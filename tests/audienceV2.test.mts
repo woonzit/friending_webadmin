@@ -172,7 +172,7 @@ test("disclosure widening is tracked separately from eligibility widening", () =
 test("the model states its own provenance and stays free of Core wire assumptions", async () => {
   const source = await readFile(new URL("../lib/audienceV2.ts", import.meta.url), "utf8");
   // The shape comes from the frozen spec, which is why this module can exist before the contract.
-  assert.match(source, /freelove-internal-classification-v1\.2\.md/);
+  assert.match(source, /friending-internal-classification-v1\.2\.md/);
   // No Core call, no bridge import: this stays a pure model until the Phase 1 contract lands.
   assert.doesNotMatch(source, /adminCall|coreCall|fetch\(/);
 });

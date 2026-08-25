@@ -1,4 +1,4 @@
-# Freelove Webadmin deployment
+# Friending Webadmin deployment
 
 This document contains no credential values. Secret material stays on the
 server and must never be pasted into source, commits, logs, screenshots, or AI
@@ -8,50 +8,49 @@ prompts.
 
 | Item | Value |
 |---|---|
-| Public URL | `https://webadmin.freelove.hu` |
+| Public URL | `https://friendingapp.com` |
 | Server | `googlecloud@34.30.1.210` |
-| SSH key | `FREELOVE_WEBADMIN_SSH_KEY` or `$HOME/.ssh/googlecloud` |
-| Application directory | `/opt/freelove/webadmin` |
-| Internal listener | `127.0.0.1:3004` |
-| PM2 process | `freelove-webadmin` |
-| Core endpoint | `https://core.freelove.hu` |
-| Core repository | `woonzit/freelove_core` |
-| Webadmin repository | `woonzit/freelove_webadmin` |
+| Host override | `FRIENDING_WEBADMIN_HOST` |
+| SSH key | `FRIENDING_WEBADMIN_SSH_KEY` or `$HOME/.ssh/googlecloud` |
+| Application directory | `/opt/friending/admin` |
+| Internal listener | `127.0.0.1:3006` |
+| PM2 process | `friending-webadmin` |
+| Core endpoint | `https://core.friending.com` |
+| Core repository | `woonzit/friending_core` |
+| Webadmin repository | `woonzit/friending_webadmin` |
 
 The host is shared with other live products. Never modify `/opt/ingatlan`,
-`/opt/zsakmany`, original Friending folders, or unrelated Apache vhosts.
+`/opt/zsakmany`, `/opt/friending/new`, `/opt/friending/pic`, `/opt/friending/coffee`, or unrelated
+Apache vhosts.
 
 ## DNS and TLS
 
-`webadmin.freelove.hu` has an A record for `34.30.1.210`.
+`friendingapp.com` has an A record for `34.30.1.210`.
 
 Expected Apache TLS files:
 
 ```text
-/etc/apache2/ssl/webadmin_freelove_hu.crt
-/etc/apache2/ssl/webadmin.freelove.hu.key
-/etc/apache2/ssl/webadmin_freelove_hu.ca-bundle
+/etc/apache2/ssl/friendingapp_com.crt
+/etc/apache2/ssl/friendingapp.com.key
+/etc/apache2/ssl/friendingapp_com.ca-bundle
 ```
 
-The private key must be owned by root and mode `0600`. Validate the certificate
-and key match before enabling the vhost. Apache configuration is infrastructure-owned and is not
-stored in this repository. If a separate infrastructure checkout is supplied, review its
-`webadmin.freelove.hu` vhost template first. The enabled server file is:
-
-```text
-/etc/apache2/sites-available/freelove-webadmin.conf
-```
+The private key must be owned by root and mode `0600`. Validate that the certificate and key match
+before changing the vhost. Apache configuration is infrastructure-owned and is not stored in this
+repository. The existing `friendingapp.com` vhost is in
+`/etc/apache2/sites-available/000-default.conf`; back it up before replacing its old document-root
+handling with a reverse proxy to `127.0.0.1:3006`.
 
 Then run `sudo apache2ctl configtest` before `sudo systemctl reload apache2`.
 Never reload Apache after a failed config test.
 
 ## Server-only environment
 
-`/opt/freelove/webadmin/.env.local` is mode `0600` and contains exactly these
+`/opt/friending/admin/.env.local` is mode `0600` and contains exactly these
 server-only variables:
 
 ```text
-CORE_API_BASE=https://core.freelove.hu
+CORE_API_BASE=https://core.friending.com
 WEBADMIN_API_SECRET=<same value as Core WEBADMIN_SECRET>
 WEBADMIN_SESSION_SECRET=<independent random value, at least 32 bytes>
 ```
@@ -61,7 +60,7 @@ the Core secret.
 
 ## Authentication bootstrap
 
-Core owns the `freelove_new.admin_emails` allow-list. The first production
+Core owns the `friending_new.admin_emails` allow-list. The first production
 owner is bootstrapped once in MongoDB; all later administrators are managed
 from the Admin users page. A bootstrap record contains:
 
@@ -69,7 +68,7 @@ from the Admin users page. A bootstrap record contains:
 email, role=owner, is_active=true, created_at, updated_at
 ```
 
-Login codes are short-lived and are sent through the existing Freelove
+Login codes are short-lived and are sent through the existing Friending
 transactional mail pipeline. The Next.js application signs its own host-only
 HttpOnly session cookie and rechecks active Core membership on every protected
 request.
@@ -84,7 +83,7 @@ The canonical command is:
 ```
 
 The first invocation is an itemized rsync dry run. The script refuses a dirty
-or unpushed Git state. `--go` runs tests, TypeScript, a production build and the
+or upstream-divergent Git state. `--go` runs tests, TypeScript, a production build and the
 production dependency audit locally; uploads without `--delete`; then repeats
 install/tests/build on the server before restarting PM2 and recording the exact
 commit in `.deploy_commit`.
@@ -97,12 +96,12 @@ and logs.
 After deployment:
 
 ```bash
-curl -sS -I https://webadmin.freelove.hu/login
-curl -sS -I https://webadmin.freelove.hu/
-curl -sS -X POST https://webadmin.freelove.hu/api/admin/overview \
+curl -sS -I https://friendingapp.com/login
+curl -sS -I https://friendingapp.com/
+curl -sS -X POST https://friendingapp.com/api/admin/overview \
   -H 'Content-Type: application/json' \
-  -H 'Origin: https://webadmin.freelove.hu' \
-  -H 'X-Freelove-Admin-Request: 1' \
+  -H 'Origin: https://friendingapp.com' \
+  -H 'X-Friending-Admin-Request: 1' \
   --data '{}'
 ```
 
@@ -113,7 +112,7 @@ Expected results:
 - the admin proxy returns `401` without the signed cookie;
 - TLS hostname and chain validate;
 - `X-Robots-Tag`, CSP, frame, referrer and content-type headers are present;
-- `pm2 describe freelove-webadmin` is online with no unstable restart loop;
+- `pm2 describe friending-webadmin` is online with no unstable restart loop;
 - the Apache error log contains no new proxy or TLS errors.
 
 Do not use a real login-code request as a routine health check because it sends

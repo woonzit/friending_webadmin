@@ -94,7 +94,7 @@ export default function LoginForm() {
           <div className="login-brand">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.svg" width="58" height="58" alt="" />
-            <span><strong>Freelove</strong><small>Admin</small></span>
+            <span><strong>Friending</strong><small>Admin</small></span>
           </div>
           <p className="eyebrow">{t("eyebrow")}</p>
           <h1>{t("brandHeadline")}<br /><span>{t("brandHeadlineAccent")}</span></h1>
@@ -111,7 +111,7 @@ export default function LoginForm() {
           <div className="login-mobile-brand">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.svg" width="48" height="48" alt="" />
-            <strong>Freelove</strong>
+            <strong>Friending</strong>
           </div>
           <h2>{step === "email" ? t("title") : t("codeTitle")}</h2>
           <p className="login-intro">

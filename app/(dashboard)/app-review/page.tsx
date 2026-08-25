@@ -23,7 +23,7 @@ import {
 import { formatDate, formatNumber } from "@/lib/format";
 
 type Notice = { tone: "success" | "error"; text: string };
-const PENDING_RESET_STORAGE_KEY = "freelove.app-review.pending-reset.v1";
+const PENDING_RESET_STORAGE_KEY = "friending.app-review.pending-reset.v1";
 
 function scalarText(value: string | number | boolean): string {
   if (typeof value === "boolean") return value ? "true" : "false";

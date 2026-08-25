@@ -73,7 +73,7 @@ function profileImageUrl(value: unknown): string {
   const candidate = avatarUrl(value);
   try {
     const parsed = new URL(candidate);
-    return parsed.protocol === "https:" && parsed.hostname === "pic.freelove.hu"
+    return parsed.protocol === "https:" && parsed.hostname === "img.friending.co"
       ? parsed.toString()
       : "";
   } catch {

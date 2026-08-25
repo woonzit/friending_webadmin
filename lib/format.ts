@@ -54,5 +54,5 @@ export function avatarUrl(value: unknown): string {
   const path = String(value ?? "").trim();
   if (!path) return "";
   if (/^https:\/\//i.test(path)) return path;
-  return `https://pic.freelove.hu/api/cache/${path.replace(/^\/+/, "")}`;
+  return `https://img.friending.co/api/cache/${path.replace(/^\/+/, "")}`;
 }

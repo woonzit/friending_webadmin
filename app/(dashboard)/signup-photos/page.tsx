@@ -329,7 +329,7 @@ export default function SignupPhotosPage() {
               type="url"
               inputMode="url"
               spellCheck={false}
-              placeholder="https://freelove.hu/moderalasi-elvek"
+              placeholder="https://friending.com/moderalasi-elvek"
               value={draft.moderation.link_url}
               disabled={locked}
               onChange={(event) => patch({

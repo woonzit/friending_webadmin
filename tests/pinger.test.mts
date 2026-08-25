@@ -18,8 +18,8 @@ function payload(): Record<string, unknown> {
         enabled: false,
         action_key: "ping",
         icon: {
-          light_url: "https://pic.freelove.hu/api/cache/admin/pinger/light/icon.png",
-          dark_url: "https://pic.freelove.hu/api/cache/admin/pinger/dark/icon.png",
+          light_url: "https://img.friending.co/api/cache/admin/pinger/light/icon.png",
+          dark_url: "https://img.friending.co/api/cache/admin/pinger/dark/icon.png",
         },
         cooldown_seconds: 86400,
         retention_seconds: 604800,
@@ -69,8 +69,8 @@ test("Pinger admin payload parses the frozen schema and writes the same material
     enabled: false,
     action_key: "ping",
     icon: {
-      light_url: "https://pic.freelove.hu/api/cache/admin/pinger/light/icon.png",
-      dark_url: "https://pic.freelove.hu/api/cache/admin/pinger/dark/icon.png",
+      light_url: "https://img.friending.co/api/cache/admin/pinger/light/icon.png",
+      dark_url: "https://img.friending.co/api/cache/admin/pinger/dark/icon.png",
     },
     // A fixture without the state pair still writes it, empty — which is what
     // makes the field additive rather than a migration.
@@ -87,7 +87,7 @@ test("Pinger admin payload parses the frozen schema and writes the same material
 });
 
 test("the icon state pair and the bundled switch survive a load/save round trip", () => {
-  const managed = "https://pic.freelove.hu/api/cache/admin/pinger";
+  const managed = "https://img.friending.co/api/cache/admin/pinger";
   const withPair = payload();
   const configuration = ((withPair.data as Record<string, unknown>).configuration as Record<string, unknown>);
   configuration.icon_liked = {
@@ -153,12 +153,12 @@ test("copy validation counts Unicode scalars and rejects duplicate or extra toke
 });
 
 test("managed icon validation rejects traversal, query and encoded paths", () => {
-  assert.equal(pingerIconURL("https://pic.freelove.hu/api/cache/../../secret.png"), null);
-  assert.equal(pingerIconURL("https://pic.freelove.hu/api/cache/%2e%2e/secret.png"), null);
-  assert.equal(pingerIconURL("https://pic.freelove.hu/api/cache/icon.png?redirect=1"), null);
+  assert.equal(pingerIconURL("https://img.friending.co/api/cache/../../secret.png"), null);
+  assert.equal(pingerIconURL("https://img.friending.co/api/cache/%2e%2e/secret.png"), null);
+  assert.equal(pingerIconURL("https://img.friending.co/api/cache/icon.png?redirect=1"), null);
   assert.equal(
-    pingerIconURL("https://pic.freelove.hu/api/cache/admin/pinger/light/icon.png"),
-    "https://pic.freelove.hu/api/cache/admin/pinger/light/icon.png",
+    pingerIconURL("https://img.friending.co/api/cache/admin/pinger/light/icon.png"),
+    "https://img.friending.co/api/cache/admin/pinger/light/icon.png",
   );
 });
 

@@ -1,7 +1,7 @@
 /**
  * V2 catalogue rule model — pure, contract-independent.
  *
- * The shape is fixed by the frozen `freelove-internal-classification-v1.2.md` §4, not by a Core
+ * The shape is fixed by the frozen `friending-internal-classification-v1.2.md` §4, not by a Core
  * wire contract, so this module can be built and tested before Core publishes the Phase 1 admin
  * contract. Core remains authoritative for validation, storage and promotion; this is the console's
  * fail-closed reading of a rule plus the pure predicates DEC-006 gates on.

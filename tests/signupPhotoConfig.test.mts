@@ -18,8 +18,8 @@ import {
   type SignupPhotoConfig,
 } from "../lib/signupPhotoConfig.ts";
 
-const IMAGE_A = "https://pic.freelove.hu/api/cache/admin/uploads/2026/08/a.jpg";
-const IMAGE_B = "https://pic.freelove.hu/api/cache/admin/uploads/2026/08/b.jpg";
+const IMAGE_A = "https://img.friending.co/api/cache/admin/uploads/2026/08/a.jpg";
+const IMAGE_B = "https://img.friending.co/api/cache/admin/uploads/2026/08/b.jpg";
 
 /** The §4.1 read shape, with both locales unresolved. */
 function validConfig(): Record<string, unknown> {
@@ -32,7 +32,7 @@ function validConfig(): Record<string, unknown> {
       enabled: true,
       text: { en: "Profile pictures are moderated.", hu: "A profilképeket moderáljuk." },
       link_title: { en: "Moderation policy", hu: "Moderálási elveink" },
-      link_url: "https://freelove.hu/moderalasi-elvek",
+      link_url: "https://friending.com/moderalasi-elvek",
     },
     avatar: {
       title: { en: "Upload your first picture", hu: "Töltsd fel az első képed" },
@@ -176,11 +176,11 @@ test("the verdict is a closed union", () => {
 test("a tip image is accepted only from the media host, under the cache path", () => {
   assert.equal(isTrustedTipImageUrl(IMAGE_A), true);
   for (const url of [
-    "http://pic.freelove.hu/api/cache/a.jpg",
-    "https://pic.freelove.hu/uploads/a.jpg",
-    "https://pic.freelove.hu.evil.example/api/cache/a.jpg",
-    "https://pic.freelove.hu@evil.example/api/cache/a.jpg",
-    "https://pic.freelove.hu:8443/api/cache/a.jpg",
+    "http://img.friending.co/api/cache/a.jpg",
+    "https://img.friending.co/uploads/a.jpg",
+    "https://img.friending.co.evil.example/api/cache/a.jpg",
+    "https://img.friending.co@evil.example/api/cache/a.jpg",
+    "https://img.friending.co:8443/api/cache/a.jpg",
     "/api/cache/a.jpg",
     "",
   ]) {
@@ -192,9 +192,9 @@ test("a tip image is accepted only from the media host, under the cache path", (
 
   // The moderation link is a policy page: its host is deliberately unrestricted, its scheme is not.
   assert.equal(isModerationLinkUrl("https://anything.example/policy"), true);
-  assert.equal(isModerationLinkUrl("http://freelove.hu/policy"), false);
+  assert.equal(isModerationLinkUrl("http://friending.com/policy"), false);
   assert.equal(isModerationLinkUrl("javascript:alert(1)"), false);
-  assert.equal(isModerationLinkUrl("freelove.hu/policy"), false);
+  assert.equal(isModerationLinkUrl("friending.com/policy"), false);
 });
 
 test("the twelve-item cap holds on load, on validation and on the add control", () => {
@@ -286,10 +286,10 @@ test("a malformed policy link is refused locally even while the notice is switch
   // so a broken address parked behind a disabled toggle cannot go live when somebody flips it back
   // on. Skipping the branch locally turned that into a 422 that named no field.
   for (const broken of [
-    "freelove.hu/moderalasi-elvek",
-    "http://freelove.hu/moderalasi-elvek",
+    "friending.com/moderalasi-elvek",
+    "http://friending.com/moderalasi-elvek",
     "javascript:alert(1)",
-    "https://user:pass@freelove.hu/policy",
+    "https://user:pass@friending.com/policy",
   ]) {
     draft.moderation.link_url = broken;
     assert.equal(validateSignupPhotoDraft(draft), "moderationLink", broken);
@@ -299,7 +299,7 @@ test("a malformed policy link is refused locally even while the notice is switch
   // governs whether the block is required, not whether a supplied address may be broken.
   draft.moderation.link_url = "";
   assert.equal(validateSignupPhotoDraft(draft), null);
-  draft.moderation.link_url = "https://freelove.hu/moderalasi-elvek";
+  draft.moderation.link_url = "https://friending.com/moderalasi-elvek";
   assert.equal(validateSignupPhotoDraft(draft), null);
 
   // With the notice on, an empty URL is the requirement failure and a broken one is still the
@@ -309,7 +309,7 @@ test("a malformed policy link is refused locally even while the notice is switch
   draft.moderation.link_title = { en: "Policy", hu: "Elvek" };
   draft.moderation.link_url = "";
   assert.equal(validateSignupPhotoDraft(draft), "moderation");
-  draft.moderation.link_url = "http://freelove.hu/policy";
+  draft.moderation.link_url = "http://friending.com/policy";
   assert.equal(validateSignupPhotoDraft(draft), "moderationLink");
 });
 

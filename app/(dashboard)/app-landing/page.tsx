@@ -68,7 +68,7 @@ const EMPTY_RULE: AppLandingRule = {
 
 // Built-in app defaults mirrored from Core's AppLandingService so the preview
 // resolves exactly like production: rule → global rule → built-in default.
-const DEFAULT_TITLE = "freelove.";
+const DEFAULT_TITLE = "friending.";
 const DEFAULT_DESCRIPTION_EN = "Meet people near you — and wherever you're headed next.";
 const DEFAULT_DESCRIPTION_HU = "Ismerj meg embereket a közeledben — és bárhol, ahová tartasz.";
 

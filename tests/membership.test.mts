@@ -63,9 +63,9 @@ function configurationFixture() {
     },
     store_products: {
       apple: [
-        { product_id: "com.freelove.easynet.subscription1w", tier: "plus", period: "P1W" },
-        { product_id: "com.freelove.easynet.subscription1", tier: "plus", period: "P1M" },
-        { product_id: "com.freelove.easynet.subscription3", tier: "plus", period: "P3M" },
+        { product_id: "com.friending.app.subscription1w", tier: "plus", period: "P1W" },
+        { product_id: "com.friending.app.subscription1", tier: "plus", period: "P1M" },
+        { product_id: "com.friending.app.subscription3", tier: "plus", period: "P3M" },
       ],
       google: [],
     },
@@ -115,7 +115,7 @@ function userDetailFixture() {
       source_id: "SENSITIVE-PROVIDER-IDENTIFIER",
       platform: "apple",
       environment: "Production",
-      product_id: "com.freelove.easynet.subscription1",
+      product_id: "com.friending.app.subscription1",
       base_plan_id: "",
       tier: "plus",
       provider_state: "active",
@@ -293,12 +293,12 @@ test("membership machine errors map to closed action-specific localized keys", (
 });
 
 test("dirty navigation guard targets App Router route changes but not same-page controls", () => {
-  const current = "https://admin.freelove.hu/membership?tab=plans#limits";
+  const current = "https://friendingapp.com/membership?tab=plans#limits";
   assert.equal(membershipShouldGuardInternalNavigation(current, "/users"), true);
   assert.equal(membershipShouldGuardInternalNavigation(current, "/membership?tab=members"), true);
   assert.equal(membershipShouldGuardInternalNavigation(current, "/membership?tab=plans#preview"), false);
   assert.equal(membershipShouldGuardInternalNavigation(current, current), false);
-  assert.equal(membershipShouldGuardInternalNavigation(current, "https://core.freelove.hu/health"), false);
+  assert.equal(membershipShouldGuardInternalNavigation(current, "https://core.friending.com/health"), false);
   assert.equal(membershipShouldGuardInternalNavigation(current, "http://["), false);
 });
 
@@ -306,7 +306,7 @@ test("member detail keeps operational facts and drops provider secrets", () => {
   const parsed = membershipUserDetail(userDetailFixture());
   assert.ok(parsed);
   assert.equal(parsed.effective_membership.tier, "plus");
-  assert.equal(parsed.store_sources[0]?.product_id, "com.freelove.easynet.subscription1");
+  assert.equal(parsed.store_sources[0]?.product_id, "com.friending.app.subscription1");
   const serialized = JSON.stringify(parsed);
   for (const secret of ["SENSITIVE-PROVIDER-IDENTIFIER", "SECRET-RECEIPT", "SENSITIVE-IDEMPOTENCY-KEY", "raw_receipt", "source_id", "request_id"]) {
     assert.equal(serialized.includes(secret), false, `${secret} reached browser state`);
@@ -453,7 +453,7 @@ test("the operator catalogue keeps non-empty Google products beside Apple", () =
   const parsed = membershipConfiguration(configurationFixture());
   assert.ok(parsed);
   parsed.store_products.google.push({
-    product_id: "freelove_plus",
+    product_id: "friending_plus",
     tier: "plus",
     period: "P1M",
   });
@@ -461,7 +461,7 @@ test("the operator catalogue keeps non-empty Google products beside Apple", () =
   assert.equal(rows.length, 4);
   assert.deepEqual(rows.at(-1), {
     platform: "google",
-    product_id: "freelove_plus",
+    product_id: "friending_plus",
     tier: "plus",
     period: "P1M",
   });

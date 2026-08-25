@@ -8,7 +8,7 @@ import { adminCall } from "@/lib/adminClient";
  * Re-crops a member's picture and overwrites it.
  *
  * The source arrives from Core as a data URL rather than the public
- * pic.freelove.hu URL on purpose: that host sends no `Access-Control-Allow-Origin`,
+ * img.friending.co URL on purpose: that host sends no `Access-Control-Allow-Origin`,
  * so a cross-origin <img> would taint the canvas and `toDataURL` would throw at
  * the very end, after the operator had done the work. A data URL is same-origin
  * by construction.

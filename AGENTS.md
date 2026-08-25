@@ -1,20 +1,20 @@
-# Freelove Webadmin — Shared Agent Instructions
+# Friending Webadmin — Shared Agent Instructions
 
 This is the binding repository instruction file for every coding agent. `CLAUDE.md` imports it.
-Keep permanent rules and the concise current release state here; do not append chronological
-session logs. Write technical documentation, code, comments, identifiers, commit messages, and
+Keep permanent rules here; do not append chronological session logs or historical release
+handoffs. Write technical documentation, code, comments, identifiers, commit messages, and
 handoffs in English. Product copy remains bilingual English/Hungarian.
 
 ## Repository and runtime
 
-- Product: **Freelove Webadmin**
-- Repository: `https://github.com/woonzit/freelove_webadmin`
-- Production URL: `https://webadmin.freelove.hu`
-- Production path: `/opt/freelove/webadmin`
-- Runtime: Next.js on `127.0.0.1:3004`, behind shared Apache
-- PM2 process: `freelove-webadmin`
-- Core API: `https://core.freelove.hu`
-- Core repository: `https://github.com/woonzit/freelove_core`
+- Product: **Friending Webadmin**
+- Repository: `https://github.com/woonzit/friending_webadmin`
+- Production URL: `https://friendingapp.com`
+- Production path: `/opt/friending/admin`
+- Runtime: Next.js on `127.0.0.1:3006`, behind shared Apache
+- PM2 process: `friending-webadmin`
+- Core API: `https://core.friending.com`
+- Core repository: `https://github.com/woonzit/friending_core`
 
 The checkout path is deliberately unspecified. Core, Join, and Android may be present as sibling
 repositories, but no build, script, test, or instruction may depend on a developer username,
@@ -29,16 +29,16 @@ are optional read-only references; never edit or deploy them as an incidental We
 - If agents work concurrently, use separate branches and Git worktrees. Never run two agents in
   the same directory.
 - Before editing an overlapping area, inspect uncommitted work and recent commits.
-- When the owner supplies `FREELOVE_COORDINATION_DIR`, treat that append-only shared folder as the
+- When the owner supplies `FRIENDING_COORDINATION_DIR`, treat that append-only shared folder as the
   live coordination board: inspect its newest entries at session start, before overlapping edits,
   before commit/delivery, and at least every three minutes during an active multi-agent lane. Never
   rewrite another agent's entry. If the folder is unavailable, say so explicitly; repository
   build and test workflows must remain standalone and must not depend on it.
 - Keep `CLAUDE.md` as the one-line import. Shared rules and current state belong here.
-- Stable feature delivery normally includes applicable gates, a descriptive commit, integration
-  into and push of `main`, deployment, and runtime smoke checks unless the user asks for a local
-  checkpoint. Documentation/tooling-only changes do not require a production restart when they
-  cannot alter generated or runtime application behavior.
+- Stable feature delivery normally includes applicable gates, a descriptive local commit, and a
+  factual handoff. Repository pushes and production deployment require current owner
+  authorization; never bypass a disabled push URL. Documentation/tooling-only changes do not
+  require a production restart when they cannot alter generated or runtime application behavior.
 
 ## Product boundary
 
@@ -54,7 +54,8 @@ Webadmin is the authenticated operations console for:
 - App Review sandbox readiness, guarded reset, and reset audit state.
 
 Do not reintroduce AYI/Are You In, Deplug, curated activities/events, event creation/joining,
-waiting room, Persona verification, mandatory walkthrough, or other retired Freelove surfaces.
+waiting room, mandatory walkthrough, or other retired Friending surfaces. Persona verification is
+in scope only through its reviewed Core contract and dedicated operations surfaces.
 
 The interface is dark-only and bilingual. English is the base/fallback locale and Hungarian is
 fully supported. `messages/en.json` and `messages/hu.json` must keep identical key trees. Use the
@@ -166,11 +167,11 @@ checks. Any edited shell script must at least pass `bash -n` and its safe dry-ru
 ## Deployment safety
 
 - The canonical procedure is `docs/DEPLOYMENT.md` and `deploy.sh`.
-- Host/key overrides are `FREELOVE_WEBADMIN_HOST` and `FREELOVE_WEBADMIN_SSH_KEY`; the conventional
+- Host/key overrides are `FRIENDING_WEBADMIN_HOST` and `FRIENDING_WEBADMIN_SSH_KEY`; the conventional
   key default is `$HOME/.ssh/googlecloud`.
 - The host is shared. Never modify unrelated directories, processes, databases, certificates, or
   vhosts.
-- `freelove-webadmin` binds only to `127.0.0.1:3004`.
+- `friending-webadmin` binds only to `127.0.0.1:3006`.
 - Deploy only a clean commit synchronized with its upstream. Read the live `.deploy_commit`
   immediately before cutover and never overwrite a newer divergent whole-tree release.
 - The deploy script preserves `.env.local`, excludes generated/dependency trees, never uses
@@ -187,44 +188,3 @@ Post-deploy smoke covers HTTPS and HTTP redirect, public login, guest dashboard 
 same-origin unauthenticated 401, foreign-origin 403, required security headers, loopback-only
 binding, PM2 stability, and every touched authenticated boundary. Do not send a real login code as
 a routine health probe because it sends email and spends the rate limit.
-
-## Current release state
-
-- Runtime application commit `d0b6ede335ede4127fb86d01c0823cc2f48eac68` is deployed at
-  `/opt/freelove/webadmin`. The live `.deploy_commit` and selected contextual-help source hashes
-  match it.
-- Every one of the 33 authenticated dashboard screens has one route-specific Help control with a
-  detailed page overview, safe novice workflow, and separate guidance for all 172 inventoried
-  functional sections in English and Hungarian. Exact and dynamic routes fail closed, and the
-  accessible modal is verified on desktop and mobile layouts.
-- Android support context is accepted and labelled `Android`; the established iOS and Web labels
-  remain unchanged. The same decoder still fails closed for unknown platform values.
-- The release passed 265 tests, strict TypeScript, optimized build, EN/HU parity, and a zero-finding
-  production dependency audit locally and on the server. External HTTPS/auth/origin/TLS/header
-  smokes passed; Core `/health` is green; PM2 is stable on loopback port 3004 with zero unstable
-  restarts; and the server-only `.env.local` is owner-readable at mode `0600`.
-- The browser bridge exposes 134 unique, explicitly classified actions, all present among Core's
-  164 unique Webadmin routes. Core's role-guard census, route construction, Composer/platform
-  checks, PHP lint over 473 runtime files, PHPStan over 526 analysed files, and all 223 PHP test
-  files pass. Storage halves that require a separately supplied disposable Mongo URI remain
-  environment-skipped; no Core code or migration changed in this delivery.
-- The standalone R73 handoff revision is `028b696c1324ca7a99446e74f4809f2d16718ebd`.
-  The handoff tree removes unprovided client-checkout dependencies from engineering prose and
-  requires no owner-machine path. A fresh clone needs no `.env.local` or sibling checkout for the
-  complete Webadmin test, type, build, or dependency-audit gates.
-- Full-history distribution remains gated by the owner-level rotation/rewrite decision recorded on
-  the shared coordination board. A clean current tip and deployed runtime do not make a
-  history-bearing clone distributable before that owner decision.
-- App Review fixture v3 is ready at 33/33 checks, 22/22 count witnesses, and 58/58 media files.
-  The first guarded reset advanced one revision exactly once and wrote one completed receipt plus
-  one audit row; no second mutation was issued and no credential was exposed.
-- Core's scheduled recovery remains the safety net for complete account deletion and same-UID
-  reprovisioning. Webadmin's reset state survives browser reloads without duplicating mutations.
-- The remaining App Review release gate is a signed, credential-injected physical-device reviewer
-  walkthrough. Parser or server-only evidence does not complete that gate.
-- Membership purchase/provider rollout, private verification evidence decisions, and other
-  real-provider mutations remain controlled external gates. Never enable them merely to make an
-  administration panel appear complete.
-
-Replace these bullets when facts change. Do not recreate the removed historical review reports,
-machine-local handoffs, or dated session sections.

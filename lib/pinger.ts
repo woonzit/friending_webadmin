@@ -105,7 +105,7 @@ export function pingerIconURL(value: unknown): string | null {
     const decodedPath = decodeURIComponent(url.pathname);
     const segments = decodedPath.split("/");
     if (
-      url.protocol !== "https:" || url.hostname !== "pic.freelove.hu"
+      url.protocol !== "https:" || url.hostname !== "img.friending.co"
       || (url.port !== "" && url.port !== "443") || url.username || url.password
       || url.search || url.hash || decodedPath !== url.pathname
       || !url.pathname.startsWith("/api/cache/") || url.pathname.includes("//")

@@ -64,19 +64,19 @@ test("the profile base is taken only from what the server offers", () => {
   const withBase = {
     ...payload(43_200),
     public_profile_base_url: {
-      value: "https://freelove.hu",
+      value: "https://friending.com",
       type: "enum",
-      allowed_values: ["https://join.freelove.hu", "https://freelove.hu"],
+      allowed_values: ["https://friending.com"],
       updated_at: 9,
       updated_by: "ops@test.invalid",
     },
   };
   const normalized = normalizeRuntimeSettings(withBase);
   assert.ok(normalized);
-  assert.equal(normalized.public_profile_base_url.value, "https://freelove.hu");
+  assert.equal(normalized.public_profile_base_url.value, "https://friending.com");
   assert.equal(
     runtimeSettingsSavePayload(normalized).public_profile_base_url,
-    "https://freelove.hu",
+    "https://friending.com",
   );
 
   // A stored value outside the offered set falls back to the first offer
@@ -89,7 +89,7 @@ test("the profile base is taken only from what the server offers", () => {
     },
   });
   assert.ok(stale);
-  assert.equal(stale.public_profile_base_url.value, "https://join.freelove.hu");
+  assert.equal(stale.public_profile_base_url.value, "https://friending.com");
 });
 
 test("the website origin is carried through and omitted when unmanaged", () => {
@@ -101,16 +101,16 @@ test("the website origin is carried through and omitted when unmanaged", () => {
   const managed = normalizeRuntimeSettings({
     ...payload(43_200),
     public_web_base: {
-      value: "https://freelove.hu",
+      value: "https://friending.com",
       type: "origin",
       updated_at: 11,
       updated_by: "ops@test.invalid",
     },
   });
   assert.ok(managed);
-  assert.equal(managed.public_web_base.value, "https://freelove.hu");
+  assert.equal(managed.public_web_base.value, "https://friending.com");
   assert.equal(
     runtimeSettingsSavePayload(managed).public_web_base,
-    "https://freelove.hu",
+    "https://friending.com",
   );
 });

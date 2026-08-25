@@ -23,7 +23,7 @@ const response = {
     email_is_real: true,
     apple_id: "001234.abcdef.0001",
     height_cm: 178,
-    avatar_thumb: "https://pic.freelove.hu/a.jpg",
+    avatar_thumb: "https://img.friending.co/a.jpg",
     last_location: { city: "Budapest", region: "Pest", country: "Hungary", country_code: "HU", location_name: "", lat: 47.4979, lng: 19.0402 },
     hometown: { city: "Szeged", region: "Csongrád", country: "Hungary", country_code: "HU", location_name: "", lat: 46.253, lng: 20.1414 },
     facebook_id: "SENTINEL-FACEBOOK", instagram: "SENTINEL-INSTAGRAM",
@@ -31,7 +31,7 @@ const response = {
     birthday_stamp: 852076800, birthmonth: 1, birthday: 1,
   },
   images: [
-    { image_id: "img1", thumb: "https://pic.freelove.hu/t1.jpg", full: "https://pic.freelove.hu/f1.jpg", is_avatar: true, mod_status: "pending", moderation_scan: { adult: "VERY_LIKELY" } },
+    { image_id: "img1", thumb: "https://img.friending.co/t1.jpg", full: "https://img.friending.co/f1.jpg", is_avatar: true, mod_status: "pending", moderation_scan: { adult: "VERY_LIKELY" } },
   ],
   about_me: [{ id: "a1", value: "Coffee" }],
   into_tags: [{ key: "hiking", name: "Hiking" }],

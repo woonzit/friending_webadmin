@@ -256,7 +256,7 @@ function HeroDialog({
               inputMode="url"
               value={value.forward_url}
               onChange={(event) => onChange({ ...value, forward_url: event.target.value.slice(0, 2048) })}
-              placeholder="https://freelove.hu/campaign"
+              placeholder="https://friending.com/campaign"
             />
             <small className="field-hint">{t("destinationUrlHint")}</small>
           </label>

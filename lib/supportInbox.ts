@@ -148,7 +148,7 @@ export function supportImageUrl(value: unknown): string {
     const url = new URL(raw);
     if (
       url.protocol !== "https:"
-      || url.hostname !== "pic.freelove.hu"
+      || url.hostname !== "img.friending.co"
       || url.port !== ""
       || url.username !== ""
       || url.password !== ""

@@ -18,12 +18,12 @@ test("hero URLs require HTTPS and allow an optional blank destination", () => {
   assert.equal(isHttpsUrl("", false), false);
 });
 
-test("avatar paths resolve against the Freelove image cache", () => {
+test("avatar paths resolve against the Friending image cache", () => {
   assert.equal(
     avatarUrl("ab/abc/hash_meetpic.jpeg"),
-    "https://pic.freelove.hu/api/cache/ab/abc/hash_meetpic.jpeg",
+    "https://img.friending.co/api/cache/ab/abc/hash_meetpic.jpeg",
   );
-  assert.equal(avatarUrl("https://pic.freelove.hu/image.jpeg"), "https://pic.freelove.hu/image.jpeg");
+  assert.equal(avatarUrl("https://img.friending.co/image.jpeg"), "https://img.friending.co/image.jpeg");
   assert.equal(avatarUrl(""), "");
 });
 

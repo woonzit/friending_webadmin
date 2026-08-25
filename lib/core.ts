@@ -5,7 +5,7 @@ export type CoreResult<T = Record<string, unknown>> = {
   data: T | null;
 };
 
-const CORE_API_BASE = (process.env.CORE_API_BASE ?? "https://core.freelove.hu").replace(/\/+$/, "");
+const CORE_API_BASE = (process.env.CORE_API_BASE ?? "https://core.friending.com").replace(/\/+$/, "");
 
 /**
  * Parameters Core treats as authoritative, which a request body may therefore

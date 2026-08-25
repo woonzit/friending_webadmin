@@ -46,7 +46,7 @@
     "button": "Help",
     "openLabel": "{page} megnyitása",
     "closeLabel": "Oldalsúgó bezárása",
-    "eyebrow": "Freelove operátori útmutató",
+    "eyebrow": "Friending operátori útmutató",
     "overviewEyebrow": "Oldaláttekintés",
     "overviewTitle": "Mire való ez a képernyő?",
     "startTitle": "Az oldal biztonságos használata",
@@ -527,7 +527,7 @@
       },
       "datesActivities": {
         "title": "Dates aktivitások súgó",
-        "summary": "A Dates a Freelove tagok által létrehozott programterülete. Ezen a képernyőn a támogatási és biztonsági csapat minden aktivitást megkereshet, megértheti annak életciklusát, és nyers adatbázisrekordok böngészése nélkül nyithat korlátozott üzemeltetési részletet.",
+        "summary": "A Dates a Friending tagok által létrehozott programterülete. Ezen a képernyőn a támogatási és biztonsági csapat minden aktivitást megkereshet, megértheti annak életciklusát, és nyers adatbázisrekordok böngészése nélkül nyithat korlátozott üzemeltetési részletet.",
         "steps": {
           "1": "Keress ismert aktivitás, cím, város vagy host alapján, és szűkítsd az életciklus- vagy moderációs állapotot.",
           "2": "Megnyitás előtt együtt olvasd a host, időzítés, résztvevői és moderációs oszlopokat.",
@@ -891,7 +891,7 @@
       },
       "landing": {
         "title": "Join landing hátterek súgó",
-        "summary": "Ez a képernyő a join.freelove.hu belépési és regisztrációs felülete mögötti reszponzív látványt vezérli. Egy védett, kép nélküli fallback mindig létezik, opcionális globális, ország- és városkampányok pedig képet vagy videót adhatnak.",
+        "summary": "Ez a képernyő a friending.com belépési és regisztrációs felülete mögötti reszponzív látványt vezérli. Egy védett, kép nélküli fallback mindig létezik, opcionális globális, ország- és városkampányok pedig képet vagy videót adhatnak.",
         "steps": {
           "1": "A védett fallbackkel kezdj, és ellenőrizd, hogy kampánymédia nélkül is olvasható marad a login.",
           "2": "Kampánynál a reszponzív média és megjelenés előtt határozd meg a földrajzi hatókört és prioritást.",
@@ -965,7 +965,7 @@
       },
       "appLanding": {
         "title": "App nyitóképernyő súgó",
-        "summary": "Ez az oldal a bejelentkezés előtt látható iOS-képernyőt vezérli: hátteret, Freelove címmegjelenítést és kétnyelvű leírást. A globális szabály adja az alapot, az ország- vagy városfelülírások pedig bármely üres mezőt örökölhetnek.",
+        "summary": "Ez az oldal a bejelentkezés előtt látható iOS-képernyőt vezérli: hátteret, Friending címmegjelenítést és kétnyelvű leírást. A globális szabály adja az alapot, az ország- vagy városfelülírások pedig bármely üres mezőt örökölhetnek.",
         "steps": {
           "1": "Először hozd létre és vizsgáld át a globális szabályt, mert minden override és beépített fallback ezen keresztül oldódik fel.",
           "2": "Override-nál csak a ténylegesen eltérő mezőket töltsd, és ellenőrizd a földrajzi prioritást.",
@@ -1001,7 +1001,7 @@
           },
           "title": {
             "title": "Szöveges vagy képes cím",
-            "purpose": "A Freelove cím kétnyelvű szöveg vagy átlátszó PNG lehet; az üres override-szöveg a globális vagy beépített címet örökli.",
+            "purpose": "A Friending cím kétnyelvű szöveg vagy átlátszó PNG lehet; az üres override-szöveg a globális vagy beépített címet örökli.",
             "actions": {
               "1": "Válassz szöveget és töltsd ki mindkét locale-t, vagy töltsd fel a kötelező átlátszó címképet.",
               "2": "Képes cím eltávolítása előtt válts vissza szövegre."
@@ -1030,7 +1030,7 @@
       },
       "signupOptions": {
         "title": "Signup opciók súgó",
-        "summary": "Ez a munkaterület határozza meg a Freelove-profil létrehozásakor megjelenő kérdéseket és válaszokat. Elkülöníti a védett azonossági tengelyeket az opcionális kérdésektől, és vezérli a kétnyelvű címkéket, ikonokat és az egyes választások célközönségét.",
+        "summary": "Ez a munkaterület határozza meg a Friending-profil létrehozásakor megjelenő kérdéseket és válaszokat. Elkülöníti a védett azonossági tengelyeket az opcionális kérdésektől, és vezérli a kétnyelvű címkéket, ikonokat és az egyes választások célközönségét.",
         "steps": {
           "1": "Keresd meg a kérdést, majd először döntsd el, hogy védett rendszerazonosság vagy szerkeszthető opcionális csoport.",
           "2": "Módosítás előtt együtt nézd át a kérdés megjelenését, válaszait és audience szabályait.",
@@ -1404,7 +1404,7 @@
       },
       "layer2Intents": {
         "title": "Layer 2 intentek súgó",
-        "summary": "A Layer 2 a „Mi hozott a Freelove-ra?” mögötti katalógus. A tag kevés intentet választ, és egy válasz csak annak a másik tagnak fedhető fel, aki ugyanabban a kölcsönös setben választott intentet.",
+        "summary": "A Layer 2 a „Mi hozott a Friendingre?” mögötti katalógus. A tag kevés intentet választ, és egy válasz csak annak a másik tagnak fedhető fel, aki ugyanabban a kölcsönös setben választott intentet.",
         "steps": {
           "1": "Elem szerkesztése előtt olvasd el a katalógus readinessét és az aktuális selection limitet.",
           "2": "Őrizd meg a permanens azonosságot, Layer 1 elhelyezést és kölcsönös setet, miközben mindkét nyelven kitöltöd a címkét és glossaryt.",
@@ -1534,7 +1534,7 @@
       },
       "pinger": {
         "title": "Pinger súgó",
-        "summary": "A Pinger a Freelove könnyű érdeklődési jelzése: a tag egy másik profilról érdeklődést fejezhet ki, a kompatibilis állapotok pedig a Collectorba vagy védett chatélménybe kerülhetnek. Ez az oldal kezeli a release policyt, artworköt és kétnyelvű tagi szöveget.",
+        "summary": "A Pinger a Friending könnyű érdeklődési jelzése: a tag egy másik profilról érdeklődést fejezhet ki, a kompatibilis állapotok pedig a Collectorba vagy védett chatélménybe kerülhetnek. Ez az oldal kezeli a release policyt, artworköt és kétnyelvű tagi szöveget.",
         "steps": {
           "1": "A fő- és chatszerződés gate-et tartsd kikapcsolva, amíg a kapcsolódó Core- és kliensrelease nincs bizonyítva.",
           "2": "A cooldown, retention és új tagi alapértékeket minden tagi üzenettel együtt vizsgáld.",
@@ -1582,7 +1582,7 @@
       },
       "inviteConfiguration": {
         "title": "Mobilmeghívások súgó",
-        "summary": "A mobilmeghívás SMS-ben hív valakit a Freelove-ra. A Webadmin dönti el, hogy a Freelove szervere vagy a tag iPhone-ja küld, mely lokalizált template renderelődik, és egy App Store storefront ország felülírja-e a globális fallbacket.",
+        "summary": "A mobilmeghívás SMS-ben hív valakit a Friendingre. A Webadmin dönti el, hogy a Friending szervere vagy a tag iPhone-ja küld, mely lokalizált template renderelődik, és egy App Store storefront ország felülírja-e a globális fallbacket.",
         "steps": {
           "1": "Nézd át a globális fallbacket, mert akkor érvényes, ha a StoreKit nem ad használható storefrontot vagy nincs illeszkedő override.",
           "2": "Privacy és provider-readiness szerint válassz delivery módot, majd validáld minden kötelező nyelv template-jét.",
@@ -1605,7 +1605,7 @@
               "1": "Szerverküldést csak kész provider credential, rate limit és monitoring mellett válassz.",
               "2": "Eszközös küldést használj, ha a tagnak saját carrierén át kell ellenőriznie és elküldenie."
             },
-            "guidance": "A két mód privacy-, költség- és deliveryszemantikája eltér. A szöveg ne állítsa, hogy a Freelove küldött egy eszközön komponált üzenetet."
+            "guidance": "A két mód privacy-, költség- és deliveryszemantikája eltér. A szöveg ne állítsa, hogy a Friending küldött egy eszközön komponált üzenetet."
           },
           "templates": {
             "title": "Lokalizált SMS-template-ek",
@@ -1685,7 +1685,7 @@
       },
       "helpCms": {
         "title": "Súgóközpont CMS útmutató",
-        "summary": "Ez a CMS publikálja a tagok által látott Freelove Súgóközpontot. A kategóriák rendezik a felfedezést; minden cikk egy kétnyelvű egységben tárol angol és magyar címet, összefoglalót, keresőszót és strukturált blokktörzset.",
+        "summary": "Ez a CMS publikálja a tagok által látott Friending Súgóközpontot. A kategóriák rendezik a felfedezést; minden cikk egy kétnyelvű egységben tárol angol és magyar címet, összefoglalót, keresőszót és strukturált blokktörzset.",
         "steps": {
           "1": "Először válassz vagy hozz létre kategóriát, majd permanens slug alapján nyiss meg egy cikkdraftot.",
           "2": "Mindkét locale fület töltsd ki és ellenőrizd, beleértve a struktúrát, linket, kiemelést és figyelmeztetést.",
@@ -1726,7 +1726,7 @@
               "1": "Add hozzá a megfelelő blokktípust, szerkeszd a runokat vagy listaelemeket, és nyilakkal rendezd.",
               "2": "Kiemelést, linket és warning tone-t csak az érthetőség javítására használj."
             },
-            "guidance": "A lépések olyan tagoknak szóljanak, akik még nem ismerik a Freelove-ot. Secret, privát bizonyítéklink vagy nem támogatott markup ne kerüljön bele."
+            "guidance": "A lépések olyan tagoknak szóljanak, akik még nem ismerik a Friendinget. Secret, privát bizonyítéklink vagy nem támogatott markup ne kerüljön bele."
           },
           "categories": {
             "title": "Súgókategóriák",
@@ -1834,7 +1834,7 @@
       },
       "appReview": {
         "title": "App Review sandbox súgó",
-        "summary": "A sandbox determinisztikus, szintetikus fiók, amellyel platformreviewerek megtapasztalhatják a feltöltött Freelove appot. A Core kezeli a fix azonosságot, fixture-t, teljes törlést és azonos UID-s reprovisioninget; a Webadmin readiness-t mutat és egy szigorúan scoped resetet kínál.",
+        "summary": "A sandbox determinisztikus, szintetikus fiók, amellyel platformreviewerek megtapasztalhatják a feltöltött Friending appot. A Core kezeli a fix azonosságot, fixture-t, teljes törlést és azonos UID-s reprovisioninget; a Webadmin readiness-t mutat és egy szigorúan scoped resetet kínál.",
         "steps": {
           "1": "Darabszám vagy check értelmezése előtt ellenőrizd a control recordot, életciklust és fixture-verziót.",
           "2": "Olvasd el az összes count witnesst és readiness checket; egyetlen hibás check esetén sem kész a sandbox.",
@@ -2117,7 +2117,7 @@
     "eyebrow": "Privát üzemeltetési felület",
     "brandHeadline": "Közösségi üzemeltetés,",
     "brandHeadlineAccent": "zaj nélkül.",
-    "brandCopy": "A Freelove közösségét, kampányait és működési kapcsolóit egy biztonságos helyről kezelheted.",
+    "brandCopy": "A Friending közösségét, kampányait és működési kapcsolóit egy biztonságos helyről kezelheted.",
     "securityNote": "Csak jóváhagyott adminisztrátoroknak. Minden működési változás naplózva van.",
     "title": "Üdv újra",
     "subtitle": "Adj meg egy engedélyezett e-mail-címet. Rövid ideig érvényes belépési kódot küldünk.",
@@ -2141,7 +2141,7 @@
     "genericError": "Valami hiba történt. Próbáld újra."
   },
   "overview": {
-    "eyebrow": "Freelove üzemeltetés",
+    "eyebrow": "Friending üzemeltetés",
     "title": "Áttekintés",
     "subtitle": "Élő pillanatkép a közösségről és a discovery működését alakító beállításokról.",
     "totalUsers": "Regisztrált userek",
@@ -2159,7 +2159,7 @@
     "manageConfig": "Működési beállítások",
     "manageConfigCopy": "Engedélyezett termékkapcsolók módosítása deploy nélkül.",
     "recentAudit": "Legutóbbi aktivitás",
-    "recentAuditCopy": "A legutóbbi adminisztrátori változások a Freelove-ban.",
+    "recentAuditCopy": "A legutóbbi adminisztrátori változások a Friendingben.",
     "viewAudit": "Teljes admin napló",
     "noAudit": "Még nem történt naplózott adminisztrátori változás.",
     "loadError": "Az üzemeltetési pillanatkép nem tölthető be."
@@ -2766,7 +2766,7 @@
     "image": "Kép",
     "video": "Videó",
     "campaignImage": "Kampánykép",
-    "campaignImageHint": "A feltöltött képet optimalizáljuk, és a Freelove képtárhelyén tároljuk.",
+    "campaignImageHint": "A feltöltött képet optimalizáljuk, és a Friending képtárhelyén tároljuk.",
     "videoUrl": "Videó URL",
     "videoUrlHint": "Jóváhagyott CDN-ről származó HTTPS videó URL.",
     "destinationUrl": "Cél URL",
@@ -2812,7 +2812,7 @@
   "landing": {
     "eyebrow": "Publikus web",
     "title": "Nyitóoldal-hátterek",
-    "subtitle": "A join.freelove.hu reszponzív kép- vagy videóhátterének kezelése: állandó média nélküli alapnézet és földrajzi kampányok.",
+    "subtitle": "A friending.com reszponzív kép- vagy videóhátterének kezelése: állandó média nélküli alapnézet és földrajzi kampányok.",
     "newRule": "Új háttérszabály",
     "activeCount": "{active} aktív / {total}",
     "precedence": "Városi média → országos média → globális média → média nélküli alapnézet",
@@ -2951,7 +2951,7 @@
     "titleImage": "Kép",
     "titleTextEn": "Cím · angol",
     "titleTextHu": "Cím · magyar",
-    "titleTextHint": "Opcionális. Az üres cím a globális szabálytól öröklődik; a beépített alapértelmezés a „freelove.”.",
+    "titleTextHint": "Opcionális. Az üres cím a globális szabálytól öröklődik; a beépített alapértelmezés a „friending.”.",
     "titleImageLabel": "Címkép",
     "titleImageHint": "Képcímnél kötelező. Tölts fel átlátszó hátterű PNG-t; az átlátszóság megmarad.",
     "descriptionEn": "Leírás · angol",
@@ -3522,7 +3522,7 @@
   "admins": {
     "eyebrow": "Hozzáférés-kezelés",
     "title": "Admin userek",
-    "subtitle": "Csak aktív címek kérhetnek Freelove admin belépési kódot.",
+    "subtitle": "Csak aktív címek kérhetnek Friending admin belépési kódot.",
     "addTitle": "Adminisztrátor hozzáadása",
     "emailPlaceholder": "admin@ceg.hu",
     "add": "Admin hozzáadása",
@@ -4241,7 +4241,7 @@
   "inviteConfiguration": {
     "eyebrow": "Növekedés és megosztás",
     "title": "Mobilos meghívások",
-    "subtitle": "Globálisan vagy App Store-országonként állítsd be, hogy a Freelove vagy a tag iPhone-ja küldje ki a meghívó SMS-t.",
+    "subtitle": "Globálisan vagy App Store-országonként állítsd be, hogy a Friending vagy a tag iPhone-ja küldje ki a meghívó SMS-t.",
     "loadError": "A mobilos meghívások beállítása nem tölthető be.",
     "saved": "A mobilos meghívások beállítása mentve.",
     "unsaved": "Mentetlen meghívási módosítások",
@@ -4254,7 +4254,7 @@
     },
     "modes": {
       "server_sms": {
-        "title": "A Freelove küldi az SMS-t",
+        "title": "A Friending küldi az SMS-t",
         "copy": "A kiválasztott telefonszám a Core-hoz kerül, és a szerver küldi ki az adminisztrátor által megírt üzenetet."
       },
       "device_sms": {
@@ -4370,7 +4370,7 @@
       "tipKey": "Minden tippkártyához kell stabil kulcs kisbetűkből, számokból vagy aláhúzásból.",
       "duplicateTipKey": "Két tippkártya stabil kulcsa azonos. A kulcsoknak egyedinek kell lenniük.",
       "tipCaption": "Minden tippkártyához kell angol és magyar felirat.",
-      "tipImage": "Minden tippkártyához fel kell tölteni alapértelmezett képet. Csak a https://pic.freelove.hu/api/cache/ alatti címek fogadhatók el, mert az alkalmazás minden más hosztot és útvonalat elutasít.",
+      "tipImage": "Minden tippkártyához fel kell tölteni alapértelmezett képet. Csak a https://img.friending.co/api/cache/ alatti címek fogadhatók el, mert az alkalmazás minden más hosztot és útvonalat elutasít.",
       "tooManyTips": "Legfeljebb 12 tippkártya menthető."
     },
     "errors": {
@@ -4379,7 +4379,7 @@
       "invalidModeration": "A Core elutasította a moderálási blokkot (signup-photo-config-invalid-moderation).",
       "invalidAvatar": "A Core elutasította az avatár képernyő szövegeit (signup-photo-config-invalid-avatar).",
       "invalidTips": "A Core elutasította a tippdobozt (signup-photo-config-invalid-tips).",
-      "invalidImageUrl": "A Core elutasított egy tippkép-címet (signup-photo-config-invalid-image-url). Csak a https://pic.freelove.hu/api/cache/ alatti címek fogadhatók el.",
+      "invalidImageUrl": "A Core elutasított egy tippkép-címet (signup-photo-config-invalid-image-url). Csak a https://img.friending.co/api/cache/ alatti címek fogadhatók el.",
       "duplicateTipKey": "Két tippkártya stabil kulcsa azonos (signup-photo-config-duplicate-tip-key).",
       "tooManyTips": "A Core tizenkettőnél több tippkártyát nem fogad el (signup-photo-config-too-many-tips).",
       "writeFailed": "A Core nem tudta eltárolni a beállítást (signup-photo-config-write-failed), így a módosítás nem mentődött el. A piszkozatod megmarad — próbáld újra. Ha az újrapróbálkozás ütközést jelez, az előző írás mégis megtörtént: töltsd újra az oldalt, és ellenőrizd a tárolt értékeket.",

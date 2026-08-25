@@ -204,7 +204,7 @@ function icon(value: unknown): ManagedIcon | null {
   if (!(["image/png", "image/svg+xml"] as string[]).includes(mime)) return null;
   try {
     const parsed = new URL(url);
-    if (parsed.protocol !== "https:" || parsed.hostname !== "pic.freelove.hu") return null;
+    if (parsed.protocol !== "https:" || parsed.hostname !== "img.friending.co") return null;
   } catch {
     return null;
   }

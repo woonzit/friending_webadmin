@@ -29,7 +29,7 @@ export const MAX_PHOTO_COUNT = 6;
  * accepted but a device drops would be an invisible failure — the operator would see the picture
  * here and members would see nothing.
  */
-export const PUBLIC_IMAGE_ORIGIN = "https://pic.freelove.hu";
+export const PUBLIC_IMAGE_ORIGIN = "https://img.friending.co";
 export const PUBLIC_IMAGE_PATH_PREFIX = "/api/cache/";
 
 export const MAX_TIP_KEY_LENGTH = 40;
@@ -234,7 +234,7 @@ function localizedText(value: unknown, max: number): SignupPhotoLocalizedText | 
 /**
  * §1: absolute `https://`, origin exactly `PUBLIC_IMAGE_ORIGIN`, path under the cache prefix.
  * `URL.origin` covers scheme, host and port together; embedded credentials are refused separately
- * because `origin` ignores them and `https://pic.freelove.hu@evil.example/…` would otherwise pass.
+ * because `origin` ignores them and `https://img.friending.co@evil.example/…` would otherwise pass.
  */
 export function isTrustedTipImageUrl(value: string): boolean {
   let parsed: URL;

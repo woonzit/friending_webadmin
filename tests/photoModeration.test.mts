@@ -11,7 +11,7 @@ test("profile photo moderation is an explicit authenticated admin capability", (
 test("photo moderation accepts legacy relative cache paths but restricts their public host", async () => {
   const source = await readFile(new URL("../app/(dashboard)/photo-moderation/page.tsx", import.meta.url), "utf8");
   assert.match(source, /avatarUrl\(value\)/);
-  assert.match(source, /parsed\.hostname === "pic\.freelove\.hu"/);
+  assert.match(source, /parsed\.hostname === "img\.friending\.co"/);
   assert.match(source, /image_action: action/);
   assert.match(source, /moderation_scan/);
 });

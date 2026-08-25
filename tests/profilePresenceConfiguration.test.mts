@@ -23,7 +23,7 @@ function payload() {
       now_enabled: false,
       enabled_modes: ["online", "date", "invisible"],
       updated_at: 1_723_000_000,
-      updated_by: "owner@freelove.hu",
+      updated_by: "owner@friending.com",
     },
     mandatory_modes: ["online", "invisible"],
     optional_modes: ["date", "now"],

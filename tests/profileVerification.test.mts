@@ -58,7 +58,7 @@ function validConfig(): Record<string, unknown> {
       consent: {
         body: l10n("I consent to private evidence storage."),
         link_title: l10n("Privacy information"),
-        link_url: "https://freelove.hu/privacy",
+        link_url: "https://friending.com/privacy",
       },
     },
     prompts: PROFILE_VERIFICATION_PROMPTS.map((key) => ({
@@ -156,7 +156,7 @@ function validDetail() {
       gender: "female",
       birthday: 631152000,
       current_avatar_hash: "avatar_hash",
-      current_avatar_url: "https://pic.freelove.hu/api/cache/ad/ada/avatar_hash_free_pop_up.jpeg",
+      current_avatar_url: "https://img.friending.co/api/cache/ad/ada/avatar_hash_free_pop_up.jpeg",
     },
     history: [{
       event_id: "e".repeat(32),
@@ -262,7 +262,7 @@ test("detail parsing preserves private comparison metadata and rejects malformed
   assert.ok(parsed);
   assert.equal(parsed.case?.identity_snapshot.birthday, 631152000);
   assert.equal(parsed.submission?.actions[1], "smile");
-  assert.equal(parsed.user.current_avatar_url?.startsWith("https://pic.freelove.hu/"), true);
+  assert.equal(parsed.user.current_avatar_url?.startsWith("https://img.friending.co/"), true);
   assert.equal(parsed.history.length, 1);
 
   const broken = validDetail();
@@ -270,7 +270,7 @@ test("detail parsing preserves private comparison metadata and rejects malformed
   assert.equal(profileVerificationDetail(broken), null);
 
   const insecureAvatar = validDetail();
-  insecureAvatar.user.current_avatar_url = "http://pic.freelove.hu/avatar.jpeg";
+  insecureAvatar.user.current_avatar_url = "http://img.friending.co/avatar.jpeg";
   assert.equal(profileVerificationDetail(insecureAvatar), null);
 });
 

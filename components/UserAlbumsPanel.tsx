@@ -17,7 +17,7 @@ function httpsImage(value: unknown): string {
   if (typeof value !== "string") return "";
   try {
     const url = new URL(value);
-    return url.protocol === "https:" && url.hostname === "pic.freelove.hu" ? url.toString() : "";
+    return url.protocol === "https:" && url.hostname === "img.friending.co" ? url.toString() : "";
   } catch {
     return "";
   }

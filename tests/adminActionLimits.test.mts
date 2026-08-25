@@ -122,7 +122,8 @@ test("the largest signup photo document fits under the default body ceiling", as
   // U+1D518 is four bytes in UTF-8 and one code point, which is what the length caps count.
   const wide = (codePoints: number) => "\u{1D518}".repeat(codePoints);
   const map = (codePoints: number) => ({ en: wide(codePoints), hu: wide(codePoints) });
-  const longUrl = `https://pic.freelove.hu/api/cache/${"a".repeat(MAX_URL_LENGTH - 34)}`;
+  const imagePrefix = "https://img.friending.co/api/cache/";
+  const longUrl = `${imagePrefix}${"a".repeat(MAX_URL_LENGTH - imagePrefix.length)}`;
   assert.equal(longUrl.length, MAX_URL_LENGTH);
 
   const payload = signupPhotoSavePayload({

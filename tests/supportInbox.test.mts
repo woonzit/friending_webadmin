@@ -9,7 +9,7 @@ import {
   supportThreads,
 } from "../lib/supportInbox.ts";
 
-const image = "https://pic.freelove.hu/api/cache/support/42/2026/08/0123456789abcdef0123456789abcdef.jpg";
+const image = "https://img.friending.co/api/cache/support/42/2026/08/0123456789abcdef0123456789abcdef.jpg";
 
 test("support inbox decodes image rows and the latest bounded client context", () => {
   const payload = {
@@ -32,7 +32,7 @@ test("support inbox decodes image rows and the latest bounded client context", (
         screen_height_px: 2796,
         auth_token: "must-not-be-decoded",
       },
-      user: { displayname: { value: "Ada" }, avatar: "https://pic.freelove.hu/a.jpg" },
+      user: { displayname: { value: "Ada" }, avatar: "https://img.friending.co/a.jpg" },
     }],
   };
   assert.equal(supportMediaEnabled(payload), true);
@@ -72,7 +72,7 @@ test("support conversations require text XOR a trusted first-party image", () =>
   assert.equal(supportConversation({
     messages: [{
       id: "x", smid: 1, sender: "user", kind: "image", body: "",
-      image_url: image.replace("pic.freelove.hu", "example.com"), image_removed: false,
+      image_url: image.replace("img.friending.co", "example.com"), image_removed: false,
     }],
   }), null);
   assert.equal(supportConversation({

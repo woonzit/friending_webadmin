@@ -93,7 +93,7 @@ function tagCatalog(key: "what_im_into" | "my_story" | "interests") {
         sort_order: 10,
         active: true,
         audience: { genders: ["female"], segments: ["female_lesbian"] },
-        icon: { url: "https://pic.freelove.hu/api/cache/admin/profile-icons/coffee.svg", mime: "image/svg+xml" },
+        icon: { url: "https://img.friending.co/api/cache/admin/profile-icons/coffee.svg", mime: "image/svg+xml" },
         emoji: "☕",
         revision: 4,
         selected_member_count: 12,

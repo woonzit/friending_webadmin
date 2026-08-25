@@ -109,7 +109,7 @@ export default function Shell({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" width="42" height="42" alt="" />
           <span>
-            <strong>Freelove</strong>
+            <strong>Friending</strong>
             <small>{common("adminBadge")}</small>
           </span>
         </Link>
@@ -148,7 +148,7 @@ export default function Shell({
             <span />
             <span />
           </button>
-          <span className="mobile-brand">Freelove <b>{common("adminBadge")}</b></span>
+          <span className="mobile-brand">Friending <b>{common("adminBadge")}</b></span>
           <LocaleSwitcher />
         </header>
         <main className="content">{children}</main>

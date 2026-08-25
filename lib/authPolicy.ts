@@ -141,7 +141,7 @@ export const AUTH_ADDRESS_RULE: ThrottleRule = { limit: 40, windowSeconds: 600 }
 
 /**
  * Process-local state. Webadmin deploys as a single Next.js process on
- * `127.0.0.1:3004` behind Apache, so this is a real control for that topology
+ * `127.0.0.1:3006` behind Apache, so this is a real control for that topology
  * and only for that topology: it is not shared across instances, it does not
  * survive a PM2 restart, and it is not a substitute for an edge/WAF rule.
  */

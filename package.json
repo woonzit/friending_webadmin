@@ -1,5 +1,5 @@
 {
-  "name": "freelove-webadmin",
+  "name": "friending-webadmin",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,9 +7,9 @@
     "node": ">=20.9.0"
   },
   "scripts": {
-    "dev": "next dev -H 127.0.0.1 -p 3004",
+    "dev": "next dev -H 127.0.0.1 -p 3006",
     "build": "next build",
-    "start": "next start -H 127.0.0.1 -p 3004",
+    "start": "next start -H 127.0.0.1 -p 3006",
     "test": "tsx --test tests/*.test.mts",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit"

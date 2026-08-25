@@ -159,7 +159,7 @@ test("Dates pages use the authenticated bridge and keep destructive controls exp
     "../app/(dashboard)/dates/configuration/page.tsx",
   ];
   const pages = pageFiles.map((file) => readFileSync(new URL(file, import.meta.url), "utf8")).join("\n");
-  assert.doesNotMatch(pages, /core\.freelove\.hu|WEBADMIN_SECRET|fetch\s*\(/);
+  assert.doesNotMatch(pages, /core\.friending\.com|WEBADMIN_SECRET|fetch\s*\(/);
   assert.match(pages, /adminCall\(/);
   assert.match(pages, /expected_revision/);
   assert.match(pages, /idempotency_key/);

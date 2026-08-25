@@ -46,7 +46,7 @@
     "button": "Help",
     "openLabel": "Open {page}",
     "closeLabel": "Close page help",
-    "eyebrow": "Freelove operator guide",
+    "eyebrow": "Friending operator guide",
     "overviewEyebrow": "Page overview",
     "overviewTitle": "What this screen is for",
     "startTitle": "A safe way to use this page",
@@ -527,7 +527,7 @@
       },
       "datesActivities": {
         "title": "Dates activities help",
-        "summary": "Dates is the member-created activity area of Freelove. This screen lets support and safety staff search every activity, understand its lifecycle and open a bounded operational detail without browsing raw database records.",
+        "summary": "Dates is the member-created activity area of Friending. This screen lets support and safety staff search every activity, understand its lifecycle and open a bounded operational detail without browsing raw database records.",
         "steps": {
           "1": "Search by a known activity, title, city or host and narrow the lifecycle or moderation state.",
           "2": "Read host, timing, attendance and moderation columns together before opening a result.",
@@ -891,7 +891,7 @@
       },
       "landing": {
         "title": "Join landing backgrounds help",
-        "summary": "This screen controls the responsive visual background behind sign-in and signup on join.freelove.hu. A protected image-free fallback always exists, while optional global, country and city campaigns can provide images or video.",
+        "summary": "This screen controls the responsive visual background behind sign-in and signup on friending.com. A protected image-free fallback always exists, while optional global, country and city campaigns can provide images or video.",
         "steps": {
           "1": "Start with the protected fallback and confirm that login remains readable without campaign media.",
           "2": "For a campaign, define the geographic scope and priority before uploading responsive media and appearance settings.",
@@ -965,7 +965,7 @@
       },
       "appLanding": {
         "title": "App landing screen help",
-        "summary": "This page controls the iOS screen shown before sign-in: background, Freelove title treatment and bilingual description. A global rule supplies defaults and country or city overrides may inherit any blank field.",
+        "summary": "This page controls the iOS screen shown before sign-in: background, Friending title treatment and bilingual description. A global rule supplies defaults and country or city overrides may inherit any blank field.",
         "steps": {
           "1": "Establish and review the global rule because every override and built-in fallback resolves through it.",
           "2": "For an override, fill only the fields that genuinely differ and verify its geographic priority.",
@@ -1001,7 +1001,7 @@
           },
           "title": {
             "title": "Text or image title",
-            "purpose": "The Freelove title can be bilingual text or a transparent PNG treatment, with blank override text inheriting the global or built-in title.",
+            "purpose": "The Friending title can be bilingual text or a transparent PNG treatment, with blank override text inheriting the global or built-in title.",
             "actions": {
               "1": "Choose text and complete both locales, or upload the required transparent title image.",
               "2": "Switch back to text before removing an image title."
@@ -1030,7 +1030,7 @@
       },
       "signupOptions": {
         "title": "Signup options help",
-        "summary": "This workspace defines the questions and selectable answers used while a person creates a Freelove profile. It distinguishes protected identity axes from optional questions and controls bilingual labels, icons and who is eligible to see each choice.",
+        "summary": "This workspace defines the questions and selectable answers used while a person creates a Friending profile. It distinguishes protected identity axes from optional questions and controls bilingual labels, icons and who is eligible to see each choice.",
         "steps": {
           "1": "Find the question and first decide whether it is a protected system axis or an editable optional group.",
           "2": "Review question presentation, answer choices and audience rules together before changing any one of them.",
@@ -1404,7 +1404,7 @@
       },
       "layer2Intents": {
         "title": "Layer 2 intents help",
-        "summary": "Layer 2 is the catalog behind “What brings you to Freelove”. Members choose a small number of intents, and an answer is disclosed only to another member who selected an intent in the same reciprocal set.",
+        "summary": "Layer 2 is the catalog behind “What brings you to Friending”. Members choose a small number of intents, and an answer is disclosed only to another member who selected an intent in the same reciprocal set.",
         "steps": {
           "1": "Read catalog readiness and current selection limit before editing any item.",
           "2": "Preserve the item's permanent identity, Layer 1 placement and reciprocal set while completing label and glossary in both languages.",
@@ -1534,7 +1534,7 @@
       },
       "pinger": {
         "title": "Pinger help",
-        "summary": "Pinger is Freelove's lightweight interest signal: a member can indicate interest from another profile, and compatible states can feed the Collector or the guarded chat experience. This page owns its release policy, artwork and bilingual member copy.",
+        "summary": "Pinger is Friending's lightweight interest signal: a member can indicate interest from another profile, and compatible states can feed the Collector or the guarded chat experience. This page owns its release policy, artwork and bilingual member copy.",
         "steps": {
           "1": "Keep the master and chat-contract gates off until the matching Core and client releases are proven.",
           "2": "Review cooldown, retention and new-member defaults together with every member-facing message.",
@@ -1582,7 +1582,7 @@
       },
       "inviteConfiguration": {
         "title": "Mobile invitations help",
-        "summary": "Mobile invitations let a member invite someone by SMS. Webadmin decides whether Freelove's server or the member's iPhone sends the message, which localized template is rendered, and whether an App Store storefront country overrides the global fallback.",
+        "summary": "Mobile invitations let a member invite someone by SMS. Webadmin decides whether Friending's server or the member's iPhone sends the message, which localized template is rendered, and whether an App Store storefront country overrides the global fallback.",
         "steps": {
           "1": "Review the global fallback because it applies when StoreKit supplies no usable storefront or no override matches.",
           "2": "Choose the delivery mode with privacy and provider readiness in mind, then validate every required language template.",
@@ -1605,7 +1605,7 @@
               "1": "Choose server delivery only when provider credentials, rate limits and monitoring are ready.",
               "2": "Choose device delivery when the member should review and send through their own carrier."
             },
-            "guidance": "The two modes have different privacy, cost and delivery semantics. Copy must not imply that Freelove sent a device-composed message."
+            "guidance": "The two modes have different privacy, cost and delivery semantics. Copy must not imply that Friending sent a device-composed message."
           },
           "templates": {
             "title": "Localized SMS templates",
@@ -1685,7 +1685,7 @@
       },
       "helpCms": {
         "title": "Help centre CMS guide",
-        "summary": "This CMS publishes the member-facing Freelove Help centre. Categories organize discovery, while each article stores English and Hungarian title, summary, search keywords and a structured block body that publishes as one bilingual unit.",
+        "summary": "This CMS publishes the member-facing Friending Help centre. Categories organize discovery, while each article stores English and Hungarian title, summary, search keywords and a structured block body that publishes as one bilingual unit.",
         "steps": {
           "1": "Choose or create the category first, then open one article draft by its permanent slug.",
           "2": "Complete and proofread both locale tabs, including structure, links, emphasis and warnings.",
@@ -1726,7 +1726,7 @@
               "1": "Add the appropriate block type, edit its runs or list items and reorder it with the arrow controls.",
               "2": "Apply supported emphasis, links and warning tones only where they improve comprehension."
             },
-            "guidance": "Keep steps task-oriented for members unfamiliar with Freelove. Do not place secrets, private evidence links or unsupported markup in article content."
+            "guidance": "Keep steps task-oriented for members unfamiliar with Friending. Do not place secrets, private evidence links or unsupported markup in article content."
           },
           "categories": {
             "title": "Help categories",
@@ -1834,7 +1834,7 @@
       },
       "appReview": {
         "title": "App Review sandbox help",
-        "summary": "The sandbox is a deterministic, synthetic account used by platform reviewers to experience a populated Freelove app. Core owns its fixed identity, fixture, full deletion and same-UID reprovisioning; Webadmin shows readiness and offers one tightly scoped reset.",
+        "summary": "The sandbox is a deterministic, synthetic account used by platform reviewers to experience a populated Friending app. Core owns its fixed identity, fixture, full deletion and same-UID reprovisioning; Webadmin shows readiness and offers one tightly scoped reset.",
         "steps": {
           "1": "Confirm the control record, lifecycle and fixture version before interpreting any count or check.",
           "2": "Read all count witnesses and readiness checks; one failed check means the sandbox is not ready.",
@@ -2117,7 +2117,7 @@
     "eyebrow": "Private operations console",
     "brandHeadline": "Community operations,",
     "brandHeadlineAccent": "without the noise.",
-    "brandCopy": "Manage the Freelove community, campaigns and runtime controls from one secure place.",
+    "brandCopy": "Manage the Friending community, campaigns and runtime controls from one secure place.",
     "securityNote": "Restricted to approved administrators. Every operational change is audited.",
     "title": "Welcome back",
     "subtitle": "Use an approved email address. We will send a short-lived sign-in code.",
@@ -2141,7 +2141,7 @@
     "genericError": "Something went wrong. Please try again."
   },
   "overview": {
-    "eyebrow": "Freelove operations",
+    "eyebrow": "Friending operations",
     "title": "Overview",
     "subtitle": "A live snapshot of the community and the controls that shape discovery.",
     "totalUsers": "Registered users",
@@ -2159,7 +2159,7 @@
     "manageConfig": "Review runtime settings",
     "manageConfigCopy": "Change allow-listed product controls without a deploy.",
     "recentAudit": "Recent activity",
-    "recentAuditCopy": "The latest administrative changes across Freelove.",
+    "recentAuditCopy": "The latest administrative changes across Friending.",
     "viewAudit": "View full audit log",
     "noAudit": "No administrative changes have been recorded yet.",
     "loadError": "The operational snapshot could not be loaded."
@@ -2766,7 +2766,7 @@
     "image": "Image",
     "video": "Video",
     "campaignImage": "Campaign image",
-    "campaignImageHint": "The uploaded image is optimized and stored on the Freelove image CDN.",
+    "campaignImageHint": "The uploaded image is optimized and stored on the Friending image CDN.",
     "videoUrl": "Video URL",
     "videoUrlHint": "Use an HTTPS video URL served by an approved CDN.",
     "destinationUrl": "Destination URL",
@@ -2812,7 +2812,7 @@
   "landing": {
     "eyebrow": "Public web",
     "title": "Landing backgrounds",
-    "subtitle": "Control the responsive image or video background shown on join.freelove.hu, including its permanent media-free fallback and geographic campaigns.",
+    "subtitle": "Control the responsive image or video background shown on friending.com, including its permanent media-free fallback and geographic campaigns.",
     "newRule": "New background rule",
     "activeCount": "{active} active of {total}",
     "precedence": "City media → country media → global media → media-free fallback",
@@ -2951,7 +2951,7 @@
     "titleImage": "Image",
     "titleTextEn": "Title · English",
     "titleTextHu": "Title · Hungarian",
-    "titleTextHint": "Optional. Blank titles inherit from the global rule; the built-in default is “freelove.”.",
+    "titleTextHint": "Optional. Blank titles inherit from the global rule; the built-in default is “friending.”.",
     "titleImageLabel": "Title image",
     "titleImageHint": "Required for image titles. Upload a PNG with transparency; it keeps its transparent background.",
     "descriptionEn": "Description · English",
@@ -3522,7 +3522,7 @@
   "admins": {
     "eyebrow": "Access control",
     "title": "Admin users",
-    "subtitle": "Only active addresses can request a Freelove admin sign-in code.",
+    "subtitle": "Only active addresses can request a Friending admin sign-in code.",
     "addTitle": "Add administrator",
     "emailPlaceholder": "admin@company.com",
     "add": "Add admin",
@@ -4163,7 +4163,7 @@
   "layer2": {
     "eyebrow": "Signup intents",
     "title": "Layer 2 intents",
-    "subtitle": "The catalogue behind “What brings you to Freelove”. Members choose up to {limit}.",
+    "subtitle": "The catalogue behind “What brings you to Friending”. Members choose up to {limit}.",
     "loadError": "The intent catalogue could not be loaded.",
     "stalePublicItem": "Item “{id}” is still stored as public. Layer 2 answers are reciprocal only, so nothing is shown here rather than displaying a public item as if it were protected. Migrate Core first, then reload.",
     "saveError": "The change could not be saved.",
@@ -4207,7 +4207,7 @@
     "liveState": "Live",
     "blockedBy": "Not servable: glossary missing in {locales}.",
     "notServable": "Not servable yet.",
-    "subtitleUnknownLimit": "The catalogue behind “What brings you to Freelove”.",
+    "subtitleUnknownLimit": "The catalogue behind “What brings you to Friending”.",
     "selectionLimit": "Selection limit",
     "selectionLimitCopy": "How many Layer 2 answers one member may select. It applies to every member and takes effect as soon as it is saved; nobody's existing selection is removed, so a member who already picked more than the new limit keeps them all until they next edit.",
     "selectionLimitLabel": "Members may select up to",
@@ -4241,7 +4241,7 @@
   "inviteConfiguration": {
     "eyebrow": "Growth and sharing",
     "title": "Mobile invitations",
-    "subtitle": "Choose whether Freelove or the member's iPhone sends invitation SMS messages, globally or by App Store storefront country.",
+    "subtitle": "Choose whether Friending or the member's iPhone sends invitation SMS messages, globally or by App Store storefront country.",
     "loadError": "The mobile invitation configuration could not be loaded.",
     "saved": "Mobile invitation configuration saved.",
     "unsaved": "Unsaved invitation changes",
@@ -4254,7 +4254,7 @@
     },
     "modes": {
       "server_sms": {
-        "title": "Freelove sends the SMS",
+        "title": "Friending sends the SMS",
         "copy": "The selected phone number is sent to Core and the server sends the administrator-authored message."
       },
       "device_sms": {
@@ -4370,7 +4370,7 @@
       "tipKey": "Every tip card needs a stable key of lowercase letters, numbers or underscores.",
       "duplicateTipKey": "Two tip cards share the same stable key. Keys must be unique.",
       "tipCaption": "Every tip card needs a caption in English and Hungarian.",
-      "tipImage": "Every tip card needs a default picture uploaded here. Only addresses under https://pic.freelove.hu/api/cache/ are accepted, because the app refuses any other host or path.",
+      "tipImage": "Every tip card needs a default picture uploaded here. Only addresses under https://img.friending.co/api/cache/ are accepted, because the app refuses any other host or path.",
       "tooManyTips": "At most 12 tip cards can be saved."
     },
     "errors": {
@@ -4379,7 +4379,7 @@
       "invalidModeration": "Core rejected the moderation block (signup-photo-config-invalid-moderation).",
       "invalidAvatar": "Core rejected the avatar screen copy (signup-photo-config-invalid-avatar).",
       "invalidTips": "Core rejected the tips box (signup-photo-config-invalid-tips).",
-      "invalidImageUrl": "Core rejected a tip picture address (signup-photo-config-invalid-image-url). Only addresses under https://pic.freelove.hu/api/cache/ are accepted.",
+      "invalidImageUrl": "Core rejected a tip picture address (signup-photo-config-invalid-image-url). Only addresses under https://img.friending.co/api/cache/ are accepted.",
       "duplicateTipKey": "Two tip cards share a stable key (signup-photo-config-duplicate-tip-key).",
       "tooManyTips": "Core refused more than 12 tip cards (signup-photo-config-too-many-tips).",
       "writeFailed": "Core could not store the configuration (signup-photo-config-write-failed), so the change was not saved. Your draft is kept — try again. If the retry reports a conflict instead, the earlier write did land: reload and check the stored values.",

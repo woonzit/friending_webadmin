@@ -3,10 +3,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SERVER_HOST="${FREELOVE_WEBADMIN_HOST:-googlecloud@34.30.1.210}"
-SSH_KEY="${FREELOVE_WEBADMIN_SSH_KEY:-$HOME/.ssh/googlecloud}"
-TARGET="/opt/freelove/webadmin"
-PM2_NAME="freelove-webadmin"
+SERVER_HOST="${FRIENDING_WEBADMIN_HOST:-googlecloud@34.30.1.210}"
+SSH_KEY="${FRIENDING_WEBADMIN_SSH_KEY:-$HOME/.ssh/googlecloud}"
+TARGET="/opt/friending/admin"
+PM2_NAME="friending-webadmin"
 COMMIT_SHA="$(git -C "$SCRIPT_DIR" rev-parse --verify HEAD)"
 
 if [[ ! -f "$SSH_KEY" ]]; then
@@ -80,4 +80,4 @@ ssh -i "$SSH_KEY" -o BatchMode=yes "$SERVER_HOST" "
   pm2 save
 "
 
-echo "Deployed $COMMIT_SHA to https://webadmin.freelove.hu"
+echo "Deployed $COMMIT_SHA to https://friendingapp.com"

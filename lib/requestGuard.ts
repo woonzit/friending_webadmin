@@ -1,6 +1,6 @@
 type HeaderReader = { get(name: string): string | null };
 
-export const ADMIN_REQUEST_HEADER = "x-freelove-admin-request";
+export const ADMIN_REQUEST_HEADER = "x-friending-admin-request";
 export const ADMIN_REQUEST_HEADER_VALUE = "1";
 
 function sameHost(urlValue: string, host: string): boolean {

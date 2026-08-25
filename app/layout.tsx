@@ -5,10 +5,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Freelove Admin",
-    template: "%s · Freelove Admin",
+    default: "Friending Admin",
+    template: "%s · Friending Admin",
   },
-  description: "Secure Freelove operations console",
+  description: "Secure Friending operations console",
   robots: { index: false, follow: false, nocache: true },
 };
 

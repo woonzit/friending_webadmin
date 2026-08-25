@@ -16,9 +16,10 @@ function headers(values: Record<string, string>) {
 }
 
 test("same-origin requests with the admin marker are trusted", () => {
+  assert.equal(ADMIN_REQUEST_HEADER, "x-friending-admin-request");
   const value = headers({
-    origin: "https://webadmin.freelove.hu",
-    host: "webadmin.freelove.hu",
+    origin: "https://friendingapp.com",
+    host: "friendingapp.com",
     "sec-fetch-site": "same-origin",
     [ADMIN_REQUEST_HEADER]: ADMIN_REQUEST_HEADER_VALUE,
   });
@@ -28,49 +29,49 @@ test("same-origin requests with the admin marker are trusted", () => {
 
 test("foreign, missing-origin and unmarked requests fail closed", () => {
   assert.equal(isTrustedAdminRequest(headers({
-    origin: "https://freelove.hu",
-    host: "webadmin.freelove.hu",
+    origin: "https://friending.com",
+    host: "friendingapp.com",
     [ADMIN_REQUEST_HEADER]: ADMIN_REQUEST_HEADER_VALUE,
   })), false);
   assert.equal(isTrustedAdminRequest(headers({
-    host: "webadmin.freelove.hu",
+    host: "friendingapp.com",
     [ADMIN_REQUEST_HEADER]: ADMIN_REQUEST_HEADER_VALUE,
   })), false);
   assert.equal(isTrustedAdminRequest(headers({
-    origin: "https://webadmin.freelove.hu",
-    host: "webadmin.freelove.hu",
+    origin: "https://friendingapp.com",
+    host: "friendingapp.com",
   })), false);
 });
 
 test("host comparison includes the development port", () => {
   assert.equal(isSameOrigin(headers({
-    origin: "http://localhost:3004",
-    host: "localhost:3004",
+    origin: "http://localhost:3006",
+    host: "localhost:3006",
   })), true);
   assert.equal(isSameOrigin(headers({
     origin: "http://localhost:3005",
-    host: "localhost:3004",
+    host: "localhost:3006",
   })), false);
 });
 
 test("private media subresources require a same-host source and fail direct or cross-site opens", () => {
   assert.equal(isTrustedAdminMediaRead(headers({
-    referer: "https://webadmin.freelove.hu/profile-verification/abc",
-    host: "webadmin.freelove.hu",
+    referer: "https://friendingapp.com/profile-verification/abc",
+    host: "friendingapp.com",
     "sec-fetch-site": "same-origin",
   })), true);
   assert.equal(isTrustedAdminMediaRead(headers({
-    origin: "https://webadmin.freelove.hu",
-    host: "webadmin.freelove.hu",
+    origin: "https://friendingapp.com",
+    host: "friendingapp.com",
     "sec-fetch-site": "same-origin",
   })), true);
   assert.equal(isTrustedAdminMediaRead(headers({
-    host: "webadmin.freelove.hu",
+    host: "friendingapp.com",
     "sec-fetch-site": "none",
   })), false, "a copied evidence URL may not be opened directly");
   assert.equal(isTrustedAdminMediaRead(headers({
     referer: "https://evil.example/",
-    host: "webadmin.freelove.hu",
+    host: "friendingapp.com",
     "sec-fetch-site": "cross-site",
   })), false);
 });

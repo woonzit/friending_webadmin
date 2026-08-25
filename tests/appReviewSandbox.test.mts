@@ -31,7 +31,7 @@ function statusFixture(): Record<string, unknown> {
       fixture_version: 3,
       reset_state: "idle",
       last_reset_at: 1787000000,
-      last_reset_by: "owner@freelove.hu",
+      last_reset_by: "owner@friending.com",
       last_reset_request_id: "6f1c2d3e-4a5b-4c6d-8e9f-0a1b2c3d4e5f",
       reset_error: "",
       reprovision_state: "idle",
@@ -43,7 +43,7 @@ function statusFixture(): Record<string, unknown> {
       code_configured: true,
       email_configured: true,
       phone_configured: true,
-      email: "review@freelove.hu",
+      email: "review@friending.com",
       phone: "15128014040",
       demo_system_enabled: true,
     },
@@ -61,7 +61,7 @@ test("the status decoder accepts the documented shape and projects it", () => {
   assert.equal(status.control.reviewUid, 626001);
   assert.equal(status.control.resetRevision, 2);
   assert.equal(status.env.uidMatchesControl, true);
-  assert.equal(status.env.email, "review@freelove.hu");
+  assert.equal(status.env.email, "review@friending.com");
   assert.equal(status.media.ready, true);
   assert.equal(status.ready, true);
   assert.equal(status.checks.length, APP_REVIEW_CHECK_KEYS.length);

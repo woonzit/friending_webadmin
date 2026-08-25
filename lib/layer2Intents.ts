@@ -1,7 +1,7 @@
 /**
  * Layer 2 intent catalogue model.
  *
- * The semantics come from the frozen `freelove-audience-signup-spec-v2.5.md` §8. The field names
+ * The semantics come from the frozen `friending-audience-signup-spec-v2.5.md` §8. The field names
  * come from Core's `config/layer2_intent_catalog_v1.json`, which this module was checked against
  * directly: an earlier version used names of its own (`intent_catalog_revision`, `max_selected`,
  * `maps_to`, `sort_order`, `active`) and rejected the real seed outright. Core owns the wire, so

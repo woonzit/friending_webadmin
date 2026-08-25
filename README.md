@@ -1,17 +1,18 @@
-# Freelove Webadmin
+# Friending Webadmin
 
-Secure, bilingual administration for Freelove.
+Secure, dark-only bilingual administration for Friending at `https://friendingapp.com`.
 
-The first release provides:
+The console provides:
 
 - an operational overview;
 - registered-user search and profile inspection;
+- moderation, verification, membership, support, and presence operations;
 - People discovery hero campaign management;
-- a small allow-listed runtime configuration registry;
+- allow-listed runtime, landing, signup, and profile catalogue configuration;
 - admin allow-list management;
 - an immutable administrative audit view.
 
-The browser never receives the Freelove Core shared secret. Email-code login
+The browser never receives the Friending Core shared secret. Email-code login
 creates a separate signed HttpOnly session, and admin membership is rechecked
 against Core on every protected request.
 
@@ -23,7 +24,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3004`.
+Open `http://localhost:3006`.
 
 ## Checks
 

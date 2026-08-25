@@ -26,7 +26,7 @@ function setMessage(messages: InviteMessages, language: string, value: string): 
 function preview(template: string): string {
   return template
     .replaceAll("{display_name}", "Alex")
-    .replaceAll("{user_url}", "https://join.freelove.hu/@alex_427");
+    .replaceAll("{user_url}", "https://friending.com/@alex_427");
 }
 
 export default function InviteConfigurationPage() {

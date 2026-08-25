@@ -348,7 +348,7 @@ test("render order is deterministic and never depends on input order", () => {
 
 test("the model hard-codes no catalogue content", async () => {
   const source = await readFile(new URL("../lib/layer2Intents.ts", import.meta.url), "utf8");
-  assert.match(source, /freelove-audience-signup-spec-v2\.5\.md/);
+  assert.match(source, /friending-audience-signup-spec-v2\.5\.md/);
   assert.doesNotMatch(source, /adminCall|coreCall|fetch\(/);
   // Spec §2 [v2.5]: "No client may ship a temporarily hard-coded Layer 2 list." The rows live in
   // Core; only the Layer 1 group names and the id grammar are structural.
