@@ -1,3 +1,8 @@
+import {
+  webadminDataSuccessEnvelope,
+  webadminErrorEnvelope,
+} from "@/lib/webadminEnvelope";
+
 /** Closed browser model for the canned-template Webadmin contract v1. */
 
 export const CANNED_TEMPLATE_CONTRACT_VERSION = 1 as const;
@@ -519,9 +524,9 @@ export function cannedTemplateListResponse(
   value: unknown,
   expected: CannedTemplateListRequest,
 ): CannedTemplateListData | null {
-  const raw = exactObject(value, ["success", "status_code", "data"]);
-  return raw?.success === true && raw.status_code === 200
-    ? cannedTemplateListData(raw.data, expected)
+  const envelope = webadminDataSuccessEnvelope(value);
+  return envelope
+    ? cannedTemplateListData(envelope.data, expected)
     : null;
 }
 
@@ -757,12 +762,10 @@ function deleted(value: unknown): CannedTemplateDeleted | null {
 }
 
 export function cannedTemplateSaveResponse(value: unknown): CannedTemplateSaveData | null {
-  const envelope = exactObject(value, ["success", "status_code", "data"]);
+  const envelope = webadminDataSuccessEnvelope(value);
   const raw = exactObject(envelope?.data, ["contract_version", "template", "replayed"]);
   const template = cannedTemplate(raw?.template);
-  return envelope?.success === true
-    && envelope.status_code === 200
-    && raw?.contract_version === 1
+  return raw?.contract_version === 1
     && template
     && typeof raw.replayed === "boolean"
     ? { contract_version: 1, template, replayed: raw.replayed }
@@ -770,12 +773,10 @@ export function cannedTemplateSaveResponse(value: unknown): CannedTemplateSaveDa
 }
 
 export function cannedTemplateDeleteResponse(value: unknown): CannedTemplateDeleteData | null {
-  const envelope = exactObject(value, ["success", "status_code", "data"]);
+  const envelope = webadminDataSuccessEnvelope(value);
   const raw = exactObject(envelope?.data, ["contract_version", "deleted", "replayed"]);
   const tombstone = deleted(raw?.deleted);
-  return envelope?.success === true
-    && envelope.status_code === 200
-    && raw?.contract_version === 1
+  return raw?.contract_version === 1
     && tombstone
     && typeof raw.replayed === "boolean"
     ? { contract_version: 1, deleted: tombstone, replayed: raw.replayed }
@@ -783,10 +784,9 @@ export function cannedTemplateDeleteResponse(value: unknown): CannedTemplateDele
 }
 
 export function cannedTemplateConflictResponse(value: unknown): CannedTemplateConflictData | null {
-  const envelope = exactObject(value, ["success", "status_code", "error", "data"]);
+  const envelope = webadminErrorEnvelope(value, "required");
   const raw = exactObject(envelope?.data, ["contract_version", "template", "deleted"]);
-  if (envelope?.success !== false
-    || envelope.status_code !== 409
+  if (envelope?.status_code !== 409
     || envelope.error !== "canned-template-conflict"
     || raw?.contract_version !== 1) return null;
   if (raw.template !== null && raw.deleted === null) {
@@ -918,12 +918,12 @@ export function cannedTemplateErrorKey(value: unknown): CannedTemplateErrorKey {
 }
 
 export function cannedTemplateErrorResponse(value: unknown): string | null {
-  const raw = exactObject(value, ["success", "status_code", "error"]);
-  if (!raw || raw.success !== false || typeof raw.error !== "string") return null;
+  const envelope = webadminErrorEnvelope(value);
+  if (!envelope) return null;
   const status = CANNED_TEMPLATE_ERROR_STATUSES[
-    raw.error as keyof typeof CANNED_TEMPLATE_ERROR_STATUSES
+    envelope.error as keyof typeof CANNED_TEMPLATE_ERROR_STATUSES
   ];
-  return status !== undefined && raw.status_code === status ? raw.error : null;
+  return status !== undefined && envelope.status_code === status ? envelope.error : null;
 }
 
 export function cannedTemplateShouldRetainMutation(error: string | null): boolean {

@@ -328,3 +328,10 @@ Core T-108 **MUST** cover:
 Webadmin T-207(a) **MUST** cover fail-closed parsers, guest 401, foreign-origin 403, Core-authored
 capabilities, channel bounds, safe canonical preview, conflict adoption, durable retry identity,
 delete confirmation, EN/HU parity, route-specific Help, and zero references to send/history actions.
+
+## Lead amendment A-ENV (2026-08-26T02:35Z) — envelope key set
+
+Core's shared `Webadmin::reply()` always appends the legacy trio. A versioned success body therefore has exactly
+`{success, status_code, data, message, status, can_send}`. A versioned refusal has exactly
+`{success, status_code, error, message, status, can_send}`, plus `data` only for the contracted conflict response.
+The legacy trio remains transport metadata; Core does not remove it and consumers keep this top-level key set closed.

@@ -332,3 +332,10 @@ the distinction between an empty queue and a failed/malformed read.
 - A1 (2026-08-25T17:58Z): an exact-detail read (`report_id` present) echoes `filter.status="all"`,
   `filter.target_type="all"`, and `filter.report_id=<the id>`; the returned row's own `status` is authoritative.
   Core MUST NOT echo the list default `pending` on a detail read.
+
+## Lead amendment A-ENV (2026-08-26T02:35Z) — envelope key set
+
+Core's shared `Webadmin::reply()` always appends the legacy trio. A versioned success body therefore has exactly
+`{success, status_code, data, message, status, can_send}`. A versioned refusal has exactly
+`{success, status_code, error, message, status, can_send}`, plus `data` only for the contracted conflict response.
+The legacy trio remains transport metadata; Core does not remove it and consumers keep this top-level key set closed.

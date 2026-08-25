@@ -1,3 +1,5 @@
+import { webadminEnvelope } from "@/lib/webadminEnvelope";
+
 /** Closed browser model for the additive dual-push Webadmin contract. */
 
 export const PUSH_DELIVERY_MODES = ["fcm", "onesignal", "both"] as const;
@@ -41,22 +43,6 @@ const SETTING_KEYS = [
   "maximum",
   "updated_at",
   "updated_by",
-] as const;
-const SUCCESS_KEYS = [
-  "success",
-  "status_code",
-  "settings",
-  "message",
-  "status",
-  "can_send",
-] as const;
-const ERROR_KEYS = [
-  "success",
-  "status_code",
-  "error",
-  "message",
-  "status",
-  "can_send",
 ] as const;
 const LOCAL_DENIAL_KEYS = ["success", "error"] as const;
 const CHANNEL_KEYS = ["fcm_token_present", "onesignal_id_present"] as const;
@@ -133,15 +119,11 @@ export function pushDeliverySetting(value: unknown): PushDeliverySetting | null 
  * The settings map stays open for future managed keys, but its known entry is closed.
  */
 export function pushSettingsResponse(value: unknown): PushDeliverySetting | null {
-  const raw = exactObject(value, SUCCESS_KEYS);
+  const raw = webadminEnvelope(value, true, ["settings"]);
   const settings = object(raw?.settings);
   if (
     !raw
-    || raw.success !== true
     || raw.status_code !== 200
-    || raw.message !== 200
-    || raw.status !== 200
-    || raw.can_send !== 0
     || !settings
   ) return null;
   return pushDeliverySetting(settings.push_delivery_mode);
@@ -168,14 +150,10 @@ export function pushChannels(value: unknown): PushChannels | null {
 
 /** Parse Core's closed logical-error envelope without treating unknown errors as known. */
 export function pushAdminError(value: unknown): PushAdminError | null {
-  const raw = exactObject(value, ERROR_KEYS);
+  const raw = webadminEnvelope(value, false, ["error"]);
   if (
     !raw
-    || raw.success !== false
     || typeof raw.error !== "string"
-    || raw.message !== 200
-    || raw.status !== 200
-    || raw.can_send !== 0
     || !Object.hasOwn(PUSH_ADMIN_ERROR_STATUSES, raw.error)
   ) return null;
   const error = raw.error as PushAdminError;

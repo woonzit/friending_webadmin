@@ -1,3 +1,9 @@
+import {
+  webadminDataSuccessEnvelope,
+  webadminEmptySuccessEnvelope,
+  webadminErrorEnvelope,
+} from "@/lib/webadminEnvelope";
+
 /**
  * Closed consumer model for Persona Webadmin contract v1.
  *
@@ -550,23 +556,9 @@ export function personaStartFullPayload(
   return payload;
 }
 
-function exactLegacySuccess(value: unknown): Record<string, unknown> | null {
-  const source = exactObject(
-    value,
-    ["success", "status_code", "data", "message", "status", "can_send"],
-  );
-  if (!source
-    || source.success !== true
-    || source.status_code !== 200
-    || source.message !== 200
-    || source.status !== 200
-    || source.can_send !== 0) return null;
-  return source;
-}
-
 export function personaStartConfigResponse(value: unknown): PersonaStartConfig | null {
-  const source = exactLegacySuccess(value);
-  return source ? personaStartConfig(source.data) : null;
+  const envelope = webadminDataSuccessEnvelope(value);
+  return envelope ? personaStartConfig(envelope.data) : null;
 }
 
 export function personaStartUpdateResponse(value: unknown): PersonaStartConfig | null {
@@ -712,17 +704,7 @@ export type PersonaEmptySuccess = {
 };
 
 export function personaEmptyMutationResponse(value: unknown): PersonaEmptySuccess | null {
-  const source = exactObject(
-    value,
-    ["success", "status_code", "message", "status", "can_send"],
-  );
-  if (!source
-    || source.success !== true
-    || source.status_code !== 200
-    || source.message !== 200
-    || source.status !== 200
-    || source.can_send !== 0) return null;
-  return source as PersonaEmptySuccess;
+  return webadminEmptySuccessEnvelope(value) as PersonaEmptySuccess | null;
 }
 
 export type PersonaForceSuccess = {
@@ -748,8 +730,8 @@ function safeRelativeVerifyImage(value: unknown): string | null {
 }
 
 export function personaForceMutationResponse(value: unknown): PersonaForceSuccess | null {
-  const source = exactLegacySuccess(value);
-  const data = exactObject(source?.data, ["verify_image_url"]);
+  const envelope = webadminDataSuccessEnvelope(value);
+  const data = exactObject(envelope?.data, ["verify_image_url"]);
   const verifyImageUrl = safeRelativeVerifyImage(data?.verify_image_url);
   return verifyImageUrl === null ? null : { verify_image_url: verifyImageUrl };
 }
@@ -795,19 +777,11 @@ export type PersonaAdminFailure = {
 };
 
 export function personaAdminFailureResponse(value: unknown): PersonaAdminFailure | null {
-  const source = exactObject(
-    value,
-    ["success", "status_code", "error", "message", "status", "can_send"],
-  );
-  if (!source || typeof source.error !== "string") return null;
-  const expectedStatus = ERROR_STATUS.get(source.error);
-  if (source.success !== false
-    || expectedStatus === undefined
-    || source.status_code !== expectedStatus
-    || source.message !== 200
-    || source.status !== 200
-    || source.can_send !== 0) return null;
-  return source as PersonaAdminFailure;
+  const envelope = webadminErrorEnvelope(value);
+  if (!envelope) return null;
+  const expectedStatus = ERROR_STATUS.get(envelope.error);
+  if (expectedStatus === undefined || envelope.status_code !== expectedStatus) return null;
+  return envelope as PersonaAdminFailure;
 }
 
 export function personaAdminErrorKey(value: unknown): PersonaAdminError | "generic" {

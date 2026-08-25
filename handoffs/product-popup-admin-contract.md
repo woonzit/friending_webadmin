@@ -325,3 +325,10 @@ clear semantics, EN/HU parity, and the user-detail Help section.
   non-negative Unix-second integer `evaluated_at` = Core's evaluation instant. Invariant:
   `popup.status === (popup.expires_at > evaluated_at ? "active" : "expired")`. Consumers never compare against the
   device clock; a contradictory status is a stored-invalid/malformed failure.
+
+## Lead amendment A-ENV (2026-08-26T02:35Z) — envelope key set
+
+Core's shared `Webadmin::reply()` always appends the legacy trio. A versioned success body therefore has exactly
+`{success, status_code, data, message, status, can_send}`. A versioned refusal has exactly
+`{success, status_code, error, message, status, can_send}`, plus `data` only for the contracted conflict response.
+The legacy trio remains transport metadata; Core does not remove it and consumers keep this top-level key set closed.

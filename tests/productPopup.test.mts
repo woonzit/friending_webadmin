@@ -471,6 +471,9 @@ test("every closed refusal has a localized route, exact status, and documented t
           error as keyof typeof PRODUCT_POPUP_ERROR_STATUSES
         ],
         error,
+        message: 200,
+        status: 200,
+        can_send: 0,
       }), error);
     }
   }
@@ -483,11 +486,17 @@ test("every closed refusal has a localized route, exact status, and documented t
     success: false,
     status_code: 503,
     error: "product-popup-title-invalid",
+    message: 200,
+    status: 200,
+    can_send: 0,
   }), null, "known errors with the wrong status remain uncertain");
   assert.equal(productPopupErrorResponse({
     success: false,
     status_code: 422,
     error: "product-popup-title-invalid",
+    message: 200,
+    status: 200,
+    can_send: 0,
     detail: "not contracted",
   }), null, "extra refusal fields remain uncertain");
 });

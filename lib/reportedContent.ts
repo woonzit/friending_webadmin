@@ -1,3 +1,8 @@
+import {
+  webadminDataSuccessEnvelope,
+  webadminErrorEnvelope,
+} from "@/lib/webadminEnvelope";
+
 /** Closed browser projection for the reported-content Webadmin contract. */
 
 export const REPORTED_CONTENT_CONTRACT_VERSION = 1;
@@ -417,9 +422,9 @@ export function reportedContentListData(value: unknown): ReportedContentListData
 
 /** Decode the exact successful legacy envelope around a list/detail response. */
 export function reportedContentListResponse(value: unknown): ReportedContentListData | null {
-  const raw = exactObject(value, ["success", "status_code", "data"]);
-  return raw?.success === true && raw.status_code === 200
-    ? reportedContentListData(raw.data)
+  const envelope = webadminDataSuccessEnvelope(value);
+  return envelope
+    ? reportedContentListData(envelope.data)
     : null;
 }
 
@@ -435,19 +440,18 @@ export function reportedContentActionData(value: unknown): ReportedContentAction
 }
 
 export function reportedContentActionResponse(value: unknown): ReportedContentActionData | null {
-  const raw = exactObject(value, ["success", "status_code", "data"]);
-  return raw?.success === true && raw.status_code === 200
-    ? reportedContentActionData(raw.data)
+  const envelope = webadminDataSuccessEnvelope(value);
+  return envelope
+    ? reportedContentActionData(envelope.data)
     : null;
 }
 
 export function reportedContentConflictResponse(value: unknown): ReportedContentConflictData | null {
-  const raw = exactObject(value, ["success", "status_code", "error", "data"]);
-  const data = exactObject(raw?.data, ["contract_version", "report"]);
+  const envelope = webadminErrorEnvelope(value, "required");
+  const data = exactObject(envelope?.data, ["contract_version", "report"]);
   const report = reportedContentReport(data?.report);
-  return raw?.success === false
-    && raw.status_code === 409
-    && raw.error === "reported-content-conflict"
+  return envelope?.status_code === 409
+    && envelope.error === "reported-content-conflict"
     && data?.contract_version === 1
     && report
     ? { contract_version: 1, report }
@@ -541,15 +545,15 @@ export function reportedContentErrorKey(value: unknown): ReportedContentErrorKey
 
 /** Decode a refusal without conflict data; malformed/unknown envelopes stay uncertain. */
 export function reportedContentErrorResponse(value: unknown): string | null {
-  const raw = exactObject(value, ["success", "status_code", "error"]);
-  const error = typeof raw?.error === "string"
-    && Object.prototype.hasOwnProperty.call(REPORTED_CONTENT_ERROR_STATUSES, raw.error)
-    ? raw.error as keyof typeof REPORTED_CONTENT_ERROR_STATUSES
+  const envelope = webadminErrorEnvelope(value);
+  const error = typeof envelope?.error === "string"
+    && Object.prototype.hasOwnProperty.call(REPORTED_CONTENT_ERROR_STATUSES, envelope.error)
+    ? envelope.error as keyof typeof REPORTED_CONTENT_ERROR_STATUSES
     : null;
-  return raw?.success === false
+  return envelope !== null
     && error !== null
     && error !== "reported-content-conflict"
-    && raw.status_code === REPORTED_CONTENT_ERROR_STATUSES[error]
+    && envelope.status_code === REPORTED_CONTENT_ERROR_STATUSES[error]
     ? error
     : null;
 }

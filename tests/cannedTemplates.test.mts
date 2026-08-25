@@ -452,6 +452,9 @@ test("every closed refusal has an exact status, localized key, and durable retry
       success: false,
       status_code: CANNED_TEMPLATE_ERROR_STATUSES[error as keyof typeof CANNED_TEMPLATE_ERROR_STATUSES],
       error,
+      message: 200,
+      status: 200,
+      can_send: 0,
     };
     assert.equal(cannedTemplateErrorResponse(response), error);
     assert.equal(cannedTemplateErrorKey(error), key);
@@ -461,6 +464,9 @@ test("every closed refusal has an exact status, localized key, and durable retry
     success: false,
     status_code: 500,
     error: "canned-template-name-invalid",
+    message: 200,
+    status: 200,
+    can_send: 0,
   }), null);
   assert.equal(cannedTemplateShouldRetainMutation(null), true);
   assert.equal(cannedTemplateShouldRetainMutation("canned-template-request-in-progress"), true);

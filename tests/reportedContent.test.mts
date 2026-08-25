@@ -361,6 +361,9 @@ test("every closed refusal has localized routing and the documented retry policy
           error as keyof typeof REPORTED_CONTENT_ERROR_STATUSES
         ],
         error,
+        message: 200,
+        status: 200,
+        can_send: 0,
       }), error);
     }
   }
@@ -370,17 +373,26 @@ test("every closed refusal has localized routing and the documented retry policy
     success: false,
     status_code: 503,
     error: "reported-content-reason-invalid",
+    message: 200,
+    status: 200,
+    can_send: 0,
   }), null, "a known error with the wrong status stays uncertain");
   assert.equal(reportedContentErrorResponse({
     success: false,
     status_code: 422,
     error: "reported-content-reason-invalid",
+    message: 200,
+    status: 200,
+    can_send: 0,
     detail: "not contracted",
   }), null, "extra refusal data stays uncertain");
   assert.equal(reportedContentErrorResponse({
     success: false,
     status_code: 500,
     error: "future-error",
+    message: 200,
+    status: 200,
+    can_send: 0,
   }), null);
   assert.equal(reportedContentShouldRetainDecision("future-error"), true);
   assert.equal(reportedContentShouldRetainDecision(undefined), true);

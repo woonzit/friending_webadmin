@@ -2,6 +2,9 @@
   "pending_list": {
     "success": true,
     "status_code": 200,
+    "message": 200,
+    "status": 200,
+    "can_send": 0,
     "data": {
       "contract_version": 1,
       "principal": {
@@ -77,6 +80,9 @@
   "empty_list": {
     "success": true,
     "status_code": 200,
+    "message": 200,
+    "status": 200,
+    "can_send": 0,
     "data": {
       "contract_version": 1,
       "principal": {
@@ -98,6 +104,9 @@
   "exact_detail": {
     "success": true,
     "status_code": 200,
+    "message": 200,
+    "status": 200,
+    "can_send": 0,
     "data": {
       "contract_version": 1,
       "principal": {
@@ -145,6 +154,9 @@
   "action_success": {
     "success": true,
     "status_code": 200,
+    "message": 200,
+    "status": 200,
+    "can_send": 0,
     "data": {
       "contract_version": 1,
       "report": {
@@ -183,6 +195,9 @@
     "success": false,
     "status_code": 409,
     "error": "reported-content-conflict",
+    "message": 200,
+    "status": 200,
+    "can_send": 0,
     "data": {
       "contract_version": 1,
       "report": {

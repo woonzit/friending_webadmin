@@ -1,3 +1,8 @@
+import {
+  webadminDataSuccessEnvelope,
+  webadminErrorEnvelope,
+} from "@/lib/webadminEnvelope";
+
 /** Closed browser model for the per-user product-popup Webadmin contract. */
 
 export const PRODUCT_POPUP_CONTRACT_VERSION = 1;
@@ -603,9 +608,9 @@ export function productPopupResourceData(value: unknown): ProductPopupResourceDa
 }
 
 export function productPopupReadResponse(value: unknown): ProductPopupResourceData | null {
-  const raw = exactObject(value, ["success", "status_code", "data"]);
-  return raw?.success === true && raw.status_code === 200
-    ? productPopupResourceData(raw.data)
+  const envelope = webadminDataSuccessEnvelope(value);
+  return envelope
+    ? productPopupResourceData(envelope.data)
     : null;
 }
 
@@ -634,9 +639,9 @@ export function productPopupMutationData(value: unknown): ProductPopupMutationDa
 }
 
 function mutationResponse(value: unknown): ProductPopupMutationData | null {
-  const raw = exactObject(value, ["success", "status_code", "data"]);
-  return raw?.success === true && raw.status_code === 200
-    ? productPopupMutationData(raw.data)
+  const envelope = webadminDataSuccessEnvelope(value);
+  return envelope
+    ? productPopupMutationData(envelope.data)
     : null;
 }
 
@@ -651,15 +656,14 @@ export function productPopupClearResponse(value: unknown): ProductPopupMutationD
 }
 
 export function productPopupConflictResponse(value: unknown): ProductPopupConflictData | null {
-  const raw = exactObject(value, ["success", "status_code", "error", "data"]);
-  const error = oneOf(raw?.error, [
+  const envelope = webadminErrorEnvelope(value, "required");
+  const error = oneOf(envelope?.error, [
     "product-popup-conflict",
     "product-popup-already-clear",
   ] as const);
-  const resource = productPopupResourceData(raw?.data);
+  const resource = productPopupResourceData(envelope?.data);
   if (
-    raw?.success !== false
-    || raw.status_code !== 409
+    envelope?.status_code !== 409
     || error === null
     || !resource
     || !productPopupCanWrite(resource.principal)
@@ -767,16 +771,16 @@ export function productPopupErrorKey(value: unknown): ProductPopupErrorKey {
 
 /** Decode refusals without authoritative conflict data. */
 export function productPopupErrorResponse(value: unknown): string | null {
-  const raw = exactObject(value, ["success", "status_code", "error"]);
-  const error = typeof raw?.error === "string"
-    && Object.prototype.hasOwnProperty.call(PRODUCT_POPUP_ERROR_STATUSES, raw.error)
-    ? raw.error as keyof typeof PRODUCT_POPUP_ERROR_STATUSES
+  const envelope = webadminErrorEnvelope(value);
+  const error = typeof envelope?.error === "string"
+    && Object.prototype.hasOwnProperty.call(PRODUCT_POPUP_ERROR_STATUSES, envelope.error)
+    ? envelope.error as keyof typeof PRODUCT_POPUP_ERROR_STATUSES
     : null;
-  return raw?.success === false
+  return envelope !== null
     && error !== null
     && error !== "product-popup-conflict"
     && error !== "product-popup-already-clear"
-    && raw.status_code === PRODUCT_POPUP_ERROR_STATUSES[error]
+    && envelope.status_code === PRODUCT_POPUP_ERROR_STATUSES[error]
     ? error
     : null;
 }

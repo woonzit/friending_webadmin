@@ -295,3 +295,12 @@ server-owned `secret`/`admin_email`, viewer read and mutation denial, action-dri
 `contract_ready=false` dormancy, full config round-trip, boolean/number serialization, local bounds
 and preview, all confirmations, every closed error, no automatic uncertain retry, and proof that no
 provider key or identity evidence reaches browser logs/state.
+
+## Lead amendment A-ENV (2026-08-26T02:35Z) — envelope key set
+
+Core's shared `Webadmin::reply()` always appends the legacy trio. A versioned success body therefore has exactly
+`{success, status_code, data, message, status, can_send}`. A versioned refusal has exactly
+`{success, status_code, error, message, status, can_send}`, plus `data` only for a contracted conflict response.
+The existing fake-marker mutation success has no material data and keeps the exact five transport keys
+`{success, status_code, message, status, can_send}` until its receipt-backed contract version is released.
+The legacy trio remains transport metadata; Core does not remove it and consumers keep each top-level key set closed.
