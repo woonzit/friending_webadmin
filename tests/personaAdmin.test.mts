@@ -34,6 +34,8 @@ import {
   personaStartFullPayload,
   personaStartUpdateResponse,
   personaTargetFromUserDetail,
+  personaTargetLookupData,
+  personaTargetLookupResponse,
   personaUidPayload,
   type PersonaStartConfig,
 } from "../lib/personaAdmin.ts";
@@ -127,13 +129,16 @@ test("both locales cover the complete closed field, section, and error vocabular
 });
 
 test("closed envelopes and config material fail on missing, unknown, loose, unsafe, or out-of-bound values", () => {
+  const contractLegalProgress = clone(fixtures.config_success);
+  data(contractLegalProgress).progress_value = 1.01;
+  assert.equal(personaStartConfigResponse(contractLegalProgress)?.progress_value, 1.01);
+
   const mutations: Array<(raw: JsonObject) => void> = [
     (raw) => { raw.trace_id = "not-contracted"; },
     (raw) => { raw.status_code = "200"; },
     (raw) => { delete data(raw).active; },
     (raw) => { data(raw).private_provider_key = "private"; },
     (raw) => { data(raw).active = 1; },
-    (raw) => { data(raw).progress_value = 1.01; },
     (raw) => { data(raw).title_size = 80.5; },
     (raw) => { data(raw).title_size = 81; },
     (raw) => { data(raw).title_main = "x".repeat(201); },
@@ -171,7 +176,7 @@ test("draft normalization mirrors Core bounds without dirtying untouched legacy 
   const patch = personaStartConfigPatch(authoritative, draft);
   assert.ok(patch);
   assert.deepEqual(patch.fields, ["progress_value", "title_size", "title_main", "benefit1_body"]);
-  assert.equal(patch.payload.progress_value, 0);
+  assert.equal(patch.payload.progress_value, -2);
   assert.equal(patch.payload.title_size, 80);
   assert.equal(patch.payload.title_main, "Updated {{highlight}} title");
   assert.equal(Array.from(String(patch.payload.benefit1_body)).length, 600);
@@ -271,11 +276,14 @@ test("the action-specific proxy boundary forwards only canonical contracted mate
       trust_body_link_url: "https://withpersona.com/",
     },
   );
+  assert.deepEqual(
+    { ...normalizePersonaProxyBody("persona_start_update_config", { progress_value: 1.1 }) },
+    { progress_value: 1.1 },
+  );
   for (const invalid of [
     {},
     { active: "0" },
     { progress_value: Number.NaN },
-    { progress_value: 1.1 },
     { title_size: 81 },
     { title_main: " trailing " },
     { trust_body_link_url: "http://withpersona.com" },
@@ -324,6 +332,17 @@ test("UID and target projections are canonical, bounded, and contain no identity
   });
   assert.deepEqual(target, { uid: 42, displayName: "Ada" });
   assert.deepEqual(Object.keys(target ?? {}).sort(), ["displayName", "uid"]);
+  assert.deepEqual(personaTargetLookupData(target!), { uid: 42, display_name: "Ada" });
+  assert.deepEqual(personaTargetLookupResponse({
+    success: true,
+    status_code: 200,
+    data: { uid: 42, display_name: "Ada" },
+  }), target);
+  assert.equal(personaTargetLookupResponse({
+    success: true,
+    status_code: 200,
+    data: { uid: 42, display_name: "Ada", birthdate: "private" },
+  }), null, "a broad user document cannot enter the dedicated browser projection");
   assert.equal(personaTargetFromUserDetail({ success: true, status_code: 200, profile: { uid: 42, display_name: "bad\u0001name" } }), null);
 });
 
@@ -370,6 +389,11 @@ test("every closed error requires its exact legacy envelope and status", () => {
     assert.equal(personaAdminFailureResponse(response)?.error, error);
     assert.equal(personaAdminErrorKey(error), error);
   }
+  assert.equal(personaAdminFailureResponse({
+    success: false,
+    status_code: 403,
+    error: "admin-write-required",
+  })?.error, "admin-write-required");
   assert.equal(personaAdminErrorKey("future-provider-error"), "generic");
   assert.equal(personaAdminErrorKey("constructor"), "generic");
   assert.equal(personaAdminFailureResponse({
@@ -439,17 +463,18 @@ test("the dormant bridge is unreachable for guests, foreign origins, viewers, an
   const identityMerge = proxy.indexOf("mergeCoreParams(body, { admin_email: session.email })");
   assert.ok(originGate >= 0 && allowListGate > originGate && sessionGate > allowListGate);
   assert.ok(capabilityGate > sessionGate && bodyGate > capabilityGate && identityMerge > bodyGate);
-  assert.match(proxy, /if \(!session\)[\s\S]*?status: 401/);
-  assert.match(proxy, /if \(!isTrustedAdminRequest\(request\.headers\)\)[\s\S]*?status: 403/);
-  assert.match(proxy, /if \(!isAdminActionAllowed\(action\)\)[\s\S]*?status: 404/);
+  assert.match(proxy, /if \(!session\)[\s\S]*?bridgeError\("auth-required", 401\)/);
+  assert.match(proxy, /if \(!isTrustedAdminRequest\(request\.headers\)\)[\s\S]*?bridgeError\("bad-origin", 403\)/);
+  assert.match(proxy, /if \(!isAdminActionAllowed\(action\)\)[\s\S]*?bridgeError\("not-found", 404\)/);
 });
 
 test("page, navigation, runtime readiness, confirmations, and same-origin calls share one cutover", async () => {
-  const [page, shell, actions, route, component, model] = await Promise.all([
+  const [page, shell, actions, route, memberRoute, component, model] = await Promise.all([
     readFile(new URL("../app/(dashboard)/persona/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/Shell.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/adminActions.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/admin/[action]/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/admin/persona-member/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../components/PersonaAdminConsole.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/personaAdmin.ts", import.meta.url), "utf8"),
   ]);
@@ -464,6 +489,14 @@ test("page, navigation, runtime readiness, confirmations, and same-origin calls 
   const configCall = component.indexOf('adminCall("persona_start_get_config_admin")');
   assert.ok(membershipCall >= 0 && configCall > membershipCall);
   for (const endpoint of PERSONA_ADMIN_ACTIONS) assert.match(component, new RegExp(endpoint));
+  assert.match(component, /adminCall\("persona-member", \{ uid: String\(uid\) \}\)/);
+  assert.doesNotMatch(component, /adminCall\("user_detail"/);
+  assert.match(memberRoute, /if \(!PERSONA_ADMIN_PROXY_RELEASED\) return errorResponse\("not-found", 404\)/);
+  assert.match(memberRoute, /requireAdminWriter\(\)/);
+  assert.match(memberRoute, /isTrustedAdminRequest\(request\.headers\)/);
+  assert.match(memberRoute, /coreCall\("user_detail"/);
+  assert.match(memberRoute, /personaTargetLookupData\(target\)/);
+  assert.doesNotMatch(memberRoute, /json\(result\.data|NextResponse\.json\(result\.data/);
   assert.match(component, /personaCapabilityAllows\(capabilities, action/);
   assert.match(component, /<ConfirmDialog/);
   assert.match(component, /setMemberRecoveryRequired\(true\)/);

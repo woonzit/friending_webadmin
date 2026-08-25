@@ -130,6 +130,7 @@ test("canonical email output has a closed HTML vocabulary and a no-network sandb
     '<p><img src="https://tracking.example.test/pixel"></p>',
     '<p><a href="javascript:alert(1)">Bad</a></p>',
     '<p><a href="https://user:pass@example.test">Bad</a></p>',
+    '<p><a href="https://x"onclick="alert(1)">Bad</a></p>',
     '<p><!-- hidden -->Text</p>',
     '<p><strong>unclosed</p>',
     '<P>uppercase serializer drift</P>',
@@ -143,6 +144,13 @@ test("canonical email output has a closed HTML vocabulary and a no-network sandb
   assert.match(document, /class="canonical-link"/);
   assert.doesNotMatch(document, /href=/, "canonical links are visually retained but inert and network-free");
   assert.equal(cannedTemplateEmailPreviewDocument("<script>x</script>"), null);
+
+  const spacedClose = '<p><a href="https://friending.com/help">Help</a ></p>';
+  assert.equal(isCanonicalCannedEmailHtml(spacedClose), true);
+  const spacedDocument = cannedTemplateEmailPreviewDocument(spacedClose);
+  assert.ok(spacedDocument);
+  assert.match(spacedDocument, /<span class="canonical-link">Help<\/span>/);
+  assert.doesNotMatch(spacedDocument, /<\/?a\b/);
 });
 
 test("template rows fail closed on unknown, missing, loose, unsafe, or channel-incompatible material", () => {
@@ -216,6 +224,13 @@ test("list requests normalize bounded search and page material, while page merge
   assert.equal(normalizeCannedTemplateQuery("line\nbreak"), null);
   assert.equal(cannedTemplateListPayload("future", ""), null);
   assert.equal(cannedTemplateListPayload("email", "", "bad cursor"), null);
+  assert.deepEqual(cannedTemplateListPayload("email", "", "page_two=="), {
+    contract_version: 1,
+    type: "email",
+    query: "",
+    page_size: 50,
+    cursor: "page_two==",
+  });
 
   const first = { ...emailList(), total: 3, next_cursor: "page_two" };
   const next: CannedTemplateListData = {
@@ -247,6 +262,14 @@ test("list requests normalize bounded search and page material, while page merge
     cannedTemplateListResponse(repeatedCursor, repeatedCursorRequest),
     null,
     "a response cannot repeat the cursor used to request it",
+  );
+
+  const paddedNext = clone(fixtures.list_email);
+  data(paddedNext).next_cursor = "page_two==";
+  data(paddedNext).total = 3;
+  assert.equal(
+    cannedTemplateListResponse(paddedNext, expected("email"))?.next_cursor,
+    "page_two==",
   );
 });
 
@@ -468,6 +491,11 @@ test("every closed refusal has an exact status, localized key, and durable retry
     status: 200,
     can_send: 0,
   }), null);
+  assert.equal(cannedTemplateErrorResponse({
+    success: false,
+    status_code: 403,
+    error: "admin-write-required",
+  }), "admin-write-required");
   assert.equal(cannedTemplateShouldRetainMutation(null), true);
   assert.equal(cannedTemplateShouldRetainMutation("canned-template-request-in-progress"), true);
   assert.equal(cannedTemplateShouldRetainMutation("canned-template-audit-write-failed"), true);
@@ -513,9 +541,9 @@ test("the dormant bridge is unreachable for guests, foreign origins, viewers, an
   const identityMerge = proxy.indexOf("mergeCoreParams(body, { admin_email: session.email })");
   assert.ok(originGate >= 0 && allowListGate > originGate && sessionGate > allowListGate);
   assert.ok(bodyGate > sessionGate && identityMerge > bodyGate);
-  assert.match(proxy, /if \(!session\)[\s\S]*?status: 401/);
-  assert.match(proxy, /if \(!isTrustedAdminRequest\(request\.headers\)\)[\s\S]*?status: 403/);
-  assert.match(proxy, /if \(!isAdminActionAllowed\(action\)\)[\s\S]*?status: 404/);
+  assert.match(proxy, /if \(!session\)[\s\S]*?bridgeError\("auth-required", 401\)/);
+  assert.match(proxy, /if \(!isTrustedAdminRequest\(request\.headers\)\)[\s\S]*?bridgeError\("bad-origin", 403\)/);
+  assert.match(proxy, /if \(!isAdminActionAllowed\(action\)\)[\s\S]*?bridgeError\("not-found", 404\)/);
 });
 
 test("page, navigation, proxy, durable recovery, confirmation, safe preview, and Help share one cutover", async () => {

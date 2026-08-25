@@ -2,6 +2,7 @@ import {
   webadminDataSuccessEnvelope,
   webadminErrorEnvelope,
 } from "@/lib/webadminEnvelope";
+import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
 
 /** Closed browser model for the canned-template Webadmin contract v1. */
 
@@ -149,7 +150,7 @@ export type CannedTemplateResult<T> =
 
 const TEMPLATE_ID = /^[0-9a-f]{24}$/u;
 const REQUEST_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
-const CURSOR = /^[A-Za-z0-9_-]{1,256}$/u;
+const CURSOR = /^[A-Za-z0-9_=-]{1,256}$/u;
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/u;
 const DISALLOWED_C0_CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/u;
 const ANY_CONTROL = /\p{Cc}/u;
@@ -305,11 +306,12 @@ function canonicalLinkAttributes(value: string): boolean {
   const seen = new Set<string>();
   let href: string | null = null;
   while (remaining !== "") {
-    const match = /^([a-z]+)\s*=\s*(["'])(.*?)\2(?:\s+|$)/u.exec(remaining);
+    const match = /^([a-z]+)\s*=\s*(?:"([^"<>]*)"|'([^'<>]*)')(?:\s+|$)/u.exec(remaining);
     if (!match) return false;
-    const [, name, , attributeValue] = match;
+    const [, name, doubleQuoted, singleQuoted] = match;
+    const attributeValue = doubleQuoted ?? singleQuoted;
+    if (attributeValue === undefined) return false;
     if ((name !== "href" && name !== "title") || seen.has(name)) return false;
-    if (attributeValue.includes("<") || attributeValue.includes(">")) return false;
     if (name === "href") href = attributeValue;
     else if (decodeHtmlAttribute(attributeValue) === null) return false;
     seen.add(name);
@@ -318,48 +320,84 @@ function canonicalLinkAttributes(value: string): boolean {
   return href !== null && safeCanonicalEmailHref(href);
 }
 
+type CanonicalEmailToken = {
+  start: number;
+  end: number;
+  raw: string;
+  tag: string;
+  closing: boolean;
+};
+
+type CanonicalEmailFragment = {
+  body: string;
+  tokens: CanonicalEmailToken[];
+};
+
+/** One grammar supplies both validation and the inert preview rewrite. */
+function canonicalCannedEmailFragment(value: unknown): CanonicalEmailFragment | null {
+  const body = canonicalWireText(value, 1, 50_000, "body");
+  if (!body || /<!--|<!DOCTYPE|<\?|<!\[CDATA\[/iu.test(body)) return null;
+
+  const stack: string[] = [];
+  const parsedTokens: CanonicalEmailToken[] = [];
+  const tokens = /<[^>]*>/gu;
+  let end = 0;
+  for (const match of body.matchAll(tokens)) {
+    const index = match.index ?? -1;
+    if (index < end || body.slice(end, index).includes("<")) return null;
+    const token = match[0];
+    const parsed = /^<(\/)?([a-z][a-z0-9]*)([^<>]*?)(\/?)>$/u.exec(token);
+    if (!parsed) return null;
+    const [, closing, tag, rawAttributes, selfClosing] = parsed;
+    if (!ALLOWED_EMAIL_TAGS.has(tag)) return null;
+    if (closing) {
+      if (selfClosing || rawAttributes.trim() !== "" || stack.pop() !== tag) return null;
+    } else if (tag === "br") {
+      if (rawAttributes.trim() !== "") return null;
+    } else {
+      if (selfClosing) return null;
+      if (tag === "a") {
+        if (!canonicalLinkAttributes(rawAttributes)) return null;
+      } else if (rawAttributes.trim() !== "") return null;
+      stack.push(tag);
+    }
+    parsedTokens.push({
+      start: index,
+      end: index + token.length,
+      raw: token,
+      tag,
+      closing: Boolean(closing),
+    });
+    end = index + token.length;
+  }
+  return !body.slice(end).includes("<") && stack.length === 0
+    ? { body, tokens: parsedTokens }
+    : null;
+}
+
 /**
  * Validate the sanitizer's canonical fragment before it is ever used as HTML.
  * The accepted contract has a tiny closed tag/attribute vocabulary, so the
  * consumer can fail closed instead of trusting a provider-shaped string.
  */
 export function isCanonicalCannedEmailHtml(value: unknown): value is string {
-  const body = canonicalWireText(value, 1, 50_000, "body");
-  if (!body || /<!--|<!DOCTYPE|<\?|<!\[CDATA\[/iu.test(body)) return false;
-
-  const stack: string[] = [];
-  const tokens = /<[^>]*>/gu;
-  let end = 0;
-  for (const match of body.matchAll(tokens)) {
-    const index = match.index ?? -1;
-    if (index < end || body.slice(end, index).includes("<")) return false;
-    const token = match[0];
-    const parsed = /^<(\/)?([a-z][a-z0-9]*)([^<>]*?)(\/?)>$/u.exec(token);
-    if (!parsed) return false;
-    const [, closing, tag, rawAttributes, selfClosing] = parsed;
-    if (!ALLOWED_EMAIL_TAGS.has(tag)) return false;
-    if (closing) {
-      if (selfClosing || rawAttributes.trim() !== "" || stack.pop() !== tag) return false;
-    } else if (tag === "br") {
-      if (rawAttributes.trim() !== "") return false;
-    } else {
-      if (selfClosing) return false;
-      if (tag === "a") {
-        if (!canonicalLinkAttributes(rawAttributes)) return false;
-      } else if (rawAttributes.trim() !== "") return false;
-      stack.push(tag);
-    }
-    end = index + token.length;
-  }
-  return !body.slice(end).includes("<") && stack.length === 0;
+  return canonicalCannedEmailFragment(value) !== null;
 }
 
 /** Sandboxed preview document for already-canonical Core output only. */
 export function cannedTemplateEmailPreviewDocument(body: unknown): string | null {
-  if (!isCanonicalCannedEmailHtml(body)) return null;
-  const inertBody = body
-    .replace(/<a\b[^>]*>/gu, '<span class="canonical-link">')
-    .replace(/<\/a>/gu, "</span>");
+  const fragment = canonicalCannedEmailFragment(body);
+  if (!fragment) return null;
+  let cursor = 0;
+  let inertBody = "";
+  for (const token of fragment.tokens) {
+    inertBody += fragment.body.slice(cursor, token.start);
+    inertBody += token.tag === "a"
+      ? token.closing ? "</span>" : '<span class="canonical-link">'
+      : token.raw;
+    cursor = token.end;
+  }
+  inertBody += fragment.body.slice(cursor);
   return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'none'; media-src 'none'; connect-src 'none'; frame-src 'none'; object-src 'none'; form-action 'none'; base-uri 'none'; style-src 'unsafe-inline'"><style>html{color-scheme:light}body{margin:0;padding:20px;background:#fff;color:#14151a;font:15px/1.55 Arial,sans-serif;overflow-wrap:anywhere}.canonical-link{color:#5d61d8;text-decoration:underline}blockquote{margin:12px 0;padding-left:12px;border-left:3px solid #c9caee}h1,h2,h3{line-height:1.2}</style></head><body>${inertBody}</body></html>`;
 }
 
@@ -918,7 +956,7 @@ export function cannedTemplateErrorKey(value: unknown): CannedTemplateErrorKey {
 }
 
 export function cannedTemplateErrorResponse(value: unknown): string | null {
-  const envelope = webadminErrorEnvelope(value);
+  const envelope = webadminErrorEnvelope(value) ?? adminBridgeErrorEnvelope(value);
   if (!envelope) return null;
   const status = CANNED_TEMPLATE_ERROR_STATUSES[
     envelope.error as keyof typeof CANNED_TEMPLATE_ERROR_STATUSES

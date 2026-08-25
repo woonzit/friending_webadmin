@@ -2,6 +2,7 @@ import {
   webadminDataSuccessEnvelope,
   webadminErrorEnvelope,
 } from "@/lib/webadminEnvelope";
+import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
 
 /** Closed browser projection for the reported-content Webadmin contract. */
 
@@ -74,6 +75,7 @@ export type ReportedContentReport = {
   subject_content: ReportedContentSubject;
   reason_code: string;
   reason_text: string;
+  reason_truncated: boolean;
   created_at: number;
   resolution: ReportedContentResolution;
 };
@@ -266,6 +268,7 @@ export function reportedContentReport(value: unknown): ReportedContentReport | n
     "subject_content",
     "reason_code",
     "reason_text",
+    "reason_truncated",
     "created_at",
     "resolution",
   ]);
@@ -281,6 +284,9 @@ export function reportedContentReport(value: unknown): ReportedContentReport | n
     ? raw.reason_code
     : null;
   const reasonText = boundedText(raw.reason_text, 0, 500);
+  const reasonTruncated = typeof raw.reason_truncated === "boolean"
+    ? raw.reason_truncated
+    : null;
   const createdAt = integer(raw.created_at, 0, Number.MAX_SAFE_INTEGER);
   const parsedResolution = resolution(raw.resolution);
   if (
@@ -293,6 +299,7 @@ export function reportedContentReport(value: unknown): ReportedContentReport | n
     || !content
     || reasonCode === null
     || reasonText === null
+    || reasonTruncated === null
     || createdAt === null
     || parsedResolution === undefined
     || (targetType === "user" && content.kind !== "profile")
@@ -310,6 +317,7 @@ export function reportedContentReport(value: unknown): ReportedContentReport | n
     subject_content: content,
     reason_code: reasonCode,
     reason_text: reasonText,
+    reason_truncated: reasonTruncated,
     created_at: createdAt,
     resolution: parsedResolution,
   };
@@ -545,7 +553,7 @@ export function reportedContentErrorKey(value: unknown): ReportedContentErrorKey
 
 /** Decode a refusal without conflict data; malformed/unknown envelopes stay uncertain. */
 export function reportedContentErrorResponse(value: unknown): string | null {
-  const envelope = webadminErrorEnvelope(value);
+  const envelope = webadminErrorEnvelope(value) ?? adminBridgeErrorEnvelope(value);
   const error = typeof envelope?.error === "string"
     && Object.prototype.hasOwnProperty.call(REPORTED_CONTENT_ERROR_STATUSES, envelope.error)
     ? envelope.error as keyof typeof REPORTED_CONTENT_ERROR_STATUSES
@@ -677,4 +685,31 @@ export function reportedContentCanDecide(principalValue: ReportedContentPrincipa
 
 export function reportedContentPendingStorageKey(reportIdValue: string): string {
   return `friending.reported-content.pending-decision.v1:${reportIdValue}`;
+}
+
+export type ReportedContentPersistedMutation<T> =
+  | { ok: true; response: T }
+  | { ok: false };
+
+/**
+ * Persist the exact durable identity before starting a mutation. Browsers may
+ * expose `sessionStorage` while throwing on writes (private browsing/quota), so
+ * the callback is deliberately unreachable until `setItem` has succeeded.
+ */
+export async function reportedContentPersistBeforeMutation<T>(
+  storage: Pick<Storage, "setItem">,
+  pending: ReportedContentPendingDecision,
+  mutate: () => Promise<T>,
+): Promise<ReportedContentPersistedMutation<T>> {
+  const canonical = reportedContentPendingDecision(pending);
+  if (!canonical) return { ok: false };
+  try {
+    storage.setItem(
+      reportedContentPendingStorageKey(canonical.reportId),
+      JSON.stringify(canonical),
+    );
+  } catch {
+    return { ok: false };
+  }
+  return { ok: true, response: await mutate() };
 }

@@ -2933,7 +2933,7 @@
     },
     "limits": {
       "size": "Whole number from 8 to 80",
-      "progress": "Number from 0 to 1",
+      "progress": "Finite number",
       "url": "HTTPS URL or empty; maximum {maximum} Unicode characters",
       "color": "Color value; maximum {maximum} Unicode characters",
       "icon": "Native icon fallback name; maximum {maximum} Unicode characters",
@@ -3268,6 +3268,7 @@
       "target": "Target type",
       "reasonCode": "Reason code",
       "reasonText": "Member explanation",
+      "reasonTruncated": "This is a shortened excerpt of the original explanation.",
       "noReasonText": "No additional text was supplied.",
       "revision": "Revision",
       "materialTitle": "Reported material",

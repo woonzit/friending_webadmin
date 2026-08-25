@@ -26,7 +26,7 @@ import {
   personaStartHtmlMaxLength,
   personaStartStringCap,
   personaStartUpdateResponse,
-  personaTargetFromUserDetail,
+  personaTargetLookupResponse,
   personaUidPayload,
   type PersonaAdminCapabilities,
   type PersonaAdminCapabilityAction,
@@ -120,7 +120,7 @@ function PersonaStartPreview({ config }: { config: PersonaStartConfig }) {
               <div className="persona-device-progress" style={{ backgroundColor: personaPreviewColor(config.progress_track_color, "#E6E7F3") }}>
                 <span style={{
                   backgroundColor: personaPreviewColor(config.progress_filled_color, "#7A7FFD"),
-                  width: `${config.progress_value * 100}%`,
+                  width: `${Math.max(0, Math.min(1, config.progress_value)) * 100}%`,
                 }} />
               </div>
             )}
@@ -304,8 +304,8 @@ export default function PersonaAdminConsole() {
           <input
             type="number"
             inputMode={kind === "size" ? "numeric" : "decimal"}
-            min={kind === "size" ? 8 : 0}
-            max={kind === "size" ? 80 : 1}
+            min={kind === "size" ? 8 : undefined}
+            max={kind === "size" ? 80 : undefined}
             step={kind === "size" ? 1 : 0.01}
             value={Number(value)}
             disabled={controlsLocked}
@@ -391,9 +391,9 @@ export default function PersonaAdminConsole() {
     setMemberFeedback(null);
     setMemberRecoveryRequired(false);
     setConfirmation(null);
-    const response = await adminCall("user_detail", { uid });
+    const response = await adminCall("persona-member", { uid: String(uid) });
     setTargetBusy(false);
-    const parsedTarget = personaTargetFromUserDetail(response);
+    const parsedTarget = personaTargetLookupResponse(response);
     if (!parsedTarget) {
       setMemberFeedback({
         tone: "error",

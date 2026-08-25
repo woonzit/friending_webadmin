@@ -339,3 +339,14 @@ Core's shared `Webadmin::reply()` always appends the legacy trio. A versioned su
 `{success, status_code, data, message, status, can_send}`. A versioned refusal has exactly
 `{success, status_code, error, message, status, can_send}`, plus `data` only for the contracted conflict response.
 The legacy trio remains transport metadata; Core does not remove it and consumers keep this top-level key set closed.
+
+## Lead amendment A3 (2026-08-26T05:25Z) — reason excerpt and legacy client decisions
+
+- `reason_text` in the versioned projection is Core's deterministic excerpt `contract_reason_text` (NFC, trimmed, ≤ 500 scalars)
+  of the member-supplied message; the original stored `message` (legacy client contract, up to 3000 bytes) is preserved
+  byte-for-byte and never projected. The row gains `reason_truncated: boolean` (true when the excerpt shortened the original).
+  Existing rows are backfilled additively by the guarded migration; an over-long original never fails the queue read.
+- The legacy client route `/v1/moderation/set_report_action` keeps its exact request/response/error vocabulary but performs the
+  same conditional `pending → confirmed|rejected` transition (revision +1, `decided_by` = the authenticated moderator's
+  normalized email, canonical `decision`, event side effect only for the winning transition). It carries no request id and
+  uses no Webadmin receipt; a Webadmin decision and a client decision on the same report race on the revision, exactly one wins.

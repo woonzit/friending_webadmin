@@ -2,6 +2,7 @@ import {
   webadminDataSuccessEnvelope,
   webadminErrorEnvelope,
 } from "@/lib/webadminEnvelope";
+import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
 
 /** Closed browser model for the per-user product-popup Webadmin contract. */
 
@@ -231,11 +232,11 @@ export function canonicalProductPopupUrl(value: unknown): string | null {
 }
 
 function canonicalWireUrl(value: unknown): string | null {
-  if (typeof value !== "string" || value.trim() !== value || value.normalize("NFC") !== value) {
-    return null;
-  }
-  const canonical = canonicalProductPopupUrl(value);
-  return canonical === value ? canonical : null;
+  if (typeof value !== "string" || value.trim() !== value) return null;
+  // Core promises a legal HTTPS URL, not byte identity with WHATWG's spelling.
+  // Normalize only after validation so equivalent host case, dot segments, and
+  // Unicode spellings converge to one browser model without rejecting the row.
+  return canonicalProductPopupUrl(value);
 }
 
 function principal(value: unknown): ProductPopupPrincipal | null {
@@ -557,9 +558,6 @@ function popup(
     || createdBy === null
     || updatedAt === null
     || updatedBy === null
-    || updatedAt < createdAt
-    || evaluatedAt < updatedAt
-    || expiresAt <= updatedAt
     || status !== (expiresAt > evaluatedAt ? "active" : "expired")
   ) return null;
   return {
@@ -771,7 +769,7 @@ export function productPopupErrorKey(value: unknown): ProductPopupErrorKey {
 
 /** Decode refusals without authoritative conflict data. */
 export function productPopupErrorResponse(value: unknown): string | null {
-  const envelope = webadminErrorEnvelope(value);
+  const envelope = webadminErrorEnvelope(value) ?? adminBridgeErrorEnvelope(value);
   const error = typeof envelope?.error === "string"
     && Object.prototype.hasOwnProperty.call(PRODUCT_POPUP_ERROR_STATUSES, envelope.error)
     ? envelope.error as keyof typeof PRODUCT_POPUP_ERROR_STATUSES

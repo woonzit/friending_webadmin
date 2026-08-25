@@ -18,28 +18,35 @@ import { readAdminSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
+function bridgeError(error: string, status: number) {
+  return NextResponse.json(
+    { success: false, status_code: status, error },
+    { status },
+  );
+}
+
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ action: string }> },
 ) {
   if (!isTrustedAdminRequest(request.headers)) {
-    return NextResponse.json({ success: false, error: "bad-origin" }, { status: 403 });
+    return bridgeError("bad-origin", 403);
   }
   // Exact membership of a closed set: no prefix, case-insensitive or normalised
   // matching, so a crafted segment cannot reach an action that is not listed.
   const { action } = await context.params;
   if (!isAdminActionAllowed(action)) {
-    return NextResponse.json({ success: false, error: "not-found" }, { status: 404 });
+    return bridgeError("not-found", 404);
   }
   const bodyLimit = adminActionBodyLimit(action);
 
   const declaredLength = Number(request.headers.get("content-length") ?? "0");
   if (Number.isFinite(declaredLength) && declaredLength > bodyLimit) {
-    return NextResponse.json({ success: false, error: "too-large" }, { status: 413 });
+    return bridgeError("too-large", 413);
   }
   const session = await readAdminSession();
   if (!session) {
-    return NextResponse.json({ success: false, error: "auth-required" }, { status: 401 });
+    return bridgeError("auth-required", 401);
   }
 
   // Revocation is authoritative in Core. This is deliberately checked on every
@@ -49,7 +56,7 @@ export async function POST(
     { admin_email: session.email },
   );
   if (membership.status !== 200 || !membership.data?.success) {
-    return NextResponse.json({ success: false, error: "auth-required" }, { status: 401 });
+    return bridgeError("auth-required", 401);
   }
 
   // Membership is not authorization: `viewer` is a deliberately read-only role,
@@ -61,42 +68,36 @@ export async function POST(
   const principal = adminPrincipalFrom(membership.data);
   const personaAuthorized = personaProxyCapabilityAuthorized(action, membership.data);
   if (personaAuthorized === false) {
-    return NextResponse.json(
-      { success: false, error: "persona-capability-required" },
-      { status: 403 },
-    );
+    return bridgeError("persona-capability-required", 403);
   }
   if (!isAdminActionAuthorized(action, principal)) {
-    return NextResponse.json(
-      { success: false, error: "admin-write-required" },
-      { status: 403 },
-    );
+    return bridgeError("admin-write-required", 403);
   }
 
   let body: Record<string, unknown> = {};
   try {
     const raw = await request.text();
     if (Buffer.byteLength(raw, "utf8") > bodyLimit) {
-      return NextResponse.json({ success: false, error: "too-large" }, { status: 413 });
+      return bridgeError("too-large", 413);
     }
     const parsed = raw ? JSON.parse(raw) : {};
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return NextResponse.json({ success: false, error: "invalid-input" }, { status: 400 });
+      return bridgeError("invalid-input", 400);
     }
     body = parsed as Record<string, unknown>;
   } catch {
-    return NextResponse.json({ success: false, error: "invalid-input" }, { status: 400 });
+    return bridgeError("invalid-input", 400);
   }
 
   const normalizedPersonaBody = normalizePersonaProxyBody(action, body);
   if (normalizedPersonaBody === null) {
-    return NextResponse.json({ success: false, error: "invalid-input" }, { status: 400 });
+    return bridgeError("invalid-input", 400);
   }
   if (normalizedPersonaBody !== undefined) body = normalizedPersonaBody;
 
   const normalizedCannedBody = normalizeCannedTemplateProxyBody(action, body);
   if (normalizedCannedBody === null) {
-    return NextResponse.json({ success: false, error: "invalid-input" }, { status: 400 });
+    return bridgeError("invalid-input", 400);
   }
   if (normalizedCannedBody !== undefined) body = normalizedCannedBody;
 
@@ -110,10 +111,11 @@ export async function POST(
   );
   const coreError = (result.data as Record<string, unknown> | null)?.error;
   if (invalidatesAdminSession(result.status, coreError)) {
-    return NextResponse.json({ success: false, error: "auth-required" }, { status: 401 });
+    return bridgeError("auth-required", 401);
   }
+  if (result.data === null) return bridgeError("core-unavailable", result.status || 502);
   return NextResponse.json(
-    result.data ?? { success: false, error: "core-unavailable" },
+    result.data,
     { status: result.status || 502 },
   );
 }

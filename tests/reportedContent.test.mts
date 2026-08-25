@@ -23,6 +23,7 @@ import {
   reportedContentPendingDecision,
   reportedContentPendingFromPayload,
   reportedContentPendingStorageKey,
+  reportedContentPersistBeforeMutation,
   reportedContentReport,
   reportedContentReportConverged,
   reportedContentReportsAreOrdered,
@@ -80,6 +81,7 @@ test("the accepted version-1 fixtures decode as exact queue, detail, action, and
     report_id: "report-user-001",
   });
   assert.equal(detail.reports[0].status, "pending");
+  assert.equal(detail.reports[0].reason_truncated, true);
 
   const action = reportedContentActionResponse(fixtures.action_success);
   assert.ok(action);
@@ -132,6 +134,10 @@ test("closed envelopes, principals, rows, and safe projections reject every shap
     (raw) => { reports(raw)[0].created_at = -1; },
     (raw) => { reports(raw)[0].reason_code = "Not Canonical"; },
     (raw) => { reports(raw)[0].reason_text = " trailing "; },
+    (raw) => { reports(raw)[0].reason_text = "Cafe\u0301"; },
+    (raw) => { reports(raw)[0].reason_text = "x".repeat(501); },
+    (raw) => { delete reports(raw)[0].reason_truncated; },
+    (raw) => { reports(raw)[0].reason_truncated = 0; },
     (raw) => { object(reports(raw)[0].reporter).display_name = "Cafe\u0301"; },
     (raw) => { reports(raw)[0].target_type = "user"; },
     (raw) => { reports(raw)[0].status = "confirmed"; },
@@ -321,6 +327,52 @@ test("convergence clears only the exact completed gesture", () => {
   assert.equal(reportedContentDecisionConverged(result, { ...pending, reason: "Different reason" }), false);
 });
 
+test("private-browsing storage is written before mutation and a throwing store prevents the call", async () => {
+  const pending = reportedContentPendingDecision({
+    version: 1,
+    reportId: "report-user-001",
+    action: "rejected",
+    reason: "No policy violation was found.",
+    expectedRevision: 1,
+    requestId: "6f1c2d3e-4a5b-4c6d-8e9f-0a1b2c3d4e5f",
+  });
+  assert.ok(pending);
+
+  const order: string[] = [];
+  const writes = new Map<string, string>();
+  const stored = await reportedContentPersistBeforeMutation(
+    {
+      setItem(key, value) {
+        order.push("persist");
+        writes.set(key, value);
+      },
+    },
+    pending,
+    async () => {
+      order.push("mutate");
+      return "response";
+    },
+  );
+  assert.deepEqual(stored, { ok: true, response: "response" });
+  assert.deepEqual(order, ["persist", "mutate"]);
+  assert.deepEqual(
+    JSON.parse(writes.get(reportedContentPendingStorageKey(pending.reportId)) ?? "null"),
+    pending,
+  );
+
+  let mutationCalls = 0;
+  const refused = await reportedContentPersistBeforeMutation(
+    { setItem() { throw new Error("private browsing storage denied"); } },
+    pending,
+    async () => {
+      mutationCalls += 1;
+      return "must-not-run";
+    },
+  );
+  assert.deepEqual(refused, { ok: false });
+  assert.equal(mutationCalls, 0);
+});
+
 test("every closed refusal has localized routing and the documented retry policy", () => {
   const terminal = new Set([
     "reported-content-contract-version-invalid",
@@ -369,6 +421,12 @@ test("every closed refusal has localized routing and the documented retry policy
   }
   assert.equal(reportedContentErrorKey("future-error"), "generic");
   assert.equal(reportedContentErrorKey("constructor"), "generic");
+  assert.equal(reportedContentErrorResponse({
+    success: false,
+    status_code: 403,
+    error: "admin-write-required",
+  }), "admin-write-required", "an exact bridge denial is terminal, not an uncertain replay");
+  assert.equal(reportedContentShouldRetainDecision("admin-write-required"), false);
   assert.equal(reportedContentErrorResponse({
     success: false,
     status_code: 503,
@@ -425,8 +483,8 @@ test("the dormant bridge is unreachable for guests, foreign origins, viewers, an
   const allowListGate = proxy.indexOf("isAdminActionAllowed(action)");
   const sessionGate = proxy.indexOf("readAdminSession()");
   assert.ok(originGate >= 0 && allowListGate > originGate && sessionGate > allowListGate);
-  assert.match(proxy, /if \(!session\)[\s\S]*?status: 401/);
-  assert.match(proxy, /if \(!isAdminActionAllowed\(action\)\)[\s\S]*?status: 404/);
+  assert.match(proxy, /if \(!session\)[\s\S]*?bridgeError\("auth-required", 401\)/);
+  assert.match(proxy, /if \(!isAdminActionAllowed\(action\)\)[\s\S]*?bridgeError\("not-found", 404\)/);
 });
 
 test("queue, detail, navigation, and proxy activation remain one explicit dormant cutover", async () => {
@@ -446,6 +504,7 @@ test("queue, detail, navigation, and proxy activation remain one explicit dorman
   assert.match(detail, /adminCall\("moderation_reported_list"/);
   assert.match(detail, /adminCall\("moderation_report_action"/);
   assert.match(detail, /window\.sessionStorage\.setItem/);
+  assert.match(detail, /reportedContentPersistBeforeMutation\([\s\S]*?adminCall\("moderation_report_action"/);
   assert.match(detail, /reportedContentConflictResponse/);
   assert.match(detail, /reportedContentErrorResponse/);
   assert.match(detail, /reportedContentReportConverged/);

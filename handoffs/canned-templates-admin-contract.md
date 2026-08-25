@@ -335,3 +335,7 @@ Core's shared `Webadmin::reply()` always appends the legacy trio. A versioned su
 `{success, status_code, data, message, status, can_send}`. A versioned refusal has exactly
 `{success, status_code, error, message, status, can_send}`, plus `data` only for the contracted conflict response.
 The legacy trio remains transport metadata; Core does not remove it and consumers keep this top-level key set closed.
+
+## Lead amendment A-CUR (2026-08-26T03:15Z)
+
+`cursor` is opaque base64url of 1..256 characters and MAY carry `=` padding; consumers accept `^[A-Za-z0-9_=-]{1,256}$`.

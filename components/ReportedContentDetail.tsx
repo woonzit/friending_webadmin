@@ -26,6 +26,7 @@ import {
   reportedContentPendingDecision,
   reportedContentPendingFromPayload,
   reportedContentPendingStorageKey,
+  reportedContentPersistBeforeMutation,
   reportedContentReportConverged,
   reportedContentShouldRetainDecision,
   type ReportedContentDecision,
@@ -188,15 +189,26 @@ export default function ReportedContentDetail() {
     }
 
     const durable = pending ?? reportedContentPendingFromPayload(payload);
-    if (!rememberPending(durable)) {
+    const persisted = await reportedContentPersistBeforeMutation(
+      window.sessionStorage,
+      durable,
+      async () => {
+        pendingRef.current = durable;
+        setPending(durable);
+        setStorageAvailable(true);
+        setBusy(true);
+        setConfirming(false);
+        setNotice(null);
+        return adminCall("moderation_report_action", payload);
+      },
+    );
+    if (!persisted.ok) {
+      setStorageAvailable(false);
       setConfirming(false);
       setNotice({ tone: "error", text: t("errors.persistenceUnavailable") });
       return;
     }
-    setBusy(true);
-    setConfirming(false);
-    setNotice(null);
-    const response = await adminCall("moderation_report_action", payload);
+    const response = persisted.response;
     const result = reportedContentActionResponse(response);
     if (result && reportedContentDecisionConverged(result, durable)) {
       setReport(result.report);
@@ -275,7 +287,13 @@ export default function ReportedContentDetail() {
             <div className="detail-row"><dt>{t("reportId")}</dt><dd><code>{report.report_id}</code></dd></div>
             <div className="detail-row"><dt>{t("target")}</dt><dd>{t(`targets.${report.target_type}`)}</dd></div>
             <div className="detail-row"><dt>{t("reasonCode")}</dt><dd><code>{report.reason_code}</code></dd></div>
-            <div className="detail-row"><dt>{t("reasonText")}</dt><dd>{report.reason_text || t("noReasonText")}</dd></div>
+            <div className="detail-row">
+              <dt>{t("reasonText")}</dt>
+              <dd>
+                {report.reason_text || t("noReasonText")}
+                {report.reason_truncated ? <small className="muted"> {t("reasonTruncated")}</small> : null}
+              </dd>
+            </div>
             <div className="detail-row"><dt>{common("createdAt")}</dt><dd>{formatDate(report.created_at, locale, true)}</dd></div>
             <div className="detail-row"><dt>{t("revision")}</dt><dd>{report.revision}</dd></div>
           </dl></div>

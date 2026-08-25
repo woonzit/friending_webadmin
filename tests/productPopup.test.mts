@@ -141,14 +141,23 @@ test("Core's evaluated_at clock is required and alone determines the active or e
     (raw) => { data(raw).evaluated_at = String(NOW); },
     (raw) => { data(raw).evaluated_at = -1; },
     (raw) => { popup(raw).status = "expired"; },
-    (raw) => { data(raw).evaluated_at = Number(popup(raw).updated_at) - 1; },
-    (raw) => { popup(raw).expires_at = popup(raw).updated_at; },
   ];
   for (const mutate of contradictions) {
     const raw = clone(fixtures.active_url);
     mutate(raw);
     assert.equal(productPopupReadResponse(raw), null, mutate.toString());
   }
+
+  const independentTimestamps = clone(fixtures.active_url);
+  data(independentTimestamps).evaluated_at = 100;
+  popup(independentTimestamps).expires_at = 125;
+  popup(independentTimestamps).updated_at = 150;
+  popup(independentTimestamps).created_at = 200;
+  popup(independentTimestamps).status = "active";
+  assert.ok(
+    productPopupReadResponse(independentTimestamps),
+    "the contract states no created/updated/evaluated/expiry ordering beyond status vs evaluated_at",
+  );
 });
 
 test("closed envelopes, principals, popup projections, and timestamps fail on every shape surprise", () => {
@@ -170,11 +179,10 @@ test("closed envelopes, principals, popup projections, and timestamps fail on ev
     (raw) => { popup(raw).message = "unsafe\uD800text"; },
     (raw) => { popup(raw).created_by = "Admin@friending.com"; },
     (raw) => { popup(raw).created_at = -1; },
-    (raw) => { popup(raw).updated_at = Number(popup(raw).created_at) - 1; },
     (raw) => { data(raw).resource_revision = 0; popup(raw).revision = 0; },
     (raw) => { button(raw).debug = true; },
     (raw) => { button(raw).action = "none"; },
-    (raw) => { button(raw).url = "https://FRIENDING.com/plus?source=popup"; },
+    (raw) => { button(raw).url = " https://friending.com/plus?source=popup"; },
   ];
   for (const mutate of mutations) {
     const raw = clone(fixtures.active_url);
@@ -233,6 +241,15 @@ test("HTTPS destinations normalize canonically and reject credentials, unsafe sc
     "https://example.com/benefits?q=one",
   );
   assert.equal(canonicalProductPopupUrl("https://example.com"), "https://example.com/");
+
+  const legalWireSpelling = clone(fixtures.active_url);
+  button(legalWireSpelling).url = "https://FRIENDING.com/a/../plus?source=popup";
+  const normalizedWire = productPopupReadResponse(legalWireSpelling);
+  assert.equal(
+    normalizedWire?.popup?.button.url,
+    "https://friending.com/plus?source=popup",
+    "contract-legal URLs compare and render after normalization, not byte identity",
+  );
 
   for (const invalid of [
     "http://example.com",
@@ -390,10 +407,16 @@ test("clear and pending helpers preserve one exact retry identity without revali
     { ...pendingSet, action: "replace" },
     { ...pendingSet, payload: { ...pendingSet.payload, request_id: REQUEST_ID.toUpperCase() } },
     { ...pendingSet, payload: { ...pendingSet.payload, title: ` ${pendingSet.payload.title}` } },
-    { ...pendingSet, payload: { ...pendingSet.payload, button_url: "https://FRIENDING.com/plus?source=popup" } },
   ]) {
     assert.equal(productPopupPendingMutation(invalid), null);
   }
+  assert.deepEqual(productPopupPendingMutation({
+    ...pendingSet,
+    payload: {
+      ...pendingSet.payload,
+      button_url: "https://FRIENDING.com/plus?source=popup",
+    },
+  }), pendingSet, "durable state normalizes equivalent legal HTTPS spelling");
   assert.equal(productPopupClearPayload(42, 3, "   ", REQUEST_ID).ok, false);
 });
 
@@ -499,6 +522,11 @@ test("every closed refusal has a localized route, exact status, and documented t
     can_send: 0,
     detail: "not contracted",
   }), null, "extra refusal fields remain uncertain");
+  assert.equal(productPopupErrorResponse({
+    success: false,
+    status_code: 403,
+    error: "admin-write-required",
+  }), "admin-write-required");
 });
 
 test("the dormant popup bridge is unreachable for guests, foreign origins, viewers, and owners", async () => {
@@ -532,9 +560,9 @@ test("the dormant popup bridge is unreachable for guests, foreign origins, viewe
   const allowListGate = proxy.indexOf("isAdminActionAllowed(action)");
   const sessionGate = proxy.indexOf("readAdminSession()");
   assert.ok(originGate >= 0 && allowListGate > originGate && sessionGate > allowListGate);
-  assert.match(proxy, /if \(!session\)[\s\S]*?status: 401/);
-  assert.match(proxy, /if \(!isTrustedAdminRequest\(request\.headers\)\)[\s\S]*?status: 403/);
-  assert.match(proxy, /if \(!isAdminActionAllowed\(action\)\)[\s\S]*?status: 404/);
+  assert.match(proxy, /if \(!session\)[\s\S]*?bridgeError\("auth-required", 401\)/);
+  assert.match(proxy, /if \(!isTrustedAdminRequest\(request\.headers\)\)[\s\S]*?bridgeError\("bad-origin", 403\)/);
+  assert.match(proxy, /if \(!isAdminActionAllowed\(action\)\)[\s\S]*?bridgeError\("not-found", 404\)/);
 });
 
 test("user-detail activation, same-origin calls, exact preview, durable recovery, and Help remain one explicit cutover", async () => {

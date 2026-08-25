@@ -91,6 +91,12 @@ commit in `.deploy_commit`.
 The script deliberately excludes `.env.local`, `.git`, `.next`, `node_modules`
 and logs.
 
+Feature readiness flags are compatibility cutovers, not deploy conveniences. Flip a flag only
+after its matching Core provider release is live and its authenticated boundary smoke has passed.
+If Core is rolled back, un-flip the dependent Webadmin flag in the same recovery window; leaving a
+new consumer enabled against an older provider intentionally fails closed and can make shared pages
+such as registered-user detail unavailable.
+
 ## Verification
 
 After deployment:

@@ -45,6 +45,7 @@
           },
           "reason_code": "harassment",
           "reason_text": "Synthetic member report.",
+          "reason_truncated": false,
           "created_at": 1787600100,
           "resolution": null
         },
@@ -69,6 +70,7 @@
           },
           "reason_code": "profile_content",
           "reason_text": "Synthetic profile report.",
+          "reason_truncated": false,
           "created_at": 1787600200,
           "resolution": null
         }
@@ -143,6 +145,7 @@
           },
           "reason_code": "profile_content",
           "reason_text": "Synthetic profile report.",
+          "reason_truncated": true,
           "created_at": 1787600200,
           "resolution": null
         }
@@ -180,6 +183,7 @@
         },
         "reason_code": "profile_content",
         "reason_text": "Synthetic profile report.",
+        "reason_truncated": true,
         "created_at": 1787600200,
         "resolution": {
           "decision": "rejected",
@@ -221,6 +225,7 @@
         },
         "reason_code": "profile_content",
         "reason_text": "Synthetic profile report.",
+        "reason_truncated": true,
         "created_at": 1787600200,
         "resolution": {
           "decision": "confirmed",

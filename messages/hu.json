@@ -2933,7 +2933,7 @@
     },
     "limits": {
       "size": "Egész szám 8 és 80 között",
-      "progress": "Szám 0 és 1 között",
+      "progress": "Véges szám",
       "url": "HTTPS URL vagy üres érték; legfeljebb {maximum} Unicode karakter",
       "color": "Színérték; legfeljebb {maximum} Unicode karakter",
       "icon": "Natív fallback ikon neve; legfeljebb {maximum} Unicode karakter",
@@ -3268,6 +3268,7 @@
       "target": "Cél típusa",
       "reasonCode": "Indokkód",
       "reasonText": "Tagi magyarázat",
+      "reasonTruncated": "Ez az eredeti magyarázat rövidített kivonata.",
       "noReasonText": "Nem érkezett kiegészítő szöveg.",
       "revision": "Revízió",
       "materialTitle": "Jelentett anyag",

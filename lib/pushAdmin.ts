@@ -1,4 +1,5 @@
 import { webadminEnvelope } from "@/lib/webadminEnvelope";
+import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
 
 /** Closed browser model for the additive dual-push Webadmin contract. */
 
@@ -44,7 +45,6 @@ const SETTING_KEYS = [
   "updated_at",
   "updated_by",
 ] as const;
-const LOCAL_DENIAL_KEYS = ["success", "error"] as const;
 const CHANNEL_KEYS = ["fcm_token_present", "onesignal_id_present"] as const;
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
@@ -162,8 +162,8 @@ export function pushAdminError(value: unknown): PushAdminError | null {
 
 /** The same-origin bridge enforces the editor role before Core and returns this closed denial. */
 export function pushLocalWriteDenial(value: unknown): "admin-write-required" | null {
-  const raw = exactObject(value, LOCAL_DENIAL_KEYS);
-  return raw?.success === false && raw.error === "admin-write-required"
+  const raw = adminBridgeErrorEnvelope(value);
+  return raw?.status_code === 403 && raw.error === "admin-write-required"
     ? "admin-write-required"
     : null;
 }

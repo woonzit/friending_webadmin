@@ -233,15 +233,22 @@ test("closed logical errors require their exact status and legacy envelope", () 
   assert.equal(pushAdminError(errorEnvelope("provider-secret-invalid", 422)), null);
   assert.equal(pushAdminError({ success: false, error: "admin-write-required" }), null);
   assert.equal(
-    pushLocalWriteDenial({ success: false, error: "admin-write-required" }),
+    pushLocalWriteDenial({
+      success: false,
+      status_code: 403,
+      error: "admin-write-required",
+    }),
     "admin-write-required",
   );
   assert.equal(pushLocalWriteDenial({
     success: false,
     error: "admin-write-required",
-    status_code: 403,
   }), null);
-  assert.equal(pushLocalWriteDenial({ success: false, error: "owner-required" }), null);
+  assert.equal(pushLocalWriteDenial({
+    success: false,
+    status_code: 403,
+    error: "owner-required",
+  }), null);
   assert.equal(pushAdminError({ ...errorEnvelope("query-failed", 500), extra: true }), null);
 });
 
@@ -294,7 +301,7 @@ test("push reads and writes inherit the bridge's guest, origin, actor and secret
   const actorMerge = proxy.indexOf("mergeCoreParams(body, { admin_email: session.email })");
   assert.ok(originGate >= 0 && allowListGate > originGate && guestGate > allowListGate);
   assert.ok(actorMerge > guestGate);
-  assert.match(proxy, /auth-required[\s\S]*status: 401/);
+  assert.match(proxy, /bridgeError\("auth-required", 401\)/);
 
   const core = await readFile(new URL("../lib/core.ts", import.meta.url), "utf8");
   assert.match(core, /body\.set\("secret", apiSecret\(\)\)/);

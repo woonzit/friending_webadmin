@@ -3,6 +3,7 @@ import {
   webadminEmptySuccessEnvelope,
   webadminErrorEnvelope,
 } from "@/lib/webadminEnvelope";
+import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
 
 /**
  * Closed consumer model for Persona Webadmin contract v1.
@@ -456,8 +457,10 @@ function configFrom(value: unknown, normalize: boolean): PersonaStartConfig | nu
 
   const progress = source.progress_value;
   if (typeof progress !== "number" || !Number.isFinite(progress)) return null;
-  if (!normalize && (progress < 0 || progress > 1)) return null;
-  output.progress_value = normalize ? Math.max(0, Math.min(1, progress)) : progress;
+  // Core's compatibility contract casts this field to a JSON number; it does
+  // not clamp it to 0...1. The editor may suggest a usual proportion without
+  // rejecting or silently changing an authoritative contract-legal value.
+  output.progress_value = progress;
 
   for (const key of PERSONA_START_INTEGER_KEYS) {
     const valueAtKey = source[key];
@@ -527,7 +530,7 @@ export function personaStartConfigPatch(
       normalizedValue = typeof draftValue === "boolean" ? draftValue : null;
     } else if (NUMBER_KEY_SET.has(key)) {
       normalizedValue = typeof draftValue === "number" && Number.isFinite(draftValue)
-        ? Math.max(0, Math.min(1, draftValue))
+        ? draftValue
         : null;
     } else if (INTEGER_KEY_SET.has(key)) {
       normalizedValue = typeof draftValue === "number" && Number.isFinite(draftValue)
@@ -648,9 +651,7 @@ function exactNormalizedPatch(
       continue;
     }
     if (NUMBER_KEY_SET.has(key)) {
-      if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
-        return null;
-      }
+      if (typeof value !== "number" || !Number.isFinite(value)) return null;
       output[key] = value;
       continue;
     }
@@ -767,17 +768,28 @@ const ERROR_STATUS: ReadonlyMap<string, number> = new Map(
   Object.entries(PERSONA_ADMIN_ERROR_STATUSES),
 );
 
-export type PersonaAdminFailure = {
+type PersonaAdminFailureBase = {
   success: false;
   status_code: number;
   error: PersonaAdminError;
+};
+
+export type PersonaAdminCoreFailure = PersonaAdminFailureBase & {
   message: 200;
   status: 200;
   can_send: 0;
 };
 
+export type PersonaAdminBridgeFailure = PersonaAdminFailureBase & {
+  message?: never;
+  status?: never;
+  can_send?: never;
+};
+
+export type PersonaAdminFailure = PersonaAdminCoreFailure | PersonaAdminBridgeFailure;
+
 export function personaAdminFailureResponse(value: unknown): PersonaAdminFailure | null {
-  const envelope = webadminErrorEnvelope(value);
+  const envelope = webadminErrorEnvelope(value) ?? adminBridgeErrorEnvelope(value);
   if (!envelope) return null;
   const expectedStatus = ERROR_STATUS.get(envelope.error);
   if (expectedStatus === undefined || envelope.status_code !== expectedStatus) return null;
@@ -792,6 +804,11 @@ export function personaAdminErrorKey(value: unknown): PersonaAdminError | "gener
 
 export type PersonaTarget = { uid: number; displayName: string };
 
+export type PersonaTargetLookupData = {
+  uid: number;
+  display_name: string;
+};
+
 export function personaTargetFromUserDetail(value: unknown): PersonaTarget | null {
   const source = record(value);
   const profile = record(source?.profile);
@@ -803,6 +820,33 @@ export function personaTargetFromUserDetail(value: unknown): PersonaTarget | nul
   const displayName = phpTrim(profile.display_name);
   if (scalarLength(displayName) > 200) return null;
   return { uid, displayName };
+}
+
+/** Build the only two member fields the Persona browser workflow may receive. */
+export function personaTargetLookupData(
+  target: PersonaTarget,
+): PersonaTargetLookupData | null {
+  const uid = canonicalUid(target.uid);
+  if (uid === null
+    || typeof target.displayName !== "string"
+    || hasUnpairedSurrogate(target.displayName)
+    || containsUnsafeTextControl(target.displayName)
+    || scalarLength(target.displayName) > 200) return null;
+  return { uid, display_name: phpTrim(target.displayName) };
+}
+
+/** Decode the dedicated same-origin route; arbitrary user documents fail closed. */
+export function personaTargetLookupResponse(value: unknown): PersonaTarget | null {
+  const source = exactObject(value, ["success", "status_code", "data"]);
+  const data = exactObject(source?.data, ["uid", "display_name"]);
+  if (!source || source.success !== true || source.status_code !== 200 || !data) return null;
+  const projected = personaTargetLookupData({
+    uid: data.uid as number,
+    displayName: data.display_name as string,
+  });
+  return projected
+    ? { uid: projected.uid, displayName: projected.display_name }
+    : null;
 }
 
 export type PersonaHighlightPart = { text: string; highlighted: boolean };
