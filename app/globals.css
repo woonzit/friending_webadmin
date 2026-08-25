@@ -1982,6 +1982,534 @@ textarea:focus {
   }
 }
 
+/* ---- Persona admin contract v1 (dormant until provider release) ---- */
+
+.persona-readiness-panel,
+.persona-member-panel,
+.persona-config-panel {
+  margin-bottom: 22px;
+}
+
+.persona-readiness-panel .panel-header {
+  align-items: flex-start;
+}
+
+.persona-target-lookup {
+  display: grid;
+  grid-template-columns: minmax(240px, 520px) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.persona-target-lookup .button {
+  margin-bottom: 24px;
+}
+
+.persona-target-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  min-width: min(100%, 320px);
+  margin-top: 16px;
+  padding: 13px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface-raised);
+}
+
+.persona-target-avatar {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.persona-target-card > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.persona-target-card strong {
+  overflow-wrap: anywhere;
+}
+
+.persona-target-card small {
+  color: var(--muted);
+}
+
+.persona-recovery-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(245, 185, 66, 0.35);
+  border-radius: 12px;
+  background: var(--amber-soft);
+}
+
+.persona-recovery-callout p {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+.persona-operation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.persona-operation-grid article {
+  display: flex;
+  min-width: 0;
+  min-height: 230px;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.008));
+}
+
+.persona-operation-grid h3 {
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.persona-operation-grid p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.persona-operation-grid .button {
+  width: 100%;
+}
+
+.persona-operation-grid .field-hint {
+  margin-top: -9px;
+}
+
+.persona-config-header {
+  align-items: flex-start;
+}
+
+.persona-config-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+  align-items: start;
+  gap: 22px;
+  margin-top: 18px;
+}
+
+.persona-editor-sections {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+
+.persona-editor-section {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.persona-editor-section > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.persona-editor-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.persona-editor-section > summary::before {
+  content: "+";
+  flex: 0 0 20px;
+  color: var(--accent);
+  font-size: 20px;
+  line-height: 1;
+  text-align: center;
+}
+
+.persona-editor-section[open] > summary::before {
+  content: "−";
+}
+
+.persona-editor-section > summary > span:first-of-type {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+}
+
+.persona-editor-section > summary strong {
+  color: var(--text);
+}
+
+.persona-editor-section > summary small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.persona-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 4px 18px 18px;
+  border-top: 1px solid var(--border);
+}
+
+.persona-config-field,
+.persona-config-switch {
+  min-width: 0;
+  margin-top: 14px;
+}
+
+.persona-config-field textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.persona-config-field small {
+  overflow-wrap: anywhere;
+}
+
+.persona-config-field code,
+.persona-config-switch code {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.persona-color-field {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.persona-color-field i {
+  display: block;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(255, 255, 255, 0.08) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.08) 75%), linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.08) 75%);
+  background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+  background-size: 14px 14px;
+}
+
+.persona-preview-column {
+  position: sticky;
+  top: 82px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-raised);
+}
+
+.persona-preview-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.persona-preview-heading h3 {
+  margin: 0 0 4px;
+  color: var(--text);
+}
+
+.persona-preview-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.persona-phone-frame {
+  width: min(100%, 410px);
+  margin: 0 auto 14px;
+  padding: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 34px;
+  background: #040507;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+}
+
+.persona-phone-frame::before {
+  content: "";
+  display: block;
+  width: 72px;
+  height: 5px;
+  margin: 0 auto 9px;
+  border-radius: 999px;
+  background: #30343c;
+}
+
+.persona-device-screen {
+  overflow: hidden;
+  min-height: 640px;
+  padding: 20px 17px 24px;
+  border-radius: 25px;
+  color: #0a0a19;
+}
+
+.persona-device-header {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 23px;
+}
+
+.persona-device-brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+.persona-device-brand img,
+.persona-device-brand-mark {
+  display: grid;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.persona-device-brand strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.persona-device-progress {
+  overflow: hidden;
+  width: 100%;
+  height: 5px;
+  border-radius: 999px;
+}
+
+.persona-device-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.persona-device-screen > h2 {
+  margin: 0;
+  font-weight: 800;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+.persona-device-subtitle {
+  margin: 12px 0 22px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.persona-device-benefits {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.persona-device-benefits article {
+  min-width: 0;
+  text-align: center;
+}
+
+.persona-preview-icon {
+  display: grid;
+  overflow: hidden;
+  width: 38px;
+  height: 38px;
+  margin: 0 auto 8px;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.persona-preview-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.persona-device-benefits strong,
+.persona-device-benefits p {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.persona-device-benefits p {
+  margin: 4px 0 0;
+  color: #5c5c72;
+  line-height: 1.35;
+}
+
+.persona-device-trust,
+.persona-device-safety {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.persona-device-trust .persona-preview-icon,
+.persona-device-safety .persona-preview-icon {
+  margin: 0;
+}
+
+.persona-device-trust > span:last-child,
+.persona-device-safety > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.persona-device-trust strong,
+.persona-device-trust small,
+.persona-device-safety strong,
+.persona-device-safety small {
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.persona-device-trust small b {
+  margin-left: 3px;
+}
+
+.persona-device-cta {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 13px;
+  opacity: 1;
+  font-weight: 800;
+}
+
+.persona-device-secured {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin: 9px 0 12px;
+}
+
+.persona-device-about {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  margin: 0 auto;
+  padding: 8px 12px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.persona-device-skip {
+  display: block;
+  margin: 16px auto 0;
+  border: 0;
+  background: transparent;
+  opacity: 1;
+  font-weight: 700;
+}
+
+.persona-preview-column > .field-hint {
+  margin: 0;
+  text-align: center;
+}
+
+@media (max-width: 1220px) {
+  .persona-config-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .persona-preview-column {
+    position: static;
+  }
+}
+
+@media (max-width: 900px) {
+  .persona-operation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .persona-operation-grid article {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .persona-readiness-panel .panel-header,
+  .persona-config-header,
+  .persona-preview-heading,
+  .persona-recovery-callout {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .persona-target-lookup,
+  .persona-field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .persona-target-lookup .button {
+    width: 100%;
+    margin-bottom: 0;
+  }
+
+  .persona-config-header .row-actions,
+  .persona-config-header .button,
+  .persona-recovery-callout .button {
+    width: 100%;
+  }
+
+  .persona-preview-column {
+    padding: 12px;
+  }
+
+  .persona-device-screen {
+    min-height: 0;
+    padding: 18px 13px 22px;
+  }
+}
+
 .landing-device-preview img,
 .landing-device-preview video {
   width: 100%;

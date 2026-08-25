@@ -6,9 +6,12 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import AdminHelp from "@/components/AdminHelp";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
-import { REPORTED_CONTENT_CONTRACT_READY } from "@/lib/contractReadiness";
+import {
+  PERSONA_ADMIN_PROXY_RELEASED,
+  REPORTED_CONTENT_CONTRACT_READY,
+} from "@/lib/contractReadiness";
 
-type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "verification" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit";
+type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit";
 
 const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; ready?: boolean }> = [
   { href: "/", key: "overview", icon: "overview", exact: true },
@@ -17,6 +20,7 @@ const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; r
   { href: "/photo-moderation", key: "photoModeration", icon: "photoModeration" },
   { href: "/reported-content", key: "reportedContent", icon: "reportedContent", ready: REPORTED_CONTENT_CONTRACT_READY },
   { href: "/profile-verification", key: "profileVerification", icon: "verification" },
+  { href: "/persona", key: "persona", icon: "persona", ready: PERSONA_ADMIN_PROXY_RELEASED },
   { href: "/profile-location", key: "profileLocation", icon: "profileLocation" },
   { href: "/dates", key: "dates", icon: "dates" },
   { href: "/heroes", key: "heroes", icon: "heroes" },
@@ -53,6 +57,7 @@ const PATHS: Record<IconName, React.ReactNode> = {
   photoModeration: <><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 5-5 3.5 3.5 2-2 5.5 5.5"/><path d="m14.5 8.5 2 2 4-4"/></>,
   reportedContent: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M12 7v5"/><path d="M12 16h.01"/></>,
   verification: <><path d="M12 2.8 14.1 4l2.4-.1 1.2 2.1 2.1 1.2-.1 2.4 1.2 2.1-1.2 2.1.1 2.4-2.1 1.2-1.2 2.1-2.4-.1L12 20.6l-2.1-1.2-2.4.1-1.2-2.1-2.1-1.2.1-2.4L3.1 11.7l1.2-2.1-.1-2.4L6.3 6l1.2-2.1 2.4.1L12 2.8Z"/><path d="m8.5 11.8 2.2 2.2 4.8-5"/></>,
+  persona: <><path d="M12 22s7-3.7 7-10V5l-7-3-7 3v7c0 6.3 7 10 7 10Z"/><circle cx="12" cy="9" r="2.4"/><path d="M8.7 16a3.5 3.5 0 0 1 6.6 0"/></>,
   profileLocation: <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></>,
   dates: <><path d="M5 4v3M19 4v3M4 9h16"/><rect x="3" y="5" width="18" height="16" rx="3"/><path d="m8 15 2.3 2.3L16 12"/></>,
   heroes: <><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></>,

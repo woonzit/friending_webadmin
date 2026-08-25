@@ -618,6 +618,81 @@
           }
         }
       },
+      "persona": {
+        "title": "Persona operations help",
+        "summary": "This guarded workspace combines the native Persona start-screen singleton with three narrowly scoped member overrides. Core authors readiness and capabilities, while Webadmin provides safe projections, exact previews, fresh confirmations and manual recovery after any uncertain mutation response.",
+        "steps": {
+          "1": "Read the contract-readiness badges first; a dormant or missing action means stop, not permission to work around the gate.",
+          "2": "For a member operation, resolve the canonical UID and compare both UID and display name before selecting one action.",
+          "3": "For configuration, review normalized changed fields and the device preview, then confirm one save and verify the returned complete object.",
+          "4": "After a timeout, malformed response or recovery warning, reload authoritative state and never repeat the previous gesture automatically."
+        },
+        "sections": {
+          "readiness": {
+            "title": "Contract and capabilities",
+            "purpose": "The readiness panel proves the schema version, provider release state and whether Core granted this administrator read-only or write actions.",
+            "actions": {
+              "1": "Confirm that contract readiness is active before expecting any Persona proxy action to be reachable.",
+              "2": "Use only controls whose exact action appears in the current Core-authored capability list."
+            },
+            "guidance": "Role labels and visible buttons are not authority. A runtime readiness downgrade or removed action must close the corresponding control immediately."
+          },
+          "memberLookup": {
+            "title": "Canonical member lookup",
+            "purpose": "The lookup accepts one positive base-10 UID and stores only the resolved UID and display name needed to anchor a confirmation.",
+            "actions": {
+              "1": "Enter the exact UID without a sign, decimal point or leading zero, then resolve it through the authenticated proxy.",
+              "2": "Compare the returned display name and UID with the support case before opening a confirmation."
+            },
+            "guidance": "The safe target projection deliberately omits provider attributes, inquiry identifiers, birth data and raw verification evidence. Never infer them from this card."
+          },
+          "syntheticMarker": {
+            "title": "Synthetic marker controls",
+            "purpose": "Apply marks an eligible member with an explicitly admin-created Persona state; revoke removes only that guarded synthetic state.",
+            "actions": {
+              "1": "Apply only for an approved operational purpose and state clearly that it is not provider-backed verification.",
+              "2": "Revoke only after confirming the target; let Core refuse real, provider-backed or force-promoted states."
+            },
+            "guidance": "Neither action verifies phone ownership. Core records audit intent before mutation, and the browser must never label a synthetic marker as a Persona provider check."
+          },
+          "forceVerify": {
+            "title": "Avatar promotion override",
+            "purpose": "The force operation copies the member's current durable avatar into the accepted Persona verification-image model and marks the member accepted.",
+            "actions": {
+              "1": "Read the high-impact confirmation naming the member and UID before promoting the current avatar.",
+              "2": "After success, reload the target before considering another operation; the returned relative path is validated and discarded."
+            },
+            "guidance": "This replaces verification evidence and is not a provider inquiry. Missing or non-durable avatars must remain Core refusals, never browser-side workarounds."
+          },
+          "startConfig": {
+            "title": "Complete start-screen editor",
+            "purpose": "Eleven groups cover every contracted boolean, progress value, font size, URL, color, icon fallback and text field in the native pre-inquiry screen.",
+            "actions": {
+              "1": "Open only the group you need, edit bounded values, and inspect the normalized-change count.",
+              "2": "Discard the draft to restore the last complete Core object, or review and confirm one partial patch."
+            },
+            "guidance": "Sizes clamp to 8–80, progress to 0–1 and strings to their contract caps. Unchanged legacy defaults stay byte-preserved and are not silently rewritten."
+          },
+          "preview": {
+            "title": "Normalized device preview",
+            "purpose": "The non-interactive phone frame renders the normalized draft's hierarchy, highlighted copy, benefit cards, trust content, action, safety card and skip state.",
+            "actions": {
+              "1": "Check content order, visibility switches, typography and contrast before opening the save confirmation.",
+              "2": "Verify every intended highlight marker and fallback icon behavior rather than relying on field names alone."
+            },
+            "guidance": "The preview is an approximation, not an iOS screenshot. It loads images only from the Friending image host so an arbitrary configured host cannot track an administrator."
+          },
+          "uncertainResponses": {
+            "title": "Uncertain-response recovery",
+            "purpose": "Current compatibility mutations have no caller-owned receipt, so a lost, malformed, timeout or unexpected response cannot be proven safe to retry.",
+            "actions": {
+              "1": "Use the displayed reload control to read authoritative configuration or target state after any recovery warning.",
+              "2": "Review audit and current state outside the pending gesture before deciding whether a new manual operation is justified."
+            },
+            "guidance": "The console never auto-retries or stores a substitute request identity for this contract. Repeating an uncertain gesture can duplicate audit or evidence replacement."
+          }
+        }
+      },
       "profileLocation": {
         "title": "Profile location limits help",
         "summary": "This page controls how far a member may move their public profile location from the browser location they explicitly shared. It sets policy radii, not anyone's exact position.",
@@ -2157,6 +2232,7 @@
     "photoModeration": "Photo moderation",
     "reportedContent": "Reported content",
     "profileVerification": "Profile verification",
+    "persona": "Persona operations",
     "profileLocation": "Profile location",
     "dates": "Dates operations",
     "heroes": "People hero",
@@ -2687,6 +2763,230 @@
     "approved": "The picture was approved and the user was notified.",
     "rejected": "The picture was rejected and the user was notified.",
     "actionError": "The moderation decision could not be saved. Please try again."
+  },
+  "personaAdmin": {
+    "eyebrow": "Identity operations",
+    "title": "Persona operations",
+    "subtitle": "Manage guarded member verification overrides and the complete native Persona start screen through Core-authored capabilities.",
+    "loadError": "The Persona contract or start configuration could not be decoded safely. No editable state has been assumed.",
+    "readiness": {
+      "title": "Contract readiness",
+      "copy": "Core is the authority for schema version, release readiness and every available action.",
+      "dormant": "Dormant",
+      "contractLocked": "Core has not released receipt-backed Persona mutations. Navigation, proxy actions and every production control remain closed.",
+      "readyCopy": "The released contract is active, but each visible control still follows the exact action list returned for this administrator.",
+      "version": "Contract v{version}",
+      "writer": "Write actions granted",
+      "viewer": "Read-only capabilities"
+    },
+    "member": {
+      "title": "Member verification operations",
+      "copy": "Resolve a canonical UID first, confirm the displayed member, then choose one narrowly defined and Core-audited action.",
+      "uidLabel": "Canonical member UID",
+      "uidHint": "Positive base-10 digits with no sign, decimal point or leading zero.",
+      "lookup": "Resolve member",
+      "notFound": "No member exists for this UID.",
+      "lookupError": "The member could not be resolved from a complete safe projection.",
+      "targetReady": "Target resolved. Recheck the displayed name and UID before choosing an action.",
+      "uidFallback": "Member #{uid}",
+      "uidValue": "UID {uid}",
+      "reloadRequired": "The target state changed or the mutation result needs authoritative recovery. Reload this UID before considering another action; the console will not retry automatically.",
+      "reloadTarget": "Reload target",
+      "writeRequired": "The current Core action list no longer permits this operation. Reload capabilities.",
+      "uncertain": "The mutation response was lost, malformed or outside the closed contract. Do not repeat it; reload authoritative target state first.",
+      "capabilityUnavailable": "This action is absent from your current Core-authored capabilities.",
+      "actions": {
+        "apply_fake": {
+          "title": "Apply synthetic marker",
+          "copy": "Marks an otherwise unverified member with an explicitly synthetic, admin-applied Persona state. It is not a provider identity check and does not verify the phone.",
+          "button": "Apply synthetic marker"
+        },
+        "revoke_fake": {
+          "title": "Revoke synthetic marker",
+          "copy": "Removes only the guarded admin-applied marker. Core refuses provider-backed and force-promoted verification states.",
+          "button": "Revoke synthetic marker"
+        },
+        "force_verify": {
+          "title": "Promote current avatar",
+          "copy": "Copies the member's current durable avatar into accepted Persona verification evidence. This is a high-impact operator override.",
+          "button": "Promote avatar"
+        }
+      },
+      "confirm": {
+        "apply_fake": "Apply an explicitly synthetic admin marker to {name} (UID {uid})? This does not represent a Persona provider check and does not change phone verification.",
+        "revoke_fake": "Remove the synthetic Persona marker from {name} (UID {uid})? Core will refuse this if the current state is provider-backed or force-promoted.",
+        "force_verify": "Promote the current avatar of {name} (UID {uid}) into accepted verification evidence? This replaces that member's Persona verification image and cannot be undone from this screen."
+      },
+      "confirmTitles": {
+        "apply_fake": "Apply a synthetic marker?",
+        "revoke_fake": "Revoke the synthetic marker?",
+        "force_verify": "Promote this avatar?"
+      },
+      "success": {
+        "apply_fake": "Core accepted the synthetic marker operation. Reload the target before any further action.",
+        "revoke_fake": "Core removed the guarded synthetic marker. Reload the target before any further action.",
+        "force_verify": "Core promoted the current avatar and returned a valid bounded verification path. The path was not retained in browser state."
+      }
+    },
+    "config": {
+      "title": "Persona start screen",
+      "copy": "Edit every field in the native pre-inquiry screen. The live preview uses the same bounded values that the proxy will send.",
+      "reset": "Discard draft",
+      "review": "Review changes",
+      "writeRequired": "The current Core action list no longer permits configuration writes.",
+      "saved": "Core saved and returned the complete normalized Persona start configuration.",
+      "uncertain": "The save response was lost, malformed or outside the closed contract. Do not submit again until the authoritative configuration is reloaded.",
+      "confirmCopy": "Save {count, plural, one {# normalized field} other {# normalized fields}} to the Persona start screen? Core audits field names only, never the copy, URL or color values.",
+      "confirmTitle": "Save Persona start-screen changes?",
+      "confirmButton": "Save reviewed changes",
+      "readOnly": "Your capabilities allow reading the complete configuration but not changing it.",
+      "unsaved": "The draft contains {count, plural, one {# normalized change} other {# normalized changes}}. Review the device preview before saving.",
+      "normalized": "The preview shows Core-compatible trimming or numeric clamping that will be applied to edited fields.",
+      "invalid": "At least one edited value is unsafe or outside the closed field contract. No save can be sent.",
+      "reloadRequired": "Authoritative recovery is required before another save. The console never retries a Persona mutation automatically.",
+      "reload": "Reload configuration"
+    },
+    "limits": {
+      "size": "Whole number from 8 to 80",
+      "progress": "Number from 0 to 1",
+      "url": "HTTPS URL or empty; maximum {maximum} Unicode characters",
+      "color": "Color value; maximum {maximum} Unicode characters",
+      "icon": "Native icon fallback name; maximum {maximum} Unicode characters",
+      "multiline": "Multiline copy; maximum {maximum} Unicode characters",
+      "text": "Text; maximum {maximum} Unicode characters"
+    },
+    "sections": {
+      "general": { "title": "Availability and page", "copy": "Master visibility and page background." },
+      "header": { "title": "Brand header and progress", "copy": "Logo, brand text and progress-bar presentation." },
+      "title": { "title": "Main title", "copy": "Primary template, highlight text, colors and type size." },
+      "subtitle": { "title": "Subtitle", "copy": "Supporting template, highlight text, colors and type size." },
+      "benefits": { "title": "Three benefits", "copy": "Icons, titles, bodies and shared typography for all benefit columns." },
+      "trust": { "title": "Trust card", "copy": "Optional featured-in card, link presentation and supporting brand art." },
+      "cta": { "title": "Primary action", "copy": "Verification call-to-action label, fallback icon and colors." },
+      "secured": { "title": "Secured-by line", "copy": "Persona security attribution and fallback icon." },
+      "about": { "title": "About Persona pill", "copy": "Informational pill label, fallback icon, border and colors." },
+      "safety": { "title": "Safety card", "copy": "Optional safety explanation, illustration, icon and typography." },
+      "skip": { "title": "Skip action", "copy": "Optional skip label, color and type size." }
+    },
+    "preview": {
+      "label": "Normalized Persona start-screen preview",
+      "title": "Device preview",
+      "copy": "A safe, non-interactive approximation of the current normalized draft.",
+      "active": "Screen active",
+      "inactive": "Screen inactive",
+      "imageBoundary": "Only Friending image-host URLs load in this admin preview. Other valid HTTPS values remain editable but are not requested by the browser."
+    },
+    "fields": {
+      "active": "Show the Persona start screen",
+      "progress_active": "Show progress bar",
+      "trust_active": "Show trust card",
+      "safety_active": "Show safety card",
+      "skip_active": "Show skip action",
+      "progress_value": "Progress fraction",
+      "header_brand_size": "Brand text size",
+      "title_size": "Main title size",
+      "subtitle_size": "Subtitle size",
+      "benefit_title_size": "Benefit title size",
+      "benefit_body_size": "Benefit body size",
+      "trust_title_size": "Trust title size",
+      "trust_body_size": "Trust body size",
+      "cta_title_size": "Primary action title size",
+      "secured_text_size": "Secured-by text size",
+      "about_title_size": "About-pill title size",
+      "safety_title_size": "Safety title size",
+      "safety_body_size": "Safety body size",
+      "skip_title_size": "Skip title size",
+      "header_logo_url": "Header logo image URL",
+      "header_brand_text": "Header brand text",
+      "header_brand_color": "Header brand color",
+      "progress_filled_color": "Progress filled color",
+      "progress_track_color": "Progress track color",
+      "title_main": "Main title template",
+      "title_highlight": "Main title highlight text",
+      "title_color": "Main title color",
+      "title_highlight_color": "Main title highlight color",
+      "subtitle_text": "Subtitle template",
+      "subtitle_highlight": "Subtitle highlight text",
+      "subtitle_color": "Subtitle color",
+      "subtitle_highlight_color": "Subtitle highlight color",
+      "benefit1_icon_url": "Benefit 1 icon image URL",
+      "benefit1_icon_name": "Benefit 1 fallback icon",
+      "benefit1_icon_color": "Benefit 1 icon color",
+      "benefit1_icon_bg_color": "Benefit 1 icon background",
+      "benefit1_title": "Benefit 1 title",
+      "benefit1_body": "Benefit 1 body",
+      "benefit2_icon_url": "Benefit 2 icon image URL",
+      "benefit2_icon_name": "Benefit 2 fallback icon",
+      "benefit2_icon_color": "Benefit 2 icon color",
+      "benefit2_icon_bg_color": "Benefit 2 icon background",
+      "benefit2_title": "Benefit 2 title",
+      "benefit2_body": "Benefit 2 body",
+      "benefit3_icon_url": "Benefit 3 icon image URL",
+      "benefit3_icon_name": "Benefit 3 fallback icon",
+      "benefit3_icon_color": "Benefit 3 icon color",
+      "benefit3_icon_bg_color": "Benefit 3 icon background",
+      "benefit3_title": "Benefit 3 title",
+      "benefit3_body": "Benefit 3 body",
+      "trust_icon_url": "Trust-card icon image URL",
+      "trust_icon_name": "Trust-card fallback icon",
+      "trust_icon_color": "Trust-card icon color",
+      "trust_icon_bg_color": "Trust-card icon background",
+      "trust_title": "Trust-card title",
+      "trust_body_prefix": "Trust-card sentence prefix",
+      "trust_body_link_text": "Trust-card link text",
+      "trust_body_link_url": "Trust-card link URL",
+      "trust_brand_logo_url": "Trust-card brand logo URL",
+      "trust_card_bg_color": "Trust-card background",
+      "trust_text_color": "Trust-card text color",
+      "trust_link_color": "Trust-card link color",
+      "cta_title": "Primary action title",
+      "cta_icon_name": "Primary action fallback icon",
+      "cta_bg_color": "Primary action background",
+      "cta_text_color": "Primary action text color",
+      "secured_text": "Secured-by text",
+      "secured_text_color": "Secured-by text color",
+      "secured_icon_name": "Secured-by fallback icon",
+      "about_title": "About-pill title",
+      "about_icon_name": "About-pill fallback icon",
+      "about_icon_color": "About-pill icon color",
+      "about_text_color": "About-pill text color",
+      "about_pill_bg_color": "About-pill background",
+      "about_pill_border_color": "About-pill border color",
+      "safety_icon_url": "Safety-card icon image URL",
+      "safety_icon_name": "Safety-card fallback icon",
+      "safety_icon_color": "Safety-card icon color",
+      "safety_icon_bg_color": "Safety-card icon background",
+      "safety_title": "Safety-card title",
+      "safety_body": "Safety-card body",
+      "safety_illustration_url": "Safety-card illustration URL",
+      "safety_card_bg_color": "Safety-card background",
+      "safety_title_color": "Safety-card title color",
+      "safety_body_color": "Safety-card body color",
+      "skip_title": "Skip action title",
+      "skip_text_color": "Skip action color",
+      "page_bg_color": "Page background color"
+    },
+    "errors": {
+      "unauthorized": "The Webadmin server credential was rejected. This is a server configuration failure.",
+      "admin-session-invalid": "The active administrator identity could not be revalidated. Sign in again.",
+      "admin-revoked": "This administrator membership was revoked. Sign out and contact an owner.",
+      "admin-write-required": "A current editor capability is required for this mutation.",
+      "query-failed": "Core could not read the administrator, member or configuration state safely.",
+      "audit-write-failed": "Core could not persist the audit intent, so the domain mutation did not begin. Reload before another gesture.",
+      "no-fields": "The configuration patch contained no recognized changed field.",
+      "db-write-failed": "The configuration write failed after audit. Reload authoritative configuration before deciding what to do next.",
+      "uid-invalid": "The member UID for this synthetic-marker action was invalid.",
+      "uid-missing": "The member UID for avatar promotion was missing or invalid.",
+      "user-not-found": "The target member no longer exists.",
+      "already-verified-real": "Core refused the synthetic marker because the member already has accepted or provider-linked verification.",
+      "not-fake-persona": "Core refused revocation because the current Persona state is not the guarded synthetic marker.",
+      "user-has-no-avatar": "The member has no current avatar record to promote.",
+      "avatar-file-not-found": "The current avatar has no durable source file, so it cannot become verification evidence.",
+      "copy-failed": "Avatar promotion failed. Reload authoritative member state before any new gesture.",
+      "mark-failed": "Core could not apply the synthetic or force-promoted state. Reload before any new gesture.",
+      "unmark-failed": "Core could not remove the synthetic marker. Reload before any new gesture.",
+      "generic": "Core returned an unknown or malformed Persona refusal. No success has been assumed; reload authoritative state."
+    }
   },
   "reportedContent": {
     "queue": {

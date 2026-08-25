@@ -93,6 +93,20 @@ export const ADMIN_HELP_PAGES = [
     matches: dynamic("/profile-verification"),
   },
   {
+    key: "persona",
+    route: "/persona",
+    sections: [
+      "readiness",
+      "memberLookup",
+      "syntheticMarker",
+      "forceVerify",
+      "startConfig",
+      "preview",
+      "uncertainResponses",
+    ],
+    matches: exact("/persona"),
+  },
+  {
     key: "profileLocation",
     route: "/profile-location",
     sections: ["globalPolicy", "countryOverride", "currentOverrides"],

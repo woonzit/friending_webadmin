@@ -8,6 +8,10 @@ import {
   isAdminActionAuthorized,
 } from "@/lib/adminActions";
 import { coreCall, mergeCoreParams } from "@/lib/core";
+import {
+  normalizePersonaProxyBody,
+  personaProxyCapabilityAuthorized,
+} from "@/lib/personaAdmin";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { readAdminSession } from "@/lib/session";
 
@@ -54,6 +58,13 @@ export async function POST(
   // purpose: the session is valid, so `adminClient` must not send the operator
   // back to /login.
   const principal = adminPrincipalFrom(membership.data);
+  const personaAuthorized = personaProxyCapabilityAuthorized(action, membership.data);
+  if (personaAuthorized === false) {
+    return NextResponse.json(
+      { success: false, error: "persona-capability-required" },
+      { status: 403 },
+    );
+  }
   if (!isAdminActionAuthorized(action, principal)) {
     return NextResponse.json(
       { success: false, error: "admin-write-required" },
@@ -75,6 +86,12 @@ export async function POST(
   } catch {
     return NextResponse.json({ success: false, error: "invalid-input" }, { status: 400 });
   }
+
+  const normalizedPersonaBody = normalizePersonaProxyBody(action, body);
+  if (normalizedPersonaBody === null) {
+    return NextResponse.json({ success: false, error: "invalid-input" }, { status: 400 });
+  }
+  if (normalizedPersonaBody !== undefined) body = normalizedPersonaBody;
 
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer

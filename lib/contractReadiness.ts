@@ -8,3 +8,9 @@
  */
 export const REPORTED_CONTENT_CONTRACT_READY: boolean = false;
 export const PRODUCT_POPUP_CONTRACT_READY: boolean = false;
+/**
+ * Local half of the Persona cutover. Even after this reviewed release switch
+ * changes, every control still requires Core's `admin_me.persona.contract_ready`
+ * and exact action capability at runtime.
+ */
+export const PERSONA_ADMIN_PROXY_RELEASED: boolean = false;
