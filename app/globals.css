@@ -8020,6 +8020,154 @@ textarea:focus {
   font-weight: 800;
 }
 
+/* Reported-content moderation (dormant until the versioned provider contract is live). */
+.reported-content-filter-panel .panel-body {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.reported-content-filters {
+  display: grid;
+  width: min(100%, 720px);
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.reported-content-summary {
+  display: grid;
+  justify-items: end;
+  text-align: right;
+}
+
+.reported-content-summary strong {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.reported-content-summary span,
+.reported-content-summary small {
+  color: var(--muted);
+}
+
+.reported-content-queue-panel,
+.reported-content-material-panel,
+.reported-content-resolution-panel,
+.reported-content-decision-panel {
+  margin-top: 24px;
+}
+
+.reported-content-table-wrap {
+  border: 0;
+  border-radius: 0;
+}
+
+.reported-content-table {
+  white-space: normal;
+}
+
+.reported-content-table th,
+.reported-content-table td {
+  min-width: 126px;
+}
+
+.reported-content-table th:first-child,
+.reported-content-table td:first-child {
+  min-width: 190px;
+}
+
+.reported-content-table code,
+.reported-content-detail-grid code,
+.reported-content-material code {
+  overflow-wrap: anywhere;
+  color: var(--text-soft);
+  white-space: normal;
+}
+
+.reported-content-load-more {
+  display: flex;
+  justify-content: center;
+  padding: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.reported-status.status-pending {
+  border-color: rgba(245, 185, 66, 0.4);
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.reported-status.status-confirmed {
+  border-color: rgba(255, 90, 105, 0.4);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.reported-status.status-rejected {
+  border-color: rgba(51, 213, 139, 0.4);
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.reported-content-detail-grid {
+  align-items: start;
+}
+
+.reported-content-identities {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.reported-content-identities article {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--bg-soft);
+}
+
+.reported-content-identities article > span,
+.reported-content-identities article > small {
+  color: var(--muted);
+}
+
+.reported-content-identities article > a {
+  width: fit-content;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.reported-content-material > strong {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.reported-content-material > p,
+.reported-content-material blockquote {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.reported-content-material blockquote {
+  margin-top: 18px;
+  padding: 18px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 12px 12px 0;
+  background: var(--bg-soft);
+  color: var(--text-soft);
+}
+
+.reported-content-pending {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 @media (max-width: 1080px) {
   .presence-mode-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -8027,7 +8175,8 @@ textarea:focus {
 
   .verification-status-editor-grid,
   .verification-detail-grid,
-  .verification-evidence-grid {
+  .verification-evidence-grid,
+  .reported-content-detail-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -8039,13 +8188,26 @@ textarea:focus {
 
   .verification-localized-pair,
   .verification-color-grid,
-  .verification-member-overview {
+  .verification-member-overview,
+  .reported-content-filters,
+  .reported-content-identities {
     grid-template-columns: 1fr;
   }
 
   .presence-config-header,
   .verification-config-header,
-  .verification-queue-filter .panel-body {
+  .verification-queue-filter .panel-body,
+  .reported-content-filter-panel .panel-body {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reported-content-summary {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .reported-content-pending {
     align-items: stretch;
     flex-direction: column;
   }

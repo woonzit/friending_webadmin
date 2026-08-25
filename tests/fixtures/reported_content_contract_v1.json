@@ -1,0 +1,219 @@
+{
+  "pending_list": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "admin",
+        "capabilities": [
+          "reported_content_decide",
+          "reported_content_read"
+        ]
+      },
+      "filter": {
+        "status": "pending",
+        "target_type": "all",
+        "report_id": null
+      },
+      "reports": [
+        {
+          "report_id": "report-chat-001",
+          "status": "pending",
+          "revision": 3,
+          "target_type": "chat",
+          "reporter": {
+            "uid": 101,
+            "display_name": "Alex Example",
+            "username": "alex_example"
+          },
+          "subject": {
+            "uid": 202,
+            "display_name": "Casey Example",
+            "username": "casey_example"
+          },
+          "subject_content": {
+            "kind": "chat_message",
+            "message_id": "chat-message-001",
+            "availability": "available",
+            "text": "This is synthetic contract-fixture text.",
+            "sent_at": 1787600000,
+            "has_restricted_evidence": true
+          },
+          "reason_code": "harassment",
+          "reason_text": "Synthetic member report.",
+          "created_at": 1787600100,
+          "resolution": null
+        },
+        {
+          "report_id": "report-user-001",
+          "status": "pending",
+          "revision": 1,
+          "target_type": "user",
+          "reporter": {
+            "uid": 303,
+            "display_name": "Morgan Example",
+            "username": "morgan_example"
+          },
+          "subject": {
+            "uid": 404,
+            "display_name": "Riley Example",
+            "username": "riley_example"
+          },
+          "subject_content": {
+            "kind": "profile",
+            "summary": "Synthetic profile summary for parser coverage."
+          },
+          "reason_code": "profile_content",
+          "reason_text": "Synthetic profile report.",
+          "created_at": 1787600200,
+          "resolution": null
+        }
+      ],
+      "next_cursor": "cGVuZGluZy1wYWdlLTI",
+      "total": 3
+    }
+  },
+  "empty_list": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "viewer",
+        "capabilities": [
+          "reported_content_read"
+        ]
+      },
+      "filter": {
+        "status": "rejected",
+        "target_type": "user",
+        "report_id": null
+      },
+      "reports": [],
+      "next_cursor": null,
+      "total": 0
+    }
+  },
+  "exact_detail": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "admin",
+        "capabilities": [
+          "reported_content_decide",
+          "reported_content_read"
+        ]
+      },
+      "filter": {
+        "status": "all",
+        "target_type": "all",
+        "report_id": "report-user-001"
+      },
+      "reports": [
+        {
+          "report_id": "report-user-001",
+          "status": "pending",
+          "revision": 1,
+          "target_type": "user",
+          "reporter": {
+            "uid": 303,
+            "display_name": "Morgan Example",
+            "username": "morgan_example"
+          },
+          "subject": {
+            "uid": 404,
+            "display_name": "Riley Example",
+            "username": "riley_example"
+          },
+          "subject_content": {
+            "kind": "profile",
+            "summary": "Synthetic profile summary for parser coverage."
+          },
+          "reason_code": "profile_content",
+          "reason_text": "Synthetic profile report.",
+          "created_at": 1787600200,
+          "resolution": null
+        }
+      ],
+      "next_cursor": null,
+      "total": 1
+    }
+  },
+  "action_success": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "report": {
+        "report_id": "report-user-001",
+        "status": "rejected",
+        "revision": 2,
+        "target_type": "user",
+        "reporter": {
+          "uid": 303,
+          "display_name": "Morgan Example",
+          "username": "morgan_example"
+        },
+        "subject": {
+          "uid": 404,
+          "display_name": "Riley Example",
+          "username": "riley_example"
+        },
+        "subject_content": {
+          "kind": "profile",
+          "summary": "Synthetic profile summary for parser coverage."
+        },
+        "reason_code": "profile_content",
+        "reason_text": "Synthetic profile report.",
+        "created_at": 1787600200,
+        "resolution": {
+          "decision": "rejected",
+          "reason": "No policy violation was found.",
+          "decided_at": 1787600300,
+          "decided_by": "moderator@example.test"
+        }
+      },
+      "replayed": false
+    }
+  },
+  "conflict": {
+    "success": false,
+    "status_code": 409,
+    "error": "reported-content-conflict",
+    "data": {
+      "contract_version": 1,
+      "report": {
+        "report_id": "report-user-001",
+        "status": "confirmed",
+        "revision": 2,
+        "target_type": "user",
+        "reporter": {
+          "uid": 303,
+          "display_name": "Morgan Example",
+          "username": "morgan_example"
+        },
+        "subject": {
+          "uid": 404,
+          "display_name": "Riley Example",
+          "username": "riley_example"
+        },
+        "subject_content": {
+          "kind": "profile",
+          "summary": "Synthetic profile summary for parser coverage."
+        },
+        "reason_code": "profile_content",
+        "reason_text": "Synthetic profile report.",
+        "created_at": 1787600200,
+        "resolution": {
+          "decision": "confirmed",
+          "reason": "The report was confirmed by another operator.",
+          "decided_at": 1787600290,
+          "decided_by": "other-moderator@example.test"
+        }
+      }
+    }
+  }
+}

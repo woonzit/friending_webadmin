@@ -49,7 +49,7 @@ test("all authenticated page routes have one closed contextual help entry", asyn
   const actualRoutes = files.map(routeForPageFile).sort();
   const helpRoutes = ADMIN_HELP_PAGES.map((page) => page.route).sort();
 
-  assert.equal(actualRoutes.length, 33, "the current screen census changed; review every new or removed screen");
+  assert.equal(actualRoutes.length, 35, "the current screen census changed; review every new or removed screen");
   assert.deepEqual(helpRoutes, actualRoutes);
   assert.equal(new Set(helpRoutes).size, helpRoutes.length, "a screen may have only one help document");
 });
@@ -73,7 +73,7 @@ test("exact and dynamic routes resolve to the intended guide and nothing generic
 
 test("every inventoried functional section has detailed English and Hungarian help", async () => {
   const totalSections = ADMIN_HELP_PAGES.reduce((sum, page) => sum + page.sections.length, 0);
-  assert.equal(totalSections, 172, "review the functional-section census when the UI changes");
+  assert.equal(totalSections, 183, "review the functional-section census when the UI changes");
 
   for (const locale of ["en", "hu"]) {
     const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));

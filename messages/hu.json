@@ -365,6 +365,127 @@
           }
         }
       },
+      "reportedContentQueue": {
+        "title": "Jelentett tartalmak sorának súgója",
+        "summary": "Ez a biztonságos user-, profil- és chatüzenet-vetületek globális jelentéstriázs sora. Elkülöníti a függő munkát a lezárt előzményektől, megtartja a hiteles lapozást, és hibás olvasást soha nem értelmez üres sorként.",
+        "steps": {
+          "1": "Válaszd ki a kijelölt moderációs feladatnak megfelelő függő vagy lezárt állapotot és céltípust.",
+          "2": "Nyiss meg egy jelentést, azonosítsd a bejelentőt és a jelentett usert, majd csak a Core által szándékosan adott korlátozott anyagot olvasd.",
+          "3": "Minden döntést a részletező oldalon végezz el, majd továbblépés előtt ellenőrizd a hiteles eredményállapotot."
+        },
+        "sections": {
+          "filters": {
+            "title": "Állapot- és célszűrők",
+            "purpose": "A két zárt szűrő elkülöníti a függő, megerősített és elutasított jelentéseket, valamint a profil- és chatüzenetcélokat.",
+            "actions": {
+              "1": "Válaszd az aktuális feladathoz tartozó legszűkebb állapot- és célkombinációt.",
+              "2": "Szűrőváltáskor vagy más moderátor lehetséges döntése után frissítsd az első oldalt."
+            },
+            "guidance": "Az üres eredmény csak a kiválasztott normalizált szűrő ürességét bizonyítja. Nem bizonyítja, hogy a teljes moderációs előzmény üres."
+          },
+          "queue": {
+            "title": "Hiteles jelentéssorok",
+            "purpose": "Minden sor azonosítja a bejelentőt, jelentett tagot, céltípust, tagi indokot, aktuális állapotot és létrehozási időt teljes user- vagy chatdokumentum nélkül.",
+            "actions": {
+              "1": "A látható jelentésazonosítóval és tagi azonosítókkal nyisd meg a megfelelő részletes rekordot.",
+              "2": "A függő sorokat a legrégebbitől kezeld, és listametaadatból ne hozz döntést."
+            },
+            "guidance": "A jelentés állítás, nem bizonyított szabálysértés. Eredmény rögzítése előtt nyisd meg a részleteket, és értékeld a vetített kontextust."
+          },
+          "safeProjection": {
+            "title": "Biztonságos anyagvetület",
+            "purpose": "A Core a sor tartalmát egyszerű szövegre, korlátozott címkékre és biztonságos tagazonosítókra szűkíti, miközben visszatartja az elérhetőséget, koordinátát, privát URL-t és nyers bizonyítékot.",
+            "actions": {
+              "1": "A vetített indokot és céltípust kontextusként, ne korlátlan fiókbizonyítékként olvasd.",
+              "2": "Hiányos sor esetén állj meg és jelezd a betöltési hibát; ne kerüld meg a hibát."
+            },
+            "guidance": "Ne keress közvetlen tárolási utat, és ne másold a jelentést külső ticketbe. Korlátozott bizonyítékhoz külön szerződött bridge szükséges."
+          },
+          "capabilities": {
+            "title": "Olvasási és döntési képességek",
+            "purpose": "A sor a Core által adott képességeket a szerepnévtől függetlenül kezeli, így a konzol nem talál ki döntési jogosultságot viewernek vagy későbbi szűkebb szerepnek.",
+            "actions": {
+              "1": "A csak olvasási hozzáférést triázsra és eszkalációra használd terminális döntés nélkül.",
+              "2": "Döntési vezérlőt csak akkor várj, ha a Core kifejezetten visszaadta a döntési képességet."
+            },
+            "guidance": "A szerepnév leíró adat, nem jogosultságbizonyíték. A Core a döntési képességet a módosításkor ismét ellenőrzi."
+          },
+          "pagination": {
+            "title": "Kurzoros lapozás",
+            "purpose": "A további oldalak átlátszatlan, az aktuális szűrőkhöz kötött kurzort használnak, és minden elfogadott oldalon egyedi, stabil jelentésazonosítókat tartanak meg.",
+            "actions": {
+              "1": "A kurzor érvényessége alatt mindkét szűrő változtatása nélkül tölts be további oldalakat.",
+              "2": "Elavult vagy érvénytelen Core-kurzor esetén indulj újra az első oldalról."
+            },
+            "guidance": "Kurzor értelmezése vagy gyártása tilos. Duplikált, hibás vagy rosszul rendezett oldal részleges sor bővítése helyett zártan hibázik."
+          }
+        }
+      },
+      "reportedContentDetail": {
+        "title": "Jelentett tartalom részleteinek súgója",
+        "summary": "Ez a munkatér egy pontos jelentést mutat, és egy revízióhoz kötött megerősítő vagy elutasító döntést enged. Bizonytalan válasznál megőrzi a kliens kérésazonosítóját, összefésülés nélkül átveszi az ütközést, és nem tilt automatikusan vagy töröl tartalmat.",
+        "steps": {
+          "1": "A korlátozott célanyag értelmezése előtt ellenőrizd a jelentésazonosítót, revíziót, bejelentőt és jelentett usert.",
+          "2": "Ha a Core döntési képességet adott, válassz megerősítést vagy elutasítást, és a jóváhagyás előtt írj tényszerű belső indokot.",
+          "3": "Bizonytalan válasz után változtatás nélkül ismételd a mentett kérést, amíg a Core visszajátszást, konvergenciát vagy terminális ütközést nem ad."
+        },
+        "sections": {
+          "identities": {
+            "title": "Bejelentő és jelentett user",
+            "purpose": "Az azonosítókártyák csak a jelentés megértéséhez és vizsgálatához szükséges UID-t, megjelenő nevet és felhasználónevet adják a két személyről.",
+            "actions": {
+              "1": "Ellenőrizd, hogy mindkét azonosítókártya a vizsgálni kívánt jelentéshez tartozik.",
+              "2": "Csak akkor nyisd meg a tagprofilt, ha további engedélyezett supportkontextus szükséges."
+            },
+            "guidance": "A vetület szándékosan kihagyja az elérhetőséget, providert, születésnapot, kapcsolatot és helyadatot. Hiányzó azonosítóadatból ne következtess."
+          },
+          "reportedMaterial": {
+            "title": "Korlátozott jelentett anyag",
+            "purpose": "A profiljelentés rövid egyszerű szöveges összefoglalót, a chatjelentés korlátozott üzenetet vagy kifejezett eltávolított/elérhetetlen állapotot és csak bizonyítékjelenlétet ad.",
+            "actions": {
+              "1": "Üres chatüzenet értelmezése előtt olvasd el az elérhetőségi jelölést.",
+              "2": "A korlátozott bizonyíték jelvényét határjelzőként, ne fájlhozzáférési engedélyként kezeld."
+            },
+            "guidance": "A közvetlen tárolási utak, privát URL-ek és korlátlan beszélgetések nem részei ennek a szerződésnek. Elérhetetlen bizonyítékot ne pótolj találgatással."
+          },
+          "decision": {
+            "title": "Jelentés megerősítése vagy elutasítása",
+            "purpose": "A döntés csak a függő jelentést állítja megerősítettre vagy elutasítottra a pontos látható revízión, és korlátozott operátori indokot rögzít.",
+            "actions": {
+              "1": "Csak akkor erősítsd meg, ha a vetített kontextus alátámasztja a tag jelentésének érvényességét.",
+              "2": "Elutasításkor tényszerűen indokold, miért nem megerősített a jelentés, szükségtelen privát adat nélkül."
+            },
+            "guidance": "Ez a döntés nem tilt usert, nem függeszt fel fiókot és nem töröl tartalmat. Későbbi szabályzati lépéshez külön, auditált eszközt használj."
+          },
+          "conflictRetry": {
+            "title": "Ütközés és bizonytalan válasz helyreállítása",
+            "purpose": "Az oldal módosítás előtt elmenti a kérésazonosítót, várt revíziót, műveletet és indokot, így timeout vagy elveszett válasz nem válhat második logikai döntéssé.",
+            "actions": {
+              "1": "Mindig a Mentett kérés újrapróbálása gombot használd, amíg a függő kérés sávja látszik.",
+              "2": "Revízióütközéskor a régi draft összefésülése helyett vizsgáld meg az átvett Core-sort."
+            },
+            "guidance": "Hálózati, timeout, szolgáltatási vagy folyamatban válasz után ne töröld az azonosságot és ne készíts új UUID-t. A pontos replay a helyreállítás."
+          },
+          "resolution": {
+            "title": "Hiteles lezárás",
+            "purpose": "A lezárt jelentés a Core által visszaadott döntést, belső indokot, döntő adminisztrátort és időpontot mutatja a növelt revízióval.",
+            "actions": {
+              "1": "Ellenőrizd, hogy a visszaadott döntés és indok egyezik a megerősített operátori művelettel.",
+              "2": "A lezárást megváltoztathatatlan előzményként kezeld, és ne küldj újabb döntést."
+            },
+            "guidance": "A visszajátszott siker az eredeti befejezés, nem második módosítás. A lezárt jelentés az elszámoltatható moderációs előzmény része marad."
+          },
+          "boundaries": {
+            "title": "Jogosultsági és bizonyítékhatárok",
+            "purpose": "A Core adja az olvasási és döntési képességeket, felülírja az adminazonosságot, validál minden módosítást, és állapotváltozás előtt tartós audit-szándékot rögzít.",
+            "actions": {
+              "1": "Döntési képesség hiányában állj meg, és az engedélyezett üzemeltetési útvonalon eszkalálj.",
+              "2": "Az operátori indok legyen tényszerű, és ne tartalmazzon privát bizonyítékot, elérhetőséget vagy tárolási hivatkozást."
+            },
+            "guidance": "A böngésző nem hívja közvetlenül a Core-t, és nem bővítheti saját szerepét. Auditírási hiba változatlanul hagyja a jelentést, ugyanazzal a retry-azonossággal."
+          }
+        }
+      },
       "profileVerificationQueue": {
         "title": "Profilverifikációs sor súgó",
         "summary": "Ez az oldal azokat a tagokat listázza, akik privát videós szelfit küldtek be az aktuális elfogadott főfotóval való kézi összehasonlításhoz. A sor csak metaadatot tartalmaz; a privát bizonyíték kizárólag lefoglalt ügyben nyílik meg.",
@@ -2024,6 +2145,7 @@
     "users": "Regisztrált userek",
     "membership": "Előfizetések",
     "photoModeration": "Képmoderáció",
+    "reportedContent": "Jelentett tartalom",
     "profileVerification": "Profilhitelesítés",
     "profileLocation": "Profilhelyzet",
     "dates": "Dates üzemeltetés",
@@ -2555,6 +2677,143 @@
     "approved": "A képet jóváhagytuk, a user értesítést kapott.",
     "rejected": "A képet elutasítottuk, a user értesítést kapott.",
     "actionError": "A moderációs döntést nem sikerült menteni. Próbáld újra."
+  },
+  "reportedContent": {
+    "queue": {
+      "eyebrow": "Biztonság és bizalom",
+      "title": "Jelentett tartalom",
+      "subtitle": "Tag- és chatjelentések ellenőrzése egy hiteles sorból, privát bizonyíték felfedése és automatikus fiókbüntetés nélkül.",
+      "loadError": "A jelentett tartalmak sora nem tölthető be biztonságosan. A felület nem feltételez üres állapotot.",
+      "targetFilter": "Jelentett cél",
+      "statuses": {
+        "pending": "Függőben",
+        "confirmed": "Megerősítve",
+        "rejected": "Elutasítva",
+        "all": "Minden állapot"
+      },
+      "targets": {
+        "user": "User vagy profil",
+        "chat": "Chatüzenet",
+        "all": "Minden cél"
+      },
+      "matchingReports": "egyező jelentés",
+      "decisionAccess": "Döntési képesség elérhető",
+      "readOnlyAccess": "Csak olvasási hozzáférés",
+      "queueTitle": "Moderációs sor",
+      "queueCopy": "A függő jelentések a legrégebbivel, a lezárt előzmények a legújabbal kezdődnek. Minden sor a Core korlátozott, biztonságos vetülete.",
+      "loaded": "{count} betöltve",
+      "emptyTitle": "Nincs a szűrőnek megfelelő jelentés",
+      "emptyCopy": "A Core teljes és érvényes üres eredményt adott a kiválasztott állapothoz és célhoz.",
+      "subject": "Jelentett user",
+      "reporter": "Bejelentő",
+      "target": "Cél",
+      "reason": "Tagi indok",
+      "uid": "UID {uid}",
+      "noReasonText": "Nincs kiegészítő szöveg",
+      "loadMore": "További jelentések betöltése"
+    },
+    "detail": {
+      "back": "Vissza a jelentett tartalmakhoz",
+      "eyebrow": "Biztonság és bizalom",
+      "title": "{reportId} jelentés",
+      "subtitle": "A jelentés hiteles revíziója: {revision}. A döntés csak a jelentés érvényességét rögzíti; nem tilt usert és nem töröl tartalmat.",
+      "loadError": "A jelentés nem tölthető be teljes és érvényes Core-válaszból.",
+      "pendingTitle": "Egy megerősített kérés még függőben van.",
+      "pendingCopy": "Az eredeti kérésazonosítóval ismételd meg a mentett {action} döntést; a versengő vezérlők zárolva maradnak.",
+      "retryPending": "Mentett kérés újrapróbálása",
+      "viewerNotice": "A Core olvasási hozzáférést adott, de jelentésdöntési képességet nem. Csak a biztonságos vetület vizsgálható.",
+      "identitiesTitle": "A jelentés szereplői",
+      "identitiesCopy": "Csak a jelentés megértéséhez szükséges biztonságos azonosítómezők jelennek meg.",
+      "reporter": "Bejelentő",
+      "subject": "Jelentett user",
+      "uid": "UID {uid}",
+      "openUser": "Userprofil megnyitása",
+      "reportTitle": "Jelentési kontextus",
+      "reportCopy": "Az indok és a cél metaadatai a moderációs rekordhoz beküldött korlátozott értékek.",
+      "reportId": "Jelentésazonosító",
+      "target": "Cél típusa",
+      "reasonCode": "Indokkód",
+      "reasonText": "Tagi magyarázat",
+      "noReasonText": "Nem érkezett kiegészítő szöveg.",
+      "revision": "Revízió",
+      "materialTitle": "Jelentett anyag",
+      "materialCopy": "A Core egyszerű szöveget vagy elérhetetlenségi jelölést ad; közvetlen tárolási út és privát bizonyíték itt soha nem jelenik meg.",
+      "restrictedEvidence": "Korlátozott bizonyíték létezik",
+      "profileSummary": "Profilösszefoglaló",
+      "unavailableMaterial": "Nem elérhető",
+      "availability": "Elérhetőség",
+      "availabilityValues": {
+        "available": "Elérhető",
+        "removed": "Eltávolítva",
+        "unavailable": "Nem elérhető legacy cél"
+      },
+      "messageId": "Üzenetazonosító",
+      "sentAt": "Elküldve",
+      "resolutionTitle": "Rögzített lezárás",
+      "resolutionCopy": "Ez a megváltoztathatatlan operátori eredmény magyarázza, hogy a jelentést megerősítették vagy elutasították.",
+      "decision": "Döntés",
+      "operatorReason": "Operátori indok",
+      "decidedBy": "Döntéshozó",
+      "decidedAt": "Döntés ideje",
+      "decisionTitle": "Döntés a jelentésről",
+      "decisionCopy": "Döntsd el, érvényes-e a jelentés, és adj pontos belső indokot. A user- vagy tartalomkorlátozást külön auditált eszközök kezelik.",
+      "decisionClosed": "A jelentés már lezárt. Lezárt jelentésről nem lehet újra dönteni.",
+      "decisionUnavailable": "A Core által adott képességeid nem engednek döntést.",
+      "persistenceUnavailable": "Ez a böngésző nem tudja megőrizni a tartós újrapróbálási azonosságot, ezért nem küldhető új döntés.",
+      "pendingControlsLocked": "Egy mentett kérés eredménye bizonytalan. Új művelet előtt ugyanazt a kérést próbáld újra.",
+      "reasonHint": "{count}/500 karakter. Legyen tényszerű, és ne tartalmazzon szükségtelen privát adatot.",
+      "statuses": {
+        "pending": "Függőben",
+        "confirmed": "Megerősítve",
+        "rejected": "Elutasítva"
+      },
+      "targets": {
+        "user": "User vagy profil",
+        "chat": "Chatüzenet"
+      },
+      "decisions": {
+        "confirmed": "Jelentés megerősítése",
+        "rejected": "Jelentés elutasítása"
+      },
+      "submit": {
+        "confirmed": "Jelentés megerősítése",
+        "rejected": "Jelentés elutasítása"
+      },
+      "confirm": {
+        "confirmedTitle": "Megerősíted ezt a jelentést?",
+        "confirmedCopy": "Ez azt rögzíti, hogy a jelentés érvényes. Nem tiltja automatikusan a usert, és nem távolítja el a jelentett anyagot.",
+        "rejectedTitle": "Elutasítod ezt a jelentést?",
+        "rejectedCopy": "Ez azt rögzíti, hogy a jelentést nem erősítették meg. Nem törli a jelentést vagy annak audit-előzményeit."
+      },
+      "decisionSaved": "A jelentésdöntést pontosan egyszer mentette a Core.",
+      "decisionReplayed": "A Core a korábban befejezett döntést játszotta vissza; nem jött létre második módosítás.",
+      "decisionObserved": "A hiteles újratöltés bizonyítja, hogy a mentett döntés már befejeződött; nem indult újrapróbálás.",
+      "errors": {
+        "contractVersionInvalid": "A Core elutasította a jelentett tartalom szerződésverzióját.",
+        "parameterInvalid": "A kérés váratlan vagy hibás paramétert tartalmazott.",
+        "filterInvalid": "A kiválasztott jelentésszűrő érvénytelen.",
+        "cursorInvalid": "A sorkurzor elavult vagy érvénytelen. Töltsd újra az első oldalt.",
+        "reportIdInvalid": "A jelentésazonosító érvénytelen.",
+        "decisionInvalid": "Válassz egy támogatott jelentésdöntést.",
+        "reasonInvalid": "Adj meg 1 és 500 karakter közötti pontos operátori indokot.",
+        "revisionInvalid": "A jelentés revíziója érvénytelen. Töltsd újra a jelentést.",
+        "requestIdInvalid": "A tartós kérésazonosító érvénytelen.",
+        "notFound": "A kért jelentés már nem létezik.",
+        "conflict": "A jelentés megváltozott a döntés előtt. A felület átvette a Core hiteles verzióját; új művelet előtt vizsgáld meg.",
+        "requestIdConflict": "Ez a kérésazonosító már más tartalomhoz tartozik. A művelet nem ismétlődött meg.",
+        "requestInProgress": "A Core még feldolgozza ugyanezt a kérést. Változtatás nélkül próbáld újra a mentett kérést.",
+        "readRequired": "A Core-képességeid nem engedik a jelentett tartalom olvasását.",
+        "decisionRequired": "A Core-képességeid nem engedik a jelentésről szóló döntést.",
+        "auditWriteFailed": "A Core nem tudta tartósan rögzíteni az auditbizonyítékot, ezért a jelentés változatlan maradt. Próbáld újra a mentett kérést.",
+        "storedInvalid": "A Core hibás tárolt jelentésadatot talált, ezért nem adott vissza részleges rekordot.",
+        "readFailed": "A Core nem tudta biztonságosan beolvasni a jelentést. Próbáld újra.",
+        "writeFailed": "A döntés eredménye bizonytalan. Őrizd meg, és próbáld újra pontosan ugyanazt a kérést.",
+        "sessionInvalid": "Az adminisztrátori munkameneted vagy tagságod már nem érvényes.",
+        "persistenceUnavailable": "A böngésző nem tudta tartósan menteni az újrapróbálási azonosságot. Nem indult döntés.",
+        "persistenceCleanupFailed": "A hiteles eredmény látható, de a böngésző nem tudta törölni a mentett újrapróbálási állapotot. Ne indíts másik döntést; újratöltéssel egyeztesd.",
+        "generic": "A jelentésművelet biztonságosan meghiúsult. A felület nem feltételez sikert vagy üres állapotot."
+      }
+    }
   },
   "userDetail": {
     "back": "Vissza a regisztrált userekhez",

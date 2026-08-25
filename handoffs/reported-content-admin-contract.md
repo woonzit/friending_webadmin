@@ -327,3 +327,8 @@ Core T-108 **MUST** cover:
 Webadmin T-205 **MUST** cover strict parsers, guest 401, foreign-origin 403, read/write capability
 gates, every closed refusal path, durable retry identity, EN/HU key parity, route-specific Help, and
 the distinction between an empty queue and a failed/malformed read.
+
+## Lead amendments (accepted, binding for T-108a / T-205)
+- A1 (2026-08-25T17:58Z): an exact-detail read (`report_id` present) echoes `filter.status="all"`,
+  `filter.target_type="all"`, and `filter.report_id=<the id>`; the returned row's own `status` is authoritative.
+  Core MUST NOT echo the list default `pending` on a detail read.

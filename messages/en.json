@@ -365,6 +365,127 @@
           }
         }
       },
+      "reportedContentQueue": {
+        "title": "Reported-content queue help",
+        "summary": "This is the global report triage queue for safe user/profile and chat-message projections. It separates pending work from resolved history, preserves authoritative pagination and never treats a malformed read as proof that no reports exist.",
+        "steps": {
+          "1": "Choose the pending or resolved status and target type that matches your assigned moderation work.",
+          "2": "Open one report, identify the reporter and subject, and read only the bounded material Core deliberately projects.",
+          "3": "Use the detail page for any decision, then verify the authoritative status before continuing to another report."
+        },
+        "sections": {
+          "filters": {
+            "title": "Status and target filters",
+            "purpose": "The two closed filters separate pending, confirmed and rejected reports and distinguish profile targets from chat-message targets.",
+            "actions": {
+              "1": "Select the narrowest status and target combination relevant to the current assignment.",
+              "2": "Refresh the first page after changing filters or when another moderator may have acted."
+            },
+            "guidance": "An empty result proves only that the selected normalized filter is empty. It is never evidence that the whole moderation history is empty."
+          },
+          "queue": {
+            "title": "Authoritative report rows",
+            "purpose": "Each row identifies the reporter, reported member, target kind, member reason, current report state and creation time without returning whole user or chat documents.",
+            "actions": {
+              "1": "Use the visible report ID and member identities to open the intended detail record.",
+              "2": "Prioritize pending rows in their oldest-first order and avoid deciding from list metadata."
+            },
+            "guidance": "A report indicates an allegation, not a proven violation. Open the detail and evaluate the projected context before recording an outcome."
+          },
+          "safeProjection": {
+            "title": "Safe projected material",
+            "purpose": "Core limits queue content to plain text, bounded labels and safe member identifiers while withholding contacts, coordinates, private URLs and raw evidence.",
+            "actions": {
+              "1": "Read the projected reason and target kind as context, not as unrestricted account evidence.",
+              "2": "Stop and report a load failure if any row is incomplete instead of working around it."
+            },
+            "guidance": "Do not seek direct storage paths or copy report material into external tickets. Restricted evidence requires a separately contracted bridge."
+          },
+          "capabilities": {
+            "title": "Read and decision capabilities",
+            "purpose": "The queue displays Core-authored capabilities independently from the role label, so the console never invents decision authority for a viewer or future narrower role.",
+            "actions": {
+              "1": "Use read-only access for triage and escalation without attempting a terminal report decision.",
+              "2": "Expect decision controls only when Core explicitly returns the report-decision capability."
+            },
+            "guidance": "A role name is descriptive, not authorization evidence. Core rechecks the decision capability again at mutation time."
+          },
+          "pagination": {
+            "title": "Cursor pagination",
+            "purpose": "Load-more uses an opaque cursor bound to the current filters and preserves unique stable report IDs across every accepted page.",
+            "actions": {
+              "1": "Load subsequent pages without changing either filter while the cursor remains active.",
+              "2": "Restart from the first page when Core reports a stale or invalid cursor."
+            },
+            "guidance": "Never interpret or manufacture a cursor. A duplicate, malformed or out-of-order page fails closed instead of extending a partial queue."
+          }
+        }
+      },
+      "reportedContentDetail": {
+        "title": "Reported-content detail help",
+        "summary": "This workspace shows one exact report and permits one revision-bound confirm or reject decision. It preserves a caller-minted request ID across uncertain responses, adopts conflicts without merging, and deliberately performs no automatic ban or content deletion.",
+        "steps": {
+          "1": "Confirm the report ID, revision, reporter and reported member before interpreting the bounded target material.",
+          "2": "If Core grants decision capability, select confirm or reject and write a factual internal reason before reviewing the confirmation.",
+          "3": "After any uncertain response, retry the saved request unchanged until Core returns replay, convergence or a terminal conflict."
+        },
+        "sections": {
+          "identities": {
+            "title": "Reporter and reported member",
+            "purpose": "The identity cards expose only UID, display name and username for the two people needed to understand and investigate this report.",
+            "actions": {
+              "1": "Verify that both identity cards correspond to the report you intended to review.",
+              "2": "Open a member profile only when additional authorized support context is necessary."
+            },
+            "guidance": "The projection intentionally omits contact, social-provider, birthday, relationship and location details. Do not infer missing identity data."
+          },
+          "reportedMaterial": {
+            "title": "Bounded reported material",
+            "purpose": "Profile reports carry a short plain-text summary; chat reports carry bounded message text or an explicit removed/unavailable state plus restricted-evidence presence only.",
+            "actions": {
+              "1": "Read the availability marker before interpreting an empty chat-message text value.",
+              "2": "Treat the restricted-evidence badge as a boundary marker, not as permission to retrieve files."
+            },
+            "guidance": "Direct storage paths, private URLs and unrestricted conversations are outside this contract. Never replace unavailable evidence with guesses."
+          },
+          "decision": {
+            "title": "Confirm or reject the report",
+            "purpose": "A decision changes only the pending report to confirmed or rejected at the exact displayed revision and records a bounded operator reason.",
+            "actions": {
+              "1": "Confirm only when the projected context supports that the member's report is valid.",
+              "2": "Reject when the report is not confirmed, and explain that conclusion factually without unnecessary private data."
+            },
+            "guidance": "This decision never bans a user, suspends an account or deletes content. Use separate explicit audited tools if later policy action is required."
+          },
+          "conflictRetry": {
+            "title": "Conflict and uncertain-response recovery",
+            "purpose": "The page stores one request ID, expected revision, action and reason before mutation so a timeout or lost response cannot become a second logical decision.",
+            "actions": {
+              "1": "Use Retry saved request whenever the pending-request banner remains visible.",
+              "2": "On a revision conflict, review the adopted Core row instead of merging it with the old draft."
+            },
+            "guidance": "Do not clear the pending identity or mint another UUID after a network, timeout, service or in-progress response. Exact replay is the recovery path."
+          },
+          "resolution": {
+            "title": "Authoritative resolution",
+            "purpose": "Resolved reports show the decision, internal reason, deciding administrator and timestamp returned by Core with the incremented revision.",
+            "actions": {
+              "1": "Verify that the returned decision and reason match the confirmed operator gesture.",
+              "2": "Use the resolution as immutable history and do not attempt to submit another decision."
+            },
+            "guidance": "A replayed success is the original completion, not a second change. Resolved reports remain visible for accountable moderation history."
+          },
+          "boundaries": {
+            "title": "Authorization and evidence boundaries",
+            "purpose": "Core authors read/decide capabilities, overwrites administrator identity, validates every mutation and persists audit intent before the report state can change.",
+            "actions": {
+              "1": "Stop when decision capability is absent and escalate through the approved operational path.",
+              "2": "Keep operator reasons factual and exclude private evidence, contact data and direct storage references."
+            },
+            "guidance": "The browser never calls Core directly and cannot widen its own role. An audit-write refusal leaves the report untouched and retains the same retry identity."
+          }
+        }
+      },
       "profileVerificationQueue": {
         "title": "Profile verification queue help",
         "summary": "This page lists members who submitted a private video selfie for manual comparison with their current accepted main photo. Queue rows contain metadata; private evidence opens only inside a claimed case.",
@@ -2024,6 +2145,7 @@
     "users": "Registered users",
     "membership": "Membership",
     "photoModeration": "Photo moderation",
+    "reportedContent": "Reported content",
     "profileVerification": "Profile verification",
     "profileLocation": "Profile location",
     "dates": "Dates operations",
@@ -2555,6 +2677,143 @@
     "approved": "The picture was approved and the user was notified.",
     "rejected": "The picture was rejected and the user was notified.",
     "actionError": "The moderation decision could not be saved. Please try again."
+  },
+  "reportedContent": {
+    "queue": {
+      "eyebrow": "Trust and safety",
+      "title": "Reported content",
+      "subtitle": "Review member and chat reports from one authoritative queue without exposing private evidence or applying automatic account penalties.",
+      "loadError": "The reported-content queue could not be loaded safely. No empty state has been assumed.",
+      "targetFilter": "Reported target",
+      "statuses": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "rejected": "Rejected",
+        "all": "All statuses"
+      },
+      "targets": {
+        "user": "User or profile",
+        "chat": "Chat message",
+        "all": "All targets"
+      },
+      "matchingReports": "matching reports",
+      "decisionAccess": "Decision capability available",
+      "readOnlyAccess": "Read-only access",
+      "queueTitle": "Moderation queue",
+      "queueCopy": "Pending reports are oldest first; resolved history is newest first. Every row is a bounded safe projection from Core.",
+      "loaded": "{count} loaded",
+      "emptyTitle": "No reports match this filter",
+      "emptyCopy": "Core returned a complete, valid empty result for the selected status and target.",
+      "subject": "Reported user",
+      "reporter": "Reporter",
+      "target": "Target",
+      "reason": "Member reason",
+      "uid": "UID {uid}",
+      "noReasonText": "No additional text",
+      "loadMore": "Load more reports"
+    },
+    "detail": {
+      "back": "Back to reported content",
+      "eyebrow": "Trust and safety",
+      "title": "Report {reportId}",
+      "subtitle": "Authoritative report revision {revision}. Decisions record report validity only; they do not ban a member or delete content.",
+      "loadError": "This report could not be loaded from a complete, valid Core response.",
+      "pendingTitle": "A confirmed request is still pending.",
+      "pendingCopy": "Retry the saved {action} decision with its original request ID; competing controls remain locked.",
+      "retryPending": "Retry saved request",
+      "viewerNotice": "Core granted read access but no report-decision capability. You can inspect the safe projection only.",
+      "identitiesTitle": "People in this report",
+      "identitiesCopy": "Only safe identity fields needed to understand the report are shown.",
+      "reporter": "Reporter",
+      "subject": "Reported user",
+      "uid": "UID {uid}",
+      "openUser": "Open user profile",
+      "reportTitle": "Report context",
+      "reportCopy": "The reason and target metadata are the bounded values submitted to the moderation record.",
+      "reportId": "Report ID",
+      "target": "Target type",
+      "reasonCode": "Reason code",
+      "reasonText": "Member explanation",
+      "noReasonText": "No additional text was supplied.",
+      "revision": "Revision",
+      "materialTitle": "Reported material",
+      "materialCopy": "Core returns plain text or an unavailable marker; direct storage paths and private evidence are never projected here.",
+      "restrictedEvidence": "Restricted evidence exists",
+      "profileSummary": "Profile summary",
+      "unavailableMaterial": "Unavailable",
+      "availability": "Availability",
+      "availabilityValues": {
+        "available": "Available",
+        "removed": "Removed",
+        "unavailable": "Unavailable legacy target"
+      },
+      "messageId": "Message ID",
+      "sentAt": "Sent",
+      "resolutionTitle": "Recorded resolution",
+      "resolutionCopy": "This immutable operator outcome explains whether the report was confirmed or rejected.",
+      "decision": "Decision",
+      "operatorReason": "Operator reason",
+      "decidedBy": "Decided by",
+      "decidedAt": "Decided at",
+      "decisionTitle": "Decide this report",
+      "decisionCopy": "Choose whether the report is valid and write a specific internal reason. Separate audited tools handle any user or content restriction.",
+      "decisionClosed": "This report is already resolved. A resolved report cannot be decided again.",
+      "decisionUnavailable": "Your Core-authored capabilities do not permit a decision.",
+      "persistenceUnavailable": "This browser cannot preserve the durable retry identity, so no new decision can be sent.",
+      "pendingControlsLocked": "A saved request is unresolved. Retry that exact request before starting another action.",
+      "reasonHint": "{count}/500 characters. Keep it factual and omit unnecessary private data.",
+      "statuses": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "rejected": "Rejected"
+      },
+      "targets": {
+        "user": "User or profile",
+        "chat": "Chat message"
+      },
+      "decisions": {
+        "confirmed": "Confirm report",
+        "rejected": "Reject report"
+      },
+      "submit": {
+        "confirmed": "Confirm report",
+        "rejected": "Reject report"
+      },
+      "confirm": {
+        "confirmedTitle": "Confirm this report?",
+        "confirmedCopy": "This records that the report is valid. It does not automatically ban the user or remove the reported material.",
+        "rejectedTitle": "Reject this report?",
+        "rejectedCopy": "This records that the report is not confirmed. It does not erase the report or its audit history."
+      },
+      "decisionSaved": "The report decision was saved exactly once.",
+      "decisionReplayed": "Core replayed the previously completed decision; no second mutation was created.",
+      "decisionObserved": "The authoritative reload proves the saved decision already completed; no retry was sent.",
+      "errors": {
+        "contractVersionInvalid": "Core refused the reported-content contract version.",
+        "parameterInvalid": "The request contained an unexpected or malformed parameter.",
+        "filterInvalid": "The selected report filter is invalid.",
+        "cursorInvalid": "The queue cursor is stale or invalid. Reload the first page.",
+        "reportIdInvalid": "The report identifier is invalid.",
+        "decisionInvalid": "Choose one supported report decision.",
+        "reasonInvalid": "Enter a specific operator reason from 1 to 500 characters.",
+        "revisionInvalid": "The report revision is invalid. Reload the report.",
+        "requestIdInvalid": "The durable request identifier is invalid.",
+        "notFound": "The requested report no longer exists.",
+        "conflict": "The report changed before this decision. The authoritative Core version has been adopted; review it before another action.",
+        "requestIdConflict": "This request ID is already bound to different material. The action was not repeated.",
+        "requestInProgress": "Core is still processing this exact request. Retry the saved request without changing it.",
+        "readRequired": "Your Core capabilities do not permit reading reported content.",
+        "decisionRequired": "Your Core capabilities do not permit report decisions.",
+        "auditWriteFailed": "Core could not persist audit evidence, so the report was left unchanged. Retry the saved request.",
+        "storedInvalid": "Core found malformed stored report data and refused to return a partial record.",
+        "readFailed": "Core could not read the report safely. Try again.",
+        "writeFailed": "The decision result is uncertain. Retain and retry the exact saved request.",
+        "sessionInvalid": "Your administrator session or membership is no longer valid.",
+        "persistenceUnavailable": "The browser could not durably store the retry identity. No decision was sent.",
+        "persistenceCleanupFailed": "The authoritative result is visible, but the browser could not clear its saved retry state. Do not start another decision; reload to reconcile it.",
+        "generic": "The report operation failed safely. No success or empty state has been assumed."
+      }
+    }
   },
   "userDetail": {
     "back": "Back to registered users",

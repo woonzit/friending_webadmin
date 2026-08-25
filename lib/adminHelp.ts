@@ -68,6 +68,18 @@ export const ADMIN_HELP_PAGES = [
     matches: exact("/photo-moderation"),
   },
   {
+    key: "reportedContentQueue",
+    route: "/reported-content",
+    sections: ["filters", "queue", "safeProjection", "capabilities", "pagination"],
+    matches: exact("/reported-content"),
+  },
+  {
+    key: "reportedContentDetail",
+    route: "/reported-content/[reportId]",
+    sections: ["identities", "reportedMaterial", "decision", "conflictRetry", "resolution", "boundaries"],
+    matches: dynamic("/reported-content"),
+  },
+  {
     key: "profileVerificationQueue",
     route: "/profile-verification",
     sections: ["statusFilter", "caseQueue", "caseMetadata", "configurationLink"],
