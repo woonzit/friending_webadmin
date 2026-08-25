@@ -12,6 +12,7 @@ import {
   normalizePersonaProxyBody,
   personaProxyCapabilityAuthorized,
 } from "@/lib/personaAdmin";
+import { normalizeCannedTemplateProxyBody } from "@/lib/cannedTemplates";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { readAdminSession } from "@/lib/session";
 
@@ -92,6 +93,12 @@ export async function POST(
     return NextResponse.json({ success: false, error: "invalid-input" }, { status: 400 });
   }
   if (normalizedPersonaBody !== undefined) body = normalizedPersonaBody;
+
+  const normalizedCannedBody = normalizeCannedTemplateProxyBody(action, body);
+  if (normalizedCannedBody === null) {
+    return NextResponse.json({ success: false, error: "invalid-input" }, { status: 400 });
+  }
+  if (normalizedCannedBody !== undefined) body = normalizedCannedBody;
 
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer

@@ -107,6 +107,19 @@ export const ADMIN_HELP_PAGES = [
     matches: exact("/persona"),
   },
   {
+    key: "cannedTemplates",
+    route: "/canned-templates",
+    sections: [
+      "channels",
+      "listSearch",
+      "editor",
+      "canonicalPreview",
+      "revisionReceipts",
+      "deleteBoundary",
+    ],
+    matches: exact("/canned-templates"),
+  },
+  {
     key: "profileLocation",
     route: "/profile-location",
     sections: ["globalPolicy", "countryOverride", "currentOverrides"],

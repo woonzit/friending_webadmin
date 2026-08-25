@@ -7,11 +7,12 @@ import { useTranslations } from "next-intl";
 import AdminHelp from "@/components/AdminHelp";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import {
+  CANNED_TEMPLATES_CONTRACT_READY,
   PERSONA_ADMIN_PROXY_RELEASED,
   REPORTED_CONTENT_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 
-type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit";
+type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "templates" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit";
 
 const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; ready?: boolean }> = [
   { href: "/", key: "overview", icon: "overview", exact: true },
@@ -37,6 +38,7 @@ const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; r
   { href: "/footprints", key: "footprints", icon: "footprints" },
   { href: "/pinger", key: "pinger", icon: "pinger" },
   { href: "/invite-configuration", key: "inviteConfiguration", icon: "invite" },
+  { href: "/canned-templates", key: "cannedTemplates", icon: "templates", ready: CANNED_TEMPLATES_CONTRACT_READY },
   { href: "/support", key: "support", icon: "chat" },
   { href: "/help-cms", key: "helpCms", icon: "audit" },
   { href: "/configuration", key: "configuration", icon: "config" },
@@ -72,6 +74,7 @@ const PATHS: Record<IconName, React.ReactNode> = {
   icebreakers: <><path d="M5 5h14v11H9l-4 3v-3H5z"/><path d="M8 9h8M8 12h5"/></>,
   // A speech bubble with a reply arrow: the operator support inbox.
   chat: <><path d="M4 5h16v12H10l-5 3v-3H4z"/><path d="m9 11 2-2m-2 2 2 2m-2-2h6"/></>,
+  templates: <><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/><path d="M7 3v3M17 3v3"/></>,
   invite: <><path d="m3 11 18-8-7.5 18-3.2-7.3L3 11Z"/><path d="m10.3 13.7 4.4-4.4"/></>,
   // Two offset footprint soles: the badge-coin system members leave on
   // each other's profiles.

@@ -693,6 +693,72 @@
           }
         }
       },
+      "cannedTemplates": {
+        "title": "Message templates help",
+        "summary": "This workspace manages only reusable email, SMS and push templates. Core owns capability checks, canonical email sanitization, revisions, receipts and audit intent; the console keeps channel content bounded, previews canonical output safely and never opens a delivery workflow.",
+        "steps": {
+          "1": "Choose one channel and use the internal-name filter to load a complete authoritative result.",
+          "2": "Select a stored template or start a new one, then review channel-specific limits and the normalized draft.",
+          "3": "Write an internal audit reason, open a fresh confirmation and submit one revisioned mutation.",
+          "4": "If a request becomes pending, keep controls locked and retry only the exact saved request identity until Core returns convergence or conflict."
+        },
+        "sections": {
+          "channels": {
+            "title": "Email, SMS and push channels",
+            "purpose": "Each channel has an immutable format and exact subject/body rules: sanitized HTML email, subjectless plain SMS, or titled plain push.",
+            "actions": {
+              "1": "Choose the intended channel before creating a template.",
+              "2": "Treat moving content between channels as a separate create and separately confirmed delete."
+            },
+            "guidance": "Channel rules are storage contracts, not presentation hints. The console never changes an existing template's channel or silently truncates content."
+          },
+          "listSearch": {
+            "title": "Authoritative list and search",
+            "purpose": "The list binds every page and cursor to one channel, normalized name query and fixed page size, ordered by update time and stable identifier.",
+            "actions": {
+              "1": "Search only by the internal operator name and read the exact total returned by Core.",
+              "2": "Load subsequent pages with the issued cursor; restart from page one after a cursor refusal."
+            },
+            "guidance": "A malformed stored row fails the whole read. Never interpret a parser error as an empty template library or skip an inconvenient row."
+          },
+          "editor": {
+            "title": "Bounded revisioned editor",
+            "purpose": "The editor normalizes Unicode text, applies channel-specific caps and binds updates to the exact observed template revision.",
+            "actions": {
+              "1": "Review internal name, subject/title, body and a specific audit reason before confirmation.",
+              "2": "For SMS, watch the 160-character cost guidance; for push, keep the title near the recommended display length."
+            },
+            "guidance": "The 160 SMS and 40-character push-title markers are guidance only. The enforced storage caps remain 1,600 and 80, and Core rejects rather than clamps an overlong value."
+          },
+          "canonicalPreview": {
+            "title": "Canonical and draft preview",
+            "purpose": "Stored Core-returned output is kept separate from the normalized browser draft so sanitization is never implied before Core performs it.",
+            "actions": {
+              "1": "For email, inspect stored canonical HTML in the no-network sandbox and inspect unsanitized draft only as inert source.",
+              "2": "For SMS and push, compare the safely rendered plain-text draft with the stored canonical item."
+            },
+            "guidance": "Only the closed canonical HTML tag/attribute vocabulary can enter the frame. Scripts, images, forms, active content and external requests remain impossible in the preview."
+          },
+          "revisionReceipts": {
+            "title": "Revisions and durable receipts",
+            "purpose": "Every create, update or delete persists a UUID, action, channel, target, expected revision and normalized material before the proxy call.",
+            "actions": {
+              "1": "When the pending banner appears, leave competing controls locked.",
+              "2": "Retry only the saved identity; accept exact replay, canonical success or authoritative conflict without minting a replacement request."
+            },
+            "guidance": "Timeout, lost response, in-progress, audit failure and uncertain write retain the same request. A different payload under the UUID is a terminal conflict."
+          },
+          "deleteBoundary": {
+            "title": "Delete and delivery boundary",
+            "purpose": "Deletion removes a template from future pickers at one exact revision and keeps a tombstone for replay/concurrency authority.",
+            "actions": {
+              "1": "Read the fresh confirmation naming the template, channel and revision.",
+              "2": "After success or conflict, adopt the returned tombstone or template instead of restoring or merging locally."
+            },
+            "guidance": "Deletion does not alter historical messages. This page has no recipient selector, campaign, delivery action, provider credential or delivery record."
+          }
+        }
+      },
       "profileLocation": {
         "title": "Profile location limits help",
         "summary": "This page controls how far a member may move their public profile location from the browser location they explicitly shared. It sets policy radii, not anyone's exact position.",
@@ -2254,6 +2320,7 @@
     "footprints": "Footprints",
     "pinger": "Pinger",
     "inviteConfiguration": "Mobile invites",
+    "cannedTemplates": "Message templates",
     "appReview": "App Review sandbox"
   },
   "pinger": {
@@ -2986,6 +3053,145 @@
       "mark-failed": "Core could not apply the synthetic or force-promoted state. Reload before any new gesture.",
       "unmark-failed": "Core could not remove the synthetic marker. Reload before any new gesture.",
       "generic": "Core returned an unknown or malformed Persona refusal. No success has been assumed; reload authoritative state."
+    }
+  },
+  "cannedTemplates": {
+    "eyebrow": "Communications library",
+    "title": "Message templates",
+    "subtitle": "Manage reusable email, SMS and push content as revisioned, audited templates without opening any delivery workflow.",
+    "loadError": "The canned-template list could not be decoded safely. No empty or editable state has been assumed.",
+    "viewerNotice": "Core granted read access only. You can inspect canonical templates and previews, but cannot create, update or delete them.",
+    "channelNavigation": "Template channel",
+    "channels": {
+      "email": "Email",
+      "sms": "SMS",
+      "push": "Push"
+    },
+    "search": {
+      "label": "Search internal template names",
+      "placeholder": "Name contains…",
+      "button": "Search",
+      "all": "all names"
+    },
+    "pending": {
+      "title": "A receipt-backed mutation is pending.",
+      "save": "Retry the saved create/update with its original request ID; competing controls remain locked.",
+      "delete": "Retry the saved delete with its original request ID; competing controls remain locked.",
+      "retry": "Retry saved request",
+      "restored": "A durable pending mutation was restored. Review it and retry only with the retained identity."
+    },
+    "list": {
+      "title": "Canonical templates",
+      "copy": "{channel} · filter: {query}. Results are authoritative, ordered by last update and never skip malformed rows.",
+      "total": "{total} total",
+      "noSubject": "No subject for SMS",
+      "updated": "Updated {date} · revision {revision}",
+      "emptyTitle": "No matching templates",
+      "emptyCopy": "Core returned a complete, valid empty result for this exact channel and name filter.",
+      "loadMore": "Load more templates"
+    },
+    "editor": {
+      "new": "New template",
+      "editTitle": "Edit template",
+      "createTitle": "Create template",
+      "editCopy": "Update the exact observed revision {revision}; the channel cannot be changed.",
+      "createCopy": "Create one new {channel} template with revision 1 after Core accepts the content.",
+      "name": "Internal operator name",
+      "pushTitle": "Push title",
+      "subject": "Email subject",
+      "htmlBody": "Email HTML source",
+      "body": "Plain-text body",
+      "auditReason": "Internal audit reason",
+      "delete": "Delete template",
+      "reviewUpdate": "Review update",
+      "reviewCreate": "Review create",
+      "normalized": "The confirmation uses trimmed, NFC-normalized text. Review the normalized draft preview before continuing.",
+      "channelImmutable": "A template never changes channel. To move content, create it in the destination channel and confirm deletion separately."
+    },
+    "limits": {
+      "name": "{count}/120 Unicode characters",
+      "subject": "{count}/200 Unicode characters",
+      "pushTitle": "{count}/80 Unicode characters; around 40 is recommended for display",
+      "emailBody": "{count}/50,000 Unicode characters before Core sanitization",
+      "smsBody": "{count}/1,600 Unicode characters; more than 160 may use multiple carrier segments",
+      "pushBody": "{count}/1,000 Unicode characters",
+      "auditReason": "{count}/500 Unicode characters; do not copy message content here"
+    },
+    "preview": {
+      "label": "Safe canned-template preview",
+      "title": "Safe preview",
+      "copy": "Stored canonical content and the normalized draft stay visibly separate.",
+      "channels": {
+        "email": "Email",
+        "sms": "SMS",
+        "push": "Push"
+      },
+      "storedTitle": "Stored canonical output",
+      "revision": "Revision {revision}",
+      "emailFrameTitle": "Canonical email preview for {name}",
+      "noStored": "This is a new template; Core has not returned canonical stored content yet.",
+      "draftTitle": "Normalized draft",
+      "normalized": "Locally valid",
+      "invalid": "Incomplete",
+      "draftInvalid": "Complete the bounded fields and audit reason to generate a normalized draft.",
+      "emailSourceOnly": "Unsanitized email draft is shown only as inert source. Only Core-returned canonical HTML appears in the sandboxed visual frame."
+    },
+    "confirm": {
+      "updateTitle": "Update this template?",
+      "createTitle": "Create this template?",
+      "deleteTitle": "Delete this template?",
+      "updateCopy": "Save normalized {channel} content for {name} against revision {revision}? Core may canonicalize email HTML and advances the revision exactly once.",
+      "createCopy": "Create {name} as a new {channel} template? Core generates the identifier and stores revision 1 only once for this request identity.",
+      "deleteCopy": "Delete {name} ({channel}, revision {revision}) from future template pickers? Historical message records are not changed, and no restore action exists here.",
+      "saveButton": "Save reviewed template",
+      "deleteButton": "Delete reviewed template"
+    },
+    "validation": {
+      "query": "Search text must normalize to at most 80 Unicode characters.",
+      "channel": "Choose one supported template channel.",
+      "templateId": "The stored template identifier is invalid.",
+      "revision": "The observed template revision is invalid.",
+      "requestId": "A durable canonical request identity could not be created.",
+      "auditReason": "Write a specific internal reason of 1–500 Unicode characters.",
+      "name": "The internal template name must contain 1–120 Unicode characters.",
+      "subject": "The subject/title is missing or exceeds this channel's exact limit; SMS subject must stay empty.",
+      "body": "The body is missing, too long or contains a forbidden control character. Content is never silently truncated."
+    },
+    "notices": {
+      "noChanges": "The normalized content matches the stored canonical template; there is no update to save.",
+      "saveReplayed": "Core replayed the original canonical save result without a second mutation.",
+      "saved": "Core saved and returned the complete canonical template.",
+      "deleteReplayed": "Core replayed the original delete result without a second mutation.",
+      "deleted": "Core deleted the template from future use and returned its tombstone revision."
+    },
+    "errors": {
+      "contractVersionInvalid": "Core refused the canned-template contract version.",
+      "parameterInvalid": "The request contained unknown, duplicate, structured or incompatible material.",
+      "channelInvalid": "The template channel is not supported.",
+      "idInvalid": "The template identifier is invalid.",
+      "nameInvalid": "The internal template name is invalid.",
+      "subjectInvalid": "The channel-specific subject or push title is invalid.",
+      "bodyInvalid": "The channel-specific body is invalid and was not truncated.",
+      "htmlInvalid": "Core rejected the email HTML sanitizer input. No unsafe draft has been adopted.",
+      "auditReasonInvalid": "The internal audit reason is invalid.",
+      "revisionInvalid": "The expected template revision is invalid.",
+      "requestIdInvalid": "The mutation request identity is invalid.",
+      "cursorInvalid": "The list cursor is invalid. Restart the search from its first page.",
+      "notFound": "The template no longer exists. Refresh the authoritative list.",
+      "conflict": "Another authoritative change won. The returned template or tombstone was adopted; the draft was not merged.",
+      "channelConflict": "A stored template cannot move between channels.",
+      "requestIdConflict": "This request ID was already bound to different material. The gesture is terminal and must not be reminted automatically.",
+      "requestInProgress": "Core is still processing this exact request. Retain and retry the same identity.",
+      "readRequired": "The current Core capabilities no longer permit reading canned templates.",
+      "writeRequired": "The current Core capabilities no longer permit this template mutation.",
+      "auditWriteFailed": "Core could not persist audit intent and did not begin the mutation. Retain the same request identity.",
+      "storedInvalid": "Core found malformed stored template material. The entire operation failed; no row was skipped.",
+      "readFailed": "Core could not read the complete authoritative template list.",
+      "writeFailed": "The write result is uncertain. Keep the exact request identity and read authoritative state before retrying it.",
+      "sessionInvalid": "The administrator session or membership is no longer active.",
+      "generic": "Core returned an unknown or malformed canned-template response. No success has been assumed; retain an uncertain mutation identity.",
+      "persistenceUnavailable": "This browser cannot durably preserve the mutation identity, so no new template mutation can be started.",
+      "persistenceCleanupFailed": "Core converged, but the browser could not clear the saved request identity. Do not submit another mutation from this tab."
     }
   },
   "reportedContent": {

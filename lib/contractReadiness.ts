@@ -14,3 +14,5 @@ export const PRODUCT_POPUP_CONTRACT_READY: boolean = false;
  * and exact action capability at runtime.
  */
 export const PERSONA_ADMIN_PROXY_RELEASED: boolean = false;
+/** T-108c must be released and reviewed before canned CRUD is reachable. */
+export const CANNED_TEMPLATES_CONTRACT_READY: boolean = false;

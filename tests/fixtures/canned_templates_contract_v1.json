@@ -1,0 +1,159 @@
+{
+  "list_email": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "admin",
+        "capabilities": [
+          "canned_templates_read",
+          "canned_templates_write"
+        ]
+      },
+      "channel": "email",
+      "query": "",
+      "templates": [
+        {
+          "template_id": "000000000000000000000001",
+          "channel": "email",
+          "revision": 2,
+          "name": "Welcome email",
+          "format": "sanitized_html",
+          "subject": "Welcome to Friending",
+          "body": "<h2>Welcome</h2><p>Hello <strong>friend</strong>. <a href=\"https://friending.com/help\" title=\"Help\">Learn more</a></p>",
+          "created_at": 100,
+          "created_by": "owner@example.test",
+          "updated_at": 200,
+          "updated_by": "editor@example.test"
+        },
+        {
+          "template_id": "000000000000000000000002",
+          "channel": "email",
+          "revision": 1,
+          "name": "Safety reminder",
+          "format": "sanitized_html",
+          "subject": "A safety reminder",
+          "body": "<p>Please review the <a href=\"https://friending.com/safety?a=1&amp;b=2\">community guidance</a>.</p>",
+          "created_at": 90,
+          "created_by": "owner@example.test",
+          "updated_at": 100,
+          "updated_by": "owner@example.test"
+        }
+      ],
+      "next_cursor": null,
+      "total": 2
+    }
+  },
+  "list_sms_viewer_empty": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "viewer",
+        "capabilities": [
+          "canned_templates_read"
+        ]
+      },
+      "channel": "sms",
+      "query": "nothing",
+      "templates": [],
+      "next_cursor": null,
+      "total": 0
+    }
+  },
+  "save_email": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "template": {
+        "template_id": "000000000000000000000001",
+        "channel": "email",
+        "revision": 3,
+        "name": "Welcome email",
+        "format": "sanitized_html",
+        "subject": "Welcome to Friending",
+        "body": "<h2>Welcome</h2><p>Hello <strong>friend</strong>.</p>",
+        "created_at": 100,
+        "created_by": "owner@example.test",
+        "updated_at": 300,
+        "updated_by": "editor@example.test"
+      },
+      "replayed": false
+    }
+  },
+  "save_push_create": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "template": {
+        "template_id": "000000000000000000000003",
+        "channel": "push",
+        "revision": 1,
+        "name": "Profile reminder",
+        "format": "plain_text",
+        "subject": "Complete your profile",
+        "body": "Add a little more about yourself.",
+        "created_at": 300,
+        "created_by": "editor@example.test",
+        "updated_at": 300,
+        "updated_by": "editor@example.test"
+      },
+      "replayed": true
+    }
+  },
+  "delete_email": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "deleted": {
+        "template_id": "000000000000000000000001",
+        "channel": "email",
+        "revision": 3,
+        "deleted_at": 300
+      },
+      "replayed": false
+    }
+  },
+  "conflict_template": {
+    "success": false,
+    "status_code": 409,
+    "error": "canned-template-conflict",
+    "data": {
+      "contract_version": 1,
+      "template": {
+        "template_id": "000000000000000000000001",
+        "channel": "email",
+        "revision": 4,
+        "name": "Welcome email revised elsewhere",
+        "format": "sanitized_html",
+        "subject": "Welcome to Friending",
+        "body": "<p>Another editor saved this canonical body.</p>",
+        "created_at": 100,
+        "created_by": "owner@example.test",
+        "updated_at": 400,
+        "updated_by": "other@example.test"
+      },
+      "deleted": null
+    }
+  },
+  "conflict_deleted": {
+    "success": false,
+    "status_code": 409,
+    "error": "canned-template-conflict",
+    "data": {
+      "contract_version": 1,
+      "template": null,
+      "deleted": {
+        "template_id": "000000000000000000000001",
+        "channel": "email",
+        "revision": 3,
+        "deleted_at": 300
+      }
+    }
+  }
+}

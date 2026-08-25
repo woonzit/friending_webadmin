@@ -693,6 +693,72 @@
           }
         }
       },
+      "cannedTemplates": {
+        "title": "Üzenetsablonok súgó",
+        "summary": "Ez a munkaterület kizárólag újrahasználható email-, SMS- és push-sablonokat kezel. A képességvizsgálat, a kanonikus emailtisztítás, a revízió, receipt és auditszándék a Core tulajdona; a konzol korlátozza a csatornatartalmat, biztonságosan mutat előnézetet, és nem nyit kézbesítési folyamatot.",
+        "steps": {
+          "1": "Válassz egy csatornát, és a belső névszűrővel tölts be teljes, hiteles eredményt.",
+          "2": "Válassz tárolt sablont vagy kezdj újat, majd ellenőrizd a csatornaspecifikus korlátokat és a normalizált draftot.",
+          "3": "Írj belső auditindokot, nyiss friss megerősítést, és küldj be egy revíziózott módosítást.",
+          "4": "Függő kérésnél tartsd zárva a vezérlőket, és csak a pontos mentett kérésazonosságot próbáld újra, amíg a Core konvergenciát vagy ütközést nem ad."
+        },
+        "sections": {
+          "channels": {
+            "title": "Email-, SMS- és push-csatorna",
+            "purpose": "Minden csatornának megváltoztathatatlan formátuma és pontos tárgy-/törzsszabálya van: tisztított HTML-email, tárgy nélküli egyszerű SMS vagy címes egyszerű push.",
+            "actions": {
+              "1": "Új sablon létrehozása előtt válaszd ki a kívánt csatornát.",
+              "2": "A csatornák közötti áthelyezést külön létrehozásként és külön megerősített törlésként kezeld."
+            },
+            "guidance": "A csatornaszabályok tárolási szerződések, nem megjelenítési tippek. A konzol nem változtatja meg meglévő sablon csatornáját, és nem csonkol némán tartalmat."
+          },
+          "listSearch": {
+            "title": "Hiteles lista és keresés",
+            "purpose": "A lista minden oldalt és kurzort egy csatornához, normalizált névlekérdezéshez és rögzített oldalmérethez köt; a sorrend frissítési idő és stabil azonosító szerinti.",
+            "actions": {
+              "1": "Csak a belső operátori névre keress, és a Core által adott pontos összesítést olvasd.",
+              "2": "A további oldalakat a kiadott kurzorral töltsd; kurzorelusítás után indulj újra az első oldalról."
+            },
+            "guidance": "Hibás tárolt sor a teljes olvasást meghiúsítja. Parserhibát soha ne értelmezz üres sablonkönyvtárként, és ne hagyj ki problémás sort."
+          },
+          "editor": {
+            "title": "Korlátozott, revíziózott szerkesztő",
+            "purpose": "A szerkesztő normalizálja a Unicode szöveget, alkalmazza a csatornaspecifikus korlátokat, és a módosítást a pontos megfigyelt sablonrevízióhoz köti.",
+            "actions": {
+              "1": "Megerősítés előtt ellenőrizd a belső nevet, tárgyat/címet, törzset és konkrét auditindokot.",
+              "2": "SMS-nél figyeld a 160 karakteres költségjelzést; pushnál tartsd a címet az ajánlott megjelenítési hossz közelében."
+            },
+            "guidance": "A 160 karakteres SMS- és 40 karakteres push-címjelzés csak útmutató. A kikényszerített tárolási korlát 1600 és 80; a Core elutasít, nem csonkol."
+          },
+          "canonicalPreview": {
+            "title": "Kanonikus és draftelőnézet",
+            "purpose": "A Core által visszaadott tárolt kimenet elkülönül a normalizált böngésződrafttól, így a felület nem állít tisztítást annak Core oldali megtörténte előtt.",
+            "actions": {
+              "1": "Emailnél a tárolt kanonikus HTML-t a hálózatmentes sandboxban, a nem tisztított draftot pedig csak inaktív forrásként vizsgáld.",
+              "2": "SMS-nél és pushnál vesd össze a biztonságosan renderelt egyszerű draftot a tárolt kanonikus elemmel."
+            },
+            "guidance": "A keretbe csak a zárt kanonikus HTML tag-/attribútumszókészlet kerülhet. Script, kép, űrlap, aktív tartalom és külső kérés nem lehetséges az előnézetben."
+          },
+          "revisionReceipts": {
+            "title": "Revíziók és tartós receiptek",
+            "purpose": "Minden létrehozás, módosítás vagy törlés a proxyhívás előtt tartósítja a UUID-t, műveletet, csatornát, célt, várt revíziót és normalizált anyagot.",
+            "actions": {
+              "1": "A függő jelzés megjelenésekor hagyd zárolva a többi vezérlőt.",
+              "2": "Csak a mentett azonosságot próbáld újra; fogadd el a pontos replayt, kanonikus sikert vagy hiteles ütközést új kérés gyártása nélkül."
+            },
+            "guidance": "Timeout, elveszett válasz, folyamatban lévő kérés, audithiba és bizonytalan írás ugyanazt a kérést őrzi. Eltérő payload ugyanazon UUID alatt végleges ütközés."
+          },
+          "deleteBoundary": {
+            "title": "Törlési és kézbesítési határ",
+            "purpose": "A törlés egy pontos revíziónál eltávolítja a sablont a jövőbeli választókból, és tombstone-t tart meg a replay és konkurencia kezeléséhez.",
+            "actions": {
+              "1": "Olvasd el a sablont, csatornát és revíziót megnevező friss megerősítést.",
+              "2": "Siker vagy ütközés után a visszaadott tombstone-t vagy sablont vedd át helyi visszaállítás vagy összefésülés nélkül."
+            },
+            "guidance": "A törlés nem módosít korábbi üzeneteket. Ezen az oldalon nincs címzettválasztó, kampány, kézbesítési művelet, providerszintű hitelesítő adat vagy kézbesítési rekord."
+          }
+        }
+      },
       "profileLocation": {
         "title": "Profilhely-korlátok súgó",
         "summary": "Ez az oldal azt szabályozza, milyen messz mozgathatja egy tag a nyilvános profilhelyét attól a böngészőhelytől, amelyet kifejezetten megosztott. Szabályzati sugarakat állít, nem bárki pontos helyét.",
@@ -2254,6 +2320,7 @@
     "footprints": "Footprints",
     "pinger": "Pinger",
     "inviteConfiguration": "Mobilos meghívások",
+    "cannedTemplates": "Üzenetsablonok",
     "appReview": "App Review sandbox"
   },
   "pinger": {
@@ -2986,6 +3053,145 @@
       "mark-failed": "A Core nem tudta alkalmazni a szintetikus vagy kényszerítetten előléptetett állapotot. Újabb művelet előtt tölts újra.",
       "unmark-failed": "A Core nem tudta eltávolítani a szintetikus jelölőt. Újabb művelet előtt tölts újra.",
       "generic": "A Core ismeretlen vagy hibás Persona-elutasítást adott. A felület nem feltételez sikert; töltsd újra a hiteles állapotot."
+    }
+  },
+  "cannedTemplates": {
+    "eyebrow": "Kommunikációs könyvtár",
+    "title": "Üzenetsablonok",
+    "subtitle": "Újrahasználható email-, SMS- és push-tartalom kezelése revíziózott, auditált sablonként, kézbesítési folyamat megnyitása nélkül.",
+    "loadError": "A sablonlista nem dekódolható biztonságosan. A felület nem feltételez üres vagy szerkeszthető állapotot.",
+    "viewerNotice": "A Core csak olvasási jogosultságot adott. A kanonikus sablonok és előnézetek megtekinthetők, de nem hozhatók létre, módosíthatók vagy törölhetők.",
+    "channelNavigation": "Sabloncsatorna",
+    "channels": {
+      "email": "Email",
+      "sms": "SMS",
+      "push": "Push"
+    },
+    "search": {
+      "label": "Keresés a belső sablonnevekben",
+      "placeholder": "A név tartalmazza…",
+      "button": "Keresés",
+      "all": "minden név"
+    },
+    "pending": {
+      "title": "Egy receipt-alapú módosítás függőben van.",
+      "save": "Az elmentett létrehozást/módosítást az eredeti kérésazonosítóval próbáld újra; a többi vezérlő zárolva marad.",
+      "delete": "Az elmentett törlést az eredeti kérésazonosítóval próbáld újra; a többi vezérlő zárolva marad.",
+      "retry": "Mentett kérés újrapróbálása",
+      "restored": "A tartós függő módosítás helyreállt. Ellenőrizd, és csak a megőrzött azonossággal próbáld újra."
+    },
+    "list": {
+      "title": "Kanonikus sablonok",
+      "copy": "{channel} · szűrő: {query}. A találatok hitelesek, utolsó módosítás szerint rendezettek, és hibás sor soha nem marad ki.",
+      "total": "Összesen {total}",
+      "noSubject": "Az SMS-nek nincs tárgya",
+      "updated": "Frissítve: {date} · revízió: {revision}",
+      "emptyTitle": "Nincs egyező sablon",
+      "emptyCopy": "A Core teljes, érvényes üres eredményt adott ehhez a pontos csatornához és névszűrőhöz.",
+      "loadMore": "További sablonok betöltése"
+    },
+    "editor": {
+      "new": "Új sablon",
+      "editTitle": "Sablon szerkesztése",
+      "createTitle": "Sablon létrehozása",
+      "editCopy": "A pontosan megfigyelt {revision}. revízió módosítása; a csatorna nem változtatható meg.",
+      "createCopy": "Új {channel} sablon létrehozása 1. revízióval, miután a Core elfogadta a tartalmat.",
+      "name": "Belső operátori név",
+      "pushTitle": "Push cím",
+      "subject": "Email tárgy",
+      "htmlBody": "Email HTML-forrás",
+      "body": "Egyszerű szöveges törzs",
+      "auditReason": "Belső auditindok",
+      "delete": "Sablon törlése",
+      "reviewUpdate": "Módosítás áttekintése",
+      "reviewCreate": "Létrehozás áttekintése",
+      "normalized": "A megerősítés levágott és NFC-normalizált szöveget használ. Folytatás előtt ellenőrizd a normalizált draftelőnézetet.",
+      "channelImmutable": "A sablon csatornája soha nem változik. Áthelyezéshez hozd létre a célcsatornán, majd külön erősítsd meg a törlést."
+    },
+    "limits": {
+      "name": "{count}/120 Unicode karakter",
+      "subject": "{count}/200 Unicode karakter",
+      "pushTitle": "{count}/80 Unicode karakter; megjelenítéshez körülbelül 40 ajánlott",
+      "emailBody": "{count}/50 000 Unicode karakter a Core tisztítása előtt",
+      "smsBody": "{count}/1600 Unicode karakter; 160 felett több szolgáltatói szegmens lehet",
+      "pushBody": "{count}/1000 Unicode karakter",
+      "auditReason": "{count}/500 Unicode karakter; az üzenettartalmat ne másold ide"
+    },
+    "preview": {
+      "label": "Biztonságos sablonelőnézet",
+      "title": "Biztonságos előnézet",
+      "copy": "A tárolt kanonikus tartalom és a normalizált draft láthatóan elkülönül.",
+      "channels": {
+        "email": "Email",
+        "sms": "SMS",
+        "push": "Push"
+      },
+      "storedTitle": "Tárolt kanonikus kimenet",
+      "revision": "{revision}. revízió",
+      "emailFrameTitle": "{name} kanonikus email-előnézete",
+      "noStored": "Ez új sablon; a Core még nem adott vissza kanonikus tárolt tartalmat.",
+      "draftTitle": "Normalizált draft",
+      "normalized": "Helyileg érvényes",
+      "invalid": "Hiányos",
+      "draftInvalid": "A normalizált draft elkészítéséhez töltsd ki a korlátozott mezőket és az auditindokot.",
+      "emailSourceOnly": "A még nem tisztított email-draft csak inaktív forrásként látszik. A sandboxos vizuális keretben kizárólag a Core által visszaadott kanonikus HTML jelenik meg."
+    },
+    "confirm": {
+      "updateTitle": "Módosítod ezt a sablont?",
+      "createTitle": "Létrehozod ezt a sablont?",
+      "deleteTitle": "Törlöd ezt a sablont?",
+      "updateCopy": "Mented {name} normalizált {channel} tartalmát a(z) {revision}. revízió ellenében? A Core kanonizálhatja az email HTML-t, és pontosan egyszer lépteti a revíziót.",
+      "createCopy": "Létrehozod {name} sablont új {channel} sablonként? A Core generál azonosítót, és ehhez a kérésazonossághoz csak egyszer tárolja az 1. revíziót.",
+      "deleteCopy": "Törlöd {name} sablont ({channel}, {revision}. revízió) a jövőbeli sablonválasztókból? A korábbi üzenetrekordok nem változnak, és itt nincs visszaállítás.",
+      "saveButton": "Áttekintett sablon mentése",
+      "deleteButton": "Áttekintett sablon törlése"
+    },
+    "validation": {
+      "query": "A keresőszöveg legfeljebb 80 Unicode karakterre normalizálódhat.",
+      "channel": "Válassz egy támogatott sabloncsatornát.",
+      "templateId": "A tárolt sablonazonosító érvénytelen.",
+      "revision": "A megfigyelt sablonrevízió érvénytelen.",
+      "requestId": "Nem hozható létre tartós kanonikus kérésazonosság.",
+      "auditReason": "Adj meg konkrét belső indokot 1–500 Unicode karakterben.",
+      "name": "A belső sablonnév 1–120 Unicode karakter lehet.",
+      "subject": "A tárgy/cím hiányzik vagy túllépi a csatorna pontos korlátját; az SMS tárgya maradjon üres.",
+      "body": "A törzs hiányzik, túl hosszú vagy tiltott vezérlőkaraktert tartalmaz. A tartalom soha nem csonkolódik némán."
+    },
+    "notices": {
+      "noChanges": "A normalizált tartalom megegyezik a tárolt kanonikus sablonnal; nincs menthető módosítás.",
+      "saveReplayed": "A Core második módosítás nélkül játszotta vissza az eredeti kanonikus mentési eredményt.",
+      "saved": "A Core elmentette és visszaadta a teljes kanonikus sablont.",
+      "deleteReplayed": "A Core második módosítás nélkül játszotta vissza az eredeti törlési eredményt.",
+      "deleted": "A Core törölte a sablont a jövőbeli használatból, és visszaadta a tombstone revízióját."
+    },
+    "errors": {
+      "contractVersionInvalid": "A Core elutasította a sablonszerződés verzióját.",
+      "parameterInvalid": "A kérés ismeretlen, duplikált, strukturált vagy inkompatibilis anyagot tartalmazott.",
+      "channelInvalid": "A sabloncsatorna nem támogatott.",
+      "idInvalid": "A sablonazonosító érvénytelen.",
+      "nameInvalid": "A belső sablonnév érvénytelen.",
+      "subjectInvalid": "A csatornaspecifikus tárgy vagy push cím érvénytelen.",
+      "bodyInvalid": "A csatornaspecifikus törzs érvénytelen, és nem lett csonkolva.",
+      "htmlInvalid": "A Core elutasította az email HTML-tisztító bemenetét. A felület nem vett át nem biztonságos draftot.",
+      "auditReasonInvalid": "A belső auditindok érvénytelen.",
+      "revisionInvalid": "A várt sablonrevízió érvénytelen.",
+      "requestIdInvalid": "A módosítás kérésazonossága érvénytelen.",
+      "cursorInvalid": "A listakurzor érvénytelen. Indítsd újra a keresést az első oldalról.",
+      "notFound": "A sablon már nem létezik. Frissítsd a hiteles listát.",
+      "conflict": "Más hiteles módosítás nyert. A felület átvette a visszaadott sablont vagy tombstone-t; a draftot nem fésülte össze.",
+      "channelConflict": "Tárolt sablon nem helyezhető át másik csatornára.",
+      "requestIdConflict": "Ez a kérésazonosító már más anyaghoz kötődik. A művelet végleges, és nem kaphat automatikusan új azonosítót.",
+      "requestInProgress": "A Core még ezt a pontos kérést dolgozza fel. Őrizd meg és ugyanazzal az azonossággal próbáld újra.",
+      "readRequired": "Az aktuális Core-képességek már nem engedik a sablonok olvasását.",
+      "writeRequired": "Az aktuális Core-képességek már nem engedik ezt a sablonmódosítást.",
+      "auditWriteFailed": "A Core nem tudta tartósítani az auditszándékot, ezért nem kezdte el a módosítást. Őrizd meg ugyanazt a kérésazonosságot.",
+      "storedInvalid": "A Core hibás tárolt sablonanyagot talált. A teljes művelet meghiúsult; egyetlen sor sem maradt ki.",
+      "readFailed": "A Core nem tudta beolvasni a teljes hiteles sablonlistát.",
+      "writeFailed": "Az írás eredménye bizonytalan. Tartsd meg a pontos kérésazonosságot, és újrapróbálás előtt olvasd be a hiteles állapotot.",
+      "sessionInvalid": "Az admin munkamenet vagy tagság már nem aktív.",
+      "generic": "A Core ismeretlen vagy hibás sablonválaszt adott. A felület nem feltételez sikert; a bizonytalan módosításazonosság megmarad.",
+      "persistenceUnavailable": "A böngésző nem tudja tartósan megőrizni a módosításazonosságot, ezért új sablonmódosítás nem indítható.",
+      "persistenceCleanupFailed": "A Core konvergált, de a böngésző nem tudta törölni a mentett kérésazonosságot. Ebből a fülből ne indíts új módosítást."
     }
   },
   "reportedContent": {
