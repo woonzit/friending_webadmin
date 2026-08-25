@@ -141,7 +141,7 @@
       },
       "userDetail": {
         "title": "Member account help",
-        "summary": "This is the complete support workspace for one confirmed UID. It joins authoritative account facts with photo operations, effective membership, moderation, a time-bounded product popup, public profile text and structured profile answers.",
+        "summary": "This is the complete support workspace for one confirmed UID. It joins authoritative account facts with photo operations, effective membership, moderation, a time-bounded product popup, boolean-only push-channel presence, public profile text and structured profile answers.",
         "steps": {
           "1": "Confirm the UID, display name and account state at the top before touching any control.",
           "2": "Use the narrowest section for the requested task and read warnings or previews before saving.",
@@ -196,6 +196,15 @@
               "3": "After an uncertain response, reconcile authoritative state or retry only the saved request with its original identity."
             },
             "guidance": "A product popup is not a push, support reply, moderation penalty or permanent gate. Never bypass its 30-day maximum, and never start a competing mutation while a durable request is unresolved."
+          },
+          "pushChannels": {
+            "title": "Member push-channel presence",
+            "purpose": "This read-only panel reports whether Core can currently resolve at least one usable FCM registration and at least one usable OneSignal registration for this UID.",
+            "actions": {
+              "1": "Read each provider independently; a member can have neither, one or both registrations.",
+              "2": "Compare presence with the global delivery mode when investigating why a provider is or is not eligible for a push."
+            },
+            "guidance": "Presence is not proof that a notification was sent or delivered. The console never exposes raw registrations, hashes, device identifiers, provider errors or credentials."
           },
           "profileCopy": {
             "title": "Public profile texts",
@@ -2031,7 +2040,7 @@
       },
       "configuration": {
         "title": "Configuration help",
-        "summary": "Configuration contains only approved product controls that can change without a deployment. It covers reversible feature behavior, Join session timing, iOS appearance, public link origins, presence availability and the complete profile-video-verification member flow.",
+        "summary": "Configuration contains only approved product controls that can change without a deployment. It covers reversible feature behavior, Join session timing, iOS appearance, global push delivery, public link origins, presence availability and the complete profile-video-verification member flow.",
         "steps": {
           "1": "Identify the exact product surface and read its current value, bounds and member consequence.",
           "2": "Change one coherent setting group, including both languages where copy is involved.",
@@ -2064,6 +2073,15 @@
               "2": "Use a forced mode only for an explicitly tested product or emergency reason."
             },
             "guidance": "This affects every iOS screen from launch. Test contrast, media and modals throughout the app before forcing an appearance."
+          },
+          "pushDelivery": {
+            "title": "Global push delivery mode",
+            "purpose": "The mode enables FCM, OneSignal or both provider channels for Core's provider-agnostic push worker; Both handles eligible channels independently.",
+            "actions": {
+              "1": "Confirm current member-registration coverage and provider readiness before narrowing the mode.",
+              "2": "Save one deliberate mode change, wait for the canonical Core response and verify the operational effect without sending a routine test push."
+            },
+            "guidance": "This setting does not register devices, configure provider credentials or prove delivery. After an uncertain response, the page reloads authoritative settings before allowing another gesture."
           },
           "publicLinks": {
             "title": "Website and profile-link origins",
@@ -3501,6 +3519,15 @@
     "imageStatusPending": "Pending review",
     "imageStatusRejected": "Rejected",
     "openModeration": "Review",
+    "pushChannels": {
+      "title": "Push channels",
+      "copy": "Core reports only whether at least one currently usable registration is resolvable for each provider.",
+      "fcm": "FCM registration",
+      "onesignal": "OneSignal registration",
+      "present": "Present",
+      "notPresent": "Not present",
+      "separate": "Registration presence is member-specific. The global delivery mode is configured separately and can disable a present channel. Identifiers and provider credentials are never shown here."
+    },
     "allAlbums": "All profile albums",
     "allAlbumsCopy": "Administrators can inspect and remove images from public and private albums without requesting access.",
     "albumLoadError": "The user's albums could not be loaded.",
@@ -3933,6 +3960,29 @@
       "dark": {
         "title": "Force Dark",
         "copy": "Always launches and remains in Dark appearance."
+      }
+    },
+    "push": {
+      "section": "Push delivery",
+      "title": "Enabled delivery providers",
+      "copy": "Choose which registered provider channels Core may use for push delivery. The worker handles each enabled channel independently.",
+      "separate": "This global policy does not register a member or prove delivery. User detail shows channel presence separately; provider credentials remain server-managed.",
+      "invalid": "Core did not return an exact supported push-delivery setting. No value was assumed or submitted.",
+      "writeRequired": "Your administrator role may read this setting but cannot change runtime configuration. The authoritative value was reloaded.",
+      "uncertain": "The save outcome could not be proven from Core's response. The authoritative configuration was reloaded before another action was enabled.",
+      "modes": {
+        "fcm": {
+          "title": "FCM only",
+          "copy": "Send only through usable FCM registrations."
+        },
+        "onesignal": {
+          "title": "OneSignal only",
+          "copy": "Send only through usable OneSignal registrations."
+        },
+        "both": {
+          "title": "Both providers",
+          "copy": "Fan out independently to every usable FCM and OneSignal registration."
+        }
       }
     },
     "safetyTitle": "Safe configuration boundary",

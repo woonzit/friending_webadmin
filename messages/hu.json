@@ -141,7 +141,7 @@
       },
       "userDetail": {
         "title": "Tagfiók súgó",
-        "summary": "Ez az egy ellenőrzött UID-hoz tartozó teljes támogatási munkaterület. A hiteles fióktényeket fényképműveletekkel, tényleges tagsággal, moderációval, időkorlátos termékpopuppal, nyilvános profilszöveggel és strukturált profilválaszokkal egyesíti.",
+        "summary": "Ez az egy ellenőrzött UID-hoz tartozó teljes támogatási munkaterület. A hiteles fióktényeket fényképműveletekkel, tényleges tagsággal, moderációval, időkorlátos termékpopuppal, azonosítómentes pushcsatorna-jelenléttel, nyilvános profilszöveggel és strukturált profilválaszokkal egyesíti.",
         "steps": {
           "1": "Bármely vezérlő használata előtt ellenőrizd felül a UID-t, megjelenített nevet és fiókállapotot.",
           "2": "A kéréshez legszűkebben illeszkedő szekciót használd, és mentés előtt olvasd el a figyelmeztetéseket vagy előnézetet.",
@@ -196,6 +196,15 @@
               "3": "Bizonytalan válasz után egyeztesd a hiteles állapotot, vagy kizárólag a mentett kérést próbáld újra az eredeti azonosságával."
             },
             "guidance": "A termékpopup nem push, supportválasz, moderációs büntetés vagy állandó gate. Ne kerüld meg a 30 napos maximumot, és ne indíts versengő módosítást, amíg egy tartós kérés eredménye bizonytalan."
+          },
+          "pushChannels": {
+            "title": "Tagi pushcsatorna-jelenlét",
+            "purpose": "Ez a csak olvasható panel megmutatja, hogy a Core jelenleg fel tud-e oldani legalább egy használható FCM- és legalább egy használható OneSignal-regisztrációt ehhez a UID-hoz.",
+            "actions": {
+              "1": "Minden szolgáltatót külön olvass; a tagnak lehet nulla, egy vagy mindkét regisztrációja.",
+              "2": "Ha azt vizsgálod, miért jogosult vagy nem jogosult egy szolgáltató pushra, vesd össze a jelenlétet a globális kézbesítési móddal."
+            },
+            "guidance": "A jelenlét nem bizonyítja, hogy értesítést küldtek vagy kézbesítettek. A konzol soha nem fed fel nyers regisztrációt, hash-t, eszközazonosítót, szolgáltatói hibát vagy hitelesítőt."
           },
           "profileCopy": {
             "title": "Nyilvános profilszövegek",
@@ -2031,7 +2040,7 @@
       },
       "configuration": {
         "title": "Konfiguráció súgó",
-        "summary": "A Konfiguráció csak jóváhagyott, deployment nélkül módosítható termékvezérlőket tartalmaz. Lefedi a visszafordítható feature működést, Join sessionidőt, iOS appearance-et, nyilvános linkorigint, presence elérhetőséget és a teljes profilvideó-verifikációs tagi folyamatot.",
+        "summary": "A Konfiguráció csak jóváhagyott, deployment nélkül módosítható termékvezérlőket tartalmaz. Lefedi a visszafordítható feature működést, Join sessionidőt, iOS appearance-et, globális pushkézbesítést, nyilvános linkorigint, presence elérhetőséget és a teljes profilvideó-verifikációs tagi folyamatot.",
         "steps": {
           "1": "Azonosítsd a pontos termékfelületet, és olvasd el az aktuális értéket, korlátot és tagi következményt.",
           "2": "Egy összefüggő beállításcsoportot módosíts, szövegnél mindkét nyelvvel.",
@@ -2064,6 +2073,15 @@
               "2": "Kényszerített módot csak explicit tesztelt termék- vagy vészhelyzeti okból használj."
             },
             "guidance": "Ez indulástól minden iOS-képernyőt érint. Kényszerítés előtt az egész appban teszteld a kontrasztot, médiát és modalt."
+          },
+          "pushDelivery": {
+            "title": "Globális pushkézbesítési mód",
+            "purpose": "A mód az FCM, a OneSignal vagy mindkét szolgáltatói csatornát engedélyezi a Core szolgáltatófüggetlen push workerének; a Mindkettő a jogosult csatornákat egymástól függetlenül kezeli.",
+            "actions": {
+              "1": "A mód szűkítése előtt ellenőrizd az aktuális tagi regisztrációs lefedettséget és a szolgáltatók üzemkészségét.",
+              "2": "Egy szándékos módváltást ments, várd meg a Core kanonikus válaszát, majd rutin teszt-push küldése nélkül ellenőrizd az üzemeltetési hatást."
+            },
+            "guidance": "Ez a beállítás nem regisztrál eszközt, nem konfigurál szolgáltatói hitelesítőt és nem bizonyít kézbesítést. Bizonytalan válasz után az oldal újabb művelet engedélyezése előtt újratölti a hiteles beállításokat."
           },
           "publicLinks": {
             "title": "Weboldal- és profillink origin",
@@ -3501,6 +3519,15 @@
     "imageStatusPending": "Moderációra vár",
     "imageStatusRejected": "Elutasítva",
     "openModeration": "Ellenőrzés",
+    "pushChannels": {
+      "title": "Push csatornák",
+      "copy": "A Core csak azt jelzi, hogy az egyes szolgáltatókhoz feloldható-e legalább egy jelenleg használható regisztráció.",
+      "fcm": "FCM-regisztráció",
+      "onesignal": "OneSignal-regisztráció",
+      "present": "Jelen van",
+      "notPresent": "Nincs jelen",
+      "separate": "A regisztráció jelenléte tagonként eltér. A globális kézbesítési mód külön állítható, és egy jelen lévő csatornát is kikapcsolhat. Az azonosítók és szolgáltatói hitelesítők itt soha nem jelennek meg."
+    },
     "allAlbums": "Minden profilalbum",
     "allAlbumsCopy": "Az adminisztrátor hozzáféréskérés nélkül ellenőrizheti és törölheti a nyilvános és privát albumok képeit.",
     "albumLoadError": "A user albumai nem tölthetők be.",
@@ -3933,6 +3960,29 @@
       "dark": {
         "title": "Kényszerített sötét",
         "copy": "Az app mindig Sötét megjelenéssel indul és úgy is marad."
+      }
+    },
+    "push": {
+      "section": "Push kézbesítés",
+      "title": "Engedélyezett kézbesítési szolgáltatók",
+      "copy": "Válaszd ki, hogy a Core mely regisztrált szolgáltatói csatornákat használhatja push kézbesítéshez. A worker minden engedélyezett csatornát egymástól függetlenül kezel.",
+      "separate": "Ez a globális szabály nem regisztrál tagot, és nem bizonyít kézbesítést. A tag részletes oldala külön mutatja a csatornák jelenlétét; a szolgáltatói hitelesítők a szerveren maradnak.",
+      "invalid": "A Core nem adott vissza pontos, támogatott pushkézbesítési beállítást. Az oldal nem feltételezett és nem küldött be értéket.",
+      "writeRequired": "Az adminisztrátori szerepköröd olvashatja ezt a beállítást, de nem módosíthatja a működési konfigurációt. A hiteles érték újratöltődött.",
+      "uncertain": "A mentés eredménye nem bizonyítható a Core válaszából. Az oldal az újabb művelet engedélyezése előtt újratöltötte a hiteles konfigurációt.",
+      "modes": {
+        "fcm": {
+          "title": "Csak FCM",
+          "copy": "Kézbesítés csak használható FCM-regisztrációkon keresztül."
+        },
+        "onesignal": {
+          "title": "Csak OneSignal",
+          "copy": "Kézbesítés csak használható OneSignal-regisztrációkon keresztül."
+        },
+        "both": {
+          "title": "Mindkét szolgáltató",
+          "copy": "Független kézbesítés minden használható FCM- és OneSignal-regisztrációra."
+        }
       }
     },
     "safetyTitle": "Biztonságos konfigurációs határ",

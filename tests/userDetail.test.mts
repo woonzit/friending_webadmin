@@ -100,6 +100,7 @@ test("tolerated shapes are normalised rather than refused", () => {
   assert.equal(minimal?.profile.uid, 7);
   assert.deepEqual(minimal?.images, []);
   assert.deepEqual(minimal?.tags, []);
+  assert.equal(minimal?.push_channels, null);
   assert.equal(minimal?.profile.last_location, null);
   // An all-empty location is null rather than a row of em dashes.
   assert.equal(userDetail({ profile: { uid: 7, hometown: { city: "", region: "" } } })?.profile.hometown, null);
@@ -112,7 +113,7 @@ test("tolerated shapes are normalised rather than refused", () => {
 test("the page projects instead of casting, and states why", async () => {
   const page = await readFile(new URL("../app/(dashboard)/users/[uid]/page.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(page, /as unknown as DetailData/);
-  assert.match(page, /userDetail\(response\)/);
+  assert.match(page, /userDetail\(response, PUSH_MODE_CONTRACT_READY\)/);
   const parser = await readFile(new URL("../lib/userDetail.ts", import.meta.url), "utf8");
   assert.match(parser, /coordinates/i);
 });

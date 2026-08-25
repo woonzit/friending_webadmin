@@ -1,13 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
 import ProfilePresenceConfiguration from "@/components/ProfilePresenceConfiguration";
 import ProfileVerificationConfiguration from "@/components/ProfileVerificationConfiguration";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
-import { adminCall } from "@/lib/adminClient";
+import { adminCall, type AdminResponse } from "@/lib/adminClient";
+import { PUSH_MODE_CONTRACT_READY } from "@/lib/contractReadiness";
 import { formatDate } from "@/lib/format";
+import {
+  PUSH_DELIVERY_MODES,
+  pushAdminError,
+  pushDeliverySavePayload,
+  pushLocalWriteDenial,
+  pushSettingsResponse,
+  type PushAdminError,
+  type PushDeliverySetting,
+} from "@/lib/pushAdmin";
 import {
   normalizeRuntimeSettings,
   runtimeSettingsSavePayload,
@@ -15,30 +25,44 @@ import {
   type RuntimeSettings,
 } from "@/lib/runtimeConfiguration";
 
+type ConfigurationSnapshot = {
+  runtime: RuntimeSettings;
+  push: PushDeliverySetting | null;
+};
+
+function configurationSnapshot(response: AdminResponse | null): ConfigurationSnapshot | null {
+  if (!response?.success || !response.settings || typeof response.settings !== "object") {
+    return null;
+  }
+  const runtime = normalizeRuntimeSettings(response.settings);
+  if (!runtime) return null;
+  const push = PUSH_MODE_CONTRACT_READY ? pushSettingsResponse(response) : null;
+  return PUSH_MODE_CONTRACT_READY && !push ? null : { runtime, push };
+}
+
 export default function ConfigurationPage() {
   const t = useTranslations("configuration");
   const common = useTranslations("common");
   const locale = useLocale();
   const [settings, setSettings] = useState<RuntimeSettings | null>(null);
+  const [pushSetting, setPushSetting] = useState<PushDeliverySetting | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [busy, setBusy] = useState(false);
+  const saveInFlight = useRef(false);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
 
   const load = useCallback(async () => {
-    if (!settings) setState("loading");
+    setState("loading");
     const response = await adminCall("get_settings");
-    if (!response?.success || !response.settings || typeof response.settings !== "object") {
+    const snapshot = configurationSnapshot(response);
+    if (!snapshot) {
       setState("error");
       return;
     }
-    const normalized = normalizeRuntimeSettings(response.settings);
-    if (!normalized) {
-      setState("error");
-      return;
-    }
-    setSettings(normalized);
+    setSettings(snapshot.runtime);
+    setPushSetting(snapshot.push);
     setState("ready");
-  }, [settings]);
+  }, []);
 
   useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -51,28 +75,60 @@ export default function ConfigurationPage() {
   }
 
   async function save() {
+    if (saveInFlight.current) return;
     if (!settings) return;
     if (!sessionIdleMinutesValid(settings.join_session_idle_minutes.value)) {
       setMessage({ tone: "error", text: t("sessionIdleInvalid") });
       return;
     }
+    const pushPayload = PUSH_MODE_CONTRACT_READY
+      ? pushDeliverySavePayload(pushSetting?.value)
+      : null;
+    if (PUSH_MODE_CONTRACT_READY && !pushPayload) {
+      setMessage({ tone: "error", text: t("push.invalid") });
+      return;
+    }
+    saveInFlight.current = true;
     setBusy(true);
     setMessage(null);
     const response = await adminCall("set_settings", {
-      settings: runtimeSettingsSavePayload(settings),
+      settings: {
+        ...runtimeSettingsSavePayload(settings),
+        ...(pushPayload ?? {}),
+      },
     });
+    const saved = configurationSnapshot(response);
+    if (saved) {
+      setSettings(saved.runtime);
+      setPushSetting(saved.push);
+      saveInFlight.current = false;
+      setBusy(false);
+      setMessage({ tone: "success", text: t("saved") });
+      return;
+    }
+
+    if (!PUSH_MODE_CONTRACT_READY) {
+      saveInFlight.current = false;
+      setBusy(false);
+      setMessage({ tone: "error", text: t("saveError") });
+      return;
+    }
+
+    // This mutation contract has no caller-owned receipt. Keep every gesture
+    // locked until a fresh read resolves any transport or response ambiguity.
+    const error = pushAdminError(response) ?? pushLocalWriteDenial(response);
+    const recovered = configurationSnapshot(await adminCall("get_settings"));
+    if (!recovered) {
+      saveInFlight.current = false;
+      setBusy(false);
+      setState("error");
+      return;
+    }
+    setSettings(recovered.runtime);
+    setPushSetting(recovered.push);
+    saveInFlight.current = false;
     setBusy(false);
-    if (!response?.success || !response.settings) {
-      setMessage({ tone: "error", text: t("saveError") });
-      return;
-    }
-    const normalized = normalizeRuntimeSettings(response.settings);
-    if (!normalized) {
-      setMessage({ tone: "error", text: t("saveError") });
-      return;
-    }
-    setSettings(normalized);
-    setMessage({ tone: "success", text: t("saved") });
+    setMessage({ tone: "error", text: pushSaveError(t, error) });
   }
 
   if (state === "loading") return <LoadingPanel />;
@@ -131,6 +187,7 @@ export default function ConfigurationPage() {
                     <span className="sr-only">{row.title}</span>
                     <input
                       type="checkbox"
+                      disabled={busy}
                       checked={setting.value}
                       onChange={(event) => setBooleanValue(row.key, event.target.checked)}
                     />
@@ -164,6 +221,7 @@ export default function ConfigurationPage() {
                   step={1}
                   value={settings.join_session_idle_minutes.value}
                   aria-invalid={!sessionIdleMinutesValid(settings.join_session_idle_minutes.value)}
+                  disabled={busy}
                   onChange={(event) => {
                     const value = Number(event.target.value);
                     setSettings((current) => current ? {
@@ -202,6 +260,7 @@ export default function ConfigurationPage() {
                     name="app-appearance-mode"
                     value={mode}
                     checked={settings.app_appearance_mode.value === mode}
+                    disabled={busy}
                     onChange={() => {
                       setSettings((current) => current ? {
                         ...current,
@@ -226,6 +285,46 @@ export default function ConfigurationPage() {
             </div>
           </div>
         </section>
+        {PUSH_MODE_CONTRACT_READY && pushSetting ? (
+          <section className="panel push-mode-panel">
+            <div className="panel-header"><div><h2>{t("push.section")}</h2></div></div>
+            <div className="panel-body">
+              <div className="setting-copy">
+                <h3>{t("push.title")}</h3>
+                <p>{t("push.copy")}</p>
+              </div>
+              <div className="push-mode-options" role="radiogroup" aria-label={t("push.title")}>
+                {PUSH_DELIVERY_MODES.map((mode) => (
+                  <label
+                    className={`push-mode-option${pushSetting.value === mode ? " selected" : ""}`}
+                    key={mode}
+                  >
+                    <input
+                      type="radio"
+                      name="push-delivery-mode"
+                      value={mode}
+                      checked={pushSetting.value === mode}
+                      disabled={busy}
+                      onChange={() => {
+                        setPushSetting((current) => current ? { ...current, value: mode } : current);
+                        setMessage(null);
+                      }}
+                    />
+                    <span>
+                      <strong>{t(`push.modes.${mode}.title`)}</strong>
+                      <small>{t(`push.modes.${mode}.copy`)}</small>
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <p className="page-subtitle push-mode-note">{t("push.separate")}</p>
+              <div className="setting-meta">
+                <span>{t("updatedAt")}: {formatDate(pushSetting.updated_at, locale, true)}</span>
+                {pushSetting.updated_by && <span>{t("updatedBy")}: {pushSetting.updated_by}</span>}
+              </div>
+            </div>
+          </section>
+        ) : null}
         {settings.public_profile_base_url.allowed_values?.length || settings.public_web_base.value ? (
           <section className="panel">
             <div className="panel-header"><div><h2>{t("profileLink")}</h2></div></div>
@@ -241,6 +340,7 @@ export default function ConfigurationPage() {
                       type="url"
                       inputMode="url"
                       spellCheck={false}
+                      disabled={busy}
                       value={settings.public_web_base.value}
                       onChange={(event) => {
                         const next = event.target.value;
@@ -274,6 +374,7 @@ export default function ConfigurationPage() {
                       name="public-profile-base-url"
                       value={base}
                       checked={settings.public_profile_base_url.value === base}
+                      disabled={busy}
                       onChange={() => {
                         setSettings((current) => current ? {
                           ...current,
@@ -309,4 +410,14 @@ export default function ConfigurationPage() {
       <ProfileVerificationConfiguration />
     </>
   );
+}
+
+function pushSaveError(
+  t: ReturnType<typeof useTranslations<"configuration">>,
+  error: PushAdminError | null,
+): string {
+  if (error === "admin-write-required") return t("push.writeRequired");
+  if (error === "settings-invalid" || error === "setting-invalid") return t("push.invalid");
+  if (error === "write-failed" || error === null) return t("push.uncertain");
+  return t("saveError");
 }

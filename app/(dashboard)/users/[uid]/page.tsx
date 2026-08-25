@@ -13,7 +13,10 @@ import UserMembershipPanel from "@/components/UserMembershipPanel";
 import UserContentEditor from "@/components/UserContentEditor";
 import ProductPopupPanel from "@/components/ProductPopupPanel";
 import { adminCall } from "@/lib/adminClient";
-import { PRODUCT_POPUP_CONTRACT_READY } from "@/lib/contractReadiness";
+import {
+  PRODUCT_POPUP_CONTRACT_READY,
+  PUSH_MODE_CONTRACT_READY,
+} from "@/lib/contractReadiness";
 import { formatDate } from "@/lib/format";
 import {
   identityOptionGroups,
@@ -62,7 +65,9 @@ export default function UserDetailPage() {
     const parsedIdentityGroups = identityOptionGroups(profileResponse?.identity_options);
     // Project rather than cast: the response carries fields this page never renders, including the
     // member's login and home coordinates. See lib/userDetail.ts.
-    const parsedDetail = response?.success ? userDetail(response) : null;
+    const parsedDetail = response?.success
+      ? userDetail(response, PUSH_MODE_CONTRACT_READY)
+      : null;
     if (!parsedDetail || !profileResponse?.success || !parsedProfileFields || !parsedIdentityGroups) {
       setState("error");
       return;
@@ -167,6 +172,30 @@ export default function UserDetailPage() {
             </div>
           </section>
         ))}
+        {PUSH_MODE_CONTRACT_READY && data.push_channels ? (
+          <section className="panel push-channels-panel">
+            <div className="panel-header"><h2>{t("pushChannels.title")}</h2></div>
+            <div className="panel-body">
+              <p className="page-subtitle">{t("pushChannels.copy")}</p>
+              <dl className="detail-list push-channel-list">
+                {([
+                  [t("pushChannels.fcm"), data.push_channels.fcm_token_present],
+                  [t("pushChannels.onesignal"), data.push_channels.onesignal_id_present],
+                ] as Array<[string, boolean]>).map(([label, present]) => (
+                  <div className="detail-row" key={label}>
+                    <dt>{label}</dt>
+                    <dd>
+                      <span className={`status-badge ${present ? "status-active" : "status-inactive"}`}>
+                        {present ? t("pushChannels.present") : t("pushChannels.notPresent")}
+                      </span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="page-subtitle push-channel-note">{t("pushChannels.separate")}</p>
+            </div>
+          </section>
+        ) : null}
         <section className="panel">
           <div className="panel-header"><h2>{t("gallery")}</h2></div>
           <div className="panel-body">

@@ -26,6 +26,7 @@ import {
   unavailableMembershipUserDetail,
   type MembershipUserDetail,
 } from "@/lib/membership";
+import { pushChannels, type PushChannels } from "@/lib/pushAdmin";
 
 export type UserDetailLocation = {
   city: string;
@@ -72,6 +73,8 @@ export type UserDetail = {
   tags: string[];
   /** Safe, typed entitlement/store/admin-grant projection owned by Membership V1. */
   membership: MembershipUserDetail;
+  /** Boolean-only provider registration state; raw identifiers never enter this model. */
+  push_channels: PushChannels | null;
 };
 
 const MOD_STATUSES = ["accepted", "pending", "denied"] as const;
@@ -142,7 +145,7 @@ const TAG_FIELDS = ["about_me", "into_tags", "my_life_tags", "sport_tags", "inte
  * Parse a `user_detail` payload, failing closed. A response without a usable profile is an error,
  * not a blank page — `AGENTS.md`: "Treat malformed success responses as errors."
  */
-export function userDetail(value: unknown): UserDetail | null {
+export function userDetail(value: unknown, requirePushChannels = false): UserDetail | null {
   const source = record(value);
   const profileSource = record(source?.profile);
   if (!source || !profileSource) return null;
@@ -153,6 +156,14 @@ export function userDetail(value: unknown): UserDetail | null {
     ? unavailableMembershipUserDetail(uid)
     : membershipUserDetail(source.membership);
   if (!membership || membership.uid !== uid) return null;
+
+  let parsedPushChannels: PushChannels | null = null;
+  if (source.push_channels === undefined) {
+    if (requirePushChannels) return null;
+  } else {
+    parsedPushChannels = pushChannels(source.push_channels);
+    if (!parsedPushChannels) return null;
+  }
 
   const images: UserDetailImage[] = [];
   if (source.images !== undefined) {
@@ -199,5 +210,6 @@ export function userDetail(value: unknown): UserDetail | null {
     images,
     tags,
     membership,
+    push_channels: parsedPushChannels,
   };
 }
