@@ -9857,7 +9857,7 @@ body .verification-level-pill.level-strong {
   }
 }
 
-/* Per-member product popup (dormant until the versioned provider contract is live). */
+/* Per-member product popup. */
 .product-popup-panel {
   margin-bottom: 20px;
 }

@@ -1,4 +1,7 @@
-import { REPORTED_CONTENT_CONTRACT_READY } from "@/lib/contractReadiness";
+import {
+  PRODUCT_POPUP_CONTRACT_READY,
+  REPORTED_CONTENT_CONTRACT_READY,
+} from "@/lib/contractReadiness";
 
 export const DATES_ADMIN_ACTIONS = [
   "admin_me",
@@ -30,6 +33,10 @@ export const DATES_ADMIN_ACTIONS = [
 
 const REPORTED_CONTENT_ADMIN_ACTIONS = REPORTED_CONTENT_CONTRACT_READY
   ? ["moderation_reported_list", "moderation_report_action"] as const
+  : [] as const;
+
+const PRODUCT_POPUP_ADMIN_ACTIONS = PRODUCT_POPUP_CONTRACT_READY
+  ? ["admin_get_user_popup", "admin_set_user_popup", "admin_clear_user_popup"] as const
   : [] as const;
 
 export const ADMIN_ACTIONS = [
@@ -142,6 +149,7 @@ export const ADMIN_ACTIONS = [
   "set_layer2_selection_limit",
   "signup_photo_config",
   "save_signup_photo_config",
+  ...PRODUCT_POPUP_ADMIN_ACTIONS,
   ...REPORTED_CONTENT_ADMIN_ACTIONS,
   ...DATES_ADMIN_ACTIONS,
 ] as const;
@@ -310,6 +318,13 @@ export const ADMIN_ACTION_ACCESS: Record<AdminAction, AdminActionAccess> = {
   // write on `requireAdminEditor`; both classifications here are at least as strict.
   signup_photo_config: "read",
   save_signup_photo_config: "write",
+
+  // Product-popup reads are safe for every active administrator. Creating,
+  // replacing, or clearing the member-bound popup requires the global editor
+  // role here and Core's narrower capability/revision checks afterward.
+  admin_get_user_popup: "read",
+  admin_set_user_popup: "write",
+  admin_clear_user_popup: "write",
 
   // The list is safe for every active administrator. A browser-side decision
   // also requires the global editor role; Core then rechecks its narrower

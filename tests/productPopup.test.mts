@@ -529,17 +529,16 @@ test("every closed refusal has a localized route, exact status, and documented t
   }), "admin-write-required");
 });
 
-test("the dormant popup bridge is unreachable for guests, foreign origins, viewers, and owners", async () => {
-  assert.equal(PRODUCT_POPUP_CONTRACT_READY, false);
-  const actions = [
-    "admin_get_user_popup",
-    "admin_set_user_popup",
-    "admin_clear_user_popup",
-  ];
-  for (const action of actions) {
-    assert.equal(isAdminActionAllowed(action), false);
+test("the released popup bridge remains closed to guests and foreign origins, with exact role gates", async () => {
+  assert.equal(PRODUCT_POPUP_CONTRACT_READY, true);
+  const readAction = "admin_get_user_popup";
+  const writeActions = ["admin_set_user_popup", "admin_clear_user_popup"];
+  assert.equal(isAdminActionAllowed(readAction), true);
+  assert.equal(isAdminActionAuthorized(readAction, adminPrincipalFrom({ role: "viewer" })), true);
+  for (const action of writeActions) {
+    assert.equal(isAdminActionAllowed(action), true);
     assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "viewer" })), false);
-    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "owner" })), false);
+    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "owner" })), true);
   }
 
   assert.equal(isTrustedAdminRequest(headers({
@@ -576,7 +575,10 @@ test("user-detail activation, same-origin calls, exact preview, durable recovery
   ]);
 
   assert.match(page, /PRODUCT_POPUP_CONTRACT_READY \? <ProductPopupPanel/);
-  assert.doesNotMatch(actions, /admin_(?:get|set|clear)_user_popup/);
+  assert.match(actions, /PRODUCT_POPUP_CONTRACT_READY/);
+  assert.match(actions, /admin_get_user_popup/);
+  assert.match(actions, /admin_set_user_popup/);
+  assert.match(actions, /admin_clear_user_popup/);
   assert.match(panel, /adminCall\("admin_get_user_popup"/);
   assert.match(panel, /"admin_set_user_popup"/);
   assert.match(panel, /"admin_clear_user_popup"/);
