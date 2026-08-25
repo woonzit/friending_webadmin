@@ -308,8 +308,8 @@ test("push reads and writes inherit the bridge's guest, origin, actor and secret
   assert.doesNotMatch(proxy, /WEBADMIN_API_SECRET/);
 });
 
-test("both dormant UI projections share one cutover and lock uncertain saves through reload", async () => {
-  assert.equal(PUSH_MODE_CONTRACT_READY, false);
+test("both released UI projections share one cutover and lock uncertain saves through reload", async () => {
+  assert.equal(PUSH_MODE_CONTRACT_READY, true);
   const configuration = await readFile(
     new URL("../app/(dashboard)/configuration/page.tsx", import.meta.url),
     "utf8",

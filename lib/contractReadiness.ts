@@ -16,5 +16,5 @@ export const PRODUCT_POPUP_CONTRACT_READY: boolean = false;
 export const PERSONA_ADMIN_PROXY_RELEASED: boolean = false;
 /** T-108c must be released and reviewed before canned CRUD is reachable. */
 export const CANNED_TEMPLATES_CONTRACT_READY: boolean = false;
-/** T-107 must be released and reviewed before push projections are required. */
-export const PUSH_MODE_CONTRACT_READY: boolean = false;
+/** T-107 is released; push settings and per-member channel projections are required. */
+export const PUSH_MODE_CONTRACT_READY: boolean = true;
