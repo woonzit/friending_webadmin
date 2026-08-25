@@ -7,3 +7,4 @@
  * environment fallbacks: activation is an explicit reviewed source change.
  */
 export const REPORTED_CONTENT_CONTRACT_READY: boolean = false;
+export const PRODUCT_POPUP_CONTRACT_READY: boolean = false;

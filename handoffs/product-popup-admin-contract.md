@@ -319,3 +319,9 @@ Core T-108 **MUST** cover:
 Webadmin T-206 **MUST** cover strict parsers, guest 401, foreign-origin 403, Core-authored read/write
 capabilities, URL and expiry validation, exact preview, conflict adoption, durable retry identity,
 clear semantics, EN/HU parity, and the user-detail Help section.
+
+## Lead amendments (accepted, binding for T-108b / T-206)
+- A1 (2026-08-25T18:20Z): `ProductPopupResourceData` (and the mutation/conflict data that embed it) gains a required
+  non-negative Unix-second integer `evaluated_at` = Core's evaluation instant. Invariant:
+  `popup.status === (popup.expires_at > evaluated_at ? "active" : "expired")`. Consumers never compare against the
+  device clock; a contradictory status is a stored-invalid/malformed failure.

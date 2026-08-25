@@ -141,7 +141,7 @@
       },
       "userDetail": {
         "title": "Tagfiók súgó",
-        "summary": "Ez az egy ellenőrzött UID-hoz tartozó teljes támogatási munkaterület. A hiteles fióktényeket fényképműveletekkel, tényleges tagsággal, moderációval, nyilvános profilszöveggel és strukturált profilválaszokkal egyesíti.",
+        "summary": "Ez az egy ellenőrzött UID-hoz tartozó teljes támogatási munkaterület. A hiteles fióktényeket fényképműveletekkel, tényleges tagsággal, moderációval, időkorlátos termékpopuppal, nyilvános profilszöveggel és strukturált profilválaszokkal egyesíti.",
         "steps": {
           "1": "Bármely vezérlő használata előtt ellenőrizd felül a UID-t, megjelenített nevet és fiókállapotot.",
           "2": "A kéréshez legszűkebben illeszkedő szekciót használd, és mentés előtt olvasd el a figyelmeztetéseket vagy előnézetet.",
@@ -186,6 +186,16 @@
               "3": "Munkamenet megfékezéséhez kényszeríts kijelentkeztetést, vagy a globális alapérték módosítása nélkül állíts napi Footprint-kivételt."
             },
             "guidance": "A felfüggesztés és tiltás elrejti a profilt és beszélgetéseket, valamint lezárja a munkameneteket. Az IP-blokk más, ugyanazt a címet használó embereket is érinthet, a puszta kijelentkeztetés viszont nem akadályozza meg az újbóli belépést."
+          },
+          "productPopup": {
+            "title": "Tagonkénti termékpopup",
+            "purpose": "Ez a szerkesztő beolvassa, előnézetben mutatja, létrehozza, lecseréli vagy törli az ehhez a UID-hoz rendelt egyetlen időkorlátos alkalmazáson belüli termék-/support üzenetet.",
+            "actions": {
+              "1": "Csere szerkesztése előtt olvasd el a Core által adott aktuális állapotot, pontos lejáratot és erőforrás-revíziót.",
+              "2": "Ellenőrizd a normalizált tagi előnézetet, majd a megfigyelt revízióhoz képest erősítsd meg a pontos tartalmat és lejáratot.",
+              "3": "Bizonytalan válasz után egyeztesd a hiteles állapotot, vagy kizárólag a mentett kérést próbáld újra az eredeti azonosságával."
+            },
+            "guidance": "A termékpopup nem push, supportválasz, moderációs büntetés vagy állandó gate. Ne kerüld meg a 30 napos maximumot, és ne indíts versengő módosítást, amíg egy tartós kérés eredménye bizonytalan."
           },
           "profileCopy": {
             "title": "Nyilvános profilszövegek",
@@ -2813,6 +2823,143 @@
         "persistenceCleanupFailed": "A hiteles eredmény látható, de a böngésző nem tudta törölni a mentett újrapróbálási állapotot. Ne indíts másik döntést; újratöltéssel egyeztesd.",
         "generic": "A jelentésművelet biztonságosan meghiúsult. A felület nem feltételez sikert vagy üres állapotot."
       }
+    }
+  },
+  "productPopup": {
+    "title": "Terméküzenet",
+    "copy": "Hozd létre, cseréld vagy töröld ennek az egy tagnak az alkalmazáson belüli termék-/support popupját. A revízió, lejárat, audit és kézbesítési állapot a Core tulajdona.",
+    "viewerNotice": "A Core popup-olvasási hozzáférést adott, írási képességet viszont nem. Csak a hiteles üzenet vizsgálható.",
+    "epoch": "Unix {value}",
+    "actorInstant": "{actor} · {instant}",
+    "characters": "{count}/{maximum} karakter",
+    "actions": {
+      "set": "beállítás vagy csere",
+      "clear": "törlés"
+    },
+    "statuses": {
+      "active": "Aktív",
+      "expired": "Lejárt",
+      "empty": "Nincs popup"
+    },
+    "repeatModes": {
+      "once": "Popupazonosítónként egyszer",
+      "until_expiry": "Alkalmazásnyitáskor a lejáratig"
+    },
+    "buttonActions": {
+      "none": "Nincs gomb",
+      "url": "HTTPS URL megnyitása",
+      "rate": "Értékelési folyamat megnyitása"
+    },
+    "current": {
+      "eyebrow": "Hiteles erőforrás",
+      "title": "Aktuális popup",
+      "empty": "A Core érvényes üres popup-erőforrást adott ehhez a létező taghoz.",
+      "resourceRevision": "Erőforrás-revízió",
+      "evaluatedAt": "Core által értékelt állapot",
+      "popId": "Popupazonosító",
+      "repeatMode": "Ismétlési viselkedés",
+      "expiresAt": "Pontos lejárat",
+      "button": "Gombművelet",
+      "created": "Létrehozva",
+      "updated": "Frissítve"
+    },
+    "editor": {
+      "title": "Popup-szerkesztő",
+      "copy": "Írd meg a tagnak látható szöveget, válassz korlátozott viselkedést, és dokumentáld a belső indokot. Megerősítés előtt készíts normalizált előnézetet.",
+      "revision": "Szerkesztett revízió: {revision}",
+      "preview": "Ellenőrzés és előnézet",
+      "create": "Popup létrehozása",
+      "replace": "Popup cseréje",
+      "clear": "Popup törlése"
+    },
+    "fields": {
+      "title": "Popup címe",
+      "message": "Popup üzenete",
+      "repeatMode": "Ismétlési viselkedés",
+      "expiresAt": "Lejárat a helyi időd szerint",
+      "expiryHint": "Beküldéskor legalább öt perccel, legfeljebb 30 nappal kell a jövőben lennie.",
+      "buttonAction": "Gombművelet",
+      "buttonTitle": "Gomb felirata",
+      "buttonUrl": "HTTPS cél",
+      "buttonUrlPlaceholder": "https://example.com/path",
+      "buttonUrlHint": "Csak HTTPS, hitelesítő adatok nélkül, legfeljebb 500 karakter. Az előnézet a Core-kompatibilis kanonikus alakot mutatja.",
+      "auditReason": "Belső auditindok",
+      "auditReasonHint": "{count}/500 karakter. A tag nem látja; legyen tényszerű, és ne tartalmazzon szükségtelen privát adatot."
+    },
+    "preview": {
+      "eyebrow": "Normalizált tagi nézet",
+      "title": "Pontos előnézet",
+      "valid": "Ellenőrizve",
+      "required": "Előnézet szükséges",
+      "empty": "Ellenőrizd a piszkozatot a beküldendő, pontosan normalizált cím, üzenet, gomb, ismétlési viselkedés és lejárat megjelenítéséhez.",
+      "repeatMode": "Ismétlési viselkedés",
+      "expiresAt": "Pontos lejárat",
+      "button": "Gombművelet",
+      "canonicalUrl": "Kanonikus URL",
+      "exactCopy": "Az előnézet a normalizált payloadot használja. Bármely módosítás érvényteleníti; megerősítés előtt újra ellenőrizni kell."
+    },
+    "pending": {
+      "title": "Egy megerősített popupkérés eredménye még bizonytalan.",
+      "copy": "A mentett {action} kérés megőrzi eredeti revízióját, normalizált anyagát és kérésazonosítóját. A versengő vezérlők zárolva vannak.",
+      "reconcile": "Hiteles állapot beolvasása",
+      "retry": "Pontos kérés újrapróbálása"
+    },
+    "notices": {
+      "previewReady": "A pontos normalizált előnézet elkészült. Megerősítés előtt ellenőrizz minden mezőt.",
+      "previewChanged": "Az ellenőrzött anyag megváltozott vagy időben érvénytelenné vált. Megerősítés előtt vizsgáld meg a friss előnézetet.",
+      "saved": "A Core pontosan egyszer mentette a popup-erőforrást.",
+      "replayed": "A Core a korábban befejezett kérést játszotta vissza; nem jött létre második popup vagy revízió.",
+      "observed": "A hiteles beolvasás bizonyítja, hogy a mentett kérés már konvergált; nem indult újrapróbálás."
+    },
+    "confirm": {
+      "setTitle": "Alkalmazod pontosan ezt a popupot?",
+      "setCopy": "Ez a megfigyelt revízión lecseréli a tag popupját. Pontos lejárat: {expiry}",
+      "setButton": "Popup alkalmazása",
+      "clearTitle": "Törlöd ennek a tagnak a popupját?",
+      "clearCopy": "Ez eltávolítja a tagnak látható popupot, miközben megőrzi a hiteles erőforrás-revíziót és az audit-előzményt.",
+      "clearButton": "Popup törlése"
+    },
+    "validation": {
+      "uid": "A tag UID-ja érvénytelen.",
+      "revision": "A megfigyelt popup-revízió érvénytelen. Töltsd újra az erőforrást.",
+      "requestId": "Nem sikerült létrehozni a tartós kérésazonosítót.",
+      "auditReason": "Adj meg 1 és 500 karakter közötti belső auditindokot.",
+      "title": "Adj meg 1 és 100 karakter közötti popupcímet.",
+      "message": "Adj meg 1 és 1000 karakter közötti popupüzenetet.",
+      "repeatMode": "Válassz egy támogatott ismétlési viselkedést.",
+      "expiry": "Válassz pontos lejáratot mostantól öt perc és 30 nap között.",
+      "button": "Válassz érvényes gombműveletet és hozzá illő címmezőket.",
+      "buttonUrl": "Adj meg egy kanonikus HTTPS URL-t hitelesítő adatok és vezérlőkarakterek nélkül."
+    },
+    "errors": {
+      "load": "A popup-erőforrás nem tölthető be teljes és érvényes Core-válaszból. A felület nem feltételez üres állapotot.",
+      "contractVersionInvalid": "A Core elutasította a termékpopup szerződésverzióját.",
+      "parameterInvalid": "A kérés váratlan vagy hibás paramétert tartalmazott.",
+      "uidInvalid": "A tag UID-ja érvénytelen.",
+      "userNotFound": "A kiválasztott tag már nem létezik.",
+      "titleInvalid": "A Core elutasította a popup címét.",
+      "messageInvalid": "A Core elutasította a popup üzenetét.",
+      "repeatModeInvalid": "A Core elutasította az ismétlési viselkedést.",
+      "expiryInvalid": "A Core elutasította a lejárati időtávot. Ellenőrizd újra az aktuális időhöz képest.",
+      "buttonInvalid": "A Core elutasította a gombmezőket vagy azok kombinációját.",
+      "buttonUrlInvalid": "A Core elutasította a HTTPS gombcélt.",
+      "auditReasonInvalid": "A Core elutasította a belső auditindokot.",
+      "revisionInvalid": "A popup-revízió érvénytelen. Töltsd újra az erőforrást.",
+      "requestIdInvalid": "A tartós kérésazonosító érvénytelen.",
+      "alreadyClear": "A popup már üres volt. A felület átvette a hiteles üres erőforrást.",
+      "conflict": "A popup megváltozott a kérés előtt. A felület átvette a Core hiteles erőforrását; új művelet előtt vizsgáld meg.",
+      "requestIdConflict": "Ez a kérésazonosító már más anyaghoz tartozik. A művelet nem ismétlődött meg.",
+      "requestInProgress": "A Core még feldolgozza ugyanezt a kérést. Egyeztesd vagy változtatás nélkül próbáld újra a mentett kérést.",
+      "readRequired": "A Core-képességeid nem engedik a termékpopupok olvasását.",
+      "writeRequired": "A Core-képességeid nem engedik a termékpopupok módosítását.",
+      "auditWriteFailed": "A Core nem tudta tartósan rögzíteni az auditbizonyítékot, ezért a popup változatlan maradt. Próbáld újra a mentett kérést.",
+      "storedInvalid": "A Core hibás tárolt popupadatot talált, ezért nem adott vissza részleges erőforrást.",
+      "readFailed": "A Core nem tudta biztonságosan beolvasni a popupot. Próbáld újra.",
+      "writeFailed": "A popup eredménye bizonytalan. Őrizd meg, majd egyeztesd vagy próbáld újra pontosan ugyanazt a mentett kérést.",
+      "sessionInvalid": "Az adminisztrátori munkameneted vagy tagságod már nem érvényes.",
+      "persistenceUnavailable": "Ez a böngésző nem tudta tartósan menteni az újrapróbálási azonosságot. Nem küldhető új popupmódosítás.",
+      "persistenceCleanupFailed": "A hiteles eredmény látható, de a böngésző nem tudta törölni a mentett újrapróbálási állapotot. Ne indíts másik módosítást; újratöltéssel egyeztesd.",
+      "generic": "A popupművelet biztonságosan meghiúsult. A felület nem feltételez sikert vagy üres állapotot."
     }
   },
   "userDetail": {

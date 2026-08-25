@@ -45,6 +45,7 @@ export const ADMIN_HELP_PAGES = [
       "albums",
       "membership",
       "moderation",
+      "productPopup",
       "profileCopy",
       "profileAnswers",
       "accountFacts",

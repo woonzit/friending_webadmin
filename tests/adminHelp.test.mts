@@ -73,7 +73,7 @@ test("exact and dynamic routes resolve to the intended guide and nothing generic
 
 test("every inventoried functional section has detailed English and Hungarian help", async () => {
   const totalSections = ADMIN_HELP_PAGES.reduce((sum, page) => sum + page.sections.length, 0);
-  assert.equal(totalSections, 183, "review the functional-section census when the UI changes");
+  assert.equal(totalSections, 184, "review the functional-section census when the UI changes");
 
   for (const locale of ["en", "hu"]) {
     const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));

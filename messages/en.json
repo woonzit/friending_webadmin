@@ -141,7 +141,7 @@
       },
       "userDetail": {
         "title": "Member account help",
-        "summary": "This is the complete support workspace for one confirmed UID. It joins authoritative account facts with photo operations, effective membership, moderation, public profile text and structured profile answers.",
+        "summary": "This is the complete support workspace for one confirmed UID. It joins authoritative account facts with photo operations, effective membership, moderation, a time-bounded product popup, public profile text and structured profile answers.",
         "steps": {
           "1": "Confirm the UID, display name and account state at the top before touching any control.",
           "2": "Use the narrowest section for the requested task and read warnings or previews before saving.",
@@ -186,6 +186,16 @@
               "3": "Force logout for session containment, or set a daily Footprint override without changing the global default."
             },
             "guidance": "Suspension and ban hide the profile and conversations and terminate sessions. An IP block can affect other people sharing that address, while forced logout alone does not prevent signing back in."
+          },
+          "productPopup": {
+            "title": "Per-member product popup",
+            "purpose": "This editor reads, previews, creates, replaces or clears the one time-bounded in-app product/support message assigned to this UID.",
+            "actions": {
+              "1": "Read the current Core-authored status, exact expiry and resource revision before drafting a replacement.",
+              "2": "Validate the normalized member preview, then confirm the exact content and expiry against the observed revision.",
+              "3": "After an uncertain response, reconcile authoritative state or retry only the saved request with its original identity."
+            },
+            "guidance": "A product popup is not a push, support reply, moderation penalty or permanent gate. Never bypass its 30-day maximum, and never start a competing mutation while a durable request is unresolved."
           },
           "profileCopy": {
             "title": "Public profile texts",
@@ -2813,6 +2823,143 @@
         "persistenceCleanupFailed": "The authoritative result is visible, but the browser could not clear its saved retry state. Do not start another decision; reload to reconcile it.",
         "generic": "The report operation failed safely. No success or empty state has been assumed."
       }
+    }
+  },
+  "productPopup": {
+    "title": "Product message",
+    "copy": "Create, replace or clear the in-app product/support popup for this one member. Core owns revision, expiry, audit and delivery state.",
+    "viewerNotice": "Core granted popup read access but no write capability. You can inspect the authoritative message only.",
+    "epoch": "Unix {value}",
+    "actorInstant": "{actor} · {instant}",
+    "characters": "{count}/{maximum} characters",
+    "actions": {
+      "set": "set or replace",
+      "clear": "clear"
+    },
+    "statuses": {
+      "active": "Active",
+      "expired": "Expired",
+      "empty": "No popup"
+    },
+    "repeatModes": {
+      "once": "Once per popup ID",
+      "until_expiry": "On app open until expiry"
+    },
+    "buttonActions": {
+      "none": "No button",
+      "url": "Open HTTPS URL",
+      "rate": "Open rating flow"
+    },
+    "current": {
+      "eyebrow": "Authoritative resource",
+      "title": "Current popup",
+      "empty": "Core returned a valid empty popup resource for this existing member.",
+      "resourceRevision": "Resource revision",
+      "evaluatedAt": "Status evaluated by Core",
+      "popId": "Popup ID",
+      "repeatMode": "Repeat behavior",
+      "expiresAt": "Exact expiry",
+      "button": "Button action",
+      "created": "Created",
+      "updated": "Updated"
+    },
+    "editor": {
+      "title": "Popup editor",
+      "copy": "Write member-visible copy, choose bounded behavior and document the internal reason. Generate the normalized preview before confirming.",
+      "revision": "Editing revision {revision}",
+      "preview": "Validate and preview",
+      "create": "Create popup",
+      "replace": "Replace popup",
+      "clear": "Clear popup"
+    },
+    "fields": {
+      "title": "Popup title",
+      "message": "Popup message",
+      "repeatMode": "Repeat behavior",
+      "expiresAt": "Expiry in your local time",
+      "expiryHint": "Must be at least five minutes and at most 30 days in the future when submitted.",
+      "buttonAction": "Button action",
+      "buttonTitle": "Button title",
+      "buttonUrl": "HTTPS destination",
+      "buttonUrlPlaceholder": "https://example.com/path",
+      "buttonUrlHint": "HTTPS only, no credentials, at most 500 characters. The preview shows Core-compatible canonical form.",
+      "auditReason": "Internal audit reason",
+      "auditReasonHint": "{count}/500 characters. This is not shown to the member; keep it factual and omit unnecessary private data."
+    },
+    "preview": {
+      "eyebrow": "Normalized member view",
+      "title": "Exact preview",
+      "valid": "Validated",
+      "required": "Preview required",
+      "empty": "Validate the draft to render the exact normalized title, message, button, repeat behavior and expiry that will be sent.",
+      "repeatMode": "Repeat behavior",
+      "expiresAt": "Exact expiry",
+      "button": "Button action",
+      "canonicalUrl": "Canonical URL",
+      "exactCopy": "The preview uses the normalized payload. Any edit invalidates it and requires another validation before confirmation."
+    },
+    "pending": {
+      "title": "A confirmed popup request is unresolved.",
+      "copy": "The saved {action} request keeps its original revision, normalized material and request ID. Competing controls are locked.",
+      "reconcile": "Read authoritative state",
+      "retry": "Retry exact request"
+    },
+    "notices": {
+      "previewReady": "The exact normalized preview is ready. Review every field before confirming.",
+      "previewChanged": "The validated material changed or aged out. Review the refreshed preview before confirming.",
+      "saved": "Core saved the popup resource exactly once.",
+      "replayed": "Core replayed the previously completed request; no second popup or revision was created.",
+      "observed": "The authoritative read proves the saved request already converged; no retry was sent."
+    },
+    "confirm": {
+      "setTitle": "Apply this exact popup?",
+      "setCopy": "This replaces the member's popup at the observed revision. Exact expiry: {expiry}",
+      "setButton": "Apply popup",
+      "clearTitle": "Clear this member's popup?",
+      "clearCopy": "This removes the member-visible popup while preserving the authoritative resource revision and audit history.",
+      "clearButton": "Clear popup"
+    },
+    "validation": {
+      "uid": "The member UID is invalid.",
+      "revision": "The observed popup revision is invalid. Reload the resource.",
+      "requestId": "The durable request identifier could not be created.",
+      "auditReason": "Enter an internal audit reason from 1 to 500 characters.",
+      "title": "Enter a popup title from 1 to 100 characters.",
+      "message": "Enter a popup message from 1 to 1000 characters.",
+      "repeatMode": "Choose one supported repeat behavior.",
+      "expiry": "Choose an exact expiry between five minutes and 30 days from now.",
+      "button": "Choose a valid button action and matching title fields.",
+      "buttonUrl": "Enter one canonical HTTPS URL without credentials or control characters."
+    },
+    "errors": {
+      "load": "The popup resource could not be loaded from a complete, valid Core response. No empty state has been assumed.",
+      "contractVersionInvalid": "Core refused the product-popup contract version.",
+      "parameterInvalid": "The request contained an unexpected or malformed parameter.",
+      "uidInvalid": "The member UID is invalid.",
+      "userNotFound": "The selected member no longer exists.",
+      "titleInvalid": "Core rejected the popup title.",
+      "messageInvalid": "Core rejected the popup message.",
+      "repeatModeInvalid": "Core rejected the repeat behavior.",
+      "expiryInvalid": "Core rejected the expiry horizon. Revalidate against the current time.",
+      "buttonInvalid": "Core rejected the button fields or their combination.",
+      "buttonUrlInvalid": "Core rejected the HTTPS button destination.",
+      "auditReasonInvalid": "Core rejected the internal audit reason.",
+      "revisionInvalid": "The popup revision is invalid. Reload the resource.",
+      "requestIdInvalid": "The durable request identifier is invalid.",
+      "alreadyClear": "The popup was already clear. The authoritative empty resource has been adopted.",
+      "conflict": "The popup changed before this request. The authoritative Core resource has been adopted; review it before another action.",
+      "requestIdConflict": "This request ID is already bound to different material. The operation was not repeated.",
+      "requestInProgress": "Core is still processing this exact request. Reconcile or retry the saved request without changing it.",
+      "readRequired": "Your Core capabilities do not permit reading product popups.",
+      "writeRequired": "Your Core capabilities do not permit changing product popups.",
+      "auditWriteFailed": "Core could not persist audit evidence, so the popup was left unchanged. Retry the saved request.",
+      "storedInvalid": "Core found malformed stored popup data and refused to return a partial resource.",
+      "readFailed": "Core could not read the popup safely. Try again.",
+      "writeFailed": "The popup result is uncertain. Retain and reconcile or retry the exact saved request.",
+      "sessionInvalid": "Your administrator session or membership is no longer valid.",
+      "persistenceUnavailable": "This browser could not durably store the retry identity. No new popup mutation can be sent.",
+      "persistenceCleanupFailed": "The authoritative result is visible, but the browser could not clear its saved retry state. Do not start another mutation; reload to reconcile it.",
+      "generic": "The popup operation failed safely. No success or empty state has been assumed."
     }
   },
   "userDetail": {

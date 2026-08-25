@@ -11,7 +11,9 @@ import UserAlbumsPanel from "@/components/UserAlbumsPanel";
 import UserModerationPanel from "@/components/UserModerationPanel";
 import UserMembershipPanel from "@/components/UserMembershipPanel";
 import UserContentEditor from "@/components/UserContentEditor";
+import ProductPopupPanel from "@/components/ProductPopupPanel";
 import { adminCall } from "@/lib/adminClient";
+import { PRODUCT_POPUP_CONTRACT_READY } from "@/lib/contractReadiness";
 import { formatDate } from "@/lib/format";
 import {
   identityOptionGroups,
@@ -139,6 +141,7 @@ export default function UserDetailPage() {
       <UserAlbumsPanel uid={uid} />
       <UserMembershipPanel uid={uid} initial={data.membership} />
       <UserModerationPanel uid={uid} />
+      {PRODUCT_POPUP_CONTRACT_READY ? <ProductPopupPanel key={`product-popup-${uid}`} uid={uid} /> : null}
       <UserContentEditor
         key={profile.uid}
         uid={uid}

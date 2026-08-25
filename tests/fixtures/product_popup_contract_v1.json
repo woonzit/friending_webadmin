@@ -1,0 +1,227 @@
+{
+  "never_authored": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "viewer",
+        "capabilities": ["product_popup_read"]
+      },
+      "uid": 42,
+      "resource_revision": 0,
+      "evaluated_at": 1787674800,
+      "popup": null
+    }
+  },
+  "active_url": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "admin",
+        "capabilities": ["product_popup_read", "product_popup_write"]
+      },
+      "uid": 42,
+      "resource_revision": 3,
+      "evaluated_at": 1787674800,
+      "popup": {
+        "pop_id": "popup.42.3",
+        "revision": 3,
+        "status": "active",
+        "title": "Discover Friending PLUS",
+        "message": "See the benefits selected for your account.",
+        "repeat_mode": "until_expiry",
+        "expires_at": 1788279600,
+        "button": {
+          "action": "url",
+          "title": "View benefits",
+          "url": "https://friending.com/plus?source=popup"
+        },
+        "created_at": 1787588400,
+        "created_by": "owner@friending.com",
+        "updated_at": 1787674700,
+        "updated_by": "admin@friending.com"
+      }
+    }
+  },
+  "expired_rate": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "owner",
+        "capabilities": ["product_popup_read", "product_popup_write"]
+      },
+      "uid": 84,
+      "resource_revision": 2,
+      "evaluated_at": 1787674800,
+      "popup": {
+        "pop_id": "popup:84:2",
+        "revision": 2,
+        "status": "expired",
+        "title": "How is Friending working for you?",
+        "message": "Your feedback helps us improve the app.",
+        "repeat_mode": "once",
+        "expires_at": 1787674700,
+        "button": {
+          "action": "rate",
+          "title": "Rate Friending",
+          "url": ""
+        },
+        "created_at": 1787400000,
+        "created_by": "owner@friending.com",
+        "updated_at": 1787500000,
+        "updated_by": "owner@friending.com"
+      }
+    }
+  },
+  "explicitly_cleared": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "admin",
+        "capabilities": ["product_popup_read", "product_popup_write"]
+      },
+      "uid": 42,
+      "resource_revision": 5,
+      "evaluated_at": 1787675000,
+      "popup": null
+    }
+  },
+  "set_success": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "admin",
+        "capabilities": ["product_popup_read", "product_popup_write"]
+      },
+      "uid": 42,
+      "resource_revision": 4,
+      "evaluated_at": 1787674900,
+      "popup": {
+        "pop_id": "popup.42.4",
+        "revision": 4,
+        "status": "active",
+        "title": "PLUS is ready",
+        "message": "Open the benefits selected for your account.",
+        "repeat_mode": "until_expiry",
+        "expires_at": 1788279600,
+        "button": {
+          "action": "url",
+          "title": "View benefits",
+          "url": "https://friending.com/plus?source=popup"
+        },
+        "created_at": 1787674850,
+        "created_by": "admin@friending.com",
+        "updated_at": 1787674850,
+        "updated_by": "admin@friending.com"
+      },
+      "replayed": false
+    }
+  },
+  "set_replay": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "admin",
+        "capabilities": ["product_popup_read", "product_popup_write"]
+      },
+      "uid": 42,
+      "resource_revision": 4,
+      "evaluated_at": 1787674900,
+      "popup": {
+        "pop_id": "popup.42.4",
+        "revision": 4,
+        "status": "active",
+        "title": "PLUS is ready",
+        "message": "Open the benefits selected for your account.",
+        "repeat_mode": "until_expiry",
+        "expires_at": 1788279600,
+        "button": {
+          "action": "url",
+          "title": "View benefits",
+          "url": "https://friending.com/plus?source=popup"
+        },
+        "created_at": 1787674850,
+        "created_by": "admin@friending.com",
+        "updated_at": 1787674850,
+        "updated_by": "admin@friending.com"
+      },
+      "replayed": true
+    }
+  },
+  "clear_success": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "admin",
+        "capabilities": ["product_popup_read", "product_popup_write"]
+      },
+      "uid": 42,
+      "resource_revision": 4,
+      "evaluated_at": 1787674900,
+      "popup": null,
+      "replayed": false
+    }
+  },
+  "conflict": {
+    "success": false,
+    "status_code": 409,
+    "error": "product-popup-conflict",
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "admin",
+        "capabilities": ["product_popup_read", "product_popup_write"]
+      },
+      "uid": 42,
+      "resource_revision": 4,
+      "evaluated_at": 1787674900,
+      "popup": {
+        "pop_id": "popup.42.4",
+        "revision": 4,
+        "status": "active",
+        "title": "Changed by another operator",
+        "message": "This is the authoritative replacement.",
+        "repeat_mode": "once",
+        "expires_at": 1788279600,
+        "button": {
+          "action": "none",
+          "title": "",
+          "url": ""
+        },
+        "created_at": 1787674850,
+        "created_by": "owner@friending.com",
+        "updated_at": 1787674850,
+        "updated_by": "owner@friending.com"
+      }
+    }
+  },
+  "already_clear": {
+    "success": false,
+    "status_code": 409,
+    "error": "product-popup-already-clear",
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "admin",
+        "capabilities": ["product_popup_read", "product_popup_write"]
+      },
+      "uid": 42,
+      "resource_revision": 5,
+      "evaluated_at": 1787675000,
+      "popup": null
+    }
+  }
+}
