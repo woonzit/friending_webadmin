@@ -456,14 +456,14 @@ test("every closed refusal has localized routing and the documented retry policy
   assert.equal(reportedContentShouldRetainDecision(undefined), true);
 });
 
-test("the dormant bridge is unreachable for guests, foreign origins, viewers, and owners", async () => {
-  assert.equal(REPORTED_CONTENT_CONTRACT_READY, false);
-  const actions = ["moderation_reported_list", "moderation_report_action"];
-  for (const action of actions) {
-    assert.equal(isAdminActionAllowed(action), false);
-    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "viewer" })), false);
-    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "owner" })), false);
-  }
+test("the released bridge permits only the intended same-origin role classes", async () => {
+  assert.equal(REPORTED_CONTENT_CONTRACT_READY, true);
+  assert.equal(isAdminActionAllowed("moderation_reported_list"), true);
+  assert.equal(isAdminActionAuthorized("moderation_reported_list", adminPrincipalFrom({ role: "viewer" })), true);
+  assert.equal(isAdminActionAuthorized("moderation_reported_list", adminPrincipalFrom({ role: "owner" })), true);
+  assert.equal(isAdminActionAllowed("moderation_report_action"), true);
+  assert.equal(isAdminActionAuthorized("moderation_report_action", adminPrincipalFrom({ role: "viewer" })), false);
+  assert.equal(isAdminActionAuthorized("moderation_report_action", adminPrincipalFrom({ role: "owner" })), true);
 
   assert.equal(isTrustedAdminRequest(headers({
     origin: "https://friendingapp.com",
@@ -487,7 +487,7 @@ test("the dormant bridge is unreachable for guests, foreign origins, viewers, an
   assert.match(proxy, /if \(!isAdminActionAllowed\(action\)\)[\s\S]*?bridgeError\("not-found", 404\)/);
 });
 
-test("queue, detail, navigation, and proxy activation remain one explicit dormant cutover", async () => {
+test("queue, detail, navigation, and proxy activation share one explicit release switch", async () => {
   const [queuePage, detailPage, queue, detail, shell] = await Promise.all([
     readFile(new URL("../app/(dashboard)/reported-content/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/(dashboard)/reported-content/[reportId]/page.tsx", import.meta.url), "utf8"),

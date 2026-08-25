@@ -6,7 +6,7 @@
  * matching release is verified. Keep these server/client-safe booleans free of
  * environment fallbacks: activation is an explicit reviewed source change.
  */
-export const REPORTED_CONTENT_CONTRACT_READY: boolean = false;
+export const REPORTED_CONTENT_CONTRACT_READY: boolean = true;
 export const PRODUCT_POPUP_CONTRACT_READY: boolean = false;
 /**
  * Local half of the Persona cutover. Even after this reviewed release switch

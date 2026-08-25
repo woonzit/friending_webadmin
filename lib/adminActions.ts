@@ -1,3 +1,5 @@
+import { REPORTED_CONTENT_CONTRACT_READY } from "@/lib/contractReadiness";
+
 export const DATES_ADMIN_ACTIONS = [
   "admin_me",
   "dates_activity_list",
@@ -25,6 +27,10 @@ export const DATES_ADMIN_ACTIONS = [
   "dates_reason_save",
   "dates_reason_deactivate",
 ] as const;
+
+const REPORTED_CONTENT_ADMIN_ACTIONS = REPORTED_CONTENT_CONTRACT_READY
+  ? ["moderation_reported_list", "moderation_report_action"] as const
+  : [] as const;
 
 export const ADMIN_ACTIONS = [
   "overview",
@@ -136,6 +142,7 @@ export const ADMIN_ACTIONS = [
   "set_layer2_selection_limit",
   "signup_photo_config",
   "save_signup_photo_config",
+  ...REPORTED_CONTENT_ADMIN_ACTIONS,
   ...DATES_ADMIN_ACTIONS,
 ] as const;
 
@@ -303,6 +310,12 @@ export const ADMIN_ACTION_ACCESS: Record<AdminAction, AdminActionAccess> = {
   // write on `requireAdminEditor`; both classifications here are at least as strict.
   signup_photo_config: "read",
   save_signup_photo_config: "write",
+
+  // The list is safe for every active administrator. A browser-side decision
+  // also requires the global editor role; Core then rechecks its narrower
+  // reported-content capability before accepting any mutation.
+  moderation_reported_list: "read",
+  moderation_report_action: "write",
 
   admin_me: "read",
   dates_activity_list: "dates_read",
