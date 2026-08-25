@@ -12,10 +12,12 @@ import UserModerationPanel from "@/components/UserModerationPanel";
 import UserMembershipPanel from "@/components/UserMembershipPanel";
 import UserContentEditor from "@/components/UserContentEditor";
 import ProductPopupPanel from "@/components/ProductPopupPanel";
+import VerificationUserPanel from "@/components/VerificationUserPanel";
 import { adminCall } from "@/lib/adminClient";
 import {
   PRODUCT_POPUP_CONTRACT_READY,
   PUSH_MODE_CONTRACT_READY,
+  VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 import { formatDate } from "@/lib/format";
 import {
@@ -25,6 +27,7 @@ import {
   type UserProfileFields,
 } from "@/lib/profileFields";
 import { userDetail, type UserDetail, type UserDetailLocation } from "@/lib/userDetail";
+import { verificationUserFixture } from "@/lib/verificationAdmin";
 
 function locationLabel(location: UserDetailLocation | null): string {
   if (!location) return "—";
@@ -146,6 +149,7 @@ export default function UserDetailPage() {
       <UserAlbumsPanel uid={uid} />
       <UserMembershipPanel uid={uid} initial={data.membership} />
       <UserModerationPanel uid={uid} />
+      {VERIFICATION_CONTRACT_READY ? <VerificationUserPanel data={verificationUserFixture(uid, t("verificationGrant.fixtureReason"), t("verificationGrant.fixtureRejectionReason"))} /> : null}
       {PRODUCT_POPUP_CONTRACT_READY ? <ProductPopupPanel key={`product-popup-${uid}`} uid={uid} /> : null}
       <UserContentEditor
         key={profile.uid}

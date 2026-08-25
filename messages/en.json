@@ -206,6 +206,16 @@
             },
             "guidance": "Presence is not proof that a notification was sent or delivered. The console never exposes raw registrations, hashes, device identifiers, provider errors or credentials."
           },
+          "verificationGrant": {
+            "title": "Verification level and team grant",
+            "purpose": "This panel separates method statuses, derived or imported verification, the effective level and any upward-only team grant for the confirmed member.",
+            "actions": {
+              "1": "Read the applied region, method statuses, provenance and evaluated expiry before considering a grant.",
+              "2": "Preview Light or Strong with a private bounded reason and optional expiry, then review the privacy-safe pink-seal consequence.",
+              "3": "Remove only the team grant when appropriate; genuine Video selfie, Persona and imported verification remain unchanged."
+            },
+            "guidance": "Strong changes internal access, but other members see only the same pink verified seal with no tier disclosure. This panel cannot override the member's badge-visibility preference or revoke genuine verification."
+          },
           "profileCopy": {
             "title": "Public profile texts",
             "purpose": "Operators can correct the member's headline and About text when handling support or accepted-content moderation.",
@@ -624,6 +634,117 @@
               "2": "Use history to understand a re-review or replacement without overwriting earlier facts."
             },
             "guidance": "History is evidence, not an editable note pad. A missing expected event should be investigated before repeating any action."
+          }
+        }
+      },
+      "verification": {
+        "title": "Verification settings help",
+        "summary": "This dormant policy workspace previews regional methods, feature requirements, bilingual gate states, privacy-safe seals and synthetic evaluation without changing member access.",
+        "steps": {
+          "1": "Start with Scopes and confirm which regional policy supplies the effective methods before changing any requirement.",
+          "2": "Review each feature row and its inherited source, then inspect both English and Hungarian gate previews.",
+          "3": "Check badge legibility at every supported size and use Simulator with synthetic states before preparing a save.",
+          "4": "When live wiring arrives, confirm one revisioned mutation and reconcile Core state after any timeout or conflict."
+        },
+        "sections": {
+          "overview": {
+            "title": "Verification policy workspace",
+            "purpose": "The five tabs place all verification policy presentation in one bounded operations surface while Core remains the enforcement authority.",
+            "actions": {
+              "1": "Read the dormant/readiness banner before interpreting any fixture or draft as production state.",
+              "2": "Move between tabs to review one complete policy story without opening unrelated configuration pages."
+            },
+            "guidance": "A local preview is design evidence only. It never proves that a member is allowed, blocked, verified or eligible for a provider flow."
+          },
+          "methodsAndLevels": {
+            "title": "Methods and levels",
+            "purpose": "Video selfie and Persona map into None, Light and Strong according to the effective scope, with pending never granting access and single-method scopes hiding tier language.",
+            "actions": {
+              "1": "Read the derived Light and Strong mapping whenever enabled methods change.",
+              "2": "Confirm that a single enabled method uses method wording only, while both methods use the tier presentation."
+            },
+            "guidance": "The mapping is derived and read-only. Do not create a second control that disagrees with the enabled-method selection."
+          },
+          "scopePrecedence": {
+            "title": "Scope precedence",
+            "purpose": "The authoritative member-region projection resolves policy in city, country, then global order, with unset override fields inheriting from the next level.",
+            "actions": {
+              "1": "Inspect the effective source shown beside an inherited method or feature requirement.",
+              "2": "Use the simulator to verify fallback when a city or country has no active matching override."
+            },
+            "guidance": "Webadmin never derives a member region from browser coordinates. Global remains the active, non-deletable fallback."
+          },
+          "scopeEditing": {
+            "title": "Add and pause overrides",
+            "purpose": "Country overrides use a closed ISO picker and city overrides use one canonical server-proxied Places result rather than free text.",
+            "actions": {
+              "1": "Choose the country first, then select exactly one canonical city suggestion when needed.",
+              "2": "Use inheritance for a narrow override and deactivate it instead of inventing a replacement global policy."
+            },
+            "guidance": "Typed city text is not an identity. Provider keys, coordinates and raw Places responses must never enter the browser or audit log."
+          },
+          "featureMatrix": {
+            "title": "Feature requirements",
+            "purpose": "The matrix assigns None, Light or Strong to all eleven frozen feature keys, while country and city cells may explicitly inherit.",
+            "actions": {
+              "1": "Read the localized feature label and machine key before changing a cell.",
+              "2": "Check the displayed effective value and source for every inherited cell before reviewing the scope draft."
+            },
+            "guidance": "Unknown or missing feature keys are a contract mismatch, not optional rows. A conflict replaces the draft with Core's complete canonical scope."
+          },
+          "gateMessages": {
+            "title": "Bilingual gate messages",
+            "purpose": "Video, ID check, two-step, pending and rejected previews provide bounded plain-text modal content for both locales.",
+            "actions": {
+              "1": "Edit English and Hungarian together and keep every required field within its Unicode bound.",
+              "2": "Review the non-interactive phone preview and confirm the action kind before preparing the pair."
+            },
+            "guidance": "The Both state is an ordered two-step flow beginning with Video selfie. Pending is information-only; rejected includes a safe reason, attempt count and manual-review availability."
+          },
+          "badges": {
+            "title": "Verification badges",
+            "purpose": "Verified, Pending and Rejected each preview one bounded PNG, while all verified photos use the same pink public seal regardless of tier.",
+            "actions": {
+              "1": "Choose a bounded square asset and inspect it at 16, 24 and 40 pixels on light and dark backgrounds.",
+              "2": "Review the local selection without treating upload completion as a saved badge-manifest change."
+            },
+            "guidance": "Pending and rejected seals are self-only. Members may hide their verified seal in Privacy, and no projection to others reveals Light or Strong."
+          },
+          "simulator": {
+            "title": "Test a policy safely",
+            "purpose": "Synthetic region, method, rejection, provenance and badge-privacy inputs show expected presentation and all eleven feature outcomes without touching a member.",
+            "actions": {
+              "1": "Exercise no-match, inherited, pending, imported and granted combinations before rollout.",
+              "2": "When the contract is wired, compare only the complete Core-authored evaluation and resolved copy key."
+            },
+            "guidance": "The dormant local calculation is a UI fixture, not access authority. The live simulator must use Core and contains no UID or evidence lookup."
+          },
+          "teamGrant": {
+            "title": "Team verification grant",
+            "purpose": "The member-detail panel can preview an upward-only Light or Strong grant with a private reason and optional Core-evaluated expiry.",
+            "actions": {
+              "1": "Compare derived, imported and current effective levels before preparing a grant.",
+              "2": "Review the privacy-safe pink-seal consequence and remove only the grant when the support decision requires it."
+            },
+            "guidance": "A Strong grant affects internal access, but other members still see only one pink seal with no tier disclosure. The panel cannot revoke genuine verification."
+          },
+          "conflictsAndRetry": {
+            "title": "Conflicts and uncertain saves",
+            "purpose": "Every future mutation has one exact revision and durable request identity so retries converge without duplicating a logical action.",
+            "actions": {
+              "1": "After timeout or in-progress state, retain and reuse the exact saved request material.",
+              "2": "On conflict, adopt the complete canonical resource and prepare a fresh edit without merging fields."
+            },
+            "guidance": "Never mint a second request to make an uncertain result disappear. A malformed response is not proof of failure or permission to retry differently."
+          },
+          "privacyAndAudit": {
+            "title": "Privacy and audit boundaries",
+            "purpose": "Capability checks, audit-before-mutation ordering and minimal projections keep verification policy separate from private provider or biometric evidence.",
+            "actions": {
+              "1": "Use only controls permitted by the current Core-authored capability list.",
+              "2": "Keep reasons internal and verify that projections to other members contain only the allowed pink seal, never level, method, pending or rejected detail."
+            },
+            "guidance": "The page must never expose inquiry ids, evidence, exact coordinates, provider keys, raw storage paths, internal reasons, request receipts or administrator identity to members."
           }
         }
       },
@@ -2316,6 +2437,7 @@
     "photoModeration": "Photo moderation",
     "reportedContent": "Reported content",
     "profileVerification": "Profile verification",
+    "verificationSettings": "Verification settings",
     "persona": "Persona operations",
     "profileLocation": "Profile location",
     "dates": "Dates operations",
@@ -3073,6 +3195,315 @@
       "generic": "Core returned an unknown or malformed Persona refusal. No success has been assumed; reload authoritative state."
     }
   },
+  "verificationAdmin": {
+    "eyebrow": "Trust and safety policy",
+    "title": "Verification settings",
+    "subtitle": "Shape regional methods, feature requirements, bilingual member messages and privacy-safe badge presentation.",
+    "staging": "Staging",
+    "readinessTitle": "Interface preview.",
+    "readinessCopy": "Values stay on this page for review and do not affect members or published settings.",
+    "fixtureBadge": "Preview data",
+    "localDraftNotice": "The preview changed on this page only. Published settings are unchanged.",
+    "reviewDraft": "Review local draft",
+    "or": "or",
+    "tabs": {
+      "label": "Verification settings sections",
+      "scopes": "Scopes",
+      "requirements": "Feature requirements",
+      "messages": "Gate messages",
+      "badges": "Badges",
+      "simulator": "Simulator"
+    },
+    "methods": {
+      "video": "Video selfie",
+      "persona": "Persona"
+    },
+    "statuses": {
+      "not_started": "Not started",
+      "pending": "Pending review",
+      "verified": "Verified",
+      "rejected": "Needs retry"
+    },
+    "levels": {
+      "none": "Not verified",
+      "light": "Light",
+      "strong": "Strong"
+    },
+    "sources": {
+      "derived": "Derived",
+      "granted": "Verified by the Friending team",
+      "imported": "Verified in the previous Friending app"
+    },
+    "countries": {
+      "HU": "Hungary",
+      "AT": "Austria",
+      "DE": "Germany",
+      "PL": "Poland",
+      "RS": "Serbia",
+      "US": "United States",
+      "CA": "Canada"
+    },
+    "cities": {
+      "budapest": "Budapest",
+      "szeged": "Szeged",
+      "miami": "Miami",
+      "toronto": "Toronto"
+    },
+    "features": {
+      "people": { "list": { "title": "Browse People" } },
+      "profile": {
+        "view": { "title": "View another profile" },
+        "public_link": { "title": "Share public profile link" }
+      },
+      "chat": {
+        "start": { "title": "Start a chat" },
+        "send": { "title": "Send chat messages" }
+      },
+      "friend": { "request": { "title": "Send friend request" } },
+      "dates": {
+        "access": { "title": "Open Dates" },
+        "create": { "title": "Create a Date" },
+        "join": { "title": "Join a Date" }
+      },
+      "footprints": { "send": { "title": "Send a Footprint" } },
+      "album": { "private_request": { "title": "Request private album" } }
+    },
+    "scopes": {
+      "listTitle": "Regional scopes",
+      "listCopy": "Choose which methods exist in each region, its default level and whether the policy is live, a draft or off.",
+      "global": "Global",
+      "globalCode": "ALL",
+      "inherited": "Inherited methods",
+      "kinds": {
+        "global": "Global fallback",
+        "country": "Country region",
+        "city": "City region"
+      },
+      "columns": {
+        "region": "Region",
+        "defaultLevel": "Default level",
+        "status": "Status"
+      },
+      "states": {
+        "live": "Live",
+        "draft": "Draft",
+        "off": "Off"
+      },
+      "toggleMethod": "Toggle {method} for {scope}",
+      "defaultLevelFor": "Default level for {scope}",
+      "statusFor": "Publication status for {scope}",
+      "noTierLanguage": "Tier wording is hidden with one method",
+      "addRegion": "Add region",
+      "cancelAdd": "Close add form",
+      "importMembers": "Import from Members",
+      "importPreview": "Import is shown for workflow review only. No member locations were read.",
+      "kindLabel": "Region kind",
+      "country": "Country",
+      "citySearch": "City search",
+      "citySearchPlaceholder": "City catalogue search is not active in this preview",
+      "citySearchHint": "Typed text is never accepted as a city identity. A published workflow must return canonical suggestions.",
+      "city": "Selected canonical result",
+      "cityPlaceholder": "Select a sample result",
+      "canonicalSelection": "Only the selected result supplies the city identity; its fallback key is not editable.",
+      "addDraft": "Add draft region",
+      "addedDraft": "The draft region was added to this preview only.",
+      "duplicate": "That region already exists in the preview.",
+      "cityRequired": "Select one canonical city result before adding the draft region.",
+      "guardrails": {
+        "title": "Guardrails",
+        "copy": "These rules stay visible beside every regional edit.",
+        "bothOff": {
+          "title": "Both methods off",
+          "copy": "The region has no verification gate or badge, and every feature requirement falls to None."
+        },
+        "oneOn": {
+          "title": "One method on",
+          "copy": "Member screens use method wording only and hide Light or Strong tier language."
+        },
+        "liveDisable": {
+          "title": "Disable a live method",
+          "copy": "Earned verification remains, while new checks with that method cannot start."
+        }
+      },
+      "queue": {
+        "title": "Pending review queue",
+        "copy": "Preview data for the operational queue card.",
+        "average": "Average {minutes} min",
+        "progressLabel": "Average wait {minutes} minutes against a {threshold} minute threshold",
+        "threshold": "Above {minutes} minutes, the pending message automatically uses its longer variant."
+      }
+    },
+    "requirements": {
+      "title": "Feature requirements matrix",
+      "copy": "Set a tier per closed feature key and inspect the effective source of every inherited cell.",
+      "compactScope": "Scope shown on compact layouts",
+      "feature": "Feature",
+      "values": {
+        "inherit": "Inherit",
+        "none": "None",
+        "light": "Light",
+        "strong": "Strong"
+      },
+      "effective": "Effective: {value} from {source}",
+      "guardrailNone": "Both methods are off, so the effective requirement is None."
+    },
+    "messages": {
+      "title": "Default gate messages",
+      "copy": "Edit one atomic EN/HU fixture pair and inspect the member sheet without executing its action.",
+      "defaultLabel": "Default message kind",
+      "variants": {
+        "video": "Video",
+        "persona": "Persona",
+        "both": "Both · two steps",
+        "pending": "Pending",
+        "rejected": "Rejected · retry"
+      },
+      "bothMeaning": "Both is an ordered two-step flow: Video selfie first, then ID check. A member may stop after step 1.",
+      "pendingMeaning": "Pending is information-only. It can show the review wait and links back to Verification status.",
+      "rejectedMeaning": "Rejected uses a member-safe reason, attempt counter and manual-review availability supplied with the state.",
+      "localeLabel": "Message locale",
+      "locales": {
+        "en": "English",
+        "hu": "Hungarian"
+      },
+      "fields": {
+        "icon": "Allow-listed symbol",
+        "title": "Title",
+        "subtitle": "Subtitle",
+        "description": "Description",
+        "actionKind": "Primary action",
+        "actionLabel": "Action label",
+        "actionUrl": "HTTPS action URL",
+        "cancelLabel": "Cancel label"
+      },
+      "actions": {
+        "start_video": "Start video verification",
+        "start_persona": "Start identity verification",
+        "open_verification_center": "Open Verification",
+        "dismiss": "Close message",
+        "url": "Open HTTPS URL"
+      },
+      "invalidUrl": "Enter a canonical HTTPS URL without embedded credentials.",
+      "previewLabel": "Unsaved member gate preview",
+      "emptyPreview": "Untitled verification message",
+      "emptyAction": "Primary action",
+      "emptyCancel": "Not now",
+      "nonInteractive": "Unsaved, non-interactive member preview",
+      "previewSteps": {
+        "video": "Video selfie",
+        "persona": "ID check"
+      },
+      "previewPending": {
+        "wait": "Current average review time: about {minutes} minutes",
+        "longer": "A longer reassurance message is used above {minutes} minutes."
+      },
+      "previewRejected": {
+        "reason": "The face moved outside the guide during the recording.",
+        "attempt": "Attempt {attempt} of {maximum}",
+        "manualReview": "If retry still fails, the team can review it manually."
+      }
+    },
+    "badges": {
+      "title": "Badge specimens",
+      "copy": "Review the public verified seal and the self-only pending and rejected states at every supported size.",
+      "file": "Badge PNG",
+      "limit": "PNG only, at most {size} MiB. The selected file remains local in this preview.",
+      "tierInsideOnly": "Verification center only",
+      "placementRule": "Photos always show one pink verified seal, regardless of Light or Strong. Tier names appear only inside the Verification center.",
+      "slots": {
+        "verified": { "title": "Verified seal", "copy": "The single pink public seal for every verified member." },
+        "pending": { "title": "Pending seal", "copy": "Visible only to the member on their own profile." },
+        "rejected": { "title": "Retry seal", "copy": "Visible only to the member on their own profile." }
+      },
+      "placements": {
+        "people": "People card",
+        "profile": "Profile header",
+        "chat": "Chat header"
+      },
+      "selfOnly": "Hidden from others",
+      "visibleHere": "Shown here",
+      "privacy": "Members can hide their own verified seal in Privacy. Pending and rejected seals are never projected to other members.",
+      "errors": {
+        "empty": "The selected file is empty.",
+        "size": "The selected file is larger than 2 MiB.",
+        "type": "Select a PNG file."
+      },
+      "noManifest": "The local PNG is ready for interface review. Published badge settings are unchanged.",
+      "review": "Review selection"
+    },
+    "simulator": {
+      "inputsTitle": "Synthetic member inputs",
+      "inputsCopy": "Choose fixture-only location, method and provenance states without looking up a UID.",
+      "localOnly": "This calculation is a layout preview. It does not read or change any member.",
+      "scope": "Member region",
+      "video": "Video selfie status",
+      "persona": "Persona status",
+      "imported": "Imported level",
+      "grant": "Team-grant level",
+      "badgeVisible": "Member allows the verified seal to be shown",
+      "rejectedFixture": "Retry state preview",
+      "rejectedReason": "The face moved outside the guide during the recording.",
+      "rejectedAttempt": "Attempt {attempt} of {maximum}",
+      "manualReview": "Manual review is available after another failed retry",
+      "outputTitle": "Fixture evaluation",
+      "outputCopy": "Every closed feature remains visible so a missing row cannot look allowed.",
+      "derived": "Derived level",
+      "effective": "Effective level and source",
+      "chain": "Scope chain",
+      "tierLanguageHidden": "Method wording only",
+      "publicBadge": "Projection to other members",
+      "pinkSeal": "One pink verified seal",
+      "hiddenSeal": "No badge",
+      "ownState": "Own-profile state",
+      "ownStates": {
+        "none": "No seal",
+        "verified": "Pink verified seal",
+        "pending": "Pending seal",
+        "rejected": "Retry seal"
+      },
+      "allowed": "Allowed",
+      "blocked": "Verification required",
+      "requirement": "Requires {value}",
+      "next": "Next: {method}"
+    },
+    "seedCopy": {
+      "video": {
+        "title": "Video verification",
+        "subtitle": "A quick check helps keep Friending genuine.",
+        "description": "Open Verification to start a video selfie or check a submission. Once approved, it unlocks features that require Light verification.",
+        "actionLabel": "Open Verification",
+        "cancelLabel": "Not now"
+      },
+      "persona": {
+        "title": "Identity verification",
+        "subtitle": "An identity check helps build trust.",
+        "description": "Open Verification to start an identity check with Persona or review its status. Once approved, it unlocks features that require Strong verification.",
+        "actionLabel": "Open Verification",
+        "cancelLabel": "Not now"
+      },
+      "both": {
+        "title": "Two quick steps to continue",
+        "subtitle": "Start with a video selfie, then complete an ID check.",
+        "description": "Complete step 1 first. You may stop there and return for the ID check when you are ready.",
+        "actionLabel": "Start step 1 · Video selfie",
+        "cancelLabel": "Not now"
+      },
+      "pending": {
+        "title": "Your verification is on the way",
+        "subtitle": "The review is still in progress.",
+        "description": "You can keep using Friending while the team reviews your submission. Check Verification for the latest status.",
+        "actionLabel": "Got it",
+        "cancelLabel": "View verification status"
+      },
+      "rejected": {
+        "title": "We could not confirm that video",
+        "subtitle": "A retry usually fixes framing or lighting issues.",
+        "description": "Review the reason below, then record a new video when you are ready.",
+        "actionLabel": "Try again",
+        "cancelLabel": "Not now"
+      }
+    }
+  },
   "cannedTemplates": {
     "eyebrow": "Communications library",
     "title": "Message templates",
@@ -3528,6 +3959,95 @@
       "present": "Present",
       "notPresent": "Not present",
       "separate": "Registration presence is member-specific. The global delivery mode is configured separately and can disable a present channel. Identifiers and provider credentials are never shown here."
+    },
+    "verificationGrant": {
+      "fixtureReason": "Preview team support decision",
+      "fixtureRejectionReason": "The face moved outside the guide during the recording.",
+      "title": "Verification",
+      "copy": "Review method states, provenance, effective level and the separate upward-only team grant.",
+      "localOnly": "Preview data only: no member verification or team grant is read or changed.",
+      "scope": "Applied region",
+      "evaluatedAt": "Evaluation time",
+      "derivedLevel": "Derived level",
+      "effectiveLevel": "Effective level",
+      "badgeVisibility": "Member badge visibility",
+      "badgeVisible": "Visible",
+      "badgeHidden": "Hidden by the member",
+      "badgePrivacy": "This preference is controlled by the member in Privacy. Administrators cannot override it here.",
+      "levels": {
+        "none": "Not verified",
+        "light": "Light",
+        "strong": "Strong"
+      },
+      "sources": {
+        "derived": "Derived",
+        "granted": "Verified by the Friending team",
+        "imported": "Verified in the previous Friending app"
+      },
+      "methods": {
+        "video": "Video selfie",
+        "persona": "Persona"
+      },
+      "statuses": {
+        "not_started": "Not started",
+        "pending": "Pending review",
+        "verified": "Verified",
+        "rejected": "Needs retry"
+      },
+      "methodHints": {
+        "persona": "Persona",
+        "video": "video",
+        "manual": "manual review"
+      },
+      "imported": {
+        "title": "Previous-app verification",
+        "copy": "{level} from {method}, imported {date}. This is not a synthetic provider inquiry or team grant."
+      },
+      "rejection": {
+        "title": "Retry context",
+        "reason": "Member-safe reason",
+        "attempt": "Attempt {attempt} of {maximum}",
+        "manualReview": "Manual review is available after another failed retry",
+        "manualReviewUnavailable": "Manual review is not currently available"
+      },
+      "grant": {
+        "title": "Current team grant",
+        "status": {
+          "active": "Active",
+          "expired": "Expired"
+        },
+        "level": "Granted level",
+        "reason": "Internal reason",
+        "grantedBy": "Granted by",
+        "grantedAt": "Granted at",
+        "expiry": "Expiry",
+        "noExpiry": "No expiry",
+        "revision": "Grant revision",
+        "empty": "No team grant exists for this member."
+      },
+      "editor": {
+        "title": "Team grant editor",
+        "copy": "Prepare a Light or Strong grant without changing method results or imported provenance.",
+        "readOnly": "Your Core-authored capabilities permit grant reading but not editing.",
+        "level": "Team grant level",
+        "reason": "Internal reason",
+        "reasonPrivate": "Never projected to the member",
+        "expiryMode": "Expiry mode",
+        "noExpiry": "No expiry",
+        "chooseExpiry": "Exact future expiry",
+        "expiry": "Expiry date and time",
+        "expiryError": "Choose a time after Core's evaluation timestamp.",
+        "expiryHint": "Core, not the browser clock, decides whether the saved grant is active.",
+        "previewLevel": "Preview effective level",
+        "changesNow": "This fixture would raise the effective level.",
+        "noImmediateChange": "No immediate level change.",
+        "strongWarning": "A Strong grant changes access inside Verification, but other members still see only the same pink verified seal with no tier disclosure.",
+        "remove": "Preview removal",
+        "preview": "Preview grant",
+        "noRevocation": "Removal affects only the team grant. V1 cannot revoke genuine Video selfie, Persona or imported verification.",
+        "removePreview": "Removal preview only: method and imported verification would remain unchanged. No request was sent."
+      },
+      "previewed": "Local {level} preview prepared. No request was sent."
     },
     "allAlbums": "All profile albums",
     "allAlbumsCopy": "Administrators can inspect and remove images from public and private albums without requesting access.",

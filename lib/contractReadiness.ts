@@ -18,3 +18,5 @@ export const PERSONA_ADMIN_PROXY_RELEASED: boolean = false;
 export const CANNED_TEMPLATES_CONTRACT_READY: boolean = false;
 /** T-107 is released; push settings and per-member channel projections are required. */
 export const PUSH_MODE_CONTRACT_READY: boolean = true;
+/** T-109/T-108 must be released and reviewed before verification policy UI is reachable. */
+export const VERIFICATION_CONTRACT_READY: boolean = false;

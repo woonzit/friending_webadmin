@@ -206,6 +206,16 @@
             },
             "guidance": "A jelenlét nem bizonyítja, hogy értesítést küldtek vagy kézbesítettek. A konzol soha nem fed fel nyers regisztrációt, hash-t, eszközazonosítót, szolgáltatói hibát vagy hitelesítőt."
           },
+          "verificationGrant": {
+            "title": "Ellenőrzési szint és csapatszintű jogosultság",
+            "purpose": "Ez a panel külön mutatja a módszerállapotokat, a származtatott vagy importált ellenőrzést, a tényleges szintet és a megerősített tag felfelé ható csapatszintű jogosultságát.",
+            "actions": {
+              "1": "Jogosultság mérlegelése előtt olvasd el az alkalmazott területet, a módszerállapotokat, a forrást és a kiértékelt lejáratot.",
+              "2": "Tekintsd meg az Alapszintű vagy Erős jogosultság előnézetét privát, korlátozott indokkal és opcionális lejárattal, majd ellenőrizd az adatvédelmi szempontból biztonságos rózsaszín pecsét következményét.",
+              "3": "Szükség esetén csak a csapat által megadott szintet távolítsd el; a valódi videós szelfi-, Persona- és importált ellenőrzés változatlan marad."
+            },
+            "guidance": "Az Erős szint a belső hozzáférést módosítja, más tagok azonban csak ugyanazt a rózsaszín pecsétet látják szintfelfedés nélkül. Ez a panel nem írhatja felül a tag jelvényláthatóságát, és nem vonhat vissza valódi ellenőrzést."
+          },
           "profileCopy": {
             "title": "Nyilvános profilszövegek",
             "purpose": "Az operátorok támogatási vagy elfogadott-tartalom moderációs ügyben javíthatják a tag headline és Bemutatkozás szövegét.",
@@ -624,6 +634,117 @@
               "2": "Az előzményből értsd meg a re-review vagy csere történetét a korábbi tények felülírása nélkül."
             },
             "guidance": "Az előzmény bizonyíték, nem szerkeszthető jegyzettömb. Hiányzó várt eseménynél vizsgálódj, mielőtt megismételnél egy műveletet."
+          }
+        }
+      },
+      "verification": {
+        "title": "Ellenőrzési beállítások súgója",
+        "summary": "Ez a nyugalmi szabályzatmunkaterület területi módszereket, funkciókövetelményeket, kétnyelvű gate-állapotokat, adatvédelmi szempontból biztonságos pecséteket és szintetikus kiértékelést mutat a tagi hozzáférés módosítása nélkül.",
+        "steps": {
+          "1": "A Területek lapon kezdd, és követelmény módosítása előtt ellenőrizd, melyik területi szabályzat adja a tényleges módszereket.",
+          "2": "Vizsgáld meg minden funkció sorát és öröklési forrását, majd nézd át az angol és magyar gate-előnézetet.",
+          "3": "Ellenőrizd a jelvények olvashatóságát minden támogatott méretben, és mentés előkészítése előtt használj szintetikus állapotokat a Szimulátorban.",
+          "4": "Az élő bekötés után egyetlen revíziózott módosítást erősíts meg, timeout vagy ütközés után pedig egyeztesd a Core állapotát."
+        },
+        "sections": {
+          "overview": {
+            "title": "Ellenőrzési szabályzatmunkaterület",
+            "purpose": "Az öt lap minden ellenőrzési szabályzatot és megjelenítést egy korlátozott üzemeltetési felületre hoz, miközben a Core marad a kikényszerítés hatósága.",
+            "actions": {
+              "1": "Olvasd el a nyugalmi/készenléti jelzést, mielőtt bármely fixture-t vagy draftot éles állapotként értelmeznél.",
+              "2": "A lapok között haladva tekints át egy teljes szabályzattörténetet más konfigurációs oldalak megnyitása nélkül."
+            },
+            "guidance": "A helyi előnézet csak tervezési bizonyíték. Nem igazolja, hogy egy tag engedélyezett, blokkolt, ellenőrzött vagy szolgáltatói folyamatra jogosult."
+          },
+          "methodsAndLevels": {
+            "title": "Módszerek és szintek",
+            "purpose": "A videós szelfi és a Persona a tényleges terület szerint ad Nincs, Alapszintű vagy Erős szintet; a függő állapot soha nem ad hozzáférést, egyetlen módszernél pedig nincs szintnyelv.",
+            "actions": {
+              "1": "Az engedélyezett módszerek változásakor olvasd el a származtatott Alapszintű és Erős leképezést.",
+              "2": "Ellenőrizd, hogy egyetlen módszernél csak a módszer neve, mindkét módszernél pedig a szintmegjelenítés látható."
+            },
+            "guidance": "A leképezés származtatott és csak olvasható. Ne hozz létre második vezérlőt, amely eltér az engedélyezett módszerektől."
+          },
+          "scopePrecedence": {
+            "title": "Területi elsőbbség",
+            "purpose": "A hiteles tagi területkivetítés város, ország, majd globális sorrendben oldja fel a szabályzatot, a nem beállított felülírások a következő szintről örökölnek.",
+            "actions": {
+              "1": "Vizsgáld meg az örökölt módszer vagy funkciókövetelmény mellett megjelenő tényleges forrást.",
+              "2": "A Szimulátorral ellenőrizd a fallbacket, ha egy városhoz vagy országhoz nincs aktív egyező felülírás."
+            },
+            "guidance": "A Webadmin soha nem vezet le tagi területet böngésző-koordinátából. A globális szabályzat aktív, nem törölhető fallback."
+          },
+          "scopeEditing": {
+            "title": "Felülírások hozzáadása és szüneteltetése",
+            "purpose": "Az országfelülírás zárt ISO-választót, a városfelülírás pedig szabadszöveg helyett egy kanonikus, szerveren proxizott Places-találatot használ.",
+            "actions": {
+              "1": "Először válaszd ki az országot, majd szükség esetén pontosan egy kanonikus városjavaslatot.",
+              "2": "Szűk felülíráshoz használj öröklést, és új globális szabályzat kitalálása helyett inaktiváld a felülírást."
+            },
+            "guidance": "A begépelt városszöveg nem azonosság. Szolgáltatói kulcs, koordináta és nyers Places-válasz soha nem kerülhet a böngészőbe vagy auditnaplóba."
+          },
+          "featureMatrix": {
+            "title": "Funkciókövetelmények",
+            "purpose": "A mátrix mind a tizenegy rögzített funkciókulcshoz Nincs, Alapszintű vagy Erős értéket rendel, az ország- és városcella pedig kifejezetten örökölhet.",
+            "actions": {
+              "1": "Cella módosítása előtt olvasd el a lokalizált funkciónevet és a gépi kulcsot.",
+              "2": "A területi draft áttekintése előtt minden örökölt cellánál ellenőrizd a megjelenített tényleges értéket és forrást."
+            },
+            "guidance": "Az ismeretlen vagy hiányzó funkciókulcs szerződéseltérés, nem opcionális sor. Ütközéskor a Core teljes kanonikus területe váltja fel a draftot."
+          },
+          "gateMessages": {
+            "title": "Kétnyelvű gate-üzenetek",
+            "purpose": "A videó, személyazonosság-ellenőrzés, kétlépéses, függő és elutasított előnézet korlátozott egyszerűszöveges modáltartalmat ad mindkét nyelven.",
+            "actions": {
+              "1": "Az angol és magyar változatot együtt szerkeszd, és minden kötelező mezőt tarts a Unicode-korláton belül.",
+              "2": "Nézd át a nem interaktív telefonos előnézetet, és a pár előkészítése előtt ellenőrizd a művelet típusát."
+            },
+            "guidance": "A Mindkettő rendezett, videós szelfivel kezdődő kétlépéses folyamat. A függő állapot csak tájékoztat; az elutasított biztonságos indokot, próbálkozásszámot és kézi ellenőrzési lehetőséget mutat."
+          },
+          "badges": {
+            "title": "Ellenőrzési jelvények",
+            "purpose": "A Hitelesített, Függő és Elutasított állapot egy-egy korlátozott PNG-t mutat; a hitelesített fotókon szinttől függetlenül ugyanaz a rózsaszín pecsét látható.",
+            "actions": {
+              "1": "Válassz korlátozott, négyzetes assetet, majd ellenőrizd 16, 24 és 40 pixelen világos és sötét háttéren.",
+              "2": "A helyi kiválasztást úgy tekintsd át, hogy a feltöltés befejezését ne kezeld mentett jelvénymanifeszt-módosításként."
+            },
+            "guidance": "A függő és elutasított pecsét csak saját profilon látható. A tag az Adatvédelemben elrejtheti a hitelesített pecsétet, másoknak pedig soha nem fedhető fel az Alapszintű vagy Erős szint."
+          },
+          "simulator": {
+            "title": "Szabályzat biztonságos tesztelése",
+            "purpose": "Szintetikus terület-, módszer-, elutasítási, forrás- és jelvényláthatósági bemenetek mutatják a várt megjelenítést és mind a tizenegy funkció eredményét valódi tag érintése nélkül.",
+            "actions": {
+              "1": "Kiadás előtt próbáld ki a nem egyező, örökölt, függő, importált és megadott kombinációkat.",
+              "2": "A szerződés bekötése után kizárólag a teljes Core-kiértékelést és feloldott copy-kulcsot hasonlítsd össze."
+            },
+            "guidance": "A nyugalmi helyi számítás UI-fixture, nem hozzáférési hatóság. Az élő Szimulátor a Core-t használja, és nincs benne UID- vagy bizonyítéklekérdezés."
+          },
+          "teamGrant": {
+            "title": "Csapatszintű ellenőrzési jogosultság",
+            "purpose": "A tagrészlet panel felfelé ható Alapszintű vagy Erős jogosultságot tekinthet meg privát indokkal és opcionális, Core által értékelt lejárattal.",
+            "actions": {
+              "1": "Jogosultság előkészítése előtt hasonlítsd össze a származtatott, importált és aktuális tényleges szintet.",
+              "2": "Vizsgáld meg az adatvédelmi szempontból biztonságos rózsaszín pecsét következményét, és csak az operátori jogosultságot távolítsd el, ha a támogatási döntés ezt kívánja."
+            },
+            "guidance": "Az Erős jogosultság a belső hozzáférést módosítja, más tagok azonban csak egy rózsaszín pecsétet látnak szintfelfedés nélkül. A panel nem vonhat vissza valódi ellenőrzést."
+          },
+          "conflictsAndRetry": {
+            "title": "Ütközések és bizonytalan mentések",
+            "purpose": "Minden jövőbeli módosítás egy pontos revíziót és tartós kérésazonosságot kap, hogy az újrapróbálás ismételt logikai művelet nélkül konvergáljon.",
+            "actions": {
+              "1": "Timeout vagy folyamatban lévő állapot után őrizd meg és használd újra a pontos mentett kérésanyagot.",
+              "2": "Ütközéskor vedd át a teljes kanonikus erőforrást, és mezők összefésülése nélkül készíts friss módosítást."
+            },
+            "guidance": "Bizonytalan eredmény eltüntetéséhez soha ne készíts második kérést. A hibás válasz nem bizonyít kudarcot, és nem enged eltérő újrapróbálást."
+          },
+          "privacyAndAudit": {
+            "title": "Adatvédelmi és audithatárok",
+            "purpose": "A képességellenőrzés, módosítás előtti audit és minimális kivetítés külön tartja a szabályzatot a privát szolgáltatói vagy biometrikus bizonyítéktól.",
+            "actions": {
+              "1": "Csak az aktuális Core-képességlista által engedett vezérlőket használd.",
+              "2": "Az indokot tartsd belsőnek, és ellenőrizd, hogy a más tagoknak szóló kivetítés csak az engedett rózsaszín pecsétet tartalmazza, szint-, módszer-, függő vagy elutasított részletet soha."
+            },
+            "guidance": "Az oldal nem fedhet fel inquiry ID-t, bizonyítékot, pontos koordinátát, szolgáltatói kulcsot, nyers tárolási útvonalat, belső indokot, receiptet vagy adminazonosságot a tagoknak."
           }
         }
       },
@@ -2316,6 +2437,7 @@
     "photoModeration": "Képmoderáció",
     "reportedContent": "Jelentett tartalom",
     "profileVerification": "Profilhitelesítés",
+    "verificationSettings": "Ellenőrzési beállítások",
     "persona": "Persona műveletek",
     "profileLocation": "Profilhelyzet",
     "dates": "Dates üzemeltetés",
@@ -3073,6 +3195,315 @@
       "generic": "A Core ismeretlen vagy hibás Persona-elutasítást adott. A felület nem feltételez sikert; töltsd újra a hiteles állapotot."
     }
   },
+  "verificationAdmin": {
+    "eyebrow": "Bizalom és biztonsági szabályzat",
+    "title": "Ellenőrzési beállítások",
+    "subtitle": "Területi módszerek, funkciókövetelmények, kétnyelvű tagi üzenetek és adatvédelmi szempontból biztonságos jelvénymegjelenítés kialakítása.",
+    "staging": "Előkészítés",
+    "readinessTitle": "Felületi előnézet.",
+    "readinessCopy": "Az értékek csak ezen az oldalon változnak áttekintés céljából; a tagokat és a közzétett beállításokat nem érintik.",
+    "fixtureBadge": "Előnézeti adatok",
+    "localDraftNotice": "Az előnézet csak ezen az oldalon változott. A közzétett beállítások változatlanok.",
+    "reviewDraft": "Helyi draft áttekintése",
+    "or": "vagy",
+    "tabs": {
+      "label": "Ellenőrzési beállítások szekciói",
+      "scopes": "Területek",
+      "requirements": "Funkciókövetelmények",
+      "messages": "Gate-üzenetek",
+      "badges": "Jelvények",
+      "simulator": "Szimulátor"
+    },
+    "methods": {
+      "video": "Videós szelfi",
+      "persona": "Persona"
+    },
+    "statuses": {
+      "not_started": "Nincs elkezdve",
+      "pending": "Ellenőrzés alatt",
+      "verified": "Ellenőrizve",
+      "rejected": "Újrapróbálás szükséges"
+    },
+    "levels": {
+      "none": "Nincs ellenőrizve",
+      "light": "Alapszintű",
+      "strong": "Erős"
+    },
+    "sources": {
+      "derived": "Származtatott",
+      "granted": "A Friending csapata ellenőrizte",
+      "imported": "Az előző Friending alkalmazásban ellenőrizve"
+    },
+    "countries": {
+      "HU": "Magyarország",
+      "AT": "Ausztria",
+      "DE": "Németország",
+      "PL": "Lengyelország",
+      "RS": "Szerbia",
+      "US": "Egyesült Államok",
+      "CA": "Kanada"
+    },
+    "cities": {
+      "budapest": "Budapest",
+      "szeged": "Szeged",
+      "miami": "Miami",
+      "toronto": "Toronto"
+    },
+    "features": {
+      "people": { "list": { "title": "People böngészése" } },
+      "profile": {
+        "view": { "title": "Másik profil megtekintése" },
+        "public_link": { "title": "Nyilvános profillink megosztása" }
+      },
+      "chat": {
+        "start": { "title": "Chat indítása" },
+        "send": { "title": "Chatüzenet küldése" }
+      },
+      "friend": { "request": { "title": "Barátkérés küldése" } },
+      "dates": {
+        "access": { "title": "Dates megnyitása" },
+        "create": { "title": "Date létrehozása" },
+        "join": { "title": "Csatlakozás Date-hez" }
+      },
+      "footprints": { "send": { "title": "Footprint küldése" } },
+      "album": { "private_request": { "title": "Privát album kérése" } }
+    },
+    "scopes": {
+      "listTitle": "Területi szabályzatok",
+      "listCopy": "Válaszd ki az egyes területek módszereit, alapértelmezett szintjét és éles, draft vagy kikapcsolt állapotát.",
+      "global": "Globális",
+      "globalCode": "MIND",
+      "inherited": "Örökölt módszerek",
+      "kinds": {
+        "global": "Globális fallback",
+        "country": "Országterület",
+        "city": "Városterület"
+      },
+      "columns": {
+        "region": "Terület",
+        "defaultLevel": "Alapértelmezett szint",
+        "status": "Állapot"
+      },
+      "states": {
+        "live": "Éles",
+        "draft": "Draft",
+        "off": "Kikapcsolva"
+      },
+      "toggleMethod": "{method} váltása ennél a területnél: {scope}",
+      "defaultLevelFor": "{scope} alapértelmezett szintje",
+      "statusFor": "{scope} közzétételi állapota",
+      "noTierLanguage": "Egy módszernél nincs szintnyelv",
+      "addRegion": "Terület hozzáadása",
+      "cancelAdd": "Hozzáadás bezárása",
+      "importMembers": "Importálás a tagokból",
+      "importPreview": "Az import csak a munkafolyamat előnézete. Tagi helyadatot nem olvastunk.",
+      "kindLabel": "Terület típusa",
+      "country": "Ország",
+      "citySearch": "Városkeresés",
+      "citySearchPlaceholder": "A városkatalógus keresése ebben az előnézetben nem aktív",
+      "citySearchHint": "A begépelt szöveg soha nem fogadható el városazonosságként. A közzétett folyamat kanonikus javaslatokat ad.",
+      "city": "Kiválasztott kanonikus találat",
+      "cityPlaceholder": "Válassz mintatalálatot",
+      "canonicalSelection": "A város azonosságát csak a kiválasztott találat adja; a fallback-kulcs nem szerkeszthető.",
+      "addDraft": "Draftterület hozzáadása",
+      "addedDraft": "A draftterület csak ehhez az előnézethez lett hozzáadva.",
+      "duplicate": "Ez a terület már szerepel az előnézetben.",
+      "cityRequired": "A draftterület hozzáadása előtt válassz ki egy kanonikus várostalálatot.",
+      "guardrails": {
+        "title": "Védőkorlátok",
+        "copy": "Ezek a szabályok minden területi módosítás mellett láthatók.",
+        "bothOff": {
+          "title": "Mindkét módszer kikapcsolva",
+          "copy": "A területen nincs ellenőrzési gate vagy jelvény, és minden funkciókövetelmény Nincs értékre esik."
+        },
+        "oneOn": {
+          "title": "Egy módszer bekapcsolva",
+          "copy": "A tagi képernyők csak a módszer nevét használják, és elrejtik az Alapszintű vagy Erős szintnyelvet."
+        },
+        "liveDisable": {
+          "title": "Éles módszer kikapcsolása",
+          "copy": "A megszerzett ellenőrzés megmarad, de ezzel a módszerrel új ellenőrzés nem indítható."
+        }
+      },
+      "queue": {
+        "title": "Függő ellenőrzések sora",
+        "copy": "Előnézeti adatok az üzemeltetési sorkártyához.",
+        "average": "Átlag {minutes} perc",
+        "progressLabel": "{minutes} perces átlagos várakozás a {threshold} perces küszöbhöz képest",
+        "threshold": "{minutes} perc felett a függő üzenet automatikusan a hosszabb változatot használja."
+      }
+    },
+    "requirements": {
+      "title": "Funkciókövetelmény-mátrix",
+      "copy": "Állíts szintet minden zárt funkciókulcshoz, és vizsgáld meg minden örökölt cella tényleges forrását.",
+      "compactScope": "Kompakt elrendezésben mutatott terület",
+      "feature": "Funkció",
+      "values": {
+        "inherit": "Öröklés",
+        "none": "Nincs",
+        "light": "Alapszintű",
+        "strong": "Erős"
+      },
+      "effective": "Tényleges: {value}, forrás: {source}",
+      "guardrailNone": "Mindkét módszer ki van kapcsolva, ezért a tényleges követelmény Nincs."
+    },
+    "messages": {
+      "title": "Alapértelmezett gate-üzenetek",
+      "copy": "Egy atomi EN/HU fixture-pár szerkesztése és a tagi sheet ellenőrzése a művelet végrehajtása nélkül.",
+      "defaultLabel": "Alapüzenet típusa",
+      "variants": {
+        "video": "Videó",
+        "persona": "Persona",
+        "both": "Mindkettő · két lépés",
+        "pending": "Függőben",
+        "rejected": "Elutasítva · újrapróbálás"
+      },
+      "bothMeaning": "A Mindkettő rendezett, kétlépéses folyamat: először videós szelfi, majd személyazonosság-ellenőrzés. A tag az első lépés után megállhat.",
+      "pendingMeaning": "A függő állapot csak tájékoztat. Megmutathatja a várakozást, és visszavezet az Ellenőrzés állapotához.",
+      "rejectedMeaning": "Az elutasított állapot tag számára biztonságos indokot, próbálkozásszámot és kézi ellenőrzési lehetőséget mutat.",
+      "localeLabel": "Üzenet nyelve",
+      "locales": {
+        "en": "Angol",
+        "hu": "Magyar"
+      },
+      "fields": {
+        "icon": "Engedélyezett szimbólum",
+        "title": "Cím",
+        "subtitle": "Alcím",
+        "description": "Leírás",
+        "actionKind": "Elsődleges művelet",
+        "actionLabel": "Művelet felirata",
+        "actionUrl": "HTTPS művelet-URL",
+        "cancelLabel": "Mégse felirata"
+      },
+      "actions": {
+        "start_video": "Videós ellenőrzés indítása",
+        "start_persona": "Személyazonosság-ellenőrzés indítása",
+        "open_verification_center": "Ellenőrzés megnyitása",
+        "dismiss": "Üzenet bezárása",
+        "url": "HTTPS URL megnyitása"
+      },
+      "invalidUrl": "Adj meg kanonikus HTTPS URL-t beágyazott hitelesítők nélkül.",
+      "previewLabel": "Nem mentett tagi gate-előnézet",
+      "emptyPreview": "Cím nélküli ellenőrzési üzenet",
+      "emptyAction": "Elsődleges művelet",
+      "emptyCancel": "Most nem",
+      "nonInteractive": "Nem mentett, nem interaktív tagi előnézet",
+      "previewSteps": {
+        "video": "Videós szelfi",
+        "persona": "Személyazonosság-ellenőrzés"
+      },
+      "previewPending": {
+        "wait": "Jelenlegi átlagos ellenőrzési idő: körülbelül {minutes} perc",
+        "longer": "{minutes} perc felett hosszabb megnyugtató üzenet jelenik meg."
+      },
+      "previewRejected": {
+        "reason": "Az arc a felvétel közben kikerült a vezetőkeretből.",
+        "attempt": "{attempt}. próbálkozás, legfeljebb {maximum}",
+        "manualReview": "Ha az újrapróbálás sem sikerül, a csapat kézzel is ellenőrizheti."
+      }
+    },
+    "badges": {
+      "title": "Jelvényminták",
+      "copy": "Ellenőrizd a nyilvános hitelesített pecsétet és a csak saját profilon látható függő, illetve újrapróbálási állapotot minden támogatott méretben.",
+      "file": "Jelvény PNG",
+      "limit": "Csak PNG, legfeljebb {size} MiB. A kiválasztott fájl ebben az előnézetben helyben marad.",
+      "tierInsideOnly": "Csak az Ellenőrzési központban",
+      "placementRule": "A fotókon Alapszintű és Erős szintnél is mindig ugyanaz az egy rózsaszín pecsét jelenik meg. A szintnevek csak az Ellenőrzési központban láthatók.",
+      "slots": {
+        "verified": { "title": "Hitelesített pecsét", "copy": "Az egyetlen nyilvános rózsaszín pecsét minden ellenőrzött tagnál." },
+        "pending": { "title": "Függő pecsét", "copy": "Csak a tag számára, a saját profilján látható." },
+        "rejected": { "title": "Újrapróbálási pecsét", "copy": "Csak a tag számára, a saját profilján látható." }
+      },
+      "placements": {
+        "people": "People kártya",
+        "profile": "Profilfejléc",
+        "chat": "Chatfejléc"
+      },
+      "selfOnly": "Mások elől rejtve",
+      "visibleHere": "Itt látható",
+      "privacy": "A tag az Adatvédelemben elrejtheti a saját hitelesített pecsétjét. A függő és elutasított pecsét soha nem jelenik meg más tagoknak.",
+      "errors": {
+        "empty": "A kiválasztott fájl üres.",
+        "size": "A kiválasztott fájl nagyobb 2 MiB-nál.",
+        "type": "Válassz PNG-fájlt."
+      },
+      "noManifest": "A helyi PNG felületi ellenőrzésre kész. A közzétett jelvénybeállítások változatlanok.",
+      "review": "Kiválasztás áttekintése"
+    },
+    "simulator": {
+      "inputsTitle": "Szintetikus tagi bemenetek",
+      "inputsCopy": "UID keresése nélkül válassz kizárólag fixture-alapú hely-, módszer- és forrásállapotot.",
+      "localOnly": "Ez a számítás csak az elrendezés előnézete. Nem olvas és nem módosít valódi tagot.",
+      "scope": "Tagi terület",
+      "video": "Videós szelfi állapota",
+      "persona": "Persona állapota",
+      "imported": "Importált szint",
+      "grant": "Csapat által megadott szint",
+      "badgeVisible": "A tag engedélyezi a hitelesített pecsét megjelenítését",
+      "rejectedFixture": "Újrapróbálási állapot előnézete",
+      "rejectedReason": "Az arc a felvétel közben kikerült a vezetőkeretből.",
+      "rejectedAttempt": "{attempt}. próbálkozás, legfeljebb {maximum}",
+      "manualReview": "Újabb sikertelen próbálkozás után kézi ellenőrzés kérhető",
+      "outputTitle": "Fixture-kiértékelés",
+      "outputCopy": "Minden zárt funkció látható marad, így hiányzó sor nem tűnhet engedélyezettnek.",
+      "derived": "Származtatott szint",
+      "effective": "Tényleges szint és forrás",
+      "chain": "Területi lánc",
+      "tierLanguageHidden": "Csak módszernév",
+      "publicBadge": "Más tagoknak mutatott kivetítés",
+      "pinkSeal": "Egy rózsaszín hitelesített pecsét",
+      "hiddenSeal": "Nincs jelvény",
+      "ownState": "Saját profil állapota",
+      "ownStates": {
+        "none": "Nincs pecsét",
+        "verified": "Rózsaszín hitelesített pecsét",
+        "pending": "Függő pecsét",
+        "rejected": "Újrapróbálási pecsét"
+      },
+      "allowed": "Engedélyezett",
+      "blocked": "Ellenőrzés szükséges",
+      "requirement": "Követelmény: {value}",
+      "next": "Következő: {method}"
+    },
+    "seedCopy": {
+      "video": {
+        "title": "Videós ellenőrzés",
+        "subtitle": "Egy gyors ellenőrzés segít, hogy a Friending közössége hiteles maradjon.",
+        "description": "Nyisd meg az Ellenőrzés oldalt videós szelfi indításához vagy egy beküldés állapotának megtekintéséhez. Jóváhagyás után elérheted az Alapszintű ellenőrzést igénylő funkciókat.",
+        "actionLabel": "Ellenőrzés megnyitása",
+        "cancelLabel": "Most nem"
+      },
+      "persona": {
+        "title": "Személyazonosság-ellenőrzés",
+        "subtitle": "A személyazonosság ellenőrzése segít a bizalom építésében.",
+        "description": "Nyisd meg az Ellenőrzés oldalt a Persona személyazonosság-ellenőrzésének indításához vagy az állapot megtekintéséhez. Jóváhagyás után elérheted az Erős ellenőrzést igénylő funkciókat.",
+        "actionLabel": "Ellenőrzés megnyitása",
+        "cancelLabel": "Most nem"
+      },
+      "both": {
+        "title": "Két gyors lépés a folytatáshoz",
+        "subtitle": "Kezdd videós szelfivel, majd végezd el a személyazonosság-ellenőrzést.",
+        "description": "Először teljesítsd az első lépést. Ezután megállhatsz, és később visszatérhetsz a személyazonosság-ellenőrzéshez.",
+        "actionLabel": "1. lépés · Videós szelfi",
+        "cancelLabel": "Most nem"
+      },
+      "pending": {
+        "title": "Az ellenőrzésed folyamatban van",
+        "subtitle": "Az átvizsgálás még tart.",
+        "description": "A Friendinget továbbra is használhatod, amíg a csapat átnézi a beküldésedet. A legfrissebb állapotot az Ellenőrzésben találod.",
+        "actionLabel": "Rendben",
+        "cancelLabel": "Ellenőrzési állapot"
+      },
+      "rejected": {
+        "title": "A videót nem tudtuk megerősíteni",
+        "subtitle": "Az újrapróbálás általában megoldja a keretezési vagy fényproblémákat.",
+        "description": "Olvasd el az alábbi indokot, majd készíts új felvételt, amikor készen állsz.",
+        "actionLabel": "Újrapróbálom",
+        "cancelLabel": "Most nem"
+      }
+    }
+  },
   "cannedTemplates": {
     "eyebrow": "Kommunikációs könyvtár",
     "title": "Üzenetsablonok",
@@ -3528,6 +3959,95 @@
       "present": "Jelen van",
       "notPresent": "Nincs jelen",
       "separate": "A regisztráció jelenléte tagonként eltér. A globális kézbesítési mód külön állítható, és egy jelen lévő csatornát is kikapcsolhat. Az azonosítók és szolgáltatói hitelesítők itt soha nem jelennek meg."
+    },
+    "verificationGrant": {
+      "fixtureReason": "Előnézeti csapattámogatási döntés",
+      "fixtureRejectionReason": "Az arc a felvétel közben kikerült a vezetőkeretből.",
+      "title": "Ellenőrzés",
+      "copy": "Módszerállapotok, forrás, tényleges szint és a különálló, felfelé ható csapatszintű jogosultság áttekintése.",
+      "localOnly": "Csak előnézeti adatok: nem olvasunk vagy módosítunk tagi ellenőrzést és csapatszintű jogosultságot.",
+      "scope": "Alkalmazott terület",
+      "evaluatedAt": "Kiértékelés ideje",
+      "derivedLevel": "Származtatott szint",
+      "effectiveLevel": "Tényleges szint",
+      "badgeVisibility": "Tagi jelvény láthatósága",
+      "badgeVisible": "Látható",
+      "badgeHidden": "A tag elrejtette",
+      "badgePrivacy": "Ezt a beállítást a tag kezeli az Adatvédelemben. Az adminisztrátor itt nem írhatja felül.",
+      "levels": {
+        "none": "Nincs ellenőrizve",
+        "light": "Alapszintű",
+        "strong": "Erős"
+      },
+      "sources": {
+        "derived": "Származtatott",
+        "granted": "A Friending csapata ellenőrizte",
+        "imported": "Az előző Friending alkalmazásban ellenőrizve"
+      },
+      "methods": {
+        "video": "Videós szelfi",
+        "persona": "Persona"
+      },
+      "statuses": {
+        "not_started": "Nincs elkezdve",
+        "pending": "Ellenőrzés alatt",
+        "verified": "Ellenőrizve",
+        "rejected": "Újrapróbálás szükséges"
+      },
+      "methodHints": {
+        "persona": "Persona",
+        "video": "videó",
+        "manual": "kézi ellenőrzés"
+      },
+      "imported": {
+        "title": "Korábbi alkalmazásbeli ellenőrzés",
+        "copy": "{level}, forrás: {method}, importálva: {date}. Ez nem szintetikus szolgáltatói inquiry vagy csapatszintű jogosultság."
+      },
+      "rejection": {
+        "title": "Újrapróbálási környezet",
+        "reason": "Tag számára biztonságos indok",
+        "attempt": "{attempt}. próbálkozás, legfeljebb {maximum}",
+        "manualReview": "Újabb sikertelen próbálkozás után kézi ellenőrzés kérhető",
+        "manualReviewUnavailable": "Kézi ellenőrzés jelenleg nem érhető el"
+      },
+      "grant": {
+        "title": "Aktuális csapatszintű jogosultság",
+        "status": {
+          "active": "Aktív",
+          "expired": "Lejárt"
+        },
+        "level": "Megadott szint",
+        "reason": "Belső indoklás",
+        "grantedBy": "Megadó admin",
+        "grantedAt": "Megadás ideje",
+        "expiry": "Lejárat",
+        "noExpiry": "Nincs lejárat",
+        "revision": "Jogosultság revíziója",
+        "empty": "Ennek a tagnak nincs csapat által megadott szintje."
+      },
+      "editor": {
+        "title": "Csapatszintű jogosultság szerkesztője",
+        "copy": "Alapszintű vagy Erős jogosultság előkészítése a módszereredmények és importált forrás módosítása nélkül.",
+        "readOnly": "A Core által adott képességeid olvasást engednek, módosítást nem.",
+        "level": "Csapat által megadott szint",
+        "reason": "Belső indoklás",
+        "reasonPrivate": "A tagi kivetítésben soha nem jelenik meg",
+        "expiryMode": "Lejárat módja",
+        "noExpiry": "Nincs lejárat",
+        "chooseExpiry": "Pontos jövőbeli lejárat",
+        "expiry": "Lejárat dátuma és ideje",
+        "expiryError": "A Core kiértékelési időpontjánál későbbi időt válassz.",
+        "expiryHint": "A mentett jogosultság aktivitását a Core, nem a böngésző órája dönti el.",
+        "previewLevel": "Tényleges szint előnézete",
+        "changesNow": "Ez a fixture megemelné a tényleges szintet.",
+        "noImmediateChange": "A szint most nem változik.",
+        "strongWarning": "A csapat által megadott Erős szint az Ellenőrzésen belüli hozzáférést módosítja, más tagok azonban továbbra is csak ugyanazt a rózsaszín pecsétet látják szintfelfedés nélkül.",
+        "remove": "Eltávolítás előnézete",
+        "preview": "Jogosultság előnézete",
+        "noRevocation": "Az eltávolítás csak a csapatszintű jogosultságot érinti. A V1 nem vonhat vissza valódi videós szelfi-, Persona- vagy importált ellenőrzést.",
+        "removePreview": "Csak eltávolítási előnézet: a módszer- és importált ellenőrzés változatlan maradna. Nem küldtünk kérést."
+      },
+      "previewed": "A helyi {level} előnézet elkészült. Nem küldtünk kérést."
     },
     "allAlbums": "Minden profilalbum",
     "allAlbumsCopy": "Az adminisztrátor hozzáféréskérés nélkül ellenőrizheti és törölheti a nyilvános és privát albumok képeit.",

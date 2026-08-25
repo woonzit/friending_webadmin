@@ -10,6 +10,7 @@ import {
   CANNED_TEMPLATES_CONTRACT_READY,
   PERSONA_ADMIN_PROXY_RELEASED,
   REPORTED_CONTENT_CONTRACT_READY,
+  VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 
 type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "templates" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit";
@@ -21,6 +22,7 @@ const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; r
   { href: "/photo-moderation", key: "photoModeration", icon: "photoModeration" },
   { href: "/reported-content", key: "reportedContent", icon: "reportedContent", ready: REPORTED_CONTENT_CONTRACT_READY },
   { href: "/profile-verification", key: "profileVerification", icon: "verification" },
+  { href: "/verification", key: "verificationSettings", icon: "verification", ready: VERIFICATION_CONTRACT_READY },
   { href: "/persona", key: "persona", icon: "persona", ready: PERSONA_ADMIN_PROXY_RELEASED },
   { href: "/profile-location", key: "profileLocation", icon: "profileLocation" },
   { href: "/dates", key: "dates", icon: "dates" },
