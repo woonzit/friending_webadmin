@@ -296,11 +296,62 @@ server-owned `secret`/`admin_email`, viewer read and mutation denial, action-dri
 and preview, all confirmations, every closed error, no automatic uncertain retry, and proof that no
 provider key or identity evidence reaches browser logs/state.
 
-## Lead amendment A-ENV (2026-08-26T02:35Z) — envelope key set
+## Lead amendment A-ENV (2026-08-26T02:35Z) — envelope key set, binding for Core and Webadmin
+Core's `Webadmin::reply()` always appends the legacy trio. A versioned success body is therefore EXACTLY the six top-level keys
+`{success, status_code, data, message, status, can_send}` (`message`/`status`/`can_send` present, ignored); a versioned refusal is
+EXACTLY `{success, status_code, error, message, status, can_send}` plus the optional conflict `data`. "Exactly `success`,
+`status_code`, `data`" in the transport section refers to the MATERIAL keys and is superseded by this amendment. Consumers keep
+closed key sets at this six-key envelope (as `admin/lib/pushAdmin.ts` already does); Core does not change.
 
-Core's shared `Webadmin::reply()` always appends the legacy trio. A versioned success body therefore has exactly
-`{success, status_code, data, message, status, can_send}`. A versioned refusal has exactly
-`{success, status_code, error, message, status, can_send}`, plus `data` only for a contracted conflict response.
-The existing fake-marker mutation success has no material data and keeps the exact five transport keys
-`{success, status_code, message, status, can_send}` until its receipt-backed contract version is released.
-The legacy trio remains transport metadata; Core does not remove it and consumers keep each top-level key set closed.
+## Lead amendment A-R (receipt era) — 2026-08-26T01:50Z
+
+Binding per the lead decision `messages/20260826T0100Z-lead-persona-receipt-shape-answer.md` (C1 no unversioned mutation aliases, C2 implicit member revision, C3 persona-* vocabulary). Provider text authored by codex-api2 (`messages/20260826T0141Z-codex-api2-persona-ar-artifact.md`, implemented as Core `docs/PERSONA_WEBADMIN_RECEIPTS_V1.md`). Effective for Webadmin (T-202) only after the Core train carrying it is released and `admin_me.persona.contract_ready=true`.
+
+1. All versioned requests are exact scalar `POST application/x-www-form-urlencoded` shapes. Caller `request_id` is a
+   lowercase UUIDv4; reason is NFC-normalized/boundary-trimmed, 1–300 Unicode scalars, control-free. UID/revision strings
+   are canonical decimal integers. Versioned replies use A-ENV and no-store headers.
+2. `admin_me.persona.contract_ready=true`. Viewer actions remain exactly `[read_start_config]`; editor/owner actions remain
+   exactly `[apply_fake,revoke_fake,force_verify,read_start_config,write_start_config]` in that order.
+3. Read table:
+
+| action | exact consumer fields | success material |
+|---|---|---|
+| `persona_start_get_config_admin` | `{contract_version:'1'}` | `{contract_version:1,resource_revision,config}` |
+| `user_detail` | `{persona_contract_version:'1',uid}` | existing response plus top-level `persona_admin:{contract_version:1,revision}` |
+
+   Absence of either selector preserves the pre-version response exactly. Missing config reads as revision 0 plus full
+   defaults. Missing `userinfo.persona_admin_revision` reads as 1; no userinfo mass backfill exists.
+4. Mutation table (there are no unversioned mutation aliases; missing `contract_version` is
+   `persona-contract-version-required` 422):
+
+| action | exact consumer fields | success material |
+|---|---|---|
+| `persona_start_update_config` | `{contract_version:'1',request_id,expected_revision,reason,<one-or-more config fields>}` | `{contract_version:1,resource_revision,config,replayed}` |
+| `admin_apply_fake_persona` | `{contract_version:'1',uid,request_id,expected_revision,reason}` | `{contract_version:1,uid,revision,replayed}` |
+| `admin_revoke_fake_persona` | same member shape | `{contract_version:1,uid,revision,replayed}` |
+| `admin_force_persona_verify` | same member shape | `{contract_version:1,uid,revision,reason}` is **not** returned; exact success is `{contract_version:1,uid,revision,verify_image_url,replayed}` |
+
+5. Receipt identity fingerprints actor email, action, target, expected revision and normalized material. Exact completed
+   retry returns the canonical receipt with `replayed=true`; conflicting UUID reuse and active matching claims are closed.
+   The receipt TTL is 30 days. Durable audit intent precedes state; reason reaches audit only as length + SHA-256.
+6. Force claims the target revision before managed-image work and uses request/avatar-deterministic evidence identity.
+   Provider completion claims the observed member revision before provider/image work. Provider/native/fake/force authority
+   writes advance the shared member revision. Two decisions at one revision yield exactly one state winner.
+7. Exact receipt-era error table:
+
+| error | status | optional data |
+|---|---:|---|
+| `persona-contract-version-required` | 422 | none |
+| `persona-contract-version-invalid` | 422 | none |
+| `persona-request-invalid` | 422 | none |
+| `persona-request-id-invalid` | 422 | none |
+| `persona-request-id-conflict` | 409 | none |
+| `persona-request-in-progress` | 409 | none |
+| `persona-conflict` | 409 | member `{contract_version:1,uid,revision}` or config `{contract_version:1,resource_revision}` only |
+| `persona-schema-unavailable` | 503 | none |
+| `persona-write-failed` | 503 | none |
+| `persona-audit-write-failed` | 503 | none |
+
+Existing auth/authorization/semantic Persona errors remain. The guarded migration validates at most the exact Persona
+config singleton, backfills only a missing config `resource_revision=1`, rejects malformed/partial receipt-era metadata,
+and reports/performs `userinfo_backfill=0`.

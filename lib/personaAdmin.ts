@@ -1,6 +1,5 @@
 import {
   webadminDataSuccessEnvelope,
-  webadminEmptySuccessEnvelope,
   webadminErrorEnvelope,
 } from "@/lib/webadminEnvelope";
 import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
@@ -429,7 +428,7 @@ function validHttpsUrl(value: string): boolean {
 
 function normalizedString(key: PersonaStartStringKey, value: unknown): string | null {
   if (typeof value !== "string" || hasUnpairedSurrogate(value)) return null;
-  const trimmed = phpTrim(value);
+  const trimmed = phpTrim(value.normalize("NFC"));
   if (containsUnsafeTextControl(trimmed)) return null;
   const capped = Array.from(trimmed).slice(0, personaStartStringCap(key)).join("");
   if (personaStartStringCap(key) === 1000 && !validHttpsUrl(capped)) return null;
@@ -457,7 +456,7 @@ function configFrom(value: unknown, normalize: boolean): PersonaStartConfig | nu
 
   const progress = source.progress_value;
   if (typeof progress !== "number" || !Number.isFinite(progress)) return null;
-  // Core's compatibility contract casts this field to a JSON number; it does
+  // Core's Persona configuration contract casts this field to a JSON number; it does
   // not clamp it to 0...1. The editor may suggest a usual proportion without
   // rejecting or silently changing an authoritative contract-legal value.
   output.progress_value = progress;
@@ -559,13 +558,61 @@ export function personaStartFullPayload(
   return payload;
 }
 
-export function personaStartConfigResponse(value: unknown): PersonaStartConfig | null {
-  const envelope = webadminDataSuccessEnvelope(value);
-  return envelope ? personaStartConfig(envelope.data) : null;
+function revision(value: unknown, minimum = 0): number | null {
+  return typeof value === "number"
+    && Number.isSafeInteger(value)
+    && value >= minimum
+    && value <= 2_147_483_647
+    ? value
+    : null;
 }
 
-export function personaStartUpdateResponse(value: unknown): PersonaStartConfig | null {
-  return personaStartConfigResponse(value);
+export type PersonaStartConfigResource = {
+  contract_version: 1;
+  resource_revision: number;
+  config: PersonaStartConfig;
+};
+
+export type PersonaStartConfigMutation = PersonaStartConfigResource & {
+  replayed: boolean;
+};
+
+function personaStartResourceData(value: unknown): PersonaStartConfigResource | null {
+  const source = exactObject(
+    value,
+    ["contract_version", "resource_revision", "config"],
+  );
+  const resourceRevision = revision(source?.resource_revision);
+  const config = personaStartConfig(source?.config);
+  return source?.contract_version === PERSONA_ADMIN_CONTRACT_VERSION
+    && resourceRevision !== null
+    && config
+    ? { contract_version: 1, resource_revision: resourceRevision, config }
+    : null;
+}
+
+/** Decode the exact receipt-era configuration read envelope. */
+export function personaStartConfigResponse(value: unknown): PersonaStartConfigResource | null {
+  const envelope = webadminDataSuccessEnvelope(value);
+  return envelope ? personaStartResourceData(envelope.data) : null;
+}
+
+/** Decode the exact receipt-era configuration mutation receipt. */
+export function personaStartUpdateResponse(value: unknown): PersonaStartConfigMutation | null {
+  const envelope = webadminDataSuccessEnvelope(value);
+  const source = exactObject(
+    envelope?.data,
+    ["contract_version", "resource_revision", "config", "replayed"],
+  );
+  if (!source || typeof source.replayed !== "boolean") return null;
+  const resource = personaStartResourceData({
+    contract_version: source.contract_version,
+    resource_revision: source.resource_revision,
+    config: source.config,
+  });
+  return resource && resource.resource_revision >= 1
+    ? { ...resource, replayed: source.replayed }
+    : null;
 }
 
 export function personaAdminCapabilitiesFrom(value: unknown): PersonaAdminCapabilities | null {
@@ -623,6 +670,7 @@ function canonicalUid(value: unknown): number | null {
   return typeof value === "number"
     && Number.isSafeInteger(value)
     && value > 0
+    && value <= 2_147_483_647
     ? value
     : null;
 }
@@ -632,9 +680,30 @@ export function canonicalPersonaUid(value: string): number | null {
   return canonicalUid(Number(value));
 }
 
-export function personaUidPayload(uid: number): { uid: string } | null {
-  const parsed = canonicalUid(uid);
-  return parsed === null ? null : { uid: String(parsed) };
+export function canonicalPersonaRequestId(value: unknown): string | null {
+  return typeof value === "string"
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u.test(value)
+    ? value
+    : null;
+}
+
+/**
+ * Canonicalize the operator reason before it is persisted in sessionStorage.
+ * The proxy accepts only this exact output, so neither it nor Core silently
+ * changes receipt material after the browser has made it durable.
+ */
+export function normalizePersonaReason(value: unknown): string | null {
+  if (typeof value !== "string" || hasUnpairedSurrogate(value)) return null;
+  const normalized = value.trim().normalize("NFC");
+  if (normalized === ""
+    || scalarLength(normalized) > 300
+    || /[\u0000-\u001F\u007F-\u009F]/u.test(normalized)) return null;
+  return normalized;
+}
+
+function canonicalPersonaReason(value: unknown): string | null {
+  const normalized = normalizePersonaReason(value);
+  return normalized !== null && normalized === value ? normalized : null;
 }
 
 function exactNormalizedPatch(
@@ -674,6 +743,37 @@ function exactNormalizedPatch(
   return output;
 }
 
+export const PERSONA_ADMIN_MUTATION_ACTIONS = [
+  "persona_start_update_config",
+  "admin_apply_fake_persona",
+  "admin_revoke_fake_persona",
+  "admin_force_persona_verify",
+] as const;
+
+export type PersonaAdminMutationAction =
+  (typeof PERSONA_ADMIN_MUTATION_ACTIONS)[number];
+
+const PERSONA_MUTATION_ACTION_SET: ReadonlySet<string> = new Set(
+  PERSONA_ADMIN_MUTATION_ACTIONS,
+);
+
+export type PersonaProxyPayload = Record<string, string | number | boolean>;
+
+function normalizedPersonaMutationBase(
+  source: Record<string, unknown> | null,
+  minimumRevision: number,
+): { request_id: string; expected_revision: number; reason: string } | null {
+  const requestId = canonicalPersonaRequestId(source?.request_id);
+  const expectedRevision = revision(source?.expected_revision, minimumRevision);
+  const reason = canonicalPersonaReason(source?.reason);
+  return source?.contract_version === PERSONA_ADMIN_CONTRACT_VERSION
+    && requestId
+    && expectedRevision !== null
+    && reason
+    ? { request_id: requestId, expected_revision: expectedRevision, reason }
+    : null;
+}
+
 /**
  * Action-specific server boundary.
  *
@@ -683,32 +783,120 @@ function exactNormalizedPatch(
 export function normalizePersonaProxyBody(
   action: string,
   body: Record<string, unknown>,
-): Record<string, string | number | boolean> | null | undefined {
+): PersonaProxyPayload | null | undefined {
   if (!PERSONA_ACTION_SET.has(action)) return undefined;
   if (action === "persona_start_get_config_admin") {
-    return Object.keys(body).length === 0 ? Object.create(null) : null;
+    const source = exactObject(body, ["contract_version"]);
+    return source?.contract_version === PERSONA_ADMIN_CONTRACT_VERSION
+      ? Object.assign(Object.create(null), { contract_version: 1 })
+      : null;
   }
-  if (action === "persona_start_update_config") return exactNormalizedPatch(body);
-  const source = exactObject(body, ["uid"]);
-  const uid = typeof source?.uid === "string" ? canonicalPersonaUid(source.uid) : null;
-  return uid === null
-    ? null
-    : Object.assign(Object.create(null), { uid: String(uid) });
+  if (action === "persona_start_update_config") {
+    const keys = Object.keys(body);
+    const metadata = new Set([
+      "contract_version",
+      "request_id",
+      "expected_revision",
+      "reason",
+    ]);
+    const fieldKeys = keys.filter((key) => !metadata.has(key));
+    if (fieldKeys.length === 0
+      || keys.length !== fieldKeys.length + metadata.size
+      || fieldKeys.some((key) => !FIELD_KEY_SET.has(key))) return null;
+    const base = normalizedPersonaMutationBase(body, 0);
+    const patch = exactNormalizedPatch(
+      Object.fromEntries(fieldKeys.map((key) => [key, body[key]])),
+    );
+    return base && patch
+      ? Object.assign(
+          Object.create(null),
+          { contract_version: 1, ...base },
+          patch,
+        )
+      : null;
+  }
+  const source = exactObject(
+    body,
+    ["contract_version", "uid", "request_id", "expected_revision", "reason"],
+  );
+  const base = normalizedPersonaMutationBase(source, 1);
+  const uid = canonicalUid(source?.uid);
+  return base && uid !== null
+    ? Object.assign(
+        Object.create(null),
+        { contract_version: 1, uid, ...base },
+      )
+    : null;
 }
 
-export type PersonaEmptySuccess = {
-  success: true;
-  status_code: 200;
-  message: 200;
-  status: 200;
-  can_send: 0;
+export type PersonaPendingMutation = {
+  version: 1;
+  action: PersonaAdminMutationAction;
+  target: string;
+  payload: PersonaProxyPayload;
 };
 
-export function personaEmptyMutationResponse(value: unknown): PersonaEmptySuccess | null {
-  return webadminEmptySuccessEnvelope(value) as PersonaEmptySuccess | null;
+export const PERSONA_PENDING_STORAGE_KEY = "friending.persona.pending-mutation.v1";
+
+function personaPendingTarget(
+  action: PersonaAdminMutationAction,
+  payload: PersonaProxyPayload,
+): string | null {
+  if (action === "persona_start_update_config") return "config:start";
+  const uid = canonicalUid(payload.uid);
+  return uid === null ? null : `uid:${uid}`;
 }
 
-export type PersonaForceSuccess = {
+/** Build one canonical, target-bound mutation for durable browser retry. */
+export function personaPendingMutation(
+  action: PersonaAdminMutationAction,
+  body: Record<string, unknown>,
+): PersonaPendingMutation | null {
+  const payload = normalizePersonaProxyBody(action, body);
+  if (!payload) return null;
+  const target = personaPendingTarget(action, payload);
+  return target ? { version: 1, action, target, payload } : null;
+}
+
+/** Decode sessionStorage without accepting widened or target-mismatched rows. */
+export function personaPendingFrom(value: unknown): PersonaPendingMutation | null {
+  const source = exactObject(value, ["version", "action", "target", "payload"]);
+  const action = typeof source?.action === "string"
+    && PERSONA_MUTATION_ACTION_SET.has(source.action)
+    ? source.action as PersonaAdminMutationAction
+    : null;
+  const payload = record(source?.payload);
+  if (source?.version !== 1 || !action || typeof source.target !== "string" || !payload) {
+    return null;
+  }
+  const pending = personaPendingMutation(action, payload);
+  return pending && pending.target === source.target ? pending : null;
+}
+
+/** Persist the exact identity before the first byte of a mutation is sent. */
+export async function personaPersistBeforeMutation<T>(
+  storage: Pick<Storage, "setItem">,
+  pending: PersonaPendingMutation,
+  mutate: () => Promise<T>,
+): Promise<{ ok: true; response: T } | { ok: false }> {
+  const canonical = personaPendingFrom(pending);
+  if (!canonical) return { ok: false };
+  try {
+    storage.setItem(PERSONA_PENDING_STORAGE_KEY, JSON.stringify(canonical));
+  } catch {
+    return { ok: false };
+  }
+  return { ok: true, response: await mutate() };
+}
+
+export type PersonaMemberMutation = {
+  contract_version: 1;
+  uid: number;
+  revision: number;
+  replayed: boolean;
+};
+
+export type PersonaForceMutation = PersonaMemberMutation & {
   verify_image_url: string;
 };
 
@@ -730,32 +918,118 @@ function safeRelativeVerifyImage(value: unknown): string | null {
   return /_meetpic\.jpeg$/u.test(segments[2]) ? value : null;
 }
 
-export function personaForceMutationResponse(value: unknown): PersonaForceSuccess | null {
-  const envelope = webadminDataSuccessEnvelope(value);
-  const data = exactObject(envelope?.data, ["verify_image_url"]);
-  const verifyImageUrl = safeRelativeVerifyImage(data?.verify_image_url);
-  return verifyImageUrl === null ? null : { verify_image_url: verifyImageUrl };
+function personaMemberMutationData(value: unknown): PersonaMemberMutation | null {
+  const source = exactObject(
+    value,
+    ["contract_version", "uid", "revision", "replayed"],
+  );
+  const uid = canonicalUid(source?.uid);
+  const nextRevision = revision(source?.revision, 1);
+  return source?.contract_version === PERSONA_ADMIN_CONTRACT_VERSION
+    && uid !== null
+    && nextRevision !== null
+    && typeof source.replayed === "boolean"
+    ? {
+        contract_version: 1,
+        uid,
+        revision: nextRevision,
+        replayed: source.replayed,
+      }
+    : null;
 }
 
-export const PERSONA_ADMIN_ERROR_STATUSES = {
+/** Apply/revoke share the same exact receipt material. */
+export function personaMemberMutationResponse(value: unknown): PersonaMemberMutation | null {
+  const envelope = webadminDataSuccessEnvelope(value);
+  return envelope ? personaMemberMutationData(envelope.data) : null;
+}
+
+export function personaForceMutationResponse(value: unknown): PersonaForceMutation | null {
+  const envelope = webadminDataSuccessEnvelope(value);
+  const source = exactObject(
+    envelope?.data,
+    ["contract_version", "uid", "revision", "verify_image_url", "replayed"],
+  );
+  if (!source) return null;
+  const member = personaMemberMutationData({
+    contract_version: source.contract_version,
+    uid: source.uid,
+    revision: source.revision,
+    replayed: source.replayed,
+  });
+  const verifyImageUrl = safeRelativeVerifyImage(source.verify_image_url);
+  return member && verifyImageUrl !== null
+    ? { ...member, verify_image_url: verifyImageUrl }
+    : null;
+}
+
+export function personaStartResourceConverged(
+  resource: PersonaStartConfigResource,
+  pending: PersonaPendingMutation,
+): boolean {
+  const expectedRevision = revision(pending.payload.expected_revision);
+  if (pending.action !== "persona_start_update_config"
+    || expectedRevision === null
+    || resource.resource_revision !== expectedRevision + 1) return false;
+  for (const key of PERSONA_START_FIELD_KEYS) {
+    if (Object.hasOwn(pending.payload, key)
+      && !Object.is(resource.config[key], pending.payload[key])) return false;
+  }
+  return true;
+}
+
+export function personaMemberMutationConverged(
+  result: PersonaMemberMutation,
+  pending: PersonaPendingMutation,
+): boolean {
+  const uid = canonicalUid(pending.payload.uid);
+  const expectedRevision = revision(pending.payload.expected_revision, 1);
+  if (pending.action === "persona_start_update_config"
+    || uid === null
+    || expectedRevision === null
+    || result.uid !== uid) return false;
+  return pending.action === "admin_apply_fake_persona"
+    ? result.revision === expectedRevision || result.revision === expectedRevision + 1
+    : result.revision === expectedRevision + 1;
+}
+
+export const PERSONA_ADMIN_CORE_ERROR_STATUSES = {
   unauthorized: 401,
   "admin-session-invalid": 401,
   "admin-revoked": 403,
   "admin-write-required": 403,
-  "query-failed": 500,
-  "audit-write-failed": 500,
-  "no-fields": 400,
-  "db-write-failed": 500,
-  "uid-invalid": 400,
-  "uid-missing": 400,
   "user-not-found": 404,
   "already-verified-real": 409,
   "not-fake-persona": 409,
   "user-has-no-avatar": 422,
   "avatar-file-not-found": 422,
-  "copy-failed": 500,
-  "mark-failed": 500,
-  "unmark-failed": 500,
+  "persona-contract-version-required": 422,
+  "persona-contract-version-invalid": 422,
+  "persona-request-invalid": 422,
+  "persona-request-id-invalid": 422,
+  "persona-request-id-conflict": 409,
+  "persona-request-in-progress": 409,
+  "persona-conflict": 409,
+  "persona-schema-unavailable": 503,
+  "persona-write-failed": 503,
+  "persona-audit-write-failed": 503,
+} as const;
+
+export const PERSONA_ADMIN_BRIDGE_ERROR_STATUSES = {
+  "persona-capability-required": 403,
+  "bad-origin": 403,
+  "not-found": 404,
+  "auth-required": 401,
+  "invalid-input": 400,
+  "too-large": 413,
+  "core-unavailable": 502,
+  "core-timeout": 504,
+  "invalid-core-response": 502,
+} as const;
+
+export const PERSONA_ADMIN_ERROR_STATUSES = {
+  ...PERSONA_ADMIN_CORE_ERROR_STATUSES,
+  ...PERSONA_ADMIN_BRIDGE_ERROR_STATUSES,
 } as const;
 
 export type PersonaAdminError = keyof typeof PERSONA_ADMIN_ERROR_STATUSES;
@@ -789,11 +1063,69 @@ export type PersonaAdminBridgeFailure = PersonaAdminFailureBase & {
 export type PersonaAdminFailure = PersonaAdminCoreFailure | PersonaAdminBridgeFailure;
 
 export function personaAdminFailureResponse(value: unknown): PersonaAdminFailure | null {
-  const envelope = webadminErrorEnvelope(value) ?? adminBridgeErrorEnvelope(value);
-  if (!envelope) return null;
-  const expectedStatus = ERROR_STATUS.get(envelope.error);
-  if (expectedStatus === undefined || envelope.status_code !== expectedStatus) return null;
-  return envelope as PersonaAdminFailure;
+  const core = webadminErrorEnvelope(value);
+  if (core) {
+    const expectedStatus = Object.prototype.hasOwnProperty.call(
+      PERSONA_ADMIN_CORE_ERROR_STATUSES,
+      core.error,
+    ) ? PERSONA_ADMIN_CORE_ERROR_STATUSES[
+        core.error as keyof typeof PERSONA_ADMIN_CORE_ERROR_STATUSES
+      ] : undefined;
+    return expectedStatus !== undefined && core.status_code === expectedStatus
+      ? core as PersonaAdminCoreFailure
+      : null;
+  }
+  const bridge = adminBridgeErrorEnvelope(value);
+  if (!bridge) return null;
+  const expectedStatus = Object.prototype.hasOwnProperty.call(
+    PERSONA_ADMIN_BRIDGE_ERROR_STATUSES,
+    bridge.error,
+  ) ? PERSONA_ADMIN_BRIDGE_ERROR_STATUSES[
+      bridge.error as keyof typeof PERSONA_ADMIN_BRIDGE_ERROR_STATUSES
+    ] : undefined;
+  return expectedStatus !== undefined && bridge.status_code === expectedStatus
+    ? bridge as PersonaAdminBridgeFailure
+    : null;
+}
+
+export type PersonaConfigConflict = {
+  kind: "config";
+  contract_version: 1;
+  resource_revision: number;
+};
+
+export type PersonaMemberConflict = {
+  kind: "member";
+  contract_version: 1;
+  uid: number;
+  revision: number;
+};
+
+export type PersonaConflict = PersonaConfigConflict | PersonaMemberConflict;
+
+/** Only `persona-conflict` may carry one of these two exact authoritative rows. */
+export function personaConflictResponse(value: unknown): PersonaConflict | null {
+  const envelope = webadminErrorEnvelope(value, "required");
+  if (!envelope || envelope.status_code !== 409 || envelope.error !== "persona-conflict") {
+    return null;
+  }
+  const config = exactObject(
+    envelope.data,
+    ["contract_version", "resource_revision"],
+  );
+  const configRevision = revision(config?.resource_revision);
+  if (config?.contract_version === 1 && configRevision !== null) {
+    return { kind: "config", contract_version: 1, resource_revision: configRevision };
+  }
+  const member = exactObject(
+    envelope.data,
+    ["contract_version", "uid", "revision"],
+  );
+  const uid = canonicalUid(member?.uid);
+  const memberRevision = revision(member?.revision, 1);
+  return member?.contract_version === 1 && uid !== null && memberRevision !== null
+    ? { kind: "member", contract_version: 1, uid, revision: memberRevision }
+    : null;
 }
 
 export function personaAdminErrorKey(value: unknown): PersonaAdminError | "generic" {
@@ -802,50 +1134,76 @@ export function personaAdminErrorKey(value: unknown): PersonaAdminError | "gener
     : "generic";
 }
 
-export type PersonaTarget = { uid: number; displayName: string };
+/** Unknown, in-progress, transport, and 5xx results retain the exact UUID/material. */
+export function personaShouldRetainMutation(value: unknown): boolean {
+  if (typeof value !== "string") return true;
+  if (value === "persona-request-in-progress") return true;
+  const status = ERROR_STATUS.get(value);
+  return status === undefined || status >= 500;
+}
+
+export type PersonaTarget = { uid: number; displayName: string; revision: number };
 
 export type PersonaTargetLookupData = {
   uid: number;
   display_name: string;
+  revision: number;
 };
 
 export function personaTargetFromUserDetail(value: unknown): PersonaTarget | null {
   const source = record(value);
   const profile = record(source?.profile);
+  const personaAdmin = exactObject(
+    source?.persona_admin,
+    ["contract_version", "revision"],
+  );
   const uid = canonicalUid(profile?.uid);
-  if (!source || source.success !== true || source.status_code !== 200 || uid === null) return null;
+  const memberRevision = revision(personaAdmin?.revision, 1);
+  if (!source
+    || source.success !== true
+    || source.status_code !== 200
+    || personaAdmin?.contract_version !== PERSONA_ADMIN_CONTRACT_VERSION
+    || uid === null
+    || memberRevision === null) return null;
   if (typeof profile?.display_name !== "string"
     || hasUnpairedSurrogate(profile.display_name)
     || containsUnsafeTextControl(profile.display_name)) return null;
   const displayName = phpTrim(profile.display_name);
   if (scalarLength(displayName) > 200) return null;
-  return { uid, displayName };
+  return { uid, displayName, revision: memberRevision };
 }
 
-/** Build the only two member fields the Persona browser workflow may receive. */
+/** Build the only three member fields the Persona browser workflow may receive. */
 export function personaTargetLookupData(
   target: PersonaTarget,
 ): PersonaTargetLookupData | null {
   const uid = canonicalUid(target.uid);
+  const memberRevision = revision(target.revision, 1);
   if (uid === null
+    || memberRevision === null
     || typeof target.displayName !== "string"
     || hasUnpairedSurrogate(target.displayName)
     || containsUnsafeTextControl(target.displayName)
     || scalarLength(target.displayName) > 200) return null;
-  return { uid, display_name: phpTrim(target.displayName) };
+  return { uid, display_name: phpTrim(target.displayName), revision: memberRevision };
 }
 
 /** Decode the dedicated same-origin route; arbitrary user documents fail closed. */
 export function personaTargetLookupResponse(value: unknown): PersonaTarget | null {
   const source = exactObject(value, ["success", "status_code", "data"]);
-  const data = exactObject(source?.data, ["uid", "display_name"]);
+  const data = exactObject(source?.data, ["uid", "display_name", "revision"]);
   if (!source || source.success !== true || source.status_code !== 200 || !data) return null;
   const projected = personaTargetLookupData({
     uid: data.uid as number,
     displayName: data.display_name as string,
+    revision: data.revision as number,
   });
   return projected
-    ? { uid: projected.uid, displayName: projected.display_name }
+    ? {
+        uid: projected.uid,
+        displayName: projected.display_name,
+        revision: projected.revision,
+      }
     : null;
 }
 

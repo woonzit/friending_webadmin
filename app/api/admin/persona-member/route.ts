@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { PERSONA_ADMIN_PROXY_RELEASED } from "@/lib/contractReadiness";
 import { coreCall } from "@/lib/core";
 import {
+  PERSONA_ADMIN_CONTRACT_VERSION,
   canonicalPersonaUid,
+  personaAdminCapabilitiesFrom,
+  personaCapabilityAllows,
   personaTargetFromUserDetail,
   personaTargetLookupData,
 } from "@/lib/personaAdmin";
@@ -33,7 +36,8 @@ function record(value: unknown): Record<string, unknown> | null {
 /**
  * Server-side data-minimising bridge for the Persona target confirmation.
  * Core's broad `user_detail` document is parsed here and never forwarded to
- * the browser; the response contains only canonical uid and display name.
+ * the browser; the response contains only canonical uid, display name, and the
+ * shared receipt-era member revision needed for an optimistic mutation.
  */
 export async function POST(request: NextRequest) {
   if (!isTrustedAdminRequest(request.headers)) return errorResponse("bad-origin", 403);
@@ -46,6 +50,10 @@ export async function POST(request: NextRequest) {
 
   const writer = await requireAdminWriter();
   if (!writer.ok) return errorResponse(writer.error, writer.status);
+  const capabilities = personaAdminCapabilitiesFrom(writer.membership);
+  if (!personaCapabilityAllows(capabilities, "apply_fake")) {
+    return errorResponse("persona-capability-required", 403);
+  }
 
   let body: Record<string, unknown>;
   try {
@@ -63,6 +71,7 @@ export async function POST(request: NextRequest) {
   if (uid === null) return errorResponse("invalid-input", 400);
 
   const result = await coreCall("user_detail", {
+    persona_contract_version: PERSONA_ADMIN_CONTRACT_VERSION,
     uid: String(uid),
     admin_email: writer.session.email,
   });

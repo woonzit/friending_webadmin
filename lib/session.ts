@@ -1,8 +1,15 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { coreCall } from "@/lib/core";
-import { VERIFICATION_CONTRACT_READY } from "@/lib/contractReadiness";
+import {
+  PERSONA_ADMIN_PROXY_RELEASED,
+  VERIFICATION_CONTRACT_READY,
+} from "@/lib/contractReadiness";
 import { isAdminWriteRole, normalizeAdminRole } from "@/lib/authPolicy";
+import {
+  personaAdminCapabilitiesFrom,
+  personaCapabilityAllows,
+} from "@/lib/personaAdmin";
 import { verificationAdminMe } from "@/lib/verificationAdmin";
 import {
   createSessionToken,
@@ -18,11 +25,17 @@ export { SESSION_MAX_AGE_SECONDS as COOKIE_MAX_AGE };
 export type AdminIdentity = {
   email: string;
   role: string;
+  personaConsoleReady: boolean;
   verificationConsoleReady: boolean;
 };
 
 export type AdminWriter =
-  | { ok: true; session: SessionPayload; role: string }
+  | {
+      ok: true;
+      session: SessionPayload;
+      role: string;
+      membership: Record<string, unknown>;
+    }
   | { ok: false; error: "auth-required" | "admin-write-required"; status: 401 | 403 };
 
 function sessionSecret(): string {
@@ -59,15 +72,19 @@ export async function adminMe(): Promise<AdminIdentity | null> {
     success?: boolean;
     email?: string;
     role?: string;
+    persona?: unknown;
     verification?: unknown;
   }>("admin_me", { admin_email: session.email });
   if (result.status !== 200 || !result.data?.success) return null;
   const role = normalizeAdminRole(result.data.role);
   if (!role) return null;
+  const persona = personaAdminCapabilitiesFrom(result.data);
   const verification = verificationAdminMe(result.data.verification);
   return {
     email: String(result.data.email ?? session.email),
     role,
+    personaConsoleReady: PERSONA_ADMIN_PROXY_RELEASED
+      && personaCapabilityAllows(persona, "read_start_config"),
     verificationConsoleReady: VERIFICATION_CONTRACT_READY
       && verification?.contract_ready === true
       && verification.actions.includes("verification_console"),
@@ -82,7 +99,7 @@ export async function adminMe(): Promise<AdminIdentity | null> {
 export async function requireAdminWriter(): Promise<AdminWriter> {
   const session = await readAdminSession();
   if (!session) return { ok: false, error: "auth-required", status: 401 };
-  const result = await coreCall<{ success?: boolean; role?: string }>("admin_me", {
+  const result = await coreCall<Record<string, unknown> & { success?: boolean; role?: string }>("admin_me", {
     admin_email: session.email,
   });
   if (result.status !== 200 || !result.data?.success) {
@@ -91,7 +108,12 @@ export async function requireAdminWriter(): Promise<AdminWriter> {
   if (!isAdminWriteRole(result.data.role)) {
     return { ok: false, error: "admin-write-required", status: 403 };
   }
-  return { ok: true, session, role: normalizeAdminRole(result.data.role) };
+  return {
+    ok: true,
+    session,
+    role: normalizeAdminRole(result.data.role),
+    membership: result.data,
+  };
 }
 
 export function adminCookieOptions(maxAge = SESSION_MAX_AGE_SECONDS) {

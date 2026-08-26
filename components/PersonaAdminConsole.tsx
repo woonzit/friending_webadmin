@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import {
+  PERSONA_ADMIN_CONTRACT_VERSION,
+  PERSONA_PENDING_STORAGE_KEY,
   PERSONA_START_SECTIONS,
   canonicalPersonaUid,
   clonePersonaStartConfig,
@@ -14,23 +16,33 @@ import {
   personaAdminErrorKey,
   personaAdminFailureResponse,
   personaCapabilityAllows,
-  personaEmptyMutationResponse,
+  personaConflictResponse,
   personaForceMutationResponse,
   personaHighlightParts,
+  personaMemberMutationConverged,
+  personaMemberMutationResponse,
+  personaPendingFrom,
+  personaPendingMutation,
+  personaPersistBeforeMutation,
   personaPreviewColor,
   personaPreviewImageUrl,
+  personaShouldRetainMutation,
   personaStartConfigPatch,
   personaStartConfigResponse,
   personaStartDraftWithValue,
   personaStartFieldKind,
   personaStartHtmlMaxLength,
+  personaStartResourceConverged,
   personaStartStringCap,
   personaStartUpdateResponse,
   personaTargetLookupResponse,
-  personaUidPayload,
+  normalizePersonaReason,
   type PersonaAdminCapabilities,
   type PersonaAdminCapabilityAction,
+  type PersonaAdminMutationAction,
+  type PersonaPendingMutation,
   type PersonaStartConfig,
+  type PersonaStartConfigResource,
   type PersonaStartFieldKey,
   type PersonaStartStringKey,
   type PersonaTarget,
@@ -41,11 +53,11 @@ type Feedback = { tone: "success" | "error" | "info"; text: string };
 type MemberAction = "apply_fake" | "revoke_fake" | "force_verify";
 type Confirmation = { kind: "config" } | { kind: MemberAction };
 
-const MEMBER_ENDPOINTS: Record<MemberAction, string> = {
+const MEMBER_ENDPOINTS = {
   apply_fake: "admin_apply_fake_persona",
   revoke_fake: "admin_revoke_fake_persona",
   force_verify: "admin_force_persona_verify",
-};
+} as const satisfies Record<MemberAction, PersonaAdminMutationAction>;
 
 function HighlightedCopy({
   template,
@@ -214,20 +226,39 @@ export default function PersonaAdminConsole() {
   const common = useTranslations("common");
   const [state, setState] = useState<LoadState>("loading");
   const [capabilities, setCapabilities] = useState<PersonaAdminCapabilities | null>(null);
-  const [stored, setStored] = useState<PersonaStartConfig | null>(null);
+  const [stored, setStored] = useState<PersonaStartConfigResource | null>(null);
   const [draft, setDraft] = useState<PersonaStartConfig | null>(null);
   const [busy, setBusy] = useState(false);
   const [configRecoveryRequired, setConfigRecoveryRequired] = useState(false);
   const [configFeedback, setConfigFeedback] = useState<Feedback | null>(null);
+  const [configReason, setConfigReason] = useState("");
   const [uidInput, setUidInput] = useState("");
   const [target, setTarget] = useState<PersonaTarget | null>(null);
   const [targetBusy, setTargetBusy] = useState(false);
   const [memberBusy, setMemberBusy] = useState(false);
   const [memberRecoveryRequired, setMemberRecoveryRequired] = useState(false);
   const [memberFeedback, setMemberFeedback] = useState<Feedback | null>(null);
+  const [memberReason, setMemberReason] = useState("");
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [pending, setPending] = useState<PersonaPendingMutation | null>(null);
+  const [persistenceAvailable, setPersistenceAvailable] = useState(true);
+  const pendingRef = useRef<PersonaPendingMutation | null>(null);
 
-  const load = useCallback(async () => {
+  const clearPending = useCallback((): boolean => {
+    try {
+      window.sessionStorage.removeItem(PERSONA_PENDING_STORAGE_KEY);
+    } catch {
+      setPersistenceAvailable(false);
+      return false;
+    }
+    pendingRef.current = null;
+    setPending(null);
+    return true;
+  }, []);
+
+  const load = useCallback(async (
+    pendingCandidate: PersonaPendingMutation | null = pendingRef.current,
+  ) => {
     setState("loading");
     setConfigFeedback(null);
     setMemberFeedback(null);
@@ -251,28 +282,64 @@ export default function PersonaAdminConsole() {
       setState("error");
       return;
     }
-    const response = await adminCall("persona_start_get_config_admin");
-    const parsedConfig = personaStartConfigResponse(response);
-    if (!parsedConfig) {
+    const response = await adminCall("persona_start_get_config_admin", {
+      contract_version: PERSONA_ADMIN_CONTRACT_VERSION,
+    });
+    const resource = personaStartConfigResponse(response);
+    if (!resource) {
       setState("error");
       return;
     }
-    setStored(parsedConfig);
-    setDraft(clonePersonaStartConfig(parsedConfig));
+    setStored(resource);
+    setDraft(clonePersonaStartConfig(resource.config));
+    if (pendingCandidate?.action === "persona_start_update_config"
+      && personaStartResourceConverged(resource, pendingCandidate)) {
+      const cleared = clearPending();
+      setConfigFeedback({
+        tone: cleared ? "success" : "error",
+        text: cleared ? t("receipts.converged") : t("receipts.persistenceCleanupFailed"),
+      });
+    }
     setState("ready");
-  }, []);
+  }, [clearPending, t]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let restored: PersonaPendingMutation | null = null;
+    try {
+      const serialized = window.sessionStorage.getItem(PERSONA_PENDING_STORAGE_KEY);
+      if (serialized !== null) {
+        try {
+          restored = personaPendingFrom(JSON.parse(serialized));
+        } catch {
+          restored = null;
+        }
+        if (!restored) setPersistenceAvailable(false);
+      }
+    } catch {
+      setPersistenceAvailable(false);
+    }
+    pendingRef.current = restored;
+    setPending(restored);
+    if (restored && restored.action !== "persona_start_update_config") {
+      setUidInput(String(restored.payload.uid));
+    }
+    void load(restored);
+  }, [load]);
 
   const review = useMemo(() => (
-    stored && draft ? personaStartConfigPatch(stored, draft) : null
+    stored && draft ? personaStartConfigPatch(stored.config, draft) : null
   ), [draft, stored]);
   const preview = review?.normalized ?? null;
   const dirty = Boolean(review && review.fields.length > 0);
   const normalized = Boolean(preview && draft
     && JSON.stringify(preview) !== JSON.stringify(draft));
   const canWriteConfig = personaCapabilityAllows(capabilities, "write_start_config");
-  const controlsLocked = busy || configRecoveryRequired || !canWriteConfig;
+  const controlsLocked = busy
+    || memberBusy
+    || pending !== null
+    || configRecoveryRequired
+    || !persistenceAvailable
+    || !canWriteConfig;
 
   function updateField(key: PersonaStartFieldKey, value: string | number | boolean) {
     setDraft((current) => current ? personaStartDraftWithValue(current, key, value) : current);
@@ -355,37 +422,13 @@ export default function PersonaAdminConsole() {
     );
   }
 
-  async function saveConfig() {
-    if (!review || review.fields.length === 0 || !capabilities || busy) return;
-    if (!personaCapabilityAllows(capabilities, "write_start_config")) {
-      setConfigFeedback({ tone: "error", text: t("config.writeRequired") });
-      setConfirmation(null);
-      return;
-    }
-    setBusy(true);
-    setConfigFeedback(null);
-    const response = await adminCall("persona_start_update_config", review.payload);
-    setBusy(false);
-    setConfirmation(null);
-    const canonical = personaStartUpdateResponse(response);
-    if (canonical) {
-      setStored(canonical);
-      setDraft(clonePersonaStartConfig(canonical));
-      setConfigFeedback({ tone: "success", text: t("config.saved") });
-      return;
-    }
-    const failure = personaAdminFailureResponse(response);
-    setConfigRecoveryRequired(true);
-    if (failure) {
-      setConfigFeedback({ tone: "error", text: t(`errors.${personaAdminErrorKey(failure.error)}`) });
-    } else {
-      setConfigFeedback({ tone: "error", text: t("config.uncertain") });
-    }
-  }
-
   async function lookupTarget() {
     const uid = canonicalPersonaUid(uidInput);
-    if (uid === null || targetBusy || memberBusy) return;
+    if (uid === null
+      || targetBusy
+      || memberBusy
+      || busy
+      || pendingRef.current?.action === "persona_start_update_config") return;
     setTargetBusy(true);
     setTarget(null);
     setMemberFeedback(null);
@@ -407,35 +450,191 @@ export default function PersonaAdminConsole() {
     setMemberFeedback({ tone: "info", text: t("member.targetReady") });
   }
 
-  async function runMemberMutation(action: MemberAction) {
-    if (!target || !capabilities || memberBusy) return;
+  function finishMutationBusy(action: PersonaAdminMutationAction) {
+    if (action === "persona_start_update_config") setBusy(false);
+    else setMemberBusy(false);
+  }
+
+  function mutationFeedback(
+    action: PersonaAdminMutationAction,
+    feedback: Feedback,
+  ) {
+    if (action === "persona_start_update_config") setConfigFeedback(feedback);
+    else setMemberFeedback(feedback);
+  }
+
+  async function executeMutation(next: PersonaPendingMutation) {
+    if (busy || memberBusy) return;
+    const existing = pendingRef.current;
+    const durable = existing ?? next;
+    if (durable.action === "persona_start_update_config") setBusy(true);
+    else setMemberBusy(true);
+    setConfirmation(null);
+    mutationFeedback(durable.action, { tone: "info", text: t("receipts.sending") });
+
+    let response;
+    if (existing) {
+      response = await adminCall(existing.action, existing.payload);
+    } else {
+      const persisted = await personaPersistBeforeMutation(
+        window.sessionStorage,
+        next,
+        () => {
+          pendingRef.current = next;
+          setPending(next);
+          return adminCall(next.action, next.payload);
+        },
+      );
+      if (!persisted.ok) {
+        setPersistenceAvailable(false);
+        mutationFeedback(durable.action, {
+          tone: "error",
+          text: t("receipts.persistenceUnavailable"),
+        });
+        finishMutationBusy(durable.action);
+        return;
+      }
+      response = persisted.response;
+    }
+
+    const active = pendingRef.current ?? durable;
+    if (active.action === "persona_start_update_config") {
+      const result = personaStartUpdateResponse(response);
+      if (result && personaStartResourceConverged(result, active)) {
+        const cleared = clearPending();
+        setStored({
+          contract_version: 1,
+          resource_revision: result.resource_revision,
+          config: result.config,
+        });
+        setDraft(clonePersonaStartConfig(result.config));
+        setConfigReason("");
+        setConfigRecoveryRequired(false);
+        setConfigFeedback({
+          tone: cleared ? "success" : "error",
+          text: cleared
+            ? t(result.replayed ? "receipts.replayed" : "config.saved")
+            : t("receipts.persistenceCleanupFailed"),
+        });
+        finishMutationBusy(active.action);
+        return;
+      }
+    } else {
+      const result = active.action === "admin_force_persona_verify"
+        ? personaForceMutationResponse(response)
+        : personaMemberMutationResponse(response);
+      if (result && personaMemberMutationConverged(result, active)) {
+        const cleared = clearPending();
+        setTarget((current) => current && current.uid === result.uid
+          ? { ...current, revision: result.revision }
+          : current);
+        setMemberReason("");
+        setMemberRecoveryRequired(false);
+        const action = Object.entries(MEMBER_ENDPOINTS).find(([, endpoint]) => (
+          endpoint === active.action
+        ))?.[0] as MemberAction | undefined;
+        setMemberFeedback({
+          tone: cleared ? "success" : "error",
+          text: cleared
+            ? t(result.replayed
+              ? "receipts.replayed"
+              : `member.success.${action ?? "apply_fake"}`)
+            : t("receipts.persistenceCleanupFailed"),
+        });
+        finishMutationBusy(active.action);
+        return;
+      }
+    }
+
+    const conflict = personaConflictResponse(response);
+    const failure = personaAdminFailureResponse(response);
+    const conflictWithoutData = failure?.error === "persona-conflict";
+    const conflictMatches = active.action === "persona_start_update_config"
+      ? conflict?.kind === "config"
+      : conflict?.kind === "member" && conflict.uid === active.payload.uid;
+    if (conflictWithoutData || conflictMatches) {
+      const cleared = clearPending();
+      if (active.action === "persona_start_update_config") {
+        setConfigRecoveryRequired(true);
+      } else {
+        setTarget(null);
+        setMemberRecoveryRequired(true);
+      }
+      mutationFeedback(active.action, {
+        tone: "error",
+        text: cleared ? t("receipts.conflict") : t("receipts.persistenceCleanupFailed"),
+      });
+      finishMutationBusy(active.action);
+      return;
+    }
+
+    const retain = personaShouldRetainMutation(failure?.error);
+    if (!retain) clearPending();
+    mutationFeedback(active.action, {
+      tone: "error",
+      text: failure
+        ? t(`errors.${personaAdminErrorKey(failure.error)}`)
+        : t("receipts.uncertain"),
+    });
+    finishMutationBusy(active.action);
+  }
+
+  function saveConfig() {
+    const reason = normalizePersonaReason(configReason);
+    if (!review
+      || review.fields.length === 0
+      || !stored
+      || !capabilities
+      || !reason
+      || pendingRef.current
+      || busy
+      || memberBusy) return;
+    if (!personaCapabilityAllows(capabilities, "write_start_config")) {
+      setConfigFeedback({ tone: "error", text: t("config.writeRequired") });
+      setConfirmation(null);
+      return;
+    }
+    const mutation = personaPendingMutation("persona_start_update_config", {
+      contract_version: PERSONA_ADMIN_CONTRACT_VERSION,
+      request_id: crypto.randomUUID(),
+      expected_revision: stored.resource_revision,
+      reason,
+      ...review.payload,
+    });
+    if (!mutation) {
+      setConfigFeedback({ tone: "error", text: t("config.invalid") });
+      setConfirmation(null);
+      return;
+    }
+    void executeMutation(mutation);
+  }
+
+  function runMemberMutation(action: MemberAction) {
+    const reason = normalizePersonaReason(memberReason);
+    if (!target
+      || !capabilities
+      || !reason
+      || pendingRef.current
+      || memberBusy
+      || busy) return;
     if (!personaCapabilityAllows(capabilities, action)) {
       setMemberFeedback({ tone: "error", text: t("member.writeRequired") });
       setConfirmation(null);
       return;
     }
-    const payload = personaUidPayload(target.uid);
-    if (!payload) return;
-    setMemberBusy(true);
-    setMemberFeedback(null);
-    const response = await adminCall(MEMBER_ENDPOINTS[action], payload);
-    setMemberBusy(false);
-    setConfirmation(null);
-    const success = action === "force_verify"
-      ? personaForceMutationResponse(response) !== null
-      : personaEmptyMutationResponse(response) !== null;
-    setMemberRecoveryRequired(true);
-    if (success) {
-      setMemberFeedback({ tone: "success", text: t(`member.success.${action}`) });
+    const mutation = personaPendingMutation(MEMBER_ENDPOINTS[action], {
+      contract_version: PERSONA_ADMIN_CONTRACT_VERSION,
+      uid: target.uid,
+      request_id: crypto.randomUUID(),
+      expected_revision: target.revision,
+      reason,
+    });
+    if (!mutation) {
+      setMemberFeedback({ tone: "error", text: t("member.invalidReason") });
+      setConfirmation(null);
       return;
     }
-    const failure = personaAdminFailureResponse(response);
-    setMemberFeedback({
-      tone: "error",
-      text: failure
-        ? t(`errors.${personaAdminErrorKey(failure.error)}`)
-        : t("member.uncertain"),
-    });
+    void executeMutation(mutation);
   }
 
   function confirmationCopy(): string {
@@ -471,6 +670,8 @@ export default function PersonaAdminConsole() {
 
   const memberActions: MemberAction[] = ["apply_fake", "revoke_fake", "force_verify"];
   const uid = canonicalPersonaUid(uidInput);
+  const memberReasonNormalized = normalizePersonaReason(memberReason);
+  const configReasonNormalized = normalizePersonaReason(configReason);
 
   return (
     <>
@@ -491,6 +692,38 @@ export default function PersonaAdminConsole() {
         </div>
       </section>
 
+      {!persistenceAvailable && (
+        <div className="alert alert-error" role="alert">{t("receipts.persistenceUnavailable")}</div>
+      )}
+
+      {pending && (
+        <section className="panel persona-readiness-panel">
+          <div className="panel-header">
+            <div>
+              <h2>{t("receipts.pendingTitle")}</h2>
+              <p>{t("receipts.pendingCopy", {
+                action: t(`receipts.actions.${pending.action}`),
+                target: pending.target,
+              })}</p>
+            </div>
+            <span className="badge badge-warning">{t("receipts.retained")}</span>
+          </div>
+          <div className="panel-body">
+            <p className="field-hint">{t("receipts.requestId", {
+              requestId: String(pending.payload.request_id),
+            })}</p>
+            <button
+              className="button button-secondary"
+              type="button"
+              disabled={busy || memberBusy || !persistenceAvailable}
+              onClick={() => void executeMutation(pending)}
+            >
+              {t("receipts.retryExact")}
+            </button>
+          </div>
+        </section>
+      )}
+
       <section className="panel persona-member-panel">
         <div className="panel-header"><div><h2>{t("member.title")}</h2><p>{t("member.copy")}</p></div></div>
         <div className="panel-body">
@@ -501,7 +734,7 @@ export default function PersonaAdminConsole() {
               <input
                 inputMode="numeric"
                 value={uidInput}
-                disabled={targetBusy || memberBusy}
+                disabled={targetBusy || memberBusy || busy || pending !== null}
                 aria-invalid={uidInput !== "" && uid === null}
                 onChange={(event) => {
                   setUidInput(event.target.value);
@@ -513,14 +746,17 @@ export default function PersonaAdminConsole() {
               />
               <small>{t("member.uidHint")}</small>
             </label>
-            <button className="button button-secondary" type="button" disabled={uid === null || targetBusy || memberBusy} onClick={() => void lookupTarget()}>
+            <button className="button button-secondary" type="button" disabled={uid === null || targetBusy || memberBusy || busy || pending?.action === "persona_start_update_config"} onClick={() => void lookupTarget()}>
               {targetBusy ? common("loading") : t("member.lookup")}
             </button>
           </div>
           {target && (
             <div className="persona-target-card">
               <span className="persona-target-avatar" aria-hidden="true">{(target.displayName || String(target.uid)).slice(0, 1).toUpperCase()}</span>
-              <span><strong>{target.displayName || t("member.uidFallback", { uid: String(target.uid) })}</strong><small>{t("member.uidValue", { uid: String(target.uid) })}</small></span>
+              <span>
+                <strong>{target.displayName || t("member.uidFallback", { uid: String(target.uid) })}</strong>
+                <small>{t("member.uidValue", { uid: String(target.uid) })} · {t("member.revision", { revision: target.revision })}</small>
+              </span>
             </div>
           )}
           {memberRecoveryRequired && (
@@ -528,6 +764,24 @@ export default function PersonaAdminConsole() {
               <p>{t("member.reloadRequired")}</p>
               <button className="button button-secondary button-small" type="button" disabled={targetBusy || memberBusy || uid === null} onClick={() => void lookupTarget()}>{t("member.reloadTarget")}</button>
             </div>
+          )}
+          {capabilities.can_write && (
+            <label className="field persona-config-field">
+              <span>{t("member.reasonLabel")}</span>
+              <input
+                type="text"
+                value={memberReason}
+                maxLength={600}
+                disabled={memberBusy || busy || pending !== null || !persistenceAvailable}
+                aria-invalid={memberReason !== "" && memberReasonNormalized === null}
+                onChange={(event) => {
+                  setMemberReason(event.target.value);
+                  setMemberFeedback(null);
+                  setConfirmation(null);
+                }}
+              />
+              <small>{t("limits.reason", { count: Array.from(memberReason).length, maximum: 300 })}</small>
+            </label>
           )}
           <div className="persona-operation-grid">
             {memberActions.map((action) => {
@@ -538,7 +792,7 @@ export default function PersonaAdminConsole() {
                   <button
                     className={`button ${action === "force_verify" || action === "revoke_fake" ? "button-danger" : "button-secondary"}`}
                     type="button"
-                    disabled={!target || memberBusy || memberRecoveryRequired || !allowed}
+                    disabled={!target || memberBusy || busy || pending !== null || memberRecoveryRequired || !persistenceAvailable || !memberReasonNormalized || !allowed}
                     onClick={() => setConfirmation({ kind: action })}
                   >
                     {t(`member.actions.${action}.button`)}
@@ -553,10 +807,10 @@ export default function PersonaAdminConsole() {
 
       <section className="panel persona-config-panel">
         <div className="panel-header persona-config-header">
-          <div><h2>{t("config.title")}</h2><p>{t("config.copy")}</p></div>
+          <div><h2>{t("config.title")}</h2><p>{t("config.copy")}</p><small>{t("config.revision", { revision: stored.resource_revision })}</small></div>
           <div className="row-actions">
-            <button className="button button-secondary" type="button" disabled={controlsLocked || !dirty} onClick={() => { setDraft(clonePersonaStartConfig(stored)); setConfigFeedback(null); setConfirmation(null); }}>{t("config.reset")}</button>
-            <button className="button button-primary" type="button" disabled={controlsLocked || !dirty || !review} onClick={() => setConfirmation({ kind: "config" })}>{t("config.review")}</button>
+            <button className="button button-secondary" type="button" disabled={controlsLocked || !dirty} onClick={() => { setDraft(clonePersonaStartConfig(stored.config)); setConfigFeedback(null); setConfirmation(null); }}>{t("config.reset")}</button>
+            <button className="button button-primary" type="button" disabled={controlsLocked || !dirty || !review || !configReasonNormalized} onClick={() => setConfirmation({ kind: "config" })}>{t("config.review")}</button>
           </div>
         </div>
         <div className="panel-body">
@@ -570,6 +824,24 @@ export default function PersonaAdminConsole() {
               <p>{t("config.reloadRequired")}</p>
               <button className="button button-secondary button-small" type="button" disabled={busy || memberBusy} onClick={() => void load()}>{t("config.reload")}</button>
             </div>
+          )}
+          {canWriteConfig && (
+            <label className="field persona-config-field">
+              <span>{t("config.reasonLabel")}</span>
+              <input
+                type="text"
+                value={configReason}
+                maxLength={600}
+                disabled={controlsLocked}
+                aria-invalid={configReason !== "" && configReasonNormalized === null}
+                onChange={(event) => {
+                  setConfigReason(event.target.value);
+                  setConfigFeedback(null);
+                  setConfirmation(null);
+                }}
+              />
+              <small>{t("limits.reason", { count: Array.from(configReason).length, maximum: 300 })}</small>
+            </label>
           )}
           <div className="persona-config-layout">
             <div className="persona-editor-sections">

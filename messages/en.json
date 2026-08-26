@@ -819,12 +819,12 @@
       },
       "persona": {
         "title": "Persona operations help",
-        "summary": "This guarded workspace combines the native Persona start-screen singleton with three narrowly scoped member overrides. Core authors readiness and capabilities, while Webadmin provides safe projections, exact previews, fresh confirmations and manual recovery after any uncertain mutation response.",
+        "summary": "This guarded workspace combines the revisioned Persona start-screen singleton with three narrowly scoped member overrides. Core authors readiness and capabilities; Webadmin provides minimal revision projections, exact previews, fresh confirmations and durable receipt retry.",
         "steps": {
           "1": "Read the contract-readiness badges first; a dormant or missing action means stop, not permission to work around the gate.",
           "2": "For a member operation, resolve the canonical UID and compare both UID and display name before selecting one action.",
-          "3": "For configuration, review normalized changed fields and the device preview, then confirm one save and verify the returned complete object.",
-          "4": "After a timeout, malformed response or recovery warning, reload authoritative state and never repeat the previous gesture automatically."
+          "3": "For configuration, review normalized fields, the device preview, current resource revision and private reason before confirming one save.",
+          "4": "After timeout, malformed response, 5xx or in-progress state, use only the exact session-stored retry; after a revision conflict, refresh authoritative state."
         },
         "sections": {
           "readiness": {
@@ -838,10 +838,10 @@
           },
           "memberLookup": {
             "title": "Canonical member lookup",
-            "purpose": "The lookup accepts one positive base-10 UID and stores only the resolved UID and display name needed to anchor a confirmation.",
+            "purpose": "The lookup accepts one positive base-10 UID and stores only UID, display name and the shared Persona revision needed to anchor a confirmation and optimistic write.",
             "actions": {
               "1": "Enter the exact UID without a sign, decimal point or leading zero, then resolve it through the authenticated proxy.",
-              "2": "Compare the returned display name and UID with the support case before opening a confirmation."
+              "2": "Compare the returned display name, UID and current revision with the support case before opening a confirmation."
             },
             "guidance": "The safe target projection deliberately omits provider attributes, inquiry identifiers, birth data and raw verification evidence. Never infer them from this card."
           },
@@ -859,7 +859,7 @@
             "purpose": "The force operation copies the member's current durable avatar into the accepted Persona verification-image model and marks the member accepted.",
             "actions": {
               "1": "Read the high-impact confirmation naming the member and UID before promoting the current avatar.",
-              "2": "After success, reload the target before considering another operation; the returned relative path is validated and discarded."
+              "2": "After success, verify that the canonical receipt advanced the displayed member revision; the returned relative path is validated and discarded."
             },
             "guidance": "This replaces verification evidence and is not a provider inquiry. Missing or non-durable avatars must remain Core refusals, never browser-side workarounds."
           },
@@ -868,9 +868,9 @@
             "purpose": "Eleven groups cover every contracted boolean, progress value, font size, URL, color, icon fallback and text field in the native pre-inquiry screen.",
             "actions": {
               "1": "Open only the group you need, edit bounded values, and inspect the normalized-change count.",
-              "2": "Discard the draft to restore the last complete Core object, or review and confirm one partial patch."
+              "2": "Discard the draft to restore the last complete Core object, or add a bounded private reason and confirm one partial patch at its exact revision."
             },
-            "guidance": "Sizes clamp to 8–80, progress to 0–1 and strings to their contract caps. Unchanged legacy defaults stay byte-preserved and are not silently rewritten."
+            "guidance": "Sizes clamp to 8–80, progress remains any finite contracted number, and strings use their field caps. Unchanged defaults stay byte-preserved and are not silently rewritten."
           },
           "preview": {
             "title": "Normalized device preview",
@@ -882,13 +882,13 @@
             "guidance": "The preview is an approximation, not an iOS screenshot. It loads images only from the Friending image host so an arbitrary configured host cannot track an administrator."
           },
           "uncertainResponses": {
-            "title": "Uncertain-response recovery",
-            "purpose": "Current compatibility mutations have no caller-owned receipt, so a lost, malformed, timeout or unexpected response cannot be proven safe to retry.",
+            "title": "Receipt retry and conflicts",
+            "purpose": "Every mutation stores its lowercase UUIDv4, action, target, expected revision, normalized material and private reason in sessionStorage before the first network byte is sent.",
             "actions": {
-              "1": "Use the displayed reload control to read authoritative configuration or target state after any recovery warning.",
-              "2": "Review audit and current state outside the pending gesture before deciding whether a new manual operation is justified."
+              "1": "After timeout, malformed response, 5xx or in-progress state, use Retry exact request; never mint a replacement UUID or edit its material.",
+              "2": "Clear the retained row only after a canonical success/replay, proven configuration convergence, or terminal conflict; refresh after stale revision."
             },
-            "guidance": "The console never auto-retries or stores a substitute request identity for this contract. Repeating an uncertain gesture can duplicate audit or evidence replacement."
+            "guidance": "Competing controls remain locked while a receipt is pending. Member revision alone cannot prove convergence, so an uncertain member mutation must obtain its canonical receipt by exact retry."
           }
         }
       },
@@ -3055,6 +3055,26 @@
       "writer": "Write actions granted",
       "viewer": "Read-only capabilities"
     },
+    "receipts": {
+      "pendingTitle": "Pending Persona receipt",
+      "pendingCopy": "The exact {action} request for {target} is retained in this browser session. Competing Persona changes stay locked until its result is resolved.",
+      "retained": "Exact retry retained",
+      "requestId": "Request ID: {requestId}",
+      "retryExact": "Retry the exact request",
+      "sending": "The durable request identity was saved before sending. Waiting for Core's canonical receipt.",
+      "converged": "An authoritative configuration read proved that the retained save converged. Its stored request identity was cleared.",
+      "replayed": "Core replayed the canonical completed receipt; no second logical mutation was created.",
+      "conflict": "The expected revision is stale. The retained request was cleared; refresh authoritative state before creating a new request.",
+      "uncertain": "The response was lost, malformed, or outside the closed receipt contract. The exact request remains stored; retry that request only.",
+      "persistenceUnavailable": "Session receipt storage is unavailable or contains an invalid pending row. Persona mutations remain locked so an uncertain request identity cannot be lost.",
+      "persistenceCleanupFailed": "Core returned a valid result, but the stored request identity could not be cleared. Controls remain locked; retrying will reuse the same receipt.",
+      "actions": {
+        "persona_start_update_config": "start-screen save",
+        "admin_apply_fake_persona": "synthetic-marker apply",
+        "admin_revoke_fake_persona": "synthetic-marker revoke",
+        "admin_force_persona_verify": "avatar promotion"
+      }
+    },
     "member": {
       "title": "Member verification operations",
       "copy": "Resolve a canonical UID first, confirm the displayed member, then choose one narrowly defined and Core-audited action.",
@@ -3066,10 +3086,12 @@
       "targetReady": "Target resolved. Recheck the displayed name and UID before choosing an action.",
       "uidFallback": "Member #{uid}",
       "uidValue": "UID {uid}",
-      "reloadRequired": "The target state changed or the mutation result needs authoritative recovery. Reload this UID before considering another action; the console will not retry automatically.",
+      "revision": "Persona revision {revision}",
+      "reasonLabel": "Private operator reason",
+      "invalidReason": "Enter a control-free reason from 1 to 300 Unicode characters.",
+      "reloadRequired": "The member revision changed. Reload this UID before creating a new request from the authoritative revision.",
       "reloadTarget": "Reload target",
       "writeRequired": "The current Core action list no longer permits this operation. Reload capabilities.",
-      "uncertain": "The mutation response was lost, malformed or outside the closed contract. Do not repeat it; reload authoritative target state first.",
       "capabilityUnavailable": "This action is absent from your current Core-authored capabilities.",
       "actions": {
         "apply_fake": {
@@ -3099,27 +3121,28 @@
         "force_verify": "Promote this avatar?"
       },
       "success": {
-        "apply_fake": "Core accepted the synthetic marker operation. Reload the target before any further action.",
-        "revoke_fake": "Core removed the guarded synthetic marker. Reload the target before any further action.",
-        "force_verify": "Core promoted the current avatar and returned a valid bounded verification path. The path was not retained in browser state."
+        "apply_fake": "Core returned the canonical synthetic-marker receipt. A new marker advances the shared revision once; an already-present marker keeps its revision.",
+        "revoke_fake": "Core removed the guarded synthetic marker and advanced the shared member revision exactly once.",
+        "force_verify": "Core promoted the current avatar, advanced the shared member revision, and returned a valid bounded path that was not retained in browser state."
       }
     },
     "config": {
       "title": "Persona start screen",
       "copy": "Edit every field in the native pre-inquiry screen. The live preview uses the same bounded values that the proxy will send.",
+      "revision": "Resource revision {revision}",
+      "reasonLabel": "Private operator reason",
       "reset": "Discard draft",
       "review": "Review changes",
       "writeRequired": "The current Core action list no longer permits configuration writes.",
       "saved": "Core saved and returned the complete normalized Persona start configuration.",
-      "uncertain": "The save response was lost, malformed or outside the closed contract. Do not submit again until the authoritative configuration is reloaded.",
-      "confirmCopy": "Save {count, plural, one {# normalized field} other {# normalized fields}} to the Persona start screen? Core audits field names only, never the copy, URL or color values.",
+      "confirmCopy": "Save {count, plural, one {# normalized field} other {# normalized fields}} at the displayed resource revision? Core retains a request fingerprint; audit stores field names plus only the reason length and hash.",
       "confirmTitle": "Save Persona start-screen changes?",
       "confirmButton": "Save reviewed changes",
       "readOnly": "Your capabilities allow reading the complete configuration but not changing it.",
       "unsaved": "The draft contains {count, plural, one {# normalized change} other {# normalized changes}}. Review the device preview before saving.",
       "normalized": "The preview shows Core-compatible trimming or numeric clamping that will be applied to edited fields.",
       "invalid": "At least one edited value is unsafe or outside the closed field contract. No save can be sent.",
-      "reloadRequired": "Authoritative recovery is required before another save. The console never retries a Persona mutation automatically.",
+      "reloadRequired": "The configuration revision changed. Reload the complete authoritative object before preparing a new receipt-backed save.",
       "reload": "Reload configuration"
     },
     "limits": {
@@ -3129,7 +3152,8 @@
       "color": "Color value; maximum {maximum} Unicode characters",
       "icon": "Native icon fallback name; maximum {maximum} Unicode characters",
       "multiline": "Multiline copy; maximum {maximum} Unicode characters",
-      "text": "Text; maximum {maximum} Unicode characters"
+      "text": "Text; maximum {maximum} Unicode characters",
+      "reason": "Required, control-free reason: {count}/{maximum} Unicode characters. It stays out of response and log material."
     },
     "sections": {
       "general": { "title": "Availability and page", "copy": "Master visibility and page background." },
@@ -3247,20 +3271,30 @@
       "admin-session-invalid": "The active administrator identity could not be revalidated. Sign in again.",
       "admin-revoked": "This administrator membership was revoked. Sign out and contact an owner.",
       "admin-write-required": "A current editor capability is required for this mutation.",
-      "query-failed": "Core could not read the administrator, member or configuration state safely.",
-      "audit-write-failed": "Core could not persist the audit intent, so the domain mutation did not begin. Reload before another gesture.",
-      "no-fields": "The configuration patch contained no recognized changed field.",
-      "db-write-failed": "The configuration write failed after audit. Reload authoritative configuration before deciding what to do next.",
-      "uid-invalid": "The member UID for this synthetic-marker action was invalid.",
-      "uid-missing": "The member UID for avatar promotion was missing or invalid.",
       "user-not-found": "The target member no longer exists.",
       "already-verified-real": "Core refused the synthetic marker because the member already has accepted or provider-linked verification.",
       "not-fake-persona": "Core refused revocation because the current Persona state is not the guarded synthetic marker.",
       "user-has-no-avatar": "The member has no current avatar record to promote.",
       "avatar-file-not-found": "The current avatar has no durable source file, so it cannot become verification evidence.",
-      "copy-failed": "Avatar promotion failed. Reload authoritative member state before any new gesture.",
-      "mark-failed": "Core could not apply the synthetic or force-promoted state. Reload before any new gesture.",
-      "unmark-failed": "Core could not remove the synthetic marker. Reload before any new gesture.",
+      "persona-contract-version-required": "This Persona mutation omitted the required receipt-era contract version.",
+      "persona-contract-version-invalid": "The Persona contract version is unsupported. Refresh the console before retrying.",
+      "persona-request-invalid": "The receipt-era Persona request fields or normalized material were invalid.",
+      "persona-request-id-invalid": "The Persona request ID was not a lowercase UUIDv4.",
+      "persona-request-id-conflict": "That request ID is already bound to different Persona material. It was not reused.",
+      "persona-request-in-progress": "Core is still processing this exact request. Keep its stored identity and retry only that request.",
+      "persona-conflict": "The expected Persona revision is stale. Refresh authoritative state before creating a new request.",
+      "persona-schema-unavailable": "The receipt-era Persona schema is unavailable. The exact request remains retained for recovery.",
+      "persona-write-failed": "Core could not complete the Persona write. The exact request remains retained for safe replay or recovery.",
+      "persona-audit-write-failed": "Core could not persist the Persona audit intent. The exact request remains retained for safe replay.",
+      "persona-capability-required": "The current Core capability list does not permit this Persona action.",
+      "bad-origin": "The browser request did not come from this Webadmin origin.",
+      "not-found": "The Persona bridge is not released on this Webadmin build.",
+      "auth-required": "The administrator session could not be revalidated.",
+      "invalid-input": "The same-origin Persona proxy rejected a non-canonical request body.",
+      "too-large": "The Persona request exceeded the proxy's bounded body size.",
+      "core-unavailable": "Core could not be reached. The exact request remains retained.",
+      "core-timeout": "Core did not answer before the timeout. The write may have landed; retry only the retained request.",
+      "invalid-core-response": "Core returned malformed JSON. No result was assumed and the exact request remains retained.",
       "generic": "Core returned an unknown or malformed Persona refusal. No success has been assumed; reload authoritative state."
     }
   },

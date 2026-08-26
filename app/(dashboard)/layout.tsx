@@ -7,5 +7,13 @@ export const dynamic = "force-dynamic";
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const me = await adminMe();
   if (!me) redirect("/login");
-  return <Shell adminEmail={me.email} verificationConsoleReady={me.verificationConsoleReady}>{children}</Shell>;
+  return (
+    <Shell
+      adminEmail={me.email}
+      personaConsoleReady={me.personaConsoleReady}
+      verificationConsoleReady={me.verificationConsoleReady}
+    >
+      {children}
+    </Shell>
+  );
 }

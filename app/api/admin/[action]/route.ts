@@ -56,7 +56,7 @@ export async function POST(
 
   // Revocation is authoritative in Core. This is deliberately checked on every
   // bridge call, not only when the dashboard layout is rendered.
-  const membership = await coreCall<{ success?: boolean; role?: string; dates?: unknown; verification?: unknown }>(
+  const membership = await coreCall<{ success?: boolean; role?: string; dates?: unknown; persona?: unknown; verification?: unknown }>(
     "admin_me",
     { admin_email: session.email },
   );

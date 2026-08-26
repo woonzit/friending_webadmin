@@ -819,12 +819,12 @@
       },
       "persona": {
         "title": "Persona műveletek súgó",
-        "summary": "Ez a védett munkaterület egyesíti a natív Persona indítóképernyő singletonját három szűken korlátozott tagi felülbírálással. A készültséget és képességeket a Core adja, a Webadmin pedig biztonságos vetületet, pontos előnézetet, friss megerősítést és kézi helyreállítást biztosít bizonytalan módosítási válasz után.",
+        "summary": "Ez a védett munkaterület egyesíti a revíziózott Persona indítóképernyő singletonját három szűken korlátozott tagi felülbírálással. A készültséget és képességeket a Core adja; a Webadmin minimális revízióvetületet, pontos előnézetet, friss megerősítést és tartós receipt-újrapróbálást biztosít.",
         "steps": {
           "1": "Először olvasd el a szerződéskészültségi jelvényeket; az inaktív állapot vagy hiányzó művelet megállást jelent, nem engedélyt a gate megkerülésére.",
           "2": "Tagi műveletnél oldd fel a kanonikus UID-t, majd egyetlen művelet kiválasztása előtt vesd össze a UID-t és a megjelenített nevet.",
-          "3": "Konfigurációnál nézd át a normalizált módosított mezőket és eszközelőnézetet, majd erősíts meg egy mentést, és ellenőrizd a visszaadott teljes objektumot.",
-          "4": "Timeout, hibás válasz vagy helyreállítási figyelmeztetés után töltsd újra a hiteles állapotot, és soha ne ismételd meg automatikusan az előző műveletet."
+          "3": "Konfigurációnál egy mentés megerősítése előtt nézd át a normalizált mezőket, az eszközelőnézetet, az aktuális erőforrás-revíziót és a privát indokot.",
+          "4": "Timeout, hibás válasz, 5xx vagy folyamatban lévő állapot után csak a sessionben tárolt pontos újrapróbálást használd; revízióütközés után frissítsd a hiteles állapotot."
         },
         "sections": {
           "readiness": {
@@ -838,10 +838,10 @@
           },
           "memberLookup": {
             "title": "Kanonikus tagkeresés",
-            "purpose": "A kereső egy pozitív tízes UID-t fogad, és csak a megerősítés rögzítéséhez szükséges feloldott UID-t és megjelenített nevet tartja meg.",
+            "purpose": "A kereső egy pozitív tízes UID-t fogad, és csak a megerősítéshez és optimista íráshoz szükséges UID-t, megjelenített nevet és közös Persona-revíziót tartja meg.",
             "actions": {
               "1": "Írd be a pontos UID-t előjel, tizedespont és kezdő nulla nélkül, majd oldd fel a hitelesített proxyn keresztül.",
-              "2": "Megerősítés megnyitása előtt vesd össze a visszaadott nevet és UID-t a támogatási üggyel."
+              "2": "Megerősítés megnyitása előtt vesd össze a visszaadott nevet, UID-t és aktuális revíziót a támogatási üggyel."
             },
             "guidance": "A biztonságos célvetület szándékosan kihagyja a providerattribútumokat, inquiry azonosítókat, születési adatot és nyers verifikációs bizonyítékot. Ne következtess rájuk ebből a kártyából."
           },
@@ -859,7 +859,7 @@
             "purpose": "A kényszerített művelet a tag aktuális tartós avatárját az elfogadott Persona verifikációs képmodellbe másolja, és elfogadottnak jelöli a tagot.",
             "actions": {
               "1": "Az aktuális avatár előléptetése előtt olvasd el a tagot és UID-t megnevező nagy hatású megerősítést.",
-              "2": "Siker után újabb művelet előtt töltsd újra a célt; a visszaadott relatív útvonalat a felület validálja és eldobja."
+              "2": "Siker után ellenőrizd, hogy a kanonikus receipt léptette a megjelenített tagi revíziót; a visszaadott relatív útvonalat a felület validálja és eldobja."
             },
             "guidance": "Ez lecseréli a verifikációs bizonyítékot, és nem provider inquiry. A hiányzó vagy nem tartós avatár maradjon Core-elutasítás, soha ne legyen böngészőoldali kerülőút."
           },
@@ -868,9 +868,9 @@
             "purpose": "Tizenegy csoport tartalmaz minden szerződött logikai mezőt, folyamatértéket, betűméretet, URL-t, színt, fallback ikont és szöveget a natív inquiry előtti képernyőhöz.",
             "actions": {
               "1": "Csak a szükséges csoportot nyisd ki, szerkessz korlátozott értéket, és ellenőrizd a normalizált változások számát.",
-              "2": "A draft elvetésével állítsd vissza az utolsó teljes Core-objektumot, vagy nézz át és erősíts meg egy részleges patch-et."
+              "2": "A draft elvetésével állítsd vissza az utolsó teljes Core-objektumot, vagy adj meg korlátozott privát indokot, és erősíts meg egy részleges patch-et a pontos revízión."
             },
-            "guidance": "A méret 8–80, a folyamat 0–1 közé szorul, a szövegek pedig a szerződéses korlátig érnek. A változatlan legacy alapértékek byte-pontosan megmaradnak, és nem íródnak át észrevétlenül."
+            "guidance": "A méret 8–80 közé szorul, a folyamatérték bármely véges szerződéses szám marad, a szövegek pedig a mezőkorlátot használják. A változatlan alapértékek byte-pontosan megmaradnak, és nem íródnak át észrevétlenül."
           },
           "preview": {
             "title": "Normalizált eszközelőnézet",
@@ -882,13 +882,13 @@
             "guidance": "Az előnézet közelítés, nem iOS screenshot. Csak a Friending képkezelőről tölt képet, így tetszőleges konfigurált host nem követheti az adminisztrátort."
           },
           "uncertainResponses": {
-            "title": "Bizonytalan válasz helyreállítása",
-            "purpose": "A jelenlegi kompatibilitási módosításnak nincs hívó által birtokolt receiptje, ezért elveszett, hibás, timeoutos vagy váratlan válasz után nem bizonyítható biztonságos újrapróbálás.",
+            "title": "Receipt-újrapróbálás és ütközések",
+            "purpose": "Minden módosítás a hálózati küldés előtt sessionStorage-ba menti a kisbetűs UUIDv4-et, műveletet, célt, elvárt revíziót, normalizált anyagot és privát indokot.",
             "actions": {
-              "1": "Helyreállítási figyelmeztetés után a látható újratöltő vezérlővel olvasd be a hiteles konfigurációt vagy célállapotot.",
-              "2": "Új kézi művelet indokoltságának eldöntése előtt vizsgáld meg az auditot és aktuális állapotot a függő műveleten kívül."
+              "1": "Timeout, hibás válasz, 5xx vagy folyamatban lévő állapot után a pontos kérés újrapróbálását használd; soha ne készíts új UUID-t és ne módosítsd az anyagot.",
+              "2": "A megőrzött sort csak kanonikus siker/visszajátszás, bizonyított konfigurációkonvergencia vagy terminális ütközés után töröld; elavult revízió után frissíts."
             },
-            "guidance": "A konzol nem próbálkozik automatikusan újra, és nem tárol helyettesítő kérésazonosságot ehhez a szerződéshez. Bizonytalan művelet ismétlése duplikált auditot vagy bizonyítékcserét okozhat."
+            "guidance": "Függő receipt mellett a versengő vezérlők zároltak. A tagi revízió önmagában nem bizonyít konvergenciát, ezért bizonytalan tagmódosításnak pontos újrapróbálással kell megszereznie a kanonikus receiptet."
           }
         }
       },
@@ -3055,6 +3055,26 @@
       "writer": "Írási műveletek engedélyezve",
       "viewer": "Csak olvasási képességek"
     },
+    "receipts": {
+      "pendingTitle": "Függő Persona receipt",
+      "pendingCopy": "A(z) {target} célhoz tartozó pontos {action} kérés ebben a böngészőmunkamenetben megmarad. A versengő Persona-módosítások zároltak az eredmény feloldásáig.",
+      "retained": "Pontos újrapróbálás megőrizve",
+      "requestId": "Kérésazonosító: {requestId}",
+      "retryExact": "Pontos kérés újrapróbálása",
+      "sending": "A tartós kérésazonosság küldés előtt mentésre került. Várakozás a Core kanonikus receiptjére.",
+      "converged": "Egy hiteles konfigurációolvasás bizonyította a megőrzött mentés konvergenciáját. A tárolt kérésazonosság törlődött.",
+      "replayed": "A Core visszajátszotta a befejezett kanonikus receiptet; nem jött létre második logikai módosítás.",
+      "conflict": "Az elvárt revízió elavult. A megőrzött kérés törlődött; új kérés előtt frissítsd a hiteles állapotot.",
+      "uncertain": "A válasz elveszett, hibás vagy kívül esik a zárt receiptszerződésen. A pontos kérés tárolva marad; csak ezt próbáld újra.",
+      "persistenceUnavailable": "A munkamenet receipt-tárolója nem érhető el, vagy érvénytelen függő sort tartalmaz. A Persona-módosítások zároltak, hogy bizonytalan kérésazonosság ne vesszen el.",
+      "persistenceCleanupFailed": "A Core érvényes eredményt adott, de a tárolt kérésazonosság nem törölhető. A vezérlők zároltak; az újrapróbálás ugyanazt a receiptet használja.",
+      "actions": {
+        "persona_start_update_config": "indítóképernyő-mentés",
+        "admin_apply_fake_persona": "szintetikus jelölő alkalmazása",
+        "admin_revoke_fake_persona": "szintetikus jelölő visszavonása",
+        "admin_force_persona_verify": "avatárelőléptetés"
+      }
+    },
     "member": {
       "title": "Tagverifikációs műveletek",
       "copy": "Előbb oldj fel egy kanonikus UID-t, ellenőrizd a megjelenített tagot, majd válassz egy szűken meghatározott és Core által auditált műveletet.",
@@ -3066,10 +3086,12 @@
       "targetReady": "A cél feloldva. Műveletválasztás előtt ellenőrizd újra a megjelenített nevet és UID-t.",
       "uidFallback": "#{uid} tag",
       "uidValue": "UID {uid}",
-      "reloadRequired": "A célállapot megváltozott, vagy a módosítás eredménye hiteles helyreállítást igényel. Újabb művelet előtt töltsd újra ezt a UID-t; a konzol nem próbálkozik automatikusan újra.",
+      "revision": "Persona-revízió: {revision}",
+      "reasonLabel": "Privát operátori indok",
+      "invalidReason": "Adj meg 1–300 Unicode karakteres, vezérlőkarakter-mentes indokot.",
+      "reloadRequired": "A tag revíziója megváltozott. Új kérés létrehozása előtt töltsd újra ezt a UID-t a hiteles revízióval.",
       "reloadTarget": "Cél újratöltése",
       "writeRequired": "A jelenlegi Core műveletlista már nem engedi ezt a műveletet. Töltsd újra a képességeket.",
-      "uncertain": "A módosítás válasza elveszett, hibás vagy kívül esik a zárt szerződésen. Ne ismételd meg; előbb töltsd újra a hiteles célállapotot.",
       "capabilityUnavailable": "Ez a művelet hiányzik a Core által adott jelenlegi képességeidből.",
       "actions": {
         "apply_fake": {
@@ -3099,27 +3121,28 @@
         "force_verify": "Előlépteted ezt az avatárt?"
       },
       "success": {
-        "apply_fake": "A Core elfogadta a szintetikus jelölő műveletét. További lépés előtt töltsd újra a célt.",
-        "revoke_fake": "A Core eltávolította a védett szintetikus jelölőt. További lépés előtt töltsd újra a célt.",
-        "force_verify": "A Core előléptette az aktuális avatárt, és érvényes, korlátozott verifikációs útvonalat adott vissza. Az útvonal nem került böngészőállapotba."
+        "apply_fake": "A Core visszaadta a szintetikus jelölő kanonikus receiptjét. Egy új jelölő egyszer lépteti a közös revíziót; a már meglévő jelölő megtartja azt.",
+        "revoke_fake": "A Core eltávolította a védett szintetikus jelölőt, és pontosan egyszer léptette a közös tagi revíziót.",
+        "force_verify": "A Core előléptette az aktuális avatárt, léptette a közös tagi revíziót, és érvényes korlátozott útvonalat adott vissza, amely nem került böngészőállapotba."
       }
     },
     "config": {
       "title": "Persona indítóképernyő",
       "copy": "A natív, inquiry előtti képernyő minden mezőjének szerkesztése. Az élő előnézet ugyanazokat a korlátozott értékeket használja, amelyeket a proxy elküld.",
+      "revision": "Erőforrás-revízió: {revision}",
+      "reasonLabel": "Privát operátori indok",
       "reset": "Draft elvetése",
       "review": "Változások áttekintése",
       "writeRequired": "A jelenlegi Core műveletlista már nem engedi a konfiguráció írását.",
       "saved": "A Core elmentette és visszaadta a teljes normalizált Persona indítókonfigurációt.",
-      "uncertain": "A mentés válasza elveszett, hibás vagy kívül esik a zárt szerződésen. Ne küldd újra a hiteles konfiguráció újratöltéséig.",
-      "confirmCopy": "Elmented ezt a {count, plural, one {# normalizált mezőt} other {# normalizált mezőt}} a Persona indítóképernyőhöz? A Core csak a mezőneveket auditálja, a szöveg-, URL- és színértékeket soha.",
+      "confirmCopy": "Elmented ezt a {count, plural, one {# normalizált mezőt} other {# normalizált mezőt}} a megjelenített erőforrás-revízión? A Core kérésfingerprintet tart meg; az audit a mezőnevek mellett csak az indok hosszát és hashét tárolja.",
       "confirmTitle": "Mented a Persona indítóképernyő változásait?",
       "confirmButton": "Átnézett változások mentése",
       "readOnly": "A képességeid engedik a teljes konfiguráció olvasását, de a módosítását nem.",
       "unsaved": "A draft {count, plural, one {# normalizált változást} other {# normalizált változást}} tartalmaz. Mentés előtt nézd át az eszközelőnézetet.",
       "normalized": "Az előnézet a szerkesztett mezőkre alkalmazandó, Core-kompatibilis levágást vagy numerikus korlátozást mutatja.",
       "invalid": "Legalább egy szerkesztett érték nem biztonságos vagy kívül esik a zárt mezőszerződésen. Mentés nem küldhető.",
-      "reloadRequired": "Újabb mentés előtt hiteles helyreállítás szükséges. A konzol soha nem próbálkozik automatikusan újra Persona módosítással.",
+      "reloadRequired": "A konfiguráció revíziója megváltozott. Új receiptes mentés előkészítése előtt töltsd újra a teljes hiteles objektumot.",
       "reload": "Konfiguráció újratöltése"
     },
     "limits": {
@@ -3129,7 +3152,8 @@
       "color": "Színérték; legfeljebb {maximum} Unicode karakter",
       "icon": "Natív fallback ikon neve; legfeljebb {maximum} Unicode karakter",
       "multiline": "Többsoros szöveg; legfeljebb {maximum} Unicode karakter",
-      "text": "Szöveg; legfeljebb {maximum} Unicode karakter"
+      "text": "Szöveg; legfeljebb {maximum} Unicode karakter",
+      "reason": "Kötelező, vezérlőkarakter-mentes indok: {count}/{maximum} Unicode karakter. Nem kerül válaszba vagy naplóanyagba."
     },
     "sections": {
       "general": { "title": "Elérhetőség és oldal", "copy": "Fő láthatóság és oldalháttér." },
@@ -3247,20 +3271,30 @@
       "admin-session-invalid": "Az aktív adminisztrátori azonosság nem ellenőrizhető újra. Jelentkezz be ismét.",
       "admin-revoked": "Ezt az adminisztrátori tagságot visszavonták. Jelentkezz ki, és keresd a tulajdonost.",
       "admin-write-required": "Ehhez a módosításhoz aktuális szerkesztői képesség szükséges.",
-      "query-failed": "A Core nem tudta biztonságosan olvasni az adminisztrátori, tagi vagy konfigurációs állapotot.",
-      "audit-write-failed": "A Core nem tudta tartósan rögzíteni az audit-szándékot, ezért a tartományi módosítás nem indult el. Újabb művelet előtt tölts újra.",
-      "no-fields": "A konfigurációs patch nem tartalmazott felismert módosított mezőt.",
-      "db-write-failed": "A konfiguráció írása audit után meghiúsult. További döntés előtt töltsd újra a hiteles konfigurációt.",
-      "uid-invalid": "A szintetikus jelölő művelet tagi UID-ja érvénytelen.",
-      "uid-missing": "Az avatár előléptetéséhez szükséges tagi UID hiányzik vagy érvénytelen.",
       "user-not-found": "A céltag már nem létezik.",
       "already-verified-real": "A Core elutasította a szintetikus jelölőt, mert a tag már elfogadott vagy providerhez kötött verifikációval rendelkezik.",
       "not-fake-persona": "A Core elutasította a visszavonást, mert az aktuális Persona állapot nem a védett szintetikus jelölő.",
       "user-has-no-avatar": "A tagnak nincs előléptethető aktuális avatarrekordja.",
       "avatar-file-not-found": "Az aktuális avatárhoz nincs tartós forrásfájl, ezért nem válhat verifikációs bizonyítékká.",
-      "copy-failed": "Az avatár előléptetése meghiúsult. Újabb művelet előtt töltsd újra a hiteles tagállapotot.",
-      "mark-failed": "A Core nem tudta alkalmazni a szintetikus vagy kényszerítetten előléptetett állapotot. Újabb művelet előtt tölts újra.",
-      "unmark-failed": "A Core nem tudta eltávolítani a szintetikus jelölőt. Újabb művelet előtt tölts újra.",
+      "persona-contract-version-required": "Ebből a Persona-módosításból hiányzott a kötelező receipt-era szerződésverzió.",
+      "persona-contract-version-invalid": "A Persona szerződésverziója nem támogatott. Újrapróbálás előtt frissítsd a konzolt.",
+      "persona-request-invalid": "A receiptes Persona-kérés mezői vagy normalizált anyaga érvénytelen volt.",
+      "persona-request-id-invalid": "A Persona kérésazonosítója nem kisbetűs UUIDv4 volt.",
+      "persona-request-id-conflict": "Ez a kérésazonosító már más Persona-anyaghoz kötődik. Nem került újra felhasználásra.",
+      "persona-request-in-progress": "A Core még feldolgozza ezt a pontos kérést. Őrizd meg az azonosságát, és csak ezt próbáld újra.",
+      "persona-conflict": "Az elvárt Persona-revízió elavult. Új kérés előtt frissítsd a hiteles állapotot.",
+      "persona-schema-unavailable": "A receiptes Persona-séma nem érhető el. A pontos kérés megmarad helyreállításhoz.",
+      "persona-write-failed": "A Core nem tudta befejezni a Persona-írást. A pontos kérés megmarad biztonságos visszajátszáshoz vagy helyreállításhoz.",
+      "persona-audit-write-failed": "A Core nem tudta tartósan rögzíteni a Persona audit-szándékot. A pontos kérés megmarad biztonságos visszajátszáshoz.",
+      "persona-capability-required": "A jelenlegi Core képességlista nem engedi ezt a Persona-műveletet.",
+      "bad-origin": "A böngészőkérés nem erről a Webadmin-originről érkezett.",
+      "not-found": "A Persona-híd nincs kiadva ebben a Webadmin buildben.",
+      "auth-required": "Az adminisztrátori munkamenet nem ellenőrizhető újra.",
+      "invalid-input": "Az azonos originű Persona proxy elutasította a nem kanonikus kéréstörzset.",
+      "too-large": "A Persona-kérés túllépte a proxy korlátozott törzsméretét.",
+      "core-unavailable": "A Core nem érhető el. A pontos kérés megmarad.",
+      "core-timeout": "A Core nem válaszolt a timeout előtt. Az írás megtörténhetett; csak a megőrzött kérést próbáld újra.",
+      "invalid-core-response": "A Core hibás JSON-t adott. A felület nem feltételezett eredményt, és a pontos kérés megmarad.",
       "generic": "A Core ismeretlen vagy hibás Persona-elutasítást adott. A felület nem feltételez sikert; töltsd újra a hiteles állapotot."
     }
   },

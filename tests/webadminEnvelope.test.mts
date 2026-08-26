@@ -112,8 +112,8 @@ test("all regenerated versioned fixtures carry the real Webadmin reply trio", as
 
   const persona = await fixture("persona_admin_contract_v1.json");
   assert.ok(webadminDataSuccessEnvelope(persona.config_success));
+  assert.ok(webadminDataSuccessEnvelope(persona.member_success));
   assert.ok(webadminDataSuccessEnvelope(persona.force_success));
-  assert.ok(webadminEmptySuccessEnvelope(persona.empty_success));
 });
 
 test("every dormant console delegates transport parsing to the shared helper", async () => {

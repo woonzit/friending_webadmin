@@ -83,7 +83,7 @@ export function webadminDataSuccessEnvelope(value: unknown): WebadminDataSuccess
   return source?.status_code === 200 ? source as WebadminDataSuccessEnvelope : null;
 }
 
-/** Existing Persona marker mutations intentionally return no material data. */
+/** Legacy actions that intentionally return no material data use this exact form. */
 export function webadminEmptySuccessEnvelope(value: unknown): WebadminEmptySuccessEnvelope | null {
   const source = webadminEnvelope(value, true, []);
   return source?.status_code === 200 ? source as WebadminEmptySuccessEnvelope : null;

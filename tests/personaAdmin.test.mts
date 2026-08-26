@@ -9,34 +9,46 @@ import {
 import { PERSONA_ADMIN_PROXY_RELEASED } from "../lib/contractReadiness.ts";
 import {
   PERSONA_ADMIN_ACTIONS,
+  PERSONA_ADMIN_BRIDGE_ERROR_STATUSES,
   PERSONA_ADMIN_CAPABILITY_ACTIONS,
+  PERSONA_ADMIN_CONTRACT_VERSION,
+  PERSONA_ADMIN_CORE_ERROR_STATUSES,
   PERSONA_ADMIN_ERROR_KEYS,
-  PERSONA_ADMIN_ERROR_STATUSES,
+  PERSONA_ADMIN_MUTATION_ACTIONS,
+  PERSONA_PENDING_STORAGE_KEY,
   PERSONA_START_FIELD_KEYS,
   PERSONA_START_SECTIONS,
   canonicalPersonaUid,
+  canonicalPersonaRequestId,
   clonePersonaStartConfig,
   normalizePersonaProxyBody,
+  normalizePersonaReason,
   normalizePersonaStartDraft,
   personaAdminCapabilitiesFrom,
   personaAdminErrorKey,
   personaAdminFailureResponse,
   personaCapabilityAllows,
-  personaEmptyMutationResponse,
+  personaConflictResponse,
   personaForceMutationResponse,
   personaHighlightParts,
+  personaMemberMutationConverged,
+  personaMemberMutationResponse,
+  personaPendingFrom,
+  personaPendingMutation,
+  personaPersistBeforeMutation,
   personaPreviewColor,
   personaPreviewImageUrl,
   personaProxyCapabilityAuthorized,
+  personaShouldRetainMutation,
   personaStartConfigPatch,
   personaStartConfigResponse,
   personaStartDraftWithValue,
   personaStartFullPayload,
+  personaStartResourceConverged,
   personaStartUpdateResponse,
   personaTargetFromUserDetail,
   personaTargetLookupData,
   personaTargetLookupResponse,
-  personaUidPayload,
   type PersonaStartConfig,
 } from "../lib/personaAdmin.ts";
 import {
@@ -51,6 +63,8 @@ const fixtures = JSON.parse(
   await readFile(new URL("./fixtures/persona_admin_contract_v1.json", import.meta.url), "utf8"),
 ) as Record<string, JsonObject>;
 
+const REQUEST_ID = "123e4567-e89b-42d3-a456-426614174000";
+
 function clone<T>(value: T): T {
   return structuredClone(value);
 }
@@ -64,6 +78,10 @@ function data(value: JsonObject): JsonObject {
   return object(value.data);
 }
 
+function configData(value: JsonObject): JsonObject {
+  return object(data(value).config);
+}
+
 function headers(values: Record<string, string>) {
   const normalized = new Map(
     Object.entries(values).map(([key, value]) => [key.toLowerCase(), value]),
@@ -74,7 +92,7 @@ function headers(values: Record<string, string>) {
 function config(): PersonaStartConfig {
   const parsed = personaStartConfigResponse(fixtures.config_success);
   assert.ok(parsed);
-  return parsed;
+  return parsed.config;
 }
 
 test("the version-1 fixture decodes one complete closed start configuration", () => {
@@ -91,7 +109,12 @@ test("the version-1 fixture decodes one complete closed start configuration", ()
   assert.equal(new Set(sectionFields).size, PERSONA_START_FIELD_KEYS.length);
   assert.deepEqual([...sectionFields].sort(), [...PERSONA_START_FIELD_KEYS].sort());
 
-  assert.deepEqual(personaStartUpdateResponse(fixtures.config_success), parsed);
+  const resource = personaStartConfigResponse(fixtures.config_success);
+  assert.ok(resource);
+  assert.equal(resource.contract_version, 1);
+  assert.equal(resource.resource_revision, 7);
+  assert.deepEqual(resource.config, parsed);
+  assert.equal(personaStartUpdateResponse(fixtures.config_success), null);
   const payload = personaStartFullPayload(parsed);
   assert.ok(payload);
   assert.deepEqual(Object.keys(payload).sort(), [...PERSONA_START_FIELD_KEYS].sort());
@@ -130,23 +153,26 @@ test("both locales cover the complete closed field, section, and error vocabular
 
 test("closed envelopes and config material fail on missing, unknown, loose, unsafe, or out-of-bound values", () => {
   const contractLegalProgress = clone(fixtures.config_success);
-  data(contractLegalProgress).progress_value = 1.01;
-  assert.equal(personaStartConfigResponse(contractLegalProgress)?.progress_value, 1.01);
+  configData(contractLegalProgress).progress_value = 1.01;
+  assert.equal(personaStartConfigResponse(contractLegalProgress)?.config.progress_value, 1.01);
 
   const mutations: Array<(raw: JsonObject) => void> = [
     (raw) => { raw.trace_id = "not-contracted"; },
     (raw) => { raw.status_code = "200"; },
-    (raw) => { delete data(raw).active; },
-    (raw) => { data(raw).private_provider_key = "private"; },
-    (raw) => { data(raw).active = 1; },
-    (raw) => { data(raw).title_size = 80.5; },
-    (raw) => { data(raw).title_size = 81; },
-    (raw) => { data(raw).title_main = "x".repeat(201); },
-    (raw) => { data(raw).safety_body = "x".repeat(601); },
-    (raw) => { data(raw).trust_body_link_url = "http://example.test"; },
-    (raw) => { data(raw).trust_body_link_url = "https://user:pass@example.test/"; },
-    (raw) => { data(raw).benefit1_title = "unsafe\u0001text"; },
-    (raw) => { data(raw).benefit1_title = "unsafe\uD800text"; },
+    (raw) => { data(raw).contract_version = 2; },
+    (raw) => { data(raw).resource_revision = "7"; },
+    (raw) => { data(raw).provider_state = "private"; },
+    (raw) => { delete configData(raw).active; },
+    (raw) => { configData(raw).private_provider_key = "private"; },
+    (raw) => { configData(raw).active = 1; },
+    (raw) => { configData(raw).title_size = 80.5; },
+    (raw) => { configData(raw).title_size = 81; },
+    (raw) => { configData(raw).title_main = "x".repeat(201); },
+    (raw) => { configData(raw).safety_body = "x".repeat(601); },
+    (raw) => { configData(raw).trust_body_link_url = "http://example.test"; },
+    (raw) => { configData(raw).trust_body_link_url = "https://user:pass@example.test/"; },
+    (raw) => { configData(raw).benefit1_title = "unsafe\u0001text"; },
+    (raw) => { configData(raw).benefit1_title = "unsafe\uD800text"; },
   ];
   for (const mutate of mutations) {
     const raw = clone(fixtures.config_success);
@@ -200,8 +226,8 @@ test("legacy JSON slash and Unicode escapes are compared after decoding", () => 
   const decoded = JSON.parse(encoded) as JsonObject;
   const parsed = personaStartConfigResponse(decoded);
   assert.ok(parsed);
-  assert.equal(parsed.title_main, "Verify in {{highlight}} to unlock Friending");
-  assert.equal(parsed.benefit2_icon_url, "https://img.friending.co/api/cache/app/persona/bolt.png");
+  assert.equal(parsed.config.title_main, "Verify in {{highlight}} to unlock Friending");
+  assert.equal(parsed.config.benefit2_icon_url, "https://img.friending.co/api/cache/app/persona/bolt.png");
 });
 
 test("admin_me Persona capabilities are exact, ordered, action-driven, and dormant", () => {
@@ -257,11 +283,22 @@ test("the proxy capability gate maps every Persona endpoint and rejects malforme
 
 test("the action-specific proxy boundary forwards only canonical contracted material", () => {
   assert.equal(normalizePersonaProxyBody("overview", {}), undefined);
-  assert.deepEqual({ ...normalizePersonaProxyBody("persona_start_get_config_admin", {}) }, {});
+  assert.deepEqual(
+    { ...normalizePersonaProxyBody("persona_start_get_config_admin", { contract_version: 1 }) },
+    { contract_version: 1 },
+  );
+  assert.equal(normalizePersonaProxyBody("persona_start_get_config_admin", {}), null);
   assert.equal(normalizePersonaProxyBody("persona_start_get_config_admin", { secret: "attacker" }), null);
 
+  const mutationBase = {
+    contract_version: 1,
+    request_id: REQUEST_ID,
+    expected_revision: 7,
+    reason: "Approved support correction",
+  };
   assert.deepEqual(
     { ...normalizePersonaProxyBody("persona_start_update_config", {
+      ...mutationBase,
       active: false,
       progress_value: 0.5,
       title_size: 32,
@@ -269,6 +306,7 @@ test("the action-specific proxy boundary forwards only canonical contracted mate
       trust_body_link_url: "https://withpersona.com/",
     }) },
     {
+      ...mutationBase,
       active: false,
       progress_value: 0.5,
       title_size: 32,
@@ -277,19 +315,29 @@ test("the action-specific proxy boundary forwards only canonical contracted mate
     },
   );
   assert.deepEqual(
-    { ...normalizePersonaProxyBody("persona_start_update_config", { progress_value: 1.1 }) },
-    { progress_value: 1.1 },
+    { ...normalizePersonaProxyBody("persona_start_update_config", {
+      ...mutationBase,
+      progress_value: 1.1,
+    }) },
+    { ...mutationBase, progress_value: 1.1 },
   );
   for (const invalid of [
     {},
-    { active: "0" },
-    { progress_value: Number.NaN },
-    { title_size: 81 },
-    { title_main: " trailing " },
-    { trust_body_link_url: "http://withpersona.com" },
-    { unknown: "value" },
-    { secret: "attacker", title_main: "x" },
-    { admin_email: "attacker@example.test", title_main: "x" },
+    mutationBase,
+    { ...mutationBase, contract_version: "1", active: false },
+    { ...mutationBase, request_id: REQUEST_ID.toUpperCase(), active: false },
+    { ...mutationBase, expected_revision: -1, active: false },
+    { ...mutationBase, expected_revision: 2_147_483_648, active: false },
+    { ...mutationBase, reason: " trailing ", active: false },
+    { ...mutationBase, reason: "unsafe\nreason", active: false },
+    { ...mutationBase, active: "0" },
+    { ...mutationBase, progress_value: Number.NaN },
+    { ...mutationBase, title_size: 81 },
+    { ...mutationBase, title_main: " trailing " },
+    { ...mutationBase, trust_body_link_url: "http://withpersona.com" },
+    { ...mutationBase, unknown: "value" },
+    { ...mutationBase, secret: "attacker", title_main: "x" },
+    { ...mutationBase, admin_email: "attacker@example.test", title_main: "x" },
   ]) {
     assert.equal(normalizePersonaProxyBody("persona_start_update_config", invalid), null);
   }
@@ -299,10 +347,12 @@ test("the action-specific proxy boundary forwards only canonical contracted mate
     "admin_revoke_fake_persona",
     "admin_force_persona_verify",
   ]) {
-    assert.deepEqual({ ...normalizePersonaProxyBody(action, { uid: "42" }) }, { uid: "42" });
-    assert.equal(normalizePersonaProxyBody(action, { uid: 42 }), null);
-    assert.equal(normalizePersonaProxyBody(action, { uid: "042" }), null);
-    assert.equal(normalizePersonaProxyBody(action, { uid: "42", admin_email: "attacker@example.test" }), null);
+    const body = { ...mutationBase, uid: 42 };
+    assert.deepEqual({ ...normalizePersonaProxyBody(action, body) }, body);
+    assert.equal(normalizePersonaProxyBody(action, { ...mutationBase, uid: "42" }), null);
+    assert.equal(normalizePersonaProxyBody(action, { ...mutationBase, uid: 42, expected_revision: 0 }), null);
+    assert.equal(normalizePersonaProxyBody(action, { ...mutationBase, uid: 2_147_483_648 }), null);
+    assert.equal(normalizePersonaProxyBody(action, { ...body, admin_email: "attacker@example.test" }), null);
   }
 });
 
@@ -313,8 +363,7 @@ test("UID and target projections are canonical, bounded, and contain no identity
   assert.equal(canonicalPersonaUid("+42"), null);
   assert.equal(canonicalPersonaUid("42.0"), null);
   assert.equal(canonicalPersonaUid(String(Number.MAX_SAFE_INTEGER + 1)), null);
-  assert.deepEqual(personaUidPayload(42), { uid: "42" });
-  assert.equal(personaUidPayload(-1), null);
+  assert.equal(canonicalPersonaUid("2147483648"), null);
 
   const target = personaTargetFromUserDetail({
     success: true,
@@ -326,40 +375,58 @@ test("UID and target projections are canonical, bounded, and contain no identity
       provider_payload: { private: true },
       birthdate: "private",
     },
+    persona_admin: { contract_version: 1, revision: 7 },
     message: 200,
     status: 200,
     can_send: 0,
   });
-  assert.deepEqual(target, { uid: 42, displayName: "Ada" });
-  assert.deepEqual(Object.keys(target ?? {}).sort(), ["displayName", "uid"]);
-  assert.deepEqual(personaTargetLookupData(target!), { uid: 42, display_name: "Ada" });
+  assert.deepEqual(target, { uid: 42, displayName: "Ada", revision: 7 });
+  assert.deepEqual(Object.keys(target ?? {}).sort(), ["displayName", "revision", "uid"]);
+  assert.deepEqual(personaTargetLookupData(target!), { uid: 42, display_name: "Ada", revision: 7 });
   assert.deepEqual(personaTargetLookupResponse({
     success: true,
     status_code: 200,
-    data: { uid: 42, display_name: "Ada" },
+    data: { uid: 42, display_name: "Ada", revision: 7 },
   }), target);
   assert.equal(personaTargetLookupResponse({
     success: true,
     status_code: 200,
-    data: { uid: 42, display_name: "Ada", birthdate: "private" },
+    data: { uid: 42, display_name: "Ada", revision: 7, birthdate: "private" },
   }), null, "a broad user document cannot enter the dedicated browser projection");
-  assert.equal(personaTargetFromUserDetail({ success: true, status_code: 200, profile: { uid: 42, display_name: "bad\u0001name" } }), null);
+  assert.equal(personaTargetFromUserDetail({ success: true, status_code: 200, profile: { uid: 42, display_name: "Ada" } }), null, "versioned member revision is required");
+  assert.equal(personaTargetFromUserDetail({ success: true, status_code: 200, profile: { uid: 42, display_name: "bad\u0001name" }, persona_admin: { contract_version: 1, revision: 7 } }), null);
 });
 
-test("empty and force mutation parsers accept only exact authoritative success", () => {
-  assert.ok(personaEmptyMutationResponse(fixtures.empty_success));
+test("receipt-era mutation parsers require exact revisions, replay flags, and material", () => {
+  assert.deepEqual(personaMemberMutationResponse(fixtures.member_success), {
+    contract_version: 1,
+    uid: 42,
+    revision: 8,
+    replayed: false,
+  });
   assert.deepEqual(personaForceMutationResponse(fixtures.force_success), {
+    contract_version: 1,
+    uid: 42,
+    revision: 8,
     verify_image_url: "ab/able-user/1787684000hash_meetpic.jpeg",
+    replayed: false,
   });
 
+  const configMutation = clone(fixtures.config_success);
+  data(configMutation).resource_revision = 8;
+  data(configMutation).replayed = false;
+  assert.equal(personaStartUpdateResponse(configMutation)?.resource_revision, 8);
+
   for (const mutate of [
-    (raw: JsonObject) => { raw.replayed = false; },
+    (raw: JsonObject) => { data(raw).replayed = "false"; },
+    (raw: JsonObject) => { data(raw).revision = 0; },
+    (raw: JsonObject) => { data(raw).reason = "must-not-return"; },
     (raw: JsonObject) => { raw.status_code = 201; },
     (raw: JsonObject) => { raw.can_send = false; },
   ]) {
-    const raw = clone(fixtures.empty_success);
+    const raw = clone(fixtures.member_success);
     mutate(raw);
-    assert.equal(personaEmptyMutationResponse(raw), null);
+    assert.equal(personaMemberMutationResponse(raw), null);
   }
 
   for (const path of [
@@ -376,34 +443,39 @@ test("empty and force mutation parsers accept only exact authoritative success",
 });
 
 test("every closed error requires its exact legacy envelope and status", () => {
-  assert.equal(PERSONA_ADMIN_ERROR_KEYS.length, 18);
-  for (const error of PERSONA_ADMIN_ERROR_KEYS) {
+  assert.equal(Object.keys(PERSONA_ADMIN_CORE_ERROR_STATUSES).length, 19);
+  assert.equal(Object.keys(PERSONA_ADMIN_BRIDGE_ERROR_STATUSES).length, 9);
+  assert.equal(PERSONA_ADMIN_ERROR_KEYS.length, 28);
+  for (const [error, statusCode] of Object.entries(PERSONA_ADMIN_CORE_ERROR_STATUSES)) {
     const response = {
       success: false,
-      status_code: PERSONA_ADMIN_ERROR_STATUSES[error],
+      status_code: statusCode,
       error,
       message: 200,
       status: 200,
       can_send: 0,
     };
-    assert.equal(personaAdminFailureResponse(response)?.error, error);
+    assert.equal(personaAdminFailureResponse(response)?.error, error, error);
     assert.equal(personaAdminErrorKey(error), error);
   }
-  assert.equal(personaAdminFailureResponse({
-    success: false,
-    status_code: 403,
-    error: "admin-write-required",
-  })?.error, "admin-write-required");
+  for (const [error, statusCode] of Object.entries(PERSONA_ADMIN_BRIDGE_ERROR_STATUSES)) {
+    assert.equal(personaAdminFailureResponse({
+      success: false,
+      status_code: statusCode,
+      error,
+    })?.error, error, error);
+  }
   assert.equal(personaAdminErrorKey("future-provider-error"), "generic");
   assert.equal(personaAdminErrorKey("constructor"), "generic");
   assert.equal(personaAdminFailureResponse({
     success: false,
-    status_code: 500,
-    error: "uid-invalid",
+    status_code: 409,
+    error: "persona-conflict",
+    data: { contract_version: 1, resource_revision: 8 },
     message: 200,
     status: 200,
     can_send: 0,
-  }), null);
+  }), null, "conflict data is parsed only by the conflict parser");
   assert.equal(personaAdminFailureResponse({
     success: false,
     status_code: 500,
@@ -412,6 +484,142 @@ test("every closed error requires its exact legacy envelope and status", () => {
     status: 200,
     can_send: 0,
   }), null);
+  assert.equal(personaAdminFailureResponse({
+    success: false,
+    status_code: 403,
+    error: "persona-capability-required",
+    message: 200,
+    status: 200,
+    can_send: 0,
+  }), null, "bridge codes cannot widen into a Core envelope");
+});
+
+test("Persona conflicts accept only the two exact A-R authoritative projections", () => {
+  const configConflict = {
+    success: false,
+    status_code: 409,
+    error: "persona-conflict",
+    data: { contract_version: 1, resource_revision: 8 },
+    message: 200,
+    status: 200,
+    can_send: 0,
+  };
+  const memberConflict = {
+    ...configConflict,
+    data: { contract_version: 1, uid: 42, revision: 9 },
+  };
+  assert.deepEqual(personaConflictResponse(configConflict), {
+    kind: "config",
+    contract_version: 1,
+    resource_revision: 8,
+  });
+  assert.deepEqual(personaConflictResponse(memberConflict), {
+    kind: "member",
+    contract_version: 1,
+    uid: 42,
+    revision: 9,
+  });
+  assert.equal(personaConflictResponse({
+    ...configConflict,
+    data: { contract_version: 1, resource_revision: 8, config: {} },
+  }), null);
+  assert.equal(personaConflictResponse({ ...configConflict, error: "persona-write-failed" }), null);
+});
+
+test("reasons, UUIDs, and durable pending rows are canonical and target-bound", async () => {
+  assert.equal(canonicalPersonaRequestId(REQUEST_ID), REQUEST_ID);
+  assert.equal(canonicalPersonaRequestId(REQUEST_ID.toUpperCase()), null);
+  assert.equal(canonicalPersonaRequestId("123e4567-e89b-12d3-a456-426614174000"), null);
+  assert.equal(normalizePersonaReason("  e\u0301rvényes indok  "), "érvényes indok");
+  assert.equal(normalizePersonaReason("line\nbreak"), null);
+  assert.equal(normalizePersonaReason("\u0000unsafe"), null);
+  assert.equal(normalizePersonaReason("🛡".repeat(301)), null);
+
+  const pending = personaPendingMutation("persona_start_update_config", {
+    contract_version: 1,
+    request_id: REQUEST_ID,
+    expected_revision: 6,
+    reason: "Approved correction",
+    title_main: "Verify in {{highlight}} to unlock Friending",
+  });
+  assert.ok(pending);
+  assert.equal(pending.target, "config:start");
+  assert.deepEqual(personaPendingFrom(JSON.parse(JSON.stringify(pending))), pending);
+  assert.equal(personaPendingFrom({ ...pending, target: "uid:42" }), null);
+  assert.equal(personaPendingFrom({
+    ...pending,
+    payload: { ...pending.payload, secret: "attacker" },
+  }), null);
+
+  const events: string[] = [];
+  const persisted = await personaPersistBeforeMutation(
+    { setItem(key, value) {
+      assert.equal(key, PERSONA_PENDING_STORAGE_KEY);
+      assert.deepEqual(personaPendingFrom(JSON.parse(value)), pending);
+      events.push("stored");
+    } },
+    pending,
+    async () => {
+      assert.deepEqual(events, ["stored"]);
+      events.push("sent");
+      return "response";
+    },
+  );
+  assert.deepEqual(persisted, { ok: true, response: "response" });
+  assert.deepEqual(events, ["stored", "sent"]);
+
+  let sent = false;
+  assert.deepEqual(await personaPersistBeforeMutation(
+    { setItem() { throw new Error("private browsing"); } },
+    pending,
+    async () => { sent = true; return "never"; },
+  ), { ok: false });
+  assert.equal(sent, false);
+});
+
+test("canonical receipts and authoritative reads prove convergence without a second logical action", () => {
+  const resource = personaStartConfigResponse(fixtures.config_success);
+  assert.ok(resource);
+  const configPending = personaPendingMutation("persona_start_update_config", {
+    contract_version: 1,
+    request_id: REQUEST_ID,
+    expected_revision: 6,
+    reason: "Approved correction",
+    title_main: resource.config.title_main,
+  });
+  assert.ok(configPending);
+  assert.equal(personaStartResourceConverged(resource, configPending), true);
+  assert.equal(personaStartResourceConverged(
+    { ...resource, resource_revision: 8 },
+    configPending,
+  ), false);
+
+  const memberPending = personaPendingMutation("admin_apply_fake_persona", {
+    contract_version: 1,
+    uid: 42,
+    request_id: REQUEST_ID,
+    expected_revision: 7,
+    reason: "Approved correction",
+  });
+  const memberResult = personaMemberMutationResponse(fixtures.member_success);
+  assert.ok(memberPending && memberResult);
+  assert.equal(personaMemberMutationConverged(memberResult, memberPending), true);
+  assert.equal(personaMemberMutationConverged({ ...memberResult, revision: 7 }, memberPending), true, "already-applied synthetic marker is a same-revision canonical success");
+  assert.equal(personaMemberMutationConverged({ ...memberResult, revision: 9 }, memberPending), false);
+
+  assert.deepEqual(PERSONA_ADMIN_MUTATION_ACTIONS, [
+    "persona_start_update_config",
+    "admin_apply_fake_persona",
+    "admin_revoke_fake_persona",
+    "admin_force_persona_verify",
+  ]);
+  assert.equal(personaShouldRetainMutation("persona-request-in-progress"), true);
+  assert.equal(personaShouldRetainMutation("persona-write-failed"), true);
+  assert.equal(personaShouldRetainMutation("core-timeout"), true);
+  assert.equal(personaShouldRetainMutation(null), true);
+  assert.equal(personaShouldRetainMutation("persona-conflict"), false);
+  assert.equal(personaShouldRetainMutation("persona-request-id-conflict"), false);
+  assert.equal(personaShouldRetainMutation("user-not-found"), false);
 });
 
 test("preview helpers replace literal markers and suppress unsafe colors and remote images", () => {
@@ -469,7 +677,7 @@ test("the dormant bridge is unreachable for guests, foreign origins, viewers, an
 });
 
 test("page, navigation, runtime readiness, confirmations, and same-origin calls share one cutover", async () => {
-  const [page, shell, actions, route, memberRoute, component, model] = await Promise.all([
+  const [page, shell, actions, route, memberRoute, component, model, session] = await Promise.all([
     readFile(new URL("../app/(dashboard)/persona/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/Shell.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/adminActions.ts", import.meta.url), "utf8"),
@@ -477,32 +685,46 @@ test("page, navigation, runtime readiness, confirmations, and same-origin calls 
     readFile(new URL("../app/api/admin/persona-member/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../components/PersonaAdminConsole.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/personaAdmin.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/session.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /if \(!PERSONA_ADMIN_PROXY_RELEASED\) notFound\(\)/);
+  assert.match(page, /if \(!me\?\.personaConsoleReady\) notFound\(\)/);
   assert.match(shell, /ready: PERSONA_ADMIN_PROXY_RELEASED/);
-  for (const action of PERSONA_ADMIN_ACTIONS) assert.doesNotMatch(actions, new RegExp(action));
+  assert.match(shell, /item\.key !== "persona" \|\| personaConsoleReady/);
+  assert.match(actions, /ACTIVE_PERSONA_ADMIN_ACTIONS = PERSONA_ADMIN_PROXY_RELEASED/);
+  for (const action of PERSONA_ADMIN_ACTIONS) assert.match(actions, new RegExp(action));
   assert.match(route, /personaProxyCapabilityAuthorized/);
   assert.match(route, /normalizePersonaProxyBody/);
 
   const membershipCall = component.indexOf('adminCall("admin_me")');
-  const configCall = component.indexOf('adminCall("persona_start_get_config_admin")');
+  const configCall = component.indexOf('adminCall("persona_start_get_config_admin"');
   assert.ok(membershipCall >= 0 && configCall > membershipCall);
   for (const endpoint of PERSONA_ADMIN_ACTIONS) assert.match(component, new RegExp(endpoint));
   assert.match(component, /adminCall\("persona-member", \{ uid: String\(uid\) \}\)/);
   assert.doesNotMatch(component, /adminCall\("user_detail"/);
   assert.match(memberRoute, /if \(!PERSONA_ADMIN_PROXY_RELEASED\) return errorResponse\("not-found", 404\)/);
   assert.match(memberRoute, /requireAdminWriter\(\)/);
+  assert.match(memberRoute, /personaCapabilityAllows\(capabilities, "apply_fake"\)/);
   assert.match(memberRoute, /isTrustedAdminRequest\(request\.headers\)/);
   assert.match(memberRoute, /coreCall\("user_detail"/);
+  assert.match(memberRoute, /persona_contract_version: PERSONA_ADMIN_CONTRACT_VERSION/);
   assert.match(memberRoute, /personaTargetLookupData\(target\)/);
   assert.doesNotMatch(memberRoute, /json\(result\.data|NextResponse\.json\(result\.data/);
   assert.match(component, /personaCapabilityAllows\(capabilities, action/);
   assert.match(component, /<ConfirmDialog/);
   assert.match(component, /setMemberRecoveryRequired\(true\)/);
   assert.match(component, /setConfigRecoveryRequired\(true\)/);
-  assert.doesNotMatch(component, /sessionStorage|localStorage|setInterval|setTimeout|console\./);
+  assert.match(component, /sessionStorage\.getItem\(PERSONA_PENDING_STORAGE_KEY\)/);
+  assert.match(component, /personaPersistBeforeMutation/);
+  assert.match(component, /crypto\.randomUUID\(\)/);
+  assert.match(component, /expected_revision: stored\.resource_revision/);
+  assert.match(component, /expected_revision: target\.revision/);
+  assert.match(component, /contract_version: PERSONA_ADMIN_CONTRACT_VERSION/);
+  assert.doesNotMatch(component, /localStorage|setInterval|setTimeout|console\./);
   assert.doesNotMatch(component, /coreCall|core\.friending\.com|WEBADMIN_API_SECRET|provider_key|persona_inquiry/);
   assert.doesNotMatch(component, /verify_image_url/);
+  assert.match(session, /personaConsoleReady: PERSONA_ADMIN_PROXY_RELEASED/);
+  assert.match(session, /personaCapabilityAllows\(persona, "read_start_config"\)/);
   assert.doesNotMatch(model, /console\.|provider_payload|birthdate|PERSONA_(?:PRODUCTION|SANDBOX)_KEY/);
 });

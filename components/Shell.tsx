@@ -97,10 +97,12 @@ function NavIcon({ name }: { name: IconName }) {
 
 export default function Shell({
   adminEmail,
+  personaConsoleReady,
   verificationConsoleReady,
   children,
 }: {
   adminEmail: string;
+  personaConsoleReady: boolean;
   verificationConsoleReady: boolean;
   children: React.ReactNode;
 }) {
@@ -130,6 +132,7 @@ export default function Shell({
         </Link>
         <nav className="main-nav" aria-label={common("mainNavigation")}>
           {NAV.filter((item) => item.ready !== false
+            && (item.key !== "persona" || personaConsoleReady)
             && (item.key !== "verificationSettings" || verificationConsoleReady)).map((item) => {
             const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
             return (

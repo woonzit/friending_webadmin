@@ -1,9 +1,11 @@
 import {
   CANNED_TEMPLATES_CONTRACT_READY,
+  PERSONA_ADMIN_PROXY_RELEASED,
   PRODUCT_POPUP_CONTRACT_READY,
   REPORTED_CONTENT_CONTRACT_READY,
   VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
+import { PERSONA_ADMIN_ACTIONS } from "@/lib/personaAdmin";
 import {
   MAX_VERIFICATION_BADGE_FORM_BYTES,
   VERIFICATION_ADMIN_ACTIONS,
@@ -47,6 +49,11 @@ const PRODUCT_POPUP_ADMIN_ACTIONS = PRODUCT_POPUP_CONTRACT_READY
 
 const CANNED_TEMPLATE_ADMIN_ACTIONS = CANNED_TEMPLATES_CONTRACT_READY
   ? ["list_canned", "save_canned", "delete_canned"] as const
+  : [] as const;
+
+/** Receipt-era Persona routes stay absent until the reviewed Core train is released. */
+const ACTIVE_PERSONA_ADMIN_ACTIONS = PERSONA_ADMIN_PROXY_RELEASED
+  ? PERSONA_ADMIN_ACTIONS
   : [] as const;
 
 /** The full contract stays executable in tests while the actual bridge list remains closed. */
@@ -167,6 +174,7 @@ export const ADMIN_ACTIONS = [
   ...PRODUCT_POPUP_ADMIN_ACTIONS,
   ...CANNED_TEMPLATE_ADMIN_ACTIONS,
   ...REPORTED_CONTENT_ADMIN_ACTIONS,
+  ...ACTIVE_PERSONA_ADMIN_ACTIONS,
   ...ACTIVE_VERIFICATION_ADMIN_ACTIONS,
   ...DATES_ADMIN_ACTIONS,
 ] as const;
@@ -354,6 +362,17 @@ export const ADMIN_ACTION_ACCESS = {
   // reported-content capability before accepting any mutation.
   moderation_reported_list: "read",
   moderation_report_action: "write",
+
+  // Persona has its own exact per-action capability block, rechecked by the
+  // bridge. These rows add the independent global viewer/editor floor only
+  // while the provider release switch is enabled.
+  ...(PERSONA_ADMIN_PROXY_RELEASED ? {
+    persona_start_get_config_admin: "read" as const,
+    persona_start_update_config: "write" as const,
+    admin_force_persona_verify: "write" as const,
+    admin_apply_fake_persona: "write" as const,
+    admin_revoke_fake_persona: "write" as const,
+  } : {}),
 
   ...(VERIFICATION_CONTRACT_READY ? {
     verification_console: "read" as const,
