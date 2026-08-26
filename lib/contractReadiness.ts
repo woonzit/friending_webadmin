@@ -23,7 +23,9 @@ export const PUSH_MODE_CONTRACT_READY: boolean = true;
 /** Core T-109 S2 is released; all 17 actions remain gated by Core's current projection. */
 export const VERIFICATION_CONTRACT_READY: boolean = true;
 /**
- * Core T-121 is accepted but not yet released. The complete v1 consumer remains
- * unreachable until the dormant provider release and separate cutover approval.
+ * Core T-121 is released dormant. The complete v1 consumer remains unreachable
+ * until migration, independent consumer review, and separate cutover approval.
  */
 export const AUDIENCE_VISIBILITY_CONTRACT_READY: boolean = false;
+/** T-120 is not published; the dormant T-216 consumer remains unreachable. */
+export const PROFILE_TEXT_MODERATION_CONTRACT_READY: boolean = false;

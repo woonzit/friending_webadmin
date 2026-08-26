@@ -4,9 +4,11 @@ import { coreCall } from "@/lib/core";
 import {
   AUDIENCE_VISIBILITY_CONTRACT_READY,
   PERSONA_ADMIN_PROXY_RELEASED,
+  PROFILE_TEXT_MODERATION_CONTRACT_READY,
   VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 import { audienceVisibilityAdminMe } from "@/lib/audienceVisibilityAdmin";
+import { profileTextModerationAdminMe } from "@/lib/profileTextModeration";
 import { isAdminWriteRole, normalizeAdminRole } from "@/lib/authPolicy";
 import {
   personaAdminCapabilitiesFrom,
@@ -30,6 +32,7 @@ export type AdminIdentity = {
   personaConsoleReady: boolean;
   verificationConsoleReady: boolean;
   audienceVisibilityConsoleReady: boolean;
+  profileTextModerationConsoleReady: boolean;
 };
 
 export type AdminWriter =
@@ -78,6 +81,7 @@ export async function adminMe(): Promise<AdminIdentity | null> {
     persona?: unknown;
     verification?: unknown;
     audience_visibility?: unknown;
+    profile_text_moderation?: unknown;
   }>("admin_me", { admin_email: session.email });
   if (result.status !== 200 || !result.data?.success) return null;
   const role = normalizeAdminRole(result.data.role);
@@ -85,6 +89,7 @@ export async function adminMe(): Promise<AdminIdentity | null> {
   const persona = personaAdminCapabilitiesFrom(result.data);
   const verification = verificationAdminMe(result.data.verification);
   const audienceVisibility = audienceVisibilityAdminMe(result.data.audience_visibility);
+  const profileTextModeration = profileTextModerationAdminMe(result.data.profile_text_moderation);
   return {
     email: String(result.data.email ?? session.email),
     role,
@@ -96,6 +101,9 @@ export async function adminMe(): Promise<AdminIdentity | null> {
     audienceVisibilityConsoleReady: AUDIENCE_VISIBILITY_CONTRACT_READY
       && audienceVisibility?.contract_ready === true
       && audienceVisibility.actions.includes("audience_visibility_catalog"),
+    profileTextModerationConsoleReady: PROFILE_TEXT_MODERATION_CONTRACT_READY
+      && profileTextModeration?.contract_ready === true
+      && profileTextModeration.actions.includes("moderation_profile_text_list"),
   };
 }
 

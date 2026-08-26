@@ -1982,6 +1982,103 @@ textarea:focus {
   }
 }
 
+/* Profile-text moderation: a dormant, receipt-backed queue with no bulk UI. */
+.profile-text-pending,
+.profile-text-conflict,
+.profile-text-list,
+.profile-text-row,
+.profile-text-row > header,
+.profile-text-row > footer {
+  display: grid;
+  gap: 12px;
+}
+
+.profile-text-pending {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.profile-text-filters,
+.profile-text-queue,
+.profile-text-decision {
+  margin-bottom: 20px;
+}
+
+.profile-text-row {
+  padding: 17px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--bg-soft);
+}
+
+.profile-text-row > header,
+.profile-text-row > footer {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.profile-text-row > header > div,
+.profile-text-row > footer > div,
+.profile-text-row .status-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.profile-text-row header code,
+.profile-text-pending code {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+
+.profile-text-row footer {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.profile-text-row footer a {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.profile-text-content {
+  margin: 0;
+  padding: 14px;
+  border-left: 3px solid rgba(242, 59, 141, 0.55);
+  border-radius: 0 10px 10px 0;
+  background: var(--surface-raised);
+  color: var(--text-soft);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.profile-text-more {
+  justify-self: center;
+}
+
+.profile-text-contract-note {
+  margin-top: 18px;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .profile-text-pending,
+  .profile-text-row > header,
+  .profile-text-row > footer {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-text-row .row-actions,
+  .profile-text-row .row-actions .button,
+  .profile-text-more {
+    width: 100%;
+  }
+}
+
 /* Audience visibility v2: one dormant workspace replaces the orientation-era
    group editor and the old Layer-1/Layer-2 intent surface after activation. */
 .audience-visibility-tabs {

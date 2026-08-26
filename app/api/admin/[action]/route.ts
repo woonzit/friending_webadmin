@@ -4,6 +4,10 @@ import {
   audienceVisibilityProxyCapabilityAuthorized,
 } from "@/lib/audienceVisibilityAdmin";
 import {
+  normalizeProfileTextModerationProxyBody,
+  profileTextModerationProxyCapabilityAuthorized,
+} from "@/lib/profileTextModeration";
+import {
   adminActionBodyLimit,
   adminActionTimeoutMs,
   adminPrincipalFrom,
@@ -68,6 +72,7 @@ export async function POST(
     persona?: unknown;
     verification?: unknown;
     audience_visibility?: unknown;
+    profile_text_moderation?: unknown;
   }>(
     "admin_me",
     { admin_email: session.email },
@@ -95,7 +100,18 @@ export async function POST(
   if (audienceVisibilityAuthorized === false) {
     return bridgeError("catalog-admin-capability-required", 403);
   }
-  if (!isAdminBridgeActionAuthorized(action, principal, audienceVisibilityAuthorized)) {
+  const profileTextModerationAuthorized = profileTextModerationProxyCapabilityAuthorized(action, membership.data);
+  if (profileTextModerationAuthorized === false) {
+    return bridgeError(action === "moderation_profile_text_list"
+      ? "profile-text-moderation-read-required"
+      : "profile-text-moderation-decision-required", 403);
+  }
+  if (!isAdminBridgeActionAuthorized(
+    action,
+    principal,
+    audienceVisibilityAuthorized,
+    profileTextModerationAuthorized,
+  )) {
     return bridgeError("admin-write-required", 403);
   }
 
@@ -143,6 +159,12 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedAudienceVisibilityBody !== undefined) body = normalizedAudienceVisibilityBody;
+
+  const normalizedProfileTextModerationBody = normalizeProfileTextModerationProxyBody(action, body);
+  if (normalizedProfileTextModerationBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedProfileTextModerationBody !== undefined) body = normalizedProfileTextModerationBody;
 
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer

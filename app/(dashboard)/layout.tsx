@@ -13,6 +13,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       personaConsoleReady={me.personaConsoleReady}
       verificationConsoleReady={me.verificationConsoleReady}
       audienceVisibilityConsoleReady={me.audienceVisibilityConsoleReady}
+      profileTextModerationConsoleReady={me.profileTextModerationConsoleReady}
     >
       {children}
     </Shell>

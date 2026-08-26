@@ -1686,6 +1686,89 @@
           }
         }
       },
+      "profileTextModeration": {
+        "title": "Profile text moderation help",
+        "summary": "This receipt-backed queue lets operators review pending member headlines and biographies one field at a time while preserving the exact text, Core-owned authorization, independent field revisions, internal audit privacy, and fail-closed queue semantics.",
+        "steps": {
+          "1": "Apply a field or member filter, then confirm that the complete authoritative queue loaded before treating any result as empty.",
+          "2": "Read the unchanged text and member context, choose Accept or Deny for exactly one field, and enter a factual internal reason.",
+          "3": "After an uncertain response, retry only the exact saved decision; after a conflict, review Core's refreshed state and make a new gesture."
+        },
+        "sections": {
+          "readiness": {
+            "title": "Readiness and capabilities",
+            "purpose": "The route appears only when the reviewed Webadmin switch and Core's current contract-ready action projection both authorize a complete queue read.",
+            "actions": {
+              "1": "Refresh the page if an expected read or decision control is absent.",
+              "2": "Treat malformed readiness or membership data as unavailable state, never as permission."
+            },
+            "guidance": "The browser does not infer access from a broad role. Core reloads active membership and the exact action capability on every request."
+          },
+          "queue": {
+            "title": "Pending queue and filters",
+            "purpose": "The queue contains only non-empty pending headline and biography fields, ordered oldest first and paginated by an opaque filter-bound cursor.",
+            "actions": {
+              "1": "Filter by field or exact positive member UID when narrowing an investigation.",
+              "2": "Use Load more without changing the applied filter, or refresh from page one after a cursor refusal."
+            },
+            "guidance": "A valid empty result is proven only by a complete decoded response with zero items, zero total, and no next cursor. A read error is not emptiness."
+          },
+          "safeProjection": {
+            "title": "Safe plain-text projection",
+            "purpose": "Each row exposes only the bounded profile text, Unicode length, content witness, field revision, update time, UID, display name and username needed for review.",
+            "actions": {
+              "1": "Read all member-authored content as plain text without interpreting HTML or Markdown.",
+              "2": "Open the bounded member page only when broader operational context is genuinely needed."
+            },
+            "guidance": "Contact data, location, devices, import provenance, media, private evidence and audit records are intentionally absent. Never copy queue text into logs or tickets."
+          },
+          "decisions": {
+            "title": "One-field decisions",
+            "purpose": "Accept or Deny changes only one selected field's moderation status while preserving its exact text and binding the decision to the visible revision and hash.",
+            "actions": {
+              "1": "Choose one field decision and enter a specific internal reason of at most 300 Unicode characters.",
+              "2": "Review the unchanged-text notice before submitting the single-field action."
+            },
+            "guidance": "Acceptance permits the unchanged field to enter existing public projections; denial keeps it hidden. Neither action edits text, restricts the account, or notifies the member."
+          },
+          "concurrency": {
+            "title": "Durable identity and retry",
+            "purpose": "Before sending, Webadmin stores the exact UUID, target, revision, content hash, decision and reason so uncertain delivery cannot create a second logical command.",
+            "actions": {
+              "1": "Use Retry exact saved decision after a timeout, malformed response, in-progress result or uncertain server failure.",
+              "2": "Keep every competing queue, filter and decision control locked while that identity remains pending."
+            },
+            "guidance": "Never edit a saved command, clear it merely because delivery is uncertain, or mint another UUID. A replayed success is the original completion, not a second decision."
+          },
+          "conflicts": {
+            "title": "Conflicts and convergence",
+            "purpose": "A revision, text, status, member-edit or removal conflict returns the current bounded field or a null removal marker and applies no stale decision.",
+            "actions": {
+              "1": "Accept Core's current field or removal marker and let the console discard the terminal saved gesture.",
+              "2": "Review the reloaded queue before deciding again with a fresh revision, hash and UUID."
+            },
+            "guidance": "Do not merge, force-save, reuse the old reason automatically, or apply a former decision to changed member text. A new state always requires a new operator gesture."
+          },
+          "privacy": {
+            "title": "Audit and privacy boundary",
+            "purpose": "Core owns the pre-mutation audit intent and records bounded reason length and hash without copying the reason, member text, content hash or identity projection into audit details.",
+            "actions": {
+              "1": "Write a factual reason that omits unnecessary private or identifying information.",
+              "2": "Keep text and hashes out of URLs, browser logs, telemetry, screenshots and external notes."
+            },
+            "guidance": "Session storage contains only an unresolved command and never the member text. Queue responses are no-store, and no moderation action sends email, push or realtime events."
+          },
+          "noBulk": {
+            "title": "No bulk moderation",
+            "purpose": "The Webadmin v1 surface deliberately offers no select-all, multi-field, imported-member batch, arbitrary status, restore, edit or reusable bulk operation.",
+            "actions": {
+              "1": "Moderate each headline or biography with its own explicit decision and receipt identity.",
+              "2": "Escalate operational volume concerns instead of scripting browser calls or reusing request tokens."
+            },
+            "guidance": "Any one-time imported-text operation is a separately reviewed owner tool outside this console and outside T-120; it must never appear as a hidden button or route parameter."
+          }
+        }
+      },
       "userGroups": {
         "title": "User groups help",
         "summary": "User groups are server-evaluated member segments used to show restricted profile questions. Membership is calculated from gender and matching-orientation rules; one member can belong to several groups at the same time.",
@@ -2589,6 +2672,7 @@
     "membership": "Membership",
     "photoModeration": "Photo moderation",
     "reportedContent": "Reported content",
+    "textModeration": "Profile text moderation",
     "profileVerification": "Profile verification",
     "verificationSettings": "Verification settings",
     "persona": "Persona operations",
@@ -3948,6 +4032,101 @@
       "generic": "Core returned an unknown or malformed canned-template response. No success has been assumed; retain an uncertain mutation identity.",
       "persistenceUnavailable": "This browser cannot durably preserve the mutation identity, so no new template mutation can be started.",
       "persistenceCleanupFailed": "Core converged, but the browser could not clear the saved request identity. Do not submit another mutation from this tab."
+    }
+  },
+  "profileTextModeration": {
+    "eyebrow": "Trust and safety",
+    "title": "Profile text moderation",
+    "subtitle": "Review pending headlines and biographies one field at a time through Core's authoritative, revision-bound queue.",
+    "forbidden": "Core does not currently grant access to the profile-text moderation queue.",
+    "loadError": "The complete profile-text queue could not be decoded safely. No empty state has been assumed.",
+    "readOnly": "Your current Core capabilities allow queue review but not moderation decisions.",
+    "contractNote": "Each decision changes only the selected field's moderation status. It never edits the member's text, applies an account restriction, or sends a notification.",
+    "live": {
+      "persistenceUnavailable": "This tab cannot preserve the exact decision identity, so no new mutation was sent.",
+      "pendingMutation": "One exact profile-text decision has an uncertain result.",
+      "retryExact": "Retry exact saved decision",
+      "persistenceCleanupFailed": "Core returned a terminal result, but this tab could not clear the saved decision. Do not submit another mutation here.",
+      "replayed": "Core replayed the original completed decision without applying a second mutation.",
+      "saved": "Core applied the decision exactly once and returned the complete authoritative field.",
+      "conflict": "The field changed or was resolved elsewhere. The stale decision was discarded and the queue was reloaded.",
+      "errorCode": "The decision was not accepted. {message}",
+      "unknownError": "Core returned an unknown or malformed response. The exact saved identity has been retained.",
+      "invalidDecision": "The selected field, revision, hash, decision, or reason is not a valid v1 command.",
+      "conflictCurrent": "Core now reports {field} as {status} at revision {revision}. Review the refreshed queue before making a new decision.",
+      "conflictRemoved": "Core reports that this field is now empty or removed. Review the refreshed queue before taking another action."
+    },
+    "fields": {
+      "headline": "Headline",
+      "about_me": "Biography"
+    },
+    "statuses": {
+      "pending": "pending",
+      "accepted": "accepted",
+      "denied": "denied"
+    },
+    "filters": {
+      "title": "Queue filters",
+      "copy": "Filter the authoritative pending queue by one field and, optionally, one exact member UID.",
+      "field": "Profile field",
+      "all": "Headline and biography",
+      "uid": "Member UID",
+      "uidPlaceholder": "All members",
+      "uidHint": "Leave empty for all members, or enter a positive numeric UID.",
+      "apply": "Apply filters"
+    },
+    "queue": {
+      "title": "Pending profile text",
+      "count": "{loaded} of {total} matching fields loaded",
+      "emptyTitle": "No pending text matches these filters",
+      "emptyCopy": "Core returned a complete, valid empty result for this exact filter.",
+      "unnamed": "Unnamed member",
+      "revision": "Revision {revision}",
+      "length": "{count} Unicode characters",
+      "openMember": "Open member UID {uid}",
+      "loadMore": "Load more pending fields"
+    },
+    "decisions": {
+      "accept": "Accept",
+      "deny": "Deny",
+      "acceptedTitle": "Accept this profile text",
+      "deniedTitle": "Deny this profile text",
+      "copy": "Decide {field} for member UID {uid} using the exact visible revision and content witness.",
+      "unchangedText": "The text itself is never edited by this action. Acceptance makes the unchanged field eligible for public projection; denial keeps it hidden.",
+      "reason": "Internal audit reason",
+      "reasonHint": "{count}/300 Unicode characters. Keep it factual and omit unnecessary private data.",
+      "acceptedSubmit": "Accept unchanged text",
+      "deniedSubmit": "Deny unchanged text"
+    },
+    "errors": {
+      "sessionInvalid": "The administrator session or active membership is no longer valid.",
+      "badOrigin": "The browser request did not come from the authenticated Webadmin origin.",
+      "routeNotFound": "The dormant profile-text action is not available in this Webadmin release.",
+      "readRequired": "Core no longer grants the exact queue-read capability.",
+      "decisionRequired": "Core no longer grants the exact profile-text decision capability.",
+      "requestInvalid": "The request contained unknown, structured, loose, or incompatible material.",
+      "tooLarge": "The request exceeded the bounded Webadmin body size.",
+      "temporarilyUnavailable": "Core is temporarily unavailable or could not complete the authoritative read.",
+      "invalidResponse": "Core returned a response outside the exact v1 envelope or material contract.",
+      "contractVersion": "Core refused the required profile-text moderation contract version.",
+      "filterInvalid": "The field, member UID, page size, or filter combination is invalid.",
+      "cursorInvalid": "The opaque queue cursor is invalid or bound to another filter. Restart from the first page.",
+      "memberInvalid": "The member UID is malformed or outside the supported range.",
+      "fieldInvalid": "The selected profile field is outside the closed headline/biography vocabulary.",
+      "decisionInvalid": "Choose exactly Accept or Deny for one pending field.",
+      "revisionInvalid": "The expected field revision is malformed or outside the supported range.",
+      "hashInvalid": "The Core-authored content witness is malformed. Reload the queue.",
+      "reasonInvalid": "Enter a trimmed, control-free internal reason from 1 to 300 Unicode characters.",
+      "requestIdInvalid": "The durable request identity is not a canonical lowercase UUID v4.",
+      "memberNotFound": "The target member no longer exists. The authoritative queue will be reloaded.",
+      "requestIdConflict": "This request identity already binds different material. The saved gesture is terminal and was cleared.",
+      "requestInProgress": "Core is still processing this exact decision. Retain and retry the same saved identity.",
+      "storedInvalid": "Core found malformed stored profile text or moderation metadata. No row was skipped and no empty state is shown.",
+      "schemaUnavailable": "The required moderation schema, indexes, receipt state, or readiness marker is unavailable.",
+      "auditWriteFailed": "Core could not persist the audit intent and did not begin the decision. Retry the same identity.",
+      "receiptWriteFailed": "The receipt outcome is uncertain. Retain and retry the exact saved identity.",
+      "writeFailed": "The field-write outcome is uncertain. Retain the exact identity and read authoritative state.",
+      "generic": "Core returned an unknown refusal. No success has been assumed and the exact identity remains saved."
     }
   },
   "reportedContent": {

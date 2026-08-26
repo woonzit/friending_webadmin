@@ -1686,6 +1686,89 @@
           }
         }
       },
+      "profileTextModeration": {
+        "title": "Profilszöveg-moderáció súgó",
+        "summary": "Ez a nyugtaalapú sor lehetővé teszi a függő tagi címsorok és bemutatkozások mezőnkénti ellenőrzését, miközben megőrzi a pontos szöveget, a Core által kezelt jogosultságot, a független mezőrevíziókat, a belső audit adatvédelmét és a fail-closed sorszemantikát.",
+        "steps": {
+          "1": "Alkalmazz mező- vagy tagszűrőt, majd csak a teljes hiteles sor betöltése után tekints egy eredményt üresnek.",
+          "2": "Olvasd el a változatlan szöveget és tagi kontextust, válassz Elfogadást vagy Elutasítást pontosan egy mezőhöz, és adj tényszerű belső indokot.",
+          "3": "Bizonytalan válasz után csak a pontos mentett döntést próbáld újra; ütközés után tekintsd át a Core frissített állapotát, majd indíts új műveletet."
+        },
+        "sections": {
+          "readiness": {
+            "title": "Készenlét és képességek",
+            "purpose": "Az útvonal csak akkor jelenik meg, ha az ellenőrzött Webadmin-kapcsoló és a Core aktuális contract-ready műveletkivetítése is teljes sorolvasást enged.",
+            "actions": {
+              "1": "Frissítsd az oldalt, ha hiányzik egy elvárt olvasási vagy döntési vezérlő.",
+              "2": "A hibás készenléti vagy tagsági adatot elérhetetlenségként kezeld, soha ne jogosultságként."
+            },
+            "guidance": "A böngésző nem következtet hozzáférésre általános szerepből. A Core minden kérésnél újratölti az aktív tagságot és a pontos műveleti képességet."
+          },
+          "queue": {
+            "title": "Függő sor és szűrők",
+            "purpose": "A sor csak nem üres, függő címsor- és bemutatkozásmezőket tartalmaz, a legrégebbivel kezdve, átlátszatlan és szűrőhöz kötött kurzorral lapozva.",
+            "actions": {
+              "1": "Vizsgálat szűkítéséhez szűrj mezőre vagy egy pontos pozitív tagi UID-re.",
+              "2": "A Továbbiak betöltése közben ne módosítsd az alkalmazott szűrőt; kurzorelustasítás után indulj újra az első oldalról."
+            },
+            "guidance": "Érvényes üres eredményt csak a teljesen dekódolt, nulla elemet, nulla összesítést és következő kurzor nélkül adott válasz bizonyít. Az olvasási hiba nem üresség."
+          },
+          "safeProjection": {
+            "title": "Biztonságos egyszerűszöveg-vetület",
+            "purpose": "Minden sor csak az ellenőrzéshez szükséges korlátozott profilszöveget, Unicode-hosszt, tartalomtanút, mezőrevíziót, frissítési időt, UID-t, megjelenítési nevet és felhasználónevet mutatja.",
+            "actions": {
+              "1": "Minden tagi tartalmat egyszerű szövegként olvass, HTML vagy Markdown értelmezése nélkül.",
+              "2": "A korlátozott tagoldalt csak akkor nyisd meg, ha szélesebb üzemeltetési kontextus valóban szükséges."
+            },
+            "guidance": "Kapcsolati adat, helyzet, eszköz, importeredeztetés, média, privát bizonyíték és auditrekord szándékosan nincs jelen. Sorszöveget ne másolj naplóba vagy ticketbe."
+          },
+          "decisions": {
+            "title": "Egymezős döntések",
+            "purpose": "Az Elfogadás vagy Elutasítás csak egy kiválasztott mező moderációs állapotát módosítja, megőrzi a pontos szöveget, és a látható revízióhoz meg hashhez kötődik.",
+            "actions": {
+              "1": "Válassz egy meződöntést, és adj legfeljebb 300 Unicode-karakteres pontos belső indokot.",
+              "2": "Az egymezős művelet elküldése előtt olvasd el a változatlan szövegre vonatkozó tájékoztatót."
+            },
+            "guidance": "Az elfogadás a változatlan mezőt a meglévő nyilvános vetületekbe engedi, az elutasítás rejtve tartja. Egyik sem szerkeszt szöveget, korlátoz fiókot vagy értesít tagot."
+          },
+          "concurrency": {
+            "title": "Tartós azonosság és újrapróbálás",
+            "purpose": "Küldés előtt a Webadmin menti a pontos UUID-t, célt, revíziót, tartalomhasht, döntést és indokot, így bizonytalan kézbesítésből nem lehet második logikai parancs.",
+            "actions": {
+              "1": "Timeout, hibás válasz, in-progress eredmény vagy bizonytalan szerverhiba után a pontos mentett döntést próbáld újra.",
+              "2": "Minden versengő sor-, szűrő- és döntési vezérlőt tarts zárolva, amíg ez az azonosság függőben van."
+            },
+            "guidance": "Soha ne szerkeszd vagy pusztán bizonytalan kézbesítés miatt töröld a mentett parancsot, és ne készíts másik UUID-t. A replayelt siker az eredeti teljesítés."
+          },
+          "conflicts": {
+            "title": "Ütközések és konvergencia",
+            "purpose": "Revízió-, szöveg-, állapot-, tagi szerkesztési vagy eltávolítási ütközés az aktuális korlátozott mezőt vagy null eltávolítási markert adja vissza, és nem alkalmaz elavult döntést.",
+            "actions": {
+              "1": "Vedd át a Core aktuális mezőjét vagy eltávolítási markerét, és hagyd, hogy a konzol eldobja a végleges mentett műveletet.",
+              "2": "Új revízióval, hashsel és UUID-val végzett döntés előtt vizsgáld meg az újratöltött sort."
+            },
+            "guidance": "Ne egyesíts, ne force-save-olj, ne használd újra automatikusan a régi indokot, és ne alkalmazz korábbi döntést megváltozott tagi szövegre. Új állapot új operátori műveletet igényel."
+          },
+          "privacy": {
+            "title": "Audit- és adatvédelmi határ",
+            "purpose": "A Core kezeli a módosítás előtti auditszándékot, és csak az indok korlátozott hosszát és hashét rögzíti, az indokot, tagi szöveget, tartalomhasht vagy identitásvetületet nem.",
+            "actions": {
+              "1": "Tényszerű indokot írj, amely nem tartalmaz szükségtelen privát vagy azonosító adatot.",
+              "2": "A szöveget és hasheket tartsd távol URL-ektől, böngészőnaplóktól, telemetriától, képernyőképektől és külső jegyzetektől."
+            },
+            "guidance": "A session storage csak a lezáratlan parancsot tartalmazza, a tagi szöveget soha. A sorválaszok no-store jellegűek, és egyetlen döntés sem küld emailt, push- vagy realtime eseményt."
+          },
+          "noBulk": {
+            "title": "Nincs tömeges moderáció",
+            "purpose": "A Webadmin v1 felület szándékosan nem kínál összes kijelölése, többmezős, importálttag-batch, tetszőleges állapot-, visszaállítási, szerkesztési vagy újrahasználható bulk műveletet.",
+            "actions": {
+              "1": "Minden címsort vagy bemutatkozást saját kifejezett döntéssel és nyugtaazonossággal moderálj.",
+              "2": "Böngészőkérések szkriptelése vagy kérés-tokenek újrahasználata helyett jelezd az üzemeltetési volumen problémáját."
+            },
+            "guidance": "Bármely egyszeri importáltszöveg-művelet külön ellenőrzött owner eszköz ezen a konzolon és a T-120-on kívül; soha nem jelenhet meg rejtett gombként vagy útvonalparaméterként."
+          }
+        }
+      },
       "userGroups": {
         "title": "Usercsoportok súgó",
         "summary": "A usercsoportok szerver által kiértékelt tagszegmensek, amelyek korlátozott profilkérdéseket tesznek láthatóvá. A tagság gender- és matching-orientation szabályokból számolódik; egy tag egyszerre több csoporthoz tartozhat.",
@@ -2589,6 +2672,7 @@
     "membership": "Előfizetések",
     "photoModeration": "Képmoderáció",
     "reportedContent": "Jelentett tartalom",
+    "textModeration": "Profilszöveg-moderáció",
     "profileVerification": "Profilhitelesítés",
     "verificationSettings": "Ellenőrzési beállítások",
     "persona": "Persona műveletek",
@@ -3948,6 +4032,101 @@
       "generic": "A Core ismeretlen vagy hibás sablonválaszt adott. A felület nem feltételez sikert; a bizonytalan módosításazonosság megmarad.",
       "persistenceUnavailable": "A böngésző nem tudja tartósan megőrizni a módosításazonosságot, ezért új sablonmódosítás nem indítható.",
       "persistenceCleanupFailed": "A Core konvergált, de a böngésző nem tudta törölni a mentett kérésazonosságot. Ebből a fülből ne indíts új módosítást."
+    }
+  },
+  "profileTextModeration": {
+    "eyebrow": "Biztonság és bizalom",
+    "title": "Profilszöveg-moderáció",
+    "subtitle": "Függő címsorok és bemutatkozások mezőnkénti ellenőrzése a Core hiteles, revízióhoz kötött sorában.",
+    "forbidden": "A Core jelenleg nem ad hozzáférést a profilszöveg-moderációs sorhoz.",
+    "loadError": "A teljes profilszövegsor nem dekódolható biztonságosan. A felület nem feltételez üres állapotot.",
+    "readOnly": "A jelenlegi Core-képességeid engedik a sor áttekintését, de moderációs döntést nem.",
+    "contractNote": "Minden döntés csak a kiválasztott mező moderációs állapotát módosítja. Nem szerkeszti a tag szövegét, nem korlátozza a fiókot és nem küld értesítést.",
+    "live": {
+      "persistenceUnavailable": "Ez a lap nem tudja megőrizni a pontos döntésazonosságot, ezért nem küldtünk új módosítást.",
+      "pendingMutation": "Egy pontos profilszöveg-döntés eredménye bizonytalan.",
+      "retryExact": "Pontos mentett döntés újrapróbálása",
+      "persistenceCleanupFailed": "A Core végleges eredményt adott, de a lap nem tudta törölni a mentett döntést. Innen ne indíts új módosítást.",
+      "replayed": "A Core második módosítás nélkül játszotta vissza az eredeti befejezett döntést.",
+      "saved": "A Core pontosan egyszer alkalmazta a döntést, és visszaadta a teljes hiteles mezőt.",
+      "conflict": "A mező megváltozott vagy máshol lezárták. Az elavult döntést eldobtuk, és újratöltöttük a sort.",
+      "errorCode": "A döntést nem fogadták el. {message}",
+      "unknownError": "A Core ismeretlen vagy hibás választ adott. A pontos mentett azonosságot megőriztük.",
+      "invalidDecision": "A kiválasztott mező, revízió, hash, döntés vagy indok nem érvényes v1 parancs.",
+      "conflictCurrent": "A Core szerint a(z) {field} most {status} állapotú, revíziója {revision}. Új döntés előtt tekintsd át a frissített sort.",
+      "conflictRemoved": "A Core szerint ez a mező most üres vagy eltávolított. Új művelet előtt tekintsd át a frissített sort."
+    },
+    "fields": {
+      "headline": "Címsor",
+      "about_me": "Bemutatkozás"
+    },
+    "statuses": {
+      "pending": "függőben",
+      "accepted": "elfogadva",
+      "denied": "elutasítva"
+    },
+    "filters": {
+      "title": "Sorszűrők",
+      "copy": "Szűrd a hiteles függő sort egy mezőre és opcionálisan egy pontos tagi UID-re.",
+      "field": "Profilmező",
+      "all": "Címsor és bemutatkozás",
+      "uid": "Tag UID-je",
+      "uidPlaceholder": "Minden tag",
+      "uidHint": "Hagyd üresen minden taghoz, vagy adj meg pozitív numerikus UID-t.",
+      "apply": "Szűrők alkalmazása"
+    },
+    "queue": {
+      "title": "Függő profilszövegek",
+      "count": "{loaded}/{total} egyező mező betöltve",
+      "emptyTitle": "Nincs a szűrőknek megfelelő függő szöveg",
+      "emptyCopy": "A Core teljes és érvényes üres eredményt adott ehhez a pontos szűrőhöz.",
+      "unnamed": "Névtelen tag",
+      "revision": "{revision}. revízió",
+      "length": "{count} Unicode-karakter",
+      "openMember": "{uid} UID-jű tag megnyitása",
+      "loadMore": "További függő mezők betöltése"
+    },
+    "decisions": {
+      "accept": "Elfogadás",
+      "deny": "Elutasítás",
+      "acceptedTitle": "Profilszöveg elfogadása",
+      "deniedTitle": "Profilszöveg elutasítása",
+      "copy": "Döntés a(z) {uid} UID-jű tag {field} mezőjéről a pontos látható revízióval és tartalomtanúval.",
+      "unchangedText": "Ez a művelet soha nem szerkeszti a szöveget. Az elfogadás a változatlan mezőt nyilvánosan megjeleníthetővé teszi, az elutasítás rejtve tartja.",
+      "reason": "Belső auditindok",
+      "reasonHint": "{count}/300 Unicode-karakter. Legyen tényszerű, és ne tartalmazzon szükségtelen privát adatot.",
+      "acceptedSubmit": "Változatlan szöveg elfogadása",
+      "deniedSubmit": "Változatlan szöveg elutasítása"
+    },
+    "errors": {
+      "sessionInvalid": "Az admin munkamenet vagy aktív tagság már nem érvényes.",
+      "badOrigin": "A böngészőkérés nem a hitelesített Webadmin originről érkezett.",
+      "routeNotFound": "A nyugalmi profilszöveg-művelet ebben a Webadmin-kiadásban nem érhető el.",
+      "readRequired": "A Core már nem adja meg a pontos sorolvasási képességet.",
+      "decisionRequired": "A Core már nem adja meg a pontos profilszöveg-döntési képességet.",
+      "requestInvalid": "A kérés ismeretlen, strukturált, laza vagy inkompatibilis anyagot tartalmazott.",
+      "tooLarge": "A kérés túllépte a Webadmin korlátozott törzsméretét.",
+      "temporarilyUnavailable": "A Core átmenetileg nem érhető el, vagy nem tudta befejezni a hiteles olvasást.",
+      "invalidResponse": "A Core válasza nem felel meg a pontos v1 envelope- vagy anyagszerződésnek.",
+      "contractVersion": "A Core elutasította a kötelező profilszöveg-moderációs szerződésverziót.",
+      "filterInvalid": "A mező, tagi UID, oldalméret vagy szűrőkombináció érvénytelen.",
+      "cursorInvalid": "Az átlátszatlan sorkurzor érvénytelen vagy más szűrőhöz kötődik. Indítsd újra az első oldalról.",
+      "memberInvalid": "A tagi UID hibás vagy a támogatott tartományon kívül van.",
+      "fieldInvalid": "A kiválasztott profilmező nincs a zárt címsor/bemutatkozás szókészletben.",
+      "decisionInvalid": "Egyetlen függő mezőhöz pontosan Elfogadás vagy Elutasítás döntést válassz.",
+      "revisionInvalid": "A várt mezőrevízió hibás vagy a támogatott tartományon kívül van.",
+      "hashInvalid": "A Core által adott tartalomtanú hibás. Töltsd újra a sort.",
+      "reasonInvalid": "Adj meg 1–300 Unicode-karakteres, körülvágott és vezérlőjelmentes belső indokot.",
+      "requestIdInvalid": "A tartós kérésazonosság nem kanonikus kisbetűs UUID v4.",
+      "memberNotFound": "A céltag már nem létezik. A hiteles sort újratöltjük.",
+      "requestIdConflict": "Ez a kérésazonosság már más anyaghoz kötődik. A mentett művelet végleges, ezért töröltük.",
+      "requestInProgress": "A Core még ezt a pontos döntést dolgozza fel. Őrizd meg és ugyanazt a mentett azonosságot próbáld újra.",
+      "storedInvalid": "A Core hibás tárolt profilszöveget vagy moderációs metaadatot talált. Egyetlen sor sem maradt ki, és nem jelenik meg üres állapot.",
+      "schemaUnavailable": "A szükséges moderációs séma, indexek, nyugtaállapot vagy készenléti marker nem érhető el.",
+      "auditWriteFailed": "A Core nem tudta menteni az auditszándékot, ezért nem kezdte el a döntést. Ugyanazt az azonosságot próbáld újra.",
+      "receiptWriteFailed": "A nyugtaeredmény bizonytalan. Őrizd meg és próbáld újra a pontos mentett azonosságot.",
+      "writeFailed": "A mezőírás eredménye bizonytalan. Őrizd meg a pontos azonosságot, és olvasd be a hiteles állapotot.",
+      "generic": "A Core ismeretlen elutasítást adott. Nem feltételeztünk sikert, és a pontos azonosság mentve marad."
     }
   },
   "reportedContent": {

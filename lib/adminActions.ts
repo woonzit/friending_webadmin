@@ -3,11 +3,13 @@ import {
   CANNED_TEMPLATES_CONTRACT_READY,
   OUTBOUND_MESSAGING_CONTRACT_READY,
   PERSONA_ADMIN_PROXY_RELEASED,
+  PROFILE_TEXT_MODERATION_CONTRACT_READY,
   PRODUCT_POPUP_CONTRACT_READY,
   REPORTED_CONTENT_CONTRACT_READY,
   VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 import { AUDIENCE_VISIBILITY_ADMIN_ACTIONS } from "@/lib/audienceVisibilityAdmin";
+import { PROFILE_TEXT_MODERATION_ACTIONS } from "@/lib/profileTextModeration";
 import { OUTBOUND_MESSAGING_ACTIONS } from "@/lib/outboundMessaging";
 import { PERSONA_ADMIN_ACTIONS } from "@/lib/personaAdmin";
 import {
@@ -73,6 +75,11 @@ const ACTIVE_VERIFICATION_ADMIN_ACTIONS = VERIFICATION_CONTRACT_READY
 /** Dormant T-215 actions stay absent until the reviewed T-121 provider release. */
 const ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS = AUDIENCE_VISIBILITY_CONTRACT_READY
   ? AUDIENCE_VISIBILITY_ADMIN_ACTIONS
+  : [] as const;
+
+/** Dormant T-216 actions stay absent until the reviewed T-120 provider release. */
+const ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS = PROFILE_TEXT_MODERATION_CONTRACT_READY
+  ? PROFILE_TEXT_MODERATION_ACTIONS
   : [] as const;
 
 export const ADMIN_ACTIONS = [
@@ -192,6 +199,7 @@ export const ADMIN_ACTIONS = [
   ...ACTIVE_PERSONA_ADMIN_ACTIONS,
   ...ACTIVE_VERIFICATION_ADMIN_ACTIONS,
   ...ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS,
+  ...ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS,
   ...DATES_ADMIN_ACTIONS,
 ] as const;
 
@@ -431,6 +439,11 @@ export const ADMIN_ACTION_ACCESS = {
     set_audience_visibility_intent_limit: "write" as const,
   } : {}),
 
+  ...(PROFILE_TEXT_MODERATION_CONTRACT_READY ? {
+    moderation_profile_text_list: "read" as const,
+    moderation_profile_text_action: "write" as const,
+  } : {}),
+
   admin_me: "read",
   dates_activity_list: "dates_read",
   dates_activity_detail: "dates_read",
@@ -639,19 +652,22 @@ export function isAdminActionAuthorized(action: string, principal: AdminPrincipa
 }
 
 /**
- * Compose the generic Webadmin role floor with the independent audience-
- * visibility control plane. The seven versioned catalogue actions are already
- * authorized by Core's exact `admin_me.audience_visibility` block, whose role
- * is deliberately independent from the top-level administrator role. Every
- * other family keeps the existing generic authorization policy unchanged.
+ * Compose the generic Webadmin role floor with independent capability blocks.
+ * Actions in either named versioned family are already authorized by their
+ * exact Core-authored `admin_me` projection and must not be reinterpreted from
+ * the top-level role. Every other family keeps the existing generic policy.
  */
 export function isAdminBridgeActionAuthorized(
   action: string,
   principal: AdminPrincipal,
   audienceVisibilityAuthorized: boolean | null,
+  profileTextModerationAuthorized: boolean | null = null,
 ): boolean {
   if ((AUDIENCE_VISIBILITY_ADMIN_ACTIONS as readonly string[]).includes(action)) {
     return audienceVisibilityAuthorized === true;
+  }
+  if ((PROFILE_TEXT_MODERATION_ACTIONS as readonly string[]).includes(action)) {
+    return profileTextModerationAuthorized === true;
   }
   return isAdminActionAuthorized(action, principal);
 }

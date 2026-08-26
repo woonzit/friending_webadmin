@@ -90,6 +90,21 @@ export const ADMIN_HELP_PAGES = [
     matches: dynamic("/reported-content"),
   },
   {
+    key: "profileTextModeration",
+    route: "/text-moderation",
+    sections: [
+      "readiness",
+      "queue",
+      "safeProjection",
+      "decisions",
+      "concurrency",
+      "conflicts",
+      "privacy",
+      "noBulk",
+    ],
+    matches: exact("/text-moderation"),
+  },
+  {
     key: "profileVerificationQueue",
     route: "/profile-verification",
     sections: ["statusFilter", "caseQueue", "caseMetadata", "configurationLink"],

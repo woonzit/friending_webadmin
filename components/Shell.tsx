@@ -10,6 +10,7 @@ import {
   AUDIENCE_VISIBILITY_CONTRACT_READY,
   CANNED_TEMPLATES_CONTRACT_READY,
   PERSONA_ADMIN_PROXY_RELEASED,
+  PROFILE_TEXT_MODERATION_CONTRACT_READY,
   REPORTED_CONTENT_CONTRACT_READY,
   VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
@@ -22,6 +23,7 @@ const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; r
   { href: "/membership", key: "membership", icon: "membership" },
   { href: "/photo-moderation", key: "photoModeration", icon: "photoModeration" },
   { href: "/reported-content", key: "reportedContent", icon: "reportedContent", ready: REPORTED_CONTENT_CONTRACT_READY },
+  { href: "/text-moderation", key: "textModeration", icon: "reportedContent", ready: PROFILE_TEXT_MODERATION_CONTRACT_READY },
   { href: "/profile-verification", key: "profileVerification", icon: "verification" },
   { href: "/verification", key: "verificationSettings", icon: "verification", ready: VERIFICATION_CONTRACT_READY },
   { href: "/persona", key: "persona", icon: "persona", ready: PERSONA_ADMIN_PROXY_RELEASED },
@@ -102,12 +104,14 @@ export default function Shell({
   personaConsoleReady,
   verificationConsoleReady,
   audienceVisibilityConsoleReady,
+  profileTextModerationConsoleReady,
   children,
 }: {
   adminEmail: string;
   personaConsoleReady: boolean;
   verificationConsoleReady: boolean;
   audienceVisibilityConsoleReady: boolean;
+  profileTextModerationConsoleReady: boolean;
   children: React.ReactNode;
 }) {
   const nav = useTranslations("nav");
@@ -139,6 +143,7 @@ export default function Shell({
             && (item.key !== "persona" || personaConsoleReady)
             && (item.key !== "verificationSettings" || verificationConsoleReady)
             && (item.key !== "audienceVisibility" || audienceVisibilityConsoleReady)
+            && (item.key !== "textModeration" || profileTextModerationConsoleReady)
             && (!AUDIENCE_VISIBILITY_CONTRACT_READY
               || (item.key !== "userGroups" && item.key !== "layer2Intents"))).map((item) => {
             const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
