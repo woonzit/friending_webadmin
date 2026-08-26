@@ -1,10 +1,12 @@
 import {
   CANNED_TEMPLATES_CONTRACT_READY,
+  OUTBOUND_MESSAGING_CONTRACT_READY,
   PERSONA_ADMIN_PROXY_RELEASED,
   PRODUCT_POPUP_CONTRACT_READY,
   REPORTED_CONTENT_CONTRACT_READY,
   VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
+import { OUTBOUND_MESSAGING_ACTIONS } from "@/lib/outboundMessaging";
 import { PERSONA_ADMIN_ACTIONS } from "@/lib/personaAdmin";
 import {
   MAX_VERIFICATION_BADGE_FORM_BYTES,
@@ -49,6 +51,11 @@ const PRODUCT_POPUP_ADMIN_ACTIONS = PRODUCT_POPUP_CONTRACT_READY
 
 const CANNED_TEMPLATE_ADMIN_ACTIONS = CANNED_TEMPLATES_CONTRACT_READY
   ? ["list_canned", "save_canned", "delete_canned"] as const
+  : [] as const;
+
+/** Strict v1 outbound actions stay absent unless the reviewed provider release is active. */
+const ACTIVE_OUTBOUND_MESSAGING_ACTIONS = OUTBOUND_MESSAGING_CONTRACT_READY
+  ? OUTBOUND_MESSAGING_ACTIONS
   : [] as const;
 
 /** Receipt-era Persona routes stay absent until the reviewed Core train is released. */
@@ -173,6 +180,7 @@ export const ADMIN_ACTIONS = [
   "save_signup_photo_config",
   ...PRODUCT_POPUP_ADMIN_ACTIONS,
   ...CANNED_TEMPLATE_ADMIN_ACTIONS,
+  ...ACTIVE_OUTBOUND_MESSAGING_ACTIONS,
   ...REPORTED_CONTENT_ADMIN_ACTIONS,
   ...ACTIVE_PERSONA_ADMIN_ACTIONS,
   ...ACTIVE_VERIFICATION_ADMIN_ACTIONS,
@@ -356,6 +364,15 @@ export const ADMIN_ACTION_ACCESS = {
   list_canned: "read",
   save_canned: "write",
   delete_canned: "write",
+
+  // Core authors the narrower history/send capabilities on every action.
+  // These rows add only the independent global viewer/editor floor.
+  ...(OUTBOUND_MESSAGING_CONTRACT_READY ? {
+    outbound_message_preview: "write" as const,
+    send_message: "write" as const,
+    user_history: "read" as const,
+    user_history_detail: "read" as const,
+  } : {}),
 
   // The list is safe for every active administrator. A browser-side decision
   // also requires the global editor role; Core then rechecks its narrower

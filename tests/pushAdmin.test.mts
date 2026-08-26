@@ -252,7 +252,7 @@ test("closed logical errors require their exact status and legacy envelope", () 
   assert.equal(pushAdminError({ ...errorEnvelope("query-failed", 500), extra: true }), null);
 });
 
-test("existing bridge actions retain viewer-read and editor-write policy without enabling a sender", () => {
+test("existing bridge actions retain viewer-read and editor-write policy without inventing push routes", () => {
   const viewer = adminPrincipalFrom({ role: "viewer" });
   const admin = adminPrincipalFrom({ role: "admin" });
   const owner = adminPrincipalFrom({ role: "owner" });
@@ -269,7 +269,7 @@ test("existing bridge actions retain viewer-read and editor-write policy without
   assert.equal(ADMIN_ACTIONS.filter((action) => action === "get_settings").length, 1);
   assert.equal(ADMIN_ACTIONS.filter((action) => action === "set_settings").length, 1);
   assert.equal(ADMIN_ACTIONS.filter((action) => action === "user_detail").length, 1);
-  for (const forbidden of ["send_message", "user_history", "push_send", "push_credentials"]) {
+  for (const forbidden of ["push_send", "push_credentials"]) {
     assert.equal((ADMIN_ACTIONS as readonly string[]).includes(forbidden), false);
   }
 });

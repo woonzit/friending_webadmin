@@ -13,6 +13,7 @@ import {
   personaProxyCapabilityAuthorized,
 } from "@/lib/personaAdmin";
 import { normalizeCannedTemplateProxyBody } from "@/lib/cannedTemplates";
+import { normalizeOutboundMessagingProxyBody } from "@/lib/outboundMessaging";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { readAdminSession } from "@/lib/session";
 import {
@@ -109,6 +110,12 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedCannedBody !== undefined) body = normalizedCannedBody;
+
+  const normalizedOutboundBody = normalizeOutboundMessagingProxyBody(action, body);
+  if (normalizedOutboundBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedOutboundBody !== undefined) body = normalizedOutboundBody;
 
   const normalizedVerificationBody = normalizeVerificationProxyBody(action, body);
   if (normalizedVerificationBody === null) {

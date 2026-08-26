@@ -16,8 +16,8 @@ export const PRODUCT_POPUP_CONTRACT_READY: boolean = true;
 export const PERSONA_ADMIN_PROXY_RELEASED: boolean = true;
 /** Core T-108c is released; all three CRUD actions remain capability/revision gated. */
 export const CANNED_TEMPLATES_CONTRACT_READY: boolean = true;
-/** T-108d must be released and reviewed before outbound messaging is reachable. */
-export const OUTBOUND_MESSAGING_CONTRACT_READY: boolean = false;
+/** Core T-108d is released; the versioned outbound bridge is available behind Core capabilities. */
+export const OUTBOUND_MESSAGING_CONTRACT_READY: boolean = true;
 /** T-107 is released; push settings and per-member channel projections are required. */
 export const PUSH_MODE_CONTRACT_READY: boolean = true;
 /** T-109/T-108 must be released and reviewed before verification policy UI is reachable. */

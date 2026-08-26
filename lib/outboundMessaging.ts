@@ -712,7 +712,7 @@ function structuralHistoryDetailPayload(value: unknown): OutboundHistoryDetailRe
     : null;
 }
 
-/** Future proxy normalizer, intentionally not registered in `ADMIN_ACTIONS` while readiness is false. */
+/** Normalize strict browser-owned fields before forwarding an outbound action to Core. */
 export function normalizeOutboundMessagingProxyBody(
   action: string,
   body: Record<string, unknown>,

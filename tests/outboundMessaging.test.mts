@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
+  adminActionBodyLimit,
   adminPrincipalFrom,
   isAdminActionAllowed,
   isAdminActionAuthorized,
@@ -117,8 +118,8 @@ function sendPayload(): OutboundSendPayload {
   return result.value;
 }
 
-test("the accepted v1 vocabulary and dormant boundary are closed", () => {
-  assert.equal(OUTBOUND_MESSAGING_CONTRACT_READY, false);
+test("the accepted v1 vocabulary and released boundary are closed", () => {
+  assert.equal(OUTBOUND_MESSAGING_CONTRACT_READY, true);
   assert.deepEqual(OUTBOUND_MESSAGING_ACTIONS, [
     "outbound_message_preview",
     "send_message",
@@ -564,11 +565,16 @@ test("all closed refusals have exact statuses, localized keys, and an explicit r
   ]) assert.equal(outboundMessagingShouldRetainSend(error), false, error);
 });
 
-test("dormant actions remain unreachable to guests, foreign origins, viewers, and owners", async () => {
+test("released actions keep history viewer-readable and sending editor-only", async () => {
   for (const action of OUTBOUND_MESSAGING_ACTIONS) {
-    assert.equal(isAdminActionAllowed(action), false);
-    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "viewer" })), false);
-    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "owner" })), false);
+    const historyRead = action === "user_history" || action === "user_history_detail";
+    assert.equal(isAdminActionAllowed(action), true);
+    assert.equal(
+      isAdminActionAuthorized(action, adminPrincipalFrom({ role: "viewer" })),
+      historyRead,
+    );
+    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "owner" })), true);
+    assert.equal(adminActionBodyLimit(action), 256_000, `${action} keeps the default body ceiling`);
   }
   assert.equal(isTrustedAdminRequest(headers({
     origin: "https://friendingapp.com",
@@ -591,7 +597,10 @@ test("dormant actions remain unreachable to guests, foreign origins, viewers, an
   assert.match(proxy, /if \(!session\)[\s\S]*?bridgeError\("auth-required", 401\)/);
   assert.match(proxy, /if \(!isTrustedAdminRequest\(request\.headers\)\)[\s\S]*?bridgeError\("bad-origin", 403\)/);
   assert.match(proxy, /if \(!isAdminActionAllowed\(action\)\)[\s\S]*?bridgeError\("not-found", 404\)/);
-  assert.doesNotMatch(proxy, /normalizeOutboundMessagingProxyBody/);
+  const bodyGate = proxy.indexOf("normalizeOutboundMessagingProxyBody(action, body)");
+  const identityMerge = proxy.indexOf("mergeCoreParams(body, { admin_email: session.email })");
+  assert.ok(bodyGate > sessionGate && identityMerge > bodyGate);
+  assert.match(proxy, /normalizeOutboundMessagingProxyBody\(action, body\)/);
 });
 
 test("fixture browser state contains no contact or delivery-provider identifier fields", () => {
@@ -610,7 +619,7 @@ test("fixture browser state contains no contact or delivery-provider identifier 
   visit(fixtures);
 });
 
-test("user-detail shell, safe previews, locales, and seven Help sections share the false cutover", async () => {
+test("user-detail shell, safe previews, locales, and seven Help sections share the release switch", async () => {
   const [page, component, actions, route, model, enRaw, huRaw] = await Promise.all([
     readFile(new URL("../app/(dashboard)/users/[uid]/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/OutboundMessagingPanel.tsx", import.meta.url), "utf8"),
@@ -621,8 +630,10 @@ test("user-detail shell, safe previews, locales, and seven Help sections share t
     readFile(new URL("../messages/hu.json", import.meta.url), "utf8"),
   ]);
   assert.match(page, /OUTBOUND_MESSAGING_CONTRACT_READY \? <OutboundMessagingPanel/);
-  assert.doesNotMatch(actions, /outbound_message_preview|send_message|user_history(?:_detail)?/);
-  assert.doesNotMatch(route, /normalizeOutboundMessagingProxyBody/);
+  assert.match(actions, /OUTBOUND_MESSAGING_CONTRACT_READY/);
+  assert.match(actions, /OUTBOUND_MESSAGING_ACTIONS/);
+  assert.match(actions, /\.\.\.ACTIVE_OUTBOUND_MESSAGING_ACTIONS/);
+  assert.match(route, /normalizeOutboundMessagingProxyBody/);
   assert.doesNotMatch(component, /adminCall|coreCall|core\.friending\.com|WEBADMIN_API_SECRET|console\./);
   assert.match(component, /outboundMessageDraftMaterial/);
   assert.match(component, /sandbox=""/);
