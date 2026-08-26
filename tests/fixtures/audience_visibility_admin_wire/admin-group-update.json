@@ -1,0 +1,42 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "group": {
+            "key": "community_hosts",
+            "labels": {
+                "en": "Community organizers",
+                "hu": "Közösségi házigazdák"
+            },
+            "rules": [
+                {
+                    "genders": [
+                        "man",
+                        "woman"
+                    ],
+                    "visible_to": [
+                        "both"
+                    ]
+                }
+            ],
+            "legacy_segment": "",
+            "sort_order": 800,
+            "active": true,
+            "id": "0000000000000000000000f0",
+            "protected": false,
+            "revision": 2,
+            "editable_fields": [
+                "key",
+                "labels",
+                "rules",
+                "sort_order",
+                "active"
+            ]
+        },
+        "replayed": false
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

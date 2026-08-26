@@ -1,0 +1,149 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "intents": {
+            "schema_version": 2,
+            "title": {
+                "en": "What are you looking for?",
+                "hu": "Mit keresel?"
+            },
+            "intents_revision": 5,
+            "selection_min": 0,
+            "selection_max": 5,
+            "items": [
+                {
+                    "key": "people_to_meet_irl",
+                    "labels": {
+                        "en": "People to meet in person",
+                        "hu": "Személyes találkozások"
+                    },
+                    "sort_order": 1,
+                    "archived": false
+                },
+                {
+                    "key": "couple_friends",
+                    "labels": {
+                        "en": "Couple friends",
+                        "hu": "Páros barátok"
+                    },
+                    "sort_order": 2,
+                    "archived": false
+                },
+                {
+                    "key": "gaming",
+                    "labels": {
+                        "en": "Gaming",
+                        "hu": "Gaming"
+                    },
+                    "sort_order": 3,
+                    "archived": false
+                },
+                {
+                    "key": "volunteer",
+                    "labels": {
+                        "en": "Volunteer",
+                        "hu": "Önkénteskedés"
+                    },
+                    "sort_order": 4,
+                    "archived": false
+                },
+                {
+                    "key": "workouts_sports",
+                    "labels": {
+                        "en": "Workouts & Sports",
+                        "hu": "Edzés és sport"
+                    },
+                    "sort_order": 5,
+                    "archived": false
+                },
+                {
+                    "key": "travel",
+                    "labels": {
+                        "en": "Travel",
+                        "hu": "Utazás"
+                    },
+                    "sort_order": 6,
+                    "archived": false
+                },
+                {
+                    "key": "live_music",
+                    "labels": {
+                        "en": "Live music",
+                        "hu": "Élő zene"
+                    },
+                    "sort_order": 7,
+                    "archived": false
+                },
+                {
+                    "key": "nights_out",
+                    "labels": {
+                        "en": "Nights out",
+                        "hu": "Esti programok"
+                    },
+                    "sort_order": 8,
+                    "archived": false
+                },
+                {
+                    "key": "coworking",
+                    "labels": {
+                        "en": "Coworking",
+                        "hu": "Coworking"
+                    },
+                    "sort_order": 9,
+                    "archived": false
+                },
+                {
+                    "key": "faith_studies",
+                    "labels": {
+                        "en": "Faith studies",
+                        "hu": "Hitélet"
+                    },
+                    "sort_order": 10,
+                    "archived": false
+                },
+                {
+                    "key": "arts_culture",
+                    "labels": {
+                        "en": "Arts & Culture",
+                        "hu": "Művészet és kultúra"
+                    },
+                    "sort_order": 11,
+                    "archived": false
+                },
+                {
+                    "key": "roommate",
+                    "labels": {
+                        "en": "Roommate",
+                        "hu": "Lakótárs"
+                    },
+                    "sort_order": 12,
+                    "archived": false
+                },
+                {
+                    "key": "kid_playdates",
+                    "labels": {
+                        "en": "Kid playdates",
+                        "hu": "Gyerekprogramok"
+                    },
+                    "sort_order": 13,
+                    "archived": false
+                },
+                {
+                    "key": "anything",
+                    "labels": {
+                        "en": "Anything",
+                        "hu": "Bármi"
+                    },
+                    "sort_order": 14,
+                    "archived": false
+                }
+            ]
+        },
+        "replayed": false
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

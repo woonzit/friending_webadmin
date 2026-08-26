@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import AdminHelp from "@/components/AdminHelp";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import {
+  AUDIENCE_VISIBILITY_CONTRACT_READY,
   CANNED_TEMPLATES_CONTRACT_READY,
   PERSONA_ADMIN_PROXY_RELEASED,
   REPORTED_CONTENT_CONTRACT_READY,
@@ -31,6 +32,7 @@ const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; r
   { href: "/app-landing", key: "appLanding", icon: "appLanding" },
   { href: "/signup-options", key: "signupOptions", icon: "signupOptions" },
   { href: "/signup-photos", key: "signupPhotos", icon: "signupPhotos" },
+  { href: "/audience-visibility", key: "audienceVisibility", icon: "userGroups", ready: AUDIENCE_VISIBILITY_CONTRACT_READY },
   { href: "/user-groups", key: "userGroups", icon: "userGroups" },
   { href: "/profile-fields", key: "profileFields", icon: "profileFields" },
   { href: "/profile-presentation", key: "profilePresentation", icon: "profileFields" },
@@ -99,11 +101,13 @@ export default function Shell({
   adminEmail,
   personaConsoleReady,
   verificationConsoleReady,
+  audienceVisibilityConsoleReady,
   children,
 }: {
   adminEmail: string;
   personaConsoleReady: boolean;
   verificationConsoleReady: boolean;
+  audienceVisibilityConsoleReady: boolean;
   children: React.ReactNode;
 }) {
   const nav = useTranslations("nav");
@@ -133,7 +137,10 @@ export default function Shell({
         <nav className="main-nav" aria-label={common("mainNavigation")}>
           {NAV.filter((item) => item.ready !== false
             && (item.key !== "persona" || personaConsoleReady)
-            && (item.key !== "verificationSettings" || verificationConsoleReady)).map((item) => {
+            && (item.key !== "verificationSettings" || verificationConsoleReady)
+            && (item.key !== "audienceVisibility" || audienceVisibilityConsoleReady)
+            && (!AUDIENCE_VISIBILITY_CONTRACT_READY
+              || (item.key !== "userGroups" && item.key !== "layer2Intents"))).map((item) => {
             const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
             return (
               <Link

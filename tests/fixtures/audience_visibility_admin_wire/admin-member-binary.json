@@ -1,0 +1,19 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "uid": 880121,
+        "gender": "man",
+        "visible_to": "both",
+        "revision": 3,
+        "group": {
+            "id": "000000000000000000000003",
+            "key": "male_for_both",
+            "legacy_segment": "male_bisexual"
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

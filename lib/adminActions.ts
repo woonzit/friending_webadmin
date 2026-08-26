@@ -1,4 +1,5 @@
 import {
+  AUDIENCE_VISIBILITY_CONTRACT_READY,
   CANNED_TEMPLATES_CONTRACT_READY,
   OUTBOUND_MESSAGING_CONTRACT_READY,
   PERSONA_ADMIN_PROXY_RELEASED,
@@ -6,6 +7,7 @@ import {
   REPORTED_CONTENT_CONTRACT_READY,
   VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
+import { AUDIENCE_VISIBILITY_ADMIN_ACTIONS } from "@/lib/audienceVisibilityAdmin";
 import { OUTBOUND_MESSAGING_ACTIONS } from "@/lib/outboundMessaging";
 import { PERSONA_ADMIN_ACTIONS } from "@/lib/personaAdmin";
 import {
@@ -66,6 +68,11 @@ const ACTIVE_PERSONA_ADMIN_ACTIONS = PERSONA_ADMIN_PROXY_RELEASED
 /** Released verification actions share one explicit rollback switch and Core capability recheck. */
 const ACTIVE_VERIFICATION_ADMIN_ACTIONS = VERIFICATION_CONTRACT_READY
   ? VERIFICATION_ADMIN_ACTIONS
+  : [] as const;
+
+/** Dormant T-215 actions stay absent until the reviewed T-121 provider release. */
+const ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS = AUDIENCE_VISIBILITY_CONTRACT_READY
+  ? AUDIENCE_VISIBILITY_ADMIN_ACTIONS
   : [] as const;
 
 export const ADMIN_ACTIONS = [
@@ -184,6 +191,7 @@ export const ADMIN_ACTIONS = [
   ...REPORTED_CONTENT_ADMIN_ACTIONS,
   ...ACTIVE_PERSONA_ADMIN_ACTIONS,
   ...ACTIVE_VERIFICATION_ADMIN_ACTIONS,
+  ...ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS,
   ...DATES_ADMIN_ACTIONS,
 ] as const;
 
@@ -409,6 +417,18 @@ export const ADMIN_ACTION_ACCESS = {
     verification_grant_preview: "write" as const,
     verification_grant_save: "write" as const,
     verification_grant_remove: "write" as const,
+  } : {}),
+
+  // Core authors the exact per-action capability projection. These rows add
+  // the independent global viewer/editor floor only after provider release.
+  ...(AUDIENCE_VISIBILITY_CONTRACT_READY ? {
+    audience_visibility_catalog: "read" as const,
+    audience_visibility_member_detail: "read" as const,
+    save_audience_visibility_group: "write" as const,
+    archive_audience_visibility_group: "write" as const,
+    save_audience_visibility_intent: "write" as const,
+    archive_audience_visibility_intent: "write" as const,
+    set_audience_visibility_intent_limit: "write" as const,
   } : {}),
 
   admin_me: "read",

@@ -22,3 +22,8 @@ export const OUTBOUND_MESSAGING_CONTRACT_READY: boolean = true;
 export const PUSH_MODE_CONTRACT_READY: boolean = true;
 /** Core T-109 S2 is released; all 17 actions remain gated by Core's current projection. */
 export const VERIFICATION_CONTRACT_READY: boolean = true;
+/**
+ * Core T-121 is accepted but not yet released. The complete v1 consumer remains
+ * unreachable until the dormant provider release and separate cutover approval.
+ */
+export const AUDIENCE_VISIBILITY_CONTRACT_READY: boolean = false;

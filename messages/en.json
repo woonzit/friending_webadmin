@@ -1603,6 +1603,89 @@
           }
         }
       },
+      "audienceVisibility": {
+        "title": "Audience visibility help",
+        "summary": "This versioned workspace replaces orientation-era groups and Layer-1 intents after activation. It joins seven protected gender × visible-to groups, custom content groups, a read-only retirement manifest and the private replacement-intent catalogue without granting the browser discovery authority.",
+        "steps": {
+          "1": "Refresh and confirm that Core projects the expected actions before opening an editor; missing write controls reflect current capability, not a local guess.",
+          "2": "Review the complete protected/custom group catalogue or retirement evidence before changing one bounded resource with a factual audit reason.",
+          "3": "After a timeout or malformed response, use only Retry exact saved command; after a conflict, inspect Core's adopted resource and make a fresh gesture."
+        },
+        "sections": {
+          "readiness": {
+            "title": "Release and capability readiness",
+            "purpose": "The route appears only when Webadmin's reviewed release switch and Core's current contract-ready action projection both permit the complete v1 catalogue read.",
+            "actions": {
+              "1": "Refresh membership and catalogue state when a control expected for your catalogue role is absent.",
+              "2": "Treat a decode or readiness failure as unavailable state instead of an empty catalogue."
+            },
+            "guidance": "The browser never reconstructs catalogue permissions from a broad admin role. Core rechecks the exact action capability on every request."
+          },
+          "groups": {
+            "title": "Visibility group inventory",
+            "purpose": "The ordered inventory shows complete canonical group rows, bilingual names, gender × visible-to rules, active state, revision and any preserved legacy segment.",
+            "actions": {
+              "1": "Read each rule as a cross-product and compare the localized label with its stable key.",
+              "2": "Open only the intended group and verify its revision before preparing a change."
+            },
+            "guidance": "Derived membership comes only from canonical gender and visible-to fields. Operators never assign individual members to these groups."
+          },
+          "protectedGroups": {
+            "title": "Seven protected groups",
+            "purpose": "The seven system rows preserve the reviewed gender × visible-to combinations and exact legacy segment identifiers while keeping their ObjectIds and membership logic immutable.",
+            "actions": {
+              "1": "Edit only an English or Hungarian label or the display order on a protected row.",
+              "2": "Review the fixed rule, active state and legacy segment as evidence before saving."
+            },
+            "guidance": "A protected row cannot be archived, re-keyed or given a different rule. Core refuses any contradiction in the complete submitted material."
+          },
+          "customRules": {
+            "title": "Custom content-group rules",
+            "purpose": "Custom groups combine one to twenty OR rules; each rule requires canonical-order genders and visible-to values and targets only catalogue content, never discovery access.",
+            "actions": {
+              "1": "Add values on both axes and use separate rule cards when alternative combinations should match.",
+              "2": "Archive or restore the existing row instead of deleting it when availability changes."
+            },
+            "guidance": "A rule containing nonbinary may use only Everyone. Keep keys stable and inspect every content audience that may reference the group."
+          },
+          "retirement": {
+            "title": "Retirement evidence",
+            "purpose": "The read-only manifest proves that matching orientation, Layer 1 and four sex/anatomy questions are retired while body hair remains neutral and legacy types stay import-refusal evidence.",
+            "actions": {
+              "1": "Compare the manifest hash and exact retired rows when auditing a migration or catalogue report.",
+              "2": "Confirm that body hair is active for the neutral general profile set rather than orientation-derived eligibility."
+            },
+            "guidance": "Tombstoned catalogue rows and historic answers are not deleted or projected here. This page offers no control that can restore orientation authority."
+          },
+          "intents": {
+            "title": "Replacement intent catalogue",
+            "purpose": "The bilingual What are you looking for? list allows zero to five private selections and exposes item labels, order, archive state and one catalogue-wide optimistic revision.",
+            "actions": {
+              "1": "Edit or add a bounded item and archive or restore an existing key without deleting it.",
+              "2": "Change the selection maximum independently with its own audit reason and current revision."
+            },
+            "guidance": "There is no visible Layer 1, reciprocal set, sex/friends/love value or orientation. Selected intents never authorize profile reach or discovery."
+          },
+          "memberProjection": {
+            "title": "Member read-only projection",
+            "purpose": "Registered-user detail separately reads the canonical gender, visible-to value, revision and one derived protected group through this narrow versioned contract.",
+            "actions": {
+              "1": "Use the projection to explain the member's current protected group without editing their setting.",
+              "2": "Treat unresolved gender as no derived group and visible-to Everyone, not as a guessed identity."
+            },
+            "guidance": "The broad legacy user-detail payload is not visibility authority. No member mutation, orientation, private intent choice or import provenance exists in this console."
+          },
+          "conflicts": {
+            "title": "Revision conflicts and exact retry",
+            "purpose": "Every mutation persists a UUID, exact expected revision and normalized material before sending so uncertain delivery cannot become a second logical command.",
+            "actions": {
+              "1": "Retry the stored command unchanged after a timeout, server failure, malformed response or in-progress result.",
+              "2": "On conflict, accept Core's complete canonical resource, discard the draft and review before a new gesture."
+            },
+            "guidance": "Never merge a stale draft, force-save, clear an uncertain identity or mint another UUID. A replayed success is the original completion."
+          }
+        }
+      },
       "userGroups": {
         "title": "User groups help",
         "summary": "User groups are server-evaluated member segments used to show restricted profile questions. Membership is calculated from gender and matching-orientation rules; one member can belong to several groups at the same time.",
@@ -2516,6 +2599,7 @@
     "appLanding": "App landing",
     "signupOptions": "Signup options",
     "signupPhotos": "Signup photos",
+    "audienceVisibility": "Audience visibility",
     "userGroups": "User groups",
     "profileFields": "Profile fields",
     "profilePresentation": "Public profile layout",
@@ -4413,6 +4497,105 @@
       "generic": "The outbound operation failed safely. No success, empty state or delivery has been assumed."
     }
   },
+  "audienceVisibilityAdmin": {
+    "eyebrow": "Discovery and catalogue policy",
+    "title": "Audience visibility",
+    "subtitle": "Manage gender × profile-visibility groups, the retired-question manifest and the replacement intent catalogue from one versioned workspace.",
+    "forbidden": "Core does not currently grant this administrator the audience-visibility catalogue read action.",
+    "loadError": "The complete audience-visibility catalogue could not be decoded safely. No empty or partial state is shown.",
+    "edit": "Edit",
+    "remove": "Remove rule",
+    "archive": "Archive",
+    "restore": "Restore",
+    "contractNote": "This workspace exposes exactly {actions} versioned Core actions. Member visibility and derived membership remain Core-owned.",
+    "tabs": {
+      "label": "Audience visibility workspace sections",
+      "groups": "Visibility groups",
+      "retirement": "Retirement manifest",
+      "intents": "Intents"
+    },
+    "live": {
+      "pendingMutation": "One exact receipt-backed command is pending. Competing controls remain locked.",
+      "retryExact": "Retry exact saved command",
+      "persistenceUnavailable": "The exact command could not be stored in this tab. No mutation was sent.",
+      "persistenceCleanupFailed": "Core returned a terminal result, but this tab could not clear the saved command identity.",
+      "saved": "Core applied the command exactly once and returned the complete canonical resource.",
+      "replayed": "Core replayed the original canonical result without a second mutation.",
+      "conflict": "The revision changed. The complete canonical resource was adopted; review it and make a fresh gesture.",
+      "errorCode": "The operation was not accepted ({code}). No success was assumed.",
+      "unknownError": "unknown, transport, or malformed response",
+      "invalidDraft": "The material does not satisfy the exact audience-visibility v1 contract. Check canonical keys, both languages, rules, bounds and audit reason."
+    },
+    "groups": {
+      "title": "Gender × visibility groups",
+      "copy": "Seven protected groups derive discovery compatibility from canonical gender and who may see the member's profile. Custom groups remain content-targeting tools only.",
+      "add": "Add custom group",
+      "protected": "Protected",
+      "custom": "Custom",
+      "revision": "Revision {revision}",
+      "newTitle": "New custom visibility group",
+      "editTitle": "Edit visibility group",
+      "protectedHint": "The stable key, rule, legacy segment, active state and ObjectId are fixed. Only bilingual labels and order may change.",
+      "customHint": "Rules are ORed; each rule is the cross-product of its selected genders and visible-to values.",
+      "rules": "Membership rules",
+      "rulesHint": "Every rule needs at least one value on both axes. A rule containing nonbinary can target only Everyone.",
+      "rule": "Rule {number}",
+      "genderAxis": "Member gender",
+      "visibleAxis": "Who can see the member",
+      "addRule": "Add rule",
+      "protectedFields": "Protected membership material is read-only. Saving this row submits the complete unchanged rule and legacy segment while allowing only labels and order to differ."
+    },
+    "genders": {
+      "man": "Man",
+      "woman": "Woman",
+      "nonbinary": "Nonbinary"
+    },
+    "visibleTo": {
+      "male": "Men",
+      "female": "Women",
+      "both": "Everyone"
+    },
+    "states": {
+      "active": "Active",
+      "archived": "Archived",
+      "retired": "Retired"
+    },
+    "fields": {
+      "key": "Stable key",
+      "order": "Sort order",
+      "labelEn": "English label",
+      "labelHu": "Hungarian label",
+      "auditReason": "Internal audit reason",
+      "auditHint": "{count}/300 Unicode characters; required, trimmed and never member-facing."
+    },
+    "retirement": {
+      "title": "Activated retirement boundaries",
+      "copy": "This read-only Core manifest proves which former matching and catalogue concepts are no longer runtime authorities.",
+      "orientation": "Matching orientation",
+      "layer1": "Layer 1 intent",
+      "manifest": "Manifest SHA-256",
+      "questionsTitle": "Retired sex/anatomy questions",
+      "questionsCopy": "The catalogue rows and historical member answers are tombstoned, not deleted or exposed here.",
+      "sexAnatomy": "Retired because this is a sex/anatomy profile question.",
+      "retainedTitle": "Retained neutral question",
+      "retainedCopy": "Body hair remains a general profile fact for all seven protected groups and no longer depends on orientation-derived eligibility.",
+      "neutral": "Active in the neutral general profile set for every protected group.",
+      "legacyTitle": "Legacy import refusal vocabulary",
+      "legacyCopy": "These legacy catalogue types are evidence-only. Runtime never restores them as current profile or discovery facts."
+    },
+    "intents": {
+      "copy": "Edit the bilingual What are you looking for? list. Selected values are owner-private preferences and never authorize profile reach or discovery.",
+      "add": "Add intent",
+      "noLayer1": "Layer 1 is retired and hidden. There is no sex/friends/love, reciprocal-set, visibility-mode or orientation control in this catalogue.",
+      "selectionMax": "Maximum selections",
+      "selectionMin": "Minimum is fixed at zero; maximum must remain between 1 and 5.",
+      "saveLimit": "Save selection limit",
+      "order": "Order {order}",
+      "newTitle": "New intent",
+      "editTitle": "Edit intent",
+      "editorCopy": "Initial keys are stable. Archive is reversible availability control; no delete action exists."
+    }
+  },
   "userDetail": {
     "back": "Back to registered users",
     "eyebrow": "User profile",
@@ -4566,6 +4749,30 @@
         },
         "confirmStrong": "I reviewed the Strong-grant warning and the resulting internal access change.",
         "saveGrant": "Save reviewed grant"
+      }
+    },
+    "audienceVisibility": {
+      "title": "Who can see my profile",
+      "copy": "Read-only canonical visibility and the one protected group Core derives from gender × visible-to. This panel never trusts the broad legacy member payload.",
+      "loading": "Loading the bounded audience-visibility projection…",
+      "loadError": "The audience-visibility projection could not be decoded safely.",
+      "retry": "Retry authoritative read",
+      "gender": "Canonical gender",
+      "visibleTo": "Who can see the profile",
+      "group": "Derived protected group",
+      "revision": "Visibility revision",
+      "unresolved": "Unresolved",
+      "groupUnresolved": "No derived group while gender remains unresolved",
+      "nonbinaryFixed": "Visible to everyone",
+      "genders": {
+        "man": "Man",
+        "woman": "Woman",
+        "nonbinary": "Nonbinary"
+      },
+      "visibleToValues": {
+        "male": "Men",
+        "female": "Women",
+        "both": "Everyone"
       }
     },
     "allAlbums": "All profile albums",

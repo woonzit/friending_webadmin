@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  normalizeAudienceVisibilityProxyBody,
+  audienceVisibilityProxyCapabilityAuthorized,
+} from "@/lib/audienceVisibilityAdmin";
+import {
   adminActionBodyLimit,
   adminActionTimeoutMs,
   adminPrincipalFrom,
@@ -57,7 +61,14 @@ export async function POST(
 
   // Revocation is authoritative in Core. This is deliberately checked on every
   // bridge call, not only when the dashboard layout is rendered.
-  const membership = await coreCall<{ success?: boolean; role?: string; dates?: unknown; persona?: unknown; verification?: unknown }>(
+  const membership = await coreCall<{
+    success?: boolean;
+    role?: string;
+    dates?: unknown;
+    persona?: unknown;
+    verification?: unknown;
+    audience_visibility?: unknown;
+  }>(
     "admin_me",
     { admin_email: session.email },
   );
@@ -79,6 +90,10 @@ export async function POST(
   const verificationAuthorized = verificationProxyCapabilityAuthorized(action, membership.data);
   if (verificationAuthorized === false) {
     return bridgeError("verification-capability-required", 403);
+  }
+  const audienceVisibilityAuthorized = audienceVisibilityProxyCapabilityAuthorized(action, membership.data);
+  if (audienceVisibilityAuthorized === false) {
+    return bridgeError("catalog-admin-capability-required", 403);
   }
   if (!isAdminActionAuthorized(action, principal)) {
     return bridgeError("admin-write-required", 403);
@@ -122,6 +137,12 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedVerificationBody !== undefined) body = normalizedVerificationBody;
+
+  const normalizedAudienceVisibilityBody = normalizeAudienceVisibilityProxyBody(action, body);
+  if (normalizedAudienceVisibilityBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedAudienceVisibilityBody !== undefined) body = normalizedAudienceVisibilityBody;
 
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer

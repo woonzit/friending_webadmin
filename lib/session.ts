@@ -2,9 +2,11 @@ import "server-only";
 import { cookies } from "next/headers";
 import { coreCall } from "@/lib/core";
 import {
+  AUDIENCE_VISIBILITY_CONTRACT_READY,
   PERSONA_ADMIN_PROXY_RELEASED,
   VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
+import { audienceVisibilityAdminMe } from "@/lib/audienceVisibilityAdmin";
 import { isAdminWriteRole, normalizeAdminRole } from "@/lib/authPolicy";
 import {
   personaAdminCapabilitiesFrom,
@@ -27,6 +29,7 @@ export type AdminIdentity = {
   role: string;
   personaConsoleReady: boolean;
   verificationConsoleReady: boolean;
+  audienceVisibilityConsoleReady: boolean;
 };
 
 export type AdminWriter =
@@ -74,12 +77,14 @@ export async function adminMe(): Promise<AdminIdentity | null> {
     role?: string;
     persona?: unknown;
     verification?: unknown;
+    audience_visibility?: unknown;
   }>("admin_me", { admin_email: session.email });
   if (result.status !== 200 || !result.data?.success) return null;
   const role = normalizeAdminRole(result.data.role);
   if (!role) return null;
   const persona = personaAdminCapabilitiesFrom(result.data);
   const verification = verificationAdminMe(result.data.verification);
+  const audienceVisibility = audienceVisibilityAdminMe(result.data.audience_visibility);
   return {
     email: String(result.data.email ?? session.email),
     role,
@@ -88,6 +93,9 @@ export async function adminMe(): Promise<AdminIdentity | null> {
     verificationConsoleReady: VERIFICATION_CONTRACT_READY
       && verification?.contract_ready === true
       && verification.actions.includes("verification_console"),
+    audienceVisibilityConsoleReady: AUDIENCE_VISIBILITY_CONTRACT_READY
+      && audienceVisibility?.contract_ready === true
+      && audienceVisibility.actions.includes("audience_visibility_catalog"),
   };
 }
 

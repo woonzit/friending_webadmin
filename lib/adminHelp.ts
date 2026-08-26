@@ -241,6 +241,21 @@ export const ADMIN_HELP_PAGES = [
     matches: exact("/signup-photos"),
   },
   {
+    key: "audienceVisibility",
+    route: "/audience-visibility",
+    sections: [
+      "readiness",
+      "groups",
+      "protectedGroups",
+      "customRules",
+      "retirement",
+      "intents",
+      "memberProjection",
+      "conflicts",
+    ],
+    matches: exact("/audience-visibility"),
+  },
+  {
     key: "userGroups",
     route: "/user-groups",
     sections: ["groupList", "membershipRules", "legacyProjection", "archiveBehavior"],

@@ -12,6 +12,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       adminEmail={me.email}
       personaConsoleReady={me.personaConsoleReady}
       verificationConsoleReady={me.verificationConsoleReady}
+      audienceVisibilityConsoleReady={me.audienceVisibilityConsoleReady}
     >
       {children}
     </Shell>

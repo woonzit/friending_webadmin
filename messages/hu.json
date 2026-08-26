@@ -1603,6 +1603,89 @@
           }
         }
       },
+      "audienceVisibility": {
+        "title": "Profil-láthatóság súgó",
+        "summary": "Ez a verziózott munkafelület aktiválás után leváltja az orientációalapú csoportokat és a Layer 1 szándékokat. Egyesíti a hét védett nem × láthatóság csoportot, az egyéni tartalomcsoportokat, a csak olvasható kivezetési jegyzéket és a privát új szándékkatalógust anélkül, hogy a böngészőnek felfedezési hatáskört adna.",
+        "steps": {
+          "1": "Frissíts, és szerkesztő megnyitása előtt ellenőrizd a Core által kivetített műveleteket; a hiányzó írási vezérlő aktuális képességet jelez, nem helyi feltételezést.",
+          "2": "Egyetlen korlátozott erőforrás tényszerű auditindokkal végzett módosítása előtt nézd át a teljes védett/egyéni csoportkatalógust vagy kivezetési bizonyítékot.",
+          "3": "Timeout vagy hibás válasz után csak a pontos mentett parancsot próbáld újra; ütközés után vizsgáld meg a Core átvett erőforrását, majd indíts új műveletet."
+        },
+        "sections": {
+          "readiness": {
+            "title": "Kiadási és képességkészenlét",
+            "purpose": "Az útvonal csak akkor jelenik meg, ha a Webadmin ellenőrzött kiadási kapcsolója és a Core aktuális contract-ready műveletkivetítése is engedi a teljes v1 katalógus olvasását.",
+            "actions": {
+              "1": "Frissítsd a tagságot és a katalógusállapotot, ha hiányzik egy, a katalógusszerepedhez várt vezérlő.",
+              "2": "A dekódolási vagy készenléti hibát elérhetetlen állapotként kezeld, ne üres katalógusként."
+            },
+            "guidance": "A böngésző nem épít újra katalógusjogokat általános adminszerepből. A Core minden kérésnél újra ellenőrzi a pontos műveleti képességet."
+          },
+          "groups": {
+            "title": "Láthatósági csoportleltár",
+            "purpose": "A rendezett leltár teljes hiteles csoportsorokat, kétnyelvű neveket, nem × láthatóság szabályokat, aktív állapotot, revíziót és megőrzött legacy szegmenst mutat.",
+            "actions": {
+              "1": "Minden szabályt keresztszorzatként olvass, és vesd össze a lokalizált címkét a stabil kulccsal.",
+              "2": "Csak a kívánt csoportot nyisd meg, és módosítás előtt ellenőrizd a revízióját."
+            },
+            "guidance": "A származtatott tagság kizárólag hiteles nem- és visible-to mezőkből jön. Operátor soha nem rendel kézzel tagot ezekhez a csoportokhoz."
+          },
+          "protectedGroups": {
+            "title": "Hét védett csoport",
+            "purpose": "A hét rendszersor megőrzi az ellenőrzött nem × láthatóság kombinációkat és a pontos legacy szegmensazonosítókat, miközben ObjectId-juk és tagsági logikájuk változtathatatlan.",
+            "actions": {
+              "1": "Védett soron csak az angol vagy magyar címkét, illetve a megjelenítési sorrendet szerkeszd.",
+              "2": "Mentés előtt bizonyítékként nézd át a rögzített szabályt, aktív állapotot és legacy szegmenst."
+            },
+            "guidance": "Védett sor nem archiválható, nem kulcsozható át és nem kaphat más szabályt. A Core a teljes beküldött anyag bármely ellentmondását elutasítja."
+          },
+          "customRules": {
+            "title": "Egyéni tartalomcsoport-szabályok",
+            "purpose": "Az egyéni csoportok egy–húsz VAGY szabályból állnak; minden szabály hiteles sorrendű nem- és visible-to értékeket igényel, és csak katalógustartalmat céloz, felfedezési hozzáférést soha.",
+            "actions": {
+              "1": "Mindkét tengelyen adj értéket, és külön szabálykártyát használj, ha alternatív kombinációknak kell egyezniük.",
+              "2": "Elérhetőségi változásnál törlés helyett archiváld vagy állítsd vissza a meglévő sort."
+            },
+            "guidance": "Nonbinary nemet tartalmazó szabály csak a Mindenki értéket használhatja. Őrizd a stabil kulcsokat, és vizsgálj meg minden hivatkozó tartalomaudience-t."
+          },
+          "retirement": {
+            "title": "Kivezetési bizonyíték",
+            "purpose": "A csak olvasható jegyzék bizonyítja a matching orientation, Layer 1 és négy szex/anatómia kérdés kivezetését, miközben a testszőrzet semleges marad, a legacy típusok pedig import-elutasítási bizonyítékok.",
+            "actions": {
+              "1": "Migráció vagy katalógusjelentés auditálásakor hasonlítsd össze a jegyzék hashét és a pontos kivezetett sorokat.",
+              "2": "Ellenőrizd, hogy a testszőrzet a semleges általános profilhalmazban aktív, nem orientációból származtatott jogosultságban."
+            },
+            "guidance": "A tombstone katalógussorok és történeti válaszok nincsenek törölve vagy itt kivetítve. Az oldal nem kínál vezérlőt az orientáció hatáskörének visszaállítására."
+          },
+          "intents": {
+            "title": "Új szándékkatalógus",
+            "purpose": "A kétnyelvű Mit keresel? lista nulla–öt privát választást enged, és elemcímkéket, sorrendet, archivált állapotot, valamint egy katalógusszintű optimista revíziót tesz elérhetővé.",
+            "actions": {
+              "1": "Szerkessz vagy adj hozzá korlátozott elemet, a meglévő kulcsot pedig törlés nélkül archiváld vagy állítsd vissza.",
+              "2": "A kiválasztási maximumot külön, saját auditindokával és aktuális revízióval módosítsd."
+            },
+            "guidance": "Nincs látható Layer 1, reciprocal set, szex/barátok/szerelem érték vagy orientáció. A kiválasztott szándék soha nem jogosít profil-elérésre vagy felfedezésre."
+          },
+          "memberProjection": {
+            "title": "Csak olvasható tagi vetület",
+            "purpose": "A regisztrált tag részlete külön, szűk verziózott szerződésen olvassa a hiteles nemet, visible-to értéket, revíziót és az egy származtatott védett csoportot.",
+            "actions": {
+              "1": "A vetülettel magyarázd el a tag jelenlegi védett csoportját a beállítás szerkesztése nélkül.",
+              "2": "A feloldatlan nemet származtatott csoport nélkül és Mindenki visible-to értékkel kezeld, ne találj ki identitást."
+            },
+            "guidance": "A széles legacy user-detail válasz nem láthatósági hatáskör. Ebben a konzolban nincs tagmódosítás, orientáció, privát szándékválasztás vagy importeredeztetés."
+          },
+          "conflicts": {
+            "title": "Revízióütközés és pontos újrapróbálás",
+            "purpose": "Minden módosítás küldés előtt ment egy UUID-t, pontos várt revíziót és normalizált anyagot, így a bizonytalan kézbesítésből nem lehet második logikai parancs.",
+            "actions": {
+              "1": "Timeout, szerverhiba, hibás válasz vagy in-progress eredmény után változtatás nélkül próbáld újra a tárolt parancsot.",
+              "2": "Ütközéskor vedd át a Core teljes hiteles erőforrását, dobd el a draftot, és új művelet előtt tekintsd át."
+            },
+            "guidance": "Soha ne egyesíts elavult draftot, ne force-save-olj, ne törölj bizonytalan azonosságot, és ne készíts másik UUID-t. A replayelt siker az eredeti teljesítés."
+          }
+        }
+      },
       "userGroups": {
         "title": "Usercsoportok súgó",
         "summary": "A usercsoportok szerver által kiértékelt tagszegmensek, amelyek korlátozott profilkérdéseket tesznek láthatóvá. A tagság gender- és matching-orientation szabályokból számolódik; egy tag egyszerre több csoporthoz tartozhat.",
@@ -2516,6 +2599,7 @@
     "appLanding": "App nyitóképernyő",
     "signupOptions": "Signup opciók",
     "signupPhotos": "Regisztrációs képek",
+    "audienceVisibility": "Profil láthatósága",
     "userGroups": "User csoportok",
     "profileFields": "Profiladatok",
     "profilePresentation": "Nyilvános profil elrendezése",
@@ -4413,6 +4497,105 @@
       "generic": "A kimenő művelet biztonságosan meghiúsult. A felület nem feltételez sikert, üres állapotot vagy kézbesítést."
     }
   },
+  "audienceVisibilityAdmin": {
+    "eyebrow": "Felfedezési és katalógusszabályzat",
+    "title": "Profil láthatósága",
+    "subtitle": "A nem × profil-láthatóság csoportok, a kivezetési jegyzék és az új szándékkatalógus kezelése egy verziózott munkafelületen.",
+    "forbidden": "A Core jelenleg nem ad ennek az adminisztrátornak audience-visibility katalógusolvasási műveletet.",
+    "loadError": "A teljes audience-visibility katalógus nem dekódolható biztonságosan. A felület nem mutat üres vagy részleges állapotot.",
+    "edit": "Szerkesztés",
+    "remove": "Szabály eltávolítása",
+    "archive": "Archiválás",
+    "restore": "Visszaállítás",
+    "contractNote": "Ez a munkafelület pontosan {actions} verziózott Core-műveletet tesz elérhetővé. A tag láthatósága és származtatott csoporttagsága a Core tulajdona marad.",
+    "tabs": {
+      "label": "A profil-láthatóság munkafelület részei",
+      "groups": "Láthatósági csoportok",
+      "retirement": "Kivezetési jegyzék",
+      "intents": "Szándékok"
+    },
+    "live": {
+      "pendingMutation": "Egy pontos, nyugtával védett parancs függőben van. A többi vezérlő zárolva marad.",
+      "retryExact": "Pontos mentett parancs újrapróbálása",
+      "persistenceUnavailable": "A pontos parancs nem menthető ebben a lapon. Nem történt módosítási kérés.",
+      "persistenceCleanupFailed": "A Core végleges eredményt adott, de a lap nem tudta törölni a mentett parancsazonosságot.",
+      "saved": "A Core pontosan egyszer alkalmazta a parancsot, és visszaadta a teljes hiteles erőforrást.",
+      "replayed": "A Core második módosítás nélkül játszotta vissza az eredeti hiteles eredményt.",
+      "conflict": "A revízió megváltozott. A teljes hiteles erőforrást átvettük; tekintsd át, és indíts új műveletet.",
+      "errorCode": "A műveletet nem fogadták el ({code}). A felület nem feltételez sikert.",
+      "unknownError": "ismeretlen, hálózati vagy hibás válasz",
+      "invalidDraft": "Az anyag nem felel meg a pontos audience-visibility v1 szerződésnek. Ellenőrizd a kulcsokat, mindkét nyelvet, a szabályokat, a korlátokat és az auditindokot."
+    },
+    "groups": {
+      "title": "Nem × láthatóság csoportok",
+      "copy": "Hét védett csoport származtatja a felfedezési kompatibilitást a hiteles nemből és abból, ki láthatja a tag profilját. Az egyéni csoportok csak tartalomcélzási eszközök.",
+      "add": "Egyéni csoport hozzáadása",
+      "protected": "Védett",
+      "custom": "Egyéni",
+      "revision": "{revision}. revízió",
+      "newTitle": "Új egyéni láthatósági csoport",
+      "editTitle": "Láthatósági csoport szerkesztése",
+      "protectedHint": "A stabil kulcs, szabály, legacy szegmens, aktív állapot és ObjectId rögzített. Csak a kétnyelvű címke és a sorrend változhat.",
+      "customHint": "A szabályok VAGY kapcsolatban állnak; egy szabály a kiválasztott nemek és láthatósági értékek keresztszorzata.",
+      "rules": "Tagsági szabályok",
+      "rulesHint": "Minden szabály mindkét tengelyén legalább egy érték kell. A nonbinary nemet tartalmazó szabály csak a Mindenki értéket célozhatja.",
+      "rule": "{number}. szabály",
+      "genderAxis": "A tag neme",
+      "visibleAxis": "Ki láthatja a tagot",
+      "addRule": "Szabály hozzáadása",
+      "protectedFields": "A védett tagsági anyag csak olvasható. Mentéskor a teljes, változatlan szabály és legacy szegmens megy, miközben csak a címkék és a sorrend térhet el."
+    },
+    "genders": {
+      "man": "Férfi",
+      "woman": "Nő",
+      "nonbinary": "Nem bináris"
+    },
+    "visibleTo": {
+      "male": "Férfiak",
+      "female": "Nők",
+      "both": "Mindenki"
+    },
+    "states": {
+      "active": "Aktív",
+      "archived": "Archivált",
+      "retired": "Kivezetett"
+    },
+    "fields": {
+      "key": "Stabil kulcs",
+      "order": "Sorrend",
+      "labelEn": "Angol címke",
+      "labelHu": "Magyar címke",
+      "auditReason": "Belső auditindok",
+      "auditHint": "{count}/300 Unicode karakter; kötelező, körbevágott és soha nem jelenik meg a tagnak."
+    },
+    "retirement": {
+      "title": "Aktivált kivezetési határok",
+      "copy": "Ez a csak olvasható Core-jegyzék bizonyítja, mely korábbi párosítási és katalógusfogalmak nem runtime döntési források többé.",
+      "orientation": "Párosítási orientáció",
+      "layer1": "Layer 1 szándék",
+      "manifest": "Jegyzék SHA-256",
+      "questionsTitle": "Kivezetett szex/anatómia kérdések",
+      "questionsCopy": "A katalógussorok és a korábbi tagi válaszok tombstone állapotúak, nincsenek törölve és itt sem jelennek meg.",
+      "sexAnatomy": "Kivezetve, mert szexuális/anatómiai profilkérdés.",
+      "retainedTitle": "Megtartott semleges kérdés",
+      "retainedCopy": "A testszőrzet minden védett csoportnál általános profiladat marad, és már nem függ orientációból származtatott jogosultságtól.",
+      "neutral": "Aktív a semleges általános profilhalmazban mind a hét védett csoportnál.",
+      "legacyTitle": "Legacy import-elutasítási szókészlet",
+      "legacyCopy": "Ezek a legacy katalógustípusok csak bizonyítékok. A runtime soha nem állítja vissza őket aktuális profil- vagy felfedezési adatként."
+    },
+    "intents": {
+      "copy": "A kétnyelvű Mit keresel? lista szerkesztése. A kiválasztott értékek tulajdonosi privát preferenciák, és soha nem jogosítanak profil-elérésre vagy felfedezésre.",
+      "add": "Szándék hozzáadása",
+      "noLayer1": "A Layer 1 kivezetett és rejtett. Ebben a katalógusban nincs szex/barátok/szerelem, reciprocal-set, visibility-mode vagy orientáció vezérlő.",
+      "selectionMax": "Választások maximuma",
+      "selectionMin": "A minimum rögzítve nulla; a maximum 1 és 5 között marad.",
+      "saveLimit": "Kiválasztási korlát mentése",
+      "order": "{order}. sorrend",
+      "newTitle": "Új szándék",
+      "editTitle": "Szándék szerkesztése",
+      "editorCopy": "A kezdeti kulcsok stabilak. Az archiválás visszafordítható elérhetőségi vezérlés; törlési művelet nincs."
+    }
+  },
   "userDetail": {
     "back": "Vissza a regisztrált userekhez",
     "eyebrow": "User profil",
@@ -4566,6 +4749,30 @@
         },
         "confirmStrong": "Áttekintettem az Erős jogosultság figyelmeztetését és a belső hozzáférés változását.",
         "saveGrant": "Áttekintett jogosultság mentése"
+      }
+    },
+    "audienceVisibility": {
+      "title": "Ki láthatja a profilomat",
+      "copy": "Csak olvasható hiteles láthatóság és az az egy védett csoport, amelyet a Core a nem × láthatóság alapján származtat. Ez a panel soha nem bízik a széles legacy tagi válaszban.",
+      "loading": "A korlátozott audience-visibility vetület betöltése…",
+      "loadError": "Az audience-visibility vetület nem dekódolható biztonságosan.",
+      "retry": "Hiteles olvasás újrapróbálása",
+      "gender": "Hiteles nem",
+      "visibleTo": "Ki láthatja a profilt",
+      "group": "Származtatott védett csoport",
+      "revision": "Láthatósági revízió",
+      "unresolved": "Feloldatlan",
+      "groupUnresolved": "Nincs származtatott csoport, amíg a nem feloldatlan",
+      "nonbinaryFixed": "Mindenki láthatja",
+      "genders": {
+        "man": "Férfi",
+        "woman": "Nő",
+        "nonbinary": "Nem bináris"
+      },
+      "visibleToValues": {
+        "male": "Férfiak",
+        "female": "Nők",
+        "both": "Mindenki"
       }
     },
     "allAlbums": "Minden profilalbum",

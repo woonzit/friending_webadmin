@@ -1982,6 +1982,185 @@ textarea:focus {
   }
 }
 
+/* Audience visibility v2: one dormant workspace replaces the orientation-era
+   group editor and the old Layer-1/Layer-2 intent surface after activation. */
+.audience-visibility-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.audience-visibility-tabs button {
+  min-height: 42px;
+  padding: 9px 13px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.audience-visibility-tabs button:hover,
+.audience-visibility-tabs button:focus-visible,
+.audience-visibility-tabs button.active {
+  border-color: rgba(242, 59, 141, 0.35);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.audience-visibility-pending,
+.audience-visibility-workspace,
+.audience-visibility-list,
+.audience-visibility-rules,
+.audience-visibility-rule,
+.audience-visibility-rule > div,
+.audience-visibility-user-panel dd {
+  display: grid;
+  gap: 12px;
+}
+
+.audience-visibility-pending {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.audience-visibility-workspace {
+  gap: 20px;
+}
+
+.audience-visibility-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 15px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-soft);
+}
+
+.audience-visibility-row > div:first-child {
+  min-width: 0;
+}
+
+.audience-visibility-row p {
+  margin: 7px 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.audience-visibility-row-title,
+.audience-visibility-row .status-list,
+.audience-visibility-rule header,
+.audience-visibility-limit {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.audience-visibility-row-title code,
+.audience-visibility-row .status-list code,
+.audience-visibility-pending code {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+
+.audience-visibility-row .status-list {
+  font-size: 12px;
+}
+
+.audience-visibility-rules {
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.audience-visibility-rules legend {
+  padding: 0 7px;
+  color: var(--text-soft);
+  font-weight: 700;
+}
+
+.audience-visibility-rule {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-raised);
+}
+
+.audience-visibility-rule header {
+  justify-content: space-between;
+}
+
+.audience-visibility-rule > div > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.audience-visibility-limit {
+  align-items: end;
+  margin: 18px 0;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-raised);
+}
+
+.audience-visibility-limit .field {
+  flex: 1 1 220px;
+}
+
+.audience-visibility-contract-note {
+  margin-top: 18px;
+  text-align: center;
+}
+
+.audience-visibility-user-panel {
+  margin-bottom: 20px;
+}
+
+.audience-visibility-user-panel dd small,
+.audience-visibility-fixed-note {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .audience-visibility-tabs,
+  .audience-visibility-pending {
+    grid-template-columns: 1fr;
+  }
+
+  .audience-visibility-tabs button {
+    text-align: left;
+  }
+
+  .audience-visibility-row,
+  .audience-visibility-editor .panel-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .audience-visibility-row > .button,
+  .audience-visibility-limit > .button {
+    width: 100%;
+  }
+}
+
 /* Owner-delivered verification administration layout (ADM-01…ADM-06). */
 
 .verification-staging-badge {
