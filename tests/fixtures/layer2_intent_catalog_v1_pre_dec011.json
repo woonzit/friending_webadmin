@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "catalog_revision": 2,
+  "selection_limit": 5,
+  "reciprocal_sets": [
+    "enm",
+    "kink"
+  ],
+  "_note_labels": "Labels are copied VERBATIM from spec v2.5 section 8. Do not reword them here; a change is a spec change first.",
+  "_note_glossary": "Glossary supplied 2026-08-05 and copied verbatim from the product content document; twenty-two strings, eleven items, EN and HU. Do not reword here - a change is a content change first. Layer2CatalogPolicy::isPublishable() now passes for every item.",
+  "items": [
+    {
+      "id": "dating",
+      "labels": {
+        "en": "Dating",
+        "hu": "Randizás"
+      },
+      "glossary": {
+        "en": "Going on dates to see where things lead, without a fixed destination in mind.",
+        "hu": "Randevúzás azért, hogy kiderüljön, hova vezet — előre eldöntött cél nélkül."
+      },
+      "layer1": [
+        "love"
+      ],
+      "visibility_mode": "public",
+      "reciprocal_set_id": "",
+      "order": 10,
+      "archived": false
+    },
+    {
+      "id": "long_term",
+      "labels": {
+        "en": "Long-term connections",
+        "hu": "Hosszú távú kapcsolat"
+      },
+      "glossary": {
+        "en": "Looking for something lasting, whatever shape it turns out to take.",
+        "hu": "Tartós kapcsolatot keresel, bármilyen formát öltsön is."
+      },
+      "layer1": [
+        "love"
+      ],
+      "visibility_mode": "public",
+      "reciprocal_set_id": "",
+      "order": 20,
+      "archived": false
+    },
+    {
+      "id": "monogamy",
+      "labels": {
+        "en": "Monogamy only",
+        "hu": "Csak monogámia"
+      },
+      "glossary": {
+        "en": "One partner at a time, by choice — and you'd like that clear from the start.",
+        "hu": "Egyszerre egy partner, tudatos döntésből — és szeretnéd, ha ez az elejétől világos lenne."
+      },
+      "layer1": [
+        "love"
+      ],
+      "visibility_mode": "public",
+      "reciprocal_set_id": "",
+      "order": 30,
+      "archived": false
+    },
+    {
+      "id": "short_term",
+      "labels": {
+        "en": "Short-term connections",
+        "hu": "Rövid távú kapcsolat"
+      },
+      "glossary": {
+        "en": "Something with a shorter horizon — a season, a visit, a while — rather than an open-ended one.",
+        "hu": "Rövidebb távra szól: egy időszakra, egy látogatásra, egy darabig — nem határozatlan időre."
+      },
+      "layer1": [
+        "sex"
+      ],
+      "visibility_mode": "public",
+      "reciprocal_set_id": "",
+      "order": 40,
+      "archived": false
+    },
+    {
+      "id": "casual",
+      "labels": {
+        "en": "Casual play and fun",
+        "hu": "Könnyed kalandok"
+      },
+      "glossary": {
+        "en": "Meeting for enjoyment and physical connection, without building toward a relationship.",
+        "hu": "Találkozás az élményért és a testi kapcsolatért, anélkül hogy kapcsolat felé építkeznétek."
+      },
+      "layer1": [
+        "sex"
+      ],
+      "visibility_mode": "public",
+      "reciprocal_set_id": "",
+      "order": 50,
+      "archived": false
+    },
+    {
+      "id": "fwb",
+      "labels": {
+        "en": "Friends with benefits",
+        "hu": "Barátság extrákkal"
+      },
+      "glossary": {
+        "en": "A friendship that includes sex, where the friendship is the part meant to last.",
+        "hu": "Barátság, amiben szex is van, és a barátság az, ami megmarad. Angolul: friends with benefits, röviden FWB."
+      },
+      "layer1": [
+        "friends",
+        "sex"
+      ],
+      "visibility_mode": "public",
+      "reciprocal_set_id": "",
+      "order": 60,
+      "archived": false
+    },
+    {
+      "id": "new_friends",
+      "labels": {
+        "en": "Making new friends",
+        "hu": "Új barátok"
+      },
+      "glossary": {
+        "en": "Meeting people to spend time with, with no romantic or sexual expectation attached.",
+        "hu": "Emberekkel ismerkedsz, akikkel időt tölthetsz, romantikus vagy szexuális elvárás nélkül."
+      },
+      "layer1": [
+        "friends"
+      ],
+      "visibility_mode": "public",
+      "reciprocal_set_id": "",
+      "order": 70,
+      "archived": false
+    },
+    {
+      "id": "community",
+      "labels": {
+        "en": "Finding community",
+        "hu": "Közösség"
+      },
+      "glossary": {
+        "en": "Looking for a group to belong to rather than one person — shared interests, shared spaces, people who get it.",
+        "hu": "Nem egy embert keresel, hanem csoportot, ahová tartozhatsz — közös érdeklődés, közös terek, akik értik."
+      },
+      "layer1": [
+        "friends"
+      ],
+      "visibility_mode": "public",
+      "reciprocal_set_id": "",
+      "order": 80,
+      "archived": false
+    },
+    {
+      "id": "open_to_all",
+      "labels": {
+        "en": "Open to everything",
+        "hu": "Nyitott vagyok bármire"
+      },
+      "glossary": {
+        "en": "You're not narrowing it down yet, and you'd rather see who turns up than decide in advance.",
+        "hu": "Egyelőre nem szűkíted, és szívesebben nézed meg, ki jön szembe, mint hogy előre eldöntsd."
+      },
+      "layer1": [
+        "friends",
+        "love",
+        "sex"
+      ],
+      "visibility_mode": "public",
+      "reciprocal_set_id": "",
+      "order": 90,
+      "archived": false
+    },
+    {
+      "id": "enm",
+      "labels": {
+        "en": "Non-monogamy",
+        "hu": "Nem monogám kapcsolat"
+      },
+      "glossary": {
+        "en": "More than one romantic or sexual connection at a time, with everyone involved knowing and agreeing. Often called ENM, ethical non-monogamy. Only people who chose this can see it on your profile.",
+        "hu": "Egyszerre több romantikus vagy szexuális kapcsolat úgy, hogy minden érintett tud róla és egyetért. Angolul ENM, azaz ethical non-monogamy. Csak azok látják a profilodon, akik szintén ezt választották."
+      },
+      "layer1": [
+        "love",
+        "sex"
+      ],
+      "visibility_mode": "reciprocal",
+      "reciprocal_set_id": "enm",
+      "order": 100,
+      "archived": false
+    },
+    {
+      "id": "kink",
+      "labels": {
+        "en": "Kinks and desires",
+        "hu": "Kink és vágyak"
+      },
+      "glossary": {
+        "en": "Specific tastes and dynamics you'd want a partner to know about. Only people who chose this can see it on your profile.",
+        "hu": "Konkrét ízlések és dinamikák, amikről szeretnéd, hogy egy partner tudjon. Csak azok látják a profilodon, akik szintén ezt választották."
+      },
+      "layer1": [
+        "sex"
+      ],
+      "visibility_mode": "reciprocal",
+      "reciprocal_set_id": "kink",
+      "order": 110,
+      "archived": false
+    }
+  ],
+  "glossary_revision": 1
+}

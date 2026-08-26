@@ -1,0 +1,520 @@
+export const DATES_ADMIN_ACTIONS = [
+  "admin_me",
+  "dates_activity_list",
+  "dates_activity_detail",
+  "dates_activity_location",
+  "dates_activity_update",
+  "dates_activity_command",
+  "dates_activity_host_transfer",
+  "dates_configuration",
+  "dates_configuration_save",
+  "dates_activity_type_save",
+  "dates_moderation_queue",
+  "dates_moderation_detail",
+  "dates_moderation_evidence",
+  "dates_moderation_trail_evidence",
+  "dates_moderation_claim",
+  "dates_moderation_heartbeat",
+  "dates_moderation_release",
+  "dates_moderation_note",
+  "dates_moderation_escalate",
+  "dates_moderation_resolve",
+  "dates_moderation_legal_hold",
+  "dates_moderation_sla",
+  "dates_reason_list",
+  "dates_reason_save",
+  "dates_reason_deactivate",
+] as const;
+
+export const ADMIN_ACTIONS = [
+  "overview",
+  "list_users",
+  "user_detail",
+  "membership_configuration",
+  "save_membership_configuration",
+  "membership_user_detail",
+  "membership_admin_grant_preview",
+  "membership_admin_grant",
+  "membership_admin_grant_update",
+  "membership_admin_grant_revoke",
+  "app_review_sandbox_status",
+  "app_review_sandbox_reset",
+  "set_demo_visibility_permission",
+  "list_hero",
+  "save_hero",
+  "delete_hero",
+  "list_landing",
+  "save_landing",
+  "delete_landing",
+  "list_app_landing",
+  "save_app_landing",
+  "delete_app_landing",
+  "get_settings",
+  "set_settings",
+  "invite_configuration",
+  "save_invite_configuration",
+  "list_signup_options",
+  "save_signup_option_group",
+  "save_signup_option",
+  "delete_signup_option",
+  "list_profile_fields",
+  "user_cast_groups",
+  "save_user_cast_group",
+  "archive_user_cast_group",
+  "support_threads",
+  "support_messages",
+  "support_send",
+  "help_admin_list",
+  "save_help_category",
+  "save_help_article",
+  "publish_help_article",
+  "archive_help_article",
+  "footprints_admin",
+  "pinger_admin",
+  "save_pinger_config",
+  "save_footprint_settings",
+  "save_footprint_badge",
+  "archive_footprint_badge",
+  "set_footprint_user_limit",
+  "footprint_reports",
+  "resolve_footprint_report",
+  "profile_verification_config",
+  "save_profile_verification_config",
+  "profile_presence_configuration",
+  "save_profile_presence_configuration",
+  "profile_verification_queue",
+  "profile_verification_detail",
+  "profile_verification_decision",
+  "profile_verification_lease",
+  "profile_verification_evidence",
+  "user_moderation",
+  "suspend_user",
+  "unsuspend_user",
+  "ban_user",
+  "unban_user",
+  "ban_user_ip",
+  "remove_ip_ban",
+  "force_logout_user",
+  "admin_save_user_content",
+  "admin_set_main_photo",
+  "list_icebreakers",
+  "save_icebreaker_prompt",
+  "archive_icebreaker_prompt",
+  "save_profile_section_layout",
+  "save_profile_field",
+  "archive_profile_field",
+  "save_profile_field_option",
+  "archive_profile_field_option",
+  "user_profile_fields",
+  "save_user_profile_fields",
+  "save_user_profile_identity",
+  "moderation_pic_list",
+  "moderation_image_action",
+  "user_profile_albums",
+  "admin_delete_profile_album_image",
+  "admin_get_image_data",
+  "admin_replace_image",
+  "set_image_square_crop",
+  "profile_location_policies",
+  "save_profile_location_policy",
+  "delete_profile_location_policy",
+  "profile_presentation",
+  "save_profile_presentation",
+  "save_profile_presentation_source",
+  "profile_tag_catalogs",
+  "profile_tag_catalog_preview",
+  "save_profile_tag_catalog",
+  "profile_photo_insights",
+  "list_admins",
+  "add_admin",
+  "update_admin",
+  "delete_admin",
+  "list_audit",
+  "layer2_catalog",
+  "save_layer2_item",
+  "archive_layer2_item",
+  "set_layer2_selection_limit",
+  "signup_photo_config",
+  "save_signup_photo_config",
+  ...DATES_ADMIN_ACTIONS,
+] as const;
+
+export type AdminAction = (typeof ADMIN_ACTIONS)[number];
+
+/**
+ * What a principal must hold to invoke an action, mirroring the gate Core runs
+ * for the same route:
+ *
+ * - `read` — `requireAdminActor()`. Any active administrator, `viewer` included.
+ * - `write` — `requireAdminEditor()`. `owner` or `admin` only.
+ * - `owner` — `requireAdminActor($request, true)`. `owner` only.
+ * - `dates_read` / `dates_write` — the separate Dates capability ladder in
+ *   `DatesAdminAuthorizationService`, whose read-only rung is `support_viewer`.
+ */
+export type AdminActionAccess = "read" | "write" | "owner" | "dates_read" | "dates_write";
+
+/**
+ * The classification is exhaustive by type: `Record<AdminAction, …>` fails the
+ * typecheck when an action is added to the allow-list without a class, and the
+ * runtime lookup denies anything it does not find. Adding an action therefore
+ * cannot silently grant write access.
+ *
+ * The historically permissive campaign, landing, demo-visibility and media
+ * handlers now use Core's editor gate too. Their explicit `write` rows remain
+ * valuable defence in depth: a future backend regression still cannot widen
+ * the browser surface to a read-only viewer.
+ */
+export const ADMIN_ACTION_ACCESS: Record<AdminAction, AdminActionAccess> = {
+  overview: "read",
+  list_users: "read",
+  user_detail: "read",
+  membership_configuration: "read",
+  save_membership_configuration: "write",
+  membership_user_detail: "read",
+  membership_admin_grant_preview: "write",
+  membership_admin_grant: "write",
+  membership_admin_grant_update: "write",
+  membership_admin_grant_revoke: "owner",
+  // App Review sandbox: the status names no credential (only whether one is
+  // configured), so every active admin may read it. The reset rebuilds only
+  // documents carrying the sandbox scope and is audited on Core, so `admin`
+  // suffices — it matches Core's `viewer`-refusing write gate, never weaker.
+  app_review_sandbox_status: "read",
+  app_review_sandbox_reset: "write",
+  set_demo_visibility_permission: "write",
+  list_hero: "read",
+  save_hero: "write",
+  delete_hero: "write",
+  list_landing: "read",
+  save_landing: "write",
+  delete_landing: "write",
+  list_app_landing: "read",
+  save_app_landing: "write",
+  delete_app_landing: "write",
+  get_settings: "read",
+  set_settings: "write",
+  invite_configuration: "read",
+  save_invite_configuration: "write",
+  list_signup_options: "read",
+  save_signup_option_group: "write",
+  save_signup_option: "write",
+  delete_signup_option: "write",
+  list_profile_fields: "read",
+  user_cast_groups: "read",
+  save_user_cast_group: "write",
+  archive_user_cast_group: "write",
+  support_threads: "read",
+  // Reading a member's messages clears the operator-side unread counter —
+  // the bell feed's read-clears-counter rule, mirrored by Core's actor gate.
+  support_messages: "read",
+  support_send: "write",
+  help_admin_list: "read",
+  save_help_category: "write",
+  save_help_article: "write",
+  publish_help_article: "write",
+  archive_help_article: "write",
+  footprints_admin: "read",
+  pinger_admin: "read",
+  save_pinger_config: "write",
+  save_footprint_settings: "write",
+  save_footprint_badge: "write",
+  archive_footprint_badge: "write",
+  set_footprint_user_limit: "write",
+  footprint_reports: "read",
+  resolve_footprint_report: "write",
+  // Profile Video Verification V1: queue/config metadata is visible to every
+  // active admin. Configuration writes, evidence and review commands match
+  // Core's editor/owner gate; a viewer can never obtain biometric bytes.
+  profile_verification_config: "read",
+  save_profile_verification_config: "write",
+  // Presence availability is visible to every active administrator. Disabling
+  // a mode rewrites affected member profiles, so only editors may save it.
+  profile_presence_configuration: "read",
+  save_profile_presence_configuration: "write",
+  profile_verification_queue: "read",
+  profile_verification_detail: "read",
+  profile_verification_decision: "write",
+  profile_verification_lease: "write",
+  profile_verification_evidence: "write",
+  // moderation v1: status is a read; every command is a write matching
+  // Core's requireAdminEditor gate.
+  user_moderation: "read",
+  suspend_user: "write",
+  unsuspend_user: "write",
+  ban_user: "write",
+  unban_user: "write",
+  ban_user_ip: "write",
+  remove_ip_ban: "write",
+  force_logout_user: "write",
+  admin_save_user_content: "write",
+  admin_set_main_photo: "write",
+  list_icebreakers: "read",
+  save_icebreaker_prompt: "write",
+  archive_icebreaker_prompt: "write",
+  save_profile_section_layout: "write",
+  save_profile_field: "write",
+  archive_profile_field: "write",
+  save_profile_field_option: "write",
+  archive_profile_field_option: "write",
+  user_profile_fields: "read",
+  save_user_profile_fields: "write",
+  save_user_profile_identity: "write",
+  moderation_pic_list: "read",
+  moderation_image_action: "write",
+  user_profile_albums: "read",
+  admin_delete_profile_album_image: "write",
+  // Returns one picture as a data URL. Same exposure as `user_profile_albums`,
+  // which already shows these pictures, so it classifies the same way. It is a
+  // data URL rather than a proxied fetch because a cross-origin image would
+  // taint the editor's canvas and make the save throw.
+  admin_get_image_data: "read",
+  // Overwrites the member's own picture in public media storage and marks it
+  // accepted. That is a write in the strongest sense the console has.
+  admin_replace_image: "write",
+  set_image_square_crop: "write",
+  profile_location_policies: "read",
+  save_profile_location_policy: "write",
+  delete_profile_location_policy: "write",
+  profile_presentation: "read",
+  save_profile_presentation: "write",
+  save_profile_presentation_source: "write",
+  profile_tag_catalogs: "read",
+  profile_tag_catalog_preview: "read",
+  save_profile_tag_catalog: "write",
+  profile_photo_insights: "read",
+  list_admins: "read",
+  add_admin: "owner",
+  update_admin: "owner",
+  delete_admin: "owner",
+  list_audit: "read",
+
+  // Core gates these on the `catalog` capability ladder (`catalog_inventory_read` /
+  // `catalog_layer2_edit`, editor rank). The console classifies them on its own global ladder and
+  // deliberately no stricter class exists for reads, so the rule holds: at least as strict as
+  // Core's gate, never derived from it. The capability list still drives what the UI offers.
+  layer2_catalog: "read",
+  save_layer2_item: "write",
+  archive_layer2_item: "write",
+  // The catalogue-wide selection limit. Core routes it to the same
+  // `CAP_LAYER2_EDIT` gate as the two item writes, so it is classified the same.
+  set_layer2_selection_limit: "write",
+
+  // Signup photo experience, contract §4.1/§4.2. Core gates the read on `requireAdminActor` and the
+  // write on `requireAdminEditor`; both classifications here are at least as strict.
+  signup_photo_config: "read",
+  save_signup_photo_config: "write",
+
+  admin_me: "read",
+  dates_activity_list: "dates_read",
+  dates_activity_detail: "dates_read",
+  dates_activity_location: "dates_read",
+  dates_activity_update: "dates_write",
+  dates_activity_command: "dates_write",
+  dates_activity_host_transfer: "dates_write",
+  dates_configuration: "dates_read",
+  dates_configuration_save: "dates_write",
+  dates_activity_type_save: "dates_write",
+  dates_moderation_queue: "dates_read",
+  dates_moderation_detail: "dates_read",
+  dates_moderation_evidence: "dates_read",
+  dates_moderation_trail_evidence: "dates_write",
+  dates_moderation_claim: "dates_write",
+  dates_moderation_heartbeat: "dates_write",
+  dates_moderation_release: "dates_write",
+  dates_moderation_note: "dates_write",
+  dates_moderation_escalate: "dates_write",
+  dates_moderation_resolve: "dates_write",
+  dates_moderation_legal_hold: "dates_write",
+  dates_moderation_sla: "dates_read",
+  dates_reason_list: "dates_read",
+  dates_reason_save: "dates_write",
+  dates_reason_deactivate: "dates_write",
+};
+
+// A Map, not the record itself: a plain-object lookup would resolve inherited
+// keys such as `constructor` to a truthy value for an action nobody allow-listed.
+const ACTION_ACCESS: ReadonlyMap<string, AdminActionAccess> = new Map(
+  Object.entries(ADMIN_ACTION_ACCESS),
+);
+
+/** Global roles Core's `WebadminRolePolicy` lets write. `viewer` is read-only. */
+const GLOBAL_WRITE_ROLES: ReadonlySet<string> = new Set(["owner", "admin"]);
+
+/** The Dates rung that holds no write capability at all. */
+const DATES_READ_ONLY_ROLE = "support_viewer";
+
+const DATES_ROLES: ReadonlySet<string> = new Set([
+  "support_viewer",
+  "moderator",
+  "senior_moderator",
+  "administrator",
+  "superadmin",
+]);
+
+export type AdminPrincipal = {
+  /** `owner`, `admin` or `viewer`; `""` when the membership payload was unusable. */
+  role: string;
+  /** Resolved Dates rung; `""` when no rung can be established. */
+  datesRole: string;
+};
+
+/**
+ * Core derives the same fallback when an `admin_emails` row carries no explicit
+ * `dates_role` (`DatesAdminAuthorizationService::role`). It is reproduced here so
+ * a Core response without a `dates` block does not lock every Dates operator
+ * out. Unlike Core, an unrecognised global role resolves to no rung at all
+ * rather than to `administrator`: this layer fails closed.
+ */
+function datesRoleFromGlobalRole(role: string): string {
+  if (role === "owner") return "superadmin";
+  if (role === "admin") return "administrator";
+  if (role === "viewer") return DATES_READ_ONLY_ROLE;
+  return "";
+}
+
+function record(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function lowercaseString(value: unknown): string {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+/**
+ * Read the principal out of a Core `admin_me` payload. Anything unexpected
+ * resolves to a role that grants nothing, so a malformed membership response
+ * denies writes instead of inheriting them.
+ */
+export function adminPrincipalFrom(value: unknown): AdminPrincipal {
+  const row = record(value);
+  const role = lowercaseString(row?.role);
+  const datesRole = lowercaseString(record(row?.dates)?.role);
+  return {
+    role,
+    datesRole: DATES_ROLES.has(datesRole) ? datesRole : datesRoleFromGlobalRole(role),
+  };
+}
+
+/**
+ * Per-action request-body ceiling. Everything caps at 256 KB except explicitly bounded bulk
+ * documents.
+ */
+const DEFAULT_BODY_LIMIT_BYTES = 256_000;
+const TAG_CATALOG_BODY_LIMIT_BYTES = 1_100_000;
+// The Core contract permits every ISO storefront to carry localized templates.
+// Row, language and template caps still bound the decoded document; this limit
+// keeps the bridge from rejecting a configuration valid at those maxima.
+const INVITE_CONFIGURATION_BODY_LIMIT_BYTES = 16_000_000;
+/**
+ * The re-cropped picture travels as base64 inside the JSON body, which costs
+ * about a third on top of the JPEG. Core refuses a decoded image over 8 MiB, so
+ * this sits just under the point where a body could still decode to an accepted
+ * image: anything larger is rejected here, cheaply, instead of after the upload.
+ */
+const REPLACE_IMAGE_BODY_LIMIT_BYTES = 6_000_000;
+
+/**
+ * `save_signup_photo_config` deliberately does NOT appear below. Its `tips_json` carries at most 12
+ * items, each bounded by the caps in `lib/signupPhotoConfig.ts`, so a maximal document — every
+ * string filled to its cap with four-byte characters and both image URLs at 2048 characters — is
+ * roughly a third of the default ceiling. `tests/adminActionLimits.test.mts` builds that maximal
+ * document and asserts it fits, so the bound is proven from the caps rather than assumed; raising a
+ * cap far enough to break it fails that test instead of producing a silent 413.
+ */
+const ADMIN_ACTION_BODY_LIMIT: Partial<Record<AdminAction, number>> = {
+  save_profile_tag_catalog: TAG_CATALOG_BODY_LIMIT_BYTES,
+  save_invite_configuration: INVITE_CONFIGURATION_BODY_LIMIT_BYTES,
+  admin_replace_image: REPLACE_IMAGE_BODY_LIMIT_BYTES,
+};
+
+const ACTION_BODY_LIMIT: ReadonlyMap<string, number> = new Map(
+  Object.entries(ADMIN_ACTION_BODY_LIMIT),
+);
+
+export function adminActionBodyLimit(action: string): number {
+  return ACTION_BODY_LIMIT.get(action) ?? DEFAULT_BODY_LIMIT_BYTES;
+}
+
+/**
+ * Per-action Core timeout.
+ *
+ * The bridge used to pass none, so `coreCall`'s 10 s default applied to every action and an abort
+ * surfaced to the operator as `core-unavailable` — "Core is down" — for what was really one slow
+ * call. The three upload routes already opt into 30 s deliberately; these are the read and write
+ * paths that carry the same weight.
+ *
+ * The listed actions all traverse the migrated catalogue: three catalogues, 17 groups and 627 items,
+ * with the save running inside a Mongo transaction. Anything unlisted keeps the 10 s default.
+ *
+ * Rule for a new action: raise it only with a measured reason. A generous timeout on a *mutating*
+ * call is not free — it widens the window in which the operator cannot tell whether the write
+ * landed, which is why `core-timeout` is reported distinctly from `core-unavailable`.
+ */
+const DEFAULT_CORE_TIMEOUT_MS = 10_000;
+const BULK_CATALOG_TIMEOUT_MS = 30_000;
+/**
+ * Matches the three upload routes. Core decodes the JPEG and writes six files —
+ * two originals plus four resized variants — before it answers, which is more
+ * work than the 10 s default assumes for a body of this size.
+ */
+const REPLACE_IMAGE_TIMEOUT_MS = 30_000;
+
+const ADMIN_ACTION_TIMEOUT_MS: Partial<Record<AdminAction, number>> = {
+  admin_replace_image: REPLACE_IMAGE_TIMEOUT_MS,
+  profile_tag_catalogs: BULK_CATALOG_TIMEOUT_MS,
+  profile_tag_catalog_preview: BULK_CATALOG_TIMEOUT_MS,
+  save_profile_tag_catalog: BULK_CATALOG_TIMEOUT_MS,
+  profile_presentation: BULK_CATALOG_TIMEOUT_MS,
+  save_profile_presentation: BULK_CATALOG_TIMEOUT_MS,
+};
+
+const ACTION_TIMEOUT: ReadonlyMap<string, number> = new Map(
+  Object.entries(ADMIN_ACTION_TIMEOUT_MS),
+);
+
+export function adminActionTimeoutMs(action: string): number {
+  return ACTION_TIMEOUT.get(action) ?? DEFAULT_CORE_TIMEOUT_MS;
+}
+
+export function isAdminActionAllowed(action: string): boolean {
+  return ACTION_ACCESS.has(action);
+}
+
+export function adminActionAccess(action: string): AdminActionAccess | null {
+  return ACTION_ACCESS.get(action) ?? null;
+}
+
+/**
+ * Whether an already-authenticated, membership-checked principal may run this
+ * action. Membership is the caller's responsibility; this answers the role
+ * question only. An unknown or unclassified action is denied.
+ */
+export function isAdminActionAuthorized(action: string, principal: AdminPrincipal): boolean {
+  const access = ACTION_ACCESS.get(action);
+  switch (access) {
+    case "read":
+    case "dates_read":
+      return true;
+    case "write":
+      return GLOBAL_WRITE_ROLES.has(principal.role);
+    case "owner":
+      return principal.role === "owner";
+    case "dates_write":
+      return principal.datesRole !== "" && principal.datesRole !== DATES_READ_ONLY_ROLE;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Only a failed membership/session check should send an operator back to the
+ * login page. A role or Dates-capability denial is a valid authenticated 403
+ * and must stay a 403 so the UI can report authorization accurately.
+ */
+export function invalidatesAdminSession(status: number, rawError: unknown): boolean {
+  const error = String(rawError ?? "");
+  return status === 401
+    || (status === 403 && (error === "admin-revoked" || error === "admin-session-invalid"));
+}
