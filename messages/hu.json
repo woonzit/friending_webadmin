@@ -745,12 +745,13 @@
           },
           "scopeEditing": {
             "title": "Felülírások hozzáadása és szüneteltetése",
-            "purpose": "A teljes mentett draftnak nincs tagi hatása a külön élő műveletig; az ország- és városmezők pontosan örökölnek, a globális szint pedig tiltja az öröklést.",
+            "purpose": "A teljes mentett draftnak nincs tagi hatása a külön élő műveletig; az ország- és városmezők pontosan örökölnek, a globális szint pedig tiltja az öröklést. Az új felülírás a közzétételig csak draft marad.",
             "actions": {
               "1": "Zárt ISO-országot vagy egy aktuális, Core-on proxizott Places-részlettokent használj; a begépelt város önmagában nem hozhat létre hatóságot.",
-              "2": "A teljes draftot a megfigyelt revízión mentsd, majd közzététel, inaktiválás, sírkőjelölés vagy visszaállítás előtt készíts új hatáselőnézetet."
+              "2": "A teljes draftot a megfigyelt revízión mentsd, majd közzététel, inaktiválás, sírkőjelölés vagy visszaállítás előtt készíts új hatáselőnézetet.",
+              "3": "Csak draft közzétételénél vizsgáld meg a szülőterületből származó tényleges előtte értékeket. A sírkő visszaállítása újra csak draft állapotot ad, és továbbra is külön közzétételt igényel."
             },
-            "guidance": "Csak az élő szabályzat hat a tagokra. A globális szint mindig aktív és nem törölhető; a felülírás eltávolítása megőrzött sírkő, nem fizikai törlés."
+            "guidance": "Csak az élő szabályzat hat a tagokra. A visszaállítás soha nem tesz közzé draftot. A globális szint mindig aktív és nem törölhető; a felülírás eltávolítása megőrzött sírkő, nem fizikai törlés."
           },
           "featureMatrix": {
             "title": "Funkciókövetelmények",
@@ -766,7 +767,7 @@
             "purpose": "Öt kötelező alappár és opcionális funkciófelülírás tárol korlátozott egyszerűszöveges angol és magyar anyagot atomi módon, szemantikus assetekkel és biztonságos műveletekkel.",
             "actions": {
               "1": "A két nyelvet együtt szerkeszd; címke pontosan akkor legyen, ha művelet is van, URL-művelethez pedig csak korlátozott, biztonságos HTTPS használható.",
-              "2": "A Függő állapot maradjon csak tájékoztató: soha nem old fel, induláskor 30 perc után használ hosszú szöveget, és időzítő nem teszi automatikusan terminálissá."
+              "2": "A Függő állapot maradjon csak tájékoztató: soha nem old fel, induláskor 30 perc után használ hosszú szöveget, és időzítő nem teszi automatikusan terminálissá. A sorátlagos hosszú szöveg az 1. verzióban nem érhető el."
             },
             "guidance": "Az automatikus műveletet a Core oldja fel az aktuális állapotból. A szöveg nem kényszeríthet providerindítást, nem fedhet fel providerrészletet és nem hozhat létre jogosultságkerülőt."
           },
@@ -3621,6 +3622,20 @@
       "draftRequirement": "Mentett piszkozatkövetelmény",
       "effectiveRequirement": "Aktuális élő követelmény",
       "notLive": "Nincs tényleges élő szabályzat",
+      "policyStates": {
+        "active": "Aktív élő szabályzat",
+        "draft_only": "Csak draft",
+        "inactive": "Inaktív, megőrzött élő szabályzattal",
+        "tombstoned_draft_only": "Sírkőjelölt, csak draft",
+        "tombstoned_live": "Sírkőjelölt, megőrzött élő szabályzattal"
+      },
+      "policyStateHelp": {
+        "active": "A terület aktuális élő blokkja hatással lehet a tagokra.",
+        "draft_only": "A közzététel elérhető. Addig a hatás tényleges előtte értékei a szülőterületből származnak.",
+        "inactive": "A megőrzött élő blokknak jelenleg nincs tagi hatása.",
+        "tombstoned_draft_only": "A visszaállítás csak draft állapotba viszi vissza ezt a területet. Nem aktiválja és nem teszi közzé.",
+        "tombstoned_live": "A visszaállítás újraaktiválja a megőrzött élő blokkot. A mentett draftot nem teszi közzé."
+      },
       "saveDraft": "Revíziózott piszkozat mentése",
       "operation": "Áttekintett élő művelet",
       "operations": {
@@ -3634,6 +3649,10 @@
       "previewFailed": "A hatáselőnézetet elutasították vagy hibás. Készíts új hiteles előnézetet.",
       "previewActivationBlocked": "Az eredmény nem Nincs követelményt tartalmaz, ezért addig nem alkalmazható, amíg minden aktiválási védelem zöld nem lesz.",
       "membersChanged": "változik a(z) {total} kiértékelt tagból",
+      "impactConfigured": "Beállított előtte → utána",
+      "impactEffective": "Tényleges előtte → utána",
+      "impactAffected": "Érintett tagok",
+      "impactTransition": "{before} → {after}",
       "typePhrase": "Pontosan ezt írd be: {phrase}",
       "reason": "Privát operátori indok",
       "apply": "Áttekintett művelet alkalmazása",
@@ -3652,6 +3671,7 @@
       "pendingSettings": "Függő szöveg beállításai és összesítése",
       "overdueSeconds": "Hosszú szöveg küszöbe (másodperc)",
       "longCopy": "Sorátlagos hosszabb szöveg használata",
+      "longCopyV1Unavailable": "Az 1. verzióban nem érhető el. A hosszabb függő szöveget csak a tag saját késedelmi ideje választja ki.",
       "thresholdSeconds": "Sorátlag küszöbe (másodperc)",
       "savePending": "Függő beállítások mentése",
       "pendingTotal": "Függő összesen",

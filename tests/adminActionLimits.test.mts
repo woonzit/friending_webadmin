@@ -85,6 +85,8 @@ const RAISED_BODY_LIMITS: Partial<Record<(typeof ADMIN_ACTIONS)[number], number>
   // A re-cropped picture travels as base64, which costs about a third on top of
   // the JPEG. Core refuses a decoded image over 8 MiB.
   admin_replace_image: 6_000_000,
+  // Verification A1 carries a bounded 2 MiB PNG as base64 in the JSON body.
+  verification_badge_upload: 3_145_728,
 };
 
 test("the per-action body ceiling is raised only where it is named", () => {

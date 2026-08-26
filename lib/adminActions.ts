@@ -63,7 +63,7 @@ const ACTIVE_PERSONA_ADMIN_ACTIONS = PERSONA_ADMIN_PROXY_RELEASED
   ? PERSONA_ADMIN_ACTIONS
   : [] as const;
 
-/** The full contract stays executable in tests while the actual bridge list remains closed. */
+/** Released verification actions share one explicit rollback switch and Core capability recheck. */
 const ACTIVE_VERIFICATION_ADMIN_ACTIONS = VERIFICATION_CONTRACT_READY
   ? VERIFICATION_ADMIN_ACTIONS
   : [] as const;
@@ -535,7 +535,7 @@ const ADMIN_ACTION_BODY_LIMIT: Readonly<Record<string, number>> = {
   save_invite_configuration: INVITE_CONFIGURATION_BODY_LIMIT_BYTES,
   admin_replace_image: REPLACE_IMAGE_BODY_LIMIT_BYTES,
   // A1: this is the effective guard on Apache 2.4.52 and therefore stays
-  // pinned even while the Verification bridge allow-list is dormant.
+  // pinned independently of the Verification bridge rollback switch.
   verification_badge_upload: MAX_VERIFICATION_BADGE_FORM_BYTES,
 };
 

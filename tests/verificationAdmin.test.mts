@@ -56,7 +56,9 @@ import {
   verificationPersistBeforeMutation,
   verificationPngBytesError,
   verificationPolicyImpactPreviewResponse,
+  verificationPolicyLifecycle,
   verificationPolicyMutationResponse,
+  verificationPolicyOperationsFor,
   verificationProxyCapabilityAuthorized,
   verificationShouldRetainMutation,
   verificationSimulationResponse,
@@ -248,8 +250,8 @@ function grantPreview(level: "light" | "strong" = "light"): VerificationGrantPre
   };
 }
 
-test("the accepted contract vocabulary is exact and the release switch remains dormant", () => {
-  assert.equal(VERIFICATION_CONTRACT_READY, false);
+test("the accepted contract vocabulary and released seventeen-action bridge are exact", () => {
+  assert.equal(VERIFICATION_CONTRACT_READY, true);
   assert.deepEqual(VERIFICATION_METHODS, ["video", "persona"]);
   assert.deepEqual(VERIFICATION_LEVELS, ["none", "light", "strong"]);
   assert.deepEqual(VERIFICATION_BADGE_SLOTS, ["light", "strong", "pending"]);
@@ -276,15 +278,31 @@ test("the accepted contract vocabulary is exact and the release switch remains d
   assert.equal(VERIFICATION_MUTATION_ACTIONS.length, 9);
   assert.equal(VERIFICATION_GRANT_CAPABILITIES.join(","), "verification_grant_edit,verification_grant_read");
   assert.deepEqual([...VERIFICATION_CAPABILITIES], [...VERIFICATION_CAPABILITIES].sort());
+  assert.deepEqual(
+    ADMIN_ACTIONS.filter((action) => action.startsWith("verification_")),
+    VERIFICATION_ADMIN_ACTIONS,
+  );
+  const viewerReads = new Set([
+    "verification_console",
+    "verification_simulate",
+    "verification_pending_summary",
+    "verification_user_detail",
+  ]);
+  const ownerOnly = new Set([
+    "verification_policy_impact_preview",
+    "verification_policy_apply",
+  ]);
 
   for (const action of VERIFICATION_ADMIN_ACTIONS) {
-    assert.equal(ADMIN_ACTIONS.includes(action as never), false, `${action} must stay outside the live bridge`);
-    assert.equal(isAdminActionAllowed(action), false);
-    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "owner" })), false);
+    assert.equal(ADMIN_ACTIONS.includes(action as never), true, `${action} must be in the live bridge`);
+    assert.equal(isAdminActionAllowed(action), true);
+    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "viewer" })), viewerReads.has(action), `${action} viewer floor`);
+    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "admin" })), !ownerOnly.has(action), `${action} editor floor`);
+    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "owner" })), true);
   }
 });
 
-test("A1 pins all badge ceilings while every other dormant action keeps the default", () => {
+test("A1 pins the active badge-upload ceiling while every other verification action keeps the default", () => {
   assert.equal(MAX_VERIFICATION_BADGE_BYTES, 2_097_152);
   assert.equal(MAX_VERIFICATION_BADGE_FORM_BYTES, 3_145_728);
   assert.equal(MIN_VERIFICATION_BADGE_DIMENSION, 16);
@@ -423,6 +441,66 @@ test("policy, copy, pending and badge mutation parsers close every material obje
   const activeWithoutMedia = clone(fixture.badges[0]);
   activeWithoutMedia.active = true;
   assert.equal(verificationBadgeMutationResponse(success({ contract_version: 1, principal: fixture.principal, badge: activeWithoutMedia, replayed: false })), null);
+});
+
+test("A7 and A8 keep draft-only publish and tombstone restore separate", () => {
+  const fixture = verificationConsoleFixture();
+  const draftOnly = {
+    ...clone(fixture.policies[0]),
+    scope_key: "country:HU",
+    scope: { kind: "country" as const, country_code: "HU", place_id: null, display: "Hungary" },
+    revision: 2,
+    active: false,
+    deleted_at: null,
+    live: null,
+    effective: null,
+  };
+  const parsedDraftOnly = verificationPolicyMutationResponse(success({
+    contract_version: 1,
+    principal: fixture.principal,
+    policy: draftOnly,
+    replayed: false,
+  }));
+  assert.ok(parsedDraftOnly);
+  assert.equal(verificationPolicyLifecycle(parsedDraftOnly.policy), "draft_only");
+  assert.deepEqual(verificationPolicyOperationsFor(parsedDraftOnly.policy), ["publish", "tombstone"]);
+
+  const tombstonedDraftOnly = { ...draftOnly, revision: 3, deleted_at: NOW };
+  const parsedTombstone = verificationPolicyMutationResponse(success({
+    contract_version: 1,
+    principal: fixture.principal,
+    policy: tombstonedDraftOnly,
+    replayed: false,
+  }));
+  assert.ok(parsedTombstone);
+  assert.equal(verificationPolicyLifecycle(parsedTombstone.policy), "tombstoned_draft_only");
+  assert.deepEqual(verificationPolicyOperationsFor(parsedTombstone.policy), ["restore"]);
+
+  const restoredDraftOnly = { ...draftOnly, revision: 4 };
+  const parsedRestore = verificationPolicyMutationResponse(success({
+    contract_version: 1,
+    principal: fixture.principal,
+    policy: restoredDraftOnly,
+    replayed: false,
+  }));
+  assert.ok(parsedRestore);
+  assert.equal(parsedRestore.policy.active, false, "restore must not activate a never-published override");
+  assert.equal(parsedRestore.policy.live, null, "restore must not manufacture a live block");
+  assert.equal(verificationPolicyLifecycle(parsedRestore.policy), "draft_only");
+  assert.deepEqual(verificationPolicyOperationsFor(parsedRestore.policy), ["publish", "tombstone"]);
+
+  const draftOnlyImpact = impactPreview();
+  draftOnlyImpact.scope_key = "country:HU";
+  draftOnlyImpact.confirmation_phrase = "PUBLISH country:HU";
+  draftOnlyImpact.impact.features[0].configured_before = "none";
+  draftOnlyImpact.impact.features[0].effective_before = "light";
+  const parsedImpact = verificationPolicyImpactPreviewResponse(success(draftOnlyImpact));
+  assert.ok(parsedImpact);
+  assert.equal(
+    parsedImpact.impact.features[0].effective_before,
+    "light",
+    "the console must preserve Core's parent-derived effective-before value",
+  );
 });
 
 test("impact, Places and aggregate parsers accept only their exact bounded shapes", () => {
@@ -591,6 +669,7 @@ test("all seventeen proxy normalizers accept one exact request and reject actor,
   assert.equal(normalizeVerificationProxyBody("verification_copy_remove", { ...valid.verification_copy_remove, copy_key: "default.video" }), null);
   assert.equal(normalizeVerificationProxyBody("verification_badge_remove", { ...valid.verification_badge_remove, expected_revision: 0 }), null);
   assert.equal(normalizeVerificationProxyBody("verification_pending_settings_save", { ...valid.verification_pending_settings_save, queue_average_long_copy_enabled: "0" }), null);
+  assert.equal(normalizeVerificationProxyBody("verification_pending_settings_save", { ...valid.verification_pending_settings_save, queue_average_long_copy_enabled: true }), null, "A9 refuses enabling the inert v1 toggle");
   assert.equal(normalizeVerificationProxyBody("verification_simulate", {
     ...valid.verification_simulate,
     simulation_json: { ...simulationInput(), imported_method_hint: "unknown" },
@@ -726,6 +805,7 @@ test("route, navigation, page, console and user panel preserve every security an
   assert.match(shell, /item\.key !== "verificationSettings" \|\| verificationConsoleReady/);
   assert.match(layout, /verificationConsoleReady=\{me\.verificationConsoleReady\}/);
   assert.match(actions, /ACTIVE_VERIFICATION_ADMIN_ACTIONS = VERIFICATION_CONTRACT_READY/);
+  assert.match(actions, /\.\.\.ACTIVE_VERIFICATION_ADMIN_ACTIONS/);
 
   for (const action of VERIFICATION_ADMIN_ACTIONS) {
     assert.match(`${actions}\n${consoleSource}\n${userPanel}`, new RegExp(`"${action}"`), action);
@@ -737,6 +817,13 @@ test("route, navigation, page, console and user panel preserve every security an
   assert.match(consoleSource, /VERIFICATION_COPY_KEYS/);
   assert.match(consoleSource, /normalized_fingerprint: impact\.normalized_fingerprint/);
   assert.match(consoleSource, /confirmation !== impact\.confirmation_phrase/);
+  assert.match(consoleSource, /verificationPolicyOperationsFor/);
+  assert.match(consoleSource, /feature\.effective_before/);
+  assert.match(consoleSource, /queue_average_long_copy_enabled: false/);
+  assert.doesNotMatch(consoleSource, /queue_average_long_copy_enabled:\s*pendingLongCopy/);
+  assert.match(consoleSource, /type="checkbox" checked=\{pendingLongCopy\} disabled/);
+  assert.doesNotMatch(consoleSource, /setPendingLongCopy\(event\.target\.checked\)/);
+  assert.match(consoleSource, /live\.longCopyV1Unavailable/);
   assert.match(consoleSource, /copyEditorLocale/);
   assert.match(consoleSource, /policy_enable_allowed/);
   assert.match(consoleSource, /completePolicyPage/);
@@ -790,6 +877,8 @@ test("English and Hungarian UI and eleven Help topics stay key-identical and cov
   assert.deepEqual(Object.keys(hu.adminHelp.pages.verification.sections), expectedSections);
   assert.deepEqual(keyPaths(en.verificationAdmin), keyPaths(hu.verificationAdmin));
   assert.deepEqual(keyPaths(en.userDetail.verificationGrant), keyPaths(hu.userDetail.verificationGrant));
+  assert.match(JSON.stringify(en.verificationAdmin), /Not available in v1/);
+  assert.match(JSON.stringify(hu.verificationAdmin), /Az 1\. verzióban nem érhető el/);
 
   const help = `${JSON.stringify(en.adminHelp.pages.verification)}\n${JSON.stringify(hu.adminHelp.pages.verification)}`;
   for (const evidence of [
@@ -803,6 +892,8 @@ test("English and Hungarian UI and eleven Help topics stay key-identical and cov
     "request id",
     "provider keys",
     "all-None",
+    "parent-derived effective-before",
+    "not available in v1",
     "regisztrációs vagy IP-országát",
     "fingerprinthez",
     "30 perc",

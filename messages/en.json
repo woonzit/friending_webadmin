@@ -745,12 +745,13 @@
           },
           "scopeEditing": {
             "title": "Add and pause overrides",
-            "purpose": "A complete saved draft has no member effect until a separate live operation; country and city fields inherit exactly, while global forbids inheritance.",
+            "purpose": "A complete saved draft has no member effect until a separate live operation; country and city fields inherit exactly, while global forbids inheritance. New overrides remain draft-only until published.",
             "actions": {
               "1": "Use a closed ISO country or one current Core-proxied Places detail token; typed city text alone cannot create authority.",
-              "2": "Save the complete draft at the observed revision, then generate a new impact preview before publish, deactivate, tombstone or restore."
+              "2": "Save the complete draft at the observed revision, then generate a new impact preview before publish, deactivate, tombstone or restore.",
+              "3": "For a draft-only publish, review the parent-derived effective-before values. Restoring its tombstone returns it to draft-only and still requires a separate publish."
             },
-            "guidance": "Only live policy affects members. Global is always active and non-deletable; override removal is a retained tombstone, never a physical delete."
+            "guidance": "Only live policy affects members. Restore never publishes a draft. Global is always active and non-deletable; override removal is a retained tombstone, never a physical delete."
           },
           "featureMatrix": {
             "title": "Feature requirements",
@@ -766,7 +767,7 @@
             "purpose": "Five required default pairs and optional per-feature overrides store bounded plain-text English and Hungarian material atomically with semantic assets and safe actions.",
             "actions": {
               "1": "Edit both locales together and verify labels are present exactly when their action exists; URL actions accept bounded safe HTTPS only.",
-              "2": "Keep Pending information-only: it never unlocks, launch overdue copy starts at 30 minutes, and no timer turns it terminal automatically."
+              "2": "Keep Pending information-only: it never unlocks, launch overdue copy starts at 30 minutes, and no timer turns it terminal automatically. Queue-average long copy is not available in v1."
             },
             "guidance": "Automatic actions are resolved by Core from current state. Copy cannot force a provider start, expose provider detail or create an authorization bypass."
           },
@@ -3621,6 +3622,20 @@
       "draftRequirement": "Saved draft requirement",
       "effectiveRequirement": "Current live requirement",
       "notLive": "No effective live policy",
+      "policyStates": {
+        "active": "Active live policy",
+        "draft_only": "Draft only",
+        "inactive": "Inactive with retained live policy",
+        "tombstoned_draft_only": "Tombstoned draft only",
+        "tombstoned_live": "Tombstoned with retained live policy"
+      },
+      "policyStateHelp": {
+        "active": "This scope's current live block can affect members.",
+        "draft_only": "Publish is available. Until then, impact effective-before values come from the parent scope.",
+        "inactive": "The retained live block currently has no member effect.",
+        "tombstoned_draft_only": "Restore returns this scope to draft only. It never activates or publishes it.",
+        "tombstoned_live": "Restore reactivates the retained live block. It never publishes the saved draft."
+      },
       "saveDraft": "Save revisioned draft",
       "operation": "Reviewed live operation",
       "operations": {
@@ -3634,6 +3649,10 @@
       "previewFailed": "The impact preview was refused or malformed. Generate a new authoritative preview.",
       "previewActivationBlocked": "This result contains a non-None requirement and cannot be applied until every activation guard is green.",
       "membersChanged": "of {total} evaluated members change",
+      "impactConfigured": "Configured before → after",
+      "impactEffective": "Effective before → after",
+      "impactAffected": "Affected members",
+      "impactTransition": "{before} → {after}",
       "typePhrase": "Type exactly: {phrase}",
       "reason": "Private operator reason",
       "apply": "Apply reviewed operation",
@@ -3652,6 +3671,7 @@
       "pendingSettings": "Pending-copy settings and aggregate",
       "overdueSeconds": "Long-copy threshold (seconds)",
       "longCopy": "Use queue-average longer copy",
+      "longCopyV1Unavailable": "Not available in v1. Only the member's own overdue time selects the longer pending copy.",
       "thresholdSeconds": "Queue-average threshold (seconds)",
       "savePending": "Save pending settings",
       "pendingTotal": "Pending total",

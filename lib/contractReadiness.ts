@@ -20,5 +20,5 @@ export const CANNED_TEMPLATES_CONTRACT_READY: boolean = true;
 export const OUTBOUND_MESSAGING_CONTRACT_READY: boolean = true;
 /** T-107 is released; push settings and per-member channel projections are required. */
 export const PUSH_MODE_CONTRACT_READY: boolean = true;
-/** T-109/T-108 must be released and reviewed before verification policy UI is reachable. */
-export const VERIFICATION_CONTRACT_READY: boolean = false;
+/** Core T-109 S2 is released; all 17 actions remain gated by Core's current projection. */
+export const VERIFICATION_CONTRACT_READY: boolean = true;

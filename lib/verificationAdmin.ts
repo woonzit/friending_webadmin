@@ -165,6 +165,39 @@ export type VerificationPolicy = {
   updated_by: string;
 };
 
+export type VerificationPolicyLifecycle =
+  | "active"
+  | "draft_only"
+  | "inactive"
+  | "tombstoned_draft_only"
+  | "tombstoned_live";
+
+type VerificationPolicyState = Pick<VerificationPolicy, "scope" | "active" | "deleted_at" | "live">;
+
+/**
+ * Core owns policy transitions. This closed projection exists only to label the
+ * returned state and to avoid offering operations that the v1 contract refuses.
+ */
+export function verificationPolicyLifecycle(policy: VerificationPolicyState): VerificationPolicyLifecycle {
+  if (policy.deleted_at !== null) return policy.live === null ? "tombstoned_draft_only" : "tombstoned_live";
+  if (policy.active) return "active";
+  return policy.live === null ? "draft_only" : "inactive";
+}
+
+/**
+ * A7 permits publish for a draft-only override. A8 keeps a draft-only
+ * tombstone draft-only after restore, so it must be published separately.
+ */
+export function verificationPolicyOperationsFor(policy: VerificationPolicyState): VerificationPolicyOperation[] {
+  if (policy.scope.kind === "global") return ["publish"];
+  if (policy.deleted_at !== null) return ["restore"];
+  return VERIFICATION_POLICY_OPERATIONS.filter((operation) => {
+    if (operation === "publish") return policy.active || policy.live === null;
+    if (operation === "deactivate") return policy.active;
+    return operation === "tombstone";
+  });
+}
+
 export type VerificationCopyBehavior = {
   icon: { kind: "asset"; asset_key: `verification.${VerificationGateVariant}` };
   primary_action: "automatic" | "open_verification_center" | "url" | "none";
@@ -1443,8 +1476,8 @@ function normalizePendingSettings(body: JsonObject): JsonObject | null {
   const threshold = integer(raw?.queue_average_threshold_seconds, 300, 86_400);
   const revision = integer(raw?.expected_revision, 1, 2_147_483_647);
   const id = requestId(raw?.request_id);
-  return overdue !== null && typeof raw?.queue_average_long_copy_enabled === "boolean" && threshold !== null && revision !== null && id
-    ? Object.assign(Object.create(null), { contract_version: 1, overdue_after_seconds: overdue, queue_average_long_copy_enabled: raw.queue_average_long_copy_enabled, queue_average_threshold_seconds: threshold, expected_revision: revision, request_id: id })
+  return overdue !== null && raw?.queue_average_long_copy_enabled === false && threshold !== null && revision !== null && id
+    ? Object.assign(Object.create(null), { contract_version: 1, overdue_after_seconds: overdue, queue_average_long_copy_enabled: false, queue_average_threshold_seconds: threshold, expected_revision: revision, request_id: id })
     : null;
 }
 
@@ -1715,7 +1748,7 @@ function fixtureBadge(slot: VerificationBadgeSlot): VerificationBadgeAsset {
   return { schema_version: 1, slot, revision: 1, active: false, deleted_at: null, managed_url: null, mime: null, width: null, height: null, byte_size: null, content_sha256: null, updated_at: VERIFICATION_FIXTURE_EVALUATED_AT, updated_by: "owner@friending.com" };
 }
 
-/** Exact all-none launch fixture used only by tests and dormant visual development. */
+/** Exact all-none launch fixture used only by tests and visual development. */
 export function verificationConsoleFixture(): VerificationConsoleData {
   const block = fixtureSavedBlock();
   const globalPolicy: VerificationPolicy = {

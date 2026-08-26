@@ -14,7 +14,6 @@ import {
   VERIFICATION_METHODS,
   VERIFICATION_METHOD_STATUSES,
   VERIFICATION_PENDING_STORAGE_KEY,
-  VERIFICATION_POLICY_OPERATIONS,
   VERIFICATION_REQUIREMENTS,
   VERIFICATION_TAB_KEYS,
   normalizeVerificationProxyBody,
@@ -33,7 +32,9 @@ import {
   verificationPendingSummaryResponse,
   verificationPersistBeforeMutation,
   verificationPolicyImpactPreviewResponse,
+  verificationPolicyLifecycle,
   verificationPolicyMutationResponse,
+  verificationPolicyOperationsFor,
   verificationShouldRetainMutation,
   verificationSimulationResponse,
   type VerificationBadgeAsset,
@@ -281,12 +282,21 @@ export default function VerificationAdminConsole({ initialTab }: { initialTab: V
     () => data?.policies.find((row) => row.scope_key === selectedScope) ?? null,
     [data, selectedScope],
   );
+  const policyLifecycle = useMemo(
+    () => selectedPolicy ? verificationPolicyLifecycle(selectedPolicy) : null,
+    [selectedPolicy],
+  );
+  const policyOperations = useMemo(
+    () => selectedPolicy ? verificationPolicyOperationsFor(selectedPolicy) : [],
+    [selectedPolicy],
+  );
 
   useEffect(() => {
     if (selectedPolicy) setPolicyDraft(clone(selectedPolicy.draft));
+    setOperation((current) => policyOperations.includes(current) ? current : policyOperations[0] ?? "publish");
     setImpact(null);
     setConfirmation("");
-  }, [selectedPolicy]);
+  }, [policyOperations, selectedPolicy]);
 
   useEffect(() => {
     const pair = data?.copy_pairs.find((row) => row.copy_key === selectedCopy) ?? null;
@@ -440,7 +450,7 @@ export default function VerificationAdminConsole({ initialTab }: { initialTab: V
   }
 
   async function previewImpact() {
-    if (!selectedPolicy || busy) return;
+    if (!selectedPolicy || busy || !policyOperations.includes(operation)) return;
     setBusy(true);
     const response = await adminCall("verification_policy_impact_preview", {
       contract_version: 1,
@@ -567,7 +577,7 @@ export default function VerificationAdminConsole({ initialTab }: { initialTab: V
     startMutation("verification_pending_settings_save", "pending", {
       contract_version: 1,
       overdue_after_seconds: Number(pendingOverdue),
-      queue_average_long_copy_enabled: pendingLongCopy,
+      queue_average_long_copy_enabled: false,
       queue_average_threshold_seconds: Number(pendingThreshold),
       expected_revision: data.pending_settings.revision,
       request_id: crypto.randomUUID(),
@@ -680,6 +690,10 @@ export default function VerificationAdminConsole({ initialTab }: { initialTab: V
             <div className="panel-body">
               <label className="field"><span>{t("live.scope")}</span><select value={selectedScope} onChange={(event) => setSelectedScope(event.target.value)}>{data.policies.map((row) => <option value={row.scope_key} key={row.scope_key}>{row.scope.display} · {row.scope_key}</option>)}</select></label>
               {selectedPolicy && policyDraft ? <div className="form-stack">
+                {policyLifecycle ? <div className="verification-provenance-card">
+                  <strong>{t(`live.policyStates.${policyLifecycle}`)}</strong>
+                  <small>{t(`live.policyStateHelp.${policyLifecycle}`)}</small>
+                </div> : null}
                 <label className="field">
                   <span>{t("live.enabledMethods")}</span>
                   <select value={methodChoice(policyDraft.enabled_methods)} disabled={locked || !can("verification_policy_edit")} onChange={(event) => { setPolicyDraft({ ...policyDraft, enabled_methods: methodsFromChoice(event.target.value) }); setImpact(null); }}>
@@ -700,9 +714,21 @@ export default function VerificationAdminConsole({ initialTab }: { initialTab: V
                 })}</tbody></table></div>
                 <div className="row-actions"><button type="button" className="button button-primary" disabled={locked || !can("verification_policy_edit")} onClick={() => savePolicyDraft(selectedPolicy)}>{t("live.saveDraft")}</button></div>
                 <div className="verification-grant-editor">
-                  <label className="field"><span>{t("live.operation")}</span><select value={operation} disabled={locked || !can("verification_policy_publish")} onChange={(event) => { setOperation(event.target.value as VerificationPolicyOperation); setImpact(null); }}>{VERIFICATION_POLICY_OPERATIONS.map((value) => <option value={value} key={value}>{t(`live.operations.${value}`)}</option>)}</select></label>
+                  <label className="field"><span>{t("live.operation")}</span><select value={operation} disabled={locked || !can("verification_policy_publish")} onChange={(event) => { setOperation(event.target.value as VerificationPolicyOperation); setImpact(null); }}>{policyOperations.map((value) => <option value={value} key={value}>{t(`live.operations.${value}`)}</option>)}</select></label>
                   <button type="button" className="button button-secondary" disabled={locked || !can("verification_policy_publish")} onClick={() => void previewImpact()}>{t("live.previewImpact")}</button>
-                  {impact ? <div className="form-stack"><div className="verification-queue-metric"><strong>{impact.impact.members_changed}</strong><span>{t("live.membersChanged", { total: impact.impact.members_evaluated })}</span></div><label className="field"><span>{t("live.typePhrase", { phrase: impact.confirmation_phrase })}</span><input disabled={locked} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></label><label className="field"><span>{t("live.reason")}</span><textarea disabled={locked} maxLength={300} value={reason} onChange={(event) => setReason(event.target.value)} /></label>{impactActivationBlocked ? <div className="alert alert-warning">{t("live.previewActivationBlocked")}</div> : null}<button type="button" className="button button-danger" disabled={locked || !can("verification_policy_publish") || impactActivationBlocked || confirmation !== impact.confirmation_phrase || reason.trim() === ""} onClick={applyImpact}>{t("live.apply")}</button></div> : null}
+                  {impact ? <div className="form-stack">
+                    <div className="verification-queue-metric"><strong>{impact.impact.members_changed}</strong><span>{t("live.membersChanged", { total: impact.impact.members_evaluated })}</span></div>
+                    <div className="table-wrap"><table className="data-table"><thead><tr><th>{t("requirements.feature")}</th><th>{t("live.impactConfigured")}</th><th>{t("live.impactEffective")}</th><th>{t("live.impactAffected")}</th></tr></thead><tbody>{impact.impact.features.map((feature) => <tr key={feature.feature}>
+                      <th><strong>{t(`features.${feature.feature}.title`)}</strong><small>{feature.feature}</small></th>
+                      <td>{t("live.impactTransition", { before: t(`requirements.values.${feature.configured_before}`), after: t(`requirements.values.${feature.configured_after}`) })}</td>
+                      <td>{t("live.impactTransition", { before: t(`requirements.values.${feature.effective_before}`), after: t(`requirements.values.${feature.effective_after}`) })}</td>
+                      <td>{feature.affected_members}</td>
+                    </tr>)}</tbody></table></div>
+                    <label className="field"><span>{t("live.typePhrase", { phrase: impact.confirmation_phrase })}</span><input disabled={locked} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></label>
+                    <label className="field"><span>{t("live.reason")}</span><textarea disabled={locked} maxLength={300} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
+                    {impactActivationBlocked ? <div className="alert alert-warning">{t("live.previewActivationBlocked")}</div> : null}
+                    <button type="button" className="button button-danger" disabled={locked || !can("verification_policy_publish") || impactActivationBlocked || confirmation !== impact.confirmation_phrase || reason.trim() === ""} onClick={applyImpact}>{t("live.apply")}</button>
+                  </div> : null}
                 </div>
               </div> : null}
             </div>
@@ -749,7 +775,17 @@ export default function VerificationAdminConsole({ initialTab }: { initialTab: V
               </> : null}
             </div>
           </section>
-          <section className="panel"><div className="panel-header"><h2>{t("live.pendingSettings")}</h2></div><div className="panel-body form-stack"><label className="field"><span>{t("live.overdueSeconds")}</span><input disabled={locked || !can("verification_copy_edit")} type="number" min={300} max={86400} value={pendingOverdue} onChange={(event) => setPendingOverdue(event.target.value)} /></label><label className="checkbox-field"><input disabled={locked || !can("verification_copy_edit")} type="checkbox" checked={pendingLongCopy} onChange={(event) => setPendingLongCopy(event.target.checked)} /><span>{t("live.longCopy")}</span></label><label className="field"><span>{t("live.thresholdSeconds")}</span><input disabled={locked || !can("verification_copy_edit")} type="number" min={300} max={86400} value={pendingThreshold} onChange={(event) => setPendingThreshold(event.target.value)} /></label><button type="button" className="button button-primary" disabled={locked || !can("verification_copy_edit")} onClick={savePendingSettings}>{t("live.savePending")}</button><dl className="detail-list"><div className="detail-row"><dt>{t("live.pendingTotal")}</dt><dd>{summary.total}</dd></div><div className="detail-row"><dt>{t("live.inSla")}</dt><dd>{summary.in_sla}</dd></div><div className="detail-row"><dt>{t("live.overdue")}</dt><dd>{summary.overdue}</dd></div></dl></div></section>
+          <section className="panel">
+            <div className="panel-header"><h2>{t("live.pendingSettings")}</h2></div>
+            <div className="panel-body form-stack">
+              <label className="field"><span>{t("live.overdueSeconds")}</span><input disabled={locked || !can("verification_copy_edit")} type="number" min={300} max={86400} value={pendingOverdue} onChange={(event) => setPendingOverdue(event.target.value)} /></label>
+              <label className="checkbox-field"><input type="checkbox" checked={pendingLongCopy} disabled aria-describedby="verification-long-copy-v1-help" /><span>{t("live.longCopy")}</span></label>
+              <small id="verification-long-copy-v1-help" className="field-hint">{t("live.longCopyV1Unavailable")}</small>
+              <label className="field"><span>{t("live.thresholdSeconds")}</span><input disabled={locked || !can("verification_copy_edit")} type="number" min={300} max={86400} value={pendingThreshold} onChange={(event) => setPendingThreshold(event.target.value)} /></label>
+              <button type="button" className="button button-primary" disabled={locked || !can("verification_copy_edit")} onClick={savePendingSettings}>{t("live.savePending")}</button>
+              <dl className="detail-list"><div className="detail-row"><dt>{t("live.pendingTotal")}</dt><dd>{summary.total}</dd></div><div className="detail-row"><dt>{t("live.inSla")}</dt><dd>{summary.in_sla}</dd></div><div className="detail-row"><dt>{t("live.overdue")}</dt><dd>{summary.overdue}</dd></div></dl>
+            </div>
+          </section>
           {copyDraft && copyLocale ? <aside className={`verification-gate-preview preview-${copyVariant}`} aria-label={t("messages.previewLabel")}>
             <div className="verification-phone-status"><span>9:41</span><span>{copyEditorLocale.toUpperCase()}</span></div>
             <div className="verification-gate-sheet">
