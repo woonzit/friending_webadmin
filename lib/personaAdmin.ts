@@ -7,10 +7,10 @@ import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
 /**
  * Closed consumer model for Persona Webadmin contract v1.
  *
- * The provider is intentionally dormant. This module contains no endpoint or
- * credential access; it validates decoded Core values, builds the exact public
- * browser material, and supplies the action-specific proxy boundary that will
- * become reachable only after the reviewed cutover.
+ * The released provider remains gated by an exact runtime capability block.
+ * This module contains no endpoint or credential access; it validates decoded
+ * Core values, builds the exact public browser material, and supplies the
+ * action-specific proxy boundary.
  */
 
 export const PERSONA_ADMIN_CONTRACT_VERSION = 1 as const;

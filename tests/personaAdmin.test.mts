@@ -230,7 +230,7 @@ test("legacy JSON slash and Unicode escapes are compared after decoding", () => 
   assert.equal(parsed.config.benefit2_icon_url, "https://img.friending.co/api/cache/app/persona/bolt.png");
 });
 
-test("admin_me Persona capabilities are exact, ordered, action-driven, and dormant", () => {
+test("admin_me Persona capabilities are exact, ordered, action-driven, and readiness-gated", () => {
   const viewer = personaAdminCapabilitiesFrom(fixtures.admin_me_viewer);
   const writer = personaAdminCapabilitiesFrom(fixtures.admin_me_writer);
   assert.ok(viewer && writer);
@@ -641,12 +641,19 @@ test("preview helpers replace literal markers and suppress unsafe colors and rem
   assert.equal(personaPreviewImageUrl("javascript:alert(1)"), null);
 });
 
-test("the dormant bridge is unreachable for guests, foreign origins, viewers, and owners", async () => {
-  assert.equal(PERSONA_ADMIN_PROXY_RELEASED, false);
+test("the released bridge keeps exact guest, origin, viewer, and writer gates", async () => {
+  assert.equal(PERSONA_ADMIN_PROXY_RELEASED, true);
   for (const action of PERSONA_ADMIN_ACTIONS) {
-    assert.equal(isAdminActionAllowed(action), false);
-    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "viewer" })), false);
-    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "owner" })), false);
+    assert.equal(isAdminActionAllowed(action), true);
+    assert.equal(
+      isAdminActionAuthorized(action, adminPrincipalFrom({ role: "viewer" })),
+      action === "persona_start_get_config_admin",
+    );
+    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "owner" })), true);
+    assert.equal(
+      isAdminActionAuthorized(action, adminPrincipalFrom({})),
+      action === "persona_start_get_config_admin",
+    );
   }
 
   assert.equal(isTrustedAdminRequest(headers({

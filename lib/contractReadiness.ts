@@ -13,7 +13,7 @@ export const PRODUCT_POPUP_CONTRACT_READY: boolean = true;
  * changes, every control still requires Core's `admin_me.persona.contract_ready`
  * and exact action capability at runtime.
  */
-export const PERSONA_ADMIN_PROXY_RELEASED: boolean = false;
+export const PERSONA_ADMIN_PROXY_RELEASED: boolean = true;
 /** Core T-108c is released; all three CRUD actions remain capability/revision gated. */
 export const CANNED_TEMPLATES_CONTRACT_READY: boolean = true;
 /** T-108d must be released and reviewed before outbound messaging is reachable. */
