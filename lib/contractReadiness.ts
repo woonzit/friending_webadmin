@@ -14,8 +14,8 @@ export const PRODUCT_POPUP_CONTRACT_READY: boolean = true;
  * and exact action capability at runtime.
  */
 export const PERSONA_ADMIN_PROXY_RELEASED: boolean = false;
-/** T-108c must be released and reviewed before canned CRUD is reachable. */
-export const CANNED_TEMPLATES_CONTRACT_READY: boolean = false;
+/** Core T-108c is released; all three CRUD actions remain capability/revision gated. */
+export const CANNED_TEMPLATES_CONTRACT_READY: boolean = true;
 /** T-108d must be released and reviewed before outbound messaging is reachable. */
 export const OUTBOUND_MESSAGING_CONTRACT_READY: boolean = false;
 /** T-107 is released; push settings and per-member channel projections are required. */

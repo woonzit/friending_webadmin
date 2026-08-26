@@ -512,12 +512,16 @@ test("the contract surface is CRUD-only and has no outbound send/history action"
   assert.equal(CANNED_TEMPLATE_ACTIONS.some((action) => /send|history/u.test(action)), false);
 });
 
-test("the dormant bridge is unreachable for guests, foreign origins, viewers, and owners", async () => {
-  assert.equal(CANNED_TEMPLATES_CONTRACT_READY, false);
+test("the released bridge keeps reads available to viewers and mutations editor-only", async () => {
+  assert.equal(CANNED_TEMPLATES_CONTRACT_READY, true);
   for (const action of CANNED_TEMPLATE_ACTIONS) {
-    assert.equal(isAdminActionAllowed(action), false);
-    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "viewer" })), false);
-    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "owner" })), false);
+    assert.equal(isAdminActionAllowed(action), true);
+    assert.equal(
+      isAdminActionAuthorized(action, adminPrincipalFrom({ role: "viewer" })),
+      action === "list_canned",
+    );
+    assert.equal(isAdminActionAuthorized(action, adminPrincipalFrom({ role: "owner" })), true);
+    assert.equal(adminActionBodyLimit(action), 256_000, `${action} keeps the default body ceiling`);
   }
 
   assert.equal(isTrustedAdminRequest(headers({
@@ -562,7 +566,7 @@ test("page, navigation, proxy, durable recovery, confirmation, safe preview, and
   assert.match(shell, /ready: CANNED_TEMPLATES_CONTRACT_READY/);
   assert.match(shell, /NAV\.filter\(\(item\) => item\.ready !== false\)/);
   for (const action of CANNED_TEMPLATE_ACTIONS) {
-    assert.doesNotMatch(actions, new RegExp(`"${action}"`));
+    assert.match(actions, new RegExp(`"${action}"`));
     assert.match(`${component}\n${model}`, new RegExp(`"${action}"`));
   }
   assert.match(route, /normalizeCannedTemplateProxyBody\(action, body\)/);

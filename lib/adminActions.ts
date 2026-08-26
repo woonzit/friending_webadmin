@@ -1,4 +1,5 @@
 import {
+  CANNED_TEMPLATES_CONTRACT_READY,
   PRODUCT_POPUP_CONTRACT_READY,
   REPORTED_CONTENT_CONTRACT_READY,
 } from "@/lib/contractReadiness";
@@ -37,6 +38,10 @@ const REPORTED_CONTENT_ADMIN_ACTIONS = REPORTED_CONTENT_CONTRACT_READY
 
 const PRODUCT_POPUP_ADMIN_ACTIONS = PRODUCT_POPUP_CONTRACT_READY
   ? ["admin_get_user_popup", "admin_set_user_popup", "admin_clear_user_popup"] as const
+  : [] as const;
+
+const CANNED_TEMPLATE_ADMIN_ACTIONS = CANNED_TEMPLATES_CONTRACT_READY
+  ? ["list_canned", "save_canned", "delete_canned"] as const
   : [] as const;
 
 export const ADMIN_ACTIONS = [
@@ -150,6 +155,7 @@ export const ADMIN_ACTIONS = [
   "signup_photo_config",
   "save_signup_photo_config",
   ...PRODUCT_POPUP_ADMIN_ACTIONS,
+  ...CANNED_TEMPLATE_ADMIN_ACTIONS,
   ...REPORTED_CONTENT_ADMIN_ACTIONS,
   ...DATES_ADMIN_ACTIONS,
 ] as const;
@@ -325,6 +331,12 @@ export const ADMIN_ACTION_ACCESS: Record<AdminAction, AdminActionAccess> = {
   admin_get_user_popup: "read",
   admin_set_user_popup: "write",
   admin_clear_user_popup: "write",
+
+  // Core authors the narrower canned-template capabilities on every response;
+  // the bridge also enforces the global viewer/editor ladder in depth.
+  list_canned: "read",
+  save_canned: "write",
+  delete_canned: "write",
 
   // The list is safe for every active administrator. A browser-side decision
   // also requires the global editor role; Core then rechecks its narrower
