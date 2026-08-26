@@ -9,7 +9,7 @@ import {
   adminPrincipalFrom,
   invalidatesAdminSession,
   isAdminActionAllowed,
-  isAdminActionAuthorized,
+  isAdminBridgeActionAuthorized,
 } from "@/lib/adminActions";
 import { coreCall, mergeCoreParams } from "@/lib/core";
 import {
@@ -95,7 +95,7 @@ export async function POST(
   if (audienceVisibilityAuthorized === false) {
     return bridgeError("catalog-admin-capability-required", 403);
   }
-  if (!isAdminActionAuthorized(action, principal)) {
+  if (!isAdminBridgeActionAuthorized(action, principal, audienceVisibilityAuthorized)) {
     return bridgeError("admin-write-required", 403);
   }
 

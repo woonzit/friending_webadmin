@@ -639,6 +639,24 @@ export function isAdminActionAuthorized(action: string, principal: AdminPrincipa
 }
 
 /**
+ * Compose the generic Webadmin role floor with the independent audience-
+ * visibility control plane. The seven versioned catalogue actions are already
+ * authorized by Core's exact `admin_me.audience_visibility` block, whose role
+ * is deliberately independent from the top-level administrator role. Every
+ * other family keeps the existing generic authorization policy unchanged.
+ */
+export function isAdminBridgeActionAuthorized(
+  action: string,
+  principal: AdminPrincipal,
+  audienceVisibilityAuthorized: boolean | null,
+): boolean {
+  if ((AUDIENCE_VISIBILITY_ADMIN_ACTIONS as readonly string[]).includes(action)) {
+    return audienceVisibilityAuthorized === true;
+  }
+  return isAdminActionAuthorized(action, principal);
+}
+
+/**
  * Only a failed membership/session check should send an operator back to the
  * login page. A role or Dates-capability denial is a valid authenticated 403
  * and must stay a 403 so the UI can report authorization accurately.

@@ -28,7 +28,12 @@ import {
   audienceVisibilityTab,
   normalizeAudienceVisibilityProxyBody,
 } from "../lib/audienceVisibilityAdmin.ts";
-import { ADMIN_ACTIONS, adminActionAccess } from "../lib/adminActions.ts";
+import {
+  ADMIN_ACTIONS,
+  adminActionAccess,
+  adminPrincipalFrom,
+  isAdminBridgeActionAuthorized,
+} from "../lib/adminActions.ts";
 import { AUDIENCE_VISIBILITY_CONTRACT_READY } from "../lib/contractReadiness.ts";
 
 type Json = Record<string, any>;
@@ -143,6 +148,23 @@ function editorAdminMe(ready = true): Json {
   };
 }
 
+function catalogueAdminMe(role: "viewer" | "editor" | "approver" | "owner"): Json {
+  const writable = role !== "viewer";
+  return {
+    contract_version: 1,
+    contract_ready: true,
+    principal: {
+      role,
+      capabilities: writable
+        ? [...AUDIENCE_VISIBILITY_CAPABILITIES]
+        : AUDIENCE_VISIBILITY_CAPABILITIES.slice(0, 2),
+    },
+    actions: writable
+      ? [...AUDIENCE_VISIBILITY_ADMIN_ACTIONS]
+      : AUDIENCE_VISIBILITY_ADMIN_ACTIONS.slice(0, 2),
+  };
+}
+
 test("the dormant v1 vocabulary pins seven actions, four capabilities, and the D-019 axes", () => {
   assert.equal(AUDIENCE_VISIBILITY_CONTRACT_READY, false);
   assert.deepEqual(AUDIENCE_VISIBILITY_GENDERS, ["man", "woman", "nonbinary"]);
@@ -195,6 +217,54 @@ test("the proxy capability decision trusts only the exact additive admin_me bloc
     ...membership,
     audience_visibility: { ...editorAdminMe(), extra: true },
   }), false);
+});
+
+test("bridge authorization composes the independent catalogue role without weakening other families", () => {
+  const globalViewer = adminPrincipalFrom({ role: "viewer" });
+  for (const catalogueRole of ["editor", "approver", "owner"] as const) {
+    const membership = {
+      success: true,
+      role: "viewer",
+      audience_visibility: catalogueAdminMe(catalogueRole),
+    };
+    for (const action of AUDIENCE_VISIBILITY_ADMIN_ACTIONS) {
+      const capability = audienceVisibilityProxyCapabilityAuthorized(action, membership);
+      assert.equal(capability, true, `${catalogueRole} capability for ${action}`);
+      assert.equal(
+        isAdminBridgeActionAuthorized(action, globalViewer, capability),
+        true,
+        `top-level viewer with catalogue ${catalogueRole} may ${action}`,
+      );
+    }
+  }
+
+  const catalogueViewer = {
+    success: true,
+    role: "viewer",
+    audience_visibility: catalogueAdminMe("viewer"),
+  };
+  for (const [index, action] of AUDIENCE_VISIBILITY_ADMIN_ACTIONS.entries()) {
+    const capability = audienceVisibilityProxyCapabilityAuthorized(action, catalogueViewer);
+    assert.equal(capability, index < 2);
+    assert.equal(isAdminBridgeActionAuthorized(action, globalViewer, capability), index < 2);
+  }
+
+  for (const membership of [
+    { success: true, role: "viewer" },
+    { success: true, role: "viewer", audience_visibility: { ...catalogueAdminMe("editor"), extra: true } },
+  ]) {
+    const capability = audienceVisibilityProxyCapabilityAuthorized(
+      "save_audience_visibility_group",
+      membership,
+    );
+    assert.equal(capability, false);
+    assert.equal(
+      isAdminBridgeActionAuthorized("save_audience_visibility_group", globalViewer, capability),
+      false,
+    );
+  }
+
+  assert.equal(isAdminBridgeActionAuthorized("save_hero", globalViewer, true), false);
 });
 
 test("the complete catalogue parses and every shape or semantic surprise fails closed", () => {
