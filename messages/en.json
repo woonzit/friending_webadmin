@@ -141,7 +141,7 @@
       },
       "userDetail": {
         "title": "Member account help",
-        "summary": "This is the complete support workspace for one confirmed UID. It joins authoritative account facts with photo operations, effective membership, moderation, a time-bounded product popup, boolean-only push-channel presence, public profile text and structured profile answers.",
+        "summary": "This is the complete support workspace for one confirmed UID. It joins authoritative account facts with photo operations, effective membership, moderation, a time-bounded product popup, privacy-safe outbound messaging, boolean-only push-channel presence, public profile text and structured profile answers.",
         "steps": {
           "1": "Confirm the UID, display name and account state at the top before touching any control.",
           "2": "Use the narrowest section for the requested task and read warnings or previews before saving.",
@@ -196,6 +196,75 @@
               "3": "After an uncertain response, reconcile authoritative state or retry only the saved request with its original identity."
             },
             "guidance": "A product popup is not a push, support reply, moderation penalty or permanent gate. Never bypass its 30-day maximum, and never start a competing mutation while a durable request is unresolved."
+          },
+          "outboundAvailability": {
+            "title": "Outbound channel availability",
+            "purpose": "The availability cards distinguish available, absent, opted-out, ineligible and not-yet-migrated states without exposing a destination or push registration.",
+            "actions": {
+              "1": "Read each channel independently and treat the displayed state as Core's current policy result.",
+              "2": "Stop if any row is missing or malformed; never turn a failed availability read into an absent channel."
+            },
+            "guidance": "Availability means only that Core can currently resolve an eligible route. It does not prove delivery, reveal a provider, or override the member's preference."
+          },
+          "outboundPreview": {
+            "title": "Recipient preview and capacity",
+            "purpose": "The preview binds the operator to an exact explicit UID list, shows safe display identity and reports current rolling all-channel and SMS-plus-push capacity.",
+            "actions": {
+              "1": "Confirm the UID and display identity before drafting any member-facing content.",
+              "2": "Check the selected channel, recipient count, remaining capacity and five-minute preview expiry together.",
+              "3": "Read a fresh preview if identity, availability, capacity or expiry changes."
+            },
+            "guidance": "A preview reserves no capacity and guarantees no future delivery. Version 1 accepts only 1 to 100 explicit unique UIDs, never a query, cohort, place, event or campaign selector."
+          },
+          "outboundContent": {
+            "title": "Template or custom content",
+            "purpose": "The composer sends either one exact canonical template revision or bounded custom content with the template reference deliberately removed.",
+            "actions": {
+              "1": "Use Exact template when the immutable stored wording is appropriate and verify its observed revision.",
+              "2": "Switch explicitly to Custom content before changing any subject or body, then validate the channel-specific bounds.",
+              "3": "Inspect canonical email only inside the sandbox; custom email source remains inert until Core sanitizes it."
+            },
+            "guidance": "There is no variable substitution, attachment, arbitrary deep link, schedule or provider choice. Editing a template for one send must never retain template attribution."
+          },
+          "outboundConfirmation": {
+            "title": "Confirmation, partial choice and audit",
+            "purpose": "The final review joins the exact recipient count, selected channel, content source, current availability, explicit partial-send behavior and factual internal reason.",
+            "actions": {
+              "1": "Enter a bounded operational reason that contains no unnecessary private information.",
+              "2": "Leave partial sending off unless the reviewed multi-member operation may legitimately skip unavailable recipients.",
+              "3": "Confirm only after the displayed recipient, content and preview still match the intended gesture."
+            },
+            "guidance": "Partial sending never bypasses rate limits: if the full planned dispatch exceeds rolling capacity, nobody is selected. Core records audit intent before reservation or provider-visible work."
+          },
+          "outboundResults": {
+            "title": "Send result and uncertain recovery",
+            "purpose": "One closed outcome per UID distinguishes provider-accepted sent, durably queued, policy-skipped and terminally failed initial states without raw diagnostics.",
+            "actions": {
+              "1": "Treat Queued as durable acceptance for later work, not as proof of delivery.",
+              "2": "After a timeout, malformed response or in-progress result, preserve and retry only the exact saved request identity and material.",
+              "3": "Use authoritative history to observe later state changes instead of manufacturing another send."
+            },
+            "guidance": "Never mint a second request ID after uncertainty. An expired preview or rate-limit refusal ends that gesture and requires a fresh preview plus a new request identity."
+          },
+          "outboundHistory": {
+            "title": "Bounded delivery history",
+            "purpose": "History rows show current aggregate status, immutable bounded subject and body excerpt, actor and times, template provenance and a content hash for one UID.",
+            "actions": {
+              "1": "Select a row to read its one UID-bound full canonical body and verify that its metadata matches the list snapshot.",
+              "2": "Use current history for queued, retrying, partially sent, failed, skipped or suppressed state after the initial receipt.",
+              "3": "Restart from the first page when Core rejects a stale history cursor."
+            },
+            "guidance": "Partially sent is an aggregate push state and deliberately does not reveal which provider accepted or failed. One malformed stored row invalidates the complete read; it is never skipped into a false empty list."
+          },
+          "outboundPrivacy": {
+            "title": "Messaging permissions and privacy",
+            "purpose": "History read, outbound send, canned-template read and canned-template edit are independent Core capabilities that the browser must never derive from an administrator role name.",
+            "actions": {
+              "1": "Use read-only history access for investigation without assuming permission to preview or send.",
+              "2": "Use a stored template only when the separate template-read capability is present; sending never grants template editing.",
+              "3": "Keep member destinations and transport diagnostics outside screenshots, notes and copied case material."
+            },
+            "guidance": "Email addresses, phone numbers, tokens, device values, provider identifiers, credentials, provider responses and raw errors are intentionally unavailable in preview, results, history, audit and browser state."
           },
           "pushChannels": {
             "title": "Member push-channel presence",
@@ -3916,6 +3985,278 @@
       "persistenceUnavailable": "This browser could not durably store the retry identity. No new popup mutation can be sent.",
       "persistenceCleanupFailed": "The authoritative result is visible, but the browser could not clear its saved retry state. Do not start another mutation; reload to reconcile it.",
       "generic": "The popup operation failed safely. No success or empty state has been assumed."
+    }
+  },
+  "outboundMessaging": {
+    "title": "Outbound message",
+    "copy": "Preview one confirmed member, compose bounded content and inspect privacy-safe delivery history without revealing destinations or provider identifiers.",
+    "localOnly": "Contract preview only",
+    "channels": {
+      "email": "Email",
+      "sms": "SMS",
+      "push": "Push"
+    },
+    "availability": {
+      "title": "Channel availability",
+      "copy": "Core evaluates each channel through one closed policy. The console shows only the safe result, never the underlying contact or registration.",
+      "states": {
+        "available": {
+          "label": "Available",
+          "copy": "The member is eligible, opted in and currently has a resolvable channel. Delivery is still not guaranteed."
+        },
+        "channel_absent": {
+          "label": "Channel absent",
+          "copy": "The member is eligible but Core cannot resolve a usable verified destination for this channel."
+        },
+        "opted_out": {
+          "label": "Opted out",
+          "copy": "The authoritative member preference forbids this administrative delivery channel."
+        },
+        "banned": {
+          "label": "Not eligible",
+          "copy": "The account is banned, deleted or otherwise prohibited from administrative dispatch."
+        },
+        "not_migrated": {
+          "label": "Not migrated",
+          "copy": "No explicit reviewed Friending member mapping exists, so legacy state is never matched by UID alone."
+        }
+      }
+    },
+    "preview": {
+      "title": "Recipient preview",
+      "copy": "Confirm the exact UID and display identity, then review current capacity and the short preview lifetime before composing.",
+      "recipientCount": "{count, plural, one {# recipient} other {# recipients}}",
+      "unnamed": "Unnamed member",
+      "uid": "UID {uid}",
+      "overall": "All-channel capacity",
+      "smsPush": "SMS + push capacity",
+      "ofLimit": "of {limit} in the rolling window",
+      "expires": "Preview lifetime",
+      "fiveMinutes": "5 minutes"
+    },
+    "content": {
+      "title": "Template or custom content",
+      "copy": "Choose one exact stored template revision or detach to a custom bounded draft. Modified content is never attributed to the template.",
+      "channelLabel": "Message channel",
+      "sources": {
+        "template": {
+          "title": "Exact template",
+          "copy": "Send the selected immutable canonical revision without browser-side edits."
+        },
+        "custom": {
+          "title": "Custom content",
+          "copy": "Write a one-off bounded message with no template attribution."
+        }
+      },
+      "templateName": "Selected template",
+      "revision": "Revision {revision}",
+      "templateLocked": "To change this content, switch explicitly to Custom content; the template reference will be cleared.",
+      "pushTitle": "Push title",
+      "subject": "Email subject",
+      "body": "Message body",
+      "guidance": {
+        "email": "Email source is sent to Core's deterministic sanitizer. Raw draft HTML is shown only as inert source until Core returns canonical content.",
+        "sms": "SMS has no subject and accepts at most 1,600 Unicode characters. Keep the message concise and identify the operational purpose.",
+        "push": "Push accepts an 80-character title and a 1,000-character body. Version 1 has no arbitrary deep link or provider choice."
+      },
+      "previewLabel": "Content preview",
+      "canonicalPreview": "Canonical stored preview",
+      "draftPreview": "Local draft preview",
+      "emailFrameTitle": "Sandboxed canonical email preview",
+      "emailSourceOnly": "Raw custom email source is never executed. Core must sanitize it before any rendered preview."
+    },
+    "confirmation": {
+      "title": "Confirmation and audit",
+      "copy": "Record a factual internal reason, verify the exact member and channel, and make the partial-send choice explicit before any request can be admitted.",
+      "auditReason": "Internal audit reason",
+      "auditHint": "1–500 characters. It is not member-visible; omit unnecessary private data.",
+      "recipient": "Recipient",
+      "channel": "Channel",
+      "source": "Content source",
+      "availability": "Current availability",
+      "allowPartial": "Allow unavailable recipients to be skipped",
+      "allowPartialCopy": "Multi-member requests may skip unavailable members. This one-member composer always stops on an availability change; rate-limit refusal still sends nobody.",
+      "validate": "Validate local preview",
+      "sendUnavailable": "Sending unavailable",
+      "validated": "The bounded local material is valid for {count, plural, one {# recipient} other {# recipients}}. Live sending remains disabled until the provider contract is released."
+    },
+    "notices": {
+      "previewReady": "The local material is valid. Review the recipient, source, channel, partial choice and audit reason together."
+    },
+    "validation": {
+      "channel": "Choose one supported outbound channel.",
+      "contentSource": "Choose an exact template or explicit custom content.",
+      "templateId": "The selected template identifier is invalid.",
+      "templateRevision": "The selected template revision is invalid.",
+      "subject": "Enter a channel-compatible subject within its exact bound.",
+      "body": "Enter a channel-compatible body within its exact bound and without forbidden controls.",
+      "allowPartial": "Choose one explicit partial-send behavior.",
+      "auditReason": "Enter a factual internal reason from 1 to 500 characters.",
+      "preview": "The preview no longer matches the exact recipient list.",
+      "previewExpired": "The recipient preview expired. Read a fresh preview before continuing.",
+      "uids": "The explicit recipient list is invalid.",
+      "requestId": "The durable request identity could not be created."
+    },
+    "results": {
+      "title": "Result and recovery",
+      "copy": "Every requested UID receives one closed outcome. Initial acceptance and current delivery history remain separate facts.",
+      "outcomes": {
+        "sent": {
+          "label": "Sent",
+          "copy": "The applicable outbox already observed a provider-accepted terminal aggregate before the response."
+        },
+        "queued": {
+          "label": "Queued",
+          "copy": "Core durably accepted the work for later processing; this is not proof of provider delivery."
+        },
+        "skipped": {
+          "label": "Skipped",
+          "copy": "Partial sending was allowed and this member was unavailable under one safe policy reason."
+        },
+        "failed": {
+          "label": "Failed",
+          "copy": "Core observed one closed terminal failure without exposing provider diagnostics or identifiers."
+        }
+      },
+      "recovery": "After a timeout, malformed reply or in-progress result, keep the exact saved request identity and material. Never create a second logical send; reconcile history or retry only that saved request."
+    },
+    "history": {
+      "title": "Delivery history",
+      "copy": "Rows show bounded immutable content snapshots and current aggregate state. Full canonical content is fetched one UID-bound row at a time and hash-checked before display.",
+      "total": "{count, plural, one {# row} other {# rows}}",
+      "statuses": {
+        "queued": "Queued",
+        "sending": "Sending",
+        "retrying": "Retrying",
+        "sent": "Sent",
+        "partially_sent": "Partially sent",
+        "failed": "Failed",
+        "skipped": "Skipped",
+        "suppressed": "Suppressed"
+      },
+      "noSubject": "No subject",
+      "loadMore": "Load older rows",
+      "detailTitle": "Exact content detail",
+      "detailCopy": "One selected row, with delivery metadata matched to the bounded list snapshot.",
+      "emailFrameTitle": "Sandboxed exact email history content",
+      "status": "Current status",
+      "updated": "Last updated",
+      "actor": "Sent by",
+      "provenance": "Content provenance",
+      "templateRevision": "Stored template revision {revision}",
+      "custom": "Custom immutable content",
+      "pushMode": "Push mode snapshot",
+      "pushModes": {
+        "fcm": "FCM",
+        "onesignal": "OneSignal",
+        "both": "FCM + OneSignal"
+      },
+      "integrity": "Content integrity",
+      "hashVerified": "SHA-256 verified before live display",
+      "reason": "Safe reason"
+    },
+    "reasons": {
+      "channel_absent": "Channel absent",
+      "opted_out": "Member opted out",
+      "banned": "Account not eligible",
+      "not_migrated": "Member not migrated",
+      "provider_unavailable": "Delivery service unavailable",
+      "provider_rejected": "Delivery service rejected the message",
+      "delivery_expired": "Delivery window expired",
+      "delivery_failed": "Delivery failed"
+    },
+    "privacy": {
+      "title": "Permissions and privacy",
+      "copy": "Core grants history read, outbound send and canned-template access independently. The browser never reconstructs a capability from the role name.",
+      "sendTitle": "Outbound send",
+      "sendAvailable": "This fixture principal carries the send capability; this local contract preview still blocks every action.",
+      "sendUnavailable": "This principal may inspect history but cannot preview or send messages.",
+      "historyTitle": "History read",
+      "historyAvailable": "A read-only operator may inspect safe bounded rows and one exact UID-bound detail.",
+      "templateTitle": "Template access",
+      "templateSeparate": "Template read and template edit are separate capabilities; outbound send implies neither one.",
+      "withheld": "Email addresses, phone numbers, registrations, device values, provider identifiers, credentials and raw provider errors are never available in this surface."
+    },
+    "fixture": {
+      "auditReason": "Approved account-support reminder",
+      "custom": {
+        "email": {
+          "subject": "A note about your Friending profile",
+          "body": "<p>Write a clear member update here.</p>"
+        },
+        "sms": {
+          "body": "A short Friending profile reminder."
+        },
+        "push": {
+          "subject": "Profile reminder",
+          "body": "Add a little more about yourself."
+        }
+      },
+      "templates": {
+        "email": {
+          "name": "Welcome email",
+          "subject": "Welcome to Friending",
+          "body": "<p>Welcome to <strong>Friending</strong>.</p>"
+        },
+        "sms": {
+          "name": "Profile check-in",
+          "body": "Your profile check-in is ready."
+        },
+        "push": {
+          "name": "Profile reminder",
+          "subject": "Profile reminder",
+          "body": "Add a little more about yourself."
+        }
+      },
+      "history": {
+        "emailSubject": "Welcome to Friending",
+        "emailExcerpt": "Welcome to Friending.",
+        "emailBody": "<p>Welcome to <strong>Friending</strong>.</p>",
+        "pushSubject": "Profile reminder",
+        "pushExcerpt": "Add a little more about yourself.",
+        "pushBody": "Add a little more about yourself.",
+        "smsExcerpt": "Your profile check-in is ready.",
+        "smsBody": "Your profile check-in is ready."
+      }
+    },
+    "errors": {
+      "contractVersionInvalid": "Core refused the outbound-messaging contract version.",
+      "parameterInvalid": "The request contained an unexpected, duplicate or malformed parameter.",
+      "uidsInvalid": "The explicit recipient list is invalid.",
+      "recipientLimit": "A request can name at most 100 explicit recipients.",
+      "previewIdInvalid": "The recipient preview identifier is invalid.",
+      "previewExpired": "The preview expired. Start a new gesture with a fresh preview and request identity.",
+      "previewConflict": "The preview belongs to a different operator or recipient list.",
+      "recipientConflict": "Availability changed. Review the fresh safe preview before deciding again.",
+      "channelInvalid": "Core rejected the selected message channel.",
+      "contentSourceInvalid": "Core rejected the selected content source.",
+      "templateIdInvalid": "The template identifier is invalid.",
+      "templateRevisionInvalid": "The template revision is invalid.",
+      "templateNotFound": "The selected template no longer exists.",
+      "templateConflict": "The selected template revision changed or was deleted. Reload templates.",
+      "subjectInvalid": "Core rejected the subject or push title.",
+      "bodyInvalid": "Core rejected the message body.",
+      "htmlInvalid": "Core's sanitizer rejected the email source.",
+      "partialInvalid": "The partial-send choice is invalid.",
+      "auditReasonInvalid": "Core rejected the internal audit reason.",
+      "revisionInvalid": "The create-only revision precondition is invalid.",
+      "requestIdInvalid": "The durable request identity is invalid.",
+      "rateLimited": "The complete request exceeds current rolling capacity. Nobody was dispatched; wait and start a fresh gesture.",
+      "requestIdConflict": "This request identity is already bound to different material. Never retry it with changes.",
+      "requestInProgress": "Core is processing this exact saved request. Retry only the same identity and material.",
+      "cursorInvalid": "The history cursor is invalid. Restart from the first page.",
+      "messageIdInvalid": "The selected history row identifier is invalid.",
+      "notFound": "No matching history row exists for this member.",
+      "sendRequired": "Your Core capabilities do not permit outbound preview or send.",
+      "historyReadRequired": "Your Core capabilities do not permit delivery-history reads.",
+      "auditWriteFailed": "Core could not persist audit intent; no reservation or dispatch occurred. Retry the exact saved identity.",
+      "receiptWriteFailed": "The receipt state is uncertain. Retain the exact saved identity and reconcile before retrying.",
+      "recipientReadFailed": "Core could not evaluate recipients safely. Do not infer that a channel is absent.",
+      "storedInvalid": "Core found malformed stored message state and refused the whole operation.",
+      "readFailed": "Core could not read outbound state safely. Try the same read again.",
+      "writeFailed": "The send result is uncertain. Retain the exact identity and inspect authoritative history.",
+      "sessionInvalid": "Your administrator session or membership is no longer valid.",
+      "generic": "The outbound operation failed safely. No success, empty state or delivery has been assumed."
     }
   },
   "userDetail": {

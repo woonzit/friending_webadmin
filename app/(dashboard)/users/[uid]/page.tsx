@@ -12,9 +12,11 @@ import UserModerationPanel from "@/components/UserModerationPanel";
 import UserMembershipPanel from "@/components/UserMembershipPanel";
 import UserContentEditor from "@/components/UserContentEditor";
 import ProductPopupPanel from "@/components/ProductPopupPanel";
+import OutboundMessagingPanel from "@/components/OutboundMessagingPanel";
 import VerificationUserPanel from "@/components/VerificationUserPanel";
 import { adminCall } from "@/lib/adminClient";
 import {
+  OUTBOUND_MESSAGING_CONTRACT_READY,
   PRODUCT_POPUP_CONTRACT_READY,
   PUSH_MODE_CONTRACT_READY,
   VERIFICATION_CONTRACT_READY,
@@ -151,6 +153,7 @@ export default function UserDetailPage() {
       <UserModerationPanel uid={uid} />
       {VERIFICATION_CONTRACT_READY ? <VerificationUserPanel data={verificationUserFixture(uid, t("verificationGrant.fixtureReason"), t("verificationGrant.fixtureRejectionReason"))} /> : null}
       {PRODUCT_POPUP_CONTRACT_READY ? <ProductPopupPanel key={`product-popup-${uid}`} uid={uid} /> : null}
+      {OUTBOUND_MESSAGING_CONTRACT_READY ? <OutboundMessagingPanel uid={uid} displayName={profile.display_name} codename={profile.codename} /> : null}
       <UserContentEditor
         key={profile.uid}
         uid={uid}

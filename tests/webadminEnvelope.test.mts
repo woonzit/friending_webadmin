@@ -93,6 +93,7 @@ test("all regenerated versioned fixtures carry the real Webadmin reply trio", as
     "reported_content_contract_v1.json",
     "product_popup_contract_v1.json",
     "canned_templates_contract_v1.json",
+    "outbound_messaging_contract_v1.json",
   ];
   for (const name of fixtureFiles) {
     const entries = await fixture(name);
@@ -122,6 +123,7 @@ test("every dormant console delegates transport parsing to the shared helper", a
     "cannedTemplates.ts",
     "personaAdmin.ts",
     "pushAdmin.ts",
+    "outboundMessaging.ts",
   ];
   for (const file of files) {
     const source = await readFile(new URL(`../lib/${file}`, import.meta.url), "utf8");

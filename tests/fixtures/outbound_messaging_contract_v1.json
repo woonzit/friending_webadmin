@@ -1,0 +1,352 @@
+{
+  "preview_all_states": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "admin",
+        "capabilities": [
+          "outbound_messages_history_read",
+          "outbound_messages_send"
+        ]
+      },
+      "preview_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "evaluated_at": 1787680000,
+      "expires_at": 1787680300,
+      "requested_count": 5,
+      "recipients": [
+        {
+          "uid": 42,
+          "display_name": "Ada",
+          "codename": "ada",
+          "channels": {
+            "email": "available",
+            "sms": "available",
+            "push": "available"
+          }
+        },
+        {
+          "uid": 43,
+          "display_name": "Bela",
+          "codename": "bela",
+          "channels": {
+            "email": "channel_absent",
+            "sms": "channel_absent",
+            "push": "channel_absent"
+          }
+        },
+        {
+          "uid": 44,
+          "display_name": "Cora",
+          "codename": "cora",
+          "channels": {
+            "email": "opted_out",
+            "sms": "opted_out",
+            "push": "opted_out"
+          }
+        },
+        {
+          "uid": 45,
+          "display_name": "Dani",
+          "codename": "dani",
+          "channels": {
+            "email": "banned",
+            "sms": "banned",
+            "push": "banned"
+          }
+        },
+        {
+          "uid": 46,
+          "display_name": "Eli",
+          "codename": "eli",
+          "channels": {
+            "email": "not_migrated",
+            "sms": "not_migrated",
+            "push": "not_migrated"
+          }
+        }
+      ],
+      "limits": {
+        "max_recipients_per_request": 100,
+        "window_seconds": 300,
+        "overall": {
+          "limit": 500,
+          "used": 120,
+          "remaining": 380
+        },
+        "sms_push": {
+          "limit": 200,
+          "used": 44,
+          "remaining": 156
+        }
+      }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+  },
+  "preview_one": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "owner",
+        "capabilities": [
+          "outbound_messages_history_read",
+          "outbound_messages_send"
+        ]
+      },
+      "preview_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "evaluated_at": 1787680000,
+      "expires_at": 1787680300,
+      "requested_count": 1,
+      "recipients": [
+        {
+          "uid": 42,
+          "display_name": "Ada",
+          "codename": "ada",
+          "channels": {
+            "email": "available",
+            "sms": "channel_absent",
+            "push": "available"
+          }
+        }
+      ],
+      "limits": {
+        "max_recipients_per_request": 100,
+        "window_seconds": 300,
+        "overall": {
+          "limit": 500,
+          "used": 120,
+          "remaining": 380
+        },
+        "sms_push": {
+          "limit": 200,
+          "used": 44,
+          "remaining": 156
+        }
+      }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+  },
+  "send_one": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "request_id": "123e4567-e89b-42d3-a456-426614174000",
+      "preview_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "channel": "push",
+      "requested_count": 1,
+      "sent": 0,
+      "queued": 1,
+      "skipped": 0,
+      "failed": 0,
+      "results": [
+        {
+          "uid": 42,
+          "message_id": "64f000000000000000000003",
+          "outcome": "queued",
+          "reason": null
+        }
+      ],
+      "replayed": false
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+  },
+  "history_page": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "viewer",
+        "capabilities": [
+          "outbound_messages_history_read"
+        ]
+      },
+      "uid": 42,
+      "evaluated_at": 1787680400,
+      "messages": [
+        {
+          "message_id": "64f000000000000000000001",
+          "request_id": "123e4567-e89b-42d3-a456-426614174000",
+          "uid": 42,
+          "channel": "email",
+          "format": "sanitized_html",
+          "subject": "Welcome to Friending",
+          "body_excerpt": "Welcome to Friending.",
+          "content_sha256": "6ba3a6fed2a9e66abe4d0ddabe002b9f348bfbe839f29d692753d933a15a8a4e",
+          "template": {
+            "template_id": "65a000000000000000000001",
+            "revision": 3
+          },
+          "status": "sent",
+          "status_reason": null,
+          "push_mode": null,
+          "created_at": 1787680300,
+          "updated_at": 1787680310,
+          "completed_at": 1787680310,
+          "sent_by": "owner@example.test"
+        },
+        {
+          "message_id": "64f000000000000000000002",
+          "request_id": "223e4567-e89b-42d3-a456-426614174000",
+          "uid": 42,
+          "channel": "sms",
+          "format": "plain_text",
+          "subject": "",
+          "body_excerpt": "Your profile check-in is ready.",
+          "content_sha256": "45ed6730ce84efe91b1a5dc077773eb81d17ee77bb288fb078782f71ef9528a0",
+          "template": null,
+          "status": "failed",
+          "status_reason": "delivery_failed",
+          "push_mode": null,
+          "created_at": 1787680200,
+          "updated_at": 1787680220,
+          "completed_at": 1787680220,
+          "sent_by": "owner@example.test"
+        },
+        {
+          "message_id": "64f000000000000000000003",
+          "request_id": "323e4567-e89b-42d3-a456-426614174000",
+          "uid": 42,
+          "channel": "push",
+          "format": "plain_text",
+          "subject": "Profile reminder",
+          "body_excerpt": "Add a little more about yourself.",
+          "content_sha256": "7b7524c5e5451e46232b697cf1530bb8ec31511f3bf1c1fe9410705032d7e6c2",
+          "template": null,
+          "status": "partially_sent",
+          "status_reason": null,
+          "push_mode": "both",
+          "created_at": 1787680100,
+          "updated_at": 1787680120,
+          "completed_at": 1787680120,
+          "sent_by": "owner@example.test"
+        }
+      ],
+      "next_cursor": null,
+      "total": 3
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+  },
+  "history_empty": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "viewer",
+        "capabilities": [
+          "outbound_messages_history_read"
+        ]
+      },
+      "uid": 42,
+      "evaluated_at": 1787680400,
+      "messages": [],
+      "next_cursor": null,
+      "total": 0
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+  },
+  "history_detail_email": {
+    "success": true,
+    "status_code": 200,
+    "data": {
+      "contract_version": 1,
+      "principal": {
+        "role": "viewer",
+        "capabilities": [
+          "outbound_messages_history_read"
+        ]
+      },
+      "evaluated_at": 1787680401,
+      "message": {
+        "message_id": "64f000000000000000000001",
+        "request_id": "123e4567-e89b-42d3-a456-426614174000",
+        "uid": 42,
+        "channel": "email",
+        "format": "sanitized_html",
+        "subject": "Welcome to Friending",
+        "body": "<p>Welcome to <strong>Friending</strong>.</p>",
+        "content_sha256": "6ba3a6fed2a9e66abe4d0ddabe002b9f348bfbe839f29d692753d933a15a8a4e",
+        "template": {
+          "template_id": "65a000000000000000000001",
+          "revision": 3
+        },
+        "status": "sent",
+        "status_reason": null,
+        "push_mode": null,
+        "created_at": 1787680300,
+        "updated_at": 1787680310,
+        "completed_at": 1787680310,
+        "sent_by": "owner@example.test"
+      }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+  },
+  "recipient_conflict": {
+    "success": false,
+    "status_code": 409,
+    "error": "outbound-message-recipient-conflict",
+    "data": {
+      "contract_version": 1,
+      "preview": {
+        "contract_version": 1,
+        "principal": {
+          "role": "owner",
+          "capabilities": [
+            "outbound_messages_history_read",
+            "outbound_messages_send"
+          ]
+        },
+        "preview_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        "evaluated_at": 1787680060,
+        "expires_at": 1787680360,
+        "requested_count": 1,
+        "recipients": [
+          {
+            "uid": 42,
+            "display_name": "Ada",
+            "codename": "ada",
+            "channels": {
+              "email": "available",
+              "sms": "channel_absent",
+              "push": "opted_out"
+            }
+          }
+        ],
+        "limits": {
+          "max_recipients_per_request": 100,
+          "window_seconds": 300,
+          "overall": {
+            "limit": 500,
+            "used": 121,
+            "remaining": 379
+          },
+          "sms_push": {
+            "limit": 200,
+            "used": 44,
+            "remaining": 156
+          }
+        }
+      }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+  }
+}

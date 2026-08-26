@@ -141,7 +141,7 @@
       },
       "userDetail": {
         "title": "Tagfiók súgó",
-        "summary": "Ez az egy ellenőrzött UID-hoz tartozó teljes támogatási munkaterület. A hiteles fióktényeket fényképműveletekkel, tényleges tagsággal, moderációval, időkorlátos termékpopuppal, azonosítómentes pushcsatorna-jelenléttel, nyilvános profilszöveggel és strukturált profilválaszokkal egyesíti.",
+        "summary": "Ez az egy ellenőrzött UID-hoz tartozó teljes támogatási munkaterület. A hiteles fióktényeket fényképműveletekkel, tényleges tagsággal, moderációval, időkorlátos termékpopuppal, adatvédelmi szempontból biztonságos kimenő üzenetekkel, azonosítómentes pushcsatorna-jelenléttel, nyilvános profilszöveggel és strukturált profilválaszokkal egyesíti.",
         "steps": {
           "1": "Bármely vezérlő használata előtt ellenőrizd felül a UID-t, megjelenített nevet és fiókállapotot.",
           "2": "A kéréshez legszűkebben illeszkedő szekciót használd, és mentés előtt olvasd el a figyelmeztetéseket vagy előnézetet.",
@@ -196,6 +196,75 @@
               "3": "Bizonytalan válasz után egyeztesd a hiteles állapotot, vagy kizárólag a mentett kérést próbáld újra az eredeti azonosságával."
             },
             "guidance": "A termékpopup nem push, supportválasz, moderációs büntetés vagy állandó gate. Ne kerüld meg a 30 napos maximumot, és ne indíts versengő módosítást, amíg egy tartós kérés eredménye bizonytalan."
+          },
+          "outboundAvailability": {
+            "title": "Kimenő csatornák elérhetősége",
+            "purpose": "Az elérhetőségi kártyák megkülönböztetik az elérhető, hiányzó, leiratkozott, nem jogosult és még nem migrált állapotot anélkül, hogy célcímet vagy pushregisztrációt fednének fel.",
+            "actions": {
+              "1": "Minden csatornát külön olvass, és a megjelenő állapotot kezeld a Core aktuális szabályeredményeként.",
+              "2": "Állj meg, ha bármely sor hiányzik vagy hibás; a sikertelen elérhetőségi olvasást soha ne alakítsd hiányzó csatornává."
+            },
+            "guidance": "Az elérhetőség csak azt jelenti, hogy a Core jelenleg fel tud oldani egy jogosult útvonalat. Nem bizonyít kézbesítést, nem fedi fel a szolgáltatót, és nem írja felül a tag beállítását."
+          },
+          "outboundPreview": {
+            "title": "Címzett-előnézet és kapacitás",
+            "purpose": "Az előnézet pontos, kifejezett UID-listához köti az operátort, biztonságos megjelenő identitást mutat, és jelzi az aktuális összes csatornás, valamint SMS-plusz-push gördülő kapacitást.",
+            "actions": {
+              "1": "Bármilyen tagnak szóló tartalom megírása előtt ellenőrizd az UID-t és a megjelenő identitást.",
+              "2": "Együtt ellenőrizd a kiválasztott csatornát, címzettszámot, fennmaradó kapacitást és az ötperces előnézeti lejáratot.",
+              "3": "Olvass friss előnézetet, ha az identitás, elérhetőség, kapacitás vagy lejárat megváltozik."
+            },
+            "guidance": "Az előnézet nem foglal kapacitást és nem garantál későbbi kézbesítést. Az 1. verzió csak 1–100 kifejezett egyedi UID-t fogad, lekérdezést, kohorszot, helyet, eseményt vagy kampányválasztót soha."
+          },
+          "outboundContent": {
+            "title": "Sablon vagy egyedi tartalom",
+            "purpose": "Az összeállító vagy egy pontos kanonikus sablonrevíziót, vagy korlátozott egyedi tartalmat küld, amelyből a sablonhivatkozás szándékosan hiányzik.",
+            "actions": {
+              "1": "A Pontos sablont akkor használd, ha a változtathatatlan tárolt szöveg megfelelő, és ellenőrizd a megfigyelt revízióját.",
+              "2": "Bármely tárgy vagy törzs módosítása előtt válts kifejezetten Egyedi tartalomra, majd ellenőrizd a csatornaspecifikus korlátokat.",
+              "3": "Kanonikus e-mailt csak a sandboxban vizsgálj; az egyedi e-mail-forrás inaktív marad, amíg a Core meg nem tisztítja."
+            },
+            "guidance": "Nincs változóhelyettesítés, melléklet, tetszőleges mélyhivatkozás, ütemezés vagy szolgáltatóválasztás. Egy sablon egyszeri módosított küldése soha nem tarthatja meg a sabloneredetet."
+          },
+          "outboundConfirmation": {
+            "title": "Megerősítés, részleges választás és audit",
+            "purpose": "A végső ellenőrzés összekapcsolja a pontos címzettszámot, kiválasztott csatornát, tartalomforrást, aktuális elérhetőséget, kifejezett részlegesküldési viselkedést és tényszerű belső indokot.",
+            "actions": {
+              "1": "Adj meg korlátozott műveleti indokot, amely nem tartalmaz szükségtelen privát információt.",
+              "2": "Hagyd kikapcsolva a részleges küldést, kivéve ha az ellenőrzött többtagos művelet jogosan kihagyhat nem elérhető címzetteket.",
+              "3": "Csak akkor erősíts meg, ha a megjelenő címzett, tartalom és előnézet még egyezik a tervezett művelettel."
+            },
+            "guidance": "A részleges küldés soha nem kerüli meg a kapacitáskorlátot: ha a teljes tervezett küldés meghaladja a gördülő kapacitást, senkit sem választ ki. A Core foglalás vagy szolgáltatónak látható munka előtt rögzíti az auditszándékot."
+          },
+          "outboundResults": {
+            "title": "Küldési eredmény és bizonytalan helyreállítás",
+            "purpose": "UID-nként egy zárt eredmény különbözteti meg a szolgáltató által elfogadott elküldött, tartósan sorba állított, szabály szerint kihagyott és véglegesen sikertelen kezdeti állapotot nyers diagnosztika nélkül.",
+            "actions": {
+              "1": "A Sorba állítva állapotot későbbi munkára szóló tartós befogadásként kezeld, ne kézbesítési bizonyítékként.",
+              "2": "Időtúllépés, hibás válasz vagy folyamatban lévő eredmény után őrizd meg, és csak pontosan ugyanazt a mentett kérésazonosságot és anyagot próbáld újra.",
+              "3": "A későbbi állapotváltozást a hiteles előzményből olvasd, ne hozz létre másik küldést."
+            },
+            "guidance": "Bizonytalanság után soha ne készíts második kérésazonosítót. A lejárt előnézet vagy kapacitáskorlát lezárja a műveletet, és friss előnézetet plusz új kérésazonosságot követel."
+          },
+          "outboundHistory": {
+            "title": "Korlátozott kézbesítési előzmények",
+            "purpose": "Az előzménysorok egy UID-hoz mutatják az aktuális összesített állapotot, a változtathatatlan korlátozott tárgyat és törzskivonatot, az operátort és időket, a sabloneredetet és a tartalom hashét.",
+            "actions": {
+              "1": "Válassz ki egy sort az egyetlen UID-hoz kötött teljes kanonikus törzs olvasásához, és ellenőrizd, hogy metaadatai egyeznek a listapillanatképpel.",
+              "2": "A kezdeti nyugta után az aktuális előzményből olvasd a sorba állított, újrapróbált, részben elküldött, sikertelen, kihagyott vagy elnyomott állapotot.",
+              "3": "Indulj újra az első oldalról, ha a Core elutasít egy elavult előzménykurzort."
+            },
+            "guidance": "A Részben elküldve összesített pushállapot, és szándékosan nem fedi fel, melyik szolgáltató fogadott el vagy hibázott. Egy hibás tárolt sor az egész olvasást érvényteleníti; soha nem marad ki hamis üres listát eredményezve."
+          },
+          "outboundPrivacy": {
+            "title": "Üzenetküldési jogosultságok és adatvédelem",
+            "purpose": "Az előzményolvasás, kimenő küldés, sablonolvasás és sablonszerkesztés független Core-képesség, amelyet a böngésző soha nem következtethet ki az adminisztrátori szerepkör nevéből.",
+            "actions": {
+              "1": "Vizsgálathoz használd az írásvédett előzményhozzáférést anélkül, hogy előnézeti vagy küldési jogosultságot feltételeznél.",
+              "2": "Tárolt sablont csak külön sablonolvasási képességgel használj; a küldés soha nem ad sablonszerkesztési jogot.",
+              "3": "A tagi célokat és szállítási diagnosztikát tartsd távol a képernyőképektől, jegyzetektől és másolt ügyanyagoktól."
+            },
+            "guidance": "E-mail-címek, telefonszámok, tokenek, eszközértékek, szolgáltatói azonosítók, hitelesítő adatok, szolgáltatói válaszok és nyers hibák szándékosan nem érhetők el az előnézetben, eredményekben, előzményben, auditban és böngészőállapotban."
           },
           "pushChannels": {
             "title": "Tagi pushcsatorna-jelenlét",
@@ -3916,6 +3985,278 @@
       "persistenceUnavailable": "Ez a böngésző nem tudta tartósan menteni az újrapróbálási azonosságot. Nem küldhető új popupmódosítás.",
       "persistenceCleanupFailed": "A hiteles eredmény látható, de a böngésző nem tudta törölni a mentett újrapróbálási állapotot. Ne indíts másik módosítást; újratöltéssel egyeztesd.",
       "generic": "A popupművelet biztonságosan meghiúsult. A felület nem feltételez sikert vagy üres állapotot."
+    }
+  },
+  "outboundMessaging": {
+    "title": "Kimenő üzenet",
+    "copy": "Egy megerősített tag előnézete, korlátozott tartalom összeállítása és adatvédelmi szempontból biztonságos kézbesítési előzmények a célcímek és szolgáltatói azonosítók felfedése nélkül.",
+    "localOnly": "Csak szerződés-előnézet",
+    "channels": {
+      "email": "E-mail",
+      "sms": "SMS",
+      "push": "Push"
+    },
+    "availability": {
+      "title": "Csatorna elérhetősége",
+      "copy": "A Core minden csatornát egy zárt szabály szerint értékel. A konzol csak a biztonságos eredményt mutatja, az alapul szolgáló elérhetőséget vagy regisztrációt soha.",
+      "states": {
+        "available": {
+          "label": "Elérhető",
+          "copy": "A tag jogosult, engedélyezte a csatornát, és jelenleg feloldható cél tartozik hozzá. A kézbesítés így sem garantált."
+        },
+        "channel_absent": {
+          "label": "Nincs csatorna",
+          "copy": "A tag jogosult, de a Core nem tud használható, ellenőrzött célt feloldani ehhez a csatornához."
+        },
+        "opted_out": {
+          "label": "Leiratkozott",
+          "copy": "A tag hiteles beállítása tiltja az adminisztratív kézbesítést ezen a csatornán."
+        },
+        "banned": {
+          "label": "Nem jogosult",
+          "copy": "A fiók tiltott, törölt, vagy más okból nem kaphat adminisztratív küldeményt."
+        },
+        "not_migrated": {
+          "label": "Nincs migrálva",
+          "copy": "Nem létezik kifejezett, ellenőrzött Friending tagleképezés, ezért a régi állapot soha nem kapcsolódik pusztán UID alapján."
+        }
+      }
+    },
+    "preview": {
+      "title": "Címzett előnézete",
+      "copy": "Ellenőrizd a pontos UID-t és megjelenő identitást, majd az összeállítás előtt nézd meg az aktuális kapacitást és az előnézet rövid élettartamát.",
+      "recipientCount": "{count, plural, one {# címzett} other {# címzett}}",
+      "unnamed": "Névtelen tag",
+      "uid": "UID {uid}",
+      "overall": "Összes csatorna kapacitása",
+      "smsPush": "SMS + push kapacitás",
+      "ofLimit": "a gördülő ablak {limit} értékéből",
+      "expires": "Előnézet élettartama",
+      "fiveMinutes": "5 perc"
+    },
+    "content": {
+      "title": "Sablon vagy egyedi tartalom",
+      "copy": "Válassz egy pontos tárolt sablonrevíziót, vagy válaszd le egy korlátozott egyedi piszkozattá. A módosított tartalom soha nem kap sabloneredetet.",
+      "channelLabel": "Üzenetcsatorna",
+      "sources": {
+        "template": {
+          "title": "Pontos sablon",
+          "copy": "A kiválasztott változtathatatlan, kanonikus revízió küldése böngészőoldali módosítás nélkül."
+        },
+        "custom": {
+          "title": "Egyedi tartalom",
+          "copy": "Egyszeri, korlátozott üzenet írása sabloneredet nélkül."
+        }
+      },
+      "templateName": "Kiválasztott sablon",
+      "revision": "{revision}. revízió",
+      "templateLocked": "A tartalom módosításához válts kifejezetten Egyedi tartalomra; a sablonhivatkozás törlődik.",
+      "pushTitle": "Push címe",
+      "subject": "E-mail tárgya",
+      "body": "Üzenettörzs",
+      "guidance": {
+        "email": "Az e-mail-forrást a Core determinisztikus tisztítója kapja meg. A nyers HTML-piszkozat csak inaktív forrásként látható, amíg a Core nem ad vissza kanonikus tartalmat.",
+        "sms": "Az SMS-nek nincs tárgya, és legfeljebb 1600 Unicode karaktert fogad. Legyen tömör, és nevezze meg a műveleti célt.",
+        "push": "A push legfeljebb 80 karakteres címet és 1000 karakteres törzset fogad. Az 1. verzióban nincs tetszőleges mélyhivatkozás vagy szolgáltatóválasztás."
+      },
+      "previewLabel": "Tartalom előnézete",
+      "canonicalPreview": "Kanonikus tárolt előnézet",
+      "draftPreview": "Helyi piszkozat előnézete",
+      "emailFrameTitle": "Sandboxolt kanonikus e-mail-előnézet",
+      "emailSourceOnly": "A nyers egyedi e-mail-forrás soha nem fut le. A Core-nak meg kell tisztítania bármilyen renderelt előnézet előtt."
+    },
+    "confirmation": {
+      "title": "Megerősítés és audit",
+      "copy": "Rögzíts tényszerű belső indokot, ellenőrizd a pontos tagot és csatornát, és minden kérés befogadása előtt válaszd ki egyértelműen a részleges küldés szabályát.",
+      "auditReason": "Belső auditindok",
+      "auditHint": "1–500 karakter. A tag nem látja; hagyd ki a szükségtelen privát adatot.",
+      "recipient": "Címzett",
+      "channel": "Csatorna",
+      "source": "Tartalomforrás",
+      "availability": "Aktuális elérhetőség",
+      "allowPartial": "A nem elérhető címzettek kihagyhatók",
+      "allowPartialCopy": "A többtagos kérések kihagyhatják a nem elérhető tagokat. Ez az egytagos összeállító elérhetőségi változáskor mindig megáll; kapacitáskorlát esetén továbbra sem kap senki küldeményt.",
+      "validate": "Helyi előnézet ellenőrzése",
+      "sendUnavailable": "Küldés nem érhető el",
+      "validated": "A korlátozott helyi anyag érvényes {count, plural, one {# címzetthez} other {# címzetthez}}. Az élő küldés a szolgáltatói szerződés kiadásáig tiltott marad."
+    },
+    "notices": {
+      "previewReady": "A helyi anyag érvényes. Együtt ellenőrizd a címzettet, forrást, csatornát, részleges választást és auditindokot."
+    },
+    "validation": {
+      "channel": "Válassz egy támogatott kimenő csatornát.",
+      "contentSource": "Válassz pontos sablont vagy kifejezett egyedi tartalmat.",
+      "templateId": "A kiválasztott sablonazonosító érvénytelen.",
+      "templateRevision": "A kiválasztott sablonrevízió érvénytelen.",
+      "subject": "Adj meg a csatornához illő tárgyat a pontos korláton belül.",
+      "body": "Adj meg a csatornához illő törzset a pontos korláton belül, tiltott vezérlőkarakterek nélkül.",
+      "allowPartial": "Válassz egy egyértelmű részlegesküldési viselkedést.",
+      "auditReason": "Adj meg 1 és 500 karakter közötti tényszerű belső indokot.",
+      "preview": "Az előnézet már nem egyezik a pontos címzettlistával.",
+      "previewExpired": "A címzett-előnézet lejárt. Folytatás előtt olvass be friss előnézetet.",
+      "uids": "A kifejezett címzettlista érvénytelen.",
+      "requestId": "Nem sikerült létrehozni a tartós kérésazonosságot."
+    },
+    "results": {
+      "title": "Eredmény és helyreállítás",
+      "copy": "Minden kért UID pontosan egy zárt eredményt kap. A kezdeti befogadás és az aktuális kézbesítési előzmény külön tény marad.",
+      "outcomes": {
+        "sent": {
+          "label": "Elküldve",
+          "copy": "A megfelelő outbox már a válasz előtt szolgáltató által elfogadott végleges összesített állapotot figyelt meg."
+        },
+        "queued": {
+          "label": "Sorba állítva",
+          "copy": "A Core tartósan befogadta a későbbi feldolgozást; ez nem bizonyítja a szolgáltatói kézbesítést."
+        },
+        "skipped": {
+          "label": "Kihagyva",
+          "copy": "A részleges küldés engedélyezett volt, ez a tag pedig egy biztonságos szabályindok szerint nem volt elérhető."
+        },
+        "failed": {
+          "label": "Sikertelen",
+          "copy": "A Core zárt végleges hibát figyelt meg, szolgáltatói diagnosztika vagy azonosító felfedése nélkül."
+        }
+      },
+      "recovery": "Időtúllépés, hibás válasz vagy folyamatban lévő eredmény után őrizd meg pontosan a mentett kérésazonosságot és anyagot. Soha ne hozz létre második logikai küldést; egyeztesd az előzményt, vagy csak ugyanazt a mentett kérést próbáld újra."
+    },
+    "history": {
+      "title": "Kézbesítési előzmények",
+      "copy": "A sorok korlátozott, változtathatatlan tartalmi pillanatképet és aktuális összesített állapotot mutatnak. A teljes kanonikus tartalom egyszerre egy UID-hoz kötött sorhoz olvasható, és megjelenítés előtt hash-ellenőrzést kap.",
+      "total": "{count, plural, one {# sor} other {# sor}}",
+      "statuses": {
+        "queued": "Sorba állítva",
+        "sending": "Küldés alatt",
+        "retrying": "Újrapróbálás",
+        "sent": "Elküldve",
+        "partially_sent": "Részben elküldve",
+        "failed": "Sikertelen",
+        "skipped": "Kihagyva",
+        "suppressed": "Elnyomva"
+      },
+      "noSubject": "Nincs tárgy",
+      "loadMore": "Régebbi sorok betöltése",
+      "detailTitle": "Pontos tartalom részlete",
+      "detailCopy": "Egy kiválasztott sor, a korlátozott listapillanatképhez egyeztetett kézbesítési metaadatokkal.",
+      "emailFrameTitle": "Sandboxolt pontos e-mail-előzménytartalom",
+      "status": "Aktuális állapot",
+      "updated": "Utolsó frissítés",
+      "actor": "Küldő operátor",
+      "provenance": "Tartalom eredete",
+      "templateRevision": "Tárolt sablon {revision}. revíziója",
+      "custom": "Egyedi változtathatatlan tartalom",
+      "pushMode": "Pushmód pillanatképe",
+      "pushModes": {
+        "fcm": "FCM",
+        "onesignal": "OneSignal",
+        "both": "FCM + OneSignal"
+      },
+      "integrity": "Tartalom sértetlensége",
+      "hashVerified": "Élő megjelenítés előtt SHA-256-tal ellenőrizve",
+      "reason": "Biztonságos indok"
+    },
+    "reasons": {
+      "channel_absent": "Nincs csatorna",
+      "opted_out": "A tag leiratkozott",
+      "banned": "A fiók nem jogosult",
+      "not_migrated": "A tag nincs migrálva",
+      "provider_unavailable": "A kézbesítési szolgáltatás nem elérhető",
+      "provider_rejected": "A kézbesítési szolgáltatás elutasította az üzenetet",
+      "delivery_expired": "A kézbesítési időablak lejárt",
+      "delivery_failed": "A kézbesítés sikertelen"
+    },
+    "privacy": {
+      "title": "Jogosultságok és adatvédelem",
+      "copy": "A Core külön adja az előzményolvasási, kimenő küldési és sablonhozzáférési képességet. A böngésző soha nem következtet képességre a szerepkör nevéből.",
+      "sendTitle": "Kimenő küldés",
+      "sendAvailable": "A mintaoperátornak van küldési képessége; ez a helyi szerződés-előnézet továbbra is minden műveletet blokkol.",
+      "sendUnavailable": "Ez az operátor megvizsgálhatja az előzményt, de nem készíthet előnézetet és nem küldhet üzenetet.",
+      "historyTitle": "Előzmények olvasása",
+      "historyAvailable": "Az írásvédett operátor biztonságos, korlátozott sorokat és egy pontos, UID-hoz kötött részletet vizsgálhat.",
+      "templateTitle": "Sablonhozzáférés",
+      "templateSeparate": "A sablon olvasása és szerkesztése külön képesség; a kimenő küldés egyikre sem ad automatikus jogot.",
+      "withheld": "E-mail-címek, telefonszámok, regisztrációk, eszközértékek, szolgáltatói azonosítók, hitelesítő adatok és nyers szolgáltatói hibák soha nem érhetők el ezen a felületen."
+    },
+    "fixture": {
+      "auditReason": "Jóváhagyott fióktámogatási emlékeztető",
+      "custom": {
+        "email": {
+          "subject": "Megjegyzés a Friending profilodról",
+          "body": "<p>Ide írj egyértelmű tagi tájékoztatást.</p>"
+        },
+        "sms": {
+          "body": "Rövid emlékeztető a Friending profilodról."
+        },
+        "push": {
+          "subject": "Profil-emlékeztető",
+          "body": "Írj egy kicsit többet magadról."
+        }
+      },
+      "templates": {
+        "email": {
+          "name": "Üdvözlő e-mail",
+          "subject": "Üdv a Friendingben",
+          "body": "<p>Üdv a <strong>Friendingben</strong>.</p>"
+        },
+        "sms": {
+          "name": "Profil-ellenőrzés",
+          "body": "Elkészült a profilod ellenőrzése."
+        },
+        "push": {
+          "name": "Profil-emlékeztető",
+          "subject": "Profil-emlékeztető",
+          "body": "Írj egy kicsit többet magadról."
+        }
+      },
+      "history": {
+        "emailSubject": "Üdv a Friendingben",
+        "emailExcerpt": "Üdv a Friendingben.",
+        "emailBody": "<p>Üdv a <strong>Friendingben</strong>.</p>",
+        "pushSubject": "Profil-emlékeztető",
+        "pushExcerpt": "Írj egy kicsit többet magadról.",
+        "pushBody": "Írj egy kicsit többet magadról.",
+        "smsExcerpt": "Elkészült a profilod ellenőrzése.",
+        "smsBody": "Elkészült a profilod ellenőrzése."
+      }
+    },
+    "errors": {
+      "contractVersionInvalid": "A Core elutasította a kimenő üzenet szerződésverzióját.",
+      "parameterInvalid": "A kérés váratlan, ismétlődő vagy hibás paramétert tartalmazott.",
+      "uidsInvalid": "A kifejezett címzettlista érvénytelen.",
+      "recipientLimit": "Egy kérés legfeljebb 100 kifejezett címzettet nevezhet meg.",
+      "previewIdInvalid": "A címzett-előnézet azonosítója érvénytelen.",
+      "previewExpired": "Az előnézet lejárt. Indíts új műveletet friss előnézettel és új kérésazonossággal.",
+      "previewConflict": "Az előnézet másik operátorhoz vagy címzettlistához tartozik.",
+      "recipientConflict": "Az elérhetőség megváltozott. Új döntés előtt vizsgáld meg a friss biztonságos előnézetet.",
+      "channelInvalid": "A Core elutasította a kiválasztott üzenetcsatornát.",
+      "contentSourceInvalid": "A Core elutasította a kiválasztott tartalomforrást.",
+      "templateIdInvalid": "A sablonazonosító érvénytelen.",
+      "templateRevisionInvalid": "A sablonrevízió érvénytelen.",
+      "templateNotFound": "A kiválasztott sablon már nem létezik.",
+      "templateConflict": "A kiválasztott sablonrevízió megváltozott vagy törlődött. Töltsd újra a sablonokat.",
+      "subjectInvalid": "A Core elutasította a tárgyat vagy push-címet.",
+      "bodyInvalid": "A Core elutasította az üzenettörzset.",
+      "htmlInvalid": "A Core tisztítója elutasította az e-mail-forrást.",
+      "partialInvalid": "A részlegesküldési választás érvénytelen.",
+      "auditReasonInvalid": "A Core elutasította a belső auditindokot.",
+      "revisionInvalid": "A csak-létrehozás revíziós előfeltétele érvénytelen.",
+      "requestIdInvalid": "A tartós kérésazonosság érvénytelen.",
+      "rateLimited": "A teljes kérés meghaladja az aktuális gördülő kapacitást. Senki nem kapott küldeményt; várj, majd indíts új műveletet.",
+      "requestIdConflict": "Ez a kérésazonosság már más anyaghoz tartozik. Soha ne próbáld újra módosítva.",
+      "requestInProgress": "A Core feldolgozza pontosan ezt a mentett kérést. Csak ugyanazt az azonosságot és anyagot próbáld újra.",
+      "cursorInvalid": "Az előzménykurzor érvénytelen. Indulj újra az első oldalról.",
+      "messageIdInvalid": "A kiválasztott előzménysor azonosítója érvénytelen.",
+      "notFound": "Ehhez a taghoz nem létezik megfelelő előzménysor.",
+      "sendRequired": "A Core-képességeid nem engedik a kimenő előnézetet vagy küldést.",
+      "historyReadRequired": "A Core-képességeid nem engedik a kézbesítési előzmények olvasását.",
+      "auditWriteFailed": "A Core nem tudta tartósan rögzíteni az audit szándékát; nem történt foglalás vagy küldés. Próbáld újra pontosan a mentett azonosságot.",
+      "receiptWriteFailed": "A nyugta állapota bizonytalan. Őrizd meg pontosan a mentett azonosságot, és újrapróbálás előtt egyeztess.",
+      "recipientReadFailed": "A Core nem tudta biztonságosan értékelni a címzetteket. Ne következtess arra, hogy nincs csatorna.",
+      "storedInvalid": "A Core hibás tárolt üzenetállapotot talált, ezért az egész műveletet elutasította.",
+      "readFailed": "A Core nem tudta biztonságosan olvasni a kimenő állapotot. Próbáld újra ugyanazt az olvasást.",
+      "writeFailed": "A küldés eredménye bizonytalan. Őrizd meg a pontos azonosságot, és vizsgáld meg a hiteles előzményt.",
+      "sessionInvalid": "Az adminisztrátori munkameneted vagy tagságod már nem érvényes.",
+      "generic": "A kimenő művelet biztonságosan meghiúsult. A felület nem feltételez sikert, üres állapotot vagy kézbesítést."
     }
   },
   "userDetail": {
