@@ -29,7 +29,6 @@ import {
   type UserProfileFields,
 } from "@/lib/profileFields";
 import { userDetail, type UserDetail, type UserDetailLocation } from "@/lib/userDetail";
-import { verificationUserFixture } from "@/lib/verificationAdmin";
 
 function locationLabel(location: UserDetailLocation | null): string {
   if (!location) return "—";
@@ -71,7 +70,7 @@ export default function UserDetailPage() {
     // Project rather than cast: the response carries fields this page never renders, including the
     // member's login and home coordinates. See lib/userDetail.ts.
     const parsedDetail = response?.success
-      ? userDetail(response, PUSH_MODE_CONTRACT_READY)
+      ? userDetail(response, PUSH_MODE_CONTRACT_READY, VERIFICATION_CONTRACT_READY)
       : null;
     if (!parsedDetail || !profileResponse?.success || !parsedProfileFields || !parsedIdentityGroups) {
       setState("error");
@@ -151,7 +150,7 @@ export default function UserDetailPage() {
       <UserAlbumsPanel uid={uid} />
       <UserMembershipPanel uid={uid} initial={data.membership} />
       <UserModerationPanel uid={uid} />
-      {VERIFICATION_CONTRACT_READY ? <VerificationUserPanel data={verificationUserFixture(uid, t("verificationGrant.fixtureReason"), t("verificationGrant.fixtureRejectionReason"))} /> : null}
+      {VERIFICATION_CONTRACT_READY ? <VerificationUserPanel uid={uid} access={data.verification_access} /> : null}
       {PRODUCT_POPUP_CONTRACT_READY ? <ProductPopupPanel key={`product-popup-${uid}`} uid={uid} /> : null}
       {OUTBOUND_MESSAGING_CONTRACT_READY ? <OutboundMessagingPanel uid={uid} displayName={profile.display_name} codename={profile.codename} /> : null}
       <UserContentEditor

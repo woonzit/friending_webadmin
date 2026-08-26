@@ -319,7 +319,7 @@ test("both released UI projections share one cutover and lock uncertain saves th
     "utf8",
   );
   assert.match(configuration, /PUSH_MODE_CONTRACT_READY && pushSetting/);
-  assert.match(userPage, /userDetail\(response, PUSH_MODE_CONTRACT_READY\)/);
+  assert.match(userPage, /userDetail\(response, PUSH_MODE_CONTRACT_READY, VERIFICATION_CONTRACT_READY\)/);
   assert.match(userPage, /PUSH_MODE_CONTRACT_READY && data\.push_channels/);
 
   const lock = configuration.indexOf("setBusy(true)");

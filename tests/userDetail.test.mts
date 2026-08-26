@@ -113,7 +113,7 @@ test("tolerated shapes are normalised rather than refused", () => {
 test("the page projects instead of casting, and states why", async () => {
   const page = await readFile(new URL("../app/(dashboard)/users/[uid]/page.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(page, /as unknown as DetailData/);
-  assert.match(page, /userDetail\(response, PUSH_MODE_CONTRACT_READY\)/);
+  assert.match(page, /userDetail\(response, PUSH_MODE_CONTRACT_READY, VERIFICATION_CONTRACT_READY\)/);
   const parser = await readFile(new URL("../lib/userDetail.ts", import.meta.url), "utf8");
   assert.match(parser, /coordinates/i);
 });

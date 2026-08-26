@@ -499,7 +499,7 @@ test("queue, detail, navigation, and proxy activation share one explicit release
   assert.match(queuePage, /if \(!REPORTED_CONTENT_CONTRACT_READY\) notFound\(\)/);
   assert.match(detailPage, /if \(!REPORTED_CONTENT_CONTRACT_READY\) notFound\(\)/);
   assert.match(shell, /ready: REPORTED_CONTENT_CONTRACT_READY/);
-  assert.match(shell, /NAV\.filter\(\(item\) => item\.ready !== false\)/);
+  assert.match(shell, /NAV\.filter\(\(item\) => item\.ready !== false/);
   assert.match(queue, /adminCall\("moderation_reported_list"/);
   assert.match(detail, /adminCall\("moderation_reported_list"/);
   assert.match(detail, /adminCall\("moderation_report_action"/);

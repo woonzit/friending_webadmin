@@ -15,13 +15,18 @@ import {
 import { normalizeCannedTemplateProxyBody } from "@/lib/cannedTemplates";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { readAdminSession } from "@/lib/session";
+import {
+  normalizeVerificationProxyBody,
+  verificationProxyCapabilityAuthorized,
+} from "@/lib/verificationAdmin";
 
 export const dynamic = "force-dynamic";
+const NO_STORE_HEADERS = { "Cache-Control": "no-store" } as const;
 
 function bridgeError(error: string, status: number) {
   return NextResponse.json(
     { success: false, status_code: status, error },
-    { status },
+    { status, headers: NO_STORE_HEADERS },
   );
 }
 
@@ -51,7 +56,7 @@ export async function POST(
 
   // Revocation is authoritative in Core. This is deliberately checked on every
   // bridge call, not only when the dashboard layout is rendered.
-  const membership = await coreCall<{ success?: boolean; role?: string; dates?: unknown }>(
+  const membership = await coreCall<{ success?: boolean; role?: string; dates?: unknown; verification?: unknown }>(
     "admin_me",
     { admin_email: session.email },
   );
@@ -69,6 +74,10 @@ export async function POST(
   const personaAuthorized = personaProxyCapabilityAuthorized(action, membership.data);
   if (personaAuthorized === false) {
     return bridgeError("persona-capability-required", 403);
+  }
+  const verificationAuthorized = verificationProxyCapabilityAuthorized(action, membership.data);
+  if (verificationAuthorized === false) {
+    return bridgeError("verification-capability-required", 403);
   }
   if (!isAdminActionAuthorized(action, principal)) {
     return bridgeError("admin-write-required", 403);
@@ -101,6 +110,12 @@ export async function POST(
   }
   if (normalizedCannedBody !== undefined) body = normalizedCannedBody;
 
+  const normalizedVerificationBody = normalizeVerificationProxyBody(action, body);
+  if (normalizedVerificationBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedVerificationBody !== undefined) body = normalizedVerificationBody;
+
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer
   // depends on the order of an object literal to stay authoritative.
@@ -116,6 +131,6 @@ export async function POST(
   if (result.data === null) return bridgeError("core-unavailable", result.status || 502);
   return NextResponse.json(
     result.data,
-    { status: result.status || 502 },
+    { status: result.status || 502, headers: NO_STORE_HEADERS },
   );
 }

@@ -564,7 +564,7 @@ test("page, navigation, proxy, durable recovery, confirmation, safe preview, and
 
   assert.match(page, /if \(!CANNED_TEMPLATES_CONTRACT_READY\) notFound\(\)/);
   assert.match(shell, /ready: CANNED_TEMPLATES_CONTRACT_READY/);
-  assert.match(shell, /NAV\.filter\(\(item\) => item\.ready !== false\)/);
+  assert.match(shell, /NAV\.filter\(\(item\) => item\.ready !== false/);
   for (const action of CANNED_TEMPLATE_ACTIONS) {
     assert.match(actions, new RegExp(`"${action}"`));
     assert.match(`${component}\n${model}`, new RegExp(`"${action}"`));

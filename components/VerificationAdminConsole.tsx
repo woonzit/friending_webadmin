@@ -1,520 +1,397 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
+import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
+import { adminCall, type AdminResponse } from "@/lib/adminClient";
 import {
-  MAX_VERIFICATION_BADGE_BYTES,
+  VERIFICATION_BADGE_SLOTS,
   VERIFICATION_FEATURE_KEYS,
   VERIFICATION_GATE_VARIANTS,
   VERIFICATION_LEVELS,
+  VERIFICATION_LOCALES,
   VERIFICATION_METHODS,
   VERIFICATION_METHOD_STATUSES,
+  VERIFICATION_PENDING_STORAGE_KEY,
+  VERIFICATION_POLICY_OPERATIONS,
   VERIFICATION_REQUIREMENTS,
-  VERIFICATION_SCOPE_STATES,
   VERIFICATION_TAB_KEYS,
+  normalizeVerificationProxyBody,
   verificationBadgeFileError,
-  verificationBadgeFixtures,
-  verificationDerivedLevel,
-  verificationEffectiveMethods,
-  verificationEffectiveRequirement,
-  verificationGateCopyErrors,
-  verificationIsoCountry,
-  verificationMaxLevel,
-  verificationScopeFixtures,
-  verificationTextLength,
-  verificationTierLanguageEnabled,
+  verificationBadgeMutationResponse,
+  verificationCityDetailResponse,
+  verificationCitySearchResponse,
+  verificationConflictResponse,
+  verificationConsoleResponse,
+  verificationCopyMutationResponse,
+  verificationErrorResponse,
+  verificationGrantMutationResponse,
+  verificationPendingFrom,
+  verificationPendingMutation,
+  verificationPendingSettingsMutationResponse,
+  verificationPendingSummaryResponse,
+  verificationPersistBeforeMutation,
+  verificationPolicyImpactPreviewResponse,
+  verificationPolicyMutationResponse,
+  verificationShouldRetainMutation,
+  verificationSimulationResponse,
+  type VerificationBadgeAsset,
   type VerificationBadgeSlot,
-  type VerificationFeatureKey,
-  type VerificationGateCopyLocale,
-  type VerificationGateCopyPair,
-  type VerificationGateVariant,
+  type VerificationCapability,
+  type VerificationCityDetailData,
+  type VerificationCitySuggestion,
+  type VerificationConsoleData,
+  type VerificationCopyBehavior,
   type VerificationLevel,
-  type VerificationMethod,
+  type VerificationLocale,
+  type VerificationLocalizedGateCopy,
   type VerificationMethodStatus,
-  type VerificationRequirement,
-  type VerificationScope,
-  type VerificationScopeState,
+  type VerificationMutationAction,
+  type VerificationPendingMutation,
+  type VerificationPendingSummaryData,
+  type VerificationPolicy,
+  type VerificationPolicyImpactPreviewData,
+  type VerificationPolicyOperation,
+  type VerificationSimulationData,
+  type VerificationSimulationInput,
+  type VerificationStoredPolicyBlock,
   type VerificationTabKey,
 } from "@/lib/verificationAdmin";
 
 type Notice = { tone: "info" | "error" | "success"; text: string } | null;
-type CopyLocale = "en" | "hu";
-type VerificationPreviewLocaleCopy = {
-  label: string;
-  emptyTitle: string;
-  emptyAction: string;
-  emptyCancel: string;
-  nonInteractive: string;
-  steps: { video: string; persona: string };
-  pending: { wait: string; longer: string };
-  rejected: { reason: string; attempt: string; manualReview: string };
+type LoadState = "loading" | "ready" | "error";
+type CopyDraft = {
+  copy_key: string;
+  behavior: VerificationCopyBehavior;
+  locales: Record<VerificationLocale, VerificationLocalizedGateCopy>;
+  expectedRevision: number;
+  active: boolean;
 };
-type VerificationPreviewCopyPair = Record<CopyLocale, VerificationPreviewLocaleCopy>;
-type BadgeDraft = {
-  slot: VerificationBadgeSlot;
-  previewUrl: string | null;
-  fileName: string | null;
-  error: "empty" | "size" | "type" | null;
-};
+type SimulationInputMethod = VerificationSimulationInput["video"];
 
-const COUNTRY_OPTIONS = ["HU", "AT", "DE", "PL", "RS", "US", "CA"] as const;
-const CITY_OPTIONS = [
-  { id: "fixture-budapest-place", country: "HU", cityKey: "budapest" },
-  { id: "fixture-szeged-place", country: "HU", cityKey: "szeged" },
-  { id: "fixture-miami-place", country: "US", cityKey: "miami" },
-  { id: "fixture-toronto-place", country: "CA", cityKey: "toronto" },
-] as const;
+const VERIFICATION_COPY_KEYS = [
+  ...VERIFICATION_GATE_VARIANTS.map((variant) => `default.${variant}`),
+  ...VERIFICATION_FEATURE_KEYS.flatMap((feature) => (
+    VERIFICATION_GATE_VARIANTS.map((variant) => `feature.${feature}.${variant}`)
+  )),
+].sort();
+const COPY_VALIDATION_REQUEST_ID = "00000000-0000-4000-8000-000000000000";
 
-function cloneCopyPairs(pairs: readonly VerificationGateCopyPair[]): VerificationGateCopyPair[] {
-  return pairs.map((pair) => ({ ...pair, en: { ...pair.en }, hu: { ...pair.hu } }));
+function clone<T>(value: T): T { return structuredClone(value); }
+
+function methodChoice(methods: VerificationStoredPolicyBlock["enabled_methods"]): string {
+  if (methods === "inherit") return "inherit";
+  if (methods.length === 0) return "none";
+  if (methods.length === 2) return "both";
+  return methods[0];
 }
 
-function requirementRank(value: Exclude<VerificationRequirement, "inherit">): number {
-  return value === "strong" ? 2 : value === "light" ? 1 : 0;
+function methodsFromChoice(value: string): VerificationStoredPolicyBlock["enabled_methods"] {
+  if (value === "inherit") return "inherit";
+  if (value === "both") return ["video", "persona"];
+  if (value === "video" || value === "persona") return [value];
+  return [];
 }
 
-function levelRank(value: VerificationLevel): number {
-  return value === "strong" ? 2 : value === "light" ? 1 : 0;
+function mutationResult(action: VerificationMutationAction, response: unknown): { replayed: boolean } | null {
+  if (action === "verification_policy_save_draft" || action === "verification_policy_apply") {
+    return verificationPolicyMutationResponse(response);
+  }
+  if (action === "verification_copy_save" || action === "verification_copy_remove") {
+    return verificationCopyMutationResponse(response);
+  }
+  if (action === "verification_pending_settings_save") return verificationPendingSettingsMutationResponse(response);
+  if (action === "verification_badge_upload" || action === "verification_badge_remove") {
+    return verificationBadgeMutationResponse(response);
+  }
+  return verificationGrantMutationResponse(response);
 }
 
-function copyPairVariant(pair: VerificationGateCopyPair): VerificationGateVariant {
-  return pair.key.slice("default.".length) as VerificationGateVariant;
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 32_768) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 32_768));
+  }
+  return btoa(binary);
 }
 
-function formatPreviewCopy(template: string, values: Record<string, string | number>): string {
-  return Object.entries(values).reduce(
-    (result, [key, value]) => result.replace(`{${key}}`, String(value)),
-    template,
-  );
-}
-
-function useScopeLabel() {
-  const t = useTranslations("verificationAdmin");
-  return (scope: VerificationScope): string => {
-    if (scope.kind === "global") return t("scopes.global");
-    if (scope.kind === "city" && scope.cityKey) {
-      return `${t(`cities.${scope.cityKey}`)} · ${scope.country ?? ""}`;
-    }
-    return scope.country ? `${t(`countries.${scope.country}`)} · ${scope.country}` : scope.display;
+function defaultOverrideDraft(): VerificationStoredPolicyBlock {
+  return {
+    enabled_methods: "inherit",
+    feature_requirements: Object.fromEntries(
+      VERIFICATION_FEATURE_KEYS.map((feature) => [feature, "inherit"]),
+    ) as VerificationStoredPolicyBlock["feature_requirements"],
   };
 }
 
-function VerificationScopeTab({
-  scopes,
-  onScopes,
-  onNotice,
-}: {
-  scopes: VerificationScope[];
-  onScopes: (scopes: VerificationScope[]) => void;
-  onNotice: (notice: Notice) => void;
-}) {
-  const t = useTranslations("verificationAdmin");
-  const scopeLabel = useScopeLabel();
-  const [adding, setAdding] = useState(false);
-  const [kind, setKind] = useState<"country" | "city">("country");
-  const [country, setCountry] = useState<(typeof COUNTRY_OPTIONS)[number]>("HU");
-  const [placeId, setPlaceId] = useState("");
-  const cityChoices = CITY_OPTIONS.filter((city) => city.country === country);
-
-  function replaceScope(next: VerificationScope) {
-    onScopes(scopes.map((scope) => scope.id === next.id ? next : scope));
-    onNotice({ tone: "info", text: t("localDraftNotice") });
-  }
-
-  function toggleMethod(scope: VerificationScope, method: VerificationMethod) {
-    const effective = verificationEffectiveMethods(scope, scopes);
-    const configured = scope.enabledMethods ?? effective;
-    const nextMethods = configured.includes(method)
-      ? configured.filter((candidate) => candidate !== method)
-      : VERIFICATION_METHODS.filter((candidate) => configured.includes(candidate) || candidate === method);
-    replaceScope({
-      ...scope,
-      enabledMethods: nextMethods,
-      defaultLevel: nextMethods.length === 0 ? "none" : scope.defaultLevel,
-    });
-  }
-
-  function setDefaultLevel(scope: VerificationScope, defaultLevel: VerificationLevel) {
-    replaceScope({ ...scope, defaultLevel });
-  }
-
-  function setPublishState(scope: VerificationScope, publishState: VerificationScopeState) {
-    replaceScope({
-      ...scope,
-      publishState,
-      defaultLevel: publishState === "off" ? "none" : scope.defaultLevel,
-    });
-  }
-
-  function addScope() {
-    const iso = verificationIsoCountry(country);
-    if (!iso) return;
-    let next: VerificationScope;
-    if (kind === "country") {
-      const id = `country:${iso}`;
-      if (scopes.some((scope) => scope.id === id)) {
-        onNotice({ tone: "error", text: t("scopes.duplicate") });
-        return;
-      }
-      next = {
-        id,
-        kind,
-        country: iso,
-        placeId: null,
-        cityKey: null,
-        display: iso,
-        publishState: "draft",
-        enabledMethods: null,
-        defaultLevel: "light",
-        featureRequirements: Object.fromEntries(
-          VERIFICATION_FEATURE_KEYS.map((feature) => [feature, "inherit"]),
-        ) as Record<VerificationFeatureKey, VerificationRequirement>,
-        revision: 0,
-      };
-    } else {
-      const city = cityChoices.find((candidate) => candidate.id === placeId);
-      if (!city) {
-        onNotice({ tone: "error", text: t("scopes.cityRequired") });
-        return;
-      }
-      const id = `city:${city.country}:${city.cityKey}`;
-      if (scopes.some((scope) => scope.id === id)) {
-        onNotice({ tone: "error", text: t("scopes.duplicate") });
-        return;
-      }
-      next = {
-        id,
-        kind,
-        country: city.country,
-        placeId: city.id,
-        cityKey: city.cityKey,
-        display: city.cityKey,
-        publishState: "draft",
-        enabledMethods: null,
-        defaultLevel: "light",
-        featureRequirements: Object.fromEntries(
-          VERIFICATION_FEATURE_KEYS.map((feature) => [feature, "inherit"]),
-        ) as Record<VerificationFeatureKey, VerificationRequirement>,
-        revision: 0,
-      };
-    }
-    onScopes([...scopes, next]);
-    setAdding(false);
-    setPlaceId("");
-    onNotice({ tone: "success", text: t("scopes.addedDraft") });
-  }
-
-  return (
-    <div className="verification-scopes-workspace">
-      <section className="panel verification-regional-panel">
-        <div className="panel-header">
-          <div><h2>{t("scopes.listTitle")}</h2><p>{t("scopes.listCopy")}</p></div>
-          <span className="badge">{scopes.length}</span>
-        </div>
-        <div className="panel-body">
-          <div className="table-wrap verification-scope-table-wrap">
-            <table className="data-table verification-scope-table">
-              <thead><tr><th>{t("scopes.columns.region")}</th><th>{t("methods.video")}</th><th>{t("methods.persona")}</th><th>{t("scopes.columns.defaultLevel")}</th><th>{t("scopes.columns.status")}</th></tr></thead>
-              <tbody>
-                {scopes.map((scope) => {
-                  const methods = verificationEffectiveMethods(scope, scopes);
-                  const tierLanguage = verificationTierLanguageEnabled(methods);
-                  const code = scope.kind === "global" ? t("scopes.globalCode") : scope.country ?? "";
-                  return (
-                    <tr key={scope.id} className={scope.publishState === "off" ? "verification-scope-off" : ""}>
-                      <th>
-                        <span className="verification-region-cell"><b>{code}</b><span><strong>{scopeLabel(scope)}</strong><small>{t(`scopes.kinds.${scope.kind}`)}{scope.enabledMethods === null ? ` · ${t("scopes.inherited")}` : ""}</small></span></span>
-                      </th>
-                      {VERIFICATION_METHODS.map((method) => (
-                        <td key={method} data-label={t(`methods.${method}`)}>
-                          <label className="switch verification-method-switch">
-                            <input type="checkbox" checked={methods.includes(method)} aria-label={t("scopes.toggleMethod", { method: t(`methods.${method}`), scope: scopeLabel(scope) })} onChange={() => toggleMethod(scope, method)} />
-                            <span className="switch-track" />
-                          </label>
-                        </td>
-                      ))}
-                      <td data-label={t("scopes.columns.defaultLevel")}>
-                        <select value={scope.defaultLevel} disabled={methods.length === 0 || scope.publishState === "off"} aria-label={t("scopes.defaultLevelFor", { scope: scopeLabel(scope) })} onChange={(event) => setDefaultLevel(scope, event.target.value as VerificationLevel)}>
-                          {VERIFICATION_LEVELS.map((level) => <option key={level} value={level}>{t(`levels.${level}`)}</option>)}
-                        </select>
-                        {!tierLanguage && methods.length === 1 ? <small>{t("scopes.noTierLanguage")}</small> : null}
-                      </td>
-                      <td data-label={t("scopes.columns.status")}>
-                        <select value={scope.publishState} disabled={scope.kind === "global"} aria-label={t("scopes.statusFor", { scope: scopeLabel(scope) })} className={`verification-state-select state-${scope.publishState}`} onChange={(event) => setPublishState(scope, event.target.value as VerificationScopeState)}>
-                          {VERIFICATION_SCOPE_STATES.map((state) => <option key={state} value={state}>{t(`scopes.states.${state}`)}</option>)}
-                        </select>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className="row-actions verification-scope-actions">
-            <button type="button" className="button button-primary" onClick={() => setAdding((value) => !value)}>{adding ? t("scopes.cancelAdd") : t("scopes.addRegion")}</button>
-            <button type="button" className="button button-secondary" onClick={() => onNotice({ tone: "info", text: t("scopes.importPreview") })}>{t("scopes.importMembers")}</button>
-          </div>
-          {adding ? (
-            <div className="verification-add-scope">
-              <div className="segmented-tabs" role="tablist" aria-label={t("scopes.kindLabel")}>
-                {(["country", "city"] as const).map((value) => <button key={value} type="button" role="tab" aria-selected={kind === value} className={kind === value ? "active" : ""} onClick={() => { setKind(value); setPlaceId(""); }}>{t(`scopes.kinds.${value}`)}</button>)}
-              </div>
-              <label className="field"><span>{t("scopes.country")}</span><select value={country} onChange={(event) => { setCountry(event.target.value as typeof country); setPlaceId(""); }}>{COUNTRY_OPTIONS.map((codeValue) => <option value={codeValue} key={codeValue}>{t(`countries.${codeValue}`)} · {codeValue}</option>)}</select></label>
-              {kind === "city" ? (
-                <div className="verification-city-picker">
-                  <label className="field"><span>{t("scopes.citySearch")}</span><input type="search" value="" readOnly placeholder={t("scopes.citySearchPlaceholder")} aria-describedby="verification-city-search-hint" /><small id="verification-city-search-hint" className="field-hint">{t("scopes.citySearchHint")}</small></label>
-                  <label className="field"><span>{t("scopes.city")}</span><select value={placeId} onChange={(event) => setPlaceId(event.target.value)}><option value="">{t("scopes.cityPlaceholder")}</option>{cityChoices.map((city) => <option value={city.id} key={city.id}>{t(`cities.${city.cityKey}`)} · {city.country}</option>)}</select><small className="field-hint">{t("scopes.canonicalSelection")}</small></label>
-                </div>
-              ) : null}
-              <button type="button" className="button button-primary" onClick={addScope}>{t("scopes.addDraft")}</button>
-            </div>
-          ) : null}
-        </div>
-      </section>
-
-      <aside className="verification-scope-sidecards">
-        <section className="panel verification-guardrails-card">
-          <div className="panel-header"><div><h2>{t("scopes.guardrails.title")}</h2><p>{t("scopes.guardrails.copy")}</p></div></div>
-          <div className="panel-body">
-            {(["bothOff", "oneOn", "liveDisable"] as const).map((rule) => <article key={rule}><strong>{t(`scopes.guardrails.${rule}.title`)}</strong><p>{t(`scopes.guardrails.${rule}.copy`)}</p></article>)}
-          </div>
-        </section>
-        <section className="panel verification-queue-card">
-          <div className="panel-header"><div><h2>{t("scopes.queue.title")}</h2><p>{t("scopes.queue.copy")}</p></div></div>
-          <div className="panel-body">
-            <div className="verification-queue-metric"><strong>128</strong><span>{t("scopes.queue.average", { minutes: 4 })}</span></div>
-            <div className="verification-queue-bar" aria-label={t("scopes.queue.progressLabel", { minutes: 4, threshold: 30 })}><span style={{ width: `${Math.round((4 / 30) * 100)}%` }} /></div>
-            <p>{t("scopes.queue.threshold", { minutes: 30 })}</p>
-          </div>
-        </section>
-      </aside>
-    </div>
-  );
+function defaultSimulation(): VerificationSimulationInput {
+  return {
+    video: { status: "not_started", pending_age_seconds: null, attempt: null, retry_available: true },
+    persona: { status: "not_started", pending_age_seconds: null, attempt: null, retry_available: true },
+    imported_level: "none",
+    imported_method_hint: null,
+    grant_level: "none",
+    badge_visible: true,
+  };
 }
 
-function VerificationRequirementsTab({ scopes, onScopes, onNotice }: { scopes: VerificationScope[]; onScopes: (scopes: VerificationScope[]) => void; onNotice: (notice: Notice) => void }) {
-  const t = useTranslations("verificationAdmin");
-  const scopeLabel = useScopeLabel();
-  const [compactScope, setCompactScope] = useState(scopes[0]?.id ?? "global");
-
-  function update(scopeId: string, feature: VerificationFeatureKey, value: VerificationRequirement) {
-    onScopes(scopes.map((scope) => scope.id === scopeId ? { ...scope, featureRequirements: { ...scope.featureRequirements, [feature]: value } } : scope));
-  }
-
-  return (
-    <section className="panel verification-matrix-panel">
-      <div className="panel-header"><div><h2>{t("requirements.title")}</h2><p>{t("requirements.copy")}</p></div><button type="button" className="button button-primary button-small" onClick={() => onNotice({ tone: "info", text: t("localDraftNotice") })}>{t("reviewDraft")}</button></div>
-      <div className="panel-body">
-        <label className="field verification-compact-scope"><span>{t("requirements.compactScope")}</span><select value={compactScope} onChange={(event) => setCompactScope(event.target.value)}>{scopes.map((scope) => <option key={scope.id} value={scope.id}>{scopeLabel(scope)}</option>)}</select></label>
-        <div className="table-wrap verification-matrix-wrap">
-          <table className="data-table verification-matrix">
-            <thead><tr><th>{t("requirements.feature")}</th>{scopes.map((scope) => <th key={scope.id} data-scope-id={scope.id} className={compactScope === scope.id ? "compact-active" : ""}>{scopeLabel(scope)}</th>)}</tr></thead>
-            <tbody>
-              {VERIFICATION_FEATURE_KEYS.map((feature) => (
-                <tr key={feature}>
-                  <th><strong>{t(`features.${feature}.title`)}</strong><small>{feature}</small></th>
-                  {scopes.map((scope) => {
-                    const methods = verificationEffectiveMethods(scope, scopes);
-                    const guarded = methods.length === 0;
-                    const effective = verificationEffectiveRequirement(scope, feature, scopes);
-                    const source = scopes.find((candidate) => candidate.id === effective?.sourceId);
-                    return (
-                      <td key={scope.id} data-scope-id={scope.id} className={compactScope === scope.id ? "compact-active" : ""}>
-                        <select aria-label={`${t(`features.${feature}.title`)} · ${scopeLabel(scope)}`} value={guarded ? "none" : scope.featureRequirements[feature]} disabled={guarded} onChange={(event) => update(scope.id, feature, event.target.value as VerificationRequirement)}>
-                          {VERIFICATION_REQUIREMENTS.filter((value) => scope.kind !== "global" || value !== "inherit").map((value) => <option key={value} value={value}>{t(`requirements.values.${value}`)}</option>)}
-                        </select>
-                        {guarded ? <small>{t("requirements.guardrailNone")}</small> : scope.featureRequirements[feature] === "inherit" && effective ? <small>{t("requirements.effective", { value: t(`requirements.values.${effective.value}`), source: source ? scopeLabel(source) : t("scopes.global") })}</small> : null}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  );
+function consoleSnapshotIdentity(value: VerificationConsoleData): string {
+  return JSON.stringify({
+    principal: value.principal,
+    evaluated_at: value.evaluated_at,
+    feature_keys: value.feature_keys,
+    method_availability: value.method_availability,
+    total_policies: value.total_policies,
+    copy_pairs: value.copy_pairs,
+    pending_settings: value.pending_settings,
+    badges: value.badges,
+    import_health: value.import_health,
+    activation_guard: value.activation_guard,
+  });
 }
 
-function VerificationGatePreview({ copy, locale, previewCopy, variant }: { copy: VerificationGateCopyLocale; locale: CopyLocale; previewCopy: VerificationPreviewCopyPair; variant: VerificationGateVariant }) {
-  const preview = previewCopy[locale];
-  const icon = variant === "pending" ? "◷" : variant === "rejected" ? "!" : variant === "both" ? "1·2" : "✓";
-  return (
-    <aside className={`verification-gate-preview preview-${variant}`} aria-label={preview.label}>
-      <div className="verification-phone-status"><span>9:41</span><span>{locale.toUpperCase()}</span></div>
-      <div className="verification-gate-sheet">
-        <span className="verification-gate-icon" aria-hidden="true">{icon}</span>
-        <h3>{copy.title || preview.emptyTitle}</h3>
-        {copy.subtitle ? <strong>{copy.subtitle}</strong> : null}
-        {variant === "both" ? <div className="verification-stepper"><span><b>1</b>{preview.steps.video}</span><span><b>2</b>{preview.steps.persona}</span></div> : null}
-        {variant === "rejected" ? <div className="verification-rejection-preview"><strong>{preview.rejected.reason}</strong><span>{formatPreviewCopy(preview.rejected.attempt, { attempt: 2, maximum: 5 })}</span><small>{preview.rejected.manualReview}</small></div> : null}
-        {variant === "pending" ? <div className="verification-pending-preview"><strong>{formatPreviewCopy(preview.pending.wait, { minutes: 4 })}</strong><small>{formatPreviewCopy(preview.pending.longer, { minutes: 30 })}</small></div> : null}
-        {copy.description ? <p>{copy.description}</p> : null}
-        <button type="button" tabIndex={-1} aria-disabled="true">{copy.actionLabel || preview.emptyAction}</button>
-        <button type="button" className="verification-preview-secondary" tabIndex={-1} aria-disabled="true">{copy.cancelLabel || preview.emptyCancel}</button>
-      </div>
-      <small>{preview.nonInteractive}</small>
-    </aside>
-  );
+function policyPrecedes(left: VerificationPolicy, right: VerificationPolicy): boolean {
+  const rank = { global: 0, country: 1, city: 2 } as const;
+  return (rank[left.scope.kind] - rank[right.scope.kind]
+    || left.scope.display.localeCompare(right.scope.display)
+    || left.scope_key.localeCompare(right.scope_key)) < 0;
 }
 
-function VerificationMessagesTab({ pairs, previewCopy, onPairs, onNotice }: { pairs: VerificationGateCopyPair[]; previewCopy: VerificationPreviewCopyPair; onPairs: (pairs: VerificationGateCopyPair[]) => void; onNotice: (notice: Notice) => void }) {
-  const t = useTranslations("verificationAdmin");
-  const [variant, setVariant] = useState<VerificationGateVariant>("video");
-  const [locale, setLocale] = useState<CopyLocale>("en");
-  const pairIndex = pairs.findIndex((pair) => copyPairVariant(pair) === variant);
-  const pair = pairs[pairIndex] ?? pairs[0];
-  const copy = pair[locale];
-  const errors = verificationGateCopyErrors(copy);
+function samePrincipal(left: VerificationConsoleData["principal"], right: VerificationConsoleData["principal"]): boolean {
+  return left.role === right.role
+    && left.capabilities.length === right.capabilities.length
+    && left.capabilities.every((capability, index) => capability === right.capabilities[index]);
+}
 
-  function update<K extends keyof VerificationGateCopyLocale>(field: K, value: VerificationGateCopyLocale[K]) {
-    const next = cloneCopyPairs(pairs);
-    next[pairIndex] = { ...pair, [locale]: { ...copy, [field]: value } };
-    onPairs(next);
-  }
-
-  function fieldCount(field: "title" | "subtitle" | "description" | "actionLabel" | "cancelLabel", maximum: number) {
-    return <small className={errors.includes(field) ? "field-error" : "field-hint"}>{verificationTextLength(copy[field])}/{maximum}</small>;
-  }
-
-  return (
-    <div className="verification-message-workspace">
-      <section className="panel">
-        <div className="panel-header"><div><h2>{t("messages.title")}</h2><p>{t("messages.copy")}</p></div><span className="badge badge-warning">{t("fixtureBadge")}</span></div>
-        <div className="panel-body verification-message-editor">
-          <div className="segmented-tabs verification-message-kind-tabs" role="tablist" aria-label={t("messages.defaultLabel")}>{VERIFICATION_GATE_VARIANTS.map((value) => <button type="button" role="tab" aria-selected={variant === value} className={variant === value ? "active" : ""} key={value} onClick={() => setVariant(value)}>{t(`messages.variants.${value}`)}</button>)}</div>
-          {variant === "both" ? <div className="alert alert-info">{t("messages.bothMeaning")}</div> : null}
-          {variant === "pending" ? <div className="alert alert-info">{t("messages.pendingMeaning")}</div> : null}
-          {variant === "rejected" ? <div className="alert alert-info">{t("messages.rejectedMeaning")}</div> : null}
-          <div className="segmented-tabs verification-locale-tabs" role="tablist" aria-label={t("messages.localeLabel")}>{(["en", "hu"] as const).map((value) => <button type="button" role="tab" aria-selected={locale === value} className={locale === value ? "active" : ""} key={value} onClick={() => setLocale(value)}>{t(`messages.locales.${value}`)}</button>)}</div>
-          <div className="verification-copy-grid">
-            <label className="field"><span>{t("messages.fields.icon")}</span><select value={copy.iconValue} onChange={(event) => update("iconValue", event.target.value)}><option value="video.fill">video.fill</option><option value="person.text.rectangle.fill">person.text.rectangle.fill</option><option value="checkmark.shield.fill">checkmark.shield.fill</option><option value="clock.fill">clock.fill</option><option value="exclamationmark.triangle.fill">exclamationmark.triangle.fill</option></select></label>
-            <label className="field"><span>{t("messages.fields.title")}</span><input maxLength={80} value={copy.title} onChange={(event) => update("title", event.target.value)} />{fieldCount("title", 80)}</label>
-            <label className="field"><span>{t("messages.fields.subtitle")}</span><input maxLength={120} value={copy.subtitle} onChange={(event) => update("subtitle", event.target.value)} />{fieldCount("subtitle", 120)}</label>
-            <label className="field verification-copy-wide"><span>{t("messages.fields.description")}</span><textarea maxLength={600} rows={6} value={copy.description} onChange={(event) => update("description", event.target.value)} />{fieldCount("description", 600)}</label>
-            <label className="field"><span>{t("messages.fields.actionKind")}</span><select value={copy.actionKind} onChange={(event) => update("actionKind", event.target.value as VerificationGateCopyLocale["actionKind"])}><option value="start_video">{t("messages.actions.start_video")}</option><option value="start_persona">{t("messages.actions.start_persona")}</option><option value="open_verification_center">{t("messages.actions.open_verification_center")}</option><option value="dismiss">{t("messages.actions.dismiss")}</option><option value="url">{t("messages.actions.url")}</option></select></label>
-            <label className="field"><span>{t("messages.fields.actionLabel")}</span><input maxLength={40} value={copy.actionLabel} onChange={(event) => update("actionLabel", event.target.value)} />{fieldCount("actionLabel", 40)}</label>
-            {copy.actionKind === "url" ? <label className="field verification-copy-wide"><span>{t("messages.fields.actionUrl")}</span><input inputMode="url" value={copy.actionUrl} onChange={(event) => update("actionUrl", event.target.value)} />{errors.includes("actionUrl") ? <small className="field-error">{t("messages.invalidUrl")}</small> : null}</label> : null}
-            <label className="field"><span>{t("messages.fields.cancelLabel")}</span><input maxLength={40} value={copy.cancelLabel} onChange={(event) => update("cancelLabel", event.target.value)} />{fieldCount("cancelLabel", 40)}</label>
-          </div>
-          <button type="button" className="button button-primary" disabled={errors.length > 0} onClick={() => onNotice({ tone: "info", text: t("localDraftNotice") })}>{t("reviewDraft")}</button>
-        </div>
-      </section>
-      <VerificationGatePreview copy={copy} locale={locale} previewCopy={previewCopy} variant={variant} />
-    </div>
-  );
+function completePolicyPage(value: VerificationConsoleData, accumulated = value.policies.length): boolean {
+  if (value.next_cursor === null) return accumulated === value.total_policies;
+  return value.policies.length > 0 && accumulated < value.total_policies;
 }
 
 function badgeSymbol(slot: VerificationBadgeSlot): string {
-  return slot === "verified" ? "✓" : slot === "pending" ? "◷" : "!";
+  if (slot === "pending") return "◷";
+  return slot === "strong" ? "◆" : "✓";
 }
 
-function VerificationBadgesTab({ onNotice }: { onNotice: (notice: Notice) => void }) {
+export default function VerificationAdminConsole({ initialTab }: { initialTab: VerificationTabKey }) {
   const t = useTranslations("verificationAdmin");
-  const [badges, setBadges] = useState<BadgeDraft[]>(() => verificationBadgeFixtures().map((badge) => ({ ...badge, previewUrl: badge.managedUrl, fileName: null, error: null })));
-  const urls = useRef<string[]>([]);
+  const locale = useLocale() === "hu" ? "hu" : "en";
+  const [tab, setTab] = useState<VerificationTabKey>(initialTab);
+  const [state, setState] = useState<LoadState>("loading");
+  const [data, setData] = useState<VerificationConsoleData | null>(null);
+  const [summary, setSummary] = useState<VerificationPendingSummaryData | null>(null);
+  const [notice, setNotice] = useState<Notice>(null);
+  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<VerificationPendingMutation | null>(null);
+  const pendingRef = useRef<VerificationPendingMutation | null>(null);
+  const [selectedScope, setSelectedScope] = useState("global");
+  const [policyDraft, setPolicyDraft] = useState<VerificationStoredPolicyBlock | null>(null);
+  const [impact, setImpact] = useState<VerificationPolicyImpactPreviewData | null>(null);
+  const [operation, setOperation] = useState<VerificationPolicyOperation>("publish");
+  const [confirmation, setConfirmation] = useState("");
+  const [reason, setReason] = useState("");
+  const [countryCode, setCountryCode] = useState("");
+  const [cityQuery, setCityQuery] = useState("");
+  const [cityCountry, setCityCountry] = useState("");
+  const [citySuggestions, setCitySuggestions] = useState<VerificationCitySuggestion[]>([]);
+  const [cityDetail, setCityDetail] = useState<VerificationCityDetailData["city"] | null>(null);
+  const searchTokenRef = useRef<string | null>(null);
+  const [selectedCopy, setSelectedCopy] = useState("");
+  const [copyDraft, setCopyDraft] = useState<CopyDraft | null>(null);
+  const [copyEditorLocale, setCopyEditorLocale] = useState<VerificationLocale>("en");
+  const [badgeFiles, setBadgeFiles] = useState<Partial<Record<VerificationBadgeSlot, File>>>({});
+  const [pendingOverdue, setPendingOverdue] = useState("1800");
+  const [pendingLongCopy, setPendingLongCopy] = useState(false);
+  const [pendingThreshold, setPendingThreshold] = useState("1800");
+  const [simulation, setSimulation] = useState<VerificationSimulationInput>(defaultSimulation);
+  const [simulationScope, setSimulationScope] = useState("global");
+  const [simulationResult, setSimulationResult] = useState<VerificationSimulationData | null>(null);
 
-  useEffect(() => () => {
-    for (const url of urls.current) URL.revokeObjectURL(url);
-    urls.current = [];
+  const can = useCallback((capability: VerificationCapability): boolean => (
+    data?.principal.capabilities.includes(capability) ?? false
+  ), [data]);
+
+  const load = useCallback(async () => {
+    setState((current) => current === "ready" ? current : "loading");
+    const [consoleResponse, pendingResponse] = await Promise.all([
+      adminCall("verification_console", { contract_version: 1, scope_kind: "all", page_size: 50 }),
+      adminCall("verification_pending_summary", { contract_version: 1 }),
+    ]);
+    const parsed = verificationConsoleResponse(consoleResponse);
+    const parsedSummary = verificationPendingSummaryResponse(pendingResponse);
+    if (!parsed || !parsedSummary || !completePolicyPage(parsed)
+      || !parsed.policies.some((row) => row.scope_key === "global")
+      || !samePrincipal(parsed.principal, parsedSummary.principal)) {
+      setState("error");
+      return;
+    }
+    setData(parsed);
+    setSummary(parsedSummary);
+    setSelectedScope((current) => parsed.policies.some((row) => row.scope_key === current) ? current : parsed.policies[0]?.scope_key ?? "global");
+    setSelectedCopy((current) => VERIFICATION_COPY_KEYS.includes(current) ? current : "default.video");
+    setPendingOverdue(String(parsed.pending_settings.overdue_after_seconds));
+    setPendingLongCopy(parsed.pending_settings.queue_average_long_copy_enabled);
+    setPendingThreshold(String(parsed.pending_settings.queue_average_threshold_seconds));
+    setState("ready");
   }, []);
 
-  function choose(slot: VerificationBadgeSlot, file: File | null) {
-    if (!file) return;
-    const error = verificationBadgeFileError(file);
-    let previewUrl: string | null = null;
-    if (!error) {
-      previewUrl = URL.createObjectURL(file);
-      urls.current.push(previewUrl);
+  async function loadMorePolicies() {
+    if (!data?.next_cursor || busy) return;
+    const current = data;
+    setBusy(true);
+    const response = await adminCall("verification_console", {
+      contract_version: 1,
+      scope_kind: "all",
+      page_size: 50,
+      cursor: current.next_cursor,
+    });
+    const parsed = verificationConsoleResponse(response);
+    const boundaryValid = parsed !== null && (current.policies.length === 0 || parsed.policies.length === 0
+      || policyPrecedes(current.policies[current.policies.length - 1], parsed.policies[0]));
+    const keys = parsed ? [...current.policies, ...parsed.policies].map((row) => row.scope_key) : [];
+    if (!parsed || consoleSnapshotIdentity(current) !== consoleSnapshotIdentity(parsed)
+      || !boundaryValid || new Set(keys).size !== keys.length || !completePolicyPage(parsed, keys.length)) {
+      setNotice({ tone: "error", text: t("live.loadMoreFailed") });
+      setBusy(false);
+      return;
     }
-    setBadges((current) => current.map((badge) => badge.slot === slot ? { ...badge, previewUrl, fileName: file.name, error } : badge));
+    setData({ ...parsed, policies: [...current.policies, ...parsed.policies] });
+    setNotice(null);
+    setBusy(false);
   }
 
-  return (
-    <section className="panel">
-      <div className="panel-header"><div><h2>{t("badges.title")}</h2><p>{t("badges.copy")}</p></div><span className="badge badge-warning">{t("fixtureBadge")}</span></div>
-      <div className="panel-body verification-badges-body">
-        <div className="verification-tier-specimens"><div><span className="verification-level-pill level-light">{t("levels.light")}</span><small>{t("badges.tierInsideOnly")}</small></div><div><span className="verification-level-pill level-strong">{t("levels.strong")}</span><small>{t("badges.tierInsideOnly")}</small></div></div>
-        <div className="alert alert-info">{t("badges.placementRule")}</div>
-        <div className="verification-badge-grid">
-          {badges.map((badge) => (
-            <article className="verification-badge-card" key={badge.slot}>
-              <header><div><h3>{t(`badges.slots.${badge.slot}.title`)}</h3><p>{t(`badges.slots.${badge.slot}.copy`)}</p></div><span className={`verification-badge-fallback slot-${badge.slot}`} aria-hidden="true">{badgeSymbol(badge.slot)}</span></header>
-              <label className="field"><span>{t("badges.file")}</span><input type="file" accept="image/png" onChange={(event) => choose(badge.slot, event.target.files?.[0] ?? null)} /><small className="field-hint">{t("badges.limit", { size: Math.floor(MAX_VERIFICATION_BADGE_BYTES / 1024 / 1024) })}</small></label>
-              {badge.error ? <div className="alert alert-error">{t(`badges.errors.${badge.error}`)}</div> : null}
-              {badge.fileName ? <p className="verification-file-name">{badge.fileName}</p> : null}
-              <div className="verification-badge-previews">{([16, 24, 40] as const).map((size) => <div key={size}><span className="verification-badge-stage stage-dark">{badge.previewUrl ? <img src={badge.previewUrl} width={size} height={size} alt="" /> : <b className={`slot-${badge.slot}`} style={{ width: size, height: size }}>{badgeSymbol(badge.slot)}</b>}</span><span className="verification-badge-stage stage-light">{badge.previewUrl ? <img src={badge.previewUrl} width={size} height={size} alt="" /> : <b className={`slot-${badge.slot}`} style={{ width: size, height: size }}>{badgeSymbol(badge.slot)}</b>}</span><small>{size}px</small></div>)}</div>
-              <div className="verification-badge-placements">{(["people", "profile", "chat"] as const).map((placement) => <span key={placement} className={badge.slot !== "verified" && placement !== "profile" ? "is-private" : ""}>{t(`badges.placements.${placement}`)}<small>{badge.slot !== "verified" && placement !== "profile" ? t("badges.selfOnly") : t("badges.visibleHere")}</small></span>)}</div>
-              <button type="button" className="button button-secondary" disabled={!badge.previewUrl || Boolean(badge.error)} onClick={() => onNotice({ tone: "info", text: t("badges.noManifest") })}>{t("badges.review")}</button>
-            </article>
-          ))}
-        </div>
-        <p className="field-hint">{t("badges.privacy")}</p>
-      </div>
-    </section>
+  useEffect(() => {
+    try {
+      const serialized = window.sessionStorage.getItem(VERIFICATION_PENDING_STORAGE_KEY);
+      if (serialized) {
+        const restored = verificationPendingFrom(JSON.parse(serialized));
+        if (restored) {
+          pendingRef.current = restored;
+          setPending(restored);
+        } else window.sessionStorage.removeItem(VERIFICATION_PENDING_STORAGE_KEY);
+      }
+    } catch {
+      setNotice({ tone: "error", text: t("live.persistenceUnavailable") });
+    }
+    void load();
+  }, [load, t]);
+
+  const selectedPolicy = useMemo(
+    () => data?.policies.find((row) => row.scope_key === selectedScope) ?? null,
+    [data, selectedScope],
   );
-}
 
-function VerificationSimulatorTab({ scopes }: { scopes: VerificationScope[] }) {
-  const t = useTranslations("verificationAdmin");
-  const scopeLabel = useScopeLabel();
-  const [scopeId, setScopeId] = useState(scopes[0]?.id ?? "global");
-  const [video, setVideo] = useState<VerificationMethodStatus>("rejected");
-  const [persona, setPersona] = useState<VerificationMethodStatus>("pending");
-  const [imported, setImported] = useState<VerificationLevel>("none");
-  const [grant, setGrant] = useState<VerificationLevel>("none");
-  const [badgeVisible, setBadgeVisible] = useState(true);
-  const scope = scopes.find((candidate) => candidate.id === scopeId) ?? scopes[0];
-  const methods = verificationEffectiveMethods(scope, scopes);
-  const statuses = { video, persona };
-  const derived = verificationDerivedLevel(methods, statuses);
-  const effective = verificationMaxLevel(derived, imported, grant);
-  const source = effective === grant && grant !== "none" ? "granted" : effective === imported && imported !== "none" ? "imported" : "derived";
-  const tierLanguage = verificationTierLanguageEnabled(methods);
-  const ownState = video === "rejected" || persona === "rejected" ? "rejected" : video === "pending" || persona === "pending" ? "pending" : effective !== "none" ? "verified" : "none";
-  const publicBadge = badgeVisible && effective !== "none";
+  useEffect(() => {
+    if (selectedPolicy) setPolicyDraft(clone(selectedPolicy.draft));
+    setImpact(null);
+    setConfirmation("");
+  }, [selectedPolicy]);
 
-  return (
-    <div className="verification-simulator-layout">
-      <section className="panel">
-        <div className="panel-header"><div><h2>{t("simulator.inputsTitle")}</h2><p>{t("simulator.inputsCopy")}</p></div><span className="badge badge-warning">{t("fixtureBadge")}</span></div>
-        <div className="panel-body form-stack">
-          <div className="alert alert-info">{t("simulator.localOnly")}</div>
-          <label className="field"><span>{t("simulator.scope")}</span><select value={scopeId} onChange={(event) => setScopeId(event.target.value)}>{scopes.map((candidate) => <option key={candidate.id} value={candidate.id}>{scopeLabel(candidate)}</option>)}</select></label>
-          <label className="field"><span>{t("simulator.video")}</span><select value={video} onChange={(event) => setVideo(event.target.value as VerificationMethodStatus)}>{VERIFICATION_METHOD_STATUSES.map((status) => <option key={status} value={status}>{t(`statuses.${status}`)}</option>)}</select></label>
-          <label className="field"><span>{t("simulator.persona")}</span><select value={persona} onChange={(event) => setPersona(event.target.value as VerificationMethodStatus)}>{VERIFICATION_METHOD_STATUSES.map((status) => <option key={status} value={status}>{t(`statuses.${status}`)}</option>)}</select></label>
-          {(video === "rejected" || persona === "rejected") ? <div className="verification-rejection-input"><strong>{t("simulator.rejectedFixture")}</strong><span>{t("simulator.rejectedReason")}</span><small>{t("simulator.rejectedAttempt", { attempt: 2, maximum: 5 })} · {t("simulator.manualReview")}</small></div> : null}
-          <label className="field"><span>{t("simulator.imported")}</span><select value={imported} onChange={(event) => setImported(event.target.value as VerificationLevel)}>{VERIFICATION_LEVELS.map((level) => <option key={level} value={level}>{t(`levels.${level}`)}</option>)}</select></label>
-          <label className="field"><span>{t("simulator.grant")}</span><select value={grant} onChange={(event) => setGrant(event.target.value as VerificationLevel)}>{VERIFICATION_LEVELS.map((level) => <option key={level} value={level}>{t(`levels.${level}`)}</option>)}</select></label>
-          <label className="checkbox-field"><input type="checkbox" checked={badgeVisible} onChange={(event) => setBadgeVisible(event.target.checked)} /><span>{t("simulator.badgeVisible")}</span></label>
-        </div>
-      </section>
-      <section className="panel">
-        <div className="panel-header"><div><h2>{t("simulator.outputTitle")}</h2><p>{t("simulator.outputCopy")}</p></div>{tierLanguage ? <span className={`verification-level-pill level-${effective}`}>{t(`levels.${effective}`)}</span> : <span className="badge">{t("simulator.tierLanguageHidden")}</span>}</div>
-        <div className="panel-body">
-          <dl className="detail-list verification-simulator-summary"><div className="detail-row"><dt>{t("simulator.derived")}</dt><dd>{t(`levels.${derived}`)}</dd></div><div className="detail-row"><dt>{t("simulator.effective")}</dt><dd>{t(`levels.${effective}`)} · {t(`sources.${source}`)}</dd></div><div className="detail-row"><dt>{t("simulator.chain")}</dt><dd>{scopeLabel(scope)} → {t("scopes.global")}</dd></div><div className="detail-row"><dt>{t("simulator.publicBadge")}</dt><dd>{publicBadge ? t("simulator.pinkSeal") : t("simulator.hiddenSeal")}</dd></div><div className="detail-row"><dt>{t("simulator.ownState")}</dt><dd>{t(`simulator.ownStates.${ownState}`)}</dd></div></dl>
-          <div className="verification-simulator-features">{VERIFICATION_FEATURE_KEYS.map((feature) => {
-            const requirement = verificationEffectiveRequirement(scope, feature, scopes);
-            const required = requirement?.value ?? "none";
-            const allowed = levelRank(effective) >= requirementRank(required);
-            const nextMethod = required === "strong" ? (methods.includes("persona") ? "persona" : methods[0]) : methods.includes("video") ? "video" : methods[0];
-            return <article key={feature}><div><strong>{t(`features.${feature}.title`)}</strong><small>{feature}</small></div><span className={`status-badge ${allowed ? "status-accepted" : "status-denied"}`}>{allowed ? t("simulator.allowed") : t("simulator.blocked")}</span><small>{t("simulator.requirement", { value: t(`requirements.values.${required}`) })}{!allowed && nextMethod ? ` · ${t("simulator.next", { method: t(`methods.${nextMethod}`) })}` : ""}</small></article>;
-          })}</div>
-        </div>
-      </section>
-    </div>
-  );
-}
+  useEffect(() => {
+    const pair = data?.copy_pairs.find((row) => row.copy_key === selectedCopy) ?? null;
+    if (pair) {
+      setCopyDraft({
+        copy_key: pair.copy_key,
+        behavior: clone(pair.behavior),
+        locales: clone(pair.locales),
+        expectedRevision: pair.revision,
+        active: pair.active,
+      });
+      return;
+    }
+    const variant = VERIFICATION_GATE_VARIANTS.find((candidate) => selectedCopy.endsWith(`.${candidate}`));
+    const fallback = variant
+      ? data?.copy_pairs.find((row) => row.copy_key === `default.${variant}`)
+      : null;
+    setCopyDraft(fallback ? {
+      copy_key: selectedCopy,
+      behavior: clone(fallback.behavior),
+      locales: clone(fallback.locales),
+      expectedRevision: 0,
+      active: false,
+    } : null);
+  }, [data, selectedCopy]);
 
-export default function VerificationAdminConsole({ seedCopy, previewCopy, initialTab }: { seedCopy: VerificationGateCopyPair[]; previewCopy: VerificationPreviewCopyPair; initialTab: VerificationTabKey }) {
-  const t = useTranslations("verificationAdmin");
-  const [tab, setTab] = useState<VerificationTabKey>(initialTab);
-  const [scopes, setScopes] = useState<VerificationScope[]>(verificationScopeFixtures);
-  const [copyPairs, setCopyPairs] = useState<VerificationGateCopyPair[]>(() => cloneCopyPairs(seedCopy));
-  const [notice, setNotice] = useState<Notice>(null);
-  const tabIndex = VERIFICATION_TAB_KEYS.indexOf(tab);
+  useEffect(() => {
+    setSimulationResult(null);
+  }, [simulation, simulationScope]);
+
+  const copyCanSave = useMemo(() => copyDraft !== null && Boolean(normalizeVerificationProxyBody(
+    "verification_copy_save",
+    {
+      contract_version: 1,
+      copy_json: {
+        copy_key: copyDraft.copy_key,
+        behavior: copyDraft.behavior,
+        locales: copyDraft.locales,
+      },
+      expected_revision: copyDraft.expectedRevision,
+      request_id: COPY_VALIDATION_REQUEST_ID,
+    },
+  )), [copyDraft]);
+
+  function clearPending(): boolean {
+    try { window.sessionStorage.removeItem(VERIFICATION_PENDING_STORAGE_KEY); } catch { return false; }
+    pendingRef.current = null;
+    setPending(null);
+    return true;
+  }
+
+  async function executeMutation(next: VerificationPendingMutation) {
+    if (busy) return;
+    setBusy(true);
+    setNotice(null);
+    const existing = pendingRef.current;
+    let response: AdminResponse | null;
+    if (existing) {
+      response = await adminCall(existing.action, existing.payload);
+    } else {
+      const persisted = await verificationPersistBeforeMutation(
+        window.sessionStorage,
+        next,
+        () => adminCall(next.action, next.payload),
+      );
+      if (!persisted.ok) {
+        setBusy(false);
+        setNotice({ tone: "error", text: t("live.persistenceUnavailable") });
+        return;
+      }
+      pendingRef.current = next;
+      setPending(next);
+      response = persisted.response;
+    }
+    const durable = pendingRef.current ?? next;
+    const success = mutationResult(durable.action, response);
+    if (success) {
+      const cleared = clearPending();
+      setNotice({ tone: cleared ? "success" : "error", text: cleared ? t(success.replayed ? "live.replayed" : "live.saved") : t("live.persistenceCleanupFailed") });
+      setBusy(false);
+      if (cleared) void load();
+      return;
+    }
+    const conflict = verificationConflictResponse(response);
+    if (conflict) {
+      const cleared = clearPending();
+      setNotice({ tone: "error", text: cleared ? t("live.conflict") : t("live.persistenceCleanupFailed") });
+      setBusy(false);
+      if (cleared) void load();
+      return;
+    }
+    const error = verificationErrorResponse(response);
+    if (!verificationShouldRetainMutation(error)) clearPending();
+    setNotice({ tone: "error", text: t("live.errorCode", { code: error ?? t("live.unknownError") }) });
+    setBusy(false);
+  }
+
+  function startMutation(action: VerificationMutationAction, target: string, body: Record<string, unknown>) {
+    const next = verificationPendingMutation(action, target, body);
+    if (!next) {
+      setNotice({ tone: "error", text: t("live.invalidDraft") });
+      return;
+    }
+    void executeMutation(next);
+  }
 
   function selectTab(value: VerificationTabKey) {
     setTab(value);
@@ -524,30 +401,424 @@ export default function VerificationAdminConsole({ seedCopy, previewCopy, initia
     window.history.replaceState(window.history.state, "", url);
   }
 
-  const activePanel = useMemo(() => {
-    if (tab === "scopes") return <VerificationScopeTab scopes={scopes} onScopes={setScopes} onNotice={setNotice} />;
-    if (tab === "requirements") return <VerificationRequirementsTab scopes={scopes} onScopes={setScopes} onNotice={setNotice} />;
-    if (tab === "messages") return <VerificationMessagesTab pairs={copyPairs} previewCopy={previewCopy} onPairs={setCopyPairs} onNotice={setNotice} />;
-    if (tab === "badges") return <VerificationBadgesTab onNotice={setNotice} />;
-    return <VerificationSimulatorTab scopes={scopes} />;
-  }, [copyPairs, previewCopy, scopes, tab]);
+  function updateFeature(feature: (typeof VERIFICATION_FEATURE_KEYS)[number], value: string) {
+    if (!policyDraft || !(VERIFICATION_REQUIREMENTS as readonly string[]).includes(value)) return;
+    setPolicyDraft({ ...policyDraft, feature_requirements: { ...policyDraft.feature_requirements, [feature]: value } as VerificationStoredPolicyBlock["feature_requirements"] });
+    setImpact(null);
+  }
+
+  function savePolicyDraft(policy: VerificationPolicy, draft = policyDraft, placeToken?: string) {
+    if (!draft) return;
+    startMutation("verification_policy_save_draft", policy.scope_key, {
+      contract_version: 1,
+      scope_key: policy.scope_key,
+      draft_json: draft,
+      ...(placeToken ? { place_token: placeToken } : {}),
+      expected_revision: policy.revision,
+      request_id: crypto.randomUUID(),
+    });
+  }
+
+  function saveNewScope(key: string, placeToken?: string) {
+    if (!data || data.next_cursor !== null || data.policies.length !== data.total_policies) {
+      setNotice({ tone: "error", text: t("live.loadAllBeforeAdd") });
+      return;
+    }
+    if (data.policies.some((row) => row.scope_key === key)) {
+      setSelectedScope(key);
+      setNotice({ tone: "info", text: t("live.scopeAlreadyExists") });
+      return;
+    }
+    startMutation("verification_policy_save_draft", key, {
+      contract_version: 1,
+      scope_key: key,
+      draft_json: defaultOverrideDraft(),
+      ...(placeToken ? { place_token: placeToken } : {}),
+      expected_revision: 0,
+      request_id: crypto.randomUUID(),
+    });
+  }
+
+  async function previewImpact() {
+    if (!selectedPolicy || busy) return;
+    setBusy(true);
+    const response = await adminCall("verification_policy_impact_preview", {
+      contract_version: 1,
+      scope_key: selectedPolicy.scope_key,
+      operation,
+      expected_revision: selectedPolicy.revision,
+    });
+    const parsed = verificationPolicyImpactPreviewResponse(response);
+    const bound = parsed?.scope_key === selectedPolicy.scope_key
+      && parsed.operation === operation
+      && parsed.expected_revision === selectedPolicy.revision
+      ? parsed
+      : null;
+    setImpact(bound);
+    setConfirmation("");
+    setNotice(bound ? { tone: "info", text: t("live.previewReady") } : { tone: "error", text: t("live.previewFailed") });
+    setBusy(false);
+  }
+
+  function applyImpact() {
+    if (!impact || confirmation !== impact.confirmation_phrase) return;
+    startMutation("verification_policy_apply", impact.scope_key, {
+      contract_version: 1,
+      scope_key: impact.scope_key,
+      operation: impact.operation,
+      expected_revision: impact.expected_revision,
+      normalized_fingerprint: impact.normalized_fingerprint,
+      confirmation_phrase: confirmation,
+      reason,
+      request_id: crypto.randomUUID(),
+    });
+  }
+
+  async function searchCity() {
+    if (busy) return;
+    const token = searchTokenRef.current ?? crypto.randomUUID();
+    searchTokenRef.current = token;
+    setBusy(true);
+    const response = await adminCall("verification_places_city_search", {
+      contract_version: 1,
+      search_token: token,
+      query: cityQuery.trim(),
+      ...(cityCountry ? { country_code: cityCountry.trim().toUpperCase() } : {}),
+    });
+    const parsed = verificationCitySearchResponse(response);
+    const bound = parsed?.search_token === token ? parsed : null;
+    setCitySuggestions(bound?.suggestions ?? []);
+    setCityDetail(null);
+    setNotice(bound ? null : { tone: "error", text: t("live.citySearchFailed") });
+    setBusy(false);
+  }
+
+  async function selectCity(place: string) {
+    const token = searchTokenRef.current;
+    if (!token || busy) return;
+    setBusy(true);
+    const response = await adminCall("verification_places_city_detail", { contract_version: 1, search_token: token, place_id: place });
+    const parsed = verificationCityDetailResponse(response);
+    const bound = parsed?.city.place_id === place ? parsed : null;
+    setCityDetail(bound?.city ?? null);
+    setNotice(bound ? null : { tone: "error", text: t("live.cityDetailFailed") });
+    setBusy(false);
+  }
+
+  function saveCopy() {
+    if (!copyDraft) return;
+    startMutation("verification_copy_save", copyDraft.copy_key, {
+      contract_version: 1,
+      copy_json: { copy_key: copyDraft.copy_key, behavior: copyDraft.behavior, locales: copyDraft.locales },
+      expected_revision: copyDraft.expectedRevision,
+      request_id: crypto.randomUUID(),
+    });
+  }
+
+  function updateCopyLocale(patch: Partial<VerificationLocalizedGateCopy>) {
+    if (!copyDraft) return;
+    setCopyDraft({
+      ...copyDraft,
+      locales: {
+        ...copyDraft.locales,
+        [copyEditorLocale]: { ...copyDraft.locales[copyEditorLocale], ...patch },
+      },
+    });
+  }
+
+  function updateCopyAction(
+    field: "primary_action" | "secondary_action",
+    value: VerificationCopyBehavior[typeof field],
+  ) {
+    if (!copyDraft) return;
+    const primary = field === "primary_action";
+    const actionIsNone = value === "none";
+    const actionUsesUrl = value === "url";
+    const labelKey = primary ? "primary_label" : "secondary_label";
+    const urlKey = primary ? "primary_url" : "secondary_url";
+    const locales = Object.fromEntries(VERIFICATION_LOCALES.map((entry) => [entry, {
+      ...copyDraft.locales[entry],
+      [labelKey]: actionIsNone ? null : copyDraft.locales[entry][labelKey] ?? "",
+    }])) as CopyDraft["locales"];
+    setCopyDraft({
+      ...copyDraft,
+      behavior: {
+        ...copyDraft.behavior,
+        [field]: value,
+        [urlKey]: actionUsesUrl ? copyDraft.behavior[urlKey] ?? "" : null,
+      },
+      locales,
+    });
+  }
+
+  function removeCopy() {
+    if (!copyDraft?.copy_key.startsWith("feature.") || !copyDraft.active) return;
+    startMutation("verification_copy_remove", copyDraft.copy_key, {
+      contract_version: 1,
+      copy_key: copyDraft.copy_key,
+      reason,
+      expected_revision: copyDraft.expectedRevision,
+      request_id: crypto.randomUUID(),
+    });
+  }
+
+  function savePendingSettings() {
+    if (!data) return;
+    startMutation("verification_pending_settings_save", "pending", {
+      contract_version: 1,
+      overdue_after_seconds: Number(pendingOverdue),
+      queue_average_long_copy_enabled: pendingLongCopy,
+      queue_average_threshold_seconds: Number(pendingThreshold),
+      expected_revision: data.pending_settings.revision,
+      request_id: crypto.randomUUID(),
+    });
+  }
+
+  async function uploadBadge(asset: VerificationBadgeAsset) {
+    const file = badgeFiles[asset.slot];
+    if (!file) return;
+    const error = await verificationBadgeFileError(file);
+    if (error) {
+      setNotice({ tone: "error", text: t(`badges.errors.${error}`) });
+      return;
+    }
+    const png = bytesToBase64(new Uint8Array(await file.arrayBuffer()));
+    startMutation("verification_badge_upload", asset.slot, {
+      contract_version: 1,
+      slot: asset.slot,
+      png_base64: png,
+      expected_revision: asset.revision,
+      request_id: crypto.randomUUID(),
+    });
+  }
+
+  function removeBadge(asset: VerificationBadgeAsset) {
+    startMutation("verification_badge_remove", asset.slot, {
+      contract_version: 1,
+      slot: asset.slot,
+      reason,
+      expected_revision: asset.revision,
+      request_id: crypto.randomUUID(),
+    });
+  }
+
+  function updateSimulationMethod(
+    method: (typeof VERIFICATION_METHODS)[number],
+    patch: Partial<SimulationInputMethod>,
+  ) {
+    setSimulation((current) => ({
+      ...current,
+      [method]: { ...current[method], ...patch },
+    }));
+  }
+
+  async function runSimulation() {
+    if (busy) return;
+    setBusy(true);
+    const response = await adminCall("verification_simulate", {
+      contract_version: 1,
+      scope_key: simulationScope,
+      locale,
+      simulation_json: simulation,
+    });
+    const parsed = verificationSimulationResponse(response);
+    const requestedScope = data?.policies.find((row) => row.scope_key === simulationScope)?.scope;
+    const expectedSeal = parsed !== null
+      && simulation.badge_visible
+      && parsed.effective_level !== "none"
+      && parsed.enabled_methods.length > 0;
+    const bound = parsed && requestedScope
+      && JSON.stringify(parsed.scope) === JSON.stringify(requestedScope)
+      && parsed.method_statuses.video === simulation.video.status
+      && parsed.method_statuses.persona === simulation.persona.status
+      && parsed.imported_level === simulation.imported_level
+      && parsed.granted_level === simulation.grant_level
+      && parsed.external_seal_would_show === expectedSeal
+      ? parsed
+      : null;
+    setSimulationResult(bound);
+    setNotice(bound ? null : { tone: "error", text: t("live.simulationFailed") });
+    setBusy(false);
+  }
+
+  if (state === "loading") return <LoadingPanel />;
+  if (state === "error" || !data || !summary) return <ErrorPanel message={t("live.loadError")} retry={load} />;
+
+  const locked = busy || pending !== null;
+  const tabIndex = VERIFICATION_TAB_KEYS.indexOf(tab);
+  const copyLocale = copyDraft?.locales[copyEditorLocale];
+  const copyVariant = VERIFICATION_GATE_VARIANTS.find((variant) => selectedCopy.endsWith(`.${variant}`)) ?? "video";
+  const copyPreviewIcon = copyVariant === "pending" ? "◷" : copyVariant === "rejected" ? "!" : copyVariant === "both" ? "1·2" : "✓";
+  const canCreateScope = data.next_cursor === null && data.policies.length === data.total_policies;
+  const impactActivationBlocked = impact?.impact.features.some((feature) => feature.effective_after !== "none") === true
+    && !impact.activation_guard.non_none_publish_ready;
 
   function tabKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
-    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") return;
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
-    const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? VERIFICATION_TAB_KEYS.length - 1 : (tabIndex + (event.key === "ArrowRight" ? 1 : -1) + VERIFICATION_TAB_KEYS.length) % VERIFICATION_TAB_KEYS.length;
-    const next = VERIFICATION_TAB_KEYS[nextIndex];
+    const index = event.key === "Home" ? 0 : event.key === "End" ? VERIFICATION_TAB_KEYS.length - 1
+      : (tabIndex + (event.key === "ArrowRight" ? 1 : -1) + VERIFICATION_TAB_KEYS.length) % VERIFICATION_TAB_KEYS.length;
+    const next = VERIFICATION_TAB_KEYS[index];
     selectTab(next);
     document.getElementById(`verification-tab-${next}`)?.focus();
   }
 
   return (
     <>
-      <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} actions={<span className="badge badge-warning verification-staging-badge">{t("staging")}</span>} />
-      <div className="alert alert-info page-alert verification-readiness" role="status"><strong>{t("readinessTitle")}</strong> {t("readinessCopy")}</div>
+      <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} actions={<button type="button" className="button button-secondary button-small" onClick={() => void load()}>{t("live.refresh")}</button>} />
+      {!data.activation_guard.non_none_publish_ready ? <div className="alert alert-warning page-alert"><strong>{t("live.activationBlocked")}</strong> {data.activation_guard.blocking_reasons.map((value) => t(`live.activationReasons.${value}`)).join(", ")}</div> : null}
+      {pending ? <div className="alert alert-info page-alert"><strong>{t("live.pendingMutation")}</strong> {pending.action} · {pending.target} <button type="button" className="button button-secondary button-small" disabled={busy} onClick={() => void executeMutation(pending)}>{t("live.retryExact")}</button></div> : null}
       {notice ? <div className={`alert alert-${notice.tone} page-alert`} role="status">{notice.text}</div> : null}
-      <div className="verification-tabs" role="tablist" aria-label={t("tabs.label")}>{VERIFICATION_TAB_KEYS.map((value) => <button id={`verification-tab-${value}`} type="button" role="tab" aria-selected={tab === value} aria-controls={`verification-panel-${value}`} tabIndex={tab === value ? 0 : -1} className={tab === value ? "active" : ""} key={value} onKeyDown={tabKeyDown} onClick={() => selectTab(value)}>{t(`tabs.${value}`)}</button>)}</div>
-      <div id={`verification-panel-${tab}`} role="tabpanel" aria-labelledby={`verification-tab-${tab}`}>{activePanel}</div>
+      <div className="verification-tabs" role="tablist" aria-label={t("tabs.label")}>
+        {VERIFICATION_TAB_KEYS.map((value) => <button id={`verification-tab-${value}`} type="button" role="tab" aria-selected={tab === value} tabIndex={tab === value ? 0 : -1} className={tab === value ? "active" : ""} key={value} onKeyDown={tabKeyDown} onClick={() => selectTab(value)}>{t(`tabs.${value}`)}</button>)}
+      </div>
+
+      <div role="tabpanel" aria-labelledby={`verification-tab-${tab}`}>
+        {tab === "scopes" ? <div className="verification-scopes-workspace">
+          <section className="panel">
+            <div className="panel-header"><div><h2>{t("scopes.listTitle")}</h2><p>{t("scopes.listCopy")}</p></div><div className="row-actions"><span className="badge">{t("live.shownPolicies", { shown: data.policies.length, total: data.total_policies })}</span>{data.next_cursor ? <button type="button" className="button button-secondary button-small" disabled={locked} onClick={() => void loadMorePolicies()}>{t("live.loadMore")}</button> : null}</div></div>
+            <div className="panel-body">
+              <label className="field"><span>{t("live.scope")}</span><select value={selectedScope} onChange={(event) => setSelectedScope(event.target.value)}>{data.policies.map((row) => <option value={row.scope_key} key={row.scope_key}>{row.scope.display} · {row.scope_key}</option>)}</select></label>
+              {selectedPolicy && policyDraft ? <div className="form-stack">
+                <label className="field">
+                  <span>{t("live.enabledMethods")}</span>
+                  <select value={methodChoice(policyDraft.enabled_methods)} disabled={locked || !can("verification_policy_edit")} onChange={(event) => { setPolicyDraft({ ...policyDraft, enabled_methods: methodsFromChoice(event.target.value) }); setImpact(null); }}>
+                    {selectedPolicy.scope.kind !== "global" ? <option value="inherit">{t("requirements.values.inherit")}</option> : null}
+                    <option value="none">{t("live.methodChoices.none")}</option>
+                    <option value="video" disabled={!data.method_availability.video.policy_enable_allowed}>{t("methods.video")}</option>
+                    <option value="persona" disabled={!data.method_availability.persona.policy_enable_allowed}>{t("methods.persona")}</option>
+                    <option value="both" disabled={VERIFICATION_METHODS.some((method) => !data.method_availability[method].policy_enable_allowed)}>{t("live.methodChoices.both")}</option>
+                  </select>
+                  <small className="field-hint">{VERIFICATION_METHODS.map((method) => {
+                    const availability = data.method_availability[method];
+                    return `${t(`methods.${method}`)}: ${availability.reason ? t(`live.methodReasons.${availability.reason}`) : t("live.methodAvailable")}`;
+                  }).join(" · ")}</small>
+                </label>
+                <div className="table-wrap"><table className="data-table"><thead><tr><th>{t("requirements.feature")}</th><th>{t("live.draftRequirement")}</th><th>{t("live.effectiveRequirement")}</th></tr></thead><tbody>{VERIFICATION_FEATURE_KEYS.map((feature) => {
+                  const effective = selectedPolicy.effective?.feature_requirements[feature];
+                  return <tr key={feature}><th><strong>{t(`features.${feature}.title`)}</strong><small>{feature}</small></th><td><select value={policyDraft.feature_requirements[feature]} disabled={locked || !can("verification_policy_edit")} onChange={(event) => updateFeature(feature, event.target.value)}>{VERIFICATION_REQUIREMENTS.filter((value) => selectedPolicy.scope.kind !== "global" || value !== "inherit").map((value) => <option value={value} key={value}>{t(`requirements.values.${value}`)}</option>)}</select></td><td>{effective ? <><strong>{t(`requirements.values.${effective.required_tier}`)}</strong><small>{effective.source_scope_key}</small></> : t("live.notLive")}</td></tr>;
+                })}</tbody></table></div>
+                <div className="row-actions"><button type="button" className="button button-primary" disabled={locked || !can("verification_policy_edit")} onClick={() => savePolicyDraft(selectedPolicy)}>{t("live.saveDraft")}</button></div>
+                <div className="verification-grant-editor">
+                  <label className="field"><span>{t("live.operation")}</span><select value={operation} disabled={locked || !can("verification_policy_publish")} onChange={(event) => { setOperation(event.target.value as VerificationPolicyOperation); setImpact(null); }}>{VERIFICATION_POLICY_OPERATIONS.map((value) => <option value={value} key={value}>{t(`live.operations.${value}`)}</option>)}</select></label>
+                  <button type="button" className="button button-secondary" disabled={locked || !can("verification_policy_publish")} onClick={() => void previewImpact()}>{t("live.previewImpact")}</button>
+                  {impact ? <div className="form-stack"><div className="verification-queue-metric"><strong>{impact.impact.members_changed}</strong><span>{t("live.membersChanged", { total: impact.impact.members_evaluated })}</span></div><label className="field"><span>{t("live.typePhrase", { phrase: impact.confirmation_phrase })}</span><input disabled={locked} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></label><label className="field"><span>{t("live.reason")}</span><textarea disabled={locked} maxLength={300} value={reason} onChange={(event) => setReason(event.target.value)} /></label>{impactActivationBlocked ? <div className="alert alert-warning">{t("live.previewActivationBlocked")}</div> : null}<button type="button" className="button button-danger" disabled={locked || !can("verification_policy_publish") || impactActivationBlocked || confirmation !== impact.confirmation_phrase || reason.trim() === ""} onClick={applyImpact}>{t("live.apply")}</button></div> : null}
+                </div>
+              </div> : null}
+            </div>
+          </section>
+          <aside className="verification-scope-sidecards">
+            <section className="panel"><div className="panel-header"><h2>{t("live.addCountry")}</h2></div><div className="panel-body"><label className="field"><span>{t("scopes.country")}</span><input disabled={locked || !can("verification_policy_edit")} maxLength={2} value={countryCode} onChange={(event) => setCountryCode(event.target.value.toUpperCase())} /></label>{!canCreateScope ? <p className="field-hint">{t("live.loadAllBeforeAdd")}</p> : null}<button type="button" className="button button-secondary" disabled={locked || !can("verification_policy_edit") || !canCreateScope || !/^[A-Z]{2}$/.test(countryCode)} onClick={() => saveNewScope(`country:${countryCode}`)}>{t("scopes.addDraft")}</button></div></section>
+            <section className="panel"><div className="panel-header"><h2>{t("live.addCity")}</h2></div><div className="panel-body form-stack"><label className="field"><span>{t("scopes.citySearch")}</span><input disabled={locked || !can("verification_policy_edit")} type="search" value={cityQuery} onChange={(event) => setCityQuery(event.target.value)} /></label><label className="field"><span>{t("scopes.country")}</span><input disabled={locked || !can("verification_policy_edit")} maxLength={2} value={cityCountry} onChange={(event) => setCityCountry(event.target.value.toUpperCase())} /></label><button type="button" className="button button-secondary" disabled={locked || !can("verification_policy_edit") || cityQuery.trim().length < 2} onClick={() => void searchCity()}>{t("live.search")}</button>{citySuggestions.map((row) => <button type="button" className="button button-ghost" disabled={locked || !can("verification_policy_edit")} key={row.place_id} onClick={() => void selectCity(row.place_id)}>{row.display} · {row.secondary}</button>)}{cityDetail ? <div className="verification-provenance-card"><strong>{cityDetail.display}</strong><small>{cityDetail.scope_key}</small>{!canCreateScope ? <p className="field-hint">{t("live.loadAllBeforeAdd")}</p> : null}<button type="button" className="button button-primary" disabled={locked || !can("verification_policy_edit") || !canCreateScope} onClick={() => saveNewScope(cityDetail.scope_key, cityDetail.place_token)}>{t("scopes.addDraft")}</button></div> : null}</div></section>
+          </aside>
+        </div> : null}
+
+        {tab === "requirements" ? <section className="panel"><div className="panel-header"><div><h2>{t("requirements.title")}</h2><p>{t("requirements.copy")}</p></div></div><div className="panel-body"><div className="table-wrap"><table className="data-table"><thead><tr><th>{t("requirements.feature")}</th>{data.policies.map((row) => <th key={row.scope_key}>{row.scope.display}</th>)}</tr></thead><tbody>{VERIFICATION_FEATURE_KEYS.map((feature) => <tr key={feature}><th><strong>{t(`features.${feature}.title`)}</strong><small>{feature}</small></th>{data.policies.map((row) => {
+          const effective = row.effective?.feature_requirements[feature];
+          return <td key={row.scope_key}>{effective ? <><strong>{t(`requirements.values.${effective.required_tier}`)}</strong><small>{effective.source_scope_key}</small></> : t("live.notLive")}</td>;
+        })}</tr>)}</tbody></table></div></div></section> : null}
+
+        {tab === "messages" ? <div className="section-grid">
+          <section className="panel">
+            <div className="panel-header"><div><h2>{t("messages.title")}</h2><p>{t("messages.copy")}</p></div></div>
+            <div className="panel-body form-stack">
+              <label className="field"><span>{t("live.copyPair")}</span><select value={selectedCopy} onChange={(event) => setSelectedCopy(event.target.value)}>{VERIFICATION_COPY_KEYS.map((key) => <option value={key} key={key}>{key}</option>)}</select></label>
+              {copyDraft && copyLocale ? <>
+                <div className="row-actions">
+                  {VERIFICATION_LOCALES.map((entry) => <button type="button" className={`button button-small ${copyEditorLocale === entry ? "button-primary" : "button-secondary"}`} aria-pressed={copyEditorLocale === entry} key={entry} onClick={() => setCopyEditorLocale(entry)}>{t(`messages.locales.${entry}`)}</button>)}
+                  <span className="status-badge status-inactive">{copyDraft.expectedRevision === 0 ? t("live.newOverride") : t("live.revision", { revision: copyDraft.expectedRevision })}</span>
+                </div>
+                <small className="field-hint">{copyDraft.behavior.icon.asset_key}</small>
+                <label className="field"><span>{t("messages.fields.title")}</span><input disabled={locked || !can("verification_copy_edit")} maxLength={80} value={copyLocale.title} onChange={(event) => updateCopyLocale({ title: event.target.value })} /></label>
+                <label className="field"><span>{t("messages.fields.subtitle")}</span><input disabled={locked || !can("verification_copy_edit")} maxLength={120} value={copyLocale.subtitle} onChange={(event) => updateCopyLocale({ subtitle: event.target.value })} /></label>
+                <label className="field"><span>{t("messages.fields.description")}</span><textarea disabled={locked || !can("verification_copy_edit")} maxLength={600} value={copyLocale.description} onChange={(event) => updateCopyLocale({ description: event.target.value })} /></label>
+                <label className="field"><span>{t("messages.fields.overdueDescription")}</span><textarea disabled={locked || !can("verification_copy_edit")} maxLength={600} value={copyLocale.overdue_description ?? ""} onChange={(event) => updateCopyLocale({ overdue_description: event.target.value || null })} /></label>
+                <label className="field"><span>{t("messages.fields.attentionNote")}</span><textarea disabled={locked || !can("verification_copy_edit")} maxLength={300} value={copyLocale.attention_note ?? ""} onChange={(event) => updateCopyLocale({ attention_note: event.target.value || null })} /></label>
+                <label className="field"><span>{t("messages.fields.primaryAction")}</span><select disabled={locked || !can("verification_copy_edit")} value={copyDraft.behavior.primary_action} onChange={(event) => updateCopyAction("primary_action", event.target.value as VerificationCopyBehavior["primary_action"])}>{(["automatic", "open_verification_center", "url", "none"] as const).map((action) => <option value={action} key={action}>{t(`messages.behaviorActions.${action}`)}</option>)}</select></label>
+                {copyDraft.behavior.primary_action !== "none" ? <label className="field"><span>{t("messages.fields.primaryLabel")}</span><input disabled={locked || !can("verification_copy_edit")} maxLength={40} value={copyLocale.primary_label ?? ""} onChange={(event) => updateCopyLocale({ primary_label: event.target.value })} /></label> : null}
+                {copyDraft.behavior.primary_action === "url" ? <label className="field"><span>{t("messages.fields.primaryUrl")}</span><input disabled={locked || !can("verification_copy_edit")} type="url" maxLength={2048} value={copyDraft.behavior.primary_url ?? ""} onChange={(event) => setCopyDraft({ ...copyDraft, behavior: { ...copyDraft.behavior, primary_url: event.target.value } })} /></label> : null}
+                <label className="field"><span>{t("messages.fields.secondaryAction")}</span><select disabled={locked || !can("verification_copy_edit")} value={copyDraft.behavior.secondary_action} onChange={(event) => updateCopyAction("secondary_action", event.target.value as VerificationCopyBehavior["secondary_action"])}>{(["open_verification_center", "url", "none"] as const).map((action) => <option value={action} key={action}>{t(`messages.behaviorActions.${action}`)}</option>)}</select></label>
+                {copyDraft.behavior.secondary_action !== "none" ? <label className="field"><span>{t("messages.fields.secondaryLabel")}</span><input disabled={locked || !can("verification_copy_edit")} maxLength={40} value={copyLocale.secondary_label ?? ""} onChange={(event) => updateCopyLocale({ secondary_label: event.target.value })} /></label> : null}
+                {copyDraft.behavior.secondary_action === "url" ? <label className="field"><span>{t("messages.fields.secondaryUrl")}</span><input disabled={locked || !can("verification_copy_edit")} type="url" maxLength={2048} value={copyDraft.behavior.secondary_url ?? ""} onChange={(event) => setCopyDraft({ ...copyDraft, behavior: { ...copyDraft.behavior, secondary_url: event.target.value } })} /></label> : null}
+                <label className="field"><span>{t("messages.fields.cancelLabel")}</span><input disabled={locked || !can("verification_copy_edit")} maxLength={40} value={copyLocale.cancel_label} onChange={(event) => updateCopyLocale({ cancel_label: event.target.value })} /></label>
+                {copyDraft.copy_key.startsWith("feature.") && copyDraft.active ? <label className="field"><span>{t("live.removeReason")}</span><textarea disabled={locked || !can("verification_copy_edit")} maxLength={300} value={reason} onChange={(event) => setReason(event.target.value)} /></label> : null}
+                <div className="row-actions">
+                  <button type="button" className="button button-danger" disabled={locked || !can("verification_copy_edit") || !copyDraft.copy_key.startsWith("feature.") || !copyDraft.active || reason.trim() === ""} onClick={removeCopy}>{t("live.removeOverride")}</button>
+                  <button type="button" className="button button-primary" disabled={locked || !can("verification_copy_edit") || !copyCanSave} onClick={saveCopy}>{t("live.saveCopy")}</button>
+                </div>
+              </> : null}
+            </div>
+          </section>
+          <section className="panel"><div className="panel-header"><h2>{t("live.pendingSettings")}</h2></div><div className="panel-body form-stack"><label className="field"><span>{t("live.overdueSeconds")}</span><input disabled={locked || !can("verification_copy_edit")} type="number" min={300} max={86400} value={pendingOverdue} onChange={(event) => setPendingOverdue(event.target.value)} /></label><label className="checkbox-field"><input disabled={locked || !can("verification_copy_edit")} type="checkbox" checked={pendingLongCopy} onChange={(event) => setPendingLongCopy(event.target.checked)} /><span>{t("live.longCopy")}</span></label><label className="field"><span>{t("live.thresholdSeconds")}</span><input disabled={locked || !can("verification_copy_edit")} type="number" min={300} max={86400} value={pendingThreshold} onChange={(event) => setPendingThreshold(event.target.value)} /></label><button type="button" className="button button-primary" disabled={locked || !can("verification_copy_edit")} onClick={savePendingSettings}>{t("live.savePending")}</button><dl className="detail-list"><div className="detail-row"><dt>{t("live.pendingTotal")}</dt><dd>{summary.total}</dd></div><div className="detail-row"><dt>{t("live.inSla")}</dt><dd>{summary.in_sla}</dd></div><div className="detail-row"><dt>{t("live.overdue")}</dt><dd>{summary.overdue}</dd></div></dl></div></section>
+          {copyDraft && copyLocale ? <aside className={`verification-gate-preview preview-${copyVariant}`} aria-label={t("messages.previewLabel")}>
+            <div className="verification-phone-status"><span>9:41</span><span>{copyEditorLocale.toUpperCase()}</span></div>
+            <div className="verification-gate-sheet">
+              <span className="verification-gate-icon" aria-hidden="true">{copyPreviewIcon}</span>
+              <h3>{copyLocale.title || t("messages.emptyPreview")}</h3>
+              {copyLocale.subtitle ? <strong>{copyLocale.subtitle}</strong> : null}
+              {copyLocale.attention_note ? <p>{copyLocale.attention_note}</p> : null}
+              {copyLocale.description ? <p>{copyLocale.description}</p> : null}
+              {copyVariant === "pending" && copyLocale.overdue_description ? <p>{copyLocale.overdue_description}</p> : null}
+              {copyDraft.behavior.primary_action !== "none" ? <button type="button" tabIndex={-1} aria-disabled="true">{copyLocale.primary_label || t("messages.emptyAction")}</button> : null}
+              {copyDraft.behavior.secondary_action !== "none" ? <button type="button" className="verification-preview-secondary" tabIndex={-1} aria-disabled="true">{copyLocale.secondary_label || t("messages.emptyAction")}</button> : null}
+              <button type="button" className="verification-preview-secondary" tabIndex={-1} aria-disabled="true">{copyLocale.cancel_label || t("messages.emptyCancel")}</button>
+            </div>
+            <small>{t("messages.nonInteractive")}</small>
+          </aside> : null}
+        </div> : null}
+
+        {tab === "badges" ? <section className="panel">
+          <div className="panel-header"><div><h2>{t("badges.title")}</h2><p>{t("badges.copy")}</p></div></div>
+          <div className="panel-body form-stack">
+            <p className="field-hint">{t("badges.limit", { size: 2 })}</p>
+            <div className="verification-badge-grid">{data.badges.map((asset) => <article key={asset.slot} className="verification-badge-card">
+              <h3>{t(`badges.slots.${asset.slot}`)}</h3>
+              <small>{t("live.revision", { revision: asset.revision })}</small>
+              <div className="verification-badge-previews">{([16, 24, 40] as const).map((size) => <div key={size}>
+                <span className="verification-badge-stage stage-dark">{asset.managed_url ? <img src={asset.managed_url} alt="" width={size} height={size} /> : <b style={{ width: size, height: size }}>{badgeSymbol(asset.slot)}</b>}</span>
+                <span className="verification-badge-stage stage-light">{asset.managed_url ? <img src={asset.managed_url} alt="" width={size} height={size} /> : <b style={{ width: size, height: size }}>{badgeSymbol(asset.slot)}</b>}</span>
+                <small>{size}px</small>
+              </div>)}</div>
+              {!asset.managed_url ? <span className="verification-badge-placeholder">{t("live.fallback")}</span> : null}
+              <input type="file" accept="image/png" disabled={locked || !can("verification_badge_edit")} onChange={(event) => { const file = event.target.files?.[0]; if (file) setBadgeFiles((current) => ({ ...current, [asset.slot]: file })); }} />
+              <div className="row-actions"><button type="button" className="button button-danger button-small" disabled={locked || !can("verification_badge_edit") || !asset.active || reason.trim() === ""} onClick={() => removeBadge(asset)}>{t("live.remove")}</button><button type="button" className="button button-primary button-small" disabled={locked || !can("verification_badge_edit") || !badgeFiles[asset.slot]} onClick={() => void uploadBadge(asset)}>{t("live.upload")}</button></div>
+            </article>)}</div>
+            <label className="field"><span>{t("live.reason")}</span><textarea disabled={locked || !can("verification_badge_edit")} maxLength={300} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
+          </div>
+        </section> : null}
+
+        {tab === "simulator" ? <div className="section-grid">
+          <section className="panel">
+            <div className="panel-header"><div><h2>{t("simulator.inputsTitle")}</h2><p>{t("simulator.inputsCopy")}</p></div></div>
+            <div className="panel-body form-stack">
+              <label className="field"><span>{t("simulator.scope")}</span><select disabled={locked || !can("verification_simulate")} value={simulationScope} onChange={(event) => setSimulationScope(event.target.value)}>{data.policies.map((row) => <option value={row.scope_key} key={row.scope_key}>{row.scope.display}</option>)}</select></label>
+              {VERIFICATION_METHODS.map((method) => <fieldset className="verification-provenance-card" key={method}>
+                <legend>{t(`methods.${method}`)}</legend>
+                <label className="field"><span>{t("simulator.methodStatus")}</span><select disabled={locked || !can("verification_simulate")} value={simulation[method].status} onChange={(event) => {
+                  const status = event.target.value as VerificationMethodStatus;
+                  updateSimulationMethod(method, { status, pending_age_seconds: status === "pending" ? simulation[method].pending_age_seconds ?? 60 : null });
+                }}>{VERIFICATION_METHOD_STATUSES.map((status) => <option value={status} key={status}>{t(`statuses.${status}`)}</option>)}</select></label>
+                {simulation[method].status === "pending" ? <label className="field"><span>{t("simulator.pendingAge")}</span><input disabled={locked || !can("verification_simulate")} type="number" min={0} max={2_592_000} value={simulation[method].pending_age_seconds ?? ""} onChange={(event) => updateSimulationMethod(method, { pending_age_seconds: event.target.value === "" ? null : Number(event.target.value) })} /></label> : null}
+                <label className="field"><span>{t("simulator.attempt")}</span><input disabled={locked || !can("verification_simulate")} type="number" min={1} max={method === "video" ? 5 : undefined} value={simulation[method].attempt ?? ""} onChange={(event) => updateSimulationMethod(method, { attempt: event.target.value === "" ? null : Number(event.target.value) })} /></label>
+                <label className="checkbox-field"><input disabled={locked || !can("verification_simulate")} type="checkbox" checked={simulation[method].retry_available} onChange={(event) => updateSimulationMethod(method, { retry_available: event.target.checked })} /><span>{t("simulator.retryAvailable")}</span></label>
+              </fieldset>)}
+              <label className="field"><span>{t("simulator.imported")}</span><select disabled={locked || !can("verification_simulate")} value={simulation.imported_level} onChange={(event) => {
+                const level = event.target.value as VerificationLevel;
+                setSimulation({ ...simulation, imported_level: level, imported_method_hint: level === "none" ? null : simulation.imported_method_hint ?? "manual" });
+              }}>{VERIFICATION_LEVELS.map((level) => <option value={level} key={level}>{t(`levels.${level}`)}</option>)}</select></label>
+              {simulation.imported_level !== "none" ? <label className="field"><span>{t("simulator.importedHint")}</span><select disabled={locked || !can("verification_simulate")} value={simulation.imported_method_hint ?? "manual"} onChange={(event) => setSimulation({ ...simulation, imported_method_hint: event.target.value as "video" | "persona" | "manual" })}>{(["video", "persona", "manual"] as const).map((hint) => <option value={hint} key={hint}>{t(`methodHints.${hint}`)}</option>)}</select></label> : null}
+              <label className="field"><span>{t("simulator.grant")}</span><select disabled={locked || !can("verification_simulate")} value={simulation.grant_level} onChange={(event) => setSimulation({ ...simulation, grant_level: event.target.value as VerificationLevel })}>{VERIFICATION_LEVELS.map((level) => <option value={level} key={level}>{t(`levels.${level}`)}</option>)}</select></label>
+              <label className="checkbox-field"><input disabled={locked || !can("verification_simulate")} type="checkbox" checked={simulation.badge_visible} onChange={(event) => setSimulation({ ...simulation, badge_visible: event.target.checked })} /><span>{t("simulator.badgeVisible")}</span></label>
+              <button type="button" className="button button-primary" disabled={locked || !can("verification_simulate")} onClick={() => void runSimulation()}>{t("live.runSimulation")}</button>
+            </div>
+          </section>
+          <section className="panel">
+            <div className="panel-header"><div><h2>{t("simulator.outputTitle")}</h2><p>{t("simulator.outputCopy")}</p></div></div>
+            <div className="panel-body">{simulationResult ? <><div className="verification-queue-metric"><strong>{t(`levels.${simulationResult.effective_level}`)}</strong><span>{t(`sources.${simulationResult.effective_source}`)}</span></div><div className="verification-simulator-features">{simulationResult.feature_access.map((row) => <article key={row.feature}><strong>{t(`features.${row.feature}.title`)}</strong><span className={`status-badge ${row.allowed ? "status-accepted" : "status-denied"}`}>{row.allowed ? t("simulator.allowed") : t("simulator.blocked")}</span><small>{row.modal?.title ?? t(`requirements.values.${row.required_tier}`)}</small></article>)}</div></> : <p className="page-subtitle">{t("live.noSimulation")}</p>}</div>
+          </section>
+        </div> : null}
+      </div>
+      <div className="alert alert-info page-alert"><strong>{t("live.importHealth")}</strong> {data.import_health.invalid}/{data.import_health.total}</div>
     </>
   );
 }

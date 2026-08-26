@@ -2,7 +2,12 @@ import {
   CANNED_TEMPLATES_CONTRACT_READY,
   PRODUCT_POPUP_CONTRACT_READY,
   REPORTED_CONTENT_CONTRACT_READY,
+  VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
+import {
+  MAX_VERIFICATION_BADGE_FORM_BYTES,
+  VERIFICATION_ADMIN_ACTIONS,
+} from "@/lib/verificationAdmin";
 
 export const DATES_ADMIN_ACTIONS = [
   "admin_me",
@@ -42,6 +47,11 @@ const PRODUCT_POPUP_ADMIN_ACTIONS = PRODUCT_POPUP_CONTRACT_READY
 
 const CANNED_TEMPLATE_ADMIN_ACTIONS = CANNED_TEMPLATES_CONTRACT_READY
   ? ["list_canned", "save_canned", "delete_canned"] as const
+  : [] as const;
+
+/** The full contract stays executable in tests while the actual bridge list remains closed. */
+const ACTIVE_VERIFICATION_ADMIN_ACTIONS = VERIFICATION_CONTRACT_READY
+  ? VERIFICATION_ADMIN_ACTIONS
   : [] as const;
 
 export const ADMIN_ACTIONS = [
@@ -157,6 +167,7 @@ export const ADMIN_ACTIONS = [
   ...PRODUCT_POPUP_ADMIN_ACTIONS,
   ...CANNED_TEMPLATE_ADMIN_ACTIONS,
   ...REPORTED_CONTENT_ADMIN_ACTIONS,
+  ...ACTIVE_VERIFICATION_ADMIN_ACTIONS,
   ...DATES_ADMIN_ACTIONS,
 ] as const;
 
@@ -185,7 +196,7 @@ export type AdminActionAccess = "read" | "write" | "owner" | "dates_read" | "dat
  * valuable defence in depth: a future backend regression still cannot widen
  * the browser surface to a read-only viewer.
  */
-export const ADMIN_ACTION_ACCESS: Record<AdminAction, AdminActionAccess> = {
+export const ADMIN_ACTION_ACCESS = {
   overview: "read",
   list_users: "read",
   user_detail: "read",
@@ -344,6 +355,26 @@ export const ADMIN_ACTION_ACCESS: Record<AdminAction, AdminActionAccess> = {
   moderation_reported_list: "read",
   moderation_report_action: "write",
 
+  ...(VERIFICATION_CONTRACT_READY ? {
+    verification_console: "read" as const,
+    verification_policy_save_draft: "write" as const,
+    verification_policy_impact_preview: "owner" as const,
+    verification_policy_apply: "owner" as const,
+    verification_copy_save: "write" as const,
+    verification_copy_remove: "write" as const,
+    verification_pending_settings_save: "write" as const,
+    verification_badge_upload: "write" as const,
+    verification_badge_remove: "write" as const,
+    verification_places_city_search: "write" as const,
+    verification_places_city_detail: "write" as const,
+    verification_simulate: "read" as const,
+    verification_pending_summary: "read" as const,
+    verification_user_detail: "read" as const,
+    verification_grant_preview: "write" as const,
+    verification_grant_save: "write" as const,
+    verification_grant_remove: "write" as const,
+  } : {}),
+
   admin_me: "read",
   dates_activity_list: "dates_read",
   dates_activity_detail: "dates_read",
@@ -369,7 +400,7 @@ export const ADMIN_ACTION_ACCESS: Record<AdminAction, AdminActionAccess> = {
   dates_reason_list: "dates_read",
   dates_reason_save: "dates_write",
   dates_reason_deactivate: "dates_write",
-};
+} as Record<AdminAction, AdminActionAccess>;
 
 // A Map, not the record itself: a plain-object lookup would resolve inherited
 // keys such as `constructor` to a truthy value for an action nobody allow-listed.
@@ -463,10 +494,13 @@ const REPLACE_IMAGE_BODY_LIMIT_BYTES = 6_000_000;
  * document and asserts it fits, so the bound is proven from the caps rather than assumed; raising a
  * cap far enough to break it fails that test instead of producing a silent 413.
  */
-const ADMIN_ACTION_BODY_LIMIT: Partial<Record<AdminAction, number>> = {
+const ADMIN_ACTION_BODY_LIMIT: Readonly<Record<string, number>> = {
   save_profile_tag_catalog: TAG_CATALOG_BODY_LIMIT_BYTES,
   save_invite_configuration: INVITE_CONFIGURATION_BODY_LIMIT_BYTES,
   admin_replace_image: REPLACE_IMAGE_BODY_LIMIT_BYTES,
+  // A1: this is the effective guard on Apache 2.4.52 and therefore stays
+  // pinned even while the Verification bridge allow-list is dormant.
+  verification_badge_upload: MAX_VERIFICATION_BADGE_FORM_BYTES,
 };
 
 const ACTION_BODY_LIMIT: ReadonlyMap<string, number> = new Map(

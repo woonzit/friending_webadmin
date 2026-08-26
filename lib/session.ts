@@ -1,7 +1,9 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { coreCall } from "@/lib/core";
+import { VERIFICATION_CONTRACT_READY } from "@/lib/contractReadiness";
 import { isAdminWriteRole, normalizeAdminRole } from "@/lib/authPolicy";
+import { verificationAdminMe } from "@/lib/verificationAdmin";
 import {
   createSessionToken,
   SESSION_MAX_AGE_SECONDS,
@@ -16,6 +18,7 @@ export { SESSION_MAX_AGE_SECONDS as COOKIE_MAX_AGE };
 export type AdminIdentity = {
   email: string;
   role: string;
+  verificationConsoleReady: boolean;
 };
 
 export type AdminWriter =
@@ -56,13 +59,18 @@ export async function adminMe(): Promise<AdminIdentity | null> {
     success?: boolean;
     email?: string;
     role?: string;
+    verification?: unknown;
   }>("admin_me", { admin_email: session.email });
   if (result.status !== 200 || !result.data?.success) return null;
   const role = normalizeAdminRole(result.data.role);
   if (!role) return null;
+  const verification = verificationAdminMe(result.data.verification);
   return {
     email: String(result.data.email ?? session.email),
     role,
+    verificationConsoleReady: VERIFICATION_CONTRACT_READY
+      && verification?.contract_ready === true
+      && verification.actions.includes("verification_console"),
   };
 }
 

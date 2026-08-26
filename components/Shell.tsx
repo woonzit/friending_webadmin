@@ -97,9 +97,11 @@ function NavIcon({ name }: { name: IconName }) {
 
 export default function Shell({
   adminEmail,
+  verificationConsoleReady,
   children,
 }: {
   adminEmail: string;
+  verificationConsoleReady: boolean;
   children: React.ReactNode;
 }) {
   const nav = useTranslations("nav");
@@ -127,7 +129,8 @@ export default function Shell({
           </span>
         </Link>
         <nav className="main-nav" aria-label={common("mainNavigation")}>
-          {NAV.filter((item) => item.ready !== false).map((item) => {
+          {NAV.filter((item) => item.ready !== false
+            && (item.key !== "verificationSettings" || verificationConsoleReady)).map((item) => {
             const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
             return (
               <Link
