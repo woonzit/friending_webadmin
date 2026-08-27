@@ -2,12 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import FeatureSwitchesPanel from "@/components/FeatureSwitchesPanel";
 import PageHeader from "@/components/PageHeader";
 import ProfilePresenceConfiguration from "@/components/ProfilePresenceConfiguration";
 import ProfileVerificationConfiguration from "@/components/ProfileVerificationConfiguration";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
-import { PUSH_MODE_CONTRACT_READY } from "@/lib/contractReadiness";
+import {
+  FEATURE_SWITCHES_CONTRACT_READY,
+  PUSH_MODE_CONTRACT_READY,
+} from "@/lib/contractReadiness";
 import { formatDate } from "@/lib/format";
 import {
   PUSH_DELIVERY_MODES,
@@ -167,6 +171,7 @@ export default function ConfigurationPage() {
         }
       />
       {message && <div className={`alert ${message.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{message.text}</div>}
+      {FEATURE_SWITCHES_CONTRACT_READY ? <FeatureSwitchesPanel /> : null}
       <div className="section-grid">
         {rows.map((row) => {
           const setting = settings[row.key];

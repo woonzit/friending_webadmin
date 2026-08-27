@@ -309,7 +309,7 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "footprints",
     route: "/footprints",
-    sections: ["limits", "visits", "badges", "twoSidedAudience", "memberOverride", "reports", "archiveBehavior"],
+    sections: ["limits", "featureSwitchesPointer", "badges", "twoSidedAudience", "memberOverride", "reports", "archiveBehavior"],
     matches: exact("/footprints"),
   },
   {
@@ -341,6 +341,7 @@ export const ADMIN_HELP_PAGES = [
     route: "/configuration",
     sections: [
       "productControls",
+      "featureSwitches",
       "session",
       "appearance",
       "pushDelivery",

@@ -2123,16 +2123,15 @@
             },
             "guidance": "A lower daily limit can affect all members immediately. It does not remove Footprints already sent or shorten existing messages."
           },
-            "visits": {
-              "title": "Profile visits switch",
-              "purpose": "Controls whether Friending records and shows who viewed a member's profile. It is a separate contract from the badge settings below, with its own permission, its own revision and its own audit receipt.",
-              "actions": {
-                "1": "Read the current state and who last changed it before deciding.",
-                "2": "Give a required internal reason, then turn visits on or off.",
-                "3": "If a change reports an unknown outcome, use the retry button rather than starting a new one."
-              },
-              "guidance": "The switch covers profile visits only: recording, the visitors feed and the app's Visits tab. Footprint badges, per-member allowances, reports and photo likes stay available to members in either state. Turning it off keeps every visit already recorded — they reappear if you turn it back on — but the period while it is off is never reconstructed. Because the switch and the badge settings share one revision, saving one while the other is open makes the second save conflict; reload and decide again."
+          "featureSwitchesPointer": {
+            "title": "Feature availability lives in Configuration",
+            "purpose": "Hey and the complete Footprints family are controlled together in the Feature switches panel on Configuration. The badge limits and catalog on this page keep their own document and revision.",
+            "actions": {
+              "1": "Open Configuration when you need to review or change global Hey or Footprints availability.",
+              "2": "Return here to edit badge limits, catalog entries, member allowances or reports."
             },
+            "guidance": "The Configuration switch is the product-wide Footprints gate; it can hide visits, badge sending and the complete collector. It does not share a revision with these badge settings, so one editor cannot create a false conflict in the other."
+          },
           "badges": {
             "title": "Badge catalog",
             "purpose": "Each badge carries approved artwork, English and Hungarian meaning, order, active or archived state and two independent audience rules.",
@@ -2422,6 +2421,16 @@
               "2": "Change only a setting whose product impact and rollback are understood."
             },
             "guidance": "Turning a feature off normally preserves its records. Demo controls never merge demo and regular users, and a disabled hero response does not delete campaigns."
+          },
+          "featureSwitches": {
+            "title": "Hey and Footprints feature switches",
+            "purpose": "This independent, receipted control family governs global Hey availability and the complete Footprints family. Each command changes one switch, while both share one authoritative family revision.",
+            "actions": {
+              "1": "Read both current states, per-switch provenance and the shared revision before deciding.",
+              "2": "Enter a required internal reason and change only the intended switch.",
+              "3": "After an unknown outcome, retry the retained command or reload for authoritative convergence; never start a second logical command."
+            },
+            "guidance": "Hey off removes the Pinger button, profile gesture, Heys tab and Hey notifications. Footprints off stops visits and badge sends, hides the entire Visits / Footprints / Likes collector and stops Footprints notifications. Existing records remain, and the photo-like gesture on profile media still works even though its collector tab is hidden. Hey and Footprints share one family revision, but badge settings and general runtime settings do not. Launch posture is an explicit audited choice: Hey on, Footprints off."
           },
           "session": {
             "title": "Join idle session timeout",
@@ -7318,68 +7327,89 @@
     "audienceRequired": "Custom targeting requires at least one gender or user group.",
     "groupInactive": "Inactive group",
     "globalHint": "Everyone. Switch to Custom to narrow it by gender or user group.",
-    "customEmptyHint": "Nothing selected yet — this still means everyone. Pick genders and/or groups; both must match when set."
+    "customEmptyHint": "Nothing selected yet — this still means everyone. Pick genders and/or groups; both must match when set.",
+    "featureSwitchesPointer": {
+      "title": "Feature availability",
+      "copy": "The global Footprints family switch now lives with the Hey switch in Configuration. Badge limits and catalogue settings on this page keep their own document and revision.",
+      "action": "Open feature switches"
+    }
   },
-    "footprintVisits": {
-      "title": "Profile visits (Footprints)",
-      "lead": "Whether Friending records and shows who viewed a member's profile.",
-      "scopeNote": "This switch covers profile visits only. Footprint badges, the badge catalogue, per-member allowances, reports and photo likes are unaffected and stay available to members either way.",
-      "currentState": "Current state",
-      "stateOn": "Recording visits",
-      "stateOff": "Not recording visits",
-      "revision": "Revision",
-      "provenance": "Last change",
-      "neverSet": "Never changed from this console.",
-      "lastChanged": "{actor} · {when}",
-      "consequenceOff": "Turning this off stops new visits being recorded, hides the Visits tab in the app and stops \"someone viewed your profile\" alerts. Visits already recorded are kept and reappear if you turn it back on; the period while it is off is never reconstructed.",
-      "consequenceOn": "Turning this on resumes recording from now on. Nothing is recovered for the period it was off.",
-      "reason": "Reason (internal, required)",
-      "reasonHint": "{count}/{max} characters. Recorded in the audit trail; members never see it.",
-      "enable": "Turn visits on",
-      "disable": "Turn visits off",
-      "retry": "Retry the saved change",
-      "readOnly": "You can see this setting but not change it.",
-      "unavailable": "Profile visit control is not available for this account yet.",
-      "live": {
-        "saved": "Saved. The app reflects the new setting on its next launch config.",
-        "noChange": "No change — it already held that value.",
-        "replayed": "Already saved earlier; the stored change was confirmed rather than repeated.",
-        "conflict": "Someone changed this setting first. The current state is shown; decide again if you still want a change.",
-        "conflictAlreadyApplied": "Someone else already set it to the value you asked for. Nothing further to do.",
-        "pendingRetry": "A change was sent but its outcome is unknown. Retry the saved change — it reuses the same request so it cannot be applied twice.",
-        "persistenceUnavailable": "This browser cannot store the pending change safely, so the switch cannot be used here.",
-        "persistenceCleanupFailed": "The change was processed but the saved copy could not be cleared. Reload before trying again.",
-        "requestIdUnavailable": "This browser cannot generate a request identifier, so the switch cannot be used here.",
-        "draftInvalid": "The change could not be prepared. Check the reason and try again.",
-        "errorCode": "Could not save: {message}",
-        "unknownError": "Could not save. The outcome is unknown — retry the saved change."
+  "featureSwitches": {
+    "title": "Feature switches",
+    "lead": "Global availability for Hey and the complete Footprints family. Each change is revision-bound, receipted and audited by Core.",
+    "revision": "Family revision {revision}",
+    "familyRevisionNote": "Hey and Footprints share this one family revision, so changing either switch refreshes both. Runtime settings and Footprint badge settings use separate documents and revisions.",
+    "launchPosture": "Launch procedure: keep Hey on and explicitly turn Footprints off with an administrator reason before go-live. Missing keys still mean enabled; deployment never flips a feature by default.",
+    "stateOn": "On",
+    "stateOff": "Off",
+    "lastChange": "Last change",
+    "neverSet": "Never changed from this console.",
+    "lastChanged": "{actor} · {when}",
+    "reason": "Reason (internal, required)",
+    "reasonHint": "{count}/{max} Unicode characters. Core binds its length and hash to the audit receipt; members never see it.",
+    "retry": "Retry the saved change",
+    "readOnly": "You can see these switches but not change them.",
+    "unavailable": "Feature-switch control is not available for this account yet.",
+    "switches": {
+      "hey": {
+        "title": "Hey",
+        "summary": "The product-wide gate above the Pinger rollout setting and the profile relation gesture.",
+        "consequenceOff": "Turning Hey off hides the Pinger button, the profile Hey gesture and the Heys collector tab, refuses new sends, and stops Hey bell rows and pushes. Existing Heys and matches remain; withdrawing a previous Hey stays possible.",
+        "consequenceOn": "Turning Hey on permits the relation gesture again. The Pinger button still appears only when its separate rollout configuration is enabled; nothing is reconstructed for the off period.",
+        "enable": "Turn Hey on",
+        "disable": "Turn Hey off"
       },
-      "errors": {
-        "sessionInvalid": "Your session is no longer valid. Sign in again.",
-        "badOrigin": "The request came from an unexpected origin and was refused.",
-        "routeNotFound": "This control is not available on the server.",
-        "readRequired": "You do not have permission to view this setting.",
-        "editRequired": "You do not have permission to change this setting.",
-        "requestInvalid": "The request was rejected as malformed.",
-        "tooLarge": "The request was too large.",
-        "temporarilyUnavailable": "The server is temporarily unavailable. Try again shortly.",
-        "invalidResponse": "The server response could not be read.",
-        "contractVersion": "This console is out of date with the server. Reload the page.",
-        "valueInvalid": "The value was rejected by the server.",
-        "revisionInvalid": "The revision was rejected. Reload and try again.",
-        "reasonInvalid": "The reason was rejected. Use 1–300 characters without control characters.",
-        "requestIdInvalid": "The request identifier was rejected. Reload and try again.",
-        "conflict": "Someone changed this setting first.",
-        "requestIdConflict": "This request identifier is already used for a different change. Reload and start again.",
-        "requestInProgress": "The same change is still being processed. Retry the saved change.",
-        "storedInvalid": "The stored setting is malformed and cannot be shown safely.",
-        "schemaUnavailable": "The server is not ready to serve this setting.",
-        "auditWriteFailed": "The audit record could not be written, so nothing changed. Retry the saved change.",
-        "receiptWriteFailed": "The outcome is unknown. Retry the saved change — it cannot be applied twice.",
-        "writeFailed": "The outcome is unknown. Retry the saved change — it cannot be applied twice.",
-        "generic": "The change did not go through."
+      "footprints": {
+        "title": "Footprints",
+        "summary": "The product-wide gate for visits, Footprint badges and the entire Visits / Footprints / Likes collector.",
+        "consequenceOff": "Turning Footprints off stops visit recording and Footprint badge sends, hides the whole collector and stops Footprint alerts and pushes. Existing records remain. The photo-like gesture on profile media still works and still notifies its owner; only its collector tab disappears.",
+        "consequenceOn": "Turning Footprints on resumes new visits, badge sends and the collector from now on. Nothing is reconstructed for the off period, and existing records become reachable again.",
+        "enable": "Turn Footprints on",
+        "disable": "Turn Footprints off"
       }
     },
+    "live": {
+      "saved": "Saved. Released clients receive the new availability in their next launch configuration.",
+      "noChange": "No change — it already held that value.",
+      "replayed": "Already saved earlier; the retained receipt was confirmed rather than applied twice.",
+      "converged": "The authoritative read confirms the retained change completed; no retry was sent.",
+      "conflict": "Someone changed this feature family first. Both current switches are shown; decide again before making a fresh change.",
+      "conflictAlreadyApplied": "The current family state already contains the requested value. The stale retained command was cleared without forcing another write.",
+      "pendingRetry": "The {feature} change has an unknown outcome. Retry only that saved command; both switches remain locked because they share one revision.",
+      "persistenceUnavailable": "This browser cannot store a pending command safely, so these switches cannot be changed here.",
+      "persistenceCleanupFailed": "The command was processed but its saved copy could not be cleared. Reload before trying again.",
+      "requestIdUnavailable": "This browser cannot generate a request identifier, so these switches cannot be changed here.",
+      "draftInvalid": "The command could not be prepared. Check the reason and try again.",
+      "errorCode": "Could not save: {message}",
+      "unknownError": "Could not save. The outcome is unknown — retry the retained command."
+    },
+    "errors": {
+      "sessionInvalid": "Your session is no longer valid. Sign in again.",
+      "badOrigin": "The request came from an unexpected origin and was refused.",
+      "routeNotFound": "This control is not available on the server.",
+      "readRequired": "You do not have permission to view these switches.",
+      "editRequired": "You do not have permission to change these switches.",
+      "requestInvalid": "The request was rejected as malformed.",
+      "tooLarge": "The request was too large.",
+      "temporarilyUnavailable": "The server is temporarily unavailable. Try again shortly.",
+      "invalidResponse": "The server response could not be read.",
+      "contractVersion": "This console is out of date with the server. Reload the page.",
+      "switchInvalid": "The feature name was rejected by the server.",
+      "valueInvalid": "The requested on/off value was rejected by the server.",
+      "revisionInvalid": "The family revision was rejected. Reload and try again.",
+      "reasonInvalid": "The reason was rejected. Use 1–300 Unicode characters without control characters.",
+      "requestIdInvalid": "The request identifier was rejected. Reload and try again.",
+      "conflict": "Someone changed the feature family first.",
+      "requestIdConflict": "This request identifier is already used for a different command. Reload and start again.",
+      "requestInProgress": "The same command is still being processed. Retry the retained command.",
+      "storedInvalid": "The stored feature family is malformed and cannot be shown safely.",
+      "schemaUnavailable": "The server is not ready to serve feature switches.",
+      "auditWriteFailed": "The audit intent could not be written, so nothing changed. Retry the retained command.",
+      "receiptWriteFailed": "The outcome is unknown. Retry the retained command — it cannot be applied twice.",
+      "writeFailed": "The outcome is unknown. Retry the retained command — it cannot be applied twice.",
+      "generic": "The command did not go through."
+    }
+  },
   "appReview": {
     "eyebrow": "Store review",
     "title": "App Review sandbox",

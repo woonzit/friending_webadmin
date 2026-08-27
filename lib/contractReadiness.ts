@@ -30,9 +30,9 @@ export const AUDIENCE_VISIBILITY_CONTRACT_READY: boolean = false;
 /** T-120 is not published; the dormant T-216 consumer remains unreachable. */
 export const PROFILE_TEXT_MODERATION_CONTRACT_READY: boolean = false;
 /**
- * T-123 is built but not released; the dormant T-218 consumer remains
- * unreachable. Note this is the CONSUMER's readiness, not the product state:
- * Core's `visits_enabled` defaults to enabled (A1), so the Core half changes no
- * member behaviour until an administrator flips the switch through this console.
+ * T-126 is not released; the dormant T-218b consumer remains unreachable.
+ * This is the CONSUMER cutover, not either product state. Both Core values
+ * default to enabled (A1); launch posture is a later explicit administrator
+ * flip (Hey on, Footprints off), never an inverted code default.
  */
-export const FOOTPRINTS_VISITS_CONTRACT_READY: boolean = false;
+export const FEATURE_SWITCHES_CONTRACT_READY: boolean = false;

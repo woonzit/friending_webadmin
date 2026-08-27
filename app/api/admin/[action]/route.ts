@@ -4,9 +4,9 @@ import {
   audienceVisibilityProxyCapabilityAuthorized,
 } from "@/lib/audienceVisibilityAdmin";
 import {
-  footprintVisitsProxyCapabilityAuthorized,
-  normalizeFootprintVisitsProxyBody,
-} from "@/lib/footprintVisits";
+  featureSwitchesProxyCapabilityAuthorized,
+  normalizeFeatureSwitchesProxyBody,
+} from "@/lib/featureSwitches";
 import {
   normalizeProfileTextModerationProxyBody,
   profileTextModerationProxyCapabilityAuthorized,
@@ -77,6 +77,7 @@ export async function POST(
     verification?: unknown;
     audience_visibility?: unknown;
     profile_text_moderation?: unknown;
+    feature_switches?: unknown;
   }>(
     "admin_me",
     { admin_email: session.email },
@@ -110,18 +111,18 @@ export async function POST(
       ? "profile-text-moderation-read-required"
       : "profile-text-moderation-decision-required", 403);
   }
-  const footprintVisitsAuthorized = footprintVisitsProxyCapabilityAuthorized(action, membership.data);
-  if (footprintVisitsAuthorized === false) {
-    return bridgeError(action === "footprints_visits_get"
-      ? "footprints-visits-read-required"
-      : "footprints-visits-edit-required", 403);
+  const featureSwitchesAuthorized = featureSwitchesProxyCapabilityAuthorized(action, membership.data);
+  if (featureSwitchesAuthorized === false) {
+    return bridgeError(action === "feature_switches_get"
+      ? "feature-switches-read-required"
+      : "feature-switches-edit-required", 403);
   }
   if (!isAdminBridgeActionAuthorized(
     action,
     principal,
     audienceVisibilityAuthorized,
     profileTextModerationAuthorized,
-    footprintVisitsAuthorized,
+    featureSwitchesAuthorized,
   )) {
     return bridgeError("admin-write-required", 403);
   }
@@ -177,11 +178,11 @@ export async function POST(
   }
   if (normalizedProfileTextModerationBody !== undefined) body = normalizedProfileTextModerationBody;
 
-  const normalizedFootprintVisitsBody = normalizeFootprintVisitsProxyBody(action, body);
-  if (normalizedFootprintVisitsBody === null) {
+  const normalizedFeatureSwitchesBody = normalizeFeatureSwitchesProxyBody(action, body);
+  if (normalizedFeatureSwitchesBody === null) {
     return bridgeError("invalid-input", 400);
   }
-  if (normalizedFootprintVisitsBody !== undefined) body = normalizedFootprintVisitsBody;
+  if (normalizedFeatureSwitchesBody !== undefined) body = normalizedFeatureSwitchesBody;
 
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer

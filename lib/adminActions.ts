@@ -3,14 +3,14 @@ import {
   CANNED_TEMPLATES_CONTRACT_READY,
   OUTBOUND_MESSAGING_CONTRACT_READY,
   PERSONA_ADMIN_PROXY_RELEASED,
-  FOOTPRINTS_VISITS_CONTRACT_READY,
+  FEATURE_SWITCHES_CONTRACT_READY,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
   PRODUCT_POPUP_CONTRACT_READY,
   REPORTED_CONTENT_CONTRACT_READY,
   VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 import { AUDIENCE_VISIBILITY_ADMIN_ACTIONS } from "@/lib/audienceVisibilityAdmin";
-import { FOOTPRINT_VISITS_ACTIONS } from "@/lib/footprintVisits";
+import { FEATURE_SWITCHES_ACTIONS } from "@/lib/featureSwitches";
 import { PROFILE_TEXT_MODERATION_ACTIONS } from "@/lib/profileTextModeration";
 import { OUTBOUND_MESSAGING_ACTIONS } from "@/lib/outboundMessaging";
 import { PERSONA_ADMIN_ACTIONS } from "@/lib/personaAdmin";
@@ -84,9 +84,9 @@ const ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS = PROFILE_TEXT_MODERATION_CONTRACT_
   ? PROFILE_TEXT_MODERATION_ACTIONS
   : [] as const;
 
-/** Dormant T-218 actions stay absent until the reviewed T-123 provider release. */
-const ACTIVE_FOOTPRINT_VISITS_ACTIONS = FOOTPRINTS_VISITS_CONTRACT_READY
-  ? FOOTPRINT_VISITS_ACTIONS
+/** Dormant T-218b actions stay absent until the reviewed T-126 provider release. */
+const ACTIVE_FEATURE_SWITCHES_ACTIONS = FEATURE_SWITCHES_CONTRACT_READY
+  ? FEATURE_SWITCHES_ACTIONS
   : [] as const;
 
 export const ADMIN_ACTIONS = [
@@ -207,7 +207,7 @@ export const ADMIN_ACTIONS = [
   ...ACTIVE_VERIFICATION_ADMIN_ACTIONS,
   ...ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS,
   ...ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS,
-  ...ACTIVE_FOOTPRINT_VISITS_ACTIONS,
+  ...ACTIVE_FEATURE_SWITCHES_ACTIONS,
   ...DATES_ADMIN_ACTIONS,
 ] as const;
 
@@ -452,9 +452,9 @@ export const ADMIN_ACTION_ACCESS = {
     moderation_profile_text_action: "write" as const,
   } : {}),
 
-  ...(FOOTPRINTS_VISITS_CONTRACT_READY ? {
-    footprints_visits_get: "read" as const,
-    footprints_visits_set: "write" as const,
+  ...(FEATURE_SWITCHES_CONTRACT_READY ? {
+    feature_switches_get: "read" as const,
+    feature_switches_set: "write" as const,
   } : {}),
 
   admin_me: "read",
@@ -666,7 +666,7 @@ export function isAdminActionAuthorized(action: string, principal: AdminPrincipa
 
 /**
  * Compose the generic Webadmin role floor with independent capability blocks.
- * Actions in either named versioned family are already authorized by their
+ * Actions in these named versioned families are already authorized by their
  * exact Core-authored `admin_me` projection and must not be reinterpreted from
  * the top-level role. Every other family keeps the existing generic policy.
  */
@@ -675,7 +675,7 @@ export function isAdminBridgeActionAuthorized(
   principal: AdminPrincipal,
   audienceVisibilityAuthorized: boolean | null,
   profileTextModerationAuthorized: boolean | null = null,
-  footprintVisitsAuthorized: boolean | null = null,
+  featureSwitchesAuthorized: boolean | null = null,
 ): boolean {
   if ((AUDIENCE_VISIBILITY_ADMIN_ACTIONS as readonly string[]).includes(action)) {
     return audienceVisibilityAuthorized === true;
@@ -683,8 +683,8 @@ export function isAdminBridgeActionAuthorized(
   if ((PROFILE_TEXT_MODERATION_ACTIONS as readonly string[]).includes(action)) {
     return profileTextModerationAuthorized === true;
   }
-  if ((FOOTPRINT_VISITS_ACTIONS as readonly string[]).includes(action)) {
-    return footprintVisitsAuthorized === true;
+  if ((FEATURE_SWITCHES_ACTIONS as readonly string[]).includes(action)) {
+    return featureSwitchesAuthorized === true;
   }
   return isAdminActionAuthorized(action, principal);
 }

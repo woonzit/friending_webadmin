@@ -2123,16 +2123,15 @@
             },
             "guidance": "Az alacsonyabb napi limit minden tagot azonnal érinthet. A már elküldött Footprinteket nem törli, a meglévő üzenetet nem rövidíti."
           },
-            "visits": {
-              "title": "Profilnézők kapcsoló",
-              "purpose": "Azt szabályozza, hogy a Friending rögzíti és mutatja-e, ki nézte meg egy tag profilját. Az alatta lévő jelvénybeállításoktól külön szerződés, saját jogosultsággal, saját verzióval és saját audit nyugtával.",
-              "actions": {
-                "1": "Döntés előtt olvasd el a jelenlegi állapotot és azt, hogy ki módosította utoljára.",
-                "2": "Adj kötelező belső indoklást, majd kapcsold be vagy ki a látogatásokat.",
-                "3": "Ha egy módosítás ismeretlen kimenetet jelez, az újraküldés gombot használd, ne indíts újat."
-              },
-              "guidance": "A kapcsoló kizárólag a profilnézőkre vonatkozik: a rögzítésre, a látogatói listára és az app Látogatók fülére. A Footprint jelvények, a tagonkénti keretek, a bejelentések és a fotókedvelések mindkét állásban elérhetők maradnak. Kikapcsolva minden korábban rögzített látogatás megmarad — visszakapcsoláskor újra megjelennek —, de a kikapcsolt időszak soha nem áll helyre. Mivel a kapcsoló és a jelvénybeállítások egy verzión osztoznak, ha az egyiket úgy mented, hogy a másik nyitva van, a második mentés ütközik; tölts újra, és dönts ismét."
+          "featureSwitchesPointer": {
+            "title": "A funkciók elérhetősége a Konfiguráció oldalon található",
+            "purpose": "A Hey-t és a teljes Footprints családot a Konfiguráció Funkciókapcsolók panelje vezérli együtt. Az ezen az oldalon lévő jelvénykeretek és katalógus saját dokumentumot és revíziót használnak.",
+            "actions": {
+              "1": "A globális Hey- vagy Footprints-elérhetőség áttekintéséhez vagy módosításához nyisd meg a Konfiguráció oldalt.",
+              "2": "A jelvénykeretek, katalóguselemek, tagi keretek vagy bejelentések szerkesztéséhez térj vissza ide."
             },
+            "guidance": "A Konfiguráció kapcsolója a Footprints teljes termékszintű kapuja; elrejtheti a látogatásokat, a jelvényküldést és a teljes gyűjtőt. Nem osztozik revízión ezekkel a jelvénybeállításokkal, ezért egyik szerkesztője sem okozhat álütközést a másikban."
+          },
           "badges": {
             "title": "Jelvénykatalógus",
             "purpose": "Minden jelvény jóváhagyott artworköt, angol és magyar jelentést, sorrendet, aktív vagy archivált állapotot és két független audience szabályt tartalmaz.",
@@ -2422,6 +2421,16 @@
               "2": "Csak olyan beállítást módosíts, amelynek termékhatását és rollbackjét érted."
             },
             "guidance": "Egy feature kikapcsolása általában megőrzi rekordjait. A demóvezérlő soha nem egyesíti a demó- és normál tagokat, a hero kikapcsolása pedig nem törli a kampányokat."
+          },
+          "featureSwitches": {
+            "title": "Hey és Footprints funkciókapcsolók",
+            "purpose": "Ez a független, nyugtázott vezérlőcsalád szabályozza a Hey globális elérhetőségét és a teljes Footprints családot. Egy parancs egy kapcsolót módosít, miközben mindkettő egy hiteles családrevízión osztozik.",
+            "actions": {
+              "1": "Döntés előtt olvasd el mindkét aktuális állapotot, a kapcsolónkénti módosítási adatokat és a közös revíziót.",
+              "2": "Adj kötelező belső indoklást, és csak a szándékolt kapcsolót módosítsd.",
+              "3": "Ismeretlen kimenet után a megtartott parancsot küldd újra, vagy a hiteles állapot megerősítéséhez tölts újra; soha ne indíts második logikai parancsot."
+            },
+            "guidance": "A Hey kikapcsolása eltávolítja a Pinger gombot, a profilgesztust, a Hey-k fület és a Hey-értesítéseket. A Footprints kikapcsolása leállítja a látogatásokat és jelvényküldést, elrejti a teljes Látogatások / Footprints / Kedvelések gyűjtőt, és leállítja a Footprints-értesítéseket. A meglévő rekordok megmaradnak, a profilmédián lévő fotókedvelés gesztusa pedig a rejtett gyűjtőfül ellenére továbbra is működik. A Hey és a Footprints egy családrevízión osztozik, a jelvénybeállításokkal és általános futásidejű beállításokkal viszont nem. Az indulási állapot kifejezett, auditált döntés: Hey bekapcsolva, Footprints kikapcsolva."
           },
           "session": {
             "title": "Join idle session timeout",
@@ -7318,68 +7327,89 @@
     "audienceRequired": "Egyéni célzásnál válassz legalább egy nemet vagy user csoportot.",
     "groupInactive": "Inaktív csoport",
     "globalHint": "Mindenki. Válts Egyénire, ha nem vagy user csoport szerint szűkítenéd.",
-    "customEmptyHint": "Még nincs kijelölés — ez így még mindenkit jelent. Válassz nemet és/vagy csoportot; ha mindkettő be van állítva, együtt kell teljesülniük."
+    "customEmptyHint": "Még nincs kijelölés — ez így még mindenkit jelent. Válassz nemet és/vagy csoportot; ha mindkettő be van állítva, együtt kell teljesülniük.",
+    "featureSwitchesPointer": {
+      "title": "Funkciók elérhetősége",
+      "copy": "A globális Footprints kapcsoló most a Hey kapcsolóval együtt a Konfiguráció oldalon található. Az ezen az oldalon lévő jelvénylimitek és katalógusbeállítások saját dokumentumot és revíziót használnak.",
+      "action": "Funkciókapcsolók megnyitása"
+    }
   },
-    "footprintVisits": {
-      "title": "Profilnézők (Footprints)",
-      "lead": "Rögzíti és mutatja-e a Friending, hogy ki nézte meg egy tag profilját.",
-      "scopeNote": "Ez a kapcsoló kizárólag a profilnézőkre vonatkozik. A Footprint jelvények, a jelvénykatalógus, a tagonkénti keretek, a bejelentések és a fotókedvelések nem érintettek, és mindkét állásban elérhetők maradnak a tagoknak.",
-      "currentState": "Jelenlegi állapot",
-      "stateOn": "Rögzíti a látogatásokat",
-      "stateOff": "Nem rögzíti a látogatásokat",
-      "revision": "Verzió",
-      "provenance": "Utolsó változtatás",
-      "neverSet": "Erről a felületről még nem módosították.",
-      "lastChanged": "{actor} · {when}",
-      "consequenceOff": "Kikapcsolva nem rögzülnek új látogatások, az appban eltűnik a Látogatók fül, és megszűnnek a „valaki megnézte a profilodat” értesítések. A már rögzített látogatások megmaradnak, és visszakapcsoláskor újra megjelennek; a kikapcsolt időszak viszont soha nem áll helyre.",
-      "consequenceOn": "Bekapcsolva mostantól újra rögzülnek a látogatások. A kikapcsolt időszakból semmi nem áll helyre.",
-      "reason": "Indoklás (belső, kötelező)",
-      "reasonHint": "{count}/{max} karakter. Az audit naplóba kerül; a tagok soha nem látják.",
-      "enable": "Látogatások bekapcsolása",
-      "disable": "Látogatások kikapcsolása",
-      "retry": "Mentett módosítás újraküldése",
-      "readOnly": "Ezt a beállítást láthatod, de nem módosíthatod.",
-      "unavailable": "A profilnézők vezérlése ehhez a fiókhoz még nem érhető el.",
-      "live": {
-        "saved": "Mentve. Az app a következő indítási konfigurációnál veszi át az új beállítást.",
-        "noChange": "Nincs változás — már ezen az értéken állt.",
-        "replayed": "Korábban már elmentve; a tárolt módosítás megerősítésre került, nem futott le újra.",
-        "conflict": "Valaki megelőzött a módosítással. A jelenlegi állapot látható; ha továbbra is módosítanál, dönts újra.",
-        "conflictAlreadyApplied": "Valaki más már a kért értékre állította. Nincs további teendő.",
-        "pendingRetry": "A módosítás elment, de a kimenete ismeretlen. Küldd újra a mentett módosítást — ugyanazt a kérést használja, így nem hajtódhat végre kétszer.",
-        "persistenceUnavailable": "Ez a böngésző nem tudja biztonságosan eltárolni a függő módosítást, ezért a kapcsoló itt nem használható.",
-        "persistenceCleanupFailed": "A módosítás feldolgozásra került, de a mentett másolatot nem sikerült törölni. Tölts újra, mielőtt ismét próbálkozol.",
-        "requestIdUnavailable": "Ez a böngésző nem tud kérésazonosítót előállítani, ezért a kapcsoló itt nem használható.",
-        "draftInvalid": "A módosítást nem sikerült előkészíteni. Ellenőrizd az indoklást, és próbáld újra.",
-        "errorCode": "Nem sikerült menteni: {message}",
-        "unknownError": "Nem sikerült menteni. A kimenet ismeretlen — küldd újra a mentett módosítást."
+  "featureSwitches": {
+    "title": "Funkciókapcsolók",
+    "lead": "A Hey és a teljes Footprints család globális elérhetősége. Minden változtatást a Core revízióhoz köt, nyugtáz és auditál.",
+    "revision": "Családrevízió: {revision}",
+    "familyRevisionNote": "A Hey és a Footprints ezen az egy családrevízión osztozik, ezért bármelyik kapcsoló módosítása mindkettőt frissíti. A futásidejű és Footprint jelvénybeállítások külön dokumentumot és revíziót használnak.",
+    "launchPosture": "Élesítési eljárás: a Hey maradjon bekapcsolva, a Footprintset pedig az éles indulás előtt adminisztrátori indoklással, kifejezetten kapcsold ki. A hiányzó kulcs továbbra is bekapcsoltat jelent; a telepítés alapértelmezetten soha nem kapcsol ki funkciót.",
+    "stateOn": "Bekapcsolva",
+    "stateOff": "Kikapcsolva",
+    "lastChange": "Utolsó változtatás",
+    "neverSet": "Erről a felületről még nem módosították.",
+    "lastChanged": "{actor} · {when}",
+    "reason": "Indoklás (belső, kötelező)",
+    "reasonHint": "{count}/{max} Unicode karakter. A Core a hosszát és hashét az auditnyugtához köti; a tagok soha nem látják.",
+    "retry": "Mentett módosítás újraküldése",
+    "readOnly": "Ezeket a kapcsolókat láthatod, de nem módosíthatod.",
+    "unavailable": "A funkciókapcsolók vezérlése ehhez a fiókhoz még nem érhető el.",
+    "switches": {
+      "hey": {
+        "title": "Hey",
+        "summary": "A Pinger bevezetési beállítása és a profilkapcsolati gesztus felett álló teljes termékszintű kapu.",
+        "consequenceOff": "A Hey kikapcsolása elrejti a Pinger gombot, a profil Hey gesztust és a Hey-k gyűjtőfület, elutasítja az új küldéseket, és leállítja a Hey-értesítési bejegyzéseket és push értesítéseket. A meglévő Hey-k és matchek megmaradnak; egy korábbi Hey visszavonható marad.",
+        "consequenceOn": "A Hey bekapcsolása újra engedi a kapcsolati gesztust. A Pinger gomb továbbra is csak akkor jelenik meg, ha a külön bevezetési konfigurációja aktív; a kikapcsolt időszakból semmi nem épül újra.",
+        "enable": "Hey bekapcsolása",
+        "disable": "Hey kikapcsolása"
       },
-      "errors": {
-        "sessionInvalid": "A munkameneted már nem érvényes. Jelentkezz be újra.",
-        "badOrigin": "A kérés váratlan forrásból érkezett, ezért elutasítottuk.",
-        "routeNotFound": "Ez a vezérlő nem érhető el a szerveren.",
-        "readRequired": "Nincs jogosultságod megtekinteni ezt a beállítást.",
-        "editRequired": "Nincs jogosultságod módosítani ezt a beállítást.",
-        "requestInvalid": "A kérést hibás formátum miatt elutasítottuk.",
-        "tooLarge": "A kérés túl nagy volt.",
-        "temporarilyUnavailable": "A szerver átmenetileg nem érhető el. Próbáld újra hamarosan.",
-        "invalidResponse": "A szerver válaszát nem sikerült értelmezni.",
-        "contractVersion": "Ez a felület elavult a szerverhez képest. Tölts újra az oldalt.",
-        "valueInvalid": "Az értéket a szerver elutasította.",
-        "revisionInvalid": "A verziót elutasítottuk. Tölts újra, és próbáld ismét.",
-        "reasonInvalid": "Az indoklást elutasítottuk. Használj 1–300 karaktert vezérlőkarakterek nélkül.",
-        "requestIdInvalid": "A kérésazonosítót elutasítottuk. Tölts újra, és próbáld ismét.",
-        "conflict": "Valaki megelőzött a módosítással.",
-        "requestIdConflict": "Ez a kérésazonosító már egy másik módosításhoz tartozik. Tölts újra, és kezdd elölről.",
-        "requestInProgress": "Ugyanez a módosítás még feldolgozás alatt van. Küldd újra a mentett módosítást.",
-        "storedInvalid": "A tárolt beállítás hibás, ezért nem jeleníthető meg biztonságosan.",
-        "schemaUnavailable": "A szerver még nem áll készen a beállítás kiszolgálására.",
-        "auditWriteFailed": "Az audit bejegyzést nem sikerült írni, ezért semmi nem változott. Küldd újra a mentett módosítást.",
-        "receiptWriteFailed": "A kimenet ismeretlen. Küldd újra a mentett módosítást — nem hajtódhat végre kétszer.",
-        "writeFailed": "A kimenet ismeretlen. Küldd újra a mentett módosítást — nem hajtódhat végre kétszer.",
-        "generic": "A módosítás nem ment át."
+      "footprints": {
+        "title": "Footprints",
+        "summary": "A látogatások, Footprint jelvények és a teljes Látogatások / Footprints / Kedvelések gyűjtő termékszintű kapuja.",
+        "consequenceOff": "A Footprints kikapcsolása leállítja a látogatások rögzítését és a Footprint jelvényküldést, elrejti a teljes gyűjtőt, és leállítja a Footprint-értesítési bejegyzéseket és push értesítéseket. A meglévő rekordok megmaradnak. A profilképeken lévő fotókedvelés gesztusa továbbra is működik és értesíti a tulajdonost; csak a gyűjtőfüle tűnik el.",
+        "consequenceOn": "A Footprints bekapcsolása mostantól újraindítja az új látogatásokat, jelvényküldést és a gyűjtőt. A kikapcsolt időszakból semmi nem épül újra, a meglévő rekordok pedig újra elérhetővé válnak.",
+        "enable": "Footprints bekapcsolása",
+        "disable": "Footprints kikapcsolása"
       }
     },
+    "live": {
+      "saved": "Mentve. A kiadott kliensek a következő indítási konfigurációval veszik át az új elérhetőséget.",
+      "noChange": "Nincs változás — már ezen az értéken állt.",
+      "replayed": "Korábban már elmentve; a megtartott nyugtát erősítettük meg, nem alkalmaztuk kétszer.",
+      "converged": "A hiteles lekérés bizonyítja, hogy a megtartott módosítás befejeződött; nem küldtünk újabb kérést.",
+      "conflict": "Valaki előbb módosította ezt a funkciócsaládot. Mindkét aktuális kapcsoló látható; friss módosítás előtt dönts újra.",
+      "conflictAlreadyApplied": "A jelenlegi családállapot már tartalmazza a kért értéket. Az elavult megtartott parancsot kényszerített újabb írás nélkül töröltük.",
+      "pendingRetry": "A(z) {feature} módosításának kimenete ismeretlen. Csak ezt a mentett parancsot küldd újra; a közös revízió miatt mindkét kapcsoló zárolva marad.",
+      "persistenceUnavailable": "Ez a böngésző nem tud biztonságosan függő parancsot tárolni, ezért itt nem módosíthatók a kapcsolók.",
+      "persistenceCleanupFailed": "A parancs feldolgozásra került, de a mentett másolatot nem sikerült törölni. Tölts újra, mielőtt ismét próbálkozol.",
+      "requestIdUnavailable": "Ez a böngésző nem tud kérésazonosítót előállítani, ezért itt nem módosíthatók a kapcsolók.",
+      "draftInvalid": "A parancsot nem sikerült előkészíteni. Ellenőrizd az indoklást, és próbáld újra.",
+      "errorCode": "Nem sikerült menteni: {message}",
+      "unknownError": "Nem sikerült menteni. A kimenet ismeretlen — küldd újra a megtartott parancsot."
+    },
+    "errors": {
+      "sessionInvalid": "A munkameneted már nem érvényes. Jelentkezz be újra.",
+      "badOrigin": "A kérés váratlan forrásból érkezett, ezért elutasítottuk.",
+      "routeNotFound": "Ez a vezérlő nem érhető el a szerveren.",
+      "readRequired": "Nincs jogosultságod megtekinteni ezeket a kapcsolókat.",
+      "editRequired": "Nincs jogosultságod módosítani ezeket a kapcsolókat.",
+      "requestInvalid": "A kérést hibás formátum miatt elutasítottuk.",
+      "tooLarge": "A kérés túl nagy volt.",
+      "temporarilyUnavailable": "A szerver átmenetileg nem érhető el. Próbáld újra hamarosan.",
+      "invalidResponse": "A szerver válaszát nem sikerült értelmezni.",
+      "contractVersion": "Ez a felület elavult a szerverhez képest. Tölts újra az oldalt.",
+      "switchInvalid": "A funkció nevét a szerver elutasította.",
+      "valueInvalid": "A kért be/ki értéket a szerver elutasította.",
+      "revisionInvalid": "A családrevíziót elutasítottuk. Tölts újra, és próbáld ismét.",
+      "reasonInvalid": "Az indoklást elutasítottuk. Használj 1–300 Unicode karaktert vezérlőkarakterek nélkül.",
+      "requestIdInvalid": "A kérésazonosítót elutasítottuk. Tölts újra, és próbáld ismét.",
+      "conflict": "Valaki előbb módosította a funkciócsaládot.",
+      "requestIdConflict": "Ez a kérésazonosító már egy másik parancshoz tartozik. Tölts újra, és kezdd elölről.",
+      "requestInProgress": "Ugyanez a parancs még feldolgozás alatt van. Küldd újra a megtartott parancsot.",
+      "storedInvalid": "A tárolt funkciócsalád hibás, ezért nem jeleníthető meg biztonságosan.",
+      "schemaUnavailable": "A szerver még nem áll készen a funkciókapcsolók kiszolgálására.",
+      "auditWriteFailed": "Az audittervet nem sikerült írni, ezért semmi nem változott. Küldd újra a megtartott parancsot.",
+      "receiptWriteFailed": "A kimenet ismeretlen. Küldd újra a megtartott parancsot — nem hajtódhat végre kétszer.",
+      "writeFailed": "A kimenet ismeretlen. Küldd újra a megtartott parancsot — nem hajtódhat végre kétszer.",
+      "generic": "A parancs nem ment át."
+    }
+  },
   "appReview": {
     "eyebrow": "Áruházi review",
     "title": "App Review sandbox",

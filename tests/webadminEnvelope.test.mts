@@ -124,7 +124,7 @@ test("every dormant console delegates transport parsing to the shared helper", a
     "personaAdmin.ts",
     "pushAdmin.ts",
     "outboundMessaging.ts",
-    "footprintVisits.ts",
+    "featureSwitches.ts",
   ];
   for (const file of files) {
     const source = await readFile(new URL(`../lib/${file}`, import.meta.url), "utf8");
