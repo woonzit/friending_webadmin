@@ -727,12 +727,16 @@ test("the panel, proxy, locales and Help share one dormant family cutover", asyn
   assert.match(actions, /ACTIVE_FEATURE_SWITCHES_ACTIONS/);
   assert.match(bridge, /featureSwitchesProxyCapabilityAuthorized/);
   assert.match(bridge, /normalizeFeatureSwitchesProxyBody/);
+  assert.match(bridge, /adminBridgeCoreTransportError\(result\.status, result\.data\)/);
+  assert.match(bridge, /bridgeError\(transportError\.error, transportError\.status_code\)/);
   assert.match(bridge, /isAdminBridgeActionAuthorized\([\s\S]+featureSwitchesAuthorized/);
 
   assert.match(panel, /featureSwitchesPersistBeforeMutation\([\s\S]+adminCall\(command!\.action/);
   assert.match(panel, /adminCall\(existing\.action, existing\.payload\)/);
   assert.match(panel, /featureSwitchesStateConverged\(candidate, parsed\)/);
   assert.match(panel, /await load\(\)/);
+  assert.match(panel, /setLoadFailure\(error \? featureSwitchesErrorKey\(error\) : null\)/);
+  assert.match(panel, /loadFailure \? t\(`errors\.\$\{loadFailure\}`\) : t\("live\.unknownError"\)/);
   assert.doesNotMatch(panel, /maxLength=/, "M1: UTF-16 HTML maxlength must not bound Unicode scalars");
   assert.doesNotMatch(panel, /dangerouslySetInnerHTML|localStorage|console\.(?:log|info|warn|error)/);
   assert.match(panel, /setCurrent\(null\);\n\s+setState\("error"\)/);

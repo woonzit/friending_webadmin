@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as nodeModule from "node:module";
+import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
+import {
+  featureSwitchesError,
+  featureSwitchesErrorKey,
+} from "../lib/featureSwitches.ts";
 
 // `lib/core.ts` carries the shared Core credential and is therefore a
 // `server-only` module. Plain Node has no React Server Component resolution
@@ -253,6 +258,55 @@ test("the logical status_code wins and transport failures fail closed", async ()
     const unavailable = await coreCall("overview", {});
     assert.equal(unavailable.status, 502);
     assert.deepEqual(unavailable.data, { success: false, error: "core-unavailable" });
+  } finally {
+    restoreFetch();
+  }
+});
+
+test("real coreCall transport failures cross the action-proxy seam into the feature-switch read decoder", async () => {
+  const cases = [
+    {
+      error: "core-timeout",
+      status: 504,
+      key: "temporarilyUnavailable",
+      fetch: async () => {
+        const error = new Error("timed out");
+        error.name = "TimeoutError";
+        throw error;
+      },
+    },
+    {
+      error: "core-unavailable",
+      status: 502,
+      key: "temporarilyUnavailable",
+      fetch: async () => { throw new Error("network down"); },
+    },
+    {
+      error: "invalid-core-response",
+      status: 502,
+      key: "invalidResponse",
+      fetch: async () => ({
+        status: 200,
+        json: async () => { throw new SyntaxError("not json"); },
+      } as unknown as Response),
+    },
+  ] as const;
+
+  try {
+    for (const expected of cases) {
+      globalThis.fetch = expected.fetch as unknown as typeof globalThis.fetch;
+      const coreResult = await coreCall("feature_switches_get", { contract_version: 1 });
+      const proxyBody = adminBridgeCoreTransportError(coreResult.status, coreResult.data);
+      assert.deepEqual(proxyBody, {
+        success: false,
+        status_code: expected.status,
+        error: expected.error,
+      });
+      const decoded = featureSwitchesError(proxyBody);
+      assert.equal(decoded, expected.error);
+      assert.equal(featureSwitchesErrorKey(decoded), expected.key);
+      assert.notEqual(featureSwitchesErrorKey(decoded), "generic");
+    }
   } finally {
     restoreFetch();
   }

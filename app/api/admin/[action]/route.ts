@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { adminBridgeCoreTransportError } from "@/lib/adminBridge";
 import {
   normalizeAudienceVisibilityProxyBody,
   audienceVisibilityProxyCapabilityAuthorized,
@@ -192,6 +193,10 @@ export async function POST(
     mergeCoreParams(body, { admin_email: session.email }),
     adminActionTimeoutMs(action),
   );
+  const transportError = adminBridgeCoreTransportError(result.status, result.data);
+  if (transportError) {
+    return bridgeError(transportError.error, transportError.status_code);
+  }
   const coreError = (result.data as Record<string, unknown> | null)?.error;
   if (invalidatesAdminSession(result.status, coreError)) {
     return bridgeError("auth-required", 401);

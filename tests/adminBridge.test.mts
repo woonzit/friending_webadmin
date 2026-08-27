@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { adminBridgeErrorEnvelope } from "../lib/adminBridge.ts";
+import {
+  adminBridgeCoreTransportError,
+  adminBridgeErrorEnvelope,
+} from "../lib/adminBridge.ts";
 
 test("the same-origin bridge refusal is exact and carries its logical status", () => {
   assert.deepEqual(adminBridgeErrorEnvelope({
@@ -24,6 +27,30 @@ test("the same-origin bridge refusal is exact and carries its logical status", (
   ]) assert.equal(adminBridgeErrorEnvelope(malformed), null, JSON.stringify(malformed));
 });
 
+test("only exact coreCall transport failures gain a bridge status", () => {
+  for (const [error, status] of [
+    ["core-timeout", 504],
+    ["core-unavailable", 502],
+    ["invalid-core-response", 502],
+  ] as const) {
+    assert.deepEqual(adminBridgeCoreTransportError(status, { success: false, error }), {
+      success: false,
+      status_code: status,
+      error,
+    });
+  }
+
+  for (const [status, malformed] of [
+    [502, { success: false, error: "core-timeout" }],
+    [504, { success: false, error: "core-unavailable" }],
+    [504, { success: false, error: "invalid-core-response" }],
+    [502, { success: false, error: "core-unavailable", detail: "extra" }],
+    [502, { success: true, error: "core-unavailable" }],
+    [502, { success: false, error: "invented" }],
+    [502, null],
+  ] as const) assert.equal(adminBridgeCoreTransportError(status, malformed), null);
+});
+
 test("every generic bridge-generated refusal uses the status-bearing response helper", async () => {
   const route = await readFile(
     new URL("../app/api/admin/[action]/route.ts", import.meta.url),
@@ -33,6 +60,11 @@ test("every generic bridge-generated refusal uses the status-bearing response he
     route,
     /\{ success: false, status_code: status, error \}/,
     "the response body carries the same logical status as HTTP",
+  );
+  assert.match(
+    route,
+    /adminBridgeCoreTransportError\(result\.status, result\.data\)[\s\S]*?bridgeError\(transportError\.error, transportError\.status_code\)/,
+    "coreCall transport failures leave the generic proxy through bridgeError",
   );
   for (const [error, status] of [
     ["bad-origin", 403],
