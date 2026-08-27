@@ -1,7 +1,7 @@
 {
     "schema_version": 1,
     "contract": "admin-granted-verification-v1",
-    "source_commit": "ff4d2b736801e03a905a782998370cc40a45e410",
+    "source_commit": "4657d1e12ab99927b4d3bab5393a33db27191e12",
     "generator_commit": "6bf17e492877ee252599cdac6fff393fa52a298a",
     "fixture_set_sha256": "889888940225bf1bb9b2f5d0b9049fe6a16406e17334b16aeb89c733abf2e088",
     "provenance": {
