@@ -2185,18 +2185,18 @@
             "actions": {
               "1": "A korlátozott cooldown vagy retention értéket csak az aktuális termékeljárás szerint módosítsd.",
               "2": "A chatszerződést csak explicit migrációs readiness után engedélyezd.",
-              "3": "Válaszd ki, hogy az új tagok alapból csak általuk kedvelt emberektől kapjanak-e üzenetet."
+              "3": "Válaszd ki, hogy az új tagok alapból csak azoktól kapjanak-e üzenetet, akiknek Hey-t küldtek."
             },
             "guidance": "A stabil action key wire identity, és szövegváltozással nem módosulhat. A rolloutkapcsolók safety gate-ek, nem adatmigrációs eszközök."
           },
           "icons": {
-            "title": "Like és Already liked ikonok",
+            "title": "Hey ikonállapotok",
             "purpose": "Négy kezelt megjelenés fedi le a két interakciós állapotot Light és Dark módban, vagy az app használhatja a beépített ikonkészletet.",
             "actions": {
               "1": "Minden egyedi állapothoz és appearance-hez tölts fel megbízható PNG-t vagy SVG-t.",
               "2": "Teljes beépített fallbackhez válaszd a bundled ikonokat a feltöltött egyedi artwork törlése nélkül."
             },
-            "guidance": "A Like és Already liked mindkét appearance-ben legyen jól megkülönböztethető és olvasható. A feltöltés önmagában nem publikál, konfigurációt is kell menteni."
+            "guidance": "Ellenőrizd, hogy az elérhető és a már elküldött Hey állapota mindkét megjelenésben jól megkülönböztethető és olvasható maradjon. A feltöltés önmagában nem publikál, konfigurációt is kell menteni."
           },
           "copy": {
             "title": "Kétnyelvű tagi szöveg",
@@ -2719,19 +2719,19 @@
       "chatContractOn": "1 — kérések és kapu aktív",
       "chatContractHelp": "Az 1-es verziót csak a chat-migráció befejezése után kapcsold be.",
       "chatContractLocked": "Zárolva marad, amíg nincs ellenőrzött migráció és külön production kiadási engedély.",
-      "gateDefault": "Új tagoknál alapból csak az írhasson, akit ő kedvelt"
+      "gateDefault": "Új tagoknál alapból csak az írhasson, akinek Hey-t küldtek"
     },
     "icon": {
       "title": "Művelet ikonja",
       "copy": "Két állapot ikonja, mindkét megjelenésben. Tölts fel PNG-t vagy SVG-t, amelyből a Core kezelt PNG-változatokat készít.",
-      "light": "Kedvelés — világos",
-      "dark": "Kedvelés — sötét",
+      "light": "Hey — világos",
+      "dark": "Hey — sötét",
       "empty": "Beépített tartalék ikon",
       "choose": "PNG vagy SVG választása",
       "uploading": "Feltöltés…",
       "staged": "Az ikon feltöltve. Az URL publikálásához mentsd el a konfigurációt.",
-      "likedLight": "Már kedvelt — világos",
-      "likedDark": "Már kedvelt — sötét",
+      "likedLight": "Elküldött Hey — világos",
+      "likedDark": "Elküldött Hey — sötét",
       "useBundled": "Az alkalmazás beépített ikonjai",
       "useBundledHint": "Bekapcsolva egyik képet sem kell feltöltened; a feltöltöttek megmaradnak, csak nem használja őket."
     },
@@ -2939,7 +2939,7 @@
     },
     "quotas": {
       "footprint_send": "Elküldött footprint",
-      "pinger_send": "Like / Pinger jelzés",
+      "pinger_send": "Hey-ek / Pinger-jelzések",
       "private_album_access": "Privátalbum-hozzáférés",
       "quick_phrase_slots": "Mentett chatmondat"
     },
@@ -3046,7 +3046,7 @@
     },
     "quotas": {
       "footprint_send": "Mai footprintek",
-      "pinger_send": "Mai like-ok",
+      "pinger_send": "Mai Hey-ek",
       "private_album_access": "Privátalbum-hozzáférések",
       "quick_phrase_slots": "Mentett mondatok"
     },

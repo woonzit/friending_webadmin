@@ -191,3 +191,83 @@ test("the same-origin bridge classifies Pinger reads and writes and provides a b
   assert.match(route, /coreMultipartCall/);
   assert.doesNotMatch(route, /image_b64/);
 });
+
+test("Webadmin uses the accepted Hey vocabulary without renaming photo likes", async () => {
+  const [en, hu] = await Promise.all(["en", "hu"].map(async (locale) => (
+    JSON.parse(await readFile(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"))
+  )));
+
+  assert.deepEqual([
+    en.pinger.runtime.gateDefault,
+    en.pinger.icon.light,
+    en.pinger.icon.dark,
+    en.pinger.icon.likedLight,
+    en.pinger.icon.likedDark,
+    en.adminHelp.pages.pinger.sections.runtime.actions["3"],
+    en.adminHelp.pages.pinger.sections.icons.title,
+    en.adminHelp.pages.pinger.sections.icons.guidance,
+    en.membershipConfig.quotas.pinger_send,
+    en.membershipUser.quotas.pinger_send,
+  ], [
+    "Default new members to ‘only people I sent a Hey may message me’",
+    "Hey — light",
+    "Hey — dark",
+    "Hey sent — light",
+    "Hey sent — dark",
+    "Choose whether new members default to receiving messages only from people they sent a Hey.",
+    "Hey icon states",
+    "Check that the available and already-sent Hey states remain visually distinct and readable in both appearances. Upload alone does not publish until configuration is saved.",
+    "Heys / Pinger signals",
+    "Heys today",
+  ]);
+  assert.deepEqual([
+    hu.pinger.runtime.gateDefault,
+    hu.pinger.icon.light,
+    hu.pinger.icon.dark,
+    hu.pinger.icon.likedLight,
+    hu.pinger.icon.likedDark,
+    hu.adminHelp.pages.pinger.sections.runtime.actions["3"],
+    hu.adminHelp.pages.pinger.sections.icons.title,
+    hu.adminHelp.pages.pinger.sections.icons.guidance,
+    hu.membershipConfig.quotas.pinger_send,
+    hu.membershipUser.quotas.pinger_send,
+  ], [
+    "Új tagoknál alapból csak az írhasson, akinek Hey-t küldtek",
+    "Hey — világos",
+    "Hey — sötét",
+    "Elküldött Hey — világos",
+    "Elküldött Hey — sötét",
+    "Válaszd ki, hogy az új tagok alapból csak azoktól kapjanak-e üzenetet, akiknek Hey-t küldtek.",
+    "Hey ikonállapotok",
+    "Ellenőrizd, hogy az elérhető és a már elküldött Hey állapota mindkét megjelenésben jól megkülönböztethető és olvasható maradjon. A feltöltés önmagában nem publikál, konfigurációt is kell menteni.",
+    "Hey-ek / Pinger-jelzések",
+    "Mai Hey-ek",
+  ]);
+
+  assert.deepEqual([
+    en.userDetail.totalLikes,
+    en.userDetail.likedPhotos,
+    en.userDetail.likesValue,
+    en.appReview.counts.photo_likes,
+    en.appReview.checks.photo_likes,
+  ], [
+    "Total likes",
+    "Photos with likes",
+    "{count, plural, =0 {No likes} one {# like} other {# likes}}",
+    "Photo likes",
+    "Photo likes",
+  ]);
+  assert.deepEqual([
+    hu.userDetail.totalLikes,
+    hu.userDetail.likedPhotos,
+    hu.userDetail.likesValue,
+    hu.appReview.counts.photo_likes,
+    hu.appReview.checks.photo_likes,
+  ], [
+    "Összes like",
+    "Like-olt képek",
+    "{count, plural, =0 {Nincs like} one {# like} other {# like}}",
+    "Fotó-kedvelések",
+    "Fotó-kedvelések",
+  ]);
+});

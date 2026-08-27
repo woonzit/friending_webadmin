@@ -2185,18 +2185,18 @@
             "actions": {
               "1": "Adjust bounded cooldown or retention only with the current product procedure.",
               "2": "Enable the chat contract only after its migration readiness is explicitly reported.",
-              "3": "Choose whether new members default to receiving messages only from people they liked."
+              "3": "Choose whether new members default to receiving messages only from people they sent a Hey."
             },
             "guidance": "The stable action key is wire identity and must not change with wording. Rollout switches are safety gates, not data migration tools."
           },
           "icons": {
-            "title": "Like and already-liked icons",
+            "title": "Hey icon states",
             "purpose": "Four managed appearances cover the two interaction states in Light and Dark mode, or the app can use its bundled icon set.",
             "actions": {
               "1": "Upload a trusted PNG or SVG for each custom state and appearance.",
               "2": "Select bundled icons for a complete built-in fallback without deleting staged custom artwork."
             },
-            "guidance": "Check that Like and Already liked remain visually distinct and readable in both appearances. Upload alone does not publish until configuration is saved."
+            "guidance": "Check that the available and already-sent Hey states remain visually distinct and readable in both appearances. Upload alone does not publish until configuration is saved."
           },
           "copy": {
             "title": "Bilingual member copy",
@@ -2719,19 +2719,19 @@
       "chatContractOn": "1 — requests and gate active",
       "chatContractHelp": "Enable version 1 only after the chat migration has completed.",
       "chatContractLocked": "Locked until the verified migration and an explicit production release permit are present.",
-      "gateDefault": "Default new members to ‘only people I liked may message me’"
+      "gateDefault": "Default new members to ‘only people I sent a Hey may message me’"
     },
     "icon": {
       "title": "Action icon",
       "copy": "Two states, each in both appearances. Upload a PNG or an SVG that Core turns into managed PNG variants.",
-      "light": "Like — light",
-      "dark": "Like — dark",
+      "light": "Hey — light",
+      "dark": "Hey — dark",
       "empty": "Bundled fallback",
       "choose": "Choose PNG or SVG",
       "uploading": "Uploading…",
       "staged": "Icon uploaded. Save the configuration to publish its URL.",
-      "likedLight": "Already liked — light",
-      "likedDark": "Already liked — dark",
+      "likedLight": "Hey sent — light",
+      "likedDark": "Hey sent — dark",
       "useBundled": "Use the app's bundled icons",
       "useBundledHint": "With this on none of the four uploads is needed; anything already uploaded is kept but not used."
     },
@@ -2939,7 +2939,7 @@
     },
     "quotas": {
       "footprint_send": "Footprints sent",
-      "pinger_send": "Likes / Pinger signals",
+      "pinger_send": "Heys / Pinger signals",
       "private_album_access": "Private-album accesses",
       "quick_phrase_slots": "Saved chat phrases"
     },
@@ -3046,7 +3046,7 @@
     },
     "quotas": {
       "footprint_send": "Footprints today",
-      "pinger_send": "Likes today",
+      "pinger_send": "Heys today",
       "private_album_access": "Private-album accesses",
       "quick_phrase_slots": "Saved phrases"
     },
