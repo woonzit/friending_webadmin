@@ -1,0 +1,22 @@
+{
+    "success": true,
+    "status_code": 200,
+    "feature_switches": {
+        "contract_version": 1,
+        "contract_ready": false,
+        "hey_enabled": true,
+        "footprints_enabled": true,
+        "revision": 0,
+        "principal": {
+            "role": "owner",
+            "capabilities": [
+                "feature_switches_read",
+                "feature_switches_edit"
+            ]
+        },
+        "actions": []
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

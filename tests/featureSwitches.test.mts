@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { readFile, readdir } from "node:fs/promises";
 import {
   FEATURE_SWITCHES,
   FEATURE_SWITCHES_ACTIONS,
@@ -40,6 +41,93 @@ import { FEATURE_SWITCHES_CONTRACT_READY } from "../lib/contractReadiness.ts";
 
 const UUID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 const OTHER_UUID = "7b5f2a11-2c3d-4e5f-8a9b-0c1d2e3f4a5b";
+const FIXTURE_DIRECTORY = new URL("./fixtures/feature_switches_wire/", import.meta.url);
+
+// Body identity is the 43 released wire blobs plus their aggregate set hash.
+// Manifest provenance is pinned separately so a scoped Core source change
+// cannot be reported as a body change when the published wire stays stable.
+const FIXTURE_SOURCE_COMMIT = "da63c74f58ed93430dda0d0f417e028c45080f59";
+const FIXTURE_CONTRACT_MANIFEST_SHA256 = "97e0601d25e941af0d126978a3a4a1d26858e8ec3b1a0bd1e79a8c05fe2611e2";
+const FIXTURE_GENERATOR_SHA256 = "cac1e46f08f10a226da47911baff68f7f719bdde91f9a4249f936f1c80a07a52";
+const FIXTURE_SET_SHA256 = "3022e10eb8c5a3316273765755324825d8a44c71ad9ca2d1e9c1a04c761f545e";
+const FIXTURE_BODY_COUNT = 43;
+
+const FIXTURE_BODY_FILES = [
+  "admin_me-dormant-owner.json",
+  "admin_me-ready-admin.json",
+  "admin_me-ready-owner.json",
+  "admin_me-ready-viewer.json",
+  "admin_me-revoked.json",
+  "appconfig-both-off.json",
+  "appconfig-both-on.json",
+  "appconfig-hey-off-footprints-on.json",
+  "appconfig-hey-on-footprints-off.json",
+  "error-admin-revoked.json",
+  "error-admin-session-invalid.json",
+  "error-feature-switches-audit-write-failed.json",
+  "error-feature-switches-contract-version-invalid.json",
+  "error-feature-switches-contract-version-required.json",
+  "error-feature-switches-edit-required.json",
+  "error-feature-switches-read-failed.json",
+  "error-feature-switches-read-required.json",
+  "error-feature-switches-reason-invalid.json",
+  "error-feature-switches-receipt-write-failed.json",
+  "error-feature-switches-request-id-conflict.json",
+  "error-feature-switches-request-id-invalid.json",
+  "error-feature-switches-request-in-progress.json",
+  "error-feature-switches-request-invalid.json",
+  "error-feature-switches-revision-invalid.json",
+  "error-feature-switches-schema-unavailable.json",
+  "error-feature-switches-stored-invalid.json",
+  "error-feature-switches-switch-invalid.json",
+  "error-feature-switches-value-invalid.json",
+  "error-feature-switches-write-failed.json",
+  "error-unauthorized.json",
+  "get-never-set.json",
+  "member-footprint-disabled.json",
+  "member-hey-disabled.json",
+  "push-footprint-en.json",
+  "push-footprint-hu.json",
+  "push-hey-en.json",
+  "push-hey-hu.json",
+  "push-mutual-hey-none.json",
+  "set-conflict.json",
+  "set-footprints-off.json",
+  "set-hey-off.json",
+  "set-no-change.json",
+  "set-replayed.json",
+] as const;
+
+const FIXTURE_SOURCE_PATHS = [
+  "config/routes.php",
+  "src/Core/Response.php",
+  "src/Http/Controllers/AppController.php",
+  "src/Http/Controllers/FootprintController.php",
+  "src/Http/Controllers/PingerController.php",
+  "src/Http/Controllers/ProfileMediaController.php",
+  "src/Http/Controllers/RelationController.php",
+  "src/Http/Controllers/WebadminController.php",
+  "src/Http/Controllers/WebadminFeatureSwitchesController.php",
+  "src/Services/FeatureSwitchesAdminException.php",
+  "src/Services/FeatureSwitchesAdminService.php",
+  "src/Services/FeatureSwitchesReadinessService.php",
+  "src/Services/FeatureSwitchesService.php",
+  "src/Services/FootprintService.php",
+  "src/Services/ProfileVisitDeferralService.php",
+  "src/Services/SocketNotifyService.php",
+  "src/Support/FeatureSwitchesAdminPolicy.php",
+  "src/Support/Webadmin.php",
+] as const;
+
+type Json = Record<string, any>;
+
+function sha256(value: string): string {
+  return createHash("sha256").update(value, "utf8").digest("hex");
+}
+
+async function fixtureManifest(): Promise<Json> {
+  return JSON.parse(await readFile(new URL("manifest.json", FIXTURE_DIRECTORY), "utf8"));
+}
 
 function envelope(data: unknown, overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
@@ -133,6 +221,141 @@ function parsedState(overrides: Partial<FeatureSwitchesState> = {}): FeatureSwit
     ...overrides,
   };
 }
+
+test("the released Core corpus is manifest-bound with body identity kept separate", async () => {
+  const manifest = await fixtureManifest();
+  assert.deepEqual(Object.keys(manifest).sort(), [
+    "contract_manifest_sha256",
+    "contract_version",
+    "fixture_set_sha256",
+    "fixtures",
+    "provenance",
+    "schema_version",
+    "source_commit",
+  ]);
+  assert.equal(manifest.schema_version, 1);
+  assert.equal(manifest.contract_version, 1);
+  assert.equal(manifest.source_commit, FIXTURE_SOURCE_COMMIT);
+  assert.equal(manifest.contract_manifest_sha256, FIXTURE_CONTRACT_MANIFEST_SHA256);
+  assert.equal(manifest.fixture_set_sha256, FIXTURE_SET_SHA256);
+
+  const provenance = manifest.provenance;
+  assert.deepEqual(Object.keys(provenance).sort(), [
+    "cache_policy",
+    "evaluated_at",
+    "generator",
+    "generator_sha256",
+    "source_paths",
+    "wire_adapters",
+  ]);
+  assert.equal(provenance.generator, "tests/feature_switches_fixture_dump.php");
+  assert.equal(provenance.generator_sha256, FIXTURE_GENERATOR_SHA256);
+  assert.equal(provenance.evaluated_at, 1_787_800_000);
+  assert.deepEqual(provenance.source_paths, FIXTURE_SOURCE_PATHS);
+  assert.deepEqual(provenance.wire_adapters, {
+    admin_me: "Friending\\Support\\Webadmin::reply",
+    versioned_actions: "Friending\\Support\\Webadmin::noStoreReply",
+    member_routes: "Friending\\Core\\Response::wirePayload",
+  });
+  assert.deepEqual(provenance.cache_policy, {
+    admin_me: "pre-version-route-default",
+    versioned_actions: "no-store",
+    member_routes: "route-default",
+  });
+
+  assert.ok(Array.isArray(manifest.fixtures));
+  assert.equal(FIXTURE_BODY_FILES.length, FIXTURE_BODY_COUNT);
+  assert.equal(manifest.fixtures.length, FIXTURE_BODY_COUNT);
+  assert.deepEqual(
+    manifest.fixtures.map((row: Json) => row.file),
+    [...FIXTURE_BODY_FILES],
+  );
+  const inventory = (await readdir(FIXTURE_DIRECTORY)).sort();
+  assert.deepEqual(
+    inventory.filter((file) => file !== "manifest.json"),
+    [...FIXTURE_BODY_FILES].sort(),
+  );
+  assert.deepEqual(inventory.filter((file) => file === "manifest.json"), ["manifest.json"]);
+
+  const seenFiles = new Set<string>();
+  const seenCases = new Set<string>();
+  const consumerCounts = new Map<string, number>();
+  const aggregateRows: string[] = [];
+  for (const row of manifest.fixtures as Json[]) {
+    assert.deepEqual(Object.keys(row).sort(), ["case", "consumer", "file", "route", "sha256", "valid"]);
+    assert.equal(typeof row.file, "string");
+    assert.match(row.file, /^[a-z0-9_-]+\.json$/u);
+    assert.equal(typeof row.case, "string");
+    assert.equal(row.case.length > 0 && row.case === row.case.trim(), true);
+    assert.ok(["webadmin", "ios", "push"].includes(row.consumer));
+    assert.equal(typeof row.valid, "boolean");
+    assert.equal(row.valid, row.consumer !== "push");
+    assert.match(row.sha256, /^[a-f0-9]{64}$/u);
+    assert.equal(seenFiles.has(row.file), false, `duplicate fixture file ${row.file}`);
+    assert.equal(seenCases.has(row.case), false, `duplicate fixture case ${row.case}`);
+    seenFiles.add(row.file);
+    seenCases.add(row.case);
+    consumerCounts.set(row.consumer, (consumerCounts.get(row.consumer) ?? 0) + 1);
+
+    if (row.consumer === "webadmin") {
+      assert.match(row.route, /^\/v1\/webadmin\/(?:admin_me|feature_switches_(?:get|set))$/u);
+    } else if (row.consumer === "ios") {
+      assert.ok([
+        "/v1/app/ios_appconfig",
+        "/v1/footprints/visitors",
+        "/v1/iosuser/like",
+      ].includes(row.route));
+    } else {
+      assert.ok(["push://footprint", "push://new_hey"].includes(row.route));
+    }
+
+    const wire = await readFile(new URL(row.file, FIXTURE_DIRECTORY), "utf8");
+    assert.equal(sha256(wire), row.sha256, `${row.file} must match its released byte hash`);
+    assert.doesNotThrow(() => JSON.parse(wire), `${row.file} must remain JSON`);
+    aggregateRows.push(`${row.file}\0${row.sha256}`);
+  }
+  assert.deepEqual(
+    Object.fromEntries([...consumerCounts].sort(([left], [right]) => left.localeCompare(right))),
+    { ios: 6, push: 5, webadmin: 32 },
+  );
+  assert.equal(sha256(aggregateRows.join("\n")), FIXTURE_SET_SHA256);
+});
+
+test("every released corpus body is run through the production Webadmin decoders", async () => {
+  const manifest = await fixtureManifest();
+  for (const row of manifest.fixtures as Json[]) {
+    const body = JSON.parse(await readFile(new URL(row.file, FIXTURE_DIRECTORY), "utf8")) as Json;
+    const decoders = {
+      admin_me: featureSwitchesAdminMe(body.feature_switches),
+      state: featureSwitchesStateResponse(body),
+      mutation: featureSwitchesMutationResponse(body),
+      conflict: featureSwitchesConflictResponse(body),
+      error: featureSwitchesError(body),
+    };
+    const accepted = Object.entries(decoders)
+      .filter(([, value]) => value !== null)
+      .map(([name]) => name);
+
+    if (row.consumer !== "webadmin") {
+      assert.deepEqual(accepted, [], `${row.file} must not enter a Webadmin decoder`);
+      continue;
+    }
+
+    let expected: keyof typeof decoders;
+    if (row.route === "/v1/webadmin/admin_me") {
+      expected = body.success === true ? "admin_me" : "error";
+    } else if (row.route === "/v1/webadmin/feature_switches_get") {
+      expected = "state";
+    } else if (body.success === true) {
+      expected = "mutation";
+    } else if (body.error === "feature-switches-conflict") {
+      expected = "conflict";
+    } else {
+      expected = "error";
+    }
+    assert.deepEqual(accepted, [expected], `${row.file} must satisfy exactly its production decoder`);
+  }
+});
 
 test("the dormant family vocabulary and conditional proxy surface are exact", () => {
   assert.deepEqual([...FEATURE_SWITCHES], ["hey", "footprints"]);

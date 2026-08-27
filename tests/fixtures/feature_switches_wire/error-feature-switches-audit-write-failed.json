@@ -1,0 +1,8 @@
+{
+    "success": false,
+    "status_code": 503,
+    "error": "feature-switches-audit-write-failed",
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

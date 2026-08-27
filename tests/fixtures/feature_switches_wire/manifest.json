@@ -1,0 +1,388 @@
+{
+    "schema_version": 1,
+    "contract_version": 1,
+    "source_commit": "da63c74f58ed93430dda0d0f417e028c45080f59",
+    "contract_manifest_sha256": "97e0601d25e941af0d126978a3a4a1d26858e8ec3b1a0bd1e79a8c05fe2611e2",
+    "fixture_set_sha256": "3022e10eb8c5a3316273765755324825d8a44c71ad9ca2d1e9c1a04c761f545e",
+    "provenance": {
+        "generator": "tests/feature_switches_fixture_dump.php",
+        "generator_sha256": "cac1e46f08f10a226da47911baff68f7f719bdde91f9a4249f936f1c80a07a52",
+        "wire_adapters": {
+            "admin_me": "Friending\\Support\\Webadmin::reply",
+            "versioned_actions": "Friending\\Support\\Webadmin::noStoreReply",
+            "member_routes": "Friending\\Core\\Response::wirePayload"
+        },
+        "cache_policy": {
+            "admin_me": "pre-version-route-default",
+            "versioned_actions": "no-store",
+            "member_routes": "route-default"
+        },
+        "evaluated_at": 1787800000,
+        "source_paths": [
+            "config/routes.php",
+            "src/Core/Response.php",
+            "src/Http/Controllers/AppController.php",
+            "src/Http/Controllers/FootprintController.php",
+            "src/Http/Controllers/PingerController.php",
+            "src/Http/Controllers/ProfileMediaController.php",
+            "src/Http/Controllers/RelationController.php",
+            "src/Http/Controllers/WebadminController.php",
+            "src/Http/Controllers/WebadminFeatureSwitchesController.php",
+            "src/Services/FeatureSwitchesAdminException.php",
+            "src/Services/FeatureSwitchesAdminService.php",
+            "src/Services/FeatureSwitchesReadinessService.php",
+            "src/Services/FeatureSwitchesService.php",
+            "src/Services/FootprintService.php",
+            "src/Services/ProfileVisitDeferralService.php",
+            "src/Services/SocketNotifyService.php",
+            "src/Support/FeatureSwitchesAdminPolicy.php",
+            "src/Support/Webadmin.php"
+        ]
+    },
+    "fixtures": [
+        {
+            "file": "admin_me-dormant-owner.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "dormant provider: capabilities held, no action offered",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "d7d07517f6522e10d42ddf059e1e70c2bc1b04bd6a4cfe8ac5483e0cb7c9484a"
+        },
+        {
+            "file": "admin_me-ready-admin.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready admin: read + edit",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "a8c60b95711e462d59cb08fc7934585ee90adf626228effae16be9d0edd095d3"
+        },
+        {
+            "file": "admin_me-ready-owner.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready owner: read + edit",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "da780342f3ec39461cc62f4b2fe96347fc1d2698e60bad67df439fd90ad2608c"
+        },
+        {
+            "file": "admin_me-ready-viewer.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready viewer: read only",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "0fd3c8d180a9356e906fd0e32d09b11dd8e551e04068e201e92f955b028b2f23"
+        },
+        {
+            "file": "admin_me-revoked.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "revoked membership is refused, not projected",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "7ca14279ec3e818347b77f76b3b2c68550e2977556e39510f0b89c138cfafa9b"
+        },
+        {
+            "file": "appconfig-both-off.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "capability: both off — iOS hides tab-bar item 2 entirely (L4)",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "8fab69eac934cd05cd83fafe7db24001399aab3d7323255b96ada4eb9fe69ffc"
+        },
+        {
+            "file": "appconfig-both-on.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "capability: Hey on, Footprints on",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "cdfe05c599cf27baf115ff16895ff2bcd1fdec226cd54eb847af69d1581f4c93"
+        },
+        {
+            "file": "appconfig-hey-off-footprints-on.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "capability: Hey off, Footprints on — tab 2 keeps its Footprints tabs",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "3ba096922b4dd0d0167b13cf1de77eae36c5f89aa5208a8007ddc2113c040fb2"
+        },
+        {
+            "file": "appconfig-hey-on-footprints-off.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "capability: the launch posture — Hey on, Footprints off",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "3ca14c21096c095ff1d0a05eb65d145440a0ba24e4248207617db44262a53bf5"
+        },
+        {
+            "file": "error-admin-revoked.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: admin-revoked",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "7ca14279ec3e818347b77f76b3b2c68550e2977556e39510f0b89c138cfafa9b"
+        },
+        {
+            "file": "error-admin-session-invalid.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: admin-session-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "40972c7f616df32648d2df4eebaf02ea4510e9eb357e2248b18fe2f69769561e"
+        },
+        {
+            "file": "error-feature-switches-audit-write-failed.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-audit-write-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "2f42aa335eab4d2aae77f2140af3aac25f62c98e991b92795cd4319a4044ee61"
+        },
+        {
+            "file": "error-feature-switches-contract-version-invalid.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-contract-version-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "a4bac5c07c4289d9891efe94c6e274dc103ef4d7e7df79153567678de28ee818"
+        },
+        {
+            "file": "error-feature-switches-contract-version-required.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-contract-version-required",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "c5ec5fec766d6fc80f320b1795fd8a10af49c337689b6acd54f22e15a1fbb9f9"
+        },
+        {
+            "file": "error-feature-switches-edit-required.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-edit-required",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "67bcd49d9a0aafccc53c3284d2e6c38b4d198f19de6dce3dd5ff0a4572da1d8e"
+        },
+        {
+            "file": "error-feature-switches-read-failed.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-read-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "00678130c220bf1de1af89adf5fae73de931e85ed6b271c0b2f7629815d9c2b4"
+        },
+        {
+            "file": "error-feature-switches-read-required.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-read-required",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "2c54431a8f50100e38efd16cc47b63db1c52a5c626920154972172f1e437791e"
+        },
+        {
+            "file": "error-feature-switches-reason-invalid.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-reason-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "9086e37271ea9def7aa04e835922a5155bfde9a1f05e3a958bca1ade5462a146"
+        },
+        {
+            "file": "error-feature-switches-receipt-write-failed.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-receipt-write-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "da391a0f1f70fdb6fb69eec1293dcd7396ef8d803247279cd82bd1d2eeffdbe9"
+        },
+        {
+            "file": "error-feature-switches-request-id-conflict.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-request-id-conflict",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "e608149d0e6cafb02a13f05189278cee709a349f6343d2b57019cce990b13c86"
+        },
+        {
+            "file": "error-feature-switches-request-id-invalid.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-request-id-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "1dc78088419dd87be37130f722790d015c1e83d374d9a9728a03c8fbd2bb66be"
+        },
+        {
+            "file": "error-feature-switches-request-in-progress.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-request-in-progress",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "63b1a215e78b6c9128a330a1dc222dd0535a2cc71dbb10bf0618b2b3b9af6cb5"
+        },
+        {
+            "file": "error-feature-switches-request-invalid.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-request-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "ee4e329e78deb004845e4bbf58ad95784e59e79db943008a6ea458a0292be310"
+        },
+        {
+            "file": "error-feature-switches-revision-invalid.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-revision-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "812827447cf1f06a031af05cca9115bbaf68a6fcb3ae5d0f5acd75796906268b"
+        },
+        {
+            "file": "error-feature-switches-schema-unavailable.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-schema-unavailable",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "2876a4b6f2d86dc08df1ae6920f206fd96e19ca6a05cd232621e27659ec6cf6d"
+        },
+        {
+            "file": "error-feature-switches-stored-invalid.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-stored-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "25194314ca0ba267412d614bb4a697286dc14d76462f1a7091d4ee63a9d598bc"
+        },
+        {
+            "file": "error-feature-switches-switch-invalid.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-switch-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "39dde279bf37d0d8a5b690ed720f02fc3531833777ebf61d64d32148178f382c"
+        },
+        {
+            "file": "error-feature-switches-value-invalid.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-value-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "617477a0c3f69826cfd5a8c770ff12b73bc0c859629030fd165295e67432fad8"
+        },
+        {
+            "file": "error-feature-switches-write-failed.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: feature-switches-write-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "e1e7dce64432b99ee50c08f7d2fb3c2ef5b904d9c795cb12e4597b0e623e80f9"
+        },
+        {
+            "file": "error-unauthorized.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "closed refusal: unauthorized",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "92a1f1484a7aae426dbcce31512c40eb078ddeb28fa893a4c7354c1303499c29"
+        },
+        {
+            "file": "get-never-set.json",
+            "route": "/v1/webadmin/feature_switches_get",
+            "case": "A1: never set — both enabled, zero provenance",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "77a5f63739b75161ec9fce2b6d6d015aa51ad02e7ea8745d1147ac7425371f62"
+        },
+        {
+            "file": "member-footprint-disabled.json",
+            "route": "/v1/footprints/visitors",
+            "case": "the Footprints family refused while the switch is off",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "6eed372baf5377c1cf468ca37a30747d09155682cda3a0e15822f9c591a12f09"
+        },
+        {
+            "file": "member-hey-disabled.json",
+            "route": "/v1/iosuser/like",
+            "case": "the Hey gesture refused while the switch is off",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "f447f9aa222c673f4180bb7c0fce1a122d34cd9696cf7f903976afcaed220d38"
+        },
+        {
+            "file": "push-footprint-en.json",
+            "route": "push://footprint",
+            "case": "badge push, English recipient",
+            "consumer": "push",
+            "valid": false,
+            "sha256": "eb0223901caed2ae46d84041afa584b507d8c735b894becd268c67465365f679"
+        },
+        {
+            "file": "push-footprint-hu.json",
+            "route": "push://footprint",
+            "case": "badge push, Hungarian recipient",
+            "consumer": "push",
+            "valid": false,
+            "sha256": "7ef5cab731f086d69d2e07560a2501702985d28f423d20331febe42c6cbd4fb5"
+        },
+        {
+            "file": "push-hey-en.json",
+            "route": "push://new_hey",
+            "case": "relation Hey push, English recipient",
+            "consumer": "push",
+            "valid": false,
+            "sha256": "d989895c9ed528835bad6dce5ff806072b407bf314bfec206ebbe52ca7a6ff1c"
+        },
+        {
+            "file": "push-hey-hu.json",
+            "route": "push://new_hey",
+            "case": "relation Hey push, Hungarian recipient",
+            "consumer": "push",
+            "valid": false,
+            "sha256": "9c06532f3e6e5600c8ee8cd439c19724e75da41f96b2fb83032aa018f89ee1b6"
+        },
+        {
+            "file": "push-mutual-hey-none.json",
+            "route": "push://new_hey",
+            "case": "a MUTUAL Hey emits new_match only — no Hey push, so a reciprocating member gets one notification, not two",
+            "consumer": "push",
+            "valid": false,
+            "sha256": "11b7214ff538a995a28a90efd0fe9355d2a2b0ad84fd8aaae5a5ebb586a58352"
+        },
+        {
+            "file": "set-conflict.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "stale revision: adopt current, fresh gesture required",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "f991e5d5c67fa67e0d6632209a9f300fd6ac6cc8a00f7b51908157f07f117704"
+        },
+        {
+            "file": "set-footprints-off.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "the launch posture flip: Footprints off, Hey untouched",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "06babc8880b17fbba575b9ba2a7703a6750632b0779610b2975c998b49d99386"
+        },
+        {
+            "file": "set-hey-off.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "Hey off, Footprints untouched",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "eaef4b90dcdc357fd5ec71cac1e906c1f519cbcea1ef978818b0c4d7460f4f90"
+        },
+        {
+            "file": "set-no-change.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "setting the value it already holds is a receipted no-op",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "9edc1efc8fc06afc56ab7c3d441db44dc5f0afe7d3eeb67813f62659ae4e65ad"
+        },
+        {
+            "file": "set-replayed.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "the same request id returns the committed result",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "7c305efc90beb54e656fd434a6a73880fc13f1d1e83380a5d1b1ec41ddc7897b"
+        }
+    ]
+}

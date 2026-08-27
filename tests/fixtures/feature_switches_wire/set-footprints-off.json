@@ -1,0 +1,23 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "hey": {
+            "enabled": true,
+            "updated_at": 1787800000,
+            "updated_by": "owner@friending.com"
+        },
+        "footprints": {
+            "enabled": false,
+            "updated_at": 1787800000,
+            "updated_by": "owner@friending.com"
+        },
+        "revision": 5,
+        "no_change": false,
+        "replayed": false
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
