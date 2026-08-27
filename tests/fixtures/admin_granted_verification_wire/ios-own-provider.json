@@ -1,0 +1,149 @@
+{
+    "status_code": 200,
+    "data": {
+        "verification": {
+            "schema_version": 1,
+            "evaluated_at": 1800000000,
+            "scope": {
+                "scope_key": "global",
+                "kind": "global",
+                "display": "Global",
+                "source": "global"
+            },
+            "enabled_methods": [
+                "persona"
+            ],
+            "startable_methods": [],
+            "tier_language": false,
+            "methods": {
+                "video": {
+                    "status": "not_started",
+                    "raw_status": null,
+                    "can_start": false,
+                    "pending_phase": null,
+                    "pending_since": null,
+                    "reason": null,
+                    "attempt": null,
+                    "max_attempts": null,
+                    "manual_review_available": false,
+                    "state_integrity": true,
+                    "missing_requirements": [
+                        "avatar",
+                        "gender",
+                        "birthday"
+                    ],
+                    "action": null
+                },
+                "persona": {
+                    "status": "verified",
+                    "can_start": false,
+                    "pending_phase": null,
+                    "pending_since": null,
+                    "reason": null,
+                    "attempt": null,
+                    "max_attempts": null,
+                    "manual_review_available": false,
+                    "state_integrity": true,
+                    "action": null
+                }
+            },
+            "level": "strong",
+            "source": "derived",
+            "imported": null,
+            "grant": null,
+            "badge_visible": true,
+            "self_badge": {
+                "kind": "strong",
+                "asset_url": null
+            },
+            "external_seal": {
+                "asset_url": "https://img.friending.co/api/cache/admin/verification-badges/light-r1-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png"
+            },
+            "feature_access": {
+                "people.list": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "profile.view": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "chat.send": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "friend.request": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "dates.access": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "dates.create": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "dates.join": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "footprints.send": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "pinger.send": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "album.private_request": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                }
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import {
   ADMIN_GRANTED_VERIFICATION_ACTIONS,
   ADMIN_GRANTED_VERIFICATION_CAPABILITIES,
@@ -40,18 +40,143 @@ import {
 import { ADMIN_GRANTED_VERIFICATION_CONTRACT_READY } from "../lib/contractReadiness.ts";
 import {
   normalizeVerificationProxyBody,
+  verificationAdminMe,
   verificationConsoleFixture,
+  verificationGrantMutationResponse,
+  verificationUserDetailResponse,
   verificationUserFixture,
 } from "../lib/verificationAdmin.ts";
+import {
+  personaConflictResponse,
+  personaMemberMutationResponse,
+} from "../lib/personaAdmin.ts";
 
 type Json = Record<string, any>;
 
 const UUID = "12345678-1234-4234-8234-123456789abc";
 const EVALUATED_AT = 1_787_692_800;
 const REASON = "Support decision 👩‍💻";
+const FIXTURE_DIRECTORY = new URL("./fixtures/admin_granted_verification_wire/", import.meta.url);
+
+// These identities move only when Core publishes a regenerated normative
+// corpus. T-219 copies that directory unchanged; it never blesses hand-edited
+// lookalikes.
+const FIXTURE_SOURCE_COMMIT = "ff4d2b736801e03a905a782998370cc40a45e410";
+const FIXTURE_GENERATOR_COMMIT = "6bf17e492877ee252599cdac6fff393fa52a298a";
+const FIXTURE_GENERATOR_SHA256 = "7bbb7986bdd7474af6826d12274e980c33a49dcae5bc2cbae124e8d0af22b0f1";
+const FIXTURE_SET_SHA256 = "889888940225bf1bb9b2f5d0b9049fe6a16406e17334b16aeb89c733abf2e088";
+
+const FIXTURE_FILES = [
+  "admin-me-dormant-viewer.json",
+  "admin-me-ready-viewer.json",
+  "admin-me-dormant-admin.json",
+  "admin-me-ready-admin.json",
+  "admin-me-dormant-owner.json",
+  "admin-me-ready-owner.json",
+  "admin-me-revoked-actor.json",
+  "compat-admin-me-verification-block.json",
+  "compat-user-detail-unselected.json",
+  "compat-grant-save-success.json",
+  "compat-grant-remove-success.json",
+  "compat-persona-apply-success.json",
+  "compat-persona-revoke-success.json",
+  "compat-persona-apply-idempotent-success.json",
+  "compat-persona-apply-replay.json",
+  "selected-absent.json",
+  "selected-active-video.json",
+  "selected-active-persona.json",
+  "selected-expired.json",
+  "selected-revoked.json",
+  "mutation-grant-create.json",
+  "mutation-grant-update.json",
+  "mutation-grant-method-change.json",
+  "mutation-revoke-disabled-after-grant.json",
+  "mutation-completed-replay.json",
+  "mutation-write-uncertainty-converged.json",
+  "refusal-request-id-conflict.json",
+  "refusal-request-in-progress.json",
+  "refusal-stale-over-tombstone.json",
+  "refusal-method-mismatch.json",
+  "refusal-method-disabled.json",
+  "refusal-grant-not-active.json",
+  "refusal-audit-write-failed.json",
+  "refusal-write-failed.json",
+  "persona-active-video-conflict.json",
+  "persona-dual-revision-race-conflict.json",
+  "selected-provider-wins.json",
+  "selected-import-wins.json",
+  "selected-provider-tie.json",
+  "selected-import-tie.json",
+  "selected-provider-survives-revoke.json",
+  "ios-own-provider.json",
+  "ios-own-admin-granted.json",
+  "ios-external-list-equivalence.json",
+] as const;
+
+const FIXTURE_KINDS = [
+  "admin_me",
+  "compatibility",
+  "selected_read",
+  "mutation_success",
+  "conflict",
+  "refusal",
+  "ios_wire",
+] as const;
+
+const IOS_FORBIDDEN_KEYS = [
+  "method_hint",
+  "granted_by",
+  "granted_at",
+  "reason_length",
+  "reason_sha256",
+  "import_provenance",
+  "request_id",
+  "persona_inquiry_id",
+] as const;
+
+const FIXTURE_SOURCE_PATHS = [
+  "config/routes.php",
+  "src/Core/Response.php",
+  "src/Http/Controllers/VerificationAdminController.php",
+  "src/Http/Controllers/WebadminController.php",
+  "src/Services/AdminGrantedVerificationService.php",
+  "src/Services/AdminGrantedVerificationTransaction.php",
+  "src/Services/MongoVerificationPolicyDataSource.php",
+  "src/Services/PersonaAdminService.php",
+  "src/Services/VerificationAdminActorService.php",
+  "src/Services/VerificationAdminException.php",
+  "src/Services/VerificationAdminMemberService.php",
+  "src/Services/VerificationAdminMutationExecutor.php",
+  "src/Services/VerificationAdminProjectionService.php",
+  "src/Services/VerificationAdminReadService.php",
+  "src/Services/VerificationAdminSchemaService.php",
+  "src/Services/VerificationGrantService.php",
+  "src/Services/VerificationPolicySchemaService.php",
+  "src/Services/VerificationPolicyService.php",
+  "src/Services/VerificationRequestContext.php",
+  "src/Services/WebadminMutationCommand.php",
+  "src/Services/WebadminMutationService.php",
+  "src/Support/AdminGrantedVerificationPolicy.php",
+  "src/Support/PersonaPolicy.php",
+  "src/Support/VerificationAdminPolicy.php",
+  "src/Support/VerificationMemberEvaluator.php",
+  "src/Support/VerificationPolicy.php",
+  "src/Support/Webadmin.php",
+  "src/Support/WebadminMutationPolicy.php",
+] as const;
 
 function sha256(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
+}
+
+function containsKey(value: unknown, needle: string): boolean {
+  if (Array.isArray(value)) return value.some((entry) => containsKey(entry, needle));
+  if (value === null || typeof value !== "object") return false;
+  return Object.entries(value).some(([key, entry]) => key === needle || containsKey(entry, needle));
+}
+
+async function fixtureManifest(): Promise<Json> {
+  return JSON.parse(await readFile(new URL("manifest.json", FIXTURE_DIRECTORY), "utf8"));
 }
 
 function success(data: unknown): Json {
@@ -151,6 +276,154 @@ function command(action: "verification_grant" | "verification_revoke", overrides
     ...overrides,
   };
 }
+
+test("the published Core corpus is manifest-bound, inventory-exact, and privacy-safe", async () => {
+  const manifest = await fixtureManifest();
+  assert.deepEqual(Object.keys(manifest).sort(), [
+    "contract",
+    "fixture_set_sha256",
+    "fixtures",
+    "generator_commit",
+    "provenance",
+    "schema_version",
+    "source_commit",
+  ]);
+  assert.equal(manifest.schema_version, 1);
+  assert.equal(manifest.contract, "admin-granted-verification-v1");
+  assert.equal(manifest.source_commit, FIXTURE_SOURCE_COMMIT);
+  assert.equal(manifest.generator_commit, FIXTURE_GENERATOR_COMMIT);
+  assert.equal(manifest.fixture_set_sha256, FIXTURE_SET_SHA256);
+
+  const provenance = manifest.provenance;
+  assert.deepEqual(Object.keys(provenance).sort(), [
+    "evaluated_at",
+    "generator",
+    "generator_sha256",
+    "ios_wire_adapter",
+    "resource_shaper",
+    "source_paths",
+    "webadmin_wire_adapter",
+  ]);
+  assert.equal(provenance.generator, "tests/admin_granted_verification_fixture_dump.php");
+  assert.equal(provenance.generator_sha256, FIXTURE_GENERATOR_SHA256);
+  assert.equal(provenance.webadmin_wire_adapter, "Friending\\Support\\Webadmin::noStoreReply");
+  assert.equal(provenance.ios_wire_adapter, "Friending\\Core\\Response::wirePayload");
+  assert.equal(
+    provenance.resource_shaper,
+    "Friending\\Services\\AdminGrantedVerificationService::resourceFromProjection",
+  );
+  assert.equal(provenance.evaluated_at, 1_800_000_000);
+  assert.deepEqual(provenance.source_paths, FIXTURE_SOURCE_PATHS);
+
+  assert.ok(Array.isArray(manifest.fixtures));
+  assert.equal(manifest.fixtures.length, FIXTURE_FILES.length);
+  assert.deepEqual(manifest.fixtures.map((row: Json) => row.file), FIXTURE_FILES);
+  assert.deepEqual(
+    (await readdir(FIXTURE_DIRECTORY)).sort(),
+    [...FIXTURE_FILES, "manifest.json"].sort(),
+  );
+
+  const seenFiles = new Set<string>();
+  const seenCases = new Set<string>();
+  const kindCounts = new Map<string, number>();
+  const bodies = new Map<string, Json>();
+  const aggregateRows: string[] = [];
+  for (const row of manifest.fixtures as Json[]) {
+    assert.deepEqual(Object.keys(row).sort(), ["case", "file", "kind", "route", "sha256"]);
+    assert.equal(typeof row.file, "string");
+    assert.equal(typeof row.case, "string");
+    assert.match(row.case, /^[a-z0-9_]+$/u);
+    assert.equal(typeof row.route, "string");
+    assert.match(row.route, /^\/v1\/(?:webadmin|iospeople|iosuser)\//u);
+    assert.ok((FIXTURE_KINDS as readonly string[]).includes(row.kind));
+    assert.match(row.sha256, /^[a-f0-9]{64}$/u);
+    assert.equal(seenFiles.has(row.file), false, `duplicate fixture file ${row.file}`);
+    assert.equal(seenCases.has(row.case), false, `duplicate fixture case ${row.case}`);
+    seenFiles.add(row.file);
+    seenCases.add(row.case);
+    kindCounts.set(row.kind, (kindCounts.get(row.kind) ?? 0) + 1);
+
+    const wire = await readFile(new URL(row.file, FIXTURE_DIRECTORY), "utf8");
+    assert.equal(sha256(wire), row.sha256, `${row.file} must match its published byte hash`);
+    aggregateRows.push(`${row.file}\0${row.sha256}`);
+    const body = JSON.parse(wire) as Json;
+    bodies.set(row.file, body);
+
+    const sibling = body.data?.admin_granted_verification;
+    if (sibling !== undefined) {
+      assert.equal(containsKey(sibling, "reason"), false, `${row.file} exposed a raw reason`);
+      assert.equal(containsKey(sibling, "request_id"), false, `${row.file} exposed a request id`);
+    }
+    if (row.kind === "ios_wire") {
+      for (const key of IOS_FORBIDDEN_KEYS) {
+        assert.equal(containsKey(body, key), false, `${row.file} exposed ${key}`);
+      }
+    }
+  }
+  assert.deepEqual(
+    Object.fromEntries([...kindCounts].sort(([left], [right]) => left.localeCompare(right))),
+    {
+      admin_me: 6,
+      compatibility: 10,
+      conflict: 4,
+      ios_wire: 3,
+      mutation_success: 6,
+      refusal: 5,
+      selected_read: 10,
+    },
+  );
+  assert.equal(sha256(aggregateRows.join("\n")), FIXTURE_SET_SHA256);
+
+  const provider = bodies.get("ios-own-provider.json")?.data?.verification;
+  const granted = bodies.get("ios-own-admin-granted.json")?.data?.verification;
+  assert.deepEqual(granted?.self_badge, provider?.self_badge);
+  assert.deepEqual(granted?.external_seal, provider?.external_seal);
+  const members = bodies.get("ios-external-list-equivalence.json")?.data?.members;
+  assert.ok(Array.isArray(members));
+  assert.equal(members.length, 2);
+  assert.equal(members[0]?.profile_verified, true);
+  assert.equal(members[1]?.profile_verified, true);
+  assert.deepEqual(members[1]?.verification_seal, members[0]?.verification_seal);
+});
+
+test("every published Webadmin corpus case passes its production decoder", async () => {
+  const manifest = await fixtureManifest();
+  const failures: string[] = [];
+  for (const row of manifest.fixtures as Json[]) {
+    if (row.kind === "ios_wire") continue;
+    const body = JSON.parse(await readFile(new URL(row.file, FIXTURE_DIRECTORY), "utf8")) as Json;
+    let parsed = false;
+    if (row.kind === "admin_me") {
+      parsed = adminGrantedVerificationAdminMe(body.admin_granted_verification) !== null;
+    } else if (row.kind === "selected_read") {
+      parsed = adminGrantedVerificationSelectedDetailResponse(body) !== null;
+    } else if (row.kind === "mutation_success") {
+      parsed = adminGrantedVerificationMutationResponse(body) !== null;
+    } else if (row.kind === "conflict") {
+      parsed = adminGrantedVerificationConflictResponse(body) !== null;
+    } else if (row.kind === "refusal") {
+      parsed = adminGrantedVerificationError(body) === body.error;
+    } else if (row.kind === "compatibility") {
+      if (row.case === "old_verification_block_unchanged") {
+        parsed = verificationAdminMe(body.verification) !== null
+          && adminGrantedVerificationAdminMe(body.admin_granted_verification) !== null;
+      } else if (row.case === "old_v1_unselected_exact_shape") {
+        parsed = verificationUserDetailResponse(body) !== null;
+      } else if (row.case === "old_grant_save_success" || row.case === "old_grant_remove_success") {
+        parsed = verificationGrantMutationResponse(body) !== null;
+      } else if (
+        row.case === "persona_alias_active_video_conflict"
+        || row.case === "persona_alias_dual_revision_race_loser"
+      ) {
+        parsed = personaConflictResponse(body) !== null;
+      } else if (typeof row.case === "string" && row.case.startsWith("persona_alias_")) {
+        parsed = personaMemberMutationResponse(body) !== null;
+      }
+    }
+    if (!parsed) failures.push(`${row.file} (${row.case})`);
+  }
+  assert.deepEqual(failures, [], "published fixtures must satisfy the shipped strict decoders");
+});
 
 test("the T-219 vocabulary and proxy surface remain dormant behind one explicit local switch", async () => {
   assert.equal(ADMIN_GRANTED_VERIFICATION_CONTRACT_READY, false);

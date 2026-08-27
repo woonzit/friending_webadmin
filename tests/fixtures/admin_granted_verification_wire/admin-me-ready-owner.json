@@ -1,0 +1,24 @@
+{
+    "success": true,
+    "status_code": 200,
+    "email": "owner@friending.com",
+    "role": "owner",
+    "admin_granted_verification": {
+        "contract_version": 1,
+        "contract_ready": true,
+        "principal": {
+            "role": "owner",
+            "capabilities": [
+                "verification_grant_edit",
+                "verification_grant_read"
+            ]
+        },
+        "actions": [
+            "verification_grant",
+            "verification_revoke"
+        ]
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

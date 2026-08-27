@@ -1,0 +1,24 @@
+{
+    "status_code": 200,
+    "data": {
+        "members": [
+            {
+                "id": 995201,
+                "profile_verified": true,
+                "verification_seal": {
+                    "asset_url": "https://img.friending.co/api/cache/admin/verification-badges/light-r1-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png"
+                }
+            },
+            {
+                "id": 995202,
+                "profile_verified": true,
+                "verification_seal": {
+                    "asset_url": "https://img.friending.co/api/cache/admin/verification-badges/light-r1-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png"
+                }
+            }
+        ]
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

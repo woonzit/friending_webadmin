@@ -1,0 +1,171 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "principal": {
+            "role": "viewer",
+            "capabilities": [
+                "verification_grant_read",
+                "verification_pending_read",
+                "verification_policy_read",
+                "verification_simulate"
+            ]
+        },
+        "verification": {
+            "schema_version": 1,
+            "uid": 995101,
+            "display_name": "Fixture Member",
+            "evaluated_at": 1800000000,
+            "scope": {
+                "kind": "global",
+                "country_code": null,
+                "place_id": null,
+                "display": "Global",
+                "scope_key": "global",
+                "source": "global"
+            },
+            "enabled_methods": [
+                "video",
+                "persona"
+            ],
+            "startable_methods": [],
+            "tier_language": true,
+            "methods": {
+                "video": {
+                    "status": "not_started",
+                    "raw_video_status": null,
+                    "can_start": false,
+                    "pending_phase": null,
+                    "pending_since": null,
+                    "member_safe_reason": null,
+                    "attempt": null,
+                    "max_attempts": null,
+                    "manual_review_available": false,
+                    "state_integrity": true
+                },
+                "persona": {
+                    "status": "verified",
+                    "raw_video_status": null,
+                    "can_start": false,
+                    "pending_phase": null,
+                    "pending_since": null,
+                    "member_safe_reason": null,
+                    "attempt": null,
+                    "max_attempts": null,
+                    "manual_review_available": false,
+                    "state_integrity": true
+                }
+            },
+            "badge_visible": true,
+            "derived_level": "strong",
+            "imported": null,
+            "import_integrity": "absent",
+            "grant": {
+                "level": "strong",
+                "reason": "Fixture admin-granted verification",
+                "granted_by": "operator@friending.com",
+                "granted_at": 1799999900,
+                "expires_at": 1800000000,
+                "revision": 5,
+                "status": "expired",
+                "evaluated_at": 1800000000
+            },
+            "grant_revision": 5,
+            "effective_level": "strong",
+            "effective_source": "derived",
+            "external_seal_would_show": true,
+            "feature_access": [
+                {
+                    "feature": "people.list",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "profile.view",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "chat.send",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "friend.request",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "dates.access",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "dates.create",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "dates.join",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "footprints.send",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "pinger.send",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "album.private_request",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                }
+            ]
+        },
+        "admin_granted_verification": {
+            "schema_version": 1,
+            "uid": 995101,
+            "evaluated_at": 1800000000,
+            "enabled_methods": [
+                "video",
+                "persona"
+            ],
+            "grant_revision": 5,
+            "admin_grant": {
+                "method": "persona",
+                "level": "strong",
+                "method_hint": "admin_granted",
+                "reason_length": 34,
+                "reason_sha256": "cf0025c9804acae2b09fe8a696d901fcde27d1b4983f951660a9fbb20749b7fe",
+                "granted_by": "operator@friending.com",
+                "granted_at": 1799999900,
+                "expires_at": 1800000000,
+                "revision": 5,
+                "status": "revoked",
+                "evaluated_at": 1800000000
+            },
+            "effective_level": "strong",
+            "effective_source": "derived",
+            "external_seal_would_show": true
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

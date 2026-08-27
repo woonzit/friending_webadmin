@@ -1,0 +1,20 @@
+{
+    "success": true,
+    "status_code": 200,
+    "email": "viewer@friending.com",
+    "role": "viewer",
+    "admin_granted_verification": {
+        "contract_version": 1,
+        "contract_ready": true,
+        "principal": {
+            "role": "viewer",
+            "capabilities": [
+                "verification_grant_read"
+            ]
+        },
+        "actions": []
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -1,0 +1,355 @@
+{
+    "schema_version": 1,
+    "contract": "admin-granted-verification-v1",
+    "source_commit": "ff4d2b736801e03a905a782998370cc40a45e410",
+    "generator_commit": "6bf17e492877ee252599cdac6fff393fa52a298a",
+    "fixture_set_sha256": "889888940225bf1bb9b2f5d0b9049fe6a16406e17334b16aeb89c733abf2e088",
+    "provenance": {
+        "generator": "tests/admin_granted_verification_fixture_dump.php",
+        "generator_sha256": "7bbb7986bdd7474af6826d12274e980c33a49dcae5bc2cbae124e8d0af22b0f1",
+        "webadmin_wire_adapter": "Friending\\Support\\Webadmin::noStoreReply",
+        "ios_wire_adapter": "Friending\\Core\\Response::wirePayload",
+        "resource_shaper": "Friending\\Services\\AdminGrantedVerificationService::resourceFromProjection",
+        "evaluated_at": 1800000000,
+        "source_paths": [
+            "config/routes.php",
+            "src/Core/Response.php",
+            "src/Http/Controllers/VerificationAdminController.php",
+            "src/Http/Controllers/WebadminController.php",
+            "src/Services/AdminGrantedVerificationService.php",
+            "src/Services/AdminGrantedVerificationTransaction.php",
+            "src/Services/MongoVerificationPolicyDataSource.php",
+            "src/Services/PersonaAdminService.php",
+            "src/Services/VerificationAdminActorService.php",
+            "src/Services/VerificationAdminException.php",
+            "src/Services/VerificationAdminMemberService.php",
+            "src/Services/VerificationAdminMutationExecutor.php",
+            "src/Services/VerificationAdminProjectionService.php",
+            "src/Services/VerificationAdminReadService.php",
+            "src/Services/VerificationAdminSchemaService.php",
+            "src/Services/VerificationGrantService.php",
+            "src/Services/VerificationPolicySchemaService.php",
+            "src/Services/VerificationPolicyService.php",
+            "src/Services/VerificationRequestContext.php",
+            "src/Services/WebadminMutationCommand.php",
+            "src/Services/WebadminMutationService.php",
+            "src/Support/AdminGrantedVerificationPolicy.php",
+            "src/Support/PersonaPolicy.php",
+            "src/Support/VerificationAdminPolicy.php",
+            "src/Support/VerificationMemberEvaluator.php",
+            "src/Support/VerificationPolicy.php",
+            "src/Support/Webadmin.php",
+            "src/Support/WebadminMutationPolicy.php"
+        ]
+    },
+    "fixtures": [
+        {
+            "file": "admin-me-dormant-viewer.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "dormant_viewer",
+            "kind": "admin_me",
+            "sha256": "391d46565de124540c23da44f6b2a3e56bb56ad1416ff416572bc1bfe5b36541"
+        },
+        {
+            "file": "admin-me-ready-viewer.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready_viewer",
+            "kind": "admin_me",
+            "sha256": "6f06ee07cfb8b7a3bda42c2d6d4ac5529c2ffd1258af89cd3a922cbff63aff95"
+        },
+        {
+            "file": "admin-me-dormant-admin.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "dormant_admin",
+            "kind": "admin_me",
+            "sha256": "9ffc00ade7d10aafae6a728161baa198a668e7ff5de6417dac43d49f83a56fd5"
+        },
+        {
+            "file": "admin-me-ready-admin.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready_admin",
+            "kind": "admin_me",
+            "sha256": "ded20f1370b6f73dfe0c6d9259de652cc69d9e26fa74f67db4bd69d7ca06f4b5"
+        },
+        {
+            "file": "admin-me-dormant-owner.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "dormant_owner",
+            "kind": "admin_me",
+            "sha256": "958b60db9f4c2f6ec4384c06ced3457969a6ff94726579fc584d988eb88ba745"
+        },
+        {
+            "file": "admin-me-ready-owner.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready_owner",
+            "kind": "admin_me",
+            "sha256": "2076b563ab0b004cbb526eae9f8a54aa88cb78801e8dd3aefe9abd02f7593cc4"
+        },
+        {
+            "file": "admin-me-revoked-actor.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "revoked_actor",
+            "kind": "refusal",
+            "sha256": "7ca14279ec3e818347b77f76b3b2c68550e2977556e39510f0b89c138cfafa9b"
+        },
+        {
+            "file": "compat-admin-me-verification-block.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "old_verification_block_unchanged",
+            "kind": "compatibility",
+            "sha256": "f4907b6b500b03ee71e9a49d829d85f46092e71d8c03c8bd325b53a3d6808bfe"
+        },
+        {
+            "file": "compat-user-detail-unselected.json",
+            "route": "/v1/webadmin/verification_user_detail",
+            "case": "old_v1_unselected_exact_shape",
+            "kind": "compatibility",
+            "sha256": "a56c675e55e7eebb891fd1bd8a0004f4928949e7ea60f72ff453f5622e15bc0f"
+        },
+        {
+            "file": "compat-grant-save-success.json",
+            "route": "/v1/webadmin/verification_grant_save",
+            "case": "old_grant_save_success",
+            "kind": "compatibility",
+            "sha256": "09be152eb7a484ebc01bdb5fe8045970878c7985307e42fb87c5d6568c86b8f7"
+        },
+        {
+            "file": "compat-grant-remove-success.json",
+            "route": "/v1/webadmin/verification_grant_remove",
+            "case": "old_grant_remove_success",
+            "kind": "compatibility",
+            "sha256": "e36d7f5fe677d80c3a3d6b3b822a970e860e57231cd0d0414895f472fa138edb"
+        },
+        {
+            "file": "compat-persona-apply-success.json",
+            "route": "/v1/webadmin/admin_apply_fake_persona",
+            "case": "persona_alias_apply_success",
+            "kind": "compatibility",
+            "sha256": "6d2fbe2bb50baa39f828fdc27360f93a43c9fb8e60d8425affbd9f233d79acf5"
+        },
+        {
+            "file": "compat-persona-revoke-success.json",
+            "route": "/v1/webadmin/admin_revoke_fake_persona",
+            "case": "persona_alias_revoke_success",
+            "kind": "compatibility",
+            "sha256": "dfac1c677bf573af2131ec43a3a008e3b36b2ad63112c18941fab180eb2c6112"
+        },
+        {
+            "file": "compat-persona-apply-idempotent-success.json",
+            "route": "/v1/webadmin/admin_apply_fake_persona",
+            "case": "persona_alias_active_persona_state_idempotent",
+            "kind": "compatibility",
+            "sha256": "6d2fbe2bb50baa39f828fdc27360f93a43c9fb8e60d8425affbd9f233d79acf5"
+        },
+        {
+            "file": "compat-persona-apply-replay.json",
+            "route": "/v1/webadmin/admin_apply_fake_persona",
+            "case": "persona_alias_completed_replay",
+            "kind": "compatibility",
+            "sha256": "81dcc30ed541bea78499d9314a984940b6bc5e25663be5ac293d1f53aaa62d86"
+        },
+        {
+            "file": "selected-absent.json",
+            "route": "/v1/webadmin/verification_user_detail",
+            "case": "selected_absent",
+            "kind": "selected_read",
+            "sha256": "10f6d4f63c6101a31f796fdebf816c070e85589ec819c0ec6caafa3c60570976"
+        },
+        {
+            "file": "selected-active-video.json",
+            "route": "/v1/webadmin/verification_user_detail",
+            "case": "selected_active_video",
+            "kind": "selected_read",
+            "sha256": "cb955a75062f00e3aee0f0ad293a015dbf3bc5f112fa9088c4bea7294172b856"
+        },
+        {
+            "file": "selected-active-persona.json",
+            "route": "/v1/webadmin/verification_user_detail",
+            "case": "selected_active_persona",
+            "kind": "selected_read",
+            "sha256": "0a73a5e1b11b90dc1855bb798666aebcbd78bddc9d115794e06b738968eef1bd"
+        },
+        {
+            "file": "selected-expired.json",
+            "route": "/v1/webadmin/verification_user_detail",
+            "case": "selected_expired",
+            "kind": "selected_read",
+            "sha256": "4cf9f51f89c71ec5699b1507c436c56384ab4f8f9de16ef37dce915258fd6100"
+        },
+        {
+            "file": "selected-revoked.json",
+            "route": "/v1/webadmin/verification_user_detail",
+            "case": "selected_revoked",
+            "kind": "selected_read",
+            "sha256": "0343d853e005754406d16d8a416181b58fd0aacdf22f0326083e9191241b6b27"
+        },
+        {
+            "file": "mutation-grant-create.json",
+            "route": "/v1/webadmin/verification_grant",
+            "case": "grant_create",
+            "kind": "mutation_success",
+            "sha256": "9f09bb13fe15e97ef051da5f233cc6da5a8936cb3c476f6a0cf636f940ef2e7d"
+        },
+        {
+            "file": "mutation-grant-update.json",
+            "route": "/v1/webadmin/verification_grant",
+            "case": "grant_update",
+            "kind": "mutation_success",
+            "sha256": "5760f1c3819745e2733ffb3ec1dae7fde1dc5d89213d6d925d68d50c314d08df"
+        },
+        {
+            "file": "mutation-grant-method-change.json",
+            "route": "/v1/webadmin/verification_grant",
+            "case": "grant_method_change",
+            "kind": "mutation_success",
+            "sha256": "f4c95b6560b0be36262b77c25a8485e95bb9238be2eb2060ae918917e077c227"
+        },
+        {
+            "file": "mutation-revoke-disabled-after-grant.json",
+            "route": "/v1/webadmin/verification_revoke",
+            "case": "revoke_after_method_disabled",
+            "kind": "mutation_success",
+            "sha256": "6c3859424965ec856236d76d99d0ce87cf88df00021975adf72adf55496713a8"
+        },
+        {
+            "file": "mutation-completed-replay.json",
+            "route": "/v1/webadmin/verification_grant",
+            "case": "completed_replay",
+            "kind": "mutation_success",
+            "sha256": "d120300748485b14202862f5ec2b4cb3fbc392cd2536afffd0a7708e22a9bf89"
+        },
+        {
+            "file": "mutation-write-uncertainty-converged.json",
+            "route": "/v1/webadmin/verification_grant",
+            "case": "write_uncertainty_converged",
+            "kind": "mutation_success",
+            "sha256": "9f09bb13fe15e97ef051da5f233cc6da5a8936cb3c476f6a0cf636f940ef2e7d"
+        },
+        {
+            "file": "refusal-request-id-conflict.json",
+            "route": "/v1/webadmin/verification_grant",
+            "case": "actor_or_material_request_id_conflict",
+            "kind": "refusal",
+            "sha256": "c11d9ee6fabc7776cc22da05c59c731f4eeb840e5a189e096c7079fcdd75d36f"
+        },
+        {
+            "file": "refusal-request-in-progress.json",
+            "route": "/v1/webadmin/verification_grant",
+            "case": "matching_request_in_progress",
+            "kind": "refusal",
+            "sha256": "3d19d11b25a960aba28c8cb40802888fc4eaecd6ea9d464a934b720419cf8848"
+        },
+        {
+            "file": "refusal-stale-over-tombstone.json",
+            "route": "/v1/webadmin/verification_grant",
+            "case": "zero_or_stale_over_retained_tombstone",
+            "kind": "conflict",
+            "sha256": "41ed4dadddb48ef41972980111402b1fbeb54a4d0be860516c4e0ae7021d141f"
+        },
+        {
+            "file": "refusal-method-mismatch.json",
+            "route": "/v1/webadmin/verification_revoke",
+            "case": "active_method_mismatch",
+            "kind": "conflict",
+            "sha256": "ed1ba9b74342cbe3654a179148b2faedea455efb3be76b20c74fec1e20d90f69"
+        },
+        {
+            "file": "refusal-method-disabled.json",
+            "route": "/v1/webadmin/verification_grant",
+            "case": "grant_method_not_enabled",
+            "kind": "conflict",
+            "sha256": "f56735766d4e2f0100a8d85d15296a64297d64b3b771e51903370b3047b941a0"
+        },
+        {
+            "file": "refusal-grant-not-active.json",
+            "route": "/v1/webadmin/verification_revoke",
+            "case": "revoke_inactive",
+            "kind": "conflict",
+            "sha256": "0618901d7b452b9dde7ba84e6607e5f8e7c11d91fa290e6b28f07f92e40e252a"
+        },
+        {
+            "file": "refusal-audit-write-failed.json",
+            "route": "/v1/webadmin/verification_grant",
+            "case": "audit_before_domain_failure",
+            "kind": "refusal",
+            "sha256": "5ac0bab91d84950fbb547a44c2c46fa7bdb7b20941a2a872cae06d076657daed"
+        },
+        {
+            "file": "refusal-write-failed.json",
+            "route": "/v1/webadmin/verification_grant",
+            "case": "unconverged_write_failure",
+            "kind": "refusal",
+            "sha256": "9997eba7875811bdffca07fcbedb441a96d6ae52e86f307fd6f019e1527b50f8"
+        },
+        {
+            "file": "persona-active-video-conflict.json",
+            "route": "/v1/webadmin/admin_apply_fake_persona",
+            "case": "persona_alias_active_video_conflict",
+            "kind": "compatibility",
+            "sha256": "5fe16d4f9c2a003e6bd3fe8c2a87538710a2a31ca39117eb790366365e73ea94"
+        },
+        {
+            "file": "persona-dual-revision-race-conflict.json",
+            "route": "/v1/webadmin/admin_apply_fake_persona",
+            "case": "persona_alias_dual_revision_race_loser",
+            "kind": "compatibility",
+            "sha256": "81de65b856a14ef4209470b8c5e214a21f1e090fba1087e17a333b7ffe82371f"
+        },
+        {
+            "file": "selected-provider-wins.json",
+            "route": "/v1/webadmin/verification_user_detail",
+            "case": "provider_max_over_admin",
+            "kind": "selected_read",
+            "sha256": "cdd74694f03e62c2c5fc2469e2ee9790e13de979f4e80b56a665c5e5b885fb4a"
+        },
+        {
+            "file": "selected-import-wins.json",
+            "route": "/v1/webadmin/verification_user_detail",
+            "case": "import_max_over_admin",
+            "kind": "selected_read",
+            "sha256": "94a58f58b9320937c03a4dc8e8efedb2c2735fb8aacc898f5f6d6e09f7bc4e47"
+        },
+        {
+            "file": "selected-provider-tie.json",
+            "route": "/v1/webadmin/verification_user_detail",
+            "case": "provider_tie_precedes_admin",
+            "kind": "selected_read",
+            "sha256": "5cb3a5a2db7da476628efba6f4f258594189bd33b5e905b969e7b47616219796"
+        },
+        {
+            "file": "selected-import-tie.json",
+            "route": "/v1/webadmin/verification_user_detail",
+            "case": "import_tie_precedes_admin",
+            "kind": "selected_read",
+            "sha256": "18fb485a7b46a8b0b1461ab9a34ae465e04a4b736b76f5a916a6e1261d6ca3a5"
+        },
+        {
+            "file": "selected-provider-survives-revoke.json",
+            "route": "/v1/webadmin/verification_user_detail",
+            "case": "revoke_does_not_lower_provider_authority",
+            "kind": "selected_read",
+            "sha256": "1d68a37a4649ca30ff4144b6db6f4b1fb4475d3970b2d9b567989c864c1257ba"
+        },
+        {
+            "file": "ios-own-provider.json",
+            "route": "/v1/iosuser/get_own_profile_data",
+            "case": "provider_backed_own_projection",
+            "kind": "ios_wire",
+            "sha256": "a6086a221293a3841840fdb25d4d3de2ddbf4c0b5c10f13fe31ecfb5c57ef75d"
+        },
+        {
+            "file": "ios-own-admin-granted.json",
+            "route": "/v1/iosuser/get_own_profile_data",
+            "case": "admin_granted_own_projection",
+            "kind": "ios_wire",
+            "sha256": "02994ecf1dd4f60982b380f282c13e090fa3a0b376c7fc02b05aa7d8ca107220"
+        },
+        {
+            "file": "ios-external-list-equivalence.json",
+            "route": "/v1/iospeople/get_people",
+            "case": "provider_admin_external_seal_equivalence",
+            "kind": "ios_wire",
+            "sha256": "a47a5b2d799cc672c34e6f807785af3a875ab38f1d41e31231ed065a84792088"
+        }
+    ]
+}

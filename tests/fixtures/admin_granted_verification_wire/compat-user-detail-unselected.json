@@ -1,0 +1,144 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "principal": {
+            "role": "viewer",
+            "capabilities": [
+                "verification_grant_read",
+                "verification_pending_read",
+                "verification_policy_read",
+                "verification_simulate"
+            ]
+        },
+        "verification": {
+            "schema_version": 1,
+            "uid": 995101,
+            "display_name": "Fixture Member",
+            "evaluated_at": 1800000000,
+            "scope": {
+                "kind": "global",
+                "country_code": null,
+                "place_id": null,
+                "display": "Global",
+                "scope_key": "global",
+                "source": "global"
+            },
+            "enabled_methods": [
+                "persona"
+            ],
+            "startable_methods": [],
+            "tier_language": false,
+            "methods": {
+                "video": {
+                    "status": "not_started",
+                    "raw_video_status": null,
+                    "can_start": false,
+                    "pending_phase": null,
+                    "pending_since": null,
+                    "member_safe_reason": null,
+                    "attempt": null,
+                    "max_attempts": null,
+                    "manual_review_available": false,
+                    "state_integrity": true
+                },
+                "persona": {
+                    "status": "not_started",
+                    "raw_video_status": null,
+                    "can_start": false,
+                    "pending_phase": null,
+                    "pending_since": null,
+                    "member_safe_reason": null,
+                    "attempt": null,
+                    "max_attempts": null,
+                    "manual_review_available": false,
+                    "state_integrity": true
+                }
+            },
+            "badge_visible": true,
+            "derived_level": "none",
+            "imported": null,
+            "import_integrity": "absent",
+            "grant": {
+                "level": "strong",
+                "reason": "Fixture admin-granted verification",
+                "granted_by": "operator@friending.com",
+                "granted_at": 1799999900,
+                "expires_at": null,
+                "revision": 1,
+                "status": "active",
+                "evaluated_at": 1800000000
+            },
+            "grant_revision": 1,
+            "effective_level": "strong",
+            "effective_source": "granted",
+            "external_seal_would_show": true,
+            "feature_access": [
+                {
+                    "feature": "people.list",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "profile.view",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "chat.send",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "friend.request",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "dates.access",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "dates.create",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "dates.join",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "footprints.send",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "pinger.send",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                },
+                {
+                    "feature": "album.private_request",
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true
+                }
+            ]
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

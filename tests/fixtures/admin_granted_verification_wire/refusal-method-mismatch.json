@@ -1,0 +1,37 @@
+{
+    "success": false,
+    "status_code": 409,
+    "error": "verification-conflict",
+    "data": {
+        "contract_version": 1,
+        "admin_granted_verification": {
+            "schema_version": 1,
+            "uid": 995101,
+            "evaluated_at": 1800000000,
+            "enabled_methods": [
+                "video",
+                "persona"
+            ],
+            "grant_revision": 1,
+            "admin_grant": {
+                "method": "video",
+                "level": "light",
+                "method_hint": "admin_granted",
+                "reason_length": 34,
+                "reason_sha256": "cf0025c9804acae2b09fe8a696d901fcde27d1b4983f951660a9fbb20749b7fe",
+                "granted_by": "operator@friending.com",
+                "granted_at": 1799999900,
+                "expires_at": null,
+                "revision": 1,
+                "status": "active",
+                "evaluated_at": 1800000000
+            },
+            "effective_level": "light",
+            "effective_source": "granted",
+            "external_seal_would_show": true
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

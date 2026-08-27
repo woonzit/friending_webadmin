@@ -1,0 +1,39 @@
+{
+    "success": true,
+    "status_code": 200,
+    "email": "admin@friending.com",
+    "role": "admin",
+    "verification": {
+        "contract_version": 1,
+        "contract_ready": false,
+        "principal": {
+            "role": "admin",
+            "capabilities": [
+                "verification_badge_edit",
+                "verification_copy_edit",
+                "verification_grant_edit",
+                "verification_grant_read",
+                "verification_pending_read",
+                "verification_policy_edit",
+                "verification_policy_read",
+                "verification_simulate"
+            ]
+        },
+        "actions": []
+    },
+    "admin_granted_verification": {
+        "contract_version": 1,
+        "contract_ready": false,
+        "principal": {
+            "role": "admin",
+            "capabilities": [
+                "verification_grant_edit",
+                "verification_grant_read"
+            ]
+        },
+        "actions": []
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

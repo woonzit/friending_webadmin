@@ -1,0 +1,44 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "principal": {
+            "role": "admin",
+            "capabilities": [
+                "verification_grant_edit",
+                "verification_grant_read"
+            ]
+        },
+        "admin_granted_verification": {
+            "schema_version": 1,
+            "uid": 995101,
+            "evaluated_at": 1800000000,
+            "enabled_methods": [
+                "video",
+                "persona"
+            ],
+            "grant_revision": 3,
+            "admin_grant": {
+                "method": "video",
+                "level": "light",
+                "method_hint": "admin_granted",
+                "reason_length": 22,
+                "reason_sha256": "57bd451425f61ca8e135c7e5dcc72d293014eeb155c0c6433f77071b58a300d2",
+                "granted_by": "operator@friending.com",
+                "granted_at": 1799999900,
+                "expires_at": null,
+                "revision": 3,
+                "status": "active",
+                "evaluated_at": 1800000000
+            },
+            "effective_level": "light",
+            "effective_source": "granted",
+            "external_seal_would_show": true
+        },
+        "replayed": false
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
