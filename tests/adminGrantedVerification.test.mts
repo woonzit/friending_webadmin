@@ -651,6 +651,8 @@ test("the panel is same-origin, explicit-confirmation, durable-retry, and no-opt
   assert.match(source, /sessionStorage\.getItem\(PERSONA_PENDING_STORAGE_KEY\)/);
   assert.match(source, /restored\?\.action === "admin_apply_fake_persona"/);
   assert.match(source, /restored\?\.action === "admin_revoke_fake_persona"/);
+  assert.match(source, /if \(!mutation\.replayed[\s\S]*?adopt\(mutation\.admin_granted_verification\)/);
+  assert.match(source, /if \(cleared && mutation\.replayed[\s\S]*?await load\(\)/);
   assert.doesNotMatch(source, /https:\/\/core\.friending\.com/);
   assert.doesNotMatch(source, /provider_payload|inquiry_id|evidence_url|video_url/);
   const send = source.indexOf("response = persisted.response");

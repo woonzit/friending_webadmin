@@ -218,12 +218,20 @@ export default function AdminGrantedVerificationPanel({ uid }: { uid: number }) 
       const command = existing ?? next;
       const mutation = adminGrantedVerificationMutationResponse(response);
       if (mutation && await adminGrantedVerificationMutationConverged(command, mutation)) {
-        if (mutation.admin_granted_verification.uid === uidRef.current) {
+        // A completed receipt replay returns the original canonical bytes even
+        // when a later command has already changed the grant. It proves this
+        // pending command converged, but it is not necessarily current state.
+        if (!mutation.replayed
+          && mutation.admin_granted_verification.uid === uidRef.current) {
           adopt(mutation.admin_granted_verification);
         }
         setReason("");
         setConfirmed(false);
         const cleared = clearPending();
+        if (cleared && mutation.replayed
+          && mutation.admin_granted_verification.uid === uidRef.current) {
+          await load();
+        }
         setNotice({
           tone: cleared ? "success" : "error",
           text: cleared
