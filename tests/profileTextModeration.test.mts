@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import {
   PROFILE_TEXT_MODERATION_ACTIONS,
   PROFILE_TEXT_MODERATION_CAPABILITIES,
@@ -28,7 +28,9 @@ import {
   profileTextModerationReasonIsValid,
   profileTextModerationShouldRetainMutation,
   type ProfileTextModerationField,
+  type ProfileTextModerationFilterField,
   type ProfileTextModerationRole,
+  type ProfileTextModerationStatus,
 } from "../lib/profileTextModeration.ts";
 import {
   ADMIN_ACTIONS,
@@ -535,4 +537,261 @@ test("route, navigation, session, UI, locales, and Help share one dormant no-bul
     Object.keys(hu.adminHelp.pages.profileTextModeration.sections).sort(),
   );
   assert.match(en.adminHelp.pages.profileTextModeration.sections.noBulk.guidance, /outside T-120/);
+});
+
+/**
+ * Normative provider corpus published by Core T-120 at
+ * `22c7186bf84ec748b129a47739037d94234da59f` and copied here byte-identically.
+ * The manifest — not this file — is the authority on what the set contains; the
+ * bindings below only declare which production decoder each published case must
+ * survive, so a provider regeneration cannot silently change consumer meaning.
+ */
+const FIXTURE_DIRECTORY = new URL("./fixtures/profile_text_moderation_wire/", import.meta.url);
+const FIXTURE_SOURCE_COMMIT = "6a8d226aad51bbacebd478d122b6907447e74f5b";
+const FIXTURE_SET_SHA256 = "34d2584376c163df123edc0f5c460fc28cc6c962c78fccafde4766c7045024cf";
+const FIXTURE_PROVIDER_MANIFEST_SHA256 = "5f84f81c5c85d0f48aca52620843c7151547dd8653d01fdd7e0ea502488cf85c";
+const FIXTURE_ROUTES = [
+  "/v1/webadmin/admin_me",
+  "/v1/webadmin/moderation_profile_text_list",
+  "/v1/webadmin/moderation_profile_text_action",
+  "contract://malformed-profile-text-response",
+] as const;
+/** No published browser projection may carry contact, location, or provenance material. */
+const FORBIDDEN_MATERIAL = /email|phone|msisdn|latitude|longitude|location|address|import|evidence|persona|ip_address/iu;
+
+type FixtureBinding =
+  | { kind: "admin_me"; role: ProfileTextModerationRole; ready: boolean }
+  | {
+    kind: "list";
+    field: ProfileTextModerationFilterField;
+    uid: number | null;
+    pageSize: number;
+    items: number;
+    total: number;
+    paged: boolean;
+  }
+  | { kind: "mutation"; status: ProfileTextModerationStatus; replayed: boolean }
+  | { kind: "conflict"; status: ProfileTextModerationStatus | null; revision: number | null }
+  | { kind: "error"; error: string }
+  | { kind: "malformed" };
+
+/** Keyed by published file name; the manifest's own order is asserted separately. */
+const FIXTURE_BINDINGS: Record<string, FixtureBinding> = {
+  "admin-me-dormant-viewer.json": { kind: "admin_me", role: "viewer", ready: false },
+  "admin-me-dormant-admin.json": { kind: "admin_me", role: "admin", ready: false },
+  "admin-me-dormant-owner.json": { kind: "admin_me", role: "owner", ready: false },
+  "admin-me-ready-viewer.json": { kind: "admin_me", role: "viewer", ready: true },
+  "admin-me-ready-admin.json": { kind: "admin_me", role: "admin", ready: true },
+  "admin-me-ready-owner.json": { kind: "admin_me", role: "owner", ready: true },
+  "admin-me-revoked.json": { kind: "error", error: "admin-revoked" },
+  "list-empty.json": { kind: "list", field: "all", uid: null, pageSize: 50, items: 0, total: 0, paged: false },
+  "list-one-field.json": { kind: "list", field: "all", uid: null, pageSize: 50, items: 1, total: 1, paged: false },
+  "list-two-fields-one-member.json": { kind: "list", field: "all", uid: 501, pageSize: 50, items: 2, total: 2, paged: false },
+  "list-mixed-members.json": { kind: "list", field: "all", uid: null, pageSize: 50, items: 4, total: 4, paged: false },
+  "list-uid-filtered.json": { kind: "list", field: "all", uid: 501, pageSize: 50, items: 2, total: 2, paged: false },
+  "list-field-filtered.json": { kind: "list", field: "headline", uid: null, pageSize: 50, items: 2, total: 2, paged: false },
+  "list-page-one.json": { kind: "list", field: "all", uid: null, pageSize: 2, items: 2, total: 4, paged: true },
+  "list-page-two.json": { kind: "list", field: "all", uid: null, pageSize: 2, items: 2, total: 4, paged: false },
+  "list-headline-bound.json": { kind: "list", field: "headline", uid: null, pageSize: 50, items: 1, total: 1, paged: false },
+  "list-about-me-bound.json": { kind: "list", field: "about_me", uid: null, pageSize: 50, items: 1, total: 1, paged: false },
+  "list-unicode-safe-identity.json": { kind: "list", field: "all", uid: 501, pageSize: 50, items: 2, total: 2, paged: false },
+  "action-accepted-admin.json": { kind: "mutation", status: "accepted", replayed: false },
+  "action-denied-owner.json": { kind: "mutation", status: "denied", replayed: false },
+  "action-completed-replay.json": { kind: "mutation", status: "accepted", replayed: true },
+  "action-receipt-recovery.json": { kind: "mutation", status: "accepted", replayed: false },
+  "race-same-field-winner.json": { kind: "mutation", status: "accepted", replayed: false },
+  "race-different-field-headline.json": { kind: "mutation", status: "accepted", replayed: false },
+  "race-different-field-about-me.json": { kind: "mutation", status: "denied", replayed: false },
+  "conflict-stale-revision.json": { kind: "conflict", status: "pending", revision: 3 },
+  "conflict-changed-hash.json": { kind: "conflict", status: "pending", revision: 3 },
+  "conflict-member-edit.json": { kind: "conflict", status: "pending", revision: 4 },
+  "conflict-already-resolved.json": { kind: "conflict", status: "accepted", revision: 4 },
+  "race-same-field-loser.json": { kind: "conflict", status: "accepted", revision: 4 },
+  "race-member-edit-winner.json": { kind: "conflict", status: "pending", revision: 4 },
+  "conflict-empty-field.json": { kind: "conflict", status: null, revision: null },
+  "error-unauthorized.json": { kind: "error", error: "unauthorized" },
+  "error-admin-session-invalid.json": { kind: "error", error: "admin-session-invalid" },
+  "error-admin-revoked.json": { kind: "error", error: "admin-revoked" },
+  "error-read-required.json": { kind: "error", error: "profile-text-moderation-read-required" },
+  "error-decision-required.json": { kind: "error", error: "profile-text-moderation-decision-required" },
+  "error-version-required.json": { kind: "error", error: "profile-text-moderation-contract-version-required" },
+  "error-version-invalid.json": { kind: "error", error: "profile-text-moderation-contract-version-invalid" },
+  "error-request-invalid.json": { kind: "error", error: "profile-text-moderation-request-invalid" },
+  "error-filter-invalid.json": { kind: "error", error: "profile-text-moderation-filter-invalid" },
+  "error-cursor-invalid.json": { kind: "error", error: "profile-text-moderation-cursor-invalid" },
+  "error-member-invalid.json": { kind: "error", error: "profile-text-moderation-member-invalid" },
+  "error-field-invalid.json": { kind: "error", error: "profile-text-moderation-field-invalid" },
+  "error-decision-invalid.json": { kind: "error", error: "profile-text-moderation-decision-invalid" },
+  "error-revision-invalid.json": { kind: "error", error: "profile-text-moderation-revision-invalid" },
+  "error-content-hash-invalid.json": { kind: "error", error: "profile-text-moderation-content-hash-invalid" },
+  "error-reason-invalid.json": { kind: "error", error: "profile-text-moderation-reason-invalid" },
+  "error-request-id-invalid.json": { kind: "error", error: "profile-text-moderation-request-id-invalid" },
+  "error-member-not-found.json": { kind: "error", error: "profile-text-moderation-member-not-found" },
+  "error-request-id-conflict.json": { kind: "error", error: "profile-text-moderation-request-id-conflict" },
+  "error-request-in-progress.json": { kind: "error", error: "profile-text-moderation-request-in-progress" },
+  "error-stored-invalid.json": { kind: "error", error: "profile-text-moderation-stored-invalid" },
+  "error-schema-unavailable.json": { kind: "error", error: "profile-text-moderation-schema-unavailable" },
+  "error-read-failed.json": { kind: "error", error: "profile-text-moderation-read-failed" },
+  "error-audit-write-failed.json": { kind: "error", error: "profile-text-moderation-audit-write-failed" },
+  "error-receipt-write-failed.json": { kind: "error", error: "profile-text-moderation-receipt-write-failed" },
+  "error-write-failed.json": { kind: "error", error: "profile-text-moderation-write-failed" },
+  "malformed-extra-top-level.json": { kind: "malformed" },
+  "malformed-missing-data.json": { kind: "malformed" },
+  "malformed-status-type.json": { kind: "malformed" },
+  "malformed-additive-item.json": { kind: "malformed" },
+  "malformed-conflict-data.json": { kind: "malformed" },
+};
+
+async function fixtureManifest(): Promise<Json> {
+  return JSON.parse(await readFile(new URL("manifest.json", FIXTURE_DIRECTORY), "utf8"));
+}
+
+test("the 63 published Core fixtures are byte-identical, manifest-bound, and inventory-exact", async () => {
+  const manifest = await fixtureManifest();
+  assert.deepEqual(Object.keys(manifest), [
+    "schema_version",
+    "contract_version",
+    "source_commit",
+    "provider_manifest_sha256",
+    "fixture_set_sha256",
+    "provenance",
+    "fixtures",
+  ]);
+  assert.equal(manifest.schema_version, 1);
+  assert.equal(manifest.contract_version, 1);
+  assert.equal(manifest.source_commit, FIXTURE_SOURCE_COMMIT);
+  assert.equal(manifest.provider_manifest_sha256, FIXTURE_PROVIDER_MANIFEST_SHA256);
+  assert.equal(manifest.fixture_set_sha256, FIXTURE_SET_SHA256);
+  assert.deepEqual(Object.keys(manifest.provenance), [
+    "generator",
+    "generator_sha256",
+    "wire_adapters",
+    "cache_policy",
+    "evaluated_at",
+    "source_paths",
+  ]);
+  assert.equal(manifest.provenance.generator, "tests/profile_text_moderation_fixture_dump.php");
+  assert.match(manifest.provenance.generator_sha256, /^[0-9a-f]{64}$/u);
+  assert.deepEqual(manifest.provenance.wire_adapters, {
+    admin_me: "Friending\\Support\\Webadmin::reply",
+    versioned_actions: "Friending\\Support\\Webadmin::noStoreReply",
+  });
+  assert.deepEqual(manifest.provenance.cache_policy, {
+    admin_me: "pre-version-route-default",
+    versioned_actions: "no-store",
+  });
+  assert.deepEqual(manifest.provenance.source_paths, ["composer.json", "config/", "public/", "src/"]);
+
+  const rows: Json[] = manifest.fixtures;
+  assert.equal(rows.length, 63);
+  assert.deepEqual(rows.map((row) => row.file), Object.keys(FIXTURE_BINDINGS));
+  assert.deepEqual(
+    (await readdir(FIXTURE_DIRECTORY)).sort(),
+    [...Object.keys(FIXTURE_BINDINGS), "manifest.json"].sort(),
+  );
+
+  for (const row of rows) {
+    assert.deepEqual(Object.keys(row), ["file", "route", "case", "consumer", "valid", "sha256"], row.file);
+    assert.equal(row.consumer, "webadmin", row.file);
+    assert.ok((FIXTURE_ROUTES as readonly string[]).includes(row.route), row.route);
+    assert.equal(row.valid, FIXTURE_BINDINGS[row.file].kind !== "malformed", row.file);
+    assert.equal(
+      row.route === "contract://malformed-profile-text-response",
+      FIXTURE_BINDINGS[row.file].kind === "malformed",
+      row.file,
+    );
+    const bytes = await readFile(new URL(row.file, FIXTURE_DIRECTORY));
+    assert.equal(
+      createHash("sha256").update(bytes).digest("hex"),
+      row.sha256,
+      `${row.file} changed after Core publication`,
+    );
+    if (row.valid) assert.doesNotMatch(bytes.toString("utf8"), FORBIDDEN_MATERIAL, row.file);
+  }
+
+  // Recompute Core's aggregate exactly as `profile_text_moderation_fixture_dump.php` does.
+  assert.equal(
+    createHash("sha256")
+      .update(rows.map((row) => `${row.file}\0${row.sha256}`).join("\n"), "utf8")
+      .digest("hex"),
+    FIXTURE_SET_SHA256,
+  );
+});
+
+test("every published fixture round-trips through the production decoder its case declares", async () => {
+  const rows: Json[] = (await fixtureManifest()).fixtures;
+  for (const row of rows) {
+    const binding = FIXTURE_BINDINGS[row.file];
+    const body = JSON.parse(await readFile(new URL(row.file, FIXTURE_DIRECTORY), "utf8"));
+    if (binding.kind === "admin_me") {
+      const parsed = profileTextModerationAdminMe(body.profile_text_moderation);
+      assert.deepEqual(parsed, block(binding.role, binding.ready), row.file);
+      assert.equal(
+        profileTextModerationProxyCapabilityAuthorized("moderation_profile_text_list", body),
+        binding.ready,
+        row.file,
+      );
+      assert.equal(
+        profileTextModerationProxyCapabilityAuthorized("moderation_profile_text_action", body),
+        binding.ready && binding.role !== "viewer",
+        row.file,
+      );
+      continue;
+    }
+    if (binding.kind === "list") {
+      const expectation = { field: binding.field, uid: binding.uid, page_size: binding.pageSize };
+      const parsed = await profileTextModerationListResponse(body, expectation);
+      assert.ok(parsed, row.file);
+      assert.deepEqual(parsed.filter, { field: binding.field, uid: binding.uid }, row.file);
+      assert.equal(parsed.items.length, binding.items, row.file);
+      assert.equal(parsed.total, binding.total, row.file);
+      assert.equal(parsed.next_cursor !== null, binding.paged, row.file);
+      assert.ok(parsed.items.every((entry) => entry.status === "pending"), row.file);
+      // A wrong filter or a page smaller than the published page must never decode.
+      assert.equal(
+        await profileTextModerationListResponse(body, { ...expectation, uid: 999_999 }),
+        null,
+        row.file,
+      );
+      if (binding.items > 1) {
+        assert.equal(
+          await profileTextModerationListResponse(body, { ...expectation, page_size: binding.items - 1 }),
+          null,
+          row.file,
+        );
+      }
+      continue;
+    }
+    if (binding.kind === "mutation") {
+      const parsed = await profileTextModerationMutationResponse(body);
+      assert.ok(parsed, row.file);
+      assert.equal(parsed.item.status, binding.status, row.file);
+      assert.equal(parsed.replayed, binding.replayed, row.file);
+      assert.equal(await profileTextModerationConflict(body), null, row.file);
+      continue;
+    }
+    if (binding.kind === "conflict") {
+      const parsed = await profileTextModerationConflict(body);
+      assert.ok(parsed, row.file);
+      assert.equal(parsed.current?.status ?? null, binding.status, row.file);
+      assert.equal(parsed.current?.revision ?? null, binding.revision, row.file);
+      assert.equal(await profileTextModerationMutationResponse(body), null, row.file);
+      // A conflict is a refusal, never a decodable success or a plain error.
+      assert.equal(profileTextModerationError(body), null, row.file);
+      continue;
+    }
+    if (binding.kind === "error") {
+      assert.equal(profileTextModerationError(body), binding.error, row.file);
+      assert.equal(profileTextModerationAdminMe(body.profile_text_moderation), null, row.file);
+      assert.equal(await profileTextModerationMutationResponse(body), null, row.file);
+      assert.equal(await profileTextModerationConflict(body), null, row.file);
+      continue;
+    }
+    const expectation = { field: "all" as const, uid: null, page_size: 50 };
+    assert.equal(profileTextModerationAdminMe(body.profile_text_moderation), null, row.file);
+    assert.equal(await profileTextModerationListResponse(body, expectation), null, row.file);
+    assert.equal(await profileTextModerationMutationResponse(body), null, row.file);
+    assert.equal(await profileTextModerationConflict(body), null, row.file);
+    assert.equal(profileTextModerationError(body), null, row.file);
+  }
 });

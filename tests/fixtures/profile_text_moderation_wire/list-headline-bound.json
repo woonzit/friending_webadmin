@@ -1,0 +1,41 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "principal": {
+            "role": "viewer",
+            "capabilities": [
+                "profile_text_moderation_read"
+            ]
+        },
+        "actions": [
+            "moderation_profile_text_list"
+        ],
+        "filter": {
+            "field": "headline",
+            "uid": null
+        },
+        "items": [
+            {
+                "uid": 504,
+                "field": "headline",
+                "text": "űűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűűű",
+                "text_length": 200,
+                "content_sha256": "fd5f75cbbdc4c2231b948f7b6e54b4b52fd3ff8136d43112d3ef9e9e5002de90",
+                "status": "pending",
+                "revision": 1,
+                "status_updated_at": 1800000001,
+                "member": {
+                    "display_name": "Fixture Member 504",
+                    "username": "fixture_504"
+                }
+            }
+        ],
+        "next_cursor": null,
+        "total": 1
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

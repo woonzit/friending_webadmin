@@ -1,0 +1,25 @@
+{
+    "success": false,
+    "status_code": 409,
+    "error": "profile-text-moderation-conflict",
+    "data": {
+        "contract_version": 1,
+        "current": {
+            "uid": 501,
+            "field": "headline",
+            "text": "A later member-authored headline",
+            "text_length": 32,
+            "content_sha256": "7149f883bec91c9eee046babe077f7aee579df4bc25c52e5dd63479bf95cfa96",
+            "status": "pending",
+            "revision": 4,
+            "status_updated_at": 1800000012,
+            "member": {
+                "display_name": "Árvíztűrő Tükörfúrógép",
+                "username": "unicode_member"
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

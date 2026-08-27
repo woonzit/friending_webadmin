@@ -1,0 +1,57 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "principal": {
+            "role": "admin",
+            "capabilities": [
+                "profile_text_moderation_read",
+                "profile_text_moderation_decide"
+            ]
+        },
+        "actions": [
+            "moderation_profile_text_list",
+            "moderation_profile_text_action"
+        ],
+        "filter": {
+            "field": "all",
+            "uid": 501
+        },
+        "items": [
+            {
+                "uid": 501,
+                "field": "headline",
+                "text": "A canonical pending headline – Árvíztűrő",
+                "text_length": 40,
+                "content_sha256": "287dee71335d79523b7d462156f2eda7be57d329197df5642fb4b59940d70973",
+                "status": "pending",
+                "revision": 3,
+                "status_updated_at": 1799999970,
+                "member": {
+                    "display_name": "Árvíztűrő Tükörfúrógép",
+                    "username": "unicode_member"
+                }
+            },
+            {
+                "uid": 501,
+                "field": "about_me",
+                "text": "A canonical pending biography\nwith a second line 🤝",
+                "text_length": 50,
+                "content_sha256": "b2ced955f2d3da4cb1b08b49b732279f9b85ca2dbbaace4553fcc4c65f9cf47a",
+                "status": "pending",
+                "revision": 7,
+                "status_updated_at": 1799999980,
+                "member": {
+                    "display_name": "Árvíztűrő Tükörfúrógép",
+                    "username": "unicode_member"
+                }
+            }
+        ],
+        "next_cursor": null,
+        "total": 2
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

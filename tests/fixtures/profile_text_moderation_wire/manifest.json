@@ -1,0 +1,532 @@
+{
+    "schema_version": 1,
+    "contract_version": 1,
+    "source_commit": "6a8d226aad51bbacebd478d122b6907447e74f5b",
+    "provider_manifest_sha256": "5f84f81c5c85d0f48aca52620843c7151547dd8653d01fdd7e0ea502488cf85c",
+    "fixture_set_sha256": "34d2584376c163df123edc0f5c460fc28cc6c962c78fccafde4766c7045024cf",
+    "provenance": {
+        "generator": "tests/profile_text_moderation_fixture_dump.php",
+        "generator_sha256": "37a56c4dcb64bf7998d84c4e4bf0c7ab9d3070289def99f58b1f4b9ffcdde8c8",
+        "wire_adapters": {
+            "admin_me": "Friending\\Support\\Webadmin::reply",
+            "versioned_actions": "Friending\\Support\\Webadmin::noStoreReply"
+        },
+        "cache_policy": {
+            "admin_me": "pre-version-route-default",
+            "versioned_actions": "no-store"
+        },
+        "evaluated_at": 1800000000,
+        "source_paths": [
+            "composer.json",
+            "config/",
+            "public/",
+            "src/"
+        ]
+    },
+    "fixtures": [
+        {
+            "file": "admin-me-dormant-viewer.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "dormant-viewer",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "81c90aee344a731d3d3227b43f25c7a5e8a16a3f5de80d2152c7d46db9579231"
+        },
+        {
+            "file": "admin-me-dormant-admin.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "dormant-admin",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "25b7ec4f973ba25c5b4d7a5b39c00d6d12a906d9c9026a414f82622cacca5a79"
+        },
+        {
+            "file": "admin-me-dormant-owner.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "dormant-owner",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "c9aeec35e16353f7c4c15bbe79aeeffc0b08934b4c0fb6d5e934edffd25e0041"
+        },
+        {
+            "file": "admin-me-ready-viewer.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready-viewer",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "f9cb8622496f03516ea66f12e245765a1e27af9da93d82f774fd983293b5d89c"
+        },
+        {
+            "file": "admin-me-ready-admin.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready-admin",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "79bc65c46015185f07b3c1c0f9586f514544147004bf61db894b0e49f982ea97"
+        },
+        {
+            "file": "admin-me-ready-owner.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready-owner",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "30ba489680e737a5c1cb116d1752dad4222c64610cb3cb54164501f7a91cfb64"
+        },
+        {
+            "file": "admin-me-revoked.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "revoked",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "7ca14279ec3e818347b77f76b3b2c68550e2977556e39510f0b89c138cfafa9b"
+        },
+        {
+            "file": "list-empty.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "proven_empty",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "12422f93207aff0e714ffe9da9c5e2f6df52b141fc6e1b6cd6a975c67490ed65"
+        },
+        {
+            "file": "list-one-field.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "one_field",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "218507d1ca8de3af72af834fdfdc8cdd56e6a13fb611068dd9f7d3d0e01d45bf"
+        },
+        {
+            "file": "list-two-fields-one-member.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "two_fields_one_member",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "ba8d0d13f4ae573c4cddfe66acc133746136d44fbc3d5d72a019cb2f544ec6d2"
+        },
+        {
+            "file": "list-mixed-members.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "mixed_members",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "02e8c90feff85afe04b0162f82fda4cbfffbfdb3e1fb971f9192ddfdf507c01b"
+        },
+        {
+            "file": "list-uid-filtered.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "uid_filtered",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "9d1cb2b6fd44a996807ef20e1449b6d0bb06954b3a17e8bbd38574bd052beb2c"
+        },
+        {
+            "file": "list-field-filtered.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "field_filtered",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "05e34cd9331be5f1c8a630d53e83c2ad819a91a24825ac15447d9d18bdfc9348"
+        },
+        {
+            "file": "list-page-one.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "page_one",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "45494d9e0028a23b419dba0206d855f0a9b6794143cd88ac153b53c2b7275ae5"
+        },
+        {
+            "file": "list-page-two.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "page_two",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "f09652a9e319d7ccf73c3978c83bd374ce4b67367be8d80c7c96966822197f3a"
+        },
+        {
+            "file": "list-headline-bound.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "headline_200_code_points",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "35a1b73099cdd59e1be5b6b27503224f2301e0d2f5884f27f8fc53b03352b70e"
+        },
+        {
+            "file": "list-about-me-bound.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "about_me_3000_code_points",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "937406663e92e7d40fc09ca540558a243d3027121fd47b2dd15796b05c446758"
+        },
+        {
+            "file": "list-unicode-safe-identity.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "unicode_safe_identity",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "9d1cb2b6fd44a996807ef20e1449b6d0bb06954b3a17e8bbd38574bd052beb2c"
+        },
+        {
+            "file": "action-accepted-admin.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "accepted_admin",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "0fa40283304a2a92933d9ba857f9f89832e6d2df85650395847c4d4dfd23e241"
+        },
+        {
+            "file": "action-denied-owner.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "denied_owner",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "58ec80f21cec6a51981c22d74feac5904902e58ff33f0b255d1eeb8d9957f314"
+        },
+        {
+            "file": "action-completed-replay.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "completed_replay",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "5613eb2b285c83c4efef4d1e28683d3910f632ae5601cff46dea2e4ca1d40fad"
+        },
+        {
+            "file": "action-receipt-recovery.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "domain_success_receipt_recovery",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "0fa40283304a2a92933d9ba857f9f89832e6d2df85650395847c4d4dfd23e241"
+        },
+        {
+            "file": "race-same-field-winner.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "same_field_race_winner",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "0fa40283304a2a92933d9ba857f9f89832e6d2df85650395847c4d4dfd23e241"
+        },
+        {
+            "file": "race-different-field-headline.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "different_field_headline",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "0fa40283304a2a92933d9ba857f9f89832e6d2df85650395847c4d4dfd23e241"
+        },
+        {
+            "file": "race-different-field-about-me.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "different_field_about_me",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "58ec80f21cec6a51981c22d74feac5904902e58ff33f0b255d1eeb8d9957f314"
+        },
+        {
+            "file": "conflict-stale-revision.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "stale_revision",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "ec0170fd205a31bb28effad363c163abf185613abaa51120f8bb4e4e26ee4db4"
+        },
+        {
+            "file": "conflict-changed-hash.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "changed_hash",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "ec0170fd205a31bb28effad363c163abf185613abaa51120f8bb4e4e26ee4db4"
+        },
+        {
+            "file": "conflict-member-edit.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "member_edit",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "e66f9394f5ad8899c1426d95aa50649e504e0a88ff87b021474f2b08a87878b3"
+        },
+        {
+            "file": "conflict-already-resolved.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "already_resolved",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "1502880a71d09c7568b25ba1d59193f90ca9aaf5b55cb169bae249970e13ea57"
+        },
+        {
+            "file": "race-same-field-loser.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "same_field_race_loser",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "1502880a71d09c7568b25ba1d59193f90ca9aaf5b55cb169bae249970e13ea57"
+        },
+        {
+            "file": "race-member-edit-winner.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "member_edit_race_winner",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "e66f9394f5ad8899c1426d95aa50649e504e0a88ff87b021474f2b08a87878b3"
+        },
+        {
+            "file": "conflict-empty-field.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "empty_removed_field",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "49ee8635525e2e28e0f41d5f756d6843e20eb1d37801a411b456094c826f1b19"
+        },
+        {
+            "file": "error-unauthorized.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "unauthorized",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "92a1f1484a7aae426dbcce31512c40eb078ddeb28fa893a4c7354c1303499c29"
+        },
+        {
+            "file": "error-admin-session-invalid.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "admin-session-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "40972c7f616df32648d2df4eebaf02ea4510e9eb357e2248b18fe2f69769561e"
+        },
+        {
+            "file": "error-admin-revoked.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "admin-revoked",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "7ca14279ec3e818347b77f76b3b2c68550e2977556e39510f0b89c138cfafa9b"
+        },
+        {
+            "file": "error-read-required.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "profile-text-moderation-read-required",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "bb317d27bf59f9ea62a8e84f495e7082e775466c70b901f2a64ef5f83af41899"
+        },
+        {
+            "file": "error-decision-required.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-decision-required",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "4e7044308aa342d53a72c13829bd296a736cb1dd653e77477629e972bfd3c823"
+        },
+        {
+            "file": "error-version-required.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-contract-version-required",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "2864a77f1b01ca97a73659aa2d196b8adedd7b0d8301e5b83dbd97d4571d446a"
+        },
+        {
+            "file": "error-version-invalid.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-contract-version-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "f0fcbb7490b8b2f8fd01dd10ea35aef42a035e84f073bf9e763fe8812bc827f0"
+        },
+        {
+            "file": "error-request-invalid.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-request-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "2ed3cc593fa2f920368c8bdca699180c31bfbfe0376aa3f19c1fca5ce71d4894"
+        },
+        {
+            "file": "error-filter-invalid.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "profile-text-moderation-filter-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "1cb547011375d3608eca2ba1a0d20048f2c8562af0a1a31f5c23ee225b51f70d"
+        },
+        {
+            "file": "error-cursor-invalid.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "profile-text-moderation-cursor-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "c21a3d84feb7618a3391d4cd150fb86587982e39e4729f945a45d07371eea319"
+        },
+        {
+            "file": "error-member-invalid.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-member-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "27aef6bc1e75a4ffe45d2497cbd7ef2e20fd0fcbc5591a21a4e8138fb72f679b"
+        },
+        {
+            "file": "error-field-invalid.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-field-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "d9c8604d4233f163d56fc409810f2e2fe42cdc904397a29d5873020360e46d91"
+        },
+        {
+            "file": "error-decision-invalid.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-decision-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "c51f09d2ec601145e52fbb27e368c191557950a0c8d0271d6f347e6e62d6c68b"
+        },
+        {
+            "file": "error-revision-invalid.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-revision-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "70bb9a2436a072a53f251251b2dcf20c1fbfabbd4a66d3f8cb8f027593fd729e"
+        },
+        {
+            "file": "error-content-hash-invalid.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-content-hash-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "4761403eb19741c72df7bb1d37baf8e4814c29d81fdd6db59a8b5346a01fa6b4"
+        },
+        {
+            "file": "error-reason-invalid.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-reason-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "a7d1d8aa8a9ce2298ce5d4098428e070c636679f37a545518002ca7dcd62afd7"
+        },
+        {
+            "file": "error-request-id-invalid.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-request-id-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "fc80a0b12c8cb34d19db91fbba95f448a84a179b65267284ae588887484722c5"
+        },
+        {
+            "file": "error-member-not-found.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-member-not-found",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "9b6c34bdee202bdd67011a1b8fce26d8a5bcdda01977fd5b4e6e8137f7b5f1ac"
+        },
+        {
+            "file": "error-request-id-conflict.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-request-id-conflict",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "cc66754071ddc55d76d18487f946a8c3e70da2fd8015ceea96d73ff0bd923491"
+        },
+        {
+            "file": "error-request-in-progress.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-request-in-progress",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "def9e4e30371686c4bafcdb73399062f343c28bf3da29fbd8b71e12a3f2b84e5"
+        },
+        {
+            "file": "error-stored-invalid.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-stored-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "2f91f38b140c900a71c0857eb79fb5deb1760cdf7c07f440f0df8bdfae50d40d"
+        },
+        {
+            "file": "error-schema-unavailable.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-schema-unavailable",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "2e6201ec988df90cc1bb31b4af91599783030e363b533e8cced7c403813d9319"
+        },
+        {
+            "file": "error-read-failed.json",
+            "route": "/v1/webadmin/moderation_profile_text_list",
+            "case": "profile-text-moderation-read-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "392614f5a265977a9893610c34bb282f12236d2cc61e55c91742d9da2f3f06dc"
+        },
+        {
+            "file": "error-audit-write-failed.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-audit-write-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "091a32693dcdefb0b19ca185f6064f99c300b22b936b1fed88ce71ab729ef48d"
+        },
+        {
+            "file": "error-receipt-write-failed.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-receipt-write-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "096c4ff9ffe03c7aac9950ac70ae0389ddce2e6f0e7f42d5c663f11c9bf4bf03"
+        },
+        {
+            "file": "error-write-failed.json",
+            "route": "/v1/webadmin/moderation_profile_text_action",
+            "case": "profile-text-moderation-write-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "17af483a36145f0c97f9b2a13afb82b17c6051c28cad74d27832f605173cf657"
+        },
+        {
+            "file": "malformed-extra-top-level.json",
+            "route": "contract://malformed-profile-text-response",
+            "case": "extra_top_level",
+            "consumer": "webadmin",
+            "valid": false,
+            "sha256": "ae18ce903aa25383b0b22eb251c3a27ea85d8dd31ea236f247f18c2ac159e474"
+        },
+        {
+            "file": "malformed-missing-data.json",
+            "route": "contract://malformed-profile-text-response",
+            "case": "missing_data",
+            "consumer": "webadmin",
+            "valid": false,
+            "sha256": "768bbb570d255c3da4acf3c9f9e3f35ac2c05b515d909be711c5424354b90d67"
+        },
+        {
+            "file": "malformed-status-type.json",
+            "route": "contract://malformed-profile-text-response",
+            "case": "status_code_string",
+            "consumer": "webadmin",
+            "valid": false,
+            "sha256": "cdac494fac5e922ce768fc547e2627f5b48ca4513696b427e7e8b4ad96363f09"
+        },
+        {
+            "file": "malformed-additive-item.json",
+            "route": "contract://malformed-profile-text-response",
+            "case": "additive_item_field",
+            "consumer": "webadmin",
+            "valid": false,
+            "sha256": "59ae9d934cdd099d27aca37bc7454a2d14c8b4fadabf7fc3ad9434762762cf22"
+        },
+        {
+            "file": "malformed-conflict-data.json",
+            "route": "contract://malformed-profile-text-response",
+            "case": "conflict_missing_current",
+            "consumer": "webadmin",
+            "valid": false,
+            "sha256": "d37ad6b3a8a3d6118b755c9f1fe859576efffbfdb5db862be2b0bdcc6d8eb1ff"
+        }
+    ]
+}

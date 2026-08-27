@@ -1,0 +1,18 @@
+{
+    "success": true,
+    "status_code": 200,
+    "profile_text_moderation": {
+        "contract_version": 1,
+        "contract_ready": false,
+        "principal": {
+            "role": "viewer",
+            "capabilities": [
+                "profile_text_moderation_read"
+            ]
+        },
+        "actions": []
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
