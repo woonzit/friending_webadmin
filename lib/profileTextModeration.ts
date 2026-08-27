@@ -64,6 +64,14 @@ export type ProfileTextModerationListExpectation = {
   field: ProfileTextModerationFilterField;
   uid: number | null;
   page_size: number;
+  /**
+   * Rows already loaded for this exact filter before the page being decoded:
+   * 0 for a first page, the loaded count for a named continuation. The decoder
+   * binds `total` and `next_cursor` to it (T-414 B1): a terminal page must
+   * complete the queue exactly, a continuation must leave rows to load, and an
+   * empty first page proves emptiness only with `total=0`.
+   */
+  loaded_before?: number;
 };
 
 export type ProfileTextModerationMutation = {
@@ -326,10 +334,16 @@ export async function profileTextModerationListResponse(
       || (uid !== null && item.uid !== uid)) return null;
     items.push(item);
   }
+  const loadedBefore = expected.loaded_before ?? 0;
+  if (!Number.isSafeInteger(loadedBefore) || loadedBefore < 0) return null;
+  const loaded = loadedBefore + items.length;
   if (new Set(items.map((item) => `${item.uid}:${item.field}`)).size !== items.length
     || items.some((item, index) => index > 0 && itemOrder(items[index - 1], item) >= 0)
     || total < items.length || (total === 0 && (items.length !== 0 || nextCursor !== null))
-    || (items.length === 0 && nextCursor !== null)) return null;
+    || (items.length === 0 && nextCursor !== null)
+    // Page-kind cardinality (T-414 B1): terminal pages complete the queue exactly;
+    // continuations carry at least one row and leave rows to load.
+    || (nextCursor === null ? loaded !== total : (items.length === 0 || loaded >= total))) return null;
   return {
     contract_version: 1,
     principal,

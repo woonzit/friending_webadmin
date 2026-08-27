@@ -129,6 +129,7 @@ export default function ProfileTextModerationConsole({
       field: requestedField,
       uid: requestedUid,
       page_size: 50,
+      loaded_before: append ? itemsRef.current.length : 0,
     });
     if (sequence !== loadSequenceRef.current) return;
     if (!parsed) {

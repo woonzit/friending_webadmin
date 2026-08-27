@@ -242,6 +242,43 @@ test("list decoding proves exact filters, pending rows, ordering, bounds, and no
   assert.equal(await profileTextModerationListResponse(success(listData([first, second], { total: 1 })), expectation), null);
 });
 
+test("list cardinality is bound to the page kind and never fakes emptiness or truncation", async () => {
+  const rows = [
+    item({ uid: 41, field: "headline", status_updated_at: 100 }),
+    item({ uid: 41, field: "about_me", status_updated_at: 100 }),
+    item({ uid: 42, field: "headline", status_updated_at: 101 }),
+    item({ uid: 42, field: "about_me", status_updated_at: 101 }),
+  ];
+  const first = { field: "all" as const, uid: null, page_size: 2, loaded_before: 0 };
+  const continuation = { ...first, loaded_before: 2 };
+  // T-414 B1: the three contradictory shapes fail closed.
+  assert.equal(await profileTextModerationListResponse(success(listData([], { total: 1 })), first), null);
+  assert.equal(await profileTextModerationListResponse(success(listData([rows[0]], { total: 2 })), first), null);
+  assert.equal(await profileTextModerationListResponse(success(listData([rows[0]], {
+    total: 1,
+    next_cursor: "opaque_page-2",
+  })), first), null);
+  // The valid two-page path decodes only when each page is bound to its kind.
+  const pageOne = await profileTextModerationListResponse(success(listData([rows[0], rows[1]], {
+    total: 4,
+    next_cursor: "opaque_page-2",
+  })), first);
+  assert.equal(pageOne?.next_cursor, "opaque_page-2");
+  const pageTwo = await profileTextModerationListResponse(success(listData([rows[2], rows[3]], { total: 4 })), continuation);
+  assert.equal(pageTwo?.next_cursor, null);
+  assert.equal(pageTwo?.total, 4);
+  assert.equal(await profileTextModerationListResponse(success(listData([rows[2], rows[3]], { total: 4 })), first), null);
+  assert.equal(await profileTextModerationListResponse(success(listData([rows[2], rows[3]], {
+    total: 4,
+    next_cursor: "opaque_page-3",
+  })), continuation), null);
+  assert.equal(await profileTextModerationListResponse(success(listData([], { total: 0 })), continuation), null);
+  assert.equal(await profileTextModerationListResponse(success(listData([], { total: 0 })), { ...first, loaded_before: -1 }), null);
+  // The console binds every continuation to the rows it already holds.
+  const consoleSource = await readFile(new URL("../components/ProfileTextModerationConsole.tsx", import.meta.url), "utf8");
+  assert.match(consoleSource, /loaded_before: append \? itemsRef\.current\.length : 0/);
+});
+
 test("safe member identity is bounded plain text and rejects control or additive data", async () => {
   const expectation = { field: "all" as const, uid: null, page_size: 50 };
   assert.ok(await profileTextModerationListResponse(success(listData([
@@ -739,7 +776,14 @@ test("every published fixture round-trips through the production decoder its cas
       continue;
     }
     if (binding.kind === "list") {
-      const expectation = { field: binding.field, uid: binding.uid, page_size: binding.pageSize };
+      const expectation = {
+        field: binding.field,
+        uid: binding.uid,
+        page_size: binding.pageSize,
+        // A terminal page that does not start the queue is a continuation of the
+        // rows the corpus already published before it (T-414 B1).
+        loaded_before: binding.paged ? 0 : binding.total - binding.items,
+      };
       const parsed = await profileTextModerationListResponse(body, expectation);
       assert.ok(parsed, row.file);
       assert.deepEqual(parsed.filter, { field: binding.field, uid: binding.uid }, row.file);
