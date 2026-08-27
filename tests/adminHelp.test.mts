@@ -73,7 +73,9 @@ test("exact and dynamic routes resolve to the intended guide and nothing generic
 
 test("every inventoried functional section has detailed English and Hungarian help", async () => {
   const totalSections = ADMIN_HELP_PAGES.reduce((sum, page) => sum + page.sections.length, 0);
-  assert.equal(totalSections, 234, "review the functional-section census when the UI changes");
+  // 235 since T-218: the Footprints visits switch is its own contract with its
+  // own permission and revision, so it earns its own Help section.
+  assert.equal(totalSections, 235, "review the functional-section census when the UI changes");
 
   for (const locale of ["en", "hu"]) {
     const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));

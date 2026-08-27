@@ -7791,6 +7791,80 @@ body .verification-level-pill.level-strong {
   align-items: end;
 }
 
+/* T-218 Footprints visits switch. */
+.footprint-visits-scope {
+  margin-top: -12px;
+  padding: 10px 13px;
+  border-left: 2px solid var(--border);
+  color: var(--muted);
+}
+
+.footprint-visits-state {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin: 0 0 16px;
+}
+
+.footprint-visits-state > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.footprint-visits-state dt {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.footprint-visits-state dd {
+  margin: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.footprint-visits-consequence {
+  margin: 0 0 16px;
+  padding: 12px 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.footprint-visits-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.footprint-visits-notice {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.footprint-visits-notice-error,
+.footprint-visits-error {
+  border-color: rgba(209, 4, 45, 0.42);
+  color: var(--text-soft);
+}
+
+.footprint-visits-notice-success {
+  border-color: rgba(57, 151, 15, 0.42);
+  color: var(--text-soft);
+}
+
+.footprint-visits-notice-info {
+  color: var(--muted);
+}
+
 .footprints-override {
   margin-top: 20px;
   padding-top: 20px;
@@ -8250,6 +8324,7 @@ body .verification-level-pill.level-strong {
 }
 
 @media (max-width: 900px) {
+  .footprint-visits-form,
   .footprints-settings-grid,
   .footprints-dialog-grid,
   .footprints-audience-grid {

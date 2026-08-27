@@ -7,10 +7,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import FootprintsVisitsPanel from "@/components/FootprintsVisitsPanel";
 import ImageUploadField from "@/components/ImageUploadField";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
+import { FOOTPRINTS_VISITS_CONTRACT_READY } from "@/lib/contractReadiness";
 import {
   FOOTPRINT_GENDERS,
   footprintReports,
@@ -276,6 +278,21 @@ export default function FootprintsPage() {
     <div className="footprints-page">
       <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
       {notice ? <p className="footprints-notice" role="status">{notice}</p> : null}
+
+      {/*
+        T-218: the visits switch is its own contract with its own capability,
+        revision and receipt, so it owns its state and never shares this page's
+        `payload.settings.revision`. It renders first because it is the widest
+        decision on the page — everything below it stays available either way.
+
+        Dormant until the T-123 provider release. The panel has no route or
+        navigation entry of its own, so this local switch is its whole reviewed
+        activation: while it is false the panel does not render at all and its
+        two proxy actions are absent from the allow-list. Core's own
+        `contract_ready` plus the exact action capability gate it again at
+        runtime once it does render.
+      */}
+      {FOOTPRINTS_VISITS_CONTRACT_READY ? <FootprintsVisitsPanel /> : null}
 
       <section className="panel">
         <h2>{t("settingsTitle")}</h2>

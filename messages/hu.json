@@ -2123,6 +2123,16 @@
             },
             "guidance": "Az alacsonyabb napi limit minden tagot azonnal érinthet. A már elküldött Footprinteket nem törli, a meglévő üzenetet nem rövidíti."
           },
+            "visits": {
+              "title": "Profilnézők kapcsoló",
+              "purpose": "Azt szabályozza, hogy a Friending rögzíti és mutatja-e, ki nézte meg egy tag profilját. Az alatta lévő jelvénybeállításoktól külön szerződés, saját jogosultsággal, saját verzióval és saját audit nyugtával.",
+              "actions": {
+                "1": "Döntés előtt olvasd el a jelenlegi állapotot és azt, hogy ki módosította utoljára.",
+                "2": "Adj kötelező belső indoklást, majd kapcsold be vagy ki a látogatásokat.",
+                "3": "Ha egy módosítás ismeretlen kimenetet jelez, az újraküldés gombot használd, ne indíts újat."
+              },
+              "guidance": "A kapcsoló kizárólag a profilnézőkre vonatkozik: a rögzítésre, a látogatói listára és az app Látogatók fülére. A Footprint jelvények, a tagonkénti keretek, a bejelentések és a fotókedvelések mindkét állásban elérhetők maradnak. Kikapcsolva minden korábban rögzített látogatás megmarad — visszakapcsoláskor újra megjelennek —, de a kikapcsolt időszak soha nem áll helyre. Mivel a kapcsoló és a jelvénybeállítások egy verzión osztoznak, ha az egyiket úgy mented, hogy a másik nyitva van, a második mentés ütközik; tölts újra, és dönts ismét."
+            },
           "badges": {
             "title": "Jelvénykatalógus",
             "purpose": "Minden jelvény jóváhagyott artworköt, angol és magyar jelentést, sorrendet, aktív vagy archivált állapotot és két független audience szabályt tartalmaz.",
@@ -7310,6 +7320,66 @@
     "globalHint": "Mindenki. Válts Egyénire, ha nem vagy user csoport szerint szűkítenéd.",
     "customEmptyHint": "Még nincs kijelölés — ez így még mindenkit jelent. Válassz nemet és/vagy csoportot; ha mindkettő be van állítva, együtt kell teljesülniük."
   },
+    "footprintVisits": {
+      "title": "Profilnézők (Footprints)",
+      "lead": "Rögzíti és mutatja-e a Friending, hogy ki nézte meg egy tag profilját.",
+      "scopeNote": "Ez a kapcsoló kizárólag a profilnézőkre vonatkozik. A Footprint jelvények, a jelvénykatalógus, a tagonkénti keretek, a bejelentések és a fotókedvelések nem érintettek, és mindkét állásban elérhetők maradnak a tagoknak.",
+      "currentState": "Jelenlegi állapot",
+      "stateOn": "Rögzíti a látogatásokat",
+      "stateOff": "Nem rögzíti a látogatásokat",
+      "revision": "Verzió",
+      "provenance": "Utolsó változtatás",
+      "neverSet": "Erről a felületről még nem módosították.",
+      "lastChanged": "{actor} · {when}",
+      "consequenceOff": "Kikapcsolva nem rögzülnek új látogatások, az appban eltűnik a Látogatók fül, és megszűnnek a „valaki megnézte a profilodat” értesítések. A már rögzített látogatások megmaradnak, és visszakapcsoláskor újra megjelennek; a kikapcsolt időszak viszont soha nem áll helyre.",
+      "consequenceOn": "Bekapcsolva mostantól újra rögzülnek a látogatások. A kikapcsolt időszakból semmi nem áll helyre.",
+      "reason": "Indoklás (belső, kötelező)",
+      "reasonHint": "{count}/{max} karakter. Az audit naplóba kerül; a tagok soha nem látják.",
+      "enable": "Látogatások bekapcsolása",
+      "disable": "Látogatások kikapcsolása",
+      "retry": "Mentett módosítás újraküldése",
+      "readOnly": "Ezt a beállítást láthatod, de nem módosíthatod.",
+      "unavailable": "A profilnézők vezérlése ehhez a fiókhoz még nem érhető el.",
+      "live": {
+        "saved": "Mentve. Az app a következő indítási konfigurációnál veszi át az új beállítást.",
+        "noChange": "Nincs változás — már ezen az értéken állt.",
+        "replayed": "Korábban már elmentve; a tárolt módosítás megerősítésre került, nem futott le újra.",
+        "conflict": "Valaki megelőzött a módosítással. A jelenlegi állapot látható; ha továbbra is módosítanál, dönts újra.",
+        "conflictAlreadyApplied": "Valaki más már a kért értékre állította. Nincs további teendő.",
+        "pendingRetry": "A módosítás elment, de a kimenete ismeretlen. Küldd újra a mentett módosítást — ugyanazt a kérést használja, így nem hajtódhat végre kétszer.",
+        "persistenceUnavailable": "Ez a böngésző nem tudja biztonságosan eltárolni a függő módosítást, ezért a kapcsoló itt nem használható.",
+        "persistenceCleanupFailed": "A módosítás feldolgozásra került, de a mentett másolatot nem sikerült törölni. Tölts újra, mielőtt ismét próbálkozol.",
+        "requestIdUnavailable": "Ez a böngésző nem tud kérésazonosítót előállítani, ezért a kapcsoló itt nem használható.",
+        "draftInvalid": "A módosítást nem sikerült előkészíteni. Ellenőrizd az indoklást, és próbáld újra.",
+        "errorCode": "Nem sikerült menteni: {message}",
+        "unknownError": "Nem sikerült menteni. A kimenet ismeretlen — küldd újra a mentett módosítást."
+      },
+      "errors": {
+        "sessionInvalid": "A munkameneted már nem érvényes. Jelentkezz be újra.",
+        "badOrigin": "A kérés váratlan forrásból érkezett, ezért elutasítottuk.",
+        "routeNotFound": "Ez a vezérlő nem érhető el a szerveren.",
+        "readRequired": "Nincs jogosultságod megtekinteni ezt a beállítást.",
+        "editRequired": "Nincs jogosultságod módosítani ezt a beállítást.",
+        "requestInvalid": "A kérést hibás formátum miatt elutasítottuk.",
+        "tooLarge": "A kérés túl nagy volt.",
+        "temporarilyUnavailable": "A szerver átmenetileg nem érhető el. Próbáld újra hamarosan.",
+        "invalidResponse": "A szerver válaszát nem sikerült értelmezni.",
+        "contractVersion": "Ez a felület elavult a szerverhez képest. Tölts újra az oldalt.",
+        "valueInvalid": "Az értéket a szerver elutasította.",
+        "revisionInvalid": "A verziót elutasítottuk. Tölts újra, és próbáld ismét.",
+        "reasonInvalid": "Az indoklást elutasítottuk. Használj 1–300 karaktert vezérlőkarakterek nélkül.",
+        "requestIdInvalid": "A kérésazonosítót elutasítottuk. Tölts újra, és próbáld ismét.",
+        "conflict": "Valaki megelőzött a módosítással.",
+        "requestIdConflict": "Ez a kérésazonosító már egy másik módosításhoz tartozik. Tölts újra, és kezdd elölről.",
+        "requestInProgress": "Ugyanez a módosítás még feldolgozás alatt van. Küldd újra a mentett módosítást.",
+        "storedInvalid": "A tárolt beállítás hibás, ezért nem jeleníthető meg biztonságosan.",
+        "schemaUnavailable": "A szerver még nem áll készen a beállítás kiszolgálására.",
+        "auditWriteFailed": "Az audit bejegyzést nem sikerült írni, ezért semmi nem változott. Küldd újra a mentett módosítást.",
+        "receiptWriteFailed": "A kimenet ismeretlen. Küldd újra a mentett módosítást — nem hajtódhat végre kétszer.",
+        "writeFailed": "A kimenet ismeretlen. Küldd újra a mentett módosítást — nem hajtódhat végre kétszer.",
+        "generic": "A módosítás nem ment át."
+      }
+    },
   "appReview": {
     "eyebrow": "Áruházi review",
     "title": "App Review sandbox",

@@ -4,6 +4,10 @@ import {
   audienceVisibilityProxyCapabilityAuthorized,
 } from "@/lib/audienceVisibilityAdmin";
 import {
+  footprintVisitsProxyCapabilityAuthorized,
+  normalizeFootprintVisitsProxyBody,
+} from "@/lib/footprintVisits";
+import {
   normalizeProfileTextModerationProxyBody,
   profileTextModerationProxyCapabilityAuthorized,
 } from "@/lib/profileTextModeration";
@@ -106,11 +110,18 @@ export async function POST(
       ? "profile-text-moderation-read-required"
       : "profile-text-moderation-decision-required", 403);
   }
+  const footprintVisitsAuthorized = footprintVisitsProxyCapabilityAuthorized(action, membership.data);
+  if (footprintVisitsAuthorized === false) {
+    return bridgeError(action === "footprints_visits_get"
+      ? "footprints-visits-read-required"
+      : "footprints-visits-edit-required", 403);
+  }
   if (!isAdminBridgeActionAuthorized(
     action,
     principal,
     audienceVisibilityAuthorized,
     profileTextModerationAuthorized,
+    footprintVisitsAuthorized,
   )) {
     return bridgeError("admin-write-required", 403);
   }
@@ -165,6 +176,12 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedProfileTextModerationBody !== undefined) body = normalizedProfileTextModerationBody;
+
+  const normalizedFootprintVisitsBody = normalizeFootprintVisitsProxyBody(action, body);
+  if (normalizedFootprintVisitsBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedFootprintVisitsBody !== undefined) body = normalizedFootprintVisitsBody;
 
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer

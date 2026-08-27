@@ -2123,6 +2123,16 @@
             },
             "guidance": "A lower daily limit can affect all members immediately. It does not remove Footprints already sent or shorten existing messages."
           },
+            "visits": {
+              "title": "Profile visits switch",
+              "purpose": "Controls whether Friending records and shows who viewed a member's profile. It is a separate contract from the badge settings below, with its own permission, its own revision and its own audit receipt.",
+              "actions": {
+                "1": "Read the current state and who last changed it before deciding.",
+                "2": "Give a required internal reason, then turn visits on or off.",
+                "3": "If a change reports an unknown outcome, use the retry button rather than starting a new one."
+              },
+              "guidance": "The switch covers profile visits only: recording, the visitors feed and the app's Visits tab. Footprint badges, per-member allowances, reports and photo likes stay available to members in either state. Turning it off keeps every visit already recorded — they reappear if you turn it back on — but the period while it is off is never reconstructed. Because the switch and the badge settings share one revision, saving one while the other is open makes the second save conflict; reload and decide again."
+            },
           "badges": {
             "title": "Badge catalog",
             "purpose": "Each badge carries approved artwork, English and Hungarian meaning, order, active or archived state and two independent audience rules.",
@@ -7310,6 +7320,66 @@
     "globalHint": "Everyone. Switch to Custom to narrow it by gender or user group.",
     "customEmptyHint": "Nothing selected yet — this still means everyone. Pick genders and/or groups; both must match when set."
   },
+    "footprintVisits": {
+      "title": "Profile visits (Footprints)",
+      "lead": "Whether Friending records and shows who viewed a member's profile.",
+      "scopeNote": "This switch covers profile visits only. Footprint badges, the badge catalogue, per-member allowances, reports and photo likes are unaffected and stay available to members either way.",
+      "currentState": "Current state",
+      "stateOn": "Recording visits",
+      "stateOff": "Not recording visits",
+      "revision": "Revision",
+      "provenance": "Last change",
+      "neverSet": "Never changed from this console.",
+      "lastChanged": "{actor} · {when}",
+      "consequenceOff": "Turning this off stops new visits being recorded, hides the Visits tab in the app and stops \"someone viewed your profile\" alerts. Visits already recorded are kept and reappear if you turn it back on; the period while it is off is never reconstructed.",
+      "consequenceOn": "Turning this on resumes recording from now on. Nothing is recovered for the period it was off.",
+      "reason": "Reason (internal, required)",
+      "reasonHint": "{count}/{max} characters. Recorded in the audit trail; members never see it.",
+      "enable": "Turn visits on",
+      "disable": "Turn visits off",
+      "retry": "Retry the saved change",
+      "readOnly": "You can see this setting but not change it.",
+      "unavailable": "Profile visit control is not available for this account yet.",
+      "live": {
+        "saved": "Saved. The app reflects the new setting on its next launch config.",
+        "noChange": "No change — it already held that value.",
+        "replayed": "Already saved earlier; the stored change was confirmed rather than repeated.",
+        "conflict": "Someone changed this setting first. The current state is shown; decide again if you still want a change.",
+        "conflictAlreadyApplied": "Someone else already set it to the value you asked for. Nothing further to do.",
+        "pendingRetry": "A change was sent but its outcome is unknown. Retry the saved change — it reuses the same request so it cannot be applied twice.",
+        "persistenceUnavailable": "This browser cannot store the pending change safely, so the switch cannot be used here.",
+        "persistenceCleanupFailed": "The change was processed but the saved copy could not be cleared. Reload before trying again.",
+        "requestIdUnavailable": "This browser cannot generate a request identifier, so the switch cannot be used here.",
+        "draftInvalid": "The change could not be prepared. Check the reason and try again.",
+        "errorCode": "Could not save: {message}",
+        "unknownError": "Could not save. The outcome is unknown — retry the saved change."
+      },
+      "errors": {
+        "sessionInvalid": "Your session is no longer valid. Sign in again.",
+        "badOrigin": "The request came from an unexpected origin and was refused.",
+        "routeNotFound": "This control is not available on the server.",
+        "readRequired": "You do not have permission to view this setting.",
+        "editRequired": "You do not have permission to change this setting.",
+        "requestInvalid": "The request was rejected as malformed.",
+        "tooLarge": "The request was too large.",
+        "temporarilyUnavailable": "The server is temporarily unavailable. Try again shortly.",
+        "invalidResponse": "The server response could not be read.",
+        "contractVersion": "This console is out of date with the server. Reload the page.",
+        "valueInvalid": "The value was rejected by the server.",
+        "revisionInvalid": "The revision was rejected. Reload and try again.",
+        "reasonInvalid": "The reason was rejected. Use 1–300 characters without control characters.",
+        "requestIdInvalid": "The request identifier was rejected. Reload and try again.",
+        "conflict": "Someone changed this setting first.",
+        "requestIdConflict": "This request identifier is already used for a different change. Reload and start again.",
+        "requestInProgress": "The same change is still being processed. Retry the saved change.",
+        "storedInvalid": "The stored setting is malformed and cannot be shown safely.",
+        "schemaUnavailable": "The server is not ready to serve this setting.",
+        "auditWriteFailed": "The audit record could not be written, so nothing changed. Retry the saved change.",
+        "receiptWriteFailed": "The outcome is unknown. Retry the saved change — it cannot be applied twice.",
+        "writeFailed": "The outcome is unknown. Retry the saved change — it cannot be applied twice.",
+        "generic": "The change did not go through."
+      }
+    },
   "appReview": {
     "eyebrow": "Store review",
     "title": "App Review sandbox",

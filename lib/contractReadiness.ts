@@ -29,3 +29,10 @@ export const VERIFICATION_CONTRACT_READY: boolean = true;
 export const AUDIENCE_VISIBILITY_CONTRACT_READY: boolean = false;
 /** T-120 is not published; the dormant T-216 consumer remains unreachable. */
 export const PROFILE_TEXT_MODERATION_CONTRACT_READY: boolean = false;
+/**
+ * T-123 is built but not released; the dormant T-218 consumer remains
+ * unreachable. Note this is the CONSUMER's readiness, not the product state:
+ * Core's `visits_enabled` defaults to enabled (A1), so the Core half changes no
+ * member behaviour until an administrator flips the switch through this console.
+ */
+export const FOOTPRINTS_VISITS_CONTRACT_READY: boolean = false;
