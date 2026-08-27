@@ -285,6 +285,16 @@
             },
             "guidance": "Strong changes internal access, but other members see only the same pink verified seal with no tier disclosure. This panel cannot override the member's badge-visibility preference or revoke genuine verification."
           },
+          "adminGrantedVerification": {
+            "title": "Admin-granted verification authority",
+            "purpose": "This distinct panel shows the retained evidence-free admin seal, its safe reason witness, the member's currently enabled grant methods and the final effective verification without presenting a fake provider result.",
+            "actions": {
+              "1": "Confirm the UID, exact revision, current enabled methods and whether another genuine or imported authority already wins.",
+              "2": "Choose only a currently enabled method, enter the bounded internal reason and explicitly confirm before granting.",
+              "3": "Revoke the active admin grant when required, even if its method was disabled later, then verify the authoritative returned state."
+            },
+            "guidance": "A provider-free grant is audited authority, not Persona, Video selfie or manual-review evidence. Never create a second request ID after an uncertain response; retry the exact saved command."
+          },
           "profileCopy": {
             "title": "Public profile texts",
             "purpose": "Operators can correct the member's headline and About text when handling support or accepted-content moderation.",
@@ -3266,6 +3276,7 @@
     "member": {
       "title": "Member verification operations",
       "copy": "Resolve a canonical UID first, confirm the displayed member, then choose one narrowly defined and Core-audited action.",
+      "adminGrantTransition": "Synthetic Persona apply/revoke has moved to the member's Admin-granted verification panel. This screen keeps only genuine Persona force verification; an already saved alias receipt remains retryable above.",
       "uidLabel": "Canonical member UID",
       "uidHint": "Positive base-10 digits with no sign, decimal point or leading zero.",
       "lookup": "Resolve member",
@@ -4905,6 +4916,7 @@
         "title": "Team grant editor",
         "copy": "Prepare a Light or Strong grant without changing method results or imported provenance.",
         "readOnly": "Your Core-authored capabilities permit grant reading but not editing.",
+        "transitionReadOnly": "This legacy level-based editor is read-only during the method-based admin-grant transition. Any already saved receipt can still be retried exactly.",
         "level": "Team grant level",
         "reason": "Internal reason",
         "reasonPrivate": "Never projected to the member",
@@ -4947,6 +4959,110 @@
         },
         "confirmStrong": "I reviewed the Strong-grant warning and the resulting internal access change.",
         "saveGrant": "Save reviewed grant"
+      }
+    },
+    "adminGrantedVerification": {
+      "title": "Admin-granted verification",
+      "copy": "Grant or revoke evidence-free Video selfie or Persona authority independently of genuine provider and imported verification.",
+      "evaluatedAt": "Authoritative evaluation time",
+      "enabledMethods": "Methods enabled for a new grant",
+      "noEnabledMethods": "No method is enabled in this member's live policy scope",
+      "grantRevision": "Admin-grant revision",
+      "effectiveLevel": "Effective verification",
+      "externalSeal": "Member-facing verified seal",
+      "sealVisible": "Would show",
+      "sealHidden": "Would not show",
+      "levels": {
+        "none": "Not verified",
+        "light": "Light",
+        "strong": "Strong"
+      },
+      "sources": {
+        "derived": "Genuine provider result",
+        "imported": "Imported authority",
+        "granted": "Admin-granted authority"
+      },
+      "methods": {
+        "video": "Fake Video selfie verification",
+        "persona": "Fake Persona verification"
+      },
+      "statuses": {
+        "active": "Active",
+        "expired": "Expired",
+        "revoked": "Revoked"
+      },
+      "grant": {
+        "title": "Retained admin-granted seal",
+        "noProviderEvidence": "Method hint: admin-granted. This is not a Persona inquiry, Video selfie result, manual review or provider evidence.",
+        "method": "Granted method",
+        "level": "Derived level",
+        "actor": "Originally granted by",
+        "grantedAt": "Originally granted at",
+        "expiry": "Assignment expiry",
+        "noExpiry": "No expiry",
+        "reasonMetadata": "Assignment-reason witness",
+        "reasonWitness": "{length} Unicode scalars; SHA-256",
+        "empty": "No retained admin grant has ever existed for this member."
+      },
+      "editor": {
+        "title": "Evidence-free admin authority",
+        "copy": "A grant follows the method enabled in the member's current live policy. A revoke removes only the active admin grant and can leave genuine or imported verification effective.",
+        "readOnly": "Your exact Core-authored capability block permits this projection to be read, but not changed.",
+        "method": "Grant method",
+        "methodHint": "Only methods configured in the member's current scope can receive a new admin grant.",
+        "noMethod": "A new grant is unavailable until a verification method is configured in this member's live scope.",
+        "reason": "Internal operation reason",
+        "reasonPrivate": "The text is stored only for the durable command and Core's grant authority; this projection returns only its length and hash",
+        "confirm": "I confirmed the UID, method and reason and understand this creates or revokes provider-free verification authority.",
+        "grant": "Grant {method}",
+        "revoke": "Revoke {method}",
+        "revokeDisabledMethod": "The active method is no longer enabled for new grants, but its existing admin authority can and should remain revocable.",
+        "authorityNote": "Granting replaces the retained row at its exact revision. Revoking never removes genuine provider or imported authority."
+      },
+      "transition": {
+        "title": "Legacy grant receipt pending.",
+        "copy": "{action} for {target} must converge through the legacy panel before a method-based command can start.",
+        "recheck": "Recheck saved receipt"
+      },
+      "live": {
+        "loading": "Loading the bounded admin-granted verification projection…",
+        "loadError": "The exact capability block or selected verification projection could not be decoded safely.",
+        "retryLoad": "Retry authoritative read",
+        "pendingMutation": "One exact admin-grant command is pending.",
+        "pendingMaterial": "{method}, expected revision {revision}. The private reason is deliberately not displayed here.",
+        "openPendingMember": "Open pending member",
+        "retryExact": "Retry exact saved command",
+        "persistenceUnavailable": "The complete normalized command could not be saved in this tab. No mutation was sent.",
+        "persistenceCleanupFailed": "Core returned an authoritative result, but the saved command identity could not be cleared.",
+        "saved": "Core applied the admin-grant command exactly once and returned its authoritative state.",
+        "replayed": "Core replayed the command's original canonical result without a second mutation.",
+        "converged": "The authoritative selected read proves that the saved command converged; its receipt identity was cleared.",
+        "invalidDraft": "The UID, method, reason, revision or durable request identity is invalid.",
+        "unknownError": "Core returned an unknown or malformed response. The exact command remains saved for safe retry."
+      },
+      "errors": {
+        "sessionInvalid": "The administrator session is no longer active. The saved command remains available after sign-in.",
+        "forbidden": "The exact Core-authored admin-grant capability is not available.",
+        "routeNotFound": "The dormant admin-grant route is not released.",
+        "memberNotFound": "The target member no longer exists or is being deleted.",
+        "requestInvalid": "The request contains malformed, missing or unexpected material.",
+        "tooLarge": "The request exceeds the proxy limit.",
+        "contractVersion": "Core refused this admin-grant contract version.",
+        "requestIdInvalid": "The durable request ID is not a lowercase UUID v4.",
+        "grantInvalid": "The UID, method, reason or revision is outside the accepted bounds.",
+        "methodNotEnabled": "That method is not enabled in the member's current live policy. The authoritative state was refreshed.",
+        "grantNotActive": "The requested admin grant is absent, expired or already revoked. The authoritative state was refreshed.",
+        "conflict": "The method, revision or grant state changed. The authoritative state was refreshed; review it before a new command.",
+        "requestIdConflict": "That request ID is already bound to different command material. The saved command was not retried under a new ID.",
+        "requestInProgress": "The same command is still in progress. Keep and retry this exact saved request.",
+        "schemaUnavailable": "The required grant, receipt or audit schema is unavailable. The exact command remains saved.",
+        "storedInvalid": "Core found invalid stored verification material and failed closed. The exact command remains saved.",
+        "readFailed": "The authoritative verification read failed. The exact command remains saved.",
+        "writeFailed": "The post-audit write or receipt convergence is uncertain. The exact command remains saved.",
+        "auditWriteFailed": "Core could not durably write the audit intent. The exact command remains saved.",
+        "temporarilyUnavailable": "Core is unavailable or timed out. Success was not assumed and the exact command remains saved.",
+        "invalidResponse": "Core returned a malformed response. Success was not assumed and the exact command remains saved.",
+        "generic": "The command was not accepted. No success was assumed."
       }
     },
     "audienceVisibility": {

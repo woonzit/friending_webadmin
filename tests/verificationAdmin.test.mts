@@ -792,7 +792,7 @@ test("route, navigation, page, console and user panel preserve every security an
   assert.ok(route.indexOf("isTrustedAdminRequest") < route.indexOf("readAdminSession"));
   assert.ok(route.indexOf("isAdminActionAllowed") < route.indexOf("readAdminSession"));
   assert.ok(route.indexOf("verificationProxyCapabilityAuthorized") < route.indexOf("coreCall(\n    action"));
-  assert.match(route, /normalizeVerificationProxyBody\(action, body\)/);
+  assert.match(route, /normalizeVerificationProxyBody\(\s*action,\s*body,\s*ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,\s*\)/);
   assert.match(route, /Cache-Control": "no-store"/);
   assert.match(route, /mergeCoreParams\(body, \{ admin_email: session\.email \}\)/);
   assert.doesNotMatch(route, /CORE_API_BASE|WEBADMIN_API_SECRET/);

@@ -11926,9 +11926,28 @@ body .verification-level-pill.level-strong {
   grid-column: 1 / -1;
 }
 
-.verification-user-panel {
+.verification-user-panel,
+.admin-granted-verification-panel {
   margin-top: 24px;
   scroll-margin-top: 84px;
+}
+
+.admin-granted-verification-panel code {
+  overflow-wrap: anywhere;
+}
+
+.admin-granted-verification-pending {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-granted-verification-pending > div {
+  display: grid;
+  min-width: min(100%, 280px);
+  gap: 3px;
 }
 
 .verification-method-statuses {
@@ -12034,6 +12053,7 @@ body .verification-level-pill.level-strong {
 
   .verification-matrix-panel .panel-header,
   .verification-user-panel .panel-header,
+  .admin-granted-verification-panel .panel-header,
   .verification-grant-actions,
   .verification-badge-card > header,
   .verification-grant-editor > header {

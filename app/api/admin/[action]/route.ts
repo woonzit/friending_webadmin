@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminBridgeCoreTransportError } from "@/lib/adminBridge";
 import {
+  adminGrantedVerificationLegacyReceiptRetryAuthorized,
+  adminGrantedVerificationProxyCapabilityAuthorized,
+  adminGrantedVerificationSelectedReadAuthorized,
+  normalizeAdminGrantedVerificationProxyBody,
+} from "@/lib/adminGrantedVerification";
+import {
   normalizeAudienceVisibilityProxyBody,
   audienceVisibilityProxyCapabilityAuthorized,
 } from "@/lib/audienceVisibilityAdmin";
@@ -20,6 +26,7 @@ import {
   isAdminActionAllowed,
   isAdminBridgeActionAuthorized,
 } from "@/lib/adminActions";
+import { ADMIN_GRANTED_VERIFICATION_CONTRACT_READY } from "@/lib/contractReadiness";
 import { coreCall, mergeCoreParams } from "@/lib/core";
 import {
   normalizePersonaProxyBody,
@@ -76,6 +83,7 @@ export async function POST(
     dates?: unknown;
     persona?: unknown;
     verification?: unknown;
+    admin_granted_verification?: unknown;
     audience_visibility?: unknown;
     profile_text_moderation?: unknown;
     feature_switches?: unknown;
@@ -94,12 +102,26 @@ export async function POST(
   // purpose: the session is valid, so `adminClient` must not send the operator
   // back to /login.
   const principal = adminPrincipalFrom(membership.data);
-  const personaAuthorized = personaProxyCapabilityAuthorized(action, membership.data);
-  if (personaAuthorized === false) {
+  const legacyAdminGrantRetryAuthorized = ADMIN_GRANTED_VERIFICATION_CONTRACT_READY
+    ? adminGrantedVerificationLegacyReceiptRetryAuthorized(action, membership.data)
+    : null;
+  const personaAuthorized = personaProxyCapabilityAuthorized(
+    action,
+    membership.data,
+    ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
+  );
+  if (personaAuthorized === false && legacyAdminGrantRetryAuthorized !== true) {
     return bridgeError("persona-capability-required", 403);
   }
   const verificationAuthorized = verificationProxyCapabilityAuthorized(action, membership.data);
-  if (verificationAuthorized === false) {
+  if (verificationAuthorized === false && legacyAdminGrantRetryAuthorized !== true) {
+    return bridgeError("verification-capability-required", 403);
+  }
+  const adminGrantedVerificationAuthorized = adminGrantedVerificationProxyCapabilityAuthorized(
+    action,
+    membership.data,
+  );
+  if (adminGrantedVerificationAuthorized === false) {
     return bridgeError("verification-capability-required", 403);
   }
   const audienceVisibilityAuthorized = audienceVisibilityProxyCapabilityAuthorized(action, membership.data);
@@ -161,11 +183,25 @@ export async function POST(
   }
   if (normalizedOutboundBody !== undefined) body = normalizedOutboundBody;
 
-  const normalizedVerificationBody = normalizeVerificationProxyBody(action, body);
+  const normalizedVerificationBody = normalizeVerificationProxyBody(
+    action,
+    body,
+    ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
+  );
   if (normalizedVerificationBody === null) {
     return bridgeError("invalid-input", 400);
   }
+  if (normalizedVerificationBody?.admin_granted_verification_contract_version === 1
+    && !adminGrantedVerificationSelectedReadAuthorized(membership.data)) {
+    return bridgeError("verification-capability-required", 403);
+  }
   if (normalizedVerificationBody !== undefined) body = normalizedVerificationBody;
+
+  const normalizedAdminGrantedVerificationBody = normalizeAdminGrantedVerificationProxyBody(action, body);
+  if (normalizedAdminGrantedVerificationBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedAdminGrantedVerificationBody !== undefined) body = normalizedAdminGrantedVerificationBody;
 
   const normalizedAudienceVisibilityBody = normalizeAudienceVisibilityProxyBody(action, body);
   if (normalizedAudienceVisibilityBody === null) {

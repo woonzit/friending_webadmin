@@ -45,6 +45,7 @@ export const ADMIN_HELP_PAGES = [
       "albums",
       "membership",
       "verificationGrant",
+      "adminGrantedVerification",
       "moderation",
       "productPopup",
       "outboundAvailability",

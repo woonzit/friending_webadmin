@@ -285,6 +285,16 @@
             },
             "guidance": "Az Erős szint a belső hozzáférést módosítja, más tagok azonban csak ugyanazt a rózsaszín pecsétet látják szintfelfedés nélkül. Ez a panel nem írhatja felül a tag jelvényláthatóságát, és nem vonhat vissza valódi ellenőrzést."
           },
+          "adminGrantedVerification": {
+            "title": "Admin által megadott ellenőrzési jogosultság",
+            "purpose": "Ez a külön panel a megőrzött, bizonyíték nélküli adminpecsétet, annak biztonságos indoktanúját, a tag jelenleg engedélyezett megadási módszereit és a végső tényleges ellenőrzést mutatja hamis szolgáltatói eredmény megjelenítése nélkül.",
+            "actions": {
+              "1": "Ellenőrizd a UID-t, a pontos revíziót, az aktuálisan engedélyezett módszereket és azt, hogy nyer-e már más valódi vagy importált jogosultság.",
+              "2": "Csak aktuálisan engedélyezett módszert válassz, adj meg korlátozott belső indokot, majd a megadás előtt erősítsd meg kifejezetten.",
+              "3": "Szükség esetén vond vissza az aktív adminjogosultságot akkor is, ha a módszerét később letiltották, majd ellenőrizd a visszakapott hiteles állapotot."
+            },
+            "guidance": "A szolgáltatói bizonyíték nélküli megadás auditált jogosultság, nem Persona-, videósszelfi- vagy kézi ellenőrzési bizonyíték. Bizonytalan válasz után soha ne hozz létre második kérésazonosítót; pontosan a mentett parancsot próbáld újra."
+          },
           "profileCopy": {
             "title": "Nyilvános profilszövegek",
             "purpose": "Az operátorok támogatási vagy elfogadott-tartalom moderációs ügyben javíthatják a tag headline és Bemutatkozás szövegét.",
@@ -3266,6 +3276,7 @@
     "member": {
       "title": "Tagverifikációs műveletek",
       "copy": "Előbb oldj fel egy kanonikus UID-t, ellenőrizd a megjelenített tagot, majd válassz egy szűken meghatározott és Core által auditált műveletet.",
+      "adminGrantTransition": "A szintetikus Persona megadása és visszavonása átkerült a tag Admin által megadott ellenőrzés paneljére. Itt csak a valódi Persona-kényszerellenőrzés marad; egy már mentett aliasnyugta fent továbbra is újrapróbálható.",
       "uidLabel": "Kanonikus tagi UID",
       "uidHint": "Pozitív tízes számjegyek előjel, tizedespont és kezdő nulla nélkül.",
       "lookup": "Tag feloldása",
@@ -4905,6 +4916,7 @@
         "title": "Csapatszintű jogosultság szerkesztője",
         "copy": "Alapszintű vagy Erős jogosultság előkészítése a módszereredmények és importált forrás módosítása nélkül.",
         "readOnly": "A Core által adott képességeid olvasást engednek, módosítást nem.",
+        "transitionReadOnly": "Ez a korábbi, szintalapú szerkesztő csak olvasható a módszeralapú adminjogosultságra átállás alatt. A már mentett nyugta továbbra is pontosan újrapróbálható.",
         "level": "Csapat által megadott szint",
         "reason": "Belső indoklás",
         "reasonPrivate": "A tagi kivetítésben soha nem jelenik meg",
@@ -4947,6 +4959,110 @@
         },
         "confirmStrong": "Áttekintettem az Erős jogosultság figyelmeztetését és a belső hozzáférés változását.",
         "saveGrant": "Áttekintett jogosultság mentése"
+      }
+    },
+    "adminGrantedVerification": {
+      "title": "Admin által megadott ellenőrzés",
+      "copy": "Bizonyíték nélküli videósszelfi- vagy Persona-jogosultság megadása és visszavonása a valódi szolgáltatói és importált ellenőrzéstől függetlenül.",
+      "evaluatedAt": "Hiteles kiértékelési idő",
+      "enabledMethods": "Új jogosultsághoz engedélyezett módszerek",
+      "noEnabledMethods": "A tag élő szabályzati területén nincs engedélyezett módszer",
+      "grantRevision": "Adminjogosultság revíziója",
+      "effectiveLevel": "Tényleges ellenőrzés",
+      "externalSeal": "Tagoknak látható ellenőrzési pecsét",
+      "sealVisible": "Megjelenne",
+      "sealHidden": "Nem jelenne meg",
+      "levels": {
+        "none": "Nincs ellenőrizve",
+        "light": "Alapszintű",
+        "strong": "Erős"
+      },
+      "sources": {
+        "derived": "Valódi szolgáltatói eredmény",
+        "imported": "Importált jogosultság",
+        "granted": "Admin által megadott jogosultság"
+      },
+      "methods": {
+        "video": "Hamis videósszelfi-ellenőrzés",
+        "persona": "Hamis Persona-ellenőrzés"
+      },
+      "statuses": {
+        "active": "Aktív",
+        "expired": "Lejárt",
+        "revoked": "Visszavont"
+      },
+      "grant": {
+        "title": "Megőrzött admin által megadott pecsét",
+        "noProviderEvidence": "Módszerjelzés: admin által megadott. Ez nem Persona inquiry, videósszelfi-eredmény, kézi ellenőrzés vagy szolgáltatói bizonyíték.",
+        "method": "Megadott módszer",
+        "level": "Származtatott szint",
+        "actor": "Eredetileg megadta",
+        "grantedAt": "Eredeti megadás ideje",
+        "expiry": "Hozzárendelés lejárata",
+        "noExpiry": "Nincs lejárat",
+        "reasonMetadata": "A hozzárendelési indok tanúadata",
+        "reasonWitness": "{length} Unicode-karakter; SHA-256",
+        "empty": "Ehhez a taghoz még soha nem tartozott megőrzött adminjogosultság."
+      },
+      "editor": {
+        "title": "Bizonyíték nélküli adminjogosultság",
+        "copy": "A megadás a tag aktuális élő szabályzatában engedélyezett módszert követi. A visszavonás csak az aktív adminjogosultságot távolítja el; a valódi vagy importált ellenőrzés érvényben maradhat.",
+        "readOnly": "A Core pontos képességblokkja engedi ennek a vetületnek az olvasását, módosítását azonban nem.",
+        "method": "Megadás módszere",
+        "methodHint": "Új adminjogosultságot csak a tag aktuális területén beállított módszer kaphat.",
+        "noMethod": "Új jogosultság addig nem adható, amíg a tag élő területén nincs beállított ellenőrzési módszer.",
+        "reason": "Belső műveleti indok",
+        "reasonPrivate": "A szöveget csak a tartós parancs és a Core jogosultsága őrzi; ez a vetület csak a hosszát és a hashét adja vissza",
+        "confirm": "Ellenőriztem a UID-t, a módszert és az indokot, és értem, hogy ez szolgáltatói bizonyíték nélküli ellenőrzési jogosultságot hoz létre vagy von vissza.",
+        "grant": "{method} megadása",
+        "revoke": "{method} visszavonása",
+        "revokeDisabledMethod": "Az aktív módszer új megadáshoz már nincs engedélyezve, a meglévő adminjogosultsága azonban továbbra is visszavonható és visszavonhatónak kell maradnia.",
+        "authorityNote": "A megadás a pontos revízión cseréli a megőrzött sort. A visszavonás soha nem törli a valódi szolgáltatói vagy importált jogosultságot."
+      },
+      "transition": {
+        "title": "Korábbi jogosultságnyugta függőben.",
+        "copy": "A(z) {action} műveletnek ({target}) a korábbi panelen kell konvergálnia, mielőtt módszeralapú parancs indulhat.",
+        "recheck": "Mentett nyugta újraellenőrzése"
+      },
+      "live": {
+        "loading": "A korlátozott admin által megadott ellenőrzési vetület betöltése…",
+        "loadError": "A pontos képességblokk vagy a kiválasztott ellenőrzési vetület nem dekódolható biztonságosan.",
+        "retryLoad": "Hiteles olvasás újrapróbálása",
+        "pendingMutation": "Egy pontos adminjogosultság-parancs függőben van.",
+        "pendingMaterial": "{method}, várt revízió: {revision}. A privát indok szándékosan nem jelenik meg itt.",
+        "openPendingMember": "Függő tag megnyitása",
+        "retryExact": "Pontos mentett parancs újrapróbálása",
+        "persistenceUnavailable": "A teljes normalizált parancs nem menthető ebben a lapon. Nem küldtünk módosítást.",
+        "persistenceCleanupFailed": "A Core hiteles eredményt adott, de a mentett parancsazonosság nem törölhető.",
+        "saved": "A Core pontosan egyszer alkalmazta az adminjogosultság-parancsot, és visszaadta a hiteles állapotát.",
+        "replayed": "A Core második módosítás nélkül játszotta vissza a parancs eredeti kanonikus eredményét.",
+        "converged": "A hiteles kiválasztott olvasás bizonyítja a mentett parancs konvergenciáját; a nyugtaazonosságot töröltük.",
+        "invalidDraft": "A UID, módszer, indok, revízió vagy tartós kérésazonosság érvénytelen.",
+        "unknownError": "A Core ismeretlen vagy hibás választ adott. A pontos parancsot megőriztük a biztonságos újrapróbáláshoz."
+      },
+      "errors": {
+        "sessionInvalid": "Az adminisztrátori munkamenet már nem aktív. A mentett parancs bejelentkezés után is elérhető marad.",
+        "forbidden": "A Core által adott pontos adminjogosultság-képesség nem érhető el.",
+        "routeNotFound": "A nyugalmi adminjogosultság-útvonal még nincs kiadva.",
+        "memberNotFound": "A céltag már nem létezik vagy törlés alatt áll.",
+        "requestInvalid": "A kérés hibás, hiányzó vagy váratlan anyagot tartalmaz.",
+        "tooLarge": "A kérés meghaladja a proxy korlátját.",
+        "contractVersion": "A Core elutasította ezt az adminjogosultság-szerződésverziót.",
+        "requestIdInvalid": "A tartós kérésazonosító nem kisbetűs UUID v4.",
+        "grantInvalid": "A UID, módszer, indok vagy revízió az elfogadott határokon kívül van.",
+        "methodNotEnabled": "Ez a módszer nincs engedélyezve a tag aktuális élő szabályzatában. A hiteles állapotot frissítettük.",
+        "grantNotActive": "A kért adminjogosultság hiányzik, lejárt vagy már visszavont. A hiteles állapotot frissítettük.",
+        "conflict": "A módszer, revízió vagy jogosultságállapot megváltozott. Frissítettük a hiteles állapotot; új parancs előtt tekintsd át.",
+        "requestIdConflict": "Ez a kérésazonosító már más parancsanyaghoz kötött. A mentett parancsot nem próbáltuk új azonosítóval.",
+        "requestInProgress": "Ugyanez a parancs még folyamatban van. Őrizd meg és próbáld újra pontosan ezt a mentett kérést.",
+        "schemaUnavailable": "A szükséges jogosultság-, nyugta- vagy auditséma nem érhető el. A pontos parancs megmaradt.",
+        "storedInvalid": "A Core hibás tárolt ellenőrzési anyagot talált és zártan hibázott. A pontos parancs megmaradt.",
+        "readFailed": "A hiteles ellenőrzési olvasás sikertelen. A pontos parancs megmaradt.",
+        "writeFailed": "Az audit utáni írás vagy nyugtakonvergencia bizonytalan. A pontos parancs megmaradt.",
+        "auditWriteFailed": "A Core nem tudta tartósan kiírni az auditszándékot. A pontos parancs megmaradt.",
+        "temporarilyUnavailable": "A Core nem érhető el vagy időtúllépés történt. Nem feltételeztünk sikert, és a pontos parancs megmaradt.",
+        "invalidResponse": "A Core hibás választ adott. Nem feltételeztünk sikert, és a pontos parancs megmaradt.",
+        "generic": "A parancsot nem fogadták el. Nem feltételeztünk sikert."
       }
     },
     "audienceVisibility": {

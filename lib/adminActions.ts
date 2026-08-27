@@ -1,4 +1,5 @@
 import {
+  ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
   AUDIENCE_VISIBILITY_CONTRACT_READY,
   CANNED_TEMPLATES_CONTRACT_READY,
   OUTBOUND_MESSAGING_CONTRACT_READY,
@@ -9,6 +10,7 @@ import {
   REPORTED_CONTENT_CONTRACT_READY,
   VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
+import { ADMIN_GRANTED_VERIFICATION_ACTIONS } from "@/lib/adminGrantedVerification";
 import { AUDIENCE_VISIBILITY_ADMIN_ACTIONS } from "@/lib/audienceVisibilityAdmin";
 import { FEATURE_SWITCHES_ACTIONS } from "@/lib/featureSwitches";
 import { PROFILE_TEXT_MODERATION_ACTIONS } from "@/lib/profileTextModeration";
@@ -72,6 +74,11 @@ const ACTIVE_PERSONA_ADMIN_ACTIONS = PERSONA_ADMIN_PROXY_RELEASED
 /** Released verification actions share one explicit rollback switch and Core capability recheck. */
 const ACTIVE_VERIFICATION_ADMIN_ACTIONS = VERIFICATION_CONTRACT_READY
   ? VERIFICATION_ADMIN_ACTIONS
+  : [] as const;
+
+/** Dormant T-219 actions use their own release switch and Core capability block. */
+const ACTIVE_ADMIN_GRANTED_VERIFICATION_ACTIONS = ADMIN_GRANTED_VERIFICATION_CONTRACT_READY
+  ? ADMIN_GRANTED_VERIFICATION_ACTIONS
   : [] as const;
 
 /** Dormant T-215 actions stay absent until the reviewed T-121 provider release. */
@@ -205,6 +212,7 @@ export const ADMIN_ACTIONS = [
   ...REPORTED_CONTENT_ADMIN_ACTIONS,
   ...ACTIVE_PERSONA_ADMIN_ACTIONS,
   ...ACTIVE_VERIFICATION_ADMIN_ACTIONS,
+  ...ACTIVE_ADMIN_GRANTED_VERIFICATION_ACTIONS,
   ...ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS,
   ...ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS,
   ...ACTIVE_FEATURE_SWITCHES_ACTIONS,
@@ -433,6 +441,11 @@ export const ADMIN_ACTION_ACCESS = {
     verification_grant_preview: "write" as const,
     verification_grant_save: "write" as const,
     verification_grant_remove: "write" as const,
+  } : {}),
+
+  ...(ADMIN_GRANTED_VERIFICATION_CONTRACT_READY ? {
+    verification_grant: "write" as const,
+    verification_revoke: "write" as const,
   } : {}),
 
   // Core authors the exact per-action capability projection. These rows add

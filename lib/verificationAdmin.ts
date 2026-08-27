@@ -1517,10 +1517,23 @@ function normalizeContractOnly(body: JsonObject): JsonObject | null {
   return baseRequest(body, []) ? Object.assign(Object.create(null), { contract_version: 1 }) : null;
 }
 
-function normalizeUserDetail(body: JsonObject): JsonObject | null {
-  const raw = baseRequest(body, ["uid"]);
+function normalizeUserDetail(
+  body: JsonObject,
+  adminGrantedVerificationSelectorAllowed: boolean,
+): JsonObject | null {
+  const selector = "admin_granted_verification_contract_version";
+  const raw = baseRequest(
+    body,
+    ["uid"],
+    adminGrantedVerificationSelectorAllowed ? [selector] : [],
+  );
   const uid = integer(raw?.uid, 1, 2_147_483_647);
-  return uid === null ? null : Object.assign(Object.create(null), { contract_version: 1, uid });
+  if (uid === null || (raw?.[selector] !== undefined && raw[selector] !== 1)) return null;
+  return Object.assign(
+    Object.create(null),
+    { contract_version: 1, uid },
+    raw?.[selector] === 1 ? { [selector]: 1 } : {},
+  );
 }
 
 function grantBase(body: JsonObject): JsonObject | null {
@@ -1543,7 +1556,11 @@ function normalizeGrantSave(body: JsonObject): JsonObject | null {
 }
 
 /** `undefined` is not Verification, `null` is refused, and an object is the only forwarded material. */
-export function normalizeVerificationProxyBody(action: string, body: JsonObject): JsonObject | null | undefined {
+export function normalizeVerificationProxyBody(
+  action: string,
+  body: JsonObject,
+  adminGrantedVerificationSelectorAllowed = false,
+): JsonObject | null | undefined {
   if (!(VERIFICATION_ADMIN_ACTIONS as readonly string[]).includes(action)) return undefined;
   switch (action as VerificationAction) {
     case "verification_console": return normalizeConsole(body);
@@ -1559,7 +1576,10 @@ export function normalizeVerificationProxyBody(action: string, body: JsonObject)
     case "verification_places_city_detail": return normalizeCityDetail(body);
     case "verification_simulate": return normalizeSimulation(body);
     case "verification_pending_summary": return normalizeContractOnly(body);
-    case "verification_user_detail": return normalizeUserDetail(body);
+    case "verification_user_detail": return normalizeUserDetail(
+      body,
+      adminGrantedVerificationSelectorAllowed,
+    );
     case "verification_grant_preview": return grantBase(body);
     case "verification_grant_save": return normalizeGrantSave(body);
     case "verification_grant_remove": return normalizeRevisionMutation(body, "uid");

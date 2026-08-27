@@ -6,7 +6,10 @@ import {
   isAdminActionAllowed,
   isAdminActionAuthorized,
 } from "../lib/adminActions.ts";
-import { PERSONA_ADMIN_PROXY_RELEASED } from "../lib/contractReadiness.ts";
+import {
+  ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
+  PERSONA_ADMIN_PROXY_RELEASED,
+} from "../lib/contractReadiness.ts";
 import {
   PERSONA_ADMIN_ACTIONS,
   PERSONA_ADMIN_BRIDGE_ERROR_STATUSES,
@@ -15,6 +18,7 @@ import {
   PERSONA_ADMIN_CORE_ERROR_STATUSES,
   PERSONA_ADMIN_ERROR_KEYS,
   PERSONA_ADMIN_MUTATION_ACTIONS,
+  PERSONA_TRANSITIONED_CAPABILITY_ACTIONS,
   PERSONA_PENDING_STORAGE_KEY,
   PERSONA_START_FIELD_KEYS,
   PERSONA_START_SECTIONS,
@@ -244,6 +248,14 @@ test("admin_me Persona capabilities are exact, ordered, action-driven, and readi
   const readyWriter = personaAdminCapabilitiesFrom(readyWriterRaw);
   assert.ok(readyWriter);
   assert.equal(personaCapabilityAllows(readyWriter, "force_verify"), true);
+
+  const transitionedWriter = clone(readyWriterRaw);
+  object(transitionedWriter.persona).actions = [...PERSONA_TRANSITIONED_CAPABILITY_ACTIONS];
+  assert.equal(personaAdminCapabilitiesFrom(transitionedWriter), null);
+  assert.deepEqual(
+    personaAdminCapabilitiesFrom(transitionedWriter, true)?.actions,
+    PERSONA_TRANSITIONED_CAPABILITY_ACTIONS,
+  );
 
   const roleIsNotAuthority = clone(readyWriterRaw);
   roleIsNotAuthority.role = "viewer";
@@ -673,7 +685,7 @@ test("the released bridge keeps exact guest, origin, viewer, and writer gates", 
   const originGate = proxy.indexOf("isTrustedAdminRequest(request.headers)");
   const allowListGate = proxy.indexOf("isAdminActionAllowed(action)");
   const sessionGate = proxy.indexOf("readAdminSession()");
-  const capabilityGate = proxy.indexOf("personaProxyCapabilityAuthorized(action, membership.data)");
+  const capabilityGate = proxy.indexOf("personaProxyCapabilityAuthorized(");
   const bodyGate = proxy.indexOf("normalizePersonaProxyBody(action, body)");
   const identityMerge = proxy.indexOf("mergeCoreParams(body, { admin_email: session.email })");
   assert.ok(originGate >= 0 && allowListGate > originGate && sessionGate > allowListGate);
@@ -708,11 +720,14 @@ test("page, navigation, runtime readiness, confirmations, and same-origin calls 
   const configCall = component.indexOf('adminCall("persona_start_get_config_admin"');
   assert.ok(membershipCall >= 0 && configCall > membershipCall);
   for (const endpoint of PERSONA_ADMIN_ACTIONS) assert.match(component, new RegExp(endpoint));
+  assert.equal(ADMIN_GRANTED_VERIFICATION_CONTRACT_READY, false);
+  assert.match(component, /!ADMIN_GRANTED_VERIFICATION_CONTRACT_READY \|\| action === "force_verify"/);
+  assert.match(component, /member\.adminGrantTransition/);
   assert.match(component, /adminCall\("persona-member", \{ uid: String\(uid\) \}\)/);
   assert.doesNotMatch(component, /adminCall\("user_detail"/);
   assert.match(memberRoute, /if \(!PERSONA_ADMIN_PROXY_RELEASED\) return errorResponse\("not-found", 404\)/);
   assert.match(memberRoute, /requireAdminWriter\(\)/);
-  assert.match(memberRoute, /personaCapabilityAllows\(capabilities, "apply_fake"\)/);
+  assert.match(memberRoute, /\["apply_fake", "revoke_fake", "force_verify"\]\.some/);
   assert.match(memberRoute, /isTrustedAdminRequest\(request\.headers\)/);
   assert.match(memberRoute, /coreCall\("user_detail"/);
   assert.match(memberRoute, /persona_contract_version: PERSONA_ADMIN_CONTRACT_VERSION/);

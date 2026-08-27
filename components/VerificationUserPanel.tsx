@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
 import { formatDate } from "@/lib/format";
+import { ADMIN_GRANTED_VERIFICATION_CONTRACT_READY } from "@/lib/contractReadiness";
 import {
   VERIFICATION_PENDING_STORAGE_KEY,
   verificationConflictResponse,
@@ -42,7 +43,10 @@ export default function VerificationUserPanel({ uid, access }: { uid: number; ac
   const [pending, setPending] = useState<VerificationPendingMutation | null>(null);
   const pendingRef = useRef<VerificationPendingMutation | null>(null);
   const canRead = access?.contract_ready === true && access.capabilities.includes("verification_grant_read");
-  const canEdit = access?.contract_ready === true && access.capabilities.includes("verification_grant_edit");
+  const legacyEditorTransitioned = ADMIN_GRANTED_VERIFICATION_CONTRACT_READY;
+  const canEdit = !legacyEditorTransitioned
+    && access?.contract_ready === true
+    && access.capabilities.includes("verification_grant_edit");
 
   const load = useCallback(async () => {
     if (!canRead) return;
@@ -223,7 +227,7 @@ export default function VerificationUserPanel({ uid, access }: { uid: number; ac
 
         <div className="verification-grant-editor">
           <header><h3>{t("editor.title")}</h3><p>{t("editor.copy")}</p></header>
-          {!canEdit ? <div className="alert alert-info">{t("editor.readOnly")}</div> : <div className="form-stack">
+          {!canEdit ? <div className="alert alert-info">{t(legacyEditorTransitioned ? "editor.transitionReadOnly" : "editor.readOnly")}</div> : <div className="form-stack">
             <label className="field"><span>{t("editor.level")}</span><select disabled={locked} value={level} onChange={(event) => updateDraft(() => setLevel(event.target.value as typeof level))}><option value="light">{t("levels.light")}</option><option value="strong">{t("levels.strong")}</option></select></label>
             <label className="field"><span>{t("editor.reason")}</span><textarea disabled={locked} rows={4} maxLength={300} value={reason} onChange={(event) => updateDraft(() => setReason(event.target.value))} /><small className={validation === "reason" ? "field-error" : "field-hint"}>{verificationTextLength(reason)}/300 · {t("editor.reasonPrivate")}</small></label>
             <label className="field"><span>{t("editor.expiryMode")}</span><select disabled={locked} value={expiryMode} onChange={(event) => updateDraft(() => setExpiryMode(event.target.value as typeof expiryMode))}><option value="none">{t("editor.noExpiry")}</option><option value="date">{t("editor.chooseExpiry")}</option></select></label>

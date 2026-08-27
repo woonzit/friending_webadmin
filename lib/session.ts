@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { coreCall } from "@/lib/core";
 import {
+  ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
   AUDIENCE_VISIBILITY_CONTRACT_READY,
   PERSONA_ADMIN_PROXY_RELEASED,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
@@ -86,7 +87,10 @@ export async function adminMe(): Promise<AdminIdentity | null> {
   if (result.status !== 200 || !result.data?.success) return null;
   const role = normalizeAdminRole(result.data.role);
   if (!role) return null;
-  const persona = personaAdminCapabilitiesFrom(result.data);
+  const persona = personaAdminCapabilitiesFrom(
+    result.data,
+    ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
+  );
   const verification = verificationAdminMe(result.data.verification);
   const audienceVisibility = audienceVisibilityAdminMe(result.data.audience_visibility);
   const profileTextModeration = profileTextModerationAdminMe(result.data.profile_text_moderation);

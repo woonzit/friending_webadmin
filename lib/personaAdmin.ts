@@ -33,6 +33,13 @@ export const PERSONA_ADMIN_CAPABILITY_ACTIONS = [
   "write_start_config",
 ] as const;
 
+/** Exact post-T-219 action list after the two fake-verification aliases are unadvertised. */
+export const PERSONA_TRANSITIONED_CAPABILITY_ACTIONS = [
+  "force_verify",
+  "read_start_config",
+  "write_start_config",
+] as const;
+
 export type PersonaAdminCapabilityAction =
   (typeof PERSONA_ADMIN_CAPABILITY_ACTIONS)[number];
 
@@ -615,7 +622,10 @@ export function personaStartUpdateResponse(value: unknown): PersonaStartConfigMu
     : null;
 }
 
-export function personaAdminCapabilitiesFrom(value: unknown): PersonaAdminCapabilities | null {
+export function personaAdminCapabilitiesFrom(
+  value: unknown,
+  allowTransitionedAliasActions = false,
+): PersonaAdminCapabilities | null {
   const outer = record(value);
   if (!outer || outer.success !== true || outer.status_code !== 200) return null;
   const source = exactObject(
@@ -628,17 +638,22 @@ export function personaAdminCapabilitiesFrom(value: unknown): PersonaAdminCapabi
     || source.can_read !== true
     || typeof source.can_write !== "boolean"
     || !Array.isArray(source.actions)) return null;
+  const actions = source.actions as unknown[];
 
-  const expected = source.can_write ? PERSONA_ADMIN_CAPABILITY_ACTIONS : VIEWER_ACTIONS;
-  if (source.actions.length !== expected.length
-    || !source.actions.every((action, index) => action === expected[index])) return null;
+  const expectedLists: readonly (readonly PersonaAdminCapabilityAction[])[] = source.can_write
+    ? allowTransitionedAliasActions
+      ? [PERSONA_ADMIN_CAPABILITY_ACTIONS, PERSONA_TRANSITIONED_CAPABILITY_ACTIONS]
+      : [PERSONA_ADMIN_CAPABILITY_ACTIONS]
+    : [VIEWER_ACTIONS];
+  if (!expectedLists.some((expected) => actions.length === expected.length
+    && actions.every((action, index) => action === expected[index]))) return null;
 
   return {
     contract_version: 1,
     contract_ready: source.contract_ready,
     can_read: true,
     can_write: source.can_write,
-    actions: [...source.actions] as PersonaAdminCapabilityAction[],
+    actions: [...actions] as PersonaAdminCapabilityAction[],
   };
 }
 
@@ -660,10 +675,14 @@ const ACTION_CAPABILITY: ReadonlyMap<string, PersonaAdminCapabilityAction> = new
 export function personaProxyCapabilityAuthorized(
   action: string,
   adminMe: unknown,
+  allowTransitionedAliasActions = false,
 ): boolean | null {
   const required = ACTION_CAPABILITY.get(action);
   if (!required) return null;
-  return personaCapabilityAllows(personaAdminCapabilitiesFrom(adminMe), required);
+  return personaCapabilityAllows(
+    personaAdminCapabilitiesFrom(adminMe, allowTransitionedAliasActions),
+    required,
+  );
 }
 
 function canonicalUid(value: unknown): number | null {

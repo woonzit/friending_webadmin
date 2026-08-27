@@ -23,6 +23,12 @@ export const PUSH_MODE_CONTRACT_READY: boolean = true;
 /** Core T-109 S2 is released; all 17 actions remain gated by Core's current projection. */
 export const VERIFICATION_CONTRACT_READY: boolean = true;
 /**
+ * T-125/T-219 is not released. Even after this flips, Core's separate
+ * `admin_me.admin_granted_verification` block must be exact and ready before
+ * the selector or either mutation can cross the proxy.
+ */
+export const ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: boolean = false;
+/**
  * Core T-121 is released dormant. The complete v1 consumer remains unreachable
  * until migration, independent consumer review, and separate cutover approval.
  */

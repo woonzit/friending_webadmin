@@ -6,6 +6,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
+import { ADMIN_GRANTED_VERIFICATION_CONTRACT_READY } from "@/lib/contractReadiness";
 import {
   PERSONA_ADMIN_CONTRACT_VERSION,
   PERSONA_PENDING_STORAGE_KEY,
@@ -266,7 +267,10 @@ export default function PersonaAdminConsole() {
     setMemberRecoveryRequired(false);
     setConfirmation(null);
     const membership = await adminCall("admin_me");
-    const parsedCapabilities = personaAdminCapabilitiesFrom(membership);
+    const parsedCapabilities = personaAdminCapabilitiesFrom(
+      membership,
+      ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
+    );
     if (!parsedCapabilities) {
       setState("error");
       return;
@@ -668,7 +672,9 @@ export default function PersonaAdminConsole() {
     return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
   }
 
-  const memberActions: MemberAction[] = ["apply_fake", "revoke_fake", "force_verify"];
+  const allMemberActions: MemberAction[] = ["apply_fake", "revoke_fake", "force_verify"];
+  const memberActions = allMemberActions
+    .filter((action) => !ADMIN_GRANTED_VERIFICATION_CONTRACT_READY || action === "force_verify");
   const uid = canonicalPersonaUid(uidInput);
   const memberReasonNormalized = normalizePersonaReason(memberReason);
   const configReasonNormalized = normalizePersonaReason(configReason);
@@ -727,6 +733,7 @@ export default function PersonaAdminConsole() {
       <section className="panel persona-member-panel">
         <div className="panel-header"><div><h2>{t("member.title")}</h2><p>{t("member.copy")}</p></div></div>
         <div className="panel-body">
+          {ADMIN_GRANTED_VERIFICATION_CONTRACT_READY ? <div className="alert alert-info">{t("member.adminGrantTransition")}</div> : null}
           {memberFeedback && <div className={`alert ${memberFeedback.tone === "success" ? "alert-success" : memberFeedback.tone === "info" ? "alert-info" : "alert-error"}`} role="status">{memberFeedback.text}</div>}
           <div className="persona-target-lookup">
             <label className="field">

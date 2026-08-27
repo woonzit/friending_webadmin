@@ -14,9 +14,11 @@ import UserContentEditor from "@/components/UserContentEditor";
 import ProductPopupPanel from "@/components/ProductPopupPanel";
 import OutboundMessagingPanel from "@/components/OutboundMessagingPanel";
 import VerificationUserPanel from "@/components/VerificationUserPanel";
+import AdminGrantedVerificationPanel from "@/components/AdminGrantedVerificationPanel";
 import AudienceVisibilityUserPanel from "@/components/AudienceVisibilityUserPanel";
 import { adminCall } from "@/lib/adminClient";
 import {
+  ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
   AUDIENCE_VISIBILITY_CONTRACT_READY,
   OUTBOUND_MESSAGING_CONTRACT_READY,
   PRODUCT_POPUP_CONTRACT_READY,
@@ -153,6 +155,7 @@ export default function UserDetailPage() {
       <UserMembershipPanel uid={uid} initial={data.membership} />
       <UserModerationPanel uid={uid} />
       {VERIFICATION_CONTRACT_READY ? <VerificationUserPanel uid={uid} access={data.verification_access} /> : null}
+      {ADMIN_GRANTED_VERIFICATION_CONTRACT_READY ? <AdminGrantedVerificationPanel key={`admin-granted-verification-${uid}`} uid={uid} /> : null}
       {AUDIENCE_VISIBILITY_CONTRACT_READY ? <AudienceVisibilityUserPanel uid={uid} /> : null}
       {PRODUCT_POPUP_CONTRACT_READY ? <ProductPopupPanel key={`product-popup-${uid}`} uid={uid} /> : null}
       {OUTBOUND_MESSAGING_CONTRACT_READY ? <OutboundMessagingPanel uid={uid} displayName={profile.display_name} codename={profile.codename} /> : null}

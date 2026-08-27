@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PERSONA_ADMIN_PROXY_RELEASED } from "@/lib/contractReadiness";
+import {
+  ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
+  PERSONA_ADMIN_PROXY_RELEASED,
+} from "@/lib/contractReadiness";
 import { coreCall } from "@/lib/core";
 import {
   PERSONA_ADMIN_CONTRACT_VERSION,
@@ -50,8 +53,13 @@ export async function POST(request: NextRequest) {
 
   const writer = await requireAdminWriter();
   if (!writer.ok) return errorResponse(writer.error, writer.status);
-  const capabilities = personaAdminCapabilitiesFrom(writer.membership);
-  if (!personaCapabilityAllows(capabilities, "apply_fake")) {
+  const capabilities = personaAdminCapabilitiesFrom(
+    writer.membership,
+    ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
+  );
+  if (!["apply_fake", "revoke_fake", "force_verify"].some((action) => (
+    personaCapabilityAllows(capabilities, action as "apply_fake" | "revoke_fake" | "force_verify")
+  ))) {
     return errorResponse("persona-capability-required", 403);
   }
 
