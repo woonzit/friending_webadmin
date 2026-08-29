@@ -5613,13 +5613,17 @@
       "globalProtected": "A globális szabály állandó: a tartalmát szerkeszd a törlése vagy a hatókörének módosítása helyett.",
       "writeRequired": "A szerepköröd megtekintheti a megjelenési szabályokat, de nem módosíthatja.",
       "timeout": "A Core nem válaszolt időben. A mentés megtörténhetett — a lista frissült; ellenőrizd, mielőtt újra próbálod.",
+      "uncertainNotLanded": "A Core válasza elveszett. A lista frissült, és nem tartalmazza ezt a módosítást — megismételheted.",
+      "uncertainReloadFailed": "A Core válasza elveszett, és a lista nem tölthető újra. Mielőtt bármit tennél, tölts újra; az ismételt mentés duplikált szabályt hozhatna létre.",
       "rejected": "A Core elutasította a szabályt ({code}).",
       "save": "A szabály nem menthető.",
       "delete": "A szabály nem törölhető."
     },
     "toast": {
       "saved": "Megjelenési szabály elmentve.",
-      "deleted": "Megjelenési szabály törölve."
+      "deleted": "Megjelenési szabály törölve.",
+      "recovered": "Megjelenési szabály elmentve (az újratöltött lista megerősítette).",
+      "deletedRecovered": "Megjelenési szabály törölve (az újratöltött lista megerősítette)."
     },
     "validation": {
       "name": "Adj meg egy admin megnevezést (1–120 karakter).",
@@ -5638,6 +5642,7 @@
     "editor": {
       "createTitle": "Megjelenési szabály létrehozása",
       "editTitle": "Megjelenési szabály szerkesztése",
+      "reloadList": "Lista újratöltése",
       "targetingTitle": "Célzás és életciklus",
       "targetingCopy": "Hol és mikor érvényes a szabály. A geo szabály mindig megelőzi az áruház-országot, az pedig a globális szabályt.",
       "name": "Admin megnevezés",
@@ -5659,6 +5664,7 @@
       "storefrontHint": "ISO 3166-1 alpha-3, az eszköz App Store áruház-országa.",
       "placeLabel": "Hely megnevezése",
       "placeLabelHint": "A szabálylistában látszik; a városkeresés kitölti.",
+      "placeLabelPlaceholder": "Budapest",
       "countryCode": "Ország (opcionális)",
       "countryCodeNone": "Nincs beállítva",
       "countryCodeHint": "Csak metaadat — nem vesz részt az illesztésben.",
@@ -5813,6 +5819,8 @@
       "storefront": "Áruház-ország",
       "storefrontAny": "Nem küldjük",
       "language": "Nyelv",
+      "languageEn": "Angol",
+      "languageHu": "Magyar",
       "latitude": "Szélesség",
       "longitude": "Hosszúság",
       "ip": "IP-cím",
@@ -5838,6 +5846,8 @@
       "landingButton": "Tovább",
       "hero": "Hero-karusszel ({count})",
       "heroEmpty": "Nincs hero-elem ehhez a helyhez.",
+      "typeImage": "Kép",
+      "typeVideo": "Videó",
       "role": {
         "accent": "Fő accent",
         "accent_pressed": "Megnyomott / kiemelt",

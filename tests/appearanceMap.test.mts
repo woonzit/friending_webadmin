@@ -29,8 +29,14 @@ const GLOBAL_CSP = [
   "media-src 'self' https:",
 ].join("; ");
 
+/**
+ * Google's "Allowlist CSP" sample for the Maps JavaScript API (developers.google.com/maps/
+ * documentation/javascript/content-security-policy, lines 98-110, page updated 2026-08-25),
+ * `'unsafe-eval'` included: the API does not execute without it. It is acceptable only on the
+ * isolated map document, which renders nothing but the map and never sees a secret.
+ */
 const GOOGLE_MAPS_ORIGINS = {
-  "script-src": ["https://*.googleapis.com", "https://*.gstatic.com", "*.google.com", "https://*.ggpht.com", "*.googleusercontent.com", "blob:"],
+  "script-src": ["'unsafe-eval'", "https://*.googleapis.com", "https://*.gstatic.com", "*.google.com", "https://*.ggpht.com", "*.googleusercontent.com", "blob:"],
   "img-src": ["https://*.googleapis.com", "https://*.gstatic.com", "*.google.com", "*.googleusercontent.com", "data:"],
   "frame-src": ["*.google.com"],
   "connect-src": ["https://*.googleapis.com", "*.google.com", "https://*.gstatic.com", "data:", "blob:"],
@@ -96,9 +102,13 @@ test("only the map document carries Google's Maps allow-list, a same-origin fram
   // The map document never needs the console's wide media/image grants.
   assert.ok(!(policy.get("img-src") ?? []).includes("https:"), "img-src is limited to Google's hosts");
   assert.deepEqual(policy.get("media-src"), ["'self'"]);
-  for (const sources of policy.values()) {
-    assert.ok(!sources.some((source) => source === "*" || source === "'unsafe-eval'"), "no wildcard or eval grant");
+  for (const [directive, sources] of policy) {
+    assert.ok(!sources.includes("*"), `${directive}: no wildcard grant`);
+    if (directive !== "script-src") assert.ok(!sources.includes("'unsafe-eval'"), `${directive}: eval only where Google requires it`);
   }
+  // The console document never gets eval: the grant is confined to the map frame.
+  const globalPolicy = directives(GLOBAL_CSP);
+  for (const sources of globalPolicy.values()) assert.ok(!sources.includes("'unsafe-eval'"));
 });
 
 /**

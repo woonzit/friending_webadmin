@@ -1,4 +1,6 @@
 import { getCountryDataList } from "countries-list";
+import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
+import { webadminDataSuccessEnvelope, webadminErrorEnvelope } from "@/lib/webadminEnvelope";
 
 /**
  * Appearance & placement rules (D-052, `handoffs/appearance-rules-contract.md`
@@ -228,6 +230,15 @@ export type AppearancePreviewLanding = {
   description: string;
 };
 
+export type AppearancePreviewHeroStyle = {
+  title_size: number | null;
+  title_color: string;
+  title_weight: string;
+  subtitle_size: number | null;
+  subtitle_color: string;
+  subtitle_weight: string;
+};
+
 export type AppearancePreviewHeroItem = {
   id: string;
   media_url: string;
@@ -236,6 +247,7 @@ export type AppearancePreviewHeroItem = {
   title: string;
   subtitle: string;
   link_title: string;
+  text_style: Record<AppearanceHeroPlatform, AppearancePreviewHeroStyle>;
 };
 
 export type AppearancePreviewPayload = {
@@ -430,9 +442,15 @@ export function appearanceTimestampToLocalInput(value: string | null): string {
 export function appearanceTimestampFromLocalInput(value: string): string | null | undefined {
   const trimmed = value.trim();
   if (trimmed === "") return null;
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(trimmed)) return undefined;
-  const date = new Date(trimmed);
-  if (!Number.isFinite(date.getTime())) return undefined;
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(trimmed);
+  if (!match) return undefined;
+  const [year, month, day, hour, minute, second] = match.slice(1).map((part) => Number(part ?? 0));
+  const date = new Date(year!, month! - 1, day!, hour!, minute!, second!);
+  // `Date` normalises an impossible local date (30 February → 2 March) and a
+  // time inside a DST gap; only an input that reads back unchanged is real.
+  if (!Number.isFinite(date.getTime())
+    || date.getFullYear() !== year || date.getMonth() !== month! - 1 || date.getDate() !== day
+    || date.getHours() !== hour || date.getMinutes() !== minute || date.getSeconds() !== second) return undefined;
   return date.toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
@@ -686,13 +704,13 @@ function parseLandingDefaults(value: unknown): AppearanceLandingDraft | null {
 }
 
 /**
- * `appearance_rules_list` material. `defaults` is Core's compiled default (the
- * same §1 palette this module compiles); when Core omits it the compiled table
- * is used so the editor's inheritance preview still has its last level.
+ * `appearance_rules_list` material: the rules plus Core's compiled defaults
+ * (the same §1 palette and landing this module compiles for its own display
+ * constants). Both halves are required; a partial payload is refused.
  */
 export function parseAppearanceListPayload(value: unknown): AppearanceListPayload | null {
   const source = record(value);
-  if (!source || !exactKeys(source, ["rules"], ["defaults"])) return null;
+  if (!source || !exactKeys(source, ["rules", "defaults"])) return null;
   if (!Array.isArray(source.rules)) return null;
   const rules: AppearanceRule[] = [];
   const seen = new Set<string>();
@@ -705,19 +723,14 @@ export function parseAppearanceListPayload(value: unknown): AppearanceListPayloa
     rules.push(rule);
   }
   if (globalCount > 1) return null;
-  let defaults: AppearanceListPayload["defaults"] = {
-    palette: APPEARANCE_DEFAULT_PALETTE,
-    landing: APPEARANCE_DEFAULT_LANDING,
-  };
-  if (Object.hasOwn(source, "defaults")) {
-    const defaultsSource = record(source.defaults);
-    if (!defaultsSource || !exactKeys(defaultsSource, ["palette", "landing"])) return null;
-    const palette = parseAppearanceFullPalette(defaultsSource.palette);
-    const landing = parseLandingDefaults(defaultsSource.landing);
-    if (!palette || !landing) return null;
-    defaults = { palette, landing };
-  }
-  return { rules, defaults };
+  // The binding list wire carries Core's compiled defaults; the console never
+  // substitutes its own table for missing provider material.
+  const defaultsSource = record(source.defaults);
+  if (!defaultsSource || !exactKeys(defaultsSource, ["palette", "landing"])) return null;
+  const palette = parseAppearanceFullPalette(defaultsSource.palette);
+  const landing = parseLandingDefaults(defaultsSource.landing);
+  if (!palette || !landing) return null;
+  return { rules, defaults: { palette, landing } };
 }
 
 function parsePreviewLanding(value: unknown): AppearancePreviewLanding | null {
@@ -758,11 +771,44 @@ function parsePreviewHeroItem(value: unknown): AppearancePreviewHeroItem | null 
   const title = boundedText(source.title, 0, 160);
   const subtitle = boundedText(source.subtitle, 0, 160);
   const linkTitle = boundedText(source.link_title, 0, 80);
+  const textStyle = parsePreviewTextStyle(source.text_style);
   if (id === null || media === null || type === null || forward === null
     || title === null || subtitle === null || linkTitle === null
     || source.image_url !== media || source.destination_url !== forward
-    || record(source.text_style) === null) return null;
-  return { id, media_url: media, type, forward_url: forward, title, subtitle, link_title: linkTitle };
+    || textStyle === null) return null;
+  return { id, media_url: media, type, forward_url: forward, title, subtitle, link_title: linkTitle, text_style: textStyle };
+}
+
+const PREVIEW_STYLE_KEYS = [
+  "title_size", "title_color", "title_weight", "subtitle_size", "subtitle_color", "subtitle_weight",
+] as const;
+
+/** `AppearanceRuleService::heroStyle()` per platform: exact six keys, closed domains. */
+function parsePreviewTextStyle(value: unknown): Record<AppearanceHeroPlatform, AppearancePreviewHeroStyle> | null {
+  const source = record(value);
+  if (!source || !exactKeys(source, ["web", "mobile"])) return null;
+  const result = {} as Record<AppearanceHeroPlatform, AppearancePreviewHeroStyle>;
+  for (const platform of ["web", "mobile"] as const) {
+    const style = record(source[platform]);
+    if (!style || !exactKeys(style, PREVIEW_STYLE_KEYS)) return null;
+    const titleSize = style.title_size === null ? null : integer(style.title_size, 10, 120);
+    const subtitleSize = style.subtitle_size === null ? null : integer(style.subtitle_size, 10, 120);
+    const titleColor = heroColor(style.title_color);
+    const subtitleColor = heroColor(style.subtitle_color);
+    const weights = [style.title_weight, style.subtitle_weight];
+    if ((style.title_size !== null && titleSize === null) || (style.subtitle_size !== null && subtitleSize === null)
+      || titleColor === null || subtitleColor === null
+      || !weights.every((weight) => typeof weight === "string" && (APPEARANCE_HERO_TEXT_WEIGHTS as readonly string[]).includes(weight))) return null;
+    result[platform] = {
+      title_size: titleSize,
+      title_color: titleColor,
+      title_weight: style.title_weight as string,
+      subtitle_size: subtitleSize,
+      subtitle_color: subtitleColor,
+      subtitle_weight: style.subtitle_weight as string,
+    };
+  }
+  return result;
 }
 
 /** `appearance_rules_preview` material = the app's `POST /v1/app/appearance` payload. */
@@ -795,7 +841,8 @@ export function parseAppearancePreviewPayload(value: unknown): AppearancePreview
     ? matched.location_source as AppearanceLocationSource
     : null;
   if (scope === null || ruleId === null || locationSource === null) return null;
-  if (scope === "default" && ruleId !== "") return null;
+  // `default` = compiled defaults and no rule; every other scope names the rule that won.
+  if (scope === "default" ? ruleId !== "" : ruleId === "") return null;
   return {
     revision,
     content_version: contentVersion,
@@ -1104,7 +1151,6 @@ export function validateAppearanceRuleDraft(draft: AppearanceRuleDraft): Appeara
     const radius = numberInput(draft.radius_km);
     if (latitude === null || longitude === null || radius === null
       || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180
-      || (latitude === 0 && longitude === 0)
       || radius < MIN_APPEARANCE_RADIUS_KM || radius > MAX_APPEARANCE_RADIUS_KM
       || boundedText(draft.place_label, 1, MAX_APPEARANCE_PLACE_LABEL_LENGTH) === null) return "geo";
     if (draft.country_code !== "" && !isAppearanceAlpha2(draft.country_code)) return "countryCode";
@@ -1175,7 +1221,36 @@ export type AppearancePreviewRequest = {
 };
 
 const IPV4 = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
-const IPV6 = /^[0-9A-Fa-f:.]{2,45}$/;
+const IPV6_HEXTET = /^[0-9A-Fa-f]{1,4}$/;
+
+/**
+ * Exact textual IPv4 or IPv6 address (RFC 4291 §2.2: hextets of 1–4 hex
+ * digits, at most one `::` compression, an optional trailing embedded dotted
+ * quad counting as two hextets, exactly eight hextets without compression and
+ * at most seven with it). No zone ids, prefixes, ports or brackets.
+ */
+export function parseAppearanceIpAddress(value: string): string | null {
+  const ip = value.trim();
+  if (IPV4.test(ip)) return ip;
+  if (!ip.includes(":") || ip.length > 45 || /[^0-9A-Fa-f:.]/.test(ip)) return null;
+  const halves = ip.split("::");
+  if (halves.length > 2) return null;
+  const head = halves[0] === "" ? [] : halves[0]!.split(":");
+  const tail = halves.length === 2 ? (halves[1] === "" ? [] : halves[1]!.split(":")) : [];
+  const groups = [...head, ...tail];
+  let hextets = 0;
+  for (const [index, group] of groups.entries()) {
+    if (index === groups.length - 1 && group.includes(".")) {
+      if (!IPV4.test(group)) return null;
+      hextets += 2;
+      continue;
+    }
+    if (!IPV6_HEXTET.test(group)) return null;
+    hextets += 1;
+  }
+  if (halves.length === 2 ? hextets > 7 : hextets !== 8) return null;
+  return ip;
+}
 
 function parsePreviewRequest(body: Record<string, unknown>): AppearancePreviewRequest | null {
   if (!subsetKeys(body, ["storefront_country", "latitude", "longitude", "ip", "lang"])) return null;
@@ -1196,8 +1271,8 @@ function parsePreviewRequest(body: Record<string, unknown>): AppearancePreviewRe
   }
   if (Object.hasOwn(body, "ip") && body.ip !== "") {
     if (typeof body.ip !== "string") return null;
-    const ip = body.ip.trim();
-    if (!IPV4.test(ip) && !(ip.includes(":") && IPV6.test(ip))) return null;
+    const ip = parseAppearanceIpAddress(body.ip);
+    if (ip === null) return null;
     request.ip = ip;
   }
   if (Object.hasOwn(body, "lang") && body.lang !== "") {
@@ -1267,4 +1342,133 @@ export function appearanceRuleIsLive(rule: AppearanceRule, now: number): boolean
   if (rule.starts_at !== null && Date.parse(rule.starts_at) > now) return false;
   if (rule.ends_at !== null && Date.parse(rule.ends_at) <= now) return false;
   return true;
+}
+
+
+// ---------------------------------------------------------------------------
+// Response decoding. Every browser path evaluates Core's exact legacy envelope
+// (`lib/webadminEnvelope.ts`) or the bridge's exact refusal before any domain
+// material is trusted, and every write success is bound to its target.
+// ---------------------------------------------------------------------------
+
+/** Core (or the bridge) answered with a machine-named refusal: the write did not land. */
+export type AppearanceRefusal = { ok: false; kind: "refused"; error: string; status: number };
+/** No usable answer: transport loss, timeout, unreachable Core or an unrecognised shape. A write may have landed. */
+export type AppearanceUncertain = { ok: false; kind: "uncertain"; error: string };
+export type AppearanceDecode<T> = { ok: true; value: T } | AppearanceRefusal | AppearanceUncertain;
+
+const UNCERTAIN_BRIDGE_ERRORS: ReadonlySet<string> = new Set(["core-timeout", "core-unavailable", "invalid-core-response"]);
+
+function uncertain(error: string): AppearanceUncertain {
+  return { ok: false, kind: "uncertain", error };
+}
+
+function decodeRefusal(value: unknown): AppearanceRefusal | AppearanceUncertain | null {
+  const bridge = adminBridgeErrorEnvelope(value);
+  if (bridge) {
+    return UNCERTAIN_BRIDGE_ERRORS.has(bridge.error)
+      ? uncertain(bridge.error)
+      : { ok: false, kind: "refused", error: bridge.error, status: bridge.status_code };
+  }
+  const core = webadminErrorEnvelope(value, "forbidden") ?? webadminErrorEnvelope(value, "required");
+  return core ? { ok: false, kind: "refused", error: core.error, status: core.status_code } : null;
+}
+
+function decodeMaterial<T>(value: unknown, parse: (data: unknown) => T | null): AppearanceDecode<T> {
+  if (value === null || value === undefined) return uncertain("no-response");
+  const success = webadminDataSuccessEnvelope(value);
+  if (success) {
+    const parsed = parse(success.data);
+    return parsed === null ? uncertain("malformed-material") : { ok: true, value: parsed };
+  }
+  return decodeRefusal(value) ?? uncertain("malformed-envelope");
+}
+
+export function decodeAppearanceListResponse(value: unknown): AppearanceDecode<AppearanceListPayload> {
+  return decodeMaterial(value, parseAppearanceListPayload);
+}
+
+export function decodeAppearancePreviewResponse(value: unknown): AppearanceDecode<AppearancePreviewPayload> {
+  return decodeMaterial(value, parseAppearancePreviewPayload);
+}
+
+export function decodeAppearanceGeocodeResponse(value: unknown): AppearanceDecode<AppearanceGeocodeCandidate[]> {
+  return decodeMaterial(value, parseAppearanceGeocodePayload);
+}
+
+/** The fourteen-key material of a stored rule, for comparison with a submitted body. */
+export function appearanceRuleInputOf(rule: AppearanceRule): AppearanceRuleInput {
+  return {
+    name: rule.name,
+    scope: rule.scope,
+    storefront_country: rule.storefront_country,
+    country_code: rule.country_code,
+    center: rule.center ? { ...rule.center } : null,
+    radius_km: rule.radius_km,
+    place_label: rule.place_label,
+    priority: rule.priority,
+    active: rule.active,
+    starts_at: rule.starts_at,
+    ends_at: rule.ends_at,
+    landing: { ...rule.landing },
+    hero: { mode: rule.hero.mode, items: rule.hero.items.map((item) => ({ ...item })) },
+    palette: { light: { ...rule.palette.light }, dark: { ...rule.palette.dark } },
+  };
+}
+
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  const source = record(value);
+  if (source) {
+    return `{${Object.keys(source).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(source[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+/**
+ * True when a stored rule carries exactly the submitted material. Core mints
+ * ids for hero items submitted without one, so those ids are the only field
+ * excluded from the comparison — and only where the submission left them empty.
+ */
+export function appearanceRuleMaterialMatches(rule: AppearanceRule, submitted: AppearanceRuleInput): boolean {
+  const stored = appearanceRuleInputOf(rule);
+  if (stored.hero.items.length !== submitted.hero.items.length) return false;
+  const storedItems = stored.hero.items.map((item, index) => (submitted.hero.items[index]?.id === "" ? { ...item, id: "" } : item));
+  return canonicalJson({ ...stored, hero: { mode: stored.hero.mode, items: storedItems } }) === canonicalJson(submitted);
+}
+
+/**
+ * `appearance_rules_save`: exact success envelope, `data: { rule }`, and the
+ * returned rule bound to the submitted target — the same id on an update, the
+ * same material on a create. An unbound "success" is uncertain, never adopted.
+ */
+export function decodeAppearanceSaveResponse(
+  value: unknown,
+  submitted: { id: string; input: AppearanceRuleInput },
+): AppearanceDecode<AppearanceRule> {
+  const decoded = decodeMaterial(value, (data) => {
+    const source = record(data);
+    if (!source || !exactKeys(source, ["rule"])) return null;
+    return parseAppearanceRule(source.rule);
+  });
+  if (!decoded.ok) return decoded;
+  const rule = decoded.value;
+  if (submitted.id !== "") {
+    if (rule.id !== submitted.id) return uncertain("unbound-target");
+  } else if (!appearanceRuleMaterialMatches(rule, submitted.input)) {
+    return uncertain("unbound-material");
+  }
+  return decoded;
+}
+
+/** `appearance_rules_delete`: exact success envelope with `data: { id }` naming the submitted rule. */
+export function decodeAppearanceDeleteResponse(value: unknown, submittedId: string): AppearanceDecode<{ id: string }> {
+  const decoded = decodeMaterial(value, (data) => {
+    const source = record(data);
+    if (!source || !exactKeys(source, ["id"])) return null;
+    const id = boundedText(source.id, 1, MAX_ID_LENGTH);
+    return id === null ? null : { id };
+  });
+  if (!decoded.ok) return decoded;
+  return decoded.value.id === submittedId ? decoded : uncertain("unbound-target");
 }

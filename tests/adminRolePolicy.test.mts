@@ -10,6 +10,7 @@ import {
   isAdminActionAuthorized,
   type AdminActionAccess,
 } from "../lib/adminActions.ts";
+import { APPEARANCE_RULES_CONTRACT_READY } from "../lib/contractReadiness.ts";
 
 const OWNER = adminPrincipalFrom({ role: "owner" });
 const ADMIN = adminPrincipalFrom({ role: "admin" });
@@ -29,21 +30,44 @@ test("every allow-listed action is classified, and nothing else is", () => {
   }
 });
 
+/** The People hero and App landing actions the D-052 appearance rules replace at cutover. */
+const LEGACY_PLACEMENT_ACTIONS = [
+  "list_hero",
+  "save_hero",
+  "delete_hero",
+  "list_app_landing",
+  "save_app_landing",
+  "delete_app_landing",
+];
+
 test("the historically permissive bridge actions remain classified as writes", () => {
   // The matching Core release now uses its editor gate too. Keeping the console
   // classification explicit preserves defence in depth and prevents a future
   // backend regression from widening the browser surface.
+  const legacyWrites = APPEARANCE_RULES_CONTRACT_READY
+    ? []
+    : ["save_hero", "delete_hero", "save_app_landing", "delete_app_landing"];
   for (const action of [
-    "save_hero",
-    "delete_hero",
+    ...legacyWrites,
     "save_landing",
     "delete_landing",
-    "save_app_landing",
-    "delete_app_landing",
     "set_demo_visibility_permission",
   ]) {
     assert.equal(adminActionAccess(action), "write", `${action} must be a write`);
     assert.equal(isAdminActionAuthorized(action, VIEWER), false);
+  }
+});
+
+test("the replaced hero and app-landing actions leave the allow-list with the appearance switch", () => {
+  for (const action of LEGACY_PLACEMENT_ACTIONS) {
+    assert.equal(isAdminActionAllowed(action), !APPEARANCE_RULES_CONTRACT_READY, action);
+    assert.equal(action in ADMIN_ACTION_ACCESS, !APPEARANCE_RULES_CONTRACT_READY, action);
+    // Denied for everyone once retired, including the owner.
+    if (APPEARANCE_RULES_CONTRACT_READY) assert.equal(isAdminActionAuthorized(action, OWNER), false, action);
+  }
+  // The Join landing (web) surface is untouched by the cutover.
+  for (const action of ["list_landing", "save_landing", "delete_landing"]) {
+    assert.equal(isAdminActionAllowed(action), true, action);
   }
 });
 

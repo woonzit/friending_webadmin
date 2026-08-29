@@ -14,7 +14,7 @@ import {
 } from "@/lib/appearanceMap";
 import {
   MAX_APPEARANCE_GEOCODE_QUERY_LENGTH,
-  parseAppearanceGeocodePayload,
+  decodeAppearanceGeocodeResponse,
   type AppearanceGeocodeCandidate,
 } from "@/lib/appearanceRules";
 
@@ -82,12 +82,12 @@ export default function AppearanceMapPicker({ center, radiusKm, language, disabl
     setCandidates(null);
     const response = await adminCall("appearance_city_geocode", { query: trimmed.slice(0, MAX_APPEARANCE_GEOCODE_QUERY_LENGTH), lang: language });
     setSearching(false);
-    const parsed = response?.success ? parseAppearanceGeocodePayload(response.data) : null;
-    if (!parsed) {
-      setSearchError(response?.error === "admin-write-required" ? t("searchForbidden") : t("searchError"));
+    const decoded = decodeAppearanceGeocodeResponse(response);
+    if (!decoded.ok) {
+      setSearchError(decoded.kind === "refused" && decoded.error === "admin-write-required" ? t("searchForbidden") : t("searchError"));
       return;
     }
-    setCandidates(parsed);
+    setCandidates(decoded.value);
   }
 
   return (

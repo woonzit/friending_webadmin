@@ -13,24 +13,33 @@ import {
   appearanceRuleDraft,
   appearanceRuleInputFromDraft,
   appearanceRuleIsLive,
+  appearanceRuleMaterialMatches,
+  decodeAppearanceDeleteResponse,
+  decodeAppearanceListResponse,
+  decodeAppearanceSaveResponse,
   localizedAppearanceCountries,
   newAppearanceRuleDraft,
-  parseAppearanceListPayload,
-  parseAppearanceRule,
   sortAppearanceRules,
   validateAppearanceRuleDraft,
   type AppearanceDraftError,
   type AppearanceListPayload,
   type AppearanceRule,
   type AppearanceRuleDraft,
+  type AppearanceRuleInput,
 } from "@/lib/appearanceRules";
 import { formatDate } from "@/lib/format";
 
 type LoadState = "loading" | "ready" | "error";
 
-function record(value: unknown): Record<string, unknown> | null {
-  return value !== null && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
-}
+/**
+ * A write whose outcome is not proven. While one is pending the operator can
+ * only reload; a create is never retried until the authoritative list proves
+ * it did not land (or the landed rule is adopted by its material).
+ */
+type UncertainWrite =
+  | { kind: "create"; input: AppearanceRuleInput }
+  | { kind: "update"; id: string; input: AppearanceRuleInput }
+  | { kind: "delete"; id: string };
 
 /**
  * The Appearance & placements console. The page wrapper gates it behind the
@@ -47,22 +56,27 @@ export default function AppearanceConsole() {
   const [draft, setDraft] = useState<AppearanceRuleDraft | null>(null);
   const [deleting, setDeleting] = useState<AppearanceRule | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uncertain, setUncertain] = useState<UncertainWrite | null>(null);
   const [formError, setFormError] = useState("");
   const [toast, setToast] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const countries = useMemo(() => localizedAppearanceCountries(locale), [locale]);
 
+  /** One authoritative read; `null` means the list could not be proven (never an empty state). */
+  const fetchList = useCallback(async (): Promise<AppearanceListPayload | null> => {
+    const decoded = decodeAppearanceListResponse(await adminCall("appearance_rules_list"));
+    if (!decoded.ok) {
+      setState("error");
+      return null;
+    }
+    setPayload(decoded.value);
+    setState("ready");
+    return decoded.value;
+  }, []);
+
   const load = useCallback(async () => {
     if (!payload) setState("loading");
-    const response = await adminCall("appearance_rules_list");
-    const parsed = response?.success ? parseAppearanceListPayload(response.data) : null;
-    if (!parsed) {
-      // A read error must never render as a proven empty state.
-      setState("error");
-      return;
-    }
-    setPayload(parsed);
-    setState("ready");
-  }, [payload]);
+    await fetchList();
+  }, [payload, fetchList]);
 
   useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -81,72 +95,139 @@ export default function AppearanceConsole() {
     return t(`validation.${code}`);
   }
 
-  function coreErrorMessage(error: unknown, fallback: string): string {
-    const code = typeof error === "string" ? error : "";
+  function refusalMessage(code: string, fallback: string): string {
     if (code === "appearance-rule-conflict") return t("errors.conflict");
     if (code === "appearance-rule-not-found") return t("errors.notFound");
     if (code === "appearance-rule-global-protected") return t("errors.globalProtected");
     if (code === "admin-write-required") return t("errors.writeRequired");
-    if (code === "core-timeout") return t("errors.timeout");
     if (code.startsWith("appearance-rule-")) return t("errors.rejected", { code });
     return fallback;
   }
 
+  /**
+   * Resolve an uncertain write against the authoritative list. Nothing is
+   * retried automatically; the operator regains the save control only once the
+   * reload has proven what happened.
+   */
+  async function reconcile(pending: UncertainWrite) {
+    setUncertain(pending);
+    const fresh = await fetchList();
+    if (!fresh) {
+      setFormError(t("errors.uncertainReloadFailed"));
+      if (pending.kind === "delete") setToast({ tone: "error", text: t("errors.uncertainReloadFailed") });
+      return;
+    }
+    setUncertain(null);
+    if (pending.kind === "create") {
+      const landed = fresh.rules.find((rule) => appearanceRuleMaterialMatches(rule, pending.input));
+      if (landed) {
+        setDraft(null);
+        setFormError("");
+        setToast({ tone: "success", text: t("toast.recovered") });
+      } else {
+        setFormError(t("errors.uncertainNotLanded"));
+      }
+      return;
+    }
+    if (pending.kind === "update") {
+      const current = fresh.rules.find((rule) => rule.id === pending.id);
+      if (!current) {
+        setDraft(null);
+        setFormError("");
+        setToast({ tone: "error", text: t("errors.notFound") });
+      } else if (appearanceRuleMaterialMatches(current, pending.input)) {
+        setDraft(null);
+        setFormError("");
+        setToast({ tone: "success", text: t("toast.recovered") });
+      } else {
+        // Not landed: refresh the CAS revision so a deliberate retry is valid.
+        setDraft((value) => (value && value.id === current.id ? { ...value, revision: current.revision } : value));
+        setFormError(t("errors.uncertainNotLanded"));
+      }
+      return;
+    }
+    const stillThere = fresh.rules.some((rule) => rule.id === pending.id);
+    setToast(stillThere
+      ? { tone: "error", text: t("errors.uncertainNotLanded") }
+      : { tone: "success", text: t("toast.deletedRecovered") });
+  }
+
   async function save() {
-    if (!draft) return;
+    if (!draft || uncertain) return;
     const validation = validateAppearanceRuleDraft(draft);
     if (validation) {
       setFormError(draftErrorMessage(validation));
       return;
     }
-    const rule = appearanceRuleInputFromDraft(draft);
-    if (!rule) {
+    const input = appearanceRuleInputFromDraft(draft);
+    if (!input) {
       setFormError(t("validation.name"));
       return;
     }
     setBusy(true);
     setFormError("");
-    const response = await adminCall("appearance_rules_save", { id: draft.id, expected_revision: draft.revision, rule });
-    setBusy(false);
-    const saved = response?.success ? parseAppearanceRule(record(response.data)?.rule) : null;
-    if (!saved) {
-      const message = coreErrorMessage(response?.error, t("errors.save"));
-      setFormError(message);
-      if (response?.error === "appearance-rule-conflict" || response?.error === "core-timeout") {
-        // Never replay an uncertain or stale write: reload the authoritative list instead.
-        void load();
-      }
+    const response = await adminCall("appearance_rules_save", { id: draft.id, expected_revision: draft.revision, rule: input });
+    const decoded = decodeAppearanceSaveResponse(response, { id: draft.id, input });
+    if (decoded.ok) {
+      const saved = decoded.value;
+      setPayload((current) => current
+        ? { ...current, rules: [...current.rules.filter((row) => row.id !== saved.id), saved] }
+        : current);
+      setBusy(false);
+      setDraft(null);
+      setToast({ tone: "success", text: t("toast.saved") });
       return;
     }
-    setPayload((current) => current
-      ? { ...current, rules: [...current.rules.filter((row) => row.id !== saved.id), saved] }
-      : current);
-    setDraft(null);
-    setToast({ tone: "success", text: t("toast.saved") });
+    if (decoded.kind === "refused") {
+      setFormError(refusalMessage(decoded.error, t("errors.save")));
+      if (decoded.error === "appearance-rule-conflict" || decoded.error === "appearance-rule-not-found") {
+        // Stale revision: show the authoritative list; the operator redoes the change.
+        await fetchList();
+      }
+      setBusy(false);
+      return;
+    }
+    await reconcile(draft.id === "" ? { kind: "create", input } : { kind: "update", id: draft.id, input });
+    setBusy(false);
   }
 
   async function remove() {
-    if (!deleting) return;
+    if (!deleting || uncertain) return;
     if (deleting.scope === "global") {
       setToast({ tone: "error", text: t("errors.globalProtected") });
       setDeleting(null);
       return;
     }
     setBusy(true);
-    const response = await adminCall("appearance_rules_delete", { id: deleting.id, expected_revision: deleting.revision });
-    setBusy(false);
-    if (!response?.success) {
-      setToast({ tone: "error", text: coreErrorMessage(response?.error, t("errors.delete")) });
-      setDeleting(null);
-      if (response?.error === "appearance-rule-conflict" || response?.error === "appearance-rule-not-found") void load();
+    const target = deleting;
+    const response = await adminCall("appearance_rules_delete", { id: target.id, expected_revision: target.revision });
+    const decoded = decodeAppearanceDeleteResponse(response, target.id);
+    setDeleting(null);
+    if (decoded.ok) {
+      setPayload((current) => current ? { ...current, rules: current.rules.filter((row) => row.id !== target.id) } : current);
+      setBusy(false);
+      setToast({ tone: "success", text: t("toast.deleted") });
       return;
     }
-    setPayload((current) => current ? { ...current, rules: current.rules.filter((row) => row.id !== deleting.id) } : current);
-    setDeleting(null);
-    setToast({ tone: "success", text: t("toast.deleted") });
+    if (decoded.kind === "refused") {
+      setToast({ tone: "error", text: refusalMessage(decoded.error, t("errors.delete")) });
+      if (decoded.error === "appearance-rule-conflict" || decoded.error === "appearance-rule-not-found") await fetchList();
+      setBusy(false);
+      return;
+    }
+    await reconcile({ kind: "delete", id: target.id });
+    setBusy(false);
+  }
+
+  async function reloadAfterUncertain() {
+    if (!uncertain || busy) return;
+    setBusy(true);
+    await reconcile(uncertain);
+    setBusy(false);
   }
 
   function newRule() {
+    if (uncertain) return;
     setFormError("");
     setDraft(globalRule
       ? newAppearanceRuleDraft("geo", t("newGeoName"), 10)
@@ -184,14 +265,20 @@ export default function AppearanceConsole() {
         eyebrow={t("eyebrow")}
         title={t("title")}
         subtitle={t("subtitle")}
-        actions={<button className="button button-primary" disabled={state !== "ready"} onClick={newRule}>{globalRule ? t("newRule") : t("newGlobalRule")}</button>}
+        actions={<button className="button button-primary" disabled={state !== "ready" || uncertain !== null} onClick={newRule}>{globalRule ? t("newRule") : t("newGlobalRule")}</button>}
       />
       <div className="list-summary">
         <strong>{t("liveCount", { live: liveCount, total: rules.length })}</strong>
         <span>{t("precedence")}</span>
       </div>
+      {uncertain && !draft && (
+        <div className="alert alert-warning" role="alert">
+          <span>{t("errors.uncertainReloadFailed")}</span>
+          <button className="button button-secondary button-small" disabled={busy} onClick={() => void reloadAfterUncertain()}>{common("retry")}</button>
+        </div>
+      )}
       {state === "loading" ? <LoadingPanel /> : state === "error" ? (
-        <ErrorPanel message={t("loadError")} retry={load} />
+        <ErrorPanel message={t("loadError")} retry={uncertain ? () => void reloadAfterUncertain() : load} />
       ) : rules.length === 0 ? (
         <EmptyPanel title={t("empty")} copy={t("emptyCopy")} />
       ) : (
@@ -231,11 +318,11 @@ export default function AppearanceConsole() {
                     ))}
                   </div>
                   <div className="row-actions">
-                    <button className="button button-secondary button-small" onClick={() => { setFormError(""); setDraft(appearanceRuleDraft(rule)); }}>
+                    <button className="button button-secondary button-small" disabled={uncertain !== null} onClick={() => { setFormError(""); setDraft(appearanceRuleDraft(rule)); }}>
                       {common("edit")}
                     </button>
                     {rule.scope !== "global" && (
-                      <button className="button button-danger button-small" onClick={() => setDeleting(rule)}>
+                      <button className="button button-danger button-small" disabled={uncertain !== null} onClick={() => setDeleting(rule)}>
                         {common("delete")}
                       </button>
                     )}
@@ -254,10 +341,12 @@ export default function AppearanceConsole() {
           defaults={payload.defaults}
           countries={countries}
           busy={busy}
+          uncertain={uncertain !== null}
           error={formError}
           onChange={setDraft}
-          onClose={() => { if (!busy) setDraft(null); }}
+          onClose={() => { if (!busy) { setDraft(null); setFormError(""); } }}
           onSave={() => void save()}
+          onReload={() => void reloadAfterUncertain()}
         />
       )}
       {deleting && (

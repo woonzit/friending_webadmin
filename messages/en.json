@@ -5613,13 +5613,17 @@
       "globalProtected": "The global rule is permanent: edit its content instead of deleting it or changing its scope.",
       "writeRequired": "Your role can view appearance rules but not change them.",
       "timeout": "Core did not answer in time. The write may or may not have landed — the list was reloaded; check before retrying.",
+      "uncertainNotLanded": "Core's answer was lost. The list was reloaded and does not contain this change — you may redo it.",
+      "uncertainReloadFailed": "Core's answer was lost and the list could not be reloaded. Reload before doing anything else; a repeated save could create a duplicate rule.",
       "rejected": "Core refused the rule ({code}).",
       "save": "The rule could not be saved.",
       "delete": "The rule could not be deleted."
     },
     "toast": {
       "saved": "Appearance rule saved.",
-      "deleted": "Appearance rule deleted."
+      "deleted": "Appearance rule deleted.",
+      "recovered": "Appearance rule saved (confirmed from the reloaded list).",
+      "deletedRecovered": "Appearance rule deleted (confirmed from the reloaded list)."
     },
     "validation": {
       "name": "Enter an admin label (1–120 characters).",
@@ -5638,6 +5642,7 @@
     "editor": {
       "createTitle": "Create appearance rule",
       "editTitle": "Edit appearance rule",
+      "reloadList": "Reload list",
       "targetingTitle": "Targeting and lifecycle",
       "targetingCopy": "Where and when the rule applies. A geo rule always beats a store-country rule, which beats the global rule.",
       "name": "Admin label",
@@ -5659,6 +5664,7 @@
       "storefrontHint": "ISO 3166-1 alpha-3, the App Store storefront of the device.",
       "placeLabel": "Place label",
       "placeLabelHint": "Shown in the rule list; a city search fills it in.",
+      "placeLabelPlaceholder": "Budapest",
       "countryCode": "Country (optional)",
       "countryCodeNone": "Not set",
       "countryCodeHint": "Metadata only — it never takes part in matching.",
@@ -5813,6 +5819,8 @@
       "storefront": "Store country",
       "storefrontAny": "Not sent",
       "language": "Language",
+      "languageEn": "English",
+      "languageHu": "Hungarian",
       "latitude": "Latitude",
       "longitude": "Longitude",
       "ip": "IP address",
@@ -5838,6 +5846,8 @@
       "landingButton": "Continue",
       "hero": "Hero carousel ({count})",
       "heroEmpty": "No hero items for this location.",
+      "typeImage": "Image",
+      "typeVideo": "Video",
       "role": {
         "accent": "Main accent",
         "accent_pressed": "Pressed / highlighted",

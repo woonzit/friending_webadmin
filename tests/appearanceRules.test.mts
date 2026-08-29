@@ -11,14 +11,21 @@ import {
   appearanceRuleDraft,
   appearanceRuleInputFromDraft,
   appearanceRuleIsLive,
+  appearanceRuleMaterialMatches,
   appearanceTimestampFromLocalInput,
   appearanceTimestampToLocalInput,
+  decodeAppearanceDeleteResponse,
+  decodeAppearanceGeocodeResponse,
+  decodeAppearanceListResponse,
+  decodeAppearancePreviewResponse,
+  decodeAppearanceSaveResponse,
   isAppearanceStorefront,
   localizedAppearanceCountries,
   newAppearanceRuleDraft,
   normalizeAppearancePaletteHex,
   normalizeAppearanceProxyBody,
   parseAppearanceGeocodePayload,
+  parseAppearanceIpAddress,
   parseAppearanceListPayload,
   parseAppearancePreviewPayload,
   parseAppearanceRule,
@@ -200,8 +207,10 @@ test("rule decoding fails closed on unknown, missing, loose, or scope-inconsiste
   assert.equal(parseAppearanceRule("rule"), null);
 });
 
-test("the list payload demands unique ids, at most one global rule, and exact defaults when present", () => {
-  const list = parseAppearanceListPayload({ rules: [wireRule(), geoRule(), storefrontRule()] });
+const DEFAULTS = { palette: APPEARANCE_DEFAULT_PALETTE, landing: APPEARANCE_DEFAULT_LANDING };
+
+test("the list payload demands unique ids, at most one global rule, and Core's exact defaults", () => {
+  const list = parseAppearanceListPayload({ rules: [wireRule(), geoRule(), storefrontRule()], defaults: DEFAULTS });
   assert.ok(list);
   assert.equal(list.rules.length, 3);
   assert.deepEqual(list.defaults.palette, APPEARANCE_DEFAULT_PALETTE);
@@ -218,15 +227,16 @@ test("the list payload demands unique ids, at most one global rule, and exact de
   assert.equal(withDefaults.defaults.palette.light.accent, "#123456");
   assert.equal(withDefaults.defaults.landing.title_text_en, "friending");
 
-  assert.equal(parseAppearanceListPayload({ rules: [wireRule(), wireRule()] }), null, "duplicate id");
-  assert.equal(parseAppearanceListPayload({ rules: [wireRule(), wireRule({ id: "other" })] }), null, "two globals");
-  assert.equal(parseAppearanceListPayload({ rules: [wireRule({ priority: "0" })] }), null, "one bad rule poisons the list");
+  assert.equal(parseAppearanceListPayload({ rules: [wireRule()] }), null, "missing defaults are never substituted locally");
+  assert.equal(parseAppearanceListPayload({ rules: [wireRule(), wireRule()], defaults: DEFAULTS }), null, "duplicate id");
+  assert.equal(parseAppearanceListPayload({ rules: [wireRule(), wireRule({ id: "other" })], defaults: DEFAULTS }), null, "two globals");
+  assert.equal(parseAppearanceListPayload({ rules: [wireRule({ priority: "0" })], defaults: DEFAULTS }), null, "one bad rule poisons the list");
   assert.equal(parseAppearanceListPayload({ rules: [], defaults: { palette: APPEARANCE_DEFAULT_PALETTE } }), null, "partial defaults");
   assert.equal(parseAppearanceListPayload({ rules: [], defaults: { palette: { light: {}, dark: {} }, landing: APPEARANCE_DEFAULT_LANDING } }), null, "incomplete default palette");
   assert.equal(parseAppearanceListPayload({ rules: [], defaults: { palette: APPEARANCE_DEFAULT_PALETTE, landing: { title_text_en: "x" } } }), null, "incomplete default landing");
-  assert.equal(parseAppearanceListPayload({ rules: {} }), null);
+  assert.equal(parseAppearanceListPayload({ rules: {}, defaults: DEFAULTS }), null);
   assert.equal(parseAppearanceListPayload([]), null);
-  assert.equal(parseAppearanceListPayload({ rules: [], extra: true }), null);
+  assert.equal(parseAppearanceListPayload({ rules: [], defaults: DEFAULTS, extra: true }), null);
 });
 
 // ---------------------------------------------------------------------------
@@ -252,7 +262,10 @@ function previewPayload(overrides: Record<string, unknown> = {}): Record<string,
       title: "Pride week",
       subtitle: "",
       link_title: "",
-      text_style: { web: {}, mobile: {} },
+      text_style: {
+        web: { title_size: null, title_color: "", title_weight: "", subtitle_size: null, subtitle_color: "", subtitle_weight: "" },
+        mobile: { title_size: 24, title_color: "#ffffff", title_weight: "bold", subtitle_size: null, subtitle_color: "", subtitle_weight: "" },
+      },
     }],
     palette: APPEARANCE_DEFAULT_PALETTE,
     matched: { scope: "geo", rule_id: "66d0a1b2c3d4e5f6a7b8c9d1", location_source: "gps" },
@@ -278,8 +291,15 @@ test("the test-location preview decodes the app payload and refuses vocabulary d
   assert.equal(defaults.content_version, "0");
   assert.equal(defaults.matched.scope, "default");
 
+  assert.equal(preview.hero[0]?.text_style.mobile.title_size, 24);
   assert.equal(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "country", rule_id: "x", location_source: "ip" } })), null, "dropped country tier");
   assert.equal(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "default", rule_id: "x", location_source: "ip" } })), null, "default with a rule id");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "geo", rule_id: "", location_source: "gps" } })), null, "a matched rule must be named");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "global", rule_id: "", location_source: "none" } })), null, "global match without its id");
+  const heroItem = (previewPayload().hero as Record<string, unknown>[])[0]!;
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ hero: [{ ...heroItem, text_style: { web: {}, mobile: {} } }] })), null, "text_style must carry the six style keys");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ hero: [{ ...heroItem, text_style: { web: heroItem.text_style, mobile: {}, print: {} } }] })), null, "text_style platforms are closed");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ hero: [{ ...heroItem, text_style: { ...(heroItem.text_style as object), mobile: { title_size: 500, title_color: "", title_weight: "", subtitle_size: null, subtitle_color: "", subtitle_weight: "" } } }] })), null, "text_style sizes stay bounded");
   assert.equal(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "geo", rule_id: "x", location_source: "wifi" } })), null, "unknown location source");
   assert.equal(parseAppearancePreviewPayload(previewPayload({ palette: { light: {}, dark: {} } })), null, "incomplete palette");
   assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: { background: { type: "image", url: "", poster_url: "" }, title: { type: "text", text: "", image_url: "" } } })), null, "missing description");
@@ -426,6 +446,11 @@ test("draft validation names the first failing group", () => {
   assert.equal(validateAppearanceRuleDraft(geo), "name");
   geo.name = "Budapest";
   assert.equal(validateAppearanceRuleDraft(geo), "geo");
+  geo.latitude = "0";
+  geo.longitude = "0";
+  geo.radius_km = "25";
+  geo.place_label = "Null Island";
+  assert.equal(validateAppearanceRuleDraft(geo), null, "0,0 is a valid coordinate pair; blank means unset");
   geo.latitude = "47.5";
   geo.longitude = "19.04";
   geo.radius_km = "600";
@@ -481,6 +506,11 @@ test("timestamps are exact UTC wire strings and the local input converts both wa
   assert.equal(wire, "2026-08-29T11:00:00Z");
   assert.equal(appearanceTimestampFromLocalInput(""), null);
   assert.equal(appearanceTimestampFromLocalInput("not a date"), undefined);
+  assert.equal(appearanceTimestampFromLocalInput("2026-02-30T10:00"), undefined, "an impossible local date is refused, not normalised");
+  assert.equal(appearanceTimestampFromLocalInput("2026-04-31T10:00"), undefined);
+  assert.equal(appearanceTimestampFromLocalInput("2026-08-29T24:00"), undefined);
+  assert.equal(appearanceTimestampFromLocalInput("2026-08-29T23:60"), undefined);
+  assert.match(appearanceTimestampFromLocalInput("2024-02-29T10:00") ?? "", /^2024-02-29T\d{2}:00:00Z$|^2024-02-28T\d{2}:00:00Z$|^2024-03-01T\d{2}:00:00Z$/, "a real leap day converts");
   assert.equal(appearanceTimestampToLocalInput(null), "");
 
   const rule = parseAppearanceRule(geoRule());
@@ -585,4 +615,129 @@ test("the five appearance actions stay dormant until the readiness switch flips,
   // The raised save ceiling is a static table entry, independent of the switch.
   assert.equal(adminActionBodyLimit("appearance_rules_save"), 1_100_000);
   assert.equal(adminActionBodyLimit("appearance_rules_list"), 256_000);
+});
+
+
+test("the preview IP field accepts only real IPv4/IPv6 addresses", () => {
+  for (const ip of [
+    "203.0.113.7", "0.0.0.0", "255.255.255.255",
+    "::", "::1", "1::", "2001:db8::1", "2001:db8:0:0:0:0:0:1", "2001:db8::0:1",
+    "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7::", "::ffff:192.0.2.1", "64:ff9b::192.0.2.33", "fe80::1", "::1:80",
+    "ABCD:EF01:2345:6789:abcd:ef01:2345:6789",
+  ]) {
+    assert.equal(parseAppearanceIpAddress(ip), ip, ip);
+    assert.deepEqual(normalizeAppearanceProxyBody("appearance_rules_preview", { ip }), { ip }, ip);
+  }
+  for (const ip of [
+    "::::", "1::2::3", ":::", "1:2:3:4:5:6:7:8:9", "1:2:3:4:5:6:7", "1:2:3:4:5:6:7:8::", ":1:2:3:4:5:6:7",
+    "1:2:3:4:5:6:7:", "12345::1", "g::1", "fe80::1%eth0", "[::1]", "[::1]:80", "2001:db8::/32",
+    "::ffff:999.0.2.1", "192.0.2.1::1", "1.2.3", "256.1.1.1", "1.2.3.4.5", "01.2.3.4", " ", "not-an-ip",
+  ]) {
+    assert.equal(parseAppearanceIpAddress(ip), null, ip);
+    assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { ip }), null, ip);
+  }
+});
+
+function envelope(data: unknown, statusCode = 200): Record<string, unknown> {
+  return { success: true, status_code: statusCode, message: 200, status: 200, can_send: 0, data };
+}
+
+function coreRefusal(error: string, statusCode: number): Record<string, unknown> {
+  return { success: false, status_code: statusCode, message: 200, status: 200, can_send: 0, error };
+}
+
+test("every action decodes Core's exact legacy envelope or the bridge refusal — never a bare success flag", () => {
+  const list = decodeAppearanceListResponse(envelope({ rules: [wireRule()], defaults: DEFAULTS }));
+  assert.ok(list.ok);
+  assert.equal(list.value.rules.length, 1);
+
+  // The reviewer's probes: a bare success flag and a "successful" 409 envelope are both refused.
+  for (const [label, value] of [
+    ["bare success", { success: true, data: { rules: [], defaults: DEFAULTS } }],
+    ["successful 409", envelope({ rules: [], defaults: DEFAULTS }, 409)],
+    ["missing trio", { success: true, status_code: 200, data: { rules: [], defaults: DEFAULTS } }],
+    ["extra key", { ...envelope({ rules: [], defaults: DEFAULTS }), extra: 1 }],
+    ["null", null],
+    ["string", "ok"],
+    ["material without defaults", envelope({ rules: [] })],
+  ] as const) {
+    const decoded = decodeAppearanceListResponse(value);
+    assert.equal(decoded.ok, false, label);
+    assert.equal(!decoded.ok && decoded.kind, "uncertain", label);
+  }
+
+  const refused = decodeAppearanceListResponse(coreRefusal("admin-revoked", 403));
+  assert.deepEqual(refused, { ok: false, kind: "refused", error: "admin-revoked", status: 403 });
+  const bridgeRefused = decodeAppearanceListResponse({ success: false, status_code: 403, error: "admin-write-required" });
+  assert.deepEqual(bridgeRefused, { ok: false, kind: "refused", error: "admin-write-required", status: 403 });
+  for (const error of ["core-timeout", "core-unavailable", "invalid-core-response"]) {
+    const decoded = decodeAppearanceListResponse({ success: false, status_code: error === "core-timeout" ? 504 : 502, error });
+    assert.deepEqual(decoded, { ok: false, kind: "uncertain", error }, error);
+  }
+  const withData = decodeAppearanceListResponse({ ...coreRefusal("appearance-rule-conflict", 409), data: { revision: 4 } });
+  assert.deepEqual(withData, { ok: false, kind: "refused", error: "appearance-rule-conflict", status: 409 });
+
+  assert.ok(decodeAppearancePreviewResponse(envelope(previewPayload())).ok);
+  assert.equal(decodeAppearancePreviewResponse({ success: true, data: previewPayload() }).ok, false);
+  assert.ok(decodeAppearanceGeocodeResponse(envelope({ candidates: [] })).ok);
+  assert.equal(decodeAppearanceGeocodeResponse(envelope({ results: [] })).ok, false);
+});
+
+test("a save success is bound to its target: the same id on update, the same material on create", () => {
+  const stored = parseAppearanceRule(geoRule());
+  assert.ok(stored);
+  const input = appearanceRuleInputFromDraft(appearanceRuleDraft(stored));
+  assert.ok(input);
+
+  const update = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ revision: 4 }) }), { id: stored.id, input });
+  assert.ok(update.ok);
+  assert.equal(update.value.revision, 4);
+  const otherId = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ id: "someone-else" }) }), { id: stored.id, input });
+  assert.deepEqual(otherId, { ok: false, kind: "uncertain", error: "unbound-target" });
+
+  const create = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ id: "minted", revision: 1 }) }), { id: "", input });
+  assert.ok(create.ok, "create adopts the minted id when the material is what was sent");
+  assert.equal(create.value.id, "minted");
+  const drifted = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ id: "minted", revision: 1, priority: 99 }) }), { id: "", input });
+  assert.deepEqual(drifted, { ok: false, kind: "uncertain", error: "unbound-material" });
+
+  // Hero item ids are minted by Core on create and are the only tolerated difference.
+  const heroRule = parseAppearanceRule(wireRule());
+  assert.ok(heroRule);
+  const heroInput = appearanceRuleInputFromDraft(appearanceRuleDraft(heroRule));
+  assert.ok(heroInput);
+  const submittedWithoutIds = { ...heroInput, hero: { mode: "replace" as const, items: heroInput.hero.items.map((item) => ({ ...item, id: "" })) } };
+  assert.equal(appearanceRuleMaterialMatches(heroRule, submittedWithoutIds), true);
+  assert.equal(appearanceRuleMaterialMatches(heroRule, heroInput), true);
+  assert.equal(appearanceRuleMaterialMatches({ ...heroRule, hero: { mode: "replace", items: [] } }, heroInput), false);
+  assert.equal(appearanceRuleMaterialMatches(heroRule, { ...heroInput, name: "Other" }), false);
+
+  for (const [label, value] of [
+    ["bare success", { success: true, rule: geoRule() }],
+    ["data without rule", envelope({})],
+    ["data with extra", envelope({ rule: geoRule(), warning: "x" })],
+    ["invalid rule", envelope({ rule: geoRule({ priority: "10" }) })],
+    ["null", null],
+  ] as const) {
+    const decoded = decodeAppearanceSaveResponse(value, { id: stored.id, input });
+    assert.equal(decoded.ok, false, label);
+    assert.equal(!decoded.ok && decoded.kind, "uncertain", label);
+  }
+  assert.deepEqual(
+    decodeAppearanceSaveResponse(coreRefusal("appearance-rule-conflict", 409), { id: stored.id, input }),
+    { ok: false, kind: "refused", error: "appearance-rule-conflict", status: 409 },
+  );
+});
+
+test("a delete success must name the deleted rule", () => {
+  assert.deepEqual(decodeAppearanceDeleteResponse(envelope({ id: "abc" }), "abc"), { ok: true, value: { id: "abc" } });
+  assert.deepEqual(decodeAppearanceDeleteResponse(envelope({ id: "other" }), "abc"), { ok: false, kind: "uncertain", error: "unbound-target" });
+  assert.equal(decodeAppearanceDeleteResponse({ success: true }, "abc").ok, false, "a bare success removes nothing");
+  assert.equal(decodeAppearanceDeleteResponse(envelope({}), "abc").ok, false);
+  assert.equal(decodeAppearanceDeleteResponse(envelope({ id: "abc", deleted: true }), "abc").ok, false);
+  assert.equal(decodeAppearanceDeleteResponse(null, "abc").ok, false);
+  assert.deepEqual(
+    decodeAppearanceDeleteResponse(coreRefusal("appearance-rule-global-protected", 403), "abc"),
+    { ok: false, kind: "refused", error: "appearance-rule-global-protected", status: 403 },
+  );
 });

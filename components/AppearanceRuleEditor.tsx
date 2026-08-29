@@ -36,10 +36,13 @@ type Props = {
   defaults: { palette: AppearanceFullPalette; landing: AppearanceLandingDraft };
   countries: readonly LocalizedAppearanceCountry[];
   busy: boolean;
+  /** An unproven write is pending: saving is withheld until the operator reloads. */
+  uncertain: boolean;
   error: string;
   onChange: (value: AppearanceRuleDraft) => void;
   onClose: () => void;
   onSave: () => void;
+  onReload: () => void;
 };
 
 type UploadField = "background" | "poster" | "title" | "hero";
@@ -64,10 +67,12 @@ export default function AppearanceRuleEditor({
   defaults,
   countries,
   busy,
+  uncertain,
   error,
   onChange,
   onClose,
   onSave,
+  onReload,
 }: Props) {
   const t = useTranslations("appearance.editor");
   const common = useTranslations("common");
@@ -200,7 +205,7 @@ export default function AppearanceRuleEditor({
                   maxLength={MAX_APPEARANCE_PLACE_LABEL_LENGTH}
                   disabled={locked}
                   onChange={(event) => patch({ place_label: event.target.value })}
-                  placeholder="Budapest"
+                  placeholder={t("placeLabelPlaceholder")}
                 />
                 <small className="field-hint">{t("placeLabelHint")}</small>
               </label>
@@ -408,9 +413,15 @@ export default function AppearanceRuleEditor({
         </div>
         <div className="dialog-actions">
           <button className="button button-secondary" onClick={onClose} disabled={locked}>{common("cancel")}</button>
-          <button className="button button-primary" onClick={onSave} disabled={locked}>
-            {busy ? common("saving") : common("save")}
-          </button>
+          {uncertain ? (
+            <button className="button button-primary" onClick={onReload} disabled={locked}>
+              {busy ? common("loading") : t("reloadList")}
+            </button>
+          ) : (
+            <button className="button button-primary" onClick={onSave} disabled={locked}>
+              {busy ? common("saving") : common("save")}
+            </button>
+          )}
         </div>
       </section>
     </div>

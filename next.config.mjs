@@ -31,7 +31,11 @@ export const appearanceMapContentSecurityPolicy = [
   "form-action 'self'",
   "frame-ancestors 'self'",
   "object-src 'none'",
-  "script-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com *.google.com https://*.ggpht.com *.googleusercontent.com blob:",
+  // 'unsafe-eval' is required by Google's allow-list sample ("Allowlist CSP",
+  // lines 98-110, page updated 2026-08-25). It is tolerable ONLY because this
+  // document is an authenticated frame that renders the map alone: no console
+  // UI, no operator data, no secret ever reaches it.
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googleapis.com https://*.gstatic.com *.google.com https://*.ggpht.com *.googleusercontent.com blob:",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com *.google.com *.googleusercontent.com",

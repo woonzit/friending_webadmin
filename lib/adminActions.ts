@@ -103,6 +103,15 @@ const ACTIVE_APPEARANCE_ACTIONS = APPEARANCE_RULES_CONTRACT_READY
   ? APPEARANCE_ACTIONS
   : [] as const;
 
+/**
+ * The People hero and App landing surfaces the appearance rules replace. They
+ * leave the allow-list with the same switch that opens `/appearance`, so the
+ * cutover is one reviewed source change and no retired mutation stays callable.
+ */
+const LEGACY_PLACEMENT_ACTIONS = APPEARANCE_RULES_CONTRACT_READY
+  ? [] as const
+  : ["list_hero", "save_hero", "delete_hero", "list_app_landing", "save_app_landing", "delete_app_landing"] as const;
+
 export const ADMIN_ACTIONS = [
   "overview",
   "list_users",
@@ -117,15 +126,10 @@ export const ADMIN_ACTIONS = [
   "app_review_sandbox_status",
   "app_review_sandbox_reset",
   "set_demo_visibility_permission",
-  "list_hero",
-  "save_hero",
-  "delete_hero",
+  ...LEGACY_PLACEMENT_ACTIONS,
   "list_landing",
   "save_landing",
   "delete_landing",
-  "list_app_landing",
-  "save_app_landing",
-  "delete_app_landing",
   "get_settings",
   "set_settings",
   "invite_configuration",
@@ -270,15 +274,17 @@ export const ADMIN_ACTION_ACCESS = {
   app_review_sandbox_status: "read",
   app_review_sandbox_reset: "write",
   set_demo_visibility_permission: "write",
-  list_hero: "read",
-  save_hero: "write",
-  delete_hero: "write",
+  ...(APPEARANCE_RULES_CONTRACT_READY ? {} : {
+    list_hero: "read" as const,
+    save_hero: "write" as const,
+    delete_hero: "write" as const,
+    list_app_landing: "read" as const,
+    save_app_landing: "write" as const,
+    delete_app_landing: "write" as const,
+  }),
   list_landing: "read",
   save_landing: "write",
   delete_landing: "write",
-  list_app_landing: "read",
-  save_app_landing: "write",
-  delete_app_landing: "write",
   get_settings: "read",
   set_settings: "write",
   invite_configuration: "read",

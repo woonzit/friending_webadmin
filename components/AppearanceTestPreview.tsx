@@ -8,7 +8,7 @@ import { adminCall } from "@/lib/adminClient";
 import {
   APPEARANCE_PALETTE_MODES,
   APPEARANCE_PALETTE_ROLES,
-  parseAppearancePreviewPayload,
+  decodeAppearancePreviewResponse,
   type AppearancePreviewPayload,
   type LocalizedAppearanceCountry,
 } from "@/lib/appearanceRules";
@@ -54,13 +54,13 @@ export default function AppearanceTestPreview({ countries, ruleNames }: Props) {
     setError("");
     const response = await adminCall("appearance_rules_preview", body);
     setBusy(false);
-    const parsed = response?.success ? parseAppearancePreviewPayload(response.data) : null;
-    if (!parsed) {
-      setError(response?.error === "invalid-input" ? t("inputInvalid") : t("previewError"));
+    const decoded = decodeAppearancePreviewResponse(response);
+    if (!decoded.ok) {
+      setError(decoded.kind === "refused" && decoded.error === "invalid-input" ? t("inputInvalid") : t("previewError"));
       setResult(null);
       return;
     }
-    setResult(parsed);
+    setResult(decoded.value);
   }
 
   const matchedRuleName = result && result.matched.rule_id ? ruleNames.get(result.matched.rule_id) ?? result.matched.rule_id : "";
@@ -87,8 +87,8 @@ export default function AppearanceTestPreview({ countries, ruleNames }: Props) {
           <label className="field">
             <span>{t("language")}</span>
             <select value={lang} disabled={busy} onChange={(event) => setLang(event.target.value === "hu" ? "hu" : "en")}>
-              <option value="en">English</option>
-              <option value="hu">Magyar</option>
+              <option value="en">{t("languageEn")}</option>
+              <option value="hu">{t("languageHu")}</option>
             </select>
           </label>
           <label className="field">
@@ -163,7 +163,7 @@ export default function AppearanceTestPreview({ countries, ruleNames }: Props) {
               <ul className="appearance-test-hero-list">
                 {result.hero.map((item) => (
                   <li key={item.id}>
-                    <span className="badge">{item.type}</span>
+                    <span className="badge">{item.type === "video" ? t("typeVideo") : t("typeImage")}</span>
                     <strong>{item.title || item.media_url}</strong>
                     {item.subtitle && <span>{item.subtitle}</span>}
                   </li>
