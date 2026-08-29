@@ -1,0 +1,30 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "verification": {
+            "contract_version": 1,
+            "contract_ready": false,
+            "principal": {
+                "role": "viewer",
+                "capabilities": [
+                    "verification_grant_read",
+                    "verification_pending_read",
+                    "verification_policy_read",
+                    "verification_simulate"
+                ]
+            },
+            "actions": []
+        },
+        "verification_forced": {
+            "contract_version": 1,
+            "contract_ready": true,
+            "actions": [
+                "verification_forced_console"
+            ]
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

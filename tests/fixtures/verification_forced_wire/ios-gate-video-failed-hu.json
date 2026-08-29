@@ -1,0 +1,42 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "forced": {
+            "schema_version": 1,
+            "revision": 7,
+            "storefront": "HUN",
+            "forced_methods": [
+                "persona",
+                "video"
+            ],
+            "gate": "waiting_room",
+            "satisfied_by": null,
+            "pending": null,
+            "failed": {
+                "method": "video",
+                "status": "new_video_requested",
+                "reason_text": "Ez gyenge fény vagy elmosódott dokumentum miatt fordulhat elő — nem számít hibapontnak. Azonnal újrapróbálhatod."
+            },
+            "waiting_room": {
+                "lang": "hu",
+                "title": "Még egy lépés, mielőtt ismerkedsz",
+                "subtitle": "A régiódban hitelesítés szükséges",
+                "description": "Magyarországi fixture leírás."
+            },
+            "allowed_surfaces": [
+                "profile.edit",
+                "profile.preview",
+                "account.hub",
+                "support",
+                "sign_out",
+                "delete_account",
+                "verification.persona",
+                "verification.video"
+            ]
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

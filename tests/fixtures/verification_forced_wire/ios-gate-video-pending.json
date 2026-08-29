@@ -1,0 +1,40 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "forced": {
+            "schema_version": 1,
+            "revision": 7,
+            "storefront": "USA",
+            "forced_methods": [
+                "video"
+            ],
+            "gate": "waiting_room",
+            "satisfied_by": null,
+            "pending": {
+                "method": "video",
+                "status": "pending_re_review"
+            },
+            "failed": null,
+            "waiting_room": {
+                "lang": "en",
+                "title": "One more step before you meet people",
+                "subtitle": "Verification is required in your region",
+                "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members."
+            },
+            "allowed_surfaces": [
+                "profile.edit",
+                "profile.preview",
+                "account.hub",
+                "support",
+                "sign_out",
+                "delete_account",
+                "verification.persona",
+                "verification.video"
+            ]
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

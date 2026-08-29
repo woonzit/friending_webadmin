@@ -1,0 +1,269 @@
+{
+    "status_code": 200,
+    "data": {
+        "profile": {
+            "id": 991001,
+            "displayname": "Fixture Owner",
+            "profile_verified": false,
+            "headline": "Fixture pending owner headline",
+            "headline_status": "pending",
+            "about": "Fixture pending owner biography",
+            "about_me_status": "pending",
+            "friends": [
+                {
+                    "id": 991002,
+                    "displayname": "Fixture Member 991002",
+                    "profile_verified": true,
+                    "verification_seal": {
+                        "asset_url": "https://img.friending.co/api/cache/admin/verification-badges/light-r1-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png"
+                    }
+                },
+                {
+                    "id": 991003,
+                    "displayname": "Fixture Member 991003",
+                    "profile_verified": false,
+                    "verification_seal": null
+                },
+                {
+                    "id": 991004,
+                    "displayname": "Fixture Member 991004",
+                    "profile_verified": true,
+                    "verification_seal": {
+                        "asset_url": "https://img.friending.co/api/cache/admin/verification-badges/light-r1-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png"
+                    }
+                },
+                {
+                    "id": 991005,
+                    "displayname": "Fixture Member 991005",
+                    "profile_verified": true,
+                    "verification_seal": {
+                        "asset_url": "https://img.friending.co/api/cache/admin/verification-badges/light-r1-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png"
+                    }
+                }
+            ]
+        },
+        "verification": {
+            "schema_version": 1,
+            "evaluated_at": 1800000000,
+            "scope": {
+                "scope_key": "global",
+                "kind": "global",
+                "display": "Global",
+                "source": "global"
+            },
+            "enabled_methods": [
+                "persona"
+            ],
+            "startable_methods": [
+                "persona"
+            ],
+            "tier_language": false,
+            "methods": {
+                "video": {
+                    "status": "not_started",
+                    "raw_status": null,
+                    "can_start": false,
+                    "pending_phase": null,
+                    "pending_since": null,
+                    "reason": null,
+                    "attempt": null,
+                    "max_attempts": null,
+                    "manual_review_available": false,
+                    "state_integrity": true,
+                    "missing_requirements": [
+                        "avatar"
+                    ],
+                    "action": null
+                },
+                "persona": {
+                    "status": "not_started",
+                    "can_start": true,
+                    "pending_phase": null,
+                    "pending_since": null,
+                    "reason": null,
+                    "attempt": null,
+                    "max_attempts": null,
+                    "manual_review_available": false,
+                    "state_integrity": true,
+                    "action": {
+                        "kind": "start_persona",
+                        "label": "Start identity check",
+                        "url": null
+                    }
+                }
+            },
+            "level": "light",
+            "source": "imported",
+            "imported": {
+                "level": "light",
+                "method_hint": "manual",
+                "imported_at": 1700000000
+            },
+            "grant": null,
+            "badge_visible": true,
+            "self_badge": {
+                "kind": "light",
+                "asset_url": "https://img.friending.co/api/cache/admin/verification-badges/light-r1-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png"
+            },
+            "external_seal": {
+                "asset_url": "https://img.friending.co/api/cache/admin/verification-badges/light-r1-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png"
+            },
+            "feature_access": {
+                "people.list": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "profile.view": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "chat.send": {
+                    "configured_requirement": "strong",
+                    "required_tier": "strong",
+                    "allowed": false,
+                    "missing_methods": [
+                        "persona"
+                    ],
+                    "next_method": "persona",
+                    "modal": {
+                        "kind": "persona",
+                        "icon": {
+                            "kind": "asset",
+                            "asset_key": "verification.persona"
+                        },
+                        "steps": [
+                            {
+                                "position": 1,
+                                "method": "persona",
+                                "state": "current"
+                            }
+                        ],
+                        "current_step": 1,
+                        "title": "Identity verification",
+                        "subtitle": "An identity check helps build trust.",
+                        "description": "Open Verification to start an identity check with Persona or review its status. Once approved, it unlocks features that require Strong verification.",
+                        "attention_note": null,
+                        "reason": null,
+                        "attempt": null,
+                        "max_attempts": null,
+                        "manual_review_available": false,
+                        "primary_action": {
+                            "kind": "start_persona",
+                            "label": "Open Verification",
+                            "url": null
+                        },
+                        "secondary_action": null,
+                        "cancel_label": "Not now",
+                        "provider_attribution": "Powered by Persona"
+                    }
+                },
+                "friend.request": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "dates.access": {
+                    "configured_requirement": "strong",
+                    "required_tier": "strong",
+                    "allowed": false,
+                    "missing_methods": [
+                        "persona"
+                    ],
+                    "next_method": "persona",
+                    "modal": {
+                        "kind": "persona",
+                        "icon": {
+                            "kind": "asset",
+                            "asset_key": "verification.persona"
+                        },
+                        "steps": [
+                            {
+                                "position": 1,
+                                "method": "persona",
+                                "state": "current"
+                            }
+                        ],
+                        "current_step": 1,
+                        "title": "Identity verification",
+                        "subtitle": "An identity check helps build trust.",
+                        "description": "Open Verification to start an identity check with Persona or review its status. Once approved, it unlocks features that require Strong verification.",
+                        "attention_note": null,
+                        "reason": null,
+                        "attempt": null,
+                        "max_attempts": null,
+                        "manual_review_available": false,
+                        "primary_action": {
+                            "kind": "start_persona",
+                            "label": "Open Verification",
+                            "url": null
+                        },
+                        "secondary_action": null,
+                        "cancel_label": "Not now",
+                        "provider_attribution": "Powered by Persona"
+                    }
+                },
+                "dates.create": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "dates.join": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "footprints.send": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "pinger.send": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                },
+                "album.private_request": {
+                    "configured_requirement": "none",
+                    "required_tier": "none",
+                    "allowed": true,
+                    "missing_methods": [],
+                    "next_method": null,
+                    "modal": null
+                }
+            }
+        },
+        "audience_onboarding": {
+            "schema_version": 1,
+            "evaluated_at": 1800000000,
+            "required": false,
+            "missing": [],
+            "discovery_blocked": false
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

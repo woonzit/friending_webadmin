@@ -330,7 +330,12 @@ test("the refusal maps are closed, status-bound and disjoint per envelope source
   for (const [name] of FORCED_CORE_UNCERTAIN_STATUSES) assert.equal(FORCED_CORE_REFUSAL_STATUSES.has(name), false, name);
   for (const [name, status] of FORCED_BRIDGE_UNCERTAIN_STATUSES) assert.ok(status === 502 || status === 504, name);
   for (const [name] of FORCED_BRIDGE_UNCERTAIN_STATUSES) assert.equal(FORCED_BRIDGE_REFUSAL_STATUSES.has(name), false, name);
-  assert.deepEqual([...FORCED_CORE_REFUSAL_STATUSES.keys()].sort(), ["admin-revoked", "admin-session-invalid", "admin-write-required", "unauthorized", "verification-forced-conflict", "verification-forced-invalid"]);
+  assert.deepEqual([...FORCED_CORE_REFUSAL_STATUSES.keys()].sort(), [
+    "admin-revoked", "admin-session-invalid", "admin-write-required", "unauthorized",
+    "verification-forced-conflict", "verification-forced-copy-default-invalid", "verification-forced-copy-overrides-invalid",
+    "verification-forced-default-invalid", "verification-forced-invalid", "verification-forced-overrides-invalid",
+    "verification-forced-revision-invalid",
+  ]);
   assert.deepEqual([...FORCED_CORE_UNCERTAIN_STATUSES.keys()].sort(), ["verification-forced-unavailable", "verification-forced-write-failed"]);
 });
 

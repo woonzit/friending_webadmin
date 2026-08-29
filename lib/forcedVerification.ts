@@ -567,15 +567,21 @@ export type ForcedUncertain = { ok: false; kind: "uncertain"; error: string };
 export type ForcedDecode<T> = { ok: true; value: T } | ForcedRefusal | ForcedUncertain;
 
 /**
- * Closed Core refusal vocabulary (contract §4 + the shared admin refusals),
- * each with its exact `status_code`. A refusal proves the write did not
- * land. Field-specific `verification-forced-invalid` companions are bound
- * from the published T-470 status map; until then only the named codes are
- * refusals and every other answer is uncertain.
+ * Closed Core refusal vocabulary, bound from the published T-470 corpus
+ * manifest (`tests/fixtures/verification_forced_wire/manifest.json`:
+ * `control_plane_error_statuses` + `boundary_error_statuses`), each with its
+ * exact `status_code`. A refusal proves the write did not land. Together with
+ * the 503 family below it must equal the published maps exactly (pinned by
+ * `tests/verificationForcedWire.test.mts`).
  */
 export const FORCED_CORE_REFUSAL_STATUSES: ReadonlyMap<string, number> = new Map<string, number>([
   ["verification-forced-conflict", 409],
   ["verification-forced-invalid", 422],
+  ["verification-forced-default-invalid", 422],
+  ["verification-forced-overrides-invalid", 422],
+  ["verification-forced-copy-default-invalid", 422],
+  ["verification-forced-copy-overrides-invalid", 422],
+  ["verification-forced-revision-invalid", 422],
   ["admin-write-required", 403],
   ["admin-session-invalid", 401],
   ["unauthorized", 401],

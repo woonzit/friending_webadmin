@@ -1,0 +1,65 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "revision": 7,
+        "default": {
+            "persona": true,
+            "video": false
+        },
+        "overrides": {
+            "DEU": {
+                "persona": false,
+                "video": false
+            },
+            "HUN": {
+                "persona": true,
+                "video": true
+            },
+            "USA": {
+                "persona": false,
+                "video": true
+            }
+        },
+        "copy_default": {
+            "en": {
+                "title": "One more step before you meet people",
+                "subtitle": "Verification is required in your region",
+                "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members."
+            },
+            "hu": {
+                "title": "Még egy lépés, mielőtt ismerkedsz",
+                "subtitle": "A régiódban hitelesítés szükséges",
+                "description": "A Friending biztonsága érdekében a régiódban minden tagnak igazolnia kell a személyazonosságát, mielőtt használná az appot. Ez körülbelül két percet vesz igénybe, és a dokumentumaidat más tagok soha nem látják."
+            }
+        },
+        "copy_overrides": {
+            "HUN": {
+                "en": {
+                    "subtitle": "Hungary fixture subtitle"
+                },
+                "hu": {
+                    "description": "Magyarországi fixture leírás."
+                }
+            }
+        },
+        "compiled_defaults": {
+            "copy": {
+                "en": {
+                    "title": "One more step before you meet people",
+                    "subtitle": "Verification is required in your region",
+                    "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members."
+                },
+                "hu": {
+                    "title": "Még egy lépés, mielőtt ismerkedsz",
+                    "subtitle": "A régiódban hitelesítés szükséges",
+                    "description": "A Friending biztonsága érdekében a régiódban minden tagnak igazolnia kell a személyazonosságát, mielőtt használná az appot. Ez körülbelül két percet vesz igénybe, és a dokumentumaidat más tagok soha nem látják."
+                }
+            }
+        },
+        "storefront_catalogue_hint": "alpha-3"
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
