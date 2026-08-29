@@ -75,21 +75,45 @@ request.
 
 ## Deploy
 
-The canonical command is:
+A release ships one reviewed commit, in this order. `deploy.sh` implements
+steps 2 to 7 and refuses to start unless step 1 has happened.
+
+1. **Publish `main` first.** The commit must already exist on its upstream.
+   The script refuses a dirty tree, a branch without an upstream, and a HEAD
+   that is ahead of or behind that upstream — deploying an unpublished commit
+   would leave production on a state nobody can fetch.
+2. **Stage an exact archive.** `git archive` of that commit is written to a
+   temporary tar, hashed with SHA-256, extracted, and hashed again. Only
+   tracked files of the reviewed commit reach the stage; an untracked or
+   ignored file on the workstation can never reach production. The script
+   prints the commit and the archive hash — record both with the release.
+3. **Local gates.** `npm test`, `npm run typecheck`, `npm run build` and
+   `npm audit --omit=dev` run on the workstation before anything is uploaded.
+4. **Upload the stage.** `rsync` without `--delete`, excluding `.env.local`,
+   `.env`, `.deploy_commit`, `node_modules`, `.next/`, `.git`, build info and
+   logs. The server keeps its own environment file, its build cache and its
+   deploy record; nothing server-owned is overwritten from a workstation.
+5. **Server gates.** `npm ci`, `npm test`, `npm run typecheck` and
+   `npm run build` run again in `/opt/friending/admin`, and the script first
+   asserts that `.env.local` is present.
+6. **Restart PM2 as the `googlecloud` user.** The PM2 daemon that owns
+   `friending-webadmin` belongs to that login user. Never wrap this in `sudo`:
+   under `sudo` PM2 talks to root's daemon and reports the process as not
+   found, which looks like a missing app while the real one keeps running the
+   old code. The script restarts through the same SSH login, then writes the
+   exact commit to `.deploy_commit` and runs `pm2 save`.
+7. **Smoke.** Run the checks under *Verification* below before you call the
+   release done.
+
+The canonical commands are:
 
 ```bash
-./deploy.sh
-./deploy.sh --go
+./deploy.sh        # dry run: itemized rsync of the staged archive
+./deploy.sh --go   # gates, upload, server gates, restart, deploy record
 ```
 
-The first invocation is an itemized rsync dry run. The script refuses a dirty
-or upstream-divergent Git state. `--go` runs tests, TypeScript, a production build and the
-production dependency audit locally; uploads without `--delete`; then repeats
-install/tests/build on the server before restarting PM2 and recording the exact
-commit in `.deploy_commit`.
-
-The script deliberately excludes `.env.local`, `.git`, `.next`, `node_modules`
-and logs.
+The dry run stages and hashes the archive exactly like a real release, so the
+file list it prints is the file list `--go` would upload.
 
 Feature readiness flags are compatibility cutovers, not deploy conveniences. Flip a flag only
 after its matching Core provider release is live and its authenticated boundary smoke has passed.
@@ -123,3 +147,26 @@ Expected results:
 
 Do not use a real login-code request as a routine health check because it sends
 mail and consumes the per-address rate limit.
+
+Read the live `.deploy_commit` immediately before and after cutover, and verify
+that the deployed source hashes match the archive hash the script printed.
+Never overwrite a newer divergent release you did not publish.
+
+## Rollback
+
+A rollback is an ordinary release of the previous good commit — never an edit
+on the server.
+
+1. Identify the commit to return to: the value `.deploy_commit` held before the
+   release, which is also the commit named in the previous release record.
+2. Check that commit out locally (it is already published, so the upstream
+   guard is satisfied) and run `./deploy.sh` then `./deploy.sh --go`. The same
+   staged archive, gates, restart and deploy record apply.
+3. Re-run the smoke checks and confirm `.deploy_commit` names the commit you
+   rolled back to.
+
+If the release also flipped a readiness switch, un-flip it in the same recovery
+window: a consumer left enabled against a rolled-back provider fails closed and
+can make shared pages unavailable. A rollback of Webadmin alone never requires a
+Core rollback, but a Core rollback always requires un-flipping the dependent
+Webadmin switch.
