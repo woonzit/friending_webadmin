@@ -14,8 +14,9 @@ import {
   type AppearanceMapParentMessage,
 } from "@/lib/appearanceMap";
 import {
-  MAX_APPEARANCE_GEOCODE_QUERY_LENGTH,
+  appearanceTrim,
   decodeAppearanceGeocodeResponse,
+  MAX_APPEARANCE_GEOCODE_QUERY_LENGTH,
   type AppearanceGeocodeCandidate,
 } from "@/lib/appearanceRules";
 
@@ -81,7 +82,7 @@ export default function AppearanceMapPicker({ center, radiusKm, language, disabl
   }, [hasKey, frameReady, center, radiusKm, language]);
 
   async function search() {
-    const trimmed = query.trim();
+    const trimmed = appearanceTrim(query);
     if (!trimmed || searching) return;
     setSearching(true);
     setSearchError("");
@@ -119,7 +120,7 @@ export default function AppearanceMapPicker({ center, radiusKm, language, disabl
         <button
           type="button"
           className="button button-secondary"
-          disabled={disabled || searching || query.trim() === ""}
+          disabled={disabled || searching || appearanceTrim(query) === ""}
           onClick={() => void search()}
         >
           {searching ? t("searching") : t("searchButton")}

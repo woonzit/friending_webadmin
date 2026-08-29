@@ -1373,3 +1373,41 @@ test("an uncertain create is proven only by a NEW row: a pre-existing material-e
   assert.match(consoleSource, /reconcileAppearanceCreate\(pending, fresh\.rules\)/);
   assert.doesNotMatch(consoleSource, /fresh\.rules\.find\(\(rule\) => appearanceRuleMaterialMatches\(rule, pending\.input\)\)/, "material alone never closes the draft");
 });
+
+test("the four component pre-normalisation paths use the PHP-compatible trim, so Unicode padding reaches the strict boundary", () => {
+  const nbsp = "\u00A0";
+  // Geocode query: preserved by the trim helper and forwarded by the proxy exactly as typed.
+  const paddedQuery = `${nbsp}Budapest${nbsp}`;
+  assert.equal(appearanceTrim(paddedQuery), paddedQuery);
+  assert.deepEqual(normalizeAppearanceProxyBody("appearance_city_geocode", { query: paddedQuery }), { query: paddedQuery });
+  assert.deepEqual(normalizeAppearanceProxyBody("appearance_city_geocode", { query: "  Budapest  " }), { query: "Budapest" }, "ASCII padding still canonicalises");
+  // Preview IP: a padded IP is refused at the proxy boundary — the component must not strip the evidence first.
+  const paddedIp = `${nbsp}203.0.113.7${nbsp}`;
+  assert.equal(appearanceTrim(paddedIp), paddedIp);
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { ip: paddedIp }), null);
+  assert.deepEqual(normalizeAppearanceProxyBody("appearance_rules_preview", { ip: " 203.0.113.7 " }), { ip: "203.0.113.7" });
+  // Palette colour: a padded value is refused by the strict normaliser once the component stops pre-stripping it.
+  const paddedHex = `${nbsp}#aabbcc${nbsp}`;
+  assert.equal(normalizeAppearancePaletteHex(appearanceTrim(paddedHex)), null);
+  assert.equal(normalizeAppearancePaletteHex(appearanceTrim(" #aabbcc ")), "#AABBCC");
+  // Hero colour: the draft keeps the padded value and the hero parser refuses it; ASCII padding canonicalises.
+  const item = parseAppearanceRule(wireRule())!.hero.items[0]!;
+  const paddedColour = appearanceTrim(`${nbsp}#aabbcc${nbsp}`).toLowerCase();
+  assert.equal(paddedColour, `${nbsp}#aabbcc${nbsp}`);
+  assert.equal(parseAppearanceHero({ mode: "replace", items: [{ ...item, title_color_web: paddedColour }] }), null);
+  assert.equal(parseAppearanceHero({ mode: "replace", items: [{ ...item, title_color_web: appearanceTrim(" #AABBCC ").toLowerCase() }] })?.items[0]?.title_color_web, "#aabbcc");
+  // Source assertions: the four Core-bound paths no longer call JavaScript trim; display-only coordinate checks stay out of scope.
+  const read = (file: string) => readFileSync(new URL(`../components/${file}`, import.meta.url), "utf8");
+  const picker = read("AppearanceMapPicker.tsx");
+  assert.match(picker, /const trimmed = appearanceTrim\(query\);/);
+  assert.doesNotMatch(picker, /query\.trim\(\)/);
+  const preview = read("AppearanceTestPreview.tsx");
+  assert.match(preview, /const ipValue = appearanceTrim\(ip\);/);
+  assert.doesNotMatch(preview, /ip\.trim\(\)/);
+  const palette = read("AppearancePaletteEditor.tsx");
+  assert.match(palette, /const raw = appearanceTrim\(event\.target\.value\);/);
+  assert.doesNotMatch(palette, /value\.trim\(\)/);
+  const hero = read("AppearanceHeroEditor.tsx");
+  assert.match(hero, /appearanceTrim\(event\.target\.value\)\.toLowerCase\(\)/);
+  assert.doesNotMatch(hero, /\.trim\(\)/);
+});

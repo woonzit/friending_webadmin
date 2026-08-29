@@ -8,6 +8,7 @@ import { adminCall } from "@/lib/adminClient";
 import {
   APPEARANCE_PALETTE_MODES,
   APPEARANCE_PALETTE_ROLES,
+  appearanceTrim,
   decodeAppearancePreviewResponse,
   type AppearancePreviewPayload,
   type LocalizedAppearanceCountry,
@@ -49,7 +50,9 @@ export default function AppearanceTestPreview({ countries, ruleNames }: Props) {
       body.latitude = parsedLatitude;
       body.longitude = parsedLongitude;
     }
-    if (ip.trim() !== "") body.ip = ip.trim();
+    // Finding 26: the Core-bound IP is PHP-trimmed only; Unicode padding reaches the strict proxy boundary and is refused there.
+    const ipValue = appearanceTrim(ip);
+    if (ipValue !== "") body.ip = ipValue;
     setBusy(true);
     setError("");
     const response = await adminCall("appearance_rules_preview", body);

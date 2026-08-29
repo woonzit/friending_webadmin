@@ -6,6 +6,7 @@ import AppearancePalettePreview from "@/components/AppearancePalettePreview";
 import {
   APPEARANCE_PALETTE_MODES,
   APPEARANCE_PALETTE_ROLES,
+  appearanceTrim,
   normalizeAppearancePaletteHex,
   resolveAppearancePalette,
   type AppearanceFullPalette,
@@ -85,7 +86,7 @@ export default function AppearancePaletteEditor({ value, inherited, defaults, di
                       disabled={disabled || inherits}
                       aria-label={`${t(mode)} · ${t(`role.${role}`)} · ${t("hex")}`}
                       onChange={(event) => {
-                        const raw = event.target.value.trim();
+                        const raw = appearanceTrim(event.target.value);
                         const hex = normalizeAppearancePaletteHex(raw);
                         // Keep typing possible: an incomplete value is stored as typed and refused on save.
                         setRole(mode, role, hex ?? raw);

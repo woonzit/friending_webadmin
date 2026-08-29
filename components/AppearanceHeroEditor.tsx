@@ -5,8 +5,9 @@ import { useTranslations } from "next-intl";
 import ImageUploadField from "@/components/ImageUploadField";
 import {
   APPEARANCE_HERO_TEXT_WEIGHTS,
-  MAX_APPEARANCE_HERO_ITEMS,
+  appearanceTrim,
   emptyAppearanceHeroItem,
+  MAX_APPEARANCE_HERO_ITEMS,
   type AppearanceHero,
   type AppearanceHeroItem,
   type AppearanceHeroPlatform,
@@ -87,7 +88,7 @@ function StyleFields({
                   spellCheck={false}
                   disabled={disabled}
                   placeholder={t("colorDefault")}
-                  onChange={(event) => onChange({ ...item, [colorKey]: event.target.value.trim().toLowerCase() })}
+                  onChange={(event) => onChange({ ...item, [colorKey]: appearanceTrim(event.target.value).toLowerCase() })}
                 />
               </div>
             </div>
