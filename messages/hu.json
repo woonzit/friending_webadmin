@@ -1548,12 +1548,12 @@
           },
           "landing": {
             "title": "App nyitóképernyő",
-            "purpose": "Háttérkép vagy -videó opcionális előképpel, szöveges vagy képes cím mindkét nyelven és kétnyelvű leírás; minden csoport öröklődik, ha üresen marad.",
+            "purpose": "Háttérkép vagy -videó opcionális előképpel, szöveges vagy képes cím mindkét nyelven és kétnyelvű leírás; minden mező önállóan öröklődik, ha üresen marad.",
             "actions": {
-              "1": "Csak azokat a csoportokat töltsd ki, amelyek eltérnek az örökölt tartalomtól.",
+              "1": "Csak azokat a mezőket töltsd ki, amelyek eltérnek az örökölt tartalomtól; a háttér típusa mindig a fájljával együtt utazik.",
               "2": "A telefonos előnézetben ellenőrizd a feloldott hátteret, címet és leírást."
             },
-            "guidance": "Az üres öröklést jelent, sosem fekete hátteret. Az asset nélküli képcím a címet örökli, nem törött képet küld."
+            "guidance": "Az üres öröklést jelent, sosem fekete hátteret. Az asset nélküli képcímet a mentés visszautasítja, nem törött képet küld; az előkép önállóan öröklődik, de csak videóháttér fölött jelenik meg."
           },
           "hero": {
             "title": "Discover hero-karusszel",
@@ -5634,7 +5634,8 @@
       "window": "Az időablak vége a kezdete után legyen.",
       "background": "Tölts fel háttérképet vagy -videót, vagy hagyd üresen a hátteret az örökléshez.",
       "poster": "A videó-előkép feltöltésének be kell fejeződnie, vagy távolítsd el.",
-      "titleImage": "Tölts fel címképet, vagy állítsd vissza a cím típusát szövegre.",
+      "titleImage": "A címképnek abszolút https címnek kell lennie, és a feltöltésének be kell fejeződnie.",
+      "titleImageRequired": "A képcímhez címkép kell. Tölts fel egyet, vagy állítsd a cím típusát szövegre vagy öröklésre.",
       "heroItem": "Minden hero-elemhez feltöltött kép vagy HTTPS videó-URL kell; a célhivatkozás is HTTPS legyen.",
       "heroTypography": "A hero betűméret 10–120 px, a szín #rrggbb formátumú lehet; az alapértelmezéshez hagyd üresen a mezőt.",
       "palette": "A palettaszínek #RRGGBB értékek legyenek; pipáld be az „örökli” opciót annál a szerepnél, amelyet nem akarsz beállítani."
@@ -5688,18 +5689,20 @@
       "backgroundImage": "Kép",
       "backgroundVideo": "Videó",
       "titleType": "Cím típusa",
+      "titleInherit": "Örökölt",
       "titleText": "Szöveg",
       "titleImage": "Kép",
       "backgroundImageLabel": "Háttérkép",
       "backgroundVideoLabel": "Háttérvideó",
       "backgroundInheritHint": "Opcionális. Üresen hagyva a hátteret örökli.",
       "posterImage": "Videó-előkép · opcionális",
-      "posterHint": "Opcionális kép, amely a videó betöltése alatt látszik.",
+      "posterHint": "Opcionális. Önállóan öröklődik, és csak akkor látszik, amíg a tényleges háttér videó.",
       "titleTextEn": "Cím · angol",
       "titleTextHu": "Cím · magyar",
       "titleTextHint": "Opcionális. Az üres cím öröklődik; a beépített alapértelmezés a „friending.”.",
       "titleImageLabel": "Címkép",
-      "titleImageHint": "Átlátszó PNG. Üresen hagyva a címet örökli.",
+      "titleImageHint": "Átlátszó PNG. Kép típusú címnél kötelező.",
+      "titleImageInheritHint": "Opcionális átlátszó PNG. Csak ott használatos, ahol az örökölt címtípus kép.",
       "descriptionEn": "Leírás · angol",
       "descriptionHu": "Leírás · magyar",
       "descriptionHint": "Opcionális, legfeljebb 300 karakter. Az üres leírás öröklődik.",

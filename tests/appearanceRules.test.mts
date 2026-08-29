@@ -6,6 +6,7 @@ import {
   APPEARANCE_DEFAULT_PALETTE,
   APPEARANCE_PALETTE_MODES,
   APPEARANCE_PALETTE_ROLES,
+  appearanceLandingCoherent,
   appearanceLandingDraft,
   appearanceLandingWire,
   appearanceRuleDraft,
@@ -367,20 +368,43 @@ test("the palette resolves per role down the chain and records where each value 
   }
 });
 
-test("landing resolves per group with the legacy language fallback and hero replaces or inherits", () => {
+test("landing inherits per field (Amendment v1.5) with the language fallback and hero replaces or inherits", () => {
   const geo = parseAppearanceRule(geoRule({ landing: { background_type: "video", background_url: "https://cdn.friending.co/pride.mp4", background_poster_url: "https://cdn.friending.co/pride.jpg", description_hu: "Budapesti pride." } }));
-  const global = parseAppearanceRule(wireRule({ landing: { title_type: "text", title_text_en: "friending.", title_text_hu: "", description_en: "Global copy", description_hu: "" } }));
+  const global = parseAppearanceRule(wireRule({ landing: { title_type: "text", title_text_en: "Global title", description_en: "Global copy" } }));
   assert.ok(geo && global);
 
   const hu = resolveAppearanceLanding([geo.landing, global.landing], APPEARANCE_DEFAULT_LANDING, "hu");
   assert.equal(hu.backgroundType, "video");
   assert.equal(hu.backgroundUrl, "https://cdn.friending.co/pride.mp4");
   assert.equal(hu.posterUrl, "https://cdn.friending.co/pride.jpg");
-  assert.equal(hu.titleText, "friending.", "hu title falls back to the English of the same document");
+  assert.equal(hu.titleType, "text");
+  assert.equal(hu.titleText, APPEARANCE_DEFAULT_LANDING.title_text_hu, "the Hungarian title inherits per field down to the compiled default");
   assert.equal(hu.description, "Budapesti pride.");
 
   const en = resolveAppearanceLanding([geo.landing, global.landing], APPEARANCE_DEFAULT_LANDING, "en");
-  assert.equal(en.description, "Global copy", "an override without English copy does not win the description");
+  assert.equal(en.titleText, "Global title");
+  assert.equal(en.description, "Global copy", "an override without English copy does not win the English description");
+
+  // The reviewed storefront poster-only case: the poster wins on its own while the video stays global.
+  const posterOnly = resolveAppearanceLanding([{ background_poster_url: "https://cdn.friending.co/store.jpg" }, geo.landing, global.landing], APPEARANCE_DEFAULT_LANDING, "en");
+  assert.equal(posterOnly.backgroundUrl, "https://cdn.friending.co/pride.mp4");
+  assert.equal(posterOnly.posterUrl, "https://cdn.friending.co/store.jpg");
+
+  // The poster is dropped whenever the effective background is not a video.
+  const imageOverPoster = resolveAppearanceLanding([{ background_type: "image", background_url: "https://cdn.friending.co/still.jpg" }, geo.landing], APPEARANCE_DEFAULT_LANDING, "en");
+  assert.equal(imageOverPoster.backgroundType, "image");
+  assert.equal(imageOverPoster.backgroundUrl, "https://cdn.friending.co/still.jpg");
+  assert.equal(imageOverPoster.posterUrl, "");
+
+  // A text without a title type does not change the inherited image title.
+  const imageTitle = resolveAppearanceLanding([{ title_text_hu: "Store cím" }, { title_type: "image", title_image_url: "https://cdn.friending.co/title.png" }], APPEARANCE_DEFAULT_LANDING, "hu");
+  assert.equal(imageTitle.titleType, "image");
+  assert.equal(imageTitle.titleImageUrl, "https://cdn.friending.co/title.png");
+  assert.equal(imageTitle.titleText, "Store cím");
+
+  // Blank-to-English fallback applies after per-field resolution.
+  const fallback = resolveAppearanceLanding([{ description_en: "Only English" }], { ...APPEARANCE_DEFAULT_LANDING, description_hu: "" }, "hu");
+  assert.equal(fallback.description, "Only English");
 
   const defaultsOnly = resolveAppearanceLanding([], APPEARANCE_DEFAULT_LANDING, "hu");
   assert.equal(defaultsOnly.titleText, "friending.");
@@ -399,8 +423,9 @@ test("landing resolves per group with the legacy language fallback and hero repl
 // Editor draft ↔ wire
 // ---------------------------------------------------------------------------
 
-test("blank editor groups inherit; filled groups reach the wire as exact subsets", () => {
+test("blank editor fields inherit; filled fields reach the wire per field (Amendment v1.5)", () => {
   const blank = appearanceLandingDraft({});
+  assert.equal(blank.title_type, "", "no stored title type is the inherited state");
   assert.deepEqual(appearanceLandingWire(blank), {});
 
   const filled = { ...blank, background_type: "video", background_url: "https://cdn.friending.co/a.mp4", background_poster_url: "https://cdn.friending.co/a.jpg", description_en: "Hello", title_text_hu: "Szia" };
@@ -408,19 +433,44 @@ test("blank editor groups inherit; filled groups reach the wire as exact subsets
     background_type: "video",
     background_url: "https://cdn.friending.co/a.mp4",
     background_poster_url: "https://cdn.friending.co/a.jpg",
-    title_type: "text",
-    title_text_en: "",
     title_text_hu: "Szia",
     description_en: "Hello",
-    description_hu: "",
-  });
+  }, "blank localized siblings are absent, never empty strings");
+
+  const posterOnly = { ...blank, background_poster_url: "https://cdn.friending.co/store.jpg" };
+  assert.deepEqual(appearanceLandingWire(posterOnly), { background_poster_url: "https://cdn.friending.co/store.jpg" }, "a poster inherits on its own");
+
+  const textMode = { ...blank, title_type: "text" };
+  assert.deepEqual(appearanceLandingWire(textMode), { title_type: "text" }, "an explicit text title keeps the inherited texts");
 
   const imageTitleWithoutAsset = { ...blank, title_type: "image" };
-  assert.deepEqual(appearanceLandingWire(imageTitleWithoutAsset), {}, "an image title without its asset inherits");
+  assert.deepEqual(appearanceLandingWire(imageTitleWithoutAsset), { title_type: "image" });
+  assert.equal(appearanceLandingCoherent(appearanceLandingWire(imageTitleWithoutAsset)), false, "an image title without its asset is not coherent");
 
+  const stored = { title_text_hu: "Store cím" };
+  assert.deepEqual(appearanceLandingWire(appearanceLandingDraft(stored)), stored, "a per-field stored rule round-trips without gaining a title type");
   const roundTrip = appearanceLandingDraft(appearanceLandingWire(filled));
   assert.equal(roundTrip.background_url, filled.background_url);
+  assert.equal(roundTrip.title_type, "");
   assert.equal(roundTrip.title_image_url, "");
+});
+
+test("the save-time pairing rule is applied before Core sees the body", () => {
+  assert.equal(appearanceLandingCoherent({}), true);
+  assert.equal(appearanceLandingCoherent({ background_type: "image", background_url: "https://cdn.friending.co/a.jpg", background_poster_url: "https://cdn.friending.co/p.jpg", title_type: "image", title_image_url: "https://cdn.friending.co/t.png" }), true);
+  assert.equal(appearanceLandingCoherent({ background_poster_url: "https://cdn.friending.co/p.jpg" }), true);
+  assert.equal(appearanceLandingCoherent({ title_type: "text" }), true);
+  assert.equal(appearanceLandingCoherent({ background_type: "video" }), false, "type without url");
+  assert.equal(appearanceLandingCoherent({ background_url: "https://cdn.friending.co/a.mp4" }), false, "url without type");
+  assert.equal(appearanceLandingCoherent({ title_type: "image" }), false, "image title without asset");
+
+  const rule = appearanceRuleInputFromDraft(appearanceRuleDraft(parseAppearanceRule(geoRule())!));
+  assert.ok(rule);
+  assert.ok(parseAppearanceRuleInput({ ...rule, landing: { background_poster_url: "https://cdn.friending.co/p.jpg" } }));
+  assert.ok(parseAppearanceRuleInput({ ...rule, landing: { title_text_hu: "Store cím" } }));
+  assert.equal(parseAppearanceRuleInput({ ...rule, landing: { background_type: "video" } }), null);
+  assert.equal(parseAppearanceRuleInput({ ...rule, landing: { background_url: "https://cdn.friending.co/a.mp4" } }), null);
+  assert.equal(parseAppearanceRuleInput({ ...rule, landing: { title_type: "image" } }), null);
 });
 
 test("a rule round-trips through the editor draft into the exact fourteen-key save body", () => {
@@ -483,8 +533,11 @@ test("draft validation names the first failing group", () => {
   assert.equal(validateAppearanceRuleDraft(geo), "background");
   geo.landing.background_url = "";
   geo.landing.title_type = "image";
+  assert.equal(validateAppearanceRuleDraft(geo), "titleImageRequired", "an image title needs its asset in the same rule");
   geo.landing.title_image_url = "ftp://x";
   assert.equal(validateAppearanceRuleDraft(geo), "titleImage");
+  geo.landing.title_type = "";
+  assert.equal(validateAppearanceRuleDraft(geo), "titleImage", "an inherited title type still validates the image address");
   geo.landing.title_image_url = "";
   geo.hero = { mode: "replace", items: [{ ...(parseAppearanceRule(wireRule())!.hero.items[0]!), media_url: "" }] };
   assert.equal(validateAppearanceRuleDraft(geo), "heroItem");

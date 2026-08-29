@@ -1548,12 +1548,12 @@
           },
           "landing": {
             "title": "App landing screen",
-            "purpose": "Background image or video with an optional poster, a text or image title in both languages and a bilingual description, each group inheriting when left blank.",
+            "purpose": "Background image or video with an optional poster, a text or image title in both languages and a bilingual description, each field inheriting on its own when left blank.",
             "actions": {
-              "1": "Fill only the groups that differ from the inherited content.",
+              "1": "Fill only the fields that differ from the inherited content; a background type always travels with its file.",
               "2": "Use the phone preview to confirm the resolved background, title and description."
             },
-            "guidance": "Blank means inherit, never black. A title image without its asset inherits the title instead of shipping a broken image."
+            "guidance": "Blank means inherit, never black. An image title without its asset is refused at save time instead of shipping a broken image, and a poster inherits on its own but shows only over a video background."
           },
           "hero": {
             "title": "Discover hero carousel",
@@ -5634,7 +5634,8 @@
       "window": "The end of the window must be after its start.",
       "background": "Upload a background image or video, or leave the background blank to inherit.",
       "poster": "The video poster must finish uploading, or remove it.",
-      "titleImage": "Upload a title image, or switch the title type back to text.",
+      "titleImage": "The title image must be an absolute https address that has finished uploading.",
+      "titleImageRequired": "An image title needs a title image. Upload one, or switch the title type to text or inherited.",
       "heroItem": "Every hero item needs an uploaded image or an HTTPS video URL; destination links must use HTTPS.",
       "heroTypography": "Hero font sizes must be 10–120 px and colours #rrggbb values; leave a field empty for the default.",
       "palette": "Palette colours must be #RRGGBB values; tick “inherit” for a role you do not want to set."
@@ -5688,18 +5689,20 @@
       "backgroundImage": "Image",
       "backgroundVideo": "Video",
       "titleType": "Title type",
+      "titleInherit": "Inherited",
       "titleText": "Text",
       "titleImage": "Image",
       "backgroundImageLabel": "Background image",
       "backgroundVideoLabel": "Background video",
       "backgroundInheritHint": "Optional. Leave it empty to inherit the background.",
       "posterImage": "Video poster · optional",
-      "posterHint": "Optional image shown while the video loads.",
+      "posterHint": "Optional. Inherits on its own and is shown only while the effective background is a video.",
       "titleTextEn": "Title · English",
       "titleTextHu": "Title · Hungarian",
       "titleTextHint": "Optional. Blank titles inherit; the compiled default is “friending.”.",
       "titleImageLabel": "Title image",
-      "titleImageHint": "Transparent PNG. Leave it empty to inherit the title.",
+      "titleImageHint": "Transparent PNG. Required while the title type is Image.",
+      "titleImageInheritHint": "Optional transparent PNG. Used only where the inherited title type is an image.",
       "descriptionEn": "Description · English",
       "descriptionHu": "Description · Hungarian",
       "descriptionHint": "Optional, up to 300 characters. Blank descriptions inherit.",

@@ -82,7 +82,11 @@ export const APPEARANCE_LANDING_KEYS = [
 export type AppearanceLandingKey = (typeof APPEARANCE_LANDING_KEYS)[number];
 /** Wire form: only the keys a rule sets are present; an absent key inherits. */
 export type AppearanceLanding = Partial<Record<AppearanceLandingKey, string>>;
-/** Editor form: every key present, blank = inherit (the legacy App landing semantics). */
+/**
+ * Editor form: every key present, blank = inherit (Amendment v1.5: per field).
+ * `title_type` may also be `""` (inherited); `background_type` is only sent
+ * together with a `background_url`, so it needs no inherited state of its own.
+ */
 export type AppearanceLandingDraft = Record<AppearanceLandingKey, string>;
 
 const LANDING_LIMITS: Record<AppearanceLandingKey, number> = {
@@ -660,7 +664,7 @@ function parseRuleInputFields(source: Record<string, unknown>): AppearanceRuleIn
   const landing = parseAppearanceLanding(source.landing);
   const hero = parseAppearanceHero(source.hero);
   const palette = parseAppearancePalette(source.palette);
-  if (!scopeFields || !landing || !hero || !palette) return null;
+  if (!scopeFields || !landing || !appearanceLandingCoherent(landing) || !hero || !palette) return null;
   return {
     name,
     scope,
@@ -932,33 +936,45 @@ export type ResolvedAppearanceLanding = {
   description: string;
 };
 
-function landingText(doc: AppearanceLanding, key: "title_text" | "description", language: "en" | "hu"): string {
-  const local = doc[`${key}_${language}`]?.trim() ?? "";
-  if (local) return local;
-  return doc[`${key}_en`]?.trim() ?? "";
+/** The first document in precedence order that actually supplies the field, else the compiled default. */
+function landingField(chain: readonly AppearanceLanding[], defaults: AppearanceLandingDraft, key: AppearanceLandingKey): string {
+  for (const doc of chain) {
+    const value = doc[key]?.trim() ?? "";
+    if (value !== "") return value;
+  }
+  return defaults[key].trim();
 }
 
-/** Legacy `AppLandingService` semantics: a document wins a field only when it actually supplies it. */
+function landingText(
+  chain: readonly AppearanceLanding[],
+  defaults: AppearanceLandingDraft,
+  key: "title_text" | "description",
+  language: "en" | "hu",
+): string {
+  const local = landingField(chain, defaults, `${key}_${language}`);
+  return local !== "" ? local : landingField(chain, defaults, `${key}_en`);
+}
+
+/**
+ * Amendment v1.5: every landing field inherits on its own down the chain
+ * (geo → storefront → global) and then the compiled default, with the
+ * localized blank-to-English fallback. The poster is part of the output only
+ * when the effective background is a video.
+ */
 export function resolveAppearanceLanding(
   chain: readonly AppearanceLanding[],
   defaults: AppearanceLandingDraft,
   language: "en" | "hu",
 ): ResolvedAppearanceLanding {
-  const background = chain.find((doc) => (doc.background_url ?? "").trim() !== "");
-  const title = chain.find((doc) => {
-    if (doc.title_type === "image") return (doc.title_image_url ?? "").trim() !== "";
-    return landingText(doc, "title_text", language) !== "";
-  });
-  const description = chain.find((doc) => landingText(doc, "description", language) !== "");
-  const backgroundSource = background ?? defaults;
+  const backgroundType = landingField(chain, defaults, "background_type") === "video" ? "video" : "image";
   return {
-    backgroundType: backgroundSource.background_type === "video" ? "video" : "image",
-    backgroundUrl: background?.background_url?.trim() ?? defaults.background_url,
-    posterUrl: background ? (background.background_poster_url?.trim() ?? "") : defaults.background_poster_url,
-    titleType: title ? (title.title_type === "image" ? "image" : "text") : (defaults.title_type === "image" ? "image" : "text"),
-    titleText: title ? landingText(title, "title_text", language) : landingText(defaults, "title_text", language),
-    titleImageUrl: title ? (title.title_image_url?.trim() ?? "") : defaults.title_image_url,
-    description: description ? landingText(description, "description", language) : landingText(defaults, "description", language),
+    backgroundType,
+    backgroundUrl: landingField(chain, defaults, "background_url"),
+    posterUrl: backgroundType === "video" ? landingField(chain, defaults, "background_poster_url") : "",
+    titleType: landingField(chain, defaults, "title_type") === "image" ? "image" : "text",
+    titleText: landingText(chain, defaults, "title_text", language),
+    titleImageUrl: landingField(chain, defaults, "title_image_url"),
+    description: landingText(chain, defaults, "description", language),
   };
 }
 
@@ -979,7 +995,7 @@ export function appearanceLandingDraft(landing: AppearanceLanding): AppearanceLa
     background_type: landing.background_type === "video" ? "video" : "image",
     background_url: landing.background_url ?? "",
     background_poster_url: landing.background_poster_url ?? "",
-    title_type: landing.title_type === "image" ? "image" : "text",
+    title_type: landing.title_type === "image" || landing.title_type === "text" ? landing.title_type : "",
     title_text_en: landing.title_text_en ?? "",
     title_text_hu: landing.title_text_hu ?? "",
     title_image_url: landing.title_image_url ?? "",
@@ -988,31 +1004,39 @@ export function appearanceLandingDraft(landing: AppearanceLanding): AppearanceLa
   };
 }
 
-/** Blank editor groups inherit: only the groups the operator filled reach the wire. */
+/**
+ * Per-field wire (Amendment v1.5): a blank editor field inherits and is
+ * absent; a filled one is sent. The save-time pairing rule is built into the
+ * shape (`background_type` travels only with a `background_url`) or refused
+ * beforehand by `validateAppearanceRuleDraft` (an image title needs its asset).
+ */
 export function appearanceLandingWire(draft: AppearanceLandingDraft): AppearanceLanding {
   const wire: AppearanceLanding = {};
-  if (draft.background_url.trim() !== "") {
-    wire.background_type = draft.background_type;
-    wire.background_url = draft.background_url.trim();
-    if (draft.background_type === "video" && draft.background_poster_url.trim() !== "") {
-      wire.background_poster_url = draft.background_poster_url.trim();
-    }
+  const backgroundUrl = draft.background_url.trim();
+  if (backgroundUrl !== "") {
+    wire.background_type = draft.background_type === "video" ? "video" : "image";
+    wire.background_url = backgroundUrl;
   }
-  if (draft.title_type === "image") {
-    if (draft.title_image_url.trim() !== "") {
-      wire.title_type = "image";
-      wire.title_image_url = draft.title_image_url.trim();
-    }
-  } else if (draft.title_text_en.trim() !== "" || draft.title_text_hu.trim() !== "") {
-    wire.title_type = "text";
-    wire.title_text_en = draft.title_text_en.trim();
-    wire.title_text_hu = draft.title_text_hu.trim();
-  }
-  if (draft.description_en.trim() !== "" || draft.description_hu.trim() !== "") {
-    wire.description_en = draft.description_en.trim();
-    wire.description_hu = draft.description_hu.trim();
+  const poster = draft.background_poster_url.trim();
+  if (poster !== "") wire.background_poster_url = poster;
+  if (draft.title_type === "image" || draft.title_type === "text") wire.title_type = draft.title_type;
+  for (const key of ["title_text_en", "title_text_hu", "title_image_url", "description_en", "description_hu"] as const) {
+    const text = draft[key].trim();
+    if (text !== "") wire[key] = text;
   }
   return wire;
+}
+
+/**
+ * Amendment v1.5 save-time coherence: `background_type` and `background_url`
+ * are set together in one rule, and `title_type = image` brings its
+ * `title_image_url`. Core refuses anything else with
+ * `appearance-rule-landing-invalid`; the proxy refuses it first.
+ */
+export function appearanceLandingCoherent(landing: AppearanceLanding): boolean {
+  if ((landing.background_type !== undefined) !== (landing.background_url !== undefined)) return false;
+  if (landing.title_type === "image" && landing.title_image_url === undefined) return false;
+  return true;
 }
 
 export function emptyAppearanceHeroItem(sortOrder: number): AppearanceHeroItem {
@@ -1102,7 +1126,7 @@ export function newAppearanceRuleDraft(scope: AppearanceScope, name: string, pri
     active: true,
     starts_at: null,
     ends_at: null,
-    landing: { ...APPEARANCE_DEFAULT_LANDING, title_text_en: "", title_text_hu: "", description_en: "", description_hu: "" },
+    landing: { ...APPEARANCE_DEFAULT_LANDING, title_type: "", title_text_en: "", title_text_hu: "", description_en: "", description_hu: "" },
     hero: { mode: "inherit", items: [] },
     palette: { light: {}, dark: {} },
   };
@@ -1118,6 +1142,7 @@ export type AppearanceDraftError =
   | "background"
   | "poster"
   | "titleImage"
+  | "titleImageRequired"
   | "heroItem"
   | "heroTypography"
   | "palette";
@@ -1171,7 +1196,8 @@ export function validateAppearanceRuleDraft(draft: AppearanceRuleDraft): Appeara
   const landing = draft.landing;
   if (!isAppearanceHttpsUrl(landing.background_url, true)) return "background";
   if (!isAppearanceHttpsUrl(landing.background_poster_url, true)) return "poster";
-  if (landing.title_type === "image" && landing.title_image_url.trim() !== "" && !isAppearanceHttpsUrl(landing.title_image_url)) return "titleImage";
+  if (landing.title_type === "image" && landing.title_image_url.trim() === "") return "titleImageRequired";
+  if (!isAppearanceHttpsUrl(landing.title_image_url, true)) return "titleImage";
   if (draft.hero.mode === "replace") {
     if (draft.hero.items.length > MAX_APPEARANCE_HERO_ITEMS) return "heroItem";
     for (const item of draft.hero.items) {

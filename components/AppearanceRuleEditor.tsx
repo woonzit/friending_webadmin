@@ -285,7 +285,7 @@ export default function AppearanceRuleEditor({
               onChange={(event) => {
                 const backgroundType = event.target.value;
                 if (backgroundType === value.landing.background_type) return;
-                patchLanding({ background_type: backgroundType, background_url: "", background_poster_url: "" });
+                patchLanding({ background_type: backgroundType, background_url: "" });
               }}
             >
               <option value="image">{t("backgroundImage")}</option>
@@ -308,6 +308,7 @@ export default function AppearanceRuleEditor({
                 });
               }}
             >
+              <option value="">{t("titleInherit")}</option>
               <option value="text">{t("titleText")}</option>
               <option value="image">{t("titleImage")}</option>
             </select>
@@ -323,29 +324,29 @@ export default function AppearanceRuleEditor({
               onChange={(url) => patchLanding({ background_url: url })}
             />
           ) : (
-            <>
-              <VideoUploadField
-                className="field-full"
-                label={t("backgroundVideoLabel")}
-                value={value.landing.background_url}
-                poster={value.landing.background_poster_url}
-                disabled={locked}
-                hint={t("backgroundInheritHint")}
-                onBusyChange={(isBusy) => setUploading(isBusy ? "background" : null)}
-                onChange={(url) => patchLanding({ background_url: url })}
-              />
-              <ImageUploadField
-                className="field-full"
-                label={t("posterImage")}
-                value={value.landing.background_poster_url}
-                disabled={locked}
-                hint={t("posterHint")}
-                onBusyChange={(isBusy) => setUploading(isBusy ? "poster" : null)}
-                onChange={(url) => patchLanding({ background_poster_url: url })}
-              />
-            </>
+            <VideoUploadField
+              className="field-full"
+              label={t("backgroundVideoLabel")}
+              value={value.landing.background_url}
+              poster={value.landing.background_poster_url}
+              disabled={locked}
+              hint={t("backgroundInheritHint")}
+              onBusyChange={(isBusy) => setUploading(isBusy ? "background" : null)}
+              onChange={(url) => patchLanding({ background_url: url })}
+            />
           )}
-          {value.landing.title_type === "text" ? (
+          {/* Amendment v1.5: the poster inherits on its own, so it is editable whatever this rule's background is. */}
+          <ImageUploadField
+            className="field-full"
+            label={t("posterImage")}
+            value={value.landing.background_poster_url}
+            disabled={locked}
+            hint={t("posterHint")}
+            onBusyChange={(isBusy) => setUploading(isBusy ? "poster" : null)}
+            onChange={(url) => patchLanding({ background_poster_url: url })}
+          />
+          {/* Inherited title type: text and image fields are independent per-field overrides. */}
+          {value.landing.title_type !== "image" && (
             <>
               <label className="field">
                 <span>{t("titleTextEn")}</span>
@@ -357,13 +358,14 @@ export default function AppearanceRuleEditor({
                 <small className="field-hint">{t("titleTextHint")}</small>
               </label>
             </>
-          ) : (
+          )}
+          {value.landing.title_type !== "text" && (
             <ImageUploadField
               className="field-full"
               label={t("titleImageLabel")}
               value={value.landing.title_image_url}
               disabled={locked}
-              hint={t("titleImageHint")}
+              hint={value.landing.title_type === "image" ? t("titleImageHint") : t("titleImageInheritHint")}
               onBusyChange={(isBusy) => setUploading(isBusy ? "title" : null)}
               onChange={(url) => patchLanding({ title_image_url: url })}
             />
