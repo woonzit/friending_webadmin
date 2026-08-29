@@ -5557,7 +5557,70 @@
     "profileLinkBase": "Public profile address",
     "profileLinkBaseCopy": "The origin members' shareable profile links and QR codes are minted from. Only origins that released app builds recognise are offered — a link on an unknown host does not degrade the in-app QR screen, it removes it. Opening the app from a host also needs that domain in the signed build's associated domains; otherwise the link still works, but lands in the browser.",
     "webBase": "Website address",
-    "webBaseCopy": "The origin the legal, marketing and giveaway links in the apps are built from — privacy policy, terms and similar. Free text, because these only ever open in a browser: a wrong value costs a broken link, not a broken screen. It must be an https origin with no path; each consumer appends its own."
+    "webBaseCopy": "The origin the legal, marketing and giveaway links in the apps are built from — privacy policy, terms and similar. Free text, because these only ever open in a browser: a wrong value costs a broken link, not a broken screen. It must be an https origin with no path; each consumer appends its own.",
+    "authPolicy": {
+      "eyebrow": "Sign-in availability",
+      "title": "Authentication policy",
+      "copy": "Choose the global sign-up and sign-in methods, then override deliberate App Store storefronts. The storefront is supplied by the App Store, never inferred from a member's location.",
+      "revision": "Revision {revision}",
+      "savePolicy": "Save authentication policy",
+      "saved": "Authentication policy saved at revision {revision}.",
+      "writeRequired": "Editor access is required to save the authentication policy.",
+      "saveError": "The save was not confirmed. Authoritative policy settings were reloaded; review them before trying again.",
+      "globalTitle": "Global default",
+      "globalCopy": "Used when the app supplies no known storefront or no storefront override exists. Phone and e-mail cannot both be disabled here.",
+      "phone": {
+        "title": "Phone sign-up and sign-in",
+        "copy": "Offers phone authentication where the resolved storefront policy permits it.",
+        "short": "Phone"
+      },
+      "email": {
+        "title": "E-mail sign-up and sign-in",
+        "copy": "Offers e-mail authentication where the resolved storefront policy permits it.",
+        "short": "E-mail"
+      },
+      "apple": {
+        "title": "Sign in with Apple",
+        "copy": "Always available and read-only. It does not make a phone-and-e-mail-off global default valid.",
+        "short": "Apple always on",
+        "preview": "Apple"
+      },
+      "methodPreview": "{scope}: {methods}",
+      "globalPreview": "Default",
+      "pendingStorefrontPreview": "Choose storefront",
+      "overridesTitle": "Storefront method overrides",
+      "overridesCopy": "Each ISO three-letter country replaces both global method values for that App Store storefront.",
+      "addOverride": "Add method override",
+      "removeOverride": "Remove",
+      "emptyOverrides": "Every storefront currently uses the global method default.",
+      "storefront": "App Store storefront",
+      "selectStorefront": "Select a country",
+      "dialTitle": "Global phone calling codes",
+      "dialCopy": "Allow every E.164 country calling code, or choose countries to build a code list. The list limits new phone sign-up and new phone links; an existing verified phone login stays available.",
+      "dialRule": "Phone calling-code rule",
+      "allCountries": "All countries",
+      "selectedCountries": "Selected countries",
+      "callingCodeCountry": "Country",
+      "selectCallingCodeCountry": "Select a country and calling code",
+      "addCallingCode": "Add code",
+      "selectedCallingCodes": "Selected phone calling codes",
+      "removeCallingCode": "Remove {code}",
+      "noCallingCodes": "No new phone calling code is allowed by this rule. Existing verified phone logins remain available.",
+      "dialOverridesTitle": "Storefront calling-code overrides",
+      "dialOverridesCopy": "Optionally replace the global calling-code rule for individual App Store storefronts.",
+      "addDialOverride": "Add calling-code override",
+      "removeDialOverride": "Remove override",
+      "emptyDialOverrides": "Every storefront currently uses the global calling-code rule.",
+      "updatedAt": "Policy last updated",
+      "updatedBy": "Updated by",
+      "errors": {
+        "noMethod": "Keep phone or e-mail enabled in the global default.",
+        "storefront": "Choose a valid ISO three-letter App Store storefront for every override.",
+        "duplicateStorefront": "The same storefront cannot appear twice in one override list.",
+        "dialCodes": "Selected calling-code rules may contain only valid, unique country codes.",
+        "revision": "The authentication-policy revision is invalid. Reload before saving."
+      }
+    }
   },
   "userGroups": {
     "eyebrow": "Audience data model",

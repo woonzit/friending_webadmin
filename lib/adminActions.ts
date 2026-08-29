@@ -569,6 +569,9 @@ export function adminPrincipalFrom(value: unknown): AdminPrincipal {
  */
 const DEFAULT_BODY_LIMIT_BYTES = 256_000;
 const TAG_CATALOG_BODY_LIMIT_BYTES = 1_100_000;
+// At the contract maxima, all 249 storefronts may each carry the complete
+// bounded E.164 calling-code list. The resulting JSON is about 307 KB.
+const RUNTIME_SETTINGS_BODY_LIMIT_BYTES = 400_000;
 // The Core contract permits every ISO storefront to carry localized templates.
 // Row, language and template caps still bound the decoded document; this limit
 // keeps the bridge from rejecting a configuration valid at those maxima.
@@ -592,6 +595,7 @@ const REPLACE_IMAGE_BODY_LIMIT_BYTES = 6_000_000;
 const ADMIN_ACTION_BODY_LIMIT: Readonly<Record<string, number>> = {
   save_profile_tag_catalog: TAG_CATALOG_BODY_LIMIT_BYTES,
   save_invite_configuration: INVITE_CONFIGURATION_BODY_LIMIT_BYTES,
+  set_settings: RUNTIME_SETTINGS_BODY_LIMIT_BYTES,
   admin_replace_image: REPLACE_IMAGE_BODY_LIMIT_BYTES,
   // A1: this is the effective guard on Apache 2.4.52 and therefore stays
   // pinned independently of the Verification bridge rollback switch.

@@ -2,12 +2,20 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import AuthPolicyConfigurationCard from "@/components/AuthPolicyConfigurationCard";
 import FeatureSwitchesPanel from "@/components/FeatureSwitchesPanel";
 import PageHeader from "@/components/PageHeader";
 import ProfilePresenceConfiguration from "@/components/ProfilePresenceConfiguration";
 import ProfileVerificationConfiguration from "@/components/ProfileVerificationConfiguration";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
+import {
+  authPolicyDraftIssue,
+  authPolicySavePayload,
+  authPolicySettingsResponse,
+  type AuthPolicyConfiguration,
+  type AuthPolicyDraftIssue,
+} from "@/lib/authPolicyConfiguration";
 import {
   FEATURE_SWITCHES_CONTRACT_READY,
   PUSH_MODE_CONTRACT_READY,
@@ -32,6 +40,7 @@ import {
 type ConfigurationSnapshot = {
   runtime: RuntimeSettings;
   push: PushDeliverySetting | null;
+  authPolicy: AuthPolicyConfiguration;
 };
 
 function configurationSnapshot(response: AdminResponse | null): ConfigurationSnapshot | null {
@@ -41,7 +50,9 @@ function configurationSnapshot(response: AdminResponse | null): ConfigurationSna
   const runtime = normalizeRuntimeSettings(response.settings);
   if (!runtime) return null;
   const push = PUSH_MODE_CONTRACT_READY ? pushSettingsResponse(response) : null;
-  return PUSH_MODE_CONTRACT_READY && !push ? null : { runtime, push };
+  const authPolicy = authPolicySettingsResponse(response);
+  if (!authPolicy || (PUSH_MODE_CONTRACT_READY && !push)) return null;
+  return { runtime, push, authPolicy };
 }
 
 export default function ConfigurationPage() {
@@ -50,6 +61,7 @@ export default function ConfigurationPage() {
   const locale = useLocale();
   const [settings, setSettings] = useState<RuntimeSettings | null>(null);
   const [pushSetting, setPushSetting] = useState<PushDeliverySetting | null>(null);
+  const [authPolicy, setAuthPolicy] = useState<AuthPolicyConfiguration | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [busy, setBusy] = useState(false);
   const saveInFlight = useRef(false);
@@ -65,6 +77,7 @@ export default function ConfigurationPage() {
     }
     setSettings(snapshot.runtime);
     setPushSetting(snapshot.push);
+    setAuthPolicy(snapshot.authPolicy);
     setState("ready");
   }, []);
 
@@ -78,43 +91,31 @@ export default function ConfigurationPage() {
     setMessage(null);
   }
 
-  async function save() {
+  async function commitSettings(
+    payload: Record<string, unknown>,
+    kind: "runtime" | "authPolicy",
+  ) {
     if (saveInFlight.current) return;
-    if (!settings) return;
-    if (!sessionIdleMinutesValid(settings.join_session_idle_minutes.value)) {
-      setMessage({ tone: "error", text: t("sessionIdleInvalid") });
-      return;
-    }
-    const pushPayload = PUSH_MODE_CONTRACT_READY
-      ? pushDeliverySavePayload(pushSetting?.value)
-      : null;
-    if (PUSH_MODE_CONTRACT_READY && !pushPayload) {
-      setMessage({ tone: "error", text: t("push.invalid") });
-      return;
-    }
     saveInFlight.current = true;
     setBusy(true);
     setMessage(null);
-    const response = await adminCall("set_settings", {
-      settings: {
-        ...runtimeSettingsSavePayload(settings),
-        ...(pushPayload ?? {}),
-      },
-    });
+    const response = await adminCall("set_settings", { settings: payload });
     const saved = configurationSnapshot(response);
     if (saved) {
-      setSettings(saved.runtime);
-      setPushSetting(saved.push);
+      if (kind === "runtime") {
+        setSettings(saved.runtime);
+        setPushSetting(saved.push);
+      } else {
+        setAuthPolicy(saved.authPolicy);
+      }
       saveInFlight.current = false;
       setBusy(false);
-      setMessage({ tone: "success", text: t("saved") });
-      return;
-    }
-
-    if (!PUSH_MODE_CONTRACT_READY) {
-      saveInFlight.current = false;
-      setBusy(false);
-      setMessage({ tone: "error", text: t("saveError") });
+      setMessage({
+        tone: "success",
+        text: kind === "authPolicy"
+          ? t("authPolicy.saved", { revision: saved.authPolicy.revision })
+          : t("saved"),
+      });
       return;
     }
 
@@ -128,15 +129,59 @@ export default function ConfigurationPage() {
       setState("error");
       return;
     }
-    setSettings(recovered.runtime);
-    setPushSetting(recovered.push);
+    if (kind === "runtime") {
+      setSettings(recovered.runtime);
+      setPushSetting(recovered.push);
+    } else {
+      setAuthPolicy(recovered.authPolicy);
+    }
     saveInFlight.current = false;
     setBusy(false);
-    setMessage({ tone: "error", text: pushSaveError(t, error) });
+    setMessage({
+      tone: "error",
+      text: kind === "authPolicy"
+        ? authPolicySaveError(t, response, error)
+        : pushSaveError(t, error),
+    });
+  }
+
+  async function save() {
+    if (!settings) return;
+    if (!sessionIdleMinutesValid(settings.join_session_idle_minutes.value)) {
+      setMessage({ tone: "error", text: t("sessionIdleInvalid") });
+      return;
+    }
+    const pushPayload = PUSH_MODE_CONTRACT_READY
+      ? pushDeliverySavePayload(pushSetting?.value)
+      : null;
+    if (PUSH_MODE_CONTRACT_READY && !pushPayload) {
+      setMessage({ tone: "error", text: t("push.invalid") });
+      return;
+    }
+    await commitSettings({
+      ...runtimeSettingsSavePayload(settings),
+      ...(pushPayload ?? {}),
+    }, "runtime");
+  }
+
+  async function saveAuthPolicy() {
+    if (!authPolicy) return;
+    const authPolicyIssue = authPolicyDraftIssue(authPolicy);
+    const authPolicyPayload = authPolicySavePayload(authPolicy);
+    if (authPolicyIssue || !authPolicyPayload) {
+      setMessage({
+        tone: "error",
+        text: authPolicyIssueMessage(t, authPolicyIssue ?? "revision"),
+      });
+      return;
+    }
+    await commitSettings(authPolicyPayload, "authPolicy");
   }
 
   if (state === "loading") return <LoadingPanel />;
-  if (state === "error" || !settings) return <ErrorPanel message={t("loadError")} retry={load} />;
+  if (state === "error" || !settings || !authPolicy) {
+    return <ErrorPanel message={t("loadError")} retry={load} />;
+  }
 
   const rows: Array<{
     key: "people_hero_enabled" | "demo_system_enabled";
@@ -172,6 +217,15 @@ export default function ConfigurationPage() {
       />
       {message && <div className={`alert ${message.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{message.text}</div>}
       {FEATURE_SWITCHES_CONTRACT_READY ? <FeatureSwitchesPanel /> : null}
+      <AuthPolicyConfigurationCard
+        value={authPolicy}
+        busy={busy}
+        onSave={() => void saveAuthPolicy()}
+        onChange={(next) => {
+          setAuthPolicy(next);
+          setMessage(null);
+        }}
+      />
       <div className="section-grid">
         {rows.map((row) => {
           const setting = settings[row.key];
@@ -425,4 +479,29 @@ function pushSaveError(
   if (error === "settings-invalid" || error === "setting-invalid") return t("push.invalid");
   if (error === "write-failed" || error === null) return t("push.uncertain");
   return t("saveError");
+}
+
+function authPolicyIssueMessage(
+  t: ReturnType<typeof useTranslations<"configuration">>,
+  issue: AuthPolicyDraftIssue,
+): string {
+  if (issue === "noMethod") return t("authPolicy.errors.noMethod");
+  if (issue === "storefront") return t("authPolicy.errors.storefront");
+  if (issue === "duplicateStorefront") return t("authPolicy.errors.duplicateStorefront");
+  if (issue === "dialCodes") return t("authPolicy.errors.dialCodes");
+  return t("authPolicy.errors.revision");
+}
+
+function authPolicySaveError(
+  t: ReturnType<typeof useTranslations<"configuration">>,
+  response: AdminResponse | null,
+  error: PushAdminError | null,
+): string {
+  if (error === "admin-write-required") return t("authPolicy.writeRequired");
+  if (
+    response?.success === false
+    && response.status_code === 422
+    && response.error === "auth-policy-no-method"
+  ) return t("authPolicy.errors.noMethod");
+  return t("authPolicy.saveError");
 }

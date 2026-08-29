@@ -10,6 +10,7 @@ import {
   normalizeAudienceVisibilityProxyBody,
   audienceVisibilityProxyCapabilityAuthorized,
 } from "@/lib/audienceVisibilityAdmin";
+import { normalizeAuthPolicySettingsProxyBody } from "@/lib/authPolicyConfiguration";
 import {
   featureSwitchesProxyCapabilityAuthorized,
   normalizeFeatureSwitchesProxyBody,
@@ -182,6 +183,12 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedOutboundBody !== undefined) body = normalizedOutboundBody;
+
+  const normalizedAuthPolicyBody = normalizeAuthPolicySettingsProxyBody(action, body);
+  if (normalizedAuthPolicyBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedAuthPolicyBody !== undefined) body = normalizedAuthPolicyBody;
 
   const normalizedVerificationBody = normalizeVerificationProxyBody(
     action,
