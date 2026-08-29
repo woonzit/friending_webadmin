@@ -1235,20 +1235,25 @@ export function parseAppearanceIpAddress(value: string): string | null {
   if (!ip.includes(":") || ip.length > 45 || /[^0-9A-Fa-f:.]/.test(ip)) return null;
   const halves = ip.split("::");
   if (halves.length > 2) return null;
+  const compressed = halves.length === 2;
   const head = halves[0] === "" ? [] : halves[0]!.split(":");
-  const tail = halves.length === 2 ? (halves[1] === "" ? [] : halves[1]!.split(":")) : [];
-  const groups = [...head, ...tail];
+  const tail = compressed ? (halves[1] === "" ? [] : halves[1]!.split(":")) : [];
+  // The dotted quad stands for the final 32 bits, so it may only be the very
+  // last textual group: the last of the tail, or the last of the head when
+  // nothing is compressed. A quad followed by `::` (`192.0.2.1::`) is refused.
+  const finalGroups = compressed ? tail : head;
   let hextets = 0;
-  for (const [index, group] of groups.entries()) {
-    if (index === groups.length - 1 && group.includes(".")) {
-      if (!IPV4.test(group)) return null;
+  for (const [position, group] of [...head, ...tail].entries()) {
+    const isFinal = finalGroups.length > 0 && position === head.length + tail.length - 1;
+    if (group.includes(".")) {
+      if (!isFinal || !IPV4.test(group)) return null;
       hextets += 2;
       continue;
     }
     if (!IPV6_HEXTET.test(group)) return null;
     hextets += 1;
   }
-  if (halves.length === 2 ? hextets > 7 : hextets !== 8) return null;
+  if (compressed ? hextets > 7 : hextets !== 8) return null;
   return ip;
 }
 
@@ -1357,21 +1362,80 @@ export type AppearanceRefusal = { ok: false; kind: "refused"; error: string; sta
 export type AppearanceUncertain = { ok: false; kind: "uncertain"; error: string };
 export type AppearanceDecode<T> = { ok: true; value: T } | AppearanceRefusal | AppearanceUncertain;
 
-const UNCERTAIN_BRIDGE_ERRORS: ReadonlySet<string> = new Set(["core-timeout", "core-unavailable", "invalid-core-response"]);
+const CORE_VALIDATION_REFUSALS = [
+  "appearance-rule-request-invalid", "appearance-rule-id-invalid", "appearance-rule-revision-invalid",
+  "appearance-rule-invalid", "appearance-rule-field-unknown", "appearance-rule-name-invalid",
+  "appearance-rule-scope-invalid", "appearance-rule-priority-invalid", "appearance-rule-active-invalid",
+  "appearance-rule-date-invalid", "appearance-rule-date-window-invalid", "appearance-rule-storefront-invalid",
+  "appearance-rule-scope-fields-invalid", "appearance-rule-country-invalid", "appearance-rule-geo-invalid",
+  "appearance-rule-landing-invalid", "appearance-rule-landing-field-unknown",
+  "appearance-rule-background-type-invalid", "appearance-rule-title-type-invalid", "appearance-rule-url-invalid",
+  "appearance-rule-hero-invalid", "appearance-rule-hero-mode-invalid", "appearance-rule-hero-inherit-items-invalid",
+  "appearance-rule-hero-item-invalid", "appearance-rule-hero-text-invalid", "appearance-rule-hero-text-size-invalid",
+  "appearance-rule-hero-text-color-invalid", "appearance-rule-hero-text-weight-invalid",
+  "appearance-rule-palette-invalid", "appearance-rule-palette-color-invalid",
+  "appearance-preview-invalid", "appearance-preview-field-unknown", "appearance-preview-storefront-invalid",
+  "appearance-preview-geo-invalid", "appearance-preview-ip-invalid", "appearance-preview-language-invalid",
+  "appearance-city-query-invalid", "appearance-city-language-invalid",
+] as const;
+
+/**
+ * Closed refusal vocabulary: every machine name Core (T-467
+ * `AppearanceRulesAdminException`) or the bridge (`app/api/admin/[action]`)
+ * can answer with, bound to its exact `status_code`. A refusal proves the
+ * write did not land. Anything outside this table — an unknown name, a known
+ * name with another status — is UNCERTAIN and triggers the authoritative
+ * reload instead of unlocking a retry.
+ */
+export const APPEARANCE_REFUSAL_STATUSES: ReadonlyMap<string, number> = new Map<string, number>([
+  ...CORE_VALIDATION_REFUSALS.map((error): [string, number] => [error, 422]),
+  ["appearance-rule-conflict", 409],
+  ["appearance-rule-global-protected", 409],
+  ["appearance-rule-not-found", 404],
+  ["admin-write-required", 403],
+  ["admin-session-invalid", 401],
+  ["admin-revoked", 403],
+  // Bridge refusals (`app/api/admin/[action]/route.ts`).
+  ["invalid-input", 400],
+  ["auth-required", 401],
+  ["bad-origin", 403],
+  ["not-found", 404],
+  ["too-large", 413],
+]);
+
+/**
+ * Answers after which a write may still have landed: the bridge's transport
+ * trio and Core's 503 family (`AppearanceRulesAdminService` storage, audit,
+ * schema and geocode failures). Bound to their exact statuses as well.
+ */
+export const APPEARANCE_UNCERTAIN_STATUSES: ReadonlyMap<string, number> = new Map<string, number>([
+  ["core-timeout", 504],
+  ["core-unavailable", 502],
+  ["invalid-core-response", 502],
+  ["appearance-rule-admin-unavailable", 503],
+  ["appearance-rule-schema-unavailable", 503],
+  ["appearance-rule-stored-invalid", 503],
+  ["appearance-rule-write-failed", 503],
+  ["appearance-rule-read-failed", 503],
+  ["appearance-rule-audit-write-failed", 503],
+  ["appearance-city-geocode-unavailable", 503],
+]);
 
 function uncertain(error: string): AppearanceUncertain {
   return { ok: false, kind: "uncertain", error };
 }
 
+function classifyRefusal(error: string, status: number): AppearanceRefusal | AppearanceUncertain {
+  if (APPEARANCE_REFUSAL_STATUSES.get(error) === status) return { ok: false, kind: "refused", error, status };
+  if (APPEARANCE_UNCERTAIN_STATUSES.get(error) === status) return uncertain(error);
+  return uncertain("unknown-refusal");
+}
+
 function decodeRefusal(value: unknown): AppearanceRefusal | AppearanceUncertain | null {
   const bridge = adminBridgeErrorEnvelope(value);
-  if (bridge) {
-    return UNCERTAIN_BRIDGE_ERRORS.has(bridge.error)
-      ? uncertain(bridge.error)
-      : { ok: false, kind: "refused", error: bridge.error, status: bridge.status_code };
-  }
+  if (bridge) return classifyRefusal(bridge.error, bridge.status_code);
   const core = webadminErrorEnvelope(value, "forbidden") ?? webadminErrorEnvelope(value, "required");
-  return core ? { ok: false, kind: "refused", error: core.error, status: core.status_code } : null;
+  return core ? classifyRefusal(core.error, core.status_code) : null;
 }
 
 function decodeMaterial<T>(value: unknown, parse: (data: unknown) => T | null): AppearanceDecode<T> {

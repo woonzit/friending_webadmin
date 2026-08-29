@@ -44,10 +44,12 @@ export const PROFILE_TEXT_MODERATION_CONTRACT_READY: boolean = false;
 export const FEATURE_SWITCHES_CONTRACT_READY: boolean = false;
 /**
  * D-052 appearance rules (T-467 provider / T-468 consumer). While false the
- * "Appearance & placements" page and its five proxy actions are unreachable
- * and the navigation keeps the legacy `/heroes` + `/app-landing` screens.
- * Flipping it (after the Core provider is live) swaps the navigation, redirects
- * the two legacy screens to `/appearance` and leaves the legacy actions to a
- * separate cleanup commit; Core keeps serving them during the transition.
+ * "Appearance & placements" page, its map document and its five proxy actions
+ * are unreachable and the navigation keeps the legacy `/heroes` +
+ * `/app-landing` screens with their six actions. Flipping it (after the Core
+ * provider is live) is the whole cutover in one reviewed change: the
+ * navigation swaps, both legacy screens redirect to `/appearance`, and the six
+ * replaced hero/app-landing actions leave the allow-list. Deleting the legacy
+ * page files afterwards is housekeeping, not a behaviour change.
  */
 export const APPEARANCE_RULES_CONTRACT_READY: boolean = false;

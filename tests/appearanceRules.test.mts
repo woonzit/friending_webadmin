@@ -623,6 +623,7 @@ test("the preview IP field accepts only real IPv4/IPv6 addresses", () => {
     "203.0.113.7", "0.0.0.0", "255.255.255.255",
     "::", "::1", "1::", "2001:db8::1", "2001:db8:0:0:0:0:0:1", "2001:db8::0:1",
     "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7::", "::ffff:192.0.2.1", "64:ff9b::192.0.2.33", "fe80::1", "::1:80",
+    "::192.0.2.1", "1:2:3:4:5:6:192.0.2.1", "1::2:192.0.2.1",
     "ABCD:EF01:2345:6789:abcd:ef01:2345:6789",
   ]) {
     assert.equal(parseAppearanceIpAddress(ip), ip, ip);
@@ -632,6 +633,8 @@ test("the preview IP field accepts only real IPv4/IPv6 addresses", () => {
     "::::", "1::2::3", ":::", "1:2:3:4:5:6:7:8:9", "1:2:3:4:5:6:7", "1:2:3:4:5:6:7:8::", ":1:2:3:4:5:6:7",
     "1:2:3:4:5:6:7:", "12345::1", "g::1", "fe80::1%eth0", "[::1]", "[::1]:80", "2001:db8::/32",
     "::ffff:999.0.2.1", "192.0.2.1::1", "1.2.3", "256.1.1.1", "1.2.3.4.5", "01.2.3.4", " ", "not-an-ip",
+    // A dotted quad is the final 32 bits: nothing, not even `::`, may follow it.
+    "192.0.2.1::", "2001:db8:192.0.2.1::", "1:2:3:4:5:6:192.0.2.1:7", "::192.0.2.1:1",
   ]) {
     assert.equal(parseAppearanceIpAddress(ip), null, ip);
     assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { ip }), null, ip);
@@ -676,6 +679,7 @@ test("every action decodes Core's exact legacy envelope or the bridge refusal â€
   }
   const withData = decodeAppearanceListResponse({ ...coreRefusal("appearance-rule-conflict", 409), data: { revision: 4 } });
   assert.deepEqual(withData, { ok: false, kind: "refused", error: "appearance-rule-conflict", status: 409 });
+  assert.deepEqual(decodeAppearanceListResponse(coreRefusal("appearance-rule-read-failed", 503)), { ok: false, kind: "uncertain", error: "appearance-rule-read-failed" });
 
   assert.ok(decodeAppearancePreviewResponse(envelope(previewPayload())).ok);
   assert.equal(decodeAppearancePreviewResponse({ success: true, data: previewPayload() }).ok, false);
@@ -729,6 +733,42 @@ test("a save success is bound to its target: the same id on update, the same mat
   );
 });
 
+test("the refusal vocabulary is closed: unknown names and wrong statuses are uncertain, never a proven no-land", () => {
+  const stored = parseAppearanceRule(geoRule());
+  assert.ok(stored);
+  const input = appearanceRuleInputFromDraft(appearanceRuleDraft(stored));
+  assert.ok(input);
+  const save = (value: unknown) => decodeAppearanceSaveResponse(value, { id: stored.id, input });
+  const remove = (value: unknown) => decodeAppearanceDeleteResponse(value, stored.id);
+
+  for (const decode of [save, remove]) {
+    // Known no-land refusals at their exact statuses.
+    assert.deepEqual(decode(coreRefusal("appearance-rule-conflict", 409)), { ok: false, kind: "refused", error: "appearance-rule-conflict", status: 409 });
+    assert.deepEqual(decode(coreRefusal("appearance-rule-global-protected", 409)), { ok: false, kind: "refused", error: "appearance-rule-global-protected", status: 409 });
+    assert.deepEqual(decode(coreRefusal("appearance-rule-not-found", 404)), { ok: false, kind: "refused", error: "appearance-rule-not-found", status: 404 });
+    assert.deepEqual(decode(coreRefusal("appearance-rule-hero-item-invalid", 422)), { ok: false, kind: "refused", error: "appearance-rule-hero-item-invalid", status: 422 });
+    assert.deepEqual(decode(coreRefusal("appearance-rule-revision-invalid", 422)), { ok: false, kind: "refused", error: "appearance-rule-revision-invalid", status: 422 });
+    assert.deepEqual(decode({ success: false, status_code: 403, error: "admin-write-required" }), { ok: false, kind: "refused", error: "admin-write-required", status: 403 });
+    assert.deepEqual(decode({ success: false, status_code: 400, error: "invalid-input" }), { ok: false, kind: "refused", error: "invalid-input", status: 400 });
+    assert.deepEqual(decode({ success: false, status_code: 404, error: "not-found" }), { ok: false, kind: "refused", error: "not-found", status: 404 });
+    // The reviewer's probes: an unknown bridge transport name, an unknown Core name, a known name at the wrong status.
+    assert.deepEqual(decode({ success: false, status_code: 502, error: "future-transport" }), { ok: false, kind: "uncertain", error: "unknown-refusal" });
+    assert.deepEqual(decode(coreRefusal("appearance-rule-future", 418)), { ok: false, kind: "uncertain", error: "unknown-refusal" });
+    assert.deepEqual(decode(coreRefusal("appearance-rule-conflict", 200)), { ok: false, kind: "uncertain", error: "unknown-refusal" });
+    assert.deepEqual(decode(coreRefusal("appearance-rule-conflict", 409.5)), { ok: false, kind: "uncertain", error: "malformed-envelope" });
+    assert.deepEqual(decode(coreRefusal("appearance-rule-not-found", 409)), { ok: false, kind: "uncertain", error: "unknown-refusal" });
+    assert.deepEqual(decode({ success: false, status_code: 500, error: "admin-write-required" }), { ok: false, kind: "uncertain", error: "unknown-refusal" });
+    assert.deepEqual(decode({ success: false, status_code: 504, error: "core-unavailable" }), { ok: false, kind: "uncertain", error: "unknown-refusal" }, "a transport name at the wrong status is still uncertain");
+    // Core's 503 family: the write may have landed.
+    assert.deepEqual(decode(coreRefusal("appearance-rule-write-failed", 503)), { ok: false, kind: "uncertain", error: "appearance-rule-write-failed" });
+    assert.deepEqual(decode(coreRefusal("appearance-rule-audit-write-failed", 503)), { ok: false, kind: "uncertain", error: "appearance-rule-audit-write-failed" });
+    assert.deepEqual(decode(coreRefusal("appearance-rule-write-failed", 500)), { ok: false, kind: "uncertain", error: "unknown-refusal" });
+    for (const [error, status] of [["core-timeout", 504], ["core-unavailable", 502], ["invalid-core-response", 502]] as const) {
+      assert.deepEqual(decode({ success: false, status_code: status, error }), { ok: false, kind: "uncertain", error });
+    }
+  }
+});
+
 test("a delete success must name the deleted rule", () => {
   assert.deepEqual(decodeAppearanceDeleteResponse(envelope({ id: "abc" }), "abc"), { ok: true, value: { id: "abc" } });
   assert.deepEqual(decodeAppearanceDeleteResponse(envelope({ id: "other" }), "abc"), { ok: false, kind: "uncertain", error: "unbound-target" });
@@ -737,7 +777,7 @@ test("a delete success must name the deleted rule", () => {
   assert.equal(decodeAppearanceDeleteResponse(envelope({ id: "abc", deleted: true }), "abc").ok, false);
   assert.equal(decodeAppearanceDeleteResponse(null, "abc").ok, false);
   assert.deepEqual(
-    decodeAppearanceDeleteResponse(coreRefusal("appearance-rule-global-protected", 403), "abc"),
-    { ok: false, kind: "refused", error: "appearance-rule-global-protected", status: 403 },
+    decodeAppearanceDeleteResponse(coreRefusal("appearance-rule-global-protected", 409), "abc"),
+    { ok: false, kind: "refused", error: "appearance-rule-global-protected", status: 409 },
   );
 });
