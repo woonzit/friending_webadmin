@@ -1,7 +1,7 @@
 {
     "schema_version": 1,
     "contract": "forced-verification-waiting-room-v1.3",
-    "source_commit": "9fbcf6223b07d835d67a2843ffad928baaa5d3f6",
+    "source_commit": "ecf8300de2cbf5f69e5855381d8af267446ab6a1",
     "fixture_set_sha256": "5c93ba15984aebc28dcd1221f3b8f093e1697446a1a3f156a4c9aa288b2adb78",
     "provenance": {
         "generator": "tests/forced_verification_fixture_dump.php",
@@ -79,6 +79,7 @@
     "route_tags": {
         "forced_gate_exempt": [
             "GET /v1/ping/bans",
+            "POST /v1/app/appearance",
             "POST /v1/app/ios_appconfig",
             "POST /v1/app/send_support_message",
             "POST /v1/dates/appeal/status",
