@@ -4,11 +4,17 @@ import { coreCall } from "@/lib/core";
 import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
   AUDIENCE_VISIBILITY_CONTRACT_READY,
+  FORCED_VERIFICATION_CONTRACT_READY,
   PERSONA_ADMIN_PROXY_RELEASED,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
   VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 import { audienceVisibilityAdminMe } from "@/lib/audienceVisibilityAdmin";
+import {
+  forcedVerificationAccess,
+  parseForcedVerificationAdminMe,
+  type ForcedVerificationAccess,
+} from "@/lib/forcedVerification";
 import { profileTextModerationAdminMe } from "@/lib/profileTextModeration";
 import { isAdminWriteRole, normalizeAdminRole } from "@/lib/authPolicy";
 import {
@@ -34,6 +40,8 @@ export type AdminIdentity = {
   verificationConsoleReady: boolean;
   audienceVisibilityConsoleReady: boolean;
   profileTextModerationConsoleReady: boolean;
+  /** D-053 "Forced & waiting room" tab, from Core's `admin_me.verification_forced` block and the local release switch. */
+  forcedVerification: ForcedVerificationAccess;
 };
 
 export type AdminWriter =
@@ -81,6 +89,7 @@ export async function adminMe(): Promise<AdminIdentity | null> {
     role?: string;
     persona?: unknown;
     verification?: unknown;
+    verification_forced?: unknown;
     audience_visibility?: unknown;
     profile_text_moderation?: unknown;
   }>("admin_me", { admin_email: session.email });
@@ -108,6 +117,10 @@ export async function adminMe(): Promise<AdminIdentity | null> {
     profileTextModerationConsoleReady: PROFILE_TEXT_MODERATION_CONTRACT_READY
       && profileTextModeration?.contract_ready === true
       && profileTextModeration.actions.includes("moderation_profile_text_list"),
+    forcedVerification: forcedVerificationAccess(
+      parseForcedVerificationAdminMe(result.data.verification_forced),
+      FORCED_VERIFICATION_CONTRACT_READY,
+    ),
   };
 }
 

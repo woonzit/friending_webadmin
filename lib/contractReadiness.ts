@@ -36,6 +36,14 @@ export const AUDIENCE_VISIBILITY_CONTRACT_READY: boolean = false;
 /** T-120 is not published; the dormant T-216 consumer remains unreachable. */
 export const PROFILE_TEXT_MODERATION_CONTRACT_READY: boolean = false;
 /**
+ * D-053 forced verification + Waiting Room (Core T-470, Webadmin T-471). The
+ * lead flips this at release: the "Forced & waiting room" tab, its three proxy
+ * actions and the help entry stay unreachable until then. Even afterwards the
+ * tab needs Core's `admin_me.verification_forced` block to be ready and to
+ * list the console action for the current operator.
+ */
+export const FORCED_VERIFICATION_CONTRACT_READY: boolean = false;
+/**
  * T-126 is not released; the dormant T-218b consumer remains unreachable.
  * This is the CONSUMER cutover, not either product state. Both Core values
  * default to enabled (A1); launch posture is a later explicit administrator

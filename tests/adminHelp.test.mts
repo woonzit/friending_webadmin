@@ -76,8 +76,9 @@ test("every inventoried functional section has detailed English and Hungarian he
   const totalSections = ADMIN_HELP_PAGES.reduce((sum, page) => sum + page.sections.length, 0);
   // 237 in the combined dormant release: T-218 adds the feature-switch family
   // guidance, and T-219 adds the independent admin-granted verification guide.
-  // T-468 adds the eight Appearance & placements sections and T-476 its save/conflict section (246).
-  assert.equal(totalSections, 246, "review the functional-section census when the UI changes");
+  // T-468 adds the eight Appearance & placements sections and T-476 its save/conflict section (246);
+  // T-471 adds the forced verification / Waiting Room tab section (247).
+  assert.equal(totalSections, 247, "review the functional-section census when the UI changes");
 
   for (const locale of ["en", "hu"]) {
     const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));

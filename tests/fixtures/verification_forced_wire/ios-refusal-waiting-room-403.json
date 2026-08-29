@@ -1,0 +1,38 @@
+{
+    "success": false,
+    "status_code": 403,
+    "error": "verification-forced-waiting-room",
+    "data": {
+        "forced": {
+            "schema_version": 1,
+            "revision": 7,
+            "storefront": null,
+            "forced_methods": [
+                "persona"
+            ],
+            "gate": "waiting_room",
+            "satisfied_by": null,
+            "pending": null,
+            "failed": null,
+            "waiting_room": {
+                "lang": "en",
+                "title": "One more step before you meet people",
+                "subtitle": "Verification is required in your region",
+                "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members."
+            },
+            "allowed_surfaces": [
+                "profile.edit",
+                "profile.preview",
+                "account.hub",
+                "support",
+                "sign_out",
+                "delete_account",
+                "verification.persona",
+                "verification.video"
+            ]
+        }
+    },
+    "message": 403,
+    "status": 403,
+    "can_send": 0
+}

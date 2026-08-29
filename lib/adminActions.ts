@@ -6,6 +6,7 @@ import {
   OUTBOUND_MESSAGING_CONTRACT_READY,
   PERSONA_ADMIN_PROXY_RELEASED,
   FEATURE_SWITCHES_CONTRACT_READY,
+  FORCED_VERIFICATION_CONTRACT_READY,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
   PRODUCT_POPUP_CONTRACT_READY,
   REPORTED_CONTENT_CONTRACT_READY,
@@ -15,6 +16,7 @@ import { ADMIN_GRANTED_VERIFICATION_ACTIONS } from "@/lib/adminGrantedVerificati
 import { APPEARANCE_ACTIONS } from "@/lib/appearanceRules";
 import { AUDIENCE_VISIBILITY_ADMIN_ACTIONS } from "@/lib/audienceVisibilityAdmin";
 import { FEATURE_SWITCHES_ACTIONS } from "@/lib/featureSwitches";
+import { FORCED_VERIFICATION_ACTIONS } from "@/lib/forcedVerification";
 import { PROFILE_TEXT_MODERATION_ACTIONS } from "@/lib/profileTextModeration";
 import { OUTBOUND_MESSAGING_ACTIONS } from "@/lib/outboundMessaging";
 import { PERSONA_ADMIN_ACTIONS } from "@/lib/personaAdmin";
@@ -81,6 +83,11 @@ const ACTIVE_VERIFICATION_ADMIN_ACTIONS = VERIFICATION_CONTRACT_READY
 /** Dormant T-219 actions use their own release switch and Core capability block. */
 const ACTIVE_ADMIN_GRANTED_VERIFICATION_ACTIONS = ADMIN_GRANTED_VERIFICATION_CONTRACT_READY
   ? ADMIN_GRANTED_VERIFICATION_ACTIONS
+  : [] as const;
+
+/** Dormant T-471 actions (D-053 forced verification) use their own release switch and Core `admin_me.verification_forced` block. */
+const ACTIVE_FORCED_VERIFICATION_ACTIONS = FORCED_VERIFICATION_CONTRACT_READY
+  ? FORCED_VERIFICATION_ACTIONS
   : [] as const;
 
 /** Dormant T-215 actions stay absent until the reviewed T-121 provider release. */
@@ -224,6 +231,7 @@ export const ADMIN_ACTIONS = [
   ...ACTIVE_PERSONA_ADMIN_ACTIONS,
   ...ACTIVE_VERIFICATION_ADMIN_ACTIONS,
   ...ACTIVE_ADMIN_GRANTED_VERIFICATION_ACTIONS,
+  ...ACTIVE_FORCED_VERIFICATION_ACTIONS,
   ...ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS,
   ...ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS,
   ...ACTIVE_FEATURE_SWITCHES_ACTIONS,
@@ -460,6 +468,13 @@ export const ADMIN_ACTION_ACCESS = {
   ...(ADMIN_GRANTED_VERIFICATION_CONTRACT_READY ? {
     verification_grant: "write" as const,
     verification_revoke: "write" as const,
+  } : {}),
+
+  /** Contract v1 §4: the console and the counts-only impact preview are reads; the revisioned save is an editor write. */
+  ...(FORCED_VERIFICATION_CONTRACT_READY ? {
+    verification_forced_console: "read" as const,
+    verification_forced_save: "write" as const,
+    verification_forced_impact_preview: "read" as const,
   } : {}),
 
   // Core authors the exact per-action capability projection. These rows add

@@ -1,0 +1,29 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "by_storefront": [
+            {
+                "storefront": "HUN",
+                "members_seen": 4,
+                "would_be_gated": 3,
+                "satisfied": 1
+            },
+            {
+                "storefront": "USA",
+                "members_seen": 7,
+                "would_be_gated": 5,
+                "satisfied": 2
+            }
+        ],
+        "unknown_storefront": {
+            "members_seen": 2,
+            "would_be_gated": 2,
+            "satisfied": 0
+        },
+        "computed_at": "2027-01-15T08:00:00Z"
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

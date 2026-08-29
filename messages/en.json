@@ -808,6 +808,15 @@
             },
             "guidance": "Expiry is strict at Core's captured time. Removal is not a negative revocation and cannot lower genuine Video, Persona or valid imported authority."
           },
+          "forcedWaitingRoom": {
+            "title": "Forced verification and Waiting Room",
+            "purpose": "Marks Persona or selfie-video verification as mandatory globally or per App Store storefront; gated members see the Waiting Room until one forced method is satisfied.",
+            "actions": {
+              "1": "Set the global default first, then add a storefront override only where the rule differs; an override replaces the whole method set, so two switches off means not forced there.",
+              "2": "Edit the Waiting Room text in both languages, check the light and dark phone preview for the storefront, run the impact preview, and save at the shown revision."
+            },
+            "guidance": "Seeded state forces nothing. Core evaluates the gate server-side with the member's last-seen storefront; a malformed stored document fails safe (nothing forced) while this tab reports it. Switch forcing on only after the iOS build carrying the Waiting Room is live in the App Store: the gate applies to every app version, and an older app receives the refusal without a screen to show for it."
+          },
           "conflictsAndRetry": {
             "title": "Conflicts and uncertain saves",
             "purpose": "Impact preview binds operation, scope, revisions, normalized result, method readiness and activation guard into one fingerprint and exact typed phrase.",
@@ -3608,7 +3617,115 @@
       "requirements": "Feature requirements",
       "messages": "Gate messages",
       "badges": "Badges",
-      "simulator": "Simulator"
+      "simulator": "Simulator",
+      "forced": "Forced & waiting room"
+    },
+    "forced": {
+      "readOnly": "Read-only: your administrator role can inspect forced verification but not change it.",
+      "loadError": "The forced-verification document could not be loaded from Core.",
+      "unavailableTitle": "Stored document unavailable",
+      "unavailableCopy": "Core reports the stored forced-verification document as malformed (verification-forced-unavailable). Nothing is forced for members while it stays malformed, and the console cannot edit it until Core repairs the setting. Tell an administrator.",
+      "retry": "Try again",
+      "reload": "Reload from Core",
+      "revision": "Revision {revision}",
+      "unsaved": "Unsaved changes",
+      "rulesTitle": "Forced methods by storefront",
+      "rulesCopy": "A forced method places every member of that App Store storefront into the Waiting Room until one forced method is satisfied. The global default applies to storefronts without an override and to members whose storefront is unknown.",
+      "columns": {
+        "region": "Storefront",
+        "persona": "Persona ID check",
+        "video": "Selfie video",
+        "summary": "Effective rule",
+        "actions": "Actions"
+      },
+      "methods": {
+        "persona": "Persona ID check",
+        "video": "Selfie video"
+      },
+      "globalRow": "Global default",
+      "globalRowHint": "Every storefront without an override, and unknown storefronts",
+      "selectStorefront": "Choose a storefront…",
+      "addOverride": "Add storefront override",
+      "removeOverride": "Remove",
+      "overrideHint": "An override replaces the whole method set for its storefront. Both switches off means “not forced there” even when the global default forces a method.",
+      "summary": {
+        "none": "Not forced",
+        "persona": "Persona ID check required",
+        "video": "Selfie video required",
+        "any": "Either method satisfies"
+      },
+      "copyTitle": "Waiting Room copy",
+      "copyCopy": "Title (≤ 60), subtitle (≤ 90) and description (≤ 400) in English and Hungarian. The global text is required; a storefront override sets only the fields that differ and inherits the rest.",
+      "defaultsTitle": "Global text",
+      "resetCompiled": "Reset to the compiled default",
+      "overridesTitle": "Storefront text overrides",
+      "overridesCopy": "Blank fields inherit the global text of the same language.",
+      "addCopyOverride": "Add text override",
+      "removeCopyOverride": "Remove override",
+      "noCopyOverrides": "No storefront text overrides.",
+      "copy": {
+        "fields": {
+          "title": "Title",
+          "subtitle": "Subtitle",
+          "description": "Description"
+        },
+        "locales": {
+          "en": "English",
+          "hu": "Hungarian"
+        },
+        "limit": "{used} / {max}",
+        "inheritPlaceholder": "Inherits: {value}"
+      },
+      "previewTitle": "Phone preview",
+      "previewCopy": "What a member of the selected storefront would see, in light and dark appearance, with the draft above applied.",
+      "preview": {
+        "storefront": "Storefront",
+        "global": "Global default (no override, or storefront unknown)",
+        "globalShort": "Global",
+        "locale": "Language",
+        "light": "Light appearance",
+        "dark": "Dark appearance",
+        "primaryPersona": "Verify with ID",
+        "primaryVideo": "Record a selfie video",
+        "footerEdit": "Edit profile",
+        "footerSupport": "Support",
+        "footerSignOut": "Sign out",
+        "footerDelete": "Delete account",
+        "notForced": "Not forced here — members never see the Waiting Room.",
+        "nonInteractive": "Static preview of the designer frame WR-01; button labels and status strings live in the app and are not editable here.",
+        "compiledCopy": "Compiled text is shown for: {fields}. The draft value there is invalid and would be refused on save; the preview degrades only that text, never the forced methods."
+      },
+      "impactTitle": "Impact preview",
+      "impactCopy": "Core counts, per last-seen storefront, how many members the draft would gate and how many already satisfy a forced method. Counts only, never identities.",
+      "runImpact": "Run impact preview",
+      "working": "Working…",
+      "impactReady": "Impact preview ready for the current draft.",
+      "impactFailed": "Core could not compute the impact preview ({code}).",
+      "impactStale": "The draft changed since this preview; run it again before saving.",
+      "impactEmpty": "Run the preview to see how many members the draft would affect.",
+      "impactColumns": {
+        "storefront": "Storefront",
+        "seen": "Members seen",
+        "gated": "Would be gated",
+        "satisfied": "Already satisfied"
+      },
+      "impactUnknown": "Unknown storefront",
+      "impactComputedAt": "Computed at {time}",
+      "save": "Save forced verification",
+      "saving": "Saving…",
+      "saved": "Saved as revision {revision}.",
+      "conflict": "Another administrator saved first (verification-forced-conflict). Your draft was discarded and the current server copy is shown.",
+      "invalid": "Core refused the document ({code}). Nothing was saved; correct the values and try again.",
+      "refused": "Core refused the request ({code}). Nothing was saved.",
+      "uncertain": "Core's answer was uncertain ({code}), so the console reloaded the authoritative document instead of retrying. If “Unsaved changes” is gone, the write landed; otherwise compare your draft and save again.",
+      "validation": {
+        "storefront": "Every override needs a storefront from the catalogue.",
+        "duplicateStorefront": "Two overrides name the same storefront.",
+        "copyRequired": "The global title, subtitle and description are required in both languages.",
+        "copyTooLong": "A text exceeds its limit (title 60, subtitle 90, description 400 characters).",
+        "copyControl": "A text contains a control character or a line break where none is allowed.",
+        "copyWhitespace": "A text starts or ends with a Unicode space (for example a non-breaking space) or consists only of such spaces. Remove it; ordinary spaces at the edges are trimmed automatically."
+      }
     },
     "methods": {
       "video": "Video selfie",
