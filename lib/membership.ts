@@ -64,7 +64,7 @@ export type MembershipConfiguration = {
     legacy_compat_enabled: boolean;
   };
   store_products: {
-    apple: Array<{ product_id: string; tier: "plus"; period: "P1W" | "P1M" | "P3M" }>;
+    apple: Array<{ product_id: string; tier: "plus"; period: "P1M" | "P3M" | "P6M" }>;
     google: Array<{ product_id: string; tier: "plus"; period: string }>;
   };
 };
@@ -416,7 +416,7 @@ export function membershipConfiguration(value: unknown): MembershipConfiguration
     bounds[key] = { scope, min, max };
   }
 
-  const apple = productRows(productsSource.apple, ["P1W", "P1M", "P3M"] as const);
+  const apple = productRows(productsSource.apple, ["P1M", "P3M", "P6M"] as const);
   const google = productRows(productsSource.google, null);
   if (!apple || !google) return null;
   return {
@@ -433,7 +433,7 @@ export function membershipConfiguration(value: unknown): MembershipConfiguration
 
 function productRows(
   value: unknown,
-  periods: readonly ["P1W", "P1M", "P3M"],
+  periods: readonly ["P1M", "P3M", "P6M"],
 ): MembershipConfiguration["store_products"]["apple"] | null;
 function productRows(
   value: unknown,

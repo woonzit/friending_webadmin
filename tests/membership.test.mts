@@ -63,9 +63,9 @@ function configurationFixture() {
     },
     store_products: {
       apple: [
-        { product_id: "com.friending.app.subscription1w", tier: "plus", period: "P1W" },
-        { product_id: "com.friending.app.subscription1", tier: "plus", period: "P1M" },
-        { product_id: "com.friending.app.subscription3", tier: "plus", period: "P3M" },
+        { product_id: "com.friending.app.subscription1m", tier: "plus", period: "P1M" },
+        { product_id: "com.friending.app.subscription3m", tier: "plus", period: "P3M" },
+        { product_id: "com.friending.app.subscription6m", tier: "plus", period: "P6M" },
       ],
       google: [],
     },
@@ -160,6 +160,25 @@ test("membership configuration is strict, bounded and projects a safe save body"
   const unknownCapability = configurationFixture();
   Object.assign(unknownCapability.configuration.capabilities, { arbitrary_paid_access: { free: true, plus: true } });
   assert.equal(membershipConfiguration(unknownCapability), null);
+});
+
+test("membership configuration accepts only Core's closed Apple product periods", () => {
+  const parsed = membershipConfiguration(configurationFixture());
+  assert.ok(parsed);
+  assert.deepEqual(
+    parsed.store_products.apple.map(({ product_id, period }) => ({ product_id, period })),
+    [
+      { product_id: "com.friending.app.subscription1m", period: "P1M" },
+      { product_id: "com.friending.app.subscription3m", period: "P3M" },
+      { product_id: "com.friending.app.subscription6m", period: "P6M" },
+    ],
+  );
+
+  for (const period of ["P1W", "P1Y"]) {
+    const invalid = configurationFixture();
+    invalid.store_products.apple[0].period = period;
+    assert.equal(membershipConfiguration(invalid), null, `${period} must fail closed for Apple`);
+  }
 });
 
 test("plan dirty state compares editable material and ignores server metadata", () => {
