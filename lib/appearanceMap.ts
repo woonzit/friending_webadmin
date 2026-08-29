@@ -15,6 +15,38 @@ export const APPEARANCE_MAP_READY_CALLBACK = "__friendingAppearanceMapReady";
 
 /** Budapest — the editor's starting viewport when a rule has no centre yet. */
 export const APPEARANCE_MAP_DEFAULT_CENTER = { latitude: 47.4979, longitude: 19.0402 } as const;
+/**
+ * The console is dark-only, so the roadmap is initialised with Google's
+ * documented FIXED dark colour scheme — never FOLLOW_SYSTEM (T-468b finding 18;
+ * https://developers.google.com/maps/documentation/javascript/mapcolorscheme).
+ */
+export const APPEARANCE_MAP_COLOR_SCHEME = "DARK" as const;
+export const APPEARANCE_MAP_DEFAULT_ZOOM = 9;
+
+export type AppearanceMapOptions = {
+  center: { lat: number; lng: number };
+  zoom: number;
+  mapTypeControl: false;
+  streetViewControl: false;
+  fullscreenControl: false;
+  clickableIcons: false;
+  gestureHandling: "greedy";
+  colorScheme: typeof APPEARANCE_MAP_COLOR_SCHEME;
+};
+
+/** The exact options the frame hands to `google.maps.Map` — pinned by `tests/appearanceMap.test.mts`. */
+export function appearanceMapOptions(center: { lat: number; lng: number }): AppearanceMapOptions {
+  return {
+    center,
+    zoom: APPEARANCE_MAP_DEFAULT_ZOOM,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+    clickableIcons: false,
+    gestureHandling: "greedy",
+    colorScheme: APPEARANCE_MAP_COLOR_SCHEME,
+  };
+}
 
 export type AppearanceMapLanguage = "en" | "hu";
 
@@ -114,6 +146,17 @@ export function parseAppearanceMapFrameMessage(value: unknown): AppearanceMapFra
  * for the editor). A same-origin message from any other window — another
  * tab's script, a sibling frame — is ignored before its body is even parsed.
  */
+/**
+ * T-468b finding 23: a trusted `moved` message mutates the draft only while
+ * the picker is enabled. The picker consults its CURRENT disabled state (a
+ * ref updated on every render) so a message that originated or queued before
+ * the lock can never change the draft after the request body was fixed.
+ */
+export function appearanceMapMoveAccepted(message: AppearanceMapFrameMessage, disabled: boolean): AppearanceMapCenter | null {
+  if (message.type !== "friending.appearance-map.moved" || disabled) return null;
+  return message.center;
+}
+
 export function isTrustedAppearanceMapEvent(
   event: { origin: string; source: unknown },
   expectedOrigin: string,

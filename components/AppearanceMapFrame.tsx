@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   APPEARANCE_MAP_DEFAULT_CENTER,
+  appearanceMapOptions,
   APPEARANCE_MAP_READY_CALLBACK,
   googleMapsBrowserKey,
   googleMapsScriptUrl,
@@ -95,15 +96,8 @@ export default function AppearanceMapFrame({ language }: { language: AppearanceM
       if (!element) return;
       try {
         const start = { lat: APPEARANCE_MAP_DEFAULT_CENTER.latitude, lng: APPEARANCE_MAP_DEFAULT_CENTER.longitude };
-        const map = new google.maps.Map(element, {
-          center: start,
-          zoom: 9,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
-          clickableIcons: false,
-          gestureHandling: "greedy",
-        });
+        // Fixed dark colour scheme for the dark-only console (finding 18); options pinned in lib/appearanceMap.ts.
+        const map = new google.maps.Map(element, appearanceMapOptions(start));
         const marker = new google.maps.Marker({ map, position: start, draggable: true, title: t("markerTitle") });
         const circle = new google.maps.Circle({
           map,

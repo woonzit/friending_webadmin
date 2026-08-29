@@ -5614,6 +5614,8 @@
       "writeRequired": "A szerepköröd megtekintheti a megjelenési szabályokat, de nem módosíthatja.",
       "timeout": "A Core nem válaszolt időben. A mentés megtörténhetett — a lista frissült; ellenőrizd, mielőtt újra próbálod.",
       "uncertainNotLanded": "A Core válasza elveszett. A lista frissült, és nem tartalmazza ezt a módosítást — megismételheted.",
+      "uncertainConflict": "Egy másik adminisztrátor írása vitte el a következő revíziót, amíg a tiéd bizonytalan volt, így a te írásod nem landolt, és a piszkozatodat lezártuk. A hiteles szabály látszik — nyisd meg újra, hogy az övék fölé szándékosan végezd el a módosítást.",
+      "uncertainSuperseded": "A szabály több mint egy revíziót lépett, amíg az írásod bizonytalan volt, így nem eldönthető, hogy landolt-e a felülírás előtt. A piszkozatodat lezártuk, és sosem próbáljuk újra; a hiteles szabály látszik — nyisd meg újra a szándékos szerkesztéshez.",
       "uncertainReloadFailed": "A Core válasza elveszett, és a lista nem tölthető újra. Mielőtt bármit tennél, tölts újra; az ismételt mentés duplikált szabályt hozhatna létre.",
       "rejected": "A Core elutasította a szabályt ({code}).",
       "save": "A szabály nem menthető.",
@@ -5636,6 +5638,7 @@
       "poster": "A videó-előkép feltöltésének be kell fejeződnie, vagy távolítsd el.",
       "titleImage": "A címképnek abszolút https címnek kell lennie, és a feltöltésének be kell fejeződnie.",
       "titleImageRequired": "A képcímhez címkép kell. Tölts fel egyet, vagy állítsd a cím típusát szövegre vagy öröklésre.",
+      "landingControl": "Egy landing-szöveg vezérlő- vagy érvénytelen karaktert tartalmaz (sortörés, tabulátor, párja nélküli surrogate vagy hasonló). Távolítsd el — a Core az ilyen értéket elutasítja, nem javítja.",
       "heroItem": "Minden hero-elemhez feltöltött kép vagy HTTPS videó-URL kell; a célhivatkozás is HTTPS legyen.",
       "heroTypography": "A hero betűméret 10–120 px, a szín #rrggbb formátumú lehet; az alapértelmezéshez hagyd üresen a mezőt.",
       "palette": "A palettaszínek #RRGGBB értékek legyenek; pipáld be az „örökli” opciót annál a szerepnél, amelyet nem akarsz beállítani."

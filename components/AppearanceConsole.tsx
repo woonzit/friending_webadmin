@@ -19,6 +19,7 @@ import {
   decodeAppearanceSaveResponse,
   localizedAppearanceCountries,
   newAppearanceRuleDraft,
+  reconcileAppearanceUpdate,
   sortAppearanceRules,
   validateAppearanceRuleDraft,
   type AppearanceDraftError,
@@ -38,7 +39,7 @@ type LoadState = "loading" | "ready" | "error";
  */
 type UncertainWrite =
   | { kind: "create"; input: AppearanceRuleInput }
-  | { kind: "update"; id: string; input: AppearanceRuleInput }
+  | { kind: "update"; id: string; expected_revision: number; input: AppearanceRuleInput }
   | { kind: "delete"; id: string };
 
 /**
@@ -130,21 +131,31 @@ export default function AppearanceConsole() {
       return;
     }
     if (pending.kind === "update") {
-      const current = fresh.rules.find((rule) => rule.id === pending.id);
-      if (!current) {
-        setDraft(null);
-        setFormError("");
-        setToast({ tone: "error", text: t("errors.notFound") });
-      } else if (appearanceRuleMaterialMatches(current, pending.input)) {
-        setDraft(null);
-        setFormError("");
-        setToast({ tone: "success", text: t("toast.recovered") });
-      } else {
-        // Not landed: refresh the CAS revision so a deliberate retry is valid.
-        setDraft((value) => (value && value.id === current.id ? { ...value, revision: current.revision } : value));
-        setFormError(t("errors.uncertainNotLanded"));
+      // T-468b finding 21: revision-aware — the stale draft is never rebased onto a newer row.
+      const decision = reconcileAppearanceUpdate(pending, fresh.rules.find((rule) => rule.id === pending.id) ?? null);
+      switch (decision.outcome) {
+        case "missing":
+          setDraft(null);
+          setFormError("");
+          setToast({ tone: "error", text: t("errors.notFound") });
+          return;
+        case "landed":
+          setDraft(null);
+          setFormError("");
+          setToast({ tone: "success", text: t("toast.recovered") });
+          return;
+        case "not-landed":
+          // Proven no-land at the unchanged revision: the draft keeps its expected revision and may be retried deliberately.
+          setFormError(t("errors.uncertainNotLanded"));
+          return;
+        case "conflict":
+        case "superseded":
+          // Someone else's material owns a newer revision: close the stale draft; the operator reopens the authoritative row.
+          setDraft(null);
+          setFormError("");
+          setToast({ tone: "error", text: t(decision.outcome === "conflict" ? "errors.uncertainConflict" : "errors.uncertainSuperseded") });
+          return;
       }
-      return;
     }
     const stillThere = fresh.rules.some((rule) => rule.id === pending.id);
     setToast(stillThere
@@ -167,7 +178,7 @@ export default function AppearanceConsole() {
     setBusy(true);
     setFormError("");
     const response = await adminCall("appearance_rules_save", { id: draft.id, expected_revision: draft.revision, rule: input });
-    const decoded = decodeAppearanceSaveResponse(response, { id: draft.id, input });
+    const decoded = decodeAppearanceSaveResponse(response, { id: draft.id, expected_revision: draft.revision, input });
     if (decoded.ok) {
       const saved = decoded.value;
       setPayload((current) => current
@@ -187,7 +198,7 @@ export default function AppearanceConsole() {
       setBusy(false);
       return;
     }
-    await reconcile(draft.id === "" ? { kind: "create", input } : { kind: "update", id: draft.id, input });
+    await reconcile(draft.id === "" ? { kind: "create", input } : { kind: "update", id: draft.id, expected_revision: draft.revision, input });
     setBusy(false);
   }
 
@@ -297,7 +308,7 @@ export default function AppearanceConsole() {
                       {rule.active ? (live ? common("active") : t("list.scheduled")) : common("inactive")}
                     </span>
                     <span className="badge">{t("list.priority", { value: rule.priority })}</span>
-                    {rule.migrated_from === "country" && <span className="badge badge-warning">{t("list.migrated")}</span>}
+                    {rule.migrated_from !== null && <span className="badge badge-warning">{t("list.migrated")}</span>}
                   </div>
                   <div className="landing-variants">
                     <span>{t("list.window")}: {windowLabel(rule)}</span>

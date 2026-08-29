@@ -215,13 +215,16 @@ test("every released Webadmin body decodes through the production decoders with 
   const saveBody = await fixture("webadmin-save.json");
   const savedRule = parseAppearanceRule((saveBody as Json).data.rule);
   assert.ok(savedRule);
-  const update = decodeAppearanceSaveResponse(saveBody, { id: geo.id, input: appearanceRuleInputOf(geo) });
-  assert.ok(update.ok, "save bound by id on update");
+  // Finding 11: the fixture is the CAS successor of the geo rule (8 → 9) with its full material.
+  const update = decodeAppearanceSaveResponse(saveBody, { id: geo.id, expected_revision: geo.revision - 1, input: appearanceRuleInputOf(geo) });
+  assert.ok(update.ok, "save bound by id, material and successor revision on update");
   assert.equal(update.value.revision, 9);
-  const create = decodeAppearanceSaveResponse(saveBody, { id: "", input: appearanceRuleInputOf(savedRule) });
-  assert.ok(create.ok, "save bound by material on create");
+  assert.deepEqual(decodeAppearanceSaveResponse(saveBody, { id: geo.id, expected_revision: geo.revision, input: appearanceRuleInputOf(geo) }), { ok: false, kind: "uncertain", error: "unbound-revision" }, "a non-successor revision never adopts");
+  assert.deepEqual(decodeAppearanceSaveResponse(saveBody, { id: geo.id, expected_revision: geo.revision - 1, input: { ...appearanceRuleInputOf(geo), name: "Other name" } }), { ok: false, kind: "uncertain", error: "unbound-material" }, "same id, different material never adopts");
+  const create = decodeAppearanceSaveResponse(saveBody, { id: "", expected_revision: 0, input: appearanceRuleInputOf(savedRule) });
+  assert.deepEqual(create, { ok: false, kind: "uncertain", error: "unbound-revision" }, "a create answer is always revision 1; this fixture is an update");
   assert.equal(appearanceRuleMaterialMatches(savedRule, appearanceRuleInputOf(geo)), true);
-  assert.equal(decodeAppearanceSaveResponse(saveBody, { id: storefront.id, input: appearanceRuleInputOf(storefront) }).ok, false, "another target never adopts this rule");
+  assert.equal(decodeAppearanceSaveResponse(saveBody, { id: storefront.id, expected_revision: storefront.revision, input: appearanceRuleInputOf(storefront) }).ok, false, "another target never adopts this rule");
   // What the console would send back for this rule is exactly the fourteen-key body Core accepts.
   const roundTrip = normalizeAppearanceProxyBody("appearance_rules_save", { id: geo.id, expected_revision: geo.revision, rule: appearanceRuleInputOf(geo) });
   assert.ok(roundTrip);
@@ -246,7 +249,7 @@ test("every released Webadmin body decodes through the production decoders with 
 
   const conflict = await fixture("webadmin-conflict.json");
   for (const decoded of [
-    decodeAppearanceSaveResponse(conflict, { id: geo.id, input: appearanceRuleInputOf(geo) }),
+    decodeAppearanceSaveResponse(conflict, { id: geo.id, expected_revision: geo.revision, input: appearanceRuleInputOf(geo) }),
     decodeAppearanceDeleteResponse(conflict, geo.id),
     decodeAppearanceListResponse(conflict),
   ]) {
@@ -254,7 +257,7 @@ test("every released Webadmin body decodes through the production decoders with 
   }
   const validation = await fixture("webadmin-validation.json");
   assert.deepEqual(
-    decodeAppearanceSaveResponse(validation, { id: "", input: appearanceRuleInputOf(geo) }),
+    decodeAppearanceSaveResponse(validation, { id: "", expected_revision: 0, input: appearanceRuleInputOf(geo) }),
     { ok: false, kind: "refused", error: "appearance-rule-palette-color-invalid", status: 422 },
   );
 });

@@ -114,6 +114,16 @@ export const APPEARANCE_DEFAULT_LANDING: AppearanceLandingDraft = {
   description_hu: "Ismerj meg embereket a közeledben — és bárhol, ahová tartasz.",
 };
 
+/**
+ * Released Core migration markers (T-467b finding 9): a rule migrated from a
+ * legacy country row, or an inactive legacy global landing reactivated by the
+ * migration to keep an active hero. Any other value is malformed.
+ */
+export const APPEARANCE_MIGRATION_MARKERS = ["country", "inactive_global_landing"] as const;
+export type AppearanceMigrationMarker = (typeof APPEARANCE_MIGRATION_MARKERS)[number];
+/** Core's stored actor bound (T-467b finding 23): non-empty after trim, at most 320 raw code points. */
+export const MAX_APPEARANCE_ACTOR_LENGTH = 320;
+
 export const APPEARANCE_HERO_MODES = ["inherit", "replace"] as const;
 export type AppearanceHeroMode = (typeof APPEARANCE_HERO_MODES)[number];
 export const APPEARANCE_HERO_TEXT_WEIGHTS = ["", "normal", "semibold", "bold"] as const;
@@ -185,10 +195,10 @@ export type AppearanceRule = {
   hero: AppearanceHero;
   palette: AppearancePalette;
   revision: number;
-  created_at: string | null;
-  updated_at: string | null;
+  created_at: string;
+  updated_at: string;
   updated_by: string;
-  migrated_from: "country" | null;
+  migrated_from: AppearanceMigrationMarker | null;
 };
 
 /** The exact fourteen keys Core's `normalizeInput` accepts on save. */
@@ -282,6 +292,24 @@ export const MAX_APPEARANCE_PRIORITY = 10_000;
 export const MIN_APPEARANCE_RADIUS_KM = 1;
 export const MAX_APPEARANCE_RADIUS_KM = 500;
 const MAX_ID_LENGTH = 128;
+/** Core rule identity is a BSON ObjectId: exactly 24 lowercase hex characters on the wire (T-468b finding 6). */
+const RULE_ID = /^[0-9a-f]{24}$/;
+/** Core's `content_version` is a lowercase SHA-256 hex digest (T-468b finding 7). */
+const CONTENT_VERSION = /^[0-9a-f]{64}$/;
+/** `AppearanceRuleService::heroWire()` emits at most ten active items (T-468b finding 7). */
+const MAX_APPEARANCE_PREVIEW_HERO_ITEMS = 10;
+/** `AppearanceCityGeocodeService` returns at most five de-duplicated candidates (T-468b finding 8). */
+const MAX_APPEARANCE_GEOCODE_CANDIDATES = 5;
+/** `AppearancePolicy::MAX_RULES`: a successful list never carries more rows (T-468b finding 13). */
+export const MAX_APPEARANCE_RULES = 100;
+/** `AppearanceRuleService::heroWire()` output ceiling — the app and the preview see at most ten items (T-468b finding 15). */
+export const MAX_APPEARANCE_EFFECTIVE_HERO_ITEMS = 10;
+const MAX_APPEARANCE_PLACE_ID_BYTES = 256;
+
+/** The one exact rule-id reader: stored ids and update/delete targets. */
+export function appearanceRuleId(value: unknown): string | null {
+  return typeof value === "string" && RULE_ID.test(value) ? value : null;
+}
 const MAX_URL_LENGTH = 2048;
 
 // ---------------------------------------------------------------------------
@@ -292,7 +320,14 @@ const MAX_URL_LENGTH = 2048;
 export type AppearanceCountry = { alpha2: string; alpha3: string };
 export type LocalizedAppearanceCountry = AppearanceCountry & { name: string };
 
-const COUNTRY_SOURCE = getCountryDataList().filter((country) => !country.userAssigned);
+/**
+ * Core `AppearancePolicy::ALPHA2_TO_ALPHA3` is the 249 current ISO 3166-1
+ * assignments (T-468b finding 17). `countries-list` additionally carries the
+ * CLDR subdivision-style territories AC/ASC and TA/TAA, which Core refuses.
+ */
+const NON_ISO_REGIONS: ReadonlySet<string> = new Set(["AC", "TA"]);
+export const APPEARANCE_COUNTRY_COUNT = 249;
+const COUNTRY_SOURCE = getCountryDataList().filter((country) => !country.userAssigned && !NON_ISO_REGIONS.has(country.iso2));
 const ENGLISH_COUNTRY_NAMES: ReadonlyMap<string, string> = new Map(
   COUNTRY_SOURCE.map((country) => [country.iso2, country.name]),
 );
@@ -343,12 +378,47 @@ function subsetKeys(value: Record<string, unknown>, allowed: readonly string[]):
 }
 
 const CONTROL_CHARACTERS = /[\u0000-\u001F\u007F-\u009F]/;
+/**
+ * Well-formed UTF-16 (T-468b finding 24): PHP's JSON decoder refuses an
+ * unpaired surrogate escape and Core requires valid UTF-8, while JavaScript
+ * happily materialises a lone surrogate — and `TextEncoder` would silently
+ * replace it with U+FFFD. Every Core-bound string helper requires this BEFORE
+ * trimming, byte counting or URL parsing.
+ */
+export function wellFormedUtf16(value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const unit = value.charCodeAt(index);
+    if (unit >= 0xd800 && unit <= 0xdbff) {
+      const next = index + 1 < value.length ? value.charCodeAt(index + 1) : 0;
+      if (next < 0xdc00 || next > 0xdfff) return false;
+      index += 1;
+    } else if (unit >= 0xdc00 && unit <= 0xdfff) {
+      return false;
+    }
+  }
+  return true;
+}
+/** Core-bound text material: a string that is well-formed UTF-16 and carries no control character on the ORIGINAL value. */
+function coreString(value: unknown): value is string {
+  return typeof value === "string" && wellFormedUtf16(value) && !CONTROL_CHARACTERS.test(value);
+}
+/**
+ * PHP's default `trim()` character list — space, tab, newline, carriage
+ * return, NUL and vertical tab — which is what Core canonicalises appearance
+ * text with (T-468b finding 19). JavaScript `appearanceTrim(String.prototype)` would
+ * also strip Unicode whitespace such as U+00A0, which Core keeps as content.
+ */
+const PHP_TRIM_EDGE = /^[ \t\n\r\0\x0B]+|[ \t\n\r\0\x0B]+$/g;
+export function appearanceTrim(value: string): string {
+  return value.replace(PHP_TRIM_EDGE, "");
+}
 
+/** Bounded text as Core reads it: controls are refused on the ORIGINAL string (never repaired by trimming), then PHP-trimmed and measured in code points. */
 function boundedText(value: unknown, minimum: number, maximum: number): string | null {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
+  if (!coreString(value)) return null;
+  const trimmed = appearanceTrim(value);
   const length = [...trimmed].length;
-  if (length < minimum || length > maximum || CONTROL_CHARACTERS.test(trimmed)) return null;
+  if (length < minimum || length > maximum) return null;
   return trimmed;
 }
 
@@ -374,7 +444,7 @@ export function parseAppearancePaletteHex(value: unknown): string | null {
 
 /** Operator input is normalised to the wire form; anything else is refused. */
 export function normalizeAppearancePaletteHex(value: string): string | null {
-  const trimmed = value.trim().toUpperCase();
+  const trimmed = appearanceTrim(value).toUpperCase();
   const withHash = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
   return /^#[0-9A-F]{6}$/.test(withHash) ? withHash : null;
 }
@@ -382,34 +452,46 @@ export function normalizeAppearancePaletteHex(value: string): string | null {
 /** Hero typography colours stay lowercase `#rrggbb` (the legacy hero contract). */
 function heroColor(value: unknown): string | null {
   if (typeof value !== "string") return null;
-  const trimmed = value.trim();
+  const trimmed = appearanceTrim(value);
   if (trimmed === "") return "";
   return /^#[0-9a-f]{6}$/.test(trimmed) ? trimmed : null;
 }
 
+/** Core `AppearancePolicy::webUrl()`: no control character anywhere in the ORIGINAL string, trimmed URL ≤ 2048 UTF-8 bytes (T-468b finding 16). */
 function webUrl(value: unknown, allowEmpty: boolean): string | null {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
+  if (!coreString(value)) return null;
+  const trimmed = appearanceTrim(value);
   if (trimmed === "") return allowEmpty ? "" : null;
-  if (trimmed.length > MAX_URL_LENGTH) return null;
+  if (new TextEncoder().encode(trimmed).length > MAX_URL_LENGTH) return null;
+  return httpsWireUrl(trimmed) ? trimmed : null;
+}
+
+/**
+ * Non-repairing syntax gate (T-468b finding 20): the raw wire value must start
+ * with the literal `https://` followed by a non-empty authority BEFORE the
+ * WHATWG parser sees it, because `new URL()` repairs forms Core's
+ * `AppearancePolicy::webUrl()` rejects (`https:\\host`, `https:host`,
+ * `https:///host`). The raw value is what is kept and compared — never the
+ * serialised `new URL()` form — so Core-accepted forms such as a backslash
+ * after the host or credentials survive exactly. HTTPS only (finding 16).
+ */
+const HTTPS_WIRE_URL = /^https:\/\/[^\/\\?#]+/;
+function httpsWireUrl(trimmed: string): boolean {
+  if (!HTTPS_WIRE_URL.test(trimmed)) return false;
   try {
     const url = new URL(trimmed);
-    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
-    return url.hostname ? trimmed : null;
+    return url.protocol === "https:" && url.hostname !== "";
   } catch {
-    return null;
+    return false;
   }
 }
 
 export function isAppearanceHttpsUrl(value: string, optional = false): boolean {
-  const trimmed = value.trim();
+  if (!coreString(value)) return false;
+  const trimmed = appearanceTrim(value);
   if (trimmed === "") return optional;
-  if (trimmed.length > MAX_URL_LENGTH) return false;
-  try {
-    return new URL(trimmed).protocol === "https:";
-  } catch {
-    return false;
-  }
+  if (new TextEncoder().encode(trimmed).length > MAX_URL_LENGTH) return false;
+  return httpsWireUrl(trimmed);
 }
 
 const WIRE_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
@@ -445,7 +527,7 @@ export function appearanceTimestampToLocalInput(value: string | null): string {
 
 /** The inverse: a local datetime input becomes the exact UTC wire form, `""` clears. */
 export function appearanceTimestampFromLocalInput(value: string): string | null | undefined {
-  const trimmed = value.trim();
+  const trimmed = appearanceTrim(value);
   if (trimmed === "") return null;
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(trimmed);
   if (!match) return undefined;
@@ -480,9 +562,10 @@ export function parseAppearanceLanding(value: unknown): AppearanceLanding | null
   for (const key of APPEARANCE_LANDING_KEYS) {
     if (!Object.hasOwn(source, key)) continue;
     const raw = source[key];
-    if (typeof raw !== "string") return null;
-    const trimmed = raw.trim();
-    if ([...trimmed].length > LANDING_LIMITS[key] || CONTROL_CHARACTERS.test(trimmed)) return null;
+    // Findings 16/24: controls and malformed UTF-16 are refused on the ORIGINAL string, before trimming can repair them.
+    if (!coreString(raw)) return null;
+    const trimmed = appearanceTrim(raw);
+    if ([...trimmed].length > LANDING_LIMITS[key]) return null;
     if (key === "background_type" && trimmed !== "image" && trimmed !== "video") return null;
     if (key === "title_type" && trimmed !== "text" && trimmed !== "image") return null;
     if (key === "background_url" || key === "background_poster_url" || key === "title_image_url") {
@@ -679,7 +762,13 @@ function parseRuleInputFields(source: Record<string, unknown>): AppearanceRuleIn
 export function parseAppearanceRuleInput(value: unknown): AppearanceRuleInput | null {
   const source = record(value);
   if (!source || !exactKeys(source, RULE_INPUT_KEYS)) return null;
-  return parseRuleInputFields(source);
+  const input = parseRuleInputFields(source);
+  if (!input) return null;
+  // Finding 14 / T-468b finding 3: save input may carry several EMPTY hero ids for
+  // Core to mint, but every non-empty id must already be unique.
+  const namedIds = input.hero.items.map((item) => item.id).filter((heroId) => heroId !== "");
+  if (new Set(namedIds).size !== namedIds.length) return null;
+  return input;
 }
 
 /** One stored rule exactly as Core projects it. */
@@ -687,13 +776,22 @@ export function parseAppearanceRule(value: unknown): AppearanceRule | null {
   const source = record(value);
   if (!source || !exactKeys(source, RULE_WIRE_KEYS, ["migrated_from"])) return null;
   const input = parseRuleInputFields(source);
-  const id = boundedText(source.id, 1, MAX_ID_LENGTH);
+  const id = appearanceRuleId(source.id);
   const revision = integer(source.revision, 1, Number.MAX_SAFE_INTEGER);
-  const createdAt = nullableTimestamp(source.created_at);
-  const updatedAt = nullableTimestamp(source.updated_at);
-  const updatedBy = typeof source.updated_by === "string" ? source.updated_by : null;
-  if (!input || id === null || revision === null || createdAt === undefined || updatedAt === undefined || updatedBy === null) return null;
-  if (Object.hasOwn(source, "migrated_from") && source.migrated_from !== "country") return null;
+  // Finding 6: stored audit timestamps are strict UTC strings, never null (nullable only for starts_at / ends_at).
+  const createdAt = parseAppearanceTimestamp(source.created_at);
+  const updatedAt = parseAppearanceTimestamp(source.updated_at);
+  // Finding 23: the stored actor mirrors Core's bounds — non-empty after trim, ≤ 320 raw code
+  // points — and is projected unrepaired; a violation makes the whole body untrusted.
+  const updatedBy = coreString(source.updated_by)
+    && appearanceTrim(source.updated_by) !== ""
+    && [...source.updated_by].length <= MAX_APPEARANCE_ACTOR_LENGTH
+    ? source.updated_by
+    : null;
+  const migratedFrom = Object.hasOwn(source, "migrated_from")
+    ? ((APPEARANCE_MIGRATION_MARKERS as readonly unknown[]).includes(source.migrated_from) ? source.migrated_from as AppearanceMigrationMarker : undefined)
+    : null;
+  if (!input || id === null || revision === null || createdAt === null || updatedAt === null || updatedBy === null || migratedFrom === undefined) return null;
   // T-467b finding 14: an empty hero id is legal only in save input (Core mints
   // it); a STORED rule carries non-empty, unique hero ids or is malformed.
   const heroIds = input.hero.items.map((item) => item.id);
@@ -705,7 +803,7 @@ export function parseAppearanceRule(value: unknown): AppearanceRule | null {
     created_at: createdAt,
     updated_at: updatedAt,
     updated_by: updatedBy,
-    migrated_from: source.migrated_from === "country" ? "country" : null,
+    migrated_from: migratedFrom,
   };
 }
 
@@ -737,7 +835,10 @@ export function parseAppearanceListPayload(value: unknown): AppearanceListPayloa
     if (rule.scope === "global") globalCount += 1;
     rules.push(rule);
   }
-  if (globalCount > 1) return null;
+  // Findings 12/13: Core emits a successful list only with EXACTLY one global rule and at most
+  // `AppearancePolicy::MAX_RULES` rows; anything else is its `appearance-rule-schema-unavailable`
+  // boundary, so such a "success" is malformed material here.
+  if (globalCount !== 1 || rules.length > MAX_APPEARANCE_RULES) return null;
   // The binding list wire carries Core's compiled defaults; the console never
   // substitutes its own table for missing provider material.
   const defaultsSource = record(source.defaults);
@@ -764,6 +865,14 @@ function parsePreviewLanding(value: unknown): AppearancePreviewLanding | null {
   const description = boundedText(source.description, 0, LANDING_LIMITS.description_en);
   if (backgroundType === null || backgroundUrl === null || posterUrl === null || titleType === null
     || titleText === null || titleImage === null || description === null) return null;
+  // Finding 9: resolved coherence Core guarantees — an image background carries no poster, a
+  // video background has a URL, a text title has text and no image, an image title has an image
+  // and no text, and the compiled fallback makes the description non-empty.
+  if (backgroundType === "image" && posterUrl !== "") return null;
+  if (backgroundType === "video" && backgroundUrl === "") return null;
+  if (titleType === "text" && (titleText === "" || titleImage !== "")) return null;
+  if (titleType === "image" && (titleImage === "" || titleText !== "")) return null;
+  if (description === "") return null;
   return {
     background: { type: backgroundType, url: backgroundUrl, poster_url: posterUrl },
     title: { type: titleType, text: titleText, image_url: titleImage },
@@ -779,7 +888,7 @@ const PREVIEW_HERO_KEYS = [
 function parsePreviewHeroItem(value: unknown): AppearancePreviewHeroItem | null {
   const source = record(value);
   if (!source || !exactKeys(source, PREVIEW_HERO_KEYS)) return null;
-  const id = boundedText(source.id, 0, MAX_ID_LENGTH);
+  const id = boundedText(source.id, 1, MAX_ID_LENGTH);
   const media = webUrl(source.media_url, false);
   const type = source.type === "image" || source.type === "video" ? source.type : null;
   const forward = webUrl(source.forward_url, true);
@@ -831,15 +940,15 @@ export function parseAppearancePreviewPayload(value: unknown): AppearancePreview
   const source = record(value);
   if (!source || !exactKeys(source, ["revision", "content_version", "landing", "hero", "palette", "matched"])) return null;
   const revision = integer(source.revision, 0, Number.MAX_SAFE_INTEGER);
-  const contentVersion = typeof source.content_version === "string" && source.content_version.trim() !== ""
-    ? source.content_version.trim()
-    : Number.isSafeInteger(source.content_version) && (source.content_version as number) >= 0
-      ? String(source.content_version)
-      : null;
+  // Finding 7: Core's `content_version` is always a lowercase SHA-256 hex digest.
+  const contentVersion = typeof source.content_version === "string" && CONTENT_VERSION.test(source.content_version)
+    ? source.content_version
+    : null;
   const landing = parsePreviewLanding(source.landing);
   const palette = parseAppearanceFullPalette(source.palette);
   const matched = record(source.matched);
   if (revision === null || contentVersion === null || !landing || !palette || !Array.isArray(source.hero)
+    || source.hero.length > MAX_APPEARANCE_PREVIEW_HERO_ITEMS
     || !matched || !exactKeys(matched, ["scope", "rule_id", "location_source"])) return null;
   const hero: AppearancePreviewHeroItem[] = [];
   for (const raw of source.hero) {
@@ -847,10 +956,12 @@ export function parseAppearancePreviewPayload(value: unknown): AppearancePreview
     if (!item) return null;
     hero.push(item);
   }
+  // Finding 7: `heroWire()` emits stored items, whose ids are non-empty and unique.
+  if (new Set(hero.map((item) => item.id)).size !== hero.length) return null;
   const scope = typeof matched.scope === "string" && (APPEARANCE_MATCHED_SCOPES as readonly string[]).includes(matched.scope)
     ? matched.scope as AppearanceMatchedScope
     : null;
-  const ruleId = boundedText(matched.rule_id, 0, MAX_ID_LENGTH);
+  const ruleId = matched.rule_id === "" ? "" : appearanceRuleId(matched.rule_id);
   const locationSource = typeof matched.location_source === "string"
     && (APPEARANCE_LOCATION_SOURCES as readonly string[]).includes(matched.location_source)
     ? matched.location_source as AppearanceLocationSource
@@ -858,6 +969,10 @@ export function parseAppearancePreviewPayload(value: unknown): AppearancePreview
   if (scope === null || ruleId === null || locationSource === null) return null;
   // `default` = compiled defaults and no rule; every other scope names the rule that won.
   if (scope === "default" ? ruleId !== "" : ruleId === "") return null;
+  // Finding 10: the default match is exactly the empty chain (revision 0); any rule match has
+  // revision ≥ 1; a geo match needs real GPS or IP evidence.
+  if (scope === "default" ? revision !== 0 : revision < 1) return null;
+  if (scope === "geo" && locationSource === "none") return null;
   return {
     revision,
     content_version: contentVersion,
@@ -872,17 +987,22 @@ export function parseAppearancePreviewPayload(value: unknown): AppearancePreview
 export function parseAppearanceGeocodePayload(value: unknown): AppearanceGeocodeCandidate[] | null {
   const source = record(value);
   if (!source || !exactKeys(source, ["candidates"]) || !Array.isArray(source.candidates)) return null;
+  // Finding 8: Core returns 0..5 candidates de-duplicated by `place_id` (≤ 256 UTF-8 bytes),
+  // each with a non-empty alpha-2 country and an integer radius in 1..500 after its ceil.
+  if (source.candidates.length > MAX_APPEARANCE_GEOCODE_CANDIDATES) return null;
   const candidates: AppearanceGeocodeCandidate[] = [];
+  const seen = new Set<string>();
   for (const raw of source.candidates) {
     const candidate = record(raw);
     if (!candidate || !exactKeys(candidate, ["place_id", "place_label", "country_code", "center", "radius_km"])) return null;
-    const placeId = boundedText(candidate.place_id, 1, 512);
+    const placeId = boundedText(candidate.place_id, 1, MAX_APPEARANCE_PLACE_ID_BYTES);
     const placeLabel = boundedText(candidate.place_label, 1, MAX_APPEARANCE_PLACE_LABEL_LENGTH);
-    const country = candidate.country_code === "" ? ""
-      : typeof candidate.country_code === "string" && isAppearanceAlpha2(candidate.country_code) ? candidate.country_code : null;
+    const country = typeof candidate.country_code === "string" && isAppearanceAlpha2(candidate.country_code) ? candidate.country_code : null;
     const center = parseCenter(candidate.center);
-    const radius = finite(candidate.radius_km, MIN_APPEARANCE_RADIUS_KM, MAX_APPEARANCE_RADIUS_KM);
+    const radius = integer(candidate.radius_km, MIN_APPEARANCE_RADIUS_KM, MAX_APPEARANCE_RADIUS_KM);
     if (placeId === null || placeLabel === null || country === null || !center || radius === null) return null;
+    if (new TextEncoder().encode(placeId).length > MAX_APPEARANCE_PLACE_ID_BYTES || seen.has(placeId)) return null;
+    seen.add(placeId);
     candidates.push({ place_id: placeId, place_label: placeLabel, country_code: country, center, radius_km: radius });
   }
   return candidates;
@@ -936,23 +1056,36 @@ export type ResolvedAppearanceLanding = {
   description: string;
 };
 
-/** The first document in precedence order that actually supplies the field, else the compiled default. */
-function landingField(chain: readonly AppearanceLanding[], defaults: AppearanceLandingDraft, key: AppearanceLandingKey): string {
+/** The first document in precedence order that actually supplies the field, else `""`. */
+function chainField(chain: readonly AppearanceLanding[], key: AppearanceLandingKey): string {
   for (const doc of chain) {
-    const value = doc[key]?.trim() ?? "";
+    const value = appearanceTrim(doc[key] ?? "");
     if (value !== "") return value;
   }
-  return defaults[key].trim();
+  return "";
 }
 
+/** The first document in precedence order that actually supplies the field, else the compiled default. */
+function landingField(chain: readonly AppearanceLanding[], defaults: AppearanceLandingDraft, key: AppearanceLandingKey): string {
+  return chainField(chain, key) || appearanceTrim(defaults[key]);
+}
+
+/**
+ * Released Core `AppearanceResolverService::localizedLandingField()` (T-468b
+ * finding 4): the complete requested-language rule chain, then the complete
+ * English rule chain, and only then the compiled default — requested language
+ * first, English last. Defaults never enter either chain search.
+ */
 function landingText(
   chain: readonly AppearanceLanding[],
   defaults: AppearanceLandingDraft,
   key: "title_text" | "description",
   language: "en" | "hu",
 ): string {
-  const local = landingField(chain, defaults, `${key}_${language}`);
-  return local !== "" ? local : landingField(chain, defaults, `${key}_en`);
+  return chainField(chain, `${key}_${language}`)
+    || chainField(chain, `${key}_en`)
+    || appearanceTrim(defaults[`${key}_${language}`])
+    || appearanceTrim(defaults[`${key}_en`]);
 }
 
 /**
@@ -978,17 +1111,29 @@ export function resolveAppearanceLanding(
   };
 }
 
+/** Core `heroWire()`: the replacing rule's active items, sorted, and at most the first ten (finding 15). */
 export function resolveAppearanceHero(chain: readonly AppearanceHero[]): AppearanceHeroItem[] {
   const replacing = chain.find((hero) => hero.mode === "replace");
   if (!replacing) return [];
   return [...replacing.items]
     .filter((item) => item.active)
-    .sort((left, right) => left.sort_order - right.sort_order || left.id.localeCompare(right.id));
+    .sort((left, right) => left.sort_order - right.sort_order || left.id.localeCompare(right.id))
+    .slice(0, MAX_APPEARANCE_EFFECTIVE_HERO_ITEMS);
 }
 
 // ---------------------------------------------------------------------------
 // Editor draft ↔ wire
 // ---------------------------------------------------------------------------
+
+/**
+ * A title-type change touches ONLY `title_type` (T-468b finding 14): the
+ * text fields and the image URL are independent per-field overrides that
+ * persist until the operator clears them explicitly.
+ */
+export function appearanceLandingWithTitleType(landing: AppearanceLandingDraft, titleType: string): AppearanceLandingDraft {
+  const next = titleType === "image" || titleType === "text" ? titleType : "";
+  return next === landing.title_type ? landing : { ...landing, title_type: next };
+}
 
 export function appearanceLandingDraft(landing: AppearanceLanding): AppearanceLandingDraft {
   return {
@@ -1012,16 +1157,16 @@ export function appearanceLandingDraft(landing: AppearanceLanding): AppearanceLa
  */
 export function appearanceLandingWire(draft: AppearanceLandingDraft): AppearanceLanding {
   const wire: AppearanceLanding = {};
-  const backgroundUrl = draft.background_url.trim();
+  const backgroundUrl = appearanceTrim(draft.background_url);
   if (backgroundUrl !== "") {
     wire.background_type = draft.background_type === "video" ? "video" : "image";
     wire.background_url = backgroundUrl;
   }
-  const poster = draft.background_poster_url.trim();
+  const poster = appearanceTrim(draft.background_poster_url);
   if (poster !== "") wire.background_poster_url = poster;
   if (draft.title_type === "image" || draft.title_type === "text") wire.title_type = draft.title_type;
   for (const key of ["title_text_en", "title_text_hu", "title_image_url", "description_en", "description_hu"] as const) {
-    const text = draft[key].trim();
+    const text = appearanceTrim(draft[key]);
     if (text !== "") wire[key] = text;
   }
   return wire;
@@ -1034,6 +1179,10 @@ export function appearanceLandingWire(draft: AppearanceLandingDraft): Appearance
  * `appearance-rule-landing-invalid`; the proxy refuses it first.
  */
 export function appearanceLandingCoherent(landing: AppearanceLanding): boolean {
+  // T-468b finding 5: a present URL key is a NON-EMPTY validated URL, never "" or whitespace.
+  for (const key of ["background_url", "background_poster_url", "title_image_url"] as const) {
+    if (landing[key] !== undefined && appearanceTrim(landing[key]) === "") return false;
+  }
   if ((landing.background_type !== undefined) !== (landing.background_url !== undefined)) return false;
   if (landing.title_type === "image" && landing.title_image_url === undefined) return false;
   return true;
@@ -1143,12 +1292,13 @@ export type AppearanceDraftError =
   | "poster"
   | "titleImage"
   | "titleImageRequired"
+  | "landingControl"
   | "heroItem"
   | "heroTypography"
   | "palette";
 
 function numberInput(value: string): number | null {
-  const trimmed = value.trim();
+  const trimmed = appearanceTrim(value);
   if (trimmed === "" || !/^-?\d+(\.\d+)?$/.test(trimmed)) return null;
   const parsed = Number(trimmed);
   return Number.isFinite(parsed) ? parsed : null;
@@ -1194,9 +1344,14 @@ export function validateAppearanceRuleDraft(draft: AppearanceRuleDraft): Appeara
   if (!Number.isInteger(draft.priority) || draft.priority < 0 || draft.priority > MAX_APPEARANCE_PRIORITY) return "priority";
   if (!appearanceTimestampsOrdered(draft.starts_at, draft.ends_at)) return "window";
   const landing = draft.landing;
+  // T-468b finding 22: controls on the ORIGINAL draft strings are refused for every landing
+  // key before `appearanceLandingWire()` could trim them away (Core's `normalizeLanding()`).
+  for (const key of APPEARANCE_LANDING_KEYS) {
+    if (!coreString(landing[key])) return "landingControl";
+  }
   if (!isAppearanceHttpsUrl(landing.background_url, true)) return "background";
   if (!isAppearanceHttpsUrl(landing.background_poster_url, true)) return "poster";
-  if (landing.title_type === "image" && landing.title_image_url.trim() === "") return "titleImageRequired";
+  if (landing.title_type === "image" && appearanceTrim(landing.title_image_url) === "") return "titleImageRequired";
   if (!isAppearanceHttpsUrl(landing.title_image_url, true)) return "titleImage";
   if (draft.hero.mode === "replace") {
     if (draft.hero.items.length > MAX_APPEARANCE_HERO_ITEMS) return "heroItem";
@@ -1214,13 +1369,13 @@ export function appearanceRuleInputFromDraft(draft: AppearanceRuleDraft): Appear
   if (validateAppearanceRuleDraft(draft) !== null) return null;
   const isGeo = draft.scope === "geo";
   const input: AppearanceRuleInput = {
-    name: draft.name.trim(),
+    name: appearanceTrim(draft.name),
     scope: draft.scope,
     storefront_country: draft.scope === "storefront" ? draft.storefront_country : "",
     country_code: isGeo ? draft.country_code : "",
     center: isGeo ? { latitude: Number(draft.latitude), longitude: Number(draft.longitude) } : null,
     radius_km: isGeo ? Number(draft.radius_km) : null,
-    place_label: isGeo ? draft.place_label.trim() : "",
+    place_label: isGeo ? appearanceTrim(draft.place_label) : "",
     priority: draft.priority,
     active: draft.active,
     starts_at: draft.starts_at,
@@ -1231,8 +1386,8 @@ export function appearanceRuleInputFromDraft(draft: AppearanceRuleDraft): Appear
         mode: "replace",
         items: draft.hero.items.map((item) => ({
           ...item,
-          media_url: item.media_url.trim(),
-          forward_url: item.forward_url.trim(),
+          media_url: appearanceTrim(item.media_url),
+          forward_url: appearanceTrim(item.forward_url),
         })),
       }
       : { mode: "inherit", items: [] },
@@ -1267,7 +1422,7 @@ const IPV6_HEXTET = /^[0-9A-Fa-f]{1,4}$/;
  * at most seven with it). No zone ids, prefixes, ports or brackets.
  */
 export function parseAppearanceIpAddress(value: string): string | null {
-  const ip = value.trim();
+  const ip = appearanceTrim(value);
   if (IPV4.test(ip)) return ip;
   if (!ip.includes(":") || ip.length > 45 || /[^0-9A-Fa-f:.]/.test(ip)) return null;
   const halves = ip.split("::");
@@ -1339,7 +1494,8 @@ export function normalizeAppearanceProxyBody(
       return {};
     case "appearance_rules_save": {
       if (!exactKeys(body, ["id", "expected_revision", "rule"])) return null;
-      const id = boundedText(body.id, 0, MAX_ID_LENGTH);
+      // Finding 6: only a create target is empty; an update names a stored rule id.
+      const id = body.id === "" ? "" : appearanceRuleId(body.id);
       const expectedRevision = integer(body.expected_revision, 0, Number.MAX_SAFE_INTEGER);
       const rule = parseAppearanceRuleInput(body.rule);
       if (id === null || expectedRevision === null || !rule) return null;
@@ -1348,7 +1504,7 @@ export function normalizeAppearanceProxyBody(
     }
     case "appearance_rules_delete": {
       if (!exactKeys(body, ["id", "expected_revision"])) return null;
-      const id = boundedText(body.id, 1, MAX_ID_LENGTH);
+      const id = appearanceRuleId(body.id);
       const expectedRevision = integer(body.expected_revision, 1, Number.MAX_SAFE_INTEGER);
       if (id === null || expectedRevision === null) return null;
       return { id, expected_revision: expectedRevision };
@@ -1566,14 +1722,56 @@ export function appearanceRuleMaterialMatches(rule: AppearanceRule, submitted: A
   return canonicalJson({ ...stored, hero: { mode: stored.hero.mode, items: storedItems } }) === canonicalJson(submitted);
 }
 
+export type AppearanceUpdateReconciliation = {
+  /**
+   * `landed`: the authoritative row carries the submitted material — the write
+   * (or an identical later one) is in place; adopt it.
+   * `not-landed`: the row is still at the attempted revision with other
+   * material — proof that nothing was written; a deliberate retry at the SAME
+   * expected revision is valid.
+   * `conflict`: the immediate successor revision carries someone else's
+   * material — this write did not land and the operator must reopen the
+   * authoritative row; the stale draft is never rebased.
+   * `superseded`: a later revision carries other material — ambiguous
+   * (this write may have landed and been overwritten); never retry, adopt.
+   * `missing`: the row is gone.
+   */
+  outcome: "landed" | "not-landed" | "conflict" | "superseded" | "missing";
+  /** Whether the stale draft may be retried unchanged (only `not-landed`). */
+  retry: boolean;
+  /** The authoritative row the operator must adopt/reopen instead of the stale draft. */
+  adopt: AppearanceRule | null;
+};
+
+/**
+ * T-468b finding 21: revision-aware reconciliation of an uncertain UPDATE
+ * against the authoritative list. The attempted `expected_revision` is part
+ * of the pending identity; a newer mismatching row is never a safe rebase of
+ * the stale submitted material.
+ */
+export function reconcileAppearanceUpdate(
+  attempted: { id: string; expected_revision: number; input: AppearanceRuleInput },
+  authoritative: AppearanceRule | null,
+): AppearanceUpdateReconciliation {
+  if (!authoritative || authoritative.id !== attempted.id) return { outcome: "missing", retry: false, adopt: null };
+  if (appearanceRuleMaterialMatches(authoritative, attempted.input)) return { outcome: "landed", retry: false, adopt: authoritative };
+  if (authoritative.revision === attempted.expected_revision) return { outcome: "not-landed", retry: true, adopt: null };
+  if (authoritative.revision === attempted.expected_revision + 1) return { outcome: "conflict", retry: false, adopt: authoritative };
+  return { outcome: "superseded", retry: false, adopt: authoritative };
+}
+
 /**
  * `appearance_rules_save`: exact success envelope, `data: { rule }`, and the
- * returned rule bound to the submitted target — the same id on an update, the
- * same material on a create. An unbound "success" is uncertain, never adopted.
+ * returned rule bound to the submitted target on BOTH create and update
+ * (T-468b finding 11): the same id on an update (a create adopts the minted
+ * one), the same fourteen-key material (Core-minted empty hero ids excepted)
+ * and exactly the CAS successor revision `expected_revision + 1` (a create
+ * moves 0 → 1). Anything else is an uncertain malformed success that must be
+ * reconciled through the authoritative list, never adopted.
  */
 export function decodeAppearanceSaveResponse(
   value: unknown,
-  submitted: { id: string; input: AppearanceRuleInput },
+  submitted: { id: string; expected_revision: number; input: AppearanceRuleInput },
 ): AppearanceDecode<AppearanceRule> {
   const decoded = decodeMaterial(value, (data) => {
     const source = record(data);
@@ -1582,11 +1780,9 @@ export function decodeAppearanceSaveResponse(
   });
   if (!decoded.ok) return decoded;
   const rule = decoded.value;
-  if (submitted.id !== "") {
-    if (rule.id !== submitted.id) return uncertain("unbound-target");
-  } else if (!appearanceRuleMaterialMatches(rule, submitted.input)) {
-    return uncertain("unbound-material");
-  }
+  if (submitted.id !== "" && rule.id !== submitted.id) return uncertain("unbound-target");
+  if (!appearanceRuleMaterialMatches(rule, submitted.input)) return uncertain("unbound-material");
+  if (rule.revision !== submitted.expected_revision + 1) return uncertain("unbound-revision");
   return decoded;
 }
 
@@ -1595,7 +1791,7 @@ export function decodeAppearanceDeleteResponse(value: unknown, submittedId: stri
   const decoded = decodeMaterial(value, (data) => {
     const source = record(data);
     if (!source || !exactKeys(source, ["id"])) return null;
-    const id = boundedText(source.id, 1, MAX_ID_LENGTH);
+    const id = appearanceRuleId(source.id);
     return id === null ? null : { id };
   });
   if (!decoded.ok) return decoded;

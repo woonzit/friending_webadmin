@@ -1,19 +1,24 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   APPEARANCE_ACTIONS,
+  APPEARANCE_COUNTRIES,
+  APPEARANCE_COUNTRY_COUNT,
   APPEARANCE_DEFAULT_LANDING,
   APPEARANCE_DEFAULT_PALETTE,
   APPEARANCE_PALETTE_MODES,
   APPEARANCE_PALETTE_ROLES,
   appearanceLandingCoherent,
   appearanceLandingDraft,
+  appearanceLandingWithTitleType,
   appearanceLandingWire,
   appearanceRuleDraft,
   appearanceRuleInputFromDraft,
   appearanceRuleInputOf,
   appearanceRuleIsLive,
   appearanceRuleMaterialMatches,
+  appearanceTrim,
   appearanceTimestampFromLocalInput,
   appearanceTimestampToLocalInput,
   decodeAppearanceDeleteResponse,
@@ -21,6 +26,8 @@ import {
   decodeAppearanceListResponse,
   decodeAppearancePreviewResponse,
   decodeAppearanceSaveResponse,
+  isAppearanceAlpha2,
+  isAppearanceHttpsUrl,
   isAppearanceStorefront,
   localizedAppearanceCountries,
   newAppearanceRuleDraft,
@@ -28,16 +35,20 @@ import {
   normalizeAppearanceProxyBody,
   parseAppearanceGeocodePayload,
   parseAppearanceIpAddress,
+  parseAppearanceHero,
+  parseAppearanceLanding,
   parseAppearanceListPayload,
   parseAppearancePreviewPayload,
   parseAppearanceRule,
   parseAppearanceRuleInput,
+  reconcileAppearanceUpdate,
   parseAppearanceTimestamp,
   resolveAppearanceHero,
   resolveAppearanceLanding,
   resolveAppearancePalette,
   sortAppearanceRules,
   validateAppearanceRuleDraft,
+  wellFormedUtf16,
   type AppearanceRule,
 } from "../lib/appearanceRules.ts";
 import {
@@ -226,7 +237,7 @@ test("rule decoding fails closed on unknown, missing, loose, or scope-inconsiste
     ["palette hex without hash", wireRule({ palette: { light: { accent: "007F91" }, dark: {} } })],
     ["palette unknown mode", wireRule({ palette: { light: {}, dark: {}, dim: {} } })],
     ["migrated_from foreign value", storefrontRule({ migrated_from: "city" })],
-    ["control character in name", wireRule({ name: "badname" })],
+    ["control character in name", wireRule({ name: "bad\u0007name" })],
   ];
   for (const [label, value] of cases) {
     assert.equal(parseAppearanceRule(value), null, label);
@@ -246,7 +257,7 @@ test("the list payload demands unique ids, at most one global rule, and Core's e
   assert.deepEqual(list.defaults.landing, APPEARANCE_DEFAULT_LANDING);
 
   const withDefaults = parseAppearanceListPayload({
-    rules: [],
+    rules: [wireRule()],
     defaults: {
       palette: { light: { ...APPEARANCE_DEFAULT_PALETTE.light, accent: "#123456" }, dark: APPEARANCE_DEFAULT_PALETTE.dark },
       landing: { ...APPEARANCE_DEFAULT_LANDING, title_text_en: "friending" },
@@ -258,7 +269,7 @@ test("the list payload demands unique ids, at most one global rule, and Core's e
 
   assert.equal(parseAppearanceListPayload({ rules: [wireRule()] }), null, "missing defaults are never substituted locally");
   assert.equal(parseAppearanceListPayload({ rules: [wireRule(), wireRule()], defaults: DEFAULTS }), null, "duplicate id");
-  assert.equal(parseAppearanceListPayload({ rules: [wireRule(), wireRule({ id: "other" })], defaults: DEFAULTS }), null, "two globals");
+  assert.equal(parseAppearanceListPayload({ rules: [wireRule(), wireRule({ id: "66d0a1b2c3d4e5f6a7b8c9ee" })], defaults: DEFAULTS }), null, "two globals");
   assert.equal(parseAppearanceListPayload({ rules: [wireRule({ priority: "0" })], defaults: DEFAULTS }), null, "one bad rule poisons the list");
   assert.equal(parseAppearanceListPayload({ rules: [], defaults: { palette: APPEARANCE_DEFAULT_PALETTE } }), null, "partial defaults");
   assert.equal(parseAppearanceListPayload({ rules: [], defaults: { palette: { light: {}, dark: {} }, landing: APPEARANCE_DEFAULT_LANDING } }), null, "incomplete default palette");
@@ -275,7 +286,7 @@ test("the list payload demands unique ids, at most one global rule, and Core's e
 function previewPayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     revision: 7,
-    content_version: "7:2026-08-29T11:00:00Z",
+    content_version: "a3f1c9e2b7d4085f6c1e2a9b8d7c6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a",
     landing: {
       background: { type: "image", url: "https://img.friending.co/api/cache/pride.jpg", poster_url: "" },
       title: { type: "text", text: "friending.", image_url: "" },
@@ -312,12 +323,12 @@ test("the test-location preview decodes the app payload and refuses vocabulary d
 
   const defaults = parseAppearancePreviewPayload(previewPayload({
     revision: 0,
-    content_version: 0,
+    content_version: "0000c9e2b7d4085f6c1e2a9b8d7c6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a",
     hero: [],
     matched: { scope: "default", rule_id: "", location_source: "none" },
   }));
   assert.ok(defaults);
-  assert.equal(defaults.content_version, "0");
+  assert.equal(defaults.content_version, "0000c9e2b7d4085f6c1e2a9b8d7c6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a");
   assert.equal(defaults.matched.scope, "default");
 
   assert.equal(preview.hero[0]?.text_style.mobile.title_size, 24);
@@ -394,7 +405,7 @@ test("landing inherits per field (Amendment v1.5) with the language fallback and
   assert.equal(hu.backgroundUrl, "https://cdn.friending.co/pride.mp4");
   assert.equal(hu.posterUrl, "https://cdn.friending.co/pride.jpg");
   assert.equal(hu.titleType, "text");
-  assert.equal(hu.titleText, APPEARANCE_DEFAULT_LANDING.title_text_hu, "the Hungarian title inherits per field down to the compiled default");
+  assert.equal(hu.titleText, "Global title", "no Hungarian title anywhere in the chain → the chain's English title beats the compiled Hungarian default (Core localizedLandingField)");
   assert.equal(hu.description, "Budapesti pride.");
 
   const en = resolveAppearanceLanding([geo.landing, global.landing], APPEARANCE_DEFAULT_LANDING, "en");
@@ -636,7 +647,7 @@ test("timestamps are exact UTC wire strings and the local input converts both wa
 });
 
 test("the operator list reads in resolution order: geo, storefront, global", () => {
-  const rules = [wireRule(), storefrontRule(), geoRule(), geoRule({ id: "z", name: "Aachen", priority: 10 }), geoRule({ id: "y", name: "Zürich", priority: 20 })]
+  const rules = [wireRule(), storefrontRule(), geoRule(), geoRule({ id: "66d0a1b2c3d4e5f6a7b8c9e1", name: "Aachen", priority: 10 }), geoRule({ id: "66d0a1b2c3d4e5f6a7b8c9e2", name: "Zürich", priority: 20 })]
     .map((value) => parseAppearanceRule(value))
     .filter((rule): rule is AppearanceRule => rule !== null);
   assert.equal(rules.length, 5);
@@ -652,7 +663,7 @@ test("the store-country catalogue is ISO alpha-3 with localized names", () => {
   assert.equal(isAppearanceStorefront("hun"), false);
   const hu = localizedAppearanceCountries("hu");
   const en = localizedAppearanceCountries("en");
-  assert.ok(hu.length >= 240);
+  assert.equal(hu.length, APPEARANCE_COUNTRY_COUNT, "exactly Core's 249 ISO 3166-1 pairs");
   assert.equal(hu.length, en.length);
   assert.equal(en.find((country) => country.alpha3 === "HUN")?.name, "Hungary");
   assert.equal(hu.find((country) => country.alpha3 === "HUN")?.name, "Magyarország");
@@ -669,23 +680,23 @@ test("the proxy forwards only the exact bodies the contract lists", () => {
 
   const rule = appearanceRuleInputFromDraft(appearanceRuleDraft(parseAppearanceRule(geoRule())!));
   assert.ok(rule);
-  const save = normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: 3, rule });
+  const save = normalizeAppearanceProxyBody("appearance_rules_save", { id: "66d0a1b2c3d4e5f6a7b8c9d1", expected_revision: 3, rule });
   assert.ok(save);
   assert.deepEqual(Object.keys(save).sort(), ["expected_revision", "id", "rule"]);
   assert.deepEqual(save.rule, rule);
   assert.ok(normalizeAppearanceProxyBody("appearance_rules_save", { id: "", expected_revision: 0, rule }), "create");
   assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "", expected_revision: 3, rule }), null, "create with a revision");
-  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: 0, rule }), null, "update without a revision");
-  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: 3, rule, admin_email: "x" }), null, "reserved key");
-  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: "3", rule }), null, "string revision");
-  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: 3, rule: { ...rule, extra: 1 } }), null, "unknown rule key");
-  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: 3, rule: { ...rule, palette: { light: { accent: "#007f91" }, dark: {} } } }), null, "lowercase palette hex");
-  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: 3 }), null, "missing rule");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "66d0a1b2c3d4e5f6a7b8c9d1", expected_revision: 0, rule }), null, "update without a revision");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "66d0a1b2c3d4e5f6a7b8c9d1", expected_revision: 3, rule, admin_email: "x" }), null, "reserved key");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "66d0a1b2c3d4e5f6a7b8c9d1", expected_revision: "3", rule }), null, "string revision");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "66d0a1b2c3d4e5f6a7b8c9d1", expected_revision: 3, rule: { ...rule, extra: 1 } }), null, "unknown rule key");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "66d0a1b2c3d4e5f6a7b8c9d1", expected_revision: 3, rule: { ...rule, palette: { light: { accent: "#007f91" }, dark: {} } } }), null, "lowercase palette hex");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "66d0a1b2c3d4e5f6a7b8c9d1", expected_revision: 3 }), null, "missing rule");
 
-  assert.deepEqual(normalizeAppearanceProxyBody("appearance_rules_delete", { id: "abc", expected_revision: 3 }), { id: "abc", expected_revision: 3 });
-  assert.equal(normalizeAppearanceProxyBody("appearance_rules_delete", { id: "abc", expected_revision: 0 }), null);
+  assert.deepEqual(normalizeAppearanceProxyBody("appearance_rules_delete", { id: "66d0a1b2c3d4e5f6a7b8c9d1", expected_revision: 3 }), { id: "66d0a1b2c3d4e5f6a7b8c9d1", expected_revision: 3 });
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_delete", { id: "66d0a1b2c3d4e5f6a7b8c9d1", expected_revision: 0 }), null);
   assert.equal(normalizeAppearanceProxyBody("appearance_rules_delete", { id: "", expected_revision: 1 }), null);
-  assert.equal(normalizeAppearanceProxyBody("appearance_rules_delete", { id: "abc", expected_revision: 1, force: true }), null);
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_delete", { id: "66d0a1b2c3d4e5f6a7b8c9d1", expected_revision: 1, force: true }), null);
 
   assert.deepEqual(normalizeAppearanceProxyBody("appearance_rules_preview", {}), {});
   assert.deepEqual(
@@ -807,16 +818,16 @@ test("a save success is bound to its target: the same id on update, the same mat
   const input = appearanceRuleInputFromDraft(appearanceRuleDraft(stored));
   assert.ok(input);
 
-  const update = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ revision: 4 }) }), { id: stored.id, input });
+  const update = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ revision: 4 }) }), { id: stored.id, expected_revision: 3, input });
   assert.ok(update.ok);
   assert.equal(update.value.revision, 4);
-  const otherId = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ id: "someone-else" }) }), { id: stored.id, input });
+  const otherId = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ id: "66d0a1b2c3d4e5f6a7b8c9d9", revision: 4 }) }), { id: stored.id, expected_revision: 3, input });
   assert.deepEqual(otherId, { ok: false, kind: "uncertain", error: "unbound-target" });
 
-  const create = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ id: "minted", revision: 1 }) }), { id: "", input });
+  const create = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ id: "66d0a1b2c3d4e5f6a7b8c9dd", revision: 1 }) }), { id: "", expected_revision: 0, input });
   assert.ok(create.ok, "create adopts the minted id when the material is what was sent");
-  assert.equal(create.value.id, "minted");
-  const drifted = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ id: "minted", revision: 1, priority: 99 }) }), { id: "", input });
+  assert.equal(create.value.id, "66d0a1b2c3d4e5f6a7b8c9dd");
+  const drifted = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ id: "66d0a1b2c3d4e5f6a7b8c9dd", revision: 1, priority: 99 }) }), { id: "", expected_revision: 0, input });
   assert.deepEqual(drifted, { ok: false, kind: "uncertain", error: "unbound-material" });
 
   // Hero item ids are minted by Core on create and are the only tolerated difference.
@@ -837,12 +848,12 @@ test("a save success is bound to its target: the same id on update, the same mat
     ["invalid rule", envelope({ rule: geoRule({ priority: "10" }) })],
     ["null", null],
   ] as const) {
-    const decoded = decodeAppearanceSaveResponse(value, { id: stored.id, input });
+    const decoded = decodeAppearanceSaveResponse(value, { id: stored.id, expected_revision: 3, input });
     assert.equal(decoded.ok, false, label);
     assert.equal(!decoded.ok && decoded.kind, "uncertain", label);
   }
   assert.deepEqual(
-    decodeAppearanceSaveResponse(coreRefusal("appearance-rule-conflict", 409), { id: stored.id, input }),
+    decodeAppearanceSaveResponse(coreRefusal("appearance-rule-conflict", 409), { id: stored.id, expected_revision: 3, input }),
     { ok: false, kind: "refused", error: "appearance-rule-conflict", status: 409 },
   );
 });
@@ -852,7 +863,7 @@ test("the refusal vocabulary is closed: unknown names and wrong statuses are unc
   assert.ok(stored);
   const input = appearanceRuleInputFromDraft(appearanceRuleDraft(stored));
   assert.ok(input);
-  const save = (value: unknown) => decodeAppearanceSaveResponse(value, { id: stored.id, input });
+  const save = (value: unknown) => decodeAppearanceSaveResponse(value, { id: stored.id, expected_revision: stored.revision, input });
   const remove = (value: unknown) => decodeAppearanceDeleteResponse(value, stored.id);
 
   for (const decode of [save, remove]) {
@@ -899,14 +910,438 @@ test("the refusal vocabulary is closed: unknown names and wrong statuses are unc
 });
 
 test("a delete success must name the deleted rule", () => {
-  assert.deepEqual(decodeAppearanceDeleteResponse(envelope({ id: "abc" }), "abc"), { ok: true, value: { id: "abc" } });
-  assert.deepEqual(decodeAppearanceDeleteResponse(envelope({ id: "other" }), "abc"), { ok: false, kind: "uncertain", error: "unbound-target" });
-  assert.equal(decodeAppearanceDeleteResponse({ success: true }, "abc").ok, false, "a bare success removes nothing");
-  assert.equal(decodeAppearanceDeleteResponse(envelope({}), "abc").ok, false);
-  assert.equal(decodeAppearanceDeleteResponse(envelope({ id: "abc", deleted: true }), "abc").ok, false);
-  assert.equal(decodeAppearanceDeleteResponse(null, "abc").ok, false);
+  assert.deepEqual(decodeAppearanceDeleteResponse(envelope({ id: "66d0a1b2c3d4e5f6a7b8c9d1" }), "66d0a1b2c3d4e5f6a7b8c9d1"), { ok: true, value: { id: "66d0a1b2c3d4e5f6a7b8c9d1" } });
+  assert.deepEqual(decodeAppearanceDeleteResponse(envelope({ id: "66d0a1b2c3d4e5f6a7b8c9d9" }), "66d0a1b2c3d4e5f6a7b8c9d1"), { ok: false, kind: "uncertain", error: "unbound-target" });
+  assert.equal(decodeAppearanceDeleteResponse({ success: true }, "66d0a1b2c3d4e5f6a7b8c9d1").ok, false, "a bare success removes nothing");
+  assert.equal(decodeAppearanceDeleteResponse(envelope({}), "66d0a1b2c3d4e5f6a7b8c9d1").ok, false);
+  assert.equal(decodeAppearanceDeleteResponse(envelope({ id: "66d0a1b2c3d4e5f6a7b8c9d1", deleted: true }), "66d0a1b2c3d4e5f6a7b8c9d1").ok, false);
+  assert.equal(decodeAppearanceDeleteResponse(null, "66d0a1b2c3d4e5f6a7b8c9d1").ok, false);
   assert.deepEqual(
-    decodeAppearanceDeleteResponse(coreRefusal("appearance-rule-global-protected", 409), "abc"),
+    decodeAppearanceDeleteResponse(coreRefusal("appearance-rule-global-protected", 409), "66d0a1b2c3d4e5f6a7b8c9d1"),
     { ok: false, kind: "refused", error: "appearance-rule-global-protected", status: 409 },
   );
+});
+
+test("the stored actor mirrors Core's bounds: non-empty after trim, at most 320 code points, never repaired", () => {
+  assert.ok(parseAppearanceRule(wireRule({ updated_by: "lead@friending.com" })));
+  assert.equal(parseAppearanceRule(wireRule({ updated_by: "" })), null, "empty actor");
+  assert.equal(parseAppearanceRule(wireRule({ updated_by: "   " })), null, "whitespace-only actor");
+  const boundary = "a".repeat(320);
+  const stored = parseAppearanceRule(wireRule({ updated_by: boundary }));
+  assert.ok(stored, "320 code points fit");
+  assert.equal(stored.updated_by, boundary, "projected unrepaired");
+  assert.equal(parseAppearanceRule(wireRule({ updated_by: "a".repeat(321) })), null, "321 code points are over the bound");
+  const astral = "🙂".repeat(320);
+  assert.ok(parseAppearanceRule(wireRule({ updated_by: astral })), "the bound counts code points, not UTF-16 units");
+  assert.equal(parseAppearanceRule(wireRule({ updated_by: `${astral}x` })), null);
+  const padded = " lead@friending.com ";
+  assert.equal(parseAppearanceRule(wireRule({ updated_by: padded }))?.updated_by, padded, "surrounding whitespace is kept, not trimmed away");
+  assert.equal(parseAppearanceListPayload({ rules: [wireRule({ updated_by: "" })], defaults: { palette: APPEARANCE_DEFAULT_PALETTE, landing: APPEARANCE_DEFAULT_LANDING } }), null, "a malformed actor makes the whole list untrusted");
+});
+
+test("migrated_from is the closed released marker union and survives the full list decoder", () => {
+  const reactivated = parseAppearanceRule(wireRule({ migrated_from: "inactive_global_landing" }));
+  assert.ok(reactivated);
+  assert.equal(reactivated.migrated_from, "inactive_global_landing", "the marker is preserved");
+  assert.equal(parseAppearanceRule(wireRule({ migrated_from: "country" }))?.migrated_from, "country");
+  assert.equal(parseAppearanceRule(wireRule())?.migrated_from, null, "absent marker");
+  for (const foreign of ["city", "", null, "INACTIVE_GLOBAL_LANDING", 1, true, ["country"]]) {
+    assert.equal(parseAppearanceRule(wireRule({ migrated_from: foreign })), null, `foreign marker ${JSON.stringify(foreign)}`);
+  }
+  const list = parseAppearanceListPayload({
+    rules: [wireRule({ migrated_from: "inactive_global_landing" }), storefrontRule({ migrated_from: "country" }), geoRule()],
+    defaults: { palette: APPEARANCE_DEFAULT_PALETTE, landing: APPEARANCE_DEFAULT_LANDING },
+  });
+  assert.ok(list, "a list carrying the reactivated-global marker decodes in full");
+  assert.deepEqual(list.rules.map((rule) => rule.migrated_from), ["inactive_global_landing", "country", null]);
+  const decoded = decodeAppearanceListResponse({ message: 200, status: 200, can_send: 0, success: true, status_code: 200, data: {
+    rules: [wireRule({ migrated_from: "inactive_global_landing" })],
+    defaults: { palette: APPEARANCE_DEFAULT_PALETTE, landing: APPEARANCE_DEFAULT_LANDING },
+  } });
+  assert.ok(decoded.ok && decoded.value.rules[0]?.migrated_from === "inactive_global_landing");
+});
+
+test("save input refuses repeated non-empty hero ids while empty ids stay legal for Core to mint", () => {
+  const stored = parseAppearanceRule(wireRule())!;
+  const item = stored.hero.items[0]!;
+  const input = appearanceRuleInputOf(stored);
+  const withItems = (items: typeof stored.hero.items) => ({ ...input, hero: { mode: "replace" as const, items } });
+  const save = (rule: unknown) => normalizeAppearanceProxyBody("appearance_rules_save", { id: stored.id, expected_revision: stored.revision, rule });
+  assert.equal(save(withItems([item, { ...item }])), null, "duplicate non-empty id refused at the proxy");
+  assert.equal(parseAppearanceRuleInput(withItems([item, { ...item }])), null);
+  assert.ok(save(withItems([item, { ...item, id: "" }])), "mixed empty + unique non-empty accepted");
+  assert.ok(save(withItems([{ ...item, id: "" }, { ...item, id: "" }])), "multiple empty ids accepted");
+  assert.ok(save(withItems([item, { ...item, id: `${item.id}-2` }])), "distinct non-empty ids accepted");
+  assert.equal(parseAppearanceRule(wireRule({ hero: { mode: "replace", items: [{ ...item, id: "" }, { ...item, id: "" }] } })), null, "the stored path keeps the stronger rule");
+});
+
+test("localized landing text follows Core: requested-language chain, English chain, then compiled defaults", () => {
+  const real = APPEARANCE_DEFAULT_LANDING;
+  // English-only HIGH rule under Hungarian: the chain's English beats the compiled Hungarian default.
+  const highEnglish = resolveAppearanceLanding([{ title_text_en: "Geo English", description_en: "Geo copy" }, {}], real, "hu");
+  assert.equal(highEnglish.titleText, "Geo English");
+  assert.equal(highEnglish.description, "Geo copy");
+  // English-only LOWER rule under Hungarian: still the chain's English before any default.
+  const lowEnglish = resolveAppearanceLanding([{}, { title_text_en: "Global English" }], real, "hu");
+  assert.equal(lowEnglish.titleText, "Global English");
+  // Higher English versus lower Hungarian: the requested-language chain wins first.
+  const mixed = resolveAppearanceLanding([{ title_text_en: "Geo English" }, { title_text_hu: "Globális cím" }], real, "hu");
+  assert.equal(mixed.titleText, "Globális cím");
+  assert.equal(resolveAppearanceLanding([{ title_text_en: "Geo English" }, { title_text_hu: "Globális cím" }], real, "en").titleText, "Geo English");
+  // Defaults only: requested language, then English.
+  const defaultsOnly = resolveAppearanceLanding([], real, "hu");
+  assert.equal(defaultsOnly.titleText, real.title_text_hu);
+  assert.equal(defaultsOnly.description, real.description_hu);
+  assert.equal(resolveAppearanceLanding([], { ...real, description_hu: "" }, "hu").description, real.description_en, "a blank compiled Hungarian default falls to the compiled English one last");
+});
+
+test("the preview refuses state combinations released Core cannot emit", () => {
+  const ok = parseAppearancePreviewPayload(previewPayload());
+  assert.ok(ok);
+  const landing = (patch: Record<string, unknown>) => ({ ...(previewPayload().landing as Record<string, unknown>), ...patch });
+  const image = { type: "image", url: "https://img.friending.co/api/cache/pride.jpg", poster_url: "" };
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: landing({ background: { ...image, poster_url: "https://img.friending.co/api/cache/p.jpg" } }) })), null, "image background with a poster");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: landing({ background: { type: "video", url: "", poster_url: "" } }) })), null, "video background without a URL");
+  assert.ok(parseAppearancePreviewPayload(previewPayload({ landing: landing({ background: { type: "video", url: "https://cdn.friending.co/a.mp4", poster_url: "https://img.friending.co/api/cache/p.jpg" } }) })), "video with URL and poster");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: landing({ title: { type: "text", text: "friending.", image_url: "https://img.friending.co/api/cache/t.png" } }) })), null, "text title with an image URL");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: landing({ title: { type: "text", text: "", image_url: "" } }) })), null, "text title without text");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: landing({ title: { type: "image", text: "", image_url: "" } }) })), null, "image title without an image");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: landing({ title: { type: "image", text: "friending.", image_url: "https://img.friending.co/api/cache/t.png" } }) })), null, "image title with text");
+  assert.ok(parseAppearancePreviewPayload(previewPayload({ landing: landing({ title: { type: "image", text: "", image_url: "https://img.friending.co/api/cache/t.png" } }) })), "image title with only its image");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: landing({ description: "" }) })), null, "the compiled fallback makes the description non-empty");
+  const envelope = (data: unknown) => ({ message: 200, status: 200, can_send: 0, success: true, status_code: 200, data });
+  assert.deepEqual(decodeAppearancePreviewResponse(envelope(previewPayload({ landing: landing({ description: "" }) }))), { ok: false, kind: "uncertain", error: "malformed-material" }, "malformed success through the decoder");
+
+  // Finding 10: matched invariants.
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ revision: 1, matched: { scope: "default", rule_id: "", location_source: "none" } })), null, "default match at revision 1");
+  assert.ok(parseAppearancePreviewPayload(previewPayload({ revision: 0, matched: { scope: "default", rule_id: "", location_source: "gps" } })), "gps evidence stays legal on a default answer");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ revision: 0, matched: { scope: "geo", rule_id: "66d0a1b2c3d4e5f6a7b8c9d1", location_source: "gps" } })), null, "geo match at revision 0");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "geo", rule_id: "66d0a1b2c3d4e5f6a7b8c9d1", location_source: "none" } })), null, "geo match without location evidence");
+  assert.ok(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "storefront", rule_id: "66d0a1b2c3d4e5f6a7b8c9d2", location_source: "none" } })), "a storefront match needs no location evidence");
+  assert.ok(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "global", rule_id: "66d0a1b2c3d4e5f6a7b8c9d0", location_source: "ip" } })), "ip evidence stays legal on a global answer");
+
+  // Finding 7: identity and version domains.
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ content_version: "7:2026-08-29T11:00:00Z" })), null, "content_version is a lowercase sha256 hex digest");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ content_version: "A3F1C9E2B7D4085F6C1E2A9B8D7C6F5E4D3C2B1A0F9E8D7C6B5A4F3E2D1C0B9A" })), null, "uppercase digest");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ content_version: 0 })), null, "numeric version");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "geo", rule_id: "x", location_source: "gps" } })), null, "a matched rule id is 24 lowercase hex");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "geo", rule_id: "66D0A1B2C3D4E5F6A7B8C9D1", location_source: "gps" } })), null, "uppercase rule id");
+  const heroItem = (previewPayload().hero as Record<string, unknown>[])[0]!;
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ hero: [{ ...heroItem, id: "" }] })), null, "empty hero id");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ hero: [heroItem, { ...heroItem }] })), null, "duplicate hero id");
+  assert.ok(parseAppearancePreviewPayload(previewPayload({ hero: Array.from({ length: 10 }, (_, index) => ({ ...heroItem, id: `hero-${index}` })) })), "ten items fit");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ hero: Array.from({ length: 11 }, (_, index) => ({ ...heroItem, id: `hero-${index}` })) })), null, "eleven items are over the wire cap");
+});
+
+test("geocode candidates mirror Core's output bounds exactly", () => {
+  const candidate = (patch: Record<string, unknown> = {}) => ({ place_id: "ChIJyc_U0TTDQUcRYBEeDCnEAAQ", place_label: "Budapest, Hungary", country_code: "HU", center: { latitude: 47.4979, longitude: 19.0402 }, radius_km: 23, ...patch });
+  assert.equal(parseAppearanceGeocodePayload({ candidates: Array.from({ length: 5 }, (_, index) => candidate({ place_id: `place-${index}` })) })?.length, 5, "five candidates fit");
+  assert.equal(parseAppearanceGeocodePayload({ candidates: Array.from({ length: 6 }, (_, index) => candidate({ place_id: `place-${index}` })) }), null, "six candidates are over the cap");
+  assert.equal(parseAppearanceGeocodePayload({ candidates: [candidate(), candidate()] }), null, "duplicate place_id");
+  assert.equal(parseAppearanceGeocodePayload({ candidates: [candidate({ country_code: "" })] }), null, "empty country");
+  assert.equal(parseAppearanceGeocodePayload({ candidates: [candidate({ radius_km: 23.5 })] }), null, "fractional radius");
+  assert.equal(parseAppearanceGeocodePayload({ candidates: [candidate({ radius_km: 501 })] }), null, "radius above the cap");
+  assert.ok(parseAppearanceGeocodePayload({ candidates: [candidate({ radius_km: 500 })] }));
+  assert.ok(parseAppearanceGeocodePayload({ candidates: [candidate({ place_id: "a".repeat(256) })] }), "256 bytes fit");
+  assert.equal(parseAppearanceGeocodePayload({ candidates: [candidate({ place_id: "a".repeat(257) })] }), null, "257 bytes are over the cap");
+  assert.equal(parseAppearanceGeocodePayload({ candidates: [candidate({ place_id: "é".repeat(200) })] }), null, "the cap counts UTF-8 bytes, not characters");
+  assert.equal(parseAppearanceGeocodePayload({ candidates: [candidate({ place_id: "" })] }), null, "empty place_id");
+});
+
+test("landing pairing needs a non-empty URL at the proxy boundary; poster-only and text-only overrides stay legal", () => {
+  const rule = appearanceRuleInputFromDraft(appearanceRuleDraft(parseAppearanceRule(geoRule())!))!;
+  const save = (landing: unknown) => normalizeAppearanceProxyBody("appearance_rules_save", { id: rule ? "66d0a1b2c3d4e5f6a7b8c9d1" : "", expected_revision: 9, rule: { ...rule, landing } });
+  for (const landing of [
+    { background_type: "image", background_url: "" },
+    { background_type: "image", background_url: "   " },
+    { title_type: "image", title_image_url: "" },
+    { title_type: "image", title_image_url: " " },
+    { background_poster_url: "" },
+    { title_image_url: "" },
+  ]) {
+    assert.equal(parseAppearanceRuleInput({ ...rule, landing }), null, `parser refuses ${JSON.stringify(landing)}`);
+    assert.equal(save(landing), null, `proxy refuses ${JSON.stringify(landing)}`);
+  }
+  for (const landing of [
+    { background_poster_url: "https://cdn.friending.co/p.jpg" },
+    { title_type: "text", title_text_hu: "Cím" },
+    { background_type: "image", background_url: "https://cdn.friending.co/a.jpg" },
+    { title_type: "image", title_image_url: "https://cdn.friending.co/t.png" },
+  ]) {
+    assert.ok(parseAppearanceRuleInput({ ...rule, landing }), `parser accepts ${JSON.stringify(landing)}`);
+    assert.ok(save(landing), `proxy accepts ${JSON.stringify(landing)}`);
+  }
+});
+
+test("a save success is the exact CAS successor with the submitted material, on create and update alike", () => {
+  const envelope = (data: unknown) => ({ message: 200, status: 200, can_send: 0, success: true, status_code: 200, data });
+  const stored = parseAppearanceRule(geoRule())!;
+  const input = appearanceRuleInputOf(stored);
+  const ok = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ revision: stored.revision + 1 }) }), { id: stored.id, expected_revision: stored.revision, input });
+  assert.ok(ok.ok);
+  assert.deepEqual(decodeAppearanceSaveResponse(envelope({ rule: geoRule({ revision: stored.revision + 2 }) }), { id: stored.id, expected_revision: stored.revision, input }), { ok: false, kind: "uncertain", error: "unbound-revision" }, "skipped successor");
+  assert.deepEqual(decodeAppearanceSaveResponse(envelope({ rule: geoRule({ revision: stored.revision }) }), { id: stored.id, expected_revision: stored.revision, input }), { ok: false, kind: "uncertain", error: "unbound-revision" }, "unchanged revision");
+  assert.deepEqual(decodeAppearanceSaveResponse(envelope({ rule: geoRule({ revision: stored.revision + 1, name: "Renamed" }) }), { id: stored.id, expected_revision: stored.revision, input }), { ok: false, kind: "uncertain", error: "unbound-material" }, "same id, different material on update");
+  assert.deepEqual(decodeAppearanceSaveResponse(envelope({ rule: geoRule({ id: "66d0a1b2c3d4e5f6a7b8c9dd", revision: 2 }) }), { id: "", expected_revision: 0, input }), { ok: false, kind: "uncertain", error: "unbound-revision" }, "a new row is always revision 1");
+  assert.ok(decodeAppearanceSaveResponse(envelope({ rule: geoRule({ id: "66d0a1b2c3d4e5f6a7b8c9dd", revision: 1 }) }), { id: "", expected_revision: 0, input }).ok);
+  // Stored identity and audit timestamps are exact (finding 6).
+  assert.equal(parseAppearanceRule(geoRule({ id: "x" })), null, "stored id is 24 lowercase hex");
+  assert.equal(parseAppearanceRule(geoRule({ id: "66D0A1B2C3D4E5F6A7B8C9D1" })), null, "uppercase id");
+  assert.equal(parseAppearanceRule(geoRule({ created_at: null })), null, "created_at never null");
+  assert.equal(parseAppearanceRule(geoRule({ updated_at: null })), null, "updated_at never null");
+  assert.equal(parseAppearanceRule(geoRule({ updated_at: "2026-08-29 11:00:00" })), null, "loose timestamp");
+  assert.ok(parseAppearanceRule(geoRule({ starts_at: null, ends_at: null })), "the window stays nullable");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: 3, rule: input }), null, "loose update target id");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_delete", { id: "abc", expected_revision: 3 }), null, "loose delete target id");
+  assert.ok(normalizeAppearanceProxyBody("appearance_rules_save", { id: "", expected_revision: 0, rule: input }), "create target is empty");
+  assert.deepEqual(decodeAppearanceDeleteResponse(envelope({ id: "abc" }), "abc"), { ok: false, kind: "uncertain", error: "malformed-material" }, "a loose delete id is malformed success");
+});
+
+test("a successful list carries exactly one global rule and at most 100 rules", () => {
+  const DEFAULTS = { palette: APPEARANCE_DEFAULT_PALETTE, landing: APPEARANCE_DEFAULT_LANDING };
+  assert.equal(parseAppearanceListPayload({ rules: [], defaults: DEFAULTS }), null, "zero globals is Core's schema-unavailable boundary, never a success");
+  assert.equal(parseAppearanceListPayload({ rules: [storefrontRule(), geoRule()], defaults: DEFAULTS }), null, "no global among overrides");
+  assert.equal(parseAppearanceListPayload({ rules: [wireRule(), wireRule({ id: "66d0a1b2c3d4e5f6a7b8c9e9", name: "Second global" })], defaults: DEFAULTS }), null, "two globals");
+  const geoRules = (count: number) => Array.from({ length: count }, (_, index) => geoRule({ id: `66d0a1b2c3d4e5f6a7b8${String(index).padStart(4, "0")}`, name: `Geo ${index}` }));
+  const hundred = parseAppearanceListPayload({ rules: [wireRule(), ...geoRules(99)], defaults: DEFAULTS });
+  assert.equal(hundred?.rules.length, 100, "one hundred rules fit");
+  assert.equal(parseAppearanceListPayload({ rules: [wireRule(), ...geoRules(100)], defaults: DEFAULTS }), null, "101 rules are over Core's MAX_RULES");
+  const envelope = (data: unknown) => ({ message: 200, status: 200, can_send: 0, success: true, status_code: 200, data });
+  assert.deepEqual(decodeAppearanceListResponse(envelope({ rules: [wireRule(), ...geoRules(100)], defaults: DEFAULTS })), { ok: false, kind: "uncertain", error: "malformed-material" });
+  assert.deepEqual(decodeAppearanceListResponse(envelope({ rules: [], defaults: DEFAULTS })), { ok: false, kind: "uncertain", error: "malformed-material" });
+});
+
+test("a title-type change touches only title_type; text and image overrides persist until cleared", () => {
+  const start = { ...appearanceLandingDraft({}), title_type: "text", title_text_en: "Hello", title_text_hu: "Szia", title_image_url: "https://cdn.friending.co/t.png" };
+  const image = appearanceLandingWithTitleType(start, "image");
+  assert.equal(image.title_type, "image");
+  assert.equal(image.title_text_en, "Hello");
+  assert.equal(image.title_text_hu, "Szia");
+  assert.equal(image.title_image_url, "https://cdn.friending.co/t.png");
+  const text = appearanceLandingWithTitleType(image, "text");
+  assert.deepEqual(text, start, "text → image → text is lossless");
+  const inherited = appearanceLandingWithTitleType(text, "");
+  assert.equal(inherited.title_type, "");
+  assert.equal(inherited.title_image_url, "https://cdn.friending.co/t.png");
+  assert.equal(appearanceLandingWithTitleType(start, "text"), start, "no-op returns the same object");
+  assert.equal(appearanceLandingWithTitleType(start, "banner").title_type, "", "an unknown type falls to inherited, nothing else changes");
+  assert.equal(appearanceLandingWithTitleType(start, "banner").title_text_hu, "Szia");
+});
+
+test("the effective hero list is capped at Core's ten-item output ceiling", () => {
+  const base = parseAppearanceRule(wireRule())!;
+  const item = base.hero.items[0]!;
+  const items = (count: number) => Array.from({ length: count }, (_, index) => ({ ...item, id: `hero-${index}`, sort_order: count - index, active: true }));
+  const ten = resolveAppearanceHero([{ mode: "replace", items: items(10) }]);
+  assert.equal(ten.length, 10, "ten items pass through");
+  const eleven = resolveAppearanceHero([{ mode: "replace", items: items(11) }]);
+  assert.equal(eleven.length, 10, "eleven active items are truncated to the first ten after sorting");
+  assert.deepEqual(eleven.map((entry) => entry.sort_order), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "the ten lowest sort orders survive");
+  const withInactive = resolveAppearanceHero([{ mode: "replace", items: [...items(10), { ...item, id: "hero-off", sort_order: 0, active: false }] }]);
+  assert.equal(withInactive.length, 10, "inactive items never take a slot");
+  assert.ok(parseAppearanceHero({ mode: "replace", items: items(100) }), "the 100-item storage ceiling stays separate");
+  assert.equal(parseAppearanceHero({ mode: "replace", items: items(101) }), null);
+});
+
+test("the country catalogue is exactly Core's 249 ISO 3166-1 pairs; the CLDR extras are refused", () => {
+  assert.equal(APPEARANCE_COUNTRIES.length, 249);
+  assert.equal(new Set(APPEARANCE_COUNTRIES.map((country) => country.alpha3)).size, 249, "alpha-3 codes are unique");
+  assert.equal(new Set(APPEARANCE_COUNTRIES.map((country) => country.alpha2)).size, 249, "alpha-2 codes are unique");
+  for (const country of APPEARANCE_COUNTRIES) {
+    assert.match(country.alpha2, /^[A-Z]{2}$/);
+    assert.match(country.alpha3, /^[A-Z]{3}$/);
+  }
+  for (const [alpha2, alpha3] of [["AC", "ASC"], ["TA", "TAA"]] as const) {
+    assert.equal(isAppearanceAlpha2(alpha2), false, `${alpha2} is not an ISO country`);
+    assert.equal(isAppearanceStorefront(alpha3), false, `${alpha3} is not an App Store storefront`);
+    assert.equal(APPEARANCE_COUNTRIES.some((country) => country.alpha2 === alpha2 || country.alpha3 === alpha3), false);
+  }
+  for (const [alpha2, alpha3] of [["HU", "HUN"], ["US", "USA"], ["DE", "DEU"], ["SH", "SHN"]] as const) {
+    assert.equal(isAppearanceAlpha2(alpha2), true);
+    assert.equal(isAppearanceStorefront(alpha3), true);
+  }
+  assert.equal(localizedAppearanceCountries("hu").length, 249, "localized labels come from the pinned package after the closed set is selected");
+});
+
+test("appearance URLs are capped at 2048 UTF-8 bytes and refuse control characters anywhere in the original string", () => {
+  const prefix = "https://cdn.friending.co/";
+  const multibyte = (bytes: number) => prefix + "é".repeat(Math.floor((bytes - prefix.length) / 2)) + "a".repeat((bytes - prefix.length) % 2);
+  const exact = multibyte(2048);
+  assert.equal(new TextEncoder().encode(exact).length, 2048);
+  assert.ok(exact.length < 2048, "the UTF-16 length is shorter than the byte length");
+  assert.equal(isAppearanceHttpsUrl(exact), true, "2048 bytes fit");
+  const over = multibyte(2049);
+  assert.equal(new TextEncoder().encode(over).length, 2049);
+  assert.equal(isAppearanceHttpsUrl(over), false, "2049 bytes are over the cap even though the UTF-16 length is under it");
+  assert.ok(parseAppearanceLanding({ background_type: "image", background_url: exact }));
+  assert.equal(parseAppearanceLanding({ background_type: "image", background_url: over }), null);
+  const heroItem = parseAppearanceRule(wireRule())!.hero.items[0]!;
+  assert.ok(parseAppearanceHero({ mode: "replace", items: [{ ...heroItem, media_url: exact }] }));
+  assert.equal(parseAppearanceHero({ mode: "replace", items: [{ ...heroItem, media_url: over }] }), null);
+  const controlCases: ReadonlyArray<[string, string]> = [
+    ["leading", "\u0001https://cdn.friending.co/a.jpg"],
+    ["trailing", "https://cdn.friending.co/a.jpg\u0007"],
+    ["embedded", "https://cdn.friending.co/a\u001fb.jpg"],
+    ["trailing newline", "https://cdn.friending.co/a.jpg\n"],
+  ];
+  for (const [label, url] of controlCases) {
+    assert.equal(isAppearanceHttpsUrl(url), false, `${label} control refused by the draft validator`);
+    assert.equal(parseAppearanceLanding({ background_type: "image", background_url: url }), null, `${label} control refused by the landing parser, never repaired by trimming`);
+    assert.equal(parseAppearanceLanding({ background_poster_url: url }), null, `${label} control refused on a poster`);
+    assert.equal(parseAppearanceHero({ mode: "replace", items: [{ ...heroItem, media_url: url }] }), null, `${label} control refused on a hero URL`);
+  }
+  assert.ok(isAppearanceHttpsUrl("  https://cdn.friending.co/a.jpg  "), "plain surrounding whitespace is still trimmed");
+  assert.equal(isAppearanceHttpsUrl("http://cdn.friending.co/a.jpg"), false, "the editor stays HTTPS-only");
+});
+
+test("Core-valid Unicode whitespace survives every canonicalisation point; only PHP's ASCII trim set is stripped", () => {
+  const nbsp = "\u00A0";
+  const emSpace = "\u2003";
+  for (const pad of [nbsp, emSpace]) {
+    const name = `${pad}Name${pad}`;
+    const title = `${pad}Title${pad}`;
+    const stored = parseAppearanceRule(wireRule({ name, landing: { title_type: "text", title_text_en: title, description_en: `${pad}Copy${pad}` } }));
+    assert.ok(stored, "parse keeps the padded material");
+    assert.equal(stored.name, name);
+    assert.equal(stored.landing.title_text_en, title);
+    const draft = appearanceRuleDraft(stored);
+    assert.equal(draft.name, name);
+    assert.equal(draft.landing.title_text_en, title);
+    const input = appearanceRuleInputFromDraft(draft);
+    assert.ok(input);
+    assert.equal(input.name, name, "the save input carries the padding back to Core");
+    assert.equal(input.landing.title_text_en, title);
+    assert.equal(appearanceRuleMaterialMatches(stored, input), true, "open-and-save is a no-op on Core-valid material");
+    const resolved = resolveAppearanceLanding([stored.landing], APPEARANCE_DEFAULT_LANDING, "en");
+    assert.equal(resolved.titleText, title, "the local resolver treats the padded text as content, not blank");
+    assert.equal(resolved.description, `${pad}Copy${pad}`);
+    assert.equal(resolveAppearanceLanding([{ title_text_en: pad }], APPEARANCE_DEFAULT_LANDING, "en").titleText, pad, "a Unicode-space-only field is content for Core, so it is content here");
+    const body = normalizeAppearanceProxyBody("appearance_rules_save", { id: stored.id, expected_revision: stored.revision, rule: input });
+    assert.ok(body && (body.rule as { name: string }).name === name, "the proxy forwards it untouched");
+  }
+  // Ordinary ASCII padding is still normalised on the way to Core, as Core itself does.
+  assert.equal(appearanceTrim(" \t Name \n\r\0\x0B"), "Name");
+  assert.equal(appearanceTrim(`${nbsp}Name${nbsp}`), `${nbsp}Name${nbsp}`);
+  const spaced = appearanceRuleInputFromDraft({ ...appearanceRuleDraft(parseAppearanceRule(wireRule())!), name: "  Spaced  " });
+  assert.equal(spaced?.name, "Spaced");
+  assert.equal(resolveAppearanceLanding([{ title_text_en: "   " }], APPEARANCE_DEFAULT_LANDING, "en").titleText, APPEARANCE_DEFAULT_LANDING.title_text_en, "ASCII-space-only is blank");
+  // Strict wire timestamps are never trimmed.
+  assert.equal(parseAppearanceRule(wireRule({ updated_at: " 2026-08-29T11:00:00Z" })), null);
+  assert.equal(parseAppearanceRule(wireRule({ starts_at: "2026-06-01T00:00:00Z " })), null);
+});
+
+test("the URL syntax gate never lets the WHATWG parser repair what Core rejects, and keeps Core-accepted raw forms", () => {
+  const heroItem = parseAppearanceRule(wireRule())!.hero.items[0]!;
+  const accepted = ["https://example.com\\path", "https://user:pass@example.com/path", "https://cdn.friending.co/a.jpg"];
+  const refused = ["https:\\\\example.com\\path", "https:example.com", "https:///example.com", "https://example.com:99999/path", "http://example.com/path", "HTTPS://example.com/path", "https://", "https:// example.com"];
+  for (const url of accepted) {
+    assert.equal(isAppearanceHttpsUrl(url), true, `draft accepts ${url}`);
+    assert.equal(parseAppearanceLanding({ background_type: "image", background_url: url })?.background_url, url, `landing keeps the raw value ${url}`);
+    assert.equal(parseAppearanceHero({ mode: "replace", items: [{ ...heroItem, media_url: url }] })?.items[0]?.media_url, url, `hero keeps the raw value ${url}`);
+  }
+  for (const url of refused) {
+    assert.equal(isAppearanceHttpsUrl(url), false, `draft refuses ${url}`);
+    assert.equal(parseAppearanceLanding({ background_type: "image", background_url: url }), null, `landing refuses ${url}`);
+    assert.equal(parseAppearanceHero({ mode: "replace", items: [{ ...heroItem, media_url: url }] }), null, `hero refuses ${url}`);
+  }
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: { ...(previewPayload().landing as object), background: { type: "image", url: "https:///example.com", poster_url: "" } } })), null, "the response reader shares the gate");
+});
+
+test("uncertain updates reconcile by revision: convergence adopts, an unchanged revision proves no-land, a newer row is never a rebase", () => {
+  const stored = parseAppearanceRule(geoRule())!;
+  const input = appearanceRuleInputOf(stored);
+  const other = { ...input, name: "Someone else's edit" };
+  const attempted = { id: stored.id, expected_revision: stored.revision, input: { ...input, name: "My edit" } };
+  const row = (patch: Record<string, unknown>) => parseAppearanceRule(geoRule(patch))!;
+  assert.deepEqual(reconcileAppearanceUpdate(attempted, null), { outcome: "missing", retry: false, adopt: null });
+  const unchanged = row({ revision: stored.revision });
+  assert.deepEqual(reconcileAppearanceUpdate(attempted, unchanged), { outcome: "not-landed", retry: true, adopt: null }, "same revision, other material: proof that nothing was written");
+  const mineAtSuccessor = row({ revision: stored.revision + 1, name: "My edit" });
+  assert.deepEqual(reconcileAppearanceUpdate(attempted, mineAtSuccessor), { outcome: "landed", retry: false, adopt: mineAtSuccessor }, "matching successor: landed");
+  const theirsAtSuccessor = row({ revision: stored.revision + 1, name: other.name });
+  assert.deepEqual(reconcileAppearanceUpdate(attempted, theirsAtSuccessor), { outcome: "conflict", retry: false, adopt: theirsAtSuccessor }, "different successor: conflict, never a rebase");
+  const mineLater = row({ revision: stored.revision + 3, name: "My edit" });
+  assert.deepEqual(reconcileAppearanceUpdate(attempted, mineLater), { outcome: "landed", retry: false, adopt: mineLater }, "matching later revision: converged");
+  const theirsLater = row({ revision: stored.revision + 2, name: other.name });
+  assert.deepEqual(reconcileAppearanceUpdate(attempted, theirsLater), { outcome: "superseded", retry: false, adopt: theirsLater }, "different later revision: ambiguous supersession, never retried");
+  for (const decision of [reconcileAppearanceUpdate(attempted, theirsAtSuccessor), reconcileAppearanceUpdate(attempted, theirsLater)]) {
+    assert.equal(decision.retry, false);
+    assert.notEqual(decision.adopt?.revision, attempted.expected_revision, "the authoritative revision is adopted, never stamped onto the stale draft");
+  }
+  // Component-level: the console routes every uncertain update through the helper, carries the attempted
+  // revision in the pending identity and never stamps a newer revision onto the stale draft.
+  const consoleSource = readFileSync(new URL("../components/AppearanceConsole.tsx", import.meta.url), "utf8");
+  assert.match(consoleSource, /kind: "update"; id: string; expected_revision: number; input: AppearanceRuleInput/);
+  assert.match(consoleSource, /reconcileAppearanceUpdate\(pending, /);
+  assert.doesNotMatch(consoleSource, /revision: current\.revision/);
+  assert.match(consoleSource, /case "conflict":\s*\n\s*case "superseded":\s*\n[\s\S]*?setDraft\(null\)/, "a newer mismatching row closes the stale draft instead of enabling its save");
+});
+
+test("landing strings are refused for controls on the ORIGINAL value — parser, proxy and draft alike — while ASCII spaces still canonicalise", () => {
+  const stored = parseAppearanceRule(geoRule())!;
+  const input = appearanceRuleInputOf(stored);
+  const cases: ReadonlyArray<[string, Record<string, string>]> = [
+    ["trailing newline on a title", { title_type: "text", title_text_en: "Hello\n" }],
+    ["carriage return on the background type", { background_type: "image\r", background_url: "https://cdn.friending.co/a.jpg" }],
+    ["tab on the title type", { title_type: "text\t" }],
+    ["vertical tab on a description", { description_hu: "Body\u000B" }],
+  ];
+  for (const [label, landing] of cases) {
+    assert.equal(parseAppearanceLanding(landing), null, `parser refuses ${label}`);
+    assert.equal(parseAppearanceRuleInput({ ...input, landing }), null, `rule input refuses ${label}`);
+    assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: stored.id, expected_revision: stored.revision, rule: { ...input, landing } }), null, `proxy refuses ${label}`);
+    const draft = appearanceRuleDraft(stored);
+    draft.landing = { ...draft.landing, ...landing };
+    assert.equal(validateAppearanceRuleDraft(draft), "landingControl", `draft validation refuses ${label} before the wire could trim it`);
+    assert.equal(appearanceRuleInputFromDraft(draft), null);
+  }
+  // ASCII-space control: ordinary padding is canonicalised, never refused.
+  const padded = appearanceRuleDraft(stored);
+  padded.landing = { ...padded.landing, title_type: "text", title_text_en: "  Hello  " };
+  assert.equal(validateAppearanceRuleDraft(padded), null);
+  assert.equal(appearanceRuleInputFromDraft(padded)?.landing.title_text_en, "Hello");
+  assert.deepEqual(parseAppearanceLanding({ title_text_en: "  Hello  " }), { title_text_en: "Hello" });
+  assert.equal(parseAppearanceRule(wireRule({ name: "Name\n" })), null, "the same rule holds for the rule name");
+});
+
+test("Core-bound strings must be well-formed UTF-16: unpaired surrogates are refused everywhere, valid non-BMP pairs pass", () => {
+  const high = "\uD800";
+  const low = "\uDC00";
+  const pair = "\uD83D\uDE42"; // one emoji, two code units, four UTF-8 bytes
+  assert.equal(wellFormedUtf16(pair), true);
+  assert.equal(wellFormedUtf16(high), false);
+  assert.equal(wellFormedUtf16(low), false);
+  assert.equal(wellFormedUtf16(`a${high}b`), false);
+  assert.equal(wellFormedUtf16(`${low}${high}`), false, "a reversed pair is two lone surrogates");
+  assert.equal(new TextEncoder().encode(pair).length, 4, "the byte count control counts the real pair");
+  const stored = parseAppearanceRule(geoRule())!;
+  const input = appearanceRuleInputOf(stored);
+  for (const bad of [high, low]) {
+    assert.equal(parseAppearanceRule(geoRule({ name: `Name${bad}` })), null, "stored name");
+    assert.equal(parseAppearanceRule(geoRule({ updated_by: `lead${bad}@friending.com` })), null, "stored actor");
+    assert.equal(parseAppearanceRule(geoRule({ place_label: `Budapest${bad}` })), null, "stored place label");
+    assert.equal(parseAppearanceLanding({ description_en: `Body${bad}` }), null, "landing description");
+    assert.equal(parseAppearanceLanding({ background_type: "image", background_url: `https://cdn.friending.co/${bad}.jpg` }), null, "landing URL");
+    assert.equal(isAppearanceHttpsUrl(`https://cdn.friending.co/${bad}.jpg`), false, "draft URL validator");
+    assert.equal(parseAppearanceRuleInput({ ...input, name: `Name${bad}` }), null, "rule input name");
+    assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: stored.id, expected_revision: stored.revision, rule: { ...input, name: `Name${bad}` } }), null, "proxy");
+    const heroItem = parseAppearanceRule(wireRule())!.hero.items[0]!;
+    assert.equal(parseAppearanceHero({ mode: "replace", items: [{ ...heroItem, title_en: `Pride${bad}` }] }), null, "hero copy");
+    assert.equal(parseAppearanceHero({ mode: "replace", items: [{ ...heroItem, id: `hero${bad}` }] }), null, "hero id");
+    assert.equal(parseAppearanceGeocodePayload({ candidates: [{ place_id: `place${bad}`, place_label: "Budapest, Hungary", country_code: "HU", center: { latitude: 47.5, longitude: 19.04 }, radius_km: 23 }] }), null, "geocode string");
+    const draft = appearanceRuleDraft(stored);
+    draft.name = `Name${bad}`;
+    assert.equal(validateAppearanceRuleDraft(draft), "name", "draft name");
+    const landingDraft = appearanceRuleDraft(stored);
+    landingDraft.landing = { ...landingDraft.landing, description_en: `Body${bad}` };
+    assert.equal(validateAppearanceRuleDraft(landingDraft), "landingControl", "draft landing");
+    assert.equal(appearanceRuleInputFromDraft(landingDraft), null);
+  }
+  assert.ok(parseAppearanceRule(geoRule({ name: `Pride ${pair}` })), "a valid pair in a name");
+  assert.deepEqual(parseAppearanceLanding({ description_en: `Body ${pair}` }), { description_en: `Body ${pair}` });
+  assert.equal(isAppearanceHttpsUrl(`https://cdn.friending.co/${pair}.jpg`), true);
+  const draft = appearanceRuleDraft(stored);
+  draft.name = `Pride ${pair}`;
+  assert.equal(validateAppearanceRuleDraft(draft), null);
+  assert.equal(appearanceRuleInputFromDraft(draft)?.name, `Pride ${pair}`);
 });

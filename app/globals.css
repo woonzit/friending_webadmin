@@ -12880,3 +12880,10 @@ body .verification-level-pill.level-strong {
     margin-top: 0;
   }
 }
+
+/* T-468b finding 23: while the editor is locked the embedded map is neither focusable nor pointer-interactive. */
+.appearance-map-iframe.is-disabled {
+  pointer-events: none;
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}

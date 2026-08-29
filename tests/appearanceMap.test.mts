@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   APPEARANCE_MAP_FRAME_PATH,
   APPEARANCE_MAP_READY_CALLBACK,
@@ -10,6 +11,9 @@ import {
   parseAppearanceMapParentMessage,
   roundAppearanceCoordinate,
   validGoogleMapsBrowserKey,
+  APPEARANCE_MAP_COLOR_SCHEME,
+  appearanceMapMoveAccepted,
+  appearanceMapOptions,
 } from "../lib/appearanceMap.ts";
 
 type HeaderEntry = { source: string; headers: Array<{ key: string; value: string }> };
@@ -229,4 +233,42 @@ test("the parent → frame and frame → parent vocabularies are closed", () => 
 
   assert.equal(roundAppearanceCoordinate(47.49791234567), 47.497912);
   assert.equal(roundAppearanceCoordinate(-0.0000004), -0);
+});
+
+test("the embedded map is initialised with Google's fixed DARK colour scheme and nothing else changes", () => {
+  const options = appearanceMapOptions({ lat: 47.4979, lng: 19.0402 });
+  assert.equal(options.colorScheme, "DARK");
+  assert.equal(APPEARANCE_MAP_COLOR_SCHEME, "DARK");
+  assert.deepEqual(options, {
+    center: { lat: 47.4979, lng: 19.0402 },
+    zoom: 9,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+    clickableIcons: false,
+    gestureHandling: "greedy",
+    colorScheme: "DARK",
+  });
+  const frame = readFileSync(new URL("../components/AppearanceMapFrame.tsx", import.meta.url), "utf8");
+  assert.match(frame, /new google\.maps\.Map\(element, appearanceMapOptions\(start\)\)/, "the frame hands exactly the pinned options to google.maps.Map");
+  assert.doesNotMatch(frame, /FOLLOW_SYSTEM|colorScheme: "LIGHT"/);
+});
+
+test("a trusted moved message reaches the draft only while the picker is enabled, and the lock is read live", () => {
+  const moved = { type: "friending.appearance-map.moved" as const, center: { latitude: 47.5, longitude: 19.04 } };
+  const ready = { type: "friending.appearance-map.ready" as const };
+  assert.deepEqual(appearanceMapMoveAccepted(moved, false), moved.center, "enabled: the move is applied");
+  assert.equal(appearanceMapMoveAccepted(moved, true), null, "disabled: the move is ignored");
+  assert.equal(appearanceMapMoveAccepted(ready, false), null, "ready is never a move");
+  // disabled -> enabled -> disabled sequence: every decision reads the current flag, none a captured one.
+  const sequence = [true, false, true].map((disabled) => appearanceMapMoveAccepted(moved, disabled) !== null);
+  assert.deepEqual(sequence, [false, true, false]);
+  const picker = readFileSync(new URL("../components/AppearanceMapPicker.tsx", import.meta.url), "utf8");
+  assert.match(picker, /const disabledRef = useRef\(disabled\);\s*\n\s*disabledRef\.current = disabled;/, "the lock lives in a ref updated on every render");
+  assert.match(picker, /appearanceMapMoveAccepted\(message, disabledRef\.current\)/, "the message handler consults the live ref, not the prop closure");
+  assert.match(picker, /tabIndex=\{disabled \? -1 : 0\}/, "a locked frame is not focusable");
+  assert.match(picker, /aria-disabled=\{disabled\}/, "accessible disabled indication");
+  assert.match(picker, /is-disabled/, "the disabled class carries the pointer-events rule");
+  const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(css, /\.appearance-map-iframe\.is-disabled \{[^}]*pointer-events: none/, "a locked frame is not pointer-interactive");
 });

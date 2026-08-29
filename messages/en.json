@@ -5614,6 +5614,8 @@
       "writeRequired": "Your role can view appearance rules but not change them.",
       "timeout": "Core did not answer in time. The write may or may not have landed — the list was reloaded; check before retrying.",
       "uncertainNotLanded": "Core's answer was lost. The list was reloaded and does not contain this change — you may redo it.",
+      "uncertainConflict": "Another administrator's write took the next revision while yours was in flight (uncertain answer), so your write did not land and your draft was closed. The authoritative rule is shown — reopen it to make the change deliberately on top of theirs.",
+      "uncertainSuperseded": "The rule moved on by more than one revision while your write was uncertain, so it is ambiguous whether it landed before being overwritten. Your draft was closed and is never retried; the authoritative rule is shown — reopen it to edit deliberately.",
       "uncertainReloadFailed": "Core's answer was lost and the list could not be reloaded. Reload before doing anything else; a repeated save could create a duplicate rule.",
       "rejected": "Core refused the rule ({code}).",
       "save": "The rule could not be saved.",
@@ -5636,6 +5638,7 @@
       "poster": "The video poster must finish uploading, or remove it.",
       "titleImage": "The title image must be an absolute https address that has finished uploading.",
       "titleImageRequired": "An image title needs a title image. Upload one, or switch the title type to text or inherited.",
+      "landingControl": "A landing text contains a control or invalid character (line break, tab, unpaired surrogate or similar). Remove it — Core refuses such values instead of repairing them.",
       "heroItem": "Every hero item needs an uploaded image or an HTTPS video URL; destination links must use HTTPS.",
       "heroTypography": "Hero font sizes must be 10–120 px and colours #rrggbb values; leave a field empty for the default.",
       "palette": "Palette colours must be #RRGGBB values; tick “inherit” for a role you do not want to set."

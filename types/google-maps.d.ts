@@ -24,6 +24,9 @@ declare namespace google.maps {
     latLng: LatLng | null;
   }
 
+  /** `google.maps.ColorScheme` — the map's fixed appearance, supplied at initialisation. */
+  type ColorScheme = "DARK" | "LIGHT" | "FOLLOW_SYSTEM";
+
   interface MapOptions {
     center?: LatLngLiteral;
     zoom?: number;
@@ -32,6 +35,7 @@ declare namespace google.maps {
     fullscreenControl?: boolean;
     clickableIcons?: boolean;
     gestureHandling?: string;
+    colorScheme?: ColorScheme;
   }
 
   class Map {

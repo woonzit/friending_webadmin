@@ -6,6 +6,7 @@ import { adminCall } from "@/lib/adminClient";
 import {
   APPEARANCE_MAP_FRAME_PATH,
   googleMapsBrowserKey,
+  appearanceMapMoveAccepted,
   isTrustedAppearanceMapEvent,
   parseAppearanceMapFrameMessage,
   type AppearanceMapCenter,
@@ -43,6 +44,9 @@ export default function AppearanceMapPicker({ center, radiusKm, language, disabl
   const [searchError, setSearchError] = useState("");
   const onMoveRef = useRef(onMove);
   onMoveRef.current = onMove;
+  // Finding 23: the handler reads the CURRENT lock state, never a captured prop.
+  const disabledRef = useRef(disabled);
+  disabledRef.current = disabled;
 
   useEffect(() => {
     if (!hasKey) return;
@@ -55,7 +59,9 @@ export default function AppearanceMapPicker({ center, radiusKm, language, disabl
         setFrameReady(true);
         return;
       }
-      onMoveRef.current(message.center);
+      const center = appearanceMapMoveAccepted(message, disabledRef.current);
+      if (!center) return;
+      onMoveRef.current(center);
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
@@ -155,7 +161,9 @@ export default function AppearanceMapPicker({ center, radiusKm, language, disabl
         <div className="appearance-map-embed">
           <iframe
             ref={frameRef}
-            className="appearance-map-iframe"
+            className={`appearance-map-iframe${disabled ? " is-disabled" : ""}`}
+            tabIndex={disabled ? -1 : 0}
+            aria-disabled={disabled}
             src={APPEARANCE_MAP_FRAME_PATH}
             title={t("mapLabel")}
             sandbox="allow-scripts allow-same-origin"

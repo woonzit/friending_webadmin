@@ -16,6 +16,7 @@ import {
   MAX_APPEARANCE_RADIUS_KM,
   MIN_APPEARANCE_RADIUS_KM,
   appearanceLandingWire,
+  appearanceLandingWithTitleType,
   appearanceTimestampFromLocalInput,
   appearanceTimestampToLocalInput,
   resolveAppearanceHero,
@@ -298,14 +299,9 @@ export default function AppearanceRuleEditor({
               value={value.landing.title_type}
               disabled={locked}
               onChange={(event) => {
-                const titleType = event.target.value;
-                if (titleType === value.landing.title_type) return;
-                patchLanding({
-                  title_type: titleType,
-                  title_text_en: titleType === "image" ? "" : value.landing.title_text_en,
-                  title_text_hu: titleType === "image" ? "" : value.landing.title_text_hu,
-                  title_image_url: titleType === "text" ? "" : value.landing.title_image_url,
-                });
+                // T-468b finding 14: only the type changes; text and image overrides persist until cleared.
+                const next = appearanceLandingWithTitleType(value.landing, event.target.value);
+                if (next !== value.landing) patchLanding({ title_type: next.title_type });
               }}
             >
               <option value="">{t("titleInherit")}</option>
