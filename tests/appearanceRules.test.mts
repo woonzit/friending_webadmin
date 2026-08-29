@@ -1,0 +1,588 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {
+  APPEARANCE_ACTIONS,
+  APPEARANCE_DEFAULT_LANDING,
+  APPEARANCE_DEFAULT_PALETTE,
+  APPEARANCE_PALETTE_MODES,
+  APPEARANCE_PALETTE_ROLES,
+  appearanceLandingDraft,
+  appearanceLandingWire,
+  appearanceRuleDraft,
+  appearanceRuleInputFromDraft,
+  appearanceRuleIsLive,
+  appearanceTimestampFromLocalInput,
+  appearanceTimestampToLocalInput,
+  isAppearanceStorefront,
+  localizedAppearanceCountries,
+  newAppearanceRuleDraft,
+  normalizeAppearancePaletteHex,
+  normalizeAppearanceProxyBody,
+  parseAppearanceGeocodePayload,
+  parseAppearanceListPayload,
+  parseAppearancePreviewPayload,
+  parseAppearanceRule,
+  parseAppearanceRuleInput,
+  parseAppearanceTimestamp,
+  resolveAppearanceHero,
+  resolveAppearanceLanding,
+  resolveAppearancePalette,
+  sortAppearanceRules,
+  validateAppearanceRuleDraft,
+  type AppearanceRule,
+} from "../lib/appearanceRules.ts";
+import {
+  ADMIN_ACTIONS,
+  ADMIN_ACTION_ACCESS,
+  adminActionAccess,
+  adminActionBodyLimit,
+  isAdminActionAllowed,
+} from "../lib/adminActions.ts";
+import { APPEARANCE_RULES_CONTRACT_READY } from "../lib/contractReadiness.ts";
+
+function heroItem(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    id: "hero-1",
+    media_url: "https://img.friending.co/api/cache/hero.jpg",
+    type: "image",
+    forward_url: "",
+    title_en: "Pride week",
+    title_hu: "Pride hét",
+    subtitle_en: "",
+    subtitle_hu: "",
+    link_title_en: "",
+    link_title_hu: "",
+    title_size_web: null,
+    title_color_web: "",
+    title_weight_web: "",
+    subtitle_size_web: null,
+    subtitle_color_web: "",
+    subtitle_weight_web: "",
+    title_size_mobile: 24,
+    title_color_mobile: "#ffffff",
+    title_weight_mobile: "bold",
+    subtitle_size_mobile: null,
+    subtitle_color_mobile: "",
+    subtitle_weight_mobile: "",
+    sort_order: 10,
+    active: true,
+    ...overrides,
+  };
+}
+
+function wireRule(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    id: "66d0a1b2c3d4e5f6a7b8c9d0",
+    name: "Global appearance",
+    scope: "global",
+    storefront_country: "",
+    country_code: "",
+    center: null,
+    radius_km: null,
+    place_label: "",
+    priority: 0,
+    active: true,
+    starts_at: null,
+    ends_at: null,
+    landing: {},
+    hero: { mode: "replace", items: [heroItem()] },
+    palette: { light: { accent: "#007F91" }, dark: {} },
+    revision: 3,
+    created_at: "2026-08-29T10:00:00Z",
+    updated_at: "2026-08-29T11:00:00Z",
+    updated_by: "lead@friending.com",
+    ...overrides,
+  };
+}
+
+function geoRule(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return wireRule({
+    id: "66d0a1b2c3d4e5f6a7b8c9d1",
+    name: "Budapest pride",
+    scope: "geo",
+    country_code: "HU",
+    center: { latitude: 47.4979, longitude: 19.0402 },
+    radius_km: 25,
+    place_label: "Budapest",
+    priority: 10,
+    starts_at: "2026-06-01T00:00:00Z",
+    ends_at: "2026-07-01T00:00:00Z",
+    landing: { background_type: "image", background_url: "https://img.friending.co/api/cache/pride.jpg" },
+    hero: { mode: "inherit", items: [] },
+    palette: { light: { accent: "#FF00AA", on_accent: "#000000" }, dark: { accent: "#FFAAEE" } },
+    ...overrides,
+  });
+}
+
+function storefrontRule(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return wireRule({
+    id: "66d0a1b2c3d4e5f6a7b8c9d2",
+    name: "United States store",
+    scope: "storefront",
+    storefront_country: "USA",
+    priority: 5,
+    hero: { mode: "inherit", items: [] },
+    palette: { light: {}, dark: {} },
+    migrated_from: "country",
+    ...overrides,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Rule parsing
+// ---------------------------------------------------------------------------
+
+test("a Core rule projection decodes exactly and keeps its provenance", () => {
+  const global = parseAppearanceRule(wireRule());
+  assert.ok(global);
+  assert.equal(global.scope, "global");
+  assert.equal(global.hero.items.length, 1);
+  assert.equal(global.hero.items[0]?.title_size_mobile, 24);
+  assert.equal(global.palette.light.accent, "#007F91");
+  assert.equal(global.migrated_from, null);
+
+  const geo = parseAppearanceRule(geoRule());
+  assert.ok(geo);
+  assert.deepEqual(geo.center, { latitude: 47.4979, longitude: 19.0402 });
+  assert.equal(geo.radius_km, 25);
+  assert.equal(geo.landing.background_url, "https://img.friending.co/api/cache/pride.jpg");
+  assert.equal(geo.landing.title_text_en, undefined, "absent landing keys stay absent (inherit)");
+
+  const storefront = parseAppearanceRule(storefrontRule());
+  assert.ok(storefront);
+  assert.equal(storefront.storefront_country, "USA");
+  assert.equal(storefront.migrated_from, "country");
+});
+
+test("rule decoding fails closed on unknown, missing, loose, or scope-inconsistent material", () => {
+  const cases: Array<[string, Record<string, unknown>]> = [
+    ["extra key", wireRule({ extra: 1 })],
+    ["missing revision", (() => { const rule = wireRule(); delete rule.revision; return rule; })()],
+    ["string priority", wireRule({ priority: "0" })],
+    ["priority above cap", wireRule({ priority: 10_001 })],
+    ["string active", wireRule({ active: "true" })],
+    ["revision zero", wireRule({ revision: 0 })],
+    ["unknown scope", wireRule({ scope: "country" })],
+    ["global with storefront", wireRule({ storefront_country: "HUN" })],
+    ["storefront alpha-2", storefrontRule({ storefront_country: "US" })],
+    ["storefront with center", storefrontRule({ center: { latitude: 1, longitude: 1 } })],
+    ["geo without label", geoRule({ place_label: "" })],
+    ["geo radius above cap", geoRule({ radius_km: 501 })],
+    ["geo latitude out of range", geoRule({ center: { latitude: 91, longitude: 19 } })],
+    ["geo center extra key", geoRule({ center: { latitude: 47, longitude: 19, altitude: 1 } })],
+    ["geo bad alpha-2", geoRule({ country_code: "XX" })],
+    ["window reversed", geoRule({ starts_at: "2026-07-01T00:00:00Z", ends_at: "2026-06-01T00:00:00Z" })],
+    ["window loose timestamp", geoRule({ starts_at: "2026-06-01T00:00:00+02:00" })],
+    ["window impossible date", geoRule({ starts_at: "2026-02-30T00:00:00Z" })],
+    ["landing unknown key", wireRule({ landing: { colour: "red" } })],
+    ["landing bad background type", wireRule({ landing: { background_type: "gif" } })],
+    ["landing http-less url", wireRule({ landing: { background_url: "cdn.example.com/x.jpg" } })],
+    ["landing description too long", wireRule({ landing: { description_en: "x".repeat(301) } })],
+    ["hero unknown mode", wireRule({ hero: { mode: "append", items: [] } })],
+    ["hero inherit with items", wireRule({ hero: { mode: "inherit", items: [heroItem()] } })],
+    ["hero item missing key", wireRule({ hero: { mode: "replace", items: [(() => { const item = heroItem(); delete item.active; return item; })()] } })],
+    ["hero item size out of range", wireRule({ hero: { mode: "replace", items: [heroItem({ title_size_web: 9 })] } })],
+    ["hero item uppercase colour", wireRule({ hero: { mode: "replace", items: [heroItem({ title_color_web: "#FFFFFF" })] } })],
+    ["hero item bad weight", wireRule({ hero: { mode: "replace", items: [heroItem({ title_weight_web: "heavy" })] } })],
+    ["hero item media not a url", wireRule({ hero: { mode: "replace", items: [heroItem({ media_url: "" })] } })],
+    ["palette unknown role", wireRule({ palette: { light: { primary: "#000000" }, dark: {} } })],
+    ["palette lowercase hex", wireRule({ palette: { light: { accent: "#007f91" }, dark: {} } })],
+    ["palette hex without hash", wireRule({ palette: { light: { accent: "007F91" }, dark: {} } })],
+    ["palette unknown mode", wireRule({ palette: { light: {}, dark: {}, dim: {} } })],
+    ["migrated_from foreign value", storefrontRule({ migrated_from: "city" })],
+    ["control character in name", wireRule({ name: "badname" })],
+  ];
+  for (const [label, value] of cases) {
+    assert.equal(parseAppearanceRule(value), null, label);
+  }
+  assert.equal(parseAppearanceRule(null), null);
+  assert.equal(parseAppearanceRule([]), null);
+  assert.equal(parseAppearanceRule("rule"), null);
+});
+
+test("the list payload demands unique ids, at most one global rule, and exact defaults when present", () => {
+  const list = parseAppearanceListPayload({ rules: [wireRule(), geoRule(), storefrontRule()] });
+  assert.ok(list);
+  assert.equal(list.rules.length, 3);
+  assert.deepEqual(list.defaults.palette, APPEARANCE_DEFAULT_PALETTE);
+  assert.deepEqual(list.defaults.landing, APPEARANCE_DEFAULT_LANDING);
+
+  const withDefaults = parseAppearanceListPayload({
+    rules: [],
+    defaults: {
+      palette: { light: { ...APPEARANCE_DEFAULT_PALETTE.light, accent: "#123456" }, dark: APPEARANCE_DEFAULT_PALETTE.dark },
+      landing: { ...APPEARANCE_DEFAULT_LANDING, title_text_en: "friending" },
+    },
+  });
+  assert.ok(withDefaults);
+  assert.equal(withDefaults.defaults.palette.light.accent, "#123456");
+  assert.equal(withDefaults.defaults.landing.title_text_en, "friending");
+
+  assert.equal(parseAppearanceListPayload({ rules: [wireRule(), wireRule()] }), null, "duplicate id");
+  assert.equal(parseAppearanceListPayload({ rules: [wireRule(), wireRule({ id: "other" })] }), null, "two globals");
+  assert.equal(parseAppearanceListPayload({ rules: [wireRule({ priority: "0" })] }), null, "one bad rule poisons the list");
+  assert.equal(parseAppearanceListPayload({ rules: [], defaults: { palette: APPEARANCE_DEFAULT_PALETTE } }), null, "partial defaults");
+  assert.equal(parseAppearanceListPayload({ rules: [], defaults: { palette: { light: {}, dark: {} }, landing: APPEARANCE_DEFAULT_LANDING } }), null, "incomplete default palette");
+  assert.equal(parseAppearanceListPayload({ rules: [], defaults: { palette: APPEARANCE_DEFAULT_PALETTE, landing: { title_text_en: "x" } } }), null, "incomplete default landing");
+  assert.equal(parseAppearanceListPayload({ rules: {} }), null);
+  assert.equal(parseAppearanceListPayload([]), null);
+  assert.equal(parseAppearanceListPayload({ rules: [], extra: true }), null);
+});
+
+// ---------------------------------------------------------------------------
+// Preview and geocode payloads
+// ---------------------------------------------------------------------------
+
+function previewPayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    revision: 7,
+    content_version: "7:2026-08-29T11:00:00Z",
+    landing: {
+      background: { type: "image", url: "https://img.friending.co/api/cache/pride.jpg", poster_url: "" },
+      title: { type: "text", text: "friending.", image_url: "" },
+      description: "Meet people near you.",
+    },
+    hero: [{
+      id: "hero-1",
+      media_url: "https://img.friending.co/api/cache/hero.jpg",
+      type: "image",
+      forward_url: "https://friending.com/pride",
+      image_url: "https://img.friending.co/api/cache/hero.jpg",
+      destination_url: "https://friending.com/pride",
+      title: "Pride week",
+      subtitle: "",
+      link_title: "",
+      text_style: { web: {}, mobile: {} },
+    }],
+    palette: APPEARANCE_DEFAULT_PALETTE,
+    matched: { scope: "geo", rule_id: "66d0a1b2c3d4e5f6a7b8c9d1", location_source: "gps" },
+    ...overrides,
+  };
+}
+
+test("the test-location preview decodes the app payload and refuses vocabulary drift", () => {
+  const preview = parseAppearancePreviewPayload(previewPayload());
+  assert.ok(preview);
+  assert.equal(preview.revision, 7);
+  assert.equal(preview.matched.scope, "geo");
+  assert.equal(preview.hero[0]?.title, "Pride week");
+  assert.equal(preview.landing.title.text, "friending.");
+
+  const defaults = parseAppearancePreviewPayload(previewPayload({
+    revision: 0,
+    content_version: 0,
+    hero: [],
+    matched: { scope: "default", rule_id: "", location_source: "none" },
+  }));
+  assert.ok(defaults);
+  assert.equal(defaults.content_version, "0");
+  assert.equal(defaults.matched.scope, "default");
+
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "country", rule_id: "x", location_source: "ip" } })), null, "dropped country tier");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "default", rule_id: "x", location_source: "ip" } })), null, "default with a rule id");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "geo", rule_id: "x", location_source: "wifi" } })), null, "unknown location source");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ palette: { light: {}, dark: {} } })), null, "incomplete palette");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: { background: { type: "image", url: "", poster_url: "" }, title: { type: "text", text: "", image_url: "" } } })), null, "missing description");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ revision: -1 })), null);
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ extra: 1 })), null);
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ hero: [{ id: "x" }] })), null, "partial hero item");
+});
+
+test("geocode candidates decode exactly", () => {
+  const candidates = parseAppearanceGeocodePayload({
+    candidates: [{
+      place_id: "ChIJyc_U0TTDQUcRYBEeDCnEAAQ",
+      place_label: "Budapest, Hungary",
+      country_code: "HU",
+      center: { latitude: 47.4979, longitude: 19.0402 },
+      radius_km: 23,
+    }],
+  });
+  assert.ok(candidates);
+  assert.equal(candidates.length, 1);
+  assert.equal(candidates[0]?.radius_km, 23);
+
+  assert.deepEqual(parseAppearanceGeocodePayload({ candidates: [] }), []);
+  assert.equal(parseAppearanceGeocodePayload({ candidates: [{ place_id: "x", place_label: "Nowhere", country_code: "ZZ", center: { latitude: 0, longitude: 0 }, radius_km: 5 }] }), null, "unknown alpha-2");
+  assert.equal(parseAppearanceGeocodePayload({ candidates: [{ place_id: "x", place_label: "Nowhere", country_code: "", center: { latitude: 0, longitude: 0 }, radius_km: 0.5 }] }), null, "radius below the floor");
+  assert.equal(parseAppearanceGeocodePayload({ results: [] }), null);
+});
+
+// ---------------------------------------------------------------------------
+// Inheritance
+// ---------------------------------------------------------------------------
+
+test("the palette resolves per role down the chain and records where each value came from", () => {
+  const geo = parseAppearanceRule(geoRule());
+  const global = parseAppearanceRule(wireRule());
+  assert.ok(geo && global);
+  const resolved = resolveAppearancePalette([geo.palette, global.palette], APPEARANCE_DEFAULT_PALETTE);
+  assert.equal(resolved.values.light.accent, "#FF00AA");
+  assert.equal(resolved.sources.light.accent, "rule");
+  assert.equal(resolved.values.light.on_accent, "#000000");
+  assert.equal(resolved.values.light.accent_pressed, "#006776");
+  assert.equal(resolved.sources.light.accent_pressed, "default");
+  assert.equal(resolved.values.dark.accent, "#FFAAEE");
+  assert.equal(resolved.values.dark.inactive, "#8A9497");
+
+  const inherited = resolveAppearancePalette([{ light: {}, dark: {} }, global.palette], APPEARANCE_DEFAULT_PALETTE);
+  assert.equal(inherited.values.light.accent, "#007F91");
+  assert.equal(inherited.sources.light.accent, "inherited");
+  for (const mode of APPEARANCE_PALETTE_MODES) {
+    for (const role of APPEARANCE_PALETTE_ROLES) {
+      assert.match(inherited.values[mode][role], /^#[0-9A-F]{6}$/);
+    }
+  }
+});
+
+test("landing resolves per group with the legacy language fallback and hero replaces or inherits", () => {
+  const geo = parseAppearanceRule(geoRule({ landing: { background_type: "video", background_url: "https://cdn.friending.co/pride.mp4", background_poster_url: "https://cdn.friending.co/pride.jpg", description_hu: "Budapesti pride." } }));
+  const global = parseAppearanceRule(wireRule({ landing: { title_type: "text", title_text_en: "friending.", title_text_hu: "", description_en: "Global copy", description_hu: "" } }));
+  assert.ok(geo && global);
+
+  const hu = resolveAppearanceLanding([geo.landing, global.landing], APPEARANCE_DEFAULT_LANDING, "hu");
+  assert.equal(hu.backgroundType, "video");
+  assert.equal(hu.backgroundUrl, "https://cdn.friending.co/pride.mp4");
+  assert.equal(hu.posterUrl, "https://cdn.friending.co/pride.jpg");
+  assert.equal(hu.titleText, "friending.", "hu title falls back to the English of the same document");
+  assert.equal(hu.description, "Budapesti pride.");
+
+  const en = resolveAppearanceLanding([geo.landing, global.landing], APPEARANCE_DEFAULT_LANDING, "en");
+  assert.equal(en.description, "Global copy", "an override without English copy does not win the description");
+
+  const defaultsOnly = resolveAppearanceLanding([], APPEARANCE_DEFAULT_LANDING, "hu");
+  assert.equal(defaultsOnly.titleText, "friending.");
+  assert.equal(defaultsOnly.description, APPEARANCE_DEFAULT_LANDING.description_hu);
+
+  const globalRule = parseAppearanceRule(wireRule());
+  assert.ok(globalRule);
+  assert.equal(resolveAppearanceHero([geo.hero, globalRule.hero]).length, 1, "inherit keeps the global list");
+  const replaced = parseAppearanceRule(geoRule({ hero: { mode: "replace", items: [] } }));
+  assert.ok(replaced);
+  assert.equal(resolveAppearanceHero([replaced.hero, globalRule.hero]).length, 0, "replace with no items hides the carousel");
+  assert.equal(resolveAppearanceHero([]).length, 0);
+});
+
+// ---------------------------------------------------------------------------
+// Editor draft ↔ wire
+// ---------------------------------------------------------------------------
+
+test("blank editor groups inherit; filled groups reach the wire as exact subsets", () => {
+  const blank = appearanceLandingDraft({});
+  assert.deepEqual(appearanceLandingWire(blank), {});
+
+  const filled = { ...blank, background_type: "video", background_url: "https://cdn.friending.co/a.mp4", background_poster_url: "https://cdn.friending.co/a.jpg", description_en: "Hello", title_text_hu: "Szia" };
+  assert.deepEqual(appearanceLandingWire(filled), {
+    background_type: "video",
+    background_url: "https://cdn.friending.co/a.mp4",
+    background_poster_url: "https://cdn.friending.co/a.jpg",
+    title_type: "text",
+    title_text_en: "",
+    title_text_hu: "Szia",
+    description_en: "Hello",
+    description_hu: "",
+  });
+
+  const imageTitleWithoutAsset = { ...blank, title_type: "image" };
+  assert.deepEqual(appearanceLandingWire(imageTitleWithoutAsset), {}, "an image title without its asset inherits");
+
+  const roundTrip = appearanceLandingDraft(appearanceLandingWire(filled));
+  assert.equal(roundTrip.background_url, filled.background_url);
+  assert.equal(roundTrip.title_image_url, "");
+});
+
+test("a rule round-trips through the editor draft into the exact fourteen-key save body", () => {
+  const rule = parseAppearanceRule(geoRule());
+  assert.ok(rule);
+  const draft = appearanceRuleDraft(rule);
+  assert.equal(draft.latitude, "47.4979");
+  assert.equal(draft.revision, 3);
+  assert.equal(validateAppearanceRuleDraft(draft), null);
+  const input = appearanceRuleInputFromDraft(draft);
+  assert.ok(input);
+  assert.deepEqual(Object.keys(input).sort(), [
+    "active", "center", "country_code", "ends_at", "hero", "landing", "name", "palette",
+    "place_label", "priority", "radius_km", "scope", "starts_at", "storefront_country",
+  ]);
+  assert.deepEqual(input.center, { latitude: 47.4979, longitude: 19.0402 });
+  assert.equal(input.radius_km, 25);
+  assert.deepEqual(input.landing, { background_type: "image", background_url: "https://img.friending.co/api/cache/pride.jpg" });
+  assert.deepEqual(input.hero, { mode: "inherit", items: [] });
+  assert.equal(parseAppearanceRuleInput(input) !== null, true);
+
+  const storefront = newAppearanceRuleDraft("storefront", "US store", 5);
+  assert.equal(validateAppearanceRuleDraft(storefront), "storefront");
+  storefront.storefront_country = "USA";
+  assert.equal(validateAppearanceRuleDraft(storefront), null);
+  const storefrontInput = appearanceRuleInputFromDraft(storefront);
+  assert.ok(storefrontInput);
+  assert.equal(storefrontInput.center, null);
+  assert.equal(storefrontInput.place_label, "");
+  assert.deepEqual(storefrontInput.palette, { light: {}, dark: {} });
+});
+
+test("draft validation names the first failing group", () => {
+  const geo = newAppearanceRuleDraft("geo", "", 0);
+  assert.equal(validateAppearanceRuleDraft(geo), "name");
+  geo.name = "Budapest";
+  assert.equal(validateAppearanceRuleDraft(geo), "geo");
+  geo.latitude = "47.5";
+  geo.longitude = "19.04";
+  geo.radius_km = "600";
+  geo.place_label = "Budapest";
+  assert.equal(validateAppearanceRuleDraft(geo), "geo");
+  geo.radius_km = "25";
+  geo.country_code = "H";
+  assert.equal(validateAppearanceRuleDraft(geo), "countryCode");
+  geo.country_code = "HU";
+  geo.priority = 10_001;
+  assert.equal(validateAppearanceRuleDraft(geo), "priority");
+  geo.priority = 10;
+  geo.starts_at = "2026-07-01T00:00:00Z";
+  geo.ends_at = "2026-06-01T00:00:00Z";
+  assert.equal(validateAppearanceRuleDraft(geo), "window");
+  geo.ends_at = "2026-08-01T00:00:00Z";
+  geo.landing.background_url = "http://insecure.example.com/a.jpg";
+  assert.equal(validateAppearanceRuleDraft(geo), "background");
+  geo.landing.background_url = "";
+  geo.landing.title_type = "image";
+  geo.landing.title_image_url = "ftp://x";
+  assert.equal(validateAppearanceRuleDraft(geo), "titleImage");
+  geo.landing.title_image_url = "";
+  geo.hero = { mode: "replace", items: [{ ...(parseAppearanceRule(wireRule())!.hero.items[0]!), media_url: "" }] };
+  assert.equal(validateAppearanceRuleDraft(geo), "heroItem");
+  geo.hero = { mode: "replace", items: [{ ...(parseAppearanceRule(wireRule())!.hero.items[0]!), title_size_web: 500 }] };
+  assert.equal(validateAppearanceRuleDraft(geo), "heroTypography");
+  geo.hero = { mode: "inherit", items: [] };
+  geo.palette = { light: { accent: "#12345g" }, dark: {} };
+  assert.equal(validateAppearanceRuleDraft(geo), "palette");
+  geo.palette = { light: { accent: "#123456" }, dark: {} };
+  assert.equal(validateAppearanceRuleDraft(geo), null);
+  assert.ok(appearanceRuleInputFromDraft(geo));
+});
+
+test("palette hex input is normalised to the uppercase wire form or refused", () => {
+  assert.equal(normalizeAppearancePaletteHex("#007f91"), "#007F91");
+  assert.equal(normalizeAppearancePaletteHex("007f91"), "#007F91");
+  assert.equal(normalizeAppearancePaletteHex(" #DDFBFC "), "#DDFBFC");
+  assert.equal(normalizeAppearancePaletteHex("#fff"), null);
+  assert.equal(normalizeAppearancePaletteHex("teal"), null);
+  assert.equal(normalizeAppearancePaletteHex(""), null);
+});
+
+test("timestamps are exact UTC wire strings and the local input converts both ways", () => {
+  assert.equal(parseAppearanceTimestamp("2026-08-29T11:00:00Z"), "2026-08-29T11:00:00Z");
+  assert.equal(parseAppearanceTimestamp("2026-08-29T11:00:00.000Z"), null);
+  assert.equal(parseAppearanceTimestamp("2026-08-29T11:00Z"), null);
+  assert.equal(parseAppearanceTimestamp("2026-13-01T00:00:00Z"), null);
+  assert.equal(parseAppearanceTimestamp(1_756_465_200), null);
+
+  const wire = appearanceTimestampFromLocalInput(appearanceTimestampToLocalInput("2026-08-29T11:00:00Z"));
+  assert.equal(wire, "2026-08-29T11:00:00Z");
+  assert.equal(appearanceTimestampFromLocalInput(""), null);
+  assert.equal(appearanceTimestampFromLocalInput("not a date"), undefined);
+  assert.equal(appearanceTimestampToLocalInput(null), "");
+
+  const rule = parseAppearanceRule(geoRule());
+  assert.ok(rule);
+  assert.equal(appearanceRuleIsLive(rule, Date.parse("2026-06-15T00:00:00Z")), true);
+  assert.equal(appearanceRuleIsLive(rule, Date.parse("2026-05-31T23:59:59Z")), false, "starts_at is inclusive");
+  assert.equal(appearanceRuleIsLive(rule, Date.parse("2026-07-01T00:00:00Z")), false, "ends_at is exclusive");
+  assert.equal(appearanceRuleIsLive({ ...rule, active: false }, Date.parse("2026-06-15T00:00:00Z")), false);
+});
+
+test("the operator list reads in resolution order: geo, storefront, global", () => {
+  const rules = [wireRule(), storefrontRule(), geoRule(), geoRule({ id: "z", name: "Aachen", priority: 10 }), geoRule({ id: "y", name: "Zürich", priority: 20 })]
+    .map((value) => parseAppearanceRule(value))
+    .filter((rule): rule is AppearanceRule => rule !== null);
+  assert.equal(rules.length, 5);
+  assert.deepEqual(sortAppearanceRules(rules).map((rule) => rule.name), [
+    "Zürich", "Aachen", "Budapest pride", "United States store", "Global appearance",
+  ]);
+});
+
+test("the store-country catalogue is ISO alpha-3 with localized names", () => {
+  assert.equal(isAppearanceStorefront("HUN"), true);
+  assert.equal(isAppearanceStorefront("USA"), true);
+  assert.equal(isAppearanceStorefront("HU"), false);
+  assert.equal(isAppearanceStorefront("hun"), false);
+  const hu = localizedAppearanceCountries("hu");
+  const en = localizedAppearanceCountries("en");
+  assert.ok(hu.length >= 240);
+  assert.equal(hu.length, en.length);
+  assert.equal(en.find((country) => country.alpha3 === "HUN")?.name, "Hungary");
+  assert.equal(hu.find((country) => country.alpha3 === "HUN")?.name, "Magyarország");
+  assert.equal(en.find((country) => country.alpha3 === "HUN")?.alpha2, "HU");
+});
+
+// ---------------------------------------------------------------------------
+// Proxy normalization and action classification
+// ---------------------------------------------------------------------------
+
+test("the proxy forwards only the exact bodies the contract lists", () => {
+  assert.equal(normalizeAppearanceProxyBody("list_users", { anything: 1 }), undefined);
+  assert.deepEqual(normalizeAppearanceProxyBody("appearance_rules_list", { admin_email: "x", page: 2 }), {});
+
+  const rule = appearanceRuleInputFromDraft(appearanceRuleDraft(parseAppearanceRule(geoRule())!));
+  assert.ok(rule);
+  const save = normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: 3, rule });
+  assert.ok(save);
+  assert.deepEqual(Object.keys(save).sort(), ["expected_revision", "id", "rule"]);
+  assert.deepEqual(save.rule, rule);
+  assert.ok(normalizeAppearanceProxyBody("appearance_rules_save", { id: "", expected_revision: 0, rule }), "create");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "", expected_revision: 3, rule }), null, "create with a revision");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: 0, rule }), null, "update without a revision");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: 3, rule, admin_email: "x" }), null, "reserved key");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: "3", rule }), null, "string revision");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: 3, rule: { ...rule, extra: 1 } }), null, "unknown rule key");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: 3, rule: { ...rule, palette: { light: { accent: "#007f91" }, dark: {} } } }), null, "lowercase palette hex");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_save", { id: "abc", expected_revision: 3 }), null, "missing rule");
+
+  assert.deepEqual(normalizeAppearanceProxyBody("appearance_rules_delete", { id: "abc", expected_revision: 3 }), { id: "abc", expected_revision: 3 });
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_delete", { id: "abc", expected_revision: 0 }), null);
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_delete", { id: "", expected_revision: 1 }), null);
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_delete", { id: "abc", expected_revision: 1, force: true }), null);
+
+  assert.deepEqual(normalizeAppearanceProxyBody("appearance_rules_preview", {}), {});
+  assert.deepEqual(
+    normalizeAppearanceProxyBody("appearance_rules_preview", { storefront_country: "HUN", latitude: 47.5, longitude: 19.04, ip: "", lang: "hu" }),
+    { storefront_country: "HUN", latitude: 47.5, longitude: 19.04, lang: "hu" },
+  );
+  assert.deepEqual(normalizeAppearanceProxyBody("appearance_rules_preview", { ip: "203.0.113.7" }), { ip: "203.0.113.7" });
+  assert.deepEqual(normalizeAppearanceProxyBody("appearance_rules_preview", { ip: "2001:db8::1" }), { ip: "2001:db8::1" });
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { latitude: 47.5 }), null, "latitude without longitude");
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { storefront_country: "HU" }), null);
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { ip: "not-an-ip" }), null);
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { lang: "de" }), null);
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { uid: 1 }), null);
+
+  assert.deepEqual(normalizeAppearanceProxyBody("appearance_city_geocode", { query: "  Budapest " }), { query: "Budapest" });
+  assert.deepEqual(normalizeAppearanceProxyBody("appearance_city_geocode", { query: "Budapest", lang: "hu" }), { query: "Budapest", lang: "hu" });
+  assert.equal(normalizeAppearanceProxyBody("appearance_city_geocode", { query: "" }), null);
+  assert.equal(normalizeAppearanceProxyBody("appearance_city_geocode", { query: "x".repeat(121) }), null);
+  assert.equal(normalizeAppearanceProxyBody("appearance_city_geocode", { query: "Budapest", lang: "de" }), null);
+  assert.equal(normalizeAppearanceProxyBody("appearance_city_geocode", { q: "Budapest" }), null);
+});
+
+test("the five appearance actions stay dormant until the readiness switch flips, then classify as designed", () => {
+  assert.equal(APPEARANCE_ACTIONS.length, 5);
+  for (const action of APPEARANCE_ACTIONS) {
+    assert.equal(isAdminActionAllowed(action), APPEARANCE_RULES_CONTRACT_READY, action);
+    assert.equal((ADMIN_ACTIONS as readonly string[]).includes(action), APPEARANCE_RULES_CONTRACT_READY, action);
+  }
+  if (APPEARANCE_RULES_CONTRACT_READY) {
+    assert.equal(adminActionAccess("appearance_rules_list"), "read");
+    assert.equal(adminActionAccess("appearance_rules_preview"), "read");
+    assert.equal(adminActionAccess("appearance_rules_save"), "write");
+    assert.equal(adminActionAccess("appearance_rules_delete"), "write");
+    assert.equal(adminActionAccess("appearance_city_geocode"), "write");
+  } else {
+    for (const action of APPEARANCE_ACTIONS) {
+      assert.equal(adminActionAccess(action), null, action);
+      assert.equal(action in ADMIN_ACTION_ACCESS, false, action);
+    }
+  }
+  // The raised save ceiling is a static table entry, independent of the switch.
+  assert.equal(adminActionBodyLimit("appearance_rules_save"), 1_100_000);
+  assert.equal(adminActionBodyLimit("appearance_rules_list"), 256_000);
+});

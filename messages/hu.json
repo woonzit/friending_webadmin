@@ -1510,6 +1510,89 @@
           }
         }
       },
+      "appearance": {
+        "title": "Megjelenés és elhelyezések súgó",
+        "summary": "Ez az oldal az egyetlen hely az iOS nyitóképernyő, a Discover hero-karusszel és a világos/sötét paletta kezelésére. Az állandó globális szabály adja az alapot, az áruház-ország szabályok egy App Store áruház-országra írják felül, a geo szabályok pedig mindkettőt felülírják a városban vagy térképkörben tartózkodó tagoknál. Az üres mezők mindig öröklődnek; a láncot a Core oldja fel, az app pedig a beépített alapértelmezéseket rendereli utolsó szintként.",
+        "steps": {
+          "1": "Először a globális szabályt nézd át: a nyitóképernyő-tartalma, hero-karusszele és palettája az, amiből minden felülírás örököl.",
+          "2": "Áruház-ország vagy geo felülírást csak a ténylegesen eltérő részekhez adj, és a prioritását az azonos hatókörű, átfedő szabályokhoz igazítsd.",
+          "3": "Aktiválás előtt oldj fel egy tesztelt helyet az előnézeti panelen, hogy pontosan lásd, milyen nyitóképernyőt, hero-t és palettát kap az app."
+        },
+        "sections": {
+          "rules": {
+            "title": "Szabályleltár",
+            "purpose": "A kártyák feloldási sorrendben — geo, majd áruház-ország, majd globális — mutatják az összes szabályt élő állapottal, időablakkal, prioritással és azzal, mit állít be.",
+            "actions": {
+              "1": "A globális szabályt minden felülírás előtt hozd létre; később nem törölhető.",
+              "2": "Nyisd meg a kártyát a szerkesztéshez, vagy törölj egy felülírást, miután a megerősítés megnevezte."
+            },
+            "guidance": "Az átemeltként jelölt szabály korábbi országszabályból származik, és most az App Store áruház-országot célozza; ellenőrizd, hogy ez még a kívánt közönség-e."
+          },
+          "targeting": {
+            "title": "Hatókör és prioritás",
+            "purpose": "A szabály globális, egy App Store áruház-országhoz (alpha-3) kötött, vagy a tag aktuális helyéhez városként vagy térképpont + kilométeres sugárként kötött.",
+            "actions": {
+              "1": "Először a hatókört válaszd ki; a szerkesztő csak az ahhoz szükséges mezőket mutatja.",
+              "2": "A prioritást úgy állítsd, hogy az azonos hatókörű, átfedő szabályok a várt módon oldódjanak fel."
+            },
+            "guidance": "A geo mindig megelőzi az áruház-országot, az pedig a globálist. Azonos prioritású geo szabályoknál a közelebbi középpont, majd a kisebb sugár, majd az újabb szabály nyer."
+          },
+          "window": {
+            "title": "Aktív állapot és eseményablak",
+            "purpose": "Az aktív állapot dönti el, hogy a Core egyáltalán figyelembe veszi-e a szabályt; az opcionális kezdet és vég eseményablakot ad, amely csak azon időpontok között oldódik fel.",
+            "actions": {
+              "1": "A piszkozatot tartsd inaktívan, amíg a tartalma és a médiája jóvá nincs hagyva.",
+              "2": "Az időablakot a helyi idődben add meg, és ellenőrizd a szerkesztő alatt megjelenő UTC sort."
+            },
+            "guidance": "A kezdet zárt, a vég nyílt; az ablakon kívüli szabályt a Core egyszerűen átugorja, így a lánc következő szintje érvényesül."
+          },
+          "landing": {
+            "title": "App nyitóképernyő",
+            "purpose": "Háttérkép vagy -videó opcionális előképpel, szöveges vagy képes cím mindkét nyelven és kétnyelvű leírás; minden csoport öröklődik, ha üresen marad.",
+            "actions": {
+              "1": "Csak azokat a csoportokat töltsd ki, amelyek eltérnek az örökölt tartalomtól.",
+              "2": "A telefonos előnézetben ellenőrizd a feloldott hátteret, címet és leírást."
+            },
+            "guidance": "Az üres öröklést jelent, sosem fekete hátteret. Az asset nélküli képcím a címet örökli, nem törött képet küld."
+          },
+          "hero": {
+            "title": "Discover hero-karusszel",
+            "purpose": "Minden szabály vagy örökli a lánc karusszelét, vagy lecseréli a saját, sorba rendezett elemeire — kép- vagy videokártyákra kétnyelvű szöveggel és opcionális tipográfiai felülírással.",
+            "actions": {
+              "1": "A Lecseréli módot csak akkor válaszd, ha ez a közönség más karusszelt lásson.",
+              "2": "Tudatosan rendezd az elemeket, és a jóvá nem hagyott kártyákat tartsd inaktívan."
+            },
+            "guidance": "Az üres csere elrejti a karusszelt az illeszkedő tagoknál. A globális szabály cseréje az, amit minden felülírás örököl."
+          },
+          "palette": {
+            "title": "Világos és sötét paletta",
+            "purpose": "Módonként öt szerep — fő accent, megnyomott, halvány háttér, szöveg accenten és inaktív — mindegyik vagy örökölt, vagy ezen a szabályon #RRGGBB színként beállított.",
+            "actions": {
+              "1": "Csak azoknál a szerepeknél vedd ki az Örökli pipát, amelyeket ez a szabály módosít.",
+              "2": "Mentés előtt hasonlítsd össze a világos és a sötét előnézetet; mindkét mód eljut az appba."
+            },
+            "guidance": "Az előnézetek ezt a szabályt a globális szabály és a beépített alapértelmezés fölé rétegzik. Az accenten lévő szöveg mindkét módban maradjon olvasható."
+          },
+          "mapSearch": {
+            "title": "Térképes kijelölő és városkeresés",
+            "purpose": "A geo szabály középpontja és sugara a Core által geokódolt városkeresésből, a térkép húzható jelölőjéből vagy a koordinátamezőkből származik.",
+            "actions": {
+              "1": "Keress rá egy városra, és válassz találatot a középpont, a javasolt sugár, a megnevezés és az ország kitöltéséhez.",
+              "2": "Állítsd be a sugarat kilométerben, és ellenőrizd a kört a térképen."
+            },
+            "guidance": "A térkép opcionális: beállított böngészőkulcs nélkül a koordináta- és sugármezők továbbra is pontosan meghatározzák a szabályt."
+          },
+          "testPreview": {
+            "title": "Előnézet tesztelt helyre",
+            "purpose": "A Core feloldója pontosan azt adja vissza, amit az app kapna egy áruház-országra, koordinátákra vagy IP-címre, beleértve az illeszkedő szabályt és a hely forrását.",
+            "actions": {
+              "1": "Add meg azt az áruház-országot és koordinátákat, amelyeket egy valódi eszköz küldene, vagy egy IP-címet.",
+              "2": "Élesítés előtt ellenőrizd az illeszkedő hatókört, a palettamintákat és a hero-listát."
+            },
+            "guidance": "Az előnézetet a Core számolja, nem a böngésző, ezért a futtatás pillanatában tárolt szabályokat tükrözi."
+          }
+        }
+      },
       "signupOptions": {
         "title": "Signup opciók súgó",
         "summary": "Ez a munkaterület határozza meg a Friending-profil létrehozásakor megjelenő kérdéseket és válaszokat. Elkülöníti a védett azonossági tengelyeket az opcionális kérdésektől, és vezérli a kétnyelvű címkéket, ikonokat és az egyes választások célközönségét.",
@@ -2710,6 +2793,7 @@
     "heroes": "People hero",
     "landing": "Join nyitóoldal",
     "appLanding": "App nyitóképernyő",
+    "appearance": "Megjelenés és elhelyezések",
     "signupOptions": "Signup opciók",
     "signupPhotos": "Regisztrációs képek",
     "audienceVisibility": "Profil láthatósága",
@@ -5489,6 +5573,279 @@
     "descriptionLabel": "Leírás",
     "fallbackInherit": "örökölt",
     "fallbackDefault": "app-alapértelmezés"
+  },
+  "appearance": {
+    "eyebrow": "Natív app",
+    "title": "Megjelenés és elhelyezések",
+    "subtitle": "Egy szabálykészlet az iOS nyitóképernyőhöz, a Discover hero-karusszelhez és a világos/sötét palettához. Egy szabály lehet globális, App Store-országhoz kötött vagy a tag aktuális helyéhez igazodó; minden üresen hagyott mező a láncon lefelé öröklődik egészen az app beépített alapértelmezéséig.",
+    "newRule": "Új szabály",
+    "newGlobalRule": "Globális szabály létrehozása",
+    "newGeoName": "Városi megjelenés",
+    "newGlobalName": "Globális megjelenés",
+    "liveCount": "{live} élő / {total}",
+    "precedence": "Geo találat → áruház-ország → globális szabály → beépített app-alapértelmezés",
+    "loadError": "A megjelenési szabályok nem tölthetők be.",
+    "empty": "Még nincs megjelenési szabály.",
+    "emptyCopy": "Először hozd létre a globális szabályt. Addig az app a beépített alapértelmezéseit rendereli.",
+    "deleteTitle": "Törlöd a megjelenési szabályt?",
+    "deleteCopy": "A(z) „{name}” kikerül a feloldásból. A feltöltött médiafájlok megmaradnak.",
+    "scope": {
+      "global": "Globális",
+      "storefront": "Áruház-ország",
+      "geo": "Geo"
+    },
+    "list": {
+      "always": "mindig",
+      "scheduled": "Ütemezett",
+      "priority": "{value}. prioritás",
+      "migrated": "Országszabályból átemelve",
+      "window": "Időablak",
+      "sets": "Beállít",
+      "setsLanding": "nyitóképernyő",
+      "setsHero": "hero ({count} elem)",
+      "setsPalette": "paletta ({count}/{total} szerep)",
+      "setsNothing": "semmit — mindent örököl",
+      "revision": "{revision}. revízió · {by}"
+    },
+    "errors": {
+      "conflict": "Időközben valaki más módosította ezt a szabályt. A lista frissült — nyisd meg újra a szabályt, és ismételd meg a módosítást.",
+      "notFound": "Ez a szabály már nem létezik. A lista frissült.",
+      "globalProtected": "A globális szabály állandó: a tartalmát szerkeszd a törlése vagy a hatókörének módosítása helyett.",
+      "writeRequired": "A szerepköröd megtekintheti a megjelenési szabályokat, de nem módosíthatja.",
+      "timeout": "A Core nem válaszolt időben. A mentés megtörténhetett — a lista frissült; ellenőrizd, mielőtt újra próbálod.",
+      "rejected": "A Core elutasította a szabályt ({code}).",
+      "save": "A szabály nem menthető.",
+      "delete": "A szabály nem törölhető."
+    },
+    "toast": {
+      "saved": "Megjelenési szabály elmentve.",
+      "deleted": "Megjelenési szabály törölve."
+    },
+    "validation": {
+      "name": "Adj meg egy admin megnevezést (1–120 karakter).",
+      "storefront": "Válaszd ki az App Store áruház-országát.",
+      "geo": "Adj meg helymegnevezést, érvényes koordinátákat és 1–500 km közötti sugarat.",
+      "countryCode": "Az opcionális ország érvényes kétbetűs kód legyen.",
+      "priority": "A prioritás 0 és 10 000 közötti egész szám legyen.",
+      "window": "Az időablak vége a kezdete után legyen.",
+      "background": "Tölts fel háttérképet vagy -videót, vagy hagyd üresen a hátteret az örökléshez.",
+      "poster": "A videó-előkép feltöltésének be kell fejeződnie, vagy távolítsd el.",
+      "titleImage": "Tölts fel címképet, vagy állítsd vissza a cím típusát szövegre.",
+      "heroItem": "Minden hero-elemhez feltöltött kép vagy HTTPS videó-URL kell; a célhivatkozás is HTTPS legyen.",
+      "heroTypography": "A hero betűméret 10–120 px, a szín #rrggbb formátumú lehet; az alapértelmezéshez hagyd üresen a mezőt.",
+      "palette": "A palettaszínek #RRGGBB értékek legyenek; pipáld be az „örökli” opciót annál a szerepnél, amelyet nem akarsz beállítani."
+    },
+    "editor": {
+      "createTitle": "Megjelenési szabály létrehozása",
+      "editTitle": "Megjelenési szabály szerkesztése",
+      "targetingTitle": "Célzás és életciklus",
+      "targetingCopy": "Hol és mikor érvényes a szabály. A geo szabály mindig megelőzi az áruház-országot, az pedig a globális szabályt.",
+      "name": "Admin megnevezés",
+      "namePlaceholder": "Budapest Pride hét",
+      "scopeLabel": "Hatókör",
+      "scopeOption": {
+        "global": "Globális (egyetlen, állandó)",
+        "storefront": "Áruház-ország (App Store storefront)",
+        "geo": "Geo (aktuális hely: város vagy térképpont + sugár)"
+      },
+      "scopeHint": {
+        "global": "Az egyetlen alapszabály, amelyből minden felülírás örököl.",
+        "storefront": "Az eszköz App Store áruház-országa alapján, nem a tag tartózkodási helye szerint.",
+        "geo": "A tag aktuális helye alapján (GPS, ha az appnak már van engedélye, különben IP)."
+      },
+      "globalScopeLocked": "A globális szabály hatóköre nem módosítható; a tartalmát szerkeszd.",
+      "storefront": "Áruház-ország",
+      "storefrontPlaceholder": "Válassz áruház-országot…",
+      "storefrontHint": "ISO 3166-1 alpha-3, az eszköz App Store áruház-országa.",
+      "placeLabel": "Hely megnevezése",
+      "placeLabelHint": "A szabálylistában látszik; a városkeresés kitölti.",
+      "countryCode": "Ország (opcionális)",
+      "countryCodeNone": "Nincs beállítva",
+      "countryCodeHint": "Csak metaadat — nem vesz részt az illesztésben.",
+      "latitude": "Középpont szélessége",
+      "longitude": "Középpont hosszúsága",
+      "radius": "Sugár · km",
+      "radiusHint": "1–500 km. A városkeresés a várost lefedő sugarat javasolja.",
+      "priority": "Prioritás",
+      "priorityHint": "Azonos hatókörű, átfedő szabályok közül a magasabb nyer. Azonos prioritású geo szabályoknál a közelebbi középpont, majd a kisebb sugár, majd az újabb.",
+      "isActive": "Ez a szabály aktív",
+      "startsAt": "Kezdete",
+      "endsAt": "Vége",
+      "windowHint": "Opcionális eseményablak a helyi idődben; UTC-ként tároljuk. A kezdet zárt, a vég nyílt.",
+      "windowUtc": "UTC: {starts} → {ends}",
+      "windowAlways": "Nincs időablak: a szabály mindig érvényes, amíg aktív.",
+      "windowInvalid": "Adj meg érvényes dátumot és időt az időablakhoz.",
+      "landingTitle": "App nyitóképernyő",
+      "landingCopyGlobal": "Az alap nyitóképernyő-tartalom. Az üres mezők a beépített app-alapértelmezésre esnek vissza.",
+      "landingCopyOverride": "Csak az eltérő mezőket töltsd ki; az üresek a globális szabálytól, majd a beépített alapértelmezéstől öröklődnek.",
+      "backgroundType": "Háttér típusa",
+      "backgroundImage": "Kép",
+      "backgroundVideo": "Videó",
+      "titleType": "Cím típusa",
+      "titleText": "Szöveg",
+      "titleImage": "Kép",
+      "backgroundImageLabel": "Háttérkép",
+      "backgroundVideoLabel": "Háttérvideó",
+      "backgroundInheritHint": "Opcionális. Üresen hagyva a hátteret örökli.",
+      "posterImage": "Videó-előkép · opcionális",
+      "posterHint": "Opcionális kép, amely a videó betöltése alatt látszik.",
+      "titleTextEn": "Cím · angol",
+      "titleTextHu": "Cím · magyar",
+      "titleTextHint": "Opcionális. Az üres cím öröklődik; a beépített alapértelmezés a „friending.”.",
+      "titleImageLabel": "Címkép",
+      "titleImageHint": "Átlátszó PNG. Üresen hagyva a címet örökli.",
+      "descriptionEn": "Leírás · angol",
+      "descriptionHu": "Leírás · magyar",
+      "descriptionHint": "Opcionális, legfeljebb 300 karakter. Az üres leírás öröklődik.",
+      "landingPreview": "Telefonos előnézet",
+      "builtInBackground": "Beépített app-háttér",
+      "landingPreviewButton": "Tovább",
+      "landingPreviewHint": "Feloldva: ez a szabály → globális szabály → beépített alapértelmezés, a konzol nyelvén. A gomb a feloldott világos accentet mutatja.",
+      "heroTitle": "Discover hero-karusszel",
+      "heroCopy": "Örököld a lánc karusszelét, vagy cseréld le ennek a szabálynak a saját elemeire. Az üres csere elrejti a karusszelt.",
+      "paletteTitle": "Paletta",
+      "paletteCopyGlobal": "A márkapaletta. Minden „örökli” állapotban hagyott szerep a beépített alapértelmezést használja.",
+      "paletteCopyOverride": "Módonként egyes szerepeket írhatsz felül; minden más a globális szabálytól, majd a beépített alapértelmezéstől öröklődik."
+    },
+    "hero": {
+      "mode": "Hero mód",
+      "modeInherit": "Örökli",
+      "inheritNoneGlobal": "a globális szabály felett nincs lánc — az öröklés itt azt jelenti, nincs karusszel",
+      "inheritCount": "{count} örökölt elem",
+      "modeReplace": "Lecseréli",
+      "replaceHint": "ennek a szabálynak a saját listája",
+      "replaceEmpty": "Még nincs elem — az illeszkedő tagoknál a karusszel rejtve marad.",
+      "addItem": "Hero-elem hozzáadása",
+      "itemTitle": "{index}. elem",
+      "moveUp": "Feljebb",
+      "moveDown": "Lejjebb",
+      "mediaType": "Médiatípus",
+      "image": "Kép",
+      "video": "Videó",
+      "sortOrder": "Sorrend",
+      "campaignImage": "Hero-kép",
+      "campaignImageHint": "A feltöltött képet optimalizáljuk, és a Friending képtárhelyén tároljuk.",
+      "videoUrl": "Videó URL",
+      "videoUrlHint": "Jóváhagyott CDN-ről származó HTTPS videó-URL.",
+      "destinationUrl": "Cél URL",
+      "destinationUrlHint": "Opcionális HTTPS link, amely a kártya kiválasztásakor nyílik meg.",
+      "titleEn": "Cím · angol",
+      "titleHu": "Cím · magyar",
+      "subtitleEn": "Alcím · angol",
+      "subtitleHu": "Alcím · magyar",
+      "linkTitleEn": "Link felirat · angol",
+      "linkTitleHu": "Link felirat · magyar",
+      "linkTitleHint": "A szöveg alatti kattintható link felirata. Üresen az app alapértelmezett feliratát használja.",
+      "showTypography": "Tipográfiai felülírások megjelenítése",
+      "hideTypography": "Tipográfiai felülírások elrejtése",
+      "typographyHint": "Platformonkénti betűméret, -vastagság és -szín a címhez és alcímhez. Üresen az app alapértelmezett stílusa marad.",
+      "itemActive": "Az elem aktív",
+      "web": "Web",
+      "mobile": "Mobil",
+      "title": "Cím",
+      "subtitle": "Alcím",
+      "sizeDefault": "méret",
+      "sizePx": "betűméret pixelben",
+      "weightLabel": "betűvastagság",
+      "weight": {
+        "default": "Vastagság: alap",
+        "normal": "Normál",
+        "semibold": "Félkövér",
+        "bold": "Kövér"
+      },
+      "colorHex": "betűszín",
+      "colorDefault": "#szín (alap)"
+    },
+    "map": {
+      "searchLabel": "Városkeresés",
+      "searchPlaceholder": "Budapest",
+      "searchHint": "A Core geokódolja; válassz egy találatot a középpont, a sugár, a megnevezés és az ország kitöltéséhez.",
+      "searchButton": "Keresés",
+      "searching": "Keresés…",
+      "searchError": "A városkeresés nem sikerült. Ellenőrizd a kapcsolatot, és próbáld újra.",
+      "searchForbidden": "A szerepköröd megtekintheti a szabályokat, de nem futtathat városkeresést.",
+      "noResults": "Nincs a keresésre illeszkedő hely.",
+      "candidatesLabel": "Városkeresés találatai",
+      "candidateGeometry": "{latitude}, {longitude} · javasolt sugár {radius} km",
+      "mapLabel": "Térképes kijelölő",
+      "mapHint": "Húzd a jelölőt vagy kattints a térképre a középpont áthelyezéséhez. A kör a sugarat mutatja.",
+      "unavailableTitle": "A térképes kijelölő nincs beállítva",
+      "unavailable": "Ebbe a konzolba nincs beépítve Google Maps böngészőkulcs. A középpontot a szélesség, hosszúság és sugár mezőkkel vagy városkereséssel add meg.",
+      "loading": "A térkép betöltése…",
+      "failed": "A térkép nem tölthető be. A szélesség, hosszúság és sugár mezők továbbra is működnek.",
+      "markerTitle": "A szabály középpontja",
+      "authRequired": "A térképes kijelölő használatához jelentkezz be az adminkonzolba."
+    },
+    "palette": {
+      "light": "Világos mód",
+      "dark": "Sötét mód",
+      "role": {
+        "accent": "Fő accent",
+        "accent_pressed": "Megnyomott / kiemelt",
+        "accent_faint_bg": "Halvány accent háttér",
+        "on_accent": "Szöveg és ikon accenten",
+        "inactive": "Inaktív elem"
+      },
+      "inherit": "Örökli",
+      "hex": "hex",
+      "fromGlobal": "A globális szabálytól örökölve",
+      "fromDefault": "Beépített app-alapértelmezés",
+      "setHere": "Ez a szabály állítja be",
+      "hint": "A színek #RRGGBB formátumúak. Az előnézetek módonként a feloldott palettát festik a V3 Discover-elemekkel."
+    },
+    "palettePreview": {
+      "label": "Paletta-előnézet · {mode}",
+      "light": "világos",
+      "dark": "sötét",
+      "forYou": "NEKED",
+      "nearby": "KÖZELBEN",
+      "activity": "AKTIVITÁS",
+      "location": "Budapest · Jelenlegi hely",
+      "heroTitle": "Pride hét a városban",
+      "heroSubtitle": "Hero-kártya",
+      "primaryButton": "Köszönj rá",
+      "pressedButton": "Megnyomva",
+      "chip": "Utazók"
+    },
+    "testPreview": {
+      "title": "Előnézet tesztelt helyre",
+      "copy": "Kérdezd meg a Core feloldóját, mit kapna az app egy áruház-országra, koordinátákra vagy IP-címre. Itt semmit sem a böngésző számol.",
+      "storefront": "Áruház-ország",
+      "storefrontAny": "Nem küldjük",
+      "language": "Nyelv",
+      "latitude": "Szélesség",
+      "longitude": "Hosszúság",
+      "ip": "IP-cím",
+      "ipHint": "Opcionális. Koordináták nélkül a Core ebből az IP-ből oldja fel a helyet; ha egyik sincs, a saját kérésedből.",
+      "run": "Feloldás",
+      "running": "Feloldás…",
+      "coordinatesInvalid": "Adj meg érvényes szélességet és hosszúságot is, vagy egyiket se.",
+      "inputInvalid": "A Core elutasította a tesztbemenetet.",
+      "previewError": "Az előnézet nem oldható fel.",
+      "matched": {
+        "geo": "Geo szabály",
+        "storefront": "Áruház-ország szabály",
+        "global": "Globális szabály",
+        "default": "Beépített alapértelmezések"
+      },
+      "source": {
+        "gps": "Hely: GPS",
+        "ip": "Hely: IP",
+        "none": "Hely: nincs"
+      },
+      "revision": "{revision}. revízió · tartalom {version}",
+      "builtInBackground": "Beépített app-háttér",
+      "landingButton": "Tovább",
+      "hero": "Hero-karusszel ({count})",
+      "heroEmpty": "Nincs hero-elem ehhez a helyhez.",
+      "role": {
+        "accent": "Fő accent",
+        "accent_pressed": "Megnyomott / kiemelt",
+        "accent_faint_bg": "Halvány accent háttér",
+        "on_accent": "Szöveg és ikon accenten",
+        "inactive": "Inaktív elem"
+      }
+    }
   },
   "configuration": {
     "eyebrow": "Működési kapcsolók",

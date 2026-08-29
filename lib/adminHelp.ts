@@ -219,6 +219,12 @@ export const ADMIN_HELP_PAGES = [
     matches: dynamic("/dates"),
   },
   {
+    key: "appearance",
+    route: "/appearance",
+    sections: ["rules", "targeting", "window", "landing", "hero", "palette", "mapSearch", "testPreview"],
+    matches: exact("/appearance"),
+  },
+  {
     key: "heroes",
     route: "/heroes",
     sections: ["campaignList", "mediaCopy", "targetOrder", "typography", "lifecycle"],

@@ -1510,6 +1510,89 @@
           }
         }
       },
+      "appearance": {
+        "title": "Appearance & placements help",
+        "summary": "This page is the single place for the iOS landing screen, the Discover hero carousel and the light/dark palette. A permanent global rule supplies the base, store-country rules override it for one App Store storefront, and geo rules override both for members currently inside a city or map circle. Blank fields always inherit; Core resolves the chain and the app renders the compiled defaults as the last level.",
+        "steps": {
+          "1": "Review the global rule first: its landing content, hero carousel and palette are what every override inherits from.",
+          "2": "Add a store-country or geo override only for what actually differs, and set its priority relative to overlapping rules of the same scope.",
+          "3": "Resolve a test location in the preview panel to confirm the exact landing, hero and palette the app will receive before activating."
+        },
+        "sections": {
+          "rules": {
+            "title": "Rule inventory",
+            "purpose": "Cards list every rule in resolution order — geo, then store country, then global — with live state, window, priority and what each rule sets.",
+            "actions": {
+              "1": "Create the global rule before any override; it cannot be deleted later.",
+              "2": "Open a card to edit it, or delete an override after the confirmation names it."
+            },
+            "guidance": "A rule marked as migrated came from a legacy country rule and now targets the App Store storefront; check that this is still the intended audience."
+          },
+          "targeting": {
+            "title": "Scope and priority",
+            "purpose": "A rule is global, tied to one App Store storefront country (alpha-3) or tied to the member's current location as a city or map point with a radius in kilometres.",
+            "actions": {
+              "1": "Pick the scope first; the editor shows only the fields that scope needs.",
+              "2": "Set priority so that overlapping rules of the same scope resolve the way you expect."
+            },
+            "guidance": "Geo always beats store country, which beats global. Equal-priority geo rules use the nearest centre, then the smaller radius, then the newest rule."
+          },
+          "window": {
+            "title": "Active state and event window",
+            "purpose": "Active decides whether Core considers the rule at all; an optional start and end make it an event window that resolves only inside those instants.",
+            "actions": {
+              "1": "Keep a draft inactive until its content and media are approved.",
+              "2": "Enter the window in your local time and check the UTC line the editor shows underneath."
+            },
+            "guidance": "The start is inclusive and the end exclusive; a rule outside its window is simply skipped, so the next level of the chain applies."
+          },
+          "landing": {
+            "title": "App landing screen",
+            "purpose": "Background image or video with an optional poster, a text or image title in both languages and a bilingual description, each group inheriting when left blank.",
+            "actions": {
+              "1": "Fill only the groups that differ from the inherited content.",
+              "2": "Use the phone preview to confirm the resolved background, title and description."
+            },
+            "guidance": "Blank means inherit, never black. A title image without its asset inherits the title instead of shipping a broken image."
+          },
+          "hero": {
+            "title": "Discover hero carousel",
+            "purpose": "Each rule either inherits the carousel from the chain or replaces it with its own ordered items — image or video cards with bilingual copy and optional typography overrides.",
+            "actions": {
+              "1": "Choose Replace only when this audience should see a different carousel.",
+              "2": "Order the items deliberately and keep unapproved cards inactive."
+            },
+            "guidance": "An empty replacement hides the carousel for matching members. The global rule's replacement is what every override inherits."
+          },
+          "palette": {
+            "title": "Light and dark palette",
+            "purpose": "Five roles per mode — main accent, pressed, faint background, text on accent and inactive — each either inherited or set as a #RRGGBB colour on this rule.",
+            "actions": {
+              "1": "Untick Inherit only for the roles this rule should change.",
+              "2": "Compare the light and dark previews before saving; both modes ship to the app."
+            },
+            "guidance": "The previews resolve this rule over the global rule over the compiled defaults. Keep text on accent readable in both modes."
+          },
+          "mapSearch": {
+            "title": "Map picker and city search",
+            "purpose": "A geo rule's centre and radius come from a city search geocoded by Core, from the draggable marker on the map, or from the coordinate fields.",
+            "actions": {
+              "1": "Search a city and pick a result to fill the centre, suggested radius, label and country.",
+              "2": "Adjust the radius in kilometres and confirm the circle on the map."
+            },
+            "guidance": "The map is optional: without a configured browser key the coordinate and radius fields still define the rule exactly."
+          },
+          "testPreview": {
+            "title": "Preview for a test location",
+            "purpose": "Core's resolver answers exactly what the app would receive for a storefront, coordinates or IP address, including which rule matched and where the location came from.",
+            "actions": {
+              "1": "Enter the storefront and coordinates a real device would send, or an IP address.",
+              "2": "Check the matched scope, the palette swatches and the hero list before going live."
+            },
+            "guidance": "The preview is computed by Core, not the browser, so it reflects the stored rules of the moment you run it."
+          }
+        }
+      },
       "signupOptions": {
         "title": "Signup options help",
         "summary": "This workspace defines the questions and selectable answers used while a person creates a Friending profile. It distinguishes protected identity axes from optional questions and controls bilingual labels, icons and who is eligible to see each choice.",
@@ -2710,6 +2793,7 @@
     "heroes": "People hero",
     "landing": "Join landing",
     "appLanding": "App landing",
+    "appearance": "Appearance & placements",
     "signupOptions": "Signup options",
     "signupPhotos": "Signup photos",
     "audienceVisibility": "Audience visibility",
@@ -5489,6 +5573,279 @@
     "descriptionLabel": "Description",
     "fallbackInherit": "inherits",
     "fallbackDefault": "app default"
+  },
+  "appearance": {
+    "eyebrow": "Native app",
+    "title": "Appearance & placements",
+    "subtitle": "One rule set for the iOS landing screen, the Discover hero carousel and the light/dark palette. A rule may apply globally, per App Store storefront or by the member's current location; every field a rule leaves blank inherits down the chain to the compiled app default.",
+    "newRule": "New rule",
+    "newGlobalRule": "Create the global rule",
+    "newGeoName": "City appearance",
+    "newGlobalName": "Global appearance",
+    "liveCount": "{live} live of {total}",
+    "precedence": "Geo match → store country → global rule → compiled app default",
+    "loadError": "Appearance rules could not be loaded.",
+    "empty": "No appearance rules yet.",
+    "emptyCopy": "Create the global rule first. Until then the app renders its compiled defaults.",
+    "deleteTitle": "Delete appearance rule?",
+    "deleteCopy": "This removes “{name}” from resolution. Its uploaded media files are retained.",
+    "scope": {
+      "global": "Global",
+      "storefront": "Store country",
+      "geo": "Geo"
+    },
+    "list": {
+      "always": "always",
+      "scheduled": "Scheduled",
+      "priority": "Priority {value}",
+      "migrated": "Migrated from a country rule",
+      "window": "Window",
+      "sets": "Sets",
+      "setsLanding": "landing",
+      "setsHero": "hero ({count} items)",
+      "setsPalette": "palette ({count}/{total} roles)",
+      "setsNothing": "nothing — inherits everything",
+      "revision": "Revision {revision} · {by}"
+    },
+    "errors": {
+      "conflict": "Someone else changed this rule in the meantime. The list was reloaded — open the rule again and redo your change.",
+      "notFound": "This rule no longer exists. The list was reloaded.",
+      "globalProtected": "The global rule is permanent: edit its content instead of deleting it or changing its scope.",
+      "writeRequired": "Your role can view appearance rules but not change them.",
+      "timeout": "Core did not answer in time. The write may or may not have landed — the list was reloaded; check before retrying.",
+      "rejected": "Core refused the rule ({code}).",
+      "save": "The rule could not be saved.",
+      "delete": "The rule could not be deleted."
+    },
+    "toast": {
+      "saved": "Appearance rule saved.",
+      "deleted": "Appearance rule deleted."
+    },
+    "validation": {
+      "name": "Enter an admin label (1–120 characters).",
+      "storefront": "Choose the App Store storefront country.",
+      "geo": "Enter a place label, valid coordinates and a radius between 1 and 500 km.",
+      "countryCode": "The optional country must be a valid two-letter code.",
+      "priority": "Priority must be a whole number from 0 to 10,000.",
+      "window": "The end of the window must be after its start.",
+      "background": "Upload a background image or video, or leave the background blank to inherit.",
+      "poster": "The video poster must finish uploading, or remove it.",
+      "titleImage": "Upload a title image, or switch the title type back to text.",
+      "heroItem": "Every hero item needs an uploaded image or an HTTPS video URL; destination links must use HTTPS.",
+      "heroTypography": "Hero font sizes must be 10–120 px and colours #rrggbb values; leave a field empty for the default.",
+      "palette": "Palette colours must be #RRGGBB values; tick “inherit” for a role you do not want to set."
+    },
+    "editor": {
+      "createTitle": "Create appearance rule",
+      "editTitle": "Edit appearance rule",
+      "targetingTitle": "Targeting and lifecycle",
+      "targetingCopy": "Where and when the rule applies. A geo rule always beats a store-country rule, which beats the global rule.",
+      "name": "Admin label",
+      "namePlaceholder": "Budapest Pride week",
+      "scopeLabel": "Scope",
+      "scopeOption": {
+        "global": "Global (one, permanent)",
+        "storefront": "Store country (App Store storefront)",
+        "geo": "Geo (current location: city or map point + radius)"
+      },
+      "scopeHint": {
+        "global": "The single base rule every override inherits from.",
+        "storefront": "Matched by the device's App Store storefront, not by where the member is.",
+        "geo": "Matched by the member's current location (GPS if the app already has permission, otherwise IP)."
+      },
+      "globalScopeLocked": "The global rule keeps its scope; edit its content.",
+      "storefront": "Store country",
+      "storefrontPlaceholder": "Choose a storefront…",
+      "storefrontHint": "ISO 3166-1 alpha-3, the App Store storefront of the device.",
+      "placeLabel": "Place label",
+      "placeLabelHint": "Shown in the rule list; a city search fills it in.",
+      "countryCode": "Country (optional)",
+      "countryCodeNone": "Not set",
+      "countryCodeHint": "Metadata only — it never takes part in matching.",
+      "latitude": "Centre latitude",
+      "longitude": "Centre longitude",
+      "radius": "Radius · km",
+      "radiusHint": "1–500 km. A city search suggests the radius that covers the city's viewport.",
+      "priority": "Priority",
+      "priorityHint": "Higher wins among overlapping rules of the same scope. Equal-priority geo rules use the nearest centre, then the smaller radius, then the newest.",
+      "isActive": "This rule is active",
+      "startsAt": "Starts at",
+      "endsAt": "Ends at",
+      "windowHint": "Optional event window in your local time; stored as UTC. Start is inclusive, end is exclusive.",
+      "windowUtc": "UTC: {starts} → {ends}",
+      "windowAlways": "No window: the rule applies whenever it is active.",
+      "windowInvalid": "Enter a valid date and time for the window.",
+      "landingTitle": "App landing screen",
+      "landingCopyGlobal": "The base landing content. Blank fields fall back to the compiled app default.",
+      "landingCopyOverride": "Fill only what differs; blank fields inherit from the global rule, then from the compiled default.",
+      "backgroundType": "Background type",
+      "backgroundImage": "Image",
+      "backgroundVideo": "Video",
+      "titleType": "Title type",
+      "titleText": "Text",
+      "titleImage": "Image",
+      "backgroundImageLabel": "Background image",
+      "backgroundVideoLabel": "Background video",
+      "backgroundInheritHint": "Optional. Leave it empty to inherit the background.",
+      "posterImage": "Video poster · optional",
+      "posterHint": "Optional image shown while the video loads.",
+      "titleTextEn": "Title · English",
+      "titleTextHu": "Title · Hungarian",
+      "titleTextHint": "Optional. Blank titles inherit; the compiled default is “friending.”.",
+      "titleImageLabel": "Title image",
+      "titleImageHint": "Transparent PNG. Leave it empty to inherit the title.",
+      "descriptionEn": "Description · English",
+      "descriptionHu": "Description · Hungarian",
+      "descriptionHint": "Optional, up to 300 characters. Blank descriptions inherit.",
+      "landingPreview": "Phone preview",
+      "builtInBackground": "Compiled app background",
+      "landingPreviewButton": "Continue",
+      "landingPreviewHint": "Resolved as this rule → global rule → compiled default, in the console's language. The button shows the resolved light accent.",
+      "heroTitle": "Discover hero carousel",
+      "heroCopy": "Inherit the chain's carousel or replace it with this rule's own items. An empty replacement hides the carousel.",
+      "paletteTitle": "Palette",
+      "paletteCopyGlobal": "The brand palette. Every role you leave on “inherit” uses the compiled default.",
+      "paletteCopyOverride": "Override single roles per mode; everything else inherits from the global rule, then the compiled default."
+    },
+    "hero": {
+      "mode": "Hero mode",
+      "modeInherit": "Inherit",
+      "inheritNoneGlobal": "the global rule has no chain above it — inherit means no carousel",
+      "inheritCount": "{count} inherited items",
+      "modeReplace": "Replace",
+      "replaceHint": "this rule's own list",
+      "replaceEmpty": "No items yet — the carousel stays hidden for matching members.",
+      "addItem": "Add hero item",
+      "itemTitle": "Item {index}",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "mediaType": "Media type",
+      "image": "Image",
+      "video": "Video",
+      "sortOrder": "Order",
+      "campaignImage": "Hero image",
+      "campaignImageHint": "The uploaded image is optimized and stored on the Friending image CDN.",
+      "videoUrl": "Video URL",
+      "videoUrlHint": "Use an HTTPS video URL served by an approved CDN.",
+      "destinationUrl": "Destination URL",
+      "destinationUrlHint": "Optional HTTPS link opened when the card is selected.",
+      "titleEn": "Title · English",
+      "titleHu": "Title · Hungarian",
+      "subtitleEn": "Subtitle · English",
+      "subtitleHu": "Subtitle · Hungarian",
+      "linkTitleEn": "Link label · English",
+      "linkTitleHu": "Link label · Hungarian",
+      "linkTitleHint": "Shown as the tappable link under the copy. Empty keeps the app's default label.",
+      "showTypography": "Show typography overrides",
+      "hideTypography": "Hide typography overrides",
+      "typographyHint": "Per-platform font size, weight and colour for the title and subtitle. Empty keeps the app's default styling.",
+      "itemActive": "Item is active",
+      "web": "Web",
+      "mobile": "Mobile",
+      "title": "Title",
+      "subtitle": "Subtitle",
+      "sizeDefault": "size",
+      "sizePx": "font size in pixels",
+      "weightLabel": "font weight",
+      "weight": {
+        "default": "Weight: default",
+        "normal": "Normal",
+        "semibold": "Semibold",
+        "bold": "Bold"
+      },
+      "colorHex": "font colour",
+      "colorDefault": "#colour (default)"
+    },
+    "map": {
+      "searchLabel": "City search",
+      "searchPlaceholder": "Budapest",
+      "searchHint": "Geocoded by Core; pick a result to fill the centre, radius, label and country.",
+      "searchButton": "Search",
+      "searching": "Searching…",
+      "searchError": "The city search failed. Check your connection and try again.",
+      "searchForbidden": "Your role can view rules but not run a city search.",
+      "noResults": "No place matched that search.",
+      "candidatesLabel": "City search results",
+      "candidateGeometry": "{latitude}, {longitude} · suggested radius {radius} km",
+      "mapLabel": "Map picker",
+      "mapHint": "Drag the marker or click the map to move the centre. The circle shows the radius.",
+      "unavailableTitle": "Map picker not configured",
+      "unavailable": "No Google Maps browser key is built into this console. Set the centre with the latitude, longitude and radius fields or a city search.",
+      "loading": "Loading the map…",
+      "failed": "The map could not be loaded. The latitude, longitude and radius fields still work.",
+      "markerTitle": "Rule centre",
+      "authRequired": "Sign in to the admin console to use the map picker."
+    },
+    "palette": {
+      "light": "Light mode",
+      "dark": "Dark mode",
+      "role": {
+        "accent": "Main accent",
+        "accent_pressed": "Pressed / highlighted",
+        "accent_faint_bg": "Faint accent background",
+        "on_accent": "Text and icons on accent",
+        "inactive": "Inactive element"
+      },
+      "inherit": "Inherit",
+      "hex": "hex",
+      "fromGlobal": "Inherited from the global rule",
+      "fromDefault": "Compiled app default",
+      "setHere": "Set by this rule",
+      "hint": "Colours are #RRGGBB. The previews paint the resolved palette for each mode with the V3 Discover elements."
+    },
+    "palettePreview": {
+      "label": "Palette preview · {mode}",
+      "light": "light",
+      "dark": "dark",
+      "forYou": "FOR YOU",
+      "nearby": "NEARBY",
+      "activity": "ACTIVITY",
+      "location": "Budapest · Current location",
+      "heroTitle": "Pride week in the city",
+      "heroSubtitle": "Hero card",
+      "primaryButton": "Say hey",
+      "pressedButton": "Pressed",
+      "chip": "Travellers"
+    },
+    "testPreview": {
+      "title": "Preview for a test location",
+      "copy": "Ask Core's resolver what the app would receive for a storefront, coordinates or IP address. Nothing here is computed in the browser.",
+      "storefront": "Store country",
+      "storefrontAny": "Not sent",
+      "language": "Language",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "ip": "IP address",
+      "ipHint": "Optional. Without coordinates Core resolves the location from this IP; without both, from your own request.",
+      "run": "Resolve",
+      "running": "Resolving…",
+      "coordinatesInvalid": "Enter both a valid latitude and longitude, or neither.",
+      "inputInvalid": "Core refused the test input.",
+      "previewError": "The preview could not be resolved.",
+      "matched": {
+        "geo": "Geo rule",
+        "storefront": "Store-country rule",
+        "global": "Global rule",
+        "default": "Compiled defaults"
+      },
+      "source": {
+        "gps": "Location: GPS",
+        "ip": "Location: IP",
+        "none": "Location: none"
+      },
+      "revision": "Revision {revision} · content {version}",
+      "builtInBackground": "Compiled app background",
+      "landingButton": "Continue",
+      "hero": "Hero carousel ({count})",
+      "heroEmpty": "No hero items for this location.",
+      "role": {
+        "accent": "Main accent",
+        "accent_pressed": "Pressed / highlighted",
+        "accent_faint_bg": "Faint accent background",
+        "on_accent": "Text and icons on accent",
+        "inactive": "Inactive element"
+      }
+    }
   },
   "configuration": {
     "eyebrow": "Runtime controls",

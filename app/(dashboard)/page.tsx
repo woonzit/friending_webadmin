@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { APPEARANCE_RULES_CONTRACT_READY } from "@/lib/contractReadiness";
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
@@ -80,7 +81,7 @@ export default function OverviewPage() {
             <Link className="quick-link" href="/users">
               <strong>{t("manageUsers")}</strong><span>{t("manageUsersCopy")}</span>
             </Link>
-            <Link className="quick-link" href="/heroes">
+            <Link className="quick-link" href={APPEARANCE_RULES_CONTRACT_READY ? "/appearance" : "/heroes"}>
               <strong>{t("manageHeroes")}</strong><span>{t("manageHeroesCopy")}</span>
             </Link>
             <Link className="quick-link" href="/configuration">

@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import AdminHelp from "@/components/AdminHelp";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import {
+  APPEARANCE_RULES_CONTRACT_READY,
   AUDIENCE_VISIBILITY_CONTRACT_READY,
   CANNED_TEMPLATES_CONTRACT_READY,
   PERSONA_ADMIN_PROXY_RELEASED,
@@ -29,9 +30,12 @@ const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; r
   { href: "/persona", key: "persona", icon: "persona", ready: PERSONA_ADMIN_PROXY_RELEASED },
   { href: "/profile-location", key: "profileLocation", icon: "profileLocation" },
   { href: "/dates", key: "dates", icon: "dates" },
-  { href: "/heroes", key: "heroes", icon: "heroes" },
+  // D-052: one "Appearance & placements" page replaces the People hero and App
+  // landing screens once Core's appearance-rules provider is live.
+  { href: "/appearance", key: "appearance", icon: "appLanding", ready: APPEARANCE_RULES_CONTRACT_READY },
+  { href: "/heroes", key: "heroes", icon: "heroes", ready: !APPEARANCE_RULES_CONTRACT_READY },
   { href: "/landing", key: "landing", icon: "landing" },
-  { href: "/app-landing", key: "appLanding", icon: "appLanding" },
+  { href: "/app-landing", key: "appLanding", icon: "appLanding", ready: !APPEARANCE_RULES_CONTRACT_READY },
   { href: "/signup-options", key: "signupOptions", icon: "signupOptions" },
   { href: "/signup-photos", key: "signupPhotos", icon: "signupPhotos" },
   { href: "/audience-visibility", key: "audienceVisibility", icon: "userGroups", ready: AUDIENCE_VISIBILITY_CONTRACT_READY },

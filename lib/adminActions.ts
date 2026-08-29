@@ -1,5 +1,6 @@
 import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
+  APPEARANCE_RULES_CONTRACT_READY,
   AUDIENCE_VISIBILITY_CONTRACT_READY,
   CANNED_TEMPLATES_CONTRACT_READY,
   OUTBOUND_MESSAGING_CONTRACT_READY,
@@ -11,6 +12,7 @@ import {
   VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 import { ADMIN_GRANTED_VERIFICATION_ACTIONS } from "@/lib/adminGrantedVerification";
+import { APPEARANCE_ACTIONS } from "@/lib/appearanceRules";
 import { AUDIENCE_VISIBILITY_ADMIN_ACTIONS } from "@/lib/audienceVisibilityAdmin";
 import { FEATURE_SWITCHES_ACTIONS } from "@/lib/featureSwitches";
 import { PROFILE_TEXT_MODERATION_ACTIONS } from "@/lib/profileTextModeration";
@@ -94,6 +96,11 @@ const ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS = PROFILE_TEXT_MODERATION_CONTRACT_
 /** Dormant T-218b actions stay absent until the reviewed T-126 provider release. */
 const ACTIVE_FEATURE_SWITCHES_ACTIONS = FEATURE_SWITCHES_CONTRACT_READY
   ? FEATURE_SWITCHES_ACTIONS
+  : [] as const;
+
+/** Dormant D-052 appearance-rule actions stay absent until the Core T-467 provider is live. */
+const ACTIVE_APPEARANCE_ACTIONS = APPEARANCE_RULES_CONTRACT_READY
+  ? APPEARANCE_ACTIONS
   : [] as const;
 
 export const ADMIN_ACTIONS = [
@@ -216,6 +223,7 @@ export const ADMIN_ACTIONS = [
   ...ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS,
   ...ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS,
   ...ACTIVE_FEATURE_SWITCHES_ACTIONS,
+  ...ACTIVE_APPEARANCE_ACTIONS,
   ...DATES_ADMIN_ACTIONS,
 ] as const;
 
@@ -470,6 +478,18 @@ export const ADMIN_ACTION_ACCESS = {
     feature_switches_set: "write" as const,
   } : {}),
 
+  // D-052 appearance rules. Listing and the test-location preview are safe
+  // reads for every active administrator; save and delete match Core's editor
+  // gate and audit. The city lookup spends Google geocoding quota, so it is a
+  // write on this ladder exactly like `verification_places_city_search`.
+  ...(APPEARANCE_RULES_CONTRACT_READY ? {
+    appearance_rules_list: "read" as const,
+    appearance_rules_save: "write" as const,
+    appearance_rules_delete: "write" as const,
+    appearance_rules_preview: "read" as const,
+    appearance_city_geocode: "write" as const,
+  } : {}),
+
   admin_me: "read",
   dates_activity_list: "dates_read",
   dates_activity_detail: "dates_read",
@@ -583,6 +603,12 @@ const INVITE_CONFIGURATION_BODY_LIMIT_BYTES = 16_000_000;
  * image: anything larger is rejected here, cheaply, instead of after the upload.
  */
 const REPLACE_IMAGE_BODY_LIMIT_BYTES = 6_000_000;
+/**
+ * One appearance rule may replace the hero carousel with up to 100 items, each
+ * carrying three 2048-character URLs plus bounded bilingual copy — roughly
+ * 750 KB at the caps — so the save shares the tag-catalogue ceiling.
+ */
+const APPEARANCE_RULE_BODY_LIMIT_BYTES = TAG_CATALOG_BODY_LIMIT_BYTES;
 
 /**
  * `save_signup_photo_config` deliberately does NOT appear below. Its `tips_json` carries at most 12
@@ -597,6 +623,7 @@ const ADMIN_ACTION_BODY_LIMIT: Readonly<Record<string, number>> = {
   save_invite_configuration: INVITE_CONFIGURATION_BODY_LIMIT_BYTES,
   set_settings: RUNTIME_SETTINGS_BODY_LIMIT_BYTES,
   admin_replace_image: REPLACE_IMAGE_BODY_LIMIT_BYTES,
+  appearance_rules_save: APPEARANCE_RULE_BODY_LIMIT_BYTES,
   // A1: this is the effective guard on Apache 2.4.52 and therefore stays
   // pinned independently of the Verification bridge rollback switch.
   verification_badge_upload: MAX_VERIFICATION_BADGE_FORM_BYTES,

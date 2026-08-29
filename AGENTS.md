@@ -46,7 +46,8 @@ Webadmin is the authenticated operations console for:
 
 - overview and registered-user support;
 - member moderation, profile content, albums, and media review;
-- People hero and Join landing configuration;
+- People hero and Join landing configuration, and the unified Appearance & placements rules
+  (app landing image, hero carousel and light/dark palette by storefront or current location);
 - runtime configuration and signup/profile catalogues;
 - profile presentation, tags, icebreakers, and user groups;
 - support/help-centre, Footprints, presence, membership, and verification operations;

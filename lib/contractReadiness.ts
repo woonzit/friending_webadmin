@@ -42,3 +42,12 @@ export const PROFILE_TEXT_MODERATION_CONTRACT_READY: boolean = false;
  * flip (Hey on, Footprints off), never an inverted code default.
  */
 export const FEATURE_SWITCHES_CONTRACT_READY: boolean = false;
+/**
+ * D-052 appearance rules (T-467 provider / T-468 consumer). While false the
+ * "Appearance & placements" page and its five proxy actions are unreachable
+ * and the navigation keeps the legacy `/heroes` + `/app-landing` screens.
+ * Flipping it (after the Core provider is live) swaps the navigation, redirects
+ * the two legacy screens to `/appearance` and leaves the legacy actions to a
+ * separate cleanup commit; Core keeps serving them during the transition.
+ */
+export const APPEARANCE_RULES_CONTRACT_READY: boolean = false;

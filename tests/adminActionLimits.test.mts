@@ -90,6 +90,9 @@ const RAISED_BODY_LIMITS: Partial<Record<(typeof ADMIN_ACTIONS)[number], number>
   admin_replace_image: 6_000_000,
   // Verification A1 carries a bounded 2 MiB PNG as base64 in the JSON body.
   verification_badge_upload: 3_145_728,
+  // D-052: a rule may replace the hero carousel with 100 bounded items, about
+  // 750 KB at the caps, so the save shares the tag-catalogue ceiling.
+  appearance_rules_save: 1_100_000,
 };
 
 test("the per-action body ceiling is raised only where it is named", () => {

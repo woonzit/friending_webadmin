@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { redirect } from "next/navigation";
+import { APPEARANCE_RULES_CONTRACT_READY } from "@/lib/contractReadiness";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ImageUploadField from "@/components/ImageUploadField";
 import PageHeader from "@/components/PageHeader";
@@ -309,6 +311,8 @@ function HeroDialog({
 }
 
 export default function HeroesPage() {
+  // Replaced by /appearance (D-052) once the Core appearance-rules provider is live.
+  if (APPEARANCE_RULES_CONTRACT_READY) redirect("/appearance");
   const t = useTranslations("heroes");
   const common = useTranslations("common");
   const [rows, setRows] = useState<Hero[]>([]);

@@ -10,6 +10,7 @@ import {
   normalizeAudienceVisibilityProxyBody,
   audienceVisibilityProxyCapabilityAuthorized,
 } from "@/lib/audienceVisibilityAdmin";
+import { normalizeAppearanceProxyBody } from "@/lib/appearanceRules";
 import { normalizeAuthPolicySettingsProxyBody } from "@/lib/authPolicyConfiguration";
 import {
   featureSwitchesProxyCapabilityAuthorized,
@@ -227,6 +228,15 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedFeatureSwitchesBody !== undefined) body = normalizedFeatureSwitchesBody;
+
+  // Appearance rules travel as one strict fourteen-key document; anything the
+  // contract does not list is refused here rather than forwarded for Core to
+  // reject, and the nested rule is JSON-encoded into one form field by coreCall.
+  const normalizedAppearanceBody = normalizeAppearanceProxyBody(action, body);
+  if (normalizedAppearanceBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedAppearanceBody !== undefined) body = normalizedAppearanceBody;
 
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer
