@@ -1,0 +1,21 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "background": {
+            "type": "video",
+            "url": "https://img.example/global.mp4",
+            "poster_url": "https://img.example/global.jpg"
+        },
+        "title": {
+            "type": "text",
+            "text": "Store cím",
+            "image_url": ""
+        },
+        "description": "Budapesti leírás",
+        "content_version": "2add2eb45125e9e21a1e3e6ab0612fc68c7687d49e0d87e9eebad0d33ed741ba"
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -1,0 +1,21 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "candidates": [
+            {
+                "place_id": "budapest-place",
+                "place_label": "Budapest, Hungary",
+                "country_code": "HU",
+                "center": {
+                    "latitude": 47.4979,
+                    "longitude": 19.0402
+                },
+                "radius_km": 28
+            }
+        ]
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

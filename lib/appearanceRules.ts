@@ -328,6 +328,17 @@ function record(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+/**
+ * Core serialises an EMPTY map as `[]` (PHP's empty array): a rule with no
+ * landing override arrives as `"landing": []` and a palette mode with no role
+ * as `"light": []`. Exactly the empty array is read as the empty object;
+ * a non-empty array is still not a map.
+ */
+function mapRecord(value: unknown): Record<string, unknown> | null {
+  if (Array.isArray(value)) return value.length === 0 ? {} : null;
+  return record(value);
+}
+
 function exactKeys(value: Record<string, unknown>, required: readonly string[], optional: readonly string[] = []): boolean {
   const actual = Object.keys(value);
   if (actual.some((key) => !required.includes(key) && !optional.includes(key))) return false;
@@ -468,7 +479,7 @@ function parseCenter(value: unknown): AppearanceCenter | null {
 }
 
 export function parseAppearanceLanding(value: unknown): AppearanceLanding | null {
-  const source = record(value);
+  const source = mapRecord(value);
   if (!source || !subsetKeys(source, APPEARANCE_LANDING_KEYS)) return null;
   const landing: AppearanceLanding = {};
   for (const key of APPEARANCE_LANDING_KEYS) {
@@ -576,7 +587,7 @@ export function parseAppearancePalette(value: unknown): AppearancePalette | null
   const palette: AppearancePalette = { light: {}, dark: {} };
   for (const mode of APPEARANCE_PALETTE_MODES) {
     if (!Object.hasOwn(source, mode)) continue;
-    const modeSource = record(source[mode]);
+    const modeSource = mapRecord(source[mode]);
     if (!modeSource || !subsetKeys(modeSource, APPEARANCE_PALETTE_ROLES)) return null;
     for (const role of APPEARANCE_PALETTE_ROLES) {
       if (!Object.hasOwn(modeSource, role)) continue;
@@ -1380,12 +1391,14 @@ const CORE_VALIDATION_REFUSALS = [
 ] as const;
 
 /**
- * Closed Core refusal vocabulary (T-467 `AppearanceRulesAdminException` and
- * the Webadmin actor/editor gates): every machine name bound to its exact
- * `status_code`. A refusal proves the write did not land. It is consulted
- * ONLY after the exact legacy Core envelope parsed — a Core name inside a
- * bridge-shaped envelope is never a refusal. Provisional until compared with
- * codex-api's published `done` and fixtures.
+ * Closed Core refusal vocabulary, bound from the published T-467 fixture
+ * manifest (`tests/fixtures/appearance_rules_wire/manifest.json`,
+ * `control_plane_error_statuses`): every machine name with its exact
+ * `status_code`. Together with the 503 family below it must equal that map
+ * exactly (pinned by `tests/appearanceRulesWire.test.mts`). A refusal proves
+ * the write did not land. It is consulted ONLY after the exact legacy Core
+ * envelope parsed — a Core name inside a bridge-shaped envelope is never a
+ * refusal.
  */
 export const APPEARANCE_CORE_REFUSAL_STATUSES: ReadonlyMap<string, number> = new Map<string, number>([
   ...CORE_VALIDATION_REFUSALS.map((error): [string, number] => [error, 422]),
@@ -1394,6 +1407,7 @@ export const APPEARANCE_CORE_REFUSAL_STATUSES: ReadonlyMap<string, number> = new
   ["appearance-rule-not-found", 404],
   ["admin-write-required", 403],
   ["admin-session-invalid", 401],
+  ["unauthorized", 401],
   ["admin-revoked", 403],
 ]);
 

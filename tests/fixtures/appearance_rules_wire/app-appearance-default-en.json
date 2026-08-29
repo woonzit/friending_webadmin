@@ -1,0 +1,46 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "revision": 0,
+        "content_version": "01f703293ecab06b06697a5836ae146cc046e17e307966649b239205c2fef304",
+        "landing": {
+            "background": {
+                "type": "image",
+                "url": "",
+                "poster_url": ""
+            },
+            "title": {
+                "type": "text",
+                "text": "friending.",
+                "image_url": ""
+            },
+            "description": "Meet people near you — and wherever you're headed next."
+        },
+        "hero": [],
+        "palette": {
+            "light": {
+                "accent": "#007F91",
+                "accent_pressed": "#006776",
+                "accent_faint_bg": "#DDFBFC",
+                "on_accent": "#FFFFFF",
+                "inactive": "#6B7478"
+            },
+            "dark": {
+                "accent": "#75F0F4",
+                "accent_pressed": "#8DFDFF",
+                "accent_faint_bg": "#12373B",
+                "on_accent": "#071516",
+                "inactive": "#8A9497"
+            }
+        },
+        "matched": {
+            "scope": "default",
+            "rule_id": "",
+            "location_source": "none"
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

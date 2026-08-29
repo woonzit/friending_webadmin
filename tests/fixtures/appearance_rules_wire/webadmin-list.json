@@ -1,0 +1,197 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "rules": [
+            {
+                "id": "600000000000000000000001",
+                "name": "Global fixture",
+                "scope": "global",
+                "storefront_country": "",
+                "country_code": "",
+                "center": null,
+                "radius_km": null,
+                "place_label": "",
+                "priority": 0,
+                "active": true,
+                "starts_at": null,
+                "ends_at": null,
+                "landing": {
+                    "background_poster_url": "https://img.example/global.jpg",
+                    "background_type": "video",
+                    "background_url": "https://img.example/global.mp4",
+                    "description_en": "Global description",
+                    "description_hu": "Globális leírás",
+                    "title_text_en": "Global title",
+                    "title_text_hu": "Globális cím",
+                    "title_type": "text"
+                },
+                "hero": {
+                    "mode": "replace",
+                    "items": [
+                        {
+                            "id": "hero-global",
+                            "media_url": "https://img.example/hero-global.jpg",
+                            "type": "image",
+                            "forward_url": "https://friending.com/global",
+                            "title_en": "Global hero",
+                            "title_hu": "Globális hero",
+                            "subtitle_en": "",
+                            "subtitle_hu": "",
+                            "link_title_en": "",
+                            "link_title_hu": "",
+                            "title_size_web": null,
+                            "title_color_web": "",
+                            "title_weight_web": "",
+                            "subtitle_size_web": null,
+                            "subtitle_color_web": "",
+                            "subtitle_weight_web": "",
+                            "title_size_mobile": null,
+                            "title_color_mobile": "",
+                            "title_weight_mobile": "",
+                            "subtitle_size_mobile": null,
+                            "subtitle_color_mobile": "",
+                            "subtitle_weight_mobile": "",
+                            "sort_order": 1,
+                            "active": true
+                        }
+                    ]
+                },
+                "palette": {
+                    "light": {
+                        "accent_pressed": "#102030"
+                    },
+                    "dark": []
+                },
+                "revision": 7,
+                "created_at": "1970-01-01T00:15:00Z",
+                "updated_at": "1970-01-01T00:16:40Z",
+                "updated_by": "fixture@example.com"
+            },
+            {
+                "id": "600000000000000000000002",
+                "name": "US storefront fixture",
+                "scope": "storefront",
+                "storefront_country": "USA",
+                "country_code": "",
+                "center": null,
+                "radius_km": null,
+                "place_label": "",
+                "priority": 0,
+                "active": true,
+                "starts_at": null,
+                "ends_at": null,
+                "landing": {
+                    "title_text_hu": "Store cím"
+                },
+                "hero": {
+                    "mode": "inherit",
+                    "items": []
+                },
+                "palette": {
+                    "light": [],
+                    "dark": {
+                        "inactive": "#405060"
+                    }
+                },
+                "revision": 11,
+                "created_at": "1970-01-01T00:16:40Z",
+                "updated_at": "1970-01-01T00:18:20Z",
+                "updated_by": "fixture@example.com"
+            },
+            {
+                "id": "600000000000000000000003",
+                "name": "Budapest fixture",
+                "scope": "geo",
+                "storefront_country": "",
+                "country_code": "HU",
+                "center": {
+                    "latitude": 47.4979,
+                    "longitude": 19.0402
+                },
+                "radius_km": 25,
+                "place_label": "Budapest, Hungary",
+                "priority": 20,
+                "active": true,
+                "starts_at": null,
+                "ends_at": null,
+                "landing": {
+                    "description_hu": "Budapesti leírás"
+                },
+                "hero": {
+                    "mode": "replace",
+                    "items": [
+                        {
+                            "id": "hero-geo",
+                            "media_url": "https://img.example/hero-geo.jpg",
+                            "type": "image",
+                            "forward_url": "",
+                            "title_en": "Geo hero",
+                            "title_hu": "Geo hero HU",
+                            "subtitle_en": "",
+                            "subtitle_hu": "Geo alcím",
+                            "link_title_en": "",
+                            "link_title_hu": "Megnyitás",
+                            "title_size_web": null,
+                            "title_color_web": "",
+                            "title_weight_web": "",
+                            "subtitle_size_web": null,
+                            "subtitle_color_web": "",
+                            "subtitle_weight_web": "",
+                            "title_size_mobile": 24,
+                            "title_color_mobile": "#aabbcc",
+                            "title_weight_mobile": "bold",
+                            "subtitle_size_mobile": null,
+                            "subtitle_color_mobile": "",
+                            "subtitle_weight_mobile": "",
+                            "sort_order": 0,
+                            "active": true
+                        }
+                    ]
+                },
+                "palette": {
+                    "light": {
+                        "accent": "#112233"
+                    },
+                    "dark": []
+                },
+                "revision": 9,
+                "created_at": "1970-01-01T00:18:20Z",
+                "updated_at": "1970-01-01T00:20:00Z",
+                "updated_by": "fixture@example.com"
+            }
+        ],
+        "defaults": {
+            "palette": {
+                "light": {
+                    "accent": "#007F91",
+                    "accent_pressed": "#006776",
+                    "accent_faint_bg": "#DDFBFC",
+                    "on_accent": "#FFFFFF",
+                    "inactive": "#6B7478"
+                },
+                "dark": {
+                    "accent": "#75F0F4",
+                    "accent_pressed": "#8DFDFF",
+                    "accent_faint_bg": "#12373B",
+                    "on_accent": "#071516",
+                    "inactive": "#8A9497"
+                }
+            },
+            "landing": {
+                "background_type": "image",
+                "background_url": "",
+                "background_poster_url": "",
+                "title_type": "text",
+                "title_text_en": "friending.",
+                "title_text_hu": "friending.",
+                "title_image_url": "",
+                "description_en": "Meet people near you — and wherever you're headed next.",
+                "description_hu": "Ismerj meg embereket a közeledben — és bárhol, ahová tartasz."
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

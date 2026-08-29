@@ -1,0 +1,175 @@
+{
+    "schema_version": 1,
+    "source_commit": "03f41c58d32b41e213da874e0b19180995b4ea6f",
+    "fixture_set_sha256": "e66df2656bb47bcf2ef4a9e45934a50498de3201729162656a817539fdaa69b5",
+    "provenance": {
+        "generator": "tests/appearance_rules_fixture_dump.php",
+        "generator_sha256": "12cdf5d8b8908bda7d6a70a5b27ef48936bb2c2138a28736f926b4300dfddf97",
+        "wire_adapters": [
+            "Friending\\Core\\Response::wirePayload",
+            "Friending\\Support\\Webadmin::noStoreReply"
+        ],
+        "source_paths": [
+            "config/routes.php",
+            "src/Core/Response.php",
+            "src/Http/Controllers/AppController.php",
+            "src/Http/Controllers/AppearanceController.php",
+            "src/Http/Controllers/WebadminAppearanceController.php",
+            "src/Http/Middleware/WebadminSecretMiddleware.php",
+            "src/Services/AppearanceCityGeocodeService.php",
+            "src/Services/AppearanceMigrationPlanner.php",
+            "src/Services/AppearanceResolverService.php",
+            "src/Services/AppearanceRuleService.php",
+            "src/Services/AppearanceRulesAdminException.php",
+            "src/Services/AppearanceRulesAdminService.php",
+            "src/Services/AppearanceTransaction.php",
+            "src/Services/PeopleService.php",
+            "src/Support/AppearancePolicy.php",
+            "src/Support/GoogleGeo.php",
+            "src/Support/Webadmin.php",
+            "src/Support/WebadminRolePolicy.php",
+            "tests/appearance_rules_fixture_dump.php",
+            "tests/appearance_rules_fixture_dump_test.php"
+        ]
+    },
+    "control_plane_error_statuses": {
+        "unauthorized": 401,
+        "admin-session-invalid": 401,
+        "admin-revoked": 403,
+        "admin-write-required": 403,
+        "appearance-rule-not-found": 404,
+        "appearance-rule-conflict": 409,
+        "appearance-rule-global-protected": 409,
+        "appearance-rule-request-invalid": 422,
+        "appearance-rule-id-invalid": 422,
+        "appearance-rule-revision-invalid": 422,
+        "appearance-rule-invalid": 422,
+        "appearance-rule-field-unknown": 422,
+        "appearance-rule-name-invalid": 422,
+        "appearance-rule-scope-invalid": 422,
+        "appearance-rule-scope-fields-invalid": 422,
+        "appearance-rule-storefront-invalid": 422,
+        "appearance-rule-country-invalid": 422,
+        "appearance-rule-geo-invalid": 422,
+        "appearance-rule-priority-invalid": 422,
+        "appearance-rule-active-invalid": 422,
+        "appearance-rule-date-invalid": 422,
+        "appearance-rule-date-window-invalid": 422,
+        "appearance-rule-landing-invalid": 422,
+        "appearance-rule-landing-field-unknown": 422,
+        "appearance-rule-background-type-invalid": 422,
+        "appearance-rule-title-type-invalid": 422,
+        "appearance-rule-url-invalid": 422,
+        "appearance-rule-hero-invalid": 422,
+        "appearance-rule-hero-mode-invalid": 422,
+        "appearance-rule-hero-inherit-items-invalid": 422,
+        "appearance-rule-hero-item-invalid": 422,
+        "appearance-rule-hero-text-invalid": 422,
+        "appearance-rule-hero-text-size-invalid": 422,
+        "appearance-rule-hero-text-color-invalid": 422,
+        "appearance-rule-hero-text-weight-invalid": 422,
+        "appearance-rule-palette-invalid": 422,
+        "appearance-rule-palette-color-invalid": 422,
+        "appearance-preview-invalid": 422,
+        "appearance-preview-field-unknown": 422,
+        "appearance-preview-storefront-invalid": 422,
+        "appearance-preview-geo-invalid": 422,
+        "appearance-preview-ip-invalid": 422,
+        "appearance-preview-language-invalid": 422,
+        "appearance-city-query-invalid": 422,
+        "appearance-city-language-invalid": 422,
+        "appearance-rule-admin-unavailable": 503,
+        "appearance-rule-read-failed": 503,
+        "appearance-rule-stored-invalid": 503,
+        "appearance-rule-schema-unavailable": 503,
+        "appearance-rule-write-failed": 503,
+        "appearance-rule-audit-write-failed": 503,
+        "appearance-city-geocode-unavailable": 503
+    },
+    "fixtures": [
+        {
+            "file": "app-appearance-default-en.json",
+            "route": "/v1/app/appearance",
+            "case": "pure compiled defaults with no location evidence",
+            "consumer": "ios",
+            "sha256": "ea439fa4150251fa31dc278851e3b9009643b31e9b393cea63ca43ea9e94c83a"
+        },
+        {
+            "file": "app-appearance-geo-hu.json",
+            "route": "/v1/app/appearance",
+            "case": "geo match with per-field storefront and global inheritance",
+            "consumer": "ios",
+            "sha256": "64cee805b92c3c6a1c6b18d3b8ba8809edf9bcc55b08b7cdbac88608292ecff7"
+        },
+        {
+            "file": "appconfig-appearance-geo-hu.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "cold-start appearance fragment",
+            "consumer": "ios",
+            "sha256": "741079dfc424c84faa19a83da51da50a265f7f099af6e5723ba234012c732bcb"
+        },
+        {
+            "file": "landing-content-geo-hu.json",
+            "route": "/v1/app/landing_content",
+            "case": "legacy landing compatibility projection",
+            "consumer": "ios",
+            "sha256": "47beee11d399d5e4ca769094959caadeaaf019298821bccc1fdd9f0ea79f89a3"
+        },
+        {
+            "file": "people-discover-hero-geo-hu.json",
+            "route": "/v1/people/discover",
+            "case": "legacy People hero compatibility projection",
+            "consumer": "ios",
+            "sha256": "aa9402124788b946b894d3e45e74a68ce559e2101df60a891c48e510393b71c0"
+        },
+        {
+            "file": "webadmin-conflict.json",
+            "route": "/v1/webadmin/appearance_rules_save",
+            "case": "stale revision with current rule",
+            "consumer": "webadmin",
+            "sha256": "31599057299e41168b0d3b6011a6db8931595c9902a8482483a3367e7820d77b"
+        },
+        {
+            "file": "webadmin-delete.json",
+            "route": "/v1/webadmin/appearance_rules_delete",
+            "case": "delete acknowledgement",
+            "consumer": "webadmin",
+            "sha256": "91e24827b5f33b14878160a2170bc16869a02394b97563b60324b3dc7cbc8fa4"
+        },
+        {
+            "file": "webadmin-geocode.json",
+            "route": "/v1/webadmin/appearance_city_geocode",
+            "case": "viewport-derived city candidate",
+            "consumer": "webadmin",
+            "sha256": "772478765d706021e710592a080d87e199250880aa9cba7f6fe1b7d618673235"
+        },
+        {
+            "file": "webadmin-list.json",
+            "route": "/v1/webadmin/appearance_rules_list",
+            "case": "rule list with compiled defaults",
+            "consumer": "webadmin",
+            "sha256": "9ec59465f51d74489fe56b687ba561103a086859dd52d0de8a52a30bdc04dc39"
+        },
+        {
+            "file": "webadmin-preview.json",
+            "route": "/v1/webadmin/appearance_rules_preview",
+            "case": "preview equals public appearance payload",
+            "consumer": "webadmin",
+            "sha256": "64cee805b92c3c6a1c6b18d3b8ba8809edf9bcc55b08b7cdbac88608292ecff7"
+        },
+        {
+            "file": "webadmin-save.json",
+            "route": "/v1/webadmin/appearance_rules_save",
+            "case": "stored rule projection after save",
+            "consumer": "webadmin",
+            "sha256": "a4cfdd6022cc3270e540bae7c74bc76903d4d1b201f884f083e9a71261077c15"
+        },
+        {
+            "file": "webadmin-validation.json",
+            "route": "/v1/webadmin/appearance_rules_save",
+            "case": "invalid palette refusal",
+            "consumer": "webadmin",
+            "sha256": "54b1cafe0b31dd56dec6b4fb5b6f5567851b450bc73b13772be0551175715df7"
+        }
+    ]
+}

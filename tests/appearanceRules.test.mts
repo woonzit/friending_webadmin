@@ -161,6 +161,16 @@ test("a Core rule projection decodes exactly and keeps its provenance", () => {
   assert.equal(storefront.migrated_from, "country");
 });
 
+test("Core's empty-map encoding (`[]`) is read as the empty object for landing and palette modes only", () => {
+  const rule = parseAppearanceRule(wireRule({ landing: [], palette: { light: [], dark: { accent: "#75F0F4" } } }));
+  assert.ok(rule);
+  assert.deepEqual(rule.landing, {});
+  assert.deepEqual(rule.palette, { light: {}, dark: { accent: "#75F0F4" } });
+  assert.equal(parseAppearanceRule(wireRule({ palette: [] })), null, "the palette container itself always carries its two modes");
+  assert.equal(parseAppearanceRule(wireRule({ hero: [] })), null, "hero is never an array");
+  assert.equal(parseAppearanceRule(wireRule({ center: [] })), null);
+});
+
 test("rule decoding fails closed on unknown, missing, loose, or scope-inconsistent material", () => {
   const cases: Array<[string, Record<string, unknown>]> = [
     ["extra key", wireRule({ extra: 1 })],
@@ -193,6 +203,8 @@ test("rule decoding fails closed on unknown, missing, loose, or scope-inconsiste
     ["hero item bad weight", wireRule({ hero: { mode: "replace", items: [heroItem({ title_weight_web: "heavy" })] } })],
     ["hero item media not a url", wireRule({ hero: { mode: "replace", items: [heroItem({ media_url: "" })] } })],
     ["palette unknown role", wireRule({ palette: { light: { primary: "#000000" }, dark: {} } })],
+    ["palette mode as a non-empty array", wireRule({ palette: { light: ["#007F91"], dark: {} } })],
+    ["landing as a non-empty array", wireRule({ landing: ["https://img.example/x.jpg"] })],
     ["palette lowercase hex", wireRule({ palette: { light: { accent: "#007f91" }, dark: {} } })],
     ["palette hex without hash", wireRule({ palette: { light: { accent: "007F91" }, dark: {} } })],
     ["palette unknown mode", wireRule({ palette: { light: {}, dark: {}, dim: {} } })],
@@ -751,6 +763,8 @@ test("the refusal vocabulary is closed: unknown names and wrong statuses are unc
     assert.deepEqual(decode({ success: false, status_code: 403, error: "admin-write-required" }), { ok: false, kind: "refused", error: "admin-write-required", status: 403 });
     assert.deepEqual(decode({ success: false, status_code: 400, error: "invalid-input" }), { ok: false, kind: "refused", error: "invalid-input", status: 400 });
     assert.deepEqual(decode({ success: false, status_code: 404, error: "not-found" }), { ok: false, kind: "refused", error: "not-found", status: 404 });
+    assert.deepEqual(decode(coreRefusal("unauthorized", 401)), { ok: false, kind: "refused", error: "unauthorized", status: 401 }, "published Core name");
+    assert.deepEqual(decode(coreRefusal("unauthorized", 403)), { ok: false, kind: "uncertain", error: "unknown-refusal" });
     // The reviewer's probes: an unknown bridge transport name, an unknown Core name, a known name at the wrong status.
     assert.deepEqual(decode({ success: false, status_code: 502, error: "future-transport" }), { ok: false, kind: "uncertain", error: "unknown-refusal" });
     assert.deepEqual(decode(coreRefusal("appearance-rule-future", 418)), { ok: false, kind: "uncertain", error: "unknown-refusal" });

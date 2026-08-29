@@ -1,0 +1,77 @@
+{
+    "status_code": 200,
+    "data": {
+        "appearance": {
+            "revision": 11,
+            "content_version": "2add2eb45125e9e21a1e3e6ab0612fc68c7687d49e0d87e9eebad0d33ed741ba",
+            "landing": {
+                "background": {
+                    "type": "video",
+                    "url": "https://img.example/global.mp4",
+                    "poster_url": "https://img.example/global.jpg"
+                },
+                "title": {
+                    "type": "text",
+                    "text": "Store cím",
+                    "image_url": ""
+                },
+                "description": "Budapesti leírás"
+            },
+            "hero": [
+                {
+                    "id": "hero-geo",
+                    "media_url": "https://img.example/hero-geo.jpg",
+                    "type": "image",
+                    "forward_url": "",
+                    "image_url": "https://img.example/hero-geo.jpg",
+                    "destination_url": "",
+                    "title": "Geo hero HU",
+                    "subtitle": "Geo alcím",
+                    "link_title": "Megnyitás",
+                    "text_style": {
+                        "web": {
+                            "title_size": null,
+                            "title_color": "",
+                            "title_weight": "",
+                            "subtitle_size": null,
+                            "subtitle_color": "",
+                            "subtitle_weight": ""
+                        },
+                        "mobile": {
+                            "title_size": 24,
+                            "title_color": "#aabbcc",
+                            "title_weight": "bold",
+                            "subtitle_size": null,
+                            "subtitle_color": "",
+                            "subtitle_weight": ""
+                        }
+                    }
+                }
+            ],
+            "palette": {
+                "light": {
+                    "accent": "#112233",
+                    "accent_pressed": "#102030",
+                    "accent_faint_bg": "#DDFBFC",
+                    "on_accent": "#FFFFFF",
+                    "inactive": "#6B7478"
+                },
+                "dark": {
+                    "accent": "#75F0F4",
+                    "accent_pressed": "#8DFDFF",
+                    "accent_faint_bg": "#12373B",
+                    "on_accent": "#071516",
+                    "inactive": "#405060"
+                }
+            },
+            "matched": {
+                "scope": "geo",
+                "rule_id": "600000000000000000000003",
+                "location_source": "gps"
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

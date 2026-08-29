@@ -1,0 +1,40 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "hero": [
+            {
+                "id": "hero-geo",
+                "media_url": "https://img.example/hero-geo.jpg",
+                "type": "image",
+                "forward_url": "",
+                "image_url": "https://img.example/hero-geo.jpg",
+                "destination_url": "",
+                "title": "Geo hero HU",
+                "subtitle": "Geo alcím",
+                "link_title": "Megnyitás",
+                "text_style": {
+                    "web": {
+                        "title_size": null,
+                        "title_color": "",
+                        "title_weight": "",
+                        "subtitle_size": null,
+                        "subtitle_color": "",
+                        "subtitle_weight": ""
+                    },
+                    "mobile": {
+                        "title_size": 24,
+                        "title_color": "#aabbcc",
+                        "title_weight": "bold",
+                        "subtitle_size": null,
+                        "subtitle_color": "",
+                        "subtitle_weight": ""
+                    }
+                }
+            }
+        ]
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

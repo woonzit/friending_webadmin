@@ -1,0 +1,70 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "rule": {
+            "id": "600000000000000000000003",
+            "name": "Budapest fixture",
+            "scope": "geo",
+            "storefront_country": "",
+            "country_code": "HU",
+            "center": {
+                "latitude": 47.4979,
+                "longitude": 19.0402
+            },
+            "radius_km": 25,
+            "place_label": "Budapest, Hungary",
+            "priority": 20,
+            "active": true,
+            "starts_at": null,
+            "ends_at": null,
+            "landing": {
+                "description_hu": "Budapesti leírás"
+            },
+            "hero": {
+                "mode": "replace",
+                "items": [
+                    {
+                        "id": "hero-geo",
+                        "media_url": "https://img.example/hero-geo.jpg",
+                        "type": "image",
+                        "forward_url": "",
+                        "title_en": "Geo hero",
+                        "title_hu": "Geo hero HU",
+                        "subtitle_en": "",
+                        "subtitle_hu": "Geo alcím",
+                        "link_title_en": "",
+                        "link_title_hu": "Megnyitás",
+                        "title_size_web": null,
+                        "title_color_web": "",
+                        "title_weight_web": "",
+                        "subtitle_size_web": null,
+                        "subtitle_color_web": "",
+                        "subtitle_weight_web": "",
+                        "title_size_mobile": 24,
+                        "title_color_mobile": "#aabbcc",
+                        "title_weight_mobile": "bold",
+                        "subtitle_size_mobile": null,
+                        "subtitle_color_mobile": "",
+                        "subtitle_weight_mobile": "",
+                        "sort_order": 0,
+                        "active": true
+                    }
+                ]
+            },
+            "palette": {
+                "light": {
+                    "accent": "#112233"
+                },
+                "dark": []
+            },
+            "revision": 9,
+            "created_at": "1970-01-01T00:18:20Z",
+            "updated_at": "1970-01-01T00:20:00Z",
+            "updated_by": "fixture@example.com"
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
