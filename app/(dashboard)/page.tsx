@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
 import { EmptyPanel, ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
+import { legacyHeroOverviewCardVisible } from "@/lib/appearanceRules";
 import { formatDate, formatNumber } from "@/lib/format";
 
 type AuditRow = {
@@ -56,7 +57,8 @@ export default function OverviewPage() {
     { label: t("totalUsers"), value: formatNumber(data.total_users, locale), tone: "" },
     { label: t("newUsers"), value: formatNumber(data.new_users_7d, locale), tone: "green" },
     { label: t("demoProfiles"), value: formatNumber(data.demo_profiles, locale), tone: "pink" },
-    { label: t("activeHeroes"), value: formatNumber(data.active_heroes, locale), tone: "" },
+    // T-468b finding 27: the legacy people_hero count is stale by construction after the cutover.
+    ...(legacyHeroOverviewCardVisible() ? [{ label: t("activeHeroes"), value: formatNumber(data.active_heroes, locale), tone: "" }] : []),
     { label: t("activeAdmins"), value: formatNumber(data.active_admins, locale), tone: "green" },
     { label: t("avatarCoverage"), value: `${avatarCoverage}%`, tone: "pink" },
   ];

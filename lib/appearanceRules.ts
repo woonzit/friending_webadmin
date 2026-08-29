@@ -1,6 +1,7 @@
 import { getCountryDataList } from "countries-list";
 import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
 import { webadminDataSuccessEnvelope, webadminErrorEnvelope } from "@/lib/webadminEnvelope";
+import { APPEARANCE_RULES_CONTRACT_READY } from "@/lib/contractReadiness";
 
 /**
  * Appearance & placement rules (D-052, `handoffs/appearance-rules-contract.md`
@@ -123,6 +124,16 @@ export const APPEARANCE_MIGRATION_MARKERS = ["country", "inactive_global_landing
 export type AppearanceMigrationMarker = (typeof APPEARANCE_MIGRATION_MARKERS)[number];
 /** Core's stored actor bound (T-467b finding 23): non-empty after trim, at most 320 raw code points. */
 export const MAX_APPEARANCE_ACTOR_LENGTH = 320;
+
+/**
+ * T-468b finding 27: after the cutover Core's overview `active_heroes` still
+ * counts the legacy `people_hero` rows, which unified saves no longer keep in
+ * sync — the card would be stale by construction. It is shown only while the
+ * readiness switch is off; a live replacement needs its own Core contract.
+ */
+export function legacyHeroOverviewCardVisible(ready: boolean = APPEARANCE_RULES_CONTRACT_READY): boolean {
+  return !ready;
+}
 
 export const APPEARANCE_HERO_MODES = ["inherit", "replace"] as const;
 export type AppearanceHeroMode = (typeof APPEARANCE_HERO_MODES)[number];

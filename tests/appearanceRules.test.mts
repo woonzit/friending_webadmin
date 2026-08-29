@@ -29,6 +29,7 @@ import {
   isAppearanceAlpha2,
   isAppearanceHttpsUrl,
   isAppearanceStorefront,
+  legacyHeroOverviewCardVisible,
   localizedAppearanceCountries,
   newAppearanceRuleDraft,
   normalizeAppearancePaletteHex,
@@ -1410,4 +1411,13 @@ test("the four component pre-normalisation paths use the PHP-compatible trim, so
   const hero = read("AppearanceHeroEditor.tsx");
   assert.match(hero, /appearanceTrim\(event\.target\.value\)\.toLowerCase\(\)/);
   assert.doesNotMatch(hero, /\.trim\(\)/);
+});
+
+test("the legacy active-hero overview card is shown only while the appearance cutover is off", () => {
+  assert.equal(legacyHeroOverviewCardVisible(false), true, "before the cutover the people_hero count is still live");
+  assert.equal(legacyHeroOverviewCardVisible(true), false, "after the cutover the count is stale by construction and must not render");
+  assert.equal(legacyHeroOverviewCardVisible(), !APPEARANCE_RULES_CONTRACT_READY, "the default follows the release switch");
+  const page = readFileSync(new URL("../app/(dashboard)/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /\.\.\.\(legacyHeroOverviewCardVisible\(\) \? \[\{ label: t\("activeHeroes"\)/, "the card is gated through the helper");
+  assert.equal((page.match(/data\.active_heroes/g) ?? []).length, 1, "active_heroes is read only inside the gated card");
 });
