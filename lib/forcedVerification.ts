@@ -80,8 +80,13 @@ export type ForcedVerificationDocument = {
   /** Sorted alpha-3 keys; an override replaces the whole method set (contract §1). */
   overrides: Record<string, ForcedMethods>;
   copy_default: Record<WaitingRoomLocale, WaitingRoomCopy>;
-  /** Sorted alpha-3 keys; each locale object carries only overridden fields. */
-  copy_overrides: Record<string, Partial<Record<WaitingRoomLocale, WaitingRoomCopyOverride>>>;
+  /**
+   * Sorted alpha-3 keys. Core requires EXACTLY the `en` and `hu` containers on
+   * every storefront entry (`ForcedVerificationPolicy::normalizeCopyOverrides`),
+   * so both are always present; each carries only the overridden fields and an
+   * empty object is the valid "inherit every field" container.
+   */
+  copy_overrides: Record<string, Record<WaitingRoomLocale, WaitingRoomCopyOverride>>;
 };
 
 export type ForcedVerificationConsole = {
@@ -293,17 +298,18 @@ function parseLocalizedCopy(value: unknown): Record<WaitingRoomLocale, WaitingRo
   return en && hu ? { en, hu } : null;
 }
 
-function parseLocalizedCopyOverride(value: unknown): Partial<Record<WaitingRoomLocale, WaitingRoomCopyOverride>> | null {
+/**
+ * A storefront copy override as Core stores it: exactly the `en` and `hu`
+ * containers, each holding only overridden fields. A partial container ({} or
+ * one locale only) is refused rather than treated as proven state — Core would
+ * reject the same shape on the way back in.
+ */
+function parseLocalizedCopyOverride(value: unknown): Record<WaitingRoomLocale, WaitingRoomCopyOverride> | null {
   const source = record(value);
-  if (!source || !subsetKeys(source, WAITING_ROOM_LOCALES)) return null;
-  const output: Partial<Record<WaitingRoomLocale, WaitingRoomCopyOverride>> = {};
-  for (const locale of WAITING_ROOM_LOCALES) {
-    if (!Object.hasOwn(source, locale)) continue;
-    const parsed = parseWaitingRoomCopyOverride(source[locale]);
-    if (parsed === null) return null;
-    output[locale] = parsed;
-  }
-  return output;
+  if (!source || !exactKeys(source, WAITING_ROOM_LOCALES)) return null;
+  const en = parseWaitingRoomCopyOverride(source.en);
+  const hu = parseWaitingRoomCopyOverride(source.hu);
+  return en && hu ? { en, hu } : null;
 }
 
 export function parseWaitingRoomCopyOverrides(value: unknown): ForcedVerificationDocument["copy_overrides"] | null {
@@ -507,16 +513,22 @@ export function forcedVerificationDocumentFromDraft(draft: ForcedVerificationDra
   }
   const copyOverrides: ForcedVerificationDocument["copy_overrides"] = {};
   for (const storefront of Object.keys(draft.copy_overrides).sort()) {
-    const locales: Partial<Record<WaitingRoomLocale, WaitingRoomCopyOverride>> = {};
+    // `en` is inserted before `hu` because Core compares the key list exactly.
+    // A locale the operator left blank travels as an empty object, never as a
+    // missing key: an entry with one locale is refused by Core.
+    const locales = {} as Record<WaitingRoomLocale, WaitingRoomCopyOverride>;
+    let fields = 0;
     for (const locale of WAITING_ROOM_LOCALES) {
       const override: WaitingRoomCopyOverride = {};
       for (const field of WAITING_ROOM_COPY_FIELDS) {
         const text = forcedCopyTrim(draft.copy_overrides[storefront][locale][field]);
         if (text !== "") override[field] = text;
       }
-      if (Object.keys(override).length > 0) locales[locale] = override;
+      locales[locale] = override;
+      fields += Object.keys(override).length;
     }
-    if (Object.keys(locales).length > 0) copyOverrides[storefront] = locales;
+    // A storefront whose two containers are both empty overrides nothing at all.
+    if (fields > 0) copyOverrides[storefront] = locales;
   }
   const trimCopy = (copy: WaitingRoomCopy): WaitingRoomCopy => ({
     title: forcedCopyTrim(copy.title),
@@ -737,8 +749,10 @@ export function decodeForcedImpactResponse(value: unknown): ForcedDecode<ForcedV
 
 /**
  * `verification_forced_save`: exact success envelope whose stored document
- * equals the submitted material and whose revision moved past the expected
- * one. An unbound "success" is uncertain, never adopted.
+ * equals the submitted material and whose revision is the EXACT successor of
+ * the expected one. Core increments an accepted save by exactly one
+ * (`ForcedVerificationAdminService::save`), so a skipped, unchanged or stale
+ * revision is an unbound "success": uncertain, never adopted.
  */
 export function decodeForcedSaveResponse(
   value: unknown,
@@ -746,7 +760,7 @@ export function decodeForcedSaveResponse(
 ): ForcedDecode<ForcedVerificationSaved> {
   const decoded = decodeMaterial(value, parseForcedVerificationSaved);
   if (!decoded.ok) return decoded;
-  if (decoded.value.revision <= submitted.expected_revision) return uncertain("unbound-revision");
+  if (decoded.value.revision !== submitted.expected_revision + 1) return uncertain("unbound-revision");
   if (!forcedVerificationDocumentsEqual(decoded.value.document, submitted.document)) return uncertain("unbound-material");
   return decoded;
 }

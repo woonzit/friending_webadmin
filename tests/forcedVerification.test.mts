@@ -316,7 +316,7 @@ test("decoders adopt only exact success material bound to the request and classi
   const saved = decodeForcedSaveResponse(success({ revision: 2, ...submitted.document }), submitted);
   assert.ok(saved.ok && saved.value.revision === 2);
   assert.deepEqual(decodeForcedSaveResponse(success({ revision: 1, ...submitted.document }), submitted), { ok: false, kind: "uncertain", error: "malformed-material" }, "a saved revision below 2 is not the save material");
-  assert.deepEqual(decodeForcedSaveResponse(success({ revision: 2, ...submitted.document }), { ...submitted, expected_revision: 3 }), { ok: false, kind: "uncertain", error: "unbound-revision" }, "revision must move past the expected one");
+  assert.deepEqual(decodeForcedSaveResponse(success({ revision: 2, ...submitted.document }), { ...submitted, expected_revision: 3 }), { ok: false, kind: "uncertain", error: "unbound-revision" }, "revision must be the exact successor of the expected one");
   assert.deepEqual(decodeForcedSaveResponse(success({ revision: 2, ...document() }), submitted), { ok: false, kind: "uncertain", error: "unbound-material" }, "a different stored document is never adopted");
   assert.deepEqual(decodeForcedSaveResponse(refusal("verification-forced-conflict", 409), submitted), { ok: false, kind: "refused", error: "verification-forced-conflict", status: 409 });
   assert.deepEqual(decodeForcedSaveResponse(refusal("verification-forced-invalid", 422), submitted), { ok: false, kind: "refused", error: "verification-forced-invalid", status: 422 });
@@ -452,4 +452,65 @@ test("preview: a malformed copy value degrades to the compiled text per field wh
   const storefronts = forcedVerificationDraftStorefronts(draft);
   assert.ok(storefronts.includes("USA") && !storefronts.includes(""), "blank rows are skipped");
   assert.deepEqual(storefronts, [...storefronts].sort());
+});
+
+test("a storefront copy override carries exactly both locale containers (T-471b finding 1)", () => {
+  const valid = document();
+  const withOverrides = (copy_overrides: unknown) => ({ ...valid, copy_overrides });
+  const full = { HUN: { en: { title: "Verify to continue" }, hu: { title: "Hitelesíts a folytatáshoz" } } };
+
+  // Reader: Core stores exactly `en` and `hu` on every storefront entry.
+  assert.ok(parseForcedVerificationDocument(withOverrides(full)), "both containers parse");
+  assert.ok(parseForcedVerificationDocument(withOverrides({ HUN: { en: {}, hu: {} } })), "two empty containers are the valid inherit-everything shape");
+  assert.equal(parseForcedVerificationDocument(withOverrides({ HUN: { en: { title: "Verify to continue" } } })), null, "a missing hu container is never proven state");
+  assert.equal(parseForcedVerificationDocument(withOverrides({ HUN: { hu: { title: "Hitelesíts a folytatáshoz" } } })), null, "a missing en container is never proven state");
+  assert.equal(parseForcedVerificationDocument(withOverrides({ HUN: {} })), null, "neither locale");
+  assert.equal(parseForcedVerificationDocument(withOverrides({ HUN: { en: {}, hu: {}, de: {} } })), null, "an extra locale");
+
+  // Proxy normalisation decodes with the same reader before forwarding.
+  assert.equal(
+    normalizeForcedVerificationProxyBody("verification_forced_save", { expected_revision: 1, document: withOverrides({ HUN: { en: { title: "Verify to continue" } } }) }),
+    null,
+    "the proxy refuses to forward a partial locale container",
+  );
+  assert.ok(
+    normalizeForcedVerificationProxyBody("verification_forced_save", { expected_revision: 1, document: withOverrides(full) }),
+    "the proxy forwards a document with both containers",
+  );
+
+  // Draft canonicalisation: a blank locale travels as an empty object.
+  const draft = forcedVerificationDraft(document());
+  draft.copy_overrides.USA = { en: { title: "Verify to continue", subtitle: "", description: "" }, hu: { title: "", subtitle: "", description: "" } };
+  const canonical = forcedVerificationDocumentFromDraft(draft);
+  assert.ok(canonical);
+  assert.deepEqual(canonical.copy_overrides.USA, { en: { title: "Verify to continue" }, hu: {} }, "the untranslated locale is an empty container, not a missing key");
+  assert.deepEqual(Object.keys(canonical.copy_overrides.USA), ["en", "hu"], "en is emitted before hu, the key order Core compares");
+  assert.ok(parseForcedVerificationDocument(canonical), "what the console emits is exactly what the reader accepts");
+
+  draft.copy_overrides.DEU = { en: { title: "", subtitle: "", description: "" }, hu: { title: "", subtitle: "", description: "" } };
+  assert.deepEqual(Object.keys(forcedVerificationDocumentFromDraft(draft)!.copy_overrides), ["USA"], "a storefront that overrides nothing at all is dropped whole");
+});
+
+test("save success is adopted only on the exact revision successor (T-471b finding 2)", () => {
+  const submitted = { expected_revision: 7, document: document({ default: { persona: true, video: false } }) };
+  const answer = (revision: number) => decodeForcedSaveResponse(success({ revision, ...submitted.document }), submitted);
+
+  const adopted = answer(8);
+  assert.ok(adopted.ok && adopted.value.revision === 8, "the exact successor is the only adopted success");
+  for (const [revision, label] of [[7, "unchanged"], [9, "skipped"], [6, "stale"], [Number.MAX_SAFE_INTEGER, "maximum safe integer"]] as const) {
+    assert.deepEqual(
+      answer(revision),
+      { ok: false, kind: "uncertain", error: "unbound-revision" },
+      `a ${label} revision is uncertain, never adopted as authoritative`,
+    );
+  }
+
+  const ceiling = { expected_revision: FORCED_VERIFICATION_REVISION_MAX - 1, document: submitted.document };
+  const atCeiling = decodeForcedSaveResponse(success({ revision: FORCED_VERIFICATION_REVISION_MAX, ...ceiling.document }), ceiling);
+  assert.ok(atCeiling.ok && atCeiling.value.revision === FORCED_VERIFICATION_REVISION_MAX, "the successor at the contract ceiling is still a success");
+  assert.deepEqual(
+    decodeForcedSaveResponse(success({ revision: FORCED_VERIFICATION_REVISION_MAX + 1, ...ceiling.document }), ceiling),
+    { ok: false, kind: "uncertain", error: "malformed-material" },
+    "a revision past the contract ceiling is not a readable saved document",
+  );
 });

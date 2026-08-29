@@ -815,7 +815,7 @@
               "1": "Set the global default first, then add a storefront override only where the rule differs; an override replaces the whole method set, so two switches off means not forced there.",
               "2": "Edit the Waiting Room text in both languages, check the light and dark phone preview for the storefront, run the impact preview, and save at the shown revision."
             },
-            "guidance": "Seeded state forces nothing. Core evaluates the gate server-side with the member's last-seen storefront; a malformed stored document fails safe (nothing forced) while this tab reports it. Forcing goes live only in the owner's rollout order."
+            "guidance": "Seeded state forces nothing. Core evaluates the gate server-side with the member's last-seen storefront; a malformed stored document fails safe (nothing forced) while this tab reports it. Switch forcing on only after the iOS build carrying the Waiting Room is live in the App Store: the gate applies to every app version, and an older app receives the refusal without a screen to show for it."
           },
           "conflictsAndRetry": {
             "title": "Conflicts and uncertain saves",

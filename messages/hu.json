@@ -815,7 +815,7 @@
               "1": "Először a globális alapértelmezést állítsd be, és csak ott adj hozzá storefront-felülírást, ahol a szabály eltér; a felülírás a teljes módszerkészletet lecseréli, így két kikapcsolt kapcsoló azt jelenti, hogy ott nem kötelező.",
               "2": "Szerkeszd a Váróterem szövegét mindkét nyelven, ellenőrizd a világos és sötét telefonos előnézetet a storefronthoz, futtasd a hatás-előnézetet, és a megjelenített revíziónál ments."
             },
-            "guidance": "A kiindulási állapot semmit sem tesz kötelezővé. A Core a szerveren értékeli a kaput a tag utoljára látott storefrontja alapján; a hibás tárolt dokumentum biztonságosan hibázik (semmi sem kötelező), miközben ez a fül jelzi. A kényszerítés csak a tulajdonos bevezetési sorrendjében élesedik."
+            "guidance": "A kiindulási állapot semmit sem tesz kötelezővé. A Core a szerveren értékeli a kaput a tag utoljára látott storefrontja alapján; a hibás tárolt dokumentum biztonságosan hibázik (semmi sem kötelező), miközben ez a fül jelzi. A kényszerítést csak azután kapcsold be, hogy a Váróteremmel készült iOS build már elérhető az App Store-ban: a kapu minden app-verzióra érvényes, és a régebbi app úgy kapja meg az elutasítást, hogy nincs mit megjelenítenie hozzá."
           },
           "conflictsAndRetry": {
             "title": "Ütközések és bizonytalan mentések",
