@@ -52,4 +52,4 @@ export const FEATURE_SWITCHES_CONTRACT_READY: boolean = false;
  * replaced hero/app-landing actions leave the allow-list. Deleting the legacy
  * page files afterwards is housekeeping, not a behaviour change.
  */
-export const APPEARANCE_RULES_CONTRACT_READY: boolean = false;
+export const APPEARANCE_RULES_CONTRACT_READY: boolean = true;
