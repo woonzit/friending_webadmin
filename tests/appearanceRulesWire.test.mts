@@ -25,15 +25,16 @@ import {
 } from "../lib/appearanceRules.ts";
 
 /**
- * T-467's production-generated wire corpus (Core replacement tip `31e74cfef677f98de292d9deb3cdcfcdd115d66c`,
+ * T-467's production-generated wire corpus (Core replacement tip `d5e7494c032076b4a23e2bfc2a26d4665f88664f`,
  * `tests/fixtures/appearance_rules_wire/`), copied byte-identically. The production decoders must
  * accept every Webadmin body exactly as Core publishes it and classify every refusal by the
  * manifest's closed status map — this is the cross-lane binding the readiness switch depends on.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/appearance_rules_wire/", import.meta.url);
-// Core T-467 replacement `done` (2026-08-29 15:49Z): accepted tip 31e74cfef677f98de292d9deb3cdcfcdd115d66c,
-// behaviour/source provenance commit e8c20219…, fixture set 7a225897…, generator b0cb5a6d….
-const FIXTURE_SOURCE_COMMIT = "e8c20219add9370b00935402b9d6e3f516dd343b";
+// Core T-467 round-2 delta `done` (2026-08-29 16:32Z): exact tip d5e7494c032076b4a23e2bfc2a26d4665f88664f,
+// source provenance commit 448202998…, fixture set 7a225897… and generator b0cb5a6d… unchanged (payload
+// bodies byte-identical to 31e74cf; only `manifest.json.source_commit` moved).
+const FIXTURE_SOURCE_COMMIT = "448202998826dc82b8764d03eae7862279204240";
 const FIXTURE_GENERATOR_SHA256 = "b0cb5a6db69c42f0e4c4a2b7bf24272ba9e313f5fbc44b6821f28249f6cf20f8";
 const FIXTURE_SET_SHA256 = "7a225897dc0d83bf208016b392fe4329c978faabe2b4c389ab822d2614482952";
 const FIXTURE_BODY_FILES = [

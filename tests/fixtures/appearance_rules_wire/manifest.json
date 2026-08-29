@@ -1,6 +1,6 @@
 {
     "schema_version": 1,
-    "source_commit": "e8c20219add9370b00935402b9d6e3f516dd343b",
+    "source_commit": "448202998826dc82b8764d03eae7862279204240",
     "fixture_set_sha256": "7a225897dc0d83bf208016b392fe4329c978faabe2b4c389ab822d2614482952",
     "provenance": {
         "generator": "tests/appearance_rules_fixture_dump.php",
