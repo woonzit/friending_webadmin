@@ -25,15 +25,17 @@ import {
 } from "../lib/appearanceRules.ts";
 
 /**
- * T-467's production-generated wire corpus (Core tip `bbf9367cd5e9488632d7739abbac9285e0e88de5`,
+ * T-467's production-generated wire corpus (Core replacement tip `31e74cfef677f98de292d9deb3cdcfcdd115d66c`,
  * `tests/fixtures/appearance_rules_wire/`), copied byte-identically. The production decoders must
  * accept every Webadmin body exactly as Core publishes it and classify every refusal by the
  * manifest's closed status map — this is the cross-lane binding the readiness switch depends on.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/appearance_rules_wire/", import.meta.url);
-const FIXTURE_SOURCE_COMMIT = "03f41c58d32b41e213da874e0b19180995b4ea6f";
-const FIXTURE_GENERATOR_SHA256 = "12cdf5d8b8908bda7d6a70a5b27ef48936bb2c2138a28736f926b4300dfddf97";
-const FIXTURE_SET_SHA256 = "e66df2656bb47bcf2ef4a9e45934a50498de3201729162656a817539fdaa69b5";
+// Core T-467 replacement `done` (2026-08-29 15:49Z): accepted tip 31e74cfef677f98de292d9deb3cdcfcdd115d66c,
+// behaviour/source provenance commit e8c20219…, fixture set 7a225897…, generator b0cb5a6d….
+const FIXTURE_SOURCE_COMMIT = "e8c20219add9370b00935402b9d6e3f516dd343b";
+const FIXTURE_GENERATOR_SHA256 = "b0cb5a6db69c42f0e4c4a2b7bf24272ba9e313f5fbc44b6821f28249f6cf20f8";
+const FIXTURE_SET_SHA256 = "7a225897dc0d83bf208016b392fe4329c978faabe2b4c389ab822d2614482952";
 const FIXTURE_BODY_FILES = [
   "app-appearance-default-en.json",
   "app-appearance-geo-hu.json",
@@ -50,10 +52,13 @@ const FIXTURE_BODY_FILES = [
 ] as const;
 const FIXTURE_SOURCE_PATHS = [
   "config/routes.php",
+  "src/Core/Mongo.php",
+  "src/Core/Request.php",
   "src/Core/Response.php",
   "src/Http/Controllers/AppController.php",
   "src/Http/Controllers/AppearanceController.php",
   "src/Http/Controllers/WebadminAppearanceController.php",
+  "src/Http/Controllers/WebadminController.php",
   "src/Http/Middleware/WebadminSecretMiddleware.php",
   "src/Services/AppearanceCityGeocodeService.php",
   "src/Services/AppearanceMigrationPlanner.php",
@@ -65,6 +70,7 @@ const FIXTURE_SOURCE_PATHS = [
   "src/Services/PeopleService.php",
   "src/Support/AppearancePolicy.php",
   "src/Support/GoogleGeo.php",
+  "src/Support/StrictJson.php",
   "src/Support/Webadmin.php",
   "src/Support/WebadminRolePolicy.php",
   "tests/appearance_rules_fixture_dump.php",
@@ -154,18 +160,31 @@ test("the production refusal maps equal Core's published control-plane status ma
 test("every released Webadmin body decodes through the production decoders with target binding", async () => {
   const list = decodeAppearanceListResponse(await fixture("webadmin-list.json"));
   assert.ok(list.ok, "list");
+  // T-467b finding 11: the list arrives in Core's canonical production order (scope ascending, then the
+  // service's stored order), so the console's own precedence sort is what puts geo → storefront → global first.
   assert.deepEqual(list.value.rules.map((rule) => [rule.id, rule.scope, rule.revision]), [
+    ["600000000000000000000004", "geo", 2],
+    ["600000000000000000000005", "geo", 3],
+    ["600000000000000000000000", "geo", 4],
+    ["600000000000000000000003", "geo", 9],
     ["600000000000000000000001", "global", 7],
     ["600000000000000000000002", "storefront", 11],
-    ["600000000000000000000003", "geo", 9],
   ]);
   assert.deepEqual(list.value.defaults.palette, APPEARANCE_DEFAULT_PALETTE, "Core's compiled palette equals the console's display constants");
   assert.deepEqual(list.value.defaults.landing, APPEARANCE_DEFAULT_LANDING);
-  const [global, storefront, geo] = list.value.rules as [AppearanceRule, AppearanceRule, AppearanceRule];
-  // PHP encodes an empty map as `[]`: the storefront rule's light palette and the global rule's dark palette are empty.
+  const byId = (id: string): AppearanceRule => list.value.rules.find((rule) => rule.id === id)!;
+  const global = byId("600000000000000000000001");
+  const storefront = byId("600000000000000000000002");
+  const geo = byId("600000000000000000000003");
+  // Empty maps are JSON objects (finding 8/15): the storefront rule's light palette, the global rule's dark
+  // palette and the plain geo rules' landing/palette maps are `{}`, never `[]`.
   assert.deepEqual(storefront.palette, { light: {}, dark: { inactive: "#405060" } });
   assert.deepEqual(global.palette, { light: { accent_pressed: "#102030" }, dark: {} });
-  assert.deepEqual(storefront.landing, { title_text_hu: "Store cím" });
+  assert.deepEqual(byId("600000000000000000000004").landing, {});
+  assert.deepEqual(byId("600000000000000000000004").palette, { light: {}, dark: {} });
+  assert.deepEqual(storefront.landing, { title_text_hu: "Store cím", description_hu: "Storefront Hungarian description" });
+  assert.deepEqual(geo.landing, { title_text_en: "Geo English title", description_en: "Geo English description" });
+  assert.ok(list.value.rules.every((rule) => rule.hero.items.every((item) => item.id !== "")), "stored hero ids are minted");
   assert.equal(global.hero.items[0]?.sort_order, 1);
   assert.equal(geo.hero.items[0]?.title_color_mobile, "#aabbcc");
 
@@ -178,6 +197,12 @@ test("every released Webadmin body decodes through the production decoders with 
   const layered = resolveAppearancePalette([geo.palette, storefront.palette, global.palette], list.value.defaults.palette);
   assert.deepEqual(layered.values, preview.value.palette, "geo → storefront → global → defaults per role");
   const landing = resolveAppearanceLanding([geo.landing, storefront.landing, global.landing], list.value.defaults.landing, "hu");
+  // Amendment v1.5 + finding 17 pinned by the corpus: the geo rule sets English title/description only, the
+  // storefront rule Hungarian only — for lang=hu the storefront Hungarian wins over the higher layer's English,
+  // and the background (video + poster) inherits per field from the global rule.
+  assert.equal(preview.value.landing.title.text, "Store cím");
+  assert.equal(preview.value.landing.description, "Storefront Hungarian description");
+  assert.equal(landing.titleType, preview.value.landing.title.type);
   assert.equal(landing.backgroundType, preview.value.landing.background.type);
   assert.equal(landing.backgroundUrl, preview.value.landing.background.url);
   assert.equal(landing.posterUrl, preview.value.landing.background.poster_url);

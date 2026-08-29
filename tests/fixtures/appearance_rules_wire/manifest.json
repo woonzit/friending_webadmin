@@ -1,20 +1,23 @@
 {
     "schema_version": 1,
-    "source_commit": "03f41c58d32b41e213da874e0b19180995b4ea6f",
-    "fixture_set_sha256": "e66df2656bb47bcf2ef4a9e45934a50498de3201729162656a817539fdaa69b5",
+    "source_commit": "e8c20219add9370b00935402b9d6e3f516dd343b",
+    "fixture_set_sha256": "7a225897dc0d83bf208016b392fe4329c978faabe2b4c389ab822d2614482952",
     "provenance": {
         "generator": "tests/appearance_rules_fixture_dump.php",
-        "generator_sha256": "12cdf5d8b8908bda7d6a70a5b27ef48936bb2c2138a28736f926b4300dfddf97",
+        "generator_sha256": "b0cb5a6db69c42f0e4c4a2b7bf24272ba9e313f5fbc44b6821f28249f6cf20f8",
         "wire_adapters": [
             "Friending\\Core\\Response::wirePayload",
             "Friending\\Support\\Webadmin::noStoreReply"
         ],
         "source_paths": [
             "config/routes.php",
+            "src/Core/Mongo.php",
+            "src/Core/Request.php",
             "src/Core/Response.php",
             "src/Http/Controllers/AppController.php",
             "src/Http/Controllers/AppearanceController.php",
             "src/Http/Controllers/WebadminAppearanceController.php",
+            "src/Http/Controllers/WebadminController.php",
             "src/Http/Middleware/WebadminSecretMiddleware.php",
             "src/Services/AppearanceCityGeocodeService.php",
             "src/Services/AppearanceMigrationPlanner.php",
@@ -26,6 +29,7 @@
             "src/Services/PeopleService.php",
             "src/Support/AppearancePolicy.php",
             "src/Support/GoogleGeo.php",
+            "src/Support/StrictJson.php",
             "src/Support/Webadmin.php",
             "src/Support/WebadminRolePolicy.php",
             "tests/appearance_rules_fixture_dump.php",
@@ -99,21 +103,21 @@
             "route": "/v1/app/appearance",
             "case": "geo match with per-field storefront and global inheritance",
             "consumer": "ios",
-            "sha256": "64cee805b92c3c6a1c6b18d3b8ba8809edf9bcc55b08b7cdbac88608292ecff7"
+            "sha256": "b61186d5d8204d811db9b960fd9ea813708061af654d5c53399e080a9ffbcfd2"
         },
         {
             "file": "appconfig-appearance-geo-hu.json",
             "route": "/v1/app/ios_appconfig",
             "case": "cold-start appearance fragment",
             "consumer": "ios",
-            "sha256": "741079dfc424c84faa19a83da51da50a265f7f099af6e5723ba234012c732bcb"
+            "sha256": "37feab63c3c933395919f38151515895c696ec8490de286886705265c785fe29"
         },
         {
             "file": "landing-content-geo-hu.json",
             "route": "/v1/app/landing_content",
             "case": "legacy landing compatibility projection",
             "consumer": "ios",
-            "sha256": "47beee11d399d5e4ca769094959caadeaaf019298821bccc1fdd9f0ea79f89a3"
+            "sha256": "56e31d37ef0deb976ec33de313d1afa43f25e1fe07bca31a0fe09f28bc01eb5c"
         },
         {
             "file": "people-discover-hero-geo-hu.json",
@@ -148,21 +152,21 @@
             "route": "/v1/webadmin/appearance_rules_list",
             "case": "rule list with compiled defaults",
             "consumer": "webadmin",
-            "sha256": "9ec59465f51d74489fe56b687ba561103a086859dd52d0de8a52a30bdc04dc39"
+            "sha256": "246bc04ee3691240019b7842e54f09fdcdcb78c9efe363fc4f55c0a807886ddd"
         },
         {
             "file": "webadmin-preview.json",
             "route": "/v1/webadmin/appearance_rules_preview",
             "case": "preview equals public appearance payload",
             "consumer": "webadmin",
-            "sha256": "64cee805b92c3c6a1c6b18d3b8ba8809edf9bcc55b08b7cdbac88608292ecff7"
+            "sha256": "b61186d5d8204d811db9b960fd9ea813708061af654d5c53399e080a9ffbcfd2"
         },
         {
             "file": "webadmin-save.json",
             "route": "/v1/webadmin/appearance_rules_save",
             "case": "stored rule projection after save",
             "consumer": "webadmin",
-            "sha256": "a4cfdd6022cc3270e540bae7c74bc76903d4d1b201f884f083e9a71261077c15"
+            "sha256": "f796cf2bb827f29c846e7fd076ec0d6213afb4316a10e15cf6bf441514996da8"
         },
         {
             "file": "webadmin-validation.json",

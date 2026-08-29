@@ -332,17 +332,6 @@ function record(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
-/**
- * Core serialises an EMPTY map as `[]` (PHP's empty array): a rule with no
- * landing override arrives as `"landing": []` and a palette mode with no role
- * as `"light": []`. Exactly the empty array is read as the empty object;
- * a non-empty array is still not a map.
- */
-function mapRecord(value: unknown): Record<string, unknown> | null {
-  if (Array.isArray(value)) return value.length === 0 ? {} : null;
-  return record(value);
-}
-
 function exactKeys(value: Record<string, unknown>, required: readonly string[], optional: readonly string[] = []): boolean {
   const actual = Object.keys(value);
   if (actual.some((key) => !required.includes(key) && !optional.includes(key))) return false;
@@ -483,8 +472,9 @@ function parseCenter(value: unknown): AppearanceCenter | null {
   return { latitude, longitude };
 }
 
+/** A JSON object even when empty (Core container identity, T-467b finding 8/15); an array is never a landing map. */
 export function parseAppearanceLanding(value: unknown): AppearanceLanding | null {
-  const source = mapRecord(value);
+  const source = record(value);
   if (!source || !subsetKeys(source, APPEARANCE_LANDING_KEYS)) return null;
   const landing: AppearanceLanding = {};
   for (const key of APPEARANCE_LANDING_KEYS) {
@@ -592,7 +582,7 @@ export function parseAppearancePalette(value: unknown): AppearancePalette | null
   const palette: AppearancePalette = { light: {}, dark: {} };
   for (const mode of APPEARANCE_PALETTE_MODES) {
     if (!Object.hasOwn(source, mode)) continue;
-    const modeSource = mapRecord(source[mode]);
+    const modeSource = record(source[mode]);
     if (!modeSource || !subsetKeys(modeSource, APPEARANCE_PALETTE_ROLES)) return null;
     for (const role of APPEARANCE_PALETTE_ROLES) {
       if (!Object.hasOwn(modeSource, role)) continue;
@@ -704,6 +694,10 @@ export function parseAppearanceRule(value: unknown): AppearanceRule | null {
   const updatedBy = typeof source.updated_by === "string" ? source.updated_by : null;
   if (!input || id === null || revision === null || createdAt === undefined || updatedAt === undefined || updatedBy === null) return null;
   if (Object.hasOwn(source, "migrated_from") && source.migrated_from !== "country") return null;
+  // T-467b finding 14: an empty hero id is legal only in save input (Core mints
+  // it); a STORED rule carries non-empty, unique hero ids or is malformed.
+  const heroIds = input.hero.items.map((item) => item.id);
+  if (heroIds.some((heroId) => heroId === "") || new Set(heroIds).size !== heroIds.length) return null;
   return {
     id,
     ...input,

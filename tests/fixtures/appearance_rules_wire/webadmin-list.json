@@ -4,6 +4,158 @@
     "data": {
         "rules": [
             {
+                "id": "600000000000000000000004",
+                "name": "Inactive priority-order fixture",
+                "scope": "geo",
+                "storefront_country": "",
+                "country_code": "HU",
+                "center": {
+                    "latitude": 47.4979,
+                    "longitude": 19.0402
+                },
+                "radius_km": 25,
+                "place_label": "Budapest, Hungary",
+                "priority": 30,
+                "active": false,
+                "starts_at": null,
+                "ends_at": null,
+                "landing": {},
+                "hero": {
+                    "mode": "inherit",
+                    "items": []
+                },
+                "palette": {
+                    "light": {},
+                    "dark": {}
+                },
+                "revision": 2,
+                "created_at": "1970-01-01T00:16:40Z",
+                "updated_at": "1970-01-01T00:18:20Z",
+                "updated_by": "fixture@example.com"
+            },
+            {
+                "id": "600000000000000000000005",
+                "name": "Inactive timestamp-order fixture",
+                "scope": "geo",
+                "storefront_country": "",
+                "country_code": "HU",
+                "center": {
+                    "latitude": 47.4979,
+                    "longitude": 19.0402
+                },
+                "radius_km": 25,
+                "place_label": "Budapest, Hungary",
+                "priority": 20,
+                "active": false,
+                "starts_at": null,
+                "ends_at": null,
+                "landing": {},
+                "hero": {
+                    "mode": "inherit",
+                    "items": []
+                },
+                "palette": {
+                    "light": {},
+                    "dark": {}
+                },
+                "revision": 3,
+                "created_at": "1970-01-01T00:20:00Z",
+                "updated_at": "1970-01-01T00:21:40Z",
+                "updated_by": "fixture@example.com"
+            },
+            {
+                "id": "600000000000000000000000",
+                "name": "Inactive id-order fixture",
+                "scope": "geo",
+                "storefront_country": "",
+                "country_code": "HU",
+                "center": {
+                    "latitude": 47.4979,
+                    "longitude": 19.0402
+                },
+                "radius_km": 25,
+                "place_label": "Budapest, Hungary",
+                "priority": 20,
+                "active": false,
+                "starts_at": null,
+                "ends_at": null,
+                "landing": {},
+                "hero": {
+                    "mode": "inherit",
+                    "items": []
+                },
+                "palette": {
+                    "light": {},
+                    "dark": {}
+                },
+                "revision": 4,
+                "created_at": "1970-01-01T00:18:20Z",
+                "updated_at": "1970-01-01T00:20:00Z",
+                "updated_by": "fixture@example.com"
+            },
+            {
+                "id": "600000000000000000000003",
+                "name": "Budapest fixture",
+                "scope": "geo",
+                "storefront_country": "",
+                "country_code": "HU",
+                "center": {
+                    "latitude": 47.4979,
+                    "longitude": 19.0402
+                },
+                "radius_km": 25,
+                "place_label": "Budapest, Hungary",
+                "priority": 20,
+                "active": true,
+                "starts_at": null,
+                "ends_at": null,
+                "landing": {
+                    "description_en": "Geo English description",
+                    "title_text_en": "Geo English title"
+                },
+                "hero": {
+                    "mode": "replace",
+                    "items": [
+                        {
+                            "id": "hero-geo",
+                            "media_url": "https://img.example/hero-geo.jpg",
+                            "type": "image",
+                            "forward_url": "",
+                            "title_en": "Geo hero",
+                            "title_hu": "Geo hero HU",
+                            "subtitle_en": "",
+                            "subtitle_hu": "Geo alcím",
+                            "link_title_en": "",
+                            "link_title_hu": "Megnyitás",
+                            "title_size_web": null,
+                            "title_color_web": "",
+                            "title_weight_web": "",
+                            "subtitle_size_web": null,
+                            "subtitle_color_web": "",
+                            "subtitle_weight_web": "",
+                            "title_size_mobile": 24,
+                            "title_color_mobile": "#aabbcc",
+                            "title_weight_mobile": "bold",
+                            "subtitle_size_mobile": null,
+                            "subtitle_color_mobile": "",
+                            "subtitle_weight_mobile": "",
+                            "sort_order": 0,
+                            "active": true
+                        }
+                    ]
+                },
+                "palette": {
+                    "light": {
+                        "accent": "#112233"
+                    },
+                    "dark": {}
+                },
+                "revision": 9,
+                "created_at": "1970-01-01T00:18:20Z",
+                "updated_at": "1970-01-01T00:20:00Z",
+                "updated_by": "fixture@example.com"
+            },
+            {
                 "id": "600000000000000000000001",
                 "name": "Global fixture",
                 "scope": "global",
@@ -61,7 +213,7 @@
                     "light": {
                         "accent_pressed": "#102030"
                     },
-                    "dark": []
+                    "dark": {}
                 },
                 "revision": 7,
                 "created_at": "1970-01-01T00:15:00Z",
@@ -82,6 +234,7 @@
                 "starts_at": null,
                 "ends_at": null,
                 "landing": {
+                    "description_hu": "Storefront Hungarian description",
                     "title_text_hu": "Store cím"
                 },
                 "hero": {
@@ -89,7 +242,7 @@
                     "items": []
                 },
                 "palette": {
-                    "light": [],
+                    "light": {},
                     "dark": {
                         "inactive": "#405060"
                     }
@@ -97,67 +250,6 @@
                 "revision": 11,
                 "created_at": "1970-01-01T00:16:40Z",
                 "updated_at": "1970-01-01T00:18:20Z",
-                "updated_by": "fixture@example.com"
-            },
-            {
-                "id": "600000000000000000000003",
-                "name": "Budapest fixture",
-                "scope": "geo",
-                "storefront_country": "",
-                "country_code": "HU",
-                "center": {
-                    "latitude": 47.4979,
-                    "longitude": 19.0402
-                },
-                "radius_km": 25,
-                "place_label": "Budapest, Hungary",
-                "priority": 20,
-                "active": true,
-                "starts_at": null,
-                "ends_at": null,
-                "landing": {
-                    "description_hu": "Budapesti leírás"
-                },
-                "hero": {
-                    "mode": "replace",
-                    "items": [
-                        {
-                            "id": "hero-geo",
-                            "media_url": "https://img.example/hero-geo.jpg",
-                            "type": "image",
-                            "forward_url": "",
-                            "title_en": "Geo hero",
-                            "title_hu": "Geo hero HU",
-                            "subtitle_en": "",
-                            "subtitle_hu": "Geo alcím",
-                            "link_title_en": "",
-                            "link_title_hu": "Megnyitás",
-                            "title_size_web": null,
-                            "title_color_web": "",
-                            "title_weight_web": "",
-                            "subtitle_size_web": null,
-                            "subtitle_color_web": "",
-                            "subtitle_weight_web": "",
-                            "title_size_mobile": 24,
-                            "title_color_mobile": "#aabbcc",
-                            "title_weight_mobile": "bold",
-                            "subtitle_size_mobile": null,
-                            "subtitle_color_mobile": "",
-                            "subtitle_weight_mobile": "",
-                            "sort_order": 0,
-                            "active": true
-                        }
-                    ]
-                },
-                "palette": {
-                    "light": {
-                        "accent": "#112233"
-                    },
-                    "dark": []
-                },
-                "revision": 9,
-                "created_at": "1970-01-01T00:18:20Z",
-                "updated_at": "1970-01-01T00:20:00Z",
                 "updated_by": "fixture@example.com"
             }
         ],

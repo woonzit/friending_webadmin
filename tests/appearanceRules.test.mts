@@ -11,6 +11,7 @@ import {
   appearanceLandingWire,
   appearanceRuleDraft,
   appearanceRuleInputFromDraft,
+  appearanceRuleInputOf,
   appearanceRuleIsLive,
   appearanceRuleMaterialMatches,
   appearanceTimestampFromLocalInput,
@@ -162,14 +163,29 @@ test("a Core rule projection decodes exactly and keeps its provenance", () => {
   assert.equal(storefront.migrated_from, "country");
 });
 
-test("Core's empty-map encoding (`[]`) is read as the empty object for landing and palette modes only", () => {
-  const rule = parseAppearanceRule(wireRule({ landing: [], palette: { light: [], dark: { accent: "#75F0F4" } } }));
+test("empty maps are JSON objects (Core container identity); an array container is refused everywhere", () => {
+  const rule = parseAppearanceRule(wireRule({ landing: {}, palette: { light: {}, dark: { accent: "#75F0F4" } } }));
   assert.ok(rule);
   assert.deepEqual(rule.landing, {});
   assert.deepEqual(rule.palette, { light: {}, dark: { accent: "#75F0F4" } });
+  assert.equal(parseAppearanceRule(wireRule({ landing: [] })), null, "`[]` is not an empty landing map");
+  assert.equal(parseAppearanceRule(wireRule({ palette: { light: [], dark: {} } })), null, "`[]` is not an empty palette mode");
   assert.equal(parseAppearanceRule(wireRule({ palette: [] })), null, "the palette container itself always carries its two modes");
   assert.equal(parseAppearanceRule(wireRule({ hero: [] })), null, "hero is never an array");
   assert.equal(parseAppearanceRule(wireRule({ center: [] })), null);
+  assert.equal(parseAppearanceRuleInput({ ...appearanceRuleInputOf(rule), landing: [] }), null, "the proxy refuses the array container too");
+});
+
+test("stored hero items carry non-empty unique ids; save input may leave an id empty for Core to mint", () => {
+  const base = parseAppearanceRule(wireRule())!;
+  const item = base.hero.items[0]!;
+  assert.ok(item.id !== "");
+  assert.equal(parseAppearanceRule(wireRule({ hero: { mode: "replace", items: [{ ...item, id: "" }] } })), null, "stored empty id");
+  assert.equal(parseAppearanceRule(wireRule({ hero: { mode: "replace", items: [item, { ...item, id: "" }] } })), null, "stored empty id beside a valid one");
+  assert.equal(parseAppearanceRule(wireRule({ hero: { mode: "replace", items: [item, { ...item }] } })), null, "stored duplicate id");
+  assert.ok(parseAppearanceRule(wireRule({ hero: { mode: "replace", items: [item, { ...item, id: `${item.id}-2` }] } })), "distinct ids");
+  const input = appearanceRuleInputOf(base);
+  assert.ok(parseAppearanceRuleInput({ ...input, hero: { mode: "replace", items: [{ ...item, id: "" }] } }), "input without an id is legal before minting");
 });
 
 test("rule decoding fails closed on unknown, missing, loose, or scope-inconsistent material", () => {

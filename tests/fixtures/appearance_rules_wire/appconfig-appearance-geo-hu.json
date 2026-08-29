@@ -3,7 +3,7 @@
     "data": {
         "appearance": {
             "revision": 11,
-            "content_version": "2add2eb45125e9e21a1e3e6ab0612fc68c7687d49e0d87e9eebad0d33ed741ba",
+            "content_version": "878f766977a1d9c89ec9e75bf7c6c8e00eed89039401cf8a323e1132a6747beb",
             "landing": {
                 "background": {
                     "type": "video",
@@ -15,7 +15,7 @@
                     "text": "Store cím",
                     "image_url": ""
                 },
-                "description": "Budapesti leírás"
+                "description": "Storefront Hungarian description"
             },
             "hero": [
                 {
