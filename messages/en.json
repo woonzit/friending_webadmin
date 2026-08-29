@@ -3598,7 +3598,8 @@
         "footerSignOut": "Sign out",
         "footerDelete": "Delete account",
         "notForced": "Not forced here — members never see the Waiting Room.",
-        "nonInteractive": "Static preview of the designer frame WR-01; button labels and status strings live in the app and are not editable here."
+        "nonInteractive": "Static preview of the designer frame WR-01; button labels and status strings live in the app and are not editable here.",
+        "compiledCopy": "Compiled text is shown for: {fields}. The draft value there is invalid and would be refused on save; the preview degrades only that text, never the forced methods."
       },
       "impactTitle": "Impact preview",
       "impactCopy": "Core counts, per last-seen storefront, how many members the draft would gate and how many already satisfy a forced method. Counts only, never identities.",
@@ -3628,7 +3629,8 @@
         "duplicateStorefront": "Two overrides name the same storefront.",
         "copyRequired": "The global title, subtitle and description are required in both languages.",
         "copyTooLong": "A text exceeds its limit (title 60, subtitle 90, description 400 characters).",
-        "copyControl": "A text contains a control character or a line break where none is allowed."
+        "copyControl": "A text contains a control character or a line break where none is allowed.",
+        "copyWhitespace": "A text starts or ends with a Unicode space (for example a non-breaking space) or consists only of such spaces. Remove it; ordinary spaces at the edges are trimmed automatically."
       }
     },
     "methods": {

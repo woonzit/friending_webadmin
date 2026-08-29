@@ -1,7 +1,7 @@
 {
     "schema_version": 1,
     "contract": "forced-verification-waiting-room-v1.3",
-    "source_commit": "4c43b83862c0b6531d4689e850bcce1ca4da62cf",
+    "source_commit": "939df5867dd0f87bc27e807f06e46cbeffc97b4d",
     "fixture_set_sha256": "5c93ba15984aebc28dcd1221f3b8f093e1697446a1a3f156a4c9aa288b2adb78",
     "provenance": {
         "generator": "tests/forced_verification_fixture_dump.php",
@@ -155,7 +155,6 @@
             "POST /v1/iosuser/update_email",
             "POST /v1/iosuser/update_genders",
             "POST /v1/iosuser/update_profile_data",
-            "POST /v1/iosuser/user_need_to_deleted",
             "POST /v1/iosuser/verification_gate",
             "POST /v1/membership/configuration",
             "POST /v1/membership/status",

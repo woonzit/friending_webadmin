@@ -178,6 +178,26 @@ export function forcedStorefrontName(alpha3: string, locale: string): string {
 const CONTROL_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 
+/**
+ * PHP `trim()` strips only `" \t\n\r\0\x0B"`. JavaScript's `String.prototype.trim()`
+ * would also strip Unicode whitespace such as U+00A0, which Core refuses at a copy
+ * boundary instead of normalising it away — so canonicalisation trims exactly as
+ * Core does and any remaining boundary whitespace is a refusal, never a repair.
+ */
+const PHP_TRIM_EDGE = /^[ \t\n\r\0\x0B]+|[ \t\n\r\0\x0B]+$/g;
+export function forcedCopyTrim(value: string): string {
+  return value.replace(PHP_TRIM_EDGE, "");
+}
+
+/**
+ * Core's `BOUNDARY_WHITESPACE_PATTERN`: a Unicode separator (`\p{Z}`), C0 whitespace,
+ * NEL or BOM at either edge. A value made only of such whitespace matches as well.
+ */
+const BOUNDARY_WHITESPACE = /^[\p{Z}\u0009-\u000D\u0085\uFEFF]|[\p{Z}\u0009-\u000D\u0085\uFEFF]$/u;
+export function hasBoundaryWhitespace(value: string): boolean {
+  return BOUNDARY_WHITESPACE.test(value);
+}
+
 function record(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
@@ -208,9 +228,11 @@ export function waitingRoomTextLength(value: string): number {
   return [...value].length;
 }
 
+/** Published copy exactly as Core's `copyText` accepts it: non-empty, PHP-trimmed, no boundary whitespace, bounded, no controls. */
 function copyText(value: unknown, field: WaitingRoomCopyField): string | null {
   if (typeof value !== "string" || CONTROL_CHARACTERS.test(value)) return null;
-  if (value.trim() === "" || waitingRoomTextLength(value) > WAITING_ROOM_COPY_LIMITS[field]) return null;
+  if (value === "" || forcedCopyTrim(value) !== value || hasBoundaryWhitespace(value)) return null;
+  if (waitingRoomTextLength(value) > WAITING_ROOM_COPY_LIMITS[field]) return null;
   return value;
 }
 
@@ -407,7 +429,8 @@ export type ForcedVerificationDraftIssue =
   | "duplicateStorefront"
   | "copyRequired"
   | "copyTooLong"
-  | "copyControl";
+  | "copyControl"
+  | "copyWhitespace";
 
 export function emptyWaitingRoomCopyOverrideDraft(): WaitingRoomCopyOverrideDraft {
   return { en: { title: "", subtitle: "", description: "" }, hu: { title: "", subtitle: "", description: "" } };
@@ -433,9 +456,10 @@ export function forcedVerificationDraft(document: ForcedVerificationDocument): F
 }
 
 function copyIssue(value: string, field: WaitingRoomCopyField, required: boolean): ForcedVerificationDraftIssue | null {
-  const trimmed = value.trim();
+  const trimmed = forcedCopyTrim(value);
   if (trimmed === "") return required ? "copyRequired" : null;
   if (CONTROL_CHARACTERS.test(trimmed) || (field !== "description" && /[\n\r]/.test(trimmed))) return "copyControl";
+  if (hasBoundaryWhitespace(trimmed)) return "copyWhitespace";
   if (waitingRoomTextLength(trimmed) > WAITING_ROOM_COPY_LIMITS[field]) return "copyTooLong";
   return null;
 }
@@ -470,9 +494,10 @@ export function validateForcedVerificationDraft(draft: ForcedVerificationDraft):
 }
 
 /**
- * The canonical document for a valid draft (`null` otherwise): trimmed text,
- * storefront keys sorted, blank override fields absent, empty locale and
- * storefront override objects dropped.
+ * The canonical document for a valid draft (`null` otherwise): PHP-trimmed text
+ * (Unicode boundary whitespace is a validation refusal, never trimmed), storefront
+ * keys sorted, blank override fields absent, empty locale and storefront override
+ * objects dropped.
  */
 export function forcedVerificationDocumentFromDraft(draft: ForcedVerificationDraft): ForcedVerificationDocument | null {
   if (validateForcedVerificationDraft(draft) !== null) return null;
@@ -486,7 +511,7 @@ export function forcedVerificationDocumentFromDraft(draft: ForcedVerificationDra
     for (const locale of WAITING_ROOM_LOCALES) {
       const override: WaitingRoomCopyOverride = {};
       for (const field of WAITING_ROOM_COPY_FIELDS) {
-        const text = draft.copy_overrides[storefront][locale][field].trim();
+        const text = forcedCopyTrim(draft.copy_overrides[storefront][locale][field]);
         if (text !== "") override[field] = text;
       }
       if (Object.keys(override).length > 0) locales[locale] = override;
@@ -494,9 +519,9 @@ export function forcedVerificationDocumentFromDraft(draft: ForcedVerificationDra
     if (Object.keys(locales).length > 0) copyOverrides[storefront] = locales;
   }
   const trimCopy = (copy: WaitingRoomCopy): WaitingRoomCopy => ({
-    title: copy.title.trim(),
-    subtitle: copy.subtitle.trim(),
-    description: copy.description.trim(),
+    title: forcedCopyTrim(copy.title),
+    subtitle: forcedCopyTrim(copy.subtitle),
+    description: forcedCopyTrim(copy.description),
   });
   return {
     default: { persona: draft.default.persona, video: draft.default.video },
@@ -538,6 +563,48 @@ export function resolveWaitingRoomCopy(
 /** Every storefront that carries a method or a copy override, sorted. */
 export function forcedVerificationStorefronts(document: ForcedVerificationDocument): string[] {
   return [...new Set([...Object.keys(document.overrides), ...Object.keys(document.copy_overrides)])].sort();
+}
+
+// ---------------------------------------------------------------------------
+// Draft preview (contract Amendment v1.4: copy is presentation, not authorization)
+// ---------------------------------------------------------------------------
+
+/** The method set a draft would force for a storefront: the first exact override row, else the global default. */
+export function resolveDraftForcedMethods(draft: ForcedVerificationDraft, storefront: string | null): ForcedMethods {
+  const row = storefront === null ? undefined : draft.overrides.find((entry) => entry.storefront === storefront);
+  return row ? { persona: row.persona, video: row.video } : { ...draft.default };
+}
+
+export type WaitingRoomPreviewCopy = { copy: WaitingRoomCopy; compiledFields: WaitingRoomCopyField[] };
+
+/**
+ * The Waiting Room copy a preview renders for a draft: per field the non-blank storefront
+ * override, else the global default of the same locale. A malformed or missing value
+ * degrades to the compiled copy for that field only and is reported in `compiledFields`;
+ * the forced methods are never affected by copy (Amendment v1.4).
+ */
+export function previewWaitingRoomCopy(
+  draft: ForcedVerificationDraft,
+  storefront: string | null,
+  locale: WaitingRoomLocale,
+  compiled: Record<WaitingRoomLocale, WaitingRoomCopy>,
+): WaitingRoomPreviewCopy {
+  const override = storefront === null ? undefined : draft.copy_overrides[storefront]?.[locale];
+  const copy: WaitingRoomCopy = { ...compiled[locale] };
+  const compiledFields: WaitingRoomCopyField[] = [];
+  for (const field of WAITING_ROOM_COPY_FIELDS) {
+    const overrideText = override ? override[field] : "";
+    const candidate = forcedCopyTrim(overrideText) !== "" ? overrideText : draft.copy_default[locale][field];
+    if (copyIssue(candidate, field, true) === null) copy[field] = forcedCopyTrim(candidate);
+    else compiledFields.push(field);
+  }
+  return { copy, compiledFields };
+}
+
+/** Every storefront a draft names in a method row or a copy override, sorted; blank rows are skipped. */
+export function forcedVerificationDraftStorefronts(draft: ForcedVerificationDraft): string[] {
+  const rows = draft.overrides.map((row) => row.storefront).filter((storefront) => storefront !== "");
+  return [...new Set([...rows, ...Object.keys(draft.copy_overrides)])].sort();
 }
 
 // ---------------------------------------------------------------------------

@@ -14,15 +14,16 @@ import {
   decodeForcedImpactResponse,
   decodeForcedSaveResponse,
   emptyWaitingRoomCopyOverrideDraft,
+  forcedCopyTrim,
   forcedMethodList,
   forcedStorefrontName,
   forcedVerificationDocumentFromDraft,
   forcedVerificationDocumentsEqual,
   forcedVerificationDraft,
-  forcedVerificationStorefronts,
+  forcedVerificationDraftStorefronts,
   localizedForcedStorefronts,
-  resolveForcedMethods,
-  resolveWaitingRoomCopy,
+  previewWaitingRoomCopy,
+  resolveDraftForcedMethods,
   validateForcedVerificationDraft,
   waitingRoomTextLength,
   type ForcedMethods,
@@ -246,11 +247,11 @@ export default function ForcedVerificationTab({ access, locked }: Props) {
   if (state === "error" || !console_ || !draft) return <ErrorPanel message={t("loadError")} retry={() => void load(false)} />;
 
   const usedOverrideStorefronts = new Set(draft.overrides.map((row) => row.storefront));
-  const previewDocument = draftDocument ?? console_.document;
   const previewStorefrontOrNull = previewStorefront === "" ? null : previewStorefront;
-  const previewMethods = forcedMethodList(resolveForcedMethods(previewDocument, previewStorefrontOrNull));
-  const previewCopy = resolveWaitingRoomCopy(previewDocument, previewStorefrontOrNull, previewLocale);
-  const previewStorefronts = [...new Set([...forcedVerificationStorefronts(previewDocument), ...(previewStorefront ? [previewStorefront] : [])])].sort();
+  const previewMethods = forcedMethodList(resolveDraftForcedMethods(draft, previewStorefrontOrNull));
+  const preview = previewWaitingRoomCopy(draft, previewStorefrontOrNull, previewLocale, console_.compiled_defaults.copy);
+  const previewCopy = preview.copy;
+  const previewStorefronts = [...new Set([...forcedVerificationDraftStorefronts(draft), ...(previewStorefront ? [previewStorefront] : [])])].sort();
   const previewLabels = {
     persona: t("preview.primaryPersona"),
     video: t("preview.primaryVideo"),
@@ -264,7 +265,7 @@ export default function ForcedVerificationTab({ access, locked }: Props) {
     const value = storefront === null ? draft!.copy_default[copyLocale][field] : (draft!.copy_overrides[storefront]?.[copyLocale][field] ?? "");
     const inherited = storefront === null ? console_!.compiled_defaults.copy[copyLocale][field] : draft!.copy_default[copyLocale][field];
     const limit = WAITING_ROOM_COPY_LIMITS[field];
-    const used = waitingRoomTextLength(value.trim());
+    const used = waitingRoomTextLength(forcedCopyTrim(value));
     const id = `forced-copy-${storefront ?? "default"}-${copyLocale}-${field}`;
     const common = {
       id,
@@ -400,6 +401,9 @@ export default function ForcedVerificationTab({ access, locked }: Props) {
             <PhoneFrame mode="light" storefrontLabel={storefrontLabel} copy={previewCopy} methods={previewMethods} labels={{ ...previewLabels, modeLabel: t("preview.light") }} />
             <PhoneFrame mode="dark" storefrontLabel={storefrontLabel} copy={previewCopy} methods={previewMethods} labels={{ ...previewLabels, modeLabel: t("preview.dark") }} />
           </div>
+          {preview.compiledFields.length > 0 && (
+            <p className="field-hint" role="status"><strong>{t("preview.compiledCopy", { fields: preview.compiledFields.map((field) => t(`copy.fields.${field}`)).join(", ") })}</strong></p>
+          )}
           <small className="field-hint">{t("preview.nonInteractive")}</small>
         </div>
       </section>

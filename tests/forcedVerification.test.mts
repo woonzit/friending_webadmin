@@ -25,11 +25,16 @@ import {
   normalizeForcedVerificationProxyBody,
   parseForcedVerificationAdminMe,
   parseForcedVerificationConsole,
+  forcedCopyTrim,
+  hasBoundaryWhitespace,
   parseForcedVerificationDocument,
   parseForcedVerificationImpact,
   parseForcedVerificationSaved,
   resolveForcedMethods,
   resolveWaitingRoomCopy,
+  forcedVerificationDraftStorefronts,
+  previewWaitingRoomCopy,
+  resolveDraftForcedMethods,
   validateForcedVerificationDraft,
   waitingRoomTextLength,
   type ForcedVerificationDocument,
@@ -362,4 +367,89 @@ test("the proxy forwards only exact bodies and the actions stay dormant behind t
     assert.equal((ADMIN_ACTIONS as readonly string[]).includes(action), FORCED_VERIFICATION_CONTRACT_READY, `${action} allow-listed only with the switch`);
     assert.equal(adminActionAccess(action) ?? null, FORCED_VERIFICATION_CONTRACT_READY ? (action === "verification_forced_save" ? "write" : "read") : null);
   }
+});
+
+test("copy whitespace mirrors Core: PHP trim, Unicode boundary whitespace refused, interior NBSP kept", () => {
+  assert.equal(forcedCopyTrim(" \t\n\r\0\x0BCím \t\n\r\0\x0B"), "Cím", "PHP trim strips exactly its ASCII set");
+  assert.equal(forcedCopyTrim("\u00A0Cím\u00A0"), "\u00A0Cím\u00A0", "PHP trim never strips Unicode whitespace");
+  assert.equal(hasBoundaryWhitespace("Nem\u00A0törhető"), false, "interior NBSP is not boundary whitespace");
+  for (const edge of ["\u00A0", "\u1680", "\u2000", "\u2003", "\u200A", "\u2028", "\u2029", "\u202F", "\u205F", "\u3000", "\u0085", "\uFEFF"]) {
+    const label = `U+${edge.codePointAt(0)!.toString(16).toUpperCase().padStart(4, "0")}`;
+    assert.equal(hasBoundaryWhitespace(`${edge}Cim`), true, `leading ${label}`);
+    assert.equal(hasBoundaryWhitespace(`Cim${edge}`), true, `trailing ${label}`);
+    assert.equal(hasBoundaryWhitespace(`Ci${edge}m`), false, `interior ${label}`);
+  }
+
+  const draft = forcedVerificationDraft(document());
+  draft.copy_default.hu.title = "\u00A0Cím";
+  assert.equal(validateForcedVerificationDraft(draft), "copyWhitespace", "leading NBSP");
+  draft.copy_default.hu.title = "Cím\u00A0";
+  assert.equal(validateForcedVerificationDraft(draft), "copyWhitespace", "trailing NBSP");
+  draft.copy_default.hu.title = "\u00A0";
+  assert.equal(validateForcedVerificationDraft(draft), "copyWhitespace", "NBSP-only is a whitespace refusal, not a blank field");
+  draft.copy_default.hu.title = " \u00A0\u2003 ";
+  assert.equal(validateForcedVerificationDraft(draft), "copyWhitespace", "Unicode-whitespace-only after the ASCII edges are trimmed");
+  draft.copy_default.hu.title = "\uFEFFCím";
+  assert.equal(validateForcedVerificationDraft(draft), "copyWhitespace", "BOM edge");
+  draft.copy_default.hu.title = "Cím\u0085";
+  assert.equal(validateForcedVerificationDraft(draft), "copyWhitespace", "NEL edge");
+  draft.copy_default.hu.title = "Nem\u00A0törhető cím";
+  assert.equal(validateForcedVerificationDraft(draft), null, "interior NBSP is content");
+  draft.copy_default.hu.title = " \tNem\u00A0törhető cím\r\n";
+  assert.equal(validateForcedVerificationDraft(draft), null, "ASCII edges are trimmed, never refused");
+  const canonical = forcedVerificationDocumentFromDraft(draft);
+  assert.ok(canonical);
+  assert.equal(canonical.copy_default.hu.title, "Nem\u00A0törhető cím", "the canonical text keeps the interior NBSP and drops only the ASCII edges");
+  assert.equal(waitingRoomTextLength(forcedCopyTrim(" a\u00A0b ")), 3, "the editor counter counts the NBSP");
+
+  draft.copy_default.hu.title = "Cím";
+  draft.copy_overrides.USA = { en: { title: "", subtitle: "", description: "" }, hu: { title: "", subtitle: "", description: "" } };
+  draft.copy_overrides.USA!.en.title = "Verify\u00A0";
+  assert.equal(validateForcedVerificationDraft(draft), "copyWhitespace", "per-storefront override copy: trailing NBSP");
+  draft.copy_overrides.USA!.en.title = "\u00A0";
+  assert.equal(validateForcedVerificationDraft(draft), "copyWhitespace", "an override made only of NBSP is refused, not dropped as blank");
+  draft.copy_overrides.USA!.en.title = "Verify\u00A0to continue";
+  assert.equal(validateForcedVerificationDraft(draft), null);
+  assert.equal(forcedVerificationDocumentFromDraft(draft)?.copy_overrides.USA?.en?.title, "Verify\u00A0to continue", "override text keeps the interior NBSP");
+
+  const valid = document();
+  const withTitle = (title: string) => ({ ...valid, copy_default: { ...valid.copy_default, en: { ...valid.copy_default.en, title } } });
+  assert.equal(parseForcedVerificationDocument(withTitle("\u00A0Verify")), null, "published leading NBSP fails closed");
+  assert.equal(parseForcedVerificationDocument(withTitle("Verify\u00A0")), null, "published trailing NBSP fails closed");
+  assert.equal(parseForcedVerificationDocument(withTitle("\u00A0")), null, "published NBSP-only fails closed");
+  assert.equal(parseForcedVerificationDocument(withTitle(" Verify")), null, "published untrimmed ASCII edge fails closed");
+  assert.equal(parseForcedVerificationDocument(withTitle("Verify\u0085")), null, "published NEL edge fails closed");
+  assert.ok(parseForcedVerificationDocument(withTitle("Verify\u00A0now")), "published interior NBSP is content");
+});
+
+test("preview: a malformed copy value degrades to the compiled text per field while the draft methods stand (Amendment v1.4)", () => {
+  const compiled = { en: { ...WAITING_ROOM_COMPILED_COPY.en }, hu: { ...WAITING_ROOM_COMPILED_COPY.hu } };
+  const draft = forcedVerificationDraft(document());
+  draft.default = { persona: true, video: false };
+  draft.overrides = [{ storefront: "USA", persona: false, video: true }, { storefront: "", persona: true, video: true }];
+  draft.copy_default.hu.title = "x".repeat(61);
+  assert.equal(validateForcedVerificationDraft(draft), "storefront", "the draft is not saveable");
+  assert.deepEqual(resolveDraftForcedMethods(draft, null), { persona: true, video: false });
+  assert.deepEqual(resolveDraftForcedMethods(draft, "USA"), { persona: false, video: true }, "an exact row replaces the whole set");
+  assert.deepEqual(resolveDraftForcedMethods(draft, "DEU"), { persona: true, video: false }, "no row falls back to the global default");
+  const hu = previewWaitingRoomCopy(draft, null, "hu", compiled);
+  assert.deepEqual(hu.compiledFields, ["title"]);
+  assert.equal(hu.copy.title, compiled.hu.title, "the over-limit title degrades to the compiled title");
+  assert.equal(hu.copy.subtitle, draft.copy_default.hu.subtitle, "valid fields keep the draft text");
+  assert.equal(hu.copy.description, draft.copy_default.hu.description);
+  assert.deepEqual(previewWaitingRoomCopy(draft, null, "en", compiled).compiledFields, [], "the other locale is untouched");
+
+  draft.copy_overrides.USA = { en: { title: "  Verify  ", subtitle: "\u00A0", description: "" }, hu: { title: "", subtitle: "", description: "" } };
+  const usa = previewWaitingRoomCopy(draft, "USA", "en", compiled);
+  assert.equal(usa.copy.title, "Verify", "a valid override is PHP-trimmed and used");
+  assert.equal(usa.copy.subtitle, compiled.en.subtitle, "an NBSP-only override degrades to the compiled subtitle");
+  assert.equal(usa.copy.description, draft.copy_default.en.description, "a blank override inherits the global default");
+  assert.deepEqual(usa.compiledFields, ["subtitle"]);
+  draft.copy_default.en.description = "";
+  assert.deepEqual(previewWaitingRoomCopy(draft, "USA", "en", compiled).compiledFields, ["subtitle", "description"], "a missing default is a degraded field too");
+  assert.deepEqual(previewWaitingRoomCopy(draft, "DEU", "en", compiled).compiledFields, ["description"], "a storefront without overrides degrades only the missing default");
+
+  const storefronts = forcedVerificationDraftStorefronts(draft);
+  assert.ok(storefronts.includes("USA") && !storefronts.includes(""), "blank rows are skipped");
+  assert.deepEqual(storefronts, [...storefronts].sort());
 });

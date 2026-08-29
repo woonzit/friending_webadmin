@@ -3598,7 +3598,8 @@
         "footerSignOut": "Kijelentkezés",
         "footerDelete": "Fiók törlése",
         "notForced": "Itt nem kötelező — a tagok sosem látják a Várótermet.",
-        "nonInteractive": "A WR-01 tervezői keret statikus előnézete; a gombfeliratok és állapotszövegek az alkalmazásban élnek, itt nem szerkeszthetők."
+        "nonInteractive": "A WR-01 tervezői keret statikus előnézete; a gombfeliratok és állapotszövegek az alkalmazásban élnek, itt nem szerkeszthetők.",
+        "compiledCopy": "Beépített szöveg jelenik meg itt: {fields}. A vázlat értéke ott érvénytelen, mentéskor elutasításra kerülne; az előnézet csak azt a szöveget cseréli, a kötelező módszereket soha."
       },
       "impactTitle": "Hatás-előnézet",
       "impactCopy": "A Core az utoljára látott storefront szerint megszámolja, hány tagot zárna a Váróterembe a piszkozat, és hányan teljesítenek már egy kötelező módszert. Csak darabszámok, sosem személyek.",
@@ -3628,7 +3629,8 @@
         "duplicateStorefront": "Két felülírás ugyanazt a storefrontot nevezi meg.",
         "copyRequired": "A globális cím, alcím és leírás mindkét nyelven kötelező.",
         "copyTooLong": "Egy szöveg túllépi a korlátját (cím 60, alcím 90, leírás 400 karakter).",
-        "copyControl": "Egy szöveg vezérlőkaraktert vagy nem megengedett sortörést tartalmaz."
+        "copyControl": "Egy szöveg vezérlőkaraktert vagy nem megengedett sortörést tartalmaz.",
+        "copyWhitespace": "Egy szöveg Unicode szóközzel (például nem törhető szóközzel) kezdődik vagy végződik, vagy csak ilyen szóközökből áll. Távolítsd el; a szélső hagyományos szóközök automatikusan levágódnak."
       }
     },
     "methods": {
