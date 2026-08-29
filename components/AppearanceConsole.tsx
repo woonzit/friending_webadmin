@@ -13,12 +13,12 @@ import {
   appearanceRuleDraft,
   appearanceRuleInputFromDraft,
   appearanceRuleIsLive,
-  appearanceRuleMaterialMatches,
   decodeAppearanceDeleteResponse,
   decodeAppearanceListResponse,
   decodeAppearanceSaveResponse,
   localizedAppearanceCountries,
   newAppearanceRuleDraft,
+  reconcileAppearanceCreate,
   reconcileAppearanceUpdate,
   sortAppearanceRules,
   validateAppearanceRuleDraft,
@@ -38,7 +38,7 @@ type LoadState = "loading" | "ready" | "error";
  * it did not land (or the landed rule is adopted by its material).
  */
 type UncertainWrite =
-  | { kind: "create"; input: AppearanceRuleInput }
+  | { kind: "create"; baseline_ids: string[]; input: AppearanceRuleInput }
   | { kind: "update"; id: string; expected_revision: number; input: AppearanceRuleInput }
   | { kind: "delete"; id: string };
 
@@ -120,7 +120,8 @@ export default function AppearanceConsole() {
     }
     setUncertain(null);
     if (pending.kind === "create") {
-      const landed = fresh.rules.find((rule) => appearanceRuleMaterialMatches(rule, pending.input));
+      // T-468b finding 25: only a row whose id was absent from the pre-request baseline proves the create.
+      const landed = reconcileAppearanceCreate(pending, fresh.rules).adopt;
       if (landed) {
         setDraft(null);
         setFormError("");
@@ -198,7 +199,7 @@ export default function AppearanceConsole() {
       setBusy(false);
       return;
     }
-    await reconcile(draft.id === "" ? { kind: "create", input } : { kind: "update", id: draft.id, expected_revision: draft.revision, input });
+    await reconcile(draft.id === "" ? { kind: "create", baseline_ids: rules.map((rule) => rule.id), input } : { kind: "update", id: draft.id, expected_revision: draft.revision, input });
     setBusy(false);
   }
 

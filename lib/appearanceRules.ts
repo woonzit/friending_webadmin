@@ -1760,6 +1760,30 @@ export function reconcileAppearanceUpdate(
   return { outcome: "superseded", retry: false, adopt: authoritative };
 }
 
+export type AppearanceCreateReconciliation = {
+  /** `landed`: a NEW row (absent from the pre-request baseline) carries the submitted material; `not-landed`: no such row. */
+  outcome: "landed" | "not-landed";
+  /** The newly observed row to adopt; `null` when the create did not land. */
+  adopt: AppearanceRule | null;
+};
+
+/**
+ * T-468b finding 25: reconciliation of an uncertain CREATE against the
+ * authoritative list. Core has no uniqueness for non-global material, so a
+ * material-equal row proves the create only when its id was ABSENT from the
+ * set of ids observed immediately before the request; a pre-existing match
+ * is never evidence. The minted-empty-hero-id exception inside
+ * `appearanceRuleMaterialMatches` is thereby bound to the new identity.
+ */
+export function reconcileAppearanceCreate(
+  attempted: { input: AppearanceRuleInput; baseline_ids: readonly string[] },
+  rules: readonly AppearanceRule[],
+): AppearanceCreateReconciliation {
+  const baseline = new Set(attempted.baseline_ids);
+  const landed = rules.find((rule) => !baseline.has(rule.id) && appearanceRuleMaterialMatches(rule, attempted.input)) ?? null;
+  return landed ? { outcome: "landed", adopt: landed } : { outcome: "not-landed", adopt: null };
+}
+
 /**
  * `appearance_rules_save`: exact success envelope, `data: { rule }`, and the
  * returned rule bound to the submitted target on BOTH create and update

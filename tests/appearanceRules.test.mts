@@ -41,6 +41,7 @@ import {
   parseAppearancePreviewPayload,
   parseAppearanceRule,
   parseAppearanceRuleInput,
+  reconcileAppearanceCreate,
   reconcileAppearanceUpdate,
   parseAppearanceTimestamp,
   resolveAppearanceHero,
@@ -1344,4 +1345,31 @@ test("Core-bound strings must be well-formed UTF-16: unpaired surrogates are ref
   draft.name = `Pride ${pair}`;
   assert.equal(validateAppearanceRuleDraft(draft), null);
   assert.equal(appearanceRuleInputFromDraft(draft)?.name, `Pride ${pair}`);
+});
+
+test("an uncertain create is proven only by a NEW row: a pre-existing material-equal rule is never evidence", () => {
+  const existing = parseAppearanceRule(geoRule())!;
+  const input = appearanceRuleInputOf(existing);
+  const baseline = [existing.id, "66d0a1b2c3d4e5f6a7b8c9d0"];
+  const attempted = { input, baseline_ids: baseline };
+  assert.deepEqual(reconcileAppearanceCreate(attempted, [existing]), { outcome: "not-landed", adopt: null }, "old match only: never recovered");
+  const fresh = parseAppearanceRule(geoRule({ id: "66d0a1b2c3d4e5f6a7b8c9ef", revision: 1 }))!;
+  assert.deepEqual(reconcileAppearanceCreate(attempted, [existing, fresh]), { outcome: "landed", adopt: fresh }, "old + new: the new identity is adopted");
+  assert.deepEqual(reconcileAppearanceCreate(attempted, [fresh]), { outcome: "landed", adopt: fresh }, "new match only");
+  assert.deepEqual(reconcileAppearanceCreate(attempted, []), { outcome: "not-landed", adopt: null }, "no match");
+  const other = parseAppearanceRule(geoRule({ id: "66d0a1b2c3d4e5f6a7b8c9ee", revision: 1, name: "Different" }))!;
+  assert.deepEqual(reconcileAppearanceCreate(attempted, [existing, other]), { outcome: "not-landed", adopt: null }, "a new row with other material is not this create");
+  // The minted-empty-hero-id exception stays bound to the newly observed identity.
+  const heroStored = parseAppearanceRule(wireRule())!;
+  const heroInput = appearanceRuleInputOf(heroStored);
+  const withoutIds = { ...heroInput, hero: { mode: "replace" as const, items: heroInput.hero.items.map((item) => ({ ...item, id: "" })) } };
+  assert.equal(reconcileAppearanceCreate({ input: withoutIds, baseline_ids: [heroStored.id] }, [heroStored]).outcome, "not-landed", "a pre-existing row with minted ids is still old");
+  const minted = parseAppearanceRule(wireRule({ id: "66d0a1b2c3d4e5f6a7b8c9e5", revision: 1 }))!;
+  assert.equal(reconcileAppearanceCreate({ input: withoutIds, baseline_ids: [heroStored.id] }, [heroStored, minted]).adopt?.id, minted.id);
+  // Component-level: the pending create carries the baseline ids captured at request time and the console reconciles through the helper.
+  const consoleSource = readFileSync(new URL("../components/AppearanceConsole.tsx", import.meta.url), "utf8");
+  assert.match(consoleSource, /kind: "create"; baseline_ids: string\[\]; input: AppearanceRuleInput/);
+  assert.match(consoleSource, /kind: "create", baseline_ids: rules\.map\(\(rule\) => rule\.id\), input/);
+  assert.match(consoleSource, /reconcileAppearanceCreate\(pending, fresh\.rules\)/);
+  assert.doesNotMatch(consoleSource, /fresh\.rules\.find\(\(rule\) => appearanceRuleMaterialMatches\(rule, pending\.input\)\)/, "material alone never closes the draft");
 });
