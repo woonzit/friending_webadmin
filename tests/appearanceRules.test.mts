@@ -678,7 +678,7 @@ test("every action decodes Core's exact legacy envelope or the bridge refusal â€
     assert.deepEqual(decoded, { ok: false, kind: "uncertain", error }, error);
   }
   const withData = decodeAppearanceListResponse({ ...coreRefusal("appearance-rule-conflict", 409), data: { revision: 4 } });
-  assert.deepEqual(withData, { ok: false, kind: "refused", error: "appearance-rule-conflict", status: 409 });
+  assert.deepEqual(withData, { ok: false, kind: "uncertain", error: "refusal-with-data" }, "the wire contracts no refusal material");
   assert.deepEqual(decodeAppearanceListResponse(coreRefusal("appearance-rule-read-failed", 503)), { ok: false, kind: "uncertain", error: "appearance-rule-read-failed" });
 
   assert.ok(decodeAppearancePreviewResponse(envelope(previewPayload())).ok);
@@ -759,6 +759,19 @@ test("the refusal vocabulary is closed: unknown names and wrong statuses are unc
     assert.deepEqual(decode(coreRefusal("appearance-rule-not-found", 409)), { ok: false, kind: "uncertain", error: "unknown-refusal" });
     assert.deepEqual(decode({ success: false, status_code: 500, error: "admin-write-required" }), { ok: false, kind: "uncertain", error: "unknown-refusal" });
     assert.deepEqual(decode({ success: false, status_code: 504, error: "core-unavailable" }), { ok: false, kind: "uncertain", error: "unknown-refusal" }, "a transport name at the wrong status is still uncertain");
+    // Envelope-source closure: a Core name in the bridge's three-key shape, a bridge name in the
+    // legacy Core trio shape, and a known Core error carrying additive `data` are all uncertain.
+    assert.deepEqual(decode({ success: false, status_code: 409, error: "appearance-rule-conflict" }), { ok: false, kind: "uncertain", error: "unknown-refusal" }, "Core name in bridge shape");
+    assert.deepEqual(decode({ success: false, status_code: 404, error: "appearance-rule-not-found" }), { ok: false, kind: "uncertain", error: "unknown-refusal" });
+    assert.deepEqual(decode({ success: false, status_code: 503, error: "appearance-rule-write-failed" }), { ok: false, kind: "uncertain", error: "unknown-refusal" }, "Core 503 name in bridge shape is not a named uncertainty either");
+    assert.deepEqual(decode(coreRefusal("invalid-input", 400)), { ok: false, kind: "uncertain", error: "unknown-refusal" }, "bridge name in Core shape");
+    assert.deepEqual(decode(coreRefusal("not-found", 404)), { ok: false, kind: "uncertain", error: "unknown-refusal" });
+    assert.deepEqual(decode(coreRefusal("core-timeout", 504)), { ok: false, kind: "uncertain", error: "unknown-refusal" }, "bridge transport name in Core shape");
+    assert.deepEqual(decode({ ...coreRefusal("appearance-rule-conflict", 409), data: { anything: "accepted" } }), { ok: false, kind: "uncertain", error: "refusal-with-data" }, "known Core error with additive data");
+    assert.deepEqual(decode({ ...coreRefusal("appearance-rule-not-found", 404), data: {} }), { ok: false, kind: "uncertain", error: "refusal-with-data" });
+    assert.deepEqual(decode({ ...coreRefusal("appearance-rule-conflict", 409), data: { revision: 4 }, extra: 1 }), { ok: false, kind: "uncertain", error: "malformed-envelope" });
+    // `admin-write-required` is legitimately emitted by both sources at 403.
+    assert.deepEqual(decode(coreRefusal("admin-write-required", 403)), { ok: false, kind: "refused", error: "admin-write-required", status: 403 });
     // Core's 503 family: the write may have landed.
     assert.deepEqual(decode(coreRefusal("appearance-rule-write-failed", 503)), { ok: false, kind: "uncertain", error: "appearance-rule-write-failed" });
     assert.deepEqual(decode(coreRefusal("appearance-rule-audit-write-failed", 503)), { ok: false, kind: "uncertain", error: "appearance-rule-audit-write-failed" });

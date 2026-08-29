@@ -1380,14 +1380,14 @@ const CORE_VALIDATION_REFUSALS = [
 ] as const;
 
 /**
- * Closed refusal vocabulary: every machine name Core (T-467
- * `AppearanceRulesAdminException`) or the bridge (`app/api/admin/[action]`)
- * can answer with, bound to its exact `status_code`. A refusal proves the
- * write did not land. Anything outside this table — an unknown name, a known
- * name with another status — is UNCERTAIN and triggers the authoritative
- * reload instead of unlocking a retry.
+ * Closed Core refusal vocabulary (T-467 `AppearanceRulesAdminException` and
+ * the Webadmin actor/editor gates): every machine name bound to its exact
+ * `status_code`. A refusal proves the write did not land. It is consulted
+ * ONLY after the exact legacy Core envelope parsed — a Core name inside a
+ * bridge-shaped envelope is never a refusal. Provisional until compared with
+ * codex-api's published `done` and fixtures.
  */
-export const APPEARANCE_REFUSAL_STATUSES: ReadonlyMap<string, number> = new Map<string, number>([
+export const APPEARANCE_CORE_REFUSAL_STATUSES: ReadonlyMap<string, number> = new Map<string, number>([
   ...CORE_VALIDATION_REFUSALS.map((error): [string, number] => [error, 422]),
   ["appearance-rule-conflict", 409],
   ["appearance-rule-global-protected", 409],
@@ -1395,23 +1395,10 @@ export const APPEARANCE_REFUSAL_STATUSES: ReadonlyMap<string, number> = new Map<
   ["admin-write-required", 403],
   ["admin-session-invalid", 401],
   ["admin-revoked", 403],
-  // Bridge refusals (`app/api/admin/[action]/route.ts`).
-  ["invalid-input", 400],
-  ["auth-required", 401],
-  ["bad-origin", 403],
-  ["not-found", 404],
-  ["too-large", 413],
 ]);
 
-/**
- * Answers after which a write may still have landed: the bridge's transport
- * trio and Core's 503 family (`AppearanceRulesAdminService` storage, audit,
- * schema and geocode failures). Bound to their exact statuses as well.
- */
-export const APPEARANCE_UNCERTAIN_STATUSES: ReadonlyMap<string, number> = new Map<string, number>([
-  ["core-timeout", 504],
-  ["core-unavailable", 502],
-  ["invalid-core-response", 502],
+/** Core answers after which a write may still have landed (the 503 family). */
+export const APPEARANCE_CORE_UNCERTAIN_STATUSES: ReadonlyMap<string, number> = new Map<string, number>([
   ["appearance-rule-admin-unavailable", 503],
   ["appearance-rule-schema-unavailable", 503],
   ["appearance-rule-stored-invalid", 503],
@@ -1421,21 +1408,59 @@ export const APPEARANCE_UNCERTAIN_STATUSES: ReadonlyMap<string, number> = new Ma
   ["appearance-city-geocode-unavailable", 503],
 ]);
 
+/**
+ * Closed bridge refusal vocabulary (`app/api/admin/[action]/route.ts`), bound
+ * to exact statuses and consulted ONLY after the exact three-key bridge
+ * envelope parsed. Every bridge refusal is answered before Core is called.
+ */
+export const APPEARANCE_BRIDGE_REFUSAL_STATUSES: ReadonlyMap<string, number> = new Map<string, number>([
+  ["invalid-input", 400],
+  ["auth-required", 401],
+  ["bad-origin", 403],
+  ["admin-write-required", 403],
+  ["not-found", 404],
+  ["too-large", 413],
+]);
+
+/** The bridge's transport trio: Core was called and its answer is unknown. */
+export const APPEARANCE_BRIDGE_UNCERTAIN_STATUSES: ReadonlyMap<string, number> = new Map<string, number>([
+  ["core-timeout", 504],
+  ["core-unavailable", 502],
+  ["invalid-core-response", 502],
+]);
+
 function uncertain(error: string): AppearanceUncertain {
   return { ok: false, kind: "uncertain", error };
 }
 
-function classifyRefusal(error: string, status: number): AppearanceRefusal | AppearanceUncertain {
-  if (APPEARANCE_REFUSAL_STATUSES.get(error) === status) return { ok: false, kind: "refused", error, status };
-  if (APPEARANCE_UNCERTAIN_STATUSES.get(error) === status) return uncertain(error);
+function classifyRefusal(
+  error: string,
+  status: number,
+  refusals: ReadonlyMap<string, number>,
+  uncertains: ReadonlyMap<string, number>,
+): AppearanceRefusal | AppearanceUncertain {
+  if (refusals.get(error) === status) return { ok: false, kind: "refused", error, status };
+  if (uncertains.get(error) === status) return uncertain(error);
   return uncertain("unknown-refusal");
 }
 
+/**
+ * Envelope-source and material closure: the bridge map applies only to the
+ * exact three-key bridge envelope, the Core map only to the exact legacy trio
+ * envelope WITHOUT `data`. The binding wire contracts no refusal material, so a
+ * known Core error carrying additive `data` is uncertain, never a proven
+ * no-land; anything else is malformed.
+ */
 function decodeRefusal(value: unknown): AppearanceRefusal | AppearanceUncertain | null {
   const bridge = adminBridgeErrorEnvelope(value);
-  if (bridge) return classifyRefusal(bridge.error, bridge.status_code);
-  const core = webadminErrorEnvelope(value, "forbidden") ?? webadminErrorEnvelope(value, "required");
-  return core ? classifyRefusal(core.error, core.status_code) : null;
+  if (bridge) {
+    return classifyRefusal(bridge.error, bridge.status_code, APPEARANCE_BRIDGE_REFUSAL_STATUSES, APPEARANCE_BRIDGE_UNCERTAIN_STATUSES);
+  }
+  const core = webadminErrorEnvelope(value, "forbidden");
+  if (core) {
+    return classifyRefusal(core.error, core.status_code, APPEARANCE_CORE_REFUSAL_STATUSES, APPEARANCE_CORE_UNCERTAIN_STATUSES);
+  }
+  return webadminErrorEnvelope(value, "required") ? uncertain("refusal-with-data") : null;
 }
 
 function decodeMaterial<T>(value: unknown, parse: (data: unknown) => T | null): AppearanceDecode<T> {
