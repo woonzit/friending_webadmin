@@ -1590,6 +1590,16 @@
               "2": "Élesítés előtt ellenőrizd az illeszkedő hatókört, a palettamintákat és a hero-listát."
             },
             "guidance": "Az előnézetet a Core számolja, nem a böngésző, ezért a futtatás pillanatában tárolt szabályokat tükrözi."
+          },
+          "saving": {
+            "title": "Mentés, ütközés és bizonytalan eredmény",
+            "purpose": "Minden mentés magával viszi a betöltött revíziót, így a Core csak akkor fogadja el, amíg közben senki más nem módosította ugyanazt a szabályt.",
+            "actions": {
+              "1": "Akkor ments, amikor az előnézet a várt tartalmat mutatja; a visszajelzés megnevezi a szabályt és az új revíziót.",
+              "2": "Ütközés jelzése után töltsd újra a szabályt, alkalmazd a módosításodat a friss tartalomra, és ments újra.",
+              "3": "Időtúllépés vagy megszakadt kapcsolat után töltsd újra az oldalt, és nézd meg, átment-e a módosítás, mielőtt újrapróbálod."
+            },
+            "guidance": "Az ütközés (HTTP 409) azt jelenti, hogy a szabály közben megváltozott a szerveren, és a vázlatod nem íródott ki. A bizonytalan eredmény azt jelenti, hogy a válasz nem érkezett meg: a konzol a hiteles állapotot tölti újra, ahelyett hogy kétszer küldené el ugyanazt, így szabály sosem jön létre vagy módosul duplán."
           }
         }
       },

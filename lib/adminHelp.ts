@@ -221,7 +221,7 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "appearance",
     route: "/appearance",
-    sections: ["rules", "targeting", "window", "landing", "hero", "palette", "mapSearch", "testPreview"],
+    sections: ["rules", "targeting", "window", "landing", "hero", "palette", "mapSearch", "testPreview", "saving"],
     matches: exact("/appearance"),
   },
   {

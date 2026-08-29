@@ -1590,6 +1590,16 @@
               "2": "Check the matched scope, the palette swatches and the hero list before going live."
             },
             "guidance": "The preview is computed by Core, not the browser, so it reflects the stored rules of the moment you run it."
+          },
+          "saving": {
+            "title": "Saving, conflicts and uncertain results",
+            "purpose": "Every save carries the revision you loaded, so Core accepts it only while nobody else has changed that rule in the meantime.",
+            "actions": {
+              "1": "Save once the preview shows what you expect; the confirmation names the rule and its new revision.",
+              "2": "After a conflict notice, reload the rule, re-apply your change on the fresh content and save again.",
+              "3": "After a timeout or a lost connection, reload the page and check whether the change landed before you retry."
+            },
+            "guidance": "A conflict (HTTP 409) means the rule moved on the server and your draft was not written. An uncertain result means the answer never arrived: the console reloads the authoritative state instead of sending the same change twice, so a rule is never created or edited in duplicate."
           }
         }
       },
