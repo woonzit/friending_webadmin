@@ -406,6 +406,17 @@ test("landing inherits per field (Amendment v1.5) with the language fallback and
   const fallback = resolveAppearanceLanding([{ description_en: "Only English" }], { ...APPEARANCE_DEFAULT_LANDING, description_hu: "" }, "hu");
   assert.equal(fallback.description, "Only English");
 
+  // T-467b finding 17: a higher layer's English never outranks a lower layer's requested language.
+  const crossLayer = [{ description_en: "Geo English", title_text_en: "Geo title" }, { description_hu: "Globális leírás", title_text_hu: "Globális cím" }];
+  const crossHu = resolveAppearanceLanding(crossLayer, { ...APPEARANCE_DEFAULT_LANDING, description_hu: "", title_text_hu: "" }, "hu");
+  assert.equal(crossHu.description, "Globális leírás");
+  assert.equal(crossHu.titleText, "Globális cím");
+  const crossEn = resolveAppearanceLanding(crossLayer, APPEARANCE_DEFAULT_LANDING, "en");
+  assert.equal(crossEn.description, "Geo English");
+  assert.equal(crossEn.titleText, "Geo title");
+  const noHungarian = resolveAppearanceLanding([{ description_en: "Geo English" }, { description_en: "Global English" }], { ...APPEARANCE_DEFAULT_LANDING, description_hu: "" }, "hu");
+  assert.equal(noHungarian.description, "Geo English", "English falls back only when the whole chain has no Hungarian");
+
   const defaultsOnly = resolveAppearanceLanding([], APPEARANCE_DEFAULT_LANDING, "hu");
   assert.equal(defaultsOnly.titleText, "friending.");
   assert.equal(defaultsOnly.description, APPEARANCE_DEFAULT_LANDING.description_hu);
@@ -471,6 +482,28 @@ test("the save-time pairing rule is applied before Core sees the body", () => {
   assert.equal(parseAppearanceRuleInput({ ...rule, landing: { background_type: "video" } }), null);
   assert.equal(parseAppearanceRuleInput({ ...rule, landing: { background_url: "https://cdn.friending.co/a.mp4" } }), null);
   assert.equal(parseAppearanceRuleInput({ ...rule, landing: { title_type: "image" } }), null);
+});
+
+test("loosely typed rule scalars are refused at the proxy with their exact wire types", () => {
+  const geo = appearanceRuleInputFromDraft(appearanceRuleDraft(parseAppearanceRule(geoRule())!));
+  const global = appearanceRuleInputFromDraft(appearanceRuleDraft(parseAppearanceRule(wireRule())!));
+  assert.ok(geo && global);
+  assert.ok(parseAppearanceRuleInput(geo));
+  assert.ok(parseAppearanceRuleInput(global));
+  assert.equal(parseAppearanceRuleInput({ ...geo, starts_at: "" }), null, "an empty string is not a nullable timestamp");
+  assert.equal(parseAppearanceRuleInput({ ...geo, ends_at: "" }), null);
+  assert.equal(parseAppearanceRuleInput({ ...geo, priority: "3" }), null, "decimal string priority");
+  assert.equal(parseAppearanceRuleInput({ ...geo, priority: 3.5 }), null, "fractional priority");
+  assert.equal(parseAppearanceRuleInput({ ...geo, radius_km: "25" }), null, "string radius");
+  assert.equal(parseAppearanceRuleInput({ ...geo, active: "true" }), null, "string flag");
+  assert.equal(parseAppearanceRuleInput({ ...geo, storefront_country: null }), null, "null in a string position");
+  assert.equal(parseAppearanceRuleInput({ ...geo, center: { latitude: "47.5", longitude: 19.04 } }), null, "string coordinate");
+  assert.equal(parseAppearanceRuleInput({ ...global, center: "" }), null, "empty string in a null position");
+  assert.equal(parseAppearanceRuleInput({ ...global, radius_km: "" }), null);
+  assert.equal(parseAppearanceRuleInput({ ...global, radius_km: 0 }), null, "zero is not the neutral radius");
+  assert.equal(parseAppearanceRuleInput({ ...global, place_label: null }), null);
+  assert.equal(parseAppearanceRuleInput({ ...global, country_code: null }), null);
+  assert.equal(parseAppearanceRuleInput({ ...global, center: [] }), null, "an array is not null");
 });
 
 test("a rule round-trips through the editor draft into the exact fourteen-key save body", () => {

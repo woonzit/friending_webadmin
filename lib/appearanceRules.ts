@@ -433,8 +433,9 @@ export function parseAppearanceTimestamp(value: unknown): string | null {
   return new Date(millis).toISOString().replace(/\.\d{3}Z$/, "Z") === value ? value : null;
 }
 
+/** `null` or an exact UTC timestamp; an empty string is not a nullable timestamp. */
 function nullableTimestamp(value: unknown): string | null | undefined {
-  if (value === null || value === "") return null;
+  if (value === null) return null;
   const parsed = parseAppearanceTimestamp(value);
   return parsed === null ? undefined : parsed;
 }
@@ -621,18 +622,24 @@ export function parseAppearanceFullPalette(value: unknown): AppearanceFullPalett
 
 type ScopeFields = Pick<AppearanceRuleInput, "storefront_country" | "country_code" | "center" | "radius_km" | "place_label">;
 
+/**
+ * Scope-neutral fields carry their exact wire type: an empty string for
+ * `storefront_country`, `country_code` and `place_label`, `null` for `center`
+ * and `radius_km`. `null`, `""` and a missing key are not interchangeable.
+ */
 function parseScopeFields(scope: AppearanceScope, source: Record<string, unknown>): ScopeFields | null {
-  const neutral = (value: unknown) => value === null || value === "" || value === undefined;
+  const blank = (value: unknown) => value === "";
+  const absent = (value: unknown) => value === null;
   if (scope === "storefront") {
     const storefront = typeof source.storefront_country === "string" ? source.storefront_country : "";
     if (!isAppearanceStorefront(storefront)) return null;
-    if (!neutral(source.country_code) || !neutral(source.center) || !neutral(source.radius_km) || !neutral(source.place_label)) return null;
+    if (!blank(source.country_code) || !absent(source.center) || !absent(source.radius_km) || !blank(source.place_label)) return null;
     return { storefront_country: storefront, country_code: "", center: null, radius_km: null, place_label: "" };
   }
   if (scope === "geo") {
-    if (!neutral(source.storefront_country)) return null;
+    if (!blank(source.storefront_country)) return null;
     let country = "";
-    if (!neutral(source.country_code)) {
+    if (!blank(source.country_code)) {
       if (typeof source.country_code !== "string" || !isAppearanceAlpha2(source.country_code)) return null;
       country = source.country_code;
     }
@@ -642,9 +649,8 @@ function parseScopeFields(scope: AppearanceScope, source: Record<string, unknown
     if (!center || radius === null || placeLabel === null) return null;
     return { storefront_country: "", country_code: country, center, radius_km: radius, place_label: placeLabel };
   }
-  for (const field of ["storefront_country", "country_code", "center", "radius_km", "place_label"] as const) {
-    if (!neutral(source[field])) return null;
-  }
+  if (!blank(source.storefront_country) || !blank(source.country_code) || !blank(source.place_label)
+    || !absent(source.center) || !absent(source.radius_km)) return null;
   return { storefront_country: "", country_code: "", center: null, radius_km: null, place_label: "" };
 }
 
