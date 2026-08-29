@@ -73,9 +73,10 @@ test("exact and dynamic routes resolve to the intended guide and nothing generic
 
 test("every inventoried functional section has detailed English and Hungarian help", async () => {
   const totalSections = ADMIN_HELP_PAGES.reduce((sum, page) => sum + page.sections.length, 0);
-  // 237 in the combined dormant release: T-218 adds the feature-switch family
-  // guidance, and T-219 adds the independent admin-granted verification guide.
-  assert.equal(totalSections, 237, "review the functional-section census when the UI changes");
+  // 238 in the combined dormant release: T-218 adds the feature-switch family
+  // guidance, T-219 the independent admin-granted verification guide, and T-471
+  // the forced verification / Waiting Room tab of the Verification console.
+  assert.equal(totalSections, 238, "review the functional-section census when the UI changes");
 
   for (const locale of ["en", "hu"]) {
     const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));

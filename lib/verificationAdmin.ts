@@ -3,6 +3,7 @@ import {
   webadminDataSuccessEnvelope,
   webadminErrorEnvelope,
 } from "@/lib/webadminEnvelope";
+import { FORCED_VERIFICATION_CONTRACT_READY } from "@/lib/contractReadiness";
 
 /** Accepted Verification Policy v1 contract. Every vocabulary is closed. */
 export const VERIFICATION_CONTRACT_VERSION = 1 as const;
@@ -18,7 +19,16 @@ export const VERIFICATION_GATE_VARIANTS = ["video", "persona", "both", "pending"
 export const VERIFICATION_BADGE_SLOTS = ["light", "strong", "pending"] as const;
 export const VERIFICATION_LOCALES = ["en", "hu"] as const;
 export const VERIFICATION_PROVENANCE = ["derived", "imported", "granted"] as const;
-export const VERIFICATION_TAB_KEYS = ["scopes", "requirements", "messages", "badges", "simulator"] as const;
+/** Every console tab, including the D-053 "Forced & waiting room" tab (T-471). */
+export const VERIFICATION_TAB_KEYS_ALL = ["scopes", "requirements", "messages", "badges", "simulator", "forced"] as const;
+/**
+ * The tabs that exist in this release: `forced` joins only after the lead
+ * flips `FORCED_VERIFICATION_CONTRACT_READY`; until then `?tab=forced` falls
+ * back to Scopes and the tab strip is unchanged.
+ */
+export const VERIFICATION_TAB_KEYS: readonly VerificationTabKey[] = FORCED_VERIFICATION_CONTRACT_READY
+  ? VERIFICATION_TAB_KEYS_ALL
+  : VERIFICATION_TAB_KEYS_ALL.filter((key) => key !== "forced");
 export const VERIFICATION_FEATURE_KEYS = [
   "people.list",
   "profile.view",
@@ -92,7 +102,7 @@ export type VerificationGateVariant = (typeof VERIFICATION_GATE_VARIANTS)[number
 export type VerificationBadgeSlot = (typeof VERIFICATION_BADGE_SLOTS)[number];
 export type VerificationLocale = (typeof VERIFICATION_LOCALES)[number];
 export type VerificationProvenance = (typeof VERIFICATION_PROVENANCE)[number];
-export type VerificationTabKey = (typeof VERIFICATION_TAB_KEYS)[number];
+export type VerificationTabKey = (typeof VERIFICATION_TAB_KEYS_ALL)[number];
 export type VerificationFeatureKey = (typeof VERIFICATION_FEATURE_KEYS)[number];
 export type VerificationCapability = (typeof VERIFICATION_CAPABILITIES)[number];
 export type VerificationAction = (typeof VERIFICATION_ADMIN_ACTIONS)[number];

@@ -16,6 +16,10 @@ import {
   normalizeFeatureSwitchesProxyBody,
 } from "@/lib/featureSwitches";
 import {
+  forcedVerificationProxyCapabilityAuthorized,
+  normalizeForcedVerificationProxyBody,
+} from "@/lib/forcedVerification";
+import {
   normalizeProfileTextModerationProxyBody,
   profileTextModerationProxyCapabilityAuthorized,
 } from "@/lib/profileTextModeration";
@@ -125,6 +129,10 @@ export async function POST(
   if (adminGrantedVerificationAuthorized === false) {
     return bridgeError("verification-capability-required", 403);
   }
+  const forcedVerificationAuthorized = forcedVerificationProxyCapabilityAuthorized(action, membership.data);
+  if (forcedVerificationAuthorized === false) {
+    return bridgeError("verification-capability-required", 403);
+  }
   const audienceVisibilityAuthorized = audienceVisibilityProxyCapabilityAuthorized(action, membership.data);
   if (audienceVisibilityAuthorized === false) {
     return bridgeError("catalog-admin-capability-required", 403);
@@ -189,6 +197,12 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedAuthPolicyBody !== undefined) body = normalizedAuthPolicyBody;
+
+  const normalizedForcedVerificationBody = normalizeForcedVerificationProxyBody(action, body);
+  if (normalizedForcedVerificationBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedForcedVerificationBody !== undefined) body = normalizedForcedVerificationBody;
 
   const normalizedVerificationBody = normalizeVerificationProxyBody(
     action,

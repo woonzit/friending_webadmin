@@ -870,6 +870,7 @@ test("English and Hungarian UI and eleven Help topics stay key-identical and cov
     "badges",
     "simulator",
     "teamGrant",
+    "forcedWaitingRoom",
     "conflictsAndRetry",
     "privacyAndAudit",
   ];
@@ -900,4 +901,12 @@ test("English and Hungarian UI and eleven Help topics stay key-identical and cov
     "rózsaszín pecsét",
   ]) assert.match(help, new RegExp(evidence.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), evidence);
   assert.doesNotMatch(help, /all eleven|mind a tizenegy|dormant|nyugalmi|local calculation|helyi számítás/i);
+});
+
+test("the forced tab exists only behind the D-053 release switch (T-471)", async () => {
+  const { VERIFICATION_TAB_KEYS_ALL } = await import("../lib/verificationAdmin.ts");
+  const { FORCED_VERIFICATION_CONTRACT_READY } = await import("../lib/contractReadiness.ts");
+  assert.deepEqual(VERIFICATION_TAB_KEYS_ALL, ["scopes", "requirements", "messages", "badges", "simulator", "forced"]);
+  assert.equal(VERIFICATION_TAB_KEYS.includes("forced"), FORCED_VERIFICATION_CONTRACT_READY);
+  assert.equal(verificationTabKey("forced"), FORCED_VERIFICATION_CONTRACT_READY ? "forced" : "scopes", "a dormant tab falls back to Scopes");
 });

@@ -12441,3 +12441,29 @@ body .verification-level-pill.level-strong {
     width: 100%;
   }
 }
+
+/* Verification console → Forced & waiting room (T-471, D-053). */
+.forced-workspace { display: grid; gap: 20px; }
+.forced-rule-table th select { min-width: 220px; }
+.forced-rule-table td { vertical-align: middle; }
+.forced-switch { display: inline-flex; }
+.forced-subheading { margin: 0; font-size: 14px; font-weight: 800; }
+.forced-section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.forced-copy-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+.forced-copy-override { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft); }
+.forced-copy-counter.is-over { color: #ef6c66; }
+.forced-inline-field { min-width: 260px; }
+.forced-phone-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 300px)); justify-content: center; gap: 20px; }
+.forced-phone { position: relative; display: grid; align-content: start; gap: 12px; min-height: 560px; margin: 0; padding: 44px 22px 18px; border: 1px solid; border-radius: 34px; text-align: center; }
+.forced-phone-status { position: absolute; top: 14px; right: 22px; left: 22px; display: flex; justify-content: space-between; font-size: 10px; font-weight: 800; }
+.forced-phone-illustration { display: grid; place-items: center; width: 120px; height: 120px; margin: 8px auto 4px; border-radius: 50%; }
+.forced-phone-illustration span { display: block; width: 54px; height: 54px; border-radius: 18px; opacity: 0.85; }
+.forced-phone-title { margin: 0; font-size: 22px; font-weight: 800; line-height: 1.15; }
+.forced-phone-subtitle { margin: 0; font-size: 13.5px; font-weight: 700; }
+.forced-phone-description { max-height: 150px; margin: 0; overflow: auto; font-size: 13px; line-height: 1.45; }
+.forced-phone-actions { display: grid; gap: 10px; margin-top: auto; }
+.forced-phone-button { display: block; padding: 14px 16px; border: 1.5px solid; border-radius: 27px; font-size: 14px; font-weight: 800; }
+.forced-phone-note { font-size: 12px; }
+.forced-phone-footer { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; font-size: 11px; font-weight: 600; }
+.forced-save-bar { display: grid; justify-items: end; gap: 8px; }
+@media (max-width: 900px) { .forced-copy-grid { grid-template-columns: 1fr; } }

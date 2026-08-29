@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import ForcedVerificationTab from "@/components/ForcedVerificationTab";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
+import { type ForcedVerificationAccess } from "@/lib/forcedVerification";
 import {
   VERIFICATION_BADGE_SLOTS,
   VERIFICATION_FEATURE_KEYS,
@@ -175,8 +177,10 @@ function badgeSymbol(slot: VerificationBadgeSlot): string {
   return slot === "strong" ? "◆" : "✓";
 }
 
-export default function VerificationAdminConsole({ initialTab }: { initialTab: VerificationTabKey }) {
+export default function VerificationAdminConsole({ initialTab, forced }: { initialTab: VerificationTabKey; forced: ForcedVerificationAccess }) {
   const t = useTranslations("verificationAdmin");
+  /** The D-053 tab exists only when the release switch is on AND Core lists the console action for this operator. */
+  const tabs = useMemo(() => VERIFICATION_TAB_KEYS.filter((key) => key !== "forced" || forced.visible), [forced.visible]);
   const locale = useLocale() === "hu" ? "hu" : "en";
   const [tab, setTab] = useState<VerificationTabKey>(initialTab);
   const [state, setState] = useState<LoadState>("loading");
@@ -655,7 +659,7 @@ export default function VerificationAdminConsole({ initialTab }: { initialTab: V
   if (state === "error" || !data || !summary) return <ErrorPanel message={t("live.loadError")} retry={load} />;
 
   const locked = busy || pending !== null;
-  const tabIndex = VERIFICATION_TAB_KEYS.indexOf(tab);
+  const tabIndex = tabs.indexOf(tab);
   const copyLocale = copyDraft?.locales[copyEditorLocale];
   const copyVariant = VERIFICATION_GATE_VARIANTS.find((variant) => selectedCopy.endsWith(`.${variant}`)) ?? "video";
   const copyPreviewIcon = copyVariant === "pending" ? "◷" : copyVariant === "rejected" ? "!" : copyVariant === "both" ? "1·2" : "✓";
@@ -666,9 +670,9 @@ export default function VerificationAdminConsole({ initialTab }: { initialTab: V
   function tabKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
-    const index = event.key === "Home" ? 0 : event.key === "End" ? VERIFICATION_TAB_KEYS.length - 1
-      : (tabIndex + (event.key === "ArrowRight" ? 1 : -1) + VERIFICATION_TAB_KEYS.length) % VERIFICATION_TAB_KEYS.length;
-    const next = VERIFICATION_TAB_KEYS[index];
+    const index = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1
+      : (tabIndex + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    const next = tabs[index];
     selectTab(next);
     document.getElementById(`verification-tab-${next}`)?.focus();
   }
@@ -680,7 +684,7 @@ export default function VerificationAdminConsole({ initialTab }: { initialTab: V
       {pending ? <div className="alert alert-info page-alert"><strong>{t("live.pendingMutation")}</strong> {pending.action} · {pending.target} <button type="button" className="button button-secondary button-small" disabled={busy} onClick={() => void executeMutation(pending)}>{t("live.retryExact")}</button></div> : null}
       {notice ? <div className={`alert alert-${notice.tone} page-alert`} role="status">{notice.text}</div> : null}
       <div className="verification-tabs" role="tablist" aria-label={t("tabs.label")}>
-        {VERIFICATION_TAB_KEYS.map((value) => <button id={`verification-tab-${value}`} type="button" role="tab" aria-selected={tab === value} tabIndex={tab === value ? 0 : -1} className={tab === value ? "active" : ""} key={value} onKeyDown={tabKeyDown} onClick={() => selectTab(value)}>{t(`tabs.${value}`)}</button>)}
+        {tabs.map((value) => <button id={`verification-tab-${value}`} type="button" role="tab" aria-selected={tab === value} tabIndex={tab === value ? 0 : -1} className={tab === value ? "active" : ""} key={value} onKeyDown={tabKeyDown} onClick={() => selectTab(value)}>{t(`tabs.${value}`)}</button>)}
       </div>
 
       <div role="tabpanel" aria-labelledby={`verification-tab-${tab}`}>
@@ -822,6 +826,8 @@ export default function VerificationAdminConsole({ initialTab }: { initialTab: V
             <label className="field"><span>{t("live.reason")}</span><textarea disabled={locked || !can("verification_badge_edit")} maxLength={300} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
           </div>
         </section> : null}
+
+        {tab === "forced" && forced.visible ? <ForcedVerificationTab access={forced} locked={locked} /> : null}
 
         {tab === "simulator" ? <div className="section-grid">
           <section className="panel">

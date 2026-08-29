@@ -130,6 +130,7 @@ export const ADMIN_HELP_PAGES = [
       "badges",
       "simulator",
       "teamGrant",
+      "forcedWaitingRoom",
       "conflictsAndRetry",
       "privacyAndAudit",
     ],
