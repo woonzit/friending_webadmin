@@ -43,13 +43,15 @@ const UUID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 const OTHER_UUID = "7b5f2a11-2c3d-4e5f-8a9b-0c1d2e3f4a5b";
 const FIXTURE_DIRECTORY = new URL("./fixtures/feature_switches_wire/", import.meta.url);
 
-// Body identity is the 43 released wire blobs plus their aggregate set hash.
-// Manifest provenance is pinned separately so a scoped Core source change
-// cannot be reported as a body change when the published wire stays stable.
-const FIXTURE_SOURCE_COMMIT = "da63c74f58ed93430dda0d0f417e028c45080f59";
+// Copied byte-identically from the lead-accepted Core tip. Body identity is
+// pinned separately so provenance-only manifest moves cannot be mistaken for
+// changes to the 43 released wire blobs.
+const FIXTURE_ACCEPTED_CORE_TIP = "fab53c14afd5191438b59ccc4e52d0da81a0d315";
+const FIXTURE_SOURCE_COMMIT = "b50432bd04b571f52d6191bd4feac4a6cc376085";
 const FIXTURE_CONTRACT_MANIFEST_SHA256 = "97e0601d25e941af0d126978a3a4a1d26858e8ec3b1a0bd1e79a8c05fe2611e2";
 const FIXTURE_GENERATOR_SHA256 = "cac1e46f08f10a226da47911baff68f7f719bdde91f9a4249f936f1c80a07a52";
 const FIXTURE_SET_SHA256 = "3022e10eb8c5a3316273765755324825d8a44c71ad9ca2d1e9c1a04c761f545e";
+const FIXTURE_MANIFEST_SHA256 = "65b424c5693a036da5b834af04537c012997f65b9326ec5c0b04f055982fa69e";
 const FIXTURE_BODY_COUNT = 43;
 
 const FIXTURE_BODY_FILES = [
@@ -223,7 +225,9 @@ function parsedState(overrides: Partial<FeatureSwitchesState> = {}): FeatureSwit
 }
 
 test("the released Core corpus is manifest-bound with body identity kept separate", async () => {
-  const manifest = await fixtureManifest();
+  const manifestWire = await readFile(new URL("manifest.json", FIXTURE_DIRECTORY), "utf8");
+  assert.equal(sha256(manifestWire), FIXTURE_MANIFEST_SHA256);
+  const manifest = JSON.parse(manifestWire) as Json;
   assert.deepEqual(Object.keys(manifest).sort(), [
     "contract_manifest_sha256",
     "contract_version",
@@ -319,6 +323,8 @@ test("the released Core corpus is manifest-bound with body identity kept separat
     { ios: 6, push: 5, webadmin: 32 },
   );
   assert.equal(sha256(aggregateRows.join("\n")), FIXTURE_SET_SHA256);
+  assert.match(FIXTURE_ACCEPTED_CORE_TIP, /^[0-9a-f]{40}$/);
+  assert.notEqual(FIXTURE_ACCEPTED_CORE_TIP, FIXTURE_SOURCE_COMMIT, "the accepted provenance tip follows its source commit");
 });
 
 test("every released corpus body is run through the production Webadmin decoders", async () => {

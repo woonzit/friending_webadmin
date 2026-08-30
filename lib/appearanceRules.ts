@@ -803,6 +803,23 @@ const APPEARANCE_LANDING_INTEGER_BOUNDS: Partial<Record<AppearanceLandingKey, re
   footer_size: [10, 18],
 };
 
+/** Fields whose draft values can reach `AppearanceLandingPreview` inline styles. */
+export const APPEARANCE_LANDING_PREVIEW_STYLE_KEYS = [
+  ...APPEARANCE_LANDING_COLOR_KEYS,
+  ...APPEARANCE_LANDING_ALPHA_KEYS,
+  ...APPEARANCE_LANDING_FONT_KEYS,
+  ...APPEARANCE_LANDING_ALIGN_KEYS,
+  "title_size",
+  "title_image_width_percent",
+  "title_image_offset_percent",
+  "description_size",
+  "button_corner_radius",
+  "button_phone_size",
+  "button_email_size",
+  "footer_size",
+  "button_apple_style",
+] as const satisfies readonly AppearanceLandingKey[];
+
 const LANDING_ALPHA = /^(?:0\.\d{2}|1\.00)$/;
 const LANDING_INTEGER = /^(?:0|[1-9]\d*|-[1-9]\d*)$/;
 
@@ -1761,6 +1778,33 @@ export function appearanceLandingWithTitleType(landing: AppearanceLandingDraft, 
   return next === landing.title_type ? landing : { ...landing, title_type: next };
 }
 
+export type AppearanceLandingBackgroundType = "image" | "video";
+
+/**
+ * A background-type choice is only an upload mode until matching media exists.
+ * Switching type therefore clears the stored pair atomically and returns the
+ * requested uploader separately; clearing media always returns both fields to
+ * inherit. The save-time coherence check remains the final guard.
+ */
+export function appearanceLandingBackgroundSelection(
+  landing: AppearanceLandingDraft,
+  selectedType: string,
+): {
+  draft: AppearanceLandingDraft;
+  pendingType: AppearanceLandingBackgroundType | null;
+} {
+  const pendingType = selectedType === "image" || selectedType === "video" ? selectedType : null;
+  if (pendingType !== null
+    && landing.background_type === pendingType
+    && appearanceTrim(landing.background_url) !== "") {
+    return { draft: landing, pendingType: null };
+  }
+  const draft = landing.background_type === "" && landing.background_url === ""
+    ? landing
+    : { ...landing, background_type: "", background_url: "" };
+  return { draft, pendingType };
+}
+
 export function appearanceLandingDraft(landing: AppearanceLanding): AppearanceLandingDraft {
   const draft = {} as AppearanceLandingDraft;
   for (const key of APPEARANCE_LANDING_KEYS) draft[key] = landing[key] ?? "";
@@ -1780,6 +1824,29 @@ export function appearanceLandingWire(draft: AppearanceLandingDraft): Appearance
     if (value !== "") wire[key] = value;
   }
   return wire;
+}
+
+/**
+ * Validate every style-bearing draft field before it can enter the local
+ * merge. Invalid values are omitted, so resolution falls back to the parent
+ * chain or compiled default; callers receive the exact fields to mark invalid.
+ */
+export function appearanceLandingPreviewDraft(draft: AppearanceLandingDraft): {
+  landing: AppearanceLanding;
+  invalidFields: AppearanceLandingKey[];
+} {
+  const landing = appearanceLandingWire(draft);
+  const invalidFields: AppearanceLandingKey[] = [];
+  for (const key of APPEARANCE_LANDING_PREVIEW_STYLE_KEYS) {
+    const raw = draft[key];
+    const trimmed = appearanceTrim(raw);
+    const invalid = !coreString(raw)
+      || (trimmed !== "" && ([...trimmed].length > LANDING_LIMITS[key] || !appearanceLandingFieldValid(key, trimmed)));
+    if (!invalid) continue;
+    delete landing[key];
+    invalidFields.push(key);
+  }
+  return { landing, invalidFields };
 }
 
 /**

@@ -13,13 +13,16 @@ import {
   APPEARANCE_LANDING_FONTS,
   APPEARANCE_LANDING_FLAT_SOURCE_SCOPES,
   APPEARANCE_LANDING_KEYS,
+  APPEARANCE_LANDING_PREVIEW_STYLE_KEYS,
   APPEARANCE_PALETTE_MODES,
   APPEARANCE_PALETTE_ROLES,
   appearanceLandingCoherent,
+  appearanceLandingBackgroundSelection,
   appearanceLandingDraft,
   appearanceFooterTextHasExactTags,
   appearancePreviewLandingFields,
   appearanceLandingWithTitleType,
+  appearanceLandingPreviewDraft,
   appearanceLandingWire,
   appearanceRuleDraft,
   appearanceRuleInputFromDraft,
@@ -745,6 +748,102 @@ test("the local D-061 merge resolves all flat fields and localized button/footer
     "Draft English",
     "Amendment v1.4a exhausts the HU rule chain and then the EN rule chain before either compiled default",
   );
+});
+
+test("the landing preview rejects malformed style strings and inherits safe values", () => {
+  const invalidValues = {
+    overlay_alpha: "1.25",
+    title_color: "red;background:url(x)",
+    title_font: "serif",
+    title_size: "12px;color:red",
+    title_align: "justify",
+    title_image_width_percent: "101",
+    title_image_offset_percent: "-41",
+    description_size: "41",
+    button_corner_radius: "33",
+    button_apple_style: "rainbow",
+    footer_size: "9",
+  } as const;
+  const draft = appearanceLandingDraft(invalidValues);
+  const preview = appearanceLandingPreviewDraft(draft);
+  assert.deepEqual(
+    [...preview.invalidFields].sort(),
+    Object.keys(invalidValues).sort(),
+  );
+  for (const key of preview.invalidFields) {
+    assert.equal(Object.hasOwn(preview.landing, key), false, `${key} cannot reach the preview merge`);
+  }
+
+  const parent = appearanceLandingDraft({
+    overlay_alpha: "0.20",
+    title_color: "#123456",
+    title_font: "system_bold",
+    title_size: "52",
+    title_align: "right",
+    title_image_width_percent: "75",
+    title_image_offset_percent: "5",
+    description_size: "20",
+    button_corner_radius: "12",
+    button_apple_style: "black",
+    footer_size: "14",
+  });
+  const resolved = resolveAppearanceLanding([preview.landing, parent], APPEARANCE_DEFAULT_LANDING, "en");
+  for (const [key, expected] of Object.entries(parent)) {
+    if (expected !== "") assert.equal(resolved.effective[key as keyof typeof parent], expected, key);
+  }
+  assert.equal(JSON.stringify(resolved.effective).includes("background:url"), false);
+  assert.equal(JSON.stringify(resolved.effective).includes("color:red"), false);
+
+  const valid = appearanceLandingPreviewDraft(appearanceLandingDraft({
+    overlay_alpha: "1.00",
+    title_color: "#AABBCC",
+    title_font: "proxima_regular",
+    title_size: "12",
+    title_align: "center",
+    title_image_width_percent: "100",
+    title_image_offset_percent: "-40",
+    button_corner_radius: "0",
+    button_apple_style: "white_outline",
+    footer_size: "18",
+  }));
+  assert.deepEqual(valid.invalidFields, []);
+  assert.equal(valid.landing.title_color, "#AABBCC");
+  assert.equal(new Set(APPEARANCE_LANDING_PREVIEW_STYLE_KEYS).size, APPEARANCE_LANDING_PREVIEW_STYLE_KEYS.length);
+});
+
+test("a background type remains a pending upload choice until media completes the pair", () => {
+  const blank = appearanceLandingDraft({});
+  const pendingVideo = appearanceLandingBackgroundSelection(blank, "video");
+  assert.equal(pendingVideo.pendingType, "video");
+  assert.equal(pendingVideo.draft.background_type, "");
+  assert.equal(pendingVideo.draft.background_url, "");
+  assert.equal(appearanceLandingCoherent(appearanceLandingWire(pendingVideo.draft)), true);
+
+  const image = appearanceLandingDraft({
+    background_type: "image",
+    background_url: "https://cdn.friending.co/background.jpg",
+  });
+  const switched = appearanceLandingBackgroundSelection(image, "video");
+  assert.equal(switched.pendingType, "video");
+  assert.equal(switched.draft.background_type, "");
+  assert.equal(switched.draft.background_url, "");
+
+  const unchanged = appearanceLandingBackgroundSelection(image, "image");
+  assert.equal(unchanged.pendingType, null);
+  assert.equal(unchanged.draft, image);
+
+  const cleared = appearanceLandingBackgroundSelection(image, "");
+  assert.equal(cleared.pendingType, null);
+  assert.equal(cleared.draft.background_type, "");
+  assert.equal(cleared.draft.background_url, "");
+
+  const repairedHalfPair = appearanceLandingBackgroundSelection(
+    appearanceLandingDraft({ background_type: "video" }),
+    "video",
+  );
+  assert.equal(repairedHalfPair.pendingType, "video");
+  assert.equal(repairedHalfPair.draft.background_type, "");
+  assert.equal(repairedHalfPair.draft.background_url, "");
 });
 
 test("the save-time pairing rule is applied before Core sees the body", () => {
@@ -1692,6 +1791,9 @@ test("the landing composer wires every closed field, parent-only v2 previews, PN
   const uploader = readFileSync(new URL("../components/ImageUploadField.tsx", import.meta.url), "utf8");
   const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
   for (const key of APPEARANCE_LANDING_KEYS) assert.ok(composer.includes(key), key);
+  for (const key of APPEARANCE_LANDING_PREVIEW_STYLE_KEYS) {
+    assert.ok(composer.includes(`previewError("${key}")`), `${key} needs its own preview validation error`);
+  }
   assert.match(composer, /appearance_schema:\s*2/);
   assert.match(composer, /exclude_rule_id/);
   assert.match(composer, /location_mode:\s*"none"/);
@@ -1705,6 +1807,11 @@ test("the landing composer wires every closed field, parent-only v2 previews, PN
   assert.match(composer, /source\.scope/);
   assert.match(composer, /title_text_hu:\s*contentByLanguage\.hu\.titleText/);
   assert.match(composer, /draftWire\[englishFallback\]/, "a local English draft fallback never receives invented Core provenance");
+  assert.match(composer, /appearanceLandingPreviewDraft\(rule\.landing\)/, "draft styles are validated before the local merge");
+  assert.match(composer, /invalidPreviewValue/, "invalid style fields receive an inline error");
+  assert.match(composer, /appearanceLandingBackgroundSelection\(rule\.landing, value\)/, "background type is only staged until an upload completes the pair");
+  assert.match(composer, /effectiveValueApproximate/, "non-authoritative inherited placeholders are labelled");
+  assert.match(composer, /parentState\.kind !== "ready" \|\| comparison\.kind === "loading"/, "Core comparison waits for an authoritative parent read");
   assert.match(composer, /\[targetKey, rule\.id, parentReload\]/);
   assert.match(composer, /compareAppearanceLandingWithPreview/);
   assert.match(testPreview, /appearance_schema:\s*2/);
@@ -1716,6 +1823,7 @@ test("the landing composer wires every closed field, parent-only v2 previews, PN
   assert.match(uploader, /invalidPngType/);
   assert.match(uploader, /logoTooLarge/);
   assert.match(preview, /fields\.qr_enabled === "true"/);
+  assert.match(preview, /appearanceLandingPreviewDraft\(content\.effective\)/, "the inline-style render boundary validates defensively too");
   assert.match(css, /\.appearance-landing-apple-button\.is-white_outline/);
   assert.match(preview, //);
   assert.match(css, /\.appearance-landing-composition-phone\s*\{[^}]*width:\s*390px;[^}]*height:\s*844px;/s);

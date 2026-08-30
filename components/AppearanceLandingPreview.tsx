@@ -2,7 +2,10 @@
 
 import { Fragment } from "react";
 import {
+  APPEARANCE_DEFAULT_LANDING,
+  appearanceLandingPreviewDraft,
   isAppearanceHttpsUrl,
+  resolveAppearanceLandingFields,
   type AppearanceFullPaletteValues,
   type ResolvedAppearanceLanding,
 } from "@/lib/appearanceRules";
@@ -72,7 +75,12 @@ export default function AppearanceLandingPreview({
   authMethods: AppearanceAuthPreviewMode;
   labels: AppearanceLandingPreviewLabels;
 }) {
-  const fields = content.effective;
+  // The composer already removes invalid draft styles so they inherit. Keep
+  // the render boundary defensive as this component also has other callers.
+  const fields = resolveAppearanceLandingFields(
+    [appearanceLandingPreviewDraft(content.effective).landing],
+    APPEARANCE_DEFAULT_LANDING,
+  );
   const hasBackground = isAppearanceHttpsUrl(content.backgroundUrl);
   const showPhone = authMethods === "both" || authMethods === "phone";
   const showEmail = authMethods === "both" || authMethods === "email";

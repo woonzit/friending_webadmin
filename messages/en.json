@@ -5867,6 +5867,8 @@
       "inherit": "Inherit",
       "effectiveValue": "Effective: {value}",
       "effectiveValueSource": "Effective: {value} · inherited from {source}",
+      "effectiveValueApproximate": "Approximate: {value} · parent read unavailable",
+      "invalidPreviewValue": "Invalid draft value. The preview is using the inherited or compiled-default value.",
       "inheritValue": "Inherit · {value}",
       "source": {
         "geo": "geo rule {id}",
@@ -5908,6 +5910,7 @@
         "video": "Video",
         "imageUpload": "Background image",
         "videoUpload": "Background video",
+        "pendingUpload": "Upload a {type} to apply this type. Until the upload finishes, both background fields inherit.",
         "poster": "Video poster",
         "overlayColor": "Overlay colour",
         "overlayAlpha": "Overlay opacity · 0–1"
@@ -5997,6 +6000,7 @@
         "targetNeeded": "Choose a valid storefront or geo centre to resolve this rule's parent chain.",
         "parentError": "Core's parent-only preview could not be decoded. The phone remains a local fallback and is not proof of the inherited state.",
         "retry": "Retry",
+        "approximate": "Approximate preview — parent read unavailable. Inherited values may change when Core responds.",
         "builtInBackground": "Compiled app background",
         "apple": "Continue with Apple",
         "divider": "or",
@@ -6007,6 +6011,7 @@
         "running": "Comparing…",
         "savedOnly": "This check deliberately compares the saved rule; unsaved draft changes stay local.",
         "saveFirst": "Save the new rule before comparing it with Core.",
+        "parentUnavailable": "Comparison is available after the parent read succeeds.",
         "error": "Core's saved-state preview could not be decoded.",
         "same": "The local saved-state merge matches Core for this language.",
         "differences": "{count} saved-state field differences",

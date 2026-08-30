@@ -5867,6 +5867,8 @@
       "inherit": "Öröklés",
       "effectiveValue": "Tényleges: {value}",
       "effectiveValueSource": "Tényleges: {value} · öröklés innen: {source}",
+      "effectiveValueApproximate": "Közelítő érték: {value} · a szülőolvasás nem érhető el",
+      "invalidPreviewValue": "Érvénytelen piszkozatérték. Az előnézet az örökölt vagy beépített alapértelmezett értéket használja.",
       "inheritValue": "Öröklés · {value}",
       "source": {
         "geo": "geo szabály {id}",
@@ -5908,6 +5910,7 @@
         "video": "Videó",
         "imageUpload": "Háttérkép",
         "videoUpload": "Háttérvideó",
+        "pendingUpload": "A(z) {type} feltöltése alkalmazza ezt a típust. Addig mindkét háttérmező öröklődik.",
         "poster": "Videó-előkép",
         "overlayColor": "Overlay színe",
         "overlayAlpha": "Overlay átlátszósága · 0–1"
@@ -5997,6 +6000,7 @@
         "targetNeeded": "Válassz érvényes áruház-országot vagy geo középpontot a szabály szülőláncának feloldásához.",
         "parentError": "A Core csak szülőket tartalmazó előnézete nem dekódolható. A telefon helyi tartalékot mutat, ez nem bizonyítja az örökölt állapotot.",
         "retry": "Újra",
+        "approximate": "Közelítő előnézet — a szülőolvasás nem érhető el. Az örökölt értékek megváltozhatnak, amikor a Core válaszol.",
         "builtInBackground": "Beépített app-háttér",
         "apple": "Folytatás Apple-lel",
         "divider": "vagy",
@@ -6007,6 +6011,7 @@
         "running": "Összevetés…",
         "savedOnly": "Ez az ellenőrzés szándékosan a mentett szabályt veti össze; a nem mentett piszkozat helyi marad.",
         "saveFirst": "Mentsd az új szabályt, mielőtt összeveted a Core-ral.",
+        "parentUnavailable": "Az összevetés a szülőolvasás sikeres befejezése után érhető el.",
         "error": "A Core mentett állapotú előnézete nem dekódolható.",
         "same": "A helyi mentettállapot-feloldás ezen a nyelven egyezik a Core-ral.",
         "differences": "{count} eltérő mentett mező",
