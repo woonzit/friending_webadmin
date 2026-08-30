@@ -15,7 +15,8 @@
                 "lang": "en",
                 "title": "One more step before you meet people",
                 "subtitle": "Verification is required in your region",
-                "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members."
+                "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members.",
+                "help_url": "https://friending.com/help/verification"
             },
             "allowed_surfaces": [
                 "profile.edit",

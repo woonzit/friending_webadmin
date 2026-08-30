@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
-    "contract": "forced-verification-waiting-room-v1.3",
-    "source_commit": "5b391e4282b785d0f5e1d385afb77d0e9e88e380",
-    "fixture_set_sha256": "5c93ba15984aebc28dcd1221f3b8f093e1697446a1a3f156a4c9aa288b2adb78",
+    "contract": "forced-verification-waiting-room-v1.5",
+    "source_commit": "e25b89c2d757d7cda6016332ff66509af045389c",
+    "fixture_set_sha256": "5e524966b1f4c53ca0767b2c8239a1d8a69ed04a196d0a83023e2a280b71bcc9",
     "provenance": {
         "generator": "tests/forced_verification_fixture_dump.php",
-        "generator_sha256": "60c911e8d5c4cc3e95f0d493f0a934afc4950558f844fe957b2de925ff4fbb96",
+        "generator_sha256": "c3961b1731aee55f3f7dcb94d87da24839f2033fa9a8a669520a6ef1a586e055",
         "ios_wire_adapter": "Friending\\Core\\Response::wirePayload",
         "webadmin_wire_adapter": "Friending\\Support\\Webadmin::noStoreReply",
         "member_shaper": "Friending\\Support\\ForcedVerificationEvaluator::project",
@@ -250,11 +250,11 @@
         {
             "file": "ios-gate-global-persona-waiting-en.json",
             "route": "/v1/iosuser/verification_gate",
-            "case": "unknown storefront uses global Persona rule and waits",
+            "case": "unknown storefront uses global Persona rule, waits, and carries the default help URL",
             "consumer": "ios",
             "kind": "dedicated_refresh",
             "http_status": 200,
-            "sha256": "1ccb49c0d554311982cdca0c84decf000e49540d75f0fe0f508c152c5f8ad175"
+            "sha256": "181cda25625848fd176506519165d276edaf9aa4e91f4853472b66807e6a0f01"
         },
         {
             "file": "ios-gate-grant-satisfied.json",
@@ -263,7 +263,7 @@
             "consumer": "ios",
             "kind": "satisfied",
             "http_status": 200,
-            "sha256": "bafda513041227b2b9d27ec99991b14c3ea06f185e35d689056bf607aaae3519"
+            "sha256": "17da38d7201bebe7e3ce64d202bb837f4da7fea39baabba9632bbfdc04b09b02"
         },
         {
             "file": "ios-gate-malformed-settings-fail-safe.json",
@@ -272,7 +272,7 @@
             "consumer": "ios",
             "kind": "fail_safe",
             "http_status": 200,
-            "sha256": "b0666fb8c5be279aadb0b29a2d2cc3e5aba34a8814da952701b7d526cede5639"
+            "sha256": "fc7e263d812310b322f41fa91c079322bdbd6798e59e58ea182cd4d588655607"
         },
         {
             "file": "ios-gate-persona-failed-en.json",
@@ -281,7 +281,7 @@
             "consumer": "ios",
             "kind": "failed",
             "http_status": 200,
-            "sha256": "cc135d1853b4cb0293c03fa8f0154f436b9b12f959665ba5eb335a875935ac8e"
+            "sha256": "707d96d1a5c64c76406890394cce7d7feaf5d7c82789c1659043e92704309330"
         },
         {
             "file": "ios-gate-persona-pending.json",
@@ -290,7 +290,7 @@
             "consumer": "ios",
             "kind": "pending",
             "http_status": 200,
-            "sha256": "993710d83d0e056419bc1fd857ec05265bdcca5a57d5d64f9283d32e5b977320"
+            "sha256": "79096b0d0326397560592a1b9c02981fd4fee2a8b2340790873be6b00bd5ae4f"
         },
         {
             "file": "ios-gate-persona-satisfied.json",
@@ -299,16 +299,16 @@
             "consumer": "ios",
             "kind": "satisfied",
             "http_status": 200,
-            "sha256": "a8b437e5ef590e740f8e736309e4364f99559ddc7b27ff96c3a53a7519348e94"
+            "sha256": "39cc38e858ca4161556bd8dd5993d586b237cccaa0685db53bfcfe6722d3ec15"
         },
         {
             "file": "ios-gate-storefront-disabled.json",
             "route": "/v1/iosuser/verification_gate",
-            "case": "DEU empty replacement disables the global rule",
+            "case": "DEU empty replacement disables the global rule and inherits the default help URL",
             "consumer": "ios",
             "kind": "dedicated_refresh",
             "http_status": 200,
-            "sha256": "84ae14cd57161ff58067c4c1558d01123753547d2eb1da1b2d33d998c5e3e268"
+            "sha256": "04b1fea8143e6540308fd16abd243d66149bb070d5e7c6e4fd890caa7ee739ac"
         },
         {
             "file": "ios-gate-storefront-video-waiting-en.json",
@@ -317,16 +317,16 @@
             "consumer": "ios",
             "kind": "dedicated_refresh",
             "http_status": 200,
-            "sha256": "2c79ae1b2dcdfc94b336e939ba3fbec3b894f1349d399c16529f39c32980083e"
+            "sha256": "b5c7513b65b106a36ed09ed995fdb7fca709544eded8365e3620d74d17a88d6c"
         },
         {
             "file": "ios-gate-video-failed-hu.json",
             "route": "/v1/iosuser/verification_gate",
-            "case": "video retry includes exact Hungarian retry reason and copy override",
+            "case": "video retry includes exact Hungarian retry reason, copy override, and storefront help URL",
             "consumer": "ios",
             "kind": "failed",
             "http_status": 200,
-            "sha256": "64697569a6daab67c19444de1519ddbabf05a339e1bee26a6e3af4ff256a5047"
+            "sha256": "9fa051f2e2cec5c05e0d0e274ba549137cb63e2517ae0c2b5b0bdb432a6d7312"
         },
         {
             "file": "ios-gate-video-pending.json",
@@ -335,7 +335,7 @@
             "consumer": "ios",
             "kind": "pending",
             "http_status": 200,
-            "sha256": "c302ddcf0e94ef3a466adc015050a41abeb20863f333e1dcd805d1e4cb4f799d"
+            "sha256": "03c0e2caf41f23f0d5e15195d9d9e954d9019ba594c5f2f732b982df24406a8c"
         },
         {
             "file": "ios-gate-video-satisfied.json",
@@ -344,7 +344,7 @@
             "consumer": "ios",
             "kind": "satisfied",
             "http_status": 200,
-            "sha256": "a2d0a903312e4e58d14e6785eaabcce3cbf8df4a971b554d8d81230671ed46dd"
+            "sha256": "6c7b9de31e2ae3caf3c801d47d6c4ff2ece1e7e5110d1a6d4ca7ffcf0c4ec6e9"
         },
         {
             "file": "ios-own-get-own-profile-data-after.json",
@@ -353,7 +353,7 @@
             "consumer": "ios",
             "kind": "compatibility_after",
             "http_status": 200,
-            "sha256": "1a14c69a651ffee3677cb4b105e5f7ea702c87738f69e0694ae0117530e3547a",
+            "sha256": "9daed7e836255bcfd290868fd5b204a827c98101f0658f104a300c94ce3d732a",
             "compatibility_group": "get-own-profile-data"
         },
         {
@@ -373,7 +373,7 @@
             "consumer": "ios",
             "kind": "compatibility_after",
             "http_status": 200,
-            "sha256": "1a14c69a651ffee3677cb4b105e5f7ea702c87738f69e0694ae0117530e3547a",
+            "sha256": "9daed7e836255bcfd290868fd5b204a827c98101f0658f104a300c94ce3d732a",
             "compatibility_group": "get-user-own"
         },
         {
@@ -393,7 +393,7 @@
             "consumer": "ios",
             "kind": "compatibility_after",
             "http_status": 200,
-            "sha256": "f707c3bbbc0b1975427f1c8268e055df00b274987fd4406dfd7192b31c3ffdee",
+            "sha256": "f4265ff6eb2357885c12f55097b3f3d1bf727406149a229dfaf1bec6a5ead2d3",
             "compatibility_group": "get-user-profile"
         },
         {
@@ -413,7 +413,7 @@
             "consumer": "ios",
             "kind": "member_refusal",
             "http_status": 403,
-            "sha256": "ee33432c4c8434138f171356152c6b75296a73d36a4b858831eead74e80ec031"
+            "sha256": "fedfb5fb938c5e7baa0e1b4ffeb45c10c8081cf64bdb0ddb20003437c5aa601c"
         },
         {
             "file": "webadmin-admin-me-admin.json",
@@ -440,7 +440,7 @@
             "consumer": "webadmin",
             "kind": "admin_read",
             "http_status": 200,
-            "sha256": "cbef604208983f61caea287cde1cc9c7702bce58e265a0b000f0de8f6b5d3577"
+            "sha256": "597314ebe15397635ce3e27ab4753e32c922c0f4ab2e3b4b92888fe00a23d859"
         },
         {
             "file": "webadmin-impact.json",
@@ -575,7 +575,7 @@
             "consumer": "webadmin",
             "kind": "admin_write",
             "http_status": 200,
-            "sha256": "a0d07d92e87c14ca8490d36e064c25b7ebd7fd195a104776e66686d69ff558fc"
+            "sha256": "3937e0e6d17b5397f70f07aa0516d835d048d6a2acade01bc8f85c8a27991273"
         }
     ]
 }

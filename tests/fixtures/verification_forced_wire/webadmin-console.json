@@ -25,12 +25,14 @@
             "en": {
                 "title": "One more step before you meet people",
                 "subtitle": "Verification is required in your region",
-                "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members."
+                "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members.",
+                "help_url": "https://friending.com/help/verification"
             },
             "hu": {
                 "title": "Még egy lépés, mielőtt ismerkedsz",
                 "subtitle": "A régiódban hitelesítés szükséges",
-                "description": "A Friending biztonsága érdekében a régiódban minden tagnak igazolnia kell a személyazonosságát, mielőtt használná az appot. Ez körülbelül két percet vesz igénybe, és a dokumentumaidat más tagok soha nem látják."
+                "description": "A Friending biztonsága érdekében a régiódban minden tagnak igazolnia kell a személyazonosságát, mielőtt használná az appot. Ez körülbelül két percet vesz igénybe, és a dokumentumaidat más tagok soha nem látják.",
+                "help_url": "https://friending.com/hu/help/verification"
             }
         },
         "copy_overrides": {
@@ -39,7 +41,8 @@
                     "subtitle": "Hungary fixture subtitle"
                 },
                 "hu": {
-                    "description": "Magyarországi fixture leírás."
+                    "description": "Magyarországi fixture leírás.",
+                    "help_url": "https://friending.com/hu/help/verification-hungary"
                 }
             }
         },
@@ -48,12 +51,14 @@
                 "en": {
                     "title": "One more step before you meet people",
                     "subtitle": "Verification is required in your region",
-                    "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members."
+                    "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members.",
+                    "help_url": null
                 },
                 "hu": {
                     "title": "Még egy lépés, mielőtt ismerkedsz",
                     "subtitle": "A régiódban hitelesítés szükséges",
-                    "description": "A Friending biztonsága érdekében a régiódban minden tagnak igazolnia kell a személyazonosságát, mielőtt használná az appot. Ez körülbelül két percet vesz igénybe, és a dokumentumaidat más tagok soha nem látják."
+                    "description": "A Friending biztonsága érdekében a régiódban minden tagnak igazolnia kell a személyazonosságát, mielőtt használná az appot. Ez körülbelül két percet vesz igénybe, és a dokumentumaidat más tagok soha nem látják.",
+                    "help_url": null
                 }
             }
         },

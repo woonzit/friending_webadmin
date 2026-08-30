@@ -22,7 +22,8 @@
                 "lang": "hu",
                 "title": "Még egy lépés, mielőtt ismerkedsz",
                 "subtitle": "A régiódban hitelesítés szükséges",
-                "description": "Magyarországi fixture leírás."
+                "description": "Magyarországi fixture leírás.",
+                "help_url": "https://friending.com/hu/help/verification-hungary"
             },
             "allowed_surfaces": [
                 "profile.edit",

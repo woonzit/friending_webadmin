@@ -38,11 +38,11 @@ const FIXTURE_DIRECTORY = new URL("./fixtures/verification_forced_wire/", import
 // read): source commit 5b391e42…, manifest d2b10985…; fixture set 5c93ba15… and generator 60c911e8…
 // unchanged, route table still 129 exempt / 35 public. The 36 payload bodies are byte-identical to the
 // previous tip 8a1e2478; only manifest provenance moved.
-const FIXTURE_CONTRACT = "forced-verification-waiting-room-v1.3";
-const FIXTURE_SOURCE_COMMIT = "5b391e4282b785d0f5e1d385afb77d0e9e88e380";
-const FIXTURE_SET_SHA256 = "5c93ba15984aebc28dcd1221f3b8f093e1697446a1a3f156a4c9aa288b2adb78";
-const FIXTURE_GENERATOR_SHA256 = "60c911e8d5c4cc3e95f0d493f0a934afc4950558f844fe957b2de925ff4fbb96";
-const FIXTURE_MANIFEST_SHA256 = "d2b10985f1f5c261fd8aaa913509323971642411140e7849e17988ec9a2ed1c9";
+const FIXTURE_CONTRACT = "forced-verification-waiting-room-v1.5";
+const FIXTURE_SOURCE_COMMIT = "e25b89c2d757d7cda6016332ff66509af045389c";
+const FIXTURE_SET_SHA256 = "5e524966b1f4c53ca0767b2c8239a1d8a69ed04a196d0a83023e2a280b71bcc9";
+const FIXTURE_GENERATOR_SHA256 = "c3961b1731aee55f3f7dcb94d87da24839f2033fa9a8a669520a6ef1a586e055";
+const FIXTURE_MANIFEST_SHA256 = "743cd698dd00a59eb7a028c34422be259fafef548a7bfc4eeeccf75ca432a6ca";
 const FIXTURE_COMPATIBILITY_SHA256 = "6ea71b641912153c5c0e6368dd426d7e44ef84a212395a1672139ca8d9681705";
 const FIXTURE_BODY_COUNT = 36;
 
@@ -178,13 +178,35 @@ test("every published Webadmin body decodes through the production decoders with
   assert.deepEqual(console_.document.default, { persona: true, video: false });
   assert.deepEqual(Object.keys(console_.document.overrides), ["DEU", "HUN", "USA"], "storefront keys arrive and stay sorted");
   assert.deepEqual(console_.document.overrides.DEU, { persona: false, video: false }, "an empty replacement disables the global rule");
-  assert.deepEqual(console_.document.copy_default, WAITING_ROOM_COMPILED_COPY, "Core's seeded copy equals the pinned compiled copy");
-  // Amendment v1.5: this corpus predates `help_url`; an absent value reads as `null` (no help button) until the
-  // lead re-pins to the accepted T-477 tip, whose bodies carry the key explicitly.
-  assert.equal(console_.document.copy_default.en.help_url, null);
+  // v1.5 corpus: the console scenario carries a saved help URL; everything else in the copy
+  // still equals the pinned compiled copy, and help_url is null or an https URL per locale.
+  const seededWithoutHelp = Object.fromEntries(
+    Object.entries(console_.document.copy_default).map(([locale, copy]) => {
+      const { help_url: _helpUrl, ...rest } = copy as Record<string, unknown>;
+      return [locale, rest];
+    }),
+  );
+  const compiledWithoutHelp = Object.fromEntries(
+    Object.entries(WAITING_ROOM_COMPILED_COPY).map(([locale, copy]) => {
+      const { help_url: _helpUrl, ...rest } = copy as Record<string, unknown>;
+      return [locale, rest];
+    }),
+  );
+  assert.deepEqual(seededWithoutHelp, compiledWithoutHelp, "Core's seeded copy equals the pinned compiled copy apart from help_url");
+  for (const [locale, copy] of Object.entries(console_.document.copy_default)) {
+    const helpUrl = (copy as Record<string, unknown>).help_url;
+    assert.ok(helpUrl === null || (typeof helpUrl === "string" && helpUrl.startsWith("https://")), `${locale} help_url is null or https`);
+  }
+  // Amendment v1.5 corpus (Core T-477): every copy block carries `help_url` explicitly; the compiled default is null.
+  assert.equal(console_.compiled_defaults.copy.en.help_url, null);
   assert.equal(console_.compiled_defaults.copy.hu.help_url, null);
   assert.deepEqual(console_.compiled_defaults.copy, WAITING_ROOM_COMPILED_COPY, "Core's compiled defaults equal the pinned contract §6 / v1.1 copy");
-  assert.deepEqual(console_.document.copy_overrides, { HUN: { en: { subtitle: "Hungary fixture subtitle" }, hu: { description: "Magyarországi fixture leírás." } } });
+  assert.deepEqual(console_.document.copy_overrides, {
+    HUN: {
+      en: { subtitle: "Hungary fixture subtitle" },
+      hu: { description: "Magyarországi fixture leírás.", help_url: "https://friending.com/hu/help/verification-hungary" },
+    },
+  });
 
   // Resolution over the published document agrees with the iOS gate fixtures' storefront semantics.
   assert.deepEqual(forcedMethodList(resolveForcedMethods(console_.document, null)), ["persona"], "unknown storefront → global Persona");
