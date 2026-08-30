@@ -269,6 +269,15 @@ test("draft validation mirrors the contract limits and every issue has a stable 
   assert.equal(validateForcedVerificationDraft(draft), null, "a tab is not a control character Core refuses");
   draft.copy_default.hu.description = "bell\u0007here";
   assert.equal(validateForcedVerificationDraft(draft), "copyControl");
+  // T-475 B1: Core's `copyText` class ends at U+009F, so DEL and every C1 control are refused inside a text too.
+  draft.copy_default.hu.description = "sor\u0085sor";
+  assert.equal(validateForcedVerificationDraft(draft), "copyControl", "interior NEL (C1) is a control, not content");
+  draft.copy_default.hu.description = "sor\u009Fsor";
+  assert.equal(validateForcedVerificationDraft(draft), "copyControl", "the last C1 control U+009F");
+  draft.copy_default.hu.description = "sor\u007Fsor";
+  assert.equal(validateForcedVerificationDraft(draft), "copyControl", "DEL");
+  draft.copy_default.hu.description = "sor\u00A0sor";
+  assert.equal(validateForcedVerificationDraft(draft), null, "U+00A0 is the first code point past the class: interior NBSP stays content");
   draft.copy_default.hu.description = "Rendben.";
   draft.copy_overrides.USA = { en: { title: "", subtitle: "x".repeat(91), description: "", help_url: "" }, hu: { title: "", subtitle: "", description: "", help_url: "" } };
   assert.equal(validateForcedVerificationDraft(draft), "copyTooLong");
@@ -397,7 +406,9 @@ test("copy whitespace mirrors Core: PHP trim, Unicode boundary whitespace refuse
   draft.copy_default.hu.title = "\uFEFFCím";
   assert.equal(validateForcedVerificationDraft(draft), "copyWhitespace", "BOM edge");
   draft.copy_default.hu.title = "Cím\u0085";
-  assert.equal(validateForcedVerificationDraft(draft), "copyWhitespace", "NEL edge");
+  assert.equal(validateForcedVerificationDraft(draft), "copyControl", "an edge NEL is boundary whitespace AND a C1 control; the control refusal is reported first (T-475 B1)");
+  draft.copy_default.hu.title = "Cí\u0085m";
+  assert.equal(validateForcedVerificationDraft(draft), "copyControl", "interior NEL");
   draft.copy_default.hu.title = "Nem\u00A0törhető cím";
   assert.equal(validateForcedVerificationDraft(draft), null, "interior NBSP is content");
   draft.copy_default.hu.title = " \tNem\u00A0törhető cím\r\n";
@@ -424,6 +435,9 @@ test("copy whitespace mirrors Core: PHP trim, Unicode boundary whitespace refuse
   assert.equal(parseForcedVerificationDocument(withTitle("\u00A0")), null, "published NBSP-only fails closed");
   assert.equal(parseForcedVerificationDocument(withTitle(" Verify")), null, "published untrimmed ASCII edge fails closed");
   assert.equal(parseForcedVerificationDocument(withTitle("Verify\u0085")), null, "published NEL edge fails closed");
+  assert.equal(parseForcedVerificationDocument(withTitle("Ver\u0085ify")), null, "published interior NEL fails closed: a C1 control (T-475 B1)");
+  assert.equal(parseForcedVerificationDocument(withTitle("Ver\u009Fify")), null, "published interior U+009F fails closed");
+  assert.equal(parseForcedVerificationDocument({ ...valid, copy_overrides: { USA: { en: { subtitle: "Ver\u0085ify" }, hu: {} } } }), null, "an override text carries the same control class");
   assert.ok(parseForcedVerificationDocument(withTitle("Verify\u00A0now")), "published interior NBSP is content");
 });
 
@@ -582,6 +596,7 @@ test("help_url (Amendment v1.5): null or a well-formed https URL on the global d
     [`${HELP_PREFIX}${LONE_SURROGATE}`, "lone surrogate"],
     ["https://user:secret@help.friending.com/", "credentials"],
     ["https://user@help.friending.com/", "user-only credentials"],
+    [`https://example.com${BACKSLASH}@evil.test/`, "credentials behind a backslash: PHP parse_url reads user example.com\\ at host evil.test (T-475 B11)"],
     [1, "number"],
     [true, "boolean"],
     [[HELP_URL], "array"],
@@ -623,6 +638,11 @@ test("help_url: draft round trip keeps null / URL / inherit and every refusal ha
 
   assert.equal(waitingRoomHelpUrlIssue(""), null);
   assert.equal(waitingRoomHelpUrlIssue(HELP_URL_AT_LIMIT), null, "exactly 2048 bytes fits");
+  // T-475 B11: the credential span is PHP's authority — closed by `/`, `?` or `#` only — so an `@` past
+  // any of those is path, query or fragment content for Core as well.
+  for (const suffix of ["/@x", "/?@x", "/#@x", "?@x", "#@x"]) {
+    assert.equal(waitingRoomHelpUrlIssue(`https://help.friending.com${suffix}`), null, `an @ after ${JSON.stringify(suffix[0])} is not a credential`);
+  }
   assert.equal(waitingRoomHelpUrlByteLength(" https://é.example "), 18, "bytes of the trimmed value, not code points");
   for (const [value, issue] of [
     ["http://help.friending.com/", "copyHelpUrlInvalid"],
@@ -638,6 +658,8 @@ test("help_url: draft round trip keeps null / URL / inherit and every refusal ha
     [`${HELP_PREFIX}${LONE_SURROGATE}`, "copyHelpUrlControl"],
     ["https://user:secret@help.friending.com/", "copyHelpUrlCredentials"],
     ["https://user@help.friending.com/", "copyHelpUrlCredentials"],
+    ["https://@help.friending.com/", "copyHelpUrlCredentials"],
+    [`https://example.com${BACKSLASH}@evil.test/`, "copyHelpUrlCredentials"],
   ] as const) {
     assert.equal(waitingRoomHelpUrlIssue(value), issue, JSON.stringify(value.slice(0, 40)));
     draft.copy_default.en.help_url = value;
@@ -699,9 +721,12 @@ test("help_url: the proxy forwards null and https strings exactly, and the save 
     [1, "number"],
     [true, "boolean"],
     ["https://user:pw@help.friending.com/", "credentials"],
+    [`https://example.com${BACKSLASH}@evil.test/`, "credentials behind a backslash (T-475 B11)"],
     [`${HELP_URL_AT_LIMIT}a`, "2049 bytes"],
   ] as const) {
     assert.equal(normalizeForcedVerificationProxyBody("verification_forced_save", { expected_revision: 1, document: withDefault(valid, help_url) }), null, `refused before Core: ${label}`);
+    assert.equal(normalizeForcedVerificationProxyBody("verification_forced_save", { expected_revision: 1, document: withOverride(valid, help_url) }), null, `refused before Core on an override: ${label}`);
+    assert.equal(normalizeForcedVerificationProxyBody("verification_forced_impact_preview", { document: withDefault(valid, help_url) }), null, `refused before Core on the preview: ${label}`);
   }
   assert.equal(normalizeForcedVerificationProxyBody("verification_forced_save", { expected_revision: 1, document: withOverride(valid, null) }), null, "null on an override is refused before Core");
 

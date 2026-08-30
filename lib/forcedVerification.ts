@@ -195,7 +195,12 @@ export function forcedStorefrontName(alpha3: string, locale: string): string {
 // Strict parsers (fail closed: exact keys, exact types, closed domains)
 // ---------------------------------------------------------------------------
 
-const CONTROL_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
+/**
+ * Core's `copyText` control class: C0 except TAB, LF and CR, then DEL and the C1
+ * range U+0080-U+009F. NEL (U+0085) is therefore a control wherever it sits; at an
+ * edge it is also boundary whitespace, and the control refusal is reported first.
+ */
+const CONTROL_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/;
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 
 /**
@@ -258,8 +263,14 @@ function copyText(value: unknown, field: WaitingRoomCopyField): string | null {
 
 /** Core's `webUrl()` control set — C0, DEL and C1 — anywhere in a URL (a line break is never URL content). */
 const URL_CONTROL_CHARACTERS = /[\u0000-\u001F\u007F-\u009F]/;
-/** The authority as the non-repairing gate reads it: everything after `https://` up to the first `/`, `\`, `?` or `#`. */
-const HTTPS_AUTHORITY = /^https:\/\/([^/\\?#]+)/;
+/**
+ * The authority as PHP `parse_url` delimits it (Core's `helpUrl`): everything after
+ * `https://` up to the first `/`, `?` or `#`. A backslash is authority content there,
+ * so `https://example.com\@evil.test/` is user `example.com\` at host `evil.test` for
+ * Core, although the WHATWG parser behind `httpsWireUrl` reads it as host `example.com`
+ * with path `/@evil.test/`. The credential check must read Core's span.
+ */
+const PHP_URL_AUTHORITY = /^https:\/\/([^/?#]*)/;
 
 /** UTF-8 bytes of the PHP-trimmed value, the unit Core bounds a URL in (`strlen`). For the editor counter only. */
 export function waitingRoomHelpUrlByteLength(value: string): number {
@@ -275,8 +286,9 @@ export function waitingRoomHelpUrlByteLength(value: string): number {
  * the appearance console's non-repairing `https://` gate (no `http:`, no
  * form `new URL()` would silently repair); and no credentials — PHP's
  * `parse_url` reads anything before the last `@` of the authority as
- * `user[:pass]`, so any `@` there refuses. The raw trimmed value is what is
- * kept and compared, never a re-serialised form.
+ * `user[:pass]`, and that authority ends at the first `/`, `?` or `#` (never at
+ * a backslash), so any `@` in that span refuses. The raw trimmed value is what
+ * is kept and compared, never a re-serialised form.
  */
 export function waitingRoomHelpUrlIssue(value: string): ForcedVerificationDraftIssue | null {
   const trimmed = forcedCopyTrim(value);
@@ -284,7 +296,7 @@ export function waitingRoomHelpUrlIssue(value: string): ForcedVerificationDraftI
   if (!wellFormedUtf16(trimmed) || URL_CONTROL_CHARACTERS.test(trimmed)) return "copyHelpUrlControl";
   if (new TextEncoder().encode(trimmed).length > WAITING_ROOM_HELP_URL_MAX_BYTES) return "copyHelpUrlTooLong";
   if (!httpsWireUrl(trimmed)) return "copyHelpUrlInvalid";
-  if ((HTTPS_AUTHORITY.exec(trimmed)?.[1] ?? "").includes("@")) return "copyHelpUrlCredentials";
+  if ((PHP_URL_AUTHORITY.exec(trimmed)?.[1] ?? "").includes("@")) return "copyHelpUrlCredentials";
   return null;
 }
 
