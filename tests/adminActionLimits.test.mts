@@ -93,6 +93,12 @@ const RAISED_BODY_LIMITS: Partial<Record<(typeof ADMIN_ACTIONS)[number], number>
   // D-052: a rule may replace the hero carousel with 100 bounded items, about
   // 750 KB at the caps, so the save shares the tag-catalogue ceiling.
   appearance_rules_save: 1_100_000,
+  // T-475 B4: the forced verification document may name all 249 storefronts in
+  // both override maps with every copy block at the contract caps; the browser
+  // JSON at those maxima is 2,167,097 bytes (derived and built below). The impact
+  // preview carries the same document.
+  verification_forced_save: 2_400_000,
+  verification_forced_impact_preview: 2_400_000,
 };
 
 test("the per-action body ceiling is raised only where it is named", () => {
@@ -170,6 +176,81 @@ test("the largest signup photo document fits under the default body ceiling", as
   assert.equal(adminActionBodyLimit("signup_photo_config"), 256_000);
 });
 
+/**
+ * T-475 B4. The forced verification save sat under the default ceiling, which refused a document
+ * that is valid at every contract cap (T-471b). Derive the maximum from the caps alone, build that
+ * document, prove the proxy parser admits it, and pin both sides of the ceiling: the maximum fits
+ * with the documented margin, and one byte over the ceiling fails the exact predicate the bridge
+ * applies (`Buffer.byteLength(raw, "utf8") > bodyLimit` → 413), whatever the content.
+ */
+test("the largest forced verification document fits its own ceiling and one byte over is refused", async () => {
+  const {
+    FORCED_STOREFRONTS,
+    FORCED_VERIFICATION_REVISION_MAX,
+    WAITING_ROOM_COPY_LIMITS,
+    WAITING_ROOM_HELP_URL_MAX_BYTES,
+    normalizeForcedVerificationProxyBody,
+  } = await import("../lib/forcedVerification.ts");
+
+  // The contract counts text in code points; U+1D518 is one code point and four UTF-8 bytes.
+  const wide = (codePoints: number) => "\u{1D518}".repeat(codePoints);
+  // Core admits only RFC 3986 ASCII in a help URL, so its 2048-byte cap is 2048 JSON bytes as well.
+  const helpPrefix = "https://help.friending.com/";
+  const helpUrl = `${helpPrefix}${"a".repeat(WAITING_ROOM_HELP_URL_MAX_BYTES - helpPrefix.length)}`;
+  const block = {
+    title: wide(WAITING_ROOM_COPY_LIMITS.title),
+    subtitle: wide(WAITING_ROOM_COPY_LIMITS.subtitle),
+    description: wide(WAITING_ROOM_COPY_LIMITS.description),
+    help_url: helpUrl,
+  };
+  // `false` is the longer literal.
+  const methods = { persona: false, video: false };
+  const storefronts = FORCED_STOREFRONTS.map((storefront) => storefront.alpha3);
+  assert.equal(storefronts.length, 249);
+  const document = {
+    default: methods,
+    overrides: Object.fromEntries(storefronts.map((code) => [code, methods])),
+    copy_default: { en: block, hu: block },
+    copy_overrides: Object.fromEntries(storefronts.map((code) => [code, { en: block, hu: block }])),
+  };
+  const body = { expected_revision: FORCED_VERIFICATION_REVISION_MAX, document };
+  // Valid at every cap: the proxy parsers forward it unchanged.
+  assert.deepEqual(normalizeForcedVerificationProxyBody("verification_forced_save", body), body);
+  assert.deepEqual(normalizeForcedVerificationProxyBody("verification_forced_impact_preview", { document }), { document });
+
+  // The same figure from the caps alone. `adminClient.adminCall` sends `JSON.stringify(body)`:
+  // no whitespace, non-ASCII text raw (four bytes per code point here), the URL byte for byte.
+  const count = storefronts.length;
+  const textBytes = 4 * (WAITING_ROOM_COPY_LIMITS.title + WAITING_ROOM_COPY_LIMITS.subtitle + WAITING_ROOM_COPY_LIMITS.description);
+  const blockBytes = '{"title":"","subtitle":"","description":"","help_url":""}'.length + textBytes + WAITING_ROOM_HELP_URL_MAX_BYTES;
+  const localesBytes = '{"en":,"hu":}'.length + 2 * blockBytes;
+  const methodsBytes = JSON.stringify(methods).length;
+  const mapBytes = (entryBytes: number) => "{}".length + count * ('"XXX":'.length + entryBytes) + (count - 1);
+  const documentBytes = '{"default":,"overrides":,"copy_default":,"copy_overrides":}'.length
+    + methodsBytes + mapBytes(methodsBytes) + localesBytes + mapBytes(localesBytes);
+  const derived = '{"expected_revision":,"document":}'.length + String(FORCED_VERIFICATION_REVISION_MAX).length + documentBytes;
+
+  const raw = JSON.stringify(body);
+  const bytes = Buffer.byteLength(raw, "utf8");
+  assert.equal(bytes, derived, "the built document is exactly the derived maximum");
+  assert.equal(bytes, 2_167_097);
+
+  const limit = adminActionBodyLimit("verification_forced_save");
+  assert.equal(limit, 2_400_000);
+  assert.equal(adminActionBodyLimit("verification_forced_impact_preview"), limit, "the preview carries the same document");
+  assert.ok(bytes > 256_000, "the default ceiling refused this valid document (the T-471b finding)");
+  assert.ok(bytes <= limit, `maximal forced body is ${bytes} bytes`);
+  assert.ok(limit - bytes >= Math.floor(bytes / 10), "about ten percent of headroom over the proven maximum");
+
+  // The bridge's predicate on both sides of the ceiling: exactly at it admitted, one byte over refused.
+  const atLimit = raw + " ".repeat(limit - bytes);
+  const overLimit = `${atLimit} `;
+  assert.equal(Buffer.byteLength(atLimit, "utf8"), limit);
+  assert.equal(Buffer.byteLength(atLimit, "utf8") > limit, false);
+  assert.equal(Buffer.byteLength(overLimit, "utf8"), limit + 1);
+  assert.equal(Buffer.byteLength(overLimit, "utf8") > limit, true, "one byte over the ceiling is a 413 before any parsing");
+});
+
 test("a Core timeout is reported distinctly from an unreachable Core", async () => {
   // `AbortSignal.timeout` rejects with a TimeoutError DOMException.
   globalThis.fetch = (async () => {
@@ -225,6 +306,8 @@ test("the bridge applies both per-action tables rather than a hardcoded constant
     "utf8",
   );
   assert.match(route, /adminActionBodyLimit\(action\)/);
+  // The predicate the body-ceiling regressions above mirror: strictly greater than the ceiling.
+  assert.match(route, /Buffer\.byteLength\(raw, "utf8"\) > bodyLimit/);
   assert.match(route, /adminActionTimeoutMs\(action\)/);
   // The literals used to live in the route; they belong with the rest of the per-action policy.
   assert.doesNotMatch(route, /256_000|1_100_000|10_000/);

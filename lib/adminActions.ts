@@ -630,6 +630,20 @@ const REPLACE_IMAGE_BODY_LIMIT_BYTES = 6_000_000;
  * 750 KB at the caps — so the save shares the tag-catalogue ceiling.
  */
 const APPEARANCE_RULE_BODY_LIMIT_BYTES = TAG_CATALOG_BODY_LIMIT_BYTES;
+/**
+ * D-053 forced verification (T-475 B4). One canonical save document may name all
+ * 249 storefronts in BOTH the method override map and the copy override map, each
+ * copy override carrying both locale containers filled to the contract caps (title
+ * 60, subtitle 90, description 400 code points of four-byte UTF-8, plus a 2048-byte
+ * ASCII `help_url`), with the same two full blocks in `copy_default`. The browser
+ * JSON at exactly those maxima is 2,167,097 bytes: `tests/adminActionLimits.test.mts`
+ * derives that figure from the caps, builds the document and proves the proxy parser
+ * admits it. The ceiling sits about ten percent above it and stays a finite
+ * per-request bound (Apache 2.4.52 does not apply `LimitRequestBody` to the proxied
+ * path, so this is the effective guard). The impact preview carries the same
+ * document and shares the ceiling.
+ */
+const FORCED_VERIFICATION_BODY_LIMIT_BYTES = 2_400_000;
 
 /**
  * `save_signup_photo_config` deliberately does NOT appear below. Its `tips_json` carries at most 12
@@ -645,6 +659,8 @@ const ADMIN_ACTION_BODY_LIMIT: Readonly<Record<string, number>> = {
   set_settings: RUNTIME_SETTINGS_BODY_LIMIT_BYTES,
   admin_replace_image: REPLACE_IMAGE_BODY_LIMIT_BYTES,
   appearance_rules_save: APPEARANCE_RULE_BODY_LIMIT_BYTES,
+  verification_forced_save: FORCED_VERIFICATION_BODY_LIMIT_BYTES,
+  verification_forced_impact_preview: FORCED_VERIFICATION_BODY_LIMIT_BYTES,
   // A1: this is the effective guard on Apache 2.4.52 and therefore stays
   // pinned independently of the Verification bridge rollback switch.
   verification_badge_upload: MAX_VERIFICATION_BADGE_FORM_BYTES,
