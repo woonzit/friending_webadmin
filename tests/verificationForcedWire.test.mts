@@ -26,23 +26,23 @@ import {
 import { verificationAdminMe } from "../lib/verificationAdmin.ts";
 
 /**
- * T-470's production-generated wire corpus (Core review-repair provenance tip
- * `8a1e2478370ae48b393844032de65cb099c11d10` over 006960aa, `tests/fixtures/verification_forced_wire/`),
+ * T-470's production-generated wire corpus (ACCEPTED Core tip
+ * `0a552d0d4425b619c7c7c613925ec188b76474f5`, `tests/fixtures/verification_forced_wire/`),
  * copied byte-identically. The production decoders must accept every Webadmin body exactly as
  * Core publishes it and classify every refusal by the manifest's closed status maps — this is
  * the cross-lane binding `FORCED_VERIFICATION_CONTRACT_READY` depends on.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/verification_forced_wire/", import.meta.url);
-// codex-api3's T-470b review repairs (2026-08-29 19:47Z: strict BSON-integer stored revision, the moderator
-// cross-member delete route removed from `forced_gate_exempt`, Unicode boundary-whitespace copy refusal;
-// behavior commit 939df586…): source commit 939df586…, fixture set 5c93ba15… and generator 60c911e8…
-// unchanged, manifest 99e793a2… (129 exempt routes). The 36 payload bodies are byte-identical to the 17:29Z
-// integrated final artifact 341590d6; only manifest provenance moved.
+// Final binding to the tip codex-api ACCEPTED in T-470b round 3 (2026-08-30 01:00Z; behaviour commit
+// 5b391e42… gates the moderator `edit_user` branch of the exempt profile-editor route before any target
+// read): source commit 5b391e42…, manifest d2b10985…; fixture set 5c93ba15… and generator 60c911e8…
+// unchanged, route table still 129 exempt / 35 public. The 36 payload bodies are byte-identical to the
+// previous tip 8a1e2478; only manifest provenance moved.
 const FIXTURE_CONTRACT = "forced-verification-waiting-room-v1.3";
-const FIXTURE_SOURCE_COMMIT = "939df5867dd0f87bc27e807f06e46cbeffc97b4d";
+const FIXTURE_SOURCE_COMMIT = "5b391e4282b785d0f5e1d385afb77d0e9e88e380";
 const FIXTURE_SET_SHA256 = "5c93ba15984aebc28dcd1221f3b8f093e1697446a1a3f156a4c9aa288b2adb78";
 const FIXTURE_GENERATOR_SHA256 = "60c911e8d5c4cc3e95f0d493f0a934afc4950558f844fe957b2de925ff4fbb96";
-const FIXTURE_MANIFEST_SHA256 = "99e793a2c4653781497d1e09ddb9cbad8b2598b6da716166c20c361cfcf97064";
+const FIXTURE_MANIFEST_SHA256 = "d2b10985f1f5c261fd8aaa913509323971642411140e7849e17988ec9a2ed1c9";
 const FIXTURE_COMPATIBILITY_SHA256 = "6ea71b641912153c5c0e6368dd426d7e44ef84a212395a1672139ca8d9681705";
 const FIXTURE_BODY_COUNT = 36;
 
