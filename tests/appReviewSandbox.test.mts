@@ -221,13 +221,14 @@ test("the closed key lists are the ones the page renders", () => {
     "reviewer_baseline", "profile_semantics", "media_files", "albums", "members", "reviewer_photos",
     "counterpart_photos", "album_access", "friends", "friend_requests", "visitors", "footprints",
     "photo_likes", "chat_rooms", "chat_messages", "mutes", "blocks", "notifications", "plus_grant",
+    "verification_grant",
     "dates_activities", "dates_memberships", "dates_threads", "dates_thread_members", "dates_messages",
     "dates_notifications", "dates_semantics", "content",
   ]);
   assert.deepEqual([...APP_REVIEW_COUNT_KEYS], [
     "members", "albums", "chat_rooms", "chat_messages", "friends", "friend_requests",
     "visitors", "notifications", "reviewer_photos", "counterpart_photos", "album_access",
-    "footprints", "photo_likes", "mutes", "blocks", "plus_grant", "dates_activities",
+    "footprints", "photo_likes", "mutes", "blocks", "plus_grant", "verification_grant", "dates_activities",
     "dates_memberships", "dates_threads", "dates_thread_members", "dates_messages", "dates_notifications",
   ]);
 });
