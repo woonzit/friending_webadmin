@@ -8,7 +8,7 @@ import {
   isAdminActionAllowed,
   isAdminActionAuthorized,
 } from "../lib/adminActions.ts";
-import { VERIFICATION_CONTRACT_READY } from "../lib/contractReadiness.ts";
+import { FORCED_VERIFICATION_CONTRACT_READY, VERIFICATION_CONTRACT_READY } from "../lib/contractReadiness.ts";
 import {
   ADMIN_REQUEST_HEADER,
   ADMIN_REQUEST_HEADER_VALUE,
@@ -256,7 +256,14 @@ test("the accepted contract vocabulary and released seventeen-action bridge are 
   assert.deepEqual(VERIFICATION_LEVELS, ["none", "light", "strong"]);
   assert.deepEqual(VERIFICATION_BADGE_SLOTS, ["light", "strong", "pending"]);
   assert.deepEqual(VERIFICATION_LOCALES, ["en", "hu"]);
-  assert.deepEqual(VERIFICATION_TAB_KEYS, ["scopes", "requirements", "messages", "badges", "simulator"]);
+  assert.deepEqual(VERIFICATION_TAB_KEYS, [
+    "scopes",
+    "requirements",
+    "messages",
+    "badges",
+    "simulator",
+    ...(FORCED_VERIFICATION_CONTRACT_READY ? ["forced"] : []),
+  ]);
   assert.deepEqual(VERIFICATION_POLICY_OPERATIONS, ["publish", "deactivate", "tombstone", "restore"]);
   assert.deepEqual(VERIFICATION_GATE_VARIANTS, ["video", "persona", "both", "pending", "rejected"]);
   assert.deepEqual(VERIFICATION_FEATURE_KEYS, [
@@ -279,8 +286,16 @@ test("the accepted contract vocabulary and released seventeen-action bridge are 
   assert.equal(VERIFICATION_GRANT_CAPABILITIES.join(","), "verification_grant_edit,verification_grant_read");
   assert.deepEqual([...VERIFICATION_CAPABILITIES], [...VERIFICATION_CAPABILITIES].sort());
   assert.deepEqual(
-    ADMIN_ACTIONS.filter((action) => action.startsWith("verification_")),
+    ADMIN_ACTIONS.filter(
+      (action) => action.startsWith("verification_") && !action.startsWith("verification_forced_"),
+    ),
     VERIFICATION_ADMIN_ACTIONS,
+  );
+  assert.deepEqual(
+    ADMIN_ACTIONS.filter((action) => action.startsWith("verification_forced_")),
+    FORCED_VERIFICATION_CONTRACT_READY
+      ? ["verification_forced_console", "verification_forced_save", "verification_forced_impact_preview"]
+      : [],
   );
   const viewerReads = new Set([
     "verification_console",
