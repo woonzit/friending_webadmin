@@ -617,7 +617,7 @@ test("fixture browser state contains no contact or delivery-provider identifier 
   visit(fixtures);
 });
 
-test("user-detail shell, safe previews, locales, and seven Help sections share the release switch", async () => {
+test("user-detail shell, safe previews, locales, and seven Help sections stay bound to the released surface", async () => {
   const [page, component, actions, route, model, enRaw, huRaw] = await Promise.all([
     readFile(new URL("../app/(dashboard)/users/[uid]/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/OutboundMessagingPanel.tsx", import.meta.url), "utf8"),

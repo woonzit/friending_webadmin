@@ -12,8 +12,10 @@ Két konzolról van szó:
    képernyő, a Discover hero-körhinta és a világos/sötét kiemelőszín-paletta,
    App Store áruház-országonként vagy földrajzi területenként.
 2. **Hitelesítés → Kötelező hitelesítés és Váróterem** — az a fül, amely
-   kötelezővé teszi a hitelesítést. Rejtve marad, amíg a kiadási kapcsolót be
-   nem kapcsolják; mielőtt ezt kéred, olvasd el a végén a bevezetési szabályt.
+   kötelezővé teszi a hitelesítést. Azoknak az adminisztrátoroknak jelenik meg,
+   akiknek a Core-fiókja megkapta a hitelesítési konzol jogosultságát; külön
+   kapcsolót nem kell kérned. Mielőtt bárhol bekapcsolod a kötelezővé tételt,
+   olvasd el a végén a bevezetési szabályt.
 
 Amit itt módosítasz, azt a Core tárolja, az e-mail-címeddel bekerül az
 audit-naplóba, és app-frissítés nélkül érvényesül a tagoknál.
@@ -178,8 +180,11 @@ sosem írja felül egymást észrevétlenül.
 ## 2. Hitelesítés → Kötelező hitelesítés és Váróterem
 
 Ez a fül teszi kötelezővé a hitelesítést. Amíg nincs bekapcsolva, semmi nem
-érinti a tagokat; maga a fül is rejtve marad, amíg a kiadásért felelős be nem
-kapcsolja a kiadási kapcsolót.
+érinti a tagokat. Nincs kiadási lépés, amire várni kellene: a fül azoknak az
+adminisztrátoroknak jelenik meg, akiknek a Core-fiókja megkapta a hitelesítési
+konzol jogosultságát, és csak akkor hiányzik, ha ez a jogosultság hiányzik.
+Kötelezővé pedig csak akkor válik bármi, ha bekapcsolt módszerrel mentesz egy
+szabályt — hogy mikor teheted meg, azt a 2.6 pont mondja meg.
 
 ### 2.1 Mit jelent a tagnak a „kötelező"
 

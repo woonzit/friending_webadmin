@@ -485,7 +485,7 @@ test("the released bridge permits only the intended same-origin role classes", a
   assert.match(proxy, /if \(!isAdminActionAllowed\(action\)\)[\s\S]*?bridgeError\("not-found", 404\)/);
 });
 
-test("queue, detail, navigation, and proxy activation share one explicit release switch", async () => {
+test("queue, detail, navigation, and proxy activation stay bound to one released surface", async () => {
   const [queuePage, detailPage, queue, detail, shell] = await Promise.all([
     readFile(new URL("../app/(dashboard)/reported-content/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/(dashboard)/reported-content/[reportId]/page.tsx", import.meta.url), "utf8"),

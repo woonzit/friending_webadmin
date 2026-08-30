@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import AppearanceMapFrame from "@/components/AppearanceMapFrame";
 import { adminMe } from "@/lib/session";

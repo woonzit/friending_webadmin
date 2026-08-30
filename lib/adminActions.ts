@@ -419,8 +419,8 @@ export const ADMIN_ACTION_ACCESS = {
   verification_grant_remove: "write",
 
   ...(ADMIN_GRANTED_VERIFICATION_CONTRACT_READY ? {
-  verification_grant: "write" as const,
-  verification_revoke: "write" as const,
+    verification_grant: "write" as const,
+    verification_revoke: "write" as const,
   } : {}),
 
   /** Contract v1 §4: the console and the counts-only impact preview are reads; the revisioned save is an editor write. */

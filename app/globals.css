@@ -2710,7 +2710,7 @@ body .verification-level-pill.level-strong {
   }
 }
 
-/* ---- Persona admin contract v1 (dormant until provider release) ---- */
+/* ---- Persona admin contract v1 ---- */
 
 .persona-readiness-panel,
 .persona-member-panel,
@@ -9850,7 +9850,7 @@ body .verification-level-pill.level-strong {
   font-weight: 800;
 }
 
-/* Reported-content moderation (dormant until the versioned provider contract is live). */
+/* Reported-content moderation. */
 .reported-content-filter-panel .panel-body {
   display: flex;
   align-items: flex-end;
@@ -11804,7 +11804,7 @@ body .verification-level-pill.level-strong {
   }
 }
 
-/* Verification policy console (dormant until the versioned Core contract is live). */
+/* Verification policy console. */
 
 .verification-readiness {
   margin-bottom: 18px;

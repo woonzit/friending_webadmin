@@ -28,7 +28,7 @@ import {
  * T-467's production-generated wire corpus (Core replacement tip `d5e7494c032076b4a23e2bfc2a26d4665f88664f`,
  * `tests/fixtures/appearance_rules_wire/`), copied byte-identically. The production decoders must
  * accept every Webadmin body exactly as Core publishes it and classify every refusal by the
- * manifest's closed status map — this is the cross-lane binding the readiness switch depends on.
+ * manifest's closed status map — this is the cross-lane binding the released consumer rests on.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/appearance_rules_wire/", import.meta.url);
 // Core T-467 round-2 delta `done` (2026-08-29 16:32Z): exact tip d5e7494c032076b4a23e2bfc2a26d4665f88664f,

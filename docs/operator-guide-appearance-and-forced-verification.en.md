@@ -12,8 +12,9 @@ Two consoles are covered:
    screen, the Discover hero carousel and the light/dark accent palette, per
    App Store storefront or per geographic area.
 2. **Verification → Forced & waiting room** — the tab that makes verification
-   mandatory. It stays hidden until the release switch is turned on; read the
-   rollout rule at the end before asking for that switch.
+   mandatory. It appears for administrators whose Core account carries the
+   verification console capability; there is no separate switch to ask for.
+   Read the rollout rule at the end before you turn forcing on anywhere.
 
 Everything you change here is stored by Core, recorded in the audit trail with
 your e-mail, and takes effect for members without an app update.
@@ -175,8 +176,10 @@ never silently overwrite each other.
 ## 2. Verification → Forced & waiting room
 
 This tab makes verification mandatory. Until it is switched on, nothing in it
-affects members; the tab itself stays hidden until the release switch is turned
-on by the release owner.
+affects members. There is no release step to wait for: the tab appears for
+administrators whose Core account carries the verification console capability,
+and it is missing only when that capability is missing. Forcing itself begins
+only when you save a rule with a method on — and section 2.6 says when you may.
 
 ### 2.1 What "forced" does to a member
 
