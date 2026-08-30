@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import AppearanceMapFrame from "@/components/AppearanceMapFrame";
-import { APPEARANCE_RULES_CONTRACT_READY } from "@/lib/contractReadiness";
+
 import { adminMe } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,6 @@ export const dynamic = "force-dynamic";
  * page rendered inside a frame.
  */
 export default async function AppearanceMapPage() {
-  if (!APPEARANCE_RULES_CONTRACT_READY) notFound();
   const t = await getTranslations("appearance.map");
   const locale = await getLocale();
   const me = await adminMe();

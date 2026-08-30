@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
-  PERSONA_ADMIN_PROXY_RELEASED,
 } from "@/lib/contractReadiness";
 import { coreCall } from "@/lib/core";
 import {
@@ -44,7 +43,6 @@ function record(value: unknown): Record<string, unknown> | null {
  */
 export async function POST(request: NextRequest) {
   if (!isTrustedAdminRequest(request.headers)) return errorResponse("bad-origin", 403);
-  if (!PERSONA_ADMIN_PROXY_RELEASED) return errorResponse("not-found", 404);
 
   const declaredLength = Number(request.headers.get("content-length") ?? "0");
   if (Number.isFinite(declaredLength) && declaredLength > BODY_LIMIT) {

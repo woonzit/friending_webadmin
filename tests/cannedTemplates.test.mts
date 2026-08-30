@@ -7,7 +7,7 @@ import {
   isAdminActionAllowed,
   isAdminActionAuthorized,
 } from "../lib/adminActions.ts";
-import { CANNED_TEMPLATES_CONTRACT_READY } from "../lib/contractReadiness.ts";
+
 import {
   CANNED_TEMPLATE_ACTIONS,
   CANNED_TEMPLATE_CAPABILITIES,
@@ -513,7 +513,6 @@ test("the contract surface is CRUD-only and has no outbound send/history action"
 });
 
 test("the released bridge keeps reads available to viewers and mutations editor-only", async () => {
-  assert.equal(CANNED_TEMPLATES_CONTRACT_READY, true);
   for (const action of CANNED_TEMPLATE_ACTIONS) {
     assert.equal(isAdminActionAllowed(action), true);
     assert.equal(
@@ -562,8 +561,6 @@ test("page, navigation, proxy, durable recovery, confirmation, safe preview, and
     readFile(new URL("../messages/hu.json", import.meta.url), "utf8"),
   ]);
 
-  assert.match(page, /if \(!CANNED_TEMPLATES_CONTRACT_READY\) notFound\(\)/);
-  assert.match(shell, /ready: CANNED_TEMPLATES_CONTRACT_READY/);
   assert.match(shell, /NAV\.filter\(\(item\) => item\.ready !== false/);
   for (const action of CANNED_TEMPLATE_ACTIONS) {
     assert.match(actions, new RegExp(`"${action}"`));

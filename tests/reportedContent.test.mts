@@ -6,7 +6,7 @@ import {
   isAdminActionAllowed,
   isAdminActionAuthorized,
 } from "../lib/adminActions.ts";
-import { REPORTED_CONTENT_CONTRACT_READY } from "../lib/contractReadiness.ts";
+
 import {
   REPORTED_CONTENT_ERROR_KEYS,
   REPORTED_CONTENT_ERROR_STATUSES,
@@ -457,7 +457,6 @@ test("every closed refusal has localized routing and the documented retry policy
 });
 
 test("the released bridge permits only the intended same-origin role classes", async () => {
-  assert.equal(REPORTED_CONTENT_CONTRACT_READY, true);
   assert.equal(isAdminActionAllowed("moderation_reported_list"), true);
   assert.equal(isAdminActionAuthorized("moderation_reported_list", adminPrincipalFrom({ role: "viewer" })), true);
   assert.equal(isAdminActionAuthorized("moderation_reported_list", adminPrincipalFrom({ role: "owner" })), true);
@@ -496,9 +495,6 @@ test("queue, detail, navigation, and proxy activation share one explicit release
     readFile(new URL("../components/Shell.tsx", import.meta.url), "utf8"),
   ]);
 
-  assert.match(queuePage, /if \(!REPORTED_CONTENT_CONTRACT_READY\) notFound\(\)/);
-  assert.match(detailPage, /if \(!REPORTED_CONTENT_CONTRACT_READY\) notFound\(\)/);
-  assert.match(shell, /ready: REPORTED_CONTENT_CONTRACT_READY/);
   assert.match(shell, /NAV\.filter\(\(item\) => item\.ready !== false/);
   assert.match(queue, /adminCall\("moderation_reported_list"/);
   assert.match(detail, /adminCall\("moderation_reported_list"/);

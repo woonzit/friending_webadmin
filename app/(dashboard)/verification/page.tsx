@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import VerificationAdminConsole from "@/components/VerificationAdminConsole";
-import { VERIFICATION_CONTRACT_READY } from "@/lib/contractReadiness";
+
 import { adminMe } from "@/lib/session";
 import { verificationTabKey } from "@/lib/verificationAdmin";
 
@@ -9,7 +9,6 @@ export default async function VerificationAdminPage({
 }: {
   searchParams: Promise<{ tab?: string | string[] }>;
 }) {
-  if (!VERIFICATION_CONTRACT_READY) notFound();
   const me = await adminMe();
   if (!me?.verificationConsoleReady) notFound();
   const query = await searchParams;

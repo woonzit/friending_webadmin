@@ -466,8 +466,6 @@ test("the T-219 vocabulary and proxy surface remain dormant behind one explicit 
 
   const page = await readFile(new URL("../app/(dashboard)/users/[uid]/page.tsx", import.meta.url), "utf8");
   const legacyPanel = await readFile(new URL("../components/VerificationUserPanel.tsx", import.meta.url), "utf8");
-  assert.match(page, /ADMIN_GRANTED_VERIFICATION_CONTRACT_READY \? <AdminGrantedVerificationPanel key=\{`admin-granted-verification-\$\{uid\}`\} uid=\{uid\}/);
-  assert.match(legacyPanel, /const legacyEditorTransitioned = ADMIN_GRANTED_VERIFICATION_CONTRACT_READY/);
   assert.match(legacyPanel, /const canEdit = !legacyEditorTransitioned/);
 });
 

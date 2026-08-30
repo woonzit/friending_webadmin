@@ -20,10 +20,6 @@ import { adminCall } from "@/lib/adminClient";
 import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
   AUDIENCE_VISIBILITY_CONTRACT_READY,
-  OUTBOUND_MESSAGING_CONTRACT_READY,
-  PRODUCT_POPUP_CONTRACT_READY,
-  PUSH_MODE_CONTRACT_READY,
-  VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 import { formatDate } from "@/lib/format";
 import {
@@ -74,7 +70,7 @@ export default function UserDetailPage() {
     // Project rather than cast: the response carries fields this page never renders, including the
     // member's login and home coordinates. See lib/userDetail.ts.
     const parsedDetail = response?.success
-      ? userDetail(response, PUSH_MODE_CONTRACT_READY, VERIFICATION_CONTRACT_READY)
+      ? userDetail(response, true, true)
       : null;
     if (!parsedDetail || !profileResponse?.success || !parsedProfileFields || !parsedIdentityGroups) {
       setState("error");
@@ -154,11 +150,11 @@ export default function UserDetailPage() {
       <UserAlbumsPanel uid={uid} />
       <UserMembershipPanel uid={uid} initial={data.membership} />
       <UserModerationPanel uid={uid} />
-      {VERIFICATION_CONTRACT_READY ? <VerificationUserPanel uid={uid} access={data.verification_access} /> : null}
+      <VerificationUserPanel uid={uid} access={data.verification_access} />
       {ADMIN_GRANTED_VERIFICATION_CONTRACT_READY ? <AdminGrantedVerificationPanel key={`admin-granted-verification-${uid}`} uid={uid} /> : null}
       {AUDIENCE_VISIBILITY_CONTRACT_READY ? <AudienceVisibilityUserPanel uid={uid} /> : null}
-      {PRODUCT_POPUP_CONTRACT_READY ? <ProductPopupPanel key={`product-popup-${uid}`} uid={uid} /> : null}
-      {OUTBOUND_MESSAGING_CONTRACT_READY ? <OutboundMessagingPanel uid={uid} displayName={profile.display_name} codename={profile.codename} /> : null}
+      <ProductPopupPanel key={`product-popup-${uid}`} uid={uid} />
+      <OutboundMessagingPanel uid={uid} displayName={profile.display_name} codename={profile.codename} />
       <UserContentEditor
         key={profile.uid}
         uid={uid}
@@ -184,7 +180,7 @@ export default function UserDetailPage() {
             </div>
           </section>
         ))}
-        {PUSH_MODE_CONTRACT_READY && data.push_channels ? (
+        {data.push_channels ? (
           <section className="panel push-channels-panel">
             <div className="panel-header"><h2>{t("pushChannels.title")}</h2></div>
             <div className="panel-body">

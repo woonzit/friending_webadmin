@@ -7,7 +7,7 @@ import {
   adminPrincipalFrom,
   isAdminActionAuthorized,
 } from "../lib/adminActions.ts";
-import { PUSH_MODE_CONTRACT_READY } from "../lib/contractReadiness.ts";
+
 import {
   PUSH_ADMIN_ERROR_STATUSES,
   PUSH_DELIVERY_MODES,
@@ -309,7 +309,6 @@ test("push reads and writes inherit the bridge's guest, origin, actor and secret
 });
 
 test("both released UI projections share one cutover and lock uncertain saves through reload", async () => {
-  assert.equal(PUSH_MODE_CONTRACT_READY, true);
   const configuration = await readFile(
     new URL("../app/(dashboard)/configuration/page.tsx", import.meta.url),
     "utf8",
@@ -318,9 +317,6 @@ test("both released UI projections share one cutover and lock uncertain saves th
     new URL("../app/(dashboard)/users/[uid]/page.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(configuration, /PUSH_MODE_CONTRACT_READY && pushSetting/);
-  assert.match(userPage, /userDetail\(response, PUSH_MODE_CONTRACT_READY, VERIFICATION_CONTRACT_READY\)/);
-  assert.match(userPage, /PUSH_MODE_CONTRACT_READY && data\.push_channels/);
 
   const lock = configuration.indexOf("setBusy(true)");
   const mutation = configuration.indexOf('adminCall("set_settings"');

@@ -7,13 +7,8 @@ import { useTranslations } from "next-intl";
 import AdminHelp from "@/components/AdminHelp";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import {
-  APPEARANCE_RULES_CONTRACT_READY,
   AUDIENCE_VISIBILITY_CONTRACT_READY,
-  CANNED_TEMPLATES_CONTRACT_READY,
-  PERSONA_ADMIN_PROXY_RELEASED,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
-  REPORTED_CONTENT_CONTRACT_READY,
-  VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 
 type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "templates" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit";
@@ -23,19 +18,17 @@ const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; r
   { href: "/users", key: "users", icon: "users" },
   { href: "/membership", key: "membership", icon: "membership" },
   { href: "/photo-moderation", key: "photoModeration", icon: "photoModeration" },
-  { href: "/reported-content", key: "reportedContent", icon: "reportedContent", ready: REPORTED_CONTENT_CONTRACT_READY },
+  { href: "/reported-content", key: "reportedContent", icon: "reportedContent" },
   { href: "/text-moderation", key: "textModeration", icon: "reportedContent", ready: PROFILE_TEXT_MODERATION_CONTRACT_READY },
   { href: "/profile-verification", key: "profileVerification", icon: "verification" },
-  { href: "/verification", key: "verificationSettings", icon: "verification", ready: VERIFICATION_CONTRACT_READY },
-  { href: "/persona", key: "persona", icon: "persona", ready: PERSONA_ADMIN_PROXY_RELEASED },
+  { href: "/verification", key: "verificationSettings", icon: "verification" },
+  { href: "/persona", key: "persona", icon: "persona" },
   { href: "/profile-location", key: "profileLocation", icon: "profileLocation" },
   { href: "/dates", key: "dates", icon: "dates" },
   // D-052: one "Appearance & placements" page replaces the People hero and App
   // landing screens once Core's appearance-rules provider is live.
-  { href: "/appearance", key: "appearance", icon: "appLanding", ready: APPEARANCE_RULES_CONTRACT_READY },
-  { href: "/heroes", key: "heroes", icon: "heroes", ready: !APPEARANCE_RULES_CONTRACT_READY },
+  { href: "/appearance", key: "appearance", icon: "appLanding" },
   { href: "/landing", key: "landing", icon: "landing" },
-  { href: "/app-landing", key: "appLanding", icon: "appLanding", ready: !APPEARANCE_RULES_CONTRACT_READY },
   { href: "/signup-options", key: "signupOptions", icon: "signupOptions" },
   { href: "/signup-photos", key: "signupPhotos", icon: "signupPhotos" },
   { href: "/audience-visibility", key: "audienceVisibility", icon: "userGroups", ready: AUDIENCE_VISIBILITY_CONTRACT_READY },
@@ -48,7 +41,7 @@ const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; r
   { href: "/footprints", key: "footprints", icon: "footprints" },
   { href: "/pinger", key: "pinger", icon: "pinger" },
   { href: "/invite-configuration", key: "inviteConfiguration", icon: "invite" },
-  { href: "/canned-templates", key: "cannedTemplates", icon: "templates", ready: CANNED_TEMPLATES_CONTRACT_READY },
+  { href: "/canned-templates", key: "cannedTemplates", icon: "templates" },
   { href: "/support", key: "support", icon: "chat" },
   { href: "/help-cms", key: "helpCms", icon: "audit" },
   { href: "/configuration", key: "configuration", icon: "config" },

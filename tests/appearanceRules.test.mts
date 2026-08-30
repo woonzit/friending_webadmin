@@ -29,7 +29,6 @@ import {
   isAppearanceAlpha2,
   isAppearanceHttpsUrl,
   isAppearanceStorefront,
-  legacyHeroOverviewCardVisible,
   localizedAppearanceCountries,
   newAppearanceRuleDraft,
   normalizeAppearancePaletteHex,
@@ -60,7 +59,6 @@ import {
   adminActionBodyLimit,
   isAdminActionAllowed,
 } from "../lib/adminActions.ts";
-import { APPEARANCE_RULES_CONTRACT_READY } from "../lib/contractReadiness.ts";
 
 function heroItem(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
@@ -721,29 +719,21 @@ test("the proxy forwards only the exact bodies the contract lists", () => {
   assert.equal(normalizeAppearanceProxyBody("appearance_city_geocode", { q: "Budapest" }), null);
 });
 
-test("the five appearance actions stay dormant until the readiness switch flips, then classify as designed", () => {
+test("the five appearance actions are allow-listed and classified as designed", () => {
   assert.equal(APPEARANCE_ACTIONS.length, 5);
   for (const action of APPEARANCE_ACTIONS) {
-    assert.equal(isAdminActionAllowed(action), APPEARANCE_RULES_CONTRACT_READY, action);
-    assert.equal((ADMIN_ACTIONS as readonly string[]).includes(action), APPEARANCE_RULES_CONTRACT_READY, action);
+    assert.equal(isAdminActionAllowed(action), true, action);
+    assert.equal((ADMIN_ACTIONS as readonly string[]).includes(action), true, action);
   }
-  if (APPEARANCE_RULES_CONTRACT_READY) {
-    assert.equal(adminActionAccess("appearance_rules_list"), "read");
-    assert.equal(adminActionAccess("appearance_rules_preview"), "read");
-    assert.equal(adminActionAccess("appearance_rules_save"), "write");
-    assert.equal(adminActionAccess("appearance_rules_delete"), "write");
-    assert.equal(adminActionAccess("appearance_city_geocode"), "write");
-  } else {
-    for (const action of APPEARANCE_ACTIONS) {
-      assert.equal(adminActionAccess(action), null, action);
-      assert.equal(action in ADMIN_ACTION_ACCESS, false, action);
-    }
-  }
-  // The raised save ceiling is a static table entry, independent of the switch.
+  assert.equal(adminActionAccess("appearance_rules_list"), "read");
+  assert.equal(adminActionAccess("appearance_rules_preview"), "read");
+  assert.equal(adminActionAccess("appearance_rules_save"), "write");
+  assert.equal(adminActionAccess("appearance_rules_delete"), "write");
+  assert.equal(adminActionAccess("appearance_city_geocode"), "write");
+  // The raised save ceiling is a static table entry.
   assert.equal(adminActionBodyLimit("appearance_rules_save"), 1_100_000);
   assert.equal(adminActionBodyLimit("appearance_rules_list"), 256_000);
 });
-
 
 test("the preview IP field accepts only real IPv4/IPv6 addresses", () => {
   for (const ip of [
@@ -1413,11 +1403,14 @@ test("the four component pre-normalisation paths use the PHP-compatible trim, so
   assert.doesNotMatch(hero, /\.trim\(\)/);
 });
 
-test("the legacy active-hero overview card is shown only while the appearance cutover is off", () => {
-  assert.equal(legacyHeroOverviewCardVisible(false), true, "before the cutover the people_hero count is still live");
-  assert.equal(legacyHeroOverviewCardVisible(true), false, "after the cutover the count is stale by construction and must not render");
-  assert.equal(legacyHeroOverviewCardVisible(), !APPEARANCE_RULES_CONTRACT_READY, "the default follows the release switch");
+test("the retired active-hero overview card is gone from the dashboard", () => {
+  // D-060 removed the switch that used to show it. The count Core still keeps
+  // for the legacy people_hero rows is stale by construction after the D-052
+  // cutover, so nothing may render it until a replacement has its own contract.
   const page = readFileSync(new URL("../app/(dashboard)/page.tsx", import.meta.url), "utf8");
-  assert.match(page, /\.\.\.\(legacyHeroOverviewCardVisible\(\) \? \[\{ label: t\("activeHeroes"\)/, "the card is gated through the helper");
-  assert.equal((page.match(/data\.active_heroes/g) ?? []).length, 1, "active_heroes is read only inside the gated card");
+  // Core still sends the field, so the response type keeps it; what must be
+  // gone is any rendering of it.
+  assert.doesNotMatch(page, /data\.active_heroes/, "the stale legacy metric is never read for display");
+  assert.doesNotMatch(page, /activeHeroes/, "its overview card and label are gone");
+  assert.doesNotMatch(page, /legacyHeroOverviewCardVisible/, "the retired helper is gone with its switch");
 });

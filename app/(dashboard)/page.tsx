@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { APPEARANCE_RULES_CONTRACT_READY } from "@/lib/contractReadiness";
+
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
 import { EmptyPanel, ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
-import { legacyHeroOverviewCardVisible } from "@/lib/appearanceRules";
 import { formatDate, formatNumber } from "@/lib/format";
 
 type AuditRow = {
@@ -58,7 +57,6 @@ export default function OverviewPage() {
     { label: t("newUsers"), value: formatNumber(data.new_users_7d, locale), tone: "green" },
     { label: t("demoProfiles"), value: formatNumber(data.demo_profiles, locale), tone: "pink" },
     // T-468b finding 27: the legacy people_hero count is stale by construction after the cutover.
-    ...(legacyHeroOverviewCardVisible() ? [{ label: t("activeHeroes"), value: formatNumber(data.active_heroes, locale), tone: "" }] : []),
     { label: t("activeAdmins"), value: formatNumber(data.active_admins, locale), tone: "green" },
     { label: t("avatarCoverage"), value: `${avatarCoverage}%`, tone: "pink" },
   ];
@@ -83,7 +81,7 @@ export default function OverviewPage() {
             <Link className="quick-link" href="/users">
               <strong>{t("manageUsers")}</strong><span>{t("manageUsersCopy")}</span>
             </Link>
-            <Link className="quick-link" href={APPEARANCE_RULES_CONTRACT_READY ? "/appearance" : "/heroes"}>
+            <Link className="quick-link" href="/appearance">
               <strong>{t("manageHeroes")}</strong><span>{t("manageHeroesCopy")}</span>
             </Link>
             <Link className="quick-link" href="/configuration">

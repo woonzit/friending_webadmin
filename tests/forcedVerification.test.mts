@@ -45,7 +45,6 @@ import {
   type ForcedVerificationDocument,
 } from "../lib/forcedVerification.ts";
 import { ADMIN_ACTIONS, adminActionAccess } from "../lib/adminActions.ts";
-import { FORCED_VERIFICATION_CONTRACT_READY } from "../lib/contractReadiness.ts";
 
 const LEGACY = { message: 200, status: 200, can_send: 0 } as const;
 
@@ -186,7 +185,7 @@ test("the console, save and impact materials are exact and closed", () => {
   assert.equal(parseForcedVerificationImpact({ by_storefront: [], unknown_storefront: { members_seen: -1, would_be_gated: 0, satisfied: 0 }, computed_at: "2026-08-29T14:00:00Z" }), null, "negative count");
 });
 
-test("the admin_me projection is a closed block and the access derives only from it plus the release switch", () => {
+test("the admin_me projection is a closed block and the access derives only from it", () => {
   const ready = parseForcedVerificationAdminMe({ contract_version: 1, contract_ready: true, actions: ["verification_forced_console", "verification_forced_save", "verification_forced_impact_preview"] });
   assert.deepEqual(ready?.actions, [...FORCED_VERIFICATION_ACTIONS]);
   const reader = parseForcedVerificationAdminMe({ contract_version: 1, contract_ready: true, actions: ["verification_forced_console"] });
@@ -201,13 +200,12 @@ test("the admin_me projection is a closed block and the access derives only from
   assert.equal(parseForcedVerificationAdminMe({ contract_version: 1, contract_ready: true, actions: ["verification_forced_console", "verification_forced_console"] }), null, "duplicate");
   assert.equal(parseForcedVerificationAdminMe({ contract_version: 1, contract_ready: true, actions: [], principal: {} }), null, "unknown key");
 
-  assert.deepEqual(forcedVerificationAccess(ready, true), { visible: true, editable: true });
-  assert.deepEqual(forcedVerificationAccess(reader, true), { visible: true, editable: false });
-  assert.deepEqual(forcedVerificationAccess(dormant, true), { visible: false, editable: false });
-  assert.deepEqual(forcedVerificationAccess(ready, false), { visible: false, editable: false }, "the local switch hides, never grants");
-  assert.deepEqual(forcedVerificationAccess(null, true), { visible: false, editable: false });
+  assert.deepEqual(forcedVerificationAccess(ready), { visible: true, editable: true });
+  assert.deepEqual(forcedVerificationAccess(reader), { visible: true, editable: false });
+  assert.deepEqual(forcedVerificationAccess(dormant), { visible: false, editable: false });
+  assert.deepEqual(forcedVerificationAccess(null), { visible: false, editable: false });
   const saveOnly = parseForcedVerificationAdminMe({ contract_version: 1, contract_ready: true, actions: ["verification_forced_save"] });
-  assert.deepEqual(forcedVerificationAccess(saveOnly, true), { visible: false, editable: false }, "no console action means no tab at all");
+  assert.deepEqual(forcedVerificationAccess(saveOnly), { visible: false, editable: false }, "no console action means no tab at all");
 
   const membership = { verification_forced: { contract_version: 1, contract_ready: true, actions: ["verification_forced_console"] } };
   assert.equal(forcedVerificationProxyCapabilityAuthorized("verification_forced_console", membership), true);
@@ -403,7 +401,7 @@ test("the refusal maps are closed, status-bound and disjoint per envelope source
 // Proxy normalization and dormant registration
 // ---------------------------------------------------------------------------
 
-test("the proxy forwards only exact bodies and the actions stay dormant behind the release switch", () => {
+test("the proxy forwards only exact bodies and the actions are allow-listed", () => {
   const valid = document({ default: { persona: true, video: false } });
   assert.deepEqual(normalizeForcedVerificationProxyBody("verification_forced_console", {}), {});
   assert.equal(normalizeForcedVerificationProxyBody("verification_forced_console", { page: 1 }), null);
@@ -419,8 +417,8 @@ test("the proxy forwards only exact bodies and the actions stay dormant behind t
   assert.equal(normalizeForcedVerificationProxyBody("verification_console", { anything: 1 }), undefined, "other families untouched");
 
   for (const action of FORCED_VERIFICATION_ACTIONS) {
-    assert.equal((ADMIN_ACTIONS as readonly string[]).includes(action), FORCED_VERIFICATION_CONTRACT_READY, `${action} allow-listed only with the switch`);
-    assert.equal(adminActionAccess(action) ?? null, FORCED_VERIFICATION_CONTRACT_READY ? (action === "verification_forced_save" ? "write" : "read") : null);
+    assert.equal((ADMIN_ACTIONS as readonly string[]).includes(action), true, `${action} is allow-listed`);
+    assert.equal(adminActionAccess(action) ?? null, action === "verification_forced_save" ? "write" : "read");
   }
 });
 

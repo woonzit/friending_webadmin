@@ -6,7 +6,7 @@ import {
   isAdminActionAllowed,
   isAdminActionAuthorized,
 } from "../lib/adminActions.ts";
-import { PRODUCT_POPUP_CONTRACT_READY } from "../lib/contractReadiness.ts";
+
 import {
   PRODUCT_POPUP_ERROR_KEYS,
   PRODUCT_POPUP_ERROR_STATUSES,
@@ -530,7 +530,6 @@ test("every closed refusal has a localized route, exact status, and documented t
 });
 
 test("the released popup bridge remains closed to guests and foreign origins, with exact role gates", async () => {
-  assert.equal(PRODUCT_POPUP_CONTRACT_READY, true);
   const readAction = "admin_get_user_popup";
   const writeActions = ["admin_set_user_popup", "admin_clear_user_popup"];
   assert.equal(isAdminActionAllowed(readAction), true);
@@ -574,8 +573,6 @@ test("user-detail activation, same-origin calls, exact preview, durable recovery
     readFile(new URL("../messages/hu.json", import.meta.url), "utf8"),
   ]);
 
-  assert.match(page, /PRODUCT_POPUP_CONTRACT_READY \? <ProductPopupPanel/);
-  assert.match(actions, /PRODUCT_POPUP_CONTRACT_READY/);
   assert.match(actions, /admin_get_user_popup/);
   assert.match(actions, /admin_set_user_popup/);
   assert.match(actions, /admin_clear_user_popup/);

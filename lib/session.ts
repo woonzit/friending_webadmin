@@ -4,10 +4,7 @@ import { coreCall } from "@/lib/core";
 import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
   AUDIENCE_VISIBILITY_CONTRACT_READY,
-  FORCED_VERIFICATION_CONTRACT_READY,
-  PERSONA_ADMIN_PROXY_RELEASED,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
-  VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 import { audienceVisibilityAdminMe } from "@/lib/audienceVisibilityAdmin";
 import {
@@ -106,10 +103,8 @@ export async function adminMe(): Promise<AdminIdentity | null> {
   return {
     email: String(result.data.email ?? session.email),
     role,
-    personaConsoleReady: PERSONA_ADMIN_PROXY_RELEASED
-      && personaCapabilityAllows(persona, "read_start_config"),
-    verificationConsoleReady: VERIFICATION_CONTRACT_READY
-      && verification?.contract_ready === true
+    personaConsoleReady: personaCapabilityAllows(persona, "read_start_config"),
+    verificationConsoleReady: verification?.contract_ready === true
       && verification.actions.includes("verification_console"),
     audienceVisibilityConsoleReady: AUDIENCE_VISIBILITY_CONTRACT_READY
       && audienceVisibility?.contract_ready === true
@@ -117,10 +112,7 @@ export async function adminMe(): Promise<AdminIdentity | null> {
     profileTextModerationConsoleReady: PROFILE_TEXT_MODERATION_CONTRACT_READY
       && profileTextModeration?.contract_ready === true
       && profileTextModeration.actions.includes("moderation_profile_text_list"),
-    forcedVerification: forcedVerificationAccess(
-      parseForcedVerificationAdminMe(result.data.verification_forced),
-      FORCED_VERIFICATION_CONTRACT_READY,
-    ),
+    forcedVerification: forcedVerificationAccess(parseForcedVerificationAdminMe(result.data.verification_forced)),
   };
 }
 

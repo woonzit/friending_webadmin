@@ -1,16 +1,8 @@
 import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
-  APPEARANCE_RULES_CONTRACT_READY,
   AUDIENCE_VISIBILITY_CONTRACT_READY,
-  CANNED_TEMPLATES_CONTRACT_READY,
-  OUTBOUND_MESSAGING_CONTRACT_READY,
-  PERSONA_ADMIN_PROXY_RELEASED,
   FEATURE_SWITCHES_CONTRACT_READY,
-  FORCED_VERIFICATION_CONTRACT_READY,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
-  PRODUCT_POPUP_CONTRACT_READY,
-  REPORTED_CONTENT_CONTRACT_READY,
-  VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 import { ADMIN_GRANTED_VERIFICATION_ACTIONS } from "@/lib/adminGrantedVerification";
 import { APPEARANCE_ACTIONS } from "@/lib/appearanceRules";
@@ -53,32 +45,20 @@ export const DATES_ADMIN_ACTIONS = [
   "dates_reason_deactivate",
 ] as const;
 
-const REPORTED_CONTENT_ADMIN_ACTIONS = REPORTED_CONTENT_CONTRACT_READY
-  ? ["moderation_reported_list", "moderation_report_action"] as const
-  : [] as const;
+const REPORTED_CONTENT_ADMIN_ACTIONS = ["moderation_reported_list", "moderation_report_action"] as const;
 
-const PRODUCT_POPUP_ADMIN_ACTIONS = PRODUCT_POPUP_CONTRACT_READY
-  ? ["admin_get_user_popup", "admin_set_user_popup", "admin_clear_user_popup"] as const
-  : [] as const;
+const PRODUCT_POPUP_ADMIN_ACTIONS = ["admin_get_user_popup", "admin_set_user_popup", "admin_clear_user_popup"] as const;
 
-const CANNED_TEMPLATE_ADMIN_ACTIONS = CANNED_TEMPLATES_CONTRACT_READY
-  ? ["list_canned", "save_canned", "delete_canned"] as const
-  : [] as const;
+const CANNED_TEMPLATE_ADMIN_ACTIONS = ["list_canned", "save_canned", "delete_canned"] as const;
 
 /** Strict v1 outbound actions stay absent unless the reviewed provider release is active. */
-const ACTIVE_OUTBOUND_MESSAGING_ACTIONS = OUTBOUND_MESSAGING_CONTRACT_READY
-  ? OUTBOUND_MESSAGING_ACTIONS
-  : [] as const;
+const ACTIVE_OUTBOUND_MESSAGING_ACTIONS = OUTBOUND_MESSAGING_ACTIONS;
 
 /** Receipt-era Persona routes stay absent until the reviewed Core train is released. */
-const ACTIVE_PERSONA_ADMIN_ACTIONS = PERSONA_ADMIN_PROXY_RELEASED
-  ? PERSONA_ADMIN_ACTIONS
-  : [] as const;
+const ACTIVE_PERSONA_ADMIN_ACTIONS = PERSONA_ADMIN_ACTIONS;
 
 /** Released verification actions share one explicit rollback switch and Core capability recheck. */
-const ACTIVE_VERIFICATION_ADMIN_ACTIONS = VERIFICATION_CONTRACT_READY
-  ? VERIFICATION_ADMIN_ACTIONS
-  : [] as const;
+const ACTIVE_VERIFICATION_ADMIN_ACTIONS = VERIFICATION_ADMIN_ACTIONS;
 
 /** Dormant T-219 actions use their own release switch and Core capability block. */
 const ACTIVE_ADMIN_GRANTED_VERIFICATION_ACTIONS = ADMIN_GRANTED_VERIFICATION_CONTRACT_READY
@@ -86,9 +66,7 @@ const ACTIVE_ADMIN_GRANTED_VERIFICATION_ACTIONS = ADMIN_GRANTED_VERIFICATION_CON
   : [] as const;
 
 /** Dormant T-471 actions (D-053 forced verification) use their own release switch and Core `admin_me.verification_forced` block. */
-const ACTIVE_FORCED_VERIFICATION_ACTIONS = FORCED_VERIFICATION_CONTRACT_READY
-  ? FORCED_VERIFICATION_ACTIONS
-  : [] as const;
+const ACTIVE_FORCED_VERIFICATION_ACTIONS = FORCED_VERIFICATION_ACTIONS;
 
 /** Dormant T-215 actions stay absent until the reviewed T-121 provider release. */
 const ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS = AUDIENCE_VISIBILITY_CONTRACT_READY
@@ -106,18 +84,7 @@ const ACTIVE_FEATURE_SWITCHES_ACTIONS = FEATURE_SWITCHES_CONTRACT_READY
   : [] as const;
 
 /** Dormant D-052 appearance-rule actions stay absent until the Core T-467 provider is live. */
-const ACTIVE_APPEARANCE_ACTIONS = APPEARANCE_RULES_CONTRACT_READY
-  ? APPEARANCE_ACTIONS
-  : [] as const;
-
-/**
- * The People hero and App landing surfaces the appearance rules replace. They
- * leave the allow-list with the same switch that opens `/appearance`, so the
- * cutover is one reviewed source change and no retired mutation stays callable.
- */
-const LEGACY_PLACEMENT_ACTIONS = APPEARANCE_RULES_CONTRACT_READY
-  ? [] as const
-  : ["list_hero", "save_hero", "delete_hero", "list_app_landing", "save_app_landing", "delete_app_landing"] as const;
+const ACTIVE_APPEARANCE_ACTIONS = APPEARANCE_ACTIONS;
 
 export const ADMIN_ACTIONS = [
   "overview",
@@ -133,7 +100,6 @@ export const ADMIN_ACTIONS = [
   "app_review_sandbox_status",
   "app_review_sandbox_reset",
   "set_demo_visibility_permission",
-  ...LEGACY_PLACEMENT_ACTIONS,
   "list_landing",
   "save_landing",
   "delete_landing",
@@ -282,14 +248,6 @@ export const ADMIN_ACTION_ACCESS = {
   app_review_sandbox_status: "read",
   app_review_sandbox_reset: "write",
   set_demo_visibility_permission: "write",
-  ...(APPEARANCE_RULES_CONTRACT_READY ? {} : {
-    list_hero: "read" as const,
-    save_hero: "write" as const,
-    delete_hero: "write" as const,
-    list_app_landing: "read" as const,
-    save_app_landing: "write" as const,
-    delete_app_landing: "write" as const,
-  }),
   list_landing: "read",
   save_landing: "write",
   delete_landing: "write",
@@ -421,12 +379,10 @@ export const ADMIN_ACTION_ACCESS = {
 
   // Core authors the narrower history/send capabilities on every action.
   // These rows add only the independent global viewer/editor floor.
-  ...(OUTBOUND_MESSAGING_CONTRACT_READY ? {
-    outbound_message_preview: "write" as const,
-    send_message: "write" as const,
-    user_history: "read" as const,
-    user_history_detail: "read" as const,
-  } : {}),
+    outbound_message_preview: "write",
+    send_message: "write",
+    user_history: "read",
+    user_history_detail: "read",
 
   // The list is safe for every active administrator. A browser-side decision
   // also requires the global editor role; Core then rechecks its narrower
@@ -437,33 +393,29 @@ export const ADMIN_ACTION_ACCESS = {
   // Persona has its own exact per-action capability block, rechecked by the
   // bridge. These rows add the independent global viewer/editor floor only
   // while the provider release switch is enabled.
-  ...(PERSONA_ADMIN_PROXY_RELEASED ? {
-    persona_start_get_config_admin: "read" as const,
-    persona_start_update_config: "write" as const,
-    admin_force_persona_verify: "write" as const,
-    admin_apply_fake_persona: "write" as const,
-    admin_revoke_fake_persona: "write" as const,
-  } : {}),
+    persona_start_get_config_admin: "read",
+    persona_start_update_config: "write",
+    admin_force_persona_verify: "write",
+    admin_apply_fake_persona: "write",
+    admin_revoke_fake_persona: "write",
 
-  ...(VERIFICATION_CONTRACT_READY ? {
-    verification_console: "read" as const,
-    verification_policy_save_draft: "write" as const,
-    verification_policy_impact_preview: "owner" as const,
-    verification_policy_apply: "owner" as const,
-    verification_copy_save: "write" as const,
-    verification_copy_remove: "write" as const,
-    verification_pending_settings_save: "write" as const,
-    verification_badge_upload: "write" as const,
-    verification_badge_remove: "write" as const,
-    verification_places_city_search: "write" as const,
-    verification_places_city_detail: "write" as const,
-    verification_simulate: "read" as const,
-    verification_pending_summary: "read" as const,
-    verification_user_detail: "read" as const,
-    verification_grant_preview: "write" as const,
-    verification_grant_save: "write" as const,
-    verification_grant_remove: "write" as const,
-  } : {}),
+    verification_console: "read",
+    verification_policy_save_draft: "write",
+    verification_policy_impact_preview: "owner",
+    verification_policy_apply: "owner",
+    verification_copy_save: "write",
+    verification_copy_remove: "write",
+    verification_pending_settings_save: "write",
+    verification_badge_upload: "write",
+    verification_badge_remove: "write",
+    verification_places_city_search: "write",
+    verification_places_city_detail: "write",
+    verification_simulate: "read",
+    verification_pending_summary: "read",
+    verification_user_detail: "read",
+    verification_grant_preview: "write",
+    verification_grant_save: "write",
+    verification_grant_remove: "write",
 
   ...(ADMIN_GRANTED_VERIFICATION_CONTRACT_READY ? {
     verification_grant: "write" as const,
@@ -471,11 +423,9 @@ export const ADMIN_ACTION_ACCESS = {
   } : {}),
 
   /** Contract v1 §4: the console and the counts-only impact preview are reads; the revisioned save is an editor write. */
-  ...(FORCED_VERIFICATION_CONTRACT_READY ? {
-    verification_forced_console: "read" as const,
-    verification_forced_save: "write" as const,
-    verification_forced_impact_preview: "read" as const,
-  } : {}),
+    verification_forced_console: "read",
+    verification_forced_save: "write",
+    verification_forced_impact_preview: "read",
 
   // Core authors the exact per-action capability projection. These rows add
   // the independent global viewer/editor floor only after provider release.
@@ -503,13 +453,11 @@ export const ADMIN_ACTION_ACCESS = {
   // reads for every active administrator; save and delete match Core's editor
   // gate and audit. The city lookup spends Google geocoding quota, so it is a
   // write on this ladder exactly like `verification_places_city_search`.
-  ...(APPEARANCE_RULES_CONTRACT_READY ? {
-    appearance_rules_list: "read" as const,
-    appearance_rules_save: "write" as const,
-    appearance_rules_delete: "write" as const,
-    appearance_rules_preview: "read" as const,
-    appearance_city_geocode: "write" as const,
-  } : {}),
+    appearance_rules_list: "read",
+    appearance_rules_save: "write",
+    appearance_rules_delete: "write",
+    appearance_rules_preview: "read",
+    appearance_city_geocode: "write",
 
   admin_me: "read",
   dates_activity_list: "dates_read",

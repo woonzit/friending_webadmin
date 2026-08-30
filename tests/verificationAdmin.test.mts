@@ -8,7 +8,7 @@ import {
   isAdminActionAllowed,
   isAdminActionAuthorized,
 } from "../lib/adminActions.ts";
-import { FORCED_VERIFICATION_CONTRACT_READY, VERIFICATION_CONTRACT_READY } from "../lib/contractReadiness.ts";
+
 import {
   ADMIN_REQUEST_HEADER,
   ADMIN_REQUEST_HEADER_VALUE,
@@ -251,7 +251,6 @@ function grantPreview(level: "light" | "strong" = "light"): VerificationGrantPre
 }
 
 test("the accepted contract vocabulary and released seventeen-action bridge are exact", () => {
-  assert.equal(VERIFICATION_CONTRACT_READY, true);
   assert.deepEqual(VERIFICATION_METHODS, ["video", "persona"]);
   assert.deepEqual(VERIFICATION_LEVELS, ["none", "light", "strong"]);
   assert.deepEqual(VERIFICATION_BADGE_SLOTS, ["light", "strong", "pending"]);
@@ -262,7 +261,7 @@ test("the accepted contract vocabulary and released seventeen-action bridge are 
     "messages",
     "badges",
     "simulator",
-    ...(FORCED_VERIFICATION_CONTRACT_READY ? ["forced"] : []),
+    "forced",
   ]);
   assert.deepEqual(VERIFICATION_POLICY_OPERATIONS, ["publish", "deactivate", "tombstone", "restore"]);
   assert.deepEqual(VERIFICATION_GATE_VARIANTS, ["video", "persona", "both", "pending", "rejected"]);
@@ -293,9 +292,7 @@ test("the accepted contract vocabulary and released seventeen-action bridge are 
   );
   assert.deepEqual(
     ADMIN_ACTIONS.filter((action) => action.startsWith("verification_forced_")),
-    FORCED_VERIFICATION_CONTRACT_READY
-      ? ["verification_forced_console", "verification_forced_save", "verification_forced_impact_preview"]
-      : [],
+    ["verification_forced_console", "verification_forced_save", "verification_forced_impact_preview"],
   );
   const viewerReads = new Set([
     "verification_console",
@@ -807,19 +804,16 @@ test("route, navigation, page, console and user panel preserve every security an
   assert.ok(route.indexOf("isTrustedAdminRequest") < route.indexOf("readAdminSession"));
   assert.ok(route.indexOf("isAdminActionAllowed") < route.indexOf("readAdminSession"));
   assert.ok(route.indexOf("verificationProxyCapabilityAuthorized") < route.indexOf("coreCall(\n    action"));
-  assert.match(route, /normalizeVerificationProxyBody\(\s*action,\s*body,\s*ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,\s*\)/);
   assert.match(route, /Cache-Control": "no-store"/);
   assert.match(route, /mergeCoreParams\(body, \{ admin_email: session\.email \}\)/);
   assert.doesNotMatch(route, /CORE_API_BASE|WEBADMIN_API_SECRET/);
   assert.match(core, /if \(typeof value === "boolean"\) return value \? "1" : "0"/);
 
-  assert.match(page, /if \(!VERIFICATION_CONTRACT_READY\) notFound\(\)/);
   assert.match(page, /if \(!me\?\.verificationConsoleReady\) notFound\(\)/);
   assert.match(session, /verificationAdminMe\(result\.data\.verification\)/);
   assert.match(session, /verification\.actions\.includes\("verification_console"\)/);
   assert.match(shell, /item\.key !== "verificationSettings" \|\| verificationConsoleReady/);
   assert.match(layout, /verificationConsoleReady=\{me\.verificationConsoleReady\}/);
-  assert.match(actions, /ACTIVE_VERIFICATION_ADMIN_ACTIONS = VERIFICATION_CONTRACT_READY/);
   assert.match(actions, /\.\.\.ACTIVE_VERIFICATION_ADMIN_ACTIONS/);
 
   for (const action of VERIFICATION_ADMIN_ACTIONS) {
@@ -852,7 +846,6 @@ test("route, navigation, page, console and user panel preserve every security an
   assert.match(userPanel, /verification_grant_save/);
   assert.match(userPanel, /verification_grant_remove/);
   assert.match(userPanel, /strongConfirmed/);
-  assert.match(userPage, /VERIFICATION_CONTRACT_READY \? <VerificationUserPanel/);
   assert.doesNotMatch(`${consoleSource}\n${userPanel}`, /https:\/\/core\.friending\.com|WEBADMIN_API_SECRET|fetch\(\s*["'`]https:/);
 });
 
@@ -918,10 +911,8 @@ test("English and Hungarian UI and eleven Help topics stay key-identical and cov
   assert.doesNotMatch(help, /all eleven|mind a tizenegy|dormant|nyugalmi|local calculation|helyi számítás/i);
 });
 
-test("the forced tab exists only behind the D-053 release switch (T-471)", async () => {
-  const { VERIFICATION_TAB_KEYS_ALL } = await import("../lib/verificationAdmin.ts");
-  const { FORCED_VERIFICATION_CONTRACT_READY } = await import("../lib/contractReadiness.ts");
-  assert.deepEqual(VERIFICATION_TAB_KEYS_ALL, ["scopes", "requirements", "messages", "badges", "simulator", "forced"]);
-  assert.equal(VERIFICATION_TAB_KEYS.includes("forced"), FORCED_VERIFICATION_CONTRACT_READY);
-  assert.equal(verificationTabKey("forced"), FORCED_VERIFICATION_CONTRACT_READY ? "forced" : "scopes", "a dormant tab falls back to Scopes");
+test("the forced tab is a permanent console tab (T-471, D-053)", () => {
+  assert.deepEqual(VERIFICATION_TAB_KEYS, ["scopes", "requirements", "messages", "badges", "simulator", "forced"]);
+  assert.equal(verificationTabKey("forced"), "forced");
+  assert.equal(verificationTabKey("nonsense"), "scopes", "an unknown tab still falls back to Scopes");
 });

@@ -512,8 +512,8 @@ export function parseForcedVerificationAdminMe(value: unknown): ForcedVerificati
  * What the current operator may do, from Core's projection only: the local
  * readiness switch can hide the console, never grant it.
  */
-export function forcedVerificationAccess(projection: ForcedVerificationAdminMe | null, contractReady: boolean): ForcedVerificationAccess {
-  if (!contractReady || !projection || !projection.contract_ready) return { visible: false, editable: false };
+export function forcedVerificationAccess(projection: ForcedVerificationAdminMe | null): ForcedVerificationAccess {
+  if (!projection || !projection.contract_ready) return { visible: false, editable: false };
   const visible = projection.actions.includes("verification_forced_console");
   return { visible, editable: visible && projection.actions.includes("verification_forced_save") };
 }

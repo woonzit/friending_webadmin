@@ -18,7 +18,6 @@ import {
 } from "@/lib/authPolicyConfiguration";
 import {
   FEATURE_SWITCHES_CONTRACT_READY,
-  PUSH_MODE_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 import { formatDate } from "@/lib/format";
 import {
@@ -49,9 +48,9 @@ function configurationSnapshot(response: AdminResponse | null): ConfigurationSna
   }
   const runtime = normalizeRuntimeSettings(response.settings);
   if (!runtime) return null;
-  const push = PUSH_MODE_CONTRACT_READY ? pushSettingsResponse(response) : null;
+  const push = pushSettingsResponse(response);
   const authPolicy = authPolicySettingsResponse(response);
-  if (!authPolicy || (PUSH_MODE_CONTRACT_READY && !push)) return null;
+  if (!authPolicy || !push) return null;
   return { runtime, push, authPolicy };
 }
 
@@ -151,10 +150,8 @@ export default function ConfigurationPage() {
       setMessage({ tone: "error", text: t("sessionIdleInvalid") });
       return;
     }
-    const pushPayload = PUSH_MODE_CONTRACT_READY
-      ? pushDeliverySavePayload(pushSetting?.value)
-      : null;
-    if (PUSH_MODE_CONTRACT_READY && !pushPayload) {
+    const pushPayload = pushDeliverySavePayload(pushSetting?.value);
+    if (!pushPayload) {
       setMessage({ tone: "error", text: t("push.invalid") });
       return;
     }
@@ -344,7 +341,7 @@ export default function ConfigurationPage() {
             </div>
           </div>
         </section>
-        {PUSH_MODE_CONTRACT_READY && pushSetting ? (
+        {pushSetting ? (
           <section className="panel push-mode-panel">
             <div className="panel-header"><div><h2>{t("push.section")}</h2></div></div>
             <div className="panel-body">

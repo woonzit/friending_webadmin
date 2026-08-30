@@ -7,7 +7,7 @@ import {
   isAdminActionAllowed,
   isAdminActionAuthorized,
 } from "../lib/adminActions.ts";
-import { OUTBOUND_MESSAGING_CONTRACT_READY } from "../lib/contractReadiness.ts";
+
 import {
   OUTBOUND_MESSAGING_ACTIONS,
   OUTBOUND_MESSAGING_AVAILABILITY,
@@ -119,7 +119,6 @@ function sendPayload(): OutboundSendPayload {
 }
 
 test("the accepted v1 vocabulary and released boundary are closed", () => {
-  assert.equal(OUTBOUND_MESSAGING_CONTRACT_READY, true);
   assert.deepEqual(OUTBOUND_MESSAGING_ACTIONS, [
     "outbound_message_preview",
     "send_message",
@@ -629,8 +628,6 @@ test("user-detail shell, safe previews, locales, and seven Help sections share t
     readFile(new URL("../messages/en.json", import.meta.url), "utf8"),
     readFile(new URL("../messages/hu.json", import.meta.url), "utf8"),
   ]);
-  assert.match(page, /OUTBOUND_MESSAGING_CONTRACT_READY \? <OutboundMessagingPanel/);
-  assert.match(actions, /OUTBOUND_MESSAGING_CONTRACT_READY/);
   assert.match(actions, /OUTBOUND_MESSAGING_ACTIONS/);
   assert.match(actions, /\.\.\.ACTIVE_OUTBOUND_MESSAGING_ACTIONS/);
   assert.match(route, /normalizeOutboundMessagingProxyBody/);

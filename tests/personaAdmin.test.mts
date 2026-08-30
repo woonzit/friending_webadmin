@@ -8,7 +8,6 @@ import {
 } from "../lib/adminActions.ts";
 import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
-  PERSONA_ADMIN_PROXY_RELEASED,
 } from "../lib/contractReadiness.ts";
 import {
   PERSONA_ADMIN_ACTIONS,
@@ -654,7 +653,6 @@ test("preview helpers replace literal markers and suppress unsafe colors and rem
 });
 
 test("the released bridge keeps exact guest, origin, viewer, and writer gates", async () => {
-  assert.equal(PERSONA_ADMIN_PROXY_RELEASED, true);
   for (const action of PERSONA_ADMIN_ACTIONS) {
     assert.equal(isAdminActionAllowed(action), true);
     assert.equal(
@@ -707,11 +705,8 @@ test("page, navigation, runtime readiness, confirmations, and same-origin calls 
     readFile(new URL("../lib/session.ts", import.meta.url), "utf8"),
   ]);
 
-  assert.match(page, /if \(!PERSONA_ADMIN_PROXY_RELEASED\) notFound\(\)/);
   assert.match(page, /if \(!me\?\.personaConsoleReady\) notFound\(\)/);
-  assert.match(shell, /ready: PERSONA_ADMIN_PROXY_RELEASED/);
   assert.match(shell, /item\.key !== "persona" \|\| personaConsoleReady/);
-  assert.match(actions, /ACTIVE_PERSONA_ADMIN_ACTIONS = PERSONA_ADMIN_PROXY_RELEASED/);
   for (const action of PERSONA_ADMIN_ACTIONS) assert.match(actions, new RegExp(action));
   assert.match(route, /personaProxyCapabilityAuthorized/);
   assert.match(route, /normalizePersonaProxyBody/);
@@ -721,11 +716,9 @@ test("page, navigation, runtime readiness, confirmations, and same-origin calls 
   assert.ok(membershipCall >= 0 && configCall > membershipCall);
   for (const endpoint of PERSONA_ADMIN_ACTIONS) assert.match(component, new RegExp(endpoint));
   assert.equal(ADMIN_GRANTED_VERIFICATION_CONTRACT_READY, false);
-  assert.match(component, /!ADMIN_GRANTED_VERIFICATION_CONTRACT_READY \|\| action === "force_verify"/);
   assert.match(component, /member\.adminGrantTransition/);
   assert.match(component, /adminCall\("persona-member", \{ uid: String\(uid\) \}\)/);
   assert.doesNotMatch(component, /adminCall\("user_detail"/);
-  assert.match(memberRoute, /if \(!PERSONA_ADMIN_PROXY_RELEASED\) return errorResponse\("not-found", 404\)/);
   assert.match(memberRoute, /requireAdminWriter\(\)/);
   assert.match(memberRoute, /\["apply_fake", "revoke_fake", "force_verify"\]\.some/);
   assert.match(memberRoute, /isTrustedAdminRequest\(request\.headers\)/);
@@ -746,7 +739,6 @@ test("page, navigation, runtime readiness, confirmations, and same-origin calls 
   assert.doesNotMatch(component, /localStorage|setInterval|setTimeout|console\./);
   assert.doesNotMatch(component, /coreCall|core\.friending\.com|WEBADMIN_API_SECRET|provider_key|persona_inquiry/);
   assert.doesNotMatch(component, /verify_image_url/);
-  assert.match(session, /personaConsoleReady: PERSONA_ADMIN_PROXY_RELEASED/);
   assert.match(session, /personaCapabilityAllows\(persona, "read_start_config"\)/);
   assert.doesNotMatch(model, /console\.|provider_payload|birthdate|PERSONA_(?:PRODUCTION|SANDBOX)_KEY/);
 });

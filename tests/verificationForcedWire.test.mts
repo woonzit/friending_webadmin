@@ -300,11 +300,10 @@ test("the admin_me fixtures bind the v1.2 capability projection beside the relea
   }
   const adminBlock = parseForcedVerificationAdminMe(admin.data.verification_forced);
   assert.deepEqual(adminBlock, { contract_version: 1, contract_ready: true, actions: [...FORCED_VERIFICATION_ACTIONS] });
-  assert.deepEqual(forcedVerificationAccess(adminBlock, true), { visible: true, editable: true });
-  assert.deepEqual(forcedVerificationAccess(adminBlock, false), { visible: false, editable: false }, "the local release switch still hides the tab");
+  assert.deepEqual(forcedVerificationAccess(adminBlock), { visible: true, editable: true });
   const viewerBlock = parseForcedVerificationAdminMe(viewer.data.verification_forced);
   assert.deepEqual(viewerBlock, { contract_version: 1, contract_ready: true, actions: ["verification_forced_console"] });
-  assert.deepEqual(forcedVerificationAccess(viewerBlock, true), { visible: true, editable: false });
+  assert.deepEqual(forcedVerificationAccess(viewerBlock), { visible: true, editable: false });
   for (const action of FORCED_VERIFICATION_ACTIONS) {
     assert.equal(forcedVerificationProxyCapabilityAuthorized(action, admin.data), true, `admin ${action}`);
     assert.equal(forcedVerificationProxyCapabilityAuthorized(action, viewer.data), action === "verification_forced_console", `viewer ${action}`);
