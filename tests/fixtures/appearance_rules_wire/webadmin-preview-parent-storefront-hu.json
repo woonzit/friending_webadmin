@@ -1,0 +1,397 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "revision": 21,
+        "content_version": "f2b61a8e1d5a9679e6fefe95e79da4d5bda1669620785b448044c42f42bcf4ff",
+        "landing": {
+            "background": {
+                "type": "image",
+                "url": "",
+                "poster_url": "",
+                "overlay": {
+                    "color": "#000000",
+                    "alpha": 0.35
+                }
+            },
+            "title": {
+                "type": "image",
+                "text": "",
+                "image_url": "https://img.example/friending-logo.png",
+                "image": {
+                    "width_percent": 72,
+                    "offset_percent": -6
+                },
+                "style": {
+                    "font": "proxima_bold",
+                    "size": 44,
+                    "color": "#FFFFFF",
+                    "align": "left"
+                }
+            },
+            "description": {
+                "text": "Ismerj meg embereket a közeledben — és bárhol, ahová tartasz.",
+                "style": {
+                    "font": "proxima_regular",
+                    "size": 17,
+                    "color": "#F2F4F7",
+                    "align": "left"
+                },
+                "backdrop": {
+                    "color": "#000000",
+                    "alpha": 0
+                }
+            },
+            "buttons": {
+                "corner_radius": 28,
+                "phone": {
+                    "label": "Folytatás telefonszámmal",
+                    "background": "#FFFFFF",
+                    "text_color": "#0B0E12",
+                    "font": "proxima_semibold",
+                    "size": 17
+                },
+                "email": {
+                    "label": "Folytatás e-mailben",
+                    "background": "#FFFFFF",
+                    "text_color": "#0B0E12",
+                    "font": "proxima_semibold",
+                    "size": 17
+                },
+                "apple": {
+                    "style": "white"
+                }
+            },
+            "footer": {
+                "text": "A folytatással elfogadod a <terms>Felhasználási feltételeket</terms> és az <privacy>Adatvédelmi nyilatkozatot</privacy>.",
+                "background": {
+                    "color": "#000000",
+                    "alpha": 0.55
+                },
+                "style": {
+                    "font": "proxima_regular",
+                    "size": 12,
+                    "color": "#E4E8ED"
+                }
+            },
+            "qr": {
+                "enabled": true,
+                "background": "#000000",
+                "icon_color": "#FFFFFF"
+            }
+        },
+        "hero": [],
+        "palette": {
+            "light": {
+                "accent": "#007F91",
+                "accent_pressed": "#006776",
+                "accent_faint_bg": "#DDFBFC",
+                "on_accent": "#FFFFFF",
+                "inactive": "#6B7478"
+            },
+            "dark": {
+                "accent": "#75F0F4",
+                "accent_pressed": "#8DFDFF",
+                "accent_faint_bg": "#12373B",
+                "on_accent": "#071516",
+                "inactive": "#8A9497"
+            }
+        },
+        "matched": {
+            "scope": "storefront",
+            "rule_id": "620000000000000000000002",
+            "location_source": "none"
+        },
+        "landing_flat": {
+            "background_type": "",
+            "background_url": "",
+            "background_poster_url": "",
+            "title_type": "image",
+            "title_text_en": "",
+            "title_text_hu": "",
+            "title_image_url": "https://img.example/friending-logo.png",
+            "description_en": "",
+            "description_hu": "",
+            "overlay_color": "",
+            "overlay_alpha": "",
+            "title_font": "",
+            "title_size": "",
+            "title_color": "",
+            "title_align": "",
+            "title_image_width_percent": "72",
+            "title_image_offset_percent": "-6",
+            "description_font": "",
+            "description_size": "",
+            "description_color": "",
+            "description_align": "",
+            "description_backdrop_color": "",
+            "description_backdrop_alpha": "",
+            "button_corner_radius": "",
+            "button_phone_label_en": "",
+            "button_phone_label_hu": "",
+            "button_email_label_en": "",
+            "button_email_label_hu": "",
+            "button_phone_bg": "",
+            "button_phone_text_color": "",
+            "button_phone_font": "",
+            "button_phone_size": "",
+            "button_email_bg": "",
+            "button_email_text_color": "",
+            "button_email_font": "",
+            "button_email_size": "",
+            "button_apple_style": "",
+            "footer_text_en": "",
+            "footer_text_hu": "",
+            "footer_bg_color": "",
+            "footer_bg_alpha": "",
+            "footer_text_color": "",
+            "footer_font": "",
+            "footer_size": "",
+            "qr_enabled": "",
+            "qr_bg_color": "",
+            "qr_icon_color": ""
+        },
+        "landing_flat_defaults": {
+            "background_type": "image",
+            "background_url": "",
+            "background_poster_url": "",
+            "title_type": "text",
+            "title_text_en": "friending.",
+            "title_text_hu": "friending.",
+            "title_image_url": "",
+            "description_en": "Meet people near you — and wherever you're headed next.",
+            "description_hu": "Ismerj meg embereket a közeledben — és bárhol, ahová tartasz.",
+            "overlay_color": "#000000",
+            "overlay_alpha": "0.35",
+            "title_font": "proxima_bold",
+            "title_size": "44",
+            "title_color": "#FFFFFF",
+            "title_align": "left",
+            "title_image_width_percent": "60",
+            "title_image_offset_percent": "-10",
+            "description_font": "proxima_regular",
+            "description_size": "17",
+            "description_color": "#F2F4F7",
+            "description_align": "left",
+            "description_backdrop_color": "#000000",
+            "description_backdrop_alpha": "0.00",
+            "button_corner_radius": "28",
+            "button_phone_label_en": "Continue with phone number",
+            "button_phone_label_hu": "Folytatás telefonszámmal",
+            "button_email_label_en": "Continue with e-mail",
+            "button_email_label_hu": "Folytatás e-mailben",
+            "button_phone_bg": "#FFFFFF",
+            "button_phone_text_color": "#0B0E12",
+            "button_phone_font": "proxima_semibold",
+            "button_phone_size": "17",
+            "button_email_bg": "#FFFFFF",
+            "button_email_text_color": "#0B0E12",
+            "button_email_font": "proxima_semibold",
+            "button_email_size": "17",
+            "button_apple_style": "white",
+            "footer_text_en": "By continuing you accept our <terms>Terms</terms> and <privacy>Privacy Policy</privacy>.",
+            "footer_text_hu": "A folytatással elfogadod a <terms>Felhasználási feltételeket</terms> és az <privacy>Adatvédelmi nyilatkozatot</privacy>.",
+            "footer_bg_color": "#000000",
+            "footer_bg_alpha": "0.55",
+            "footer_text_color": "#E4E8ED",
+            "footer_font": "proxima_regular",
+            "footer_size": "12",
+            "qr_enabled": "true",
+            "qr_bg_color": "#000000",
+            "qr_icon_color": "#FFFFFF"
+        },
+        "landing_flat_sources": {
+            "background_type": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "background_url": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "background_poster_url": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "title_type": {
+                "scope": "storefront",
+                "rule_id": "620000000000000000000002"
+            },
+            "title_text_en": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "title_text_hu": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "title_image_url": {
+                "scope": "storefront",
+                "rule_id": "620000000000000000000002"
+            },
+            "description_en": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "description_hu": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "overlay_color": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "overlay_alpha": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "title_font": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "title_size": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "title_color": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "title_align": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "title_image_width_percent": {
+                "scope": "storefront",
+                "rule_id": "620000000000000000000002"
+            },
+            "title_image_offset_percent": {
+                "scope": "storefront",
+                "rule_id": "620000000000000000000002"
+            },
+            "description_font": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "description_size": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "description_color": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "description_align": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "description_backdrop_color": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "description_backdrop_alpha": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "button_corner_radius": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "button_phone_label_en": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "button_phone_label_hu": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "button_email_label_en": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "button_email_label_hu": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "button_phone_bg": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "button_phone_text_color": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "button_phone_font": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "button_phone_size": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "button_email_bg": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "button_email_text_color": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "button_email_font": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "button_email_size": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "button_apple_style": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "footer_text_en": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "footer_text_hu": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "footer_bg_color": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "footer_bg_alpha": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "footer_text_color": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "footer_font": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "footer_size": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "qr_enabled": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "qr_bg_color": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "qr_icon_color": {
+                "scope": "none",
+                "rule_id": ""
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

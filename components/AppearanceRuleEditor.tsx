@@ -3,24 +3,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import AppearanceHeroEditor from "@/components/AppearanceHeroEditor";
-import AppearanceLandingPreview from "@/components/AppearanceLandingPreview";
+import AppearanceLandingComposer from "@/components/AppearanceLandingComposer";
 import AppearanceMapPicker from "@/components/AppearanceMapPicker";
 import AppearancePaletteEditor from "@/components/AppearancePaletteEditor";
-import ImageUploadField from "@/components/ImageUploadField";
-import VideoUploadField from "@/components/VideoUploadField";
 import {
-  APPEARANCE_DEFAULT_LANDING,
   MAX_APPEARANCE_NAME_LENGTH,
   MAX_APPEARANCE_PLACE_LABEL_LENGTH,
   MAX_APPEARANCE_PRIORITY,
   MAX_APPEARANCE_RADIUS_KM,
   MIN_APPEARANCE_RADIUS_KM,
-  appearanceLandingWire,
-  appearanceLandingWithTitleType,
+  appearanceLandingDraft,
   appearanceTimestampFromLocalInput,
   appearanceTimestampToLocalInput,
   resolveAppearanceHero,
-  resolveAppearanceLanding,
+  resolveAppearanceLandingFields,
   resolveAppearancePalette,
   type AppearanceFullPalette,
   type AppearanceLandingDraft,
@@ -32,6 +28,7 @@ import {
 
 type Props = {
   value: AppearanceRuleDraft;
+  persistedRule: AppearanceRule | null;
   /** The global rule this draft inherits from; null for the global rule itself or when none exists yet. */
   globalRule: AppearanceRule | null;
   defaults: { palette: AppearanceFullPalette; landing: AppearanceLandingDraft };
@@ -46,7 +43,7 @@ type Props = {
   onReload: () => void;
 };
 
-type UploadField = "background" | "poster" | "title" | "hero";
+type UploadField = "landing" | "hero";
 
 function SectionHeading({ title, copy }: { title: string; copy: string }) {
   return (
@@ -64,6 +61,7 @@ function SectionHeading({ title, copy }: { title: string; copy: string }) {
  */
 export default function AppearanceRuleEditor({
   value,
+  persistedRule,
   globalRule,
   defaults,
   countries,
@@ -94,9 +92,9 @@ export default function AppearanceRuleEditor({
   }, [locked, onClose]);
 
   const inheritedChain = useMemo(() => (value.scope === "global" || !globalRule ? [] : [globalRule]), [value.scope, globalRule]);
-  const landingPreview = useMemo(
-    () => resolveAppearanceLanding([appearanceLandingWire(value.landing), ...inheritedChain.map((rule) => rule.landing)], defaults.landing, language),
-    [value.landing, inheritedChain, defaults.landing, language],
+  const inheritedLanding = useMemo(
+    () => resolveAppearanceLandingFields(inheritedChain.map((rule) => rule.landing), appearanceLandingDraft({})),
+    [inheritedChain],
   );
   const palettePreview = useMemo(
     () => resolveAppearancePalette([value.palette, ...inheritedChain.map((rule) => rule.palette)], defaults.palette),
@@ -118,10 +116,6 @@ export default function AppearanceRuleEditor({
 
   function patch(next: Partial<AppearanceRuleDraft>) {
     onChange({ ...value, ...next });
-  }
-
-  function patchLanding(next: Partial<AppearanceLandingDraft>) {
-    onChange({ ...value, landing: { ...value.landing, ...next } });
   }
 
   function setScope(scope: AppearanceScope) {
@@ -278,113 +272,17 @@ export default function AppearanceRuleEditor({
           </label>
 
           <SectionHeading title={t("landingTitle")} copy={value.scope === "global" ? t("landingCopyGlobal") : t("landingCopyOverride")} />
-          <label className="field">
-            <span>{t("backgroundType")}</span>
-            <select
-              value={value.landing.background_type}
-              disabled={locked}
-              onChange={(event) => {
-                const backgroundType = event.target.value;
-                if (backgroundType === value.landing.background_type) return;
-                patchLanding({ background_type: backgroundType, background_url: "" });
-              }}
-            >
-              <option value="image">{t("backgroundImage")}</option>
-              <option value="video">{t("backgroundVideo")}</option>
-            </select>
-          </label>
-          <label className="field">
-            <span>{t("titleType")}</span>
-            <select
-              value={value.landing.title_type}
-              disabled={locked}
-              onChange={(event) => {
-                // T-468b finding 14: only the type changes; text and image overrides persist until cleared.
-                const next = appearanceLandingWithTitleType(value.landing, event.target.value);
-                if (next !== value.landing) patchLanding({ title_type: next.title_type });
-              }}
-            >
-              <option value="">{t("titleInherit")}</option>
-              <option value="text">{t("titleText")}</option>
-              <option value="image">{t("titleImage")}</option>
-            </select>
-          </label>
-          {value.landing.background_type === "image" ? (
-            <ImageUploadField
-              className="field-full"
-              label={t("backgroundImageLabel")}
-              value={value.landing.background_url}
-              disabled={locked}
-              hint={t("backgroundInheritHint")}
-              onBusyChange={(isBusy) => setUploading(isBusy ? "background" : null)}
-              onChange={(url) => patchLanding({ background_url: url })}
-            />
-          ) : (
-            <VideoUploadField
-              className="field-full"
-              label={t("backgroundVideoLabel")}
-              value={value.landing.background_url}
-              poster={value.landing.background_poster_url}
-              disabled={locked}
-              hint={t("backgroundInheritHint")}
-              onBusyChange={(isBusy) => setUploading(isBusy ? "background" : null)}
-              onChange={(url) => patchLanding({ background_url: url })}
-            />
-          )}
-          {/* Amendment v1.5: the poster inherits on its own, so it is editable whatever this rule's background is. */}
-          <ImageUploadField
-            className="field-full"
-            label={t("posterImage")}
-            value={value.landing.background_poster_url}
+          <AppearanceLandingComposer
+            rule={value}
+            persistedRule={persistedRule}
+            inherited={inheritedLanding}
+            defaults={defaults.landing}
+            palette={palettePreview.values}
+            countries={countries}
             disabled={locked}
-            hint={t("posterHint")}
-            onBusyChange={(isBusy) => setUploading(isBusy ? "poster" : null)}
-            onChange={(url) => patchLanding({ background_poster_url: url })}
+            onBusyChange={(isBusy) => setUploading(isBusy ? "landing" : null)}
+            onChange={(landing) => onChange({ ...value, landing })}
           />
-          {/* Inherited title type: text and image fields are independent per-field overrides. */}
-          {value.landing.title_type !== "image" && (
-            <>
-              <label className="field">
-                <span>{t("titleTextEn")}</span>
-                <input value={value.landing.title_text_en} maxLength={80} disabled={locked} onChange={(event) => patchLanding({ title_text_en: event.target.value })} placeholder={APPEARANCE_DEFAULT_LANDING.title_text_en} />
-              </label>
-              <label className="field">
-                <span>{t("titleTextHu")}</span>
-                <input value={value.landing.title_text_hu} maxLength={80} disabled={locked} onChange={(event) => patchLanding({ title_text_hu: event.target.value })} placeholder={APPEARANCE_DEFAULT_LANDING.title_text_hu} />
-                <small className="field-hint">{t("titleTextHint")}</small>
-              </label>
-            </>
-          )}
-          {value.landing.title_type !== "text" && (
-            <ImageUploadField
-              className="field-full"
-              label={t("titleImageLabel")}
-              value={value.landing.title_image_url}
-              disabled={locked}
-              hint={value.landing.title_type === "image" ? t("titleImageHint") : t("titleImageInheritHint")}
-              onBusyChange={(isBusy) => setUploading(isBusy ? "title" : null)}
-              onChange={(url) => patchLanding({ title_image_url: url })}
-            />
-          )}
-          <label className="field">
-            <span>{t("descriptionEn")}</span>
-            <textarea rows={3} maxLength={300} value={value.landing.description_en} disabled={locked} onChange={(event) => patchLanding({ description_en: event.target.value })} placeholder={defaults.landing.description_en} />
-          </label>
-          <label className="field">
-            <span>{t("descriptionHu")}</span>
-            <textarea rows={3} maxLength={300} value={value.landing.description_hu} disabled={locked} onChange={(event) => patchLanding({ description_hu: event.target.value })} placeholder={defaults.landing.description_hu} />
-            <small className="field-hint">{t("descriptionHint")}</small>
-          </label>
-          <div className="app-landing-preview field-full" aria-label={t("landingPreview")}>
-            <AppearanceLandingPreview
-              content={landingPreview}
-              fallbackLabel={t("builtInBackground")}
-              accent={palettePreview.values.light.accent}
-              onAccent={palettePreview.values.light.on_accent}
-              buttonLabel={t("landingPreviewButton")}
-            />
-            <span className="app-landing-preview-hint">{t("landingPreviewHint")}</span>
-          </div>
 
           <SectionHeading title={t("heroTitle")} copy={t("heroCopy")} />
           <AppearanceHeroEditor

@@ -2776,9 +2776,11 @@
     "uploading": "Uploading and optimizing image…",
     "uploadingShort": "Uploading…",
     "invalidType": "Choose a JPEG, PNG or WebP image.",
+    "invalidPngType": "Choose a PNG image for the landing logo.",
     "invalidImage": "This file is not a valid image.",
     "invalidDimensions": "The image must be at least 64 × 64 pixels and no larger than 32 megapixels.",
     "tooLarge": "The image is too large. The maximum source size is 15 MB.",
+    "logoTooLarge": "The landing logo is too large. The maximum source size is 4 MB.",
     "authRequired": "Your admin session could not be verified. Refresh the page and sign in again.",
     "failed": "The image could not be uploaded. Please try again."
   },
@@ -5776,8 +5778,11 @@
       "background": "Upload a background image or video, or leave the background blank to inherit.",
       "poster": "The video poster must finish uploading, or remove it.",
       "titleImage": "The title image must be an absolute https address that has finished uploading.",
-      "titleImageRequired": "An image title needs a title image. Upload one, or switch the title type to text or inherited.",
+      "titleImageRequired": "An image title needs a title image. Upload one, or switch the title type to text, none or inherited.",
       "landingControl": "A landing text contains a control or invalid character (line break, tab, unpaired surrogate or similar). Remove it — Core refuses such values instead of repairing them.",
+      "landingValue": "A landing value is outside its allowed range or vocabulary. Colours must be uppercase #RRGGBB and opacity values must have two decimals.",
+      "landingPair": "Background type and media, plus each overlay colour and opacity, must be set or inherited together.",
+      "footerTags": "Each footer language needs exactly one '<terms>'…'</terms>' pair and one '<privacy>'…'</privacy>' pair.",
       "heroItem": "Every hero item needs an uploaded image or an HTTPS video URL; destination links must use HTTPS.",
       "heroTypography": "Hero font sizes must be 10–120 px and colours #rrggbb values; leave a field empty for the default.",
       "palette": "Palette colours must be #RRGGBB values; tick “inherit” for a role you do not want to set."
@@ -5857,6 +5862,157 @@
       "paletteTitle": "Palette",
       "paletteCopyGlobal": "The brand palette. Every role you leave on “inherit” uses the compiled default.",
       "paletteCopyOverride": "Override single roles per mode; everything else inherits from the global rule, then the compiled default."
+    },
+    "landingComposer": {
+      "inherit": "Inherit",
+      "effectiveValue": "Effective: {value}",
+      "effectiveValueSource": "Effective: {value} · inherited from {source}",
+      "inheritValue": "Inherit · {value}",
+      "source": {
+        "geo": "geo rule {id}",
+        "storefront": "storefront rule {id}",
+        "global": "global rule {id}",
+        "none": "compiled default"
+      },
+      "font": {
+        "proxima_light": "Proxima Nova Light",
+        "proxima_regular": "Proxima Nova Regular",
+        "proxima_medium": "Proxima Nova Medium",
+        "proxima_semibold": "Proxima Nova Semibold",
+        "proxima_bold": "Proxima Nova Bold",
+        "proxima_extrabold": "Proxima Nova Extrabold",
+        "proxima_black": "Proxima Nova Black",
+        "proxima_cond_light": "Proxima Nova Condensed Light",
+        "proxima_cond_regular": "Proxima Nova Condensed Regular",
+        "proxima_cond_medium": "Proxima Nova Condensed Medium",
+        "proxima_cond_semibold": "Proxima Nova Condensed Semibold",
+        "system_regular": "System Regular",
+        "system_semibold": "System Semibold",
+        "system_bold": "System Bold"
+      },
+      "align": {
+        "left": "Left",
+        "center": "Centre",
+        "right": "Right"
+      },
+      "apple": {
+        "white": "Apple white",
+        "white_outline": "Apple white outline",
+        "black": "Apple black"
+      },
+      "background": {
+        "title": "Background",
+        "copy": "Set the image or video, optional poster and the colour overlay painted above the media.",
+        "type": "Background type",
+        "image": "Image",
+        "video": "Video",
+        "imageUpload": "Background image",
+        "videoUpload": "Background video",
+        "poster": "Video poster",
+        "overlayColor": "Overlay colour",
+        "overlayAlpha": "Overlay opacity · 0–1"
+      },
+      "title": {
+        "title": "Title",
+        "copy": "Show styled text, a centred PNG logo, or no title. Hidden text and image values remain available until you clear them.",
+        "type": "Title type",
+        "text": "Text",
+        "image": "PNG logo",
+        "none": "None",
+        "textEn": "Title text · English",
+        "textHu": "Title text · Hungarian",
+        "font": "Title font",
+        "size": "Title size · pt",
+        "color": "Title colour",
+        "align": "Title alignment",
+        "logo": "Title logo · PNG",
+        "logoHint": "PNG only, at most 4 MB; transparency is preserved.",
+        "logoWidth": "Logo width · % of screen",
+        "logoOffset": "Logo vertical offset · % from centre"
+      },
+      "subtitle": {
+        "title": "Subtitle",
+        "copy": "Localized supporting copy with its own typography and an optional colour backdrop.",
+        "textEn": "Subtitle · English",
+        "textHu": "Subtitle · Hungarian",
+        "font": "Subtitle font",
+        "size": "Subtitle size · pt",
+        "color": "Subtitle colour",
+        "align": "Subtitle alignment",
+        "backdropColor": "Backdrop colour",
+        "backdropAlpha": "Backdrop opacity · 0–1"
+      },
+      "buttons": {
+        "title": "Buttons",
+        "copy": "Phone and e-mail have independent labels and colours. Apple keeps one of Apple's mandated styles; all three share the corner radius.",
+        "radius": "Shared corner radius",
+        "phone": "Phone",
+        "email": "E-mail",
+        "labelEn": "Label · English",
+        "labelHu": "Label · Hungarian",
+        "background": "Background colour",
+        "textColor": "Text colour",
+        "font": "Font",
+        "size": "Text size · pt",
+        "apple": "Apple style"
+      },
+      "footer": {
+        "title": "Footer",
+        "copy": "Each sentence must contain exactly one '<terms>'…'</terms>' and one '<privacy>'…'</privacy>' pair. The app turns those spans into links.",
+        "textEn": "Footer text · English",
+        "textHu": "Footer text · Hungarian",
+        "background": "Background colour",
+        "alpha": "Background opacity · 0–1",
+        "textColor": "Text colour",
+        "font": "Font",
+        "size": "Text size · pt"
+      },
+      "qr": {
+        "title": "QR reader",
+        "copy": "Controls the existing product-message and shared-profile scanner button in the top-right safe area.",
+        "enabled": "QR reader",
+        "on": "Shown",
+        "off": "Hidden",
+        "background": "Button background",
+        "icon": "Icon colour"
+      },
+      "preview": {
+        "controls": "Landing preview controls",
+        "language": {
+          "en": "EN",
+          "hu": "HU"
+        },
+        "palette": {
+          "light": "Light",
+          "dark": "Dark"
+        },
+        "auth": {
+          "both": "Phone + e-mail",
+          "phone": "Phone only",
+          "email": "E-mail only"
+        },
+        "testStorefront": "Test storefront",
+        "storefrontNone": "No storefront tier",
+        "parentLoading": "Loading the parent-only effective composition from Core…",
+        "targetNeeded": "Choose a valid storefront or geo centre to resolve this rule's parent chain.",
+        "parentError": "Core's parent-only preview could not be decoded. The phone remains a local fallback and is not proof of the inherited state.",
+        "retry": "Retry",
+        "builtInBackground": "Compiled app background",
+        "apple": "Continue with Apple",
+        "divider": "or",
+        "qr": "QR reader"
+      },
+      "compare": {
+        "run": "Compare with Core",
+        "running": "Comparing…",
+        "savedOnly": "This check deliberately compares the saved rule; unsaved draft changes stay local.",
+        "saveFirst": "Save the new rule before comparing it with Core.",
+        "error": "Core's saved-state preview could not be decoded.",
+        "same": "The local saved-state merge matches Core for this language.",
+        "differences": "{count} saved-state field differences",
+        "local": "Local",
+        "core": "Core"
+      }
     },
     "hero": {
       "mode": "Hero mode",
@@ -5989,6 +6145,9 @@
       "revision": "Revision {revision} · content {version}",
       "builtInBackground": "Compiled app background",
       "landingButton": "Continue",
+      "appleButton": "Continue with Apple",
+      "divider": "or",
+      "qrButton": "QR reader",
       "hero": "Hero carousel ({count})",
       "heroEmpty": "No hero items for this location.",
       "typeImage": "Image",

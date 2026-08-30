@@ -1,0 +1,109 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "revision": 22,
+        "content_version": "9debc51c9f03dc6f6ddc60b04913160c374627a7818dc683391b8ccb64f088bb",
+        "landing": {
+            "background": {
+                "type": "image",
+                "url": "",
+                "poster_url": "",
+                "overlay": {
+                    "color": "#071516",
+                    "alpha": 0.45
+                }
+            },
+            "title": {
+                "type": "none",
+                "text": "",
+                "image_url": "",
+                "image": {
+                    "width_percent": 72,
+                    "offset_percent": -6
+                },
+                "style": {
+                    "font": "proxima_extrabold",
+                    "size": 48,
+                    "color": "#F7FFFF",
+                    "align": "center"
+                }
+            },
+            "description": {
+                "text": "English-only geo description",
+                "style": {
+                    "font": "proxima_medium",
+                    "size": 18,
+                    "color": "#E8FCFD",
+                    "align": "center"
+                },
+                "backdrop": {
+                    "color": "#001214",
+                    "alpha": 0.3
+                }
+            },
+            "buttons": {
+                "corner_radius": 14,
+                "phone": {
+                    "label": "Folytatás telefonnal",
+                    "background": "#75F0F4",
+                    "text_color": "#071516",
+                    "font": "proxima_semibold",
+                    "size": 18
+                },
+                "email": {
+                    "label": "Folytatás e-maillel",
+                    "background": "#DDFBFC",
+                    "text_color": "#12373B",
+                    "font": "proxima_medium",
+                    "size": 16
+                },
+                "apple": {
+                    "style": "black"
+                }
+            },
+            "footer": {
+                "text": "Folytatás előtt olvasd el a <terms>Feltételeket</terms> és az <privacy>Adatvédelmi nyilatkozatot</privacy>.",
+                "background": {
+                    "color": "#071516",
+                    "alpha": 0.65
+                },
+                "style": {
+                    "font": "proxima_regular",
+                    "size": 13,
+                    "color": "#E4E8ED"
+                }
+            },
+            "qr": {
+                "enabled": false,
+                "background": "#DDFBFC",
+                "icon_color": "#071516"
+            }
+        },
+        "hero": [],
+        "palette": {
+            "light": {
+                "accent": "#007F91",
+                "accent_pressed": "#006776",
+                "accent_faint_bg": "#DDFBFC",
+                "on_accent": "#FFFFFF",
+                "inactive": "#6B7478"
+            },
+            "dark": {
+                "accent": "#75F0F4",
+                "accent_pressed": "#8DFDFF",
+                "accent_faint_bg": "#12373B",
+                "on_accent": "#071516",
+                "inactive": "#8A9497"
+            }
+        },
+        "matched": {
+            "scope": "geo",
+            "rule_id": "620000000000000000000003",
+            "location_source": "gps"
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

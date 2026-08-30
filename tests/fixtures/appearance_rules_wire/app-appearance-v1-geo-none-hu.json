@@ -1,0 +1,46 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "revision": 22,
+        "content_version": "9debc51c9f03dc6f6ddc60b04913160c374627a7818dc683391b8ccb64f088bb",
+        "landing": {
+            "background": {
+                "type": "image",
+                "url": "",
+                "poster_url": ""
+            },
+            "title": {
+                "type": "text",
+                "text": "",
+                "image_url": ""
+            },
+            "description": "English-only geo description"
+        },
+        "hero": [],
+        "palette": {
+            "light": {
+                "accent": "#007F91",
+                "accent_pressed": "#006776",
+                "accent_faint_bg": "#DDFBFC",
+                "on_accent": "#FFFFFF",
+                "inactive": "#6B7478"
+            },
+            "dark": {
+                "accent": "#75F0F4",
+                "accent_pressed": "#8DFDFF",
+                "accent_faint_bg": "#12373B",
+                "on_accent": "#071516",
+                "inactive": "#8A9497"
+            }
+        },
+        "matched": {
+            "scope": "geo",
+            "rule_id": "620000000000000000000003",
+            "location_source": "gps"
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

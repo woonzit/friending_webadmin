@@ -255,6 +255,70 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Proxima Nova";
+  src: url("/fonts/ProximaNova-Light.otf") format("opentype");
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Proxima Nova";
+  src: url("/fonts/ProximaNova-Medium.otf") format("opentype");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Proxima Nova";
+  src: url("/fonts/ProximaNova-Extrabold.otf") format("opentype");
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Proxima Nova";
+  src: url("/fonts/ProximaNova-Black.otf") format("opentype");
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Proxima Nova Condensed";
+  src: url("/fonts/ProximaNovaCond-Light.otf") format("opentype");
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Proxima Nova Condensed";
+  src: url("/fonts/ProximaNovaCond-Regular.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Proxima Nova Condensed";
+  src: url("/fonts/ProximaNovaCond-Medium.otf") format("opentype");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Proxima Nova Condensed";
+  src: url("/fonts/ProximaNovaCond-Semibold.otf") format("opentype");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
   --bg: #07090c;
@@ -12515,7 +12579,7 @@ body .verification-level-pill.level-strong {
 }
 
 .appearance-dialog {
-  width: min(100%, 1080px);
+  width: min(100%, 1500px);
 }
 
 .appearance-section-heading {
@@ -12895,6 +12959,432 @@ body .verification-level-pill.level-strong {
   pointer-events: none;
   opacity: 0.55;
   filter: grayscale(0.4);
+}
+
+/* Landing composer + exact-size iOS landing preview (T-489, D-061). */
+.appearance-landing-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 430px;
+  gap: 22px;
+  align-items: start;
+}
+
+.appearance-landing-composer-fields,
+.appearance-landing-composer-section,
+.appearance-landing-preview-column,
+.appearance-landing-core-compare {
+  display: grid;
+  gap: 14px;
+}
+
+.appearance-landing-composer-section {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+}
+
+.appearance-landing-composer-section > header h4,
+.appearance-landing-composer-section > header p {
+  margin: 0;
+}
+
+.appearance-landing-composer-section > header h4 {
+  font-size: 15px;
+}
+
+.appearance-landing-composer-section > header p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.appearance-landing-composer input::placeholder,
+.appearance-landing-composer textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.72;
+}
+
+.appearance-landing-field-meta,
+.appearance-landing-effective-value {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.appearance-landing-field-meta .text-button {
+  flex: none;
+  font-size: 11px;
+}
+
+.appearance-landing-color-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  gap: 8px;
+}
+
+.appearance-landing-color-row input[type="color"] {
+  width: 48px;
+  height: 42px;
+  padding: 3px;
+  cursor: pointer;
+}
+
+.appearance-landing-range-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 88px;
+  gap: 10px;
+  align-items: center;
+}
+
+.appearance-landing-range-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.appearance-landing-method-heading {
+  margin-top: 2px;
+  padding: 8px 0 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.appearance-landing-preview-column {
+  position: sticky;
+  top: 0;
+}
+
+.appearance-landing-preview-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.appearance-landing-preview-toolbar .segmented-control {
+  flex: 1 1 auto;
+}
+
+.appearance-landing-preview-toolbar .segmented-control button {
+  flex: 1;
+  padding-inline: 9px;
+  font-size: 11px;
+}
+
+.appearance-landing-auth-toggle {
+  flex-basis: 100% !important;
+}
+
+.appearance-landing-preview-storefront {
+  display: grid;
+  flex: 1 0 100%;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.appearance-landing-preview-storefront select {
+  min-width: 0;
+}
+
+.appearance-landing-parent-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.appearance-landing-preview-scroll {
+  width: 100%;
+  padding: 12px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--bg-soft);
+}
+
+.appearance-landing-composition-phone {
+  position: relative;
+  width: 390px;
+  height: 844px;
+  overflow: hidden;
+  border: 8px solid #020304;
+  border-radius: 52px;
+  box-shadow: 0 24px 58px rgba(0, 0, 0, 0.46), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  isolation: isolate;
+}
+
+.appearance-landing-composition-media,
+.appearance-landing-composition-overlay,
+.appearance-landing-composition-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.appearance-landing-composition-media {
+  z-index: 0;
+  object-fit: cover;
+}
+
+.appearance-landing-composition-fallback {
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 78% 15%, currentColor 0, transparent 34%),
+    radial-gradient(circle at 18% 70%, color-mix(in srgb, currentColor 65%, transparent) 0, transparent 38%),
+    #0b0e12;
+  opacity: 0.82;
+}
+
+.appearance-landing-composition-fallback span {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 12px;
+}
+
+.appearance-landing-composition-overlay {
+  z-index: 1;
+}
+
+.appearance-landing-safe-area {
+  position: absolute;
+  z-index: 5;
+  right: 0;
+  left: 0;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.appearance-landing-safe-area-top {
+  top: 0;
+  display: flex;
+  height: 47px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  font-size: 11px;
+  font-weight: 700;
+  text-shadow: 0 1px 4px #000;
+}
+
+.appearance-landing-safe-area-top i {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: 114px;
+  height: 29px;
+  transform: translateX(-50%);
+  border-radius: 99px;
+  background: #000;
+}
+
+.appearance-landing-safe-area-top b {
+  font-size: 8px;
+  letter-spacing: 2px;
+}
+
+.appearance-landing-safe-area-bottom {
+  bottom: 0;
+  display: grid;
+  height: 24px;
+  place-items: center;
+}
+
+.appearance-landing-safe-area-bottom i {
+  width: 132px;
+  height: 5px;
+  border-radius: 99px;
+  background: currentColor;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.appearance-landing-qr {
+  position: absolute;
+  z-index: 6;
+  top: 54px;
+  right: 18px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 50%;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+
+.appearance-landing-qr svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.appearance-landing-composition-logo {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  height: auto;
+  object-fit: contain;
+  transform: translate(-50%, -50%);
+}
+
+.appearance-landing-composition-content {
+  position: absolute;
+  z-index: 3;
+  inset: 108px 24px 132px;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.appearance-landing-composition-title {
+  display: block;
+  width: 100%;
+  line-height: 0.98;
+  overflow-wrap: anywhere;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.3);
+}
+
+.appearance-landing-composition-description {
+  width: 100%;
+  margin: 18px 0 0;
+  padding: 8px;
+  border-radius: 10px;
+  line-height: 1.26;
+  white-space: pre-wrap;
+}
+
+.appearance-landing-composition-actions {
+  display: grid;
+  gap: 9px;
+  width: 100%;
+  margin-top: auto;
+}
+
+.appearance-landing-method-button,
+.appearance-landing-apple-button {
+  display: grid;
+  min-height: 54px;
+  place-items: center;
+  padding: 10px 16px;
+  text-align: center;
+  line-height: 1.05;
+}
+
+.appearance-landing-divider {
+  color: rgba(255, 255, 255, 0.86);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  text-align: center;
+  text-shadow: 0 1px 4px #000;
+}
+
+.appearance-landing-apple-button {
+  border: 1px solid transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.appearance-landing-apple-button b {
+  margin-right: 4px;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.appearance-landing-apple-button.is-white {
+  background: #fff;
+  color: #000;
+}
+
+.appearance-landing-apple-button.is-white_outline {
+  border-color: #fff;
+  background: transparent;
+  color: #fff;
+}
+
+.appearance-landing-apple-button.is-black {
+  background: #000;
+  color: #fff;
+}
+
+.appearance-landing-composition-footer {
+  position: absolute;
+  z-index: 4;
+  right: 0;
+  bottom: 24px;
+  left: 0;
+  min-height: 84px;
+  padding: 14px 24px;
+  line-height: 1.28;
+  text-align: center;
+}
+
+.appearance-landing-composition-footer u {
+  font-weight: 700;
+  text-underline-offset: 2px;
+}
+
+.appearance-landing-core-compare > small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.appearance-landing-core-compare .alert ul {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+.appearance-landing-core-compare .alert li {
+  display: grid;
+  gap: 2px;
+}
+
+.appearance-landing-core-compare .alert code {
+  color: var(--text);
+}
+
+.appearance-landing-font-proxima_light { font-family: "Proxima Nova", sans-serif; font-weight: 300; }
+.appearance-landing-font-proxima_regular { font-family: "Proxima Nova", sans-serif; font-weight: 400; }
+.appearance-landing-font-proxima_medium { font-family: "Proxima Nova", sans-serif; font-weight: 500; }
+.appearance-landing-font-proxima_semibold { font-family: "Proxima Nova", sans-serif; font-weight: 600; }
+.appearance-landing-font-proxima_bold { font-family: "Proxima Nova", sans-serif; font-weight: 700; }
+.appearance-landing-font-proxima_extrabold { font-family: "Proxima Nova", sans-serif; font-weight: 800; }
+.appearance-landing-font-proxima_black { font-family: "Proxima Nova", sans-serif; font-weight: 900; }
+.appearance-landing-font-proxima_cond_light { font-family: "Proxima Nova Condensed", sans-serif; font-weight: 300; }
+.appearance-landing-font-proxima_cond_regular { font-family: "Proxima Nova Condensed", sans-serif; font-weight: 400; }
+.appearance-landing-font-proxima_cond_medium { font-family: "Proxima Nova Condensed", sans-serif; font-weight: 500; }
+.appearance-landing-font-proxima_cond_semibold { font-family: "Proxima Nova Condensed", sans-serif; font-weight: 600; }
+.appearance-landing-font-system_regular { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; font-weight: 400; }
+.appearance-landing-font-system_semibold { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; font-weight: 600; }
+.appearance-landing-font-system_bold { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; font-weight: 700; }
+
+@media (max-width: 1220px) {
+  .appearance-landing-composer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .appearance-landing-preview-column {
+    position: static;
+  }
+}
+
+@media (max-width: 620px) {
+  .appearance-landing-composer-section {
+    padding: 12px;
+  }
+
+  .appearance-landing-range-row {
+    grid-template-columns: minmax(0, 1fr) 82px;
+  }
 }
 
 /* Verification console → Forced & waiting room (T-471, D-053). */

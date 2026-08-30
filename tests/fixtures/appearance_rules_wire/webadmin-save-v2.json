@@ -1,0 +1,78 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "rule": {
+            "id": "620000000000000000000003",
+            "name": "Budapest composer fixture",
+            "scope": "geo",
+            "storefront_country": "",
+            "country_code": "HU",
+            "center": {
+                "latitude": 47.4979,
+                "longitude": 19.0402
+            },
+            "radius_km": 25,
+            "place_label": "Budapest, Hungary",
+            "priority": 20,
+            "active": true,
+            "starts_at": null,
+            "ends_at": null,
+            "landing": {
+                "button_apple_style": "black",
+                "button_corner_radius": "14",
+                "button_email_bg": "#DDFBFC",
+                "button_email_font": "proxima_medium",
+                "button_email_label_en": "Continue by e-mail",
+                "button_email_label_hu": "Folytatás e-maillel",
+                "button_email_size": "16",
+                "button_email_text_color": "#12373B",
+                "button_phone_bg": "#75F0F4",
+                "button_phone_font": "proxima_semibold",
+                "button_phone_label_en": "Continue by phone",
+                "button_phone_label_hu": "Folytatás telefonnal",
+                "button_phone_size": "18",
+                "button_phone_text_color": "#071516",
+                "description_align": "center",
+                "description_backdrop_alpha": "0.30",
+                "description_backdrop_color": "#001214",
+                "description_color": "#E8FCFD",
+                "description_en": "English-only geo description",
+                "description_font": "proxima_medium",
+                "description_size": "18",
+                "footer_bg_alpha": "0.65",
+                "footer_bg_color": "#071516",
+                "footer_font": "proxima_regular",
+                "footer_size": "13",
+                "footer_text_color": "#E4E8ED",
+                "footer_text_en": "Continue after reading our <terms>Terms</terms> and <privacy>Privacy Policy</privacy>.",
+                "footer_text_hu": "Folytatás előtt olvasd el a <terms>Feltételeket</terms> és az <privacy>Adatvédelmi nyilatkozatot</privacy>.",
+                "overlay_alpha": "0.45",
+                "overlay_color": "#071516",
+                "qr_bg_color": "#DDFBFC",
+                "qr_enabled": "false",
+                "qr_icon_color": "#071516",
+                "title_align": "center",
+                "title_color": "#F7FFFF",
+                "title_font": "proxima_extrabold",
+                "title_size": "48",
+                "title_type": "none"
+            },
+            "hero": {
+                "mode": "inherit",
+                "items": []
+            },
+            "palette": {
+                "light": {},
+                "dark": {}
+            },
+            "revision": 22,
+            "created_at": "1970-01-01T00:35:00Z",
+            "updated_at": "1970-01-01T00:36:40Z",
+            "updated_by": "fixture@example.com"
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

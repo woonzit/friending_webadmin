@@ -2776,9 +2776,11 @@
     "uploading": "Kép feltöltése és optimalizálása…",
     "uploadingShort": "Feltöltés…",
     "invalidType": "JPEG, PNG vagy WebP képet válassz.",
+    "invalidPngType": "A nyitóképernyő logójához PNG képet válassz.",
     "invalidImage": "Ez a fájl nem érvényes kép.",
     "invalidDimensions": "A kép legalább 64 × 64 pixeles, legfeljebb 32 megapixeles lehet.",
     "tooLarge": "A kép túl nagy. A forrásfájl legfeljebb 15 MB lehet.",
+    "logoTooLarge": "A nyitóképernyő logója túl nagy. A forrásfájl legfeljebb 4 MB lehet.",
     "authRequired": "Az admin munkamenet nem ellenőrizhető. Frissítsd az oldalt, majd jelentkezz be újra.",
     "failed": "A kép feltöltése nem sikerült. Próbáld újra."
   },
@@ -5776,8 +5778,11 @@
       "background": "Tölts fel háttérképet vagy -videót, vagy hagyd üresen a hátteret az örökléshez.",
       "poster": "A videó-előkép feltöltésének be kell fejeződnie, vagy távolítsd el.",
       "titleImage": "A címképnek abszolút https címnek kell lennie, és a feltöltésének be kell fejeződnie.",
-      "titleImageRequired": "A képcímhez címkép kell. Tölts fel egyet, vagy állítsd a cím típusát szövegre vagy öröklésre.",
+      "titleImageRequired": "A képcímhez címkép kell. Tölts fel egyet, vagy állítsd a cím típusát szövegre, nincs értékre vagy öröklésre.",
       "landingControl": "Egy landing-szöveg vezérlő- vagy érvénytelen karaktert tartalmaz (sortörés, tabulátor, párja nélküli surrogate vagy hasonló). Távolítsd el — a Core az ilyen értéket elutasítja, nem javítja.",
+      "landingValue": "Egy nyitóképernyő-érték kívül esik az engedélyezett tartományon vagy szókészleten. A szín nagybetűs #RRGGBB, az átlátszóság két tizedesjegyű legyen.",
+      "landingPair": "A háttértípust és médiát, valamint minden overlay-színt és átlátszóságot együtt kell beállítani vagy örökölni.",
+      "footerTags": "A lábléc minden nyelvén pontosan egy '<terms>'…'</terms>' és egy '<privacy>'…'</privacy>' pár szükséges.",
       "heroItem": "Minden hero-elemhez feltöltött kép vagy HTTPS videó-URL kell; a célhivatkozás is HTTPS legyen.",
       "heroTypography": "A hero betűméret 10–120 px, a szín #rrggbb formátumú lehet; az alapértelmezéshez hagyd üresen a mezőt.",
       "palette": "A palettaszínek #RRGGBB értékek legyenek; pipáld be az „örökli” opciót annál a szerepnél, amelyet nem akarsz beállítani."
@@ -5857,6 +5862,157 @@
       "paletteTitle": "Paletta",
       "paletteCopyGlobal": "A márkapaletta. Minden „örökli” állapotban hagyott szerep a beépített alapértelmezést használja.",
       "paletteCopyOverride": "Módonként egyes szerepeket írhatsz felül; minden más a globális szabálytól, majd a beépített alapértelmezéstől öröklődik."
+    },
+    "landingComposer": {
+      "inherit": "Öröklés",
+      "effectiveValue": "Tényleges: {value}",
+      "effectiveValueSource": "Tényleges: {value} · öröklés innen: {source}",
+      "inheritValue": "Öröklés · {value}",
+      "source": {
+        "geo": "geo szabály {id}",
+        "storefront": "áruházi szabály {id}",
+        "global": "globális szabály {id}",
+        "none": "beépített alapértelmezés"
+      },
+      "font": {
+        "proxima_light": "Proxima Nova Light",
+        "proxima_regular": "Proxima Nova Regular",
+        "proxima_medium": "Proxima Nova Medium",
+        "proxima_semibold": "Proxima Nova Semibold",
+        "proxima_bold": "Proxima Nova Bold",
+        "proxima_extrabold": "Proxima Nova Extrabold",
+        "proxima_black": "Proxima Nova Black",
+        "proxima_cond_light": "Proxima Nova Condensed Light",
+        "proxima_cond_regular": "Proxima Nova Condensed Regular",
+        "proxima_cond_medium": "Proxima Nova Condensed Medium",
+        "proxima_cond_semibold": "Proxima Nova Condensed Semibold",
+        "system_regular": "Rendszer normál",
+        "system_semibold": "Rendszer félkövér",
+        "system_bold": "Rendszer kövér"
+      },
+      "align": {
+        "left": "Balra",
+        "center": "Középre",
+        "right": "Jobbra"
+      },
+      "apple": {
+        "white": "Apple fehér",
+        "white_outline": "Apple fehér körvonalas",
+        "black": "Apple fekete"
+      },
+      "background": {
+        "title": "Háttér",
+        "copy": "Állítsd be a képet vagy videót, az opcionális előképet és a média fölötti színes overlayt.",
+        "type": "Háttér típusa",
+        "image": "Kép",
+        "video": "Videó",
+        "imageUpload": "Háttérkép",
+        "videoUpload": "Háttérvideó",
+        "poster": "Videó-előkép",
+        "overlayColor": "Overlay színe",
+        "overlayAlpha": "Overlay átlátszósága · 0–1"
+      },
+      "title": {
+        "title": "Cím",
+        "copy": "Stílusozott szöveget, középre igazított PNG logót vagy semmilyen címet jeleníthetsz meg. A rejtett szöveg- és képértékek megmaradnak, amíg külön nem törlöd őket.",
+        "type": "Cím típusa",
+        "text": "Szöveg",
+        "image": "PNG logó",
+        "none": "Nincs",
+        "textEn": "Címszöveg · angol",
+        "textHu": "Címszöveg · magyar",
+        "font": "Cím betűtípusa",
+        "size": "Cím mérete · pt",
+        "color": "Cím színe",
+        "align": "Cím igazítása",
+        "logo": "Címlogó · PNG",
+        "logoHint": "Csak PNG, legfeljebb 4 MB; az átlátszóság megmarad.",
+        "logoWidth": "Logó szélessége · képernyő %",
+        "logoOffset": "Logó függőleges eltolása · % a középtől"
+      },
+      "subtitle": {
+        "title": "Alcím",
+        "copy": "Lokalizált kiegészítő szöveg saját tipográfiával és opcionális színes háttérrel.",
+        "textEn": "Alcím · angol",
+        "textHu": "Alcím · magyar",
+        "font": "Alcím betűtípusa",
+        "size": "Alcím mérete · pt",
+        "color": "Alcím színe",
+        "align": "Alcím igazítása",
+        "backdropColor": "Háttér színe",
+        "backdropAlpha": "Háttér átlátszósága · 0–1"
+      },
+      "buttons": {
+        "title": "Gombok",
+        "copy": "A telefon és e-mail külön feliratot és színeket kap. Az Apple az előírt stílusok egyikét használja; mindhárom gomb saroksugara közös.",
+        "radius": "Közös saroksugár",
+        "phone": "Telefon",
+        "email": "E-mail",
+        "labelEn": "Felirat · angol",
+        "labelHu": "Felirat · magyar",
+        "background": "Háttérszín",
+        "textColor": "Szövegszín",
+        "font": "Betűtípus",
+        "size": "Szövegméret · pt",
+        "apple": "Apple stílus"
+      },
+      "footer": {
+        "title": "Lábléc",
+        "copy": "Minden mondat pontosan egy '<terms>'…'</terms>' és egy '<privacy>'…'</privacy>' párt tartalmazzon. Az app ezeket a részeket linkké alakítja.",
+        "textEn": "Lábléc szövege · angol",
+        "textHu": "Lábléc szövege · magyar",
+        "background": "Háttérszín",
+        "alpha": "Háttér átlátszósága · 0–1",
+        "textColor": "Szövegszín",
+        "font": "Betűtípus",
+        "size": "Szövegméret · pt"
+      },
+      "qr": {
+        "title": "QR-olvasó",
+        "copy": "A jobb felső safe area meglévő terméküzenet- és megosztottprofil-olvasó gombját vezérli.",
+        "enabled": "QR-olvasó",
+        "on": "Látható",
+        "off": "Rejtett",
+        "background": "Gomb háttere",
+        "icon": "Ikon színe"
+      },
+      "preview": {
+        "controls": "Nyitóképernyő-előnézet vezérlői",
+        "language": {
+          "en": "EN",
+          "hu": "HU"
+        },
+        "palette": {
+          "light": "Világos",
+          "dark": "Sötét"
+        },
+        "auth": {
+          "both": "Telefon + e-mail",
+          "phone": "Csak telefon",
+          "email": "Csak e-mail"
+        },
+        "testStorefront": "Teszt áruház-ország",
+        "storefrontNone": "Áruházi szint nélkül",
+        "parentLoading": "A szülő tényleges kompozíciójának betöltése a Core-ból…",
+        "targetNeeded": "Válassz érvényes áruház-országot vagy geo középpontot a szabály szülőláncának feloldásához.",
+        "parentError": "A Core csak szülőket tartalmazó előnézete nem dekódolható. A telefon helyi tartalékot mutat, ez nem bizonyítja az örökölt állapotot.",
+        "retry": "Újra",
+        "builtInBackground": "Beépített app-háttér",
+        "apple": "Folytatás Apple-lel",
+        "divider": "vagy",
+        "qr": "QR-olvasó"
+      },
+      "compare": {
+        "run": "Összevetés a Core-ral",
+        "running": "Összevetés…",
+        "savedOnly": "Ez az ellenőrzés szándékosan a mentett szabályt veti össze; a nem mentett piszkozat helyi marad.",
+        "saveFirst": "Mentsd az új szabályt, mielőtt összeveted a Core-ral.",
+        "error": "A Core mentett állapotú előnézete nem dekódolható.",
+        "same": "A helyi mentettállapot-feloldás ezen a nyelven egyezik a Core-ral.",
+        "differences": "{count} eltérő mentett mező",
+        "local": "Helyi",
+        "core": "Core"
+      }
     },
     "hero": {
       "mode": "Hero mód",
@@ -5989,6 +6145,9 @@
       "revision": "{revision}. revízió · tartalom {version}",
       "builtInBackground": "Beépített app-háttér",
       "landingButton": "Tovább",
+      "appleButton": "Folytatás Apple-lel",
+      "divider": "vagy",
+      "qrButton": "QR-olvasó",
       "hero": "Hero-karusszel ({count})",
       "heroEmpty": "Nincs hero-elem ehhez a helyhez.",
       "typeImage": "Kép",

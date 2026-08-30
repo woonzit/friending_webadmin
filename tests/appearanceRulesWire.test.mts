@@ -9,6 +9,7 @@ import {
   APPEARANCE_CORE_UNCERTAIN_STATUSES,
   APPEARANCE_DEFAULT_LANDING,
   APPEARANCE_DEFAULT_PALETTE,
+  APPEARANCE_LANDING_KEYS,
   appearanceRuleInputOf,
   appearanceRuleMaterialMatches,
   decodeAppearanceDeleteResponse,
@@ -17,38 +18,54 @@ import {
   decodeAppearancePreviewResponse,
   decodeAppearanceSaveResponse,
   normalizeAppearanceProxyBody,
+  parseAppearancePreviewPayload,
   parseAppearanceRule,
   resolveAppearanceHero,
   resolveAppearanceLanding,
+  resolveAppearanceLandingFields,
   resolveAppearancePalette,
   type AppearanceRule,
 } from "../lib/appearanceRules.ts";
 
 /**
- * T-467's production-generated wire corpus (Core replacement tip `d5e7494c032076b4a23e2bfc2a26d4665f88664f`,
+ * T-488's production-generated wire corpus (lead-accepted Core tip `fab53c14afd5191438b59ccc4e52d0da81a0d315`,
  * `tests/fixtures/appearance_rules_wire/`), copied byte-identically. The production decoders must
  * accept every Webadmin body exactly as Core publishes it and classify every refusal by the
  * manifest's closed status map — this is the cross-lane binding the released consumer rests on.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/appearance_rules_wire/", import.meta.url);
-// Core T-467 round-2 delta `done` (2026-08-29 16:32Z): exact tip d5e7494c032076b4a23e2bfc2a26d4665f88664f,
-// source provenance commit 448202998…, fixture set 7a225897… and generator b0cb5a6d… unchanged (payload
-// bodies byte-identical to 31e74cf; only `manifest.json.source_commit` moved).
-const FIXTURE_SOURCE_COMMIT = "448202998826dc82b8764d03eae7862279204240";
-const FIXTURE_GENERATOR_SHA256 = "b0cb5a6db69c42f0e4c4a2b7bf24272ba9e313f5fbc44b6821f28249f6cf20f8";
-const FIXTURE_SET_SHA256 = "7a225897dc0d83bf208016b392fe4329c978faabe2b4c389ab822d2614482952";
+const FIXTURE_ACCEPTED_CORE_TIP = "fab53c14afd5191438b59ccc4e52d0da81a0d315";
+const FIXTURE_SOURCE_COMMIT = "b50432bd04b571f52d6191bd4feac4a6cc376085";
+const FIXTURE_GENERATOR_SHA256 = "01e0721c337ee3f3f2abd444888396d159c6ced779b6b93d5c9e947a40da97ce";
+const FIXTURE_SET_SHA256 = "461e150eeadfd4cea1851d8f37571540e2aba9085d7b17f566221d48d2c69877";
+const FIXTURE_MANIFEST_SHA256 = "24ada7317285fc3631e03870c370b60322c6c5e6e0ee68f7e05c9df0a01920e7";
 const FIXTURE_BODY_FILES = [
   "app-appearance-default-en.json",
   "app-appearance-geo-hu.json",
+  "app-appearance-schema-invalid.json",
+  "app-appearance-v1-geo-none-hu.json",
+  "app-appearance-v2-geo-none-hu.json",
+  "app-appearance-v2-global-defaults-en.json",
+  "app-appearance-v2-storefront-logo-en.json",
   "appconfig-appearance-geo-hu.json",
+  "appconfig-appearance-schema-invalid.json",
+  "appconfig-appearance-v2-geo-none-hu.json",
+  "appconfig-appearance-v2-global-defaults-en.json",
+  "appconfig-appearance-v2-storefront-logo-en.json",
   "landing-content-geo-hu.json",
   "people-discover-hero-geo-hu.json",
   "webadmin-conflict.json",
   "webadmin-delete.json",
   "webadmin-geocode.json",
+  "webadmin-list-v2.json",
   "webadmin-list.json",
+  "webadmin-preview-parent-global-hu.json",
+  "webadmin-preview-parent-storefront-hu.json",
+  "webadmin-preview-v2-geo-hu.json",
   "webadmin-preview.json",
+  "webadmin-save-v2.json",
   "webadmin-save.json",
+  "webadmin-validation-v2-field.json",
   "webadmin-validation.json",
 ] as const;
 const FIXTURE_SOURCE_PATHS = [
@@ -93,7 +110,9 @@ async function fixture(file: string): Promise<unknown> {
 }
 
 test("the released appearance corpus is byte-identical, complete, and traceable to the Core source commit", async () => {
-  const manifest = await fixtureManifest();
+  const manifestWire = await readFile(new URL("manifest.json", FIXTURE_DIRECTORY), "utf8");
+  assert.equal(sha256(manifestWire), FIXTURE_MANIFEST_SHA256);
+  const manifest = JSON.parse(manifestWire) as Json;
   assert.deepEqual(Object.keys(manifest).sort(), [
     "control_plane_error_statuses",
     "fixture_set_sha256",
@@ -135,14 +154,16 @@ test("the released appearance corpus is byte-identical, complete, and traceable 
     consumerCounts.set(row.consumer, (consumerCounts.get(row.consumer) ?? 0) + 1);
     aggregateRows.push(`${row.file}\0${row.sha256}`);
   }
-  assert.deepEqual(Object.fromEntries([...consumerCounts].sort()), { ios: 5, webadmin: 7 });
+  assert.deepEqual(Object.fromEntries([...consumerCounts].sort()), { ios: 14, webadmin: 13 });
   assert.equal(sha256(aggregateRows.join("\n")), FIXTURE_SET_SHA256);
+  assert.match(FIXTURE_ACCEPTED_CORE_TIP, /^[0-9a-f]{40}$/);
+  assert.notEqual(FIXTURE_ACCEPTED_CORE_TIP, FIXTURE_SOURCE_COMMIT, "the accepted provenance tip follows its source commit");
 });
 
 test("the production refusal maps equal Core's published control-plane status map exactly", async () => {
   const manifest = await fixtureManifest();
   const published = manifest.control_plane_error_statuses as Record<string, number>;
-  assert.equal(Object.keys(published).length, 52);
+  assert.equal(Object.keys(published).length, 53);
   const local = new Map<string, number>([...APPEARANCE_CORE_REFUSAL_STATUSES, ...APPEARANCE_CORE_UNCERTAIN_STATUSES]);
   assert.equal(local.size, APPEARANCE_CORE_REFUSAL_STATUSES.size + APPEARANCE_CORE_UNCERTAIN_STATUSES.size, "no name is both refused and uncertain");
   assert.deepEqual(
@@ -262,9 +283,85 @@ test("every released Webadmin body decodes through the production decoders with 
   );
 });
 
+test("the accepted v2 Webadmin cases bind the complete composer, parent-only merge, and closed field refusal", async () => {
+  const list = decodeAppearanceListResponse(await fixture("webadmin-list-v2.json"));
+  assert.ok(list.ok, "v2 list");
+  assert.deepEqual(Object.keys(list.value.defaults.landing), [...APPEARANCE_LANDING_KEYS]);
+  assert.deepEqual(list.value.defaults.landing, APPEARANCE_DEFAULT_LANDING);
+  assert.deepEqual(list.value.rules.map((rule) => [rule.id, rule.scope, rule.revision]), [
+    ["620000000000000000000003", "geo", 22],
+    ["620000000000000000000001", "global", 20],
+    ["620000000000000000000002", "storefront", 21],
+  ]);
+  const geo = list.value.rules.find((rule) => rule.scope === "geo")!;
+  assert.equal(Object.keys(geo.landing).length, 38, "the fixture exercises a broad sparse composer override");
+  assert.equal(geo.landing.title_type, "none");
+  assert.equal(geo.landing.description_hu, undefined, "the HU description must exercise the English rule fallback");
+
+  const saved = decodeAppearanceSaveResponse(await fixture("webadmin-save-v2.json"), {
+    id: geo.id,
+    expected_revision: 21,
+    input: appearanceRuleInputOf(geo),
+  });
+  assert.ok(saved.ok, "v2 save is bound to its exact CAS successor and full material");
+  assert.equal(saved.value.revision, 22);
+
+  const parentGlobal = decodeAppearancePreviewResponse(await fixture("webadmin-preview-parent-global-hu.json"));
+  const parentStorefront = decodeAppearancePreviewResponse(await fixture("webadmin-preview-parent-storefront-hu.json"));
+  const resolved = decodeAppearancePreviewResponse(await fixture("webadmin-preview-v2-geo-hu.json"));
+  assert.ok(parentGlobal.ok && parentStorefront.ok && resolved.ok);
+  for (const preview of [parentGlobal.value, parentStorefront.value, resolved.value]) {
+    assert.equal(preview.landing.schema, 2);
+    assert.ok(preview.landing_flat && preview.landing_flat_sources && preview.landing_flat_defaults);
+    assert.deepEqual(preview.landing_flat_defaults, APPEARANCE_DEFAULT_LANDING);
+  }
+  assert.deepEqual(parentGlobal.value.matched, { scope: "default", rule_id: "", location_source: "none" });
+  assert.ok(APPEARANCE_LANDING_KEYS.every((key) => parentGlobal.value.landing_flat![key] === ""));
+  assert.ok(APPEARANCE_LANDING_KEYS.every((key) => {
+    const source = parentGlobal.value.landing_flat_sources![key];
+    return source.scope === "none" && source.rule_id === "";
+  }));
+  assert.deepEqual(parentStorefront.value.matched, {
+    scope: "storefront",
+    rule_id: "620000000000000000000002",
+    location_source: "none",
+  });
+  assert.equal(parentStorefront.value.landing_flat!.title_type, "image");
+  assert.equal(parentStorefront.value.landing_flat_sources!.title_image_url.scope, "storefront");
+
+  const localFlat = resolveAppearanceLandingFields(
+    [geo.landing, parentStorefront.value.landing_flat!],
+    parentStorefront.value.landing_flat_defaults!,
+  );
+  const local = resolveAppearanceLanding(
+    [geo.landing, parentStorefront.value.landing_flat!],
+    parentStorefront.value.landing_flat_defaults!,
+    "hu",
+  );
+  assert.equal(local.description, "English-only geo description", "HU falls through both rule layers to the geo EN value before defaults");
+  assert.equal(local.titleType, "none");
+  assert.equal(localFlat.title_image_url, "https://img.example/friending-logo.png", "the pre-fallback parent logo remains present");
+  assert.equal(resolved.value.landing.title.image_url, "", "the presentation gates hidden logo material by title type");
+  assert.equal(local.effective.overlay_color, resolved.value.landing.v2!.background.overlay.color);
+  assert.equal(local.effective.qr_enabled, resolved.value.landing.v2!.qr.enabled ? "true" : "false");
+
+  const validation = await fixture("webadmin-validation-v2-field.json");
+  assert.deepEqual(
+    decodeAppearanceSaveResponse(validation, { id: geo.id, expected_revision: 21, input: appearanceRuleInputOf(geo) }),
+    { ok: false, kind: "refused", error: "appearance-rule-invalid", status: 422 },
+  );
+});
+
 test("the iOS bodies never enter a Webadmin material decoder except the shared appearance payload", async () => {
   // `/v1/app/appearance` is the same payload the preview action returns, so both app fixtures decode.
-  for (const file of ["app-appearance-default-en.json", "app-appearance-geo-hu.json"]) {
+  for (const file of [
+    "app-appearance-default-en.json",
+    "app-appearance-geo-hu.json",
+    "app-appearance-v1-geo-none-hu.json",
+    "app-appearance-v2-geo-none-hu.json",
+    "app-appearance-v2-global-defaults-en.json",
+    "app-appearance-v2-storefront-logo-en.json",
+  ]) {
     const decoded = decodeAppearancePreviewResponse(await fixture(file));
     assert.ok(decoded.ok, file);
   }
@@ -275,8 +372,54 @@ test("the iOS bodies never enter a Webadmin material decoder except the shared a
   assert.deepEqual(defaults.value.palette, APPEARANCE_DEFAULT_PALETTE);
   assert.deepEqual(defaults.value.hero, []);
 
+  const v1None = decodeAppearancePreviewResponse(await fixture("app-appearance-v1-geo-none-hu.json"));
+  const v2Geo = decodeAppearancePreviewResponse(await fixture("app-appearance-v2-geo-none-hu.json"));
+  const v2Defaults = decodeAppearancePreviewResponse(await fixture("app-appearance-v2-global-defaults-en.json"));
+  const v2Logo = decodeAppearancePreviewResponse(await fixture("app-appearance-v2-storefront-logo-en.json"));
+  assert.ok(v1None.ok && v2Geo.ok && v2Defaults.ok && v2Logo.ok);
+  assert.equal(v1None.value.landing.schema, 1);
+  assert.deepEqual(v1None.value.landing.title, { type: "text", text: "", image_url: "" });
+  assert.equal(v2Geo.value.landing.schema, 2);
+  assert.equal(v2Geo.value.landing.v2!.description.backdrop.alpha, 0.3);
+  assert.equal(v2Geo.value.landing.v2!.qr.enabled, false);
+  assert.equal(v2Defaults.value.landing.v2!.description.backdrop.alpha, 0, "integral JSON alpha is a valid number");
+  assert.equal(v2Logo.value.landing.title.type, "image");
+  assert.equal(v2Logo.value.landing.title.image_url, "https://img.example/friending-logo.png");
+
+  assert.deepEqual(decodeAppearancePreviewResponse(await fixture("app-appearance-schema-invalid.json")), {
+    ok: false,
+    kind: "refused",
+    error: "appearance-schema-invalid",
+    status: 422,
+  });
+  assert.deepEqual(decodeAppearancePreviewResponse(await fixture("appconfig-appearance-schema-invalid.json")), {
+    ok: false,
+    kind: "refused",
+    error: "appearance-schema-invalid",
+    status: 422,
+  });
+
+  for (const file of [
+    "appconfig-appearance-v2-geo-none-hu.json",
+    "appconfig-appearance-v2-global-defaults-en.json",
+    "appconfig-appearance-v2-storefront-logo-en.json",
+  ]) {
+    const body = await fixture(file) as Json;
+    const nested = parseAppearancePreviewPayload(body.data.appearance);
+    assert.ok(nested, file);
+    assert.equal(nested.landing.schema, 2, file);
+    assert.equal(nested.landing_flat, null, `${file} stays on the app-only shape`);
+  }
+
   // The cold-start fragment, the legacy landing and the People projection are not Webadmin envelopes.
-  for (const file of ["appconfig-appearance-geo-hu.json", "landing-content-geo-hu.json", "people-discover-hero-geo-hu.json"]) {
+  for (const file of [
+    "appconfig-appearance-geo-hu.json",
+    "appconfig-appearance-v2-geo-none-hu.json",
+    "appconfig-appearance-v2-global-defaults-en.json",
+    "appconfig-appearance-v2-storefront-logo-en.json",
+    "landing-content-geo-hu.json",
+    "people-discover-hero-geo-hu.json",
+  ]) {
     const body = await fixture(file);
     for (const [name, decoded] of Object.entries({
       list: decodeAppearanceListResponse(body),

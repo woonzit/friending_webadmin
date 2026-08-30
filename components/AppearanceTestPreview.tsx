@@ -8,8 +8,11 @@ import { adminCall } from "@/lib/adminClient";
 import {
   APPEARANCE_PALETTE_MODES,
   APPEARANCE_PALETTE_ROLES,
+  APPEARANCE_DEFAULT_LANDING,
   appearanceTrim,
+  appearancePreviewLandingFields,
   decodeAppearancePreviewResponse,
+  resolveAppearanceLanding,
   type AppearancePreviewPayload,
   type LocalizedAppearanceCountry,
 } from "@/lib/appearanceRules";
@@ -21,8 +24,9 @@ type Props = {
 
 /**
  * "Preview for a test location": Core's resolver answers exactly what the app
- * would receive for the given storefront, coordinates or IP. Nothing here is
- * computed locally; the panel only renders the authoritative payload.
+ * would receive for the given storefront, coordinates or IP. No rule is
+ * resolved here; the panel only adapts Core's authoritative presentation to
+ * the shared phone component.
  */
 export default function AppearanceTestPreview({ countries, ruleNames }: Props) {
   const t = useTranslations("appearance.testPreview");
@@ -37,7 +41,7 @@ export default function AppearanceTestPreview({ countries, ruleNames }: Props) {
 
   async function run() {
     if (busy) return;
-    const body: Record<string, unknown> = { lang };
+    const body: Record<string, unknown> = { lang, appearance_schema: 2 };
     if (storefront) body.storefront_country = storefront;
     if (latitude.trim() !== "" || longitude.trim() !== "") {
       const parsedLatitude = Number(latitude);
@@ -60,6 +64,13 @@ export default function AppearanceTestPreview({ countries, ruleNames }: Props) {
     const decoded = decodeAppearancePreviewResponse(response);
     if (!decoded.ok) {
       setError(decoded.kind === "refused" && decoded.error === "invalid-input" ? t("inputInvalid") : t("previewError"));
+      setResult(null);
+      return;
+    }
+    if (decoded.value.landing.schema !== 2
+      || decoded.value.landing_flat === null || decoded.value.landing_flat_sources === null
+      || decoded.value.landing_flat_defaults === null) {
+      setError(t("previewError"));
       setResult(null);
       return;
     }
@@ -127,19 +138,16 @@ export default function AppearanceTestPreview({ countries, ruleNames }: Props) {
             <div className="appearance-test-grid">
               <div className="app-landing-preview">
                 <AppearanceLandingPreview
-                  content={{
-                    backgroundType: result.landing.background.type,
-                    backgroundUrl: result.landing.background.url,
-                    posterUrl: result.landing.background.poster_url,
-                    titleType: result.landing.title.type,
-                    titleText: result.landing.title.text,
-                    titleImageUrl: result.landing.title.image_url,
-                    description: result.landing.description,
-                  }}
+                  content={resolveAppearanceLanding(
+                    [appearancePreviewLandingFields(result.landing, lang)],
+                    result.landing_flat_defaults ?? APPEARANCE_DEFAULT_LANDING,
+                    lang,
+                  )}
                   fallbackLabel={t("builtInBackground")}
-                  accent={result.palette.light.accent}
-                  onAccent={result.palette.light.on_accent}
-                  buttonLabel={t("landingButton")}
+                  palette={result.palette.light}
+                  paletteMode="light"
+                  authMethods="both"
+                  labels={{ apple: t("appleButton"), divider: t("divider"), qr: t("qrButton") }}
                 />
               </div>
               <div className="appearance-test-palettes">

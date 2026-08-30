@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 import {
   ADMIN_IMAGE_ACCEPT,
   MAX_ADMIN_IMAGE_INPUT_BYTES,
+  MAX_LANDING_LOGO_INPUT_BYTES,
 } from "@/lib/adminImageConfig";
 import { adminUploadImage } from "@/lib/adminClient";
 
@@ -24,6 +25,8 @@ type ImageUploadFieldProps = {
   disabled?: boolean;
   className?: string;
   onBusyChange?: (busy: boolean) => void;
+  /** Landing logos are a stricter subset of the general image bridge. */
+  pngOnly?: boolean;
 };
 
 function UploadIcon() {
@@ -43,6 +46,7 @@ export default function ImageUploadField({
   disabled = false,
   className = "",
   onBusyChange,
+  pngOnly = false,
 }: ImageUploadFieldProps) {
   const t = useTranslations("imageUpload");
   const inputId = useId();
@@ -66,16 +70,17 @@ export default function ImageUploadField({
 
   async function upload(file: File) {
     setError("");
-    if (file.type && !ACCEPTED_TYPES.has(file.type)) {
-      setError(t("invalidType"));
+    if (pngOnly ? file.type !== "image/png" : (file.type !== "" && !ACCEPTED_TYPES.has(file.type))) {
+      setError(t(pngOnly ? "invalidPngType" : "invalidType"));
       return;
     }
     if (file.size === 0) {
       setError(t("invalidImage"));
       return;
     }
-    if (file.size > MAX_ADMIN_IMAGE_INPUT_BYTES) {
-      setError(t("tooLarge"));
+    const maximumBytes = pngOnly ? MAX_LANDING_LOGO_INPUT_BYTES : MAX_ADMIN_IMAGE_INPUT_BYTES;
+    if (file.size > maximumBytes) {
+      setError(t(pngOnly ? "logoTooLarge" : "tooLarge"));
       return;
     }
 
@@ -170,7 +175,7 @@ export default function ImageUploadField({
         id={inputId}
         className="sr-only"
         type="file"
-        accept={ADMIN_IMAGE_ACCEPT}
+        accept={pngOnly ? "image/png" : ADMIN_IMAGE_ACCEPT}
         disabled={locked}
         aria-labelledby={`${inputId}-label`}
         onChange={(event) => {

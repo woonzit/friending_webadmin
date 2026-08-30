@@ -1,0 +1,110 @@
+{
+    "status_code": 200,
+    "data": {
+        "appearance": {
+            "revision": 21,
+            "content_version": "398fbbacccfdf2d013dfbf96064630d95b5a3699a45fe7c47712d687fa24a37d",
+            "landing": {
+                "background": {
+                    "type": "image",
+                    "url": "",
+                    "poster_url": "",
+                    "overlay": {
+                        "color": "#000000",
+                        "alpha": 0.35
+                    }
+                },
+                "title": {
+                    "type": "image",
+                    "text": "",
+                    "image_url": "https://img.example/friending-logo.png",
+                    "image": {
+                        "width_percent": 72,
+                        "offset_percent": -6
+                    },
+                    "style": {
+                        "font": "proxima_bold",
+                        "size": 44,
+                        "color": "#FFFFFF",
+                        "align": "left"
+                    }
+                },
+                "description": {
+                    "text": "Meet people near you — and wherever you're headed next.",
+                    "style": {
+                        "font": "proxima_regular",
+                        "size": 17,
+                        "color": "#F2F4F7",
+                        "align": "left"
+                    },
+                    "backdrop": {
+                        "color": "#000000",
+                        "alpha": 0
+                    }
+                },
+                "buttons": {
+                    "corner_radius": 28,
+                    "phone": {
+                        "label": "Continue with phone number",
+                        "background": "#FFFFFF",
+                        "text_color": "#0B0E12",
+                        "font": "proxima_semibold",
+                        "size": 17
+                    },
+                    "email": {
+                        "label": "Continue with e-mail",
+                        "background": "#FFFFFF",
+                        "text_color": "#0B0E12",
+                        "font": "proxima_semibold",
+                        "size": 17
+                    },
+                    "apple": {
+                        "style": "white"
+                    }
+                },
+                "footer": {
+                    "text": "By continuing you accept our <terms>Terms</terms> and <privacy>Privacy Policy</privacy>.",
+                    "background": {
+                        "color": "#000000",
+                        "alpha": 0.55
+                    },
+                    "style": {
+                        "font": "proxima_regular",
+                        "size": 12,
+                        "color": "#E4E8ED"
+                    }
+                },
+                "qr": {
+                    "enabled": true,
+                    "background": "#000000",
+                    "icon_color": "#FFFFFF"
+                }
+            },
+            "hero": [],
+            "palette": {
+                "light": {
+                    "accent": "#007F91",
+                    "accent_pressed": "#006776",
+                    "accent_faint_bg": "#DDFBFC",
+                    "on_accent": "#FFFFFF",
+                    "inactive": "#6B7478"
+                },
+                "dark": {
+                    "accent": "#75F0F4",
+                    "accent_pressed": "#8DFDFF",
+                    "accent_faint_bg": "#12373B",
+                    "on_accent": "#071516",
+                    "inactive": "#8A9497"
+                }
+            },
+            "matched": {
+                "scope": "storefront",
+                "rule_id": "620000000000000000000002",
+                "location_source": "none"
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

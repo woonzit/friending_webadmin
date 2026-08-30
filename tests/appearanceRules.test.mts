@@ -1,16 +1,24 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { readFileSync, statSync } from "node:fs";
 import {
   APPEARANCE_ACTIONS,
   APPEARANCE_COUNTRIES,
   APPEARANCE_COUNTRY_COUNT,
   APPEARANCE_DEFAULT_LANDING,
   APPEARANCE_DEFAULT_PALETTE,
+  APPEARANCE_LANDING_ALIGNS,
+  APPEARANCE_LANDING_APPLE_STYLES,
+  APPEARANCE_LANDING_FONTS,
+  APPEARANCE_LANDING_FLAT_SOURCE_SCOPES,
+  APPEARANCE_LANDING_KEYS,
   APPEARANCE_PALETTE_MODES,
   APPEARANCE_PALETTE_ROLES,
   appearanceLandingCoherent,
   appearanceLandingDraft,
+  appearanceFooterTextHasExactTags,
+  appearancePreviewLandingFields,
   appearanceLandingWithTitleType,
   appearanceLandingWire,
   appearanceRuleDraft,
@@ -46,6 +54,7 @@ import {
   parseAppearanceTimestamp,
   resolveAppearanceHero,
   resolveAppearanceLanding,
+  resolveAppearanceLandingFields,
   resolveAppearancePalette,
   sortAppearanceRules,
   validateAppearanceRuleDraft,
@@ -313,6 +322,58 @@ function previewPayload(overrides: Record<string, unknown> = {}): Record<string,
   };
 }
 
+// Contract-local schema-v2 fixture until the accepted T-488 Core corpus is pinned below.
+// It is test input only and is never presented as cross-repository provenance.
+function previewLandingV2(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    background: {
+      type: "image",
+      url: "https://img.friending.co/api/cache/pride.jpg",
+      poster_url: "",
+      overlay: { color: "#000000", alpha: 0.35 },
+    },
+    title: {
+      type: "text",
+      text: "friending.",
+      image_url: "",
+      image: { width_percent: 60, offset_percent: -10 },
+      style: { font: "proxima_bold", size: 44, color: "#FFFFFF", align: "left" },
+    },
+    description: {
+      text: "Meet people nearby.",
+      style: { font: "proxima_regular", size: 17, color: "#F2F4F7", align: "left" },
+      backdrop: { color: "#000000", alpha: 0 },
+    },
+    buttons: {
+      corner_radius: 28,
+      phone: { label: "Continue with phone number", background: "#FFFFFF", text_color: "#0B0E12", font: "proxima_semibold", size: 17 },
+      email: { label: "Continue with e-mail", background: "#FFFFFF", text_color: "#0B0E12", font: "proxima_semibold", size: 17 },
+      apple: { style: "white" },
+    },
+    footer: {
+      text: "By continuing you accept our <terms>Terms</terms> and <privacy>Privacy Policy</privacy>.",
+      background: { color: "#000000", alpha: 0.55 },
+      style: { font: "proxima_regular", size: 12, color: "#E4E8ED" },
+    },
+    qr: { enabled: true, background: "#000000", icon_color: "#FFFFFF" },
+    ...overrides,
+  };
+}
+
+function previewLandingFlat(overrides: Record<string, string> = {}): Record<string, string> {
+  return {
+    ...Object.fromEntries(APPEARANCE_LANDING_KEYS.map((key) => [key, ""])),
+    ...overrides,
+  };
+}
+
+function previewLandingFlatSources(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    ...Object.fromEntries(APPEARANCE_LANDING_KEYS.map((key) => [key, { scope: "none", rule_id: "" }])),
+    ...overrides,
+  };
+}
+
 test("the test-location preview decodes the app payload and refuses vocabulary drift", () => {
   const preview = parseAppearancePreviewPayload(previewPayload());
   assert.ok(preview);
@@ -346,6 +407,98 @@ test("the test-location preview decodes the app payload and refuses vocabulary d
   assert.equal(parseAppearancePreviewPayload(previewPayload({ revision: -1 })), null);
   assert.equal(parseAppearancePreviewPayload(previewPayload({ extra: 1 })), null);
   assert.equal(parseAppearancePreviewPayload(previewPayload({ hero: [{ id: "x" }] })), null, "partial hero item");
+});
+
+test("the schema-v2 preview decodes exactly and flattens the requested language for comparison", () => {
+  const preview = parseAppearancePreviewPayload(previewPayload({ landing: previewLandingV2() }));
+  assert.ok(preview);
+  assert.equal(preview.landing.schema, 2);
+  assert.equal(preview.landing.v2?.title.style.font, "proxima_bold");
+  assert.equal(preview.landing.v2?.qr.enabled, true);
+  assert.equal(preview.landing_flat, null, "the app schema-2 shape has no Webadmin siblings");
+  assert.equal(preview.landing_flat_sources, null);
+  assert.equal(preview.landing_flat_defaults, null);
+  const fields = appearancePreviewLandingFields(preview.landing, "en");
+  assert.equal(fields.overlay_alpha, "0.35");
+  assert.equal(fields.description_backdrop_alpha, "0.00");
+  assert.equal(fields.title_image_offset_percent, "-10");
+  assert.equal(fields.button_phone_label_en, "Continue with phone number");
+  assert.equal(fields.button_phone_label_hu, undefined, "the wire projects only the requested language");
+  assert.equal(fields.qr_enabled, "true");
+
+  const webadmin = parseAppearancePreviewPayload(previewPayload({
+    landing: previewLandingV2(),
+    landing_flat: previewLandingFlat({
+      title_text_en: "Parent title",
+      description_en: "Meet people nearby.",
+      overlay_color: "#010203",
+      overlay_alpha: "0.50",
+    }),
+    landing_flat_sources: previewLandingFlatSources({
+      title_text_en: { scope: "global", rule_id: "66d0a1b2c3d4e5f6a7b8c9d2" },
+      description_en: { scope: "global", rule_id: "66d0a1b2c3d4e5f6a7b8c9d2" },
+      overlay_color: { scope: "global", rule_id: "66d0a1b2c3d4e5f6a7b8c9d2" },
+      overlay_alpha: { scope: "global", rule_id: "66d0a1b2c3d4e5f6a7b8c9d2" },
+    }),
+    landing_flat_defaults: APPEARANCE_DEFAULT_LANDING,
+  }));
+  assert.ok(webadmin);
+  assert.equal(webadmin.landing_flat?.description_en, "Meet people nearby.");
+  assert.equal(webadmin.landing_flat_defaults?.description_hu, APPEARANCE_DEFAULT_LANDING.description_hu);
+  assert.deepEqual(webadmin.landing_flat_sources?.title_text_en, {
+    scope: "global",
+    rule_id: "66d0a1b2c3d4e5f6a7b8c9d2",
+  });
+
+  for (const [label, overrides] of [
+    ["missing flat defaults sibling", { landing_flat: previewLandingFlat(), landing_flat_sources: previewLandingFlatSources() }],
+    ["orphan flat defaults", { landing_flat_defaults: APPEARANCE_DEFAULT_LANDING }],
+    ["partial flat fields", { landing_flat: { title_type: "text" }, landing_flat_sources: previewLandingFlatSources(), landing_flat_defaults: APPEARANCE_DEFAULT_LANDING }],
+    ["partial flat sources", { landing_flat: previewLandingFlat(), landing_flat_sources: { title_type: { scope: "none", rule_id: "" } }, landing_flat_defaults: APPEARANCE_DEFAULT_LANDING }],
+    ["partial flat defaults", { landing_flat: previewLandingFlat(), landing_flat_sources: previewLandingFlatSources(), landing_flat_defaults: { title_type: "text" } }],
+    ["empty required flat default", { landing_flat: previewLandingFlat(), landing_flat_sources: previewLandingFlatSources(), landing_flat_defaults: { ...APPEARANCE_DEFAULT_LANDING, title_font: "" } }],
+    ["none source with id", { landing_flat: previewLandingFlat(), landing_flat_sources: previewLandingFlatSources({ title_type: { scope: "none", rule_id: "66d0a1b2c3d4e5f6a7b8c9d2" } }), landing_flat_defaults: APPEARANCE_DEFAULT_LANDING }],
+    ["none source with a value", { landing_flat: previewLandingFlat({ title_type: "text" }), landing_flat_sources: previewLandingFlatSources(), landing_flat_defaults: APPEARANCE_DEFAULT_LANDING }],
+    ["rule source without id", { landing_flat: previewLandingFlat({ title_type: "text" }), landing_flat_sources: previewLandingFlatSources({ title_type: { scope: "global", rule_id: "" } }), landing_flat_defaults: APPEARANCE_DEFAULT_LANDING }],
+    ["rule source without a value", { landing_flat: previewLandingFlat(), landing_flat_sources: previewLandingFlatSources({ title_type: { scope: "global", rule_id: "66d0a1b2c3d4e5f6a7b8c9d2" } }), landing_flat_defaults: APPEARANCE_DEFAULT_LANDING }],
+    ["split coherent pair", {
+      landing_flat: previewLandingFlat({ overlay_color: "#000000", overlay_alpha: "0.35" }),
+      landing_flat_sources: previewLandingFlatSources({
+        overlay_color: { scope: "geo", rule_id: "66d0a1b2c3d4e5f6a7b8c9d1" },
+        overlay_alpha: { scope: "global", rule_id: "66d0a1b2c3d4e5f6a7b8c9d2" },
+      }),
+      landing_flat_defaults: APPEARANCE_DEFAULT_LANDING,
+    }],
+    ["rule-only image type without asset", {
+      landing_flat: previewLandingFlat({ title_type: "image" }),
+      landing_flat_sources: previewLandingFlatSources({ title_type: { scope: "global", rule_id: "66d0a1b2c3d4e5f6a7b8c9d2" } }),
+      landing_flat_defaults: APPEARANCE_DEFAULT_LANDING,
+    }],
+    ["retired default source", { landing_flat: previewLandingFlat(), landing_flat_sources: previewLandingFlatSources({ title_type: { scope: "default", rule_id: "" } }), landing_flat_defaults: APPEARANCE_DEFAULT_LANDING }],
+    ["flat siblings on schema 1", { landing_flat: previewLandingFlat(), landing_flat_sources: previewLandingFlatSources(), landing_flat_defaults: APPEARANCE_DEFAULT_LANDING }],
+  ] as const) {
+    const landing = label === "flat siblings on schema 1" ? previewPayload().landing : previewLandingV2();
+    assert.equal(parseAppearancePreviewPayload(previewPayload({ landing, ...overrides })), null, label);
+  }
+
+  const base = previewLandingV2();
+  const background = base.background as Record<string, unknown>;
+  const title = base.title as Record<string, unknown>;
+  const buttons = base.buttons as Record<string, unknown>;
+  const footer = base.footer as Record<string, unknown>;
+  for (const [label, landing] of [
+    ["lowercase v2 colour", { ...base, background: { ...background, overlay: { color: "#abcdef", alpha: 0.5 } } }],
+    ["v2 alpha exceeds storage precision", { ...base, background: { ...background, overlay: { color: "#000000", alpha: 0.351 } } }],
+    ["unknown v2 font", { ...base, title: { ...title, style: { font: "serif", size: 44, color: "#FFFFFF", align: "left" } } }],
+    ["title size out of range", { ...base, title: { ...title, style: { font: "proxima_bold", size: 73, color: "#FFFFFF", align: "left" } } }],
+    ["empty resolved description", { ...base, description: { text: "", style: { font: "proxima_regular", size: 17, color: "#F2F4F7", align: "left" }, backdrop: { color: "#000000", alpha: 0 } } }],
+    ["custom Apple colour vocabulary", { ...base, buttons: { ...buttons, apple: { style: "pink" } } }],
+    ["footer without markers", { ...base, footer: { ...footer, text: "Terms and privacy" } }],
+    ["unknown v2 key", { ...base, future: true }],
+  ] as const) assert.equal(parseAppearancePreviewPayload(previewPayload({ landing })), null, label);
+
+  const noneTitle = { ...title, type: "none", text: "", image_url: "" };
+  assert.ok(parseAppearancePreviewPayload(previewPayload({ landing: previewLandingV2({ title: noneTitle }) })));
 });
 
 test("geocode candidates decode exactly", () => {
@@ -491,6 +644,107 @@ test("blank editor fields inherit; filled fields reach the wire per field (Amend
   assert.equal(roundTrip.background_url, filled.background_url);
   assert.equal(roundTrip.title_type, "");
   assert.equal(roundTrip.title_image_url, "");
+});
+
+test("the D-061 landing vocabulary is closed and canonical while every draft field can inherit", () => {
+  assert.equal(APPEARANCE_LANDING_KEYS.length, 47);
+  assert.equal(new Set(APPEARANCE_LANDING_KEYS).size, APPEARANCE_LANDING_KEYS.length);
+  assert.equal(APPEARANCE_LANDING_FONTS.length, 14);
+  assert.deepEqual(APPEARANCE_LANDING_FLAT_SOURCE_SCOPES, ["geo", "storefront", "global", "none"]);
+  assert.deepEqual(APPEARANCE_LANDING_ALIGNS, ["left", "center", "right"]);
+  assert.deepEqual(APPEARANCE_LANDING_APPLE_STYLES, ["white", "white_outline", "black"]);
+  assert.ok(parseAppearanceLanding(APPEARANCE_DEFAULT_LANDING), "all compiled defaults satisfy the closed flat model");
+
+  const blank = appearanceLandingDraft({});
+  assert.deepEqual(Object.keys(blank), [...APPEARANCE_LANDING_KEYS]);
+  assert.ok(APPEARANCE_LANDING_KEYS.every((key) => blank[key] === ""));
+  assert.deepEqual(appearanceLandingWire(blank), {});
+
+  const valid = {
+    overlay_color: "#001122",
+    overlay_alpha: "0.30",
+    title_type: "none",
+    title_font: "proxima_cond_semibold",
+    title_size: "72",
+    title_align: "right",
+    title_image_offset_percent: "-40",
+    button_apple_style: "white_outline",
+    qr_enabled: "false",
+  };
+  assert.deepEqual(parseAppearanceLanding(valid), valid);
+  for (const [label, landing] of [
+    ["lowercase colour", { overlay_color: "#aabbcc" }],
+    ["alpha needs two decimals", { overlay_alpha: "0.3" }],
+    ["alpha is bounded", { overlay_alpha: "1.01" }],
+    ["integer is canonical", { title_size: "072" }],
+    ["integer is bounded", { title_size: "73" }],
+    ["offset has no plus spelling", { title_image_offset_percent: "+10" }],
+    ["font vocabulary is closed", { title_font: "proxima_cond_bold" }],
+    ["alignment vocabulary is closed", { title_align: "justify" }],
+    ["Apple vocabulary is closed", { button_apple_style: "grey" }],
+    ["QR is a string boolean", { qr_enabled: "1" }],
+    ["unknown flat key", { future_style: "x" }],
+  ] as const) {
+    assert.equal(parseAppearanceLanding(landing), null, label);
+  }
+});
+
+test("D-061 pair coherence and footer markers fail closed before save", () => {
+  const footer = "Read our <terms>Terms</terms> and <privacy>Privacy</privacy>.";
+  assert.equal(appearanceFooterTextHasExactTags(footer), true);
+  for (const invalid of [
+    "Read our Terms and Privacy.",
+    "<terms>Terms</terms> <terms>Again</terms> <privacy>Privacy</privacy>",
+    "<terms></terms> <privacy>Privacy</privacy>",
+    "<terms><privacy>Nested</privacy></terms>",
+    "<terms>Terms</privacy> <privacy>Privacy</terms>",
+  ]) assert.equal(appearanceFooterTextHasExactTags(invalid), false, invalid);
+
+  assert.equal(appearanceLandingCoherent({ overlay_color: "#000000" }), false);
+  assert.equal(appearanceLandingCoherent({ overlay_color: "#000000", overlay_alpha: "0.25" }), true);
+  assert.equal(appearanceLandingCoherent({ description_backdrop_alpha: "0.00" }), false);
+  assert.equal(appearanceLandingCoherent({ footer_bg_color: "#000000" }), false);
+  assert.equal(appearanceLandingCoherent({ title_type: "none" }), true);
+  assert.equal(appearanceLandingCoherent({ title_type: "image" }), false);
+  assert.equal(appearanceLandingCoherent({ footer_text_en: footer }), true);
+  assert.equal(parseAppearanceLanding({ footer_text_en: "Terms and privacy" }), null);
+
+  const draft = appearanceRuleDraft(parseAppearanceRule(geoRule())!);
+  draft.landing.overlay_color = "#000000";
+  assert.equal(validateAppearanceRuleDraft(draft), "landingPair");
+  draft.landing.overlay_alpha = "0.3";
+  assert.equal(validateAppearanceRuleDraft(draft), "landingValue");
+  draft.landing.overlay_alpha = "0.30";
+  draft.landing.footer_text_en = "Terms and privacy";
+  assert.equal(validateAppearanceRuleDraft(draft), "footerTags");
+  draft.landing.footer_text_en = footer;
+  assert.equal(validateAppearanceRuleDraft(draft), null);
+});
+
+test("the local D-061 merge resolves all flat fields and localized button/footer copy", () => {
+  const effective = resolveAppearanceLandingFields([
+    { overlay_alpha: "0.80", button_phone_label_hu: "Telefonnal", footer_text_hu: "<terms>Feltételek</terms> és <privacy>Adatvédelem</privacy>" },
+    { overlay_color: "#123456", title_font: "system_bold" },
+  ], APPEARANCE_DEFAULT_LANDING);
+  assert.equal(effective.overlay_color, "#123456");
+  assert.equal(effective.overlay_alpha, "0.80");
+  assert.equal(effective.title_font, "system_bold");
+  assert.equal(effective.button_email_bg, APPEARANCE_DEFAULT_LANDING.button_email_bg);
+
+  const resolved = resolveAppearanceLanding([effective], APPEARANCE_DEFAULT_LANDING, "hu");
+  assert.equal(resolved.phoneLabel, "Telefonnal");
+  assert.equal(resolved.emailLabel, APPEARANCE_DEFAULT_LANDING.button_email_label_hu);
+  assert.equal(resolved.footerText, "<terms>Feltételek</terms> és <privacy>Adatvédelem</privacy>");
+  assert.equal(resolved.effective.overlay_alpha, "0.80");
+
+  const parentRulesOnly = appearanceLandingDraft({ title_text_en: "Parent English" });
+  const compiledDefaults = { ...APPEARANCE_DEFAULT_LANDING, title_text_en: "Default English", title_text_hu: "Alapértelmezett magyar" };
+  const unsaved = appearanceLandingWire({ ...appearanceLandingDraft({}), title_text_en: "Draft English" });
+  assert.equal(
+    resolveAppearanceLanding([unsaved, parentRulesOnly], compiledDefaults, "hu").titleText,
+    "Draft English",
+    "Amendment v1.4a exhausts the HU rule chain and then the EN rule chain before either compiled default",
+  );
 });
 
 test("the save-time pairing rule is applied before Core sees the body", () => {
@@ -705,6 +959,30 @@ test("the proxy forwards only the exact bodies the contract lists", () => {
   );
   assert.deepEqual(normalizeAppearanceProxyBody("appearance_rules_preview", { ip: "203.0.113.7" }), { ip: "203.0.113.7" });
   assert.deepEqual(normalizeAppearanceProxyBody("appearance_rules_preview", { ip: "2001:db8::1" }), { ip: "2001:db8::1" });
+  assert.deepEqual(normalizeAppearanceProxyBody("appearance_rules_preview", {
+    appearance_schema: 2,
+    exclude_rule_id: "66d0a1b2c3d4e5f6a7b8c9d1",
+    location_mode: "none",
+    storefront_country: "HUN",
+    lang: "en",
+  }), {
+    appearance_schema: 2,
+    exclude_rule_id: "66d0a1b2c3d4e5f6a7b8c9d1",
+    location_mode: "none",
+    storefront_country: "HUN",
+    lang: "en",
+  });
+  assert.deepEqual(normalizeAppearanceProxyBody("appearance_rules_preview", {
+    location_mode: "auto",
+    latitude: 47.5,
+    longitude: 19.04,
+  }), { location_mode: "auto", latitude: 47.5, longitude: 19.04 });
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { appearance_schema: 3 }), null);
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { appearance_schema: "2" }), null);
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { exclude_rule_id: "not-an-object-id" }), null);
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { location_mode: "gps" }), null);
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { location_mode: "none", latitude: 0, longitude: 0 }), null);
+  assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { location_mode: "none", ip: "" }), null, "even an empty location input conflicts with none");
   assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { latitude: 47.5 }), null, "latitude without longitude");
   assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { storefront_country: "HU" }), null);
   assert.equal(normalizeAppearanceProxyBody("appearance_rules_preview", { ip: "not-an-ip" }), null);
@@ -865,6 +1143,10 @@ test("the refusal vocabulary is closed: unknown names and wrong statuses are unc
     assert.deepEqual(decode(coreRefusal("appearance-rule-not-found", 404)), { ok: false, kind: "refused", error: "appearance-rule-not-found", status: 404 });
     assert.deepEqual(decode(coreRefusal("appearance-rule-hero-item-invalid", 422)), { ok: false, kind: "refused", error: "appearance-rule-hero-item-invalid", status: 422 });
     assert.deepEqual(decode(coreRefusal("appearance-rule-revision-invalid", 422)), { ok: false, kind: "refused", error: "appearance-rule-revision-invalid", status: 422 });
+    assert.deepEqual(decode({ ...coreRefusal("appearance-rule-invalid", 422), field: "overlay_alpha" }), { ok: false, kind: "refused", error: "appearance-rule-invalid", status: 422 });
+    assert.deepEqual(decode({ ...coreRefusal("appearance-rule-invalid", 422), field: "location_mode" }), { ok: false, kind: "refused", error: "appearance-rule-invalid", status: 422 });
+    assert.deepEqual(decode({ ...coreRefusal("appearance-rule-invalid", 422), field: "future_field" }), { ok: false, kind: "uncertain", error: "malformed-envelope" });
+    assert.deepEqual(decode({ ...coreRefusal("appearance-rule-conflict", 409), field: "overlay_alpha" }), { ok: false, kind: "uncertain", error: "malformed-envelope" });
     assert.deepEqual(decode({ success: false, status_code: 403, error: "admin-write-required" }), { ok: false, kind: "refused", error: "admin-write-required", status: 403 });
     assert.deepEqual(decode({ success: false, status_code: 400, error: "invalid-input" }), { ok: false, kind: "refused", error: "invalid-input", status: 400 });
     assert.deepEqual(decode({ success: false, status_code: 404, error: "not-found" }), { ok: false, kind: "refused", error: "not-found", status: 404 });
@@ -996,7 +1278,7 @@ test("the preview refuses state combinations released Core cannot emit", () => {
   assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: landing({ background: { type: "video", url: "", poster_url: "" } }) })), null, "video background without a URL");
   assert.ok(parseAppearancePreviewPayload(previewPayload({ landing: landing({ background: { type: "video", url: "https://cdn.friending.co/a.mp4", poster_url: "https://img.friending.co/api/cache/p.jpg" } }) })), "video with URL and poster");
   assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: landing({ title: { type: "text", text: "friending.", image_url: "https://img.friending.co/api/cache/t.png" } }) })), null, "text title with an image URL");
-  assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: landing({ title: { type: "text", text: "", image_url: "" } }) })), null, "text title without text");
+  assert.ok(parseAppearancePreviewPayload(previewPayload({ landing: landing({ title: { type: "text", text: "", image_url: "" } }) })), "v2 none projects to a legacy text title with empty text");
   assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: landing({ title: { type: "image", text: "", image_url: "" } }) })), null, "image title without an image");
   assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: landing({ title: { type: "image", text: "friending.", image_url: "https://img.friending.co/api/cache/t.png" } }) })), null, "image title with text");
   assert.ok(parseAppearancePreviewPayload(previewPayload({ landing: landing({ title: { type: "image", text: "", image_url: "https://img.friending.co/api/cache/t.png" } }) })), "image title with only its image");
@@ -1401,6 +1683,59 @@ test("the four component pre-normalisation paths use the PHP-compatible trim, so
   const hero = read("AppearanceHeroEditor.tsx");
   assert.match(hero, /appearanceTrim\(event\.target\.value\)\.toLowerCase\(\)/);
   assert.doesNotMatch(hero, /\.trim\(\)/);
+});
+
+test("the landing composer wires every closed field, parent-only v2 previews, PNG preflight and the exact phone frame", () => {
+  const composer = readFileSync(new URL("../components/AppearanceLandingComposer.tsx", import.meta.url), "utf8");
+  const preview = readFileSync(new URL("../components/AppearanceLandingPreview.tsx", import.meta.url), "utf8");
+  const testPreview = readFileSync(new URL("../components/AppearanceTestPreview.tsx", import.meta.url), "utf8");
+  const uploader = readFileSync(new URL("../components/ImageUploadField.tsx", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+  for (const key of APPEARANCE_LANDING_KEYS) assert.ok(composer.includes(key), key);
+  assert.match(composer, /appearance_schema:\s*2/);
+  assert.match(composer, /exclude_rule_id/);
+  assert.match(composer, /location_mode:\s*"none"/);
+  assert.match(composer, /testStorefront/);
+  assert.match(composer, /lang:\s*"en"/);
+  assert.doesNotMatch(composer, /lang:\s*"hu"/, "Amendment v1.4 needs one pre-fallback parent read per target");
+  assert.match(composer, /decoded\.value\.landing_flat/);
+  assert.match(composer, /decoded\.value\.landing_flat_sources/);
+  assert.match(composer, /decoded\.value\.landing_flat_defaults/);
+  assert.match(composer, /parentPreview\.value\.landing_flat_defaults/);
+  assert.match(composer, /source\.scope/);
+  assert.match(composer, /title_text_hu:\s*contentByLanguage\.hu\.titleText/);
+  assert.match(composer, /draftWire\[englishFallback\]/, "a local English draft fallback never receives invented Core provenance");
+  assert.match(composer, /\[targetKey, rule\.id, parentReload\]/);
+  assert.match(composer, /compareAppearanceLandingWithPreview/);
+  assert.match(testPreview, /appearance_schema:\s*2/);
+  assert.match(testPreview, /landing\.schema !== 2/);
+  assert.match(testPreview, /landing_flat === null/);
+  assert.match(testPreview, /landing_flat_defaults === null/);
+  assert.match(uploader, /pngOnly \? file\.type !== "image\/png"/);
+  assert.match(uploader, /MAX_LANDING_LOGO_INPUT_BYTES/);
+  assert.match(uploader, /invalidPngType/);
+  assert.match(uploader, /logoTooLarge/);
+  assert.match(preview, /fields\.qr_enabled === "true"/);
+  assert.match(css, /\.appearance-landing-apple-button\.is-white_outline/);
+  assert.match(preview, //);
+  assert.match(css, /\.appearance-landing-composition-phone\s*\{[^}]*width:\s*390px;[^}]*height:\s*844px;/s);
+  assert.match(css, /appearance-landing-safe-area-top/);
+  // Byte pins copied from the read-only iOS bundle at bd9ea0d.
+  const fontPins = {
+    "ProximaNova-Light.otf": "0f77660e06a5f61a45c4dbdab511722357cf29e7f5ba1b2cf097550afdb0ed20",
+    "ProximaNova-Medium.otf": "cfdedf92a4ab9532861ee2fd415824f86bed7ce47cb80b763c2487a2cd09eba0",
+    "ProximaNova-Extrabold.otf": "792e4c168c69ba6b3ef762f0244a951d32641f2c49bf5a480906eab92555f8e0",
+    "ProximaNova-Black.otf": "4f7fa48c8dae49f947bd0f9e7bc4a9e9ba6b9384511414fc8dd07aed93f113b0",
+    "ProximaNovaCond-Light.otf": "e359124f197ecb566c676e553d883e1060c31690f45664cd339cf21292bb03d1",
+    "ProximaNovaCond-Regular.otf": "6dc01117ee71847aef8fb9f4e33bc37bb30325694dbae886ebf8c3b37bfa694a",
+    "ProximaNovaCond-Medium.otf": "60bb68b2ac8c5758e153ce4b2a75fde7bbf62c1244202c7399b9ff57582c869c",
+    "ProximaNovaCond-Semibold.otf": "8ea7075762c251265449265282459721b09b1641c09e1766a571f86bb08b55df",
+  } as const;
+  for (const [font, expected] of Object.entries(fontPins)) {
+    const asset = new URL(`../public/fonts/${font}`, import.meta.url);
+    assert.ok(statSync(asset).size > 0, font);
+    assert.equal(createHash("sha256").update(readFileSync(asset)).digest("hex"), expected, font);
+  }
 });
 
 test("the retired active-hero overview card is gone from the dashboard", () => {

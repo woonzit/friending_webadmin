@@ -349,6 +349,7 @@ export default function AppearanceConsole() {
       {draft && payload && (
         <AppearanceRuleEditor
           value={draft}
+          persistedRule={draft.id === "" ? null : rules.find((rule) => rule.id === draft.id) ?? null}
           globalRule={globalRule && globalRule.id !== draft.id ? globalRule : null}
           defaults={payload.defaults}
           countries={countries}

@@ -1,10 +1,10 @@
 {
     "schema_version": 1,
-    "source_commit": "448202998826dc82b8764d03eae7862279204240",
-    "fixture_set_sha256": "7a225897dc0d83bf208016b392fe4329c978faabe2b4c389ab822d2614482952",
+    "source_commit": "b50432bd04b571f52d6191bd4feac4a6cc376085",
+    "fixture_set_sha256": "461e150eeadfd4cea1851d8f37571540e2aba9085d7b17f566221d48d2c69877",
     "provenance": {
         "generator": "tests/appearance_rules_fixture_dump.php",
-        "generator_sha256": "b0cb5a6db69c42f0e4c4a2b7bf24272ba9e313f5fbc44b6821f28249f6cf20f8",
+        "generator_sha256": "01e0721c337ee3f3f2abd444888396d159c6ced779b6b93d5c9e947a40da97ce",
         "wire_adapters": [
             "Friending\\Core\\Response::wirePayload",
             "Friending\\Support\\Webadmin::noStoreReply"
@@ -64,6 +64,7 @@
         "appearance-rule-background-type-invalid": 422,
         "appearance-rule-title-type-invalid": 422,
         "appearance-rule-url-invalid": 422,
+        "appearance-schema-invalid": 422,
         "appearance-rule-hero-invalid": 422,
         "appearance-rule-hero-mode-invalid": 422,
         "appearance-rule-hero-inherit-items-invalid": 422,
@@ -106,11 +107,74 @@
             "sha256": "b61186d5d8204d811db9b960fd9ea813708061af654d5c53399e080a9ffbcfd2"
         },
         {
+            "file": "app-appearance-schema-invalid.json",
+            "route": "/v1/app/appearance",
+            "case": "appearance schema outside the closed 1/2 vocabulary",
+            "consumer": "ios",
+            "sha256": "2b3f1e34483371755c91082e5922e1c5132ed4b1fda7c2bf6361d5db8935e5de"
+        },
+        {
+            "file": "app-appearance-v1-geo-none-hu.json",
+            "route": "/v1/app/appearance",
+            "case": "schema v1 projection of title none to empty text",
+            "consumer": "ios",
+            "sha256": "bbaee3900027c60ad1792ea34fdeb083801a5e572e15c16a04a981e1cff56d8b"
+        },
+        {
+            "file": "app-appearance-v2-geo-none-hu.json",
+            "route": "/v1/app/appearance",
+            "case": "schema v2 geo override with title none, custom controls, footer and QR",
+            "consumer": "ios",
+            "sha256": "e1bf57e7bfafb7263ff4572bac57b58bd12f4ea75421ca7be48933c93490c5d5"
+        },
+        {
+            "file": "app-appearance-v2-global-defaults-en.json",
+            "route": "/v1/app/appearance",
+            "case": "schema v2 old-shape global rule inheriting every compiled landing default",
+            "consumer": "ios",
+            "sha256": "e63e2f35fa3c4914b7413cd63de6cdee1e9f93c0b79fd85aef32a4a7ec9981f1"
+        },
+        {
+            "file": "app-appearance-v2-storefront-logo-en.json",
+            "route": "/v1/app/appearance",
+            "case": "schema v2 storefront logo override",
+            "consumer": "ios",
+            "sha256": "573e8c023d05b41e2457183b27558eebba1f019828899e255a7283d9246e6626"
+        },
+        {
             "file": "appconfig-appearance-geo-hu.json",
             "route": "/v1/app/ios_appconfig",
             "case": "cold-start appearance fragment",
             "consumer": "ios",
             "sha256": "37feab63c3c933395919f38151515895c696ec8490de286886705265c785fe29"
+        },
+        {
+            "file": "appconfig-appearance-schema-invalid.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "cold-start appearance schema outside the closed 1/2 vocabulary",
+            "consumer": "ios",
+            "sha256": "2b3f1e34483371755c91082e5922e1c5132ed4b1fda7c2bf6361d5db8935e5de"
+        },
+        {
+            "file": "appconfig-appearance-v2-geo-none-hu.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "cold-start schema v2 geo composer appearance fragment",
+            "consumer": "ios",
+            "sha256": "4ef26bc13c8fdb72675e3bd700112d6080967af063b53616b97364392f974912"
+        },
+        {
+            "file": "appconfig-appearance-v2-global-defaults-en.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "cold-start schema v2 compiled landing defaults through a global rule",
+            "consumer": "ios",
+            "sha256": "8a11f9320fa24d1fc009a22a5fae13ad26115c65b2597ac75a2b89105b99a195"
+        },
+        {
+            "file": "appconfig-appearance-v2-storefront-logo-en.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "cold-start schema v2 storefront logo appearance fragment",
+            "consumer": "ios",
+            "sha256": "acef8fb412637ad5a841832988b7d7c52a1c76908d621ad91a316a8c54a5963b"
         },
         {
             "file": "landing-content-geo-hu.json",
@@ -148,11 +212,39 @@
             "sha256": "772478765d706021e710592a080d87e199250880aa9cba7f6fe1b7d618673235"
         },
         {
+            "file": "webadmin-list-v2.json",
+            "route": "/v1/webadmin/appearance_rules_list",
+            "case": "flat landing v2 overrides and complete compiled defaults",
+            "consumer": "webadmin",
+            "sha256": "a803378462b9990f2ab57c0836021f7c2ad6d2aed1b9bbea7718e6a159c7e6dc"
+        },
+        {
             "file": "webadmin-list.json",
             "route": "/v1/webadmin/appearance_rules_list",
             "case": "rule list with compiled defaults",
             "consumer": "webadmin",
-            "sha256": "246bc04ee3691240019b7842e54f09fdcdcb78c9efe363fc4f55c0a807886ddd"
+            "sha256": "f9ba889fda25451a6bf4f11ad736b2517529ebc125b9eeab734352f769e7496a"
+        },
+        {
+            "file": "webadmin-preview-parent-global-hu.json",
+            "route": "/v1/webadmin/appearance_rules_preview",
+            "case": "global parent schema v2 preview with location suppressed and global excluded",
+            "consumer": "webadmin",
+            "sha256": "efaa4d83fe96cf1715953614d43d54ba229694531be35287f80e9c19b93d90c5"
+        },
+        {
+            "file": "webadmin-preview-parent-storefront-hu.json",
+            "route": "/v1/webadmin/appearance_rules_preview",
+            "case": "parent-only schema v2 preview with the persisted geo rule excluded",
+            "consumer": "webadmin",
+            "sha256": "3830ba7c05cfa5a5891490b07f4a958d5a83a5848a5d448b9aac23b14c2d43aa"
+        },
+        {
+            "file": "webadmin-preview-v2-geo-hu.json",
+            "route": "/v1/webadmin/appearance_rules_preview",
+            "case": "saved-state schema v2 preview",
+            "consumer": "webadmin",
+            "sha256": "1172641e336b4c215121a86f8fdf77ab3ba96623d429fdde5f3b142c41a87b33"
         },
         {
             "file": "webadmin-preview.json",
@@ -162,11 +254,25 @@
             "sha256": "b61186d5d8204d811db9b960fd9ea813708061af654d5c53399e080a9ffbcfd2"
         },
         {
+            "file": "webadmin-save-v2.json",
+            "route": "/v1/webadmin/appearance_rules_save",
+            "case": "stored flat landing v2 rule projection after save",
+            "consumer": "webadmin",
+            "sha256": "75342b30e0599e24a4c67f915c6abc680f2249d23a1e35777738fe6b4d635939"
+        },
+        {
             "file": "webadmin-save.json",
             "route": "/v1/webadmin/appearance_rules_save",
             "case": "stored rule projection after save",
             "consumer": "webadmin",
             "sha256": "f796cf2bb827f29c846e7fd076ec0d6213afb4316a10e15cf6bf441514996da8"
+        },
+        {
+            "file": "webadmin-validation-v2-field.json",
+            "route": "/v1/webadmin/appearance_rules_save",
+            "case": "invalid landing v2 value with a closed flat field name",
+            "consumer": "webadmin",
+            "sha256": "c7466a3fca94e4f2e2dbc9081962e6732958cd01b6ce32c832e8d4e1fc897312"
         },
         {
             "file": "webadmin-validation.json",
