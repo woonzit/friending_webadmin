@@ -1,6 +1,6 @@
 import { getCountryDataList } from "countries-list";
 import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
-import { httpsWireUrl, wellFormedUtf16 } from "@/lib/appearanceRules";
+import { wellFormedUtf16 } from "@/lib/appearanceRules";
 import { webadminDataSuccessEnvelope, webadminErrorEnvelope } from "@/lib/webadminEnvelope";
 
 /**
@@ -253,9 +253,9 @@ export function waitingRoomTextLength(value: string): number {
   return [...value].length;
 }
 
-/** Published copy exactly as Core's `copyText` accepts it: non-empty, PHP-trimmed, no boundary whitespace, bounded, no controls. */
+/** Published copy exactly as Core's `copyText` accepts it: valid UTF-8, non-empty, PHP-trimmed, no boundary whitespace, bounded, no controls. */
 function copyText(value: unknown, field: WaitingRoomCopyField): string | null {
-  if (typeof value !== "string" || CONTROL_CHARACTERS.test(value)) return null;
+  if (typeof value !== "string" || !wellFormedUtf16(value) || CONTROL_CHARACTERS.test(value)) return null;
   if (value === "" || forcedCopyTrim(value) !== value || hasBoundaryWhitespace(value)) return null;
   if (waitingRoomTextLength(value) > WAITING_ROOM_COPY_LIMITS[field]) return null;
   return value;
@@ -263,51 +263,71 @@ function copyText(value: unknown, field: WaitingRoomCopyField): string | null {
 
 /** Core's `webUrl()` control set — C0, DEL and C1 — anywhere in a URL (a line break is never URL content). */
 const URL_CONTROL_CHARACTERS = /[\u0000-\u001F\u007F-\u009F]/;
+/** Core c0a4212 `ForcedVerificationPolicy::HELP_URL_CHARACTER_PATTERN`: RFC 3986 ASCII URL characters only. */
+const HELP_URL_CHARACTER_PATTERN = /^[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+$/;
+/** Core c0a4212 `ForcedVerificationPolicy::HELP_URL_HOST_PATTERN`: DNS labels, including punycode, but no raw IDN or IPv6. */
+const HELP_URL_HOST_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$/;
+/** Core c0a4212 requires a present port to be canonical decimal in the inclusive range 1...65535. */
+const HELP_URL_PORT_PATTERN = /^[1-9][0-9]{0,4}$/;
+const HELP_URL_PORT_MAX = 65_535;
+const MALFORMED_PERCENT_ESCAPE = /%(?![0-9A-Fa-f]{2})/;
 /**
  * The authority as PHP `parse_url` delimits it (Core's `helpUrl`): everything after
- * `https://` up to the first `/`, `?` or `#`. A backslash is authority content there,
- * so `https://example.com\@evil.test/` is user `example.com\` at host `evil.test` for
- * Core, although the WHATWG parser behind `httpsWireUrl` reads it as host `example.com`
- * with path `/@evil.test/`. The credential check must read Core's span.
+ * `https://` up to the first `/`, `?` or `#`. Core's ASCII character pattern refuses
+ * a backslash before any authority parsing can reinterpret it.
  */
 const PHP_URL_AUTHORITY = /^https:\/\/([^/?#]*)/;
 
-/** UTF-8 bytes of the PHP-trimmed value, the unit Core bounds a URL in (`strlen`). For the editor counter only. */
+/** UTF-8 bytes of the raw editor value, the unit Core bounds a URL in (`strlen`). For the editor counter only. */
 export function waitingRoomHelpUrlByteLength(value: string): number {
-  return new TextEncoder().encode(forcedCopyTrim(value)).length;
+  return new TextEncoder().encode(value).length;
 }
 
 /**
  * Why an editor value is not a Waiting Room help URL (Amendment v1.5); `null`
- * when it is one, or when it is blank (blank = "no button" on the global
- * default, "inherit" on an override — the caller decides). Rules, in order:
- * well-formed UTF-16 and no control character in the PHP-trimmed value (a
- * lone surrogate can never reach Core as UTF-8); at most 2048 UTF-8 bytes;
- * the appearance console's non-repairing `https://` gate (no `http:`, no
- * form `new URL()` would silently repair); and no credentials — PHP's
- * `parse_url` reads anything before the last `@` of the authority as
- * `user[:pass]`, and that authority ends at the first `/`, `?` or `#` (never at
- * a backslash), so any `@` in that span refuses. The raw trimmed value is what
- * is kept and compared, never a re-serialised form.
+ * only when the raw value is one. This deliberately mirrors Core c0a4212
+ * `src/Support/ForcedVerificationPolicy.php::helpUrl`: well-formed text;
+ * at most 2048 raw UTF-8 bytes; RFC 3986 ASCII characters with valid percent
+ * escapes; exact lowercase `https://`; a non-empty DNS-style host; an optional
+ * canonical port in 1...65535; and no credentials. The draft-only empty-string
+ * sentinel is handled separately by `waitingRoomHelpUrlDraftIssue`.
  */
-export function waitingRoomHelpUrlIssue(value: string): ForcedVerificationDraftIssue | null {
-  const trimmed = forcedCopyTrim(value);
-  if (trimmed === "") return null;
-  if (!wellFormedUtf16(trimmed) || URL_CONTROL_CHARACTERS.test(trimmed)) return "copyHelpUrlControl";
-  if (new TextEncoder().encode(trimmed).length > WAITING_ROOM_HELP_URL_MAX_BYTES) return "copyHelpUrlTooLong";
-  if (!httpsWireUrl(trimmed)) return "copyHelpUrlInvalid";
-  if ((PHP_URL_AUTHORITY.exec(trimmed)?.[1] ?? "").includes("@")) return "copyHelpUrlCredentials";
+export function waitingRoomHelpUrlIssue(value: unknown): ForcedVerificationDraftIssue | null {
+  if (typeof value !== "string" || value === "") return "copyHelpUrlInvalid";
+  if (!wellFormedUtf16(value) || URL_CONTROL_CHARACTERS.test(value)) return "copyHelpUrlControl";
+  if (new TextEncoder().encode(value).length > WAITING_ROOM_HELP_URL_MAX_BYTES) return "copyHelpUrlTooLong";
+  if (
+    !HELP_URL_CHARACTER_PATTERN.test(value) ||
+    MALFORMED_PERCENT_ESCAPE.test(value) ||
+    !value.startsWith("https://")
+  ) return "copyHelpUrlInvalid";
+
+  const authority = PHP_URL_AUTHORITY.exec(value)?.[1] ?? "";
+  if (authority === "") return "copyHelpUrlInvalid";
+  if (authority.includes("@")) return "copyHelpUrlCredentials";
+  const colon = authority.indexOf(":");
+  const host = colon === -1 ? authority : authority.slice(0, colon);
+  const port = colon === -1 ? null : authority.slice(colon + 1);
+  if (!HELP_URL_HOST_PATTERN.test(host)) return "copyHelpUrlInvalid";
+  if (
+    port !== null &&
+    (!HELP_URL_PORT_PATTERN.test(port) || Number.parseInt(port, 10) > HELP_URL_PORT_MAX)
+  ) return "copyHelpUrlInvalid";
   return null;
 }
 
+/** Empty is the editor's explicit no-button/inherit sentinel; every non-empty value uses Core's strict validator. */
+export function waitingRoomHelpUrlDraftIssue(value: string): ForcedVerificationDraftIssue | null {
+  return value === "" ? null : waitingRoomHelpUrlIssue(value);
+}
+
 /**
- * A published `help_url`: `null`, or a string that is exactly its PHP-trimmed
- * self and passes every editor rule. `undefined` = refused (an empty string is
- * not the `null` form, and an untrimmed value is not proven state).
+ * A published `help_url`: `null`, or a raw string that passes every Core rule.
+ * `undefined` = refused (an empty string is not the `null` form).
  */
 function helpUrl(value: unknown): string | null | undefined {
   if (value === null) return null;
-  if (typeof value !== "string" || value === "" || forcedCopyTrim(value) !== value) return undefined;
+  if (typeof value !== "string") return undefined;
   return waitingRoomHelpUrlIssue(value) === null ? value : undefined;
 }
 
@@ -521,6 +541,7 @@ export type ForcedVerificationDraftIssue =
   | "copyRequired"
   | "copyTooLong"
   | "copyControl"
+  | "copyMalformedText"
   | "copyWhitespace"
   | "copyHelpUrlInvalid"
   | "copyHelpUrlTooLong"
@@ -562,6 +583,7 @@ export function forcedVerificationDraft(document: ForcedVerificationDocument): F
 function copyIssue(value: string, field: WaitingRoomCopyField, required: boolean): ForcedVerificationDraftIssue | null {
   const trimmed = forcedCopyTrim(value);
   if (trimmed === "") return required ? "copyRequired" : null;
+  if (!wellFormedUtf16(trimmed)) return "copyMalformedText";
   if (CONTROL_CHARACTERS.test(trimmed) || (field !== "description" && /[\n\r]/.test(trimmed))) return "copyControl";
   if (hasBoundaryWhitespace(trimmed)) return "copyWhitespace";
   if (waitingRoomTextLength(trimmed) > WAITING_ROOM_COPY_LIMITS[field]) return "copyTooLong";
@@ -582,7 +604,7 @@ export function validateForcedVerificationDraft(draft: ForcedVerificationDraft):
       const issue = copyIssue(draft.copy_default[locale][field], field, true);
       if (issue) return issue;
     }
-    const helpIssue = waitingRoomHelpUrlIssue(draft.copy_default[locale].help_url);
+    const helpIssue = waitingRoomHelpUrlDraftIssue(draft.copy_default[locale].help_url);
     if (helpIssue) return helpIssue;
   }
   const copyStorefronts = Object.keys(draft.copy_overrides);
@@ -594,7 +616,7 @@ export function validateForcedVerificationDraft(draft: ForcedVerificationDraft):
         const issue = copyIssue(draft.copy_overrides[storefront][locale][field], field, false);
         if (issue) return issue;
       }
-      const helpIssue = waitingRoomHelpUrlIssue(draft.copy_overrides[storefront][locale].help_url);
+      const helpIssue = waitingRoomHelpUrlDraftIssue(draft.copy_overrides[storefront][locale].help_url);
       if (helpIssue) return helpIssue;
     }
   }
@@ -626,8 +648,8 @@ export function forcedVerificationDocumentFromDraft(draft: ForcedVerificationDra
         const text = forcedCopyTrim(draft.copy_overrides[storefront][locale][field]);
         if (text !== "") override[field] = text;
       }
-      // A blank help URL inherits by omission (Amendment v1.5), like a blank text.
-      const help = forcedCopyTrim(draft.copy_overrides[storefront][locale].help_url);
+      // An exactly blank help URL inherits by omission (Amendment v1.5); non-empty URLs are never repaired.
+      const help = draft.copy_overrides[storefront][locale].help_url;
       if (help !== "") override.help_url = help;
       locales[locale] = override;
       fields += Object.keys(override).length;
@@ -636,13 +658,12 @@ export function forcedVerificationDocumentFromDraft(draft: ForcedVerificationDra
     if (fields > 0) copyOverrides[storefront] = locales;
   }
   const trimCopy = (copy: WaitingRoomCopyDraft): WaitingRoomCopy => {
-    const help = forcedCopyTrim(copy.help_url);
     return {
       title: forcedCopyTrim(copy.title),
       subtitle: forcedCopyTrim(copy.subtitle),
       description: forcedCopyTrim(copy.description),
       // Always present on the global default (`null` = no button), and last: Core compares the key list in order.
-      help_url: help === "" ? null : help,
+      help_url: copy.help_url === "" ? null : copy.help_url,
     };
   };
   return {
@@ -724,10 +745,14 @@ export function previewWaitingRoomCopy(
     else compiledFields.push(field);
   }
   const overrideHelp = override ? override.help_url : "";
-  const helpCandidate = forcedCopyTrim(overrideHelp) !== "" ? overrideHelp : draft.copy_default[locale].help_url;
-  const help = forcedCopyTrim(helpCandidate);
-  if (waitingRoomHelpUrlIssue(helpCandidate) !== null) compiledFields.push(WAITING_ROOM_HELP_URL_FIELD);
-  else if (help !== "") copy.help_url = help;
+  const helpCandidate = overrideHelp !== "" ? overrideHelp : draft.copy_default[locale].help_url;
+  if (helpCandidate === "") {
+    // The compiled default is null: no help button is a valid configured state.
+  } else if (waitingRoomHelpUrlIssue(helpCandidate) !== null) {
+    compiledFields.push(WAITING_ROOM_HELP_URL_FIELD);
+  } else {
+    copy.help_url = helpCandidate;
+  }
   return { copy, compiledFields };
 }
 

@@ -7357,6 +7357,7 @@ body .verification-level-pill.level-strong {
 }
 
 .presentation-phone-preview {
+  --presentation-preview-hero-glow: rgba(0, 189, 255, 0.4);
   width: min(100% - 40px, 420px);
   margin: 28px auto;
   padding: 14px 14px 24px;
@@ -7371,8 +7372,16 @@ body .verification-level-pill.level-strong {
   border-radius: 21px;
   background:
     linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.68)),
-    radial-gradient(circle at 70% 20%, rgba(0, 189, 255, 0.4), transparent 35%),
+    radial-gradient(circle at 70% 20%, var(--presentation-preview-hero-glow), transparent 35%),
     #252b34;
+}
+
+.presentation-phone-preview.accent-female {
+  --presentation-preview-hero-glow: rgba(242, 59, 141, 0.4);
+}
+
+.presentation-phone-preview.accent-neutral {
+  --presentation-preview-hero-glow: rgba(194, 201, 210, 0.4);
 }
 
 .presentation-preview-chips {

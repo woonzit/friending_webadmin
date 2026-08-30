@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   APP_REVIEW_CHECK_KEYS,
@@ -54,6 +55,37 @@ function statusFixture(): Record<string, unknown> {
     checks: APP_REVIEW_CHECK_KEYS.map((key) => ({ key, ok: true, actual: 1, expected: 1 })),
   };
 }
+
+/**
+ * Pinned from Core c0a4212: fixed checks and counts come from
+ * `src/Services/AppReviewSandboxService.php`; ordered fixture checks come from
+ * `src/Services/AppReviewFixtureV1.php`; Dates counts come from
+ * `src/Services/AppReviewDatesFixtureService.php`.
+ */
+test("the pinned Core c0a4212 status decodes and owns the exact closed key order and set", () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL("./fixtures/app_review_sandbox/status-core-c0a4212.json", import.meta.url),
+    "utf8",
+  )) as { source_commit: unknown; status: Record<string, unknown> };
+  assert.deepEqual(Object.keys(fixture), ["source_commit", "status"]);
+  assert.equal(fixture.source_commit, "c0a4212710bff4f3eafd5879c3536289f87c644b");
+
+  const rawChecks = fixture.status.checks as Array<{ key: string }>;
+  const rawCounts = fixture.status.counts as Record<string, unknown>;
+  const checkKeys = rawChecks.map((check) => check.key);
+  const countKeys = Object.keys(rawCounts);
+  assert.deepEqual(checkKeys, [...APP_REVIEW_CHECK_KEYS], "Core check display order equals the Webadmin closed list");
+  assert.deepEqual(countKeys, [...APP_REVIEW_COUNT_KEYS], "Core count insertion order equals the Webadmin closed list");
+  assert.equal(new Set(checkKeys).size, checkKeys.length, "Core check keys are a set, with no duplicates");
+  assert.equal(new Set(countKeys).size, countKeys.length, "Core count keys are a set, with no duplicates");
+  assert.deepEqual([...new Set(checkKeys)].sort(), [...APP_REVIEW_CHECK_KEYS].sort(), "Core and Webadmin check sets are equal");
+  assert.deepEqual([...new Set(countKeys)].sort(), [...APP_REVIEW_COUNT_KEYS].sort(), "Core and Webadmin count sets are equal");
+
+  const decoded = appReviewSandboxStatus(fixture.status);
+  assert.ok(decoded, "the full Core-derived status is accepted by the fail-closed decoder");
+  assert.deepEqual(decoded.checks.map((check) => check.key), checkKeys);
+  assert.deepEqual(Object.keys(decoded.counts), countKeys);
+});
 
 test("the status decoder accepts the documented shape and projects it", () => {
   const status = appReviewSandboxStatus(statusFixture());

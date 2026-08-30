@@ -286,6 +286,47 @@ test("draft validation mirrors the contract limits and every issue has a stable 
   assert.equal(forcedVerificationDocumentFromDraft({ ...draft, overrides: [{ storefront: "US", persona: true, video: true }] }), null, "an invalid draft never becomes a document");
 });
 
+test("Waiting Room copy is well-formed UTF-16 on every default and storefront text field", () => {
+  const high = String.fromCharCode(0xd83d);
+  const low = String.fromCharCode(0xde42);
+  const astralPair = `${high}${low}`;
+  const fields = ["title", "subtitle", "description"] as const;
+  const locales = ["en", "hu"] as const;
+
+  for (const field of fields) {
+    for (const locale of locales) {
+      for (const [label, malformed] of [["lone high surrogate", high], ["lone low surrogate", low]] as const) {
+        const defaultDraft = forcedVerificationDraft(document());
+        defaultDraft.copy_default[locale][field] = `copy${malformed}`;
+        assert.equal(validateForcedVerificationDraft(defaultDraft), "copyMalformedText", `default ${locale}.${field}: ${label}`);
+        const defaultWire = document();
+        defaultWire.copy_default[locale][field] = `copy${malformed}`;
+        assert.equal(parseForcedVerificationDocument(defaultWire), null, `published default ${locale}.${field}: ${label}`);
+
+        const overrideDraft = forcedVerificationDraft(document());
+        overrideDraft.copy_overrides.USA = emptyWaitingRoomCopyOverrideDraft();
+        overrideDraft.copy_overrides.USA[locale][field] = `copy${malformed}`;
+        assert.equal(validateForcedVerificationDraft(overrideDraft), "copyMalformedText", `override ${locale}.${field}: ${label}`);
+        const overrideWire = document({ copy_overrides: { USA: { en: {}, hu: {} } } });
+        overrideWire.copy_overrides.USA![locale][field] = `copy${malformed}`;
+        assert.equal(parseForcedVerificationDocument(overrideWire), null, `published override ${locale}.${field}: ${label}`);
+      }
+    }
+  }
+
+  const validDraft = forcedVerificationDraft(document());
+  validDraft.copy_overrides.USA = emptyWaitingRoomCopyOverrideDraft();
+  for (const locale of locales) {
+    for (const field of fields) {
+      validDraft.copy_default[locale][field] = `Default ${astralPair}`;
+      validDraft.copy_overrides.USA[locale][field] = `Override ${astralPair}`;
+    }
+  }
+  assert.equal(validateForcedVerificationDraft(validDraft), null, "a valid astral surrogate pair passes every text field");
+  const validWire = forcedVerificationDocumentFromDraft(validDraft);
+  assert.ok(validWire && parseForcedVerificationDocument(validWire), "the valid astral pair survives canonicalization and strict parsing");
+});
+
 test("resolution follows the contract: override replaces the method set, copy inherits per field", () => {
   const stored = document({
     default: { persona: true, video: false },
@@ -563,6 +604,73 @@ function withOverride(base: ForcedVerificationDocument, help_url: unknown): unkn
   return { ...base, copy_overrides: { USA: { en: { help_url }, hu: {} } } };
 }
 
+/**
+ * Accept/refuse vectors copied from Core c0a4212
+ * `tests/forced_verification_policy_test.php` (the v1.5 Waiting Room help URL table).
+ * The two backslash cases additionally pin B16's named character-pattern edge.
+ */
+test("help_url validator agrees with every Core c0a4212 acceptance and refusal vector", () => {
+  const coreHelpUrl = "https://friending.com/help/verification";
+  const coreMaximumHelpUrl = "https://friending.com/help/".padEnd(WAITING_ROOM_HELP_URL_MAX_BYTES, "a");
+  const accepted = [
+    coreHelpUrl,
+    "https://xn--sg-fka.friending.com:8443/p/%C3%BA?q=1&r=2#top",
+    coreMaximumHelpUrl,
+    "https://friending.com:443/help",
+    "https://friending.com:1/",
+    "https://friending.com:65535",
+    "https://friending.com/help?next=:1x#:+1",
+  ] as const;
+  const refused: ReadonlyArray<readonly [string, unknown]> = [
+    ["null is not a URL string", null],
+    ["wrong type", 123],
+    ["empty", ""],
+    ["http scheme", "http://friending.com/help"],
+    ["uppercase scheme", "HTTPS://friending.com/help"],
+    ["scheme only", "https://"],
+    ["credentials", "https://user:secret@friending.com/help"],
+    ["empty user-info", "https://@friending.com/help"],
+    ["one byte over the limit", `${coreMaximumHelpUrl}a`],
+    ["C0 control character", `https://friending.com/help${BEL}`],
+    ["C1 control character", `https://friending.com/help${NEL}`],
+    ["interior whitespace", "https://friending.com/help page"],
+    ["boundary whitespace", " https://friending.com/help"],
+    ["trailing newline", `https://friending.com/help${LF}`],
+    ["raw non-ASCII path", "https://friending.com/súgó"],
+    ["raw IDN host", "https://súgó.friending.com/"],
+    ["malformed percent escape", "https://friending.com/%zz"],
+    ["invalid host label", "https://-friending.com/"],
+    ["IPv6 host", "https://[2001:db8::1]/help"],
+    ["empty authority", "https:///help"],
+    ["empty host before a port", "https://:443/"],
+    ["invalid port", "https://friending.com:abc/"],
+    ["empty port", "https://friending.com:/"],
+    ["port zero", "https://friending.com:0/"],
+    ["port above 65535", "https://friending.com:65536/"],
+    ["two ports", "https://friending.com:443:1/"],
+    ["port with a trailing letter", "https://friending.com:1x/"],
+    ["signed port", "https://friending.com:+1/"],
+    ["fractional port", "https://friending.com:1.5/"],
+    ["exponent port", "https://friending.com:1e2/"],
+    ["leading-zero port", "https://friending.com:0443/"],
+    ["credentials after a port", "https://friending.com:443@evil.test/"],
+    ["backslash in a path", `https://friending.com${BACKSLASH}help`],
+    ["credentials behind a backslash", `https://example.com${BACKSLASH}@evil.test/`],
+  ];
+
+  const base = withHelp(HELP_URL);
+  for (const value of accepted) {
+    assert.equal(waitingRoomHelpUrlIssue(value), null, `Core accepts ${value.slice(0, 80)}`);
+    assert.ok(parseForcedVerificationDocument(withDefault(base, value)), `published default accepts ${value.slice(0, 80)}`);
+    assert.ok(parseForcedVerificationDocument(withOverride(base, value)), `published override accepts ${value.slice(0, 80)}`);
+  }
+  for (const [label, value] of refused) {
+    assert.notEqual(waitingRoomHelpUrlIssue(value), null, `Core refuses: ${label}`);
+    assert.equal(parseForcedVerificationDocument(withOverride(base, value)), null, `published override refuses: ${label}`);
+    if (value !== null) assert.equal(parseForcedVerificationDocument(withDefault(base, value)), null, `published default refuses: ${label}`);
+  }
+});
+
 test("help_url (Amendment v1.5): null or a well-formed https URL on the global default, a URL or absent on an override", () => {
   assert.equal(WAITING_ROOM_COMPILED_COPY.en.help_url, null, "the compiled default has no help button");
   assert.equal(WAITING_ROOM_COMPILED_COPY.hu.help_url, null);
@@ -577,7 +685,7 @@ test("help_url (Amendment v1.5): null or a well-formed https URL on the global d
   assert.ok(parseForcedVerificationConsole(consolePayload({ ...withHelp(HELP_URL) })), "console material with a help URL");
   assert.ok(parseForcedVerificationSaved({ revision: 2, ...withHelp(HELP_URL) }), "save material with a help URL");
   assert.ok(parseForcedVerificationDocument(withDefault(valid, HELP_URL_AT_LIMIT)), "exactly 2048 bytes fits");
-  assert.ok(parseForcedVerificationDocument(withDefault(valid, `${HELP_PREFIX}kérdés?x=1#top`)), "a non-ASCII path is kept raw, never re-serialised");
+  assert.ok(parseForcedVerificationDocument(withDefault(valid, `${HELP_PREFIX}k%C3%A9rd%C3%A9s?x=1#top`)), "a percent-encoded non-ASCII path is kept raw, never re-serialised");
   assert.ok(parseForcedVerificationDocument(withOverride(valid, HELP_URL_AT_LIMIT)), "the byte limit is the same on an override");
 
   for (const [value, label] of [
@@ -624,26 +732,26 @@ test("help_url: draft round trip keeps null / URL / inherit and every refusal ha
   assert.deepEqual(waitingRoomCopyDraft(WAITING_ROOM_COMPILED_COPY.en), { ...WAITING_ROOM_COMPILED_COPY.en, help_url: "" });
   assert.deepEqual(emptyWaitingRoomCopyOverrideDraft().hu, { title: "", subtitle: "", description: "", help_url: "" });
 
-  draft.copy_default.en.help_url = `  ${HELP_URL}${TAB}`;
-  assert.equal(validateForcedVerificationDraft(draft), null, "ASCII edges are trimmed, never refused");
-  assert.equal(forcedVerificationDocumentFromDraft(draft)?.copy_default.en.help_url, HELP_URL);
-  draft.copy_default.en.help_url = "   ";
+  draft.copy_default.en.help_url = ` ${HELP_URL}`;
+  assert.equal(validateForcedVerificationDraft(draft), "copyHelpUrlInvalid", "the URL validator never repairs a Core-invalid boundary space");
+  assert.equal(forcedVerificationDocumentFromDraft(draft), null);
+  draft.copy_default.en.help_url = "";
   assert.equal(forcedVerificationDocumentFromDraft(draft)?.copy_default.en.help_url, null, "a blank global URL is explicit null");
-  draft.copy_overrides.USA!.en.help_url = " ";
+  draft.copy_overrides.USA!.en.help_url = "";
   assert.equal(Object.hasOwn(forcedVerificationDocumentFromDraft(draft)!.copy_overrides.USA!.en, "help_url"), false, "a blank override URL is an absent key (inherit)");
   draft.copy_overrides.USA!.hu.title = "";
   assert.deepEqual(Object.keys(forcedVerificationDocumentFromDraft(draft)!.copy_overrides), [], "an override that sets nothing at all is dropped whole");
   draft.copy_overrides.USA!.en.help_url = `${HELP_PREFIX}us`;
   assert.deepEqual(forcedVerificationDocumentFromDraft(draft)!.copy_overrides.USA, { en: { help_url: `${HELP_PREFIX}us` }, hu: {} }, "a URL-only override is a real override");
 
-  assert.equal(waitingRoomHelpUrlIssue(""), null);
+  assert.equal(waitingRoomHelpUrlIssue(""), "copyHelpUrlInvalid", "the strict URL validator mirrors Core; only the draft wrapper treats empty as absence");
   assert.equal(waitingRoomHelpUrlIssue(HELP_URL_AT_LIMIT), null, "exactly 2048 bytes fits");
   // T-475 B11: the credential span is PHP's authority — closed by `/`, `?` or `#` only — so an `@` past
   // any of those is path, query or fragment content for Core as well.
   for (const suffix of ["/@x", "/?@x", "/#@x", "?@x", "#@x"]) {
     assert.equal(waitingRoomHelpUrlIssue(`https://help.friending.com${suffix}`), null, `an @ after ${JSON.stringify(suffix[0])} is not a credential`);
   }
-  assert.equal(waitingRoomHelpUrlByteLength(" https://é.example "), 18, "bytes of the trimmed value, not code points");
+  assert.equal(waitingRoomHelpUrlByteLength(" https://é.example "), 20, "bytes of the raw value, not code points");
   for (const [value, issue] of [
     ["http://help.friending.com/", "copyHelpUrlInvalid"],
     ["help.friending.com", "copyHelpUrlInvalid"],
@@ -656,10 +764,15 @@ test("help_url: draft round trip keeps null / URL / inherit and every refusal ha
     [`${HELP_PREFIX}a${TAB}b`, "copyHelpUrlControl"],
     [`${HELP_PREFIX}${NEL}`, "copyHelpUrlControl"],
     [`${HELP_PREFIX}${LONE_SURROGATE}`, "copyHelpUrlControl"],
+    [`${HELP_PREFIX}súgó`, "copyHelpUrlInvalid"],
+    [`${HELP_PREFIX}bad%zz`, "copyHelpUrlInvalid"],
+    ["https://-help.friending.com/", "copyHelpUrlInvalid"],
+    ["https://help.friending.com:65536/", "copyHelpUrlInvalid"],
+    ["https://help.friending.com:0443/", "copyHelpUrlInvalid"],
     ["https://user:secret@help.friending.com/", "copyHelpUrlCredentials"],
     ["https://user@help.friending.com/", "copyHelpUrlCredentials"],
     ["https://@help.friending.com/", "copyHelpUrlCredentials"],
-    [`https://example.com${BACKSLASH}@evil.test/`, "copyHelpUrlCredentials"],
+    [`https://example.com${BACKSLASH}@evil.test/`, "copyHelpUrlInvalid"],
   ] as const) {
     assert.equal(waitingRoomHelpUrlIssue(value), issue, JSON.stringify(value.slice(0, 40)));
     draft.copy_default.en.help_url = value;
@@ -689,8 +802,10 @@ test("help_url: storefront inherit resolution and the preview's button-only-with
   const none = previewWaitingRoomCopy(draft, null, "hu", compiled);
   assert.equal(none.copy.help_url, null, "no URL anywhere → no button");
   assert.deepEqual(none.compiledFields, [], "no button is a legitimate state, not a degraded field");
-  draft.copy_overrides.USA!.en.help_url = `  ${HELP_PREFIX}us  `;
-  assert.equal(previewWaitingRoomCopy(draft, "USA", "en", compiled).copy.help_url, `${HELP_PREFIX}us`, "the preview shows the trimmed URL");
+  draft.copy_overrides.USA!.en.help_url = ` ${HELP_PREFIX}us`;
+  const untrimmed = previewWaitingRoomCopy(draft, "USA", "en", compiled);
+  assert.equal(untrimmed.copy.help_url, null, "the preview never repairs a Core-invalid URL");
+  assert.deepEqual(untrimmed.compiledFields, ["help_url"]);
   draft.copy_overrides.USA!.en.help_url = "http://help.friending.com/us";
   const degraded = previewWaitingRoomCopy(draft, "USA", "en", compiled);
   assert.equal(degraded.copy.help_url, null, "a malformed override URL degrades to no button — never to the global URL");
@@ -721,7 +836,7 @@ test("help_url: the proxy forwards null and https strings exactly, and the save 
     [1, "number"],
     [true, "boolean"],
     ["https://user:pw@help.friending.com/", "credentials"],
-    [`https://example.com${BACKSLASH}@evil.test/`, "credentials behind a backslash (T-475 B11)"],
+    [`https://example.com${BACKSLASH}@evil.test/`, "backslash is outside Core's ASCII URL character set"],
     [`${HELP_URL_AT_LIMIT}a`, "2049 bytes"],
   ] as const) {
     assert.equal(normalizeForcedVerificationProxyBody("verification_forced_save", { expected_revision: 1, document: withDefault(valid, help_url) }), null, `refused before Core: ${label}`);

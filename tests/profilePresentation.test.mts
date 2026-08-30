@@ -263,6 +263,35 @@ test("Webadmin pages keep conflicts local, expose managed icons, warnings and al
   assert.match(actions, /save_profile_tag_catalog:\s*TAG_CATALOG_BODY_LIMIT_BYTES/);
 });
 
+test("the profile presentation preview hero glow follows its selected accent only", async () => {
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(
+    css,
+    /\.presentation-phone-preview\s*\{[^}]*--presentation-preview-hero-glow:\s*rgba\(0, 189, 255, 0\.4\)/s,
+    "the default preview keeps D-058's #00bdff glow",
+  );
+  assert.match(
+    css,
+    /\.presentation-phone-preview\.accent-female\s*\{[^}]*--presentation-preview-hero-glow:\s*rgba\(242, 59, 141, 0\.4\)/s,
+    "the female app-preview variant alone restores its pink glow",
+  );
+  assert.match(
+    css,
+    /\.presentation-phone-preview\.accent-neutral\s*\{[^}]*--presentation-preview-hero-glow:\s*rgba\(194, 201, 210, 0\.4\)/s,
+    "the neutral app-preview variant uses its neutral accent",
+  );
+  assert.match(
+    css,
+    /\.presentation-preview-hero\s*\{[^}]*radial-gradient\([^;]*var\(--presentation-preview-hero-glow\)/s,
+    "the hero consumes the scoped accent instead of a global colour literal",
+  );
+  assert.equal(
+    css.match(/rgba\(242, 59, 141,/g)?.length,
+    2,
+    "the magenta family appears only in the female hero and female chips",
+  );
+});
+
 test("Hungarian Profile tag catalog navigation uses localized titles", async () => {
   const messages = JSON.parse(
     await readFile(new URL("../messages/hu.json", import.meta.url), "utf8"),

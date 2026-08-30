@@ -1,0 +1,269 @@
+{
+  "source_commit": "c0a4212710bff4f3eafd5879c3536289f87c644b",
+  "status": {
+    "schema_version": 1,
+    "fixture": "app_review_v1",
+    "fixture_version": 3,
+    "content_complete": true,
+    "control": {
+      "present": true,
+      "state": "ready",
+      "review_uid": 626001,
+      "reset_revision": 2,
+      "fixture_version": 3,
+      "reset_state": "idle",
+      "last_reset_at": 1787000000,
+      "last_reset_by": "owner@friending.com",
+      "last_reset_request_id": "6f1c2d3e-4a5b-4c6d-8e9f-0a1b2c3d4e5f",
+      "reset_error": "",
+      "reprovision_state": "idle"
+    },
+    "env": {
+      "login_enabled": true,
+      "uid_configured": 626001,
+      "uid_matches_control": true,
+      "code_configured": true,
+      "email_configured": true,
+      "phone_configured": true,
+      "demo_system_enabled": true
+    },
+    "ready": true,
+    "reset_confirmation": "RESET APP REVIEW",
+    "counts": {
+      "members": 0,
+      "albums": 2,
+      "chat_rooms": 4,
+      "chat_messages": 8,
+      "friends": 2,
+      "friend_requests": 3,
+      "visitors": 3,
+      "notifications": 10,
+      "reviewer_photos": 5,
+      "counterpart_photos": 4,
+      "album_access": 4,
+      "footprints": 2,
+      "photo_likes": 1,
+      "mutes": 1,
+      "blocks": 1,
+      "plus_grant": 1,
+      "verification_grant": 1,
+      "dates_activities": 2,
+      "dates_memberships": 3,
+      "dates_threads": 2,
+      "dates_thread_members": 3,
+      "dates_messages": 2,
+      "dates_notifications": 1
+    },
+    "media": {
+      "expected": 58,
+      "valid": 58,
+      "ready": true
+    },
+    "checks": [
+      {
+        "key": "account_active",
+        "ok": true,
+        "actual": "active",
+        "expected": "active"
+      },
+      {
+        "key": "control",
+        "ok": true,
+        "actual": "ready",
+        "expected": "ready"
+      },
+      {
+        "key": "env_uid",
+        "ok": true,
+        "actual": 626001,
+        "expected": 626001
+      },
+      {
+        "key": "env_login",
+        "ok": true,
+        "actual": true,
+        "expected": true
+      },
+      {
+        "key": "reset_converged",
+        "ok": true,
+        "actual": "idle",
+        "expected": "idle"
+      },
+      {
+        "key": "reprovision_converged",
+        "ok": true,
+        "actual": "idle",
+        "expected": "idle"
+      },
+      {
+        "key": "reviewer_baseline",
+        "ok": true,
+        "actual": true,
+        "expected": true
+      },
+      {
+        "key": "profile_semantics",
+        "ok": true,
+        "actual": true,
+        "expected": true
+      },
+      {
+        "key": "media_files",
+        "ok": true,
+        "actual": 58,
+        "expected": 58
+      },
+      {
+        "key": "albums",
+        "ok": true,
+        "actual": 2,
+        "expected": 2
+      },
+      {
+        "key": "members",
+        "ok": true,
+        "actual": 0,
+        "expected": 0
+      },
+      {
+        "key": "reviewer_photos",
+        "ok": true,
+        "actual": 5,
+        "expected": 5
+      },
+      {
+        "key": "counterpart_photos",
+        "ok": true,
+        "actual": 4,
+        "expected": 4
+      },
+      {
+        "key": "album_access",
+        "ok": true,
+        "actual": 4,
+        "expected": 4
+      },
+      {
+        "key": "friends",
+        "ok": true,
+        "actual": 2,
+        "expected": 2
+      },
+      {
+        "key": "friend_requests",
+        "ok": true,
+        "actual": 3,
+        "expected": 3
+      },
+      {
+        "key": "visitors",
+        "ok": true,
+        "actual": 3,
+        "expected": 3
+      },
+      {
+        "key": "footprints",
+        "ok": true,
+        "actual": 2,
+        "expected": 2
+      },
+      {
+        "key": "photo_likes",
+        "ok": true,
+        "actual": 1,
+        "expected": 1
+      },
+      {
+        "key": "chat_rooms",
+        "ok": true,
+        "actual": 4,
+        "expected": 4
+      },
+      {
+        "key": "chat_messages",
+        "ok": true,
+        "actual": 8,
+        "expected": 8
+      },
+      {
+        "key": "mutes",
+        "ok": true,
+        "actual": 1,
+        "expected": 1
+      },
+      {
+        "key": "blocks",
+        "ok": true,
+        "actual": 1,
+        "expected": 1
+      },
+      {
+        "key": "notifications",
+        "ok": true,
+        "actual": 10,
+        "expected": 10
+      },
+      {
+        "key": "plus_grant",
+        "ok": true,
+        "actual": 1,
+        "expected": 1
+      },
+      {
+        "key": "verification_grant",
+        "ok": true,
+        "actual": 1,
+        "expected": 1
+      },
+      {
+        "key": "dates_activities",
+        "ok": true,
+        "actual": 2,
+        "expected": 2
+      },
+      {
+        "key": "dates_memberships",
+        "ok": true,
+        "actual": 3,
+        "expected": 3
+      },
+      {
+        "key": "dates_threads",
+        "ok": true,
+        "actual": 2,
+        "expected": 2
+      },
+      {
+        "key": "dates_thread_members",
+        "ok": true,
+        "actual": 3,
+        "expected": 3
+      },
+      {
+        "key": "dates_messages",
+        "ok": true,
+        "actual": 2,
+        "expected": 2
+      },
+      {
+        "key": "dates_notifications",
+        "ok": true,
+        "actual": 1,
+        "expected": 1
+      },
+      {
+        "key": "dates_semantics",
+        "ok": true,
+        "actual": true,
+        "expected": true
+      },
+      {
+        "key": "content",
+        "ok": true,
+        "actual": "complete",
+        "expected": "complete"
+      }
+    ]
+  }
+}

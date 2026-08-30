@@ -28,7 +28,7 @@ import {
   validateForcedVerificationDraft,
   waitingRoomCopyDraft,
   waitingRoomHelpUrlByteLength,
-  waitingRoomHelpUrlIssue,
+  waitingRoomHelpUrlDraftIssue,
   waitingRoomTextLength,
   type ForcedMethods,
   type ForcedVerificationAccess,
@@ -298,8 +298,8 @@ export default function ForcedVerificationTab({ access, locked }: Props) {
   /** Amendment v1.5: the per-language help URL. Blank = no button (global) or inherit (override); the placeholder shows what is inherited. */
   function helpUrlField(storefront: string | null, copyLocale: WaitingRoomLocale) {
     const value = storefront === null ? draft!.copy_default[copyLocale].help_url : (draft!.copy_overrides[storefront]?.[copyLocale].help_url ?? "");
-    const inherited = forcedCopyTrim(draft!.copy_default[copyLocale].help_url);
-    const issue = waitingRoomHelpUrlIssue(value);
+    const inherited = draft!.copy_default[copyLocale].help_url;
+    const issue = waitingRoomHelpUrlDraftIssue(value);
     const used = waitingRoomHelpUrlByteLength(value);
     const id = `forced-copy-${storefront ?? "default"}-${copyLocale}-help_url`;
     const placeholder = storefront === null

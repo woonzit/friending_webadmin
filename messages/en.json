@@ -3733,6 +3733,7 @@
         "copyRequired": "The global title, subtitle and description are required in both languages.",
         "copyTooLong": "A text exceeds its limit (title 60, subtitle 90, description 400 characters).",
         "copyControl": "A text contains a control character or a line break where none is allowed.",
+        "copyMalformedText": "A text contains malformed Unicode (an unpaired surrogate).",
         "copyWhitespace": "A text starts or ends with a Unicode space (for example a non-breaking space) or consists only of such spaces. Remove it; ordinary spaces at the edges are trimmed automatically.",
         "copyHelpUrlInvalid": "A help URL must be a well-formed https:// address; http and other schemes are refused.",
         "copyHelpUrlTooLong": "A help URL exceeds 2048 bytes.",
