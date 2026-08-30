@@ -1778,6 +1778,36 @@ export function appearanceLandingWithTitleType(landing: AppearanceLandingDraft, 
   return next === landing.title_type ? landing : { ...landing, title_type: next };
 }
 
+/**
+ * T-492: a landed logo upload switches the draft title type to `image` in the
+ * same patch, so the preview shows the logo immediately and the save-time
+ * coherence rule (`image` requires `title_image_url`) is satisfied. The
+ * switch applies from inherit and `text`, and deliberately also from an
+ * explicit `none`: the operator uploading a logo clearly wants it shown.
+ * Removing the logo from an `image` draft returns the type to inherit in the
+ * same patch, so no incoherent image-without-URL draft can remain; a removal
+ * never touches any other draft type.
+ */
+export function appearanceLandingLogoSelection(landing: AppearanceLandingDraft, url: string): AppearanceLandingDraft {
+  const titleType = appearanceTrim(url) !== "" ? "image" : landing.title_type === "image" ? "" : landing.title_type;
+  return landing.title_image_url === url && landing.title_type === titleType
+    ? landing
+    : { ...landing, title_image_url: url, title_type: titleType };
+}
+
+/**
+ * T-492: the persistent hint under the logo field — a draft logo value is
+ * present yet the EFFECTIVE title type will not render it. Still reachable
+ * after the auto-switch by changing the type manually, because text and image
+ * overrides persist until cleared (T-468b finding 14).
+ */
+export function appearanceLandingLogoHintVisible(
+  landing: AppearanceLandingDraft,
+  effectiveTitleType: ResolvedAppearanceLanding["titleType"],
+): boolean {
+  return appearanceTrim(landing.title_image_url) !== "" && effectiveTitleType !== "image";
+}
+
 export type AppearanceLandingBackgroundType = "image" | "video";
 
 /**

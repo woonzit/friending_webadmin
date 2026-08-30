@@ -5930,6 +5930,7 @@
         "align": "Cím igazítása",
         "logo": "Címlogó · PNG",
         "logoHint": "Csak PNG, legfeljebb 4 MB; az átlátszóság megmarad.",
+        "logoTypeHint": "A logó csak akkor jelenik meg, ha a cím típusa Kép.",
         "logoWidth": "Logó szélessége · képernyő %",
         "logoOffset": "Logó függőleges eltolása · % a középtől"
       },

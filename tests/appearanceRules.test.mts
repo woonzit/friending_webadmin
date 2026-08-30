@@ -19,6 +19,8 @@ import {
   appearanceLandingCoherent,
   appearanceLandingBackgroundSelection,
   appearanceLandingDraft,
+  appearanceLandingLogoHintVisible,
+  appearanceLandingLogoSelection,
   appearanceFooterTextHasExactTags,
   appearancePreviewLandingFields,
   appearanceLandingWithTitleType,
@@ -1501,6 +1503,43 @@ test("a title-type change touches only title_type; text and image overrides pers
   assert.equal(appearanceLandingWithTitleType(start, "banner").title_text_hu, "Szia");
 });
 
+test("a landed logo upload switches the draft title type to image; removal returns it to inherit (T-492)", () => {
+  const logo = "https://cdn.friending.co/logo.png";
+  // Inherited draft type over a text-titled parent: the upload patch flips the draft to image…
+  const uploaded = appearanceLandingLogoSelection(appearanceLandingDraft({}), logo);
+  assert.equal(uploaded.title_type, "image");
+  assert.equal(uploaded.title_image_url, logo);
+  assert.equal(appearanceLandingCoherent(appearanceLandingWire(uploaded)), true, "the save-time coherence rule is satisfied in the same patch");
+  // …and the merged preview shows the logo immediately.
+  const preview = resolveAppearanceLanding(
+    [appearanceLandingPreviewDraft(uploaded).landing, { title_type: "text", title_text_en: "Global title" }],
+    APPEARANCE_DEFAULT_LANDING,
+    "en",
+  );
+  assert.equal(preview.titleType, "image");
+  assert.equal(preview.titleImageUrl, logo);
+  // An explicit none flips too: the operator uploading a logo clearly wants it shown.
+  const fromNone = appearanceLandingLogoSelection({ ...appearanceLandingDraft({}), title_type: "none" }, logo);
+  assert.equal(fromNone.title_type, "image");
+  assert.equal(appearanceLandingLogoSelection(uploaded, logo), uploaded, "a no-op returns the same object");
+  // Removing the logo from an image draft returns the type to inherit — no image-without-URL draft remains.
+  const removed = appearanceLandingLogoSelection(uploaded, "");
+  assert.equal(removed.title_type, "");
+  assert.equal(removed.title_image_url, "");
+  assert.equal(appearanceLandingCoherent(appearanceLandingWire(removed)), true);
+  // A removal never touches a type the upload did not set.
+  const textKept = appearanceLandingLogoSelection({ ...appearanceLandingDraft({}), title_type: "text", title_image_url: logo }, "");
+  assert.equal(textKept.title_type, "text");
+  assert.equal(textKept.title_image_url, "");
+  // The persistent hint: a draft logo the effective title type will not render (T-468b overrides persist).
+  const manualText = appearanceLandingWithTitleType(uploaded, "text");
+  const effective = resolveAppearanceLanding([appearanceLandingPreviewDraft(manualText).landing], APPEARANCE_DEFAULT_LANDING, "en");
+  assert.equal(effective.titleType, "text");
+  assert.equal(appearanceLandingLogoHintVisible(manualText, effective.titleType), true, "manual text with a logo present shows the hint");
+  assert.equal(appearanceLandingLogoHintVisible(uploaded, preview.titleType), false, "an image title needs no hint");
+  assert.equal(appearanceLandingLogoHintVisible(appearanceLandingDraft({}), "text"), false, "no logo, no hint");
+});
+
 test("the effective hero list is capped at Core's ten-item output ceiling", () => {
   const base = parseAppearanceRule(wireRule())!;
   const item = base.hero.items[0]!;
@@ -1810,6 +1849,9 @@ test("the landing composer wires every closed field, parent-only v2 previews, PN
   assert.match(composer, /appearanceLandingPreviewDraft\(rule\.landing\)/, "draft styles are validated before the local merge");
   assert.match(composer, /invalidPreviewValue/, "invalid style fields receive an inline error");
   assert.match(composer, /appearanceLandingBackgroundSelection\(rule\.landing, value\)/, "background type is only staged until an upload completes the pair");
+  assert.match(composer, /appearanceLandingLogoSelection\(rule\.landing, url\)/, "a landed logo upload and a removal adjust the draft title type in the same patch (T-492)");
+  assert.match(composer, /appearanceLandingLogoHintVisible\(rule\.landing, content\.titleType\)/, "the logo-visibility hint keys off the effective title type");
+  assert.ok(composer.includes('t("title.logoTypeHint")'), "the hint copy is localized");
   assert.match(composer, /effectiveValueApproximate/, "non-authoritative inherited placeholders are labelled");
   assert.match(composer, /parentState\.kind !== "ready" \|\| comparison\.kind === "loading"/, "Core comparison waits for an authoritative parent read");
   assert.match(composer, /\[targetKey, rule\.id, parentReload\]/);

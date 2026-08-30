@@ -5930,6 +5930,7 @@
         "align": "Title alignment",
         "logo": "Title logo · PNG",
         "logoHint": "PNG only, at most 4 MB; transparency is preserved.",
+        "logoTypeHint": "The logo is shown only when the title type is Image.",
         "logoWidth": "Logo width · % of screen",
         "logoOffset": "Logo vertical offset · % from centre"
       },

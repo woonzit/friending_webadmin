@@ -11,6 +11,8 @@ import {
   APPEARANCE_LANDING_APPLE_STYLES,
   APPEARANCE_LANDING_FONTS,
   appearanceLandingBackgroundSelection,
+  appearanceLandingLogoHintVisible,
+  appearanceLandingLogoSelection,
   appearanceLandingPreviewDraft,
   appearanceLandingWire,
   compareAppearanceLandingWithPreview,
@@ -478,7 +480,10 @@ export default function AppearanceLandingComposer({
           <RangeField label={t("title.size")} value={rule.landing.title_size} effective={effective.title_size} minimum={12} maximum={72} step={1} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("title_size", effective.title_size)} error={previewError("title_size")} onChange={(value) => patch("title_size", value)} />
           <ColorField label={t("title.color")} value={rule.landing.title_color} effective={effective.title_color} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("title_color", effective.title_color)} error={previewError("title_color")} onChange={(value) => patch("title_color", value)} />
           <SelectField label={t("title.align")} value={rule.landing.title_align} effective={effective.title_align} effectiveLabel={metaEffective("title_align", effective.title_align)} disabled={disabled} inheritValue={inheritValue(t(`align.${effective.title_align}`))} options={alignOptions} error={previewError("title_align")} onChange={(value) => patch("title_align", value)} />
-          <ImageUploadField className="field-full" label={t("title.logo")} value={rule.landing.title_image_url} disabled={disabled} pngOnly hint={`${t("title.logoHint")} ${uploadHint("title_image_url", effective.title_image_url || "—")}`} onBusyChange={onBusyChange} onChange={(url) => patch("title_image_url", url)} />
+          <ImageUploadField className="field-full" label={t("title.logo")} value={rule.landing.title_image_url} disabled={disabled} pngOnly hint={`${t("title.logoHint")} ${uploadHint("title_image_url", effective.title_image_url || "—")}`} onBusyChange={onBusyChange} onChange={(url) => onChange(appearanceLandingLogoSelection(rule.landing, url))} />
+          {appearanceLandingLogoHintVisible(rule.landing, content.titleType) && (
+            <small className="field-hint field-full">{t("title.logoTypeHint")}</small>
+          )}
           <RangeField label={t("title.logoWidth")} value={rule.landing.title_image_width_percent} effective={effective.title_image_width_percent} minimum={20} maximum={100} step={1} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("title_image_width_percent", effective.title_image_width_percent)} error={previewError("title_image_width_percent")} onChange={(value) => patch("title_image_width_percent", value)} />
           <RangeField label={t("title.logoOffset")} value={rule.landing.title_image_offset_percent} effective={effective.title_image_offset_percent} minimum={-40} maximum={40} step={1} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("title_image_offset_percent", effective.title_image_offset_percent)} error={previewError("title_image_offset_percent")} onChange={(value) => patch("title_image_offset_percent", value)} />
         </ComposerSection>
