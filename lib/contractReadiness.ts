@@ -42,7 +42,7 @@ export const PROFILE_TEXT_MODERATION_CONTRACT_READY: boolean = false;
  * tab needs Core's `admin_me.verification_forced` block to be ready and to
  * list the console action for the current operator.
  */
-export const FORCED_VERIFICATION_CONTRACT_READY: boolean = false;
+export const FORCED_VERIFICATION_CONTRACT_READY: boolean = true;
 /**
  * T-126 is not released; the dormant T-218b consumer remains unreachable.
  * This is the CONSUMER cutover, not either product state. Both Core values
