@@ -9,6 +9,7 @@ import {
   FORCED_VERIFICATION_UNAVAILABLE_ERROR,
   WAITING_ROOM_COPY_FIELDS,
   WAITING_ROOM_COPY_LIMITS,
+  WAITING_ROOM_HELP_URL_MAX_BYTES,
   WAITING_ROOM_LOCALES,
   decodeForcedConsoleResponse,
   decodeForcedImpactResponse,
@@ -25,6 +26,9 @@ import {
   previewWaitingRoomCopy,
   resolveDraftForcedMethods,
   validateForcedVerificationDraft,
+  waitingRoomCopyDraft,
+  waitingRoomHelpUrlByteLength,
+  waitingRoomHelpUrlIssue,
   waitingRoomTextLength,
   type ForcedMethods,
   type ForcedVerificationAccess,
@@ -33,7 +37,9 @@ import {
   type ForcedVerificationDraft,
   type ForcedVerificationImpact,
   type ForcedVerificationMethod,
+  type WaitingRoomCopy,
   type WaitingRoomCopyField,
+  type WaitingRoomCopyKey,
   type WaitingRoomLocale,
 } from "@/lib/forcedVerification";
 
@@ -76,14 +82,18 @@ function PhoneFrame({
 }: {
   mode: "light" | "dark";
   storefrontLabel: string;
-  copy: { title: string; subtitle: string; description: string };
+  copy: WaitingRoomCopy;
   methods: ForcedVerificationMethod[];
-  labels: { persona: string; video: string; footer: string[]; notForced: string; modeLabel: string };
+  labels: { persona: string; video: string; footer: string[]; notForced: string; help: string; modeLabel: string };
 }) {
   const palette = PHONE_PALETTE[mode];
   return (
     <figure className={`forced-phone forced-phone-${mode}`} style={{ background: palette.surface, color: palette.text, borderColor: palette.line }} aria-label={labels.modeLabel}>
       <div className="forced-phone-status" style={{ color: palette.inactive }}><span>9:41</span><span>{storefrontLabel}</span></div>
+      {copy.help_url !== null ? (
+        // Amendment v1.5: the round "?" help button (36 px, accent_faint_bg fill, accent glyph, top-right) exists only for an effective URL.
+        <span className="forced-phone-help" style={{ background: palette.faint, color: palette.accent }} role="img" aria-label={labels.help} title={copy.help_url}>?</span>
+      ) : null}
       <div className="forced-phone-illustration" style={{ background: palette.faint, color: palette.accent }} aria-hidden="true">
         <span style={{ background: palette.accent }} />
       </div>
@@ -163,7 +173,7 @@ export default function ForcedVerificationTab({ access, locked }: Props) {
     patch({ overrides: draft.overrides.map((row, candidate) => (candidate === index ? { ...row, ...next } : row)) });
   }
 
-  function patchCopy(storefront: string | null, copyLocale: WaitingRoomLocale, field: WaitingRoomCopyField, value: string) {
+  function patchCopy(storefront: string | null, copyLocale: WaitingRoomLocale, field: WaitingRoomCopyKey, value: string) {
     if (!draft) return;
     if (storefront === null) {
       patch({ copy_default: { ...draft.copy_default, [copyLocale]: { ...draft.copy_default[copyLocale], [field]: value } } });
@@ -257,6 +267,7 @@ export default function ForcedVerificationTab({ access, locked }: Props) {
     video: t("preview.primaryVideo"),
     footer: [t("preview.footerEdit"), t("preview.footerSupport"), t("preview.footerSignOut"), t("preview.footerDelete")],
     notForced: t("preview.notForced"),
+    help: t("preview.help"),
     modeLabel: "",
   };
   const storefrontLabel = previewStorefrontOrNull ? `${forcedStorefrontName(previewStorefrontOrNull, previewLocale)} · ${previewStorefrontOrNull}` : t("preview.globalShort");
@@ -280,6 +291,38 @@ export default function ForcedVerificationTab({ access, locked }: Props) {
         <span>{t(`copy.fields.${field}`)} · {t(`copy.locales.${copyLocale}`)}</span>
         {field === "description" ? <textarea rows={4} {...common} /> : <input {...common} />}
         <small className={`field-hint forced-copy-counter${used > limit ? " is-over" : ""}`}>{t("copy.limit", { used, max: limit })}</small>
+      </label>
+    );
+  }
+
+  /** Amendment v1.5: the per-language help URL. Blank = no button (global) or inherit (override); the placeholder shows what is inherited. */
+  function helpUrlField(storefront: string | null, copyLocale: WaitingRoomLocale) {
+    const value = storefront === null ? draft!.copy_default[copyLocale].help_url : (draft!.copy_overrides[storefront]?.[copyLocale].help_url ?? "");
+    const inherited = forcedCopyTrim(draft!.copy_default[copyLocale].help_url);
+    const issue = waitingRoomHelpUrlIssue(value);
+    const used = waitingRoomHelpUrlByteLength(value);
+    const id = `forced-copy-${storefront ?? "default"}-${copyLocale}-help_url`;
+    const placeholder = storefront === null
+      ? t("copy.helpUrlPlaceholder")
+      : inherited === "" ? t("copy.inheritNone") : t("copy.inheritPlaceholder", { value: inherited });
+    return (
+      <label className="field forced-copy-field" key={id}>
+        <span>{t("copy.fields.help_url")} · {t(`copy.locales.${copyLocale}`)}</span>
+        <input
+          id={id}
+          type="url"
+          inputMode="url"
+          autoComplete="off"
+          spellCheck={false}
+          value={value}
+          disabled={!editable}
+          aria-invalid={issue !== null}
+          placeholder={placeholder}
+          onChange={(event) => patchCopy(storefront, copyLocale, "help_url", event.target.value)}
+        />
+        {issue
+          ? <small className="field-error">{t(`validation.${issue}`)}</small>
+          : <small className={`field-hint forced-copy-counter${used > WAITING_ROOM_HELP_URL_MAX_BYTES ? " is-over" : ""}`}>{t("copy.helpUrlBytes", { used, max: WAITING_ROOM_HELP_URL_MAX_BYTES })}</small>}
       </label>
     );
   }
@@ -347,9 +390,11 @@ export default function ForcedVerificationTab({ access, locked }: Props) {
           <h3 className="forced-subheading">{t("defaultsTitle")}</h3>
           <div className="forced-copy-grid">
             {WAITING_ROOM_COPY_FIELDS.map((field) => WAITING_ROOM_LOCALES.map((copyLocale) => copyField(null, copyLocale, field)))}
+            {WAITING_ROOM_LOCALES.map((copyLocale) => helpUrlField(null, copyLocale))}
           </div>
+          <small className="field-hint">{t("copy.helpUrlHint")}</small>
           <div className="row-actions">
-            <button type="button" className="button button-ghost button-small" disabled={!editable} onClick={() => patch({ copy_default: { en: { ...console_.compiled_defaults.copy.en }, hu: { ...console_.compiled_defaults.copy.hu } } })}>{t("resetCompiled")}</button>
+            <button type="button" className="button button-ghost button-small" disabled={!editable} onClick={() => patch({ copy_default: { en: waitingRoomCopyDraft(console_.compiled_defaults.copy.en), hu: waitingRoomCopyDraft(console_.compiled_defaults.copy.hu) } })}>{t("resetCompiled")}</button>
           </div>
 
           <div className="forced-section-heading">
@@ -373,6 +418,7 @@ export default function ForcedVerificationTab({ access, locked }: Props) {
               </div>
               <div className="forced-copy-grid">
                 {WAITING_ROOM_COPY_FIELDS.map((field) => WAITING_ROOM_LOCALES.map((copyLocale) => copyField(storefront, copyLocale, field)))}
+                {WAITING_ROOM_LOCALES.map((copyLocale) => helpUrlField(storefront, copyLocale))}
               </div>
             </article>
           ))}
@@ -404,6 +450,7 @@ export default function ForcedVerificationTab({ access, locked }: Props) {
           {preview.compiledFields.length > 0 && (
             <p className="field-hint" role="status"><strong>{t("preview.compiledCopy", { fields: preview.compiledFields.map((field) => t(`copy.fields.${field}`)).join(", ") })}</strong></p>
           )}
+          <p className="field-hint forced-help-url-note">{previewCopy.help_url !== null ? t("preview.helpUrl", { url: previewCopy.help_url }) : t("preview.noHelpUrl")}</p>
           <small className="field-hint">{t("preview.nonInteractive")}</small>
         </div>
       </section>

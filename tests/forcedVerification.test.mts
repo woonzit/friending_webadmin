@@ -9,7 +9,12 @@ import {
   FORCED_VERIFICATION_ACTIONS,
   FORCED_VERIFICATION_REVISION_MAX,
   WAITING_ROOM_COMPILED_COPY,
+  WAITING_ROOM_HELP_URL_MAX_BYTES,
   decodeForcedConsoleResponse,
+  emptyWaitingRoomCopyOverrideDraft,
+  waitingRoomCopyDraft,
+  waitingRoomHelpUrlByteLength,
+  waitingRoomHelpUrlIssue,
   decodeForcedImpactResponse,
   decodeForcedSaveResponse,
   forcedMethodList,
@@ -232,7 +237,7 @@ test("the draft round-trips the stored document and blank override fields inheri
   assert.equal(forcedVerificationDocumentsEqual(rebuilt, stored), true);
 
   draft.overrides.reverse();
-  draft.copy_overrides.DEU = { en: { title: "  ", subtitle: "", description: "" }, hu: { title: "", subtitle: "", description: "" } };
+  draft.copy_overrides.DEU = { en: { title: "  ", subtitle: "", description: "", help_url: "" }, hu: { title: "", subtitle: "", description: "", help_url: "" } };
   draft.copy_overrides.USA!.en.title = "  Verify to continue  ";
   const canonical = forcedVerificationDocumentFromDraft(draft);
   assert.ok(canonical);
@@ -265,7 +270,7 @@ test("draft validation mirrors the contract limits and every issue has a stable 
   draft.copy_default.hu.description = "bell\u0007here";
   assert.equal(validateForcedVerificationDraft(draft), "copyControl");
   draft.copy_default.hu.description = "Rendben.";
-  draft.copy_overrides.USA = { en: { title: "", subtitle: "x".repeat(91), description: "" }, hu: { title: "", subtitle: "", description: "" } };
+  draft.copy_overrides.USA = { en: { title: "", subtitle: "x".repeat(91), description: "", help_url: "" }, hu: { title: "", subtitle: "", description: "", help_url: "" } };
   assert.equal(validateForcedVerificationDraft(draft), "copyTooLong");
   draft.copy_overrides.USA.en.subtitle = "";
   assert.equal(validateForcedVerificationDraft(draft), null, "blank override fields are fine");
@@ -403,7 +408,7 @@ test("copy whitespace mirrors Core: PHP trim, Unicode boundary whitespace refuse
   assert.equal(waitingRoomTextLength(forcedCopyTrim(" a\u00A0b ")), 3, "the editor counter counts the NBSP");
 
   draft.copy_default.hu.title = "Cím";
-  draft.copy_overrides.USA = { en: { title: "", subtitle: "", description: "" }, hu: { title: "", subtitle: "", description: "" } };
+  draft.copy_overrides.USA = { en: { title: "", subtitle: "", description: "", help_url: "" }, hu: { title: "", subtitle: "", description: "", help_url: "" } };
   draft.copy_overrides.USA!.en.title = "Verify\u00A0";
   assert.equal(validateForcedVerificationDraft(draft), "copyWhitespace", "per-storefront override copy: trailing NBSP");
   draft.copy_overrides.USA!.en.title = "\u00A0";
@@ -439,7 +444,7 @@ test("preview: a malformed copy value degrades to the compiled text per field wh
   assert.equal(hu.copy.description, draft.copy_default.hu.description);
   assert.deepEqual(previewWaitingRoomCopy(draft, null, "en", compiled).compiledFields, [], "the other locale is untouched");
 
-  draft.copy_overrides.USA = { en: { title: "  Verify  ", subtitle: "\u00A0", description: "" }, hu: { title: "", subtitle: "", description: "" } };
+  draft.copy_overrides.USA = { en: { title: "  Verify  ", subtitle: "\u00A0", description: "", help_url: "" }, hu: { title: "", subtitle: "", description: "", help_url: "" } };
   const usa = previewWaitingRoomCopy(draft, "USA", "en", compiled);
   assert.equal(usa.copy.title, "Verify", "a valid override is PHP-trimmed and used");
   assert.equal(usa.copy.subtitle, compiled.en.subtitle, "an NBSP-only override degrades to the compiled subtitle");
@@ -480,14 +485,14 @@ test("a storefront copy override carries exactly both locale containers (T-471b 
 
   // Draft canonicalisation: a blank locale travels as an empty object.
   const draft = forcedVerificationDraft(document());
-  draft.copy_overrides.USA = { en: { title: "Verify to continue", subtitle: "", description: "" }, hu: { title: "", subtitle: "", description: "" } };
+  draft.copy_overrides.USA = { en: { title: "Verify to continue", subtitle: "", description: "", help_url: "" }, hu: { title: "", subtitle: "", description: "", help_url: "" } };
   const canonical = forcedVerificationDocumentFromDraft(draft);
   assert.ok(canonical);
   assert.deepEqual(canonical.copy_overrides.USA, { en: { title: "Verify to continue" }, hu: {} }, "the untranslated locale is an empty container, not a missing key");
   assert.deepEqual(Object.keys(canonical.copy_overrides.USA), ["en", "hu"], "en is emitted before hu, the key order Core compares");
   assert.ok(parseForcedVerificationDocument(canonical), "what the console emits is exactly what the reader accepts");
 
-  draft.copy_overrides.DEU = { en: { title: "", subtitle: "", description: "" }, hu: { title: "", subtitle: "", description: "" } };
+  draft.copy_overrides.DEU = { en: { title: "", subtitle: "", description: "", help_url: "" }, hu: { title: "", subtitle: "", description: "", help_url: "" } };
   assert.deepEqual(Object.keys(forcedVerificationDocumentFromDraft(draft)!.copy_overrides), ["USA"], "a storefront that overrides nothing at all is dropped whole");
 });
 
@@ -512,5 +517,202 @@ test("save success is adopted only on the exact revision successor (T-471b findi
     decodeForcedSaveResponse(success({ revision: FORCED_VERIFICATION_REVISION_MAX + 1, ...ceiling.document }), ceiling),
     { ok: false, kind: "uncertain", error: "malformed-material" },
     "a revision past the contract ceiling is not a readable saved document",
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Waiting Room help URL (contract Amendment v1.5, D-057)
+// ---------------------------------------------------------------------------
+
+const HELP_PREFIX = "https://help.friending.com/";
+const HELP_URL = `${HELP_PREFIX}waiting-room`;
+/** Exactly 2048 UTF-8 bytes after the trim: the last accepted length. */
+const HELP_URL_AT_LIMIT = HELP_PREFIX + "a".repeat(WAITING_ROOM_HELP_URL_MAX_BYTES - HELP_PREFIX.length);
+/** Characters the test source keeps out of literals: BEL (C0), NEL (C1), a lone high surrogate, TAB, LF and backslash. */
+const BEL = String.fromCharCode(0x07);
+const NEL = String.fromCharCode(0x85);
+const LONE_SURROGATE = String.fromCharCode(0xd83d);
+const TAB = String.fromCharCode(0x09);
+const LF = String.fromCharCode(0x0a);
+const BACKSLASH = String.fromCharCode(0x5c);
+
+function withHelp(defaultEn: string | null, copy_overrides: ForcedVerificationDocument["copy_overrides"] = {}): ForcedVerificationDocument {
+  const base = document({ copy_overrides });
+  return { ...base, copy_default: { ...base.copy_default, en: { ...base.copy_default.en, help_url: defaultEn } } };
+}
+
+function withDefault(base: ForcedVerificationDocument, help_url: unknown): unknown {
+  return { ...base, copy_default: { ...base.copy_default, en: { ...base.copy_default.en, help_url } } };
+}
+
+function withOverride(base: ForcedVerificationDocument, help_url: unknown): unknown {
+  return { ...base, copy_overrides: { USA: { en: { help_url }, hu: {} } } };
+}
+
+test("help_url (Amendment v1.5): null or a well-formed https URL on the global default, a URL or absent on an override", () => {
+  assert.equal(WAITING_ROOM_COMPILED_COPY.en.help_url, null, "the compiled default has no help button");
+  assert.equal(WAITING_ROOM_COMPILED_COPY.hu.help_url, null);
+  assert.equal(new TextEncoder().encode(HELP_URL_AT_LIMIT).length, WAITING_ROOM_HELP_URL_MAX_BYTES);
+  const valid = withHelp(HELP_URL, { USA: { en: { help_url: `${HELP_PREFIX}us` }, hu: {} } });
+  assert.deepEqual(parseForcedVerificationDocument(valid), valid, "a valid https URL parses on both levels");
+  assert.deepEqual(parseForcedVerificationDocument(withHelp(null)), withHelp(null), "null on the global default is the explicit no-button form");
+  const { help_url: _absent, ...withoutHelp } = valid.copy_default.en;
+  const legacy = parseForcedVerificationDocument({ ...valid, copy_default: { ...valid.copy_default, en: withoutHelp } });
+  assert.equal(legacy?.copy_default.en.help_url, null, "an absent help_url reads as null (the corpus before T-477)");
+  assert.deepEqual(Object.keys(legacy!.copy_default.en), ["title", "subtitle", "description", "help_url"], "the parsed block always carries the key, last");
+  assert.ok(parseForcedVerificationConsole(consolePayload({ ...withHelp(HELP_URL) })), "console material with a help URL");
+  assert.ok(parseForcedVerificationSaved({ revision: 2, ...withHelp(HELP_URL) }), "save material with a help URL");
+  assert.ok(parseForcedVerificationDocument(withDefault(valid, HELP_URL_AT_LIMIT)), "exactly 2048 bytes fits");
+  assert.ok(parseForcedVerificationDocument(withDefault(valid, `${HELP_PREFIX}kérdés?x=1#top`)), "a non-ASCII path is kept raw, never re-serialised");
+  assert.ok(parseForcedVerificationDocument(withOverride(valid, HELP_URL_AT_LIMIT)), "the byte limit is the same on an override");
+
+  for (const [value, label] of [
+    ["http://help.friending.com/", "http"],
+    ["https:help.friending.com", "a form new URL() would repair"],
+    ["https:///help.friending.com", "empty authority"],
+    ["https://", "no authority"],
+    ["javascript:alert(1)", "foreign scheme"],
+    ["", "an empty string is not the null form"],
+    [` ${HELP_URL}`, "a published untrimmed URL fails closed"],
+    [`${HELP_URL}${LF}`, "trailing line break"],
+    [`${HELP_URL_AT_LIMIT}a`, "2049 bytes"],
+    [`${HELP_PREFIX}${"é".repeat(1011)}`, "2049 bytes of multibyte text (1038 code points)"],
+    [`${HELP_PREFIX}${BEL}`, "C0 control"],
+    [`${HELP_PREFIX}${NEL}`, "C1 control"],
+    [`${HELP_PREFIX}${LONE_SURROGATE}`, "lone surrogate"],
+    ["https://user:secret@help.friending.com/", "credentials"],
+    ["https://user@help.friending.com/", "user-only credentials"],
+    [1, "number"],
+    [true, "boolean"],
+    [[HELP_URL], "array"],
+  ] as const) {
+    assert.equal(parseForcedVerificationDocument(withDefault(valid, value)), null, `global default: ${label}`);
+    assert.equal(parseForcedVerificationDocument(withOverride(valid, value)), null, `override: ${label}`);
+  }
+  assert.equal(parseForcedVerificationDocument(withOverride(valid, null)), null, "an override inherits by omitting the key, never with null");
+  assert.equal(parseForcedVerificationDocument({ ...valid, copy_overrides: { USA: { en: { help_url: `${HELP_PREFIX}us`, headline: "x" }, hu: {} } } }), null, "unknown key beside help_url");
+  assert.equal(parseForcedVerificationDocument({ ...valid, copy_default: { ...valid.copy_default, en: { ...valid.copy_default.en, help: HELP_URL } } }), null, "a misspelt key is unknown, not the optional field");
+});
+
+test("help_url: draft round trip keeps null / URL / inherit and every refusal has a stable issue code", () => {
+  const stored = withHelp(HELP_URL, { USA: { en: { help_url: `${HELP_PREFIX}us` }, hu: { title: "Cím" } } });
+  const draft = forcedVerificationDraft(stored);
+  assert.equal(draft.copy_default.en.help_url, HELP_URL);
+  assert.equal(draft.copy_default.hu.help_url, "", "null edits as a blank field");
+  assert.equal(draft.copy_overrides.USA?.en.help_url, `${HELP_PREFIX}us`);
+  assert.equal(draft.copy_overrides.USA?.hu.help_url, "", "an absent override URL is a blank (inherit) field");
+  const rebuilt = forcedVerificationDocumentFromDraft(draft);
+  assert.deepEqual(rebuilt, stored, "round trip");
+  assert.deepEqual(Object.keys(rebuilt!.copy_default.hu), ["title", "subtitle", "description", "help_url"], "the emitted block carries help_url last, the order Core compares");
+  assert.equal(rebuilt!.copy_default.hu.help_url, null, "the global default always carries the key: null = no button");
+  assert.ok(forcedVerificationDocumentsEqual(rebuilt!, stored));
+  assert.deepEqual(waitingRoomCopyDraft(WAITING_ROOM_COMPILED_COPY.en), { ...WAITING_ROOM_COMPILED_COPY.en, help_url: "" });
+  assert.deepEqual(emptyWaitingRoomCopyOverrideDraft().hu, { title: "", subtitle: "", description: "", help_url: "" });
+
+  draft.copy_default.en.help_url = `  ${HELP_URL}${TAB}`;
+  assert.equal(validateForcedVerificationDraft(draft), null, "ASCII edges are trimmed, never refused");
+  assert.equal(forcedVerificationDocumentFromDraft(draft)?.copy_default.en.help_url, HELP_URL);
+  draft.copy_default.en.help_url = "   ";
+  assert.equal(forcedVerificationDocumentFromDraft(draft)?.copy_default.en.help_url, null, "a blank global URL is explicit null");
+  draft.copy_overrides.USA!.en.help_url = " ";
+  assert.equal(Object.hasOwn(forcedVerificationDocumentFromDraft(draft)!.copy_overrides.USA!.en, "help_url"), false, "a blank override URL is an absent key (inherit)");
+  draft.copy_overrides.USA!.hu.title = "";
+  assert.deepEqual(Object.keys(forcedVerificationDocumentFromDraft(draft)!.copy_overrides), [], "an override that sets nothing at all is dropped whole");
+  draft.copy_overrides.USA!.en.help_url = `${HELP_PREFIX}us`;
+  assert.deepEqual(forcedVerificationDocumentFromDraft(draft)!.copy_overrides.USA, { en: { help_url: `${HELP_PREFIX}us` }, hu: {} }, "a URL-only override is a real override");
+
+  assert.equal(waitingRoomHelpUrlIssue(""), null);
+  assert.equal(waitingRoomHelpUrlIssue(HELP_URL_AT_LIMIT), null, "exactly 2048 bytes fits");
+  assert.equal(waitingRoomHelpUrlByteLength(" https://é.example "), 18, "bytes of the trimmed value, not code points");
+  for (const [value, issue] of [
+    ["http://help.friending.com/", "copyHelpUrlInvalid"],
+    ["help.friending.com", "copyHelpUrlInvalid"],
+    ["https://", "copyHelpUrlInvalid"],
+    [`https:${BACKSLASH}${BACKSLASH}help.friending.com`, "copyHelpUrlInvalid"],
+    ["https:help.friending.com", "copyHelpUrlInvalid"],
+    [`${HELP_URL_AT_LIMIT}a`, "copyHelpUrlTooLong"],
+    [`${HELP_PREFIX}${"é".repeat(1011)}`, "copyHelpUrlTooLong"],
+    [`${HELP_PREFIX}${BEL}`, "copyHelpUrlControl"],
+    [`${HELP_PREFIX}a${TAB}b`, "copyHelpUrlControl"],
+    [`${HELP_PREFIX}${NEL}`, "copyHelpUrlControl"],
+    [`${HELP_PREFIX}${LONE_SURROGATE}`, "copyHelpUrlControl"],
+    ["https://user:secret@help.friending.com/", "copyHelpUrlCredentials"],
+    ["https://user@help.friending.com/", "copyHelpUrlCredentials"],
+  ] as const) {
+    assert.equal(waitingRoomHelpUrlIssue(value), issue, JSON.stringify(value.slice(0, 40)));
+    draft.copy_default.en.help_url = value;
+    assert.equal(validateForcedVerificationDraft(draft), issue, `global: ${issue}`);
+    assert.equal(forcedVerificationDocumentFromDraft(draft), null, "an invalid draft never becomes a document");
+    draft.copy_default.en.help_url = "";
+    draft.copy_overrides.USA!.hu.help_url = value;
+    assert.equal(validateForcedVerificationDraft(draft), issue, `override: ${issue}`);
+    draft.copy_overrides.USA!.hu.help_url = "";
+  }
+  assert.equal(validateForcedVerificationDraft(draft), null);
+});
+
+test("help_url: storefront inherit resolution and the preview's button-only-with-a-URL rule", () => {
+  const stored = withHelp(HELP_URL, { DEU: { en: { title: "Verify" }, hu: {} }, USA: { en: { help_url: `${HELP_PREFIX}us` }, hu: {} } });
+  assert.equal(resolveWaitingRoomCopy(stored, "USA", "en").help_url, `${HELP_PREFIX}us`, "an override URL wins");
+  assert.equal(resolveWaitingRoomCopy(stored, "DEU", "en").help_url, HELP_URL, "an override without help_url inherits the global URL");
+  assert.equal(resolveWaitingRoomCopy(stored, "FRA", "en").help_url, HELP_URL, "no override → global");
+  assert.equal(resolveWaitingRoomCopy(stored, null, "en").help_url, HELP_URL, "unknown storefront → global");
+  assert.equal(resolveWaitingRoomCopy(stored, "USA", "hu").help_url, null, "the English URL never leaks into Hungarian, whose default is null");
+  assert.equal(resolveWaitingRoomCopy(withHelp(null), "USA", "en").help_url, null, "null everywhere → no button");
+
+  const compiled = { en: { ...WAITING_ROOM_COMPILED_COPY.en }, hu: { ...WAITING_ROOM_COMPILED_COPY.hu } };
+  const draft = forcedVerificationDraft(stored);
+  assert.equal(previewWaitingRoomCopy(draft, "USA", "en", compiled).copy.help_url, `${HELP_PREFIX}us`);
+  assert.equal(previewWaitingRoomCopy(draft, "DEU", "en", compiled).copy.help_url, HELP_URL);
+  const none = previewWaitingRoomCopy(draft, null, "hu", compiled);
+  assert.equal(none.copy.help_url, null, "no URL anywhere → no button");
+  assert.deepEqual(none.compiledFields, [], "no button is a legitimate state, not a degraded field");
+  draft.copy_overrides.USA!.en.help_url = `  ${HELP_PREFIX}us  `;
+  assert.equal(previewWaitingRoomCopy(draft, "USA", "en", compiled).copy.help_url, `${HELP_PREFIX}us`, "the preview shows the trimmed URL");
+  draft.copy_overrides.USA!.en.help_url = "http://help.friending.com/us";
+  const degraded = previewWaitingRoomCopy(draft, "USA", "en", compiled);
+  assert.equal(degraded.copy.help_url, null, "a malformed override URL degrades to no button — never to the global URL");
+  assert.deepEqual(degraded.compiledFields, ["help_url"], "and is reported like a degraded text");
+  draft.copy_overrides.USA!.en.help_url = "";
+  draft.copy_default.en.help_url = "https://user:pw@help.friending.com/";
+  const degradedDefault = previewWaitingRoomCopy(draft, "DEU", "en", compiled);
+  assert.equal(degradedDefault.copy.help_url, null);
+  assert.deepEqual(degradedDefault.compiledFields, ["help_url"]);
+  assert.equal(degradedDefault.copy.title, "Verify", "the texts stand; copy is presentation only (Amendment v1.4)");
+  draft.copy_default.hu.title = "x".repeat(61);
+  assert.deepEqual(previewWaitingRoomCopy(draft, null, "hu", compiled).compiledFields, ["title"], "text and URL degradation are independent");
+});
+
+test("help_url: the proxy forwards null and https strings exactly, and the save binding sees a dropped URL as another document", () => {
+  const valid = withHelp(HELP_URL, { USA: { en: { help_url: `${HELP_PREFIX}us` }, hu: {} } });
+  const forwarded = normalizeForcedVerificationProxyBody("verification_forced_save", { expected_revision: 1, document: valid });
+  assert.deepEqual(forwarded, { expected_revision: 1, document: valid });
+  assert.deepEqual(
+    Object.keys((forwarded as { document: ForcedVerificationDocument }).document.copy_default.en),
+    ["title", "subtitle", "description", "help_url"],
+    "the forwarded copy block keeps help_url last — Core compares the key list in order",
+  );
+  assert.deepEqual(normalizeForcedVerificationProxyBody("verification_forced_impact_preview", { document: withHelp(null) }), { document: withHelp(null) });
+  for (const [help_url, label] of [
+    ["http://help.friending.com/", "http"],
+    ["", "empty string"],
+    [1, "number"],
+    [true, "boolean"],
+    ["https://user:pw@help.friending.com/", "credentials"],
+    [`${HELP_URL_AT_LIMIT}a`, "2049 bytes"],
+  ] as const) {
+    assert.equal(normalizeForcedVerificationProxyBody("verification_forced_save", { expected_revision: 1, document: withDefault(valid, help_url) }), null, `refused before Core: ${label}`);
+  }
+  assert.equal(normalizeForcedVerificationProxyBody("verification_forced_save", { expected_revision: 1, document: withOverride(valid, null) }), null, "null on an override is refused before Core");
+
+  const submitted = { expected_revision: 1, document: valid };
+  const adopted = decodeForcedSaveResponse(success({ revision: 2, ...valid }), submitted);
+  assert.ok(adopted.ok && adopted.value.document.copy_default.en.help_url === HELP_URL && adopted.value.document.copy_overrides.USA?.en.help_url === `${HELP_PREFIX}us`);
+  assert.deepEqual(decodeForcedSaveResponse(success({ revision: 2, ...withHelp(null, valid.copy_overrides) }), submitted), { ok: false, kind: "uncertain", error: "unbound-material" }, "an echo without the global URL is another document");
+  const { help_url: _dropped, ...withoutHelp } = valid.copy_default.en;
+  assert.deepEqual(
+    decodeForcedSaveResponse(success({ revision: 2, ...valid, copy_default: { ...valid.copy_default, en: withoutHelp } }), submitted),
+    { ok: false, kind: "uncertain", error: "unbound-material" },
+    "an echo that drops the key reads as null and is not the submitted material",
   );
 });

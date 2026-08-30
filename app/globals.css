@@ -12902,6 +12902,8 @@ body .verification-level-pill.level-strong {
 .forced-phone-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 300px)); justify-content: center; gap: 20px; }
 .forced-phone { position: relative; display: grid; align-content: start; gap: 12px; min-height: 560px; margin: 0; padding: 44px 22px 18px; border: 1px solid; border-radius: 34px; text-align: center; }
 .forced-phone-status { position: absolute; top: 14px; right: 22px; left: 22px; display: flex; justify-content: space-between; font-size: 10px; font-weight: 800; }
+.forced-phone-help { position: absolute; top: 36px; right: 16px; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; font-size: 18px; font-weight: 800; line-height: 1; }
+.forced-help-url-note { overflow-wrap: anywhere; }
 .forced-phone-illustration { display: grid; place-items: center; width: 120px; height: 120px; margin: 8px auto 4px; border-radius: 50%; }
 .forced-phone-illustration span { display: block; width: 54px; height: 54px; border-radius: 18px; opacity: 0.85; }
 .forced-phone-title { margin: 0; font-size: 22px; font-weight: 800; line-height: 1.15; }

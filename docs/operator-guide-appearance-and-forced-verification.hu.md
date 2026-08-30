@@ -216,6 +216,15 @@ szerkeszthető; a globális alapértéknél mindkettő kötelező.
 hagyott mező az azonos nyelvű globális szöveget örökli. Tartsd tényszerűnek a
 megfogalmazást: a kizárt tag csak ezt a magyarázatot látja.
 
+Nyelvenként egy opcionális **súgó URL** is megadható (a szerződés 1.5-ös
+módosítása). Ha ki van töltve, a Váróterem jobb felső sarkában kerek „?" gomb
+jelenik meg, amely az alkalmazáson belüli böngészőben, a terem fölött nyitja meg
+a címet; üresen hagyva nincs gomb. A címnek `https://`-sel kell kezdődnie,
+legfeljebb 2048 bájt lehet, és nem tartalmazhat hitelesítő adatokat. Az üresen
+hagyott áruház-országos felülírás a globális URL-t örökli, pontosan úgy, mint a
+három szövegmező, a telefonos előnézet pedig csak ott mutatja a gombot, ahol
+tényleges URL van. Az URL csak megjelenítés: sosem engedi át a tagot a kapun.
+
 Két gyakorlati megjegyzés:
 
 - A szélső hagyományos szóközöket automatikusan levágjuk. Az olyan „szóközt",

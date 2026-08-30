@@ -1,11 +1,12 @@
 import { getCountryDataList } from "countries-list";
 import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
+import { httpsWireUrl, wellFormedUtf16 } from "@/lib/appearanceRules";
 import { webadminDataSuccessEnvelope, webadminErrorEnvelope } from "@/lib/webadminEnvelope";
 
 /**
  * Forced verification + Waiting Room — the Webadmin side of
  * `handoffs/forced-verification-waiting-room-contract.md` v1 §4 (D-053 /
- * D-053a, Amendment v1.1). Pure module shared by the proxy route, the
+ * D-053a, Amendments v1.1–v1.5). Pure module shared by the proxy route, the
  * dashboard page and the "Forced & waiting room" tab; no `server-only`
  * import because the client renders the same closed parsers.
  *
@@ -35,11 +36,20 @@ export type ForcedMethods = Record<ForcedVerificationMethod, boolean>;
 export const WAITING_ROOM_LOCALES = ["en", "hu"] as const;
 export type WaitingRoomLocale = (typeof WAITING_ROOM_LOCALES)[number];
 
+/** The bounded text fields of a Waiting Room copy block (contract §4). */
 export const WAITING_ROOM_COPY_FIELDS = ["title", "subtitle", "description"] as const;
 export type WaitingRoomCopyField = (typeof WAITING_ROOM_COPY_FIELDS)[number];
-export type WaitingRoomCopy = Record<WaitingRoomCopyField, string>;
-/** A per-storefront override carries only the fields it sets; an absent field inherits. */
-export type WaitingRoomCopyOverride = Partial<WaitingRoomCopy>;
+/** Amendment v1.5: the per-language URL behind the Waiting Room's round "?" button; `null` = no button. */
+export const WAITING_ROOM_HELP_URL_FIELD = "help_url" as const;
+/** Every key of a copy block, in the order Core compares the key list. */
+export const WAITING_ROOM_COPY_KEYS = [...WAITING_ROOM_COPY_FIELDS, WAITING_ROOM_HELP_URL_FIELD] as const;
+export type WaitingRoomCopyKey = (typeof WAITING_ROOM_COPY_KEYS)[number];
+export type WaitingRoomCopy = Record<WaitingRoomCopyField, string> & { help_url: string | null };
+/**
+ * A per-storefront override carries only the fields it sets; an absent field
+ * inherits. `help_url` inherits by omission like the texts — it is never `null` here.
+ */
+export type WaitingRoomCopyOverride = Partial<Record<WaitingRoomCopyField, string>> & { help_url?: string };
 
 /** Contract §4: title ≤ 60, subtitle ≤ 90, description ≤ 400 code points. */
 export const WAITING_ROOM_COPY_LIMITS: Readonly<Record<WaitingRoomCopyField, number>> = {
@@ -47,6 +57,9 @@ export const WAITING_ROOM_COPY_LIMITS: Readonly<Record<WaitingRoomCopyField, num
   subtitle: 90,
   description: 400,
 };
+
+/** Amendment v1.5: an `https://` URL of at most 2048 UTF-8 bytes after the PHP-compatible trim. */
+export const WAITING_ROOM_HELP_URL_MAX_BYTES = 2048;
 
 /** Contract §2: server-owned integer, seeded 1, first save → 2, max 2^53 − 1. */
 export const FORCED_VERIFICATION_REVISION_MAX = 9_007_199_254_740_991;
@@ -63,11 +76,13 @@ export const WAITING_ROOM_COMPILED_COPY: Readonly<Record<WaitingRoomLocale, Wait
     title: "One more step before you meet people",
     subtitle: "Verification is required in your region",
     description: "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members.",
+    help_url: null,
   },
   hu: {
     title: "Még egy lépés, mielőtt ismerkedsz",
     subtitle: "A régiódban hitelesítés szükséges",
     description: "A Friending biztonsága érdekében a régiódban minden tagnak igazolnia kell a személyazonosságát, mielőtt használná az appot. Ez körülbelül két percet vesz igénybe, és a dokumentumaidat más tagok soha nem látják.",
+    help_url: null,
   },
 };
 
@@ -241,6 +256,49 @@ function copyText(value: unknown, field: WaitingRoomCopyField): string | null {
   return value;
 }
 
+/** Core's `webUrl()` control set — C0, DEL and C1 — anywhere in a URL (a line break is never URL content). */
+const URL_CONTROL_CHARACTERS = /[\u0000-\u001F\u007F-\u009F]/;
+/** The authority as the non-repairing gate reads it: everything after `https://` up to the first `/`, `\`, `?` or `#`. */
+const HTTPS_AUTHORITY = /^https:\/\/([^/\\?#]+)/;
+
+/** UTF-8 bytes of the PHP-trimmed value, the unit Core bounds a URL in (`strlen`). For the editor counter only. */
+export function waitingRoomHelpUrlByteLength(value: string): number {
+  return new TextEncoder().encode(forcedCopyTrim(value)).length;
+}
+
+/**
+ * Why an editor value is not a Waiting Room help URL (Amendment v1.5); `null`
+ * when it is one, or when it is blank (blank = "no button" on the global
+ * default, "inherit" on an override — the caller decides). Rules, in order:
+ * well-formed UTF-16 and no control character in the PHP-trimmed value (a
+ * lone surrogate can never reach Core as UTF-8); at most 2048 UTF-8 bytes;
+ * the appearance console's non-repairing `https://` gate (no `http:`, no
+ * form `new URL()` would silently repair); and no credentials — PHP's
+ * `parse_url` reads anything before the last `@` of the authority as
+ * `user[:pass]`, so any `@` there refuses. The raw trimmed value is what is
+ * kept and compared, never a re-serialised form.
+ */
+export function waitingRoomHelpUrlIssue(value: string): ForcedVerificationDraftIssue | null {
+  const trimmed = forcedCopyTrim(value);
+  if (trimmed === "") return null;
+  if (!wellFormedUtf16(trimmed) || URL_CONTROL_CHARACTERS.test(trimmed)) return "copyHelpUrlControl";
+  if (new TextEncoder().encode(trimmed).length > WAITING_ROOM_HELP_URL_MAX_BYTES) return "copyHelpUrlTooLong";
+  if (!httpsWireUrl(trimmed)) return "copyHelpUrlInvalid";
+  if ((HTTPS_AUTHORITY.exec(trimmed)?.[1] ?? "").includes("@")) return "copyHelpUrlCredentials";
+  return null;
+}
+
+/**
+ * A published `help_url`: `null`, or a string that is exactly its PHP-trimmed
+ * self and passes every editor rule. `undefined` = refused (an empty string is
+ * not the `null` form, and an untrimmed value is not proven state).
+ */
+function helpUrl(value: unknown): string | null | undefined {
+  if (value === null) return null;
+  if (typeof value !== "string" || value === "" || forcedCopyTrim(value) !== value) return undefined;
+  return waitingRoomHelpUrlIssue(value) === null ? value : undefined;
+}
+
 export function parseForcedMethods(value: unknown): ForcedMethods | null {
   const source = record(value);
   if (!source || !exactKeys(source, FORCED_VERIFICATION_METHODS)) return null;
@@ -267,25 +325,38 @@ export function parseForcedOverrides(value: unknown): Record<string, ForcedMetho
   return source ? sortedEntries(source, parseForcedMethods) : null;
 }
 
+/**
+ * A full copy block. `help_url` is optional on READ only: the pinned T-470
+ * corpus predates Amendment v1.5 and an absent value resolves to `null`
+ * exactly as Core resolves it; the console itself always emits the key.
+ */
 export function parseWaitingRoomCopy(value: unknown): WaitingRoomCopy | null {
   const source = record(value);
-  if (!source || !exactKeys(source, WAITING_ROOM_COPY_FIELDS)) return null;
+  if (!source || !exactKeys(source, WAITING_ROOM_COPY_FIELDS, [WAITING_ROOM_HELP_URL_FIELD])) return null;
   const title = copyText(source.title, "title");
   const subtitle = copyText(source.subtitle, "subtitle");
   const description = copyText(source.description, "description");
-  if (title === null || subtitle === null || description === null) return null;
-  return { title, subtitle, description };
+  const help = Object.hasOwn(source, WAITING_ROOM_HELP_URL_FIELD) ? helpUrl(source.help_url) : null;
+  if (title === null || subtitle === null || description === null || help === undefined) return null;
+  // Key order is what Core compares on the way back in: `help_url` last.
+  return { title, subtitle, description, help_url: help };
 }
 
 export function parseWaitingRoomCopyOverride(value: unknown): WaitingRoomCopyOverride | null {
   const source = record(value);
-  if (!source || !subsetKeys(source, WAITING_ROOM_COPY_FIELDS)) return null;
+  if (!source || !subsetKeys(source, WAITING_ROOM_COPY_KEYS)) return null;
   const output: WaitingRoomCopyOverride = {};
   for (const field of WAITING_ROOM_COPY_FIELDS) {
     if (!Object.hasOwn(source, field)) continue;
     const text = copyText(source[field], field);
     if (text === null) return null;
     output[field] = text;
+  }
+  if (Object.hasOwn(source, WAITING_ROOM_HELP_URL_FIELD)) {
+    // An override inherits by omitting the key; `null` is not an override value.
+    const help = helpUrl(source.help_url);
+    if (help === undefined || help === null) return null;
+    output.help_url = help;
   }
   return output;
 }
@@ -420,13 +491,15 @@ export function forcedVerificationAccess(projection: ForcedVerificationAdminMe |
 // ---------------------------------------------------------------------------
 
 export type ForcedOverrideRow = ForcedMethods & { storefront: string };
+/** Editor form of one copy block: every key a string. A blank `help_url` is `null` on the global default and "inherit" on an override. */
+export type WaitingRoomCopyDraft = Record<WaitingRoomCopyKey, string>;
 /** Editor form of a storefront copy override: every field present, blank = inherit. */
-export type WaitingRoomCopyOverrideDraft = Record<WaitingRoomLocale, WaitingRoomCopy>;
+export type WaitingRoomCopyOverrideDraft = Record<WaitingRoomLocale, WaitingRoomCopyDraft>;
 
 export type ForcedVerificationDraft = {
   default: ForcedMethods;
   overrides: ForcedOverrideRow[];
-  copy_default: Record<WaitingRoomLocale, WaitingRoomCopy>;
+  copy_default: Record<WaitingRoomLocale, WaitingRoomCopyDraft>;
   copy_overrides: Record<string, WaitingRoomCopyOverrideDraft>;
 };
 
@@ -436,10 +509,23 @@ export type ForcedVerificationDraftIssue =
   | "copyRequired"
   | "copyTooLong"
   | "copyControl"
-  | "copyWhitespace";
+  | "copyWhitespace"
+  | "copyHelpUrlInvalid"
+  | "copyHelpUrlTooLong"
+  | "copyHelpUrlControl"
+  | "copyHelpUrlCredentials";
+
+export function emptyWaitingRoomCopyDraft(): WaitingRoomCopyDraft {
+  return { title: "", subtitle: "", description: "", help_url: "" };
+}
 
 export function emptyWaitingRoomCopyOverrideDraft(): WaitingRoomCopyOverrideDraft {
-  return { en: { title: "", subtitle: "", description: "" }, hu: { title: "", subtitle: "", description: "" } };
+  return { en: emptyWaitingRoomCopyDraft(), hu: emptyWaitingRoomCopyDraft() };
+}
+
+/** The editor form of a published copy block (`help_url: null` edits as a blank field). */
+export function waitingRoomCopyDraft(copy: WaitingRoomCopy): WaitingRoomCopyDraft {
+  return { title: copy.title, subtitle: copy.subtitle, description: copy.description, help_url: copy.help_url ?? "" };
 }
 
 export function forcedVerificationDraft(document: ForcedVerificationDocument): ForcedVerificationDraft {
@@ -449,14 +535,14 @@ export function forcedVerificationDraft(document: ForcedVerificationDocument): F
     for (const locale of WAITING_ROOM_LOCALES) {
       const override = locales[locale];
       if (!override) continue;
-      for (const field of WAITING_ROOM_COPY_FIELDS) draft[locale][field] = override[field] ?? "";
+      for (const key of WAITING_ROOM_COPY_KEYS) draft[locale][key] = override[key] ?? "";
     }
     copyOverrides[storefront] = draft;
   }
   return {
     default: { ...document.default },
     overrides: Object.entries(document.overrides).map(([storefront, methods]) => ({ storefront, ...methods })),
-    copy_default: { en: { ...document.copy_default.en }, hu: { ...document.copy_default.hu } },
+    copy_default: { en: waitingRoomCopyDraft(document.copy_default.en), hu: waitingRoomCopyDraft(document.copy_default.hu) },
     copy_overrides: copyOverrides,
   };
 }
@@ -484,6 +570,8 @@ export function validateForcedVerificationDraft(draft: ForcedVerificationDraft):
       const issue = copyIssue(draft.copy_default[locale][field], field, true);
       if (issue) return issue;
     }
+    const helpIssue = waitingRoomHelpUrlIssue(draft.copy_default[locale].help_url);
+    if (helpIssue) return helpIssue;
   }
   const copyStorefronts = Object.keys(draft.copy_overrides);
   if (copyStorefronts.length > STOREFRONT_CATALOGUE.length) return "storefront";
@@ -494,6 +582,8 @@ export function validateForcedVerificationDraft(draft: ForcedVerificationDraft):
         const issue = copyIssue(draft.copy_overrides[storefront][locale][field], field, false);
         if (issue) return issue;
       }
+      const helpIssue = waitingRoomHelpUrlIssue(draft.copy_overrides[storefront][locale].help_url);
+      if (helpIssue) return helpIssue;
     }
   }
   return null;
@@ -524,17 +614,25 @@ export function forcedVerificationDocumentFromDraft(draft: ForcedVerificationDra
         const text = forcedCopyTrim(draft.copy_overrides[storefront][locale][field]);
         if (text !== "") override[field] = text;
       }
+      // A blank help URL inherits by omission (Amendment v1.5), like a blank text.
+      const help = forcedCopyTrim(draft.copy_overrides[storefront][locale].help_url);
+      if (help !== "") override.help_url = help;
       locales[locale] = override;
       fields += Object.keys(override).length;
     }
     // A storefront whose two containers are both empty overrides nothing at all.
     if (fields > 0) copyOverrides[storefront] = locales;
   }
-  const trimCopy = (copy: WaitingRoomCopy): WaitingRoomCopy => ({
-    title: forcedCopyTrim(copy.title),
-    subtitle: forcedCopyTrim(copy.subtitle),
-    description: forcedCopyTrim(copy.description),
-  });
+  const trimCopy = (copy: WaitingRoomCopyDraft): WaitingRoomCopy => {
+    const help = forcedCopyTrim(copy.help_url);
+    return {
+      title: forcedCopyTrim(copy.title),
+      subtitle: forcedCopyTrim(copy.subtitle),
+      description: forcedCopyTrim(copy.description),
+      // Always present on the global default (`null` = no button), and last: Core compares the key list in order.
+      help_url: help === "" ? null : help,
+    };
+  };
   return {
     default: { persona: draft.default.persona, video: draft.default.video },
     overrides,
@@ -569,6 +667,7 @@ export function resolveWaitingRoomCopy(
     title: override?.title ?? base.title,
     subtitle: override?.subtitle ?? base.subtitle,
     description: override?.description ?? base.description,
+    help_url: override?.help_url ?? base.help_url,
   };
 }
 
@@ -587,13 +686,15 @@ export function resolveDraftForcedMethods(draft: ForcedVerificationDraft, storef
   return row ? { persona: row.persona, video: row.video } : { ...draft.default };
 }
 
-export type WaitingRoomPreviewCopy = { copy: WaitingRoomCopy; compiledFields: WaitingRoomCopyField[] };
+export type WaitingRoomPreviewCopy = { copy: WaitingRoomCopy; compiledFields: WaitingRoomCopyKey[] };
 
 /**
  * The Waiting Room copy a preview renders for a draft: per field the non-blank storefront
  * override, else the global default of the same locale. A malformed or missing value
  * degrades to the compiled copy for that field only and is reported in `compiledFields`;
- * the forced methods are never affected by copy (Amendment v1.4).
+ * the forced methods are never affected by copy (Amendment v1.4). The help URL follows
+ * the same chain, ending in the compiled `null`: the round "?" button exists only for an
+ * effective, well-formed URL, and a malformed value degrades to "no button" (v1.5).
  */
 export function previewWaitingRoomCopy(
   draft: ForcedVerificationDraft,
@@ -603,13 +704,18 @@ export function previewWaitingRoomCopy(
 ): WaitingRoomPreviewCopy {
   const override = storefront === null ? undefined : draft.copy_overrides[storefront]?.[locale];
   const copy: WaitingRoomCopy = { ...compiled[locale] };
-  const compiledFields: WaitingRoomCopyField[] = [];
+  const compiledFields: WaitingRoomCopyKey[] = [];
   for (const field of WAITING_ROOM_COPY_FIELDS) {
     const overrideText = override ? override[field] : "";
     const candidate = forcedCopyTrim(overrideText) !== "" ? overrideText : draft.copy_default[locale][field];
     if (copyIssue(candidate, field, true) === null) copy[field] = forcedCopyTrim(candidate);
     else compiledFields.push(field);
   }
+  const overrideHelp = override ? override.help_url : "";
+  const helpCandidate = forcedCopyTrim(overrideHelp) !== "" ? overrideHelp : draft.copy_default[locale].help_url;
+  const help = forcedCopyTrim(helpCandidate);
+  if (waitingRoomHelpUrlIssue(helpCandidate) !== null) compiledFields.push(WAITING_ROOM_HELP_URL_FIELD);
+  else if (help !== "") copy.help_url = help;
   return { copy, compiledFields };
 }
 

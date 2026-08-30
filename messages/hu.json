@@ -810,12 +810,13 @@
           },
           "forcedWaitingRoom": {
             "title": "Kötelező hitelesítés és Váróterem",
-            "purpose": "A Persona vagy szelfivideós hitelesítést globálisan vagy App Store storefrontonként kötelezővé teszi; a zárolt tagok a Várótermet látják, amíg egy kötelező módszert nem teljesítenek.",
+            "purpose": "A Persona vagy szelfivideós hitelesítést globálisan vagy App Store storefrontonként kötelezővé teszi; a zárolt tagok a Várótermet látják, amíg egy kötelező módszert nem teljesítenek. A Váróterem szövege és opcionális súgó URL-je is itt szerkeszthető.",
             "actions": {
               "1": "Először a globális alapértelmezést állítsd be, és csak ott adj hozzá storefront-felülírást, ahol a szabály eltér; a felülírás a teljes módszerkészletet lecseréli, így két kikapcsolt kapcsoló azt jelenti, hogy ott nem kötelező.",
-              "2": "Szerkeszd a Váróterem szövegét mindkét nyelven, ellenőrizd a világos és sötét telefonos előnézetet a storefronthoz, futtasd a hatás-előnézetet, és a megjelenített revíziónál ments."
+              "2": "Szerkeszd a Váróterem szövegét mindkét nyelven, ellenőrizd a világos és sötét telefonos előnézetet a storefronthoz, futtasd a hatás-előnézetet, és a megjelenített revíziónál ments.",
+              "3": "Adj meg nyelvenként súgó URL-t, ha a tagoknak legyen hol tovább olvasniuk: legfeljebb 2048 bájtos, hitelesítő adat nélküli https cím lehet. A kerek „?” gomb csak ott jelenik meg a Váróteremben, ahol tényleges URL van; az üresen hagyott storefront-felülírás a globális URL-t örökli, az üres globális URL pedig azt jelenti, hogy nincs gomb."
             },
-            "guidance": "A kiindulási állapot semmit sem tesz kötelezővé. A Core a szerveren értékeli a kaput a tag utoljára látott storefrontja alapján; a hibás tárolt dokumentum biztonságosan hibázik (semmi sem kötelező), miközben ez a fül jelzi. A kényszerítést csak azután kapcsold be, hogy a Váróteremmel készült iOS build már elérhető az App Store-ban: a kapu minden app-verzióra érvényes, és a régebbi app úgy kapja meg az elutasítást, hogy nincs mit megjelenítenie hozzá."
+            "guidance": "A kiindulási állapot semmit sem tesz kötelezővé. A Core a szerveren értékeli a kaput a tag utoljára látott storefrontja alapján; a hibás tárolt dokumentum biztonságosan hibázik (semmi sem kötelező), miközben ez a fül jelzi. A súgó URL csak megjelenítés: az alkalmazáson belüli böngészőben nyílik meg a Váróterem fölött, és sosem engedi át a tagot a kapun. A kényszerítést csak azután kapcsold be, hogy a Váróteremmel készült iOS build már elérhető az App Store-ban: a kapu minden app-verzióra érvényes, és a régebbi app úgy kapja meg az elutasítást, hogy nincs mit megjelenítenie hozzá."
           },
           "conflictsAndRetry": {
             "title": "Ütközések és bizonytalan mentések",
@@ -3655,11 +3656,11 @@
         "any": "Bármelyik módszer elég"
       },
       "copyTitle": "Váróterem szövegei",
-      "copyCopy": "Cím (≤ 60), alcím (≤ 90) és leírás (≤ 400) angolul és magyarul. A globális szöveg kötelező; a storefront-felülírás csak az eltérő mezőket állítja be, a többit örökli.",
+      "copyCopy": "Cím (≤ 60), alcím (≤ 90) és leírás (≤ 400) angolul és magyarul, valamint egy opcionális súgó URL (csak https, legfeljebb 2048 bájt) a kerek „?” gomb mögé. A globális szöveg kötelező; a storefront-felülírás csak az eltérő mezőket állítja be, a többit örökli.",
       "defaultsTitle": "Globális szöveg",
       "resetCompiled": "Visszaállítás a beépített alapértelmezésre",
       "overridesTitle": "Storefront szövegfelülírások",
-      "overridesCopy": "Az üres mezők az azonos nyelvű globális szöveget öröklik.",
+      "overridesCopy": "Az üres mezők az azonos nyelvű globális szöveget és súgó URL-t öröklik.",
       "addCopyOverride": "Szövegfelülírás hozzáadása",
       "removeCopyOverride": "Felülírás eltávolítása",
       "noCopyOverrides": "Nincs storefront-szövegfelülírás.",
@@ -3667,14 +3668,19 @@
         "fields": {
           "title": "Cím",
           "subtitle": "Alcím",
-          "description": "Leírás"
+          "description": "Leírás",
+          "help_url": "Súgó URL"
         },
         "locales": {
           "en": "Angol",
           "hu": "Magyar"
         },
         "limit": "{used} / {max}",
-        "inheritPlaceholder": "Örökli: {value}"
+        "inheritPlaceholder": "Örökli: {value}",
+        "inheritNone": "Örökli: nincs súgógomb",
+        "helpUrlPlaceholder": "https://… — üresen nincs súgógomb",
+        "helpUrlBytes": "{used} / {max} bájt",
+        "helpUrlHint": "A súgó URL a Váróterem jobb felső sarkában lévő kerek „?” gombról nyílik meg az alkalmazáson belüli böngészőben. https://-sel kell kezdődnie, legfeljebb 2048 bájt lehet, és nem tartalmazhat hitelesítő adatokat; üresen hagyva a gomb nem jelenik meg."
       },
       "previewTitle": "Telefonos előnézet",
       "previewCopy": "Amit a kiválasztott storefront tagja látna világos és sötét megjelenéssel, a fenti piszkozattal.",
@@ -3692,6 +3698,9 @@
         "footerSignOut": "Kijelentkezés",
         "footerDelete": "Fiók törlése",
         "notForced": "Itt nem kötelező — a tagok sosem látják a Várótermet.",
+        "help": "Súgó",
+        "helpUrl": "A „?” gomb ezt nyitja meg az alkalmazáson belüli böngészőben: {url}",
+        "noHelpUrl": "Ehhez a storefronthoz és nyelvhez nincs súgó URL — a „?” gomb nem jelenik meg.",
         "nonInteractive": "A WR-01 tervezői keret statikus előnézete; a gombfeliratok és állapotszövegek az alkalmazásban élnek, itt nem szerkeszthetők.",
         "compiledCopy": "Beépített szöveg jelenik meg itt: {fields}. A vázlat értéke ott érvénytelen, mentéskor elutasításra kerülne; az előnézet csak azt a szöveget cseréli, a kötelező módszereket soha."
       },
@@ -3724,7 +3733,11 @@
         "copyRequired": "A globális cím, alcím és leírás mindkét nyelven kötelező.",
         "copyTooLong": "Egy szöveg túllépi a korlátját (cím 60, alcím 90, leírás 400 karakter).",
         "copyControl": "Egy szöveg vezérlőkaraktert vagy nem megengedett sortörést tartalmaz.",
-        "copyWhitespace": "Egy szöveg Unicode szóközzel (például nem törhető szóközzel) kezdődik vagy végződik, vagy csak ilyen szóközökből áll. Távolítsd el; a szélső hagyományos szóközök automatikusan levágódnak."
+        "copyWhitespace": "Egy szöveg Unicode szóközzel (például nem törhető szóközzel) kezdődik vagy végződik, vagy csak ilyen szóközökből áll. Távolítsd el; a szélső hagyományos szóközök automatikusan levágódnak.",
+        "copyHelpUrlInvalid": "A súgó URL-nek jól formázott https:// címnek kell lennie; a http és más sémák el vannak utasítva.",
+        "copyHelpUrlTooLong": "Egy súgó URL meghaladja a 2048 bájtot.",
+        "copyHelpUrlControl": "Egy súgó URL vezérlőkaraktert vagy hibás szöveget tartalmaz.",
+        "copyHelpUrlCredentials": "A súgó URL nem tartalmazhat hitelesítő adatokat (felhasználó:jelszó@kiszolgáló)."
       }
     },
     "methods": {

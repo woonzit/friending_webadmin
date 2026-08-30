@@ -810,12 +810,13 @@
           },
           "forcedWaitingRoom": {
             "title": "Forced verification and Waiting Room",
-            "purpose": "Marks Persona or selfie-video verification as mandatory globally or per App Store storefront; gated members see the Waiting Room until one forced method is satisfied.",
+            "purpose": "Marks Persona or selfie-video verification as mandatory globally or per App Store storefront; gated members see the Waiting Room until one forced method is satisfied. The Waiting Room text and its optional help URL are edited here too.",
             "actions": {
               "1": "Set the global default first, then add a storefront override only where the rule differs; an override replaces the whole method set, so two switches off means not forced there.",
-              "2": "Edit the Waiting Room text in both languages, check the light and dark phone preview for the storefront, run the impact preview, and save at the shown revision."
+              "2": "Edit the Waiting Room text in both languages, check the light and dark phone preview for the storefront, run the impact preview, and save at the shown revision.",
+              "3": "Set a Help URL per language when members should have somewhere to read more: an https address of at most 2048 bytes without credentials. The round “?” button appears in the Waiting Room only where an effective URL exists; a storefront override left blank inherits the global URL, and a blank global URL means no button."
             },
-            "guidance": "Seeded state forces nothing. Core evaluates the gate server-side with the member's last-seen storefront; a malformed stored document fails safe (nothing forced) while this tab reports it. Switch forcing on only after the iOS build carrying the Waiting Room is live in the App Store: the gate applies to every app version, and an older app receives the refusal without a screen to show for it."
+            "guidance": "Seeded state forces nothing. Core evaluates the gate server-side with the member's last-seen storefront; a malformed stored document fails safe (nothing forced) while this tab reports it. The help URL is presentation only: it opens in an in-app browser over the Waiting Room and never lets a member past the gate. Switch forcing on only after the iOS build carrying the Waiting Room is live in the App Store: the gate applies to every app version, and an older app receives the refusal without a screen to show for it."
           },
           "conflictsAndRetry": {
             "title": "Conflicts and uncertain saves",
@@ -3655,11 +3656,11 @@
         "any": "Either method satisfies"
       },
       "copyTitle": "Waiting Room copy",
-      "copyCopy": "Title (≤ 60), subtitle (≤ 90) and description (≤ 400) in English and Hungarian. The global text is required; a storefront override sets only the fields that differ and inherits the rest.",
+      "copyCopy": "Title (≤ 60), subtitle (≤ 90) and description (≤ 400) in English and Hungarian, plus an optional help URL (https only, at most 2048 bytes) behind the round “?” button. The global text is required; a storefront override sets only the fields that differ and inherits the rest.",
       "defaultsTitle": "Global text",
       "resetCompiled": "Reset to the compiled default",
       "overridesTitle": "Storefront text overrides",
-      "overridesCopy": "Blank fields inherit the global text of the same language.",
+      "overridesCopy": "Blank fields inherit the global text and help URL of the same language.",
       "addCopyOverride": "Add text override",
       "removeCopyOverride": "Remove override",
       "noCopyOverrides": "No storefront text overrides.",
@@ -3667,14 +3668,19 @@
         "fields": {
           "title": "Title",
           "subtitle": "Subtitle",
-          "description": "Description"
+          "description": "Description",
+          "help_url": "Help URL"
         },
         "locales": {
           "en": "English",
           "hu": "Hungarian"
         },
         "limit": "{used} / {max}",
-        "inheritPlaceholder": "Inherits: {value}"
+        "inheritPlaceholder": "Inherits: {value}",
+        "inheritNone": "Inherits: no help button",
+        "helpUrlPlaceholder": "https://… — blank means no help button",
+        "helpUrlBytes": "{used} / {max} bytes",
+        "helpUrlHint": "The help URL opens in an in-app browser from the round “?” button in the Waiting Room’s top-right corner. It must start with https://, be at most 2048 bytes and carry no credentials; leave it blank and the button is not shown."
       },
       "previewTitle": "Phone preview",
       "previewCopy": "What a member of the selected storefront would see, in light and dark appearance, with the draft above applied.",
@@ -3692,6 +3698,9 @@
         "footerSignOut": "Sign out",
         "footerDelete": "Delete account",
         "notForced": "Not forced here — members never see the Waiting Room.",
+        "help": "Help",
+        "helpUrl": "The “?” button opens {url} in an in-app browser.",
+        "noHelpUrl": "No help URL for this storefront and language — the “?” button is not shown.",
         "nonInteractive": "Static preview of the designer frame WR-01; button labels and status strings live in the app and are not editable here.",
         "compiledCopy": "Compiled text is shown for: {fields}. The draft value there is invalid and would be refused on save; the preview degrades only that text, never the forced methods."
       },
@@ -3724,7 +3733,11 @@
         "copyRequired": "The global title, subtitle and description are required in both languages.",
         "copyTooLong": "A text exceeds its limit (title 60, subtitle 90, description 400 characters).",
         "copyControl": "A text contains a control character or a line break where none is allowed.",
-        "copyWhitespace": "A text starts or ends with a Unicode space (for example a non-breaking space) or consists only of such spaces. Remove it; ordinary spaces at the edges are trimmed automatically."
+        "copyWhitespace": "A text starts or ends with a Unicode space (for example a non-breaking space) or consists only of such spaces. Remove it; ordinary spaces at the edges are trimmed automatically.",
+        "copyHelpUrlInvalid": "A help URL must be a well-formed https:// address; http and other schemes are refused.",
+        "copyHelpUrlTooLong": "A help URL exceeds 2048 bytes.",
+        "copyHelpUrlControl": "A help URL contains a control character or malformed text.",
+        "copyHelpUrlCredentials": "A help URL must not carry credentials (user:password@host)."
       }
     },
     "methods": {

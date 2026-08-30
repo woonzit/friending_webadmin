@@ -213,6 +213,15 @@ Per storefront you may override any of the three fields separately; a field you
 leave blank inherits the global text of the same language. Keep the wording
 factual: it is the only explanation a blocked member sees.
 
+Each language also has an optional **Help URL** (contract Amendment v1.5). When
+one is set, the Waiting Room shows a round "?" button in its top-right corner
+that opens the address in an in-app browser sheet over the room; leave it blank
+and there is no button. The address must start with `https://`, be at most
+2048 bytes and carry no credentials. A storefront override left blank inherits
+the global URL, exactly like the three text fields, and the phone preview shows
+the button only where an effective URL exists. The URL is presentation only: it
+never lets a member past the gate.
+
 Two practical notes:
 
 - Ordinary spaces at the edges are trimmed automatically. A "space" that is a

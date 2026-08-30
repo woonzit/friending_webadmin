@@ -179,6 +179,10 @@ test("every published Webadmin body decodes through the production decoders with
   assert.deepEqual(Object.keys(console_.document.overrides), ["DEU", "HUN", "USA"], "storefront keys arrive and stay sorted");
   assert.deepEqual(console_.document.overrides.DEU, { persona: false, video: false }, "an empty replacement disables the global rule");
   assert.deepEqual(console_.document.copy_default, WAITING_ROOM_COMPILED_COPY, "Core's seeded copy equals the pinned compiled copy");
+  // Amendment v1.5: this corpus predates `help_url`; an absent value reads as `null` (no help button) until the
+  // lead re-pins to the accepted T-477 tip, whose bodies carry the key explicitly.
+  assert.equal(console_.document.copy_default.en.help_url, null);
+  assert.equal(console_.compiled_defaults.copy.hu.help_url, null);
   assert.deepEqual(console_.compiled_defaults.copy, WAITING_ROOM_COMPILED_COPY, "Core's compiled defaults equal the pinned contract §6 / v1.1 copy");
   assert.deepEqual(console_.document.copy_overrides, { HUN: { en: { subtitle: "Hungary fixture subtitle" }, hu: { description: "Magyarországi fixture leírás." } } });
 

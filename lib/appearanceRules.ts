@@ -487,7 +487,8 @@ function webUrl(value: unknown, allowEmpty: boolean): string | null {
  * after the host or credentials survive exactly. HTTPS only (finding 16).
  */
 const HTTPS_WIRE_URL = /^https:\/\/[^\/\\?#]+/;
-function httpsWireUrl(trimmed: string): boolean {
+/** Shared with the forced-verification console's Waiting Room help URL (Amendment v1.5): one https gate, one behaviour. */
+export function httpsWireUrl(trimmed: string): boolean {
   if (!HTTPS_WIRE_URL.test(trimmed)) return false;
   try {
     const url = new URL(trimmed);
