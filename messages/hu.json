@@ -728,7 +728,7 @@
         "sections": {
           "overview": {
             "title": "Ellenőrzési szabályzatmunkaterület",
-            "purpose": "Az öt lap a teljes, korlátozott ellenőrzési vezérlősíkot csak akkor mutatja, ha a Core aktuális műveletkivetítése felsorolja a konzolt ehhez az operátorhoz.",
+            "purpose": "A hat lap a teljes, korlátozott ellenőrzési vezérlősíkot csak akkor mutatja, ha a Core aktuális műveletkivetítése felsorolja a konzolt ehhez az operátorhoz.",
             "actions": {
               "1": "Élő művelet előkészítése előtt olvasd el az aktiválási védelmet és az importállapot számlálóit.",
               "2": "A mindenhol Nincs induló szabályzatot tekintsd inertnek; nem Nincs követelmény aktiválása külön, áttekintett kiadási művelet."
@@ -3606,8 +3606,6 @@
     "title": "Ellenőrzési beállítások",
     "subtitle": "Területi módszerek, funkciókövetelmények, kétnyelvű tagi üzenetek és adatvédelmi szempontból biztonságos jelvénymegjelenítés kialakítása.",
     "staging": "Védett bevezetés",
-    "readinessTitle": "Core-hiteles munkaterület.",
-    "readinessCopy": "A konzol addig elérhetetlen marad, amíg a Core aktuális műveletkivetítése nem sorolja fel ehhez az operátorhoz.",
     "fixtureBadge": "Hiteles adatok",
     "localDraftNotice": "A megjelenített erőforrást csak revíziózott, validált Core-válasz cserélheti le.",
     "reviewDraft": "Draft áttekintése",

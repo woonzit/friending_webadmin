@@ -728,7 +728,7 @@
         "sections": {
           "overview": {
             "title": "Verification policy workspace",
-            "purpose": "The five tabs expose the complete bounded Verification control plane only when Core's current action projection lists the console for this operator.",
+            "purpose": "The six tabs expose the complete bounded Verification control plane only when Core's current action projection lists the console for this operator.",
             "actions": {
               "1": "Read the activation guard and import-health counts before preparing any live operation.",
               "2": "Treat the all-None launch policy as inert; activation of a non-None requirement is a separate reviewed release operation."
@@ -3606,8 +3606,6 @@
     "title": "Verification settings",
     "subtitle": "Shape regional methods, feature requirements, bilingual member messages and privacy-safe badge presentation.",
     "staging": "Guarded rollout",
-    "readinessTitle": "Core-authoritative workspace.",
-    "readinessCopy": "The console stays unavailable until Core's current action projection lists it for this operator.",
     "fixtureBadge": "Authoritative data",
     "localDraftNotice": "Only a revisioned, validated Core response can replace the displayed resource.",
     "reviewDraft": "Review draft",
