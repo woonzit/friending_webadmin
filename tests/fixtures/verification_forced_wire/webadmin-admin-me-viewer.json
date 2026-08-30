@@ -4,7 +4,7 @@
     "data": {
         "verification": {
             "contract_version": 1,
-            "contract_ready": false,
+            "contract_ready": true,
             "principal": {
                 "role": "viewer",
                 "capabilities": [
@@ -14,7 +14,12 @@
                     "verification_simulate"
                 ]
             },
-            "actions": []
+            "actions": [
+                "verification_console",
+                "verification_pending_summary",
+                "verification_simulate",
+                "verification_user_detail"
+            ]
         },
         "verification_forced": {
             "contract_version": 1,

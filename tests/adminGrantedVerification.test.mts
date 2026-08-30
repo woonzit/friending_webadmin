@@ -61,10 +61,10 @@ const FIXTURE_DIRECTORY = new URL("./fixtures/admin_granted_verification_wire/",
 // Body identity is the 44 published wire blobs plus their aggregate set hash.
 // Manifest provenance is pinned separately because an overlapping Core source
 // path can legitimately advance source_commit without changing a wire byte.
-const FIXTURE_SOURCE_COMMIT = "4657d1e12ab99927b4d3bab5393a33db27191e12";
+const FIXTURE_SOURCE_COMMIT = "ba639d4d28edd104222fadc8d9da44500bbbe280";
 const FIXTURE_GENERATOR_COMMIT = "6bf17e492877ee252599cdac6fff393fa52a298a";
 const FIXTURE_GENERATOR_SHA256 = "7bbb7986bdd7474af6826d12274e980c33a49dcae5bc2cbae124e8d0af22b0f1";
-const FIXTURE_SET_SHA256 = "889888940225bf1bb9b2f5d0b9049fe6a16406e17334b16aeb89c733abf2e088";
+const FIXTURE_SET_SHA256 = "5dfd7f261c383c7dc7533824152779a38fd2902405d4c2085c10110aad8d9706";
 const FIXTURE_BODY_COUNT = 44;
 
 const FIXTURE_BODY_FILES = [

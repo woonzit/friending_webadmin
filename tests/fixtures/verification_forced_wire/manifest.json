@@ -1,8 +1,8 @@
 {
     "schema_version": 1,
     "contract": "forced-verification-waiting-room-v1.5",
-    "source_commit": "e25b89c2d757d7cda6016332ff66509af045389c",
-    "fixture_set_sha256": "5e524966b1f4c53ca0767b2c8239a1d8a69ed04a196d0a83023e2a280b71bcc9",
+    "source_commit": "ba639d4d28edd104222fadc8d9da44500bbbe280",
+    "fixture_set_sha256": "59e521560ecdd90a6efd836a9ebe055aee4dc731b2b4ddb4ee3d058552792c0e",
     "provenance": {
         "generator": "tests/forced_verification_fixture_dump.php",
         "generator_sha256": "c3961b1731aee55f3f7dcb94d87da24839f2033fa9a8a669520a6ef1a586e055",
@@ -422,7 +422,7 @@
             "consumer": "webadmin",
             "kind": "admin_capability",
             "http_status": 200,
-            "sha256": "55c2a2ffad7b510906fd85438565b61b1663d23c851b916150e98c4c14a7d07c"
+            "sha256": "8208e1230d8f763a63b1bac39396747de72a366c170f91aea1fc8a9d91231953"
         },
         {
             "file": "webadmin-admin-me-viewer.json",
@@ -431,7 +431,7 @@
             "consumer": "webadmin",
             "kind": "admin_capability",
             "http_status": 200,
-            "sha256": "340042236fd6329ab106edea5fc06afbfd6bd927de59295553e37373757e5f5e"
+            "sha256": "557b7053f90452cb958858b221badd6d632032651ee939b27332ce2da74cc0ee"
         },
         {
             "file": "webadmin-console.json",

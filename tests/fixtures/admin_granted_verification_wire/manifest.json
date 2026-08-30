@@ -1,9 +1,9 @@
 {
     "schema_version": 1,
     "contract": "admin-granted-verification-v1",
-    "source_commit": "4657d1e12ab99927b4d3bab5393a33db27191e12",
+    "source_commit": "ba639d4d28edd104222fadc8d9da44500bbbe280",
     "generator_commit": "6bf17e492877ee252599cdac6fff393fa52a298a",
-    "fixture_set_sha256": "889888940225bf1bb9b2f5d0b9049fe6a16406e17334b16aeb89c733abf2e088",
+    "fixture_set_sha256": "5dfd7f261c383c7dc7533824152779a38fd2902405d4c2085c10110aad8d9706",
     "provenance": {
         "generator": "tests/admin_granted_verification_fixture_dump.php",
         "generator_sha256": "7bbb7986bdd7474af6826d12274e980c33a49dcae5bc2cbae124e8d0af22b0f1",
@@ -97,7 +97,7 @@
             "route": "/v1/webadmin/admin_me",
             "case": "old_verification_block_unchanged",
             "kind": "compatibility",
-            "sha256": "f4907b6b500b03ee71e9a49d829d85f46092e71d8c03c8bd325b53a3d6808bfe"
+            "sha256": "d0cb4d2f6ff279aa391d4768d83403d49b8fab36c860e3fe761141dce804a9fc"
         },
         {
             "file": "compat-user-detail-unselected.json",

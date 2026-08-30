@@ -4,7 +4,7 @@
     "data": {
         "verification": {
             "contract_version": 1,
-            "contract_ready": false,
+            "contract_ready": true,
             "principal": {
                 "role": "admin",
                 "capabilities": [
@@ -18,7 +18,23 @@
                     "verification_simulate"
                 ]
             },
-            "actions": []
+            "actions": [
+                "verification_badge_remove",
+                "verification_badge_upload",
+                "verification_console",
+                "verification_copy_remove",
+                "verification_copy_save",
+                "verification_grant_preview",
+                "verification_grant_remove",
+                "verification_grant_save",
+                "verification_pending_settings_save",
+                "verification_pending_summary",
+                "verification_places_city_detail",
+                "verification_places_city_search",
+                "verification_policy_save_draft",
+                "verification_simulate",
+                "verification_user_detail"
+            ]
         },
         "verification_forced": {
             "contract_version": 1,

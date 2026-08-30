@@ -26,23 +26,22 @@ import {
 import { verificationAdminMe } from "../lib/verificationAdmin.ts";
 
 /**
- * T-470's production-generated wire corpus (ACCEPTED Core tip
- * `0a552d0d4425b619c7c7c613925ec188b76474f5`, `tests/fixtures/verification_forced_wire/`),
+ * T-470's production-generated wire corpus (released Core tip
+ * `3fcde8bd929a4ba0f71dc33d9fd501e8eb97ce92`, `tests/fixtures/verification_forced_wire/`),
  * copied byte-identically. The production decoders must accept every Webadmin body exactly as
- * Core publishes it and classify every refusal by the manifest's closed status maps — this is
- * the cross-lane binding `FORCED_VERIFICATION_CONTRACT_READY` depends on.
+ * Core publishes it and classify every refusal by the manifest's closed status maps.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/verification_forced_wire/", import.meta.url);
-// Final binding to the tip codex-api ACCEPTED in T-470b round 3 (2026-08-30 01:00Z; behaviour commit
-// 5b391e42… gates the moderator `edit_user` branch of the exempt profile-editor route before any target
-// read): source commit 5b391e42…, manifest d2b10985…; fixture set 5c93ba15… and generator 60c911e8…
-// unchanged, route table still 129 exempt / 35 public. The 36 payload bodies are byte-identical to the
-// previous tip 8a1e2478; only manifest provenance moved.
+// T-484: re-pinned to the released Core tip that advertises the Verification console (T-483, D-060;
+// behaviour commit ba639d4…). Two of the 36 bodies move — `webadmin-admin-me-{admin,viewer}` now carry
+// `verification.contract_ready: true` and the role's action list — so the fixture-set and manifest hashes
+// move with them. Every other body, the generator, the status maps and the 129 exempt / 35 public route
+// table are unchanged; a leaf-level diff of both files showed no change outside `contract_ready`/`actions`.
 const FIXTURE_CONTRACT = "forced-verification-waiting-room-v1.5";
-const FIXTURE_SOURCE_COMMIT = "e25b89c2d757d7cda6016332ff66509af045389c";
-const FIXTURE_SET_SHA256 = "5e524966b1f4c53ca0767b2c8239a1d8a69ed04a196d0a83023e2a280b71bcc9";
+const FIXTURE_SOURCE_COMMIT = "ba639d4d28edd104222fadc8d9da44500bbbe280";
+const FIXTURE_SET_SHA256 = "59e521560ecdd90a6efd836a9ebe055aee4dc731b2b4ddb4ee3d058552792c0e";
 const FIXTURE_GENERATOR_SHA256 = "c3961b1731aee55f3f7dcb94d87da24839f2033fa9a8a669520a6ef1a586e055";
-const FIXTURE_MANIFEST_SHA256 = "743cd698dd00a59eb7a028c34422be259fafef548a7bfc4eeeccf75ca432a6ca";
+const FIXTURE_MANIFEST_SHA256 = "b0251c8dc726db2ca4ce4207a2ae8c53ead183256d7884e52bcd6c26987bf42d";
 const FIXTURE_COMPATIBILITY_SHA256 = "6ea71b641912153c5c0e6368dd426d7e44ef84a212395a1672139ca8d9681705";
 const FIXTURE_BODY_COUNT = 36;
 
@@ -260,16 +259,44 @@ test("every published Webadmin body decodes through the production decoders with
   }
 });
 
-test("the admin_me fixtures bind the v1.2 capability projection beside an untouched verification block", async () => {
+test("the admin_me fixtures bind the v1.2 capability projection beside the released verification block", async () => {
   const admin = (await fixture("webadmin-admin-me-admin.json")) as Json;
   const viewer = (await fixture("webadmin-admin-me-viewer.json")) as Json;
+  const legacyActions: Record<string, string[]> = {
+    // T-483 released the Verification console contract (D-060), so the legacy
+    // block now advertises the caller's own actions instead of an empty list.
+    admin: [
+      "verification_badge_remove",
+      "verification_badge_upload",
+      "verification_console",
+      "verification_copy_remove",
+      "verification_copy_save",
+      "verification_grant_preview",
+      "verification_grant_remove",
+      "verification_grant_save",
+      "verification_pending_settings_save",
+      "verification_pending_summary",
+      "verification_places_city_detail",
+      "verification_places_city_search",
+      "verification_policy_save_draft",
+      "verification_simulate",
+      "verification_user_detail",
+    ],
+    viewer: ["verification_console", "verification_pending_summary", "verification_simulate", "verification_user_detail"],
+  };
   for (const body of [admin, viewer]) {
     assert.deepEqual(Object.keys(body).sort(), ["can_send", "data", "message", "status", "status_code", "success"]);
     assert.deepEqual(Object.keys(body.data).sort(), ["verification", "verification_forced"]);
     const legacy = verificationAdminMe(body.data.verification);
-    assert.ok(legacy, "the closed admin_me.verification block still parses — no forced action name leaked into it");
-    assert.deepEqual(legacy.actions, []);
-    assert.equal(legacy.contract_ready, false);
+    assert.ok(legacy, "the admin_me.verification block still parses under its own closed reader");
+    assert.equal(legacy.contract_ready, true);
+    assert.deepEqual(legacy.actions, legacyActions[legacy.principal.role]);
+    for (const action of legacy.actions) {
+      assert.ok(
+        !action.startsWith("verification_forced"),
+        `no forced action name leaks into the legacy block (${action})`,
+      );
+    }
   }
   const adminBlock = parseForcedVerificationAdminMe(admin.data.verification_forced);
   assert.deepEqual(adminBlock, { contract_version: 1, contract_ready: true, actions: [...FORCED_VERIFICATION_ACTIONS] });
