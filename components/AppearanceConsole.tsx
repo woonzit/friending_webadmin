@@ -43,8 +43,8 @@ type UncertainWrite =
   | { kind: "delete"; id: string };
 
 /**
- * The Appearance & placements console. The page wrapper gates it behind the
- * readiness switch; this component owns the list, the editor and the
+ * The Appearance & placements console. The dashboard layout gates the page on
+ * the session and the role; this component owns the list, the editor and the
  * test-location preview, and never computes a resolution the browser would
  * present as Core's answer.
  */

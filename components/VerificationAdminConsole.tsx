@@ -179,7 +179,7 @@ function badgeSymbol(slot: VerificationBadgeSlot): string {
 
 export default function VerificationAdminConsole({ initialTab, forced }: { initialTab: VerificationTabKey; forced: ForcedVerificationAccess }) {
   const t = useTranslations("verificationAdmin");
-  /** The D-053 tab exists only when the release switch is on AND Core lists the console action for this operator. */
+  /** The D-053 tab exists only when Core lists the console action for this operator. */
   const tabs = useMemo(() => VERIFICATION_TAB_KEYS.filter((key) => key !== "forced" || forced.visible), [forced.visible]);
   const locale = useLocale() === "hu" ? "hu" : "en";
   const [tab, setTab] = useState<VerificationTabKey>(initialTab);

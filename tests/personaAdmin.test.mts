@@ -720,6 +720,7 @@ test("page, navigation, runtime readiness, confirmations, and same-origin calls 
   assert.match(component, /adminCall\("persona-member", \{ uid: String\(uid\) \}\)/);
   assert.doesNotMatch(component, /adminCall\("user_detail"/);
   assert.match(memberRoute, /requireAdminWriter\(\)/);
+  assert.match(component, /!ADMIN_GRANTED_VERIFICATION_CONTRACT_READY \|\| action === "force_verify"/);
   assert.match(memberRoute, /\["apply_fake", "revoke_fake", "force_verify"\]\.some/);
   assert.match(memberRoute, /isTrustedAdminRequest\(request\.headers\)/);
   assert.match(memberRoute, /coreCall\("user_detail"/);

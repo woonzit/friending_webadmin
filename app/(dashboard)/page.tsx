@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";

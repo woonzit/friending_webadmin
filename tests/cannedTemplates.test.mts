@@ -7,7 +7,6 @@ import {
   isAdminActionAllowed,
   isAdminActionAuthorized,
 } from "../lib/adminActions.ts";
-
 import {
   CANNED_TEMPLATE_ACTIONS,
   CANNED_TEMPLATE_CAPABILITIES,

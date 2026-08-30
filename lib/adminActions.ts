@@ -51,21 +51,21 @@ const PRODUCT_POPUP_ADMIN_ACTIONS = ["admin_get_user_popup", "admin_set_user_pop
 
 const CANNED_TEMPLATE_ADMIN_ACTIONS = ["list_canned", "save_canned", "delete_canned"] as const;
 
-/** Strict v1 outbound actions stay absent unless the reviewed provider release is active. */
+/** Strict v1 outbound actions; Core rechecks its own history/send capability on every call. */
 const ACTIVE_OUTBOUND_MESSAGING_ACTIONS = OUTBOUND_MESSAGING_ACTIONS;
 
-/** Receipt-era Persona routes stay absent until the reviewed Core train is released. */
+/** Receipt-era Persona routes; Core authors the exact per-action capability block. */
 const ACTIVE_PERSONA_ADMIN_ACTIONS = PERSONA_ADMIN_ACTIONS;
 
-/** Released verification actions share one explicit rollback switch and Core capability recheck. */
+/** Released verification actions; each one is rechecked against Core's capability projection. */
 const ACTIVE_VERIFICATION_ADMIN_ACTIONS = VERIFICATION_ADMIN_ACTIONS;
 
-/** Dormant T-219 actions use their own release switch and Core capability block. */
+/** Dormant T-219 actions: the provider is unreleased, so they stay behind their own switch. */
 const ACTIVE_ADMIN_GRANTED_VERIFICATION_ACTIONS = ADMIN_GRANTED_VERIFICATION_CONTRACT_READY
   ? ADMIN_GRANTED_VERIFICATION_ACTIONS
   : [] as const;
 
-/** Dormant T-471 actions (D-053 forced verification) use their own release switch and Core `admin_me.verification_forced` block. */
+/** Released T-471 actions (D-053 forced verification), gated by Core's `admin_me.verification_forced` block. */
 const ACTIVE_FORCED_VERIFICATION_ACTIONS = FORCED_VERIFICATION_ACTIONS;
 
 /** Dormant T-215 actions stay absent until the reviewed T-121 provider release. */
@@ -83,7 +83,7 @@ const ACTIVE_FEATURE_SWITCHES_ACTIONS = FEATURE_SWITCHES_CONTRACT_READY
   ? FEATURE_SWITCHES_ACTIONS
   : [] as const;
 
-/** Dormant D-052 appearance-rule actions stay absent until the Core T-467 provider is live. */
+/** Released D-052 appearance-rule actions; Core rechecks its editor gate on every mutation. */
 const ACTIVE_APPEARANCE_ACTIONS = APPEARANCE_ACTIONS;
 
 export const ADMIN_ACTIONS = [
@@ -379,10 +379,10 @@ export const ADMIN_ACTION_ACCESS = {
 
   // Core authors the narrower history/send capabilities on every action.
   // These rows add only the independent global viewer/editor floor.
-    outbound_message_preview: "write",
-    send_message: "write",
-    user_history: "read",
-    user_history_detail: "read",
+  outbound_message_preview: "write",
+  send_message: "write",
+  user_history: "read",
+  user_history_detail: "read",
 
   // The list is safe for every active administrator. A browser-side decision
   // also requires the global editor role; Core then rechecks its narrower
@@ -391,41 +391,42 @@ export const ADMIN_ACTION_ACCESS = {
   moderation_report_action: "write",
 
   // Persona has its own exact per-action capability block, rechecked by the
-  // bridge. These rows add the independent global viewer/editor floor only
-  // while the provider release switch is enabled.
-    persona_start_get_config_admin: "read",
-    persona_start_update_config: "write",
-    admin_force_persona_verify: "write",
-    admin_apply_fake_persona: "write",
-    admin_revoke_fake_persona: "write",
+  // bridge. These rows add the independent global viewer/editor floor.
+  persona_start_get_config_admin: "read",
+  persona_start_update_config: "write",
+  admin_force_persona_verify: "write",
+  admin_apply_fake_persona: "write",
+  admin_revoke_fake_persona: "write",
 
-    verification_console: "read",
-    verification_policy_save_draft: "write",
-    verification_policy_impact_preview: "owner",
-    verification_policy_apply: "owner",
-    verification_copy_save: "write",
-    verification_copy_remove: "write",
-    verification_pending_settings_save: "write",
-    verification_badge_upload: "write",
-    verification_badge_remove: "write",
-    verification_places_city_search: "write",
-    verification_places_city_detail: "write",
-    verification_simulate: "read",
-    verification_pending_summary: "read",
-    verification_user_detail: "read",
-    verification_grant_preview: "write",
-    verification_grant_save: "write",
-    verification_grant_remove: "write",
+  // Core authors the exact per-action verification capability projection and
+  // rechecks it on every call; these rows add the global viewer/editor floor.
+  verification_console: "read",
+  verification_policy_save_draft: "write",
+  verification_policy_impact_preview: "owner",
+  verification_policy_apply: "owner",
+  verification_copy_save: "write",
+  verification_copy_remove: "write",
+  verification_pending_settings_save: "write",
+  verification_badge_upload: "write",
+  verification_badge_remove: "write",
+  verification_places_city_search: "write",
+  verification_places_city_detail: "write",
+  verification_simulate: "read",
+  verification_pending_summary: "read",
+  verification_user_detail: "read",
+  verification_grant_preview: "write",
+  verification_grant_save: "write",
+  verification_grant_remove: "write",
 
   ...(ADMIN_GRANTED_VERIFICATION_CONTRACT_READY ? {
-    verification_grant: "write" as const,
-    verification_revoke: "write" as const,
+  verification_grant: "write" as const,
+  verification_revoke: "write" as const,
   } : {}),
 
   /** Contract v1 §4: the console and the counts-only impact preview are reads; the revisioned save is an editor write. */
-    verification_forced_console: "read",
-    verification_forced_save: "write",
-    verification_forced_impact_preview: "read",
+  verification_forced_console: "read",
+  verification_forced_save: "write",
+  verification_forced_impact_preview: "read",
 
   // Core authors the exact per-action capability projection. These rows add
   // the independent global viewer/editor floor only after provider release.
@@ -610,7 +611,7 @@ const ADMIN_ACTION_BODY_LIMIT: Readonly<Record<string, number>> = {
   verification_forced_save: FORCED_VERIFICATION_BODY_LIMIT_BYTES,
   verification_forced_impact_preview: FORCED_VERIFICATION_BODY_LIMIT_BYTES,
   // A1: this is the effective guard on Apache 2.4.52 and therefore stays
-  // pinned independently of the Verification bridge rollback switch.
+  // pinned independently of the Verification capability projection.
   verification_badge_upload: MAX_VERIFICATION_BADGE_FORM_BYTES,
 };
 

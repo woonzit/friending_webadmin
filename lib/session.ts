@@ -37,7 +37,7 @@ export type AdminIdentity = {
   verificationConsoleReady: boolean;
   audienceVisibilityConsoleReady: boolean;
   profileTextModerationConsoleReady: boolean;
-  /** D-053 "Forced & waiting room" tab, from Core's `admin_me.verification_forced` block and the local release switch. */
+  /** D-053 "Forced & waiting room" tab, from Core's `admin_me.verification_forced` block. */
   forcedVerification: ForcedVerificationAccess;
 };
 
