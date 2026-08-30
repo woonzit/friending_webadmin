@@ -317,7 +317,12 @@
                 "footer_size": "12",
                 "qr_enabled": "true",
                 "qr_bg_color": "#000000",
-                "qr_icon_color": "#FFFFFF"
+                "qr_icon_color": "#FFFFFF",
+                "description_hidden": "false",
+                "text_gap_value": "24",
+                "text_gap_unit": "pt",
+                "footer_min_height_value": "0",
+                "footer_min_height_unit": "pt"
             }
         }
     },

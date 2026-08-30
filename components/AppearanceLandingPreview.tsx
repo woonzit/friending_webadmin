@@ -3,6 +3,7 @@
 import { Fragment } from "react";
 import {
   APPEARANCE_DEFAULT_LANDING,
+  appearanceLandingLayoutPixels,
   appearanceLandingPreviewDraft,
   isAppearanceHttpsUrl,
   resolveAppearanceLandingFields,
@@ -85,6 +86,10 @@ export default function AppearanceLandingPreview({
   const showPhone = authMethods === "both" || authMethods === "phone";
   const showEmail = authMethods === "both" || authMethods === "email";
   const buttonRadius = number(fields.button_corner_radius, 28);
+  const layout = appearanceLandingLayoutPixels(fields);
+  const showTitleText = content.titleType === "text" && content.titleText !== "";
+  const showDescription = !content.descriptionHidden && content.description !== "";
+  const showTextBlock = showTitleText || showDescription;
   const appleStyle = fields.button_apple_style === "black" || fields.button_apple_style === "white_outline"
     ? fields.button_apple_style
     : "white";
@@ -147,74 +152,83 @@ export default function AppearanceLandingPreview({
       )}
 
       <div className="appearance-landing-composition-content">
-        {content.titleType === "text" && content.titleText !== "" && (
-          <strong
-            className={`appearance-landing-composition-title ${fontClass(fields.title_font)}`}
-            style={{ color: fields.title_color, fontSize: `${number(fields.title_size, 44)}px`, textAlign: aligned(fields.title_align) }}
-          >
-            {content.titleText}
-          </strong>
-        )}
-        {content.description !== "" && (
-          <p
-            className={`appearance-landing-composition-description ${fontClass(fields.description_font)}`}
-            style={{
-              backgroundColor: rgba(fields.description_backdrop_color, fields.description_backdrop_alpha),
-              color: fields.description_color,
-              fontSize: `${number(fields.description_size, 17)}px`,
-              textAlign: aligned(fields.description_align),
-            }}
-          >
-            {content.description}
-          </p>
-        )}
+        <div className="appearance-landing-composition-body">
+          {showTextBlock && (
+            <div className="appearance-landing-composition-text-block" style={{ marginBottom: `${layout.textGap}px` }}>
+              {showTitleText && (
+                <strong
+                  className={`appearance-landing-composition-title ${fontClass(fields.title_font)}`}
+                  style={{ color: fields.title_color, fontSize: `${number(fields.title_size, 44)}px`, textAlign: aligned(fields.title_align) }}
+                >
+                  {content.titleText}
+                </strong>
+              )}
+              {showDescription && (
+                <p
+                  className={`appearance-landing-composition-description ${fontClass(fields.description_font)}`}
+                  style={{
+                    backgroundColor: rgba(fields.description_backdrop_color, fields.description_backdrop_alpha),
+                    color: fields.description_color,
+                    fontSize: `${number(fields.description_size, 17)}px`,
+                    textAlign: aligned(fields.description_align),
+                  }}
+                >
+                  {content.description}
+                </p>
+              )}
+            </div>
+          )}
 
-        <div className="appearance-landing-composition-actions">
-          {showPhone && (
+          <div className="appearance-landing-composition-actions">
+            {showPhone && (
+              <span
+                className={`appearance-landing-method-button ${fontClass(fields.button_phone_font)}`}
+                style={{
+                  backgroundColor: fields.button_phone_bg,
+                  borderRadius: `${buttonRadius}px`,
+                  color: fields.button_phone_text_color,
+                  fontSize: `${number(fields.button_phone_size, 17)}px`,
+                }}
+              >
+                {content.phoneLabel}
+              </span>
+            )}
+            {showPhone && showEmail && <span className="appearance-landing-divider">{labels.divider}</span>}
+            {showEmail && (
+              <span
+                className={`appearance-landing-method-button ${fontClass(fields.button_email_font)}`}
+                style={{
+                  backgroundColor: fields.button_email_bg,
+                  borderRadius: `${buttonRadius}px`,
+                  color: fields.button_email_text_color,
+                  fontSize: `${number(fields.button_email_size, 17)}px`,
+                }}
+              >
+                {content.emailLabel}
+              </span>
+            )}
             <span
-              className={`appearance-landing-method-button ${fontClass(fields.button_phone_font)}`}
-              style={{
-                backgroundColor: fields.button_phone_bg,
-                borderRadius: `${buttonRadius}px`,
-                color: fields.button_phone_text_color,
-                fontSize: `${number(fields.button_phone_size, 17)}px`,
-              }}
+              className={`appearance-landing-apple-button is-${appleStyle}`}
+              style={{ borderRadius: `${buttonRadius}px` }}
             >
-              {content.phoneLabel}
+              <b aria-hidden="true"></b> {labels.apple}
             </span>
-          )}
-          {showPhone && showEmail && <span className="appearance-landing-divider">{labels.divider}</span>}
-          {showEmail && (
-            <span
-              className={`appearance-landing-method-button ${fontClass(fields.button_email_font)}`}
-              style={{
-                backgroundColor: fields.button_email_bg,
-                borderRadius: `${buttonRadius}px`,
-                color: fields.button_email_text_color,
-                fontSize: `${number(fields.button_email_size, 17)}px`,
-              }}
-            >
-              {content.emailLabel}
-            </span>
-          )}
-          <span
-            className={`appearance-landing-apple-button is-${appleStyle}`}
-            style={{ borderRadius: `${buttonRadius}px` }}
-          >
-            <b aria-hidden="true"></b> {labels.apple}
+          </div>
+        </div>
+
+        <div
+          className={`appearance-landing-composition-footer ${fontClass(fields.footer_font)}`}
+          style={{
+            backgroundColor: rgba(fields.footer_bg_color, fields.footer_bg_alpha),
+            color: fields.footer_text_color,
+            fontSize: `${number(fields.footer_size, 12)}px`,
+            minHeight: `${layout.footerMinHeight}px`,
+          }}
+        >
+          <span className="appearance-landing-composition-footer-copy">
+            <FooterText text={content.footerText} />
           </span>
         </div>
-      </div>
-
-      <div
-        className={`appearance-landing-composition-footer ${fontClass(fields.footer_font)}`}
-        style={{
-          backgroundColor: rgba(fields.footer_bg_color, fields.footer_bg_alpha),
-          color: fields.footer_text_color,
-          fontSize: `${number(fields.footer_size, 12)}px`,
-        }}
-      >
-        <FooterText text={content.footerText} />
       </div>
       <div className="appearance-landing-safe-area appearance-landing-safe-area-bottom" aria-hidden="true"><i /></div>
     </div>

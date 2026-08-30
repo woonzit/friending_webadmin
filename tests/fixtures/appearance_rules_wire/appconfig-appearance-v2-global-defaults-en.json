@@ -31,6 +31,7 @@
                 },
                 "description": {
                     "text": "Meet people near you — and wherever you're headed next.",
+                    "hidden": false,
                     "style": {
                         "font": "proxima_regular",
                         "size": 17,
@@ -40,6 +41,16 @@
                     "backdrop": {
                         "color": "#000000",
                         "alpha": 0
+                    }
+                },
+                "layout": {
+                    "text_gap": {
+                        "value": 24,
+                        "unit": "pt"
+                    },
+                    "footer_min_height": {
+                        "value": 0,
+                        "unit": "pt"
                     }
                 },
                 "buttons": {

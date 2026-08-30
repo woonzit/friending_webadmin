@@ -106,6 +106,13 @@ export type AppearanceLandingAlign = (typeof APPEARANCE_LANDING_ALIGNS)[number];
 export const APPEARANCE_LANDING_APPLE_STYLES = ["white", "white_outline", "black"] as const;
 export type AppearanceLandingAppleStyle = (typeof APPEARANCE_LANDING_APPLE_STYLES)[number];
 
+/** D-061c / contract v1.7: closed units for vertical landing layout measurements. */
+export const APPEARANCE_LANDING_LAYOUT_UNITS = ["pt", "percent"] as const;
+export type AppearanceLandingLayoutUnit = (typeof APPEARANCE_LANDING_LAYOUT_UNITS)[number];
+
+/** The contract's fixed phone-frame height; percentage layout values use this axis. */
+export const APPEARANCE_LANDING_PREVIEW_HEIGHT = 844;
+
 /**
  * D-061 contract §1. The list is closed on both the stored-rule and browser
  * boundaries; every value remains a string and an empty editor value means
@@ -151,6 +158,13 @@ export const APPEARANCE_LANDING_KEYS = [
   "qr_enabled",
   "qr_bg_color",
   "qr_icon_color",
+  // Amendments v1.6/v1.7 append their five flat keys to Core's closed
+  // LANDING_KEYS order. Preserve that provider order for flat wire parity.
+  "description_hidden",
+  "text_gap_value",
+  "text_gap_unit",
+  "footer_min_height_value",
+  "footer_min_height_unit",
 ] as const;
 export type AppearanceLandingKey = (typeof APPEARANCE_LANDING_KEYS)[number];
 /** Wire form: only the keys a rule sets are present; an absent key inherits. */
@@ -186,6 +200,7 @@ const LANDING_LIMITS: Record<AppearanceLandingKey, number> = {
   description_align: 6,
   description_backdrop_color: 7,
   description_backdrop_alpha: 4,
+  description_hidden: 5,
   button_corner_radius: 2,
   button_phone_label_en: 40,
   button_phone_label_hu: 40,
@@ -207,6 +222,10 @@ const LANDING_LIMITS: Record<AppearanceLandingKey, number> = {
   footer_text_color: 7,
   footer_font: 24,
   footer_size: 2,
+  text_gap_value: 3,
+  text_gap_unit: 7,
+  footer_min_height_value: 3,
+  footer_min_height_unit: 7,
   qr_enabled: 5,
   qr_bg_color: 7,
   qr_icon_color: 7,
@@ -263,6 +282,11 @@ export const APPEARANCE_DEFAULT_LANDING: AppearanceLandingDraft = {
   qr_enabled: "true",
   qr_bg_color: "#000000",
   qr_icon_color: "#FFFFFF",
+  description_hidden: "false",
+  text_gap_value: "24",
+  text_gap_unit: "pt",
+  footer_min_height_value: "0",
+  footer_min_height_unit: "pt",
 };
 
 /**
@@ -405,8 +429,13 @@ export type AppearancePreviewLandingV2 = {
   };
   description: {
     text: string;
+    hidden: boolean;
     style: { font: AppearanceLandingFont; size: number; color: string; align: AppearanceLandingAlign };
     backdrop: { color: string; alpha: number };
+  };
+  layout: {
+    text_gap: { value: number; unit: AppearanceLandingLayoutUnit };
+    footer_min_height: { value: number; unit: AppearanceLandingLayoutUnit };
   };
   buttons: {
     corner_radius: number;
@@ -792,6 +821,11 @@ const APPEARANCE_LANDING_ALIGN_KEYS = [
   "description_align",
 ] as const satisfies readonly AppearanceLandingKey[];
 
+const APPEARANCE_LANDING_LAYOUT_UNIT_KEYS = [
+  "text_gap_unit",
+  "footer_min_height_unit",
+] as const satisfies readonly AppearanceLandingKey[];
+
 const APPEARANCE_LANDING_INTEGER_BOUNDS: Partial<Record<AppearanceLandingKey, readonly [number, number]>> = {
   title_size: [12, 72],
   title_image_width_percent: [20, 100],
@@ -801,9 +835,11 @@ const APPEARANCE_LANDING_INTEGER_BOUNDS: Partial<Record<AppearanceLandingKey, re
   button_phone_size: [12, 24],
   button_email_size: [12, 24],
   footer_size: [10, 18],
+  text_gap_value: [0, 200],
+  footer_min_height_value: [0, 300],
 };
 
-/** Fields whose draft values can reach `AppearanceLandingPreview` inline styles. */
+/** Fields whose draft values affect `AppearanceLandingPreview` rendering or inline styles. */
 export const APPEARANCE_LANDING_PREVIEW_STYLE_KEYS = [
   ...APPEARANCE_LANDING_COLOR_KEYS,
   ...APPEARANCE_LANDING_ALPHA_KEYS,
@@ -818,6 +854,11 @@ export const APPEARANCE_LANDING_PREVIEW_STYLE_KEYS = [
   "button_email_size",
   "footer_size",
   "button_apple_style",
+  "description_hidden",
+  "text_gap_value",
+  "text_gap_unit",
+  "footer_min_height_value",
+  "footer_min_height_unit",
 ] as const satisfies readonly AppearanceLandingKey[];
 
 const LANDING_ALPHA = /^(?:0\.\d{2}|1\.00)$/;
@@ -865,8 +906,11 @@ function appearanceLandingFieldValid(key: AppearanceLandingKey, value: string): 
   if ((APPEARANCE_LANDING_ALIGN_KEYS as readonly string[]).includes(key)) return (APPEARANCE_LANDING_ALIGNS as readonly string[]).includes(value);
   const integerBounds = APPEARANCE_LANDING_INTEGER_BOUNDS[key];
   if (integerBounds) return parseAppearanceLandingInteger(value, integerBounds[0], integerBounds[1]) !== null;
+  if ((APPEARANCE_LANDING_LAYOUT_UNIT_KEYS as readonly string[]).includes(key)) {
+    return (APPEARANCE_LANDING_LAYOUT_UNITS as readonly string[]).includes(value);
+  }
   if (key === "button_apple_style") return (APPEARANCE_LANDING_APPLE_STYLES as readonly string[]).includes(value);
-  if (key === "qr_enabled") return value === "true" || value === "false";
+  if (key === "description_hidden" || key === "qr_enabled") return value === "true" || value === "false";
   if (key === "footer_text_en" || key === "footer_text_hu") return appearanceFooterTextHasExactTags(value);
   return true;
 }
@@ -1183,6 +1227,12 @@ function previewLandingAlign(value: unknown): AppearanceLandingAlign | null {
     : null;
 }
 
+function previewLandingLayoutUnit(value: unknown): AppearanceLandingLayoutUnit | null {
+  return typeof value === "string" && (APPEARANCE_LANDING_LAYOUT_UNITS as readonly string[]).includes(value)
+    ? value as AppearanceLandingLayoutUnit
+    : null;
+}
+
 function parsePreviewLandingV1(source: Record<string, unknown>): AppearancePreviewLanding | null {
   if (!exactKeys(source, ["background", "title", "description"])) return null;
   const background = record(source.background);
@@ -1215,16 +1265,18 @@ function parsePreviewLandingV1(source: Record<string, unknown>): AppearancePrevi
 }
 
 function parsePreviewLandingV2(source: Record<string, unknown>): AppearancePreviewLanding | null {
-  if (!exactKeys(source, ["background", "title", "description", "buttons", "footer", "qr"])) return null;
+  if (!exactKeys(source, ["background", "title", "description", "layout", "buttons", "footer", "qr"])) return null;
   const background = record(source.background);
   const title = record(source.title);
   const description = record(source.description);
+  const layout = record(source.layout);
   const buttons = record(source.buttons);
   const footer = record(source.footer);
   const qr = record(source.qr);
   if (!background || !exactKeys(background, ["type", "url", "poster_url", "overlay"])
     || !title || !exactKeys(title, ["type", "text", "image_url", "image", "style"])
-    || !description || !exactKeys(description, ["text", "style", "backdrop"])
+    || !description || !exactKeys(description, ["text", "hidden", "style", "backdrop"])
+    || !layout || !exactKeys(layout, ["text_gap", "footer_min_height"])
     || !buttons || !exactKeys(buttons, ["corner_radius", "phone", "email", "apple"])
     || !footer || !exactKeys(footer, ["text", "background", "style"])
     || !qr || !exactKeys(qr, ["enabled", "background", "icon_color"])) return null;
@@ -1239,6 +1291,8 @@ function parsePreviewLandingV2(source: Record<string, unknown>): AppearancePrevi
   const apple = record(buttons.apple);
   const footerBackground = record(footer.background);
   const footerStyle = record(footer.style);
+  const textGap = record(layout.text_gap);
+  const footerMinHeight = record(layout.footer_min_height);
   if (!overlay || !exactKeys(overlay, ["color", "alpha"])
     || !titleImageLayout || !exactKeys(titleImageLayout, ["width_percent", "offset_percent"])
     || !titleStyle || !exactKeys(titleStyle, ["font", "size", "color", "align"])
@@ -1248,7 +1302,9 @@ function parsePreviewLandingV2(source: Record<string, unknown>): AppearancePrevi
     || !email || !exactKeys(email, ["label", "background", "text_color", "font", "size"])
     || !apple || !exactKeys(apple, ["style"])
     || !footerBackground || !exactKeys(footerBackground, ["color", "alpha"])
-    || !footerStyle || !exactKeys(footerStyle, ["font", "size", "color"])) return null;
+    || !footerStyle || !exactKeys(footerStyle, ["font", "size", "color"])
+    || !textGap || !exactKeys(textGap, ["value", "unit"])
+    || !footerMinHeight || !exactKeys(footerMinHeight, ["value", "unit"])) return null;
 
   const backgroundType = background.type === "image" || background.type === "video" ? background.type : null;
   const backgroundUrl = webUrl(background.url, true);
@@ -1265,6 +1321,7 @@ function parsePreviewLandingV2(source: Record<string, unknown>): AppearancePrevi
   const titleColor = previewLandingColor(titleStyle.color);
   const titleAlign = previewLandingAlign(titleStyle.align);
   const descriptionText = boundedText(description.text, 1, LANDING_LIMITS.description_en);
+  const descriptionHidden = boolean(description.hidden);
   const descriptionFont = previewLandingFont(descriptionStyle.font);
   const descriptionSize = integer(descriptionStyle.size, 10, 40);
   const descriptionColor = previewLandingColor(descriptionStyle.color);
@@ -1291,6 +1348,10 @@ function parsePreviewLandingV2(source: Record<string, unknown>): AppearancePrevi
   const footerFont = previewLandingFont(footerStyle.font);
   const footerSize = integer(footerStyle.size, 10, 18);
   const footerTextColor = previewLandingColor(footerStyle.color);
+  const textGapValue = integer(textGap.value, 0, 200);
+  const textGapUnit = previewLandingLayoutUnit(textGap.unit);
+  const footerMinHeightValue = integer(footerMinHeight.value, 0, 300);
+  const footerMinHeightUnit = previewLandingLayoutUnit(footerMinHeight.unit);
   const qrEnabled = boolean(qr.enabled);
   const qrBackground = previewLandingColor(qr.background);
   const qrIconColor = previewLandingColor(qr.icon_color);
@@ -1298,13 +1359,15 @@ function parsePreviewLandingV2(source: Record<string, unknown>): AppearancePrevi
   if (backgroundType === null || backgroundUrl === null || posterUrl === null || overlayColor === null || overlayAlpha === null
     || titleType === null || titleText === null || titleImageUrl === null || titleWidth === null || titleOffset === null
     || titleFont === null || titleSize === null || titleColor === null || titleAlign === null
-    || descriptionText === null || descriptionFont === null || descriptionSize === null || descriptionColor === null
+    || descriptionText === null || descriptionHidden === null || descriptionFont === null || descriptionSize === null || descriptionColor === null
     || descriptionAlign === null || backdropColor === null || backdropAlpha === null || cornerRadius === null
     || phoneLabel === null || phoneBackground === null || phoneTextColor === null || phoneFont === null || phoneSize === null
     || emailLabel === null || emailBackground === null || emailTextColor === null || emailFont === null || emailSize === null
     || appleStyle === null || footerText === null || !appearanceFooterTextHasExactTags(footerText)
     || footerBackgroundColor === null || footerBackgroundAlpha === null || footerFont === null || footerSize === null
-    || footerTextColor === null || qrEnabled === null || qrBackground === null || qrIconColor === null) return null;
+    || footerTextColor === null || textGapValue === null || textGapUnit === null
+    || footerMinHeightValue === null || footerMinHeightUnit === null
+    || qrEnabled === null || qrBackground === null || qrIconColor === null) return null;
 
   if (backgroundType === "image" && posterUrl !== "") return null;
   if (backgroundType === "video" && backgroundUrl === "") return null;
@@ -1323,8 +1386,13 @@ function parsePreviewLandingV2(source: Record<string, unknown>): AppearancePrevi
     },
     description: {
       text: descriptionText,
+      hidden: descriptionHidden,
       style: { font: descriptionFont, size: descriptionSize, color: descriptionColor, align: descriptionAlign },
       backdrop: { color: backdropColor, alpha: backdropAlpha },
+    },
+    layout: {
+      text_gap: { value: textGapValue, unit: textGapUnit },
+      footer_min_height: { value: footerMinHeightValue, unit: footerMinHeightUnit },
     },
     buttons: {
       corner_radius: cornerRadius,
@@ -1451,6 +1519,8 @@ function parsePreviewLandingFlatSources(
     ["overlay_color", "overlay_alpha"],
     ["description_backdrop_color", "description_backdrop_alpha"],
     ["footer_bg_color", "footer_bg_alpha"],
+    ["text_gap_value", "text_gap_unit"],
+    ["footer_min_height_value", "footer_min_height_unit"],
   ] as const) {
     const leftSet = landingFlat[left] !== "";
     const rightSet = landingFlat[right] !== "";
@@ -1580,6 +1650,11 @@ export function appearancePreviewLandingFields(
     qr_enabled: v2.qr.enabled ? "true" : "false",
     qr_bg_color: v2.qr.background,
     qr_icon_color: v2.qr.icon_color,
+    description_hidden: v2.description.hidden ? "true" : "false",
+    text_gap_value: String(v2.layout.text_gap.value),
+    text_gap_unit: v2.layout.text_gap.unit,
+    footer_min_height_value: String(v2.layout.footer_min_height.value),
+    footer_min_height_unit: v2.layout.footer_min_height.unit,
   };
 }
 
@@ -1676,6 +1751,7 @@ export type ResolvedAppearanceLanding = {
   titleText: string;
   titleImageUrl: string;
   description: string;
+  descriptionHidden: boolean;
   footerText: string;
   phoneLabel: string;
   emailLabel: string;
@@ -1747,10 +1823,45 @@ export function resolveAppearanceLanding(
     titleText: landingText(chain, defaults, "title_text", language),
     titleImageUrl: effective.title_image_url,
     description: landingText(chain, defaults, "description", language),
+    descriptionHidden: effective.description_hidden === "true",
     footerText: landingText(chain, defaults, "footer_text", language),
     phoneLabel: landingText(chain, defaults, "button_phone_label", language),
     emailLabel: landingText(chain, defaults, "button_email_label", language),
     effective,
+  };
+}
+
+export type AppearanceLandingPreviewLayout = {
+  textGap: number;
+  footerMinHeight: number;
+};
+
+/**
+ * Contract v1.7 preview maths. Points map one-to-one to CSS pixels inside the
+ * exact 390×844 frame; percentages use the screen-height axis.
+ */
+export function appearanceLandingLayoutPixels(
+  fields: AppearanceLandingDraft,
+  screenHeight = APPEARANCE_LANDING_PREVIEW_HEIGHT,
+): AppearanceLandingPreviewLayout {
+  const height = Number.isFinite(screenHeight) && screenHeight >= 0
+    ? screenHeight
+    : APPEARANCE_LANDING_PREVIEW_HEIGHT;
+  const pixels = (
+    valueKey: "text_gap_value" | "footer_min_height_value",
+    unitKey: "text_gap_unit" | "footer_min_height_unit",
+    maximum: number,
+    fallbackValue: number,
+  ) => {
+    const value = parseAppearanceLandingInteger(fields[valueKey], 0, maximum) ?? fallbackValue;
+    const unit = (APPEARANCE_LANDING_LAYOUT_UNITS as readonly string[]).includes(fields[unitKey])
+      ? fields[unitKey] as AppearanceLandingLayoutUnit
+      : "pt";
+    return unit === "percent" ? value * height / 100 : value;
+  };
+  return {
+    textGap: pixels("text_gap_value", "text_gap_unit", 200, 24),
+    footerMinHeight: pixels("footer_min_height_value", "footer_min_height_unit", 300, 0),
   };
 }
 
@@ -1784,28 +1895,55 @@ export function appearanceLandingWithTitleType(landing: AppearanceLandingDraft, 
  * coherence rule (`image` requires `title_image_url`) is satisfied. The
  * switch applies from inherit and `text`, and deliberately also from an
  * explicit `none`: the operator uploading a logo clearly wants it shown.
- * Removing the logo from an `image` draft returns the type to inherit in the
- * same patch, so no incoherent image-without-URL draft can remain; a removal
- * never touches any other draft type.
+ * Removing the logo always returns the draft type to inherit in the same
+ * patch, including after a later manual text/none choice, so removal has one
+ * predictable result and no image-without-URL draft can remain.
  */
 export function appearanceLandingLogoSelection(landing: AppearanceLandingDraft, url: string): AppearanceLandingDraft {
-  const titleType = appearanceTrim(url) !== "" ? "image" : landing.title_type === "image" ? "" : landing.title_type;
+  const titleType = appearanceTrim(url) !== "" ? "image" : "";
   return landing.title_image_url === url && landing.title_type === titleType
     ? landing
     : { ...landing, title_image_url: url, title_type: titleType };
 }
 
+export type AppearanceLandingLayoutPair = "text_gap" | "footer_min_height";
+
 /**
- * T-492: the persistent hint under the logo field — a draft logo value is
- * present yet the EFFECTIVE title type will not render it. Still reachable
- * after the auto-switch by changing the type manually, because text and image
- * overrides persist until cleared (T-468b finding 14).
+ * Contract v1.7 pairs are edited atomically. Setting either member fills the
+ * other from the effective composition; clearing either member clears both so
+ * the pair returns to inherit without a transient half-override.
+ */
+export function appearanceLandingLayoutPairSelection(
+  landing: AppearanceLandingDraft,
+  effective: AppearanceLandingDraft,
+  pair: AppearanceLandingLayoutPair,
+  member: "value" | "unit",
+  selection: string,
+): AppearanceLandingDraft {
+  const valueKey = pair === "text_gap" ? "text_gap_value" : "footer_min_height_value";
+  const unitKey = pair === "text_gap" ? "text_gap_unit" : "footer_min_height_unit";
+  const value = selection === ""
+    ? ""
+    : member === "value" ? selection : landing[valueKey] || effective[valueKey];
+  const unit = selection === ""
+    ? ""
+    : member === "unit" ? selection : landing[unitKey] || effective[unitKey];
+  return landing[valueKey] === value && landing[unitKey] === unit
+    ? landing
+    : { ...landing, [valueKey]: value, [unitKey]: unit };
+}
+
+/**
+ * T-492: the persistent hint under the logo field — a resolved logo value is
+ * present yet the EFFECTIVE title type will not render it. This includes a
+ * locally uploaded logo followed by a manual type change and a logo inherited
+ * from another rule, because flat overrides persist independently.
  */
 export function appearanceLandingLogoHintVisible(
-  landing: AppearanceLandingDraft,
+  logoUrl: string,
   effectiveTitleType: ResolvedAppearanceLanding["titleType"],
 ): boolean {
-  return appearanceTrim(landing.title_image_url) !== "" && effectiveTitleType !== "image";
+  return appearanceTrim(logoUrl) !== "" && effectiveTitleType !== "image";
 }
 
 export type AppearanceLandingBackgroundType = "image" | "video";
@@ -1896,6 +2034,8 @@ export function appearanceLandingCoherent(landing: AppearanceLanding): boolean {
     ["overlay_color", "overlay_alpha"],
     ["description_backdrop_color", "description_backdrop_alpha"],
     ["footer_bg_color", "footer_bg_alpha"],
+    ["text_gap_value", "text_gap_unit"],
+    ["footer_min_height_value", "footer_min_height_unit"],
   ] as const) {
     if (set(color) !== set(alpha)) return false;
   }

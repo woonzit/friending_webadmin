@@ -100,6 +100,72 @@
                 "updated_by": "fixture@example.com"
             },
             {
+                "id": "620000000000000000000005",
+                "name": "HU percent-pt layout fixture",
+                "scope": "storefront",
+                "storefront_country": "HUN",
+                "country_code": "",
+                "center": null,
+                "radius_km": null,
+                "place_label": "",
+                "priority": 0,
+                "active": true,
+                "starts_at": null,
+                "ends_at": null,
+                "landing": {
+                    "description_hidden": "false",
+                    "footer_min_height_unit": "pt",
+                    "footer_min_height_value": "96",
+                    "text_gap_unit": "percent",
+                    "text_gap_value": "11"
+                },
+                "hero": {
+                    "mode": "inherit",
+                    "items": []
+                },
+                "palette": {
+                    "light": {},
+                    "dark": {}
+                },
+                "revision": 24,
+                "created_at": "1970-01-01T00:38:20Z",
+                "updated_at": "1970-01-01T00:40:00Z",
+                "updated_by": "fixture@example.com"
+            },
+            {
+                "id": "620000000000000000000004",
+                "name": "GB hidden subtitle pt-percent layout fixture",
+                "scope": "storefront",
+                "storefront_country": "GBR",
+                "country_code": "",
+                "center": null,
+                "radius_km": null,
+                "place_label": "",
+                "priority": 0,
+                "active": true,
+                "starts_at": null,
+                "ends_at": null,
+                "landing": {
+                    "description_hidden": "true",
+                    "footer_min_height_unit": "percent",
+                    "footer_min_height_value": "16",
+                    "text_gap_unit": "pt",
+                    "text_gap_value": "48"
+                },
+                "hero": {
+                    "mode": "inherit",
+                    "items": []
+                },
+                "palette": {
+                    "light": {},
+                    "dark": {}
+                },
+                "revision": 23,
+                "created_at": "1970-01-01T00:36:40Z",
+                "updated_at": "1970-01-01T00:38:20Z",
+                "updated_by": "fixture@example.com"
+            },
+            {
                 "id": "620000000000000000000002",
                 "name": "US logo fixture",
                 "scope": "storefront",
@@ -196,7 +262,12 @@
                 "footer_size": "12",
                 "qr_enabled": "true",
                 "qr_bg_color": "#000000",
-                "qr_icon_color": "#FFFFFF"
+                "qr_icon_color": "#FFFFFF",
+                "description_hidden": "false",
+                "text_gap_value": "24",
+                "text_gap_unit": "pt",
+                "footer_min_height_value": "0",
+                "footer_min_height_unit": "pt"
             }
         }
     },

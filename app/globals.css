@@ -13237,10 +13237,23 @@ body .verification-level-pill.level-strong {
 .appearance-landing-composition-content {
   position: absolute;
   z-index: 3;
-  inset: 108px 24px 132px;
+  inset: 108px 0 0;
   display: flex;
   min-height: 0;
   flex-direction: column;
+  justify-content: flex-end;
+}
+
+.appearance-landing-composition-body {
+  display: flex;
+  min-height: 0;
+  flex: 0 0 auto;
+  flex-direction: column;
+  padding: 0 24px 24px;
+}
+
+.appearance-landing-composition-text-block {
+  width: 100%;
 }
 
 .appearance-landing-composition-title {
@@ -13260,11 +13273,14 @@ body .verification-level-pill.level-strong {
   white-space: pre-wrap;
 }
 
+.appearance-landing-composition-text-block > .appearance-landing-composition-description:first-child {
+  margin-top: 0;
+}
+
 .appearance-landing-composition-actions {
   display: grid;
   gap: 9px;
   width: 100%;
-  margin-top: auto;
 }
 
 .appearance-landing-method-button,
@@ -13315,13 +13331,12 @@ body .verification-level-pill.level-strong {
 }
 
 .appearance-landing-composition-footer {
-  position: absolute;
-  z-index: 4;
-  right: 0;
-  bottom: 24px;
-  left: 0;
-  min-height: 84px;
-  padding: 14px 24px;
+  display: grid;
+  width: 100%;
+  min-height: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  padding: 14px 24px 38px;
   line-height: 1.28;
   text-align: center;
 }
@@ -13329,6 +13344,10 @@ body .verification-level-pill.level-strong {
 .appearance-landing-composition-footer u {
   font-weight: 700;
   text-underline-offset: 2px;
+}
+
+.appearance-landing-composition-footer-copy {
+  display: block;
 }
 
 .appearance-landing-core-compare > small {

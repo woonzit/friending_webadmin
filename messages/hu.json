@@ -5897,6 +5897,10 @@
         "center": "Középre",
         "right": "Jobbra"
       },
+      "layoutUnit": {
+        "pt": "pt",
+        "percent": "képernyőmagasság %"
+      },
       "apple": {
         "white": "Apple fehér",
         "white_outline": "Apple fehér körvonalas",
@@ -5936,7 +5940,11 @@
       },
       "subtitle": {
         "title": "Alcím",
-        "copy": "Lokalizált kiegészítő szöveg saját tipográfiával és opcionális színes háttérrel.",
+        "copy": "Lokalizált kiegészítő szöveg saját tipográfiával, opcionális színes háttérrel és a belépési gombokhoz igazított pozícióval.",
+        "visibility": "Alcím megjelenítése",
+        "shown": "Megjelenik",
+        "hidden": "Rejtett",
+        "visibilityHelp": "Az elrejtés az alcímet és a hátterét is leveszi a nyitóképernyőről, de egyik lokalizált szöveget sem törli.",
         "textEn": "Alcím · angol",
         "textHu": "Alcím · magyar",
         "font": "Alcím betűtípusa",
@@ -5944,7 +5952,10 @@
         "color": "Alcím színe",
         "align": "Alcím igazítása",
         "backdropColor": "Háttér színe",
-        "backdropAlpha": "Háttér átlátszósága · 0–1"
+        "backdropAlpha": "Háttér átlátszósága · 0–1",
+        "textGap": "Szöveg távolsága a gomboktól",
+        "textGapUnit": "Távolság mértékegysége",
+        "textGapHelp": "A szöveges cím és a látható alcím egy blokkot alkot a legfelső látható belépési gomb felett. Ez a távolság a képlogót nem mozgatja."
       },
       "buttons": {
         "title": "Gombok",
@@ -5962,14 +5973,17 @@
       },
       "footer": {
         "title": "Lábléc",
-        "copy": "Minden mondat pontosan egy '<terms>'…'</terms>' és egy '<privacy>'…'</privacy>' párt tartalmazzon. Az app ezeket a részeket linkké alakítja.",
+        "copy": "A lábléc az alsó élhez van rögzítve. Minden mondat pontosan egy '<terms>'…'</terms>' és egy '<privacy>'…'</privacy>' párt tartalmazzon.",
         "textEn": "Lábléc szövege · angol",
         "textHu": "Lábléc szövege · magyar",
         "background": "Háttérszín",
         "alpha": "Háttér átlátszósága · 0–1",
         "textColor": "Szövegszín",
         "font": "Betűtípus",
-        "size": "Szövegméret · pt"
+        "size": "Szövegméret · pt",
+        "minHeight": "Lábléc minimális magassága",
+        "minHeightUnit": "Magasság mértékegysége",
+        "minHeightHelp": "A háttér a képernyő fizikai alsó éléig ér, a szöveg pedig a safe area felett marad. A tartalom szükség esetén magasabbra növeli a láblécet."
       },
       "qr": {
         "title": "QR-olvasó",

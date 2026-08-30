@@ -2,8 +2,8 @@
     "success": true,
     "status_code": 200,
     "data": {
-        "revision": 21,
-        "content_version": "398fbbacccfdf2d013dfbf96064630d95b5a3699a45fe7c47712d687fa24a37d",
+        "revision": 23,
+        "content_version": "97df3a47a5f785145f7601a6bb46e1bb91f365bda516aab12d7494ff94603918",
         "landing": {
             "background": {
                 "type": "image",
@@ -15,12 +15,12 @@
                 }
             },
             "title": {
-                "type": "image",
-                "text": "",
-                "image_url": "https://img.example/friending-logo.png",
+                "type": "text",
+                "text": "friending.",
+                "image_url": "",
                 "image": {
-                    "width_percent": 72,
-                    "offset_percent": -6
+                    "width_percent": 60,
+                    "offset_percent": -10
                 },
                 "style": {
                     "font": "proxima_bold",
@@ -31,7 +31,7 @@
             },
             "description": {
                 "text": "Meet people near you — and wherever you're headed next.",
-                "hidden": false,
+                "hidden": true,
                 "style": {
                     "font": "proxima_regular",
                     "size": 17,
@@ -45,12 +45,12 @@
             },
             "layout": {
                 "text_gap": {
-                    "value": 24,
+                    "value": 48,
                     "unit": "pt"
                 },
                 "footer_min_height": {
-                    "value": 0,
-                    "unit": "pt"
+                    "value": 16,
+                    "unit": "percent"
                 }
             },
             "buttons": {
@@ -110,7 +110,7 @@
         },
         "matched": {
             "scope": "storefront",
-            "rule_id": "620000000000000000000002",
+            "rule_id": "620000000000000000000004",
             "location_source": "none"
         }
     },

@@ -31,6 +31,7 @@
             },
             "description": {
                 "text": "Ismerj meg embereket a közeledben — és bárhol, ahová tartasz.",
+                "hidden": false,
                 "style": {
                     "font": "proxima_regular",
                     "size": 17,
@@ -40,6 +41,16 @@
                 "backdrop": {
                     "color": "#000000",
                     "alpha": 0
+                }
+            },
+            "layout": {
+                "text_gap": {
+                    "value": 24,
+                    "unit": "pt"
+                },
+                "footer_min_height": {
+                    "value": 0,
+                    "unit": "pt"
                 }
             },
             "buttons": {
@@ -149,7 +160,12 @@
             "footer_size": "",
             "qr_enabled": "",
             "qr_bg_color": "",
-            "qr_icon_color": ""
+            "qr_icon_color": "",
+            "description_hidden": "",
+            "text_gap_value": "",
+            "text_gap_unit": "",
+            "footer_min_height_value": "",
+            "footer_min_height_unit": ""
         },
         "landing_flat_defaults": {
             "background_type": "image",
@@ -198,7 +214,12 @@
             "footer_size": "12",
             "qr_enabled": "true",
             "qr_bg_color": "#000000",
-            "qr_icon_color": "#FFFFFF"
+            "qr_icon_color": "#FFFFFF",
+            "description_hidden": "false",
+            "text_gap_value": "24",
+            "text_gap_unit": "pt",
+            "footer_min_height_value": "0",
+            "footer_min_height_unit": "pt"
         },
         "landing_flat_sources": {
             "background_type": {
@@ -386,6 +407,26 @@
                 "rule_id": ""
             },
             "qr_icon_color": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "description_hidden": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "text_gap_value": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "text_gap_unit": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "footer_min_height_value": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "footer_min_height_unit": {
                 "scope": "none",
                 "rule_id": ""
             }

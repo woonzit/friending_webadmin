@@ -10,6 +10,7 @@ import {
   APPEARANCE_DEFAULT_LANDING,
   APPEARANCE_DEFAULT_PALETTE,
   APPEARANCE_LANDING_KEYS,
+  appearanceLandingLayoutPixels,
   appearanceRuleInputOf,
   appearanceRuleMaterialMatches,
   decodeAppearanceDeleteResponse,
@@ -28,17 +29,17 @@ import {
 } from "../lib/appearanceRules.ts";
 
 /**
- * T-488's production-generated wire corpus (lead-accepted Core tip `fab53c14afd5191438b59ccc4e52d0da81a0d315`,
+ * T-493/T-496's production-generated wire corpus (lead-accepted Core tip `981918ba3d0b65cce53859ff1184182168dccd38`,
  * `tests/fixtures/appearance_rules_wire/`), copied byte-identically. The production decoders must
  * accept every Webadmin body exactly as Core publishes it and classify every refusal by the
  * manifest's closed status map — this is the cross-lane binding the released consumer rests on.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/appearance_rules_wire/", import.meta.url);
-const FIXTURE_ACCEPTED_CORE_TIP = "fab53c14afd5191438b59ccc4e52d0da81a0d315";
-const FIXTURE_SOURCE_COMMIT = "b50432bd04b571f52d6191bd4feac4a6cc376085";
-const FIXTURE_GENERATOR_SHA256 = "01e0721c337ee3f3f2abd444888396d159c6ced779b6b93d5c9e947a40da97ce";
-const FIXTURE_SET_SHA256 = "461e150eeadfd4cea1851d8f37571540e2aba9085d7b17f566221d48d2c69877";
-const FIXTURE_MANIFEST_SHA256 = "24ada7317285fc3631e03870c370b60322c6c5e6e0ee68f7e05c9df0a01920e7";
+const FIXTURE_ACCEPTED_CORE_TIP = "981918ba3d0b65cce53859ff1184182168dccd38";
+const FIXTURE_SOURCE_COMMIT = "9c22992bf110f67ac425f3ea1befd99b2c923e17";
+const FIXTURE_GENERATOR_SHA256 = "e4922e36d44f61d93bc64d3d7fd3a975280761481a38cc936ea950bfbe4ade89";
+const FIXTURE_SET_SHA256 = "3e6884e27aa1fdcf48843ee5c0e9fba11c532469be3abc943a2591f5efb5c3ef";
+const FIXTURE_MANIFEST_SHA256 = "f927e9c92a9d545e39584c83f7f8550b85308a2d5d398449b3618f56fac271de";
 const FIXTURE_BODY_FILES = [
   "app-appearance-default-en.json",
   "app-appearance-geo-hu.json",
@@ -46,11 +47,15 @@ const FIXTURE_BODY_FILES = [
   "app-appearance-v1-geo-none-hu.json",
   "app-appearance-v2-geo-none-hu.json",
   "app-appearance-v2-global-defaults-en.json",
+  "app-appearance-v2-hidden-layout-pt-percent-en.json",
+  "app-appearance-v2-layout-percent-pt-en.json",
   "app-appearance-v2-storefront-logo-en.json",
   "appconfig-appearance-geo-hu.json",
   "appconfig-appearance-schema-invalid.json",
   "appconfig-appearance-v2-geo-none-hu.json",
   "appconfig-appearance-v2-global-defaults-en.json",
+  "appconfig-appearance-v2-hidden-layout-pt-percent-en.json",
+  "appconfig-appearance-v2-layout-percent-pt-en.json",
   "appconfig-appearance-v2-storefront-logo-en.json",
   "landing-content-geo-hu.json",
   "people-discover-hero-geo-hu.json",
@@ -62,7 +67,10 @@ const FIXTURE_BODY_FILES = [
   "webadmin-preview-parent-global-hu.json",
   "webadmin-preview-parent-storefront-hu.json",
   "webadmin-preview-v2-geo-hu.json",
+  "webadmin-preview-v2-hidden-layout-pt-percent-en.json",
+  "webadmin-preview-v2-layout-percent-pt-en.json",
   "webadmin-preview.json",
+  "webadmin-save-v2-hidden-layout.json",
   "webadmin-save-v2.json",
   "webadmin-save.json",
   "webadmin-validation-v2-field.json",
@@ -154,7 +162,7 @@ test("the released appearance corpus is byte-identical, complete, and traceable 
     consumerCounts.set(row.consumer, (consumerCounts.get(row.consumer) ?? 0) + 1);
     aggregateRows.push(`${row.file}\0${row.sha256}`);
   }
-  assert.deepEqual(Object.fromEntries([...consumerCounts].sort()), { ios: 14, webadmin: 13 });
+  assert.deepEqual(Object.fromEntries([...consumerCounts].sort()), { ios: 18, webadmin: 16 });
   assert.equal(sha256(aggregateRows.join("\n")), FIXTURE_SET_SHA256);
   assert.match(FIXTURE_ACCEPTED_CORE_TIP, /^[0-9a-f]{40}$/);
   assert.notEqual(FIXTURE_ACCEPTED_CORE_TIP, FIXTURE_SOURCE_COMMIT, "the accepted provenance tip follows its source commit");
@@ -283,7 +291,7 @@ test("every released Webadmin body decodes through the production decoders with 
   );
 });
 
-test("the accepted v2 Webadmin cases bind the complete composer, parent-only merge, and closed field refusal", async () => {
+test("the accepted v2 Webadmin cases bind the complete composer, v1.6/v1.7 layout, parent-only merge, and closed field refusal", async () => {
   const list = decodeAppearanceListResponse(await fixture("webadmin-list-v2.json"));
   assert.ok(list.ok, "v2 list");
   assert.deepEqual(Object.keys(list.value.defaults.landing), [...APPEARANCE_LANDING_KEYS]);
@@ -291,12 +299,30 @@ test("the accepted v2 Webadmin cases bind the complete composer, parent-only mer
   assert.deepEqual(list.value.rules.map((rule) => [rule.id, rule.scope, rule.revision]), [
     ["620000000000000000000003", "geo", 22],
     ["620000000000000000000001", "global", 20],
+    ["620000000000000000000005", "storefront", 24],
+    ["620000000000000000000004", "storefront", 23],
     ["620000000000000000000002", "storefront", 21],
   ]);
   const geo = list.value.rules.find((rule) => rule.scope === "geo")!;
+  const hiddenLayout = list.value.rules.find((rule) => rule.id === "620000000000000000000004")!;
+  const percentLayout = list.value.rules.find((rule) => rule.id === "620000000000000000000005")!;
   assert.equal(Object.keys(geo.landing).length, 38, "the fixture exercises a broad sparse composer override");
   assert.equal(geo.landing.title_type, "none");
   assert.equal(geo.landing.description_hu, undefined, "the HU description must exercise the English rule fallback");
+  assert.deepEqual(hiddenLayout.landing, {
+    description_hidden: "true",
+    footer_min_height_unit: "percent",
+    footer_min_height_value: "16",
+    text_gap_unit: "pt",
+    text_gap_value: "48",
+  });
+  assert.deepEqual(percentLayout.landing, {
+    description_hidden: "false",
+    footer_min_height_unit: "pt",
+    footer_min_height_value: "96",
+    text_gap_unit: "percent",
+    text_gap_value: "11",
+  });
 
   const saved = decodeAppearanceSaveResponse(await fixture("webadmin-save-v2.json"), {
     id: geo.id,
@@ -305,12 +331,21 @@ test("the accepted v2 Webadmin cases bind the complete composer, parent-only mer
   });
   assert.ok(saved.ok, "v2 save is bound to its exact CAS successor and full material");
   assert.equal(saved.value.revision, 22);
+  const hiddenSaved = decodeAppearanceSaveResponse(await fixture("webadmin-save-v2-hidden-layout.json"), {
+    id: hiddenLayout.id,
+    expected_revision: 22,
+    input: appearanceRuleInputOf(hiddenLayout),
+  });
+  assert.ok(hiddenSaved.ok, "the hidden/layout save binds all five flat fields as one CAS successor");
+  assert.equal(hiddenSaved.value.revision, 23);
 
   const parentGlobal = decodeAppearancePreviewResponse(await fixture("webadmin-preview-parent-global-hu.json"));
   const parentStorefront = decodeAppearancePreviewResponse(await fixture("webadmin-preview-parent-storefront-hu.json"));
   const resolved = decodeAppearancePreviewResponse(await fixture("webadmin-preview-v2-geo-hu.json"));
-  assert.ok(parentGlobal.ok && parentStorefront.ok && resolved.ok);
-  for (const preview of [parentGlobal.value, parentStorefront.value, resolved.value]) {
+  const hiddenPreview = decodeAppearancePreviewResponse(await fixture("webadmin-preview-v2-hidden-layout-pt-percent-en.json"));
+  const percentPreview = decodeAppearancePreviewResponse(await fixture("webadmin-preview-v2-layout-percent-pt-en.json"));
+  assert.ok(parentGlobal.ok && parentStorefront.ok && resolved.ok && hiddenPreview.ok && percentPreview.ok);
+  for (const preview of [parentGlobal.value, parentStorefront.value, resolved.value, hiddenPreview.value, percentPreview.value]) {
     assert.equal(preview.landing.schema, 2);
     assert.ok(preview.landing_flat && preview.landing_flat_sources && preview.landing_flat_defaults);
     assert.deepEqual(preview.landing_flat_defaults, APPEARANCE_DEFAULT_LANDING);
@@ -345,6 +380,31 @@ test("the accepted v2 Webadmin cases bind the complete composer, parent-only mer
   assert.equal(local.effective.overlay_color, resolved.value.landing.v2!.background.overlay.color);
   assert.equal(local.effective.qr_enabled, resolved.value.landing.v2!.qr.enabled ? "true" : "false");
 
+  assert.equal(hiddenPreview.value.landing.v2!.description.hidden, true);
+  assert.deepEqual(hiddenPreview.value.landing.v2!.layout, {
+    text_gap: { value: 48, unit: "pt" },
+    footer_min_height: { value: 16, unit: "percent" },
+  });
+  assert.deepEqual(appearanceLandingLayoutPixels(hiddenPreview.value.landing_flat!), {
+    textGap: 48,
+    footerMinHeight: 135.04,
+  });
+  assert.equal(percentPreview.value.landing.v2!.description.hidden, false);
+  assert.deepEqual(percentPreview.value.landing.v2!.layout, {
+    text_gap: { value: 11, unit: "percent" },
+    footer_min_height: { value: 96, unit: "pt" },
+  });
+  assert.deepEqual(appearanceLandingLayoutPixels(percentPreview.value.landing_flat!), {
+    textGap: 92.84,
+    footerMinHeight: 96,
+  });
+  for (const [preview, rule] of [[hiddenPreview.value, hiddenLayout], [percentPreview.value, percentLayout]] as const) {
+    for (const field of ["description_hidden", "text_gap_value", "text_gap_unit", "footer_min_height_value", "footer_min_height_unit"] as const) {
+      assert.equal(preview.landing_flat![field], rule.landing[field], field);
+      assert.deepEqual(preview.landing_flat_sources![field], { scope: "storefront", rule_id: rule.id }, field);
+    }
+  }
+
   const validation = await fixture("webadmin-validation-v2-field.json");
   assert.deepEqual(
     decodeAppearanceSaveResponse(validation, { id: geo.id, expected_revision: 21, input: appearanceRuleInputOf(geo) }),
@@ -360,6 +420,8 @@ test("the iOS bodies never enter a Webadmin material decoder except the shared a
     "app-appearance-v1-geo-none-hu.json",
     "app-appearance-v2-geo-none-hu.json",
     "app-appearance-v2-global-defaults-en.json",
+    "app-appearance-v2-hidden-layout-pt-percent-en.json",
+    "app-appearance-v2-layout-percent-pt-en.json",
     "app-appearance-v2-storefront-logo-en.json",
   ]) {
     const decoded = decodeAppearancePreviewResponse(await fixture(file));
@@ -375,14 +437,31 @@ test("the iOS bodies never enter a Webadmin material decoder except the shared a
   const v1None = decodeAppearancePreviewResponse(await fixture("app-appearance-v1-geo-none-hu.json"));
   const v2Geo = decodeAppearancePreviewResponse(await fixture("app-appearance-v2-geo-none-hu.json"));
   const v2Defaults = decodeAppearancePreviewResponse(await fixture("app-appearance-v2-global-defaults-en.json"));
+  const v2Hidden = decodeAppearancePreviewResponse(await fixture("app-appearance-v2-hidden-layout-pt-percent-en.json"));
+  const v2Percent = decodeAppearancePreviewResponse(await fixture("app-appearance-v2-layout-percent-pt-en.json"));
   const v2Logo = decodeAppearancePreviewResponse(await fixture("app-appearance-v2-storefront-logo-en.json"));
-  assert.ok(v1None.ok && v2Geo.ok && v2Defaults.ok && v2Logo.ok);
+  assert.ok(v1None.ok && v2Geo.ok && v2Defaults.ok && v2Hidden.ok && v2Percent.ok && v2Logo.ok);
   assert.equal(v1None.value.landing.schema, 1);
   assert.deepEqual(v1None.value.landing.title, { type: "text", text: "", image_url: "" });
   assert.equal(v2Geo.value.landing.schema, 2);
   assert.equal(v2Geo.value.landing.v2!.description.backdrop.alpha, 0.3);
   assert.equal(v2Geo.value.landing.v2!.qr.enabled, false);
   assert.equal(v2Defaults.value.landing.v2!.description.backdrop.alpha, 0, "integral JSON alpha is a valid number");
+  assert.equal(v2Defaults.value.landing.v2!.description.hidden, false);
+  assert.deepEqual(v2Defaults.value.landing.v2!.layout, {
+    text_gap: { value: 24, unit: "pt" },
+    footer_min_height: { value: 0, unit: "pt" },
+  });
+  assert.equal(v2Hidden.value.landing.v2!.description.hidden, true);
+  assert.deepEqual(v2Hidden.value.landing.v2!.layout, {
+    text_gap: { value: 48, unit: "pt" },
+    footer_min_height: { value: 16, unit: "percent" },
+  });
+  assert.equal(v2Percent.value.landing.v2!.description.hidden, false);
+  assert.deepEqual(v2Percent.value.landing.v2!.layout, {
+    text_gap: { value: 11, unit: "percent" },
+    footer_min_height: { value: 96, unit: "pt" },
+  });
   assert.equal(v2Logo.value.landing.title.type, "image");
   assert.equal(v2Logo.value.landing.title.image_url, "https://img.example/friending-logo.png");
 
@@ -402,6 +481,8 @@ test("the iOS bodies never enter a Webadmin material decoder except the shared a
   for (const file of [
     "appconfig-appearance-v2-geo-none-hu.json",
     "appconfig-appearance-v2-global-defaults-en.json",
+    "appconfig-appearance-v2-hidden-layout-pt-percent-en.json",
+    "appconfig-appearance-v2-layout-percent-pt-en.json",
     "appconfig-appearance-v2-storefront-logo-en.json",
   ]) {
     const body = await fixture(file) as Json;
@@ -416,6 +497,8 @@ test("the iOS bodies never enter a Webadmin material decoder except the shared a
     "appconfig-appearance-geo-hu.json",
     "appconfig-appearance-v2-geo-none-hu.json",
     "appconfig-appearance-v2-global-defaults-en.json",
+    "appconfig-appearance-v2-hidden-layout-pt-percent-en.json",
+    "appconfig-appearance-v2-layout-percent-pt-en.json",
     "appconfig-appearance-v2-storefront-logo-en.json",
     "landing-content-geo-hu.json",
     "people-discover-hero-geo-hu.json",

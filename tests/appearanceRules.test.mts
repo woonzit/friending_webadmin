@@ -13,6 +13,7 @@ import {
   APPEARANCE_LANDING_FONTS,
   APPEARANCE_LANDING_FLAT_SOURCE_SCOPES,
   APPEARANCE_LANDING_KEYS,
+  APPEARANCE_LANDING_LAYOUT_UNITS,
   APPEARANCE_LANDING_PREVIEW_STYLE_KEYS,
   APPEARANCE_PALETTE_MODES,
   APPEARANCE_PALETTE_ROLES,
@@ -21,6 +22,8 @@ import {
   appearanceLandingDraft,
   appearanceLandingLogoHintVisible,
   appearanceLandingLogoSelection,
+  appearanceLandingLayoutPairSelection,
+  appearanceLandingLayoutPixels,
   appearanceFooterTextHasExactTags,
   appearancePreviewLandingFields,
   appearanceLandingWithTitleType,
@@ -346,6 +349,7 @@ function previewLandingV2(overrides: Record<string, unknown> = {}): Record<strin
     },
     description: {
       text: "Meet people nearby.",
+      hidden: false,
       style: { font: "proxima_regular", size: 17, color: "#F2F4F7", align: "left" },
       backdrop: { color: "#000000", alpha: 0 },
     },
@@ -359,6 +363,10 @@ function previewLandingV2(overrides: Record<string, unknown> = {}): Record<strin
       text: "By continuing you accept our <terms>Terms</terms> and <privacy>Privacy Policy</privacy>.",
       background: { color: "#000000", alpha: 0.55 },
       style: { font: "proxima_regular", size: 12, color: "#E4E8ED" },
+    },
+    layout: {
+      text_gap: { value: 24, unit: "pt" },
+      footer_min_height: { value: 0, unit: "pt" },
     },
     qr: { enabled: true, background: "#000000", icon_color: "#FFFFFF" },
     ...overrides,
@@ -419,6 +427,8 @@ test("the schema-v2 preview decodes exactly and flattens the requested language 
   assert.ok(preview);
   assert.equal(preview.landing.schema, 2);
   assert.equal(preview.landing.v2?.title.style.font, "proxima_bold");
+  assert.equal(preview.landing.v2?.description.hidden, false);
+  assert.deepEqual(preview.landing.v2?.layout.text_gap, { value: 24, unit: "pt" });
   assert.equal(preview.landing.v2?.qr.enabled, true);
   assert.equal(preview.landing_flat, null, "the app schema-2 shape has no Webadmin siblings");
   assert.equal(preview.landing_flat_sources, null);
@@ -430,6 +440,11 @@ test("the schema-v2 preview decodes exactly and flattens the requested language 
   assert.equal(fields.button_phone_label_en, "Continue with phone number");
   assert.equal(fields.button_phone_label_hu, undefined, "the wire projects only the requested language");
   assert.equal(fields.qr_enabled, "true");
+  assert.equal(fields.description_hidden, "false");
+  assert.equal(fields.text_gap_value, "24");
+  assert.equal(fields.text_gap_unit, "pt");
+  assert.equal(fields.footer_min_height_value, "0");
+  assert.equal(fields.footer_min_height_unit, "pt");
 
   const webadmin = parseAppearancePreviewPayload(previewPayload({
     landing: previewLandingV2(),
@@ -489,16 +504,24 @@ test("the schema-v2 preview decodes exactly and flattens the requested language 
   const base = previewLandingV2();
   const background = base.background as Record<string, unknown>;
   const title = base.title as Record<string, unknown>;
+  const description = base.description as Record<string, unknown>;
   const buttons = base.buttons as Record<string, unknown>;
   const footer = base.footer as Record<string, unknown>;
+  const layout = base.layout as Record<string, unknown>;
   for (const [label, landing] of [
     ["lowercase v2 colour", { ...base, background: { ...background, overlay: { color: "#abcdef", alpha: 0.5 } } }],
     ["v2 alpha exceeds storage precision", { ...base, background: { ...background, overlay: { color: "#000000", alpha: 0.351 } } }],
     ["unknown v2 font", { ...base, title: { ...title, style: { font: "serif", size: 44, color: "#FFFFFF", align: "left" } } }],
     ["title size out of range", { ...base, title: { ...title, style: { font: "proxima_bold", size: 73, color: "#FFFFFF", align: "left" } } }],
-    ["empty resolved description", { ...base, description: { text: "", style: { font: "proxima_regular", size: 17, color: "#F2F4F7", align: "left" }, backdrop: { color: "#000000", alpha: 0 } } }],
+    ["empty resolved description", { ...base, description: { ...description, text: "" } }],
+    ["loose description visibility", { ...base, description: { ...description, hidden: "false" } }],
+    ["missing description visibility", { ...base, description: { text: description.text, style: description.style, backdrop: description.backdrop } }],
     ["custom Apple colour vocabulary", { ...base, buttons: { ...buttons, apple: { style: "pink" } } }],
     ["footer without markers", { ...base, footer: { ...footer, text: "Terms and privacy" } }],
+    ["text gap out of range", { ...base, layout: { ...layout, text_gap: { value: 201, unit: "pt" } } }],
+    ["unknown text gap unit", { ...base, layout: { ...layout, text_gap: { value: 24, unit: "px" } } }],
+    ["footer minimum out of range", { ...base, layout: { ...layout, footer_min_height: { value: 301, unit: "pt" } } }],
+    ["partial layout", { ...base, layout: { text_gap: { value: 24, unit: "pt" } } }],
     ["unknown v2 key", { ...base, future: true }],
   ] as const) assert.equal(parseAppearancePreviewPayload(previewPayload({ landing })), null, label);
 
@@ -652,12 +675,13 @@ test("blank editor fields inherit; filled fields reach the wire per field (Amend
 });
 
 test("the D-061 landing vocabulary is closed and canonical while every draft field can inherit", () => {
-  assert.equal(APPEARANCE_LANDING_KEYS.length, 47);
+  assert.equal(APPEARANCE_LANDING_KEYS.length, 52);
   assert.equal(new Set(APPEARANCE_LANDING_KEYS).size, APPEARANCE_LANDING_KEYS.length);
   assert.equal(APPEARANCE_LANDING_FONTS.length, 14);
   assert.deepEqual(APPEARANCE_LANDING_FLAT_SOURCE_SCOPES, ["geo", "storefront", "global", "none"]);
   assert.deepEqual(APPEARANCE_LANDING_ALIGNS, ["left", "center", "right"]);
   assert.deepEqual(APPEARANCE_LANDING_APPLE_STYLES, ["white", "white_outline", "black"]);
+  assert.deepEqual(APPEARANCE_LANDING_LAYOUT_UNITS, ["pt", "percent"]);
   assert.ok(parseAppearanceLanding(APPEARANCE_DEFAULT_LANDING), "all compiled defaults satisfy the closed flat model");
 
   const blank = appearanceLandingDraft({});
@@ -673,6 +697,11 @@ test("the D-061 landing vocabulary is closed and canonical while every draft fie
     title_size: "72",
     title_align: "right",
     title_image_offset_percent: "-40",
+    description_hidden: "true",
+    text_gap_value: "200",
+    text_gap_unit: "percent",
+    footer_min_height_value: "300",
+    footer_min_height_unit: "pt",
     button_apple_style: "white_outline",
     qr_enabled: "false",
   };
@@ -687,6 +716,14 @@ test("the D-061 landing vocabulary is closed and canonical while every draft fie
     ["font vocabulary is closed", { title_font: "proxima_cond_bold" }],
     ["alignment vocabulary is closed", { title_align: "justify" }],
     ["Apple vocabulary is closed", { button_apple_style: "grey" }],
+    ["subtitle visibility is a string boolean", { description_hidden: "1" }],
+    ["text gap value has a lower bound", { text_gap_value: "-1" }],
+    ["text gap value is bounded", { text_gap_value: "201" }],
+    ["text gap value is canonical", { text_gap_value: "024" }],
+    ["text gap unit is closed", { text_gap_unit: "px" }],
+    ["footer minimum has a lower bound", { footer_min_height_value: "-1" }],
+    ["footer minimum is bounded", { footer_min_height_value: "301" }],
+    ["footer minimum unit is closed", { footer_min_height_unit: "vh" }],
     ["QR is a string boolean", { qr_enabled: "1" }],
     ["unknown flat key", { future_style: "x" }],
   ] as const) {
@@ -709,6 +746,11 @@ test("D-061 pair coherence and footer markers fail closed before save", () => {
   assert.equal(appearanceLandingCoherent({ overlay_color: "#000000", overlay_alpha: "0.25" }), true);
   assert.equal(appearanceLandingCoherent({ description_backdrop_alpha: "0.00" }), false);
   assert.equal(appearanceLandingCoherent({ footer_bg_color: "#000000" }), false);
+  assert.equal(appearanceLandingCoherent({ text_gap_value: "24" }), false);
+  assert.equal(appearanceLandingCoherent({ text_gap_unit: "pt" }), false);
+  assert.equal(appearanceLandingCoherent({ text_gap_value: "24", text_gap_unit: "pt" }), true);
+  assert.equal(appearanceLandingCoherent({ footer_min_height_value: "20" }), false);
+  assert.equal(appearanceLandingCoherent({ footer_min_height_value: "20", footer_min_height_unit: "percent" }), true);
   assert.equal(appearanceLandingCoherent({ title_type: "none" }), true);
   assert.equal(appearanceLandingCoherent({ title_type: "image" }), false);
   assert.equal(appearanceLandingCoherent({ footer_text_en: footer }), true);
@@ -752,6 +794,93 @@ test("the local D-061 merge resolves all flat fields and localized button/footer
   );
 });
 
+test("subtitle visibility has inherit, shown and hidden states without deleting its text (D-061b)", () => {
+  const parent = appearanceLandingDraft({
+    description_en: "Keep this copy",
+    description_hidden: "true",
+  });
+  const inherited = resolveAppearanceLanding([appearanceLandingWire(appearanceLandingDraft({})), parent], APPEARANCE_DEFAULT_LANDING, "en");
+  assert.equal(inherited.descriptionHidden, true);
+  assert.equal(inherited.description, "Keep this copy");
+
+  const shown = resolveAppearanceLanding([
+    appearanceLandingWire(appearanceLandingDraft({ description_hidden: "false" })),
+    parent,
+  ], APPEARANCE_DEFAULT_LANDING, "en");
+  assert.equal(shown.descriptionHidden, false);
+  assert.equal(shown.description, "Keep this copy");
+
+  const hidden = resolveAppearanceLanding([
+    appearanceLandingWire(appearanceLandingDraft({ description_hidden: "true" })),
+  ], APPEARANCE_DEFAULT_LANDING, "en");
+  assert.equal(hidden.descriptionHidden, true);
+  assert.equal(hidden.description, APPEARANCE_DEFAULT_LANDING.description_en);
+  assert.deepEqual(parseAppearanceLanding({ description_hidden: "false" }), { description_hidden: "false" });
+  assert.deepEqual(parseAppearanceLanding({ description_hidden: "true" }), { description_hidden: "true" });
+});
+
+test("layout controls keep value and unit atomic and convert pt/percent on the phone-height axis (D-061c)", () => {
+  const blank = appearanceLandingDraft({});
+  const effective = appearanceLandingDraft({
+    text_gap_value: "24",
+    text_gap_unit: "pt",
+    footer_min_height_value: "10",
+    footer_min_height_unit: "percent",
+  });
+
+  const textValue = appearanceLandingLayoutPairSelection(blank, effective, "text_gap", "value", "40");
+  assert.equal(textValue.text_gap_value, "40");
+  assert.equal(textValue.text_gap_unit, "pt", "setting the value materializes the effective unit in the same draft patch");
+  assert.equal(appearanceLandingCoherent(appearanceLandingWire(textValue)), true);
+
+  const textUnit = appearanceLandingLayoutPairSelection(blank, effective, "text_gap", "unit", "percent");
+  assert.equal(textUnit.text_gap_value, "24", "setting the unit materializes the effective value in the same draft patch");
+  assert.equal(textUnit.text_gap_unit, "percent");
+  const textCleared = appearanceLandingLayoutPairSelection(textUnit, effective, "text_gap", "unit", "");
+  assert.equal(textCleared.text_gap_value, "");
+  assert.equal(textCleared.text_gap_unit, "");
+
+  const footerValue = appearanceLandingLayoutPairSelection(blank, effective, "footer_min_height", "value", "120");
+  assert.equal(footerValue.footer_min_height_value, "120");
+  assert.equal(footerValue.footer_min_height_unit, "percent");
+  const footerUnit = appearanceLandingLayoutPairSelection(footerValue, effective, "footer_min_height", "unit", "pt");
+  assert.equal(footerUnit.footer_min_height_value, "120");
+  assert.equal(footerUnit.footer_min_height_unit, "pt");
+  const footerCleared = appearanceLandingLayoutPairSelection(footerUnit, effective, "footer_min_height", "value", "");
+  assert.equal(footerCleared.footer_min_height_value, "");
+  assert.equal(footerCleared.footer_min_height_unit, "");
+
+  assert.deepEqual(appearanceLandingLayoutPixels(APPEARANCE_DEFAULT_LANDING), { textGap: 24, footerMinHeight: 0 });
+  assert.deepEqual(appearanceLandingLayoutPixels(appearanceLandingDraft({
+    text_gap_value: "37",
+    text_gap_unit: "pt",
+    footer_min_height_value: "120",
+    footer_min_height_unit: "pt",
+  })), { textGap: 37, footerMinHeight: 120 });
+  assert.deepEqual(appearanceLandingLayoutPixels(appearanceLandingDraft({
+    text_gap_value: "10",
+    text_gap_unit: "percent",
+    footer_min_height_value: "25",
+    footer_min_height_unit: "percent",
+  })), { textGap: 84.4, footerMinHeight: 211 });
+  assert.deepEqual(appearanceLandingLayoutPixels(appearanceLandingDraft({
+    text_gap_value: "10",
+    text_gap_unit: "percent",
+    footer_min_height_value: "25",
+    footer_min_height_unit: "percent",
+  }), 1000), { textGap: 100, footerMinHeight: 250 });
+
+  const merged = resolveAppearanceLandingFields([
+    { text_gap_value: "10", text_gap_unit: "percent" },
+    { footer_min_height_value: "120", footer_min_height_unit: "pt" },
+  ], APPEARANCE_DEFAULT_LANDING);
+  assert.equal(merged.text_gap_value, "10");
+  assert.equal(merged.text_gap_unit, "percent");
+  assert.equal(merged.footer_min_height_value, "120");
+  assert.equal(merged.footer_min_height_unit, "pt");
+  assert.deepEqual(appearanceLandingLayoutPixels(merged), { textGap: 84.4, footerMinHeight: 120 });
+});
+
 test("the landing preview rejects malformed style strings and inherits safe values", () => {
   const invalidValues = {
     overlay_alpha: "1.25",
@@ -762,9 +891,14 @@ test("the landing preview rejects malformed style strings and inherits safe valu
     title_image_width_percent: "101",
     title_image_offset_percent: "-41",
     description_size: "41",
+    description_hidden: "maybe",
     button_corner_radius: "33",
     button_apple_style: "rainbow",
     footer_size: "9",
+    text_gap_value: "201",
+    text_gap_unit: "px",
+    footer_min_height_value: "301",
+    footer_min_height_unit: "vh",
   } as const;
   const draft = appearanceLandingDraft(invalidValues);
   const preview = appearanceLandingPreviewDraft(draft);
@@ -785,9 +919,14 @@ test("the landing preview rejects malformed style strings and inherits safe valu
     title_image_width_percent: "75",
     title_image_offset_percent: "5",
     description_size: "20",
+    description_hidden: "false",
     button_corner_radius: "12",
     button_apple_style: "black",
     footer_size: "14",
+    text_gap_value: "32",
+    text_gap_unit: "pt",
+    footer_min_height_value: "12",
+    footer_min_height_unit: "percent",
   });
   const resolved = resolveAppearanceLanding([preview.landing, parent], APPEARANCE_DEFAULT_LANDING, "en");
   for (const [key, expected] of Object.entries(parent)) {
@@ -804,9 +943,14 @@ test("the landing preview rejects malformed style strings and inherits safe valu
     title_align: "center",
     title_image_width_percent: "100",
     title_image_offset_percent: "-40",
+    description_hidden: "true",
     button_corner_radius: "0",
     button_apple_style: "white_outline",
     footer_size: "18",
+    text_gap_value: "200",
+    text_gap_unit: "percent",
+    footer_min_height_value: "300",
+    footer_min_height_unit: "pt",
   }));
   assert.deepEqual(valid.invalidFields, []);
   assert.equal(valid.landing.title_color, "#AABBCC");
@@ -1518,26 +1662,37 @@ test("a landed logo upload switches the draft title type to image; removal retur
   );
   assert.equal(preview.titleType, "image");
   assert.equal(preview.titleImageUrl, logo);
-  // An explicit none flips too: the operator uploading a logo clearly wants it shown.
-  const fromNone = appearanceLandingLogoSelection({ ...appearanceLandingDraft({}), title_type: "none" }, logo);
-  assert.equal(fromNone.title_type, "image");
+  // Explicit text and none both flip too: uploading a logo clearly asks to show it.
+  for (const titleType of ["text", "none"] as const) {
+    const selected = appearanceLandingLogoSelection({ ...appearanceLandingDraft({}), title_type: titleType }, logo);
+    assert.equal(selected.title_type, "image", `${titleType} switches to image`);
+    assert.equal(selected.title_image_url, logo);
+  }
   assert.equal(appearanceLandingLogoSelection(uploaded, logo), uploaded, "a no-op returns the same object");
   // Removing the logo from an image draft returns the type to inherit — no image-without-URL draft remains.
   const removed = appearanceLandingLogoSelection(uploaded, "");
   assert.equal(removed.title_type, "");
   assert.equal(removed.title_image_url, "");
   assert.equal(appearanceLandingCoherent(appearanceLandingWire(removed)), true);
-  // A removal never touches a type the upload did not set.
-  const textKept = appearanceLandingLogoSelection({ ...appearanceLandingDraft({}), title_type: "text", title_image_url: logo }, "");
-  assert.equal(textKept.title_type, "text");
-  assert.equal(textKept.title_image_url, "");
+  // Removal has one result even after the operator manually changed the type.
+  for (const titleType of ["text", "none"] as const) {
+    const reset = appearanceLandingLogoSelection({ ...appearanceLandingDraft({}), title_type: titleType, title_image_url: logo }, "");
+    assert.equal(reset.title_type, "", `${titleType} resets to inherit`);
+    assert.equal(reset.title_image_url, "");
+  }
   // The persistent hint: a draft logo the effective title type will not render (T-468b overrides persist).
   const manualText = appearanceLandingWithTitleType(uploaded, "text");
   const effective = resolveAppearanceLanding([appearanceLandingPreviewDraft(manualText).landing], APPEARANCE_DEFAULT_LANDING, "en");
   assert.equal(effective.titleType, "text");
-  assert.equal(appearanceLandingLogoHintVisible(manualText, effective.titleType), true, "manual text with a logo present shows the hint");
-  assert.equal(appearanceLandingLogoHintVisible(uploaded, preview.titleType), false, "an image title needs no hint");
-  assert.equal(appearanceLandingLogoHintVisible(appearanceLandingDraft({}), "text"), false, "no logo, no hint");
+  assert.equal(appearanceLandingLogoHintVisible(effective.titleImageUrl, effective.titleType), true, "manual text with a logo present shows the hint");
+  assert.equal(appearanceLandingLogoHintVisible(effective.titleImageUrl, "none"), true, "every effective non-image type shows the hint");
+  assert.equal(appearanceLandingLogoHintVisible(preview.titleImageUrl, preview.titleType), false, "an image title needs no hint");
+  const inheritedLogo = resolveAppearanceLanding([
+    { title_type: "text" },
+    { title_image_url: logo },
+  ], APPEARANCE_DEFAULT_LANDING, "en");
+  assert.equal(appearanceLandingLogoHintVisible(inheritedLogo.titleImageUrl, inheritedLogo.titleType), true, "an inherited logo also gets the dependency hint");
+  assert.equal(appearanceLandingLogoHintVisible("", "text"), false, "no logo, no hint");
 });
 
 test("the effective hero list is capped at Core's ten-item output ceiling", () => {
@@ -1850,8 +2005,13 @@ test("the landing composer wires every closed field, parent-only v2 previews, PN
   assert.match(composer, /invalidPreviewValue/, "invalid style fields receive an inline error");
   assert.match(composer, /appearanceLandingBackgroundSelection\(rule\.landing, value\)/, "background type is only staged until an upload completes the pair");
   assert.match(composer, /appearanceLandingLogoSelection\(rule\.landing, url\)/, "a landed logo upload and a removal adjust the draft title type in the same patch (T-492)");
-  assert.match(composer, /appearanceLandingLogoHintVisible\(rule\.landing, content\.titleType\)/, "the logo-visibility hint keys off the effective title type");
+  assert.match(composer, /appearanceLandingLogoHintVisible\(content\.titleImageUrl, content\.titleType\)/, "the logo-visibility hint keys off the resolved URL and effective title type");
   assert.ok(composer.includes('t("title.logoTypeHint")'), "the hint copy is localized");
+  assert.match(composer, /patch\("description_hidden", value\)/, "the three-state subtitle control writes only the new flat field");
+  assert.match(composer, /appearanceLandingLayoutPairSelection\(rule\.landing, effective, pair, member, value\)/, "layout pair edits are atomic");
+  assert.ok(composer.includes('previewError("description_hidden")'));
+  assert.ok(composer.includes('previewError("text_gap_value")'));
+  assert.ok(composer.includes('previewError("footer_min_height_value")'));
   assert.match(composer, /effectiveValueApproximate/, "non-authoritative inherited placeholders are labelled");
   assert.match(composer, /parentState\.kind !== "ready" \|\| comparison\.kind === "loading"/, "Core comparison waits for an authoritative parent read");
   assert.match(composer, /\[targetKey, rule\.id, parentReload\]/);
@@ -1865,11 +2025,18 @@ test("the landing composer wires every closed field, parent-only v2 previews, PN
   assert.match(uploader, /invalidPngType/);
   assert.match(uploader, /logoTooLarge/);
   assert.match(preview, /fields\.qr_enabled === "true"/);
+  assert.match(preview, /!content\.descriptionHidden && content\.description !== ""/, "hidden subtitle removes the text and backdrop element together");
+  assert.match(preview, /marginBottom: `\$\{layout\.textGap\}px`/, "the text block ends at the configured gap above actions");
+  assert.match(preview, /minHeight: `\$\{layout\.footerMinHeight\}px`/, "the footer grows to at least the configured height");
+  assert.match(preview, /appearance-landing-composition-footer-copy[\s\S]*<FooterText/, "tagged footer text remains one layout child");
+  assert.match(preview, /top: `\$\{50 \+ number\(fields\.title_image_offset_percent, -10\)\}%`/, "the image logo keeps its independent centre-offset placement");
   assert.match(preview, /appearanceLandingPreviewDraft\(content\.effective\)/, "the inline-style render boundary validates defensively too");
   assert.match(css, /\.appearance-landing-apple-button\.is-white_outline/);
   assert.match(preview, //);
   assert.match(css, /\.appearance-landing-composition-phone\s*\{[^}]*width:\s*390px;[^}]*height:\s*844px;/s);
   assert.match(css, /appearance-landing-safe-area-top/);
+  assert.match(css, /\.appearance-landing-composition-content\s*\{[^}]*inset:\s*108px 0 0;[^}]*justify-content:\s*flex-end;/s, "the content/footer stack is bottom anchored");
+  assert.match(css, /\.appearance-landing-composition-footer\s*\{[^}]*padding:\s*14px 24px 38px;/s, "footer text clears the bottom safe area while its background reaches the edge");
   // Byte pins copied from the read-only iOS bundle at bd9ea0d.
   const fontPins = {
     "ProximaNova-Light.otf": "0f77660e06a5f61a45c4dbdab511722357cf29e7f5ba1b2cf097550afdb0ed20",

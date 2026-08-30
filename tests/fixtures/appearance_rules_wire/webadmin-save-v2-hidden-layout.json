@@ -1,0 +1,42 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "rule": {
+            "id": "620000000000000000000004",
+            "name": "GB hidden subtitle pt-percent layout fixture",
+            "scope": "storefront",
+            "storefront_country": "GBR",
+            "country_code": "",
+            "center": null,
+            "radius_km": null,
+            "place_label": "",
+            "priority": 0,
+            "active": true,
+            "starts_at": null,
+            "ends_at": null,
+            "landing": {
+                "description_hidden": "true",
+                "footer_min_height_unit": "percent",
+                "footer_min_height_value": "16",
+                "text_gap_unit": "pt",
+                "text_gap_value": "48"
+            },
+            "hero": {
+                "mode": "inherit",
+                "items": []
+            },
+            "palette": {
+                "light": {},
+                "dark": {}
+            },
+            "revision": 23,
+            "created_at": "1970-01-01T00:36:40Z",
+            "updated_at": "1970-01-01T00:38:20Z",
+            "updated_by": "fixture@example.com"
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

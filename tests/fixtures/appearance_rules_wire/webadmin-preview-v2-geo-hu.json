@@ -31,6 +31,7 @@
             },
             "description": {
                 "text": "English-only geo description",
+                "hidden": false,
                 "style": {
                     "font": "proxima_medium",
                     "size": 18,
@@ -40,6 +41,16 @@
                 "backdrop": {
                     "color": "#001214",
                     "alpha": 0.3
+                }
+            },
+            "layout": {
+                "text_gap": {
+                    "value": 24,
+                    "unit": "pt"
+                },
+                "footer_min_height": {
+                    "value": 0,
+                    "unit": "pt"
                 }
             },
             "buttons": {
@@ -149,7 +160,12 @@
             "footer_size": "13",
             "qr_enabled": "false",
             "qr_bg_color": "#DDFBFC",
-            "qr_icon_color": "#071516"
+            "qr_icon_color": "#071516",
+            "description_hidden": "",
+            "text_gap_value": "",
+            "text_gap_unit": "",
+            "footer_min_height_value": "",
+            "footer_min_height_unit": ""
         },
         "landing_flat_defaults": {
             "background_type": "image",
@@ -198,7 +214,12 @@
             "footer_size": "12",
             "qr_enabled": "true",
             "qr_bg_color": "#000000",
-            "qr_icon_color": "#FFFFFF"
+            "qr_icon_color": "#FFFFFF",
+            "description_hidden": "false",
+            "text_gap_value": "24",
+            "text_gap_unit": "pt",
+            "footer_min_height_value": "0",
+            "footer_min_height_unit": "pt"
         },
         "landing_flat_sources": {
             "background_type": {
@@ -388,6 +409,26 @@
             "qr_icon_color": {
                 "scope": "geo",
                 "rule_id": "620000000000000000000003"
+            },
+            "description_hidden": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "text_gap_value": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "text_gap_unit": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "footer_min_height_value": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "footer_min_height_unit": {
+                "scope": "none",
+                "rule_id": ""
             }
         }
     },

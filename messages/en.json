@@ -5897,6 +5897,10 @@
         "center": "Centre",
         "right": "Right"
       },
+      "layoutUnit": {
+        "pt": "pt",
+        "percent": "% of screen height"
+      },
       "apple": {
         "white": "Apple white",
         "white_outline": "Apple white outline",
@@ -5936,7 +5940,11 @@
       },
       "subtitle": {
         "title": "Subtitle",
-        "copy": "Localized supporting copy with its own typography and an optional colour backdrop.",
+        "copy": "Localized supporting copy with its own typography, optional colour backdrop and position above the sign-in buttons.",
+        "visibility": "Subtitle visibility",
+        "shown": "Shown",
+        "hidden": "Hidden",
+        "visibilityHelp": "Hiding removes both the subtitle and its backdrop from the landing screen without deleting either localized text.",
         "textEn": "Subtitle · English",
         "textHu": "Subtitle · Hungarian",
         "font": "Subtitle font",
@@ -5944,7 +5952,10 @@
         "color": "Subtitle colour",
         "align": "Subtitle alignment",
         "backdropColor": "Backdrop colour",
-        "backdropAlpha": "Backdrop opacity · 0–1"
+        "backdropAlpha": "Backdrop opacity · 0–1",
+        "textGap": "Text distance from buttons",
+        "textGapUnit": "Distance unit",
+        "textGapHelp": "The text title and visible subtitle form one block anchored above the topmost visible sign-in button. This gap does not move an image logo."
       },
       "buttons": {
         "title": "Buttons",
@@ -5962,14 +5973,17 @@
       },
       "footer": {
         "title": "Footer",
-        "copy": "Each sentence must contain exactly one '<terms>'…'</terms>' and one '<privacy>'…'</privacy>' pair. The app turns those spans into links.",
+        "copy": "The footer is pinned to the bottom edge. Each sentence must contain exactly one '<terms>'…'</terms>' and one '<privacy>'…'</privacy>' pair.",
         "textEn": "Footer text · English",
         "textHu": "Footer text · Hungarian",
         "background": "Background colour",
         "alpha": "Background opacity · 0–1",
         "textColor": "Text colour",
         "font": "Font",
-        "size": "Text size · pt"
+        "size": "Text size · pt",
+        "minHeight": "Footer minimum height",
+        "minHeightUnit": "Height unit",
+        "minHeightHelp": "The background reaches the physical bottom edge while the text stays above the safe area. Intrinsic content may make the footer taller."
       },
       "qr": {
         "title": "QR reader",

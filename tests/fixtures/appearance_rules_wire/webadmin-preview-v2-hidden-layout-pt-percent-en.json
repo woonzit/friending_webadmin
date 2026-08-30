@@ -2,8 +2,8 @@
     "success": true,
     "status_code": 200,
     "data": {
-        "revision": 21,
-        "content_version": "f2b61a8e1d5a9679e6fefe95e79da4d5bda1669620785b448044c42f42bcf4ff",
+        "revision": 23,
+        "content_version": "97df3a47a5f785145f7601a6bb46e1bb91f365bda516aab12d7494ff94603918",
         "landing": {
             "background": {
                 "type": "image",
@@ -15,12 +15,12 @@
                 }
             },
             "title": {
-                "type": "image",
-                "text": "",
-                "image_url": "https://img.example/friending-logo.png",
+                "type": "text",
+                "text": "friending.",
+                "image_url": "",
                 "image": {
-                    "width_percent": 72,
-                    "offset_percent": -6
+                    "width_percent": 60,
+                    "offset_percent": -10
                 },
                 "style": {
                     "font": "proxima_bold",
@@ -30,8 +30,8 @@
                 }
             },
             "description": {
-                "text": "Ismerj meg embereket a közeledben — és bárhol, ahová tartasz.",
-                "hidden": false,
+                "text": "Meet people near you — and wherever you're headed next.",
+                "hidden": true,
                 "style": {
                     "font": "proxima_regular",
                     "size": 17,
@@ -45,25 +45,25 @@
             },
             "layout": {
                 "text_gap": {
-                    "value": 24,
+                    "value": 48,
                     "unit": "pt"
                 },
                 "footer_min_height": {
-                    "value": 0,
-                    "unit": "pt"
+                    "value": 16,
+                    "unit": "percent"
                 }
             },
             "buttons": {
                 "corner_radius": 28,
                 "phone": {
-                    "label": "Folytatás telefonszámmal",
+                    "label": "Continue with phone number",
                     "background": "#FFFFFF",
                     "text_color": "#0B0E12",
                     "font": "proxima_semibold",
                     "size": 17
                 },
                 "email": {
-                    "label": "Folytatás e-mailben",
+                    "label": "Continue with e-mail",
                     "background": "#FFFFFF",
                     "text_color": "#0B0E12",
                     "font": "proxima_semibold",
@@ -74,7 +74,7 @@
                 }
             },
             "footer": {
-                "text": "A folytatással elfogadod a <terms>Felhasználási feltételeket</terms> és az <privacy>Adatvédelmi nyilatkozatot</privacy>.",
+                "text": "By continuing you accept our <terms>Terms</terms> and <privacy>Privacy Policy</privacy>.",
                 "background": {
                     "color": "#000000",
                     "alpha": 0.55
@@ -110,17 +110,17 @@
         },
         "matched": {
             "scope": "storefront",
-            "rule_id": "620000000000000000000002",
+            "rule_id": "620000000000000000000004",
             "location_source": "none"
         },
         "landing_flat": {
             "background_type": "",
             "background_url": "",
             "background_poster_url": "",
-            "title_type": "image",
+            "title_type": "",
             "title_text_en": "",
             "title_text_hu": "",
-            "title_image_url": "https://img.example/friending-logo.png",
+            "title_image_url": "",
             "description_en": "",
             "description_hu": "",
             "overlay_color": "",
@@ -129,8 +129,8 @@
             "title_size": "",
             "title_color": "",
             "title_align": "",
-            "title_image_width_percent": "72",
-            "title_image_offset_percent": "-6",
+            "title_image_width_percent": "",
+            "title_image_offset_percent": "",
             "description_font": "",
             "description_size": "",
             "description_color": "",
@@ -161,11 +161,11 @@
             "qr_enabled": "",
             "qr_bg_color": "",
             "qr_icon_color": "",
-            "description_hidden": "",
-            "text_gap_value": "",
-            "text_gap_unit": "",
-            "footer_min_height_value": "",
-            "footer_min_height_unit": ""
+            "description_hidden": "true",
+            "text_gap_value": "48",
+            "text_gap_unit": "pt",
+            "footer_min_height_value": "16",
+            "footer_min_height_unit": "percent"
         },
         "landing_flat_defaults": {
             "background_type": "image",
@@ -235,8 +235,8 @@
                 "rule_id": ""
             },
             "title_type": {
-                "scope": "storefront",
-                "rule_id": "620000000000000000000002"
+                "scope": "none",
+                "rule_id": ""
             },
             "title_text_en": {
                 "scope": "none",
@@ -247,8 +247,8 @@
                 "rule_id": ""
             },
             "title_image_url": {
-                "scope": "storefront",
-                "rule_id": "620000000000000000000002"
+                "scope": "none",
+                "rule_id": ""
             },
             "description_en": {
                 "scope": "none",
@@ -283,12 +283,12 @@
                 "rule_id": ""
             },
             "title_image_width_percent": {
-                "scope": "storefront",
-                "rule_id": "620000000000000000000002"
+                "scope": "none",
+                "rule_id": ""
             },
             "title_image_offset_percent": {
-                "scope": "storefront",
-                "rule_id": "620000000000000000000002"
+                "scope": "none",
+                "rule_id": ""
             },
             "description_font": {
                 "scope": "none",
@@ -411,24 +411,24 @@
                 "rule_id": ""
             },
             "description_hidden": {
-                "scope": "none",
-                "rule_id": ""
+                "scope": "storefront",
+                "rule_id": "620000000000000000000004"
             },
             "text_gap_value": {
-                "scope": "none",
-                "rule_id": ""
+                "scope": "storefront",
+                "rule_id": "620000000000000000000004"
             },
             "text_gap_unit": {
-                "scope": "none",
-                "rule_id": ""
+                "scope": "storefront",
+                "rule_id": "620000000000000000000004"
             },
             "footer_min_height_value": {
-                "scope": "none",
-                "rule_id": ""
+                "scope": "storefront",
+                "rule_id": "620000000000000000000004"
             },
             "footer_min_height_unit": {
-                "scope": "none",
-                "rule_id": ""
+                "scope": "storefront",
+                "rule_id": "620000000000000000000004"
             }
         }
     },

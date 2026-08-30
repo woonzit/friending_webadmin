@@ -1,10 +1,10 @@
 {
     "schema_version": 1,
-    "source_commit": "b50432bd04b571f52d6191bd4feac4a6cc376085",
-    "fixture_set_sha256": "461e150eeadfd4cea1851d8f37571540e2aba9085d7b17f566221d48d2c69877",
+    "source_commit": "9c22992bf110f67ac425f3ea1befd99b2c923e17",
+    "fixture_set_sha256": "3e6884e27aa1fdcf48843ee5c0e9fba11c532469be3abc943a2591f5efb5c3ef",
     "provenance": {
         "generator": "tests/appearance_rules_fixture_dump.php",
-        "generator_sha256": "01e0721c337ee3f3f2abd444888396d159c6ced779b6b93d5c9e947a40da97ce",
+        "generator_sha256": "e4922e36d44f61d93bc64d3d7fd3a975280761481a38cc936ea950bfbe4ade89",
         "wire_adapters": [
             "Friending\\Core\\Response::wirePayload",
             "Friending\\Support\\Webadmin::noStoreReply"
@@ -125,21 +125,35 @@
             "route": "/v1/app/appearance",
             "case": "schema v2 geo override with title none, custom controls, footer and QR",
             "consumer": "ios",
-            "sha256": "e1bf57e7bfafb7263ff4572bac57b58bd12f4ea75421ca7be48933c93490c5d5"
+            "sha256": "f1eaf8bc9c76d5840c97e42d8815f9c7ab6883b29ff0e3901213f15c5bac0388"
         },
         {
             "file": "app-appearance-v2-global-defaults-en.json",
             "route": "/v1/app/appearance",
             "case": "schema v2 old-shape global rule inheriting every compiled landing default",
             "consumer": "ios",
-            "sha256": "e63e2f35fa3c4914b7413cd63de6cdee1e9f93c0b79fd85aef32a4a7ec9981f1"
+            "sha256": "416eb8f58f1744d3203969ea2c3b06080e329ab3e86c4e7de31d8dfe0967f985"
+        },
+        {
+            "file": "app-appearance-v2-hidden-layout-pt-percent-en.json",
+            "route": "/v1/app/appearance",
+            "case": "schema v2 effective hidden subtitle with pt gap and percent footer minimum",
+            "consumer": "ios",
+            "sha256": "1a49e331cdc1496b09b48eeb292ee5b1242b792348498f53361a83c20c162d4a"
+        },
+        {
+            "file": "app-appearance-v2-layout-percent-pt-en.json",
+            "route": "/v1/app/appearance",
+            "case": "schema v2 percent gap with point footer minimum",
+            "consumer": "ios",
+            "sha256": "6e87cdfe252540d79348cea496d97686cae494debc7b2c76ce5436c9ce0f9c19"
         },
         {
             "file": "app-appearance-v2-storefront-logo-en.json",
             "route": "/v1/app/appearance",
             "case": "schema v2 storefront logo override",
             "consumer": "ios",
-            "sha256": "573e8c023d05b41e2457183b27558eebba1f019828899e255a7283d9246e6626"
+            "sha256": "713a9c5c80fafb3f5cb8100e98a4ffe2846a0103e14e493f131b7ffd2646c51c"
         },
         {
             "file": "appconfig-appearance-geo-hu.json",
@@ -160,21 +174,35 @@
             "route": "/v1/app/ios_appconfig",
             "case": "cold-start schema v2 geo composer appearance fragment",
             "consumer": "ios",
-            "sha256": "4ef26bc13c8fdb72675e3bd700112d6080967af063b53616b97364392f974912"
+            "sha256": "1584f4a3cfdaf53e8f2242fbcb46c02eff0f8a6e625fc2911f5b5e5c9ef5a898"
         },
         {
             "file": "appconfig-appearance-v2-global-defaults-en.json",
             "route": "/v1/app/ios_appconfig",
             "case": "cold-start schema v2 compiled landing defaults through a global rule",
             "consumer": "ios",
-            "sha256": "8a11f9320fa24d1fc009a22a5fae13ad26115c65b2597ac75a2b89105b99a195"
+            "sha256": "807ccfddeb46a8bcd33c230317af9c925f946aba2a7e73784493fa13b35b049e"
+        },
+        {
+            "file": "appconfig-appearance-v2-hidden-layout-pt-percent-en.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "cold-start schema v2 hidden subtitle and pt-percent layout fragment",
+            "consumer": "ios",
+            "sha256": "6d7c6ea5c67e579b0d82855a66339223af1637f8d716b8822fe7e9d9a6356428"
+        },
+        {
+            "file": "appconfig-appearance-v2-layout-percent-pt-en.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "cold-start schema v2 percent-point layout fragment",
+            "consumer": "ios",
+            "sha256": "72cbf8e9ddd5f62d10668c70e4b220545c0fcc01f499b9f5b65c0d4a40e146ef"
         },
         {
             "file": "appconfig-appearance-v2-storefront-logo-en.json",
             "route": "/v1/app/ios_appconfig",
             "case": "cold-start schema v2 storefront logo appearance fragment",
             "consumer": "ios",
-            "sha256": "acef8fb412637ad5a841832988b7d7c52a1c76908d621ad91a316a8c54a5963b"
+            "sha256": "d97d9ada1c5c1116d99985db0a8399224aec0b872b3a28728ec4edab860fe520"
         },
         {
             "file": "landing-content-geo-hu.json",
@@ -216,35 +244,49 @@
             "route": "/v1/webadmin/appearance_rules_list",
             "case": "flat landing v2 overrides and complete compiled defaults",
             "consumer": "webadmin",
-            "sha256": "a803378462b9990f2ab57c0836021f7c2ad6d2aed1b9bbea7718e6a159c7e6dc"
+            "sha256": "1397e139ba60adac1ddd75e2c0286513430cd6152385f33fff035083658f0920"
         },
         {
             "file": "webadmin-list.json",
             "route": "/v1/webadmin/appearance_rules_list",
             "case": "rule list with compiled defaults",
             "consumer": "webadmin",
-            "sha256": "f9ba889fda25451a6bf4f11ad736b2517529ebc125b9eeab734352f769e7496a"
+            "sha256": "761900585db8923f1d9d5949014779b2b584fbac5f9d51f5dfed7570a617b1e2"
         },
         {
             "file": "webadmin-preview-parent-global-hu.json",
             "route": "/v1/webadmin/appearance_rules_preview",
             "case": "global parent schema v2 preview with location suppressed and global excluded",
             "consumer": "webadmin",
-            "sha256": "efaa4d83fe96cf1715953614d43d54ba229694531be35287f80e9c19b93d90c5"
+            "sha256": "886cd2b3bf460a539fdf20fb0d038aa9d5830f8606450605ed792b2eaacb171f"
         },
         {
             "file": "webadmin-preview-parent-storefront-hu.json",
             "route": "/v1/webadmin/appearance_rules_preview",
             "case": "parent-only schema v2 preview with the persisted geo rule excluded",
             "consumer": "webadmin",
-            "sha256": "3830ba7c05cfa5a5891490b07f4a958d5a83a5848a5d448b9aac23b14c2d43aa"
+            "sha256": "38d7f3e5071869dd749245ca17743ec38b0609ef2cec082a8bbce4d1b82555f1"
         },
         {
             "file": "webadmin-preview-v2-geo-hu.json",
             "route": "/v1/webadmin/appearance_rules_preview",
             "case": "saved-state schema v2 preview",
             "consumer": "webadmin",
-            "sha256": "1172641e336b4c215121a86f8fdf77ab3ba96623d429fdde5f3b142c41a87b33"
+            "sha256": "f508c095eb53834f4e61833ed1837e045036025b9f813fad6b3ba1db8cfead4b"
+        },
+        {
+            "file": "webadmin-preview-v2-hidden-layout-pt-percent-en.json",
+            "route": "/v1/webadmin/appearance_rules_preview",
+            "case": "schema v2 hidden subtitle and pt-percent layout flat preview",
+            "consumer": "webadmin",
+            "sha256": "cb454d4156d249d7a67203f8c8e79b2b45e7beb757e1f4d2dc3f6dddcaaa40e9"
+        },
+        {
+            "file": "webadmin-preview-v2-layout-percent-pt-en.json",
+            "route": "/v1/webadmin/appearance_rules_preview",
+            "case": "schema v2 percent-point layout flat preview",
+            "consumer": "webadmin",
+            "sha256": "095e8a0484fc63e4ed4a3cac7c87861197e1f03f8feb02dce0b6d3e0297998e8"
         },
         {
             "file": "webadmin-preview.json",
@@ -252,6 +294,13 @@
             "case": "preview equals public appearance payload",
             "consumer": "webadmin",
             "sha256": "b61186d5d8204d811db9b960fd9ea813708061af654d5c53399e080a9ffbcfd2"
+        },
+        {
+            "file": "webadmin-save-v2-hidden-layout.json",
+            "route": "/v1/webadmin/appearance_rules_save",
+            "case": "stored flat hidden subtitle and pt-percent layout rule projection after save",
+            "consumer": "webadmin",
+            "sha256": "b3edb9653459ba5300e52cf95c9818cfa65e23bb699cf60b7b18184c6deb4e76"
         },
         {
             "file": "webadmin-save-v2.json",

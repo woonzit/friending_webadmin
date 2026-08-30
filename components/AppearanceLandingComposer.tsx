@@ -10,7 +10,9 @@ import {
   APPEARANCE_LANDING_ALIGNS,
   APPEARANCE_LANDING_APPLE_STYLES,
   APPEARANCE_LANDING_FONTS,
+  APPEARANCE_LANDING_LAYOUT_UNITS,
   appearanceLandingBackgroundSelection,
+  appearanceLandingLayoutPairSelection,
   appearanceLandingLogoHintVisible,
   appearanceLandingLogoSelection,
   appearanceLandingPreviewDraft,
@@ -28,6 +30,8 @@ import {
   type AppearanceLandingFont,
   type AppearanceLandingFlatSources,
   type AppearanceLandingKey,
+  type AppearanceLandingLayoutPair,
+  type AppearanceLandingLayoutUnit,
   type AppearanceRule,
   type AppearanceRuleDraft,
   type LocalizedAppearanceCountry,
@@ -352,6 +356,10 @@ export default function AppearanceLandingComposer({
     onChange({ ...rule.landing, ...next });
   }
 
+  function patchLayoutPair(pair: AppearanceLandingLayoutPair, member: "value" | "unit", value: string) {
+    onChange(appearanceLandingLayoutPairSelection(rule.landing, effective, pair, member, value));
+  }
+
   const inheritLabel = t("inherit");
   const metaEffective = (key: AppearanceLandingKey, value: string) => {
     const displayValue = value || "—";
@@ -373,6 +381,10 @@ export default function AppearanceLandingComposer({
   const inheritValue = (value: string) => t("inheritValue", { value });
   const fontOptions = APPEARANCE_LANDING_FONTS.map((font) => ({ value: font, label: t(`font.${font as AppearanceLandingFont}`) }));
   const alignOptions = APPEARANCE_LANDING_ALIGNS.map((align) => ({ value: align, label: t(`align.${align}`) }));
+  const layoutUnitOptions = APPEARANCE_LANDING_LAYOUT_UNITS.map((unit) => ({
+    value: unit,
+    label: t(`layoutUnit.${unit as AppearanceLandingLayoutUnit}`),
+  }));
   const selectedBackgroundType = pendingBackgroundType ?? rule.landing.background_type;
   const uploadBackgroundType = selectedBackgroundType === "video"
     || (selectedBackgroundType === "" && effective.background_type === "video")
@@ -481,7 +493,7 @@ export default function AppearanceLandingComposer({
           <ColorField label={t("title.color")} value={rule.landing.title_color} effective={effective.title_color} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("title_color", effective.title_color)} error={previewError("title_color")} onChange={(value) => patch("title_color", value)} />
           <SelectField label={t("title.align")} value={rule.landing.title_align} effective={effective.title_align} effectiveLabel={metaEffective("title_align", effective.title_align)} disabled={disabled} inheritValue={inheritValue(t(`align.${effective.title_align}`))} options={alignOptions} error={previewError("title_align")} onChange={(value) => patch("title_align", value)} />
           <ImageUploadField className="field-full" label={t("title.logo")} value={rule.landing.title_image_url} disabled={disabled} pngOnly hint={`${t("title.logoHint")} ${uploadHint("title_image_url", effective.title_image_url || "—")}`} onBusyChange={onBusyChange} onChange={(url) => onChange(appearanceLandingLogoSelection(rule.landing, url))} />
-          {appearanceLandingLogoHintVisible(rule.landing, content.titleType) && (
+          {appearanceLandingLogoHintVisible(content.titleImageUrl, content.titleType) && (
             <small className="field-hint field-full">{t("title.logoTypeHint")}</small>
           )}
           <RangeField label={t("title.logoWidth")} value={rule.landing.title_image_width_percent} effective={effective.title_image_width_percent} minimum={20} maximum={100} step={1} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("title_image_width_percent", effective.title_image_width_percent)} error={previewError("title_image_width_percent")} onChange={(value) => patch("title_image_width_percent", value)} />
@@ -489,6 +501,24 @@ export default function AppearanceLandingComposer({
         </ComposerSection>
 
         <ComposerSection title={t("subtitle.title")} copy={t("subtitle.copy")}>
+          <SelectField
+            label={t("subtitle.visibility")}
+            value={rule.landing.description_hidden}
+            effective={t(effective.description_hidden === "true" ? "subtitle.hidden" : "subtitle.shown")}
+            effectiveLabel={metaEffective(
+              "description_hidden",
+              t(effective.description_hidden === "true" ? "subtitle.hidden" : "subtitle.shown"),
+            )}
+            disabled={disabled}
+            inheritValue={inheritValue(t(effective.description_hidden === "true" ? "subtitle.hidden" : "subtitle.shown"))}
+            options={[
+              { value: "false", label: t("subtitle.shown") },
+              { value: "true", label: t("subtitle.hidden") },
+            ]}
+            error={previewError("description_hidden")}
+            onChange={(value) => patch("description_hidden", value)}
+          />
+          <small className="field-hint field-full">{t("subtitle.visibilityHelp")}</small>
           <TextField label={t("subtitle.textEn")} value={rule.landing.description_en} effective={effective.description_en} maximum={300} rows={3} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("description_en", effective.description_en)} onChange={(value) => patch("description_en", value)} />
           <TextField label={t("subtitle.textHu")} value={rule.landing.description_hu} effective={effective.description_hu} maximum={300} rows={3} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("description_hu", effective.description_hu)} onChange={(value) => patch("description_hu", value)} />
           <SelectField label={t("subtitle.font")} value={rule.landing.description_font} effective={effective.description_font} effectiveLabel={metaEffective("description_font", effective.description_font)} disabled={disabled} inheritValue={inheritValue(t(`font.${effective.description_font as AppearanceLandingFont}`))} options={fontOptions} error={previewError("description_font")} onChange={(value) => patch("description_font", value)} />
@@ -497,6 +527,9 @@ export default function AppearanceLandingComposer({
           <SelectField label={t("subtitle.align")} value={rule.landing.description_align} effective={effective.description_align} effectiveLabel={metaEffective("description_align", effective.description_align)} disabled={disabled} inheritValue={inheritValue(t(`align.${effective.description_align}`))} options={alignOptions} error={previewError("description_align")} onChange={(value) => patch("description_align", value)} />
           <ColorField label={t("subtitle.backdropColor")} value={rule.landing.description_backdrop_color} effective={effective.description_backdrop_color} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("description_backdrop_color", effective.description_backdrop_color)} error={previewError("description_backdrop_color")} onChange={(value) => patch("description_backdrop_color", value)} />
           <RangeField label={t("subtitle.backdropAlpha")} value={rule.landing.description_backdrop_alpha} effective={effective.description_backdrop_alpha} minimum={0} maximum={1} step={0.01} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("description_backdrop_alpha", effective.description_backdrop_alpha)} error={previewError("description_backdrop_alpha")} onChange={(value) => patch("description_backdrop_alpha", value)} />
+          <RangeField label={t("subtitle.textGap")} value={rule.landing.text_gap_value} effective={effective.text_gap_value} minimum={0} maximum={200} step={1} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("text_gap_value", effective.text_gap_value)} error={previewError("text_gap_value")} onChange={(value) => patchLayoutPair("text_gap", "value", value)} />
+          <SelectField label={t("subtitle.textGapUnit")} value={rule.landing.text_gap_unit} effective={t(`layoutUnit.${effective.text_gap_unit as AppearanceLandingLayoutUnit}`)} effectiveLabel={metaEffective("text_gap_unit", t(`layoutUnit.${effective.text_gap_unit as AppearanceLandingLayoutUnit}`))} disabled={disabled} inheritValue={inheritValue(t(`layoutUnit.${effective.text_gap_unit as AppearanceLandingLayoutUnit}`))} options={layoutUnitOptions} error={previewError("text_gap_unit")} onChange={(value) => patchLayoutPair("text_gap", "unit", value)} />
+          <small className="field-hint field-full">{t("subtitle.textGapHelp")}</small>
         </ComposerSection>
 
         <ComposerSection title={t("buttons.title")} copy={t("buttons.copy")}>
@@ -536,6 +569,9 @@ export default function AppearanceLandingComposer({
           <ColorField label={t("footer.textColor")} value={rule.landing.footer_text_color} effective={effective.footer_text_color} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("footer_text_color", effective.footer_text_color)} error={previewError("footer_text_color")} onChange={(value) => patch("footer_text_color", value)} />
           <SelectField label={t("footer.font")} value={rule.landing.footer_font} effective={effective.footer_font} effectiveLabel={metaEffective("footer_font", effective.footer_font)} disabled={disabled} inheritValue={inheritValue(t(`font.${effective.footer_font as AppearanceLandingFont}`))} options={fontOptions} error={previewError("footer_font")} onChange={(value) => patch("footer_font", value)} />
           <RangeField label={t("footer.size")} value={rule.landing.footer_size} effective={effective.footer_size} minimum={10} maximum={18} step={1} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("footer_size", effective.footer_size)} error={previewError("footer_size")} onChange={(value) => patch("footer_size", value)} />
+          <RangeField label={t("footer.minHeight")} value={rule.landing.footer_min_height_value} effective={effective.footer_min_height_value} minimum={0} maximum={300} step={1} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("footer_min_height_value", effective.footer_min_height_value)} error={previewError("footer_min_height_value")} onChange={(value) => patchLayoutPair("footer_min_height", "value", value)} />
+          <SelectField label={t("footer.minHeightUnit")} value={rule.landing.footer_min_height_unit} effective={t(`layoutUnit.${effective.footer_min_height_unit as AppearanceLandingLayoutUnit}`)} effectiveLabel={metaEffective("footer_min_height_unit", t(`layoutUnit.${effective.footer_min_height_unit as AppearanceLandingLayoutUnit}`))} disabled={disabled} inheritValue={inheritValue(t(`layoutUnit.${effective.footer_min_height_unit as AppearanceLandingLayoutUnit}`))} options={layoutUnitOptions} error={previewError("footer_min_height_unit")} onChange={(value) => patchLayoutPair("footer_min_height", "unit", value)} />
+          <small className="field-hint field-full">{t("footer.minHeightHelp")}</small>
         </ComposerSection>
 
         <ComposerSection title={t("qr.title")} copy={t("qr.copy")}>

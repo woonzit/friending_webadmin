@@ -2,8 +2,8 @@
     "success": true,
     "status_code": 200,
     "data": {
-        "revision": 21,
-        "content_version": "398fbbacccfdf2d013dfbf96064630d95b5a3699a45fe7c47712d687fa24a37d",
+        "revision": 24,
+        "content_version": "9a77c5900eab732cb3ca02364bc4d9e18bd69afb15e44dbd2f2c212ba219b76e",
         "landing": {
             "background": {
                 "type": "image",
@@ -15,12 +15,12 @@
                 }
             },
             "title": {
-                "type": "image",
-                "text": "",
-                "image_url": "https://img.example/friending-logo.png",
+                "type": "text",
+                "text": "friending.",
+                "image_url": "",
                 "image": {
-                    "width_percent": 72,
-                    "offset_percent": -6
+                    "width_percent": 60,
+                    "offset_percent": -10
                 },
                 "style": {
                     "font": "proxima_bold",
@@ -45,11 +45,11 @@
             },
             "layout": {
                 "text_gap": {
-                    "value": 24,
-                    "unit": "pt"
+                    "value": 11,
+                    "unit": "percent"
                 },
                 "footer_min_height": {
-                    "value": 0,
+                    "value": 96,
                     "unit": "pt"
                 }
             },
@@ -110,7 +110,7 @@
         },
         "matched": {
             "scope": "storefront",
-            "rule_id": "620000000000000000000002",
+            "rule_id": "620000000000000000000005",
             "location_source": "none"
         }
     },

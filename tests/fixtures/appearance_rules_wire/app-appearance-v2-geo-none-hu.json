@@ -31,6 +31,7 @@
             },
             "description": {
                 "text": "English-only geo description",
+                "hidden": false,
                 "style": {
                     "font": "proxima_medium",
                     "size": 18,
@@ -40,6 +41,16 @@
                 "backdrop": {
                     "color": "#001214",
                     "alpha": 0.3
+                }
+            },
+            "layout": {
+                "text_gap": {
+                    "value": 24,
+                    "unit": "pt"
+                },
+                "footer_min_height": {
+                    "value": 0,
+                    "unit": "pt"
                 }
             },
             "buttons": {
