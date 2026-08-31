@@ -13,6 +13,10 @@
                 "36",
                 "1"
             ],
+            "phone_regions": [
+                "HU",
+                "US"
+            ],
             "phone_formats": [
                 {
                     "code": "1",

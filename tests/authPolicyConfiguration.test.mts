@@ -2,22 +2,66 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 import {
-  AUTH_POLICY_COUNTRIES,
   AUTH_POLICY_EDITABLE_SETTING_KEYS,
   AUTH_POLICY_SETTING_KEYS,
   PHONE_DIAL_FORMAT_MAX_LENGTH,
+  authPolicyConflict,
+  authPolicyDialCodesForRegions,
+  authPolicyDraftAfterConflict,
   authPolicyDraftIssue,
+  authPolicyDraftWithChanges,
   authPolicySavePayload,
   authPolicySettingsResponse,
-  localizedAuthPolicyCountries,
+  authPolicyVocabularyResponse,
+  localizedAuthPolicyCallingCodes,
+  localizedAuthPolicyRegions,
+  localizedAuthPolicyStorefronts,
   normalizeAuthPolicySettingsProxyBody,
   phoneDialFormatMask,
   phoneDialFormatRefusal,
   phoneDialMaskValid,
+  phoneRegionRefusal,
   renderPhoneDialFormatSample,
   updatePhoneDialFormat,
   type AuthPolicyConfiguration,
+  type AuthPolicyVocabulary,
 } from "../lib/authPolicyConfiguration.ts";
+
+const TEST_VOCABULARY: AuthPolicyVocabulary = {
+  storefronts: [
+    { alpha3: "CAN", nameEn: "Canada", nameHu: "Kanada" },
+    { alpha3: "HUN", nameEn: "Hungary", nameHu: "Magyarország" },
+    { alpha3: "USA", nameEn: "United States", nameHu: "Egyesült Államok" },
+  ],
+  callingCodes: [
+    { code: "1", exampleAlpha3: "USA" },
+    { code: "36", exampleAlpha3: "HUN" },
+  ],
+  regions: [
+    { alpha2: "CA", alpha3: "CAN", callingCode: "1" },
+    { alpha2: "HU", alpha3: "HUN", callingCode: "36" },
+    { alpha2: "US", alpha3: "USA", callingCode: "1" },
+  ],
+};
+
+function wireVocabulary(value: AuthPolicyVocabulary = TEST_VOCABULARY): Record<string, unknown> {
+  return {
+    storefronts: value.storefronts.map((row) => ({
+      alpha3: row.alpha3,
+      name_en: row.nameEn,
+      name_hu: row.nameHu,
+    })),
+    calling_codes: value.callingCodes.map((row) => ({
+      code: row.code,
+      example_alpha3: row.exampleAlpha3,
+    })),
+    regions: value.regions.map((row) => ({
+      alpha2: row.alpha2,
+      alpha3: row.alpha3,
+      calling_code: row.callingCode,
+    })),
+  };
+}
 
 function setting(
   value: unknown,
@@ -33,6 +77,7 @@ function setting(
     maximum: type === "integer" ? 9_223_372_036_854_776_000 : null,
     updated_at: updatedAt,
     updated_by: updatedBy,
+    ...(type === "integer" ? {} : { warning: false, invalid_codes: [] }),
   };
 }
 
@@ -52,6 +97,11 @@ function settings(): Record<string, unknown> {
       { code: "36", mask: "**/*** ****" },
       { code: "1", mask: "(***) *** ****" },
     ], "phone_dial_formats"),
+    phone_regions_default: setting(["US", "HU"], "phone_regions"),
+    phone_regions_overrides: setting(
+      { USA: ["US"], HUN: "ALL" },
+      "phone_regions_overrides",
+    ),
     auth_policy_revision: setting(7, "integer", 1_777_000_007),
   };
 }
@@ -61,6 +111,7 @@ function success(policySettings: Record<string, unknown> = settings()): Record<s
     success: true,
     status_code: 200,
     settings: policySettings,
+    vocabulary: wireVocabulary(),
     message: 200,
     status: 200,
     can_send: 0,
@@ -73,29 +124,56 @@ function parsed(): AuthPolicyConfiguration {
   return value;
 }
 
-test("the storefront catalogue is the closed ISO alpha-3 set with localized names and E.164 roots", () => {
-  assert.equal(AUTH_POLICY_COUNTRIES.length, 249);
-  assert.equal(new Set(AUTH_POLICY_COUNTRIES.map((country) => country.alpha3)).size, 249);
-  assert.ok(AUTH_POLICY_COUNTRIES.every((country) => /^[A-Z]{3}$/.test(country.alpha3)));
-  assert.ok(AUTH_POLICY_COUNTRIES.every((country) => (
-    country.dialCodes.length > 0
-      && country.dialCodes.every((code) => /^[1-9]\d{0,2}$/.test(code))
-  )));
-
-  const byCode = new Map(AUTH_POLICY_COUNTRIES.map((country) => [country.alpha3, country]));
-  assert.deepEqual(byCode.get("HUN")?.dialCodes, ["36"]);
-  assert.deepEqual(byCode.get("USA")?.dialCodes, ["1"]);
-  assert.deepEqual(byCode.get("CAN")?.dialCodes, ["1"]);
-  assert.deepEqual(byCode.get("BHS")?.dialCodes, ["1"]);
-  assert.deepEqual(byCode.get("SJM")?.dialCodes, ["47"]);
-  assert.deepEqual(byCode.get("CUW")?.dialCodes, ["599"]);
-
-  const en = new Map(localizedAuthPolicyCountries("en").map((country) => [country.alpha3, country.name]));
-  const hu = new Map(localizedAuthPolicyCountries("hu").map((country) => [country.alpha3, country.name]));
+test("Core's storefront, calling-code and region vocabulary drives every localized picker", () => {
+  const response = success();
+  assert.deepEqual(authPolicyVocabularyResponse(response), TEST_VOCABULARY);
+  const en = new Map(localizedAuthPolicyStorefronts(TEST_VOCABULARY, "en")
+    .map((country) => [country.alpha3, country.name]));
+  const hu = new Map(localizedAuthPolicyStorefronts(TEST_VOCABULARY, "hu")
+    .map((country) => [country.alpha3, country.name]));
   assert.equal(en.get("HUN"), "Hungary");
   assert.equal(hu.get("HUN"), "Magyarország");
   assert.equal(en.get("USA"), "United States");
   assert.equal(hu.get("USA"), "Egyesült Államok");
+  assert.deepEqual(localizedAuthPolicyCallingCodes(TEST_VOCABULARY, "hu"), [
+    { code: "1", exampleAlpha3: "USA", exampleName: "Egyesült Államok" },
+    { code: "36", exampleAlpha3: "HUN", exampleName: "Magyarország" },
+  ]);
+  assert.deepEqual(localizedAuthPolicyRegions(TEST_VOCABULARY, "hu"), [
+    { alpha2: "US", alpha3: "USA", callingCode: "1", name: "Egyesült Államok" },
+    { alpha2: "CA", alpha3: "CAN", callingCode: "1", name: "Kanada" },
+    { alpha2: "HU", alpha3: "HUN", callingCode: "36", name: "Magyarország" },
+  ]);
+});
+
+test("the Core vocabulary fails closed on malformed, duplicate, unsorted, or additive material", () => {
+  const mutations: Array<(candidate: Record<string, any>) => void> = [
+    (candidate) => { delete candidate.vocabulary.storefronts; },
+    (candidate) => { candidate.vocabulary.future = []; },
+    (candidate) => { candidate.vocabulary.storefronts[0].future = true; },
+    (candidate) => { candidate.vocabulary.storefronts.reverse(); },
+    (candidate) => { candidate.vocabulary.storefronts[2].alpha3 = "HUN"; },
+    (candidate) => { candidate.vocabulary.storefronts[0].name_en = " Hungary "; },
+    (candidate) => { candidate.vocabulary.calling_codes.reverse(); },
+    (candidate) => { candidate.vocabulary.calling_codes[1].code = "1"; },
+    (candidate) => { candidate.vocabulary.calling_codes[0].code = "+1"; },
+    (candidate) => { candidate.vocabulary.calling_codes[0].example_alpha3 = "GBR"; },
+    (candidate) => { delete candidate.vocabulary.regions; },
+    (candidate) => { candidate.vocabulary.regions.reverse(); },
+    (candidate) => { candidate.vocabulary.regions[0].alpha2 = "hu"; },
+    (candidate) => { candidate.vocabulary.regions[0].alpha3 = "USA"; },
+    (candidate) => { candidate.vocabulary.regions[0].calling_code = "999"; },
+    (candidate) => { candidate.vocabulary.regions[0].future = true; },
+  ];
+  for (const mutate of mutations) {
+    const candidate = structuredClone(success()) as Record<string, any>;
+    mutate(candidate);
+    assert.equal(authPolicyVocabularyResponse(candidate), null, JSON.stringify(candidate.vocabulary));
+  }
+  assert.deepEqual(
+    authPolicyVocabularyResponse({ ...success(), future_top_level: true }),
+    TEST_VOCABULARY,
+  );
 });
 
 test("phone masks accept exactly the v1.6 grammar", () => {
@@ -153,22 +231,28 @@ test("format edits keep one sorted entry per code and empty input removes the ov
   ]);
 });
 
-test("format codes mirror the canonical 1–3 digit boundary while the UI catalogue stays narrower", () => {
+test("shape-valid stored format codes outside Core's vocabulary remain visible and block resave", () => {
   const candidate = settings();
   (candidate.phone_dial_formats as Record<string, unknown>).value = [
     { code: "999", mask: "***" },
     { code: "1", mask: "(***) *** ****" },
   ];
+  (candidate.phone_dial_formats as Record<string, unknown>).warning = true;
+  (candidate.phone_dial_formats as Record<string, unknown>).invalid_codes = ["999"];
   const value = authPolicySettingsResponse(success(candidate));
   assert.ok(value);
   assert.deepEqual(value.phoneDialFormats, [
     { code: "1", mask: "(***) *** ****" },
     { code: "999", mask: "***" },
   ]);
-  assert.deepEqual(authPolicySavePayload(value)?.phone_dial_formats, value.phoneDialFormats);
+  assert.deepEqual(value.vocabularyWarnings, [
+    { setting: "phone_dial_formats", codes: ["999"] },
+  ]);
+  assert.equal(authPolicyDraftIssue(value), "dialFormatCode");
+  assert.equal(authPolicySavePayload(value), null);
 });
 
-test("all six managed values parse while saves contain exactly the five editable values", () => {
+test("all eight managed values parse while one country source writes all seven editable values", () => {
   const value = parsed();
   assert.deepEqual(value, {
     defaultMethods: { phone: true, email: true },
@@ -176,15 +260,17 @@ test("all six managed values parse while saves contain exactly the five editable
       { storefront: "HUN", phone: false, email: true },
       { storefront: "USA", phone: true, email: false },
     ],
-    defaultDialCodes: ["1", "36"],
-    dialCodeOverrides: [
-      { storefront: "HUN", dialCodes: "ALL" },
-      { storefront: "USA", dialCodes: ["1"] },
+    defaultRegions: ["HU", "US"],
+    regionOverrides: [
+      { storefront: "HUN", regions: "ALL" },
+      { storefront: "USA", regions: ["US"] },
     ],
     phoneDialFormats: [
       { code: "1", mask: "(***) *** ****" },
       { code: "36", mask: "**/*** ****" },
     ],
+    vocabulary: TEST_VOCABULARY,
+    vocabularyWarnings: [],
     revision: 7,
     updatedAt: 1_777_000_007,
     updatedBy: "policy-admin@friending.com",
@@ -206,6 +292,8 @@ test("all six managed values parse while saves contain exactly the five editable
       { code: "1", mask: "(***) *** ****" },
       { code: "36", mask: "**/*** ****" },
     ],
+    phone_regions_default: ["HU", "US"],
+    phone_regions_overrides: { HUN: "ALL", USA: ["US"] },
   });
 });
 
@@ -216,6 +304,8 @@ test("fresh environment-derived settings accept only Core's exact PHP empty-map 
   (fresh.phone_dial_codes_default as Record<string, unknown>).value = "ALL";
   (fresh.phone_dial_codes_overrides as Record<string, unknown>).value = [];
   (fresh.phone_dial_formats as Record<string, unknown>).value = [];
+  (fresh.phone_regions_default as Record<string, unknown>).value = "ALL";
+  (fresh.phone_regions_overrides as Record<string, unknown>).value = [];
   (fresh.auth_policy_revision as Record<string, unknown>).value = 1;
   for (const row of Object.values(fresh)) {
     (row as Record<string, unknown>).updated_at = 0;
@@ -224,9 +314,11 @@ test("fresh environment-derived settings accept only Core's exact PHP empty-map 
   assert.deepEqual(authPolicySettingsResponse(success(fresh)), {
     defaultMethods: { phone: true, email: false },
     methodOverrides: [],
-    defaultDialCodes: "ALL",
-    dialCodeOverrides: [],
+    defaultRegions: "ALL",
+    regionOverrides: [],
     phoneDialFormats: [],
+    vocabulary: TEST_VOCABULARY,
+    vocabularyWarnings: [],
     revision: 1,
     updatedAt: 0,
     updatedBy: "",
@@ -281,6 +373,12 @@ test("malformed methods, storefronts, calling codes, metadata and revisions fail
     (candidate) => { (candidate.phone_dial_codes_default as Record<string, unknown>).value = ["+1"]; },
     (candidate) => { (candidate.phone_dial_codes_default as Record<string, unknown>).value = [1]; },
     (candidate) => { (candidate.phone_dial_codes_default as Record<string, unknown>).value = ["999"]; },
+    (candidate) => { (candidate.phone_regions_default as Record<string, unknown>).value = { HU: true }; },
+    (candidate) => { (candidate.phone_regions_default as Record<string, unknown>).value = ["hu"]; },
+    (candidate) => { (candidate.phone_regions_default as Record<string, unknown>).value = ["HU", "HU"]; },
+    (candidate) => { (candidate.phone_regions_overrides as Record<string, unknown>).value = [{ HUN: ["HU"] }]; },
+    (candidate) => { (candidate.phone_regions_overrides as Record<string, unknown>).value = { HU: ["HU"] }; },
+    (candidate) => { (candidate.phone_regions_overrides as Record<string, unknown>).value = { HUN: ["hu"] }; },
     (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = {}; },
     (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "1" }]; },
     (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "+1", mask: "***" }]; },
@@ -326,7 +424,7 @@ test("malformed methods, storefronts, calling codes, metadata and revisions fail
   );
 });
 
-test("draft validation blocks unsafe defaults, incomplete rows, duplicates and unknown calling codes", () => {
+test("draft validation blocks unsafe defaults, incomplete rows, duplicates and unknown countries", () => {
   const noMethod = parsed();
   noMethod.defaultMethods = { phone: false, email: false };
   assert.equal(authPolicyDraftIssue(noMethod), "noMethod");
@@ -340,18 +438,19 @@ test("draft validation blocks unsafe defaults, incomplete rows, duplicates and u
   duplicate.methodOverrides.push({ storefront: "USA", phone: false, email: false });
   assert.equal(authPolicyDraftIssue(duplicate), "duplicateStorefront");
 
-  const emptyDial = parsed();
-  emptyDial.defaultDialCodes = [];
-  assert.equal(authPolicyDraftIssue(emptyDial), null);
-  assert.deepEqual(authPolicySavePayload(emptyDial)?.phone_dial_codes_default, []);
+  const emptyCountries = parsed();
+  emptyCountries.defaultRegions = [];
+  assert.equal(authPolicyDraftIssue(emptyCountries), null);
+  assert.deepEqual(authPolicySavePayload(emptyCountries)?.phone_regions_default, []);
+  assert.deepEqual(authPolicySavePayload(emptyCountries)?.phone_dial_codes_default, []);
 
-  const unknownDial = parsed();
-  unknownDial.defaultDialCodes = ["999"];
-  assert.equal(authPolicyDraftIssue(unknownDial), "dialCodes");
+  const unknownCountry = parsed();
+  unknownCountry.defaultRegions = ["ZZ"];
+  assert.equal(authPolicyDraftIssue(unknownCountry), "regions");
 
-  const duplicateDialStorefront = parsed();
-  duplicateDialStorefront.dialCodeOverrides.push({ storefront: "USA", dialCodes: "ALL" });
-  assert.equal(authPolicyDraftIssue(duplicateDialStorefront), "duplicateStorefront");
+  const duplicateRegionStorefront = parsed();
+  duplicateRegionStorefront.regionOverrides.push({ storefront: "USA", regions: "ALL" });
+  assert.equal(authPolicyDraftIssue(duplicateRegionStorefront), "duplicateStorefront");
 
   const invalidFormatCode = parsed();
   invalidFormatCode.phoneDialFormats[0] = { code: "1234", mask: "***" };
@@ -372,23 +471,82 @@ test("draft validation blocks unsafe defaults, incomplete rows, duplicates and u
   assert.equal(authPolicyDraftIssue(stale), "revision");
 });
 
-test("removing an allowed calling code keeps its phone mask inert on the save wire", () => {
+test("removing an allowed country derives both families and keeps its phone mask inert", () => {
   const value = parsed();
-  value.defaultDialCodes = ["36"];
-  value.dialCodeOverrides = value.dialCodeOverrides.map((row) => (
-    row.storefront === "USA" ? { ...row, dialCodes: [] } : row
+  value.defaultRegions = ["HU"];
+  value.regionOverrides = value.regionOverrides.map((row) => (
+    row.storefront === "USA" ? { ...row, regions: [] } : row
   ));
   assert.equal(authPolicyDraftIssue(value), null);
   const payload = authPolicySavePayload(value);
   assert.ok(payload);
   assert.deepEqual(payload.phone_dial_codes_default, ["36"]);
+  assert.deepEqual(payload.phone_regions_default, ["HU"]);
+  assert.deepEqual(payload.phone_dial_codes_overrides, { HUN: "ALL", USA: [] });
+  assert.deepEqual(payload.phone_regions_overrides, { HUN: "ALL", USA: [] });
   assert.deepEqual(payload.phone_dial_formats, [
     { code: "1", mask: "(***) *** ****" },
     { code: "36", mask: "**/*** ****" },
   ]);
 });
 
-test("the same-origin proxy closes the five editable values and rejects server-owned revision input", () => {
+test("every country-control save path derives matching region and calling-code families", () => {
+  const value = parsed();
+  assert.deepEqual(authPolicyDialCodesForRegions(["US", "HU"], value.vocabulary), ["1", "36"]);
+
+  value.defaultRegions = ["US"];
+  let payload = authPolicySavePayload(value);
+  assert.ok(payload);
+  assert.deepEqual(payload.phone_regions_default, ["US"]);
+  assert.deepEqual(payload.phone_dial_codes_default, ["1"]);
+
+  value.regionOverrides = [
+    { storefront: "HUN", regions: ["HU"] },
+    { storefront: "USA", regions: ["HU", "US"] },
+  ];
+  payload = authPolicySavePayload(value);
+  assert.ok(payload);
+  assert.deepEqual(payload.phone_regions_overrides, { HUN: ["HU"], USA: ["HU", "US"] });
+  assert.deepEqual(payload.phone_dial_codes_overrides, { HUN: ["36"], USA: ["1", "36"] });
+
+  value.regionOverrides = [
+    { storefront: "HUN", regions: ["HU", "US"] },
+    { storefront: "USA", regions: ["US"] },
+  ];
+  payload = authPolicySavePayload(value);
+  assert.ok(payload);
+  assert.deepEqual(payload.phone_regions_overrides, { HUN: ["HU", "US"], USA: ["US"] });
+  assert.deepEqual(payload.phone_dial_codes_overrides, { HUN: ["1", "36"], USA: ["1"] });
+});
+
+test("stored unknown values remain visible until the country control replaces both families", () => {
+  const candidate = settings();
+  (candidate.phone_dial_codes_default as Record<string, unknown>).value = ["999"];
+  (candidate.phone_dial_codes_default as Record<string, unknown>).warning = true;
+  (candidate.phone_dial_codes_default as Record<string, unknown>).invalid_codes = ["999"];
+  (candidate.phone_regions_default as Record<string, unknown>).value = ["ZZ"];
+  (candidate.phone_regions_default as Record<string, unknown>).warning = true;
+  (candidate.phone_regions_default as Record<string, unknown>).invalid_codes = ["ZZ"];
+  const value = authPolicySettingsResponse(success(candidate));
+  assert.ok(value);
+  assert.deepEqual(value.defaultRegions, ["ZZ"]);
+  assert.deepEqual(value.vocabularyWarnings, [
+    { setting: "phone_dial_codes_default", codes: ["999"] },
+    { setting: "phone_regions_default", codes: ["ZZ"] },
+  ]);
+  const unrelatedEdit = authPolicyDraftWithChanges(value, {
+    defaultMethods: { phone: true, email: false },
+  });
+  assert.deepEqual(unrelatedEdit.vocabularyWarnings, value.vocabularyWarnings);
+  assert.equal(authPolicySavePayload(unrelatedEdit), null);
+
+  const replaced = authPolicyDraftWithChanges(unrelatedEdit, { defaultRegions: ["HU"] });
+  assert.deepEqual(replaced.vocabularyWarnings, []);
+  assert.deepEqual(authPolicySavePayload(replaced)?.phone_regions_default, ["HU"]);
+  assert.deepEqual(authPolicySavePayload(replaced)?.phone_dial_codes_default, ["36"]);
+});
+
+test("the same-origin proxy closes all seven editable values and rejects server-owned revision input", () => {
   const authPolicy = authPolicySavePayload(parsed());
   assert.ok(authPolicy);
   const body = {
@@ -401,6 +559,13 @@ test("the same-origin proxy closes the five editable values and rejects server-o
   assert.ok(normalized);
   assert.equal(Object.getPrototypeOf(normalized), null);
   assert.deepEqual(JSON.parse(JSON.stringify(normalized)), body);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(normalizeAuthPolicySettingsProxyBody("set_settings", {
+      ...body,
+      expected_revision: 7,
+    }))),
+    { ...body, expected_revision: 7 },
+  );
   assert.equal(normalizeAuthPolicySettingsProxyBody("get_settings", {}), undefined);
   assert.deepEqual(
     JSON.parse(JSON.stringify(normalizeAuthPolicySettingsProxyBody("set_settings", {
@@ -417,12 +582,30 @@ test("the same-origin proxy closes the five editable values and rejects server-o
   assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
     settings: { ...body.settings, auth_policy_revision: 7 },
   }), null);
+  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+    settings: { people_hero_enabled: false },
+    expected_revision: 7,
+  }), null);
+  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+    ...body,
+    expected_revision: 0,
+  }), null);
+  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+    ...body,
+    expected_revision: "7",
+  }), null);
   assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", { ...body, admin_email: "x" }), null);
   assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
     settings: { ...body.settings, auth_policy_default: { phone: false, email: false } },
   }), null);
   assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
     settings: { ...body.settings, phone_dial_codes_default: ["+1"] },
+  }), null);
+  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+    settings: { ...body.settings, phone_regions_default: "ALL" },
+  }), null);
+  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+    settings: { ...body.settings, phone_regions_overrides: { HUN: "ALL" } },
   }), null);
   assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
     settings: {
@@ -432,6 +615,63 @@ test("the same-origin proxy closes the five editable values and rejects server-o
         { code: "1", mask: "****" },
       ],
     },
+  }), null);
+});
+
+test("a ruled CAS conflict reloads the authoritative revision without losing the operator draft", () => {
+  function conflict(currentRevision: unknown, error = "auth-policy-conflict", statusCode = 409) {
+    return {
+      success: false,
+      status_code: statusCode,
+      error,
+      current_revision: currentRevision,
+      message: 200,
+      status: 200,
+      can_send: 0,
+    };
+  }
+
+  assert.deepEqual(authPolicyConflict(conflict(8)), { currentRevision: 8 });
+  for (const candidate of [
+    conflict(0),
+    conflict("8"),
+    conflict(8, "setting-invalid"),
+    conflict(8, "auth-policy-conflict", 422),
+    { ...conflict(8), current_revision: 8.5 },
+  ]) assert.equal(authPolicyConflict(candidate), null);
+
+  const draft = parsed();
+  draft.defaultMethods = { phone: false, email: true };
+  draft.defaultRegions = ["HU"];
+  const authoritative = parsed();
+  authoritative.revision = 8;
+  authoritative.updatedAt = 1_777_000_008;
+  authoritative.defaultMethods = { phone: true, email: false };
+  authoritative.defaultRegions = ["US"];
+  const rebased = authPolicyDraftAfterConflict(draft, authoritative, { currentRevision: 8 });
+  assert.ok(rebased);
+  assert.deepEqual(rebased.defaultMethods, { phone: false, email: true });
+  assert.deepEqual(rebased.defaultRegions, ["HU"]);
+  assert.equal(rebased.revision, 8);
+  assert.equal(rebased.updatedAt, 1_777_000_008);
+
+  const staleDraft = parsed();
+  staleDraft.vocabularyWarnings = [
+    { setting: "phone_dial_codes_default", codes: ["999"] },
+  ];
+  const staleRebased = authPolicyDraftAfterConflict(
+    authPolicyDraftWithChanges(staleDraft, {
+      defaultMethods: { phone: false, email: true },
+    }),
+    authoritative,
+    { currentRevision: 8 },
+  );
+  assert.ok(staleRebased);
+  assert.deepEqual(staleRebased.vocabularyWarnings, staleDraft.vocabularyWarnings);
+  assert.equal(authPolicySavePayload(staleRebased), null);
+
+  assert.equal(authPolicyDraftAfterConflict(draft, { ...authoritative, revision: 7 }, {
+    currentRevision: 8,
   }), null);
 });
 
@@ -482,60 +722,164 @@ test("Core phone-format refusals require setting-invalid and the ruled dotted fi
   }
 });
 
+test("Core phone-region refusals require setting-invalid and only accepted dotted paths", () => {
+  function refusal(field: unknown, error = "setting-invalid", statusCode = 422) {
+    return {
+      success: false,
+      status_code: statusCode,
+      error,
+      field,
+      message: 200,
+      status: 200,
+      can_send: 0,
+    };
+  }
+  assert.deepEqual(phoneRegionRefusal(refusal("phone_regions_default")), {
+    setting: "phone_regions_default",
+    storefront: null,
+    index: null,
+  });
+  assert.deepEqual(phoneRegionRefusal(refusal("phone_regions_default.0")), {
+    setting: "phone_regions_default",
+    storefront: null,
+    index: 0,
+  });
+  assert.deepEqual(phoneRegionRefusal(refusal("phone_regions_overrides.HUN")), {
+    setting: "phone_regions_overrides",
+    storefront: "HUN",
+    index: null,
+  });
+  assert.deepEqual(phoneRegionRefusal(refusal("phone_regions_overrides.HUN.12")), {
+    setting: "phone_regions_overrides",
+    storefront: "HUN",
+    index: 12,
+  });
+  for (const candidate of [
+    refusal("phone_regions_default[0]"),
+    refusal("phone_regions_default.01"),
+    refusal("phone_regions_overrides.HU"),
+    refusal("phone_regions_overrides.hun.0"),
+    refusal("phone_regions_overrides.HUN.0.extra"),
+    refusal("phone_regions_default", "settings-invalid"),
+    refusal("phone_regions_default", "setting-invalid", 400),
+  ]) assert.equal(phoneRegionRefusal(candidate), null, JSON.stringify(candidate));
+});
+
 test("the maximal bounded policy fits the named settings bridge ceiling", async () => {
   const { adminActionBodyLimit } = await import("../lib/adminActions.ts");
-  const allDialCodes = [...new Set(AUTH_POLICY_COUNTRIES.flatMap((country) => country.dialCodes))];
+  const vocabularyFixture = JSON.parse(await readFile(
+    new URL("./fixtures/auth_policy_wire/webadmin-vocabulary-clean.json", import.meta.url),
+    "utf8",
+  ));
+  const fullVocabulary = authPolicyVocabularyResponse(vocabularyFixture);
+  assert.ok(fullVocabulary);
+  assert.equal(fullVocabulary.storefronts.length, 249);
+  assert.equal(fullVocabulary.callingCodes.length, 205);
+  assert.equal(fullVocabulary.regions.length, 249);
+  const allDialCodes = fullVocabulary.callingCodes.map((entry) => entry.code);
+  const allRegions = fullVocabulary.regions.map((entry) => entry.alpha2);
+  assert.deepEqual(authPolicyDialCodesForRegions(["BS", "US"], fullVocabulary), ["1"]);
+  assert.equal(authPolicyDialCodesForRegions(allRegions, fullVocabulary), "ALL");
+  const collapsed = authPolicySavePayload({
+    defaultMethods: { phone: true, email: true },
+    methodOverrides: [],
+    defaultRegions: [...allRegions],
+    regionOverrides: [{ storefront: "HUN", regions: [...allRegions] }],
+    phoneDialFormats: [],
+    vocabulary: fullVocabulary,
+    vocabularyWarnings: [],
+    revision: 1,
+    updatedAt: 0,
+    updatedBy: "",
+  });
+  assert.ok(collapsed);
+  assert.equal(collapsed.phone_regions_default, "ALL");
+  assert.equal(collapsed.phone_dial_codes_default, "ALL");
+  assert.deepEqual(collapsed.phone_regions_overrides, { HUN: "ALL" });
+  assert.deepEqual(collapsed.phone_dial_codes_overrides, { HUN: "ALL" });
+  assert.ok(normalizeAuthPolicySettingsProxyBody("set_settings", {
+    settings: collapsed,
+    expected_revision: 1,
+  }));
+
+  // The true maximum is 248/249 countries: selecting all 249 collapses to ALL.
+  // Omit one shared-code region so all 205 derived calling codes remain present.
+  const maximalRegions = allRegions.filter((region) => region !== "US");
+  assert.equal(maximalRegions.length, 248);
+  assert.deepEqual(authPolicyDialCodesForRegions(maximalRegions, fullVocabulary), allDialCodes);
   const maximal = authPolicySavePayload({
     defaultMethods: { phone: true, email: true },
-    methodOverrides: AUTH_POLICY_COUNTRIES.map((country) => ({
-      storefront: country.alpha3,
+    methodOverrides: fullVocabulary.storefronts.map((storefront) => ({
+      storefront: storefront.alpha3,
       phone: true,
       email: true,
     })),
-    defaultDialCodes: [...allDialCodes],
-    dialCodeOverrides: AUTH_POLICY_COUNTRIES.map((country) => ({
-      storefront: country.alpha3,
-      dialCodes: [...allDialCodes],
+    defaultRegions: [...maximalRegions],
+    regionOverrides: fullVocabulary.storefronts.map((storefront) => ({
+      storefront: storefront.alpha3,
+      regions: [...maximalRegions],
     })),
     phoneDialFormats: allDialCodes.map((code) => ({ code, mask: "*".repeat(32) })),
+    vocabulary: fullVocabulary,
+    vocabularyWarnings: [],
     revision: Number.MAX_SAFE_INTEGER,
     updatedAt: 0,
     updatedBy: "",
   });
   assert.ok(maximal);
-  const bytes = Buffer.byteLength(JSON.stringify({ settings: maximal }), "utf8");
+  const bytes = Buffer.byteLength(JSON.stringify({
+    settings: maximal,
+    expected_revision: Number.MAX_SAFE_INTEGER,
+  }), "utf8");
+  assert.equal(bytes, 629_851);
   assert.ok(bytes > 256_000, "the raised ceiling must remain justified");
   assert.ok(bytes < adminActionBodyLimit("set_settings"));
-  assert.equal(adminActionBodyLimit("set_settings"), 400_000);
+  assert.ok(adminActionBodyLimit("set_settings") - bytes >= Math.floor(bytes / 10));
+  assert.equal(adminActionBodyLimit("set_settings"), 694_000);
 });
 
 test("the Configuration page uses one audited settings mutation and renders immutable Apple plus previews", async () => {
-  const [page, card, proxy, en, hu] = await Promise.all([
+  const [page, card, model, proxy, en, hu] = await Promise.all([
     readFile(new URL("../app/(dashboard)/configuration/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/AuthPolicyConfigurationCard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/authPolicyConfiguration.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/admin/[action]/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../messages/en.json", import.meta.url), "utf8").then(JSON.parse),
     readFile(new URL("../messages/hu.json", import.meta.url), "utf8").then(JSON.parse),
   ]);
   assert.equal(page.match(/adminCall\("set_settings"/g)?.length, 1);
   assert.match(page, /authPolicySavePayload\(authPolicy\)/);
-  assert.match(page, /commitSettings\(authPolicyPayload, "authPolicy"\)/);
+  assert.match(page, /commitSettings\(authPolicyPayload, "authPolicy", authPolicy\.revision\)/);
   assert.match(page, /setAuthPolicy\(saved\.authPolicy\)/);
+  assert.match(page, /authPolicyConflict\(response\)/);
+  assert.match(page, /authPolicyDraftAfterConflict\(currentAuthPolicy, recovered\.authPolicy, conflict\)/);
+  assert.match(page, /setAuthPolicyConflictRevision\(rebased\.revision\)/);
   assert.match(card, /<input type="checkbox" checked disabled readOnly \/>/);
   assert.equal(card.match(/<MethodPreview/g)?.length, 2);
-  assert.match(card, /localizedAuthPolicyCountries\(locale\)/);
+  assert.match(card, /localizedAuthPolicyStorefronts\(value\.vocabulary, locale\)/);
+  assert.match(card, /localizedAuthPolicyCallingCodes\(value\.vocabulary, locale\)/);
+  assert.match(card, /localizedAuthPolicyRegions\(value\.vocabulary, locale\)/);
+  assert.doesNotMatch(`${card}\n${model}`, /from ["']countries-list["']/);
+  assert.doesNotMatch(`${card}\n${model}`, /e164CallingCode/);
+  assert.match(card, /authPolicySelectedCallingCodes\(value\)/);
   assert.match(card, /phoneDialFormatMask\(formats, code\)/);
   assert.match(card, /renderPhoneDialFormatSample\(code, mask\)/);
   assert.match(card, /updatePhoneDialFormat\(value\.phoneDialFormats, code, mask\)/);
   assert.match(card, /data-format-code=\{code\}/);
   assert.match(page, /phoneDialFormatRefusal\(response\)/);
+  assert.match(page, /phoneRegionRefusal\(response\)/);
   assert.match(proxy, /normalizeAuthPolicySettingsProxyBody\(action, body\)/);
   for (const key of [
     "savePolicy",
     "saved",
     "writeRequired",
     "saveError",
-    "noCallingCodes",
+    "conflictReloaded",
+    "vocabularyWarning",
+    "unknownStorefront",
+    "unknownCallingCode",
+    "noCountries",
+    "unknownCountry",
     "dialFormatHelp",
     "dialFormatLabel",
     "dialFormatSample",

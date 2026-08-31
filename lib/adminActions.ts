@@ -559,9 +559,11 @@ export function adminPrincipalFrom(value: unknown): AdminPrincipal {
  */
 const DEFAULT_BODY_LIMIT_BYTES = 256_000;
 const TAG_CATALOG_BODY_LIMIT_BYTES = 1_100_000;
-// At the contract maxima, all 249 storefronts may each carry the complete
-// bounded E.164 calling-code list. The resulting JSON is about 307 KB.
-const RUNTIME_SETTINGS_BODY_LIMIT_BYTES = 400_000;
+// T-517: all 249 regions collapse to the semantic ALL token, so the true
+// maximum is 249 storefront overrides carrying 248 enumerated regions, all
+// 205 derived E.164 calling codes and 205 maximal masks. The proven browser
+// JSON is 629,851 bytes; 694,000 keeps just over ten percent headroom.
+const RUNTIME_SETTINGS_BODY_LIMIT_BYTES = 694_000;
 // The Core contract permits every ISO storefront to carry localized templates.
 // Row, language and template caps still bound the decoded document; this limit
 // keeps the bridge from rejecting a configuration valid at those maxima.

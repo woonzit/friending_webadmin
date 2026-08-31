@@ -5,7 +5,7 @@
         "auth_phone_storefronts": "ALL;",
         "email_auth_enabled": true,
         "auth_policy": {
-            "storefront": "",
+            "storefront": "HUN",
             "phone": true,
             "email": true,
             "apple": true,
@@ -13,10 +13,7 @@
                 "36",
                 "1"
             ],
-            "phone_regions": [
-                "HU",
-                "US"
-            ],
+            "phone_regions": "ALL",
             "phone_formats": [
                 {
                     "code": "1",

@@ -5,21 +5,25 @@ import test from "node:test";
 import {
   phoneDialFormatRefusal,
   phoneDialMaskValid,
+  phoneRegionRefusal,
+  authPolicyVocabularyResponse,
 } from "../lib/authPolicyConfiguration.ts";
 
 /**
- * T-506's production-generated wire corpus, copied byte-identically from the
+ * T-516's production-generated wire corpus, copied byte-identically from the
  * lead-accepted Core tip. These pins bind the Webadmin decoder to the exact
  * provider bytes and preserve the app-facing inert-format witnesses.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/auth_policy_wire/", import.meta.url);
-const FIXTURE_ACCEPTED_CORE_TIP = "50c4dc0b060d9a9da7ff8a135a65d942c39fe621";
-const FIXTURE_SOURCE_COMMIT = "5c17f1db41bb5a9875b4fed080e8b2f4092a9749";
-const FIXTURE_GENERATOR_SHA256 = "72225dbf0a8578fc5ee4fa0e16f3dee558c0770c81a77a52ec80a2d0fc894a65";
-const FIXTURE_SET_SHA256 = "bc4d066f8ec3b14d7290899dc6116faaa272eb5f559f27330810c012979b9f7d";
-const FIXTURE_MANIFEST_SHA256 = "33aec55c8bcaa0fe67eab1a75a44721d37df699c8b44dc31f6cec1a340d3679e";
+const FIXTURE_ACCEPTED_CORE_TIP = "476b1b74dd78eb503ea5b2090d0aec3c3b96b5b2";
+const FIXTURE_SOURCE_COMMIT = "2994068b40a7a16d3948baec0d0b13b75659a380";
+const FIXTURE_GENERATOR_SHA256 = "945e131e811f2eef72e6fd7a6324516577753b8238108d6c797fa1f20887a80d";
+const FIXTURE_SET_SHA256 = "512f4af57e84bc57e5705ed0d1111b8c5082efc54ea6f221636e2c6b0bbeb6cf";
+const FIXTURE_MANIFEST_SHA256 = "408eed645d02ab66dc2a277d4630593077fc86548512a1911390e787efe63833";
 const FIXTURE_BODY_FILES = [
+  "appconfig-all-phone-regions.json",
   "appconfig-default-hun.json",
+  "appconfig-malformed-phone-regions.json",
   "appconfig-malformed-storefront.json",
   "appconfig-no-phone-formats.json",
   "appconfig-override-gbr.json",
@@ -28,6 +32,7 @@ const FIXTURE_BODY_FILES = [
   "refusal-email-method.json",
   "refusal-phone-dial-code.json",
   "refusal-phone-format-code-four-digits.json",
+  "refusal-phone-format-code-unassigned.json",
   "refusal-phone-format-code.json",
   "refusal-phone-format-duplicate-code.json",
   "refusal-phone-format-entry-shape.json",
@@ -39,14 +44,25 @@ const FIXTURE_BODY_FILES = [
   "refusal-phone-format-mask-too-long.json",
   "refusal-phone-format-not-list.json",
   "refusal-phone-method.json",
+  "refusal-phone-regions-dial-code.json",
+  "refusal-phone-regions-malformed-code.json",
+  "refusal-phone-regions-not-list.json",
+  "refusal-phone-regions-override-dial-code.json",
+  "refusal-phone-regions-override-storefront.json",
+  "refusal-phone-regions-override-unknown.json",
+  "refusal-phone-regions-unknown.json",
+  "webadmin-vocabulary-clean.json",
+  "webadmin-vocabulary-stale.json",
 ] as const;
 const FIXTURE_SOURCE_PATHS = [
+  "config/auth_policy_vocabulary.json",
   "src/Core/Response.php",
   "src/Http/Controllers/AppController.php",
   "src/Http/Controllers/UserController.php",
   "src/Http/Controllers/WebadminController.php",
   "src/Support/AppSettings.php",
   "src/Support/AuthMethodPolicy.php",
+  "src/Support/AuthPolicyVocabulary.php",
   "src/Support/EmailAuthPolicy.php",
   "src/Support/Webadmin.php",
   "tests/auth_policy_fixture_dump.php",
@@ -54,6 +70,7 @@ const FIXTURE_SOURCE_PATHS = [
 
 const EXPECTED_WEBADMIN_REFUSALS = {
   "refusal-phone-format-code-four-digits.json": { field: "code", index: 0 },
+  "refusal-phone-format-code-unassigned.json": { field: "code", index: 0 },
   "refusal-phone-format-code.json": { field: "code", index: 0 },
   "refusal-phone-format-duplicate-code.json": { field: "code", index: 1 },
   "refusal-phone-format-entry-shape.json": { field: "phone_dial_formats", index: null },
@@ -64,6 +81,30 @@ const EXPECTED_WEBADMIN_REFUSALS = {
   "refusal-phone-format-mask-missing-star.json": { field: "mask", index: 0 },
   "refusal-phone-format-mask-too-long.json": { field: "mask", index: 0 },
   "refusal-phone-format-not-list.json": { field: "phone_dial_formats", index: null },
+} as const;
+
+const EXPECTED_REGION_REFUSALS = {
+  "refusal-phone-regions-dial-code.json": {
+    setting: "phone_regions_default", storefront: null, index: null,
+  },
+  "refusal-phone-regions-malformed-code.json": {
+    setting: "phone_regions_default", storefront: null, index: null,
+  },
+  "refusal-phone-regions-not-list.json": {
+    setting: "phone_regions_default", storefront: null, index: null,
+  },
+  "refusal-phone-regions-override-dial-code.json": {
+    setting: "phone_regions_overrides", storefront: "HUN", index: null,
+  },
+  "refusal-phone-regions-override-storefront.json": {
+    setting: "phone_regions_overrides", storefront: "ZZZ", index: null,
+  },
+  "refusal-phone-regions-override-unknown.json": {
+    setting: "phone_regions_overrides", storefront: "HUN", index: 0,
+  },
+  "refusal-phone-regions-unknown.json": {
+    setting: "phone_regions_default", storefront: null, index: 0,
+  },
 } as const;
 
 type Json = Record<string, any>;
@@ -119,7 +160,12 @@ test("the accepted auth-policy corpus is byte-identical, inventory-exact, and pr
     assert.equal(typeof row.case, "string");
     assert.ok(row.case.length > 0);
     if (row.consumer === "webadmin") {
-      assert.equal(row.route, "/v1/webadmin/set_settings");
+      assert.equal(
+        row.route,
+        row.file.startsWith("webadmin-vocabulary-")
+          ? "/v1/webadmin/get_settings"
+          : "/v1/webadmin/set_settings",
+      );
     } else {
       assert.equal(row.consumer, "ios");
       assert.ok([
@@ -140,7 +186,7 @@ test("the accepted auth-policy corpus is byte-identical, inventory-exact, and pr
     consumerCounts.set(row.consumer, (consumerCounts.get(row.consumer) ?? 0) + 1);
     aggregateRows.push(`${row.file}\0${row.sha256}`);
   }
-  assert.deepEqual(Object.fromEntries([...consumerCounts].sort()), { ios: 9, webadmin: 11 });
+  assert.deepEqual(Object.fromEntries([...consumerCounts].sort()), { ios: 11, webadmin: 21 });
   assert.equal(sha256(aggregateRows.join("\n")), FIXTURE_SET_SHA256);
   assert.match(FIXTURE_ACCEPTED_CORE_TIP, /^[0-9a-f]{40}$/u);
   assert.notEqual(FIXTURE_ACCEPTED_CORE_TIP, FIXTURE_SOURCE_COMMIT);
@@ -149,13 +195,52 @@ test("the accepted auth-policy corpus is byte-identical, inventory-exact, and pr
 test("every published phone-format refusal passes the production dotted-field decoder", async () => {
   const manifest = await fixtureManifest();
   const webadminFiles = manifest.fixtures
-    .filter((row: Json) => row.consumer === "webadmin")
+    .filter((row: Json) => row.route === "/v1/webadmin/set_settings")
     .map((row: Json) => row.file);
-  assert.deepEqual(webadminFiles, Object.keys(EXPECTED_WEBADMIN_REFUSALS));
+  assert.deepEqual(webadminFiles, [
+    ...Object.keys(EXPECTED_WEBADMIN_REFUSALS),
+    ...Object.keys(EXPECTED_REGION_REFUSALS),
+  ]);
 
   for (const [file, expected] of Object.entries(EXPECTED_WEBADMIN_REFUSALS)) {
     assert.deepEqual(phoneDialFormatRefusal(await fixture(file)), expected, file);
   }
+});
+
+test("every published phone-region refusal passes the accepted dotted-field decoder", async () => {
+  for (const [file, expected] of Object.entries(EXPECTED_REGION_REFUSALS)) {
+    assert.deepEqual(phoneRegionRefusal(await fixture(file)), expected, file);
+  }
+});
+
+test("the published Webadmin vocabulary bodies drive the production closed decoder", async () => {
+  const clean = await fixture("webadmin-vocabulary-clean.json");
+  const stale = await fixture("webadmin-vocabulary-stale.json");
+  const cleanVocabulary = authPolicyVocabularyResponse(clean);
+  const staleVocabulary = authPolicyVocabularyResponse(stale);
+  assert.ok(cleanVocabulary && staleVocabulary);
+  assert.deepEqual(staleVocabulary, cleanVocabulary);
+  assert.equal(cleanVocabulary.storefronts.length, 249);
+  assert.equal(cleanVocabulary.callingCodes.length, 205);
+  assert.equal(cleanVocabulary.regions.length, 249);
+  assert.deepEqual(
+    cleanVocabulary.storefronts.find((row) => row.alpha3 === "HUN"),
+    { alpha3: "HUN", nameEn: "Hungary", nameHu: "Magyarország" },
+  );
+  assert.deepEqual(
+    cleanVocabulary.callingCodes.find((row) => row.code === "36"),
+    { code: "36", exampleAlpha3: "HUN" },
+  );
+  assert.deepEqual(
+    cleanVocabulary.regions.find((row) => row.alpha2 === "HU"),
+    { alpha2: "HU", alpha3: "HUN", callingCode: "36" },
+  );
+  assert.deepEqual(stale.settings.auth_policy_overrides.invalid_codes, ["ZZZ"]);
+  assert.deepEqual(stale.settings.phone_dial_codes_default.invalid_codes, ["999"]);
+  assert.deepEqual(stale.settings.phone_dial_codes_overrides.invalid_codes, ["997", "ZZZ"]);
+  assert.deepEqual(stale.settings.phone_dial_formats.invalid_codes, ["999"]);
+  assert.deepEqual(stale.settings.phone_regions_default.invalid_codes, ["ZZ"]);
+  assert.deepEqual(stale.settings.phone_regions_overrides.invalid_codes, ["QQ", "ZZZ"]);
 });
 
 test("every appconfig publishes sorted valid formats and preserves inert masks", async () => {
@@ -163,7 +248,7 @@ test("every appconfig publishes sorted valid formats and preserves inert masks",
   const appconfigFiles = manifest.fixtures
     .filter((row: Json) => row.route === "/v1/app/ios_appconfig")
     .map((row: Json) => row.file);
-  assert.deepEqual(appconfigFiles, FIXTURE_BODY_FILES.slice(0, 6));
+  assert.deepEqual(appconfigFiles, FIXTURE_BODY_FILES.slice(0, 8));
 
   for (const file of appconfigFiles) {
     const body = await fixture(file);
@@ -174,6 +259,7 @@ test("every appconfig publishes sorted valid formats and preserves inert masks",
       "phone",
       "phone_dial_codes",
       "phone_formats",
+      "phone_regions",
       "revision",
       "storefront",
     ]);
@@ -197,4 +283,7 @@ test("every appconfig publishes sorted valid formats and preserves inert masks",
   const usa = (await fixture("appconfig-override-usa.json")).data.auth_policy;
   assert.deepEqual(usa.phone_dial_codes, ["1"]);
   assert.deepEqual(usa.phone_formats.map((row: Json) => row.code), ["1", "36", "44"]);
+  assert.deepEqual(usa.phone_regions, ["US"]);
+  assert.equal((await fixture("appconfig-all-phone-regions.json")).data.auth_policy.phone_regions, "ALL");
+  assert.equal((await fixture("appconfig-malformed-phone-regions.json")).data.auth_policy.phone_regions, "ALL");
 });

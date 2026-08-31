@@ -1,0 +1,3389 @@
+{
+    "success": true,
+    "status_code": 200,
+    "settings": {
+        "auth_policy_default": {
+            "value": {
+                "phone": true,
+                "email": true
+            },
+            "warning": false,
+            "invalid_codes": []
+        },
+        "auth_policy_overrides": {
+            "value": {
+                "USA": {
+                    "phone": true,
+                    "email": false
+                }
+            },
+            "warning": false,
+            "invalid_codes": []
+        },
+        "phone_dial_codes_default": {
+            "value": [
+                "1",
+                "36"
+            ],
+            "warning": false,
+            "invalid_codes": []
+        },
+        "phone_dial_codes_overrides": {
+            "value": {
+                "HUN": [
+                    "36"
+                ]
+            },
+            "warning": false,
+            "invalid_codes": []
+        },
+        "phone_dial_formats": {
+            "value": [
+                {
+                    "code": "36",
+                    "mask": "**/*** ****"
+                }
+            ],
+            "warning": false,
+            "invalid_codes": []
+        },
+        "phone_regions_default": {
+            "value": [
+                "HU",
+                "US"
+            ],
+            "warning": false,
+            "invalid_codes": []
+        },
+        "phone_regions_overrides": {
+            "value": {
+                "HUN": [
+                    "HU"
+                ]
+            },
+            "warning": false,
+            "invalid_codes": []
+        }
+    },
+    "vocabulary": {
+        "storefronts": [
+            {
+                "alpha3": "ABW",
+                "name_en": "Aruba",
+                "name_hu": "Aruba"
+            },
+            {
+                "alpha3": "AFG",
+                "name_en": "Afghanistan",
+                "name_hu": "Afganisztán"
+            },
+            {
+                "alpha3": "AGO",
+                "name_en": "Angola",
+                "name_hu": "Angola"
+            },
+            {
+                "alpha3": "AIA",
+                "name_en": "Anguilla",
+                "name_hu": "Anguilla"
+            },
+            {
+                "alpha3": "ALA",
+                "name_en": "Åland Islands",
+                "name_hu": "Åland-szigetek"
+            },
+            {
+                "alpha3": "ALB",
+                "name_en": "Albania",
+                "name_hu": "Albánia"
+            },
+            {
+                "alpha3": "AND",
+                "name_en": "Andorra",
+                "name_hu": "Andorra"
+            },
+            {
+                "alpha3": "ARE",
+                "name_en": "United Arab Emirates",
+                "name_hu": "Egyesült Arab Emírségek"
+            },
+            {
+                "alpha3": "ARG",
+                "name_en": "Argentina",
+                "name_hu": "Argentína"
+            },
+            {
+                "alpha3": "ARM",
+                "name_en": "Armenia",
+                "name_hu": "Örményország"
+            },
+            {
+                "alpha3": "ASM",
+                "name_en": "American Samoa",
+                "name_hu": "Amerikai Szamoa"
+            },
+            {
+                "alpha3": "ATA",
+                "name_en": "Antarctica",
+                "name_hu": "Antarktisz"
+            },
+            {
+                "alpha3": "ATF",
+                "name_en": "French Southern Territories",
+                "name_hu": "Francia Déli Területek"
+            },
+            {
+                "alpha3": "ATG",
+                "name_en": "Antigua & Barbuda",
+                "name_hu": "Antigua és Barbuda"
+            },
+            {
+                "alpha3": "AUS",
+                "name_en": "Australia",
+                "name_hu": "Ausztrália"
+            },
+            {
+                "alpha3": "AUT",
+                "name_en": "Austria",
+                "name_hu": "Ausztria"
+            },
+            {
+                "alpha3": "AZE",
+                "name_en": "Azerbaijan",
+                "name_hu": "Azerbajdzsán"
+            },
+            {
+                "alpha3": "BDI",
+                "name_en": "Burundi",
+                "name_hu": "Burundi"
+            },
+            {
+                "alpha3": "BEL",
+                "name_en": "Belgium",
+                "name_hu": "Belgium"
+            },
+            {
+                "alpha3": "BEN",
+                "name_en": "Benin",
+                "name_hu": "Benin"
+            },
+            {
+                "alpha3": "BES",
+                "name_en": "Caribbean Netherlands",
+                "name_hu": "Holland Karib-térség"
+            },
+            {
+                "alpha3": "BFA",
+                "name_en": "Burkina Faso",
+                "name_hu": "Burkina Faso"
+            },
+            {
+                "alpha3": "BGD",
+                "name_en": "Bangladesh",
+                "name_hu": "Banglades"
+            },
+            {
+                "alpha3": "BGR",
+                "name_en": "Bulgaria",
+                "name_hu": "Bulgária"
+            },
+            {
+                "alpha3": "BHR",
+                "name_en": "Bahrain",
+                "name_hu": "Bahrein"
+            },
+            {
+                "alpha3": "BHS",
+                "name_en": "Bahamas",
+                "name_hu": "Bahama-szigetek"
+            },
+            {
+                "alpha3": "BIH",
+                "name_en": "Bosnia & Herzegovina",
+                "name_hu": "Bosznia-Hercegovina"
+            },
+            {
+                "alpha3": "BLM",
+                "name_en": "St. Barthélemy",
+                "name_hu": "Saint-Barthélemy"
+            },
+            {
+                "alpha3": "BLR",
+                "name_en": "Belarus",
+                "name_hu": "Belarusz"
+            },
+            {
+                "alpha3": "BLZ",
+                "name_en": "Belize",
+                "name_hu": "Belize"
+            },
+            {
+                "alpha3": "BMU",
+                "name_en": "Bermuda",
+                "name_hu": "Bermuda"
+            },
+            {
+                "alpha3": "BOL",
+                "name_en": "Bolivia",
+                "name_hu": "Bolívia"
+            },
+            {
+                "alpha3": "BRA",
+                "name_en": "Brazil",
+                "name_hu": "Brazília"
+            },
+            {
+                "alpha3": "BRB",
+                "name_en": "Barbados",
+                "name_hu": "Barbados"
+            },
+            {
+                "alpha3": "BRN",
+                "name_en": "Brunei",
+                "name_hu": "Brunei"
+            },
+            {
+                "alpha3": "BTN",
+                "name_en": "Bhutan",
+                "name_hu": "Bhután"
+            },
+            {
+                "alpha3": "BVT",
+                "name_en": "Bouvet Island",
+                "name_hu": "Bouvet-sziget"
+            },
+            {
+                "alpha3": "BWA",
+                "name_en": "Botswana",
+                "name_hu": "Botswana"
+            },
+            {
+                "alpha3": "CAF",
+                "name_en": "Central African Republic",
+                "name_hu": "Közép-afrikai Köztársaság"
+            },
+            {
+                "alpha3": "CAN",
+                "name_en": "Canada",
+                "name_hu": "Kanada"
+            },
+            {
+                "alpha3": "CCK",
+                "name_en": "Cocos (Keeling) Islands",
+                "name_hu": "Kókusz (Keeling)-szigetek"
+            },
+            {
+                "alpha3": "CHE",
+                "name_en": "Switzerland",
+                "name_hu": "Svájc"
+            },
+            {
+                "alpha3": "CHL",
+                "name_en": "Chile",
+                "name_hu": "Chile"
+            },
+            {
+                "alpha3": "CHN",
+                "name_en": "China",
+                "name_hu": "Kína"
+            },
+            {
+                "alpha3": "CIV",
+                "name_en": "Côte d’Ivoire",
+                "name_hu": "Elefántcsontpart"
+            },
+            {
+                "alpha3": "CMR",
+                "name_en": "Cameroon",
+                "name_hu": "Kamerun"
+            },
+            {
+                "alpha3": "COD",
+                "name_en": "Congo - Kinshasa",
+                "name_hu": "Kongó – Kinshasa"
+            },
+            {
+                "alpha3": "COG",
+                "name_en": "Congo - Brazzaville",
+                "name_hu": "Kongó – Brazzaville"
+            },
+            {
+                "alpha3": "COK",
+                "name_en": "Cook Islands",
+                "name_hu": "Cook-szigetek"
+            },
+            {
+                "alpha3": "COL",
+                "name_en": "Colombia",
+                "name_hu": "Kolumbia"
+            },
+            {
+                "alpha3": "COM",
+                "name_en": "Comoros",
+                "name_hu": "Comore-szigetek"
+            },
+            {
+                "alpha3": "CPV",
+                "name_en": "Cape Verde",
+                "name_hu": "Zöld-foki Köztársaság"
+            },
+            {
+                "alpha3": "CRI",
+                "name_en": "Costa Rica",
+                "name_hu": "Costa Rica"
+            },
+            {
+                "alpha3": "CUB",
+                "name_en": "Cuba",
+                "name_hu": "Kuba"
+            },
+            {
+                "alpha3": "CUW",
+                "name_en": "Curaçao",
+                "name_hu": "Curaçao"
+            },
+            {
+                "alpha3": "CXR",
+                "name_en": "Christmas Island",
+                "name_hu": "Karácsony-sziget"
+            },
+            {
+                "alpha3": "CYM",
+                "name_en": "Cayman Islands",
+                "name_hu": "Kajmán-szigetek"
+            },
+            {
+                "alpha3": "CYP",
+                "name_en": "Cyprus",
+                "name_hu": "Ciprus"
+            },
+            {
+                "alpha3": "CZE",
+                "name_en": "Czechia",
+                "name_hu": "Csehország"
+            },
+            {
+                "alpha3": "DEU",
+                "name_en": "Germany",
+                "name_hu": "Németország"
+            },
+            {
+                "alpha3": "DJI",
+                "name_en": "Djibouti",
+                "name_hu": "Dzsibuti"
+            },
+            {
+                "alpha3": "DMA",
+                "name_en": "Dominica",
+                "name_hu": "Dominika"
+            },
+            {
+                "alpha3": "DNK",
+                "name_en": "Denmark",
+                "name_hu": "Dánia"
+            },
+            {
+                "alpha3": "DOM",
+                "name_en": "Dominican Republic",
+                "name_hu": "Dominikai Köztársaság"
+            },
+            {
+                "alpha3": "DZA",
+                "name_en": "Algeria",
+                "name_hu": "Algéria"
+            },
+            {
+                "alpha3": "ECU",
+                "name_en": "Ecuador",
+                "name_hu": "Ecuador"
+            },
+            {
+                "alpha3": "EGY",
+                "name_en": "Egypt",
+                "name_hu": "Egyiptom"
+            },
+            {
+                "alpha3": "ERI",
+                "name_en": "Eritrea",
+                "name_hu": "Eritrea"
+            },
+            {
+                "alpha3": "ESH",
+                "name_en": "Western Sahara",
+                "name_hu": "Nyugat-Szahara"
+            },
+            {
+                "alpha3": "ESP",
+                "name_en": "Spain",
+                "name_hu": "Spanyolország"
+            },
+            {
+                "alpha3": "EST",
+                "name_en": "Estonia",
+                "name_hu": "Észtország"
+            },
+            {
+                "alpha3": "ETH",
+                "name_en": "Ethiopia",
+                "name_hu": "Etiópia"
+            },
+            {
+                "alpha3": "FIN",
+                "name_en": "Finland",
+                "name_hu": "Finnország"
+            },
+            {
+                "alpha3": "FJI",
+                "name_en": "Fiji",
+                "name_hu": "Fidzsi"
+            },
+            {
+                "alpha3": "FLK",
+                "name_en": "Falkland Islands",
+                "name_hu": "Falkland-szigetek"
+            },
+            {
+                "alpha3": "FRA",
+                "name_en": "France",
+                "name_hu": "Franciaország"
+            },
+            {
+                "alpha3": "FRO",
+                "name_en": "Faroe Islands",
+                "name_hu": "Feröer szigetek"
+            },
+            {
+                "alpha3": "FSM",
+                "name_en": "Micronesia",
+                "name_hu": "Mikronézia"
+            },
+            {
+                "alpha3": "GAB",
+                "name_en": "Gabon",
+                "name_hu": "Gabon"
+            },
+            {
+                "alpha3": "GBR",
+                "name_en": "United Kingdom",
+                "name_hu": "Egyesült Királyság"
+            },
+            {
+                "alpha3": "GEO",
+                "name_en": "Georgia",
+                "name_hu": "Grúzia"
+            },
+            {
+                "alpha3": "GGY",
+                "name_en": "Guernsey",
+                "name_hu": "Guernsey"
+            },
+            {
+                "alpha3": "GHA",
+                "name_en": "Ghana",
+                "name_hu": "Ghána"
+            },
+            {
+                "alpha3": "GIB",
+                "name_en": "Gibraltar",
+                "name_hu": "Gibraltár"
+            },
+            {
+                "alpha3": "GIN",
+                "name_en": "Guinea",
+                "name_hu": "Guinea"
+            },
+            {
+                "alpha3": "GLP",
+                "name_en": "Guadeloupe",
+                "name_hu": "Guadeloupe"
+            },
+            {
+                "alpha3": "GMB",
+                "name_en": "Gambia",
+                "name_hu": "Gambia"
+            },
+            {
+                "alpha3": "GNB",
+                "name_en": "Guinea-Bissau",
+                "name_hu": "Bissau-Guinea"
+            },
+            {
+                "alpha3": "GNQ",
+                "name_en": "Equatorial Guinea",
+                "name_hu": "Egyenlítői-Guinea"
+            },
+            {
+                "alpha3": "GRC",
+                "name_en": "Greece",
+                "name_hu": "Görögország"
+            },
+            {
+                "alpha3": "GRD",
+                "name_en": "Grenada",
+                "name_hu": "Grenada"
+            },
+            {
+                "alpha3": "GRL",
+                "name_en": "Greenland",
+                "name_hu": "Grönland"
+            },
+            {
+                "alpha3": "GTM",
+                "name_en": "Guatemala",
+                "name_hu": "Guatemala"
+            },
+            {
+                "alpha3": "GUF",
+                "name_en": "French Guiana",
+                "name_hu": "Francia Guyana"
+            },
+            {
+                "alpha3": "GUM",
+                "name_en": "Guam",
+                "name_hu": "Guam"
+            },
+            {
+                "alpha3": "GUY",
+                "name_en": "Guyana",
+                "name_hu": "Guyana"
+            },
+            {
+                "alpha3": "HKG",
+                "name_en": "Hong Kong SAR China",
+                "name_hu": "Hongkong KKT"
+            },
+            {
+                "alpha3": "HMD",
+                "name_en": "Heard & McDonald Islands",
+                "name_hu": "Heard-sziget és McDonald-szigetek"
+            },
+            {
+                "alpha3": "HND",
+                "name_en": "Honduras",
+                "name_hu": "Honduras"
+            },
+            {
+                "alpha3": "HRV",
+                "name_en": "Croatia",
+                "name_hu": "Horvátország"
+            },
+            {
+                "alpha3": "HTI",
+                "name_en": "Haiti",
+                "name_hu": "Haiti"
+            },
+            {
+                "alpha3": "HUN",
+                "name_en": "Hungary",
+                "name_hu": "Magyarország"
+            },
+            {
+                "alpha3": "IDN",
+                "name_en": "Indonesia",
+                "name_hu": "Indonézia"
+            },
+            {
+                "alpha3": "IMN",
+                "name_en": "Isle of Man",
+                "name_hu": "Man-sziget"
+            },
+            {
+                "alpha3": "IND",
+                "name_en": "India",
+                "name_hu": "India"
+            },
+            {
+                "alpha3": "IOT",
+                "name_en": "British Indian Ocean Territory",
+                "name_hu": "Brit Indiai-óceáni Terület"
+            },
+            {
+                "alpha3": "IRL",
+                "name_en": "Ireland",
+                "name_hu": "Írország"
+            },
+            {
+                "alpha3": "IRN",
+                "name_en": "Iran",
+                "name_hu": "Irán"
+            },
+            {
+                "alpha3": "IRQ",
+                "name_en": "Iraq",
+                "name_hu": "Irak"
+            },
+            {
+                "alpha3": "ISL",
+                "name_en": "Iceland",
+                "name_hu": "Izland"
+            },
+            {
+                "alpha3": "ISR",
+                "name_en": "Israel",
+                "name_hu": "Izrael"
+            },
+            {
+                "alpha3": "ITA",
+                "name_en": "Italy",
+                "name_hu": "Olaszország"
+            },
+            {
+                "alpha3": "JAM",
+                "name_en": "Jamaica",
+                "name_hu": "Jamaica"
+            },
+            {
+                "alpha3": "JEY",
+                "name_en": "Jersey",
+                "name_hu": "Jersey"
+            },
+            {
+                "alpha3": "JOR",
+                "name_en": "Jordan",
+                "name_hu": "Jordánia"
+            },
+            {
+                "alpha3": "JPN",
+                "name_en": "Japan",
+                "name_hu": "Japán"
+            },
+            {
+                "alpha3": "KAZ",
+                "name_en": "Kazakhstan",
+                "name_hu": "Kazahsztán"
+            },
+            {
+                "alpha3": "KEN",
+                "name_en": "Kenya",
+                "name_hu": "Kenya"
+            },
+            {
+                "alpha3": "KGZ",
+                "name_en": "Kyrgyzstan",
+                "name_hu": "Kirgizisztán"
+            },
+            {
+                "alpha3": "KHM",
+                "name_en": "Cambodia",
+                "name_hu": "Kambodzsa"
+            },
+            {
+                "alpha3": "KIR",
+                "name_en": "Kiribati",
+                "name_hu": "Kiribati"
+            },
+            {
+                "alpha3": "KNA",
+                "name_en": "St. Kitts & Nevis",
+                "name_hu": "Saint Kitts és Nevis"
+            },
+            {
+                "alpha3": "KOR",
+                "name_en": "South Korea",
+                "name_hu": "Dél-Korea"
+            },
+            {
+                "alpha3": "KWT",
+                "name_en": "Kuwait",
+                "name_hu": "Kuvait"
+            },
+            {
+                "alpha3": "LAO",
+                "name_en": "Laos",
+                "name_hu": "Laosz"
+            },
+            {
+                "alpha3": "LBN",
+                "name_en": "Lebanon",
+                "name_hu": "Libanon"
+            },
+            {
+                "alpha3": "LBR",
+                "name_en": "Liberia",
+                "name_hu": "Libéria"
+            },
+            {
+                "alpha3": "LBY",
+                "name_en": "Libya",
+                "name_hu": "Líbia"
+            },
+            {
+                "alpha3": "LCA",
+                "name_en": "St. Lucia",
+                "name_hu": "Saint Lucia"
+            },
+            {
+                "alpha3": "LIE",
+                "name_en": "Liechtenstein",
+                "name_hu": "Liechtenstein"
+            },
+            {
+                "alpha3": "LKA",
+                "name_en": "Sri Lanka",
+                "name_hu": "Srí Lanka"
+            },
+            {
+                "alpha3": "LSO",
+                "name_en": "Lesotho",
+                "name_hu": "Lesotho"
+            },
+            {
+                "alpha3": "LTU",
+                "name_en": "Lithuania",
+                "name_hu": "Litvánia"
+            },
+            {
+                "alpha3": "LUX",
+                "name_en": "Luxembourg",
+                "name_hu": "Luxemburg"
+            },
+            {
+                "alpha3": "LVA",
+                "name_en": "Latvia",
+                "name_hu": "Lettország"
+            },
+            {
+                "alpha3": "MAC",
+                "name_en": "Macao SAR China",
+                "name_hu": "Makaó KKT"
+            },
+            {
+                "alpha3": "MAF",
+                "name_en": "St. Martin",
+                "name_hu": "Saint Martin"
+            },
+            {
+                "alpha3": "MAR",
+                "name_en": "Morocco",
+                "name_hu": "Marokkó"
+            },
+            {
+                "alpha3": "MCO",
+                "name_en": "Monaco",
+                "name_hu": "Monaco"
+            },
+            {
+                "alpha3": "MDA",
+                "name_en": "Moldova",
+                "name_hu": "Moldova"
+            },
+            {
+                "alpha3": "MDG",
+                "name_en": "Madagascar",
+                "name_hu": "Madagaszkár"
+            },
+            {
+                "alpha3": "MDV",
+                "name_en": "Maldives",
+                "name_hu": "Maldív-szigetek"
+            },
+            {
+                "alpha3": "MEX",
+                "name_en": "Mexico",
+                "name_hu": "Mexikó"
+            },
+            {
+                "alpha3": "MHL",
+                "name_en": "Marshall Islands",
+                "name_hu": "Marshall-szigetek"
+            },
+            {
+                "alpha3": "MKD",
+                "name_en": "North Macedonia",
+                "name_hu": "Észak-Macedónia"
+            },
+            {
+                "alpha3": "MLI",
+                "name_en": "Mali",
+                "name_hu": "Mali"
+            },
+            {
+                "alpha3": "MLT",
+                "name_en": "Malta",
+                "name_hu": "Málta"
+            },
+            {
+                "alpha3": "MMR",
+                "name_en": "Myanmar (Burma)",
+                "name_hu": "Mianmar"
+            },
+            {
+                "alpha3": "MNE",
+                "name_en": "Montenegro",
+                "name_hu": "Montenegró"
+            },
+            {
+                "alpha3": "MNG",
+                "name_en": "Mongolia",
+                "name_hu": "Mongólia"
+            },
+            {
+                "alpha3": "MNP",
+                "name_en": "Northern Mariana Islands",
+                "name_hu": "Északi Mariana-szigetek"
+            },
+            {
+                "alpha3": "MOZ",
+                "name_en": "Mozambique",
+                "name_hu": "Mozambik"
+            },
+            {
+                "alpha3": "MRT",
+                "name_en": "Mauritania",
+                "name_hu": "Mauritánia"
+            },
+            {
+                "alpha3": "MSR",
+                "name_en": "Montserrat",
+                "name_hu": "Montserrat"
+            },
+            {
+                "alpha3": "MTQ",
+                "name_en": "Martinique",
+                "name_hu": "Martinique"
+            },
+            {
+                "alpha3": "MUS",
+                "name_en": "Mauritius",
+                "name_hu": "Mauritius"
+            },
+            {
+                "alpha3": "MWI",
+                "name_en": "Malawi",
+                "name_hu": "Malawi"
+            },
+            {
+                "alpha3": "MYS",
+                "name_en": "Malaysia",
+                "name_hu": "Malajzia"
+            },
+            {
+                "alpha3": "MYT",
+                "name_en": "Mayotte",
+                "name_hu": "Mayotte"
+            },
+            {
+                "alpha3": "NAM",
+                "name_en": "Namibia",
+                "name_hu": "Namíbia"
+            },
+            {
+                "alpha3": "NCL",
+                "name_en": "New Caledonia",
+                "name_hu": "Új-Kaledónia"
+            },
+            {
+                "alpha3": "NER",
+                "name_en": "Niger",
+                "name_hu": "Niger"
+            },
+            {
+                "alpha3": "NFK",
+                "name_en": "Norfolk Island",
+                "name_hu": "Norfolk-sziget"
+            },
+            {
+                "alpha3": "NGA",
+                "name_en": "Nigeria",
+                "name_hu": "Nigéria"
+            },
+            {
+                "alpha3": "NIC",
+                "name_en": "Nicaragua",
+                "name_hu": "Nicaragua"
+            },
+            {
+                "alpha3": "NIU",
+                "name_en": "Niue",
+                "name_hu": "Niue"
+            },
+            {
+                "alpha3": "NLD",
+                "name_en": "Netherlands",
+                "name_hu": "Hollandia"
+            },
+            {
+                "alpha3": "NOR",
+                "name_en": "Norway",
+                "name_hu": "Norvégia"
+            },
+            {
+                "alpha3": "NPL",
+                "name_en": "Nepal",
+                "name_hu": "Nepál"
+            },
+            {
+                "alpha3": "NRU",
+                "name_en": "Nauru",
+                "name_hu": "Nauru"
+            },
+            {
+                "alpha3": "NZL",
+                "name_en": "New Zealand",
+                "name_hu": "Új-Zéland"
+            },
+            {
+                "alpha3": "OMN",
+                "name_en": "Oman",
+                "name_hu": "Omán"
+            },
+            {
+                "alpha3": "PAK",
+                "name_en": "Pakistan",
+                "name_hu": "Pakisztán"
+            },
+            {
+                "alpha3": "PAN",
+                "name_en": "Panama",
+                "name_hu": "Panama"
+            },
+            {
+                "alpha3": "PCN",
+                "name_en": "Pitcairn Islands",
+                "name_hu": "Pitcairn-szigetek"
+            },
+            {
+                "alpha3": "PER",
+                "name_en": "Peru",
+                "name_hu": "Peru"
+            },
+            {
+                "alpha3": "PHL",
+                "name_en": "Philippines",
+                "name_hu": "Fülöp-szigetek"
+            },
+            {
+                "alpha3": "PLW",
+                "name_en": "Palau",
+                "name_hu": "Palau"
+            },
+            {
+                "alpha3": "PNG",
+                "name_en": "Papua New Guinea",
+                "name_hu": "Pápua Új-Guinea"
+            },
+            {
+                "alpha3": "POL",
+                "name_en": "Poland",
+                "name_hu": "Lengyelország"
+            },
+            {
+                "alpha3": "PRI",
+                "name_en": "Puerto Rico",
+                "name_hu": "Puerto Rico"
+            },
+            {
+                "alpha3": "PRK",
+                "name_en": "North Korea",
+                "name_hu": "Észak-Korea"
+            },
+            {
+                "alpha3": "PRT",
+                "name_en": "Portugal",
+                "name_hu": "Portugália"
+            },
+            {
+                "alpha3": "PRY",
+                "name_en": "Paraguay",
+                "name_hu": "Paraguay"
+            },
+            {
+                "alpha3": "PSE",
+                "name_en": "Palestinian Territories",
+                "name_hu": "Palesztin Autonómia"
+            },
+            {
+                "alpha3": "PYF",
+                "name_en": "French Polynesia",
+                "name_hu": "Francia Polinézia"
+            },
+            {
+                "alpha3": "QAT",
+                "name_en": "Qatar",
+                "name_hu": "Katar"
+            },
+            {
+                "alpha3": "REU",
+                "name_en": "Réunion",
+                "name_hu": "Réunion"
+            },
+            {
+                "alpha3": "ROU",
+                "name_en": "Romania",
+                "name_hu": "Románia"
+            },
+            {
+                "alpha3": "RUS",
+                "name_en": "Russia",
+                "name_hu": "Oroszország"
+            },
+            {
+                "alpha3": "RWA",
+                "name_en": "Rwanda",
+                "name_hu": "Ruanda"
+            },
+            {
+                "alpha3": "SAU",
+                "name_en": "Saudi Arabia",
+                "name_hu": "Szaúd-Arábia"
+            },
+            {
+                "alpha3": "SDN",
+                "name_en": "Sudan",
+                "name_hu": "Szudán"
+            },
+            {
+                "alpha3": "SEN",
+                "name_en": "Senegal",
+                "name_hu": "Szenegál"
+            },
+            {
+                "alpha3": "SGP",
+                "name_en": "Singapore",
+                "name_hu": "Szingapúr"
+            },
+            {
+                "alpha3": "SGS",
+                "name_en": "South Georgia & South Sandwich Islands",
+                "name_hu": "Déli-Georgia és Déli-Sandwich-szigetek"
+            },
+            {
+                "alpha3": "SHN",
+                "name_en": "St. Helena",
+                "name_hu": "Szent Ilona"
+            },
+            {
+                "alpha3": "SJM",
+                "name_en": "Svalbard & Jan Mayen",
+                "name_hu": "Svalbard és Jan Mayen"
+            },
+            {
+                "alpha3": "SLB",
+                "name_en": "Solomon Islands",
+                "name_hu": "Salamon-szigetek"
+            },
+            {
+                "alpha3": "SLE",
+                "name_en": "Sierra Leone",
+                "name_hu": "Sierra Leone"
+            },
+            {
+                "alpha3": "SLV",
+                "name_en": "El Salvador",
+                "name_hu": "Salvador"
+            },
+            {
+                "alpha3": "SMR",
+                "name_en": "San Marino",
+                "name_hu": "San Marino"
+            },
+            {
+                "alpha3": "SOM",
+                "name_en": "Somalia",
+                "name_hu": "Szomália"
+            },
+            {
+                "alpha3": "SPM",
+                "name_en": "St. Pierre & Miquelon",
+                "name_hu": "Saint-Pierre és Miquelon"
+            },
+            {
+                "alpha3": "SRB",
+                "name_en": "Serbia",
+                "name_hu": "Szerbia"
+            },
+            {
+                "alpha3": "SSD",
+                "name_en": "South Sudan",
+                "name_hu": "Dél-Szudán"
+            },
+            {
+                "alpha3": "STP",
+                "name_en": "São Tomé & Príncipe",
+                "name_hu": "São Tomé és Príncipe"
+            },
+            {
+                "alpha3": "SUR",
+                "name_en": "Suriname",
+                "name_hu": "Suriname"
+            },
+            {
+                "alpha3": "SVK",
+                "name_en": "Slovakia",
+                "name_hu": "Szlovákia"
+            },
+            {
+                "alpha3": "SVN",
+                "name_en": "Slovenia",
+                "name_hu": "Szlovénia"
+            },
+            {
+                "alpha3": "SWE",
+                "name_en": "Sweden",
+                "name_hu": "Svédország"
+            },
+            {
+                "alpha3": "SWZ",
+                "name_en": "Eswatini",
+                "name_hu": "Szváziföld"
+            },
+            {
+                "alpha3": "SXM",
+                "name_en": "Sint Maarten",
+                "name_hu": "Sint Maarten"
+            },
+            {
+                "alpha3": "SYC",
+                "name_en": "Seychelles",
+                "name_hu": "Seychelle-szigetek"
+            },
+            {
+                "alpha3": "SYR",
+                "name_en": "Syria",
+                "name_hu": "Szíria"
+            },
+            {
+                "alpha3": "TCA",
+                "name_en": "Turks & Caicos Islands",
+                "name_hu": "Turks- és Caicos-szigetek"
+            },
+            {
+                "alpha3": "TCD",
+                "name_en": "Chad",
+                "name_hu": "Csád"
+            },
+            {
+                "alpha3": "TGO",
+                "name_en": "Togo",
+                "name_hu": "Togo"
+            },
+            {
+                "alpha3": "THA",
+                "name_en": "Thailand",
+                "name_hu": "Thaiföld"
+            },
+            {
+                "alpha3": "TJK",
+                "name_en": "Tajikistan",
+                "name_hu": "Tádzsikisztán"
+            },
+            {
+                "alpha3": "TKL",
+                "name_en": "Tokelau",
+                "name_hu": "Tokelau"
+            },
+            {
+                "alpha3": "TKM",
+                "name_en": "Turkmenistan",
+                "name_hu": "Türkmenisztán"
+            },
+            {
+                "alpha3": "TLS",
+                "name_en": "Timor-Leste",
+                "name_hu": "Kelet-Timor"
+            },
+            {
+                "alpha3": "TON",
+                "name_en": "Tonga",
+                "name_hu": "Tonga"
+            },
+            {
+                "alpha3": "TTO",
+                "name_en": "Trinidad & Tobago",
+                "name_hu": "Trinidad és Tobago"
+            },
+            {
+                "alpha3": "TUN",
+                "name_en": "Tunisia",
+                "name_hu": "Tunézia"
+            },
+            {
+                "alpha3": "TUR",
+                "name_en": "Türkiye",
+                "name_hu": "Törökország"
+            },
+            {
+                "alpha3": "TUV",
+                "name_en": "Tuvalu",
+                "name_hu": "Tuvalu"
+            },
+            {
+                "alpha3": "TWN",
+                "name_en": "Taiwan",
+                "name_hu": "Tajvan"
+            },
+            {
+                "alpha3": "TZA",
+                "name_en": "Tanzania",
+                "name_hu": "Tanzánia"
+            },
+            {
+                "alpha3": "UGA",
+                "name_en": "Uganda",
+                "name_hu": "Uganda"
+            },
+            {
+                "alpha3": "UKR",
+                "name_en": "Ukraine",
+                "name_hu": "Ukrajna"
+            },
+            {
+                "alpha3": "UMI",
+                "name_en": "U.S. Outlying Islands",
+                "name_hu": "Az USA lakatlan külbirtokai"
+            },
+            {
+                "alpha3": "URY",
+                "name_en": "Uruguay",
+                "name_hu": "Uruguay"
+            },
+            {
+                "alpha3": "USA",
+                "name_en": "United States",
+                "name_hu": "Egyesült Államok"
+            },
+            {
+                "alpha3": "UZB",
+                "name_en": "Uzbekistan",
+                "name_hu": "Üzbegisztán"
+            },
+            {
+                "alpha3": "VAT",
+                "name_en": "Vatican City",
+                "name_hu": "Vatikán"
+            },
+            {
+                "alpha3": "VCT",
+                "name_en": "St. Vincent & Grenadines",
+                "name_hu": "Saint Vincent és a Grenadine-szigetek"
+            },
+            {
+                "alpha3": "VEN",
+                "name_en": "Venezuela",
+                "name_hu": "Venezuela"
+            },
+            {
+                "alpha3": "VGB",
+                "name_en": "British Virgin Islands",
+                "name_hu": "Brit Virgin-szigetek"
+            },
+            {
+                "alpha3": "VIR",
+                "name_en": "U.S. Virgin Islands",
+                "name_hu": "Amerikai Virgin-szigetek"
+            },
+            {
+                "alpha3": "VNM",
+                "name_en": "Vietnam",
+                "name_hu": "Vietnám"
+            },
+            {
+                "alpha3": "VUT",
+                "name_en": "Vanuatu",
+                "name_hu": "Vanuatu"
+            },
+            {
+                "alpha3": "WLF",
+                "name_en": "Wallis & Futuna",
+                "name_hu": "Wallis és Futuna"
+            },
+            {
+                "alpha3": "WSM",
+                "name_en": "Samoa",
+                "name_hu": "Szamoa"
+            },
+            {
+                "alpha3": "YEM",
+                "name_en": "Yemen",
+                "name_hu": "Jemen"
+            },
+            {
+                "alpha3": "ZAF",
+                "name_en": "South Africa",
+                "name_hu": "Dél-afrikai Köztársaság"
+            },
+            {
+                "alpha3": "ZMB",
+                "name_en": "Zambia",
+                "name_hu": "Zambia"
+            },
+            {
+                "alpha3": "ZWE",
+                "name_en": "Zimbabwe",
+                "name_hu": "Zimbabwe"
+            }
+        ],
+        "calling_codes": [
+            {
+                "code": "1",
+                "example_alpha3": "CAN"
+            },
+            {
+                "code": "7",
+                "example_alpha3": "KAZ"
+            },
+            {
+                "code": "20",
+                "example_alpha3": "EGY"
+            },
+            {
+                "code": "27",
+                "example_alpha3": "ZAF"
+            },
+            {
+                "code": "30",
+                "example_alpha3": "GRC"
+            },
+            {
+                "code": "31",
+                "example_alpha3": "NLD"
+            },
+            {
+                "code": "32",
+                "example_alpha3": "BEL"
+            },
+            {
+                "code": "33",
+                "example_alpha3": "FRA"
+            },
+            {
+                "code": "34",
+                "example_alpha3": "ESP"
+            },
+            {
+                "code": "36",
+                "example_alpha3": "HUN"
+            },
+            {
+                "code": "39",
+                "example_alpha3": "ITA"
+            },
+            {
+                "code": "40",
+                "example_alpha3": "ROU"
+            },
+            {
+                "code": "41",
+                "example_alpha3": "CHE"
+            },
+            {
+                "code": "43",
+                "example_alpha3": "AUT"
+            },
+            {
+                "code": "44",
+                "example_alpha3": "GBR"
+            },
+            {
+                "code": "45",
+                "example_alpha3": "DNK"
+            },
+            {
+                "code": "46",
+                "example_alpha3": "SWE"
+            },
+            {
+                "code": "47",
+                "example_alpha3": "BVT"
+            },
+            {
+                "code": "48",
+                "example_alpha3": "POL"
+            },
+            {
+                "code": "49",
+                "example_alpha3": "DEU"
+            },
+            {
+                "code": "51",
+                "example_alpha3": "PER"
+            },
+            {
+                "code": "52",
+                "example_alpha3": "MEX"
+            },
+            {
+                "code": "53",
+                "example_alpha3": "CUB"
+            },
+            {
+                "code": "54",
+                "example_alpha3": "ARG"
+            },
+            {
+                "code": "55",
+                "example_alpha3": "BRA"
+            },
+            {
+                "code": "56",
+                "example_alpha3": "CHL"
+            },
+            {
+                "code": "57",
+                "example_alpha3": "COL"
+            },
+            {
+                "code": "58",
+                "example_alpha3": "VEN"
+            },
+            {
+                "code": "60",
+                "example_alpha3": "MYS"
+            },
+            {
+                "code": "61",
+                "example_alpha3": "AUS"
+            },
+            {
+                "code": "62",
+                "example_alpha3": "IDN"
+            },
+            {
+                "code": "63",
+                "example_alpha3": "PHL"
+            },
+            {
+                "code": "64",
+                "example_alpha3": "NZL"
+            },
+            {
+                "code": "65",
+                "example_alpha3": "SGP"
+            },
+            {
+                "code": "66",
+                "example_alpha3": "THA"
+            },
+            {
+                "code": "81",
+                "example_alpha3": "JPN"
+            },
+            {
+                "code": "82",
+                "example_alpha3": "KOR"
+            },
+            {
+                "code": "84",
+                "example_alpha3": "VNM"
+            },
+            {
+                "code": "86",
+                "example_alpha3": "CHN"
+            },
+            {
+                "code": "90",
+                "example_alpha3": "TUR"
+            },
+            {
+                "code": "91",
+                "example_alpha3": "IND"
+            },
+            {
+                "code": "92",
+                "example_alpha3": "PAK"
+            },
+            {
+                "code": "93",
+                "example_alpha3": "AFG"
+            },
+            {
+                "code": "94",
+                "example_alpha3": "LKA"
+            },
+            {
+                "code": "95",
+                "example_alpha3": "MMR"
+            },
+            {
+                "code": "98",
+                "example_alpha3": "IRN"
+            },
+            {
+                "code": "211",
+                "example_alpha3": "SSD"
+            },
+            {
+                "code": "212",
+                "example_alpha3": "ESH"
+            },
+            {
+                "code": "213",
+                "example_alpha3": "DZA"
+            },
+            {
+                "code": "216",
+                "example_alpha3": "TUN"
+            },
+            {
+                "code": "218",
+                "example_alpha3": "LBY"
+            },
+            {
+                "code": "220",
+                "example_alpha3": "GMB"
+            },
+            {
+                "code": "221",
+                "example_alpha3": "SEN"
+            },
+            {
+                "code": "222",
+                "example_alpha3": "MRT"
+            },
+            {
+                "code": "223",
+                "example_alpha3": "MLI"
+            },
+            {
+                "code": "224",
+                "example_alpha3": "GIN"
+            },
+            {
+                "code": "225",
+                "example_alpha3": "CIV"
+            },
+            {
+                "code": "226",
+                "example_alpha3": "BFA"
+            },
+            {
+                "code": "227",
+                "example_alpha3": "NER"
+            },
+            {
+                "code": "228",
+                "example_alpha3": "TGO"
+            },
+            {
+                "code": "229",
+                "example_alpha3": "BEN"
+            },
+            {
+                "code": "230",
+                "example_alpha3": "MUS"
+            },
+            {
+                "code": "231",
+                "example_alpha3": "LBR"
+            },
+            {
+                "code": "232",
+                "example_alpha3": "SLE"
+            },
+            {
+                "code": "233",
+                "example_alpha3": "GHA"
+            },
+            {
+                "code": "234",
+                "example_alpha3": "NGA"
+            },
+            {
+                "code": "235",
+                "example_alpha3": "TCD"
+            },
+            {
+                "code": "236",
+                "example_alpha3": "CAF"
+            },
+            {
+                "code": "237",
+                "example_alpha3": "CMR"
+            },
+            {
+                "code": "238",
+                "example_alpha3": "CPV"
+            },
+            {
+                "code": "239",
+                "example_alpha3": "STP"
+            },
+            {
+                "code": "240",
+                "example_alpha3": "GNQ"
+            },
+            {
+                "code": "241",
+                "example_alpha3": "GAB"
+            },
+            {
+                "code": "242",
+                "example_alpha3": "COG"
+            },
+            {
+                "code": "243",
+                "example_alpha3": "COD"
+            },
+            {
+                "code": "244",
+                "example_alpha3": "AGO"
+            },
+            {
+                "code": "245",
+                "example_alpha3": "GNB"
+            },
+            {
+                "code": "246",
+                "example_alpha3": "IOT"
+            },
+            {
+                "code": "248",
+                "example_alpha3": "SYC"
+            },
+            {
+                "code": "249",
+                "example_alpha3": "SDN"
+            },
+            {
+                "code": "250",
+                "example_alpha3": "RWA"
+            },
+            {
+                "code": "251",
+                "example_alpha3": "ETH"
+            },
+            {
+                "code": "252",
+                "example_alpha3": "SOM"
+            },
+            {
+                "code": "253",
+                "example_alpha3": "DJI"
+            },
+            {
+                "code": "254",
+                "example_alpha3": "KEN"
+            },
+            {
+                "code": "255",
+                "example_alpha3": "TZA"
+            },
+            {
+                "code": "256",
+                "example_alpha3": "UGA"
+            },
+            {
+                "code": "257",
+                "example_alpha3": "BDI"
+            },
+            {
+                "code": "258",
+                "example_alpha3": "MOZ"
+            },
+            {
+                "code": "260",
+                "example_alpha3": "ZMB"
+            },
+            {
+                "code": "261",
+                "example_alpha3": "MDG"
+            },
+            {
+                "code": "262",
+                "example_alpha3": "ATF"
+            },
+            {
+                "code": "263",
+                "example_alpha3": "ZWE"
+            },
+            {
+                "code": "264",
+                "example_alpha3": "NAM"
+            },
+            {
+                "code": "265",
+                "example_alpha3": "MWI"
+            },
+            {
+                "code": "266",
+                "example_alpha3": "LSO"
+            },
+            {
+                "code": "267",
+                "example_alpha3": "BWA"
+            },
+            {
+                "code": "268",
+                "example_alpha3": "SWZ"
+            },
+            {
+                "code": "269",
+                "example_alpha3": "COM"
+            },
+            {
+                "code": "290",
+                "example_alpha3": "SHN"
+            },
+            {
+                "code": "291",
+                "example_alpha3": "ERI"
+            },
+            {
+                "code": "297",
+                "example_alpha3": "ABW"
+            },
+            {
+                "code": "298",
+                "example_alpha3": "FRO"
+            },
+            {
+                "code": "299",
+                "example_alpha3": "GRL"
+            },
+            {
+                "code": "350",
+                "example_alpha3": "GIB"
+            },
+            {
+                "code": "351",
+                "example_alpha3": "PRT"
+            },
+            {
+                "code": "352",
+                "example_alpha3": "LUX"
+            },
+            {
+                "code": "353",
+                "example_alpha3": "IRL"
+            },
+            {
+                "code": "354",
+                "example_alpha3": "ISL"
+            },
+            {
+                "code": "355",
+                "example_alpha3": "ALB"
+            },
+            {
+                "code": "356",
+                "example_alpha3": "MLT"
+            },
+            {
+                "code": "357",
+                "example_alpha3": "CYP"
+            },
+            {
+                "code": "358",
+                "example_alpha3": "ALA"
+            },
+            {
+                "code": "359",
+                "example_alpha3": "BGR"
+            },
+            {
+                "code": "370",
+                "example_alpha3": "LTU"
+            },
+            {
+                "code": "371",
+                "example_alpha3": "LVA"
+            },
+            {
+                "code": "372",
+                "example_alpha3": "EST"
+            },
+            {
+                "code": "373",
+                "example_alpha3": "MDA"
+            },
+            {
+                "code": "374",
+                "example_alpha3": "ARM"
+            },
+            {
+                "code": "375",
+                "example_alpha3": "BLR"
+            },
+            {
+                "code": "376",
+                "example_alpha3": "AND"
+            },
+            {
+                "code": "377",
+                "example_alpha3": "MCO"
+            },
+            {
+                "code": "378",
+                "example_alpha3": "SMR"
+            },
+            {
+                "code": "379",
+                "example_alpha3": "VAT"
+            },
+            {
+                "code": "380",
+                "example_alpha3": "UKR"
+            },
+            {
+                "code": "381",
+                "example_alpha3": "SRB"
+            },
+            {
+                "code": "382",
+                "example_alpha3": "MNE"
+            },
+            {
+                "code": "385",
+                "example_alpha3": "HRV"
+            },
+            {
+                "code": "386",
+                "example_alpha3": "SVN"
+            },
+            {
+                "code": "387",
+                "example_alpha3": "BIH"
+            },
+            {
+                "code": "389",
+                "example_alpha3": "MKD"
+            },
+            {
+                "code": "420",
+                "example_alpha3": "CZE"
+            },
+            {
+                "code": "421",
+                "example_alpha3": "SVK"
+            },
+            {
+                "code": "423",
+                "example_alpha3": "LIE"
+            },
+            {
+                "code": "500",
+                "example_alpha3": "FLK"
+            },
+            {
+                "code": "501",
+                "example_alpha3": "BLZ"
+            },
+            {
+                "code": "502",
+                "example_alpha3": "GTM"
+            },
+            {
+                "code": "503",
+                "example_alpha3": "SLV"
+            },
+            {
+                "code": "504",
+                "example_alpha3": "HND"
+            },
+            {
+                "code": "505",
+                "example_alpha3": "NIC"
+            },
+            {
+                "code": "506",
+                "example_alpha3": "CRI"
+            },
+            {
+                "code": "507",
+                "example_alpha3": "PAN"
+            },
+            {
+                "code": "508",
+                "example_alpha3": "SPM"
+            },
+            {
+                "code": "509",
+                "example_alpha3": "HTI"
+            },
+            {
+                "code": "590",
+                "example_alpha3": "BLM"
+            },
+            {
+                "code": "591",
+                "example_alpha3": "BOL"
+            },
+            {
+                "code": "592",
+                "example_alpha3": "GUY"
+            },
+            {
+                "code": "593",
+                "example_alpha3": "ECU"
+            },
+            {
+                "code": "594",
+                "example_alpha3": "GUF"
+            },
+            {
+                "code": "595",
+                "example_alpha3": "PRY"
+            },
+            {
+                "code": "596",
+                "example_alpha3": "MTQ"
+            },
+            {
+                "code": "597",
+                "example_alpha3": "SUR"
+            },
+            {
+                "code": "598",
+                "example_alpha3": "URY"
+            },
+            {
+                "code": "599",
+                "example_alpha3": "BES"
+            },
+            {
+                "code": "670",
+                "example_alpha3": "TLS"
+            },
+            {
+                "code": "672",
+                "example_alpha3": "ATA"
+            },
+            {
+                "code": "673",
+                "example_alpha3": "BRN"
+            },
+            {
+                "code": "674",
+                "example_alpha3": "NRU"
+            },
+            {
+                "code": "675",
+                "example_alpha3": "PNG"
+            },
+            {
+                "code": "676",
+                "example_alpha3": "TON"
+            },
+            {
+                "code": "677",
+                "example_alpha3": "SLB"
+            },
+            {
+                "code": "678",
+                "example_alpha3": "VUT"
+            },
+            {
+                "code": "679",
+                "example_alpha3": "FJI"
+            },
+            {
+                "code": "680",
+                "example_alpha3": "PLW"
+            },
+            {
+                "code": "681",
+                "example_alpha3": "WLF"
+            },
+            {
+                "code": "682",
+                "example_alpha3": "COK"
+            },
+            {
+                "code": "683",
+                "example_alpha3": "NIU"
+            },
+            {
+                "code": "685",
+                "example_alpha3": "WSM"
+            },
+            {
+                "code": "686",
+                "example_alpha3": "KIR"
+            },
+            {
+                "code": "687",
+                "example_alpha3": "NCL"
+            },
+            {
+                "code": "688",
+                "example_alpha3": "TUV"
+            },
+            {
+                "code": "689",
+                "example_alpha3": "PYF"
+            },
+            {
+                "code": "690",
+                "example_alpha3": "TKL"
+            },
+            {
+                "code": "691",
+                "example_alpha3": "FSM"
+            },
+            {
+                "code": "692",
+                "example_alpha3": "MHL"
+            },
+            {
+                "code": "850",
+                "example_alpha3": "PRK"
+            },
+            {
+                "code": "852",
+                "example_alpha3": "HKG"
+            },
+            {
+                "code": "853",
+                "example_alpha3": "MAC"
+            },
+            {
+                "code": "855",
+                "example_alpha3": "KHM"
+            },
+            {
+                "code": "856",
+                "example_alpha3": "LAO"
+            },
+            {
+                "code": "880",
+                "example_alpha3": "BGD"
+            },
+            {
+                "code": "886",
+                "example_alpha3": "TWN"
+            },
+            {
+                "code": "960",
+                "example_alpha3": "MDV"
+            },
+            {
+                "code": "961",
+                "example_alpha3": "LBN"
+            },
+            {
+                "code": "962",
+                "example_alpha3": "JOR"
+            },
+            {
+                "code": "963",
+                "example_alpha3": "SYR"
+            },
+            {
+                "code": "964",
+                "example_alpha3": "IRQ"
+            },
+            {
+                "code": "965",
+                "example_alpha3": "KWT"
+            },
+            {
+                "code": "966",
+                "example_alpha3": "SAU"
+            },
+            {
+                "code": "967",
+                "example_alpha3": "YEM"
+            },
+            {
+                "code": "968",
+                "example_alpha3": "OMN"
+            },
+            {
+                "code": "970",
+                "example_alpha3": "PSE"
+            },
+            {
+                "code": "971",
+                "example_alpha3": "ARE"
+            },
+            {
+                "code": "972",
+                "example_alpha3": "ISR"
+            },
+            {
+                "code": "973",
+                "example_alpha3": "BHR"
+            },
+            {
+                "code": "974",
+                "example_alpha3": "QAT"
+            },
+            {
+                "code": "975",
+                "example_alpha3": "BTN"
+            },
+            {
+                "code": "976",
+                "example_alpha3": "MNG"
+            },
+            {
+                "code": "977",
+                "example_alpha3": "NPL"
+            },
+            {
+                "code": "992",
+                "example_alpha3": "TJK"
+            },
+            {
+                "code": "993",
+                "example_alpha3": "TKM"
+            },
+            {
+                "code": "994",
+                "example_alpha3": "AZE"
+            },
+            {
+                "code": "995",
+                "example_alpha3": "GEO"
+            },
+            {
+                "code": "996",
+                "example_alpha3": "KGZ"
+            },
+            {
+                "code": "998",
+                "example_alpha3": "UZB"
+            }
+        ],
+        "regions": [
+            {
+                "alpha2": "AD",
+                "alpha3": "AND",
+                "calling_code": "376"
+            },
+            {
+                "alpha2": "AE",
+                "alpha3": "ARE",
+                "calling_code": "971"
+            },
+            {
+                "alpha2": "AF",
+                "alpha3": "AFG",
+                "calling_code": "93"
+            },
+            {
+                "alpha2": "AG",
+                "alpha3": "ATG",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "AI",
+                "alpha3": "AIA",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "AL",
+                "alpha3": "ALB",
+                "calling_code": "355"
+            },
+            {
+                "alpha2": "AM",
+                "alpha3": "ARM",
+                "calling_code": "374"
+            },
+            {
+                "alpha2": "AO",
+                "alpha3": "AGO",
+                "calling_code": "244"
+            },
+            {
+                "alpha2": "AQ",
+                "alpha3": "ATA",
+                "calling_code": "672"
+            },
+            {
+                "alpha2": "AR",
+                "alpha3": "ARG",
+                "calling_code": "54"
+            },
+            {
+                "alpha2": "AS",
+                "alpha3": "ASM",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "AT",
+                "alpha3": "AUT",
+                "calling_code": "43"
+            },
+            {
+                "alpha2": "AU",
+                "alpha3": "AUS",
+                "calling_code": "61"
+            },
+            {
+                "alpha2": "AW",
+                "alpha3": "ABW",
+                "calling_code": "297"
+            },
+            {
+                "alpha2": "AX",
+                "alpha3": "ALA",
+                "calling_code": "358"
+            },
+            {
+                "alpha2": "AZ",
+                "alpha3": "AZE",
+                "calling_code": "994"
+            },
+            {
+                "alpha2": "BA",
+                "alpha3": "BIH",
+                "calling_code": "387"
+            },
+            {
+                "alpha2": "BB",
+                "alpha3": "BRB",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "BD",
+                "alpha3": "BGD",
+                "calling_code": "880"
+            },
+            {
+                "alpha2": "BE",
+                "alpha3": "BEL",
+                "calling_code": "32"
+            },
+            {
+                "alpha2": "BF",
+                "alpha3": "BFA",
+                "calling_code": "226"
+            },
+            {
+                "alpha2": "BG",
+                "alpha3": "BGR",
+                "calling_code": "359"
+            },
+            {
+                "alpha2": "BH",
+                "alpha3": "BHR",
+                "calling_code": "973"
+            },
+            {
+                "alpha2": "BI",
+                "alpha3": "BDI",
+                "calling_code": "257"
+            },
+            {
+                "alpha2": "BJ",
+                "alpha3": "BEN",
+                "calling_code": "229"
+            },
+            {
+                "alpha2": "BL",
+                "alpha3": "BLM",
+                "calling_code": "590"
+            },
+            {
+                "alpha2": "BM",
+                "alpha3": "BMU",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "BN",
+                "alpha3": "BRN",
+                "calling_code": "673"
+            },
+            {
+                "alpha2": "BO",
+                "alpha3": "BOL",
+                "calling_code": "591"
+            },
+            {
+                "alpha2": "BQ",
+                "alpha3": "BES",
+                "calling_code": "599"
+            },
+            {
+                "alpha2": "BR",
+                "alpha3": "BRA",
+                "calling_code": "55"
+            },
+            {
+                "alpha2": "BS",
+                "alpha3": "BHS",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "BT",
+                "alpha3": "BTN",
+                "calling_code": "975"
+            },
+            {
+                "alpha2": "BV",
+                "alpha3": "BVT",
+                "calling_code": "47"
+            },
+            {
+                "alpha2": "BW",
+                "alpha3": "BWA",
+                "calling_code": "267"
+            },
+            {
+                "alpha2": "BY",
+                "alpha3": "BLR",
+                "calling_code": "375"
+            },
+            {
+                "alpha2": "BZ",
+                "alpha3": "BLZ",
+                "calling_code": "501"
+            },
+            {
+                "alpha2": "CA",
+                "alpha3": "CAN",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "CC",
+                "alpha3": "CCK",
+                "calling_code": "61"
+            },
+            {
+                "alpha2": "CD",
+                "alpha3": "COD",
+                "calling_code": "243"
+            },
+            {
+                "alpha2": "CF",
+                "alpha3": "CAF",
+                "calling_code": "236"
+            },
+            {
+                "alpha2": "CG",
+                "alpha3": "COG",
+                "calling_code": "242"
+            },
+            {
+                "alpha2": "CH",
+                "alpha3": "CHE",
+                "calling_code": "41"
+            },
+            {
+                "alpha2": "CI",
+                "alpha3": "CIV",
+                "calling_code": "225"
+            },
+            {
+                "alpha2": "CK",
+                "alpha3": "COK",
+                "calling_code": "682"
+            },
+            {
+                "alpha2": "CL",
+                "alpha3": "CHL",
+                "calling_code": "56"
+            },
+            {
+                "alpha2": "CM",
+                "alpha3": "CMR",
+                "calling_code": "237"
+            },
+            {
+                "alpha2": "CN",
+                "alpha3": "CHN",
+                "calling_code": "86"
+            },
+            {
+                "alpha2": "CO",
+                "alpha3": "COL",
+                "calling_code": "57"
+            },
+            {
+                "alpha2": "CR",
+                "alpha3": "CRI",
+                "calling_code": "506"
+            },
+            {
+                "alpha2": "CU",
+                "alpha3": "CUB",
+                "calling_code": "53"
+            },
+            {
+                "alpha2": "CV",
+                "alpha3": "CPV",
+                "calling_code": "238"
+            },
+            {
+                "alpha2": "CW",
+                "alpha3": "CUW",
+                "calling_code": "599"
+            },
+            {
+                "alpha2": "CX",
+                "alpha3": "CXR",
+                "calling_code": "61"
+            },
+            {
+                "alpha2": "CY",
+                "alpha3": "CYP",
+                "calling_code": "357"
+            },
+            {
+                "alpha2": "CZ",
+                "alpha3": "CZE",
+                "calling_code": "420"
+            },
+            {
+                "alpha2": "DE",
+                "alpha3": "DEU",
+                "calling_code": "49"
+            },
+            {
+                "alpha2": "DJ",
+                "alpha3": "DJI",
+                "calling_code": "253"
+            },
+            {
+                "alpha2": "DK",
+                "alpha3": "DNK",
+                "calling_code": "45"
+            },
+            {
+                "alpha2": "DM",
+                "alpha3": "DMA",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "DO",
+                "alpha3": "DOM",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "DZ",
+                "alpha3": "DZA",
+                "calling_code": "213"
+            },
+            {
+                "alpha2": "EC",
+                "alpha3": "ECU",
+                "calling_code": "593"
+            },
+            {
+                "alpha2": "EE",
+                "alpha3": "EST",
+                "calling_code": "372"
+            },
+            {
+                "alpha2": "EG",
+                "alpha3": "EGY",
+                "calling_code": "20"
+            },
+            {
+                "alpha2": "EH",
+                "alpha3": "ESH",
+                "calling_code": "212"
+            },
+            {
+                "alpha2": "ER",
+                "alpha3": "ERI",
+                "calling_code": "291"
+            },
+            {
+                "alpha2": "ES",
+                "alpha3": "ESP",
+                "calling_code": "34"
+            },
+            {
+                "alpha2": "ET",
+                "alpha3": "ETH",
+                "calling_code": "251"
+            },
+            {
+                "alpha2": "FI",
+                "alpha3": "FIN",
+                "calling_code": "358"
+            },
+            {
+                "alpha2": "FJ",
+                "alpha3": "FJI",
+                "calling_code": "679"
+            },
+            {
+                "alpha2": "FK",
+                "alpha3": "FLK",
+                "calling_code": "500"
+            },
+            {
+                "alpha2": "FM",
+                "alpha3": "FSM",
+                "calling_code": "691"
+            },
+            {
+                "alpha2": "FO",
+                "alpha3": "FRO",
+                "calling_code": "298"
+            },
+            {
+                "alpha2": "FR",
+                "alpha3": "FRA",
+                "calling_code": "33"
+            },
+            {
+                "alpha2": "GA",
+                "alpha3": "GAB",
+                "calling_code": "241"
+            },
+            {
+                "alpha2": "GB",
+                "alpha3": "GBR",
+                "calling_code": "44"
+            },
+            {
+                "alpha2": "GD",
+                "alpha3": "GRD",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "GE",
+                "alpha3": "GEO",
+                "calling_code": "995"
+            },
+            {
+                "alpha2": "GF",
+                "alpha3": "GUF",
+                "calling_code": "594"
+            },
+            {
+                "alpha2": "GG",
+                "alpha3": "GGY",
+                "calling_code": "44"
+            },
+            {
+                "alpha2": "GH",
+                "alpha3": "GHA",
+                "calling_code": "233"
+            },
+            {
+                "alpha2": "GI",
+                "alpha3": "GIB",
+                "calling_code": "350"
+            },
+            {
+                "alpha2": "GL",
+                "alpha3": "GRL",
+                "calling_code": "299"
+            },
+            {
+                "alpha2": "GM",
+                "alpha3": "GMB",
+                "calling_code": "220"
+            },
+            {
+                "alpha2": "GN",
+                "alpha3": "GIN",
+                "calling_code": "224"
+            },
+            {
+                "alpha2": "GP",
+                "alpha3": "GLP",
+                "calling_code": "590"
+            },
+            {
+                "alpha2": "GQ",
+                "alpha3": "GNQ",
+                "calling_code": "240"
+            },
+            {
+                "alpha2": "GR",
+                "alpha3": "GRC",
+                "calling_code": "30"
+            },
+            {
+                "alpha2": "GS",
+                "alpha3": "SGS",
+                "calling_code": "500"
+            },
+            {
+                "alpha2": "GT",
+                "alpha3": "GTM",
+                "calling_code": "502"
+            },
+            {
+                "alpha2": "GU",
+                "alpha3": "GUM",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "GW",
+                "alpha3": "GNB",
+                "calling_code": "245"
+            },
+            {
+                "alpha2": "GY",
+                "alpha3": "GUY",
+                "calling_code": "592"
+            },
+            {
+                "alpha2": "HK",
+                "alpha3": "HKG",
+                "calling_code": "852"
+            },
+            {
+                "alpha2": "HM",
+                "alpha3": "HMD",
+                "calling_code": "61"
+            },
+            {
+                "alpha2": "HN",
+                "alpha3": "HND",
+                "calling_code": "504"
+            },
+            {
+                "alpha2": "HR",
+                "alpha3": "HRV",
+                "calling_code": "385"
+            },
+            {
+                "alpha2": "HT",
+                "alpha3": "HTI",
+                "calling_code": "509"
+            },
+            {
+                "alpha2": "HU",
+                "alpha3": "HUN",
+                "calling_code": "36"
+            },
+            {
+                "alpha2": "ID",
+                "alpha3": "IDN",
+                "calling_code": "62"
+            },
+            {
+                "alpha2": "IE",
+                "alpha3": "IRL",
+                "calling_code": "353"
+            },
+            {
+                "alpha2": "IL",
+                "alpha3": "ISR",
+                "calling_code": "972"
+            },
+            {
+                "alpha2": "IM",
+                "alpha3": "IMN",
+                "calling_code": "44"
+            },
+            {
+                "alpha2": "IN",
+                "alpha3": "IND",
+                "calling_code": "91"
+            },
+            {
+                "alpha2": "IO",
+                "alpha3": "IOT",
+                "calling_code": "246"
+            },
+            {
+                "alpha2": "IQ",
+                "alpha3": "IRQ",
+                "calling_code": "964"
+            },
+            {
+                "alpha2": "IR",
+                "alpha3": "IRN",
+                "calling_code": "98"
+            },
+            {
+                "alpha2": "IS",
+                "alpha3": "ISL",
+                "calling_code": "354"
+            },
+            {
+                "alpha2": "IT",
+                "alpha3": "ITA",
+                "calling_code": "39"
+            },
+            {
+                "alpha2": "JE",
+                "alpha3": "JEY",
+                "calling_code": "44"
+            },
+            {
+                "alpha2": "JM",
+                "alpha3": "JAM",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "JO",
+                "alpha3": "JOR",
+                "calling_code": "962"
+            },
+            {
+                "alpha2": "JP",
+                "alpha3": "JPN",
+                "calling_code": "81"
+            },
+            {
+                "alpha2": "KE",
+                "alpha3": "KEN",
+                "calling_code": "254"
+            },
+            {
+                "alpha2": "KG",
+                "alpha3": "KGZ",
+                "calling_code": "996"
+            },
+            {
+                "alpha2": "KH",
+                "alpha3": "KHM",
+                "calling_code": "855"
+            },
+            {
+                "alpha2": "KI",
+                "alpha3": "KIR",
+                "calling_code": "686"
+            },
+            {
+                "alpha2": "KM",
+                "alpha3": "COM",
+                "calling_code": "269"
+            },
+            {
+                "alpha2": "KN",
+                "alpha3": "KNA",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "KP",
+                "alpha3": "PRK",
+                "calling_code": "850"
+            },
+            {
+                "alpha2": "KR",
+                "alpha3": "KOR",
+                "calling_code": "82"
+            },
+            {
+                "alpha2": "KW",
+                "alpha3": "KWT",
+                "calling_code": "965"
+            },
+            {
+                "alpha2": "KY",
+                "alpha3": "CYM",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "KZ",
+                "alpha3": "KAZ",
+                "calling_code": "7"
+            },
+            {
+                "alpha2": "LA",
+                "alpha3": "LAO",
+                "calling_code": "856"
+            },
+            {
+                "alpha2": "LB",
+                "alpha3": "LBN",
+                "calling_code": "961"
+            },
+            {
+                "alpha2": "LC",
+                "alpha3": "LCA",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "LI",
+                "alpha3": "LIE",
+                "calling_code": "423"
+            },
+            {
+                "alpha2": "LK",
+                "alpha3": "LKA",
+                "calling_code": "94"
+            },
+            {
+                "alpha2": "LR",
+                "alpha3": "LBR",
+                "calling_code": "231"
+            },
+            {
+                "alpha2": "LS",
+                "alpha3": "LSO",
+                "calling_code": "266"
+            },
+            {
+                "alpha2": "LT",
+                "alpha3": "LTU",
+                "calling_code": "370"
+            },
+            {
+                "alpha2": "LU",
+                "alpha3": "LUX",
+                "calling_code": "352"
+            },
+            {
+                "alpha2": "LV",
+                "alpha3": "LVA",
+                "calling_code": "371"
+            },
+            {
+                "alpha2": "LY",
+                "alpha3": "LBY",
+                "calling_code": "218"
+            },
+            {
+                "alpha2": "MA",
+                "alpha3": "MAR",
+                "calling_code": "212"
+            },
+            {
+                "alpha2": "MC",
+                "alpha3": "MCO",
+                "calling_code": "377"
+            },
+            {
+                "alpha2": "MD",
+                "alpha3": "MDA",
+                "calling_code": "373"
+            },
+            {
+                "alpha2": "ME",
+                "alpha3": "MNE",
+                "calling_code": "382"
+            },
+            {
+                "alpha2": "MF",
+                "alpha3": "MAF",
+                "calling_code": "590"
+            },
+            {
+                "alpha2": "MG",
+                "alpha3": "MDG",
+                "calling_code": "261"
+            },
+            {
+                "alpha2": "MH",
+                "alpha3": "MHL",
+                "calling_code": "692"
+            },
+            {
+                "alpha2": "MK",
+                "alpha3": "MKD",
+                "calling_code": "389"
+            },
+            {
+                "alpha2": "ML",
+                "alpha3": "MLI",
+                "calling_code": "223"
+            },
+            {
+                "alpha2": "MM",
+                "alpha3": "MMR",
+                "calling_code": "95"
+            },
+            {
+                "alpha2": "MN",
+                "alpha3": "MNG",
+                "calling_code": "976"
+            },
+            {
+                "alpha2": "MO",
+                "alpha3": "MAC",
+                "calling_code": "853"
+            },
+            {
+                "alpha2": "MP",
+                "alpha3": "MNP",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "MQ",
+                "alpha3": "MTQ",
+                "calling_code": "596"
+            },
+            {
+                "alpha2": "MR",
+                "alpha3": "MRT",
+                "calling_code": "222"
+            },
+            {
+                "alpha2": "MS",
+                "alpha3": "MSR",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "MT",
+                "alpha3": "MLT",
+                "calling_code": "356"
+            },
+            {
+                "alpha2": "MU",
+                "alpha3": "MUS",
+                "calling_code": "230"
+            },
+            {
+                "alpha2": "MV",
+                "alpha3": "MDV",
+                "calling_code": "960"
+            },
+            {
+                "alpha2": "MW",
+                "alpha3": "MWI",
+                "calling_code": "265"
+            },
+            {
+                "alpha2": "MX",
+                "alpha3": "MEX",
+                "calling_code": "52"
+            },
+            {
+                "alpha2": "MY",
+                "alpha3": "MYS",
+                "calling_code": "60"
+            },
+            {
+                "alpha2": "MZ",
+                "alpha3": "MOZ",
+                "calling_code": "258"
+            },
+            {
+                "alpha2": "NA",
+                "alpha3": "NAM",
+                "calling_code": "264"
+            },
+            {
+                "alpha2": "NC",
+                "alpha3": "NCL",
+                "calling_code": "687"
+            },
+            {
+                "alpha2": "NE",
+                "alpha3": "NER",
+                "calling_code": "227"
+            },
+            {
+                "alpha2": "NF",
+                "alpha3": "NFK",
+                "calling_code": "672"
+            },
+            {
+                "alpha2": "NG",
+                "alpha3": "NGA",
+                "calling_code": "234"
+            },
+            {
+                "alpha2": "NI",
+                "alpha3": "NIC",
+                "calling_code": "505"
+            },
+            {
+                "alpha2": "NL",
+                "alpha3": "NLD",
+                "calling_code": "31"
+            },
+            {
+                "alpha2": "NO",
+                "alpha3": "NOR",
+                "calling_code": "47"
+            },
+            {
+                "alpha2": "NP",
+                "alpha3": "NPL",
+                "calling_code": "977"
+            },
+            {
+                "alpha2": "NR",
+                "alpha3": "NRU",
+                "calling_code": "674"
+            },
+            {
+                "alpha2": "NU",
+                "alpha3": "NIU",
+                "calling_code": "683"
+            },
+            {
+                "alpha2": "NZ",
+                "alpha3": "NZL",
+                "calling_code": "64"
+            },
+            {
+                "alpha2": "OM",
+                "alpha3": "OMN",
+                "calling_code": "968"
+            },
+            {
+                "alpha2": "PA",
+                "alpha3": "PAN",
+                "calling_code": "507"
+            },
+            {
+                "alpha2": "PE",
+                "alpha3": "PER",
+                "calling_code": "51"
+            },
+            {
+                "alpha2": "PF",
+                "alpha3": "PYF",
+                "calling_code": "689"
+            },
+            {
+                "alpha2": "PG",
+                "alpha3": "PNG",
+                "calling_code": "675"
+            },
+            {
+                "alpha2": "PH",
+                "alpha3": "PHL",
+                "calling_code": "63"
+            },
+            {
+                "alpha2": "PK",
+                "alpha3": "PAK",
+                "calling_code": "92"
+            },
+            {
+                "alpha2": "PL",
+                "alpha3": "POL",
+                "calling_code": "48"
+            },
+            {
+                "alpha2": "PM",
+                "alpha3": "SPM",
+                "calling_code": "508"
+            },
+            {
+                "alpha2": "PN",
+                "alpha3": "PCN",
+                "calling_code": "64"
+            },
+            {
+                "alpha2": "PR",
+                "alpha3": "PRI",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "PS",
+                "alpha3": "PSE",
+                "calling_code": "970"
+            },
+            {
+                "alpha2": "PT",
+                "alpha3": "PRT",
+                "calling_code": "351"
+            },
+            {
+                "alpha2": "PW",
+                "alpha3": "PLW",
+                "calling_code": "680"
+            },
+            {
+                "alpha2": "PY",
+                "alpha3": "PRY",
+                "calling_code": "595"
+            },
+            {
+                "alpha2": "QA",
+                "alpha3": "QAT",
+                "calling_code": "974"
+            },
+            {
+                "alpha2": "RE",
+                "alpha3": "REU",
+                "calling_code": "262"
+            },
+            {
+                "alpha2": "RO",
+                "alpha3": "ROU",
+                "calling_code": "40"
+            },
+            {
+                "alpha2": "RS",
+                "alpha3": "SRB",
+                "calling_code": "381"
+            },
+            {
+                "alpha2": "RU",
+                "alpha3": "RUS",
+                "calling_code": "7"
+            },
+            {
+                "alpha2": "RW",
+                "alpha3": "RWA",
+                "calling_code": "250"
+            },
+            {
+                "alpha2": "SA",
+                "alpha3": "SAU",
+                "calling_code": "966"
+            },
+            {
+                "alpha2": "SB",
+                "alpha3": "SLB",
+                "calling_code": "677"
+            },
+            {
+                "alpha2": "SC",
+                "alpha3": "SYC",
+                "calling_code": "248"
+            },
+            {
+                "alpha2": "SD",
+                "alpha3": "SDN",
+                "calling_code": "249"
+            },
+            {
+                "alpha2": "SE",
+                "alpha3": "SWE",
+                "calling_code": "46"
+            },
+            {
+                "alpha2": "SG",
+                "alpha3": "SGP",
+                "calling_code": "65"
+            },
+            {
+                "alpha2": "SH",
+                "alpha3": "SHN",
+                "calling_code": "290"
+            },
+            {
+                "alpha2": "SI",
+                "alpha3": "SVN",
+                "calling_code": "386"
+            },
+            {
+                "alpha2": "SJ",
+                "alpha3": "SJM",
+                "calling_code": "47"
+            },
+            {
+                "alpha2": "SK",
+                "alpha3": "SVK",
+                "calling_code": "421"
+            },
+            {
+                "alpha2": "SL",
+                "alpha3": "SLE",
+                "calling_code": "232"
+            },
+            {
+                "alpha2": "SM",
+                "alpha3": "SMR",
+                "calling_code": "378"
+            },
+            {
+                "alpha2": "SN",
+                "alpha3": "SEN",
+                "calling_code": "221"
+            },
+            {
+                "alpha2": "SO",
+                "alpha3": "SOM",
+                "calling_code": "252"
+            },
+            {
+                "alpha2": "SR",
+                "alpha3": "SUR",
+                "calling_code": "597"
+            },
+            {
+                "alpha2": "SS",
+                "alpha3": "SSD",
+                "calling_code": "211"
+            },
+            {
+                "alpha2": "ST",
+                "alpha3": "STP",
+                "calling_code": "239"
+            },
+            {
+                "alpha2": "SV",
+                "alpha3": "SLV",
+                "calling_code": "503"
+            },
+            {
+                "alpha2": "SX",
+                "alpha3": "SXM",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "SY",
+                "alpha3": "SYR",
+                "calling_code": "963"
+            },
+            {
+                "alpha2": "SZ",
+                "alpha3": "SWZ",
+                "calling_code": "268"
+            },
+            {
+                "alpha2": "TC",
+                "alpha3": "TCA",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "TD",
+                "alpha3": "TCD",
+                "calling_code": "235"
+            },
+            {
+                "alpha2": "TF",
+                "alpha3": "ATF",
+                "calling_code": "262"
+            },
+            {
+                "alpha2": "TG",
+                "alpha3": "TGO",
+                "calling_code": "228"
+            },
+            {
+                "alpha2": "TH",
+                "alpha3": "THA",
+                "calling_code": "66"
+            },
+            {
+                "alpha2": "TJ",
+                "alpha3": "TJK",
+                "calling_code": "992"
+            },
+            {
+                "alpha2": "TK",
+                "alpha3": "TKL",
+                "calling_code": "690"
+            },
+            {
+                "alpha2": "TL",
+                "alpha3": "TLS",
+                "calling_code": "670"
+            },
+            {
+                "alpha2": "TM",
+                "alpha3": "TKM",
+                "calling_code": "993"
+            },
+            {
+                "alpha2": "TN",
+                "alpha3": "TUN",
+                "calling_code": "216"
+            },
+            {
+                "alpha2": "TO",
+                "alpha3": "TON",
+                "calling_code": "676"
+            },
+            {
+                "alpha2": "TR",
+                "alpha3": "TUR",
+                "calling_code": "90"
+            },
+            {
+                "alpha2": "TT",
+                "alpha3": "TTO",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "TV",
+                "alpha3": "TUV",
+                "calling_code": "688"
+            },
+            {
+                "alpha2": "TW",
+                "alpha3": "TWN",
+                "calling_code": "886"
+            },
+            {
+                "alpha2": "TZ",
+                "alpha3": "TZA",
+                "calling_code": "255"
+            },
+            {
+                "alpha2": "UA",
+                "alpha3": "UKR",
+                "calling_code": "380"
+            },
+            {
+                "alpha2": "UG",
+                "alpha3": "UGA",
+                "calling_code": "256"
+            },
+            {
+                "alpha2": "UM",
+                "alpha3": "UMI",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "US",
+                "alpha3": "USA",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "UY",
+                "alpha3": "URY",
+                "calling_code": "598"
+            },
+            {
+                "alpha2": "UZ",
+                "alpha3": "UZB",
+                "calling_code": "998"
+            },
+            {
+                "alpha2": "VA",
+                "alpha3": "VAT",
+                "calling_code": "379"
+            },
+            {
+                "alpha2": "VC",
+                "alpha3": "VCT",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "VE",
+                "alpha3": "VEN",
+                "calling_code": "58"
+            },
+            {
+                "alpha2": "VG",
+                "alpha3": "VGB",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "VI",
+                "alpha3": "VIR",
+                "calling_code": "1"
+            },
+            {
+                "alpha2": "VN",
+                "alpha3": "VNM",
+                "calling_code": "84"
+            },
+            {
+                "alpha2": "VU",
+                "alpha3": "VUT",
+                "calling_code": "678"
+            },
+            {
+                "alpha2": "WF",
+                "alpha3": "WLF",
+                "calling_code": "681"
+            },
+            {
+                "alpha2": "WS",
+                "alpha3": "WSM",
+                "calling_code": "685"
+            },
+            {
+                "alpha2": "YE",
+                "alpha3": "YEM",
+                "calling_code": "967"
+            },
+            {
+                "alpha2": "YT",
+                "alpha3": "MYT",
+                "calling_code": "262"
+            },
+            {
+                "alpha2": "ZA",
+                "alpha3": "ZAF",
+                "calling_code": "27"
+            },
+            {
+                "alpha2": "ZM",
+                "alpha3": "ZMB",
+                "calling_code": "260"
+            },
+            {
+                "alpha2": "ZW",
+                "alpha3": "ZWE",
+                "calling_code": "263"
+            }
+        ]
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

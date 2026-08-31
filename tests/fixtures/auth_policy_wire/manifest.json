@@ -1,18 +1,20 @@
 {
     "schema_version": 1,
-    "source_commit": "5c17f1db41bb5a9875b4fed080e8b2f4092a9749",
-    "fixture_set_sha256": "bc4d066f8ec3b14d7290899dc6116faaa272eb5f559f27330810c012979b9f7d",
+    "source_commit": "2994068b40a7a16d3948baec0d0b13b75659a380",
+    "fixture_set_sha256": "512f4af57e84bc57e5705ed0d1111b8c5082efc54ea6f221636e2c6b0bbeb6cf",
     "provenance": {
         "generator": "tests/auth_policy_fixture_dump.php",
-        "generator_sha256": "72225dbf0a8578fc5ee4fa0e16f3dee558c0770c81a77a52ec80a2d0fc894a65",
+        "generator_sha256": "945e131e811f2eef72e6fd7a6324516577753b8238108d6c797fa1f20887a80d",
         "wire_adapter": "Friending\\Core\\Response::wirePayload",
         "source_paths": [
+            "config/auth_policy_vocabulary.json",
             "src/Core/Response.php",
             "src/Http/Controllers/AppController.php",
             "src/Http/Controllers/UserController.php",
             "src/Http/Controllers/WebadminController.php",
             "src/Support/AppSettings.php",
             "src/Support/AuthMethodPolicy.php",
+            "src/Support/AuthPolicyVocabulary.php",
             "src/Support/EmailAuthPolicy.php",
             "src/Support/Webadmin.php",
             "tests/auth_policy_fixture_dump.php"
@@ -20,46 +22,60 @@
     },
     "fixtures": [
         {
+            "file": "appconfig-all-phone-regions.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "an unrestricted region override publishes the ALL token",
+            "consumer": "ios",
+            "sha256": "6e004e934a26167afc58d597ede136530a35fc4fc8767b6144d616027021da76"
+        },
+        {
             "file": "appconfig-default-hun.json",
             "route": "/v1/app/ios_appconfig",
             "case": "known storefront without an override uses both global defaults",
             "consumer": "ios",
-            "sha256": "943e548f70c7e7f0929bf29b3549c0735b879b491f5999dc1830306280d8eca3"
+            "sha256": "3693eab8813a0e509504a63caf39364decce79f50f55cadfca21e187988e7acd"
+        },
+        {
+            "file": "appconfig-malformed-phone-regions.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "a malformed region setting falls back to ALL, never to an empty picker",
+            "consumer": "ios",
+            "sha256": "d29d35a2047614f63875cd10400881494b774c74549588c7da11f39418972184"
         },
         {
             "file": "appconfig-malformed-storefront.json",
             "route": "/v1/app/ios_appconfig",
             "case": "malformed storefront is published empty and uses global defaults",
             "consumer": "ios",
-            "sha256": "62f82b4ae8a61b3e238375361cddd385c178f7f40dad48020624087cfc5720ee"
+            "sha256": "7f6e3db515c81f312af71906e05d16fa5f2393209afec6b6b066f5b83e2a9d21"
         },
         {
             "file": "appconfig-no-phone-formats.json",
             "route": "/v1/app/ios_appconfig",
             "case": "phone formats are always present and empty when no masks are configured",
             "consumer": "ios",
-            "sha256": "24363e3ef5ad3b9db96c6f97a73d94cdcda791ebdc707be8948db05595470914"
+            "sha256": "944bef96e304a47777711cc8bdad38a2dc7dfff2ae9a6d27549582222f0805d4"
         },
         {
             "file": "appconfig-override-gbr.json",
             "route": "/v1/app/ios_appconfig",
             "case": "storefront method override with the global dial list",
             "consumer": "ios",
-            "sha256": "58bf6d3b6206bb21dc695a08385a3e0c8e5167a0e475d5294483cfb04be5240d"
+            "sha256": "44787a56695c6305fc123653867b921d8eacf713a2263bd91d7d78a3f9a37e5c"
         },
         {
             "file": "appconfig-override-usa.json",
             "route": "/v1/app/ios_appconfig",
             "case": "independent storefront method and calling-code overrides",
             "consumer": "ios",
-            "sha256": "f9e957b2ede93f892b8d6f37b9e2a09bfbae24973129940c4196095e61558469"
+            "sha256": "4ed0eacdb0474f390cd72c9726d7d6c0e46317938e7358c41bf966c98382f9a5"
         },
         {
             "file": "appconfig-unknown-alpha3.json",
             "route": "/v1/app/ios_appconfig",
             "case": "unconfigured alpha-3 storefront uses global defaults",
             "consumer": "ios",
-            "sha256": "67df24db3dcabd7ce6b21e4d16522287eb50fd7e1045caaa9404eb936e96cc8a"
+            "sha256": "c79a3fc2c83af0eea2d5aa4849dbe6bf71478fe73367c1a68772077e40b1d657"
         },
         {
             "file": "refusal-email-method.json",
@@ -79,6 +95,13 @@
             "file": "refusal-phone-format-code-four-digits.json",
             "route": "/v1/webadmin/set_settings",
             "case": "four-digit format calling code exceeds the canonical ITU shape",
+            "consumer": "webadmin",
+            "sha256": "6a39bca1a48a36632e73d58b4daa06a0e2c2253e62c49fb2daa422512b8fd398"
+        },
+        {
+            "file": "refusal-phone-format-code-unassigned.json",
+            "route": "/v1/webadmin/set_settings",
+            "case": "format calling code is outside the generated assigned vocabulary",
             "consumer": "webadmin",
             "sha256": "6a39bca1a48a36632e73d58b4daa06a0e2c2253e62c49fb2daa422512b8fd398"
         },
@@ -158,6 +181,69 @@
             "case": "closed phone method refusal retains its legacy envelope",
             "consumer": "ios",
             "sha256": "9ef420da1cfdee23c36b4d67b603ab1d6980912f9f8c61503639e377d717708c"
+        },
+        {
+            "file": "refusal-phone-regions-dial-code.json",
+            "route": "/v1/webadmin/set_settings",
+            "case": "a default region dialing a code outside the allow-list is refused",
+            "consumer": "webadmin",
+            "sha256": "79370869883d2e1201e626c4ab995dcb6b6c94f77ec3c8e92e3b0392ad512acd"
+        },
+        {
+            "file": "refusal-phone-regions-malformed-code.json",
+            "route": "/v1/webadmin/set_settings",
+            "case": "a region code outside the two-uppercase-letter shape is refused",
+            "consumer": "webadmin",
+            "sha256": "79370869883d2e1201e626c4ab995dcb6b6c94f77ec3c8e92e3b0392ad512acd"
+        },
+        {
+            "file": "refusal-phone-regions-not-list.json",
+            "route": "/v1/webadmin/set_settings",
+            "case": "the region setting must be the ALL token or a list",
+            "consumer": "webadmin",
+            "sha256": "79370869883d2e1201e626c4ab995dcb6b6c94f77ec3c8e92e3b0392ad512acd"
+        },
+        {
+            "file": "refusal-phone-regions-override-dial-code.json",
+            "route": "/v1/webadmin/set_settings",
+            "case": "an override region is checked against that storefront resolved calling codes",
+            "consumer": "webadmin",
+            "sha256": "81291573f7d466b8379e4795674cec4ef40260396ac3f12baeafed040d3575a9"
+        },
+        {
+            "file": "refusal-phone-regions-override-storefront.json",
+            "route": "/v1/webadmin/set_settings",
+            "case": "an override storefront outside the generated vocabulary is refused",
+            "consumer": "webadmin",
+            "sha256": "fd2c00dcca73802ea0561285182f2ef31acba199799de6482ea65ae3902b9ee8"
+        },
+        {
+            "file": "refusal-phone-regions-override-unknown.json",
+            "route": "/v1/webadmin/set_settings",
+            "case": "an unknown region inside an override identifies its exact index",
+            "consumer": "webadmin",
+            "sha256": "2f3e6d75d6231d6dc3bf6455a9cbfa659eeaee5e324b6b7f8f1bd946e428ed8e"
+        },
+        {
+            "file": "refusal-phone-regions-unknown.json",
+            "route": "/v1/webadmin/set_settings",
+            "case": "a region outside the generated ISO vocabulary identifies its exact index",
+            "consumer": "webadmin",
+            "sha256": "2100115c119ca25f27660d78da17ba19fda774dc2de62b6ac776e3cdf624c573"
+        },
+        {
+            "file": "webadmin-vocabulary-clean.json",
+            "route": "/v1/webadmin/get_settings",
+            "case": "generated vocabulary and clean stored auth setting metadata",
+            "consumer": "webadmin",
+            "sha256": "87c2d0f83340af1262df928fbe9761e45f230b853743f91ea94d4fc18ca170b9"
+        },
+        {
+            "file": "webadmin-vocabulary-stale.json",
+            "route": "/v1/webadmin/get_settings",
+            "case": "shape-compatible historical values expose exact vocabulary warnings",
+            "consumer": "webadmin",
+            "sha256": "e17852e0ce919616f91d1b386083e8bd765e95a03a1103efac5ce49d773a3420"
         }
     ]
 }

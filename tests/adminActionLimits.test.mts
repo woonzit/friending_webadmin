@@ -79,9 +79,9 @@ test("the per-action timeout table raises only the measured bulk catalogue paths
 // table and not a silent consequence of allow-listing an action.
 const RAISED_BODY_LIMITS: Partial<Record<(typeof ADMIN_ACTIONS)[number], number>> = {
   save_profile_tag_catalog: 1_100_000,
-  // All 249 authentication storefront overrides may each select the complete
-  // bounded calling-code list; the maximal browser JSON is about 307 KB.
-  set_settings: 400_000,
+  // A full 249-country selection collapses to ALL; the true maximum is every
+  // storefront selecting 248 countries plus all 205 derived calling codes.
+  set_settings: 694_000,
   // The invitation policy can cover all ISO storefronts and up to twenty
   // bounded localized templates per rule.
   save_invite_configuration: 16_000_000,

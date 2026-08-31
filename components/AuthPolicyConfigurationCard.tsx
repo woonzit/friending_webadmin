@@ -5,43 +5,53 @@ import { useLocale, useTranslations } from "next-intl";
 import { formatDate } from "@/lib/format";
 import {
   PHONE_DIAL_FORMAT_MAX_LENGTH,
-  localizedAuthPolicyCountries,
+  authPolicyDraftWithChanges,
+  authPolicySelectedCallingCodes,
+  localizedAuthPolicyCallingCodes,
+  localizedAuthPolicyRegions,
+  localizedAuthPolicyStorefronts,
   phoneDialFormatMask,
   phoneDialMaskValid,
   renderPhoneDialFormatSample,
   updatePhoneDialFormat,
   type AuthPolicyConfiguration,
-  type DialCodeRule,
-  type LocalizedAuthPolicyCountry,
+  type LocalizedAuthPolicyCallingCode,
+  type LocalizedAuthPolicyRegion,
+  type LocalizedAuthPolicyStorefront,
   type PhoneDialFormat,
+  type RegionRule,
 } from "@/lib/authPolicyConfiguration";
 
 type Props = {
   value: AuthPolicyConfiguration;
   busy: boolean;
+  conflictRevision: number | null;
   onSave: () => void;
   onChange: (value: AuthPolicyConfiguration) => void;
 };
 
 type StorefrontSelectProps = {
   value: string;
-  countries: readonly LocalizedAuthPolicyCountry[];
+  storefronts: readonly LocalizedAuthPolicyStorefront[];
   usedStorefronts: ReadonlySet<string>;
   busy: boolean;
   label: string;
   placeholder: string;
+  unknownLabel: (code: string) => string;
   onChange: (value: string) => void;
 };
 
 function StorefrontSelect({
   value,
-  countries,
+  storefronts,
   usedStorefronts,
   busy,
   label,
   placeholder,
+  unknownLabel,
   onChange,
 }: StorefrontSelectProps) {
+  const known = !value || storefronts.some((storefront) => storefront.alpha3 === value);
   return (
     <label className="auth-policy-storefront-field">
       <span>{label}</span>
@@ -49,17 +59,18 @@ function StorefrontSelect({
         className="input"
         value={value}
         disabled={busy}
-        aria-invalid={!value}
+        aria-invalid={!value || !known}
         onChange={(event) => onChange(event.target.value)}
       >
         <option value="">{placeholder}</option>
-        {countries.map((country) => (
+        {!known ? <option value={value}>{unknownLabel(value)}</option> : null}
+        {storefronts.map((storefront) => (
           <option
-            key={country.alpha3}
-            value={country.alpha3}
-            disabled={country.alpha3 !== value && usedStorefronts.has(country.alpha3)}
+            key={storefront.alpha3}
+            value={storefront.alpha3}
+            disabled={storefront.alpha3 !== value && usedStorefronts.has(storefront.alpha3)}
           >
-            {country.name} · {country.alpha3}
+            {storefront.name} · {storefront.alpha3}
           </option>
         ))}
       </select>
@@ -67,14 +78,12 @@ function StorefrontSelect({
   );
 }
 
-type DialCodeControlProps = {
+type RegionControlProps = {
   id: string;
-  value: DialCodeRule;
-  formats: readonly PhoneDialFormat[];
-  countries: readonly LocalizedAuthPolicyCountry[];
+  value: RegionRule;
+  regions: readonly LocalizedAuthPolicyRegion[];
   busy: boolean;
-  onChange: (value: DialCodeRule) => void;
-  onFormatChange: (code: string, mask: string) => void;
+  onChange: (value: RegionRule) => void;
 };
 
 function MethodPreview({ scope, phone, email }: { scope: string; phone: boolean; email: boolean }) {
@@ -91,32 +100,31 @@ function MethodPreview({ scope, phone, email }: { scope: string; phone: boolean;
   );
 }
 
-function DialCodeControl({
+function RegionControl({
   id,
   value,
-  formats,
-  countries,
+  regions,
   busy,
   onChange,
-  onFormatChange,
-}: DialCodeControlProps) {
+}: RegionControlProps) {
   const t = useTranslations("configuration.authPolicy");
-  const [selectedCountry, setSelectedCountry] = useState("");
-  const selectedCodes = value === "ALL" ? [] : value;
-  const selectedSet = new Set(selectedCodes);
+  const [selectedRegion, setSelectedRegion] = useState("");
+  const selectedRegions = value === "ALL" ? [] : value;
+  const selectedSet = new Set(selectedRegions);
+  const regionMap = new Map(regions.map((region) => [region.alpha2, region]));
 
-  function addCountry() {
-    const country = countries.find((candidate) => candidate.alpha3 === selectedCountry);
-    if (!country || value === "ALL") return;
-    const next = [...new Set([...value, ...country.dialCodes])]
-      .sort((left, right) => Number(left) - Number(right));
+  function addRegion() {
+    const region = regions.find((candidate) => candidate.alpha2 === selectedRegion);
+    if (!region || value === "ALL") return;
+    const next = [...new Set([...value, region.alpha2])]
+      .sort((left, right) => left.localeCompare(right));
     onChange(next);
-    setSelectedCountry("");
+    setSelectedRegion("");
   }
 
   return (
     <fieldset className="auth-policy-dial-control">
-      <legend className="sr-only">{t("dialRule")}</legend>
+      <legend className="sr-only">{t("regionRule")}</legend>
       <div className="auth-policy-rule-options">
         <label className={value === "ALL" ? "selected" : ""}>
           <input
@@ -143,21 +151,21 @@ function DialCodeControl({
         <div className="auth-policy-dial-picker">
           <div className="auth-policy-dial-add">
             <label>
-              <span>{t("callingCodeCountry")}</span>
+              <span>{t("country")}</span>
               <select
                 className="input"
-                value={selectedCountry}
+                value={selectedRegion}
                 disabled={busy}
-                onChange={(event) => setSelectedCountry(event.target.value)}
+                onChange={(event) => setSelectedRegion(event.target.value)}
               >
-                <option value="">{t("selectCallingCodeCountry")}</option>
-                {countries.map((country) => (
+                <option value="">{t("selectCountry")}</option>
+                {regions.map((region) => (
                   <option
-                    key={country.alpha3}
-                    value={country.alpha3}
-                    disabled={country.dialCodes.every((code) => selectedSet.has(code))}
+                    key={region.alpha2}
+                    value={region.alpha2}
+                    disabled={selectedSet.has(region.alpha2)}
                   >
-                    {country.name} · {country.dialCodes.map((code) => `+${code}`).join(", ")}
+                    {region.name} · {region.alpha2} · +{region.callingCode}
                   </option>
                 ))}
               </select>
@@ -165,64 +173,46 @@ function DialCodeControl({
             <button
               type="button"
               className="button button-secondary"
-              disabled={busy || !selectedCountry}
-              onClick={addCountry}
+              disabled={busy || !selectedRegion}
+              onClick={addRegion}
             >
-              {t("addCallingCode")}
+              {t("addCountry")}
             </button>
           </div>
-          {selectedCodes.length ? (
-            <div className="auth-policy-dial-chips" aria-label={t("selectedCallingCodes")}>
-              {selectedCodes.map((code) => {
-                const mask = phoneDialFormatMask(formats, code);
-                const valid = mask === "" || phoneDialMaskValid(mask);
-                const sample = mask === "" ? null : renderPhoneDialFormatSample(code, mask);
-                const hintId = `${id}-format-${code}-hint`;
+          {selectedRegions.length ? (
+            <div className="auth-policy-region-chips" aria-label={t("selectedCountryList")}>
+              {selectedRegions.map((code) => {
+                const region = regionMap.get(code);
                 return (
-                  <div className="auth-policy-dial-format-row" data-format-code={code} key={code}>
-                    <span className="auth-policy-dial-chip">
-                      +{code}
+                  <div className="auth-policy-region-chip-stack" key={code}>
+                    <span
+                      className={`auth-policy-region-chip${region ? "" : " is-invalid"}`}
+                      aria-invalid={!region}
+                    >
+                      <span>
+                        <strong>{region?.name ?? t("unknownCountry", { code })}</strong>
+                        <small>{region ? `${region.alpha2} · +${region.callingCode}` : code}</small>
+                      </span>
                       <button
                         type="button"
                         disabled={busy}
-                        aria-label={t("removeCallingCode", { code: `+${code}` })}
-                        onClick={() => onChange(selectedCodes.filter((candidate) => candidate !== code))}
+                        aria-label={t("removeCountry", { country: region?.name ?? code })}
+                        onClick={() => onChange(selectedRegions.filter((candidate) => candidate !== code))}
                       >
                         ×
                       </button>
                     </span>
-                    <label className="auth-policy-dial-format-field">
-                      <span>{t("dialFormatLabel", { code: `+${code}` })}</span>
-                      <input
-                        className="input"
-                        value={mask}
-                        maxLength={PHONE_DIAL_FORMAT_MAX_LENGTH}
-                        disabled={busy}
-                        autoComplete="off"
-                        spellCheck={false}
-                        aria-invalid={!valid}
-                        aria-describedby={hintId}
-                        placeholder={t("dialFormatPlaceholder")}
-                        onChange={(event) => onFormatChange(code, event.target.value)}
-                      />
-                      {valid ? (
-                        <small className="field-hint" id={hintId}>
-                          {sample
-                            ? t("dialFormatSample", { sample })
-                            : t("dialFormatAutomatic")}
-                        </small>
-                      ) : (
-                        <small className="field-error" id={hintId} role="alert">
-                          {t("dialFormatInvalid")}
-                        </small>
-                      )}
-                    </label>
+                    {!region ? (
+                      <small className="field-error" role="alert">
+                        {t("unknownCountry", { code })}
+                      </small>
+                    ) : null}
                   </div>
                 );
               })}
             </div>
           ) : (
-            <p className="auth-policy-empty">{t("noCallingCodes")}</p>
+            <p className="auth-policy-empty">{t("noCountries")}</p>
           )}
         </div>
       ) : null}
@@ -230,16 +220,111 @@ function DialCodeControl({
   );
 }
 
-export default function AuthPolicyConfigurationCard({ value, busy, onSave, onChange }: Props) {
+type PhoneFormatControlsProps = {
+  codes: readonly string[];
+  formats: readonly PhoneDialFormat[];
+  callingCodes: readonly LocalizedAuthPolicyCallingCode[];
+  busy: boolean;
+  onChange: (code: string, mask: string) => void;
+};
+
+function PhoneFormatControls({
+  codes,
+  formats,
+  callingCodes,
+  busy,
+  onChange,
+}: PhoneFormatControlsProps) {
+  const t = useTranslations("configuration.authPolicy");
+  const callingCodeMap = new Map(callingCodes.map((entry) => [entry.code, entry]));
+  if (codes.length === 0) return <p className="auth-policy-empty">{t("emptyDialFormats")}</p>;
+  return (
+    <div className="auth-policy-dial-chips">
+      {codes.map((code) => {
+        const mask = phoneDialFormatMask(formats, code);
+        const valid = mask === "" || phoneDialMaskValid(mask);
+        const callingCode = callingCodeMap.get(code);
+        const sample = mask === "" ? null : renderPhoneDialFormatSample(code, mask);
+        const hintId = `auth-policy-format-${code}-hint`;
+        return (
+          <div className="auth-policy-dial-format-row" data-format-code={code} key={code}>
+            <div className="auth-policy-dial-chip-stack">
+              <span
+                className={`auth-policy-dial-chip${callingCode ? "" : " is-invalid"}`}
+                aria-invalid={!callingCode}
+              >
+                +{code}
+              </span>
+              <small className={callingCode ? "field-hint" : "field-error"}>
+                {callingCode
+                  ? callingCode.exampleName
+                  : t("unknownCallingCode", { code: `+${code}` })}
+              </small>
+            </div>
+            <label className="auth-policy-dial-format-field">
+              <span>{t("dialFormatLabel", { code: `+${code}` })}</span>
+              <input
+                className="input"
+                value={mask}
+                maxLength={PHONE_DIAL_FORMAT_MAX_LENGTH}
+                disabled={busy}
+                autoComplete="off"
+                spellCheck={false}
+                aria-invalid={!valid}
+                aria-describedby={hintId}
+                placeholder={t("dialFormatPlaceholder")}
+                onChange={(event) => onChange(code, event.target.value)}
+              />
+              {valid ? (
+                <small className="field-hint" id={hintId}>
+                  {sample ? t("dialFormatSample", { sample }) : t("dialFormatAutomatic")}
+                </small>
+              ) : (
+                <small className="field-error" id={hintId} role="alert">
+                  {t("dialFormatInvalid")}
+                </small>
+              )}
+            </label>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function AuthPolicyConfigurationCard({
+  value,
+  busy,
+  conflictRevision,
+  onSave,
+  onChange,
+}: Props) {
   const t = useTranslations("configuration.authPolicy");
   const common = useTranslations("common");
   const locale = useLocale();
-  const countries = useMemo(() => localizedAuthPolicyCountries(locale), [locale]);
+  const storefronts = useMemo(
+    () => localizedAuthPolicyStorefronts(value.vocabulary, locale),
+    [locale, value.vocabulary],
+  );
+  const callingCodes = useMemo(
+    () => localizedAuthPolicyCallingCodes(value.vocabulary, locale),
+    [locale, value.vocabulary],
+  );
+  const regions = useMemo(
+    () => localizedAuthPolicyRegions(value.vocabulary, locale),
+    [locale, value.vocabulary],
+  );
   const methodStorefronts = new Set(value.methodOverrides.map((row) => row.storefront));
-  const dialStorefronts = new Set(value.dialCodeOverrides.map((row) => row.storefront));
+  const regionStorefronts = new Set(value.regionOverrides.map((row) => row.storefront));
+  const formatCodes = [...new Set([
+    ...authPolicySelectedCallingCodes(value),
+    ...value.phoneDialFormats.map((row) => row.code),
+  ])].sort((left, right) => Number(left) - Number(right));
+  const warningCodes = [...new Set(value.vocabularyWarnings.flatMap((warning) => warning.codes))]
+    .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
 
   function patch(next: Partial<AuthPolicyConfiguration>) {
-    onChange({ ...value, ...next });
+    onChange(authPolicyDraftWithChanges(value, next));
   }
 
   function addMethodOverride() {
@@ -252,14 +337,14 @@ export default function AuthPolicyConfigurationCard({ value, busy, onSave, onCha
     });
   }
 
-  function addDialOverride() {
-    if (value.dialCodeOverrides.some((row) => !row.storefront)) return;
+  function addRegionOverride() {
+    if (value.regionOverrides.some((row) => !row.storefront)) return;
     patch({
-      dialCodeOverrides: [
-        ...value.dialCodeOverrides,
+      regionOverrides: [
+        ...value.regionOverrides,
         {
           storefront: "",
-          dialCodes: value.defaultDialCodes === "ALL" ? "ALL" : [...value.defaultDialCodes],
+          regions: value.defaultRegions === "ALL" ? "ALL" : [...value.defaultRegions],
         },
       ],
     });
@@ -292,6 +377,16 @@ export default function AuthPolicyConfigurationCard({ value, busy, onSave, onCha
         </div>
       </div>
       <div className="panel-body auth-policy-body">
+        {conflictRevision !== null ? (
+          <div className="alert alert-error auth-policy-inline-alert" role="status">
+            {t("conflictReloaded", { revision: conflictRevision })}
+          </div>
+        ) : null}
+        {warningCodes.length > 0 ? (
+          <div className="alert alert-error auth-policy-inline-alert" role="alert">
+            {t("vocabularyWarning", { codes: warningCodes.join(", ") })}
+          </div>
+        ) : null}
         <section className="auth-policy-section">
           <div className="setting-copy">
             <h3>{t("globalTitle")}</h3>
@@ -353,7 +448,7 @@ export default function AuthPolicyConfigurationCard({ value, busy, onSave, onCha
               type="button"
               className="button button-secondary"
               disabled={busy
-                || value.methodOverrides.length >= countries.length
+                || value.methodOverrides.length >= storefronts.length
                 || value.methodOverrides.some((row) => !row.storefront)}
               onClick={addMethodOverride}
             >
@@ -367,11 +462,12 @@ export default function AuthPolicyConfigurationCard({ value, busy, onSave, onCha
                   <div className="auth-policy-storefront-stack">
                     <StorefrontSelect
                       value={row.storefront}
-                      countries={countries}
+                      storefronts={storefronts}
                       usedStorefronts={methodStorefronts}
                       busy={busy}
                       label={t("storefront")}
                       placeholder={t("selectStorefront")}
+                      unknownLabel={(code) => t("unknownStorefront", { code })}
                       onChange={(storefront) => patch({
                         methodOverrides: value.methodOverrides.map((candidate, candidateIndex) => (
                           candidateIndex === index ? { ...candidate, storefront } : candidate
@@ -426,16 +522,13 @@ export default function AuthPolicyConfigurationCard({ value, busy, onSave, onCha
           <div className="setting-copy">
             <h3>{t("dialTitle")}</h3>
             <p>{t("dialCopy")}</p>
-            <p className="auth-policy-dial-format-help">{t("dialFormatHelp")}</p>
           </div>
-          <DialCodeControl
-            id="auth-policy-global-dial"
-            value={value.defaultDialCodes}
-            formats={value.phoneDialFormats}
-            countries={countries}
+          <RegionControl
+            id="auth-policy-global-region"
+            value={value.defaultRegions}
+            regions={regions}
             busy={busy}
-            onChange={(defaultDialCodes) => patch({ defaultDialCodes })}
-            onFormatChange={changeDialFormat}
+            onChange={(defaultRegions) => patch({ defaultRegions })}
           />
         </section>
 
@@ -449,27 +542,28 @@ export default function AuthPolicyConfigurationCard({ value, busy, onSave, onCha
               type="button"
               className="button button-secondary"
               disabled={busy
-                || value.dialCodeOverrides.length >= countries.length
-                || value.dialCodeOverrides.some((row) => !row.storefront)}
-              onClick={addDialOverride}
+                || value.regionOverrides.length >= storefronts.length
+                || value.regionOverrides.some((row) => !row.storefront)}
+              onClick={addRegionOverride}
             >
               {t("addDialOverride")}
             </button>
           </div>
-          {value.dialCodeOverrides.length ? (
+          {value.regionOverrides.length ? (
             <div className="auth-policy-dial-overrides">
-              {value.dialCodeOverrides.map((row, index) => (
+              {value.regionOverrides.map((row, index) => (
                 <article className="auth-policy-dial-override" key={`${row.storefront}-${index}`}>
                   <div className="auth-policy-dial-override-heading">
                     <StorefrontSelect
                       value={row.storefront}
-                      countries={countries}
-                      usedStorefronts={dialStorefronts}
+                      storefronts={storefronts}
+                      usedStorefronts={regionStorefronts}
                       busy={busy}
                       label={t("storefront")}
                       placeholder={t("selectStorefront")}
+                      unknownLabel={(code) => t("unknownStorefront", { code })}
                       onChange={(storefront) => patch({
-                        dialCodeOverrides: value.dialCodeOverrides.map((candidate, candidateIndex) => (
+                        regionOverrides: value.regionOverrides.map((candidate, candidateIndex) => (
                           candidateIndex === index ? { ...candidate, storefront } : candidate
                         )),
                       })}
@@ -479,7 +573,7 @@ export default function AuthPolicyConfigurationCard({ value, busy, onSave, onCha
                       className="button button-ghost button-danger"
                       disabled={busy}
                       onClick={() => patch({
-                        dialCodeOverrides: value.dialCodeOverrides.filter(
+                        regionOverrides: value.regionOverrides.filter(
                           (_, candidateIndex) => candidateIndex !== index,
                         ),
                       })}
@@ -487,18 +581,18 @@ export default function AuthPolicyConfigurationCard({ value, busy, onSave, onCha
                       {t("removeDialOverride")}
                     </button>
                   </div>
-                  <DialCodeControl
-                    id={`auth-policy-dial-${index}`}
-                    value={row.dialCodes}
-                    formats={value.phoneDialFormats}
-                    countries={countries}
+                  <RegionControl
+                    id={`auth-policy-region-${index}`}
+                    value={row.regions}
+                    regions={regions}
                     busy={busy}
-                    onChange={(dialCodes) => patch({
-                      dialCodeOverrides: value.dialCodeOverrides.map((candidate, candidateIndex) => (
-                        candidateIndex === index ? { ...candidate, dialCodes } : candidate
+                    onChange={(selectedRegions) => patch({
+                      regionOverrides: value.regionOverrides.map((candidate, candidateIndex) => (
+                        candidateIndex === index
+                          ? { ...candidate, regions: selectedRegions }
+                          : candidate
                       )),
                     })}
-                    onFormatChange={changeDialFormat}
                   />
                 </article>
               ))}
@@ -506,6 +600,20 @@ export default function AuthPolicyConfigurationCard({ value, busy, onSave, onCha
           ) : (
             <p className="auth-policy-empty">{t("emptyDialOverrides")}</p>
           )}
+        </section>
+
+        <section className="auth-policy-section">
+          <div className="setting-copy">
+            <h3>{t("dialFormatsTitle")}</h3>
+            <p>{t("dialFormatHelp")}</p>
+          </div>
+          <PhoneFormatControls
+            codes={formatCodes}
+            formats={value.phoneDialFormats}
+            callingCodes={callingCodes}
+            busy={busy}
+            onChange={changeDialFormat}
+          />
         </section>
 
         <div className="setting-meta auth-policy-meta">

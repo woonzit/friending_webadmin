@@ -12,6 +12,9 @@
             "phone_dial_codes": [
                 "1"
             ],
+            "phone_regions": [
+                "US"
+            ],
             "phone_formats": [
                 {
                     "code": "1",

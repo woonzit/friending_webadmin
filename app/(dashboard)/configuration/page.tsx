@@ -10,12 +10,16 @@ import ProfileVerificationConfiguration from "@/components/ProfileVerificationCo
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
 import {
+  authPolicyConflict,
+  authPolicyDraftAfterConflict,
   authPolicyDraftIssue,
   authPolicySavePayload,
   authPolicySettingsResponse,
   phoneDialFormatRefusal,
+  phoneRegionRefusal,
   type AuthPolicyConfiguration,
   type AuthPolicyDraftIssue,
+  type AuthPolicyVocabulary,
 } from "@/lib/authPolicyConfiguration";
 import {
   FEATURE_SWITCHES_CONTRACT_READY,
@@ -43,14 +47,17 @@ type ConfigurationSnapshot = {
   authPolicy: AuthPolicyConfiguration;
 };
 
-function configurationSnapshot(response: AdminResponse | null): ConfigurationSnapshot | null {
+function configurationSnapshot(
+  response: AdminResponse | null,
+  fallbackVocabulary?: AuthPolicyVocabulary,
+): ConfigurationSnapshot | null {
   if (!response?.success || !response.settings || typeof response.settings !== "object") {
     return null;
   }
   const runtime = normalizeRuntimeSettings(response.settings);
   if (!runtime) return null;
   const push = pushSettingsResponse(response);
-  const authPolicy = authPolicySettingsResponse(response);
+  const authPolicy = authPolicySettingsResponse(response, fallbackVocabulary);
   if (!authPolicy || !push) return null;
   return { runtime, push, authPolicy };
 }
@@ -62,6 +69,7 @@ export default function ConfigurationPage() {
   const [settings, setSettings] = useState<RuntimeSettings | null>(null);
   const [pushSetting, setPushSetting] = useState<PushDeliverySetting | null>(null);
   const [authPolicy, setAuthPolicy] = useState<AuthPolicyConfiguration | null>(null);
+  const [authPolicyConflictRevision, setAuthPolicyConflictRevision] = useState<number | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [busy, setBusy] = useState(false);
   const saveInFlight = useRef(false);
@@ -78,6 +86,7 @@ export default function ConfigurationPage() {
     setSettings(snapshot.runtime);
     setPushSetting(snapshot.push);
     setAuthPolicy(snapshot.authPolicy);
+    setAuthPolicyConflictRevision(null);
     setState("ready");
   }, []);
 
@@ -94,19 +103,25 @@ export default function ConfigurationPage() {
   async function commitSettings(
     payload: Record<string, unknown>,
     kind: "runtime" | "authPolicy",
+    expectedRevision?: number,
   ) {
     if (saveInFlight.current) return;
     saveInFlight.current = true;
     setBusy(true);
     setMessage(null);
-    const response = await adminCall("set_settings", { settings: payload });
-    const saved = configurationSnapshot(response);
+    const currentAuthPolicy = authPolicy;
+    const response = await adminCall("set_settings", {
+      settings: payload,
+      ...(expectedRevision === undefined ? {} : { expected_revision: expectedRevision }),
+    });
+    const saved = configurationSnapshot(response, currentAuthPolicy?.vocabulary);
     if (saved) {
       if (kind === "runtime") {
         setSettings(saved.runtime);
         setPushSetting(saved.push);
       } else {
         setAuthPolicy(saved.authPolicy);
+        setAuthPolicyConflictRevision(null);
       }
       saveInFlight.current = false;
       setBusy(false);
@@ -119,8 +134,7 @@ export default function ConfigurationPage() {
       return;
     }
 
-    // This mutation contract has no caller-owned receipt. Keep every gesture
-    // locked until a fresh read resolves any transport or response ambiguity.
+    const conflict = kind === "authPolicy" ? authPolicyConflict(response) : null;
     const error = pushAdminError(response) ?? pushLocalWriteDenial(response);
     const recovered = configurationSnapshot(await adminCall("get_settings"));
     if (!recovered) {
@@ -129,11 +143,26 @@ export default function ConfigurationPage() {
       setState("error");
       return;
     }
+    if (conflict && currentAuthPolicy) {
+      const rebased = authPolicyDraftAfterConflict(currentAuthPolicy, recovered.authPolicy, conflict);
+      if (!rebased) {
+        saveInFlight.current = false;
+        setBusy(false);
+        setState("error");
+        return;
+      }
+      setAuthPolicy(rebased);
+      setAuthPolicyConflictRevision(rebased.revision);
+      saveInFlight.current = false;
+      setBusy(false);
+      return;
+    }
     if (kind === "runtime") {
       setSettings(recovered.runtime);
       setPushSetting(recovered.push);
     } else {
       setAuthPolicy(recovered.authPolicy);
+      setAuthPolicyConflictRevision(null);
     }
     saveInFlight.current = false;
     setBusy(false);
@@ -173,7 +202,7 @@ export default function ConfigurationPage() {
       });
       return;
     }
-    await commitSettings(authPolicyPayload, "authPolicy");
+    await commitSettings(authPolicyPayload, "authPolicy", authPolicy.revision);
   }
 
   if (state === "loading") return <LoadingPanel />;
@@ -218,6 +247,7 @@ export default function ConfigurationPage() {
       <AuthPolicyConfigurationCard
         value={authPolicy}
         busy={busy}
+        conflictRevision={authPolicyConflictRevision}
         onSave={() => void saveAuthPolicy()}
         onChange={(next) => {
           setAuthPolicy(next);
@@ -486,7 +516,8 @@ function authPolicyIssueMessage(
   if (issue === "noMethod") return t("authPolicy.errors.noMethod");
   if (issue === "storefront") return t("authPolicy.errors.storefront");
   if (issue === "duplicateStorefront") return t("authPolicy.errors.duplicateStorefront");
-  if (issue === "dialCodes") return t("authPolicy.errors.dialCodes");
+  if (issue === "regions") return t("authPolicy.errors.regions");
+  if (issue === "vocabulary") return t("authPolicy.errors.vocabulary");
   if (issue === "dialFormatCode") return t("authPolicy.errors.dialFormatCode");
   if (issue === "duplicateDialFormat") return t("authPolicy.errors.duplicateDialFormat");
   if (issue === "dialFormatMask") return t("authPolicy.errors.dialFormatMask");
@@ -510,5 +541,6 @@ function authPolicySaveError(
   if (dialFormatRefusal?.field === "phone_dial_formats") {
     return t("authPolicy.errors.dialFormats");
   }
+  if (phoneRegionRefusal(response)) return t("authPolicy.errors.regions");
   return t("authPolicy.saveError");
 }
