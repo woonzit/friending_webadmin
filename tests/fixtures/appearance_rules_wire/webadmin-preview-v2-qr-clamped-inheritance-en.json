@@ -2,8 +2,8 @@
     "success": true,
     "status_code": 200,
     "data": {
-        "revision": 24,
-        "content_version": "c785697024130907eddd65f37208750d3f5a7050e4257852f07529300cf72c77",
+        "revision": 26,
+        "content_version": "11eebac5d285350b92d7b50b97ce9fa6c6bb96dcde8f26f7dfcdd49f78604cca",
         "landing": {
             "background": {
                 "type": "image",
@@ -45,11 +45,11 @@
             },
             "layout": {
                 "text_gap": {
-                    "value": 11,
-                    "unit": "percent"
+                    "value": 24,
+                    "unit": "pt"
                 },
                 "footer_min_height": {
-                    "value": 96,
+                    "value": 0,
                     "unit": "pt"
                 }
             },
@@ -89,10 +89,10 @@
                 "enabled": true,
                 "background": "#000000",
                 "icon_color": "#FFFFFF",
-                "size": 72,
-                "icon_url": "https://img.example/landing-qr-original.png",
-                "icon_padding": 16,
-                "icon_render": "original"
+                "size": 28,
+                "icon_url": "",
+                "icon_padding": 10,
+                "icon_render": "template"
             }
         },
         "hero": [],
@@ -114,7 +114,7 @@
         },
         "matched": {
             "scope": "storefront",
-            "rule_id": "620000000000000000000005",
+            "rule_id": "630000000000000000000002",
             "location_source": "none"
         },
         "controls": {
@@ -168,15 +168,15 @@
             "qr_enabled": "",
             "qr_bg_color": "",
             "qr_icon_color": "",
-            "qr_size": "72",
-            "qr_icon_url": "https://img.example/landing-qr-original.png",
-            "qr_icon_padding": "16",
-            "qr_icon_render": "original",
-            "description_hidden": "false",
-            "text_gap_value": "11",
-            "text_gap_unit": "percent",
-            "footer_min_height_value": "96",
-            "footer_min_height_unit": "pt"
+            "qr_size": "28",
+            "qr_icon_url": "",
+            "qr_icon_padding": "32",
+            "qr_icon_render": "",
+            "description_hidden": "",
+            "text_gap_value": "",
+            "text_gap_unit": "",
+            "footer_min_height_value": "",
+            "footer_min_height_unit": ""
         },
         "landing_flat_defaults": {
             "background_type": "image",
@@ -427,39 +427,39 @@
             },
             "qr_size": {
                 "scope": "storefront",
-                "rule_id": "620000000000000000000005"
+                "rule_id": "630000000000000000000002"
             },
             "qr_icon_url": {
-                "scope": "storefront",
-                "rule_id": "620000000000000000000005"
+                "scope": "none",
+                "rule_id": ""
             },
             "qr_icon_padding": {
-                "scope": "storefront",
-                "rule_id": "620000000000000000000005"
+                "scope": "global",
+                "rule_id": "630000000000000000000001"
             },
             "qr_icon_render": {
-                "scope": "storefront",
-                "rule_id": "620000000000000000000005"
+                "scope": "none",
+                "rule_id": ""
             },
             "description_hidden": {
-                "scope": "storefront",
-                "rule_id": "620000000000000000000005"
+                "scope": "none",
+                "rule_id": ""
             },
             "text_gap_value": {
-                "scope": "storefront",
-                "rule_id": "620000000000000000000005"
+                "scope": "none",
+                "rule_id": ""
             },
             "text_gap_unit": {
-                "scope": "storefront",
-                "rule_id": "620000000000000000000005"
+                "scope": "none",
+                "rule_id": ""
             },
             "footer_min_height_value": {
-                "scope": "storefront",
-                "rule_id": "620000000000000000000005"
+                "scope": "none",
+                "rule_id": ""
             },
             "footer_min_height_unit": {
-                "scope": "storefront",
-                "rule_id": "620000000000000000000005"
+                "scope": "none",
+                "rule_id": ""
             }
         }
     },

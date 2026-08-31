@@ -88,7 +88,11 @@
             "qr": {
                 "enabled": true,
                 "background": "#000000",
-                "icon_color": "#FFFFFF"
+                "icon_color": "#FFFFFF",
+                "size": 44,
+                "icon_url": "",
+                "icon_padding": 12,
+                "icon_render": "template"
             }
         },
         "hero": [],
@@ -112,6 +116,9 @@
             "scope": "storefront",
             "rule_id": "620000000000000000000002",
             "location_source": "none"
+        },
+        "controls": {
+            "button_corner_radius": 28
         }
     },
     "message": 200,

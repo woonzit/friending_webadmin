@@ -25,7 +25,7 @@ type ImageUploadFieldProps = {
   disabled?: boolean;
   className?: string;
   onBusyChange?: (busy: boolean) => void;
-  /** Landing logos are a stricter subset of the general image bridge. */
+  /** Landing PNG assets are a stricter subset of the general image bridge. */
   pngOnly?: boolean;
 };
 

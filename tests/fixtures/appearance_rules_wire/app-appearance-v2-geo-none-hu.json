@@ -88,7 +88,11 @@
             "qr": {
                 "enabled": false,
                 "background": "#DDFBFC",
-                "icon_color": "#071516"
+                "icon_color": "#071516",
+                "size": 44,
+                "icon_url": "",
+                "icon_padding": 12,
+                "icon_render": "template"
             }
         },
         "hero": [],
@@ -112,6 +116,9 @@
             "scope": "geo",
             "rule_id": "620000000000000000000003",
             "location_source": "gps"
+        },
+        "controls": {
+            "button_corner_radius": 14
         }
     },
     "message": 200,

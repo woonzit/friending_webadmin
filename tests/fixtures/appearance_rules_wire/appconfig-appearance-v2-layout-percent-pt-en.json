@@ -3,7 +3,7 @@
     "data": {
         "appearance": {
             "revision": 24,
-            "content_version": "9a77c5900eab732cb3ca02364bc4d9e18bd69afb15e44dbd2f2c212ba219b76e",
+            "content_version": "c785697024130907eddd65f37208750d3f5a7050e4257852f07529300cf72c77",
             "landing": {
                 "background": {
                     "type": "image",
@@ -88,7 +88,11 @@
                 "qr": {
                     "enabled": true,
                     "background": "#000000",
-                    "icon_color": "#FFFFFF"
+                    "icon_color": "#FFFFFF",
+                    "size": 72,
+                    "icon_url": "https://img.example/landing-qr-original.png",
+                    "icon_padding": 16,
+                    "icon_render": "original"
                 }
             },
             "hero": [],
@@ -112,6 +116,9 @@
                 "scope": "storefront",
                 "rule_id": "620000000000000000000005",
                 "location_source": "none"
+            },
+            "controls": {
+                "button_corner_radius": 28
             }
         }
     },

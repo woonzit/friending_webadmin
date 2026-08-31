@@ -11,8 +11,11 @@ import {
   APPEARANCE_LANDING_APPLE_STYLES,
   APPEARANCE_LANDING_FONTS,
   APPEARANCE_LANDING_LAYOUT_UNITS,
+  APPEARANCE_LANDING_QR_ICON_RENDERS,
   appearanceLandingBackgroundSelection,
   appearanceLandingLayoutPairSelection,
+  appearanceLandingQrGeometry,
+  appearanceLandingQrRenderGeometry,
   appearanceLandingLogoHintVisible,
   appearanceLandingLogoSelection,
   appearanceLandingPreviewDraft,
@@ -347,6 +350,17 @@ export default function AppearanceLandingComposer({
     footer_text_en: contentByLanguage.en.footerText,
     footer_text_hu: contentByLanguage.hu.footerText,
   }), [content.effective, contentByLanguage]);
+  const qrDraftPairExplicit = rule.landing.qr_size !== "" && rule.landing.qr_icon_padding !== "";
+  const qrDraftGeometryError = qrDraftPairExplicit
+    && !invalidPreviewFields.has("qr_size")
+    && !invalidPreviewFields.has("qr_icon_padding")
+    && appearanceLandingQrGeometry(rule.landing) === null
+    ? t("qr.geometryError")
+    : undefined;
+  const qrEffectiveGeometry = appearanceLandingQrGeometry(effective);
+  const qrClampWarning = !qrDraftGeometryError && qrEffectiveGeometry === null
+    ? t("qr.geometryClampWarning", { padding: appearanceLandingQrRenderGeometry(effective).padding })
+    : undefined;
 
   function patch(field: AppearanceLandingKey, value: string) {
     onChange({ ...rule.landing, [field]: value });
@@ -534,6 +548,7 @@ export default function AppearanceLandingComposer({
 
         <ComposerSection title={t("buttons.title")} copy={t("buttons.copy")}>
           <RangeField label={t("buttons.radius")} value={rule.landing.button_corner_radius} effective={effective.button_corner_radius} minimum={0} maximum={32} step={1} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("button_corner_radius", effective.button_corner_radius)} error={previewError("button_corner_radius")} onChange={(value) => patch("button_corner_radius", value)} />
+          <small className="field-hint field-full">{t("buttons.radiusHelp")}</small>
           <div className="field field-full appearance-landing-method-heading"><strong>{t("buttons.phone")}</strong></div>
           <TextField label={t("buttons.labelEn")} value={rule.landing.button_phone_label_en} effective={effective.button_phone_label_en} maximum={40} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("button_phone_label_en", effective.button_phone_label_en)} onChange={(value) => patch("button_phone_label_en", value)} />
           <TextField label={t("buttons.labelHu")} value={rule.landing.button_phone_label_hu} effective={effective.button_phone_label_hu} maximum={40} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("button_phone_label_hu", effective.button_phone_label_hu)} onChange={(value) => patch("button_phone_label_hu", value)} />
@@ -587,6 +602,33 @@ export default function AppearanceLandingComposer({
           />
           <ColorField label={t("qr.background")} value={rule.landing.qr_bg_color} effective={effective.qr_bg_color} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("qr_bg_color", effective.qr_bg_color)} error={previewError("qr_bg_color")} onChange={(value) => patch("qr_bg_color", value)} />
           <ColorField label={t("qr.icon")} value={rule.landing.qr_icon_color} effective={effective.qr_icon_color} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("qr_icon_color", effective.qr_icon_color)} error={previewError("qr_icon_color")} onChange={(value) => patch("qr_icon_color", value)} />
+          <RangeField label={t("qr.size")} value={rule.landing.qr_size} effective={effective.qr_size} minimum={28} maximum={96} step={1} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("qr_size", effective.qr_size)} error={previewError("qr_size")} onChange={(value) => patch("qr_size", value)} />
+          <ImageUploadField
+            className="field-full"
+            label={t("qr.iconUpload")}
+            value={rule.landing.qr_icon_url}
+            disabled={disabled}
+            pngOnly
+            hint={`${t("qr.iconUploadHint")} ${uploadHint("qr_icon_url", effective.qr_icon_url || t("qr.builtInIcon"))}`}
+            onBusyChange={onBusyChange}
+            onChange={(url) => patch("qr_icon_url", url)}
+          />
+          {previewError("qr_icon_url") && <small className="field-error field-full">{previewError("qr_icon_url")}</small>}
+          <RangeField label={t("qr.padding")} value={rule.landing.qr_icon_padding} effective={effective.qr_icon_padding} minimum={0} maximum={32} step={1} disabled={disabled} inheritLabel={inheritLabel} effectiveLabel={metaEffective("qr_icon_padding", effective.qr_icon_padding)} error={previewError("qr_icon_padding") ?? qrDraftGeometryError} onChange={(value) => patch("qr_icon_padding", value)} />
+          <small className="field-hint field-full">{t("qr.paddingHelp")}</small>
+          {qrClampWarning && <small className="field-hint field-full appearance-landing-qr-warning">{qrClampWarning}</small>}
+          <SelectField
+            label={t("qr.render")}
+            value={rule.landing.qr_icon_render}
+            effective={t(`qr.renderOption.${effective.qr_icon_render}`)}
+            effectiveLabel={metaEffective("qr_icon_render", t(`qr.renderOption.${effective.qr_icon_render}`))}
+            disabled={disabled}
+            inheritValue={inheritValue(t(`qr.renderOption.${effective.qr_icon_render}`))}
+            options={APPEARANCE_LANDING_QR_ICON_RENDERS.map((render) => ({ value: render, label: t(`qr.renderOption.${render}`) }))}
+            error={previewError("qr_icon_render")}
+            onChange={(value) => patch("qr_icon_render", value)}
+          />
+          <small className="field-hint field-full">{t("qr.renderHelp")}</small>
         </ComposerSection>
       </div>
 

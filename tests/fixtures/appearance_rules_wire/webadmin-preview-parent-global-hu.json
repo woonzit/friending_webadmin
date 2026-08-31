@@ -88,7 +88,11 @@
             "qr": {
                 "enabled": true,
                 "background": "#000000",
-                "icon_color": "#FFFFFF"
+                "icon_color": "#FFFFFF",
+                "size": 44,
+                "icon_url": "",
+                "icon_padding": 12,
+                "icon_render": "template"
             }
         },
         "hero": [],
@@ -112,6 +116,9 @@
             "scope": "default",
             "rule_id": "",
             "location_source": "none"
+        },
+        "controls": {
+            "button_corner_radius": 28
         },
         "landing_flat": {
             "background_type": "",
@@ -161,6 +168,10 @@
             "qr_enabled": "",
             "qr_bg_color": "",
             "qr_icon_color": "",
+            "qr_size": "",
+            "qr_icon_url": "",
+            "qr_icon_padding": "",
+            "qr_icon_render": "",
             "description_hidden": "",
             "text_gap_value": "",
             "text_gap_unit": "",
@@ -215,6 +226,10 @@
             "qr_enabled": "true",
             "qr_bg_color": "#000000",
             "qr_icon_color": "#FFFFFF",
+            "qr_size": "44",
+            "qr_icon_url": "",
+            "qr_icon_padding": "12",
+            "qr_icon_render": "template",
             "description_hidden": "false",
             "text_gap_value": "24",
             "text_gap_unit": "pt",
@@ -407,6 +422,22 @@
                 "rule_id": ""
             },
             "qr_icon_color": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "qr_size": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "qr_icon_url": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "qr_icon_padding": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "qr_icon_render": {
                 "scope": "none",
                 "rule_id": ""
             },

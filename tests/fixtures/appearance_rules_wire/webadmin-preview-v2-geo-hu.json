@@ -88,7 +88,11 @@
             "qr": {
                 "enabled": false,
                 "background": "#DDFBFC",
-                "icon_color": "#071516"
+                "icon_color": "#071516",
+                "size": 44,
+                "icon_url": "",
+                "icon_padding": 12,
+                "icon_render": "template"
             }
         },
         "hero": [],
@@ -112,6 +116,9 @@
             "scope": "geo",
             "rule_id": "620000000000000000000003",
             "location_source": "gps"
+        },
+        "controls": {
+            "button_corner_radius": 14
         },
         "landing_flat": {
             "background_type": "",
@@ -161,6 +168,10 @@
             "qr_enabled": "false",
             "qr_bg_color": "#DDFBFC",
             "qr_icon_color": "#071516",
+            "qr_size": "",
+            "qr_icon_url": "",
+            "qr_icon_padding": "",
+            "qr_icon_render": "",
             "description_hidden": "",
             "text_gap_value": "",
             "text_gap_unit": "",
@@ -215,6 +226,10 @@
             "qr_enabled": "true",
             "qr_bg_color": "#000000",
             "qr_icon_color": "#FFFFFF",
+            "qr_size": "44",
+            "qr_icon_url": "",
+            "qr_icon_padding": "12",
+            "qr_icon_render": "template",
             "description_hidden": "false",
             "text_gap_value": "24",
             "text_gap_unit": "pt",
@@ -409,6 +424,22 @@
             "qr_icon_color": {
                 "scope": "geo",
                 "rule_id": "620000000000000000000003"
+            },
+            "qr_size": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "qr_icon_url": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "qr_icon_padding": {
+                "scope": "none",
+                "rule_id": ""
+            },
+            "qr_icon_render": {
+                "scope": "none",
+                "rule_id": ""
             },
             "description_hidden": {
                 "scope": "none",

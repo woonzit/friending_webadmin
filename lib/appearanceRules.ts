@@ -106,6 +106,10 @@ export type AppearanceLandingAlign = (typeof APPEARANCE_LANDING_ALIGNS)[number];
 export const APPEARANCE_LANDING_APPLE_STYLES = ["white", "white_outline", "black"] as const;
 export type AppearanceLandingAppleStyle = (typeof APPEARANCE_LANDING_APPLE_STYLES)[number];
 
+/** D-061e / contract v1.9: uploaded QR icons are tinted or keep their source colours. */
+export const APPEARANCE_LANDING_QR_ICON_RENDERS = ["template", "original"] as const;
+export type AppearanceLandingQrIconRender = (typeof APPEARANCE_LANDING_QR_ICON_RENDERS)[number];
+
 /** D-061c / contract v1.7: closed units for vertical landing layout measurements. */
 export const APPEARANCE_LANDING_LAYOUT_UNITS = ["pt", "percent"] as const;
 export type AppearanceLandingLayoutUnit = (typeof APPEARANCE_LANDING_LAYOUT_UNITS)[number];
@@ -158,8 +162,12 @@ export const APPEARANCE_LANDING_KEYS = [
   "qr_enabled",
   "qr_bg_color",
   "qr_icon_color",
-  // Amendments v1.6/v1.7 append their five flat keys to Core's closed
-  // LANDING_KEYS order. Preserve that provider order for flat wire parity.
+  "qr_size",
+  "qr_icon_url",
+  "qr_icon_padding",
+  "qr_icon_render",
+  // Amendments v1.6/v1.7 follow the complete QR group in Core's closed
+  // provider order. Preserve that order for flat wire and corpus parity.
   "description_hidden",
   "text_gap_value",
   "text_gap_unit",
@@ -229,6 +237,10 @@ const LANDING_LIMITS: Record<AppearanceLandingKey, number> = {
   qr_enabled: 5,
   qr_bg_color: 7,
   qr_icon_color: 7,
+  qr_size: 2,
+  qr_icon_url: 2048,
+  qr_icon_padding: 2,
+  qr_icon_render: 8,
 };
 
 /** Core's compiled landing default (`AppearancePolicy::defaultLanding`), flattened. */
@@ -282,6 +294,10 @@ export const APPEARANCE_DEFAULT_LANDING: AppearanceLandingDraft = {
   qr_enabled: "true",
   qr_bg_color: "#000000",
   qr_icon_color: "#FFFFFF",
+  qr_size: "44",
+  qr_icon_url: "",
+  qr_icon_padding: "12",
+  qr_icon_render: "template",
   description_hidden: "false",
   text_gap_value: "24",
   text_gap_unit: "pt",
@@ -448,7 +464,15 @@ export type AppearancePreviewLandingV2 = {
     background: { color: string; alpha: number };
     style: { font: AppearanceLandingFont; size: number; color: string };
   };
-  qr: { enabled: boolean; background: string; icon_color: string };
+  qr: {
+    enabled: boolean;
+    background: string;
+    icon_color: string;
+    size: number;
+    icon_url: string;
+    icon_padding: number;
+    icon_render: AppearanceLandingQrIconRender;
+  };
 };
 
 /** Normalized preview view: v1 callers keep their fields; v2 adds `v2`. */
@@ -501,6 +525,8 @@ export type AppearancePreviewPayload = {
     rule_id: string;
     location_source: AppearanceLocationSource;
   };
+  /** App schema-2 only: shared appearance tokens outside the landing surface. */
+  controls: { button_corner_radius: number } | null;
   /** Webadmin schema-2 only: complete rule-chain values, blank when no rule sets the exact key. */
   landing_flat: AppearanceLandingDraft | null;
   /** Webadmin schema-2 only: the exact source selected for every flat field. */
@@ -602,6 +628,11 @@ function record(value: unknown): Record<string, unknown> | null {
 function exactKeys(value: Record<string, unknown>, required: readonly string[], optional: readonly string[] = []): boolean {
   const actual = Object.keys(value);
   if (actual.some((key) => !required.includes(key) && !optional.includes(key))) return false;
+  return required.every((key) => Object.hasOwn(value, key));
+}
+
+/** v2 landing objects are additive-safe: known required keys must exist, while unknown keys are ignored. */
+function requiredKeys(value: Record<string, unknown>, required: readonly string[]): boolean {
   return required.every((key) => Object.hasOwn(value, key));
 }
 
@@ -837,6 +868,8 @@ const APPEARANCE_LANDING_INTEGER_BOUNDS: Partial<Record<AppearanceLandingKey, re
   footer_size: [10, 18],
   text_gap_value: [0, 200],
   footer_min_height_value: [0, 300],
+  qr_size: [28, 96],
+  qr_icon_padding: [0, 32],
 };
 
 /** Fields whose draft values affect `AppearanceLandingPreview` rendering or inline styles. */
@@ -859,6 +892,10 @@ export const APPEARANCE_LANDING_PREVIEW_STYLE_KEYS = [
   "text_gap_unit",
   "footer_min_height_value",
   "footer_min_height_unit",
+  "qr_size",
+  "qr_icon_url",
+  "qr_icon_padding",
+  "qr_icon_render",
 ] as const satisfies readonly AppearanceLandingKey[];
 
 const LANDING_ALPHA = /^(?:0\.\d{2}|1\.00)$/;
@@ -897,7 +934,7 @@ function appearanceLandingFieldValid(key: AppearanceLandingKey, value: string): 
   if (value === "") return true;
   if (key === "background_type") return value === "image" || value === "video";
   if (key === "title_type") return value === "text" || value === "image" || value === "none";
-  if (key === "background_url" || key === "background_poster_url" || key === "title_image_url") {
+  if (key === "background_url" || key === "background_poster_url" || key === "title_image_url" || key === "qr_icon_url") {
     return webUrl(value, false) !== null;
   }
   if ((APPEARANCE_LANDING_COLOR_KEYS as readonly string[]).includes(key)) return parseAppearancePaletteHex(value) !== null;
@@ -910,6 +947,7 @@ function appearanceLandingFieldValid(key: AppearanceLandingKey, value: string): 
     return (APPEARANCE_LANDING_LAYOUT_UNITS as readonly string[]).includes(value);
   }
   if (key === "button_apple_style") return (APPEARANCE_LANDING_APPLE_STYLES as readonly string[]).includes(value);
+  if (key === "qr_icon_render") return (APPEARANCE_LANDING_QR_ICON_RENDERS as readonly string[]).includes(value);
   if (key === "description_hidden" || key === "qr_enabled") return value === "true" || value === "false";
   if (key === "footer_text_en" || key === "footer_text_hu") return appearanceFooterTextHasExactTags(value);
   return true;
@@ -1265,7 +1303,7 @@ function parsePreviewLandingV1(source: Record<string, unknown>): AppearancePrevi
 }
 
 function parsePreviewLandingV2(source: Record<string, unknown>): AppearancePreviewLanding | null {
-  if (!exactKeys(source, ["background", "title", "description", "layout", "buttons", "footer", "qr"])) return null;
+  if (!requiredKeys(source, ["background", "title", "description", "layout", "buttons", "footer", "qr"])) return null;
   const background = record(source.background);
   const title = record(source.title);
   const description = record(source.description);
@@ -1273,13 +1311,13 @@ function parsePreviewLandingV2(source: Record<string, unknown>): AppearancePrevi
   const buttons = record(source.buttons);
   const footer = record(source.footer);
   const qr = record(source.qr);
-  if (!background || !exactKeys(background, ["type", "url", "poster_url", "overlay"])
-    || !title || !exactKeys(title, ["type", "text", "image_url", "image", "style"])
-    || !description || !exactKeys(description, ["text", "hidden", "style", "backdrop"])
-    || !layout || !exactKeys(layout, ["text_gap", "footer_min_height"])
-    || !buttons || !exactKeys(buttons, ["corner_radius", "phone", "email", "apple"])
-    || !footer || !exactKeys(footer, ["text", "background", "style"])
-    || !qr || !exactKeys(qr, ["enabled", "background", "icon_color"])) return null;
+  if (!background || !requiredKeys(background, ["type", "url", "poster_url", "overlay"])
+    || !title || !requiredKeys(title, ["type", "text", "image_url", "image", "style"])
+    || !description || !requiredKeys(description, ["text", "hidden", "style", "backdrop"])
+    || !layout || !requiredKeys(layout, ["text_gap", "footer_min_height"])
+    || !buttons || !requiredKeys(buttons, ["corner_radius", "phone", "email", "apple"])
+    || !footer || !requiredKeys(footer, ["text", "background", "style"])
+    || !qr || !requiredKeys(qr, ["enabled", "background", "icon_color", "size", "icon_url", "icon_padding", "icon_render"])) return null;
 
   const overlay = record(background.overlay);
   const titleImageLayout = record(title.image);
@@ -1293,18 +1331,18 @@ function parsePreviewLandingV2(source: Record<string, unknown>): AppearancePrevi
   const footerStyle = record(footer.style);
   const textGap = record(layout.text_gap);
   const footerMinHeight = record(layout.footer_min_height);
-  if (!overlay || !exactKeys(overlay, ["color", "alpha"])
-    || !titleImageLayout || !exactKeys(titleImageLayout, ["width_percent", "offset_percent"])
-    || !titleStyle || !exactKeys(titleStyle, ["font", "size", "color", "align"])
-    || !descriptionStyle || !exactKeys(descriptionStyle, ["font", "size", "color", "align"])
-    || !descriptionBackdrop || !exactKeys(descriptionBackdrop, ["color", "alpha"])
-    || !phone || !exactKeys(phone, ["label", "background", "text_color", "font", "size"])
-    || !email || !exactKeys(email, ["label", "background", "text_color", "font", "size"])
-    || !apple || !exactKeys(apple, ["style"])
-    || !footerBackground || !exactKeys(footerBackground, ["color", "alpha"])
-    || !footerStyle || !exactKeys(footerStyle, ["font", "size", "color"])
-    || !textGap || !exactKeys(textGap, ["value", "unit"])
-    || !footerMinHeight || !exactKeys(footerMinHeight, ["value", "unit"])) return null;
+  if (!overlay || !requiredKeys(overlay, ["color", "alpha"])
+    || !titleImageLayout || !requiredKeys(titleImageLayout, ["width_percent", "offset_percent"])
+    || !titleStyle || !requiredKeys(titleStyle, ["font", "size", "color", "align"])
+    || !descriptionStyle || !requiredKeys(descriptionStyle, ["font", "size", "color", "align"])
+    || !descriptionBackdrop || !requiredKeys(descriptionBackdrop, ["color", "alpha"])
+    || !phone || !requiredKeys(phone, ["label", "background", "text_color", "font", "size"])
+    || !email || !requiredKeys(email, ["label", "background", "text_color", "font", "size"])
+    || !apple || !requiredKeys(apple, ["style"])
+    || !footerBackground || !requiredKeys(footerBackground, ["color", "alpha"])
+    || !footerStyle || !requiredKeys(footerStyle, ["font", "size", "color"])
+    || !textGap || !requiredKeys(textGap, ["value", "unit"])
+    || !footerMinHeight || !requiredKeys(footerMinHeight, ["value", "unit"])) return null;
 
   const backgroundType = background.type === "image" || background.type === "video" ? background.type : null;
   const backgroundUrl = webUrl(background.url, true);
@@ -1355,6 +1393,13 @@ function parsePreviewLandingV2(source: Record<string, unknown>): AppearancePrevi
   const qrEnabled = boolean(qr.enabled);
   const qrBackground = previewLandingColor(qr.background);
   const qrIconColor = previewLandingColor(qr.icon_color);
+  const qrSize = integer(qr.size, 28, 96);
+  const qrIconUrl = webUrl(qr.icon_url, true);
+  const qrIconPadding = integer(qr.icon_padding, 0, 32);
+  const qrIconRender = typeof qr.icon_render === "string"
+    && (APPEARANCE_LANDING_QR_ICON_RENDERS as readonly string[]).includes(qr.icon_render)
+    ? qr.icon_render as AppearanceLandingQrIconRender
+    : null;
 
   if (backgroundType === null || backgroundUrl === null || posterUrl === null || overlayColor === null || overlayAlpha === null
     || titleType === null || titleText === null || titleImageUrl === null || titleWidth === null || titleOffset === null
@@ -1367,7 +1412,9 @@ function parsePreviewLandingV2(source: Record<string, unknown>): AppearancePrevi
     || footerBackgroundColor === null || footerBackgroundAlpha === null || footerFont === null || footerSize === null
     || footerTextColor === null || textGapValue === null || textGapUnit === null
     || footerMinHeightValue === null || footerMinHeightUnit === null
-    || qrEnabled === null || qrBackground === null || qrIconColor === null) return null;
+    || qrEnabled === null || qrBackground === null || qrIconColor === null || qrSize === null
+    || qrIconUrl === null || qrIconPadding === null || qrIconRender === null
+    || qrSize - 2 * qrIconPadding < 8) return null;
 
   if (backgroundType === "image" && posterUrl !== "") return null;
   if (backgroundType === "video" && backgroundUrl === "") return null;
@@ -1405,7 +1452,15 @@ function parsePreviewLandingV2(source: Record<string, unknown>): AppearancePrevi
       background: { color: footerBackgroundColor, alpha: footerBackgroundAlpha },
       style: { font: footerFont, size: footerSize, color: footerTextColor },
     },
-    qr: { enabled: qrEnabled, background: qrBackground, icon_color: qrIconColor },
+    qr: {
+      enabled: qrEnabled,
+      background: qrBackground,
+      icon_color: qrIconColor,
+      size: qrSize,
+      icon_url: qrIconUrl,
+      icon_padding: qrIconPadding,
+      icon_render: qrIconRender,
+    },
   };
   return {
     schema: 2,
@@ -1491,6 +1546,7 @@ function parsePreviewLandingDefaults(value: unknown): AppearanceLandingDraft | n
     "background_url",
     "background_poster_url",
     "title_image_url",
+    "qr_icon_url",
   ];
   if (APPEARANCE_LANDING_KEYS.some((key) => defaults[key] === "" && !emptyAssetDefaults.includes(key))) return null;
   return defaults;
@@ -1535,10 +1591,13 @@ function parsePreviewLandingFlatSources(
 export function parseAppearancePreviewPayload(value: unknown): AppearancePreviewPayload | null {
   const source = record(value);
   if (!source) return null;
-  const appKeys = ["revision", "content_version", "landing", "hero", "palette", "matched"] as const;
-  const webadminKeys = [...appKeys, "landing_flat", "landing_flat_sources", "landing_flat_defaults"] as const;
+  const appV1Keys = ["revision", "content_version", "landing", "hero", "palette", "matched"] as const;
+  const appV2Keys = [...appV1Keys, "controls"] as const;
+  const webadminKeys = [...appV2Keys, "landing_flat", "landing_flat_sources", "landing_flat_defaults"] as const;
+  const appV1 = exactKeys(source, appV1Keys);
+  const appV2 = exactKeys(source, appV2Keys);
   const webadminV2 = exactKeys(source, webadminKeys);
-  if (!webadminV2 && !exactKeys(source, appKeys)) return null;
+  if (!appV1 && !appV2 && !webadminV2) return null;
   const revision = integer(source.revision, 0, Number.MAX_SAFE_INTEGER);
   // Finding 7: Core's `content_version` is always a lowercase SHA-256 hex digest.
   const contentVersion = typeof source.content_version === "string" && CONTENT_VERSION.test(source.content_version)
@@ -1552,7 +1611,13 @@ export function parseAppearancePreviewPayload(value: unknown): AppearancePreview
   const landingFlatDefaults = webadminV2 ? parsePreviewLandingDefaults(source.landing_flat_defaults) : null;
   const palette = parseAppearanceFullPalette(source.palette);
   const matched = record(source.matched);
+  const controlsSource = landing?.schema === 2 ? record(source.controls) : null;
+  const controlsRadius = controlsSource && exactKeys(controlsSource, ["button_corner_radius"])
+    ? integer(controlsSource.button_corner_radius, 0, 32)
+    : null;
   if (revision === null || contentVersion === null || !landing || !palette
+    || (landing.schema === 1 ? !appV1 : (!appV2 && !webadminV2))
+    || (landing.schema === 2 && (controlsRadius === null || controlsRadius !== landing.v2?.buttons.corner_radius))
     || (webadminV2 && (landing.schema !== 2 || landingFlat === null || landingFlatSources === null || landingFlatDefaults === null))
     || !Array.isArray(source.hero)
     || source.hero.length > MAX_APPEARANCE_PREVIEW_HERO_ITEMS
@@ -1587,6 +1652,7 @@ export function parseAppearancePreviewPayload(value: unknown): AppearancePreview
     hero,
     palette,
     matched: { scope, rule_id: ruleId, location_source: locationSource },
+    controls: landing.schema === 2 ? { button_corner_radius: controlsRadius! } : null,
     landing_flat: landingFlat,
     landing_flat_sources: landingFlatSources,
     landing_flat_defaults: landingFlatDefaults,
@@ -1650,6 +1716,10 @@ export function appearancePreviewLandingFields(
     qr_enabled: v2.qr.enabled ? "true" : "false",
     qr_bg_color: v2.qr.background,
     qr_icon_color: v2.qr.icon_color,
+    qr_size: String(v2.qr.size),
+    qr_icon_url: v2.qr.icon_url,
+    qr_icon_padding: String(v2.qr.icon_padding),
+    qr_icon_render: v2.qr.icon_render,
     description_hidden: v2.description.hidden ? "true" : "false",
     text_gap_value: String(v2.layout.text_gap.value),
     text_gap_unit: v2.layout.text_gap.unit,
@@ -1671,11 +1741,15 @@ export function compareAppearanceLandingWithPreview(
   language: "en" | "hu",
 ): AppearanceLandingDifference[] {
   const core = appearancePreviewLandingFields(preview, language);
+  const comparableLocal = { ...local };
+  // The nested v2 presentation carries Core's resolver clamp, while the flat
+  // provenance view deliberately preserves the pre-clamp inherited values.
+  comparableLocal.qr_icon_padding = String(appearanceLandingQrRenderGeometry(local).padding);
   const differences: AppearanceLandingDifference[] = [];
   for (const key of APPEARANCE_LANDING_KEYS) {
     if (!Object.hasOwn(core, key)) continue;
     const coreValue = core[key] ?? "";
-    if (local[key] !== coreValue) differences.push({ field: key, local: local[key], core: coreValue });
+    if (comparableLocal[key] !== coreValue) differences.push({ field: key, local: comparableLocal[key], core: coreValue });
   }
   return differences;
 }
@@ -1835,6 +1909,34 @@ export type AppearanceLandingPreviewLayout = {
   textGap: number;
   footerMinHeight: number;
 };
+
+export type AppearanceLandingQrGeometry = {
+  size: number;
+  padding: number;
+  iconSize: number;
+};
+
+/** Contract v1.9 QR geometry after inheritance; `null` is the exact Core-refused icon box. */
+export function appearanceLandingQrGeometry(
+  fields: Pick<AppearanceLandingDraft, "qr_size" | "qr_icon_padding">,
+): AppearanceLandingQrGeometry | null {
+  const size = parseAppearanceLandingInteger(fields.qr_size, 28, 96);
+  const padding = parseAppearanceLandingInteger(fields.qr_icon_padding, 0, 32);
+  if (size === null || padding === null || size - 2 * padding < 8) return null;
+  return { size, padding, iconSize: size - 2 * padding };
+}
+
+/** Core's resolver-side safety clamp for a cross-layer pair that predates or bypasses same-rule coherence. */
+export function appearanceLandingQrRenderGeometry(
+  fields: Pick<AppearanceLandingDraft, "qr_size" | "qr_icon_padding">,
+): AppearanceLandingQrGeometry {
+  const size = parseAppearanceLandingInteger(fields.qr_size, 28, 96)
+    ?? Number(APPEARANCE_DEFAULT_LANDING.qr_size);
+  const requestedPadding = parseAppearanceLandingInteger(fields.qr_icon_padding, 0, 32)
+    ?? Number(APPEARANCE_DEFAULT_LANDING.qr_icon_padding);
+  const padding = Math.min(requestedPadding, Math.max(0, Math.floor((size - 8) / 2)));
+  return { size, padding, iconSize: size - 2 * padding };
+}
 
 /**
  * Contract v1.7 preview maths. Points map one-to-one to CSS pixels inside the
@@ -2018,14 +2120,20 @@ export function appearanceLandingPreviewDraft(draft: AppearanceLandingDraft): {
 }
 
 /**
- * Amendment v1.5 save-time coherence: `background_type` and `background_url`
- * are set together in one rule, and `title_type = image` brings its
- * `title_image_url`. Core refuses anything else with
- * `appearance-rule-landing-invalid`; the proxy refuses it first.
+ * Save-time coherence: Amendment v1.5 pairs background fields and image-title
+ * assets; Amendment v1.9 refuses an unsafe QR box only when size and padding
+ * are both explicit in the same rule. The proxy mirrors Core before forwarding.
  */
+export function appearanceLandingQrPairCoherent(landing: AppearanceLanding): boolean {
+  const size = appearanceTrim(landing.qr_size ?? "");
+  const padding = appearanceTrim(landing.qr_icon_padding ?? "");
+  if (size === "" || padding === "") return true;
+  return appearanceLandingQrGeometry({ qr_size: size, qr_icon_padding: padding }) !== null;
+}
+
 export function appearanceLandingCoherent(landing: AppearanceLanding): boolean {
   // T-468b finding 5: a present URL key is a NON-EMPTY validated URL, never "" or whitespace.
-  for (const key of ["background_url", "background_poster_url", "title_image_url"] as const) {
+  for (const key of ["background_url", "background_poster_url", "title_image_url", "qr_icon_url"] as const) {
     if (landing[key] !== undefined && appearanceTrim(landing[key]) === "") return false;
   }
   const set = (key: AppearanceLandingKey) => appearanceTrim(landing[key] ?? "") !== "";
@@ -2040,6 +2148,7 @@ export function appearanceLandingCoherent(landing: AppearanceLanding): boolean {
     if (set(color) !== set(alpha)) return false;
   }
   if (landing.title_type === "image" && !set("title_image_url")) return false;
+  if (!appearanceLandingQrPairCoherent(landing)) return false;
   for (const key of ["footer_text_en", "footer_text_hu"] as const) {
     if (set(key) && !appearanceFooterTextHasExactTags(appearanceTrim(landing[key] ?? ""))) return false;
   }
@@ -2150,6 +2259,8 @@ export type AppearanceDraftError =
   | "poster"
   | "titleImage"
   | "titleImageRequired"
+  | "qrIcon"
+  | "qrGeometry"
   | "landingControl"
   | "landingValue"
   | "landingPair"
@@ -2214,6 +2325,7 @@ export function validateAppearanceRuleDraft(draft: AppearanceRuleDraft): Appeara
   if (!isAppearanceHttpsUrl(landing.background_poster_url, true)) return "poster";
   if (landing.title_type === "image" && appearanceTrim(landing.title_image_url) === "") return "titleImageRequired";
   if (!isAppearanceHttpsUrl(landing.title_image_url, true)) return "titleImage";
+  if (!isAppearanceHttpsUrl(landing.qr_icon_url, true)) return "qrIcon";
   for (const key of ["footer_text_en", "footer_text_hu"] as const) {
     const footer = appearanceTrim(landing[key]);
     if (footer !== "" && !appearanceFooterTextHasExactTags(footer)) return "footerTags";
@@ -2221,6 +2333,7 @@ export function validateAppearanceRuleDraft(draft: AppearanceRuleDraft): Appeara
   const landingWire = appearanceLandingWire(landing);
   const parsedLanding = parseAppearanceLanding(landingWire);
   if (parsedLanding === null) return "landingValue";
+  if (!appearanceLandingQrPairCoherent(parsedLanding)) return "qrGeometry";
   if (!appearanceLandingCoherent(parsedLanding)) return "landingPair";
   if (draft.hero.mode === "replace") {
     if (draft.hero.items.length > MAX_APPEARANCE_HERO_ITEMS) return "heroItem";

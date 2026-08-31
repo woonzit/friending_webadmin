@@ -2776,11 +2776,11 @@
     "uploading": "Kép feltöltése és optimalizálása…",
     "uploadingShort": "Feltöltés…",
     "invalidType": "JPEG, PNG vagy WebP képet válassz.",
-    "invalidPngType": "A nyitóképernyő logójához PNG képet válassz.",
+    "invalidPngType": "Ehhez a nyitóképernyő-elemhez PNG képet válassz.",
     "invalidImage": "Ez a fájl nem érvényes kép.",
     "invalidDimensions": "A kép legalább 64 × 64 pixeles, legfeljebb 32 megapixeles lehet.",
     "tooLarge": "A kép túl nagy. A forrásfájl legfeljebb 15 MB lehet.",
-    "logoTooLarge": "A nyitóképernyő logója túl nagy. A forrásfájl legfeljebb 4 MB lehet.",
+    "logoTooLarge": "Ez a nyitóképernyő-PNG túl nagy. A forrásfájl legfeljebb 4 MB lehet.",
     "authRequired": "Az admin munkamenet nem ellenőrizhető. Frissítsd az oldalt, majd jelentkezz be újra.",
     "failed": "A kép feltöltése nem sikerült. Próbáld újra."
   },
@@ -5779,6 +5779,8 @@
       "poster": "A videó-előkép feltöltésének be kell fejeződnie, vagy távolítsd el.",
       "titleImage": "A címképnek abszolút https címnek kell lennie, és a feltöltésének be kell fejeződnie.",
       "titleImageRequired": "A képcímhez címkép kell. Tölts fel egyet, vagy állítsd a cím típusát szövegre, nincs értékre vagy öröklésre.",
+      "qrIcon": "A QR-ikonnak feltöltött, abszolút HTTPS-című PNG-nek kell lennie, vagy maradjon üres a beépített ikonhoz.",
+      "qrGeometry": "A QR-ikon térközének legalább 8 pt széles és magas ikonterületet kell hagynia.",
       "landingControl": "Egy landing-szöveg vezérlő- vagy érvénytelen karaktert tartalmaz (sortörés, tabulátor, párja nélküli surrogate vagy hasonló). Távolítsd el — a Core az ilyen értéket elutasítja, nem javítja.",
       "landingValue": "Egy nyitóképernyő-érték kívül esik az engedélyezett tartományon vagy szókészleten. A szín nagybetűs #RRGGBB, az átlátszóság két tizedesjegyű legyen.",
       "landingPair": "A háttértípust és médiát, valamint minden overlay-színt és átlátszóságot együtt kell beállítani vagy örökölni.",
@@ -5959,8 +5961,9 @@
       },
       "buttons": {
         "title": "Gombok",
-        "copy": "A telefon és e-mail külön feliratot és színeket kap. Az Apple az előírt stílusok egyikét használja; mindhárom gomb saroksugara közös.",
-        "radius": "Közös saroksugár",
+        "copy": "A telefon és e-mail külön feliratot és színeket kap. Az Apple az előírt stílusok egyikét használja; mindhárom az alkalmazásszintű elsődlegesgomb-saroksugarat használja.",
+        "radius": "App elsődleges gombjainak saroksugara",
+        "radiusHelp": "Az appok közös elsődleges műveletgombjaira mindenhol érvényes, így a landingen, regisztrációnál, fiókban és randiknál is; kártyákra, chipekre és ikongombokra nem.",
         "phone": "Telefon",
         "email": "E-mail",
         "labelEn": "Felirat · angol",
@@ -5987,12 +5990,26 @@
       },
       "qr": {
         "title": "QR-olvasó",
-        "copy": "A jobb felső safe area meglévő terméküzenet- és megosztottprofil-olvasó gombját vezérli.",
+        "copy": "A jobb felső safe area területéhez rögzített kör alakú olvasógomb átmérőjét és feltöltött PNG-ikonját is beállíthatod.",
         "enabled": "QR-olvasó",
         "on": "Látható",
         "off": "Rejtett",
         "background": "Gomb háttere",
-        "icon": "Ikon színe"
+        "icon": "Ikon színezése",
+        "size": "Gomb átmérője · pt",
+        "iconUpload": "Gomb ikonja · PNG",
+        "iconUploadHint": "Csak PNG, legfeljebb 4 MB. Üresen a beépített QR-ikon jelenik meg.",
+        "builtInIcon": "beépített QR-ikon",
+        "padding": "Ikon térköze · pt",
+        "paddingHelp": "A térköz minden oldalon érvényes. A megmaradó ikonterület legalább 8 × 8 pt legyen.",
+        "geometryError": "Ez az átmérő és térköz 8 × 8 pt-nál kisebb ikonterületet hagy.",
+        "geometryClampWarning": "Az örökölt tényleges pár nem lenne biztonságos, ezért a Core {padding} pt térközt publikál, és az előnézet ezt a korlátozást mutatja.",
+        "render": "Feltöltött ikon megjelenítése",
+        "renderOption": {
+          "template": "Színezett",
+          "original": "Eredeti színek"
+        },
+        "renderHelp": "A Színezett az ikon színezését használja. Az Eredeti színek csak feltöltött PNG-re érvényes; a beépített ikon mindig színezett."
       },
       "preview": {
         "controls": "Nyitóképernyő-előnézet vezérlői",

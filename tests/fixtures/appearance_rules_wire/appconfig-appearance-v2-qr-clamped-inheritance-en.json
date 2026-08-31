@@ -2,8 +2,8 @@
     "status_code": 200,
     "data": {
         "appearance": {
-            "revision": 20,
-            "content_version": "4f21fdd6de34790e6da6e8b0e69bb47d00b66a15a2e667ed86b7f34515ad030b",
+            "revision": 26,
+            "content_version": "11eebac5d285350b92d7b50b97ce9fa6c6bb96dcde8f26f7dfcdd49f78604cca",
             "landing": {
                 "background": {
                     "type": "image",
@@ -89,9 +89,9 @@
                     "enabled": true,
                     "background": "#000000",
                     "icon_color": "#FFFFFF",
-                    "size": 44,
+                    "size": 28,
                     "icon_url": "",
-                    "icon_padding": 12,
+                    "icon_padding": 10,
                     "icon_render": "template"
                 }
             },
@@ -113,8 +113,8 @@
                 }
             },
             "matched": {
-                "scope": "global",
-                "rule_id": "620000000000000000000001",
+                "scope": "storefront",
+                "rule_id": "630000000000000000000002",
                 "location_source": "none"
             },
             "controls": {

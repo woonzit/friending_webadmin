@@ -13022,6 +13022,10 @@ body .verification-level-pill.level-strong {
   font-size: 11px;
 }
 
+.appearance-landing-qr-warning {
+  color: #f8d88c;
+}
+
 .appearance-landing-color-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 48px;
@@ -13212,16 +13216,28 @@ body .verification-level-pill.level-strong {
   top: 54px;
   right: 18px;
   display: grid;
-  width: 44px;
-  height: 44px;
   place-items: center;
-  border-radius: 50%;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
 }
 
-.appearance-landing-qr svg {
-  width: 24px;
-  height: 24px;
+.appearance-landing-qr-icon {
+  display: block;
+  object-fit: contain;
+}
+
+.appearance-landing-qr-icon.is-template {
+  background: currentColor;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+}
+
+.appearance-landing-qr-icon svg {
+  width: 100%;
+  height: 100%;
   fill: currentColor;
 }
 

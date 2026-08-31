@@ -1,10 +1,11 @@
 "use client";
 
-import { Fragment } from "react";
+import React, { Fragment } from "react";
 import {
   APPEARANCE_DEFAULT_LANDING,
   appearanceLandingLayoutPixels,
   appearanceLandingPreviewDraft,
+  appearanceLandingQrRenderGeometry,
   isAppearanceHttpsUrl,
   resolveAppearanceLandingFields,
   type AppearanceFullPaletteValues,
@@ -87,6 +88,9 @@ export default function AppearanceLandingPreview({
   const showEmail = authMethods === "both" || authMethods === "email";
   const buttonRadius = number(fields.button_corner_radius, 28);
   const layout = appearanceLandingLayoutPixels(fields);
+  const qrGeometry = appearanceLandingQrRenderGeometry(fields);
+  const qrIconUrl = isAppearanceHttpsUrl(fields.qr_icon_url, true) ? fields.qr_icon_url : "";
+  const qrIconOriginal = qrIconUrl !== "" && fields.qr_icon_render === "original";
   const showTitleText = content.titleType === "text" && content.titleText !== "";
   const showDescription = !content.descriptionHidden && content.description !== "";
   const showTextBlock = showTitleText || showDescription;
@@ -132,9 +136,32 @@ export default function AppearanceLandingPreview({
         <span
           className="appearance-landing-qr"
           title={labels.qr}
-          style={{ backgroundColor: fields.qr_bg_color, color: fields.qr_icon_color }}
+          style={{
+            backgroundColor: fields.qr_bg_color,
+            color: fields.qr_icon_color,
+            width: `${qrGeometry.size}px`,
+            height: `${qrGeometry.size}px`,
+            borderRadius: `${qrGeometry.size / 2}px`,
+          }}
         >
-          <QrGlyph />
+          {qrIconUrl === "" ? (
+            <span className="appearance-landing-qr-icon is-built-in" style={{ width: `${qrGeometry.iconSize}px`, height: `${qrGeometry.iconSize}px` }}>
+              <QrGlyph />
+            </span>
+          ) : qrIconOriginal ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="appearance-landing-qr-icon is-original" src={qrIconUrl} alt="" style={{ width: `${qrGeometry.iconSize}px`, height: `${qrGeometry.iconSize}px` }} />
+          ) : (
+            <span
+              className="appearance-landing-qr-icon is-template"
+              style={{
+                width: `${qrGeometry.iconSize}px`,
+                height: `${qrGeometry.iconSize}px`,
+                WebkitMaskImage: `url(${JSON.stringify(qrIconUrl)})`,
+                maskImage: `url(${JSON.stringify(qrIconUrl)})`,
+              }}
+            />
+          )}
         </span>
       )}
 

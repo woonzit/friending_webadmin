@@ -15,6 +15,7 @@ import {
   APPEARANCE_LANDING_KEYS,
   APPEARANCE_LANDING_LAYOUT_UNITS,
   APPEARANCE_LANDING_PREVIEW_STYLE_KEYS,
+  APPEARANCE_LANDING_QR_ICON_RENDERS,
   APPEARANCE_PALETTE_MODES,
   APPEARANCE_PALETTE_ROLES,
   appearanceLandingCoherent,
@@ -24,6 +25,8 @@ import {
   appearanceLandingLogoSelection,
   appearanceLandingLayoutPairSelection,
   appearanceLandingLayoutPixels,
+  appearanceLandingQrGeometry,
+  appearanceLandingQrRenderGeometry,
   appearanceFooterTextHasExactTags,
   appearancePreviewLandingFields,
   appearanceLandingWithTitleType,
@@ -35,6 +38,7 @@ import {
   appearanceRuleIsLive,
   appearanceRuleMaterialMatches,
   appearanceTrim,
+  compareAppearanceLandingWithPreview,
   appearanceTimestampFromLocalInput,
   appearanceTimestampToLocalInput,
   decodeAppearanceDeleteResponse,
@@ -301,7 +305,7 @@ test("the list payload demands unique ids, at most one global rule, and Core's e
 // ---------------------------------------------------------------------------
 
 function previewPayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
-  return {
+  const payload: Record<string, unknown> = {
     revision: 7,
     content_version: "a3f1c9e2b7d4085f6c1e2a9b8d7c6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a",
     landing: {
@@ -328,10 +332,16 @@ function previewPayload(overrides: Record<string, unknown> = {}): Record<string,
     matched: { scope: "geo", rule_id: "66d0a1b2c3d4e5f6a7b8c9d1", location_source: "gps" },
     ...overrides,
   };
+  const landing = payload.landing;
+  if (landing !== null && typeof landing === "object" && !Array.isArray(landing)
+    && Object.hasOwn(landing, "layout") && !Object.hasOwn(overrides, "controls")) {
+    payload.controls = { button_corner_radius: 28 };
+  }
+  return payload;
 }
 
-// Contract-local schema-v2 fixture until the accepted T-488 Core corpus is pinned below.
-// It is test input only and is never presented as cross-repository provenance.
+// Contract-local schema-v2 unit fixture. Cross-repository provenance is pinned
+// separately in appearanceRulesWire.test.mts from the accepted Core corpus.
 function previewLandingV2(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     background: {
@@ -368,7 +378,15 @@ function previewLandingV2(overrides: Record<string, unknown> = {}): Record<strin
       text_gap: { value: 24, unit: "pt" },
       footer_min_height: { value: 0, unit: "pt" },
     },
-    qr: { enabled: true, background: "#000000", icon_color: "#FFFFFF" },
+    qr: {
+      enabled: true,
+      background: "#000000",
+      icon_color: "#FFFFFF",
+      size: 44,
+      icon_url: "",
+      icon_padding: 12,
+      icon_render: "template",
+    },
     ...overrides,
   };
 }
@@ -422,7 +440,7 @@ test("the test-location preview decodes the app payload and refuses vocabulary d
   assert.equal(parseAppearancePreviewPayload(previewPayload({ hero: [{ id: "x" }] })), null, "partial hero item");
 });
 
-test("the schema-v2 preview decodes exactly and flattens the requested language for comparison", () => {
+test("the schema-v2 preview validates known material, ignores additive landing keys and flattens comparison fields", () => {
   const preview = parseAppearancePreviewPayload(previewPayload({ landing: previewLandingV2() }));
   assert.ok(preview);
   assert.equal(preview.landing.schema, 2);
@@ -430,6 +448,7 @@ test("the schema-v2 preview decodes exactly and flattens the requested language 
   assert.equal(preview.landing.v2?.description.hidden, false);
   assert.deepEqual(preview.landing.v2?.layout.text_gap, { value: 24, unit: "pt" });
   assert.equal(preview.landing.v2?.qr.enabled, true);
+  assert.deepEqual(preview.controls, { button_corner_radius: 28 });
   assert.equal(preview.landing_flat, null, "the app schema-2 shape has no Webadmin siblings");
   assert.equal(preview.landing_flat_sources, null);
   assert.equal(preview.landing_flat_defaults, null);
@@ -440,11 +459,22 @@ test("the schema-v2 preview decodes exactly and flattens the requested language 
   assert.equal(fields.button_phone_label_en, "Continue with phone number");
   assert.equal(fields.button_phone_label_hu, undefined, "the wire projects only the requested language");
   assert.equal(fields.qr_enabled, "true");
+  assert.equal(fields.qr_size, "44");
+  assert.equal(fields.qr_icon_url, "");
+  assert.equal(fields.qr_icon_padding, "12");
+  assert.equal(fields.qr_icon_render, "template");
   assert.equal(fields.description_hidden, "false");
   assert.equal(fields.text_gap_value, "24");
   assert.equal(fields.text_gap_unit, "pt");
   assert.equal(fields.footer_min_height_value, "0");
   assert.equal(fields.footer_min_height_unit, "pt");
+  const clampedPreview = parseAppearancePreviewPayload(previewPayload({
+    landing: previewLandingV2({ qr: { ...((previewLandingV2().qr as object)), size: 28, icon_padding: 10 } }),
+  }));
+  assert.ok(clampedPreview);
+  const preClampFlat = appearanceLandingDraft(appearancePreviewLandingFields(clampedPreview.landing, "en"));
+  preClampFlat.qr_icon_padding = "32";
+  assert.deepEqual(compareAppearanceLandingWithPreview(preClampFlat, clampedPreview.landing, "en"), [], "saved comparison applies the resolver clamp before comparing nested material");
 
   const webadmin = parseAppearancePreviewPayload(previewPayload({
     landing: previewLandingV2(),
@@ -508,6 +538,7 @@ test("the schema-v2 preview decodes exactly and flattens the requested language 
   const buttons = base.buttons as Record<string, unknown>;
   const footer = base.footer as Record<string, unknown>;
   const layout = base.layout as Record<string, unknown>;
+  const qr = base.qr as Record<string, unknown>;
   for (const [label, landing] of [
     ["lowercase v2 colour", { ...base, background: { ...background, overlay: { color: "#abcdef", alpha: 0.5 } } }],
     ["v2 alpha exceeds storage precision", { ...base, background: { ...background, overlay: { color: "#000000", alpha: 0.351 } } }],
@@ -522,8 +553,58 @@ test("the schema-v2 preview decodes exactly and flattens the requested language 
     ["unknown text gap unit", { ...base, layout: { ...layout, text_gap: { value: 24, unit: "px" } } }],
     ["footer minimum out of range", { ...base, layout: { ...layout, footer_min_height: { value: 301, unit: "pt" } } }],
     ["partial layout", { ...base, layout: { text_gap: { value: 24, unit: "pt" } } }],
-    ["unknown v2 key", { ...base, future: true }],
+    ["QR diameter below range", { ...base, qr: { ...qr, size: 27 } }],
+    ["QR diameter above range", { ...base, qr: { ...qr, size: 97 } }],
+    ["QR padding above range", { ...base, qr: { ...qr, icon_padding: 33 } }],
+    ["QR icon URL is not HTTPS", { ...base, qr: { ...qr, icon_url: "http://cdn.friending.co/qr.png" } }],
+    ["QR render vocabulary is closed", { ...base, qr: { ...qr, icon_render: "multicolour" } }],
+    ["QR icon box is smaller than eight points", { ...base, qr: { ...qr, size: 28, icon_padding: 11 } }],
+    ["QR required key is missing", { ...base, qr: { enabled: true, background: "#000000", icon_color: "#FFFFFF", size: 44, icon_url: "", icon_padding: 12 } }],
   ] as const) assert.equal(parseAppearancePreviewPayload(previewPayload({ landing })), null, label);
+
+  const additive = {
+    ...base,
+    future_landing: true,
+    background: { ...background, future_background: true, overlay: { ...(background.overlay as object), future_overlay: true } },
+    title: {
+      ...title,
+      future_title: true,
+      image: { ...(title.image as object), future_image: true },
+      style: { ...(title.style as object), future_style: true },
+    },
+    description: {
+      ...description,
+      future_description: true,
+      style: { ...(description.style as object), future_style: true },
+      backdrop: { ...(description.backdrop as object), future_backdrop: true },
+    },
+    layout: {
+      ...layout,
+      future_layout: true,
+      text_gap: { ...(layout.text_gap as object), future_gap: true },
+      footer_min_height: { ...(layout.footer_min_height as object), future_height: true },
+    },
+    buttons: {
+      ...buttons,
+      future_buttons: true,
+      phone: { ...(buttons.phone as object), future_phone: true },
+      email: { ...(buttons.email as object), future_email: true },
+      apple: { ...(buttons.apple as object), future_apple: true },
+    },
+    footer: {
+      ...footer,
+      future_footer: true,
+      background: { ...(footer.background as object), future_background: true },
+      style: { ...(footer.style as object), future_style: true },
+    },
+    qr: { ...qr, future_qr: true },
+  };
+  assert.ok(parseAppearancePreviewPayload(previewPayload({ landing: additive })), "unknown v2 landing keys are ignored at every object level");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: base, controls: { button_corner_radius: 27 } })), null, "the duplicated shared radius must match landing");
+  assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: base, controls: { button_corner_radius: 28, future: true } })), null, "controls remains closed");
+  const withoutControls = previewPayload({ landing: base });
+  delete withoutControls.controls;
+  assert.equal(parseAppearancePreviewPayload(withoutControls), null, "schema v2 requires root controls");
 
   const noneTitle = { ...title, type: "none", text: "", image_url: "" };
   assert.ok(parseAppearancePreviewPayload(previewPayload({ landing: previewLandingV2({ title: noneTitle }) })));
@@ -675,13 +756,18 @@ test("blank editor fields inherit; filled fields reach the wire per field (Amend
 });
 
 test("the D-061 landing vocabulary is closed and canonical while every draft field can inherit", () => {
-  assert.equal(APPEARANCE_LANDING_KEYS.length, 52);
+  assert.equal(APPEARANCE_LANDING_KEYS.length, 56);
   assert.equal(new Set(APPEARANCE_LANDING_KEYS).size, APPEARANCE_LANDING_KEYS.length);
   assert.equal(APPEARANCE_LANDING_FONTS.length, 14);
   assert.deepEqual(APPEARANCE_LANDING_FLAT_SOURCE_SCOPES, ["geo", "storefront", "global", "none"]);
   assert.deepEqual(APPEARANCE_LANDING_ALIGNS, ["left", "center", "right"]);
   assert.deepEqual(APPEARANCE_LANDING_APPLE_STYLES, ["white", "white_outline", "black"]);
   assert.deepEqual(APPEARANCE_LANDING_LAYOUT_UNITS, ["pt", "percent"]);
+  assert.deepEqual(APPEARANCE_LANDING_QR_ICON_RENDERS, ["template", "original"]);
+  assert.deepEqual(APPEARANCE_LANDING_KEYS.slice(APPEARANCE_LANDING_KEYS.indexOf("qr_enabled")), [
+    "qr_enabled", "qr_bg_color", "qr_icon_color", "qr_size", "qr_icon_url", "qr_icon_padding", "qr_icon_render",
+    "description_hidden", "text_gap_value", "text_gap_unit", "footer_min_height_value", "footer_min_height_unit",
+  ], "flat fields preserve Core's provider order");
   assert.ok(parseAppearanceLanding(APPEARANCE_DEFAULT_LANDING), "all compiled defaults satisfy the closed flat model");
 
   const blank = appearanceLandingDraft({});
@@ -704,6 +790,10 @@ test("the D-061 landing vocabulary is closed and canonical while every draft fie
     footer_min_height_unit: "pt",
     button_apple_style: "white_outline",
     qr_enabled: "false",
+    qr_size: "96",
+    qr_icon_url: "https://cdn.friending.co/qr.png",
+    qr_icon_padding: "32",
+    qr_icon_render: "original",
   };
   assert.deepEqual(parseAppearanceLanding(valid), valid);
   for (const [label, landing] of [
@@ -725,6 +815,13 @@ test("the D-061 landing vocabulary is closed and canonical while every draft fie
     ["footer minimum is bounded", { footer_min_height_value: "301" }],
     ["footer minimum unit is closed", { footer_min_height_unit: "vh" }],
     ["QR is a string boolean", { qr_enabled: "1" }],
+    ["QR diameter has a lower bound", { qr_size: "27" }],
+    ["QR diameter is bounded", { qr_size: "97" }],
+    ["QR diameter is canonical", { qr_size: "044" }],
+    ["QR icon requires HTTPS", { qr_icon_url: "http://cdn.friending.co/qr.png" }],
+    ["QR padding has a lower bound", { qr_icon_padding: "-1" }],
+    ["QR padding is bounded", { qr_icon_padding: "33" }],
+    ["QR render vocabulary is closed", { qr_icon_render: "colour" }],
     ["unknown flat key", { future_style: "x" }],
   ] as const) {
     assert.equal(parseAppearanceLanding(landing), null, label);
@@ -751,6 +848,10 @@ test("D-061 pair coherence and footer markers fail closed before save", () => {
   assert.equal(appearanceLandingCoherent({ text_gap_value: "24", text_gap_unit: "pt" }), true);
   assert.equal(appearanceLandingCoherent({ footer_min_height_value: "20" }), false);
   assert.equal(appearanceLandingCoherent({ footer_min_height_value: "20", footer_min_height_unit: "percent" }), true);
+  assert.equal(appearanceLandingCoherent({ qr_size: "28" }), true, "a sparse size override inherits padding without guessing at save time");
+  assert.equal(appearanceLandingCoherent({ qr_icon_padding: "32" }), true, "a sparse padding override inherits size without guessing at save time");
+  assert.equal(appearanceLandingCoherent({ qr_size: "28", qr_icon_padding: "10" }), true);
+  assert.equal(appearanceLandingCoherent({ qr_size: "28", qr_icon_padding: "11" }), false, "an explicit pair must leave an eight-point icon box");
   assert.equal(appearanceLandingCoherent({ title_type: "none" }), true);
   assert.equal(appearanceLandingCoherent({ title_type: "image" }), false);
   assert.equal(appearanceLandingCoherent({ footer_text_en: footer }), true);
@@ -766,17 +867,37 @@ test("D-061 pair coherence and footer markers fail closed before save", () => {
   assert.equal(validateAppearanceRuleDraft(draft), "footerTags");
   draft.landing.footer_text_en = footer;
   assert.equal(validateAppearanceRuleDraft(draft), null);
+  draft.landing.qr_size = "28";
+  draft.landing.qr_icon_padding = "11";
+  assert.equal(validateAppearanceRuleDraft(draft), "qrGeometry");
+  draft.landing.qr_icon_padding = "";
+  assert.equal(validateAppearanceRuleDraft(draft), null, "one explicit geometry member remains a legal inherited override");
 });
 
 test("the local D-061 merge resolves all flat fields and localized button/footer copy", () => {
   const effective = resolveAppearanceLandingFields([
-    { overlay_alpha: "0.80", button_phone_label_hu: "Telefonnal", footer_text_hu: "<terms>Feltételek</terms> és <privacy>Adatvédelem</privacy>" },
-    { overlay_color: "#123456", title_font: "system_bold" },
+    {
+      overlay_alpha: "0.80",
+      button_phone_label_hu: "Telefonnal",
+      footer_text_hu: "<terms>Feltételek</terms> és <privacy>Adatvédelem</privacy>",
+      qr_size: "64",
+      qr_icon_render: "original",
+    },
+    {
+      overlay_color: "#123456",
+      title_font: "system_bold",
+      qr_icon_url: "https://cdn.friending.co/custom-qr.png",
+      qr_icon_padding: "10",
+    },
   ], APPEARANCE_DEFAULT_LANDING);
   assert.equal(effective.overlay_color, "#123456");
   assert.equal(effective.overlay_alpha, "0.80");
   assert.equal(effective.title_font, "system_bold");
   assert.equal(effective.button_email_bg, APPEARANCE_DEFAULT_LANDING.button_email_bg);
+  assert.equal(effective.qr_size, "64");
+  assert.equal(effective.qr_icon_url, "https://cdn.friending.co/custom-qr.png");
+  assert.equal(effective.qr_icon_padding, "10");
+  assert.equal(effective.qr_icon_render, "original");
 
   const resolved = resolveAppearanceLanding([effective], APPEARANCE_DEFAULT_LANDING, "hu");
   assert.equal(resolved.phoneLabel, "Telefonnal");
@@ -881,6 +1002,17 @@ test("layout controls keep value and unit atomic and convert pt/percent on the p
   assert.deepEqual(appearanceLandingLayoutPixels(merged), { textGap: 84.4, footerMinHeight: 120 });
 });
 
+test("QR geometry uses the configured diameter and padding and refuses icon boxes below eight points (D-061e)", () => {
+  assert.deepEqual(appearanceLandingQrGeometry(APPEARANCE_DEFAULT_LANDING), { size: 44, padding: 12, iconSize: 20 });
+  assert.deepEqual(appearanceLandingQrGeometry(appearanceLandingDraft({ qr_size: "28", qr_icon_padding: "10" })), { size: 28, padding: 10, iconSize: 8 });
+  assert.deepEqual(appearanceLandingQrGeometry(appearanceLandingDraft({ qr_size: "96", qr_icon_padding: "32" })), { size: 96, padding: 32, iconSize: 32 });
+  assert.equal(appearanceLandingQrGeometry(appearanceLandingDraft({ qr_size: "28", qr_icon_padding: "11" })), null);
+  assert.equal(appearanceLandingQrGeometry(appearanceLandingDraft({ qr_size: "27", qr_icon_padding: "0" })), null);
+  assert.equal(appearanceLandingQrGeometry(appearanceLandingDraft({ qr_size: "44", qr_icon_padding: "33" })), null);
+  assert.deepEqual(appearanceLandingQrRenderGeometry(appearanceLandingDraft({ qr_size: "28", qr_icon_padding: "11" })), { size: 28, padding: 10, iconSize: 8 });
+  assert.deepEqual(appearanceLandingQrRenderGeometry(appearanceLandingDraft({ qr_size: "44", qr_icon_padding: "32" })), { size: 44, padding: 18, iconSize: 8 });
+});
+
 test("the landing preview rejects malformed style strings and inherits safe values", () => {
   const invalidValues = {
     overlay_alpha: "1.25",
@@ -899,6 +1031,10 @@ test("the landing preview rejects malformed style strings and inherits safe valu
     text_gap_unit: "px",
     footer_min_height_value: "301",
     footer_min_height_unit: "vh",
+    qr_size: "97",
+    qr_icon_url: "http://cdn.friending.co/qr.png",
+    qr_icon_padding: "33",
+    qr_icon_render: "colour",
   } as const;
   const draft = appearanceLandingDraft(invalidValues);
   const preview = appearanceLandingPreviewDraft(draft);
@@ -927,6 +1063,10 @@ test("the landing preview rejects malformed style strings and inherits safe valu
     text_gap_unit: "pt",
     footer_min_height_value: "12",
     footer_min_height_unit: "percent",
+    qr_size: "60",
+    qr_icon_url: "https://cdn.friending.co/parent-qr.png",
+    qr_icon_padding: "8",
+    qr_icon_render: "original",
   });
   const resolved = resolveAppearanceLanding([preview.landing, parent], APPEARANCE_DEFAULT_LANDING, "en");
   for (const [key, expected] of Object.entries(parent)) {
@@ -951,6 +1091,10 @@ test("the landing preview rejects malformed style strings and inherits safe valu
     text_gap_unit: "percent",
     footer_min_height_value: "300",
     footer_min_height_unit: "pt",
+    qr_size: "96",
+    qr_icon_url: "https://cdn.friending.co/qr.png",
+    qr_icon_padding: "32",
+    qr_icon_render: "template",
   }));
   assert.deepEqual(valid.invalidFields, []);
   assert.equal(valid.landing.title_color, "#AABBCC");
@@ -1098,6 +1242,9 @@ test("draft validation names the first failing group", () => {
   geo.landing.title_type = "";
   assert.equal(validateAppearanceRuleDraft(geo), "titleImage", "an inherited title type still validates the image address");
   geo.landing.title_image_url = "";
+  geo.landing.qr_icon_url = "http://insecure.example.com/qr.png";
+  assert.equal(validateAppearanceRuleDraft(geo), "qrIcon");
+  geo.landing.qr_icon_url = "";
   geo.hero = { mode: "replace", items: [{ ...(parseAppearanceRule(wireRule())!.hero.items[0]!), media_url: "" }] };
   assert.equal(validateAppearanceRuleDraft(geo), "heroItem");
   geo.hero = { mode: "replace", items: [{ ...(parseAppearanceRule(wireRule())!.hero.items[0]!), title_size_web: 500 }] };
@@ -1742,6 +1889,8 @@ test("appearance URLs are capped at 2048 UTF-8 bytes and refuse control characte
   assert.equal(isAppearanceHttpsUrl(over), false, "2049 bytes are over the cap even though the UTF-16 length is under it");
   assert.ok(parseAppearanceLanding({ background_type: "image", background_url: exact }));
   assert.equal(parseAppearanceLanding({ background_type: "image", background_url: over }), null);
+  assert.deepEqual(parseAppearanceLanding({ qr_icon_url: exact }), { qr_icon_url: exact });
+  assert.equal(parseAppearanceLanding({ qr_icon_url: over }), null);
   const heroItem = parseAppearanceRule(wireRule())!.hero.items[0]!;
   assert.ok(parseAppearanceHero({ mode: "replace", items: [{ ...heroItem, media_url: exact }] }));
   assert.equal(parseAppearanceHero({ mode: "replace", items: [{ ...heroItem, media_url: over }] }), null);
@@ -1755,6 +1904,7 @@ test("appearance URLs are capped at 2048 UTF-8 bytes and refuse control characte
     assert.equal(isAppearanceHttpsUrl(url), false, `${label} control refused by the draft validator`);
     assert.equal(parseAppearanceLanding({ background_type: "image", background_url: url }), null, `${label} control refused by the landing parser, never repaired by trimming`);
     assert.equal(parseAppearanceLanding({ background_poster_url: url }), null, `${label} control refused on a poster`);
+    assert.equal(parseAppearanceLanding({ qr_icon_url: url }), null, `${label} control refused on a QR icon URL`);
     assert.equal(parseAppearanceHero({ mode: "replace", items: [{ ...heroItem, media_url: url }] }), null, `${label} control refused on a hero URL`);
   }
   assert.ok(isAppearanceHttpsUrl("  https://cdn.friending.co/a.jpg  "), "plain surrounding whitespace is still trimmed");
@@ -2024,7 +2174,14 @@ test("the landing composer wires every closed field, parent-only v2 previews, PN
   assert.match(uploader, /MAX_LANDING_LOGO_INPUT_BYTES/);
   assert.match(uploader, /invalidPngType/);
   assert.match(uploader, /logoTooLarge/);
+  assert.match(composer, /label=\{t\("qr\.iconUpload"\)\}[\s\S]{0,180}pngOnly/, "the QR icon uses the same PNG-only preflight as the title logo");
+  assert.match(composer, /qrDraftPairExplicit[\s\S]*appearanceLandingQrGeometry\(rule\.landing\)/, "only a fully explicit invalid pair blocks save locally");
+  assert.match(composer, /qr\.geometryClampWarning/, "an inherited cross-layer clamp is disclosed without becoming a field error");
   assert.match(preview, /fields\.qr_enabled === "true"/);
+  assert.match(preview, /appearanceLandingQrRenderGeometry\(fields\)/, "the phone applies Core's resolver-side padding clamp");
+  assert.match(preview, /width: `\$\{qrGeometry\.size\}px`[\s\S]*height: `\$\{qrGeometry\.size\}px`[\s\S]*borderRadius: `\$\{qrGeometry\.size \/ 2\}px`/, "configured diameter produces a circle");
+  assert.match(preview, /qrIconUrl === ""[\s\S]*is-built-in[\s\S]*qrIconOriginal[\s\S]*is-original[\s\S]*is-template/, "blank, original and tinted-template icon paths stay distinct");
+  assert.match(preview, /WebkitMaskImage:[\s\S]*maskImage:/, "template uploads are tinted through their alpha mask");
   assert.match(preview, /!content\.descriptionHidden && content\.description !== ""/, "hidden subtitle removes the text and backdrop element together");
   assert.match(preview, /marginBottom: `\$\{layout\.textGap\}px`/, "the text block ends at the configured gap above actions");
   assert.match(preview, /minHeight: `\$\{layout\.footerMinHeight\}px`/, "the footer grows to at least the configured height");
@@ -2035,6 +2192,7 @@ test("the landing composer wires every closed field, parent-only v2 previews, PN
   assert.match(preview, //);
   assert.match(css, /\.appearance-landing-composition-phone\s*\{[^}]*width:\s*390px;[^}]*height:\s*844px;/s);
   assert.match(css, /appearance-landing-safe-area-top/);
+  assert.match(css, /\.appearance-landing-qr\s*\{[^}]*top:\s*54px;[^}]*right:\s*18px;/s, "the configured circle stays pinned to the top-right safe area");
   assert.match(css, /\.appearance-landing-composition-content\s*\{[^}]*inset:\s*108px 0 0;[^}]*justify-content:\s*flex-end;/s, "the content/footer stack is bottom anchored");
   assert.match(css, /\.appearance-landing-composition-footer\s*\{[^}]*padding:\s*14px 24px 38px;/s, "footer text clears the bottom safe area while its background reaches the edge");
   // Byte pins copied from the read-only iOS bundle at bd9ea0d.

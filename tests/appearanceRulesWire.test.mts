@@ -11,6 +11,8 @@ import {
   APPEARANCE_DEFAULT_PALETTE,
   APPEARANCE_LANDING_KEYS,
   appearanceLandingLayoutPixels,
+  appearanceLandingQrRenderGeometry,
+  appearancePreviewLandingFields,
   appearanceRuleInputOf,
   appearanceRuleMaterialMatches,
   decodeAppearanceDeleteResponse,
@@ -29,17 +31,17 @@ import {
 } from "../lib/appearanceRules.ts";
 
 /**
- * T-493/T-496's production-generated wire corpus (lead-accepted Core tip `981918ba3d0b65cce53859ff1184182168dccd38`,
+ * T-493/T-496/T-501's production-generated wire corpus (lead-accepted Core tip `94b891bbf8e138906f1664293b9ddba813a6f479`,
  * `tests/fixtures/appearance_rules_wire/`), copied byte-identically. The production decoders must
  * accept every Webadmin body exactly as Core publishes it and classify every refusal by the
  * manifest's closed status map — this is the cross-lane binding the released consumer rests on.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/appearance_rules_wire/", import.meta.url);
-const FIXTURE_ACCEPTED_CORE_TIP = "981918ba3d0b65cce53859ff1184182168dccd38";
-const FIXTURE_SOURCE_COMMIT = "9c22992bf110f67ac425f3ea1befd99b2c923e17";
-const FIXTURE_GENERATOR_SHA256 = "e4922e36d44f61d93bc64d3d7fd3a975280761481a38cc936ea950bfbe4ade89";
-const FIXTURE_SET_SHA256 = "3e6884e27aa1fdcf48843ee5c0e9fba11c532469be3abc943a2591f5efb5c3ef";
-const FIXTURE_MANIFEST_SHA256 = "f927e9c92a9d545e39584c83f7f8550b85308a2d5d398449b3618f56fac271de";
+const FIXTURE_ACCEPTED_CORE_TIP = "94b891bbf8e138906f1664293b9ddba813a6f479";
+const FIXTURE_SOURCE_COMMIT = "24aae647f976e0f014088d62a088e95c331e126b";
+const FIXTURE_GENERATOR_SHA256 = "884833008bb586b1711a28d7c980a851e5f8a024960456fc127e680dd254763e";
+const FIXTURE_SET_SHA256 = "bb11653a043ad328d7794f52e8f8d90a450aa799aff3ddec04474118344288e7";
+const FIXTURE_MANIFEST_SHA256 = "3fa0313ae27b18b63edf82a732946e31c082ed59e404caba5a1bd9e3f274ea91";
 const FIXTURE_BODY_FILES = [
   "app-appearance-default-en.json",
   "app-appearance-geo-hu.json",
@@ -49,6 +51,7 @@ const FIXTURE_BODY_FILES = [
   "app-appearance-v2-global-defaults-en.json",
   "app-appearance-v2-hidden-layout-pt-percent-en.json",
   "app-appearance-v2-layout-percent-pt-en.json",
+  "app-appearance-v2-qr-clamped-inheritance-en.json",
   "app-appearance-v2-storefront-logo-en.json",
   "appconfig-appearance-geo-hu.json",
   "appconfig-appearance-schema-invalid.json",
@@ -56,6 +59,7 @@ const FIXTURE_BODY_FILES = [
   "appconfig-appearance-v2-global-defaults-en.json",
   "appconfig-appearance-v2-hidden-layout-pt-percent-en.json",
   "appconfig-appearance-v2-layout-percent-pt-en.json",
+  "appconfig-appearance-v2-qr-clamped-inheritance-en.json",
   "appconfig-appearance-v2-storefront-logo-en.json",
   "landing-content-geo-hu.json",
   "people-discover-hero-geo-hu.json",
@@ -69,11 +73,13 @@ const FIXTURE_BODY_FILES = [
   "webadmin-preview-v2-geo-hu.json",
   "webadmin-preview-v2-hidden-layout-pt-percent-en.json",
   "webadmin-preview-v2-layout-percent-pt-en.json",
+  "webadmin-preview-v2-qr-clamped-inheritance-en.json",
   "webadmin-preview.json",
   "webadmin-save-v2-hidden-layout.json",
   "webadmin-save-v2.json",
   "webadmin-save.json",
   "webadmin-validation-v2-field.json",
+  "webadmin-validation-v2-qr-padding.json",
   "webadmin-validation.json",
 ] as const;
 const FIXTURE_SOURCE_PATHS = [
@@ -162,7 +168,7 @@ test("the released appearance corpus is byte-identical, complete, and traceable 
     consumerCounts.set(row.consumer, (consumerCounts.get(row.consumer) ?? 0) + 1);
     aggregateRows.push(`${row.file}\0${row.sha256}`);
   }
-  assert.deepEqual(Object.fromEntries([...consumerCounts].sort()), { ios: 18, webadmin: 16 });
+  assert.deepEqual(Object.fromEntries([...consumerCounts].sort()), { ios: 20, webadmin: 18 });
   assert.equal(sha256(aggregateRows.join("\n")), FIXTURE_SET_SHA256);
   assert.match(FIXTURE_ACCEPTED_CORE_TIP, /^[0-9a-f]{40}$/);
   assert.notEqual(FIXTURE_ACCEPTED_CORE_TIP, FIXTURE_SOURCE_COMMIT, "the accepted provenance tip follows its source commit");
@@ -291,7 +297,7 @@ test("every released Webadmin body decodes through the production decoders with 
   );
 });
 
-test("the accepted v2 Webadmin cases bind the complete composer, v1.6/v1.7 layout, parent-only merge, and closed field refusal", async () => {
+test("the accepted v2 Webadmin cases bind the complete composer, layout, QR controls, parent merge, and refusals", async () => {
   const list = decodeAppearanceListResponse(await fixture("webadmin-list-v2.json"));
   assert.ok(list.ok, "v2 list");
   assert.deepEqual(Object.keys(list.value.defaults.landing), [...APPEARANCE_LANDING_KEYS]);
@@ -320,6 +326,10 @@ test("the accepted v2 Webadmin cases bind the complete composer, v1.6/v1.7 layou
     description_hidden: "false",
     footer_min_height_unit: "pt",
     footer_min_height_value: "96",
+    qr_icon_padding: "16",
+    qr_icon_render: "original",
+    qr_icon_url: "https://img.example/landing-qr-original.png",
+    qr_size: "72",
     text_gap_unit: "percent",
     text_gap_value: "11",
   });
@@ -344,11 +354,15 @@ test("the accepted v2 Webadmin cases bind the complete composer, v1.6/v1.7 layou
   const resolved = decodeAppearancePreviewResponse(await fixture("webadmin-preview-v2-geo-hu.json"));
   const hiddenPreview = decodeAppearancePreviewResponse(await fixture("webadmin-preview-v2-hidden-layout-pt-percent-en.json"));
   const percentPreview = decodeAppearancePreviewResponse(await fixture("webadmin-preview-v2-layout-percent-pt-en.json"));
-  assert.ok(parentGlobal.ok && parentStorefront.ok && resolved.ok && hiddenPreview.ok && percentPreview.ok);
-  for (const preview of [parentGlobal.value, parentStorefront.value, resolved.value, hiddenPreview.value, percentPreview.value]) {
+  const clampedPreview = decodeAppearancePreviewResponse(await fixture("webadmin-preview-v2-qr-clamped-inheritance-en.json"));
+  assert.ok(parentGlobal.ok && parentStorefront.ok && resolved.ok && hiddenPreview.ok && percentPreview.ok && clampedPreview.ok);
+  for (const preview of [parentGlobal.value, parentStorefront.value, resolved.value, hiddenPreview.value, percentPreview.value, clampedPreview.value]) {
     assert.equal(preview.landing.schema, 2);
     assert.ok(preview.landing_flat && preview.landing_flat_sources && preview.landing_flat_defaults);
     assert.deepEqual(preview.landing_flat_defaults, APPEARANCE_DEFAULT_LANDING);
+    assert.deepEqual(preview.controls, {
+      button_corner_radius: preview.landing.v2!.buttons.corner_radius,
+    }, "the v1.10 root token duplicates the one resolved landing radius");
   }
   assert.deepEqual(parentGlobal.value.matched, { scope: "default", rule_id: "", location_source: "none" });
   assert.ok(APPEARANCE_LANDING_KEYS.every((key) => parentGlobal.value.landing_flat![key] === ""));
@@ -398,6 +412,22 @@ test("the accepted v2 Webadmin cases bind the complete composer, v1.6/v1.7 layou
     textGap: 92.84,
     footerMinHeight: 96,
   });
+  assert.deepEqual(percentPreview.value.landing.v2!.qr, {
+    enabled: true,
+    background: "#000000",
+    icon_color: "#FFFFFF",
+    size: 72,
+    icon_url: "https://img.example/landing-qr-original.png",
+    icon_padding: 16,
+    icon_render: "original",
+  }, "the custom uploaded icon scenario preserves diameter, inset and source colours");
+  for (const field of ["qr_size", "qr_icon_url", "qr_icon_padding", "qr_icon_render"] as const) {
+    assert.equal(percentPreview.value.landing_flat![field], percentLayout.landing[field], field);
+    assert.deepEqual(percentPreview.value.landing_flat_sources![field], {
+      scope: "storefront",
+      rule_id: percentLayout.id,
+    }, field);
+  }
   for (const [preview, rule] of [[hiddenPreview.value, hiddenLayout], [percentPreview.value, percentLayout]] as const) {
     for (const field of ["description_hidden", "text_gap_value", "text_gap_unit", "footer_min_height_value", "footer_min_height_unit"] as const) {
       assert.equal(preview.landing_flat![field], rule.landing[field], field);
@@ -405,9 +435,41 @@ test("the accepted v2 Webadmin cases bind the complete composer, v1.6/v1.7 layou
     }
   }
 
+  assert.deepEqual(clampedPreview.value.landing.v2!.qr, {
+    enabled: true,
+    background: "#000000",
+    icon_color: "#FFFFFF",
+    size: 28,
+    icon_url: "",
+    icon_padding: 10,
+    icon_render: "template",
+  }, "Core publishes the clamped eight-point icon box");
+  assert.equal(clampedPreview.value.landing_flat!.qr_size, "28");
+  assert.equal(clampedPreview.value.landing_flat!.qr_icon_padding, "32", "flat provenance preserves the pre-clamp inherited value");
+  assert.deepEqual(clampedPreview.value.landing_flat_sources!.qr_size, {
+    scope: "storefront",
+    rule_id: "630000000000000000000002",
+  });
+  assert.deepEqual(clampedPreview.value.landing_flat_sources!.qr_icon_padding, {
+    scope: "global",
+    rule_id: "630000000000000000000001",
+  });
+  const clampedEffective = resolveAppearanceLandingFields(
+    [clampedPreview.value.landing_flat!],
+    clampedPreview.value.landing_flat_defaults!,
+  );
+  assert.deepEqual(appearanceLandingQrRenderGeometry(clampedEffective), { size: 28, padding: 10, iconSize: 8 });
+  assert.equal(appearancePreviewLandingFields(clampedPreview.value.landing, "en").qr_icon_padding, "10");
+
   const validation = await fixture("webadmin-validation-v2-field.json");
   assert.deepEqual(
     decodeAppearanceSaveResponse(validation, { id: geo.id, expected_revision: 21, input: appearanceRuleInputOf(geo) }),
+    { ok: false, kind: "refused", error: "appearance-rule-invalid", status: 422 },
+  );
+  const qrValidation = await fixture("webadmin-validation-v2-qr-padding.json");
+  assert.equal((qrValidation as Json).field, "qr_icon_padding", "Core attributes the explicit icon-box refusal to padding");
+  assert.deepEqual(
+    decodeAppearanceSaveResponse(qrValidation, { id: geo.id, expected_revision: 21, input: appearanceRuleInputOf(geo) }),
     { ok: false, kind: "refused", error: "appearance-rule-invalid", status: 422 },
   );
 });
@@ -422,6 +484,7 @@ test("the iOS bodies never enter a Webadmin material decoder except the shared a
     "app-appearance-v2-global-defaults-en.json",
     "app-appearance-v2-hidden-layout-pt-percent-en.json",
     "app-appearance-v2-layout-percent-pt-en.json",
+    "app-appearance-v2-qr-clamped-inheritance-en.json",
     "app-appearance-v2-storefront-logo-en.json",
   ]) {
     const decoded = decodeAppearancePreviewResponse(await fixture(file));
@@ -439,11 +502,20 @@ test("the iOS bodies never enter a Webadmin material decoder except the shared a
   const v2Defaults = decodeAppearancePreviewResponse(await fixture("app-appearance-v2-global-defaults-en.json"));
   const v2Hidden = decodeAppearancePreviewResponse(await fixture("app-appearance-v2-hidden-layout-pt-percent-en.json"));
   const v2Percent = decodeAppearancePreviewResponse(await fixture("app-appearance-v2-layout-percent-pt-en.json"));
+  const v2Clamped = decodeAppearancePreviewResponse(await fixture("app-appearance-v2-qr-clamped-inheritance-en.json"));
   const v2Logo = decodeAppearancePreviewResponse(await fixture("app-appearance-v2-storefront-logo-en.json"));
-  assert.ok(v1None.ok && v2Geo.ok && v2Defaults.ok && v2Hidden.ok && v2Percent.ok && v2Logo.ok);
+  assert.ok(v1None.ok && v2Geo.ok && v2Defaults.ok && v2Hidden.ok && v2Percent.ok && v2Clamped.ok && v2Logo.ok);
   assert.equal(v1None.value.landing.schema, 1);
+  assert.equal(v1None.value.controls, null);
   assert.deepEqual(v1None.value.landing.title, { type: "text", text: "", image_url: "" });
+  const v1Wire = await fixture("app-appearance-v1-geo-none-hu.json") as Json;
+  assert.equal(Object.hasOwn(v1Wire.data, "controls"), false, "the frozen v1 wire has no shared-controls addition");
   assert.equal(v2Geo.value.landing.schema, 2);
+  for (const preview of [v2Geo.value, v2Defaults.value, v2Hidden.value, v2Percent.value, v2Clamped.value, v2Logo.value]) {
+    assert.deepEqual(preview.controls, {
+      button_corner_radius: preview.landing.v2!.buttons.corner_radius,
+    });
+  }
   assert.equal(v2Geo.value.landing.v2!.description.backdrop.alpha, 0.3);
   assert.equal(v2Geo.value.landing.v2!.qr.enabled, false);
   assert.equal(v2Defaults.value.landing.v2!.description.backdrop.alpha, 0, "integral JSON alpha is a valid number");
@@ -462,6 +534,29 @@ test("the iOS bodies never enter a Webadmin material decoder except the shared a
     text_gap: { value: 11, unit: "percent" },
     footer_min_height: { value: 96, unit: "pt" },
   });
+  assert.deepEqual(v2Percent.value.landing.v2!.qr, {
+    enabled: true,
+    background: "#000000",
+    icon_color: "#FFFFFF",
+    size: 72,
+    icon_url: "https://img.example/landing-qr-original.png",
+    icon_padding: 16,
+    icon_render: "original",
+  });
+  assert.deepEqual(v2Clamped.value.landing.v2!.qr, {
+    enabled: true,
+    background: "#000000",
+    icon_color: "#FFFFFF",
+    size: 28,
+    icon_url: "",
+    icon_padding: 10,
+    icon_render: "template",
+  });
+  const v2PercentWire = await fixture("app-appearance-v2-layout-percent-pt-en.json") as Json;
+  assert.deepEqual(Object.keys(v2PercentWire.data.controls), ["button_corner_radius"]);
+  assert.deepEqual(Object.keys(v2PercentWire.data.landing.qr), [
+    "enabled", "background", "icon_color", "size", "icon_url", "icon_padding", "icon_render",
+  ], "the provider publishes all seven QR keys in the contract order");
   assert.equal(v2Logo.value.landing.title.type, "image");
   assert.equal(v2Logo.value.landing.title.image_url, "https://img.example/friending-logo.png");
 
@@ -483,6 +578,7 @@ test("the iOS bodies never enter a Webadmin material decoder except the shared a
     "appconfig-appearance-v2-global-defaults-en.json",
     "appconfig-appearance-v2-hidden-layout-pt-percent-en.json",
     "appconfig-appearance-v2-layout-percent-pt-en.json",
+    "appconfig-appearance-v2-qr-clamped-inheritance-en.json",
     "appconfig-appearance-v2-storefront-logo-en.json",
   ]) {
     const body = await fixture(file) as Json;
@@ -499,6 +595,7 @@ test("the iOS bodies never enter a Webadmin material decoder except the shared a
     "appconfig-appearance-v2-global-defaults-en.json",
     "appconfig-appearance-v2-hidden-layout-pt-percent-en.json",
     "appconfig-appearance-v2-layout-percent-pt-en.json",
+    "appconfig-appearance-v2-qr-clamped-inheritance-en.json",
     "appconfig-appearance-v2-storefront-logo-en.json",
     "landing-content-geo-hu.json",
     "people-discover-hero-geo-hu.json",

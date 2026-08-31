@@ -1,10 +1,10 @@
 {
     "schema_version": 1,
-    "source_commit": "9c22992bf110f67ac425f3ea1befd99b2c923e17",
-    "fixture_set_sha256": "3e6884e27aa1fdcf48843ee5c0e9fba11c532469be3abc943a2591f5efb5c3ef",
+    "source_commit": "24aae647f976e0f014088d62a088e95c331e126b",
+    "fixture_set_sha256": "bb11653a043ad328d7794f52e8f8d90a450aa799aff3ddec04474118344288e7",
     "provenance": {
         "generator": "tests/appearance_rules_fixture_dump.php",
-        "generator_sha256": "e4922e36d44f61d93bc64d3d7fd3a975280761481a38cc936ea950bfbe4ade89",
+        "generator_sha256": "884833008bb586b1711a28d7c980a851e5f8a024960456fc127e680dd254763e",
         "wire_adapters": [
             "Friending\\Core\\Response::wirePayload",
             "Friending\\Support\\Webadmin::noStoreReply"
@@ -125,35 +125,42 @@
             "route": "/v1/app/appearance",
             "case": "schema v2 geo override with title none, custom controls, footer and QR",
             "consumer": "ios",
-            "sha256": "f1eaf8bc9c76d5840c97e42d8815f9c7ab6883b29ff0e3901213f15c5bac0388"
+            "sha256": "3bca133cc6e0c0a1371df45652e1bd5a672647bdb767edccd11577018c088aaa"
         },
         {
             "file": "app-appearance-v2-global-defaults-en.json",
             "route": "/v1/app/appearance",
             "case": "schema v2 old-shape global rule inheriting every compiled landing default",
             "consumer": "ios",
-            "sha256": "416eb8f58f1744d3203969ea2c3b06080e329ab3e86c4e7de31d8dfe0967f985"
+            "sha256": "0c22ef2ee582bc919ae3f8ec38d21c2bd1b041d20a0042551abf21c91eaa1850"
         },
         {
             "file": "app-appearance-v2-hidden-layout-pt-percent-en.json",
             "route": "/v1/app/appearance",
             "case": "schema v2 effective hidden subtitle with pt gap and percent footer minimum",
             "consumer": "ios",
-            "sha256": "1a49e331cdc1496b09b48eeb292ee5b1242b792348498f53361a83c20c162d4a"
+            "sha256": "f9bb2ff5773b03a913ae5e1068cebf5517d16da863c930679c61893126f257f5"
         },
         {
             "file": "app-appearance-v2-layout-percent-pt-en.json",
             "route": "/v1/app/appearance",
-            "case": "schema v2 percent gap with point footer minimum",
+            "case": "schema v2 percent-point layout with custom uploaded original QR icon",
             "consumer": "ios",
-            "sha256": "6e87cdfe252540d79348cea496d97686cae494debc7b2c76ce5436c9ce0f9c19"
+            "sha256": "db807e210bf15317f831a51bd9f45eaa20f896538bb5fc4a637fc31acc201449"
+        },
+        {
+            "file": "app-appearance-v2-qr-clamped-inheritance-en.json",
+            "route": "/v1/app/appearance",
+            "case": "schema v2 inherited QR geometry clamped to an eight-point icon box",
+            "consumer": "ios",
+            "sha256": "5b1641d0c4cb895cca6a51b5a5cd6c29ca358c5607977bb435b819b4b08722ca"
         },
         {
             "file": "app-appearance-v2-storefront-logo-en.json",
             "route": "/v1/app/appearance",
             "case": "schema v2 storefront logo override",
             "consumer": "ios",
-            "sha256": "713a9c5c80fafb3f5cb8100e98a4ffe2846a0103e14e493f131b7ffd2646c51c"
+            "sha256": "f95436aa7fca8d94d94d0d653ed7693aee04a4c5cbd6136b60fbba96df11e373"
         },
         {
             "file": "appconfig-appearance-geo-hu.json",
@@ -174,35 +181,42 @@
             "route": "/v1/app/ios_appconfig",
             "case": "cold-start schema v2 geo composer appearance fragment",
             "consumer": "ios",
-            "sha256": "1584f4a3cfdaf53e8f2242fbcb46c02eff0f8a6e625fc2911f5b5e5c9ef5a898"
+            "sha256": "b4820fea8bed65cd744ef6c42b12535fd6fb346323dc554b90eaa7d3bebb58c9"
         },
         {
             "file": "appconfig-appearance-v2-global-defaults-en.json",
             "route": "/v1/app/ios_appconfig",
             "case": "cold-start schema v2 compiled landing defaults through a global rule",
             "consumer": "ios",
-            "sha256": "807ccfddeb46a8bcd33c230317af9c925f946aba2a7e73784493fa13b35b049e"
+            "sha256": "1e7d4d4cf2a6542cb42b7eb014ae34f38aa46c142b4b60d34c194dc92b7c5f10"
         },
         {
             "file": "appconfig-appearance-v2-hidden-layout-pt-percent-en.json",
             "route": "/v1/app/ios_appconfig",
             "case": "cold-start schema v2 hidden subtitle and pt-percent layout fragment",
             "consumer": "ios",
-            "sha256": "6d7c6ea5c67e579b0d82855a66339223af1637f8d716b8822fe7e9d9a6356428"
+            "sha256": "56617ff46b7d058780eaf9e08818e2da31862ea35bbb129b6fa87b111beeb317"
         },
         {
             "file": "appconfig-appearance-v2-layout-percent-pt-en.json",
             "route": "/v1/app/ios_appconfig",
-            "case": "cold-start schema v2 percent-point layout fragment",
+            "case": "cold-start schema v2 percent-point layout and custom original QR fragment",
             "consumer": "ios",
-            "sha256": "72cbf8e9ddd5f62d10668c70e4b220545c0fcc01f499b9f5b65c0d4a40e146ef"
+            "sha256": "11021eeb494818c6ac0efad3cea91f38732bb190b1eeaba2efc4191166da678b"
+        },
+        {
+            "file": "appconfig-appearance-v2-qr-clamped-inheritance-en.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "cold-start schema v2 inherited QR geometry clamped for safe rendering",
+            "consumer": "ios",
+            "sha256": "1dd4bc666eacf5c348668ceb56a16abaa7f4274788e41e9251e492cb30a7537b"
         },
         {
             "file": "appconfig-appearance-v2-storefront-logo-en.json",
             "route": "/v1/app/ios_appconfig",
             "case": "cold-start schema v2 storefront logo appearance fragment",
             "consumer": "ios",
-            "sha256": "d97d9ada1c5c1116d99985db0a8399224aec0b872b3a28728ec4edab860fe520"
+            "sha256": "206cb4548334a4a7e0339cd513915e9f4f5751f168eca3e879387d020b8d8251"
         },
         {
             "file": "landing-content-geo-hu.json",
@@ -244,49 +258,56 @@
             "route": "/v1/webadmin/appearance_rules_list",
             "case": "flat landing v2 overrides and complete compiled defaults",
             "consumer": "webadmin",
-            "sha256": "1397e139ba60adac1ddd75e2c0286513430cd6152385f33fff035083658f0920"
+            "sha256": "5cb439fc301ecd631139f6847558c7c1e1f432c20d7802d9cc2e611cdd0cbdb7"
         },
         {
             "file": "webadmin-list.json",
             "route": "/v1/webadmin/appearance_rules_list",
             "case": "rule list with compiled defaults",
             "consumer": "webadmin",
-            "sha256": "761900585db8923f1d9d5949014779b2b584fbac5f9d51f5dfed7570a617b1e2"
+            "sha256": "c1fd1c1af497882a7e150c6ff08da747771f40ddd2cf07f13302087f86282581"
         },
         {
             "file": "webadmin-preview-parent-global-hu.json",
             "route": "/v1/webadmin/appearance_rules_preview",
             "case": "global parent schema v2 preview with location suppressed and global excluded",
             "consumer": "webadmin",
-            "sha256": "886cd2b3bf460a539fdf20fb0d038aa9d5830f8606450605ed792b2eaacb171f"
+            "sha256": "bc42b330b51166106460732b689d49850bd2cff9ab5c92c630afe5c3f164e977"
         },
         {
             "file": "webadmin-preview-parent-storefront-hu.json",
             "route": "/v1/webadmin/appearance_rules_preview",
             "case": "parent-only schema v2 preview with the persisted geo rule excluded",
             "consumer": "webadmin",
-            "sha256": "38d7f3e5071869dd749245ca17743ec38b0609ef2cec082a8bbce4d1b82555f1"
+            "sha256": "f9eff0b5508ea0196da8b3adbbc7dfc3f91b694e2936a76de5f6d0e418813e90"
         },
         {
             "file": "webadmin-preview-v2-geo-hu.json",
             "route": "/v1/webadmin/appearance_rules_preview",
             "case": "saved-state schema v2 preview",
             "consumer": "webadmin",
-            "sha256": "f508c095eb53834f4e61833ed1837e045036025b9f813fad6b3ba1db8cfead4b"
+            "sha256": "8100d51315044c5e2cc39d68158580e0decad29c1d416c0a8c4bca704d70b211"
         },
         {
             "file": "webadmin-preview-v2-hidden-layout-pt-percent-en.json",
             "route": "/v1/webadmin/appearance_rules_preview",
             "case": "schema v2 hidden subtitle and pt-percent layout flat preview",
             "consumer": "webadmin",
-            "sha256": "cb454d4156d249d7a67203f8c8e79b2b45e7beb757e1f4d2dc3f6dddcaaa40e9"
+            "sha256": "bb053e91662d042da96717b4b2b9fc352c61843858afab5599d11221c64f624e"
         },
         {
             "file": "webadmin-preview-v2-layout-percent-pt-en.json",
             "route": "/v1/webadmin/appearance_rules_preview",
-            "case": "schema v2 percent-point layout flat preview",
+            "case": "schema v2 percent-point layout and custom original QR flat preview",
             "consumer": "webadmin",
-            "sha256": "095e8a0484fc63e4ed4a3cac7c87861197e1f03f8feb02dce0b6d3e0297998e8"
+            "sha256": "43faf1cd01c4a15a3a667e2db469905c974db0dc2fac845dba034f21df8ce2bb"
+        },
+        {
+            "file": "webadmin-preview-v2-qr-clamped-inheritance-en.json",
+            "route": "/v1/webadmin/appearance_rules_preview",
+            "case": "schema v2 sparse QR sources with clamped effective padding",
+            "consumer": "webadmin",
+            "sha256": "f6f73d877cea051466fca735ec7d3ff21d5a4276aeeb18ff6517dcc27abb3e7a"
         },
         {
             "file": "webadmin-preview.json",
@@ -322,6 +343,13 @@
             "case": "invalid landing v2 value with a closed flat field name",
             "consumer": "webadmin",
             "sha256": "c7466a3fca94e4f2e2dbc9081962e6732958cd01b6ce32c832e8d4e1fc897312"
+        },
+        {
+            "file": "webadmin-validation-v2-qr-padding.json",
+            "route": "/v1/webadmin/appearance_rules_save",
+            "case": "explicit QR pair below the eight-point icon-box floor",
+            "consumer": "webadmin",
+            "sha256": "77358968f055cabd080c29e126a14e5020b7487ad9916f2bad5ee3a430e4baea"
         },
         {
             "file": "webadmin-validation.json",

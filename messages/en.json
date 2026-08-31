@@ -2776,11 +2776,11 @@
     "uploading": "Uploading and optimizing image…",
     "uploadingShort": "Uploading…",
     "invalidType": "Choose a JPEG, PNG or WebP image.",
-    "invalidPngType": "Choose a PNG image for the landing logo.",
+    "invalidPngType": "Choose a PNG image for this landing asset.",
     "invalidImage": "This file is not a valid image.",
     "invalidDimensions": "The image must be at least 64 × 64 pixels and no larger than 32 megapixels.",
     "tooLarge": "The image is too large. The maximum source size is 15 MB.",
-    "logoTooLarge": "The landing logo is too large. The maximum source size is 4 MB.",
+    "logoTooLarge": "This landing PNG is too large. The maximum source size is 4 MB.",
     "authRequired": "Your admin session could not be verified. Refresh the page and sign in again.",
     "failed": "The image could not be uploaded. Please try again."
   },
@@ -5779,6 +5779,8 @@
       "poster": "The video poster must finish uploading, or remove it.",
       "titleImage": "The title image must be an absolute https address that has finished uploading.",
       "titleImageRequired": "An image title needs a title image. Upload one, or switch the title type to text, none or inherited.",
+      "qrIcon": "The QR icon must be an uploaded PNG with an absolute HTTPS address, or blank for the built-in glyph.",
+      "qrGeometry": "QR icon padding must leave an icon box at least 8 pt wide and high.",
       "landingControl": "A landing text contains a control or invalid character (line break, tab, unpaired surrogate or similar). Remove it — Core refuses such values instead of repairing them.",
       "landingValue": "A landing value is outside its allowed range or vocabulary. Colours must be uppercase #RRGGBB and opacity values must have two decimals.",
       "landingPair": "Background type and media, plus each overlay colour and opacity, must be set or inherited together.",
@@ -5959,8 +5961,9 @@
       },
       "buttons": {
         "title": "Buttons",
-        "copy": "Phone and e-mail have independent labels and colours. Apple keeps one of Apple's mandated styles; all three share the corner radius.",
-        "radius": "Shared corner radius",
+        "copy": "Phone and e-mail have independent labels and colours. Apple keeps one of Apple's mandated styles; all three share the app-wide primary-button corner radius.",
+        "radius": "App primary-button corner radius",
+        "radiusHelp": "Applies to the apps' shared primary action buttons everywhere, including landing, signup, account and dates—not to cards, chips or icon buttons.",
         "phone": "Phone",
         "email": "E-mail",
         "labelEn": "Label · English",
@@ -5987,12 +5990,26 @@
       },
       "qr": {
         "title": "QR reader",
-        "copy": "Controls the existing product-message and shared-profile scanner button in the top-right safe area.",
+        "copy": "Configure the circular scanner button pinned to the top-right safe area, including its diameter and uploaded PNG icon.",
         "enabled": "QR reader",
         "on": "Shown",
         "off": "Hidden",
         "background": "Button background",
-        "icon": "Icon colour"
+        "icon": "Icon tint colour",
+        "size": "Button diameter · pt",
+        "iconUpload": "Button icon · PNG",
+        "iconUploadHint": "PNG only, at most 4 MB. Blank uses the built-in QR glyph.",
+        "builtInIcon": "built-in QR glyph",
+        "padding": "Icon padding · pt",
+        "paddingHelp": "The inset applies on every side. The remaining icon box must be at least 8 × 8 pt.",
+        "geometryError": "This diameter and padding leave less than an 8 × 8 pt icon box.",
+        "geometryClampWarning": "The inherited effective pair would be unsafe, so Core publishes {padding} pt padding and the preview shows that clamp.",
+        "render": "Uploaded icon rendering",
+        "renderOption": {
+          "template": "Tinted",
+          "original": "Original colours"
+        },
+        "renderHelp": "Tinted uses the icon tint colour. Original colours affect uploaded PNGs only; the built-in glyph is always tinted."
       },
       "preview": {
         "controls": "Landing preview controls",

@@ -2,8 +2,8 @@
     "success": true,
     "status_code": 200,
     "data": {
-        "revision": 23,
-        "content_version": "97df3a47a5f785145f7601a6bb46e1bb91f365bda516aab12d7494ff94603918",
+        "revision": 26,
+        "content_version": "11eebac5d285350b92d7b50b97ce9fa6c6bb96dcde8f26f7dfcdd49f78604cca",
         "landing": {
             "background": {
                 "type": "image",
@@ -31,7 +31,7 @@
             },
             "description": {
                 "text": "Meet people near you — and wherever you're headed next.",
-                "hidden": true,
+                "hidden": false,
                 "style": {
                     "font": "proxima_regular",
                     "size": 17,
@@ -45,12 +45,12 @@
             },
             "layout": {
                 "text_gap": {
-                    "value": 48,
+                    "value": 24,
                     "unit": "pt"
                 },
                 "footer_min_height": {
-                    "value": 16,
-                    "unit": "percent"
+                    "value": 0,
+                    "unit": "pt"
                 }
             },
             "buttons": {
@@ -89,9 +89,9 @@
                 "enabled": true,
                 "background": "#000000",
                 "icon_color": "#FFFFFF",
-                "size": 44,
+                "size": 28,
                 "icon_url": "",
-                "icon_padding": 12,
+                "icon_padding": 10,
                 "icon_render": "template"
             }
         },
@@ -114,7 +114,7 @@
         },
         "matched": {
             "scope": "storefront",
-            "rule_id": "620000000000000000000004",
+            "rule_id": "630000000000000000000002",
             "location_source": "none"
         },
         "controls": {
