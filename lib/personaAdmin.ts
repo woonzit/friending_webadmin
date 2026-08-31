@@ -378,6 +378,7 @@ function record(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+// Exact objects are reserved for draft normalization, browser commands, and persisted retry identities.
 function exactObject(
   value: unknown,
   keys: readonly string[],
@@ -388,6 +389,14 @@ function exactObject(
   if (actual.length !== keys.length) return null;
   const expected = new Set(keys);
   return actual.every((key) => expected.has(key)) ? source : null;
+}
+
+function requiredObject(
+  value: unknown,
+  keys: readonly string[],
+): Record<string, unknown> | null {
+  const source = record(value);
+  return source && keys.every((key) => Object.hasOwn(source, key)) ? source : null;
 }
 
 function scalarLength(value: string): number {
@@ -452,7 +461,10 @@ function strictResponseString(key: PersonaStartStringKey, value: unknown): strin
 }
 
 function configFrom(value: unknown, normalize: boolean): PersonaStartConfig | null {
-  const source = exactObject(value, PERSONA_START_FIELD_KEYS);
+  // Draft normalization is an outbound boundary; server configuration reads accept additive fields.
+  const source = normalize
+    ? exactObject(value, PERSONA_START_FIELD_KEYS)
+    : requiredObject(value, PERSONA_START_FIELD_KEYS);
   if (!source) return null;
   const output = Object.create(null) as Record<string, string | number | boolean>;
 
@@ -585,7 +597,7 @@ export type PersonaStartConfigMutation = PersonaStartConfigResource & {
 };
 
 function personaStartResourceData(value: unknown): PersonaStartConfigResource | null {
-  const source = exactObject(
+  const source = requiredObject(
     value,
     ["contract_version", "resource_revision", "config"],
   );
@@ -598,16 +610,16 @@ function personaStartResourceData(value: unknown): PersonaStartConfigResource | 
     : null;
 }
 
-/** Decode the exact receipt-era configuration read envelope. */
+/** Decode the receipt-era configuration read envelope. */
 export function personaStartConfigResponse(value: unknown): PersonaStartConfigResource | null {
   const envelope = webadminDataSuccessEnvelope(value);
   return envelope ? personaStartResourceData(envelope.data) : null;
 }
 
-/** Decode the exact receipt-era configuration mutation receipt. */
+/** Decode the receipt-era configuration mutation receipt. */
 export function personaStartUpdateResponse(value: unknown): PersonaStartConfigMutation | null {
   const envelope = webadminDataSuccessEnvelope(value);
-  const source = exactObject(
+  const source = requiredObject(
     envelope?.data,
     ["contract_version", "resource_revision", "config", "replayed"],
   );
@@ -628,7 +640,7 @@ export function personaAdminCapabilitiesFrom(
 ): PersonaAdminCapabilities | null {
   const outer = record(value);
   if (!outer || outer.success !== true || outer.status_code !== 200) return null;
-  const source = exactObject(
+  const source = requiredObject(
     outer.persona,
     ["contract_version", "contract_ready", "can_read", "can_write", "actions"],
   );
@@ -804,6 +816,7 @@ export function normalizePersonaProxyBody(
   body: Record<string, unknown>,
 ): PersonaProxyPayload | null | undefined {
   if (!PERSONA_ACTION_SET.has(action)) return undefined;
+  // Same-origin request bodies remain exact so undeclared fields cannot reach Core.
   if (action === "persona_start_get_config_admin") {
     const source = exactObject(body, ["contract_version"]);
     return source?.contract_version === PERSONA_ADMIN_CONTRACT_VERSION
@@ -879,6 +892,7 @@ export function personaPendingMutation(
 
 /** Decode sessionStorage without accepting widened or target-mismatched rows. */
 export function personaPendingFrom(value: unknown): PersonaPendingMutation | null {
+  // Persisted retry identity remains exact so replay cannot acquire new semantics.
   const source = exactObject(value, ["version", "action", "target", "payload"]);
   const action = typeof source?.action === "string"
     && PERSONA_MUTATION_ACTION_SET.has(source.action)
@@ -938,7 +952,7 @@ function safeRelativeVerifyImage(value: unknown): string | null {
 }
 
 function personaMemberMutationData(value: unknown): PersonaMemberMutation | null {
-  const source = exactObject(
+  const source = requiredObject(
     value,
     ["contract_version", "uid", "revision", "replayed"],
   );
@@ -957,7 +971,7 @@ function personaMemberMutationData(value: unknown): PersonaMemberMutation | null
     : null;
 }
 
-/** Apply/revoke share the same exact receipt material. */
+/** Apply/revoke share the same receipt material. */
 export function personaMemberMutationResponse(value: unknown): PersonaMemberMutation | null {
   const envelope = webadminDataSuccessEnvelope(value);
   return envelope ? personaMemberMutationData(envelope.data) : null;
@@ -965,7 +979,7 @@ export function personaMemberMutationResponse(value: unknown): PersonaMemberMuta
 
 export function personaForceMutationResponse(value: unknown): PersonaForceMutation | null {
   const envelope = webadminDataSuccessEnvelope(value);
-  const source = exactObject(
+  const source = requiredObject(
     envelope?.data,
     ["contract_version", "uid", "revision", "verify_image_url", "replayed"],
   );
@@ -1122,27 +1136,29 @@ export type PersonaMemberConflict = {
 
 export type PersonaConflict = PersonaConfigConflict | PersonaMemberConflict;
 
-/** Only `persona-conflict` may carry one of these two exact authoritative rows. */
+/** Only `persona-conflict` may carry one of these two authoritative rows. */
 export function personaConflictResponse(value: unknown): PersonaConflict | null {
   const envelope = webadminErrorEnvelope(value, "required");
   if (!envelope || envelope.status_code !== 409 || envelope.error !== "persona-conflict") {
     return null;
   }
-  const config = exactObject(
+  const config = requiredObject(
     envelope.data,
     ["contract_version", "resource_revision"],
   );
   const configRevision = revision(config?.resource_revision);
-  if (config?.contract_version === 1 && configRevision !== null) {
+  if (config?.contract_version === 1 && configRevision !== null
+    && !Object.hasOwn(config, "uid") && !Object.hasOwn(config, "revision")) {
     return { kind: "config", contract_version: 1, resource_revision: configRevision };
   }
-  const member = exactObject(
+  const member = requiredObject(
     envelope.data,
     ["contract_version", "uid", "revision"],
   );
   const uid = canonicalUid(member?.uid);
   const memberRevision = revision(member?.revision, 1);
   return member?.contract_version === 1 && uid !== null && memberRevision !== null
+    && !Object.hasOwn(member, "resource_revision")
     ? { kind: "member", contract_version: 1, uid, revision: memberRevision }
     : null;
 }
@@ -1172,7 +1188,7 @@ export type PersonaTargetLookupData = {
 export function personaTargetFromUserDetail(value: unknown): PersonaTarget | null {
   const source = record(value);
   const profile = record(source?.profile);
-  const personaAdmin = exactObject(
+  const personaAdmin = requiredObject(
     source?.persona_admin,
     ["contract_version", "revision"],
   );
@@ -1207,10 +1223,10 @@ export function personaTargetLookupData(
   return { uid, display_name: phpTrim(target.displayName), revision: memberRevision };
 }
 
-/** Decode the dedicated same-origin route; arbitrary user documents fail closed. */
+/** Decode the dedicated route and project only its three known member fields. */
 export function personaTargetLookupResponse(value: unknown): PersonaTarget | null {
-  const source = exactObject(value, ["success", "status_code", "data"]);
-  const data = exactObject(source?.data, ["uid", "display_name", "revision"]);
+  const source = requiredObject(value, ["success", "status_code", "data"]);
+  const data = requiredObject(source?.data, ["uid", "display_name", "revision"]);
   if (!source || source.success !== true || source.status_code !== 200 || !data) return null;
   const projected = personaTargetLookupData({
     uid: data.uid as number,

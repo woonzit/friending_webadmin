@@ -113,7 +113,11 @@ test("viewer status may hide identifiers while retaining configuration evidence"
   assert.equal(status.env.phoneConfigured, true);
 });
 
-test("every shape surprise decodes to null rather than to a partial page", () => {
+test("unknown count witnesses are ignored while missing or invalid known material fails closed", () => {
+  const additive = statusFixture();
+  (additive.counts as Record<string, unknown>).invented = 1;
+  assert.deepEqual(appReviewSandboxStatus(additive), appReviewSandboxStatus(statusFixture()));
+
   const cases: Array<(raw: Record<string, unknown>) => void> = [
     (raw) => { raw.schema_version = 2; },
     (raw) => { delete raw.control; },
@@ -123,7 +127,6 @@ test("every shape surprise decodes to null rather than to a partial page", () =>
     (raw) => { (raw.control as Record<string, unknown>).review_uid = -1; },
     (raw) => { (raw.env as Record<string, unknown>).login_enabled = "yes"; },
     (raw) => { delete (raw.counts as Record<string, unknown>).members; },
-    (raw) => { (raw.counts as Record<string, unknown>).invented = 1; },
     (raw) => { (raw.checks as unknown[]).pop(); },
     (raw) => { (raw.checks as unknown[])[1] = (raw.checks as unknown[])[0]; },
     (raw) => { (raw.checks as unknown[]).push({ key: "invented", ok: true, actual: 1, expected: 1 }); },

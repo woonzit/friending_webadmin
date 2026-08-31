@@ -159,18 +159,33 @@ test("Core's evaluated_at clock is required and alone determines the active or e
   );
 });
 
-test("closed envelopes, principals, popup projections, and timestamps fail on every shape surprise", () => {
+test("popup decoders ignore additions while known principals, projections, and timestamps fail closed", () => {
+  const additive = clone(fixtures.active_url);
+  additive.trace_id = "not-contracted";
+  data(additive).provider_id = "private";
+  object(data(additive).principal).future_principal = true;
+  popup(additive).device_token = "private";
+  button(additive).debug = true;
+  assert.deepEqual(productPopupReadResponse(additive), productPopupReadResponse(fixtures.active_url));
+
+  const additiveSet = clone(fixtures.set_success);
+  data(additiveSet).future_set = true;
+  assert.deepEqual(productPopupSetResponse(additiveSet), productPopupSetResponse(fixtures.set_success));
+  const additiveClear = clone(fixtures.clear_success);
+  data(additiveClear).future_clear = true;
+  assert.deepEqual(productPopupClearResponse(additiveClear), productPopupClearResponse(fixtures.clear_success));
+  const additiveConflict = clone(fixtures.conflict);
+  data(additiveConflict).future_conflict = true;
+  assert.deepEqual(productPopupConflictResponse(additiveConflict), productPopupConflictResponse(fixtures.conflict));
+
   const mutations: Array<(raw: JsonObject) => void> = [
-    (raw) => { raw.trace_id = "not-contracted"; },
     (raw) => { raw.status_code = "200"; },
     (raw) => { data(raw).contract_version = 2; },
-    (raw) => { data(raw).provider_id = "private"; },
     (raw) => { object(data(raw).principal).role = "superadmin"; },
     (raw) => { object(data(raw).principal).capabilities = []; },
     (raw) => { object(data(raw).principal).capabilities = ["product_popup_read", "product_popup_read"]; },
     (raw) => { object(data(raw).principal).capabilities = ["product_popup_write", "product_popup_read"]; },
     (raw) => { object(data(raw).principal).capabilities = ["product_popup_read", "private_capability"]; },
-    (raw) => { popup(raw).device_token = "private"; },
     (raw) => { popup(raw).pop_id = "bad/id"; },
     (raw) => { popup(raw).revision = 2; },
     (raw) => { popup(raw).title = " trailing "; },
@@ -179,7 +194,6 @@ test("closed envelopes, principals, popup projections, and timestamps fail on ev
     (raw) => { popup(raw).created_by = "Admin@friending.com"; },
     (raw) => { popup(raw).created_at = -1; },
     (raw) => { data(raw).resource_revision = 0; popup(raw).revision = 0; },
-    (raw) => { button(raw).debug = true; },
     (raw) => { button(raw).action = "none"; },
     (raw) => { button(raw).url = " https://friending.com/plus?source=popup"; },
   ];
@@ -520,7 +534,7 @@ test("every closed refusal has a localized route, exact status, and documented t
     status: 200,
     can_send: 0,
     detail: "not contracted",
-  }), null, "extra refusal fields remain uncertain");
+  }), "product-popup-title-invalid", "extra refusal fields are ignored");
   assert.equal(productPopupErrorResponse({
     success: false,
     status_code: 403,

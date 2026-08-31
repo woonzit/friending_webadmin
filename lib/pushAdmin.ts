@@ -54,15 +54,9 @@ function object(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
-function exactObject(value: unknown, keys: readonly string[]): Record<string, unknown> | null {
+function requiredObject(value: unknown, keys: readonly string[]): Record<string, unknown> | null {
   const raw = object(value);
-  if (!raw) return null;
-  const actual = Object.keys(raw).sort();
-  const expected = [...keys].sort();
-  return actual.length === expected.length
-    && actual.every((key, index) => key === expected[index])
-    ? raw
-    : null;
+  return raw && keys.every((key) => Object.hasOwn(raw, key)) ? raw : null;
 }
 
 function mode(value: unknown): PushDeliveryMode | null {
@@ -85,7 +79,7 @@ function canonicalAdminEmail(value: unknown): string | null {
 
 /** Parse the known managed setting without retaining any other settings entry. */
 export function pushDeliverySetting(value: unknown): PushDeliverySetting | null {
-  const raw = exactObject(value, SETTING_KEYS);
+  const raw = requiredObject(value, SETTING_KEYS);
   const parsedMode = mode(raw?.value);
   const updatedBy = canonicalAdminEmail(raw?.updated_by);
   if (
@@ -116,7 +110,7 @@ export function pushDeliverySetting(value: unknown): PushDeliverySetting | null 
 
 /**
  * Parse the complete legacy success envelope, then project only the push setting.
- * The settings map stays open for future managed keys, but its known entry is closed.
+ * The settings map stays open for future managed keys, and its known entry ignores additive fields.
  */
 export function pushSettingsResponse(value: unknown): PushDeliverySetting | null {
   const raw = webadminEnvelope(value, true, ["settings"]);
@@ -135,9 +129,9 @@ export function pushDeliverySavePayload(value: unknown): { push_delivery_mode: P
   return parsed === null ? null : { push_delivery_mode: parsed };
 }
 
-/** Parse the exact, identifier-free per-member channel projection. */
+/** Parse the identifier-free per-member channel projection. */
 export function pushChannels(value: unknown): PushChannels | null {
-  const raw = exactObject(value, CHANNEL_KEYS);
+  const raw = requiredObject(value, CHANNEL_KEYS);
   return raw
     && typeof raw.fcm_token_present === "boolean"
     && typeof raw.onesignal_id_present === "boolean"

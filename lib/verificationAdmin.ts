@@ -470,12 +470,16 @@ function record(value: unknown): JsonObject | null {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : null;
 }
 
+function requiredObject(value: unknown, keys: readonly string[]): JsonObject | null {
+  const source = record(value);
+  return source && keys.every((key) => Object.hasOwn(source, key)) ? source : null;
+}
+
+// This exact object decoder is reserved for persisted retry identities.
 function exactObject(value: unknown, keys: readonly string[]): JsonObject | null {
   const source = record(value);
-  if (!source) return null;
-  const actual = Object.keys(source).sort();
-  const expected = [...keys].sort();
-  return actual.length === expected.length && actual.every((key, index) => key === expected[index]) ? source : null;
+  if (!source || Object.keys(source).length !== keys.length) return null;
+  return keys.every((key) => Object.hasOwn(source, key)) ? source : null;
 }
 
 function oneOf<const T extends readonly string[]>(value: unknown, values: T): T[number] | null {
@@ -624,7 +628,7 @@ function externalSealWouldShow(
 }
 
 function featureRequirements(value: unknown, allowInherit: boolean): Record<VerificationFeatureKey, VerificationRequirement> | null {
-  const raw = exactObject(value, VERIFICATION_FEATURE_KEYS);
+  const raw = requiredObject(value, VERIFICATION_FEATURE_KEYS);
   if (!raw) return null;
   const output = Object.create(null) as Record<VerificationFeatureKey, VerificationRequirement>;
   for (const feature of VERIFICATION_FEATURE_KEYS) {
@@ -636,7 +640,7 @@ function featureRequirements(value: unknown, allowInherit: boolean): Record<Veri
 }
 
 function principal(value: unknown): VerificationAdminPrincipal | null {
-  const raw = exactObject(value, ["role", "capabilities"]);
+  const raw = requiredObject(value, ["role", "capabilities"]);
   const role = oneOf(raw?.role, ["viewer", "admin", "owner"] as const);
   const capabilities = orderedUnique(raw?.capabilities, VERIFICATION_CAPABILITIES);
   return role && capabilities ? { role, capabilities } : null;
@@ -663,7 +667,7 @@ export const VERIFICATION_ACTION_CAPABILITY: Record<VerificationAction, Verifica
 };
 
 export function verificationAdminMe(value: unknown): VerificationAdminMe | null {
-  const raw = exactObject(value, ["contract_version", "contract_ready", "principal", "actions"]);
+  const raw = requiredObject(value, ["contract_version", "contract_ready", "principal", "actions"]);
   const parsedPrincipal = principal(raw?.principal);
   const actions = orderedUnique(raw?.actions, [...VERIFICATION_ADMIN_ACTIONS].sort() as VerificationAction[]);
   if (raw?.contract_version !== 1 || typeof raw.contract_ready !== "boolean" || !parsedPrincipal || !actions
@@ -673,7 +677,7 @@ export function verificationAdminMe(value: unknown): VerificationAdminMe | null 
 }
 
 export function verificationAccess(value: unknown): VerificationAccess | null {
-  const raw = exactObject(value, ["contract_version", "contract_ready", "capabilities"]);
+  const raw = requiredObject(value, ["contract_version", "contract_ready", "capabilities"]);
   const capabilities = orderedUnique(raw?.capabilities, VERIFICATION_GRANT_CAPABILITIES);
   if (raw?.contract_version !== 1 || typeof raw.contract_ready !== "boolean" || !capabilities || (!raw.contract_ready && capabilities.length !== 0)) return null;
   return { contract_version: 1, contract_ready: raw.contract_ready, capabilities };
@@ -687,7 +691,7 @@ export function verificationProxyCapabilityAuthorized(action: string, membership
 }
 
 function availability(value: unknown, expected: VerificationMethod): VerificationMethodAvailability | null {
-  const raw = exactObject(value, ["method", "policy_enable_allowed", "new_start_available", "reason"]);
+  const raw = requiredObject(value, ["method", "policy_enable_allowed", "new_start_available", "reason"]);
   const reason = nullableOneOf(raw?.reason, ["deployment_unlock_disabled", "service_config_disabled", "provider_unconfigured"] as const);
   if (raw?.method !== expected || typeof raw.policy_enable_allowed !== "boolean" || typeof raw.new_start_available !== "boolean"
     || reason === undefined || (!raw.policy_enable_allowed && raw.new_start_available)
@@ -696,14 +700,14 @@ function availability(value: unknown, expected: VerificationMethod): Verificatio
 }
 
 function availabilityMap(value: unknown): VerificationConsoleData["method_availability"] | null {
-  const raw = exactObject(value, VERIFICATION_METHODS);
+  const raw = requiredObject(value, VERIFICATION_METHODS);
   const video = availability(raw?.video, "video");
   const persona = availability(raw?.persona, "persona");
   return video && persona ? { video, persona } : null;
 }
 
 function verificationScope(value: unknown): VerificationScope | null {
-  const raw = exactObject(value, ["kind", "country_code", "place_id", "display"]);
+  const raw = requiredObject(value, ["kind", "country_code", "place_id", "display"]);
   const kind = oneOf(raw?.kind, VERIFICATION_SCOPE_KINDS);
   const display = canonicalText(raw?.display, 1, 120);
   if (!kind || !display) return null;
@@ -716,14 +720,14 @@ function verificationScope(value: unknown): VerificationScope | null {
 }
 
 function storedBlock(value: unknown, global: boolean): VerificationStoredPolicyBlock | null {
-  const raw = exactObject(value, ["enabled_methods", "feature_requirements"]);
+  const raw = requiredObject(value, ["enabled_methods", "feature_requirements"]);
   const methods = raw?.enabled_methods === "inherit" ? "inherit" : methodArray(raw?.enabled_methods);
   const features = featureRequirements(raw?.feature_requirements, !global);
   return methods && features && !(global && methods === "inherit") ? { enabled_methods: methods, feature_requirements: features } : null;
 }
 
 function savedBlock(value: unknown, global: boolean): VerificationSavedPolicyBlock | null {
-  const raw = exactObject(value, ["enabled_methods", "feature_requirements", "saved_at", "saved_by"]);
+  const raw = requiredObject(value, ["enabled_methods", "feature_requirements", "saved_at", "saved_by"]);
   const block = storedBlock(raw && { enabled_methods: raw.enabled_methods, feature_requirements: raw.feature_requirements }, global);
   const savedAt = integer(raw?.saved_at);
   const savedBy = canonicalEmail(raw?.saved_by);
@@ -731,14 +735,14 @@ function savedBlock(value: unknown, global: boolean): VerificationSavedPolicyBlo
 }
 
 function effectivePolicy(value: unknown): VerificationEffectivePolicy | null {
-  const raw = exactObject(value, ["enabled_methods", "enabled_methods_source_scope_key", "tier_language", "feature_requirements"]);
+  const raw = requiredObject(value, ["enabled_methods", "enabled_methods_source_scope_key", "tier_language", "feature_requirements"]);
   const methods = methodArray(raw?.enabled_methods);
   const source = scopeKey(raw?.enabled_methods_source_scope_key);
-  const featuresRaw = exactObject(raw?.feature_requirements, VERIFICATION_FEATURE_KEYS);
+  const featuresRaw = requiredObject(raw?.feature_requirements, VERIFICATION_FEATURE_KEYS);
   if (!methods || !source || typeof raw?.tier_language !== "boolean" || raw.tier_language !== (methods.length === 2) || !featuresRaw) return null;
   const features = Object.create(null) as VerificationEffectivePolicy["feature_requirements"];
   for (const feature of VERIFICATION_FEATURE_KEYS) {
-    const row = exactObject(featuresRaw[feature], ["configured_requirement", "required_tier", "source_scope_key"]);
+    const row = requiredObject(featuresRaw[feature], ["configured_requirement", "required_tier", "source_scope_key"]);
     const configured = oneOf(row?.configured_requirement, VERIFICATION_EFFECTIVE_REQUIREMENTS);
     const required = oneOf(row?.required_tier, VERIFICATION_EFFECTIVE_REQUIREMENTS);
     const featureSource = scopeKey(row?.source_scope_key);
@@ -749,7 +753,7 @@ function effectivePolicy(value: unknown): VerificationEffectivePolicy | null {
 }
 
 function policy(value: unknown): VerificationPolicy | null {
-  const raw = exactObject(value, ["schema_version", "scope_key", "scope", "revision", "active", "deleted_at", "draft", "live", "effective", "updated_at", "updated_by"]);
+  const raw = requiredObject(value, ["schema_version", "scope_key", "scope", "revision", "active", "deleted_at", "draft", "live", "effective", "updated_at", "updated_by"]);
   const key = scopeKey(raw?.scope_key);
   const parsedScope = verificationScope(raw?.scope);
   const revision = integer(raw?.revision, 1, 2_147_483_647);
@@ -773,8 +777,8 @@ function policy(value: unknown): VerificationPolicy | null {
 }
 
 function copyBehavior(value: unknown): VerificationCopyBehavior | null {
-  const raw = exactObject(value, ["icon", "primary_action", "primary_url", "secondary_action", "secondary_url"]);
-  const icon = exactObject(raw?.icon, ["kind", "asset_key"]);
+  const raw = requiredObject(value, ["icon", "primary_action", "primary_url", "secondary_action", "secondary_url"]);
+  const icon = requiredObject(raw?.icon, ["kind", "asset_key"]);
   const assets = VERIFICATION_GATE_VARIANTS.map((variant) => `verification.${variant}`) as Array<`verification.${VerificationGateVariant}`>;
   const asset = oneOf(icon?.asset_key, assets);
   const primary = oneOf(raw?.primary_action, ["automatic", "open_verification_center", "url", "none"] as const);
@@ -787,7 +791,7 @@ function copyBehavior(value: unknown): VerificationCopyBehavior | null {
 }
 
 function localizedCopy(value: unknown): VerificationLocalizedGateCopy | null {
-  const raw = exactObject(value, ["title", "subtitle", "description", "overdue_description", "attention_note", "primary_label", "secondary_label", "cancel_label"]);
+  const raw = requiredObject(value, ["title", "subtitle", "description", "overdue_description", "attention_note", "primary_label", "secondary_label", "cancel_label"]);
   const title = canonicalText(raw?.title, 1, 80);
   const subtitle = canonicalText(raw?.subtitle, 0, 120);
   const description = canonicalText(raw?.description, 0, 600, true);
@@ -803,10 +807,10 @@ function localizedCopy(value: unknown): VerificationLocalizedGateCopy | null {
 }
 
 function copyMaterial(value: unknown): Pick<VerificationCopyPair, "copy_key" | "behavior" | "locales"> | null {
-  const raw = exactObject(value, ["copy_key", "behavior", "locales"]);
+  const raw = requiredObject(value, ["copy_key", "behavior", "locales"]);
   const key = copyKey(raw?.copy_key);
   const behavior = copyBehavior(raw?.behavior);
-  const localesRaw = exactObject(raw?.locales, VERIFICATION_LOCALES);
+  const localesRaw = requiredObject(raw?.locales, VERIFICATION_LOCALES);
   const en = localizedCopy(localesRaw?.en);
   const hu = localizedCopy(localesRaw?.hu);
   if (!key || !behavior || !en || !hu
@@ -819,7 +823,7 @@ function copyMaterial(value: unknown): Pick<VerificationCopyPair, "copy_key" | "
 }
 
 function copyPair(value: unknown): VerificationCopyPair | null {
-  const raw = exactObject(value, ["schema_version", "copy_key", "revision", "active", "deleted_at", "behavior", "locales", "updated_at", "updated_by"]);
+  const raw = requiredObject(value, ["schema_version", "copy_key", "revision", "active", "deleted_at", "behavior", "locales", "updated_at", "updated_by"]);
   const material = copyMaterial(raw && { copy_key: raw.copy_key, behavior: raw.behavior, locales: raw.locales });
   const revision = integer(raw?.revision, 1, 2_147_483_647);
   const deleted = nullableInteger(raw?.deleted_at);
@@ -831,7 +835,7 @@ function copyPair(value: unknown): VerificationCopyPair | null {
 }
 
 function pendingSettings(value: unknown): VerificationPendingSettings | null {
-  const raw = exactObject(value, ["schema_version", "revision", "overdue_after_seconds", "queue_average_long_copy_enabled", "queue_average_threshold_seconds", "updated_at", "updated_by"]);
+  const raw = requiredObject(value, ["schema_version", "revision", "overdue_after_seconds", "queue_average_long_copy_enabled", "queue_average_threshold_seconds", "updated_at", "updated_by"]);
   const revision = integer(raw?.revision, 1, 2_147_483_647);
   const overdue = integer(raw?.overdue_after_seconds, 300, 86_400);
   const threshold = integer(raw?.queue_average_threshold_seconds, 300, 86_400);
@@ -844,7 +848,7 @@ function pendingSettings(value: unknown): VerificationPendingSettings | null {
 }
 
 function badge(value: unknown): VerificationBadgeAsset | null {
-  const raw = exactObject(value, ["schema_version", "slot", "revision", "active", "deleted_at", "managed_url", "mime", "width", "height", "byte_size", "content_sha256", "updated_at", "updated_by"]);
+  const raw = requiredObject(value, ["schema_version", "slot", "revision", "active", "deleted_at", "managed_url", "mime", "width", "height", "byte_size", "content_sha256", "updated_at", "updated_by"]);
   const slot = oneOf(raw?.slot, VERIFICATION_BADGE_SLOTS);
   const revision = integer(raw?.revision, 1, 2_147_483_647);
   const deleted = nullableInteger(raw?.deleted_at);
@@ -868,7 +872,7 @@ function badge(value: unknown): VerificationBadgeAsset | null {
 }
 
 function activationGuard(value: unknown): VerificationActivationGuard | null {
-  const raw = exactObject(value, ["non_none_publish_ready", "blocking_reasons"]);
+  const raw = requiredObject(value, ["non_none_publish_ready", "blocking_reasons"]);
   const reasons = orderedUnique(raw?.blocking_reasons, ["global_policy_invalid", "method_unavailable", "persona_force_receipt_unready", "supported_client_unready"] as const);
   return typeof raw?.non_none_publish_ready === "boolean" && reasons
     && raw.non_none_publish_ready === (reasons.length === 0)
@@ -890,7 +894,7 @@ function policyOrder(rows: VerificationPolicy[]): boolean {
 }
 
 function consoleData(value: unknown): VerificationConsoleData | null {
-  const raw = exactObject(value, ["contract_version", "principal", "evaluated_at", "feature_keys", "method_availability", "policies", "next_cursor", "total_policies", "copy_pairs", "pending_settings", "badges", "import_health", "activation_guard"]);
+  const raw = requiredObject(value, ["contract_version", "principal", "evaluated_at", "feature_keys", "method_availability", "policies", "next_cursor", "total_policies", "copy_pairs", "pending_settings", "badges", "import_health", "activation_guard"]);
   const parsedPrincipal = principal(raw?.principal);
   const evaluated = integer(raw?.evaluated_at);
   const features = exactCanonical(raw?.feature_keys, VERIFICATION_FEATURE_KEYS);
@@ -916,7 +920,7 @@ function consoleData(value: unknown): VerificationConsoleData | null {
     if (!required?.active || required.deleted_at !== null) return null;
   }
   if (parsedPolicies.length > total || (total === 0 && (parsedPolicies.length !== 0 || cursor !== null))) return null;
-  const health = exactObject(raw.import_health, ["evaluated_at", "total", "invalid"]);
+  const health = requiredObject(raw.import_health, ["evaluated_at", "total", "invalid"]);
   const healthAt = integer(health?.evaluated_at);
   const healthTotal = integer(health?.total);
   const healthInvalid = integer(health?.invalid);
@@ -946,7 +950,7 @@ function successData<T>(value: unknown, parse: (data: unknown) => T | null): T |
 export function verificationConsoleResponse(value: unknown): VerificationConsoleData | null { return successData(value, consoleData); }
 
 function mutationBase(value: unknown, materialKey: string): { principal: VerificationAdminPrincipal; material: unknown; replayed: boolean } | null {
-  const raw = exactObject(value, ["contract_version", "principal", materialKey, "replayed"]);
+  const raw = requiredObject(value, ["contract_version", "principal", materialKey, "replayed"]);
   const parsedPrincipal = principal(raw?.principal);
   return raw?.contract_version === 1 && parsedPrincipal && typeof raw.replayed === "boolean"
     ? { principal: parsedPrincipal, material: raw[materialKey], replayed: raw.replayed }
@@ -962,7 +966,7 @@ export function verificationPolicyMutationResponse(value: unknown): Verification
 }
 
 function featureImpact(value: unknown, expected: VerificationFeatureKey): VerificationFeatureImpact | null {
-  const raw = exactObject(value, ["feature", "configured_before", "configured_after", "effective_before", "effective_after", "affected_members", "newly_blocked", "newly_unblocked"]);
+  const raw = requiredObject(value, ["feature", "configured_before", "configured_after", "effective_before", "effective_after", "affected_members", "newly_blocked", "newly_unblocked"]);
   const configuredBefore = oneOf(raw?.configured_before, VERIFICATION_EFFECTIVE_REQUIREMENTS);
   const configuredAfter = oneOf(raw?.configured_after, VERIFICATION_EFFECTIVE_REQUIREMENTS);
   const effectiveBefore = oneOf(raw?.effective_before, VERIFICATION_EFFECTIVE_REQUIREMENTS);
@@ -978,7 +982,7 @@ function featureImpact(value: unknown, expected: VerificationFeatureKey): Verifi
 
 export function verificationPolicyImpactPreviewResponse(value: unknown): VerificationPolicyImpactPreviewData | null {
   return successData(value, (data) => {
-    const raw = exactObject(data, ["contract_version", "principal", "evaluated_at", "scope_key", "operation", "expected_revision", "normalized_fingerprint", "confirmation_phrase", "method_availability", "activation_guard", "impact"]);
+    const raw = requiredObject(data, ["contract_version", "principal", "evaluated_at", "scope_key", "operation", "expected_revision", "normalized_fingerprint", "confirmation_phrase", "method_availability", "activation_guard", "impact"]);
     const parsedPrincipal = principal(raw?.principal);
     const evaluated = integer(raw?.evaluated_at);
     const key = scopeKey(raw?.scope_key);
@@ -987,7 +991,7 @@ export function verificationPolicyImpactPreviewResponse(value: unknown): Verific
     const fingerprint = sha256(raw?.normalized_fingerprint);
     const methods = availabilityMap(raw?.method_availability);
     const guard = activationGuard(raw?.activation_guard);
-    const impact = exactObject(raw?.impact, ["members_evaluated", "members_changed", "newly_blocked", "newly_unblocked", "descendant_scope_count", "features"]);
+    const impact = requiredObject(raw?.impact, ["members_evaluated", "members_changed", "newly_blocked", "newly_unblocked", "descendant_scope_count", "features"]);
     const membersEvaluated = integer(impact?.members_evaluated);
     const membersChanged = integer(impact?.members_changed);
     const newlyBlocked = integer(impact?.newly_blocked);
@@ -1016,7 +1020,7 @@ export function verificationBadgeMutationResponse(value: unknown): VerificationB
 }
 
 function citySuggestion(value: unknown): VerificationCitySuggestion | null {
-  const raw = exactObject(value, ["place_id", "display", "secondary", "country_code"]);
+  const raw = requiredObject(value, ["place_id", "display", "secondary", "country_code"]);
   const place = placeId(raw?.place_id);
   const display = canonicalText(raw?.display, 1, 120);
   const secondary = canonicalText(raw?.secondary, 0, 120);
@@ -1026,7 +1030,7 @@ function citySuggestion(value: unknown): VerificationCitySuggestion | null {
 
 export function verificationCitySearchResponse(value: unknown): VerificationCitySearchData | null {
   return successData(value, (data) => {
-    const raw = exactObject(data, ["contract_version", "principal", "search_token", "suggestions"]);
+    const raw = requiredObject(data, ["contract_version", "principal", "search_token", "suggestions"]);
     const parsedPrincipal = principal(raw?.principal);
     const token = requestId(raw?.search_token);
     if (raw?.contract_version !== 1 || !parsedPrincipal || !token || !Array.isArray(raw.suggestions) || raw.suggestions.length > 10) return null;
@@ -1038,9 +1042,9 @@ export function verificationCitySearchResponse(value: unknown): VerificationCity
 
 export function verificationCityDetailResponse(value: unknown): VerificationCityDetailData | null {
   return successData(value, (data) => {
-    const raw = exactObject(data, ["contract_version", "principal", "city"]);
+    const raw = requiredObject(data, ["contract_version", "principal", "city"]);
     const parsedPrincipal = principal(raw?.principal);
-    const city = exactObject(raw?.city, ["scope_key", "kind", "place_id", "display", "country_code", "place_token", "expires_at"]);
+    const city = requiredObject(raw?.city, ["scope_key", "kind", "place_id", "display", "country_code", "place_token", "expires_at"]);
     const key = scopeKey(city?.scope_key);
     const place = placeId(city?.place_id);
     const display = canonicalText(city?.display, 1, 120);
@@ -1054,7 +1058,7 @@ export function verificationCityDetailResponse(value: unknown): VerificationCity
 }
 
 function simulationMethod(value: unknown, personaMethod: boolean): VerificationSimulationMethod | null {
-  const raw = exactObject(value, ["status", "pending_age_seconds", "attempt", "retry_available"]);
+  const raw = requiredObject(value, ["status", "pending_age_seconds", "attempt", "retry_available"]);
   if (!raw) return null;
   const status = oneOf(raw?.status, VERIFICATION_METHOD_STATUSES);
   const pendingAge = nullableInteger(raw?.pending_age_seconds, 0, 2_592_000);
@@ -1064,7 +1068,7 @@ function simulationMethod(value: unknown, personaMethod: boolean): VerificationS
 }
 
 function simulationInput(value: unknown): VerificationSimulationInput | null {
-  const raw = exactObject(value, ["video", "persona", "imported_level", "imported_method_hint", "grant_level", "badge_visible"]);
+  const raw = requiredObject(value, ["video", "persona", "imported_level", "imported_method_hint", "grant_level", "badge_visible"]);
   if (!raw) return null;
   const video = simulationMethod(raw?.video, false);
   const persona = simulationMethod(raw?.persona, true);
@@ -1076,7 +1080,7 @@ function simulationInput(value: unknown): VerificationSimulationInput | null {
 }
 
 function modalAction(value: unknown): VerificationModalAction | null {
-  const raw = exactObject(value, ["kind", "label", "url"]);
+  const raw = requiredObject(value, ["kind", "label", "url"]);
   const kind = oneOf(raw?.kind, ["start_video", "start_persona", "open_verification_center", "url"] as const);
   const label = canonicalText(raw?.label, 1, 40);
   const url = nullableHttpsUrl(raw?.url);
@@ -1084,10 +1088,10 @@ function modalAction(value: unknown): VerificationModalAction | null {
 }
 
 function modal(value: unknown): VerificationModal | null {
-  const raw = exactObject(value, ["kind", "icon", "steps", "current_step", "title", "subtitle", "description", "attention_note", "reason", "attempt", "max_attempts", "manual_review_available", "primary_action", "secondary_action", "cancel_label", "provider_attribution"]);
+  const raw = requiredObject(value, ["kind", "icon", "steps", "current_step", "title", "subtitle", "description", "attention_note", "reason", "attempt", "max_attempts", "manual_review_available", "primary_action", "secondary_action", "cancel_label", "provider_attribution"]);
   if (!raw) return null;
   const kind = oneOf(raw?.kind, VERIFICATION_GATE_VARIANTS);
-  const icon = exactObject(raw?.icon, ["kind", "asset_key"]);
+  const icon = requiredObject(raw?.icon, ["kind", "asset_key"]);
   const asset = oneOf(icon?.asset_key, VERIFICATION_GATE_VARIANTS.map((variant) => `verification.${variant}`) as Array<`verification.${VerificationGateVariant}`>);
   const title = canonicalText(raw?.title, 1, 80);
   const subtitle = canonicalText(raw?.subtitle, 0, 120);
@@ -1107,7 +1111,7 @@ function modal(value: unknown): VerificationModal | null {
     || typeof raw.manual_review_available !== "boolean" || !Array.isArray(raw.steps) || raw.steps.length < 1 || raw.steps.length > 2) return null;
   const steps: VerificationModal["steps"] = [];
   for (let index = 0; index < raw.steps.length; index += 1) {
-    const step = exactObject(raw.steps[index], ["position", "method", "state"]);
+    const step = requiredObject(raw.steps[index], ["position", "method", "state"]);
     const method = oneOf(step?.method, VERIFICATION_METHODS);
     const state = oneOf(step?.state, ["complete", "current", "upcoming"] as const);
     if (step?.position !== index + 1 || !method || !state || steps.some((row) => row.method === method)) return null;
@@ -1121,7 +1125,7 @@ function modal(value: unknown): VerificationModal | null {
 }
 
 function simulatedFeature(value: unknown, expected: VerificationFeatureKey): VerificationSimulatedFeatureAccess | null {
-  const raw = exactObject(value, ["feature", "configured_requirement", "required_tier", "allowed", "missing_methods", "next_method", "copy_key", "modal"]);
+  const raw = requiredObject(value, ["feature", "configured_requirement", "required_tier", "allowed", "missing_methods", "next_method", "copy_key", "modal"]);
   const configured = oneOf(raw?.configured_requirement, VERIFICATION_EFFECTIVE_REQUIREMENTS);
   const required = oneOf(raw?.required_tier, VERIFICATION_EFFECTIVE_REQUIREMENTS);
   const missing = methodArray(raw?.missing_methods);
@@ -1135,13 +1139,13 @@ function simulatedFeature(value: unknown, expected: VerificationFeatureKey): Ver
 
 export function verificationSimulationResponse(value: unknown): VerificationSimulationData | null {
   return successData(value, (data) => {
-    const raw = exactObject(data, ["contract_version", "principal", "evaluated_at", "scope", "enabled_methods", "startable_methods", "tier_language", "method_statuses", "derived_level", "imported_level", "granted_level", "effective_level", "effective_source", "external_seal_would_show", "feature_access"]);
+    const raw = requiredObject(data, ["contract_version", "principal", "evaluated_at", "scope", "enabled_methods", "startable_methods", "tier_language", "method_statuses", "derived_level", "imported_level", "granted_level", "effective_level", "effective_source", "external_seal_would_show", "feature_access"]);
     const parsedPrincipal = principal(raw?.principal);
     const evaluated = integer(raw?.evaluated_at);
     const parsedScope = verificationScope(raw?.scope);
     const enabled = methodArray(raw?.enabled_methods);
     const startable = methodArray(raw?.startable_methods);
-    const statuses = exactObject(raw?.method_statuses, VERIFICATION_METHODS);
+    const statuses = requiredObject(raw?.method_statuses, VERIFICATION_METHODS);
     const video = oneOf(statuses?.video, VERIFICATION_METHOD_STATUSES);
     const personaStatus = oneOf(statuses?.persona, VERIFICATION_METHOD_STATUSES);
     const derived = oneOf(raw?.derived_level, VERIFICATION_LEVELS);
@@ -1173,7 +1177,7 @@ export function verificationSimulationResponse(value: unknown): VerificationSimu
 }
 
 function pendingMethodSummary(value: unknown, expected: VerificationMethod): VerificationPendingMethodSummary | null {
-  const raw = exactObject(value, ["method", "total", "in_sla", "overdue", "average_wait_seconds", "oldest_pending_at"]);
+  const raw = requiredObject(value, ["method", "total", "in_sla", "overdue", "average_wait_seconds", "oldest_pending_at"]);
   const total = integer(raw?.total);
   const inSla = integer(raw?.in_sla);
   const overdue = integer(raw?.overdue);
@@ -1186,7 +1190,7 @@ function pendingMethodSummary(value: unknown, expected: VerificationMethod): Ver
 
 export function verificationPendingSummaryResponse(value: unknown): VerificationPendingSummaryData | null {
   return successData(value, (data) => {
-    const raw = exactObject(data, ["contract_version", "principal", "evaluated_at", "total", "in_sla", "overdue", "average_wait_seconds", "methods"]);
+    const raw = requiredObject(data, ["contract_version", "principal", "evaluated_at", "total", "in_sla", "overdue", "average_wait_seconds", "methods"]);
     const parsedPrincipal = principal(raw?.principal);
     const evaluated = integer(raw?.evaluated_at);
     const total = integer(raw?.total);
@@ -1204,7 +1208,7 @@ export function verificationPendingSummaryResponse(value: unknown): Verification
 }
 
 function adminMethod(value: unknown, method: VerificationMethod): VerificationAdminMethodProjection | null {
-  const raw = exactObject(value, ["status", "raw_video_status", "can_start", "pending_phase", "pending_since", "member_safe_reason", "attempt", "max_attempts", "manual_review_available", "state_integrity"]);
+  const raw = requiredObject(value, ["status", "raw_video_status", "can_start", "pending_phase", "pending_since", "member_safe_reason", "attempt", "max_attempts", "manual_review_available", "state_integrity"]);
   if (!raw) return null;
   const status = oneOf(raw?.status, VERIFICATION_METHOD_STATUSES);
   const videoRaw = nullableOneOf(raw?.raw_video_status, ["not_started", "missing_requirements", "pending", "verified", "pending_re_review", "awaiting_avatar", "rejected", "new_video_requested"] as const);
@@ -1221,7 +1225,7 @@ function adminMethod(value: unknown, method: VerificationMethod): VerificationAd
 }
 
 function grant(value: unknown): VerificationGrant | null {
-  const raw = exactObject(value, ["level", "reason", "granted_by", "granted_at", "expires_at", "revision", "status", "evaluated_at"]);
+  const raw = requiredObject(value, ["level", "reason", "granted_by", "granted_at", "expires_at", "revision", "status", "evaluated_at"]);
   const level = oneOf(raw?.level, ["light", "strong"] as const);
   const reason = canonicalText(raw?.reason, 1, 300, true);
   const actor = canonicalEmail(raw?.granted_by);
@@ -1236,17 +1240,17 @@ function grant(value: unknown): VerificationGrant | null {
 }
 
 function userProjection(value: unknown): VerificationUserProjection | null {
-  const raw = exactObject(value, ["schema_version", "uid", "display_name", "evaluated_at", "scope", "enabled_methods", "startable_methods", "tier_language", "methods", "badge_visible", "derived_level", "imported", "import_integrity", "grant", "grant_revision", "effective_level", "effective_source", "external_seal_would_show", "feature_access"]);
+  const raw = requiredObject(value, ["schema_version", "uid", "display_name", "evaluated_at", "scope", "enabled_methods", "startable_methods", "tier_language", "methods", "badge_visible", "derived_level", "imported", "import_integrity", "grant", "grant_revision", "effective_level", "effective_source", "external_seal_would_show", "feature_access"]);
   const uid = integer(raw?.uid, 1, 2_147_483_647);
   const display = canonicalText(raw?.display_name, 0, 100);
   const evaluated = integer(raw?.evaluated_at);
-  const scopeRaw = exactObject(raw?.scope, ["kind", "country_code", "place_id", "display", "scope_key", "source"]);
+  const scopeRaw = requiredObject(raw?.scope, ["kind", "country_code", "place_id", "display", "scope_key", "source"]);
   const parsedScope = verificationScope(scopeRaw && { kind: scopeRaw.kind, country_code: scopeRaw.country_code, place_id: scopeRaw.place_id, display: scopeRaw.display });
   const key = scopeKey(scopeRaw?.scope_key);
   const scopeSource = oneOf(scopeRaw?.source, ["current_location", "registration_country", "ip_country", "global"] as const);
   const enabled = methodArray(raw?.enabled_methods);
   const startable = methodArray(raw?.startable_methods);
-  const methodsRaw = exactObject(raw?.methods, VERIFICATION_METHODS);
+  const methodsRaw = requiredObject(raw?.methods, VERIFICATION_METHODS);
   const video = adminMethod(methodsRaw?.video, "video");
   const personaMethod = adminMethod(methodsRaw?.persona, "persona");
   const derived = oneOf(raw?.derived_level, VERIFICATION_LEVELS);
@@ -1265,7 +1269,7 @@ function userProjection(value: unknown): VerificationUserProjection | null {
     || (parsedScope.kind === "city" && key !== `city:${parsedScope.place_id}`)) return null;
   let imported: VerificationUserProjection["imported"] = null;
   if (raw.imported !== null) {
-    const row = exactObject(raw.imported, ["level", "method_hint", "imported_from", "imported_at"]);
+    const row = requiredObject(raw.imported, ["level", "method_hint", "imported_from", "imported_at"]);
     const level = oneOf(row?.level, ["light", "strong"] as const);
     const hint = oneOf(row?.method_hint, ["persona", "video", "manual"] as const);
     const importedAt = integer(row?.imported_at);
@@ -1283,7 +1287,7 @@ function userProjection(value: unknown): VerificationUserProjection | null {
     || startable.some((method, index) => method !== expectedStartable[index])) return null;
   const access: VerificationUserProjection["feature_access"] = [];
   for (let index = 0; index < VERIFICATION_FEATURE_KEYS.length; index += 1) {
-    const row = exactObject(raw.feature_access[index], ["feature", "configured_requirement", "required_tier", "allowed"]);
+    const row = requiredObject(raw.feature_access[index], ["feature", "configured_requirement", "required_tier", "allowed"]);
     const configured = oneOf(row?.configured_requirement, VERIFICATION_EFFECTIVE_REQUIREMENTS);
     const required = oneOf(row?.required_tier, VERIFICATION_EFFECTIVE_REQUIREMENTS);
     if (row?.feature !== VERIFICATION_FEATURE_KEYS[index] || !configured || !required || typeof row.allowed !== "boolean") return null;
@@ -1304,7 +1308,7 @@ function userProjection(value: unknown): VerificationUserProjection | null {
 
 export function verificationUserDetailResponse(value: unknown): VerificationUserDetailData | null {
   return successData(value, (data) => {
-    const raw = exactObject(data, ["contract_version", "principal", "verification"]);
+    const raw = requiredObject(data, ["contract_version", "principal", "verification"]);
     const parsedPrincipal = principal(raw?.principal);
     const verification = userProjection(raw?.verification);
     return raw?.contract_version === 1 && parsedPrincipal && verification ? { contract_version: 1, principal: parsedPrincipal, verification } : null;
@@ -1313,11 +1317,11 @@ export function verificationUserDetailResponse(value: unknown): VerificationUser
 
 export function verificationGrantPreviewResponse(value: unknown): VerificationGrantPreviewData | null {
   return successData(value, (data) => {
-    const raw = exactObject(data, ["contract_version", "principal", "evaluated_at", "current", "preview"]);
+    const raw = requiredObject(data, ["contract_version", "principal", "evaluated_at", "current", "preview"]);
     const parsedPrincipal = principal(raw?.principal);
     const evaluated = integer(raw?.evaluated_at);
     const current = userProjection(raw?.current);
-    const preview = exactObject(raw?.preview, ["granted_level", "effective_level", "effective_source", "external_seal_would_show", "changes_effective_level", "newly_allowed_features", "still_blocked_features", "strong_grant_warning"]);
+    const preview = requiredObject(raw?.preview, ["granted_level", "effective_level", "effective_source", "external_seal_would_show", "changes_effective_level", "newly_allowed_features", "still_blocked_features", "strong_grant_warning"]);
     const granted = oneOf(preview?.granted_level, ["light", "strong"] as const);
     const effective = oneOf(preview?.effective_level, VERIFICATION_LEVELS);
     const source = oneOf(preview?.effective_source, VERIFICATION_PROVENANCE);
@@ -1354,6 +1358,7 @@ export function verificationGrantMutationResponse(value: unknown): VerificationG
 }
 
 function exactBody(body: JsonObject, required: readonly string[], optional: readonly string[] = []): JsonObject | null {
+  // Same-origin request bodies remain exact so undeclared fields cannot reach Core.
   const keys = Object.keys(body);
   return required.every((key) => keys.includes(key)) && keys.every((key) => required.includes(key) || optional.includes(key)) ? body : null;
 }
@@ -1663,7 +1668,10 @@ export const VERIFICATION_ERROR_STATUSES = {
 export type VerificationError = keyof typeof VERIFICATION_ERROR_STATUSES;
 
 export function verificationErrorResponse(value: unknown): VerificationError | null {
-  const envelope = webadminErrorEnvelope(value) ?? adminBridgeErrorEnvelope(value);
+  const core = webadminErrorEnvelope(value);
+  // Conflict `data` selects the authoritative conflict parser; the tolerant
+  // bridge subset must not reinterpret a versioned Core conflict as no-data.
+  const envelope = core ?? (webadminErrorEnvelope(value, "required") ? null : adminBridgeErrorEnvelope(value));
   const error = typeof envelope?.error === "string" && Object.prototype.hasOwnProperty.call(VERIFICATION_ERROR_STATUSES, envelope.error) ? envelope.error as VerificationError : null;
   return envelope && error && envelope.status_code === VERIFICATION_ERROR_STATUSES[error] ? error : null;
 }
@@ -1683,7 +1691,9 @@ export function verificationConflictResponse(value: unknown): VerificationConfli
   const envelope = webadminErrorEnvelope(value, "required");
   if (envelope?.status_code !== 409 || envelope.error !== "verification-conflict") return null;
   const data = record(envelope.data);
-  if (data?.contract_version !== 1 || Object.keys(data).length !== 2) return null;
+  const branches = ["policy", "copy_pair", "pending_settings", "badge", "verification"] as const;
+  const presentBranches = data ? branches.filter((key) => Object.hasOwn(data, key)) : [];
+  if (data?.contract_version !== 1 || presentBranches.length !== 1) return null;
   if (Object.prototype.hasOwnProperty.call(data, "policy")) { const parsed = policy(data.policy); return parsed ? { kind: "policy", policy: parsed } : null; }
   if (Object.prototype.hasOwnProperty.call(data, "copy_pair")) { const parsed = copyPair(data.copy_pair); return parsed ? { kind: "copy", copy_pair: parsed } : null; }
   if (Object.prototype.hasOwnProperty.call(data, "pending_settings")) { const parsed = pendingSettings(data.pending_settings); return parsed ? { kind: "pending", pending_settings: parsed } : null; }

@@ -86,7 +86,7 @@ test("the managed push setting preserves exact enum metadata and round-trips can
   }
 });
 
-test("known setting metadata is closed while the surrounding settings map stays additive", () => {
+test("known setting metadata ignores unknown fields while the surrounding settings map stays additive", () => {
   const withFutureKey = success();
   (withFutureKey.settings as Record<string, unknown>).future_managed_setting = {
     value: "SENTINEL-MUST-NOT-ENTER-STATE",
@@ -94,6 +94,7 @@ test("known setting metadata is closed while the surrounding settings map stays 
   const projected = pushSettingsResponse(withFutureKey);
   assert.ok(projected);
   assert.doesNotMatch(JSON.stringify(projected), /SENTINEL-MUST-NOT-ENTER-STATE/);
+  assert.deepEqual(pushDeliverySetting({ ...setting(), unknown: true }), pushDeliverySetting(setting()));
 
   const malformed: Record<string, unknown>[] = [];
   for (const key of Object.keys(setting())) {
@@ -102,7 +103,6 @@ test("known setting metadata is closed while the surrounding settings map stays 
     malformed.push(candidate);
   }
   malformed.push(
-    { ...setting(), unknown: true },
     { ...setting(), value: "FCM" },
     { ...setting(), value: "firebase" },
     { ...setting(), type: "string" },
@@ -124,15 +124,15 @@ test("known setting metadata is closed while the surrounding settings map stays 
   assert.ok(pushDeliverySetting({ ...setting(), updated_at: 0, updated_by: "" }));
 });
 
-test("the complete legacy success envelope is strict and never guesses a missing mode", () => {
+test("the complete legacy success envelope ignores unknown fields and never guesses a missing mode", () => {
   const base = success();
+  assert.deepEqual(pushSettingsResponse({ ...base, extra: true }), pushSettingsResponse(base));
   for (const key of Object.keys(base)) {
     const candidate = structuredClone(base);
     delete candidate[key];
     assert.equal(pushSettingsResponse(candidate), null, `missing ${key}`);
   }
   for (const candidate of [
-    { ...base, extra: true },
     { ...base, success: 1 },
     { ...base, status_code: "200" },
     { ...base, message: "200" },
@@ -163,6 +163,9 @@ test("all four member channel combinations parse without retaining identifiers",
     }
   }
 
+  const channels = { fcm_token_present: true, onesignal_id_present: false };
+  assert.deepEqual(pushChannels({ ...channels, token: "RAW" }), pushChannels(channels));
+
   for (const malformed of [
     null,
     [],
@@ -171,7 +174,6 @@ test("all four member channel combinations parse without retaining identifiers",
     { onesignal_id_present: false },
     { fcm_token_present: 1, onesignal_id_present: false },
     { fcm_token_present: true, onesignal_id_present: "false" },
-    { fcm_token_present: true, onesignal_id_present: false, token: "RAW" },
   ]) {
     assert.equal(pushChannels(malformed), null, JSON.stringify(malformed));
   }
@@ -208,15 +210,21 @@ test("user detail tolerates an absent dormant block but requires and validates i
     assert.doesNotMatch(serialized, new RegExp(leak));
   }
 
-  for (const malformed of [
-    null,
-    { fcm_token_present: true },
-    { fcm_token_present: true, onesignal_id_present: 0 },
-    {
+  const additive = userDetail({
+    ...base,
+    push_channels: {
       fcm_token_present: true,
       onesignal_id_present: true,
       raw_identifier: "RAW-ONESIGNAL-ID-SENTINEL",
     },
+  }, true);
+  assert.deepEqual(additive?.push_channels, { fcm_token_present: true, onesignal_id_present: true });
+  assert.doesNotMatch(JSON.stringify(additive), /RAW-ONESIGNAL-ID-SENTINEL/);
+
+  for (const malformed of [
+    null,
+    { fcm_token_present: true },
+    { fcm_token_present: true, onesignal_id_present: 0 },
   ]) {
     const payload = { ...base, push_channels: malformed };
     assert.equal(userDetail(payload), null, "present malformed blocks fail even while dormant");
@@ -224,7 +232,7 @@ test("user detail tolerates an absent dormant block but requires and validates i
   }
 });
 
-test("closed logical errors require their exact status and legacy envelope", () => {
+test("logical errors require their exact status and known legacy envelope fields", () => {
   for (const [error, status] of Object.entries(PUSH_ADMIN_ERROR_STATUSES)) {
     assert.equal(pushAdminError(errorEnvelope(error, status)), error);
     assert.equal(pushAdminError(errorEnvelope(error, status === 500 ? 422 : 500)), null);
@@ -248,7 +256,7 @@ test("closed logical errors require their exact status and legacy envelope", () 
     status_code: 403,
     error: "owner-required",
   }), null);
-  assert.equal(pushAdminError({ ...errorEnvelope("query-failed", 500), extra: true }), null);
+  assert.equal(pushAdminError({ ...errorEnvelope("query-failed", 500), extra: true }), "query-failed");
 });
 
 test("existing bridge actions retain viewer-read and editor-write policy without inventing push routes", () => {

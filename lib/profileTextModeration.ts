@@ -98,6 +98,7 @@ function record(value: unknown): JsonObject | null {
     : null;
 }
 
+// Exact objects are reserved for browser-owned commands and persisted retry identities.
 function exactObject(value: unknown, keys: readonly string[]): JsonObject | null {
   const source = record(value);
   if (!source) return null;
@@ -107,6 +108,11 @@ function exactObject(value: unknown, keys: readonly string[]): JsonObject | null
     && actual.every((key, index) => key === expected[index])
     ? source
     : null;
+}
+
+function requiredObject(value: unknown, keys: readonly string[]): JsonObject | null {
+  const source = record(value);
+  return source && keys.every((key) => Object.hasOwn(source, key)) ? source : null;
 }
 
 function hasOnlyKeys(value: JsonObject, keys: readonly string[]): boolean {
@@ -213,7 +219,7 @@ function expectedActions(principal: ProfileTextModerationPrincipal): ProfileText
 }
 
 function profileTextModerationPrincipal(value: unknown): ProfileTextModerationPrincipal | null {
-  const source = exactObject(value, ["role", "capabilities"]);
+  const source = requiredObject(value, ["role", "capabilities"]);
   const role = oneOf(source?.role, ["viewer", "admin", "owner"] as const);
   const capabilities = orderedUnique(source?.capabilities, PROFILE_TEXT_MODERATION_CAPABILITIES);
   if (!role || !capabilities || !exactOrdered(capabilities, expectedCapabilities(role))) return null;
@@ -221,7 +227,7 @@ function profileTextModerationPrincipal(value: unknown): ProfileTextModerationPr
 }
 
 export function profileTextModerationAdminMe(value: unknown): ProfileTextModerationAdminMe | null {
-  const source = exactObject(value, ["contract_version", "contract_ready", "principal", "actions"]);
+  const source = requiredObject(value, ["contract_version", "contract_ready", "principal", "actions"]);
   const principal = profileTextModerationPrincipal(source?.principal);
   if (source?.contract_version !== 1 || typeof source.contract_ready !== "boolean" || !principal) return null;
   const actions = source.contract_ready ? expectedActions(principal) : [];
@@ -262,7 +268,7 @@ export async function profileTextContentSha256(
 }
 
 async function profileTextModerationItem(value: unknown): Promise<ProfileTextModerationItem | null> {
-  const source = exactObject(value, [
+  const source = requiredObject(value, [
     "uid", "field", "text", "text_length", "content_sha256", "status",
     "revision", "status_updated_at", "member",
   ]);
@@ -277,7 +283,7 @@ async function profileTextModerationItem(value: unknown): Promise<ProfileTextMod
   const hash = typeof source?.content_sha256 === "string" && SHA256.test(source.content_sha256)
     ? source.content_sha256
     : null;
-  const member = exactObject(source?.member, ["display_name", "username"]);
+  const member = requiredObject(source?.member, ["display_name", "username"]);
   const displayName = canonicalPlainText(member?.display_name, 100);
   const username = canonicalPlainText(member?.username, 120);
   if (!text || length !== scalarLength(text) || !hash || !status || revision === null || updatedAt === null
@@ -311,12 +317,12 @@ export async function profileTextModerationListResponse(
   expected: ProfileTextModerationListExpectation,
 ): Promise<ProfileTextModerationList | null> {
   const envelope = webadminDataSuccessEnvelope(value);
-  const source = exactObject(envelope?.data, [
+  const source = requiredObject(envelope?.data, [
     "contract_version", "principal", "actions", "filter", "items", "next_cursor", "total",
   ]);
   const principal = profileTextModerationPrincipal(source?.principal);
   if (source?.contract_version !== 1 || !principal || !exactOrdered(source.actions, expectedActions(principal))) return null;
-  const filterSource = exactObject(source.filter, ["field", "uid"]);
+  const filterSource = requiredObject(source.filter, ["field", "uid"]);
   const field = oneOf(filterSource?.field, ["headline", "about_me", "all"] as const);
   const uid = filterSource?.uid === null ? null : integer(filterSource?.uid, 1, 2_147_483_647);
   const total = integer(source.total, 0, Number.MAX_SAFE_INTEGER);
@@ -357,7 +363,7 @@ export async function profileTextModerationListResponse(
 
 export async function profileTextModerationMutationResponse(value: unknown): Promise<ProfileTextModerationMutation | null> {
   const envelope = webadminDataSuccessEnvelope(value);
-  const source = exactObject(envelope?.data, ["contract_version", "item", "replayed"]);
+  const source = requiredObject(envelope?.data, ["contract_version", "item", "replayed"]);
   const item = await profileTextModerationItem(source?.item);
   return source?.contract_version === 1 && item && item.status !== "pending" && typeof source.replayed === "boolean"
     ? { contract_version: 1, item, replayed: source.replayed }
@@ -367,7 +373,7 @@ export async function profileTextModerationMutationResponse(value: unknown): Pro
 export async function profileTextModerationConflict(value: unknown): Promise<ProfileTextModerationConflict | null> {
   const envelope = webadminErrorEnvelope(value, "required");
   if (!envelope || envelope.status_code !== 409 || envelope.error !== "profile-text-moderation-conflict") return null;
-  const source = exactObject(envelope.data, ["contract_version", "current"]);
+  const source = requiredObject(envelope.data, ["contract_version", "current"]);
   if (source?.contract_version !== 1) return null;
   if (source.current === null) return { contract_version: 1, current: null };
   const current = await profileTextModerationItem(source.current);
@@ -414,7 +420,10 @@ export const PROFILE_TEXT_MODERATION_ERROR_STATUSES: Readonly<Record<string, num
 };
 
 export function profileTextModerationError(value: unknown): string | null {
-  const envelope = webadminErrorEnvelope(value) ?? adminBridgeErrorEnvelope(value);
+  const core = webadminErrorEnvelope(value);
+  // A Core conflict carries `data`; do not let the tolerant bridge subset
+  // reinterpret that versioned envelope as a plain bridge refusal.
+  const envelope = core ?? (webadminErrorEnvelope(value, "required") ? null : adminBridgeErrorEnvelope(value));
   const error = envelope?.error;
   return error && Object.hasOwn(PROFILE_TEXT_MODERATION_ERROR_STATUSES, error)
     && PROFILE_TEXT_MODERATION_ERROR_STATUSES[error] === envelope.status_code
@@ -507,6 +516,7 @@ export function profileTextModerationShouldRetainMutation(error: string | null):
 }
 
 function normalizeListBody(body: JsonObject): JsonObject | null {
+  // Same-origin request bodies remain closed so undeclared fields cannot reach Core.
   if (!hasOnlyKeys(body, ["contract_version", "field", "uid", "page_size", "cursor"])
     || body.contract_version !== 1) return null;
   const field = body.field === undefined
@@ -594,6 +604,7 @@ export function profileTextModerationPendingMutation(
 }
 
 export function profileTextModerationPendingFrom(value: unknown): ProfileTextModerationPendingMutation | null {
+  // Persisted retry identity remains exact so replay cannot acquire new semantics.
   const source = exactObject(value, ["version", "action", "target", "payload"]);
   return source?.version === 1 && source.action === "moderation_profile_text_action"
     && typeof source.target === "string"

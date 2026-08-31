@@ -135,6 +135,7 @@ function object(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+// Exact objects are reserved for browser-owned commands and persisted retry identities.
 function exactObject(value: unknown, keys: readonly string[]): Record<string, unknown> | null {
   const raw = object(value);
   if (!raw) return null;
@@ -144,6 +145,11 @@ function exactObject(value: unknown, keys: readonly string[]): Record<string, un
     return null;
   }
   return raw;
+}
+
+function requiredObject(value: unknown, keys: readonly string[]): Record<string, unknown> | null {
+  const raw = object(value);
+  return raw && keys.every((key) => Object.hasOwn(raw, key)) ? raw : null;
 }
 
 function integer(value: unknown, minimum: number, maximum = 2_147_483_647): number | null {
@@ -193,7 +199,7 @@ function email(value: unknown): string | null {
 }
 
 function identity(value: unknown): ReportedContentIdentity | null {
-  const raw = exactObject(value, ["uid", "display_name", "username"]);
+  const raw = requiredObject(value, ["uid", "display_name", "username"]);
   if (!raw) return null;
   const uid = integer(raw.uid, 1);
   const displayName = boundedText(raw.display_name, 0, 100);
@@ -206,12 +212,12 @@ function identity(value: unknown): ReportedContentIdentity | null {
 function subjectContent(value: unknown): ReportedContentSubject | null {
   const raw = object(value);
   if (raw?.kind === "profile") {
-    const profile = exactObject(raw, ["kind", "summary"]);
+    const profile = requiredObject(raw, ["kind", "summary"]);
     const summary = boundedText(profile?.summary, 0, 500);
     return profile && summary !== null ? { kind: "profile", summary } : null;
   }
   if (raw?.kind !== "chat_message") return null;
-  const chat = exactObject(raw, [
+  const chat = requiredObject(raw, [
     "kind",
     "message_id",
     "availability",
@@ -246,7 +252,7 @@ function subjectContent(value: unknown): ReportedContentSubject | null {
 
 function resolution(value: unknown): ReportedContentResolution | undefined {
   if (value === null) return null;
-  const raw = exactObject(value, ["decision", "reason", "decided_at", "decided_by"]);
+  const raw = requiredObject(value, ["decision", "reason", "decided_at", "decided_by"]);
   if (!raw) return undefined;
   const decision = oneOf(raw.decision, REPORTED_CONTENT_DECISIONS);
   const reason = boundedText(raw.reason, 1, 500);
@@ -258,7 +264,7 @@ function resolution(value: unknown): ReportedContentResolution | undefined {
 }
 
 export function reportedContentReport(value: unknown): ReportedContentReport | null {
-  const raw = exactObject(value, [
+  const raw = requiredObject(value, [
     "report_id",
     "status",
     "revision",
@@ -324,7 +330,7 @@ export function reportedContentReport(value: unknown): ReportedContentReport | n
 }
 
 function principal(value: unknown): ReportedContentPrincipal | null {
-  const raw = exactObject(value, ["role", "capabilities"]);
+  const raw = requiredObject(value, ["role", "capabilities"]);
   const role = oneOf(raw?.role, ["viewer", "admin", "owner"] as const);
   if (!raw || role === null || !Array.isArray(raw.capabilities)) return null;
   const capabilities: ReportedContentCapability[] = [];
@@ -360,9 +366,9 @@ export function reportedContentReportsAreOrdered(
   return true;
 }
 
-/** Decode the exact version-1 `moderation_reported_list` data object. */
+/** Decode the version-1 `moderation_reported_list` data object. */
 export function reportedContentListData(value: unknown): ReportedContentListData | null {
-  const raw = exactObject(value, [
+  const raw = requiredObject(value, [
     "contract_version",
     "principal",
     "filter",
@@ -372,7 +378,7 @@ export function reportedContentListData(value: unknown): ReportedContentListData
   ]);
   if (!raw || raw.contract_version !== REPORTED_CONTENT_CONTRACT_VERSION) return null;
   const actor = principal(raw.principal);
-  const filterRaw = exactObject(raw.filter, ["status", "target_type", "report_id"]);
+  const filterRaw = requiredObject(raw.filter, ["status", "target_type", "report_id"]);
   const status = oneOf(filterRaw?.status, REPORTED_CONTENT_STATUS_FILTERS);
   const targetType = oneOf(filterRaw?.target_type, REPORTED_CONTENT_TARGET_FILTERS);
   const exactReportId = filterRaw?.report_id === null ? null : reportId(filterRaw?.report_id);
@@ -437,7 +443,7 @@ export function reportedContentListResponse(value: unknown): ReportedContentList
 }
 
 export function reportedContentActionData(value: unknown): ReportedContentActionData | null {
-  const raw = exactObject(value, ["contract_version", "report", "replayed"]);
+  const raw = requiredObject(value, ["contract_version", "report", "replayed"]);
   const report = reportedContentReport(raw?.report);
   return raw?.contract_version === 1
     && report
@@ -456,7 +462,7 @@ export function reportedContentActionResponse(value: unknown): ReportedContentAc
 
 export function reportedContentConflictResponse(value: unknown): ReportedContentConflictData | null {
   const envelope = webadminErrorEnvelope(value, "required");
-  const data = exactObject(envelope?.data, ["contract_version", "report"]);
+  const data = requiredObject(envelope?.data, ["contract_version", "report"]);
   const report = reportedContentReport(data?.report);
   return envelope?.status_code === 409
     && envelope.error === "reported-content-conflict"
@@ -553,7 +559,10 @@ export function reportedContentErrorKey(value: unknown): ReportedContentErrorKey
 
 /** Decode a refusal without conflict data; malformed/unknown envelopes stay uncertain. */
 export function reportedContentErrorResponse(value: unknown): string | null {
-  const envelope = webadminErrorEnvelope(value) ?? adminBridgeErrorEnvelope(value);
+  const core = webadminErrorEnvelope(value);
+  // Conflict data selects the authoritative conflict decoder and must not be
+  // reclassified through the tolerant three-key bridge subset.
+  const envelope = core ?? (webadminErrorEnvelope(value, "required") ? null : adminBridgeErrorEnvelope(value));
   const error = typeof envelope?.error === "string"
     && Object.prototype.hasOwnProperty.call(REPORTED_CONTENT_ERROR_STATUSES, envelope.error)
     ? envelope.error as keyof typeof REPORTED_CONTENT_ERROR_STATUSES
@@ -608,6 +617,7 @@ export function reportedContentDecisionPayload(
 export function reportedContentPendingDecision(
   value: unknown,
 ): ReportedContentPendingDecision | null {
+  // Persisted retry identity remains exact so replay cannot acquire new semantics.
   const raw = exactObject(value, [
     "version",
     "reportId",

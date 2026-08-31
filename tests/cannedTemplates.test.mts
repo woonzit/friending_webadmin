@@ -152,10 +152,10 @@ test("canonical email output has a closed HTML vocabulary and a no-network sandb
   assert.doesNotMatch(spacedDocument, /<\/?a\b/);
 });
 
-test("template rows fail closed on unknown, missing, loose, unsafe, or channel-incompatible material", () => {
+test("template rows ignore unknown fields and fail closed on missing or invalid known material", () => {
   const template = clone(emailList().templates[0]) as unknown as JsonObject;
+  assert.deepEqual(cannedTemplate({ ...template, provider_key: "private" }), cannedTemplate(template));
   const mutations: Array<(row: JsonObject) => void> = [
-    (row) => { row.provider_key = "private"; },
     (row) => { delete row.revision; },
     (row) => { row.template_id = "ABC"; },
     (row) => { row.revision = "2"; },
@@ -187,15 +187,22 @@ test("template rows fail closed on unknown, missing, loose, unsafe, or channel-i
   assert.equal(cannedTemplate({ ...push, subject: "x".repeat(81) }), null);
 });
 
-test("list parsing binds the response to the exact request and rejects false partial state", () => {
+test("list parsing ignores unknown fields, binds the request, and rejects false partial state", () => {
+  const additive = clone(fixtures.list_email);
+  additive.trace = "extra";
+  data(additive).future = true;
+  object(data(additive).principal).provider = "private";
+  object((data(additive).templates as JsonObject[])[0]).provider_key = "private";
+  assert.deepEqual(
+    cannedTemplateListResponse(additive, expected("email")),
+    cannedTemplateListResponse(fixtures.list_email, expected("email")),
+  );
   const mutations: Array<(raw: JsonObject) => void> = [
-    (raw) => { raw.trace = "extra"; },
     (raw) => { data(raw).channel = "push"; },
     (raw) => { data(raw).query = "different"; },
     (raw) => { data(raw).total = 1; },
     (raw) => { data(raw).next_cursor = "bad cursor"; },
     (raw) => { object(data(raw).principal).capabilities = ["canned_templates_write", "canned_templates_read"]; },
-    (raw) => { object(data(raw).principal).provider = "private"; },
     (raw) => { const rows = data(raw).templates as unknown[]; rows.reverse(); },
     (raw) => { const rows = data(raw).templates as unknown[]; rows.push(clone(rows[0])); data(raw).total = 3; },
   ];
@@ -411,6 +418,10 @@ test("mutation responses converge only on the exact pending identity and canonic
   const pendingUpdate = cannedTemplatePendingSave(update.value);
   const saveResult = cannedTemplateSaveResponse(fixtures.save_email);
   assert.ok(saveResult);
+  const additiveSave = clone(fixtures.save_email);
+  data(additiveSave).future = true;
+  object(data(additiveSave).template).provider_key = "private";
+  assert.deepEqual(cannedTemplateSaveResponse(additiveSave), saveResult);
   assert.equal(cannedTemplateSaveConverged(saveResult, pendingUpdate), true);
   assert.equal(cannedTemplateSaveConverged(
     { ...saveResult, template: { ...saveResult.template, revision: 4 } },
@@ -430,16 +441,24 @@ test("mutation responses converge only on the exact pending identity and canonic
   assert.ok(deletion.ok);
   const deleteResult = cannedTemplateDeleteResponse(fixtures.delete_email);
   assert.ok(deleteResult);
+  const additiveDelete = clone(fixtures.delete_email);
+  data(additiveDelete).future = true;
+  object(data(additiveDelete).deleted).provider_key = "private";
+  assert.deepEqual(cannedTemplateDeleteResponse(additiveDelete), deleteResult);
   assert.equal(cannedTemplateDeleteConverged(
     deleteResult,
     cannedTemplatePendingDelete("email", deletion.value),
   ), true);
 });
 
-test("conflicts adopt one exact authoritative row or tombstone and never merge drafts", () => {
+test("conflicts adopt one authoritative known row or tombstone and never merge drafts", () => {
   const current = emailList();
   const templateConflict = cannedTemplateConflictResponse(fixtures.conflict_template);
   assert.ok(templateConflict?.template);
+  const additiveConflict = clone(fixtures.conflict_template);
+  data(additiveConflict).future = true;
+  object(data(additiveConflict).template).provider_key = "private";
+  assert.deepEqual(cannedTemplateConflictResponse(additiveConflict), templateConflict);
   const update = cannedTemplateSavePayload("email", current.templates[0], {
     name: "Welcome email",
     subject: "Welcome to Friending",

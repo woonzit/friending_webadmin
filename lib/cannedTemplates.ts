@@ -167,6 +167,7 @@ function object(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+// Exact objects are reserved for browser-owned commands and persisted retry identities.
 function exactObject(value: unknown, keys: readonly string[]): Record<string, unknown> | null {
   const raw = object(value);
   if (!raw) return null;
@@ -176,6 +177,11 @@ function exactObject(value: unknown, keys: readonly string[]): Record<string, un
     && actual.every((key, index) => key === expected[index])
     ? raw
     : null;
+}
+
+function requiredObject(value: unknown, keys: readonly string[]): Record<string, unknown> | null {
+  const raw = object(value);
+  return raw && keys.every((key) => Object.hasOwn(raw, key)) ? raw : null;
 }
 
 function integer(
@@ -402,7 +408,7 @@ export function cannedTemplateEmailPreviewDocument(body: unknown): string | null
 }
 
 function principal(value: unknown): CannedTemplatePrincipal | null {
-  const raw = exactObject(value, ["role", "capabilities"]);
+  const raw = requiredObject(value, ["role", "capabilities"]);
   const role = oneOf(raw?.role, ["viewer", "admin", "owner"] as const);
   if (!raw || role === null || !Array.isArray(raw.capabilities)) return null;
   const capabilities: CannedTemplateCapability[] = [];
@@ -423,7 +429,7 @@ export function cannedTemplateCanWrite(value: CannedTemplatePrincipal): boolean 
 }
 
 export function cannedTemplate(value: unknown): CannedTemplate | null {
-  const raw = exactObject(value, [
+  const raw = requiredObject(value, [
     "template_id",
     "channel",
     "revision",
@@ -514,7 +520,7 @@ export function cannedTemplateListData(
   value: unknown,
   expected: CannedTemplateListRequest,
 ): CannedTemplateListData | null {
-  const raw = exactObject(value, [
+  const raw = requiredObject(value, [
     "contract_version",
     "principal",
     "channel",
@@ -666,6 +672,7 @@ export function cannedTemplateDeletePayload(
 }
 
 function structuralSavePayload(value: unknown): CannedTemplateSavePayload | null {
+  // Browser command bodies remain exact so undeclared fields cannot reach Core.
   const raw = exactObject(value, [
     "contract_version",
     "id",
@@ -768,6 +775,7 @@ export function cannedTemplatePendingDelete(
 }
 
 export function cannedTemplatePendingMutation(value: unknown): CannedTemplatePendingMutation | null {
+  // Persisted retry identity remains exact so replay cannot acquire new semantics.
   const raw = exactObject(value, ["version", "action", "channel", "payload"]);
   const channel = oneOf(raw?.channel, CANNED_TEMPLATE_CHANNELS);
   if (!raw || raw.version !== 1 || !channel) return null;
@@ -786,7 +794,7 @@ export const CANNED_TEMPLATE_PENDING_STORAGE_KEY =
   "friending.canned-templates.pending-mutation.v1";
 
 function deleted(value: unknown): CannedTemplateDeleted | null {
-  const raw = exactObject(value, ["template_id", "channel", "revision", "deleted_at"]);
+  const raw = requiredObject(value, ["template_id", "channel", "revision", "deleted_at"]);
   const id = templateId(raw?.template_id);
   const channel = oneOf(raw?.channel, CANNED_TEMPLATE_CHANNELS);
   const revision = integer(raw?.revision, 2);
@@ -801,7 +809,7 @@ function deleted(value: unknown): CannedTemplateDeleted | null {
 
 export function cannedTemplateSaveResponse(value: unknown): CannedTemplateSaveData | null {
   const envelope = webadminDataSuccessEnvelope(value);
-  const raw = exactObject(envelope?.data, ["contract_version", "template", "replayed"]);
+  const raw = requiredObject(envelope?.data, ["contract_version", "template", "replayed"]);
   const template = cannedTemplate(raw?.template);
   return raw?.contract_version === 1
     && template
@@ -812,7 +820,7 @@ export function cannedTemplateSaveResponse(value: unknown): CannedTemplateSaveDa
 
 export function cannedTemplateDeleteResponse(value: unknown): CannedTemplateDeleteData | null {
   const envelope = webadminDataSuccessEnvelope(value);
-  const raw = exactObject(envelope?.data, ["contract_version", "deleted", "replayed"]);
+  const raw = requiredObject(envelope?.data, ["contract_version", "deleted", "replayed"]);
   const tombstone = deleted(raw?.deleted);
   return raw?.contract_version === 1
     && tombstone
@@ -823,7 +831,7 @@ export function cannedTemplateDeleteResponse(value: unknown): CannedTemplateDele
 
 export function cannedTemplateConflictResponse(value: unknown): CannedTemplateConflictData | null {
   const envelope = webadminErrorEnvelope(value, "required");
-  const raw = exactObject(envelope?.data, ["contract_version", "template", "deleted"]);
+  const raw = requiredObject(envelope?.data, ["contract_version", "template", "deleted"]);
   if (envelope?.status_code !== 409
     || envelope.error !== "canned-template-conflict"
     || raw?.contract_version !== 1) return null;

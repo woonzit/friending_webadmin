@@ -123,6 +123,7 @@ function record(value: unknown): JsonObject | null {
     : null;
 }
 
+// Exact objects are reserved for browser-owned commands and persisted retry identities.
 function exactObject(value: unknown, keys: readonly string[]): JsonObject | null {
   const source = record(value);
   if (!source) return null;
@@ -132,6 +133,11 @@ function exactObject(value: unknown, keys: readonly string[]): JsonObject | null
     && actual.every((key, index) => key === expected[index])
     ? source
     : null;
+}
+
+function requiredObject(value: unknown, keys: readonly string[]): JsonObject | null {
+  const source = record(value);
+  return source && keys.every((key) => Object.hasOwn(source, key)) ? source : null;
 }
 
 function oneOf<const T extends readonly string[]>(value: unknown, values: T): T[number] | null {
@@ -201,14 +207,14 @@ function expectedCapabilities(role: AdminGrantedVerificationRole): AdminGrantedV
 }
 
 function adminGrantedVerificationPrincipal(value: unknown): AdminGrantedVerificationPrincipal | null {
-  const source = exactObject(value, ["role", "capabilities"]);
+  const source = requiredObject(value, ["role", "capabilities"]);
   const role = oneOf(source?.role, ["viewer", "admin", "owner"] as const);
   if (!role || !exactOrdered(source?.capabilities, expectedCapabilities(role))) return null;
   return { role, capabilities: expectedCapabilities(role) };
 }
 
 export function adminGrantedVerificationAdminMe(value: unknown): AdminGrantedVerificationAdminMe | null {
-  const source = exactObject(value, ["contract_version", "contract_ready", "principal", "actions"]);
+  const source = requiredObject(value, ["contract_version", "contract_ready", "principal", "actions"]);
   const principal = adminGrantedVerificationPrincipal(source?.principal);
   if (source?.contract_version !== 1 || typeof source.contract_ready !== "boolean" || !principal) return null;
   const expectedActions = source.contract_ready && principal.capabilities.includes("verification_grant_edit")
@@ -265,7 +271,7 @@ export function adminGrantedVerificationLegacyReceiptRetryAuthorized(
 }
 
 function adminGrantedSeal(value: unknown, evaluatedAt: number): AdminGrantedSeal | null {
-  const source = exactObject(value, [
+  const source = requiredObject(value, [
     "method", "level", "method_hint", "reason_length", "reason_sha256", "granted_by",
     "granted_at", "expires_at", "revision", "status", "evaluated_at",
   ]);
@@ -303,7 +309,7 @@ function adminGrantedSeal(value: unknown, evaluatedAt: number): AdminGrantedSeal
 }
 
 export function adminGrantedVerificationResource(value: unknown): AdminGrantedVerificationResource | null {
-  const source = exactObject(value, [
+  const source = requiredObject(value, [
     "schema_version", "uid", "evaluated_at", "enabled_methods", "grant_revision",
     "admin_grant", "effective_level", "effective_source", "external_seal_would_show",
   ]);
@@ -344,7 +350,7 @@ export function adminGrantedVerificationSelectedDetailResponse(
   value: unknown,
 ): AdminGrantedVerificationSelectedDetail | null {
   const envelope = webadminDataSuccessEnvelope(value);
-  const source = exactObject(envelope?.data, [
+  const source = requiredObject(envelope?.data, [
     "contract_version", "principal", "verification", "admin_granted_verification",
   ]);
   if (!envelope || source?.contract_version !== 1) return null;
@@ -384,7 +390,7 @@ export function adminGrantedVerificationMutationResponse(
   value: unknown,
 ): AdminGrantedVerificationMutation | null {
   const envelope = webadminDataSuccessEnvelope(value);
-  const source = exactObject(envelope?.data, [
+  const source = requiredObject(envelope?.data, [
     "contract_version", "principal", "admin_granted_verification", "replayed",
   ]);
   const principal = adminGrantedVerificationPrincipal(source?.principal);
@@ -412,7 +418,7 @@ export function adminGrantedVerificationConflictResponse(
 ): AdminGrantedVerificationConflict | null {
   const envelope = webadminErrorEnvelope(value, "required");
   const error = oneOf(envelope?.error, CONFLICT_ERRORS);
-  const source = exactObject(envelope?.data, ["contract_version", "admin_granted_verification"]);
+  const source = requiredObject(envelope?.data, ["contract_version", "admin_granted_verification"]);
   const resource = adminGrantedVerificationResource(source?.admin_granted_verification);
   return envelope?.status_code === 409 && error && source?.contract_version === 1 && resource
     ? { error, contract_version: 1, admin_granted_verification: resource }
@@ -536,6 +542,7 @@ function normalizeCommandBody(
   action: AdminGrantedVerificationAction,
   body: JsonObject,
 ): JsonObject | null {
+  // Browser commands remain exact so unknown caller fields never reach Core.
   const source = exactObject(body, [
     "contract_version", "uid", "method", "reason", "request_id", "expected_revision",
   ]);
@@ -594,6 +601,7 @@ export function adminGrantedVerificationPendingMutation(
 export function adminGrantedVerificationPendingFrom(
   value: unknown,
 ): AdminGrantedVerificationPendingMutation | null {
+  // Persisted retry identity remains exact so replay cannot acquire new semantics.
   const source = exactObject(value, ["version", "action", "target", "payload"]);
   const action = oneOf(source?.action, ADMIN_GRANTED_VERIFICATION_ACTIONS);
   if (source?.version !== 1 || !action || typeof source.target !== "string") return null;

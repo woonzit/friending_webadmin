@@ -180,10 +180,13 @@ test("the dormant v1 vocabulary pins seven actions, four capabilities, and the D
   for (const action of AUDIENCE_VISIBILITY_ADMIN_ACTIONS) assert.equal(adminActionAccess(action), null);
 });
 
-test("admin_me is exact, role-derived, action-ordered, and contract-ready gated", () => {
+test("admin_me ignores unknown fields, stays role-derived, action-ordered, and contract-ready gated", () => {
   assert.ok(audienceVisibilityAdminMe(editorAdminMe()));
   assert.ok(audienceVisibilityAdminMe(editorAdminMe(false)));
-  assert.equal(audienceVisibilityAdminMe({ ...editorAdminMe(), extra: true }), null);
+  assert.deepEqual(
+    audienceVisibilityAdminMe({ ...editorAdminMe(), extra: true }),
+    audienceVisibilityAdminMe(editorAdminMe()),
+  );
   assert.equal(audienceVisibilityAdminMe({ ...editorAdminMe(), actions: [...AUDIENCE_VISIBILITY_ADMIN_ACTIONS].reverse() }), null);
   assert.equal(audienceVisibilityAdminMe({ ...editorAdminMe(false), actions: ["audience_visibility_catalog"] }), null);
 
@@ -203,7 +206,7 @@ test("admin_me is exact, role-derived, action-ordered, and contract-ready gated"
   })?.principal.role, "");
 });
 
-test("the proxy capability decision trusts only the exact additive admin_me block", () => {
+test("the proxy capability decision trusts only the additive admin_me block", () => {
   const membership = { success: true, role: "viewer", audience_visibility: editorAdminMe() };
   for (const action of AUDIENCE_VISIBILITY_ADMIN_ACTIONS) {
     assert.equal(audienceVisibilityProxyCapabilityAuthorized(action, membership), true);
@@ -216,7 +219,7 @@ test("the proxy capability decision trusts only the exact additive admin_me bloc
   assert.equal(audienceVisibilityProxyCapabilityAuthorized("audience_visibility_catalog", {
     ...membership,
     audience_visibility: { ...editorAdminMe(), extra: true },
-  }), false);
+  }), true);
 });
 
 test("bridge authorization composes the independent catalogue role without weakening other families", () => {
@@ -249,25 +252,23 @@ test("bridge authorization composes the independent catalogue role without weake
     assert.equal(isAdminBridgeActionAuthorized(action, globalViewer, capability), index < 2);
   }
 
-  for (const membership of [
+  const absentCapability = audienceVisibilityProxyCapabilityAuthorized(
+    "save_audience_visibility_group",
     { success: true, role: "viewer" },
+  );
+  assert.equal(absentCapability, false);
+  assert.equal(isAdminBridgeActionAuthorized("save_audience_visibility_group", globalViewer, absentCapability), false);
+  const additiveCapability = audienceVisibilityProxyCapabilityAuthorized(
+    "save_audience_visibility_group",
     { success: true, role: "viewer", audience_visibility: { ...catalogueAdminMe("editor"), extra: true } },
-  ]) {
-    const capability = audienceVisibilityProxyCapabilityAuthorized(
-      "save_audience_visibility_group",
-      membership,
-    );
-    assert.equal(capability, false);
-    assert.equal(
-      isAdminBridgeActionAuthorized("save_audience_visibility_group", globalViewer, capability),
-      false,
-    );
-  }
+  );
+  assert.equal(additiveCapability, true);
+  assert.equal(isAdminBridgeActionAuthorized("save_audience_visibility_group", globalViewer, additiveCapability), true);
 
   assert.equal(isAdminBridgeActionAuthorized("save_hero", globalViewer, true), false);
 });
 
-test("the complete catalogue parses and every shape or semantic surprise fails closed", () => {
+test("the complete catalogue ignores unknown fields while semantic surprises fail closed", () => {
   const fixture = catalog();
   const parsed = audienceVisibilityCatalogResponse(success(fixture));
   assert.ok(parsed);
@@ -277,8 +278,17 @@ test("the complete catalogue parses and every shape or semantic surprise fails c
   assert.equal(parsed.intents.selection_min, 0);
   assert.equal(parsed.intents.selection_max, 5);
 
-  assert.equal(audienceVisibilityCatalogResponse(success({ ...fixture, extra: true })), null);
-  assert.equal(audienceVisibilityCatalogResponse({ ...success(fixture), trace: "no" }), null);
+  const additive = structuredClone(fixture);
+  additive.extra = true;
+  additive.groups[0].future = true;
+  additive.groups[0].labels.future = "ignored";
+  additive.groups[0].rules[0].future = true;
+  additive.retirement_manifest.future = true;
+  additive.retirement_manifest.profile_questions[0].future = true;
+  additive.intents.future = true;
+  additive.intents.title.future = "ignored";
+  additive.intents.items[0].future = true;
+  assert.deepEqual(audienceVisibilityCatalogResponse({ ...success(additive), trace: "no" }), parsed);
   const loose = structuredClone(fixture);
   loose.groups[0].revision = "1";
   assert.equal(audienceVisibilityCatalogResponse(success(loose)), null);
@@ -291,9 +301,6 @@ test("the complete catalogue parses and every shape or semantic surprise fails c
   const missingIntent = structuredClone(fixture);
   missingIntent.intents.items.pop();
   assert.equal(audienceVisibilityCatalogResponse(success(missingIntent)), null);
-  const oldLayer = structuredClone(fixture);
-  oldLayer.intents.layer1 = "friending";
-  assert.equal(audienceVisibilityCatalogResponse(success(oldLayer)), null);
   const wrongRetirement = structuredClone(fixture);
   wrongRetirement.retirement_manifest.profile_questions[0].state = "active";
   assert.equal(audienceVisibilityCatalogResponse(success(wrongRetirement)), null);
@@ -406,7 +413,7 @@ test("custom group material enforces canonical rules and the nonbinary fixed sta
   assert.equal(audienceVisibilityGroupDraft({ ...valid, labels: { en: "Two  spaces", hu: "Két szóköz" } }), null);
 });
 
-test("member detail exposes only canonical gender, visible_to, revision, and one exact protected group", () => {
+test("member detail exposes only canonical known fields and one protected group", () => {
   const resolved = {
     contract_version: 1,
     uid: 7001,
@@ -420,16 +427,22 @@ test("member detail exposes only canonical gender, visible_to, revision, and one
   assert.deepEqual(audienceVisibilityMemberDetailResponse(success(unresolved)), unresolved);
   assert.equal(audienceVisibilityMemberDetailResponse(success({ ...unresolved, visible_to: "male" })), null);
   assert.equal(audienceVisibilityMemberDetailResponse(success({ ...resolved, group: { ...resolved.group, key: "female_for_male" } })), null);
-  assert.equal(audienceVisibilityMemberDetailResponse(success({ ...resolved, orientation: "bisexual" })), null);
+  assert.deepEqual(
+    audienceVisibilityMemberDetailResponse(success({ ...resolved, orientation: "bisexual", group: { ...resolved.group, future: true } })),
+    resolved,
+  );
 });
 
-test("group and intent mutation responses are exact and conflicts adopt only a full canonical resource", () => {
+test("group and intent mutation responses ignore unknown fields and conflicts adopt canonical resources", () => {
   const groupResult = { contract_version: 1, group: group(0), replayed: false };
   const intentResult = { contract_version: 1, intents: intents(), replayed: true };
   assert.ok(audienceVisibilityGroupMutationResponse(success(groupResult)));
   assert.ok(audienceVisibilityIntentMutationResponse(success(intentResult)));
   assert.equal(audienceVisibilityGroupMutationResponse(success({ ...groupResult, replayed: 0 })), null);
-  assert.equal(audienceVisibilityIntentMutationResponse(success({ ...intentResult, extra: true })), null);
+  assert.deepEqual(
+    audienceVisibilityIntentMutationResponse(success({ ...intentResult, extra: true })),
+    audienceVisibilityIntentMutationResponse(success(intentResult)),
+  );
 
   assert.deepEqual(audienceVisibilityConflict(refusal("audience-visibility-conflict", 409, {
     contract_version: 1,
@@ -439,11 +452,19 @@ test("group and intent mutation responses are exact and conflicts adopt only a f
     contract_version: 1,
     intents: intents(),
   }))?.kind, "intents");
-  assert.equal(audienceVisibilityConflict(refusal("audience-visibility-conflict", 409, {
+  assert.deepEqual(audienceVisibilityConflict(refusal("audience-visibility-conflict", 409, {
     contract_version: 1,
     group: group(1),
     draft: {},
-  })), null);
+  })), audienceVisibilityConflict(refusal("audience-visibility-conflict", 409, {
+    contract_version: 1,
+    group: group(1),
+  })));
+  assert.equal(audienceVisibilityConflict(refusal("audience-visibility-conflict", 409, {
+    contract_version: 1,
+    group: group(1),
+    intents: intents(),
+  })), null, "recognized sibling branches remain mutually exclusive");
 });
 
 test("success and conflict adoption are bound to the exact persisted target and material", () => {

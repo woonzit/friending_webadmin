@@ -142,12 +142,16 @@ test("the dormant v1 vocabulary and conditional proxy surface are exact", () => 
   for (const action of PROFILE_TEXT_MODERATION_ACTIONS) assert.equal(adminActionAccess(action), null);
 });
 
-test("admin_me is exact, role-derived, action-ordered, and readiness-gated", () => {
+test("admin_me ignores additions and stays role-derived, action-ordered, and readiness-gated", () => {
   for (const role of ["viewer", "admin", "owner"] as const) {
     assert.deepEqual(profileTextModerationAdminMe(block(role)), block(role));
     assert.deepEqual(profileTextModerationAdminMe(block(role, false)), block(role, false));
   }
-  assert.equal(profileTextModerationAdminMe({ ...block("admin"), extra: true }), null);
+  assert.deepEqual(profileTextModerationAdminMe({
+    ...block("admin"),
+    extra: true,
+    principal: { ...block("admin").principal, future_principal: true },
+  }), block("admin"));
   assert.equal(profileTextModerationAdminMe({
     ...block("admin"),
     actions: [...PROFILE_TEXT_MODERATION_ACTIONS].reverse(),
@@ -159,7 +163,7 @@ test("admin_me is exact, role-derived, action-ordered, and readiness-gated", () 
   assert.equal(profileTextModerationAdminMe({ ...block("owner", false), actions: [PROFILE_TEXT_MODERATION_ACTIONS[0]] }), null);
 });
 
-test("the bridge trusts only the exact profile-text capability block and keeps other floors", () => {
+test("the bridge trusts only known profile-text capability material and keeps other floors", () => {
   const globalViewer = adminPrincipalFrom({ role: "viewer" });
   const adminMembership = { success: true, role: "viewer", profile_text_moderation: block("admin") };
   for (const action of PROFILE_TEXT_MODERATION_ACTIONS) {
@@ -174,9 +178,12 @@ test("the bridge trusts only the exact profile-text capability block and keeps o
   assert.equal(isAdminBridgeActionAuthorized(PROFILE_TEXT_MODERATION_ACTIONS[1], globalViewer, null, false), false);
   assert.equal(profileTextModerationProxyCapabilityAuthorized("overview", adminMembership), null);
 
+  assert.equal(profileTextModerationProxyCapabilityAuthorized(
+    PROFILE_TEXT_MODERATION_ACTIONS[1],
+    { success: true, role: "owner", profile_text_moderation: { ...block("owner"), extra: true } },
+  ), true);
   for (const membership of [
     { success: true, role: "owner" },
-    { success: true, role: "owner", profile_text_moderation: { ...block("owner"), extra: true } },
     { success: true, role: "owner", profile_text_moderation: block("owner", false) },
   ]) {
     const capability = profileTextModerationProxyCapabilityAuthorized(PROFILE_TEXT_MODERATION_ACTIONS[1], membership);
@@ -194,7 +201,7 @@ test("the content witness uses the exact domain-separated UTF-8 bytes and Unicod
   assert.notEqual(nodeHash(77, "about_me", text), nodeHash(78, "about_me", text));
 });
 
-test("list decoding proves exact filters, pending rows, ordering, bounds, and non-empty truth", async () => {
+test("list decoding ignores additions and proves known filters, pending rows, ordering, bounds, and non-empty truth", async () => {
   const first = item({ uid: 41, field: "headline", status_updated_at: 100 });
   const second = item({
     uid: 41,
@@ -218,8 +225,14 @@ test("list decoding proves exact filters, pending rows, ordering, bounds, and no
   assert.deepEqual(empty?.items, []);
   assert.equal(empty?.next_cursor, null);
 
-  assert.equal(await profileTextModerationListResponse({ ...body, trace: "extra" }, expectation), null);
-  assert.equal(await profileTextModerationListResponse(success({ ...body.data, extra: true }), expectation), null);
+  const additive = structuredClone(body);
+  additive.trace = "extra";
+  additive.data.extra = true;
+  additive.data.principal.future_principal = true;
+  additive.data.filter.future_filter = true;
+  additive.data.items[0].future_item = true;
+  additive.data.items[0].member.email = "private@example.test";
+  assert.deepEqual(await profileTextModerationListResponse(additive, expectation), parsed);
   assert.equal(await profileTextModerationListResponse(body, { ...expectation, field: "headline" }), null);
   assert.equal(await profileTextModerationListResponse(body, { ...expectation, page_size: 1 }), null);
   assert.equal(await profileTextModerationListResponse(success(listData([second, first], { total: 2 })), expectation), null);
@@ -279,14 +292,16 @@ test("list cardinality is bound to the page kind and never fakes emptiness or tr
   assert.match(consoleSource, /loaded_before: append \? itemsRef\.current\.length : 0/);
 });
 
-test("safe member identity is bounded plain text and rejects control or additive data", async () => {
+test("safe member identity is bounded plain text, strips additions, and rejects invalid known text", async () => {
   const expectation = { field: "all" as const, uid: null, page_size: 50 };
   assert.ok(await profileTextModerationListResponse(success(listData([
     item({ member: { display_name: "Ada 👩‍💻", username: "" } }),
   ])), expectation));
-  assert.equal(await profileTextModerationListResponse(success(listData([
+  const additive = await profileTextModerationListResponse(success(listData([
     item({ member: { display_name: "Ada", username: "ada", email: "private@example.com" } }),
-  ])), expectation), null);
+  ])), expectation);
+  assert.ok(additive);
+  assert.deepEqual(additive.items[0].member, { display_name: "Ada", username: "ada" });
   assert.equal(await profileTextModerationListResponse(success(listData([
     item({ member: { display_name: "Ada\nLovelace", username: "ada" } }),
   ])), expectation), null);
@@ -303,7 +318,7 @@ test("internal reasons preserve valid Unicode while refusing noncanonical contro
   assert.equal(profileTextModerationReasonIsValid("A".repeat(301)), false);
 });
 
-test("mutation and conflict decoders accept only exact complete authoritative fields", async () => {
+test("mutation and conflict decoders ignore additions and require complete authoritative known fields", async () => {
   const accepted = item({ status: "accepted", revision: 4, status_updated_at: 200 });
   const mutation = await profileTextModerationMutationResponse(success({
     contract_version: 1,
@@ -322,12 +337,12 @@ test("mutation and conflict decoders accept only exact complete authoritative fi
     item: accepted,
     replayed: 0,
   })), null);
-  assert.equal(await profileTextModerationMutationResponse(success({
+  assert.deepEqual(await profileTextModerationMutationResponse({ ...success({
     contract_version: 1,
-    item: accepted,
+    item: { ...accepted, future_item: true },
     replayed: false,
     extra: true,
-  })), null);
+  }), future_envelope: true }), mutation);
 
   const current = item({ status: "pending", revision: 4, text: "Changed text" });
   assert.deepEqual(await profileTextModerationConflict(refusal("profile-text-moderation-conflict", 409, {
@@ -338,11 +353,11 @@ test("mutation and conflict decoders accept only exact complete authoritative fi
     contract_version: 1,
     current: null,
   })), { contract_version: 1, current: null });
-  assert.equal(await profileTextModerationConflict(refusal("profile-text-moderation-conflict", 409, {
+  assert.deepEqual(await profileTextModerationConflict({ ...refusal("profile-text-moderation-conflict", 409, {
     contract_version: 1,
-    current,
+    current: { ...current, future_item: true },
     extra: true,
-  })), null);
+  }), future_envelope: true }), { contract_version: 1, current });
   assert.equal(await profileTextModerationConflict(refusal("profile-text-moderation-conflict", 422, {
     contract_version: 1,
     current,
@@ -679,6 +694,13 @@ const FIXTURE_BINDINGS: Record<string, FixtureBinding> = {
   "malformed-conflict-data.json": { kind: "malformed" },
 };
 
+// Core published these as malformed under the former exact-key consumer.
+// Their immutable bytes now prove the additive-field compatibility policy.
+const ADDITIVE_COMPATIBILITY_FIXTURES = new Set([
+  "malformed-extra-top-level.json",
+  "malformed-additive-item.json",
+]);
+
 async function fixtureManifest(): Promise<Json> {
   return JSON.parse(await readFile(new URL("manifest.json", FIXTURE_DIRECTORY), "utf8"));
 }
@@ -829,6 +851,15 @@ test("every published fixture round-trips through the production decoder its cas
       assert.equal(profileTextModerationAdminMe(body.profile_text_moderation), null, row.file);
       assert.equal(await profileTextModerationMutationResponse(body), null, row.file);
       assert.equal(await profileTextModerationConflict(body), null, row.file);
+      continue;
+    }
+    if (ADDITIVE_COMPATIBILITY_FIXTURES.has(row.file)) {
+      const parsed = await profileTextModerationMutationResponse(body);
+      assert.ok(parsed, row.file);
+      assert.equal(parsed.item.status, "accepted", row.file);
+      assert.deepEqual(Object.keys(parsed.item.member).sort(), ["display_name", "username"], row.file);
+      assert.equal(await profileTextModerationConflict(body), null, row.file);
+      assert.equal(profileTextModerationError(body), null, row.file);
       continue;
     }
     const expectation = { field: "all" as const, uid: null, page_size: 50 };

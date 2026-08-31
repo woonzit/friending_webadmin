@@ -1,4 +1,4 @@
-/** Exact logical refusal emitted by the authenticated Next.js admin bridge. */
+/** Logical refusal emitted by the authenticated Next.js admin bridge. */
 
 export type AdminBridgeErrorEnvelope = {
   success: false;
@@ -13,7 +13,7 @@ const CORE_TRANSPORT_ERROR_STATUSES = {
 } as const;
 
 /**
- * Recognize only the exact two-key failures synthesized by `coreCall` itself.
+ * Recognize only the known failure fields synthesized by `coreCall` itself.
  * Core-owned refusals keep their original legacy envelope; this conversion is
  * solely the same-origin bridge adding the logical status that browsers need.
  */
@@ -23,11 +23,9 @@ export function adminBridgeCoreTransportError(
 ): AdminBridgeErrorEnvelope | null {
   if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
   const source = value as Record<string, unknown>;
-  const keys = Object.keys(source).sort();
   const error = source.error;
-  if (keys.length !== 2
-    || keys[0] !== "error"
-    || keys[1] !== "success"
+  if (!Object.hasOwn(source, "error")
+    || !Object.hasOwn(source, "success")
     || source.success !== false
     || typeof error !== "string"
     || !Object.hasOwn(CORE_TRANSPORT_ERROR_STATUSES, error)
@@ -40,11 +38,12 @@ export function adminBridgeCoreTransportError(
 export function adminBridgeErrorEnvelope(value: unknown): AdminBridgeErrorEnvelope | null {
   if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
   const source = value as Record<string, unknown>;
-  const keys = Object.keys(source).sort();
-  if (keys.length !== 3
-    || keys[0] !== "error"
-    || keys[1] !== "status_code"
-    || keys[2] !== "success"
+  // The complete legacy marker trio selects Core's sibling envelope variant;
+  // ordinary unknown bridge fields remain additive and are ignored below.
+  if (["message", "status", "can_send"].every((key) => Object.hasOwn(source, key))) return null;
+  if (!Object.hasOwn(source, "error")
+    || !Object.hasOwn(source, "status_code")
+    || !Object.hasOwn(source, "success")
     || source.success !== false
     || typeof source.status_code !== "number"
     || !Number.isSafeInteger(source.status_code)
@@ -52,5 +51,5 @@ export function adminBridgeErrorEnvelope(value: unknown): AdminBridgeErrorEnvelo
     || source.status_code > 599
     || typeof source.error !== "string"
     || source.error === "") return null;
-  return source as AdminBridgeErrorEnvelope;
+  return { success: false, status_code: source.status_code, error: source.error };
 }

@@ -173,7 +173,7 @@ function storefrontRule(overrides: Record<string, unknown> = {}): Record<string,
 // Rule parsing
 // ---------------------------------------------------------------------------
 
-test("a Core rule projection decodes exactly and keeps its provenance", () => {
+test("a Core rule projection requires known material, ignores additions, and keeps its provenance", () => {
   const global = parseAppearanceRule(wireRule());
   assert.ok(global);
   assert.equal(global.scope, "global");
@@ -220,9 +220,30 @@ test("stored hero items carry non-empty unique ids; save input may leave an id e
   assert.ok(parseAppearanceRuleInput({ ...input, hero: { mode: "replace", items: [{ ...item, id: "" }] } }), "input without an id is legal before minting");
 });
 
-test("rule decoding fails closed on unknown, missing, loose, or scope-inconsistent material", () => {
+test("rule decoding ignores unknown material but fails closed on missing, loose, or scope-inconsistent known material", () => {
+  const baseRule = wireRule();
+  const baseHero = baseRule.hero as Record<string, unknown>;
+  const baseHeroItem = (baseHero.items as Record<string, unknown>[])[0]!;
+  const basePalette = baseRule.palette as Record<string, unknown>;
+  assert.deepEqual(parseAppearanceRule(wireRule({
+    future_rule: true,
+    landing: { future_landing: true },
+    hero: { ...baseHero, future_hero: true, items: [{ ...baseHeroItem, future_item: true }] },
+    palette: {
+      ...basePalette,
+      future_palette: true,
+      light: { ...(basePalette.light as object), future_light: true },
+      dark: { ...(basePalette.dark as object), future_dark: true },
+    },
+  })), parseAppearanceRule(baseRule));
+  const baseGeo = geoRule();
+  assert.deepEqual(parseAppearanceRule(geoRule({
+    future_rule: true,
+    center: { ...(baseGeo.center as object), altitude: 1 },
+    landing: { ...(baseGeo.landing as object), future_landing: true },
+  })), parseAppearanceRule(baseGeo));
+
   const cases: Array<[string, Record<string, unknown>]> = [
-    ["extra key", wireRule({ extra: 1 })],
     ["missing revision", (() => { const rule = wireRule(); delete rule.revision; return rule; })()],
     ["string priority", wireRule({ priority: "0" })],
     ["priority above cap", wireRule({ priority: 10_001 })],
@@ -235,12 +256,10 @@ test("rule decoding fails closed on unknown, missing, loose, or scope-inconsiste
     ["geo without label", geoRule({ place_label: "" })],
     ["geo radius above cap", geoRule({ radius_km: 501 })],
     ["geo latitude out of range", geoRule({ center: { latitude: 91, longitude: 19 } })],
-    ["geo center extra key", geoRule({ center: { latitude: 47, longitude: 19, altitude: 1 } })],
     ["geo bad alpha-2", geoRule({ country_code: "XX" })],
     ["window reversed", geoRule({ starts_at: "2026-07-01T00:00:00Z", ends_at: "2026-06-01T00:00:00Z" })],
     ["window loose timestamp", geoRule({ starts_at: "2026-06-01T00:00:00+02:00" })],
     ["window impossible date", geoRule({ starts_at: "2026-02-30T00:00:00Z" })],
-    ["landing unknown key", wireRule({ landing: { colour: "red" } })],
     ["landing bad background type", wireRule({ landing: { background_type: "gif" } })],
     ["landing http-less url", wireRule({ landing: { background_url: "cdn.example.com/x.jpg" } })],
     ["landing description too long", wireRule({ landing: { description_en: "x".repeat(301) } })],
@@ -251,12 +270,10 @@ test("rule decoding fails closed on unknown, missing, loose, or scope-inconsiste
     ["hero item uppercase colour", wireRule({ hero: { mode: "replace", items: [heroItem({ title_color_web: "#FFFFFF" })] } })],
     ["hero item bad weight", wireRule({ hero: { mode: "replace", items: [heroItem({ title_weight_web: "heavy" })] } })],
     ["hero item media not a url", wireRule({ hero: { mode: "replace", items: [heroItem({ media_url: "" })] } })],
-    ["palette unknown role", wireRule({ palette: { light: { primary: "#000000" }, dark: {} } })],
     ["palette mode as a non-empty array", wireRule({ palette: { light: ["#007F91"], dark: {} } })],
     ["landing as a non-empty array", wireRule({ landing: ["https://img.example/x.jpg"] })],
     ["palette lowercase hex", wireRule({ palette: { light: { accent: "#007f91" }, dark: {} } })],
     ["palette hex without hash", wireRule({ palette: { light: { accent: "007F91" }, dark: {} } })],
-    ["palette unknown mode", wireRule({ palette: { light: {}, dark: {}, dim: {} } })],
     ["migrated_from foreign value", storefrontRule({ migrated_from: "city" })],
     ["control character in name", wireRule({ name: "bad\u0007name" })],
   ];
@@ -270,7 +287,7 @@ test("rule decoding fails closed on unknown, missing, loose, or scope-inconsiste
 
 const DEFAULTS = { palette: APPEARANCE_DEFAULT_PALETTE, landing: APPEARANCE_DEFAULT_LANDING };
 
-test("the list payload demands unique ids, at most one global rule, and Core's exact defaults", () => {
+test("the list payload demands unique ids, at most one global rule, and all known Core defaults", () => {
   const list = parseAppearanceListPayload({ rules: [wireRule(), geoRule(), storefrontRule()], defaults: DEFAULTS });
   assert.ok(list);
   assert.equal(list.rules.length, 3);
@@ -288,6 +305,23 @@ test("the list payload demands unique ids, at most one global rule, and Core's e
   assert.equal(withDefaults.defaults.palette.light.accent, "#123456");
   assert.equal(withDefaults.defaults.landing.title_text_en, "friending");
 
+  const additive = parseAppearanceListPayload({
+    rules: [{ ...wireRule(), future_rule: true }],
+    defaults: {
+      ...DEFAULTS,
+      future_defaults: true,
+      palette: {
+        ...DEFAULTS.palette,
+        future_palette: true,
+        light: { ...DEFAULTS.palette.light, future_light: true },
+        dark: { ...DEFAULTS.palette.dark, future_dark: true },
+      },
+      landing: { ...DEFAULTS.landing, future_landing: true },
+    },
+    future_list: true,
+  });
+  assert.deepEqual(additive, parseAppearanceListPayload({ rules: [wireRule()], defaults: DEFAULTS }));
+
   assert.equal(parseAppearanceListPayload({ rules: [wireRule()] }), null, "missing defaults are never substituted locally");
   assert.equal(parseAppearanceListPayload({ rules: [wireRule(), wireRule()], defaults: DEFAULTS }), null, "duplicate id");
   assert.equal(parseAppearanceListPayload({ rules: [wireRule(), wireRule({ id: "66d0a1b2c3d4e5f6a7b8c9ee" })], defaults: DEFAULTS }), null, "two globals");
@@ -297,7 +331,10 @@ test("the list payload demands unique ids, at most one global rule, and Core's e
   assert.equal(parseAppearanceListPayload({ rules: [], defaults: { palette: APPEARANCE_DEFAULT_PALETTE, landing: { title_text_en: "x" } } }), null, "incomplete default landing");
   assert.equal(parseAppearanceListPayload({ rules: {}, defaults: DEFAULTS }), null);
   assert.equal(parseAppearanceListPayload([]), null);
-  assert.equal(parseAppearanceListPayload({ rules: [], defaults: DEFAULTS, extra: true }), null);
+  assert.deepEqual(
+    parseAppearanceListPayload({ rules: [wireRule()], defaults: DEFAULTS, extra: true }),
+    parseAppearanceListPayload({ rules: [wireRule()], defaults: DEFAULTS }),
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -405,13 +442,47 @@ function previewLandingFlatSources(overrides: Record<string, unknown> = {}): Rec
   };
 }
 
-test("the test-location preview decodes the app payload and refuses vocabulary drift", () => {
+test("the test-location preview requires known material, ignores additions, and refuses vocabulary drift", () => {
   const preview = parseAppearancePreviewPayload(previewPayload());
   assert.ok(preview);
   assert.equal(preview.revision, 7);
   assert.equal(preview.matched.scope, "geo");
   assert.equal(preview.hero[0]?.title, "Pride week");
   assert.equal(preview.landing.title.text, "friending.");
+
+  const raw = previewPayload();
+  const rawLanding = raw.landing as Record<string, unknown>;
+  const rawBackground = rawLanding.background as Record<string, unknown>;
+  const rawTitle = rawLanding.title as Record<string, unknown>;
+  const rawHero = (raw.hero as Record<string, unknown>[])[0]!;
+  const rawTextStyle = rawHero.text_style as Record<string, unknown>;
+  const rawPalette = raw.palette as Record<string, unknown>;
+  assert.deepEqual(parseAppearancePreviewPayload(previewPayload({
+    future_preview: true,
+    landing: {
+      ...rawLanding,
+      future_landing: true,
+      background: { ...rawBackground, future_background: true },
+      title: { ...rawTitle, future_title: true },
+    },
+    hero: [{
+      ...rawHero,
+      future_hero: true,
+      text_style: {
+        ...rawTextStyle,
+        future_platform: true,
+        web: { ...(rawTextStyle.web as object), future_web: true },
+        mobile: { ...(rawTextStyle.mobile as object), future_mobile: true },
+      },
+    }],
+    palette: {
+      ...rawPalette,
+      future_palette: true,
+      light: { ...(rawPalette.light as object), future_light: true },
+      dark: { ...(rawPalette.dark as object), future_dark: true },
+    },
+    matched: { ...(raw.matched as object), future_match: true },
+  })), preview);
 
   const defaults = parseAppearancePreviewPayload(previewPayload({
     revision: 0,
@@ -430,13 +501,18 @@ test("the test-location preview decodes the app payload and refuses vocabulary d
   assert.equal(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "global", rule_id: "", location_source: "none" } })), null, "global match without its id");
   const heroItem = (previewPayload().hero as Record<string, unknown>[])[0]!;
   assert.equal(parseAppearancePreviewPayload(previewPayload({ hero: [{ ...heroItem, text_style: { web: {}, mobile: {} } }] })), null, "text_style must carry the six style keys");
-  assert.equal(parseAppearancePreviewPayload(previewPayload({ hero: [{ ...heroItem, text_style: { web: heroItem.text_style, mobile: {}, print: {} } }] })), null, "text_style platforms are closed");
+  const baselineTextStyle = parseAppearancePreviewPayload(previewPayload({ hero: [{ ...heroItem }] }));
+  assert.deepEqual(
+    parseAppearancePreviewPayload(previewPayload({ hero: [{ ...heroItem, text_style: { ...(heroItem.text_style as object), print: {} } }] })),
+    baselineTextStyle,
+    "unknown text_style platforms are ignored",
+  );
   assert.equal(parseAppearancePreviewPayload(previewPayload({ hero: [{ ...heroItem, text_style: { ...(heroItem.text_style as object), mobile: { title_size: 500, title_color: "", title_weight: "", subtitle_size: null, subtitle_color: "", subtitle_weight: "" } } }] })), null, "text_style sizes stay bounded");
   assert.equal(parseAppearancePreviewPayload(previewPayload({ matched: { scope: "geo", rule_id: "x", location_source: "wifi" } })), null, "unknown location source");
   assert.equal(parseAppearancePreviewPayload(previewPayload({ palette: { light: {}, dark: {} } })), null, "incomplete palette");
   assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: { background: { type: "image", url: "", poster_url: "" }, title: { type: "text", text: "", image_url: "" } } })), null, "missing description");
   assert.equal(parseAppearancePreviewPayload(previewPayload({ revision: -1 })), null);
-  assert.equal(parseAppearancePreviewPayload(previewPayload({ extra: 1 })), null);
+  assert.deepEqual(parseAppearancePreviewPayload(previewPayload({ extra: 1 })), preview);
   assert.equal(parseAppearancePreviewPayload(previewPayload({ hero: [{ id: "x" }] })), null, "partial hero item");
 });
 
@@ -601,7 +677,11 @@ test("the schema-v2 preview validates known material, ignores additive landing k
   };
   assert.ok(parseAppearancePreviewPayload(previewPayload({ landing: additive })), "unknown v2 landing keys are ignored at every object level");
   assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: base, controls: { button_corner_radius: 27 } })), null, "the duplicated shared radius must match landing");
-  assert.equal(parseAppearancePreviewPayload(previewPayload({ landing: base, controls: { button_corner_radius: 28, future: true } })), null, "controls remains closed");
+  assert.deepEqual(
+    parseAppearancePreviewPayload(previewPayload({ landing: base, controls: { button_corner_radius: 28, future: true } })),
+    parseAppearancePreviewPayload(previewPayload({ landing: base })),
+    "unknown controls are ignored",
+  );
   const withoutControls = previewPayload({ landing: base });
   delete withoutControls.controls;
   assert.equal(parseAppearancePreviewPayload(withoutControls), null, "schema v2 requires root controls");
@@ -610,8 +690,8 @@ test("the schema-v2 preview validates known material, ignores additive landing k
   assert.ok(parseAppearancePreviewPayload(previewPayload({ landing: previewLandingV2({ title: noneTitle }) })));
 });
 
-test("geocode candidates decode exactly", () => {
-  const candidates = parseAppearanceGeocodePayload({
+test("geocode candidates require known material and ignore additions", () => {
+  const raw = {
     candidates: [{
       place_id: "ChIJyc_U0TTDQUcRYBEeDCnEAAQ",
       place_label: "Budapest, Hungary",
@@ -619,10 +699,20 @@ test("geocode candidates decode exactly", () => {
       center: { latitude: 47.4979, longitude: 19.0402 },
       radius_km: 23,
     }],
-  });
+  };
+  const candidates = parseAppearanceGeocodePayload(raw);
   assert.ok(candidates);
   assert.equal(candidates.length, 1);
   assert.equal(candidates[0]?.radius_km, 23);
+  assert.deepEqual(parseAppearanceGeocodePayload({
+    ...raw,
+    future_geocode: true,
+    candidates: [{
+      ...raw.candidates[0],
+      future_candidate: true,
+      center: { ...raw.candidates[0]!.center, altitude: 1 },
+    }],
+  }), candidates);
 
   assert.deepEqual(parseAppearanceGeocodePayload({ candidates: [] }), []);
   assert.equal(parseAppearanceGeocodePayload({ candidates: [{ place_id: "x", place_label: "Nowhere", country_code: "ZZ", center: { latitude: 0, longitude: 0 }, radius_km: 5 }] }), null, "unknown alpha-2");
@@ -1436,17 +1526,20 @@ function coreRefusal(error: string, statusCode: number): Record<string, unknown>
   return { success: false, status_code: statusCode, message: 200, status: 200, can_send: 0, error };
 }
 
-test("every action decodes Core's exact legacy envelope or the bridge refusal — never a bare success flag", () => {
+test("every action decodes Core's required legacy envelope or the bridge refusal — never a bare success flag", () => {
   const list = decodeAppearanceListResponse(envelope({ rules: [wireRule()], defaults: DEFAULTS }));
   assert.ok(list.ok);
   assert.equal(list.value.rules.length, 1);
+  assert.deepEqual(
+    decodeAppearanceListResponse({ ...envelope({ rules: [wireRule()], defaults: DEFAULTS, future_data: true }), future_envelope: true }),
+    list,
+  );
 
   // The reviewer's probes: a bare success flag and a "successful" 409 envelope are both refused.
   for (const [label, value] of [
     ["bare success", { success: true, data: { rules: [], defaults: DEFAULTS } }],
     ["successful 409", envelope({ rules: [], defaults: DEFAULTS }, 409)],
     ["missing trio", { success: true, status_code: 200, data: { rules: [], defaults: DEFAULTS } }],
-    ["extra key", { ...envelope({ rules: [], defaults: DEFAULTS }), extra: 1 }],
     ["null", null],
     ["string", "ok"],
     ["material without defaults", envelope({ rules: [] })],
@@ -1483,6 +1576,13 @@ test("a save success is bound to its target: the same id on update, the same mat
   const update = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ revision: 4 }) }), { id: stored.id, expected_revision: 3, input });
   assert.ok(update.ok);
   assert.equal(update.value.revision, 4);
+  assert.deepEqual(
+    decodeAppearanceSaveResponse({
+      ...envelope({ rule: geoRule({ revision: 4, future_rule: true }), warning: "future" }),
+      future_envelope: true,
+    }, { id: stored.id, expected_revision: 3, input }),
+    update,
+  );
   const otherId = decodeAppearanceSaveResponse(envelope({ rule: geoRule({ id: "66d0a1b2c3d4e5f6a7b8c9d9", revision: 4 }) }), { id: stored.id, expected_revision: 3, input });
   assert.deepEqual(otherId, { ok: false, kind: "uncertain", error: "unbound-target" });
 
@@ -1506,7 +1606,6 @@ test("a save success is bound to its target: the same id on update, the same mat
   for (const [label, value] of [
     ["bare success", { success: true, rule: geoRule() }],
     ["data without rule", envelope({})],
-    ["data with extra", envelope({ rule: geoRule(), warning: "x" })],
     ["invalid rule", envelope({ rule: geoRule({ priority: "10" }) })],
     ["null", null],
   ] as const) {
@@ -1562,7 +1661,7 @@ test("the refusal vocabulary is closed: unknown names and wrong statuses are unc
     assert.deepEqual(decode(coreRefusal("core-timeout", 504)), { ok: false, kind: "uncertain", error: "unknown-refusal" }, "bridge transport name in Core shape");
     assert.deepEqual(decode({ ...coreRefusal("appearance-rule-conflict", 409), data: { anything: "accepted" } }), { ok: false, kind: "uncertain", error: "refusal-with-data" }, "known Core error with additive data");
     assert.deepEqual(decode({ ...coreRefusal("appearance-rule-not-found", 404), data: {} }), { ok: false, kind: "uncertain", error: "refusal-with-data" });
-    assert.deepEqual(decode({ ...coreRefusal("appearance-rule-conflict", 409), data: { revision: 4 }, extra: 1 }), { ok: false, kind: "uncertain", error: "malformed-envelope" });
+    assert.deepEqual(decode({ ...coreRefusal("appearance-rule-conflict", 409), data: { revision: 4 }, extra: 1 }), { ok: false, kind: "uncertain", error: "refusal-with-data" });
     // `admin-write-required` is legitimately emitted by both sources at 403.
     assert.deepEqual(decode(coreRefusal("admin-write-required", 403)), { ok: false, kind: "refused", error: "admin-write-required", status: 403 });
     // Core's 503 family: the write may have landed.
@@ -1576,11 +1675,15 @@ test("the refusal vocabulary is closed: unknown names and wrong statuses are unc
 });
 
 test("a delete success must name the deleted rule", () => {
-  assert.deepEqual(decodeAppearanceDeleteResponse(envelope({ id: "66d0a1b2c3d4e5f6a7b8c9d1" }), "66d0a1b2c3d4e5f6a7b8c9d1"), { ok: true, value: { id: "66d0a1b2c3d4e5f6a7b8c9d1" } });
+  const deleted = decodeAppearanceDeleteResponse(envelope({ id: "66d0a1b2c3d4e5f6a7b8c9d1" }), "66d0a1b2c3d4e5f6a7b8c9d1");
+  assert.deepEqual(deleted, { ok: true, value: { id: "66d0a1b2c3d4e5f6a7b8c9d1" } });
+  assert.deepEqual(
+    decodeAppearanceDeleteResponse({ ...envelope({ id: "66d0a1b2c3d4e5f6a7b8c9d1", deleted: true }), future_envelope: true }, "66d0a1b2c3d4e5f6a7b8c9d1"),
+    deleted,
+  );
   assert.deepEqual(decodeAppearanceDeleteResponse(envelope({ id: "66d0a1b2c3d4e5f6a7b8c9d9" }), "66d0a1b2c3d4e5f6a7b8c9d1"), { ok: false, kind: "uncertain", error: "unbound-target" });
   assert.equal(decodeAppearanceDeleteResponse({ success: true }, "66d0a1b2c3d4e5f6a7b8c9d1").ok, false, "a bare success removes nothing");
   assert.equal(decodeAppearanceDeleteResponse(envelope({}), "66d0a1b2c3d4e5f6a7b8c9d1").ok, false);
-  assert.equal(decodeAppearanceDeleteResponse(envelope({ id: "66d0a1b2c3d4e5f6a7b8c9d1", deleted: true }), "66d0a1b2c3d4e5f6a7b8c9d1").ok, false);
   assert.equal(decodeAppearanceDeleteResponse(null, "66d0a1b2c3d4e5f6a7b8c9d1").ok, false);
   assert.deepEqual(
     decodeAppearanceDeleteResponse(coreRefusal("appearance-rule-global-protected", 409), "66d0a1b2c3d4e5f6a7b8c9d1"),

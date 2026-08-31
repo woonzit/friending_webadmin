@@ -141,7 +141,7 @@ function userDetailFixture() {
   };
 }
 
-test("membership configuration is strict, bounded and projects a safe save body", () => {
+test("membership configuration ignores additive catalogue fields, stays bounded, and projects a safe save body", () => {
   const parsed = membershipConfiguration(configurationFixture());
   assert.ok(parsed);
   assert.equal(parsed.configuration.quotas.footprint_send.plus.value, 20);
@@ -157,9 +157,17 @@ test("membership configuration is strict, bounded and projects a safe save body"
   outOfBounds.configuration.quotas.quick_phrase_slots.plus.value = 51;
   assert.equal(membershipConfiguration(outOfBounds), null);
 
-  const unknownCapability = configurationFixture();
-  Object.assign(unknownCapability.configuration.capabilities, { arbitrary_paid_access: { free: true, plus: true } });
-  assert.equal(membershipConfiguration(unknownCapability), null);
+  const additive = configurationFixture();
+  Object.assign(additive.configuration.capabilities, { arbitrary_paid_access: { free: true, plus: true } });
+  Object.assign(additive.configuration.capabilities.vip_badge, { future_tier: true });
+  Object.assign(additive.configuration.quotas, { future_quota: { scope: "utc_day" } });
+  Object.assign(additive.configuration.admin_grant_presets, { future_preset: { tier: "plus", period: "P1Y" } });
+  Object.assign(additive.bounds, { future_quota: { scope: "utc_day", min: 0, max: 1 } });
+  assert.deepEqual(membershipConfiguration(additive), membershipConfiguration(configurationFixture()));
+
+  const missingCapability = configurationFixture();
+  delete (missingCapability.configuration.capabilities as Record<string, unknown>).invisible_presence;
+  assert.equal(membershipConfiguration(missingCapability), null);
 });
 
 test("membership configuration accepts only Core's closed Apple product periods", () => {

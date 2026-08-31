@@ -191,12 +191,22 @@ test("preview success binds exact recipients, all five safe states, capabilities
     "the Core-authored capability is authoritative; role inference is forbidden");
 });
 
-test("preview parsing fails closed on additive, partial, loose, reordered, or guessed material", () => {
+test("preview parsing ignores additions but fails closed on partial, loose, reordered, or guessed known material", () => {
   const request = outboundPreviewPayload([42]);
   assert.ok(request);
+  const baseline = outboundRecipientPreviewResponse(fixtures.preview_one, request);
+  const additive = clone(fixtures.preview_one);
+  additive.trace = "extra";
+  const additiveData = data(additive);
+  additiveData.contact = "hidden";
+  object(additiveData.principal).future_principal = true;
+  object(additiveData.limits).future_limits = true;
+  object(object(additiveData.limits).overall).future_bucket = true;
+  const additiveRecipient = object((additiveData.recipients as JsonObject[])[0]);
+  additiveRecipient.future_recipient = true;
+  object(additiveRecipient.channels).token = "private";
+  assert.deepEqual(outboundRecipientPreviewResponse(additive, request), baseline);
   const mutations: Array<(raw: JsonObject) => void> = [
-    (raw) => { raw.trace = "extra"; },
-    (raw) => { data(raw).contact = "hidden"; },
     (raw) => { data(raw).expires_at = 1_787_680_301; },
     (raw) => { data(raw).requested_count = "1"; },
     (raw) => { object(data(raw).principal).capabilities = ["outbound_messages_send", "outbound_messages_history_read"]; },
@@ -206,7 +216,6 @@ test("preview parsing fails closed on additive, partial, loose, reordered, or gu
     (raw) => { object((data(raw).recipients as JsonObject[])[0]).display_name = " Ada "; },
     (raw) => { object((data(raw).recipients as JsonObject[])[0]).codename = "Ada"; },
     (raw) => { object(object((data(raw).recipients as JsonObject[])[0]).channels).push = "unknown"; },
-    (raw) => { object(object((data(raw).recipients as JsonObject[])[0]).channels).token = "private"; },
   ];
   for (const mutate of mutations) {
     const raw = clone(fixtures.preview_one);
@@ -346,6 +355,11 @@ test("send success binds the exact gesture and validates every aggregate result"
   assert.equal(parsed.queued, 1);
   assert.equal(parsed.results[0].outcome, "queued");
   assert.equal(parsed.replayed, false);
+  const additive = clone(fixtures.send_one);
+  additive.trace = "future";
+  data(additive).future_send = true;
+  object((data(additive).results as JsonObject[])[0]).destination = "hidden";
+  assert.deepEqual(outboundSendResponse(additive, payload), parsed);
 
   const mutations: Array<(raw: JsonObject) => void> = [
     (raw) => { data(raw).request_id = "223e4567-e89b-42d3-a456-426614174000"; },
@@ -356,7 +370,6 @@ test("send success binds the exact gesture and validates every aggregate result"
     (raw) => { object((data(raw).results as JsonObject[])[0]).uid = 43; },
     (raw) => { object((data(raw).results as JsonObject[])[0]).message_id = null; },
     (raw) => { object((data(raw).results as JsonObject[])[0]).reason = "provider_rejected"; },
-    (raw) => { object((data(raw).results as JsonObject[])[0]).destination = "hidden"; },
   ];
   for (const mutate of mutations) {
     const raw = clone(fixtures.send_one);
@@ -413,12 +426,19 @@ test("history rows are ordered, bounded, role-independent, and proven empty only
     "the accepted history projection permits a bounded empty legacy subject");
 });
 
-test("one malformed or privacy-expanding history row fails the entire read", () => {
+test("history ignores additions but one malformed known row fails the entire read", () => {
   const request = outboundHistoryPayload(42);
   assert.ok(request);
+  const baseline = outboundHistoryResponse(fixtures.history_page, request);
+  const additive = clone(fixtures.history_page);
+  additive.trace = "future";
+  data(additive).raw_count = 3;
+  object(data(additive).principal).future_principal = true;
+  const additiveMessage = object((data(additive).messages as JsonObject[])[0]);
+  additiveMessage.destination = "hidden";
+  object(additiveMessage.template).future_template = true;
+  assert.deepEqual(outboundHistoryResponse(additive, request), baseline);
   const mutations: Array<(raw: JsonObject) => void> = [
-    (raw) => { data(raw).raw_count = 3; },
-    (raw) => { object((data(raw).messages as JsonObject[])[0]).destination = "hidden"; },
     (raw) => { object((data(raw).messages as JsonObject[])[0]).body_excerpt = "Welcome\n to Friending."; },
     (raw) => { object((data(raw).messages as JsonObject[])[0]).subject = "x".repeat(201); },
     (raw) => { object((data(raw).messages as JsonObject[])[0]).content_sha256 = "A".repeat(64); },
@@ -496,21 +516,29 @@ test("detail reads verify UID ownership, exact metadata, canonical body hash, an
   assert.equal(await outboundHistoryDetailResponse(hostile, detailRequest), null);
   const extra = clone(fixtures.history_detail_email);
   object(data(extra).message).provider_response = "hidden";
-  assert.equal(await outboundHistoryDetailResponse(extra, detailRequest), null);
+  extra.trace = "future";
+  data(extra).future_detail = true;
+  object(data(extra).principal).future_principal = true;
+  object(object(data(extra).message).template).future_template = true;
+  assert.deepEqual(
+    await outboundHistoryDetailResponse(extra, detailRequest),
+    await outboundHistoryDetailResponse(fixtures.history_detail_email, detailRequest),
+  );
   assert.equal(await outboundHistoryDetailResponse(
     fixtures.history_detail_email,
     outboundHistoryDetailPayload(43, "64f000000000000000000001")!,
   ), null);
 });
 
-test("recipient conflict adopts only a fresh exact safe preview for the same UID set", () => {
+test("recipient conflict adopts only a fresh safe preview for the same UID set and ignores additions", () => {
   const conflict = outboundRecipientConflictResponse(fixtures.recipient_conflict, [42]);
   assert.ok(conflict);
   assert.equal(conflict.preview.recipients[0].channels.push, "opted_out");
   assert.equal(outboundRecipientConflictResponse(fixtures.recipient_conflict, [43]), null);
   const extra = clone(fixtures.recipient_conflict);
   data(extra).reason = "raw";
-  assert.equal(outboundRecipientConflictResponse(extra, [42]), null);
+  extra.trace = "future";
+  assert.deepEqual(outboundRecipientConflictResponse(extra, [42]), conflict);
 });
 
 test("all closed refusals have exact statuses, localized keys, and an explicit retry policy", () => {

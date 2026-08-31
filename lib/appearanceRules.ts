@@ -626,6 +626,7 @@ function record(value: unknown): Record<string, unknown> | null {
 }
 
 function exactKeys(value: Record<string, unknown>, required: readonly string[], optional: readonly string[] = []): boolean {
+  // Browser/Core request material stays exact so undeclared fields are never forwarded.
   const actual = Object.keys(value);
   if (actual.some((key) => !required.includes(key) && !optional.includes(key))) return false;
   return required.every((key) => Object.hasOwn(value, key));
@@ -638,6 +639,19 @@ function requiredKeys(value: Record<string, unknown>, required: readonly string[
 
 function subsetKeys(value: Record<string, unknown>, allowed: readonly string[]): boolean {
   return Object.keys(value).every((key) => allowed.includes(key));
+}
+
+type KeyPolicy = "server" | "exact";
+
+function acceptedKeys(
+  value: Record<string, unknown>,
+  required: readonly string[],
+  optional: readonly string[] = [],
+  policy: KeyPolicy,
+): boolean {
+  return policy === "exact"
+    ? exactKeys(value, required, optional)
+    : requiredKeys(value, required);
 }
 
 const CONTROL_CHARACTERS = /[\u0000-\u001F\u007F-\u009F]/;
@@ -809,9 +823,9 @@ export function appearanceTimestampFromLocalInput(value: string): string | null 
 // Rule parsers
 // ---------------------------------------------------------------------------
 
-function parseCenter(value: unknown): AppearanceCenter | null {
+function parseCenter(value: unknown, policy: KeyPolicy): AppearanceCenter | null {
   const source = record(value);
-  if (!source || !exactKeys(source, ["latitude", "longitude"])) return null;
+  if (!source || !acceptedKeys(source, ["latitude", "longitude"], [], policy)) return null;
   const latitude = finite(source.latitude, -90, 90);
   const longitude = finite(source.longitude, -180, 180);
   if (latitude === null || longitude === null) return null;
@@ -953,10 +967,9 @@ function appearanceLandingFieldValid(key: AppearanceLandingKey, value: string): 
   return true;
 }
 
-/** A JSON object even when empty (Core container identity, T-467b finding 8/15); an array is never a landing map. */
-export function parseAppearanceLanding(value: unknown): AppearanceLanding | null {
+function parseAppearanceLandingWithPolicy(value: unknown, policy: KeyPolicy): AppearanceLanding | null {
   const source = record(value);
-  if (!source || !subsetKeys(source, APPEARANCE_LANDING_KEYS)) return null;
+  if (!source || (policy === "exact" && !subsetKeys(source, APPEARANCE_LANDING_KEYS))) return null;
   const landing: AppearanceLanding = {};
   for (const key of APPEARANCE_LANDING_KEYS) {
     if (!Object.hasOwn(source, key)) continue;
@@ -971,9 +984,14 @@ export function parseAppearanceLanding(value: unknown): AppearanceLanding | null
   return landing;
 }
 
-function parseHeroItem(value: unknown, position: number): AppearanceHeroItem | null {
+/** A JSON object even when empty; the exported form validates browser-owned save material. */
+export function parseAppearanceLanding(value: unknown): AppearanceLanding | null {
+  return parseAppearanceLandingWithPolicy(value, "exact");
+}
+
+function parseHeroItem(value: unknown, position: number, policy: KeyPolicy): AppearanceHeroItem | null {
   const source = record(value);
-  if (!source || !exactKeys(source, HERO_ITEM_KEYS)) return null;
+  if (!source || !acceptedKeys(source, HERO_ITEM_KEYS, [], policy)) return null;
   const id = boundedText(source.id, 0, MAX_ID_LENGTH);
   const media = webUrl(source.media_url, false);
   const type = source.type === "image" || source.type === "video" ? source.type : null;
@@ -1039,29 +1057,33 @@ function parseHeroItem(value: unknown, position: number): AppearanceHeroItem | n
   return item;
 }
 
-export function parseAppearanceHero(value: unknown): AppearanceHero | null {
+function parseAppearanceHeroWithPolicy(value: unknown, policy: KeyPolicy): AppearanceHero | null {
   const source = record(value);
-  if (!source || !exactKeys(source, ["mode", "items"])) return null;
+  if (!source || !acceptedKeys(source, ["mode", "items"], [], policy)) return null;
   const mode = source.mode === "inherit" || source.mode === "replace" ? source.mode : null;
   if (mode === null || !Array.isArray(source.items) || source.items.length > MAX_APPEARANCE_HERO_ITEMS) return null;
   if (mode === "inherit" && source.items.length > 0) return null;
   const items: AppearanceHeroItem[] = [];
   for (const [position, raw] of source.items.entries()) {
-    const item = parseHeroItem(raw, position);
+    const item = parseHeroItem(raw, position, policy);
     if (!item) return null;
     items.push(item);
   }
   return { mode, items };
 }
 
-export function parseAppearancePalette(value: unknown): AppearancePalette | null {
+export function parseAppearanceHero(value: unknown): AppearanceHero | null {
+  return parseAppearanceHeroWithPolicy(value, "exact");
+}
+
+function parseAppearancePaletteWithPolicy(value: unknown, policy: KeyPolicy): AppearancePalette | null {
   const source = record(value);
-  if (!source || !subsetKeys(source, APPEARANCE_PALETTE_MODES)) return null;
+  if (!source || (policy === "exact" && !subsetKeys(source, APPEARANCE_PALETTE_MODES))) return null;
   const palette: AppearancePalette = { light: {}, dark: {} };
   for (const mode of APPEARANCE_PALETTE_MODES) {
     if (!Object.hasOwn(source, mode)) continue;
     const modeSource = record(source[mode]);
-    if (!modeSource || !subsetKeys(modeSource, APPEARANCE_PALETTE_ROLES)) return null;
+    if (!modeSource || (policy === "exact" && !subsetKeys(modeSource, APPEARANCE_PALETTE_ROLES))) return null;
     for (const role of APPEARANCE_PALETTE_ROLES) {
       if (!Object.hasOwn(modeSource, role)) continue;
       const hex = parseAppearancePaletteHex(modeSource[role]);
@@ -1072,13 +1094,17 @@ export function parseAppearancePalette(value: unknown): AppearancePalette | null
   return palette;
 }
 
+export function parseAppearancePalette(value: unknown): AppearancePalette | null {
+  return parseAppearancePaletteWithPolicy(value, "exact");
+}
+
 export function parseAppearanceFullPalette(value: unknown): AppearanceFullPalette | null {
   const source = record(value);
-  if (!source || !exactKeys(source, APPEARANCE_PALETTE_MODES)) return null;
+  if (!source || !requiredKeys(source, APPEARANCE_PALETTE_MODES)) return null;
   const palette = { light: {}, dark: {} } as AppearanceFullPalette;
   for (const mode of APPEARANCE_PALETTE_MODES) {
     const modeSource = record(source[mode]);
-    if (!modeSource || !exactKeys(modeSource, APPEARANCE_PALETTE_ROLES)) return null;
+    if (!modeSource || !requiredKeys(modeSource, APPEARANCE_PALETTE_ROLES)) return null;
     for (const role of APPEARANCE_PALETTE_ROLES) {
       const hex = parseAppearancePaletteHex(modeSource[role]);
       if (hex === null) return null;
@@ -1095,7 +1121,11 @@ type ScopeFields = Pick<AppearanceRuleInput, "storefront_country" | "country_cod
  * `storefront_country`, `country_code` and `place_label`, `null` for `center`
  * and `radius_km`. `null`, `""` and a missing key are not interchangeable.
  */
-function parseScopeFields(scope: AppearanceScope, source: Record<string, unknown>): ScopeFields | null {
+function parseScopeFields(
+  scope: AppearanceScope,
+  source: Record<string, unknown>,
+  policy: KeyPolicy,
+): ScopeFields | null {
   const blank = (value: unknown) => value === "";
   const absent = (value: unknown) => value === null;
   if (scope === "storefront") {
@@ -1111,7 +1141,7 @@ function parseScopeFields(scope: AppearanceScope, source: Record<string, unknown
       if (typeof source.country_code !== "string" || !isAppearanceAlpha2(source.country_code)) return null;
       country = source.country_code;
     }
-    const center = parseCenter(source.center);
+    const center = parseCenter(source.center, policy);
     const radius = finite(source.radius_km, MIN_APPEARANCE_RADIUS_KM, MAX_APPEARANCE_RADIUS_KM);
     const placeLabel = boundedText(source.place_label, 1, MAX_APPEARANCE_PLACE_LABEL_LENGTH);
     if (!center || radius === null || placeLabel === null) return null;
@@ -1122,7 +1152,7 @@ function parseScopeFields(scope: AppearanceScope, source: Record<string, unknown
   return { storefront_country: "", country_code: "", center: null, radius_km: null, place_label: "" };
 }
 
-function parseRuleInputFields(source: Record<string, unknown>): AppearanceRuleInput | null {
+function parseRuleInputFields(source: Record<string, unknown>, policy: KeyPolicy): AppearanceRuleInput | null {
   const name = boundedText(source.name, 1, MAX_APPEARANCE_NAME_LENGTH);
   const scope = typeof source.scope === "string" && (APPEARANCE_SCOPES as readonly string[]).includes(source.scope)
     ? source.scope as AppearanceScope
@@ -1134,10 +1164,10 @@ function parseRuleInputFields(source: Record<string, unknown>): AppearanceRuleIn
   if (name === null || scope === null || priority === null || active === null
     || startsAt === undefined || endsAt === undefined
     || !appearanceTimestampsOrdered(startsAt, endsAt)) return null;
-  const scopeFields = parseScopeFields(scope, source);
-  const landing = parseAppearanceLanding(source.landing);
-  const hero = parseAppearanceHero(source.hero);
-  const palette = parseAppearancePalette(source.palette);
+  const scopeFields = parseScopeFields(scope, source, policy);
+  const landing = parseAppearanceLandingWithPolicy(source.landing, policy);
+  const hero = parseAppearanceHeroWithPolicy(source.hero, policy);
+  const palette = parseAppearancePaletteWithPolicy(source.palette, policy);
   if (!scopeFields || !landing || !appearanceLandingCoherent(landing) || !hero || !palette) return null;
   return {
     name,
@@ -1157,7 +1187,7 @@ function parseRuleInputFields(source: Record<string, unknown>): AppearanceRuleIn
 export function parseAppearanceRuleInput(value: unknown): AppearanceRuleInput | null {
   const source = record(value);
   if (!source || !exactKeys(source, RULE_INPUT_KEYS)) return null;
-  const input = parseRuleInputFields(source);
+  const input = parseRuleInputFields(source, "exact");
   if (!input) return null;
   // Finding 14 / T-468b finding 3: save input may carry several EMPTY hero ids for
   // Core to mint, but every non-empty id must already be unique.
@@ -1166,11 +1196,11 @@ export function parseAppearanceRuleInput(value: unknown): AppearanceRuleInput | 
   return input;
 }
 
-/** One stored rule exactly as Core projects it. */
+/** One stored rule as Core projects it, with additive server fields ignored. */
 export function parseAppearanceRule(value: unknown): AppearanceRule | null {
   const source = record(value);
-  if (!source || !exactKeys(source, RULE_WIRE_KEYS, ["migrated_from"])) return null;
-  const input = parseRuleInputFields(source);
+  if (!source || !requiredKeys(source, RULE_WIRE_KEYS)) return null;
+  const input = parseRuleInputFields(source, "server");
   const id = appearanceRuleId(source.id);
   const revision = integer(source.revision, 1, Number.MAX_SAFE_INTEGER);
   // Finding 6: stored audit timestamps are strict UTC strings, never null (nullable only for starts_at / ends_at).
@@ -1204,8 +1234,8 @@ export function parseAppearanceRule(value: unknown): AppearanceRule | null {
 
 function parseLandingDefaults(value: unknown): AppearanceLandingDraft | null {
   const source = record(value);
-  if (!source || !exactKeys(source, APPEARANCE_LANDING_KEYS)) return null;
-  const landing = parseAppearanceLanding(source);
+  if (!source || !requiredKeys(source, APPEARANCE_LANDING_KEYS)) return null;
+  const landing = parseAppearanceLandingWithPolicy(source, "server");
   if (!landing) return null;
   if (landing.background_type === undefined || landing.title_type === undefined) return null;
   return landing as AppearanceLandingDraft;
@@ -1218,7 +1248,7 @@ function parseLandingDefaults(value: unknown): AppearanceLandingDraft | null {
  */
 export function parseAppearanceListPayload(value: unknown): AppearanceListPayload | null {
   const source = record(value);
-  if (!source || !exactKeys(source, ["rules", "defaults"])) return null;
+  if (!source || !requiredKeys(source, ["rules", "defaults"])) return null;
   if (!Array.isArray(source.rules)) return null;
   const rules: AppearanceRule[] = [];
   const seen = new Set<string>();
@@ -1237,7 +1267,7 @@ export function parseAppearanceListPayload(value: unknown): AppearanceListPayloa
   // The binding list wire carries Core's compiled defaults; the console never
   // substitutes its own table for missing provider material.
   const defaultsSource = record(source.defaults);
-  if (!defaultsSource || !exactKeys(defaultsSource, ["palette", "landing"])) return null;
+  if (!defaultsSource || !requiredKeys(defaultsSource, ["palette", "landing"])) return null;
   const palette = parseAppearanceFullPalette(defaultsSource.palette);
   const landing = parseLandingDefaults(defaultsSource.landing);
   if (!palette || !landing) return null;
@@ -1272,11 +1302,11 @@ function previewLandingLayoutUnit(value: unknown): AppearanceLandingLayoutUnit |
 }
 
 function parsePreviewLandingV1(source: Record<string, unknown>): AppearancePreviewLanding | null {
-  if (!exactKeys(source, ["background", "title", "description"])) return null;
+  if (!requiredKeys(source, ["background", "title", "description"])) return null;
   const background = record(source.background);
   const title = record(source.title);
-  if (!background || !exactKeys(background, ["type", "url", "poster_url"])) return null;
-  if (!title || !exactKeys(title, ["type", "text", "image_url"])) return null;
+  if (!background || !requiredKeys(background, ["type", "url", "poster_url"])) return null;
+  if (!title || !requiredKeys(title, ["type", "text", "image_url"])) return null;
   const backgroundType = background.type === "image" || background.type === "video" ? background.type : null;
   const backgroundUrl = webUrl(background.url, true);
   const posterUrl = webUrl(background.poster_url, true);
@@ -1474,7 +1504,10 @@ function parsePreviewLandingV2(source: Record<string, unknown>): AppearancePrevi
 function parsePreviewLanding(value: unknown): AppearancePreviewLanding | null {
   const source = record(value);
   if (!source) return null;
-  return Object.keys(source).length === 3 ? parsePreviewLandingV1(source) : parsePreviewLandingV2(source);
+  const v2OnlyKeys = ["layout", "buttons", "footer", "qr"] as const;
+  return v2OnlyKeys.some((key) => Object.hasOwn(source, key))
+    ? parsePreviewLandingV2(source)
+    : parsePreviewLandingV1(source);
 }
 
 const PREVIEW_HERO_KEYS = [
@@ -1484,7 +1517,7 @@ const PREVIEW_HERO_KEYS = [
 
 function parsePreviewHeroItem(value: unknown): AppearancePreviewHeroItem | null {
   const source = record(value);
-  if (!source || !exactKeys(source, PREVIEW_HERO_KEYS)) return null;
+  if (!source || !requiredKeys(source, PREVIEW_HERO_KEYS)) return null;
   const id = boundedText(source.id, 1, MAX_ID_LENGTH);
   const media = webUrl(source.media_url, false);
   const type = source.type === "image" || source.type === "video" ? source.type : null;
@@ -1504,14 +1537,14 @@ const PREVIEW_STYLE_KEYS = [
   "title_size", "title_color", "title_weight", "subtitle_size", "subtitle_color", "subtitle_weight",
 ] as const;
 
-/** `AppearanceRuleService::heroStyle()` per platform: exact six keys, closed domains. */
+/** `AppearanceRuleService::heroStyle()` per platform: six required fields with closed domains. */
 function parsePreviewTextStyle(value: unknown): Record<AppearanceHeroPlatform, AppearancePreviewHeroStyle> | null {
   const source = record(value);
-  if (!source || !exactKeys(source, ["web", "mobile"])) return null;
+  if (!source || !requiredKeys(source, ["web", "mobile"])) return null;
   const result = {} as Record<AppearanceHeroPlatform, AppearancePreviewHeroStyle>;
   for (const platform of ["web", "mobile"] as const) {
     const style = record(source[platform]);
-    if (!style || !exactKeys(style, PREVIEW_STYLE_KEYS)) return null;
+    if (!style || !requiredKeys(style, PREVIEW_STYLE_KEYS)) return null;
     const titleSize = style.title_size === null ? null : integer(style.title_size, 10, 120);
     const subtitleSize = style.subtitle_size === null ? null : integer(style.subtitle_size, 10, 120);
     const titleColor = heroColor(style.title_color);
@@ -1534,8 +1567,8 @@ function parsePreviewTextStyle(value: unknown): Record<AppearanceHeroPlatform, A
 
 function parsePreviewLandingFlat(value: unknown): AppearanceLandingDraft | null {
   const source = record(value);
-  if (!source || !exactKeys(source, APPEARANCE_LANDING_KEYS)) return null;
-  const landing = parseAppearanceLanding(source);
+  if (!source || !requiredKeys(source, APPEARANCE_LANDING_KEYS)) return null;
+  const landing = parseAppearanceLandingWithPolicy(source, "server");
   return landing as AppearanceLandingDraft | null;
 }
 
@@ -1557,11 +1590,11 @@ function parsePreviewLandingFlatSources(
   landingFlat: AppearanceLandingDraft,
 ): AppearanceLandingFlatSources | null {
   const source = record(value);
-  if (!source || !exactKeys(source, APPEARANCE_LANDING_KEYS)) return null;
+  if (!source || !requiredKeys(source, APPEARANCE_LANDING_KEYS)) return null;
   const sources = {} as AppearanceLandingFlatSources;
   for (const key of APPEARANCE_LANDING_KEYS) {
     const raw = record(source[key]);
-    if (!raw || !exactKeys(raw, ["scope", "rule_id"])) return null;
+    if (!raw || !requiredKeys(raw, ["scope", "rule_id"])) return null;
     const scope = typeof raw.scope === "string" && (APPEARANCE_LANDING_FLAT_SOURCE_SCOPES as readonly string[]).includes(raw.scope)
       ? raw.scope as AppearanceLandingFlatSourceScope
       : null;
@@ -1587,16 +1620,19 @@ function parsePreviewLandingFlatSources(
   return sources;
 }
 
-/** App appearance material, plus the closed Webadmin-only schema-2 flat provenance sibling. */
+/** App appearance material, plus the Webadmin-only schema-2 flat provenance sibling. */
 export function parseAppearancePreviewPayload(value: unknown): AppearancePreviewPayload | null {
   const source = record(value);
   if (!source) return null;
   const appV1Keys = ["revision", "content_version", "landing", "hero", "palette", "matched"] as const;
   const appV2Keys = [...appV1Keys, "controls"] as const;
   const webadminKeys = [...appV2Keys, "landing_flat", "landing_flat_sources", "landing_flat_defaults"] as const;
-  const appV1 = exactKeys(source, appV1Keys);
-  const appV2 = exactKeys(source, appV2Keys);
-  const webadminV2 = exactKeys(source, webadminKeys);
+  const webadminOnlyKeys = ["landing_flat", "landing_flat_sources", "landing_flat_defaults"] as const;
+  const hasWebadminMaterial = webadminOnlyKeys.some((key) => Object.hasOwn(source, key));
+  const hasControls = Object.hasOwn(source, "controls");
+  const webadminV2 = hasWebadminMaterial && requiredKeys(source, webadminKeys);
+  const appV2 = !hasWebadminMaterial && hasControls && requiredKeys(source, appV2Keys);
+  const appV1 = !hasWebadminMaterial && !hasControls && requiredKeys(source, appV1Keys);
   if (!appV1 && !appV2 && !webadminV2) return null;
   const revision = integer(source.revision, 0, Number.MAX_SAFE_INTEGER);
   // Finding 7: Core's `content_version` is always a lowercase SHA-256 hex digest.
@@ -1612,7 +1648,7 @@ export function parseAppearancePreviewPayload(value: unknown): AppearancePreview
   const palette = parseAppearanceFullPalette(source.palette);
   const matched = record(source.matched);
   const controlsSource = landing?.schema === 2 ? record(source.controls) : null;
-  const controlsRadius = controlsSource && exactKeys(controlsSource, ["button_corner_radius"])
+  const controlsRadius = controlsSource && requiredKeys(controlsSource, ["button_corner_radius"])
     ? integer(controlsSource.button_corner_radius, 0, 32)
     : null;
   if (revision === null || contentVersion === null || !landing || !palette
@@ -1621,7 +1657,7 @@ export function parseAppearancePreviewPayload(value: unknown): AppearancePreview
     || (webadminV2 && (landing.schema !== 2 || landingFlat === null || landingFlatSources === null || landingFlatDefaults === null))
     || !Array.isArray(source.hero)
     || source.hero.length > MAX_APPEARANCE_PREVIEW_HERO_ITEMS
-    || !matched || !exactKeys(matched, ["scope", "rule_id", "location_source"])) return null;
+    || !matched || !requiredKeys(matched, ["scope", "rule_id", "location_source"])) return null;
   const hero: AppearancePreviewHeroItem[] = [];
   for (const raw of source.hero) {
     const item = parsePreviewHeroItem(raw);
@@ -1757,7 +1793,7 @@ export function compareAppearanceLandingWithPreview(
 /** `appearance_city_geocode` material (Amendment v1.2 §3). */
 export function parseAppearanceGeocodePayload(value: unknown): AppearanceGeocodeCandidate[] | null {
   const source = record(value);
-  if (!source || !exactKeys(source, ["candidates"]) || !Array.isArray(source.candidates)) return null;
+  if (!source || !requiredKeys(source, ["candidates"]) || !Array.isArray(source.candidates)) return null;
   // Finding 8: Core returns 0..5 candidates de-duplicated by `place_id` (≤ 256 UTF-8 bytes),
   // each with a non-empty alpha-2 country and an integer radius in 1..500 after its ceil.
   if (source.candidates.length > MAX_APPEARANCE_GEOCODE_CANDIDATES) return null;
@@ -1765,11 +1801,11 @@ export function parseAppearanceGeocodePayload(value: unknown): AppearanceGeocode
   const seen = new Set<string>();
   for (const raw of source.candidates) {
     const candidate = record(raw);
-    if (!candidate || !exactKeys(candidate, ["place_id", "place_label", "country_code", "center", "radius_km"])) return null;
+    if (!candidate || !requiredKeys(candidate, ["place_id", "place_label", "country_code", "center", "radius_km"])) return null;
     const placeId = boundedText(candidate.place_id, 1, MAX_APPEARANCE_PLACE_ID_BYTES);
     const placeLabel = boundedText(candidate.place_label, 1, MAX_APPEARANCE_PLACE_LABEL_LENGTH);
     const country = typeof candidate.country_code === "string" && isAppearanceAlpha2(candidate.country_code) ? candidate.country_code : null;
-    const center = parseCenter(candidate.center);
+    const center = parseCenter(candidate.center, "server");
     const radius = integer(candidate.radius_km, MIN_APPEARANCE_RADIUS_KM, MAX_APPEARANCE_RADIUS_KM);
     if (placeId === null || placeLabel === null || country === null || !center || radius === null) return null;
     if (new TextEncoder().encode(placeId).length > MAX_APPEARANCE_PLACE_ID_BYTES || seen.has(placeId)) return null;
@@ -2435,6 +2471,7 @@ export function parseAppearanceIpAddress(value: string): string | null {
 }
 
 function parsePreviewRequest(body: Record<string, unknown>): AppearancePreviewRequest | null {
+  // The browser-owned preview query remains closed before it is forwarded to Core.
   if (!subsetKeys(body, ["storefront_country", "latitude", "longitude", "ip", "lang", "appearance_schema", "exclude_rule_id", "location_mode"])) return null;
   const request: AppearancePreviewRequest = {};
   if (Object.hasOwn(body, "location_mode")) {
@@ -2543,8 +2580,8 @@ export function appearanceRuleIsLive(rule: AppearanceRule, now: number): boolean
 }
 
 // ---------------------------------------------------------------------------
-// Response decoding. Every browser path evaluates Core's exact legacy envelope
-// (`lib/webadminEnvelope.ts`) or the bridge's exact refusal before any domain
+// Response decoding. Every browser path evaluates Core's required legacy envelope
+// (`lib/webadminEnvelope.ts`) or the bridge's required refusal before any domain
 // material is trusted, and every write success is bound to its target.
 // ---------------------------------------------------------------------------
 
@@ -2648,27 +2685,34 @@ const APPEARANCE_FIELD_REFUSAL_FIELDS: ReadonlySet<string> = new Set([
 
 /**
  * Envelope-source and material closure: the bridge map applies only to the
- * exact three-key bridge envelope, the Core map only to the exact legacy trio
+ * required three-key bridge envelope, the Core map only to the required legacy trio
  * envelope WITHOUT `data`, or to Core's one closed
  * `appearance-rule-invalid` + `field` shape. A known Core error carrying
  * additive `data` is uncertain, never a proven no-land; anything else is
  * malformed.
  */
 function decodeRefusal(value: unknown): AppearanceRefusal | AppearanceUncertain | null {
-  const bridge = adminBridgeErrorEnvelope(value);
-  if (bridge) {
-    return classifyRefusal(bridge.error, bridge.status_code, APPEARANCE_BRIDGE_REFUSAL_STATUSES, APPEARANCE_BRIDGE_UNCERTAIN_STATUSES);
+  // Route recognized Core material before the bridge's three-key subset.
+  // Otherwise a tolerant legacy Core envelope also looks bridge-shaped.
+  const raw = record(value);
+  if (raw && Object.hasOwn(raw, "field")) {
+    const fieldCore = webadminEnvelope(value, false, ["error", "field"]);
+    if (fieldCore && fieldCore.error === "appearance-rule-invalid"
+      && typeof fieldCore.field === "string" && APPEARANCE_FIELD_REFUSAL_FIELDS.has(fieldCore.field)) {
+      return classifyRefusal(fieldCore.error, fieldCore.status_code, APPEARANCE_CORE_REFUSAL_STATUSES, APPEARANCE_CORE_UNCERTAIN_STATUSES);
+    }
+    return null;
   }
   const core = webadminErrorEnvelope(value, "forbidden");
   if (core) {
     return classifyRefusal(core.error, core.status_code, APPEARANCE_CORE_REFUSAL_STATUSES, APPEARANCE_CORE_UNCERTAIN_STATUSES);
   }
-  const fieldCore = webadminEnvelope(value, false, ["error", "field"]);
-  if (fieldCore && fieldCore.error === "appearance-rule-invalid"
-    && typeof fieldCore.field === "string" && APPEARANCE_FIELD_REFUSAL_FIELDS.has(fieldCore.field)) {
-    return classifyRefusal(fieldCore.error, fieldCore.status_code, APPEARANCE_CORE_REFUSAL_STATUSES, APPEARANCE_CORE_UNCERTAIN_STATUSES);
+  if (webadminErrorEnvelope(value, "required")) return uncertain("refusal-with-data");
+  const bridge = adminBridgeErrorEnvelope(value);
+  if (bridge) {
+    return classifyRefusal(bridge.error, bridge.status_code, APPEARANCE_BRIDGE_REFUSAL_STATUSES, APPEARANCE_BRIDGE_UNCERTAIN_STATUSES);
   }
-  return webadminErrorEnvelope(value, "required") ? uncertain("refusal-with-data") : null;
+  return null;
 }
 
 function decodeMaterial<T>(value: unknown, parse: (data: unknown) => T | null): AppearanceDecode<T> {
@@ -2797,7 +2841,7 @@ export function reconcileAppearanceCreate(
 }
 
 /**
- * `appearance_rules_save`: exact success envelope, `data: { rule }`, and the
+ * `appearance_rules_save`: success envelope, `data: { rule }`, and the
  * returned rule bound to the submitted target on BOTH create and update
  * (T-468b finding 11): the same id on an update (a create adopts the minted
  * one), the same fourteen-key material (Core-minted empty hero ids excepted)
@@ -2811,7 +2855,7 @@ export function decodeAppearanceSaveResponse(
 ): AppearanceDecode<AppearanceRule> {
   const decoded = decodeMaterial(value, (data) => {
     const source = record(data);
-    if (!source || !exactKeys(source, ["rule"])) return null;
+    if (!source || !requiredKeys(source, ["rule"])) return null;
     return parseAppearanceRule(source.rule);
   });
   if (!decoded.ok) return decoded;
@@ -2822,11 +2866,11 @@ export function decodeAppearanceSaveResponse(
   return decoded;
 }
 
-/** `appearance_rules_delete`: exact success envelope with `data: { id }` naming the submitted rule. */
+/** `appearance_rules_delete`: success envelope with `data: { id }` naming the submitted rule. */
 export function decodeAppearanceDeleteResponse(value: unknown, submittedId: string): AppearanceDecode<{ id: string }> {
   const decoded = decodeMaterial(value, (data) => {
     const source = record(data);
-    if (!source || !exactKeys(source, ["id"])) return null;
+    if (!source || !requiredKeys(source, ["id"])) return null;
     const id = appearanceRuleId(source.id);
     return id === null ? null : { id };
   });

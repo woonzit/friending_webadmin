@@ -239,12 +239,21 @@ test("fresh environment-derived settings accept only Core's exact PHP empty-map 
   assert.equal(authPolicySettingsResponse(success(populatedList)), null);
 });
 
-test("the surrounding settings map stays additive while every known policy setting is closed", () => {
+test("the surrounding settings map and known setting rows ignore additive fields", () => {
   const additive = settings();
   additive.future_setting = { secret: "SENTINEL-MUST-NOT-ENTER-DRAFT" };
   const value = authPolicySettingsResponse(success(additive));
   assert.ok(value);
   assert.doesNotMatch(JSON.stringify(value), /SENTINEL-MUST-NOT-ENTER-DRAFT/);
+
+  const additiveRows = structuredClone(settings());
+  (additiveRows.auth_policy_default as Record<string, unknown>).deprecated_at = null;
+  ((additiveRows.auth_policy_default as Record<string, unknown>).value as Record<string, unknown>).future_method = true;
+  (((additiveRows.phone_dial_formats as Record<string, unknown>).value as Record<string, unknown>[])[0]).future_mask_metadata = true;
+  assert.deepEqual(
+    authPolicySettingsResponse(success(additiveRows)),
+    authPolicySettingsResponse(success(settings())),
+  );
 
   for (const missing of AUTH_POLICY_SETTING_KEYS) {
     const candidate = structuredClone(settings());
@@ -257,9 +266,6 @@ test("the surrounding settings map stays additive while every known policy setti
     delete (candidate.auth_policy_default as Record<string, unknown>)[key];
     assert.equal(authPolicySettingsResponse(success(candidate)), null, `missing wrapper ${key}`);
   }
-  const extra = structuredClone(settings());
-  (extra.auth_policy_default as Record<string, unknown>).unknown = true;
-  assert.equal(authPolicySettingsResponse(success(extra)), null);
 });
 
 test("malformed methods, storefronts, calling codes, metadata and revisions fail closed", () => {
@@ -267,7 +273,6 @@ test("malformed methods, storefronts, calling codes, metadata and revisions fail
     (candidate) => { (candidate.auth_policy_default as Record<string, unknown>).value = { phone: true }; },
     (candidate) => { (candidate.auth_policy_default as Record<string, unknown>).value = null; },
     (candidate) => { (candidate.auth_policy_default as Record<string, unknown>).value = { phone: 1, email: false }; },
-    (candidate) => { (candidate.auth_policy_default as Record<string, unknown>).value = { phone: true, email: false, apple: true }; },
     (candidate) => { (candidate.auth_policy_default as Record<string, unknown>).value = { phone: false, email: false }; },
     (candidate) => { (candidate.auth_policy_overrides as Record<string, unknown>).value = { US: { phone: true, email: false } }; },
     (candidate) => { (candidate.auth_policy_overrides as Record<string, unknown>).value = { hun: { phone: true, email: false } }; },
@@ -278,7 +283,6 @@ test("malformed methods, storefronts, calling codes, metadata and revisions fail
     (candidate) => { (candidate.phone_dial_codes_default as Record<string, unknown>).value = ["999"]; },
     (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = {}; },
     (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "1" }]; },
-    (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "1", mask: "***", extra: true }]; },
     (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "+1", mask: "***" }]; },
     (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "0", mask: "***" }]; },
     (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "01", mask: "***" }]; },
@@ -316,7 +320,10 @@ test("malformed methods, storefronts, calling codes, metadata and revisions fail
     delete candidate[key];
     assert.equal(authPolicySettingsResponse(candidate), null, `missing envelope ${key}`);
   }
-  assert.equal(authPolicySettingsResponse({ ...envelope, extra: true }), null);
+  assert.deepEqual(
+    authPolicySettingsResponse({ ...envelope, extra: true }),
+    authPolicySettingsResponse(envelope),
+  );
 });
 
 test("draft validation blocks unsafe defaults, incomplete rows, duplicates and unknown calling codes", () => {
@@ -457,6 +464,10 @@ test("Core phone-format refusals require setting-invalid and the ruled dotted fi
     field: "mask",
     index: 999,
   });
+  assert.deepEqual(
+    phoneDialFormatRefusal({ ...refusal("phone_dial_formats.0.mask"), extra: true }),
+    phoneDialFormatRefusal(refusal("phone_dial_formats.0.mask")),
+  );
   for (const candidate of [
     refusal("phone_dial_formats[0].mask"),
     refusal("phone_dial_formats.01.mask"),
@@ -466,7 +477,6 @@ test("Core phone-format refusals require setting-invalid and the ruled dotted fi
     refusal("phone_dial_formats.0.mask\n"),
     refusal("phone_dial_formats.0.mask", "settings-invalid"),
     refusal("phone_dial_formats.0.mask", "setting-invalid", 400),
-    { ...refusal("phone_dial_formats.0.mask"), extra: true },
   ]) {
     assert.equal(phoneDialFormatRefusal(candidate), null, JSON.stringify(candidate));
   }

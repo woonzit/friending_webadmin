@@ -316,8 +316,8 @@ function quotaRule(value: unknown, minimum: number, maximum: number): Membership
   return parsed !== null && parsed <= maximum ? { mode, value: parsed } : null;
 }
 
-function exactKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
-  return Object.keys(value).sort().join("\u0000") === [...keys].sort().join("\u0000");
+function requiredKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
+  return keys.every((key) => Object.hasOwn(value, key));
 }
 
 function planConfiguration(value: unknown): MembershipPlanConfiguration | null {
@@ -336,16 +336,16 @@ function planConfiguration(value: unknown): MembershipPlanConfiguration | null {
     || updatedBy === null
     || typeof source.ready_for_enforcement !== "boolean"
     || !capabilitiesSource
-    || !exactKeys(capabilitiesSource, MEMBERSHIP_CAPABILITIES)
+    || !requiredKeys(capabilitiesSource, MEMBERSHIP_CAPABILITIES)
     || !quotasSource
-    || !exactKeys(quotasSource, MEMBERSHIP_QUOTAS)
+    || !requiredKeys(quotasSource, MEMBERSHIP_QUOTAS)
     || !presets
   ) return null;
 
   const capabilities = {} as MembershipPlanConfiguration["capabilities"];
   for (const key of MEMBERSHIP_CAPABILITIES) {
     const tiers = record(capabilitiesSource[key]);
-    if (!tiers || !exactKeys(tiers, MEMBERSHIP_TIERS)
+    if (!tiers || !requiredKeys(tiers, MEMBERSHIP_TIERS)
       || typeof tiers.free !== "boolean" || typeof tiers.plus !== "boolean") return null;
     capabilities[key] = { free: tiers.free, plus: tiers.plus };
   }
@@ -371,7 +371,7 @@ function planConfiguration(value: unknown): MembershipPlanConfiguration | null {
     const preset = record(presets[key]);
     if (!preset || preset.tier !== expected.tier || preset.period !== expected.period) return null;
   }
-  if (!exactKeys(presets, Object.keys(expectedPresets))) return null;
+  if (!requiredKeys(presets, Object.keys(expectedPresets))) return null;
 
   return {
     schema_version: 1,
@@ -392,7 +392,7 @@ export function membershipConfiguration(value: unknown): MembershipConfiguration
   const rolloutSource = record(source?.rollout);
   const productsSource = record(source?.store_products);
   if (!source || !configuration || !boundsSource
-    || !exactKeys(boundsSource, MEMBERSHIP_QUOTAS)
+    || !requiredKeys(boundsSource, MEMBERSHIP_QUOTAS)
     || !rolloutSource || !productsSource
     || typeof rolloutSource.projection_writes_enabled !== "boolean"
     || typeof rolloutSource.feature_enforcement_enabled !== "boolean"

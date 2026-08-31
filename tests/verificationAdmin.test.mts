@@ -325,12 +325,16 @@ test("A1 pins the active badge-upload ceiling while every other verification act
   }
 });
 
-test("admin readiness and user-detail access projections are exact, sorted, and capability-bound", () => {
+test("admin readiness and user-detail access projections ignore additions and stay sorted and capability-bound", () => {
   const principal = verificationConsoleFixture().principal;
   const actions = [...VERIFICATION_ADMIN_ACTIONS].sort();
   const ready = { contract_version: 1, contract_ready: true, principal, actions };
   assert.ok(verificationAdminMe(ready));
-  assert.equal(verificationAdminMe({ ...ready, extra: true }), null);
+  assert.deepEqual(verificationAdminMe({
+    ...ready,
+    extra: true,
+    principal: { ...principal, future_principal: true },
+  }), verificationAdminMe(ready));
   assert.equal(verificationAdminMe({ ...ready, actions: [...actions].reverse() }), null);
 
   const insufficient = clone(ready);
@@ -340,12 +344,16 @@ test("admin readiness and user-detail access projections are exact, sorted, and 
   assert.equal(verificationAdminMe({ contract_version: 1, contract_ready: false, principal, actions: ["verification_console"] }), null);
 
   assert.ok(verificationAccess({ contract_version: 1, contract_ready: true, capabilities: [...VERIFICATION_GRANT_CAPABILITIES] }));
+  assert.deepEqual(
+    verificationAccess({ contract_version: 1, contract_ready: true, capabilities: [...VERIFICATION_GRANT_CAPABILITIES], extra: true }),
+    verificationAccess({ contract_version: 1, contract_ready: true, capabilities: [...VERIFICATION_GRANT_CAPABILITIES] }),
+  );
   assert.equal(verificationAccess({ contract_version: 1, contract_ready: true, capabilities: [...VERIFICATION_GRANT_CAPABILITIES].reverse() }), null);
   assert.ok(verificationAccess({ contract_version: 1, contract_ready: false, capabilities: [] }));
   assert.equal(verificationAccess({ contract_version: 1, contract_ready: false, capabilities: ["verification_grant_read"] }), null);
 });
 
-test("the per-request proxy capability decision trusts only the exact Core projection", () => {
+test("the per-request proxy capability decision trusts only known Core projection fields", () => {
   const capabilities = VERIFICATION_CAPABILITIES.filter((capability) => [
     "verification_grant_read",
     "verification_pending_read",
@@ -368,7 +376,7 @@ test("the per-request proxy capability decision trusts only the exact Core proje
   assert.equal(verificationProxyCapabilityAuthorized("verification_policy_save_draft", { verification }), false);
   assert.equal(verificationProxyCapabilityAuthorized("overview", { verification }), null);
   assert.equal(verificationProxyCapabilityAuthorized("verification_console", { verification: { ...verification, contract_ready: false, actions: [] } }), false);
-  assert.equal(verificationProxyCapabilityAuthorized("verification_console", { verification: { ...verification, extra: true } }), false);
+  assert.equal(verificationProxyCapabilityAuthorized("verification_console", { verification: { ...verification, extra: true } }), true);
   assert.equal(VERIFICATION_ACTION_CAPABILITY.verification_policy_apply, "verification_policy_publish");
 });
 
@@ -389,7 +397,7 @@ test("same-origin and custom-header checks reject guests' cross-site request mat
   assert.equal(isTrustedAdminRequest(headers({ host: "friendingapp.com", origin: "https://friendingapp.com" })), false);
 });
 
-test("the console parser accepts the exact all-None launch fixture and rejects structural or semantic drift", () => {
+test("the console parser accepts the all-None launch fixture, ignores additions, and rejects known drift", () => {
   const fixture = verificationConsoleFixture();
   const parsed = verificationConsoleResponse(success(fixture));
   assert.ok(parsed);
@@ -399,8 +407,11 @@ test("the console parser accepts the exact all-None launch fixture and rejects s
   assert.equal(parsed.import_health.evaluated_at, parsed.evaluated_at);
   assert.equal(parsed.activation_guard.non_none_publish_ready, false);
 
-  assert.equal(verificationConsoleResponse({ ...success(fixture), extra: true }), null);
-  assert.equal(verificationConsoleResponse(success({ ...fixture, extra: true })), null);
+  const additive = clone(fixture);
+  (additive as unknown as Record<string, unknown>).extra = true;
+  (additive.principal as unknown as Record<string, unknown>).future_principal = true;
+  (additive.policies[0] as unknown as Record<string, unknown>).future_policy = true;
+  assert.deepEqual(verificationConsoleResponse({ ...success(additive), extra: true }), parsed);
   const missingFeature = clone(fixture);
   missingFeature.feature_keys.pop();
   assert.equal(verificationConsoleResponse(success(missingFeature)), null);
@@ -423,15 +434,48 @@ test("the console parser accepts the exact all-None launch fixture and rejects s
   assert.ok(verificationConsoleResponse(success(lastPage)), "a last page need not contain the total census");
 });
 
-test("policy, copy, pending and badge mutation parsers close every material object", () => {
+test("policy, copy, pending and badge mutation parsers ignore additions and validate known material", () => {
   const fixture = verificationConsoleFixture();
   const policy = fixture.policies[0];
   const pair = fixture.copy_pairs.find((row) => row.copy_key === "default.video");
   assert.ok(pair);
-  assert.ok(verificationPolicyMutationResponse(success({ contract_version: 1, principal: fixture.principal, policy, replayed: false })));
-  assert.ok(verificationCopyMutationResponse(success({ contract_version: 1, principal: fixture.principal, copy_pair: pair, replayed: true })));
-  assert.ok(verificationPendingSettingsMutationResponse(success({ contract_version: 1, principal: fixture.principal, pending_settings: fixture.pending_settings, replayed: false })));
-  assert.ok(verificationBadgeMutationResponse(success({ contract_version: 1, principal: fixture.principal, badge: fixture.badges[0], replayed: false })));
+  const policyResult = verificationPolicyMutationResponse(success({ contract_version: 1, principal: fixture.principal, policy, replayed: false }));
+  const copyResult = verificationCopyMutationResponse(success({ contract_version: 1, principal: fixture.principal, copy_pair: pair, replayed: true }));
+  const pendingResult = verificationPendingSettingsMutationResponse(success({ contract_version: 1, principal: fixture.principal, pending_settings: fixture.pending_settings, replayed: false }));
+  const badgeResult = verificationBadgeMutationResponse(success({ contract_version: 1, principal: fixture.principal, badge: fixture.badges[0], replayed: false }));
+  assert.ok(policyResult && copyResult && pendingResult && badgeResult);
+  assert.deepEqual(verificationPolicyMutationResponse({ ...success({
+    contract_version: 1,
+    principal: { ...fixture.principal, future_principal: true },
+    policy: { ...policy, future_policy: true, draft: { ...policy.draft, future_draft: true } },
+    replayed: false,
+    future_data: true,
+  }), future_envelope: true }), policyResult);
+  assert.deepEqual(verificationCopyMutationResponse(success({
+    contract_version: 1,
+    principal: fixture.principal,
+    copy_pair: {
+      ...pair,
+      future_copy: true,
+      behavior: { ...pair.behavior, future_behavior: true },
+      locales: { ...pair.locales, en: { ...pair.locales.en, future_locale: true } },
+    },
+    replayed: true,
+  })), copyResult);
+  assert.deepEqual(verificationPendingSettingsMutationResponse(success({
+    contract_version: 1,
+    principal: fixture.principal,
+    pending_settings: { ...fixture.pending_settings, future_pending: true },
+    replayed: false,
+    future_data: true,
+  })), pendingResult);
+  assert.deepEqual(verificationBadgeMutationResponse(success({
+    contract_version: 1,
+    principal: fixture.principal,
+    badge: { ...fixture.badges[0], future_badge: true },
+    replayed: false,
+    future_data: true,
+  })), badgeResult);
 
   const noEffectivePolicy = clone(policy);
   noEffectivePolicy.effective = null;
@@ -514,10 +558,21 @@ test("A7 and A8 keep draft-only publish and tombstone restore separate", () => {
   );
 });
 
-test("impact, Places and aggregate parsers accept only their exact bounded shapes", () => {
+test("impact, Places and aggregate parsers ignore additions and enforce known bounds", () => {
   const fixture = verificationConsoleFixture();
   const impact = impactPreview();
-  assert.ok(verificationPolicyImpactPreviewResponse(success(impact)));
+  const parsedImpact = verificationPolicyImpactPreviewResponse(success(impact));
+  assert.ok(parsedImpact);
+  assert.deepEqual(verificationPolicyImpactPreviewResponse({ ...success({
+    ...impact,
+    future_impact_response: true,
+    principal: { ...impact.principal, future_principal: true },
+    impact: {
+      ...impact.impact,
+      future_impact: true,
+      features: impact.impact.features.map((row) => ({ ...row, future_feature: true })),
+    },
+  }), future_envelope: true }), parsedImpact);
   const stalePhrase = clone(impact);
   stalePhrase.confirmation_phrase = "publish global";
   assert.equal(verificationPolicyImpactPreviewResponse(success(stalePhrase)), null);
@@ -531,24 +586,42 @@ test("impact, Places and aggregate parsers accept only their exact bounded shape
     search_token: UUID,
     suggestions: [{ place_id: "ChIJ123", display: "Budapest", secondary: "Hungary", country_code: "HU" }],
   };
-  assert.ok(verificationCitySearchResponse(success(search)));
+  const parsedSearch = verificationCitySearchResponse(success(search));
+  assert.ok(parsedSearch);
+  assert.deepEqual(verificationCitySearchResponse(success({
+    ...search,
+    future_search: true,
+    suggestions: search.suggestions.map((row) => ({ ...row, future_suggestion: true })),
+  })), parsedSearch);
   assert.equal(verificationCitySearchResponse(success({ ...search, suggestions: [...search.suggestions, search.suggestions[0]] })), null);
   const detail = {
     contract_version: 1,
     principal: fixture.principal,
     city: { scope_key: "city:ChIJ123", kind: "city", place_id: "ChIJ123", display: "Budapest", country_code: "HU", place_token: "opaque_token", expires_at: NOW + 600 },
   };
-  assert.ok(verificationCityDetailResponse(success(detail)));
+  const parsedDetail = verificationCityDetailResponse(success(detail));
+  assert.ok(parsedDetail);
+  assert.deepEqual(verificationCityDetailResponse(success({
+    ...detail,
+    future_detail: true,
+    city: { ...detail.city, future_city: true },
+  })), parsedDetail);
   assert.equal(verificationCityDetailResponse(success({ ...detail, city: { ...detail.city, scope_key: "city:other" } })), null);
 
   const summary = pendingSummary();
-  assert.ok(verificationPendingSummaryResponse(success(summary)));
+  const parsedSummary = verificationPendingSummaryResponse(success(summary));
+  assert.ok(parsedSummary);
+  assert.deepEqual(verificationPendingSummaryResponse(success({
+    ...summary,
+    future_summary: true,
+    methods: summary.methods.map((row) => ({ ...row, future_method: true })),
+  })), parsedSummary);
   const badSummary = clone(summary);
   badSummary.total = 1;
   assert.equal(verificationPendingSummaryResponse(success(badSummary)), null);
 });
 
-test("the simulator parser validates the frozen evaluator semantics and closed modal contract", () => {
+test("the simulator parser validates frozen semantics and ignores additive modal fields", () => {
   assert.ok(verificationSimulationResponse(success(simulationData())));
   assert.ok(verificationSimulationResponse(success(simulationData(true))));
 
@@ -563,13 +636,26 @@ test("the simulator parser validates the frozen evaluator semantics and closed m
   assert.equal(verificationSimulationResponse(success(nonUrlWithUrl)), null);
   const additiveModal = simulationData(true);
   (additiveModal.feature_access[0].modal as unknown as Record<string, unknown>).provider_payload = "forbidden";
-  assert.equal(verificationSimulationResponse(success(additiveModal)), null);
+  assert.deepEqual(verificationSimulationResponse({ ...success(additiveModal), future_envelope: true }), verificationSimulationResponse(success(simulationData(true))));
 });
 
 test("member projection, imports, grants and previews preserve max/source/expiry semantics", () => {
   const fixture = verificationConsoleFixture();
   const user = verificationUserFixture(7001);
-  assert.ok(verificationUserDetailResponse(success({ contract_version: 1, principal: fixture.principal, verification: user })));
+  const userResult = verificationUserDetailResponse(success({ contract_version: 1, principal: fixture.principal, verification: user }));
+  assert.ok(userResult);
+  assert.deepEqual(verificationUserDetailResponse({ ...success({
+    contract_version: 1,
+    principal: { ...fixture.principal, future_principal: true },
+    verification: {
+      ...user,
+      future_user: true,
+      scope: { ...user.scope, future_scope: true },
+      methods: { ...user.methods, persona: { ...user.methods.persona, future_method: true } },
+      feature_access: user.feature_access.map((row) => ({ ...row, future_feature: true })),
+    },
+    future_detail: true,
+  }), future_envelope: true }), userResult);
 
   const wrongScope = clone(user);
   wrongScope.scope.scope_key = "country:HU";
@@ -594,7 +680,15 @@ test("member projection, imports, grants and previews preserve max/source/expiry
   granted.effective_level = "light";
   granted.effective_source = "granted";
   granted.external_seal_would_show = true;
-  assert.ok(verificationGrantMutationResponse(success({ contract_version: 1, principal: fixture.principal, verification: granted, replayed: false })));
+  const grantResult = verificationGrantMutationResponse(success({ contract_version: 1, principal: fixture.principal, verification: granted, replayed: false }));
+  assert.ok(grantResult);
+  assert.deepEqual(verificationGrantMutationResponse(success({
+    contract_version: 1,
+    principal: fixture.principal,
+    verification: { ...granted, future_verification: true, grant: { ...granted.grant!, future_grant: true } },
+    replayed: false,
+    future_data: true,
+  })), grantResult);
   const wrongGrantClock = clone(granted);
   wrongGrantClock.grant!.evaluated_at -= 1;
   assert.equal(verificationGrantMutationResponse(success({ contract_version: 1, principal: fixture.principal, verification: wrongGrantClock, replayed: false })), null);
@@ -605,7 +699,14 @@ test("member projection, imports, grants and previews preserve max/source/expiry
   assert.equal(verificationGrantMutationResponse(success({ contract_version: 1, principal: fixture.principal, verification: granted, replayed: false })), null);
 
   const preview = grantPreview();
-  assert.ok(verificationGrantPreviewResponse(success(preview)));
+  const previewResult = verificationGrantPreviewResponse(success(preview));
+  assert.ok(previewResult);
+  assert.deepEqual(verificationGrantPreviewResponse(success({
+    ...preview,
+    future_preview_response: true,
+    current: { ...preview.current, future_current: true },
+    preview: { ...preview.preview, future_preview: true },
+  })), previewResult);
   const strong = grantPreview("strong");
   assert.ok(verificationGrantPreviewResponse(success(strong)));
   strong.preview.strong_grant_warning = false;
@@ -712,7 +813,7 @@ test("closed refusals, conflicts and uncertain-response retention never manufact
   }
   assert.equal(verificationErrorResponse({ success: false, status_code: 403, error: "bad-origin" }), "bad-origin");
   assert.equal(verificationErrorResponse(refusal("verification-request-id-invalid", 409)), null);
-  assert.equal(verificationErrorResponse({ ...refusal("verification-request-id-invalid", 422), extra: true }), null);
+  assert.equal(verificationErrorResponse({ ...refusal("verification-request-id-invalid", 422), extra: true }), "verification-request-id-invalid");
   assert.equal(verificationErrorResponse(refusal("unknown-error", 422)), null);
 
   assert.equal(verificationShouldRetainMutation(null), true);
@@ -732,7 +833,10 @@ test("closed refusals, conflicts and uncertain-response retention never manufact
   for (const [data, kind] of conflicts) {
     assert.equal(verificationConflictResponse(refusal("verification-conflict", 409, data))?.kind, kind);
   }
-  assert.equal(verificationConflictResponse(refusal("verification-conflict", 409, { contract_version: 1, policy: fixture.policies[0], extra: true })), null);
+  assert.deepEqual(
+    verificationConflictResponse(refusal("verification-conflict", 409, { contract_version: 1, policy: { ...fixture.policies[0], future_policy: true }, extra: true })),
+    verificationConflictResponse(refusal("verification-conflict", 409, { contract_version: 1, policy: fixture.policies[0] })),
+  );
   assert.equal(verificationErrorResponse(refusal("verification-conflict", 409, { contract_version: 1, policy: fixture.policies[0] })), null);
 });
 

@@ -154,19 +154,22 @@ test("both locales cover the complete closed field, section, and error vocabular
   }
 });
 
-test("closed envelopes and config material fail on missing, unknown, loose, unsafe, or out-of-bound values", () => {
+test("config decoding ignores additions but fails on missing, loose, unsafe, or out-of-bound known values", () => {
   const contractLegalProgress = clone(fixtures.config_success);
   configData(contractLegalProgress).progress_value = 1.01;
   assert.equal(personaStartConfigResponse(contractLegalProgress)?.config.progress_value, 1.01);
 
+  const additive = clone(fixtures.config_success);
+  additive.trace_id = "not-contracted";
+  data(additive).provider_state = "private";
+  configData(additive).private_provider_key = "private";
+  assert.deepEqual(personaStartConfigResponse(additive), personaStartConfigResponse(fixtures.config_success));
+
   const mutations: Array<(raw: JsonObject) => void> = [
-    (raw) => { raw.trace_id = "not-contracted"; },
     (raw) => { raw.status_code = "200"; },
     (raw) => { data(raw).contract_version = 2; },
     (raw) => { data(raw).resource_revision = "7"; },
-    (raw) => { data(raw).provider_state = "private"; },
     (raw) => { delete configData(raw).active; },
-    (raw) => { configData(raw).private_provider_key = "private"; },
     (raw) => { configData(raw).active = 1; },
     (raw) => { configData(raw).title_size = 80.5; },
     (raw) => { configData(raw).title_size = 81; },
@@ -233,7 +236,7 @@ test("legacy JSON slash and Unicode escapes are compared after decoding", () => 
   assert.equal(parsed.config.benefit2_icon_url, "https://img.friending.co/api/cache/app/persona/bolt.png");
 });
 
-test("admin_me Persona capabilities are exact, ordered, action-driven, and readiness-gated", () => {
+test("admin_me Persona capabilities ignore additions and stay ordered, action-driven, and readiness-gated", () => {
   const viewer = personaAdminCapabilitiesFrom(fixtures.admin_me_viewer);
   const writer = personaAdminCapabilitiesFrom(fixtures.admin_me_writer);
   assert.ok(viewer && writer);
@@ -241,6 +244,10 @@ test("admin_me Persona capabilities are exact, ordered, action-driven, and readi
   assert.deepEqual(writer.actions, PERSONA_ADMIN_CAPABILITY_ACTIONS);
   assert.equal(personaCapabilityAllows(viewer, "read_start_config"), false);
   assert.equal(personaCapabilityAllows(writer, "force_verify"), false);
+  const additive = clone(fixtures.admin_me_writer);
+  additive.future_admin = true;
+  object(additive.persona).provider_key = "private";
+  assert.deepEqual(personaAdminCapabilitiesFrom(additive), writer);
 
   const readyWriterRaw = clone(fixtures.admin_me_writer);
   object(readyWriterRaw.persona).contract_ready = true;
@@ -266,7 +273,6 @@ test("admin_me Persona capabilities are exact, ordered, action-driven, and readi
     (raw) => { object(raw.persona).actions = ["read_start_config"]; },
     (raw) => { object(raw.persona).actions = [...PERSONA_ADMIN_CAPABILITY_ACTIONS].reverse(); },
     (raw) => { object(raw.persona).actions = [...PERSONA_ADMIN_CAPABILITY_ACTIONS, "provider_evidence"]; },
-    (raw) => { object(raw.persona).provider_key = "private"; },
   ];
   for (const mutate of malformed) {
     const raw = clone(fixtures.admin_me_writer);
@@ -367,7 +373,7 @@ test("the action-specific proxy boundary forwards only canonical contracted mate
   }
 });
 
-test("UID and target projections are canonical, bounded, and contain no identity evidence", () => {
+test("UID and target projections are canonical, bounded, and strip identity evidence additions", () => {
   assert.equal(canonicalPersonaUid("42"), 42);
   assert.equal(canonicalPersonaUid("0"), null);
   assert.equal(canonicalPersonaUid("042"), null);
@@ -399,16 +405,17 @@ test("UID and target projections are canonical, bounded, and contain no identity
     status_code: 200,
     data: { uid: 42, display_name: "Ada", revision: 7 },
   }), target);
-  assert.equal(personaTargetLookupResponse({
+  assert.deepEqual(personaTargetLookupResponse({
     success: true,
     status_code: 200,
     data: { uid: 42, display_name: "Ada", revision: 7, birthdate: "private" },
-  }), null, "a broad user document cannot enter the dedicated browser projection");
+    future_envelope: true,
+  }), target, "a broad provider object is reduced to the dedicated browser projection");
   assert.equal(personaTargetFromUserDetail({ success: true, status_code: 200, profile: { uid: 42, display_name: "Ada" } }), null, "versioned member revision is required");
   assert.equal(personaTargetFromUserDetail({ success: true, status_code: 200, profile: { uid: 42, display_name: "bad\u0001name" }, persona_admin: { contract_version: 1, revision: 7 } }), null);
 });
 
-test("receipt-era mutation parsers require exact revisions, replay flags, and material", () => {
+test("receipt-era mutation parsers ignore additions and require valid known revisions, replay flags, and material", () => {
   assert.deepEqual(personaMemberMutationResponse(fixtures.member_success), {
     contract_version: 1,
     uid: 42,
@@ -428,10 +435,20 @@ test("receipt-era mutation parsers require exact revisions, replay flags, and ma
   data(configMutation).replayed = false;
   assert.equal(personaStartUpdateResponse(configMutation)?.resource_revision, 8);
 
+  const additiveMember = clone(fixtures.member_success);
+  additiveMember.trace = "future";
+  data(additiveMember).reason = "must-not-return";
+  assert.deepEqual(personaMemberMutationResponse(additiveMember), personaMemberMutationResponse(fixtures.member_success));
+  const additiveForce = clone(fixtures.force_success);
+  data(additiveForce).future_force = true;
+  assert.deepEqual(personaForceMutationResponse(additiveForce), personaForceMutationResponse(fixtures.force_success));
+  const additiveConfig = clone(configMutation);
+  data(additiveConfig).future_config = true;
+  assert.deepEqual(personaStartUpdateResponse(additiveConfig), personaStartUpdateResponse(configMutation));
+
   for (const mutate of [
     (raw: JsonObject) => { data(raw).replayed = "false"; },
     (raw: JsonObject) => { data(raw).revision = 0; },
-    (raw: JsonObject) => { data(raw).reason = "must-not-return"; },
     (raw: JsonObject) => { raw.status_code = 201; },
     (raw: JsonObject) => { raw.can_send = false; },
   ]) {
@@ -505,7 +522,7 @@ test("every closed error requires its exact legacy envelope and status", () => {
   }), null, "bridge codes cannot widen into a Core envelope");
 });
 
-test("Persona conflicts accept only the two exact A-R authoritative projections", () => {
+test("Persona conflicts select the two authoritative projections and ignore additions", () => {
   const configConflict = {
     success: false,
     status_code: 409,
@@ -530,10 +547,11 @@ test("Persona conflicts accept only the two exact A-R authoritative projections"
     uid: 42,
     revision: 9,
   });
-  assert.equal(personaConflictResponse({
+  assert.deepEqual(personaConflictResponse({
     ...configConflict,
     data: { contract_version: 1, resource_revision: 8, config: {} },
-  }), null);
+    trace: "future",
+  }), personaConflictResponse(configConflict));
   assert.equal(personaConflictResponse({ ...configConflict, error: "persona-write-failed" }), null);
 });
 

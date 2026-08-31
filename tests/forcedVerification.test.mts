@@ -105,10 +105,10 @@ test("the storefront catalogue is ISO alpha-3 only, sorted, localized in both la
 });
 
 // ---------------------------------------------------------------------------
-// Strict parsers
+// Server parsers
 // ---------------------------------------------------------------------------
 
-test("the document parser accepts exactly the four-key contract shape and refuses every loose variant", () => {
+test("the document parser ignores unknown fields and refuses missing or invalid known material", () => {
   const valid = document({
     default: { persona: true, video: false },
     overrides: { DEU: { persona: false, video: false }, USA: { persona: true, video: true } },
@@ -119,7 +119,7 @@ test("the document parser accepts exactly the four-key contract shape and refuse
 
   assert.equal(parseForcedVerificationDocument(null), null);
   assert.equal(parseForcedVerificationDocument([]), null);
-  assert.equal(parseForcedVerificationDocument({ ...valid, extra: 1 }), null, "unknown key");
+  assert.deepEqual(parseForcedVerificationDocument({ ...valid, extra: 1 }), parseForcedVerificationDocument(valid));
   const { copy_overrides: _dropped, ...missing } = valid;
   assert.equal(parseForcedVerificationDocument(missing), null, "missing key");
   assert.equal(parseForcedVerificationDocument({ ...valid, default: { persona: true } }), null, "partial methods");
@@ -135,17 +135,31 @@ test("the document parser accepts exactly the four-key contract shape and refuse
   assert.equal(parseForcedVerificationDocument({ ...valid, copy_default: { ...valid.copy_default, en: { ...valid.copy_default.en, subtitle: "x".repeat(91) } } }), null, "subtitle over 90");
   assert.equal(parseForcedVerificationDocument({ ...valid, copy_default: { ...valid.copy_default, en: { ...valid.copy_default.en, description: "x".repeat(401) } } }), null, "description over 400");
   assert.equal(parseForcedVerificationDocument({ ...valid, copy_default: { ...valid.copy_default, en: { ...valid.copy_default.en, description: "bad\u0007" } } }), null, "control character");
-  assert.equal(parseForcedVerificationDocument({ ...valid, copy_default: { ...valid.copy_default, en: { ...valid.copy_default.en, extra: "x" } } }), null, "unknown copy key");
+  assert.deepEqual(
+    parseForcedVerificationDocument({ ...valid, copy_default: { ...valid.copy_default, en: { ...valid.copy_default.en, extra: "x" } } }),
+    parseForcedVerificationDocument(valid),
+  );
   assert.equal(parseForcedVerificationDocument({ ...valid, copy_overrides: [] }), null, "array copy overrides");
   assert.equal(parseForcedVerificationDocument({ ...valid, copy_overrides: { USA: { fr: { title: "x" } } } }), null, "unknown locale");
   assert.equal(parseForcedVerificationDocument({ ...valid, copy_overrides: { USA: { en: { title: "" } } } }), null, "blank override field");
-  assert.equal(parseForcedVerificationDocument({ ...valid, copy_overrides: { USA: { en: { headline: "x" } } } }), null, "unknown override field");
+  assert.deepEqual(
+    parseForcedVerificationDocument({
+      ...valid,
+      copy_overrides: {
+        USA: {
+          en: { ...valid.copy_overrides.USA.en, headline: "x" },
+          hu: valid.copy_overrides.USA.hu,
+        },
+      },
+    }),
+    parseForcedVerificationDocument(valid),
+  );
   assert.equal(parseForcedVerificationDocument({ ...valid, copy_overrides: { USA: { en: null } } }), null, "null locale override");
   assert.equal(waitingRoomTextLength("🇭🇺ab"), 4, "code points, not UTF-16 units");
   assert.ok(parseForcedVerificationDocument({ ...valid, copy_default: { ...valid.copy_default, en: { ...valid.copy_default.en, title: "🙂".repeat(60) } } }), "60 astral code points fit");
 });
 
-test("the console, save and impact materials are exact and closed", () => {
+test("the console, save and impact materials ignore additive fields but validate known fields", () => {
   const parsed = parseForcedVerificationConsole(consolePayload());
   assert.ok(parsed);
   assert.equal(parsed.revision, 1);
@@ -157,8 +171,11 @@ test("the console, save and impact materials are exact and closed", () => {
   assert.equal(parseForcedVerificationConsole(consolePayload({ revision: "1" })), null, "string revision");
   assert.equal(parseForcedVerificationConsole(consolePayload({ storefront_catalogue_hint: "alpha-2" })), null, "wrong hint");
   assert.equal(parseForcedVerificationConsole(consolePayload({ compiled_defaults: { copy: { en: WAITING_ROOM_COMPILED_COPY.en } } })), null, "partial compiled copy");
-  assert.equal(parseForcedVerificationConsole(consolePayload({ compiled_defaults: { copy: WAITING_ROOM_COMPILED_COPY, extra: 1 } })), null, "unknown compiled key");
-  assert.equal(parseForcedVerificationConsole(consolePayload({ extra: true })), null, "unknown console key");
+  assert.deepEqual(
+    parseForcedVerificationConsole(consolePayload({ compiled_defaults: { copy: WAITING_ROOM_COMPILED_COPY, extra: 1 } })),
+    parseForcedVerificationConsole(consolePayload()),
+  );
+  assert.deepEqual(parseForcedVerificationConsole(consolePayload({ extra: true })), parseForcedVerificationConsole(consolePayload()));
   const { compiled_defaults: _c, ...noCompiled } = consolePayload();
   assert.equal(parseForcedVerificationConsole(noCompiled), null, "missing compiled defaults");
 
@@ -166,7 +183,10 @@ test("the console, save and impact materials are exact and closed", () => {
   assert.ok(saved);
   assert.equal(saved.revision, 2);
   assert.equal(parseForcedVerificationSaved({ revision: 1, ...document() }), null, "a saved revision is at least 2");
-  assert.equal(parseForcedVerificationSaved({ revision: 2, ...document(), storefront_catalogue_hint: "alpha-3" }), null, "console-only key on the save material");
+  assert.deepEqual(
+    parseForcedVerificationSaved({ revision: 2, ...document(), storefront_catalogue_hint: "alpha-3" }),
+    parseForcedVerificationSaved({ revision: 2, ...document() }),
+  );
 
   const impact = parseForcedVerificationImpact({
     by_storefront: [{ storefront: "USA", members_seen: 10, would_be_gated: 4, satisfied: 6 }],
@@ -178,14 +198,17 @@ test("the console, save and impact materials are exact and closed", () => {
   assert.equal(parseForcedVerificationImpact({ by_storefront: [], unknown_storefront: { members_seen: 0, would_be_gated: 0, satisfied: 0 }, computed_at: "2026-08-29T14:00:00Z" })?.by_storefront.length, 0);
   assert.equal(parseForcedVerificationImpact({ by_storefront: [{ storefront: "USA", members_seen: 1, would_be_gated: 2, satisfied: 0 }], unknown_storefront: { members_seen: 0, would_be_gated: 0, satisfied: 0 }, computed_at: "2026-08-29T14:00:00Z" }), null, "gated above seen");
   assert.equal(parseForcedVerificationImpact({ by_storefront: [{ storefront: "USA", members_seen: 1, would_be_gated: 0, satisfied: 0 }, { storefront: "USA", members_seen: 1, would_be_gated: 0, satisfied: 0 }], unknown_storefront: { members_seen: 0, would_be_gated: 0, satisfied: 0 }, computed_at: "2026-08-29T14:00:00Z" }), null, "duplicate storefront row");
-  assert.equal(parseForcedVerificationImpact({ by_storefront: [{ storefront: "USA", members_seen: 1, would_be_gated: 0, satisfied: 0, uids: [] }], unknown_storefront: { members_seen: 0, would_be_gated: 0, satisfied: 0 }, computed_at: "2026-08-29T14:00:00Z" }), null, "identities never enter the console");
+  assert.deepEqual(
+    parseForcedVerificationImpact({ by_storefront: [{ storefront: "USA", members_seen: 1, would_be_gated: 0, satisfied: 0, uids: [] }], unknown_storefront: { members_seen: 0, would_be_gated: 0, satisfied: 0 }, computed_at: "2026-08-29T14:00:00Z" }),
+    parseForcedVerificationImpact({ by_storefront: [{ storefront: "USA", members_seen: 1, would_be_gated: 0, satisfied: 0 }], unknown_storefront: { members_seen: 0, would_be_gated: 0, satisfied: 0 }, computed_at: "2026-08-29T14:00:00Z" }),
+  );
   assert.equal(parseForcedVerificationImpact({ by_storefront: [], unknown_storefront: { members_seen: 0, would_be_gated: 0, satisfied: 0 }, computed_at: "2026-08-29T14:00:00" }), null, "timestamp without Z");
   assert.equal(parseForcedVerificationImpact({ by_storefront: [], unknown_storefront: { members_seen: 0, would_be_gated: 0, satisfied: 0 }, computed_at: "2026-13-29T14:00:00Z" }), null, "impossible month");
   assert.equal(parseForcedVerificationImpact({ by_storefront: [], unknown_storefront: { members_seen: "0", would_be_gated: 0, satisfied: 0 }, computed_at: "2026-08-29T14:00:00Z" }), null, "string count");
   assert.equal(parseForcedVerificationImpact({ by_storefront: [], unknown_storefront: { members_seen: -1, would_be_gated: 0, satisfied: 0 }, computed_at: "2026-08-29T14:00:00Z" }), null, "negative count");
 });
 
-test("the admin_me projection is a closed block and the access derives only from it", () => {
+test("the admin_me projection ignores unknown fields and the access derives only from known fields", () => {
   const ready = parseForcedVerificationAdminMe({ contract_version: 1, contract_ready: true, actions: ["verification_forced_console", "verification_forced_save", "verification_forced_impact_preview"] });
   assert.deepEqual(ready?.actions, [...FORCED_VERIFICATION_ACTIONS]);
   const reader = parseForcedVerificationAdminMe({ contract_version: 1, contract_ready: true, actions: ["verification_forced_console"] });
@@ -198,7 +221,10 @@ test("the admin_me projection is a closed block and the access derives only from
   assert.equal(parseForcedVerificationAdminMe({ contract_version: 1, contract_ready: true, actions: ["verification_console"] }), null, "foreign action name");
   assert.equal(parseForcedVerificationAdminMe({ contract_version: 1, contract_ready: true, actions: ["verification_forced_save", "verification_forced_console"] }), null, "not in canonical order");
   assert.equal(parseForcedVerificationAdminMe({ contract_version: 1, contract_ready: true, actions: ["verification_forced_console", "verification_forced_console"] }), null, "duplicate");
-  assert.equal(parseForcedVerificationAdminMe({ contract_version: 1, contract_ready: true, actions: [], principal: {} }), null, "unknown key");
+  assert.deepEqual(
+    parseForcedVerificationAdminMe({ contract_version: 1, contract_ready: true, actions: [], principal: {} }),
+    parseForcedVerificationAdminMe({ contract_version: 1, contract_ready: true, actions: [] }),
+  );
 
   assert.deepEqual(forcedVerificationAccess(ready), { visible: true, editable: true });
   assert.deepEqual(forcedVerificationAccess(reader), { visible: true, editable: false });
@@ -350,12 +376,15 @@ test("resolution follows the contract: override replaces the method set, copy in
 // Decoders
 // ---------------------------------------------------------------------------
 
-test("decoders adopt only exact success material bound to the request and classify refusals by envelope source", () => {
+test("decoders adopt known success material bound to the request and classify refusals by envelope source", () => {
   const console_ = decodeForcedConsoleResponse(success(consolePayload()));
   assert.ok(console_.ok && console_.value.revision === 1);
   assert.deepEqual(decodeForcedConsoleResponse(null), { ok: false, kind: "uncertain", error: "no-response" });
   assert.deepEqual(decodeForcedConsoleResponse({ success: true }), { ok: false, kind: "uncertain", error: "malformed-envelope" });
-  assert.deepEqual(decodeForcedConsoleResponse(success({ ...consolePayload(), extra: 1 })), { ok: false, kind: "uncertain", error: "malformed-material" });
+  assert.deepEqual(
+    decodeForcedConsoleResponse(success({ ...consolePayload(), extra: 1 })),
+    decodeForcedConsoleResponse(success(consolePayload())),
+  );
   assert.deepEqual(decodeForcedConsoleResponse(refusal("verification-forced-unavailable", 503)), { ok: false, kind: "uncertain", error: "verification-forced-unavailable" }, "the malformed-stored-document state");
   assert.deepEqual(decodeForcedConsoleResponse(refusal("unauthorized", 401)), { ok: false, kind: "refused", error: "unauthorized", status: 401 });
   assert.deepEqual(decodeForcedConsoleResponse(refusal("unauthorized", 403)), { ok: false, kind: "uncertain", error: "unknown-refusal" }, "a known name at the wrong status is not a refusal");
@@ -512,18 +541,21 @@ test("preview: a malformed copy value degrades to the compiled text per field wh
   assert.deepEqual(storefronts, [...storefronts].sort());
 });
 
-test("a storefront copy override carries exactly both locale containers (T-471b finding 1)", () => {
+test("a storefront copy override requires both locale containers and ignores unknown locales on read", () => {
   const valid = document();
   const withOverrides = (copy_overrides: unknown) => ({ ...valid, copy_overrides });
   const full = { HUN: { en: { title: "Verify to continue" }, hu: { title: "Hitelesíts a folytatáshoz" } } };
 
-  // Reader: Core stores exactly `en` and `hu` on every storefront entry.
+  // Reader: Core must provide `en` and `hu` on every storefront entry.
   assert.ok(parseForcedVerificationDocument(withOverrides(full)), "both containers parse");
   assert.ok(parseForcedVerificationDocument(withOverrides({ HUN: { en: {}, hu: {} } })), "two empty containers are the valid inherit-everything shape");
   assert.equal(parseForcedVerificationDocument(withOverrides({ HUN: { en: { title: "Verify to continue" } } })), null, "a missing hu container is never proven state");
   assert.equal(parseForcedVerificationDocument(withOverrides({ HUN: { hu: { title: "Hitelesíts a folytatáshoz" } } })), null, "a missing en container is never proven state");
   assert.equal(parseForcedVerificationDocument(withOverrides({ HUN: {} })), null, "neither locale");
-  assert.equal(parseForcedVerificationDocument(withOverrides({ HUN: { en: {}, hu: {}, de: {} } })), null, "an extra locale");
+  assert.deepEqual(
+    parseForcedVerificationDocument(withOverrides({ HUN: { en: {}, hu: {}, de: {} } })),
+    parseForcedVerificationDocument(withOverrides({ HUN: { en: {}, hu: {} } })),
+  );
 
   // Proxy normalisation decodes with the same reader before forwarding.
   assert.equal(
@@ -534,6 +566,11 @@ test("a storefront copy override carries exactly both locale containers (T-471b 
   assert.ok(
     normalizeForcedVerificationProxyBody("verification_forced_save", { expected_revision: 1, document: withOverrides(full) }),
     "the proxy forwards a document with both containers",
+  );
+  assert.equal(
+    normalizeForcedVerificationProxyBody("verification_forced_save", { expected_revision: 1, document: withOverrides({ HUN: { en: {}, hu: {}, de: {} } }) }),
+    null,
+    "the outbound document remains exact",
   );
 
   // Draft canonicalisation: a blank locale travels as an empty object.
@@ -711,8 +748,21 @@ test("help_url (Amendment v1.5): null or a well-formed https URL on the global d
     assert.equal(parseForcedVerificationDocument(withOverride(valid, value)), null, `override: ${label}`);
   }
   assert.equal(parseForcedVerificationDocument(withOverride(valid, null)), null, "an override inherits by omitting the key, never with null");
-  assert.equal(parseForcedVerificationDocument({ ...valid, copy_overrides: { USA: { en: { help_url: `${HELP_PREFIX}us`, headline: "x" }, hu: {} } } }), null, "unknown key beside help_url");
-  assert.equal(parseForcedVerificationDocument({ ...valid, copy_default: { ...valid.copy_default, en: { ...valid.copy_default.en, help: HELP_URL } } }), null, "a misspelt key is unknown, not the optional field");
+  const additiveOverride = { ...valid, copy_overrides: { USA: { en: { help_url: `${HELP_PREFIX}us`, headline: "x" }, hu: {} } } };
+  assert.deepEqual(
+    parseForcedVerificationDocument(additiveOverride),
+    parseForcedVerificationDocument({ ...valid, copy_overrides: { USA: { en: { help_url: `${HELP_PREFIX}us` }, hu: {} } } }),
+  );
+  assert.equal(
+    normalizeForcedVerificationProxyBody("verification_forced_save", { expected_revision: 1, document: additiveOverride }),
+    null,
+  );
+  const additiveDefault = { ...valid, copy_default: { ...valid.copy_default, en: { ...valid.copy_default.en, help: HELP_URL } } };
+  assert.deepEqual(parseForcedVerificationDocument(additiveDefault), parseForcedVerificationDocument(valid));
+  assert.equal(
+    normalizeForcedVerificationProxyBody("verification_forced_save", { expected_revision: 1, document: additiveDefault }),
+    null,
+  );
 });
 
 test("help_url: draft round trip keeps null / URL / inherit and every refusal has a stable issue code", () => {

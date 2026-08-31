@@ -228,10 +228,28 @@ function record(value: unknown): Record<string, unknown> | null {
 }
 
 function exactKeys(source: Record<string, unknown>, required: readonly string[], optional: readonly string[] = []): boolean {
+  // Same-origin command material stays exact so undeclared fields cannot reach Core.
   const keys = Object.keys(source);
   if (keys.some((key) => !required.includes(key) && !optional.includes(key))) return false;
   if (required.some((key) => !Object.hasOwn(source, key))) return false;
   return new Set(keys).size === keys.length;
+}
+
+function requiredKeys(source: Record<string, unknown>, required: readonly string[]): boolean {
+  return required.every((key) => Object.hasOwn(source, key));
+}
+
+type KeyPolicy = "server" | "exact";
+
+function acceptedKeys(
+  source: Record<string, unknown>,
+  required: readonly string[],
+  optional: readonly string[] = [],
+  policy: KeyPolicy,
+): boolean {
+  return policy === "exact"
+    ? exactKeys(source, required, optional)
+    : requiredKeys(source, required);
 }
 
 function subsetKeys(source: Record<string, unknown>, allowed: readonly string[]): boolean {
@@ -331,9 +349,9 @@ function helpUrl(value: unknown): string | null | undefined {
   return waitingRoomHelpUrlIssue(value) === null ? value : undefined;
 }
 
-export function parseForcedMethods(value: unknown): ForcedMethods | null {
+export function parseForcedMethods(value: unknown, policy: KeyPolicy = "server"): ForcedMethods | null {
   const source = record(value);
-  if (!source || !exactKeys(source, FORCED_VERIFICATION_METHODS)) return null;
+  if (!source || !acceptedKeys(source, FORCED_VERIFICATION_METHODS, [], policy)) return null;
   if (typeof source.persona !== "boolean" || typeof source.video !== "boolean") return null;
   return { persona: source.persona, video: source.video };
 }
@@ -352,9 +370,12 @@ function sortedEntries<T>(source: Record<string, unknown>, parseValue: (value: u
 }
 
 /** `{"<ALPHA3>": {persona, video}}` — an object even when empty (Core container identity), never an array. */
-export function parseForcedOverrides(value: unknown): Record<string, ForcedMethods> | null {
+export function parseForcedOverrides(
+  value: unknown,
+  policy: KeyPolicy = "server",
+): Record<string, ForcedMethods> | null {
   const source = record(value);
-  return source ? sortedEntries(source, parseForcedMethods) : null;
+  return source ? sortedEntries(source, (entry) => parseForcedMethods(entry, policy)) : null;
 }
 
 /**
@@ -362,9 +383,17 @@ export function parseForcedOverrides(value: unknown): Record<string, ForcedMetho
  * corpus predates Amendment v1.5 and an absent value resolves to `null`
  * exactly as Core resolves it; the console itself always emits the key.
  */
-export function parseWaitingRoomCopy(value: unknown): WaitingRoomCopy | null {
+export function parseWaitingRoomCopy(
+  value: unknown,
+  policy: KeyPolicy = "server",
+): WaitingRoomCopy | null {
   const source = record(value);
-  if (!source || !exactKeys(source, WAITING_ROOM_COPY_FIELDS, [WAITING_ROOM_HELP_URL_FIELD])) return null;
+  if (!source || !acceptedKeys(
+    source,
+    WAITING_ROOM_COPY_FIELDS,
+    [WAITING_ROOM_HELP_URL_FIELD],
+    policy,
+  )) return null;
   const title = copyText(source.title, "title");
   const subtitle = copyText(source.subtitle, "subtitle");
   const description = copyText(source.description, "description");
@@ -374,9 +403,12 @@ export function parseWaitingRoomCopy(value: unknown): WaitingRoomCopy | null {
   return { title, subtitle, description, help_url: help };
 }
 
-export function parseWaitingRoomCopyOverride(value: unknown): WaitingRoomCopyOverride | null {
+export function parseWaitingRoomCopyOverride(
+  value: unknown,
+  policy: KeyPolicy = "server",
+): WaitingRoomCopyOverride | null {
   const source = record(value);
-  if (!source || !subsetKeys(source, WAITING_ROOM_COPY_KEYS)) return null;
+  if (!source || (policy === "exact" && !subsetKeys(source, WAITING_ROOM_COPY_KEYS))) return null;
   const output: WaitingRoomCopyOverride = {};
   for (const field of WAITING_ROOM_COPY_FIELDS) {
     if (!Object.hasOwn(source, field)) continue;
@@ -393,11 +425,14 @@ export function parseWaitingRoomCopyOverride(value: unknown): WaitingRoomCopyOve
   return output;
 }
 
-function parseLocalizedCopy(value: unknown): Record<WaitingRoomLocale, WaitingRoomCopy> | null {
+function parseLocalizedCopy(
+  value: unknown,
+  policy: KeyPolicy = "server",
+): Record<WaitingRoomLocale, WaitingRoomCopy> | null {
   const source = record(value);
-  if (!source || !exactKeys(source, WAITING_ROOM_LOCALES)) return null;
-  const en = parseWaitingRoomCopy(source.en);
-  const hu = parseWaitingRoomCopy(source.hu);
+  if (!source || !acceptedKeys(source, WAITING_ROOM_LOCALES, [], policy)) return null;
+  const en = parseWaitingRoomCopy(source.en, policy);
+  const hu = parseWaitingRoomCopy(source.hu, policy);
   return en && hu ? { en, hu } : null;
 }
 
@@ -407,43 +442,57 @@ function parseLocalizedCopy(value: unknown): Record<WaitingRoomLocale, WaitingRo
  * one locale only) is refused rather than treated as proven state — Core would
  * reject the same shape on the way back in.
  */
-function parseLocalizedCopyOverride(value: unknown): Record<WaitingRoomLocale, WaitingRoomCopyOverride> | null {
+function parseLocalizedCopyOverride(
+  value: unknown,
+  policy: KeyPolicy = "server",
+): Record<WaitingRoomLocale, WaitingRoomCopyOverride> | null {
   const source = record(value);
-  if (!source || !exactKeys(source, WAITING_ROOM_LOCALES)) return null;
-  const en = parseWaitingRoomCopyOverride(source.en);
-  const hu = parseWaitingRoomCopyOverride(source.hu);
+  if (!source || !acceptedKeys(source, WAITING_ROOM_LOCALES, [], policy)) return null;
+  const en = parseWaitingRoomCopyOverride(source.en, policy);
+  const hu = parseWaitingRoomCopyOverride(source.hu, policy);
   return en && hu ? { en, hu } : null;
 }
 
-export function parseWaitingRoomCopyOverrides(value: unknown): ForcedVerificationDocument["copy_overrides"] | null {
+export function parseWaitingRoomCopyOverrides(
+  value: unknown,
+  policy: KeyPolicy = "server",
+): ForcedVerificationDocument["copy_overrides"] | null {
   const source = record(value);
-  return source ? sortedEntries(source, parseLocalizedCopyOverride) : null;
+  return source ? sortedEntries(source, (entry) => parseLocalizedCopyOverride(entry, policy)) : null;
 }
 
-function documentFields(source: Record<string, unknown>): ForcedVerificationDocument | null {
-  const defaults = parseForcedMethods(source.default);
-  const overrides = parseForcedOverrides(source.overrides);
-  const copyDefault = parseLocalizedCopy(source.copy_default);
-  const copyOverrides = parseWaitingRoomCopyOverrides(source.copy_overrides);
+function documentFields(source: Record<string, unknown>, policy: KeyPolicy): ForcedVerificationDocument | null {
+  const defaults = parseForcedMethods(source.default, policy);
+  const overrides = parseForcedOverrides(source.overrides, policy);
+  const copyDefault = parseLocalizedCopy(source.copy_default, policy);
+  const copyOverrides = parseWaitingRoomCopyOverrides(source.copy_overrides, policy);
   if (!defaults || !overrides || !copyDefault || !copyOverrides) return null;
   return { default: defaults, overrides, copy_default: copyDefault, copy_overrides: copyOverrides };
 }
 
-/** The exact four-key document Core stores and the console submits. */
+/** Decode the known document fields Core stores, ignoring additive server fields. */
 export function parseForcedVerificationDocument(value: unknown): ForcedVerificationDocument | null {
   const source = record(value);
+  if (!source || !requiredKeys(source, FORCED_VERIFICATION_DOCUMENT_KEYS)) return null;
+  return documentFields(source, "server");
+}
+
+function parseExactForcedVerificationDocument(value: unknown): ForcedVerificationDocument | null {
+  const source = record(value);
   if (!source || !exactKeys(source, FORCED_VERIFICATION_DOCUMENT_KEYS)) return null;
-  return documentFields(source);
+  return documentFields(source, "exact");
 }
 
 /** `verification_forced_console` material (contract §4). */
 export function parseForcedVerificationConsole(value: unknown): ForcedVerificationConsole | null {
   const source = record(value);
-  if (!source || !exactKeys(source, FORCED_VERIFICATION_CONSOLE_KEYS)) return null;
+  if (!source || !requiredKeys(source, FORCED_VERIFICATION_CONSOLE_KEYS)) return null;
   const parsedRevision = revision(source.revision);
-  const document = documentFields(source);
+  const document = documentFields(source, "server");
   const compiled = record(source.compiled_defaults);
-  const compiledCopy = compiled && exactKeys(compiled, ["copy"]) ? parseLocalizedCopy(compiled.copy) : null;
+  const compiledCopy = compiled && requiredKeys(compiled, ["copy"])
+    ? parseLocalizedCopy(compiled.copy, "server")
+    : null;
   if (parsedRevision === null || !document || !compiledCopy || source.storefront_catalogue_hint !== FORCED_VERIFICATION_STOREFRONT_HINT) return null;
   return {
     revision: parsedRevision,
@@ -456,9 +505,9 @@ export function parseForcedVerificationConsole(value: unknown): ForcedVerificati
 /** `verification_forced_save` material: `{ revision, …the stored document… }`. */
 export function parseForcedVerificationSaved(value: unknown): ForcedVerificationSaved | null {
   const source = record(value);
-  if (!source || !exactKeys(source, ["revision", ...FORCED_VERIFICATION_DOCUMENT_KEYS])) return null;
+  if (!source || !requiredKeys(source, ["revision", ...FORCED_VERIFICATION_DOCUMENT_KEYS])) return null;
   const parsedRevision = revision(source.revision, 2);
-  const document = documentFields(source);
+  const document = documentFields(source, "server");
   return parsedRevision !== null && document ? { revision: parsedRevision, document } : null;
 }
 
@@ -473,20 +522,22 @@ function impactCounts(source: Record<string, unknown>): ForcedVerificationImpact
 /** `verification_forced_impact_preview` material: counts only, never uids. */
 export function parseForcedVerificationImpact(value: unknown): ForcedVerificationImpact | null {
   const source = record(value);
-  if (!source || !exactKeys(source, ["by_storefront", "unknown_storefront", "computed_at"])) return null;
+  if (!source || !requiredKeys(source, ["by_storefront", "unknown_storefront", "computed_at"])) return null;
   if (!Array.isArray(source.by_storefront) || source.by_storefront.length > STOREFRONT_CATALOGUE.length) return null;
   const rows: ForcedVerificationImpactRow[] = [];
   const seen = new Set<string>();
   for (const raw of source.by_storefront) {
     const row = record(raw);
-    if (!row || !exactKeys(row, ["storefront", "members_seen", "would_be_gated", "satisfied"])) return null;
+    if (!row || !requiredKeys(row, ["storefront", "members_seen", "would_be_gated", "satisfied"])) return null;
     const counts = impactCounts(row);
     if (!counts || !isForcedStorefront(row.storefront) || seen.has(row.storefront)) return null;
     seen.add(row.storefront);
     rows.push({ storefront: row.storefront, ...counts });
   }
   const unknown = record(source.unknown_storefront);
-  const unknownCounts = unknown && exactKeys(unknown, ["members_seen", "would_be_gated", "satisfied"]) ? impactCounts(unknown) : null;
+  const unknownCounts = unknown && requiredKeys(unknown, ["members_seen", "would_be_gated", "satisfied"])
+    ? impactCounts(unknown)
+    : null;
   const computedAt = typeof source.computed_at === "string" && TIMESTAMP.test(source.computed_at) && Number.isFinite(Date.parse(source.computed_at))
     ? source.computed_at
     : null;
@@ -497,7 +548,7 @@ export function parseForcedVerificationImpact(value: unknown): ForcedVerificatio
 /** `admin_me.verification_forced` — absent or malformed means "no console" for this operator. */
 export function parseForcedVerificationAdminMe(value: unknown): ForcedVerificationAdminMe | null {
   const source = record(value);
-  if (!source || !exactKeys(source, ["contract_version", "contract_ready", "actions"])) return null;
+  if (!source || !requiredKeys(source, ["contract_version", "contract_ready", "actions"])) return null;
   if (source.contract_version !== 1 || typeof source.contract_ready !== "boolean" || !Array.isArray(source.actions)) return null;
   const actions = source.actions as unknown[];
   if (actions.some((action) => !(FORCED_VERIFICATION_ACTIONS as readonly unknown[]).includes(action))) return null;
@@ -857,19 +908,20 @@ function classifyRefusal(
 
 /**
  * Envelope-source and material closure: the bridge map applies only to the
- * exact three-key bridge envelope, the Core map only to the exact legacy
+ * required three-key bridge envelope, the Core map only to the required legacy
  * trio envelope WITHOUT `data` (contract §4: refusals never carry `data`).
  */
 function decodeRefusal(value: unknown): ForcedRefusal | ForcedUncertain | null {
-  const bridge = adminBridgeErrorEnvelope(value);
-  if (bridge) {
-    return classifyRefusal(bridge.error, bridge.status_code, FORCED_BRIDGE_REFUSAL_STATUSES, FORCED_BRIDGE_UNCERTAIN_STATUSES);
-  }
+  // Parse the Core superset before the bridge's three-key subset.
   const core = webadminErrorEnvelope(value, "forbidden");
   if (core) {
     return classifyRefusal(core.error, core.status_code, FORCED_CORE_REFUSAL_STATUSES, FORCED_CORE_UNCERTAIN_STATUSES);
   }
-  return webadminErrorEnvelope(value, "required") ? uncertain("refusal-with-data") : null;
+  if (webadminErrorEnvelope(value, "required")) return uncertain("refusal-with-data");
+  const bridge = adminBridgeErrorEnvelope(value);
+  return bridge
+    ? classifyRefusal(bridge.error, bridge.status_code, FORCED_BRIDGE_REFUSAL_STATUSES, FORCED_BRIDGE_UNCERTAIN_STATUSES)
+    : null;
 }
 
 function decodeMaterial<T>(value: unknown, parse: (data: unknown) => T | null): ForcedDecode<T> {
@@ -944,13 +996,13 @@ export function normalizeForcedVerificationProxyBody(
     case "verification_forced_save": {
       if (!exactKeys(body, ["expected_revision", "document"])) return null;
       const expectedRevision = revision(body.expected_revision);
-      const document = parseForcedVerificationDocument(body.document);
+      const document = parseExactForcedVerificationDocument(body.document);
       if (expectedRevision === null || !document) return null;
       return { expected_revision: expectedRevision, document };
     }
     case "verification_forced_impact_preview": {
       if (!exactKeys(body, ["document"])) return null;
-      const document = parseForcedVerificationDocument(body.document);
+      const document = parseExactForcedVerificationDocument(body.document);
       return document ? { document } : null;
     }
     default:

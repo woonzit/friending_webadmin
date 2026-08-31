@@ -113,22 +113,32 @@ test("a valid empty result is proven and remains distinct from every malformed r
   }
 });
 
-test("closed envelopes, principals, rows, and safe projections reject every shape surprise", () => {
+test("report decoding ignores additions, strips private material, and rejects invalid known shapes", () => {
+  const baseline = reportedContentListResponse(fixtures.pending_list);
+  const additive = clone(fixtures.pending_list);
+  additive.trace_id = "not-contracted";
+  data(additive).debug = true;
+  object(data(additive).filter).future_filter = true;
+  object(data(additive).principal).session_id = "private";
+  const firstReport = reports(additive)[0];
+  firstReport.direct_storage_url = "https://private.example.test/object";
+  object(firstReport.reporter).email = "member@example.test";
+  object(firstReport.subject).latitude = 47.5;
+  object(firstReport.subject_content).future_content = true;
+  reports(additive)[1].future_report = true;
+  object(reports(additive)[1].subject_content).raw_document = {};
+  assert.deepEqual(reportedContentListResponse(additive), baseline);
+  assert.deepEqual(Object.keys(reportedContentListResponse(additive)!.reports[0].reporter).sort(), ["display_name", "uid", "username"]);
+
   const mutations: Array<(raw: JsonObject) => void> = [
-    (raw) => { raw.trace_id = "not-contracted"; },
     (raw) => { raw.status_code = "200"; },
     (raw) => { data(raw).contract_version = 2; },
-    (raw) => { data(raw).debug = true; },
     (raw) => { delete object(data(raw).filter).report_id; },
-    (raw) => { object(data(raw).principal).session_id = "private"; },
     (raw) => { object(data(raw).principal).role = "superadmin"; },
     (raw) => { object(data(raw).principal).capabilities = ["reported_content_read", "unknown"]; },
     (raw) => { object(data(raw).principal).capabilities = ["reported_content_read", "reported_content_read"]; },
     (raw) => { object(data(raw).principal).capabilities = ["reported_content_read", "reported_content_decide"]; },
     (raw) => { object(data(raw).principal).capabilities = []; },
-    (raw) => { reports(raw)[0].direct_storage_url = "https://private.example.test/object"; },
-    (raw) => { object(reports(raw)[0].reporter).email = "member@example.test"; },
-    (raw) => { object(reports(raw)[0].subject).latitude = 47.5; },
     (raw) => { reports(raw)[0].revision = 1.5; },
     (raw) => { reports(raw)[0].created_at = -1; },
     (raw) => { reports(raw)[0].reason_code = "Not Canonical"; },
@@ -144,7 +154,6 @@ test("closed envelopes, principals, rows, and safe projections reject every shap
     (raw) => { object(reports(raw)[0].subject_content).message_id = null; },
     (raw) => { object(reports(raw)[0].subject_content).sent_at = null; },
     (raw) => { object(reports(raw)[0].subject_content).has_restricted_evidence = 1; },
-    (raw) => { object(reports(raw)[1].subject_content).raw_document = {}; },
   ];
 
   for (const mutate of mutations) {
@@ -208,7 +217,7 @@ test("filters, uniqueness, ordering, pagination, and exact-detail A1 semantics f
   assert.equal(reportedContentReportsAreOrdered([...pending.reports].reverse(), "pending"), false);
 });
 
-test("decision and conflict parsers accept only authoritative exact state", () => {
+test("decision and conflict parsers ignore additions and require authoritative known state", () => {
   const pendingAction = clone(fixtures.action_success);
   const pendingReport = object(data(pendingAction).report);
   pendingReport.status = "pending";
@@ -216,8 +225,13 @@ test("decision and conflict parsers accept only authoritative exact state", () =
   pendingReport.resolution = null;
   assert.equal(reportedContentActionResponse(pendingAction), null);
 
+  const additiveAction = clone(fixtures.action_success);
+  additiveAction.trace = "future";
+  data(additiveAction).side_effect = "hidden";
+  object(data(additiveAction).report).future_report = true;
+  assert.deepEqual(reportedContentActionResponse(additiveAction), reportedContentActionResponse(fixtures.action_success));
+
   for (const mutate of [
-    (raw: JsonObject) => { data(raw).side_effect = "hidden"; },
     (raw: JsonObject) => { data(raw).replayed = 0; },
     (raw: JsonObject) => { raw.status_code = 201; },
     (raw: JsonObject) => { object(object(data(raw).report).resolution).decision = "confirmed"; },
@@ -227,11 +241,16 @@ test("decision and conflict parsers accept only authoritative exact state", () =
     assert.equal(reportedContentActionResponse(raw), null, mutate.toString());
   }
 
+  const additiveConflict = clone(fixtures.conflict);
+  additiveConflict.trace = "future";
+  data(additiveConflict).replayed = false;
+  object(data(additiveConflict).report).future_report = true;
+  assert.deepEqual(reportedContentConflictResponse(additiveConflict), reportedContentConflictResponse(fixtures.conflict));
+
   for (const mutate of [
     (raw: JsonObject) => { raw.error = "reported-content-request-id-conflict"; },
     (raw: JsonObject) => { raw.success = true; },
     (raw: JsonObject) => { raw.status_code = 200; },
-    (raw: JsonObject) => { data(raw).replayed = false; },
   ]) {
     const raw = clone(fixtures.conflict);
     mutate(raw);
@@ -442,7 +461,7 @@ test("every closed refusal has localized routing and the documented retry policy
     status: 200,
     can_send: 0,
     detail: "not contracted",
-  }), null, "extra refusal data stays uncertain");
+  }), "reported-content-reason-invalid", "extra refusal fields are ignored");
   assert.equal(reportedContentErrorResponse({
     success: false,
     status_code: 500,

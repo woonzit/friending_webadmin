@@ -266,6 +266,7 @@ function object(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+// Exact objects are reserved for browser-owned commands and persisted retry identities.
 function exactObject(value: unknown, keys: readonly string[]): Record<string, unknown> | null {
   const raw = object(value);
   if (!raw) return null;
@@ -275,6 +276,11 @@ function exactObject(value: unknown, keys: readonly string[]): Record<string, un
     && actual.every((key, index) => key === expected[index])
     ? raw
     : null;
+}
+
+function requiredObject(value: unknown, keys: readonly string[]): Record<string, unknown> | null {
+  const raw = object(value);
+  return raw && keys.every((key) => Object.hasOwn(raw, key)) ? raw : null;
 }
 
 function integer(
@@ -393,6 +399,7 @@ export function outboundPreviewPayload(values: readonly unknown[]): OutboundPrev
 }
 
 function structuralPreviewPayload(value: unknown): OutboundPreviewRequest | null {
+  // Browser command bodies remain exact so undeclared fields cannot reach Core.
   const raw = exactObject(value, ["contract_version", "uids"]);
   return raw?.contract_version === 1 && parseOutboundUidList(raw.uids)
     ? { contract_version: 1, uids: raw.uids as string }
@@ -400,7 +407,7 @@ function structuralPreviewPayload(value: unknown): OutboundPreviewRequest | null
 }
 
 export function outboundMessagingPrincipal(value: unknown): OutboundMessagingPrincipal | null {
-  const raw = exactObject(value, ["role", "capabilities"]);
+  const raw = requiredObject(value, ["role", "capabilities"]);
   const role = oneOf(raw?.role, ["viewer", "admin", "owner"] as const);
   if (!raw || !role || !Array.isArray(raw.capabilities)) return null;
   const capabilities: OutboundMessagingCapability[] = [];
@@ -419,7 +426,7 @@ export function outboundMessagingCanSend(principal: OutboundMessagingPrincipal):
 }
 
 function channelAvailability(value: unknown): Record<OutboundMessagingChannel, OutboundChannelAvailability> | null {
-  const raw = exactObject(value, OUTBOUND_MESSAGING_CHANNELS);
+  const raw = requiredObject(value, OUTBOUND_MESSAGING_CHANNELS);
   const email = oneOf(raw?.email, OUTBOUND_MESSAGING_AVAILABILITY);
   const sms = oneOf(raw?.sms, OUTBOUND_MESSAGING_AVAILABILITY);
   const push = oneOf(raw?.push, OUTBOUND_MESSAGING_AVAILABILITY);
@@ -427,7 +434,7 @@ function channelAvailability(value: unknown): Record<OutboundMessagingChannel, O
 }
 
 function recipientPreview(value: unknown): OutboundRecipientPreview | null {
-  const raw = exactObject(value, ["uid", "display_name", "codename", "channels"]);
+  const raw = requiredObject(value, ["uid", "display_name", "codename", "channels"]);
   const uid = positiveUid(raw?.uid);
   const displayName = canonicalWireText(raw?.display_name, 0, 120, "text");
   const codename = canonicalWireText(raw?.codename, 0, 64, "text");
@@ -439,7 +446,7 @@ function recipientPreview(value: unknown): OutboundRecipientPreview | null {
 }
 
 function rateBucket(value: unknown, limit: number): OutboundRateBucket | null {
-  const raw = exactObject(value, ["limit", "used", "remaining"]);
+  const raw = requiredObject(value, ["limit", "used", "remaining"]);
   const used = integer(raw?.used, 0, limit);
   const remaining = integer(raw?.remaining, 0, limit);
   return raw?.limit === limit && used !== null && remaining !== null && used + remaining === limit
@@ -451,7 +458,7 @@ export function outboundRecipientPreviewData(
   value: unknown,
   expectedUids?: readonly number[],
 ): OutboundRecipientPreviewData | null {
-  const raw = exactObject(value, [
+  const raw = requiredObject(value, [
     "contract_version",
     "principal",
     "preview_id",
@@ -466,7 +473,7 @@ export function outboundRecipientPreviewData(
   const evaluatedAt = integer(raw?.evaluated_at, 0, Number.MAX_SAFE_INTEGER);
   const expiresAt = integer(raw?.expires_at, 0, Number.MAX_SAFE_INTEGER);
   const requestedCount = integer(raw?.requested_count, 1, OUTBOUND_MESSAGING_MAX_RECIPIENTS);
-  const limitsRaw = exactObject(raw?.limits, [
+  const limitsRaw = requiredObject(raw?.limits, [
     "max_recipients_per_request", "window_seconds", "overall", "sms_push",
   ]);
   const overall = rateBucket(limitsRaw?.overall, OUTBOUND_MESSAGING_OVERALL_LIMIT);
@@ -662,6 +669,7 @@ export function outboundPendingSend(payload: OutboundSendPayload): OutboundPendi
 }
 
 export function outboundPendingSendValue(value: unknown): OutboundPendingSend | null {
+  // Persisted retry identity remains exact so replay cannot acquire new semantics.
   const raw = exactObject(value, ["version", "action", "payload"]);
   const payload = structuralSendPayload(raw?.payload);
   return raw?.version === 1 && raw.action === "send" && payload
@@ -729,7 +737,7 @@ export function normalizeOutboundMessagingProxyBody(
 }
 
 function recipientResult(value: unknown): OutboundRecipientResult | null {
-  const raw = exactObject(value, ["uid", "message_id", "outcome", "reason"]);
+  const raw = requiredObject(value, ["uid", "message_id", "outcome", "reason"]);
   const uid = positiveUid(raw?.uid);
   const outcome = oneOf(raw?.outcome, OUTBOUND_MESSAGING_OUTCOMES);
   if (!raw || uid === null || !outcome) return null;
@@ -755,7 +763,7 @@ export function outboundSendResponse(
   const expectedPayload = structuralSendPayload(expected);
   const expectedUids = expectedPayload ? parseOutboundUidList(expectedPayload.uids) : null;
   const envelope = webadminDataSuccessEnvelope(value);
-  const raw = exactObject(envelope?.data, [
+  const raw = requiredObject(envelope?.data, [
     "contract_version",
     "request_id",
     "preview_id",
@@ -809,7 +817,7 @@ export function outboundSendResponse(
 }
 
 function historyTemplate(value: unknown): OutboundHistoryTemplate | null {
-  const raw = exactObject(value, ["template_id", "revision"]);
+  const raw = requiredObject(value, ["template_id", "revision"]);
   const templateId = objectId(raw?.template_id);
   const revision = integer(raw?.revision, 1);
   return templateId && revision !== null ? { template_id: templateId, revision } : null;
@@ -875,7 +883,7 @@ function historyMetadata(value: Record<string, unknown>, expectedUid: number): H
 }
 
 export function outboundHistoryEntry(value: unknown, expectedUid: number): OutboundHistoryEntry | null {
-  const raw = exactObject(value, [
+  const raw = requiredObject(value, [
     "message_id",
     "request_id",
     "uid",
@@ -914,7 +922,7 @@ export function outboundHistoryData(
   expected: OutboundHistoryRequest,
 ): OutboundMessageHistoryData | null {
   const request = structuralHistoryPayload(expected);
-  const raw = exactObject(value, [
+  const raw = requiredObject(value, [
     "contract_version",
     "principal",
     "uid",
@@ -977,7 +985,7 @@ export function mergeOutboundHistoryPages(
 }
 
 function historyDetailEntry(value: unknown, expectedUid: number): OutboundHistoryDetailEntry | null {
-  const raw = exactObject(value, [
+  const raw = requiredObject(value, [
     "message_id",
     "request_id",
     "uid",
@@ -1021,7 +1029,7 @@ export async function outboundHistoryDetailResponse(
 ): Promise<OutboundMessageHistoryDetailData | null> {
   const request = structuralHistoryDetailPayload(expected);
   const envelope = webadminDataSuccessEnvelope(value);
-  const raw = exactObject(envelope?.data, ["contract_version", "principal", "evaluated_at", "message"]);
+  const raw = requiredObject(envelope?.data, ["contract_version", "principal", "evaluated_at", "message"]);
   const principal = outboundMessagingPrincipal(raw?.principal);
   const evaluatedAt = integer(raw?.evaluated_at, 0, Number.MAX_SAFE_INTEGER);
   const message = request ? historyDetailEntry(raw?.message, request.uid) : null;
@@ -1055,7 +1063,7 @@ export function outboundRecipientConflictResponse(
   expectedUids: readonly number[],
 ): OutboundRecipientConflictData | null {
   const envelope = webadminErrorEnvelope(value, "required");
-  const raw = exactObject(envelope?.data, ["contract_version", "preview"]);
+  const raw = requiredObject(envelope?.data, ["contract_version", "preview"]);
   const preview = outboundRecipientPreviewData(raw?.preview, expectedUids);
   return envelope?.status_code === 409
     && envelope.error === "outbound-message-recipient-conflict"

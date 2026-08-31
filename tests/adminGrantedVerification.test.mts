@@ -471,12 +471,15 @@ test("the T-219 vocabulary and proxy surface remain dormant behind one explicit 
   assert.match(legacyPanel, /const canEdit = !legacyEditorTransitioned/);
 });
 
-test("admin_me is exact, sorted, role-derived, and independently readiness-gated", () => {
+test("admin_me ignores unknown fields, stays sorted, role-derived, and independently readiness-gated", () => {
   for (const role of ["viewer", "admin", "owner"] as const) {
     assert.deepEqual(adminGrantedVerificationAdminMe(block(role)), block(role));
     assert.deepEqual(adminGrantedVerificationAdminMe(block(role, false)), block(role, false));
   }
-  assert.equal(adminGrantedVerificationAdminMe({ ...block("admin"), extra: true }), null);
+  assert.deepEqual(
+    adminGrantedVerificationAdminMe({ ...block("admin"), extra: true }),
+    adminGrantedVerificationAdminMe(block("admin")),
+  );
   assert.equal(adminGrantedVerificationAdminMe({
     ...block("admin"),
     principal: { role: "admin", capabilities: [...ADMIN_GRANTED_VERIFICATION_CAPABILITIES].reverse() },
@@ -495,7 +498,7 @@ test("admin_me is exact, sorted, role-derived, and independently readiness-gated
   }), null);
 });
 
-test("the proxy trusts only the new exact capability block and never the old Verification role", () => {
+test("the proxy trusts only the new capability block and never the old Verification role", () => {
   for (const action of ADMIN_GRANTED_VERIFICATION_ACTIONS) {
     assert.equal(adminGrantedVerificationProxyCapabilityAuthorized(action, {
       success: true,
@@ -516,7 +519,7 @@ test("the proxy trusts only the new exact capability block and never the old Ver
       success: true,
       role: "owner",
       admin_granted_verification: { ...block("admin"), extra: true },
-    }), false);
+    }), true);
     assert.equal(adminGrantedVerificationProxyCapabilityAuthorized(action, {
       success: true,
       role: "owner",
@@ -555,9 +558,16 @@ test("the proxy trusts only the new exact capability block and never the old Ver
   ), null);
 });
 
-test("the selected resource parser enforces every closed field and cross-field invariant", () => {
+test("the selected resource parser ignores unknown fields and enforces every known invariant", () => {
   assert.deepEqual(adminGrantedVerificationResource(absentResource()), absentResource());
   assert.deepEqual(adminGrantedVerificationResource(activeResource()), activeResource());
+  assert.deepEqual(
+    adminGrantedVerificationResource(activeResource({
+      extra: true,
+      admin_grant: { ...seal(), inquiry_id: "ignored" },
+    })),
+    adminGrantedVerificationResource(activeResource()),
+  );
 
   const disabledAfterGrant = activeResource({ enabled_methods: ["video"] });
   assert.ok(adminGrantedVerificationResource(disabledAfterGrant), "an active Persona grant may outlive method enablement");
@@ -584,7 +594,6 @@ test("the selected resource parser enforces every closed field and cross-field i
   })));
 
   for (const invalid of [
-    { ...absentResource(), extra: true },
     { ...absentResource(), uid: "41" },
     { ...absentResource(), enabled_methods: ["persona", "video"] },
     { ...absentResource(), enabled_methods: ["video", "video"] },
@@ -602,23 +611,21 @@ test("the selected resource parser enforces every closed field and cross-field i
     { ...absentResource(), effective_source: "imported" },
     { ...absentResource(), external_seal_would_show: true },
     activeResource({ enabled_methods: [], external_seal_would_show: true }),
-    activeResource({ admin_grant: { ...seal(), reason: "forbidden text" } }),
-    activeResource({ admin_grant: { ...seal(), inquiry_id: "forbidden" } }),
   ]) assert.equal(adminGrantedVerificationResource(invalid), null);
 });
 
-test("selected detail proves the unchanged legacy projection and exact additive sibling", () => {
+test("selected detail proves the unchanged legacy projection and additive sibling", () => {
   const body = selected(absentResource({ enabled_methods: ["persona"] }));
   const parsed = adminGrantedVerificationSelectedDetailResponse(body);
   assert.ok(parsed);
   assert.equal(parsed.verification.uid, 41);
   assert.equal(parsed.admin_granted_verification.uid, 41);
-  assert.equal(adminGrantedVerificationSelectedDetailResponse({ ...body, trace: "extra" }), null);
-  assert.equal(adminGrantedVerificationSelectedDetailResponse(success({ ...body.data, extra: true })), null);
-  assert.equal(adminGrantedVerificationSelectedDetailResponse(success({
+  assert.deepEqual(adminGrantedVerificationSelectedDetailResponse({ ...body, trace: "extra" }), parsed);
+  assert.deepEqual(adminGrantedVerificationSelectedDetailResponse(success({ ...body.data, extra: true })), parsed);
+  assert.deepEqual(adminGrantedVerificationSelectedDetailResponse(success({
     ...body.data,
     verification: { ...body.data.verification, extra: true },
-  })), null);
+  })), parsed);
   assert.equal(adminGrantedVerificationSelectedDetailResponse(success({
     ...body.data,
     admin_granted_verification: { ...body.data.admin_granted_verification, uid: 42 },
@@ -642,7 +649,7 @@ test("selected detail proves the unchanged legacy projection and exact additive 
   }), null);
 });
 
-test("mutation and conflict envelopes are exact, authoritative, and data-shape closed", () => {
+test("mutation and conflict envelopes ignore unknown fields and keep authoritative known state", () => {
   const resource = activeResource();
   assert.deepEqual(adminGrantedVerificationMutationResponse(mutation(resource)), {
     contract_version: 1,
@@ -650,10 +657,10 @@ test("mutation and conflict envelopes are exact, authoritative, and data-shape c
     admin_granted_verification: resource,
     replayed: false,
   });
-  assert.equal(adminGrantedVerificationMutationResponse(success({
+  assert.deepEqual(adminGrantedVerificationMutationResponse(success({
     ...mutation(resource).data,
     extra: true,
-  })), null);
+  })), adminGrantedVerificationMutationResponse(mutation(resource)));
   assert.equal(adminGrantedVerificationMutationResponse(success({
     ...mutation(resource).data,
     replayed: 0,
@@ -662,7 +669,10 @@ test("mutation and conflict envelopes are exact, authoritative, and data-shape c
     ...mutation(resource).data,
     principal: block("viewer").principal,
   })), null);
-  assert.equal(adminGrantedVerificationMutationResponse({ ...mutation(resource), debug: true }), null);
+  assert.deepEqual(
+    adminGrantedVerificationMutationResponse({ ...mutation(resource), debug: true }),
+    adminGrantedVerificationMutationResponse(mutation(resource)),
+  );
 
   for (const error of [
     "verification-method-not-enabled",
@@ -679,11 +689,11 @@ test("mutation and conflict envelopes are exact, authoritative, and data-shape c
       admin_granted_verification: resource,
     });
     assert.equal(adminGrantedVerificationError(body), error);
-    assert.equal(adminGrantedVerificationConflictResponse({ ...body, extra: true }), null);
-    assert.equal(adminGrantedVerificationConflictResponse(refusal(error, 409, {
+    assert.deepEqual(adminGrantedVerificationConflictResponse({ ...body, extra: true }), adminGrantedVerificationConflictResponse(body));
+    assert.deepEqual(adminGrantedVerificationConflictResponse(refusal(error, 409, {
       ...body.data,
       extra: true,
-    })), null);
+    })), adminGrantedVerificationConflictResponse(body));
     assert.equal(adminGrantedVerificationConflictResponse(refusal(error, 422, body.data)), null);
   }
   assert.equal(adminGrantedVerificationConflictResponse(refusal(

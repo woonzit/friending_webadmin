@@ -93,6 +93,7 @@ function record(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+// Exact records are reserved for browser-owned save material; Core reads use requiredRecord.
 function exactRecord(value: unknown, keys: readonly string[]): Record<string, unknown> | null {
   const source = record(value);
   if (!source) return null;
@@ -102,6 +103,11 @@ function exactRecord(value: unknown, keys: readonly string[]): Record<string, un
     && actual.every((key, index) => key === expected[index])
     ? source
     : null;
+}
+
+function requiredRecord(value: unknown, keys: readonly string[]): Record<string, unknown> | null {
+  const source = record(value);
+  return source && keys.every((key) => Object.hasOwn(source, key)) ? source : null;
 }
 
 /**
@@ -181,7 +187,7 @@ function managedSetting<T>(
   expectedMinimum: number | null = null,
   expectedMaximum: number | null = null,
 ): ParsedSetting<T> | null {
-  const source = exactRecord(value, SETTING_KEYS);
+  const source = requiredRecord(value, SETTING_KEYS);
   const parsedValue = parseValue(source?.value);
   const updatedBy = canonicalAdminEmail(source?.updated_by);
   const allowedValues = source?.allowed_values;
@@ -201,8 +207,9 @@ function managedSetting<T>(
   return { value: parsedValue, updatedAt: source.updated_at, updatedBy };
 }
 
-function methods(value: unknown): AuthMethods | null {
-  const source = exactRecord(value, METHOD_KEYS);
+function methods(value: unknown, exact = false): AuthMethods | null {
+  // Browser-owned save material stays exact so no undeclared field can be forwarded to Core.
+  const source = exact ? exactRecord(value, METHOD_KEYS) : requiredRecord(value, METHOD_KEYS);
   return source
     && typeof source.phone === "boolean"
     && typeof source.email === "boolean"
@@ -214,7 +221,7 @@ function storefront(value: unknown): string | null {
   return typeof value === "string" && STOREFRONT_CODES.has(value) ? value : null;
 }
 
-function methodOverrides(value: unknown): AuthMethodOverride[] | null {
+function methodOverrides(value: unknown, exact = false): AuthMethodOverride[] | null {
   // Core's associative PHP array becomes `[]` when the map is empty. Accept
   // only that exact wire ambiguity; a populated list is never an override map.
   if (Array.isArray(value)) return value.length === 0 ? [] : null;
@@ -223,7 +230,7 @@ function methodOverrides(value: unknown): AuthMethodOverride[] | null {
   const output: AuthMethodOverride[] = [];
   for (const [rawStorefront, rawMethods] of Object.entries(source)) {
     const parsedStorefront = storefront(rawStorefront);
-    const parsedMethods = methods(rawMethods);
+    const parsedMethods = methods(rawMethods, exact);
     if (!parsedStorefront || !parsedMethods) return null;
     output.push({ storefront: parsedStorefront, ...parsedMethods });
   }
@@ -261,12 +268,14 @@ export function phoneDialMaskValid(value: unknown): value is string {
     && !PHONE_DIAL_MASK_FORBIDDEN_CHARACTER.test(value);
 }
 
-function phoneDialFormats(value: unknown): PhoneDialFormat[] | null {
+function phoneDialFormats(value: unknown, exact = false): PhoneDialFormat[] | null {
   if (!Array.isArray(value)) return null;
   const output: PhoneDialFormat[] = [];
   const seen = new Set<string>();
   for (const entry of value) {
-    const source = exactRecord(entry, ["code", "mask"]);
+    const source = exact
+      ? exactRecord(entry, ["code", "mask"])
+      : requiredRecord(entry, ["code", "mask"]);
     const code = phoneDialFormatCode(source?.code);
     if (!source || !code || seen.has(code) || !phoneDialMaskValid(source.mask)) return null;
     seen.add(code);
@@ -479,11 +488,11 @@ export function authPolicySavePayload(value: AuthPolicyConfiguration): Record<st
 function authPolicySaveMaterial(value: unknown): Record<string, unknown> | null {
   const settings = record(value);
   if (!settings) return null;
-  const defaultMethods = methods(settings.auth_policy_default);
-  const overrides = methodOverrides(settings.auth_policy_overrides);
+  const defaultMethods = methods(settings.auth_policy_default, true);
+  const overrides = methodOverrides(settings.auth_policy_overrides, true);
   const defaultDialCodes = dialCodeRule(settings.phone_dial_codes_default);
   const dialOverrides = dialCodeOverrides(settings.phone_dial_codes_overrides);
-  const dialFormats = phoneDialFormats(settings.phone_dial_formats);
+  const dialFormats = phoneDialFormats(settings.phone_dial_formats, true);
   if (
     !defaultMethods
     || !overrides
@@ -512,6 +521,7 @@ export function normalizeAuthPolicySettingsProxyBody(
   value: unknown,
 ): Record<string, unknown> | null | undefined {
   if (action !== "set_settings") return undefined;
+  // The same-origin command body is a closed browser/Core boundary, not a server response.
   const body = exactRecord(value, ["settings"]);
   const settings = record(body?.settings);
   if (!body || !settings) return null;

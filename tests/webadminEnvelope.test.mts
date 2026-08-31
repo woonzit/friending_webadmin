@@ -29,7 +29,7 @@ async function fixture(name: string): Promise<JsonObject> {
   ) as JsonObject;
 }
 
-test("the shared A-ENV helper accepts exact data, empty, refusal, and conflict envelopes", () => {
+test("the shared A-ENV helper accepts data, empty, refusal, and conflict envelopes", () => {
   const success = { success: true, status_code: 200, data: { ok: true }, ...LEGACY };
   const empty = { success: true, status_code: 200, ...LEGACY };
   const failure = { success: false, status_code: 422, error: "field-invalid", ...LEGACY };
@@ -51,15 +51,18 @@ test("the shared A-ENV helper accepts exact data, empty, refusal, and conflict e
   );
 });
 
-test("missing, additive, loose, or noncanonical legacy envelope fields fail closed", () => {
+test("unknown envelope fields are ignored while missing, loose, or noncanonical fields fail closed", () => {
   const success = { success: true, status_code: 200, data: {}, ...LEGACY };
+  assert.deepEqual(
+    webadminDataSuccessEnvelope({ ...success, trace_id: "not-contracted" }),
+    webadminDataSuccessEnvelope(success),
+  );
   for (const key of Object.keys(success)) {
     const raw = clone(success);
     delete raw[key as keyof typeof raw];
     assert.equal(webadminDataSuccessEnvelope(raw), null, `missing ${key}`);
   }
   for (const raw of [
-    { ...success, trace_id: "not-contracted" },
     { ...success, success: 1 },
     { ...success, status_code: "200" },
     { ...success, status_code: 99 },
@@ -85,7 +88,10 @@ test("refusal data is present only on the declared conflict branch", () => {
   assert.ok(webadminErrorEnvelope(conflict, "required"));
   assert.equal(webadminErrorEnvelope({ ...failure, error: "" }), null);
   assert.equal(webadminErrorEnvelope({ ...failure, error: 1 }), null);
-  assert.equal(webadminErrorEnvelope({ ...failure, detail: "not-contracted" }), null);
+  assert.deepEqual(
+    webadminErrorEnvelope({ ...failure, detail: "not-contracted" }),
+    webadminErrorEnvelope(failure),
+  );
 });
 
 test("all regenerated versioned fixtures carry the real Webadmin reply trio", async () => {

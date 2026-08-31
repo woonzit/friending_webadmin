@@ -82,6 +82,7 @@ function record(value: unknown): JsonObject | null {
     : null;
 }
 
+// Exact objects are reserved for browser-owned commands and persisted retry identities.
 function exactObject(value: unknown, keys: readonly string[]): JsonObject | null {
   const source = record(value);
   if (!source) return null;
@@ -91,6 +92,11 @@ function exactObject(value: unknown, keys: readonly string[]): JsonObject | null
     && actual.every((key, index) => key === expected[index])
     ? source
     : null;
+}
+
+function requiredObject(value: unknown, keys: readonly string[]): JsonObject | null {
+  const source = record(value);
+  return source && keys.every((key) => Object.hasOwn(source, key)) ? source : null;
 }
 
 function oneOf<const T extends readonly string[]>(value: unknown, values: T): T[number] | null {
@@ -167,7 +173,7 @@ function expectedActions(principal: FeatureSwitchesPrincipal): FeatureSwitchesAc
 }
 
 function featureSwitchesPrincipal(value: unknown): FeatureSwitchesPrincipal | null {
-  const source = exactObject(value, ["role", "capabilities"]);
+  const source = requiredObject(value, ["role", "capabilities"]);
   const role = oneOf(source?.role, ["viewer", "admin", "owner"] as const);
   const capabilities = orderedUnique(source?.capabilities, FEATURE_SWITCHES_CAPABILITIES);
   if (!role || !capabilities) return null;
@@ -179,7 +185,7 @@ function featureSwitchesPrincipal(value: unknown): FeatureSwitchesPrincipal | nu
 }
 
 export function featureSwitchesAdminMe(value: unknown): FeatureSwitchesAdminMe | null {
-  const source = exactObject(value, [
+  const source = requiredObject(value, [
     "contract_version",
     "contract_ready",
     "hey_enabled",
@@ -227,7 +233,7 @@ export function featureSwitchesProxyCapabilityAuthorized(action: string, members
 }
 
 function featureSwitchState(value: unknown): FeatureSwitchState | null {
-  const source = exactObject(value, ["enabled", "updated_at", "updated_by"]);
+  const source = requiredObject(value, ["enabled", "updated_at", "updated_by"]);
   const updatedAt = integer(source?.updated_at, 0, Number.MAX_SAFE_INTEGER);
   const updatedBy = canonicalActor(source?.updated_by);
   if (typeof source?.enabled !== "boolean" || updatedAt === null || updatedBy === null) return null;
@@ -237,7 +243,7 @@ function featureSwitchState(value: unknown): FeatureSwitchState | null {
 }
 
 function featureSwitchesState(value: unknown): FeatureSwitchesState | null {
-  const source = exactObject(value, ["contract_version", "hey", "footprints", "revision"]);
+  const source = requiredObject(value, ["contract_version", "hey", "footprints", "revision"]);
   const revision = integer(source?.revision, 0, FEATURE_SWITCHES_REVISION_MAX);
   const hey = featureSwitchState(source?.hey);
   const footprints = featureSwitchState(source?.footprints);
@@ -248,12 +254,16 @@ function featureSwitchesState(value: unknown): FeatureSwitchesState | null {
 
 export function featureSwitchesStateResponse(value: unknown): FeatureSwitchesState | null {
   const envelope = webadminDataSuccessEnvelope(value);
+  const data = record(envelope?.data);
+  // `no_change` and `replayed` select the mutation-success variant. They are
+  // recognized sibling fields, not arbitrary additions to a read response.
+  if (data && (Object.hasOwn(data, "no_change") || Object.hasOwn(data, "replayed"))) return null;
   return envelope ? featureSwitchesState(envelope.data) : null;
 }
 
 export function featureSwitchesMutationResponse(value: unknown): FeatureSwitchesMutation | null {
   const envelope = webadminDataSuccessEnvelope(value);
-  const source = exactObject(envelope?.data, [
+  const source = requiredObject(envelope?.data, [
     "contract_version",
     "hey",
     "footprints",
@@ -275,7 +285,7 @@ export function featureSwitchesMutationResponse(value: unknown): FeatureSwitches
 export function featureSwitchesConflictResponse(value: unknown): FeatureSwitchesConflict | null {
   const envelope = webadminErrorEnvelope(value, "required");
   if (envelope?.error !== "feature-switches-conflict" || envelope.status_code !== 409) return null;
-  const source = exactObject(envelope.data, ["current"]);
+  const source = requiredObject(envelope.data, ["current"]);
   const current = featureSwitchesState(source?.current);
   return current ? { current } : null;
 }
@@ -403,6 +413,7 @@ export function featureSwitchesShouldRetainMutation(error: string | null): boole
 }
 
 function normalizeGetBody(body: JsonObject): JsonObject | null {
+  // Same-origin request bodies remain exact so undeclared fields cannot reach Core.
   const source = exactObject(body, ["contract_version"]);
   return source?.contract_version === 1
     ? Object.assign(Object.create(null), { contract_version: 1 })
@@ -466,6 +477,7 @@ export function featureSwitchesPendingMutation(
 }
 
 export function featureSwitchesPendingFrom(value: unknown): FeatureSwitchesPendingMutation | null {
+  // Persisted retry identity remains exact so replay cannot acquire new semantics.
   const source = exactObject(value, ["version", "action", "target", "payload"]);
   return source?.version === 1 && source.action === "feature_switches_set"
     && typeof source.target === "string"

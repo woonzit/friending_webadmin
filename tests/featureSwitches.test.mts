@@ -377,7 +377,7 @@ test("the dormant family vocabulary and conditional proxy surface are exact", ()
   }
 });
 
-test("admin_me is exact, capability-authored, action-ordered, and readiness-gated", () => {
+test("admin_me requires known fields, is capability-authored, action-ordered, and readiness-gated", () => {
   const owner = featureSwitchesAdminMe(adminMeBlock("owner", true));
   assert.deepEqual(owner?.actions, ["feature_switches_get", "feature_switches_set"]);
   assert.equal(owner?.hey_enabled, true);
@@ -411,7 +411,10 @@ test("admin_me is exact, capability-authored, action-ordered, and readiness-gate
   assert.equal(featureSwitchesAdminMe(adminMeBlock("owner", true, {
     actions: ["feature_switches_set", "feature_switches_get"],
   })), null);
-  assert.equal(featureSwitchesAdminMe({ ...adminMeBlock("owner", true), extra: 1 }), null);
+  assert.deepEqual(
+    featureSwitchesAdminMe({ ...adminMeBlock("owner", true), extra: 1 }),
+    featureSwitchesAdminMe(adminMeBlock("owner", true)),
+  );
   assert.equal(featureSwitchesAdminMe(adminMeBlock("owner", true, { hey_enabled: "true" })), null);
   assert.equal(featureSwitchesAdminMe(adminMeBlock("owner", true, { revision: -1 })), null);
 });
@@ -439,7 +442,7 @@ test("the bridge trusts only the exact family capability block and keeps other f
   assert.equal(isAdminBridgeActionAuthorized("overview", principal, null, null, false), true);
 });
 
-test("state decoding is exact, nested, versioned, and provenance is per-switch all-or-nothing", () => {
+test("state decoding ignores additive fields, stays versioned, and keeps provenance all-or-nothing", () => {
   assert.deepEqual(featureSwitchesStateResponse(envelope(state())), state());
   const neverSet = state({
     hey: switchState(true, { updated_at: 0, updated_by: "" }),
@@ -459,7 +462,10 @@ test("state decoding is exact, nested, versioned, and provenance is per-switch a
   }))), null);
   assert.equal(featureSwitchesStateResponse(envelope(state({ contract_version: 2 }))), null);
   assert.equal(featureSwitchesStateResponse(envelope(state({ revision: 1.5 }))), null);
-  assert.equal(featureSwitchesStateResponse(envelope({ ...state(), extra: true })), null);
+  const additive = state();
+  Object.assign(additive, { extra: true });
+  Object.assign(additive.hey, { future_provenance: true });
+  assert.deepEqual(featureSwitchesStateResponse(envelope(additive)), featureSwitchesStateResponse(envelope(state())));
   assert.equal(featureSwitchesStateResponse(envelope({
     contract_version: 1,
     hey_enabled: true,
@@ -470,7 +476,7 @@ test("state decoding is exact, nested, versioned, and provenance is per-switch a
   assert.equal(featureSwitchesStateResponse({ data: state() }), null);
 });
 
-test("mutation and conflict decoders accept only complete authoritative family state", () => {
+test("mutation and conflict decoders accept complete authoritative known state", () => {
   const mutation = featureSwitchesMutationResponse(envelope({
     ...state({ footprints: switchState(false), revision: 5 }),
     no_change: false,
@@ -494,9 +500,12 @@ test("mutation and conflict decoders accept only complete authoritative family s
   assert.equal(conflict?.current.footprints.enabled, false);
 
   assert.equal(featureSwitchesConflictResponse(errorEnvelope("feature-switches-conflict", 409, {})), null);
-  assert.equal(featureSwitchesConflictResponse(errorEnvelope("feature-switches-conflict", 409, {
-    current: { ...state(), extra: true },
-  })), null);
+  assert.deepEqual(
+    featureSwitchesConflictResponse(errorEnvelope("feature-switches-conflict", 409, {
+      current: { ...state(), extra: true },
+    })),
+    featureSwitchesConflictResponse(errorEnvelope("feature-switches-conflict", 409, { current: state() })),
+  );
   assert.equal(featureSwitchesConflictResponse(errorEnvelope("feature-switches-conflict", 422, {
     current: state(),
   })), null);

@@ -99,6 +99,7 @@ function record(value: unknown): Record<string, unknown> | null {
 }
 
 function exactKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
+  // Cross-frame messages stay exact because unknown fields may change the parent/frame security protocol.
   const actual = Object.keys(value).sort();
   const expected = [...keys].sort();
   return actual.length === expected.length && actual.every((key, index) => key === expected[index]);

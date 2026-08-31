@@ -138,6 +138,7 @@ function object(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+// Exact objects are reserved for browser-owned commands and persisted retry identities.
 function exactObject(value: unknown, keys: readonly string[]): Record<string, unknown> | null {
   const raw = object(value);
   if (!raw) return null;
@@ -147,6 +148,11 @@ function exactObject(value: unknown, keys: readonly string[]): Record<string, un
     && actual.every((key, index) => key === expected[index])
     ? raw
     : null;
+}
+
+function requiredObject(value: unknown, keys: readonly string[]): Record<string, unknown> | null {
+  const raw = object(value);
+  return raw && keys.every((key) => Object.hasOwn(raw, key)) ? raw : null;
 }
 
 function integer(value: unknown, minimum: number, maximum = 2_147_483_647): number | null {
@@ -240,7 +246,7 @@ function canonicalWireUrl(value: unknown): string | null {
 }
 
 function principal(value: unknown): ProductPopupPrincipal | null {
-  const raw = exactObject(value, ["role", "capabilities"]);
+  const raw = requiredObject(value, ["role", "capabilities"]);
   const role = oneOf(raw?.role, ["viewer", "admin", "owner"] as const);
   if (!raw || role === null || !Array.isArray(raw.capabilities)) return null;
   const capabilities: ProductPopupCapability[] = [];
@@ -259,7 +265,7 @@ function principal(value: unknown): ProductPopupPrincipal | null {
 }
 
 function button(value: unknown): ProductPopupButton | null {
-  const raw = exactObject(value, ["action", "title", "url"]);
+  const raw = requiredObject(value, ["action", "title", "url"]);
   const action = oneOf(raw?.action, PRODUCT_POPUP_BUTTON_ACTIONS);
   if (!raw || action === null) return null;
   const title = boundedWireText(raw.title, action === "none" ? 0 : 1, 60);
@@ -275,6 +281,7 @@ function button(value: unknown): ProductPopupButton | null {
 }
 
 function structuralSetPayload(value: unknown): ProductPopupSetPayload | null {
+  // Browser command bodies remain exact so undeclared fields cannot reach Core.
   const raw = exactObject(value, [
     "contract_version",
     "uid",
@@ -479,6 +486,7 @@ export function productPopupClearPayload(
 }
 
 export function productPopupPendingMutation(value: unknown): ProductPopupPendingMutation | null {
+  // Persisted retry identity remains exact so replay cannot acquire new semantics.
   const raw = exactObject(value, ["version", "action", "payload"]);
   if (!raw || raw.version !== 1) return null;
   if (raw.action === "set") {
@@ -517,7 +525,7 @@ function popup(
   resourceRevision: number,
   evaluatedAt: number,
 ): ProductPopup | null {
-  const raw = exactObject(value, [
+  const raw = requiredObject(value, [
     "pop_id",
     "revision",
     "status",
@@ -576,9 +584,9 @@ function popup(
   };
 }
 
-/** Decode the exact version-1 resource projection, including A1's Core clock. */
+/** Decode the version-1 resource projection, including A1's Core clock. */
 export function productPopupResourceData(value: unknown): ProductPopupResourceData | null {
-  const raw = exactObject(value, [
+  const raw = requiredObject(value, [
     "contract_version",
     "principal",
     "uid",
@@ -613,7 +621,7 @@ export function productPopupReadResponse(value: unknown): ProductPopupResourceDa
 }
 
 export function productPopupMutationData(value: unknown): ProductPopupMutationData | null {
-  const raw = exactObject(value, [
+  const raw = requiredObject(value, [
     "contract_version",
     "principal",
     "uid",

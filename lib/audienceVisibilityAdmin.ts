@@ -210,6 +210,7 @@ function record(value: unknown): JsonObject | null {
     : null;
 }
 
+// Exact objects are reserved for browser-owned commands and persisted retry identities.
 function exactObject(value: unknown, keys: readonly string[]): JsonObject | null {
   const source = record(value);
   if (!source) return null;
@@ -219,6 +220,11 @@ function exactObject(value: unknown, keys: readonly string[]): JsonObject | null
     && actual.every((key, index) => key === expected[index])
     ? source
     : null;
+}
+
+function requiredObject(value: unknown, keys: readonly string[]): JsonObject | null {
+  const source = record(value);
+  return source && keys.every((key) => Object.hasOwn(source, key)) ? source : null;
 }
 
 function oneOf<const T extends readonly string[]>(value: unknown, values: T): T[number] | null {
@@ -256,8 +262,8 @@ function canonicalText(value: unknown, minimum: number, maximum: number): string
   return length >= minimum && length <= maximum ? value : null;
 }
 
-function localizedPair(value: unknown, maximum: number): { en: string; hu: string } | null {
-  const source = exactObject(value, ["en", "hu"]);
+function localizedPair(value: unknown, maximum: number, exact = false): { en: string; hu: string } | null {
+  const source = exact ? exactObject(value, ["en", "hu"]) : requiredObject(value, ["en", "hu"]);
   const en = canonicalText(source?.en, 1, maximum);
   const hu = canonicalText(source?.hu, 1, maximum);
   return en && hu && en.replace(/\s+/gu, " ") === en && hu.replace(/\s+/gu, " ") === hu
@@ -283,8 +289,10 @@ function exactOrdered(value: unknown, expected: readonly string[]): string[] | n
   return value.every((entry, index) => entry === expected[index]) ? [...expected] : null;
 }
 
-function visibilityRule(value: unknown): AudienceVisibilityRule | null {
-  const source = exactObject(value, ["genders", "visible_to"]);
+function visibilityRule(value: unknown, exact = false): AudienceVisibilityRule | null {
+  const source = exact
+    ? exactObject(value, ["genders", "visible_to"])
+    : requiredObject(value, ["genders", "visible_to"]);
   const genders = orderedUnique(source?.genders, AUDIENCE_VISIBILITY_GENDERS);
   const visibleTo = orderedUnique(source?.visible_to, AUDIENCE_VISIBILITY_VALUES);
   if (!genders || genders.length === 0 || !visibleTo || visibleTo.length === 0) return null;
@@ -293,7 +301,7 @@ function visibilityRule(value: unknown): AudienceVisibilityRule | null {
 }
 
 function visibilityGroup(value: unknown): AudienceVisibilityGroup | null {
-  const source = exactObject(value, [
+  const source = requiredObject(value, [
     "id", "key", "labels", "rules", "legacy_segment", "sort_order",
     "active", "protected", "revision", "editable_fields",
   ]);
@@ -306,7 +314,7 @@ function visibilityGroup(value: unknown): AudienceVisibilityGroup | null {
     || source.rules.length > 20 || sortOrder === null || revision === null
     || typeof source.active !== "boolean" || typeof source.protected !== "boolean"
     || typeof source.legacy_segment !== "string") return null;
-  const rules = source.rules.map(visibilityRule);
+  const rules = source.rules.map((rule) => visibilityRule(rule));
   if (rules.some((rule) => rule === null)) return null;
   const parsedRules = rules as AudienceVisibilityRule[];
   const ruleFingerprints = parsedRules.map((rule) => JSON.stringify(rule));
@@ -345,7 +353,7 @@ function sortedRows<T extends { sort_order: number; key: string }>(rows: T[]): b
 }
 
 function retirementManifest(value: unknown): AudienceVisibilityRetirementManifest | null {
-  const source = exactObject(value, [
+  const source = requiredObject(value, [
     "sha256", "matching_orientation", "layer1_intent", "legacy_catalogue_types",
     "profile_questions", "retained_questions",
   ]);
@@ -357,13 +365,13 @@ function retirementManifest(value: unknown): AudienceVisibilityRetirementManifes
 
   const questions: AudienceVisibilityRetirementManifest["profile_questions"] = [];
   for (const [index, expected] of RETIRED_QUESTIONS.entries()) {
-    const row = exactObject(source.profile_questions[index], ["key", "labels", "reason", "state"]);
+    const row = requiredObject(source.profile_questions[index], ["key", "labels", "reason", "state"]);
     const labels = localizedPair(row?.labels, 80);
     if (row?.key !== expected.key || labels?.en !== expected.en || labels.hu !== expected.hu
       || row.reason !== "sex_or_anatomy" || row.state !== "retired") return null;
     questions.push({ key: expected.key, labels, reason: "sex_or_anatomy", state: "retired" });
   }
-  const retained = exactObject(source.retained_questions[0], ["key", "labels", "state", "change"]);
+  const retained = requiredObject(source.retained_questions[0], ["key", "labels", "state", "change"]);
   const retainedLabels = localizedPair(retained?.labels, 80);
   if (retained?.key !== "body_hair" || retainedLabels?.en !== "Body hair"
     || retainedLabels.hu !== "Testszőrzet" || retained.state !== "active"
@@ -385,7 +393,7 @@ function retirementManifest(value: unknown): AudienceVisibilityRetirementManifes
 }
 
 function visibilityIntent(value: unknown): AudienceVisibilityIntent | null {
-  const source = exactObject(value, ["key", "labels", "sort_order", "archived"]);
+  const source = requiredObject(value, ["key", "labels", "sort_order", "archived"]);
   const key = typeof source?.key === "string" && GROUP_KEY.test(source.key) ? source.key : null;
   const labels = localizedPair(source?.labels, 180);
   const sortOrder = integer(source?.sort_order, 0, 100_000);
@@ -395,7 +403,7 @@ function visibilityIntent(value: unknown): AudienceVisibilityIntent | null {
 }
 
 export function audienceVisibilityIntents(value: unknown): AudienceVisibilityIntents | null {
-  const source = exactObject(value, [
+  const source = requiredObject(value, [
     "schema_version", "title", "intents_revision", "selection_min", "selection_max", "items",
   ]);
   const title = localizedPair(source?.title, 180);
@@ -421,7 +429,7 @@ export function audienceVisibilityIntents(value: unknown): AudienceVisibilityInt
 }
 
 function catalogData(value: unknown): AudienceVisibilityCatalog | null {
-  const source = exactObject(value, [
+  const source = requiredObject(value, [
     "contract_version", "gender_values", "visible_to_values", "groups",
     "group_manifest_sha256", "retirement_manifest", "intents",
   ]);
@@ -453,7 +461,7 @@ function catalogData(value: unknown): AudienceVisibilityCatalog | null {
 }
 
 function principal(value: unknown): AudienceVisibilityPrincipal | null {
-  const source = exactObject(value, ["role", "capabilities"]);
+  const source = requiredObject(value, ["role", "capabilities"]);
   const role = oneOf(source?.role, ["", "viewer", "editor", "approver", "owner"] as const);
   const capabilities = orderedUnique(source?.capabilities, AUDIENCE_VISIBILITY_CAPABILITIES);
   if (role === null || !capabilities) return null;
@@ -479,7 +487,7 @@ export const AUDIENCE_VISIBILITY_ACTION_CAPABILITY: Record<
 };
 
 export function audienceVisibilityAdminMe(value: unknown): AudienceVisibilityAdminMe | null {
-  const source = exactObject(value, ["contract_version", "contract_ready", "principal", "actions"]);
+  const source = requiredObject(value, ["contract_version", "contract_ready", "principal", "actions"]);
   const parsedPrincipal = principal(source?.principal);
   if (source?.contract_version !== 1 || typeof source.contract_ready !== "boolean" || !parsedPrincipal) return null;
   const expectedActions = source.contract_ready
@@ -516,7 +524,7 @@ export function audienceVisibilityCatalogResponse(value: unknown): AudienceVisib
 
 export function audienceVisibilityGroupMutationResponse(value: unknown): AudienceVisibilityGroupMutation | null {
   return successData(value, (data) => {
-    const source = exactObject(data, ["contract_version", "group", "replayed"]);
+    const source = requiredObject(data, ["contract_version", "group", "replayed"]);
     const group = visibilityGroup(source?.group);
     return source?.contract_version === 1 && group && typeof source.replayed === "boolean"
       ? { contract_version: 1, group, replayed: source.replayed }
@@ -526,7 +534,7 @@ export function audienceVisibilityGroupMutationResponse(value: unknown): Audienc
 
 export function audienceVisibilityIntentMutationResponse(value: unknown): AudienceVisibilityIntentMutation | null {
   return successData(value, (data) => {
-    const source = exactObject(data, ["contract_version", "intents", "replayed"]);
+    const source = requiredObject(data, ["contract_version", "intents", "replayed"]);
     const intents = audienceVisibilityIntents(source?.intents);
     return source?.contract_version === 1 && intents && typeof source.replayed === "boolean"
       ? { contract_version: 1, intents, replayed: source.replayed }
@@ -536,7 +544,7 @@ export function audienceVisibilityIntentMutationResponse(value: unknown): Audien
 
 export function audienceVisibilityMemberDetailResponse(value: unknown): AudienceVisibilityMemberDetail | null {
   return successData(value, (data) => {
-    const source = exactObject(data, ["contract_version", "uid", "gender", "visible_to", "revision", "group"]);
+    const source = requiredObject(data, ["contract_version", "uid", "gender", "visible_to", "revision", "group"]);
     const uid = integer(source?.uid, 1, 2_147_483_647);
     const gender = source?.gender === null ? null : oneOf(source?.gender, AUDIENCE_VISIBILITY_GENDERS);
     const visibleTo = oneOf(source?.visible_to, AUDIENCE_VISIBILITY_VALUES);
@@ -548,7 +556,7 @@ export function audienceVisibilityMemberDetailResponse(value: unknown): Audience
         ? { contract_version: 1, uid, gender: null, visible_to: "both", revision, group: null }
         : null;
     }
-    const group = exactObject(source.group, ["id", "key", "legacy_segment"]);
+    const group = requiredObject(source.group, ["id", "key", "legacy_segment"]);
     const definition = PROTECTED_GROUPS.find((row) => row.gender === gender && row.visible_to === visibleTo);
     if (!definition || typeof group?.id !== "string" || !MONGO_ID.test(group.id)
       || group.key !== definition.key || group.legacy_segment !== definition.legacy_segment) return null;
@@ -566,10 +574,13 @@ export function audienceVisibilityMemberDetailResponse(value: unknown): Audience
 export function audienceVisibilityConflict(value: unknown): AudienceVisibilityConflict | null {
   const envelope = webadminErrorEnvelope(value, "required");
   if (!envelope || envelope.status_code !== 409 || envelope.error !== "audience-visibility-conflict") return null;
-  const groupData = exactObject(envelope.data, ["contract_version", "group"]);
+  const data = record(envelope.data);
+  const branches = ["group", "intents"].filter((key) => data && Object.hasOwn(data, key));
+  if (branches.length !== 1) return null;
+  const groupData = requiredObject(envelope.data, ["contract_version", "group"]);
   const group = visibilityGroup(groupData?.group);
   if (groupData?.contract_version === 1 && group) return { kind: "group", group };
-  const intentsData = exactObject(envelope.data, ["contract_version", "intents"]);
+  const intentsData = requiredObject(envelope.data, ["contract_version", "intents"]);
   const intents = audienceVisibilityIntents(intentsData?.intents);
   return intentsData?.contract_version === 1 && intents ? { kind: "intents", intents } : null;
 }
@@ -620,6 +631,7 @@ export function audienceVisibilityShouldRetainMutation(error: string | null): bo
 }
 
 function exactBody(body: JsonObject, keys: readonly string[]): JsonObject | null {
+  // Same-origin request bodies remain exact so undeclared fields cannot reach Core.
   return exactObject(body, keys);
 }
 
@@ -648,11 +660,11 @@ function parseCanonicalMaterial<T>(
 function normalizedGroupMaterial(value: unknown): Pick<AudienceVisibilityGroup, "key" | "labels" | "rules" | "sort_order" | "active"> | null {
   const source = exactObject(value, ["key", "labels", "rules", "sort_order", "active"]);
   const key = typeof source?.key === "string" && GROUP_KEY.test(source.key) ? source.key : null;
-  const labels = localizedPair(source?.labels, 80);
+  const labels = localizedPair(source?.labels, 80, true);
   const sortOrder = integer(source?.sort_order, 0, 100_000);
   if (!source || !key || !labels || sortOrder === null || typeof source.active !== "boolean"
     || !Array.isArray(source.rules) || source.rules.length < 1 || source.rules.length > 20) return null;
-  const rules = source.rules.map(visibilityRule);
+  const rules = source.rules.map((rule) => visibilityRule(rule, true));
   if (rules.some((rule) => rule === null)) return null;
   const parsedRules = rules as AudienceVisibilityRule[];
   if (new Set(parsedRules.map((rule) => JSON.stringify(rule))).size !== parsedRules.length) return null;
@@ -682,10 +694,10 @@ function normalizeGroupSave(body: JsonObject): JsonObject | null {
   const request = requestId(source?.request_id);
   const reason = auditReason(source?.audit_reason);
   const key = typeof source?.group_key === "string" && GROUP_KEY.test(source.group_key) ? source.group_key : null;
-  const labels = parseCanonicalMaterial(source?.labels_json, (value) => localizedPair(value, 80));
+  const labels = parseCanonicalMaterial(source?.labels_json, (value) => localizedPair(value, 80, true));
   const rules = parseCanonicalMaterial(source?.rules_json, (value) => {
     if (!Array.isArray(value) || value.length < 1 || value.length > 20) return null;
-    const parsed = value.map(visibilityRule);
+    const parsed = value.map((rule) => visibilityRule(rule, true));
     if (parsed.some((rule) => rule === null)) return null;
     const rows = parsed as AudienceVisibilityRule[];
     return new Set(rows.map((rule) => JSON.stringify(rule))).size === rows.length ? rows : null;
@@ -737,7 +749,7 @@ function normalizeIntentSave(body: JsonObject): JsonObject | null {
   const revision = integer(source?.expected_intents_revision, 1, 2_147_483_647);
   const reason = auditReason(source?.audit_reason);
   const key = typeof source?.key === "string" && GROUP_KEY.test(source.key) ? source.key : null;
-  const labels = parseCanonicalMaterial(source?.labels_json, (value) => localizedPair(value, 180));
+  const labels = parseCanonicalMaterial(source?.labels_json, (value) => localizedPair(value, 180, true));
   const sortOrder = integer(source?.sort_order, 0, 100_000);
   return source?.contract_version === 1 && request && revision !== null && reason && key && labels && sortOrder !== null
     ? Object.assign(Object.create(null), {
@@ -850,6 +862,7 @@ export function audienceVisibilityPendingMutation(
 }
 
 export function audienceVisibilityPendingFrom(value: unknown): AudienceVisibilityPendingMutation | null {
+  // Persisted retry identity remains exact so replay cannot acquire new semantics.
   const source = exactObject(value, ["version", "action", "target", "payload"]);
   const action = oneOf(source?.action, AUDIENCE_VISIBILITY_MUTATION_ACTIONS);
   const target = canonicalText(source?.target, 1, 160);

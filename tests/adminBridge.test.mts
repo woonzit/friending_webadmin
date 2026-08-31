@@ -6,12 +6,13 @@ import {
   adminBridgeErrorEnvelope,
 } from "../lib/adminBridge.ts";
 
-test("the same-origin bridge refusal is exact and carries its logical status", () => {
-  assert.deepEqual(adminBridgeErrorEnvelope({
+test("the same-origin bridge refusal requires known fields and carries its logical status", () => {
+  const refusal = {
     success: false,
     status_code: 403,
     error: "admin-write-required",
-  }), {
+  } as const;
+  assert.deepEqual(adminBridgeErrorEnvelope(refusal), {
     success: false,
     status_code: 403,
     error: "admin-write-required",
@@ -23,28 +24,41 @@ test("the same-origin bridge refusal is exact and carries its logical status", (
     { success: false, status_code: 399, error: "admin-write-required" },
     { success: true, status_code: 403, error: "admin-write-required" },
     { success: false, status_code: 403, error: "" },
-    { success: false, status_code: 403, error: "admin-write-required", detail: "extra" },
   ]) assert.equal(adminBridgeErrorEnvelope(malformed), null, JSON.stringify(malformed));
+  assert.deepEqual(
+    adminBridgeErrorEnvelope({ ...refusal, detail: "extra" }),
+    adminBridgeErrorEnvelope(refusal),
+  );
+  assert.equal(adminBridgeErrorEnvelope({
+    ...refusal,
+    message: 200,
+    status: 200,
+    can_send: 0,
+  }), null, "the recognized Core marker trio selects the sibling envelope variant");
 });
 
-test("only exact coreCall transport failures gain a bridge status", () => {
+test("only known coreCall transport failures gain a bridge status", () => {
   for (const [error, status] of [
     ["core-timeout", 504],
     ["core-unavailable", 502],
     ["invalid-core-response", 502],
   ] as const) {
-    assert.deepEqual(adminBridgeCoreTransportError(status, { success: false, error }), {
+    const refusal = { success: false, error } as const;
+    assert.deepEqual(adminBridgeCoreTransportError(status, refusal), {
       success: false,
       status_code: status,
       error,
     });
+    assert.deepEqual(
+      adminBridgeCoreTransportError(status, { ...refusal, detail: "extra" }),
+      adminBridgeCoreTransportError(status, refusal),
+    );
   }
 
   for (const [status, malformed] of [
     [502, { success: false, error: "core-timeout" }],
     [504, { success: false, error: "core-unavailable" }],
     [504, { success: false, error: "invalid-core-response" }],
-    [502, { success: false, error: "core-unavailable", detail: "extra" }],
     [502, { success: true, error: "core-unavailable" }],
     [502, { success: false, error: "invented" }],
     [502, null],

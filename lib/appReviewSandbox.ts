@@ -234,11 +234,8 @@ export function appReviewSandboxStatus(value: unknown): AppReviewSandboxStatus |
   }
 
   const decodedCounts = {} as Record<AppReviewCountKey, number>;
-  if (
-    Object.keys(counts).length !== APP_REVIEW_COUNT_KEYS.length ||
-    Object.keys(counts).some((key) => !(APP_REVIEW_COUNT_KEYS as readonly string[]).includes(key))
-  ) return null;
   for (const key of APP_REVIEW_COUNT_KEYS) {
+    if (!Object.hasOwn(counts, key)) return null;
     const count = nonNegative(counts[key]);
     if (count === null) return null;
     decodedCounts[key] = count;
