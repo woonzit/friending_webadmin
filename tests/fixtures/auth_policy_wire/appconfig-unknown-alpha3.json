@@ -1,0 +1,37 @@
+{
+    "status_code": 200,
+    "data": {
+        "auth_email_enabled": true,
+        "auth_phone_storefronts": "ALL;",
+        "email_auth_enabled": true,
+        "auth_policy": {
+            "storefront": "ZZZ",
+            "phone": true,
+            "email": true,
+            "apple": true,
+            "phone_dial_codes": [
+                "36",
+                "1"
+            ],
+            "phone_formats": [
+                {
+                    "code": "1",
+                    "mask": "(***) ***-****"
+                },
+                {
+                    "code": "36",
+                    "mask": "**/*** ****"
+                },
+                {
+                    "code": "44",
+                    "mask": "**** *** ***"
+                }
+            ],
+            "revision": 7
+        },
+        "sign_up_with_phone": "ALL;"
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -6,6 +6,7 @@ export const AUTH_POLICY_EDITABLE_SETTING_KEYS = [
   "auth_policy_overrides",
   "phone_dial_codes_default",
   "phone_dial_codes_overrides",
+  "phone_dial_formats",
 ] as const;
 
 export const AUTH_POLICY_SETTING_KEYS = [
@@ -29,11 +30,17 @@ export type DialCodeOverride = {
   dialCodes: DialCodeRule;
 };
 
+export type PhoneDialFormat = {
+  code: string;
+  mask: string;
+};
+
 export type AuthPolicyConfiguration = {
   defaultMethods: AuthMethods;
   methodOverrides: AuthMethodOverride[];
   defaultDialCodes: DialCodeRule;
   dialCodeOverrides: DialCodeOverride[];
+  phoneDialFormats: PhoneDialFormat[];
   revision: number;
   updatedAt: number;
   updatedBy: string;
@@ -44,7 +51,15 @@ export type AuthPolicyDraftIssue =
   | "storefront"
   | "duplicateStorefront"
   | "dialCodes"
+  | "dialFormatCode"
+  | "duplicateDialFormat"
+  | "dialFormatMask"
   | "revision";
+
+export type PhoneDialFormatRefusal = {
+  field: "phone_dial_formats" | "code" | "mask";
+  index: number | null;
+};
 
 export type AuthPolicyCountry = {
   alpha2: string;
@@ -122,6 +137,11 @@ const COUNTRY_CATALOG: AuthPolicyCountry[] = COUNTRY_SOURCE
 
 const STOREFRONT_CODES = new Set(COUNTRY_CATALOG.map((country) => country.alpha3));
 const DIAL_CODES = new Set(COUNTRY_CATALOG.flatMap((country) => country.dialCodes));
+const PHONE_DIAL_FORMAT_NON_DIGIT = /[^0-9]/;
+const PHONE_DIAL_MASK_FORBIDDEN_CHARACTER = /[^* ()\-./]/;
+const PHONE_DIAL_FORMAT_FIELD = /^phone_dial_formats\.(0|[1-9]\d*)\.(code|mask)(?![\s\S])/;
+
+export const PHONE_DIAL_FORMAT_MAX_LENGTH = 32;
 
 export const AUTH_POLICY_COUNTRIES: readonly AuthPolicyCountry[] = COUNTRY_CATALOG;
 
@@ -223,6 +243,96 @@ function dialCodeRule(value: unknown): DialCodeRule | null {
   return output.sort((left, right) => Number(left) - Number(right));
 }
 
+function phoneDialFormatCode(value: unknown): string | null {
+  return typeof value === "string"
+    && value.length >= 1
+    && value.length <= 3
+    && value[0] !== "0"
+    && !PHONE_DIAL_FORMAT_NON_DIGIT.test(value)
+    ? value
+    : null;
+}
+
+export function phoneDialMaskValid(value: unknown): value is string {
+  return typeof value === "string"
+    && value.length >= 1
+    && value.length <= PHONE_DIAL_FORMAT_MAX_LENGTH
+    && value.includes("*")
+    && !PHONE_DIAL_MASK_FORBIDDEN_CHARACTER.test(value);
+}
+
+function phoneDialFormats(value: unknown): PhoneDialFormat[] | null {
+  if (!Array.isArray(value)) return null;
+  const output: PhoneDialFormat[] = [];
+  const seen = new Set<string>();
+  for (const entry of value) {
+    const source = exactRecord(entry, ["code", "mask"]);
+    const code = phoneDialFormatCode(source?.code);
+    if (!source || !code || seen.has(code) || !phoneDialMaskValid(source.mask)) return null;
+    seen.add(code);
+    output.push({ code, mask: source.mask });
+  }
+  return output.sort((left, right) => Number(left.code) - Number(right.code));
+}
+
+function phoneDialFormatsIssue(
+  value: readonly PhoneDialFormat[],
+): Extract<AuthPolicyDraftIssue, "dialFormatCode" | "duplicateDialFormat" | "dialFormatMask"> | null {
+  if (!Array.isArray(value)) return "dialFormatCode";
+  const seen = new Set<string>();
+  for (const entry of value) {
+    if (!entry || phoneDialFormatCode(entry.code) === null) return "dialFormatCode";
+    if (seen.has(entry.code)) return "duplicateDialFormat";
+    seen.add(entry.code);
+    if (!phoneDialMaskValid(entry.mask)) return "dialFormatMask";
+  }
+  return null;
+}
+
+export function updatePhoneDialFormat(
+  formats: readonly PhoneDialFormat[],
+  code: string,
+  mask: string,
+): PhoneDialFormat[] {
+  const next = formats.filter((entry) => entry.code !== code);
+  if (mask !== "") next.push({ code, mask });
+  return next.sort((left, right) => Number(left.code) - Number(right.code));
+}
+
+export function phoneDialFormatMask(
+  formats: readonly PhoneDialFormat[],
+  code: string,
+): string {
+  return formats.find((entry) => entry.code === code)?.mask ?? "";
+}
+
+export function renderPhoneDialFormatSample(code: string, mask: string): string | null {
+  if (phoneDialFormatCode(code) === null || !phoneDialMaskValid(mask)) return null;
+  const seed = code === "1" ? "2125550134" : "1234567890";
+  let digitIndex = 0;
+  return [...mask].map((character) => {
+    if (character !== "*") return character;
+    const digit = seed[digitIndex % seed.length];
+    digitIndex += 1;
+    return digit;
+  }).join("");
+}
+
+/** Decode only the v1.6 setting refusal and its ruled zero-based dotted field path. */
+export function phoneDialFormatRefusal(value: unknown): PhoneDialFormatRefusal | null {
+  const envelope = webadminEnvelope(value, false, ["error", "field"]);
+  if (!envelope || envelope.status_code !== 422 || envelope.error !== "setting-invalid") return null;
+  if (envelope.field === "phone_dial_formats") {
+    return { field: "phone_dial_formats", index: null };
+  }
+  if (typeof envelope.field !== "string") return null;
+  const match = PHONE_DIAL_FORMAT_FIELD.exec(envelope.field);
+  if (!match) return null;
+  const index = Number(match[1]);
+  if (!Number.isSafeInteger(index)) return null;
+  return { field: match[2] as "code" | "mask", index };
+}
+
 function dialCodeOverrides(value: unknown): DialCodeOverride[] | null {
   // Same PHP empty-map representation as auth_policy_overrides above.
   if (Array.isArray(value)) return value.length === 0 ? [] : null;
@@ -246,7 +356,7 @@ function revision(value: unknown): number | null {
     : null;
 }
 
-/** Parse all five managed values; a partial or malformed policy never becomes an editable draft. */
+/** Parse all six managed values; a partial or malformed policy never becomes an editable draft. */
 export function authPolicySettingsResponse(value: unknown): AuthPolicyConfiguration | null {
   const envelope = webadminEnvelope(value, true, ["settings"]);
   const settings = record(envelope?.settings);
@@ -268,6 +378,11 @@ export function authPolicySettingsResponse(value: unknown): AuthPolicyConfigurat
     dialCodeOverrides,
     "phone_dial_codes_overrides",
   );
+  const dialFormats = managedSetting(
+    settings.phone_dial_formats,
+    phoneDialFormats,
+    "phone_dial_formats",
+  );
   const policyRevision = managedSetting(
     settings.auth_policy_revision,
     revision,
@@ -275,7 +390,14 @@ export function authPolicySettingsResponse(value: unknown): AuthPolicyConfigurat
     1,
     CORE_64_BIT_INTEGER_MAX_ON_JSON_WIRE,
   );
-  if (!defaultMethods || !overrides || !defaultDialCodes || !dialOverrides || !policyRevision) {
+  if (
+    !defaultMethods
+    || !overrides
+    || !defaultDialCodes
+    || !dialOverrides
+    || !dialFormats
+    || !policyRevision
+  ) {
     return null;
   }
 
@@ -284,6 +406,7 @@ export function authPolicySettingsResponse(value: unknown): AuthPolicyConfigurat
     methodOverrides: overrides.value,
     defaultDialCodes: defaultDialCodes.value,
     dialCodeOverrides: dialOverrides.value,
+    phoneDialFormats: dialFormats.value,
     revision: policyRevision.value,
     updatedAt: policyRevision.updatedAt,
     updatedBy: policyRevision.updatedBy,
@@ -318,10 +441,12 @@ export function authPolicyDraftIssue(value: AuthPolicyConfiguration): AuthPolicy
   if (value.dialCodeOverrides.some((row) => dialCodeRule(row.dialCodes) === null)) {
     return "dialCodes";
   }
+  const formatsIssue = phoneDialFormatsIssue(value.phoneDialFormats);
+  if (formatsIssue) return formatsIssue;
   return revision(value.revision) === null ? "revision" : null;
 }
 
-/** The browser sends the four editable values; Core exclusively owns the revision. */
+/** The browser sends the five editable values; Core exclusively owns the revision. */
 export function authPolicySavePayload(value: AuthPolicyConfiguration): Record<string, unknown> | null {
   if (authPolicyDraftIssue(value)) return null;
   const methodRows = [...value.methodOverrides].sort(
@@ -345,6 +470,9 @@ export function authPolicySavePayload(value: AuthPolicyConfiguration): Record<st
         ? "ALL"
         : [...row.dialCodes].sort((left, right) => Number(left) - Number(right)),
     ])),
+    phone_dial_formats: [...value.phoneDialFormats]
+      .sort((left, right) => Number(left.code) - Number(right.code))
+      .map((entry) => ({ code: entry.code, mask: entry.mask })),
   };
 }
 
@@ -355,17 +483,20 @@ function authPolicySaveMaterial(value: unknown): Record<string, unknown> | null 
   const overrides = methodOverrides(settings.auth_policy_overrides);
   const defaultDialCodes = dialCodeRule(settings.phone_dial_codes_default);
   const dialOverrides = dialCodeOverrides(settings.phone_dial_codes_overrides);
+  const dialFormats = phoneDialFormats(settings.phone_dial_formats);
   if (
     !defaultMethods
     || !overrides
     || defaultDialCodes === null
     || !dialOverrides
+    || !dialFormats
   ) return null;
   return authPolicySavePayload({
     defaultMethods,
     methodOverrides: overrides,
     defaultDialCodes,
     dialCodeOverrides: dialOverrides,
+    phoneDialFormats: dialFormats,
     revision: 1,
     updatedAt: 0,
     updatedBy: "",

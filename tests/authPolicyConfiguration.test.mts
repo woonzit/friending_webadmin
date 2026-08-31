@@ -5,11 +5,17 @@ import {
   AUTH_POLICY_COUNTRIES,
   AUTH_POLICY_EDITABLE_SETTING_KEYS,
   AUTH_POLICY_SETTING_KEYS,
+  PHONE_DIAL_FORMAT_MAX_LENGTH,
   authPolicyDraftIssue,
   authPolicySavePayload,
   authPolicySettingsResponse,
   localizedAuthPolicyCountries,
   normalizeAuthPolicySettingsProxyBody,
+  phoneDialFormatMask,
+  phoneDialFormatRefusal,
+  phoneDialMaskValid,
+  renderPhoneDialFormatSample,
+  updatePhoneDialFormat,
   type AuthPolicyConfiguration,
 } from "../lib/authPolicyConfiguration.ts";
 
@@ -42,6 +48,10 @@ function settings(): Record<string, unknown> {
       { USA: ["1"], HUN: "ALL" },
       "phone_dial_codes_overrides",
     ),
+    phone_dial_formats: setting([
+      { code: "36", mask: "**/*** ****" },
+      { code: "1", mask: "(***) *** ****" },
+    ], "phone_dial_formats"),
     auth_policy_revision: setting(7, "integer", 1_777_000_007),
   };
 }
@@ -88,7 +98,77 @@ test("the storefront catalogue is the closed ISO alpha-3 set with localized name
   assert.equal(hu.get("USA"), "Egyesült Államok");
 });
 
-test("all five managed values parse while saves contain exactly the four editable values", () => {
+test("phone masks accept exactly the v1.6 grammar", () => {
+  const accepted = [
+    "*",
+    "(***) *** ****",
+    "** **-**.**/**",
+    "*".repeat(PHONE_DIAL_FORMAT_MAX_LENGTH),
+  ];
+  for (const mask of accepted) assert.equal(phoneDialMaskValid(mask), true, mask);
+
+  const refused: unknown[] = [
+    "",
+    " ",
+    "() - ./",
+    "*".repeat(PHONE_DIAL_FORMAT_MAX_LENGTH + 1),
+    "+*",
+    "1 (***) *** ****",
+    "*_*",
+    "*\\*",
+    "*\n*",
+    "*\n",
+    "*\r",
+    "*\u2028",
+    "＊",
+    123,
+    null,
+  ];
+  for (const mask of refused) assert.equal(phoneDialMaskValid(mask), false, String(mask));
+});
+
+test("live phone-mask samples use deterministic placeholder digits", () => {
+  assert.equal(renderPhoneDialFormatSample("1", "(***) *** ****"), "(212) 555 0134");
+  assert.equal(renderPhoneDialFormatSample("36", "**/***-****"), "12/345-6789");
+  assert.equal(renderPhoneDialFormatSample("36", "*".repeat(12)), "123456789012");
+  assert.equal(renderPhoneDialFormatSample("000", "***"), null);
+  assert.equal(renderPhoneDialFormatSample("1\n", "***"), null);
+  assert.equal(renderPhoneDialFormatSample("1", "+***"), null);
+});
+
+test("format edits keep one sorted entry per code and empty input removes the override", () => {
+  const initial = [
+    { code: "36", mask: "**/*** ****" },
+    { code: "1", mask: "(***) *** ****" },
+  ];
+  const replaced = updatePhoneDialFormat(initial, "1", "***-***-****");
+  assert.deepEqual(replaced, [
+    { code: "1", mask: "***-***-****" },
+    { code: "36", mask: "**/*** ****" },
+  ]);
+  assert.equal(phoneDialFormatMask(replaced, "1"), "***-***-****");
+  assert.equal(phoneDialFormatMask(replaced, "47"), "");
+  assert.deepEqual(updatePhoneDialFormat(replaced, "1", ""), [
+    { code: "36", mask: "**/*** ****" },
+  ]);
+});
+
+test("format codes mirror the canonical 1–3 digit boundary while the UI catalogue stays narrower", () => {
+  const candidate = settings();
+  (candidate.phone_dial_formats as Record<string, unknown>).value = [
+    { code: "999", mask: "***" },
+    { code: "1", mask: "(***) *** ****" },
+  ];
+  const value = authPolicySettingsResponse(success(candidate));
+  assert.ok(value);
+  assert.deepEqual(value.phoneDialFormats, [
+    { code: "1", mask: "(***) *** ****" },
+    { code: "999", mask: "***" },
+  ]);
+  assert.deepEqual(authPolicySavePayload(value)?.phone_dial_formats, value.phoneDialFormats);
+});
+
+test("all six managed values parse while saves contain exactly the five editable values", () => {
   const value = parsed();
   assert.deepEqual(value, {
     defaultMethods: { phone: true, email: true },
@@ -100,6 +180,10 @@ test("all five managed values parse while saves contain exactly the four editabl
     dialCodeOverrides: [
       { storefront: "HUN", dialCodes: "ALL" },
       { storefront: "USA", dialCodes: ["1"] },
+    ],
+    phoneDialFormats: [
+      { code: "1", mask: "(***) *** ****" },
+      { code: "36", mask: "**/*** ****" },
     ],
     revision: 7,
     updatedAt: 1_777_000_007,
@@ -118,6 +202,10 @@ test("all five managed values parse while saves contain exactly the four editabl
     },
     phone_dial_codes_default: ["1", "36"],
     phone_dial_codes_overrides: { HUN: "ALL", USA: ["1"] },
+    phone_dial_formats: [
+      { code: "1", mask: "(***) *** ****" },
+      { code: "36", mask: "**/*** ****" },
+    ],
   });
 });
 
@@ -127,6 +215,7 @@ test("fresh environment-derived settings accept only Core's exact PHP empty-map 
   (fresh.auth_policy_overrides as Record<string, unknown>).value = [];
   (fresh.phone_dial_codes_default as Record<string, unknown>).value = "ALL";
   (fresh.phone_dial_codes_overrides as Record<string, unknown>).value = [];
+  (fresh.phone_dial_formats as Record<string, unknown>).value = [];
   (fresh.auth_policy_revision as Record<string, unknown>).value = 1;
   for (const row of Object.values(fresh)) {
     (row as Record<string, unknown>).updated_at = 0;
@@ -137,6 +226,7 @@ test("fresh environment-derived settings accept only Core's exact PHP empty-map 
     methodOverrides: [],
     defaultDialCodes: "ALL",
     dialCodeOverrides: [],
+    phoneDialFormats: [],
     revision: 1,
     updatedAt: 0,
     updatedBy: "",
@@ -186,6 +276,23 @@ test("malformed methods, storefronts, calling codes, metadata and revisions fail
     (candidate) => { (candidate.phone_dial_codes_default as Record<string, unknown>).value = ["+1"]; },
     (candidate) => { (candidate.phone_dial_codes_default as Record<string, unknown>).value = [1]; },
     (candidate) => { (candidate.phone_dial_codes_default as Record<string, unknown>).value = ["999"]; },
+    (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = {}; },
+    (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "1" }]; },
+    (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "1", mask: "***", extra: true }]; },
+    (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "+1", mask: "***" }]; },
+    (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "0", mask: "***" }]; },
+    (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "01", mask: "***" }]; },
+    (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: 1, mask: "***" }]; },
+    (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "1234", mask: "***" }]; },
+    (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "1\n", mask: "***" }]; },
+    (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "1", mask: "" }]; },
+    (candidate) => { (candidate.phone_dial_formats as Record<string, unknown>).value = [{ code: "1", mask: "+***" }]; },
+    (candidate) => {
+      (candidate.phone_dial_formats as Record<string, unknown>).value = [
+        { code: "1", mask: "***" },
+        { code: "1", mask: "****" },
+      ];
+    },
     (candidate) => { (candidate.auth_policy_revision as Record<string, unknown>).value = 0; },
     (candidate) => { (candidate.auth_policy_revision as Record<string, unknown>).value = 1.5; },
     (candidate) => { (candidate.auth_policy_revision as Record<string, unknown>).value = "7"; },
@@ -239,12 +346,42 @@ test("draft validation blocks unsafe defaults, incomplete rows, duplicates and u
   duplicateDialStorefront.dialCodeOverrides.push({ storefront: "USA", dialCodes: "ALL" });
   assert.equal(authPolicyDraftIssue(duplicateDialStorefront), "duplicateStorefront");
 
+  const invalidFormatCode = parsed();
+  invalidFormatCode.phoneDialFormats[0] = { code: "1234", mask: "***" };
+  assert.equal(authPolicyDraftIssue(invalidFormatCode), "dialFormatCode");
+
+  const duplicateFormat = parsed();
+  duplicateFormat.phoneDialFormats.push({ code: "1", mask: "***-****" });
+  assert.equal(authPolicyDraftIssue(duplicateFormat), "duplicateDialFormat");
+  assert.equal(authPolicySavePayload(duplicateFormat), null);
+
+  const invalidFormatMask = parsed();
+  invalidFormatMask.phoneDialFormats[0] = { code: "1", mask: "+***" };
+  assert.equal(authPolicyDraftIssue(invalidFormatMask), "dialFormatMask");
+  assert.equal(authPolicySavePayload(invalidFormatMask), null);
+
   const stale = parsed();
   stale.revision = 0;
   assert.equal(authPolicyDraftIssue(stale), "revision");
 });
 
-test("the same-origin proxy closes the four editable values and rejects server-owned revision input", () => {
+test("removing an allowed calling code keeps its phone mask inert on the save wire", () => {
+  const value = parsed();
+  value.defaultDialCodes = ["36"];
+  value.dialCodeOverrides = value.dialCodeOverrides.map((row) => (
+    row.storefront === "USA" ? { ...row, dialCodes: [] } : row
+  ));
+  assert.equal(authPolicyDraftIssue(value), null);
+  const payload = authPolicySavePayload(value);
+  assert.ok(payload);
+  assert.deepEqual(payload.phone_dial_codes_default, ["36"]);
+  assert.deepEqual(payload.phone_dial_formats, [
+    { code: "1", mask: "(***) *** ****" },
+    { code: "36", mask: "**/*** ****" },
+  ]);
+});
+
+test("the same-origin proxy closes the five editable values and rejects server-owned revision input", () => {
   const authPolicy = authPolicySavePayload(parsed());
   assert.ok(authPolicy);
   const body = {
@@ -280,6 +417,59 @@ test("the same-origin proxy closes the four editable values and rejects server-o
   assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
     settings: { ...body.settings, phone_dial_codes_default: ["+1"] },
   }), null);
+  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+    settings: {
+      ...body.settings,
+      phone_dial_formats: [
+        { code: "1", mask: "***" },
+        { code: "1", mask: "****" },
+      ],
+    },
+  }), null);
+});
+
+test("Core phone-format refusals require setting-invalid and the ruled dotted field paths", () => {
+  function refusal(field: unknown, error = "setting-invalid", statusCode = 422) {
+    return {
+      success: false,
+      status_code: statusCode,
+      error,
+      field,
+      message: 200,
+      status: 200,
+      can_send: 0,
+    };
+  }
+
+  assert.deepEqual(phoneDialFormatRefusal(refusal("phone_dial_formats")), {
+    field: "phone_dial_formats",
+    index: null,
+  });
+  assert.deepEqual(phoneDialFormatRefusal(refusal("phone_dial_formats.0.code")), {
+    field: "code",
+    index: 0,
+  });
+  assert.deepEqual(phoneDialFormatRefusal(refusal("phone_dial_formats.12.mask")), {
+    field: "mask",
+    index: 12,
+  });
+  assert.deepEqual(phoneDialFormatRefusal(refusal("phone_dial_formats.999.mask")), {
+    field: "mask",
+    index: 999,
+  });
+  for (const candidate of [
+    refusal("phone_dial_formats[0].mask"),
+    refusal("phone_dial_formats.01.mask"),
+    refusal("phone_dial_formats.-1.code"),
+    refusal("phone_dial_formats.9007199254740992.mask"),
+    refusal("phone_dial_formats.0.value"),
+    refusal("phone_dial_formats.0.mask\n"),
+    refusal("phone_dial_formats.0.mask", "settings-invalid"),
+    refusal("phone_dial_formats.0.mask", "setting-invalid", 400),
+    { ...refusal("phone_dial_formats.0.mask"), extra: true },
+  ]) {
+    assert.equal(phoneDialFormatRefusal(candidate), null, JSON.stringify(candidate));
+  }
 });
 
 test("the maximal bounded policy fits the named settings bridge ceiling", async () => {
@@ -297,6 +487,7 @@ test("the maximal bounded policy fits the named settings bridge ceiling", async 
       storefront: country.alpha3,
       dialCodes: [...allDialCodes],
     })),
+    phoneDialFormats: allDialCodes.map((code) => ({ code, mask: "*".repeat(32) })),
     revision: Number.MAX_SAFE_INTEGER,
     updatedAt: 0,
     updatedBy: "",
@@ -323,8 +514,23 @@ test("the Configuration page uses one audited settings mutation and renders immu
   assert.match(card, /<input type="checkbox" checked disabled readOnly \/>/);
   assert.equal(card.match(/<MethodPreview/g)?.length, 2);
   assert.match(card, /localizedAuthPolicyCountries\(locale\)/);
+  assert.match(card, /phoneDialFormatMask\(formats, code\)/);
+  assert.match(card, /renderPhoneDialFormatSample\(code, mask\)/);
+  assert.match(card, /updatePhoneDialFormat\(value\.phoneDialFormats, code, mask\)/);
+  assert.match(card, /data-format-code=\{code\}/);
+  assert.match(page, /phoneDialFormatRefusal\(response\)/);
   assert.match(proxy, /normalizeAuthPolicySettingsProxyBody\(action, body\)/);
-  for (const key of ["savePolicy", "saved", "writeRequired", "saveError", "noCallingCodes"] as const) {
+  for (const key of [
+    "savePolicy",
+    "saved",
+    "writeRequired",
+    "saveError",
+    "noCallingCodes",
+    "dialFormatHelp",
+    "dialFormatLabel",
+    "dialFormatSample",
+    "dialFormatInvalid",
+  ] as const) {
     assert.equal(typeof en.configuration.authPolicy[key], "string", `missing EN ${key}`);
     assert.equal(typeof hu.configuration.authPolicy[key], "string", `missing HU ${key}`);
   }

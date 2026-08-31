@@ -1,0 +1,11 @@
+{
+    "success": false,
+    "status_code": 403,
+    "error": "phone-dial-code-not-allowed",
+    "allowed_dial_codes": [
+        "1"
+    ],
+    "message": 403,
+    "status": 403,
+    "can_send": 0
+}

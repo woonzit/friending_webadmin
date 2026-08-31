@@ -1,13 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatDate } from "@/lib/format";
 import {
+  PHONE_DIAL_FORMAT_MAX_LENGTH,
   localizedAuthPolicyCountries,
+  phoneDialFormatMask,
+  phoneDialMaskValid,
+  renderPhoneDialFormatSample,
+  updatePhoneDialFormat,
   type AuthPolicyConfiguration,
   type DialCodeRule,
   type LocalizedAuthPolicyCountry,
+  type PhoneDialFormat,
 } from "@/lib/authPolicyConfiguration";
 
 type Props = {
@@ -64,9 +70,11 @@ function StorefrontSelect({
 type DialCodeControlProps = {
   id: string;
   value: DialCodeRule;
+  formats: readonly PhoneDialFormat[];
   countries: readonly LocalizedAuthPolicyCountry[];
   busy: boolean;
   onChange: (value: DialCodeRule) => void;
+  onFormatChange: (code: string, mask: string) => void;
 };
 
 function MethodPreview({ scope, phone, email }: { scope: string; phone: boolean; email: boolean }) {
@@ -83,7 +91,15 @@ function MethodPreview({ scope, phone, email }: { scope: string; phone: boolean;
   );
 }
 
-function DialCodeControl({ id, value, countries, busy, onChange }: DialCodeControlProps) {
+function DialCodeControl({
+  id,
+  value,
+  formats,
+  countries,
+  busy,
+  onChange,
+  onFormatChange,
+}: DialCodeControlProps) {
   const t = useTranslations("configuration.authPolicy");
   const [selectedCountry, setSelectedCountry] = useState("");
   const selectedCodes = value === "ALL" ? [] : value;
@@ -157,19 +173,53 @@ function DialCodeControl({ id, value, countries, busy, onChange }: DialCodeContr
           </div>
           {selectedCodes.length ? (
             <div className="auth-policy-dial-chips" aria-label={t("selectedCallingCodes")}>
-              {selectedCodes.map((code) => (
-                <span className="auth-policy-dial-chip" key={code}>
-                  +{code}
-                  <button
-                    type="button"
-                    disabled={busy}
-                    aria-label={t("removeCallingCode", { code: `+${code}` })}
-                    onClick={() => onChange(selectedCodes.filter((candidate) => candidate !== code))}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
+              {selectedCodes.map((code) => {
+                const mask = phoneDialFormatMask(formats, code);
+                const valid = mask === "" || phoneDialMaskValid(mask);
+                const sample = mask === "" ? null : renderPhoneDialFormatSample(code, mask);
+                const hintId = `${id}-format-${code}-hint`;
+                return (
+                  <div className="auth-policy-dial-format-row" data-format-code={code} key={code}>
+                    <span className="auth-policy-dial-chip">
+                      +{code}
+                      <button
+                        type="button"
+                        disabled={busy}
+                        aria-label={t("removeCallingCode", { code: `+${code}` })}
+                        onClick={() => onChange(selectedCodes.filter((candidate) => candidate !== code))}
+                      >
+                        ×
+                      </button>
+                    </span>
+                    <label className="auth-policy-dial-format-field">
+                      <span>{t("dialFormatLabel", { code: `+${code}` })}</span>
+                      <input
+                        className="input"
+                        value={mask}
+                        maxLength={PHONE_DIAL_FORMAT_MAX_LENGTH}
+                        disabled={busy}
+                        autoComplete="off"
+                        spellCheck={false}
+                        aria-invalid={!valid}
+                        aria-describedby={hintId}
+                        placeholder={t("dialFormatPlaceholder")}
+                        onChange={(event) => onFormatChange(code, event.target.value)}
+                      />
+                      {valid ? (
+                        <small className="field-hint" id={hintId}>
+                          {sample
+                            ? t("dialFormatSample", { sample })
+                            : t("dialFormatAutomatic")}
+                        </small>
+                      ) : (
+                        <small className="field-error" id={hintId} role="alert">
+                          {t("dialFormatInvalid")}
+                        </small>
+                      )}
+                    </label>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <p className="auth-policy-empty">{t("noCallingCodes")}</p>
@@ -212,6 +262,12 @@ export default function AuthPolicyConfigurationCard({ value, busy, onSave, onCha
           dialCodes: value.defaultDialCodes === "ALL" ? "ALL" : [...value.defaultDialCodes],
         },
       ],
+    });
+  }
+
+  function changeDialFormat(code: string, mask: string) {
+    patch({
+      phoneDialFormats: updatePhoneDialFormat(value.phoneDialFormats, code, mask),
     });
   }
 
@@ -370,13 +426,16 @@ export default function AuthPolicyConfigurationCard({ value, busy, onSave, onCha
           <div className="setting-copy">
             <h3>{t("dialTitle")}</h3>
             <p>{t("dialCopy")}</p>
+            <p className="auth-policy-dial-format-help">{t("dialFormatHelp")}</p>
           </div>
           <DialCodeControl
             id="auth-policy-global-dial"
             value={value.defaultDialCodes}
+            formats={value.phoneDialFormats}
             countries={countries}
             busy={busy}
             onChange={(defaultDialCodes) => patch({ defaultDialCodes })}
+            onFormatChange={changeDialFormat}
           />
         </section>
 
@@ -431,6 +490,7 @@ export default function AuthPolicyConfigurationCard({ value, busy, onSave, onCha
                   <DialCodeControl
                     id={`auth-policy-dial-${index}`}
                     value={row.dialCodes}
+                    formats={value.phoneDialFormats}
                     countries={countries}
                     busy={busy}
                     onChange={(dialCodes) => patch({
@@ -438,6 +498,7 @@ export default function AuthPolicyConfigurationCard({ value, busy, onSave, onCha
                         candidateIndex === index ? { ...candidate, dialCodes } : candidate
                       )),
                     })}
+                    onFormatChange={changeDialFormat}
                   />
                 </article>
               ))}

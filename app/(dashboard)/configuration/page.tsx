@@ -13,6 +13,7 @@ import {
   authPolicyDraftIssue,
   authPolicySavePayload,
   authPolicySettingsResponse,
+  phoneDialFormatRefusal,
   type AuthPolicyConfiguration,
   type AuthPolicyDraftIssue,
 } from "@/lib/authPolicyConfiguration";
@@ -486,6 +487,9 @@ function authPolicyIssueMessage(
   if (issue === "storefront") return t("authPolicy.errors.storefront");
   if (issue === "duplicateStorefront") return t("authPolicy.errors.duplicateStorefront");
   if (issue === "dialCodes") return t("authPolicy.errors.dialCodes");
+  if (issue === "dialFormatCode") return t("authPolicy.errors.dialFormatCode");
+  if (issue === "duplicateDialFormat") return t("authPolicy.errors.duplicateDialFormat");
+  if (issue === "dialFormatMask") return t("authPolicy.errors.dialFormatMask");
   return t("authPolicy.errors.revision");
 }
 
@@ -500,5 +504,11 @@ function authPolicySaveError(
     && response.status_code === 422
     && response.error === "auth-policy-no-method"
   ) return t("authPolicy.errors.noMethod");
+  const dialFormatRefusal = phoneDialFormatRefusal(response);
+  if (dialFormatRefusal?.field === "code") return t("authPolicy.errors.dialFormatCode");
+  if (dialFormatRefusal?.field === "mask") return t("authPolicy.errors.dialFormatMask");
+  if (dialFormatRefusal?.field === "phone_dial_formats") {
+    return t("authPolicy.errors.dialFormats");
+  }
   return t("authPolicy.saveError");
 }

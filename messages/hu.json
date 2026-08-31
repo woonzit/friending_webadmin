@@ -6305,6 +6305,12 @@
       "selectStorefront": "Válassz országot",
       "dialTitle": "Globális telefonos hívókódok",
       "dialCopy": "Engedélyezd az összes E.164 ország-hívókódot, vagy országok kiválasztásával állíts össze listát. A lista az új telefonos regisztrációt és az új telefonszám kapcsolását korlátozza; a meglévő ellenőrzött számmal való bejelentkezés elérhető marad.",
+      "dialFormatHelp": "Minden megjelenő hívókódchip mellett megadhatsz egy opcionális maszkot. Minden * egy számjegy helye; üresen hagyva az app automatikus formázása marad. A hívókód eltávolításakor a maszk megmarad, de nem aktív, amíg a kódot újra nem engedélyezed.",
+      "dialFormatLabel": "Számmaszk ehhez: {code}",
+      "dialFormatPlaceholder": "Automatikus formázás",
+      "dialFormatSample": "Élő példa: {sample}",
+      "dialFormatAutomatic": "Nincs felülírás — az app automatikusan formázza ezt a kódot.",
+      "dialFormatInvalid": "Használj 1–32 karaktert és legalább egy * jelet; csak szóköz, illetve a ( ) - . / jelek engedélyezettek. Ne add meg a + jelet vagy az ország hívókódját.",
       "dialRule": "Telefonos hívókód szabály",
       "allCountries": "Minden ország",
       "selectedCountries": "Kiválasztott országok",
@@ -6326,6 +6332,10 @@
         "storefront": "Minden felülíráshoz válassz érvényes, hárombetűs ISO App Store-storefrontot.",
         "duplicateStorefront": "Ugyanaz a storefront nem szerepelhet kétszer egy felülíráslistában.",
         "dialCodes": "A kiválasztott hívókódszabályok csak érvényes, egyedi országkódokat tartalmazhatnak.",
+        "dialFormatCode": "Minden telefonformátum-bejegyzéshez érvényes, kanonikus hívókód szükséges.",
+        "duplicateDialFormat": "Minden hívókódhoz csak egy telefonszámmaszk tartozhat.",
+        "dialFormatMask": "A telefonszámmaszk 1–32 karakteres, legalább egy * jelet tartalmaz, és csak az engedélyezett elválasztókat használja.",
+        "dialFormats": "A telefonformátumoknak pontos kód–maszk párok listáját kell alkotniuk.",
         "revision": "A hitelesítési szabályzat revíziója érvénytelen. Mentés előtt töltsd újra az oldalt."
       }
     }
