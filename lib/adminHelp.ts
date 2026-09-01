@@ -341,12 +341,6 @@ export const ADMIN_HELP_PAGES = [
     matches: exact("/audience-visibility"),
   },
   {
-    key: "userGroups",
-    route: "/user-groups",
-    sections: ["groupList", "membershipRules", "legacyProjection", "archiveBehavior"],
-    matches: exact("/user-groups"),
-  },
-  {
     key: "profileFields",
     route: "/profile-fields",
     sections: ["sectionLayout", "catalogSearch", "fieldEditor", "answerOptions", "audience", "archiveBehavior"],
@@ -369,12 +363,6 @@ export const ADMIN_HELP_PAGES = [
     route: "/icebreakers",
     sections: ["search", "promptEditor", "placementAudience", "archiveBehavior"],
     matches: exact("/icebreakers"),
-  },
-  {
-    key: "layer2Intents",
-    route: "/layer2-intents",
-    sections: ["readiness", "selectionLimit", "catalog", "reciprocalSets", "archiveRestore", "conflicts"],
-    matches: exact("/layer2-intents"),
   },
   {
     key: "footprints",

@@ -1882,53 +1882,6 @@
           }
         }
       },
-      "userGroups": {
-        "title": "User groups help",
-        "summary": "User groups are server-evaluated member segments used to show restricted profile questions. Membership is calculated from gender and matching-orientation rules; one member can belong to several groups at the same time.",
-        "steps": {
-          "1": "Understand the existing system groups and any audience that references them before editing rules.",
-          "2": "Build rules from canonical gender and matching orientation only, then review the resulting intent.",
-          "3": "Save, reorder or archive with awareness that field audiences may immediately gain or lose matches."
-        },
-        "sections": {
-          "groupList": {
-            "title": "Cast group inventory",
-            "purpose": "The list shows system and custom groups in display order with bilingual labels, active state, rules and member-count context.",
-            "actions": {
-              "1": "Review or reorder groups and open one for editing.",
-              "2": "Create a custom group when a new audience cannot be represented safely by existing groups."
-            },
-            "guidance": "The six system groups reproduce proven casts and cannot be archived. A group is a rule, not a manually maintained member list."
-          },
-          "membershipRules": {
-            "title": "Gender and matching-orientation rules",
-            "purpose": "A member belongs when any rule matches both their canonical gender and required matching orientation.",
-            "actions": {
-              "1": "Add one or more precise rule cards and review their OR relationship.",
-              "2": "Update labels and order independently from matching logic."
-            },
-            "guidance": "Optional profile-orientation disclosure must never enter these rules. Changing rules can alter visibility for many members immediately."
-          },
-          "legacyProjection": {
-            "title": "Legacy segment compatibility",
-            "purpose": "An optional legacy segment lets older surfaces project the first matching compatible group into the classic cast model.",
-            "actions": {
-              "1": "Retain the fixed mapping on system groups.",
-              "2": "Set a custom compatibility projection only when an older client contract explicitly needs it."
-            },
-            "guidance": "Display order can decide which compatible group wins the legacy projection. Review order and segment together."
-          },
-          "archiveBehavior": {
-            "title": "Activation and archive impact",
-            "purpose": "Deactivation or archive stops the group matching members and removes it from future audience selection without rewriting every referring field.",
-            "actions": {
-              "1": "Read the impact confirmation before archiving a custom group.",
-              "2": "Reactivate or correct the original group when its meaning should return."
-            },
-            "guidance": "Existing field audiences that reference an archived group simply stop matching through it. Confirm all known consumers before the change."
-          }
-        }
-      },
       "profileFields": {
         "title": "Profile fields help",
         "summary": "Profile fields are the bilingual questions members answer after signup. This page controls where questions appear, which members receive them, their selectable answers and how retired content remains readable on existing profiles.",
@@ -2150,71 +2103,6 @@
               "2": "Restore or edit the original prompt if its stable meaning becomes active again."
             },
             "guidance": "Archive is not deletion of member-generated answers. Removing historical content requires a separate member or moderation flow."
-          }
-        }
-      },
-      "layer2Intents": {
-        "title": "Layer 2 intents help",
-        "summary": "Layer 2 is the catalog behind “What brings you to Friending”. Members choose a small number of intents, and an answer is disclosed only to another member who selected an intent in the same reciprocal set.",
-        "steps": {
-          "1": "Read catalog readiness and current selection limit before editing any item.",
-          "2": "Preserve the item's permanent identity, Layer 1 placement and reciprocal set while completing label and glossary in both languages.",
-          "3": "Save against both revisions, then archive and replace rather than retargeting a live disclosure set."
-        },
-        "sections": {
-          "readiness": {
-            "title": "Catalog readiness",
-            "purpose": "Readiness summarizes whether every active item has complete bilingual member copy and a structurally valid place in the bounded catalog.",
-            "actions": {
-              "1": "Review incomplete or withheld items before changing selection policy.",
-              "2": "Complete both labels and glossaries so Core can serve an item."
-            },
-            "guidance": "An item may be stored before its glossary is ready, but it remains unavailable to members. Do not confuse stored with releasable."
-          },
-          "selectionLimit": {
-            "title": "Member selection limit",
-            "purpose": "The catalog-wide limit decides how many Layer 2 intents one member may choose, up to the supported maximum of five.",
-            "actions": {
-              "1": "Select the reviewed limit and save against the current catalog revision.",
-              "2": "Confirm that member and profile copy still explains the number correctly."
-            },
-            "guidance": "Lowering the limit does not remove existing excess choices. Affected members keep them until they next edit, so plan the transition."
-          },
-          "catalog": {
-            "title": "Intent catalog",
-            "purpose": "Every item has a permanent ID, one Layer 1 category, one reciprocal set, bilingual label, bilingual disclosure glossary, order and archive state.",
-            "actions": {
-              "1": "Open an item, update allowed copy or order and provide an audit reason.",
-              "2": "Review long-press glossary wording as carefully as the short label."
-            },
-            "guidance": "The glossary must plainly say who sees the answer. It is consent-facing product copy, not internal technical documentation."
-          },
-          "reciprocalSets": {
-            "title": "Reciprocal disclosure sets",
-            "purpose": "The set is the privacy boundary: a member's intent is revealed only to people who selected an item in that same set, never to an ordinary profile visitor.",
-            "actions": {
-              "1": "Check the set before an item first becomes live.",
-              "2": "Compare related items to ensure separate consent groups remain separate."
-            },
-            "guidance": "A live item's set is fixed. Moving it would merge audiences that consented separately, so create a replacement instead."
-          },
-          "archiveRestore": {
-            "title": "Archive and restore",
-            "purpose": "Archive stops a Layer 2 item being offered to new selections while members who already chose it retain their stored choice.",
-            "actions": {
-              "1": "Archive an obsolete item with a clear audit reason.",
-              "2": "Restore only when the original meaning and disclosure set are still valid."
-            },
-            "guidance": "Archive is reversible availability control, not deletion. Use a new item when meaning or disclosure audience changes."
-          },
-          "conflicts": {
-            "title": "Revision conflicts and safe saves",
-            "purpose": "Item and catalog revisions prevent two administrators from silently overwriting one another's consent-sensitive changes.",
-            "actions": {
-              "1": "Review the server version when a conflict is returned.",
-              "2": "Reapply the intended edit deliberately and submit a fresh audited request."
-            },
-            "guidance": "Never merge a stale Layer 2 draft automatically. The differences may change reciprocal disclosure or the global selection limit."
           }
         }
       },
@@ -2819,12 +2707,10 @@
     "signupOptions": "Signup options",
     "signupPhotos": "Signup photos",
     "audienceVisibility": "Audience visibility",
-    "userGroups": "User groups",
     "profileFields": "Profile fields",
     "profilePresentation": "Public profile layout",
     "profileTags": "Profile tag catalogs",
     "icebreakers": "Icebreakers",
-    "layer2Intents": "Layer 2 intents",
     "configuration": "Configuration",
     "admins": "Admin users",
     "audit": "Audit log",
@@ -6393,64 +6279,6 @@
       }
     }
   },
-  "userGroups": {
-    "eyebrow": "Audience data model",
-    "title": "User groups",
-    "subtitle": "Define the cast groups that decide who sees restricted profile questions. Membership follows the gender and orientation rules below; one member can belong to several groups.",
-    "listTitle": "Cast groups",
-    "listCopy": "Groups are evaluated in display order. The six system groups reproduce the built-in casts and cannot be archived.",
-    "add": "New group",
-    "addTitle": "Create user group",
-    "editTitle": "Edit user group",
-    "newGroupHint": "The MongoDB id is assigned by Core when the group is first saved.",
-    "key": "Stable key",
-    "keyHint": "Lowercase letters, numbers and underscores. Audiences reference this key through the group id, so renaming is safe for non-system groups.",
-    "name": "Name",
-    "nameEn": "English name",
-    "nameHu": "Hungarian name",
-    "rules": "Membership rules",
-    "rulesHint": "A member belongs when ANY rule matches: their gender and required matching orientation both match. Optional profile-orientation disclosure values never belong in these rules.",
-    "ruleTitle": "Rule {number}",
-    "ruleAnd": "and",
-    "ruleOr": "or",
-    "addRule": "Add rule",
-    "removeRule": "Remove",
-    "genders": "Genders",
-    "genderMale": "Man",
-    "genderFemale": "Woman",
-    "genderOther": "Nonbinary",
-    "orientations": "Orientations",
-    "retiredOrientation": "Removed orientation",
-    "legacySegment": "Legacy segment",
-    "legacySegmentNone": "None",
-    "legacySegmentHint": "Optional compatibility projection: the first matching group carrying a legacy segment decides the member's classic cast on older surfaces.",
-    "order": "Order",
-    "status": "Status",
-    "active": "Active",
-    "inactive": "Archived",
-    "archive": "Archive",
-    "archiveTitle": "Archive user group?",
-    "archiveCopy": "“{name}” stops matching members and disappears from audience pickers. Field audiences already referencing it simply stop matching anyone through it.",
-    "mongoId": "MongoDB id",
-    "technicalDetails": "Technical details",
-    "system": "System",
-    "systemGroup": "Protected system group",
-    "systemGroupCopy": "Its stable key and legacy segment are fixed because existing audiences reference them. Labels, rules, order and activation can be changed.",
-    "keyInvalid": "Enter a stable key beginning with a letter and containing only lowercase letters, numbers or underscores.",
-    "namesRequired": "Enter both the English and Hungarian names.",
-    "rulesInvalid": "Every rule needs at least one gender and one orientation, and the group needs at least one rule.",
-    "orientationUnknown": "One of the selected orientations no longer exists. Remove it or choose an active orientation.",
-    "orientationDisclosureForbidden": "That value belongs to optional profile-orientation disclosure and cannot be used for matching.",
-    "keyTaken": "Another group already uses this key.",
-    "conflict": "Someone else changed this group meanwhile. The list has been reloaded — reapply your change.",
-    "systemProtected": "System groups cannot be archived.",
-    "loadError": "The user groups could not be loaded.",
-    "saveError": "The group could not be saved.",
-    "archiveError": "The group could not be archived.",
-    "saved": "User group saved.",
-    "archived": "User group archived.",
-    "empty": "No user groups exist yet."
-  },
   "signupOptions": {
     "eyebrow": "Signup data model",
     "title": "Signup options",
@@ -7510,65 +7338,6 @@
         "review": "Review"
       }
     }
-  },
-  "layer2": {
-    "eyebrow": "Signup intents",
-    "title": "Layer 2 intents",
-    "subtitle": "The catalogue behind “What brings you to Friending”. Members choose up to {limit}.",
-    "loadError": "The intent catalogue could not be loaded.",
-    "stalePublicItem": "Item “{id}” is still stored as public. Layer 2 answers are reciprocal only, so nothing is shown here rather than displaying a public item as if it were protected. Migrate Core first, then reload.",
-    "saveError": "The change could not be saved.",
-    "saved": "Saved.",
-    "conflict": "Someone else changed the catalogue while you were editing. Your draft was discarded and the current version is shown — review it before editing again.",
-    "reason": "Reason",
-    "reasonHint": "Recorded in the audit log with your name. Required on every change.",
-    "reasonRequired": "Give a reason of at least three characters.",
-    "readiness": "Readiness",
-    "readinessCopy": "An item can be stored without a glossary, but Core will not serve it until both languages exist.",
-    "disclosureRule": "A Layer 2 answer never appears on a profile. It is revealed only to members who selected the same thing, and the marker a member sees while choosing is the consent. The three Layer 1 intents are the public ones; these are not.",
-    "publishableCount": "{ready} of {total} items are servable.",
-    "emptySets": "These reciprocal sets have no live item: {sets}. Members can opt into them and will never see anything.",
-    "readOnly": "You have read-only access to this catalogue.",
-    "item": "Item",
-    "layer1": "Layer 1 groups",
-    "order": "Order",
-    "status": "Status",
-    "groups": {
-      "sex": "Open to Dates",
-      "friends": "Friends",
-      "love": "Relationship"
-    },
-    "set": "Reciprocal set",
-    "setHint": "The set is the disclosure boundary: an answer is revealed only to members who chose an item in the same set, and never to anyone else. It is fixed once the item is live, because changing it would merge two groups of people who consented separately — archive this item and add a replacement instead.",
-    "labelEn": "Label (EN)",
-    "labelHu": "Label (HU)",
-    "glossaryEn": "Glossary (EN)",
-    "glossaryHu": "Glossary (HU)",
-    "glossaryHint": "Shown on long-press when a member is deciding. It must state who will see the answer: only people who set the same thing, never a profile visitor.",
-    "editTitle": "Edit “{id}”",
-    "archive": "Archive",
-    "restore": "Restore",
-    "archiveTitle": "Archive this item?",
-    "restoreTitle": "Restore this item?",
-    "archiveCopy": "“{name}” stops being offered to new members. Members who already selected it keep their choice — this is not a delete.",
-    "restoreCopy": "“{name}” becomes selectable again.",
-    "archived": "Archived.",
-    "restored": "Restored.",
-    "archivedState": "Archived",
-    "liveState": "Live",
-    "blockedBy": "Not servable: glossary missing in {locales}.",
-    "notServable": "Not servable yet.",
-    "subtitleUnknownLimit": "The catalogue behind “What brings you to Friending”.",
-    "selectionLimit": "Selection limit",
-    "selectionLimitCopy": "How many Layer 2 answers one member may select. It applies to every member and takes effect as soon as it is saved; nobody's existing selection is removed, so a member who already picked more than the new limit keeps them all until they next edit.",
-    "selectionLimitLabel": "Members may select up to",
-    "selectionLimitCeiling": "Five is the ceiling and cannot be raised from here. The iOS app checks this number against 1–5, and a value outside that range makes it discard the entire Layer 2 catalogue rather than cap it, which would fail signup outright on that build. That is why neither this control nor Core will accept a higher value. Raising the ceiling needs a released app version first, not a change on this page.",
-    "selectionLimitUnsaved": "Not saved yet. Members still see the current limit of {current} until you save.",
-    "selectionLimitSaved": "Selection limit saved.",
-    "selectionLimitUnchangedResult": "That is already the stored limit — nothing was changed.",
-    "selectionLimitNoCatalog": "There is no Layer 2 catalogue stored yet, so there is nothing for a limit to apply to. Seed the catalogue in Core first.",
-    "selectionLimitOutOfRange": "Core stores {stored} as the selection limit, which is outside the 1–5 range clients accept. Core corrects it on the way out, so members are being served {effective} and signup is not failing — but the stored value is wrong, and since Core refuses an out-of-range write, something other than this page put it there. Saving a value between 1 and 5 below replaces it.",
-    "selectionLimitSave": "Save limit"
   },
   "imageEditor": {
     "title": "Crop, rotate and zoom",

@@ -112,9 +112,6 @@ export const ADMIN_ACTIONS = [
   "save_signup_option",
   "delete_signup_option",
   "list_profile_fields",
-  "user_cast_groups",
-  "save_user_cast_group",
-  "archive_user_cast_group",
   "support_threads",
   "support_messages",
   "support_send",
@@ -185,9 +182,6 @@ export const ADMIN_ACTIONS = [
   "delete_admin",
   "list_audit",
   "layer2_catalog",
-  "save_layer2_item",
-  "archive_layer2_item",
-  "set_layer2_selection_limit",
   "signup_photo_config",
   "save_signup_photo_config",
   ...PRODUCT_POPUP_ADMIN_ACTIONS,
@@ -260,9 +254,6 @@ export const ADMIN_ACTION_ACCESS = {
   save_signup_option: "write",
   delete_signup_option: "write",
   list_profile_fields: "read",
-  user_cast_groups: "read",
-  save_user_cast_group: "write",
-  archive_user_cast_group: "write",
   support_threads: "read",
   // Reading a member's messages clears the operator-side unread counter —
   // the bell feed's read-clears-counter rule, mirrored by Core's actor gate.
@@ -348,16 +339,14 @@ export const ADMIN_ACTION_ACCESS = {
   delete_admin: "owner",
   list_audit: "read",
 
-  // Core gates these on the `catalog` capability ladder (`catalog_inventory_read` /
-  // `catalog_layer2_edit`, editor rank). The console classifies them on its own global ladder and
-  // deliberately no stricter class exists for reads, so the rule holds: at least as strict as
-  // Core's gate, never derived from it. The capability list still drives what the UI offers.
+  // T-565 retired the Layer 2 editor with `/layer2-intents`, and Core refuses
+  // every legacy write with `catalog-layer2-retired` (410) now that the D-019
+  // migration has rewritten the singleton to schema 2. The READ survives on its
+  // own: `/profile-fields` still calls it to list the intent keys a profile
+  // section may be gated on. Core gates it on `catalog_inventory_read`; the
+  // console classifies it on its own global ladder, at least as strict as
+  // Core's gate and never derived from it.
   layer2_catalog: "read",
-  save_layer2_item: "write",
-  archive_layer2_item: "write",
-  // The catalogue-wide selection limit. Core routes it to the same
-  // `CAP_LAYER2_EDIT` gate as the two item writes, so it is classified the same.
-  set_layer2_selection_limit: "write",
 
   // Signup photo experience, contract §4.1/§4.2. Core gates the read on `requireAdminActor` and the
   // write on `requireAdminEditor`; both classifications here are at least as strict.

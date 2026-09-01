@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
 import { userCastGroup, userCastGroupsPayload } from "../lib/userCastGroups.ts";
 import { DISCLOSURE_ONLY_ORIENTATION_KEYS } from "../lib/orientationIntegrity.ts";
 
@@ -57,14 +56,8 @@ test("user-group parser fails closed on malformed membership rules", () => {
   );
 });
 
-test("user-group page presents responsive rule cards and bounded vocabulary errors", async () => {
-  const source = await readFile(new URL("../app/(dashboard)/user-groups/page.tsx", import.meta.url), "utf8");
-  assert.match(source, /user-group-card-grid/);
-  assert.match(source, /t\("ruleAnd"\)/);
-  assert.match(source, /t\("ruleOr"\)/);
-  assert.match(source, /cast-group-orientation-unknown/);
-  assert.doesNotMatch(source, /<table/);
-  assert.match(source, /containsDisclosureOnlyOrientation\(rule\.orientations\)/);
-  assert.match(source, /cast-group-orientation-disclosure-forbidden/);
-  assert.match(source, /isDisclosureOnlyOrientation\(option\.key\)/);
-});
+/*
+ * T-565 retired `/user-groups`, so the page assertions that stood here went
+ * with it. The DECODER stays: profile fields, profile tags, icebreakers and
+ * signup options all embed this vocabulary in their own catalogue payloads.
+ */

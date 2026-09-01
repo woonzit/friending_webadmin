@@ -2,6 +2,12 @@
 
 Status: research snapshot for T-203, 2026-08-25.
 
+AMENDED 2026-09-01 (T-565): rows 19 (`/user-groups`) and 24 (`/layer2-intents`) recorded two
+console routes that no longer exist. The audience-visibility v2 workspace replaces both, and
+Core retires their actions server-side — `cast-group-contract-retired` and
+`catalog-layer2-retired`, both 410. The rows are left as written because this document is a
+snapshot bound to commit `0c31bbeb…`; read them as history, not as current capability.
+
 ## Scope and method
 
 This report compares the complete set of 23 top-level PHP files in

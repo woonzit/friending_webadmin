@@ -36,6 +36,7 @@ import {
   isAdminBridgeActionAuthorized,
 } from "../lib/adminActions.ts";
 import { AUDIENCE_VISIBILITY_CONTRACT_READY } from "../lib/contractReadiness.ts";
+import { adminHelpPageForPath } from "../lib/adminHelp.ts";
 
 type Json = Record<string, any>;
 
@@ -691,7 +692,16 @@ test("route, shell, bridge, console, member panel, and Help share one cutover sw
   assert.match(page, /if \(!AUDIENCE_VISIBILITY_CONTRACT_READY\) notFound\(\)/);
   assert.match(page, /audienceVisibilityConsoleReady/);
   assert.match(shell, /item\.key !== "audienceVisibility" \|\| audienceVisibilityConsoleReady/);
-  assert.match(shell, /!AUDIENCE_VISIBILITY_CONTRACT_READY[\s\S]+item\.key !== "userGroups" && item\.key !== "layer2Intents"/);
+  // T-565: the two replaced pages are gone, not conditionally hidden. The
+  // clause that removed them on the build constant ALONE — the one site that
+  // was not ANDed with `audienceVisibilityConsoleReady`, so a dormant Core left
+  // an operator with neither surface — went with them.
+  assert.doesNotMatch(shell, /key: "userGroups"|key: "layer2Intents"/);
+  assert.doesNotMatch(shell, /"\/user-groups"|"\/layer2-intents"/);
+  // The only remaining use of the constant in the shell is the one that OPENS
+  // the replacement, so a dormant Core can no longer remove a working entry.
+  assert.equal((shell.match(/AUDIENCE_VISIBILITY_CONTRACT_READY/gu) ?? []).length, 2);
+  assert.match(shell, /ready: AUDIENCE_VISIBILITY_CONTRACT_READY/);
   assert.match(bridge, /audienceVisibilityProxyCapabilityAuthorized/);
   assert.match(bridge, /normalizeAudienceVisibilityProxyBody/);
   assert.match(session, /audienceVisibilityAdminMe\(result\.data\.audience_visibility\)/);
@@ -727,4 +737,91 @@ test("there is no member mutation action in the closed surface", () => {
   assert.equal(AUDIENCE_VISIBILITY_ADMIN_ACTIONS.some((action) => action.includes("member") && !action.endsWith("detail")), false);
   assert.equal(AUDIENCE_VISIBILITY_ADMIN_ACTIONS.some((action) => action.includes("orientation")), false);
   assert.equal(AUDIENCE_VISIBILITY_ADMIN_ACTIONS.some((action) => action.includes("layer1")), false);
+});
+
+/**
+ * T-565. `/user-groups` and `/layer2-intents` are the two surfaces the v2
+ * workspace replaces, and Core retired their actions server-side before the
+ * console did: `WebadminController::userCastGroups` and its two writes answer
+ * `cast-group-contract-retired` (410) while `AudienceVisibilityAdminService`
+ * is ready, and `Layer2CatalogAdminService::stored()` throws
+ * `catalog-layer2-retired` (410) as soon as the singleton is not schema 1 —
+ * which the D-019 migration made it. Half-retiring them in the console left an
+ * operator a page that loads and then reports a refusal.
+ */
+test("the two replaced surfaces are retired outright, not hidden", async () => {
+  const [help, actions, shell, en, hu] = await Promise.all([
+    readFile(new URL("../lib/adminHelp.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/adminActions.ts", import.meta.url), "utf8"),
+    readFile(new URL("../components/Shell.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../messages/en.json", import.meta.url), "utf8"),
+    readFile(new URL("../messages/hu.json", import.meta.url), "utf8"),
+  ]);
+
+  for (const route of ["/user-groups", "/layer2-intents"]) {
+    assert.equal(adminHelpPageForPath(route), null, `${route} must have no help entry`);
+    assert.doesNotMatch(help, new RegExp(`route: "${route}"`, "u"));
+    assert.doesNotMatch(shell, new RegExp(`"${route}"`, "u"));
+  }
+
+  // Every action only those two pages called is gone from the allow-list, so
+  // the proxy rejects it as an unknown path instead of forwarding a call Core
+  // answers with 410.
+  for (const action of [
+    "user_cast_groups",
+    "save_user_cast_group",
+    "archive_user_cast_group",
+    "save_layer2_item",
+    "archive_layer2_item",
+    "set_layer2_selection_limit",
+  ]) {
+    assert.equal(ADMIN_ACTIONS.includes(action as never), false, `${action} must be retired`);
+    assert.equal(adminActionAccess(action), null, `${action} must have no access class`);
+    assert.doesNotMatch(actions, new RegExp(`"${action}"|\\b${action}:`, "u"));
+  }
+
+  // `layer2_catalog` is NOT retired: `/profile-fields` still calls it to list
+  // the intent keys a profile section may be gated on. Removing it with the
+  // editor would have broken a page nobody was retiring.
+  assert.ok(ADMIN_ACTIONS.includes("layer2_catalog" as never));
+  assert.equal(adminActionAccess("layer2_catalog"), "read");
+  const profileFields = await readFile(
+    new URL("../app/(dashboard)/profile-fields/page.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(profileFields, /adminCall\("layer2_catalog", \{\}\)/);
+
+  // The operator copy goes with the pages; nothing may reference a namespace
+  // that no longer exists.
+  for (const [locale, raw] of [["en", en], ["hu", hu]] as const) {
+    const messages = JSON.parse(raw) as Record<string, Record<string, unknown>>;
+    for (const key of ["userGroups", "layer2"]) {
+      assert.equal(messages[key], undefined, `${locale}.${key} must be retired`);
+    }
+    for (const key of ["userGroups", "layer2Intents"]) {
+      assert.equal(messages.nav[key], undefined, `${locale}.nav.${key} must be retired`);
+      assert.equal(
+        (messages.adminHelp as { pages: Record<string, unknown> }).pages[key],
+        undefined,
+        `${locale}.adminHelp.pages.${key} must be retired`,
+      );
+    }
+  }
+});
+
+test("the cast-group vocabulary survives its editor, because four live consoles read it", async () => {
+  // `lib/userCastGroups.ts` decodes the audience vocabulary that profile
+  // fields, profile tags, icebreakers and signup options embed in their own
+  // catalogue payloads. Only the EDITOR was retired; deleting the decoder
+  // would have taken the audience picker out of four pages nobody retired.
+  const consumers = [
+    "../lib/profileFields.ts",
+    "../lib/icebreakers.ts",
+    "../lib/memberAudience.ts",
+    "../components/MemberAudienceSelector.tsx",
+  ];
+  for (const consumer of consumers) {
+    const source = await readFile(new URL(consumer, import.meta.url), "utf8");
+    assert.match(source, /userCastGroup|UserCastGroup/u, `${consumer} still reads the vocabulary`);
+  }
 });

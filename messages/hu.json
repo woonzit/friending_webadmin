@@ -1882,53 +1882,6 @@
           }
         }
       },
-      "userGroups": {
-        "title": "Usercsoportok súgó",
-        "summary": "A usercsoportok szerver által kiértékelt tagszegmensek, amelyek korlátozott profilkérdéseket tesznek láthatóvá. A tagság gender- és matching-orientation szabályokból számolódik; egy tag egyszerre több csoporthoz tartozhat.",
-        "steps": {
-          "1": "Szabályszerkesztés előtt értsd meg a meglévő rendszercsoportokat és minden rájuk hivatkozó audience-t.",
-          "2": "Csak kanonikus genderből és matching orientationből építs szabályt, majd ellenőrizd az eredmény szándékát.",
-          "3": "A mentés, átrendezés vagy archiválás előtt számolj azzal, hogy a field audience-ek azonnal nyerhetnek vagy veszíthetnek találatokat."
-        },
-        "sections": {
-          "groupList": {
-            "title": "Castcsoport-leltár",
-            "purpose": "A lista megjelenítési sorrendben mutatja a rendszer- és egyedi csoportokat kétnyelvű címkével, aktív állapottal, szabályokkal és tagszám-kontextussal.",
-            "actions": {
-              "1": "Nézd át vagy rendezd át a csoportokat, és nyiss meg egyet szerkesztésre.",
-              "2": "Akkor hozz létre egyedi csoportot, ha az új audience biztonságosan nem írható le meglévővel."
-            },
-            "guidance": "A hat rendszercsoport a kipróbált castokat reprodukálja, és nem archiválható. A csoport szabály, nem kézzel karbantartott taglista."
-          },
-          "membershipRules": {
-            "title": "Gender- és matching-orientation szabályok",
-            "purpose": "A tag akkor tartozik a csoporthoz, ha bármely szabályban a kanonikus gendere és kötelező matching orientationje egyaránt egyezik.",
-            "actions": {
-              "1": "Adj hozzá egy vagy több pontos szabálykártyát, és vedd figyelembe köztük az OR kapcsolatot.",
-              "2": "A címkét és sorrendet a matching logikától függetlenül frissítsd."
-            },
-            "guidance": "Az opcionális profilorientáció-közlés soha nem kerülhet ezekbe a szabályokba. A módosítás sok tag láthatóságát azonnal megváltoztathatja."
-          },
-          "legacyProjection": {
-            "title": "Legacy szegmenskompatibilitás",
-            "purpose": "Az opcionális legacy szegmens lehetővé teszi, hogy régebbi felületek az első illeszkedő kompatibilis csoportot a klasszikus castmodellbe vetítsék.",
-            "actions": {
-              "1": "A rendszercsoportokon őrizd meg a fix leképezést.",
-              "2": "Egyedi kompatibilitási kivetítést csak akkor adj, ha régebbi kliensszerződés kifejezetten igényli."
-            },
-            "guidance": "A megjelenítési sorrend döntheti el, melyik kompatibilis csoport nyeri a legacy kivetítést. A sorrendet és szegmenst együtt vizsgáld."
-          },
-          "archiveBehavior": {
-            "title": "Aktiválás és archiválási hatás",
-            "purpose": "Az inaktiválás vagy archiválás megszünteti a tagok illeszkedését, és kiveszi a csoportot a jövőbeli audience-választásból anélkül, hogy minden hivatkozó fieldet átírna.",
-            "actions": {
-              "1": "Egyedi csoport archiválása előtt olvasd el a hatásmegerősítést.",
-              "2": "Ha az eredeti jelentésnek vissza kell térnie, az eredeti csoportot aktiváld újra vagy javítsd."
-            },
-            "guidance": "Az archivált csoportra hivatkozó field audience-ek azon a csoporton keresztül egyszerűen nem egyeznek többé. Előtte ellenőrizd minden ismert fogyasztót."
-          }
-        }
-      },
       "profileFields": {
         "title": "Profilmezők súgó",
         "summary": "A profilmezők a signup után megválaszolható kétnyelvű kérdések. Ez az oldal vezérli helyüket, célközönségüket, válaszaikat és azt, hogyan marad olvasható a nyugdíjazott tartalom a meglévő profilokon.",
@@ -2150,71 +2103,6 @@
               "2": "Ha a stabil jelentés visszatér, az eredeti promptot állítsd vissza vagy szerkeszd."
             },
             "guidance": "Az archiválás nem törli a tag által létrehozott választ. Történelmi tartalom eltávolításához külön tagi vagy moderációs folyamat kell."
-          }
-        }
-      },
-      "layer2Intents": {
-        "title": "Layer 2 intentek súgó",
-        "summary": "A Layer 2 a „Mi hozott a Friendingre?” mögötti katalógus. A tag kevés intentet választ, és egy válasz csak annak a másik tagnak fedhető fel, aki ugyanabban a kölcsönös setben választott intentet.",
-        "steps": {
-          "1": "Elem szerkesztése előtt olvasd el a katalógus readinessét és az aktuális selection limitet.",
-          "2": "Őrizd meg a permanens azonosságot, Layer 1 elhelyezést és kölcsönös setet, miközben mindkét nyelven kitöltöd a címkét és glossaryt.",
-          "3": "Mindkét revízióval ments, és élő disclosure set átcélzása helyett archiválj, majd hozz létre cserét."
-        },
-        "sections": {
-          "readiness": {
-            "title": "Katalógus-readiness",
-            "purpose": "A readiness összefoglalja, hogy minden aktív elemnek teljes kétnyelvű tagi szövege és strukturálisan érvényes helye van-e a korlátozott katalógusban.",
-            "actions": {
-              "1": "Selection policy módosítása előtt vizsgáld meg a hiányos vagy visszatartott elemeket.",
-              "2": "Töltsd ki mindkét címkét és glossaryt, hogy a Core kiszolgálhassa az elemet."
-            },
-            "guidance": "Az elem glossary nélkül tárolható, de nem lesz elérhető a tagoknak. A tároltat ne keverd össze a release-késszel."
-          },
-          "selectionLimit": {
-            "title": "Tagi selection limit",
-            "purpose": "A teljes katalógusra érvényes limit megadja, hány Layer 2 intentet választhat egy tag, legfeljebb az ötös támogatott maximummal.",
-            "actions": {
-              "1": "Válaszd ki a jóváhagyott limitet, és az aktuális katalógusrevízióval ments.",
-              "2": "Ellenőrizd, hogy a tagi és profilszöveg továbbra is helyesen magyarázza a darabszámot."
-            },
-            "guidance": "A limit csökkentése nem törli a meglévő többletválasztást. Az érintett tagok a következő szerkesztésig megtartják, ezért tervezd meg az átmenetet."
-          },
-          "catalog": {
-            "title": "Intentkatalógus",
-            "purpose": "Minden elemnek permanens ID-ja, egy Layer 1 kategóriája, egy kölcsönös setje, kétnyelvű címkéje, kétnyelvű disclosure glossaryja, sorrendje és archív állapota van.",
-            "actions": {
-              "1": "Nyiss meg egy elemet, frissíts engedélyezett szöveget vagy sorrendet, és adj auditindokot.",
-              "2": "A long-press glossary megfogalmazását ugyanolyan gondosan vizsgáld, mint a rövid címkét."
-            },
-            "guidance": "A glossary világosan mondja el, ki látja a választ. Consent-facing termékszöveg, nem belső technikai dokumentáció."
-          },
-          "reciprocalSets": {
-            "title": "Kölcsönös disclosure setek",
-            "purpose": "A set a privacyhatár: a tag intentje csak azoknak fedhető fel, akik ugyanabban a setben választottak elemet, közönséges profillátogatónak soha.",
-            "actions": {
-              "1": "Mielőtt egy elem először élő lesz, ellenőrizd a setet.",
-              "2": "Hasonlítsd össze a kapcsolódó elemeket, hogy a külön consentcsoportok külön maradjanak."
-            },
-            "guidance": "Egy élő elem setje fix. Áthelyezése külön consentet adó audience-eket egyesítene, ezért inkább cserét hozz létre."
-          },
-          "archiveRestore": {
-            "title": "Archiválás és visszaállítás",
-            "purpose": "Az archiválás megszünteti a Layer 2 elem új választását, miközben a korábban kiválasztó tagok tárolt választása megmarad.",
-            "actions": {
-              "1": "Világos auditindokkal archiválj elavult elemet.",
-              "2": "Csak akkor állítsd vissza, ha az eredeti jelentés és disclosure set még érvényes."
-            },
-            "guidance": "Az archiválás visszafordítható elérhetőségi vezérlő, nem törlés. Jelentés- vagy audience-változáshoz új elemet használj."
-          },
-          "conflicts": {
-            "title": "Revízióütközés és biztonságos mentés",
-            "purpose": "Az elem- és katalógusrevízió megakadályozza, hogy két adminisztrátor csendben felülírja egymás consentérzékeny változtatását.",
-            "actions": {
-              "1": "Ütközésnél nézd át a szerver verzióját.",
-              "2": "Tudatosan alkalmazd újra a kívánt szerkesztést, és friss auditált kérést küldj."
-            },
-            "guidance": "Elavult Layer 2 draftot soha ne merge-ölj automatikusan. A különbség kölcsönös disclosure-t vagy globális selection limitet módosíthat."
           }
         }
       },
@@ -2819,12 +2707,10 @@
     "signupOptions": "Signup opciók",
     "signupPhotos": "Regisztrációs képek",
     "audienceVisibility": "Profil láthatósága",
-    "userGroups": "User csoportok",
     "profileFields": "Profiladatok",
     "profilePresentation": "Nyilvános profil elrendezése",
     "profileTags": "Profilcímke-katalógusok",
     "icebreakers": "Jégtörő kártyák",
-    "layer2Intents": "Layer 2 szándékok",
     "configuration": "Konfiguráció",
     "admins": "Admin userek",
     "audit": "Admin napló",
@@ -6393,64 +6279,6 @@
       }
     }
   },
-  "userGroups": {
-    "eyebrow": "Audience adatmodell",
-    "title": "User csoportok",
-    "subtitle": "Itt adhatod meg azokat a cast csoportokat, amelyek eldöntik, ki látja a korlátozott profil-kérdéseket. A tagságot az alábbi nem- és orientáció-szabályok határozzák meg; egy user egyszerre több csoportba is tartozhat.",
-    "listTitle": "Cast csoportok",
-    "listCopy": "A csoportok megjelenítési sorrendben értékelődnek ki. A hat system csoport a beépített castokat képezi le, ezek nem archiválhatók.",
-    "add": "Új csoport",
-    "addTitle": "User csoport létrehozása",
-    "editTitle": "User csoport szerkesztése",
-    "newGroupHint": "A MongoDB azonosítót a Core adja az első mentéskor.",
-    "key": "Stabil kulcs",
-    "keyHint": "Kisbetűk, számok és aláhúzás. Az audience-ök a csoport azonosítóján keresztül hivatkoznak rá, így a nem-system csoportok kulcsa biztonságosan átnevezhető.",
-    "name": "Név",
-    "nameEn": "Angol név",
-    "nameHu": "Magyar név",
-    "rules": "Tagsági szabályok",
-    "rulesHint": "A user akkor tartozik a csoportba, ha BÁRMELYIK szabályban egyezik a neme és a kötelező matching orientációja. Az opcionális profilorientációs önmeghatározás kulcsai ide soha nem kerülhetnek.",
-    "ruleTitle": "{number}. szabály",
-    "ruleAnd": "és",
-    "ruleOr": "vagy",
-    "addRule": "Szabály hozzáadása",
-    "removeRule": "Eltávolítás",
-    "genders": "Nemek",
-    "genderMale": "Férfi",
-    "genderFemale": "Nő",
-    "genderOther": "Nembináris",
-    "orientations": "Orientációk",
-    "retiredOrientation": "Eltávolított orientáció",
-    "legacySegment": "Örökölt cast",
-    "legacySegmentNone": "Nincs",
-    "legacySegmentHint": "Opcionális kompatibilitási vetítés: az első illeszkedő, örökölt castot hordozó csoport dönti el a user klasszikus castját a régebbi felületeken.",
-    "order": "Sorrend",
-    "status": "Állapot",
-    "active": "Aktív",
-    "inactive": "Archivált",
-    "archive": "Archiválás",
-    "archiveTitle": "Archiválod a user csoportot?",
-    "archiveCopy": "A(z) „{name}” többé nem illeszkedik senkire, és eltűnik az audience-választókból. A rá hivatkozó mező-audience-ök egyszerűen nem találnak rajta keresztül senkit.",
-    "mongoId": "MongoDB azonosító",
-    "technicalDetails": "Technikai adatok",
-    "system": "System",
-    "systemGroup": "Védett system csoport",
-    "systemGroupCopy": "A stabil kulcsa és az örökölt castja rögzített, mert meglévő audience-ök hivatkoznak rájuk. A nevek, a szabályok, a sorrend és az aktiválás módosítható.",
-    "keyInvalid": "Adj meg betűvel kezdődő stabil kulcsot, amely csak kisbetűt, számot vagy aláhúzást tartalmaz.",
-    "namesRequired": "Add meg az angol és a magyar nevet is.",
-    "rulesInvalid": "Minden szabályhoz legalább egy nem és egy orientáció kell, és a csoportnak legalább egy szabályra van szüksége.",
-    "orientationUnknown": "Az egyik kijelölt orientáció már nem létezik. Távolítsd el, vagy válassz aktív orientációt.",
-    "orientationDisclosureForbidden": "Ez az érték az opcionális profilorientációs önmeghatározáshoz tartozik, ezért párosításhoz nem használható.",
-    "keyTaken": "Ezt a kulcsot már használja egy másik csoport.",
-    "conflict": "Valaki más közben módosította ezt a csoportot. A lista újratöltődött — vidd fel újra a változtatásod.",
-    "systemProtected": "A system csoportok nem archiválhatók.",
-    "loadError": "A user csoportok nem tölthetők be.",
-    "saveError": "A csoport nem menthető.",
-    "archiveError": "A csoport nem archiválható.",
-    "saved": "User csoport elmentve.",
-    "archived": "User csoport archiválva.",
-    "empty": "Még nincs user csoport."
-  },
   "signupOptions": {
     "eyebrow": "Signup adatmodell",
     "title": "Signup opciók",
@@ -7510,65 +7338,6 @@
         "review": "Értékelés"
       }
     }
-  },
-  "layer2": {
-    "eyebrow": "Regisztrációs szándékok",
-    "title": "Layer 2 szándékok",
-    "subtitle": "A „Miért vagy itt?” képernyő katalógusa. A tagok legfeljebb {limit} elemet választhatnak.",
-    "loadError": "A szándékkatalógus nem tölthető be.",
-    "stalePublicItem": "A(z) „{id}” elem még nyilvánosként van tárolva. A Layer 2 válaszok kizárólag kölcsönösek, ezért inkább nem mutatunk semmit, mint hogy egy nyilvános elemet védettként jelenítsünk meg. Előbb migráld a Core-t, utána tölts újra.",
-    "saveError": "A módosítást nem sikerült menteni.",
-    "saved": "Mentve.",
-    "conflict": "Valaki más módosította a katalógust, amíg szerkesztettél. A piszkozatod elveszett, és a jelenlegi változat látható — nézd át, mielőtt újra szerkesztesz.",
-    "reason": "Indoklás",
-    "reasonHint": "A neveddel együtt bekerül az admin naplóba. Minden módosításnál kötelező.",
-    "reasonRequired": "Adj meg legalább három karakteres indoklást.",
-    "readiness": "Kiszolgálhatóság",
-    "readinessCopy": "Egy elem glosszárium nélkül is tárolható, de a Core addig nem szolgálja ki, amíg mindkét nyelv hiányzik.",
-    "disclosureRule": "A Layer 2 válasz soha nem jelenik meg a profilon. Csak azok látják, akik ugyanezt beállították, és a választáskor látott jelölés maga a beleegyezés. A három Layer 1 szándék a nyilvános; ezek nem azok.",
-    "publishableCount": "{total} elemből {ready} kiszolgálható.",
-    "emptySets": "Ezekben a reciprok halmazokban nincs élő elem: {sets}. A tagok be tudnak lépni, és soha nem látnak bennük semmit.",
-    "readOnly": "Ehhez a katalógushoz csak olvasási jogosultságod van.",
-    "item": "Elem",
-    "layer1": "Layer 1 csoportok",
-    "order": "Sorrend",
-    "status": "Állapot",
-    "groups": {
-      "sex": "Randik",
-      "friends": "Barátok",
-      "love": "Kapcsolat"
-    },
-    "set": "Kölcsönös halmaz",
-    "setHint": "A halmaz a nyilvánosságra hozatal határa: a választ csak azok látják, akik ugyanabból a halmazból választottak elemet, rajtuk kívül senki. Élő elemnél nem módosítható, mert két külön beleegyező kört vonna össze — archiváld ezt az elemet, és vegyél fel helyette újat.",
-    "labelEn": "Címke (EN)",
-    "labelHu": "Címke (HU)",
-    "glossaryEn": "Glosszárium (EN)",
-    "glossaryHu": "Glosszárium (HU)",
-    "glossaryHint": "Hosszú nyomásra jelenik meg, miközben a tag dönt. Ki kell mondania, ki fogja látni a választ: csak azok, akik ugyanezt beállították, a profil látogatói soha.",
-    "editTitle": "„{id}” szerkesztése",
-    "archive": "Archiválás",
-    "restore": "Visszaállítás",
-    "archiveTitle": "Archiválod ezt az elemet?",
-    "restoreTitle": "Visszaállítod ezt az elemet?",
-    "archiveCopy": "A(z) „{name}” többé nem ajánlható fel új tagoknak. Aki már kiválasztotta, megtartja — ez nem törlés.",
-    "restoreCopy": "A(z) „{name}” újra választhatóvá válik.",
-    "archived": "Archiválva.",
-    "restored": "Visszaállítva.",
-    "archivedState": "Archivált",
-    "liveState": "Élő",
-    "blockedBy": "Nem kiszolgálható: hiányzó glosszárium ({locales}).",
-    "notServable": "Még nem kiszolgálható.",
-    "subtitleUnknownLimit": "A „Miért vagy itt?” képernyő katalógusa.",
-    "selectionLimit": "Kiválasztási korlát",
-    "selectionLimitCopy": "Hány Layer 2 választ jelölhet meg egy tag. Minden tagra érvényes, és mentés után azonnal életbe lép; meglévő választást nem törlünk, így aki már az új korlátnál többet jelölt meg, mindet megtartja a következő szerkesztésig.",
-    "selectionLimitLabel": "A tagok legfeljebb ennyit választhatnak",
-    "selectionLimitCeiling": "Az öt a felső határ, és innen nem emelhető. Az iOS alkalmazás 1 és 5 közötti értékként ellenőrzi ezt a számot, és a tartományon kívüli értéknél nem levágja, hanem az egész Layer 2 katalógust eldobja, ami az adott buildben azonnal elrontaná a regisztrációt. Ezért sem ez a vezérlő, sem a Core nem fogad el magasabb értéket. A határ emeléséhez előbb kiadott alkalmazásverzió kell, nem ezen az oldalon végzett módosítás.",
-    "selectionLimitUnsaved": "Még nincs mentve. A tagok a mentésig a jelenlegi {current} korlátot látják.",
-    "selectionLimitSaved": "A kiválasztási korlát elmentve.",
-    "selectionLimitUnchangedResult": "Ez már a tárolt korlát — semmi nem változott.",
-    "selectionLimitNoCatalog": "Még nincs tárolt Layer 2 katalógus, így nincs mire alkalmazni a korlátot. Előbb töltsd fel a katalógust a Core-ban.",
-    "selectionLimitOutOfRange": "A Core {stored} értéket tárol kiválasztási korlátként, ami kívül esik a kliensek által elfogadott 1–5 tartományon. A Core kimenetkor korrigálja, így a tagok {effective} értéket kapnak, és a regisztráció nem hibázik — a tárolt érték viszont hibás, és mivel a Core a tartományon kívüli írást visszautasítja, nem ez az oldal írta oda. Ha alább elmentesz egy 1 és 5 közötti értéket, az felülírja.",
-    "selectionLimitSave": "Korlát mentése"
   },
   "imageEditor": {
     "title": "Vágás, forgatás és nagyítás",

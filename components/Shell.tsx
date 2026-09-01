@@ -32,12 +32,10 @@ const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; r
   { href: "/signup-options", key: "signupOptions", icon: "signupOptions" },
   { href: "/signup-photos", key: "signupPhotos", icon: "signupPhotos" },
   { href: "/audience-visibility", key: "audienceVisibility", icon: "userGroups", ready: AUDIENCE_VISIBILITY_CONTRACT_READY },
-  { href: "/user-groups", key: "userGroups", icon: "userGroups" },
   { href: "/profile-fields", key: "profileFields", icon: "profileFields" },
   { href: "/profile-presentation", key: "profilePresentation", icon: "profileFields" },
   { href: "/profile-tags", key: "profileTags", icon: "profileFields" },
   { href: "/icebreakers", key: "icebreakers", icon: "icebreakers" },
-  { href: "/layer2-intents", key: "layer2Intents", icon: "icebreakers" },
   { href: "/footprints", key: "footprints", icon: "footprints" },
   { href: "/pinger", key: "pinger", icon: "pinger" },
   { href: "/invite-configuration", key: "inviteConfiguration", icon: "invite" },
@@ -140,9 +138,7 @@ export default function Shell({
             && (item.key !== "persona" || personaConsoleReady)
             && (item.key !== "verificationSettings" || verificationConsoleReady)
             && (item.key !== "audienceVisibility" || audienceVisibilityConsoleReady)
-            && (item.key !== "textModeration" || profileTextModerationConsoleReady)
-            && (!AUDIENCE_VISIBILITY_CONTRACT_READY
-              || (item.key !== "userGroups" && item.key !== "layer2Intents"))).map((item) => {
+            && (item.key !== "textModeration" || profileTextModerationConsoleReady)).map((item) => {
             const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
             return (
               <Link

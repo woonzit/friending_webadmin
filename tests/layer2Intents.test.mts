@@ -403,3 +403,18 @@ test("the wire payload Core actually builds parses, including its PHP quirks", a
   assert.equal(layer2Catalog({ ...wire, blockers: ["layer2-archived"] }).ok, false);
   assert.equal(layer2Catalog({ ...wire, blockers: { dating: 7 } }).ok, false);
 });
+
+/**
+ * Moved here from the retired `tests/layer2Editor.test.mts` by T-565. The
+ * EDITOR is gone; this model is not. `/profile-fields` still decodes the
+ * catalogue through it to list the intent keys a profile section may be gated
+ * on, so the one-visibility-mode invariant still has a live consumer.
+ */
+test("the model admits exactly one visibility mode", async () => {
+  const model = await readFile(new URL("../lib/layer2Intents.ts", import.meta.url), "utf8");
+  assert.match(model, /export type IntentVisibilityMode = "reciprocal";/);
+  // The parser must refuse `public` by name, not fold it into the generic invalid-mode answer.
+  assert.match(model, /if \(mode === "public"\) return fail\("visibility-mode-public", id\);/);
+  // No branch may still produce or blank a set id conditionally on the mode.
+  assert.doesNotMatch(model, /reciprocal-set-on-public/);
+});

@@ -58,8 +58,9 @@ test("all authenticated page routes have one closed contextual help entry", asyn
   const actualRoutes = files.map(routeForPageFile).sort();
   const helpRoutes = ADMIN_HELP_PAGES.map((page) => page.route).sort();
 
-  // 41 with T-468's Appearance & placements page (the map document lives outside the dashboard shell).
-  assert.equal(actualRoutes.length, 41, "the current screen census changed; review every new or removed screen");
+  // 39: 41 with T-468's Appearance & placements page (the map document lives
+  // outside the dashboard shell), minus the two T-565 retired ones.
+  assert.equal(actualRoutes.length, 39, "the current screen census changed; review every new or removed screen");
   assert.deepEqual(helpRoutes, actualRoutes);
   assert.equal(new Set(helpRoutes).size, helpRoutes.length, "a screen may have only one help document");
 });
@@ -86,8 +87,9 @@ test("every inventoried functional section has detailed English and Hungarian he
   // 237 in the combined dormant release: T-218 adds the feature-switch family
   // guidance, and T-219 adds the independent admin-granted verification guide.
   // T-468 adds the eight Appearance & placements sections and T-476 its save/conflict section (246);
-  // T-471 adds the forced verification / Waiting Room tab section (247).
-  assert.equal(totalSections, 247, "review the functional-section census when the UI changes");
+  // T-471 adds the forced verification / Waiting Room tab section (247). T-565
+  // retires User groups (4) and Layer 2 intents (6) with their pages (237).
+  assert.equal(totalSections, 237, "review the functional-section census when the UI changes");
 
   for (const locale of ["en", "hu"]) {
     const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));
