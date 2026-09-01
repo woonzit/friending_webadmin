@@ -3,7 +3,11 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { adminHelpPageForPath } from "@/lib/adminHelp";
+import {
+  adminHelpGuideForPath,
+  adminHelpSections,
+  type AdminHelpConsoleReadiness,
+} from "@/lib/adminHelp";
 
 type CopyRecord = Record<string, unknown>;
 
@@ -36,10 +40,17 @@ function HelpIcon() {
   );
 }
 
-export default function AdminHelp() {
+/**
+ * The contextual operator guide. It documents the screen the operator is on, so
+ * it takes the same readiness the dashboard layout gives the sidebar: a guide
+ * for a screen that refuses to render, or a section for a panel that is not
+ * there, is withheld rather than shown (T-566).
+ */
+export default function AdminHelp(readiness: AdminHelpConsoleReadiness) {
   const pathname = usePathname();
   const t = useTranslations("adminHelp");
-  const page = adminHelpPageForPath(pathname);
+  const page = adminHelpGuideForPath(pathname, readiness);
+  const sections = page ? adminHelpSections(page) : [];
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -159,10 +170,10 @@ export default function AdminHelp() {
                 </section>
               )}
 
-              {page && page.sections.length > 0 && (
+              {page && sections.length > 0 && (
                 <>
                   <nav className="admin-help-nav" aria-label={t("sectionNavigationLabel")}>
-                    {page.sections.map((sectionKey) => {
+                    {sections.map((sectionKey) => {
                       const copy = record(sectionCopies?.[sectionKey]);
                       const title = text(copy?.title);
                       return title ? (
@@ -177,7 +188,7 @@ export default function AdminHelp() {
                       <h3 id={`${instanceId}-sections-title`}>{t("sectionsTitle")}</h3>
                       <p>{t("sectionsCopy")}</p>
                     </div>
-                    {page.sections.map((sectionKey, index) => {
+                    {sections.map((sectionKey, index) => {
                       const copy = record(sectionCopies?.[sectionKey]);
                       const title = text(copy?.title);
                       const purpose = text(copy?.purpose);

@@ -5,8 +5,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   ADMIN_HELP_PAGES,
+  adminHelpGuideForPath,
   adminHelpPageForPath,
+  adminHelpSections,
+  type AdminHelpConsoleReadiness,
 } from "../lib/adminHelp.ts";
+import {
+  ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
+  AUDIENCE_VISIBILITY_CONTRACT_READY,
+  FEATURE_SWITCHES_CONTRACT_READY,
+  PROFILE_TEXT_MODERATION_CONTRACT_READY,
+} from "../lib/contractReadiness.ts";
 
 type JsonObject = Record<string, unknown>;
 
@@ -121,10 +130,159 @@ test("the authenticated shell always renders the visible accessible Help control
   const component = await readFile(path.join(root, "components", "AdminHelp.tsx"), "utf8");
 
   assert.match(shell, /import AdminHelp from "@\/components\/AdminHelp"/);
-  assert.match(shell, /<AdminHelp \/>/);
+  // The dialog receives the same four Core-projected booleans the sidebar
+  // filter uses, so a guide cannot outlive the screen it documents (T-566).
+  assert.match(shell, /<AdminHelp\n\s+personaConsoleReady=\{personaConsoleReady\}/);
+  assert.match(shell, /verificationConsoleReady=\{verificationConsoleReady\}/);
+  assert.match(shell, /audienceVisibilityConsoleReady=\{audienceVisibilityConsoleReady\}/);
+  assert.match(shell, /profileTextModerationConsoleReady=\{profileTextModerationConsoleReady\}/);
   assert.match(component, /aria-haspopup="dialog"/);
   assert.match(component, /aria-modal="true"/);
   assert.match(component, /<HelpIcon \/>/);
   assert.match(component, /t\("button"\)/);
-  assert.match(component, /page\.sections\.map/);
+  assert.match(component, /adminHelpGuideForPath\(pathname, readiness\)/);
+  assert.match(component, /adminHelpSections\(page\)/);
+  assert.match(component, /sections\.map/);
+  assert.doesNotMatch(component, /page\.sections\.map/, "a withheld section must not be rendered anyway");
+});
+
+/**
+ * T-566. The catalogue is a census of route FILES, so coverage alone cannot
+ * tell whether a documented screen renders. These tests DERIVE the gates from
+ * the page sources rather than restating them, so a screen that grows or loses
+ * a `notFound()` gate and does not tell Help fails here instead of shipping a
+ * guide to a 404.
+ */
+const CONTRACT_CONSTANTS: Record<string, boolean> = {
+  ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
+  AUDIENCE_VISIBILITY_CONTRACT_READY,
+  FEATURE_SWITCHES_CONTRACT_READY,
+  PROFILE_TEXT_MODERATION_CONTRACT_READY,
+};
+
+const ALL_READY: AdminHelpConsoleReadiness = {
+  personaConsoleReady: true,
+  verificationConsoleReady: true,
+  audienceVisibilityConsoleReady: true,
+  profileTextModerationConsoleReady: true,
+};
+
+test("every help entry declares the same readiness its route checks", async () => {
+  const files = await pageFiles(path.join(root, "app", "(dashboard)"));
+  const byRoute = new Map(ADMIN_HELP_PAGES.map((page) => [page.route, page]));
+
+  for (const file of files) {
+    const route = routeForPageFile(file);
+    const source = await readFile(file, "utf8");
+    const page = byRoute.get(route);
+    assert.ok(page, `${route} has no help entry`);
+
+    const constantGate = /if \(!([A-Z][A-Z0-9_]*)\) notFound\(\)/u.exec(source)?.[1] ?? null;
+    const consoleGate = /if \(!me\?\.([A-Za-z][A-Za-z0-9]*)\) notFound\(\)/u.exec(source)?.[1] ?? null;
+
+    if (constantGate === null) {
+      assert.equal(page.ready, undefined, `${route} is ungated but its help entry declares one`);
+    } else {
+      assert.ok(constantGate in CONTRACT_CONSTANTS, `${route} gates on an unknown constant`);
+      assert.equal(
+        page.ready,
+        CONTRACT_CONSTANTS[constantGate],
+        `${route} gates on ${constantGate}; its help entry must carry the same value`,
+      );
+    }
+
+    assert.equal(
+      page.consoleReady,
+      consoleGate ?? undefined,
+      `${route} gates on ${consoleGate ?? "nothing"}; its help entry must name the same projection`,
+    );
+  }
+});
+
+test("a guide is withheld exactly while its screen refuses to render", () => {
+  // Dormant build constant: no operator, however privileged, can reach it.
+  assert.equal(PROFILE_TEXT_MODERATION_CONTRACT_READY, false);
+  assert.equal(adminHelpGuideForPath("/text-moderation", ALL_READY), null);
+  assert.equal(adminHelpPageForPath("/text-moderation")?.key, "profileTextModeration");
+
+  // Core-projected gates: reachable for an operator Core has enabled, withheld
+  // for one it has not. Both directions, so the gate cannot be inverted.
+  for (const [route, key] of [
+    ["/persona", "personaConsoleReady"],
+    ["/verification", "verificationConsoleReady"],
+    ["/audience-visibility", "audienceVisibilityConsoleReady"],
+  ] as const) {
+    assert.ok(adminHelpGuideForPath(route, ALL_READY), `${route} must guide a ready operator`);
+    assert.equal(
+      adminHelpGuideForPath(route, { ...ALL_READY, [key]: false }),
+      null,
+      `${route} must withhold its guide from an operator Core has not enabled`,
+    );
+  }
+
+  // An ungated screen is unaffected by any projection.
+  assert.equal(
+    adminHelpGuideForPath("/users", {
+      personaConsoleReady: false,
+      verificationConsoleReady: false,
+      audienceVisibilityConsoleReady: false,
+      profileTextModerationConsoleReady: false,
+    })?.key,
+    "users",
+  );
+});
+
+test("a section is withheld exactly while its panel is behind a dormant switch", () => {
+  assert.equal(FEATURE_SWITCHES_CONTRACT_READY, false);
+  assert.equal(ADMIN_GRANTED_VERIFICATION_CONTRACT_READY, false);
+
+  const gated: Array<[string, string]> = [
+    ["/configuration", "featureSwitches"],
+    ["/footprints", "featureSwitchesPointer"],
+    ["/users/example-id", "adminGrantedVerification"],
+  ];
+
+  for (const [route, section] of gated) {
+    const page = adminHelpPageForPath(route);
+    assert.ok(page, `${route} has no help entry`);
+    assert.ok(page.sections.includes(section), `${section} must stay in the ${route} census`);
+    assert.ok(
+      !adminHelpSections(page).includes(section),
+      `${route} must withhold ${section} while its panel is not rendered`,
+    );
+  }
+
+  // Nothing else is withheld, and no entry hides a section it does not have.
+  for (const page of ADMIN_HELP_PAGES) {
+    const shown = adminHelpSections(page);
+    const hidden = page.sections.filter((section) => !shown.includes(section));
+    assert.deepEqual(
+      hidden.sort(),
+      gated.filter(([route]) => page.matches(route)).map(([, section]) => section).sort(),
+      `${page.route} withholds an unexpected section`,
+    );
+    for (const section of Object.keys(page.sectionReady ?? {})) {
+      assert.ok(
+        page.sections.includes(section),
+        `${page.route} gates ${section}, which is not one of its sections`,
+      );
+    }
+  }
+});
+
+test("withheld copy stays in both locale files so flipping a switch restores the guide", async () => {
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));
+    const pages = record(record(messages.adminHelp, "adminHelp").pages, "adminHelp.pages");
+    for (const [pageKey, sectionKey] of [
+      ["configuration", "featureSwitches"],
+      ["footprints", "featureSwitchesPointer"],
+      ["userDetail", "adminGrantedVerification"],
+      ["profileTextModeration", "queue"],
+    ] as const) {
+      const copy = record(pages[pageKey], `${locale}.${pageKey}`);
+      const sections = record(copy.sections, `${locale}.${pageKey}.sections`);
+      assert.ok(sections[sectionKey], `${locale}.${pageKey}.${sectionKey} must survive the gate`);
+    }
+  }
 });

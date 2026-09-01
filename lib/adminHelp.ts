@@ -5,12 +5,65 @@
  * two locale files, while this module makes page coverage and section coverage
  * executable: adding a screen without adding a help entry fails the focused
  * regression test instead of silently rendering a generic guide.
+ *
+ * Coverage is not the same as reachability, and until T-566 this module only
+ * knew about the first. `ADMIN_HELP_PAGES` is a census of route FILES, so a
+ * screen that exists on disk but refuses to render — `notFound()` behind a
+ * dormant contract switch — kept a complete guide, and a panel behind such a
+ * switch kept a complete section. The catalogue stays complete, because the
+ * census is what stops a new screen shipping undocumented; what changes is that
+ * an entry now declares the SAME readiness its target checks, and the dialog
+ * withholds a guide, or a section, whose surface is not there.
+ *
+ * The readiness comes from the two sources the routes themselves use and from
+ * nowhere else: the build constants in `lib/contractReadiness`, and the
+ * Core-projected `admin_me` booleans the dashboard layout already computes for
+ * the navigation. This module invents no third opinion about what is live.
  */
+
+import {
+  ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
+  AUDIENCE_VISIBILITY_CONTRACT_READY,
+  FEATURE_SWITCHES_CONTRACT_READY,
+  PROFILE_TEXT_MODERATION_CONTRACT_READY,
+} from "@/lib/contractReadiness";
+
+/**
+ * The per-operator console readiness Core projects through `admin_me`. The
+ * dashboard layout already computes exactly these four for the sidebar; Help
+ * receives the same values rather than re-deriving them, so a guide and its
+ * navigation entry can never disagree about whether a screen exists.
+ */
+export type AdminHelpConsoleReadiness = {
+  personaConsoleReady: boolean;
+  verificationConsoleReady: boolean;
+  audienceVisibilityConsoleReady: boolean;
+  profileTextModerationConsoleReady: boolean;
+};
+
+export type AdminHelpConsoleReadyKey = keyof AdminHelpConsoleReadiness;
 
 export type AdminHelpPage = {
   key: string;
   route: string;
   sections: readonly string[];
+  /**
+   * Build-constant gate of the target route, mirroring the constant that route
+   * passes to its own `notFound()`. Absent means the route is ungated.
+   */
+  ready?: boolean;
+  /**
+   * Core-projected gate of the target route, naming the same `admin_me` boolean
+   * that route passes to its own `notFound()`.
+   */
+  consoleReady?: AdminHelpConsoleReadyKey;
+  /**
+   * Build-constant gates of individual PANELS on an otherwise reachable page,
+   * mirroring the condition the page renders that panel behind. A section whose
+   * gate is false is withheld; its copy stays in both locale files so flipping
+   * the constant restores the guide with the panel.
+   */
+  sectionReady?: Readonly<Record<string, boolean>>;
   matches: (pathname: string) => boolean;
 };
 
@@ -64,6 +117,9 @@ export const ADMIN_HELP_PAGES = [
       "gallery",
       "interests",
     ],
+    // `app/(dashboard)/users/[uid]/page.tsx:154` renders the panel only while
+    // the T-125/T-219 switch is on; the guide follows it.
+    sectionReady: { adminGrantedVerification: ADMIN_GRANTED_VERIFICATION_CONTRACT_READY },
     matches: dynamic("/users"),
   },
   {
@@ -103,6 +159,8 @@ export const ADMIN_HELP_PAGES = [
       "privacy",
       "noBulk",
     ],
+    ready: PROFILE_TEXT_MODERATION_CONTRACT_READY,
+    consoleReady: "profileTextModerationConsoleReady",
     matches: exact("/text-moderation"),
   },
   {
@@ -134,6 +192,7 @@ export const ADMIN_HELP_PAGES = [
       "conflictsAndRetry",
       "privacyAndAudit",
     ],
+    consoleReady: "verificationConsoleReady",
     matches: exact("/verification"),
   },
   {
@@ -148,6 +207,7 @@ export const ADMIN_HELP_PAGES = [
       "preview",
       "uncertainResponses",
     ],
+    consoleReady: "personaConsoleReady",
     matches: exact("/persona"),
   },
   {
@@ -276,6 +336,8 @@ export const ADMIN_HELP_PAGES = [
       "memberProjection",
       "conflicts",
     ],
+    ready: AUDIENCE_VISIBILITY_CONTRACT_READY,
+    consoleReady: "audienceVisibilityConsoleReady",
     matches: exact("/audience-visibility"),
   },
   {
@@ -318,6 +380,9 @@ export const ADMIN_HELP_PAGES = [
     key: "footprints",
     route: "/footprints",
     sections: ["limits", "featureSwitchesPointer", "badges", "twoSidedAudience", "memberOverride", "reports", "archiveBehavior"],
+    // `app/(dashboard)/footprints/page.tsx:282` renders the Configuration
+    // pointer only while the T-126/T-218b switch is on.
+    sectionReady: { featureSwitchesPointer: FEATURE_SWITCHES_CONTRACT_READY },
     matches: exact("/footprints"),
   },
   {
@@ -358,6 +423,9 @@ export const ADMIN_HELP_PAGES = [
       "verificationFlow",
       "safetyBoundary",
     ],
+    // `app/(dashboard)/configuration/page.tsx:348` renders the panel only while
+    // the T-126/T-218b switch is on.
+    sectionReady: { featureSwitches: FEATURE_SWITCHES_CONTRACT_READY },
     matches: exact("/configuration"),
   },
   {
@@ -382,6 +450,40 @@ export const ADMIN_HELP_PAGES = [
 
 export type AdminHelpPageKey = (typeof ADMIN_HELP_PAGES)[number]["key"];
 
+/**
+ * The catalogue lookup: which entry DOCUMENTS this route, regardless of whether
+ * the route currently renders. This is the coverage question, and it is what
+ * the route census asserts against the filesystem.
+ */
 export function adminHelpPageForPath(pathname: string): AdminHelpPage | null {
   return ADMIN_HELP_PAGES.find((page) => page.matches(pathname)) ?? null;
+}
+
+/** Fail-closed: an undeclared gate is open, a declared one must be satisfied. */
+export function adminHelpPageReachable(
+  page: AdminHelpPage,
+  readiness: AdminHelpConsoleReadiness,
+): boolean {
+  return page.ready !== false
+    && (page.consoleReady === undefined || readiness[page.consoleReady]);
+}
+
+/**
+ * What the dialog may show: the entry for this route, or `null` when its target
+ * refuses to render. `null` is the same state an unknown path produces, so the
+ * dialog falls back to its existing "no guide for this screen" copy rather than
+ * describing a screen the operator cannot be looking at.
+ */
+export function adminHelpGuideForPath(
+  pathname: string,
+  readiness: AdminHelpConsoleReadiness,
+): AdminHelpPage | null {
+  const page = adminHelpPageForPath(pathname);
+  return page && adminHelpPageReachable(page, readiness) ? page : null;
+}
+
+/** The sections whose panel is actually on the page. */
+export function adminHelpSections(page: AdminHelpPage): readonly string[] {
+  const gates = page.sectionReady;
+  return gates ? page.sections.filter((section) => gates[section] !== false) : page.sections;
 }

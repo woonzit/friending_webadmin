@@ -181,7 +181,12 @@ export default function Shell({
         </header>
         <main className="content">{children}</main>
       </div>
-      <AdminHelp />
+      <AdminHelp
+        personaConsoleReady={personaConsoleReady}
+        verificationConsoleReady={verificationConsoleReady}
+        audienceVisibilityConsoleReady={audienceVisibilityConsoleReady}
+        profileTextModerationConsoleReady={profileTextModerationConsoleReady}
+      />
     </div>
   );
 }
