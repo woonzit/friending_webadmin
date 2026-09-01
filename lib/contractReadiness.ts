@@ -9,8 +9,11 @@
  * These are cutover tools, never product settings (D-060). A switch lives only
  * while its provider is unreleased: the release after a completed cutover
  * deletes the switch together with the branches it guarded, so the only on/off
- * an operator ever sees is the feature's own setting in the admin UI. Every
- * switch below therefore names a provider that is still dormant.
+ * an operator ever sees is the feature's own setting in the admin UI.
+ *
+ * A switch set to `true` is therefore a switch on its way out, kept for exactly
+ * one release as the documented consumer rollback lever, and deleted with its
+ * branches in the next one.
  */
 
 /**
@@ -21,10 +24,24 @@
 export const ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: boolean = false;
 
 /**
- * Core T-121 is released dormant. The complete v1 consumer remains unreachable
- * until migration, independent consumer review, and separate cutover approval.
+ * RELEASED 2026-09-01 (T-539). Core's provider is live: T-529 retired the Core
+ * activation switch so readiness is derived from the verified migration marker
+ * plus the stored schema, and `/v1/app/ios_appconfig` publishes
+ * `audience_visibility.contract_ready: true` at Core `50ff00b`.
+ *
+ * Core stays authoritative. This constant only stops the console from asking;
+ * it can never make Core answer something Core would refuse. Every surface it
+ * opens re-checks `admin_me.audience_visibility` — the page and nav item
+ * through `audienceVisibilityConsoleReady`, the member panel and the proxy
+ * through `audienceVisibilityAdminMe` — so a Core that goes unready closes them
+ * again without a console release.
+ *
+ * Retained for one release as the rollback lever named in
+ * `reports/cutover-visibility-v2-commands.md` §8: reverting this to `false` and
+ * redeploying is how the console is made unreachable. Delete it and the
+ * branches it guards in the release after that, per D-060.
  */
-export const AUDIENCE_VISIBILITY_CONTRACT_READY: boolean = false;
+export const AUDIENCE_VISIBILITY_CONTRACT_READY: boolean = true;
 
 /** T-120 is not published; the dormant T-216 consumer remains unreachable. */
 export const PROFILE_TEXT_MODERATION_CONTRACT_READY: boolean = false;

@@ -2143,8 +2143,9 @@ textarea:focus {
   }
 }
 
-/* Audience visibility v2: one dormant workspace replaces the orientation-era
-   group editor and the old Layer-1/Layer-2 intent surface after activation. */
+/* Audience visibility v2: one workspace replaces the orientation-era group
+   editor and the old Layer-1/Layer-2 intent surface. Activated by T-539; the
+   two replaced pages are hidden from the sidebar but still route. */
 .audience-visibility-tabs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -8,6 +8,7 @@ import {
   AUDIENCE_VISIBILITY_GENDERS,
   AUDIENCE_VISIBILITY_INITIAL_INTENT_KEYS,
   AUDIENCE_VISIBILITY_LEGACY_TYPES,
+  AUDIENCE_VISIBILITY_MUTATION_ACTIONS,
   AUDIENCE_VISIBILITY_PENDING_STORAGE_KEY,
   AUDIENCE_VISIBILITY_VALUES,
   audienceVisibilityAdminMe,
@@ -165,8 +166,11 @@ function catalogueAdminMe(role: "viewer" | "editor" | "approver" | "owner"): Jso
   };
 }
 
-test("the dormant v1 vocabulary pins seven actions, four capabilities, and the D-019 axes", () => {
-  assert.equal(AUDIENCE_VISIBILITY_CONTRACT_READY, false);
+test("the released v1 vocabulary pins seven actions, four capabilities, and the D-019 axes", () => {
+  // T-539 flipped the cutover switch. The vocabulary itself is unchanged; what
+  // changes is that the seven actions now reach the proxy allow-list and the
+  // access ladder. Core remains authoritative on every one of them.
+  assert.equal(AUDIENCE_VISIBILITY_CONTRACT_READY, true);
   assert.deepEqual(AUDIENCE_VISIBILITY_GENDERS, ["man", "woman", "nonbinary"]);
   assert.deepEqual(AUDIENCE_VISIBILITY_VALUES, ["male", "female", "both"]);
   assert.deepEqual(AUDIENCE_VISIBILITY_CAPABILITIES, [
@@ -176,8 +180,20 @@ test("the dormant v1 vocabulary pins seven actions, four capabilities, and the D
     "audience_visibility_intent_write",
   ]);
   assert.equal(AUDIENCE_VISIBILITY_ADMIN_ACTIONS.length, 7);
-  assert.deepEqual(ADMIN_ACTIONS.filter((action) => AUDIENCE_VISIBILITY_ADMIN_ACTIONS.includes(action as any)), []);
-  for (const action of AUDIENCE_VISIBILITY_ADMIN_ACTIONS) assert.equal(adminActionAccess(action), null);
+  assert.deepEqual(
+    ADMIN_ACTIONS.filter((action) => AUDIENCE_VISIBILITY_ADMIN_ACTIONS.includes(action as any)),
+    [...AUDIENCE_VISIBILITY_ADMIN_ACTIONS],
+  );
+  // The two reads must stay reads, so a viewer keeps catalogue and member
+  // access; the five mutations must stay writes, so a viewer never reaches one.
+  assert.equal(adminActionAccess("audience_visibility_catalog"), "read");
+  assert.equal(adminActionAccess("audience_visibility_member_detail"), "read");
+  for (const action of AUDIENCE_VISIBILITY_MUTATION_ACTIONS) {
+    assert.equal(adminActionAccess(action), "write", action);
+  }
+  for (const action of AUDIENCE_VISIBILITY_ADMIN_ACTIONS) {
+    assert.ok(adminActionAccess(action), `${action} must be classified`);
+  }
 });
 
 test("admin_me ignores unknown fields, stays role-derived, action-ordered, and contract-ready gated", () => {
@@ -658,7 +674,7 @@ test("tabs are closed and invalid input falls back to the safe inventory", () =>
   assert.equal(audienceVisibilityTab(["groups"]), "groups");
 });
 
-test("route, shell, bridge, console, member panel, and Help share the dormant cutover", async () => {
+test("route, shell, bridge, console, member panel, and Help share one cutover switch", async () => {
   const [page, shell, bridge, session, actions, consoleSource, memberPage, memberPanel, help, en, hu] = await Promise.all([
     readFile(new URL("../app/(dashboard)/audience-visibility/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/Shell.tsx", import.meta.url), "utf8"),
