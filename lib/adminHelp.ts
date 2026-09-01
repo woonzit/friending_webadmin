@@ -99,6 +99,7 @@ export const ADMIN_HELP_PAGES = [
       "membership",
       "verificationGrant",
       "adminGrantedVerification",
+      "audienceVisibility",
       "moderation",
       "productPopup",
       "outboundAvailability",
@@ -117,9 +118,24 @@ export const ADMIN_HELP_PAGES = [
       "gallery",
       "interests",
     ],
-    // `app/(dashboard)/users/[uid]/page.tsx:154` renders the panel only while
-    // the T-125/T-219 switch is on; the guide follows it.
-    sectionReady: { adminGrantedVerification: ADMIN_GRANTED_VERIFICATION_CONTRACT_READY },
+    // Two panels on this otherwise ungated page are conditional, and the guide
+    // follows the same constants: `app/(dashboard)/users/[uid]/page.tsx:154`
+    // renders admin-granted verification only while the T-125/T-219 switch is
+    // on, and `:155` renders the audience-visibility panel only while the D-019
+    // switch is on.
+    //
+    // The audience-visibility panel carries a SECOND gate this catalogue cannot
+    // express: `AudienceVisibilityUserPanel` calls `admin_me` itself and returns
+    // `null` when Core does not project `audience_visibility_member_detail` to
+    // the current operator, so the panel is per-operator and decides after its
+    // own round trip. That is the class T-566 reported as having no mechanism —
+    // a build constant is resolved here, a runtime projection cannot be. The
+    // section is therefore documented with copy that says so, rather than with
+    // a gate that would be a guess.
+    sectionReady: {
+      adminGrantedVerification: ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
+      audienceVisibility: AUDIENCE_VISIBILITY_CONTRACT_READY,
+    },
     matches: dynamic("/users"),
   },
   {

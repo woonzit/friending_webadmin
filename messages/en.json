@@ -295,6 +295,16 @@
             },
             "guidance": "A provider-free grant is audited authority, not Persona, Video selfie or manual-review evidence. Never create a second request ID after an uncertain response; retry the exact saved command."
           },
+          "audienceVisibility": {
+            "title": "Who can see my profile",
+            "purpose": "This read-only panel reports the member's canonical audience-visibility gender, who their profile is visible to, the one protected group Core derives from that pair together with its legacy segment, and the revision those three were read at.",
+            "actions": {
+              "1": "Read the gender, the visibility value and the derived group together; an unresolved gender means Core can derive no group, not that the member was taken out of one.",
+              "2": "Note the visibility revision before asking the Audience visibility workspace to change anything, because every write there is checked against it.",
+              "3": "Use Retry authoritative read when the panel reports a decoding error, and never treat a refused or undecodable read as an absent or default audience."
+            },
+            "guidance": "The panel is present only for an operator Core projects the audience-visibility member read to, so a colleague may genuinely not see it on the same member. It is a view, not an editor: groups, retirement and intents are configured on Audience visibility, and a nonbinary member is visible to everyone because that is the only protected group the contract defines for them."
+          },
           "profileCopy": {
             "title": "Public profile texts",
             "purpose": "Operators can correct the member's headline and About text when handling support or accepted-content moderation.",

@@ -89,7 +89,9 @@ test("every inventoried functional section has detailed English and Hungarian he
   // T-468 adds the eight Appearance & placements sections and T-476 its save/conflict section (246);
   // T-471 adds the forced verification / Waiting Room tab section (247). T-565
   // retires User groups (4) and Layer 2 intents (6) with their pages (237).
-  assert.equal(totalSections, 237, "review the functional-section census when the UI changes");
+  // T-569 documents `AudienceVisibilityUserPanel`, which T-539 opened on
+  // /users/<uid> with no guide in either locale (238).
+  assert.equal(totalSections, 238, "review the functional-section census when the UI changes");
 
   for (const locale of ["en", "hu"]) {
     const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));
@@ -286,5 +288,71 @@ test("withheld copy stays in both locale files so flipping a switch restores the
       const sections = record(copy.sections, `${locale}.${pageKey}.sections`);
       assert.ok(sections[sectionKey], `${locale}.${pageKey}.${sectionKey} must survive the gate`);
     }
+  }
+});
+
+/**
+ * T-569. The two conditional panels on /users/<uid> are DERIVED from the page source rather than
+ * restated here, in the same spirit as the route-gate test above: a panel that gains or loses its
+ * switch without telling Help fails here instead of shipping a guide to something that is not
+ * rendered.
+ *
+ * What this cannot cover, and why the copy says it instead: `AudienceVisibilityUserPanel` calls
+ * `admin_me` itself and returns `null` when Core does not project
+ * `audience_visibility_member_detail` to the current operator. That decision happens after the
+ * panel's own round trip, so no catalogue value can express it — the class T-566 reported as having
+ * no mechanism. A `sectionReady` entry for it would be a guess; the guidance names the gate.
+ */
+test("the user-detail section gates are derived from the panels that page renders", async () => {
+  const source = await readFile(
+    path.join(root, "app", "(dashboard)", "users", "[uid]", "page.tsx"),
+    "utf8",
+  );
+  const page = adminHelpPageForPath("/users/example-id");
+  assert.ok(page, "/users/<uid> has no help entry");
+
+  const sectionForPanel: Record<string, string> = {
+    AdminGrantedVerificationPanel: "adminGrantedVerification",
+    AudienceVisibilityUserPanel: "audienceVisibility",
+  };
+  const seen = new Set<string>();
+  for (const [, constant, component] of source.matchAll(
+    /\{([A-Z][A-Z0-9_]*) \? <([A-Za-z][A-Za-z0-9]*)/gu,
+  )) {
+    const section = sectionForPanel[component];
+    assert.ok(section, `${component} is rendered behind ${constant} with no help section mapped`);
+    assert.ok(constant in CONTRACT_CONSTANTS, `${component} gates on an unknown constant`);
+    assert.ok(page.sections.includes(section), `${section} must stay in the /users/<uid> census`);
+    assert.equal(
+      page.sectionReady?.[section],
+      CONTRACT_CONSTANTS[constant],
+      `${component} renders behind ${constant}; its help section must carry the same value`,
+    );
+    seen.add(component);
+  }
+  assert.deepEqual([...seen].sort(), Object.keys(sectionForPanel).sort());
+
+  // The panel is live today, so its guide is shown rather than withheld.
+  assert.equal(AUDIENCE_VISIBILITY_CONTRACT_READY, true);
+  assert.ok(adminHelpSections(page).includes("audienceVisibility"));
+});
+
+/**
+ * The gap T-566 found and correctly declined to fill: the console's newest operator surface had no
+ * guidance in either locale. The copy has to name the per-operator Core gate, because nothing else
+ * can.
+ */
+test("the audience-visibility member panel is documented in both locales", async () => {
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));
+    const pages = record(record(messages.adminHelp, "adminHelp").pages, "adminHelp.pages");
+    const sections = record(
+      record(record(pages.userDetail, `${locale}.userDetail`).sections, `${locale}.userDetail.sections`),
+      `${locale}.userDetail.sections`,
+    );
+    const section = record(sections.audienceVisibility, `${locale}.userDetail.audienceVisibility`);
+    const guidance = nonEmpty(section.guidance, `${locale}.userDetail.audienceVisibility.guidance`, 45);
+    // Honest about the gate the catalogue cannot express: the panel is per-operator.
+    assert.match(guidance, /Core/u, `${locale} guidance must name the Core projection that gates the panel`);
   }
 });

@@ -295,6 +295,16 @@
             },
             "guidance": "A szolgáltatói bizonyíték nélküli megadás auditált jogosultság, nem Persona-, videósszelfi- vagy kézi ellenőrzési bizonyíték. Bizonytalan válasz után soha ne hozz létre második kérésazonosítót; pontosan a mentett parancsot próbáld újra."
           },
+          "audienceVisibility": {
+            "title": "Ki láthatja a profilomat",
+            "purpose": "Ez a csak olvasható panel a tag hiteles audience-visibility nemét, a profil láthatóságát, az ebből a párosból származtatott egyetlen védett csoportot a legacy szegmensével együtt, valamint azt a revíziót mutatja, amelyen ez a három beolvasásra került.",
+            "actions": {
+              "1": "A nemet, a láthatósági értéket és a származtatott csoportot együtt olvasd; a feloldatlan nem azt jelenti, hogy a Core nem tud csoportot származtatni, nem pedig azt, hogy a tagot kivették egy csoportból.",
+              "2": "Jegyezd fel a láthatósági revíziót, mielőtt az Audience visibility munkafelületen bármit módosítanál, mert ott minden írás ehhez a számhoz van ellenőrizve.",
+              "3": "Dekódolási hiba esetén használd a Hiteles olvasás újrapróbálása gombot, és soha ne tekints megtagadott vagy dekódolhatatlan olvasást hiányzó vagy alapértelmezett közönségnek."
+            },
+            "guidance": "A panel csak annak az operátornak jelenik meg, akinek a Core kivetíti az audience-visibility tagolvasást, ezért egy kolléga jogosan nem látja ugyanannál a tagnál. Ez nézet, nem szerkesztő: a csoportokat, a kivonást és a szándékokat az Audience visibility oldalon kell beállítani, a nem bináris tagot pedig azért látja mindenki, mert a szerződés csak ezt az egy védett csoportot definiálja hozzá."
+          },
           "profileCopy": {
             "title": "Nyilvános profilszövegek",
             "purpose": "Az operátorok támogatási vagy elfogadott-tartalom moderációs ügyben javíthatják a tag headline és Bemutatkozás szövegét.",
