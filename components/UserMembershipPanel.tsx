@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
+import { normalizeAdminRole } from "@/lib/authPolicy";
 import {
   membershipActionErrorKey,
   membershipExpiryChange,
@@ -89,6 +91,7 @@ export default function UserMembershipPanel({
   const locale = useLocale();
   const [detail, setDetail] = useState(initial);
   const [adminRole, setAdminRole] = useState("");
+  const [adminAccess, setAdminAccess] = useState<"loading" | "ready" | "error">("loading");
   const [busy, setBusy] = useState("");
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [preset, setPreset] = useState<GrantPreset>("plus_month");
@@ -99,22 +102,28 @@ export default function UserMembershipPanel({
   const [expiryEdit, setExpiryEdit] = useState(() => toLocalInput(initial.admin_grant?.expires_at ?? null));
   const [expiryReason, setExpiryReason] = useState("");
 
-  useEffect(() => {
-    let active = true;
-    void adminCall("admin_me").then((response) => {
-      if (!active) return;
-      setAdminRole(typeof response?.role === "string" ? response.role.trim().toLowerCase() : "");
-    });
-    return () => { active = false; };
+  const loadAdminAccess = useCallback(async () => {
+    setAdminAccess("loading");
+    setAdminRole("");
+    const response = await adminCall("admin_me");
+    const role = response?.success === true ? normalizeAdminRole(response.role) : "";
+    if (!role) {
+      setAdminAccess("error");
+      return;
+    }
+    setAdminRole(role);
+    setAdminAccess("ready");
   }, []);
+
+  useEffect(() => { void loadAdminAccess(); }, [loadAdminAccess]);
 
   const status = detail.effective_membership;
   const activeSources = useMemo(
     () => status.sources.filter((source) => source.contributes_to_access).map((source) => source.kind),
     [status.sources],
   );
-  const editor = adminRole === "owner" || adminRole === "admin";
-  const owner = adminRole === "owner";
+  const editor = adminAccess === "ready" && (adminRole === "owner" || adminRole === "admin");
+  const owner = adminAccess === "ready" && adminRole === "owner";
   const customWire = preset === "custom" ? toWireInstant(customExpiry) : null;
   const grantInputValid = editor && validReason(reason) && (preset !== "custom" || customWire !== null);
   const currentGrant = detail.admin_grant;
@@ -268,6 +277,25 @@ export default function UserMembershipPanel({
     setNotice({ tone: "success", text: t("revoked") });
   }
 
+  if (status.lifecycle_state === "unavailable") {
+    return (
+      <section className="panel membership-user-panel">
+        <div className="panel-header membership-user-header">
+          <div>
+            <h2>{t("title")}</h2>
+            <p>{t("copy")}</p>
+          </div>
+          <button className="button button-secondary button-small" type="button" disabled={Boolean(busy)} onClick={() => void reload()}>
+            {busy === "reload" ? common("loading") : t("refresh")}
+          </button>
+        </div>
+        <div className="panel-body membership-user-body">
+          <p className="alert alert-error" role="alert">{t("unavailable")}</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="panel membership-user-panel">
       <div className="panel-header membership-user-header">
@@ -290,10 +318,6 @@ export default function UserMembershipPanel({
             {notice.text}
           </p>
         ) : null}
-        {status.lifecycle_state === "unavailable" ? (
-          <p className="alert alert-error">{t("unavailable")}</p>
-        ) : null}
-
         <div className="membership-summary-grid">
           <div><span>{t("state")}</span><strong>{t(`states.${status.lifecycle_state}`)}</strong></div>
           <div><span>{t("effectiveStart")}</span><strong><InstantValue value={status.effective_starts_at} locale={locale} /></strong></div>
@@ -356,7 +380,9 @@ export default function UserMembershipPanel({
           })}
         </div>
 
-        <div className="membership-admin-grid">
+        {adminAccess === "loading" ? <LoadingPanel /> : adminAccess === "error" ? (
+          <ErrorPanel message={t("accessUnavailable")} retry={() => void loadAdminAccess()} />
+        ) : <div className="membership-admin-grid">
           <section className="membership-subpanel">
             <div className="membership-subpanel-head">
               <div><h3>{t("grant.title")}</h3><p>{t("grant.copy")}</p></div>
@@ -466,7 +492,7 @@ export default function UserMembershipPanel({
               </div>
             ) : null}
           </section>
-        </div>
+        </div>}
 
         <section className="membership-subpanel">
           <div className="membership-subpanel-head"><div><h3>{t("store.title")}</h3><p>{t("store.copy")}</p></div></div>

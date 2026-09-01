@@ -549,6 +549,14 @@ test("the user panel renders truthful owner detail and stronger warning paths", 
   assert.match(panel, /membershipActionErrorKey\("expiry_update"/);
   assert.match(panel, /membershipActionErrorKey\("grant_revoke"/);
   assert.doesNotMatch(panel, /actionError[\s\S]*code/);
+  assert.match(panel, /response\?\.success === true \? normalizeAdminRole\(response\.role\) : ""/);
+  assert.match(panel, /adminAccess === "loading" \? <LoadingPanel \/> : adminAccess === "error" \? \(/);
+  assert.match(panel, /<ErrorPanel message=\{t\("accessUnavailable"\)\}/);
+  assert.match(panel, /if \(status\.lifecycle_state === "unavailable"\) \{/);
+  const unavailableBranch = panel.indexOf('if (status.lifecycle_state === "unavailable")');
+  const emptyStoreFinding = panel.indexOf('t("store.none")');
+  const emptyHistoryFinding = panel.indexOf('t("history.none")');
+  assert.ok(unavailableBranch >= 0 && unavailableBranch < emptyStoreFinding && unavailableBranch < emptyHistoryFinding);
 
   const english = JSON.parse(readFileSync(new URL("../messages/en.json", import.meta.url), "utf8"));
   const hungarian = JSON.parse(readFileSync(new URL("../messages/hu.json", import.meta.url), "utf8"));
@@ -562,6 +570,8 @@ test("the user panel renders truthful owner detail and stronger warning paths", 
   );
   assert.match(english.membershipUser.history.copy, /100/);
   assert.match(hungarian.membershipUser.history.copy, /100/);
+  assert.match(english.membershipUser.accessUnavailable, /could not be verified/);
+  assert.match(hungarian.membershipUser.accessUnavailable, /nem sikerült ellenőrizni/);
   for (const messages of [english.membershipErrors, hungarian.membershipErrors]) {
     assert.equal(Object.values(messages).some((value) => String(value).includes("{code}")), false);
     assert.equal(typeof messages.unknown, "string");

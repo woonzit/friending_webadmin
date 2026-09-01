@@ -124,7 +124,12 @@ test("profile field parsers preserve translations, eligibility and identity revi
     options: [option],
     values: ["dog"],
   };
-  assert.ok(profileFieldCatalog({ schema_version: 1, segments: [], fields: [field] }));
+  assert.ok(profileFieldCatalog({ schema_version: 1, segments: [], cast_groups: [], fields: [field] }));
+  assert.equal(
+    profileFieldCatalog({ schema_version: 1, segments: [], fields: [field] }),
+    null,
+    "a missing cast-group catalogue is not an empty audience vocabulary",
+  );
   const castGroup = {
     id: "64f000000000000000000001",
     key: "men_who_date_men",
@@ -253,19 +258,37 @@ test("profile field parsers preserve translations, eligibility and identity revi
 });
 
 test("identity option parser keeps server audience constraints", () => {
-  const parsed = identityOptionGroups([{
-    key: "orientation",
-    name_en: "Orientation",
-    name_hu: "Orientáció",
-    options: [{
-      key: "gay",
-      name_en: "Gay",
-      name_hu: "Meleg",
-      audiences: ["male", "other"],
-      active: true,
-    }],
-  }]);
-  assert.deepEqual(parsed?.[0]?.options[0]?.audiences, ["male", "other"]);
+  const groups = [
+    {
+      key: "gender",
+      name_en: "Gender",
+      name_hu: "Nem",
+      options: [{ key: "male", name_en: "Man", name_hu: "Férfi", audiences: [], active: true }],
+    },
+    {
+      key: "subgender",
+      name_en: "Identity",
+      name_hu: "Identitás",
+      options: [{ key: "man", name_en: "Man", name_hu: "Férfi", audiences: ["male"], active: true }],
+    },
+    {
+      key: "orientation",
+      name_en: "Orientation",
+      name_hu: "Orientáció",
+      options: [{
+        key: "gay",
+        name_en: "Gay",
+        name_hu: "Meleg",
+        audiences: ["male", "other"],
+        active: true,
+      }],
+    },
+  ];
+  const parsed = identityOptionGroups(groups);
+  assert.deepEqual(parsed?.[2]?.options[0]?.audiences, ["male", "other"]);
+  assert.equal(identityOptionGroups([]), null, "missing identity vocabulary is not three loaded-empty selectors");
+  assert.equal(identityOptionGroups(groups.slice(1)), null, "all three bounded groups are required");
+  assert.equal(identityOptionGroups([...groups, groups[0]]), null, "duplicates cannot stand in for a missing group");
 });
 
 test("registered-user editor forwards the editable height with the answer revision", async () => {
@@ -295,4 +318,10 @@ test("profile-field audience editor uses the shared gender and user-group select
   assert.match(source, /group_ids_json/);
   assert.match(source, /showAnswers/);
   assert.match(source, /expandedFields/);
+  assert.match(source, /profileFieldCatalog\(raw\)/);
+  assert.doesNotMatch(source, /castGroupsRef|source\.cast_groups === undefined/);
+
+  const userPage = await readFile(new URL("../app/(dashboard)/users/[uid]/page.tsx", import.meta.url), "utf8");
+  assert.match(userPage, /identityOptionGroups\(profileResponse\?\.identity_options\)/);
+  assert.match(userPage, /!parsedIdentityGroups/);
 });

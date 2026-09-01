@@ -7,19 +7,13 @@ import DatesAdminTabs from "@/components/DatesAdminTabs";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
-import { humanizeMachineKey, type DatesCaseSummary } from "@/lib/datesAdmin";
+import {
+  datesModerationSla,
+  humanizeMachineKey,
+  type DatesCaseSummary,
+  type DatesModerationSla,
+} from "@/lib/datesAdmin";
 import { formatDate, formatNumber } from "@/lib/format";
-
-type Sla = {
-  open_count: number;
-  unassigned_count: number;
-  sla_breach_count: number;
-  oldest_unassigned_at: number | null;
-  age_buckets: Record<string, number>;
-  median_seconds_to_claim: number | null;
-  median_seconds_to_resolve: number | null;
-  appeals_waiting: number;
-};
 
 type Filters = {
   queue: string;
@@ -46,7 +40,7 @@ export default function DatesModerationQueuePage() {
   const [draft, setDraft] = useState<Filters>(EMPTY_FILTERS);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [rows, setRows] = useState<DatesCaseSummary[]>([]);
-  const [sla, setSla] = useState<Sla | null>(null);
+  const [sla, setSla] = useState<DatesModerationSla | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
@@ -65,13 +59,17 @@ export default function DatesModerationQueuePage() {
       }, signal),
       adminCall("dates_moderation_sla", {}, signal),
     ]);
-    if (!response?.success || !Array.isArray(response.cases) || !slaResponse?.success) {
-      if (!signal?.aborted) setState("error");
+    const nextSla = datesModerationSla(slaResponse);
+    if (!response?.success || !Array.isArray(response.cases) || !nextSla) {
+      if (!signal?.aborted) {
+        setSla(null);
+        setState("error");
+      }
       return;
     }
     setRows(response.cases as DatesCaseSummary[]);
     setTotal(Number(response.total) || 0);
-    setSla(slaResponse as unknown as Sla);
+    setSla(nextSla);
     setState("ready");
   }, [filters, page, rows.length]);
 
@@ -98,7 +96,7 @@ export default function DatesModerationQueuePage() {
       <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} actions={<button className="button button-secondary" onClick={() => void load()}>{common("refresh")}</button>} />
       <DatesAdminTabs />
 
-      {sla && <div className="stat-grid dates-sla-grid">
+      {state === "ready" && sla && <div className="stat-grid dates-sla-grid">
         <article className="stat-card"><span className="stat-label">{t("openCases")}</span><strong className="stat-value">{formatNumber(sla.open_count, locale)}</strong></article>
         <article className="stat-card pink"><span className="stat-label">{t("unassigned")}</span><strong className="stat-value">{formatNumber(sla.unassigned_count, locale)}</strong><small className="dates-stat-note">{sla.oldest_unassigned_at ? t("oldest", { date: formatDate(sla.oldest_unassigned_at, locale, true) }) : t("noneWaiting")}</small></article>
         <article className="stat-card"><span className="stat-label">{t("slaBreaches")}</span><strong className="stat-value dates-danger-text">{formatNumber(sla.sla_breach_count, locale)}</strong></article>

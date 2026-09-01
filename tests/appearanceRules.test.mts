@@ -2327,3 +2327,11 @@ test("the retired active-hero overview card is gone from the dashboard", () => {
   assert.doesNotMatch(page, /activeHeroes/, "its overview card and label are gone");
   assert.doesNotMatch(page, /legacyHeroOverviewCardVisible/, "the retired helper is gone with its switch");
 });
+
+test("the appearance console withholds counts and create controls until the list is proven", () => {
+  const consoleSource = readFileSync(new URL("../components/AppearanceConsole.tsx", import.meta.url), "utf8");
+  assert.match(consoleSource, /actions=\{state === "ready" \?/);
+  assert.match(consoleSource, /\{state === "ready" && <div className="list-summary">/);
+  assert.match(consoleSource, /state === "error" \? \(\s*<ErrorPanel/);
+  assert.doesNotMatch(consoleSource, /<div className="list-summary">\s*<strong>\{t\("liveCount"[\s\S]*?<\/div>\s*\{uncertain/, "an unconditional zero-of-zero finding must not precede the error branch");
+});

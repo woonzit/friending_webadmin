@@ -155,15 +155,12 @@ export function icebreakerCatalog(value: unknown): IcebreakerCatalog | null {
   const groups = options(source?.groups);
   const memberSexes = options(source?.member_sexes);
   const segments = options(source?.segments);
-  const hasCastGroupCatalog = source?.cast_groups !== undefined;
   const castGroups: UserCastGroup[] = [];
-  if (source?.cast_groups !== undefined) {
-    if (!Array.isArray(source.cast_groups)) return null;
-    for (const value of source.cast_groups) {
-      const row = userCastGroup(value);
-      if (!row) return null;
-      castGroups.push(row);
-    }
+  if (!Array.isArray(source?.cast_groups)) return null;
+  for (const value of source.cast_groups) {
+    const row = userCastGroup(value);
+    if (!row) return null;
+    castGroups.push(row);
   }
   if (
     !source
@@ -184,7 +181,7 @@ export function icebreakerCatalog(value: unknown): IcebreakerCatalog | null {
       (segment) => !segments.some((known) => known.key === segment)
     ))
     || parsed.some((item) => item.audience.group_ids.some(
-      (id) => hasCastGroupCatalog && !castGroups.some((known) => known.id === id)
+      (id) => !castGroups.some((known) => known.id === id)
     ))
     || new Set(castGroups.map((group) => group.id)).size !== castGroups.length
     || new Set(castGroups.map((group) => group.key)).size !== castGroups.length

@@ -38,6 +38,17 @@ export type DatesCaseSummary = {
   };
 };
 
+export type DatesModerationSla = {
+  open_count: number;
+  unassigned_count: number;
+  sla_breach_count: number;
+  oldest_unassigned_at: number | null;
+  age_buckets: Record<string, number>;
+  median_seconds_to_claim: number | null;
+  median_seconds_to_resolve: number | null;
+  appeals_waiting: number;
+};
+
 const ROLES = new Set([
   "support_viewer",
   "moderator",
@@ -54,27 +65,106 @@ function record(value: unknown): Record<string, unknown> | null {
 
 export function normalizeDatesPrincipal(value: unknown): DatesAdminPrincipal | null {
   const row = record(value);
-  const role = String(row?.role ?? "");
-  const email = String(row?.email ?? "").trim().toLowerCase();
-  if (!row || !ROLES.has(role) || !email.includes("@")) return null;
+  if (!row) return null;
+  const role = typeof row.role === "string" ? row.role : "";
+  const email = typeof row.email === "string" ? row.email.trim().toLowerCase() : "";
+  const rank = row.rank;
+  const linkedUid = row.linked_uid;
+  const capabilities = row.capabilities;
+  if (
+    !ROLES.has(role)
+    || !email.includes("@")
+    || !Number.isInteger(rank)
+    || Number(rank) < 0
+    || (linkedUid !== null && (!Number.isInteger(linkedUid) || Number(linkedUid) <= 0))
+    || typeof row.sensitive_location !== "boolean"
+    || typeof row.break_glass !== "boolean"
+    || !Array.isArray(capabilities)
+    || capabilities.some((item) => typeof item !== "string")
+  ) return null;
   return {
     email,
     role: role as DatesAdminPrincipal["role"],
-    rank: Number(row.rank) || 0,
-    linked_uid: Number(row.linked_uid) > 0 ? Number(row.linked_uid) : null,
-    sensitive_location: row.sensitive_location === true,
-    break_glass: row.break_glass === true,
-    capabilities: Array.isArray(row.capabilities)
-      ? row.capabilities.filter((item): item is string => typeof item === "string")
-      : [],
+    rank: Number(rank),
+    linked_uid: linkedUid === null ? null : Number(linkedUid),
+    sensitive_location: row.sensitive_location,
+    break_glass: row.break_glass,
+    capabilities: capabilities as string[],
   };
 }
 
+export function datesAdminPrincipal(value: unknown): DatesAdminPrincipal | null {
+  const response = record(value);
+  return response?.success === true ? normalizeDatesPrincipal(response.dates) : null;
+}
+
 export function hasDatesCapability(
-  principal: DatesAdminPrincipal | null,
+  principal: DatesAdminPrincipal,
   capability: string,
 ): boolean {
-  return principal?.capabilities.includes(capability) ?? false;
+  return principal.capabilities.includes(capability);
+}
+
+function nonNegativeInteger(value: unknown): number | null {
+  return Number.isInteger(value) && Number(value) >= 0 ? Number(value) : null;
+}
+
+function optionalNonNegativeInteger(value: unknown): number | null | undefined {
+  if (value === null) return null;
+  const parsed = nonNegativeInteger(value);
+  return parsed === null ? undefined : parsed;
+}
+
+function optionalPositiveInteger(value: unknown): number | null | undefined {
+  if (value === null) return null;
+  return Number.isInteger(value) && Number(value) > 0 ? Number(value) : undefined;
+}
+
+export function datesModerationSla(value: unknown): DatesModerationSla | null {
+  const source = record(value);
+  if (!source || source.success !== true) return null;
+
+  const openCount = nonNegativeInteger(source.open_count);
+  const unassignedCount = nonNegativeInteger(source.unassigned_count);
+  const breachCount = nonNegativeInteger(source.sla_breach_count);
+  const oldest = optionalPositiveInteger(source.oldest_unassigned_at);
+  const medianClaim = optionalNonNegativeInteger(source.median_seconds_to_claim);
+  const medianResolve = optionalNonNegativeInteger(source.median_seconds_to_resolve);
+  const appealsWaiting = nonNegativeInteger(source.appeals_waiting);
+  const ageBuckets = record(source.age_buckets);
+  const ageBucketKeys = ["under_1h", "1h_to_6h", "6h_to_24h", "over_24h"];
+  const ageBucketCounts = ageBuckets
+    ? ageBucketKeys.map((key) => nonNegativeInteger(ageBuckets[key]))
+    : [];
+  if (
+    openCount === null
+    || unassignedCount === null
+    || breachCount === null
+    || oldest === undefined
+    || medianClaim === undefined
+    || medianResolve === undefined
+    || appealsWaiting === null
+    || !ageBuckets
+    || Object.keys(ageBuckets).length !== ageBucketKeys.length
+    || ageBucketKeys.some((key) => !Object.hasOwn(ageBuckets, key))
+    || ageBucketCounts.some((count) => count === null)
+    || ageBucketCounts.reduce<number>((sum, count) => sum + (count ?? 0), 0) !== openCount
+    || unassignedCount > openCount
+    || breachCount > openCount
+    || appealsWaiting > openCount
+    || (unassignedCount === 0) !== (oldest === null)
+  ) return null;
+
+  return {
+    open_count: openCount,
+    unassigned_count: unassignedCount,
+    sla_breach_count: breachCount,
+    oldest_unassigned_at: oldest,
+    age_buckets: ageBuckets as Record<string, number>,
+    median_seconds_to_claim: medianClaim,
+    median_seconds_to_resolve: medianResolve,
+    appeals_waiting: appealsWaiting,
+  };
 }
 
 export function createAdminIdempotencyKey(prefix: string): string {

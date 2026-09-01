@@ -10,10 +10,10 @@ import { adminCall } from "@/lib/adminClient";
 import {
   configurationInputValue,
   createAdminIdempotencyKey,
+  datesAdminPrincipal,
   datesRuntimeSettingVisible,
   hasDatesCapability,
   humanizeMachineKey,
-  normalizeDatesPrincipal,
   parseEntryPoints,
   type DatesAdminPrincipal,
 } from "@/lib/datesAdmin";
@@ -99,7 +99,9 @@ export default function DatesConfigurationPage() {
       adminCall("dates_reason_list", { scope }),
       adminCall("admin_me"),
     ]);
-    if (!configuration?.success || !Array.isArray(configuration.settings) || !Array.isArray(configuration.activity_types) || !reasonResponse?.success || !Array.isArray(reasonResponse.reasons)) {
+    const nextPrincipal = datesAdminPrincipal(identity);
+    if (!configuration?.success || !Array.isArray(configuration.settings) || !Array.isArray(configuration.activity_types) || !reasonResponse?.success || !Array.isArray(reasonResponse.reasons) || !nextPrincipal) {
+      setPrincipal(null);
       setState("error");
       return;
     }
@@ -109,7 +111,7 @@ export default function DatesConfigurationPage() {
     setActivityTypes(configuration.activity_types as ActivityType[]);
     setReasons(reasonResponse.reasons as Reason[]);
     setLimitation(String(configuration.known_limitation || ""));
-    setPrincipal(normalizeDatesPrincipal(identity?.dates));
+    setPrincipal(nextPrincipal);
     setState("ready");
   }, [scope, settings.length]);
 
@@ -119,7 +121,7 @@ export default function DatesConfigurationPage() {
   function failure(error: unknown) { setFeedback({ tone: "error", text: t("operationFailed", { error: String(error || "core-unavailable") }) }); }
 
   if (state === "loading") return <LoadingPanel />;
-  if (state === "error") return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
+  if (state === "error" || !principal) return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
 
   const canManageConfiguration = hasDatesCapability(principal, "dates_configuration_manage");
   const canManageReasons = hasDatesCapability(principal, "dates_reason_manage");

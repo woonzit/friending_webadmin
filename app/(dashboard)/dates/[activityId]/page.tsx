@@ -12,11 +12,11 @@ import { adminCall } from "@/lib/adminClient";
 import { operationalRecordSummary } from "@/lib/auditLog";
 import {
   createAdminIdempotencyKey,
+  datesAdminPrincipal,
   epochFromLocalInput,
   hasDatesCapability,
   humanizeMachineKey,
   localInputFromEpoch,
-  normalizeDatesPrincipal,
   type DatesAdminPrincipal,
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
@@ -154,14 +154,16 @@ export default function DatesActivityDetailPage() {
       setState("not-found");
       return;
     }
-    if (!response?.success || !response.activity) {
+    const nextPrincipal = datesAdminPrincipal(identity);
+    if (!response?.success || !response.activity || !Array.isArray(response.notifications) || !nextPrincipal) {
+      setPrincipal(null);
       setState("error");
       return;
     }
     const next = response as unknown as ActivityDetail;
     setData(next);
     setDraft(draftFromActivity(next.activity));
-    setPrincipal(normalizeDatesPrincipal(identity?.dates));
+    setPrincipal(nextPrincipal);
     setState("ready");
   }, [activityId, data]);
 
@@ -286,13 +288,13 @@ export default function DatesActivityDetailPage() {
 
   if (state === "loading") return <LoadingPanel />;
   if (state === "not-found") return <ErrorPanel message={t("notFound")} retry={() => void load()} />;
-  if (state === "error" || !data || !draft) return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
+  if (state === "error" || !data || !draft || !principal) return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
 
   const activity = data.activity;
   const canEdit = hasDatesCapability(principal, "dates_activity_edit");
   const canCommand = hasDatesCapability(principal, "dates_activity_command");
   const canTransfer = hasDatesCapability(principal, "dates_host_transfer");
-  const canLocation = principal?.sensitive_location && hasDatesCapability(principal, "dates_evidence_read");
+  const canLocation = principal.sensitive_location && hasDatesCapability(principal, "dates_evidence_read");
 
   return (
     <>
@@ -360,7 +362,7 @@ export default function DatesActivityDetailPage() {
             {!canLocation ? <p className="page-subtitle">{t("locationCapabilityRequired")}</p> : <form className="form-stack" onSubmit={revealLocation}>
               <label className="field"><span>{t("caseId")}</span><input required value={locationCaseId} onChange={(event) => setLocationCaseId(event.target.value)} placeholder="cas_…" /></label>
               <label className="field"><span>{t("adminReason")}</span><textarea required value={locationReason} onChange={(event) => setLocationReason(event.target.value)} /></label>
-              {principal?.break_glass && <label className="checkbox-field"><input type="checkbox" checked={locationBreakGlass} onChange={(event) => setLocationBreakGlass(event.target.checked)} /><span>{t("breakGlass")}</span></label>}
+              {principal.break_glass && <label className="checkbox-field"><input type="checkbox" checked={locationBreakGlass} onChange={(event) => setLocationBreakGlass(event.target.checked)} /><span>{t("breakGlass")}</span></label>}
               <button className="button button-danger" type="submit" disabled={busy}>{t("revealLocation")}</button>
             </form>}
             {privateLocation && <dl className="detail-list dates-sensitive-result">{Object.entries(privateLocation).filter(([key]) => !["activity_id", "created_at", "updated_at"].includes(key)).map(([key, value]) => <div className="detail-row" key={key}><dt>{humanizeMachineKey(key)}</dt><dd>{displayValue(value)}</dd></div>)}</dl>}
@@ -405,7 +407,7 @@ export default function DatesActivityDetailPage() {
         <div className="panel-header"><div><h2>{t("boundedHistory")}</h2><p>{t("boundedHistoryCopy")}</p></div></div>
         <div className="panel-body dates-history-sections">
           <OperationalRecords title={t("reports")} empty={t("noHistoryRecords")} records={data.reports as unknown as Array<Record<string, unknown>>} withheldLabel={(count) => t("recordWithheld", { count })} />
-          <OperationalRecords title={t("notifications")} empty={t("noHistoryRecords")} records={data.notifications || []} withheldLabel={(count) => t("recordWithheld", { count })} />
+          <OperationalRecords title={t("notifications")} empty={t("noHistoryRecords")} records={data.notifications} withheldLabel={(count) => t("recordWithheld", { count })} />
           <OperationalRecords title={t("decisions")} empty={t("noHistoryRecords")} records={data.moderation_decisions} withheldLabel={(count) => t("recordWithheld", { count })} />
           <OperationalRecords title={t("auditEntries")} empty={t("noHistoryRecords")} records={data.audit_history} withheldLabel={(count) => t("recordWithheld", { count })} />
         </div>

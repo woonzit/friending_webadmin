@@ -299,18 +299,12 @@ export function profileFieldCatalog(value: unknown): ProfileFieldCatalog | null 
     if (!row || typeof row.key !== "string" || !labels) return null;
     segments.push({ key: row.key, labels });
   }
-  // Absent on payloads predating user-cast-groups-v1; one unreadable group
-  // row invalidates the catalog, because the audience picker would otherwise
-  // offer a group whose rules the console cannot show.
-  const hasCastGroupCatalog = source.cast_groups !== undefined;
   const castGroups: UserCastGroup[] = [];
-  if (source.cast_groups !== undefined) {
-    if (!Array.isArray(source.cast_groups)) return null;
-    for (const value of source.cast_groups) {
-      const row = userCastGroup(value);
-      if (!row) return null;
-      castGroups.push(row);
-    }
+  if (!Array.isArray(source.cast_groups)) return null;
+  for (const value of source.cast_groups) {
+    const row = userCastGroup(value);
+    if (!row) return null;
+    castGroups.push(row);
   }
   if (
     new Set(castGroups.map((group) => group.id)).size !== castGroups.length
@@ -319,7 +313,7 @@ export function profileFieldCatalog(value: unknown): ProfileFieldCatalog | null 
       (segment) => !segments.some((known) => known.key === segment)
     ))
     || (fields as ProfileField[]).some((item) => item.audience.group_ids.some(
-      (id) => hasCastGroupCatalog && !castGroups.some((known) => known.id === id)
+      (id) => !castGroups.some((known) => known.id === id)
     ))
   ) return null;
   return {
@@ -613,5 +607,10 @@ export function identityOptionGroups(value: unknown): IdentityOptionGroup[] | nu
       options,
     });
   }
-  return result;
+  const keys = result.map((group) => group.key);
+  return result.length === 3
+    && new Set(keys).size === 3
+    && ["gender", "subgender", "orientation"].every((key) => keys.includes(key as IdentityOptionGroup["key"]))
+    ? result
+    : null;
 }

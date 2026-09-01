@@ -298,14 +298,19 @@ test("evidence URLs accept only opaque case IDs and a closed kind", () => {
 });
 
 test("the existing Configuration route owns the editor and the queue has its own navigation entry", async () => {
-  const [configuration, shell, evidenceRoute] = await Promise.all([
+  const [configuration, shell, evidenceRoute, detailPage] = await Promise.all([
     readFile(new URL("../app/(dashboard)/configuration/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/Shell.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/admin/profile-verification-evidence/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/(dashboard)/profile-verification/[caseId]/page.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(configuration, /ProfileVerificationConfiguration/);
   assert.match(shell, /href: "\/profile-verification"/);
   assert.match(evidenceRoute, /requireAdminWriter/);
   assert.match(evidenceRoute, /Cache-Control.*private, no-store/s);
   assert.match(evidenceRoute, /Cross-Origin-Resource-Policy/);
+  assert.match(detailPage, /identity\?\.success === true \? normalizeAdminRole/);
+  assert.match(detailPage, /!parsed \|\| !actorRole \|\| !actorEmail\.includes\("@"\)/);
+  assert.match(detailPage, /state === "error" \|\| !detail \|\| !adminActor/);
+  assert.doesNotMatch(detailPage, /setCanWrite\(isAdminWriteRole/);
 });

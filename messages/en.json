@@ -3209,7 +3209,8 @@
       "copy": "At most the latest 100 administrator mutations and normalized Store events, newest first.",
       "none": "No membership history has been recorded yet."
     },
-    "loadError": "The authoritative membership state could not be refreshed."
+    "loadError": "The authoritative membership state could not be refreshed.",
+    "accessUnavailable": "Administrator access could not be verified. Membership controls are withheld; retry before acting."
   },
   "photoModeration": {
     "eyebrow": "Trust and safety",

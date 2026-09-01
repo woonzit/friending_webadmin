@@ -5,7 +5,9 @@ import { DATES_ADMIN_ACTIONS, isAdminActionAllowed } from "../lib/adminActions.t
 import {
   configurationInputValue,
   createAdminIdempotencyKey,
+  datesAdminPrincipal,
   datesAvailabilityWriteIsRetired,
+  datesModerationSla,
   datesRuntimeSettingVisible,
   hasDatesCapability,
   normalizeDatesPrincipal,
@@ -89,13 +91,74 @@ test("Dates principal projection fails closed and exposes only server capabiliti
     linked_uid: 42,
     sensitive_location: true,
     break_glass: false,
-    capabilities: ["dates_case_read", "dates_evidence_read", 123],
+    capabilities: ["dates_case_read", "dates_evidence_read"],
   });
   assert.equal(principal?.email, "admin@example.test");
   assert.equal(principal?.linked_uid, 42);
   assert.deepEqual(principal?.capabilities, ["dates_case_read", "dates_evidence_read"]);
   assert.equal(hasDatesCapability(principal, "dates_evidence_read"), true);
   assert.equal(hasDatesCapability(principal, "dates_activity_purge"), false);
+  assert.equal(normalizeDatesPrincipal({
+    email: "admin@example.test",
+    role: "senior_moderator",
+    rank: 30,
+    linked_uid: 42,
+    sensitive_location: true,
+    break_glass: false,
+  }), null, "a missing capability catalogue is not an empty catalogue");
+  assert.equal(normalizeDatesPrincipal({
+    email: "admin@example.test",
+    role: "senior_moderator",
+    rank: 30,
+    linked_uid: 42,
+    sensitive_location: true,
+    break_glass: false,
+    capabilities: ["dates_case_read", 123],
+  }), null, "a malformed capability catalogue is not filtered into authority");
+  assert.equal(datesAdminPrincipal({ success: false, dates: principal }), null);
+  assert.equal(datesAdminPrincipal({ success: true }), null);
+  assert.deepEqual(datesAdminPrincipal({ success: true, dates: principal }), principal);
+});
+
+test("Dates SLA projection keeps explicit zero/null distinct from missing or malformed findings", () => {
+  const empty = {
+    success: true,
+    open_count: 0,
+    unassigned_count: 0,
+    sla_breach_count: 0,
+    oldest_unassigned_at: null,
+    age_buckets: { under_1h: 0, "1h_to_6h": 0, "6h_to_24h": 0, over_24h: 0 },
+    median_seconds_to_claim: null,
+    median_seconds_to_resolve: null,
+    appeals_waiting: 0,
+  };
+  assert.deepEqual(datesModerationSla(empty), {
+    open_count: 0,
+    unassigned_count: 0,
+    sla_breach_count: 0,
+    oldest_unassigned_at: null,
+    age_buckets: { under_1h: 0, "1h_to_6h": 0, "6h_to_24h": 0, over_24h: 0 },
+    median_seconds_to_claim: null,
+    median_seconds_to_resolve: null,
+    appeals_waiting: 0,
+  });
+  for (const key of [
+    "open_count",
+    "unassigned_count",
+    "sla_breach_count",
+    "oldest_unassigned_at",
+    "age_buckets",
+    "median_seconds_to_claim",
+    "median_seconds_to_resolve",
+    "appeals_waiting",
+  ]) {
+    const missing = { ...empty } as Record<string, unknown>;
+    delete missing[key];
+    assert.equal(datesModerationSla(missing), null, `missing ${key}`);
+  }
+  assert.equal(datesModerationSla({ ...empty, age_buckets: { under_1h: -1 } }), null);
+  assert.equal(datesModerationSla({ ...empty, median_seconds_to_claim: Number.NaN }), null);
+  assert.equal(datesModerationSla({ ...empty, unassigned_count: 1 }), null, "null oldest cannot mean none waiting when the queue count is positive");
 });
 
 test("resolution options remain bounded by case target and kind", () => {
@@ -206,4 +269,20 @@ test("Dates pages use the authenticated bridge and keep destructive controls exp
     "report_min", "report_max", "maximum_min", "maximum_max",
     "created_from", "created_to", "updated_from", "updated_to", "time_from", "time_to",
   ]) assert.match(pages, new RegExp(`"${filter}"`));
+
+  const principalPages = pageFiles
+    .filter((file) => !file.endsWith("moderation/page.tsx"))
+    .map((file) => readFileSync(new URL(file, import.meta.url), "utf8"));
+  for (const page of principalPages) {
+    assert.match(page, /datesAdminPrincipal\(identity\)/);
+    assert.match(page, /!nextPrincipal/);
+    assert.doesNotMatch(page, /normalizeDatesPrincipal\(identity\?\.dates\)/);
+  }
+  const activity = readFileSync(new URL("../app/(dashboard)/dates/[activityId]/page.tsx", import.meta.url), "utf8");
+  assert.match(activity, /Array\.isArray\(response\.notifications\)/);
+  assert.doesNotMatch(activity, /notifications\s*\|\|\s*\[\]/);
+  const moderation = readFileSync(new URL("../app/(dashboard)/dates/moderation/page.tsx", import.meta.url), "utf8");
+  assert.match(moderation, /datesModerationSla\(slaResponse\)/);
+  assert.match(moderation, /state === "ready" && sla/);
+  assert.doesNotMatch(moderation, /as unknown as Sla/);
 });

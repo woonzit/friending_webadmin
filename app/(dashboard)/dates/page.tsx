@@ -7,7 +7,7 @@ import DatesAdminTabs from "@/components/DatesAdminTabs";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
-import { epochFromLocalInput, humanizeMachineKey, normalizeDatesPrincipal, type DatesAdminPrincipal } from "@/lib/datesAdmin";
+import { datesAdminPrincipal, epochFromLocalInput, humanizeMachineKey, type DatesAdminPrincipal } from "@/lib/datesAdmin";
 import { formatDate, formatNumber } from "@/lib/format";
 
 type ActivityRow = {
@@ -144,13 +144,17 @@ export default function DatesActivitiesPage() {
       adminCall("dates_activity_list", payload, signal),
       adminCall("admin_me", {}, signal),
     ]);
-    if (!response?.success || !Array.isArray(response.activities)) {
-      if (!signal?.aborted) setState("error");
+    const nextPrincipal = datesAdminPrincipal(identity);
+    if (!response?.success || !Array.isArray(response.activities) || !nextPrincipal) {
+      if (!signal?.aborted) {
+        setPrincipal(null);
+        setState("error");
+      }
       return;
     }
     setRows(response.activities as ActivityRow[]);
     setTotal(Number(response.total) || 0);
-    setPrincipal(normalizeDatesPrincipal(identity?.dates));
+    setPrincipal(nextPrincipal);
     setState("ready");
   }, [filters, page, rows.length]);
 
@@ -251,7 +255,7 @@ export default function DatesActivitiesPage() {
         </details>
       </form>
 
-      {state === "loading" ? <LoadingPanel /> : state === "error" ? (
+      {state === "loading" ? <LoadingPanel /> : state === "error" || !principal ? (
         <ErrorPanel message={t("loadError")} retry={() => void load()} />
       ) : (
         <>

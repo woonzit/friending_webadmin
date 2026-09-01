@@ -8,7 +8,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
-import { isAdminWriteRole } from "@/lib/authPolicy";
+import { isAdminWriteRole, normalizeAdminRole } from "@/lib/authPolicy";
 import { formatDate, formatNumber } from "@/lib/format";
 import {
   PROFILE_VERIFICATION_REJECTION_REASONS,
@@ -21,6 +21,7 @@ import {
 type DecisionAction = "approve" | "reject" | "request_new_video";
 type Feedback = { tone: "success" | "error"; text: string };
 type Confirmation = { action: DecisionAction };
+type AdminActor = { email: string; role: string };
 
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -42,8 +43,7 @@ export default function ProfileVerificationDetailPage() {
   const uid = Number(search.get("uid") ?? slug.replace(/^uid-/, ""));
   const requestedCaseId = /^[a-f0-9]{32}$/.test(slug) ? slug : "";
   const [detail, setDetail] = useState<ProfileVerificationDetail | null>(null);
-  const [adminEmail, setAdminEmail] = useState("");
-  const [canWrite, setCanWrite] = useState(false);
+  const [adminActor, setAdminActor] = useState<AdminActor | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error" | "not-found">("loading");
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -70,13 +70,15 @@ export default function ProfileVerificationDetailPage() {
     const parsed = response?.success
       ? profileVerificationDetail(profileVerificationResponseData(response))
       : null;
-    if (!parsed) {
+    const actor = record(identity);
+    const actorRole = identity?.success === true ? normalizeAdminRole(actor?.role) : "";
+    const actorEmail = typeof actor?.email === "string" ? actor.email.trim().toLowerCase() : "";
+    if (!parsed || !actorRole || !actorEmail.includes("@")) {
+      setAdminActor(null);
       setState("error");
       return;
     }
-    const actor = record(identity);
-    setAdminEmail(typeof actor?.email === "string" ? actor.email.toLowerCase() : "");
-    setCanWrite(isAdminWriteRole(actor?.role));
+    setAdminActor({ email: actorEmail, role: actorRole });
     setDetail(parsed);
     setState("ready");
   }, [detail, requestedCaseId, slug, uid]);
@@ -139,13 +141,14 @@ export default function ProfileVerificationDetailPage() {
 
   if (state === "loading") return <LoadingPanel />;
   if (state === "not-found") return <ErrorPanel message={t("notFound")} retry={() => void load()} />;
-  if (state === "error" || !detail) return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
+  if (state === "error" || !detail || !adminActor) return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
 
   const item = detail.case;
+  const canWrite = isAdminWriteRole(adminActor.role);
   const currentAvatarMissing = detail.user.current_avatar_hash === "";
   const avatarChanged = Boolean(item && item.avatar_hash !== detail.user.current_avatar_hash);
   const leaseActive = Boolean(item?.lease_expires_at && item.lease_expires_at > Math.floor(Date.now() / 1000));
-  const assignedToMe = Boolean(item?.lease_owner && item.lease_owner.toLowerCase() === adminEmail);
+  const assignedToMe = Boolean(item?.lease_owner && item.lease_owner.toLowerCase() === adminActor.email);
   const mayDecide = canWrite && item?.status === "pending" && !avatarChanged && !currentAvatarMissing;
   const profileIncomplete = !detail.user.gender || !detail.user.birthday;
   const videoUrl = item ? profileVerificationEvidenceUrl(item.case_id, "video") : "";
@@ -211,7 +214,7 @@ export default function ProfileVerificationDetailPage() {
           {!canWrite ? <p className="page-subtitle">{t("lease.writerRequired")}</p> : item.status !== "pending" ? <p className="page-subtitle">{t("lease.closed")}</p> : <div className="row-actions">
             {(!item.lease_owner || !leaseActive || assignedToMe) && <button className="button button-primary" disabled={busy || (assignedToMe && leaseActive)} onClick={() => void lease("claim")}>{assignedToMe && leaseActive ? t("lease.claimedByYou") : t("lease.claim")}</button>}
             {assignedToMe && leaseActive && <button className="button button-secondary" disabled={busy} onClick={() => void lease("heartbeat")}>{t("lease.heartbeat")}</button>}
-            {item.lease_owner && <button className="button button-danger" disabled={busy || (!assignedToMe && item.lease_owner !== adminEmail)} onClick={() => void lease("release")}>{t("lease.release")}</button>}
+            {item.lease_owner && <button className="button button-danger" disabled={busy || (!assignedToMe && item.lease_owner !== adminActor.email)} onClick={() => void lease("release")}>{t("lease.release")}</button>}
           </div>}
         </div>
       </section>}

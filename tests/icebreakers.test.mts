@@ -16,6 +16,7 @@ const valid = {
     { key: "both", labels: { en: "Everyone", hu: "Mindenki" } },
   ],
   segments: [{ key: "female_lesbian", labels: { en: "Lesbian women", hu: "Leszbikus nők" } }],
+  cast_groups: [],
   prompts: [{
     id: "abc",
     key: "ideal_first_date",
@@ -46,6 +47,9 @@ const castGroup = {
 
 test("Icebreaker parser preserves independent card group and audience settings", () => {
   assert.equal(icebreakerCatalog(valid)?.prompts[0]?.groups[0], "love");
+  const missingCastGroups = structuredClone(valid) as Record<string, unknown>;
+  delete missingCastGroups.cast_groups;
+  assert.equal(icebreakerCatalog(missingCastGroups), null, "a missing audience catalogue is not an empty catalogue");
   const futureLocale = structuredClone(valid);
   (futureLocale.prompts[0].labels as Record<string, string>).de = "Mein ideales erstes Date";
   assert.equal(icebreakerCatalog(futureLocale)?.prompts[0]?.labels.de, "Mein ideales erstes Date");

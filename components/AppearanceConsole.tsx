@@ -277,12 +277,12 @@ export default function AppearanceConsole() {
         eyebrow={t("eyebrow")}
         title={t("title")}
         subtitle={t("subtitle")}
-        actions={<button className="button button-primary" disabled={state !== "ready" || uncertain !== null} onClick={newRule}>{globalRule ? t("newRule") : t("newGlobalRule")}</button>}
+        actions={state === "ready" ? <button className="button button-primary" disabled={uncertain !== null} onClick={newRule}>{globalRule ? t("newRule") : t("newGlobalRule")}</button> : null}
       />
-      <div className="list-summary">
+      {state === "ready" && <div className="list-summary">
         <strong>{t("liveCount", { live: liveCount, total: rules.length })}</strong>
         <span>{t("precedence")}</span>
-      </div>
+      </div>}
       {uncertain && !draft && (
         <div className="alert alert-warning" role="alert">
           <span>{t("errors.uncertainReloadFailed")}</span>

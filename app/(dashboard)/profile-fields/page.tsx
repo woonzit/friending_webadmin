@@ -545,16 +545,9 @@ export default function ProfileFieldsPage() {
   const [layoutError, setLayoutError] = useState("");
   const [layer2Items, setLayer2Items] = useState<Layer2Intent[] | null>(null);
   const [expandedFields, setExpandedFields] = useState<Set<string>>(() => new Set());
-  const castGroupsRef = useRef<ProfileFieldCatalog["cast_groups"]>([]);
-
   const applyCatalog = useCallback((raw: unknown): boolean => {
-    const source = raw && typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : null;
-    const candidate = source && source.cast_groups === undefined && castGroupsRef.current.length > 0
-      ? { ...source, cast_groups: castGroupsRef.current }
-      : raw;
-    const parsed = profileFieldCatalog(candidate);
+    const parsed = profileFieldCatalog(raw);
     if (!parsed) return false;
-    castGroupsRef.current = parsed.cast_groups;
     setCatalog(parsed);
     return true;
   }, []);

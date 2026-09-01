@@ -11,10 +11,10 @@ import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import {
   createAdminIdempotencyKey,
+  datesAdminPrincipal,
   epochFromLocalInput,
   hasDatesCapability,
   humanizeMachineKey,
-  normalizeDatesPrincipal,
   resolutionActions,
   type DatesAdminPrincipal,
   type DatesCaseSummary,
@@ -97,13 +97,15 @@ export default function DatesModerationCasePage() {
       setState("not-found");
       return;
     }
-    if (!response?.success || !response.case) {
+    const nextPrincipal = datesAdminPrincipal(identity);
+    if (!response?.success || !response.case || !nextPrincipal) {
+      setPrincipal(null);
       setState("error");
       return;
     }
     const next = response as unknown as CaseDetail;
     setData(next);
-    setPrincipal(normalizeDatesPrincipal(identity?.dates));
+    setPrincipal(nextPrincipal);
     setResolutionAction((current) => current || resolutionActions(next.case)[0] || "dismiss");
     setState("ready");
   }, [caseId, data]);
@@ -281,17 +283,17 @@ export default function DatesModerationCasePage() {
 
   if (state === "loading") return <LoadingPanel />;
   if (state === "not-found") return <ErrorPanel message={t("notFound")} retry={() => void load()} />;
-  if (state === "error" || !data) return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
+  if (state === "error" || !data || !principal) return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
 
   const item = data.case;
-  const assignedToMe = item.assignee_email?.toLowerCase() === principal?.email.toLowerCase();
+  const assignedToMe = item.assignee_email?.toLowerCase() === principal.email.toLowerCase();
   const leaseActive = (item.claim_expires_at || 0) > Math.floor(Date.now() / 1000);
-  const canBreakGlass = item.capabilities.can_break_glass && principal?.break_glass;
+  const canBreakGlass = item.capabilities.can_break_glass && principal.break_glass;
   const mayClaim = item.capabilities.can_claim || (item.conflict_of_interest && canBreakGlass);
   const mayReadEvidence = item.capabilities.can_read_evidence || (item.conflict_of_interest && canBreakGlass);
   const mayCaptureTrail = Boolean(
     item.activity_id
-    && principal?.sensitive_location
+    && principal.sensitive_location
     && hasDatesCapability(principal, "dates_trail_evidence_capture")
     && (!item.conflict_of_interest || (canBreakGlass && breakGlass)),
   );
@@ -343,7 +345,7 @@ export default function DatesModerationCasePage() {
         <div className="panel-header"><div><h2>{t("evidenceTitle")}</h2><p>{t("evidenceCopy")}</p></div></div>
         <div className="panel-body">
           {!mayReadEvidence ? <p className="page-subtitle">{t("evidenceUnavailable")}</p> : <form className="dates-evidence-controls" onSubmit={readEvidence}>
-            {principal?.sensitive_location && <label className="checkbox-field"><input type="checkbox" checked={evidenceSensitive} onChange={(event) => setEvidenceSensitive(event.target.checked)} /><span>{t("includeSensitiveLocation")}</span></label>}
+            {principal.sensitive_location && <label className="checkbox-field"><input type="checkbox" checked={evidenceSensitive} onChange={(event) => setEvidenceSensitive(event.target.checked)} /><span>{t("includeSensitiveLocation")}</span></label>}
             <label className="field"><span>{t("auditReason")}</span><input value={evidenceReason} required={evidenceSensitive || (item.conflict_of_interest && breakGlass)} onChange={(event) => setEvidenceReason(event.target.value)} placeholder={t("auditReasonPlaceholder")} /></label>
             <button className="button button-danger" type="submit" disabled={busy || (item.conflict_of_interest && !breakGlass)}>{t("readEvidence")}</button>
           </form>}
@@ -351,7 +353,7 @@ export default function DatesModerationCasePage() {
         </div>
       </section>
 
-      {principal?.sensitive_location && hasDatesCapability(principal, "dates_trail_evidence_capture") && item.activity_id && <section className="panel dates-section">
+      {principal.sensitive_location && hasDatesCapability(principal, "dates_trail_evidence_capture") && item.activity_id && <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("trailEvidenceTitle")}</h2><p>{t("trailEvidenceCopy")}</p></div></div>
         <div className="panel-body">
           <form className="dates-evidence-controls" onSubmit={captureTrailEvidence}>

@@ -3209,7 +3209,8 @@
       "copy": "Legfeljebb a 100 legutóbbi adminmódosítás és normalizált Store-esemény, a legújabbal kezdve.",
       "none": "Még nincs rögzített előfizetési előzmény."
     },
-    "loadError": "A hiteles előfizetési állapotot nem sikerült frissíteni."
+    "loadError": "A hiteles előfizetési állapotot nem sikerült frissíteni.",
+    "accessUnavailable": "Az adminisztrátori hozzáférést nem sikerült ellenőrizni. Az előfizetési vezérlőket elrejtettük; művelet előtt próbáld újra."
   },
   "photoModeration": {
     "eyebrow": "Biztonság és bizalom",

@@ -101,6 +101,9 @@ test("tolerated shapes are normalised rather than refused", () => {
   assert.deepEqual(minimal?.images, []);
   assert.deepEqual(minimal?.tags, []);
   assert.equal(minimal?.push_channels, null);
+  assert.equal(minimal?.membership.effective_membership.lifecycle_state, "unavailable");
+  assert.deepEqual(minimal?.membership.store_sources, []);
+  assert.deepEqual(minimal?.membership.history, []);
   assert.equal(minimal?.profile.last_location, null);
   // An all-empty location is null rather than a row of em dashes.
   assert.equal(userDetail({ profile: { uid: 7, hometown: { city: "", region: "" } } })?.profile.hometown, null);
