@@ -6,8 +6,12 @@ import {
   PERSONA_SCREENS_CORE_REFUSAL_STATUSES,
   PERSONA_SCREENS_CORE_UNCERTAIN_STATUSES,
   PERSONA_SCREENS_REFERENCE_AUTHORITY,
+  PERSONA_SCREEN_EXTERNAL_LINK_FIELD_BYTE_LIMITS,
+  PERSONA_SCREEN_EXTERNAL_LINK_FIELDS,
+  PERSONA_SCREEN_EXTERNAL_LINK_URL_SCHEMES,
   PERSONA_SCREEN_KEYS,
   PERSONA_SCREEN_LANGUAGES,
+  PERSONA_SCREEN_PRESENTATION_SLOTS,
   PERSONA_SCREEN_SLOTS,
   decodePersonaScreensConsoleResponse,
   decodePersonaScreensSaveResponse,
@@ -20,9 +24,9 @@ import {
 } from "../lib/personaScreens.ts";
 
 /**
- * T-550's production-generated wire corpus (Core `tests/fixtures/persona_screens_wire/`,
- * released tip `2eb97142fb28c879ce6a4facdeec8ca0515915ba`, behaviour commit
- * `e5c0bc14…`), copied byte-identically. Every body here came out of the
+ * T-550's production-generated wire corpus (Core `tests/fixtures/persona_screens_wire/`),
+ * rebound by T-593 to released provider tip `955eba61217a70f12a993e1ca5324e96f843f203`
+ * and D-089 behaviour commit `5e4591b6…`, copied byte-identically. Every body here came out of the
  * production resolver, the production admin service and the production
  * encoders, so the Webadmin decoders are verified against what Core actually
  * publishes rather than against a reading of the contract.
@@ -36,14 +40,19 @@ import {
  * vacuous, and the value half is covered separately in
  * `tests/personaScreens.test.mts` with values no app string could be mistaken
  * for.
+ *
+ * T-593's additive D-089 release changed the provider contract digest but no
+ * body in this 17-case corpus. Link-bearing decoder/publication cases therefore
+ * live in the focused model/editor suites with explicit OPERATOR sentinels;
+ * pretending an unchanged body exercised the new slot would be vacuous.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/persona_screens_wire/", import.meta.url);
 const FIXTURE_CONTRACT_VERSION = 1;
-const FIXTURE_SOURCE_COMMIT = "e5c0bc14a24bfbfedc14b5a81d866b95b5aa7348";
-const FIXTURE_MANIFEST_SHA256 = "b97ce911c40471667690f965a58a212a1f699a52a05d2f5b43c94ec5962b2c0e";
+const FIXTURE_SOURCE_COMMIT = "5e4591b6a9ae41a283798654eaa2ae3bae95c4ef";
+const FIXTURE_MANIFEST_SHA256 = "43d60ab09910a591d6deb0ad50c3308af3dddbd1816fd59405b30877078c083f";
 const FIXTURE_SET_SHA256 = "7b9f1642acf40d7f16840824642c8a78bd317b8f0f82fbfc552695ae869e770c";
 const FIXTURE_CONTRACT_MANIFEST_SHA256 =
-  "096da8bfeee97d89f67d8fa1ec50cd9430502cb773b161d0d2878c5577df8fcd";
+  "68bc244bc2781d1679bb88b87d4145a24fb1d9cafaf9c87bafdb7e9757a29f74";
 const FIXTURE_GENERATOR_SHA256 = "b440fd6cffdd4a904bae4d1ccc206ea9a7d7d24b42bbe9cffe54a15f9cd88077";
 const FIXTURE_BODY_COUNT = 17;
 
@@ -150,6 +159,17 @@ test("the published Persona screens corpus is byte-identical, complete and trace
   }
   assert.deepEqual(Object.fromEntries([...consumers].sort()), { ios: 8, webadmin: 9 });
   assert.equal(sha256(setLines.join("\n")), FIXTURE_SET_SHA256, "the fixture-set hash is the sha256 over `file\\0sha256` rows");
+});
+
+test("the local D-089 vocabulary matches the provider contract bound by the corpus manifest", () => {
+  assert.deepEqual(PERSONA_SCREEN_PRESENTATION_SLOTS, {
+    pre: ["headline", "subtitle", "external_link", "cta"],
+    success: ["headline", "subtitle", "cta"],
+    failed: ["headline", "subtitle", "cta"],
+  });
+  assert.deepEqual([...PERSONA_SCREEN_EXTERNAL_LINK_FIELDS], ["label", "url"]);
+  assert.deepEqual(PERSONA_SCREEN_EXTERNAL_LINK_FIELD_BYTE_LIMITS, { label: 80, url: 2048 });
+  assert.deepEqual([...PERSONA_SCREEN_EXTERNAL_LINK_URL_SCHEMES], ["https"]);
 });
 
 test("the production refusal maps equal Core's published vocabulary exactly", () => {

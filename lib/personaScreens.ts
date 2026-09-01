@@ -4,7 +4,8 @@ import { webadminDataSuccessEnvelope, webadminErrorEnvelope } from "@/lib/webadm
 
 /**
  * Persona verification screens copy — the Webadmin side of
- * `handoffs/persona-screens-contract.md` v1 (D-077, D-080 R1–R5, T-551).
+ * `handoffs/persona-screens-contract.md` v1 (D-077, D-080 R1–R5, D-089,
+ * T-551, T-594).
  * Pure module shared by the proxy route and the console card; no `server-only`
  * import because the browser runs the same closed parsers.
  *
@@ -43,8 +44,11 @@ import { webadminDataSuccessEnvelope, webadminErrorEnvelope } from "@/lib/webadm
  * The reference meets the draft in exactly one place — `personaScreenPreview()`
  * — whose result is display text and can reach no document.
  *
- * An empty editor box is CORRECT and means "this language has no stored value;
- * the app uses its own compiled string". It is never a value to be filled in.
+ * An empty COMPILED-COPY editor box is CORRECT and means "this language has no
+ * stored value; the app uses its own compiled string". The optional PRE link is
+ * deliberately different: it has no compiled default, so either empty control
+ * means no button. Keeping those two kinds of slot separate below is part of the
+ * contract rather than a presentation convenience.
  */
 
 // ---------------------------------------------------------------------------
@@ -64,6 +68,21 @@ export type PersonaScreenKey = (typeof PERSONA_SCREEN_KEYS)[number];
 export const PERSONA_SCREEN_SLOTS = ["headline", "subtitle", "cta"] as const;
 export type PersonaScreenSlot = (typeof PERSONA_SCREEN_SLOTS)[number];
 
+export const PERSONA_SCREEN_EXTERNAL_LINK_SLOT = "external_link" as const;
+export const PERSONA_SCREEN_EXTERNAL_LINK_FIELDS = ["label", "url"] as const;
+export type PersonaScreenExternalLinkField =
+  (typeof PERSONA_SCREEN_EXTERNAL_LINK_FIELDS)[number];
+
+/** D-089: the structured slot is PRE-only and sits between subtitle and CTA. */
+export const PERSONA_SCREEN_PRESENTATION_SLOTS = {
+  pre: ["headline", "subtitle", PERSONA_SCREEN_EXTERNAL_LINK_SLOT, "cta"],
+  success: PERSONA_SCREEN_SLOTS,
+  failed: PERSONA_SCREEN_SLOTS,
+} as const satisfies Readonly<Record<
+  PersonaScreenKey,
+  readonly (PersonaScreenSlot | typeof PERSONA_SCREEN_EXTERNAL_LINK_SLOT)[]
+>>;
+
 export const PERSONA_SCREEN_LANGUAGES = ["en", "hu"] as const;
 export type PersonaScreenLanguage = (typeof PERSONA_SCREEN_LANGUAGES)[number];
 
@@ -77,6 +96,13 @@ export const PERSONA_SCREEN_SLOT_BYTE_LIMITS: Readonly<Record<PersonaScreenSlot,
   subtitle: 320,
   cta: 40,
 };
+
+export const PERSONA_SCREEN_EXTERNAL_LINK_FIELD_BYTE_LIMITS:
+  Readonly<Record<PersonaScreenExternalLinkField, number>> = {
+  label: 80,
+  url: 2048,
+};
+export const PERSONA_SCREEN_EXTERNAL_LINK_URL_SCHEMES = ["https"] as const;
 
 export const PERSONA_SCREENS_CONTRACT_VERSION = 1;
 /** Contract §9: this family's OWN revision, seeded 1 — never the forced-verification counter. */
@@ -106,7 +132,11 @@ export const PERSONA_SCREENS_CONFLICT_ERROR = "persona-screens-conflict";
 // ---------------------------------------------------------------------------
 
 /** Any subset — a slot appears only where an operator stored something. */
-export type PersonaScreenSlotMap = Partial<Record<PersonaScreenSlot, string>>;
+export type PersonaScreenExternalLink = Partial<Record<PersonaScreenExternalLinkField, string>>;
+export type PersonaScreenSlotMap = Partial<Record<PersonaScreenSlot, string>> & {
+  /** PRE-only. A valid one-field object is retained but publishes no button. */
+  external_link?: PersonaScreenExternalLink;
+};
 export type PersonaScreenMap = Partial<Record<PersonaScreenKey, PersonaScreenSlotMap>>;
 export type PersonaScreensCopyDefault = Partial<Record<PersonaScreenLanguage, PersonaScreenMap>>;
 
@@ -207,15 +237,89 @@ export function personaScreenTrim(value: string): string {
  * the HTML refusal are write-time rules, so a value stored before them still
  * decodes rather than blanking a slot the operator can see.
  */
-function readableSlotText(value: unknown, slot: PersonaScreenSlot): string | null {
+function readableBoundedText(value: unknown, limit: number): string | null {
   if (typeof value !== "string"
     || value === ""
     || !wellFormedUtf16(value)
     || personaScreenTrim(value) !== value
-    || personaScreenSlotByteLength(value) > PERSONA_SCREEN_SLOT_BYTE_LIMITS[slot]
+    || personaScreenSlotByteLength(value) > limit
     || BOUNDARY_WHITESPACE.test(value)
     || CONTROL_CHARACTERS.test(value)) return null;
   return value;
+}
+
+function readableSlotText(value: unknown, slot: PersonaScreenSlot): string | null {
+  return readableBoundedText(value, PERSONA_SCREEN_SLOT_BYTE_LIMITS[slot]);
+}
+
+/**
+ * Core's D-089 URL gate: one case-insensitive scheme, an absolute host, and no
+ * userinfo. The raw string is retained; URL is used only to validate it.
+ *
+ * PHP's `FILTER_VALIDATE_URL` accepts ASCII URL syntax rather than silently
+ * punycoding input. The explicit ASCII and host-label checks keep the browser
+ * from accepting a string Core would refuse before the shared structural
+ * checks are applied.
+ */
+export function personaScreenExternalLinkUrlAllowed(value: string): boolean {
+  if (!/^[\x21-\x7E]+$/u.test(value)
+    || !/^https:\/\//iu.test(value)
+    || value.includes("\\")) return false;
+
+  const authorityEnd = value.slice("https://".length).search(/[/?#]/u);
+  const authority = authorityEnd === -1
+    ? value.slice("https://".length)
+    : value.slice("https://".length, "https://".length + authorityEnd);
+  // Even empty userinfo produces a `user` key in Core's `parse_url()` result.
+  if (authority === "" || authority.includes("@")) return false;
+
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol.toLowerCase() !== "https:"
+      || parsed.hostname === ""
+      || parsed.username !== ""
+      || parsed.password !== "") return false;
+    if (parsed.hostname.startsWith("[") && parsed.hostname.endsWith("]")) {
+      return /^\[[0-9a-f:.]+\]$/iu.test(parsed.hostname);
+    }
+    const hostname = parsed.hostname.endsWith(".")
+      ? parsed.hostname.slice(0, -1)
+      : parsed.hostname;
+    return hostname.split(".").every((label) =>
+      /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/iu.test(label));
+  } catch {
+    return false;
+  }
+}
+
+function readableExternalLinkField(
+  value: unknown,
+  field: PersonaScreenExternalLinkField,
+): string | null {
+  const text = readableBoundedText(
+    value,
+    PERSONA_SCREEN_EXTERNAL_LINK_FIELD_BYTE_LIMITS[field],
+  );
+  if (text === null) return null;
+  return field === "url" && !personaScreenExternalLinkUrlAllowed(text) ? null : text;
+}
+
+/** Strict console/saved-response decoding of the structured stored slot. */
+function parseReadableExternalLink(value: unknown): PersonaScreenExternalLink | null {
+  const source = record(value);
+  if (!source) return null;
+  const keys = Object.keys(source);
+  if (keys.length === 0
+    || keys.some((field) => !(PERSONA_SCREEN_EXTERNAL_LINK_FIELDS as readonly string[])
+      .includes(field))) return null;
+  const link: PersonaScreenExternalLink = {};
+  for (const field of PERSONA_SCREEN_EXTERNAL_LINK_FIELDS) {
+    if (!Object.hasOwn(source, field)) continue;
+    const text = readableExternalLinkField(source[field], field);
+    if (text === null) return null;
+    link[field] = text;
+  }
+  return link;
 }
 
 // ---------------------------------------------------------------------------
@@ -246,7 +350,14 @@ export function parsePersonaScreensCopyDefault(value: unknown): PersonaScreensCo
       if (!slots) return null;
       const parsedSlots: PersonaScreenSlotMap = {};
       for (const slot of Object.keys(slots)) {
-        if (!(PERSONA_SCREEN_SLOTS as readonly string[]).includes(slot)) return null;
+        if (!(PERSONA_SCREEN_PRESENTATION_SLOTS[screen as PersonaScreenKey] as readonly string[])
+          .includes(slot)) return null;
+        if (slot === PERSONA_SCREEN_EXTERNAL_LINK_SLOT) {
+          const link = parseReadableExternalLink(slots[slot]);
+          if (link === null) return null;
+          parsedSlots.external_link = link;
+          continue;
+        }
         const text = readableSlotText(slots[slot], slot as PersonaScreenSlot);
         if (text === null) return null;
         parsedSlots[slot as PersonaScreenSlot] = text;
@@ -346,22 +457,27 @@ export function parsePersonaScreensSaved(value: unknown): PersonaScreensSaved | 
 // ---------------------------------------------------------------------------
 
 /**
- * The editor grid: every language, screen and slot present as a string.
+ * The editor grid: every language and compiled-copy slot present as a string,
+ * plus the two dedicated PRE-link controls.
  *
- * `""` means NOTHING IS STORED for this language — the app renders its own
- * compiled string — and never "an empty value". Core refuses an empty string on
- * write for exactly that reason, so the two can never be confused on the wire.
+ * For a compiled-copy slot, `""` means NOTHING IS STORED and the app renders its
+ * own compiled string. For either link control, `""` means the optional button
+ * is absent; there is no compiled link to fall back to. Empty strings never
+ * reach the wire in either case.
  */
-export type PersonaScreensDraft =
-  Record<PersonaScreenLanguage, Record<PersonaScreenKey, Record<PersonaScreenSlot, string>>>;
+export type PersonaScreensLanguageDraft =
+  Record<PersonaScreenKey, Record<PersonaScreenSlot, string>> & {
+    external_link: Record<PersonaScreenExternalLinkField, string>;
+  };
+export type PersonaScreensDraft = Record<PersonaScreenLanguage, PersonaScreensLanguageDraft>;
 
 /** One language's screens out of the stored map. A single subscript, with no sibling in reach. */
 function languageDraft(
   copyDefault: PersonaScreensCopyDefault,
   language: PersonaScreenLanguage,
-): Record<PersonaScreenKey, Record<PersonaScreenSlot, string>> {
+): PersonaScreensLanguageDraft {
   const stored = copyDefault[language] ?? {};
-  const screens = {} as Record<PersonaScreenKey, Record<PersonaScreenSlot, string>>;
+  const screens = {} as PersonaScreensLanguageDraft;
   for (const screen of PERSONA_SCREEN_KEYS) {
     const slots = {} as Record<PersonaScreenSlot, string>;
     for (const slot of PERSONA_SCREEN_SLOTS) {
@@ -369,6 +485,10 @@ function languageDraft(
     }
     screens[screen] = slots;
   }
+  screens.external_link = {
+    label: stored.pre?.external_link?.label ?? "",
+    url: stored.pre?.external_link?.url ?? "",
+  };
   return screens;
 }
 
@@ -403,6 +523,21 @@ export function personaScreensDraftWithValue(
   };
 }
 
+export function personaScreensDraftWithExternalLinkValue(
+  draft: PersonaScreensDraft,
+  language: PersonaScreenLanguage,
+  field: PersonaScreenExternalLinkField,
+  value: string,
+): PersonaScreensDraft {
+  return {
+    ...draft,
+    [language]: {
+      ...draft[language],
+      external_link: { ...draft[language].external_link, [field]: value },
+    },
+  };
+}
+
 /**
  * The document a save carries, from the draft AND NOTHING ELSE.
  *
@@ -420,6 +555,17 @@ export function personaScreensDocumentFromDraft(draft: PersonaScreensDraft): Per
       for (const slot of PERSONA_SCREEN_SLOTS) {
         const value = draft[language][screen][slot];
         if (value !== "") slots[slot] = value;
+      }
+      if (screen === "pre") {
+        const externalLink: PersonaScreenExternalLink = {};
+        for (const field of PERSONA_SCREEN_EXTERNAL_LINK_FIELDS) {
+          const value = draft[language].external_link[field];
+          if (value !== "") externalLink[field] = value;
+        }
+        // An empty pair means switched off. A one-field pair is intentionally
+        // retained so an operator can save work in progress; publication below
+        // still withholds the whole button until both fields are usable.
+        if (Object.keys(externalLink).length > 0) slots.external_link = externalLink;
       }
       if (Object.keys(slots).length > 0) screens[screen] = slots;
     }
@@ -459,6 +605,21 @@ export function personaScreensSlotCounts(
   return counts;
 }
 
+/** The UI's 9-slot copy count, kept separate from Core's audit slot count. */
+export function personaScreensCompiledSlotCounts(
+  copyDefault: PersonaScreensCopyDefault,
+): Record<PersonaScreenLanguage, number> {
+  const counts = {} as Record<PersonaScreenLanguage, number>;
+  for (const language of PERSONA_SCREEN_LANGUAGES) {
+    counts[language] = PERSONA_SCREEN_KEYS.reduce(
+      (total, screen) => total + PERSONA_SCREEN_SLOTS
+        .filter((slot) => typeof copyDefault[language]?.[screen]?.[slot] === "string").length,
+      0,
+    );
+  }
+  return counts;
+}
+
 // ---------------------------------------------------------------------------
 // Conservative local validation (contract §6: mirror the rules for immediate
 // feedback, but Core's answer is authoritative and names the control)
@@ -471,7 +632,25 @@ export type PersonaScreenSlotIssue =
   | "control"
   | "markup"
   | "angleBrackets"
-  | "malformedText";
+  | "malformedText"
+  | "invalidHttpsUrl";
+
+function personaScreenBoundedTextIssue(
+  value: string,
+  limit: number,
+): Exclude<PersonaScreenSlotIssue, "invalidHttpsUrl"> | null {
+  if (value === "") return null;
+  if (!wellFormedUtf16(value)) return "malformedText";
+  if (personaScreenSlotByteLength(value) > limit) return "overCap";
+  if (personaScreenTrim(value) !== value) return "untrimmed";
+  if (BOUNDARY_WHITESPACE.test(value)) return "boundaryWhitespace";
+  if (CONTROL_CHARACTERS.test(value)) return "control";
+  // R5: the `{{highlight}}` markup does not come back. Refused, never stripped:
+  // silently repairing would show the operator a saved value they did not type.
+  if (value.includes("{{") || value.includes("}}")) return "markup";
+  if (value.includes("<") || value.includes(">")) return "angleBrackets";
+  return null;
+}
 
 /**
  * Why Core would refuse this value, or `null` when it would accept it.
@@ -485,16 +664,22 @@ export function personaScreenSlotIssue(
   value: string,
   slot: PersonaScreenSlot,
 ): PersonaScreenSlotIssue | null {
-  if (value === "") return null;
-  if (!wellFormedUtf16(value)) return "malformedText";
-  if (personaScreenSlotByteLength(value) > PERSONA_SCREEN_SLOT_BYTE_LIMITS[slot]) return "overCap";
-  if (personaScreenTrim(value) !== value) return "untrimmed";
-  if (BOUNDARY_WHITESPACE.test(value)) return "boundaryWhitespace";
-  if (CONTROL_CHARACTERS.test(value)) return "control";
-  // R5: the `{{highlight}}` markup does not come back. Refused, never stripped:
-  // silently repairing would show the operator a saved value they did not type.
-  if (value.includes("{{") || value.includes("}}")) return "markup";
-  if (value.includes("<") || value.includes(">")) return "angleBrackets";
+  return personaScreenBoundedTextIssue(value, PERSONA_SCREEN_SLOT_BYTE_LIMITS[slot]);
+}
+
+/** Empty is valid-but-off; a present URL must pass Core's exact D-089 gate. */
+export function personaScreenExternalLinkFieldIssue(
+  value: string,
+  field: PersonaScreenExternalLinkField,
+): PersonaScreenSlotIssue | null {
+  const issue = personaScreenBoundedTextIssue(
+    value,
+    PERSONA_SCREEN_EXTERNAL_LINK_FIELD_BYTE_LIMITS[field],
+  );
+  if (issue !== null) return issue;
+  if (field === "url" && value !== "" && !personaScreenExternalLinkUrlAllowed(value)) {
+    return "invalidHttpsUrl";
+  }
   return null;
 }
 
@@ -504,21 +689,44 @@ export type PersonaScreenSlotAddress = {
   slot: PersonaScreenSlot;
 };
 
+export type PersonaScreenExternalLinkFieldAddress = {
+  language: PersonaScreenLanguage;
+  screen: "pre";
+  externalLinkField: PersonaScreenExternalLinkField;
+};
+
+export type PersonaScreenFieldAddress =
+  | PersonaScreenSlotAddress
+  | PersonaScreenExternalLinkFieldAddress;
+
 /** Core's field path for one control — `copy_default.hu.pre.headline`. */
-export function personaScreenFieldPath(address: PersonaScreenSlotAddress): string {
-  return `copy_default.${address.language}.${address.screen}.${address.slot}`;
+export function personaScreenFieldPath(address: PersonaScreenFieldAddress): string {
+  return "externalLinkField" in address
+    ? `copy_default.${address.language}.pre.external_link.${address.externalLinkField}`
+    : `copy_default.${address.language}.${address.screen}.${address.slot}`;
 }
+
+export type PersonaScreenDraftIssue = PersonaScreenFieldAddress & {
+  issue: PersonaScreenSlotIssue;
+};
 
 export function personaScreensDraftIssues(
   draft: PersonaScreensDraft,
-): Array<PersonaScreenSlotAddress & { issue: PersonaScreenSlotIssue }> {
-  const issues: Array<PersonaScreenSlotAddress & { issue: PersonaScreenSlotIssue }> = [];
+): PersonaScreenDraftIssue[] {
+  const issues: PersonaScreenDraftIssue[] = [];
   for (const language of PERSONA_SCREEN_LANGUAGES) {
     for (const screen of PERSONA_SCREEN_KEYS) {
       for (const slot of PERSONA_SCREEN_SLOTS) {
         const issue = personaScreenSlotIssue(draft[language][screen][slot], slot);
         if (issue) issues.push({ language, screen, slot, issue });
       }
+    }
+    for (const externalLinkField of PERSONA_SCREEN_EXTERNAL_LINK_FIELDS) {
+      const issue = personaScreenExternalLinkFieldIssue(
+        draft[language].external_link[externalLinkField],
+        externalLinkField,
+      );
+      if (issue) issues.push({ language, screen: "pre", externalLinkField, issue });
     }
   }
   return issues;
@@ -527,6 +735,48 @@ export function personaScreensDraftIssues(
 // ---------------------------------------------------------------------------
 // What the app will actually show
 // ---------------------------------------------------------------------------
+
+export type PersonaScreenExternalLinkState =
+  | { kind: "off" }
+  | { kind: "missingLabel" }
+  | { kind: "missingUrl" }
+  | {
+      kind: "invalid";
+      field: PersonaScreenExternalLinkField;
+      issue: PersonaScreenSlotIssue;
+    }
+  | { kind: "visible"; link: { label: string; url: string } };
+
+/**
+ * One language's optional-link outcome from that language's draft alone. A
+ * half-pair is valid stored work, but never a button; an invalid field blocks a
+ * save and also cannot appear in the preview.
+ */
+export function personaScreenExternalLinkState(
+  draft: PersonaScreensDraft,
+  language: PersonaScreenLanguage,
+): PersonaScreenExternalLinkState {
+  const { label, url } = draft[language].external_link;
+  for (const field of PERSONA_SCREEN_EXTERNAL_LINK_FIELDS) {
+    const issue = personaScreenExternalLinkFieldIssue(
+      draft[language].external_link[field],
+      field,
+    );
+    if (issue) return { kind: "invalid", field, issue };
+  }
+  if (label === "" && url === "") return { kind: "off" };
+  if (label === "") return { kind: "missingLabel" };
+  if (url === "") return { kind: "missingUrl" };
+  return { kind: "visible", link: { label, url } };
+}
+
+function readableExternalLinkPair(value: unknown): { label: string; url: string } | null {
+  const source = record(value);
+  if (!source) return null;
+  const label = readableExternalLinkField(source.label, "label");
+  const url = readableExternalLinkField(source.url, "url");
+  return label === null || url === null ? null : { label, url };
+}
 
 export type PersonaScreensPublishedBlock = {
   contract_version: number;
@@ -537,7 +787,8 @@ export type PersonaScreensPublishedBlock = {
 /**
  * The block Core will publish in `ios_appconfig` for one language — the
  * console's mirror of `PersonaScreensPolicy::appConfigBlock()`, so an operator
- * can be told how many of the nine slots their save actually reaches.
+ * can be told how many of the nine compiled slots their save actually reaches,
+ * and whether the separate optional link publishes.
  *
  * ONE LANGUAGE'S SLOTS IN, ONE LANGUAGE'S BLOCK OUT, for the same reason Core
  * shapes it that way: the other language is not in scope here either.
@@ -551,7 +802,12 @@ export function personaScreensPublishedBlock(
     const slots = screens[screen];
     if (!slots) continue;
     const emitted: PersonaScreenSlotMap = {};
-    for (const slot of PERSONA_SCREEN_SLOTS) {
+    for (const slot of PERSONA_SCREEN_PRESENTATION_SLOTS[screen]) {
+      if (slot === PERSONA_SCREEN_EXTERNAL_LINK_SLOT) {
+        const link = readableExternalLinkPair(slots.external_link);
+        if (link !== null) emitted.external_link = link;
+        continue;
+      }
       const value = readableSlotText(slots[slot], slot);
       if (value !== null) emitted[slot] = value;
     }
@@ -840,6 +1096,14 @@ function writableSlotText(value: unknown, slot: PersonaScreenSlot): string | nul
   return personaScreenSlotIssue(text, slot) === null ? text : null;
 }
 
+function writableExternalLinkField(
+  value: unknown,
+  field: PersonaScreenExternalLinkField,
+): string | null {
+  if (typeof value !== "string" || value === "") return null;
+  return personaScreenExternalLinkFieldIssue(value, field) === null ? value : null;
+}
+
 /** Strictly `{copy_default: {...}}` — the exact document Core's `parseDocument()` accepts. */
 export function parseExactPersonaScreensDocument(value: unknown): PersonaScreensDocument | null {
   const source = record(value);
@@ -852,21 +1116,49 @@ export function parseExactPersonaScreensDocument(value: unknown): PersonaScreens
     const screens = record(languages[language]);
     if (!screens) return null;
     const parsedScreens: PersonaScreenMap = {};
+    let normalizedEmptyLink = false;
     for (const screen of Object.keys(screens)) {
       if (!(PERSONA_SCREEN_KEYS as readonly string[]).includes(screen)) return null;
       const slots = record(screens[screen]);
       if (!slots) return null;
       const parsedSlots: PersonaScreenSlotMap = {};
       for (const slot of Object.keys(slots)) {
-        if (!(PERSONA_SCREEN_SLOTS as readonly string[]).includes(slot)) return null;
+        if (!(PERSONA_SCREEN_PRESENTATION_SLOTS[screen as PersonaScreenKey] as readonly string[])
+          .includes(slot)) return null;
+        if (slot === PERSONA_SCREEN_EXTERNAL_LINK_SLOT) {
+          const sourceLink = record(slots[slot]);
+          if (!sourceLink
+            || Object.keys(sourceLink).some((field) =>
+              !(PERSONA_SCREEN_EXTERNAL_LINK_FIELDS as readonly string[]).includes(field))) return null;
+          const parsedLink: PersonaScreenExternalLink = {};
+          for (const field of PERSONA_SCREEN_EXTERNAL_LINK_FIELDS) {
+            if (!Object.hasOwn(sourceLink, field)) continue;
+            const text = writableExternalLinkField(sourceLink[field], field);
+            if (text === null) return null;
+            parsedLink[field] = text;
+          }
+          if (Object.keys(parsedLink).length > 0) parsedSlots.external_link = parsedLink;
+          else normalizedEmptyLink = true;
+          continue;
+        }
         const text = writableSlotText(slots[slot], slot as PersonaScreenSlot);
         if (text === null) return null;
         parsedSlots[slot as PersonaScreenSlot] = text;
       }
-      if (Object.keys(parsedSlots).length === 0) return null;
+      if (Object.keys(parsedSlots).length === 0) {
+        // Core canonicalizes precisely `{external_link:{}}` to absence. Keep
+        // rejecting unrelated empty screen objects as this boundary always has.
+        if (Object.keys(slots).length === 1
+          && Object.hasOwn(slots, PERSONA_SCREEN_EXTERNAL_LINK_SLOT)
+          && normalizedEmptyLink) continue;
+        return null;
+      }
       parsedScreens[screen as PersonaScreenKey] = parsedSlots;
     }
-    if (Object.keys(parsedScreens).length === 0) return null;
+    if (Object.keys(parsedScreens).length === 0) {
+      if (Object.keys(screens).length === 1 && normalizedEmptyLink) continue;
+      return null;
+    }
     copyDefault[language as PersonaScreenLanguage] = parsedScreens;
   }
   return { copy_default: copyDefault };

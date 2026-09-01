@@ -172,8 +172,9 @@ test("both locales cover the dormant editor and the console that replaced its pl
     assert.deepEqual(
       Object.keys(messages.personaAdmin?.screens ?? {}).sort(),
       [
-        "appearance", "bytes", "closed", "copy", "editing", "emptyMeans", "issueSummary", "issues",
-        "languageCount", "languageGroup", "languages", "loadError", "notices", "published",
+        "appearance", "bytes", "closed", "copy", "editing", "emptyMeans", "externalLink",
+        "issueSummary", "issues", "languageCount", "languageGroup", "languages", "loadError",
+        "notices", "published",
         "readOnly", "refusedControl", "reload", "revision", "rule", "save", "saving", "screenSource",
         "screens", "slots", "title", "unavailable", "unsaved", "viewer", "writer",
       ],

@@ -7,6 +7,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { PersonaScreensEditor } from "../components/PersonaScreensCard.tsx";
 import {
   personaScreensDraft,
+  personaScreensDraftWithExternalLinkValue,
   personaScreensDraftWithValue,
   type PersonaScreenLanguage,
   type PersonaScreensConsole,
@@ -26,6 +27,10 @@ import {
  */
 const OPERATOR_HU_HEADLINE = "OPERÁTOR HU főcím, ember gépelte";
 const OPERATOR_EN_HEADLINE = "OPERATOR EN headline, typed by a human";
+const OPERATOR_HU_LINK_LABEL = "OPERÁTOR HU tájékoztató link — kézzel beírva";
+const OPERATOR_HU_LINK_URL = "https://example.com/hu/persona?forras=operator#reszletek";
+const OPERATOR_EN_LINK_LABEL = "OPERATOR EN policy link — typed in this console";
+const OPERATOR_EN_LINK_URL = "https://example.com/en/persona?source=operator#details";
 
 /** Stand-ins for the app's compiled strings, distinct from every operator value. */
 function reference(): PersonaScreensConsole["compiled_reference"] {
@@ -76,6 +81,7 @@ async function render(options: {
       refusedField: options.refusedField ?? null,
       onLanguage: () => {},
       onPatch: () => {},
+      onExternalLinkPatch: () => {},
       onReload: () => {},
       onSave: () => {},
     }),
@@ -97,7 +103,7 @@ function valueAttributes(markup: string): string[] {
   return [...markup.matchAll(/value="([^"]*)"/g)].map((match) => match[1]);
 }
 
-test("an untouched console shows nine empty boxes, each saying the app supplies that slot", async () => {
+test("an untouched console states both opposite empty meanings at all eleven controls", async () => {
   for (const locale of ["en", "hu"] as const) {
     const markup = await render({ locale, copyDefault: {} });
     const messages = JSON.parse(
@@ -106,6 +112,11 @@ test("an untouched console shows nine empty boxes, each saying the app supplies 
     const screens = messages.personaAdmin.screens;
 
     // Every editor is empty, and the app's own copy is ghost text beside it.
+    assert.equal(
+      [...markup.matchAll(/<(?:input|textarea)[^>]+id="persona-screens-/gu)].length,
+      11,
+      `${locale} has nine copy and two link controls`,
+    );
     assert.equal(valueAttributes(markup).filter((value) => value !== "").length, 0, locale);
     for (const slot of ["headline", "subtitle", "cta"]) {
       assert.ok(markup.includes(`placeholder="APP EN pre ${slot}"`), `${locale} ${slot} placeholder`);
@@ -113,8 +124,15 @@ test("an untouched console shows nine empty boxes, each saying the app supplies 
     // Emptiness is stated in words rather than left to be interpreted.
     const emptyHint = escaped(screens.emptyMeans.replace("{language}", screens.languages.en));
     assert.equal(markup.split(emptyHint).length - 1, 9, `${locale} says so on all nine controls`);
+    for (const field of ["label", "url"] as const) {
+      const linkHint = escaped(screens.externalLink.controls[field].empty
+        .replace("{language}", screens.languages.en));
+      assert.equal(markup.split(linkHint).length - 1, 1,
+        `${locale} ${field} says empty means no button and no app copy`);
+    }
     assert.ok(markup.includes(escaped(screens.rule.emptyIsCorrect)), `${locale} rule copy`);
     assert.ok(markup.includes(escaped(screens.rule.perLanguage)), `${locale} per-language copy`);
+    assert.ok(markup.includes(escaped(screens.externalLink.status.off.title)), `${locale} button-off status`);
   }
 });
 
@@ -124,6 +142,15 @@ test("the compiled reference is a placeholder and never a value", async () => {
     assert.equal(value.startsWith("APP "), false, `the app's own copy appeared as a value: ${value}`);
   }
   assert.ok(markup.includes('placeholder="APP EN pre headline"'));
+  for (const field of ["label", "url"] as const) {
+    const control = markup.match(new RegExp(
+      `<input[^>]*id="persona-screens-en-pre-external-link-${field}"[^>]*>`,
+      "u",
+    ))?.[0] ?? "";
+    assert.notEqual(control, "", `${field} link control exists`);
+    assert.equal(control.includes("placeholder="), false,
+      `${field} has no compiled default to show as a placeholder`);
+  }
   // The preview still shows what the member would get, so the operator can see
   // the screen they are about to change.
   assert.ok(markup.includes("APP EN pre headline"), "the preview renders the app's own copy");
@@ -132,7 +159,10 @@ test("the compiled reference is a placeholder and never a value", async () => {
 test("a Hungarian tab shows no English at all when only English is stored", async () => {
   const englishOnly: PersonaScreensCopyDefault = {
     en: {
-      pre: { headline: OPERATOR_EN_HEADLINE },
+      pre: {
+        headline: OPERATOR_EN_HEADLINE,
+        external_link: { label: OPERATOR_EN_LINK_LABEL, url: OPERATOR_EN_LINK_URL },
+      },
       success: { headline: OPERATOR_EN_HEADLINE },
       failed: { headline: OPERATOR_EN_HEADLINE },
     },
@@ -140,6 +170,10 @@ test("a Hungarian tab shows no English at all when only English is stored", asyn
   const hungarian = await render({ locale: "hu", copyDefault: englishOnly, language: "hu" });
   assert.equal(hungarian.includes(OPERATOR_EN_HEADLINE), false,
     "an operator's English reached the Hungarian tab");
+  assert.equal(hungarian.includes(OPERATOR_EN_LINK_LABEL), false,
+    "an operator's English link label reached the Hungarian tab");
+  assert.equal(hungarian.includes(OPERATOR_EN_LINK_URL), false,
+    "an operator's English link URL reached the Hungarian tab");
   assert.equal(valueAttributes(hungarian).filter((value) => value !== "").length, 0,
     "every Hungarian box is empty, which is the correct state");
   // Its preview is the app's complete Hungarian, which is what a member gets.
@@ -147,6 +181,8 @@ test("a Hungarian tab shows no English at all when only English is stored", asyn
 
   const english = await render({ locale: "hu", copyDefault: englishOnly, language: "en" });
   assert.ok(english.includes(`value="${OPERATOR_EN_HEADLINE}"`), "the English tab shows the stored English");
+  assert.ok(english.includes(`value="${OPERATOR_EN_LINK_LABEL}"`), "the English tab shows its own link label");
+  assert.ok(english.includes(`value="${OPERATOR_EN_LINK_URL}"`), "the English tab shows its own link URL");
 });
 
 test("an operator's Hungarian renders in the editor and in both appearances of the preview", async () => {
@@ -175,6 +211,65 @@ test("an operator's Hungarian renders in the editor and in both appearances of t
   );
 });
 
+test("a complete operator-authored link previews between subtitle and CTA in both appearances", async () => {
+  const markup = await render({
+    locale: "hu",
+    copyDefault: {},
+    language: "hu",
+    draft: (draft) => personaScreensDraftWithExternalLinkValue(
+      personaScreensDraftWithExternalLinkValue(draft, "hu", "label", OPERATOR_HU_LINK_LABEL),
+      "hu",
+      "url",
+      OPERATOR_HU_LINK_URL,
+    ),
+  });
+  const messages = JSON.parse(
+    await readFile(new URL("../messages/hu.json", import.meta.url), "utf8"),
+  );
+  assert.equal(markup.split(OPERATOR_HU_LINK_LABEL).length - 1, 3,
+    "label control plus light and dark previews");
+  assert.equal(markup.split(OPERATOR_HU_LINK_URL).length - 1, 3,
+    "URL control plus the title on both preview link rows");
+  assert.ok(markup.includes(escaped(messages.personaAdmin.screens.externalLink.status.visible.title)));
+
+  const subtitleControl = markup.indexOf('id="persona-screens-hu-pre-subtitle"');
+  const labelControl = markup.indexOf('id="persona-screens-hu-pre-external-link-label"');
+  const urlControl = markup.indexOf('id="persona-screens-hu-pre-external-link-url"');
+  const ctaControl = markup.indexOf('id="persona-screens-hu-pre-cta"');
+  assert.ok(subtitleControl < labelControl && labelControl < urlControl && urlControl < ctaControl,
+    "the editor follows headline → subtitle → external_link → cta");
+
+  for (const frame of markup.split('<figure class="persona-screens-phone').slice(1, 3)) {
+    const subtitle = frame.indexOf("persona-screens-phone-subtitle");
+    const link = frame.indexOf("persona-screens-phone-external-link");
+    const cta = frame.indexOf("persona-screens-phone-cta");
+    assert.ok(subtitle < link && link < cta, "the member preview follows the same presentation order");
+  }
+});
+
+test("each half-pair is saveable but visibly hidden from both previews", async () => {
+  const messages = JSON.parse(
+    await readFile(new URL("../messages/en.json", import.meta.url), "utf8"),
+  );
+  for (const [field, value, status] of [
+    ["label", OPERATOR_EN_LINK_LABEL, "missingUrl"],
+    ["url", OPERATOR_EN_LINK_URL, "missingLabel"],
+  ] as const) {
+    const markup = await render({
+      locale: "en",
+      copyDefault: {},
+      language: "en",
+      draft: (draft) => personaScreensDraftWithExternalLinkValue(draft, "en", field, value),
+    });
+    assert.ok(markup.includes(escaped(messages.personaAdmin.screens.externalLink.status[status].title)));
+    assert.ok(markup.includes(escaped(messages.personaAdmin.screens.externalLink.status[status].detail)));
+    assert.equal(markup.includes("persona-screens-phone-external-link"), false,
+      `${field}-only must reserve no preview row`);
+    assert.doesNotMatch(markup, /<button[^>]*class="button button-primary"[^>]*disabled=""/,
+      `${field}-only is a valid draft that can be saved`);
+  }
+});
+
 test("the card counts, per language, how much of the screen the operator actually owns", async () => {
   const messages = JSON.parse(
     await readFile(new URL("../messages/en.json", import.meta.url), "utf8"),
@@ -187,10 +282,22 @@ test("the card counts, per language, how much of the screen the operator actuall
 
   const markup = await render({
     locale: "en",
-    copyDefault: { en: { pre: { headline: OPERATOR_EN_HEADLINE, cta: "Start" } } },
+    copyDefault: {
+      en: {
+        pre: {
+          headline: OPERATOR_EN_HEADLINE,
+          external_link: { label: OPERATOR_EN_LINK_LABEL, url: OPERATOR_EN_LINK_URL },
+          cta: "Start",
+        },
+      },
+    },
   });
   assert.ok(markup.includes(escaped(row("English", 2))), "two English slots come from the operator");
   assert.ok(markup.includes(escaped(row("Hungarian", 0))), "and none in Hungarian, which is a fact worth showing");
+  assert.ok(markup.includes(escaped(messages.personaAdmin.screens.externalLink.published
+    .replace("{language}", "English")
+    .replace("{status}", messages.personaAdmin.screens.externalLink.status.visible.title))),
+    "the optional link is reported separately rather than becoming a tenth compiled slot");
 });
 
 test("a refused value marks the exact control Core named, not the form", async () => {
@@ -227,6 +334,45 @@ test("a locally refusable value blocks the save and names its own field path", a
   assert.match(markup, /<button[^>]*class="button button-primary"[^>]*disabled=""/);
 });
 
+test("an unsafe URL blocks save, names the URL field, and previews no link", async () => {
+  const messages = JSON.parse(
+    await readFile(new URL("../messages/en.json", import.meta.url), "utf8"),
+  );
+  const markup = await render({
+    locale: "en",
+    copyDefault: {},
+    language: "en",
+    draft: (draft) => personaScreensDraftWithExternalLinkValue(
+      personaScreensDraftWithExternalLinkValue(draft, "en", "label", OPERATOR_EN_LINK_LABEL),
+      "en",
+      "url",
+      "http://operator.invalid/persona",
+    ),
+  });
+  assert.ok(markup.includes(escaped(messages.personaAdmin.screens.issues.invalidHttpsUrl)));
+  assert.ok(markup.includes(escaped(messages.personaAdmin.screens.issueSummary
+    .replace("{count}", "1")
+    .replace("{field}", "copy_default.en.pre.external_link.url"))));
+  assert.ok(markup.includes(escaped(messages.personaAdmin.screens.externalLink.status.invalid.title)));
+  assert.equal(markup.includes("persona-screens-phone-external-link"), false);
+  assert.match(markup, /<button[^>]*class="button button-primary"[^>]*disabled=""/);
+});
+
+test("a Core URL refusal marks that exact dedicated control", async () => {
+  const markup = await render({
+    locale: "en",
+    copyDefault: {},
+    language: "hu",
+    refusedField: "copy_default.hu.pre.external_link.url",
+  });
+  const messages = JSON.parse(
+    await readFile(new URL("../messages/en.json", import.meta.url), "utf8"),
+  );
+  const marker = markup.indexOf(escaped(messages.personaAdmin.screens.refusedControl));
+  const control = markup.lastIndexOf('id="persona-screens-hu-pre-external-link-url"', marker);
+  assert.ok(control >= 0 && control < marker);
+});
+
 test("a reader sees the copy and no way to change it", async () => {
   const markup = await render({ locale: "en", copyDefault: {}, editable: false });
   const messages = JSON.parse(
@@ -234,9 +380,9 @@ test("a reader sees the copy and no way to change it", async () => {
   );
   assert.ok(markup.includes(escaped(messages.personaAdmin.screens.readOnly)));
   assert.ok(markup.includes(escaped(messages.personaAdmin.screens.viewer)));
-  // Nine editors plus the save button; the language tabs and the reload button
+  // Eleven editors plus the save button; the language tabs and the reload button
   // stay live because reading in the other language is not a write.
-  assert.equal(markup.split('disabled=""').length - 1, 10, "every editor and the save button are disabled");
+  assert.equal(markup.split('disabled=""').length - 1, 12, "every editor and the save button are disabled");
 });
 
 /**
@@ -258,10 +404,12 @@ test("no control exists that fills an editor from the reference or the other lan
 
   for (const line of source.split("\n")) {
     if (/\breference\b|compiled_reference/.test(line)) {
-      assert.doesNotMatch(line, /setDraft|personaScreensDraftWithValue|onPatch\(/,
+      assert.doesNotMatch(
+        line,
+        /setDraft|personaScreensDraftWith(?:ExternalLink)?Value|onPatch\(|onExternalLinkPatch/,
         `the reference must never reach a draft mutation: ${line.trim()}`);
     }
-    if (/personaScreensDraftWithValue|setDraft\(/.test(line)) {
+    if (/personaScreensDraftWith(?:ExternalLink)?Value|setDraft\(/.test(line)) {
       assert.doesNotMatch(line, /"en"|"hu"/,
         `a draft mutation must never name a language literally: ${line.trim()}`);
     }

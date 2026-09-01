@@ -896,13 +896,13 @@
           },
           "screenCopy": {
             "title": "Verification screen copy",
-            "purpose": "The pre-verification, success and failed screens the app shows around Persona, edited per language and published by Core on the launch configuration for the member's own language.",
+            "purpose": "The pre-verification, success and failed screens the app shows around Persona, plus the optional PRE link button, edited per language and published by Core on the launch configuration for the member's own language.",
             "actions": {
-              "1": "Pick a language tab first, then type only into the slots you want to replace; the grey text is what the app says today and is never saved.",
-              "2": "Leave a slot empty to keep the app's own copy for that language, and read the per-language count under the editors before saving.",
+              "1": "Pick a language tab first, then type only into the headline, subtitle or primary-button slots you want to replace; their grey text is what the app says today and is never saved.",
+              "2": "Leave an ordinary copy slot empty to keep the app's own copy. The optional link is the opposite: an empty label or URL means no button, and a saved half-pair remains hidden until that same language has both fields.",
               "3": "On a conflict the editor reloads what is stored and never replays your save; make the change again on top of the reloaded copy."
             },
-            "guidance": "Nothing is copied between languages, by this console or by Core. An English sentence typed into a Hungarian box is published to Hungarian members exactly as typed, so translate rather than paste."
+            "guidance": "Nothing is copied between languages, by this console or by Core — not even the URL. A complete link uses an absolute HTTPS URL with a host and no credentials; an English value typed into a Hungarian control is published to Hungarian members exactly as typed."
           },
           "startConfig": {
             "title": "Complete start-screen editor",
@@ -3340,7 +3340,7 @@
     },
     "screens": {
       "title": "Verification screens the app shows",
-      "copy": "The pre-verification, success and failed screens members see around Persona. Core publishes what you write here for the member's own language; anything you leave empty stays the app's own compiled copy.",
+      "copy": "The pre-verification, success and failed screens members see around Persona. The nine headline, subtitle and primary-button fields use the app's own compiled copy when empty. The optional PRE link is different: it has no compiled default, so an empty label or URL means no link button.",
       "loadError": "The Persona screens console could not be decoded safely. Nothing editable has been assumed.",
       "revision": "Revision {revision}",
       "writer": "You may save",
@@ -3360,18 +3360,18 @@
         "detail": "Core answered that the stored copy is unreadable, so this console will not show you a repaired version of it. Members are unaffected: the app renders its own compiled screens. Reload once Core recovers, and do not retype the copy until you can see what is stored."
       },
       "rule": {
-        "title": "An empty box is correct.",
-        "emptyIsCorrect": "Leave a box empty and the app uses its own copy for that slot, in the member's own language. The grey text inside an empty box is what the app says today — a reference, never a value. It is not sent when you save.",
-        "perLanguage": "Each language is stored on its own. Nothing you type in one language is ever copied into the other, and an English sentence saved into a Hungarian box would be shown to Hungarian members exactly as you typed it."
+        "title": "An empty ordinary copy box is correct.",
+        "emptyIsCorrect": "For a headline, subtitle or primary button label, leave the box empty and the app uses its own copy in the member's language. The grey text is what the app says today — a reference, never a value. It is not sent when you save.",
+        "perLanguage": "Every copy slot and each optional-link field is stored per language. Nothing you type in one language — including a URL — is ever copied into the other."
       },
       "languageGroup": "Language being edited",
       "languages": {
         "en": "English",
         "hu": "Hungarian"
       },
-      "languageCount": "{count} of {total}",
+      "languageCount": "{count} of {total} copy",
       "editing": "You are editing the {language} copy. The other language is untouched by anything you do here.",
-      "screenSource": "{operator} of {total} from you",
+      "screenSource": "{operator} of {total} copy fields from you",
       "screens": {
         "pre": {
           "title": "Before verification",
@@ -3397,13 +3397,56 @@
       "emptyMeans": "Empty — the app uses its own {language} copy here.",
       "bytes": "{used} of {max} bytes",
       "issues": {
-        "overCap": "Too long for this slot. Accented Hungarian characters cost two bytes each.",
+        "overCap": "Too long for this control. Accented Hungarian characters cost two bytes each.",
         "untrimmed": "Remove the space at the start or the end.",
         "boundaryWhitespace": "Remove the invisible character at the start or the end.",
         "control": "Remove the control character or line break; every slot is a single line.",
         "markup": "Curly braces are not markup here and are refused. Write the sentence plainly.",
         "angleBrackets": "Angle brackets are refused. Write the sentence plainly.",
-        "malformedText": "This text is not valid; retype it rather than pasting it."
+        "malformedText": "This text is not valid; retype it rather than pasting it.",
+        "invalidHttpsUrl": "Use an absolute HTTPS URL with a host and no embedded credentials."
+      },
+      "externalLink": {
+        "title": "Optional link button",
+        "optional": "PRE only",
+        "copy": "A transparent link-style button shown between the subtitle and primary button only when this language has both valid fields.",
+        "fields": {
+          "label": "Link button label",
+          "url": "Link button HTTPS URL"
+        },
+        "controls": {
+          "label": {
+            "empty": "Empty means no link button — there is no app copy for this control. The label appears only with a valid HTTPS URL stored for {language}.",
+            "rules": "{used} of {max} bytes. Single-line operator copy; maximum 80 UTF-8 bytes."
+          },
+          "url": {
+            "empty": "Empty means no link button — there is no app copy for this control. This URL belongs only to {language} and is never copied from the other language.",
+            "rules": "{used} of {max} bytes. Use an absolute HTTPS URL with a host and no credentials."
+          }
+        },
+        "status": {
+          "off": {
+            "title": "Button off",
+            "detail": "Both {language} link controls are empty. Saving this state publishes no link button."
+          },
+          "missingLabel": {
+            "title": "Button hidden — label missing",
+            "detail": "You can save this URL for later, but members see no link button until this same language also has a label."
+          },
+          "missingUrl": {
+            "title": "Button hidden — URL missing",
+            "detail": "You can save this label for later, but members see no link button until this same language also has a valid HTTPS URL."
+          },
+          "invalid": {
+            "title": "Button hidden — invalid value",
+            "detail": "Core would refuse {field}. Fix it before saving; no link button is previewed."
+          },
+          "visible": {
+            "title": "Button visible",
+            "detail": "This complete {language} pair is shown between the subtitle and primary button in both previews."
+          }
+        },
+        "published": "{language} optional link — {status}"
       },
       "refusedControl": "Core refused this exact value.",
       "issueSummary": "{count} value(s) cannot be saved. Start with {field}.",
@@ -3413,7 +3456,7 @@
       },
       "published": {
         "title": "What members will get",
-        "copy": "Counted from the editors above, per language, exactly as Core resolves it.",
+        "copy": "The nine compiled-copy slots are counted separately from the optional link, per language, exactly as Core resolves them.",
         "row": "{language}: {published} of {total} slots come from you, {compiled} from the app's own copy.",
         "reference": "The grey reference text mirrors the app itself ({authority}). If the two ever disagree, the app is right."
       },

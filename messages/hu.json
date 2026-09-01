@@ -896,13 +896,13 @@
           },
           "screenCopy": {
             "title": "Hitelesítési képernyők szövege",
-            "purpose": "A Persona körüli három képernyő — hitelesítés előtt, sikeres, sikertelen — szövege nyelvenként szerkesztve, amelyet a Core az indítási konfiguráción, a tag saját nyelvén tesz közzé.",
+            "purpose": "A Persona körüli három képernyő — hitelesítés előtt, sikeres, sikertelen — szövege és a PRE opcionális linkgombja nyelvenként szerkesztve, amelyet a Core az indítási konfiguráción, a tag saját nyelvén tesz közzé.",
             "actions": {
-              "1": "Először válassz nyelvfület, majd csak azokba a mezőkbe írj, amelyeket le akarsz cserélni; a halvány szöveg az app mai szövege, és soha nem kerül mentésre.",
-              "2": "Hagyd üresen a mezőt, ha az adott nyelven az app saját szövegét szeretnéd megtartani, és mentés előtt nézd meg a szerkesztők alatti nyelvenkénti számot.",
+              "1": "Először válassz nyelvfület, majd csak azokba a főcím-, alcím- vagy elsődleges gombfelirat-mezőkbe írj, amelyeket le akarsz cserélni; a halvány szöveg az app mai szövege, és soha nem kerül mentésre.",
+              "2": "A normál szövegmezőt hagyd üresen az app saját szövegéhez. Az opcionális link fordítva működik: üres felirat vagy URL esetén nincs gomb, a mentett félpár pedig rejtve marad, amíg ugyanezen a nyelven nincs meg mindkét mező.",
               "3": "Ütközéskor a szerkesztő újratölti a tárolt állapotot, és soha nem játssza vissza a mentésedet; végezd el újra a módosítást az újratöltött szövegen."
             },
-            "guidance": "Semmi nem másolódik át a nyelvek között — sem ebben a konzolban, sem a Core-ban. Egy magyar mezőbe gépelt angol mondat pontosan úgy jelenik meg a magyar tagoknál, ahogy beírtad, ezért fordíts, ne másolj."
+            "guidance": "Semmi nem másolódik át a nyelvek között — az URL sem. A teljes linkhez abszolút HTTPS URL kell hoszttal és hitelesítő adatok nélkül; a magyar vezérlőbe gépelt angol érték pontosan úgy jelenik meg a magyar tagoknál, ahogy beírtad."
           },
           "startConfig": {
             "title": "Teljes indítóképernyő-szerkesztő",
@@ -3340,7 +3340,7 @@
     },
     "screens": {
       "title": "Az app hitelesítési képernyői",
-      "copy": "A Persona körüli három képernyő szövege: hitelesítés előtt, sikeres és sikertelen. Amit ide írsz, a Core a tag saját nyelvén teszi közzé; amit üresen hagysz, az az app saját, buildbe fordított szövege marad.",
+      "copy": "A Persona körüli három képernyő szövege: hitelesítés előtt, sikeres és sikertelen. A kilenc főcím-, alcím- és elsődleges gombfelirat-mező üresen az app saját, buildbe fordított szövegét használja. A PRE opcionális linkje más: nincs beépített alapértéke, ezért az üres felirat vagy URL azt jelenti, hogy nincs linkgomb.",
       "loadError": "A hitelesítési képernyők konzolja nem dekódolható biztonságosan. A felület nem feltételez szerkeszthető állapotot.",
       "revision": "{revision}. revízió",
       "writer": "Mentheted",
@@ -3360,18 +3360,18 @@
         "detail": "A Core azt válaszolta, hogy a tárolt szöveg olvashatatlan, ezért ez a konzol nem mutat neked egy magától megjavított változatot. A tagokat ez nem érinti: az app a saját beépített képernyőit jeleníti meg. Töltsd újra, ha a Core rendbe jött, és ne gépeld újra a szöveget, amíg nem látod, mi van eltárolva."
       },
       "rule": {
-        "title": "Az üres mező helyes.",
-        "emptyIsCorrect": "Ha üresen hagysz egy mezőt, az app a saját szövegét használja arra a helyre, a tag saját nyelvén. Az üres mezőben látszó halvány szöveg az, amit az app ma mond — referencia, nem érték. Mentéskor nem kerül elküldésre.",
-        "perLanguage": "A két nyelv külön tárolódik. Amit az egyik nyelven beírsz, soha nem másolódik át a másikba — és egy magyar mezőbe mentett angol mondatot a magyar tagok pontosan úgy látnák, ahogy beírtad."
+        "title": "Az üres, normál szövegmező helyes.",
+        "emptyIsCorrect": "Főcímnél, alcímnél vagy az elsődleges gomb feliratánál hagyd üresen a mezőt, és az app a saját szövegét használja a tag nyelvén. A halvány szöveg az, amit az app ma mond — referencia, nem érték. Mentéskor nem kerül elküldésre.",
+        "perLanguage": "Minden szöveghely és az opcionális link mindkét mezője nyelvenként külön tárolódik. Amit az egyik nyelven beírsz — az URL-t is beleértve —, soha nem másolódik át a másikba."
       },
       "languageGroup": "Szerkesztett nyelv",
       "languages": {
         "en": "angol",
         "hu": "magyar"
       },
-      "languageCount": "{count} / {total}",
+      "languageCount": "{count} / {total} szöveg",
       "editing": "Most a(z) {language} szöveget szerkeszted. A másik nyelvet semmi sem érinti, amit itt csinálsz.",
-      "screenSource": "Tőled {operator} / {total}",
+      "screenSource": "Tőled {operator} / {total} szövegmező",
       "screens": {
         "pre": {
           "title": "Hitelesítés előtt",
@@ -3397,13 +3397,56 @@
       "emptyMeans": "Üres — itt az app a saját {language} szövegét használja.",
       "bytes": "{used} / {max} bájt",
       "issues": {
-        "overCap": "Túl hosszú ehhez a mezőhöz. A magyar ékezetes betűk kettő bájtot érnek.",
+        "overCap": "Túl hosszú ehhez a vezérlőhöz. A magyar ékezetes betűk kettő bájtot érnek.",
         "untrimmed": "Töröld a szóközt az elejéről vagy a végéről.",
         "boundaryWhitespace": "Töröld a láthatatlan karaktert az elejéről vagy a végéről.",
         "control": "Töröld a vezérlőkaraktert vagy a sortörést; minden mező egyetlen soros.",
         "markup": "A kapcsos zárójel itt nem formázás, és el lesz utasítva. Írd le a mondatot egyszerűen.",
         "angleBrackets": "A csúcsos zárójelet a rendszer elutasítja. Írd le a mondatot egyszerűen.",
-        "malformedText": "Ez a szöveg érvénytelen; gépeld be újra beillesztés helyett."
+        "malformedText": "Ez a szöveg érvénytelen; gépeld be újra beillesztés helyett.",
+        "invalidHttpsUrl": "Abszolút HTTPS URL-t adj meg hoszttal és beágyazott hitelesítő adatok nélkül."
+      },
+      "externalLink": {
+        "title": "Opcionális linkgomb",
+        "optional": "Csak PRE",
+        "copy": "Átlátszó, linkszerű gomb az alcím és az elsődleges gomb között; csak akkor jelenik meg, ha ezen a nyelven mindkét mező érvényes.",
+        "fields": {
+          "label": "Linkgomb felirata",
+          "url": "Linkgomb HTTPS URL-je"
+        },
+        "controls": {
+          "label": {
+            "empty": "Az üres mező azt jelenti, hogy nincs linkgomb — ehhez a vezérlőhöz nincs app-szöveg. A felirat csak a(z) {language} nyelvhez tartozó, érvényes HTTPS URL-lel jelenik meg.",
+            "rules": "{used} / {max} bájt. Egysoros operátori szöveg; legfeljebb 80 UTF-8 bájt."
+          },
+          "url": {
+            "empty": "Az üres mező azt jelenti, hogy nincs linkgomb — ehhez a vezérlőhöz nincs app-szöveg. Ez az URL csak a(z) {language} nyelvhez tartozik, és soha nem másolódik át a másik nyelvből.",
+            "rules": "{used} / {max} bájt. Abszolút HTTPS URL-t adj meg hoszttal és hitelesítő adatok nélkül."
+          }
+        },
+        "status": {
+          "off": {
+            "title": "A gomb ki van kapcsolva",
+            "detail": "Mindkét {language} linkmező üres. Ezt az állapotot mentve sem jelenik meg linkgomb."
+          },
+          "missingLabel": {
+            "title": "A gomb rejtve — hiányzik a felirat",
+            "detail": "Ezt az URL-t elmentheted későbbre, de a tagok addig nem látnak linkgombot, amíg ugyanezen a nyelven feliratot is nem adsz."
+          },
+          "missingUrl": {
+            "title": "A gomb rejtve — hiányzik az URL",
+            "detail": "Ezt a feliratot elmentheted későbbre, de a tagok addig nem látnak linkgombot, amíg ugyanezen a nyelven érvényes HTTPS URL-t is nem adsz."
+          },
+          "invalid": {
+            "title": "A gomb rejtve — érvénytelen érték",
+            "detail": "A Core elutasítaná ezt a mezőt: {field}. Javítsd mentés előtt; az előnézetben sem jelenik meg linkgomb."
+          },
+          "visible": {
+            "title": "A gomb látható",
+            "detail": "Ez a teljes, {language} nyelvű pár mindkét előnézetben az alcím és az elsődleges gomb között látható."
+          }
+        },
+        "published": "{language} opcionális link — {status}"
       },
       "refusedControl": "A Core pontosan ezt az értéket utasította el.",
       "issueSummary": "{count} érték nem menthető. Kezdd ezzel: {field}.",
@@ -3413,7 +3456,7 @@
       },
       "published": {
         "title": "Amit a tagok kapni fognak",
-        "copy": "A fenti szerkesztőkből számolva, nyelvenként, pontosan úgy, ahogy a Core feloldja.",
+        "copy": "A kilenc normál szövegmezőt az opcionális linktől külön számoljuk, nyelvenként, pontosan úgy, ahogy a Core feloldja őket.",
         "row": "{language}: {total} helyből {published} tőled jön, {compiled} az app saját szövegéből.",
         "reference": "A halvány referenciaszöveg magát az appot tükrözi ({authority}). Ha a kettő valaha eltér, az appnak van igaza."
       },

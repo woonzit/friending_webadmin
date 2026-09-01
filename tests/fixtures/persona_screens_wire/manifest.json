@@ -1,8 +1,8 @@
 {
     "schema_version": 1,
     "contract_version": 1,
-    "source_commit": "e5c0bc14a24bfbfedc14b5a81d866b95b5aa7348",
-    "contract_manifest_sha256": "096da8bfeee97d89f67d8fa1ec50cd9430502cb773b161d0d2878c5577df8fcd",
+    "source_commit": "5e4591b6a9ae41a283798654eaa2ae3bae95c4ef",
+    "contract_manifest_sha256": "68bc244bc2781d1679bb88b87d4145a24fb1d9cafaf9c87bafdb7e9757a29f74",
     "fixture_set_sha256": "7b9f1642acf40d7f16840824642c8a78bd317b8f0f82fbfc552695ae869e770c",
     "provenance": {
         "generator": "tests/persona_screens_fixture_dump.php",

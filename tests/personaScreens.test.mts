@@ -5,27 +5,40 @@ import {
   PERSONA_SCREENS_ACTIONS,
   PERSONA_SCREENS_CONTRACT_VERSION,
   PERSONA_SCREENS_REVISION_MAX,
+  PERSONA_SCREEN_EXTERNAL_LINK_FIELD_BYTE_LIMITS,
+  PERSONA_SCREEN_EXTERNAL_LINK_FIELDS,
+  PERSONA_SCREEN_EXTERNAL_LINK_URL_SCHEMES,
   PERSONA_SCREEN_KEYS,
   PERSONA_SCREEN_LANGUAGES,
+  PERSONA_SCREEN_PRESENTATION_SLOTS,
   PERSONA_SCREEN_SLOTS,
   PERSONA_SCREEN_SLOT_BYTE_LIMITS,
+  decodePersonaScreensConsoleResponse,
   decodePersonaScreensSaveResponse,
   normalizePersonaScreensProxyBody,
+  parseExactPersonaScreensDocument,
   parsePersonaScreensAdminMe,
+  personaScreenExternalLinkFieldIssue,
+  personaScreenExternalLinkState,
+  personaScreenExternalLinkUrlAllowed,
+  personaScreenFieldPath,
   personaScreenPreview,
   personaScreenSlotByteLength,
   personaScreenSlotIssue,
   personaScreensAccess,
+  personaScreensCompiledSlotCounts,
   personaScreensProjectionFrom,
   personaScreensDocumentFromDraft,
   personaScreensDocumentsEqual,
   personaScreensDraft,
   personaScreensDraftIssues,
+  personaScreensDraftWithExternalLinkValue,
   personaScreensDraftWithValue,
   personaScreensForLanguage,
   personaScreensProxyCapabilityAuthorized,
   personaScreensPublishedBlock,
   personaScreensSlotCounts,
+  type PersonaScreenMap,
   type PersonaScreensCopyDefault,
   type PersonaScreensReference,
 } from "../lib/personaScreens.ts";
@@ -48,6 +61,14 @@ const OPERATOR_HU = {
   headline: "OPERÁTOR HU főcím, ember gépelte",
   subtitle: "OPERÁTOR HU alcím, ami az appban sehol nem szerepel.",
   cta: "OPERÁTOR HU gomb",
+} as const;
+const OPERATOR_EN_LINK = {
+  label: "OPERATOR EN Persona policy link — typed here",
+  url: "https://example.com/en/persona?source=webadmin-operator-en#details",
+} as const;
+const OPERATOR_HU_LINK = {
+  label: "OPERÁTOR HU Persona-tájékoztató — kézzel beírva",
+  url: "https://example.com/hu/persona?forras=webadmin-operator-hu#reszletek",
 } as const;
 
 /** A complete two-language mirror whose strings differ from every operator value above. */
@@ -85,10 +106,31 @@ function successEnvelope(data: unknown): Record<string, unknown> {
   return { success: true, status_code: 200, data, message: 200, status: 200, can_send: 0 };
 }
 
+function consoleEnvelope(copyDefault: unknown): Record<string, unknown> {
+  return successEnvelope({
+    revision: 4,
+    copy_default: copyDefault,
+    compiled_reference: REFERENCE,
+    reference_authority: "ios:Localizable.strings:verification.screen.*",
+    screens: ["pre", "success", "failed"],
+    slots: ["headline", "subtitle", "cta"],
+    languages: ["en", "hu"],
+    slot_byte_limits: { headline: 120, subtitle: 320, cta: 40 },
+  });
+}
+
 test("the closed vocabularies and byte caps are the contract's, not this console's invention", () => {
   assert.deepEqual([...PERSONA_SCREENS_ACTIONS], ["persona_screens_console", "persona_screens_save"]);
   assert.deepEqual([...PERSONA_SCREEN_KEYS], ["pre", "success", "failed"]);
   assert.deepEqual([...PERSONA_SCREEN_SLOTS], ["headline", "subtitle", "cta"]);
+  assert.deepEqual(PERSONA_SCREEN_PRESENTATION_SLOTS, {
+    pre: ["headline", "subtitle", "external_link", "cta"],
+    success: ["headline", "subtitle", "cta"],
+    failed: ["headline", "subtitle", "cta"],
+  });
+  assert.deepEqual([...PERSONA_SCREEN_EXTERNAL_LINK_FIELDS], ["label", "url"]);
+  assert.deepEqual(PERSONA_SCREEN_EXTERNAL_LINK_FIELD_BYTE_LIMITS, { label: 80, url: 2048 });
+  assert.deepEqual([...PERSONA_SCREEN_EXTERNAL_LINK_URL_SCHEMES], ["https"]);
   assert.deepEqual([...PERSONA_SCREEN_LANGUAGES], ["en", "hu"]);
   assert.deepEqual(PERSONA_SCREEN_SLOT_BYTE_LIMITS, { headline: 120, subtitle: 320, cta: 40 });
   assert.equal(PERSONA_SCREENS_CONTRACT_VERSION, 1);
@@ -164,6 +206,52 @@ test("editing one language leaves the other language's draft byte-identical", ()
   assert.equal(after.hu.success.headline, "", "a sibling slot is untouched");
 });
 
+test("an external link is drafted only from its own language and never from the compiled reference", () => {
+  const stored: PersonaScreensCopyDefault = {
+    en: { pre: { external_link: { ...OPERATOR_EN_LINK } } },
+  };
+  const draft = personaScreensDraft(stored);
+  assert.deepEqual(draft.en.external_link, OPERATOR_EN_LINK);
+  assert.deepEqual(draft.hu.external_link, { label: "", url: "" });
+  assert.equal(JSON.stringify(draft.hu).includes(OPERATOR_EN_LINK.label), false);
+  assert.equal(JSON.stringify(draft.hu).includes(OPERATOR_EN_LINK.url), false);
+  assert.deepEqual(personaScreensDocumentFromDraft(draft), { copy_default: stored });
+});
+
+test("a valid half-pair is retained on save but is explicitly not a published button", () => {
+  let draft = personaScreensDraft({});
+  draft = personaScreensDraftWithExternalLinkValue(
+    draft,
+    "hu",
+    "label",
+    OPERATOR_HU_LINK.label,
+  );
+  assert.deepEqual(draft.en.external_link, { label: "", url: "" }, "English remains untouched");
+  assert.deepEqual(personaScreenExternalLinkState(draft, "hu"), { kind: "missingUrl" });
+  const document = personaScreensDocumentFromDraft(draft);
+  assert.deepEqual(document.copy_default.hu?.pre?.external_link, { label: OPERATOR_HU_LINK.label });
+  assert.deepEqual(
+    personaScreensPublishedBlock(personaScreensForLanguage(document.copy_default, "hu"), "hu").screens,
+    {},
+    "Core retains the half for the operator but emits no button",
+  );
+  assert.deepEqual(personaScreensSlotCounts(document.copy_default), { en: 0, hu: 1 });
+  assert.deepEqual(personaScreensCompiledSlotCounts(document.copy_default), { en: 0, hu: 0 });
+});
+
+test("clearing both external-link controls canonicalizes to no structured slot", () => {
+  let draft = personaScreensDraft({ hu: { pre: { external_link: { ...OPERATOR_HU_LINK } } } });
+  draft = personaScreensDraftWithExternalLinkValue(draft, "hu", "label", "");
+  draft = personaScreensDraftWithExternalLinkValue(draft, "hu", "url", "");
+  assert.deepEqual(personaScreenExternalLinkState(draft, "hu"), { kind: "off" });
+  assert.deepEqual(personaScreensDocumentFromDraft(draft), { copy_default: {} });
+  assert.deepEqual(
+    parseExactPersonaScreensDocument({ copy_default: { hu: { pre: { external_link: {} } } } }),
+    { copy_default: {} },
+    "Core's alternative empty-object spelling is normalized away too",
+  );
+});
+
 test("byte length is measured in UTF-8, the unit Core caps", () => {
   assert.equal(personaScreenSlotByteLength("Get started"), 11);
   assert.equal(personaScreenSlotByteLength("Kezdjük"), 8, "ü costs two bytes");
@@ -193,6 +281,64 @@ test("the local validator refuses exactly what Core refuses, and never an empty 
   assert.equal(personaScreenSlotIssue("Hello \ud83d", "cta"), "malformedText");
 });
 
+test("the optional-link controls mirror Core's UTF-8 caps and closed HTTPS gate", () => {
+  assert.equal(personaScreenExternalLinkFieldIssue("", "label"), null, "empty means button off");
+  assert.equal(personaScreenExternalLinkFieldIssue("ő".repeat(40), "label"), null);
+  assert.equal(personaScreenExternalLinkFieldIssue("ő".repeat(41), "label"), "overCap");
+
+  for (const url of [
+    "https://example.com/hu/persona",
+    "HTTPS://example.com/path",
+    "https://localhost:8443/path?lang=hu#details",
+    "https://example.com./literal-percent-%",
+    "https://[::1]:8443/path",
+  ]) {
+    assert.equal(personaScreenExternalLinkUrlAllowed(url), true, url);
+    assert.equal(personaScreenExternalLinkFieldIssue(url, "url"), null, url);
+  }
+  for (const url of [
+    "http://example.com/hu/persona",
+    "javascript:alert(1)",
+    "data:text/html,hello",
+    "file:///tmp/persona.html",
+    "//example.com/hu/persona",
+    "example.com/hu/persona",
+    "https:///missing-host",
+    "https://user:pass@example.com/secret",
+    "https://exa_mple.com/path",
+    "https://example.com/árvíz",
+  ]) {
+    assert.equal(personaScreenExternalLinkUrlAllowed(url), false, url);
+    assert.equal(personaScreenExternalLinkFieldIssue(url, "url"), "invalidHttpsUrl", url);
+  }
+  const prefix = "https://example.com/";
+  const exactCapUrl = prefix + "a".repeat(2048 - personaScreenSlotByteLength(prefix));
+  assert.equal(personaScreenSlotByteLength(exactCapUrl), 2048);
+  assert.equal(personaScreenExternalLinkFieldIssue(exactCapUrl, "url"), null);
+  assert.equal(personaScreenExternalLinkFieldIssue(`${exactCapUrl}a`, "url"), "overCap");
+});
+
+test("an invalid external-link URL blocks save at Core's exact field path", () => {
+  let draft = personaScreensDraft({});
+  draft = personaScreensDraftWithExternalLinkValue(draft, "hu", "label", OPERATOR_HU_LINK.label);
+  draft = personaScreensDraftWithExternalLinkValue(draft, "hu", "url", "http://operator.invalid/hu");
+  assert.deepEqual(personaScreenExternalLinkState(draft, "hu"), {
+    kind: "invalid",
+    field: "url",
+    issue: "invalidHttpsUrl",
+  });
+  assert.deepEqual(personaScreensDraftIssues(draft), [{
+    language: "hu",
+    screen: "pre",
+    externalLinkField: "url",
+    issue: "invalidHttpsUrl",
+  }]);
+  assert.equal(
+    personaScreenFieldPath(personaScreensDraftIssues(draft)[0]),
+    "copy_default.hu.pre.external_link.url",
+  );
+});
+
 test("draft issues name the exact control, in Core's own field path", () => {
   const draft = personaScreensDraftWithValue(
     personaScreensDraft({}),
@@ -215,6 +361,44 @@ test("the published projection reproduces R2: an English-only document publishes
   const serialized = JSON.stringify(hungarian);
   for (const value of Object.values(OPERATOR_EN)) {
     assert.equal(serialized.includes(value), false, "an operator's English reached a Hungarian block");
+  }
+});
+
+test("a complete same-language link publishes in PRE presentation order and never crosses languages", () => {
+  const copyDefault: PersonaScreensCopyDefault = {
+    en: {
+      pre: {
+        headline: OPERATOR_EN.headline,
+        subtitle: OPERATOR_EN.subtitle,
+        external_link: { ...OPERATOR_EN_LINK },
+        cta: OPERATOR_EN.cta,
+      },
+    },
+  };
+  const english = personaScreensPublishedBlock(personaScreensForLanguage(copyDefault, "en"), "en");
+  assert.deepEqual(Object.keys(english.screens.pre ?? {}), [
+    "headline",
+    "subtitle",
+    "external_link",
+    "cta",
+  ]);
+  assert.deepEqual(english.screens.pre?.external_link, OPERATOR_EN_LINK);
+  const hungarian = personaScreensPublishedBlock(personaScreensForLanguage(copyDefault, "hu"), "hu");
+  assert.deepEqual(hungarian.screens, {});
+  assert.equal(JSON.stringify(hungarian).includes(OPERATOR_EN_LINK.label), false);
+  assert.equal(JSON.stringify(hungarian).includes(OPERATOR_EN_LINK.url), false);
+});
+
+test("the tolerant launch projection drops an invalid or half link without dropping sibling copy", () => {
+  for (const external_link of [
+    { label: OPERATOR_EN_LINK.label },
+    { url: OPERATOR_EN_LINK.url },
+    { label: OPERATOR_EN_LINK.label, url: "http://operator.invalid" },
+  ]) {
+    const block = personaScreensPublishedBlock({
+      pre: { headline: OPERATOR_EN.headline, external_link },
+    }, "en");
+    assert.deepEqual(block.screens, { pre: { headline: OPERATOR_EN.headline } });
   }
 });
 
@@ -255,6 +439,34 @@ test("the preview shows the app's own copy for every slot an English-only save l
   }
   const english = personaScreenPreview(draft, REFERENCE, "en", "pre");
   assert.deepEqual(english.headline, { text: OPERATOR_EN.headline, source: "operator" });
+});
+
+test("the production console decoder accepts complete and half external links but fails closed on drift", () => {
+  for (const external_link of [
+    { ...OPERATOR_EN_LINK },
+    { label: OPERATOR_EN_LINK.label },
+    { url: OPERATOR_EN_LINK.url },
+  ]) {
+    const decoded = decodePersonaScreensConsoleResponse(consoleEnvelope({
+      en: { pre: { external_link } },
+    }));
+    assert.ok(decoded.ok, JSON.stringify(external_link));
+    if (decoded.ok) assert.deepEqual(decoded.value.copy_default.en?.pre?.external_link, external_link);
+  }
+
+  for (const copyDefault of [
+    { en: { pre: { external_link: {} } } },
+    { en: { pre: { external_link: { label: "" } } } },
+    { en: { pre: { external_link: { url: "http://operator.invalid" } } } },
+    { en: { pre: { external_link: { ...OPERATOR_EN_LINK, target: "_blank" } } } },
+    { en: { success: { external_link: { ...OPERATOR_EN_LINK } } } },
+  ]) {
+    assert.deepEqual(
+      decodePersonaScreensConsoleResponse(consoleEnvelope(copyDefault)),
+      { ok: false, kind: "uncertain", error: "malformed-material" },
+      JSON.stringify(copyDefault),
+    );
+  }
 });
 
 test("a save answer is adopted only when the revision and the document are both bound", () => {
@@ -383,6 +595,17 @@ test("the proxy forwards only the exact body Core's controller accepts", () => {
     normalizePersonaScreensProxyBody("persona_screens_save", { expected_revision: 1, document: { copy_default: {} } }),
     { expected_revision: 1, document: { copy_default: {} } },
   );
+  for (const external_link of [
+    { label: OPERATOR_HU_LINK.label },
+    { url: OPERATOR_HU_LINK.url },
+    { ...OPERATOR_HU_LINK },
+  ]) {
+    const linkBody = {
+      expected_revision: 4,
+      document: { copy_default: { hu: { pre: { external_link } } } },
+    };
+    assert.deepEqual(normalizePersonaScreensProxyBody("persona_screens_save", linkBody), linkBody);
+  }
 
   for (const body of [
     { expected_revision: 4 },
@@ -397,6 +620,11 @@ test("the proxy forwards only the exact body Core's controller accepts", () => {
     { expected_revision: 4, document: { copy_default: { de: { pre: { headline: "Hallo" } } } } },
     { expected_revision: 4, document: { copy_default: { en: { welcome: { headline: "Hi" } } } } },
     { expected_revision: 4, document: { copy_default: { en: { pre: { mark: "checkmark" } } } } },
+    { expected_revision: 4, document: { copy_default: { en: { success: { external_link: OPERATOR_EN_LINK } } } } },
+    { expected_revision: 4, document: { copy_default: { en: { pre: { external_link: "link" } } } } },
+    { expected_revision: 4, document: { copy_default: { en: { pre: { external_link: { target: "_blank" } } } } } },
+    { expected_revision: 4, document: { copy_default: { en: { pre: { external_link: { label: "" } } } } } },
+    { expected_revision: 4, document: { copy_default: { en: { pre: { external_link: { url: "http://operator.invalid" } } } } } },
     { expected_revision: 4, document: { copy_default: { en: { pre: { headline: "" } } } } },
     { expected_revision: 4, document: { copy_default: { en: { pre: { headline: " untrimmed" } } } } },
     { expected_revision: 4, document: { copy_default: { en: { pre: { headline: "{{name}}" } } } } },
@@ -413,14 +641,14 @@ test("the proxy forwards only the exact body Core's controller accepts", () => {
 /**
  * `persona_screens_save` is deliberately absent from the raised body ceilings in
  * `lib/adminActions.ts`. Rather than assert that by comment, build the largest
- * document the editor can produce — every one of the eighteen slots filled to
- * its byte cap with two-byte characters — and check that the browser body still
- * fits under both the default proxy ceiling and Core's own 16 KiB document cap.
+ * document the editor can produce — every one of the eighteen compiled slots,
+ * both 80-byte labels and both 2048-byte URLs — and check that the browser body
+ * still fits under both the default proxy ceiling and Core's own 16 KiB cap.
  */
 test("the maximal document the editor can produce fits the default ceiling with room to spare", () => {
   const copyDefault: PersonaScreensCopyDefault = {};
   for (const language of PERSONA_SCREEN_LANGUAGES) {
-    const screens: Record<string, Record<string, string>> = {};
+    const screens: PersonaScreenMap = {};
     for (const screen of PERSONA_SCREEN_KEYS) {
       const slots: Record<string, string> = {};
       for (const slot of PERSONA_SCREEN_SLOTS) {
@@ -429,7 +657,18 @@ test("the maximal document the editor can produce fits the default ceiling with 
       }
       screens[screen] = slots;
     }
-    copyDefault[language] = screens as PersonaScreensCopyDefault["en"];
+    const urlPrefix = `https://example.com/${language}/`;
+    screens.pre = {
+      ...screens.pre,
+      external_link: {
+        label: "ő".repeat(PERSONA_SCREEN_EXTERNAL_LINK_FIELD_BYTE_LIMITS.label / 2),
+        url: urlPrefix + "a".repeat(
+          PERSONA_SCREEN_EXTERNAL_LINK_FIELD_BYTE_LIMITS.url
+            - personaScreenSlotByteLength(urlPrefix),
+        ),
+      },
+    };
+    copyDefault[language] = screens;
   }
   const body = JSON.stringify({ expected_revision: 1, document: { copy_default: copyDefault } });
   const bytes = Buffer.byteLength(body, "utf8");
@@ -457,11 +696,13 @@ test("the console card never routes the reference or a sibling language into a d
 
   for (const line of source.split("\n")) {
     if (!/\breference\b|compiled_reference/.test(line)) continue;
-    assert.doesNotMatch(line, /setDraft|personaScreensDraftWithValue|\bpatch\(/,
+    assert.doesNotMatch(
+      line,
+      /setDraft|personaScreensDraftWith(?:ExternalLink)?Value|onExternalLinkPatch|\bpatch\(/,
       `the reference must never reach a draft mutation: ${line.trim()}`);
   }
   for (const line of source.split("\n")) {
-    if (!/personaScreensDraftWithValue|setDraft\(/.test(line)) continue;
+    if (!/personaScreensDraftWith(?:ExternalLink)?Value|setDraft\(/.test(line)) continue;
     assert.doesNotMatch(line, /"en"|"hu"/,
       `a draft mutation must never name a language literally: ${line.trim()}`);
   }

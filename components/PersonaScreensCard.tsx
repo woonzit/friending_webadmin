@@ -6,25 +6,34 @@ import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import {
   PERSONA_SCREENS_UNAVAILABLE_ERROR,
+  PERSONA_SCREEN_EXTERNAL_LINK_FIELD_BYTE_LIMITS,
+  PERSONA_SCREEN_EXTERNAL_LINK_FIELDS,
+  PERSONA_SCREEN_EXTERNAL_LINK_SLOT,
   PERSONA_SCREEN_KEYS,
   PERSONA_SCREEN_LANGUAGES,
+  PERSONA_SCREEN_PRESENTATION_SLOTS,
   PERSONA_SCREEN_SLOTS,
   PERSONA_SCREEN_SLOT_BYTE_LIMITS,
   decodePersonaScreensConsoleResponse,
   decodePersonaScreensSaveResponse,
+  personaScreenExternalLinkFieldIssue,
+  personaScreenExternalLinkState,
   personaScreenFieldPath,
   personaScreenPreview,
   personaScreenSlotByteLength,
   personaScreenSlotIssue,
   personaScreensAccess,
+  personaScreensCompiledSlotCounts,
   personaScreensDocumentFromDraft,
   personaScreensDocumentsEqual,
   personaScreensDraft,
   personaScreensDraftIssues,
+  personaScreensDraftWithExternalLinkValue,
   personaScreensDraftWithValue,
   personaScreensForLanguage,
   personaScreensPublishedBlock,
-  personaScreensSlotCounts,
+  type PersonaScreenExternalLinkField,
+  type PersonaScreenExternalLinkState,
   type PersonaScreenKey,
   type PersonaScreenLanguage,
   type PersonaScreenPreview,
@@ -126,11 +135,13 @@ function PhoneFrame({
   mode,
   screen,
   preview,
+  externalLink,
   labels,
 }: {
   mode: PhoneMode;
   screen: PersonaScreenKey;
   preview: PersonaScreenPreview;
+  externalLink: { label: string; url: string } | null;
   labels: { mode: string; furniture: string };
 }) {
   const palette = PHONE_PALETTE[mode];
@@ -154,6 +165,15 @@ function PhoneFrame({
       <p className="persona-screens-phone-subtitle" style={{ color: palette.muted }}>
         {preview.subtitle.text}
       </p>
+      {externalLink ? (
+        <span
+          className="persona-screens-phone-external-link"
+          style={{ color: palette.accent }}
+          title={externalLink.url}
+        >
+          {externalLink.label}
+        </span>
+      ) : null}
       <div className="persona-screens-phone-actions">
         <span
           className="persona-screens-phone-cta"
@@ -192,9 +212,10 @@ function PhoneFrame({
  *      and is right to — its defaults live server-side. Here the app already
  *      holds a complete Hungarian screen, so the button would only ever turn
  *      "nothing stored" into "everything stored".
- *   3. AN EMPTY BOX IS A STATED, CORRECT STATE. Every empty control says so in
- *      words, in the operator's own language, so emptiness never reads as
- *      something waiting to be filled.
+ *   3. BOTH EMPTY MEANINGS ARE STATED AT THE CONTROL. Empty ordinary copy uses
+ *      the app's compiled language; empty link label or URL means no optional
+ *      button because none is compiled. Neither is left for an operator to
+ *      infer from the panel preamble.
  */
 export default function PersonaScreensCard({ projection, locked }: Props) {
   const t = useTranslations("personaAdmin.screens");
@@ -248,6 +269,14 @@ export default function PersonaScreensCard({ projection, locked }: Props) {
   function patch(screen: PersonaScreenKey, slot: PersonaScreenSlot, value: string) {
     setDraft((current) => (current
       ? personaScreensDraftWithValue(current, language, screen, slot, value)
+      : current));
+    setNotice(null);
+    setRefusedField(null);
+  }
+
+  function patchExternalLink(field: PersonaScreenExternalLinkField, value: string) {
+    setDraft((current) => (current
+      ? personaScreensDraftWithExternalLinkValue(current, language, field, value)
       : current));
     setNotice(null);
     setRefusedField(null);
@@ -350,6 +379,7 @@ export default function PersonaScreensCard({ projection, locked }: Props) {
       refusedField={refusedField}
       onLanguage={(entry) => { setLanguage(entry); setRefusedField(null); }}
       onPatch={patch}
+      onExternalLinkPatch={patchExternalLink}
       onReload={() => void load(false)}
       onSave={() => void save()}
     />
@@ -368,6 +398,7 @@ export type PersonaScreensEditorProps = {
   refusedField: string | null;
   onLanguage: (language: PersonaScreenLanguage) => void;
   onPatch: (screen: PersonaScreenKey, slot: PersonaScreenSlot, value: string) => void;
+  onExternalLinkPatch: (field: PersonaScreenExternalLinkField, value: string) => void;
   onReload: () => void;
   onSave: () => void;
 };
@@ -389,6 +420,7 @@ export function PersonaScreensEditor({
   refusedField,
   onLanguage,
   onPatch,
+  onExternalLinkPatch,
   onReload,
   onSave,
 }: PersonaScreensEditorProps) {
@@ -399,8 +431,9 @@ export function PersonaScreensEditor({
   const editable = access.editable && !locked && !busy;
 
   const reference = console_.compiled_reference;
-  const counts = personaScreensSlotCounts(document_.copy_default);
+  const counts = personaScreensCompiledSlotCounts(document_.copy_default);
   const totalSlots = PERSONA_SCREEN_KEYS.length * PERSONA_SCREEN_SLOTS.length;
+  const activeExternalLinkState = personaScreenExternalLinkState(draft, language);
 
   function slotField(screen: PersonaScreenKey, slot: PersonaScreenSlot) {
     const value = draft[language][screen][slot];
@@ -443,6 +476,97 @@ export function PersonaScreensEditor({
             : t("bytes", { used, max: limit })}
         </small>
       </label>
+    );
+  }
+
+  function externalLinkStatus(
+    state: PersonaScreenExternalLinkState,
+    entry: PersonaScreenLanguage,
+  ): { title: string; detail: string; tone: "info" | "warning" | "error" | "success" } {
+    const languageName = t(`languages.${entry}`);
+    if (state.kind === "invalid") {
+      const field = personaScreenFieldPath({
+        language: entry,
+        screen: "pre",
+        externalLinkField: state.field,
+      });
+      return {
+        title: t("externalLink.status.invalid.title"),
+        detail: t("externalLink.status.invalid.detail", { field }),
+        tone: "error",
+      };
+    }
+    return {
+      title: t(`externalLink.status.${state.kind}.title`),
+      detail: t(`externalLink.status.${state.kind}.detail`, { language: languageName }),
+      tone: state.kind === "visible"
+        ? "success"
+        : state.kind === "off" ? "info" : "warning",
+    };
+  }
+
+  function externalLinkControls() {
+    const status = externalLinkStatus(activeExternalLinkState, language);
+    return (
+      <section className="persona-screens-external-link" key={PERSONA_SCREEN_EXTERNAL_LINK_SLOT}>
+        <div className="persona-screens-external-link-heading">
+          <strong>{t("externalLink.title")}</strong>
+          <span className="badge badge-inactive">{t("externalLink.optional")}</span>
+        </div>
+        <p className="field-hint">{t("externalLink.copy")}</p>
+        <div className="persona-screens-external-link-fields">
+          {PERSONA_SCREEN_EXTERNAL_LINK_FIELDS.map((field) => {
+            const value = draft[language].external_link[field];
+            const path = personaScreenFieldPath({
+              language,
+              screen: "pre",
+              externalLinkField: field,
+            });
+            const limit = PERSONA_SCREEN_EXTERNAL_LINK_FIELD_BYTE_LIMITS[field];
+            const used = personaScreenSlotByteLength(value);
+            const issue = personaScreenExternalLinkFieldIssue(value, field);
+            const refused = refusedField === path;
+            const id = `persona-screens-${language}-pre-external-link-${field}`;
+            return (
+              <label className="field persona-screens-field" key={id}>
+                <span>{t(`externalLink.fields.${field}`)}</span>
+                <input
+                  id={id}
+                  type={field === "url" ? "url" : "text"}
+                  inputMode={field === "url" ? "url" : undefined}
+                  value={value}
+                  disabled={!editable}
+                  spellCheck={field === "label"}
+                  aria-invalid={issue !== null || refused}
+                  aria-describedby={`${id}-meaning ${id}-rules`}
+                  onChange={(event) => onExternalLinkPatch(field, event.target.value)}
+                />
+                {refused && !issue ? (
+                  <small className="field-error" role="alert">{t("refusedControl")}</small>
+                ) : null}
+                {issue ? (
+                  <small className="field-error" role="alert">{t(`issues.${issue}`)}</small>
+                ) : null}
+                <small id={`${id}-meaning`} className="field-hint persona-screens-link-meaning">
+                  {t(`externalLink.controls.${field}.empty`, {
+                    language: t(`languages.${language}`),
+                  })}
+                </small>
+                <small
+                  id={`${id}-rules`}
+                  className={`field-hint persona-screens-counter${used > limit ? " is-over" : ""}`}
+                >
+                  {t(`externalLink.controls.${field}.rules`, { used, max: limit })}
+                </small>
+              </label>
+            );
+          })}
+        </div>
+        <div className={`alert alert-${status.tone} persona-screens-link-status`} role="status">
+          <strong>{status.title}</strong>
+          <span>{status.detail}</span>
+        </div>
+      </section>
     );
   }
 
@@ -494,6 +618,9 @@ export function PersonaScreensEditor({
 
         {PERSONA_SCREEN_KEYS.map((screen) => {
           const preview = personaScreenPreview(draft, reference, language, screen);
+          const previewExternalLink = screen === "pre" && activeExternalLinkState.kind === "visible"
+            ? activeExternalLinkState.link
+            : null;
           const operatorSlots = PERSONA_SCREEN_SLOTS
             .filter((slot) => preview[slot].source === "operator");
           return (
@@ -512,7 +639,10 @@ export function PersonaScreensEditor({
               </div>
               <div className="persona-screens-screen-body">
                 <div className="persona-screens-fields">
-                  {PERSONA_SCREEN_SLOTS.map((slot) => slotField(screen, slot))}
+                  {PERSONA_SCREEN_PRESENTATION_SLOTS[screen].map((slot) =>
+                    slot === PERSONA_SCREEN_EXTERNAL_LINK_SLOT
+                      ? externalLinkControls()
+                      : slotField(screen, slot))}
                 </div>
                 <div className="persona-screens-phones">
                   {(["light", "dark"] as const).map((mode) => (
@@ -521,6 +651,7 @@ export function PersonaScreensEditor({
                       mode={mode}
                       screen={screen}
                       preview={preview}
+                      externalLink={previewExternalLink}
                       labels={{ mode: t(`appearance.${mode}`), furniture: t(`screens.${screen}.furniture`) }}
                     />
                   ))}
@@ -540,17 +671,30 @@ export function PersonaScreensEditor({
                 entry,
               );
               const published = PERSONA_SCREEN_KEYS.reduce(
-                (total, screen) => total + Object.keys(block.screens[screen] ?? {}).length,
+                (total, screen) => total + PERSONA_SCREEN_SLOTS
+                  .filter((slot) => typeof block.screens[screen]?.[slot] === "string").length,
                 0,
+              );
+              const linkStatus = externalLinkStatus(
+                personaScreenExternalLinkState(draft, entry),
+                entry,
               );
               return (
                 <li key={entry}>
-                  {t("published.row", {
-                    language: t(`languages.${entry}`),
-                    published,
-                    compiled: totalSlots - published,
-                    total: totalSlots,
-                  })}
+                  <span>
+                    {t("published.row", {
+                      language: t(`languages.${entry}`),
+                      published,
+                      compiled: totalSlots - published,
+                      total: totalSlots,
+                    })}
+                  </span>
+                  <span className="persona-screens-published-link">
+                    {t("externalLink.published", {
+                      language: t(`languages.${entry}`),
+                      status: linkStatus.title,
+                    })}
+                  </span>
                 </li>
               );
             })}
