@@ -46,11 +46,10 @@ import {
 /**
  * The values this suite types into the editors are DELIBERATELY unmistakable.
  *
- * T-588: Core's published corpus stores the app's own compiled Hungarian in the
- * slots it calls "served", so a rendered "served" screen is byte-identical to a
- * "nothing served" one and any assertion of the form "the served value appears"
- * passes without testing anything. Every value below could only have been typed
- * by an operator, so an assertion that finds one has actually found it.
+ * The pre-T-588 Core corpus stored the app's own compiled Hungarian in slots it
+ * called "served", so a rendered "served" screen was byte-identical to a
+ * "nothing served" one. T-588 replaced those fixtures with conspicuous copy;
+ * these focused values stay unmistakable for the same non-vacuity guarantee.
  */
 const OPERATOR_EN = {
   headline: "OPERATOR EN headline, typed by a human",

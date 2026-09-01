@@ -1,12 +1,12 @@
 {
     "schema_version": 1,
     "contract_version": 1,
-    "source_commit": "5e4591b6a9ae41a283798654eaa2ae3bae95c4ef",
+    "source_commit": "8e9a82dce491ab42e26d9339c805868c360ad340",
     "contract_manifest_sha256": "68bc244bc2781d1679bb88b87d4145a24fb1d9cafaf9c87bafdb7e9757a29f74",
-    "fixture_set_sha256": "7b9f1642acf40d7f16840824642c8a78bd317b8f0f82fbfc552695ae869e770c",
+    "fixture_set_sha256": "58ca9942651ed65adda2516f9ed2d38123b2a70276c6262bfe8a44d0193b1784",
     "provenance": {
         "generator": "tests/persona_screens_fixture_dump.php",
-        "generator_sha256": "b440fd6cffdd4a904bae4d1ccc206ea9a7d7d24b42bbe9cffe54a15f9cd88077",
+        "generator_sha256": "42625f805e2ee4e06c80cc65ce4e31aafc2ac88bae87416ff648dbbdc03f29e8",
         "wire_adapters": {
             "app_config": "Friending\\Core\\Response::wirePayload",
             "webadmin": "Friending\\Support\\Webadmin::noStoreReply"
@@ -33,16 +33,16 @@
         {
             "file": "appconfig-en-session-en-only.json",
             "route": "/v1/app/ios_appconfig",
-            "case": "the same storage in an English session publishes all nine slots — the omission is per language, not a refusal",
+            "case": "the same storage in an English session publishes all nine strings plus the PRE link — the omission is per language, not a refusal",
             "consumer": "ios",
-            "sha256": "9b48c005c265ade8924a8c79e36ed44ccdc1b995d0f248c02310f922a91e4f93"
+            "sha256": "a8a46146b74d199bc1a7021170fdb9c54579b65ec760ec7bf9a9ff226ecd7ae1"
         },
         {
             "file": "appconfig-en-session-partial-translation.json",
             "route": "/v1/app/ios_appconfig",
             "case": "the same mid-translation storage resolved for English",
             "consumer": "ios",
-            "sha256": "9b48c005c265ade8924a8c79e36ed44ccdc1b995d0f248c02310f922a91e4f93"
+            "sha256": "a8a46146b74d199bc1a7021170fdb9c54579b65ec760ec7bf9a9ff226ecd7ae1"
         },
         {
             "file": "appconfig-hu-session-en-only.json",
@@ -54,9 +54,9 @@
         {
             "file": "appconfig-hu-session-partial-translation.json",
             "route": "/v1/app/ios_appconfig",
-            "case": "mid-translation: two Hungarian slots published, the other seven omitted for the client to fill",
+            "case": "mid-translation: two Hungarian strings plus the PRE link published, the other seven strings omitted for the client to fill",
             "consumer": "ios",
-            "sha256": "0654d8d7aeef19096643283beb4cbd04e3054979f1185946e812e1b5df280a1b"
+            "sha256": "4e81bed7c9876a5e4169f3bdf03149637105a0a0a1b7ffee62e88958b5f8edf0"
         },
         {
             "file": "appconfig-nothing-stored-hu.json",
@@ -70,14 +70,14 @@
             "route": "/v1/app/ios_appconfig",
             "case": "R3: one over-cap slot is dropped and its two siblings still publish",
             "consumer": "ios",
-            "sha256": "68a2d2de2344641286cf34a7237609ad96a0de06ada2673ca0f75ee5ef9f88e2"
+            "sha256": "388907887691fe996cbd1dc178c0fbd725dff5e2ee0970cf4fe768f729e040ff"
         },
         {
             "file": "appconfig-unknown-language.json",
             "route": "/v1/app/ios_appconfig",
             "case": "an unknown lang narrows to en, exactly as the rest of ios_appconfig narrows it",
             "consumer": "ios",
-            "sha256": "9b48c005c265ade8924a8c79e36ed44ccdc1b995d0f248c02310f922a91e4f93"
+            "sha256": "a8a46146b74d199bc1a7021170fdb9c54579b65ec760ec7bf9a9ff226ecd7ae1"
         },
         {
             "file": "appconfig-unknown-vocabulary-tolerated.json",
@@ -91,7 +91,7 @@
             "route": "/v1/webadmin/persona_screens_console",
             "case": "the console projection of a mid-translation configuration, with the read-only compiled reference",
             "consumer": "webadmin",
-            "sha256": "b33ddad19da2cebab3522e93b8c303f96a2ddb4850412570ab8c91335f493192"
+            "sha256": "d76336c9980815eb9591d3f8bb27b0f9b90bbcb1bc7476a2f2272d5f409b1e55"
         },
         {
             "file": "console-read-empty.json",
@@ -105,7 +105,7 @@
             "route": "/v1/webadmin/persona_screens_save",
             "case": "the payload a successful save returns: the new revision and the stored document",
             "consumer": "webadmin",
-            "sha256": "a1b44852952956b39eec1490402db243dd9513c711b5cca856f9da28ed6103c5"
+            "sha256": "d3ba65639b8c26bb4bf899fe187739b3c0fa5463fbc1513b07825192cc651c54"
         },
         {
             "file": "refusal-conflict.json",

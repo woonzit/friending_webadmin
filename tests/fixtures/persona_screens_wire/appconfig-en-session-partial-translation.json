@@ -6,19 +6,23 @@
             "lang": "en",
             "screens": {
                 "pre": {
-                    "headline": "Verify that it’s really you",
-                    "subtitle": "A quick identity check keeps Friending safe for everyone.",
-                    "cta": "Start verification"
+                    "headline": "Operator EN: identity check headline",
+                    "subtitle": "Operator EN: this copy came from the live Persona console.",
+                    "external_link": {
+                        "label": "Operator EN: verification help",
+                        "url": "https://operator.example/en/persona-help"
+                    },
+                    "cta": "Operator EN: begin"
                 },
                 "success": {
-                    "headline": "You’re verified",
-                    "subtitle": "Your badge is live and everything is unlocked.",
-                    "cta": "Continue"
+                    "headline": "Operator EN: identity check complete",
+                    "subtitle": "Operator EN: this success copy came from the Persona console.",
+                    "cta": "Operator EN: continue"
                 },
                 "failed": {
-                    "headline": "We couldn’t finish that",
-                    "subtitle": "Nothing has happened to your account. You can try again.",
-                    "cta": "Try again"
+                    "headline": "Operator EN: identity check paused",
+                    "subtitle": "Operator EN: this retry copy came from the Persona console.",
+                    "cta": "Operator EN: retry"
                 }
             }
         }

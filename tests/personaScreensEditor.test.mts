@@ -19,11 +19,11 @@ import {
  * The card's own rendered output, in both locales, from the real component and
  * the real locale files.
  *
- * The values typed into the editors below are deliberately unmistakable, for
- * the T-588 reason: the published Core corpus stores the app's own compiled
- * Hungarian in the slots it calls "served", so an assertion that a served value
- * appears would pass on a console that served nothing at all. Nothing here
- * could be confused with a string the app already contains.
+ * The values typed into the editors below are deliberately unmistakable. The
+ * pre-T-588 Core corpus stored the app's own compiled Hungarian in slots it
+ * called "served", so a served-value assertion could pass when nothing was
+ * served. T-588 fixed the corpus; these focused sentinels preserve the same
+ * non-vacuity guarantee independently.
  */
 const OPERATOR_HU_HEADLINE = "OPERÁTOR HU főcím, ember gépelte";
 const OPERATOR_EN_HEADLINE = "OPERATOR EN headline, typed by a human";

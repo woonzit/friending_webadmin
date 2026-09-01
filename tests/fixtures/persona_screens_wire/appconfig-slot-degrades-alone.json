@@ -6,8 +6,8 @@
             "lang": "en",
             "screens": {
                 "pre": {
-                    "headline": "Verify that it’s really you",
-                    "cta": "Start verification"
+                    "headline": "Operator EN: degradation headline",
+                    "cta": "Operator EN: degrade"
                 }
             }
         }

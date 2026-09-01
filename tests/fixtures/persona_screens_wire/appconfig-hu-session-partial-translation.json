@@ -6,10 +6,14 @@
             "lang": "hu",
             "screens": {
                 "pre": {
-                    "headline": "Igazold, hogy tényleg te vagy az"
+                    "headline": "Operátori HU: személyazonosság-ellenőrzés",
+                    "external_link": {
+                        "label": "Operátori HU: ellenőrzési súgó",
+                        "url": "https://operator.example/hu/persona-sugo"
+                    }
                 },
                 "failed": {
-                    "cta": "Próbáljuk újra"
+                    "cta": "Operátori HU: újra"
                 }
             }
         }

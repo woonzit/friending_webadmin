@@ -838,7 +838,8 @@ export type PersonaScreenPreview = Record<PersonaScreenSlot, PersonaScreenPrevie
  * operator may legitimately retype a compiled string word for word, and a
  * preview that decided by comparison would then label their value "compiled"
  * and quietly teach them that saving changed nothing. That confusion is exactly
- * the T-588 defect in the Core corpus, and it is not repeated here.
+ * the defect T-588 removed from the pre-integration Core corpus, and it is not
+ * repeated here.
  */
 export function personaScreenPreview(
   draft: PersonaScreensDraft,
