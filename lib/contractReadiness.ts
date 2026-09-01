@@ -11,43 +11,24 @@
  * Temporary visibility switches may instead preserve a dormant implementation
  * when the owner explicitly requires a single reversible source gate.
  *
- * A provider-readiness switch set to `true` is therefore on its way out, kept
- * for exactly one release as the documented consumer rollback lever, and
- * deleted with its branches in the next one.
+ * After a provider cutover's rollback release has shipped, delete its source
+ * switch and guarded branches rather than retaining a permanent `true` value.
  */
 
 /**
- * T-125/T-219 is not released. Even after this flips, Core's separate
- * `admin_me.admin_granted_verification` block must be exact and ready before
- * the selector or either mutation can cross the proxy.
+ * T-125 and T-219 are deployed dormant. Core's own
+ * `ADMIN_GRANTED_CONTRACT_READY` remains false, and no consumer cutover is
+ * released. Even after this flips, Core's `admin_me.admin_granted_verification`
+ * block must be exact and ready before either mutation can cross the proxy.
  */
 export const ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: boolean = false;
 
-/**
- * RELEASED 2026-09-01 (T-539). Core's provider is live: T-529 retired the Core
- * activation switch so readiness is derived from the verified migration marker
- * plus the stored schema, and `/v1/app/ios_appconfig` publishes
- * `audience_visibility.contract_ready: true` at Core `50ff00b`.
- *
- * Core stays authoritative. This constant only stops the console from asking;
- * it can never make Core answer something Core would refuse. Every surface it
- * opens re-checks `admin_me.audience_visibility` — the page and nav item
- * through `audienceVisibilityConsoleReady`, the member panel and the proxy
- * through `audienceVisibilityAdminMe` — so a Core that goes unready closes them
- * again without a console release.
- *
- * Retained for one release as the rollback lever named in
- * `reports/cutover-visibility-v2-commands.md` §8: reverting this to `false` and
- * redeploying is how the console is made unreachable. Delete it and the
- * branches it guards in the release after that, per D-060.
- */
-export const AUDIENCE_VISIBILITY_CONTRACT_READY: boolean = true;
-
-/** T-120 is not published; the dormant T-216 consumer remains unreachable. */
+/** T-120/T-216 are deployed dormant; their activation has not been released. */
 export const PROFILE_TEXT_MODERATION_CONTRACT_READY: boolean = false;
 
 /**
- * T-126 is not released; the dormant T-218b consumer remains unreachable.
+ * T-126/T-218b are deployed dormant; their consumer cutover has not been
+ * released.
  * This is the CONSUMER cutover, not either product state. Both Core values
  * default to enabled (A1); launch posture is a later explicit administrator
  * flip (Hey on, Footprints off), never an inverted code default.

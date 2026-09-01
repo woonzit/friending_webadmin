@@ -6,10 +6,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import AdminHelp from "@/components/AdminHelp";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
-import {
-  AUDIENCE_VISIBILITY_CONTRACT_READY,
-  PROFILE_TEXT_MODERATION_CONTRACT_READY,
-} from "@/lib/contractReadiness";
+import { PROFILE_TEXT_MODERATION_CONTRACT_READY } from "@/lib/contractReadiness";
 
 type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "templates" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit";
 
@@ -31,7 +28,7 @@ const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; r
   { href: "/landing", key: "landing", icon: "landing" },
   { href: "/signup-options", key: "signupOptions", icon: "signupOptions" },
   { href: "/signup-photos", key: "signupPhotos", icon: "signupPhotos" },
-  { href: "/audience-visibility", key: "audienceVisibility", icon: "userGroups", ready: AUDIENCE_VISIBILITY_CONTRACT_READY },
+  { href: "/audience-visibility", key: "audienceVisibility", icon: "userGroups" },
   { href: "/profile-fields", key: "profileFields", icon: "profileFields" },
   { href: "/profile-presentation", key: "profilePresentation", icon: "profileFields" },
   { href: "/profile-tags", key: "profileTags", icon: "profileFields" },

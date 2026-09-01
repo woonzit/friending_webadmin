@@ -12,7 +12,6 @@ import {
 } from "../lib/adminHelp.ts";
 import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
-  AUDIENCE_VISIBILITY_CONTRACT_READY,
   FEATURE_SWITCHES_CONTRACT_READY,
   PERSONA_START_EDITOR_VISIBLE,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
@@ -162,7 +161,6 @@ test("the authenticated shell always renders the visible accessible Help control
  */
 const CONTRACT_CONSTANTS: Record<string, boolean> = {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
-  AUDIENCE_VISIBILITY_CONTRACT_READY,
   FEATURE_SWITCHES_CONTRACT_READY,
   PERSONA_START_EDITOR_VISIBLE,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
@@ -301,10 +299,10 @@ test("withheld copy stays in both locale files so flipping a switch restores the
 });
 
 /**
- * T-569. The two conditional panels on /users/<uid> are DERIVED from the page source rather than
- * restated here, in the same spirit as the route-gate test above: a panel that gains or loses its
- * switch without telling Help fails here instead of shipping a guide to something that is not
- * rendered.
+ * T-569/T-567. The remaining conditional panel on /users/<uid> is DERIVED from
+ * the page source rather than restated here. Audience visibility is always
+ * mounted after its spent build switch was retired; its own Core projection
+ * still decides whether it returns content.
  *
  * What this cannot cover, and why the copy says it instead: `AudienceVisibilityUserPanel` calls
  * `admin_me` itself and returns `null` when Core does not project
@@ -322,7 +320,6 @@ test("the user-detail section gates are derived from the panels that page render
 
   const sectionForPanel: Record<string, string> = {
     AdminGrantedVerificationPanel: "adminGrantedVerification",
-    AudienceVisibilityUserPanel: "audienceVisibility",
   };
   const seen = new Set<string>();
   for (const [, constant, component] of source.matchAll(
@@ -341,8 +338,9 @@ test("the user-detail section gates are derived from the panels that page render
   }
   assert.deepEqual([...seen].sort(), Object.keys(sectionForPanel).sort());
 
-  // The panel is live today, so its guide is shown rather than withheld.
-  assert.equal(AUDIENCE_VISIBILITY_CONTRACT_READY, true);
+  // The released panel and its guide are no longer behind a source switch.
+  assert.match(source, /<AudienceVisibilityUserPanel uid=\{uid\} \/>/);
+  assert.equal(page.sectionReady?.audienceVisibility, undefined);
   assert.ok(adminHelpSections(page).includes("audienceVisibility"));
 });
 

@@ -23,7 +23,6 @@
 
 import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
-  AUDIENCE_VISIBILITY_CONTRACT_READY,
   FEATURE_SWITCHES_CONTRACT_READY,
   PERSONA_START_EDITOR_VISIBLE,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
@@ -119,23 +118,17 @@ export const ADMIN_HELP_PAGES = [
       "gallery",
       "interests",
     ],
-    // Two panels on this otherwise ungated page are conditional, and the guide
-    // follows the same constants: `app/(dashboard)/users/[uid]/page.tsx:154`
-    // renders admin-granted verification only while the T-125/T-219 switch is
-    // on, and `:155` renders the audience-visibility panel only while the D-019
-    // switch is on.
+    // Admin-granted verification is the sole build-gated panel on this page,
+    // and its guide follows the same T-125/T-219 constant.
     //
-    // The audience-visibility panel carries a SECOND gate this catalogue cannot
-    // express: `AudienceVisibilityUserPanel` calls `admin_me` itself and returns
-    // `null` when Core does not project `audience_visibility_member_detail` to
-    // the current operator, so the panel is per-operator and decides after its
-    // own round trip. That is the class T-566 reported as having no mechanism —
-    // a build constant is resolved here, a runtime projection cannot be. The
-    // section is therefore documented with copy that says so, rather than with
-    // a gate that would be a guess.
+    // The always-mounted audience-visibility panel still calls `admin_me`
+    // itself and returns `null` when Core does not project
+    // `audience_visibility_member_detail` to the current operator. That runtime
+    // decision happens after the panel's own round trip, so the section is
+    // documented with copy that names the Core gate rather than a catalogue
+    // value that would be a guess.
     sectionReady: {
       adminGrantedVerification: ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
-      audienceVisibility: AUDIENCE_VISIBILITY_CONTRACT_READY,
     },
     matches: dynamic("/users"),
   },
@@ -358,7 +351,6 @@ export const ADMIN_HELP_PAGES = [
       "memberProjection",
       "conflicts",
     ],
-    ready: AUDIENCE_VISIBILITY_CONTRACT_READY,
     consoleReady: "audienceVisibilityConsoleReady",
     matches: exact("/audience-visibility"),
   },

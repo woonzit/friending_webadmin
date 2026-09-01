@@ -1,6 +1,5 @@
 import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
-  AUDIENCE_VISIBILITY_CONTRACT_READY,
   FEATURE_SWITCHES_CONTRACT_READY,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
@@ -71,11 +70,6 @@ const ACTIVE_FORCED_VERIFICATION_ACTIONS = FORCED_VERIFICATION_ACTIONS;
 
 /** Released T-550 actions (D-080 Persona screens), gated by Core's `admin_me.persona_screens` block. */
 const ACTIVE_PERSONA_SCREENS_ACTIONS = PERSONA_SCREENS_ACTIONS;
-
-/** Dormant T-215 actions stay absent until the reviewed T-121 provider release. */
-const ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS = AUDIENCE_VISIBILITY_CONTRACT_READY
-  ? AUDIENCE_VISIBILITY_ADMIN_ACTIONS
-  : [] as const;
 
 /** Dormant T-216 actions stay absent until the reviewed T-120 provider release. */
 const ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS = PROFILE_TEXT_MODERATION_CONTRACT_READY
@@ -196,7 +190,7 @@ export const ADMIN_ACTIONS = [
   ...ACTIVE_ADMIN_GRANTED_VERIFICATION_ACTIONS,
   ...ACTIVE_FORCED_VERIFICATION_ACTIONS,
   ...ACTIVE_PERSONA_SCREENS_ACTIONS,
-  ...ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS,
+  ...AUDIENCE_VISIBILITY_ADMIN_ACTIONS,
   ...ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS,
   ...ACTIVE_FEATURE_SWITCHES_ACTIONS,
   ...ACTIVE_APPEARANCE_ACTIONS,
@@ -419,17 +413,16 @@ export const ADMIN_ACTION_ACCESS = {
   persona_screens_console: "read",
   persona_screens_save: "write",
 
-  // Core authors the exact per-action capability projection. These rows add
-  // the independent global viewer/editor floor only after provider release.
-  ...(AUDIENCE_VISIBILITY_CONTRACT_READY ? {
-    audience_visibility_catalog: "read" as const,
-    audience_visibility_member_detail: "read" as const,
-    save_audience_visibility_group: "write" as const,
-    archive_audience_visibility_group: "write" as const,
-    save_audience_visibility_intent: "write" as const,
-    archive_audience_visibility_intent: "write" as const,
-    set_audience_visibility_intent_limit: "write" as const,
-  } : {}),
+  // Released audience-visibility routes. Core authors the exact per-action
+  // capability projection; these rows add only the independent global
+  // viewer/editor floor.
+  audience_visibility_catalog: "read",
+  audience_visibility_member_detail: "read",
+  save_audience_visibility_group: "write",
+  archive_audience_visibility_group: "write",
+  save_audience_visibility_intent: "write",
+  archive_audience_visibility_intent: "write",
+  set_audience_visibility_intent_limit: "write",
 
   ...(PROFILE_TEXT_MODERATION_CONTRACT_READY ? {
     moderation_profile_text_list: "read" as const,

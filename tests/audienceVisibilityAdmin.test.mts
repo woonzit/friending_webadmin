@@ -35,7 +35,6 @@ import {
   adminPrincipalFrom,
   isAdminBridgeActionAuthorized,
 } from "../lib/adminActions.ts";
-import { AUDIENCE_VISIBILITY_CONTRACT_READY } from "../lib/contractReadiness.ts";
 import { adminHelpPageForPath } from "../lib/adminHelp.ts";
 
 type Json = Record<string, any>;
@@ -168,10 +167,9 @@ function catalogueAdminMe(role: "viewer" | "editor" | "approver" | "owner"): Jso
 }
 
 test("the released v1 vocabulary pins seven actions, four capabilities, and the D-019 axes", () => {
-  // T-539 flipped the cutover switch. The vocabulary itself is unchanged; what
-  // changes is that the seven actions now reach the proxy allow-list and the
-  // access ladder. Core remains authoritative on every one of them.
-  assert.equal(AUDIENCE_VISIBILITY_CONTRACT_READY, true);
+  // T-567 retired the spent cutover switch. The seven released actions are
+  // permanent members of the proxy allow-list and access ladder, while Core
+  // remains authoritative on every one of them.
   assert.deepEqual(AUDIENCE_VISIBILITY_GENDERS, ["man", "woman", "nonbinary"]);
   assert.deepEqual(AUDIENCE_VISIBILITY_VALUES, ["male", "female", "both"]);
   assert.deepEqual(AUDIENCE_VISIBILITY_CAPABILITIES, [
@@ -675,7 +673,7 @@ test("tabs are closed and invalid input falls back to the safe inventory", () =>
   assert.equal(audienceVisibilityTab(["groups"]), "groups");
 });
 
-test("route, shell, bridge, console, member panel, and Help share one cutover switch", async () => {
+test("released routes and panels rely on Core capability gates without a second build gate", async () => {
   const [page, shell, bridge, session, actions, consoleSource, memberPage, memberPanel, help, en, hu] = await Promise.all([
     readFile(new URL("../app/(dashboard)/audience-visibility/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/Shell.tsx", import.meta.url), "utf8"),
@@ -689,8 +687,7 @@ test("route, shell, bridge, console, member panel, and Help share one cutover sw
     readFile(new URL("../messages/en.json", import.meta.url), "utf8"),
     readFile(new URL("../messages/hu.json", import.meta.url), "utf8"),
   ]);
-  assert.match(page, /if \(!AUDIENCE_VISIBILITY_CONTRACT_READY\) notFound\(\)/);
-  assert.match(page, /audienceVisibilityConsoleReady/);
+  assert.match(page, /if \(!me\?\.audienceVisibilityConsoleReady\) notFound\(\)/);
   assert.match(shell, /item\.key !== "audienceVisibility" \|\| audienceVisibilityConsoleReady/);
   // T-565: the two replaced pages are gone, not conditionally hidden. The
   // clause that removed them on the build constant ALONE — the one site that
@@ -698,15 +695,17 @@ test("route, shell, bridge, console, member panel, and Help share one cutover sw
   // an operator with neither surface — went with them.
   assert.doesNotMatch(shell, /key: "userGroups"|key: "layer2Intents"/);
   assert.doesNotMatch(shell, /"\/user-groups"|"\/layer2-intents"/);
-  // The only remaining use of the constant in the shell is the one that OPENS
-  // the replacement, so a dormant Core can no longer remove a working entry.
-  assert.equal((shell.match(/AUDIENCE_VISIBILITY_CONTRACT_READY/gu) ?? []).length, 2);
-  assert.match(shell, /ready: AUDIENCE_VISIBILITY_CONTRACT_READY/);
+  assert.match(shell, /\{ href: "\/audience-visibility", key: "audienceVisibility", icon: "userGroups" \}/);
   assert.match(bridge, /audienceVisibilityProxyCapabilityAuthorized/);
   assert.match(bridge, /normalizeAudienceVisibilityProxyBody/);
   assert.match(session, /audienceVisibilityAdminMe\(result\.data\.audience_visibility\)/);
-  assert.match(actions, /ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS/);
-  assert.match(memberPage, /AUDIENCE_VISIBILITY_CONTRACT_READY \? <AudienceVisibilityUserPanel/);
+  assert.match(
+    session,
+    /audienceVisibilityConsoleReady: audienceVisibility\?\.contract_ready === true\s+&& audienceVisibility\.actions\.includes\("audience_visibility_catalog"\)/,
+  );
+  assert.match(actions, /\.\.\.AUDIENCE_VISIBILITY_ADMIN_ACTIONS/);
+  assert.doesNotMatch(actions, /ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS/);
+  assert.match(memberPage, /<AudienceVisibilityUserPanel uid=\{uid\} \/>/);
   assert.match(memberPanel, /audience_visibility_member_detail/);
   assert.doesNotMatch(memberPanel, /user_detail/);
   assert.match(consoleSource, /audienceVisibilityPersistBeforeMutation/);
@@ -715,6 +714,11 @@ test("route, shell, bridge, console, member panel, and Help share one cutover sw
   assert.match(consoleSource, /set_audience_visibility_intent_limit/);
   assert.doesNotMatch(consoleSource, /visibility_mode|reciprocal_set_id|layer1_json|orientationChoices/);
   assert.match(help, /route: "\/audience-visibility"/);
+  assert.equal(adminHelpPageForPath("/audience-visibility")?.ready, undefined);
+  assert.equal(
+    adminHelpPageForPath("/audience-visibility")?.consoleReady,
+    "audienceVisibilityConsoleReady",
+  );
 
   const enMessages = JSON.parse(en);
   const huMessages = JSON.parse(hu);

@@ -17,10 +17,7 @@ import VerificationUserPanel from "@/components/VerificationUserPanel";
 import AdminGrantedVerificationPanel from "@/components/AdminGrantedVerificationPanel";
 import AudienceVisibilityUserPanel from "@/components/AudienceVisibilityUserPanel";
 import { adminCall } from "@/lib/adminClient";
-import {
-  ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
-  AUDIENCE_VISIBILITY_CONTRACT_READY,
-} from "@/lib/contractReadiness";
+import { ADMIN_GRANTED_VERIFICATION_CONTRACT_READY } from "@/lib/contractReadiness";
 import { formatDate } from "@/lib/format";
 import {
   identityOptionGroups,
@@ -152,7 +149,7 @@ export default function UserDetailPage() {
       <UserModerationPanel uid={uid} />
       <VerificationUserPanel uid={uid} access={data.verification_access} />
       {ADMIN_GRANTED_VERIFICATION_CONTRACT_READY ? <AdminGrantedVerificationPanel key={`admin-granted-verification-${uid}`} uid={uid} /> : null}
-      {AUDIENCE_VISIBILITY_CONTRACT_READY ? <AudienceVisibilityUserPanel uid={uid} /> : null}
+      <AudienceVisibilityUserPanel uid={uid} />
       <ProductPopupPanel key={`product-popup-${uid}`} uid={uid} />
       <OutboundMessagingPanel uid={uid} displayName={profile.display_name} codename={profile.codename} />
       <UserContentEditor

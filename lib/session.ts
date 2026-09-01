@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { coreCall } from "@/lib/core";
 import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
-  AUDIENCE_VISIBILITY_CONTRACT_READY,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 import { audienceVisibilityAdminMe } from "@/lib/audienceVisibilityAdmin";
@@ -106,8 +105,7 @@ export async function adminMe(): Promise<AdminIdentity | null> {
     personaConsoleReady: personaCapabilityAllows(persona, "read_start_config"),
     verificationConsoleReady: verification?.contract_ready === true
       && verification.actions.includes("verification_console"),
-    audienceVisibilityConsoleReady: AUDIENCE_VISIBILITY_CONTRACT_READY
-      && audienceVisibility?.contract_ready === true
+    audienceVisibilityConsoleReady: audienceVisibility?.contract_ready === true
       && audienceVisibility.actions.includes("audience_visibility_catalog"),
     profileTextModerationConsoleReady: PROFILE_TEXT_MODERATION_CONTRACT_READY
       && profileTextModeration?.contract_ready === true
