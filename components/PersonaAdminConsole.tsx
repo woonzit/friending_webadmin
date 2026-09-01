@@ -6,7 +6,10 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
-import { ADMIN_GRANTED_VERIFICATION_CONTRACT_READY } from "@/lib/contractReadiness";
+import {
+  ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
+  PERSONA_START_EDITOR_VISIBLE,
+} from "@/lib/contractReadiness";
 import {
   PERSONA_ADMIN_CONTRACT_VERSION,
   PERSONA_PENDING_STORAGE_KEY,
@@ -280,6 +283,13 @@ export default function PersonaAdminConsole() {
       setStored(null);
       setDraft(null);
       setState("dormant");
+      return;
+    }
+    if (!PERSONA_START_EDITOR_VISIBLE
+      && pendingCandidate?.action !== "persona_start_update_config") {
+      setStored(null);
+      setDraft(null);
+      setState("ready");
       return;
     }
     if (!personaCapabilityAllows(parsedCapabilities, "read_start_config")) {
@@ -668,7 +678,8 @@ export default function PersonaAdminConsole() {
     );
   }
 
-  if (!stored || !draft || !preview || !capabilities) {
+  if (!capabilities
+    || (PERSONA_START_EDITOR_VISIBLE && (!stored || !draft || !preview))) {
     return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
   }
 
@@ -812,57 +823,70 @@ export default function PersonaAdminConsole() {
         </div>
       </section>
 
-      <section className="panel persona-config-panel">
-        <div className="panel-header persona-config-header">
-          <div><h2>{t("config.title")}</h2><p>{t("config.copy")}</p><small>{t("config.revision", { revision: stored.resource_revision })}</small></div>
-          <div className="row-actions">
-            <button className="button button-secondary" type="button" disabled={controlsLocked || !dirty} onClick={() => { setDraft(clonePersonaStartConfig(stored.config)); setConfigFeedback(null); setConfirmation(null); }}>{t("config.reset")}</button>
-            <button className="button button-primary" type="button" disabled={controlsLocked || !dirty || !review || !configReasonNormalized} onClick={() => setConfirmation({ kind: "config" })}>{t("config.review")}</button>
-          </div>
-        </div>
-        <div className="panel-body">
-          {configFeedback && <div className={`alert ${configFeedback.tone === "success" ? "alert-success" : configFeedback.tone === "info" ? "alert-info" : "alert-error"}`} role="status">{configFeedback.text}</div>}
-          {!canWriteConfig && <div className="alert alert-info">{t("config.readOnly")}</div>}
-          {dirty && !configFeedback && <div className="alert alert-info">{t("config.unsaved", { count: review?.fields.length ?? 0 })}</div>}
-          {normalized && <div className="alert alert-info">{t("config.normalized")}</div>}
-          {!review && <div className="alert alert-error">{t("config.invalid")}</div>}
-          {configRecoveryRequired && (
-            <div className="persona-recovery-callout">
-              <p>{t("config.reloadRequired")}</p>
-              <button className="button button-secondary button-small" type="button" disabled={busy || memberBusy} onClick={() => void load()}>{t("config.reload")}</button>
+      {PERSONA_START_EDITOR_VISIBLE && stored && draft && preview ? (
+        <section className="panel persona-config-panel">
+          <div className="panel-header persona-config-header">
+            <div><h2>{t("config.title")}</h2><p>{t("config.copy")}</p><small>{t("config.revision", { revision: stored.resource_revision })}</small></div>
+            <div className="row-actions">
+              <button className="button button-secondary" type="button" disabled={controlsLocked || !dirty} onClick={() => { setDraft(clonePersonaStartConfig(stored.config)); setConfigFeedback(null); setConfirmation(null); }}>{t("config.reset")}</button>
+              <button className="button button-primary" type="button" disabled={controlsLocked || !dirty || !review || !configReasonNormalized} onClick={() => setConfirmation({ kind: "config" })}>{t("config.review")}</button>
             </div>
-          )}
-          {canWriteConfig && (
-            <label className="field persona-config-field">
-              <span>{t("config.reasonLabel")}</span>
-              <input
-                type="text"
-                value={configReason}
-                maxLength={600}
-                disabled={controlsLocked}
-                aria-invalid={configReason !== "" && configReasonNormalized === null}
-                onChange={(event) => {
-                  setConfigReason(event.target.value);
-                  setConfigFeedback(null);
-                  setConfirmation(null);
-                }}
-              />
-              <small>{t("limits.reason", { count: Array.from(configReason).length, maximum: 300 })}</small>
-            </label>
-          )}
-          <div className="persona-config-layout">
-            <div className="persona-editor-sections">
-              {PERSONA_START_SECTIONS.map((section) => (
-                <details className="persona-editor-section" key={section.key} open={section.key === "general" || section.key === "header" || section.key === "title"}>
-                  <summary><span><strong>{t(`sections.${section.key}.title`)}</strong><small>{t(`sections.${section.key}.copy`)}</small></span><span className="badge">{section.fields.length}</span></summary>
-                  <div className="persona-field-grid">{section.fields.map(renderConfigField)}</div>
-                </details>
-              ))}
-            </div>
-            <PersonaStartPreview config={preview} />
           </div>
-        </div>
-      </section>
+          <div className="panel-body">
+            {configFeedback && <div className={`alert ${configFeedback.tone === "success" ? "alert-success" : configFeedback.tone === "info" ? "alert-info" : "alert-error"}`} role="status">{configFeedback.text}</div>}
+            {!canWriteConfig && <div className="alert alert-info">{t("config.readOnly")}</div>}
+            {dirty && !configFeedback && <div className="alert alert-info">{t("config.unsaved", { count: review?.fields.length ?? 0 })}</div>}
+            {normalized && <div className="alert alert-info">{t("config.normalized")}</div>}
+            {!review && <div className="alert alert-error">{t("config.invalid")}</div>}
+            {configRecoveryRequired && (
+              <div className="persona-recovery-callout">
+                <p>{t("config.reloadRequired")}</p>
+                <button className="button button-secondary button-small" type="button" disabled={busy || memberBusy} onClick={() => void load()}>{t("config.reload")}</button>
+              </div>
+            )}
+            {canWriteConfig && (
+              <label className="field persona-config-field">
+                <span>{t("config.reasonLabel")}</span>
+                <input
+                  type="text"
+                  value={configReason}
+                  maxLength={600}
+                  disabled={controlsLocked}
+                  aria-invalid={configReason !== "" && configReasonNormalized === null}
+                  onChange={(event) => {
+                    setConfigReason(event.target.value);
+                    setConfigFeedback(null);
+                    setConfirmation(null);
+                  }}
+                />
+                <small>{t("limits.reason", { count: Array.from(configReason).length, maximum: 300 })}</small>
+              </label>
+            )}
+            <div className="persona-config-layout">
+              <div className="persona-editor-sections">
+                {PERSONA_START_SECTIONS.map((section) => (
+                  <details className="persona-editor-section" key={section.key} open={section.key === "general" || section.key === "header" || section.key === "title"}>
+                    <summary><span><strong>{t(`sections.${section.key}.title`)}</strong><small>{t(`sections.${section.key}.copy`)}</small></span><span className="badge">{section.fields.length}</span></summary>
+                    <div className="persona-field-grid">{section.fields.map(renderConfigField)}</div>
+                  </details>
+                ))}
+              </div>
+              <PersonaStartPreview config={preview} />
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="panel persona-config-panel">
+          <div className="panel-header persona-config-header">
+            <div><h2>{t("configUnavailable.title")}</h2><p>{t("configUnavailable.copy")}</p></div>
+            <span className="badge badge-warning">{t("configUnavailable.status")}</span>
+          </div>
+          <div className="panel-body">
+            <div className="alert alert-info" role="status">{t("configUnavailable.detail")}</div>
+            {configFeedback && <div className={`alert ${configFeedback.tone === "success" ? "alert-success" : configFeedback.tone === "info" ? "alert-info" : "alert-error"}`} role="status">{configFeedback.text}</div>}
+          </div>
+        </section>
+      )}
 
       {confirmation && (
         <ConfirmDialog

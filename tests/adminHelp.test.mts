@@ -14,6 +14,7 @@ import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
   AUDIENCE_VISIBILITY_CONTRACT_READY,
   FEATURE_SWITCHES_CONTRACT_READY,
+  PERSONA_START_EDITOR_VISIBLE,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
 } from "../lib/contractReadiness.ts";
 
@@ -161,6 +162,7 @@ const CONTRACT_CONSTANTS: Record<string, boolean> = {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
   AUDIENCE_VISIBILITY_CONTRACT_READY,
   FEATURE_SWITCHES_CONTRACT_READY,
+  PERSONA_START_EDITOR_VISIBLE,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
 };
 
@@ -239,11 +241,14 @@ test("a guide is withheld exactly while its screen refuses to render", () => {
 test("a section is withheld exactly while its panel is behind a dormant switch", () => {
   assert.equal(FEATURE_SWITCHES_CONTRACT_READY, false);
   assert.equal(ADMIN_GRANTED_VERIFICATION_CONTRACT_READY, false);
+  assert.equal(PERSONA_START_EDITOR_VISIBLE, false);
 
   const gated: Array<[string, string]> = [
     ["/configuration", "featureSwitches"],
     ["/footprints", "featureSwitchesPointer"],
     ["/users/example-id", "adminGrantedVerification"],
+    ["/persona", "startConfig"],
+    ["/persona", "preview"],
   ];
 
   for (const [route, section] of gated) {
@@ -283,6 +288,8 @@ test("withheld copy stays in both locale files so flipping a switch restores the
       ["footprints", "featureSwitchesPointer"],
       ["userDetail", "adminGrantedVerification"],
       ["profileTextModeration", "queue"],
+      ["persona", "startConfig"],
+      ["persona", "preview"],
     ] as const) {
       const copy = record(pages[pageKey], `${locale}.${pageKey}`);
       const sections = record(copy.sections, `${locale}.${pageKey}.sections`);

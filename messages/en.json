@@ -850,11 +850,11 @@
       },
       "persona": {
         "title": "Persona operations help",
-        "summary": "This guarded workspace combines the revisioned Persona start-screen singleton with three narrowly scoped member overrides. Core authors readiness and capabilities; Webadmin provides minimal revision projections, exact previews, fresh confirmations and durable receipt retry.",
+        "summary": "This guarded workspace provides narrowly scoped member overrides and reports the current status of the Persona start-screen surface. Core authors readiness and capabilities; Webadmin keeps exact confirmations and durable receipt retry.",
         "steps": {
           "1": "Read the contract-readiness badges first; a dormant or missing action means stop, not permission to work around the gate.",
           "2": "For a member operation, resolve the canonical UID and compare both UID and display name before selecting one action.",
-          "3": "For configuration, review normalized fields, the device preview, current resource revision and private reason before confirming one save.",
+          "3": "Follow the start-screen panel shown on this page: a compiled-copy notice means there is no live editor to use; an intentionally restored editor carries its own revision and preview controls.",
           "4": "After timeout, malformed response, 5xx or in-progress state, use only the exact session-stored retry; after a revision conflict, refresh authoritative state."
         },
         "sections": {
@@ -3243,7 +3243,7 @@
   "personaAdmin": {
     "eyebrow": "Identity operations",
     "title": "Persona operations",
-    "subtitle": "Manage guarded member verification overrides and the complete native Persona start screen through Core-authored capabilities.",
+    "subtitle": "Manage guarded member verification overrides and see the current status of the Persona start-screen configuration surface.",
     "loadError": "The Persona contract or start configuration could not be decoded safely. No editable state has been assumed.",
     "readiness": {
       "title": "Contract readiness",
@@ -3326,6 +3326,12 @@
         "revoke_fake": "Core removed the guarded synthetic marker and advanced the shared member revision exactly once.",
         "force_verify": "Core promoted the current avatar, advanced the shared member revision, and returned a valid bounded path that was not retained in browser state."
       }
+    },
+    "configUnavailable": {
+      "title": "Start-screen editor unavailable",
+      "copy": "The app does not read this legacy configuration surface, so it is hidden to prevent edits that never reach members.",
+      "detail": "The screens members see currently come from the app's own compiled copy. A replacement editor for those live screens is being built and will appear here.",
+      "status": "Replacement in progress"
     },
     "config": {
       "title": "Persona start screen",

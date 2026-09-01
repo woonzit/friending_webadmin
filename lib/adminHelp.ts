@@ -25,6 +25,7 @@ import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
   AUDIENCE_VISIBILITY_CONTRACT_READY,
   FEATURE_SWITCHES_CONTRACT_READY,
+  PERSONA_START_EDITOR_VISIBLE,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 
@@ -224,6 +225,10 @@ export const ADMIN_HELP_PAGES = [
       "uncertainResponses",
     ],
     consoleReady: "personaConsoleReady",
+    sectionReady: {
+      startConfig: PERSONA_START_EDITOR_VISIBLE,
+      preview: PERSONA_START_EDITOR_VISIBLE,
+    },
     matches: exact("/persona"),
   },
   {

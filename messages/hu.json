@@ -850,11 +850,11 @@
       },
       "persona": {
         "title": "Persona műveletek súgó",
-        "summary": "Ez a védett munkaterület egyesíti a revíziózott Persona indítóképernyő singletonját három szűken korlátozott tagi felülbírálással. A készültséget és képességeket a Core adja; a Webadmin minimális revízióvetületet, pontos előnézetet, friss megerősítést és tartós receipt-újrapróbálást biztosít.",
+        "summary": "Ez a védett munkaterület szűken korlátozott tagi felülbírálásokat biztosít, és jelzi a Persona indítóképernyő felületének aktuális állapotát. A készültséget és képességeket a Core adja; a Webadmin pontos megerősítést és tartós receipt-újrapróbálást biztosít.",
         "steps": {
           "1": "Először olvasd el a szerződéskészültségi jelvényeket; az inaktív állapot vagy hiányzó művelet megállást jelent, nem engedélyt a gate megkerülésére.",
           "2": "Tagi műveletnél oldd fel a kanonikus UID-t, majd egyetlen művelet kiválasztása előtt vesd össze a UID-t és a megjelenített nevet.",
-          "3": "Konfigurációnál egy mentés megerősítése előtt nézd át a normalizált mezőket, az eszközelőnézetet, az aktuális erőforrás-revíziót és a privát indokot.",
+          "3": "Kövesd az ezen az oldalon látható indítóképernyő-panelt: a beépített app-szövegről szóló tájékoztató azt jelenti, hogy nincs használható élő szerkesztő; a szándékosan visszakapcsolt szerkesztő saját revízió- és előnézeti vezérlőket mutat.",
           "4": "Timeout, hibás válasz, 5xx vagy folyamatban lévő állapot után csak a sessionben tárolt pontos újrapróbálást használd; revízióütközés után frissítsd a hiteles állapotot."
         },
         "sections": {
@@ -3243,7 +3243,7 @@
   "personaAdmin": {
     "eyebrow": "Azonossági műveletek",
     "title": "Persona műveletek",
-    "subtitle": "Védett tagi verifikációs felülbírálások és a teljes natív Persona indítóképernyő kezelése Core által adott képességekkel.",
+    "subtitle": "Védett tagi verifikációs felülbírálások kezelése és a Persona indítóképernyő-konfigurációs felület aktuális állapotának megtekintése.",
     "loadError": "A Persona szerződés vagy indítókonfiguráció nem dekódolható biztonságosan. A felület nem feltételez szerkeszthető állapotot.",
     "readiness": {
       "title": "Szerződéskészültség",
@@ -3326,6 +3326,12 @@
         "revoke_fake": "A Core eltávolította a védett szintetikus jelölőt, és pontosan egyszer léptette a közös tagi revíziót.",
         "force_verify": "A Core előléptette az aktuális avatárt, léptette a közös tagi revíziót, és érvényes korlátozott útvonalat adott vissza, amely nem került böngészőállapotba."
       }
+    },
+    "configUnavailable": {
+      "title": "Az indítóképernyő-szerkesztő nem érhető el",
+      "copy": "Az app nem olvassa ezt a régi konfigurációs felületet, ezért elrejtettük, hogy ne lehessen a tagokhoz soha el nem jutó módosításokat menteni.",
+      "detail": "A tagok által látott képernyők jelenleg az app saját, buildbe fordított szövegeiből épülnek fel. Az élő képernyőkhöz készülő új szerkesztő itt fog megjelenni.",
+      "status": "A csere készül"
     },
     "config": {
       "title": "Persona indítóképernyő",
