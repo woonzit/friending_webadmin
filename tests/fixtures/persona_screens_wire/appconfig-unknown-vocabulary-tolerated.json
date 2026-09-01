@@ -1,0 +1,17 @@
+{
+    "status_code": 200,
+    "data": {
+        "persona_screens": {
+            "contract_version": 1,
+            "lang": "en",
+            "screens": {
+                "pre": {
+                    "headline": "Kept"
+                }
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -4,12 +4,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PageHeader from "@/components/PageHeader";
+import PersonaScreensCard from "@/components/PersonaScreensCard";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
   PERSONA_START_EDITOR_VISIBLE,
 } from "@/lib/contractReadiness";
+import {
+  personaScreensProjectionFrom,
+  type PersonaScreensProjection,
+} from "@/lib/personaScreens";
 import {
   PERSONA_ADMIN_CONTRACT_VERSION,
   PERSONA_PENDING_STORAGE_KEY,
@@ -230,6 +235,8 @@ export default function PersonaAdminConsole() {
   const common = useTranslations("common");
   const [state, setState] = useState<LoadState>("loading");
   const [capabilities, setCapabilities] = useState<PersonaAdminCapabilities | null>(null);
+  /** Core's separate Persona-screens projection, read from the same membership answer. */
+  const [screensProjection, setScreensProjection] = useState<PersonaScreensProjection>({ kind: "unreadable" });
   const [stored, setStored] = useState<PersonaStartConfigResource | null>(null);
   const [draft, setDraft] = useState<PersonaStartConfig | null>(null);
   const [busy, setBusy] = useState(false);
@@ -270,6 +277,7 @@ export default function PersonaAdminConsole() {
     setMemberRecoveryRequired(false);
     setConfirmation(null);
     const membership = await adminCall("admin_me");
+    setScreensProjection(personaScreensProjectionFrom(membership));
     const parsedCapabilities = personaAdminCapabilitiesFrom(
       membership,
       ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
@@ -875,18 +883,19 @@ export default function PersonaAdminConsole() {
             </div>
           </div>
         </section>
-      ) : (
-        <section className="panel persona-config-panel">
-          <div className="panel-header persona-config-header">
-            <div><h2>{t("configUnavailable.title")}</h2><p>{t("configUnavailable.copy")}</p></div>
-            <span className="badge badge-warning">{t("configUnavailable.status")}</span>
-          </div>
-          <div className="panel-body">
-            <div className="alert alert-info" role="status">{t("configUnavailable.detail")}</div>
-            {configFeedback && <div className={`alert ${configFeedback.tone === "success" ? "alert-success" : configFeedback.tone === "info" ? "alert-info" : "alert-error"}`} role="status">{configFeedback.text}</div>}
-          </div>
-        </section>
-      )}
+      ) : null}
+
+      {/*
+        T-551. The replacement T-581 promised, in the place T-581 emptied. This
+        card edits the copy of the three screens the app shows TODAY, through
+        Core's own `persona_screens` contract; the legacy start-screen editor
+        above stays hidden behind `PERSONA_START_EDITOR_VISIBLE` because nothing
+        on the client reads what it edits.
+      */}
+      <PersonaScreensCard
+        projection={screensProjection}
+        locked={busy || memberBusy || pending !== null}
+      />
 
       {confirmation && (
         <ConfirmDialog

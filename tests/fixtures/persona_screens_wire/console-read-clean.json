@@ -1,0 +1,93 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "revision": 4,
+        "copy_default": {
+            "en": {
+                "pre": {
+                    "headline": "Verify that it’s really you",
+                    "subtitle": "A quick identity check keeps Friending safe for everyone.",
+                    "cta": "Start verification"
+                },
+                "success": {
+                    "headline": "You’re verified",
+                    "subtitle": "Your badge is live and everything is unlocked.",
+                    "cta": "Continue"
+                },
+                "failed": {
+                    "headline": "We couldn’t finish that",
+                    "subtitle": "Nothing has happened to your account. You can try again.",
+                    "cta": "Try again"
+                }
+            },
+            "hu": {
+                "pre": {
+                    "headline": "Igazold, hogy tényleg te vagy az"
+                },
+                "failed": {
+                    "cta": "Próbáljuk újra"
+                }
+            }
+        },
+        "compiled_reference": {
+            "en": {
+                "pre": {
+                    "headline": "Verify that it’s really you",
+                    "subtitle": "This is required in your region before you can use Friending. It takes about two minutes, and no other member ever sees your documents.",
+                    "cta": "Get started"
+                },
+                "success": {
+                    "headline": "You’re verified",
+                    "subtitle": "Your badge is live and everything is unlocked. Have fun out there.",
+                    "cta": "Continue to Friending"
+                },
+                "failed": {
+                    "headline": "We couldn’t finish that",
+                    "subtitle": "This is not a strike against your account — you can try again whenever you like.",
+                    "cta": "Try again"
+                }
+            },
+            "hu": {
+                "pre": {
+                    "headline": "Igazold, hogy tényleg te vagy az",
+                    "subtitle": "A régiódban ez kötelező a Friending használatához. Nagyjából két perc, és a dokumentumaidat egyetlen másik tag sem látja.",
+                    "cta": "Kezdjük"
+                },
+                "success": {
+                    "headline": "Kész, hitelesítve vagy",
+                    "subtitle": "Megjött a jelvényed, és minden funkció elérhető. Jó ismerkedést!",
+                    "cta": "Irány a Friending"
+                },
+                "failed": {
+                    "headline": "Nem sikerült befejezni",
+                    "subtitle": "Ez nem jelent semmilyen büntetést a fiókodra nézve — bármikor újrapróbálhatod.",
+                    "cta": "Próbáljuk újra"
+                }
+            }
+        },
+        "reference_authority": "ios:Localizable.strings:verification.screen.*",
+        "screens": [
+            "pre",
+            "success",
+            "failed"
+        ],
+        "slots": [
+            "headline",
+            "subtitle",
+            "cta"
+        ],
+        "languages": [
+            "en",
+            "hu"
+        ],
+        "slot_byte_limits": {
+            "headline": 120,
+            "subtitle": 320,
+            "cta": 40
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

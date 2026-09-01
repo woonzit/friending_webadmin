@@ -124,23 +124,17 @@ test("the version-1 fixture decodes one complete closed start configuration", ()
   assert.deepEqual(Object.keys(payload).sort(), [...PERSONA_START_FIELD_KEYS].sort());
 });
 
-test("both locales cover the dormant editor and honest replacement notice", async () => {
+/**
+ * T-581 hid the legacy start-screen editor and left a placeholder promising a
+ * replacement editor for the screens the app actually shows. T-551 delivered
+ * it, so the placeholder is gone: a panel that still said "a replacement is
+ * being built" while standing next to the replacement would be false. The
+ * dormant editor's own copy stays in both locale files, complete, so flipping
+ * `PERSONA_START_EDITOR_VISIBLE` restores it.
+ */
+test("both locales cover the dormant editor and the console that replaced its placeholder", async () => {
   const sectionKeys = PERSONA_START_SECTIONS.map((section) => section.key).sort();
   const errorKeys = [...PERSONA_ADMIN_ERROR_KEYS, "generic"].sort();
-  const unavailableCopy = {
-    en: {
-      title: "Start-screen editor unavailable",
-      copy: "The app does not read this legacy configuration surface, so it is hidden to prevent edits that never reach members.",
-      detail: "The screens members see currently come from the app's own compiled copy. A replacement editor for those live screens is being built and will appear here.",
-      status: "Replacement in progress",
-    },
-    hu: {
-      title: "Az indítóképernyő-szerkesztő nem érhető el",
-      copy: "Az app nem olvassa ezt a régi konfigurációs felületet, ezért elrejtettük, hogy ne lehessen a tagokhoz soha el nem jutó módosításokat menteni.",
-      detail: "A tagok által látott képernyők jelenleg az app saját, buildbe fordított szövegeiből épülnek fel. Az élő képernyőkhöz készülő új szerkesztő itt fog megjelenni.",
-      status: "A csere készül",
-    },
-  } as const;
   for (const locale of ["en", "hu"]) {
     const messages = JSON.parse(
       await readFile(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"),
@@ -150,6 +144,7 @@ test("both locales cover the dormant editor and honest replacement notice", asyn
         sections?: Record<string, unknown>;
         errors?: Record<string, unknown>;
         configUnavailable?: Record<string, unknown>;
+        screens?: Record<string, unknown>;
       };
     };
     assert.deepEqual(
@@ -167,10 +162,22 @@ test("both locales cover the dormant editor and honest replacement notice", asyn
       errorKeys,
       `${locale} Persona error copy`,
     );
-    assert.deepEqual(
+    assert.equal(
       messages.personaAdmin?.configUnavailable,
-      unavailableCopy[locale],
-      `${locale} must state why the editor is hidden and what replaces it`,
+      undefined,
+      `${locale} must not keep the placeholder now that its replacement is on the page`,
+    );
+    // The replacement card's own copy, which the page renders in the place the
+    // placeholder used to occupy.
+    assert.deepEqual(
+      Object.keys(messages.personaAdmin?.screens ?? {}).sort(),
+      [
+        "appearance", "bytes", "closed", "copy", "editing", "emptyMeans", "issueSummary", "issues",
+        "languageCount", "languageGroup", "languages", "loadError", "notices", "published",
+        "readOnly", "refusedControl", "reload", "revision", "rule", "save", "saving", "screenSource",
+        "screens", "slots", "title", "unavailable", "unsaved", "viewer", "writer",
+      ],
+      `${locale} verification-screens console copy`,
     );
   }
 });
@@ -759,7 +766,13 @@ test("page, navigation, runtime readiness, confirmations, and same-origin calls 
   assert.equal(PERSONA_START_EDITOR_VISIBLE, false);
   assert.match(component, /if \(!PERSONA_START_EDITOR_VISIBLE\s*&& pendingCandidate\?\.action !== "persona_start_update_config"\) \{[\s\S]*?setState\("ready"\);[\s\S]*?return;/);
   assert.match(component, /PERSONA_START_EDITOR_VISIBLE && stored && draft && preview \? \(/);
-  assert.match(component, /t\("configUnavailable\.detail"\)/);
+  // The hidden editor renders nothing at all now; the place it occupied carries
+  // the T-551 console for the screens the app really shows.
+  assert.doesNotMatch(component, /configUnavailable/);
+  assert.match(component, /<PersonaScreensCard\n\s+projection=\{screensProjection\}\n\s+locked=\{busy \|\| memberBusy \|\| pending !== null\}\n\s+\/>/);
+  // One membership read per load: the Persona-screens projection is parsed out
+  // of the same `admin_me` answer the receipt console already needed.
+  assert.match(component, /setScreensProjection\(personaScreensProjectionFrom\(membership\)\);/);
   assert.match(component, /PERSONA_START_SECTIONS\.map/);
   assert.match(component, /<PersonaStartPreview config=\{preview\} \/>/);
   assert.match(component, /member\.adminGrantTransition/);

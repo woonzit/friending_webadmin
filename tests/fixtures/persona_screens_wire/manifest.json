@@ -1,0 +1,153 @@
+{
+    "schema_version": 1,
+    "contract_version": 1,
+    "source_commit": "e5c0bc14a24bfbfedc14b5a81d866b95b5aa7348",
+    "contract_manifest_sha256": "096da8bfeee97d89f67d8fa1ec50cd9430502cb773b161d0d2878c5577df8fcd",
+    "fixture_set_sha256": "7b9f1642acf40d7f16840824642c8a78bd317b8f0f82fbfc552695ae869e770c",
+    "provenance": {
+        "generator": "tests/persona_screens_fixture_dump.php",
+        "generator_sha256": "b440fd6cffdd4a904bae4d1ccc206ea9a7d7d24b42bbe9cffe54a15f9cd88077",
+        "wire_adapters": {
+            "app_config": "Friending\\Core\\Response::wirePayload",
+            "webadmin": "Friending\\Support\\Webadmin::noStoreReply"
+        },
+        "source_paths": [
+            "config/routes.php",
+            "src/Core/Response.php",
+            "src/Http/Controllers/AppController.php",
+            "src/Http/Controllers/PersonaScreensAdminController.php",
+            "src/Http/Middleware/WebadminSecretMiddleware.php",
+            "src/Services/PersonaScreensAdminActorService.php",
+            "src/Services/PersonaScreensAdminException.php",
+            "src/Services/PersonaScreensAdminService.php",
+            "src/Services/PersonaScreensAdminTransaction.php",
+            "src/Services/PersonaScreensConfigurationService.php",
+            "src/Support/PersonaScreensAdminPolicy.php",
+            "src/Support/PersonaScreensPolicy.php",
+            "src/Support/StrictJson.php",
+            "src/Support/Webadmin.php",
+            "tests/persona_screens_fixture_dump.php"
+        ]
+    },
+    "fixtures": [
+        {
+            "file": "appconfig-en-session-en-only.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "the same storage in an English session publishes all nine slots — the omission is per language, not a refusal",
+            "consumer": "ios",
+            "sha256": "9b48c005c265ade8924a8c79e36ed44ccdc1b995d0f248c02310f922a91e4f93"
+        },
+        {
+            "file": "appconfig-en-session-partial-translation.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "the same mid-translation storage resolved for English",
+            "consumer": "ios",
+            "sha256": "9b48c005c265ade8924a8c79e36ed44ccdc1b995d0f248c02310f922a91e4f93"
+        },
+        {
+            "file": "appconfig-hu-session-en-only.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "R2: every slot filled in English, a Hungarian session — Core publishes NOTHING and the client uses its compiled Hungarian",
+            "consumer": "ios",
+            "sha256": "8c42e77ed2b2730951b5465fe634ec505ff4b351177ab15c958fad91e56b43da"
+        },
+        {
+            "file": "appconfig-hu-session-partial-translation.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "mid-translation: two Hungarian slots published, the other seven omitted for the client to fill",
+            "consumer": "ios",
+            "sha256": "0654d8d7aeef19096643283beb4cbd04e3054979f1185946e812e1b5df280a1b"
+        },
+        {
+            "file": "appconfig-nothing-stored-hu.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "no operator copy at all: the key is present and empty, and the client renders its compiled screens",
+            "consumer": "ios",
+            "sha256": "8c42e77ed2b2730951b5465fe634ec505ff4b351177ab15c958fad91e56b43da"
+        },
+        {
+            "file": "appconfig-slot-degrades-alone.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "R3: one over-cap slot is dropped and its two siblings still publish",
+            "consumer": "ios",
+            "sha256": "68a2d2de2344641286cf34a7237609ad96a0de06ada2673ca0f75ee5ef9f88e2"
+        },
+        {
+            "file": "appconfig-unknown-language.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "an unknown lang narrows to en, exactly as the rest of ios_appconfig narrows it",
+            "consumer": "ios",
+            "sha256": "9b48c005c265ade8924a8c79e36ed44ccdc1b995d0f248c02310f922a91e4f93"
+        },
+        {
+            "file": "appconfig-unknown-vocabulary-tolerated.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "R4 read tolerance: an unknown screen, slot and language are ignored, never fatal",
+            "consumer": "ios",
+            "sha256": "299c3f656a31e390e3ae3ac2c0d62031e6f63907638f68f8b9e7cebe8c15eb64"
+        },
+        {
+            "file": "console-read-clean.json",
+            "route": "/v1/webadmin/persona_screens_console",
+            "case": "the console projection of a mid-translation configuration, with the read-only compiled reference",
+            "consumer": "webadmin",
+            "sha256": "b33ddad19da2cebab3522e93b8c303f96a2ddb4850412570ab8c91335f493192"
+        },
+        {
+            "file": "console-read-empty.json",
+            "route": "/v1/webadmin/persona_screens_console",
+            "case": "nothing stored: an empty copy_default beside the full compiled reference the console shows as placeholders",
+            "consumer": "webadmin",
+            "sha256": "94b76c9cf6323b0d3beb7b3f7e63cdf511dc5b3d4b741dd0c8ce64f4f5a3834a"
+        },
+        {
+            "file": "console-saved.json",
+            "route": "/v1/webadmin/persona_screens_save",
+            "case": "the payload a successful save returns: the new revision and the stored document",
+            "consumer": "webadmin",
+            "sha256": "a1b44852952956b39eec1490402db243dd9513c711b5cca856f9da28ed6103c5"
+        },
+        {
+            "file": "refusal-conflict.json",
+            "route": "/v1/webadmin/persona_screens_save",
+            "case": "CAS: a stale expected_revision is 409 and carries current_revision so the console RELOADS instead of replaying",
+            "consumer": "webadmin",
+            "sha256": "cf0b5a4c48fba456e70ac232cb152aa441fa14ed483912f5e62a473625fcc59f"
+        },
+        {
+            "file": "refusal-highlight-markup.json",
+            "route": "/v1/webadmin/persona_screens_save",
+            "case": "R5: the {{highlight}} markup does not come back, and the refusal says which slot carried it",
+            "consumer": "webadmin",
+            "sha256": "c89a55637bd50a422cd821fc9c3fb7f5becedb37f02fb7c4448c7f7059521c0f"
+        },
+        {
+            "file": "refusal-slot-empty.json",
+            "route": "/v1/webadmin/persona_screens_save",
+            "case": "R4: an empty Hungarian headline is 422 and names the exact field",
+            "consumer": "webadmin",
+            "sha256": "b257bc1920cdac8e5f055c11c6ff0c08f9caad12688d99059bfd29aa678de089"
+        },
+        {
+            "file": "refusal-slot-over-cap.json",
+            "route": "/v1/webadmin/persona_screens_save",
+            "case": "R4: a cta over its byte cap names its own field, not the form",
+            "consumer": "webadmin",
+            "sha256": "39f20fc2cdd5df16b0f0a66e77d6f5d8cc687c54d5eadc887754466b9554c78b"
+        },
+        {
+            "file": "refusal-storefront-override-rejected.json",
+            "route": "/v1/webadmin/persona_screens_save",
+            "case": "v1 has NO storefront overrides (D-080): a copy_overrides key is not part of the document",
+            "consumer": "webadmin",
+            "sha256": "5b9c6d26fa6a6dd1655b274b31560b61bcb2d2009550766a29f7d126ee9e4c80"
+        },
+        {
+            "file": "refusal-unknown-language.json",
+            "route": "/v1/webadmin/persona_screens_save",
+            "case": "a language outside the closed vocabulary is refused at write time, though it is merely ignored at read time",
+            "consumer": "webadmin",
+            "sha256": "adef5ec170c901f1ffdcb0395ddf09d68d805eb1cc569711f56358d545dbea1d"
+        }
+    ]
+}

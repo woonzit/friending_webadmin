@@ -894,6 +894,16 @@
             },
             "guidance": "This replaces verification evidence and is not a provider inquiry. Missing or non-durable avatars must remain Core refusals, never browser-side workarounds."
           },
+          "screenCopy": {
+            "title": "Verification screen copy",
+            "purpose": "The pre-verification, success and failed screens the app shows around Persona, edited per language and published by Core on the launch configuration for the member's own language.",
+            "actions": {
+              "1": "Pick a language tab first, then type only into the slots you want to replace; the grey text is what the app says today and is never saved.",
+              "2": "Leave a slot empty to keep the app's own copy for that language, and read the per-language count under the editors before saving.",
+              "3": "On a conflict the editor reloads what is stored and never replays your save; make the change again on top of the reloaded copy."
+            },
+            "guidance": "Nothing is copied between languages, by this console or by Core. An English sentence typed into a Hungarian box is published to Hungarian members exactly as typed, so translate rather than paste."
+          },
           "startConfig": {
             "title": "Complete start-screen editor",
             "purpose": "Eleven groups cover every contracted boolean, progress value, font size, URL, color, icon fallback and text field in the native pre-inquiry screen.",
@@ -3243,8 +3253,8 @@
   "personaAdmin": {
     "eyebrow": "Identity operations",
     "title": "Persona operations",
-    "subtitle": "Manage guarded member verification overrides and see the current status of the Persona start-screen configuration surface.",
-    "loadError": "The Persona contract or start configuration could not be decoded safely. No editable state has been assumed.",
+    "subtitle": "Manage guarded member verification overrides and design the copy of the three verification screens the app shows around Persona.",
+    "loadError": "The Persona contract could not be decoded safely. No editable state has been assumed.",
     "readiness": {
       "title": "Contract readiness",
       "copy": "Core is the authority for schema version, release readiness and every available action.",
@@ -3327,11 +3337,93 @@
         "force_verify": "Core promoted the current avatar, advanced the shared member revision, and returned a valid bounded path that was not retained in browser state."
       }
     },
-    "configUnavailable": {
-      "title": "Start-screen editor unavailable",
-      "copy": "The app does not read this legacy configuration surface, so it is hidden to prevent edits that never reach members.",
-      "detail": "The screens members see currently come from the app's own compiled copy. A replacement editor for those live screens is being built and will appear here.",
-      "status": "Replacement in progress"
+    "screens": {
+      "title": "Verification screens the app shows",
+      "copy": "The pre-verification, success and failed screens members see around Persona. Core publishes what you write here for the member's own language; anything you leave empty stays the app's own compiled copy.",
+      "loadError": "The Persona screens console could not be decoded safely. Nothing editable has been assumed.",
+      "revision": "Revision {revision}",
+      "writer": "You may save",
+      "viewer": "Read only",
+      "unsaved": "Unsaved changes",
+      "readOnly": "Your role may read this copy but not change it. Core decides that, and this console cannot widen it.",
+      "reload": "Reload stored copy",
+      "save": "Save copy",
+      "saving": "Saving…",
+      "closed": {
+        "badge": "Not available",
+        "detail": "Core is not offering the verification-screens console to this administrator right now. The three screens keep working; they simply use the app's own copy."
+      },
+      "unavailable": {
+        "copy": "Core cannot read the stored screen copy.",
+        "badge": "Core unavailable",
+        "detail": "Core answered that the stored copy is unreadable, so this console will not show you a repaired version of it. Members are unaffected: the app renders its own compiled screens. Reload once Core recovers, and do not retype the copy until you can see what is stored."
+      },
+      "rule": {
+        "title": "An empty box is correct.",
+        "emptyIsCorrect": "Leave a box empty and the app uses its own copy for that slot, in the member's own language. The grey text inside an empty box is what the app says today — a reference, never a value. It is not sent when you save.",
+        "perLanguage": "Each language is stored on its own. Nothing you type in one language is ever copied into the other, and an English sentence saved into a Hungarian box would be shown to Hungarian members exactly as you typed it."
+      },
+      "languageGroup": "Language being edited",
+      "languages": {
+        "en": "English",
+        "hu": "Hungarian"
+      },
+      "languageCount": "{count} of {total}",
+      "editing": "You are editing the {language} copy. The other language is untouched by anything you do here.",
+      "screenSource": "{operator} of {total} from you",
+      "screens": {
+        "pre": {
+          "title": "Before verification",
+          "copy": "Shown once, before the member starts the Persona flow.",
+          "furniture": "The mark, the skip link and the provider line are the app's own and are not edited here."
+        },
+        "success": {
+          "title": "Verification succeeded",
+          "copy": "Shown when Persona returns an accepted result.",
+          "furniture": "The mark and the secondary link are the app's own and are not edited here."
+        },
+        "failed": {
+          "title": "Verification failed",
+          "copy": "Shown when Persona returns a failure. It is not a penalty, and the copy should not read like one.",
+          "furniture": "The mark, the provider's own failure reason and the secondary links are the app's own and are not edited here."
+        }
+      },
+      "slots": {
+        "headline": "Headline",
+        "subtitle": "Subtitle",
+        "cta": "Button label"
+      },
+      "emptyMeans": "Empty — the app uses its own {language} copy here.",
+      "bytes": "{used} of {max} bytes",
+      "issues": {
+        "overCap": "Too long for this slot. Accented Hungarian characters cost two bytes each.",
+        "untrimmed": "Remove the space at the start or the end.",
+        "boundaryWhitespace": "Remove the invisible character at the start or the end.",
+        "control": "Remove the control character or line break; every slot is a single line.",
+        "markup": "Curly braces are not markup here and are refused. Write the sentence plainly.",
+        "angleBrackets": "Angle brackets are refused. Write the sentence plainly.",
+        "malformedText": "This text is not valid; retype it rather than pasting it."
+      },
+      "refusedControl": "Core refused this exact value.",
+      "issueSummary": "{count} value(s) cannot be saved. Start with {field}.",
+      "appearance": {
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "published": {
+        "title": "What members will get",
+        "copy": "Counted from the editors above, per language, exactly as Core resolves it.",
+        "row": "{language}: {published} of {total} slots come from you, {compiled} from the app's own copy.",
+        "reference": "The grey reference text mirrors the app itself ({authority}). If the two ever disagree, the app is right."
+      },
+      "notices": {
+        "saved": "Saved. The stored copy is now revision {revision}, and the app picks it up on its next launch read.",
+        "conflict": "Someone else saved first; the stored copy is now revision {revision}. This editor has been reloaded with what is stored, so nothing was written over. Make your change again.",
+        "refused": "Core refused the save ({code}). Nothing was written.",
+        "refusedField": "Core refused the save ({code}) at {field}. Nothing was written.",
+        "uncertain": "The save could not be confirmed ({code}). The stored copy has been re-read; compare it with your draft before you try again.",
+        "validation": "Some values would be refused. Fix the marked controls first."
+      }
     },
     "config": {
       "title": "Persona start screen",
@@ -3363,17 +3455,50 @@
       "reason": "Required, control-free reason: {count}/{maximum} Unicode characters. It stays out of response and log material."
     },
     "sections": {
-      "general": { "title": "Availability and page", "copy": "Master visibility and page background." },
-      "header": { "title": "Brand header and progress", "copy": "Logo, brand text and progress-bar presentation." },
-      "title": { "title": "Main title", "copy": "Primary template, highlight text, colors and type size." },
-      "subtitle": { "title": "Subtitle", "copy": "Supporting template, highlight text, colors and type size." },
-      "benefits": { "title": "Three benefits", "copy": "Icons, titles, bodies and shared typography for all benefit columns." },
-      "trust": { "title": "Trust card", "copy": "Optional featured-in card, link presentation and supporting brand art." },
-      "cta": { "title": "Primary action", "copy": "Verification call-to-action label, fallback icon and colors." },
-      "secured": { "title": "Secured-by line", "copy": "Persona security attribution and fallback icon." },
-      "about": { "title": "About Persona pill", "copy": "Informational pill label, fallback icon, border and colors." },
-      "safety": { "title": "Safety card", "copy": "Optional safety explanation, illustration, icon and typography." },
-      "skip": { "title": "Skip action", "copy": "Optional skip label, color and type size." }
+      "general": {
+        "title": "Availability and page",
+        "copy": "Master visibility and page background."
+      },
+      "header": {
+        "title": "Brand header and progress",
+        "copy": "Logo, brand text and progress-bar presentation."
+      },
+      "title": {
+        "title": "Main title",
+        "copy": "Primary template, highlight text, colors and type size."
+      },
+      "subtitle": {
+        "title": "Subtitle",
+        "copy": "Supporting template, highlight text, colors and type size."
+      },
+      "benefits": {
+        "title": "Three benefits",
+        "copy": "Icons, titles, bodies and shared typography for all benefit columns."
+      },
+      "trust": {
+        "title": "Trust card",
+        "copy": "Optional featured-in card, link presentation and supporting brand art."
+      },
+      "cta": {
+        "title": "Primary action",
+        "copy": "Verification call-to-action label, fallback icon and colors."
+      },
+      "secured": {
+        "title": "Secured-by line",
+        "copy": "Persona security attribution and fallback icon."
+      },
+      "about": {
+        "title": "About Persona pill",
+        "copy": "Informational pill label, fallback icon, border and colors."
+      },
+      "safety": {
+        "title": "Safety card",
+        "copy": "Optional safety explanation, illustration, icon and typography."
+      },
+      "skip": {
+        "title": "Skip action",
+        "copy": "Optional skip label, color and type size."
+      }
     },
     "preview": {
       "label": "Normalized Persona start-screen preview",
@@ -3679,22 +3804,52 @@
       "toronto": "Toronto"
     },
     "features": {
-      "people": { "list": { "title": "Browse People" } },
+      "people": {
+        "list": {
+          "title": "Browse People"
+        }
+      },
       "profile": {
-        "view": { "title": "View another profile" }
+        "view": {
+          "title": "View another profile"
+        }
       },
       "chat": {
-        "send": { "title": "Send chat messages" }
+        "send": {
+          "title": "Send chat messages"
+        }
       },
-      "friend": { "request": { "title": "Send friend request" } },
+      "friend": {
+        "request": {
+          "title": "Send friend request"
+        }
+      },
       "dates": {
-        "access": { "title": "Open Dates" },
-        "create": { "title": "Create a Date" },
-        "join": { "title": "Join a Date" }
+        "access": {
+          "title": "Open Dates"
+        },
+        "create": {
+          "title": "Create a Date"
+        },
+        "join": {
+          "title": "Join a Date"
+        }
       },
-      "footprints": { "send": { "title": "Send a Footprint" } },
-      "pinger": { "send": { "title": "Send a Pinger" } },
-      "album": { "private_request": { "title": "Request private album" } }
+      "footprints": {
+        "send": {
+          "title": "Send a Footprint"
+        }
+      },
+      "pinger": {
+        "send": {
+          "title": "Send a Pinger"
+        }
+      },
+      "album": {
+        "private_request": {
+          "title": "Request private album"
+        }
+      }
     },
     "scopes": {
       "listTitle": "Regional scopes",
@@ -3937,7 +4092,10 @@
       "invalidDraft": "The draft does not satisfy the exact Verification v1 contract.",
       "scope": "Policy scope",
       "enabledMethods": "Enabled methods",
-      "methodChoices": { "none": "No method", "both": "Video selfie and Persona" },
+      "methodChoices": {
+        "none": "No method",
+        "both": "Video selfie and Persona"
+      },
       "methodAvailable": "available for new policy starts",
       "methodReasons": {
         "deployment_unlock_disabled": "deployment unlock is disabled",

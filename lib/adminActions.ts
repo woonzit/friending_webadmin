@@ -12,6 +12,7 @@ import { FORCED_VERIFICATION_ACTIONS } from "@/lib/forcedVerification";
 import { PROFILE_TEXT_MODERATION_ACTIONS } from "@/lib/profileTextModeration";
 import { OUTBOUND_MESSAGING_ACTIONS } from "@/lib/outboundMessaging";
 import { PERSONA_ADMIN_ACTIONS } from "@/lib/personaAdmin";
+import { PERSONA_SCREENS_ACTIONS } from "@/lib/personaScreens";
 import {
   MAX_VERIFICATION_BADGE_FORM_BYTES,
   VERIFICATION_ADMIN_ACTIONS,
@@ -67,6 +68,9 @@ const ACTIVE_ADMIN_GRANTED_VERIFICATION_ACTIONS = ADMIN_GRANTED_VERIFICATION_CON
 
 /** Released T-471 actions (D-053 forced verification), gated by Core's `admin_me.verification_forced` block. */
 const ACTIVE_FORCED_VERIFICATION_ACTIONS = FORCED_VERIFICATION_ACTIONS;
+
+/** Released T-550 actions (D-080 Persona screens), gated by Core's `admin_me.persona_screens` block. */
+const ACTIVE_PERSONA_SCREENS_ACTIONS = PERSONA_SCREENS_ACTIONS;
 
 /** Dormant T-215 actions stay absent until the reviewed T-121 provider release. */
 const ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS = AUDIENCE_VISIBILITY_CONTRACT_READY
@@ -192,6 +196,7 @@ export const ADMIN_ACTIONS = [
   ...ACTIVE_VERIFICATION_ADMIN_ACTIONS,
   ...ACTIVE_ADMIN_GRANTED_VERIFICATION_ACTIONS,
   ...ACTIVE_FORCED_VERIFICATION_ACTIONS,
+  ...ACTIVE_PERSONA_SCREENS_ACTIONS,
   ...ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS,
   ...ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS,
   ...ACTIVE_FEATURE_SWITCHES_ACTIONS,
@@ -416,6 +421,13 @@ export const ADMIN_ACTION_ACCESS = {
   verification_forced_console: "read",
   verification_forced_save: "write",
   verification_forced_impact_preview: "read",
+
+  // Persona screens contract §5: the console read is open to any active
+  // administrator; the revisioned save is an editor write. Core authors the
+  // exact per-action `persona_screens` capability list and rechecks it on every
+  // call, so these rows only add the independent global viewer/editor floor.
+  persona_screens_console: "read",
+  persona_screens_save: "write",
 
   // Core authors the exact per-action capability projection. These rows add
   // the independent global viewer/editor floor only after provider release.

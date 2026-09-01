@@ -38,6 +38,10 @@ import {
   normalizePersonaProxyBody,
   personaProxyCapabilityAuthorized,
 } from "@/lib/personaAdmin";
+import {
+  normalizePersonaScreensProxyBody,
+  personaScreensProxyCapabilityAuthorized,
+} from "@/lib/personaScreens";
 import { normalizeCannedTemplateProxyBody } from "@/lib/cannedTemplates";
 import { normalizeOutboundMessagingProxyBody } from "@/lib/outboundMessaging";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
@@ -89,6 +93,7 @@ export async function POST(
     role?: string;
     dates?: unknown;
     persona?: unknown;
+    persona_screens?: unknown;
     verification?: unknown;
     admin_granted_verification?: unknown;
     audience_visibility?: unknown;
@@ -134,6 +139,13 @@ export async function POST(
   const forcedVerificationAuthorized = forcedVerificationProxyCapabilityAuthorized(action, membership.data);
   if (forcedVerificationAuthorized === false) {
     return bridgeError("verification-capability-required", 403);
+  }
+  // The Persona screens console carries its own `admin_me` projection and its
+  // own revision; it deliberately does not share the Persona receipt block or
+  // the forced-verification one, so it answers with its own refusal name.
+  const personaScreensAuthorized = personaScreensProxyCapabilityAuthorized(action, membership.data);
+  if (personaScreensAuthorized === false) {
+    return bridgeError("persona-screens-capability-required", 403);
   }
   const audienceVisibilityAuthorized = audienceVisibilityProxyCapabilityAuthorized(action, membership.data);
   if (audienceVisibilityAuthorized === false) {
@@ -209,6 +221,14 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedForcedVerificationBody !== undefined) body = normalizedForcedVerificationBody;
+
+  // `document` travels as the canonical JSON string of exactly `{copy_default}`;
+  // anything the strict parser refuses is answered here rather than forwarded.
+  const normalizedPersonaScreensBody = normalizePersonaScreensProxyBody(action, body);
+  if (normalizedPersonaScreensBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedPersonaScreensBody !== undefined) body = normalizedPersonaScreensBody;
 
   const normalizedVerificationBody = normalizeVerificationProxyBody(
     action,

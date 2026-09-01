@@ -894,6 +894,16 @@
             },
             "guidance": "Ez lecseréli a verifikációs bizonyítékot, és nem provider inquiry. A hiányzó vagy nem tartós avatár maradjon Core-elutasítás, soha ne legyen böngészőoldali kerülőút."
           },
+          "screenCopy": {
+            "title": "Hitelesítési képernyők szövege",
+            "purpose": "A Persona körüli három képernyő — hitelesítés előtt, sikeres, sikertelen — szövege nyelvenként szerkesztve, amelyet a Core az indítási konfiguráción, a tag saját nyelvén tesz közzé.",
+            "actions": {
+              "1": "Először válassz nyelvfület, majd csak azokba a mezőkbe írj, amelyeket le akarsz cserélni; a halvány szöveg az app mai szövege, és soha nem kerül mentésre.",
+              "2": "Hagyd üresen a mezőt, ha az adott nyelven az app saját szövegét szeretnéd megtartani, és mentés előtt nézd meg a szerkesztők alatti nyelvenkénti számot.",
+              "3": "Ütközéskor a szerkesztő újratölti a tárolt állapotot, és soha nem játssza vissza a mentésedet; végezd el újra a módosítást az újratöltött szövegen."
+            },
+            "guidance": "Semmi nem másolódik át a nyelvek között — sem ebben a konzolban, sem a Core-ban. Egy magyar mezőbe gépelt angol mondat pontosan úgy jelenik meg a magyar tagoknál, ahogy beírtad, ezért fordíts, ne másolj."
+          },
           "startConfig": {
             "title": "Teljes indítóképernyő-szerkesztő",
             "purpose": "Tizenegy csoport tartalmaz minden szerződött logikai mezőt, folyamatértéket, betűméretet, URL-t, színt, fallback ikont és szöveget a natív inquiry előtti képernyőhöz.",
@@ -3243,8 +3253,8 @@
   "personaAdmin": {
     "eyebrow": "Azonossági műveletek",
     "title": "Persona műveletek",
-    "subtitle": "Védett tagi verifikációs felülbírálások kezelése és a Persona indítóképernyő-konfigurációs felület aktuális állapotának megtekintése.",
-    "loadError": "A Persona szerződés vagy indítókonfiguráció nem dekódolható biztonságosan. A felület nem feltételez szerkeszthető állapotot.",
+    "subtitle": "Védett tagi verifikációs felülbírálások kezelése, valamint a Persona körüli három hitelesítési képernyő szövegének megtervezése.",
+    "loadError": "A Persona szerződés nem dekódolható biztonságosan. A felület nem feltételez szerkeszthető állapotot.",
     "readiness": {
       "title": "Szerződéskészültség",
       "copy": "A sémaverzió, kiadási készültség és minden elérhető művelet hiteles forrása a Core.",
@@ -3327,11 +3337,93 @@
         "force_verify": "A Core előléptette az aktuális avatárt, léptette a közös tagi revíziót, és érvényes korlátozott útvonalat adott vissza, amely nem került böngészőállapotba."
       }
     },
-    "configUnavailable": {
-      "title": "Az indítóképernyő-szerkesztő nem érhető el",
-      "copy": "Az app nem olvassa ezt a régi konfigurációs felületet, ezért elrejtettük, hogy ne lehessen a tagokhoz soha el nem jutó módosításokat menteni.",
-      "detail": "A tagok által látott képernyők jelenleg az app saját, buildbe fordított szövegeiből épülnek fel. Az élő képernyőkhöz készülő új szerkesztő itt fog megjelenni.",
-      "status": "A csere készül"
+    "screens": {
+      "title": "Az app hitelesítési képernyői",
+      "copy": "A Persona körüli három képernyő szövege: hitelesítés előtt, sikeres és sikertelen. Amit ide írsz, a Core a tag saját nyelvén teszi közzé; amit üresen hagysz, az az app saját, buildbe fordított szövege marad.",
+      "loadError": "A hitelesítési képernyők konzolja nem dekódolható biztonságosan. A felület nem feltételez szerkeszthető állapotot.",
+      "revision": "{revision}. revízió",
+      "writer": "Mentheted",
+      "viewer": "Csak olvasás",
+      "readOnly": "A szereped olvashatja ezt a szöveget, de nem módosíthatja. Ezt a Core dönti el, és ez a konzol nem tágíthatja.",
+      "unsaved": "Nem mentett módosítás",
+      "reload": "Tárolt szöveg újratöltése",
+      "save": "Szöveg mentése",
+      "saving": "Mentés…",
+      "closed": {
+        "badge": "Nem érhető el",
+        "detail": "A Core jelenleg nem kínálja fel ennek az adminisztrátornak a hitelesítési képernyők konzolját. A három képernyő ettől működik: egyszerűen az app saját szövegét használja."
+      },
+      "unavailable": {
+        "copy": "A Core nem tudja beolvasni a tárolt képernyőszöveget.",
+        "badge": "A Core nem elérhető",
+        "detail": "A Core azt válaszolta, hogy a tárolt szöveg olvashatatlan, ezért ez a konzol nem mutat neked egy magától megjavított változatot. A tagokat ez nem érinti: az app a saját beépített képernyőit jeleníti meg. Töltsd újra, ha a Core rendbe jött, és ne gépeld újra a szöveget, amíg nem látod, mi van eltárolva."
+      },
+      "rule": {
+        "title": "Az üres mező helyes.",
+        "emptyIsCorrect": "Ha üresen hagysz egy mezőt, az app a saját szövegét használja arra a helyre, a tag saját nyelvén. Az üres mezőben látszó halvány szöveg az, amit az app ma mond — referencia, nem érték. Mentéskor nem kerül elküldésre.",
+        "perLanguage": "A két nyelv külön tárolódik. Amit az egyik nyelven beírsz, soha nem másolódik át a másikba — és egy magyar mezőbe mentett angol mondatot a magyar tagok pontosan úgy látnák, ahogy beírtad."
+      },
+      "languageGroup": "Szerkesztett nyelv",
+      "languages": {
+        "en": "angol",
+        "hu": "magyar"
+      },
+      "languageCount": "{count} / {total}",
+      "editing": "Most a(z) {language} szöveget szerkeszted. A másik nyelvet semmi sem érinti, amit itt csinálsz.",
+      "screenSource": "Tőled {operator} / {total}",
+      "screens": {
+        "pre": {
+          "title": "Hitelesítés előtt",
+          "copy": "Egyszer jelenik meg, mielőtt a tag elindítja a Persona folyamatot.",
+          "furniture": "A jel, a kihagyás link és a szolgáltatói sor az app sajátja, ezeket itt nem szerkeszted."
+        },
+        "success": {
+          "title": "Sikeres hitelesítés",
+          "copy": "Akkor jelenik meg, amikor a Persona elfogadott eredményt ad vissza.",
+          "furniture": "A jel és a másodlagos link az app sajátja, ezeket itt nem szerkeszted."
+        },
+        "failed": {
+          "title": "Sikertelen hitelesítés",
+          "copy": "Akkor jelenik meg, amikor a Persona hibát ad vissza. Ez nem büntetés, és a szöveg se hangozzon annak.",
+          "furniture": "A jel, a szolgáltató saját hibaszövege és a másodlagos linkek az app sajátjai, ezeket itt nem szerkeszted."
+        }
+      },
+      "slots": {
+        "headline": "Főcím",
+        "subtitle": "Alcím",
+        "cta": "Gombfelirat"
+      },
+      "emptyMeans": "Üres — itt az app a saját {language} szövegét használja.",
+      "bytes": "{used} / {max} bájt",
+      "issues": {
+        "overCap": "Túl hosszú ehhez a mezőhöz. A magyar ékezetes betűk kettő bájtot érnek.",
+        "untrimmed": "Töröld a szóközt az elejéről vagy a végéről.",
+        "boundaryWhitespace": "Töröld a láthatatlan karaktert az elejéről vagy a végéről.",
+        "control": "Töröld a vezérlőkaraktert vagy a sortörést; minden mező egyetlen soros.",
+        "markup": "A kapcsos zárójel itt nem formázás, és el lesz utasítva. Írd le a mondatot egyszerűen.",
+        "angleBrackets": "A csúcsos zárójelet a rendszer elutasítja. Írd le a mondatot egyszerűen.",
+        "malformedText": "Ez a szöveg érvénytelen; gépeld be újra beillesztés helyett."
+      },
+      "refusedControl": "A Core pontosan ezt az értéket utasította el.",
+      "issueSummary": "{count} érték nem menthető. Kezdd ezzel: {field}.",
+      "appearance": {
+        "light": "Világos",
+        "dark": "Sötét"
+      },
+      "published": {
+        "title": "Amit a tagok kapni fognak",
+        "copy": "A fenti szerkesztőkből számolva, nyelvenként, pontosan úgy, ahogy a Core feloldja.",
+        "row": "{language}: {total} helyből {published} tőled jön, {compiled} az app saját szövegéből.",
+        "reference": "A halvány referenciaszöveg magát az appot tükrözi ({authority}). Ha a kettő valaha eltér, az appnak van igaza."
+      },
+      "notices": {
+        "saved": "Mentve. A tárolt szöveg mostantól a(z) {revision}. revízió, és az app a következő indulási olvasáskor veszi át.",
+        "conflict": "Valaki más mentett előbb; a tárolt szöveg mostantól a(z) {revision}. revízió. A szerkesztő újratöltötte a tárolt állapotot, így semmi nem íródott felül. Kérlek, végezd el újra a módosításodat.",
+        "refused": "A Core elutasította a mentést ({code}). Semmi nem íródott ki.",
+        "refusedField": "A Core elutasította a mentést ({code}) itt: {field}. Semmi nem íródott ki.",
+        "uncertain": "A mentést nem sikerült megerősíteni ({code}). A tárolt szöveget újraolvastuk; vesd össze a piszkozatoddal, mielőtt újra próbálod.",
+        "validation": "Néhány érték elutasításra kerülne. Előbb javítsd a megjelölt mezőket."
+      }
     },
     "config": {
       "title": "Persona indítóképernyő",
@@ -3363,17 +3455,50 @@
       "reason": "Kötelező, vezérlőkarakter-mentes indok: {count}/{maximum} Unicode karakter. Nem kerül válaszba vagy naplóanyagba."
     },
     "sections": {
-      "general": { "title": "Elérhetőség és oldal", "copy": "Fő láthatóság és oldalháttér." },
-      "header": { "title": "Márkafejléc és folyamat", "copy": "Logó, márkaszöveg és folyamatsáv megjelenése." },
-      "title": { "title": "Főcím", "copy": "Elsődleges sablon, kiemelt szöveg, színek és betűméret." },
-      "subtitle": { "title": "Alcím", "copy": "Kiegészítő sablon, kiemelt szöveg, színek és betűméret." },
-      "benefits": { "title": "Három előny", "copy": "Ikonok, címek, törzsszövegek és közös tipográfia mindhárom oszlophoz." },
-      "trust": { "title": "Bizalmi kártya", "copy": "Opcionális megjelenési kártya, link és kiegészítő márkakép." },
-      "cta": { "title": "Elsődleges művelet", "copy": "Verifikációs gombcímke, fallback ikon és színek." },
-      "secured": { "title": "Biztonsági sor", "copy": "Persona biztonsági attribúció és fallback ikon." },
-      "about": { "title": "A Personáról pill", "copy": "Információs pill címke, fallback ikon, keret és színek." },
-      "safety": { "title": "Biztonsági kártya", "copy": "Opcionális biztonsági magyarázat, illusztráció, ikon és tipográfia." },
-      "skip": { "title": "Kihagyási művelet", "copy": "Opcionális kihagyási címke, szín és betűméret." }
+      "general": {
+        "title": "Elérhetőség és oldal",
+        "copy": "Fő láthatóság és oldalháttér."
+      },
+      "header": {
+        "title": "Márkafejléc és folyamat",
+        "copy": "Logó, márkaszöveg és folyamatsáv megjelenése."
+      },
+      "title": {
+        "title": "Főcím",
+        "copy": "Elsődleges sablon, kiemelt szöveg, színek és betűméret."
+      },
+      "subtitle": {
+        "title": "Alcím",
+        "copy": "Kiegészítő sablon, kiemelt szöveg, színek és betűméret."
+      },
+      "benefits": {
+        "title": "Három előny",
+        "copy": "Ikonok, címek, törzsszövegek és közös tipográfia mindhárom oszlophoz."
+      },
+      "trust": {
+        "title": "Bizalmi kártya",
+        "copy": "Opcionális megjelenési kártya, link és kiegészítő márkakép."
+      },
+      "cta": {
+        "title": "Elsődleges művelet",
+        "copy": "Verifikációs gombcímke, fallback ikon és színek."
+      },
+      "secured": {
+        "title": "Biztonsági sor",
+        "copy": "Persona biztonsági attribúció és fallback ikon."
+      },
+      "about": {
+        "title": "A Personáról pill",
+        "copy": "Információs pill címke, fallback ikon, keret és színek."
+      },
+      "safety": {
+        "title": "Biztonsági kártya",
+        "copy": "Opcionális biztonsági magyarázat, illusztráció, ikon és tipográfia."
+      },
+      "skip": {
+        "title": "Kihagyási művelet",
+        "copy": "Opcionális kihagyási címke, szín és betűméret."
+      }
     },
     "preview": {
       "label": "Normalizált Persona indítóképernyő-előnézet",
@@ -3679,22 +3804,52 @@
       "toronto": "Toronto"
     },
     "features": {
-      "people": { "list": { "title": "People böngészése" } },
+      "people": {
+        "list": {
+          "title": "People böngészése"
+        }
+      },
       "profile": {
-        "view": { "title": "Másik profil megtekintése" }
+        "view": {
+          "title": "Másik profil megtekintése"
+        }
       },
       "chat": {
-        "send": { "title": "Chatüzenet küldése" }
+        "send": {
+          "title": "Chatüzenet küldése"
+        }
       },
-      "friend": { "request": { "title": "Barátkérés küldése" } },
+      "friend": {
+        "request": {
+          "title": "Barátkérés küldése"
+        }
+      },
       "dates": {
-        "access": { "title": "Dates megnyitása" },
-        "create": { "title": "Date létrehozása" },
-        "join": { "title": "Csatlakozás Date-hez" }
+        "access": {
+          "title": "Dates megnyitása"
+        },
+        "create": {
+          "title": "Date létrehozása"
+        },
+        "join": {
+          "title": "Csatlakozás Date-hez"
+        }
       },
-      "footprints": { "send": { "title": "Footprint küldése" } },
-      "pinger": { "send": { "title": "Pinger küldése" } },
-      "album": { "private_request": { "title": "Privát album kérése" } }
+      "footprints": {
+        "send": {
+          "title": "Footprint küldése"
+        }
+      },
+      "pinger": {
+        "send": {
+          "title": "Pinger küldése"
+        }
+      },
+      "album": {
+        "private_request": {
+          "title": "Privát album kérése"
+        }
+      }
     },
     "scopes": {
       "listTitle": "Területi szabályzatok",
@@ -3937,7 +4092,10 @@
       "invalidDraft": "A piszkozat nem felel meg a pontos Verification v1 szerződésnek.",
       "scope": "Szabályzati terület",
       "enabledMethods": "Engedélyezett módszerek",
-      "methodChoices": { "none": "Nincs módszer", "both": "Videós szelfi és Persona" },
+      "methodChoices": {
+        "none": "Nincs módszer",
+        "both": "Videós szelfi és Persona"
+      },
       "methodAvailable": "elérhető új szabályzatindításhoz",
       "methodReasons": {
         "deployment_unlock_disabled": "a telepítési feloldás ki van kapcsolva",

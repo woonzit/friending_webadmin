@@ -220,6 +220,7 @@ export const ADMIN_HELP_PAGES = [
       "memberLookup",
       "syntheticMarker",
       "forceVerify",
+      "screenCopy",
       "startConfig",
       "preview",
       "uncertainResponses",

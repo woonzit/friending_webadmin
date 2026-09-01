@@ -1,0 +1,9 @@
+{
+    "success": false,
+    "status_code": 409,
+    "error": "persona-screens-conflict",
+    "current_revision": 7,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -91,8 +91,10 @@ test("every inventoried functional section has detailed English and Hungarian he
   // T-471 adds the forced verification / Waiting Room tab section (247). T-565
   // retires User groups (4) and Layer 2 intents (6) with their pages (237).
   // T-569 documents `AudienceVisibilityUserPanel`, which T-539 opened on
-  // /users/<uid> with no guide in either locale (238).
-  assert.equal(totalSections, 238, "review the functional-section census when the UI changes");
+  // /users/<uid> with no guide in either locale (238). T-551 documents the
+  // Persona verification-screens console that replaced the T-581 placeholder
+  // on /persona (239).
+  assert.equal(totalSections, 239, "review the functional-section census when the UI changes");
 
   for (const locale of ["en", "hu"]) {
     const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));

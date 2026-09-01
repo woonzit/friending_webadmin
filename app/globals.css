@@ -13615,3 +13615,36 @@ body .verification-level-pill.level-strong {
 .forced-phone-footer { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; font-size: 11px; font-weight: 600; }
 .forced-save-bar { display: grid; justify-items: end; gap: 8px; }
 @media (max-width: 900px) { .forced-copy-grid { grid-template-columns: 1fr; } }
+
+/* Persona operations → verification screens console (T-551, D-080). */
+.persona-screens-panel .panel-body { gap: 18px; }
+.persona-screens-rule { display: grid; gap: 6px; }
+.persona-screens-rule p { margin: 0; }
+.persona-screens-language { display: flex; flex-wrap: wrap; gap: 8px; }
+.persona-screens-language .button { display: inline-flex; align-items: baseline; gap: 8px; }
+.persona-screens-language-count { font-size: 11px; font-weight: 700; opacity: 0.75; }
+.persona-screens-screen { display: grid; gap: 14px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft); }
+.persona-screens-screen-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.persona-screens-screen-heading h3 { margin: 0; font-size: 15px; font-weight: 800; }
+.persona-screens-screen-heading p { margin: 2px 0 0; }
+.persona-screens-screen-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 20px; align-items: start; }
+.persona-screens-fields { display: grid; gap: 12px; align-content: start; }
+.persona-screens-counter.is-over { color: #ef6c66; }
+.persona-screens-phones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.persona-screens-phone { position: relative; display: grid; align-content: start; gap: 10px; min-height: 320px; margin: 0; padding: 34px 16px 14px; border: 1px solid; border-radius: 26px; text-align: center; }
+.persona-screens-phone-status { position: absolute; top: 12px; right: 16px; left: 16px; display: flex; justify-content: space-between; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+.persona-screens-phone-mark { display: grid; place-items: center; width: 62px; height: 62px; margin: 6px auto 2px; border-radius: 19px; }
+.persona-screens-phone-headline { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.18; overflow-wrap: anywhere; }
+.persona-screens-phone-subtitle { max-height: 96px; margin: 0; overflow: auto; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.persona-screens-phone-actions { margin-top: auto; }
+.persona-screens-phone-cta { display: block; padding: 11px 12px; border-radius: 22px; font-size: 13px; font-weight: 800; overflow-wrap: anywhere; }
+.persona-screens-phone-furniture { font-size: 9.5px; line-height: 1.35; }
+.persona-screens-published { display: grid; gap: 6px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; }
+.persona-screens-published h3 { margin: 0; font-size: 14px; font-weight: 800; }
+.persona-screens-published p { margin: 0; }
+.persona-screens-published ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; }
+.persona-screens-save-bar { display: grid; justify-items: end; gap: 8px; }
+@media (max-width: 1100px) {
+  .persona-screens-screen-body { grid-template-columns: 1fr; }
+  .persona-screens-phones { grid-template-columns: repeat(auto-fit, minmax(200px, 260px)); justify-content: start; }
+}

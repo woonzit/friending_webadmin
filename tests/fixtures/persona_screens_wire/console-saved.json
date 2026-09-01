@@ -1,0 +1,37 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "revision": 5,
+        "copy_default": {
+            "en": {
+                "pre": {
+                    "headline": "Verify that it’s really you",
+                    "subtitle": "A quick identity check keeps Friending safe for everyone.",
+                    "cta": "Start verification"
+                },
+                "success": {
+                    "headline": "You’re verified",
+                    "subtitle": "Your badge is live and everything is unlocked.",
+                    "cta": "Continue"
+                },
+                "failed": {
+                    "headline": "We couldn’t finish that",
+                    "subtitle": "Nothing has happened to your account. You can try again.",
+                    "cta": "Try again"
+                }
+            },
+            "hu": {
+                "pre": {
+                    "headline": "Igazold, hogy tényleg te vagy az"
+                },
+                "failed": {
+                    "cta": "Próbáljuk újra"
+                }
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
