@@ -1906,19 +1906,19 @@
         "title": "Profile fields help",
         "summary": "Profile fields are the bilingual questions members answer after signup. This page controls where questions appear, which members receive them, their selectable answers and how retired content remains readable on existing profiles.",
         "steps": {
-          "1": "Review profile-section layout and audience gates before editing a question or answer.",
+          "1": "Review profile-section layout and field audiences before editing a question or answer.",
           "2": "Use stable keys and complete both languages, then preview selection rules and icon behavior.",
           "3": "Save or archive one bounded catalog item and check the member-impact warning."
         },
         "sections": {
           "sectionLayout": {
             "title": "Profile section layout",
-            "purpose": "The layout places every eligible question once across Main data, More about you and Let's go deeper, with bilingual section copy and optional Layer 2 visibility gates.",
+            "purpose": "The layout places every eligible question once across Main data, More about you and Let's go deeper, with bilingual section copy and an explicit hidden state.",
             "actions": {
               "1": "Drag or move fields between sections and order them for member readability.",
-              "2": "Set section titles, subtitles, hidden state and reviewed Layer 2 gates."
+              "2": "Set section titles, subtitles and hidden state."
             },
-            "guidance": "Layout changes presentation, while field audience controls eligibility. A Layer 2 gate can further hide a section and must reflect the reciprocal disclosure policy."
+            "guidance": "Layout changes presentation, while each field's audience controls eligibility. Hiding a whole section does not rewrite or replace those field audiences."
           },
           "catalogSearch": {
             "title": "Question catalog and search",
@@ -5537,7 +5537,6 @@
     "unassignedTitle": "Not assigned to a section",
     "unassignedCopy": "Active fields outside every section. Members do not see them; stored answers stay editable here.",
     "sectionHidden": "Hidden by admin",
-    "sectionGateClosed": "Gate closed for this member",
     "sectionShareOff": "Member switched sharing off",
     "sectionAudience": "Visible to: {audience}"
   },
@@ -6646,14 +6645,6 @@
     "layoutValidationError": "Every section requires an English and Hungarian title.",
     "layoutHide": "Hide this section from members",
     "layoutHideLocked": "cannot hide: shipped clients require height here",
-    "layoutGateTitle": "Layer 2 visibility gate",
-    "layoutGateCopy": "Members see this section only after selecting at least one of the checked dating intents. Viewers additionally need a matching user group; bisexual members receive both of their groups' questions in two separated lists.",
-    "layoutGateEmpty": "No gate: every member with a resolved user group sees this section.",
-    "layoutGateActive": "{count, plural, one {Gated on # selected intent.} other {Gated on # selected intents.}}",
-    "layoutGateUnavailable": "The Layer 2 intent catalog could not be loaded, so the gate cannot be edited right now.",
-    "layoutGateStale": "Keys no longer in the live catalog (click to remove):",
-    "layoutGateUnverified": "Configured keys, shown as stored. The console cannot check them against the catalog, so it proposes no removals:",
-    "layoutGateError": "The gate refers to an unknown or archived Layer 2 intent.",
     "layoutHideError": "This section cannot be hidden.",
     "layoutConflict": "The section layout changed in another session. Reload it before saving.",
     "layoutSaveError": "The profile section layout could not be saved.",

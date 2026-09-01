@@ -391,38 +391,3 @@ export function selectableIntents(catalog: Layer2Catalog): Layer2Intent[] {
     .filter((item) => !item.archived)
     .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
 }
-
-/**
- * The console's answer to "which configured gate keys are no longer live?" — including the answer
- * "I cannot tell", which is the one that was missing.
- *
- * D-083: `/profile-fields` used to compute staleness as
- * `!(layer2Items ?? []).some(...)`, so a catalogue that FAILED TO LOAD (`null`) was read as a
- * catalogue that loaded and is EMPTY (`[]`). Every configured key then failed the lookup, was
- * rendered as unknown, and was given a one-click removal control — the console inviting an operator
- * to delete live configuration on the strength of a call that never returned. Core answers
- * `layer2_catalog` with 410 `catalog-layer2-retired` for every operator since the D-019 migration
- * rewrote the singleton to schema 2, so `null` is not a rare failure here; it is the only outcome.
- *
- * The union is the point. `{ known: false }` carries no `stale` field at all, so there is nothing
- * for a later `?? []` to default: re-collapsing the two states does not typecheck. A `string[] |
- * null` return would have documented the same rule and left it one keystroke from being undone.
- */
-export type Layer2GateReview =
-  | { known: false }
-  | { known: true; stale: string[] };
-
-/**
- * @param configured the keys stored on the section, which arrive with the layout and are known.
- * @param catalog the loaded catalogue, or `null` when the catalogue call failed or was refused.
- */
-export function reviewGateKeys(
-  configured: readonly string[],
-  catalog: readonly Layer2Intent[] | null,
-): Layer2GateReview {
-  if (catalog === null) return { known: false };
-  return {
-    known: true,
-    stale: configured.filter((key) => !catalog.some((item) => item.id === key && !item.archived)),
-  };
-}

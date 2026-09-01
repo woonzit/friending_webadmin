@@ -1906,19 +1906,19 @@
         "title": "Profilmezők súgó",
         "summary": "A profilmezők a signup után megválaszolható kétnyelvű kérdések. Ez az oldal vezérli helyüket, célközönségüket, válaszaikat és azt, hogyan marad olvasható a nyugdíjazott tartalom a meglévő profilokon.",
         "steps": {
-          "1": "Kérdés vagy válasz szerkesztése előtt nézd át a profilszekciók elrendezését és audience gate-jeit.",
+          "1": "Kérdés vagy válasz szerkesztése előtt nézd át a profilszekciók elrendezését és a fieldek audience-beállításait.",
           "2": "Használj stabil kulcsot és töltsd ki mindkét nyelvet, majd ellenőrizd a kiválasztási szabályokat és ikont.",
           "3": "Egyetlen korlátozott katalóguselemet ments vagy archiválj, és olvasd el a tagi hatás figyelmeztetését."
         },
         "sections": {
           "sectionLayout": {
             "title": "Profilszekció-elrendezés",
-            "purpose": "Az elrendezés minden jogosult kérdést egyszer helyez el a Fő adatok, Többet rólad és Menjünk mélyebbre szekciókban, kétnyelvű szekciószöveggel és opcionális Layer 2 gate-tel.",
+            "purpose": "Az elrendezés minden jogosult kérdést egyszer helyez el a Fő adatok, Többet rólad és Menjünk mélyebbre szekciókban, kétnyelvű szekciószöveggel és kifejezett rejtett állapottal.",
             "actions": {
               "1": "Húzd vagy mozgasd a mezőket a szekciók között, és rendezd őket tagi olvashatóság szerint.",
-              "2": "Állíts szekciócímet, alcímet, rejtett állapotot és jóváhagyott Layer 2 gate-et."
+              "2": "Állíts szekciócímet, alcímet és rejtett állapotot."
             },
-            "guidance": "Az elrendezés a megjelenést, a field audience a jogosultságot módosítja. A Layer 2 gate tovább rejthet egy szekciót, és meg kell felelnie a kölcsönös disclosure policynek."
+            "guidance": "Az elrendezés a megjelenést, az egyes fieldek audience-beállítása pedig a jogosultságot módosítja. Egy teljes szekció elrejtése nem írja át és nem helyettesíti ezeket a field audience-okat."
           },
           "catalogSearch": {
             "title": "Kérdéskatalógus és keresés",
@@ -5537,7 +5537,6 @@
     "unassignedTitle": "Szekcióhoz nem rendelt mezők",
     "unassignedCopy": "Aktív mezők szekció nélkül. A tagok nem látják őket; a tárolt válaszok itt szerkeszthetők.",
     "sectionHidden": "Admin által rejtve",
-    "sectionGateClosed": "A kapu zárva ennél a tagnál",
     "sectionShareOff": "A tag kikapcsolta a megosztást",
     "sectionAudience": "Láthatja: {audience}"
   },
@@ -6646,14 +6645,6 @@
     "layoutValidationError": "Minden szekcióhoz angol és magyar cím szükséges.",
     "layoutHide": "Szekció elrejtése a tagok elől",
     "layoutHideLocked": "nem rejthető: a kiadott kliensek itt várják a magasságot",
-    "layoutGateTitle": "Layer 2 láthatósági kapu",
-    "layoutGateCopy": "A tagok csak akkor látják ezt a szekciót, ha a bejelölt randi-szándékok közül legalább egyet kiválasztottak. A nézőknek ezen felül egyező felhasználói csoport kell; a biszexuális tagok mindkét csoportjuk kérdéseit két külön listában kapják.",
-    "layoutGateEmpty": "Nincs kapu: minden besorolt csoportú tag látja ezt a szekciót.",
-    "layoutGateActive": "{count, plural, one {# kiválasztott szándékhoz kötve.} other {# kiválasztott szándékhoz kötve.}}",
-    "layoutGateUnavailable": "A Layer 2 szándékkatalógus nem tölthető be, ezért a kapu most nem szerkeszthető.",
-    "layoutGateStale": "Az élő katalógusban már nem szereplő kulcsok (kattintással eltávolítható):",
-    "layoutGateUnverified": "A beállított kulcsok, ahogy tárolva vannak. A konzol nem tudja összevetni őket a katalógussal, ezért nem javasol eltávolítást:",
-    "layoutGateError": "A kapu ismeretlen vagy archivált Layer 2 szándékra hivatkozik.",
     "layoutHideError": "Ez a szekció nem rejthető el.",
     "layoutConflict": "Az elrendezést egy másik munkamenetben módosították. Mentés előtt töltsd újra.",
     "layoutSaveError": "A profilszekciók elrendezését nem sikerült menteni.",

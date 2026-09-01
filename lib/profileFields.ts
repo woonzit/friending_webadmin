@@ -69,7 +69,6 @@ export type ProfileSection = {
   subtitles: LocalizedText;
   sort_order: number;
   hidden: boolean;
-  gate?: { layer2_keys: string[] };
   items: ProfileSectionItem[];
 };
 
@@ -103,12 +102,9 @@ export type UserProfileSectionItem =
     };
 
 export type UserProfileSectionVisibility = {
-  gated: boolean;
   share_enabled: boolean;
   audience_note: string;
   hidden?: boolean;
-  gate_open?: boolean;
-  gate_layer2_keys?: string[];
 };
 
 export type UserProfileSection = {
@@ -362,19 +358,6 @@ export function profileSectionLayout(value: unknown): ProfileSectionLayout | nul
     // more_about_you cannot hide while shipped clients pin height_cm there;
     // Core refuses such a save, so a payload carrying it is malformed.
     if (typeof hidden !== "boolean" || (hidden && section.key === "more_about_you")) return null;
-    let gate: { layer2_keys: string[] } | undefined;
-    if (section.gate !== undefined) {
-      const gateRecord = record(section.gate);
-      const gateKeys = strings(gateRecord?.layer2_keys ?? null);
-      if (
-        !gateRecord
-        || section.key !== "lets_go_deeper"
-        || !gateKeys
-        || gateKeys.length > 64
-        || gateKeys.some((key) => !/^[a-z][a-z0-9_]{0,63}$/.test(key))
-      ) return null;
-      gate = { layer2_keys: gateKeys };
-    }
     const sectionItems: ProfileSectionItem[] = [];
     for (const rawItem of section.items) {
       const row = record(rawItem);
@@ -396,7 +379,6 @@ export function profileSectionLayout(value: unknown): ProfileSectionLayout | nul
       subtitles,
       sort_order: Number(section.sort_order),
       hidden,
-      ...(gate ? { gate } : {}),
       items: sectionItems,
     });
   }
@@ -522,19 +504,13 @@ export function userProfileFields(value: unknown): UserProfileFields | null {
     const rawVisibility = record(section.visibility);
     if (
       rawVisibility
-      && typeof rawVisibility.gated === "boolean"
       && typeof rawVisibility.share_enabled === "boolean"
       && typeof rawVisibility.audience_note === "string"
     ) {
       visibility = {
-        gated: rawVisibility.gated,
         share_enabled: rawVisibility.share_enabled,
         audience_note: rawVisibility.audience_note,
         ...(typeof rawVisibility.hidden === "boolean" ? { hidden: rawVisibility.hidden } : {}),
-        ...(typeof rawVisibility.gate_open === "boolean" ? { gate_open: rawVisibility.gate_open } : {}),
-        ...(strings(rawVisibility.gate_layer2_keys ?? null)
-          ? { gate_layer2_keys: strings(rawVisibility.gate_layer2_keys) ?? [] }
-          : {}),
       };
     }
     sections.push({

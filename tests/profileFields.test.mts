@@ -62,35 +62,43 @@ test("profile section layout parser enforces the three presentation groups and f
   invalid.sections[0].items.push(invalid.sections[1].items.shift()!);
   assert.equal(profileSectionLayout(invalid), null);
 
-  // Hidden + gate round-trip (profile-section3-dynamic-v1).
-  const gated = structuredClone(source) as Record<string, any>;
-  gated.sections[2].hidden = true;
-  gated.sections[2].gate = { layer2_keys: ["casual_fun", "short_term"] };
-  const parsedGated = profileSectionLayout(gated);
-  assert.equal(parsedGated?.sections[2]?.hidden, true);
-  assert.deepEqual(parsedGated?.sections[2]?.gate, { layer2_keys: ["casual_fun", "short_term"] });
-  assert.equal(parsedGated?.sections[0]?.hidden, false);
+  // Hidden state survives, while the retired Layer 2 gate is ignored rather
+  // than entering the draft and being round-tripped on the next save.
+  const legacyGated = structuredClone(source) as Record<string, any>;
+  legacyGated.sections[2].hidden = true;
+  legacyGated.sections[2].gate = { layer2_keys: ["casual_fun", "short_term"] };
+  const parsedLegacy = profileSectionLayout(legacyGated);
+  assert.equal(parsedLegacy?.sections[2]?.hidden, true);
+  assert.equal(Object.hasOwn(parsedLegacy?.sections[2] ?? {}, "gate"), false);
+  assert.equal(parsedLegacy?.sections[0]?.hidden, false);
 
-  // more_about_you cannot hide; a gate outside section 3 is malformed.
+  // more_about_you cannot hide while shipped clients pin height there.
   const hiddenHeight = structuredClone(source) as Record<string, any>;
   hiddenHeight.sections[1].hidden = true;
   assert.equal(profileSectionLayout(hiddenHeight), null);
-  const gateElsewhere = structuredClone(source) as Record<string, any>;
-  gateElsewhere.sections[0].gate = { layer2_keys: ["casual_fun"] };
-  assert.equal(profileSectionLayout(gateElsewhere), null);
-  const badGateKey = structuredClone(source) as Record<string, any>;
-  badGateKey.sections[2].gate = { layer2_keys: ["Bad Key!"] };
-  assert.equal(profileSectionLayout(badGateKey), null);
 });
 
-test("layout editor exposes the hide switch and the Layer 2 gate picker", async () => {
-  const source = await readFile(new URL("../app/(dashboard)/profile-fields/page.tsx", import.meta.url), "utf8");
+test("layout editor exposes the hide switch and no retired Layer 2 gate surface", async () => {
+  const [source, css, enRaw, huRaw] = await Promise.all([
+    readFile(new URL("../app/(dashboard)/profile-fields/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../messages/en.json", import.meta.url), "utf8"),
+    readFile(new URL("../messages/hu.json", import.meta.url), "utf8"),
+  ]);
   assert.match(source, /t\("layoutHide"\)/);
   assert.match(source, /section\.key === "more_about_you"/);
-  assert.match(source, /t\("layoutGateTitle"\)/);
-  assert.match(source, /adminCall\("layer2_catalog", \{\}\)/);
-  assert.match(source, /profile-section-gate-key-unknown/);
   assert.match(source, /profile-section-not-hideable/);
+  assert.doesNotMatch(source, /Layer2|layer2|layoutGate|profile-section-gate|section\.gate/);
+  assert.doesNotMatch(css, /profile-layout-gate/);
+  for (const raw of [enRaw, huRaw]) {
+    const messages = JSON.parse(raw);
+    assert.deepEqual(
+      Object.keys(messages.profileFields).filter((key) => key.startsWith("layoutGate")),
+      [],
+    );
+    assert.equal(Object.hasOwn(messages.userProfileEditor, "sectionGateClosed"), false);
+    assert.doesNotMatch(JSON.stringify(messages.adminHelp.pages.profileFields), /Layer 2|gate/iu);
+  }
 });
 
 test("profile field parsers preserve translations, eligibility and identity revisions", () => {
@@ -202,6 +210,13 @@ test("profile field parsers preserve translations, eligibility and identity revi
           key: "lets_go_deeper",
           title: "Menjünk mélyebbre",
           subtitle: "Személyesebb kérdések",
+          visibility: {
+            gated: false,
+            share_enabled: true,
+            audience_note: "A kölcsönös közönség láthatja.",
+            gate_open: false,
+            gate_layer2_keys: ["dating"],
+          },
           items: [{ kind: "field", key: "pets" }],
         },
       ],
@@ -214,6 +229,10 @@ test("profile field parsers preserve translations, eligibility and identity revi
   assert.equal(parsed?.sections.length, 2);
   assert.equal(parsed?.sections[1]?.key, "lets_go_deeper");
   assert.equal(parsed?.sections[1]?.title, "Menjünk mélyebbre");
+  assert.deepEqual(parsed?.sections[1]?.visibility, {
+    share_enabled: true,
+    audience_note: "A kölcsönös közönség láthatja.",
+  });
   assert.deepEqual(parsed?.sections[1]?.items[0], { kind: "field", key: "pets" });
 
   const invalidHeight = structuredClone({
@@ -309,6 +328,7 @@ test("registered-user editor renders the server section layout instead of one fl
   assert.match(source, /t\("builtinReadOnly"\)/);
   assert.match(source, /t\("unassignedTitle"\)/);
   assert.doesNotMatch(source, /eligibleFields\.map/);
+  assert.doesNotMatch(source, /sectionGateClosed|visibility\?\.gated|gate_open|gate_layer2_keys/);
 });
 
 test("profile-field audience editor uses the shared gender and user-group selector", async () => {

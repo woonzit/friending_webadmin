@@ -8,7 +8,6 @@ import PageHeader from "@/components/PageHeader";
 import ProfileIconUploadField from "@/components/ProfileIconUploadField";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
-import { layer2Catalog, reviewGateKeys, type Layer2Intent } from "@/lib/layer2Intents";
 import { migrateLegacyAudience } from "@/lib/memberAudience";
 import {
   profileFieldCatalog,
@@ -309,90 +308,9 @@ function OptionDialog({
   );
 }
 
-/**
- * The Layer 2 visibility gate on `lets_go_deeper`, extracted so that ONE place decides what the
- * console may say about a catalogue it could not read.
- *
- * `layer2Items === null` means the `layer2_catalog` call failed or was refused; `[]` would mean it
- * loaded and is empty. D-083 rules that the two must never be collapsed. `reviewGateKeys` is what
- * enforces it: when the catalogue is unknown there is no `stale` list to render, so the removal
- * control cannot be reached, and the configured keys are shown as stored instead of being reported
- * as findings. The picker below has always distinguished the two states correctly; this block did
- * not, and that difference was the whole defect.
- */
-function ProfileSectionLayer2Gate({
-  keys,
-  layer2Items,
-  busy,
-  onChange,
-}: {
-  keys: string[];
-  layer2Items: Layer2Intent[] | null;
-  busy: boolean;
-  onChange: (keys: string[]) => void;
-}) {
-  const t = useTranslations("profileFields");
-  const locale = useLocale();
-  const review = reviewGateKeys(keys, layer2Items);
-  return (
-    <div className="profile-layout-gate">
-      <strong>{t("layoutGateTitle")}</strong>
-      <p>{t("layoutGateCopy")}</p>
-      {layer2Items ? (
-        <div className="user-attribute-options">
-          {layer2Items.filter((item) => !item.archived).map((item) => {
-            const checked = keys.includes(item.id);
-            return (
-              <label className={checked ? "is-selected" : ""} key={item.id}>
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  disabled={busy}
-                  onChange={(event) => onChange(event.target.checked
-                    ? [...keys, item.id]
-                    : keys.filter((key) => key !== item.id))}
-                />
-                <span>{localeText(item.labels, locale)} <code>{item.id}</code></span>
-              </label>
-            );
-          })}
-        </div>
-      ) : (
-        <p className="page-subtitle">{t("layoutGateUnavailable")}</p>
-      )}
-      {review.known && review.stale.length > 0 ? (
-        <p className="page-subtitle">
-          {t("layoutGateStale")}{" "}
-          {review.stale.map((key) => (
-            <button
-              key={key}
-              type="button"
-              className="text-button"
-              disabled={busy}
-              onClick={() => onChange(keys.filter((existing) => existing !== key))}
-            >
-              <code>{key}</code> ✕
-            </button>
-          ))}
-        </p>
-      ) : null}
-      {!review.known && keys.length > 0 ? (
-        <p className="page-subtitle">
-          {t("layoutGateUnverified")}{" "}
-          {keys.map((key) => <code key={key}>{key}</code>)}
-        </p>
-      ) : null}
-      <small className="user-attribute-limit">
-        {keys.length === 0 ? t("layoutGateEmpty") : t("layoutGateActive", { count: keys.length })}
-      </small>
-    </div>
-  );
-}
-
 function ProfileSectionLayoutEditor({
   layout,
   catalog,
-  layer2Items,
   busy,
   error,
   dirty,
@@ -402,7 +320,6 @@ function ProfileSectionLayoutEditor({
 }: {
   layout: ProfileSectionLayout;
   catalog: ProfileFieldCatalog;
-  layer2Items: Layer2Intent[] | null;
   busy: boolean;
   error: string;
   dirty: boolean;
@@ -494,14 +411,6 @@ function ProfileSectionLayoutEditor({
                 <span>{t("layoutHide")}{section.key === "more_about_you" ? ` — ${t("layoutHideLocked")}` : ""}</span>
               </label>
             </div>
-            {section.key === "lets_go_deeper" ? (
-              <ProfileSectionLayer2Gate
-                keys={section.gate?.layer2_keys ?? []}
-                layer2Items={layer2Items}
-                busy={busy}
-                onChange={(layer2_keys) => updateSection(sectionIndex, { gate: { layer2_keys } })}
-              />
-            ) : null}
             <ol className="profile-layout-items">
               {section.items.map((item, itemIndex) => {
                 const choice = choiceMap.get(`${item.kind}:${item.key}`);
@@ -543,7 +452,6 @@ export default function ProfileFieldsPage() {
   const [toast, setToast] = useState("");
   const [layoutBusy, setLayoutBusy] = useState(false);
   const [layoutError, setLayoutError] = useState("");
-  const [layer2Items, setLayer2Items] = useState<Layer2Intent[] | null>(null);
   const [expandedFields, setExpandedFields] = useState<Set<string>>(() => new Set());
   const applyCatalog = useCallback((raw: unknown): boolean => {
     const parsed = profileFieldCatalog(raw);
@@ -552,10 +460,7 @@ export default function ProfileFieldsPage() {
     return true;
   }, []);
   const load = useCallback(async () => {
-    const [response, layer2Response] = await Promise.all([
-      adminCall("list_profile_fields"),
-      adminCall("layer2_catalog", {}),
-    ]);
+    const response = await adminCall("list_profile_fields");
     const parsedLayout = profileSectionLayout(response?.layout);
     const catalogSource = response?.catalog && typeof response.catalog === "object" && !Array.isArray(response.catalog)
       && Array.isArray(response.cast_groups)
@@ -565,13 +470,6 @@ export default function ProfileFieldsPage() {
       setStatus("error");
       return;
     }
-    // The gate picker degrades to a read-only notice when the Layer 2
-    // catalogue is unavailable or the operator lacks the catalogue role; the
-    // layout itself must keep loading.
-    const parsedLayer2 = layer2Response?.success
-      ? layer2Catalog(layer2Response.data ?? layer2Response)
-      : null;
-    setLayer2Items(parsedLayer2?.ok ? parsedLayer2.catalog.items : null);
     setLayout(parsedLayout);
     setLayoutDraft(parsedLayout);
     setLayoutError("");
@@ -629,9 +527,8 @@ export default function ProfileFieldsPage() {
       const code = response?.error;
       setLayoutError(
         code === "profile-section-conflict" ? t("layoutConflict")
-          : code === "profile-section-gate-invalid" || code === "profile-section-gate-key-unknown" ? t("layoutGateError")
-            : code === "profile-section-not-hideable" ? t("layoutHideError")
-              : t("layoutSaveError"),
+          : code === "profile-section-not-hideable" ? t("layoutHideError")
+            : t("layoutSaveError"),
       );
       return;
     }
@@ -748,7 +645,7 @@ export default function ProfileFieldsPage() {
     <>
       <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
       {toast ? <div className="alert alert-success page-alert" role="status">{toast}</div> : null}
-      <ProfileSectionLayoutEditor layout={layoutDraft} catalog={catalog} layer2Items={layer2Items} busy={layoutBusy} error={layoutError} dirty={layoutDirty} onChange={setLayoutDraft} onSave={() => void saveLayout()} onReset={() => { setLayoutDraft(layout); setLayoutError(""); }} />
+      <ProfileSectionLayoutEditor layout={layoutDraft} catalog={catalog} busy={layoutBusy} error={layoutError} dirty={layoutDirty} onChange={setLayoutDraft} onSave={() => void saveLayout()} onReset={() => { setLayoutDraft(layout); setLayoutError(""); }} />
       <section className="panel"><div className="panel-body profile-fields-toolbar"><label className="field"><span>{t("search")}</span><input type="search" value={query} placeholder={t("searchPlaceholder")} onChange={(event) => setQuery(event.target.value)} /></label><div><p>{t("toolbarCopy")}</p><button className="button button-primary" type="button" onClick={() => { setError(""); setFieldEditor(fieldDraft(undefined, Math.max(0, ...catalog.fields.map((field) => field.sort_order)) + 10, catalog.cast_groups)); }}>{t("addField")}</button></div></div></section>
       <div className="profile-field-list">
         {fields.map((field) => (

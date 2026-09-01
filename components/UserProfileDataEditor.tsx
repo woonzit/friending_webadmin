@@ -290,7 +290,6 @@ export default function UserProfileDataEditor({
           <h3>{section.title}</h3>
           {section.subtitle ? <p>{section.subtitle}</p> : null}
           {visibility?.hidden ? <span className="badge badge-warning">{t("sectionHidden")}</span> : null}
-          {visibility?.gated && visibility.gate_open === false ? <span className="badge badge-warning">{t("sectionGateClosed")}</span> : null}
           {visibility && !visibility.share_enabled ? <span className="badge badge-warning">{t("sectionShareOff")}</span> : null}
           <code>{section.key}</code>
         </div>

@@ -10,7 +10,6 @@ import {
   clampSelectionLimit,
   selectionLimitIsWritable,
   selectionLimitOutOfRange,
-  reviewGateKeys,
   LAYER2_SELECTION_LIMIT_CHOICES,
   LAYER2_SELECTION_LIMIT_MAX,
   LAYER2_SELECTION_LIMIT_MIN,
@@ -405,12 +404,7 @@ test("the wire payload Core actually builds parses, including its PHP quirks", a
   assert.equal(layer2Catalog({ ...wire, blockers: { dating: 7 } }).ok, false);
 });
 
-/**
- * Moved here from the retired `tests/layer2Editor.test.mts` by T-565. The
- * EDITOR is gone; this model is not. `/profile-fields` still decodes the
- * catalogue through it to list the intent keys a profile section may be gated
- * on, so the one-visibility-mode invariant still has a live consumer.
- */
+/** Frozen v1 contract evidence retained after the Admin surfaces were retired. */
 test("the model admits exactly one visibility mode", async () => {
   const model = await readFile(new URL("../lib/layer2Intents.ts", import.meta.url), "utf8");
   assert.match(model, /export type IntentVisibilityMode = "reciprocal";/);
@@ -418,75 +412,4 @@ test("the model admits exactly one visibility mode", async () => {
   assert.match(model, /if \(mode === "public"\) return fail\("visibility-mode-public", id\);/);
   // No branch may still produce or blank a set id conditionally on the mode.
   assert.doesNotMatch(model, /reciprocal-set-on-public/);
-});
-
-/**
- * D-083. The defect was `!(layer2Items ?? []).some(...)`: a catalogue that failed to load was read
- * as a catalogue that is empty, so every configured key became a "stale key" with a one-click
- * removal control beside it. Core answers `layer2_catalog` with 410 `catalog-layer2-retired` for
- * every operator since the D-019 migration, so that was not an edge case — it was the only case.
- */
-test("a catalogue that did not load produces no staleness finding", () => {
-  const item = (id: string, archived = false) => ({
-    id,
-    labels: { en: id, hu: id },
-    glossary: { en: id, hu: id },
-    layer1: ["love"] as const,
-    visibility_mode: "reciprocal" as const,
-    reciprocal_set_id: id,
-    order: 10,
-    archived,
-  });
-
-  // null is "I do not know what exists". There is no stale list at all, so nothing can render a
-  // finding and nothing can offer to delete a key.
-  const unknown = reviewGateKeys(["dating", "kink"], null);
-  assert.equal(unknown.known, false);
-  assert.equal("stale" in unknown, false, "an unknown catalogue must carry no list to default");
-
-  // [] is "the catalogue loaded and is empty", which IS evidence: every key is genuinely absent.
-  const empty = reviewGateKeys(["dating"], []);
-  assert.equal(empty.known, true);
-  if (!empty.known) throw new Error("unreachable");
-  assert.deepEqual(empty.stale, ["dating"]);
-
-  // A live item clears its key; an archived one does not, because an archived item is not
-  // selectable and a gate on it can never open.
-  const loaded = reviewGateKeys(
-    ["dating", "kink", "gone"],
-    [item("dating"), item("kink", true)],
-  );
-  assert.equal(loaded.known, true);
-  if (!loaded.known) throw new Error("unreachable");
-  assert.deepEqual(loaded.stale, ["kink", "gone"]);
-
-  // No configured keys is not a finding either way.
-  const none = reviewGateKeys([], []);
-  assert.equal(none.known, true);
-  if (!none.known) throw new Error("unreachable");
-  assert.deepEqual(none.stale, []);
-});
-
-/**
- * The rule has to survive the next edit, so it is asserted against the page source rather than only
- * against the helper. A `?? []` on `layer2Items` is exactly what D-083 forbids, and the removal
- * control must sit inside the branch that knows the catalogue loaded.
- */
-test("the profile-fields gate never coalesces an unloaded catalogue", async () => {
-  const page = await readFile(
-    new URL("../app/(dashboard)/profile-fields/page.tsx", import.meta.url),
-    "utf8",
-  );
-  assert.doesNotMatch(page, /layer2Items\s*(\?\?|\|\|)/, "layer2Items must never be defaulted");
-  assert.match(page, /const review = reviewGateKeys\(keys, layer2Items\);/);
-  // The stale notice and its removal button render only when the catalogue is known.
-  assert.match(page, /\{review\.known && review\.stale\.length > 0 \? \(/);
-  // ...and the unknown branch shows the configured keys without any control.
-  assert.match(page, /\{!review\.known && keys\.length > 0 \? \(/);
-  assert.match(page, /layoutGateUnverified/);
-
-  // The helper must keep the union shape: a `string[] | null` return would document the same rule
-  // and leave it one `?? []` from being undone.
-  const model = await readFile(new URL("../lib/layer2Intents.ts", import.meta.url), "utf8");
-  assert.match(model, /export type Layer2GateReview =\n\s*\| \{ known: false \}\n\s*\| \{ known: true; stale: string\[\] \};/);
 });

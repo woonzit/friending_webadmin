@@ -764,13 +764,14 @@ test("the two replaced surfaces are retired outright, not hidden", async () => {
     assert.doesNotMatch(shell, new RegExp(`"${route}"`, "u"));
   }
 
-  // Every action only those two pages called is gone from the allow-list, so
-  // the proxy rejects it as an unknown path instead of forwarding a call Core
-  // answers with 410.
+  // Every action only those two pages or the now-retired profile-section gate
+  // called is gone from the allow-list, so the proxy rejects it as an unknown
+  // path instead of forwarding a call Core answers with 410.
   for (const action of [
     "user_cast_groups",
     "save_user_cast_group",
     "archive_user_cast_group",
+    "layer2_catalog",
     "save_layer2_item",
     "archive_layer2_item",
     "set_layer2_selection_limit",
@@ -780,16 +781,11 @@ test("the two replaced surfaces are retired outright, not hidden", async () => {
     assert.doesNotMatch(actions, new RegExp(`"${action}"|\\b${action}:`, "u"));
   }
 
-  // `layer2_catalog` is NOT retired: `/profile-fields` still calls it to list
-  // the intent keys a profile section may be gated on. Removing it with the
-  // editor would have broken a page nobody was retiring.
-  assert.ok(ADMIN_ACTIONS.includes("layer2_catalog" as never));
-  assert.equal(adminActionAccess("layer2_catalog"), "read");
   const profileFields = await readFile(
     new URL("../app/(dashboard)/profile-fields/page.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(profileFields, /adminCall\("layer2_catalog", \{\}\)/);
+  assert.doesNotMatch(profileFields, /layer2_catalog|Layer2|layer2|layoutGate/);
 
   // The operator copy goes with the pages; nothing may reference a namespace
   // that no longer exists.

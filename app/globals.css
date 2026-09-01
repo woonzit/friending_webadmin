@@ -6657,32 +6657,6 @@ body .verification-level-pill.level-strong {
   opacity: 0.62;
 }
 
-.profile-layout-gate {
-  display: grid;
-  gap: 8px;
-  padding: 13px;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface-raised);
-}
-
-.profile-layout-gate strong {
-  color: var(--text);
-  font-size: 13px;
-}
-
-.profile-layout-gate p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.profile-layout-gate code {
-  color: var(--accent);
-  font-size: 9px;
-}
-
 .user-attribute-field.is-ineligible legend strong {
   color: var(--text-soft);
 }

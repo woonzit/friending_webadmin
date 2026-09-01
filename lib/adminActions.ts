@@ -185,7 +185,6 @@ export const ADMIN_ACTIONS = [
   "update_admin",
   "delete_admin",
   "list_audit",
-  "layer2_catalog",
   "signup_photo_config",
   "save_signup_photo_config",
   ...PRODUCT_POPUP_ADMIN_ACTIONS,
@@ -343,15 +342,6 @@ export const ADMIN_ACTION_ACCESS = {
   update_admin: "owner",
   delete_admin: "owner",
   list_audit: "read",
-
-  // T-565 retired the Layer 2 editor with `/layer2-intents`, and Core refuses
-  // every legacy write with `catalog-layer2-retired` (410) now that the D-019
-  // migration has rewritten the singleton to schema 2. The READ survives on its
-  // own: `/profile-fields` still calls it to list the intent keys a profile
-  // section may be gated on. Core gates it on `catalog_inventory_read`; the
-  // console classifies it on its own global ladder, at least as strict as
-  // Core's gate and never derived from it.
-  layer2_catalog: "read",
 
   // Signup photo experience, contract §4.1/§4.2. Core gates the read on `requireAdminActor` and the
   // write on `requireAdminEditor`; both classifications here are at least as strict.
