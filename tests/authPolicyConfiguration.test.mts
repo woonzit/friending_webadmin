@@ -16,7 +16,6 @@ import {
   localizedAuthPolicyCallingCodes,
   localizedAuthPolicyRegions,
   localizedAuthPolicyStorefronts,
-  normalizeAuthPolicySettingsProxyBody,
   phoneDialFormatMask,
   phoneDialFormatRefusal,
   phoneDialMaskValid,
@@ -26,6 +25,7 @@ import {
   type AuthPolicyConfiguration,
   type AuthPolicyVocabulary,
 } from "../lib/authPolicyConfiguration.ts";
+import { normalizeManagedSettingsProxyBody } from "../lib/sectionAvailability.ts";
 
 const TEST_VOCABULARY: AuthPolicyVocabulary = {
   storefronts: [
@@ -555,20 +555,20 @@ test("the same-origin proxy closes all seven editable values and rejects server-
       ...authPolicy,
     },
   };
-  const normalized = normalizeAuthPolicySettingsProxyBody("set_settings", body);
+  const normalized = normalizeManagedSettingsProxyBody("set_settings", body);
   assert.ok(normalized);
   assert.equal(Object.getPrototypeOf(normalized), null);
   assert.deepEqual(JSON.parse(JSON.stringify(normalized)), body);
   assert.deepEqual(
-    JSON.parse(JSON.stringify(normalizeAuthPolicySettingsProxyBody("set_settings", {
+    JSON.parse(JSON.stringify(normalizeManagedSettingsProxyBody("set_settings", {
       ...body,
       expected_revision: 7,
     }))),
     { ...body, expected_revision: 7 },
   );
-  assert.equal(normalizeAuthPolicySettingsProxyBody("get_settings", {}), undefined);
+  assert.equal(normalizeManagedSettingsProxyBody("get_settings", {}), undefined);
   assert.deepEqual(
-    JSON.parse(JSON.stringify(normalizeAuthPolicySettingsProxyBody("set_settings", {
+    JSON.parse(JSON.stringify(normalizeManagedSettingsProxyBody("set_settings", {
       settings: { people_hero_enabled: false },
     }))),
     { settings: { people_hero_enabled: false } },
@@ -577,37 +577,37 @@ test("the same-origin proxy closes all seven editable values and rejects server-
   for (const key of AUTH_POLICY_EDITABLE_SETTING_KEYS) {
     const candidate = structuredClone(body);
     delete candidate.settings[key];
-    assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", candidate), null);
+    assert.equal(normalizeManagedSettingsProxyBody("set_settings", candidate), null);
   }
-  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+  assert.equal(normalizeManagedSettingsProxyBody("set_settings", {
     settings: { ...body.settings, auth_policy_revision: 7 },
   }), null);
-  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+  assert.equal(normalizeManagedSettingsProxyBody("set_settings", {
     settings: { people_hero_enabled: false },
     expected_revision: 7,
   }), null);
-  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+  assert.equal(normalizeManagedSettingsProxyBody("set_settings", {
     ...body,
     expected_revision: 0,
   }), null);
-  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+  assert.equal(normalizeManagedSettingsProxyBody("set_settings", {
     ...body,
     expected_revision: "7",
   }), null);
-  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", { ...body, admin_email: "x" }), null);
-  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+  assert.equal(normalizeManagedSettingsProxyBody("set_settings", { ...body, admin_email: "x" }), null);
+  assert.equal(normalizeManagedSettingsProxyBody("set_settings", {
     settings: { ...body.settings, auth_policy_default: { phone: false, email: false } },
   }), null);
-  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+  assert.equal(normalizeManagedSettingsProxyBody("set_settings", {
     settings: { ...body.settings, phone_dial_codes_default: ["+1"] },
   }), null);
-  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+  assert.equal(normalizeManagedSettingsProxyBody("set_settings", {
     settings: { ...body.settings, phone_regions_default: "ALL" },
   }), null);
-  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+  assert.equal(normalizeManagedSettingsProxyBody("set_settings", {
     settings: { ...body.settings, phone_regions_overrides: { HUN: "ALL" } },
   }), null);
-  assert.equal(normalizeAuthPolicySettingsProxyBody("set_settings", {
+  assert.equal(normalizeManagedSettingsProxyBody("set_settings", {
     settings: {
       ...body.settings,
       phone_dial_formats: [
@@ -797,7 +797,7 @@ test("the maximal bounded policy fits the named settings bridge ceiling", async 
   assert.equal(collapsed.phone_dial_codes_default, "ALL");
   assert.deepEqual(collapsed.phone_regions_overrides, { HUN: "ALL" });
   assert.deepEqual(collapsed.phone_dial_codes_overrides, { HUN: "ALL" });
-  assert.ok(normalizeAuthPolicySettingsProxyBody("set_settings", {
+  assert.ok(normalizeManagedSettingsProxyBody("set_settings", {
     settings: collapsed,
     expected_revision: 1,
   }));
@@ -852,8 +852,8 @@ test("the Configuration page uses one audited settings mutation and renders immu
   assert.match(page, /commitSettings\(authPolicyPayload, "authPolicy", authPolicy\.revision\)/);
   assert.match(page, /setAuthPolicy\(saved\.authPolicy\)/);
   assert.match(page, /authPolicyConflict\(response\)/);
-  assert.match(page, /authPolicyDraftAfterConflict\(currentAuthPolicy, recovered\.authPolicy, conflict\)/);
-  assert.match(page, /setAuthPolicyConflictRevision\(rebased\.revision\)/);
+  assert.match(page, /authPolicyDraftAfterConflict\(\s*currentAuthPolicy,\s*recovered\.authPolicy,\s*conflict,?\s*\)/);
+  assert.match(page, /kind === "authPolicy" \|\| current !== null \? rebasedAuthPolicy\.revision : null/);
   assert.match(card, /<input type="checkbox" checked disabled readOnly \/>/);
   assert.equal(card.match(/<MethodPreview/g)?.length, 2);
   assert.match(card, /localizedAuthPolicyStorefronts\(value\.vocabulary, locale\)/);
@@ -868,7 +868,7 @@ test("the Configuration page uses one audited settings mutation and renders immu
   assert.match(card, /data-format-code=\{code\}/);
   assert.match(page, /phoneDialFormatRefusal\(response\)/);
   assert.match(page, /phoneRegionRefusal\(response\)/);
-  assert.match(proxy, /normalizeAuthPolicySettingsProxyBody\(action, body\)/);
+  assert.match(proxy, /normalizeManagedSettingsProxyBody\(action, body\)/);
   for (const key of [
     "savePolicy",
     "saved",

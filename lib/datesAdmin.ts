@@ -114,6 +114,16 @@ export function configurationInputValue(type: string, raw: string): unknown {
   return raw;
 }
 
+/** `dates_enabled` has one home: the shared section-availability control. */
+export function datesRuntimeSettingVisible(key: unknown): boolean {
+  return typeof key === "string" && key !== "dates_enabled";
+}
+
+/** Refuse the retired second writer while preserving this shared action for every other Dates row. */
+export function datesAvailabilityWriteIsRetired(action: string, value: unknown): boolean {
+  return action === "dates_configuration_save" && record(value)?.key === "dates_enabled";
+}
+
 export function resolutionActions(value: Pick<DatesCaseSummary, "queue" | "case_kind" | "target_type">): string[] {
   if (value.queue === "appeals" || value.case_kind === "appeal") return ["uphold", "overturn"];
   if (value.case_kind === "prepublication") {

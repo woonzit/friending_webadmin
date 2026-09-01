@@ -5,6 +5,8 @@ import { DATES_ADMIN_ACTIONS, isAdminActionAllowed } from "../lib/adminActions.t
 import {
   configurationInputValue,
   createAdminIdempotencyKey,
+  datesAvailabilityWriteIsRetired,
+  datesRuntimeSettingVisible,
   hasDatesCapability,
   normalizeDatesPrincipal,
   parseEntryPoints,
@@ -44,7 +46,6 @@ const EXPECTED_DATES_ACTIONS = [
 ] as const;
 
 const EXPECTED_RUNTIME_HELP_KEYS = [
-  "dates_enabled",
   "dates_creation_enabled",
   "dates_live_sharing_enabled",
   "dates_reviews_enabled",
@@ -112,6 +113,38 @@ test("admin payload helpers normalize idempotency, catalog and setting values", 
   assert.equal(configurationInputValue("integer", "42"), 42);
   assert.equal(configurationInputValue("nullable_integer", ""), null);
   assert.deepEqual(configurationInputValue("quiet_hours", "22:00|08:00"), { start: "22:00", end: "08:00" });
+});
+
+test("Dates availability has no second control, writer, route, permission, or navigation entry", () => {
+  assert.equal(datesRuntimeSettingVisible("dates_enabled"), false);
+  assert.equal(datesRuntimeSettingVisible("dates_creation_enabled"), true);
+  assert.equal(datesRuntimeSettingVisible(null), false);
+  assert.equal(datesAvailabilityWriteIsRetired("dates_configuration_save", {
+    key: "dates_enabled",
+  }), true);
+  assert.equal(datesAvailabilityWriteIsRetired("dates_configuration_save", {
+    key: "dates_creation_enabled",
+  }), false);
+  assert.equal(datesAvailabilityWriteIsRetired("dates_configuration", {
+    key: "dates_enabled",
+  }), false);
+  // The shared route remains necessary for every non-availability Dates setting.
+  assert.ok(EXPECTED_DATES_ACTIONS.includes("dates_configuration_save"));
+  assert.equal(EXPECTED_DATES_ACTIONS.some((action) => action.includes("enabled")), false);
+
+  const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
+  const helpModel = readFileSync(new URL("../lib/datesRuntimeHelp.ts", import.meta.url), "utf8");
+  const help = readFileSync(new URL("../components/DatesRuntimeSettingsHelp.tsx", import.meta.url), "utf8");
+  const tabs = readFileSync(new URL("../components/DatesAdminTabs.tsx", import.meta.url), "utf8");
+  const route = readFileSync(new URL("../app/api/admin/[action]/route.ts", import.meta.url), "utf8");
+  assert.match(page, /datesRuntimeSettingVisible\(setting\?\.key\)/);
+  assert.match(route, /datesAvailabilityWriteIsRetired\(action, body\)/);
+  assert.doesNotMatch(`${page}\n${helpModel}\n${help}\n${tabs}`, /dates_enabled/u);
+
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
+    assert.equal(Object.hasOwn(messages.datesAdmin.configuration.runtimeHelp.settings, "dates_enabled"), false);
+  }
 });
 
 test("Dates runtime help covers every bounded Core setting in both locales", () => {

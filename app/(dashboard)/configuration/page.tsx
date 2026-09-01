@@ -7,11 +7,13 @@ import FeatureSwitchesPanel from "@/components/FeatureSwitchesPanel";
 import PageHeader from "@/components/PageHeader";
 import ProfilePresenceConfiguration from "@/components/ProfilePresenceConfiguration";
 import ProfileVerificationConfiguration from "@/components/ProfileVerificationConfiguration";
+import SectionAvailabilityConfigurationCard from "@/components/SectionAvailabilityConfigurationCard";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
 import {
   authPolicyConflict,
   authPolicyDraftAfterConflict,
+  authPolicyDraftAtAuthority,
   authPolicyDraftIssue,
   authPolicySavePayload,
   authPolicySettingsResponse,
@@ -40,11 +42,22 @@ import {
   sessionIdleMinutesValid,
   type RuntimeSettings,
 } from "@/lib/runtimeConfiguration";
+import {
+  sectionAvailabilityDraftAfterConflict,
+  sectionAvailabilityDraftAtAuthority,
+  sectionAvailabilityDraftIssue,
+  sectionAvailabilityRefusal,
+  sectionAvailabilitySavePayload,
+  sectionAvailabilitySettingsResponse,
+  type SectionAvailabilityConfiguration,
+  type SectionAvailabilityDraftIssue,
+} from "@/lib/sectionAvailability";
 
 type ConfigurationSnapshot = {
   runtime: RuntimeSettings;
   push: PushDeliverySetting | null;
   authPolicy: AuthPolicyConfiguration;
+  sectionAvailability: SectionAvailabilityConfiguration;
 };
 
 function configurationSnapshot(
@@ -58,8 +71,11 @@ function configurationSnapshot(
   if (!runtime) return null;
   const push = pushSettingsResponse(response);
   const authPolicy = authPolicySettingsResponse(response, fallbackVocabulary);
-  if (!authPolicy || !push) return null;
-  return { runtime, push, authPolicy };
+  const sectionAvailability = authPolicy
+    ? sectionAvailabilitySettingsResponse(response, authPolicy)
+    : null;
+  if (!authPolicy || !sectionAvailability || !push) return null;
+  return { runtime, push, authPolicy, sectionAvailability };
 }
 
 export default function ConfigurationPage() {
@@ -69,7 +85,9 @@ export default function ConfigurationPage() {
   const [settings, setSettings] = useState<RuntimeSettings | null>(null);
   const [pushSetting, setPushSetting] = useState<PushDeliverySetting | null>(null);
   const [authPolicy, setAuthPolicy] = useState<AuthPolicyConfiguration | null>(null);
+  const [sectionAvailability, setSectionAvailability] = useState<SectionAvailabilityConfiguration | null>(null);
   const [authPolicyConflictRevision, setAuthPolicyConflictRevision] = useState<number | null>(null);
+  const [sectionAvailabilityConflictRevision, setSectionAvailabilityConflictRevision] = useState<number | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [busy, setBusy] = useState(false);
   const saveInFlight = useRef(false);
@@ -86,7 +104,9 @@ export default function ConfigurationPage() {
     setSettings(snapshot.runtime);
     setPushSetting(snapshot.push);
     setAuthPolicy(snapshot.authPolicy);
+    setSectionAvailability(snapshot.sectionAvailability);
     setAuthPolicyConflictRevision(null);
+    setSectionAvailabilityConflictRevision(null);
     setState("ready");
   }, []);
 
@@ -102,7 +122,7 @@ export default function ConfigurationPage() {
 
   async function commitSettings(
     payload: Record<string, unknown>,
-    kind: "runtime" | "authPolicy",
+    kind: "runtime" | "authPolicy" | "sectionAvailability",
     expectedRevision?: number,
   ) {
     if (saveInFlight.current) return;
@@ -110,6 +130,7 @@ export default function ConfigurationPage() {
     setBusy(true);
     setMessage(null);
     const currentAuthPolicy = authPolicy;
+    const currentSectionAvailability = sectionAvailability;
     const response = await adminCall("set_settings", {
       settings: payload,
       ...(expectedRevision === undefined ? {} : { expected_revision: expectedRevision }),
@@ -119,9 +140,27 @@ export default function ConfigurationPage() {
       if (kind === "runtime") {
         setSettings(saved.runtime);
         setPushSetting(saved.push);
-      } else {
+      } else if (kind === "authPolicy") {
         setAuthPolicy(saved.authPolicy);
         setAuthPolicyConflictRevision(null);
+        setSectionAvailability(currentSectionAvailability
+          ? sectionAvailabilityDraftAtAuthority(
+            currentSectionAvailability,
+            saved.sectionAvailability,
+          )
+          : saved.sectionAvailability);
+        setSectionAvailabilityConflictRevision((current) => (
+          current === null ? null : saved.sectionAvailability.revision
+        ));
+      } else {
+        setSectionAvailability(saved.sectionAvailability);
+        setSectionAvailabilityConflictRevision(null);
+        setAuthPolicy(currentAuthPolicy
+          ? authPolicyDraftAtAuthority(currentAuthPolicy, saved.authPolicy)
+          : saved.authPolicy);
+        setAuthPolicyConflictRevision((current) => (
+          current === null ? null : saved.authPolicy.revision
+        ));
       }
       saveInFlight.current = false;
       setBusy(false);
@@ -129,12 +168,14 @@ export default function ConfigurationPage() {
         tone: "success",
         text: kind === "authPolicy"
           ? t("authPolicy.saved", { revision: saved.authPolicy.revision })
-          : t("saved"),
+          : kind === "sectionAvailability"
+            ? t("sectionAvailability.saved", { revision: saved.sectionAvailability.revision })
+            : t("saved"),
       });
       return;
     }
 
-    const conflict = kind === "authPolicy" ? authPolicyConflict(response) : null;
+    const conflict = kind === "runtime" ? null : authPolicyConflict(response);
     const error = pushAdminError(response) ?? pushLocalWriteDenial(response);
     const recovered = configurationSnapshot(await adminCall("get_settings"));
     if (!recovered) {
@@ -143,16 +184,33 @@ export default function ConfigurationPage() {
       setState("error");
       return;
     }
-    if (conflict && currentAuthPolicy) {
-      const rebased = authPolicyDraftAfterConflict(currentAuthPolicy, recovered.authPolicy, conflict);
-      if (!rebased) {
+    if (conflict && currentAuthPolicy && currentSectionAvailability) {
+      const rebasedAuthPolicy = authPolicyDraftAfterConflict(
+        currentAuthPolicy,
+        recovered.authPolicy,
+        conflict,
+      );
+      const rebasedSectionAvailability = sectionAvailabilityDraftAfterConflict(
+        currentSectionAvailability,
+        recovered.sectionAvailability,
+        conflict,
+      );
+      if (!rebasedAuthPolicy || !rebasedSectionAvailability) {
         saveInFlight.current = false;
         setBusy(false);
         setState("error");
         return;
       }
-      setAuthPolicy(rebased);
-      setAuthPolicyConflictRevision(rebased.revision);
+      setAuthPolicy(rebasedAuthPolicy);
+      setSectionAvailability(rebasedSectionAvailability);
+      setAuthPolicyConflictRevision((current) => (
+        kind === "authPolicy" || current !== null ? rebasedAuthPolicy.revision : null
+      ));
+      setSectionAvailabilityConflictRevision((current) => (
+        kind === "sectionAvailability" || current !== null
+          ? rebasedSectionAvailability.revision
+          : null
+      ));
       saveInFlight.current = false;
       setBusy(false);
       return;
@@ -160,9 +218,27 @@ export default function ConfigurationPage() {
     if (kind === "runtime") {
       setSettings(recovered.runtime);
       setPushSetting(recovered.push);
-    } else {
+    } else if (kind === "authPolicy") {
       setAuthPolicy(recovered.authPolicy);
       setAuthPolicyConflictRevision(null);
+      setSectionAvailability(currentSectionAvailability
+        ? sectionAvailabilityDraftAtAuthority(
+          currentSectionAvailability,
+          recovered.sectionAvailability,
+        )
+        : recovered.sectionAvailability);
+      setSectionAvailabilityConflictRevision((current) => (
+        current === null ? null : recovered.sectionAvailability.revision
+      ));
+    } else {
+      setSectionAvailability(recovered.sectionAvailability);
+      setSectionAvailabilityConflictRevision(null);
+      setAuthPolicy(currentAuthPolicy
+        ? authPolicyDraftAtAuthority(currentAuthPolicy, recovered.authPolicy)
+        : recovered.authPolicy);
+      setAuthPolicyConflictRevision((current) => (
+        current === null ? null : recovered.authPolicy.revision
+      ));
     }
     saveInFlight.current = false;
     setBusy(false);
@@ -170,7 +246,9 @@ export default function ConfigurationPage() {
       tone: "error",
       text: kind === "authPolicy"
         ? authPolicySaveError(t, response, error)
-        : pushSaveError(t, error),
+        : kind === "sectionAvailability"
+          ? sectionAvailabilitySaveError(t, response, error)
+          : pushSaveError(t, error),
     });
   }
 
@@ -205,8 +283,22 @@ export default function ConfigurationPage() {
     await commitSettings(authPolicyPayload, "authPolicy", authPolicy.revision);
   }
 
+  async function saveSectionAvailability() {
+    if (!sectionAvailability) return;
+    const issue = sectionAvailabilityDraftIssue(sectionAvailability);
+    const payload = sectionAvailabilitySavePayload(sectionAvailability);
+    if (issue || !payload) {
+      setMessage({
+        tone: "error",
+        text: sectionAvailabilityIssueMessage(t, issue ?? "revision"),
+      });
+      return;
+    }
+    await commitSettings(payload, "sectionAvailability", sectionAvailability.revision);
+  }
+
   if (state === "loading") return <LoadingPanel />;
-  if (state === "error" || !settings || !authPolicy) {
+  if (state === "error" || !settings || !authPolicy || !sectionAvailability) {
     return <ErrorPanel message={t("loadError")} retry={load} />;
   }
 
@@ -243,6 +335,16 @@ export default function ConfigurationPage() {
         }
       />
       {message && <div className={`alert ${message.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{message.text}</div>}
+      <SectionAvailabilityConfigurationCard
+        value={sectionAvailability}
+        busy={busy}
+        conflictRevision={sectionAvailabilityConflictRevision}
+        onSave={() => void saveSectionAvailability()}
+        onChange={(next) => {
+          setSectionAvailability(next);
+          setMessage(null);
+        }}
+      />
       {FEATURE_SWITCHES_CONTRACT_READY ? <FeatureSwitchesPanel /> : null}
       <AuthPolicyConfigurationCard
         value={authPolicy}
@@ -543,4 +645,31 @@ function authPolicySaveError(
   }
   if (phoneRegionRefusal(response)) return t("authPolicy.errors.regions");
   return t("authPolicy.saveError");
+}
+
+function sectionAvailabilityIssueMessage(
+  t: ReturnType<typeof useTranslations<"configuration">>,
+  issue: SectionAvailabilityDraftIssue,
+): string {
+  if (issue === "storefront") return t("sectionAvailability.errors.storefront");
+  if (issue === "duplicateStorefront") {
+    return t("sectionAvailability.errors.duplicateStorefront");
+  }
+  if (issue === "vocabulary") return t("sectionAvailability.errors.vocabulary");
+  return t("sectionAvailability.errors.revision");
+}
+
+function sectionAvailabilitySaveError(
+  t: ReturnType<typeof useTranslations<"configuration">>,
+  response: AdminResponse | null,
+  error: PushAdminError | null,
+): string {
+  if (error === "admin-write-required") return t("sectionAvailability.writeRequired");
+  const refusal = sectionAvailabilityRefusal(response);
+  if (refusal) {
+    return refusal.storefront
+      ? t("sectionAvailability.errors.refusedStorefront", { code: refusal.storefront })
+      : t("sectionAvailability.errors.refusedSetting");
+  }
+  return t("sectionAvailability.saveError");
 }

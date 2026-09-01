@@ -1066,7 +1066,7 @@
       },
       "datesConfiguration": {
         "title": "Dates configuration help",
-        "summary": "This page owns the bounded operating policy for Dates: feature switches and retention limits, the member-visible activity types, and the bilingual reasons used when members report a problem.",
+        "summary": "This page owns the bounded Dates capability and retention settings, member-visible activity types, and bilingual report reasons. Dates section availability is managed once on Configuration.",
         "steps": {
           "1": "Read the effective value and the dedicated runtime help before changing a feature, limit or retention rule.",
           "2": "Keep stable catalog keys intact and update bilingual labels or active state with an audit reason.",
@@ -1079,7 +1079,7 @@
             "actions": {
               "1": "Open the built-in Runtime settings help for the purpose, operational effect and caution attached to every key.",
               "2": "Edit only the intended bounded value and save with its current revision.",
-              "3": "Compare stored and effective values, because the master switch can force subordinate switches off."
+              "3": "Compare stored and effective values, and use the separate Configuration control when the question is section availability."
             },
             "guidance": "Feature switches, workers and retention policy form one release unit. Never enable live location before positive retention and purge monitoring are proven."
           },
@@ -6266,6 +6266,51 @@
     "profileLinkBaseCopy": "The origin members' shareable profile links and QR codes are minted from. Only origins that released app builds recognise are offered — a link on an unknown host does not degrade the in-app QR screen, it removes it. Opening the app from a host also needs that domain in the signed build's associated domains; otherwise the link still works, but lands in the browser.",
     "webBase": "Website address",
     "webBaseCopy": "The origin the legal, marketing and giveaway links in the apps are built from — privacy policy, terms and similar. Free text, because these only ever open in a browser: a wrong value costs a broken link, not a broken screen. It must be an https origin with no path; each consumer appends its own.",
+    "sectionAvailability": {
+      "eyebrow": "Product section availability",
+      "title": "Travel and Dates",
+      "copy": "Set each section once: a global answer plus deliberate App Store storefront overrides. The App Store supplies the storefront; member location is not used.",
+      "revision": "Revision {revision}",
+      "save": "Save section availability",
+      "saved": "Section availability saved at revision {revision}.",
+      "conflictReloaded": "Revision {revision} is now current. Your unsaved section edits were preserved; review them, then save again.",
+      "writeRequired": "Editor access is required to save section availability.",
+      "saveError": "The save was not confirmed. Authoritative section settings were reloaded; review them before trying again.",
+      "visibilityOnly": "This controls whether released clients may present a section and its entry point. It is not an authorization or endpoint-enforcement control.",
+      "vocabularyWarning": "Stored storefronts outside Core's current vocabulary are still shown and must be replaced or removed before saving: {codes}.",
+      "travel": {
+        "title": "Travel",
+        "copy": "Controls the Travel section and its plane entry point for the resolved storefront."
+      },
+      "dates": {
+        "title": "Dates",
+        "copy": "Controls the Dates section and its hamburger-drawer entry for the resolved storefront."
+      },
+      "globalTitle": "Global availability",
+      "globalCopy": "Used when no usable storefront is supplied or that storefront has no override.",
+      "overridesTitle": "Storefront overrides",
+      "overridesCopy": "An override replaces the global answer for exactly one App Store storefront.",
+      "addOverride": "Add override",
+      "removeOverride": "Remove",
+      "emptyOverrides": "Every storefront currently uses the global answer.",
+      "storefront": "App Store storefront",
+      "selectStorefront": "Select a country",
+      "unknownStorefront": "Unsupported storefront · {code}",
+      "availability": "Availability",
+      "available": "Available",
+      "unavailable": "Unavailable",
+      "globalUpdated": "Global value updated",
+      "overridesUpdated": "Overrides updated",
+      "updatedBy": "by",
+      "errors": {
+        "storefront": "Choose a valid ISO three-letter App Store storefront for every override.",
+        "duplicateStorefront": "The same storefront cannot appear twice in one section control.",
+        "vocabulary": "Replace or remove every flagged storefront before saving section availability.",
+        "revision": "The shared settings revision is invalid. Reload before saving.",
+        "refusedSetting": "Core refused a section availability value. Reload and review both section controls.",
+        "refusedStorefront": "Core does not accept storefront {code}. Replace or remove that override."
+      }
+    },
     "authPolicy": {
       "eyebrow": "Sign-in availability",
       "title": "Authentication policy",
@@ -7227,7 +7272,7 @@
       "noCatalogRole": "Your administrator account has no catalogue role, so Core refuses this catalogue.",
       "noCatalogRoleHint": "This is a permission, not an outage. An owner has to set catalog_role on your admin_emails record; there is no console control for it yet.",
       "runtimeTitle": "Runtime settings",
-      "runtimeCopy": "Only explicit Dates keys are exposed; settings cannot be deleted from this console.",
+      "runtimeCopy": "Section availability is managed once in Configuration; this page exposes the remaining explicit Dates keys, which cannot be deleted here.",
       "settingCount": "{count} settings",
       "revision": "revision {revision}",
       "effective": "effective: {value}",
@@ -7244,11 +7289,11 @@
         "beforeChangingCopy": "Treat feature switches, retention rules and workers as one release unit. Use this order when enabling Dates or a high-impact capability:",
         "rolloutStepRetention": "Approve the privacy and legal retention values, especially live trails and moderation evidence.",
         "rolloutStepWorker": "Deploy and verify the Dates background worker, monitoring and delivery dependencies.",
-        "rolloutStepMaster": "Enable the master Dates switch for a controlled audience and verify bootstrap, list and detail reads.",
+        "rolloutStepMaster": "In Configuration, set Dates availability for the controlled storefronts and verify the client bootstrap and entry point.",
         "rolloutStepCapabilities": "Enable creation, live sharing, reviews and digest separately; do not switch them all on at once.",
         "rolloutStepVerify": "Watch errors, moderation queues, worker lag and audit logs before widening rollout.",
         "effectiveNoteLabel": "Stored vs effective:",
-        "effectiveNote": "When the master switch is OFF, Core forces every subordinate feature switch to an effective OFF even if its stored value is ON. The effective value is what the app actually receives.",
+        "effectiveNote": "Dates section availability is edited in Configuration, not on this page. A subordinate effective value can still be OFF while its stored value is ON; the effective value is the operational witness.",
         "timingNoteLabel": "Timing:",
         "timingNote": "Durations and retention values are usually copied into a record when an activity, decline, case or purge schedule is created. Changing the default does not rewrite existing deadlines unless a dedicated migration or operation does so.",
         "sectionsLabel": "Runtime help sections",
@@ -7271,7 +7316,7 @@
         "groups": {
           "rollout": {
             "title": "Feature rollout switches",
-            "copy": "Fail-closed controls for the complete Dates product and its independently releasable capabilities. OFF preserves data; it does not delete anything."
+            "copy": "Independent Dates capability controls. Section availability itself is managed once in Configuration. OFF preserves data; it does not delete anything."
           },
           "activityLifecycle": {
             "title": "Activity lifecycle and limits",
@@ -7291,17 +7336,11 @@
           }
         },
         "settings": {
-          "dates_enabled": {
-            "title": "Master Dates switch",
-            "purpose": "The top-level kill switch for the entire Dates product and the parent of every subordinate capability.",
-            "effect": "ON allows the subordinate switches to become effective. OFF forces creation, live sharing, reviews and digest to effective OFF and makes Dates product operations fail closed, while retaining existing data.",
-            "caution": "Turning this ON does not start workers or enable subordinate switches. Use OFF for an emergency product stop, not as a deletion or migration tool."
-          },
           "dates_creation_enabled": {
             "title": "Activity creation",
             "purpose": "Controls creation drafts and publishing of new Dates activities, including whether the app advertises the creation capability.",
             "effect": "ON permits eligible users to create and publish subject to validation, moderation and rate limits. OFF blocks the new-activity flow; existing activity data and allowed management operations remain available.",
-            "caution": "The master switch must also be ON. Disable this first when stopping new supply while keeping existing activities operational."
+            "caution": "Dates section availability is managed in Configuration. Disable creation first when stopping new supply while keeping existing activities operational."
           },
           "dates_live_sharing_enabled": {
             "title": "Host live-location sharing",
@@ -7313,7 +7352,7 @@
             "title": "Post-activity reviews",
             "purpose": "Controls participant review and host check-in capabilities after an activity ends, plus visibility of Dates review surfaces.",
             "effect": "ON lets eligible participants submit/view the supported review flow. OFF fails review operations closed and removes the capability from the app; stored reviews and moderation history are not deleted.",
-            "caution": "Review moderation and evidence retention remain separate safety concerns. The master switch must also be ON."
+            "caution": "Review moderation and evidence retention remain separate safety concerns. Dates section availability is managed in Configuration."
           },
           "dates_digest_enabled": {
             "title": "Nearby activity digest",

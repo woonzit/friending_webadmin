@@ -3714,6 +3714,189 @@ body .verification-level-pill.level-strong {
   color: var(--muted);
 }
 
+.section-availability-panel {
+  margin-bottom: 18px;
+}
+
+.section-availability-header {
+  align-items: flex-start;
+}
+
+.section-availability-header > div:first-child {
+  min-width: 0;
+}
+
+.section-availability-header .eyebrow {
+  margin: 0 0 5px;
+}
+
+.section-availability-header h2 {
+  margin: 0;
+}
+
+.section-availability-header h2 + p {
+  max-width: 820px;
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.section-availability-header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.section-availability-body {
+  display: grid;
+  gap: 15px;
+}
+
+.section-availability-boundary {
+  margin: 0;
+  padding: 11px 13px;
+  border-left: 3px solid var(--amber);
+  border-radius: 7px;
+  color: var(--text-soft);
+  background: var(--amber-soft);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.section-availability-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.section-availability-control {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  padding: 17px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #0b0e12;
+}
+
+.section-availability-control-heading,
+.section-availability-overrides-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.section-availability-control-heading h3,
+.section-availability-overrides-heading h4 {
+  margin: 0;
+}
+
+.section-availability-control-heading p,
+.section-availability-overrides-heading p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.section-availability-global {
+  display: grid;
+  min-height: 88px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  background: var(--surface-raised);
+}
+
+.section-availability-global strong,
+.section-availability-global small {
+  display: block;
+}
+
+.section-availability-global small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.section-availability-overrides {
+  display: grid;
+  gap: 10px;
+}
+
+.section-availability-override {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(130px, .55fr) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-raised);
+}
+
+.section-availability-override label {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.section-availability-override label > span {
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.section-availability-override select[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.section-availability-override > small {
+  grid-column: 1 / -1;
+}
+
+.section-availability-meta {
+  display: grid;
+  gap: 5px;
+  padding-top: 2px;
+}
+
+@media (max-width: 980px) {
+  .section-availability-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .section-availability-header,
+  .section-availability-control-heading,
+  .section-availability-overrides-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .section-availability-header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .section-availability-header-actions .button,
+  .section-availability-overrides-heading .button {
+    width: 100%;
+  }
+
+  .section-availability-override {
+    grid-template-columns: 1fr;
+  }
+}
+
 .auth-policy-panel {
   margin-bottom: 18px;
 }

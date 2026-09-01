@@ -1,0 +1,33 @@
+{
+    "success": true,
+    "status_code": 200,
+    "settings": {
+        "travel_enabled": {
+            "value": true,
+            "warning": false,
+            "invalid_codes": []
+        },
+        "travel_enabled_overrides": {
+            "value": {
+                "HUN": false
+            },
+            "warning": false,
+            "invalid_codes": []
+        },
+        "dates_enabled": {
+            "value": false,
+            "warning": false,
+            "invalid_codes": []
+        },
+        "dates_enabled_overrides": {
+            "value": {
+                "USA": true
+            },
+            "warning": false,
+            "invalid_codes": []
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

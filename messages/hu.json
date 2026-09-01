@@ -1066,7 +1066,7 @@
       },
       "datesConfiguration": {
         "title": "Dates konfiguráció súgó",
-        "summary": "Ez az oldal kezeli a Dates korlátozott működési szabályzatát: feature kapcsolók és megőrzési korlátok, tagok által látott aktivitástípusok, valamint a problémabejelentés kétnyelvű okai.",
+        "summary": "Ez az oldal kezeli a Dates korlátozott képesség- és megőrzési beállításait, a tagok által látott aktivitástípusokat és a kétnyelvű jelentési okokat. A Dates szekció elérhetőségének egyetlen helye a Konfiguráció.",
         "steps": {
           "1": "Feature, limit vagy retention szabály módosítása előtt olvasd el az effektív értéket és a részletes runtime súgót.",
           "2": "A stabil katalóguskulcsokat hagyd változatlanul, a kétnyelvű címkét vagy aktív állapotot auditindokkal frissítsd.",
@@ -1079,7 +1079,7 @@
             "actions": {
               "1": "Nyisd meg a beépített Runtime beállítások súgót, amely minden kulcs célját, üzemeltetési hatását és kockázatát elmagyarázza.",
               "2": "Csak a kívánt, korlátozott értéket módosítsd, és az aktuális revízióval ments.",
-              "3": "Hasonlítsd össze a tárolt és effektív értéket, mert a főkapcsoló kikényszerítheti az alkapcsolók kikapcsolását."
+              "3": "Hasonlítsd össze a tárolt és effektív értéket, szekcióelérhetőségi kérdésnél pedig használd a külön Konfiguráció vezérlőt."
             },
             "guidance": "A feature kapcsolók, workerek és retention policy egyetlen release-egységet alkotnak. Live helyet soha ne engedélyezz bizonyított pozitív retention és purge-monitoring előtt."
           },
@@ -6266,6 +6266,51 @@
     "profileLinkBaseCopy": "Ebből az alapcímből készülnek a tagok megosztható profil-linkjei és QR-kódjai. Csak olyan címek választhatók, amiket a kiadott appverziók ismernek — egy ismeretlen hoszton lévő link nem rontja el az appon belüli QR képernyőt, hanem megszünteti. Ahhoz, hogy egy cím magát az appot is megnyissa, a domainnek szerepelnie kell az aláírt build társított domainjei közt; enélkül a link működik, de böngészőben nyílik.",
     "webBase": "Weboldal címe",
     "webBaseCopy": "Ebből az alapcímből épülnek az appokban a jogi, marketing- és nyereményjáték-linkek — adatvédelem, ÁSZF és hasonlók. Szabad szöveg, mert ezek mindig böngészőben nyílnak: egy rossz érték elromló linket jelent, nem elromló képernyőt. https alapcím legyen, útvonal nélkül; az útvonalat minden felhasználó maga fűzi hozzá.",
+    "sectionAvailability": {
+      "eyebrow": "Termékszekciók elérhetősége",
+      "title": "Travel és Dates",
+      "copy": "Szekciónként egy helyen add meg a globális választ és a szándékos App Store-storefront felülírásokat. A storefrontot az App Store adja; a tag helyadata nem vesz részt benne.",
+      "revision": "{revision}. revízió",
+      "save": "Szekcióelérhetőség mentése",
+      "saved": "A szekcióelérhetőség mentve. Új revízió: {revision}.",
+      "conflictReloaded": "Most a(z) {revision}. revízió az aktuális. A nem mentett szekciómódosításaid megmaradtak; ellenőrizd, majd mentsd újra őket.",
+      "writeRequired": "A szekcióelérhetőség mentéséhez szerkesztői jogosultság szükséges.",
+      "saveError": "A mentés nem igazolható. A hiteles szekcióbeállításokat újratöltöttük; újrapróbálás előtt ellenőrizd őket.",
+      "visibilityOnly": "Ez azt szabályozza, hogy a kiadott kliensek megjeleníthetik-e a szekciót és a belépési pontját. Nem jogosultsági vagy végpont-kikényszerítési vezérlő.",
+      "vocabularyWarning": "A Core aktuális szótárán kívüli tárolt storefrontok továbbra is láthatók, de mentés előtt le kell cserélni vagy el kell távolítani őket: {codes}.",
+      "travel": {
+        "title": "Travel",
+        "copy": "A feloldott storefrontnál a Travel szekciót és a repülőgép belépési pontját szabályozza."
+      },
+      "dates": {
+        "title": "Dates",
+        "copy": "A feloldott storefrontnál a Dates szekciót és a hamburger menü bejegyzését szabályozza."
+      },
+      "globalTitle": "Globális elérhetőség",
+      "globalCopy": "Akkor érvényes, ha nincs használható storefront, vagy ahhoz nem tartozik felülírás.",
+      "overridesTitle": "Storefront-felülírások",
+      "overridesCopy": "Egy felülírás pontosan egy App Store-storefrontnál lecseréli a globális választ.",
+      "addOverride": "Felülírás hozzáadása",
+      "removeOverride": "Eltávolítás",
+      "emptyOverrides": "Jelenleg minden storefront a globális választ használja.",
+      "storefront": "App Store-storefront",
+      "selectStorefront": "Válassz országot",
+      "unknownStorefront": "Nem támogatott storefront · {code}",
+      "availability": "Elérhetőség",
+      "available": "Elérhető",
+      "unavailable": "Nem érhető el",
+      "globalUpdated": "Globális érték frissítve",
+      "overridesUpdated": "Felülírások frissítve",
+      "updatedBy": "módosította",
+      "errors": {
+        "storefront": "Minden felülíráshoz válassz érvényes, hárombetűs ISO App Store-storefrontot.",
+        "duplicateStorefront": "Ugyanaz a storefront nem szerepelhet kétszer egy szekcióvezérlőben.",
+        "vocabulary": "Mentés előtt cserélj le vagy távolíts el minden megjelölt storefrontot.",
+        "revision": "A közös beállításrevízió érvénytelen. Mentés előtt töltsd újra az oldalt.",
+        "refusedSetting": "A Core visszautasított egy szekcióelérhetőségi értéket. Töltsd újra és ellenőrizd mindkét szekcióvezérlőt.",
+        "refusedStorefront": "A Core nem fogadja el a(z) {code} storefrontot. Cseréld le vagy távolítsd el a felülírást."
+      }
+    },
     "authPolicy": {
       "eyebrow": "Bejelentkezési lehetőségek",
       "title": "Hitelesítési szabályzat",
@@ -7227,7 +7272,7 @@
       "noCatalogRole": "Az admin fiókodon nincs katalógus szerepkör, ezért a Core elutasítja ezt a katalógust.",
       "noCatalogRoleHint": "Ez jogosultsági kérdés, nem üzemzavar. Egy tulajdonosnak be kell állítania a catalog_role mezőt az admin_emails rekordodon; erre a konzolon még nincs vezérlő.",
       "runtimeTitle": "Runtime beállítások",
-      "runtimeCopy": "Csak explicit Dates kulcsok érhetők el; ezen a felületen beállítás nem törölhető.",
+      "runtimeCopy": "A szekcióelérhetőségnek egyetlen helye van a Konfigurációban; ezen az oldalon a többi explicit Dates kulcs látható, és itt egyik sem törölhető.",
       "settingCount": "{count} beállítás",
       "revision": "{revision}. revízió",
       "effective": "effektív érték: {value}",
@@ -7244,11 +7289,11 @@
         "beforeChangingCopy": "A feature kapcsolókat, a megőrzési szabályokat és a workert egy kiadási egységként kezeld. A Dates vagy egy nagy hatású képesség bekapcsolásakor ezt a sorrendet használd:",
         "rolloutStepRetention": "Hagyd jóvá az adatvédelmi és jogi megőrzési értékeket, különösen a live trail és a moderációs bizonyíték esetében.",
         "rolloutStepWorker": "Telepítsd és ellenőrizd a Dates háttér-workert, a monitorozást és a kézbesítési függőségeket.",
-        "rolloutStepMaster": "Ellenőrzött célközönségnél kapcsold be a Dates főkapcsolót, majd ellenőrizd a bootstrap, lista- és részletlekéréseket.",
+        "rolloutStepMaster": "A Konfigurációban állítsd be a Dates elérhetőségét az ellenőrzött storefrontokra, majd ellenőrizd a kliens bootstrapot és a belépési pontot.",
         "rolloutStepCapabilities": "A létrehozást, live sharinget, értékeléseket és digestet külön-külön kapcsold be; ne egyszerre mindet.",
         "rolloutStepVerify": "A szélesebb bevezetés előtt figyeld a hibákat, moderációs sorokat, worker-késést és auditnaplókat.",
         "effectiveNoteLabel": "Tárolt és effektív érték:",
-        "effectiveNote": "Ha a főkapcsoló OFF, a Core minden alárendelt feature kapcsoló effektív értékét OFF-ra kényszeríti akkor is, ha a tárolt értéke ON. Az app ténylegesen az effektív értéket kapja.",
+        "effectiveNote": "A Dates szekció elérhetősége a Konfigurációban szerkeszthető, nem ezen az oldalon. Egy alárendelt effektív érték akkor is lehet OFF, ha a tárolt értéke ON; az üzemeltetési tényt az effektív érték mutatja.",
         "timingNoteLabel": "Időzítés:",
         "timingNote": "Az időtartamok és megőrzési értékek általában egy aktivitás, elutasítás, ügy vagy törlési ütemezés létrehozásakor kerülnek a rekordba. Az alapérték módosítása nem írja át a meglévő határidőket külön migráció vagy művelet nélkül.",
         "sectionsLabel": "Runtime súgó fejezetei",
@@ -7271,7 +7316,7 @@
         "groups": {
           "rollout": {
             "title": "Feature bevezetési kapcsolók",
-            "copy": "Fail-closed vezérlők a teljes Dates termékhez és a külön kiadható képességeihez. Az OFF megőrzi az adatokat; nem töröl semmit."
+            "copy": "Egymástól független Dates képességvezérlők. A szekcióelérhetőségnek egyetlen helye van a Konfigurációban. Az OFF megőrzi az adatokat; nem töröl semmit."
           },
           "activityLifecycle": {
             "title": "Aktivitás-életciklus és korlátok",
@@ -7291,17 +7336,11 @@
           }
         },
         "settings": {
-          "dates_enabled": {
-            "title": "Dates főkapcsoló",
-            "purpose": "A teljes Dates termék legfelső szintű vészkapcsolója és minden alárendelt képesség szülőkapcsolója.",
-            "effect": "ON állapotban az alárendelt kapcsolók effektívvé válhatnak. OFF állapotban a létrehozás, live sharing, értékelés és digest effektív értéke OFF lesz, a Dates műveletek pedig fail-closed módon leállnak, miközben a meglévő adatok megmaradnak.",
-            "caution": "Az ON nem indít workert és nem kapcsolja be az alárendelt funkciókat. Az OFF vészleállításra használható, nem törlési vagy migrációs eszköz."
-          },
           "dates_creation_enabled": {
             "title": "Aktivitás létrehozása",
             "purpose": "Az új Dates aktivitások piszkozatát és publikálását, valamint a létrehozási képesség appban való megjelenítését vezérli.",
             "effect": "ON állapotban a jogosult felhasználók validáció, moderáció és rate limit mellett létrehozhatnak és publikálhatnak. OFF letiltja az új aktivitás folyamatát; a meglévő aktivitásadatok és engedélyezett kezelési műveletek megmaradnak.",
-            "caution": "A főkapcsolónak is ON állapotban kell lennie. Új kínálat leállításakor ezt kapcsold ki először, ha a meglévő aktivitásokat még működtetni szeretnéd."
+            "caution": "A Dates szekció elérhetősége a Konfigurációban kezelhető. Új kínálat leállításakor először ezt a képességet kapcsold ki, ha a meglévő aktivitásokat még működtetni szeretnéd."
           },
           "dates_live_sharing_enabled": {
             "title": "Host live helymegosztása",
@@ -7313,7 +7352,7 @@
             "title": "Aktivitás utáni értékelések",
             "purpose": "Az aktivitás befejezése utáni résztvevői értékelést, host check-int és a Dates értékelési felületek láthatóságát vezérli.",
             "effect": "ON engedi a jogosult résztvevők támogatott értékelési folyamatát. OFF fail-closed módon letiltja az értékelési műveleteket és eltávolítja a képességet az appból; a tárolt értékelések és moderációs előzmények nem törlődnek.",
-            "caution": "Az értékelés moderációja és a bizonyítékmegőrzés külön biztonsági terület. A főkapcsolónak is ON állapotban kell lennie."
+            "caution": "Az értékelés moderációja és a bizonyítékmegőrzés külön biztonsági terület. A Dates szekció elérhetősége a Konfigurációban kezelhető."
           },
           "dates_digest_enabled": {
             "title": "Közeli aktivitások digestje",

@@ -10,6 +10,7 @@ import { adminCall } from "@/lib/adminClient";
 import {
   configurationInputValue,
   createAdminIdempotencyKey,
+  datesRuntimeSettingVisible,
   hasDatesCapability,
   humanizeMachineKey,
   normalizeDatesPrincipal,
@@ -102,7 +103,9 @@ export default function DatesConfigurationPage() {
       setState("error");
       return;
     }
-    setSettings(configuration.settings as Setting[]);
+    setSettings((configuration.settings as Setting[]).filter(
+      (setting) => datesRuntimeSettingVisible(setting?.key),
+    ));
     setActivityTypes(configuration.activity_types as ActivityType[]);
     setReasons(reasonResponse.reasons as Reason[]);
     setLimitation(String(configuration.known_limitation || ""));

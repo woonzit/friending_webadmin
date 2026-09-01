@@ -1,0 +1,129 @@
+{
+    "schema_version": 1,
+    "contract_version": 1,
+    "source_commit": "d9a6c6bab4cd2814e41dd22a1eba24dc0586ae13",
+    "contract_manifest_sha256": "3396392034cf102d25d306951d68a769b079d7237a76337dfdaba5b2bb1a5fdd",
+    "fixture_set_sha256": "1c26425543a77b05933ec9f38c52ab89855f24d287554196c0f997d2b89e4882",
+    "provenance": {
+        "generator": "tests/section_availability_fixture_dump.php",
+        "generator_sha256": "539bbfc3998e1a5fce62eb93942671e6ba5d8934b999c7fdf842cdad6901b3a5",
+        "wire_adapters": {
+            "app_config": "Friending\\Core\\Response::wirePayload",
+            "webadmin": "Friending\\Support\\Webadmin::reply"
+        },
+        "source_paths": [
+            "config/auth_policy_vocabulary.json",
+            "src/Core/Response.php",
+            "src/Http/Controllers/AppController.php",
+            "src/Http/Controllers/WebadminController.php",
+            "src/Services/AuthPolicyAdminService.php",
+            "src/Support/AppSettings.php",
+            "src/Support/AuthMethodPolicy.php",
+            "src/Support/AuthPolicyVocabulary.php",
+            "src/Support/DatesFeatureFlags.php",
+            "src/Support/SectionAvailabilityPolicy.php",
+            "src/Support/Webadmin.php",
+            "tests/section_availability_fixture_dump.php"
+        ]
+    },
+    "fixtures": [
+        {
+            "file": "appconfig-compiled-defaults.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "nothing configured anywhere: Travel on, Dates off — today's behaviour",
+            "consumer": "ios",
+            "sha256": "4dea569753433a6f2b6eb07ab20cdb6274ca72675df73d9cd0e2f1f71b969624"
+        },
+        {
+            "file": "appconfig-dates-global-on.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "the existing global dates_enabled switch, with no override set",
+            "consumer": "ios",
+            "sha256": "12bc2e2dcfdd87a6161611dfe9dce74a2811bf7d96dc534241ed4acb6cea0380"
+        },
+        {
+            "file": "appconfig-malformed-settings.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "malformed default falls back to compiled; malformed override map is unset",
+            "consumer": "ios",
+            "sha256": "12bc2e2dcfdd87a6161611dfe9dce74a2811bf7d96dc534241ed4acb6cea0380"
+        },
+        {
+            "file": "appconfig-malformed-storefront.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "malformed storefront is published empty and uses the global defaults",
+            "consumer": "ios",
+            "sha256": "625f42619d1630b866af45b3f1ae52a2544ee09995823f646788e2a8affb47a1"
+        },
+        {
+            "file": "appconfig-no-storefront.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "no storefront supplied: the global defaults alone",
+            "consumer": "ios",
+            "sha256": "625f42619d1630b866af45b3f1ae52a2544ee09995823f646788e2a8affb47a1"
+        },
+        {
+            "file": "appconfig-override-dates-on-usa.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "a storefront override switches Dates ON where the global default is off",
+            "consumer": "ios",
+            "sha256": "3d41f7130d07a661ac304eda105e4e1849b8025d710731202efde4eef89414cb"
+        },
+        {
+            "file": "appconfig-override-travel-off-hun.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "a storefront override switches Travel OFF where the global default is on",
+            "consumer": "ios",
+            "sha256": "b82e714344bf9743390bd277e39589156a8046029dadda6366d15b9bb5d46369"
+        },
+        {
+            "file": "appconfig-storefront-without-override.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "a known storefront with no override of its own uses the global defaults",
+            "consumer": "ios",
+            "sha256": "e145148361da7eeceb062ffecae77d08dd1ee226c9ac4787abecb9a725e55394"
+        },
+        {
+            "file": "appconfig-unknown-alpha3.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "an unconfigured alpha-3 storefront uses the global defaults",
+            "consumer": "ios",
+            "sha256": "2d4f71ee88da57f27a6016269beec7438a7eb827de9e84076d8e05b97453c631"
+        },
+        {
+            "file": "refusal-overrides-storefront-unknown.json",
+            "route": "/v1/webadmin/set_settings",
+            "case": "an override storefront outside the generated vocabulary names its own field",
+            "consumer": "webadmin",
+            "sha256": "81ec8035f754e7d9aa79d81f7e629e520b5d7911188a427573adb0ead0c74c95"
+        },
+        {
+            "file": "refusal-overrides-value-loose.json",
+            "route": "/v1/webadmin/set_settings",
+            "case": "a console override value must be a real boolean, never \"true\"",
+            "consumer": "webadmin",
+            "sha256": "cb6801240dee1fba32196e6a4c961676ae4bf56fa1d18bc01a670983fdfc6e46"
+        },
+        {
+            "file": "refusal-section-enabled-loose.json",
+            "route": "/v1/webadmin/set_settings",
+            "case": "a console section default must be a real boolean, never 1",
+            "consumer": "webadmin",
+            "sha256": "572e00d8b27016de60623d96dc1f5e961076563bf5fcdc5dd46bd68a491a36b8"
+        },
+        {
+            "file": "webadmin-settings-clean.json",
+            "route": "/v1/webadmin/get_settings",
+            "case": "the console projection of a clean section configuration",
+            "consumer": "webadmin",
+            "sha256": "3375814bb6fdf8ea6ac3783552ee4ea4004868a44e4173e1b629e9e3e4a28fad"
+        },
+        {
+            "file": "webadmin-settings-stale.json",
+            "route": "/v1/webadmin/get_settings",
+            "case": "a shape-valid historical override storefront is flagged, not silently dropped",
+            "consumer": "webadmin",
+            "sha256": "8e3ae5c442038141e59e7dc7e66a2e347e1486fab7e76b5757df281ef3052c08"
+        }
+    ]
+}

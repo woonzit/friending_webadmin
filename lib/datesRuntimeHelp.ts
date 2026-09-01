@@ -2,7 +2,6 @@ export const DATES_RUNTIME_HELP_GROUPS = [
   {
     id: "rollout",
     settingKeys: [
-      "dates_enabled",
       "dates_creation_enabled",
       "dates_live_sharing_enabled",
       "dates_reviews_enabled",

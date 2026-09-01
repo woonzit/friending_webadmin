@@ -11,7 +11,7 @@ import {
   audienceVisibilityProxyCapabilityAuthorized,
 } from "@/lib/audienceVisibilityAdmin";
 import { normalizeAppearanceProxyBody } from "@/lib/appearanceRules";
-import { normalizeAuthPolicySettingsProxyBody } from "@/lib/authPolicyConfiguration";
+import { datesAvailabilityWriteIsRetired } from "@/lib/datesAdmin";
 import {
   featureSwitchesProxyCapabilityAuthorized,
   normalizeFeatureSwitchesProxyBody,
@@ -41,6 +41,7 @@ import {
 import { normalizeCannedTemplateProxyBody } from "@/lib/cannedTemplates";
 import { normalizeOutboundMessagingProxyBody } from "@/lib/outboundMessaging";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
+import { normalizeManagedSettingsProxyBody } from "@/lib/sectionAvailability";
 import { readAdminSession } from "@/lib/session";
 import {
   normalizeVerificationProxyBody,
@@ -175,6 +176,10 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
 
+  if (datesAvailabilityWriteIsRetired(action, body)) {
+    return bridgeError("invalid-input", 400);
+  }
+
   const normalizedPersonaBody = normalizePersonaProxyBody(action, body);
   if (normalizedPersonaBody === null) {
     return bridgeError("invalid-input", 400);
@@ -193,11 +198,11 @@ export async function POST(
   }
   if (normalizedOutboundBody !== undefined) body = normalizedOutboundBody;
 
-  const normalizedAuthPolicyBody = normalizeAuthPolicySettingsProxyBody(action, body);
-  if (normalizedAuthPolicyBody === null) {
+  const normalizedManagedSettingsBody = normalizeManagedSettingsProxyBody(action, body);
+  if (normalizedManagedSettingsBody === null) {
     return bridgeError("invalid-input", 400);
   }
-  if (normalizedAuthPolicyBody !== undefined) body = normalizedAuthPolicyBody;
+  if (normalizedManagedSettingsBody !== undefined) body = normalizedManagedSettingsBody;
 
   const normalizedForcedVerificationBody = normalizeForcedVerificationProxyBody(action, body);
   if (normalizedForcedVerificationBody === null) {

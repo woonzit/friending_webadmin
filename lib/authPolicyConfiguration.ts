@@ -963,7 +963,7 @@ export function authPolicySavePayload(value: AuthPolicyConfiguration): Record<st
   };
 }
 
-function authPolicySaveMaterial(value: unknown): Record<string, unknown> | null {
+export function authPolicySettingsMaterial(value: unknown): Record<string, unknown> | null {
   const settings = record(value);
   if (!settings) return null;
   const defaultMethods = methods(settings.auth_policy_default, true);
@@ -1019,47 +1019,18 @@ export function authPolicyDraftAfterConflict(
   conflict: AuthPolicyConflict,
 ): AuthPolicyConfiguration | null {
   if (authoritative.revision < conflict.currentRevision) return null;
+  return authPolicyDraftAtAuthority(draft, authoritative);
+}
+
+/** Preserve operator values while adopting the latest shared revision and vocabulary. */
+export function authPolicyDraftAtAuthority(
+  draft: AuthPolicyConfiguration,
+  authoritative: AuthPolicyConfiguration,
+): AuthPolicyConfiguration {
   return authPolicyDraftWithChanges(draft, {
     vocabulary: authoritative.vocabulary,
     revision: authoritative.revision,
     updatedAt: authoritative.updatedAt,
     updatedBy: authoritative.updatedBy,
   });
-}
-
-/**
- * Close the browser-owned authentication material again at the same-origin
- * boundary. Other managed runtime keys stay additive and remain Core-owned.
- */
-export function normalizeAuthPolicySettingsProxyBody(
-  action: string,
-  value: unknown,
-): Record<string, unknown> | null | undefined {
-  if (action !== "set_settings") return undefined;
-  // The same-origin command body is a closed browser/Core boundary, not a server response.
-  const rawBody = record(value);
-  const expectedRevisionProvided = rawBody !== null && Object.hasOwn(rawBody, "expected_revision");
-  const body = exactRecord(
-    value,
-    expectedRevisionProvided ? ["settings", "expected_revision"] : ["settings"],
-  );
-  const settings = record(body?.settings);
-  if (!body || !settings) return null;
-
-  if (Object.hasOwn(settings, "auth_policy_revision")) return null;
-  const presentKeys = AUTH_POLICY_EDITABLE_SETTING_KEYS.filter((key) => Object.hasOwn(settings, key));
-  if (presentKeys.length !== 0 && presentKeys.length !== AUTH_POLICY_EDITABLE_SETTING_KEYS.length) {
-    return null;
-  }
-  const authPolicy = presentKeys.length === 0 ? null : authPolicySaveMaterial(settings);
-  if (presentKeys.length > 0 && !authPolicy) return null;
-  const expectedRevision = expectedRevisionProvided ? revision(body.expected_revision) : null;
-  if (expectedRevisionProvided && (expectedRevision === null || !authPolicy)) return null;
-
-  const normalizedSettings = Object.assign(Object.create(null), settings, authPolicy ?? {});
-  return Object.assign(
-    Object.create(null),
-    { settings: normalizedSettings },
-    expectedRevisionProvided ? { expected_revision: expectedRevision } : {},
-  );
 }
