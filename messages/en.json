@@ -6477,6 +6477,7 @@
     "layoutGateActive": "{count, plural, one {Gated on # selected intent.} other {Gated on # selected intents.}}",
     "layoutGateUnavailable": "The Layer 2 intent catalog could not be loaded, so the gate cannot be edited right now.",
     "layoutGateStale": "Keys no longer in the live catalog (click to remove):",
+    "layoutGateUnverified": "Configured keys, shown as stored. The console cannot check them against the catalog, so it proposes no removals:",
     "layoutGateError": "The gate refers to an unknown or archived Layer 2 intent.",
     "layoutHideError": "This section cannot be hidden.",
     "layoutConflict": "The section layout changed in another session. Reload it before saving.",

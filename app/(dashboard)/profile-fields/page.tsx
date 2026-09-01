@@ -8,7 +8,7 @@ import PageHeader from "@/components/PageHeader";
 import ProfileIconUploadField from "@/components/ProfileIconUploadField";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
-import { layer2Catalog, type Layer2Intent } from "@/lib/layer2Intents";
+import { layer2Catalog, reviewGateKeys, type Layer2Intent } from "@/lib/layer2Intents";
 import { migrateLegacyAudience } from "@/lib/memberAudience";
 import {
   profileFieldCatalog,
@@ -309,6 +309,86 @@ function OptionDialog({
   );
 }
 
+/**
+ * The Layer 2 visibility gate on `lets_go_deeper`, extracted so that ONE place decides what the
+ * console may say about a catalogue it could not read.
+ *
+ * `layer2Items === null` means the `layer2_catalog` call failed or was refused; `[]` would mean it
+ * loaded and is empty. D-083 rules that the two must never be collapsed. `reviewGateKeys` is what
+ * enforces it: when the catalogue is unknown there is no `stale` list to render, so the removal
+ * control cannot be reached, and the configured keys are shown as stored instead of being reported
+ * as findings. The picker below has always distinguished the two states correctly; this block did
+ * not, and that difference was the whole defect.
+ */
+function ProfileSectionLayer2Gate({
+  keys,
+  layer2Items,
+  busy,
+  onChange,
+}: {
+  keys: string[];
+  layer2Items: Layer2Intent[] | null;
+  busy: boolean;
+  onChange: (keys: string[]) => void;
+}) {
+  const t = useTranslations("profileFields");
+  const locale = useLocale();
+  const review = reviewGateKeys(keys, layer2Items);
+  return (
+    <div className="profile-layout-gate">
+      <strong>{t("layoutGateTitle")}</strong>
+      <p>{t("layoutGateCopy")}</p>
+      {layer2Items ? (
+        <div className="user-attribute-options">
+          {layer2Items.filter((item) => !item.archived).map((item) => {
+            const checked = keys.includes(item.id);
+            return (
+              <label className={checked ? "is-selected" : ""} key={item.id}>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={busy}
+                  onChange={(event) => onChange(event.target.checked
+                    ? [...keys, item.id]
+                    : keys.filter((key) => key !== item.id))}
+                />
+                <span>{localeText(item.labels, locale)} <code>{item.id}</code></span>
+              </label>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="page-subtitle">{t("layoutGateUnavailable")}</p>
+      )}
+      {review.known && review.stale.length > 0 ? (
+        <p className="page-subtitle">
+          {t("layoutGateStale")}{" "}
+          {review.stale.map((key) => (
+            <button
+              key={key}
+              type="button"
+              className="text-button"
+              disabled={busy}
+              onClick={() => onChange(keys.filter((existing) => existing !== key))}
+            >
+              <code>{key}</code> ✕
+            </button>
+          ))}
+        </p>
+      ) : null}
+      {!review.known && keys.length > 0 ? (
+        <p className="page-subtitle">
+          {t("layoutGateUnverified")}{" "}
+          {keys.map((key) => <code key={key}>{key}</code>)}
+        </p>
+      ) : null}
+      <small className="user-attribute-limit">
+        {keys.length === 0 ? t("layoutGateEmpty") : t("layoutGateActive", { count: keys.length })}
+      </small>
+    </div>
+  );
+}
+
 function ProfileSectionLayoutEditor({
   layout,
   catalog,
@@ -415,62 +495,12 @@ function ProfileSectionLayoutEditor({
               </label>
             </div>
             {section.key === "lets_go_deeper" ? (
-              <div className="profile-layout-gate">
-                <strong>{t("layoutGateTitle")}</strong>
-                <p>{t("layoutGateCopy")}</p>
-                {layer2Items ? (
-                  <div className="user-attribute-options">
-                    {layer2Items.filter((item) => !item.archived).map((item) => {
-                      const keys = section.gate?.layer2_keys ?? [];
-                      const checked = keys.includes(item.id);
-                      return (
-                        <label className={checked ? "is-selected" : ""} key={item.id}>
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            disabled={busy}
-                            onChange={(event) => updateSection(sectionIndex, {
-                              gate: {
-                                layer2_keys: event.target.checked
-                                  ? [...keys, item.id]
-                                  : keys.filter((key) => key !== item.id),
-                              },
-                            })}
-                          />
-                          <span>{localeText(item.labels, locale)} <code>{item.id}</code></span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="page-subtitle">{t("layoutGateUnavailable")}</p>
-                )}
-                {(section.gate?.layer2_keys ?? []).some((key) => !(layer2Items ?? []).some((item) => item.id === key && !item.archived)) ? (
-                  <p className="page-subtitle">
-                    {t("layoutGateStale")}{" "}
-                    {(section.gate?.layer2_keys ?? [])
-                      .filter((key) => !(layer2Items ?? []).some((item) => item.id === key && !item.archived))
-                      .map((key) => (
-                        <button
-                          key={key}
-                          type="button"
-                          className="text-button"
-                          disabled={busy}
-                          onClick={() => updateSection(sectionIndex, {
-                            gate: { layer2_keys: (section.gate?.layer2_keys ?? []).filter((existing) => existing !== key) },
-                          })}
-                        >
-                          <code>{key}</code> ✕
-                        </button>
-                      ))}
-                  </p>
-                ) : null}
-                <small className="user-attribute-limit">
-                  {(section.gate?.layer2_keys ?? []).length === 0
-                    ? t("layoutGateEmpty")
-                    : t("layoutGateActive", { count: (section.gate?.layer2_keys ?? []).length })}
-                </small>
-              </div>
+              <ProfileSectionLayer2Gate
+                keys={section.gate?.layer2_keys ?? []}
+                layer2Items={layer2Items}
+                busy={busy}
+                onChange={(layer2_keys) => updateSection(sectionIndex, { gate: { layer2_keys } })}
+              />
             ) : null}
             <ol className="profile-layout-items">
               {section.items.map((item, itemIndex) => {

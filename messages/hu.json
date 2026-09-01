@@ -6477,6 +6477,7 @@
     "layoutGateActive": "{count, plural, one {# kiválasztott szándékhoz kötve.} other {# kiválasztott szándékhoz kötve.}}",
     "layoutGateUnavailable": "A Layer 2 szándékkatalógus nem tölthető be, ezért a kapu most nem szerkeszthető.",
     "layoutGateStale": "Az élő katalógusban már nem szereplő kulcsok (kattintással eltávolítható):",
+    "layoutGateUnverified": "A beállított kulcsok, ahogy tárolva vannak. A konzol nem tudja összevetni őket a katalógussal, ezért nem javasol eltávolítást:",
     "layoutGateError": "A kapu ismeretlen vagy archivált Layer 2 szándékra hivatkozik.",
     "layoutHideError": "Ez a szekció nem rejthető el.",
     "layoutConflict": "Az elrendezést egy másik munkamenetben módosították. Mentés előtt töltsd újra.",
