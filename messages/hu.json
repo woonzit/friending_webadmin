@@ -287,11 +287,11 @@
           },
           "adminGrantedVerification": {
             "title": "Admin által megadott ellenőrzési jogosultság",
-            "purpose": "Ez a külön panel a megőrzött, bizonyíték nélküli adminpecsétet, annak biztonságos indoktanúját, a tag jelenleg engedélyezett megadási módszereit és a végső tényleges ellenőrzést mutatja hamis szolgáltatói eredmény megjelenítése nélkül.",
+            "purpose": "Ez a panel a megőrzött, bizonyíték nélküli admin grantet, annak biztonságos indoktanúját, a jelenleg kiszolgálható grantmódszereket és a végső tényleges hitelesítést mutatja provideres bizonyíték megjelenítése nélkül.",
             "actions": {
-              "1": "Ellenőrizd a UID-t, a pontos revíziót, az aktuálisan engedélyezett módszereket és azt, hogy nyer-e már más valódi vagy importált jogosultság.",
-              "2": "Csak aktuálisan engedélyezett módszert válassz, adj meg korlátozott belső indokot, majd a megadás előtt erősítsd meg kifejezetten.",
-              "3": "Szükség esetén vond vissza az aktív adminjogosultságot akkor is, ha a módszerét később letiltották, majd ellenőrizd a visszakapott hiteles állapotot."
+              "1": "Ellenőrizd a UID-t, a pontos revíziót, a kiszolgálható módszereket és azt, hogy létezik-e már valódi vagy importált teljesítés.",
+              "2": "Válassz kiszolgálható módszert, adj meg korlátozott belső indokot, majd a grant előtt erősítsd meg kifejezetten.",
+              "3": "Szükség esetén akkor is vond vissza az aktív admin grantet, ha a módszere később elérhetetlenné válik, majd ellenőrizd a visszakapott hiteles állapotot."
             },
             "guidance": "A szolgáltatói bizonyíték nélküli megadás auditált jogosultság, nem Persona-, videósszelfi- vagy kézi ellenőrzési bizonyíték. Bizonytalan válasz után soha ne hozz létre második kérésazonosítót; pontosan a mentett parancsot próbáld újra."
           },
@@ -738,7 +738,7 @@
         "sections": {
           "overview": {
             "title": "Ellenőrzési szabályzatmunkaterület",
-            "purpose": "A hat lap a teljes, korlátozott ellenőrzési vezérlősíkot csak akkor mutatja, ha a Core aktuális műveletkivetítése felsorolja a konzolt ehhez az operátorhoz.",
+            "purpose": "Az elérhető lapok csak akkor mutatják a korlátozott ellenőrzési vezérlősík egyes felületeit, ha a Core aktuális műveletkivetítése engedi azokat ennek az operátornak.",
             "actions": {
               "1": "Élő művelet előkészítése előtt olvasd el az aktiválási védelmet és az importállapot számlálóit.",
               "2": "A mindenhol Nincs induló szabályzatot tekintsd inertnek; nem Nincs követelmény aktiválása külön, áttekintett kiadási művelet."
@@ -746,19 +746,19 @@
             "guidance": "A látható vezérlő nem ad jogosultságot. A Core minden kérésnél újraellenőrzi az aktuális képességet, a hibás válasz pedig soha nem válik üres vagy szerkeszthető állapottá."
           },
           "methodsAndLevels": {
-            "title": "Módszerek és szintek",
-            "purpose": "Az ellenőrzött videó Alapszintű, az ellenőrzött Persona Erős szintet ad; a tényleges szint a származtatott, érvényes importált és aktív megadott hatóság maximuma.",
+            "title": "Kötelező módszer és teljesítés",
+            "purpose": "Minden storefront pontosan egy kötelező módszert vagy a nincs értéket old fel. Persona, videó, importált hitelesítés vagy aktív admin grant szintnyelv nélkül teljesítheti.",
             "actions": {
-              "1": "Ellenőrizd, hogy egy módszernél nincs szintnyelv, és a csak videós Erős követelmény Alapszintűre szorul.",
-              "2": "Ellenőrizd, hogy mindkét módszer kikapcsolása minden tényleges követelményt Nincs értékre szorít, és nem ad külső pecsétet."
+              "1": "Az élő globális/storefront kötelező módszert a helyalapú funkciókövetelményektől külön vizsgáld.",
+              "2": "Ellenőrizd, hogy a már teljesített, importált és admin granttel rendelkező tagok kötelezőmódszer-váltáskor is teljesített állapotúak maradnak."
             },
-            "guidance": "Egy módszer kikapcsolása az új indítást tiltja, de nem ír át megszerzett módszereredményt, importot vagy csapatjogosultságot. A függő állapot soha nem ad szintet."
+            "guidance": "Az elérhetőség az új indításokat és a közzétételt vezérli; megszerzett bizonyítékot, érvényes importot vagy aktív grantet soha nem ír át. A függő állapot soha nem számít teljesítésnek."
           },
           "scopePrecedence": {
             "title": "Területi elsőbbség",
-            "purpose": "A Core a tag aktuális, szerver által írt városát, majd aktuális országát, regisztrációs vagy IP-országát, végül a globális szintet oldja fel; minden felülírásmező külön örököl.",
+            "purpose": "A Core a város→ország→globális sorrendet csak a funkciókövetelményekhez oldja fel. A kötelező módszer külön, storefront-felülírás→globális sorrendben oldódik fel.",
             "actions": {
-              "1": "Vizsgáld meg a tényleges módszerek és minden funkciókövetelmény melletti pontos forrásterületet.",
+              "1": "Vizsgáld meg minden funkciókövetelmény pontos forrásterületét, a kötelező módszer mellett pedig a külön storefrontforrást.",
               "2": "A Szimulátorral ellenőrizd a város→ország→globális fallbacket koordináta, IP vagy tagazonosság megadása nélkül."
             },
             "guidance": "A helyterület termékes személyre szabás, nem személyazonosság-, lakóhely-, csalás- vagy biztonsági bizonyíték. A Webadmin soha nem vezeti le böngésző-koordinátából."
@@ -778,7 +778,7 @@
             "purpose": "A mátrix mind a tíz rögzített funkciókulcsot pontosan egyszer tartalmazza, és minden mező pontos öröklési forrásából mutatja az élő, korlátozott szintet.",
             "actions": {
               "1": "Teljes draftcella módosítása előtt olvasd el a lokalizált funkciónevet és a gépi kulcsot.",
-              "2": "Ellenőrizd a beállított és tényleges szintet, különösen a csak videós Erős→Alapszintű és a mindkettő kikapcsolva→Nincs korlátozást."
+              "2": "Ellenőrizd a beállított és tényleges követelményt, valamint öröklési forrását; módszeralapú szintkorlátozás már nincs."
             },
             "guidance": "Az ismeretlen, ismétlődő vagy hiányzó kulcs szerződéseltérés, nem opcionális sor. A draft szerkesztése nem engedélyez funkciót, amíg a védett élő közzététel nem sikerül."
           },
@@ -804,29 +804,29 @@
             "title": "Szabályzat biztonságos tesztelése",
             "purpose": "Szintetikus terület-, módszer-, forrás- és jelvényláthatósági bemenetek futtatják a Core tiszta kiértékelőjét, és mind a tíz funkció döntését visszaadják tag érintése nélkül.",
             "actions": {
-              "1": "Kiadás előtt próbáld ki a nem egyező, örökölt, függő, elutasított, importált, megadott és mindkettő-kikapcsolt kombinációkat.",
+              "1": "Kiadás előtt próbáld ki a nem egyező, örökölt, függő, elutasított, importált, megadott és skaláris Persona/videó/nincs kombinációkat.",
               "2": "A teljes Core által adott szintet, determinisztikus forrást, korlátozást, copy-kulcsot és modált hasonlítsd össze; részleges sorból ne következtess hozzáférésre."
             },
             "guidance": "A szimulátor sikere magyarázó kimenet, nem jogosultsági token. Nem fogad UID-t, bizonyítékot, providerpayloadot vagy szabadszöveges helyhatóságot."
           },
           "teamGrant": {
-            "title": "Csapatszintű ellenőrzési jogosultság",
-            "purpose": "A tagrészlet panel csak felfelé ható Alapszintű vagy Erős jogosultságot tekint meg; a tényleges hatóság max(származtatott, érvényes importált, aktív megadott) egy Core-időpontban.",
+            "title": "Admin hitelesítési grant",
+            "purpose": "A kiszolgálható módszerhez adott grant auditált jogosultság, amely Persona-, videó- vagy importált bizonyíték állítása nélkül teljesíti a kötelező hitelesítést.",
             "actions": {
-              "1": "Hasonlítsd össze a származtatott, importált és aktuális megadott hatóságot, válassz opcionális jövőbeli lejáratot, majd az aktuális revízión készíts előnézetet.",
-              "2": "Erős szintnél mentés előtt fogadd el a friss figyelmeztetést; eltávolítás csak a megőrzött pozitív jogosultságot járatja le."
+              "1": "Hasonlítsd össze a valódi és importált teljesítést, válassz kiszolgálható grantmódszert, add meg a privát indokot, és erősítsd meg a megfigyelt revízión.",
+              "2": "Szükség esetén csak a megőrzött admin grantet vond vissza; a valódi, importált és grandfathered teljesítés érintetlen marad."
             },
-            "guidance": "A lejárat szigorúan a Core rögzített idején értendő. Az eltávolítás nem negatív visszavonás, és nem csökkentheti a valódi videó-, Persona- vagy érvényes importált hatóságot."
+            "guidance": "A grant audit céljából módszerrel címkézett, de feltétel nélkül teljesíti a Várótermet. Bizonytalan módosításnál a pontosan megtartott kérésazonosítót kell újrahasználni."
           },
           "forcedWaitingRoom": {
             "title": "Kötelező hitelesítés és Váróterem",
-            "purpose": "A Persona vagy szelfivideós hitelesítést globálisan vagy App Store storefrontonként kötelezővé teszi; a zárolt tagok a Várótermet látják, amíg egy kötelező módszert nem teljesítenek. A Váróterem szövege és opcionális súgó URL-je is itt szerkeszthető.",
+            "purpose": "A Területek lap egyetlen globális/storefront módszerszabályzatot és annak kétnyelvű Váróterem-szövegét kezeli. Soronként pontosan egy módszer vagy a nincs érték lehet élő.",
             "actions": {
-              "1": "Először a globális alapértelmezést állítsd be, és csak ott adj hozzá storefront-felülírást, ahol a szabály eltér; a felülírás a teljes módszerkészletet lecseréli, így két kikapcsolt kapcsoló azt jelenti, hogy ott nem kötelező.",
-              "2": "Szerkeszd a Váróterem szövegét mindkét nyelven, ellenőrizd a világos és sötét telefonos előnézetet a storefronthoz, futtasd a hatás-előnézetet, és a megjelenített revíziónál ments.",
-              "3": "Adj meg nyelvenként súgó URL-t, ha a tagoknak legyen hol tovább olvasniuk: legfeljebb 2048 bájtos, hitelesítő adat nélküli https cím lehet. A kerek „?” gomb csak ott jelenik meg a Váróteremben, ahol tényleges URL van; az üresen hagyott storefront-felülírás a globális URL-t örökli, az üres globális URL pedig azt jelenti, hogy nincs gomb."
+              "1": "Először a globális sort állítsd be, majd csak katalógusból választott storefront-felülírásokat adj hozzá; minden sor együtt kezeli a módszerét és öröklődő szövegét.",
+              "2": "Mentsd a draftot a megfigyelt revízión, tekintsd át a darabszámokat a Közzététel mellett, majd csak a pontos fingerprintelt előnézetet tedd közzé.",
+              "3": "Tartsd teljesen mindkét nyelvet, ellenőrizd a világos/sötét előnézetet, és csak akkor használj hitelesítő adat nélküli HTTPS súgó URL-t, ha a tagoknak további információ kell."
             },
-            "guidance": "A kiindulási állapot semmit sem tesz kötelezővé. A Core a szerveren értékeli a kaput a tag utoljára látott storefrontja alapján; a hibás tárolt dokumentum biztonságosan hibázik (semmi sem kötelező), miközben ez a fül jelzi. A súgó URL csak megjelenítés: az alkalmazáson belüli böngészőben nyílik meg a Váróterem fölött, és sosem engedi át a tagot a kapun. A kényszerítést csak azután kapcsold be, hogy a Váróteremmel készült iOS build már elérhető az App Store-ban: a kapu minden app-verzióra érvényes, és a régebbi app úgy kapja meg az elutasítást, hogy nincs mit megjelenítenie hozzá."
+            "guidance": "A módszer közzététele független a funkciókövetelmények kliensvédelmétől. A nem elérhető módszer látható marad, de nem tehető közzé; a már teljesített, importált és admin-granttel rendelkező tagok módszerváltás után is teljesített állapotúak maradnak."
           },
           "conflictsAndRetry": {
             "title": "Ütközések és bizonytalan mentések",
@@ -2715,7 +2715,7 @@
     "photoModeration": "Képmoderáció",
     "reportedContent": "Jelentett tartalom",
     "textModeration": "Profilszöveg-moderáció",
-    "profileVerification": "Profilhitelesítés",
+    "profileVerification": "Videó-hitelesítési sor",
     "verificationSettings": "Ellenőrzési beállítások",
     "persona": "Persona műveletek",
     "profileLocation": "Profilhelyzet",
@@ -3689,52 +3689,18 @@
       "requirements": "Funkciókövetelmények",
       "messages": "Gate-üzenetek",
       "badges": "Jelvények",
-      "simulator": "Szimulátor",
-      "forced": "Kötelező hitelesítés és Váróterem"
+      "simulator": "Szimulátor"
     },
     "forced": {
-      "readOnly": "Csak olvasható: az adminisztrátori szereped megtekintheti a kötelező hitelesítést, de nem módosíthatja.",
-      "loadError": "A kötelező hitelesítés dokumentumát nem sikerült betölteni a Core-ból.",
-      "unavailableTitle": "A tárolt dokumentum nem elérhető",
-      "unavailableCopy": "A Core szerint a tárolt kötelező-hitelesítési dokumentum hibás (verification-forced-unavailable). Amíg hibás, a tagok számára semmi sem kötelező, és a konzol nem tudja szerkeszteni, amíg a Core meg nem javítja a beállítást. Szólj egy adminisztrátornak.",
       "retry": "Újra",
       "reload": "Újratöltés a Core-ból",
-      "revision": "{revision}. revízió",
-      "unsaved": "Nem mentett módosítások",
-      "rulesTitle": "Kötelező módszerek storefrontonként",
-      "rulesCopy": "A kötelező módszer az adott App Store storefront minden tagját a Váróterembe helyezi, amíg az egyik kötelező módszert nem teljesíti. A globális alapértelmezés a felülírás nélküli storefrontokra és az ismeretlen storefrontú tagokra vonatkozik.",
-      "columns": {
-        "region": "Storefront",
-        "persona": "Persona igazolvány-ellenőrzés",
-        "video": "Szelfivideó",
-        "summary": "Érvényes szabály",
-        "actions": "Műveletek"
-      },
-      "methods": {
-        "persona": "Persona igazolvány-ellenőrzés",
-        "video": "Szelfivideó"
-      },
       "globalRow": "Globális alapértelmezés",
       "globalRowHint": "Minden felülírás nélküli storefront és az ismeretlen storefrontok",
       "selectStorefront": "Válassz storefrontot…",
       "addOverride": "Storefront-felülírás hozzáadása",
       "removeOverride": "Eltávolítás",
-      "overrideHint": "A felülírás a storefront teljes módszerkészletét lecseréli. Mindkét kapcsoló kikapcsolva azt jelenti: „ott nem kötelező”, akkor is, ha a globális alapértelmezés kötelezővé tesz egy módszert.",
-      "summary": {
-        "none": "Nem kötelező",
-        "persona": "Persona igazolvány-ellenőrzés kötelező",
-        "video": "Szelfivideó kötelező",
-        "any": "Bármelyik módszer elég"
-      },
-      "copyTitle": "Váróterem szövegei",
       "copyCopy": "Cím (≤ 60), alcím (≤ 90) és leírás (≤ 400) angolul és magyarul, valamint egy opcionális súgó URL (csak https, legfeljebb 2048 bájt) a kerek „?” gomb mögé. A globális szöveg kötelező; a storefront-felülírás csak az eltérő mezőket állítja be, a többit örökli.",
-      "defaultsTitle": "Globális szöveg",
       "resetCompiled": "Visszaállítás a beépített alapértelmezésre",
-      "overridesTitle": "Storefront szövegfelülírások",
-      "overridesCopy": "Az üres mezők az azonos nyelvű globális szöveget és súgó URL-t öröklik.",
-      "addCopyOverride": "Szövegfelülírás hozzáadása",
-      "removeCopyOverride": "Felülírás eltávolítása",
-      "noCopyOverrides": "Nincs storefront-szövegfelülírás.",
       "copy": {
         "fields": {
           "title": "Cím",
@@ -3754,10 +3720,7 @@
         "helpUrlHint": "A súgó URL a Váróterem jobb felső sarkában lévő kerek „?” gombról nyílik meg az alkalmazáson belüli böngészőben. https://-sel kell kezdődnie, legfeljebb 2048 bájt lehet, és nem tartalmazhat hitelesítő adatokat; üresen hagyva a gomb nem jelenik meg."
       },
       "previewTitle": "Telefonos előnézet",
-      "previewCopy": "Amit a kiválasztott storefront tagja látna világos és sötét megjelenéssel, a fenti piszkozattal.",
       "preview": {
-        "storefront": "Storefront",
-        "global": "Globális alapértelmezés (nincs felülírás, vagy ismeretlen storefront)",
         "globalShort": "Globális",
         "locale": "Nyelv",
         "light": "Világos megjelenés",
@@ -3775,29 +3738,6 @@
         "nonInteractive": "A WR-01 tervezői keret statikus előnézete; a gombfeliratok és állapotszövegek az alkalmazásban élnek, itt nem szerkeszthetők.",
         "compiledCopy": "Beépített szöveg jelenik meg itt: {fields}. A vázlat értéke ott érvénytelen, mentéskor elutasításra kerülne; az előnézet csak azt a szöveget cseréli, a kötelező módszereket soha."
       },
-      "impactTitle": "Hatás-előnézet",
-      "impactCopy": "A Core az utoljára látott storefront szerint megszámolja, hány tagot zárna a Váróterembe a piszkozat, és hányan teljesítenek már egy kötelező módszert. Csak darabszámok, sosem személyek.",
-      "runImpact": "Hatás-előnézet futtatása",
-      "working": "Folyamatban…",
-      "impactReady": "A hatás-előnézet elkészült az aktuális piszkozathoz.",
-      "impactFailed": "A Core nem tudta kiszámolni a hatás-előnézetet ({code}).",
-      "impactStale": "A piszkozat megváltozott az előnézet óta; mentés előtt futtasd újra.",
-      "impactEmpty": "Futtasd az előnézetet, hogy lásd, hány tagot érintene a piszkozat.",
-      "impactColumns": {
-        "storefront": "Storefront",
-        "seen": "Látott tagok",
-        "gated": "Váróterembe kerülne",
-        "satisfied": "Már teljesíti"
-      },
-      "impactUnknown": "Ismeretlen storefront",
-      "impactComputedAt": "Kiszámítva: {time}",
-      "save": "Kötelező hitelesítés mentése",
-      "saving": "Mentés…",
-      "saved": "Mentve {revision}. revízióként.",
-      "conflict": "Egy másik adminisztrátor előbb mentett (verification-forced-conflict). A piszkozatodat eldobtuk, és a szerver aktuális példánya látszik.",
-      "invalid": "A Core elutasította a dokumentumot ({code}). Semmi sem mentődött; javítsd az értékeket, és próbáld újra.",
-      "refused": "A Core elutasította a kérést ({code}). Semmi sem mentődött.",
-      "uncertain": "A Core válasza bizonytalan volt ({code}), ezért a konzol újrapróbálkozás helyett újratöltötte a hiteles dokumentumot. Ha a „Nem mentett módosítások” jelzés eltűnt, az írás megtörtént; különben vesd össze a piszkozatodat, és ments újra.",
       "validation": {
         "storefront": "Minden felülíráshoz a katalógusból választott storefront kell.",
         "duplicateStorefront": "Két felülírás ugyanazt a storefrontot nevezi meg.",
@@ -4120,7 +4060,6 @@
       "activationBlocked": "A Nem nulla követelmény közzététele blokkolt.",
       "activationReasons": {
         "global_policy_invalid": "a globális szabályzat hibás",
-        "method_unavailable": "egy engedélyezett módszer nem érhető el",
         "persona_force_receipt_unready": "a Persona kényszerített útja még nem nyugtabiztos",
         "supported_client_unready": "egy támogatott kliens még nem áll készen"
       },
@@ -4135,12 +4074,6 @@
       "unknownError": "ismeretlen vagy hibás válasz",
       "invalidDraft": "A piszkozat nem felel meg a pontos Verification v1 szerződésnek.",
       "scope": "Szabályzati terület",
-      "enabledMethods": "Engedélyezett módszerek",
-      "methodChoices": {
-        "none": "Nincs módszer",
-        "both": "Videós szelfi és Persona"
-      },
-      "methodAvailable": "elérhető új szabályzatindításhoz",
       "methodReasons": {
         "deployment_unlock_disabled": "a telepítési feloldás ki van kapcsolva",
         "service_config_disabled": "a szolgáltatás beállítása ki van kapcsolva",
@@ -4252,7 +4185,75 @@
         "actionLabel": "Újrapróbálom",
         "cancelLabel": "Most nem"
       }
-    }
+    },
+    "methodPolicy": {
+      "title": "Kötelező hitelesítés és Váróterem",
+      "copy": "Válassz egy kötelező módszert vagy a nincs értéket globálisan és App Store storefrontonként. Csak a közzétett revízió hat a tagokra.",
+      "readOnly": "Csak olvasható: a jelenlegi Core-képességed megtekintést enged, draft- vagy közzétételi műveletet nem.",
+      "loadError": "Az egységes hitelesítésimódszer-szabályzat nem tölthető be biztonságosan.",
+      "unavailableTitle": "A tárolt módszerszabályzat nem érhető el",
+      "unavailableCopy": "A Core hibás tárolt módszerszabályzatot jelzett. A felület nem feltételezett szerkeszthető vagy üres állapotot.",
+      "draftRevision": "Draftrevízió: {revision}",
+      "unsaved": "Nem mentett módszer- vagy Váróterem-szövegmódosítások",
+      "tableTitle": "Kötelező módszer storefrontonként",
+      "tableCopy": "A globális sor az ismeretlen és felülírás nélküli storefrontokra vonatkozik. Minden felülírás lecseréli a globális módszert, és mezőnként felülírhatja a Váróterem szövegét.",
+      "columns": {
+        "storefront": "Storefront",
+        "method": "Kötelező módszer",
+        "copy": "Váróterem szövege",
+        "actions": "Műveletek"
+      },
+      "methods": {
+        "none": "Nincs",
+        "persona": "Persona igazolvány-ellenőrzés",
+        "video": "Szelfivideó"
+      },
+      "methodAvailable": "Közzétehető",
+      "methodUnavailable": "Nem tehető közzé: {reason}",
+      "showCopy": "Váróterem-szöveg szerkesztése",
+      "hideCopy": "Szövegszerkesztő bezárása",
+      "copyInherits": "Az üres felülírásmezők az azonos nyelvű globális értéket öröklik.",
+      "saveDraft": "Draft mentése",
+      "savingDraft": "Draft mentése…",
+      "draftSaved": "A draft {revision}. revízióként mentve. A tagokat közzétételig nem érinti.",
+      "publishTitle": "Áttekintés és közzététel",
+      "publishCopy": "Tekintsd át a mentett draft összesített hatását, majd tedd közzé pontosan azt a revíziót.",
+      "previewImpact": "Hatás előnézete",
+      "impactReady": "A hatáselőnézet a(z) {revision}. revízióhoz kötődik.",
+      "impactStale": "A draft vagy a hiteles revízió megváltozott. Készíts új hatáselőnézetet.",
+      "impactFailed": "A Core nem tudta kiszámolni a módszerszabályzat hatását ({code}).",
+      "impactEmpty": "Mentsd a draftot, majd közzététel előtt tekintsd át a tagokra gyakorolt hatását.",
+      "impactColumns": {
+        "storefront": "Storefront",
+        "liveMethod": "Élő módszer",
+        "draftMethod": "Draftmódszer",
+        "seen": "Látott tagok",
+        "currentlyGated": "Jelenleg Váróteremben",
+        "wouldBeGated": "Váróterembe kerülne",
+        "satisfied": "Már teljesítette",
+        "newlyGated": "Újonnan Váróterembe kerül",
+        "newlyReleased": "Újonnan feloldódik"
+      },
+      "unknownStorefront": "Ismeretlen storefront",
+      "computedAt": "Kiszámítva: {time}",
+      "publishReason": "Privát közzétételi indok",
+      "publishReasonPlaceholder": "Miért váljon ez a pontos módszerszabályzat élővé?",
+      "confirmation": "A pontos előnézet közzétételéhez írd be: {phrase}.",
+      "publish": "Áttekintett draft közzététele",
+      "publishing": "Közzététel…",
+      "published": "A(z) {revision}. revízió élő.",
+      "replayed": "A Core visszajátszotta a befejezett közzétételi receiptet; nem jött létre második módosítás.",
+      "publishBlocked": "A közzététel blokkolt: {code}. A draft mentve marad.",
+      "conflict": "Egy másik adminisztrátor módosította a szabályzatot. A hiteles revízió látszik; új parancs előtt tekintsd át.",
+      "invalid": "A Core elutasította a módszerszabályzat dokumentumát ({code}). Semmi sem vált élővé.",
+      "refused": "A Core elutasította a kérést ({code}). Nem feltételeztünk sikert.",
+      "pendingMutation": "Egy pontos módszerszabályzat-parancs biztonságos újrapróbálásra megmaradt.",
+      "retryExact": "Pontos parancs újrapróbálása",
+      "uncertain": "Az eredmény bizonytalan. Őrizd meg, és csak a pontosan megtartott parancsot próbáld újra.",
+      "persistenceUnavailable": "A biztonságos session receipt-tároló nem érhető el; a módszerszabályzat-módosítások zároltak.",
+      "persistenceCleanupFailed": "A Core konvergált, de a megtartott parancs nem törölhető; a vezérlők zároltak maradnak."
+    },
+    "requirementsInactive": "A funkciókövetelmények inaktívak, amíg a kliensaktiválási védelem nem áll készen."
   },
   "cannedTemplates": {
     "eyebrow": "Kommunikációs könyvtár",
@@ -5294,8 +5295,8 @@
       "title": "Admin által megadott ellenőrzés",
       "copy": "Bizonyíték nélküli videósszelfi- vagy Persona-jogosultság megadása és visszavonása a valódi szolgáltatói és importált ellenőrzéstől függetlenül.",
       "evaluatedAt": "Hiteles kiértékelési idő",
-      "enabledMethods": "Új jogosultsághoz engedélyezett módszerek",
-      "noEnabledMethods": "A tag élő szabályzati területén nincs engedélyezett módszer",
+      "enabledMethods": "Új granthez elérhető módszerek",
+      "noEnabledMethods": "Jelenleg egyik hitelesítési módszer sem szolgálható ki új granthez",
       "grantRevision": "Adminjogosultság revíziója",
       "effectiveLevel": "Tényleges ellenőrzés",
       "externalSeal": "Tagoknak látható ellenőrzési pecsét",
@@ -5312,8 +5313,8 @@
         "granted": "Admin által megadott jogosultság"
       },
       "methods": {
-        "video": "Hamis videósszelfi-ellenőrzés",
-        "persona": "Hamis Persona-ellenőrzés"
+        "video": "Videó-hitelesítési grant",
+        "persona": "Persona-hitelesítési grant"
       },
       "statuses": {
         "active": "Aktív",
@@ -5335,11 +5336,11 @@
       },
       "editor": {
         "title": "Bizonyíték nélküli adminjogosultság",
-        "copy": "A megadás a tag aktuális élő szabályzatában engedélyezett módszert követi. A visszavonás csak az aktív adminjogosultságot távolítja el; a valódi vagy importált ellenőrzés érvényben maradhat.",
+        "copy": "A grant bármely, a deployment által kiszolgálható módszert használhat, és provideres bizonyíték állítása nélkül teljesíti a tag kötelező módszerét. A visszavonás csak az aktív admin grantet távolítja el.",
         "readOnly": "A Core pontos képességblokkja engedi ennek a vetületnek az olvasását, módosítását azonban nem.",
         "method": "Megadás módszere",
-        "methodHint": "Új adminjogosultságot csak a tag aktuális területén beállított módszer kaphat.",
-        "noMethod": "Új jogosultság addig nem adható, amíg a tag élő területén nincs beállított ellenőrzési módszer.",
+        "methodHint": "Válassz bármely módszert, amelyet a Core jelenleg kiszolgálhatónak jelez új granthez.",
+        "noMethod": "Új grant addig nem adható, amíg a Core nem jelez kiszolgálható hitelesítési módszert.",
         "reason": "Belső műveleti indok",
         "reasonPrivate": "A szöveget csak a tartós parancs és a Core jogosultsága őrzi; ez a vetület csak a hosszát és a hashét adja vissza",
         "confirm": "Ellenőriztem a UID-t, a módszert és az indokot, és értem, hogy ez szolgáltatói bizonyíték nélküli ellenőrzési jogosultságot hoz létre vagy von vissza.",
@@ -5379,7 +5380,7 @@
         "contractVersion": "A Core elutasította ezt az adminjogosultság-szerződésverziót.",
         "requestIdInvalid": "A tartós kérésazonosító nem kisbetűs UUID v4.",
         "grantInvalid": "A UID, módszer, indok vagy revízió az elfogadott határokon kívül van.",
-        "methodNotEnabled": "Ez a módszer nincs engedélyezve a tag aktuális élő szabályzatában. A hiteles állapotot frissítettük.",
+        "methodNotEnabled": "Ez a módszer jelenleg nem szolgálható ki új granthez. A hiteles állapotot frissítettük.",
         "grantNotActive": "A kért adminjogosultság hiányzik, lejárt vagy már visszavont. A hiteles állapotot frissítettük.",
         "conflict": "A módszer, revízió vagy jogosultságállapot megváltozott. Frissítettük a hiteles állapotot; új parancs előtt tekintsd át.",
         "requestIdConflict": "Ez a kérésazonosító már más parancsanyaghoz kötött. A mentett parancsot nem próbáltuk új azonosítóval.",
@@ -7912,14 +7913,11 @@
       "reset": "Piszkozat visszaállítása",
       "invalid": "Tölts ki minden angol és magyar mezőt, használj érvényes HTTPS-linket, az ikonszíneket pedig #RRGGBB formában add meg.",
       "conflict": "Egy másik admin módosította ezt a konfigurációt. Betöltöttük a mérvadó verziót; újabb szerkesztés előtt nézd át.",
-      "enablementLocked": "Az éles kiadási zár még aktív. A tartalom kikapcsolt állapotban menthető, de a Core még nem engedi bekapcsolni a funkciót.",
       "saveError": "A profilhitelesítési konfiguráció mentése nem sikerült ({error}).",
       "invalidResponse": "A Core elfogadta a mentést, de nem olvasható konfigurációt adott vissza. Új módosítás előtt töltsd újra.",
       "saved": "A profilhitelesítési konfiguráció elmentve.",
       "loadError": "A profilhitelesítési konfiguráció nem tölthető be.",
       "unsaved": "A profilhitelesítési piszkozat nem mentett módosításokat tartalmaz.",
-      "enabled": "Videós hitelesítés bekapcsolása natív iOS-munkamenetekhez",
-      "enabledHint": "A Core-t külön környezeti kiadási zár is védi. Maradjon kikapcsolva, amíg az adatvédelmi szöveg, a privát tárhely, az ffprobe, a mobil build és a moderátori próba nincs jóváhagyva.",
       "account": {
         "title": "Account státuszkártya",
         "copy": "Ez a négy vetület vezérli az Account sort. A címeket, alcímeket és színeket a szerver adja az iOS-nek; az ikon asset az app tulajdona marad.",
@@ -8001,7 +7999,14 @@
         "linkTitleEn": "Adatvédelmi link címe — angol",
         "linkTitleHu": "Adatvédelmi link címe — magyar",
         "linkUrl": "Adatvédelmi tájékoztató HTTPS-linkje"
-      }
+      },
+      "derivedAvailabilityLabel": "Származtatott videóelérhetőség",
+      "videoNowhere": "A videó sehol sem kötelező módszer.",
+      "videoStorefronts": "A videó itt kötelező módszer: {storefronts}.",
+      "videoGlobal": "A videó a globális kötelező módszer.",
+      "videoGlobalExcept": "A videó a globális kötelező módszer; nem videós felülírások: {storefronts}.",
+      "videoUnavailable": "Új videóindítás jelenleg nem érhető el: {reason}.",
+      "availabilityLoadError": "A hiteles módszerlefedettség nem tölthető be. A felület nem következtetett elérhetőségre."
     },
     "queue": {
       "eyebrow": "Bizalom és biztonság",

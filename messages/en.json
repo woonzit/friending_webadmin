@@ -287,11 +287,11 @@
           },
           "adminGrantedVerification": {
             "title": "Admin-granted verification authority",
-            "purpose": "This distinct panel shows the retained evidence-free admin seal, its safe reason witness, the member's currently enabled grant methods and the final effective verification without presenting a fake provider result.",
+            "purpose": "This panel shows the retained evidence-free admin grant, its safe reason witness, currently serviceable grant methods and final effective verification without presenting provider evidence.",
             "actions": {
-              "1": "Confirm the UID, exact revision, current enabled methods and whether another genuine or imported authority already wins.",
-              "2": "Choose only a currently enabled method, enter the bounded internal reason and explicitly confirm before granting.",
-              "3": "Revoke the active admin grant when required, even if its method was disabled later, then verify the authoritative returned state."
+              "1": "Confirm the UID, exact revision, serviceable methods and whether genuine or imported completion already exists.",
+              "2": "Choose a serviceable method, enter the bounded internal reason and explicitly confirm before granting.",
+              "3": "Revoke the active admin grant when required even if its method later becomes unavailable, then verify the authoritative returned state."
             },
             "guidance": "A provider-free grant is audited authority, not Persona, Video selfie or manual-review evidence. Never create a second request ID after an uncertain response; retry the exact saved command."
           },
@@ -738,7 +738,7 @@
         "sections": {
           "overview": {
             "title": "Verification policy workspace",
-            "purpose": "The six tabs expose the complete bounded Verification control plane only when Core's current action projection lists the console for this operator.",
+            "purpose": "The available tabs expose the bounded Verification control plane only when Core's current action projection permits each surface for this operator.",
             "actions": {
               "1": "Read the activation guard and import-health counts before preparing any live operation.",
               "2": "Treat the all-None launch policy as inert; activation of a non-None requirement is a separate reviewed release operation."
@@ -746,19 +746,19 @@
             "guidance": "Visible controls do not grant authority. Core rechecks the current capability on every request, and a malformed response never becomes an empty or editable state."
           },
           "methodsAndLevels": {
-            "title": "Methods and levels",
-            "purpose": "Verified Video contributes Light, verified Persona contributes Strong, and the effective level is the maximum of derived, valid imported and active granted authority.",
+            "title": "Mandatory method and completion",
+            "purpose": "Each storefront resolves exactly one mandatory method or none. Persona, video, imported verification or an active admin grant can satisfy completion without tier language.",
             "actions": {
-              "1": "Confirm that one enabled method suppresses tier language and a Video-only Strong requirement clamps to Light.",
-              "2": "Confirm that both methods off clamps every effective requirement to None and emits no external seal."
+              "1": "Inspect the live global/storefront mandatory method separately from location feature requirements.",
+              "2": "Confirm that completed, imported and admin-granted members remain satisfied when the mandatory method changes."
             },
-            "guidance": "Disabling a method prevents new starts but does not rewrite an earned method result, import or team grant. Pending never contributes a level."
+            "guidance": "Availability controls new starts and publication; it never rewrites earned evidence, valid imports or active grants. Pending never counts as completion."
           },
           "scopePrecedence": {
             "title": "Scope precedence",
-            "purpose": "Core resolves the member's current server-written city, then current country, registration or IP country, and finally global; each override field inherits independently.",
+            "purpose": "Core resolves city→country→global only for feature requirements. Mandatory method separately resolves storefront override→global.",
             "actions": {
-              "1": "Inspect the exact source scope beside effective methods and every feature requirement.",
+              "1": "Inspect the exact source scope beside every feature requirement and the separate storefront source beside the mandatory method.",
               "2": "Use the simulator to verify city-to-country-to-global fallback without entering coordinates, IPs or a member identity."
             },
             "guidance": "Location scope is product personalization, not proof of identity, residency, fraud status or security. Webadmin never derives it from browser coordinates."
@@ -778,7 +778,7 @@
             "purpose": "The matrix contains all ten frozen feature keys exactly once and shows the live clamped tier from each field's exact inheritance source.",
             "actions": {
               "1": "Read the localized feature label and machine key before changing a complete draft cell.",
-              "2": "Check the configured and effective tier, especially Video-only Strong-to-Light and both-off-to-None clamps."
+              "2": "Check the configured and effective requirement and its inheritance source; method-tier clamps no longer exist."
             },
             "guidance": "Unknown, duplicate or missing keys are a contract mismatch, not optional rows. Draft edits never authorize a feature until a guarded live publication succeeds."
           },
@@ -804,29 +804,29 @@
             "title": "Test a policy safely",
             "purpose": "Synthetic scope, method, provenance and badge-visibility inputs run Core's pure evaluator and return all ten feature decisions without touching a member.",
             "actions": {
-              "1": "Exercise no-match, inherited, pending, rejected, imported, granted and both-off combinations before rollout.",
+              "1": "Exercise no-match, inherited, pending, rejected, imported, granted and scalar Persona/video/none combinations before rollout.",
               "2": "Compare the full Core-authored level, deterministic source, clamp, copy key and modal; never infer access from a partial row."
             },
             "guidance": "A simulator success is explanatory output, not an authorization token. It accepts no UID, evidence, provider payload or free-text location authority."
           },
           "teamGrant": {
-            "title": "Team verification grant",
-            "purpose": "The member-detail panel previews an upward-only Light or Strong grant; effective authority is max(derived, valid imported, active granted) at one Core time.",
+            "title": "Admin verification grant",
+            "purpose": "A serviceable-method grant is audited authority that satisfies mandatory verification without claiming Persona, video or imported evidence.",
             "actions": {
-              "1": "Compare derived, imported and current grant authority, choose an optional future expiry, and preview at the observed grant revision.",
-              "2": "For Strong, acknowledge the fresh warning before saving; removal expires only the retained positive grant."
+              "1": "Compare genuine and imported completion, choose a serviceable grant method, enter the private reason and confirm at the observed revision.",
+              "2": "Revoke only the retained admin grant when needed; genuine, imported and grandfathered completion remains intact."
             },
-            "guidance": "Expiry is strict at Core's captured time. Removal is not a negative revocation and cannot lower genuine Video, Persona or valid imported authority."
+            "guidance": "A grant is method-labelled for audit but satisfies the room unconditionally. Uncertain mutations reuse the exact retained request id."
           },
           "forcedWaitingRoom": {
-            "title": "Forced verification and Waiting Room",
-            "purpose": "Marks Persona or selfie-video verification as mandatory globally or per App Store storefront; gated members see the Waiting Room until one forced method is satisfied. The Waiting Room text and its optional help URL are edited here too.",
+            "title": "Mandatory verification and Waiting Room",
+            "purpose": "The Scopes tab owns one global/storefront method policy and its bilingual Waiting Room copy. Exactly one method or none can be live per row.",
             "actions": {
-              "1": "Set the global default first, then add a storefront override only where the rule differs; an override replaces the whole method set, so two switches off means not forced there.",
-              "2": "Edit the Waiting Room text in both languages, check the light and dark phone preview for the storefront, run the impact preview, and save at the shown revision.",
-              "3": "Set a Help URL per language when members should have somewhere to read more: an https address of at most 2048 bytes without credentials. The round “?” button appears in the Waiting Room only where an effective URL exists; a storefront override left blank inherits the global URL, and a blank global URL means no button."
+              "1": "Set the global row first, then add only catalogue-picked storefront overrides; each row owns its method and inherited copy together.",
+              "2": "Save the draft at the observed revision, review counts beside Publish, then publish only the exact fingerprinted preview.",
+              "3": "Keep both locales complete, validate the light/dark preview and use a credential-free HTTPS help URL only when members need more information."
             },
-            "guidance": "Seeded state forces nothing. Core evaluates the gate server-side with the member's last-seen storefront; a malformed stored document fails safe (nothing forced) while this tab reports it. The help URL is presentation only: it opens in an in-app browser over the Waiting Room and never lets a member past the gate. Switch forcing on only after the iOS build carrying the Waiting Room is live in the App Store: the gate applies to every app version, and an older app receives the refusal without a screen to show for it."
+            "guidance": "Method publication is independent of the feature-requirement client guard. An unavailable method stays visible but cannot be published; completed, imported and admin-granted members remain satisfied across method switches."
           },
           "conflictsAndRetry": {
             "title": "Conflicts and uncertain saves",
@@ -2715,7 +2715,7 @@
     "photoModeration": "Photo moderation",
     "reportedContent": "Reported content",
     "textModeration": "Profile text moderation",
-    "profileVerification": "Profile verification",
+    "profileVerification": "Video verification queue",
     "verificationSettings": "Verification settings",
     "persona": "Persona operations",
     "profileLocation": "Profile location",
@@ -3689,52 +3689,18 @@
       "requirements": "Feature requirements",
       "messages": "Gate messages",
       "badges": "Badges",
-      "simulator": "Simulator",
-      "forced": "Forced & waiting room"
+      "simulator": "Simulator"
     },
     "forced": {
-      "readOnly": "Read-only: your administrator role can inspect forced verification but not change it.",
-      "loadError": "The forced-verification document could not be loaded from Core.",
-      "unavailableTitle": "Stored document unavailable",
-      "unavailableCopy": "Core reports the stored forced-verification document as malformed (verification-forced-unavailable). Nothing is forced for members while it stays malformed, and the console cannot edit it until Core repairs the setting. Tell an administrator.",
       "retry": "Try again",
       "reload": "Reload from Core",
-      "revision": "Revision {revision}",
-      "unsaved": "Unsaved changes",
-      "rulesTitle": "Forced methods by storefront",
-      "rulesCopy": "A forced method places every member of that App Store storefront into the Waiting Room until one forced method is satisfied. The global default applies to storefronts without an override and to members whose storefront is unknown.",
-      "columns": {
-        "region": "Storefront",
-        "persona": "Persona ID check",
-        "video": "Selfie video",
-        "summary": "Effective rule",
-        "actions": "Actions"
-      },
-      "methods": {
-        "persona": "Persona ID check",
-        "video": "Selfie video"
-      },
       "globalRow": "Global default",
       "globalRowHint": "Every storefront without an override, and unknown storefronts",
       "selectStorefront": "Choose a storefront…",
       "addOverride": "Add storefront override",
       "removeOverride": "Remove",
-      "overrideHint": "An override replaces the whole method set for its storefront. Both switches off means “not forced there” even when the global default forces a method.",
-      "summary": {
-        "none": "Not forced",
-        "persona": "Persona ID check required",
-        "video": "Selfie video required",
-        "any": "Either method satisfies"
-      },
-      "copyTitle": "Waiting Room copy",
       "copyCopy": "Title (≤ 60), subtitle (≤ 90) and description (≤ 400) in English and Hungarian, plus an optional help URL (https only, at most 2048 bytes) behind the round “?” button. The global text is required; a storefront override sets only the fields that differ and inherits the rest.",
-      "defaultsTitle": "Global text",
       "resetCompiled": "Reset to the compiled default",
-      "overridesTitle": "Storefront text overrides",
-      "overridesCopy": "Blank fields inherit the global text and help URL of the same language.",
-      "addCopyOverride": "Add text override",
-      "removeCopyOverride": "Remove override",
-      "noCopyOverrides": "No storefront text overrides.",
       "copy": {
         "fields": {
           "title": "Title",
@@ -3754,10 +3720,7 @@
         "helpUrlHint": "The help URL opens in an in-app browser from the round “?” button in the Waiting Room’s top-right corner. It must start with https://, be at most 2048 bytes and carry no credentials; leave it blank and the button is not shown."
       },
       "previewTitle": "Phone preview",
-      "previewCopy": "What a member of the selected storefront would see, in light and dark appearance, with the draft above applied.",
       "preview": {
-        "storefront": "Storefront",
-        "global": "Global default (no override, or storefront unknown)",
         "globalShort": "Global",
         "locale": "Language",
         "light": "Light appearance",
@@ -3775,29 +3738,6 @@
         "nonInteractive": "Static preview of the designer frame WR-01; button labels and status strings live in the app and are not editable here.",
         "compiledCopy": "Compiled text is shown for: {fields}. The draft value there is invalid and would be refused on save; the preview degrades only that text, never the forced methods."
       },
-      "impactTitle": "Impact preview",
-      "impactCopy": "Core counts, per last-seen storefront, how many members the draft would gate and how many already satisfy a forced method. Counts only, never identities.",
-      "runImpact": "Run impact preview",
-      "working": "Working…",
-      "impactReady": "Impact preview ready for the current draft.",
-      "impactFailed": "Core could not compute the impact preview ({code}).",
-      "impactStale": "The draft changed since this preview; run it again before saving.",
-      "impactEmpty": "Run the preview to see how many members the draft would affect.",
-      "impactColumns": {
-        "storefront": "Storefront",
-        "seen": "Members seen",
-        "gated": "Would be gated",
-        "satisfied": "Already satisfied"
-      },
-      "impactUnknown": "Unknown storefront",
-      "impactComputedAt": "Computed at {time}",
-      "save": "Save forced verification",
-      "saving": "Saving…",
-      "saved": "Saved as revision {revision}.",
-      "conflict": "Another administrator saved first (verification-forced-conflict). Your draft was discarded and the current server copy is shown.",
-      "invalid": "Core refused the document ({code}). Nothing was saved; correct the values and try again.",
-      "refused": "Core refused the request ({code}). Nothing was saved.",
-      "uncertain": "Core's answer was uncertain ({code}), so the console reloaded the authoritative document instead of retrying. If “Unsaved changes” is gone, the write landed; otherwise compare your draft and save again.",
       "validation": {
         "storefront": "Every override needs a storefront from the catalogue.",
         "duplicateStorefront": "Two overrides name the same storefront.",
@@ -4120,7 +4060,6 @@
       "activationBlocked": "Non-None publication is blocked.",
       "activationReasons": {
         "global_policy_invalid": "the global policy is invalid",
-        "method_unavailable": "an enabled method is unavailable",
         "persona_force_receipt_unready": "the Persona force path is not receipt-safe",
         "supported_client_unready": "a supported client is not ready"
       },
@@ -4135,12 +4074,6 @@
       "unknownError": "unknown or malformed response",
       "invalidDraft": "The draft does not satisfy the exact Verification v1 contract.",
       "scope": "Policy scope",
-      "enabledMethods": "Enabled methods",
-      "methodChoices": {
-        "none": "No method",
-        "both": "Video selfie and Persona"
-      },
-      "methodAvailable": "available for new policy starts",
       "methodReasons": {
         "deployment_unlock_disabled": "deployment unlock is disabled",
         "service_config_disabled": "service configuration is disabled",
@@ -4252,7 +4185,75 @@
         "actionLabel": "Try again",
         "cancelLabel": "Not now"
       }
-    }
+    },
+    "methodPolicy": {
+      "title": "Mandatory verification and Waiting Room",
+      "copy": "Choose one mandatory method or none globally and per App Store storefront. Only the published revision affects members.",
+      "readOnly": "Read-only: your current Core capability permits inspection but not draft or publish actions.",
+      "loadError": "The unified verification-method policy could not be loaded safely.",
+      "unavailableTitle": "Stored method policy unavailable",
+      "unavailableCopy": "Core reported invalid stored method policy. No editable or empty state was assumed.",
+      "draftRevision": "Draft revision {revision}",
+      "unsaved": "Unsaved method or Waiting Room copy changes",
+      "tableTitle": "Mandatory method by storefront",
+      "tableCopy": "The global row applies to unknown and unoverridden storefronts. Each override replaces the global method and may override its Waiting Room copy per field.",
+      "columns": {
+        "storefront": "Storefront",
+        "method": "Mandatory method",
+        "copy": "Waiting Room copy",
+        "actions": "Actions"
+      },
+      "methods": {
+        "none": "None",
+        "persona": "Persona ID check",
+        "video": "Selfie video"
+      },
+      "methodAvailable": "Available for publication",
+      "methodUnavailable": "Cannot be published: {reason}",
+      "showCopy": "Edit Waiting Room copy",
+      "hideCopy": "Close copy editor",
+      "copyInherits": "Blank override fields inherit the global value for the same language.",
+      "saveDraft": "Save draft",
+      "savingDraft": "Saving draft…",
+      "draftSaved": "Draft saved as revision {revision}. Members are unchanged until publish.",
+      "publishTitle": "Review and publish",
+      "publishCopy": "Preview the saved draft's aggregate effect, then publish that exact revision.",
+      "previewImpact": "Preview impact",
+      "impactReady": "Impact preview is bound to revision {revision}.",
+      "impactStale": "The draft or authoritative revision changed. Generate a new impact preview.",
+      "impactFailed": "Core could not compute the method-policy impact ({code}).",
+      "impactEmpty": "Save the draft, then preview its member impact before publishing.",
+      "impactColumns": {
+        "storefront": "Storefront",
+        "liveMethod": "Live method",
+        "draftMethod": "Draft method",
+        "seen": "Members seen",
+        "currentlyGated": "Currently gated",
+        "wouldBeGated": "Would be gated",
+        "satisfied": "Already satisfied",
+        "newlyGated": "Newly gated",
+        "newlyReleased": "Newly released"
+      },
+      "unknownStorefront": "Unknown storefront",
+      "computedAt": "Computed at {time}",
+      "publishReason": "Private publication reason",
+      "publishReasonPlaceholder": "Why should this exact method policy become live?",
+      "confirmation": "Type {phrase} to publish this exact preview.",
+      "publish": "Publish reviewed draft",
+      "publishing": "Publishing…",
+      "published": "Revision {revision} is live.",
+      "replayed": "Core replayed the completed publication receipt; no second change was created.",
+      "publishBlocked": "Publication is blocked: {code}. The draft remains saved.",
+      "conflict": "Another administrator changed the policy. The authoritative revision is shown; review it before a new command.",
+      "invalid": "Core refused the method-policy document ({code}). Nothing became live.",
+      "refused": "Core refused the request ({code}). No success was assumed.",
+      "pendingMutation": "An exact method-policy command is retained for safe retry.",
+      "retryExact": "Retry the exact command",
+      "uncertain": "The result is uncertain. Keep and retry only the exact retained command.",
+      "persistenceUnavailable": "Safe session receipt storage is unavailable; method-policy mutations remain locked.",
+      "persistenceCleanupFailed": "Core converged, but the retained command could not be cleared; controls remain locked."
+    },
+    "requirementsInactive": "Feature requirements are inactive until the client activation guard is ready."
   },
   "cannedTemplates": {
     "eyebrow": "Communications library",
@@ -5294,8 +5295,8 @@
       "title": "Admin-granted verification",
       "copy": "Grant or revoke evidence-free Video selfie or Persona authority independently of genuine provider and imported verification.",
       "evaluatedAt": "Authoritative evaluation time",
-      "enabledMethods": "Methods enabled for a new grant",
-      "noEnabledMethods": "No method is enabled in this member's live policy scope",
+      "enabledMethods": "Methods available for a new grant",
+      "noEnabledMethods": "No verification method is currently serviceable for a new grant",
       "grantRevision": "Admin-grant revision",
       "effectiveLevel": "Effective verification",
       "externalSeal": "Member-facing verified seal",
@@ -5312,8 +5313,8 @@
         "granted": "Admin-granted authority"
       },
       "methods": {
-        "video": "Fake Video selfie verification",
-        "persona": "Fake Persona verification"
+        "video": "Video verification grant",
+        "persona": "Persona verification grant"
       },
       "statuses": {
         "active": "Active",
@@ -5335,11 +5336,11 @@
       },
       "editor": {
         "title": "Evidence-free admin authority",
-        "copy": "A grant follows the method enabled in the member's current live policy. A revoke removes only the active admin grant and can leave genuine or imported verification effective.",
+        "copy": "A grant may use any method the deployment can serve and satisfies the member's mandatory method without claiming provider evidence. Revocation removes only the active admin grant.",
         "readOnly": "Your exact Core-authored capability block permits this projection to be read, but not changed.",
         "method": "Grant method",
-        "methodHint": "Only methods configured in the member's current scope can receive a new admin grant.",
-        "noMethod": "A new grant is unavailable until a verification method is configured in this member's live scope.",
+        "methodHint": "Choose any method Core currently reports as serviceable for a new grant.",
+        "noMethod": "A new grant is unavailable until Core reports a serviceable verification method.",
         "reason": "Internal operation reason",
         "reasonPrivate": "The text is stored only for the durable command and Core's grant authority; this projection returns only its length and hash",
         "confirm": "I confirmed the UID, method and reason and understand this creates or revokes provider-free verification authority.",
@@ -5379,7 +5380,7 @@
         "contractVersion": "Core refused this admin-grant contract version.",
         "requestIdInvalid": "The durable request ID is not a lowercase UUID v4.",
         "grantInvalid": "The UID, method, reason or revision is outside the accepted bounds.",
-        "methodNotEnabled": "That method is not enabled in the member's current live policy. The authoritative state was refreshed.",
+        "methodNotEnabled": "That method is not currently serviceable for a new grant. The authoritative state was refreshed.",
         "grantNotActive": "The requested admin grant is absent, expired or already revoked. The authoritative state was refreshed.",
         "conflict": "The method, revision or grant state changed. The authoritative state was refreshed; review it before a new command.",
         "requestIdConflict": "That request ID is already bound to different command material. The saved command was not retried under a new ID.",
@@ -7912,14 +7913,11 @@
       "reset": "Reset draft",
       "invalid": "Complete every English and Hungarian field, use valid HTTPS links, and enter icon colours as #RRGGBB.",
       "conflict": "Another administrator changed this configuration. The authoritative version has been loaded; review it before editing again.",
-      "enablementLocked": "The production release lock is still active. The content can be saved while disabled, but Core will not enable the feature yet.",
       "saveError": "Profile verification configuration could not be saved ({error}).",
       "invalidResponse": "Core accepted the save but returned an unreadable configuration. Reload before making another change.",
       "saved": "Profile verification configuration saved.",
       "loadError": "Profile verification configuration could not be loaded.",
       "unsaved": "This profile verification draft has unsaved changes.",
-      "enabled": "Enable video verification for native iOS sessions",
-      "enabledHint": "Core also has an environment release lock. Leave this off until privacy copy, private storage, ffprobe, the mobile build, and moderator walkthroughs are approved.",
       "account": {
         "title": "Account status card",
         "copy": "These four projections drive the Account row. Titles, subtitles and colours are served to iOS; the icon asset remains app-owned.",
@@ -8001,7 +7999,14 @@
         "linkTitleEn": "Privacy link title — English",
         "linkTitleHu": "Privacy link title — Hungarian",
         "linkUrl": "Privacy information HTTPS URL"
-      }
+      },
+      "derivedAvailabilityLabel": "Derived video availability",
+      "videoNowhere": "Video is not the mandatory method anywhere.",
+      "videoStorefronts": "Video is the mandatory method in: {storefronts}.",
+      "videoGlobal": "Video is the global mandatory method.",
+      "videoGlobalExcept": "Video is the global mandatory method; non-video overrides: {storefronts}.",
+      "videoUnavailable": "New video starts are currently unavailable: {reason}.",
+      "availabilityLoadError": "The authoritative method coverage could not be loaded. Availability was not inferred."
     },
     "queue": {
       "eyebrow": "Trust and safety",

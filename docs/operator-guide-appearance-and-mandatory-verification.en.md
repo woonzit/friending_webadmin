@@ -1,9 +1,9 @@
-# Operator guide: colouring, landing/hero placements and forced verification
+# Operator guide: colouring, landing/hero placements and mandatory verification
 
 Audience: the Friending owner and administrators who change what the app looks
 like per country, and who decide when verification becomes mandatory. No
 engineering knowledge is assumed. The Hungarian twin of this document is
-`operator-guide-appearance-and-forced-verification.hu.md`; both describe the
+`operator-guide-appearance-and-mandatory-verification.hu.md`; both describe the
 same screens.
 
 Two consoles are covered:
@@ -11,10 +11,12 @@ Two consoles are covered:
 1. **Appearance & placements** (`/appearance`) — live today. The landing
    screen, the Discover hero carousel and the light/dark accent palette, per
    App Store storefront or per geographic area.
-2. **Verification → Forced & waiting room** — the tab that makes verification
-   mandatory. It appears for administrators whose Core account carries the
-   verification console capability; there is no separate switch to ask for.
-   Read the rollout rule at the end before you turn forcing on anywhere.
+2. **Verification → Scopes** — the ONE table that decides which verification
+   method is mandatory, globally and per App Store storefront, and owns the
+   Waiting Room text for each row. It appears for administrators whose Core
+   account carries the method-console capability; there is no separate switch
+   to ask for. Read the rollout rule at the end before you make a method
+   mandatory anywhere.
 
 Everything you change here is stored by Core, recorded in the audit trail with
 your e-mail, and takes effect for members without an app update.
@@ -173,57 +175,65 @@ never silently overwrite each other.
 
 ---
 
-## 2. Verification → Forced & waiting room
+## 2. Verification → Scopes: the mandatory method
 
-This tab makes verification mandatory. Until it is switched on, nothing in it
-affects members. There is no release step to wait for: the tab appears for
-administrators whose Core account carries the verification console capability,
-and it is missing only when that capability is missing. Forcing itself begins
-only when you save a rule with a method on — and section 2.6 says when you may.
+This is the ONE place where verification becomes mandatory. Until you publish a
+row with a method on it, nothing here affects members. There used to be two
+places — a method list on the location scopes and a separate "Forced & waiting
+room" tab — and they could contradict each other. They are now a single table.
 
-### 2.1 What "forced" does to a member
+### 2.1 What a mandatory method does to a member
 
-A member who has not satisfied the requirement is placed in the **Waiting
+A member who has not completed the mandatory method is placed in the **Waiting
 Room**: a full-screen page that replaces the app's normal surfaces. From there
 they can start verification, reach support, sign out or delete their own
 account — nothing else. Ordinary browsing, chat and profiles are closed until
-they verify.
+they are verified.
 
 This is a heavy switch. Read section 2.6 before turning it on anywhere.
 
-### 2.2 Global default and storefront overrides
+### 2.2 One row, one method
 
-- The **global default** sets which methods are forced for everyone.
-- A **storefront override** replaces that whole set for one App Store
-  storefront. It is a replacement, not an addition: if the global default forces
-  Persona and an override for the United States forces video only, US members
-  are asked for video only.
-- A storefront with no override follows the global default.
+Every row of the table carries exactly ONE value:
 
-### 2.3 Any-of semantics
+- **Persona ID check** — the identity check.
+- **Selfie video** — the moderator-reviewed video selfie.
+- **None** — nothing is mandatory for that row.
 
-When more than one method is forced, the member satisfies the requirement with
-**any one of them** — not all. Persona *or* an active video verification badge
-*or* an active administrator-granted verification all open the app. Ticking two
-methods therefore widens the member's choice; it does not double the burden.
+There is no "both". A member is never asked for two methods at once.
 
-### 2.4 The copy editor
+The first row is the **Global** row: it applies to every storefront without an
+override and to members whose storefront is unknown. Below it you may add
+**storefront overrides**, chosen from the App Store country list. An override
+replaces the global value for that storefront — it is a replacement, not an
+addition.
 
-The Waiting Room text — title, subtitle and description — is editable in
-English and Hungarian, both required for the global default.
+A method the deployment cannot serve today is offered but cannot be published;
+the row says why (for example "deployment unlock is disabled"). A value that is
+already live stays visible even if its method later becomes unavailable.
 
-Per storefront you may override any of the three fields separately; a field you
-leave blank inherits the global text of the same language. Keep the wording
-factual: it is the only explanation a blocked member sees.
+### 2.3 Completion counts once, whichever method earned it
 
-Each language also has an optional **Help URL** (contract Amendment v1.5). When
-one is set, the Waiting Room shows a round "?" button in its top-right corner
-that opens the address in an in-app browser sheet over the room; leave it blank
-and there is no button. The address must start with `https://`, be at most
-2048 bytes and carry no credentials. A storefront override left blank inherits
-the global URL, exactly like the three text fields, and the phone preview shows
-the button only where an effective URL exists. The URL is presentation only: it
-never lets a member past the gate.
+A member who has already completed Persona or the video selfie, whose
+verification was imported from the old system, or who carries an active
+administrator grant, stays verified when you change the mandatory method. You
+never send an already-verified member back through a second method.
+
+### 2.4 The Waiting Room text, per row
+
+Open **Edit Waiting Room copy** on a row to edit its title, subtitle and
+description in English and Hungarian. On the Global row both languages are
+required; on a storefront row a field you leave blank inherits the global text
+of the same language.
+
+Each language also has an optional **Help URL**. When one is set, the Waiting
+Room shows a round "?" button in its top-right corner that opens the address in
+an in-app browser sheet over the room; leave it blank and there is no button.
+The address must start with `https://`, be at most 2048 bytes and carry no
+credentials. A storefront row left blank inherits the global URL, exactly like
+the three text fields, and the phone preview shows the button only where an
+effective URL exists. The URL is presentation only: it never lets a member past
+the gate.
 
 Two practical notes:
 
@@ -231,23 +241,33 @@ Two practical notes:
   non-breaking or other Unicode space is refused instead, because it would look
   empty while not being empty. If a pasted text is rejected for that reason,
   retype the edges by hand.
-- The preview beside the editor shows the phone screen in light and dark. When
-  a field is not valid yet, the preview shows the compiled built-in text for
-  that field and says so, so you always see something realistic.
+- The preview under the editor shows the phone screen in light and dark for
+  that row. When a field is not valid yet, the preview shows the compiled
+  built-in text for that field and says so, so you always see something
+  realistic.
 
-### 2.5 Impact preview
+### 2.5 Draft, impact preview, publish — in that order
 
-Before saving, the impact preview asks Core how many members the draft would
-place in the Waiting Room, by storefront. It returns counts only — never names
-or member data.
+Nothing you type is live until you publish, and publishing takes three steps:
 
-Treat a large number as a business decision, not a technical detail: those
-members lose access to the app until they verify.
+1. **Save draft.** The draft is stored against the revision you loaded. If
+   somebody else changed the policy meanwhile you get a conflict, your draft is
+   not written, and the authoritative version is shown.
+2. **Preview impact.** Core counts, per storefront, how many members are gated
+   now, how many the saved draft would gate, how many already satisfy it, and
+   how many would be newly gated or newly released. Counts only — never names
+   or member data.
+3. **Publish reviewed draft.** Type the exact phrase shown, give a private
+   reason, and publish. You publish exactly the revision you previewed: any
+   edit, or anyone else's save, invalidates the preview and you take a new one.
+
+Treat a large "newly gated" number as a business decision, not a technical
+detail: those members lose access to the app until they verify.
 
 ### 2.6 The rollout rule — do not skip this
 
-**Switch forcing on only after the iOS build that contains the Waiting Room is
-live in the App Store.**
+**Make a method mandatory only after the iOS build that contains the Waiting
+Room is live in the App Store.**
 
 The reason is simple. The gate is enforced by the server for every app version.
 An older app that does not know the Waiting Room receives the refusal without
@@ -257,18 +277,18 @@ to verify. Members do not all update on the same day, so:
 1. The iOS release with the Waiting Room reaches the App Store.
 2. Wait until the great majority of active members are on it (check your
    analytics; a few days is normal).
-3. Only then turn forcing on, and prefer one storefront first.
+3. Only then publish a mandatory method, and prefer one storefront first.
 4. Watch support volume for a day before widening.
 
-Turning it off again is immediate and safe: members return to the app on their
-next request.
+Setting a row back to **None** and publishing is immediate and safe: members
+return to the app on their next request.
 
-### 2.7 Saving
+### 2.7 Where the video product's own page fits
 
-Saving works exactly like the appearance console: the draft carries the
-revision you loaded, a conflict means somebody else changed the settings and
-your draft was not written, and an uncertain result reloads the authoritative
-state instead of writing twice.
+**Configuration → Profile video verification** still owns the video flow's
+wording, prompts and appearance. It no longer has an enable switch: whether
+video is mandatory is decided here, on the Scopes table, and that page shows
+the derived answer as a read-only line.
 
 ---
 

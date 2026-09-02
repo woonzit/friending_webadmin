@@ -3,7 +3,7 @@
 Kinek szól: a Friending tulajdonosának és az adminisztrátoroknak, akik
 országonként állítják be az app kinézetét, és akik eldöntik, mikor válik
 kötelezővé a hitelesítés. Mérnöki tudás nem kell hozzá. A dokumentum angol
-ikerpárja: `operator-guide-appearance-and-forced-verification.en.md`; ugyanazokat
+ikerpárja: `operator-guide-appearance-and-mandatory-verification.en.md`; ugyanazokat
 a képernyőket írják le.
 
 Két konzolról van szó:
@@ -11,11 +11,12 @@ Két konzolról van szó:
 1. **Megjelenés és elhelyezések** (`/appearance`) — már élesben van. A landing
    képernyő, a Discover hero-körhinta és a világos/sötét kiemelőszín-paletta,
    App Store áruház-országonként vagy földrajzi területenként.
-2. **Hitelesítés → Kötelező hitelesítés és Váróterem** — az a fül, amely
-   kötelezővé teszi a hitelesítést. Azoknak az adminisztrátoroknak jelenik meg,
-   akiknek a Core-fiókja megkapta a hitelesítési konzol jogosultságát; külön
-   kapcsolót nem kell kérned. Mielőtt bárhol bekapcsolod a kötelezővé tételt,
-   olvasd el a végén a bevezetési szabályt.
+2. **Hitelesítés → Területek** — az EGYETLEN táblázat, amely eldönti, melyik
+   hitelesítési módszer kötelező globálisan és App Store áruház-országonként, és
+   amely soronként a Váróterem szövegét is kezeli. Azoknak az
+   adminisztrátoroknak jelenik meg, akiknek a Core-fiókja megkapta a
+   módszerkonzol jogosultságát; külön kapcsolót nem kell kérned. Mielőtt bárhol
+   kötelezővé teszel egy módszert, olvasd el a végén a bevezetési szabályt.
 
 Amit itt módosítasz, azt a Core tárolja, az e-mail-címeddel bekerül az
 audit-naplóba, és app-frissítés nélkül érvényesül a tagoknál.
@@ -177,104 +178,124 @@ sosem írja felül egymást észrevétlenül.
 
 ---
 
-## 2. Hitelesítés → Kötelező hitelesítés és Váróterem
+## 2. Hitelesítés → Területek: a kötelező módszer
 
-Ez a fül teszi kötelezővé a hitelesítést. Amíg nincs bekapcsolva, semmi nem
-érinti a tagokat. Nincs kiadási lépés, amire várni kellene: a fül azoknak az
-adminisztrátoroknak jelenik meg, akiknek a Core-fiókja megkapta a hitelesítési
-konzol jogosultságát, és csak akkor hiányzik, ha ez a jogosultság hiányzik.
-Kötelezővé pedig csak akkor válik bármi, ha bekapcsolt módszerrel mentesz egy
-szabályt — hogy mikor teheted meg, azt a 2.6 pont mondja meg.
+Ez az EGYETLEN hely, ahol a hitelesítés kötelezővé válik. Amíg nem teszel közzé
+egy módszerrel ellátott sort, semmi sem érinti a tagokat. Korábban két hely volt
+— egy módszerlista a helyalapú területeken és egy külön „Kötelező hitelesítés és
+Váróterem" fül —, és ellentmondhattak egymásnak. Mostantól egyetlen táblázat.
 
-### 2.1 Mit jelent a tagnak a „kötelező"
+### 2.1 Mit jelent a tagnak a kötelező módszer
 
-Az a tag, aki nem teljesítette a követelményt, a **Váróterembe** kerül: egy
-teljes képernyős oldalra, amely az app szokásos felületeit váltja fel. Innen
-elindíthatja a hitelesítést, elérheti a támogatást, kijelentkezhet vagy
-törölheti a saját fiókját — mást nem. A szokásos böngészés, a csevegés és a
-profilok zárva vannak, amíg nem hitelesít.
+Az a tag, aki nem teljesítette a kötelező módszert, a **Váróterembe** kerül: egy
+teljes képernyős oldalra, amely leváltja az app szokásos felületeit. Onnan
+elindíthatja a hitelesítést, elérheti a támogatást, kijelentkezhet vagy törölheti
+a saját fiókját — mást nem. A böngészés, a csevegés és a profilok zárva vannak,
+amíg nem hitelesített.
 
-Ez súlyos kapcsoló. Mielőtt bárhol bekapcsolod, olvasd el a 2.6 pontot.
+Ez súlyos kapcsoló. Mielőtt bárhol bekapcsolod, olvasd el a 2.6-ot.
 
-### 2.2 Globális alapérték és áruház-országos felülírások
+### 2.2 Egy sor, egy módszer
 
-- A **globális alapérték** adja meg, mely módszerek kötelezők mindenkinek.
-- Az **áruház-országos felülírás** ezt a teljes halmazt cseréli le egyetlen App
-  Store áruház-országra. Ez csere, nem hozzáadás: ha a globális alapérték a
-  Personát követeli meg, egy egyesült államokbeli felülírás pedig csak a videót,
-  akkor az amerikai tagoktól csak videót kérünk.
-- Az az áruház-ország, amelyhez nincs felülírás, a globális alapértéket követi.
+A táblázat minden sora pontosan EGY értéket hordoz:
 
-### 2.3 „Bármelyik" logika
+- **Persona igazolvány-ellenőrzés** — a személyazonosság-ellenőrzés.
+- **Szelfivideó** — a moderátor által átnézett videós szelfi.
+- **Nincs** — az adott sorban semmi sem kötelező.
 
-Ha egynél több módszer kötelező, a tagnak **bármelyik egy** teljesítése elég —
-nem mind. A Persona *vagy* egy aktív videós hitelesítési jelvény *vagy* egy
-aktív, adminisztrátor által adott hitelesítés egyaránt megnyitja az appot. Két
-módszer bepipálása tehát szélesíti a tag választását, nem duplázza a terhet.
+„Mindkettő" nincs. A tagtól sosem kérünk egyszerre két módszert.
 
-### 2.4 A szövegszerkesztő
+Az első sor a **globális** sor: minden felülírás nélküli áruház-országra és
+minden ismeretlen áruház-országú tagra vonatkozik. Alatta **áruház-országos
+felülírásokat** adhatsz hozzá az App Store országlistájából. A felülírás
+lecseréli a globális értéket az adott áruház-országra — csere, nem kiegészítés.
 
-A Váróterem szövege — cím, alcím és leírás — angolul és magyarul is
-szerkeszthető; a globális alapértéknél mindkettő kötelező.
+Az a módszer, amelyet a deployment ma nem tud kiszolgálni, látszik, de nem tehető
+közzé; a sor megmondja, miért (például „a deployment feloldás ki van kapcsolva").
+A már élő érték akkor is látható marad, ha a módszere később elérhetetlenné
+válik.
 
-Áruház-országonként a három mező bármelyikét külön felülírhatod; az üresen
-hagyott mező az azonos nyelvű globális szöveget örökli. Tartsd tényszerűnek a
-megfogalmazást: a kizárt tag csak ezt a magyarázatot látja.
+### 2.3 A teljesítés egyszer számít, bármelyik módszer adta
 
-Nyelvenként egy opcionális **súgó URL** is megadható (a szerződés 1.5-ös
-módosítása). Ha ki van töltve, a Váróterem jobb felső sarkában kerek „?" gomb
-jelenik meg, amely az alkalmazáson belüli böngészőben, a terem fölött nyitja meg
-a címet; üresen hagyva nincs gomb. A címnek `https://`-sel kell kezdődnie,
-legfeljebb 2048 bájt lehet, és nem tartalmazhat hitelesítő adatokat. Az üresen
-hagyott áruház-országos felülírás a globális URL-t örökli, pontosan úgy, mint a
-három szövegmező, a telefonos előnézet pedig csak ott mutatja a gombot, ahol
-tényleges URL van. Az URL csak megjelenítés: sosem engedi át a tagot a kapun.
+Az a tag, aki már teljesítette a Personát vagy a szelfivideót, akinek a
+hitelesítése a régi rendszerből lett importálva, vagy akinek aktív admin grantje
+van, kötelezőmódszer-váltáskor is hitelesített marad. Egy már hitelesített tagot
+sosem küldesz vissza egy második módszerre.
+
+### 2.4 A Váróterem szövege soronként
+
+A sor **Váróterem-szöveg szerkesztése** gombjával szerkesztheted a címet, az
+alcímet és a leírást angolul és magyarul. A globális soron mindkét nyelv
+kötelező; áruház-országos soron az üresen hagyott mező az azonos nyelvű globális
+szöveget örökli.
+
+Mindkét nyelvhez tartozik egy opcionális **súgó URL** is. Ha be van állítva, a
+Váróterem jobb felső sarkában megjelenik egy kerek „?" gomb, amely app-on belüli
+böngészőlapon nyitja meg a címet; ha üresen hagyod, nincs gomb. A címnek
+`https://`-sel kell kezdődnie, legfeljebb 2048 bájt lehet, és nem tartalmazhat
+hitelesítő adatot. Az üresen hagyott áruház-országos sor a globális URL-t örökli,
+pontosan úgy, mint a három szövegmező, és a telefon-előnézet csak ott mutatja a
+gombot, ahol van tényleges URL. Az URL csak megjelenítés: sosem engedi át a tagot
+a kapun.
 
 Két gyakorlati megjegyzés:
 
-- A szélső hagyományos szóközöket automatikusan levágjuk. Az olyan „szóközt",
-  amely nem törhető vagy más Unicode szóköz, viszont visszautasítjuk, mert
-  üresnek látszana anélkül, hogy üres lenne. Ha egy beillesztett szöveget ezért
-  utasít vissza a rendszer, gépeld újra a szélét kézzel.
-- A szerkesztő melletti előnézet világos és sötét módban mutatja a telefon
-  képernyőjét. Ha egy mező még nem érvényes, az előnézet arra a mezőre a beépített
-  szöveget mutatja, és ezt jelzi is, hogy mindig valósághű képet láss.
+- A széleken lévő közönséges szóközöket a rendszer automatikusan levágja. Az a
+  „szóköz", amely nem törhető vagy más Unicode-szóköz, viszont elutasításra
+  kerül, mert üresnek látszik, miközben nem az. Ha egy beillesztett szöveget
+  ezért utasít el a rendszer, gépeld újra a széleket.
+- A szerkesztő alatti előnézet világos és sötét módban mutatja az adott sor
+  telefonképernyőjét. Ha egy mező még nem érvényes, az előnézet a beépített
+  fordítási szöveget mutatja arra a mezőre, és jelzi is — így mindig valósághű
+  képet látsz.
 
-### 2.5 Hatás-előnézet
+### 2.5 Draft, hatás-előnézet, közzététel — ebben a sorrendben
 
-Mentés előtt a hatás-előnézet megkérdezi a Core-tól, hány tagot tenne a vázlat a
-Váróterembe, áruház-országonként lebontva. Csak darabszámokat ad vissza — soha
-nem neveket vagy tagi adatokat.
+Amit begépelsz, addig nem élő, amíg közzé nem teszed, a közzététel pedig három
+lépés:
 
-A nagy számot üzleti döntésként kezeld, ne technikai részletként: ezek a tagok
-elveszítik a hozzáférést az apphoz, amíg nem hitelesítenek.
+1. **Draft mentése.** A draft a betöltött revízióhoz mentődik. Ha közben valaki
+   más módosította a szabályzatot, ütközést kapsz, a draftod nem íródik ki, és a
+   hiteles verzió jelenik meg.
+2. **Hatás előnézete.** A Core áruház-országonként megszámolja, hány tag van most
+   Váróteremben, hányat tenne oda a mentett draft, hányan teljesítik már, és
+   hányan kerülnének újonnan Váróterembe vagy oldódnának fel. Csak darabszámok —
+   sosem nevek vagy tagi adatok.
+3. **Áttekintett draft közzététele.** Írd be pontosan a megadott kifejezést, adj
+   meg privát indokot, és tedd közzé. Pontosan azt a revíziót teszed közzé,
+   amelyet előnéztél: bármilyen szerkesztés vagy más mentése érvényteleníti az
+   előnézetet, és újat kell készítened.
+
+A magas „újonnan Váróterembe kerül" számot üzleti döntésként kezeld, ne technikai
+részletként: azok a tagok elveszítik a hozzáférést az apphoz, amíg nem
+hitelesítenek.
 
 ### 2.6 A bevezetési szabály — ezt ne hagyd ki
 
-**A kötelezővé tételt csak azután kapcsold be, hogy a Váróteremet tartalmazó iOS
-build már elérhető az App Store-ban.**
+**Csak azután tegyél kötelezővé egy módszert, hogy a Várótermet tartalmazó iOS
+build élesben van az App Store-ban.**
 
-Az ok egyszerű. A kaput a szerver érvényesíti, minden app-verzióra. Egy régebbi
-app, amely nem ismeri a Váróteremet, megkapja az elutasítást, de nincs mit
-megjelenítenie hozzá, így a tag zsákutcát lát a hitelesítés lehetősége helyett. A
-tagok nem ugyanazon a napon frissítenek, ezért:
+Az ok egyszerű. A kaput a szerver kényszeríti ki minden app-verzióra. A régebbi
+app, amely nem ismeri a Várótermet, úgy kapja meg az elutasítást, hogy nincs
+hozzá megjeleníthető képernyője, így a tag zsákutcát lát a hitelesítés útja
+helyett. A tagok nem mind ugyanazon a napon frissítenek, ezért:
 
-1. A Váróteremmel készült iOS kiadás megjelenik az App Store-ban.
-2. Várj, amíg az aktív tagok túlnyomó többsége erre frissül (nézd meg az
-   analitikát; néhány nap a szokásos).
-3. Csak ezután kapcsold be a kötelezővé tételt, és lehetőleg először egyetlen
+1. A Várótermet tartalmazó iOS kiadás megjelenik az App Store-ban.
+2. Várd meg, amíg az aktív tagok túlnyomó többsége arra frissült (nézd meg az
+   analitikát; néhány nap normális).
+3. Csak ezután tegyél közzé kötelező módszert, és először inkább egyetlen
    áruház-országban.
-4. Bővítés előtt egy napig figyeld a támogatási megkeresések mennyiségét.
+4. Egy napig figyeld a support-forgalmat, mielőtt szélesítenél.
 
-A visszakapcsolás azonnali és biztonságos: a tagok a következő kérésüknél
-visszakerülnek az appba.
+Ha egy sort visszaállítasz **Nincs** értékre és közzéteszed, az azonnal és
+biztonságosan hat: a tagok a következő kérésüknél visszakerülnek az appba.
 
-### 2.7 Mentés
+### 2.7 Hol van a videós termék saját oldala
 
-A mentés pontosan úgy működik, mint a megjelenés-konzolon: a vázlat magával
-viszi a betöltött revíziót, az ütközés azt jelenti, hogy valaki más módosította a
-beállításokat és a vázlatod nem íródott ki, a bizonytalan eredmény pedig a
-hiteles állapotot tölti újra ahelyett, hogy kétszer írna.
+A **Konfiguráció → Videós profilhitelesítés** továbbra is a videós folyamat
+szövegét, felszólításait és megjelenését kezeli. Engedélyező kapcsolója már
+nincs: azt, hogy a videó kötelező-e, itt, a Területek táblázatban döntöd el, és
+az az oldal csak olvasható sorként mutatja a származtatott választ.
 
 ---
 
