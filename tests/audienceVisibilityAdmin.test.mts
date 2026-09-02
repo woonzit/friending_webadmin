@@ -10,6 +10,7 @@ import {
   AUDIENCE_VISIBILITY_LEGACY_TYPES,
   AUDIENCE_VISIBILITY_MUTATION_ACTIONS,
   AUDIENCE_VISIBILITY_PENDING_STORAGE_KEY,
+  AUDIENCE_VISIBILITY_RETIRED_PROFILE_QUESTION_KEYS,
   AUDIENCE_VISIBILITY_VALUES,
   audienceVisibilityAdminMe,
   audienceVisibilityCatalogResponse,
@@ -111,6 +112,58 @@ function intents(): Json {
   };
 }
 
+// Core catalogue labels of the eleven D-095 questions, in the owner's ruling order.
+const RETIRED_QUESTION_LABELS: Record<string, [string, string]> = {
+  piercings: ["Piercings", "Piercingek"],
+  tattoos: ["Tattoos", "Tetoválások"],
+  beard: ["Facial hair", "Arcszőrzet"],
+  sexual_position: ["Position", "Pozíció"],
+  safer_sex: ["Safer sex", "Biztonságosabb szex"],
+  circumcision: ["Circumcision", "Körülmetélés"],
+  dick_size: ["Penis size", "Péniszméret"],
+  body_hair: ["Body hair", "Testszőrzet"],
+  hair_color: ["Hair color", "Hajszín"],
+  eye_color: ["Eye color", "Szemszín"],
+  body_type: ["Body type", "Testalkat"],
+};
+
+// T-632 manifest: every dating-specific question retired, nothing retained.
+function retirementManifest(): Json {
+  return {
+    sha256: "2".repeat(64),
+    matching_orientation: "retired",
+    layer1_intent: "retired",
+    legacy_catalogue_types: [...AUDIENCE_VISIBILITY_LEGACY_TYPES],
+    profile_questions: AUDIENCE_VISIBILITY_RETIRED_PROFILE_QUESTION_KEYS.map((key) => ({
+      key,
+      labels: { en: RETIRED_QUESTION_LABELS[key][0], hu: RETIRED_QUESTION_LABELS[key][1] },
+    })),
+    retained_questions: [],
+  };
+}
+
+// Pre-T-632 (D-019) manifest, accepted until T-634 removes the transition branch.
+function legacyRetirementManifest(): Json {
+  return {
+    sha256: "2".repeat(64),
+    matching_orientation: "retired",
+    layer1_intent: "retired",
+    legacy_catalogue_types: [...AUDIENCE_VISIBILITY_LEGACY_TYPES],
+    profile_questions: [
+      { key: "dick_size", labels: { en: "Penis size", hu: "Péniszméret" }, reason: "sex_or_anatomy", state: "retired" },
+      { key: "circumcision", labels: { en: "Circumcision", hu: "Körülmetélés" }, reason: "sex_or_anatomy", state: "retired" },
+      { key: "sexual_position", labels: { en: "Position", hu: "Pozíció" }, reason: "sex_or_anatomy", state: "retired" },
+      { key: "safer_sex", labels: { en: "Safer sex", hu: "Biztonságosabb szex" }, reason: "sex_or_anatomy", state: "retired" },
+    ],
+    retained_questions: [{
+      key: "body_hair",
+      labels: { en: "Body hair", hu: "Testszőrzet" },
+      state: "active",
+      change: "neutral_general_all_groups",
+    }],
+  };
+}
+
 function catalog(): Json {
   return {
     contract_version: 1,
@@ -118,24 +171,7 @@ function catalog(): Json {
     visible_to_values: [...AUDIENCE_VISIBILITY_VALUES],
     groups: PROTECTED.map((_, index) => group(index)),
     group_manifest_sha256: "1".repeat(64),
-    retirement_manifest: {
-      sha256: "2".repeat(64),
-      matching_orientation: "retired",
-      layer1_intent: "retired",
-      legacy_catalogue_types: [...AUDIENCE_VISIBILITY_LEGACY_TYPES],
-      profile_questions: [
-        { key: "dick_size", labels: { en: "Penis size", hu: "Péniszméret" }, reason: "sex_or_anatomy", state: "retired" },
-        { key: "circumcision", labels: { en: "Circumcision", hu: "Körülmetélés" }, reason: "sex_or_anatomy", state: "retired" },
-        { key: "sexual_position", labels: { en: "Position", hu: "Pozíció" }, reason: "sex_or_anatomy", state: "retired" },
-        { key: "safer_sex", labels: { en: "Safer sex", hu: "Biztonságosabb szex" }, reason: "sex_or_anatomy", state: "retired" },
-      ],
-      retained_questions: [{
-        key: "body_hair",
-        labels: { en: "Body hair", hu: "Testszőrzet" },
-        state: "active",
-        change: "neutral_general_all_groups",
-      }],
-    },
+    retirement_manifest: retirementManifest(),
     intents: intents(),
   };
 }
@@ -319,6 +355,87 @@ test("the complete catalogue ignores unknown fields while semantic surprises fai
   const wrongRetirement = structuredClone(fixture);
   wrongRetirement.retirement_manifest.profile_questions[0].state = "active";
   assert.equal(audienceVisibilityCatalogResponse(success(wrongRetirement)), null);
+});
+
+test("the retirement manifest accepts eleven retired questions with nothing retained, and the pre-T-632 shape in transition", () => {
+  const withManifest = (manifest: Json): Json => ({ ...catalog(), retirement_manifest: manifest });
+  const decode = (manifest: Json) => audienceVisibilityCatalogResponse(success(withManifest(manifest)))?.retirement_manifest ?? null;
+
+  // T-632 (D-095): 1..11 rows within the eleven, labels from the payload, served order kept, retained list empty.
+  const current = decode(retirementManifest());
+  assert.ok(current);
+  assert.equal(current.sha256, "2".repeat(64));
+  assert.deepEqual(current.profile_questions.map((row) => row.key), [...AUDIENCE_VISIBILITY_RETIRED_PROFILE_QUESTION_KEYS]);
+  assert.equal(current.profile_questions.length, 11);
+  assert.deepEqual(current.profile_questions[0], { key: "piercings", labels: { en: "Piercings", hu: "Piercingek" }, state: "retired" });
+  assert.deepEqual(current.profile_questions[10], { key: "body_type", labels: { en: "Body type", hu: "Testalkat" }, state: "retired" });
+  assert.deepEqual(current.retained_questions, []);
+
+  const served = retirementManifest();
+  served.profile_questions = [...served.profile_questions].reverse().slice(0, 3);
+  assert.deepEqual(decode(served)?.profile_questions.map((row) => row.key), ["body_type", "eye_color", "hair_color"]);
+
+  const annotated = retirementManifest();
+  annotated.profile_questions = annotated.profile_questions.map((row: Json) => ({ ...row, reason: "dating_specific", state: "retired", future: true }));
+  assert.deepEqual(decode(annotated)?.profile_questions[3], { key: "sexual_position", labels: { en: "Position", hu: "Pozíció" }, reason: "dating_specific", state: "retired" });
+
+  const unknownKey = retirementManifest();
+  unknownKey.profile_questions[0].key = "smoking";
+  assert.equal(decode(unknownKey), null);
+  const duplicateKey = retirementManifest();
+  duplicateKey.profile_questions[1].key = "piercings";
+  assert.equal(decode(duplicateKey), null);
+  const empty = retirementManifest();
+  empty.profile_questions = [];
+  assert.equal(decode(empty), null);
+  const twelve = retirementManifest();
+  twelve.profile_questions.push({ key: "body_type", labels: { en: "Body type", hu: "Testalkat" } });
+  assert.equal(decode(twelve), null);
+  const notRetired = retirementManifest();
+  notRetired.profile_questions[0].state = "active";
+  assert.equal(decode(notRetired), null);
+  const unlabeled = retirementManifest();
+  delete unlabeled.profile_questions[0].labels;
+  assert.equal(decode(unlabeled), null);
+  const emptyReason = retirementManifest();
+  emptyReason.profile_questions[0].reason = "";
+  assert.equal(decode(emptyReason), null);
+  const contradiction = retirementManifest();
+  contradiction.retained_questions = legacyRetirementManifest().retained_questions;
+  assert.equal(decode(contradiction), null);
+  const twoRetained = legacyRetirementManifest();
+  twoRetained.retained_questions.push(twoRetained.retained_questions[0]);
+  assert.equal(decode(twoRetained), null);
+  const badHash = retirementManifest();
+  badHash.sha256 = "2".repeat(63);
+  assert.equal(decode(badHash), null);
+
+  // Pre-T-632 (D-019): four exact rows plus the neutral body_hair row, matched exactly as before.
+  const legacy = decode(legacyRetirementManifest());
+  assert.ok(legacy);
+  assert.deepEqual(legacy.profile_questions.map((row) => row.key), ["dick_size", "circumcision", "sexual_position", "safer_sex"]);
+  assert.deepEqual(legacy.profile_questions[0], { key: "dick_size", labels: { en: "Penis size", hu: "Péniszméret" }, reason: "sex_or_anatomy", state: "retired" });
+  assert.deepEqual(legacy.retained_questions, [{
+    key: "body_hair",
+    labels: { en: "Body hair", hu: "Testszőrzet" },
+    state: "active",
+    change: "neutral_general_all_groups",
+  }]);
+  const legacyDrift = legacyRetirementManifest();
+  legacyDrift.profile_questions[0].labels.en = "Penis";
+  assert.equal(decode(legacyDrift), null);
+  const legacyReordered = legacyRetirementManifest();
+  legacyReordered.profile_questions.reverse();
+  assert.equal(decode(legacyReordered), null);
+  const legacyShort = legacyRetirementManifest();
+  legacyShort.profile_questions.pop();
+  assert.equal(decode(legacyShort), null);
+  const legacyEleven = legacyRetirementManifest();
+  legacyEleven.profile_questions = retirementManifest().profile_questions;
+  assert.equal(decode(legacyEleven), null);
+  const legacyRetainedDrift = legacyRetirementManifest();
+  legacyRetainedDrift.retained_questions[0].change = "neutral_general";
+  assert.equal(decode(legacyRetainedDrift), null);
 });
 
 test("all 43 published Core Webadmin fixtures are unchanged, manifest-bound, and decode by case", async () => {

@@ -1783,12 +1783,12 @@
           },
           "retirement": {
             "title": "Retirement evidence",
-            "purpose": "The read-only manifest proves that matching orientation, Layer 1 and four sex/anatomy questions are retired while body hair remains neutral and legacy types stay import-refusal evidence.",
+            "purpose": "The read-only manifest proves that matching orientation, Layer 1 and the dating-specific profile questions are retired from Friending, while legacy types stay import-refusal evidence.",
             "actions": {
               "1": "Compare the manifest hash and exact retired rows when auditing a migration or catalogue report.",
-              "2": "Confirm that body hair is active for the neutral general profile set rather than orientation-derived eligibility."
+              "2": "Confirm that the retired rows list the dating-specific questions removed from Friending and that no retained question remains once the removal is deployed."
             },
-            "guidance": "Tombstoned catalogue rows and historic answers are not deleted or projected here. This page offers no control that can restore orientation authority."
+            "guidance": "Archived catalogue rows and historic answers are not projected here. This page offers no control that can restore orientation authority or a retired question."
           },
           "intents": {
             "title": "Replacement intent catalogue",
@@ -5113,11 +5113,11 @@
       "orientation": "Matching orientation",
       "layer1": "Layer 1 intent",
       "manifest": "Manifest SHA-256",
-      "questionsTitle": "Retired sex/anatomy questions",
-      "questionsCopy": "The catalogue rows and historical member answers are tombstoned, not deleted or exposed here.",
-      "sexAnatomy": "Retired because this is a sex/anatomy profile question.",
+      "questionsTitle": "Retired dating-specific questions",
+      "questionsCopy": "Friending is a friend-finding app, so these dating-specific profile questions were retired from it. Their catalogue rows are archived and never exposed here.",
+      "datingSpecific": "Retired from Friending as a dating-specific profile question.",
       "retainedTitle": "Retained neutral question",
-      "retainedCopy": "Body hair remains a general profile fact for all seven protected groups and no longer depends on orientation-derived eligibility.",
+      "retainedCopy": "A question listed here is still served as a neutral general profile fact by a Core that predates the removal. The current Friending manifest retains none.",
       "neutral": "Active in the neutral general profile set for every protected group.",
       "legacyTitle": "Legacy import refusal vocabulary",
       "legacyCopy": "These legacy catalogue types are evidence-only. Runtime never restores them as current profile or discovery facts."

@@ -49,6 +49,21 @@ export const AUDIENCE_VISIBILITY_LEGACY_TYPES = [
   "my_tribes",
 ] as const;
 
+/** D-095 (T-632): the dating-specific profile questions Core retires from Friending; served order, any subset. */
+export const AUDIENCE_VISIBILITY_RETIRED_PROFILE_QUESTION_KEYS = [
+  "piercings",
+  "tattoos",
+  "beard",
+  "sexual_position",
+  "safer_sex",
+  "circumcision",
+  "dick_size",
+  "body_hair",
+  "hair_color",
+  "eye_color",
+  "body_type",
+] as const;
+
 export const AUDIENCE_VISIBILITY_INITIAL_INTENT_KEYS = [
   "people_to_meet_irl",
   "couple_friends",
@@ -72,6 +87,8 @@ export type AudienceVisibilityCapability = (typeof AUDIENCE_VISIBILITY_CAPABILIT
 export type AudienceVisibilityAdminAction = (typeof AUDIENCE_VISIBILITY_ADMIN_ACTIONS)[number];
 export type AudienceVisibilityMutationAction = (typeof AUDIENCE_VISIBILITY_MUTATION_ACTIONS)[number];
 export type AudienceVisibilityTab = (typeof AUDIENCE_VISIBILITY_TABS)[number];
+export type AudienceVisibilityRetiredProfileQuestionKey =
+  (typeof AUDIENCE_VISIBILITY_RETIRED_PROFILE_QUESTION_KEYS)[number];
 
 export type AudienceVisibilityPrincipal = {
   role: "" | "viewer" | "editor" | "approver" | "owner";
@@ -103,23 +120,31 @@ export type AudienceVisibilityGroup = {
   editable_fields: string[];
 };
 
+export type AudienceVisibilityRetiredQuestion = {
+  key: AudienceVisibilityRetiredProfileQuestionKey;
+  labels: { en: string; hu: string };
+  /** Served by the pre-T-632 manifest ("sex_or_anatomy"); optional on the T-632 one. */
+  reason?: string;
+  state: "retired";
+};
+
+/** Only the pre-T-632 manifest carries this row; T-634 removes it with the transition branch. */
+export type AudienceVisibilityRetainedQuestion = {
+  key: "body_hair";
+  labels: { en: "Body hair"; hu: "Testszőrzet" };
+  state: "active";
+  change: "neutral_general_all_groups";
+};
+
 export type AudienceVisibilityRetirementManifest = {
   sha256: string;
   matching_orientation: "retired";
   layer1_intent: "retired";
   legacy_catalogue_types: string[];
-  profile_questions: Array<{
-    key: "dick_size" | "circumcision" | "sexual_position" | "safer_sex";
-    labels: { en: string; hu: string };
-    reason: "sex_or_anatomy";
-    state: "retired";
-  }>;
-  retained_questions: Array<{
-    key: "body_hair";
-    labels: { en: "Body hair"; hu: "Testszőrzet" };
-    state: "active";
-    change: "neutral_general_all_groups";
-  }>;
+  /** 1..11 rows in served order, keys within AUDIENCE_VISIBILITY_RETIRED_PROFILE_QUESTION_KEYS, unique. */
+  profile_questions: AudienceVisibilityRetiredQuestion[];
+  /** Empty on the T-632 manifest; exactly the neutral body_hair row on the pre-T-632 one. */
+  retained_questions: AudienceVisibilityRetainedQuestion[];
 };
 
 export type AudienceVisibilityIntent = {
@@ -197,7 +222,8 @@ const PROTECTED_GROUPS: ReadonlyArray<{
   { key: "nonbinary_for_both", gender: "nonbinary", visible_to: "both", legacy_segment: "other" },
 ];
 
-const RETIRED_QUESTIONS = [
+// Pre-T-632 (D-019) manifest, matched exactly during the transition; T-634 deletes these pins with that branch.
+const LEGACY_RETIRED_QUESTIONS = [
   { key: "dick_size", en: "Penis size", hu: "Péniszméret" },
   { key: "circumcision", en: "Circumcision", hu: "Körülmetélés" },
   { key: "sexual_position", en: "Position", hu: "Pozíció" },
@@ -352,6 +378,47 @@ function sortedRows<T extends { sort_order: number; key: string }>(rows: T[]): b
     || (rows[index - 1].sort_order === row.sort_order && rows[index - 1].key < row.key));
 }
 
+// T-632 row: key within the eleven, labels from the payload; reason/state are optional but may not contradict.
+function retiredQuestion(value: unknown): AudienceVisibilityRetiredQuestion | null {
+  const source = requiredObject(value, ["key", "labels"]);
+  const key = oneOf(source?.key, AUDIENCE_VISIBILITY_RETIRED_PROFILE_QUESTION_KEYS);
+  const labels = localizedPair(source?.labels, 80);
+  if (!source || !key || !labels) return null;
+  if (Object.hasOwn(source, "state") && source.state !== "retired") return null;
+  if (!Object.hasOwn(source, "reason")) return { key, labels, state: "retired" };
+  const reason = canonicalText(source.reason, 1, 80);
+  return reason ? { key, labels, reason, state: "retired" } : null;
+}
+
+// Pre-T-632 rows, exactly as Core published them under D-019.
+function legacyRetiredQuestions(value: unknown[]): AudienceVisibilityRetiredQuestion[] | null {
+  if (value.length !== LEGACY_RETIRED_QUESTIONS.length) return null;
+  const questions: AudienceVisibilityRetiredQuestion[] = [];
+  for (const [index, expected] of LEGACY_RETIRED_QUESTIONS.entries()) {
+    const row = requiredObject(value[index], ["key", "labels", "reason", "state"]);
+    const labels = localizedPair(row?.labels, 80);
+    if (row?.key !== expected.key || labels?.en !== expected.en || labels.hu !== expected.hu
+      || row.reason !== "sex_or_anatomy" || row.state !== "retired") return null;
+    questions.push({ key: expected.key, labels, reason: "sex_or_anatomy", state: "retired" });
+  }
+  return questions;
+}
+
+function legacyRetainedQuestion(value: unknown): AudienceVisibilityRetainedQuestion | null {
+  const retained = requiredObject(value, ["key", "labels", "state", "change"]);
+  const labels = localizedPair(retained?.labels, 80);
+  if (retained?.key !== "body_hair" || labels?.en !== "Body hair" || labels.hu !== "Testszőrzet"
+    || retained.state !== "active" || retained.change !== "neutral_general_all_groups") return null;
+  return {
+    key: "body_hair",
+    labels: { en: "Body hair", hu: "Testszőrzet" },
+    state: "active",
+    change: "neutral_general_all_groups",
+  };
+}
+
+// Two shapes: the T-632 manifest (1..11 retired rows as served, nothing retained) and, until T-634,
+// the pre-T-632 one (four exact rows plus the neutral body_hair row). An empty retained list selects the former.
 function retirementManifest(value: unknown): AudienceVisibilityRetirementManifest | null {
   const source = requiredObject(value, [
     "sha256", "matching_orientation", "layer1_intent", "legacy_catalogue_types",
@@ -360,22 +427,25 @@ function retirementManifest(value: unknown): AudienceVisibilityRetirementManifes
   if (typeof source?.sha256 !== "string" || !SHA256.test(source.sha256)
     || source.matching_orientation !== "retired" || source.layer1_intent !== "retired"
     || !exactOrdered(source.legacy_catalogue_types, AUDIENCE_VISIBILITY_LEGACY_TYPES)
-    || !Array.isArray(source.profile_questions) || source.profile_questions.length !== RETIRED_QUESTIONS.length
-    || !Array.isArray(source.retained_questions) || source.retained_questions.length !== 1) return null;
+    || !Array.isArray(source.profile_questions) || source.profile_questions.length === 0
+    || source.profile_questions.length > AUDIENCE_VISIBILITY_RETIRED_PROFILE_QUESTION_KEYS.length
+    || !Array.isArray(source.retained_questions) || source.retained_questions.length > 1) return null;
 
-  const questions: AudienceVisibilityRetirementManifest["profile_questions"] = [];
-  for (const [index, expected] of RETIRED_QUESTIONS.entries()) {
-    const row = requiredObject(source.profile_questions[index], ["key", "labels", "reason", "state"]);
-    const labels = localizedPair(row?.labels, 80);
-    if (row?.key !== expected.key || labels?.en !== expected.en || labels.hu !== expected.hu
-      || row.reason !== "sex_or_anatomy" || row.state !== "retired") return null;
-    questions.push({ key: expected.key, labels, reason: "sex_or_anatomy", state: "retired" });
+  let questions: AudienceVisibilityRetiredQuestion[] | null;
+  let retained: AudienceVisibilityRetainedQuestion[];
+  if (source.retained_questions.length === 0) {
+    const rows = source.profile_questions.map(retiredQuestion);
+    questions = rows.every((row: AudienceVisibilityRetiredQuestion | null) => row !== null)
+      ? rows as AudienceVisibilityRetiredQuestion[]
+      : null;
+    retained = [];
+  } else {
+    questions = legacyRetiredQuestions(source.profile_questions);
+    const row = legacyRetainedQuestion(source.retained_questions[0]);
+    if (!row) return null;
+    retained = [row];
   }
-  const retained = requiredObject(source.retained_questions[0], ["key", "labels", "state", "change"]);
-  const retainedLabels = localizedPair(retained?.labels, 80);
-  if (retained?.key !== "body_hair" || retainedLabels?.en !== "Body hair"
-    || retainedLabels.hu !== "Testszőrzet" || retained.state !== "active"
-    || retained.change !== "neutral_general_all_groups") return null;
+  if (!questions || new Set(questions.map((row) => row.key)).size !== questions.length) return null;
 
   return {
     sha256: source.sha256,
@@ -383,12 +453,7 @@ function retirementManifest(value: unknown): AudienceVisibilityRetirementManifes
     layer1_intent: "retired",
     legacy_catalogue_types: [...AUDIENCE_VISIBILITY_LEGACY_TYPES],
     profile_questions: questions,
-    retained_questions: [{
-      key: "body_hair",
-      labels: { en: "Body hair", hu: "Testszőrzet" },
-      state: "active",
-      change: "neutral_general_all_groups",
-    }],
+    retained_questions: retained,
   };
 }
 

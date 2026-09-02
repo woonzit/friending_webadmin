@@ -1783,12 +1783,12 @@
           },
           "retirement": {
             "title": "Kivezetési bizonyíték",
-            "purpose": "A csak olvasható jegyzék bizonyítja a matching orientation, Layer 1 és négy szex/anatómia kérdés kivezetését, miközben a testszőrzet semleges marad, a legacy típusok pedig import-elutasítási bizonyítékok.",
+            "purpose": "A csak olvasható jegyzék bizonyítja a matching orientation, a Layer 1 és a randi-specifikus profilkérdések kivezetését a Friendingből, miközben a legacy típusok import-elutasítási bizonyítékok maradnak.",
             "actions": {
               "1": "Migráció vagy katalógusjelentés auditálásakor hasonlítsd össze a jegyzék hashét és a pontos kivezetett sorokat.",
-              "2": "Ellenőrizd, hogy a testszőrzet a semleges általános profilhalmazban aktív, nem orientációból származtatott jogosultságban."
+              "2": "Ellenőrizd, hogy a kivezetett sorok a Friendingből eltávolított randi-specifikus kérdéseket sorolják fel, és a kivezetés kitelepítése után egyetlen megtartott kérdés sem marad."
             },
-            "guidance": "A tombstone katalógussorok és történeti válaszok nincsenek törölve vagy itt kivetítve. Az oldal nem kínál vezérlőt az orientáció hatáskörének visszaállítására."
+            "guidance": "Az archivált katalógussorok és a történeti válaszok itt nem jelennek meg. Az oldal nem kínál vezérlőt az orientáció hatáskörének vagy egy kivezetett kérdésnek a visszaállítására."
           },
           "intents": {
             "title": "Új szándékkatalógus",
@@ -5113,11 +5113,11 @@
       "orientation": "Párosítási orientáció",
       "layer1": "Layer 1 szándék",
       "manifest": "Jegyzék SHA-256",
-      "questionsTitle": "Kivezetett szex/anatómia kérdések",
-      "questionsCopy": "A katalógussorok és a korábbi tagi válaszok tombstone állapotúak, nincsenek törölve és itt sem jelennek meg.",
-      "sexAnatomy": "Kivezetve, mert szexuális/anatómiai profilkérdés.",
+      "questionsTitle": "Kivezetett randi-specifikus kérdések",
+      "questionsCopy": "A Friending barátkozó app, ezért ezek a randi-specifikus profilkérdések kikerültek belőle. A katalógussoraik archiválva vannak, és itt soha nem jelennek meg.",
+      "datingSpecific": "Kivezetve a Friendingből, mert randi-specifikus profilkérdés.",
       "retainedTitle": "Megtartott semleges kérdés",
-      "retainedCopy": "A testszőrzet minden védett csoportnál általános profiladat marad, és már nem függ orientációból származtatott jogosultságtól.",
+      "retainedCopy": "Az itt felsorolt kérdést a kivezetés előtti Core még semleges általános profiladatként szolgálja ki. Az aktuális Friending-jegyzék egyet sem tart meg.",
       "neutral": "Aktív a semleges általános profilhalmazban mind a hét védett csoportnál.",
       "legacyTitle": "Legacy import-elutasítási szókészlet",
       "legacyCopy": "Ezek a legacy katalógustípusok csak bizonyítékok. A runtime soha nem állítja vissza őket aktuális profil- vagy felfedezési adatként."
