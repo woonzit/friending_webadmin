@@ -4,6 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
 import { formatDate } from "@/lib/format";
+import { forcedStorefrontName } from "@/lib/forcedVerification";
+import {
+  liveNonVideoStorefronts,
+  liveVideoStorefronts,
+  verificationMethodConsoleResponse,
+  type VerificationMethodConsoleData,
+} from "@/lib/verificationMethod";
 import {
   PROFILE_VERIFICATION_BADGE_STATUSES,
   PROFILE_VERIFICATION_DETAIL_STATUSES,
@@ -115,6 +122,7 @@ function ColorFields({
 
 export default function ProfileVerificationConfiguration() {
   const t = useTranslations("profileVerification.configuration");
+  const methodReason = useTranslations("verificationAdmin.live.methodReasons");
   const common = useTranslations("common");
   const locale = useLocale();
   const previewLanguage: Language = locale === "hu" ? "hu" : "en";
@@ -123,6 +131,14 @@ export default function ProfileVerificationConfiguration() {
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  /**
+   * T-617 contract §7.3 / surprise #11: video enablement is DERIVED from the
+   * unified method policy, so this page reads `verification_method_console`
+   * rather than inferring anything from its own config document. `null` means
+   * "not read yet or refused" and fails closed — the line then says the
+   * authoritative coverage could not be loaded instead of claiming a state.
+   */
+  const [coverage, setCoverage] = useState<VerificationMethodConsoleData | null>(null);
 
   const adopt = useCallback((raw: unknown): boolean => {
     const parsed = normalizeProfileVerificationConfig(raw);
@@ -135,7 +151,11 @@ export default function ProfileVerificationConfiguration() {
   const load = useCallback(async () => {
     setState("loading");
     setFeedback(null);
-    const response = await adminCall("profile_verification_config");
+    const [response, methodResponse] = await Promise.all([
+      adminCall("profile_verification_config"),
+      adminCall("verification_method_console", { contract_version: 1 }),
+    ]);
+    setCoverage(verificationMethodConsoleResponse(methodResponse));
     setState(response?.success && adopt(profileVerificationResponseData(response)) ? "ready" : "error");
   }, [adopt]);
 
@@ -183,10 +203,10 @@ export default function ProfileVerificationConfiguration() {
         setFeedback({ tone: "error", text: t("conflict") });
         return;
       }
-      const message = response?.error === "profile-verification-enablement-locked"
-        ? t("enablementLocked")
-        : t("saveError", { error: String(response?.error || "core-unavailable") });
-      setFeedback({ tone: "error", text: message });
+      setFeedback({
+        tone: "error",
+        text: t("saveError", { error: String(response?.error || "core-unavailable") }),
+      });
       return;
     }
     if (!adopt(authoritative)) {
@@ -204,6 +224,36 @@ export default function ProfileVerificationConfiguration() {
   }
 
   const locked = busy;
+  /**
+   * The exact §7.3 sentence for the live document: nowhere, storefront-only,
+   * global, or global with non-video overrides, plus Core's own availability
+   * reason when new video starts are unavailable. A missing or refused read
+   * never renders as "not selected anywhere".
+   */
+  const derivedAvailability = ((): string => {
+    if (!coverage) return t("availabilityLoadError");
+    const live = coverage.policy.live.document;
+    const videoStorefronts = liveVideoStorefronts(live);
+    const names = (codes: string[]): string => codes
+      .map((code) => `${forcedStorefrontName(code, locale)} · ${code}`)
+      .join(", ");
+    let sentence: string;
+    if (live.global === "video") {
+      const others = liveNonVideoStorefronts(live);
+      sentence = others.length === 0
+        ? t("videoGlobal")
+        : t("videoGlobalExcept", { storefronts: names(others) });
+    } else if (videoStorefronts.length > 0) {
+      sentence = t("videoStorefronts", { storefronts: names(videoStorefronts) });
+    } else {
+      sentence = t("videoNowhere");
+    }
+    const video = coverage.method_availability.video;
+    return video.new_start_available || video.reason === null
+      ? sentence
+      : `${sentence} ${t("videoUnavailable", { reason: methodReason(video.reason) })}`;
+  })();
+
   return (
     <section id="profile-verification" className="panel verification-config-panel">
       <div className="panel-header verification-config-header">
@@ -225,10 +275,12 @@ export default function ProfileVerificationConfiguration() {
         {feedback && <div className={`alert ${feedback.tone === "success" ? "alert-success" : "alert-error"}`} role="status">{feedback.text}</div>}
         {dirty && !feedback && <div className="alert alert-info" role="status">{t("unsaved")}</div>}
 
-        <label className="switch-row verification-feature-switch">
-          <input type="checkbox" checked={draft.enabled} disabled={locked} onChange={(event) => change((next) => { next.enabled = event.target.checked; })} />
-          <span><strong>{t("enabled")}</strong><small>{t("enabledHint")}</small></span>
-        </label>
+        <div className="switch-row verification-feature-switch">
+          <span>
+            <strong>{t("derivedAvailabilityLabel")}</strong>
+            <small>{derivedAvailability}</small>
+          </span>
+        </div>
 
         <div className="verification-editor-section">
           <div className="verification-section-heading"><h3>{t("account.title")}</h3><p>{t("account.copy")}</p></div>

@@ -403,9 +403,15 @@ export function normalizeProfileVerificationConfig(value: unknown): ProfileVerif
   };
 }
 
+/**
+ * T-617 contract §6.4: the save payload is exactly `{copy, prompts}`. `enabled`
+ * is a DERIVED read-only boolean on Core's side — it is true when video is the
+ * live mandatory method somewhere and the deployment can start it — so the
+ * console must never send it. Core refuses an attempted change with
+ * `profile-verification-enabled-derived`.
+ */
 export function profileVerificationSavePayload(config: ProfileVerificationConfig): Record<string, unknown> {
   return {
-    enabled: config.enabled,
     copy: config.copy,
     prompts: config.prompts,
   };
