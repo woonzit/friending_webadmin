@@ -30,6 +30,25 @@ export const AUDIENCE_VISIBILITY_MUTATION_ACTIONS = [
   "archive_audience_visibility_intent",
   "set_audience_visibility_intent_limit",
 ] as const;
+
+/**
+ * T-653, contract amendment "Amended by `opus-api-t653`" §2a. The member
+ * identity write is published in its own `admin_me` block, NOT as a fifth
+ * capability or an eighth action above.
+ *
+ * `exactOrdered()` pins both arrays of the `audience_visibility` block, so a
+ * Core that appended to either one would make `audienceVisibilityAdminMe()`
+ * return `null` on every deployed build — darkening the whole workspace and
+ * refusing the seven actions that already work. Core therefore serves a sibling
+ * `admin_me.audience_visibility_identity` of the identical shape, and these two
+ * arrays are pinned exactly the same way for it.
+ */
+export const AUDIENCE_VISIBILITY_IDENTITY_CAPABILITIES = [
+  "audience_visibility_member_write",
+] as const;
+export const AUDIENCE_VISIBILITY_IDENTITY_ACTIONS = [
+  "save_audience_visibility_member_identity",
+] as const;
 export const AUDIENCE_VISIBILITY_TABS = ["groups", "retirement", "intents"] as const;
 
 export const AUDIENCE_VISIBILITY_LEGACY_TYPES = [
@@ -81,10 +100,27 @@ export const AUDIENCE_VISIBILITY_INITIAL_INTENT_KEYS = [
   "anything",
 ] as const;
 
+/**
+ * The legacy gender token the signup-option catalogue tags a detailed-gender
+ * option's `audiences` with, for each canonical V2 gender. Core's own
+ * projection (`IdentityV2Policy::legacyGender()`) is the authority; this is the
+ * one place the console crosses between the two vocabularies, so the member
+ * panel can filter the served `identity_options` without pinning the 25
+ * detail keys themselves.
+ */
+export const AUDIENCE_VISIBILITY_LEGACY_GENDER = {
+  man: "male",
+  woman: "female",
+  nonbinary: "other",
+} as const;
+
 export type AudienceVisibilityGender = (typeof AUDIENCE_VISIBILITY_GENDERS)[number];
 export type AudienceVisibilityValue = (typeof AUDIENCE_VISIBILITY_VALUES)[number];
 export type AudienceVisibilityCapability = (typeof AUDIENCE_VISIBILITY_CAPABILITIES)[number];
 export type AudienceVisibilityAdminAction = (typeof AUDIENCE_VISIBILITY_ADMIN_ACTIONS)[number];
+export type AudienceVisibilityIdentityCapability =
+  (typeof AUDIENCE_VISIBILITY_IDENTITY_CAPABILITIES)[number];
+export type AudienceVisibilityIdentityAction = (typeof AUDIENCE_VISIBILITY_IDENTITY_ACTIONS)[number];
 export type AudienceVisibilityMutationAction = (typeof AUDIENCE_VISIBILITY_MUTATION_ACTIONS)[number];
 export type AudienceVisibilityTab = (typeof AUDIENCE_VISIBILITY_TABS)[number];
 export type AudienceVisibilityRetiredProfileQuestionKey =
@@ -100,6 +136,18 @@ export type AudienceVisibilityAdminMe = {
   contract_ready: boolean;
   principal: AudienceVisibilityPrincipal;
   actions: AudienceVisibilityAdminAction[];
+};
+
+export type AudienceVisibilityIdentityPrincipal = {
+  role: "" | "viewer" | "editor" | "approver" | "owner";
+  capabilities: AudienceVisibilityIdentityCapability[];
+};
+
+export type AudienceVisibilityIdentityAdminMe = {
+  contract_version: 1;
+  contract_ready: boolean;
+  principal: AudienceVisibilityIdentityPrincipal;
+  actions: AudienceVisibilityIdentityAction[];
 };
 
 export type AudienceVisibilityRule = {
@@ -173,6 +221,26 @@ export type AudienceVisibilityCatalog = {
   intents: AudienceVisibilityIntents;
 };
 
+/**
+ * The three keys T-653 appends to `audience_visibility_member_detail`, kept
+ * together in one optional container.
+ *
+ * They travel as three sibling keys on the wire (contract §7a). They are
+ * modelled as one nullable object because they only mean anything together:
+ * without `identity_revision` there is no second optimistic axis to guard, so
+ * the editor cannot be offered at all. A Core that predates T-653 serves none
+ * of them and this reads `null` — the member row still decodes and still
+ * renders read-only. A Core that serves them malformed fails the whole decode,
+ * as every other field in this family does.
+ */
+export type AudienceVisibilityMemberIdentity = {
+  /** `identity_v2.revision`; 0 means the member has no canonical document yet. */
+  identity_revision: number;
+  gender_detail: string | null;
+  /** The member's own disclosure toggle. Read-only on this contract. */
+  show_gender_detail: boolean;
+};
+
 export type AudienceVisibilityMemberDetail = {
   contract_version: 1;
   uid: number;
@@ -180,6 +248,13 @@ export type AudienceVisibilityMemberDetail = {
   visible_to: AudienceVisibilityValue;
   revision: number;
   group: null | { id: string; key: string; legacy_segment: string };
+  identity: AudienceVisibilityMemberIdentity | null;
+};
+
+export type AudienceVisibilityMemberMutation = {
+  contract_version: 1;
+  member: AudienceVisibilityMemberDetail;
+  replayed: boolean;
 };
 
 export type AudienceVisibilityGroupMutation = {
@@ -196,11 +271,21 @@ export type AudienceVisibilityIntentMutation = {
 
 export type AudienceVisibilityConflict =
   | { kind: "group"; group: AudienceVisibilityGroup }
-  | { kind: "intents"; intents: AudienceVisibilityIntents };
+  | { kind: "intents"; intents: AudienceVisibilityIntents }
+  | { kind: "member"; member: AudienceVisibilityMemberDetail };
 
 type JsonObject = Record<string, unknown>;
 
 const GROUP_KEY = /^[a-z][a-z0-9_]{0,63}$/u;
+/**
+ * Shape only. The gender-detail vocabulary belongs to Core
+ * (`IdentityV2Policy::genderDetails()`), which answers
+ * `identity-gender-detail-invalid` / `-mismatch` for a value outside it or
+ * belonging to another gender. Pinning the 25 keys here would put a second
+ * authority in the browser and would have to be re-pinned on every catalogue
+ * change; the console renders the labels Core serves and validates the form.
+ */
+const GENDER_DETAIL = /^[a-z][a-z0-9_]{0,63}$/u;
 const MONGO_ID = /^[0-9a-f]{24}$/u;
 const REQUEST_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 const SHA256 = /^[0-9a-f]{64}$/u;
@@ -569,7 +654,55 @@ export function audienceVisibilityAdminMe(value: unknown): AudienceVisibilityAdm
   };
 }
 
+/**
+ * The sibling `admin_me.audience_visibility_identity` block (T-653 §2a).
+ *
+ * Same shape and the same exact-ordered pins as the block above, and tolerant
+ * of the whole block being absent: a Core that predates the amendment simply
+ * has no key here, this answers `null`, and the editor stays hidden.
+ */
+export function audienceVisibilityIdentityAdminMe(value: unknown): AudienceVisibilityIdentityAdminMe | null {
+  const source = requiredObject(value, ["contract_version", "contract_ready", "principal", "actions"]);
+  const principalSource = requiredObject(source?.principal, ["role", "capabilities"]);
+  const role = oneOf(principalSource?.role, ["", "viewer", "editor", "approver", "owner"] as const);
+  const capabilities = orderedUnique(
+    principalSource?.capabilities,
+    AUDIENCE_VISIBILITY_IDENTITY_CAPABILITIES,
+  );
+  if (source?.contract_version !== 1 || typeof source.contract_ready !== "boolean"
+    || role === null || !capabilities) return null;
+  // Reading a member is a viewer affordance; changing one's canonical gender is
+  // an editor one, exactly like the group and intent writes.
+  const expectedCapabilities = role === "" || role === "viewer"
+    ? []
+    : [...AUDIENCE_VISIBILITY_IDENTITY_CAPABILITIES];
+  if (!exactOrdered(capabilities, expectedCapabilities)) return null;
+  const expectedActions = source.contract_ready && expectedCapabilities.length > 0
+    ? [...AUDIENCE_VISIBILITY_IDENTITY_ACTIONS]
+    : [];
+  if (!exactOrdered(source.actions, expectedActions)) return null;
+  return {
+    contract_version: 1,
+    contract_ready: source.contract_ready,
+    principal: { role, capabilities: [...expectedCapabilities] },
+    actions: [...expectedActions],
+  };
+}
+
+/** Whether the sibling block authorizes the one identity action it publishes. */
+export function audienceVisibilityIdentityWriteAuthorized(membership: unknown): boolean {
+  const block = audienceVisibilityIdentityAdminMe(record(membership)?.audience_visibility_identity);
+  return Boolean(block?.contract_ready
+    && block.actions.includes(AUDIENCE_VISIBILITY_IDENTITY_ACTIONS[0])
+    && block.principal.capabilities.includes(AUDIENCE_VISIBILITY_IDENTITY_CAPABILITIES[0]));
+}
+
 export function audienceVisibilityProxyCapabilityAuthorized(action: string, membership: unknown): boolean | null {
+  if ((AUDIENCE_VISIBILITY_IDENTITY_ACTIONS as readonly string[]).includes(action)) {
+    // Authorized ONLY by the sibling block, never by the top-level role and
+    // never by the four-capability block beside it.
+    return audienceVisibilityIdentityWriteAuthorized(membership);
+  }
   if (!(AUDIENCE_VISIBILITY_ADMIN_ACTIONS as readonly string[]).includes(action)) return null;
   const block = audienceVisibilityAdminMe(record(membership)?.audience_visibility);
   const typedAction = action as AudienceVisibilityAdminAction;
@@ -607,32 +740,92 @@ export function audienceVisibilityIntentMutationResponse(value: unknown): Audien
   });
 }
 
+const MEMBER_IDENTITY_KEYS = ["identity_revision", "gender_detail", "show_gender_detail"] as const;
+
+/**
+ * The T-653 keys, decoded tolerantly: all three, or none.
+ *
+ * `{ identity: null }` is a Core that predates the amendment — the member row
+ * still decodes and the panel stays read-only, because without
+ * `identity_revision` there is no second axis to guard a write with. A partial
+ * or malformed set is `null`, which fails the whole member decode: this family
+ * never renders a half-read payload as a proven state.
+ */
+function memberIdentity(source: JsonObject): { identity: AudienceVisibilityMemberIdentity | null } | null {
+  const present = MEMBER_IDENTITY_KEYS.filter((key) => Object.hasOwn(source, key));
+  if (present.length === 0) return { identity: null };
+  if (present.length !== MEMBER_IDENTITY_KEYS.length) return null;
+  const revision = integer(source.identity_revision, 0, 2_147_483_647);
+  const raw = source.gender_detail;
+  const detail = raw === null
+    ? null
+    : typeof raw === "string" && GENDER_DETAIL.test(raw) ? raw : undefined;
+  const shown = source.show_gender_detail;
+  if (revision === null || detail === undefined || typeof shown !== "boolean") return null;
+  // Core forces the disclosure toggle false when there is no detail to
+  // disclose (`AudienceVisibilityAdminService::memberGenderDetail`), so the
+  // pair cannot legitimately arrive as "no detail, shown".
+  if (detail === null && shown) return null;
+  return {
+    identity: { identity_revision: revision, gender_detail: detail, show_gender_detail: shown },
+  };
+}
+
+function memberDetail(data: unknown): AudienceVisibilityMemberDetail | null {
+  const source = requiredObject(data, ["contract_version", "uid", "gender", "visible_to", "revision", "group"]);
+  if (!source) return null;
+  const uid = integer(source.uid, 1, 2_147_483_647);
+  const gender = source.gender === null ? null : oneOf(source.gender, AUDIENCE_VISIBILITY_GENDERS);
+  const visibleTo = oneOf(source.visible_to, AUDIENCE_VISIBILITY_VALUES);
+  const revision = integer(source.revision, 1, 2_147_483_647);
+  const identity = memberIdentity(source);
+  if (source.contract_version !== 1 || uid === null || gender === null && source.gender !== null
+    || !visibleTo || revision === null || !identity) return null;
+  if (gender === null) {
+    // An unresolved member has no canonical gender, so Core projects no detail
+    // and no derived group, and the audience can only be the open default.
+    return source.group === null && visibleTo === "both"
+      && (identity.identity === null || identity.identity.gender_detail === null)
+      ? {
+        contract_version: 1,
+        uid,
+        gender: null,
+        visible_to: "both",
+        revision,
+        group: null,
+        identity: identity.identity,
+      }
+      : null;
+  }
+  const group = requiredObject(source.group, ["id", "key", "legacy_segment"]);
+  const definition = PROTECTED_GROUPS.find((row) => row.gender === gender && row.visible_to === visibleTo);
+  if (!definition || typeof group?.id !== "string" || !MONGO_ID.test(group.id)
+    || group.key !== definition.key || group.legacy_segment !== definition.legacy_segment) return null;
+  return {
+    contract_version: 1,
+    uid,
+    gender,
+    visible_to: visibleTo,
+    revision,
+    group: { id: group.id, key: definition.key, legacy_segment: definition.legacy_segment },
+    identity: identity.identity,
+  };
+}
+
 export function audienceVisibilityMemberDetailResponse(value: unknown): AudienceVisibilityMemberDetail | null {
+  return successData(value, memberDetail);
+}
+
+/** T-653 §7b. Success carries the complete canonical member plus the replay flag. */
+export function audienceVisibilityMemberIdentityMutationResponse(
+  value: unknown,
+): AudienceVisibilityMemberMutation | null {
   return successData(value, (data) => {
-    const source = requiredObject(data, ["contract_version", "uid", "gender", "visible_to", "revision", "group"]);
-    const uid = integer(source?.uid, 1, 2_147_483_647);
-    const gender = source?.gender === null ? null : oneOf(source?.gender, AUDIENCE_VISIBILITY_GENDERS);
-    const visibleTo = oneOf(source?.visible_to, AUDIENCE_VISIBILITY_VALUES);
-    const revision = integer(source?.revision, 1, 2_147_483_647);
-    if (source?.contract_version !== 1 || uid === null || gender === null && source.gender !== null
-      || !visibleTo || revision === null) return null;
-    if (gender === null) {
-      return source.group === null && visibleTo === "both"
-        ? { contract_version: 1, uid, gender: null, visible_to: "both", revision, group: null }
-        : null;
-    }
-    const group = requiredObject(source.group, ["id", "key", "legacy_segment"]);
-    const definition = PROTECTED_GROUPS.find((row) => row.gender === gender && row.visible_to === visibleTo);
-    if (!definition || typeof group?.id !== "string" || !MONGO_ID.test(group.id)
-      || group.key !== definition.key || group.legacy_segment !== definition.legacy_segment) return null;
-    return {
-      contract_version: 1,
-      uid,
-      gender,
-      visible_to: visibleTo,
-      revision,
-      group: { id: group.id, key: definition.key, legacy_segment: definition.legacy_segment },
-    };
+    const source = requiredObject(data, ["contract_version", "member", "replayed"]);
+    const member = memberDetail(source?.member);
+    return source?.contract_version === 1 && member && typeof source.replayed === "boolean"
+      ? { contract_version: 1, member, replayed: source.replayed }
+      : null;
   });
 }
 
@@ -640,14 +833,19 @@ export function audienceVisibilityConflict(value: unknown): AudienceVisibilityCo
   const envelope = webadminErrorEnvelope(value, "required");
   if (!envelope || envelope.status_code !== 409 || envelope.error !== "audience-visibility-conflict") return null;
   const data = record(envelope.data);
-  const branches = ["group", "intents"].filter((key) => data && Object.hasOwn(data, key));
+  const branches = ["group", "intents", "member"].filter((key) => data && Object.hasOwn(data, key));
   if (branches.length !== 1) return null;
   const groupData = requiredObject(envelope.data, ["contract_version", "group"]);
   const group = visibilityGroup(groupData?.group);
   if (groupData?.contract_version === 1 && group) return { kind: "group", group };
   const intentsData = requiredObject(envelope.data, ["contract_version", "intents"]);
   const intents = audienceVisibilityIntents(intentsData?.intents);
-  return intentsData?.contract_version === 1 && intents ? { kind: "intents", intents } : null;
+  if (intentsData?.contract_version === 1 && intents) return { kind: "intents", intents };
+  // T-653 §7b: the member-identity conflict carries the canonical member, so
+  // the panel adopts it and asks for a fresh operator gesture.
+  const memberData = requiredObject(envelope.data, ["contract_version", "member"]);
+  const member = memberDetail(memberData?.member);
+  return memberData?.contract_version === 1 && member ? { kind: "member", member } : null;
 }
 
 export const AUDIENCE_VISIBILITY_ERROR_STATUSES: Readonly<Record<string, number>> = {
@@ -675,6 +873,15 @@ export const AUDIENCE_VISIBILITY_ERROR_STATUSES: Readonly<Record<string, number>
   "audience-visibility-group-protected": 403,
   "audience-visibility-conflict": 409,
   "audience-visibility-member-not-found": 404,
+  // T-653 §7b additions. `feature-retired` is the same machine error the legacy
+  // identity route answers, deliberately, so a stale console is told the feature
+  // is gone rather than that a field name was unrecognised.
+  "feature-retired": 410,
+  "identity-gender-invalid": 422,
+  "identity-gender-detail-invalid": 422,
+  "identity-gender-detail-mismatch": 422,
+  "profile-visibility-fixed": 422,
+  "audience-visibility-member-unresolved": 409,
   "audience-visibility-stored-invalid": 503,
   "audience-visibility-schema-unavailable": 503,
   "audience-visibility-write-failed": 503,
@@ -868,11 +1075,56 @@ function normalizeIntentLimit(body: JsonObject): JsonObject | null {
     : null;
 }
 
+/**
+ * T-653 §7b. The exact nine-field body, in the contract's order.
+ *
+ * `gender_detail` is a form field, so the empty string is the absent detail and
+ * Core stores it as `null`. `expected_identity_revision` may be 0 — that is the
+ * value a member with no canonical `identity_v2` echoes back, and the one that
+ * creates the document. The retired identity axes have no branch here at all:
+ * an exact body cannot carry `orientation` or `relationship_status`, so this
+ * console can never reach the `feature-retired` refusal from its own controls.
+ */
+function normalizeMemberIdentitySave(body: JsonObject): JsonObject | null {
+  const source = exactBody(body, [
+    "contract_version", "request_id", "expected_revision", "expected_identity_revision",
+    "audit_reason", "uid", "gender", "gender_detail", "visible_to",
+  ]);
+  const request = requestId(source?.request_id);
+  const revision = integer(source?.expected_revision, 1, 2_147_483_647);
+  const identityRevision = integer(source?.expected_identity_revision, 0, 2_147_483_647);
+  const reason = auditReason(source?.audit_reason);
+  const uid = integer(source?.uid, 1, 2_147_483_647);
+  const gender = oneOf(source?.gender, AUDIENCE_VISIBILITY_GENDERS);
+  const visibleTo = oneOf(source?.visible_to, AUDIENCE_VISIBILITY_VALUES);
+  const rawDetail = source?.gender_detail;
+  const detail = rawDetail === "" ? "" : typeof rawDetail === "string" && GENDER_DETAIL.test(rawDetail) ? rawDetail : null;
+  if (source?.contract_version !== 1 || !request || revision === null || identityRevision === null
+    || !reason || uid === null || !gender || !visibleTo || detail === null) return null;
+  // Core enforces the same rule on the owner route; refusing it here keeps a
+  // fixed-audience gender from spending a receipt on a certain refusal.
+  if (gender === "nonbinary" && visibleTo !== "both") return null;
+  return Object.assign(Object.create(null), {
+    contract_version: 1,
+    request_id: request,
+    expected_revision: revision,
+    expected_identity_revision: identityRevision,
+    audit_reason: reason,
+    uid,
+    gender,
+    gender_detail: detail,
+    visible_to: visibleTo,
+  });
+}
+
 /** `undefined` is another family, `null` is refused, and an object alone may reach Core. */
 export function normalizeAudienceVisibilityProxyBody(
   action: string,
   body: JsonObject,
 ): JsonObject | null | undefined {
+  if ((AUDIENCE_VISIBILITY_IDENTITY_ACTIONS as readonly string[]).includes(action)) {
+    return normalizeMemberIdentitySave(body);
+  }
   if (!(AUDIENCE_VISIBILITY_ADMIN_ACTIONS as readonly string[]).includes(action)) return undefined;
   switch (action as AudienceVisibilityAdminAction) {
     case "audience_visibility_catalog": return normalizeCatalogRead(body);
@@ -1020,4 +1272,59 @@ export function audienceVisibilityTab(value: unknown): AudienceVisibilityTab {
 /** Exported for focused tests and draft validation; never relaxes Core's final authority. */
 export function audienceVisibilityGroupDraft(value: unknown) {
   return normalizedGroupMaterial(value);
+}
+
+export type AudienceVisibilityIdentityDraft = {
+  /** `""` while an unresolved member has no gender chosen yet. */
+  gender: AudienceVisibilityGender | "";
+  /** `""` is the absent detail, exactly as the form field travels. */
+  gender_detail: string;
+  visible_to: AudienceVisibilityValue;
+  audit_reason: string;
+};
+
+/**
+ * The exact command the member-identity editor posts, or `null`.
+ *
+ * Both optimistic axes come from the member payload the panel is displaying —
+ * never from a value the browser kept across a reload — so a console that never
+ * read the member cannot guess a revision. `null` covers a Core with no T-653
+ * keys (nothing to guard with), an unchosen gender, an unusable audit reason,
+ * and every shape the proxy would refuse anyway.
+ */
+export function audienceVisibilityMemberIdentityBody(
+  member: AudienceVisibilityMemberDetail,
+  draft: AudienceVisibilityIdentityDraft,
+  request: string,
+): JsonObject | null {
+  if (!member.identity || draft.gender === "") return null;
+  return normalizeMemberIdentitySave(Object.assign(Object.create(null), {
+    contract_version: 1,
+    request_id: request,
+    expected_revision: member.revision,
+    expected_identity_revision: member.identity.identity_revision,
+    audit_reason: draft.audit_reason,
+    uid: member.uid,
+    gender: draft.gender,
+    gender_detail: draft.gender_detail,
+    visible_to: draft.visible_to,
+  }));
+}
+
+/**
+ * Whether the draft asks for exactly what is stored.
+ *
+ * Core answers such a request with success and the current revisions, which is
+ * what makes a replay safe — but it still spends a receipt and writes an audit
+ * row, so the editor does not offer it. A member with no canonical `identity_v2`
+ * is never unchanged: the document has to be created before it can match.
+ */
+export function audienceVisibilityIdentityUnchanged(
+  member: AudienceVisibilityMemberDetail,
+  draft: AudienceVisibilityIdentityDraft,
+): boolean {
+  if (!member.identity || member.identity.identity_revision < 1) return false;
+  return member.gender === draft.gender
+    && (member.identity.gender_detail ?? "") === draft.gender_detail
+    && member.visible_to === draft.visible_to;
 }

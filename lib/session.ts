@@ -5,7 +5,10 @@ import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
-import { audienceVisibilityAdminMe } from "@/lib/audienceVisibilityAdmin";
+import {
+  audienceVisibilityAdminMe,
+  audienceVisibilityIdentityWriteAuthorized,
+} from "@/lib/audienceVisibilityAdmin";
 import { profileTextModerationAdminMe } from "@/lib/profileTextModeration";
 import { isAdminWriteRole, normalizeAdminRole } from "@/lib/authPolicy";
 import {
@@ -35,6 +38,14 @@ export type AdminIdentity = {
   personaConsoleReady: boolean;
   verificationConsoleReady: boolean;
   audienceVisibilityConsoleReady: boolean;
+  /**
+   * T-653. Core's SIBLING `admin_me.audience_visibility_identity` block, and
+   * nothing else: never the four-capability `audience_visibility` block beside
+   * it, and never the top-level role. A Core that predates the amendment serves
+   * no such key, which reads as `false` and keeps the member-identity editor
+   * hidden.
+   */
+  audienceVisibilityIdentityWrite: boolean;
   profileTextModerationConsoleReady: boolean;
   /**
    * T-617 mandatory-method policy, from Core's `admin_me.verification_method`
@@ -91,6 +102,7 @@ export async function adminMe(): Promise<AdminIdentity | null> {
     verification?: unknown;
     verification_method?: unknown;
     audience_visibility?: unknown;
+    audience_visibility_identity?: unknown;
     profile_text_moderation?: unknown;
   }>("admin_me", { admin_email: session.email });
   if (result.status !== 200 || !result.data?.success) return null;
@@ -111,6 +123,7 @@ export async function adminMe(): Promise<AdminIdentity | null> {
       && verification.actions.includes("verification_console"),
     audienceVisibilityConsoleReady: audienceVisibility?.contract_ready === true
       && audienceVisibility.actions.includes("audience_visibility_catalog"),
+    audienceVisibilityIdentityWrite: audienceVisibilityIdentityWriteAuthorized(result.data),
     profileTextModerationConsoleReady: PROFILE_TEXT_MODERATION_CONTRACT_READY
       && profileTextModeration?.contract_ready === true
       && profileTextModeration.actions.includes("moderation_profile_text_list"),

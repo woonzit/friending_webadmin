@@ -148,7 +148,12 @@ export default function UserDetailPage() {
       <UserModerationPanel uid={uid} />
       <VerificationUserPanel uid={uid} access={data.verification_access} />
       {ADMIN_GRANTED_VERIFICATION_CONTRACT_READY ? <AdminGrantedVerificationPanel key={`admin-granted-verification-${uid}`} uid={uid} /> : null}
-      <AudienceVisibilityUserPanel uid={uid} />
+      {/* The canonical identity surface of this page: gender, detailed gender
+          and audience live on the audience-visibility record, and the editor
+          inside this panel is the only console write for them (T-653). The
+          detailed-gender options are Core's own served catalogue, so the panel
+          never pins that vocabulary itself. */}
+      <AudienceVisibilityUserPanel uid={uid} identityGroups={identityGroups} onIdentitySaved={load} />
       <ProductPopupPanel key={`product-popup-${uid}`} uid={uid} />
       <OutboundMessagingPanel uid={uid} displayName={profile.display_name} codename={profile.codename} />
       <UserContentEditor

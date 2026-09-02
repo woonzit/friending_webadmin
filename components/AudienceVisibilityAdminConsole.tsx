@@ -239,11 +239,14 @@ export default function AudienceVisibilityAdminConsole({ initialTab }: { initial
       if (conflict.kind === "group") {
         setCatalog((current) => current ? replaceGroup(current, conflict.group) : current);
         setGroup(null);
-      } else {
+      } else if (conflict.kind === "intents") {
         setCatalog((current) => current ? { ...current, intents: conflict.intents } : current);
         setSelectionMax(conflict.intents.selection_max);
         setIntent(null);
       }
+      // The `member` branch (T-653) belongs to the users detail page; this
+      // workspace never posts that action, and `audienceVisibilityConflict
+      // MatchesPending()` above has already refused it for these five.
       setReason("");
       setLimitReason("");
       const cleared = clearPending();

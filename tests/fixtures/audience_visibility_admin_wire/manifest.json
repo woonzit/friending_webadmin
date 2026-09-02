@@ -1,10 +1,10 @@
 {
     "schema_version": 1,
-    "source_commit": "f0c74539a5361f70e310e1ef79616434c89d06f3",
-    "fixture_set_sha256": "fe54dbd7772a807bc092c26db6b8a18e426912fdf224aa87cced4242519ecdf2",
+    "source_commit": "bd2f3256872817221ff0e15eed302b33cc610549",
+    "fixture_set_sha256": "76c395dc15e8869129ed53d491d5710e01bf1f3b3b3ddf079bfa1b93598ec9a6",
     "provenance": {
         "generator": "tests/audience_visibility_fixture_dump.php",
-        "generator_sha256": "d9af39e83117535f8049761dda3ccd86ec4e6c150d6d5bec6aedf6b4c89accd7",
+        "generator_sha256": "1747b31c6bafb828b04490d02e78ef00ffaaff15622941d56488a9016307037f",
         "app_wire_adapter": "Friending\\Core\\Response::wirePayload",
         "admin_wire_adapter": "Friending\\Support\\Webadmin::noStoreReply",
         "evaluated_at": 1800000000,
@@ -35,14 +35,14 @@
             "route": "/v1/app/signup_options",
             "case": "schema_2_full_en",
             "consumer": "ios",
-            "sha256": "f52fc35a2b63e0ff355a1b8a0fca23acad91fe5e416bc6bcfef08714b35fa86a"
+            "sha256": "b599c07729b321a9842250650e6b8c1c49241c8ee54febcfa0ecab81291a3f5e"
         },
         {
             "file": "signup-catalog-hu.json",
             "route": "/v1/app/signup_options",
             "case": "schema_2_full_hu",
             "consumer": "ios",
-            "sha256": "2c790b84c49294fb2a591dc8a9523d91499bf0f50ed260926e095b05fd469b6d"
+            "sha256": "a6f98a3b35d1867be00ee7194164bc35c3ddfac467ec718bc1d5c8f7744828ec"
         },
         {
             "file": "signup-catalog-unavailable.json",
@@ -686,21 +686,133 @@
             "route": "/v1/webadmin/audience_visibility_member_detail",
             "case": "member_binary",
             "consumer": "webadmin",
-            "sha256": "34ed93e15972cea6ef74ff0ad8640620525a75570ea5bac65754c71a3e9fd223"
+            "sha256": "1c12fc864620a03c448abd17309ce7e800864193638131d34a72d1c6bae5fa00"
         },
         {
             "file": "admin-member-nonbinary.json",
             "route": "/v1/webadmin/audience_visibility_member_detail",
             "case": "member_nonbinary",
             "consumer": "webadmin",
-            "sha256": "5b306ca162377d1d809cfc7e28adcf18cb278e874e90138205f08bce2b99085f"
+            "sha256": "35a3126be402d95762e310a4f4e5cf9b10272f0c47ca1682fa028bf16d04835d"
         },
         {
             "file": "admin-member-unresolved.json",
             "route": "/v1/webadmin/audience_visibility_member_detail",
             "case": "member_unresolved",
             "consumer": "webadmin",
-            "sha256": "d0feb26cf9ee109c195e5b5af067374edf55fc7a4cebd1e67b24d4df0aa86130"
+            "sha256": "998491cb16aeaaf061431a57b5a14c74ac3e1b902042dc85dd463dbcdc9ae45a"
+        },
+        {
+            "file": "admin-member-canonical.json",
+            "route": "/v1/webadmin/audience_visibility_member_detail",
+            "case": "member_canonical",
+            "consumer": "webadmin",
+            "sha256": "35b26c691d296bdaf97ab95835f5cb99417eda0b30bcb6264f10028fb9e13b62"
+        },
+        {
+            "file": "admin-member-identity-save.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "identity_save",
+            "consumer": "webadmin",
+            "sha256": "2b42d68a1fc9e35db3ad0c59bcf5bfc384ea5c7bd54fe6561e1a8adeb908a887"
+        },
+        {
+            "file": "admin-member-identity-noop.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "identity_no_op",
+            "consumer": "webadmin",
+            "sha256": "dfcbb6aa8bb3ab9b3995fec340d5bc1b0e06c07f7e69b24900f7827278a587a8"
+        },
+        {
+            "file": "admin-member-identity-replay.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "identity_replay",
+            "consumer": "webadmin",
+            "sha256": "3af395a3cc490c1d6f50e084e74651e593ffd1c73a96729ca0dfd62629946acf"
+        },
+        {
+            "file": "admin-member-identity-conflict.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "identity_conflict",
+            "consumer": "webadmin",
+            "sha256": "d224389edca05d5556eec27ff556f3177efbb1a9df786f48b8a614488151c184"
+        },
+        {
+            "file": "admin-member-identity-error-retired.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "feature-retired",
+            "consumer": "webadmin",
+            "sha256": "b24cec87d1d4ec2823f5d01e5de89665c791cd8756bf618736b1242e3023b70b"
+        },
+        {
+            "file": "admin-member-identity-error-gender.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "identity-gender-invalid",
+            "consumer": "webadmin",
+            "sha256": "fd9cf6bbfaaf1a1cae6f23890a330f82d833bcc3dd214d4f5330ca1e203b92b2"
+        },
+        {
+            "file": "admin-member-identity-error-detail.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "identity-gender-detail-invalid",
+            "consumer": "webadmin",
+            "sha256": "e6267ecbbe77af1a630794d08e21c90403fec1dc335ae3746645cc60c4ed13c7"
+        },
+        {
+            "file": "admin-member-identity-error-detail-mismatch.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "identity-gender-detail-mismatch",
+            "consumer": "webadmin",
+            "sha256": "0d2b019245d9ad4c8929c126d73aed09717c498998cb44cd0a535c1872e2472e"
+        },
+        {
+            "file": "admin-member-identity-error-fixed.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "profile-visibility-fixed",
+            "consumer": "webadmin",
+            "sha256": "ca3b77ae82b8ae8e2905ca8743d036eece797923022318680f4f22e3053796bc"
+        },
+        {
+            "file": "admin-member-identity-error-unresolved.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "audience-visibility-member-unresolved",
+            "consumer": "webadmin",
+            "sha256": "dfdcfdc67dc49d1070f9954953f44fdcf7e803ae2a64122b2bcff2f3bd387ca8"
+        },
+        {
+            "file": "admin-me-identity-dormant-editor.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "dormant-editor",
+            "consumer": "webadmin",
+            "sha256": "185566b7efaa7638174a196d2fa01c26f1e7e7326134bbd941f76cda33732948"
+        },
+        {
+            "file": "admin-me-identity-ready-viewer.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready-viewer",
+            "consumer": "webadmin",
+            "sha256": "edd363cab400e86190c86b0906650a84abe6520b12be14d1486974addf6282e6"
+        },
+        {
+            "file": "admin-me-identity-ready-editor.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready-editor",
+            "consumer": "webadmin",
+            "sha256": "c5ec5928be067912f525cdd7005ac4f6d5319a5342bb05fb1bdf0964b383a442"
+        },
+        {
+            "file": "admin-me-identity-ready-owner.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready-owner",
+            "consumer": "webadmin",
+            "sha256": "63145d5290a76ae3d5d7ec90164f430e23b9c74f733f43383a5dc48e10cbeb9f"
+        },
+        {
+            "file": "admin-me-identity-revoked.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "revoked",
+            "consumer": "webadmin",
+            "sha256": "4b38f63b3088889f4ba29f3936a0540b000c1c0db219873b4fb8de228e670b19"
         },
         {
             "file": "admin-group-create.json",

@@ -5,7 +5,10 @@ import {
 } from "@/lib/contractReadiness";
 import { ADMIN_GRANTED_VERIFICATION_ACTIONS } from "@/lib/adminGrantedVerification";
 import { APPEARANCE_ACTIONS } from "@/lib/appearanceRules";
-import { AUDIENCE_VISIBILITY_ADMIN_ACTIONS } from "@/lib/audienceVisibilityAdmin";
+import {
+  AUDIENCE_VISIBILITY_ADMIN_ACTIONS,
+  AUDIENCE_VISIBILITY_IDENTITY_ACTIONS,
+} from "@/lib/audienceVisibilityAdmin";
 import { FEATURE_SWITCHES_ACTIONS } from "@/lib/featureSwitches";
 import { PROFILE_TEXT_MODERATION_ACTIONS } from "@/lib/profileTextModeration";
 import { VERIFICATION_METHOD_ACTIONS } from "@/lib/verificationMethod";
@@ -191,6 +194,7 @@ export const ADMIN_ACTIONS = [
   ...ACTIVE_VERIFICATION_METHOD_ACTIONS,
   ...ACTIVE_PERSONA_SCREENS_ACTIONS,
   ...AUDIENCE_VISIBILITY_ADMIN_ACTIONS,
+  ...AUDIENCE_VISIBILITY_IDENTITY_ACTIONS,
   ...ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS,
   ...ACTIVE_FEATURE_SWITCHES_ACTIONS,
   ...ACTIVE_APPEARANCE_ACTIONS,
@@ -428,6 +432,11 @@ export const ADMIN_ACTION_ACCESS = {
   save_audience_visibility_intent: "write",
   archive_audience_visibility_intent: "write",
   set_audience_visibility_intent_limit: "write",
+
+  // T-653. The member identity write is authorized by Core's SIBLING
+  // `admin_me.audience_visibility_identity` block, whose ladder starts at
+  // editor; this row adds only the independent global editor floor.
+  save_audience_visibility_member_identity: "write",
 
   ...(PROFILE_TEXT_MODERATION_CONTRACT_READY ? {
     moderation_profile_text_list: "read" as const,
@@ -696,7 +705,8 @@ export function isAdminBridgeActionAuthorized(
   profileTextModerationAuthorized: boolean | null = null,
   featureSwitchesAuthorized: boolean | null = null,
 ): boolean {
-  if ((AUDIENCE_VISIBILITY_ADMIN_ACTIONS as readonly string[]).includes(action)) {
+  if ((AUDIENCE_VISIBILITY_ADMIN_ACTIONS as readonly string[]).includes(action)
+    || (AUDIENCE_VISIBILITY_IDENTITY_ACTIONS as readonly string[]).includes(action)) {
     return audienceVisibilityAuthorized === true;
   }
   if ((PROFILE_TEXT_MODERATION_ACTIONS as readonly string[]).includes(action)) {

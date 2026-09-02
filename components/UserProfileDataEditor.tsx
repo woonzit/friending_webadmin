@@ -359,8 +359,9 @@ export default function UserProfileDataEditor({
           ) : (
             // Core refuses the legacy identity write under audience-visibility
             // readiness, so an editable control here could only produce a
-            // failing save. The values stay visible as read-only facts until
-            // the V2 write lands (T-653).
+            // failing save. The values stay visible as read-only facts; the V2
+            // write is the editor in the audience-visibility panel above
+            // (T-653), which carries the two revisions Core guards.
             <>
               <div className="system-option-notice field-full" role="note">
                 <strong>{t("identityReadOnlyTitle")}</strong>

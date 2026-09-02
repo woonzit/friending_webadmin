@@ -297,13 +297,13 @@
           },
           "audienceVisibility": {
             "title": "Ki láthatja az adatlapomat",
-            "purpose": "Ez a csak olvasható panel a tag hiteles audience-visibility nemét, a profil láthatóságát, az ebből a párosból származtatott egyetlen védett csoportot a legacy szegmensével együtt, valamint azt a revíziót mutatja, amelyen ez a három beolvasásra került.",
+            "purpose": "Ez a panel a tag hiteles audience-visibility nemét, részletes nemi identitását, a profil láthatóságát, a nem × láthatóság párosból származtatott egyetlen védett csoportot a legacy szegmensével együtt, valamint azt a revíziót mutatja, amelyen ezek beolvasásra kerültek. Akinek a Core megadja a tagidentitás-írást, az az első hármat itt szerkeszti is.",
             "actions": {
               "1": "A nemet, a láthatósági értéket és a származtatott csoportot együtt olvasd; a feloldatlan nem azt jelenti, hogy a Core nem tud csoportot származtatni, nem pedig azt, hogy a tagot kivették egy csoportból.",
-              "2": "Jegyezd fel a láthatósági revíziót, mielőtt az Audience visibility munkafelületen bármit módosítanál, mert ott minden írás ehhez a számhoz van ellenőrizve.",
+              "2": "A tag nemét, részletes identitását vagy közönségét ennek a panelnek a szerkesztőjével módosítsd: az mindkét revíziót viszi, amelyet a Core őriz, és naplózási indokot kér. Az oldalon lejjebb lévő régi Identitás szerkesztő pontosan ezért csak olvasható.",
               "3": "Dekódolási hiba esetén használd a Hiteles olvasás újrapróbálása gombot, és soha ne tekints megtagadott vagy dekódolhatatlan olvasást hiányzó vagy alapértelmezett közönségnek."
             },
-            "guidance": "A panel csak annak az operátornak jelenik meg, akinek a Core kivetíti az audience-visibility tagolvasást, ezért egy kolléga jogosan nem látja ugyanannál a tagnál. Ez nézet, nem szerkesztő: a csoportokat, a kivonást és a szándékokat az Audience visibility oldalon kell beállítani, a nem bináris tagot pedig azért látja mindenki, mert a szerződés csak ezt az egy védett csoportot definiálja hozzá."
+            "guidance": "A panel csak annak az operátornak jelenik meg, akinek a Core kivetíti az audience-visibility tagolvasást, ezért egy kolléga jogosan nem látja ugyanannál a tagnál; a szerkesztőhöz ezen felül a külön tagírási jogosultság kell. A csoportokat, a kivonást és a szándékokat továbbra is az Audience visibility oldalon kell beállítani, a nem bináris tagot pedig azért látja mindenki, mert a szerződés csak ezt az egy védett csoportot definiálja hozzá — az ő identitásuk itt egyáltalán nem szerkeszthető. Ütközéskor a panel átveszi a Core aktuális értékeit, és új mentést kér ahelyett, hogy összefésülné."
           },
           "profileCopy": {
             "title": "Nyilvános profilszövegek",
@@ -5398,11 +5398,14 @@
     "audienceVisibility": {
       "title": "Ki láthatja az adatlapomat",
       "copy": "Csak olvasható hiteles láthatóság és az az egy védett csoport, amelyet a Core a nem × láthatóság alapján származtat. Ez a panel soha nem bízik a széles legacy tagi válaszban.",
+      "editorCopy": "A hiteles nem, a részletes nemi identitás és az, hogy ki láthatja az adatlapot — közvetlenül az audience-visibility rekordon szerkesztve. A Core mindkét revíziót őrzi, és minden mentést naplóz.",
       "loading": "A korlátozott audience-visibility vetület betöltése…",
       "loadError": "Az audience-visibility vetület nem dekódolható biztonságosan.",
       "retry": "Hiteles olvasás újrapróbálása",
       "gender": "Hiteles nem",
       "visibleTo": "Ki láthatja a profilt",
+      "genderDetail": "Részletes nemi identitás",
+      "noGenderDetail": "Nincs részletes identitás",
       "group": "Származtatott védett csoport",
       "revision": "Láthatósági revízió",
       "unresolved": "Feloldatlan",
@@ -5417,6 +5420,33 @@
         "male": "Férfiak",
         "female": "Nők",
         "both": "Mindenki"
+      },
+      "editor": {
+        "gender": "Nem",
+        "genderSelect": "Válassz…",
+        "genderDetail": "Részletes nemi identitás",
+        "genderDetailNone": "Nincs részletes identitás",
+        "visibleTo": "Ki láthatja az adatlapomat",
+        "auditReason": "Naplózási indok",
+        "auditHint": "{count} / 300 karakter. A Core ezt az indokot a naplóbejegyzésre menti, nem a tagra.",
+        "disclosure": "A tag saját döntése a részletes identitás megjelenítéséről: {state}; identitásrevízió: {revision}.",
+        "save": "Identitás mentése",
+        "saved": "Az identitás mentve. A Core újraszámolta a származtatott csoportot, és naplózta a változást.",
+        "replayed": "A Core a korábbi parancsot játszotta vissza; semmi nem íródott ki kétszer.",
+        "conflict": "A tagot egy másik munkamenetben módosították. A panel most a Core aktuális értékeit mutatja — ellenőrizd, és mentsd újra.",
+        "invalidDraft": "Ez a piszkozat nem küldhető: válassz nemet, és adj meg 1–300 karakteres naplózási indokot.",
+        "errorCode": "A Core elutasította a mentést: {code}",
+        "unknownError": "ismeretlen elutasítás",
+        "nonbinaryTitle": "Ennek a tagnak a nemét máshol kell szerkeszteni",
+        "nonbinaryCopy": "A regisztrációs katalógus csak nőt és férfit kínál, a nem bináris tagot pedig szerződés szerint mindenki látja, így ez a szerkesztő csak úgy tudna változtatni, ha átminősítené a tagot. Nem bináris tag identitásának módosítása előtt kérdezd meg a leadet.",
+        "errors": {
+          "feature-retired": "A Core elutasította a mentést: a régi identitástengelyek kivezetve. Töltsd újra az oldalt, és próbáld meg az aktuális értékekkel.",
+          "identity-gender-invalid": "A Core elutasította a nemet. A nem bináris érték soha nem osztható ki újonnan; válassz nőt vagy férfit.",
+          "identity-gender-detail-invalid": "A Core nem ismeri ezt a részletes nemi identitást.",
+          "identity-gender-detail-mismatch": "Ez a részletes identitás egy másik nemhez tartozik. Válassz olyat, amelyet a kiválasztott nem kínál.",
+          "profile-visibility-fixed": "A nem bináris tagot mindenki látja; ez a közönség nem szűkíthető.",
+          "audience-visibility-member-unresolved": "Ennek a tagnak az importja vagy onboardingja még folyamatban van, így az identitásrekordot most a Core birtokolja. Az újrapróbálkozás nem segít; próbáld meg az onboarding befejezése után."
+        }
       }
     },
     "allAlbums": "Minden profilalbum",
@@ -5546,7 +5576,7 @@
     "identityTitle": "Identitás és felhasználói csoport",
     "identityCopy": "A nem részleteit szerkeszted. A Core megőrzi a rejtett routingbeállításokat, és származtatja a castot, csatornákat és kérdéscsomagokat; a csoport nem szabadon átírható adminérték.",
     "identityReadOnlyTitle": "Az azonosság itt csak olvasható",
-    "identityReadOnlyCopy": "A hiteles nem mostantól a tag audience-visibility rekordjában él, és a Core elutasítja a régi azonossági írást. Az alábbi értékek csak támogatási ellenőrzésre jelennek meg; a szerkesztőjük készül.",
+    "identityReadOnlyCopy": "A hiteles nem mostantól a tag audience-visibility rekordjában él, és a Core elutasítja a régi azonossági írást. Az alábbi értékek csak támogatási ellenőrzésre jelennek meg; a szerkesztésük a fenti „Ki láthatja az adatlapomat” panelen történik.",
     "gender": "Nem",
     "subgender": "Részletes nemi identitás",
     "noSubgender": "Nincs részletes identitás",

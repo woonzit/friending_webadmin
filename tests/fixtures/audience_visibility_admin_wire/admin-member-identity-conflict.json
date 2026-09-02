@@ -1,0 +1,26 @@
+{
+    "success": false,
+    "status_code": 409,
+    "error": "audience-visibility-conflict",
+    "data": {
+        "contract_version": 1,
+        "member": {
+            "contract_version": 1,
+            "uid": 880124,
+            "gender": "woman",
+            "visible_to": "female",
+            "revision": 2,
+            "group": {
+                "id": "000000000000000000000005",
+                "key": "female_for_female",
+                "legacy_segment": "female_lesbian"
+            },
+            "identity_revision": 4,
+            "gender_detail": "trans_woman",
+            "show_gender_detail": true
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

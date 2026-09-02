@@ -297,13 +297,13 @@
           },
           "audienceVisibility": {
             "title": "Who can see my profile",
-            "purpose": "This read-only panel reports the member's canonical audience-visibility gender, who their profile is visible to, the one protected group Core derives from that pair together with its legacy segment, and the revision those three were read at.",
+            "purpose": "This panel reports the member's canonical audience-visibility gender, detailed gender, who their profile is visible to, the one protected group Core derives from gender × visible-to together with its legacy segment, and the revision those were read at. An operator Core grants the member-identity write also edits the first three here.",
             "actions": {
               "1": "Read the gender, the visibility value and the derived group together; an unresolved gender means Core can derive no group, not that the member was taken out of one.",
-              "2": "Note the visibility revision before asking the Audience visibility workspace to change anything, because every write there is checked against it.",
+              "2": "To change a member's gender, detailed gender or audience, use the editor in this panel: it carries both revisions Core guards and requires an audit reason. The legacy Identity editor further down the page is read-only for exactly this reason.",
               "3": "Use Retry authoritative read when the panel reports a decoding error, and never treat a refused or undecodable read as an absent or default audience."
             },
-            "guidance": "The panel is present only for an operator Core projects the audience-visibility member read to, so a colleague may genuinely not see it on the same member. It is a view, not an editor: groups, retirement and intents are configured on Audience visibility, and a nonbinary member is visible to everyone because that is the only protected group the contract defines for them."
+            "guidance": "The panel is present only for an operator Core projects the audience-visibility member read to, so a colleague may genuinely not see it on the same member; the editor needs the separate member-write capability on top of that. Groups, retirement and intents are still configured on Audience visibility, a nonbinary member is visible to everyone because that is the only protected group the contract defines for them, and their identity is not editable here at all. On a conflict the panel adopts Core's current values and asks for a fresh save rather than merging."
           },
           "profileCopy": {
             "title": "Public profile texts",
@@ -5398,11 +5398,14 @@
     "audienceVisibility": {
       "title": "Who can see my profile",
       "copy": "Read-only canonical visibility and the one protected group Core derives from gender × visible-to. This panel never trusts the broad legacy member payload.",
+      "editorCopy": "Canonical gender, detailed gender and who can see the profile, edited on the audience-visibility record itself. Core guards both revisions and audits every save.",
       "loading": "Loading the bounded audience-visibility projection…",
       "loadError": "The audience-visibility projection could not be decoded safely.",
       "retry": "Retry authoritative read",
       "gender": "Canonical gender",
       "visibleTo": "Who can see the profile",
+      "genderDetail": "Detailed gender",
+      "noGenderDetail": "No detailed gender",
       "group": "Derived protected group",
       "revision": "Visibility revision",
       "unresolved": "Unresolved",
@@ -5417,6 +5420,33 @@
         "male": "Men",
         "female": "Women",
         "both": "Everyone"
+      },
+      "editor": {
+        "gender": "Gender",
+        "genderSelect": "Select…",
+        "genderDetail": "Detailed gender",
+        "genderDetailNone": "No detailed gender",
+        "visibleTo": "Who can see my profile",
+        "auditReason": "Audit reason",
+        "auditHint": "{count} of 300 characters. Core stores this reason on the audit record, not on the member.",
+        "disclosure": "The member's own choice to display the detailed gender is {state}; identity revision {revision}.",
+        "save": "Save identity",
+        "saved": "Identity saved. Core recalculated the derived group and audited the change.",
+        "replayed": "Core replayed the earlier command; nothing was written twice.",
+        "conflict": "The member changed in another session. The panel now shows Core's current values — check them and save again.",
+        "invalidDraft": "This draft cannot be sent: choose a gender and give an audit reason of 1 to 300 characters.",
+        "errorCode": "Core refused the save: {code}",
+        "unknownError": "unknown refusal",
+        "nonbinaryTitle": "This member's gender is edited elsewhere",
+        "nonbinaryCopy": "The signup catalogue offers women and men only, and a nonbinary member is visible to everyone by contract, so this editor would have to re-gender them to change anything. Ask the lead before changing a nonbinary member's identity.",
+        "errors": {
+          "feature-retired": "Core refused the save: the legacy identity axes are retired. Reload the page and try again on the current values.",
+          "identity-gender-invalid": "Core refused the gender. Nonbinary is never newly assigned; choose woman or man.",
+          "identity-gender-detail-invalid": "Core does not know this detailed gender.",
+          "identity-gender-detail-mismatch": "That detailed gender belongs to another gender. Choose one offered for the gender you selected.",
+          "profile-visibility-fixed": "A nonbinary member is visible to everyone; that audience cannot be narrowed.",
+          "audience-visibility-member-unresolved": "This member's import or onboarding is still in flight, so Core owns their identity record for now. Retrying will not help; try again once onboarding has finished."
+        }
       }
     },
     "allAlbums": "All profile albums",
@@ -5546,7 +5576,7 @@
     "identityTitle": "Identity and user group",
     "identityCopy": "Edit gender details. Core preserves hidden routing settings and derives the cast, channels and question packs; the group itself is never stored as a free-form admin value.",
     "identityReadOnlyTitle": "Identity is read-only here",
-    "identityReadOnlyCopy": "Canonical gender now lives in the member's audience-visibility record, and Core refuses the legacy identity write. The values below are shown for support review only; an editor for them is being built.",
+    "identityReadOnlyCopy": "Canonical gender now lives in the member's audience-visibility record, and Core refuses the legacy identity write. The values below are shown for support review only; edit them in the “Who can see my profile” panel above.",
     "gender": "Gender",
     "subgender": "Detailed gender",
     "noSubgender": "No detailed gender",

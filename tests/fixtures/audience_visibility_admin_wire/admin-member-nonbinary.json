@@ -11,7 +11,10 @@
             "id": "0c5e779988ceae850aeb6803",
             "key": "nonbinary_for_both",
             "legacy_segment": "other"
-        }
+        },
+        "identity_revision": 0,
+        "gender_detail": null,
+        "show_gender_detail": false
     },
     "message": 200,
     "status": 200,

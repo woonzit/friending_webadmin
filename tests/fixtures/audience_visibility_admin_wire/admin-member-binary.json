@@ -11,7 +11,10 @@
             "id": "000000000000000000000003",
             "key": "male_for_both",
             "legacy_segment": "male_bisexual"
-        }
+        },
+        "identity_revision": 0,
+        "gender_detail": null,
+        "show_gender_detail": false
     },
     "message": 200,
     "status": 200,
