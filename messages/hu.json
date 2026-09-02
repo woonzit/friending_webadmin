@@ -2081,16 +2081,16 @@
       },
       "icebreakers": {
         "title": "Icebreaker kártyák súgó",
-        "summary": "Az Icebreakerek opcionális profilpromptok, amelyek beszélgetést indítanak vagy önkifejezést segítenek. Ez az oldal vezérli a kétnyelvű kérdést, Friends/Sex/Love elhelyezést, válaszolói audience-t és elérhetőséget.",
+        "summary": "Az Icebreakerek opcionális profilpromptok, amelyek beszélgetést indítanak vagy önkifejezést segítenek. Minden kártya barátság kártya; ez az oldal vezérli a kétnyelvű kérdést, a válaszolói audience-t és az elérhetőséget.",
         "steps": {
           "1": "Új, átfedő jelentésű prompt létrehozása előtt keress meglévőt.",
-          "2": "A kártya elhelyezését és tagi audience-ét egymástól függetlenül állítsd, és töltsd ki mindkét nyelvet.",
+          "2": "Állítsd be a tagi audience-t és töltsd ki mindkét nyelvet; minden kártya barátság kártya, elhelyezést nem kell választani.",
           "3": "Úgy ments vagy archiválj, hogy a meglévő profilválaszok megmaradjanak."
         },
         "sections": {
           "search": {
             "title": "Promptkeresés és leltár",
-            "purpose": "A keresés szűri a teljes promptkatalógust, a darabszám és kártyák pedig az aktív, archivált, csoportosított és célzott promptokat mutatják.",
+            "purpose": "A keresés szűri a teljes promptkatalógust, a darabszám és kártyák pedig az aktív, archivált és célzott promptokat mutatják.",
             "actions": {
               "1": "Keress stabil kulcs vagy lokalizált kérdés alapján.",
               "2": "Nyiss meg promptot szerkesztésre, vagy kezdj újat."
@@ -2107,13 +2107,13 @@
             "guidance": "A kulcs később nem nevezhető át. A kérdés hívjon válaszra, de ne kérjen érzékeny vagy veszélyes közlést."
           },
           "placementAudience": {
-            "title": "Friends, Sex, Love elhelyezés és audience",
-            "purpose": "Az elhelyezés meghatározza, hol jelenik meg a kártya; az audience külön vezérli, mely jogosult genderek és dinamikus csoportok válaszolhatják meg.",
+            "title": "Barátság kártyák és audience",
+            "purpose": "Minden prompt barátság kártya, elhelyezést nem kell választani; egyedül az audience vezérli, mely jogosult genderek és dinamikus csoportok válaszolhatják meg.",
             "actions": {
-              "1": "Válassz egy vagy több megfelelő tematikus csoportot.",
+              "1": "A kérdést barátság kártyaként írd meg; kérdésenként egyedül a célközönséget választod.",
               "2": "Hagyd globálisnak az audience-t, vagy válassz jóváhagyott korlátozott közönséget."
             },
-            "guidance": "Az elhelyezés nem jelent jogosultságot. Több audience-dimenziónál mindegyiknek egyeznie kell, ezért teszteld a kívánt tagcsoportokat."
+            "guidance": "Az audience az egyetlen kérdésenkénti korlátozás. Több audience-dimenziónál mindegyiknek egyeznie kell, ezért teszteld a kívánt tagcsoportokat."
           },
           "archiveBehavior": {
             "title": "Archiválás és meglévő válaszok",
@@ -6867,10 +6867,10 @@
   "icebreakers": {
     "eyebrow": "Beszélgetésindítók",
     "title": "Jégtörő kártyák",
-    "subtitle": "A többnyelvű profilkérdések, Friends/Sex/Love besorolásuk és jogosult célközönségük kezelése.",
+    "subtitle": "A többnyelvű profilkérdések és a rájuk válaszolni jogosult célközönség kezelése. Minden jégtörő barátság kártya; kérdésenként csak a célközönséget választod.",
     "search": "Kérdések szűrése",
     "searchPlaceholder": "Keresés kérdésre vagy stabil kulcsra",
-    "toolbarCopy": "{count} kérdés. A kártyacsoport és a célközönség két egymástól független beállítás.",
+    "toolbarCopy": "{count} kérdés. Minden kártya barátság kártya; kérdésenként csak a célközönséget választod.",
     "add": "Kérdés hozzáadása",
     "addTitle": "Jégtörő kérdés hozzáadása",
     "editTitle": "Jégtörő kérdés szerkesztése",
@@ -6903,7 +6903,7 @@
     "active": "Aktív",
     "inactive": "Archivált",
     "activeHint": "Az archivált kérdés a már megválaszolt profilokon olvasható marad, de újra nem választható.",
-    "validationError": "Add meg mindkét fordítást, válassz legalább egy kártyacsoportot, és töltsd ki a célközönséget.",
+    "validationError": "Add meg mindkét fordítást, és töltsd ki a célközönséget.",
     "conflict": "A kérdést egy másik munkamenetben módosították. Töltsd újra a katalógust.",
     "saveError": "A jégtörő kérdés mentése nem sikerült.",
     "saved": "A jégtörő kérdés mentve.",

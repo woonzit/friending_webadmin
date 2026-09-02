@@ -9,6 +9,7 @@ import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import {
   icebreakerCatalog,
+  isSingleGroupCatalog,
   type IcebreakerCatalog,
   type IcebreakerPrompt,
 } from "@/lib/icebreakers";
@@ -20,6 +21,8 @@ type Draft = {
   labels: Record<string, string>;
   labelEn: string;
   labelHu: string;
+  // T-630 (D-094): always `["friends"]` on a single-group catalogue; the wider
+  // union survives only for the legacy-triple transition branch (T-631 removes it).
   groups: Array<"friends" | "sex" | "love">;
   audienceMode: "global" | "segments";
   genders: string[];
@@ -38,7 +41,7 @@ function boundedQuestion(value: string): string {
   return Array.from(value).slice(0, 180).join("");
 }
 
-function draft(prompt?: IcebreakerPrompt, nextOrder = 10, castGroups: IcebreakerCatalog["cast_groups"] = []): Draft {
+function draft(prompt: IcebreakerPrompt | undefined, nextOrder: number, castGroups: IcebreakerCatalog["cast_groups"], singleGroup: boolean): Draft {
   const migratedAudience = migrateLegacyAudience(
     prompt?.audience.group_ids ?? [],
     prompt?.audience.segments ?? [],
@@ -50,7 +53,7 @@ function draft(prompt?: IcebreakerPrompt, nextOrder = 10, castGroups: Icebreaker
     labels: prompt?.labels ?? {},
     labelEn: prompt?.labels.en ?? "",
     labelHu: prompt?.labels.hu ?? "",
-    groups: prompt?.groups ?? ["friends"],
+    groups: singleGroup ? ["friends"] : prompt?.groups ?? ["friends"],
     audienceMode: prompt?.audience.mode ?? "global",
     genders: prompt?.audience.genders ?? [],
     groupIds: migratedAudience.groupIds,
@@ -123,6 +126,9 @@ function PromptDialog({
   const locale = useLocale();
   const ref = useDialog(onClose, busy);
   const isNew = value.originalKey === "";
+  // T-630: one category means nothing to pick; the checkbox grid is a transition-only
+  // rendering for a Core still on the legacy triple (T-631 removes it).
+  const singleGroup = isSingleGroupCatalog(catalog);
   return (
     <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => {
       if (event.currentTarget === event.target && !busy) onClose();
@@ -133,7 +139,7 @@ function PromptDialog({
           <label className="field field-full"><span>{t("key")}</span><input value={value.key} disabled={!isNew || busy} maxLength={64} spellCheck={false} onChange={(event) => onChange({ ...value, key: event.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") })} /><small className="field-hint">{t("keyHint")}</small></label>
           <label className="field"><span>{t("questionEn")}</span><textarea value={value.labelEn} disabled={busy} onChange={(event) => onChange({ ...value, labelEn: boundedQuestion(event.target.value) })} /></label>
           <label className="field"><span>{t("questionHu")}</span><textarea value={value.labelHu} disabled={busy} onChange={(event) => onChange({ ...value, labelHu: boundedQuestion(event.target.value) })} /></label>
-          <fieldset className="field field-full profile-audience-fieldset"><legend>{t("groups")}</legend><div className="profile-segment-grid icebreaker-group-grid">{catalog.groups.map((group) => <label key={group.key}><input type="checkbox" checked={value.groups.includes(group.key as Draft["groups"][number])} disabled={busy} onChange={(event) => onChange({ ...value, groups: event.target.checked ? [...value.groups, group.key as Draft["groups"][number]] : value.groups.filter((item) => item !== group.key) })} />{localeText(group.labels, locale)}</label>)}</div></fieldset>
+          {singleGroup ? null : <fieldset className="field field-full profile-audience-fieldset"><legend>{t("groups")}</legend><div className="profile-segment-grid icebreaker-group-grid">{catalog.groups.map((group) => <label key={group.key}><input type="checkbox" checked={value.groups.includes(group.key as Draft["groups"][number])} disabled={busy} onChange={(event) => onChange({ ...value, groups: event.target.checked ? [...value.groups, group.key as Draft["groups"][number]] : value.groups.filter((item) => item !== group.key) })} />{localeText(group.labels, locale)}</label>)}</div></fieldset>}
           <label className="field"><span>{t("order")}</span><input type="number" min="0" max="100000" value={value.sortOrder} disabled={busy} onChange={(event) => onChange({ ...value, sortOrder: Math.max(0, Math.min(100000, Number(event.target.value) || 0)) })} /></label>
           <MemberAudienceSelector
             value={{ mode: value.audienceMode, genders: value.genders, groupIds: value.groupIds, legacySegments: value.segments }}
@@ -177,6 +183,9 @@ export default function IcebreakersPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
+  // T-630 (D-094): a friends-only catalogue has no group to choose, no group column
+  // and no group validation; the draft always carries `["friends"]`.
+  const singleGroup = catalog !== null && isSingleGroupCatalog(catalog);
 
   const applyCatalog = useCallback((raw: unknown): boolean => {
     const parsed = icebreakerCatalog(raw);
@@ -203,7 +212,7 @@ export default function IcebreakersPage() {
 
   async function save() {
     if (!editor) return;
-    if (!/^[a-z][a-z0-9_]{0,63}$/.test(editor.key) || !editor.labelEn.trim() || !editor.labelHu.trim() || editor.groups.length === 0 || (editor.audienceMode === "segments" && editor.genders.length === 0 && editor.groupIds.length === 0 && editor.segments.length === 0)) {
+    if (!/^[a-z][a-z0-9_]{0,63}$/.test(editor.key) || !editor.labelEn.trim() || !editor.labelHu.trim() || (!singleGroup && editor.groups.length === 0) || (editor.audienceMode === "segments" && editor.genders.length === 0 && editor.groupIds.length === 0 && editor.segments.length === 0)) {
       setError(t("validationError")); return;
     }
     setBusy(true); setError("");
@@ -244,8 +253,8 @@ export default function IcebreakersPage() {
   return <>
     <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
     {toast ? <div className="alert alert-success page-alert" role="status">{toast}</div> : null}
-    <section className="panel"><div className="panel-body profile-fields-toolbar"><label className="field"><span>{t("search")}</span><input type="search" value={query} placeholder={t("searchPlaceholder")} onChange={(event) => setQuery(event.target.value)} /></label><div><p>{t("toolbarCopy", { count: catalog.prompts.length })}</p><button className="button button-primary" type="button" onClick={() => { setError(""); setEditor(draft(undefined, Math.max(0, ...catalog.prompts.map((prompt) => prompt.sort_order)) + 10, catalog.cast_groups)); }}>{t("add")}</button></div></div></section>
-    <section className="panel"><div className="table-wrap"><table className="data-table icebreaker-table"><thead><tr><th>{t("question")}</th><th>{t("groups")}</th><th>{t("audience")}</th><th>{t("order")}</th><th>{t("status")}</th><th><span className="sr-only">{common("actions")}</span></th></tr></thead><tbody>{prompts.map((prompt) => <tr key={prompt.key} className={prompt.active ? "" : "is-inactive"}><td><strong>{localeText(prompt.labels, locale)}</strong><code>{prompt.key}</code></td><td><div className="icebreaker-badges">{prompt.groups.map((group) => <span className="badge" key={group}>{localeText(catalog.groups.find((item) => item.key === group)?.labels ?? { en: group }, locale)}</span>)}</div></td><td>{prompt.audience.mode === "global" ? t("global") : t("castCount", { count: prompt.audience.genders.length + prompt.audience.group_ids.length + prompt.audience.segments.length })}</td><td>{prompt.sort_order}</td><td><span className={`badge ${prompt.active ? "badge-active" : "badge-inactive"}`}>{prompt.active ? t("active") : t("inactive")}</span></td><td><div className="row-actions"><button className="button button-secondary button-small" type="button" onClick={() => { setError(""); setEditor(draft(prompt, 10, catalog.cast_groups)); }}>{common("edit")}</button>{prompt.active ? <button className="button button-danger button-small" type="button" onClick={() => setArchive(prompt)}>{t("archive")}</button> : null}</div></td></tr>)}{prompts.length === 0 ? <tr><td colSpan={6} className="signup-options-empty">{t("noMatches")}</td></tr> : null}</tbody></table></div></section>
+    <section className="panel"><div className="panel-body profile-fields-toolbar"><label className="field"><span>{t("search")}</span><input type="search" value={query} placeholder={t("searchPlaceholder")} onChange={(event) => setQuery(event.target.value)} /></label><div><p>{t("toolbarCopy", { count: catalog.prompts.length })}</p><button className="button button-primary" type="button" onClick={() => { setError(""); setEditor(draft(undefined, Math.max(0, ...catalog.prompts.map((prompt) => prompt.sort_order)) + 10, catalog.cast_groups, singleGroup)); }}>{t("add")}</button></div></div></section>
+    <section className="panel"><div className="table-wrap"><table className="data-table icebreaker-table"><thead><tr><th>{t("question")}</th>{singleGroup ? null : <th>{t("groups")}</th>}<th>{t("audience")}</th><th>{t("order")}</th><th>{t("status")}</th><th><span className="sr-only">{common("actions")}</span></th></tr></thead><tbody>{prompts.map((prompt) => <tr key={prompt.key} className={prompt.active ? "" : "is-inactive"}><td><strong>{localeText(prompt.labels, locale)}</strong><code>{prompt.key}</code></td>{singleGroup ? null : <td><div className="icebreaker-badges">{prompt.groups.map((group) => <span className="badge" key={group}>{localeText(catalog.groups.find((item) => item.key === group)?.labels ?? { en: group }, locale)}</span>)}</div></td>}<td>{prompt.audience.mode === "global" ? t("global") : t("castCount", { count: prompt.audience.genders.length + prompt.audience.group_ids.length + prompt.audience.segments.length })}</td><td>{prompt.sort_order}</td><td><span className={`badge ${prompt.active ? "badge-active" : "badge-inactive"}`}>{prompt.active ? t("active") : t("inactive")}</span></td><td><div className="row-actions"><button className="button button-secondary button-small" type="button" onClick={() => { setError(""); setEditor(draft(prompt, 10, catalog.cast_groups, singleGroup)); }}>{common("edit")}</button>{prompt.active ? <button className="button button-danger button-small" type="button" onClick={() => setArchive(prompt)}>{t("archive")}</button> : null}</div></td></tr>)}{prompts.length === 0 ? <tr><td colSpan={singleGroup ? 5 : 6} className="signup-options-empty">{t("noMatches")}</td></tr> : null}</tbody></table></div></section>
     {editor ? <PromptDialog value={editor} catalog={catalog} busy={busy} error={error} onChange={setEditor} onClose={() => { if (!busy) setEditor(null); }} onSave={() => void save()} /> : null}
     {archive ? <ConfirmDialog title={t("archiveTitle")} copy={t("archiveCopy", { question: localeText(archive.labels, locale) })} confirmLabel={t("archive")} busy={busy} onCancel={() => { if (!busy) setArchive(null); }} onConfirm={() => void confirmArchive()} /> : null}
   </>;

@@ -11,6 +11,8 @@ export type IcebreakerPrompt = {
   id: string;
   key: string;
   labels: IcebreakerLocalizedText;
+  // T-630 (D-094): Friending has one category, `friends`. `sex` and `love` stay
+  // accepted on a prompt only for the transition; T-631 narrows this to `friends`.
   groups: Array<"friends" | "sex" | "love">;
   member_sex: "male" | "female" | "both";
   audience: { mode: "global" | "segments"; segments: string[]; genders: string[]; group_ids: string[] };
@@ -30,6 +32,25 @@ export type IcebreakerCatalog = {
   cast_groups: UserCastGroup[];
   prompts: IcebreakerPrompt[];
 };
+
+/**
+ * The catalogue `groups` shapes the decoder accepts, as `key` lists joined by `,`.
+ *
+ * T-630 (D-094): Friending has ONE icebreaker category, `friends`, so the target
+ * catalogue answers exactly `[friends]`. A Core still on the Freelove triple
+ * answers `friends,sex,love`; that legacy shape is accepted only for the
+ * transition, so the console stays up whichever side deploys first. T-631
+ * removes the legacy entry once the single-group Core is live.
+ */
+const ACCEPTED_GROUP_SHAPES: readonly string[] = [
+  "friends", // target (T-630)
+  "friends,sex,love", // legacy triple, transition only (removed by T-631)
+];
+
+/** True when Core serves the single `friends` category (T-630 target). */
+export function isSingleGroupCatalog(catalog: Pick<IcebreakerCatalog, "groups">): boolean {
+  return catalog.groups.length === 1;
+}
 
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -107,6 +128,7 @@ function prompt(value: unknown): IcebreakerPrompt | null {
     || !groups
     || groups.length === 0
     || groups.length > 3
+    // T-630 transition: `sex`/`love` still decode on a prompt; T-631 narrows to `friends`.
     || !groups.every((group) => ["friends", "sex", "love"].includes(group))
     || !["male", "female", "both"].includes(String(source.member_sex))
     || !audience
@@ -168,7 +190,7 @@ export function icebreakerCatalog(value: unknown): IcebreakerCatalog | null {
     || !groups
     || !memberSexes
     || !segments
-    || groups.map((item) => item.key).join(",") !== "friends,sex,love"
+    || !ACCEPTED_GROUP_SHAPES.includes(groups.map((item) => item.key).join(","))
     || memberSexes.map((item) => item.key).join(",") !== "male,female,both"
     || !Array.isArray(source.prompts)
   ) return null;

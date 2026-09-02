@@ -2081,16 +2081,16 @@
       },
       "icebreakers": {
         "title": "Icebreaker cards help",
-        "summary": "Icebreakers are optional profile prompts that help members start conversations or express themselves. This page controls bilingual question copy, Friends/Sex/Love placement, who may answer and whether a prompt remains available.",
+        "summary": "Icebreakers are optional profile prompts that help members start conversations or express themselves. Every card is a friends card; this page controls bilingual question copy, who may answer and whether a prompt remains available.",
         "steps": {
           "1": "Search for an existing prompt before creating a new one with overlapping meaning.",
-          "2": "Set card placement and member audience independently and complete both languages.",
+          "2": "Set the member audience and complete both languages; every card is a friends card, so there is no placement to choose.",
           "3": "Save or archive while preserving existing profile answers."
         },
         "sections": {
           "search": {
             "title": "Prompt search and inventory",
-            "purpose": "Search filters the complete prompt catalog while the count and cards show active, archived, grouped and targeted prompts.",
+            "purpose": "Search filters the complete prompt catalog while the count and cards show active, archived and targeted prompts.",
             "actions": {
               "1": "Find by stable key or localized question.",
               "2": "Open a prompt for editing or start a new one."
@@ -2107,13 +2107,13 @@
             "guidance": "A key cannot be renamed later. The question should invite an answer without requesting sensitive or unsafe disclosure."
           },
           "placementAudience": {
-            "title": "Friends, Sex, Love placement and audience",
-            "purpose": "Placement selects where the card appears; audience independently controls which eligible genders and dynamic groups can answer it.",
+            "title": "Friends cards and audience",
+            "purpose": "Every prompt is a friends card, so there is no placement to choose; the audience alone controls which eligible genders and dynamic groups can answer it.",
             "actions": {
-              "1": "Choose one or more appropriate thematic groups.",
+              "1": "Write the question as a friends card; the only per-prompt choice is its audience.",
               "2": "Leave audience global or select a reviewed restricted audience."
             },
-            "guidance": "Placement does not imply eligibility. When multiple audience dimensions are set they all must match, so test the intended member groups."
+            "guidance": "The audience is the only per-prompt restriction. When multiple audience dimensions are set they all must match, so test the intended member groups."
           },
           "archiveBehavior": {
             "title": "Archive and existing answers",
@@ -6867,10 +6867,10 @@
   "icebreakers": {
     "eyebrow": "Conversation starters",
     "title": "Icebreaker cards",
-    "subtitle": "Manage multilingual profile prompts, their Friends/Sex/Love placement, and their eligible member audience.",
+    "subtitle": "Manage the multilingual profile prompts and the member audience that may answer each one. Every Icebreaker is a friends card; only the audience is chosen per prompt.",
     "search": "Filter prompts",
     "searchPlaceholder": "Search a question or stable key",
-    "toolbarCopy": "{count} prompts. Group placement and audience targeting are independent settings.",
+    "toolbarCopy": "{count} prompts. Every card is a friends card; only the member audience is chosen per prompt.",
     "add": "Add prompt",
     "addTitle": "Add Icebreaker prompt",
     "editTitle": "Edit Icebreaker prompt",
@@ -6903,7 +6903,7 @@
     "active": "Active",
     "inactive": "Archived",
     "activeHint": "Archived prompts remain visible on profiles that already answered them, but cannot be selected again.",
-    "validationError": "Enter both translations, select at least one card group, and complete the audience settings.",
+    "validationError": "Enter both translations and complete the audience settings.",
     "conflict": "This prompt changed in another session. Reload the catalog and try again.",
     "saveError": "The Icebreaker prompt could not be saved.",
     "saved": "Icebreaker prompt saved.",
