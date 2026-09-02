@@ -1,10 +1,10 @@
 {
     "schema_version": 1,
-    "source_commit": "bd2f3256872817221ff0e15eed302b33cc610549",
-    "fixture_set_sha256": "76c395dc15e8869129ed53d491d5710e01bf1f3b3b3ddf079bfa1b93598ec9a6",
+    "source_commit": "5cf741f9f313558f954aead53f2e5dd48156deef",
+    "fixture_set_sha256": "6dfacf0c5586806c9de39c67ad36da6df4653b70a391154e7e8a76d366bd5aec",
     "provenance": {
         "generator": "tests/audience_visibility_fixture_dump.php",
-        "generator_sha256": "1747b31c6bafb828b04490d02e78ef00ffaaff15622941d56488a9016307037f",
+        "generator_sha256": "a7521674eb451bc83538b1ab8b657eb05570efe46749fd175dd04e337c8ccba4",
         "app_wire_adapter": "Friending\\Core\\Response::wirePayload",
         "admin_wire_adapter": "Friending\\Support\\Webadmin::noStoreReply",
         "evaluated_at": 1800000000,
@@ -35,14 +35,14 @@
             "route": "/v1/app/signup_options",
             "case": "schema_2_full_en",
             "consumer": "ios",
-            "sha256": "b599c07729b321a9842250650e6b8c1c49241c8ee54febcfa0ecab81291a3f5e"
+            "sha256": "b9d70fd142721fdcc5adb3ba58a86dc59caeab1644067768cac34b1e0884eb19"
         },
         {
             "file": "signup-catalog-hu.json",
             "route": "/v1/app/signup_options",
             "case": "schema_2_full_hu",
             "consumer": "ios",
-            "sha256": "a6f98a3b35d1867be00ee7194164bc35c3ddfac467ec718bc1d5c8f7744828ec"
+            "sha256": "7f8db750786413df804070a38cf2fd8a4ff90ff3a06747e66a458ba07e60f53c"
         },
         {
             "file": "signup-catalog-unavailable.json",

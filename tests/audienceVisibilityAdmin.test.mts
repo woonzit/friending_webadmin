@@ -455,19 +455,21 @@ test("all 59 published Core Webadmin fixtures are unchanged, manifest-bound, and
     "fixtures",
   ]);
   assert.equal(manifest.schema_version, 1);
-  // Re-pinned by T-653 to Core `main` `5a6b9b4`, which landed the provider as
-  // `bd2f325` (a clean cherry-pick of the branch's `bb8c0c0`) and regenerated
-  // this corpus from scratch on that tip. Every body is byte-identical to the
-  // branch's own run — `fixture_set_sha256` and `generator_sha256` did not move,
-  // only `source_commit` — so the pin names the commit that will actually
-  // deploy. The set gained the sixteen member-identity and sibling-`admin_me`
-  // bodies, and the three `admin-member-*.json` bodies MOVED, gaining the three
-  // additive projection keys: the pinned receipt of exactly the payload change
-  // this task consumes.
-  assert.equal(manifest.source_commit, "bd2f3256872817221ff0e15eed302b33cc610549");
-  assert.equal(manifest.fixture_set_sha256, "76c395dc15e8869129ed53d491d5710e01bf1f3b3b3ddf079bfa1b93598ec9a6");
+  // Re-pinned by T-680 from deployed Core `main` `7c6e5aa`. The published
+  // manifest is source-bound to `5cf741f9`; its full fixture set moved because
+  // the two iOS signup catalogues were regenerated with the final synthetic
+  // question copy, including "Ki láthatja az adatlapomat" in Hungarian. This
+  // curated directory still holds the 59 Webadmin bodies plus the one shared
+  // owner-profile body, all byte-identical to that Core archive.
+  assert.equal(manifest.source_commit, "5cf741f9f313558f954aead53f2e5dd48156deef");
+  assert.equal(manifest.fixture_set_sha256, "6dfacf0c5586806c9de39c67ad36da6df4653b70a391154e7e8a76d366bd5aec");
   assert.equal(manifest.provenance.generator, "tests/audience_visibility_fixture_dump.php");
+  assert.equal(manifest.provenance.generator_sha256, "a7521674eb451bc83538b1ab8b657eb05570efe46749fd175dd04e337c8ccba4");
   assert.equal(manifest.provenance.admin_wire_adapter, "Friending\\Support\\Webadmin::noStoreReply");
+
+  const fixtureRows = new Map(manifest.fixtures.map((row: Json) => [row.file, row]));
+  assert.equal(fixtureRows.get("signup-catalog-en.json")?.sha256, "b9d70fd142721fdcc5adb3ba58a86dc59caeab1644067768cac34b1e0884eb19");
+  assert.equal(fixtureRows.get("signup-catalog-hu.json")?.sha256, "7f8db750786413df804070a38cf2fd8a4ff90ff3a06747e66a458ba07e60f53c");
 
   const rows = manifest.fixtures.filter((row: Json) => row.consumer === "webadmin");
   assert.equal(rows.length, 59);
