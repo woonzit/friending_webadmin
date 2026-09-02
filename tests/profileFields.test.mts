@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -493,4 +494,242 @@ test("profile-field audience editor uses the shared gender and user-group select
   const userPage = await readFile(new URL("../app/(dashboard)/users/[uid]/page.tsx", import.meta.url), "utf8");
   assert.match(userPage, /identityOptionGroups\(profileResponse\?\.identity_options\)/);
   assert.match(userPage, /!parsedIdentityGroups/);
+});
+
+test("the deployed post-D-019 member payload decodes and renders (T-641)", async () => {
+  // Provenance: byte-identical copy of Core's
+  // `tests/fixtures/audience_visibility_wire/owner-profile-fields-identity.json`
+  // (generator `tests/audience_visibility_fixture_dump.php`, which asserts
+  // `array_keys($identity) === ['gender','subgender','subgender_selected','updated_at']`).
+  // The row and its sha256 were already published in this repository's copied
+  // manifest, so the body is manifest-bound without a manifest edit.
+  const fixtureDirectory = new URL("./fixtures/audience_visibility_admin_wire/", import.meta.url);
+  const manifest = JSON.parse(await readFile(new URL("manifest.json", fixtureDirectory), "utf8"));
+  const row = manifest.fixtures.find(
+    (entry: Record<string, string>) => entry.file === "owner-profile-fields-identity.json",
+  );
+  assert.ok(row, "the identity fragment must stay listed in the copied Core manifest");
+  assert.equal(row.case, "owner_profile_fields_identity_fragment");
+  const bytes = await readFile(new URL(row.file, fixtureDirectory));
+  assert.equal(
+    createHash("sha256").update(bytes).digest("hex"),
+    row.sha256,
+    "owner-profile-fields-identity.json changed after Core publication",
+  );
+  const identity = JSON.parse(bytes.toString("utf8")).data.profile_fields.identity;
+  assert.deepEqual(
+    Object.keys(identity),
+    ["gender", "subgender", "subgender_selected", "updated_at"],
+    "the active identity contract is closed to exactly these four keys",
+  );
+
+  // The shape `ProfileAttributeService::payload()` answers today: the four-key
+  // identity block, no `fields[].audience` and no `sections[].visibility` (both
+  // deleted by `AudienceVisibilityProjectionPolicy::member()`), and no height
+  // builtin (retired by T-632).
+  const payload = {
+    schema_version: 1,
+    catalog_version: 1,
+    revision: 3,
+    builtin_revision: 2,
+    language: "en",
+    segment: { key: "male_gay", label: "Gay men" },
+    identity,
+    layout: {
+      schema_version: 1,
+      revision: 2,
+      sections: [{
+        key: "more_about_you",
+        title: "More about you",
+        subtitle: "Personality and lifestyle",
+        items: [{ kind: "field", key: "pets" }],
+      }],
+    },
+    fields: [{
+      key: "pets",
+      labels: { en: "Pets", hu: "Háziállatok" },
+      descriptions: {},
+      label: "Pets",
+      description: "",
+      selection: { mode: "multi", min_selected: 0, max_selected: 4 },
+      icon: { url: "", mime: "" },
+      sort_order: 10,
+      active: true,
+      eligible: true,
+      revision: 2,
+      system_owned: true,
+      source: "builtin",
+      options: [{
+        field_key: "pets",
+        key: "dog",
+        option_id: 123,
+        id: 123,
+        labels: { en: "Dog", hu: "Kutya" },
+        label: "Dog",
+        sort_order: 10,
+        active: true,
+        revision: 1,
+        system_owned: false,
+        source: "custom",
+        legacy_ids: [],
+        selected: true,
+      }],
+      values: ["dog"],
+    }],
+  };
+  const parsed = userProfileFields(payload);
+  // `app/(dashboard)/users/[uid]/page.tsx` treats a null here as a page-level
+  // failure, so this single assertion is the whole member console.
+  assert.ok(parsed, "the deployed Core payload must not darken /users/[uid]");
+  assert.equal(parsed.identity.gender, identity.gender);
+  assert.equal(parsed.identity.subgender, identity.subgender);
+  assert.equal(parsed.identity.subgender_selected, identity.subgender_selected);
+  assert.equal(parsed.identity.updated_at, identity.updated_at);
+  // The retired keys decode as empty rather than as a refusal.
+  assert.equal(parsed.identity.orientation, "");
+  assert.equal(parsed.identity.audience_status, "");
+  assert.deepEqual(parsed.identity.channels, []);
+  assert.deepEqual(parsed.identity.question_packs, []);
+  assert.equal(parsed.height, null);
+  assert.equal(parsed.sections[0]?.visibility, undefined);
+  // An absent audience block is an unrestricted field, never a fabricated
+  // restriction.
+  assert.deepEqual(parsed.fields[0]?.audience, {
+    mode: "global",
+    segments: [],
+    genders: [],
+    group_ids: [],
+  });
+
+  const identityGroups = identityOptionGroups([
+    {
+      key: "gender",
+      name_en: "Gender",
+      name_hu: "Nem",
+      options: [{ key: "man", name_en: "Man", name_hu: "Férfi", audiences: [], active: true }],
+    },
+    {
+      key: "subgender",
+      name_en: "Detailed gender",
+      name_hu: "Részletes nemi identitás",
+      options: [{
+        key: "trans_man",
+        name_en: "Trans man",
+        name_hu: "Transz férfi",
+        audiences: ["man"],
+        active: true,
+      }],
+    },
+  ]);
+  assert.ok(identityGroups);
+  const messages = JSON.parse(
+    await readFile(new URL("../messages/en.json", import.meta.url), "utf8"),
+  );
+  const markup = renderToStaticMarkup(createElement(
+    NextIntlClientProvider,
+    { locale: "en", messages, timeZone: "UTC" },
+    createElement(UserProfileDataEditor, {
+      uid: 123,
+      data: parsed,
+      identityGroups,
+      onChange: () => {},
+    }),
+  ));
+  assert.match(markup, />Gender</);
+  assert.match(markup, />Pets</);
+  // Retired lists render as the empty marker instead of throwing.
+  assert.match(markup, /—/);
+});
+
+test("widening the member payload leaves every present value validated (T-641)", () => {
+  const base = {
+    schema_version: 1,
+    catalog_version: 1,
+    revision: 3,
+    language: "en",
+    segment: { key: "male_gay", label: "Gay men" },
+    identity: {
+      gender: "man",
+      subgender: "trans_man",
+      subgender_selected: true,
+      updated_at: 1800000000,
+    } as Record<string, unknown>,
+    layout: { schema_version: 1, revision: 2, sections: [] },
+    fields: [] as Array<Record<string, unknown>>,
+  };
+  assert.ok(userProfileFields(structuredClone(base)));
+
+  // A legacy identity is still decoded exactly as strictly as before: all four
+  // retired keys must be present and well-typed together.
+  const legacy = structuredClone(base);
+  legacy.identity = {
+    ...legacy.identity,
+    orientation: "gay",
+    audience_status: "active",
+    channels: ["mlm"],
+    question_packs: ["common"],
+  };
+  assert.ok(userProfileFields(structuredClone(legacy)));
+  for (const [key, value] of [
+    ["orientation", 5],
+    ["channels", "mlm"],
+    ["question_packs", [7]],
+    ["gender", 1],
+    ["subgender_selected", "yes"],
+  ] as Array<[string, unknown]>) {
+    const broken = structuredClone(legacy);
+    broken.identity = { ...broken.identity, [key]: value };
+    assert.equal(userProfileFields(broken), null, `identity.${key} must stay validated`);
+  }
+  for (const key of ["orientation", "channels", "question_packs"]) {
+    const partial = structuredClone(legacy);
+    delete (partial.identity as Record<string, unknown>)[key];
+    assert.equal(
+      userProfileFields(partial),
+      null,
+      `a legacy identity missing ${key} is still a refusal, not a new shape`,
+    );
+  }
+
+  // An absent audience decodes as global; a present one is validated unchanged.
+  const row = {
+    key: "pets",
+    labels: { en: "Pets", hu: "Háziállatok" },
+    descriptions: {},
+    selection: { mode: "multi", min_selected: 0, max_selected: 4 },
+    icon: { url: "", mime: "" },
+    sort_order: 10,
+    active: true,
+    revision: 2,
+    system_owned: true,
+    source: "builtin",
+    options: [],
+    values: [],
+  };
+  const global = structuredClone(base);
+  global.fields = [structuredClone(row)];
+  assert.ok(userProfileFields(global));
+  for (const audience of [
+    "global",
+    { mode: "everyone", segments: [], genders: [], group_ids: [] },
+    { mode: "global", segments: ["male_gay"], genders: [], group_ids: [] },
+    { mode: "segments", segments: [], genders: [], group_ids: [] },
+    { mode: "segments", segments: [], genders: ["martian"], group_ids: [] },
+    { mode: "segments", segments: [], genders: [], group_ids: ["not-an-object-id"] },
+  ]) {
+    const broken = structuredClone(base);
+    broken.fields = [{ ...structuredClone(row), audience }];
+    assert.equal(
+      userProfileFields(broken),
+      null,
+      `a served audience block stays validated: ${JSON.stringify(audience)}`,
+    );
+  }
+  // The catalogue console is not projection-filtered and keeps its audience.
+  assert.ok(profileFieldCatalog({
+    schema_version: 1,
+    segments: [],
+    cast_groups: [],
+    fields: [{ ...structuredClone(row), audience: { mode: "global", segments: [] } }],
+  }));
 });

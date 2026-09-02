@@ -121,6 +121,13 @@ export type UserProfileFields = {
   revision: number;
   language: string;
   segment: { key: string; label: string };
+  /**
+   * `gender`, `subgender`, `subgender_selected` and `updated_at` are the whole
+   * identity block under the active D-019 projection; `orientation`,
+   * `audience_status`, `channels` and `question_packs` are legacy keys that Core
+   * stops serving once audience-visibility readiness is true, and decode as `""`
+   * / `[]` from then on. See `userProfileFields()` for the two accepted shapes.
+   */
   identity: {
     gender: string;
     subgender: string;
@@ -214,12 +221,37 @@ function option(value: unknown, fieldKey: string): ProfileFieldOption | null {
   };
 }
 
+/**
+ * What an ABSENT `fields[].audience` decodes to.
+ *
+ * Under D-019 `AudienceVisibilityProjectionPolicy::member()` deletes every key
+ * named `audience` from a member payload
+ * (`api/src/Support/AudienceVisibilityProjectionPolicy.php:17`), and the admin
+ * branch of `ProfileAttributeService::payload()` merges the catalogue row into
+ * each field before that projection runs, so `/users/[uid]` receives field rows
+ * with no audience block at all. An unrestricted field is the only reading that
+ * cannot invent a restriction Core is not enforcing — the same "an empty list
+ * and a missing list mean the same audience" reasoning already applied to
+ * `group_ids` below. A block that IS present is validated exactly as before.
+ *
+ * `/profile-fields` reads `ProfileFieldCatalog::adminPayload()`, which is not
+ * projection-filtered and still carries the block on every row.
+ */
+const ABSENT_AUDIENCE_MEANS_GLOBAL: Record<string, unknown> = {
+  mode: "global",
+  segments: [],
+  genders: [],
+  group_ids: [],
+};
+
 function field(value: unknown): ProfileField | null {
   const source = record(value);
   const labels = textMap(source?.labels);
   const descriptions = textMap(source?.descriptions ?? {});
   const selection = record(source?.selection);
-  const audience = record(source?.audience);
+  const audience = source && source.audience === undefined
+    ? ABSENT_AUDIENCE_MEANS_GLOBAL
+    : record(source?.audience);
   const icon = record(source?.icon);
   const segments = strings(audience?.segments);
   const genders = strings(audience?.genders ?? []);
@@ -428,8 +460,34 @@ export function userProfileFields(value: unknown): UserProfileFields | null {
   const segment = record(source?.segment);
   const identity = record(source?.identity);
   const layout = record(source?.layout);
-  const channels = strings(identity?.channels);
-  const questionPacks = strings(identity?.question_packs);
+  // The two identity shapes this route can carry.
+  //
+  // ACTIVE (post-D-019, what the deployed Core serves): exactly the four keys
+  // `gender`, `subgender`, `subgender_selected`, `updated_at`, assembled by
+  // `ProfileAttributeService::identityPayloadFromAudience()` whenever
+  // `AudienceVisibilityReadinessService::ready()` is true — true on the live
+  // server since 2026-08-28. Core pins the shape in
+  // `api/tests/fixtures/audience_visibility_wire/owner-profile-fields-identity.json`,
+  // mirrored byte-identically at
+  // `tests/fixtures/audience_visibility_admin_wire/owner-profile-fields-identity.json`.
+  //
+  // LEGACY (pre-D-019): those four keys plus `orientation`, `audience_status`,
+  // `channels` and `question_packs`. Served only while readiness is false, and
+  // kept here for the transition; T-634 may delete this branch once no Core in
+  // the fleet can produce it.
+  //
+  // A legacy key that IS present is validated exactly as it always was, so this
+  // widens what is accepted without weakening any known value. `audience_status`
+  // has been optional-with-a-default since the key existed and stays that way.
+  const legacyIdentity = identity !== null && (
+    identity.orientation !== undefined
+    || identity.channels !== undefined
+    || identity.question_packs !== undefined
+  );
+  // In the legacy branch all three keys must be present and well-formed, exactly
+  // as they had to be before; in the active branch none of them is served.
+  const channels = strings(legacyIdentity ? identity?.channels : []);
+  const questionPacks = strings(legacyIdentity ? identity?.question_packs : []);
   if (
     !source
     || !Array.isArray(source.fields)
@@ -440,7 +498,7 @@ export function userProfileFields(value: unknown): UserProfileFields | null {
     || typeof identity.gender !== "string"
     || typeof identity.subgender !== "string"
     || typeof identity.subgender_selected !== "boolean"
-    || typeof identity.orientation !== "string"
+    || (legacyIdentity && typeof identity.orientation !== "string")
     || !channels
     || !questionPacks
     || !layout
@@ -545,7 +603,7 @@ export function userProfileFields(value: unknown): UserProfileFields | null {
       gender: identity.gender,
       subgender: identity.subgender,
       subgender_selected: identity.subgender_selected,
-      orientation: identity.orientation,
+      orientation: typeof identity.orientation === "string" ? identity.orientation : "",
       updated_at: typeof identity.updated_at === "number" ? identity.updated_at : 0,
       audience_status: typeof identity.audience_status === "string" ? identity.audience_status : "",
       channels,

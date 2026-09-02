@@ -505,7 +505,15 @@ test("all 43 published Core Webadmin fixtures are unchanged, manifest-bound, and
     "admin-error-audit-write-failed.json",
   ];
   assert.deepEqual(rows.map((row: Json) => row.file), expectedFiles);
-  assert.deepEqual((await readdir(FIXTURE_DIRECTORY)).sort(), [...expectedFiles, "manifest.json"].sort());
+  // T-641 added the single `consumer: "ios"` body this repository holds:
+  // `owner-profile-fields-identity.json`, the normative post-D-019 identity
+  // block, decoded by `tests/profileFields.test.mts`. Its manifest row and
+  // sha256 were already published in the copied manifest, so the set needed the
+  // body alone and no manifest edit; the row is verified there.
+  assert.deepEqual(
+    (await readdir(FIXTURE_DIRECTORY)).sort(),
+    [...expectedFiles, "owner-profile-fields-identity.json", "manifest.json"].sort(),
+  );
 
   for (const row of rows) {
     assert.deepEqual(Object.keys(row), ["file", "route", "case", "consumer", "sha256"]);
