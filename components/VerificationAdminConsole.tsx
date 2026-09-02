@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import ForcedVerificationTab from "@/components/ForcedVerificationTab";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
+import VerificationMethodScopesTable from "@/components/VerificationMethodScopesTable";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
-import { type ForcedVerificationAccess } from "@/lib/forcedVerification";
+import { type VerificationMethodAccess } from "@/lib/verificationMethod";
 import {
   VERIFICATION_BADGE_SLOTS,
   VERIFICATION_FEATURE_KEYS,
@@ -83,20 +83,6 @@ const COPY_VALIDATION_REQUEST_ID = "00000000-0000-4000-8000-000000000000";
 
 function clone<T>(value: T): T { return structuredClone(value); }
 
-function methodChoice(methods: VerificationStoredPolicyBlock["enabled_methods"]): string {
-  if (methods === "inherit") return "inherit";
-  if (methods.length === 0) return "none";
-  if (methods.length === 2) return "both";
-  return methods[0];
-}
-
-function methodsFromChoice(value: string): VerificationStoredPolicyBlock["enabled_methods"] {
-  if (value === "inherit") return "inherit";
-  if (value === "both") return ["video", "persona"];
-  if (value === "video" || value === "persona") return [value];
-  return [];
-}
-
 function mutationResult(action: VerificationMutationAction, response: unknown): { replayed: boolean } | null {
   if (action === "verification_policy_save_draft" || action === "verification_policy_apply") {
     return verificationPolicyMutationResponse(response);
@@ -119,6 +105,14 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
+/**
+ * A brand-new location scope. Contract §6.3: Webadmin never synthesizes or
+ * edits `enabled_methods` — Core ignores it for runtime method resolution, and
+ * every EXISTING scope keeps its last authoritative value byte-for-byte because
+ * the draft is cloned from Core's own projection. A new non-global scope has no
+ * authoritative value at all, and `"inherit"` is the neutral one Core requires
+ * in the field's place.
+ */
 function defaultOverrideDraft(): VerificationStoredPolicyBlock {
   return {
     enabled_methods: "inherit",
@@ -177,10 +171,8 @@ function badgeSymbol(slot: VerificationBadgeSlot): string {
   return slot === "strong" ? "◆" : "✓";
 }
 
-export default function VerificationAdminConsole({ initialTab, forced }: { initialTab: VerificationTabKey; forced: ForcedVerificationAccess }) {
+export default function VerificationAdminConsole({ initialTab, methodAccess }: { initialTab: VerificationTabKey; methodAccess: VerificationMethodAccess }) {
   const t = useTranslations("verificationAdmin");
-  /** The D-053 tab exists only when Core lists the console action for this operator. */
-  const tabs = useMemo(() => VERIFICATION_TAB_KEYS.filter((key) => key !== "forced" || forced.visible), [forced.visible]);
   const locale = useLocale() === "hu" ? "hu" : "en";
   const [tab, setTab] = useState<VerificationTabKey>(initialTab);
   const [state, setState] = useState<LoadState>("loading");
@@ -216,6 +208,19 @@ export default function VerificationAdminConsole({ initialTab, forced }: { initi
   const can = useCallback((capability: VerificationCapability): boolean => (
     data?.principal.capabilities.includes(capability) ?? false
   ), [data]);
+
+  /**
+   * Design §7 / contract §7.2: the feature-requirement plane is inert while
+   * Core's client activation guard is closed, so the tab is omitted from
+   * navigation rather than shown as a dead surface. Feature drafts are
+   * untouched and no hidden action is called. Until the console read lands the
+   * guard is unknown, and an unknown guard is treated as closed.
+   */
+  const requirementsReady = data?.activation_guard.non_none_publish_ready === true;
+  const tabs = useMemo(
+    () => VERIFICATION_TAB_KEYS.filter((key) => key !== "requirements" || requirementsReady),
+    [requirementsReady],
+  );
 
   const load = useCallback(async () => {
     setState((current) => current === "ready" ? current : "loading");
@@ -330,6 +335,11 @@ export default function VerificationAdminConsole({ initialTab, forced }: { initi
   useEffect(() => {
     setSimulationResult(null);
   }, [simulation, simulationScope]);
+
+  useEffect(() => {
+    // A hidden tab can still arrive from `?tab=`; selection falls back to Scopes.
+    setTab((current) => (tabs.includes(current) ? current : "scopes"));
+  }, [tabs]);
 
   const copyCanSave = useMemo(() => copyDraft !== null && Boolean(normalizeVerificationProxyBody(
     "verification_copy_save",
@@ -688,7 +698,9 @@ export default function VerificationAdminConsole({ initialTab, forced }: { initi
       </div>
 
       <div role="tabpanel" aria-labelledby={`verification-tab-${tab}`}>
-        {tab === "scopes" ? <div className="verification-scopes-workspace">
+        {tab === "scopes" ? <>
+        {methodAccess.visible ? <VerificationMethodScopesTable access={methodAccess} locked={locked} /> : null}
+        <div className="verification-scopes-workspace">
           <section className="panel">
             <div className="panel-header"><div><h2>{t("scopes.listTitle")}</h2><p>{t("scopes.listCopy")}</p></div><div className="row-actions"><span className="badge">{t("live.shownPolicies", { shown: data.policies.length, total: data.total_policies })}</span>{data.next_cursor ? <button type="button" className="button button-secondary button-small" disabled={locked} onClick={() => void loadMorePolicies()}>{t("live.loadMore")}</button> : null}</div></div>
             <div className="panel-body">
@@ -698,20 +710,6 @@ export default function VerificationAdminConsole({ initialTab, forced }: { initi
                   <strong>{t(`live.policyStates.${policyLifecycle}`)}</strong>
                   <small>{t(`live.policyStateHelp.${policyLifecycle}`)}</small>
                 </div> : null}
-                <label className="field">
-                  <span>{t("live.enabledMethods")}</span>
-                  <select value={methodChoice(policyDraft.enabled_methods)} disabled={locked || !can("verification_policy_edit")} onChange={(event) => { setPolicyDraft({ ...policyDraft, enabled_methods: methodsFromChoice(event.target.value) }); setImpact(null); }}>
-                    {selectedPolicy.scope.kind !== "global" ? <option value="inherit">{t("requirements.values.inherit")}</option> : null}
-                    <option value="none">{t("live.methodChoices.none")}</option>
-                    <option value="video" disabled={!data.method_availability.video.policy_enable_allowed}>{t("methods.video")}</option>
-                    <option value="persona" disabled={!data.method_availability.persona.policy_enable_allowed}>{t("methods.persona")}</option>
-                    <option value="both" disabled={VERIFICATION_METHODS.some((method) => !data.method_availability[method].policy_enable_allowed)}>{t("live.methodChoices.both")}</option>
-                  </select>
-                  <small className="field-hint">{VERIFICATION_METHODS.map((method) => {
-                    const availability = data.method_availability[method];
-                    return `${t(`methods.${method}`)}: ${availability.reason ? t(`live.methodReasons.${availability.reason}`) : t("live.methodAvailable")}`;
-                  }).join(" · ")}</small>
-                </label>
                 <div className="table-wrap"><table className="data-table"><thead><tr><th>{t("requirements.feature")}</th><th>{t("live.draftRequirement")}</th><th>{t("live.effectiveRequirement")}</th></tr></thead><tbody>{VERIFICATION_FEATURE_KEYS.map((feature) => {
                   const effective = selectedPolicy.effective?.feature_requirements[feature];
                   return <tr key={feature}><th><strong>{t(`features.${feature}.title`)}</strong><small>{feature}</small></th><td><select value={policyDraft.feature_requirements[feature]} disabled={locked || !can("verification_policy_edit")} onChange={(event) => updateFeature(feature, event.target.value)}>{VERIFICATION_REQUIREMENTS.filter((value) => selectedPolicy.scope.kind !== "global" || value !== "inherit").map((value) => <option value={value} key={value}>{t(`requirements.values.${value}`)}</option>)}</select></td><td>{effective ? <><strong>{t(`requirements.values.${effective.required_tier}`)}</strong><small>{effective.source_scope_key}</small></> : t("live.notLive")}</td></tr>;
@@ -741,7 +739,8 @@ export default function VerificationAdminConsole({ initialTab, forced }: { initi
             <section className="panel"><div className="panel-header"><h2>{t("live.addCountry")}</h2></div><div className="panel-body"><label className="field"><span>{t("scopes.country")}</span><input disabled={locked || !can("verification_policy_edit")} maxLength={2} value={countryCode} onChange={(event) => setCountryCode(event.target.value.toUpperCase())} /></label>{!canCreateScope ? <p className="field-hint">{t("live.loadAllBeforeAdd")}</p> : null}<button type="button" className="button button-secondary" disabled={locked || !can("verification_policy_edit") || !canCreateScope || !/^[A-Z]{2}$/.test(countryCode)} onClick={() => saveNewScope(`country:${countryCode}`)}>{t("scopes.addDraft")}</button></div></section>
             <section className="panel"><div className="panel-header"><h2>{t("live.addCity")}</h2></div><div className="panel-body form-stack"><label className="field"><span>{t("scopes.citySearch")}</span><input disabled={locked || !can("verification_policy_edit")} type="search" value={cityQuery} onChange={(event) => setCityQuery(event.target.value)} /></label><label className="field"><span>{t("scopes.country")}</span><input disabled={locked || !can("verification_policy_edit")} maxLength={2} value={cityCountry} onChange={(event) => setCityCountry(event.target.value.toUpperCase())} /></label><button type="button" className="button button-secondary" disabled={locked || !can("verification_policy_edit") || cityQuery.trim().length < 2} onClick={() => void searchCity()}>{t("live.search")}</button>{citySuggestions.map((row) => <button type="button" className="button button-ghost" disabled={locked || !can("verification_policy_edit")} key={row.place_id} onClick={() => void selectCity(row.place_id)}>{row.display} · {row.secondary}</button>)}{cityDetail ? <div className="verification-provenance-card"><strong>{cityDetail.display}</strong><small>{cityDetail.scope_key}</small>{!canCreateScope ? <p className="field-hint">{t("live.loadAllBeforeAdd")}</p> : null}<button type="button" className="button button-primary" disabled={locked || !can("verification_policy_edit") || !canCreateScope} onClick={() => saveNewScope(cityDetail.scope_key, cityDetail.place_token)}>{t("scopes.addDraft")}</button></div> : null}</div></section>
           </aside>
-        </div> : null}
+        </div>
+        </> : null}
 
         {tab === "requirements" ? <section className="panel"><div className="panel-header"><div><h2>{t("requirements.title")}</h2><p>{t("requirements.copy")}</p></div></div><div className="panel-body"><div className="table-wrap"><table className="data-table"><thead><tr><th>{t("requirements.feature")}</th>{data.policies.map((row) => <th key={row.scope_key}>{row.scope.display}</th>)}</tr></thead><tbody>{VERIFICATION_FEATURE_KEYS.map((feature) => <tr key={feature}><th><strong>{t(`features.${feature}.title`)}</strong><small>{feature}</small></th>{data.policies.map((row) => {
           const effective = row.effective?.feature_requirements[feature];
@@ -826,8 +825,6 @@ export default function VerificationAdminConsole({ initialTab, forced }: { initi
             <label className="field"><span>{t("live.reason")}</span><textarea disabled={locked || !can("verification_badge_edit")} maxLength={300} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
           </div>
         </section> : null}
-
-        {tab === "forced" && forced.visible ? <ForcedVerificationTab access={forced} locked={locked} /> : null}
 
         {tab === "simulator" ? <div className="section-grid">
           <section className="panel">

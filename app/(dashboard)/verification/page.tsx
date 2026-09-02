@@ -13,10 +13,5 @@ export default async function VerificationAdminPage({
   const query = await searchParams;
   const requestedTab = Array.isArray(query.tab) ? query.tab[0] : query.tab;
   const tab = verificationTabKey(requestedTab);
-  return (
-    <VerificationAdminConsole
-      initialTab={tab === "forced" && !me.forcedVerification.visible ? "scopes" : tab}
-      forced={me.forcedVerification}
-    />
-  );
+  return <VerificationAdminConsole initialTab={tab} methodAccess={me.verificationMethod} />;
 }

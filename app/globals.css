@@ -13632,3 +13632,10 @@ body .verification-level-pill.level-strong {
   .persona-screens-screen-body { grid-template-columns: 1fr; }
   .persona-screens-phones { grid-template-columns: repeat(auto-fit, minmax(200px, 260px)); justify-content: start; }
 }
+
+/* T-617 unified verification-method table (contract §7.1). */
+.method-policy-table td { vertical-align: top; }
+.method-cell { display: grid; gap: 6px; min-width: 220px; }
+.method-availability { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: 11px; }
+.method-row-expanded > td { background: var(--bg-soft); }
+.method-row-detail { padding: 6px 0 10px; }
