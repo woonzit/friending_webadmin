@@ -634,7 +634,7 @@ export default function FootprintsPage() {
                           })}
                         </div>
                         <p className="footprints-chip-title">
-                          {t("chipGroups")} <span>{t("matchAny")}</span>
+                          {t("chipGroups")} <span>{t("groupsRecorded")}</span>
                         </p>
                         <div className="footprints-group-grid">
                           {payload.castGroups.map((group) => {
@@ -669,8 +669,17 @@ export default function FootprintsPage() {
                             ? t("audienceRequired")
                             : `${t(side === "sender" ? "senderShort" : "recipientShort")}: ${audienceSummary(genders, groupIds)}`}
                         </p>
-                        {genders.length > 0 && groupIds.length > 0 ? (
-                          <p className="footprints-match-logic">{t("matchBothAxes")}</p>
+                        {/*
+                          D-096 (T-637): FootprintPolicy::audienceMatches()
+                          delegates to the gender-only UserAudiencePolicy
+                          predicate, so a cast-group selection is stored and
+                          echoed back but never narrows who is offered the
+                          badge. The note appears whenever a group is picked,
+                          including the group-only case that now quietly means
+                          "everyone".
+                        */}
+                        {groupIds.length > 0 ? (
+                          <p className="footprints-match-logic">{t("groupsNotEnforced")}</p>
                         ) : null}
                       </>
                     ) : (

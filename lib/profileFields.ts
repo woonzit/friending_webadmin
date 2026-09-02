@@ -139,6 +139,21 @@ export type UserProfileFields = {
     question_packs: string[];
   };
   /**
+   * True only for the LEGACY identity shape — the one Core serves while
+   * `AudienceVisibilityReadinessService::ready()` is false, and the only state
+   * in which `save_user_profile_identity` still writes.
+   *
+   * Under readiness that route answers 410 `feature-retired` before it even
+   * reads the uid (`WebadminController::saveUserProfileIdentity()`), because
+   * canonical gender lives in `identity_v2` and the legacy write would
+   * re-derive the orientation-shaped keys the retirement migration cleared.
+   * The two facts move together — the closed four-key identity block and the
+   * refused write are both `ready()` — so the served shape is a sound
+   * indicator, and the editor renders the identity read-only rather than
+   * offering a save that can only fail. The V2 write arrives with T-653.
+   */
+  identity_editable: boolean;
+  /**
    * Present only while Core still serves the editable `height_cm` builtin in
    * `more_about_you`; null once T-632 retires it (the editor then posts no
    * builtin value at all).
@@ -599,6 +614,7 @@ export function userProfileFields(value: unknown): UserProfileFields | null {
     revision: typeof source.revision === "number" ? source.revision : 0,
     language: typeof source.language === "string" ? source.language : "en",
     segment: { key: segment.key, label: segment.label },
+    identity_editable: legacyIdentity,
     identity: {
       gender: identity.gender,
       subgender: identity.subgender,

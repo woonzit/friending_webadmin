@@ -137,7 +137,7 @@ function PromptDialog({
             labels={{
               legend: t("audience"), help: t("audienceHelp"), global: t("global"), custom: t("castSpecific"),
               globalHint: t("audienceGlobalHint"), genders: t("audienceGenders"), groups: t("audienceGroups"),
-              matchAny: t("audienceMatchAny"), matchBoth: t("audienceMatchBoth"), required: t("audienceRequired"),
+              matchAny: t("audienceMatchAny"), groupsRecorded: t("audienceGroupsRecorded"), groupsNotEnforced: t("audienceGroupsNotEnforced"), required: t("audienceRequired"),
               inactive: t("audienceGroupInactive"), legacy: t("audienceLegacy"),
               gender: { male: t("genderMale"), female: t("genderFemale"), other: t("genderOther") },
             }}

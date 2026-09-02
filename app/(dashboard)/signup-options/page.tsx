@@ -175,8 +175,9 @@ function GroupDialog({
           </div>
           {group.system_owned ? (
             <div className="system-option-notice field-full" role="note">
-              <strong>{group.required ? t("requiredSystemQuestion") : t("systemQuestion")}</strong>
-              <span>{group.required ? t("requiredSystemQuestionCopy") : t("systemQuestionCopy")}</span>
+              <strong>{group.required_at_signup ? t("requiredSystemQuestion") : t("systemQuestion")}</strong>
+              <span>{group.required_at_signup ? t("requiredSystemQuestionCopy") : t("systemQuestionCopy")}</span>
+              {group.required && !group.required_at_signup && <span>{t("notAskedAtSignupCopy")}</span>}
             </div>
           ) : (
             <MemberAudienceSelector
@@ -188,7 +189,7 @@ function GroupDialog({
               labels={{
                 legend: t("groupAudience"), help: t("groupAudienceHelp"), global: t("audienceGlobal"), custom: t("audienceSpecific"),
                 globalHint: t("audienceGlobalHint"), genders: t("audienceGendersTitle"), groups: t("audienceGroupsTitle"),
-                matchAny: t("audienceMatchAny"), matchBoth: t("audienceMatchBoth"), required: t("audienceRequired"),
+                matchAny: t("audienceMatchAny"), groupsRecorded: t("audienceGroupsRecorded"), groupsNotEnforced: t("audienceGroupsNotEnforced"), required: t("audienceRequired"),
                 inactive: t("audienceInactive"), legacy: t("audienceLegacy"),
                 gender: { male: t("genderMen"), female: t("genderWomen"), other: t("genderNonbinary") },
               }}
@@ -329,7 +330,7 @@ export default function SignupOptionsPage() {
       {toast && <div className="alert alert-success page-alert" role="status">{toast}</div>}
       <section className="signup-options-overview" aria-label={t("overviewLabel")}>
         <div><strong>{catalog.groups.length}</strong><span>{t("questionGroups")}</span></div>
-        <div><strong>{catalog.groups.filter((group) => group.required).length}</strong><span>{t("requiredQuestions")}</span></div>
+        <div><strong>{catalog.groups.filter((group) => group.required_at_signup).length}</strong><span>{t("requiredQuestions")}</span></div>
         <div><strong>{catalog.groups.filter((group) => group.audience.mode === "groups").length}</strong><span>{t("targetedQuestions")}</span></div>
         <div><strong>{activeOptions}</strong><span>{t("activeAnswers")}</span></div>
       </section>
@@ -352,7 +353,8 @@ export default function SignupOptionsPage() {
                   <span className="signup-option-card-copy"><span className="signup-option-title-line"><strong>{group.name_en}</strong><small>{group.name_hu}</small></span><span><code>{group.key}</code> · {t("answerCount", { active: enabled, total: group.options.length })}</span></span>
                   <span className="signup-option-card-badges">
                     {group.system_owned && <span className="badge badge-warning">{t("system")}</span>}
-                    <span className={`badge ${group.required ? "badge-active" : "badge-inactive"}`}>{group.required ? t("required") : t("optional")}</span>
+                    <span className={`badge ${group.required_at_signup ? "badge-active" : "badge-inactive"}`}>{group.required_at_signup ? t("required") : t("optional")}</span>
+                    {group.required && !group.required_at_signup && <span className="badge badge-inactive">{t("notAskedAtSignup")}</span>}
                     <span className={`badge ${group.audience.mode === "groups" ? "badge-info" : "badge-inactive"}`}>{group.audience.mode === "groups" ? t("targeted") : t("everyone")}</span>
                     <span className="signup-option-chevron" aria-hidden="true">⌄</span>
                   </span>

@@ -54,7 +54,6 @@ export type UserDetailProfile = {
   email_is_real: boolean;
   /** The page renders only yes/no, so the identifier itself is never carried. */
   has_apple_id: boolean;
-  height_cm: number;
   avatar_thumb: string;
   last_location: UserDetailLocation | null;
   hometown: UserDetailLocation | null;
@@ -217,7 +216,6 @@ export function userDetail(
       email: text(profileSource.email),
       email_is_real: profileSource.email_is_real === true,
       has_apple_id: text(profileSource.apple_id) !== "",
-      height_cm: count(profileSource.height_cm),
       avatar_thumb: text(profileSource.avatar_thumb),
       last_location: location(profileSource.last_location),
       hometown: location(profileSource.hometown),

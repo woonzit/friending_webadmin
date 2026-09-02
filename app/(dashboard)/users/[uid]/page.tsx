@@ -120,7 +120,6 @@ export default function UserDetailPage() {
       rows: [
         [t("headline"), profile.headline || "—"],
         [t("about"), profile.about_me || "—"],
-        [t("height"), profile.height_cm > 0 ? `${profile.height_cm} cm` : "—"],
       ],
     },
   ];

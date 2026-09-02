@@ -134,6 +134,20 @@ export default function UserProfileDataEditor({
     return count < field.selection.min_selected || count > field.selection.max_selected;
   }).map((field) => field.key);
 
+  /**
+   * Read-only label for a stored identity value. It looks through the WHOLE
+   * option list rather than the audience-filtered, active-only lists the
+   * editable selects use: a value already on the member must stay readable
+   * even when the catalogue row was archived, or when the option's declared
+   * audiences no longer include the member's canonical gender. An unknown key
+   * falls back to itself rather than rendering as blank.
+   */
+  function identityLabel(groupKey: "gender" | "subgender", value: string): string {
+    if (!value) return "";
+    const option = (groups[groupKey]?.options ?? []).find((row) => row.key === value);
+    return option ? localized(option.labels, locale) || value : value;
+  }
+
   function updateIdentity(nextGender: string) {
     const validSubgender = (groups.subgender?.options ?? []).some(
       (option) => option.key === identity.subgender && option.audiences.includes(nextGender),
@@ -207,7 +221,15 @@ export default function UserProfileDataEditor({
     if (!response?.success || !parsed) {
       setIdentityNotice({
         kind: "error",
-        text: response?.error === "profile-identity-conflict" ? t("conflict") : t("identitySaveError"),
+        text: response?.error === "profile-identity-conflict"
+          ? t("conflict")
+          // Core answers 410 `feature-retired` under audience-visibility
+          // readiness. The read-only branch below normally keeps this
+          // unreachable; it stays mapped so a Core that flips readiness
+          // between the read and the write explains itself.
+          : response?.error === "feature-retired"
+            ? t("identityRetired")
+            : t("identitySaveError"),
       });
       return;
     }
@@ -316,28 +338,52 @@ export default function UserProfileDataEditor({
           <span className="badge badge-warning">{data.segment.label}</span>
         </div>
         <div className="panel-body form-grid">
-          <label className="field">
-            <span>{t("gender")}</span>
-            <select value={identity.gender} disabled={identityBusy} onChange={(event) => updateIdentity(event.target.value)}>
-              <option value="">{t("select")}</option>
-              {genderOptions.map((option) => <option value={option.key} key={option.key}>{localized(option.labels, locale)}</option>)}
-            </select>
-          </label>
-          <label className="field">
-            <span>{t("subgender")}</span>
-            <select value={identity.subgender} disabled={identityBusy || !identity.gender} onChange={(event) => setIdentity({ ...identity, subgender: event.target.value, subgenderSelected: event.target.value ? identity.subgenderSelected : false })}>
-              <option value="">{t("noSubgender")}</option>
-              {subgenderOptions.map((option) => <option value={option.key} key={option.key}>{localized(option.labels, locale)}</option>)}
-            </select>
-          </label>
-          <label className="checkbox-field user-identity-display"><input type="checkbox" checked={identity.subgenderSelected} disabled={identityBusy || !identity.subgender} onChange={(event) => setIdentity({ ...identity, subgenderSelected: event.target.checked })} /><span>{t("showSubgender")}</span></label>
+          {data.identity_editable ? (
+            <>
+              <label className="field">
+                <span>{t("gender")}</span>
+                <select value={identity.gender} disabled={identityBusy} onChange={(event) => updateIdentity(event.target.value)}>
+                  <option value="">{t("select")}</option>
+                  {genderOptions.map((option) => <option value={option.key} key={option.key}>{localized(option.labels, locale)}</option>)}
+                </select>
+              </label>
+              <label className="field">
+                <span>{t("subgender")}</span>
+                <select value={identity.subgender} disabled={identityBusy || !identity.gender} onChange={(event) => setIdentity({ ...identity, subgender: event.target.value, subgenderSelected: event.target.value ? identity.subgenderSelected : false })}>
+                  <option value="">{t("noSubgender")}</option>
+                  {subgenderOptions.map((option) => <option value={option.key} key={option.key}>{localized(option.labels, locale)}</option>)}
+                </select>
+              </label>
+              <label className="checkbox-field user-identity-display"><input type="checkbox" checked={identity.subgenderSelected} disabled={identityBusy || !identity.subgender} onChange={(event) => setIdentity({ ...identity, subgenderSelected: event.target.checked })} /><span>{t("showSubgender")}</span></label>
+            </>
+          ) : (
+            // Core refuses the legacy identity write under audience-visibility
+            // readiness, so an editable control here could only produce a
+            // failing save. The values stay visible as read-only facts until
+            // the V2 write lands (T-653).
+            <>
+              <div className="system-option-notice field-full" role="note">
+                <strong>{t("identityReadOnlyTitle")}</strong>
+                <span>{t("identityReadOnlyCopy")}</span>
+              </div>
+              {renderBuiltinFact({ key: "gender", label: t("gender"), display_value: identityLabel("gender", identity.gender) })}
+              {renderBuiltinFact({ key: "subgender", label: t("subgender"), display_value: identityLabel("subgender", identity.subgender) })}
+              {renderBuiltinFact({ key: "subgender_selected", label: t("showSubgender"), display_value: identity.subgenderSelected ? common("yes") : common("no") })}
+            </>
+          )}
           <div className="field-full user-cast-summary">
             <span><b>{t("derivedGroup")}</b>{data.segment.label}<code>{data.segment.key}</code></span>
-            <span><b>{t("channels")}</b>{data.identity.channels.join(", ") || "—"}</span>
-            <span><b>{t("questionPacks")}</b>{data.identity.question_packs.join(", ") || "—"}</span>
+            {data.identity_editable ? (
+              <>
+                <span><b>{t("channels")}</b>{data.identity.channels.join(", ") || "—"}</span>
+                <span><b>{t("questionPacks")}</b>{data.identity.question_packs.join(", ") || "—"}</span>
+              </>
+            ) : null}
           </div>
           {identityNotice ? <div className={`alert alert-${identityNotice.kind} field-full`} role="status">{identityNotice.text}</div> : null}
-          <div className="field-full editor-actions"><button className="button button-primary" type="button" disabled={identityBusy} onClick={() => void saveIdentity()}>{identityBusy ? common("saving") : t("saveIdentity")}</button></div>
+          {data.identity_editable ? (
+            <div className="field-full editor-actions"><button className="button button-primary" type="button" disabled={identityBusy} onClick={() => void saveIdentity()}>{identityBusy ? common("saving") : t("saveIdentity")}</button></div>
+          ) : null}
         </div>
       </section>
 

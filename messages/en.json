@@ -318,7 +318,7 @@
             "title": "Identity and structured profile answers",
             "purpose": "This editor shows the current signup identity axes and the profile-field answers the member is eligible to hold, organized by the configured profile sections.",
             "actions": {
-              "1": "Correct identity fields only when the request and policy establish the intended values.",
+              "1": "Correct identity fields only when the request and policy establish the intended values; while the identity block is shown read-only, Core refuses that write and the change belongs to the audience-visibility record.",
               "2": "Add, replace or clear selectable profile answers and save against the current revision.",
               "3": "Review unassigned or archived answers without silently deleting preserved history."
             },
@@ -344,7 +344,7 @@
           },
           "profileFacts": {
             "title": "Profile facts",
-            "purpose": "This read-only summary repeats the currently stored headline, About text and height for quick support review.",
+            "purpose": "This read-only summary repeats the currently stored headline and About text for quick support review.",
             "actions": {
               "1": "Confirm that recent edits converged to the expected values.",
               "2": "Use the dedicated editors above when a correction is authorized."
@@ -1659,7 +1659,7 @@
               "1": "Edit English and Hungarian titles and upload a trusted icon.",
               "2": "For non-system groups, review order, required state and availability rules."
             },
-            "guidance": "Protected system questions keep their key and policy because Core and clients depend on them. This page lists only the groups Core currently serves; an omitted retired group is not a missing required answer."
+            "guidance": "Protected system questions keep their key and policy because Core and clients depend on them. This page lists only the groups Core currently serves; an omitted retired group is not a missing required answer, and a question Core still marks required that the current signup flow does not ask is labelled as not asked at signup."
           },
           "answers": {
             "title": "Selectable answers",
@@ -1672,12 +1672,12 @@
           },
           "audiences": {
             "title": "Question and answer audiences",
-            "purpose": "Audience rules can limit optional questions or custom answers by canonical gender and dynamic user groups, with selected dimensions intersecting.",
+            "purpose": "Audience rules limit an optional question or a custom answer by canonical gender. A dynamic user group can still be selected and is stored, but since every member belongs to one group it no longer narrows anything.",
             "actions": {
               "1": "Leave all selectors empty for global availability where the group permits it.",
               "2": "Choose only the genders and groups that product policy intends to receive the question or answer."
             },
-            "guidance": "When multiple dimensions are set, every dimension must match. An overly narrow rule can make a choice disappear for legitimate members."
+            "guidance": "The gender axis is the only one Core enforces. An overly narrow gender rule can make a choice disappear for legitimate members, while a group-only restriction quietly means everyone."
           },
           "archiveBehavior": {
             "title": "Archive and preserved answers",
@@ -1950,7 +1950,7 @@
           },
           "audience": {
             "title": "Field audience",
-            "purpose": "Audience can be global or restricted by canonical gender, built-in casts and dynamic groups; configured dimensions must all match.",
+            "purpose": "Audience can be global or restricted by canonical gender. Built-in casts and dynamic groups remain selectable and stored, but they no longer narrow eligibility.",
             "actions": {
               "1": "Leave global when every eligible member should receive the question.",
               "2": "Select the smallest reviewed audience and inspect its group definitions."
@@ -2062,7 +2062,7 @@
           },
           "audience": {
             "title": "Group and item audience",
-            "purpose": "Rows can be global or restricted by canonical gender and server-derived segment, with all configured dimensions required to match.",
+            "purpose": "Rows can be global or restricted by canonical gender and the server-derived segment, with all configured dimensions required to match. The segment is derived from gender and who may see the member, not from any orientation value.",
             "actions": {
               "1": "Leave both lists empty for global availability.",
               "2": "Apply only reviewed restrictions and compare group-level and item-level intent."
@@ -2073,7 +2073,7 @@
             "title": "Synthetic audience preview",
             "purpose": "The preview asks Core for the active localized catalog visible to a chosen synthetic gender and segment context without identifying or persisting a real member.",
             "actions": {
-              "1": "Choose a language, gender and segment to inspect the resolved catalog.",
+              "1": "Choose a language, gender and gender × visibility segment to inspect the resolved catalog.",
               "2": "Repeat for each affected audience before saving."
             },
             "guidance": "A preview proves only the selected synthetic context. It does not replace checking every audience combination changed by the draft."
@@ -2109,12 +2109,12 @@
           },
           "placementAudience": {
             "title": "Friends cards and audience",
-            "purpose": "Every prompt is a friends card, so there is no placement to choose; the audience alone controls which eligible genders and dynamic groups can answer it.",
+            "purpose": "Every prompt is a friends card, so there is no placement to choose; the audience alone controls which genders can answer it. A dynamic group can be recorded with it but no longer restricts.",
             "actions": {
               "1": "Write the question as a friends card; the only per-prompt choice is its audience.",
               "2": "Leave audience global or select a reviewed restricted audience."
             },
-            "guidance": "The audience is the only per-prompt restriction. When multiple audience dimensions are set they all must match, so test the intended member groups."
+            "guidance": "The audience is the only per-prompt restriction, and its gender axis is the only part Core enforces. A group-only restriction saves and displays, but the card still reaches everyone."
           },
           "archiveBehavior": {
             "title": "Archive and existing answers",
@@ -2168,9 +2168,9 @@
             "purpose": "Sender rules govern the member viewing another profile and sending; recipient rules govern the profile owner who may receive that badge.",
             "actions": {
               "1": "Leave a side global when every eligible member should pass it.",
-              "2": "Select canonical genders or dynamic groups for a custom side and review the combined summary."
+              "2": "Select the canonical genders for a custom side and review the combined summary; a group can be recorded alongside them but does not filter."
             },
-            "guidance": "Both sides must match, and within a custom side every configured dimension must match. An empty custom selection still means global, so use the explicit mode carefully."
+            "guidance": "Both sides must permit the interaction, and within a custom side only the gender axis is enforced — a cast-group selection is stored and shown but no longer narrows. An empty custom selection still means global, so use the explicit mode carefully."
           },
           "memberOverride": {
             "title": "Member-specific daily allowance",
@@ -5160,7 +5160,6 @@
     "about": "About",
     "headline": "Headline",
     "generation": "Generation",
-    "height": "Height",
     "loadError": "This user profile could not be loaded.",
     "notFound": "The requested user does not exist.",
     "noImages": "No profile images are available.",
@@ -5546,6 +5545,8 @@
   "userProfileEditor": {
     "identityTitle": "Identity and user group",
     "identityCopy": "Edit gender details. Core preserves hidden routing settings and derives the cast, channels and question packs; the group itself is never stored as a free-form admin value.",
+    "identityReadOnlyTitle": "Identity is read-only here",
+    "identityReadOnlyCopy": "Canonical gender now lives in the member's audience-visibility record, and Core refuses the legacy identity write. The values below are shown for support review only; an editor for them is being built.",
     "gender": "Gender",
     "subgender": "Detailed gender",
     "noSubgender": "No detailed gender",
@@ -5557,6 +5558,7 @@
     "saveIdentity": "Save gender and group",
     "identityRequired": "Select a gender.",
     "identitySaveError": "Gender and user group could not be saved.",
+    "identityRetired": "Core refused this write: the legacy identity route is retired. Gender is changed through the audience-visibility record.",
     "identitySaved": "Gender saved. The user group and eligible profile fields were recalculated.",
     "fieldsTitle": "Selectable profile data",
     "fieldsCopy": "{count, plural, one {# eligible field} other {# eligible fields}} for the currently derived user group.",
@@ -6519,11 +6521,12 @@
     "filterAll": "All questions",
     "filterSystem": "System questions",
     "filterOptional": "Optional profile questions",
-    "filterTargeted": "User-group specific",
+    "filterTargeted": "Restricted audience",
     "systemAnswersTitle": "System answers are protected",
     "systemAnswersIntro": "Only the system questions Core currently serves appear here. Their labels can be renamed, but their keys, order, required state and availability remain Core-owned.",
     "system": "System",
     "required": "Required",
+    "notAskedAtSignup": "Not asked at signup",
     "optional": "Optional",
     "targeted": "Targeted",
     "everyone": "Everyone",
@@ -6540,20 +6543,22 @@
     "iconError": "Choose a valid PNG or SVG no larger than 2 MB.",
     "requiredSystemQuestion": "Required system question",
     "requiredSystemQuestionCopy": "Every member must answer this question. Its key, required state and audience are protected; the bilingual title and icon remain editable.",
+    "notAskedAtSignupCopy": "Core still marks this question required so installed apps keep decoding the catalogue, but the current signup flow never asks it and sends a default answer. Renaming it is safe; do not read the flag as an answer members must give.",
     "systemQuestion": "System-managed question",
     "systemQuestionCopy": "This question is available to everyone and its policy is protected. Its bilingual title and icon remain editable.",
     "groupAudience": "Who receives this question?",
-    "groupAudienceHelp": "Target optional signup data by gender and dynamic user groups. When both axes are selected, both must match.",
+    "groupAudienceHelp": "Target optional signup data by gender. A dynamic user group can still be recorded, but it no longer narrows who is asked — every member belongs to one group.",
     "audienceGlobal": "Everyone",
-    "audienceSpecific": "Specific user groups",
+    "audienceSpecific": "Restricted audience",
     "audienceGlobalHint": "This optional question is available to every registering member.",
     "audienceGendersTitle": "Genders",
     "audienceGroupsTitle": "Dynamic user groups",
     "audienceMatchAny": "match any",
-    "audienceMatchBoth": "When genders and groups are both selected, a member must match both filters.",
+    "audienceGroupsRecorded": "recorded, does not filter",
+    "audienceGroupsNotEnforced": "The selected user groups are stored and shown, but they no longer narrow the audience — only the gender selection decides who is asked.",
     "audienceRequired": "Select at least one gender or user group.",
     "audienceInactive": "Archived group",
-    "audienceLegacy": "Compatibility group",
+    "audienceLegacy": "Legacy segment",
     "genderMen": "Men",
     "genderWomen": "Women",
     "genderNonbinary": "Nonbinary people",
@@ -6621,15 +6626,15 @@
     "audience": "Audience",
     "global": "Everyone",
     "castSpecific": "Specific user groups",
-    "audienceHelp": "Choose who receives this profile question. Gender and group filters must both match when both are selected.",
+    "audienceHelp": "Choose who receives this profile question. The gender filter decides eligibility; built-in casts and dynamic groups are still recorded but no longer narrow it.",
     "audienceGlobalHint": "This question is available to every eligible member.",
     "audienceGendersTitle": "Genders",
     "audienceGroupsTitle": "Dynamic user groups",
-    "audienceSegmentsTitle": "Built-in casts",
     "audienceMatchAny": "match any",
-    "audienceMatchBoth": "When genders and groups are both selected, a member must match both filters.",
+    "audienceGroupsRecorded": "recorded, does not filter",
+    "audienceGroupsNotEnforced": "The selected user groups are stored and shown, but they no longer narrow eligibility — only the gender selection decides who receives the question.",
     "audienceGroupInactive": "Archived group",
-    "audienceLegacy": "Compatibility group",
+    "audienceLegacy": "Legacy segment",
     "genderMale": "Men",
     "genderFemale": "Women",
     "genderOther": "Nonbinary people",
@@ -6643,6 +6648,7 @@
     "validationError": "Enter a valid stable key and both required names.",
     "audienceRequired": "Select at least one gender or user group.",
     "conflict": "This entry changed in another session. Reload the catalog and try again.",
+    "keyRetired": "This question key was retired from Friending and cannot be re-created. Choose a new key.",
     "saveError": "The profile field could not be saved.",
     "minimumUnavailable": "The required minimum is higher than the number of active answer options. Add or reactivate answers first.",
     "iconUnmanaged": "Use the profile icon upload control. External icon URLs are not allowed.",
@@ -6678,7 +6684,6 @@
     "layoutSubtitleEn": "English subtitle",
     "layoutSubtitleHu": "Hungarian subtitle",
     "layoutSectionOrder": "Section order",
-    "layoutHeightFixed": "fixed in this section",
     "layoutMoveUp": "Move {name} up",
     "layoutMoveDown": "Move {name} down",
     "layoutRemove": "Remove",
@@ -6821,7 +6826,7 @@
     "audience": "Audience",
     "globalAudience": "Global audience",
     "gendersTitle": "Canonical gender",
-    "segmentsTitle": "Server-derived segment",
+    "segmentsTitle": "Server-derived segment (gender × who can see me)",
     "audienceHint": "All configured dimensions must match. Leaving both lists empty makes the row global.",
     "genders": {
       "male": "Male",
@@ -6829,13 +6834,13 @@
       "other": "Other / unresolved"
     },
     "segments": {
-      "male_hetero": "Heterosexual men",
-      "male_gay": "Gay men",
-      "male_bisexual": "Bisexual men",
-      "female_hetero": "Heterosexual women",
-      "female_lesbian": "Lesbian women",
-      "female_bisexual": "Bisexual women",
-      "identity_unresolved": "Identity unresolved"
+      "male_hetero": "Men visible to women",
+      "male_gay": "Men visible to men",
+      "male_bisexual": "Men visible to everyone",
+      "female_hetero": "Women visible to men",
+      "female_lesbian": "Women visible to women",
+      "female_bisexual": "Women visible to everyone",
+      "identity_unresolved": "Gender or visibility not set"
     },
     "icon": "Item icon",
     "iconHint": "PNG or sanitized SVG, maximum 2 MB. External URLs are not accepted.",
@@ -6883,19 +6888,19 @@
     "question": "Question",
     "questionEn": "English question",
     "questionHu": "Hungarian question",
-    "memberSex": "Shown to",
-    "audience": "User cast audience",
+    "audience": "Who can answer this card",
     "global": "Every cast",
     "castSpecific": "Specific user groups",
-    "audienceHelp": "Choose which members can answer this card. Gender and group filters must both match when both are selected.",
+    "audienceHelp": "Choose which members can answer this card. The gender filter decides it; user groups are still recorded but no longer narrow who is offered the card.",
     "audienceGlobalHint": "Every eligible member can answer this card.",
     "audienceGenders": "Genders",
     "audienceGroups": "User groups",
     "audienceMatchAny": "match any",
-    "audienceMatchBoth": "When genders and groups are both selected, a member must match both filters.",
+    "audienceGroupsRecorded": "recorded, does not filter",
+    "audienceGroupsNotEnforced": "The selected user groups are stored and shown, but they no longer narrow the audience — only the gender selection decides who is offered the card.",
     "audienceRequired": "Select at least one gender or user group.",
     "audienceGroupInactive": "Archived group",
-    "audienceLegacy": "Compatibility group",
+    "audienceLegacy": "Legacy segment",
     "genderMale": "Men",
     "genderFemale": "Women",
     "genderOther": "Nonbinary people",
@@ -8220,7 +8225,6 @@
     "audienceIntro": "The badge appears in the send list only when both the sender-side and recipient-side rules pass.",
     "audiencePreviewLabel": "Badge targeting rule summary",
     "previewBadge": "Offered badge",
-    "audienceHint": "Nothing selected = global. Gender and cast-group constraints must BOTH pass when set.",
     "senderShort": "Senders",
     "recipientShort": "Recipients",
     "audienceGlobal": "Global",
@@ -8253,11 +8257,12 @@
     "chipGenders": "Gender",
     "chipGroups": "User groups",
     "matchAny": "match any",
-    "matchBothAxes": "The member must match one selected gender AND belong to at least one selected user group.",
+    "groupsRecorded": "recorded, does not filter",
+    "groupsNotEnforced": "The selected user groups are stored and shown, but they no longer narrow this side — only the gender selection decides who the badge is offered to.",
     "audienceRequired": "Custom targeting requires at least one gender or user group.",
     "groupInactive": "Inactive group",
     "globalHint": "Everyone. Switch to Custom to narrow it by gender or user group.",
-    "customEmptyHint": "Nothing selected yet — this still means everyone. Pick genders and/or groups; both must match when set.",
+    "customEmptyHint": "Nothing selected yet — this still means everyone. Pick the genders this side applies to; a user group can be recorded but does not filter.",
     "featureSwitchesPointer": {
       "title": "Feature availability",
       "copy": "The global Footprints family switch now lives with the Hey switch in Configuration. Badge limits and catalogue settings on this page keep their own document and revision.",

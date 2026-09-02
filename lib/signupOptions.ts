@@ -27,7 +27,13 @@ export type SignupOptionGroup = {
   name_en: string;
   name_hu: string;
   system_owned: boolean;
+  /** The wire value, kept verbatim. Render `required_at_signup` instead. */
   required: boolean;
+  /**
+   * `required` narrowed to the questions the v3 signup ladder actually asks.
+   * See SIGNUP_RETIRED_REQUIRED_GROUPS for why the two differ today.
+   */
+  required_at_signup: boolean;
   custom_allowed: boolean;
   extensible_system: boolean;
   profile_field: string;
@@ -44,6 +50,23 @@ export type SignupCatalog = {
   segments: CastGroupSegment[];
   groups: SignupOptionGroup[];
 };
+
+/**
+ * Questions Core still serves with `required: true` while the v3 signup ladder
+ * no longer asks them (D-096 / D-097, T-637).
+ *
+ * `relationship_status` stays in Core's `SignupOptionCatalog::REQUIRED_GROUPS`
+ * until T-634 — the installed decoders refuse a catalogue without it and the
+ * schema-1 validator still wants the answer — but the new ladder has no
+ * relationship step and hard-sends `unspecified`. Badging that card "Required"
+ * tells an operator to protect an answer no member is ever asked for, and
+ * counts it into the "required for everyone" tile. So the console renders
+ * `required_at_signup`, and this list is the whole difference between the two.
+ *
+ * Delete the entry (and, when the list empties, this constant) in the same
+ * change that drops `relationship_status` from Core's REQUIRED_GROUPS.
+ */
+export const SIGNUP_RETIRED_REQUIRED_GROUPS: readonly string[] = ["relationship_status"];
 
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -129,6 +152,7 @@ export function signupOptionCatalog(raw: unknown): SignupCatalog | null {
       name_hu: group.name_hu,
       system_owned: group.system_owned,
       required: group.required,
+      required_at_signup: group.required && !SIGNUP_RETIRED_REQUIRED_GROUPS.includes(group.key),
       custom_allowed: group.custom_allowed,
       extensible_system: group.extensible_system === true,
       profile_field: group.profile_field,

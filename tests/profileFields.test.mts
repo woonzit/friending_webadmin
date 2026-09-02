@@ -415,6 +415,9 @@ test("registered-user identity editor renders and saves gender without orientati
       channels: ["people"],
       question_packs: ["common"],
     },
+    // The legacy (pre-D-019) shape is the only one whose identity write Core
+    // still accepts, so this is the branch that renders the two selects.
+    identity_editable: true,
     height: null,
     sections: [],
     fields: [],
@@ -591,6 +594,10 @@ test("the deployed post-D-019 member payload decodes and renders (T-641)", async
   assert.deepEqual(parsed.identity.channels, []);
   assert.deepEqual(parsed.identity.question_packs, []);
   assert.equal(parsed.height, null);
+  // The active projection is exactly the state in which Core answers 410
+  // `feature-retired` to `save_user_profile_identity` (T-651), so the editor
+  // must not offer that write.
+  assert.equal(parsed.identity_editable, false);
   assert.equal(parsed.sections[0]?.visibility, undefined);
   // An absent audience block is an unrestricted field, never a fabricated
   // restriction.
@@ -637,8 +644,20 @@ test("the deployed post-D-019 member payload decodes and renders (T-641)", async
   ));
   assert.match(markup, />Gender</);
   assert.match(markup, />Pets</);
-  // Retired lists render as the empty marker instead of throwing.
-  assert.match(markup, /—/);
+  // T-651: under the active projection the identity block is a read-only
+  // summary — no select, no save button, and the retired channel and
+  // question-pack rows are gone rather than rendered as empty markers.
+  assert.match(markup, /Identity is read-only here/);
+  // The stored values still read, resolved through the whole option list so an
+  // archived row or a mismatched audience cannot blank them out.
+  assert.match(markup, />Man</);
+  assert.match(markup, />Trans man</);
+  assert.equal(markup.match(/<select/g), null);
+  assert.doesNotMatch(markup, /Save gender/);
+  assert.doesNotMatch(markup, /Discovery channels/);
+  assert.doesNotMatch(markup, /Question packs/);
+  // The derived group still reads, because it is what support needs.
+  assert.match(markup, /male_gay/);
 });
 
 test("widening the member payload leaves every present value validated (T-641)", () => {
@@ -732,4 +751,43 @@ test("widening the member payload leaves every present value validated (T-641)",
     cast_groups: [],
     fields: [{ ...structuredClone(row), audience: { mode: "global", segments: [] } }],
   }));
+});
+
+/**
+ * T-651 (T-640 audit D6/D7).
+ *
+ * D6: Core retired the `height_cm` builtin with T-632 — it is gone from
+ * `ProfileBuiltinFieldCatalog::DEFINITIONS` — so nothing can ever put a
+ * `builtin:height_cm` row in a section layout. The console's guard against
+ * removing that row, and the "fixed" marker beside it, were unreachable code
+ * that also told the operator a lie about what the layout contains.
+ *
+ * D7: `ProfileFieldCatalog::saveField()` refuses any of the retired keys with
+ * `profile-field-key-retired` before it normalizes anything. The console
+ * mapped three error codes and fell through to a generic "could not be saved",
+ * so an operator typing `body_type` learned nothing.
+ */
+test("the layout editor drops the dead height guard and names the retired-key refusal", async () => {
+  const page = await readFile(
+    new URL("../app/(dashboard)/profile-fields/page.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(page, /fixedHeight/);
+  assert.doesNotMatch(page, /height_cm/);
+  assert.doesNotMatch(page, /layoutHeightFixed/);
+  // Every layout row is now removable and reorderable on the same terms.
+  assert.match(page, /disabled=\{busy\} onClick=\{\(\) => removeItem\(sectionIndex, itemIndex\)\}/);
+  assert.match(page, /if \(code === "profile-field-key-retired"\) return t\("keyRetired"\);/);
+
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(
+      await readFile(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"),
+    );
+    assert.equal(Object.hasOwn(messages.profileFields, "keyRetired"), true);
+    assert.equal(Object.hasOwn(messages.profileFields, "layoutHeightFixed"), false);
+    // Zero call sites since the selector never received it (audit D8).
+    assert.equal(Object.hasOwn(messages.profileFields, "audienceSegmentsTitle"), false);
+    // The page derives member_sex from the gender checkboxes (audit D8).
+    assert.equal(Object.hasOwn(messages.icebreakers, "memberSex"), false);
+  }
 });

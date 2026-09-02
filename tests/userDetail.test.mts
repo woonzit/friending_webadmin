@@ -119,3 +119,33 @@ test("the page projects instead of casting, and states why", async () => {
   const parser = await readFile(new URL("../lib/userDetail.ts", import.meta.url), "utf8");
   assert.match(parser, /coordinates/i);
 });
+
+/**
+ * T-651 (T-640 audit D6). Core's `user_detail` profile block never carried a
+ * `height_cm` key — `WebadminController::userDetail()` assembles `$profile`
+ * without one — so the fact row was permanently "—". T-632 removed the last
+ * producer of the value anywhere, so the row, the model field and its copy go
+ * together rather than leaving an em dash that looks like missing member data.
+ */
+test("the dead height fact row leaves the projection and the page", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const projection = await readFile(new URL("../lib/userDetail.ts", import.meta.url), "utf8");
+  const page = await readFile(
+    new URL("../app/(dashboard)/users/[uid]/page.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(projection, /height_cm/);
+  assert.doesNotMatch(page, /height_cm/);
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(
+      await readFile(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"),
+    );
+    assert.equal(Object.hasOwn(messages.userDetail, "height"), false);
+  }
+  // The read-only builtin marker stays: it labels every builtin fact row.
+  const editor = await readFile(
+    new URL("../components/UserProfileDataEditor.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(editor, /t\("notProvided"\)/);
+});

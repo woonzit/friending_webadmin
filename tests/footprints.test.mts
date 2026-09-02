@@ -104,3 +104,37 @@ test("report parser rejects a partial row instead of silently dropping it", () =
     reports: [{ ...OPEN_REPORTS.reports[0], created_at: "yesterday" }],
   }, "open"), null);
 });
+
+/**
+ * T-651 (T-640 audit D5/D8). `FootprintPolicy::audienceMatches()` delegates to
+ * the gender-only `UserAudiencePolicy::matches()` since D-096, so a badge
+ * restricted to one cast group is offered to everyone. The console keeps the
+ * control — the selection is stored and echoed back — but stops claiming the
+ * two axes are ANDed.
+ */
+test("the badge audience editor no longer promises cast-group narrowing", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const page = await readFile(
+    new URL("../app/(dashboard)/footprints/page.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(page, /matchBothAxes/);
+  assert.doesNotMatch(page, /audienceHint/);
+  // The note fires on a group-only selection too, which is the case that now
+  // silently means "everyone".
+  assert.match(
+    page,
+    /\{groupIds\.length > 0 \? \(\s*<p className="footprints-match-logic">\{t\("groupsNotEnforced"\)\}<\/p>/,
+  );
+  assert.match(page, /\{t\("chipGroups"\)\} <span>\{t\("groupsRecorded"\)\}<\/span>/);
+
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(
+      await readFile(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"),
+    );
+    assert.equal(Object.hasOwn(messages.footprints, "groupsRecorded"), true);
+    assert.equal(Object.hasOwn(messages.footprints, "groupsNotEnforced"), true);
+    // The old hint asserted "must BOTH pass" and had zero call sites.
+    assert.doesNotMatch(JSON.stringify(messages.footprints), /BOTH|EGYÜTT/);
+  }
+});

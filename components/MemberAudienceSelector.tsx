@@ -24,7 +24,10 @@ export type MemberAudienceLabels = {
   genders: string;
   groups: string;
   matchAny: string;
-  matchBoth: string;
+  /** Short marker on the group row: the selection is stored, not enforced. */
+  groupsRecorded: string;
+  /** Sentence shown whenever a group or legacy segment is selected. */
+  groupsNotEnforced: string;
   required: string;
   inactive: string;
   legacy: string;
@@ -125,7 +128,7 @@ export default function MemberAudienceSelector({
               );
             })}
           </div>
-          <p className="footprints-chip-title">{labels.groups} <span>{labels.matchAny}</span></p>
+          <p className="footprints-chip-title">{labels.groups} <span>{labels.groupsRecorded}</span></p>
           <div className="footprints-group-grid">
             {selectableGroups.map((group) => {
               const on = value.groupIds.includes(group.id);
@@ -163,8 +166,16 @@ export default function MemberAudienceSelector({
           <p className={`footprints-audience-summary${invalid ? " is-error" : ""}`}>
             {invalid ? labels.required : summary.join(", ")}
           </p>
-          {value.genders.length > 0 && (value.groupIds.length > 0 || value.legacySegments.length > 0) ? (
-            <p className="footprints-match-logic">{labels.matchBoth}</p>
+          {/*
+            D-096 (T-637): every member is in ONE group, so the group and
+            legacy-segment axes are stored and shown but no longer narrow —
+            `UserAudiencePolicy::matches()` reads the gender axis alone. The
+            note therefore appears whenever a group is selected at all, not
+            only when both axes are, because a group-only selection is the
+            case that now silently means "everyone".
+          */}
+          {value.groupIds.length > 0 || value.legacySegments.length > 0 ? (
+            <p className="footprints-match-logic">{labels.groupsNotEnforced}</p>
           ) : null}
         </>
       ) : <p className="footprints-audience-summary">{labels.globalHint}</p>}

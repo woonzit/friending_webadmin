@@ -237,7 +237,7 @@ function FieldDialog({
             labels={{
               legend: t("audience"), help: t("audienceHelp"), global: t("global"), custom: t("castSpecific"),
               globalHint: t("audienceGlobalHint"), genders: t("audienceGendersTitle"), groups: t("audienceGroupsTitle"),
-              matchAny: t("audienceMatchAny"), matchBoth: t("audienceMatchBoth"), required: t("audienceRequired"),
+              matchAny: t("audienceMatchAny"), groupsRecorded: t("audienceGroupsRecorded"), groupsNotEnforced: t("audienceGroupsNotEnforced"), required: t("audienceRequired"),
               inactive: t("audienceGroupInactive"), legacy: t("audienceLegacy"),
               gender: { male: t("genderMale"), female: t("genderFemale"), other: t("genderOther") },
             }}
@@ -367,8 +367,6 @@ function ProfileSectionLayoutEditor({
   }
 
   function removeItem(sectionIndex: number, itemIndex: number) {
-    const item = layout.sections[sectionIndex].items[itemIndex];
-    if (item.kind === "builtin" && item.key === "height_cm") return;
     updateSection(sectionIndex, {
       items: layout.sections[sectionIndex].items.filter((_, index) => index !== itemIndex),
     });
@@ -414,14 +412,13 @@ function ProfileSectionLayoutEditor({
             <ol className="profile-layout-items">
               {section.items.map((item, itemIndex) => {
                 const choice = choiceMap.get(`${item.kind}:${item.key}`);
-                const fixedHeight = item.kind === "builtin" && item.key === "height_cm";
                 return (
                   <li key={`${item.kind}:${item.key}`}>
-                    <span><strong>{choice?.label || item.key}</strong><small>{choice?.detail} · <code>{item.key}</code>{fixedHeight ? ` · ${t("layoutHeightFixed")}` : ""}</small></span>
+                    <span><strong>{choice?.label || item.key}</strong><small>{choice?.detail} · <code>{item.key}</code></small></span>
                     <div className="row-actions">
                       <button type="button" className="button button-secondary button-small" disabled={busy || itemIndex === 0} onClick={() => moveItem(sectionIndex, itemIndex, -1)} aria-label={t("layoutMoveUp", { name: choice?.label || item.key })}>↑</button>
                       <button type="button" className="button button-secondary button-small" disabled={busy || itemIndex === section.items.length - 1} onClick={() => moveItem(sectionIndex, itemIndex, 1)} aria-label={t("layoutMoveDown", { name: choice?.label || item.key })}>↓</button>
-                      <button type="button" className="button button-danger button-small" disabled={busy || fixedHeight} onClick={() => removeItem(sectionIndex, itemIndex)}>{t("layoutRemove")}</button>
+                      <button type="button" className="button button-danger button-small" disabled={busy} onClick={() => removeItem(sectionIndex, itemIndex)}>{t("layoutRemove")}</button>
                     </div>
                   </li>
                 );
@@ -499,6 +496,11 @@ export default function ProfileFieldsPage() {
 
   function saveErrorMessage(code: unknown): string {
     if (code === "profile-field-conflict") return t("conflict");
+    // Core refuses any of the retired T-632/D-019 catalogue keys before it
+    // normalizes anything (`ProfileFieldCatalog::saveField()`), so an operator
+    // typing `body_type` into the new-field dialog gets a specific reason
+    // instead of the generic "could not be saved".
+    if (code === "profile-field-key-retired") return t("keyRetired");
     if (code === "profile-field-minimum-unavailable") return t("minimumUnavailable");
     if (code === "profile-field-icon-unmanaged") return t("iconUnmanaged");
     return t("saveError");

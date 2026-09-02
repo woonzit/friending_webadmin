@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { signupOptionCatalog } from "../lib/signupOptions.ts";
+import {
+  SIGNUP_RETIRED_REQUIRED_GROUPS,
+  signupOptionCatalog,
+} from "../lib/signupOptions.ts";
 
 const page = readFileSync(
   new URL("../app/(dashboard)/signup-options/page.tsx", import.meta.url),
@@ -84,10 +87,68 @@ test("a catalogue without retired groups decodes and the page renders only serve
   });
   assert.deepEqual(parsed?.groups.map((item) => item.key), ["gender", "education_level"]);
   assert.equal(parsed?.groups.filter((item) => item.required).length, 1);
-  assert.match(page, /catalog\.groups\.filter\(\(group\) => group\.required\)\.length/);
+  assert.equal(parsed?.groups.filter((item) => item.required_at_signup).length, 1);
+  assert.match(page, /catalog\.groups\.filter\(\(group\) => group\.required_at_signup\)\.length/);
   assert.match(page, /\{groups\.map\(\(group\) =>/);
-  assert.match(page, /group\.required \? t\("required"\) : t\("optional"\)/);
+  assert.match(page, /group\.required_at_signup \? t\("required"\) : t\("optional"\)/);
   assert.doesNotMatch(page, /["'](?:orientation|looking_for|relationship_status)["']/);
+});
+
+test("the console badges Required only for a question the v3 signup actually asks", () => {
+  // Core keeps `relationship_status` in REQUIRED_GROUPS until T-634 so the
+  // installed decoders keep working, while the v3 ladder has no relationship
+  // step and hard-sends `unspecified`. Badging it Required tells an operator
+  // to protect an answer nobody is asked for.
+  assert.deepEqual([...SIGNUP_RETIRED_REQUIRED_GROUPS], ["relationship_status"]);
+  const group = (key: string, required: boolean) => ({
+    key,
+    name_en: key,
+    name_hu: key,
+    system_owned: true,
+    required,
+    custom_allowed: false,
+    extensible_system: false,
+    profile_field: key,
+    question_pack: "identity",
+    revision: 1,
+    icon: { url: "", mime: "" },
+    audience: { mode: "global", genders: [], group_ids: [], segments: [] },
+    options: [],
+  });
+  // Exactly the seven groups Core's `adminGroups()` serves under readiness:
+  // `orientation` and `looking_for` are withheld by
+  // ADMIN_HIDDEN_GROUPS_WHEN_VISIBILITY_ACTIVE, so no row for them exists.
+  const parsed = signupOptionCatalog({
+    schema_version: 1,
+    cast_groups: [],
+    segments: [],
+    groups: [
+      group("gender", true),
+      group("subgender", false),
+      group("relationship_status", true),
+      group("education_level", false),
+      group("smoking", false),
+      group("profession", false),
+      group("have_kids", false),
+    ],
+  });
+  assert.ok(parsed);
+  assert.equal(parsed.groups.length, 7);
+  assert.equal(parsed.groups.some((item) => item.key === "orientation"), false);
+  assert.equal(parsed.groups.some((item) => item.key === "looking_for"), false);
+
+  const relationship = parsed.groups.find((item) => item.key === "relationship_status");
+  // The wire value is kept verbatim; only what the console renders changes.
+  assert.equal(relationship?.required, true);
+  assert.equal(relationship?.required_at_signup, false);
+  assert.equal(parsed.groups.find((item) => item.key === "gender")?.required_at_signup, true);
+  assert.deepEqual(
+    parsed.groups.filter((item) => item.required_at_signup).map((item) => item.key),
+    ["gender"],
+  );
+  // The card carries a visible marker instead of silently dropping the badge.
+  assert.match(page, /group\.required && !group\.required_at_signup && <span className="badge badge-inactive">\{t\("notAskedAtSignup"\)\}/);
+  assert.match(page, /\{t\("notAskedAtSignupCopy"\)\}/);
 });
 
 test("retired member-orientation copy is absent in both locales", () => {
@@ -117,7 +178,7 @@ test("signup groups expose localized presentation and audience settings", () => 
   assert.match(page, /group_ids_json: JSON\.stringify\(editingGroup\.audience\.groupIds\)/);
   assert.match(page, /segments_json: JSON\.stringify\(editingGroup\.audience\.legacySegments\)/);
   assert.match(page, /group\.system_owned \? \(/);
-  assert.match(page, /group\.required \? t\("required"\) : t\("optional"\)/);
+  assert.match(page, /group\.required_at_signup \? t\("required"\) : t\("optional"\)/);
 });
 
 test("the catalog is compact until an operator opens a question card", () => {

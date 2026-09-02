@@ -296,7 +296,7 @@
             "guidance": "A szolgáltatói bizonyíték nélküli megadás auditált jogosultság, nem Persona-, videósszelfi- vagy kézi ellenőrzési bizonyíték. Bizonytalan válasz után soha ne hozz létre második kérésazonosítót; pontosan a mentett parancsot próbáld újra."
           },
           "audienceVisibility": {
-            "title": "Ki láthatja a profilomat",
+            "title": "Ki láthatja az adatlapomat",
             "purpose": "Ez a csak olvasható panel a tag hiteles audience-visibility nemét, a profil láthatóságát, az ebből a párosból származtatott egyetlen védett csoportot a legacy szegmensével együtt, valamint azt a revíziót mutatja, amelyen ez a három beolvasásra került.",
             "actions": {
               "1": "A nemet, a láthatósági értéket és a származtatott csoportot együtt olvasd; a feloldatlan nem azt jelenti, hogy a Core nem tud csoportot származtatni, nem pedig azt, hogy a tagot kivették egy csoportból.",
@@ -318,7 +318,7 @@
             "title": "Azonosság és strukturált profilválaszok",
             "purpose": "Ez a szerkesztő az aktuális signup-azonossági tengelyeket és a tag által tartható profilmező-válaszokat mutatja, a beállított profilszekciók szerint rendezve.",
             "actions": {
-              "1": "Azonossági mezőt csak akkor javíts, ha a kérés és a szabályzat egyértelműen igazolja a szándékolt értéket.",
+              "1": "Azonossági mezőt csak akkor javíts, ha a kérés és a szabályzat egyértelműen igazolja a szándékolt értéket; amíg az azonossági blokk csak olvasható, a Core elutasítja ezt az írást, és a módosítás az audience-visibility rekordhoz tartozik.",
               "2": "Adj hozzá, cserélj vagy törölj választható profilválaszokat, majd az aktuális revízióval ments.",
               "3": "A nem hozzárendelt vagy archivált válaszokat úgy vizsgáld meg, hogy ne töröld csendben a megőrzött előzményt."
             },
@@ -344,7 +344,7 @@
           },
           "profileFacts": {
             "title": "Profiltények",
-            "purpose": "Ez a csak olvasható összefoglaló gyors támogatási ellenőrzéshez megismétli az aktuális headline-t, Bemutatkozást és magasságot.",
+            "purpose": "Ez a csak olvasható összefoglaló gyors támogatási ellenőrzéshez megismétli az aktuális headline-t és Bemutatkozást.",
             "actions": {
               "1": "Ellenőrizd, hogy a közelmúltbeli módosítások a várt értékre álltak-e be.",
               "2": "Engedélyezett javításhoz használd a fentebbi célzott szerkesztőket."
@@ -1659,7 +1659,7 @@
               "1": "Szerkeszd az angol és magyar címet, és tölts fel megbízható ikont.",
               "2": "Nem rendszercsoportnál nézd át a sorrendet, kötelezőséget és elérhetőségi szabályokat."
             },
-            "guidance": "A védett rendszerkérdések megtartják kulcsukat és policyjüket, mert a Core és a kliensek függnek tőlük. Ezen az oldalon csak a Core által kiszolgált csoportok jelennek meg; egy kihagyott, kivezetett csoport nem hiányzó kötelező válasz."
+            "guidance": "A védett rendszerkérdések megtartják kulcsukat és policyjüket, mert a Core és a kliensek függnek tőlük. Ezen az oldalon csak a Core által kiszolgált csoportok jelennek meg; egy kihagyott, kivezetett csoport nem hiányzó kötelező válasz, a Core által még kötelezőnek jelölt, de a jelenlegi signup flow-ban fel nem tett kérdés pedig külön jelölést kap."
           },
           "answers": {
             "title": "Választható válaszok",
@@ -1672,12 +1672,12 @@
           },
           "audiences": {
             "title": "Kérdés- és válaszaudience",
-            "purpose": "Az audience szabály opcionális kérdést vagy egyedi választ kanonikus gender és dinamikus usercsoport szerint korlátozhat; a kiválasztott dimenziók metszetként működnek.",
+            "purpose": "Az audience szabály kanonikus gender szerint korlátoz egy opcionális kérdést vagy egyedi választ. Dinamikus usercsoport továbbra is választható és elmentődik, de mivel minden tag egyetlen csoportba tartozik, már nem szűkít semmit.",
             "actions": {
               "1": "Ahol a csoport engedi, minden választó üresen hagyása globális elérhetőséget jelent.",
               "2": "Csak a termékpolicy által szándékolt gendereket és csoportokat válaszd."
             },
-            "guidance": "Több beállított dimenziónál mindegyiknek egyeznie kell. A túl szűk szabály jogos tagok elől is eltüntetheti a választást."
+            "guidance": "A Core egyedül a gender tengelyt érvényesíti. A túl szűk gender szabály jogos tagok elől is eltüntetheti a választást, egy csak csoportra szűkített szabály viszont csendben mindenkit jelent."
           },
           "archiveBehavior": {
             "title": "Archiválás és megőrzött válaszok",
@@ -1950,7 +1950,7 @@
           },
           "audience": {
             "title": "Field audience",
-            "purpose": "Az audience lehet globális vagy kanonikus gender, beépített cast és dinamikus csoport által korlátozott; minden beállított dimenziónak egyeznie kell.",
+            "purpose": "Az audience lehet globális vagy kanonikus gender szerint korlátozott. A beépített castok és a dinamikus csoportok továbbra is választhatók és elmentődnek, de már nem szűkítik a jogosultságot.",
             "actions": {
               "1": "Használj globális beállítást, ha minden jogosult tagnak meg kell kapnia a kérdést.",
               "2": "A legszűkebb jóváhagyott audience-t válaszd, és vizsgáld meg a csoportdefiníciókat."
@@ -2062,7 +2062,7 @@
           },
           "audience": {
             "title": "Csoport- és elemaudience",
-            "purpose": "A sor lehet globális vagy kanonikus gender és szerver által képzett szegmens szerint korlátozott; minden beállított dimenziónak egyeznie kell.",
+            "purpose": "A sor lehet globális vagy kanonikus gender és a szerver által képzett szegmens szerint korlátozott; minden beállított dimenziónak egyeznie kell. A szegmenst a nem és az adja, hogy kik láthatják a tagot, nem pedig bármilyen orientációs érték.",
             "actions": {
               "1": "Globális elérhetőséghez hagyd üresen mindkét listát.",
               "2": "Csak jóváhagyott korlátozást alkalmazz, és hasonlítsd össze a csoport- és elemszintű szándékot."
@@ -2073,7 +2073,7 @@
             "title": "Szintetikus audience előnézet",
             "purpose": "Az előnézet a Core-tól kéri le a választott szintetikus gender- és szegmenskörnyezet aktív, lokalizált katalógusát valós tag azonosítása vagy mentése nélkül.",
             "actions": {
-              "1": "Válassz nyelvet, gendert és szegmenst a feloldott katalógushoz.",
+              "1": "Válassz nyelvet, gendert és nem × láthatóság szegmenst a feloldott katalógushoz.",
               "2": "Mentés előtt ismételd meg minden érintett audience-re."
             },
             "guidance": "Az előnézet csak a kiválasztott szintetikus környezetet bizonyítja. Nem helyettesíti a draft által módosított összes audience-kombináció ellenőrzését."
@@ -2109,12 +2109,12 @@
           },
           "placementAudience": {
             "title": "Barátság kártyák és audience",
-            "purpose": "Minden prompt barátság kártya, elhelyezést nem kell választani; egyedül az audience vezérli, mely jogosult genderek és dinamikus csoportok válaszolhatják meg.",
+            "purpose": "Minden prompt barátság kártya, elhelyezést nem kell választani; egyedül az audience vezérli, mely genderek válaszolhatják meg. Dinamikus csoport rögzíthető mellé, de már nem korlátoz.",
             "actions": {
               "1": "A kérdést barátság kártyaként írd meg; kérdésenként egyedül a célközönséget választod.",
               "2": "Hagyd globálisnak az audience-t, vagy válassz jóváhagyott korlátozott közönséget."
             },
-            "guidance": "Az audience az egyetlen kérdésenkénti korlátozás. Több audience-dimenziónál mindegyiknek egyeznie kell, ezért teszteld a kívánt tagcsoportokat."
+            "guidance": "Az audience az egyetlen kérdésenkénti korlátozás, és ebből a Core csak a gender tengelyt érvényesíti. A csak csoportra szűkített szabály elmentődik és megjelenik, de a kártya így is mindenkihez eljut."
           },
           "archiveBehavior": {
             "title": "Archiválás és meglévő válaszok",
@@ -2168,9 +2168,9 @@
             "purpose": "A küldői szabály a másik profilt megnyitó és küldő tagot, a fogadói szabály pedig azt a profiltulajdonost vezérli, aki megkaphatja a jelvényt.",
             "actions": {
               "1": "Hagyd globálisnak az oldalt, ha minden jogosult tagnak át kell mennie rajta.",
-              "2": "Egyedi oldalon válassz kanonikus gendert vagy dinamikus csoportot, majd ellenőrizd az összefoglalót."
+              "2": "Egyedi oldalon válaszd ki a kanonikus gendereket, majd ellenőrizd az összefoglalót; csoport rögzíthető melléjük, de nem szűr."
             },
-            "guidance": "Mindkét oldalnak egyeznie kell, az egyedi oldalon belül pedig minden beállított dimenziónak. Az üres egyedi selection is globálist jelent, ezért a módot figyelmesen használd."
+            "guidance": "Mindkét oldalnak engednie kell az interakciót, az egyedi oldalon belül pedig csak a gender tengely érvényesül — a castcsoport-választás elmentődik és látszik, de már nem szűkít. Az üres egyedi selection is globálist jelent, ezért a módot figyelmesen használd."
           },
           "memberOverride": {
             "title": "Tagi egyedi napi keret",
@@ -5160,7 +5160,6 @@
     "about": "Bemutatkozás",
     "headline": "Címsor",
     "generation": "Generáció",
-    "height": "Magasság",
     "loadError": "Ez a userprofil nem tölthető be.",
     "notFound": "A kért user nem létezik.",
     "noImages": "Nincsenek elérhető profilképek.",
@@ -5397,7 +5396,7 @@
       }
     },
     "audienceVisibility": {
-      "title": "Ki láthatja a profilomat",
+      "title": "Ki láthatja az adatlapomat",
       "copy": "Csak olvasható hiteles láthatóság és az az egy védett csoport, amelyet a Core a nem × láthatóság alapján származtat. Ez a panel soha nem bízik a széles legacy tagi válaszban.",
       "loading": "A korlátozott audience-visibility vetület betöltése…",
       "loadError": "Az audience-visibility vetület nem dekódolható biztonságosan.",
@@ -5546,6 +5545,8 @@
   "userProfileEditor": {
     "identityTitle": "Identitás és felhasználói csoport",
     "identityCopy": "A nem részleteit szerkeszted. A Core megőrzi a rejtett routingbeállításokat, és származtatja a castot, csatornákat és kérdéscsomagokat; a csoport nem szabadon átírható adminérték.",
+    "identityReadOnlyTitle": "Az azonosság itt csak olvasható",
+    "identityReadOnlyCopy": "A hiteles nem mostantól a tag audience-visibility rekordjában él, és a Core elutasítja a régi azonossági írást. Az alábbi értékek csak támogatási ellenőrzésre jelennek meg; a szerkesztőjük készül.",
     "gender": "Nem",
     "subgender": "Részletes nemi identitás",
     "noSubgender": "Nincs részletes identitás",
@@ -5557,6 +5558,7 @@
     "saveIdentity": "Nem és csoport mentése",
     "identityRequired": "Válassz nemet.",
     "identitySaveError": "A nem és a felhasználói csoport mentése nem sikerült.",
+    "identityRetired": "A Core elutasította az írást: a régi azonossági útvonal kivezetve. A nemet az audience-visibility rekordon keresztül lehet módosítani.",
     "identitySaved": "A nem mentve. A felhasználói csoport és az elérhető profilmezők újraszámítva.",
     "fieldsTitle": "Választható profiladatok",
     "fieldsCopy": "A jelenlegi felhasználói csoporthoz {count} mező érhető el.",
@@ -6519,11 +6521,12 @@
     "filterAll": "Minden kérdés",
     "filterSystem": "System kérdések",
     "filterOptional": "Opcionális profilkérdések",
-    "filterTargeted": "Usercsoport-specifikus",
+    "filterTargeted": "Korlátozott célközönség",
     "systemAnswersTitle": "A system válaszok védettek",
     "systemAnswersIntro": "Csak a Core által jelenleg kiszolgált system kérdések jelennek meg itt. A nevük átírható, de a kulcsuk, sorrendjük, kötelező állapotuk és elérhetőségük a Core hatáskörében marad.",
     "system": "System",
     "required": "Kötelező",
+    "notAskedAtSignup": "A signup nem kérdezi",
     "optional": "Opcionális",
     "targeted": "Célzott",
     "everyone": "Mindenki",
@@ -6540,20 +6543,22 @@
     "iconError": "Legfeljebb 2 MB-os, érvényes PNG vagy SVG fájlt válassz.",
     "requiredSystemQuestion": "Kötelező system kérdés",
     "requiredSystemQuestionCopy": "Ezt minden usernek meg kell válaszolnia. A kulcsa, kötelező állapota és célközönsége védett; a kétnyelvű neve és ikonja szerkeszthető.",
+    "notAskedAtSignupCopy": "A Core kompatibilitási okból még kötelezőnek jelöli ezt a kérdést, hogy a telepített appok tudják dekódolni a katalógust, de a jelenlegi signup flow soha nem teszi fel, és alapértelmezett választ küld. A nevének átírása biztonságos; ne olvasd úgy, mintha a usereknek meg kellene válaszolniuk.",
     "systemQuestion": "System által kezelt kérdés",
     "systemQuestionCopy": "Ez a kérdés mindenkinek elérhető, a szabálya védett. A kétnyelvű neve és ikonja szerkeszthető.",
     "groupAudience": "Kik kapják meg ezt a kérdést?",
-    "groupAudienceHelp": "Az opcionális signup adatokat nem és dinamikus usercsoport szerint célozhatod. Ha mindkét tengelyen választasz, mindkettőnek egyeznie kell.",
+    "groupAudienceHelp": "Az opcionális signup adatokat nem szerint célozhatod. Dinamikus usercsoport továbbra is rögzíthető, de már nem szűkíti, kitől kérdezzük — minden user egyetlen csoportba tartozik.",
     "audienceGlobal": "Mindenki",
-    "audienceSpecific": "Meghatározott usercsoportok",
+    "audienceSpecific": "Korlátozott célközönség",
     "audienceGlobalHint": "Ez az opcionális kérdés minden regisztráló usernek megjelenik.",
     "audienceGendersTitle": "Nemek",
     "audienceGroupsTitle": "Dinamikus usercsoportok",
     "audienceMatchAny": "bármelyik egyezhet",
-    "audienceMatchBoth": "Ha nemet és csoportot is kijelölsz, a usernek mindkét szűrőnek meg kell felelnie.",
+    "audienceGroupsRecorded": "rögzítve, nem szűr",
+    "audienceGroupsNotEnforced": "A kiválasztott usercsoportokat elmentjük és megjelenítjük, de már nem szűkítik a célközönséget — kizárólag a nem szerinti választás dönti el, kitől kérdezzük.",
     "audienceRequired": "Válassz legalább egy nemet vagy usercsoportot.",
     "audienceInactive": "Archivált csoport",
-    "audienceLegacy": "Kompatibilitási csoport",
+    "audienceLegacy": "Legacy szegmens",
     "genderMen": "Férfiak",
     "genderWomen": "Nők",
     "genderNonbinary": "Nembináris emberek",
@@ -6621,15 +6626,15 @@
     "audience": "Célcsoport",
     "global": "Mindenki",
     "castSpecific": "Meghatározott felhasználói csoportok",
-    "audienceHelp": "Válaszd ki, kik kapják meg ezt a profilkérdést. Ha nemet és csoportot is jelölsz, mindkettőnek egyeznie kell.",
+    "audienceHelp": "Válaszd ki, kik kapják meg ezt a profilkérdést. A jogosultságot a nem szerinti szűrő dönti el; a beépített castok és a dinamikus csoportok rögzülnek, de már nem szűkítik.",
     "audienceGlobalHint": "Ez a kérdés minden jogosult usernek elérhető.",
     "audienceGendersTitle": "Nemek",
     "audienceGroupsTitle": "Dinamikus user csoportok",
-    "audienceSegmentsTitle": "Beépített castok",
     "audienceMatchAny": "bármelyik egyezhet",
-    "audienceMatchBoth": "Ha nemet és csoportot is kijelölsz, a usernek mindkét szűrőnek meg kell felelnie.",
+    "audienceGroupsRecorded": "rögzítve, nem szűr",
+    "audienceGroupsNotEnforced": "A kiválasztott usercsoportokat elmentjük és megjelenítjük, de már nem szűkítik a jogosultságot — kizárólag a nem szerinti választás dönti el, ki kapja meg a kérdést.",
     "audienceGroupInactive": "Archivált csoport",
-    "audienceLegacy": "Kompatibilitási csoport",
+    "audienceLegacy": "Legacy szegmens",
     "genderMale": "Férfiak",
     "genderFemale": "Nők",
     "genderOther": "Nembináris emberek",
@@ -6643,6 +6648,7 @@
     "validationError": "Adj meg érvényes stabil kulcsot és mindkét kötelező nevet.",
     "audienceRequired": "Jelölj ki legalább egy nemet vagy felhasználói csoportot.",
     "conflict": "Ezt az elemet egy másik munkamenetben módosították. Töltsd újra a katalógust.",
+    "keyRetired": "Ezt a kérdéskulcsot kivezettük a Friendingből, és nem hozható létre újra. Válassz másik kulcsot.",
     "saveError": "A profilmező mentése nem sikerült.",
     "minimumUnavailable": "A kötelező minimum nagyobb az aktív válaszlehetőségek számánál. Előbb adj hozzá vagy aktiválj újra válaszokat.",
     "iconUnmanaged": "Használd a profilikon feltöltőt. Külső ikon URL nem engedélyezett.",
@@ -6678,7 +6684,6 @@
     "layoutSubtitleEn": "Angol alcím",
     "layoutSubtitleHu": "Magyar alcím",
     "layoutSectionOrder": "Szekció sorrendje",
-    "layoutHeightFixed": "ebben a szekcióban rögzített",
     "layoutMoveUp": "{name} mozgatása felfelé",
     "layoutMoveDown": "{name} mozgatása lefelé",
     "layoutRemove": "Eltávolítás",
@@ -6821,7 +6826,7 @@
     "audience": "Célközönség",
     "globalAudience": "Globális célközönség",
     "gendersTitle": "Kanonikus gender",
-    "segmentsTitle": "Szerver által képzett szegmens",
+    "segmentsTitle": "Szerver által képzett szegmens (nem × ki láthat)",
     "audienceHint": "Minden beállított dimenziónak egyeznie kell. Mindkét lista üresen globális sort jelent.",
     "genders": {
       "male": "Férfi",
@@ -6829,13 +6834,13 @@
       "other": "Egyéb / feloldatlan"
     },
     "segments": {
-      "male_hetero": "Heteroszexuális férfiak",
-      "male_gay": "Meleg férfiak",
-      "male_bisexual": "Biszexuális férfiak",
-      "female_hetero": "Heteroszexuális nők",
-      "female_lesbian": "Leszbikus nők",
-      "female_bisexual": "Biszexuális nők",
-      "identity_unresolved": "Feloldatlan identitás"
+      "male_hetero": "Férfiak, akiket nők láthatnak",
+      "male_gay": "Férfiak, akiket férfiak láthatnak",
+      "male_bisexual": "Férfiak, akiket mindenki láthat",
+      "female_hetero": "Nők, akiket férfiak láthatnak",
+      "female_lesbian": "Nők, akiket nők láthatnak",
+      "female_bisexual": "Nők, akiket mindenki láthat",
+      "identity_unresolved": "Nincs megadva nem vagy láthatóság"
     },
     "icon": "Elem ikonja",
     "iconHint": "PNG vagy tisztított SVG, legfeljebb 2 MB. Külső URL nem engedélyezett.",
@@ -6883,19 +6888,19 @@
     "question": "Kérdés",
     "questionEn": "Angol kérdés",
     "questionHu": "Magyar kérdés",
-    "memberSex": "Kinek jelenjen meg",
-    "audience": "User cast célközönség",
+    "audience": "Ki válaszolhatja meg ezt a kártyát",
     "global": "Minden cast",
     "castSpecific": "Meghatározott felhasználói csoportok",
-    "audienceHelp": "Válaszd ki, mely userek válaszolhatják meg ezt a kártyát. Ha nemet és csoportot is jelölsz, mindkettőnek egyeznie kell.",
+    "audienceHelp": "Válaszd ki, mely userek válaszolhatják meg ezt a kártyát. A nem szerinti szűrő dönt; a usercsoportok rögzülnek, de már nem szűkítik, kinek ajánljuk fel a kártyát.",
     "audienceGlobalHint": "Minden jogosult user megválaszolhatja ezt a kártyát.",
     "audienceGenders": "Nemek",
     "audienceGroups": "User csoportok",
     "audienceMatchAny": "bármelyik egyezhet",
-    "audienceMatchBoth": "Ha nemet és csoportot is kijelölsz, a usernek mindkét szűrőnek meg kell felelnie.",
+    "audienceGroupsRecorded": "rögzítve, nem szűr",
+    "audienceGroupsNotEnforced": "A kiválasztott usercsoportokat elmentjük és megjelenítjük, de már nem szűkítik a célközönséget — kizárólag a nem szerinti választás dönti el, kinek ajánljuk fel a kártyát.",
     "audienceRequired": "Jelölj ki legalább egy nemet vagy user csoportot.",
     "audienceGroupInactive": "Archivált csoport",
-    "audienceLegacy": "Kompatibilitási csoport",
+    "audienceLegacy": "Legacy szegmens",
     "genderMale": "Férfiak",
     "genderFemale": "Nők",
     "genderOther": "Nembináris emberek",
@@ -8220,7 +8225,6 @@
     "audienceIntro": "A badge csak akkor jelenik meg a küldhető listában, ha a küldő és a címzett oldali szabály is teljesül.",
     "audiencePreviewLabel": "A badge célzási szabályának összefoglalója",
     "previewBadge": "Küldhető badge",
-    "audienceHint": "Ha semmi sincs kijelölve = globális. A nem- és csoportfeltételnek EGYÜTT kell teljesülnie, ha be van állítva.",
     "senderShort": "Küldők",
     "recipientShort": "Címzettek",
     "audienceGlobal": "Globális",
@@ -8253,11 +8257,12 @@
     "chipGenders": "Nem",
     "chipGroups": "User csoportok",
     "matchAny": "bármelyik megfelel",
-    "matchBothAxes": "A usernek a kiválasztott nemek egyikébe ÉS legalább egy kiválasztott user csoportba is tartoznia kell.",
+    "groupsRecorded": "rögzítve, nem szűr",
+    "groupsNotEnforced": "A kiválasztott usercsoportokat elmentjük és megjelenítjük, de már nem szűkítik ezt az oldalt — kizárólag a nem szerinti választás dönti el, kinek ajánljuk fel a badge-et.",
     "audienceRequired": "Egyéni célzásnál válassz legalább egy nemet vagy user csoportot.",
     "groupInactive": "Inaktív csoport",
     "globalHint": "Mindenki. Válts Egyénire, ha nem vagy user csoport szerint szűkítenéd.",
-    "customEmptyHint": "Még nincs kijelölés — ez így még mindenkit jelent. Válassz nemet és/vagy csoportot; ha mindkettő be van állítva, együtt kell teljesülniük.",
+    "customEmptyHint": "Még nincs kijelölés — ez így még mindenkit jelent. Válaszd ki, mely nemekre vonatkozik ez az oldal; usercsoport rögzíthető, de nem szűr.",
     "featureSwitchesPointer": {
       "title": "Funkciók elérhetősége",
       "copy": "A globális Footprints kapcsoló most a Hey kapcsolóval együtt a Konfiguráció oldalon található. Az ezen az oldalon lévő jelvénylimitek és katalógusbeállítások saját dokumentumot és revíziót használnak.",

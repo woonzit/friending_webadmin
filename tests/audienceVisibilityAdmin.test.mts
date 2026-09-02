@@ -858,7 +858,14 @@ test("released routes and panels rely on Core capability gates without a second 
   assert.equal(enMessages.audienceVisibilityAdmin.visibleTo.both, "Everyone");
   assert.equal(huMessages.audienceVisibilityAdmin.visibleTo.both, "Mindenki");
   assert.equal(enMessages.userDetail.audienceVisibility.title, "Who can see my profile");
-  assert.equal(huMessages.userDetail.audienceVisibility.title, "Ki láthatja a profilomat");
+  // T-651: the app calls this setting "Ki láthatja az adatlapomat" (D-099,
+  // T-645), so the console names it the same way. The English half is
+  // unchanged.
+  assert.equal(huMessages.userDetail.audienceVisibility.title, "Ki láthatja az adatlapomat");
+  assert.equal(
+    huMessages.adminHelp.pages.userDetail.sections.audienceVisibility.title,
+    "Ki láthatja az adatlapomat",
+  );
   assert.equal(Object.keys(enMessages.adminHelp.pages.audienceVisibility.sections).length, 8);
   assert.deepEqual(
     Object.keys(enMessages.audienceVisibilityAdmin).sort(),
