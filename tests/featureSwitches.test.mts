@@ -54,13 +54,16 @@ const RENDER_MESSAGES = {
 
 // Copied byte-identically from the lead-accepted Core tip. Body identity is
 // pinned separately so provenance-only manifest moves cannot be mistaken for
-// changes to the 50 released wire blobs.
-const FIXTURE_ACCEPTED_CORE_TIP = "73894b68386f5d57b0a091fcb87bc0dff490f548";
-const FIXTURE_SOURCE_COMMIT = "229b7891567ab6697e552180b7d324f1f02c1ef5";
+// changes to the 50 released wire blobs — which is exactly what the last move
+// was: re-copied from Core `main` 7c6e5aa (the T-670/T-668 landing) after
+// T-659 had bound the lane's own provider commit, all 50 bodies unchanged and
+// only `source_commit` and the manifest digest different.
+const FIXTURE_ACCEPTED_CORE_TIP = "7c6e5aaad7829d61f070c27d52860f94569db8ec";
+const FIXTURE_SOURCE_COMMIT = "968e2fda92fb325584089df81fef2e83c30fcc14";
 const FIXTURE_CONTRACT_MANIFEST_SHA256 = "c854019e6be2046ad81af294719774beca04346d5f078b746daba313a787f083";
 const FIXTURE_GENERATOR_SHA256 = "7d4588c7336808f90f778c837ca15b61268594641709f489180a7b1d6a9f913f";
 const FIXTURE_SET_SHA256 = "f8af93a1dee24a7c83cfd8deb03757bead16d0c2fd13494a73dbfc778db1fd8b";
-const FIXTURE_MANIFEST_SHA256 = "28a1d34a701557cba55c603b3abea06284048b7bc8236cdac6a7be399940a0dd";
+const FIXTURE_MANIFEST_SHA256 = "b378bf039859bccab2cedee0d0104d1542ee9de5858aff726bc246ac27a52a5e";
 const FIXTURE_BODY_COUNT = 50;
 
 const FIXTURE_BODY_FILES = [
