@@ -1,23 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
-import { icebreakerCatalog, isSingleGroupCatalog } from "../lib/icebreakers.ts";
+import { icebreakerCatalog } from "../lib/icebreakers.ts";
 
-// T-630 (D-094): Friending has ONE icebreaker category, so the primary catalogue
-// is friends-only. The label pair is what Core serves for `friends`
+// T-630 (D-094): Friending has ONE icebreaker category, so the catalogue is
+// friends-only. The label pair is what Core serves for `friends`
 // (`api/src/Support/IcebreakerPolicy.php` GROUP_LABELS).
-const friendsGroups = [
-  { key: "friends", labels: { en: "Friends cards", hu: "Barátság kártyák" } },
-];
+const friendsGroup = { key: "friends", labels: { en: "Friends cards", hu: "Barátság kártyák" } };
+const friendsGroups = [friendsGroup];
 
-// Transition only: a Core still on the Freelove triple, with the labels it serves
-// today ("Dates cards" / "Relationship cards"). T-631 deletes this shape with the
-// decoder branch that accepts it.
-const legacyTripleGroups = [
-  { key: "friends", labels: { en: "Friends cards", hu: "Barátság kártyák" } },
-  { key: "sex", labels: { en: "Dates cards", hu: "Randi kártyák" } },
-  { key: "love", labels: { en: "Relationship cards", hu: "Kapcsolat kártyák" } },
-];
+// The two retired legacy deck keys, as refused INPUTS only: the decoder accepted
+// the `friends,sex,love` triple during the T-630 transition and T-631 removed it.
+const legacySexGroup = { key: "sex", labels: { en: "Legacy deck", hu: "Örökölt pakli" } };
+const legacyLoveGroup = { key: "love", labels: { en: "Legacy deck", hu: "Örökölt pakli" } };
 
 const valid = {
   schema_version: 1,
@@ -101,36 +96,25 @@ test("Icebreaker parser preserves independent card group and audience settings",
   assert.equal(icebreakerCatalog(danglingGroup), null);
 });
 
-test("Icebreaker catalogue accepts the friends-only groups (T-630) and, in transition only, the legacy triple", () => {
-  // (a) target shape: exactly [friends]
+test("Icebreaker catalogue accepts exactly the one friends group (T-630, T-631) and refuses every other shape", () => {
+  // The only shape: exactly [friends].
   const single = icebreakerCatalog(valid);
   assert.ok(single, "the friends-only catalogue must decode");
   assert.deepEqual(single.groups.map((group) => group.key), ["friends"]);
   assert.equal(single.groups[0].labels.hu, "Barátság kártyák");
-  assert.equal(isSingleGroupCatalog(single), true);
 
-  // (b) transition shape: exactly [friends, sex, love], deleted by T-631
-  const legacy = withGroups(legacyTripleGroups) as Record<string, any>;
-  legacy.prompts[0].groups = ["love"];
-  legacy.prompts.push({ ...structuredClone(valid.prompts[0]), id: "def", key: "nightclub_or_netflix", groups: ["friends", "sex", "love"] });
-  const triple = icebreakerCatalog(legacy);
-  assert.ok(triple, "the legacy triple must still decode during the transition");
-  assert.deepEqual(triple.groups.map((group) => group.key), ["friends", "sex", "love"]);
-  assert.equal(triple.groups[1].labels.en, "Dates cards");
-  assert.deepEqual(triple.prompts.map((prompt) => prompt.groups), [["love"], ["friends", "sex", "love"]]);
-  assert.equal(isSingleGroupCatalog(triple), false);
-
-  // Widening to two shapes must not have loosened anything else: every other
-  // groups list fails closed exactly as before.
+  // Every other groups list fails closed — including the legacy triple the
+  // decoder tolerated between the T-630 Webadmin and Core deploys (T-631).
   const refused: Array<[string, unknown]> = [
     ["empty", []],
-    ["sex only", [legacyTripleGroups[1]]],
-    ["love only", [legacyTripleGroups[2]]],
-    ["friends,sex", [legacyTripleGroups[0], legacyTripleGroups[1]]],
-    ["friends,love", [legacyTripleGroups[0], legacyTripleGroups[2]]],
-    ["reordered triple", [legacyTripleGroups[2], legacyTripleGroups[1], legacyTripleGroups[0]]],
-    ["triple plus a fourth", [...legacyTripleGroups, { key: "extra", labels: { en: "Extra", hu: "Extra" } }]],
-    ["friends twice", [legacyTripleGroups[0], legacyTripleGroups[0]]],
+    ["sex only", [legacySexGroup]],
+    ["love only", [legacyLoveGroup]],
+    ["friends,sex", [friendsGroup, legacySexGroup]],
+    ["friends,love", [friendsGroup, legacyLoveGroup]],
+    ["the legacy triple friends,sex,love", [friendsGroup, legacySexGroup, legacyLoveGroup]],
+    ["reordered triple", [legacyLoveGroup, legacySexGroup, friendsGroup]],
+    ["triple plus a fourth", [friendsGroup, legacySexGroup, legacyLoveGroup, { key: "extra", labels: { en: "Extra", hu: "Extra" } }]],
+    ["friends twice", [friendsGroup, friendsGroup]],
     ["friends without a Hungarian label", [{ key: "friends", labels: { en: "Friends cards" } }]],
     ["not a list", "friends"],
   ];
@@ -143,21 +127,22 @@ test("Icebreaker catalogue accepts the friends-only groups (T-630) and, in trans
   sexesDrift.member_sexes = sexesDrift.member_sexes.slice(0, 2);
   assert.equal(icebreakerCatalog(sexesDrift), null);
 
-  // Prompt-level groups: empty still fails closed, more than three still fails
-  // closed, a duplicate still fails closed; `sex`/`love` on a prompt are tolerated
-  // on either catalogue shape for the transition (T-631 narrows to `friends`).
-  const emptyGroups = structuredClone(valid) as Record<string, any>;
-  emptyGroups.prompts[0].groups = [];
-  assert.equal(icebreakerCatalog(emptyGroups), null, "a prompt with no groups is refused");
-  const fourGroups = structuredClone(valid) as Record<string, any>;
-  fourGroups.prompts[0].groups = ["friends", "sex", "love", "extra"];
-  assert.equal(icebreakerCatalog(fourGroups), null, "a prompt with four groups is refused");
-  const duplicateGroups = structuredClone(valid) as Record<string, any>;
-  duplicateGroups.prompts[0].groups = ["friends", "friends"];
-  assert.equal(icebreakerCatalog(duplicateGroups), null, "a duplicated group is refused");
-  const legacyPromptGroup = structuredClone(valid) as Record<string, any>;
-  legacyPromptGroup.prompts[0].groups = ["sex"];
-  assert.deepEqual(icebreakerCatalog(legacyPromptGroup)?.prompts[0]?.groups, ["sex"], "transition tolerance on a prompt");
+  // Prompt-level groups are exactly ["friends"]: empty, a legacy key (alone or
+  // beside friends), the legacy triple, a fourth key and a duplicate all fail closed.
+  const promptGroups: Array<[string, unknown]> = [
+    ["empty", []],
+    ["sex only", ["sex"]],
+    ["love only", ["love"]],
+    ["friends,sex", ["friends", "sex"]],
+    ["the legacy triple", ["friends", "sex", "love"]],
+    ["four groups", ["friends", "sex", "love", "extra"]],
+    ["friends twice", ["friends", "friends"]],
+  ];
+  for (const [label, groups] of promptGroups) {
+    const drifted = structuredClone(valid) as Record<string, any>;
+    drifted.prompts[0].groups = groups;
+    assert.equal(icebreakerCatalog(drifted), null, `a prompt with groups ${label} must be refused`);
+  }
 });
 
 test("Icebreaker admin capabilities and page are explicitly wired", async () => {
@@ -172,13 +157,11 @@ test("Icebreaker admin capabilities and page are explicitly wired", async () => 
   assert.match(page, /genders_json/);
   assert.match(page, /group_ids_json/);
   assert.match(page, /MemberAudienceSelector/);
-  // T-630: the single-group catalogue drives the group fieldset, the "Card groups"
-  // column, the empty-row span and the group validation off the same predicate,
-  // and the draft always carries ["friends"] on it.
-  assert.match(page, /isSingleGroupCatalog\(catalog\)/);
-  assert.match(page, /groups: singleGroup \? \["friends"\] : prompt\?\.groups \?\? \["friends"\]/);
-  assert.match(page, /\{singleGroup \? null : <fieldset/);
-  assert.match(page, /\{singleGroup \? null : <th>\{t\("groups"\)\}<\/th>\}/);
-  assert.match(page, /colSpan=\{singleGroup \? 5 : 6\}/);
-  assert.match(page, /\(!singleGroup && editor\.groups\.length === 0\)/);
+  // T-630 / T-631: one category — the console never offers a group to choose,
+  // never renders a group column, and always posts groups_json ["friends"].
+  assert.match(page, /groups_json: JSON\.stringify\(\["friends"\]\)/);
+  assert.doesNotMatch(page, /singleGroup|isSingleGroupCatalog/);
+  assert.doesNotMatch(page, /<fieldset[^>]*><legend>\{t\("groups"\)\}/);
+  assert.doesNotMatch(page, /t\("groups"\)/);
+  assert.match(page, /colSpan=\{5\}/);
 });

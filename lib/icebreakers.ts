@@ -11,9 +11,9 @@ export type IcebreakerPrompt = {
   id: string;
   key: string;
   labels: IcebreakerLocalizedText;
-  // T-630 (D-094): Friending has one category, `friends`. `sex` and `love` stay
-  // accepted on a prompt only for the transition; T-631 narrows this to `friends`.
-  groups: Array<"friends" | "sex" | "love">;
+  // T-630 (D-094): Friending has ONE icebreaker category, so every prompt carries
+  // exactly `["friends"]` (the list shape is the wire's; T-631 narrowed it).
+  groups: Array<"friends">;
   member_sex: "male" | "female" | "both";
   audience: { mode: "global" | "segments"; segments: string[]; genders: string[]; group_ids: string[] };
   sort_order: number;
@@ -34,23 +34,12 @@ export type IcebreakerCatalog = {
 };
 
 /**
- * The catalogue `groups` shapes the decoder accepts, as `key` lists joined by `,`.
- *
- * T-630 (D-094): Friending has ONE icebreaker category, `friends`, so the target
- * catalogue answers exactly `[friends]`. A Core still on the Freelove triple
- * answers `friends,sex,love`; that legacy shape is accepted only for the
- * transition, so the console stays up whichever side deploys first. T-631
- * removes the legacy entry once the single-group Core is live.
+ * The only catalogue `groups` shape (keys joined by `,`): Friending has ONE
+ * icebreaker category (T-630, D-094), so Core answers exactly `[friends]`. The
+ * legacy triple `friends,sex,love` was accepted for the T-630 transition only
+ * and is refused again since T-631.
  */
-const ACCEPTED_GROUP_SHAPES: readonly string[] = [
-  "friends", // target (T-630)
-  "friends,sex,love", // legacy triple, transition only (removed by T-631)
-];
-
-/** True when Core serves the single `friends` category (T-630 target). */
-export function isSingleGroupCatalog(catalog: Pick<IcebreakerCatalog, "groups">): boolean {
-  return catalog.groups.length === 1;
-}
+const ACCEPTED_GROUP_SHAPE = "friends";
 
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -126,10 +115,8 @@ function prompt(value: unknown): IcebreakerPrompt | null {
     || typeof labels.hu !== "string"
     || labels.hu.trim() === ""
     || !groups
-    || groups.length === 0
-    || groups.length > 3
-    // T-630 transition: `sex`/`love` still decode on a prompt; T-631 narrows to `friends`.
-    || !groups.every((group) => ["friends", "sex", "love"].includes(group))
+    // One category (T-630, D-094): a prompt's groups are exactly ["friends"].
+    || groups.join(",") !== ACCEPTED_GROUP_SHAPE
     || !["male", "female", "both"].includes(String(source.member_sex))
     || !audience
     || !["global", "segments"].includes(String(audience.mode))
@@ -190,7 +177,7 @@ export function icebreakerCatalog(value: unknown): IcebreakerCatalog | null {
     || !groups
     || !memberSexes
     || !segments
-    || !ACCEPTED_GROUP_SHAPES.includes(groups.map((item) => item.key).join(","))
+    || groups.map((item) => item.key).join(",") !== ACCEPTED_GROUP_SHAPE
     || memberSexes.map((item) => item.key).join(",") !== "male,female,both"
     || !Array.isArray(source.prompts)
   ) return null;
