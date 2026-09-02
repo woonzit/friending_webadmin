@@ -13634,8 +13634,24 @@ body .verification-level-pill.level-strong {
 }
 
 /* T-617 unified verification-method table (contract §7.1). */
+/* Fixed layout so an expanded row's editor cannot widen the table itself. */
+.method-policy-table { table-layout: fixed; width: 100%; }
+.method-policy-table th:nth-child(1) { width: 24%; }
+.method-policy-table th:nth-child(2) { width: 34%; }
+.method-policy-table th:nth-child(3) { width: 24%; }
+.method-policy-table th:nth-child(4) { width: 18%; }
 .method-policy-table td { vertical-align: top; }
-.method-cell { display: grid; gap: 6px; min-width: 220px; }
+.method-policy-table tbody th { white-space: normal; }
+.method-row-title { display: grid; gap: 4px; }
+.method-row-title small { color: var(--muted); font-size: 10px; letter-spacing: .04em; overflow-wrap: anywhere; }
+.method-cell { display: grid; gap: 6px; }
 .method-availability { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: 11px; }
 .method-row-expanded > td { background: var(--bg-soft); }
-.method-row-detail { padding: 6px 0 10px; }
+.method-row-detail { display: grid; gap: 12px; padding: 10px 0 14px; }
+/* Grid and flex children default to min-width:auto, which lets a textarea's
+   intrinsic width push the editor past the fixed cell. Pin it to zero. */
+.method-row-detail, .method-row-detail > *, .method-row-detail .forced-copy-grid > * { min-width: 0; }
+/* `.data-table` is nowrap by default, which is right for a data row and wrong
+   for a paragraph inside an expanded editor. */
+.method-row-detail { white-space: normal; }
+.method-row-detail input, .method-row-detail textarea { max-width: 100%; }

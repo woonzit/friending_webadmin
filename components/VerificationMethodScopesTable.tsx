@@ -644,9 +644,11 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     return [
       <tr key={key} className={row === null ? "forced-global-row" : undefined}>
         <th scope="row">
-          {row === null
-            ? <><strong>{shared("globalRow")}</strong><small>{shared("globalRowHint")}</small></>
-            : <><strong>{forcedStorefrontName(row, locale)}</strong><small>{row}</small></>}
+          <span className="method-row-title">
+            {row === null
+              ? <><strong>{shared("globalRow")}</strong><small>{shared("globalRowHint")}</small></>
+              : <><strong>{forcedStorefrontName(row, locale)}</strong><small>{row}</small></>}
+          </span>
         </th>
         <td>{methodSelect(row, method)}</td>
         <td>
