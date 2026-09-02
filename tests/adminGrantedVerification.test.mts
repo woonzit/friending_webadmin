@@ -61,9 +61,13 @@ const FIXTURE_DIRECTORY = new URL("./fixtures/admin_granted_verification_wire/",
 // Body identity is the 44 published wire blobs plus their aggregate set hash.
 // Manifest provenance is pinned separately because an overlapping Core source
 // path can legitimately advance source_commit without changing a wire byte.
-const FIXTURE_SOURCE_COMMIT = "ba639d4d28edd104222fadc8d9da44500bbbe280";
-const FIXTURE_GENERATOR_COMMIT = "6bf17e492877ee252599cdac6fff393fa52a298a";
-const FIXTURE_GENERATOR_SHA256 = "7bbb7986bdd7474af6826d12274e980c33a49dcae5bc2cbae124e8d0af22b0f1";
+// T-617 re-pin: the corpus BODIES are byte-identical to the pre-T-617 set; only
+// the provenance moved, because Core regenerated it at `835801a` inside the
+// `b988f05` release (the grant resource's `enabled_methods` now means "methods
+// serviceable for a NEW grant", which does not change any published body).
+const FIXTURE_SOURCE_COMMIT = "835801a49c16bd8e93fa25df2edae66a9b634077";
+const FIXTURE_GENERATOR_COMMIT = "408c99f5e5bb6560ef2b0d9ad2450c8147e636a1";
+const FIXTURE_GENERATOR_SHA256 = "3430c91c98649c0474f0d3580fdaf27cfa0e93a273219697e492e060b495e3e6";
 const FIXTURE_SET_SHA256 = "5dfd7f261c383c7dc7533824152779a38fd2902405d4c2085c10110aad8d9706";
 const FIXTURE_BODY_COUNT = 44;
 

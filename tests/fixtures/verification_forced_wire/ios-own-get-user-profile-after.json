@@ -19,9 +19,7 @@
             "enabled_methods": [
                 "persona"
             ],
-            "startable_methods": [
-                "persona"
-            ],
+            "startable_methods": [],
             "tier_language": false,
             "methods": {
                 "video": {
@@ -42,7 +40,7 @@
                 },
                 "persona": {
                     "status": "not_started",
-                    "can_start": true,
+                    "can_start": false,
                     "pending_phase": null,
                     "pending_since": null,
                     "reason": null,
@@ -50,11 +48,7 @@
                     "max_attempts": null,
                     "manual_review_available": false,
                     "state_integrity": true,
-                    "action": {
-                        "kind": "start_persona",
-                        "label": "Start identity check",
-                        "url": null
-                    }
+                    "action": null
                 }
             },
             "level": "light",
@@ -121,7 +115,7 @@
                         "max_attempts": null,
                         "manual_review_available": false,
                         "primary_action": {
-                            "kind": "start_persona",
+                            "kind": "open_verification_center",
                             "label": "Open Verification",
                             "url": null
                         },
@@ -169,7 +163,7 @@
                         "max_attempts": null,
                         "manual_review_available": false,
                         "primary_action": {
-                            "kind": "start_persona",
+                            "kind": "open_verification_center",
                             "label": "Open Verification",
                             "url": null
                         },
@@ -248,6 +242,14 @@
                 "verification.persona",
                 "verification.video"
             ]
+        },
+        "verification_method": {
+            "schema_version": 1,
+            "mandatory_method": "none",
+            "satisfied": false,
+            "satisfied_by": null,
+            "storefront": null,
+            "revision": 1
         },
         "audience_onboarding": {
             "schema_version": 1,

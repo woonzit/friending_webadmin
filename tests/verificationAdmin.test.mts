@@ -254,14 +254,15 @@ test("the accepted contract vocabulary and released seventeen-action bridge are 
   assert.deepEqual(VERIFICATION_LEVELS, ["none", "light", "strong"]);
   assert.deepEqual(VERIFICATION_BADGE_SLOTS, ["light", "strong", "pending"]);
   assert.deepEqual(VERIFICATION_LOCALES, ["en", "hu"]);
+  // T-617 folded the D-053 "Forced & waiting room" tab into the Scopes table.
   assert.deepEqual(VERIFICATION_TAB_KEYS, [
     "scopes",
     "requirements",
     "messages",
     "badges",
     "simulator",
-    "forced",
   ]);
+  assert.equal((VERIFICATION_TAB_KEYS as readonly string[]).includes("forced"), false);
   assert.deepEqual(VERIFICATION_POLICY_OPERATIONS, ["publish", "deactivate", "tombstone", "restore"]);
   assert.deepEqual(VERIFICATION_GATE_VARIANTS, ["video", "persona", "both", "pending", "rejected"]);
   assert.deepEqual(VERIFICATION_FEATURE_KEYS, [
@@ -285,13 +286,16 @@ test("the accepted contract vocabulary and released seventeen-action bridge are 
   assert.deepEqual([...VERIFICATION_CAPABILITIES], [...VERIFICATION_CAPABILITIES].sort());
   assert.deepEqual(
     ADMIN_ACTIONS.filter(
-      (action) => action.startsWith("verification_") && !action.startsWith("verification_forced_"),
+      (action) => action.startsWith("verification_") && !action.startsWith("verification_method_"),
     ),
     VERIFICATION_ADMIN_ACTIONS,
   );
+  // T-617 contract §6.1: the forced action family is gone from the bridge and
+  // the unified method family is its own closed, separately gated set.
+  assert.deepEqual(ADMIN_ACTIONS.filter((action) => action.startsWith("verification_forced_")), []);
   assert.deepEqual(
-    ADMIN_ACTIONS.filter((action) => action.startsWith("verification_forced_")),
-    ["verification_forced_console", "verification_forced_save", "verification_forced_impact_preview"],
+    ADMIN_ACTIONS.filter((action) => action.startsWith("verification_method_")),
+    ["verification_method_apply", "verification_method_console", "verification_method_impact", "verification_method_save"],
   );
   const viewerReads = new Set([
     "verification_console",
@@ -938,7 +942,11 @@ test("route, navigation, page, console and user panel preserve every security an
   assert.doesNotMatch(consoleSource, /setPendingLongCopy\(event\.target\.checked\)/);
   assert.match(consoleSource, /live\.longCopyV1Unavailable/);
   assert.match(consoleSource, /copyEditorLocale/);
-  assert.match(consoleSource, /policy_enable_allowed/);
+  // T-617 §7.1: the location-scope method select is gone, so the console no
+  // longer reads method availability at all — the ONE method editor does.
+  assert.doesNotMatch(consoleSource, /policy_enable_allowed|enabled_methods:\s*methodsFromChoice/);
+  assert.match(consoleSource, /<VerificationMethodScopesTable access=\{methodAccess\} locked=\{locked\} \/>/);
+  assert.doesNotMatch(consoleSource, /ForcedVerificationTab|verification_forced_/);
   assert.match(consoleSource, /completePolicyPage/);
   assert.match(consoleSource, /parsed\?\.search_token === token/);
   assert.match(consoleSource, /parsed\?\.city\.place_id === place/);
@@ -995,19 +1003,29 @@ test("English and Hungarian UI and eleven Help topics stay key-identical and cov
 
   const help = `${JSON.stringify(en.adminHelp.pages.verification)}\n${JSON.stringify(hu.adminHelp.pages.verification)}`;
   for (const evidence of [
-    "registration or IP country",
+    // T-617 §8.4 replaced `scopePrecedence` with the two-plane sentence, so the
+    // location chain is now stated as city→country→global and the mandatory
+    // method is named as its own separate storefront resolution.
+    "storefront override→global",
+    "storefront-felülírás→globális",
+    "Mandatory verification and Waiting Room",
+    "Kötelező hitelesítés és Váróterem",
+    "serviceable",
+    "kiszolgálható",
     "draft",
     "fingerprint",
     "30 minutes",
     "2 MiB",
     "pink seal",
-    "max(derived",
+    // D-092b retired the tier arithmetic: completion is method-agnostic, so
+    // `max(derived, imported, granted)` is no longer what the grant panel does.
+    "satisfies the room unconditionally",
+    "feltétel nélkül teljesíti",
     "request id",
     "provider keys",
     "all-None",
     "parent-derived effective-before",
     "not available in v1",
-    "regisztrációs vagy IP-országát",
     "fingerprinthez",
     "30 perc",
     "rózsaszín pecsét",
@@ -1015,8 +1033,9 @@ test("English and Hungarian UI and eleven Help topics stay key-identical and cov
   assert.doesNotMatch(help, /all eleven|mind a tizenegy|dormant|nyugalmi|local calculation|helyi számítás/i);
 });
 
-test("the forced tab is a permanent console tab (T-471, D-053)", () => {
-  assert.deepEqual(VERIFICATION_TAB_KEYS, ["scopes", "requirements", "messages", "badges", "simulator", "forced"]);
-  assert.equal(verificationTabKey("forced"), "forced");
+test("the forced tab is folded into Scopes and its deep link normalizes there (T-617, D-092a)", () => {
+  assert.deepEqual(VERIFICATION_TAB_KEYS, ["scopes", "requirements", "messages", "badges", "simulator"]);
+  assert.equal(verificationTabKey("forced"), "scopes", "?tab=forced normalizes to the table that absorbed it");
   assert.equal(verificationTabKey("nonsense"), "scopes", "an unknown tab still falls back to Scopes");
+  for (const tab of VERIFICATION_TAB_KEYS) assert.equal(verificationTabKey(tab), tab);
 });

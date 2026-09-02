@@ -36,6 +36,14 @@
                 "verification_user_detail"
             ]
         },
+        "verification_method": {
+            "contract_version": 1,
+            "contract_ready": true,
+            "actions": [
+                "verification_method_console",
+                "verification_method_save"
+            ]
+        },
         "verification_forced": {
             "contract_version": 1,
             "contract_ready": true,

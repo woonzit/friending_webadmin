@@ -93,12 +93,11 @@ const RAISED_BODY_LIMITS: Partial<Record<(typeof ADMIN_ACTIONS)[number], number>
   // D-052: a rule may replace the hero carousel with 100 bounded items, about
   // 750 KB at the caps, so the save shares the tag-catalogue ceiling.
   appearance_rules_save: 1_100_000,
-  // T-475 B4: the forced verification document may name all 249 storefronts in
-  // both override maps with every copy block at the contract caps; the browser
-  // JSON at those maxima is 2,167,097 bytes (derived and built below). The impact
-  // preview carries the same document.
-  verification_forced_save: 2_400_000,
-  verification_forced_impact_preview: 2_400_000,
+  // T-617: the method policy's `draft_json` may name all 249 storefronts with a
+  // scalar method AND a copy override at every contract cap; the browser JSON at
+  // those maxima is derived and built below. The impact preview and the
+  // publication carry only a revision, so they keep the default ceiling.
+  verification_method_save: 2_400_000,
 };
 
 test("the per-action body ceiling is raised only where it is named", () => {
@@ -177,20 +176,22 @@ test("the largest signup photo document fits under the default body ceiling", as
 });
 
 /**
- * T-475 B4. The forced verification save sat under the default ceiling, which refused a document
- * that is valid at every contract cap (T-471b). Derive the maximum from the caps alone, build that
- * document, prove the proxy parser admits it, and pin both sides of the ceiling: the maximum fits
- * with the documented margin, and one byte over the ceiling fails the exact predicate the bridge
- * applies (`Buffer.byteLength(raw, "utf8") > bodyLimit` → 413), whatever the content.
+ * T-475 B4, restated for T-617. The mandatory-method save sits above the default ceiling, which
+ * would refuse a document that is valid at every contract cap. Derive the maximum from the caps
+ * alone, build that document, prove the proxy parser admits it, and pin both sides of the ceiling:
+ * the maximum fits with the documented margin, and one byte over the ceiling fails the exact
+ * predicate the bridge applies (`Buffer.byteLength(raw, "utf8") > bodyLimit` -> 413).
  */
-test("the largest forced verification document fits its own ceiling and one byte over is refused", async () => {
+test("the largest method-policy document fits its own ceiling and one byte over is refused", async () => {
   const {
     FORCED_STOREFRONTS,
-    FORCED_VERIFICATION_REVISION_MAX,
     WAITING_ROOM_COPY_LIMITS,
     WAITING_ROOM_HELP_URL_MAX_BYTES,
-    normalizeForcedVerificationProxyBody,
   } = await import("../lib/forcedVerification.ts");
+  const {
+    VERIFICATION_METHOD_REVISION_MAX,
+    normalizeVerificationMethodProxyBody,
+  } = await import("../lib/verificationMethod.ts");
 
   // The contract counts text in code points; U+1D518 is one code point and four UTF-8 bytes.
   const wide = (codePoints: number) => "\u{1D518}".repeat(codePoints);
@@ -203,20 +204,27 @@ test("the largest forced verification document fits its own ceiling and one byte
     description: wide(WAITING_ROOM_COPY_LIMITS.description),
     help_url: helpUrl,
   };
-  // `false` is the longer literal.
-  const methods = { persona: false, video: false };
+  // `persona` is the longest method literal.
+  const method = "persona";
   const storefronts = FORCED_STOREFRONTS.map((storefront) => storefront.alpha3);
   assert.equal(storefronts.length, 249);
-  const document = {
-    default: methods,
-    overrides: Object.fromEntries(storefronts.map((code) => [code, methods])),
-    copy_default: { en: block, hu: block },
-    copy_overrides: Object.fromEntries(storefronts.map((code) => [code, { en: block, hu: block }])),
+  const requestId = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
+  const draft = {
+    global: method,
+    overrides: Object.fromEntries(storefronts.map((code) => [code, method])),
+    waiting_room_copy: {
+      default: { en: block, hu: block },
+      overrides: Object.fromEntries(storefronts.map((code) => [code, { en: block, hu: block }])),
+    },
   };
-  const body = { expected_revision: FORCED_VERIFICATION_REVISION_MAX, document };
-  // Valid at every cap: the proxy parsers forward it unchanged.
-  assert.deepEqual(normalizeForcedVerificationProxyBody("verification_forced_save", body), body);
-  assert.deepEqual(normalizeForcedVerificationProxyBody("verification_forced_impact_preview", { document }), { document });
+  const body = {
+    contract_version: 1,
+    draft_json: draft,
+    expected_revision: VERIFICATION_METHOD_REVISION_MAX,
+    request_id: requestId,
+  };
+  // Valid at every cap: the proxy parser forwards it unchanged.
+  assert.deepEqual(normalizeVerificationMethodProxyBody("verification_method_save", body), body);
 
   // The same figure from the caps alone. `adminClient.adminCall` sends `JSON.stringify(body)`:
   // no whitespace, non-ASCII text raw (four bytes per code point here), the URL byte for byte.
@@ -224,22 +232,24 @@ test("the largest forced verification document fits its own ceiling and one byte
   const textBytes = 4 * (WAITING_ROOM_COPY_LIMITS.title + WAITING_ROOM_COPY_LIMITS.subtitle + WAITING_ROOM_COPY_LIMITS.description);
   const blockBytes = '{"title":"","subtitle":"","description":"","help_url":""}'.length + textBytes + WAITING_ROOM_HELP_URL_MAX_BYTES;
   const localesBytes = '{"en":,"hu":}'.length + 2 * blockBytes;
-  const methodsBytes = JSON.stringify(methods).length;
+  const methodBytes = JSON.stringify(method).length;
   const mapBytes = (entryBytes: number) => "{}".length + count * ('"XXX":'.length + entryBytes) + (count - 1);
-  const documentBytes = '{"default":,"overrides":,"copy_default":,"copy_overrides":}'.length
-    + methodsBytes + mapBytes(methodsBytes) + localesBytes + mapBytes(localesBytes);
-  const derived = '{"expected_revision":,"document":}'.length + String(FORCED_VERIFICATION_REVISION_MAX).length + documentBytes;
+  const copyBytes = '{"default":,"overrides":}'.length + localesBytes + mapBytes(localesBytes);
+  const documentBytes = '{"global":,"overrides":,"waiting_room_copy":}'.length
+    + methodBytes + mapBytes(methodBytes) + copyBytes;
+  const derived = '{"contract_version":1,"draft_json":,"expected_revision":,"request_id":""}'.length
+    + documentBytes + String(VERIFICATION_METHOD_REVISION_MAX).length + requestId.length;
 
   const raw = JSON.stringify(body);
   const bytes = Buffer.byteLength(raw, "utf8");
   assert.equal(bytes, derived, "the built document is exactly the derived maximum");
-  assert.equal(bytes, 2_167_097);
 
-  const limit = adminActionBodyLimit("verification_forced_save");
+  const limit = adminActionBodyLimit("verification_method_save");
   assert.equal(limit, 2_400_000);
-  assert.equal(adminActionBodyLimit("verification_forced_impact_preview"), limit, "the preview carries the same document");
-  assert.ok(bytes > 256_000, "the default ceiling refused this valid document (the T-471b finding)");
-  assert.ok(bytes <= limit, `maximal forced body is ${bytes} bytes`);
+  assert.equal(adminActionBodyLimit("verification_method_impact"), 256_000, "the preview carries only a revision");
+  assert.equal(adminActionBodyLimit("verification_method_apply"), 256_000, "the publication carries only a revision, a fingerprint and a bounded reason");
+  assert.ok(bytes > 256_000, "the default ceiling would refuse this valid document");
+  assert.ok(bytes <= limit, `maximal method body is ${bytes} bytes`);
   assert.ok(limit - bytes >= Math.floor(bytes / 10), "about ten percent of headroom over the proven maximum");
 
   // The bridge's predicate on both sides of the ceiling: exactly at it admitted, one byte over refused.

@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
     "contract": "forced-verification-waiting-room-v1.5",
-    "source_commit": "ba639d4d28edd104222fadc8d9da44500bbbe280",
-    "fixture_set_sha256": "59e521560ecdd90a6efd836a9ebe055aee4dc731b2b4ddb4ee3d058552792c0e",
+    "source_commit": "2b97662d83346de3722fdcbf6f3903bb2ff4a367",
+    "fixture_set_sha256": "885c464a5748d534df784590ff69486bcf2619186c873f784951580244e443f1",
     "provenance": {
         "generator": "tests/forced_verification_fixture_dump.php",
-        "generator_sha256": "c3961b1731aee55f3f7dcb94d87da24839f2033fa9a8a669520a6ef1a586e055",
+        "generator_sha256": "9359842f8a4ae09f5cc3b72ee02132507f341e52c371ad6675b8667973c6cfc9",
         "ios_wire_adapter": "Friending\\Core\\Response::wirePayload",
         "webadmin_wire_adapter": "Friending\\Support\\Webadmin::noStoreReply",
         "member_shaper": "Friending\\Support\\ForcedVerificationEvaluator::project",
@@ -39,6 +39,7 @@
             "src/Support/ProfileVerificationPolicy.php",
             "src/Support/StrictJson.php",
             "src/Support/VerificationAdminPolicy.php",
+            "src/Support/VerificationMethodAdminPolicy.php",
             "src/Support/VerificationPolicy.php",
             "src/Support/Webadmin.php",
             "src/Support/WebadminRolePolicy.php",
@@ -59,6 +60,7 @@
         "admin-revoked": 403,
         "admin-write-required": 403,
         "verification-forced-conflict": 409,
+        "verification-forced-read-only": 409,
         "verification-forced-invalid": 422,
         "verification-forced-default-invalid": 422,
         "verification-forced-overrides-invalid": 422,
@@ -72,9 +74,9 @@
         "unauthorized": 401
     },
     "compatibility_verification_sha256": {
-        "get-own-profile-data": "6ea71b641912153c5c0e6368dd426d7e44ef84a212395a1672139ca8d9681705",
-        "get-user-own": "6ea71b641912153c5c0e6368dd426d7e44ef84a212395a1672139ca8d9681705",
-        "get-user-profile": "6ea71b641912153c5c0e6368dd426d7e44ef84a212395a1672139ca8d9681705"
+        "get-own-profile-data": "87793955d01bc71e63f2ac0d37fcf58009b3a85b4dad719c24e65da3855d2d26",
+        "get-user-own": "87793955d01bc71e63f2ac0d37fcf58009b3a85b4dad719c24e65da3855d2d26",
+        "get-user-profile": "87793955d01bc71e63f2ac0d37fcf58009b3a85b4dad719c24e65da3855d2d26"
     },
     "route_tags": {
         "forced_gate_exempt": [
@@ -353,7 +355,7 @@
             "consumer": "ios",
             "kind": "compatibility_after",
             "http_status": 200,
-            "sha256": "9daed7e836255bcfd290868fd5b204a827c98101f0658f104a300c94ce3d732a",
+            "sha256": "864bccb00fc86648924e4061a70806f9b84cf91aed61240cea4dbfc6eed97ce4",
             "compatibility_group": "get-own-profile-data"
         },
         {
@@ -363,7 +365,7 @@
             "consumer": "ios",
             "kind": "compatibility_before",
             "http_status": 200,
-            "sha256": "7a0fa10f9345cd8b98c942022e8dbe976d05083d6c8e5f41b402ac472307c585",
+            "sha256": "e93514ab24a04440bb3a6e8fe86101eec04fd7d849aa625d7c8b84b4c07d9391",
             "compatibility_group": "get-own-profile-data"
         },
         {
@@ -373,7 +375,7 @@
             "consumer": "ios",
             "kind": "compatibility_after",
             "http_status": 200,
-            "sha256": "9daed7e836255bcfd290868fd5b204a827c98101f0658f104a300c94ce3d732a",
+            "sha256": "864bccb00fc86648924e4061a70806f9b84cf91aed61240cea4dbfc6eed97ce4",
             "compatibility_group": "get-user-own"
         },
         {
@@ -383,7 +385,7 @@
             "consumer": "ios",
             "kind": "compatibility_before",
             "http_status": 200,
-            "sha256": "7a0fa10f9345cd8b98c942022e8dbe976d05083d6c8e5f41b402ac472307c585",
+            "sha256": "e93514ab24a04440bb3a6e8fe86101eec04fd7d849aa625d7c8b84b4c07d9391",
             "compatibility_group": "get-user-own"
         },
         {
@@ -393,7 +395,7 @@
             "consumer": "ios",
             "kind": "compatibility_after",
             "http_status": 200,
-            "sha256": "f4265ff6eb2357885c12f55097b3f3d1bf727406149a229dfaf1bec6a5ead2d3",
+            "sha256": "d081c3785a4b929592f8af66c0f3f3cc95b2932a01803bbcbb8dcd1e686d5094",
             "compatibility_group": "get-user-profile"
         },
         {
@@ -403,7 +405,7 @@
             "consumer": "ios",
             "kind": "compatibility_before",
             "http_status": 200,
-            "sha256": "580e571f927385b0015d880df565a2634424d7a04295baa12e8da92c29e81f51",
+            "sha256": "506b9fdc69eddba37aafb90213e421bf87b8b65c1021d9bfef77a98e000920c1",
             "compatibility_group": "get-user-profile"
         },
         {
@@ -422,7 +424,7 @@
             "consumer": "webadmin",
             "kind": "admin_capability",
             "http_status": 200,
-            "sha256": "8208e1230d8f763a63b1bac39396747de72a366c170f91aea1fc8a9d91231953"
+            "sha256": "6a1d03551f077dc4a2d7bb8d268b08653e1a94d70add44530b70b1746bef7f18"
         },
         {
             "file": "webadmin-admin-me-viewer.json",
@@ -431,7 +433,7 @@
             "consumer": "webadmin",
             "kind": "admin_capability",
             "http_status": 200,
-            "sha256": "557b7053f90452cb958858b221badd6d632032651ee939b27332ce2da74cc0ee"
+            "sha256": "f5e3a9710733620a57753f0aa5a31d4137971e05f679184f9009cfb44df1a8cf"
         },
         {
             "file": "webadmin-console.json",
@@ -542,6 +544,15 @@
             "sha256": "9d184c99b1e72389e63f8eafc053b0c54a30f3f15b1a9fa9ede5ccf92d351351"
         },
         {
+            "file": "webadmin-refusal-verification-forced-read-only.json",
+            "route": "/v1/webadmin/verification_forced_console",
+            "case": "data-free control-plane refusal verification-forced-read-only",
+            "consumer": "webadmin",
+            "kind": "admin_refusal",
+            "http_status": 200,
+            "sha256": "8f5683d88203405ca6176a03432ae311441fa5a7b8dcd7ce1b22b47edfa5fe50"
+        },
+        {
             "file": "webadmin-refusal-verification-forced-revision-invalid.json",
             "route": "/v1/webadmin/verification_forced_save",
             "case": "data-free control-plane refusal verification-forced-revision-invalid",
@@ -571,11 +582,11 @@
         {
             "file": "webadmin-save.json",
             "route": "/v1/webadmin/verification_forced_save",
-            "case": "atomic save response with bumped revision and canonical document",
+            "case": "legacy forced writer is read only during unified-method cutover",
             "consumer": "webadmin",
-            "kind": "admin_write",
+            "kind": "admin_refusal",
             "http_status": 200,
-            "sha256": "3937e0e6d17b5397f70f07aa0516d835d048d6a2acade01bc8f85c8a27991273"
+            "sha256": "8f5683d88203405ca6176a03432ae311441fa5a7b8dcd7ce1b22b47edfa5fe50"
         }
     ]
 }

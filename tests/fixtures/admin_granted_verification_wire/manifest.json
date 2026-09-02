@@ -1,12 +1,12 @@
 {
     "schema_version": 1,
     "contract": "admin-granted-verification-v1",
-    "source_commit": "ba639d4d28edd104222fadc8d9da44500bbbe280",
-    "generator_commit": "6bf17e492877ee252599cdac6fff393fa52a298a",
+    "source_commit": "835801a49c16bd8e93fa25df2edae66a9b634077",
+    "generator_commit": "408c99f5e5bb6560ef2b0d9ad2450c8147e636a1",
     "fixture_set_sha256": "5dfd7f261c383c7dc7533824152779a38fd2902405d4c2085c10110aad8d9706",
     "provenance": {
         "generator": "tests/admin_granted_verification_fixture_dump.php",
-        "generator_sha256": "7bbb7986bdd7474af6826d12274e980c33a49dcae5bc2cbae124e8d0af22b0f1",
+        "generator_sha256": "3430c91c98649c0474f0d3580fdaf27cfa0e93a273219697e492e060b495e3e6",
         "webadmin_wire_adapter": "Friending\\Support\\Webadmin::noStoreReply",
         "ios_wire_adapter": "Friending\\Core\\Response::wirePayload",
         "resource_shaper": "Friending\\Services\\AdminGrantedVerificationService::resourceFromProjection",
