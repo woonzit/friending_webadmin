@@ -1,10 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { NextIntlClientProvider } from "next-intl";
+import UserProfileDataEditor, {
+  profileIdentityPayload,
+} from "../components/UserProfileDataEditor.tsx";
 import {
   identityOptionGroups,
   profileFieldCatalog,
   profileSectionLayout,
+  type UserProfileFields,
   userProfileFields,
 } from "../lib/profileFields.ts";
 
@@ -339,7 +346,7 @@ test("profile field parsers preserve translations, eligibility and identity revi
   assert.deepEqual(parsedHeightless.sections[1]?.items, [{ kind: "field", key: "pets" }]);
 });
 
-test("identity option parser keeps server audience constraints", () => {
+test("identity option parser accepts the served gender catalogue without orientation", () => {
   const groups = [
     {
       key: "gender",
@@ -366,11 +373,86 @@ test("identity option parser keeps server audience constraints", () => {
       }],
     },
   ];
-  const parsed = identityOptionGroups(groups);
-  assert.deepEqual(parsed?.[2]?.options[0]?.audiences, ["male", "other"]);
-  assert.equal(identityOptionGroups([]), null, "missing identity vocabulary is not three loaded-empty selectors");
-  assert.equal(identityOptionGroups(groups.slice(1)), null, "all three bounded groups are required");
+  const parsed = identityOptionGroups(groups.slice(0, 2));
+  assert.deepEqual(parsed?.map((group) => group.key), ["gender", "subgender"]);
+  assert.deepEqual(parsed?.[1]?.options[0]?.audiences, ["male"]);
+  assert.equal(identityOptionGroups(groups)?.length, 3, "a legacy orientation group stays rollout-compatible");
+  assert.equal(identityOptionGroups([]), null, "a missing gender vocabulary is not two loaded-empty selectors");
+  assert.equal(identityOptionGroups(groups.slice(1)), null, "gender and detailed gender remain required");
   assert.equal(identityOptionGroups([...groups, groups[0]]), null, "duplicates cannot stand in for a missing group");
+});
+
+test("registered-user identity editor renders and saves gender without orientation", async () => {
+  const identityGroups = identityOptionGroups([
+    {
+      key: "gender",
+      name_en: "Gender",
+      name_hu: "Nem",
+      options: [{ key: "male", name_en: "Man", name_hu: "Férfi", audiences: [], active: true }],
+    },
+    {
+      key: "subgender",
+      name_en: "Detailed gender",
+      name_hu: "Részletes nemi identitás",
+      options: [{ key: "man", name_en: "Man", name_hu: "Férfi", audiences: ["male"], active: true }],
+    },
+  ]);
+  assert.ok(identityGroups);
+  const data: UserProfileFields = {
+    schema_version: 1,
+    catalog_version: 1,
+    revision: 3,
+    language: "en",
+    segment: { key: "everyone", label: "Everyone" },
+    identity: {
+      gender: "male",
+      subgender: "man",
+      subgender_selected: true,
+      orientation: "heterosexual",
+      updated_at: 44,
+      audience_status: "active",
+      channels: ["people"],
+      question_packs: ["common"],
+    },
+    height: null,
+    sections: [],
+    fields: [],
+  };
+  const messages = JSON.parse(
+    await readFile(new URL("../messages/en.json", import.meta.url), "utf8"),
+  );
+  const markup = renderToStaticMarkup(createElement(
+    NextIntlClientProvider,
+    { locale: "en", messages, timeZone: "UTC" },
+    createElement(UserProfileDataEditor, {
+      uid: 123,
+      data,
+      identityGroups,
+      onChange: () => {},
+    }),
+  ));
+  assert.match(markup, />Gender</);
+  assert.match(markup, />Detailed gender</);
+  assert.doesNotMatch(markup, /Orientation/);
+  assert.equal(markup.match(/<select/g)?.length, 2);
+
+  assert.deepEqual(
+    profileIdentityPayload(123, 44, {
+      gender: "male",
+      subgender: "man",
+      subgenderSelected: true,
+    }, "en"),
+    {
+      uid: 123,
+      expected_updated_at: 44,
+      gender: "male",
+      subgender: "man",
+      subgender_selected: true,
+      lang: "en",
+    },
+  );
+  const source = await readFile(new URL("../components/UserProfileDataEditor.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /\borientation\b/);
 });
 
 test("registered-user editor forwards the editable height only while Core serves it", async () => {

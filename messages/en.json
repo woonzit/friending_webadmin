@@ -1659,7 +1659,7 @@
               "1": "Edit English and Hungarian titles and upload a trusted icon.",
               "2": "For non-system groups, review order, required state and availability rules."
             },
-            "guidance": "Protected system questions keep their key and policy because Core and clients depend on them. Matching orientation is separate from optional profile-orientation disclosure."
+            "guidance": "Protected system questions keep their key and policy because Core and clients depend on them. This page lists only the groups Core currently serves; an omitted retired group is not a missing required answer."
           },
           "answers": {
             "title": "Selectable answers",
@@ -1668,7 +1668,7 @@
               "1": "Rename permitted bilingual labels without changing the stable meaning.",
               "2": "Add a custom option only to a group designed for extension."
             },
-            "guidance": "A permanent key carries stored member meaning. Never reuse an old key for a different identity, gender or orientation concept."
+            "guidance": "A permanent key carries stored member meaning. Never reuse an old key for a different identity or profile concept."
           },
           "audiences": {
             "title": "Question and answer audiences",
@@ -5545,9 +5545,8 @@
   },
   "userProfileEditor": {
     "identityTitle": "Identity and user group",
-    "identityCopy": "Edit canonical identity values. Core derives the cast, channels and question packs; the group itself is never stored as a free-form admin value.",
+    "identityCopy": "Edit gender details. Core preserves hidden routing settings and derives the cast, channels and question packs; the group itself is never stored as a free-form admin value.",
     "gender": "Gender",
-    "orientation": "Orientation",
     "subgender": "Detailed gender",
     "noSubgender": "No detailed gender",
     "showSubgender": "Display detailed gender on the profile",
@@ -5555,10 +5554,10 @@
     "derivedGroup": "Derived user group",
     "channels": "Discovery channels",
     "questionPacks": "Question packs",
-    "saveIdentity": "Save identity and group",
-    "identityRequired": "Select both a gender and a compatible orientation.",
-    "identitySaveError": "Identity and user group could not be saved.",
-    "identitySaved": "Identity saved. The user group and eligible profile fields were recalculated.",
+    "saveIdentity": "Save gender and group",
+    "identityRequired": "Select a gender.",
+    "identitySaveError": "Gender and user group could not be saved.",
+    "identitySaved": "Gender saved. The user group and eligible profile fields were recalculated.",
     "fieldsTitle": "Selectable profile data",
     "fieldsCopy": "{count, plural, one {# eligible field} other {# eligible fields}} for the currently derived user group.",
     "singleHint": "Choose one answer or leave it empty.",
@@ -6522,9 +6521,7 @@
     "filterOptional": "Optional profile questions",
     "filterTargeted": "User-group specific",
     "systemAnswersTitle": "System answers are protected",
-    "systemAnswersIntro": "Gender, detailed gender, matching orientation, relationship and Looking for drive validation or discovery. Their labels can be renamed, but keys, order and availability cannot be changed.",
-    "matchingOrientationTitle": "Matching orientation is a separate required axis",
-    "matchingOrientationCopy": "This question drives cast groups, audience and discovery. The optional profile-orientation disclosure is separate and never affects matching.",
+    "systemAnswersIntro": "Only the system questions Core currently serves appear here. Their labels can be renamed, but their keys, order, required state and availability remain Core-owned.",
     "system": "System",
     "required": "Required",
     "optional": "Optional",
@@ -6581,8 +6578,6 @@
     "keyInvalid": "Enter a stable key beginning with a letter and containing only lowercase letters, numbers or underscores.",
     "namesRequired": "Enter both the English and Hungarian names.",
     "systemProtected": "This system answer is protected. Only its localized names can change.",
-    "orientationDisclosureForbidden": "That value belongs to optional profile-orientation disclosure and cannot be used for matching.",
-    "extensibleSystemIntro": "Matching orientation accepts administrator-added answers, but never optional profile-disclosure keys. The five canonical matching values stay protected.",
     "audiences": "Offered to genders",
     "audiencesHint": "The custom answer is shown only to these genders during signup and profile editing.",
     "audiencesRequired": "Select at least one gender for the custom answer.",

@@ -1,9 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { signupOptionCatalog } from "../lib/signupOptions.ts";
 
 const page = readFileSync(
   new URL("../app/(dashboard)/signup-options/page.tsx", import.meta.url),
+  "utf8",
+);
+const signupLibrary = readFileSync(
+  new URL("../lib/signupOptions.ts", import.meta.url),
   "utf8",
 );
 const bridge = readFileSync(
@@ -28,9 +33,8 @@ test("signup option actions are explicit authenticated bridge capabilities", () 
 });
 
 test("system options expose rename-only controls while optional groups stay editable", () => {
-  // user-cast-groups-v1: only the BUILT-IN rows of a system group are
-  // label-only. A custom row — an administrator addition to the extensible
-  // orientation group — owns its order, activation and audiences.
+  // Only the BUILT-IN rows of a system group are label-only. A custom row in
+  // any extensible system group owns its order, activation and audiences.
   assert.match(page, /const lockedMetadata = group\.system_owned && !draft\.is_custom/);
   assert.match(page, /disabled=\{!draft\.is_new \|\| lockedMetadata \|\| busy\}/);
   assert.match(page, /disabled=\{lockedMetadata \|\| busy\}/);
@@ -45,16 +49,64 @@ test("extensible system additions carry gender audiences to Core", () => {
   // The audiences block rides ONLY on extensible custom rows; built-in rows
   // and open detail groups never send it.
   assert.match(page, /group\?\.extensible_system && optionDraft\.is_custom \? \{ audiences_json/);
-  assert.match(page, /extensible_system: group\.extensible_system === true/);
+  assert.match(signupLibrary, /extensible_system: group\.extensible_system === true/);
 });
 
-test("matching orientation rejects profile-disclosure keys before save", () => {
-  assert.match(page, /group\.key === "orientation" && isDisclosureOnlyOrientation\(option\.key\)/);
-  assert.match(page, /optionDraft\.group_key === "orientation" && isDisclosureOnlyOrientation\(key\)/);
-  assert.match(page, /signup-option-orientation-disclosure-forbidden/);
-  assert.match(page, /orientationDisclosureForbidden/);
-  assert.match(page, /matchingOrientationTitle/);
-  assert.match(page, /matchingOrientationCopy/);
+test("a catalogue without retired groups decodes and the page renders only served groups", () => {
+  const group = (key: string, required: boolean) => ({
+    key,
+    name_en: key === "gender" ? "Gender" : "Education",
+    name_hu: key === "gender" ? "Nem" : "Végzettség",
+    system_owned: key === "gender",
+    required,
+    custom_allowed: key !== "gender",
+    extensible_system: false,
+    profile_field: key,
+    question_pack: key === "gender" ? "identity" : "common",
+    revision: 1,
+    icon: { url: "", mime: "" },
+    audience: { mode: "global", genders: [], group_ids: [], segments: [] },
+    options: [{
+      key: key === "gender" ? "male" : "college",
+      name_en: key === "gender" ? "Man" : "College",
+      name_hu: key === "gender" ? "Férfi" : "Főiskola",
+      sort_order: 10,
+      active: true,
+      is_custom: false,
+      system_owned: key === "gender",
+    }],
+  });
+  const parsed = signupOptionCatalog({
+    schema_version: 2,
+    cast_groups: [],
+    segments: [],
+    groups: [group("gender", true), group("education_level", false)],
+  });
+  assert.deepEqual(parsed?.groups.map((item) => item.key), ["gender", "education_level"]);
+  assert.equal(parsed?.groups.filter((item) => item.required).length, 1);
+  assert.match(page, /catalog\.groups\.filter\(\(group\) => group\.required\)\.length/);
+  assert.match(page, /\{groups\.map\(\(group\) =>/);
+  assert.match(page, /group\.required \? t\("required"\) : t\("optional"\)/);
+  assert.doesNotMatch(page, /["'](?:orientation|looking_for|relationship_status)["']/);
+});
+
+test("retired member-orientation copy is absent in both locales", () => {
+  const en = JSON.parse(readFileSync(new URL("../messages/en.json", import.meta.url), "utf8"));
+  const hu = JSON.parse(readFileSync(new URL("../messages/hu.json", import.meta.url), "utf8"));
+  for (const key of [
+    "matchingOrientationTitle",
+    "matchingOrientationCopy",
+    "orientationDisclosureForbidden",
+    "extensibleSystemIntro",
+  ]) {
+    assert.equal(Object.hasOwn(en.signupOptions, key), false);
+    assert.equal(Object.hasOwn(hu.signupOptions, key), false);
+  }
+  assert.equal(Object.hasOwn(en.userProfileEditor, "orientation"), false);
+  assert.equal(Object.hasOwn(hu.userProfileEditor, "orientation"), false);
+  assert.deepEqual(Object.keys(en.signupOptions).sort(), Object.keys(hu.signupOptions).sort());
+  assert.doesNotMatch(JSON.stringify(en.adminHelp.pages.signupOptions), /orientation/i);
+  assert.doesNotMatch(JSON.stringify(hu.adminHelp.pages.signupOptions), /orient/i);
 });
 
 test("signup groups expose localized presentation and audience settings", () => {

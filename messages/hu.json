@@ -1659,7 +1659,7 @@
               "1": "Szerkeszd az angol és magyar címet, és tölts fel megbízható ikont.",
               "2": "Nem rendszercsoportnál nézd át a sorrendet, kötelezőséget és elérhetőségi szabályokat."
             },
-            "guidance": "A védett rendszerkérdések megtartják kulcsukat és policyjüket, mert a Core és kliensek függnek tőlük. A matching orientation különbözik az opcionális profilorientáció-közléstől."
+            "guidance": "A védett rendszerkérdések megtartják kulcsukat és policyjüket, mert a Core és a kliensek függnek tőlük. Ezen az oldalon csak a Core által kiszolgált csoportok jelennek meg; egy kihagyott, kivezetett csoport nem hiányzó kötelező válasz."
           },
           "answers": {
             "title": "Választható válaszok",
@@ -1668,7 +1668,7 @@
               "1": "Az engedélyezett kétnyelvű címkéket a stabil jelentés megváltoztatása nélkül nevezd át.",
               "2": "Egyedi opciót csak bővítésre tervezett csoporthoz adj."
             },
-            "guidance": "A permanens kulcs tárolt tagi jelentést hordoz. Régi kulcsot soha ne használj új azonosság-, gender- vagy orientation-fogalomhoz."
+            "guidance": "A permanens kulcs tárolt tagi jelentést hordoz. Régi kulcsot soha ne használj új identitás- vagy profilfogalomhoz."
           },
           "audiences": {
             "title": "Kérdés- és válaszaudience",
@@ -5545,9 +5545,8 @@
   },
   "userProfileEditor": {
     "identityTitle": "Identitás és felhasználói csoport",
-    "identityCopy": "A kanonikus identitásadatokat szerkeszted. A castot, csatornákat és kérdéscsomagokat a Core származtatja; a csoport nem szabadon átírható adminérték.",
+    "identityCopy": "A nem részleteit szerkeszted. A Core megőrzi a rejtett routingbeállításokat, és származtatja a castot, csatornákat és kérdéscsomagokat; a csoport nem szabadon átírható adminérték.",
     "gender": "Nem",
-    "orientation": "Orientáció",
     "subgender": "Részletes nemi identitás",
     "noSubgender": "Nincs részletes identitás",
     "showSubgender": "A részletes identitás jelenjen meg a profilon",
@@ -5555,10 +5554,10 @@
     "derivedGroup": "Származtatott felhasználói csoport",
     "channels": "Felfedezési csatornák",
     "questionPacks": "Kérdéscsomagok",
-    "saveIdentity": "Identitás és csoport mentése",
-    "identityRequired": "Válassz nemet és azzal kompatibilis orientációt.",
-    "identitySaveError": "Az identitás és a felhasználói csoport mentése nem sikerült.",
-    "identitySaved": "Az identitás mentve. A felhasználói csoport és az elérhető profilmezők újraszámítva.",
+    "saveIdentity": "Nem és csoport mentése",
+    "identityRequired": "Válassz nemet.",
+    "identitySaveError": "A nem és a felhasználói csoport mentése nem sikerült.",
+    "identitySaved": "A nem mentve. A felhasználói csoport és az elérhető profilmezők újraszámítva.",
     "fieldsTitle": "Választható profiladatok",
     "fieldsCopy": "A jelenlegi felhasználói csoporthoz {count} mező érhető el.",
     "singleHint": "Egy válasz jelölhető, vagy üresen hagyható.",
@@ -6522,9 +6521,7 @@
     "filterOptional": "Opcionális profilkérdések",
     "filterTargeted": "Usercsoport-specifikus",
     "systemAnswersTitle": "A system válaszok védettek",
-    "systemAnswersIntro": "A nem, részletes nem, matching orientáció, kapcsolati státusz és Mit keres válaszok validációt vagy discovery routingot vezérelnek. A nevük átírható, de a kulcsuk, sorrendjük és elérhetőségük nem.",
-    "matchingOrientationTitle": "A matching orientáció külön, kötelező tengely",
-    "matchingOrientationCopy": "Ez a kérdés vezérli a cast csoportokat, az audience-t és a discoveryt. Az opcionális profilorientációs önmeghatározás külön mező, és soha nem befolyásolja a párosítást.",
+    "systemAnswersIntro": "Csak a Core által jelenleg kiszolgált system kérdések jelennek meg itt. A nevük átírható, de a kulcsuk, sorrendjük, kötelező állapotuk és elérhetőségük a Core hatáskörében marad.",
     "system": "System",
     "required": "Kötelező",
     "optional": "Opcionális",
@@ -6581,8 +6578,6 @@
     "keyInvalid": "Adj meg betűvel kezdődő stabil kulcsot, amely csak kisbetűt, számot vagy aláhúzást tartalmaz.",
     "namesRequired": "Add meg az angol és a magyar nevet is.",
     "systemProtected": "Ez a system válasz védett. Csak a kétnyelvű neve módosítható.",
-    "orientationDisclosureForbidden": "Ez az érték az opcionális profilorientációs önmeghatározáshoz tartozik, ezért párosításhoz nem használható.",
-    "extensibleSystemIntro": "A matching orientáció admin által hozzáadott válaszokat is fogad, de opcionális disclosure-kulcsokat soha. Az öt kanonikus matching érték védett marad.",
     "audiences": "Mely nemeknek jelenik meg",
     "audiencesHint": "Az egyedi válasz csak ezeknek a nemeknek jelenik meg a regisztráció és a profil szerkesztése során.",
     "audiencesRequired": "Válassz legalább egy nemet az egyedi válaszhoz.",

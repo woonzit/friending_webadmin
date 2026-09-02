@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import React, { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
 import {
@@ -14,8 +14,23 @@ type IdentityDraft = {
   gender: string;
   subgender: string;
   subgenderSelected: boolean;
-  orientation: string;
 };
+
+export function profileIdentityPayload(
+  uid: number,
+  updatedAt: number,
+  identity: IdentityDraft,
+  lang: string,
+) {
+  return {
+    uid,
+    expected_updated_at: updatedAt,
+    gender: identity.gender,
+    subgender: identity.subgender,
+    subgender_selected: identity.subgenderSelected,
+    lang,
+  };
+}
 
 function localized(labels: Record<string, string>, locale: string): string {
   return labels[locale] || labels[locale.split("-")[0]] || labels.en || labels.hu || "";
@@ -58,7 +73,6 @@ function identityState(data: UserProfileFields): IdentityDraft {
     gender: data.identity.gender,
     subgender: data.identity.subgender,
     subgenderSelected: data.identity.subgender_selected,
-    orientation: data.identity.orientation,
   };
 }
 
@@ -98,9 +112,6 @@ export default function UserProfileDataEditor({
   const subgenderOptions = (groups.subgender?.options ?? []).filter(
     (option) => option.active && option.audiences.includes(identity.gender),
   );
-  const orientationOptions = (groups.orientation?.options ?? []).filter(
-    (option) => option.active && option.audiences.includes(identity.gender),
-  );
   const fieldsByKey = useMemo(
     () => new Map(data.fields.map((field) => [field.key, field])),
     [data.fields],
@@ -127,14 +138,10 @@ export default function UserProfileDataEditor({
     const validSubgender = (groups.subgender?.options ?? []).some(
       (option) => option.key === identity.subgender && option.audiences.includes(nextGender),
     );
-    const validOrientation = (groups.orientation?.options ?? []).some(
-      (option) => option.key === identity.orientation && option.audiences.includes(nextGender),
-    );
     setIdentity({
       gender: nextGender,
       subgender: validSubgender ? identity.subgender : "",
       subgenderSelected: validSubgender && identity.subgenderSelected,
-      orientation: validOrientation ? identity.orientation : "",
     });
   }
 
@@ -185,21 +192,16 @@ export default function UserProfileDataEditor({
   }
 
   async function saveIdentity() {
-    if (!identity.gender || !identity.orientation) {
+    if (!identity.gender) {
       setIdentityNotice({ kind: "error", text: t("identityRequired") });
       return;
     }
     setIdentityBusy(true);
     setIdentityNotice(null);
-    const response = await adminCall("save_user_profile_identity", {
-      uid,
-      expected_updated_at: data.identity.updated_at,
-      gender: identity.gender,
-      subgender: identity.subgender,
-      subgender_selected: identity.subgenderSelected,
-      orientation: identity.orientation,
-      lang: locale,
-    });
+    const response = await adminCall(
+      "save_user_profile_identity",
+      profileIdentityPayload(uid, data.identity.updated_at, identity, locale),
+    );
     setIdentityBusy(false);
     const parsed = userProfileFields(response?.data);
     if (!response?.success || !parsed) {
@@ -319,13 +321,6 @@ export default function UserProfileDataEditor({
             <select value={identity.gender} disabled={identityBusy} onChange={(event) => updateIdentity(event.target.value)}>
               <option value="">{t("select")}</option>
               {genderOptions.map((option) => <option value={option.key} key={option.key}>{localized(option.labels, locale)}</option>)}
-            </select>
-          </label>
-          <label className="field">
-            <span>{t("orientation")}</span>
-            <select value={identity.orientation} disabled={identityBusy || !identity.gender} onChange={(event) => setIdentity({ ...identity, orientation: event.target.value })}>
-              <option value="">{t("select")}</option>
-              {orientationOptions.map((option) => <option value={option.key} key={option.key}>{localized(option.labels, locale)}</option>)}
             </select>
           </label>
           <label className="field">

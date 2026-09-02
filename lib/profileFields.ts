@@ -593,9 +593,12 @@ export function identityOptionGroups(value: unknown): IdentityOptionGroup[] | nu
     });
   }
   const keys = result.map((group) => group.key);
-  return result.length === 3
-    && new Set(keys).size === 3
-    && ["gender", "subgender", "orientation"].every((key) => keys.includes(key as IdentityOptionGroup["key"]))
+  // Core omits retired identity groups from the admin catalogue. Gender and
+  // detailed gender remain required for this editor; a legacy orientation
+  // group may coexist during a rolling deployment but is ignored by the UI.
+  return (result.length === 2 || result.length === 3)
+    && new Set(keys).size === result.length
+    && ["gender", "subgender"].every((key) => keys.includes(key as IdentityOptionGroup["key"]))
     ? result
     : null;
 }
