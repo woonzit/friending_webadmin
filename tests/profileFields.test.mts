@@ -21,7 +21,7 @@ test("profile-field admin actions remain explicit authenticated capabilities", a
   ]) assert.match(source, new RegExp(`"${action}"`));
 });
 
-test("profile section layout parser enforces the three presentation groups and fixed height placement", () => {
+test("profile section layout parser enforces the three presentation groups and tolerates a layout with or without the height builtin", () => {
   const source = {
     schema_version: 1,
     key: "profile_sections_v1",
@@ -60,7 +60,20 @@ test("profile section layout parser enforces the three presentation groups and f
   assert.equal(profileSectionLayout(source)?.sections[1]?.items[0]?.key, "height_cm");
   const invalid = structuredClone(source);
   invalid.sections[0].items.push(invalid.sections[1].items.shift()!);
-  assert.equal(profileSectionLayout(invalid), null);
+  assert.equal(profileSectionLayout(invalid), null, "a height builtin outside more_about_you still fails");
+
+  // T-632: Core no longer serves the height builtin. A layout without it (in
+  // the sections and in builtin_items) decodes; nothing else is relaxed.
+  const heightless = structuredClone(source);
+  heightless.sections[1].items = heightless.sections[1].items.filter((item) => item.key !== "height_cm");
+  heightless.builtin_items = heightless.builtin_items.filter((item) => item.key !== "height_cm");
+  const parsedHeightless = profileSectionLayout(heightless);
+  assert.deepEqual(parsedHeightless?.sections[1]?.items, [{ kind: "field", key: "pets" }]);
+  assert.deepEqual(parsedHeightless?.builtin_items.map((item) => item.key), ["display_name"]);
+  assert.equal(parsedHeightless?.revision, 4);
+  const heightlessMissingSection = structuredClone(heightless);
+  heightlessMissingSection.sections.pop();
+  assert.equal(profileSectionLayout(heightlessMissingSection), null, "three sections are still required");
 
   // Hidden state survives, while the retired Layer 2 gate is ignored rather
   // than entering the draft and being round-tripped on the next save.
@@ -72,10 +85,14 @@ test("profile section layout parser enforces the three presentation groups and f
   assert.equal(Object.hasOwn(parsedLegacy?.sections[2] ?? {}, "gate"), false);
   assert.equal(parsedLegacy?.sections[0]?.hidden, false);
 
-  // more_about_you cannot hide while shipped clients pin height there.
+  // more_about_you cannot hide: Core refuses the save (profile-section-not-hideable),
+  // with or without a height builtin in the layout.
   const hiddenHeight = structuredClone(source) as Record<string, any>;
   hiddenHeight.sections[1].hidden = true;
   assert.equal(profileSectionLayout(hiddenHeight), null);
+  const hiddenHeightless = structuredClone(heightless) as Record<string, any>;
+  hiddenHeightless.sections[1].hidden = true;
+  assert.equal(profileSectionLayout(hiddenHeightless), null);
 });
 
 test("layout editor exposes the hide switch and no retired Layer 2 gate surface", async () => {
@@ -274,6 +291,52 @@ test("profile field parsers preserve translations, eligibility and identity revi
     fields: [field],
   });
   assert.equal(userProfileFields(invalidHeight), null);
+  const missingConstraints = structuredClone(invalidHeight) as Record<string, any>;
+  missingConstraints.layout.sections[0].items[0].value = 181;
+  delete missingConstraints.layout.sections[0].items[0].constraints;
+  assert.equal(userProfileFields(missingConstraints), null, "a served height builtin still needs its constraints");
+
+  // T-632: Core no longer serves the height builtin. The member editor payload
+  // decodes with height null and the remaining builtins are read-only facts.
+  const heightless = structuredClone(invalidHeight) as Record<string, any>;
+  heightless.layout.sections = [
+    {
+      key: "main_data",
+      title: "Fő adatok",
+      subtitle: "Rólam",
+      items: [{
+        kind: "builtin",
+        key: "display_name",
+        label: "Megjelenített név",
+        icon_key: "display_name",
+        value_type: "text",
+        editable: false,
+        value: "Példa",
+        display_value: "Példa",
+      }],
+    },
+    {
+      key: "more_about_you",
+      title: "Többet rólad",
+      subtitle: "Személyiség és életmód",
+      items: [{ kind: "field", key: "pets" }],
+    },
+  ];
+  const parsedHeightless = userProfileFields(heightless);
+  assert.ok(parsedHeightless, "a payload without the height builtin decodes");
+  assert.equal(parsedHeightless.height, null);
+  assert.equal(parsedHeightless.sections.length, 2);
+  assert.deepEqual(parsedHeightless.sections[0]?.items[0], {
+    kind: "builtin",
+    key: "display_name",
+    label: "Megjelenített név",
+    icon_key: "display_name",
+    value_type: "text",
+    editable: false,
+    value: "Példa",
+    display_value: "Példa",
+  });
+  assert.deepEqual(parsedHeightless.sections[1]?.items, [{ kind: "field", key: "pets" }]);
 });
 
 test("identity option parser keeps server audience constraints", () => {
@@ -310,12 +373,16 @@ test("identity option parser keeps server audience constraints", () => {
   assert.equal(identityOptionGroups([...groups, groups[0]]), null, "duplicates cannot stand in for a missing group");
 });
 
-test("registered-user editor forwards the editable height with the answer revision", async () => {
+test("registered-user editor forwards the editable height only while Core serves it", async () => {
   const source = await readFile(new URL("../components/UserProfileDataEditor.tsx", import.meta.url), "utf8");
   assert.match(source, /builtin_values_json/);
-  assert.match(source, /height_cm: heightCm/);
-  assert.match(source, /data\.height\.minimum/);
-  assert.match(source, /data\.height\.maximum/);
+  // With a served height builtin the value is posted under height_cm; without
+  // one (T-632) the body is `{}` rather than a stray key Core will refuse.
+  assert.match(source, /data\.height \? \{ height_cm: heightCm \} : \{\}/);
+  assert.match(source, /renderHeightEditor\(data\.height\)/);
+  assert.match(source, /height\.minimum/);
+  assert.match(source, /height\.maximum/);
+  assert.doesNotMatch(source, /data\.height\.(value|minimum|maximum|step|unit)/);
 });
 
 test("registered-user editor renders the server section layout instead of one flat list", async () => {

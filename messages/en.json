@@ -6688,7 +6688,7 @@
     "layoutSaved": "Profile section layout saved.",
     "layoutValidationError": "Every section requires an English and Hungarian title.",
     "layoutHide": "Hide this section from members",
-    "layoutHideLocked": "cannot hide: shipped clients require height here",
+    "layoutHideLocked": "cannot hide: Core refuses to hide this section",
     "layoutHideError": "This section cannot be hidden.",
     "layoutConflict": "The section layout changed in another session. Reload it before saving.",
     "layoutSaveError": "The profile section layout could not be saved.",

@@ -6688,7 +6688,7 @@
     "layoutSaved": "A profilszekciók elrendezése mentve.",
     "layoutValidationError": "Minden szekcióhoz angol és magyar cím szükséges.",
     "layoutHide": "Szekció elrejtése a tagok elől",
-    "layoutHideLocked": "nem rejthető: a kiadott kliensek itt várják a magasságot",
+    "layoutHideLocked": "nem rejthető: a Core nem engedi elrejteni ezt a szekciót",
     "layoutHideError": "Ez a szekció nem rejthető el.",
     "layoutConflict": "Az elrendezést egy másik munkamenetben módosították. Mentés előtt töltsd újra.",
     "layoutSaveError": "A profilszekciók elrendezését nem sikerült menteni.",

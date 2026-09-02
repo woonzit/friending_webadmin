@@ -131,13 +131,18 @@ export type UserProfileFields = {
     channels: string[];
     question_packs: string[];
   };
+  /**
+   * Present only while Core still serves the editable `height_cm` builtin in
+   * `more_about_you`; null once T-632 retires it (the editor then posts no
+   * builtin value at all).
+   */
   height: {
     value: number | null;
     minimum: number;
     maximum: number;
     step: number;
     unit: string;
-  };
+  } | null;
   sections: UserProfileSection[];
   fields: ProfileField[];
 };
@@ -355,8 +360,8 @@ export function profileSectionLayout(value: unknown): ProfileSectionLayout | nul
       || section.items.length > 150
     ) return null;
     const hidden = section.hidden === undefined ? false : section.hidden;
-    // more_about_you cannot hide while shipped clients pin height_cm there;
-    // Core refuses such a save, so a payload carrying it is malformed.
+    // more_about_you cannot hide: Core refuses such a save with
+    // profile-section-not-hideable, so a payload carrying it is malformed.
     if (typeof hidden !== "boolean" || (hidden && section.key === "more_about_you")) return null;
     const sectionItems: ProfileSectionItem[] = [];
     for (const rawItem of section.items) {
@@ -402,11 +407,13 @@ export function profileSectionLayout(value: unknown): ProfileSectionLayout | nul
       editable: row.editable,
     });
   }
-  if (!seenItems.has("builtin:height_cm")) return null;
+  // The height builtin is optional: T-632 retires it from Core, so a layout
+  // with or without it decodes. While a layout still carries it, it may sit
+  // only in more_about_you.
   const heightSection = sections.find((section) => section.items.some(
     (item) => item.kind === "builtin" && item.key === "height_cm",
   ));
-  if (heightSection?.key !== "more_about_you") return null;
+  if (heightSection && heightSection.key !== "more_about_you") return null;
   return {
     schema_version: 1,
     key: "profile_sections_v1",
@@ -521,7 +528,9 @@ export function userProfileFields(value: unknown): UserProfileFields | null {
       items: sectionItems,
     });
   }
-  if (!height || height.minimum < 0 || height.maximum <= height.minimum || height.step <= 0) {
+  // A height builtin is optional (T-632); when one is served, its constraints
+  // are validated exactly as before.
+  if (height && (height.minimum < 0 || height.maximum <= height.minimum || height.step <= 0)) {
     return null;
   }
   const fields = source.fields.map(field);

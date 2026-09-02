@@ -77,7 +77,7 @@ export default function UserProfileDataEditor({
   const common = useTranslations("common");
   const locale = useLocale();
   const [answers, setAnswers] = useState<Record<string, string[]>>(() => answerState(data));
-  const [heightCm, setHeightCm] = useState<number | null>(data.height.value);
+  const [heightCm, setHeightCm] = useState<number | null>(data.height?.value ?? null);
   const [identity, setIdentity] = useState<IdentityDraft>(() => identityState(data));
   const [fieldBusy, setFieldBusy] = useState(false);
   const [identityBusy, setIdentityBusy] = useState(false);
@@ -86,7 +86,7 @@ export default function UserProfileDataEditor({
 
   useEffect(() => {
     setAnswers(answerState(data));
-    setHeightCm(data.height.value);
+    setHeightCm(data.height?.value ?? null);
     setIdentity(identityState(data));
   }, [data]);
 
@@ -165,7 +165,10 @@ export default function UserProfileDataEditor({
       schema_version: data.schema_version,
       expected_revision: data.revision,
       answers_json: JSON.stringify(payload),
-      builtin_values_json: JSON.stringify({ height_cm: heightCm }),
+      // Only an editable height builtin has a value to post; once Core stops
+      // serving it (T-632) the body is `{}`, which Core accepts as "no builtin
+      // change" (T-634 refuses a stray `height_cm` key).
+      builtin_values_json: JSON.stringify(data.height ? { height_cm: heightCm } : {}),
       lang: locale,
     });
     setFieldBusy(false);
@@ -210,16 +213,16 @@ export default function UserProfileDataEditor({
     setIdentityNotice({ kind: "success", text: t("identitySaved") });
   }
 
-  function renderHeightEditor() {
+  function renderHeightEditor(height: NonNullable<UserProfileFields["height"]>) {
     return (
       <fieldset className="user-attribute-field user-admin-height" key="builtin-height_cm">
-        <legend><span className="user-attribute-icon"><b>↕</b></span><span><strong>{t("height")}</strong><small>{heightCm === null ? t("notProvided") : t("heightValue", { value: heightCm, unit: data.height.unit })}</small><code>height_cm</code></span></legend>
+        <legend><span className="user-attribute-icon"><b>↕</b></span><span><strong>{t("height")}</strong><small>{heightCm === null ? t("notProvided") : t("heightValue", { value: heightCm, unit: height.unit })}</small><code>height_cm</code></span></legend>
         {heightCm === null ? (
-          <button className="button button-secondary button-small" type="button" disabled={fieldBusy} onClick={() => setHeightCm(Math.max(data.height.minimum, Math.min(data.height.maximum, 175)))}>{t("heightAdd")}</button>
+          <button className="button button-secondary button-small" type="button" disabled={fieldBusy} onClick={() => setHeightCm(Math.max(height.minimum, Math.min(height.maximum, 175)))}>{t("heightAdd")}</button>
         ) : (
           <div className="user-admin-height-control">
-            <input type="range" min={data.height.minimum} max={data.height.maximum} step={data.height.step} value={heightCm} disabled={fieldBusy} aria-label={t("height")} onChange={(event) => setHeightCm(Number(event.target.value))} />
-            <output>{heightCm} {data.height.unit}</output>
+            <input type="range" min={height.minimum} max={height.maximum} step={height.step} value={heightCm} disabled={fieldBusy} aria-label={t("height")} onChange={(event) => setHeightCm(Number(event.target.value))} />
+            <output>{heightCm} {height.unit}</output>
             <button className="text-button" type="button" disabled={fieldBusy} onClick={() => setHeightCm(null)}>{t("heightClear")}</button>
           </div>
         )}
@@ -276,7 +279,9 @@ export default function UserProfileDataEditor({
     const rows: ReactNode[] = [];
     for (const item of section.items) {
       if (item.kind === "builtin") {
-        rows.push(item.key === "height_cm" ? renderHeightEditor() : renderBuiltinFact(item));
+        // The height editor exists only while Core serves the editable height
+        // builtin with its constraints; any other builtin is a read-only fact.
+        rows.push(item.key === "height_cm" && data.height ? renderHeightEditor(data.height) : renderBuiltinFact(item));
         continue;
       }
       const field = fieldsByKey.get(item.key);
