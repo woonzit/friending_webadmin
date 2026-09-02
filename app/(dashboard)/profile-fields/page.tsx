@@ -651,7 +651,7 @@ export default function ProfileFieldsPage() {
       <section className="panel"><div className="panel-body profile-fields-toolbar"><label className="field"><span>{t("search")}</span><input type="search" value={query} placeholder={t("searchPlaceholder")} onChange={(event) => setQuery(event.target.value)} /></label><div><p>{t("toolbarCopy")}</p><button className="button button-primary" type="button" onClick={() => { setError(""); setFieldEditor(fieldDraft(undefined, Math.max(0, ...catalog.fields.map((field) => field.sort_order)) + 10, catalog.cast_groups)); }}>{t("addField")}</button></div></div></section>
       <div className="profile-field-list">
         {fields.map((field) => (
-          <section className={`panel profile-field-card${field.active ? "" : " is-inactive"}`} key={field.key}>
+          <section id={field.key} className={`panel profile-field-card${field.active ? "" : " is-inactive"}`} key={field.key}>
             <div className="panel-header profile-field-card-header">
               <div className="profile-field-heading">
                 <span className="profile-field-card-icon">{/* eslint-disable-next-line @next/next/no-img-element */}{field.icon.url ? <img src={field.icon.url} alt="" /> : <b>{localeText(field.labels, locale).slice(0, 1)}</b>}</span>

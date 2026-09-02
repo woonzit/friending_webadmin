@@ -1635,58 +1635,58 @@
         }
       },
       "signupOptions": {
-        "title": "Signup options help",
-        "summary": "This workspace defines the questions and selectable answers used while a person creates a Friending profile. It distinguishes protected identity axes from optional questions and controls bilingual labels, icons and who is eligible to see each choice.",
+        "title": "Signup page composer help",
+        "summary": "This workspace composes the optional bilingual pages shown after the fixed System questions during signup. It controls page order, question placement and required state while leaving every question definition and selectable answer under Profile fields.",
         "steps": {
-          "1": "Find the question and first decide whether it is a protected system axis or an editable optional group.",
-          "2": "Review question presentation, answer choices and audience rules together before changing any one of them.",
-          "3": "Save or archive the narrowest item and verify that existing member answers remain understandable."
+          "1": "Review the locked System questions first so the optional pages do not duplicate identity or profile-visibility steps.",
+          "2": "Create and order the pages, complete both titles, then place each eligible catalogue question on exactly one page.",
+          "3": "Review required toggles and answer previews, save the complete draft once, and confirm the new layout revision."
         },
         "sections": {
-          "workspace": {
-            "title": "Compact signup workspace",
-            "purpose": "Search and expandable question cards keep the complete signup catalog manageable without loading every answer editor at once.",
+          "systemQuestions": {
+            "title": "Locked System questions",
+            "purpose": "Gender and Who can see my profile appear before every composed page in a fixed Core-owned order and remain read-only here.",
             "actions": {
-              "1": "Search by key or bilingual label and expand only the question you need.",
-              "2": "Use the overview warnings to distinguish protected system behavior from editable presentation."
+              "1": "Check both locked cards and their answer previews before composing optional pages.",
+              "2": "Treat a missing or unexpected System card as a load error rather than an empty configuration."
             },
-            "guidance": "Signup choices can influence discovery and audiences. Do not treat the catalog as cosmetic copy only."
+            "guidance": "Relationship status and detailed gender do not belong in this block. Their presence signals a contract mismatch that must be corrected in Core."
           },
-          "questions": {
-            "title": "Question presentation and policy",
-            "purpose": "Each question has stable identity, bilingual name, optional managed icon, required state, order and—where permitted—an audience.",
+          "pageLayout": {
+            "title": "Page layout and copy",
+            "purpose": "Each page owns an English and Hungarian title and subtitle, a hidden staging state, and one ordered list of placed questions.",
             "actions": {
-              "1": "Edit English and Hungarian titles and upload a trusted icon.",
-              "2": "For non-system groups, review order, required state and availability rules."
+              "1": "Use drag controls or the accessible arrow buttons to reorder pages and questions.",
+              "2": "Complete both required titles, keep one to eight questions, and hide a page only for deliberate staging."
             },
-            "guidance": "Protected system questions keep their key and policy because Core and clients depend on them. This page lists only the groups Core currently serves; an omitted retired group is not a missing required answer, and a question Core still marks required that the current signup flow does not ask is labelled as not asked at signup."
+            "guidance": "A hidden page remains part of the saved document but is not served to signup. Deleting a page returns its questions to the palette in the local draft."
           },
-          "answers": {
-            "title": "Selectable answers",
-            "purpose": "Answer rows provide the choices members can select under a question; system choices normally permit display-name edits while custom extensible groups permit new stable options.",
+          "questionPalette": {
+            "title": "Eligible question palette",
+            "purpose": "The palette contains active select-type profile fields that Core allows on signup pages and excludes every field already placed.",
             "actions": {
-              "1": "Rename permitted bilingual labels without changing the stable meaning.",
-              "2": "Add a custom option only to a group designed for extension."
+              "1": "Drag an unused question onto a page or choose the page-specific Add here button.",
+              "2": "Move or return a placed question instead of trying to create a duplicate placement."
             },
-            "guidance": "A permanent key carries stored member meaning. Never reuse an old key for a different identity or profile concept."
+            "guidance": "A question may appear on only one page. If Core reports that a placed field disappeared, review the dropped-items notice before saving the healed layout."
           },
-          "audiences": {
-            "title": "Question and answer audiences",
-            "purpose": "Audience rules limit an optional question or a custom answer by canonical gender. A dynamic user group can still be selected and is stored, but since every member belongs to one group it no longer narrows anything.",
+          "draftSaving": {
+            "title": "Draft, revision and save",
+            "purpose": "Every edit stays local until Save changes submits the complete page array with the exact layout revision loaded from Core.",
             "actions": {
-              "1": "Leave all selectors empty for global availability where the group permits it.",
-              "2": "Choose only the genders and groups that product policy intends to receive the question or answer."
+              "1": "Use Discard draft to restore the complete loaded layout without writing anything.",
+              "2": "Resolve every inline page or item reason before saving the complete revisioned draft."
             },
-            "guidance": "The gender axis is the only one Core enforces. An overly narrow gender rule can make a choice disappear for legitimate members, while a group-only restriction quietly means everyone."
+            "guidance": "A revision conflict reloads the authoritative document and says so. Reapply the intended change to that fresh copy instead of merging stale material."
           },
-          "archiveBehavior": {
-            "title": "Archive and preserved answers",
-            "purpose": "Archiving removes an optional choice from new selection while keeping existing stored answers readable and recoverable.",
+          "answersElsewhere": {
+            "title": "Answers live in Profile fields",
+            "purpose": "Answer previews are deliberately read-only in the composer because labels, options, icons and catalogue eligibility are managed elsewhere.",
             "actions": {
-              "1": "Read the confirmation and archive only the obsolete option.",
-              "2": "Edit or restore a retired option when its original meaning returns."
+              "1": "Follow Edit answers in Profile fields from a placed or unused question card.",
+              "2": "Return to the composer after the catalogue save and reload before placing newly eligible material."
             },
-            "guidance": "Archive is not destructive cleanup. Existing member data remains by design, and protected system answers cannot be removed."
+            "guidance": "This page never renames, adds, archives or deletes answer options. Keeping those writes out of the composer prevents two competing catalogue editors."
           }
         }
       },
@@ -6537,98 +6537,62 @@
     }
   },
   "signupOptions": {
-    "eyebrow": "Signup data model",
+    "eyebrow": "Signup page composer",
     "title": "Signup options",
-    "subtitle": "Manage signup questions, bilingual names, icons, audiences and answer choices from one compact workspace.",
-    "overviewLabel": "Signup option overview",
-    "questionGroups": "question groups",
-    "requiredQuestions": "required for everyone",
-    "targetedQuestions": "targeted questions",
-    "activeAnswers": "active answers",
-    "search": "Filter catalog",
-    "searchPlaceholder": "Search a key, English name or Hungarian name",
-    "groupFilter": "Question type",
-    "filterAll": "All questions",
-    "filterSystem": "System questions",
-    "filterOptional": "Optional profile questions",
-    "filterTargeted": "Restricted audience",
-    "systemAnswersTitle": "System answers are protected",
-    "systemAnswersIntro": "Only the system questions Core currently serves appear here. Their labels can be renamed, but their keys, order, required state and availability remain Core-owned.",
-    "system": "System",
-    "required": "Required",
-    "notAskedAtSignup": "Not asked at signup",
-    "optional": "Optional",
-    "targeted": "Targeted",
-    "everyone": "Everyone",
-    "answerCount": "{active} active of {total} answers",
-    "groupSettings": "Question settings",
-    "groupEditTitle": "Edit signup question",
-    "groupNameEn": "English question name",
-    "groupNameHu": "Hungarian question name",
-    "groupIcon": "Question icon",
-    "groupIconHint": "PNG or sanitized SVG, maximum 2 MB. The same icon is shown on Web and iOS.",
-    "iconChoose": "Choose icon",
-    "iconRemove": "Remove icon",
-    "iconUploading": "Uploading…",
-    "iconError": "Choose a valid PNG or SVG no larger than 2 MB.",
-    "requiredSystemQuestion": "Required system question",
-    "requiredSystemQuestionCopy": "Every member must answer this question. Its key, required state and audience are protected; the bilingual title and icon remain editable.",
-    "notAskedAtSignupCopy": "Core still marks this question required so installed apps keep decoding the catalogue, but the current signup flow never asks it and sends a default answer. Renaming it is safe; do not read the flag as an answer members must give.",
-    "systemQuestion": "System-managed question",
-    "systemQuestionCopy": "This question is available to everyone and its policy is protected. Its bilingual title and icon remain editable.",
-    "groupAudience": "Who receives this question?",
-    "groupAudienceHelp": "Target optional signup data by gender. A dynamic user group can still be recorded, but it no longer narrows who is asked — every member belongs to one group.",
-    "audienceGlobal": "Everyone",
-    "audienceSpecific": "Restricted audience",
-    "audienceGlobalHint": "This optional question is available to every registering member.",
-    "audienceGendersTitle": "Genders",
-    "audienceGroupsTitle": "Dynamic user groups",
-    "audienceMatchAny": "match any",
-    "audienceGroupsRecorded": "recorded, does not filter",
-    "audienceGroupsNotEnforced": "The selected user groups are stored and shown, but they no longer narrow the audience — only the gender selection decides who is asked.",
-    "audienceRequired": "Select at least one gender or user group.",
-    "audienceInactive": "Archived group",
-    "audienceLegacy": "Legacy segment",
-    "genderMen": "Men",
-    "genderWomen": "Women",
-    "genderNonbinary": "Nonbinary people",
-    "systemAnswer": "Protected system answer",
-    "systemAnswerCopy": "Only the English and Hungarian display names can be changed. Core remains authoritative for routing and validation.",
-    "pack": "question pack",
-    "key": "Stable key",
-    "keyHint": "Lowercase letters, numbers and underscores. The key is permanent after creation.",
-    "nameEn": "English name",
-    "nameHu": "Hungarian name",
-    "sortOrder": "Display order",
-    "order": "Order",
-    "status": "Status",
-    "active": "Active",
-    "inactive": "Inactive",
-    "add": "Add option",
-    "addTitle": "Add signup option",
-    "editTitle": "Edit signup option",
-    "rename": "Rename",
-    "deleteTitle": "Remove signup option?",
-    "deleteCopy": "“{name}” will stop appearing for new selections. Existing stored answers remain intact and the option can be restored by editing it.",
-    "keyInvalid": "Enter a stable key beginning with a letter and containing only lowercase letters, numbers or underscores.",
-    "namesRequired": "Enter both the English and Hungarian names.",
-    "systemProtected": "This system answer is protected. Only its localized names can change.",
-    "audiences": "Offered to genders",
-    "audiencesHint": "The custom answer is shown only to these genders during signup and profile editing.",
-    "audiencesRequired": "Select at least one gender for the custom answer.",
-    "genderMale": "Man",
-    "genderFemale": "Woman",
-    "genderOther": "Nonbinary",
-    "loadError": "The signup option catalog could not be loaded.",
-    "saveError": "The signup option could not be saved.",
-    "groupSaveError": "The signup question settings could not be saved.",
-    "groupConflict": "Someone else changed this question meanwhile. The catalog was reloaded; reopen it and reapply your change.",
-    "groupSaved": "Signup question settings saved.",
-    "deleteError": "The signup option could not be removed.",
-    "saved": "Signup option saved.",
-    "deleted": "Signup option removed from new selections.",
-    "noAnswers": "This question has no answers yet.",
-    "noMatches": "No signup questions match this filter."
+    "subtitle": "Compose the optional signup pages. Question definitions and answers remain managed under Profile fields.",
+    "systemTitle": "System questions",
+    "systemCopy": "Core asks these before the composed pages in a fixed order. They are shown here for context and cannot be edited or moved.",
+    "systemLocked": "Locked · fixed order",
+    "pagesTitle": "Signup pages",
+    "pagesCopy": "Arrange up to five bilingual pages and place each eligible catalogue question once.",
+    "pageCount": "{used} of {max} pages",
+    "addPage": "Add page",
+    "validationErrors": "Signup page validation errors",
+    "droppedTitle": "Missing placements removed",
+    "droppedNotice": "Core removed {count} placement(s) whose catalogue field no longer exists: {keys}.",
+    "emptyTitle": "No signup pages yet",
+    "emptyCopy": "This is an intentional empty signup ladder. Create the first optional page when you are ready to add catalogue questions.",
+    "firstPage": "Create first page",
+    "pageFallback": "Page {number}",
+    "pagePosition": "Page {number}",
+    "itemCount": "{count} question(s)",
+    "hiddenBadge": "Hidden",
+    "movePageUp": "Move page {name} up",
+    "movePageDown": "Move page {name} down",
+    "removePage": "Delete page",
+    "pageTitleEn": "English page title",
+    "pageTitleHu": "Hungarian page title",
+    "pageSubtitleEn": "English page subtitle",
+    "pageSubtitleHu": "Hungarian page subtitle",
+    "hiddenToggle": "Keep this page hidden from signup",
+    "answersPreview": "Answers",
+    "requiredToggle": "Answer required on this page",
+    "moveItemUp": "Move {name} up",
+    "moveItemDown": "Move {name} down",
+    "removeItem": "Return to catalogue",
+    "editAnswers": "Edit answers in Profile fields",
+    "pageEmpty": "Drag a question here or use an Add here button below.",
+    "paletteTitle": "Eligible question palette",
+    "paletteCopy": "Only active select-type profile fields appear here. Drag a question onto a page or use its keyboard-friendly button.",
+    "paletteEmpty": "Every eligible question is already placed on a signup page.",
+    "addHere": "Add here: page {page}",
+    "layoutRevision": "Layout revision: {revision}",
+    "draftCopy": "Changes remain a local draft until the complete page layout is saved.",
+    "discardDraft": "Discard draft",
+    "saveChanges": "Save changes",
+    "savingChanges": "Saving changes…",
+    "loadError": "The signup page composer could not be loaded. No empty layout was assumed.",
+    "saved": "Signup page layout saved.",
+    "conflictReloaded": "Another administrator saved first. The current server layout was reloaded; apply your change again.",
+    "saveError": "The signup page layout could not be saved. Reload before retrying to verify the current server state.",
+    "invalidResponse": "Core returned an invalid signup page response. Nothing was treated as saved.",
+    "issuePageLimit": "The signup ladder allows at most five pages.",
+    "issueItemLimit": "A signup page must contain between one and eight questions.",
+    "issueUnknownField": "The field “{field}” is no longer present in the eligible catalogue.",
+    "issueFieldNotSelectable": "The field “{field}” is not a select-type question and cannot be placed here.",
+    "issueFieldArchived": "The field “{field}” is archived and cannot be placed on a signup page.",
+    "issueDuplicateField": "The field “{field}” appears on more than one signup page.",
+    "issueBlankTitle": "Enter a non-blank English and Hungarian title for this page."
   },
   "profileFields": {
     "eyebrow": "Profile data model",

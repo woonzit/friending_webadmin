@@ -92,8 +92,14 @@ test("every inventoried functional section has detailed English and Hungarian he
   // T-569 documents `AudienceVisibilityUserPanel`, which T-539 opened on
   // /users/<uid> with no guide in either locale (238). T-551 documents the
   // Persona verification-screens console that replaced the T-581 placeholder
-  // on /persona (239).
+  // on /persona (239). T-671 replaces all five signup-options topics with the
+  // five composer topics below, so the reviewed total remains 239.
   assert.equal(totalSections, 239, "review the functional-section census when the UI changes");
+  assert.deepEqual(
+    ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
+    ["systemQuestions", "pageLayout", "questionPalette", "draftSaving", "answersElsewhere"],
+    "the signup-options guide must inventory the composer rather than the retired option editor",
+  );
 
   for (const locale of ["en", "hu"]) {
     const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));
