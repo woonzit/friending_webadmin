@@ -27,11 +27,12 @@ const profileFields = readFileSync(
   "utf8",
 );
 const shell = readFileSync(new URL("../components/Shell.tsx", import.meta.url), "utf8");
+const decoder = readFileSync(new URL("../lib/signupPages.ts", import.meta.url), "utf8");
 
 test("signup options is a one-read one-write page composer", () => {
   assert.match(page, /adminCall\("list_signup_options"\)/);
   assert.match(page, /adminCall\("save_signup_page_layout", body\)/);
-  assert.match(page, /response\.status_code !== 200/);
+  assert.match(page, /response\?\.success === true && response\.status_code === 200/);
   assert.match(actionAllowList, /"list_signup_options"/);
   assert.match(actionAllowList, /"save_signup_page_layout"/);
   assert.equal(adminActionAccess("list_signup_options"), "read");
@@ -81,12 +82,36 @@ test("the composer wires nested drag, keyboard ordering and exact profile-field 
 
 test("conflicts reload authority and 422 reasons stay on their page or item", () => {
   assert.match(page, /signupPageConflict\(response\)/);
+  assert.match(page, /signupPageConflictLayout\(response\)/);
   assert.match(page, /const reloaded = await load\(\)/);
   assert.match(page, /signupPageSaveIssues\(response\)/);
   assert.match(page, /setServerIssues\(refusalIssues\)/);
   assert.match(composer, /issue\.page_key === page\.key && issue\.field_key === item\.field_key/);
   assert.match(composer, /signup-item-errors/);
   assert.doesNotMatch(composer, /issues\.map\([^\n]+alert alert-error/);
+});
+
+test("the console decodes the error names Core actually sends", () => {
+  // T-671 shipped pinned on two names Core has never served, so a lost race and
+  // a policy refusal both fell through to the generic save error with nothing
+  // to fix (T-670 landing report, "two names it got wrong").
+  assert.match(decoder, /"signup-page-conflict"/);
+  assert.match(decoder, /"signup-page-layout-refused"/);
+  assert.match(decoder, /details\.items/);
+  assert.doesNotMatch(decoder, /=== "signup-page-layout-conflict"/);
+  assert.doesNotMatch(decoder, /!== "signup-page-layout-invalid"/);
+  assert.doesNotMatch(decoder, /source\.errors/);
+});
+
+test("an accepted save is adopted from Core's answer, not from the sent draft", () => {
+  // The 200 repeats the whole payload — document, catalogue, System questions
+  // and the rows THIS save healed — so re-using the draft would hide Core's
+  // healing until the next read.
+  assert.match(page, /const parsed = signupPagesPayload\(response\)/);
+  assert.match(page, /parsed\.pages\.revision !== revision/);
+  assert.match(page, /withRevision\(draft, revision\)/);
+  assert.match(page, /adopt\(parsed\)/);
+  assert.doesNotMatch(page, /dropped_items: \[\]/);
 });
 
 test("both locale trees remove editor copy and carry the composer copy", () => {

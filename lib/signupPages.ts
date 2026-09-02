@@ -19,19 +19,36 @@ export type SignupPageOption = {
 };
 
 export type SignupEligibleField = {
+  /**
+   * Core serves BOTH names for the same value on purpose
+   * (`SignupPageCatalog::eligibleFieldRow`): `key` is what every other
+   * catalogue row on this wire calls its identity, `field_key` is what a
+   * PLACEMENT calls it, and the console reads a palette row and a placed item
+   * through this one decoder. Placements are matched on `field_key`.
+   */
+  key: string;
   field_key: string;
   profile_field: string;
   labels: SignupPageText;
   icon: SignupPageIcon;
   selection: {
     mode: "single" | "multi";
+    min_selected: number;
     max_selected: number;
   };
+  sort_order: number;
   options: SignupPageOption[];
 };
 
 export type SignupSystemQuestion = {
   key: "gender" | "visible_to";
+  kind: "identity" | "audience";
+  /**
+   * Only "Ki láthatja az adatlapomat" is synthetic: it has no catalogue row at
+   * all, its labels are compiled constants, and Core omits the key entirely on
+   * the gender question rather than serving `false`.
+   */
+  synthetic: boolean;
   labels: SignupPageText;
   icon: SignupPageIcon;
   required: true;
@@ -59,9 +76,17 @@ export type SignupPageLayout = {
   pages: SignupPage[];
 };
 
+/**
+ * One row of `dropped_items` on a read or a save, and — the same shape, from
+ * the same `SignupPagePolicy::issue()` builder — one row of `details.items[]`
+ * on a 422. `field_key` is the empty string when the reason is about the page
+ * rather than one of its items.
+ */
 export type SignupDroppedItem = {
+  index: number;
   page_key: string;
   field_key: string;
+  reason: SignupPageIssueCode;
 };
 
 export type SignupPagesPayload = {
@@ -103,6 +128,10 @@ export type SignupPageSaveBody = {
 const FIELD_KEY = /^[a-z][a-z0-9_]{0,63}$/;
 const OPTION_KEY = /^[a-z0-9][a-z0-9_+\-]{0,63}$/;
 const PAGE_KEY = /^p_[0-9a-f]{8}$/;
+/** `ProfileFieldPolicy::localizedMap`'s language tag, verbatim. */
+const LANGUAGE_TAG = /^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/;
+const LAYOUT_SCHEMA_VERSION = 1;
+const LAYOUT_KEY = "signup_pages_v1";
 
 function record(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -122,6 +151,24 @@ function exactRecord<const T extends readonly string[]>(
     : null;
 }
 
+/**
+ * A record whose keys are all drawn from `keys`, but which need not carry
+ * every one of them. Core omits an absent optional member instead of serving a
+ * null (`synthetic` on the gender System question, `sort_order` on a System
+ * question's options), so an exact match would fail closed on a body that is
+ * correct.
+ */
+function allowedRecord<const T extends readonly string[]>(
+  value: unknown,
+  keys: T,
+): Partial<Record<T[number], unknown>> | null {
+  const source = record(value);
+  if (!source) return null;
+  return Object.keys(source).every((key) => keys.includes(key))
+    ? source as Partial<Record<T[number], unknown>>
+    : null;
+}
+
 function integer(value: unknown, minimum = 0, maximum = Number.MAX_SAFE_INTEGER): number | null {
   return typeof value === "number"
     && Number.isSafeInteger(value)
@@ -131,11 +178,28 @@ function integer(value: unknown, minimum = 0, maximum = Number.MAX_SAFE_INTEGER)
     : null;
 }
 
-function pageText(value: unknown, nonBlank: boolean): SignupPageText | null {
-  const source = exactRecord(value, ["en", "hu"] as const);
-  if (!source || typeof source.en !== "string" || typeof source.hu !== "string") return null;
-  if (nonBlank && (!source.en.trim() || !source.hu.trim())) return null;
-  return { en: source.en, hu: source.hu };
+/**
+ * Every bilingual string on this wire is a `ProfileFieldPolicy::localizedMap`:
+ * a map of language tag to non-blank label, `ksort`ed, carrying both `en` and
+ * `hu` only where Core declares the map REQUIRED — and JSON-encoded as `[]`,
+ * not `{}`, when it is empty, which is what an optional page subtitle nobody
+ * filled in looks like on the wire. The console renders two languages, so it
+ * keeps `en`/`hu`, tolerates any further tag Core may carry, and treats an
+ * absent one as blank rather than refusing the whole read.
+ */
+function localizedText(value: unknown, required: boolean): SignupPageText | null {
+  if (Array.isArray(value)) {
+    return !required && value.length === 0 ? { en: "", hu: "" } : null;
+  }
+  const source = record(value);
+  if (!source) return null;
+  for (const [language, label] of Object.entries(source)) {
+    if (!LANGUAGE_TAG.test(language) || typeof label !== "string" || label.trim() === "") return null;
+  }
+  const en = typeof source.en === "string" ? source.en : "";
+  const hu = typeof source.hu === "string" ? source.hu : "";
+  if (required && (en.trim() === "" || hu.trim() === "")) return null;
+  return { en, hu };
 }
 
 function pageIcon(value: unknown): SignupPageIcon | null {
@@ -143,9 +207,13 @@ function pageIcon(value: unknown): SignupPageIcon | null {
   if (!source || typeof source.url !== "string" || typeof source.mime !== "string") return null;
   if (source.url === "" && source.mime === "") return { url: "", mime: "" };
   if (source.mime !== "image/png" && source.mime !== "image/svg+xml") return null;
+  // Core's own normalizer (`ProfileFieldPolicy::httpsUrl`) accepts ANY https
+  // host, and `/profile-fields` — which produces these very icons — decodes
+  // them with no host rule either. Pinning one host here would have blanked
+  // the whole composer the first time an operator uploaded an icon. The https
+  // scheme and the two-mime allow-list stay.
   try {
-    const parsed = new URL(source.url);
-    if (parsed.protocol !== "https:" || parsed.hostname !== "img.friending.co") return null;
+    if (new URL(source.url).protocol !== "https:") return null;
   } catch {
     return null;
   }
@@ -153,9 +221,18 @@ function pageIcon(value: unknown): SignupPageIcon | null {
 }
 
 function option(value: unknown): SignupPageOption | null {
-  const source = exactRecord(value, ["key", "labels"] as const);
-  const labels = pageText(source?.labels, true);
-  if (!source || typeof source.key !== "string" || !OPTION_KEY.test(source.key) || !labels) return null;
+  // A catalogue option carries `sort_order`; a System question's option does
+  // not. The array Core sends is already in that order, so the value is
+  // validated and then dropped rather than re-sorted here.
+  const source = allowedRecord(value, ["key", "labels", "sort_order"] as const);
+  const labels = localizedText(source?.labels, true);
+  if (
+    !source
+    || typeof source.key !== "string"
+    || !OPTION_KEY.test(source.key)
+    || !labels
+    || (source.sort_order !== undefined && integer(source.sort_order, 0, 100_000) === null)
+  ) return null;
   return { key: source.key, labels };
 }
 
@@ -171,56 +248,92 @@ function options(value: unknown): SignupPageOption[] | null {
 function eligibleField(value: unknown): SignupEligibleField | null {
   const source = exactRecord(
     value,
-    ["field_key", "profile_field", "labels", "icon", "selection", "options"] as const,
+    [
+      "key",
+      "field_key",
+      "profile_field",
+      "labels",
+      "descriptions",
+      "icon",
+      "selection",
+      "sort_order",
+      "options",
+    ] as const,
   );
-  const labels = pageText(source?.labels, true);
+  const labels = localizedText(source?.labels, true);
+  // Validated and dropped: the composer never renders a field description, but
+  // a body whose descriptions are not a localized map is not a body Core sent.
+  const descriptions = localizedText(source?.descriptions, false);
   const icon = pageIcon(source?.icon);
-  const selection = exactRecord(source?.selection, ["mode", "max_selected"] as const);
-  const maxSelected = integer(selection?.max_selected, 1, 100);
+  const selection = exactRecord(
+    source?.selection,
+    ["mode", "min_selected", "max_selected"] as const,
+  );
+  const minSelected = integer(selection?.min_selected, 0, 20);
+  const maxSelected = integer(selection?.max_selected, 1, 20);
+  const sortOrder = integer(source?.sort_order, 0, 100_000);
   const parsedOptions = options(source?.options);
   if (
     !source
+    || typeof source.key !== "string"
+    || !FIELD_KEY.test(source.key)
     || typeof source.field_key !== "string"
     || !FIELD_KEY.test(source.field_key)
     || typeof source.profile_field !== "string"
     || !FIELD_KEY.test(source.profile_field)
     || !labels
+    || !descriptions
     || !icon
     || !selection
     || (selection.mode !== "single" && selection.mode !== "multi")
+    || minSelected === null
     || maxSelected === null
+    || minSelected > maxSelected
     || (selection.mode === "single" && maxSelected !== 1)
+    || sortOrder === null
     || !parsedOptions
   ) return null;
   return {
+    key: source.key,
     field_key: source.field_key,
     profile_field: source.profile_field,
     labels,
     icon,
-    selection: { mode: selection.mode, max_selected: maxSelected },
+    selection: {
+      mode: selection.mode,
+      min_selected: minSelected,
+      max_selected: maxSelected,
+    },
+    sort_order: sortOrder,
     options: parsedOptions,
   };
 }
 
 function systemQuestion(value: unknown): SignupSystemQuestion | null {
-  const source = exactRecord(
+  // `synthetic` is served only on the audience question, so the key set is an
+  // allow-list rather than an exact match.
+  const source = allowedRecord(
     value,
-    ["key", "labels", "icon", "required", "locked", "options"] as const,
+    ["key", "kind", "locked", "synthetic", "required", "labels", "icon", "options"] as const,
   );
-  const labels = pageText(source?.labels, true);
+  const labels = localizedText(source?.labels, true);
   const icon = pageIcon(source?.icon);
   const parsedOptions = options(source?.options);
   if (
     !source
     || (source.key !== "gender" && source.key !== "visible_to")
+    || (source.kind !== "identity" && source.kind !== "audience")
     || source.required !== true
     || source.locked !== true
+    || (source.synthetic !== undefined && typeof source.synthetic !== "boolean")
     || !labels
     || !icon
     || !parsedOptions
   ) return null;
   return {
     key: source.key,
+    kind: source.kind,
+    synthetic: source.synthetic === true,
     labels,
     icon,
     required: true,
@@ -242,8 +355,11 @@ function pageItem(value: unknown): SignupPageItem | null {
 
 function page(value: unknown): SignupPage | null {
   const source = exactRecord(value, ["key", "hidden", "title", "subtitle", "items"] as const);
-  const title = pageText(source?.title, false);
-  const subtitle = pageText(source?.subtitle, false);
+  // Neither is required HERE even though Core requires a title on the way in:
+  // a stored title the console cannot read must surface as the `blank-title`
+  // row `validate()` already renders on that page card, not as a dead page.
+  const title = localizedText(source?.title, false);
+  const subtitle = localizedText(source?.subtitle, false);
   if (
     !source
     || typeof source.key !== "string"
@@ -265,16 +381,37 @@ function page(value: unknown): SignupPage | null {
   };
 }
 
+/**
+ * The WHOLE stored document, not a bare array of pages: Core serves
+ * `schema_version`, `key` and the read's own `dropped_items` beside the three
+ * values the console edits. They are pinned here and then dropped — the
+ * console never writes them back, and `signupPagesPayload` takes the dropped
+ * rows from the top-level sibling Core repeats them in.
+ */
 function layout(value: unknown): SignupPageLayout | null {
-  const source = exactRecord(value, ["revision", "updated_at", "updated_by", "pages"] as const);
+  const source = exactRecord(
+    value,
+    [
+      "schema_version",
+      "key",
+      "pages",
+      "dropped_items",
+      "revision",
+      "updated_at",
+      "updated_by",
+    ] as const,
+  );
   const revision = integer(source?.revision);
   const updatedAt = integer(source?.updated_at);
   if (
     !source
+    || source.schema_version !== LAYOUT_SCHEMA_VERSION
+    || source.key !== LAYOUT_KEY
     || revision === null
     || updatedAt === null
     || typeof source.updated_by !== "string"
     || source.updated_by.length > 320
+    || droppedItems(source.dropped_items) === null
     || !Array.isArray(source.pages)
     || source.pages.length > SIGNUP_PAGE_LIMIT
   ) return null;
@@ -293,16 +430,37 @@ function layout(value: unknown): SignupPageLayout | null {
   };
 }
 
+/**
+ * One `SignupPagePolicy::issue()` row. Core builds `dropped_items` (what a read
+ * or a save healed) and `details.items[]` (what a 422 refused) from the same
+ * function, so one decoder reads both. `field_key` is `""` when the reason is
+ * about the page rather than one of its items.
+ */
 function droppedItem(value: unknown): SignupDroppedItem | null {
-  const source = exactRecord(value, ["page_key", "field_key"] as const);
+  const source = exactRecord(value, ["index", "page_key", "field_key", "reason"] as const);
+  const index = integer(source?.index, 0, SIGNUP_PAGE_LIMIT * 100);
   if (
     !source
+    || index === null
     || typeof source.page_key !== "string"
     || !PAGE_KEY.test(source.page_key)
     || typeof source.field_key !== "string"
-    || !FIELD_KEY.test(source.field_key)
+    || (source.field_key !== "" && !FIELD_KEY.test(source.field_key))
+    || typeof source.reason !== "string"
+    || !SIGNUP_PAGE_ISSUE_CODES.includes(source.reason as SignupPageIssueCode)
   ) return null;
-  return { page_key: source.page_key, field_key: source.field_key };
+  return {
+    index,
+    page_key: source.page_key,
+    field_key: source.field_key,
+    reason: source.reason as SignupPageIssueCode,
+  };
+}
+
+function droppedItems(value: unknown): SignupDroppedItem[] | null {
+  if (!Array.isArray(value) || value.length > 500) return null;
+  const parsed = value.map(droppedItem);
+  return parsed.some((row) => row === null) ? null : parsed as SignupDroppedItem[];
 }
 
 /**
@@ -314,42 +472,34 @@ function droppedItem(value: unknown): SignupDroppedItem | null {
 export function signupPagesPayload(value: unknown): SignupPagesPayload | null {
   const source = record(value);
   const parsedLayout = layout(source?.pages);
+  const dropped = droppedItems(source?.dropped_items);
   if (
     !source
     || !parsedLayout
+    || !dropped
     || !Array.isArray(source.eligible_fields)
     || source.eligible_fields.length > 500
     || !Array.isArray(source.system_questions)
     || source.system_questions.length !== 2
-    || !Array.isArray(source.dropped_items)
-    || source.dropped_items.length > 500
   ) return null;
 
   const fields = source.eligible_fields.map(eligibleField);
   const questions = source.system_questions.map(systemQuestion);
-  const dropped = source.dropped_items.map(droppedItem);
-  if (
-    fields.some((row) => row === null)
-    || questions.some((row) => row === null)
-    || dropped.some((row) => row === null)
-  ) return null;
+  if (fields.some((row) => row === null) || questions.some((row) => row === null)) return null;
 
   const eligibleFields = fields as SignupEligibleField[];
   const systemQuestions = questions as SignupSystemQuestion[];
-  const droppedItems = dropped as SignupDroppedItem[];
   if (new Set(eligibleFields.map((row) => row.field_key)).size !== eligibleFields.length) return null;
   if (new Set(systemQuestions.map((row) => row.key)).size !== 2) return null;
   if (systemQuestions[0].key !== "gender" || systemQuestions[1].key !== "visible_to") return null;
   const eligibleKeys = new Set(eligibleFields.map((row) => row.field_key));
   if (parsedLayout.pages.some((row) => row.items.some((item) => !eligibleKeys.has(item.field_key)))) return null;
-  const droppedKeys = droppedItems.map((row) => `${row.page_key}:${row.field_key}`);
-  if (new Set(droppedKeys).size !== droppedKeys.length) return null;
 
   return {
     pages: parsedLayout,
     eligible_fields: eligibleFields,
     system_questions: systemQuestions as [SignupSystemQuestion, SignupSystemQuestion],
-    dropped_items: droppedItems,
+    dropped_items: dropped,
   };
 }
 
@@ -566,6 +716,12 @@ export function withRevision(layout: SignupPageLayout, revision: number): Signup
     : null;
 }
 
+/**
+ * The accepted save. Core answers with the whole payload beside the new
+ * revision — the stored document, the catalogue and the System questions — so
+ * the console adopts that answer instead of reading a second time; this is only
+ * the CAS number out of it.
+ */
 export function signupPageSaveRevision(value: unknown): number | null {
   const source = record(value);
   const revision = integer(source?.revision);
@@ -576,46 +732,67 @@ export function signupPageSaveRevision(value: unknown): number | null {
     : null;
 }
 
+/**
+ * Core's conflict is `signup-page-conflict`. This console shipped pinned on
+ * `signup-page-layout-conflict`, a name Core has never sent (T-670 landing
+ * report, "two names it got wrong"), so every lost race fell through to the
+ * generic save error.
+ */
 export function signupPageConflict(value: unknown): boolean {
   const source = record(value);
   return source?.success === false
     && source.status_code === 409
-    && source.error === "signup-page-layout-conflict";
+    && source.error === "signup-page-conflict";
 }
 
+/**
+ * A 409 carries the CURRENT document under `pages`, so a console that lost the
+ * race can recover authority from the refusal itself rather than guessing.
+ */
+export function signupPageConflictLayout(value: unknown): SignupPageLayout | null {
+  if (!signupPageConflict(value)) return null;
+  return layout(record(value)?.pages);
+}
+
+/**
+ * One refused row, in the shape the composer renders: the reason becomes the
+ * issue code, and an empty `field_key` becomes an absent one so the row lands
+ * on its page card rather than on an item that does not exist.
+ */
 function issue(value: unknown): SignupPageIssue | null {
-  const source = record(value);
-  const issueKeys = Object.keys(source ?? {});
-  if (
-    !source
-    || issueKeys.length < 1
-    || issueKeys.some((key) => !["code", "page_key", "field_key"].includes(key))
-    || typeof source.code !== "string"
-    || !SIGNUP_PAGE_ISSUE_CODES.includes(source.code as SignupPageIssueCode)
-    || (source.page_key !== undefined && (typeof source.page_key !== "string" || !PAGE_KEY.test(source.page_key)))
-    || (source.field_key !== undefined && (typeof source.field_key !== "string" || !FIELD_KEY.test(source.field_key)))
-  ) return null;
-  const parsed: SignupPageIssue = { code: source.code as SignupPageIssueCode };
-  if (typeof source.page_key === "string") parsed.page_key = source.page_key;
-  if (typeof source.field_key === "string") parsed.field_key = source.field_key;
-  if ((parsed.code === "blank-title" || parsed.code === "item-limit") && !parsed.page_key) return null;
-  if (["unknown-field", "field-not-selectable", "field-archived", "duplicate-field"].includes(parsed.code)
-    && (!parsed.page_key || !parsed.field_key)) return null;
+  const row = droppedItem(value);
+  if (!row) return null;
+  const parsed: SignupPageIssue = { code: row.reason, page_key: row.page_key };
+  if (row.field_key !== "") parsed.field_key = row.field_key;
   return parsed;
 }
 
-/** Decode only the 422 policy refusal; callers must render every row inline. */
+/**
+ * Decode only the 422 policy refusal; callers must render every row inline.
+ *
+ * Core's refusal is `signup-page-layout-refused` with `details.items[]` — rows
+ * of `{index, page_key, field_key, reason}`. This console shipped pinned on
+ * `signup-page-layout-invalid` with a top-level `errors[]` of
+ * `{code, page_key, field_key}`, neither of which Core sends, so every refusal
+ * rendered as the generic save error with no row to fix (T-670 landing
+ * report). `signup-page-layout-invalid` IS a real Core name — the whole
+ * request being unreadable — but it never carries per-item reasons, so it
+ * belongs in the generic branch, not here.
+ */
 export function signupPageSaveIssues(value: unknown): SignupPageIssue[] | null {
   const source = record(value);
+  const details = record(source?.details);
   if (
     !source
     || source.success !== false
     || source.status_code !== 422
-    || source.error !== "signup-page-layout-invalid"
-    || !Array.isArray(source.errors)
-    || source.errors.length < 1
-    || source.errors.length > 100
+    || source.error !== "signup-page-layout-refused"
+    || !details
+    || Object.keys(details).some((key) => key !== "items")
+    || !Array.isArray(details.items)
+    || details.items.length < 1
+    || details.items.length > 500
   ) return null;
-  const parsed = source.errors.map(issue);
+  const parsed = details.items.map(issue);
   return parsed.some((row) => row === null) ? null : parsed as SignupPageIssue[];
 }

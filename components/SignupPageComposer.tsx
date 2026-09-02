@@ -199,7 +199,9 @@ export default function SignupPageComposer({
             <strong>{t("droppedTitle")}</strong>
             <p>{t("droppedNotice", {
               count: droppedItems.length,
-              keys: droppedItems.map((item) => item.field_key).join(", "),
+              // A healed row whose reason is about the page rather than one
+              // of its items carries an empty `field_key`; name the page then.
+              keys: droppedItems.map((item) => item.field_key || item.page_key).join(", "),
             })}</p>
           </div>
         ) : null}

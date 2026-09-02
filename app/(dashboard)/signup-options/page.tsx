@@ -11,6 +11,7 @@ import {
   sameLayout,
   serialize,
   signupPageConflict,
+  signupPageConflictLayout,
   signupPageSaveIssues,
   signupPageSaveRevision,
   signupPagesPayload,
@@ -46,27 +47,28 @@ export default function SignupOptionsPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const applyPayload = useCallback((value: unknown): boolean => {
-    const parsed = signupPagesPayload(value);
-    if (!parsed) return false;
+  const adopt = useCallback((parsed: SignupPagesPayload) => {
     setPayload(parsed);
     setBaseline(parsed.pages);
     setDraft(parsed.pages);
     setServerIssues([]);
     setError("");
-    return true;
   }, []);
 
   const load = useCallback(async () => {
     setStatus("loading");
     const response = await adminCall("list_signup_options");
-    if (response?.success !== true || response.status_code !== 200 || !applyPayload(response)) {
+    const parsed = response?.success === true && response.status_code === 200
+      ? signupPagesPayload(response)
+      : null;
+    if (!parsed) {
       setStatus("error");
       return false;
     }
+    adopt(parsed);
     setStatus("ready");
     return true;
-  }, [applyPayload]);
+  }, [adopt]);
 
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
@@ -109,8 +111,18 @@ export default function SignupOptionsPage() {
     const response = await adminCall("save_signup_page_layout", body);
     if (signupPageConflict(response)) {
       setBusy(false);
+      // Core's 409 answers with the document that won, so authority is
+      // recoverable even when the re-read that follows it fails.
+      const authoritative = signupPageConflictLayout(response);
       const reloaded = await load();
-      if (reloaded) setNotice(t("conflictReloaded"));
+      if (!reloaded && authoritative) {
+        setPayload({ ...payload, pages: authoritative });
+        setBaseline(authoritative);
+        setDraft(authoritative);
+        setServerIssues([]);
+        setStatus("ready");
+      }
+      setNotice(t("conflictReloaded"));
       return;
     }
     const refusalIssues = signupPageSaveIssues(response);
@@ -125,16 +137,18 @@ export default function SignupOptionsPage() {
       setError(response?.success ? t("invalidResponse") : t("saveError"));
       return;
     }
-    const saved = withRevision({ ...draft, pages: body.pages }, revision);
-    if (!saved) {
+    // An accepted save answers with the whole payload — the stored document
+    // (whose `dropped_items` are what THIS save healed), the catalogue and the
+    // System questions — so the console adopts Core's answer rather than the
+    // draft it sent. `withRevision` stays the CAS rule: the served revision
+    // must be the exact successor of the one the draft was saved against.
+    const parsed = signupPagesPayload(response);
+    if (!withRevision(draft, revision) || !parsed || parsed.pages.revision !== revision) {
       setBusy(false);
       setError(t("invalidResponse"));
       return;
     }
-    setPayload({ ...payload, pages: saved, dropped_items: [] });
-    setBaseline(saved);
-    setDraft(saved);
-    setServerIssues([]);
+    adopt(parsed);
     setBusy(false);
     setNotice(t("saved"));
   }
