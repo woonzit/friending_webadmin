@@ -778,7 +778,7 @@
             "purpose": "The matrix contains all ten frozen feature keys exactly once and shows the live clamped tier from each field's exact inheritance source.",
             "actions": {
               "1": "Read the localized feature label and machine key before changing a complete draft cell.",
-              "2": "Check the configured and effective requirement and its inheritance source; method-tier clamps no longer exist."
+              "2": "Check the configured and effective requirement and its inheritance source; Core still clamps Strong to Light when Video is the only enabled method, and clamps every requirement to None when no method is enabled."
             },
             "guidance": "Unknown, duplicate or missing keys are a contract mismatch, not optional rows. Draft edits never authorize a feature until a guarded live publication succeeds."
           },

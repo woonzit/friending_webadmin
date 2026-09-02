@@ -1001,6 +1001,19 @@ test("English and Hungarian UI and eleven Help topics stay key-identical and cov
   assert.match(JSON.stringify(en.verificationAdmin), /Not available in v1/);
   assert.match(JSON.stringify(hu.verificationAdmin), /Az 1\. verzióban nem érhető el/);
 
+  const enFeatureMatrix = en.adminHelp.pages.verification.sections.featureMatrix as {
+    actions: { "2": string };
+  };
+  const huFeatureMatrix = hu.adminHelp.pages.verification.sections.featureMatrix as typeof enFeatureMatrix;
+  assert.equal(
+    enFeatureMatrix.actions["2"],
+    "Check the configured and effective requirement and its inheritance source; Core still clamps Strong to Light when Video is the only enabled method, and clamps every requirement to None when no method is enabled.",
+  );
+  assert.equal(
+    huFeatureMatrix.actions["2"],
+    "Ellenőrizd a beállított és tényleges követelményt, valamint öröklési forrását; a Core az Erős követelményt Alapszintűre korlátozza, ha csak a videó engedélyezett, és minden követelményt Nincs értékre, ha nincs engedélyezett módszer.",
+  );
+
   const help = `${JSON.stringify(en.adminHelp.pages.verification)}\n${JSON.stringify(hu.adminHelp.pages.verification)}`;
   for (const evidence of [
     // T-617 §8.4 replaced `scopePrecedence` with the two-plane sentence, so the
@@ -1017,6 +1030,8 @@ test("English and Hungarian UI and eleven Help topics stay key-identical and cov
     "30 minutes",
     "2 MiB",
     "pink seal",
+    "Core still clamps Strong to Light when Video is the only enabled method, and clamps every requirement to None when no method is enabled.",
+    "a Core az Erős követelményt Alapszintűre korlátozza, ha csak a videó engedélyezett, és minden követelményt Nincs értékre, ha nincs engedélyezett módszer.",
     // D-092b retired the tier arithmetic: completion is method-agnostic, so
     // `max(derived, imported, granted)` is no longer what the grant panel does.
     "satisfies the room unconditionally",

@@ -778,7 +778,7 @@
             "purpose": "A mátrix mind a tíz rögzített funkciókulcsot pontosan egyszer tartalmazza, és minden mező pontos öröklési forrásából mutatja az élő, korlátozott szintet.",
             "actions": {
               "1": "Teljes draftcella módosítása előtt olvasd el a lokalizált funkciónevet és a gépi kulcsot.",
-              "2": "Ellenőrizd a beállított és tényleges követelményt, valamint öröklési forrását; módszeralapú szintkorlátozás már nincs."
+              "2": "Ellenőrizd a beállított és tényleges követelményt, valamint öröklési forrását; a Core az Erős követelményt Alapszintűre korlátozza, ha csak a videó engedélyezett, és minden követelményt Nincs értékre, ha nincs engedélyezett módszer."
             },
             "guidance": "Az ismeretlen, ismétlődő vagy hiányzó kulcs szerződéseltérés, nem opcionális sor. A draft szerkesztése nem engedélyez funkciót, amíg a védett élő közzététel nem sikerül."
           },
