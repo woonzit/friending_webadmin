@@ -131,6 +131,26 @@ test("every inventoried functional section has detailed English and Hungarian he
   }
 });
 
+test("the feature-switch Help census names all three gates and permanent Visitors", async () => {
+  for (const locale of ["en", "hu"] as const) {
+    const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));
+    const pages = record(record(messages.adminHelp, `${locale}.adminHelp`).pages, `${locale}.pages`);
+    const configuration = record(
+      record(record(pages.configuration, `${locale}.configuration`).sections, `${locale}.sections`).featureSwitches,
+      `${locale}.featureSwitches`,
+    );
+    const footprints = record(
+      record(record(pages.footprints, `${locale}.footprints`).sections, `${locale}.sections`).featureSwitchesPointer,
+      `${locale}.featureSwitchesPointer`,
+    );
+    const combined = `${configuration.title} ${configuration.purpose} ${configuration.guidance} ${footprints.purpose} ${footprints.guidance}`;
+    assert.match(combined, /Hey/u);
+    assert.match(combined, /Footprint/u);
+    assert.match(combined, locale === "en" ? /photo likes/iu : /fotókedvel/iu);
+    assert.match(combined, locale === "en" ? /Visitors (?:is|remain)/u : /Látogatók/u);
+  }
+});
+
 test("the authenticated shell always renders the visible accessible Help control", async () => {
   const shell = await readFile(path.join(root, "components", "Shell.tsx"), "utf8");
   const component = await readFile(path.join(root, "components", "AdminHelp.tsx"), "utf8");

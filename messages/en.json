@@ -2147,12 +2147,12 @@
           },
           "featureSwitchesPointer": {
             "title": "Feature availability lives in Configuration",
-            "purpose": "Hey and the complete Footprints family are controlled together in the Feature switches panel on Configuration. The badge limits and catalog on this page keep their own document and revision.",
+            "purpose": "Hey, the Footprint-badge family and photo likes are controlled together in the Feature switches panel on Configuration. Visitors is always available, and the badge limits and catalog on this page keep their own document and revision.",
             "actions": {
-              "1": "Open Configuration when you need to review or change global Hey or Footprints availability.",
+              "1": "Open Configuration when you need to review or change global Hey, Footprints or photo-like availability.",
               "2": "Return here to edit badge limits, catalog entries, member allowances or reports."
             },
-            "guidance": "The Configuration switch is the product-wide Footprints gate; it can hide visits, badge sending and the complete collector. It does not share a revision with these badge settings, so one editor cannot create a false conflict in the other."
+            "guidance": "The Configuration Footprints switch governs the badge family only; visits and the Visitors list remain available, while photo likes answer their own switch. The switch family does not share a revision with these badge settings, so one editor cannot create a false conflict in the other."
           },
           "badges": {
             "title": "Badge catalog",
@@ -2445,14 +2445,14 @@
             "guidance": "Turning a feature off normally preserves its records. Demo controls never merge demo and regular users, and a disabled hero response does not delete campaigns."
           },
           "featureSwitches": {
-            "title": "Hey and Footprints feature switches",
-            "purpose": "This independent, receipted control family governs global Hey availability and the complete Footprints family. Each command changes one switch, while both share one authoritative family revision.",
+            "title": "Hey, Footprints and photo-likes feature switches",
+            "purpose": "This independent, receipted control family governs global Hey, Footprint-badge and photo-like availability. Each command changes one switch, while all three share one authoritative family revision; Visitors is always available.",
             "actions": {
-              "1": "Read both current states, per-switch provenance and the shared revision before deciding.",
+              "1": "Read every served switch state, its provenance and the shared revision before deciding.",
               "2": "Enter a required internal reason and change only the intended switch.",
               "3": "After an unknown outcome, retry the retained command or reload for authoritative convergence; never start a second logical command."
             },
-            "guidance": "Hey off removes the Pinger button, profile gesture, Heys tab and Hey notifications. Footprints off stops visits and badge sends, hides the entire Visits / Footprints / Likes collector and stops Footprints notifications. Existing records remain, and the photo-like gesture on profile media still works even though its collector tab is hidden. Hey and Footprints share one family revision, but badge settings and general runtime settings do not. Launch posture is an explicit audited choice: Hey on, Footprints off."
+            "guidance": "Hey off removes the Pinger button, profile gesture, Heys tab and Hey notifications. Footprints off removes the Footprint-badge controls, feed, counter and notifications, while visits and Visitors remain available. Photo likes off removes photo-like controls, counters, feed and notifications. Visitors is always available. The three switches share one family revision, but badge settings and general runtime settings do not. Launch posture is an explicit audited choice: Hey on, Footprints off."
           },
           "session": {
             "title": "Join idle session timeout",
@@ -8295,18 +8295,21 @@
     "customEmptyHint": "Nothing selected yet — this still means everyone. Pick the genders this side applies to; a user group can be recorded but does not filter.",
     "featureSwitchesPointer": {
       "title": "Feature availability",
-      "copy": "The global Footprints family switch now lives with the Hey switch in Configuration. Badge limits and catalogue settings on this page keep their own document and revision.",
+      "copy": "The global Hey, Footprint-badge and photo-like switches live together in Configuration. Visitors is always available; badge limits and catalogue settings on this page keep their own document and revision.",
       "action": "Open feature switches"
     }
   },
   "featureSwitches": {
     "title": "Feature switches",
-    "lead": "Global availability for Hey and the complete Footprints family. Each change is revision-bound, receipted and audited by Core.",
+    "lead": "Global availability for Hey, Footprint badges and photo likes. Visitors is always available. Each change is revision-bound, receipted and audited by Core.",
     "revision": "Family revision {revision}",
-    "familyRevisionNote": "Hey and Footprints share this one family revision, so changing either switch refreshes both. Runtime settings and Footprint badge settings use separate documents and revisions.",
-    "launchPosture": "Launch procedure: keep Hey on and explicitly turn Footprints off with an administrator reason before go-live. Missing keys still mean enabled; deployment never flips a feature by default.",
+    "familyRevisionNote": "Hey, Footprints and Photo likes share this one family revision, so changing any switch refreshes all three. Runtime settings and Footprint badge settings use separate documents and revisions.",
+    "launchPosture": "Launch procedure: keep Hey on and explicitly turn Footprints off with an administrator reason before go-live. An absent stored value still defaults to enabled; a switch missing from the admin wire is shown as unavailable and cannot be changed.",
     "stateOn": "On",
     "stateOff": "Off",
+    "notServed": "Not served by Core",
+    "notServedDetail": "This Core version does not publish this switch.",
+    "notServedDescription": "Release a Core version that serves this switch before trying to change it. The other feature switches remain available.",
     "lastChange": "Last change",
     "neverSet": "Never changed from this console.",
     "lastChanged": "{actor} · {when}",
@@ -8326,11 +8329,19 @@
       },
       "footprints": {
         "title": "Footprints",
-        "summary": "The product-wide gate for visits, Footprint badges and the entire Visits / Footprints / Likes collector.",
-        "consequenceOff": "Turning Footprints off stops visit recording and Footprint badge sends, hides the whole collector and stops Footprint alerts and pushes. Existing records remain. The photo-like gesture on profile media still works and still notifies its owner; only its collector tab disappears.",
-        "consequenceOn": "Turning Footprints on resumes new visits, badge sends and the collector from now on. Nothing is reconstructed for the off period, and existing records become reachable again.",
+        "summary": "The product-wide gate for the Footprint-badge family; visits and Visitors remain available, and photo likes use their own switch.",
+        "consequenceOff": "Turning Footprints off hides Footprint-badge controls, feeds and counters and stops Footprint alerts and pushes. Visit recording and the Visitors list remain available. Photo likes follow their own switch.",
+        "consequenceOn": "Turning Footprints on restores Footprint-badge controls, feeds, counters and notifications from that moment. Visits, Visitors and photo likes are unchanged.",
         "enable": "Turn Footprints on",
         "disable": "Turn Footprints off"
+      },
+      "likes": {
+        "title": "Photo likes",
+        "summary": "When it is off, photos cannot be liked and the like counter disappears; the Visitors list is always available.",
+        "consequenceOff": "Turning Photo likes off hides every photo-like control and counter, the Photo-likes feed, and like bell rows and push navigation. Existing likes remain stored; Visitors stays available.",
+        "consequenceOn": "Turning Photo likes on restores photo-like controls, counters, the Photo-likes feed and notifications from that moment. Visitors remains available in either state.",
+        "enable": "Turn photo likes on",
+        "disable": "Turn photo likes off"
       }
     },
     "live": {
@@ -8338,9 +8349,9 @@
       "noChange": "No change — it already held that value.",
       "replayed": "Already saved earlier; the retained receipt was confirmed rather than applied twice.",
       "converged": "The authoritative read confirms the retained change completed; no retry was sent.",
-      "conflict": "Someone changed this feature family first. Both current switches are shown; decide again before making a fresh change.",
+      "conflict": "Someone changed this feature family first. All current switches are shown; decide again before making a fresh change.",
       "conflictAlreadyApplied": "The current family state already contains the requested value. The stale retained command was cleared without forcing another write.",
-      "pendingRetry": "The {feature} change has an unknown outcome. Retry only that saved command; both switches remain locked because they share one revision.",
+      "pendingRetry": "The {feature} change has an unknown outcome. Retry only that saved command; all switches remain locked because they share one revision.",
       "persistenceUnavailable": "This browser cannot store a pending command safely, so these switches cannot be changed here.",
       "persistenceCleanupFailed": "The command was processed but its saved copy could not be cleared. Reload before trying again.",
       "requestIdUnavailable": "This browser cannot generate a request identifier, so these switches cannot be changed here.",

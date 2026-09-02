@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
 import {
@@ -33,6 +33,16 @@ import {
 
 type Notice = { tone: "info" | "error" | "success"; text: string } | null;
 
+type FeatureSwitchesCardGridProps = {
+  current: FeatureSwitchesState;
+  canEdit: boolean;
+  reasons: Record<FeatureSwitch, string>;
+  pending: FeatureSwitchesPendingMutation | null;
+  busy: boolean;
+  onReasonChange: (selectedSwitch: FeatureSwitch, value: string) => void;
+  onSubmit: (selectedSwitch: FeatureSwitch, nextEnabled: boolean) => void;
+};
+
 function formatTimestamp(locale: string, seconds: number, fallback: string): string {
   const milliseconds = seconds * 1000;
   if (!Number.isFinite(milliseconds) || milliseconds > 8_640_000_000_000_000) return fallback;
@@ -53,16 +63,137 @@ function newRequestId(): string | null {
   }
 }
 
-export default function FeatureSwitchesPanel() {
+/** Renderable separately so served and pre-T-659 Core states stay covered without network effects. */
+export function FeatureSwitchesCardGrid({
+  current,
+  canEdit,
+  reasons,
+  pending,
+  busy,
+  onReasonChange,
+  onSubmit,
+}: FeatureSwitchesCardGridProps) {
   const t = useTranslations("featureSwitches");
   const common = useTranslations("common");
   const locale = useLocale();
+  const reasonValidity: Record<FeatureSwitch, boolean> = {
+    hey: featureSwitchesReasonIsValid(reasons.hey),
+    footprints: featureSwitchesReasonIsValid(reasons.footprints),
+    likes: featureSwitchesReasonIsValid(reasons.likes),
+  };
+  const reasonLengths: Record<FeatureSwitch, number> = {
+    hey: [...reasons.hey].length,
+    footprints: [...reasons.footprints].length,
+    likes: [...reasons.likes].length,
+  };
+
+  return (
+    <div className="feature-switches-grid">
+      {FEATURE_SWITCHES.map((selectedSwitch) => {
+        const enabled = featureSwitchesValue(current, selectedSwitch);
+        const provenance = featureSwitchesProvenance(current, selectedSwitch);
+        const pendingForSwitch = pending?.payload.switch === selectedSwitch;
+        const target = enabled === null ? false : !enabled;
+        return (
+          <article
+            className="feature-switch-card"
+            data-feature-switch={selectedSwitch}
+            data-served={enabled === null ? "false" : "true"}
+            key={selectedSwitch}
+          >
+            <div className="feature-switch-heading">
+              <div>
+                <h3>{t(`switches.${selectedSwitch}.title`)}</h3>
+                <p>{t(`switches.${selectedSwitch}.summary`)}</p>
+              </div>
+              <b className={enabled === null
+                ? "status-badge status-pending"
+                : enabled ? "status-badge status-accepted" : "status-badge status-denied"}>
+                {enabled === null ? t("notServed") : t(enabled ? "stateOn" : "stateOff")}
+              </b>
+            </div>
+
+            <dl className="feature-switch-provenance">
+              <div>
+                <dt>{t("lastChange")}</dt>
+                <dd>{provenance === null
+                  ? t("notServedDetail")
+                  : provenance.updated_at === 0
+                    ? t("neverSet")
+                    : t("lastChanged", {
+                      actor: provenance.updated_by,
+                      when: formatTimestamp(locale, provenance.updated_at, String(provenance.updated_at)),
+                    })}</dd>
+              </div>
+            </dl>
+
+            <p className="feature-switch-consequence">
+              {enabled === null
+                ? t("notServedDescription")
+                : t(`switches.${selectedSwitch}.${enabled ? "consequenceOff" : "consequenceOn"}`)}
+            </p>
+
+            {canEdit ? (
+              <div className="feature-switch-form">
+                <label className="field">
+                  <span>{t("reason")}</span>
+                  <input
+                    type="text"
+                    value={reasons[selectedSwitch]}
+                    aria-invalid={reasons[selectedSwitch] !== "" && !reasonValidity[selectedSwitch]}
+                    disabled={enabled === null || busy || pending !== null}
+                    onChange={(event) => onReasonChange(selectedSwitch, event.target.value)}
+                  />
+                  <small>{t("reasonHint", {
+                    count: reasonLengths[selectedSwitch],
+                    max: FEATURE_SWITCHES_REASON_MAX,
+                  })}</small>
+                </label>
+                <button
+                  type="button"
+                  className={enabled === null
+                    ? "button button-secondary"
+                    : target ? "button button-primary" : "button button-danger"}
+                  disabled={enabled === null || busy || (pending
+                    ? !pendingForSwitch
+                    : !reasonValidity[selectedSwitch])}
+                  onClick={() => onSubmit(
+                    selectedSwitch,
+                    pendingForSwitch ? pending.payload.enabled === "true" : target,
+                  )}
+                >
+                  {enabled === null
+                    ? t("notServed")
+                    : busy && pendingForSwitch
+                      ? common("saving")
+                      : pendingForSwitch
+                        ? t("retry")
+                        : t(`switches.${selectedSwitch}.${target ? "enable" : "disable"}`)}
+                </button>
+              </div>
+            ) : (
+              <p className="panel-lead">{t("readOnly")}</p>
+            )}
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function FeatureSwitchesPanel() {
+  const t = useTranslations("featureSwitches");
+  const common = useTranslations("common");
 
   const [state, setState] = useState<"loading" | "ready" | "error" | "forbidden">("loading");
   const [loadFailure, setLoadFailure] = useState<FeatureSwitchesErrorKey | null>(null);
   const [current, setCurrent] = useState<FeatureSwitchesState | null>(null);
   const [actions, setActions] = useState<FeatureSwitchesAction[]>([]);
-  const [reasons, setReasons] = useState<Record<FeatureSwitch, string>>({ hey: "", footprints: "" });
+  const [reasons, setReasons] = useState<Record<FeatureSwitch, string>>({
+    hey: "",
+    footprints: "",
+    likes: "",
+  });
   const [notice, setNotice] = useState<Notice>(null);
   const [pending, setPending] = useState<FeatureSwitchesPendingMutation | null>(null);
   const pendingRef = useRef<FeatureSwitchesPendingMutation | null>(null);
@@ -73,10 +204,7 @@ export default function FeatureSwitchesPanel() {
   const reasonValidity = useMemo(() => ({
     hey: featureSwitchesReasonIsValid(reasons.hey),
     footprints: featureSwitchesReasonIsValid(reasons.footprints),
-  }), [reasons]);
-  const reasonLengths = useMemo(() => ({
-    hey: [...reasons.hey].length,
-    footprints: [...reasons.footprints].length,
+    likes: featureSwitchesReasonIsValid(reasons.likes),
   }), [reasons]);
 
   const clearPending = useCallback((): boolean => {
@@ -152,7 +280,7 @@ export default function FeatureSwitchesPanel() {
   }, [load, t]);
 
   async function submit(selectedSwitch: FeatureSwitch, nextEnabled: boolean) {
-    if (busy || !current) return;
+    if (busy || !current || featureSwitchesValue(current, selectedSwitch) === null) return;
     const existing = pendingRef.current;
     let command: FeatureSwitchesPendingMutation | null = existing;
     if (!command) {
@@ -308,84 +436,17 @@ export default function FeatureSwitchesPanel() {
           </p>
         ) : null}
 
-        <div className="feature-switches-grid">
-          {FEATURE_SWITCHES.map((selectedSwitch) => {
-            const enabled = featureSwitchesValue(current, selectedSwitch);
-            const provenance = featureSwitchesProvenance(current, selectedSwitch);
-            const pendingForSwitch = pending?.payload.switch === selectedSwitch;
-            const target = !enabled;
-            return (
-              <article className="feature-switch-card" key={selectedSwitch}>
-                <div className="feature-switch-heading">
-                  <div>
-                    <h3>{t(`switches.${selectedSwitch}.title`)}</h3>
-                    <p>{t(`switches.${selectedSwitch}.summary`)}</p>
-                  </div>
-                  <b className={enabled ? "status-badge status-accepted" : "status-badge status-denied"}>
-                    {t(enabled ? "stateOn" : "stateOff")}
-                  </b>
-                </div>
-
-                <dl className="feature-switch-provenance">
-                  <div>
-                    <dt>{t("lastChange")}</dt>
-                    <dd>{provenance.updated_at === 0
-                      ? t("neverSet")
-                      : t("lastChanged", {
-                        actor: provenance.updated_by,
-                        when: formatTimestamp(locale, provenance.updated_at, String(provenance.updated_at)),
-                      })}</dd>
-                  </div>
-                </dl>
-
-                <p className="feature-switch-consequence">
-                  {t(`switches.${selectedSwitch}.${enabled ? "consequenceOff" : "consequenceOn"}`)}
-                </p>
-
-                {canEdit ? (
-                  <div className="feature-switch-form">
-                    <label className="field">
-                      <span>{t("reason")}</span>
-                      <input
-                        type="text"
-                        value={reasons[selectedSwitch]}
-                        aria-invalid={reasons[selectedSwitch] !== "" && !reasonValidity[selectedSwitch]}
-                        disabled={busy || pending !== null}
-                        onChange={(event) => {
-                          const value = event.target.value;
-                          setReasons((currentReasons) => ({ ...currentReasons, [selectedSwitch]: value }));
-                        }}
-                      />
-                      <small>{t("reasonHint", {
-                        count: reasonLengths[selectedSwitch],
-                        max: FEATURE_SWITCHES_REASON_MAX,
-                      })}</small>
-                    </label>
-                    <button
-                      type="button"
-                      className={target ? "button button-primary" : "button button-danger"}
-                      disabled={busy || (pending
-                        ? !pendingForSwitch
-                        : !reasonValidity[selectedSwitch])}
-                      onClick={() => void submit(
-                        selectedSwitch,
-                        pendingForSwitch ? pending.payload.enabled === "true" : target,
-                      )}
-                    >
-                      {busy && pendingForSwitch
-                        ? common("saving")
-                        : pendingForSwitch
-                          ? t("retry")
-                          : t(`switches.${selectedSwitch}.${target ? "enable" : "disable"}`)}
-                    </button>
-                  </div>
-                ) : (
-                  <p className="panel-lead">{t("readOnly")}</p>
-                )}
-              </article>
-            );
-          })}
-        </div>
+        <FeatureSwitchesCardGrid
+          current={current}
+          canEdit={canEdit}
+          reasons={reasons}
+          pending={pending}
+          busy={busy}
+          onReasonChange={(selectedSwitch, value) => {
+            setReasons((currentReasons) => ({ ...currentReasons, [selectedSwitch]: value }));
+          }}
+          onSubmit={(selectedSwitch, nextEnabled) => void submit(selectedSwitch, nextEnabled)}
+        />
       </div>
     </section>
   );
