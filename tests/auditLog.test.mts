@@ -38,6 +38,19 @@ test("tolerated shapes are normalised rather than rejected", () => {
   assert.equal(auditRows([{ ...row, id: 17 }])?.[0]?.id, "17");
 });
 
+test("the photo-likes feature-switch target remains visible in its audit row", async () => {
+  const target = "feature_switches:v1:likes";
+  const parsed = auditRows([{
+    ...row,
+    action: "feature_switches_set",
+    target,
+  }]);
+  assert.equal(parsed?.[0]?.target, target);
+
+  const page = await readFile(new URL("../app/(dashboard)/audit/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /<td>\{row\.target \|\| "—"\}<\/td>/u);
+});
+
 test("only allow-listed keys are rendered and everything else is counted, not shown", () => {
   const summary = auditDetailSummary({
     key: "body_type",

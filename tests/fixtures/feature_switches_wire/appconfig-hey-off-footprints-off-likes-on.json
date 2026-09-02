@@ -2,9 +2,10 @@
     "status_code": 200,
     "data": {
         "feature_switches": {
-            "contract_version": 1,
+            "contract_version": 2,
             "hey_enabled": false,
-            "footprints_enabled": false
+            "footprints_enabled": false,
+            "likes_enabled": true
         }
     },
     "message": 200,

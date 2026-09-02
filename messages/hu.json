@@ -2147,12 +2147,12 @@
           },
           "featureSwitchesPointer": {
             "title": "A funkciók elérhetősége a Konfiguráció oldalon található",
-            "purpose": "A Hey-t és a teljes Footprints családot a Konfiguráció Funkciókapcsolók panelje vezérli együtt. Az ezen az oldalon lévő jelvénykeretek és katalógus saját dokumentumot és revíziót használnak.",
+            "purpose": "A Hey-t, a Footprint-jelvénycsaládot és a fotókedveléseket a Konfiguráció Funkciókapcsolók panelje vezérli együtt. A Látogatók lista mindig elérhető, az ezen az oldalon lévő jelvénykeretek és katalógus pedig saját dokumentumot és revíziót használnak.",
             "actions": {
-              "1": "A globális Hey- vagy Footprints-elérhetőség áttekintéséhez vagy módosításához nyisd meg a Konfiguráció oldalt.",
+              "1": "A globális Hey-, Footprints- vagy fotókedvelés-elérhetőség áttekintéséhez vagy módosításához nyisd meg a Konfiguráció oldalt.",
               "2": "A jelvénykeretek, katalóguselemek, tagi keretek vagy bejelentések szerkesztéséhez térj vissza ide."
             },
-            "guidance": "A Konfiguráció kapcsolója a Footprints teljes termékszintű kapuja; elrejtheti a látogatásokat, a jelvényküldést és a teljes gyűjtőt. Nem osztozik revízión ezekkel a jelvénybeállításokkal, ezért egyik szerkesztője sem okozhat álütközést a másikban."
+            "guidance": "A Konfiguráció Footprints kapcsolója csak a jelvénycsaládot szabályozza; a látogatások és a Látogatók lista elérhető marad, a fotókedvelések pedig saját kapcsolót követnek. A kapcsolócsalád nem osztozik revízión ezekkel a jelvénybeállításokkal, ezért egyik szerkesztője sem okozhat álütközést a másikban."
           },
           "badges": {
             "title": "Jelvénykatalógus",
@@ -2445,14 +2445,14 @@
             "guidance": "Egy feature kikapcsolása általában megőrzi rekordjait. A demóvezérlő soha nem egyesíti a demó- és normál tagokat, a hero kikapcsolása pedig nem törli a kampányokat."
           },
           "featureSwitches": {
-            "title": "Hey és Footprints funkciókapcsolók",
-            "purpose": "Ez a független, nyugtázott vezérlőcsalád szabályozza a Hey globális elérhetőségét és a teljes Footprints családot. Egy parancs egy kapcsolót módosít, miközben mindkettő egy hiteles családrevízión osztozik.",
+            "title": "Hey, Footprints és fotókedvelés funkciókapcsolók",
+            "purpose": "Ez a független, nyugtázott vezérlőcsalád szabályozza a Hey, a Footprint-jelvények és a fotókedvelések globális elérhetőségét. Egy parancs egy kapcsolót módosít, miközben mindhárom egy hiteles családrevízión osztozik; a Látogatók lista mindig elérhető.",
             "actions": {
-              "1": "Döntés előtt olvasd el mindkét aktuális állapotot, a kapcsolónkénti módosítási adatokat és a közös revíziót.",
+              "1": "Döntés előtt olvasd el minden kiszolgált kapcsoló állapotát, módosítási adatait és a közös revíziót.",
               "2": "Adj kötelező belső indoklást, és csak a szándékolt kapcsolót módosítsd.",
               "3": "Ismeretlen kimenet után a megtartott parancsot küldd újra, vagy a hiteles állapot megerősítéséhez tölts újra; soha ne indíts második logikai parancsot."
             },
-            "guidance": "A Hey kikapcsolása eltávolítja a Pinger gombot, a profilgesztust, a Hey-k fület és a Hey-értesítéseket. A Footprints kikapcsolása leállítja a látogatásokat és jelvényküldést, elrejti a teljes Látogatások / Footprints / Kedvelések gyűjtőt, és leállítja a Footprints-értesítéseket. A meglévő rekordok megmaradnak, a profilmédián lévő fotókedvelés gesztusa pedig a rejtett gyűjtőfül ellenére továbbra is működik. A Hey és a Footprints egy családrevízión osztozik, a jelvénybeállításokkal és általános futásidejű beállításokkal viszont nem. Az indulási állapot kifejezett, auditált döntés: Hey bekapcsolva, Footprints kikapcsolva."
+            "guidance": "A Hey kikapcsolása eltávolítja a Pinger gombot, a profilgesztust, a Hey-k fület és a Hey-értesítéseket. A Footprints kikapcsolása eltávolítja a Footprint-jelvény vezérlőit, hírfolyamát, számlálóját és értesítéseit, miközben a látogatások és a Látogatók lista elérhető marad. A fotókedvelések kikapcsolása eltávolítja a kedvelési vezérlőket, számlálókat, hírfolyamot és értesítéseket. A Látogatók lista mindig elérhető. A három kapcsoló egy családrevízión osztozik, a jelvénybeállításokkal és általános futásidejű beállításokkal viszont nem. Az indulási állapot kifejezett, auditált döntés: Hey bekapcsolva, Footprints kikapcsolva."
           },
           "session": {
             "title": "Join idle session timeout",
@@ -8274,18 +8274,21 @@
     "customEmptyHint": "Még nincs kijelölés — ez így még mindenkit jelent. Válaszd ki, mely nemekre vonatkozik ez az oldal; usercsoport rögzíthető, de nem szűr.",
     "featureSwitchesPointer": {
       "title": "Funkciók elérhetősége",
-      "copy": "A globális Footprints kapcsoló most a Hey kapcsolóval együtt a Konfiguráció oldalon található. Az ezen az oldalon lévő jelvénylimitek és katalógusbeállítások saját dokumentumot és revíziót használnak.",
+      "copy": "A globális Hey-, Footprint-jelvény- és fotókedvelés-kapcsolók együtt találhatók a Konfiguráció oldalon. A Látogatók lista mindig elérhető; az ezen az oldalon lévő jelvénylimitek és katalógusbeállítások saját dokumentumot és revíziót használnak.",
       "action": "Funkciókapcsolók megnyitása"
     }
   },
   "featureSwitches": {
     "title": "Funkciókapcsolók",
-    "lead": "A Hey és a teljes Footprints család globális elérhetősége. Minden változtatást a Core revízióhoz köt, nyugtáz és auditál.",
+    "lead": "A Hey, a Footprint-jelvények és a fotókedvelések globális elérhetősége. A Látogatók lista mindig elérhető. Minden változtatást a Core revízióhoz köt, nyugtáz és auditál.",
     "revision": "Családrevízió: {revision}",
-    "familyRevisionNote": "A Hey és a Footprints ezen az egy családrevízión osztozik, ezért bármelyik kapcsoló módosítása mindkettőt frissíti. A futásidejű és Footprint jelvénybeállítások külön dokumentumot és revíziót használnak.",
-    "launchPosture": "Élesítési eljárás: a Hey maradjon bekapcsolva, a Footprintset pedig az éles indulás előtt adminisztrátori indoklással, kifejezetten kapcsold ki. A hiányzó kulcs továbbra is bekapcsoltat jelent; a telepítés alapértelmezetten soha nem kapcsol ki funkciót.",
+    "familyRevisionNote": "A Hey, a Footprints és a Fotó-kedvelés ezen az egy családrevízión osztozik, ezért bármelyik kapcsoló módosítása mindhármat frissíti. A futásidejű és Footprint jelvénybeállítások külön dokumentumot és revíziót használnak.",
+    "launchPosture": "Élesítési eljárás: a Hey maradjon bekapcsolva, a Footprintset pedig az éles indulás előtt adminisztrátori indoklással, kifejezetten kapcsold ki. A hiányzó tárolt érték továbbra is bekapcsoltat jelent; az admin válaszból hiányzó kapcsoló nem elérhetőként jelenik meg és nem módosítható.",
     "stateOn": "Bekapcsolva",
     "stateOff": "Kikapcsolva",
+    "notServed": "A Core nem szolgálja ki",
+    "notServedDetail": "Ez a Core-verzió nem teszi közzé ezt a kapcsolót.",
+    "notServedDescription": "A módosítás előtt olyan Core-verziót kell kiadni, amely kiszolgálja ezt a kapcsolót. A többi funkciókapcsoló továbbra is elérhető.",
     "lastChange": "Utolsó változtatás",
     "neverSet": "Erről a felületről még nem módosították.",
     "lastChanged": "{actor} · {when}",
@@ -8305,11 +8308,19 @@
       },
       "footprints": {
         "title": "Footprints",
-        "summary": "A látogatások, Footprint jelvények és a teljes Látogatások / Footprints / Kedvelések gyűjtő termékszintű kapuja.",
-        "consequenceOff": "A Footprints kikapcsolása leállítja a látogatások rögzítését és a Footprint jelvényküldést, elrejti a teljes gyűjtőt, és leállítja a Footprint-értesítési bejegyzéseket és push értesítéseket. A meglévő rekordok megmaradnak. A profilképeken lévő fotókedvelés gesztusa továbbra is működik és értesíti a tulajdonost; csak a gyűjtőfüle tűnik el.",
-        "consequenceOn": "A Footprints bekapcsolása mostantól újraindítja az új látogatásokat, jelvényküldést és a gyűjtőt. A kikapcsolt időszakból semmi nem épül újra, a meglévő rekordok pedig újra elérhetővé válnak.",
+        "summary": "A Footprint-jelvénycsalád termékszintű kapuja; a látogatások és a Látogatók lista elérhető marad, a fotókedvelések pedig saját kapcsolót használnak.",
+        "consequenceOff": "A Footprints kikapcsolása elrejti a Footprint-jelvények vezérlőit, hírfolyamait és számlálóit, valamint leállítja a Footprint-értesítéseket és pushokat. A látogatások rögzítése és a Látogatók lista elérhető marad. A fotókedvelések saját kapcsolójukat követik.",
+        "consequenceOn": "A Footprints bekapcsolása ettől a pillanattól visszaállítja a Footprint-jelvények vezérlőit, hírfolyamait, számlálóit és értesítéseit. A látogatások, a Látogatók és a fotókedvelések nem változnak.",
         "enable": "Footprints bekapcsolása",
         "disable": "Footprints kikapcsolása"
+      },
+      "likes": {
+        "title": "Fotó-kedvelés (like)",
+        "summary": "Ha ki van kapcsolva, a fotók nem kedvelhetők és a kedvelés-számláló eltűnik; a Látogatók lista mindig elérhető.",
+        "consequenceOff": "A Fotó-kedvelés kikapcsolása elrejti az összes kedvelési vezérlőt és számlálót, a Fotókedvelések hírfolyamát, valamint a kedvelési értesítési bejegyzéseket és push navigációt. A meglévő kedvelések tárolva maradnak; a Látogatók elérhető marad.",
+        "consequenceOn": "A Fotó-kedvelés bekapcsolása ettől a pillanattól visszaállítja a kedvelési vezérlőket, számlálókat, a Fotókedvelések hírfolyamát és az értesítéseket. A Látogatók mindkét állapotban elérhető marad.",
+        "enable": "Fotó-kedvelés bekapcsolása",
+        "disable": "Fotó-kedvelés kikapcsolása"
       }
     },
     "live": {
@@ -8317,9 +8328,9 @@
       "noChange": "Nincs változás — már ezen az értéken állt.",
       "replayed": "Korábban már elmentve; a megtartott nyugtát erősítettük meg, nem alkalmaztuk kétszer.",
       "converged": "A hiteles lekérés bizonyítja, hogy a megtartott módosítás befejeződött; nem küldtünk újabb kérést.",
-      "conflict": "Valaki előbb módosította ezt a funkciócsaládot. Mindkét aktuális kapcsoló látható; friss módosítás előtt dönts újra.",
+      "conflict": "Valaki előbb módosította ezt a funkciócsaládot. Minden aktuális kapcsoló látható; friss módosítás előtt dönts újra.",
       "conflictAlreadyApplied": "A jelenlegi családállapot már tartalmazza a kért értéket. Az elavult megtartott parancsot kényszerített újabb írás nélkül töröltük.",
-      "pendingRetry": "A(z) {feature} módosításának kimenete ismeretlen. Csak ezt a mentett parancsot küldd újra; a közös revízió miatt mindkét kapcsoló zárolva marad.",
+      "pendingRetry": "A(z) {feature} módosításának kimenete ismeretlen. Csak ezt a mentett parancsot küldd újra; a közös revízió miatt minden kapcsoló zárolva marad.",
       "persistenceUnavailable": "Ez a böngésző nem tud biztonságosan függő parancsot tárolni, ezért itt nem módosíthatók a kapcsolók.",
       "persistenceCleanupFailed": "A parancs feldolgozásra került, de a mentett másolatot nem sikerült törölni. Tölts újra, mielőtt ismét próbálkozol.",
       "requestIdUnavailable": "Ez a böngésző nem tud kérésazonosítót előállítani, ezért itt nem módosíthatók a kapcsolók.",

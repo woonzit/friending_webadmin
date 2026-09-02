@@ -13,6 +13,11 @@
             "updated_at": 1787800000,
             "updated_by": "owner@friending.com"
         },
+        "likes": {
+            "enabled": true,
+            "updated_at": 1787800000,
+            "updated_by": "owner@friending.com"
+        },
         "revision": 5,
         "no_change": false,
         "replayed": false

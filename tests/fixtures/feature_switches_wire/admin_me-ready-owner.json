@@ -6,6 +6,7 @@
         "contract_ready": true,
         "hey_enabled": true,
         "footprints_enabled": false,
+        "likes_enabled": true,
         "revision": 4,
         "principal": {
             "role": "owner",

@@ -4,9 +4,9 @@ import {
   webadminErrorEnvelope,
 } from "@/lib/webadminEnvelope";
 
-/** Accepted T-126 feature-switch family contract v1. */
+/** Accepted Webadmin feature-switch family contract v1 (T-126, widened by T-659). */
 export const FEATURE_SWITCHES_CONTRACT_VERSION = 1 as const;
-export const FEATURE_SWITCHES = ["hey", "footprints"] as const;
+export const FEATURE_SWITCHES = ["hey", "footprints", "likes"] as const;
 export const FEATURE_SWITCHES_CAPABILITIES = [
   "feature_switches_read",
   "feature_switches_edit",
@@ -35,6 +35,8 @@ export type FeatureSwitchesAdminMe = {
   /** Rendering hints only; mutations bind the revision from `feature_switches_get`. */
   hey_enabled: boolean;
   footprints_enabled: boolean;
+  /** Null means this console is talking to a pre-T-659 Core. */
+  likes_enabled: boolean | null;
   revision: number;
   principal: FeatureSwitchesPrincipal;
   actions: FeatureSwitchesAction[];
@@ -50,6 +52,8 @@ export type FeatureSwitchesState = {
   contract_version: 1;
   hey: FeatureSwitchState;
   footprints: FeatureSwitchState;
+  /** Null means this console is talking to a pre-T-659 Core. */
+  likes: FeatureSwitchState | null;
   revision: number;
 };
 
@@ -196,9 +200,11 @@ export function featureSwitchesAdminMe(value: unknown): FeatureSwitchesAdminMe |
   ]);
   const principal = featureSwitchesPrincipal(source?.principal);
   const revision = integer(source?.revision, 0, FEATURE_SWITCHES_REVISION_MAX);
+  const servesLikes = Boolean(source && Object.hasOwn(source, "likes_enabled"));
   if (source?.contract_version !== 1
     || typeof source.hey_enabled !== "boolean"
     || typeof source.footprints_enabled !== "boolean"
+    || (servesLikes && typeof source.likes_enabled !== "boolean")
     || typeof source.contract_ready !== "boolean"
     || revision === null
     || !principal) return null;
@@ -209,6 +215,7 @@ export function featureSwitchesAdminMe(value: unknown): FeatureSwitchesAdminMe |
     contract_ready: source.contract_ready,
     hey_enabled: source.hey_enabled,
     footprints_enabled: source.footprints_enabled,
+    likes_enabled: servesLikes ? source.likes_enabled as boolean : null,
     revision,
     principal,
     actions,
@@ -247,8 +254,11 @@ function featureSwitchesState(value: unknown): FeatureSwitchesState | null {
   const revision = integer(source?.revision, 0, FEATURE_SWITCHES_REVISION_MAX);
   const hey = featureSwitchState(source?.hey);
   const footprints = featureSwitchState(source?.footprints);
+  const servesLikes = Boolean(source && Object.hasOwn(source, "likes"));
+  const likes = servesLikes ? featureSwitchState(source?.likes) : null;
   return source?.contract_version === 1 && revision !== null && hey && footprints
-    ? { contract_version: 1, hey, footprints, revision }
+    && (!servesLikes || likes)
+    ? { contract_version: 1, hey, footprints, likes, revision }
     : null;
 }
 
@@ -276,6 +286,7 @@ export function featureSwitchesMutationResponse(value: unknown): FeatureSwitches
     contract_version: source.contract_version,
     hey: source.hey,
     footprints: source.footprints,
+    ...(Object.hasOwn(source, "likes") ? { likes: source.likes } : {}),
     revision: source.revision,
   });
   return state ? { ...state, no_change: source.no_change, replayed: source.replayed } : null;
@@ -503,18 +514,19 @@ export async function featureSwitchesPersistBeforeMutation<T>(
 export function featureSwitchesValue(
   state: FeatureSwitchesState,
   selectedSwitch: FeatureSwitch,
-): boolean {
-  return state[selectedSwitch].enabled;
+): boolean | null {
+  return state[selectedSwitch]?.enabled ?? null;
 }
 
 export function featureSwitchesProvenance(
   state: FeatureSwitchesState,
   selectedSwitch: FeatureSwitch,
-): { updated_at: number; updated_by: string } {
-  return {
-    updated_at: state[selectedSwitch].updated_at,
-    updated_by: state[selectedSwitch].updated_by,
-  };
+): { updated_at: number; updated_by: string } | null {
+  const selected = state[selectedSwitch];
+  return selected ? {
+    updated_at: selected.updated_at,
+    updated_by: selected.updated_by,
+  } : null;
 }
 
 function pendingIntent(pending: FeatureSwitchesPendingMutation): {

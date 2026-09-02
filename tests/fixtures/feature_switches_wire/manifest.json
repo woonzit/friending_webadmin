@@ -1,12 +1,13 @@
 {
     "schema_version": 1,
     "contract_version": 1,
-    "source_commit": "b50432bd04b571f52d6191bd4feac4a6cc376085",
-    "contract_manifest_sha256": "97e0601d25e941af0d126978a3a4a1d26858e8ec3b1a0bd1e79a8c05fe2611e2",
-    "fixture_set_sha256": "3022e10eb8c5a3316273765755324825d8a44c71ad9ca2d1e9c1a04c761f545e",
+    "app_contract_version": 2,
+    "source_commit": "229b7891567ab6697e552180b7d324f1f02c1ef5",
+    "contract_manifest_sha256": "c854019e6be2046ad81af294719774beca04346d5f078b746daba313a787f083",
+    "fixture_set_sha256": "f8af93a1dee24a7c83cfd8deb03757bead16d0c2fd13494a73dbfc778db1fd8b",
     "provenance": {
         "generator": "tests/feature_switches_fixture_dump.php",
-        "generator_sha256": "cac1e46f08f10a226da47911baff68f7f719bdde91f9a4249f936f1c80a07a52",
+        "generator_sha256": "7d4588c7336808f90f778c837ca15b61268594641709f489180a7b1d6a9f913f",
         "wire_adapters": {
             "admin_me": "Friending\\Support\\Webadmin::reply",
             "versioned_actions": "Friending\\Support\\Webadmin::noStoreReply",
@@ -46,7 +47,7 @@
             "case": "dormant provider: capabilities held, no action offered",
             "consumer": "webadmin",
             "valid": true,
-            "sha256": "d7d07517f6522e10d42ddf059e1e70c2bc1b04bd6a4cfe8ac5483e0cb7c9484a"
+            "sha256": "2a2187f5ecb43dd0628ce79d30c312521ff3562c9ff85045c9d560445691012e"
         },
         {
             "file": "admin_me-ready-admin.json",
@@ -54,7 +55,7 @@
             "case": "ready admin: read + edit",
             "consumer": "webadmin",
             "valid": true,
-            "sha256": "a8c60b95711e462d59cb08fc7934585ee90adf626228effae16be9d0edd095d3"
+            "sha256": "15c640f9b2903e8a2ece25c9ae9af5ed22902e27d52594c54df1ef4e7a3d8863"
         },
         {
             "file": "admin_me-ready-owner.json",
@@ -62,7 +63,7 @@
             "case": "ready owner: read + edit",
             "consumer": "webadmin",
             "valid": true,
-            "sha256": "da780342f3ec39461cc62f4b2fe96347fc1d2698e60bad67df439fd90ad2608c"
+            "sha256": "072496057f6a5ceabdfae8278e1a41f9675241e26e25525419298fd10a65ca98"
         },
         {
             "file": "admin_me-ready-viewer.json",
@@ -70,7 +71,7 @@
             "case": "ready viewer: read only",
             "consumer": "webadmin",
             "valid": true,
-            "sha256": "0fd3c8d180a9356e906fd0e32d09b11dd8e551e04068e201e92f955b028b2f23"
+            "sha256": "ce66d12f3788ea548b6329b26ab2d28e475c378aa51c0e9031f3dab0ba7268ee"
         },
         {
             "file": "admin_me-revoked.json",
@@ -81,36 +82,68 @@
             "sha256": "7ca14279ec3e818347b77f76b3b2c68550e2977556e39510f0b89c138cfafa9b"
         },
         {
-            "file": "appconfig-both-off.json",
+            "file": "appconfig-hey-off-footprints-off-likes-off.json",
             "route": "/v1/app/ios_appconfig",
-            "case": "capability: both off — iOS hides tab-bar item 2 entirely (L4)",
+            "case": "capability v2: Hey off, Footprints off, Likes off — every switchable family dark; Visitors survives (D-101)",
             "consumer": "ios",
             "valid": true,
-            "sha256": "8fab69eac934cd05cd83fafe7db24001399aab3d7323255b96ada4eb9fe69ffc"
+            "sha256": "640f68d8175565849ca0d21b6ac69a0bd7a1ed8d7973bd04eb6247d5bb123a42"
         },
         {
-            "file": "appconfig-both-on.json",
+            "file": "appconfig-hey-off-footprints-off-likes-on.json",
             "route": "/v1/app/ios_appconfig",
-            "case": "capability: Hey on, Footprints on",
+            "case": "capability v2: Hey off, Footprints off, Likes on",
             "consumer": "ios",
             "valid": true,
-            "sha256": "cdfe05c599cf27baf115ff16895ff2bcd1fdec226cd54eb847af69d1581f4c93"
+            "sha256": "b5f2e21574c597ef10ecbca0bc4340086e83b88640d6a98e5616be1fa7a49a76"
         },
         {
-            "file": "appconfig-hey-off-footprints-on.json",
+            "file": "appconfig-hey-off-footprints-on-likes-off.json",
             "route": "/v1/app/ios_appconfig",
-            "case": "capability: Hey off, Footprints on — tab 2 keeps its Footprints tabs",
+            "case": "capability v2: Hey off, Footprints on, Likes off",
             "consumer": "ios",
             "valid": true,
-            "sha256": "3ba096922b4dd0d0167b13cf1de77eae36c5f89aa5208a8007ddc2113c040fb2"
+            "sha256": "df186d2a0ff00f5842bb4b80c68b3bccd75387ce52038f697b110b6eae266fad"
         },
         {
-            "file": "appconfig-hey-on-footprints-off.json",
+            "file": "appconfig-hey-off-footprints-on-likes-on.json",
             "route": "/v1/app/ios_appconfig",
-            "case": "capability: the launch posture — Hey on, Footprints off",
+            "case": "capability v2: Hey off, Footprints on, Likes on",
             "consumer": "ios",
             "valid": true,
-            "sha256": "3ca14c21096c095ff1d0a05eb65d145440a0ba24e4248207617db44262a53bf5"
+            "sha256": "0ed11278378deb92266c939b9df89bb3b7a68d3bc79b30575b71cf466459f84c"
+        },
+        {
+            "file": "appconfig-hey-on-footprints-off-likes-off.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "capability v2: Hey on, Footprints off, Likes off",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "71d8d5db3c91c3fe226ed33af918187a61234cfda49a0dbc0bf077359a46ed21"
+        },
+        {
+            "file": "appconfig-hey-on-footprints-off-likes-on.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "capability v2: Hey on, Footprints off, Likes on — the launch posture: badges dark, likes alive (D-101 retires D-026 §4)",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "a3169fab4c39e7a73b6b4c3d4737fc0b668c60ce92b1e734679faaafb0979da6"
+        },
+        {
+            "file": "appconfig-hey-on-footprints-on-likes-off.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "capability v2: Hey on, Footprints on, Likes off — the ruling the other way round: badges alive, likes dark",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "b496920e06177c4f8c4c13141503da88b1c43c02cc0c1f3b60ee1102c667bc12"
+        },
+        {
+            "file": "appconfig-hey-on-footprints-on-likes-on.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "capability v2: Hey on, Footprints on, Likes on — the shipped default (A1: nothing set)",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "66543964e37001ec8a561c87104b6a6d477ceefe16afdffb9cda2aac71189a0d"
         },
         {
             "file": "error-admin-revoked.json",
@@ -283,15 +316,15 @@
         {
             "file": "get-never-set.json",
             "route": "/v1/webadmin/feature_switches_get",
-            "case": "A1: never set — both enabled, zero provenance",
+            "case": "A1: never set — all three enabled, zero provenance",
             "consumer": "webadmin",
             "valid": true,
-            "sha256": "77a5f63739b75161ec9fce2b6d6d015aa51ad02e7ea8745d1147ac7425371f62"
+            "sha256": "18ae68aded7dd00aade243a9150e36c92ee8a66bab49220f9376025296de11d6"
         },
         {
             "file": "member-footprint-disabled.json",
-            "route": "/v1/footprints/visitors",
-            "case": "the Footprints family refused while the switch is off",
+            "route": "/v1/footprints/send",
+            "case": "the footprint BADGE family refused while the switch is off",
             "consumer": "ios",
             "valid": true,
             "sha256": "6eed372baf5377c1cf468ca37a30747d09155682cda3a0e15822f9c591a12f09"
@@ -303,6 +336,22 @@
             "consumer": "ios",
             "valid": true,
             "sha256": "f447f9aa222c673f4180bb7c0fce1a122d34cd9696cf7f903976afcaed220d38"
+        },
+        {
+            "file": "member-likes-disabled-feed.json",
+            "route": "/v1/footprints/photo-likes",
+            "case": "the photo-likes collector feed refused while the switch is off",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "6a171ada433ddb8d47d4822a74ba2045f968849d4f4f15bccd1cb688ab933b73"
+        },
+        {
+            "file": "member-likes-disabled-write.json",
+            "route": "/v1/profile/photos/like",
+            "case": "the photo-like write refused while the switch is off",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "6a171ada433ddb8d47d4822a74ba2045f968849d4f4f15bccd1cb688ab933b73"
         },
         {
             "file": "push-footprint-en.json",
@@ -350,7 +399,7 @@
             "case": "stale revision: adopt current, fresh gesture required",
             "consumer": "webadmin",
             "valid": true,
-            "sha256": "f991e5d5c67fa67e0d6632209a9f300fd6ac6cc8a00f7b51908157f07f117704"
+            "sha256": "c17423cc9865560fb9faea849b62a8ce7d4f98e927e42a4f13d5863b8a41fa8d"
         },
         {
             "file": "set-footprints-off.json",
@@ -358,7 +407,7 @@
             "case": "the launch posture flip: Footprints off, Hey untouched",
             "consumer": "webadmin",
             "valid": true,
-            "sha256": "06babc8880b17fbba575b9ba2a7703a6750632b0779610b2975c998b49d99386"
+            "sha256": "51f93353283cbecc5575d30963420f19129fc99d78351ba57de944a3880eaca1"
         },
         {
             "file": "set-hey-off.json",
@@ -366,7 +415,15 @@
             "case": "Hey off, Footprints untouched",
             "consumer": "webadmin",
             "valid": true,
-            "sha256": "eaef4b90dcdc357fd5ec71cac1e906c1f519cbcea1ef978818b0c4d7460f4f90"
+            "sha256": "e56b62585c74bc11ffa5b7703175bd1d37f6fa3195bc28dcbf1faa2baffc6a3c"
+        },
+        {
+            "file": "set-likes-off.json",
+            "route": "/v1/webadmin/feature_switches_set",
+            "case": "photo likes off, Hey and Footprints untouched (D-101)",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "fbcf0769f28469026f98f6e3535603dfb282bb818e364ba3ae8ea143f63124cf"
         },
         {
             "file": "set-no-change.json",
@@ -374,7 +431,7 @@
             "case": "setting the value it already holds is a receipted no-op",
             "consumer": "webadmin",
             "valid": true,
-            "sha256": "9edc1efc8fc06afc56ab7c3d441db44dc5f0afe7d3eeb67813f62659ae4e65ad"
+            "sha256": "d4f6fcbc567c78a98b3d6496668d1b1d93472f960ffb1d712c44d54d9a5495ff"
         },
         {
             "file": "set-replayed.json",
@@ -382,7 +439,7 @@
             "case": "the same request id returns the committed result",
             "consumer": "webadmin",
             "valid": true,
-            "sha256": "7c305efc90beb54e656fd434a6a73880fc13f1d1e83380a5d1b1ec41ddc7897b"
+            "sha256": "a68fbb3bbe604a5d1111fe02a5c2f035d7ce6f5d07e9c1971f46ae71af42ac25"
         }
     ]
 }

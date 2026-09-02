@@ -13,6 +13,11 @@
             "updated_at": 0,
             "updated_by": ""
         },
+        "likes": {
+            "enabled": true,
+            "updated_at": 0,
+            "updated_by": ""
+        },
         "revision": 0
     },
     "message": 200,

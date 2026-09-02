@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { NextIntlClientProvider } from "next-intl";
+import { FeatureSwitchesCardGrid } from "../components/FeatureSwitchesPanel.tsx";
 import {
   FEATURE_SWITCHES,
   FEATURE_SWITCHES_ACTIONS,
@@ -42,17 +47,21 @@ import { FEATURE_SWITCHES_CONTRACT_READY } from "../lib/contractReadiness.ts";
 const UUID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 const OTHER_UUID = "7b5f2a11-2c3d-4e5f-8a9b-0c1d2e3f4a5b";
 const FIXTURE_DIRECTORY = new URL("./fixtures/feature_switches_wire/", import.meta.url);
+const RENDER_MESSAGES = {
+  en: JSON.parse(readFileSync(new URL("../messages/en.json", import.meta.url), "utf8")),
+  hu: JSON.parse(readFileSync(new URL("../messages/hu.json", import.meta.url), "utf8")),
+};
 
 // Copied byte-identically from the lead-accepted Core tip. Body identity is
 // pinned separately so provenance-only manifest moves cannot be mistaken for
-// changes to the 43 released wire blobs.
-const FIXTURE_ACCEPTED_CORE_TIP = "fab53c14afd5191438b59ccc4e52d0da81a0d315";
-const FIXTURE_SOURCE_COMMIT = "b50432bd04b571f52d6191bd4feac4a6cc376085";
-const FIXTURE_CONTRACT_MANIFEST_SHA256 = "97e0601d25e941af0d126978a3a4a1d26858e8ec3b1a0bd1e79a8c05fe2611e2";
-const FIXTURE_GENERATOR_SHA256 = "cac1e46f08f10a226da47911baff68f7f719bdde91f9a4249f936f1c80a07a52";
-const FIXTURE_SET_SHA256 = "3022e10eb8c5a3316273765755324825d8a44c71ad9ca2d1e9c1a04c761f545e";
-const FIXTURE_MANIFEST_SHA256 = "65b424c5693a036da5b834af04537c012997f65b9326ec5c0b04f055982fa69e";
-const FIXTURE_BODY_COUNT = 43;
+// changes to the 50 released wire blobs.
+const FIXTURE_ACCEPTED_CORE_TIP = "73894b68386f5d57b0a091fcb87bc0dff490f548";
+const FIXTURE_SOURCE_COMMIT = "229b7891567ab6697e552180b7d324f1f02c1ef5";
+const FIXTURE_CONTRACT_MANIFEST_SHA256 = "c854019e6be2046ad81af294719774beca04346d5f078b746daba313a787f083";
+const FIXTURE_GENERATOR_SHA256 = "7d4588c7336808f90f778c837ca15b61268594641709f489180a7b1d6a9f913f";
+const FIXTURE_SET_SHA256 = "f8af93a1dee24a7c83cfd8deb03757bead16d0c2fd13494a73dbfc778db1fd8b";
+const FIXTURE_MANIFEST_SHA256 = "28a1d34a701557cba55c603b3abea06284048b7bc8236cdac6a7be399940a0dd";
+const FIXTURE_BODY_COUNT = 50;
 
 const FIXTURE_BODY_FILES = [
   "admin_me-dormant-owner.json",
@@ -60,10 +69,14 @@ const FIXTURE_BODY_FILES = [
   "admin_me-ready-owner.json",
   "admin_me-ready-viewer.json",
   "admin_me-revoked.json",
-  "appconfig-both-off.json",
-  "appconfig-both-on.json",
-  "appconfig-hey-off-footprints-on.json",
-  "appconfig-hey-on-footprints-off.json",
+  "appconfig-hey-off-footprints-off-likes-off.json",
+  "appconfig-hey-off-footprints-off-likes-on.json",
+  "appconfig-hey-off-footprints-on-likes-off.json",
+  "appconfig-hey-off-footprints-on-likes-on.json",
+  "appconfig-hey-on-footprints-off-likes-off.json",
+  "appconfig-hey-on-footprints-off-likes-on.json",
+  "appconfig-hey-on-footprints-on-likes-off.json",
+  "appconfig-hey-on-footprints-on-likes-on.json",
   "error-admin-revoked.json",
   "error-admin-session-invalid.json",
   "error-feature-switches-audit-write-failed.json",
@@ -88,6 +101,8 @@ const FIXTURE_BODY_FILES = [
   "get-never-set.json",
   "member-footprint-disabled.json",
   "member-hey-disabled.json",
+  "member-likes-disabled-feed.json",
+  "member-likes-disabled-write.json",
   "push-footprint-en.json",
   "push-footprint-hu.json",
   "push-hey-en.json",
@@ -96,6 +111,7 @@ const FIXTURE_BODY_FILES = [
   "set-conflict.json",
   "set-footprints-off.json",
   "set-hey-off.json",
+  "set-likes-off.json",
   "set-no-change.json",
   "set-replayed.json",
 ] as const;
@@ -169,6 +185,7 @@ function state(overrides: Record<string, unknown> = {}): Record<string, unknown>
     contract_version: 1,
     hey: switchState(true),
     footprints: switchState(true),
+    likes: switchState(true),
     revision: 4,
     ...overrides,
   };
@@ -192,6 +209,7 @@ function adminMeBlock(
     contract_ready: ready,
     hey_enabled: true,
     footprints_enabled: false,
+    likes_enabled: true,
     revision: 4,
     principal: { role, capabilities },
     actions,
@@ -219,9 +237,36 @@ function parsedState(overrides: Partial<FeatureSwitchesState> = {}): FeatureSwit
     contract_version: 1,
     hey: { enabled: true, updated_at: 1, updated_by: "a@b.c" },
     footprints: { enabled: true, updated_at: 1, updated_by: "a@b.c" },
+    likes: { enabled: true, updated_at: 1, updated_by: "a@b.c" },
     revision: 4,
     ...overrides,
   };
+}
+
+function renderCards(current: FeatureSwitchesState, locale: "en" | "hu"): string {
+  return renderToStaticMarkup(createElement(
+    NextIntlClientProvider,
+    { locale, messages: RENDER_MESSAGES[locale], timeZone: "UTC" },
+    createElement(FeatureSwitchesCardGrid, {
+      current,
+      canEdit: true,
+      reasons: { hey: "owner decided", footprints: "owner decided", likes: "owner decided" },
+      pending: null,
+      busy: false,
+      onReasonChange() {},
+      onSubmit() {},
+    }),
+  ));
+}
+
+function renderedCard(markup: string, selectedSwitch: FeatureSwitch): string {
+  const marker = `data-feature-switch="${selectedSwitch}"`;
+  const markerIndex = markup.indexOf(marker);
+  assert.notEqual(markerIndex, -1, `${selectedSwitch} card is missing`);
+  const start = markup.lastIndexOf("<article", markerIndex);
+  const end = markup.indexOf("</article>", markerIndex);
+  assert.ok(start >= 0 && end > start, `${selectedSwitch} card is incomplete`);
+  return markup.slice(start, end + "</article>".length);
 }
 
 test("the released Core corpus is manifest-bound with body identity kept separate", async () => {
@@ -229,6 +274,7 @@ test("the released Core corpus is manifest-bound with body identity kept separat
   assert.equal(sha256(manifestWire), FIXTURE_MANIFEST_SHA256);
   const manifest = JSON.parse(manifestWire) as Json;
   assert.deepEqual(Object.keys(manifest).sort(), [
+    "app_contract_version",
     "contract_manifest_sha256",
     "contract_version",
     "fixture_set_sha256",
@@ -239,6 +285,7 @@ test("the released Core corpus is manifest-bound with body identity kept separat
   ]);
   assert.equal(manifest.schema_version, 1);
   assert.equal(manifest.contract_version, 1);
+  assert.equal(manifest.app_contract_version, 2);
   assert.equal(manifest.source_commit, FIXTURE_SOURCE_COMMIT);
   assert.equal(manifest.contract_manifest_sha256, FIXTURE_CONTRACT_MANIFEST_SHA256);
   assert.equal(manifest.fixture_set_sha256, FIXTURE_SET_SHA256);
@@ -306,8 +353,10 @@ test("the released Core corpus is manifest-bound with body identity kept separat
     } else if (row.consumer === "ios") {
       assert.ok([
         "/v1/app/ios_appconfig",
-        "/v1/footprints/visitors",
+        "/v1/footprints/photo-likes",
+        "/v1/footprints/send",
         "/v1/iosuser/like",
+        "/v1/profile/photos/like",
       ].includes(row.route));
     } else {
       assert.ok(["push://footprint", "push://new_hey"].includes(row.route));
@@ -320,7 +369,7 @@ test("the released Core corpus is manifest-bound with body identity kept separat
   }
   assert.deepEqual(
     Object.fromEntries([...consumerCounts].sort(([left], [right]) => left.localeCompare(right))),
-    { ios: 6, push: 5, webadmin: 32 },
+    { ios: 12, push: 5, webadmin: 33 },
   );
   assert.equal(sha256(aggregateRows.join("\n")), FIXTURE_SET_SHA256);
   assert.match(FIXTURE_ACCEPTED_CORE_TIP, /^[0-9a-f]{40}$/);
@@ -364,7 +413,7 @@ test("every released corpus body is run through the production Webadmin decoders
 });
 
 test("the dormant family vocabulary and conditional proxy surface are exact", () => {
-  assert.deepEqual([...FEATURE_SWITCHES], ["hey", "footprints"]);
+  assert.deepEqual([...FEATURE_SWITCHES], ["hey", "footprints", "likes"]);
   assert.deepEqual([...FEATURE_SWITCHES_ACTIONS], ["feature_switches_get", "feature_switches_set"]);
   assert.deepEqual([...FEATURE_SWITCHES_CAPABILITIES], [
     "feature_switches_read",
@@ -382,6 +431,12 @@ test("admin_me requires known fields, is capability-authored, action-ordered, an
   assert.deepEqual(owner?.actions, ["feature_switches_get", "feature_switches_set"]);
   assert.equal(owner?.hey_enabled, true);
   assert.equal(owner?.footprints_enabled, false);
+  assert.equal(owner?.likes_enabled, true);
+
+  const legacyOwnerWire = adminMeBlock("owner", true);
+  delete legacyOwnerWire.likes_enabled;
+  const legacyOwner = featureSwitchesAdminMe(legacyOwnerWire);
+  assert.equal(legacyOwner?.likes_enabled, null, "a pre-T-659 Core remains readable");
 
   const viewer = featureSwitchesAdminMe(adminMeBlock("viewer", true));
   assert.deepEqual(viewer?.actions, ["feature_switches_get"]);
@@ -416,6 +471,7 @@ test("admin_me requires known fields, is capability-authored, action-ordered, an
     featureSwitchesAdminMe(adminMeBlock("owner", true)),
   );
   assert.equal(featureSwitchesAdminMe(adminMeBlock("owner", true, { hey_enabled: "true" })), null);
+  assert.equal(featureSwitchesAdminMe(adminMeBlock("owner", true, { likes_enabled: "true" })), null);
   assert.equal(featureSwitchesAdminMe(adminMeBlock("owner", true, { revision: -1 })), null);
 });
 
@@ -444,9 +500,16 @@ test("the bridge trusts only the exact family capability block and keeps other f
 
 test("state decoding ignores additive fields, stays versioned, and keeps provenance all-or-nothing", () => {
   assert.deepEqual(featureSwitchesStateResponse(envelope(state())), state());
+  const legacyWire = state();
+  delete legacyWire.likes;
+  assert.deepEqual(featureSwitchesStateResponse(envelope(legacyWire)), {
+    ...legacyWire,
+    likes: null,
+  }, "a pre-T-659 Core decodes with Likes explicitly unavailable");
   const neverSet = state({
     hey: switchState(true, { updated_at: 0, updated_by: "" }),
     footprints: switchState(true, { updated_at: 0, updated_by: "" }),
+    likes: switchState(true, { updated_at: 0, updated_by: "" }),
     revision: 0,
   });
   assert.deepEqual(featureSwitchesStateResponse(envelope(neverSet)), neverSet);
@@ -460,20 +523,52 @@ test("state decoding ignores additive fields, stays versioned, and keeps provena
   assert.equal(featureSwitchesStateResponse(envelope(state({
     hey: switchState(true, { enabled: "true" }),
   }))), null);
+  assert.equal(featureSwitchesStateResponse(envelope(state({
+    likes: switchState(true, { enabled: "true" }),
+  }))), null, "a served known switch keeps strict value validation");
   assert.equal(featureSwitchesStateResponse(envelope(state({ contract_version: 2 }))), null);
   assert.equal(featureSwitchesStateResponse(envelope(state({ revision: 1.5 }))), null);
   const additive = state();
   Object.assign(additive, { extra: true });
   Object.assign(additive.hey, { future_provenance: true });
+  Object.assign(additive.likes, { future_provenance: true });
   assert.deepEqual(featureSwitchesStateResponse(envelope(additive)), featureSwitchesStateResponse(envelope(state())));
   assert.equal(featureSwitchesStateResponse(envelope({
     contract_version: 1,
     hey_enabled: true,
     footprints_enabled: false,
+    likes_enabled: true,
     revision: 4,
   })), null, "the pre-provider flattened lookalike must fail closed");
   assert.equal(featureSwitchesStateResponse(envelope(state(), { can_send: 1 })), null);
   assert.equal(featureSwitchesStateResponse({ data: state() }), null);
+});
+
+test("the Feature switches panel renders Photo likes when served and disables it for a pre-T-659 Core", () => {
+  const servedMarkup = renderCards(parsedState(), "en");
+  assert.equal(servedMarkup.match(/data-feature-switch=/gu)?.length, 3);
+  const servedLikes = renderedCard(servedMarkup, "likes");
+  assert.match(servedLikes, /data-served="true"/u);
+  assert.match(servedLikes, />Photo likes</u);
+  assert.match(servedLikes, /photos cannot be liked and the like counter disappears/u);
+  assert.match(servedLikes, />Turn photo likes off</u);
+  assert.doesNotMatch(servedLikes, /<button[^>]*disabled/u);
+
+  const hungarianLikes = renderedCard(renderCards(parsedState(), "hu"), "likes");
+  assert.match(hungarianLikes, />Fotó-kedvelés \(like\)</u);
+  assert.match(
+    hungarianLikes,
+    /Ha ki van kapcsolva, a fotók nem kedvelhetők és a kedvelés-számláló eltűnik; a Látogatók lista mindig elérhető\./u,
+  );
+
+  const legacyMarkup = renderCards(parsedState({ likes: null }), "en");
+  const unavailableLikes = renderedCard(legacyMarkup, "likes");
+  assert.match(unavailableLikes, /data-served="false"/u);
+  assert.match(unavailableLikes, /Not served by Core/u);
+  assert.match(unavailableLikes, /<input[^>]*disabled/u);
+  assert.match(unavailableLikes, /<button[^>]*disabled[^>]*>Not served by Core<\/button>/u);
+  assert.match(renderedCard(legacyMarkup, "hey"), /data-served="true"/u);
+  assert.match(renderedCard(legacyMarkup, "footprints"), /data-served="true"/u);
 });
 
 test("mutation and conflict decoders accept complete authoritative known state", () => {
@@ -483,9 +578,26 @@ test("mutation and conflict decoders accept complete authoritative known state",
     replayed: false,
   }));
   assert.equal(mutation?.footprints.enabled, false);
+  assert.equal(mutation?.likes?.enabled, true);
   assert.equal(mutation?.revision, 5);
   assert.equal(mutation?.no_change, false);
   assert.equal(mutation?.replayed, false);
+
+  const likesMutation = featureSwitchesMutationResponse(envelope({
+    ...state({ likes: switchState(false), revision: 5 }),
+    no_change: false,
+    replayed: false,
+  }));
+  assert.equal(likesMutation?.likes?.enabled, false);
+
+  const legacyMutationState = state({ footprints: switchState(false), revision: 5 });
+  delete legacyMutationState.likes;
+  const legacyMutation = featureSwitchesMutationResponse(envelope({
+    ...legacyMutationState,
+    no_change: false,
+    replayed: false,
+  }));
+  assert.equal(legacyMutation?.likes, null, "pre-T-659 mutation replies remain readable");
 
   assert.equal(featureSwitchesMutationResponse(envelope({ ...state(), no_change: false })), null);
   assert.equal(featureSwitchesMutationResponse(envelope({
@@ -498,6 +610,7 @@ test("mutation and conflict decoders accept complete authoritative known state",
   const conflict = featureSwitchesConflictResponse(conflictBody);
   assert.equal(conflict?.current.revision, 5);
   assert.equal(conflict?.current.footprints.enabled, false);
+  assert.equal(conflict?.current.likes?.enabled, true);
 
   assert.equal(featureSwitchesConflictResponse(errorEnvelope("feature-switches-conflict", 409, {})), null);
   assert.deepEqual(
@@ -531,7 +644,7 @@ test("internal reasons use Unicode scalar bounds without an HTML maxlength short
   assert.equal(featureSwitchesReasonIsValid(42), false);
 });
 
-test("proxy bodies normalize one exact switch command and reject loose or caller-owned material", () => {
+test("proxy bodies serialize one exact switch command and reject loose or caller-owned material", () => {
   assert.deepEqual(
     { ...normalizeFeatureSwitchesProxyBody("feature_switches_get", { contract_version: 1 }) },
     { contract_version: 1 },
@@ -545,6 +658,10 @@ test("proxy bodies normalize one exact switch command and reject loose or caller
       setBody(selectedSwitch),
     ) }, setBody(selectedSwitch));
   }
+  assert.equal(
+    normalizeFeatureSwitchesProxyBody("feature_switches_set", setBody("likes"))?.switch,
+    "likes",
+  );
   for (const loose of [true, false, 1, 0, "1", "0", "on", "yes", "TRUE", "False", "", " true"]) {
     assert.equal(normalizeFeatureSwitchesProxyBody(
       "feature_switches_set",
@@ -671,6 +788,20 @@ test("success and authoritative-read convergence bind target value and exact fam
   assert.deepEqual(featureSwitchesProvenance(live, "hey"), {
     updated_at: 2, updated_by: "hey@friending.com",
   });
+
+  const likesPending = featureSwitchesPendingMutation(
+    featureSwitchesTarget("likes"),
+    setBody("likes"),
+  )!;
+  assert.equal(likesPending.target, "feature_switches:v1:likes");
+  assert.equal(featureSwitchesMutationConverged(likesPending, {
+    ...parsedState({ likes: { enabled: false, updated_at: 2, updated_by: "likes@friending.com" }, revision: 5 }),
+    no_change: false,
+    replayed: false,
+  }), true);
+  assert.equal(featureSwitchesStateConverged(likesPending, parsedState({ likes: null, revision: 5 })), false);
+  assert.equal(featureSwitchesValue(parsedState({ likes: null }), "likes"), null);
+  assert.equal(featureSwitchesProvenance(parsedState({ likes: null }), "likes"), null);
 });
 
 test("every no-data refusal has an exact status, localized class, and safe retry policy", async () => {
@@ -748,6 +879,7 @@ test("the panel, proxy, locales and Help share one dormant family cutover", asyn
 
   assert.match(panel, /featureSwitchesPersistBeforeMutation\([\s\S]+adminCall\(command!\.action/);
   assert.match(panel, /adminCall\(existing\.action, existing\.payload\)/);
+  assert.match(panel, /export function FeatureSwitchesCardGrid/);
   assert.match(panel, /featureSwitchesStateConverged\(candidate, parsed\)/);
   assert.match(panel, /await load\(\)/);
   assert.match(panel, /setLoadFailure\(error \? featureSwitchesErrorKey\(error\) : null\)/);
@@ -768,16 +900,30 @@ test("the panel, proxy, locales and Help share one dormant family cutover", asyn
     Object.keys(en.featureSwitches.switches).sort(),
     Object.keys(hu.featureSwitches.switches).sort(),
   );
+  for (const selectedSwitch of FEATURE_SWITCHES) {
+    assert.deepEqual(
+      Object.keys(en.featureSwitches.switches[selectedSwitch]).sort(),
+      Object.keys(hu.featureSwitches.switches[selectedSwitch]).sort(),
+    );
+  }
 
   assert.match(help, /route: "\/configuration"/);
   assert.match(help, /"featureSwitches"/);
   assert.match(help, /route: "\/footprints"/);
   assert.match(help, /"featureSwitchesPointer"/);
-  assert.match(en.adminHelp.pages.configuration.sections.featureSwitches.guidance, /photo-like gesture/);
+  assert.match(en.adminHelp.pages.configuration.sections.featureSwitches.guidance, /Photo likes off/);
+  assert.match(en.adminHelp.pages.configuration.sections.featureSwitches.guidance, /Visitors is always available/);
   assert.match(en.adminHelp.pages.configuration.sections.featureSwitches.guidance, /one family revision/);
   assert.match(en.adminHelp.pages.footprints.sections.featureSwitchesPointer.guidance, /Configuration/);
-  assert.match(en.featureSwitches.switches.footprints.consequenceOff, /photo-like gesture/);
-  assert.match(en.featureSwitches.switches.footprints.consequenceOff, /collector tab/);
+  assert.match(en.adminHelp.pages.footprints.sections.featureSwitchesPointer.guidance, /Visitors list remain available/);
+  assert.match(en.featureSwitches.switches.footprints.consequenceOff, /Visitors list remain available/);
+  assert.match(en.featureSwitches.switches.footprints.consequenceOff, /Photo likes follow their own switch/);
+  assert.equal(en.featureSwitches.switches.likes.title, "Photo likes");
+  assert.equal(hu.featureSwitches.switches.likes.title, "Fotó-kedvelés (like)");
+  assert.equal(
+    hu.featureSwitches.switches.likes.summary,
+    "Ha ki van kapcsolva, a fotók nem kedvelhetők és a kedvelés-számláló eltűnik; a Látogatók lista mindig elérhető.",
+  );
   assert.match(en.featureSwitches.launchPosture, /keep Hey on/);
   assert.match(en.featureSwitches.launchPosture, /explicitly turn Footprints off/);
 });
