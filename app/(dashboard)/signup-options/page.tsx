@@ -9,54 +9,14 @@ import PageHeader from "@/components/PageHeader";
 import ProfileIconUploadField from "@/components/ProfileIconUploadField";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
-import { isDisclosureOnlyOrientation } from "@/lib/orientationIntegrity";
 import { migrateLegacyAudience } from "@/lib/memberAudience";
 import {
-  type CastGroupSegment,
-  type UserCastGroup,
-  userCastGroupsPayload,
-} from "@/lib/userCastGroups";
-
-type SignupOption = {
-  key: string;
-  name_en: string;
-  name_hu: string;
-  sort_order: number;
-  active: boolean;
-  is_custom: boolean;
-  system_owned: boolean;
-  audiences?: string[];
-};
-
-type SignupGroupAudience = {
-  mode: "global" | "groups";
-  genders: string[];
-  group_ids: string[];
-  segments: string[];
-};
-
-type SignupOptionGroup = {
-  key: string;
-  name_en: string;
-  name_hu: string;
-  system_owned: boolean;
-  required: boolean;
-  custom_allowed: boolean;
-  extensible_system: boolean;
-  profile_field: string;
-  question_pack: string;
-  revision: number;
-  icon: { url: string; mime: string };
-  audience: SignupGroupAudience;
-  options: SignupOption[];
-};
-
-type SignupCatalog = {
-  schema_version: number;
-  cast_groups: UserCastGroup[];
-  segments: CastGroupSegment[];
-  groups: SignupOptionGroup[];
-};
+  signupOptionCatalog,
+  type SignupCatalog,
+  type SignupOption,
+  type SignupOptionGroup,
+} from "@/lib/signupOptions";
+import type { UserCastGroup } from "@/lib/userCastGroups";
 
 type OptionDraft = SignupOption & {
   group_key: string;
@@ -76,109 +36,6 @@ type GroupDraft = {
 
 type GroupFilter = "all" | "system" | "optional" | "targeted";
 const AUDIENCE_GENDERS = ["male", "female", "other"] as const;
-
-function record(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : null;
-}
-
-function stringList(value: unknown): string[] | null {
-  if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) return null;
-  return [...new Set(value as string[])];
-}
-
-function parseCatalog(raw: unknown): SignupCatalog | null {
-  const catalog = record(raw);
-  if (!catalog || !Array.isArray(catalog.groups)) return null;
-  const castPayload = userCastGroupsPayload({
-    groups: catalog.cast_groups,
-    segments: catalog.segments,
-  });
-  if (!castPayload) return null;
-  const groups: SignupOptionGroup[] = [];
-  for (const value of catalog.groups) {
-    const group = record(value);
-    const icon = record(group?.icon);
-    const audience = record(group?.audience);
-    const genders = stringList(audience?.genders);
-    const groupIds = stringList(audience?.group_ids);
-    const segments = stringList(audience?.segments);
-    if (
-      !group
-      || typeof group.key !== "string"
-      || typeof group.name_en !== "string"
-      || typeof group.name_hu !== "string"
-      || typeof group.system_owned !== "boolean"
-      || typeof group.required !== "boolean"
-      || typeof group.custom_allowed !== "boolean"
-      || typeof group.profile_field !== "string"
-      || typeof group.question_pack !== "string"
-      || !Number.isInteger(group.revision)
-      || !icon
-      || typeof icon.url !== "string"
-      || typeof icon.mime !== "string"
-      || !audience
-      || (audience.mode !== "global" && audience.mode !== "groups")
-      || !genders
-      || !groupIds
-      || !segments
-      || !Array.isArray(group.options)
-    ) return null;
-    const options: SignupOption[] = [];
-    for (const optionValue of group.options) {
-      const option = record(optionValue);
-      if (
-        !option
-        || typeof option.key !== "string"
-        || typeof option.name_en !== "string"
-        || typeof option.name_hu !== "string"
-        || typeof option.sort_order !== "number"
-        || typeof option.active !== "boolean"
-        || typeof option.is_custom !== "boolean"
-        || typeof option.system_owned !== "boolean"
-        || (option.audiences !== undefined && !stringList(option.audiences))
-        || (group.key === "orientation" && isDisclosureOnlyOrientation(option.key))
-      ) return null;
-      options.push({
-        key: option.key,
-        name_en: option.name_en,
-        name_hu: option.name_hu,
-        sort_order: option.sort_order,
-        active: option.active,
-        is_custom: option.is_custom,
-        system_owned: option.system_owned,
-        ...(option.audiences ? { audiences: option.audiences as string[] } : {}),
-      });
-    }
-    groups.push({
-      key: group.key,
-      name_en: group.name_en,
-      name_hu: group.name_hu,
-      system_owned: group.system_owned,
-      required: group.required,
-      custom_allowed: group.custom_allowed,
-      extensible_system: group.extensible_system === true,
-      profile_field: group.profile_field,
-      question_pack: group.question_pack,
-      revision: Number(group.revision),
-      icon: { url: icon.url, mime: icon.mime },
-      audience: {
-        mode: audience.mode,
-        genders,
-        group_ids: groupIds,
-        segments,
-      },
-      options,
-    });
-  }
-  return {
-    schema_version: typeof catalog.schema_version === "number" ? catalog.schema_version : 1,
-    cast_groups: castPayload.groups,
-    segments: castPayload.segments,
-    groups,
-  };
-}
 
 function groupDraft(group: SignupOptionGroup, castGroups: UserCastGroup[]): GroupDraft {
   const migrated = migrateLegacyAudience(
@@ -243,7 +100,6 @@ function OptionDialog({
         </div>
         <div className="dialog-body form-grid">
           {lockedMetadata && <div className="system-option-notice field-full" role="note"><strong>{t("systemAnswer")}</strong><span>{t("systemAnswerCopy")}</span></div>}
-          {group.key === "orientation" && <div className="system-option-notice field-full" role="note"><strong>{t("matchingOrientationTitle")}</strong><span>{t("matchingOrientationCopy")}</span></div>}
           <label className="field field-full">
             <span>{t("key")}</span>
             <input value={draft.key} autoFocus={draft.is_new} disabled={!draft.is_new || lockedMetadata || busy} maxLength={64} spellCheck={false} onChange={(event) => onChange({ ...draft, key: event.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") })} />
@@ -365,7 +221,7 @@ export default function SignupOptionsPage() {
   const load = useCallback(async () => {
     setState((current) => current === "ready" ? current : "loading");
     const response = await adminCall("list_signup_options");
-    const parsed = response?.success ? parseCatalog(response.catalog) : null;
+    const parsed = response?.success ? signupOptionCatalog(response.catalog) : null;
     if (!parsed) { setState("error"); return; }
     setCatalog(parsed);
     setState("ready");
@@ -392,7 +248,7 @@ export default function SignupOptionsPage() {
   }, [catalog, filter, query]);
 
   function applyCatalog(raw: unknown): boolean {
-    const parsed = parseCatalog(raw);
+    const parsed = signupOptionCatalog(raw);
     if (!parsed) return false;
     setCatalog(parsed);
     return true;
@@ -403,10 +259,6 @@ export default function SignupOptionsPage() {
     const key = optionDraft.key.trim();
     if (!/^[a-z][a-z0-9_]{0,63}$/.test(key)) { setFormError(t("keyInvalid")); return; }
     if (!optionDraft.name_en.trim() || !optionDraft.name_hu.trim()) { setFormError(t("namesRequired")); return; }
-    if (optionDraft.group_key === "orientation" && isDisclosureOnlyOrientation(key)) {
-      setFormError(t("orientationDisclosureForbidden"));
-      return;
-    }
     const group = catalog.groups.find((row) => row.key === optionDraft.group_key);
     if (group?.extensible_system && optionDraft.is_custom && optionDraft.audiences.length === 0) { setFormError(t("audiencesRequired")); return; }
     setBusy(true); setFormError("");
@@ -416,13 +268,7 @@ export default function SignupOptionsPage() {
     });
     setBusy(false);
     if (!response?.success || !applyCatalog(response.catalog)) {
-      setFormError(
-        response?.error === "signup-option-system-protected"
-          ? t("systemProtected")
-          : response?.error === "signup-option-orientation-disclosure-forbidden"
-            ? t("orientationDisclosureForbidden")
-            : t("saveError"),
-      );
+      setFormError(response?.error === "signup-option-system-protected" ? t("systemProtected") : t("saveError"));
       return;
     }
     setOptionDraft(null); setToast(t("saved"));
@@ -492,7 +338,6 @@ export default function SignupOptionsPage() {
           <label className="field"><span>{t("search")}</span><input type="search" value={query} placeholder={t("searchPlaceholder")} onChange={(event) => setQuery(event.target.value)} /></label>
           <label className="field"><span>{t("groupFilter")}</span><select value={filter} onChange={(event) => setFilter(event.target.value as GroupFilter)}><option value="all">{t("filterAll")}</option><option value="system">{t("filterSystem")}</option><option value="optional">{t("filterOptional")}</option><option value="targeted">{t("filterTargeted")}</option></select></label>
           <div className="system-option-notice"><strong>{t("systemAnswersTitle")}</strong><span>{t("systemAnswersIntro")}</span></div>
-          <div className="system-option-notice"><strong>{t("matchingOrientationTitle")}</strong><span>{t("matchingOrientationCopy")}</span></div>
         </div>
       </section>
       <div className="signup-option-groups">
