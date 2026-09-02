@@ -10,12 +10,14 @@ import {
   movePresentationSource,
   normalizeManagedIcon,
   parsePresentationAdminPayload,
+  parsePresentationRefusal,
   serializePresentationLayout,
   sourceIdentity,
   type PresentationAdminPayload,
   type PresentationBuiltinSource,
   type PresentationLayout,
   type PresentationSource,
+  type PresentationSourceIssue,
   type PresentationSourceRef,
 } from "@/lib/profilePresentation";
 
@@ -101,6 +103,10 @@ export default function ProfilePresentationPage() {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // Two different lists, never merged: what the server healed away, and what it
+  // refused. A single banner for both is what T-663 replaced.
+  const [dropped, setDropped] = useState<PresentationSourceIssue[]>([]);
+  const [refused, setRefused] = useState<PresentationSourceIssue[]>([]);
   const [toast, setToast] = useState("");
   const [dragged, setDragged] = useState<PresentationSourceRef | null>(null);
   const [accent, setAccent] = useState<"male" | "female" | "neutral">("neutral");
@@ -113,7 +119,10 @@ export default function ProfilePresentationPage() {
     if (!parsed) return false;
     setPayload(parsed);
     setBaseline(parsed.layout);
-    if (!preserveDraft) setDraft(parsed.layout);
+    if (!preserveDraft) {
+      setDraft(parsed.layout);
+      setDropped(parsed.layout.dropped_sources);
+    }
     return true;
   }, []);
 
@@ -125,6 +134,7 @@ export default function ProfilePresentationPage() {
       return;
     }
     setError("");
+    setRefused([]);
     setStatus("ready");
   }, [applyPayload]);
 
@@ -148,7 +158,7 @@ export default function ProfilePresentationPage() {
   function isAssignable(source: PresentationSource): boolean {
     if (!payload) return false;
     if (source.kind === "builtin") return source.layout_allowed && !payload.reserved.builtins.includes(source.key);
-    return !payload.reserved.fields.includes(source.key);
+    return source.layout_allowed && !payload.reserved.fields.includes(source.key);
   }
 
   function move(source: PresentationSourceRef, destination: Destination, index?: number) {
@@ -157,6 +167,23 @@ export default function ProfilePresentationPage() {
     if (!definition || (destination !== "unused" && !isAssignable(definition))) return;
     setDraft(movePresentationSource(draft, source, destination, index));
     setError("");
+    setRefused([]);
+  }
+
+  /**
+   * Core's machine reason, in the operator's language. An unknown one is shown
+   * verbatim rather than hidden behind a generic sentence — the point of the
+   * per-item list is that the operator can act on it.
+   */
+  function issueReason(reason: string): string {
+    const known: Record<string, string> = {
+      "profile-presentation-source-not-found": t("reasons.notFound"),
+      "profile-presentation-source-private": t("reasons.private"),
+      "profile-presentation-source-reserved": t("reasons.reserved"),
+      "profile-presentation-source-duplicate": t("reasons.duplicate"),
+      "profile-presentation-source-invalid": t("reasons.invalid"),
+    };
+    return known[reason] ?? reason;
   }
 
   function drop(destination: Destination, index?: number) {
@@ -193,10 +220,17 @@ export default function ProfilePresentationPage() {
     if (!draft) return;
     setBusy(true);
     setError("");
+    setRefused([]);
     const response = await adminCall("save_profile_presentation", serializePresentationLayout(draft));
     setBusy(false);
     if (!response?.success) {
-      setError(response?.error === "profile-presentation-conflict" ? t("conflict") : t("saveError"));
+      // A refusal now names the offending rows. The draft is kept either way,
+      // so the operator fixes the named row instead of losing the layout.
+      const items = parsePresentationRefusal(response);
+      setRefused(items);
+      setError(response?.error === "profile-presentation-conflict"
+        ? t("conflict")
+        : items.length > 0 ? t("refusedIntro") : t("saveError"));
       return;
     }
     if (!applyPayload(response.data)) {
@@ -247,9 +281,44 @@ export default function ProfilePresentationPage() {
       <section className="panel presentation-toolbar-panel">
         <div className="panel-body presentation-toolbar">
           <div><strong>{t("revision", { revision: baseline.revision })}</strong><p>{t("toolbarCopy")}</p></div>
-          <div className="row-actions"><button className="button button-secondary" type="button" disabled={!dirty || busy} onClick={() => { setDraft(baseline); setError(""); }}>{t("reset")}</button><button className="button button-primary" type="button" disabled={!dirty || busy} onClick={() => void save()}>{busy ? common("saving") : common("save")}</button></div>
+          <div className="row-actions"><button className="button button-secondary" type="button" disabled={!dirty || busy} onClick={() => { setDraft(baseline); setError(""); setRefused([]); }}>{t("reset")}</button><button className="button button-primary" type="button" disabled={!dirty || busy} onClick={() => void save()}>{busy ? common("saving") : common("save")}</button></div>
         </div>
-        {error ? <div className="alert alert-error presentation-page-alert" role="alert"><span>{error}</span>{error === t("conflict") ? <button className="button button-secondary button-small" type="button" onClick={() => void load()}>{t("reload")}</button> : null}</div> : null}
+        {error ? (
+          <div className={`alert alert-error presentation-page-alert${refused.length > 0 ? " presentation-page-alert-stacked" : ""}`} role="alert">
+            <span>{error}</span>
+            {refused.length > 0 ? (
+              <ul className="presentation-issue-list">
+                {refused.map((item) => (
+                  <li key={`${item.placement}:${item.kind}:${item.key}`}>
+                    <code>{item.kind ? `${item.kind}:${item.key}` : t("unreadableSource")}</code>
+                    {" · "}
+                    {t(`placements.${item.placement}`)}
+                    {" · "}
+                    {issueReason(item.reason)}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {error === t("conflict") ? <button className="button button-secondary button-small" type="button" onClick={() => void load()}>{t("reload")}</button> : null}
+          </div>
+        ) : null}
+        {dropped.length > 0 ? (
+          <div className="alert alert-warning presentation-page-alert presentation-page-alert-stacked" role="status">
+            <span>{t("droppedIntro", { count: dropped.length })}</span>
+            <ul className="presentation-issue-list">
+              {dropped.map((item) => (
+                <li key={`${item.placement}:${item.kind}:${item.key}`}>
+                  <code>{item.kind ? `${item.kind}:${item.key}` : t("unreadableSource")}</code>
+                  {" · "}
+                  {t(`placements.${item.placement}`)}
+                  {" · "}
+                  {issueReason(item.reason)}
+                </li>
+              ))}
+            </ul>
+            <button className="button button-secondary button-small" type="button" onClick={() => setDropped([])}>{t("droppedDismiss")}</button>
+          </div>
+        ) : null}
       </section>
 
       <div className="presentation-layout-grid">
@@ -272,7 +341,7 @@ export default function ProfilePresentationPage() {
             const assignable = isAssignable(source);
             return <article className={`presentation-inventory-card${assignable ? "" : " is-reserved"}`} draggable={assignable} onDragStart={() => setDragged(source)} onDragEnd={() => setDragged(null)} key={sourceIdentity(source)}>
               <span className="presentation-source-icon">{/* eslint-disable-next-line @next/next/no-img-element */}{source.icon.url ? <img src={source.icon.url} alt="" /> : <b>{localeText(source.labels, locale).slice(0, 1)}</b>}</span>
-              <span className="presentation-source-copy"><strong>{localeText(source.labels, locale)}</strong><small><code>{source.kind}:{source.key}</code>{source.kind === "builtin" && source.dedicated_section ? ` · ${t("dedicated", { section: source.dedicated_section })}` : ""}{source.kind === "field" && !source.active ? ` · ${t("inactive")}` : ""}</small><em>{sourceSample(source, locale)}</em></span>
+              <span className="presentation-source-copy"><strong>{localeText(source.labels, locale)}</strong><small><code>{source.kind}:{source.key}</code>{source.dedicated_section ? ` · ${t("dedicated", { section: source.dedicated_section })}` : ""}{source.kind === "field" && !source.active ? ` · ${t("inactive")}` : ""}</small><em>{sourceSample(source, locale)}</em></span>
               <div className="presentation-inventory-actions">
                 {assignable ? <><button className="button button-secondary button-small" type="button" onClick={() => move(source, "highlight_cloud")}>{t("toHighlights")}</button><button className="button button-secondary button-small" type="button" onClick={() => move(source, "more_about_me")}>{t("toMore")}</button></> : <span className="badge badge-inactive">{t("reserved")}</span>}
                 {source.kind === "builtin" ? <button className="text-button" type="button" onClick={() => { setSourceError(""); setSourceEditor(structuredClone(source)); }}>{t("editDefinition")}</button> : null}

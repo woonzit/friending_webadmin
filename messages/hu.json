@@ -6789,7 +6789,22 @@
     "previewRow": "More About Me",
     "previewValue": "Feloldott nyilvános érték",
     "sectionOrder": "A tizenkét szekció kanonikus sorrendje",
-    "loadError": "A nyilvános Profile Presentation forráslista nem tölthető be."
+    "loadError": "A nyilvános Profile Presentation forráslista nem tölthető be.",
+    "refusedIntro": "A Core ezeket az elrendezés-elemeket visszautasította. A vázlat megmarad — javítsd az alábbi sorokat, és ments újra.",
+    "droppedIntro": "A Core {count} olyan forrást hagyott ki, ami már nem nyilvános, a többit elmentette.",
+    "droppedDismiss": "Elvetés",
+    "unreadableSource": "olvashatatlan elem",
+    "placements": {
+      "highlight_cloud": "Kiemelt címkék",
+      "more_about_me": "More About Me sorok"
+    },
+    "reasons": {
+      "notFound": "a forrás már nem létezik",
+      "private": "a forrás már nem nyilvános",
+      "reserved": "a forrásnak saját dedikált szekciója van",
+      "duplicate": "ugyanaz a forrás kétszer szerepel",
+      "invalid": "az elem hibás formátumú"
+    }
   },
   "profileTags": {
     "eyebrow": "Profil-discovery adatok",

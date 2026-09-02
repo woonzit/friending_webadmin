@@ -7,6 +7,7 @@ import {
   moveTagGroup,
   moveTagItem,
   parsePresentationAdminPayload,
+  parsePresentationRefusal,
   parseProfilePhotoInsights,
   parseProfileTagCatalogPayload,
   parseProfileTagPreview,
@@ -121,6 +122,80 @@ test("Profile Presentation inventory parser rejects duplicates and unmanaged ico
   const unmanaged = structuredClone(presentationPayload());
   unmanaged.sources.builtins[0].icon = { url: "https://example.com/icon.svg", mime: "image/svg+xml" };
   assert.equal(parsePresentationAdminPayload(unmanaged), null);
+});
+
+test("T-663: the inventory reads the dropped-sources note and both dedicated markers", () => {
+  // Absent is empty and a field with no flags is placeable, so a console built
+  // against a Core that predates T-663 still opens.
+  const legacy = parsePresentationAdminPayload(presentationPayload())!;
+  assert.deepEqual(legacy.layout.dropped_sources, []);
+  assert.equal(legacy.sources.fields[0]?.layout_allowed, true);
+  assert.equal(legacy.sources.fields[0]?.dedicated_section, "");
+
+  const healed = structuredClone(presentationPayload()) as Record<string, any>;
+  healed.layout.dropped_sources = [{
+    placement: "highlight_cloud",
+    kind: "builtin",
+    key: "looking_for",
+    reason: "profile-presentation-source-not-found",
+  }];
+  healed.sources.fields[0].layout_allowed = false;
+  healed.sources.fields[0].dedicated_section = "languages";
+  const parsed = parsePresentationAdminPayload(healed)!;
+  assert.equal(parsed.layout.dropped_sources.length, 1);
+  assert.equal(parsed.layout.dropped_sources[0]?.key, "looking_for");
+  assert.equal(parsed.layout.dropped_sources[0]?.reason, "profile-presentation-source-not-found");
+  assert.equal(parsed.sources.fields[0]?.layout_allowed, false);
+  assert.equal(parsed.sources.fields[0]?.dedicated_section, "languages");
+
+  // A malformed note is refused rather than shown as an empty reassurance.
+  const bad = structuredClone(healed) as Record<string, any>;
+  bad.layout.dropped_sources = [{ placement: "nowhere", kind: "builtin", key: "x", reason: "y" }];
+  assert.equal(parsePresentationAdminPayload(bad), null);
+});
+
+test("T-663: a refused save is read as one reason per item", () => {
+  assert.deepEqual(
+    parsePresentationRefusal({
+      success: false,
+      status_code: 422,
+      error: "profile-presentation-layout-refused",
+      details: {
+        items: [
+          {
+            placement: "highlight_cloud",
+            kind: "builtin",
+            key: "hometown",
+            reason: "profile-presentation-source-reserved",
+          },
+          {
+            placement: "more_about_me",
+            kind: "field",
+            key: "smoking",
+            reason: "profile-presentation-source-duplicate",
+          },
+        ],
+      },
+    }),
+    [
+      {
+        placement: "highlight_cloud",
+        kind: "builtin",
+        key: "hometown",
+        reason: "profile-presentation-source-reserved",
+      },
+      {
+        placement: "more_about_me",
+        kind: "field",
+        key: "smoking",
+        reason: "profile-presentation-source-duplicate",
+      },
+    ],
+  );
+  // Every other refusal keeps the generic banner: no details, no list.
+  assert.deepEqual(parsePresentationRefusal({ success: false, error: "profile-presentation-conflict" }), []);
+  assert.deepEqual(parsePresentationRefusal(null), []);
+  assert.deepEqual(parsePresentationRefusal({ details: { items: [{ key: "x" }] } }), []);
 });
 
 test("layout drag operation is duplicate-safe and serializes one complete optimistic draft", () => {

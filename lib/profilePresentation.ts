@@ -17,6 +17,30 @@ export type PresentationFieldSource = PresentationSourceRef & {
   sample_values: LocalizedText;
   active: boolean;
   audience: { mode: string; segments: string[] };
+  /**
+   * T-663. Core now names the WHOLE catalogue, marking the dedicated ones
+   * unplaceable the way it always did for built-ins, instead of hiding them.
+   * Both keys default to the pre-T-663 meaning so an older Core still parses.
+   */
+  layout_allowed: boolean;
+  dedicated_section: string;
+};
+
+/**
+ * One layout item Core would not serve, with the reason it gave.
+ *
+ * The same shape arrives from two places: `layout.dropped_sources`, items the
+ * server healed away because it retired the source under a layout that was
+ * legal when it was drawn, and the `details.items` of a refused save, items the
+ * console must fix. The page renders them differently and must not confuse
+ * them, which is why the reason travels with each item rather than as one
+ * banner for the request.
+ */
+export type PresentationSourceIssue = {
+  kind: "field" | "builtin" | "";
+  key: string;
+  placement: "highlight_cloud" | "more_about_me";
+  reason: string;
 };
 
 export type PresentationBuiltinSource = PresentationSourceRef & {
@@ -36,6 +60,7 @@ export type PresentationLayout = {
   revision: number;
   highlight_cloud: PresentationSourceRef[];
   more_about_me: PresentationSourceRef[];
+  dropped_sources: PresentationSourceIssue[];
 };
 
 export type PresentationAdminPayload = {
@@ -222,6 +247,39 @@ function sourceRef(value: unknown): PresentationSourceRef | null {
   return { kind: source.kind, key };
 }
 
+const ISSUE_PLACEMENTS = ["highlight_cloud", "more_about_me"] as const;
+
+function sourceIssue(value: unknown): PresentationSourceIssue | null {
+  const source = record(value);
+  if (
+    !source || typeof source.reason !== "string" || source.reason === ""
+    || !ISSUE_PLACEMENTS.includes(source.placement as typeof ISSUE_PLACEMENTS[number])
+    || (source.kind !== "field" && source.kind !== "builtin" && source.kind !== "")
+    || typeof source.key !== "string" || source.key.length > 64
+  ) return null;
+  return {
+    kind: source.kind,
+    key: source.key,
+    placement: source.placement as PresentationSourceIssue["placement"],
+    reason: source.reason,
+  };
+}
+
+function sourceIssues(value: unknown): PresentationSourceIssue[] | null {
+  // Absent is empty, not invalid: the key is additive and the console must keep
+  // working against a Core that predates it.
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > 200) return null;
+  const rows = value.map(sourceIssue);
+  return rows.some((row) => !row) ? null : rows as PresentationSourceIssue[];
+}
+
+/** The per-item reasons of a refused save, from the response's `details`. */
+export function parsePresentationRefusal(value: unknown): PresentationSourceIssue[] {
+  const details = record(record(value)?.details);
+  return sourceIssues(details?.items) ?? [];
+}
+
 function layout(value: unknown): PresentationLayout | null {
   const source = record(value);
   const revision = integer(source?.revision);
@@ -242,13 +300,15 @@ function layout(value: unknown): PresentationLayout | null {
   };
   const highlights = readPlacement(source.highlight_cloud);
   const more = readPlacement(source.more_about_me);
-  if (!highlights || !more) return null;
+  const dropped = sourceIssues(source.dropped_sources);
+  if (!highlights || !more || !dropped) return null;
   return {
     schema_version: 1,
     key: "public_profile_v1",
     revision,
     highlight_cloud: highlights,
     more_about_me: more,
+    dropped_sources: dropped,
   };
 }
 
@@ -264,6 +324,10 @@ function fieldSource(value: unknown): PresentationFieldSource | null {
     !source || source.kind !== "field" || !key || !labels || !managedIcon || !samples
     || typeof source.active !== "boolean" || !audience || typeof audience.mode !== "string" || !segments
   ) return null;
+  if (
+    (source.layout_allowed !== undefined && typeof source.layout_allowed !== "boolean")
+    || (source.dedicated_section !== undefined && typeof source.dedicated_section !== "string")
+  ) return null;
   return {
     kind: "field",
     key,
@@ -272,6 +336,8 @@ function fieldSource(value: unknown): PresentationFieldSource | null {
     sample_values: samples,
     active: source.active,
     audience: { mode: audience.mode, segments },
+    layout_allowed: source.layout_allowed ?? true,
+    dedicated_section: (source.dedicated_section as string | undefined) ?? "",
   };
 }
 

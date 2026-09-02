@@ -7376,6 +7376,30 @@ body .verification-level-pill.level-strong {
   margin: 0 22px 20px;
 }
 
+/*
+ * An alert that carries one reason per layout item stacks instead of sitting on
+ * a single row: the list IS the message. Before T-663 this surface had only a
+ * one-line "could not be saved", which is exactly what left an operator with a
+ * layout they could neither save nor diagnose.
+ */
+.presentation-page-alert-stacked {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.presentation-issue-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.presentation-issue-list code {
+  font-size: 11px;
+}
+
 .presentation-layout-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

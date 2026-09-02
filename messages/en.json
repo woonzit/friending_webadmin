@@ -6789,7 +6789,22 @@
     "previewRow": "More About Me",
     "previewValue": "Resolved public value",
     "sectionOrder": "Canonical twelve-section order",
-    "loadError": "The public Profile Presentation inventory could not be loaded."
+    "loadError": "The public Profile Presentation inventory could not be loaded.",
+    "refusedIntro": "Core refused these layout items. Your draft is preserved — fix the rows below and save again.",
+    "droppedIntro": "Core dropped {count} source that is no longer public and saved the rest.",
+    "droppedDismiss": "Dismiss",
+    "unreadableSource": "unreadable item",
+    "placements": {
+      "highlight_cloud": "Highlighted chips",
+      "more_about_me": "More About Me rows"
+    },
+    "reasons": {
+      "notFound": "the source no longer exists",
+      "private": "the source is no longer public",
+      "reserved": "the source has its own dedicated section",
+      "duplicate": "the same source is placed twice",
+      "invalid": "the item is malformed"
+    }
   },
   "profileTags": {
     "eyebrow": "Profile discovery data",
