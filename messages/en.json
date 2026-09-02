@@ -1590,9 +1590,10 @@
             "purpose": "Each rule either inherits the carousel from the chain or replaces it with its own ordered items — image or video cards with bilingual copy and optional typography overrides.",
             "actions": {
               "1": "Choose Replace only when this audience should see a different carousel.",
-              "2": "Order the items deliberately and keep unapproved cards inactive."
+              "2": "Order the items deliberately and keep unapproved cards inactive.",
+              "3": "Use 1.875:1 images — 1875 × 1000 px recommended, at least 1320 × 704 — to match the full-bleed Discover slot; the editor previews the centered aspect-fill crop."
             },
-            "guidance": "An empty replacement hides the carousel for matching members. The global rule's replacement is what every override inherits."
+            "guidance": "An empty storefront or geo replacement does not hide the global hero: Core skips that empty list and continues down the scope chain. The global rule remains the final stored hero source."
           },
           "palette": {
             "title": "Light and dark palette",
@@ -5964,7 +5965,7 @@
       "landingPreviewButton": "Continue",
       "landingPreviewHint": "Resolved as this rule → global rule → compiled default, in the console's language. The button shows the resolved light accent.",
       "heroTitle": "Discover hero carousel",
-      "heroCopy": "Inherit the chain's carousel or replace it with this rule's own items. An empty replacement hides the carousel.",
+      "heroCopy": "Inherit the chain's carousel or replace it with this rule's own items. An empty override falls through to the global hero.",
       "paletteTitle": "Palette",
       "paletteCopyGlobal": "The brand palette. Every role you leave on “inherit” uses the compiled default.",
       "paletteCopyOverride": "Override single roles per mode; everything else inherits from the global rule, then the compiled default."
@@ -6162,7 +6163,8 @@
       "inheritCount": "{count} inherited items",
       "modeReplace": "Replace",
       "replaceHint": "this rule's own list",
-      "replaceEmpty": "No items yet — the carousel stays hidden for matching members.",
+      "replaceEmpty": "No items yet — this empty override falls through to the global hero.",
+      "replaceEmptyGlobal": "No items yet — the global carousel stays hidden until an item is added.",
       "addItem": "Add hero item",
       "itemTitle": "Item {index}",
       "moveUp": "Move up",
@@ -6173,6 +6175,12 @@
       "sortOrder": "Order",
       "campaignImage": "Hero image",
       "campaignImageHint": "The uploaded image is optimized and stored on the Friending image CDN.",
+      "campaignImageRecommendation": "Recommended size: 1875 × 1000 px (1.875 : 1), min 1320 × 704.",
+      "cropPreviewTitle": "Centered Discover crop preview",
+      "imageDimensions": "Source: {width} × {height} px ({ratio} : 1).",
+      "cropTopBottom": "This image is taller than the Discover slot and will be cropped at the top and bottom.",
+      "cropLeftRight": "This image is wider than the Discover slot and will be cropped on the left and right.",
+      "dimensionsUnavailable": "Image dimensions could not be read from this remote URL; use the recommended size and ratio above.",
       "videoUrl": "Video URL",
       "videoUrlHint": "Use an HTTPS video URL served by an approved CDN.",
       "destinationUrl": "Destination URL",

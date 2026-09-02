@@ -1590,9 +1590,10 @@
             "purpose": "Minden szabály vagy örökli a lánc karusszelét, vagy lecseréli a saját, sorba rendezett elemeire — kép- vagy videokártyákra kétnyelvű szöveggel és opcionális tipográfiai felülírással.",
             "actions": {
               "1": "A Lecseréli módot csak akkor válaszd, ha ez a közönség más karusszelt lásson.",
-              "2": "Tudatosan rendezd az elemeket, és a jóvá nem hagyott kártyákat tartsd inaktívan."
+              "2": "Tudatosan rendezd az elemeket, és a jóvá nem hagyott kártyákat tartsd inaktívan.",
+              "3": "Használj 1.875:1 arányú képeket — ajánlottan 1875 × 1000 px, legalább 1320 × 704 — a teljes szélességű Discover-helyhez; a szerkesztő megmutatja a középre igazított aspect-fill vágást."
             },
-            "guidance": "Az üres csere elrejti a karusszelt az illeszkedő tagoknál. A globális szabály cseréje az, amit minden felülírás örököl."
+            "guidance": "Az üres áruház-ország vagy geo csere nem rejti el a globális hero-t: a Core átugorja az üres listát, és folytatja a hatóköri láncot. A globális szabály marad a végső tárolt hero-forrás."
           },
           "palette": {
             "title": "Világos és sötét paletta",
@@ -5964,7 +5965,7 @@
       "landingPreviewButton": "Tovább",
       "landingPreviewHint": "Feloldva: ez a szabály → globális szabály → beépített alapértelmezés, a konzol nyelvén. A gomb a feloldott világos accentet mutatja.",
       "heroTitle": "Discover hero-karusszel",
-      "heroCopy": "Örököld a lánc karusszelét, vagy cseréld le ennek a szabálynak a saját elemeire. Az üres csere elrejti a karusszelt.",
+      "heroCopy": "Örököld a lánc karusszelét, vagy cseréld le ennek a szabálynak a saját elemeire. Az üres felülírás visszaesik a globális hero-ra.",
       "paletteTitle": "Paletta",
       "paletteCopyGlobal": "A márkapaletta. Minden „örökli” állapotban hagyott szerep a beépített alapértelmezést használja.",
       "paletteCopyOverride": "Módonként egyes szerepeket írhatsz felül; minden más a globális szabálytól, majd a beépített alapértelmezéstől öröklődik."
@@ -6162,7 +6163,8 @@
       "inheritCount": "{count} örökölt elem",
       "modeReplace": "Lecseréli",
       "replaceHint": "ennek a szabálynak a saját listája",
-      "replaceEmpty": "Még nincs elem — az illeszkedő tagoknál a karusszel rejtve marad.",
+      "replaceEmpty": "Még nincs elem — ez az üres felülírás visszaesik a globális hero-ra.",
+      "replaceEmptyGlobal": "Még nincs elem — a globális karusszel addig rejtve marad, amíg nem adsz hozzá elemet.",
       "addItem": "Hero-elem hozzáadása",
       "itemTitle": "{index}. elem",
       "moveUp": "Feljebb",
@@ -6173,6 +6175,12 @@
       "sortOrder": "Sorrend",
       "campaignImage": "Hero-kép",
       "campaignImageHint": "A feltöltött képet optimalizáljuk, és a Friending képtárhelyén tároljuk.",
+      "campaignImageRecommendation": "Ajánlott méret: 1875 × 1000 px (1.875 : 1), minimum 1320 × 704.",
+      "cropPreviewTitle": "Középre igazított Discover-vágási előnézet",
+      "imageDimensions": "Forrás: {width} × {height} px ({ratio} : 1).",
+      "cropTopBottom": "Ez a kép magasabb a Discover-helynél, ezért a teteje és az alja le lesz vágva.",
+      "cropLeftRight": "Ez a kép szélesebb a Discover-helynél, ezért a bal és jobb széle le lesz vágva.",
+      "dimensionsUnavailable": "A kép méretei nem olvashatók ki erről a távoli URL-ről; használd a fenti ajánlott méretet és arányt.",
       "videoUrl": "Videó URL",
       "videoUrlHint": "Jóváhagyott CDN-ről származó HTTPS videó-URL.",
       "destinationUrl": "Cél URL",

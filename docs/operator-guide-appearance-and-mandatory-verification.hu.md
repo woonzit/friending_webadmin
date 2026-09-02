@@ -129,8 +129,12 @@ körhintát lásson; részleges összefésülés nincs.
 
 - A kártyák képek vagy videók, kétnyelvű szöveggel és opcionális tipográfiával.
 - Az általad megadott sorrendben lapoznak a tagok.
-- Az **üres csere elrejti a körhintát** az illeszkedő tagok elől. Ez jogos
-  választás, de győződj meg róla, hogy szándékos.
+- A teljes szélességű Discover-helyhez **1.875:1** arányú képet használj: az
+  ajánlott méret 1875 × 1000 px, a minimális referenciaméret 1320 × 704 px. A
+  szerkesztő megmutatja a középre igazított aspect-fill vágást, és a szokatlanul
+  magas vagy széles képre a mentés blokkolása nélkül figyelmeztet.
+- Az **üres áruház-ország vagy geo csere nem rejti el a globális hero-t**. A
+  Core átugorja az üres listát, és folytatja a hatóköri láncot.
 
 ### 1.8 Világos és sötét paletta
 

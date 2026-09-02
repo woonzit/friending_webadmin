@@ -127,8 +127,12 @@ see a different carousel; there is no partial merge.
 
 - Cards are images or videos with bilingual copy and optional typography.
 - The order you set is the order members swipe through.
-- An **empty replacement hides the carousel** for the matching members. That is
-  a legitimate choice, but make sure it is deliberate.
+- Use a **1.875:1** image for the full-bleed Discover slot: 1875 × 1000 px is
+  recommended, with 1320 × 704 px as the minimum reference size. The editor
+  previews the centered aspect-fill crop and warns about unusually tall or
+  wide images without blocking the save.
+- An **empty storefront or geo replacement does not hide the global hero**.
+  Core skips the empty list and continues down the scope chain.
 
 ### 1.8 Light and dark palette
 

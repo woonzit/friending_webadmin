@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import ImageUploadField from "@/components/ImageUploadField";
+import { classifyHeroImageRatio } from "@/lib/appearanceHeroImage";
 import {
   APPEARANCE_HERO_TEXT_WEIGHTS,
   appearanceTrim,
@@ -15,6 +16,14 @@ import {
 } from "@/lib/appearanceRules";
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/;
+
+type HeroImageMeasurement =
+  | { url: string; status: "measured"; width: number; height: number }
+  | { url: string; status: "unavailable" };
+
+function formattedAspectRatio(width: number, height: number): string {
+  return (width / height).toFixed(3).replace(/0+$/u, "").replace(/\.$/u, "");
+}
 
 type Props = {
   value: AppearanceHero;
@@ -121,6 +130,11 @@ function HeroItemCard({
   const t = useTranslations("appearance.hero");
   const common = useTranslations("common");
   const [showTypography, setShowTypography] = useState(false);
+  const [imageMeasurement, setImageMeasurement] = useState<HeroImageMeasurement | null>(null);
+  const currentMeasurement = imageMeasurement?.url === item.media_url ? imageMeasurement : null;
+  const ratioClassification = currentMeasurement?.status === "measured"
+    ? classifyHeroImageRatio(currentMeasurement.width, currentMeasurement.height)
+    : null;
   return (
     <article className="appearance-hero-item">
       <header className="appearance-hero-item-head">
@@ -158,16 +172,63 @@ function HeroItemCard({
           />
         </label>
         {item.type === "image" ? (
-          <ImageUploadField
-            className="field-full"
-            label={t("campaignImage")}
-            value={item.media_url}
-            required
-            disabled={disabled}
-            hint={t("campaignImageHint")}
-            onBusyChange={onBusyChange}
-            onChange={(url) => onChange({ ...item, media_url: url })}
-          />
+          <>
+            <ImageUploadField
+              className="field-full"
+              label={t("campaignImage")}
+              value={item.media_url}
+              required
+              disabled={disabled}
+              hint={t("campaignImageHint")}
+              onBusyChange={onBusyChange}
+              onChange={(url) => onChange({ ...item, media_url: url })}
+            />
+            <small className="field-hint field-full appearance-hero-image-guidance">
+              {t("campaignImageRecommendation")}
+            </small>
+            {item.media_url && (
+              <figure className="field-full appearance-hero-crop-preview">
+                <div className="appearance-hero-crop-frame">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    key={item.media_url}
+                    src={item.media_url}
+                    alt=""
+                    onLoad={(event) => {
+                      const { naturalWidth: width, naturalHeight: height } = event.currentTarget;
+                      setImageMeasurement(width > 0 && height > 0
+                        ? { url: item.media_url, status: "measured", width, height }
+                        : { url: item.media_url, status: "unavailable" });
+                    }}
+                    onError={() => setImageMeasurement({ url: item.media_url, status: "unavailable" })}
+                  />
+                </div>
+                <figcaption>
+                  <strong>{t("cropPreviewTitle")}</strong>
+                  {currentMeasurement?.status === "measured" && (
+                    <span>
+                      {t("imageDimensions", {
+                        width: currentMeasurement.width,
+                        height: currentMeasurement.height,
+                        ratio: formattedAspectRatio(currentMeasurement.width, currentMeasurement.height),
+                      })}
+                    </span>
+                  )}
+                  {ratioClassification === "crop-top-bottom" && (
+                    <span className="appearance-hero-ratio-warning" role="status">{t("cropTopBottom")}</span>
+                  )}
+                  {ratioClassification === "crop-left-right" && (
+                    <span className="appearance-hero-ratio-warning" role="status">{t("cropLeftRight")}</span>
+                  )}
+                  {currentMeasurement?.status === "unavailable" && (
+                    <span className="appearance-hero-dimensions-unavailable" role="status">
+                      {t("dimensionsUnavailable")}
+                    </span>
+                  )}
+                </figcaption>
+              </figure>
+            )}
+          </>
         ) : (
           <label className="field field-full">
             <span>{t("videoUrl")}</span>
@@ -242,7 +303,8 @@ function HeroItemCard({
 
 /**
  * Hero carousel of one rule: inherit the chain's carousel or replace it with
- * this rule's own items (an empty replacement hides the carousel).
+ * this rule's own items. Core lets an empty non-global replacement fall
+ * through to the next scope instead of hiding the global hero (T-638).
  */
 export default function AppearanceHeroEditor({ value, inheritedItems, isGlobal, disabled, onChange, onBusyChange }: Props) {
   const t = useTranslations("appearance.hero");
@@ -282,7 +344,9 @@ export default function AppearanceHeroEditor({ value, inheritedItems, isGlobal, 
       </div>
       {value.mode === "replace" && (
         <div className="appearance-hero-items">
-          {items.length === 0 && <p className="appearance-hero-empty">{t("replaceEmpty")}</p>}
+          {items.length === 0 && (
+            <p className="appearance-hero-empty">{t(isGlobal ? "replaceEmptyGlobal" : "replaceEmpty")}</p>
+          )}
           {items.map((item, index) => (
             <HeroItemCard
               key={`${item.id || "new"}-${index}`}

@@ -12885,6 +12885,57 @@ body .verification-level-pill.level-strong {
   font-size: 13px;
 }
 
+.appearance-hero-image-guidance {
+  margin-top: -4px;
+}
+
+.appearance-hero-crop-preview {
+  display: grid;
+  width: min(100%, 720px);
+  gap: 8px;
+  margin: 0;
+}
+
+.appearance-hero-crop-frame {
+  aspect-ratio: 1.875 / 1;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+}
+
+.appearance-hero-crop-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.appearance-hero-crop-preview figcaption {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.appearance-hero-crop-preview figcaption strong {
+  color: var(--text-soft);
+  font-size: 13px;
+}
+
+.appearance-hero-ratio-warning {
+  padding: 7px 9px;
+  border: 1px solid color-mix(in srgb, var(--amber) 38%, transparent);
+  border-radius: 8px;
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.appearance-hero-dimensions-unavailable {
+  color: var(--text-soft);
+}
+
 /* Palette editor + preview */
 .appearance-palette-editor {
   display: grid;
