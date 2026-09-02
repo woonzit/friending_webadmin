@@ -18,8 +18,12 @@ export const VERIFICATION_GATE_VARIANTS = ["video", "persona", "both", "pending"
 export const VERIFICATION_BADGE_SLOTS = ["light", "strong", "pending"] as const;
 export const VERIFICATION_LOCALES = ["en", "hu"] as const;
 export const VERIFICATION_PROVENANCE = ["derived", "imported", "granted"] as const;
-/** Every console tab, including the D-053 "Forced & waiting room" tab (T-471). */
-export const VERIFICATION_TAB_KEYS = ["scopes", "requirements", "messages", "badges", "simulator", "forced"] as const;
+/**
+ * Every console tab. T-617 folded the D-053 "Forced & waiting room" tab into
+ * the Scopes table, so `forced` is gone and `?tab=forced` normalizes to
+ * `scopes` through `verificationTabKey`.
+ */
+export const VERIFICATION_TAB_KEYS = ["scopes", "requirements", "messages", "badges", "simulator"] as const;
 export const VERIFICATION_FEATURE_KEYS = [
   "people.list",
   "profile.view",
@@ -639,12 +643,19 @@ function featureRequirements(value: unknown, allowInherit: boolean): Record<Veri
   return output;
 }
 
-function principal(value: unknown): VerificationAdminPrincipal | null {
+/**
+ * Core's `VerificationAdminPolicy::principal()` — `{role, capabilities}` with a
+ * sorted, deduplicated capability list. Exported because the T-617 method
+ * console carries the identical principal on every one of its four responses.
+ */
+export function verificationAdminPrincipal(value: unknown): VerificationAdminPrincipal | null {
   const raw = requiredObject(value, ["role", "capabilities"]);
   const role = oneOf(raw?.role, ["viewer", "admin", "owner"] as const);
   const capabilities = orderedUnique(raw?.capabilities, VERIFICATION_CAPABILITIES);
   return role && capabilities ? { role, capabilities } : null;
 }
+
+const principal = verificationAdminPrincipal;
 
 export const VERIFICATION_ACTION_CAPABILITY: Record<VerificationAction, VerificationCapability> = {
   verification_console: "verification_policy_read",

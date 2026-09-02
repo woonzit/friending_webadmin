@@ -7,8 +7,8 @@ import { ADMIN_GRANTED_VERIFICATION_ACTIONS } from "@/lib/adminGrantedVerificati
 import { APPEARANCE_ACTIONS } from "@/lib/appearanceRules";
 import { AUDIENCE_VISIBILITY_ADMIN_ACTIONS } from "@/lib/audienceVisibilityAdmin";
 import { FEATURE_SWITCHES_ACTIONS } from "@/lib/featureSwitches";
-import { FORCED_VERIFICATION_ACTIONS } from "@/lib/forcedVerification";
 import { PROFILE_TEXT_MODERATION_ACTIONS } from "@/lib/profileTextModeration";
+import { VERIFICATION_METHOD_ACTIONS } from "@/lib/verificationMethod";
 import { OUTBOUND_MESSAGING_ACTIONS } from "@/lib/outboundMessaging";
 import { PERSONA_ADMIN_ACTIONS } from "@/lib/personaAdmin";
 import { PERSONA_SCREENS_ACTIONS } from "@/lib/personaScreens";
@@ -65,8 +65,8 @@ const ACTIVE_ADMIN_GRANTED_VERIFICATION_ACTIONS = ADMIN_GRANTED_VERIFICATION_CON
   ? ADMIN_GRANTED_VERIFICATION_ACTIONS
   : [] as const;
 
-/** Released T-471 actions (D-053 forced verification), gated by Core's `admin_me.verification_forced` block. */
-const ACTIVE_FORCED_VERIFICATION_ACTIONS = FORCED_VERIFICATION_ACTIONS;
+/** Released T-617 actions (D-092), gated by Core's `admin_me.verification_method` block. */
+const ACTIVE_VERIFICATION_METHOD_ACTIONS = VERIFICATION_METHOD_ACTIONS;
 
 /** Released T-550 actions (D-080 Persona screens), gated by Core's `admin_me.persona_screens` block. */
 const ACTIVE_PERSONA_SCREENS_ACTIONS = PERSONA_SCREENS_ACTIONS;
@@ -188,7 +188,7 @@ export const ADMIN_ACTIONS = [
   ...ACTIVE_PERSONA_ADMIN_ACTIONS,
   ...ACTIVE_VERIFICATION_ADMIN_ACTIONS,
   ...ACTIVE_ADMIN_GRANTED_VERIFICATION_ACTIONS,
-  ...ACTIVE_FORCED_VERIFICATION_ACTIONS,
+  ...ACTIVE_VERIFICATION_METHOD_ACTIONS,
   ...ACTIVE_PERSONA_SCREENS_ACTIONS,
   ...AUDIENCE_VISIBILITY_ADMIN_ACTIONS,
   ...ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS,
@@ -401,10 +401,15 @@ export const ADMIN_ACTION_ACCESS = {
     verification_revoke: "write" as const,
   } : {}),
 
-  /** Contract v1 §4: the console and the counts-only impact preview are reads; the revisioned save is an editor write. */
-  verification_forced_console: "read",
-  verification_forced_save: "write",
-  verification_forced_impact_preview: "read",
+  // T-617 contract §2.1: the console read is open to any active administrator,
+  // the CAS draft save is an editor write, and both the counts-only impact
+  // preview and the publication are owner-only. Core authors the exact
+  // `verification_method` capability list and rechecks it on every call, so
+  // these rows only add the independent global floor.
+  verification_method_console: "read",
+  verification_method_save: "write",
+  verification_method_impact: "owner",
+  verification_method_apply: "owner",
 
   // Persona screens contract §5: the console read is open to any active
   // administrator; the revisioned save is an editor write. Core authors the
@@ -566,19 +571,18 @@ const REPLACE_IMAGE_BODY_LIMIT_BYTES = 6_000_000;
  */
 const APPEARANCE_RULE_BODY_LIMIT_BYTES = TAG_CATALOG_BODY_LIMIT_BYTES;
 /**
- * D-053 forced verification (T-475 B4). One canonical save document may name all
- * 249 storefronts in BOTH the method override map and the copy override map, each
- * copy override carrying both locale containers filled to the contract caps (title
- * 60, subtitle 90, description 400 code points of four-byte UTF-8, plus a 2048-byte
- * ASCII `help_url`), with the same two full blocks in `copy_default`. The browser
- * JSON at exactly those maxima is 2,167,097 bytes: `tests/adminActionLimits.test.mts`
- * derives that figure from the caps, builds the document and proves the proxy parser
- * admits it. The ceiling sits about ten percent above it and stays a finite
- * per-request bound (Apache 2.4.52 does not apply `LimitRequestBody` to the proxied
- * path, so this is the effective guard). The impact preview carries the same
- * document and shares the ceiling.
+ * T-617 method policy. One canonical `draft_json` may name all 249 storefronts,
+ * each row carrying its scalar method AND both locale containers of its copy
+ * override filled to the contract caps (title 60, subtitle 90, description 400
+ * code points of four-byte UTF-8, plus a 2048-byte ASCII `help_url`), with the
+ * same two full blocks in `waiting_room_copy.default`. `tests/adminActionLimits.
+ * test.mts` derives the exact maximum from the caps, builds the document and
+ * proves the proxy parser admits it. The ceiling sits above it and stays a
+ * finite per-request bound (Apache 2.4.52 does not apply `LimitRequestBody` to
+ * the proxied path, so this is the effective guard). The impact preview and the
+ * publication carry only a revision, so they keep the default ceiling.
  */
-const FORCED_VERIFICATION_BODY_LIMIT_BYTES = 2_400_000;
+const VERIFICATION_METHOD_BODY_LIMIT_BYTES = 2_400_000;
 
 /**
  * `save_signup_photo_config` deliberately does NOT appear below. Its `tips_json` carries at most 12
@@ -594,8 +598,7 @@ const ADMIN_ACTION_BODY_LIMIT: Readonly<Record<string, number>> = {
   set_settings: RUNTIME_SETTINGS_BODY_LIMIT_BYTES,
   admin_replace_image: REPLACE_IMAGE_BODY_LIMIT_BYTES,
   appearance_rules_save: APPEARANCE_RULE_BODY_LIMIT_BYTES,
-  verification_forced_save: FORCED_VERIFICATION_BODY_LIMIT_BYTES,
-  verification_forced_impact_preview: FORCED_VERIFICATION_BODY_LIMIT_BYTES,
+  verification_method_save: VERIFICATION_METHOD_BODY_LIMIT_BYTES,
   // A1: this is the effective guard on Apache 2.4.52 and therefore stays
   // pinned independently of the Verification capability projection.
   verification_badge_upload: MAX_VERIFICATION_BADGE_FORM_BYTES,

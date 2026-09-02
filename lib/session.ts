@@ -6,11 +6,6 @@ import {
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 import { audienceVisibilityAdminMe } from "@/lib/audienceVisibilityAdmin";
-import {
-  forcedVerificationAccess,
-  parseForcedVerificationAdminMe,
-  type ForcedVerificationAccess,
-} from "@/lib/forcedVerification";
 import { profileTextModerationAdminMe } from "@/lib/profileTextModeration";
 import { isAdminWriteRole, normalizeAdminRole } from "@/lib/authPolicy";
 import {
@@ -18,6 +13,11 @@ import {
   personaCapabilityAllows,
 } from "@/lib/personaAdmin";
 import { verificationAdminMe } from "@/lib/verificationAdmin";
+import {
+  verificationMethodAccess,
+  verificationMethodAdminMe,
+  type VerificationMethodAccess,
+} from "@/lib/verificationMethod";
 import {
   createSessionToken,
   SESSION_MAX_AGE_SECONDS,
@@ -36,8 +36,12 @@ export type AdminIdentity = {
   verificationConsoleReady: boolean;
   audienceVisibilityConsoleReady: boolean;
   profileTextModerationConsoleReady: boolean;
-  /** D-053 "Forced & waiting room" tab, from Core's `admin_me.verification_forced` block. */
-  forcedVerification: ForcedVerificationAccess;
+  /**
+   * T-617 mandatory-method policy, from Core's `admin_me.verification_method`
+   * sibling block ONLY (contract §2.1). Never inferred from the role or from
+   * the retired `admin_me.verification_forced` block.
+   */
+  verificationMethod: VerificationMethodAccess;
 };
 
 export type AdminWriter =
@@ -85,7 +89,7 @@ export async function adminMe(): Promise<AdminIdentity | null> {
     role?: string;
     persona?: unknown;
     verification?: unknown;
-    verification_forced?: unknown;
+    verification_method?: unknown;
     audience_visibility?: unknown;
     profile_text_moderation?: unknown;
   }>("admin_me", { admin_email: session.email });
@@ -110,7 +114,7 @@ export async function adminMe(): Promise<AdminIdentity | null> {
     profileTextModerationConsoleReady: PROFILE_TEXT_MODERATION_CONTRACT_READY
       && profileTextModeration?.contract_ready === true
       && profileTextModeration.actions.includes("moderation_profile_text_list"),
-    forcedVerification: forcedVerificationAccess(parseForcedVerificationAdminMe(result.data.verification_forced)),
+    verificationMethod: verificationMethodAccess(verificationMethodAdminMe(result.data.verification_method)),
   };
 }
 

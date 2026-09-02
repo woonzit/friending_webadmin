@@ -17,10 +17,6 @@ import {
   normalizeFeatureSwitchesProxyBody,
 } from "@/lib/featureSwitches";
 import {
-  forcedVerificationProxyCapabilityAuthorized,
-  normalizeForcedVerificationProxyBody,
-} from "@/lib/forcedVerification";
-import {
   normalizeProfileTextModerationProxyBody,
   profileTextModerationProxyCapabilityAuthorized,
 } from "@/lib/profileTextModeration";
@@ -47,6 +43,10 @@ import { normalizeOutboundMessagingProxyBody } from "@/lib/outboundMessaging";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { normalizeManagedSettingsProxyBody } from "@/lib/sectionAvailability";
 import { readAdminSession } from "@/lib/session";
+import {
+  normalizeVerificationMethodProxyBody,
+  verificationMethodProxyCapabilityAuthorized,
+} from "@/lib/verificationMethod";
 import {
   normalizeVerificationProxyBody,
   verificationProxyCapabilityAuthorized,
@@ -136,13 +136,16 @@ export async function POST(
   if (adminGrantedVerificationAuthorized === false) {
     return bridgeError("verification-capability-required", 403);
   }
-  const forcedVerificationAuthorized = forcedVerificationProxyCapabilityAuthorized(action, membership.data);
-  if (forcedVerificationAuthorized === false) {
+  // T-617 §2.1: the method console's four actions are authorized ONLY by Core's
+  // separate `admin_me.verification_method` sibling — never by the top-level
+  // role, the legacy `verification` block or the retired `verification_forced` one.
+  const verificationMethodAuthorized = verificationMethodProxyCapabilityAuthorized(action, membership.data);
+  if (verificationMethodAuthorized === false) {
     return bridgeError("verification-capability-required", 403);
   }
   // The Persona screens console carries its own `admin_me` projection and its
   // own revision; it deliberately does not share the Persona receipt block or
-  // the forced-verification one, so it answers with its own refusal name.
+  // the verification-method one, so it answers with its own refusal name.
   const personaScreensAuthorized = personaScreensProxyCapabilityAuthorized(action, membership.data);
   if (personaScreensAuthorized === false) {
     return bridgeError("persona-screens-capability-required", 403);
@@ -216,11 +219,14 @@ export async function POST(
   }
   if (normalizedManagedSettingsBody !== undefined) body = normalizedManagedSettingsBody;
 
-  const normalizedForcedVerificationBody = normalizeForcedVerificationProxyBody(action, body);
-  if (normalizedForcedVerificationBody === null) {
+  // `draft_json` travels as the canonical JSON string of exactly `{global,
+  // overrides, waiting_room_copy}`; anything the strict parser refuses is
+  // answered here rather than forwarded.
+  const normalizedVerificationMethodBody = normalizeVerificationMethodProxyBody(action, body);
+  if (normalizedVerificationMethodBody === null) {
     return bridgeError("invalid-input", 400);
   }
-  if (normalizedForcedVerificationBody !== undefined) body = normalizedForcedVerificationBody;
+  if (normalizedVerificationMethodBody !== undefined) body = normalizedVerificationMethodBody;
 
   // `document` travels as the canonical JSON string of exactly `{copy_default}`;
   // anything the strict parser refuses is answered here rather than forwarded.
