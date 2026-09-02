@@ -49,11 +49,11 @@ test("custom projections do not hide compatibility choices", () => {
 
 /**
  * D-096 (T-637) made the cast-group and legacy-segment axes inert in every
- * consumer that reads `UserAudiencePolicy::matches()` — signup option groups,
- * profile fields, icebreaker prompts and footprint badges all narrow by gender
- * alone now. The selections are still stored and echoed back, so the console
- * keeps offering them; what it must not do any more is tell the operator they
- * restrict anything.
+ * consumer that reads `UserAudiencePolicy::matches()` — profile fields,
+ * icebreaker prompts and footprint badges all narrow by gender alone now. The
+ * selections are still stored and echoed back, so the remaining editors keep
+ * offering them; what they must not do is tell the operator they restrict
+ * anything. T-671 removed the audience editor and its copy from signupOptions.
  */
 test("the shared audience selector states that a group selection no longer restricts", async () => {
   const { readFile } = await import("node:fs/promises");
@@ -76,7 +76,7 @@ test("the shared audience selector states that a group selection no longer restr
   const hu = JSON.parse(
     await readFile(new URL("../messages/hu.json", import.meta.url), "utf8"),
   );
-  for (const namespace of ["signupOptions", "profileFields", "icebreakers"]) {
+  for (const namespace of ["profileFields", "icebreakers"]) {
     for (const messages of [en, hu]) {
       assert.equal(Object.hasOwn(messages[namespace], "audienceMatchBoth"), false);
       assert.equal(Object.hasOwn(messages[namespace], "audienceGroupsRecorded"), true);
@@ -84,6 +84,10 @@ test("the shared audience selector states that a group selection no longer restr
     }
     assert.doesNotMatch(en[namespace].audienceGroupsNotEnforced, /both/i);
     assert.doesNotMatch(hu[namespace].audienceGroupsNotEnforced, /mindkett/i);
+  }
+  for (const messages of [en, hu]) {
+    assert.equal(Object.hasOwn(messages.signupOptions, "audienceGroupsRecorded"), false);
+    assert.equal(Object.hasOwn(messages.signupOptions, "audienceGroupsNotEnforced"), false);
   }
   // The footprints console owns its own copy of the editor.
   assert.equal(Object.hasOwn(en.footprints, "matchBothAxes"), false);

@@ -1635,58 +1635,58 @@
         }
       },
       "signupOptions": {
-        "title": "Signup opciók súgó",
-        "summary": "Ez a munkaterület határozza meg a Friending-profil létrehozásakor megjelenő kérdéseket és válaszokat. Elkülöníti a védett azonossági tengelyeket az opcionális kérdésektől, és vezérli a kétnyelvű címkéket, ikonokat és az egyes választások célközönségét.",
+        "title": "Signupoldal-szerkesztő súgó",
+        "summary": "Ez a munkaterület állítja össze a signup rögzített System kérdései után megjelenő opcionális, kétnyelvű oldalakat. Az oldalsorrendet, a kérdések elhelyezését és kötelezőségét kezeli, míg a kérdésdefiníciók és válaszok a Profiladatok alatt maradnak.",
         "steps": {
-          "1": "Keresd meg a kérdést, majd először döntsd el, hogy védett rendszerazonosság vagy szerkeszthető opcionális csoport.",
-          "2": "Módosítás előtt együtt nézd át a kérdés megjelenését, válaszait és audience szabályait.",
-          "3": "A legszűkebb elemet mentsd vagy archiváld, és ellenőrizd, hogy a meglévő tagi válaszok továbbra is érthetők."
+          "1": "Először nézd át a zárolt System kérdéseket, hogy az opcionális oldalak ne ismételjék az identitás- vagy profil-láthatósági lépéseket.",
+          "2": "Hozd létre és rendezd az oldalakat, töltsd ki mindkét címet, majd minden alkalmas katalóguskérdést pontosan egy oldalon helyezz el.",
+          "3": "Ellenőrizd a kötelező kapcsolókat és válaszelőnézeteket, egyszer mentsd a teljes vázlatot, majd nézd meg az új elrendezés-revíziót."
         },
         "sections": {
-          "workspace": {
-            "title": "Kompakt signup munkaterület",
-            "purpose": "A keresés és kinyitható kérdéskártyák kezelhetővé teszik a teljes signup-katalógust anélkül, hogy minden válaszszerkesztőt egyszerre kellene betölteni.",
+          "systemQuestions": {
+            "title": "Zárolt System kérdések",
+            "purpose": "A Nem és a Ki láthatja az adatlapomat minden összeállított oldal előtt, a Core által rögzített sorrendben jelenik meg, és itt csak olvasható.",
             "actions": {
-              "1": "Keress kulcs vagy kétnyelvű címke alapján, és csak a szükséges kérdést nyisd ki.",
-              "2": "Az áttekintő figyelmeztetésekből különítsd el a védett rendszerműködést a szerkeszthető megjelenéstől."
+              "1": "Az opcionális oldalak összeállítása előtt ellenőrizd mindkét zárolt kártyát és válaszelőnézetét.",
+              "2": "A hiányzó vagy váratlan System kártyát betöltési hibaként kezeld, ne üres konfigurációként."
             },
-            "guidance": "A signup-választások befolyásolhatják a discoveryt és audience-t. Ne kezeld a katalógust pusztán kozmetikai szövegként."
+            "guidance": "A kapcsolati állapot és a részletes nem nem tartozik ebbe a blokkba. Megjelenésük szerződéseltérést jelez, amelyet a Core-ban kell javítani."
           },
-          "questions": {
-            "title": "Kérdésmegjelenés és policy",
-            "purpose": "Minden kérdésnek van stabil azonossága, kétnyelvű neve, opcionális kezelt ikonja, kötelezősége, sorrendje és—ahol engedett—audience-e.",
+          "pageLayout": {
+            "title": "Oldalelrendezés és szöveg",
+            "purpose": "Minden oldalhoz angol és magyar cím, alcím, rejtett előkészítési állapot és egy rendezett kérdéslista tartozik.",
             "actions": {
-              "1": "Szerkeszd az angol és magyar címet, és tölts fel megbízható ikont.",
-              "2": "Nem rendszercsoportnál nézd át a sorrendet, kötelezőséget és elérhetőségi szabályokat."
+              "1": "Az oldalak és kérdések sorrendjéhez használd a húzást vagy az akadálymentes nyílgombokat.",
+              "2": "Töltsd ki mindkét kötelező címet, tarts egy–nyolc kérdést, és csak szándékos előkészítéshez rejts el oldalt."
             },
-            "guidance": "A védett rendszerkérdések megtartják kulcsukat és policyjüket, mert a Core és a kliensek függnek tőlük. Ezen az oldalon csak a Core által kiszolgált csoportok jelennek meg; egy kihagyott, kivezetett csoport nem hiányzó kötelező válasz, a Core által még kötelezőnek jelölt, de a jelenlegi signup flow-ban fel nem tett kérdés pedig külön jelölést kap."
+            "guidance": "A rejtett oldal a mentett dokumentum része marad, de a signup nem kapja meg. Oldal törlésekor a kérdései a helyi vázlat palettájára kerülnek vissza."
           },
-          "answers": {
-            "title": "Választható válaszok",
-            "purpose": "A válaszsorok adják a kérdés alatti választásokat; rendszeropciónál általában csak a megjelenített név módosítható, bővíthető egyedi csoportnál pedig új stabil opció adható.",
+          "questionPalette": {
+            "title": "Alkalmas kérdések palettája",
+            "purpose": "A palettán azok az aktív, választós profilmezők szerepelnek, amelyeket a Core enged a signup oldalakra, a már elhelyezettek nélkül.",
             "actions": {
-              "1": "Az engedélyezett kétnyelvű címkéket a stabil jelentés megváltoztatása nélkül nevezd át.",
-              "2": "Egyedi opciót csak bővítésre tervezett csoporthoz adj."
+              "1": "Húzz egy fel nem használt kérdést az oldalra, vagy válaszd az oldalhoz tartozó Hozzáadás ide gombot.",
+              "2": "A duplikált elhelyezés létrehozása helyett mozgasd vagy küldd vissza a már elhelyezett kérdést."
             },
-            "guidance": "A permanens kulcs tárolt tagi jelentést hordoz. Régi kulcsot soha ne használj új identitás- vagy profilfogalomhoz."
+            "guidance": "Egy kérdés csak egy oldalon lehet. Ha a Core eltűnt elhelyezett mezőt jelez, a javított elrendezés mentése előtt nézd át az eltávolítási értesítést."
           },
-          "audiences": {
-            "title": "Kérdés- és válaszaudience",
-            "purpose": "Az audience szabály kanonikus gender szerint korlátoz egy opcionális kérdést vagy egyedi választ. Dinamikus usercsoport továbbra is választható és elmentődik, de mivel minden tag egyetlen csoportba tartozik, már nem szűkít semmit.",
+          "draftSaving": {
+            "title": "Vázlat, revízió és mentés",
+            "purpose": "Minden módosítás helyi marad, amíg a Változások mentése a teljes oldaltömböt a Core-tól betöltött pontos revízióval el nem küldi.",
             "actions": {
-              "1": "Ahol a csoport engedi, minden választó üresen hagyása globális elérhetőséget jelent.",
-              "2": "Csak a termékpolicy által szándékolt gendereket és csoportokat válaszd."
+              "1": "A Vázlat elvetése írás nélkül visszaállítja a teljes betöltött elrendezést.",
+              "2": "A teljes, revíziózott vázlat mentése előtt oldj meg minden oldalon vagy kérdésnél megjelenő indokot."
             },
-            "guidance": "A Core egyedül a gender tengelyt érvényesíti. A túl szűk gender szabály jogos tagok elől is eltüntetheti a választást, egy csak csoportra szűkített szabály viszont csendben mindenkit jelent."
+            "guidance": "Revízióütközéskor a konzol betölti a hiteles dokumentumot, és ezt jelzi. Az elavult anyag összeolvasztása helyett alkalmazd újra a módosítást a friss példányon."
           },
-          "archiveBehavior": {
-            "title": "Archiválás és megőrzött válaszok",
-            "purpose": "Az archiválás kiveszi az opcionális választást az új kiválasztásból, de a meglévő tárolt válaszokat olvashatóan és visszaállíthatóan őrzi.",
+          "answersElsewhere": {
+            "title": "A válaszok helye a Profiladatok",
+            "purpose": "A válaszelőnézet itt szándékosan csak olvasható, mert a címkék, opciók, ikonok és katalógusalkalmasság másik felületen kezelhetők.",
             "actions": {
-              "1": "Olvasd el a megerősítést, és csak az elavult opciót archiváld.",
-              "2": "A nyugdíjazott opciót szerkeszd vagy állítsd vissza, ha eredeti jelentése visszatér."
+              "1": "Kövesd a Válaszok szerkesztése linket egy elhelyezett vagy fel nem használt kérdéskártyáról.",
+              "2": "A katalógus mentése után térj vissza a szerkesztőbe, és az újonnan alkalmassá vált elem elhelyezése előtt töltsd újra."
             },
-            "guidance": "Az archiválás nem destruktív takarítás. A meglévő tagadat szándékosan megmarad, a védett rendszerválaszok pedig nem távolíthatók el."
+            "guidance": "Ez az oldal soha nem nevez át, ad hozzá, archivál vagy töröl válaszopciót. Az írások kizárása megakadályozza két versengő katalógusszerkesztő kialakulását."
           }
         }
       },
@@ -6537,98 +6537,62 @@
     }
   },
   "signupOptions": {
-    "eyebrow": "Signup adatmodell",
+    "eyebrow": "Signupoldal-szerkesztő",
     "title": "Signup opciók",
-    "subtitle": "A signup kérdések, kétnyelvű nevek, ikonok, célcsoportok és válaszlehetőségek kezelése egy átlátható felületen.",
-    "overviewLabel": "Signup opciók összesítése",
-    "questionGroups": "kérdéscsoport",
-    "requiredQuestions": "mindenkinek kötelező",
-    "targetedQuestions": "célzott kérdés",
-    "activeAnswers": "aktív válasz",
-    "search": "Katalógus szűrése",
-    "searchPlaceholder": "Kulcs, angol vagy magyar név keresése",
-    "groupFilter": "Kérdés típusa",
-    "filterAll": "Minden kérdés",
-    "filterSystem": "System kérdések",
-    "filterOptional": "Opcionális profilkérdések",
-    "filterTargeted": "Korlátozott célközönség",
-    "systemAnswersTitle": "A system válaszok védettek",
-    "systemAnswersIntro": "Csak a Core által jelenleg kiszolgált system kérdések jelennek meg itt. A nevük átírható, de a kulcsuk, sorrendjük, kötelező állapotuk és elérhetőségük a Core hatáskörében marad.",
-    "system": "System",
-    "required": "Kötelező",
-    "notAskedAtSignup": "A signup nem kérdezi",
-    "optional": "Opcionális",
-    "targeted": "Célzott",
-    "everyone": "Mindenki",
-    "answerCount": "{total} válaszból {active} aktív",
-    "groupSettings": "Kérdés beállításai",
-    "groupEditTitle": "Signup kérdés szerkesztése",
-    "groupNameEn": "Kérdés angol neve",
-    "groupNameHu": "Kérdés magyar neve",
-    "groupIcon": "Kérdés ikonja",
-    "groupIconHint": "PNG vagy biztonságosan tisztított SVG, legfeljebb 2 MB. Ugyanez az ikon jelenik meg Weben és iOS-en.",
-    "iconChoose": "Ikon kiválasztása",
-    "iconRemove": "Ikon eltávolítása",
-    "iconUploading": "Feltöltés…",
-    "iconError": "Legfeljebb 2 MB-os, érvényes PNG vagy SVG fájlt válassz.",
-    "requiredSystemQuestion": "Kötelező system kérdés",
-    "requiredSystemQuestionCopy": "Ezt minden usernek meg kell válaszolnia. A kulcsa, kötelező állapota és célközönsége védett; a kétnyelvű neve és ikonja szerkeszthető.",
-    "notAskedAtSignupCopy": "A Core kompatibilitási okból még kötelezőnek jelöli ezt a kérdést, hogy a telepített appok tudják dekódolni a katalógust, de a jelenlegi signup flow soha nem teszi fel, és alapértelmezett választ küld. A nevének átírása biztonságos; ne olvasd úgy, mintha a usereknek meg kellene válaszolniuk.",
-    "systemQuestion": "System által kezelt kérdés",
-    "systemQuestionCopy": "Ez a kérdés mindenkinek elérhető, a szabálya védett. A kétnyelvű neve és ikonja szerkeszthető.",
-    "groupAudience": "Kik kapják meg ezt a kérdést?",
-    "groupAudienceHelp": "Az opcionális signup adatokat nem szerint célozhatod. Dinamikus usercsoport továbbra is rögzíthető, de már nem szűkíti, kitől kérdezzük — minden user egyetlen csoportba tartozik.",
-    "audienceGlobal": "Mindenki",
-    "audienceSpecific": "Korlátozott célközönség",
-    "audienceGlobalHint": "Ez az opcionális kérdés minden regisztráló usernek megjelenik.",
-    "audienceGendersTitle": "Nemek",
-    "audienceGroupsTitle": "Dinamikus usercsoportok",
-    "audienceMatchAny": "bármelyik egyezhet",
-    "audienceGroupsRecorded": "rögzítve, nem szűr",
-    "audienceGroupsNotEnforced": "A kiválasztott usercsoportokat elmentjük és megjelenítjük, de már nem szűkítik a célközönséget — kizárólag a nem szerinti választás dönti el, kitől kérdezzük.",
-    "audienceRequired": "Válassz legalább egy nemet vagy usercsoportot.",
-    "audienceInactive": "Archivált csoport",
-    "audienceLegacy": "Legacy szegmens",
-    "genderMen": "Férfiak",
-    "genderWomen": "Nők",
-    "genderNonbinary": "Nembináris emberek",
-    "systemAnswer": "Védett system válasz",
-    "systemAnswerCopy": "Csak az angol és magyar megjelenítési név módosítható. A routing és validáció authoritative forrása továbbra is a Core.",
-    "pack": "kérdéscsomag",
-    "key": "Stabil kulcs",
-    "keyHint": "Kisbetűk, számok és aláhúzás. Létrehozás után a kulcs nem módosítható.",
-    "nameEn": "Angol név",
-    "nameHu": "Magyar név",
-    "sortOrder": "Megjelenítési sorrend",
-    "order": "Sorrend",
-    "status": "Állapot",
-    "active": "Aktív",
-    "inactive": "Inaktív",
-    "add": "Opció hozzáadása",
-    "addTitle": "Signup opció hozzáadása",
-    "editTitle": "Signup opció szerkesztése",
-    "rename": "Átnevezés",
-    "deleteTitle": "Eltávolítod a signup opciót?",
-    "deleteCopy": "A(z) „{name}” többé nem jelenik meg új választásként. A meglévő tárolt válaszok megmaradnak, az opció szerkesztéssel visszaállítható.",
-    "keyInvalid": "Adj meg betűvel kezdődő stabil kulcsot, amely csak kisbetűt, számot vagy aláhúzást tartalmaz.",
-    "namesRequired": "Add meg az angol és a magyar nevet is.",
-    "systemProtected": "Ez a system válasz védett. Csak a kétnyelvű neve módosítható.",
-    "audiences": "Mely nemeknek jelenik meg",
-    "audiencesHint": "Az egyedi válasz csak ezeknek a nemeknek jelenik meg a regisztráció és a profil szerkesztése során.",
-    "audiencesRequired": "Válassz legalább egy nemet az egyedi válaszhoz.",
-    "genderMale": "Férfi",
-    "genderFemale": "Nő",
-    "genderOther": "Nembináris",
-    "loadError": "A signup opciókatalógus nem tölthető be.",
-    "saveError": "A signup opció nem menthető.",
-    "groupSaveError": "A signup kérdés beállításai nem menthetők.",
-    "groupConflict": "Valaki más közben módosította ezt a kérdést. A katalógust újratöltöttük; nyisd meg újra, és alkalmazd ismét a módosítást.",
-    "groupSaved": "A signup kérdés beállításai elmentve.",
-    "deleteError": "A signup opció nem távolítható el.",
-    "saved": "Signup opció elmentve.",
-    "deleted": "A signup opció kikerült az új választások közül.",
-    "noAnswers": "Ehhez a kérdéshez még nincs válasz.",
-    "noMatches": "Nincs a szűrésnek megfelelő signup kérdés."
+    "subtitle": "Az opcionális signup-oldalak összeállítása. A kérdések és válaszaik továbbra is a Profiladatok alatt kezelhetők.",
+    "systemTitle": "System kérdések",
+    "systemCopy": "A Core ezeket rögzített sorrendben, az összeállított oldalak előtt kérdezi. Itt csak tájékoztatásként láthatók, nem szerkeszthetők és nem mozgathatók.",
+    "systemLocked": "Zárolt · rögzített sorrend",
+    "pagesTitle": "Signup oldalak",
+    "pagesCopy": "Legfeljebb öt kétnyelvű oldalt állíthatsz össze, és minden alkalmas katalóguskérdést egyszer helyezhetsz el.",
+    "pageCount": "{max} oldalból {used}",
+    "addPage": "Oldal hozzáadása",
+    "validationErrors": "Signupoldal-validációs hibák",
+    "droppedTitle": "Hiányzó elhelyezések eltávolítva",
+    "droppedNotice": "A Core {count} olyan elhelyezést távolított el, amelynek katalógusmezője már nem létezik: {keys}.",
+    "emptyTitle": "Még nincs signup oldal",
+    "emptyCopy": "Ez egy szándékosan üres signup-létra. Akkor hozd létre az első opcionális oldalt, amikor katalóguskérdést szeretnél hozzáadni.",
+    "firstPage": "Első oldal létrehozása",
+    "pageFallback": "{number}. oldal",
+    "pagePosition": "{number}. oldal",
+    "itemCount": "{count} kérdés",
+    "hiddenBadge": "Rejtett",
+    "movePageUp": "A(z) {name} oldal mozgatása felfelé",
+    "movePageDown": "A(z) {name} oldal mozgatása lefelé",
+    "removePage": "Oldal törlése",
+    "pageTitleEn": "Oldal angol címe",
+    "pageTitleHu": "Oldal magyar címe",
+    "pageSubtitleEn": "Oldal angol alcíme",
+    "pageSubtitleHu": "Oldal magyar alcíme",
+    "hiddenToggle": "Ez az oldal maradjon rejtve a signupban",
+    "answersPreview": "Válaszok",
+    "requiredToggle": "A válasz kötelező ezen az oldalon",
+    "moveItemUp": "{name} mozgatása felfelé",
+    "moveItemDown": "{name} mozgatása lefelé",
+    "removeItem": "Vissza a katalógusba",
+    "editAnswers": "Válaszok szerkesztése",
+    "pageEmpty": "Húzz ide egy kérdést, vagy használd lent a Hozzáadás ide gombot.",
+    "paletteTitle": "Alkalmas kérdések palettája",
+    "paletteCopy": "Itt csak aktív, választós profilmezők jelennek meg. Húzd a kérdést egy oldalra, vagy használd a billentyűzettel is elérhető gombját.",
+    "paletteEmpty": "Minden alkalmas kérdés szerepel már valamelyik signup oldalon.",
+    "addHere": "Hozzáadás ide: {page}. oldal",
+    "layoutRevision": "Elrendezés-revízió: {revision}",
+    "draftCopy": "A módosítások helyi vázlatban maradnak, amíg a teljes oldalelrendezést el nem mented.",
+    "discardDraft": "Vázlat elvetése",
+    "saveChanges": "Változások mentése",
+    "savingChanges": "Változások mentése…",
+    "loadError": "A signupoldal-szerkesztő nem tölthető be. Nem feltételeztünk üres elrendezést.",
+    "saved": "A signupoldalak elrendezése mentve.",
+    "conflictReloaded": "Egy másik admin előbb mentett. Betöltöttük az aktuális szerverelrendezést; alkalmazd újra a módosítást.",
+    "saveError": "A signupoldalak elrendezése nem menthető. Újrapróbálás előtt töltsd újra, és ellenőrizd az aktuális szerverállapotot.",
+    "invalidResponse": "A Core érvénytelen signupoldal-választ adott. Semmit nem tekintettünk mentettnek.",
+    "issuePageLimit": "A signup-létra legfeljebb öt oldalból állhat.",
+    "issueItemLimit": "Egy signup oldalon legalább egy és legfeljebb nyolc kérdés lehet.",
+    "issueUnknownField": "A(z) „{field}” mező már nincs az alkalmas katalógusban.",
+    "issueFieldNotSelectable": "A(z) „{field}” nem választós kérdés, ezért itt nem helyezhető el.",
+    "issueFieldArchived": "A(z) „{field}” archivált, ezért signup oldalra nem helyezhető.",
+    "issueDuplicateField": "A(z) „{field}” mező egynél több signup oldalon szerepel.",
+    "issueBlankTitle": "Adj meg nem üres angol és magyar címet ehhez az oldalhoz."
   },
   "profileFields": {
     "eyebrow": "Profiladat-modell",

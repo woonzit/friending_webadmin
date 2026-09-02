@@ -1,0 +1,173 @@
+{
+  "pages": {
+    "revision": 7,
+    "updated_at": 1788379200,
+    "updated_by": "operator@example.test",
+    "pages": [
+      {
+        "key": "p_12ab34cd",
+        "hidden": false,
+        "title": {
+          "en": "More about you",
+          "hu": "Még egy kicsit rólad"
+        },
+        "subtitle": {
+          "en": "A few quick choices",
+          "hu": "Néhány gyors választás"
+        },
+        "items": [
+          {
+            "field_key": "smoking",
+            "required": false
+          }
+        ]
+      }
+    ]
+  },
+  "eligible_fields": [
+    {
+      "field_key": "smoking",
+      "profile_field": "smoking",
+      "labels": {
+        "en": "Smoking",
+        "hu": "Dohányzás"
+      },
+      "icon": {
+        "url": "",
+        "mime": ""
+      },
+      "selection": {
+        "mode": "single",
+        "max_selected": 1
+      },
+      "options": [
+        {
+          "key": "no",
+          "labels": {
+            "en": "No",
+            "hu": "Nem"
+          }
+        },
+        {
+          "key": "socially",
+          "labels": {
+            "en": "Socially",
+            "hu": "Társaságban"
+          }
+        },
+        {
+          "key": "yes",
+          "labels": {
+            "en": "Yes",
+            "hu": "Igen"
+          }
+        }
+      ]
+    },
+    {
+      "field_key": "education_level",
+      "profile_field": "education_level",
+      "labels": {
+        "en": "Education",
+        "hu": "Végzettség"
+      },
+      "icon": {
+        "url": "",
+        "mime": ""
+      },
+      "selection": {
+        "mode": "single",
+        "max_selected": 1
+      },
+      "options": [
+        {
+          "key": "secondary",
+          "labels": {
+            "en": "Secondary school",
+            "hu": "Középiskola"
+          }
+        },
+        {
+          "key": "university",
+          "labels": {
+            "en": "University",
+            "hu": "Egyetem"
+          }
+        }
+      ]
+    }
+  ],
+  "system_questions": [
+    {
+      "key": "gender",
+      "labels": {
+        "en": "Gender",
+        "hu": "Nem"
+      },
+      "icon": {
+        "url": "",
+        "mime": ""
+      },
+      "required": true,
+      "locked": true,
+      "options": [
+        {
+          "key": "female",
+          "labels": {
+            "en": "Woman",
+            "hu": "Nő"
+          }
+        },
+        {
+          "key": "male",
+          "labels": {
+            "en": "Man",
+            "hu": "Férfi"
+          }
+        }
+      ]
+    },
+    {
+      "key": "visible_to",
+      "labels": {
+        "en": "Who can see my profile",
+        "hu": "Ki láthatja az adatlapomat"
+      },
+      "icon": {
+        "url": "",
+        "mime": ""
+      },
+      "required": true,
+      "locked": true,
+      "options": [
+        {
+          "key": "female",
+          "labels": {
+            "en": "Women",
+            "hu": "Nők"
+          }
+        },
+        {
+          "key": "male",
+          "labels": {
+            "en": "Men",
+            "hu": "Férfiak"
+          }
+        },
+        {
+          "key": "both",
+          "labels": {
+            "en": "Everyone",
+            "hu": "Mindenki"
+          }
+        }
+      ]
+    }
+  ],
+  "dropped_items": [
+    {
+      "page_key": "p_deadbeef",
+      "field_key": "retired_question"
+    }
+  ]
+}
