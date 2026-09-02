@@ -206,7 +206,7 @@
         ],
         "group_manifest_sha256": "a4201559105e9061d8ee748b1a61df49dc683d84c12391a897a3e2802f31a5f7",
         "retirement_manifest": {
-            "sha256": "0802c0cac5ceef15714050a8fed61e5f78d295a215d55bb2965372d1c580ecce",
+            "sha256": "6bbd46df631a50cf4e9b7eb6bb5fd409269965d03c89a536c90c1d4588c637e1",
             "matching_orientation": "retired",
             "layer1_intent": "retired",
             "legacy_catalogue_types": [
@@ -227,21 +227,30 @@
             ],
             "profile_questions": [
                 {
-                    "key": "dick_size",
+                    "key": "piercings",
                     "labels": {
-                        "en": "Penis size",
-                        "hu": "Péniszméret"
+                        "en": "Piercings",
+                        "hu": "Piercingek"
                     },
-                    "reason": "sex_or_anatomy",
+                    "reason": "dating_specific",
                     "state": "retired"
                 },
                 {
-                    "key": "circumcision",
+                    "key": "tattoos",
                     "labels": {
-                        "en": "Circumcision",
-                        "hu": "Körülmetélés"
+                        "en": "Tattoos",
+                        "hu": "Tetoválások"
                     },
-                    "reason": "sex_or_anatomy",
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "beard",
+                    "labels": {
+                        "en": "Facial hair",
+                        "hu": "Arcszőrzet"
+                    },
+                    "reason": "dating_specific",
                     "state": "retired"
                 },
                 {
@@ -250,7 +259,7 @@
                         "en": "Position",
                         "hu": "Pozíció"
                     },
-                    "reason": "sex_or_anatomy",
+                    "reason": "dating_specific",
                     "state": "retired"
                 },
                 {
@@ -259,21 +268,65 @@
                         "en": "Safer sex",
                         "hu": "Biztonságosabb szex"
                     },
-                    "reason": "sex_or_anatomy",
+                    "reason": "dating_specific",
                     "state": "retired"
-                }
-            ],
-            "retained_questions": [
+                },
+                {
+                    "key": "circumcision",
+                    "labels": {
+                        "en": "Circumcision",
+                        "hu": "Körülmetélés"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "dick_size",
+                    "labels": {
+                        "en": "Penis size",
+                        "hu": "Péniszméret"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
                 {
                     "key": "body_hair",
                     "labels": {
                         "en": "Body hair",
                         "hu": "Testszőrzet"
                     },
-                    "state": "active",
-                    "change": "neutral_general_all_groups"
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "hair_color",
+                    "labels": {
+                        "en": "Hair color",
+                        "hu": "Hajszín"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "eye_color",
+                    "labels": {
+                        "en": "Eye color",
+                        "hu": "Szemszín"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "body_type",
+                    "labels": {
+                        "en": "Body type",
+                        "hu": "Testalkat"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
                 }
-            ]
+            ],
+            "retained_questions": []
         },
         "intents": {
             "schema_version": 2,

@@ -1,10 +1,10 @@
 {
     "schema_version": 1,
-    "source_commit": "624fd8cf46391e109b365f56270bf5ef5ade2ada",
-    "fixture_set_sha256": "7ba888e46cd6b7bc6322cd70eb04b47f102445a3fdea20ce7e00cb06563656e2",
+    "source_commit": "f0c74539a5361f70e310e1ef79616434c89d06f3",
+    "fixture_set_sha256": "fe54dbd7772a807bc092c26db6b8a18e426912fdf224aa87cced4242519ecdf2",
     "provenance": {
         "generator": "tests/audience_visibility_fixture_dump.php",
-        "generator_sha256": "e45570f320f171f728dd50355aa0013696ee609b68cea67fadaa577d14e143a7",
+        "generator_sha256": "d9af39e83117535f8049761dda3ccd86ec4e6c150d6d5bec6aedf6b4c89accd7",
         "app_wire_adapter": "Friending\\Core\\Response::wirePayload",
         "admin_wire_adapter": "Friending\\Support\\Webadmin::noStoreReply",
         "evaluated_at": 1800000000,
@@ -35,14 +35,14 @@
             "route": "/v1/app/signup_options",
             "case": "schema_2_full_en",
             "consumer": "ios",
-            "sha256": "eeb7ce33536fd618dcdd288e22ff821107da73abb5bec4bfe3ed7e54dabffece"
+            "sha256": "f52fc35a2b63e0ff355a1b8a0fca23acad91fe5e416bc6bcfef08714b35fa86a"
         },
         {
             "file": "signup-catalog-hu.json",
             "route": "/v1/app/signup_options",
             "case": "schema_2_full_hu",
             "consumer": "ios",
-            "sha256": "eb009c668efe7ba7ec46a12c2bf25bfa54bc63d5bf207e12e482f4a4a6c21ac5"
+            "sha256": "2c790b84c49294fb2a591dc8a9523d91499bf0f50ed260926e095b05fd469b6d"
         },
         {
             "file": "signup-catalog-unavailable.json",
@@ -469,7 +469,7 @@
             "route": "/v1/iosuser/get_user_profile",
             "case": "private_fields_scrubbed",
             "consumer": "ios",
-            "sha256": "8d5222268da0c9b57bea99d5215328a9c5040ecc40742d0024c2564650ccdde7"
+            "sha256": "40becd9b7e7117f4ae52672e983021c111d4179c56e57398c77c4db327913786"
         },
         {
             "file": "policy-mutual-matrix.json",
@@ -483,21 +483,21 @@
             "route": "/v1/iosuser/get_user_profile",
             "case": "friend_exception_before_predicate",
             "consumer": "provider",
-            "sha256": "8d5222268da0c9b57bea99d5215328a9c5040ecc40742d0024c2564650ccdde7"
+            "sha256": "40becd9b7e7117f4ae52672e983021c111d4179c56e57398c77c4db327913786"
         },
         {
             "file": "established-chat-profile.json",
             "route": "/v1/ioschat/get_user_profile",
             "case": "chat_exception_before_predicate",
             "consumer": "provider",
-            "sha256": "8d5222268da0c9b57bea99d5215328a9c5040ecc40742d0024c2564650ccdde7"
+            "sha256": "40becd9b7e7117f4ae52672e983021c111d4179c56e57398c77c4db327913786"
         },
         {
             "file": "blocked-established-profile.json",
             "route": "/v1/iosuser/get_user_profile",
             "case": "passive_access_retained",
             "consumer": "provider",
-            "sha256": "8d5222268da0c9b57bea99d5215328a9c5040ecc40742d0024c2564650ccdde7"
+            "sha256": "40becd9b7e7117f4ae52672e983021c111d4179c56e57398c77c4db327913786"
         },
         {
             "file": "blocked-new-outbound.json",
@@ -602,7 +602,7 @@
             "route": "contract://icebreaker-eligibility",
             "case": "retired_and_replacement_intents_ignored",
             "consumer": "provider",
-            "sha256": "0d6873c006e12f6bf6bd729799d7da10354593de9f7ad806adbdb9ac65f60437"
+            "sha256": "c41f7a2aaf1beb6f959d173b1bda8d891f308176e36f7618f9139a15c738e37a"
         },
         {
             "file": "projection-other-member-private-fields-absent.json",
@@ -679,7 +679,7 @@
             "route": "/v1/webadmin/audience_visibility_catalog",
             "case": "catalog_read",
             "consumer": "webadmin",
-            "sha256": "19bb91624919395a7ab3d7ffc488d1690f90b496707dd96c750cc935e5b45df6"
+            "sha256": "1885f7c24e86b242083c9f1200a0153486cc62c32d8f777c3331d97ab8308452"
         },
         {
             "file": "admin-member-binary.json",
