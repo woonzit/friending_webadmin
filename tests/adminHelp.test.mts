@@ -94,7 +94,8 @@ test("every inventoried functional section has detailed English and Hungarian he
   // /users/<uid> with no guide in either locale (238). T-551 documents the
   // Persona verification-screens console that replaced the T-581 placeholder
   // on /persona (239). T-671 replaces all five signup-options topics with the
-  // five composer topics below, so the reviewed total remains 239. T-683 adds
+  // five composer topics below; T-701 updates the System topic for the third
+  // locked question without changing that census, so the total remains 239. T-683 adds
   // the six into-tag moderation topics and one moderation-state topic on
   // /profile-tags, where the item badge and the locked-row refusal now live (246).
   assert.equal(totalSections, 246, "review the functional-section census when the UI changes");
@@ -125,6 +126,16 @@ test("every inventoried functional section has detailed English and Hungarian he
 
       const sections = record(copy.sections, `${locale}.${page.key}.sections`);
       assert.deepEqual(Object.keys(sections).sort(), [...page.sections].sort());
+      if (page.key === "signupOptions") {
+        const systemQuestions = record(
+          sections.systemQuestions,
+          `${locale}.${page.key}.systemQuestions`,
+        );
+        assert.match(
+          nonEmpty(systemQuestions.purpose, `${locale}.${page.key}.systemQuestions.purpose`, 55),
+          locale === "en" ? /What are you looking for\?/u : /Mit keresel\?/u,
+        );
+      }
       for (const sectionKey of page.sections) {
         const section = record(sections[sectionKey], `${locale}.${page.key}.${sectionKey}`);
         nonEmpty(section.title, `${locale}.${page.key}.${sectionKey}.title`, 5);

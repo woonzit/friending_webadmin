@@ -11,6 +11,7 @@ import {
   type SignupDroppedItem,
   type SignupPageIssue,
   type SignupPageLayout,
+  type SignupPagesPayload,
 } from "../lib/signupPages.ts";
 
 const envelopes = JSON.parse(readFileSync(
@@ -20,6 +21,14 @@ const envelopes = JSON.parse(readFileSync(
 
 const payload = signupPagesPayload(envelopes["list_signup_options.composed"]);
 assert.ok(payload, "the captured read envelope must decode");
+const systemIntentsEnvelopes = JSON.parse(readFileSync(
+  new URL("./fixtures/signup_pages_handoff/system-intents-handoff.json", import.meta.url),
+  "utf8",
+)) as Record<string, unknown>;
+const systemIntentsPayload = signupPagesPayload(
+  systemIntentsEnvelopes["list_signup_options.composed"],
+);
+assert.ok(systemIntentsPayload, "the temporary three-row handoff envelope must decode");
 
 const MESSAGES = {
   en: JSON.parse(readFileSync(new URL("../messages/en.json", import.meta.url), "utf8")),
@@ -31,14 +40,16 @@ function render(
   layout: SignupPageLayout,
   issues: SignupPageIssue[] = [],
   droppedItems: SignupDroppedItem[] = [],
+  source: SignupPagesPayload = payload,
 ): string {
   return renderToStaticMarkup(createElement(
     NextIntlClientProvider,
     { locale, messages: MESSAGES[locale], timeZone: "UTC" },
     createElement(SignupPageComposer, {
       layout,
-      eligibleFields: payload.eligible_fields,
-      systemQuestions: payload.system_questions,
+      eligibleFields: source.eligible_fields,
+      systemQuestions: source.system_questions,
+      warnings: source.warnings,
       droppedItems,
       issues,
       busy: false,
@@ -75,6 +86,15 @@ function systemBlock(markup: string): string {
   return block[0];
 }
 
+function systemCard(markup: string, key: string): string {
+  const card = new RegExp(
+    `<article class="signup-system-card"[^>]*data-system-question="${key}"[\\s\\S]*?<\\/article>`,
+    "u",
+  ).exec(markup);
+  assert.ok(card, `the ${key} System card must render`);
+  return card[0];
+}
+
 test("the two Core-served System cards are locked and no retired card is invented", () => {
   for (const locale of ["en", "hu"] as const) {
     const markup = render(locale, emptyLayout());
@@ -92,6 +112,48 @@ test("the two Core-served System cards are locked and no retired card is invente
   assert.match(render("en", emptyLayout()), /Who can see my profile/u);
   assert.match(render("hu", emptyLayout()), />Nem</u);
   assert.match(render("hu", emptyLayout()), /Ki láthatja az adatlapomat/u);
+  assert.equal([...render("en", emptyLayout()).matchAll(/>OPTIONAL<\/span>/gu)].length, 2);
+  assert.equal([...render("hu", emptyLayout()).matchAll(/>OPCIONÁLIS<\/span>/gu)].length, 2);
+  assert.doesNotMatch(render("en", emptyLayout()), /At least \d+ answers required/u);
+  assert.doesNotMatch(render("hu", emptyLayout()), /Legalább \d+ válasz kötelező/u);
+});
+
+test("the handoff's third System card renders 14 read-only answers and its required minimum", () => {
+  const en = render("en", systemIntentsPayload.pages, [], [], systemIntentsPayload);
+  const hu = render("hu", systemIntentsPayload.pages, [], [], systemIntentsPayload);
+  assert.equal([...en.matchAll(/data-system-question=/gu)].length, 3);
+  assert.equal([...hu.matchAll(/data-system-question=/gu)].length, 3);
+
+  const enCard = systemCard(en, "intents");
+  const huCard = systemCard(hu, "intents");
+  assert.match(enCard, /What are you looking for\?/u);
+  assert.match(huCard, /Mit keresel\?/u);
+  assert.equal([...enCard.matchAll(/<li>/gu)].length, 14);
+  assert.equal([...huCard.matchAll(/<li>/gu)].length, 14);
+  assert.match(enCard, /People to meet IRL/u);
+  assert.match(enCard, /Anything/u);
+  assert.match(huCard, /Élőben találkozni/u);
+  assert.match(huCard, /Bármi/u);
+  assert.match(enCard, /<span class="badge badge-warning">SYSTEM<\/span>/u);
+  assert.match(enCard, /<span class="badge badge-active">REQUIRED<\/span>/u);
+  assert.match(huCard, /<span class="badge badge-active">KÖTELEZŐ<\/span>/u);
+  assert.match(enCard, /At least 1 answers required/u);
+  assert.match(huCard, /Legalább 1 válasz kötelező/u);
+  assert.doesNotMatch(enCard, /<(?:a|button|input|select|textarea)\b/u);
+  assert.doesNotMatch(huCard, /<(?:a|button|input|select|textarea)\b/u);
+});
+
+test("an unknown fourth System key is omitted from the cards and rendered as a warning", () => {
+  const value = structuredClone(
+    systemIntentsEnvelopes["list_signup_options.composed"],
+  ) as Record<string, unknown>;
+  (value.system_questions as Record<string, unknown>[]).push({ key: "future_system_question" });
+  const parsed = signupPagesPayload(value);
+  assert.ok(parsed);
+  const en = render("en", parsed.pages, [], [], parsed);
+  assert.equal([...en.matchAll(/data-system-question=/gu)].length, 3);
+  assert.doesNotMatch(systemBlock(en), /data-system-question="future_system_question"/u);
+  assert.match(en, /Core returned unsupported System question\(s\), which were skipped: future_system_question\./u);
 });
 
 test("a composed page renders bilingual copy, ordered answers and the Profile fields anchor", () => {

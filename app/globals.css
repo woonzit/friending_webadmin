@@ -7735,8 +7735,20 @@ body .verification-level-pill.level-strong {
   font-size: 11px;
 }
 
-.signup-system-copy > .badge {
-  justify-self: start;
+.signup-system-warning {
+  margin: 16px 16px 0;
+}
+
+.signup-system-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.signup-system-required-caption {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 12px;
 }
 
 .signup-system-copy ul,

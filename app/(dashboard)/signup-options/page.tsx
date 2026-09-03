@@ -165,6 +165,7 @@ export default function SignupOptionsPage() {
         layout={draft}
         eligibleFields={payload.eligible_fields}
         systemQuestions={payload.system_questions}
+        warnings={payload.warnings}
         droppedItems={payload.dropped_items}
         issues={issues}
         busy={busy}

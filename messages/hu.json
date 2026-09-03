@@ -1638,19 +1638,19 @@
         "title": "Signupoldal-szerkesztő súgó",
         "summary": "Ez a munkaterület állítja össze a signup rögzített System kérdései után megjelenő opcionális, kétnyelvű oldalakat. Az oldalsorrendet, a kérdések elhelyezését és kötelezőségét kezeli, míg a kérdésdefiníciók és válaszok a Profiladatok alatt maradnak.",
         "steps": {
-          "1": "Először nézd át a zárolt System kérdéseket, hogy az opcionális oldalak ne ismételjék az identitás- vagy profil-láthatósági lépéseket.",
+          "1": "Először nézd át a zárolt System kérdéseket, hogy az opcionális oldalak ne ismételjék az identitás-, profil-láthatósági vagy Mit keresel? lépéseket.",
           "2": "Hozd létre és rendezd az oldalakat, töltsd ki mindkét címet, majd minden alkalmas katalóguskérdést pontosan egy oldalon helyezz el.",
           "3": "Ellenőrizd a kötelező kapcsolókat és válaszelőnézeteket, egyszer mentsd a teljes vázlatot, majd nézd meg az új elrendezés-revíziót."
         },
         "sections": {
           "systemQuestions": {
             "title": "Zárolt System kérdések",
-            "purpose": "A Nem és a Ki láthatja az adatlapomat minden összeállított oldal előtt, a Core által rögzített sorrendben jelenik meg, és itt csak olvasható.",
+            "purpose": "A Nem, a Ki láthatja az adatlapomat és a Mit keresel? minden összeállított oldal előtt, a Core által rögzített sorrendben jelenik meg, és itt csak olvasható.",
             "actions": {
-              "1": "Az opcionális oldalak összeállítása előtt ellenőrizd mindkét zárolt kártyát és válaszelőnézetét.",
-              "2": "A hiányzó vagy váratlan System kártyát betöltési hibaként kezeld, ne üres konfigurációként."
+              "1": "Az opcionális oldalak összeállítása előtt ellenőrizz minden Core-tól kapott zárolt kártyát, kötelezőségét és válaszelőnézetét.",
+              "2": "A hibás ismert System anyag betöltési hiba; az ismeretlen jövőbeli kulcsot a konzol kihagyja, és figyelmeztetést jelez."
             },
-            "guidance": "A kapcsolati állapot és a részletes nem nem tartozik ebbe a blokkba. Megjelenésük szerződéseltérést jelez, amelyet a Core-ban kell javítani."
+            "guidance": "A kapcsolati állapot és a részletes nem nem tartozik ebbe a blokkba. A konzol csak a gender, visible_to és intents kulcsot ismeri, ebben a sorrendben."
           },
           "pageLayout": {
             "title": "Oldalelrendezés és szöveg",
@@ -6716,7 +6716,11 @@
     "subtitle": "Az opcionális signup-oldalak összeállítása. A kérdések és válaszaik továbbra is a Profiladatok alatt kezelhetők.",
     "systemTitle": "System kérdések",
     "systemCopy": "A Core ezeket rögzített sorrendben, az összeállított oldalak előtt kérdezi. Itt csak tájékoztatásként láthatók, nem szerkeszthetők és nem mozgathatók.",
-    "systemLocked": "Zárolt · rögzített sorrend",
+    "systemBadge": "SYSTEM",
+    "systemRequired": "KÖTELEZŐ",
+    "systemOptional": "OPCIONÁLIS",
+    "systemRequiredMinimum": "Legalább {count} válasz kötelező",
+    "systemUnknownWarning": "A Core nem támogatott System kérdése(ke)t adott vissza; ezeket kihagytuk: {keys}.",
     "pagesTitle": "Signup oldalak",
     "pagesCopy": "Legfeljebb öt kétnyelvű oldalt állíthatsz össze, és minden alkalmas katalóguskérdést egyszer helyezhetsz el.",
     "pageCount": "{max} oldalból {used}",

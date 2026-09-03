@@ -22,6 +22,19 @@ Core has NO committed `list_signup_options` fixture corpus of its own, so this f
 Core-side manifest — is the provenance record. `tests/signupPages.test.mts` re-checks the sha256
 on every run, so an edited body fails the suite instead of silently drifting from the wire.
 
+`system-intents-handoff.json` is the **handoff shape until Core T-702 publishes the real
+envelope**:
+
+    sha256 79851687152d6193129edb9a03496e586b7b746f4dc9cd2120f77f0b33dfe1b5   (199338 bytes)
+
+It began as a byte-identical copy of `t689-signup-composer-envelopes.json`. The only hand-written
+change is one contract-only `intents` System row appended to each of the three complete payloads
+(`list_signup_options.empty`, `save_signup_page_layout.200`, and
+`list_signup_options.composed`). Each row carries `kind: "system"`, `synthetic: true`,
+`required_min: 1`, the binding bilingual title, and the live catalogue's 14 ordered bilingual
+options; it deliberately does not pretend to be a Core capture. Tests pin both its bytes and the
+fact that every pre-existing envelope member and System row is unchanged.
+
 Five envelopes, keyed by `<action>.<case>`:
 
 | key | what it is |

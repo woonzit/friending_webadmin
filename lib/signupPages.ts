@@ -18,6 +18,10 @@ export type SignupPageOption = {
   labels: SignupPageText;
 };
 
+export const SIGNUP_SYSTEM_QUESTION_KEYS = ["gender", "visible_to", "intents"] as const;
+
+export type SignupSystemQuestionKey = (typeof SIGNUP_SYSTEM_QUESTION_KEYS)[number];
+
 export type SignupEligibleField = {
   /**
    * Core serves BOTH names for the same value on purpose
@@ -41,19 +45,26 @@ export type SignupEligibleField = {
 };
 
 export type SignupSystemQuestion = {
-  key: "gender" | "visible_to";
-  kind: "identity" | "audience";
+  key: SignupSystemQuestionKey;
+  kind: "identity" | "audience" | "system";
   /**
-   * Only "Ki láthatja az adatlapomat" is synthetic: it has no catalogue row at
-   * all, its labels are compiled constants, and Core omits the key entirely on
-   * the gender question rather than serving `false`.
+   * Core omits this key, rather than serving `false`, on the deployed gender
+   * row. The two compiled questions (`visible_to` and `intents`) serve `true`.
    */
   synthetic: boolean;
+  /** Additive on T-702; deployed two-row bodies decode an absent value as 0. */
+  required_min: number;
   labels: SignupPageText;
   icon: SignupPageIcon;
-  required: true;
+  /** System membership itself locks the card; the new row need not repeat it. */
   locked: true;
   options: SignupPageOption[];
+};
+
+export type SignupPagesWarning = {
+  code: "unknown-system-question";
+  key: string;
+  index: number;
 };
 
 export type SignupPageItem = {
@@ -92,8 +103,9 @@ export type SignupDroppedItem = {
 export type SignupPagesPayload = {
   pages: SignupPageLayout;
   eligible_fields: SignupEligibleField[];
-  system_questions: [SignupSystemQuestion, SignupSystemQuestion];
+  system_questions: SignupSystemQuestion[];
   dropped_items: SignupDroppedItem[];
+  warnings: SignupPagesWarning[];
 };
 
 export const SIGNUP_PAGE_ISSUE_CODES = [
@@ -309,37 +321,101 @@ function eligibleField(value: unknown): SignupEligibleField | null {
   };
 }
 
+function isSignupSystemQuestionKey(value: string): value is SignupSystemQuestionKey {
+  return SIGNUP_SYSTEM_QUESTION_KEYS.includes(value as SignupSystemQuestionKey);
+}
+
+const SYSTEM_QUESTION_CONTRACT = {
+  gender: { kind: "identity", synthetic: false },
+  visible_to: { kind: "audience", synthetic: true },
+  intents: { kind: "system", synthetic: true },
+} as const;
+
 function systemQuestion(value: unknown): SignupSystemQuestion | null {
-  // `synthetic` is served only on the audience question, so the key set is an
-  // allow-list rather than an exact match.
+  // The first deployed rows still carry `locked`, `required`, and `icon`; the
+  // T-702 additive contract does not need to repeat them on a System-owned
+  // question. Validate legacy members when present and normalize the missing
+  // lock/icon values instead of making the new row imitate the old envelope.
   const source = allowedRecord(
     value,
-    ["key", "kind", "locked", "synthetic", "required", "labels", "icon", "options"] as const,
+    [
+      "key",
+      "kind",
+      "locked",
+      "synthetic",
+      "required",
+      "required_min",
+      "labels",
+      "icon",
+      "options",
+    ] as const,
   );
   const labels = localizedText(source?.labels, true);
-  const icon = pageIcon(source?.icon);
+  const icon = source?.icon === undefined ? { url: "", mime: "" } as const : pageIcon(source.icon);
   const parsedOptions = options(source?.options);
+  if (!source || typeof source.key !== "string" || !isSignupSystemQuestionKey(source.key)) return null;
+  const contract = SYSTEM_QUESTION_CONTRACT[source.key];
+  const synthetic = source.synthetic === undefined ? false : source.synthetic;
+  const requiredMin = source.required_min === undefined
+    ? 0
+    : integer(source.required_min, 0, 1_000);
   if (
-    !source
-    || (source.key !== "gender" && source.key !== "visible_to")
-    || (source.kind !== "identity" && source.kind !== "audience")
-    || source.required !== true
-    || source.locked !== true
-    || (source.synthetic !== undefined && typeof source.synthetic !== "boolean")
+    source.kind !== contract.kind
+    || synthetic !== contract.synthetic
+    || (source.required !== undefined && source.required !== true)
+    || (source.locked !== undefined && source.locked !== true)
+    || requiredMin === null
     || !labels
     || !icon
     || !parsedOptions
+    || requiredMin > parsedOptions.length
   ) return null;
   return {
     key: source.key,
-    kind: source.kind,
-    synthetic: source.synthetic === true,
+    kind: contract.kind,
+    synthetic: contract.synthetic,
+    required_min: requiredMin,
     labels,
     icon,
-    required: true,
     locked: true,
     options: parsedOptions,
   };
+}
+
+function systemQuestions(value: unknown): {
+  questions: SignupSystemQuestion[];
+  warnings: SignupPagesWarning[];
+} | null {
+  if (!Array.isArray(value) || value.length > 1_000) return null;
+  const questions: SignupSystemQuestion[] = [];
+  const warnings: SignupPagesWarning[] = [];
+  let previousKnownIndex = -1;
+
+  for (const [index, raw] of value.entries()) {
+    const source = record(raw);
+    if (
+      !source
+      || typeof source.key !== "string"
+      || source.key.length < 1
+      || source.key.length > 128
+    ) return null;
+
+    if (!isSignupSystemQuestionKey(source.key)) {
+      warnings.push({ code: "unknown-system-question", key: source.key, index });
+      continue;
+    }
+
+    const knownIndex = SIGNUP_SYSTEM_QUESTION_KEYS.indexOf(source.key);
+    // Any subset is safe, but known rows remain unique and in Core's fixed
+    // order even when an unknown future row is interleaved and skipped.
+    if (knownIndex <= previousKnownIndex) return null;
+    const question = systemQuestion(raw);
+    if (!question) return null;
+    questions.push(question);
+    previousKnownIndex = knownIndex;
+  }
+
+  return { questions, warnings };
 }
 
 function pageItem(value: unknown): SignupPageItem | null {
@@ -473,33 +549,30 @@ export function signupPagesPayload(value: unknown): SignupPagesPayload | null {
   const source = record(value);
   const parsedLayout = layout(source?.pages);
   const dropped = droppedItems(source?.dropped_items);
+  const parsedSystemQuestions = systemQuestions(source?.system_questions);
   if (
     !source
     || !parsedLayout
     || !dropped
+    || !parsedSystemQuestions
     || !Array.isArray(source.eligible_fields)
     || source.eligible_fields.length > 500
-    || !Array.isArray(source.system_questions)
-    || source.system_questions.length !== 2
   ) return null;
 
   const fields = source.eligible_fields.map(eligibleField);
-  const questions = source.system_questions.map(systemQuestion);
-  if (fields.some((row) => row === null) || questions.some((row) => row === null)) return null;
+  if (fields.some((row) => row === null)) return null;
 
   const eligibleFields = fields as SignupEligibleField[];
-  const systemQuestions = questions as SignupSystemQuestion[];
   if (new Set(eligibleFields.map((row) => row.field_key)).size !== eligibleFields.length) return null;
-  if (new Set(systemQuestions.map((row) => row.key)).size !== 2) return null;
-  if (systemQuestions[0].key !== "gender" || systemQuestions[1].key !== "visible_to") return null;
   const eligibleKeys = new Set(eligibleFields.map((row) => row.field_key));
   if (parsedLayout.pages.some((row) => row.items.some((item) => !eligibleKeys.has(item.field_key)))) return null;
 
   return {
     pages: parsedLayout,
     eligible_fields: eligibleFields,
-    system_questions: systemQuestions as [SignupSystemQuestion, SignupSystemQuestion],
+    system_questions: parsedSystemQuestions.questions,
     dropped_items: dropped,
+    warnings: parsedSystemQuestions.warnings,
   };
 }
 

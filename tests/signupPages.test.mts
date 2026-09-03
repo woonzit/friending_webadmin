@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   SIGNUP_PAGE_ITEM_LIMIT,
   SIGNUP_PAGE_LIMIT,
+  SIGNUP_SYSTEM_QUESTION_KEYS,
   addItem,
   addPage,
   moveItem,
@@ -34,9 +35,21 @@ const CORPUS = new URL(
 );
 const CORPUS_BYTES = readFileSync(CORPUS);
 const envelopes = JSON.parse(CORPUS_BYTES.toString("utf8")) as Record<string, unknown>;
+const SYSTEM_INTENTS_HANDOFF = new URL(
+  "./fixtures/signup_pages_handoff/system-intents-handoff.json",
+  import.meta.url,
+);
+const SYSTEM_INTENTS_HANDOFF_BYTES = readFileSync(SYSTEM_INTENTS_HANDOFF);
+const systemIntentsEnvelopes = JSON.parse(
+  SYSTEM_INTENTS_HANDOFF_BYTES.toString("utf8"),
+) as Record<string, unknown>;
 
 function envelope(key: string): Record<string, unknown> {
   return structuredClone(envelopes[key]) as Record<string, unknown>;
+}
+
+function systemIntentsEnvelope(key: string): Record<string, unknown> {
+  return structuredClone(systemIntentsEnvelopes[key]) as Record<string, unknown>;
 }
 
 function raw(): Record<string, unknown> {
@@ -73,6 +86,76 @@ test("the fixture is the published T-689 capture, byte for byte", () => {
     "save_signup_page_layout.409",
     "save_signup_page_layout.422",
   ]);
+});
+
+test("the temporary T-702 handoff appends only the contract-only intents row", () => {
+  assert.equal(
+    createHash("sha256").update(SYSTEM_INTENTS_HANDOFF_BYTES).digest("hex"),
+    "79851687152d6193129edb9a03496e586b7b746f4dc9cd2120f77f0b33dfe1b5",
+    "replace this handoff with Core T-702's real envelope when it is published",
+  );
+  assert.equal(SYSTEM_INTENTS_HANDOFF_BYTES.byteLength, 199_338);
+  assert.deepEqual(Object.keys(systemIntentsEnvelopes).sort(), Object.keys(envelopes).sort());
+
+  const completePayloads = [
+    "list_signup_options.empty",
+    "save_signup_page_layout.200",
+    "list_signup_options.composed",
+  ];
+  let pinnedIntents: Record<string, unknown> | null = null;
+  for (const key of completePayloads) {
+    const deployed = envelope(key);
+    const handoff = systemIntentsEnvelope(key);
+    const deployedRows = deployed.system_questions as Record<string, unknown>[];
+    const handoffRows = handoff.system_questions as Record<string, unknown>[];
+    assert.deepEqual(handoffRows.slice(0, deployedRows.length), deployedRows, `${key}: deployed rows`);
+    assert.equal(handoffRows.length, deployedRows.length + 1, `${key}: one additive row`);
+
+    const withoutIntents = structuredClone(handoff);
+    withoutIntents.system_questions = handoffRows.slice(0, deployedRows.length);
+    assert.deepEqual(withoutIntents, deployed, `${key}: no other envelope material changed`);
+    pinnedIntents ??= handoffRows.at(-1) ?? null;
+    assert.deepEqual(handoffRows.at(-1), pinnedIntents, `${key}: identical hand-written row`);
+  }
+
+  assert.ok(pinnedIntents);
+  assert.deepEqual(Object.keys(pinnedIntents).sort(), [
+    "key",
+    "kind",
+    "labels",
+    "options",
+    "required_min",
+    "synthetic",
+  ]);
+  assert.equal(pinnedIntents.key, "intents");
+  assert.equal(pinnedIntents.kind, "system");
+  assert.equal(pinnedIntents.synthetic, true);
+  assert.equal(pinnedIntents.required_min, 1);
+  assert.deepEqual(pinnedIntents.labels, {
+    en: "What are you looking for?",
+    hu: "Mit keresel?",
+  });
+  assert.deepEqual(
+    (pinnedIntents.options as Array<{ key: string; labels: { en: string; hu: string } }>).map(
+      (row) => [row.key, row.labels.en, row.labels.hu],
+    ),
+    [
+      ["people_to_meet_irl", "People to meet IRL", "Élőben találkozni"],
+      ["couple_friends", "Couple friends", "Páros barátok"],
+      ["gaming", "Gaming", "Gaming"],
+      ["volunteer", "Volunteer", "Önkénteskedés"],
+      ["workouts_sports", "Workouts & Sports", "Edzés és sport"],
+      ["travel", "Travel", "Utazás"],
+      ["live_music", "Live music", "Élő zene"],
+      ["nights_out", "Nights out", "Esti programok"],
+      ["coworking", "Coworking", "Coworking"],
+      ["faith_studies", "Faith studies", "Hitélet"],
+      ["arts_culture", "Arts & Culture", "Művészet és kultúra"],
+      ["roommate", "Roommate", "Lakótárs"],
+      ["kid_playdates", "Kid playdates", "Gyerekprogramok"],
+      ["anything", "Anything", "Bármi"],
+    ],
+  );
 });
 
 test("the captured read decodes the complete composer surface", () => {
@@ -113,7 +196,7 @@ test("the captured read decodes the complete composer surface", () => {
   assert.deepEqual(parsed.system_questions.map((question) => question.key), ["gender", "visible_to"]);
   assert.deepEqual(parsed.system_questions.map((question) => question.kind), ["identity", "audience"]);
   assert.deepEqual(parsed.system_questions.map((question) => question.synthetic), [false, true]);
-  assert.deepEqual(parsed.system_questions.map((question) => question.required), [true, true]);
+  assert.deepEqual(parsed.system_questions.map((question) => question.required_min), [0, 0]);
   assert.deepEqual(parsed.system_questions.map((question) => question.locked), [true, true]);
   assert.deepEqual(parsed.system_questions.map((question) => question.icon), [
     { url: "", mime: "" },
@@ -135,6 +218,7 @@ test("the captured read decodes the complete composer surface", () => {
   assert.equal(JSON.stringify(parsed).includes("subgender"), false);
 
   assert.deepEqual(parsed.dropped_items, []);
+  assert.deepEqual(parsed.warnings, []);
 });
 
 test("the fresh-install read is a deliberate zero-page layout, not a failure", () => {
@@ -145,6 +229,103 @@ test("the fresh-install read is a deliberate zero-page layout, not a failure", (
   assert.equal(parsed.pages.updated_by, "");
   assert.equal(parsed.eligible_fields.length, 6);
   assert.deepEqual(parsed.dropped_items, []);
+});
+
+test("the System decoder accepts canonical subsets and warns while skipping an unknown key", () => {
+  const complete = systemIntentsEnvelope("list_signup_options.composed");
+  const allRows = complete.system_questions as Record<string, unknown>[];
+  const completeParsed = signupPagesPayload(complete);
+  assert.ok(completeParsed, "the three-row handoff body must decode");
+  assert.deepEqual(
+    completeParsed.system_questions.map((question) => question.key),
+    SIGNUP_SYSTEM_QUESTION_KEYS,
+  );
+  assert.deepEqual(
+    completeParsed.system_questions.map((question) => question.required_min),
+    [0, 0, 1],
+  );
+  assert.deepEqual(completeParsed.system_questions[2].icon, { url: "", mime: "" });
+  assert.equal(completeParsed.system_questions[2].locked, true);
+  assert.equal(completeParsed.system_questions[2].options.length, 14);
+  assert.deepEqual(completeParsed.warnings, []);
+
+  // A read may carry any subset of the closed set while Core rolls a question
+  // out or back. Relative order, not an exact pair or exact triple, is the pin.
+  for (let mask = 0; mask < 2 ** allRows.length; mask += 1) {
+    const value = systemIntentsEnvelope("list_signup_options.composed");
+    value.system_questions = allRows.filter((_, index) => (mask & (1 << index)) !== 0);
+    assert.deepEqual(
+      signupPagesPayload(value)?.system_questions.map((question) => question.key),
+      (value.system_questions as Record<string, unknown>[]).map((row) => row.key),
+      `canonical subset ${mask.toString(2).padStart(allRows.length, "0")}`,
+    );
+  }
+
+  for (const rows of [
+    [allRows[1], allRows[0]],
+    [allRows[0], allRows[2], allRows[1]],
+    [allRows[0], allRows[0]],
+  ]) {
+    const value = systemIntentsEnvelope("list_signup_options.composed");
+    value.system_questions = rows;
+    assert.equal(signupPagesPayload(value), null, "known rows remain unique and ordered");
+  }
+
+  const withUnknown = systemIntentsEnvelope("list_signup_options.composed");
+  (withUnknown.system_questions as Record<string, unknown>[]).push({
+    key: "future_system_question",
+    // Deliberately malformed apart from its identity: unknown material is not
+    // interpreted as a known card and therefore cannot black out the page.
+    kind: 42,
+    options: null,
+  });
+  const ignored = signupPagesPayload(withUnknown);
+  assert.ok(ignored, "an unknown fourth key is a warning, not a null decode");
+  assert.deepEqual(ignored.system_questions.map((question) => question.key), [
+    "gender",
+    "visible_to",
+    "intents",
+  ]);
+  assert.deepEqual(ignored.warnings, [{
+    code: "unknown-system-question",
+    key: "future_system_question",
+    index: 3,
+  }]);
+
+  const interleavedUnknown = systemIntentsEnvelope("list_signup_options.composed");
+  (interleavedUnknown.system_questions as Record<string, unknown>[]).splice(1, 0, {
+    key: "future_identity",
+  });
+  assert.deepEqual(signupPagesPayload(interleavedUnknown)?.warnings, [{
+    code: "unknown-system-question",
+    key: "future_identity",
+    index: 1,
+  }]);
+});
+
+test("the additive intents row defaults required_min and fails closed on malformed known material", () => {
+  const absent = systemIntentsEnvelope("list_signup_options.composed");
+  delete (absent.system_questions as Record<string, unknown>[])[2].required_min;
+  assert.equal(signupPagesPayload(absent)?.system_questions[2].required_min, 0);
+
+  const cases: Array<(row: Record<string, unknown>) => void> = [
+    (row) => { row.required_min = -1; },
+    (row) => { row.required_min = 1.5; },
+    (row) => { row.required_min = "1"; },
+    (row) => { row.required_min = 15; },
+    (row) => { row.kind = "audience"; },
+    (row) => { row.synthetic = false; },
+    (row) => { delete row.synthetic; },
+    (row) => { row.locked = false; },
+    (row) => { row.required = false; },
+    (row) => { row.options = []; },
+    (row) => { row.unknown = true; },
+  ];
+  for (const mutate of cases) {
+    const value = systemIntentsEnvelope("list_signup_options.composed");
+    mutate((value.system_questions as Record<string, unknown>[])[2]);
+    assert.equal(signupPagesPayload(value), null);
+  }
 });
 
 test("the legacy option catalogue travels beside the composer blocks and is ignored", () => {
@@ -212,11 +393,10 @@ test("the decoder keeps known field and System material exact", () => {
       const fields = value.eligible_fields as Record<string, unknown>[];
       fields[0].field_key = fields[1].field_key;
     },
-    (value) => { (value.system_questions as Record<string, unknown>[]).reverse(); },
-    (value) => { (value.system_questions as Record<string, unknown>[])[1].key = "relationship_status"; },
     (value) => { (value.system_questions as Record<string, unknown>[])[0].locked = false; },
     (value) => { (value.system_questions as Record<string, unknown>[])[0].kind = "composed"; },
     (value) => { (value.system_questions as Record<string, unknown>[])[1].synthetic = "yes"; },
+    (value) => { (value.system_questions as Record<string, unknown>[]).push({ key: "" }); },
     (value) => {
       value.dropped_items = [
         { index: 0, page_key: "bad", field_key: "smoking", reason: "field-archived" },

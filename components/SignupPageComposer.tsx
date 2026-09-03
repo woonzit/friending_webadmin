@@ -21,6 +21,7 @@ import {
   type SignupPageIssue,
   type SignupPageIssueCode,
   type SignupPageLayout,
+  type SignupPagesWarning,
   type SignupSystemQuestion,
 } from "@/lib/signupPages";
 
@@ -55,6 +56,7 @@ export type SignupPageComposerProps = {
   layout: SignupPageLayout;
   eligibleFields: SignupEligibleField[];
   systemQuestions: SignupSystemQuestion[];
+  warnings?: SignupPagesWarning[];
   droppedItems: SignupDroppedItem[];
   issues: SignupPageIssue[];
   busy: boolean;
@@ -71,6 +73,7 @@ export default function SignupPageComposer({
   layout,
   eligibleFields,
   systemQuestions,
+  warnings = [],
   droppedItems,
   issues,
   busy,
@@ -146,6 +149,11 @@ export default function SignupPageComposer({
           <div><h2>{t("systemTitle")}</h2><p>{t("systemCopy")}</p></div>
           <span className="badge">{systemQuestions.length}</span>
         </div>
+        {warnings.length > 0 ? (
+          <div className="alert alert-warning signup-system-warning" role="status">
+            {t("systemUnknownWarning", { keys: warnings.map((warning) => warning.key).join(", ") })}
+          </div>
+        ) : null}
         <div className="signup-system-grid">
           {systemQuestions.map((question) => {
             const label = localeText(question.labels, locale);
@@ -156,7 +164,17 @@ export default function SignupPageComposer({
                 </span>
                 <div className="signup-system-copy">
                   <div><strong>{label}</strong><code>{question.key}</code></div>
-                  <span className="badge badge-warning">{t("systemLocked")}</span>
+                  <div className="signup-system-badges">
+                    <span className="badge badge-warning">{t("systemBadge")}</span>
+                    <span className={`badge ${question.required_min >= 1 ? "badge-active" : "badge-inactive"}`}>
+                      {t(question.required_min >= 1 ? "systemRequired" : "systemOptional")}
+                    </span>
+                  </div>
+                  {question.required_min >= 1 ? (
+                    <p className="signup-system-required-caption">
+                      {t("systemRequiredMinimum", { count: question.required_min })}
+                    </p>
+                  ) : null}
                   <ul>{question.options.map((option) => (
                     <li key={option.key}>{localeText(option.labels, locale)}</li>
                   ))}</ul>

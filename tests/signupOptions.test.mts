@@ -78,6 +78,12 @@ test("the composer wires nested drag, keyboard ordering and exact profile-field 
   assert.match(composer, /requiredToggle/);
   assert.match(composer, /answersPreview/);
   assert.match(composer, /addHere/);
+  assert.match(composer, /question\.required_min >= 1/);
+  assert.match(composer, /systemRequiredMinimum/);
+  assert.match(composer, /systemUnknownWarning/);
+  assert.match(page, /warnings=\{payload\.warnings\}/);
+  assert.match(decoder, /SIGNUP_SYSTEM_QUESTION_KEYS = \["gender", "visible_to", "intents"\]/);
+  assert.match(decoder, /code: "unknown-system-question"/);
 });
 
 test("conflicts reload authority and 422 reasons stay on their page or item", () => {
@@ -142,7 +148,11 @@ test("both locale trees remove editor copy and carry the composer copy", () => {
   ];
   const added = [
     "systemTitle",
-    "systemLocked",
+    "systemBadge",
+    "systemRequired",
+    "systemOptional",
+    "systemRequiredMinimum",
+    "systemUnknownWarning",
     "pagesTitle",
     "firstPage",
     "pageTitleEn",

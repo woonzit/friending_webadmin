@@ -1638,19 +1638,19 @@
         "title": "Signup page composer help",
         "summary": "This workspace composes the optional bilingual pages shown after the fixed System questions during signup. It controls page order, question placement and required state while leaving every question definition and selectable answer under Profile fields.",
         "steps": {
-          "1": "Review the locked System questions first so the optional pages do not duplicate identity or profile-visibility steps.",
+          "1": "Review the locked System questions first so the optional pages do not duplicate identity, profile-visibility or looking-for steps.",
           "2": "Create and order the pages, complete both titles, then place each eligible catalogue question on exactly one page.",
           "3": "Review required toggles and answer previews, save the complete draft once, and confirm the new layout revision."
         },
         "sections": {
           "systemQuestions": {
             "title": "Locked System questions",
-            "purpose": "Gender and Who can see my profile appear before every composed page in a fixed Core-owned order and remain read-only here.",
+            "purpose": "Gender, Who can see my profile and What are you looking for? appear before every composed page in a fixed Core-owned order and remain read-only here.",
             "actions": {
-              "1": "Check both locked cards and their answer previews before composing optional pages.",
-              "2": "Treat a missing or unexpected System card as a load error rather than an empty configuration."
+              "1": "Check every Core-served locked card, its required state and its answer preview before composing optional pages.",
+              "2": "Treat malformed known System material as a load error; an unknown future key is skipped and reported as a warning."
             },
-            "guidance": "Relationship status and detailed gender do not belong in this block. Their presence signals a contract mismatch that must be corrected in Core."
+            "guidance": "Relationship status and detailed gender do not belong in this block. The console recognizes only gender, visible_to and intents, in that order."
           },
           "pageLayout": {
             "title": "Page layout and copy",
@@ -6716,7 +6716,11 @@
     "subtitle": "Compose the optional signup pages. Question definitions and answers remain managed under Profile fields.",
     "systemTitle": "System questions",
     "systemCopy": "Core asks these before the composed pages in a fixed order. They are shown here for context and cannot be edited or moved.",
-    "systemLocked": "Locked · fixed order",
+    "systemBadge": "SYSTEM",
+    "systemRequired": "REQUIRED",
+    "systemOptional": "OPTIONAL",
+    "systemRequiredMinimum": "At least {count} answers required",
+    "systemUnknownWarning": "Core returned unsupported System question(s), which were skipped: {keys}.",
     "pagesTitle": "Signup pages",
     "pagesCopy": "Arrange up to five bilingual pages and place each eligible catalogue question once.",
     "pageCount": "{used} of {max} pages",
