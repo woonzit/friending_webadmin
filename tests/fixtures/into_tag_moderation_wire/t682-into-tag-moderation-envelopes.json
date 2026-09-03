@@ -1,0 +1,1912 @@
+{
+    "schema_version": 1,
+    "contract": "into-tag-moderation-v1",
+    "task": "T-682",
+    "decision": "D-107",
+    "generated_by": "team/handoffs/t682-into-tag-moderation-envelopes-generator.php",
+    "source_corpus": "api/tests/fixtures/into_tag_moderation_wire",
+    "source_commit": "01f2383b68c891d91950189e3c658f3547db3064",
+    "fixture_set_sha256": "389a9612d3ad04f9c759f52bd07567fc67575bfa7da2546c4e1b0861bf99b6cf",
+    "contract_errors": [
+        "into-tag-banned",
+        "into-tag-pending",
+        "into-tag-invalid",
+        "into-tag-limit",
+        "into-tag-catalog-full",
+        "into-tag-moderation-conflict",
+        "profile-tag-item-moderation-locked"
+    ],
+    "notes": [
+        "Every response body below is the exact bytes the production controller served through the production encoder; none was written by hand.",
+        "The Webadmin envelope carries the legacy V1 compatibility trio (message/status/can_send) and escapes unicode and slashes, because it is built by Webadmin::noStoreReply to stay byte-identical with the legacy webadminapi. The three receipted actions are no-store.",
+        "ONE revision guards the whole moderation plane. Every decide and every settings write moves it; a stale one answers 409 with data.current to adopt.",
+        "A request id retried with IDENTICAL material replays (replayed: true). The same id with different material is a conflict, not a replay.",
+        "member_creation_enabled defaults to FALSE and must stay false through the member-import cutover window: any write to profile_tag_items between an import dry run and its apply refuses that apply with member-import-protected-target-changed.",
+        "A moderation reason is never served to a member. No member body here contains moderation_reason, moderated_by, created_by_uid or label_fold."
+    ],
+    "webadmin_actions": {
+        "into_tag_moderation_list": {
+            "route": "POST /v1/webadmin/into_tag_moderation_list",
+            "capability": "into_tag_moderation_read",
+            "cache_control": "no-store",
+            "request_fields": {
+                "secret": "the shared Webadmin secret (never published)",
+                "admin_email": "the operator identity, as every webadmin action sends it",
+                "state": "pending | approved | rejected | merged | all (absent = all)",
+                "cursor": "optional; the `next_cursor` a previous page returned",
+                "limit": "optional; 1..200, default 50"
+            },
+            "envelopes": [
+                {
+                    "case": "200 pending, first page",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-list-pending.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "state": "pending",
+                        "limit": 3
+                    },
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "schema_version": 1,
+                            "state": "pending",
+                            "items": [
+                                {
+                                    "key": "board-games",
+                                    "label": "Board games",
+                                    "label_hu": "Board games",
+                                    "label_fold": "board games",
+                                    "moderation_state": "pending",
+                                    "provenance": "member",
+                                    "created_by_uid": 70001,
+                                    "created_at": 1788100000,
+                                    "active": false,
+                                    "member_count": 0,
+                                    "source_member_count": 0,
+                                    "merged_into": "",
+                                    "moderated_by": "",
+                                    "moderated_at": 0,
+                                    "moderation_reason": "",
+                                    "revision": 1
+                                },
+                                {
+                                    "key": "bouldering",
+                                    "label": "Bouldering",
+                                    "label_hu": "Bouldering",
+                                    "label_fold": "bouldering",
+                                    "moderation_state": "pending",
+                                    "provenance": "member",
+                                    "created_by_uid": 70001,
+                                    "created_at": 1788100000,
+                                    "active": false,
+                                    "member_count": 0,
+                                    "source_member_count": 0,
+                                    "merged_into": "",
+                                    "moderated_by": "",
+                                    "moderated_at": 0,
+                                    "moderation_reason": "",
+                                    "revision": 1
+                                },
+                                {
+                                    "key": "ice-baths",
+                                    "label": "Ice baths",
+                                    "label_hu": "Ice baths",
+                                    "label_fold": "ice baths",
+                                    "moderation_state": "pending",
+                                    "provenance": "member",
+                                    "created_by_uid": 70001,
+                                    "created_at": 1788100000,
+                                    "active": false,
+                                    "member_count": 0,
+                                    "source_member_count": 0,
+                                    "merged_into": "",
+                                    "moderated_by": "",
+                                    "moderated_at": 0,
+                                    "moderation_reason": "",
+                                    "revision": 1
+                                }
+                            ],
+                            "next_cursor": "ice-baths",
+                            "counts": {
+                                "approved": 3,
+                                "pending": 7,
+                                "rejected": 1,
+                                "merged": 1
+                            },
+                            "member_creation_enabled": true,
+                            "revision": 1,
+                            "principal": {
+                                "role": "owner",
+                                "capabilities": [
+                                    "into_tag_moderation_read",
+                                    "into_tag_moderation"
+                                ]
+                            }
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 pending, second page (cursor)",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-list-pending-page-two.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "state": "pending",
+                        "limit": 3,
+                        "cursor": "board-games"
+                    },
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "schema_version": 1,
+                            "state": "pending",
+                            "items": [
+                                {
+                                    "key": "bouldering",
+                                    "label": "Bouldering",
+                                    "label_hu": "Bouldering",
+                                    "label_fold": "bouldering",
+                                    "moderation_state": "pending",
+                                    "provenance": "member",
+                                    "created_by_uid": 70001,
+                                    "created_at": 1788100000,
+                                    "active": false,
+                                    "member_count": 0,
+                                    "source_member_count": 0,
+                                    "merged_into": "",
+                                    "moderated_by": "",
+                                    "moderated_at": 0,
+                                    "moderation_reason": "",
+                                    "revision": 1
+                                },
+                                {
+                                    "key": "ice-baths",
+                                    "label": "Ice baths",
+                                    "label_hu": "Ice baths",
+                                    "label_fold": "ice baths",
+                                    "moderation_state": "pending",
+                                    "provenance": "member",
+                                    "created_by_uid": 70001,
+                                    "created_at": 1788100000,
+                                    "active": false,
+                                    "member_count": 0,
+                                    "source_member_count": 0,
+                                    "merged_into": "",
+                                    "moderated_by": "",
+                                    "moderated_at": 0,
+                                    "moderation_reason": "",
+                                    "revision": 1
+                                },
+                                {
+                                    "key": "kitesurf-school",
+                                    "label": "Kitesurf school",
+                                    "label_hu": "Kitesurf school",
+                                    "label_fold": "kitesurf school",
+                                    "moderation_state": "pending",
+                                    "provenance": "member",
+                                    "created_by_uid": 70002,
+                                    "created_at": 1788096500,
+                                    "active": false,
+                                    "member_count": 0,
+                                    "source_member_count": 0,
+                                    "merged_into": "",
+                                    "moderated_by": "",
+                                    "moderated_at": 0,
+                                    "moderation_reason": "",
+                                    "revision": 1
+                                }
+                            ],
+                            "next_cursor": "kitesurf-school",
+                            "counts": {
+                                "approved": 3,
+                                "pending": 7,
+                                "rejected": 1,
+                                "merged": 1
+                            },
+                            "member_creation_enabled": true,
+                            "revision": 1,
+                            "principal": {
+                                "role": "owner",
+                                "capabilities": [
+                                    "into_tag_moderation_read",
+                                    "into_tag_moderation"
+                                ]
+                            }
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 rejected (the ban list)",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-list-rejected.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "state": "rejected",
+                        "limit": 50
+                    },
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "schema_version": 1,
+                            "state": "rejected",
+                            "items": [
+                                {
+                                    "key": "smoking",
+                                    "label": "Smoking",
+                                    "label_hu": "Smoking",
+                                    "label_fold": "smoking",
+                                    "moderation_state": "rejected",
+                                    "provenance": "legacy-user-created",
+                                    "created_by_uid": 70002,
+                                    "created_at": 1788090000,
+                                    "active": false,
+                                    "member_count": 0,
+                                    "source_member_count": 0,
+                                    "merged_into": "",
+                                    "moderated_by": "moderator@friending.com",
+                                    "moderated_at": 1788099000,
+                                    "moderation_reason": "D-020 special category",
+                                    "revision": 1
+                                }
+                            ],
+                            "next_cursor": "",
+                            "counts": {
+                                "approved": 3,
+                                "pending": 7,
+                                "rejected": 1,
+                                "merged": 1
+                            },
+                            "member_creation_enabled": true,
+                            "revision": 1,
+                            "principal": {
+                                "role": "owner",
+                                "capabilities": [
+                                    "into_tag_moderation_read",
+                                    "into_tag_moderation"
+                                ]
+                            }
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 merged (the aliases)",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-list-merged.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "state": "merged",
+                        "limit": 50
+                    },
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "schema_version": 1,
+                            "state": "merged",
+                            "items": [
+                                {
+                                    "key": "michaeljackson",
+                                    "label": "Michael Jackson",
+                                    "label_hu": "Michael Jackson",
+                                    "label_fold": "michael jackson",
+                                    "moderation_state": "merged",
+                                    "provenance": "legacy-user-created",
+                                    "created_by_uid": 70002,
+                                    "created_at": 1788090000,
+                                    "active": false,
+                                    "member_count": 0,
+                                    "source_member_count": 0,
+                                    "merged_into": "music",
+                                    "moderated_by": "moderator@friending.com",
+                                    "moderated_at": 1788099100,
+                                    "moderation_reason": "D-039 interest mapping: merged into music",
+                                    "revision": 1
+                                }
+                            ],
+                            "next_cursor": "",
+                            "counts": {
+                                "approved": 3,
+                                "pending": 7,
+                                "rejected": 1,
+                                "merged": 1
+                            },
+                            "member_creation_enabled": true,
+                            "revision": 1,
+                            "principal": {
+                                "role": "owner",
+                                "capabilities": [
+                                    "into_tag_moderation_read",
+                                    "into_tag_moderation"
+                                ]
+                            }
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 as a viewer (read only)",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-list-viewer.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "state": "pending",
+                        "limit": 3
+                    },
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "schema_version": 1,
+                            "state": "pending",
+                            "items": [
+                                {
+                                    "key": "board-games",
+                                    "label": "Board games",
+                                    "label_hu": "Board games",
+                                    "label_fold": "board games",
+                                    "moderation_state": "pending",
+                                    "provenance": "member",
+                                    "created_by_uid": 70001,
+                                    "created_at": 1788100000,
+                                    "active": false,
+                                    "member_count": 0,
+                                    "source_member_count": 0,
+                                    "merged_into": "",
+                                    "moderated_by": "",
+                                    "moderated_at": 0,
+                                    "moderation_reason": "",
+                                    "revision": 1
+                                },
+                                {
+                                    "key": "bouldering",
+                                    "label": "Bouldering",
+                                    "label_hu": "Bouldering",
+                                    "label_fold": "bouldering",
+                                    "moderation_state": "pending",
+                                    "provenance": "member",
+                                    "created_by_uid": 70001,
+                                    "created_at": 1788100000,
+                                    "active": false,
+                                    "member_count": 0,
+                                    "source_member_count": 0,
+                                    "merged_into": "",
+                                    "moderated_by": "",
+                                    "moderated_at": 0,
+                                    "moderation_reason": "",
+                                    "revision": 1
+                                },
+                                {
+                                    "key": "ice-baths",
+                                    "label": "Ice baths",
+                                    "label_hu": "Ice baths",
+                                    "label_fold": "ice baths",
+                                    "moderation_state": "pending",
+                                    "provenance": "member",
+                                    "created_by_uid": 70001,
+                                    "created_at": 1788100000,
+                                    "active": false,
+                                    "member_count": 0,
+                                    "source_member_count": 0,
+                                    "merged_into": "",
+                                    "moderated_by": "",
+                                    "moderated_at": 0,
+                                    "moderation_reason": "",
+                                    "revision": 1
+                                }
+                            ],
+                            "next_cursor": "ice-baths",
+                            "counts": {
+                                "approved": 3,
+                                "pending": 7,
+                                "rejected": 1,
+                                "merged": 1
+                            },
+                            "member_creation_enabled": true,
+                            "revision": 1,
+                            "principal": {
+                                "role": "viewer",
+                                "capabilities": [
+                                    "into_tag_moderation_read"
+                                ]
+                            }
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "422 unknown state",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-list-state-invalid.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "state": "archived"
+                    },
+                    "http_status_in_body": 422,
+                    "response": {
+                        "success": false,
+                        "status_code": 422,
+                        "error": "into-tag-state-invalid",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "401 unknown operator",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-session-invalid.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "state": "pending"
+                    },
+                    "http_status_in_body": 401,
+                    "response": {
+                        "success": false,
+                        "status_code": 401,
+                        "error": "catalog-admin-session-invalid",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "403 revoked operator",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-revoked.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "state": "pending"
+                    },
+                    "http_status_in_body": 403,
+                    "response": {
+                        "success": false,
+                        "status_code": 403,
+                        "error": "catalog-admin-revoked",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                }
+            ]
+        },
+        "into_tag_moderation_decide": {
+            "route": "POST /v1/webadmin/into_tag_moderation_decide",
+            "capability": "into_tag_moderation",
+            "cache_control": "no-store",
+            "request_fields": {
+                "secret": "the shared Webadmin secret (never published)",
+                "admin_email": "the operator identity",
+                "request_id": "UUID v4. The SAME id retried with the SAME material replays; with different material it conflicts",
+                "expected_revision": "the `revision` the list returned",
+                "key": "the tag key",
+                "verdict": "approve | reject | merge",
+                "merge_into": "required for merge, forbidden otherwise; must be an approved and active key",
+                "reason": "optional, <= 500 characters, never shown to the member"
+            },
+            "envelopes": [
+                {
+                    "case": "200 approve",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-decide-approve.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "request_id": "00000004-0000-4000-8000-000000000000",
+                        "expected_revision": 1,
+                        "key": "bouldering",
+                        "verdict": "approve",
+                        "reason": "a real activity"
+                    },
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "revision": 2,
+                            "item": {
+                                "key": "bouldering",
+                                "label": "Bouldering",
+                                "label_hu": "Bouldering",
+                                "label_fold": "bouldering",
+                                "moderation_state": "approved",
+                                "provenance": "member",
+                                "created_by_uid": 70001,
+                                "created_at": 1788100000,
+                                "active": true,
+                                "member_count": 0,
+                                "source_member_count": 0,
+                                "merged_into": "",
+                                "moderated_by": "moderator@friending.com",
+                                "moderated_at": 1788100000,
+                                "moderation_reason": "a real activity",
+                                "revision": 2
+                            },
+                            "propagated": {
+                                "selections": 0,
+                                "userinfo": 0,
+                                "user_into": 0,
+                                "used_into": 0,
+                                "filters": 0
+                            },
+                            "counts": {
+                                "approved": 4,
+                                "pending": 6,
+                                "rejected": 1,
+                                "merged": 1
+                            },
+                            "replayed": false,
+                            "audit_id": "wai:bc3f83cdd44226a655e0d5eb0531a4ec90cae67412fa0898f3d04097eba21b64"
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 reject (with propagation counts)",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-decide-reject.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "request_id": "00000006-0000-4000-8000-000000000000",
+                        "expected_revision": 2,
+                        "key": "kitesurf-school",
+                        "verdict": "reject",
+                        "reason": "a business, not an interest"
+                    },
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "revision": 3,
+                            "item": {
+                                "key": "kitesurf-school",
+                                "label": "Kitesurf school",
+                                "label_hu": "Kitesurf school",
+                                "label_fold": "kitesurf school",
+                                "moderation_state": "rejected",
+                                "provenance": "member",
+                                "created_by_uid": 70002,
+                                "created_at": 1788096500,
+                                "active": false,
+                                "member_count": 0,
+                                "source_member_count": 0,
+                                "merged_into": "",
+                                "moderated_by": "moderator@friending.com",
+                                "moderated_at": 1788100000,
+                                "moderation_reason": "a business, not an interest",
+                                "revision": 2
+                            },
+                            "propagated": {
+                                "selections": 1,
+                                "userinfo": 1,
+                                "user_into": 1,
+                                "used_into": 1,
+                                "filters": 1
+                            },
+                            "counts": {
+                                "approved": 4,
+                                "pending": 5,
+                                "rejected": 2,
+                                "merged": 1
+                            },
+                            "replayed": false,
+                            "audit_id": "wai:854caf797020c322104bb5b9e2a1a4acb2b42875c9fef59fb16adfaf6c5423f3"
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 merge",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-decide-merge.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "request_id": "00000007-0000-4000-8000-000000000000",
+                        "expected_revision": 3,
+                        "key": "night-hiking",
+                        "verdict": "merge",
+                        "merge_into": "hiking",
+                        "reason": "a variant of an approved tag"
+                    },
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "revision": 4,
+                            "item": {
+                                "key": "night-hiking",
+                                "label": "Night hiking",
+                                "label_hu": "Night hiking",
+                                "label_fold": "night hiking",
+                                "moderation_state": "merged",
+                                "provenance": "member",
+                                "created_by_uid": 70001,
+                                "created_at": 1788100000,
+                                "active": false,
+                                "member_count": 0,
+                                "source_member_count": 0,
+                                "merged_into": "hiking",
+                                "moderated_by": "moderator@friending.com",
+                                "moderated_at": 1788100000,
+                                "moderation_reason": "a variant of an approved tag",
+                                "revision": 2
+                            },
+                            "propagated": {
+                                "selections": 0,
+                                "userinfo": 0,
+                                "user_into": 0,
+                                "used_into": 0,
+                                "filters": 0
+                            },
+                            "counts": {
+                                "approved": 4,
+                                "pending": 4,
+                                "rejected": 2,
+                                "merged": 2
+                            },
+                            "replayed": false,
+                            "audit_id": "wai:e837313981f10c2c5df94f50f9f39062f95053c0244ec0c7e89102be2fa30bba"
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 replay of an identical request",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-decide-replay.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "request_id": "00000007-0000-4000-8000-000000000000",
+                        "expected_revision": 3,
+                        "key": "night-hiking",
+                        "verdict": "merge",
+                        "merge_into": "hiking",
+                        "reason": "a variant of an approved tag"
+                    },
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "revision": 4,
+                            "item": {
+                                "key": "night-hiking",
+                                "label": "Night hiking",
+                                "label_hu": "Night hiking",
+                                "label_fold": "night hiking",
+                                "moderation_state": "merged",
+                                "provenance": "member",
+                                "created_by_uid": 70001,
+                                "created_at": 1788100000,
+                                "active": false,
+                                "member_count": 0,
+                                "source_member_count": 0,
+                                "merged_into": "hiking",
+                                "moderated_by": "moderator@friending.com",
+                                "moderated_at": 1788100000,
+                                "moderation_reason": "a variant of an approved tag",
+                                "revision": 2
+                            },
+                            "propagated": {
+                                "selections": 0,
+                                "userinfo": 0,
+                                "user_into": 0,
+                                "used_into": 0,
+                                "filters": 0
+                            },
+                            "counts": {
+                                "approved": 4,
+                                "pending": 4,
+                                "rejected": 2,
+                                "merged": 2
+                            },
+                            "replayed": true,
+                            "audit_id": "wai:e837313981f10c2c5df94f50f9f39062f95053c0244ec0c7e89102be2fa30bba"
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "409 stale expected_revision",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-decide-conflict.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "request_id": "00000005-0000-4000-8000-000000000000",
+                        "expected_revision": 0,
+                        "key": "sea-swimming",
+                        "verdict": "approve"
+                    },
+                    "http_status_in_body": 409,
+                    "response": {
+                        "success": false,
+                        "status_code": 409,
+                        "error": "into-tag-moderation-conflict",
+                        "data": {
+                            "current": {
+                                "revision": 2,
+                                "member_creation_enabled": true,
+                                "counts": {
+                                    "approved": 4,
+                                    "pending": 6,
+                                    "rejected": 1,
+                                    "merged": 1
+                                }
+                            }
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "409 request id reused with new material",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-decide-request-id-conflict.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "request_id": "00000007-0000-4000-8000-000000000000",
+                        "expected_revision": 3,
+                        "key": "night-hiking",
+                        "verdict": "reject",
+                        "merge_into": ""
+                    },
+                    "http_status_in_body": 409,
+                    "response": {
+                        "success": false,
+                        "status_code": 409,
+                        "error": "into-tag-moderation-conflict",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "422 unknown verdict",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-decide-verdict-invalid.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "request_id": "00000008-0000-4000-8000-000000000000",
+                        "expected_revision": 4,
+                        "key": "sea-swimming",
+                        "verdict": "ban"
+                    },
+                    "http_status_in_body": 422,
+                    "response": {
+                        "success": false,
+                        "status_code": 422,
+                        "error": "into-tag-verdict-invalid",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "422 merge target not approved",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-decide-merge-target-invalid.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "request_id": "00000009-0000-4000-8000-000000000000",
+                        "expected_revision": 4,
+                        "key": "sea-swimming",
+                        "verdict": "merge",
+                        "merge_into": "smoking"
+                    },
+                    "http_status_in_body": 422,
+                    "response": {
+                        "success": false,
+                        "status_code": 422,
+                        "error": "into-tag-merge-target-invalid",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "422 malformed request id",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-decide-request-invalid.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "request_id": "not-a-uuid",
+                        "expected_revision": 1,
+                        "key": "sea-swimming",
+                        "verdict": "approve"
+                    },
+                    "http_status_in_body": 422,
+                    "response": {
+                        "success": false,
+                        "status_code": 422,
+                        "error": "into-tag-request-invalid",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "404 unknown key",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-decide-item-not-found.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "request_id": "0000000a-0000-4000-8000-000000000000",
+                        "expected_revision": 4,
+                        "key": "never-existed",
+                        "verdict": "approve"
+                    },
+                    "http_status_in_body": 404,
+                    "response": {
+                        "success": false,
+                        "status_code": 404,
+                        "error": "into-tag-item-not-found",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "403 viewer may not decide",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-capability-required.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "request_id": "00000003-0000-4000-8000-000000000000",
+                        "expected_revision": 1,
+                        "key": "bouldering",
+                        "verdict": "approve"
+                    },
+                    "http_status_in_body": 403,
+                    "response": {
+                        "success": false,
+                        "status_code": 403,
+                        "error": "catalog-admin-capability-required",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                }
+            ]
+        },
+        "into_tag_moderation_settings": {
+            "route": "POST /v1/webadmin/into_tag_moderation_settings",
+            "capability": "into_tag_moderation",
+            "cache_control": "no-store",
+            "request_fields": {
+                "secret": "the shared Webadmin secret (never published)",
+                "admin_email": "the operator identity",
+                "request_id": "UUID v4",
+                "expected_revision": "the `revision` the list returned",
+                "member_creation_enabled": "bool. DEFAULT FALSE, and it stays false until the owner flips it"
+            },
+            "envelopes": [
+                {
+                    "case": "200 enable",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-settings-enable.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "request_id": "00000001-0000-4000-8000-000000000000",
+                        "expected_revision": 0,
+                        "member_creation_enabled": true
+                    },
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "member_creation_enabled": true,
+                            "revision": 1,
+                            "counts": {
+                                "approved": 3,
+                                "pending": 2,
+                                "rejected": 1,
+                                "merged": 1
+                            },
+                            "replayed": false,
+                            "audit_id": "wai:e6b747af4aef7eb6aa101e84462b1928b73dc48f48baa613f777347b90c3f803"
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 replay of an identical request",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-settings-replay.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "request_id": "00000001-0000-4000-8000-000000000000",
+                        "expected_revision": 0,
+                        "member_creation_enabled": true
+                    },
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "member_creation_enabled": true,
+                            "revision": 1,
+                            "counts": {
+                                "approved": 3,
+                                "pending": 2,
+                                "rejected": 1,
+                                "merged": 1
+                            },
+                            "replayed": true,
+                            "audit_id": "wai:e6b747af4aef7eb6aa101e84462b1928b73dc48f48baa613f777347b90c3f803"
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "409 stale expected_revision",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-settings-conflict.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "request_id": "00000002-0000-4000-8000-000000000000",
+                        "expected_revision": 0,
+                        "member_creation_enabled": false
+                    },
+                    "http_status_in_body": 409,
+                    "response": {
+                        "success": false,
+                        "status_code": 409,
+                        "error": "into-tag-moderation-conflict",
+                        "data": {
+                            "current": {
+                                "revision": 1,
+                                "member_creation_enabled": true,
+                                "counts": {
+                                    "approved": 3,
+                                    "pending": 2,
+                                    "rejected": 1,
+                                    "merged": 1
+                                }
+                            }
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                }
+            ]
+        },
+        "save_profile_tag_catalog": {
+            "route": "POST /v1/webadmin/save_profile_tag_catalog",
+            "capability": "the existing owner|admin role check (unchanged)",
+            "cache_control": "route default",
+            "request_fields": {
+                "secret": "the shared Webadmin secret (never published)",
+                "admin_email": "the operator identity",
+                "catalog": "the whole catalogue draft. EVERY ITEM MUST ROUND-TRIP ITS `moderation_state`"
+            },
+            "envelopes": [
+                {
+                    "case": "422 activating or un-rejecting a locked row",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/admin-profile-tags-moderation-locked.json",
+                    "request": {
+                        "secret": "<WEBADMIN_SECRET>",
+                        "admin_email": "<operator@friending.com>",
+                        "catalog": "<the whole catalogue, with the rejected item sent active:true>"
+                    },
+                    "http_status_in_body": 422,
+                    "response": {
+                        "success": false,
+                        "status_code": 422,
+                        "error": "profile-tag-item-moderation-locked",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                }
+            ]
+        }
+    },
+    "member_routes": {
+        "tag_items_search": {
+            "route": "POST /v1/profile/tag-items/search",
+            "auth": "member session ([$auth])",
+            "request_fields": {
+                "q": "the typed query, <= 32 characters",
+                "lang": "en | hu",
+                "limit": "optional, 1..50"
+            },
+            "envelopes": [
+                {
+                    "case": "200 the author sees her own pending tag",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-search-a-sees-own-pending.json",
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "matches": [
+                                {
+                                    "key": "kitesurfing",
+                                    "label": "Kitesurfing",
+                                    "emoji": "",
+                                    "moderation_state": "pending"
+                                }
+                            ],
+                            "custom": null,
+                            "custom_refused": null
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 ANOTHER member does NOT (the A/B invariant)",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-search-b-cannot-see-a-pending.json",
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "matches": [
+                                {
+                                    "key": "kitesurf-school",
+                                    "label": "Kitesurf school",
+                                    "emoji": "",
+                                    "moderation_state": "pending"
+                                }
+                            ],
+                            "custom": null,
+                            "custom_refused": null
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 approved match",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-search-approved-only.json",
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "matches": [
+                                {
+                                    "key": "music",
+                                    "label": "Music",
+                                    "emoji": "",
+                                    "moderation_state": "approved"
+                                }
+                            ],
+                            "custom": null,
+                            "custom_refused": null
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 a rejected label matches nothing",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-search-rejected-never-matches.json",
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "matches": [],
+                            "custom": null,
+                            "custom_refused": null
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 creation off: no custom affordance",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-search-creation-disabled.json",
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "matches": [],
+                            "custom": null,
+                            "custom_refused": null
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 creation on: a custom row is offered",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-search-custom-offered.json",
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "matches": [],
+                            "custom": {
+                                "label": "Bouldering",
+                                "key_preview": "bouldering"
+                            },
+                            "custom_refused": null
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 custom refused, banned",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-search-custom-refused-banned.json",
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "matches": [],
+                            "custom": null,
+                            "custom_refused": {
+                                "code": "into-tag-banned"
+                            }
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 custom refused, someone else's pending",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-search-custom-refused-pending.json",
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "matches": [],
+                            "custom": null,
+                            "custom_refused": {
+                                "code": "into-tag-pending"
+                            }
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                }
+            ]
+        },
+        "tag_items_create": {
+            "route": "POST /v1/profile/tag-items/create",
+            "auth": "member session ([$auth])",
+            "request_fields": {
+                "label": "3..32 characters",
+                "lang": "en | hu"
+            },
+            "envelopes": [
+                {
+                    "case": "200 created, pending",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-create-ok.json",
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "item": {
+                                "key": "bouldering",
+                                "label": "Bouldering",
+                                "emoji": "",
+                                "moderation_state": "pending",
+                                "created_by_me": true,
+                                "pending_since": 1788100000
+                            },
+                            "merged_from": false
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 a merged fold resolves to its target",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-create-merged-alias.json",
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "item": {
+                                "key": "music",
+                                "label": "Music",
+                                "emoji": "",
+                                "moderation_state": "approved",
+                                "created_by_me": false,
+                                "pending_since": 0
+                            },
+                            "merged_from": true
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "403 member creation is off",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-create-disabled.json",
+                    "http_status_in_body": 403,
+                    "response": {
+                        "success": false,
+                        "status_code": 403,
+                        "error": "into-tag-creation-disabled",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "409 banned",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-create-banned.json",
+                    "http_status_in_body": 409,
+                    "response": {
+                        "success": false,
+                        "status_code": 409,
+                        "error": "into-tag-banned",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "409 someone else's pending",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-create-pending-by-other.json",
+                    "http_status_in_body": 409,
+                    "response": {
+                        "success": false,
+                        "status_code": 409,
+                        "error": "into-tag-pending",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "422 invalid label",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-create-invalid.json",
+                    "http_status_in_body": 422,
+                    "response": {
+                        "success": false,
+                        "status_code": 422,
+                        "error": "into-tag-invalid",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "429 rate limited",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-create-limit.json",
+                    "http_status_in_body": 429,
+                    "response": {
+                        "success": false,
+                        "status_code": 429,
+                        "error": "into-tag-limit",
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                }
+            ]
+        },
+        "tag_catalogs": {
+            "route": "POST /v1/profile/tag-catalogs",
+            "auth": "member session ([$auth])",
+            "request_fields": [],
+            "envelopes": [
+                {
+                    "case": "200 the author's own pending tag, badged and selectable",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-tag-catalogs-a-own-pending.json",
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "schema_version": 1,
+                            "language": "en",
+                            "catalogs": [
+                                {
+                                    "key": "what_im_into",
+                                    "title": "What I'm Into",
+                                    "subtitle": "My favorite things to do",
+                                    "active": true,
+                                    "catalog_revision": 2,
+                                    "selection_revision": 3,
+                                    "selection_source": "profile_v1",
+                                    "minimum_selected": 0,
+                                    "maximum_selected": 10,
+                                    "values": [
+                                        "hiking",
+                                        "music"
+                                    ],
+                                    "selection_over_limit": false,
+                                    "reconciliation_required": false,
+                                    "groups": [
+                                        {
+                                            "key": "general",
+                                            "label": "General",
+                                            "active": true,
+                                            "eligible": true,
+                                            "items": [
+                                                {
+                                                    "key": "hiking",
+                                                    "label": "Hiking",
+                                                    "icon": {
+                                                        "url": "",
+                                                        "mime": ""
+                                                    },
+                                                    "emoji": "",
+                                                    "selected": true,
+                                                    "active": true,
+                                                    "eligible": true,
+                                                    "selectable": true,
+                                                    "retired": false,
+                                                    "moderation_state": "approved",
+                                                    "created_by_me": false,
+                                                    "pending_since": 0
+                                                },
+                                                {
+                                                    "key": "music",
+                                                    "label": "Music",
+                                                    "icon": {
+                                                        "url": "",
+                                                        "mime": ""
+                                                    },
+                                                    "emoji": "",
+                                                    "selected": true,
+                                                    "active": true,
+                                                    "eligible": true,
+                                                    "selectable": true,
+                                                    "retired": false,
+                                                    "moderation_state": "approved",
+                                                    "created_by_me": false,
+                                                    "pending_since": 0
+                                                },
+                                                {
+                                                    "key": "reading",
+                                                    "label": "Reading",
+                                                    "icon": {
+                                                        "url": "",
+                                                        "mime": ""
+                                                    },
+                                                    "emoji": "",
+                                                    "selected": false,
+                                                    "active": true,
+                                                    "eligible": true,
+                                                    "selectable": true,
+                                                    "retired": false,
+                                                    "moderation_state": "approved",
+                                                    "created_by_me": false,
+                                                    "pending_since": 0
+                                                },
+                                                {
+                                                    "key": "kitesurfing",
+                                                    "label": "Kitesurfing",
+                                                    "icon": {
+                                                        "url": "",
+                                                        "mime": ""
+                                                    },
+                                                    "emoji": "",
+                                                    "selected": false,
+                                                    "active": true,
+                                                    "eligible": true,
+                                                    "selectable": true,
+                                                    "retired": false,
+                                                    "moderation_state": "pending",
+                                                    "created_by_me": true,
+                                                    "pending_since": 1788096400
+                                                },
+                                                {
+                                                    "key": "board-games",
+                                                    "label": "Board games",
+                                                    "icon": {
+                                                        "url": "",
+                                                        "mime": ""
+                                                    },
+                                                    "emoji": "",
+                                                    "selected": false,
+                                                    "active": true,
+                                                    "eligible": true,
+                                                    "selectable": true,
+                                                    "retired": false,
+                                                    "moderation_state": "pending",
+                                                    "created_by_me": true,
+                                                    "pending_since": 1788100000
+                                                },
+                                                {
+                                                    "key": "bouldering",
+                                                    "label": "Bouldering",
+                                                    "icon": {
+                                                        "url": "",
+                                                        "mime": ""
+                                                    },
+                                                    "emoji": "",
+                                                    "selected": false,
+                                                    "active": true,
+                                                    "eligible": true,
+                                                    "selectable": true,
+                                                    "retired": false,
+                                                    "moderation_state": "pending",
+                                                    "created_by_me": true,
+                                                    "pending_since": 1788100000
+                                                },
+                                                {
+                                                    "key": "ice-baths",
+                                                    "label": "Ice baths",
+                                                    "icon": {
+                                                        "url": "",
+                                                        "mime": ""
+                                                    },
+                                                    "emoji": "",
+                                                    "selected": false,
+                                                    "active": true,
+                                                    "eligible": true,
+                                                    "selectable": true,
+                                                    "retired": false,
+                                                    "moderation_state": "pending",
+                                                    "created_by_me": true,
+                                                    "pending_since": 1788100000
+                                                },
+                                                {
+                                                    "key": "night-hiking",
+                                                    "label": "Night hiking",
+                                                    "icon": {
+                                                        "url": "",
+                                                        "mime": ""
+                                                    },
+                                                    "emoji": "",
+                                                    "selected": false,
+                                                    "active": true,
+                                                    "eligible": true,
+                                                    "selectable": true,
+                                                    "retired": false,
+                                                    "moderation_state": "pending",
+                                                    "created_by_me": true,
+                                                    "pending_since": 1788100000
+                                                },
+                                                {
+                                                    "key": "sea-swimming",
+                                                    "label": "Sea swimming",
+                                                    "icon": {
+                                                        "url": "",
+                                                        "mime": ""
+                                                    },
+                                                    "emoji": "",
+                                                    "selected": false,
+                                                    "active": true,
+                                                    "eligible": true,
+                                                    "selectable": true,
+                                                    "retired": false,
+                                                    "moderation_state": "pending",
+                                                    "created_by_me": true,
+                                                    "pending_since": 1788100000
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "key": "my_story",
+                                    "title": "My Story",
+                                    "subtitle": "Let people know where you're at in life",
+                                    "active": true,
+                                    "catalog_revision": 0,
+                                    "selection_revision": 0,
+                                    "selection_source": "legacy",
+                                    "minimum_selected": 0,
+                                    "maximum_selected": 4,
+                                    "values": [],
+                                    "selection_over_limit": false,
+                                    "reconciliation_required": false,
+                                    "groups": []
+                                },
+                                {
+                                    "key": "interests",
+                                    "title": "My Interests",
+                                    "subtitle": "Get specific about the things you love",
+                                    "active": true,
+                                    "catalog_revision": 0,
+                                    "selection_revision": 0,
+                                    "selection_source": "legacy",
+                                    "minimum_selected": 0,
+                                    "maximum_selected": 10,
+                                    "values": [],
+                                    "selection_over_limit": false,
+                                    "reconciliation_required": false,
+                                    "groups": []
+                                }
+                            ]
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                },
+                {
+                    "case": "200 another member does not receive it",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-tag-catalogs-b-no-foreign-pending.json",
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "schema_version": 1,
+                            "language": "en",
+                            "catalogs": [
+                                {
+                                    "key": "what_im_into",
+                                    "title": "What I'm Into",
+                                    "subtitle": "My favorite things to do",
+                                    "active": true,
+                                    "catalog_revision": 2,
+                                    "selection_revision": 3,
+                                    "selection_source": "profile_v1",
+                                    "minimum_selected": 0,
+                                    "maximum_selected": 10,
+                                    "values": [
+                                        "hiking",
+                                        "music"
+                                    ],
+                                    "selection_over_limit": false,
+                                    "reconciliation_required": false,
+                                    "groups": [
+                                        {
+                                            "key": "general",
+                                            "label": "General",
+                                            "active": true,
+                                            "eligible": true,
+                                            "items": [
+                                                {
+                                                    "key": "hiking",
+                                                    "label": "Hiking",
+                                                    "icon": {
+                                                        "url": "",
+                                                        "mime": ""
+                                                    },
+                                                    "emoji": "",
+                                                    "selected": true,
+                                                    "active": true,
+                                                    "eligible": true,
+                                                    "selectable": true,
+                                                    "retired": false,
+                                                    "moderation_state": "approved",
+                                                    "created_by_me": false,
+                                                    "pending_since": 0
+                                                },
+                                                {
+                                                    "key": "music",
+                                                    "label": "Music",
+                                                    "icon": {
+                                                        "url": "",
+                                                        "mime": ""
+                                                    },
+                                                    "emoji": "",
+                                                    "selected": true,
+                                                    "active": true,
+                                                    "eligible": true,
+                                                    "selectable": true,
+                                                    "retired": false,
+                                                    "moderation_state": "approved",
+                                                    "created_by_me": false,
+                                                    "pending_since": 0
+                                                },
+                                                {
+                                                    "key": "reading",
+                                                    "label": "Reading",
+                                                    "icon": {
+                                                        "url": "",
+                                                        "mime": ""
+                                                    },
+                                                    "emoji": "",
+                                                    "selected": false,
+                                                    "active": true,
+                                                    "eligible": true,
+                                                    "selectable": true,
+                                                    "retired": false,
+                                                    "moderation_state": "approved",
+                                                    "created_by_me": false,
+                                                    "pending_since": 0
+                                                },
+                                                {
+                                                    "key": "kitesurf-school",
+                                                    "label": "Kitesurf school",
+                                                    "icon": {
+                                                        "url": "",
+                                                        "mime": ""
+                                                    },
+                                                    "emoji": "",
+                                                    "selected": false,
+                                                    "active": true,
+                                                    "eligible": true,
+                                                    "selectable": true,
+                                                    "retired": false,
+                                                    "moderation_state": "pending",
+                                                    "created_by_me": true,
+                                                    "pending_since": 1788096500
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "key": "my_story",
+                                    "title": "My Story",
+                                    "subtitle": "Let people know where you're at in life",
+                                    "active": true,
+                                    "catalog_revision": 0,
+                                    "selection_revision": 0,
+                                    "selection_source": "legacy",
+                                    "minimum_selected": 0,
+                                    "maximum_selected": 4,
+                                    "values": [],
+                                    "selection_over_limit": false,
+                                    "reconciliation_required": false,
+                                    "groups": []
+                                },
+                                {
+                                    "key": "interests",
+                                    "title": "My Interests",
+                                    "subtitle": "Get specific about the things you love",
+                                    "active": true,
+                                    "catalog_revision": 0,
+                                    "selection_revision": 0,
+                                    "selection_source": "legacy",
+                                    "minimum_selected": 0,
+                                    "maximum_selected": 10,
+                                    "values": [],
+                                    "selection_over_limit": false,
+                                    "reconciliation_required": false,
+                                    "groups": []
+                                }
+                            ]
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                }
+            ]
+        },
+        "tag_selections_save": {
+            "route": "POST /v1/profile/tag-selections/save",
+            "auth": "member session ([$auth])",
+            "request_fields": [],
+            "envelopes": [
+                {
+                    "case": "200 a locked key is dropped and echoed",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-tag-selections-save-dropped.json",
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "key": "what_im_into",
+                            "title": "What I'm Into",
+                            "subtitle": "My favorite things to do",
+                            "active": true,
+                            "catalog_revision": 2,
+                            "selection_revision": 6,
+                            "selection_source": "profile_v1",
+                            "minimum_selected": 0,
+                            "maximum_selected": 10,
+                            "values": [
+                                "hiking",
+                                "music"
+                            ],
+                            "selection_over_limit": false,
+                            "reconciliation_required": false,
+                            "groups": [
+                                {
+                                    "key": "general",
+                                    "label": "General",
+                                    "active": true,
+                                    "eligible": true,
+                                    "items": [
+                                        {
+                                            "key": "hiking",
+                                            "label": "Hiking",
+                                            "icon": {
+                                                "url": "",
+                                                "mime": ""
+                                            },
+                                            "emoji": "",
+                                            "selected": true,
+                                            "active": true,
+                                            "eligible": true,
+                                            "selectable": true,
+                                            "retired": false,
+                                            "moderation_state": "approved",
+                                            "created_by_me": false,
+                                            "pending_since": 0
+                                        },
+                                        {
+                                            "key": "music",
+                                            "label": "Music",
+                                            "icon": {
+                                                "url": "",
+                                                "mime": ""
+                                            },
+                                            "emoji": "",
+                                            "selected": true,
+                                            "active": true,
+                                            "eligible": true,
+                                            "selectable": true,
+                                            "retired": false,
+                                            "moderation_state": "approved",
+                                            "created_by_me": false,
+                                            "pending_since": 0
+                                        },
+                                        {
+                                            "key": "reading",
+                                            "label": "Reading",
+                                            "icon": {
+                                                "url": "",
+                                                "mime": ""
+                                            },
+                                            "emoji": "",
+                                            "selected": false,
+                                            "active": true,
+                                            "eligible": true,
+                                            "selectable": true,
+                                            "retired": false,
+                                            "moderation_state": "approved",
+                                            "created_by_me": false,
+                                            "pending_since": 0
+                                        },
+                                        {
+                                            "key": "bouldering",
+                                            "label": "Bouldering",
+                                            "icon": {
+                                                "url": "",
+                                                "mime": ""
+                                            },
+                                            "emoji": "",
+                                            "selected": false,
+                                            "active": true,
+                                            "eligible": true,
+                                            "selectable": true,
+                                            "retired": false,
+                                            "moderation_state": "approved",
+                                            "created_by_me": false,
+                                            "pending_since": 0
+                                        }
+                                    ]
+                                }
+                            ],
+                            "dropped_keys": [
+                                "kitesurf-school"
+                            ]
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                }
+            ]
+        },
+        "profile_completion": {
+            "route": "POST /v1/profile/completion",
+            "auth": "member session ([$auth])",
+            "request_fields": [],
+            "envelopes": [
+                {
+                    "case": "200 completion.into_tags_needed",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-profile-completion.json",
+                    "http_status_in_body": 200,
+                    "response": {
+                        "success": true,
+                        "status_code": 200,
+                        "data": {
+                            "completion": {
+                                "schema_version": 2,
+                                "percent": 7,
+                                "filled": 2,
+                                "total": 27,
+                                "blocks": [
+                                    {
+                                        "key": "main_data",
+                                        "filled": 1,
+                                        "total": 7
+                                    },
+                                    {
+                                        "key": "more_about_you",
+                                        "filled": 0,
+                                        "total": 14
+                                    },
+                                    {
+                                        "key": "bios",
+                                        "filled": 0,
+                                        "total": 2
+                                    },
+                                    {
+                                        "key": "icebreakers",
+                                        "filled": 0,
+                                        "total": 1
+                                    },
+                                    {
+                                        "key": "tags",
+                                        "filled": 1,
+                                        "total": 3
+                                    }
+                                ],
+                                "into_tags_needed": 1
+                            }
+                        },
+                        "message": 200,
+                        "status": 200,
+                        "can_send": 0
+                    }
+                }
+            ]
+        },
+        "own_read_profile_completion": {
+            "route": "POST /v1/iosuser/{get_user_own,get_own_profile_data,get_user_profile}",
+            "auth": "inline session",
+            "request_fields": [],
+            "envelopes": [
+                {
+                    "case": "data.profile_completion (sub-object)",
+                    "fixture": "tests/fixtures/into_tag_moderation_wire/member-own-read-profile-completion.json",
+                    "http_status_in_body": null,
+                    "response": {
+                        "routes": [
+                            "/v1/iosuser/get_user_own",
+                            "/v1/iosuser/get_own_profile_data",
+                            "/v1/iosuser/get_user_profile"
+                        ],
+                        "path": "data.profile_completion",
+                        "block": {
+                            "into_tags_needed": 1
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

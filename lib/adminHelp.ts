@@ -157,6 +157,12 @@ export const ADMIN_HELP_PAGES = [
     matches: dynamic("/reported-content"),
   },
   {
+    key: "intoTagModeration",
+    route: "/into-tag-moderation",
+    sections: ["queueTabs", "rowFacts", "verdicts", "bulkDecisions", "memberCreation", "receiptConflict"],
+    matches: exact("/into-tag-moderation"),
+  },
+  {
     key: "profileTextModeration",
     route: "/text-moderation",
     sections: [
@@ -369,7 +375,7 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "profileTags",
     route: "/profile-tags",
-    sections: ["catalogTabs", "catalogRules", "groupsItems", "audience", "preview"],
+    sections: ["catalogTabs", "catalogRules", "groupsItems", "moderationState", "audience", "preview"],
     matches: exact("/profile-tags"),
   },
   {

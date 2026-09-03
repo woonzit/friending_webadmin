@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 import {
   catalogImpact,
+  isTagModerationLocked,
   movePresentationSource,
   moveTagGroup,
   moveTagItem,
@@ -245,6 +246,77 @@ test("group and item drag serialization owns ordering, one parent, archives, aud
   assert.deepEqual(serialized.groups[0].items[0].audience, { genders: ["female"], segments: ["female_bisexual"] });
   assert.deepEqual(serialized.groups[0].items[0].icon, emptyIcon);
   assert.equal(serialized.groups[1].items.length, 0);
+});
+
+test("T-683 / T-686 B-5: the whole-catalogue save carries each item's moderation state", () => {
+  // The console POSTs the ENTIRE catalogue on every save. Before this field
+  // travelled, an ordinary drag-and-drop reorder restated every banned row as
+  // unmoderated, and Core's `saveChildren` would have taken the draft's word
+  // for it — a permanent ban erased by a reorder nobody meant as a decision.
+  const moderated = structuredClone(tagPayload()) as Record<string, any>;
+  const items = moderated.catalogs[0].groups[0].items;
+  items[0].moderation_state = "approved";
+  items.push({
+    ...structuredClone(items[0]),
+    key: "smoking",
+    labels: { en: "Smoking", hu: "Dohányzás" },
+    sort_order: 20,
+    active: false,
+    moderation_state: "rejected",
+  });
+  items.push({
+    ...structuredClone(items[0]),
+    key: "michaeljackson",
+    labels: { en: "Michael Jackson", hu: "Michael Jackson" },
+    sort_order: 30,
+    active: false,
+    moderation_state: "merged",
+  });
+  const parsed = parseProfileTagCatalogPayload(moderated);
+  assert.ok(parsed);
+  assert.deepEqual(
+    parsed.catalogs[0].groups[0].items.map((item) => item.moderation_state),
+    ["approved", "rejected", "merged"],
+  );
+
+  const serialized = serializeTagCatalog(parsed.catalogs[0]) as {
+    groups: Array<{ items: Array<Record<string, unknown>> }>;
+  };
+  assert.deepEqual(
+    serialized.groups[0].items.map((item) => item.moderation_state),
+    ["approved", "rejected", "merged"],
+  );
+
+  // A row whose read stated nothing sends NOTHING: absent means "keep what is
+  // stored", which is not the same as approved. Sending "approved" for an
+  // unstated row would be the console deciding on Core's behalf.
+  const unstated = parseProfileTagCatalogPayload(tagPayload())!;
+  assert.equal(unstated.catalogs[0].groups[0].items[0].moderation_state, null);
+  const unstatedWire = serializeTagCatalog(unstated.catalogs[0]) as {
+    groups: Array<{ items: Array<Record<string, unknown>> }>;
+  };
+  assert.equal(Object.hasOwn(unstatedWire.groups[0].items[0], "moderation_state"), false);
+});
+
+test("T-683: an item read as active while not approved fails closed", () => {
+  // `active === true` implies `approved` (D-107 R2), and Core enforces it on
+  // its own read too. A row that reaches the console violating it is a
+  // half-applied migration or a direct database edit, and rendering it as an
+  // ordinary active tag would invite a save Core then refuses.
+  const contradictory = structuredClone(tagPayload()) as Record<string, any>;
+  contradictory.catalogs[0].groups[0].items[0].moderation_state = "rejected";
+  contradictory.catalogs[0].groups[0].items[0].active = true;
+  assert.equal(parseProfileTagCatalogPayload(contradictory), null);
+
+  const invented = structuredClone(tagPayload()) as Record<string, any>;
+  invented.catalogs[0].groups[0].items[0].moderation_state = "banned";
+  assert.equal(parseProfileTagCatalogPayload(invented), null);
+
+  assert.equal(isTagModerationLocked("rejected"), true);
+  assert.equal(isTagModerationLocked("merged"), true);
+  assert.equal(isTagModerationLocked("pending"), false);
+  assert.equal(isTagModerationLocked("approved"), false);
+  assert.equal(isTagModerationLocked(null), false);
 });
 
 test("catalog impact and Core archival warnings preserve selected-member consequences", () => {

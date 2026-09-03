@@ -10,6 +10,7 @@ import {
   TAG_GENDERS,
   TAG_SEGMENTS,
   catalogImpact,
+  isTagModerationLocked,
   moveTagGroup,
   moveTagItem,
   normalizeManagedIcon,
@@ -53,7 +54,21 @@ function newGroup(order: number): ProfileTagGroup {
 }
 
 function newItem(order: number): ProfileTagItem {
-  return { key: "", labels: { en: "", hu: "" }, sort_order: order, active: true, audience: emptyAudience(), icon: { url: "", mime: "" }, emoji: "", revision: 0, selected_member_count: 0 };
+  // A brand-new administrator row states nothing: Core reads an absent
+  // moderation state as "keep what is stored", and a key nobody has ever
+  // moderated is stored approved. Sending "approved" here would be the console
+  // asserting a moderation decision it did not make.
+  return { key: "", labels: { en: "", hu: "" }, sort_order: order, active: true, audience: emptyAudience(), icon: { url: "", mime: "" }, emoji: "", revision: 0, selected_member_count: 0, moderation_state: null };
+}
+
+/** The badge class for one row's moderation state; an unstated row shows nothing. */
+function moderationBadgeClass(item: ProfileTagItem): string {
+  switch (item.moderation_state) {
+    case "pending": return "status-badge status-pending";
+    case "rejected": return "status-badge status-denied";
+    case "merged": return "status-badge status-merged";
+    default: return "status-badge status-accepted";
+  }
 }
 
 function AudienceEditor({ audience, disabled, onChange }: { audience: TagAudience; disabled: boolean; onChange: (audience: TagAudience) => void }) {
@@ -102,6 +117,10 @@ function ItemDialog({ editor, groups, busy, error, onChange, onClose, onSave }: 
   const t = useTranslations("profileTags");
   const common = useTranslations("common");
   const isNew = editor.originalKey === "";
+  // A rejected row is a permanent ban and a merged row is an alias for another
+  // key. Core refuses a save that would activate either, so the console must
+  // not offer the checkbox that produces that refusal.
+  const locked = isTagModerationLocked(editor.item.moderation_state);
   return (
     <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target && !busy) onClose(); }}>
       <section className="dialog profile-tag-dialog profile-tag-item-dialog" role="dialog" aria-modal="true" aria-labelledby="tag-item-dialog-title">
@@ -112,7 +131,8 @@ function ItemDialog({ editor, groups, busy, error, onChange, onClose, onSave }: 
           <label className="field"><span>{t("labelHu")}</span><input maxLength={100} disabled={busy} value={editor.item.labels.hu ?? ""} onChange={(event) => onChange({ ...editor, item: { ...editor.item, labels: { ...editor.item.labels, hu: event.target.value } } })} /></label>
           <label className="field"><span>{t("group")}</span><select value={editor.targetGroupKey} disabled={busy} onChange={(event) => onChange({ ...editor, targetGroupKey: event.target.value })}>{groups.map((group) => <option value={group.key} key={group.key}>{group.labels.en} · {group.key}</option>)}</select></label>
           <label className="field"><span>{t("emoji")}</span><input maxLength={16} disabled={busy} value={editor.item.emoji} placeholder="✨" onChange={(event) => onChange({ ...editor, item: { ...editor.item, emoji: event.target.value } })} /><small className="field-hint">{t("emojiHint")}</small></label>
-          <label className="checkbox-row field-full"><input type="checkbox" disabled={busy} checked={editor.item.active} onChange={(event) => onChange({ ...editor, item: { ...editor.item, active: event.target.checked } })} /><span>{t("itemActive")}</span></label>
+          <div className="field field-full profile-tag-moderation-field"><span>{t("moderationState")}</span><span className={moderationBadgeClass(editor.item)}>{t(`moderationStates.${editor.item.moderation_state ?? "unstated"}`)}</span><small className="field-hint">{locked ? t("moderationLockedHint") : t("moderationStateHint")}</small></div>
+          <label className="checkbox-row field-full"><input type="checkbox" disabled={busy || locked} checked={editor.item.active && !locked} onChange={(event) => onChange({ ...editor, item: { ...editor.item, active: event.target.checked } })} /><span>{t("itemActive")}</span></label>
           <div className="field-full"><ProfileIconUploadField label={t("icon")} hint={t("iconHint")} chooseLabel={t("chooseIcon")} removeLabel={t("removeIcon")} uploadingLabel={t("uploadingIcon")} errorLabel={t("iconError")} value={editor.item.icon.url} disabled={busy} onChange={(icon) => { const normalized = normalizeManagedIcon(icon); if (normalized) onChange({ ...editor, item: { ...editor.item, icon: normalized } }); }} /></div>
           <div className="field-full"><AudienceEditor audience={editor.item.audience} disabled={busy} onChange={(audience) => onChange({ ...editor, item: { ...editor.item, audience } })} /></div>
           {editor.item.selected_member_count > 0 ? <div className="alert alert-warning field-full">{t("itemSelectedWarning", { count: editor.item.selected_member_count })}</div> : null}
@@ -248,7 +268,14 @@ export default function ProfileTagsPage() {
     const response = await adminCall("save_profile_tag_catalog", { catalog: serializeTagCatalog(draft) });
     setBusy(false);
     if (!response?.success) {
-      setError(response?.error === "profile-tag-catalog-conflict" ? t("conflict") : t("saveError"));
+      // D-107 R11. Core refuses a save that would activate or re-state a
+      // rejected/merged row. The generic save error would read as "try again",
+      // which is exactly wrong: the fix is to leave the banned row alone.
+      setError(response?.error === "profile-tag-catalog-conflict"
+        ? t("conflict")
+        : response?.error === "profile-tag-item-moderation-locked"
+          ? t("moderationLocked")
+          : t("saveError"));
       return;
     }
     const parsed = parseTagCatalogSaveResult(response.data);
@@ -318,7 +345,7 @@ export default function ProfileTagsPage() {
               }}>
                 <summary><span className="drag-handle" aria-hidden="true">⋮⋮</span><span><strong>{localeText(group.labels, locale)}</strong><small><code>{group.key}</code> · {t("itemCount", { count: group.items.length })} · {t("selectedReferences", { count: groupSelected })}</small></span><span className={`badge ${group.active ? "badge-active" : "badge-inactive"}`}>{group.active ? t("active") : t("archived")}</span></summary>
                 <div className="profile-tag-group-toolbar"><div className="row-actions"><button className="icon-action" type="button" disabled={busy || groupIndex === 0} onClick={() => updateDraft(moveTagGroup(draft, groupIndex, groupIndex - 1))} aria-label={t("moveGroupUp", { name: localeText(group.labels, locale) })}>↑</button><button className="icon-action" type="button" disabled={busy || groupIndex === draft.groups.length - 1} onClick={() => updateDraft(moveTagGroup(draft, groupIndex, groupIndex + 1))} aria-label={t("moveGroupDown", { name: localeText(group.labels, locale) })}>↓</button><button className="button button-secondary button-small" type="button" onClick={() => { setEditorError(""); setGroupEditor({ originalKey: group.key, group: structuredClone(group) }); }}>{common("edit")}</button></div><button className="button button-secondary button-small" type="button" disabled={busy || itemCount >= 1_000} onClick={() => { setEditorError(""); setItemEditor({ originalKey: "", sourceGroupKey: group.key, targetGroupKey: group.key, item: newItem((group.items.length + 1) * 10) }); }}>{t("addItem")}</button></div>
-                {group.items.length === 0 ? <p className="profile-tag-empty-group">{t("emptyGroup")}</p> : <div className="table-wrap"><table className="data-table profile-tag-items"><thead><tr><th>{t("item")}</th><th>{t("audience")}</th><th>{t("selected")}</th><th>{t("status")}</th><th><span className="sr-only">{common("actions")}</span></th></tr></thead><tbody>{group.items.map((item, itemIndex) => <tr key={item.key} className={item.active ? "" : "is-inactive"} draggable onDragStart={(event) => { event.stopPropagation(); setDragItem({ groupKey: group.key, itemKey: item.key }); }} onDragEnd={() => setDragItem(null)} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); event.stopPropagation(); if (dragItem) updateDraft(moveTagItem(draft, dragItem.groupKey, dragItem.itemKey, group.key, itemIndex)); setDragItem(null); }}><td><span className="tag-item-identity"><span className="presentation-source-icon">{/* eslint-disable-next-line @next/next/no-img-element */}{item.icon.url ? <img src={item.icon.url} alt="" /> : <b>{item.emoji || localeText(item.labels, locale).slice(0, 1)}</b>}</span><span><strong>{localeText(item.labels, locale)}</strong><small><code>{item.key}</code></small></span></span></td><td>{item.audience.genders.length === 0 && item.audience.segments.length === 0 ? t("globalAudience") : t("restrictedAudience", { genders: item.audience.genders.length, segments: item.audience.segments.length })}</td><td>{item.selected_member_count}</td><td><span className={`badge ${item.active ? "badge-active" : "badge-inactive"}`}>{item.active ? t("active") : t("archived")}</span></td><td><div className="row-actions"><button className="icon-action" type="button" disabled={busy || itemIndex === 0} onClick={() => updateDraft(moveTagItem(draft, group.key, item.key, group.key, itemIndex - 1))} aria-label={t("moveItemUp", { name: localeText(item.labels, locale) })}>↑</button><button className="icon-action" type="button" disabled={busy || itemIndex === group.items.length - 1} onClick={() => updateDraft(moveTagItem(draft, group.key, item.key, group.key, itemIndex + 1))} aria-label={t("moveItemDown", { name: localeText(item.labels, locale) })}>↓</button><button className="button button-secondary button-small" type="button" onClick={() => { setEditorError(""); setItemEditor({ originalKey: item.key, sourceGroupKey: group.key, targetGroupKey: group.key, item: structuredClone(item) }); }}>{common("edit")}</button></div></td></tr>)}</tbody></table></div>}
+                {group.items.length === 0 ? <p className="profile-tag-empty-group">{t("emptyGroup")}</p> : <div className="table-wrap"><table className="data-table profile-tag-items"><thead><tr><th>{t("item")}</th><th>{t("audience")}</th><th>{t("selected")}</th><th>{t("status")}</th><th><span className="sr-only">{common("actions")}</span></th></tr></thead><tbody>{group.items.map((item, itemIndex) => <tr key={item.key} className={item.active ? "" : "is-inactive"} draggable onDragStart={(event) => { event.stopPropagation(); setDragItem({ groupKey: group.key, itemKey: item.key }); }} onDragEnd={() => setDragItem(null)} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); event.stopPropagation(); if (dragItem) updateDraft(moveTagItem(draft, dragItem.groupKey, dragItem.itemKey, group.key, itemIndex)); setDragItem(null); }}><td><span className="tag-item-identity"><span className="presentation-source-icon">{/* eslint-disable-next-line @next/next/no-img-element */}{item.icon.url ? <img src={item.icon.url} alt="" /> : <b>{item.emoji || localeText(item.labels, locale).slice(0, 1)}</b>}</span><span><strong>{localeText(item.labels, locale)}</strong><small><code>{item.key}</code></small></span></span></td><td>{item.audience.genders.length === 0 && item.audience.segments.length === 0 ? t("globalAudience") : t("restrictedAudience", { genders: item.audience.genders.length, segments: item.audience.segments.length })}</td><td>{item.selected_member_count}</td><td><div className="cell-stack"><span className={`badge ${item.active ? "badge-active" : "badge-inactive"}`}>{item.active ? t("active") : t("archived")}</span><span className={moderationBadgeClass(item)}>{t(`moderationStates.${item.moderation_state ?? "unstated"}`)}</span></div></td><td><div className="row-actions"><button className="icon-action" type="button" disabled={busy || itemIndex === 0} onClick={() => updateDraft(moveTagItem(draft, group.key, item.key, group.key, itemIndex - 1))} aria-label={t("moveItemUp", { name: localeText(item.labels, locale) })}>↑</button><button className="icon-action" type="button" disabled={busy || itemIndex === group.items.length - 1} onClick={() => updateDraft(moveTagItem(draft, group.key, item.key, group.key, itemIndex + 1))} aria-label={t("moveItemDown", { name: localeText(item.labels, locale) })}>↓</button><button className="button button-secondary button-small" type="button" onClick={() => { setEditorError(""); setItemEditor({ originalKey: item.key, sourceGroupKey: group.key, targetGroupKey: group.key, item: structuredClone(item) }); }}>{common("edit")}</button></div></td></tr>)}</tbody></table></div>}
               </details>
             );
           })}

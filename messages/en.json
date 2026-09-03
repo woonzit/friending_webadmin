@@ -1820,6 +1820,71 @@
           }
         }
       },
+      "intoTagModeration": {
+        "title": "Into-tag moderation help",
+        "summary": "Every into-tag in the vocabulary is judged here: the ones members propose, the ones the legacy import brought in, and the seeded ones. A verdict changes what every member can pick, so approving, banning and merging all carry a receipt.",
+        "steps": {
+          "1": "Open the Pending tab and read each row's origin, creator and member count before judging it.",
+          "2": "Approve a real interest, reject anything that is not one, or merge a variant into the approved tag it duplicates.",
+          "3": "Check the receipt after each decision, and reload the queue if Core reports that the revision moved."
+        },
+        "sections": {
+          "queueTabs": {
+            "title": "Pending, approved, rejected and merged",
+            "purpose": "The four tabs are the four moderation states of one vocabulary, with the live count Core keeps beside each of them.",
+            "actions": {
+              "1": "Start in Pending, which holds everything nobody has judged yet.",
+              "2": "Use Rejected as the ban list and Merged as the alias list."
+            },
+            "guidance": "The counts come from Core, not from the loaded page, so a tab showing more than the rows in front of you simply has further pages."
+          },
+          "rowFacts": {
+            "title": "What each row tells you",
+            "purpose": "A row carries the bilingual label, the permanent key, where the tag came from, who created it, how many members hold it now and how many legacy members typed it.",
+            "actions": {
+              "1": "Open the creator UID to read the member profile behind a proposal.",
+              "2": "Compare the current member count with the legacy count before rejecting."
+            },
+            "guidance": "Origin matters: a tag created by a member is a proposal, while an imported one is already in use by the members the import counted."
+          },
+          "verdicts": {
+            "title": "Approve, reject and merge",
+            "purpose": "Approving makes the tag selectable for everyone, rejecting bans the key and its exact label permanently, and merging turns it into an alias for an approved tag.",
+            "actions": {
+              "1": "Write an internal reason for a rejection or a merge; the member never sees it.",
+              "2": "Pick a merge target from the approved, active tags in the picker."
+            },
+            "guidance": "Rejection removes the tag from every profile, filter and search that holds it and can never be created again, so prefer a merge whenever an approved tag already means the same thing."
+          },
+          "bulkDecisions": {
+            "title": "Deciding several rows at once",
+            "purpose": "The selection checkboxes approve or reject a set of loaded rows one after another, each with its own request identity and the revision the previous one produced.",
+            "actions": {
+              "1": "Select rows and use the toolbar to approve or reject them together.",
+              "2": "Read the partial-result notice if the batch stopped part of the way through."
+            },
+            "guidance": "A batch stops at the first refusal rather than pushing on, so the rows after it stay untouched and can be reviewed again after the queue reloads."
+          },
+          "memberCreation": {
+            "title": "The member-creation switch",
+            "purpose": "The switch decides whether members may propose new into-tags at all; every tag they create arrives in the Pending tab rather than in the vocabulary.",
+            "actions": {
+              "1": "Leave the switch off while a member import is between its dry run and its apply.",
+              "2": "Turn it on only once the app release that offers tag creation is published."
+            },
+            "guidance": "Any write to the tag vocabulary during an import window makes that import refuse to apply, and this switch is one of those writes."
+          },
+          "receiptConflict": {
+            "title": "Receipts and revision conflicts",
+            "purpose": "Every decision and every switch write answers with an audit receipt, and one shared revision guards the whole plane so two operators cannot decide over each other.",
+            "actions": {
+              "1": "Read the receipt to see whether Core applied the request or replayed it.",
+              "2": "Retry an uncertain write with its saved request ID instead of deciding again."
+            },
+            "guidance": "A conflict is not a failure: Core hands back the current state, the queue reloads, and the decision is simply made again against what is true now."
+          }
+        }
+      },
       "profileTextModeration": {
         "title": "Profile text moderation help",
         "summary": "This receipt-backed queue lets operators review pending member headlines and biographies one field at a time while preserving the exact text, Core-owned authorization, independent field revisions, internal audit privacy, and fail-closed queue semantics.",
@@ -2059,6 +2124,15 @@
               "2": "Move an item to one target group or archive it without duplicating its identity."
             },
             "guidance": "Member selection counts reveal impact. Moving or archiving a selected item preserves it as retired and removable rather than silently rewriting profiles."
+          },
+          "moderationState": {
+            "title": "Moderation state on an item",
+            "purpose": "Each item shows the moderation state Core holds for it, and the save carries that state back so an ordinary reorder cannot quietly un-ban a rejected tag.",
+            "actions": {
+              "1": "Read the state badge before archiving or activating an item.",
+              "2": "Use the Into-tag moderation page to change a state; this editor never does."
+            },
+            "guidance": "A rejected or merged item cannot be activated here at all, and Core refuses the whole save if a draft tries it."
           },
           "audience": {
             "title": "Group and item audience",
@@ -2716,6 +2790,7 @@
     "photoModeration": "Photo moderation",
     "reportedContent": "Reported content",
     "textModeration": "Profile text moderation",
+    "intoTagModeration": "Into-tag moderation",
     "profileVerification": "Video verification queue",
     "verificationSettings": "Verification settings",
     "persona": "Persona operations",
@@ -4488,6 +4563,105 @@
       "receiptWriteFailed": "The receipt outcome is uncertain. Retain and retry the exact saved identity.",
       "writeFailed": "The field-write outcome is uncertain. Retain the exact identity and read authoritative state.",
       "generic": "Core returned an unknown refusal. No success has been assumed and the exact identity remains saved."
+    }
+  },
+  "intoTagModeration": {
+    "eyebrow": "Trust and safety",
+    "title": "Into-tag moderation",
+    "subtitle": "Judge every into-tag that entered the vocabulary — proposed by a member, imported from the legacy catalogue or seeded — and approve it, ban it, or merge it into an approved tag.",
+    "loadError": "The into-tag moderation queue could not be read as a complete, valid Core response. No empty queue has been assumed.",
+    "forbiddenTitle": "No moderation access",
+    "forbiddenCopy": "Core did not grant this operator the into-tag moderation capability. An owner can raise your catalogue role on the Admin users page.",
+    "pendingTitle": "One write is still uncertain.",
+    "pendingCopy": "Retry it with its original request ID. Core replays an identical request instead of deciding a second time.",
+    "retryPending": "Retry saved request",
+    "retrySummary": "Retried request",
+    "viewerNotice": "Core granted read access but no decision capability. You can inspect the queue only.",
+    "settingsTitle": "Moderation plane",
+    "settingsCopy": "One revision guards every decision and this switch. A write that carries a stale revision is refused with the current state rather than applied.",
+    "revision": "Revision {revision}",
+    "memberCreation": "Members may create tags",
+    "memberCreationOn": "Members may propose new into-tags; each one arrives here as pending.",
+    "memberCreationOff": "Member creation is off. Only imports and administrators add tags.",
+    "settingsSaved": "The member-creation switch was saved.",
+    "receiptAction": "Action",
+    "receiptRequestId": "Request ID",
+    "receiptAuditId": "Audit receipt",
+    "receiptOutcome": "Outcome",
+    "receiptReplayed": "Replayed — Core had already applied this exact request.",
+    "receiptApplied": "Applied",
+    "receiptVerified": "receipt matches this request",
+    "receiptUnverified": "receipt does not match this request",
+    "tabsLabel": "Moderation states",
+    "tabs": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "merged": "Merged"
+    },
+    "queueCopy": "Rows are ordered by tag key. Approving offers a tag to everyone; rejecting bans it permanently and pulls it out of every profile that holds it.",
+    "loaded": "{count} loaded",
+    "selectedCount": "{count} selected",
+    "selectAll": "Select every loaded row",
+    "emptyTitle": "Nothing to review here",
+    "emptyCopy": "Core returned a complete, valid empty page for this state.",
+    "columnTag": "Tag",
+    "columnProvenance": "Origin",
+    "columnCreator": "Created by",
+    "columnMembers": "Members",
+    "provenance": {
+      "seed": "Seed",
+      "member": "Created by a member",
+      "legacy-user-created": "Imported",
+      "admin": "Administrator",
+      "unknown": "Unknown"
+    },
+    "uid": "UID {uid}",
+    "noCreator": "No member",
+    "sourceMembers": "{count} legacy members typed it",
+    "mergedInto": "Merged into {key}",
+    "states": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "rejected": "Rejected (banned)",
+      "merged": "Merged"
+    },
+    "verdicts": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "merge": "Merge"
+    },
+    "readOnlyRow": "Read only",
+    "loadMore": "Load more tags",
+    "confirm": {
+      "approveTitle": "Approve into-tags",
+      "approveCopy": "{count, plural, one {One tag becomes selectable for everyone and appears in the member autocomplete.} other {# tags become selectable for everyone and appear in the member autocomplete.}}",
+      "rejectTitle": "Reject into-tags",
+      "rejectCopy": "{count, plural, one {The tag is banned permanently and removed from every profile, filter and search that holds it. Nobody can create it again.} other {# tags are banned permanently and removed from every profile, filter and search that holds them. Nobody can create them again.}}",
+      "mergeTitle": "Merge into an approved tag",
+      "mergeCopy": "{count, plural, one {Every member holding this tag moves to the target tag, and the alias itself can never be selected again.} other {Every member holding these # tags moves to the target tag, and the aliases themselves can never be selected again.}}"
+    },
+    "mergeSearch": "Approved tags",
+    "mergeHint": "Only an approved, active tag may be a merge target.",
+    "reason": "Internal reason",
+    "reasonHint": "{count} of 500 characters. The reason is recorded for operators and is never shown to the member.",
+    "decisionSaved": "{count, plural, one {The decision was recorded.} other {# decisions were recorded.}}",
+    "decisionPartial": "{done} of {total} decisions were recorded; the rest were not attempted.",
+    "errors": {
+      "conflict": "The moderation revision moved while you were deciding. The queue was reloaded — review the row again before deciding.",
+      "itemNotFound": "Core does not know this tag key.",
+      "verdictInvalid": "Core refused the verdict.",
+      "mergeTargetInvalid": "The merge target must be an approved, active tag that is not the tag being merged.",
+      "requestInvalid": "Core refused the request identity or the reason.",
+      "stateInvalid": "Core refused the requested queue state.",
+      "unavailable": "Core could not read the moderation vocabulary. Nothing was decided.",
+      "writeFailed": "Core could not write the decision. Nothing was decided.",
+      "sessionInvalid": "This operator is not a known Core administrator.",
+      "revoked": "This administrator account has been revoked.",
+      "capabilityRequired": "Your Core capabilities do not permit a decision.",
+      "reasonInvalid": "The reason is longer than 500 characters or contains characters Core refuses.",
+      "mergeTargets": "The approved tag list could not be read, so no merge target can be offered.",
+      "generic": "The decision could not be completed. Its request ID was kept, so a retry replays instead of deciding twice."
     }
   },
   "reportedContent": {
@@ -6879,7 +7053,18 @@
     "previewError": "The audience preview could not be loaded or was malformed.",
     "previewLimit": "Choose {min}–{max}",
     "previewEmpty": "No active items are eligible for this context.",
-    "loadError": "The Profile Tag catalogs could not be loaded."
+    "loadError": "The Profile Tag catalogs could not be loaded.",
+    "moderationState": "Moderation state",
+    "moderationStateHint": "Approving, rejecting and merging happen on the Into-tag moderation page, not here.",
+    "moderationLockedHint": "A rejected or merged tag is locked. It can never be activated again from this editor.",
+    "moderationLocked": "Core refused the save: a rejected or merged tag cannot be activated or re-stated from the catalogue editor.",
+    "moderationStates": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "rejected": "Rejected",
+      "merged": "Merged",
+      "unstated": "Not stated"
+    }
   },
   "icebreakers": {
     "eyebrow": "Conversation starters",

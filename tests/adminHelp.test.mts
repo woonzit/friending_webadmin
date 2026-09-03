@@ -59,8 +59,9 @@ test("all authenticated page routes have one closed contextual help entry", asyn
   const helpRoutes = ADMIN_HELP_PAGES.map((page) => page.route).sort();
 
   // 39: 41 with T-468's Appearance & placements page (the map document lives
-  // outside the dashboard shell), minus the two T-565 retired ones.
-  assert.equal(actualRoutes.length, 39, "the current screen census changed; review every new or removed screen");
+  // outside the dashboard shell), minus the two T-565 retired ones. T-683 adds
+  // the into-tag moderation queue (40).
+  assert.equal(actualRoutes.length, 40, "the current screen census changed; review every new or removed screen");
   assert.deepEqual(helpRoutes, actualRoutes);
   assert.equal(new Set(helpRoutes).size, helpRoutes.length, "a screen may have only one help document");
 });
@@ -93,8 +94,10 @@ test("every inventoried functional section has detailed English and Hungarian he
   // /users/<uid> with no guide in either locale (238). T-551 documents the
   // Persona verification-screens console that replaced the T-581 placeholder
   // on /persona (239). T-671 replaces all five signup-options topics with the
-  // five composer topics below, so the reviewed total remains 239.
-  assert.equal(totalSections, 239, "review the functional-section census when the UI changes");
+  // five composer topics below, so the reviewed total remains 239. T-683 adds
+  // the six into-tag moderation topics and one moderation-state topic on
+  // /profile-tags, where the item badge and the locked-row refusal now live (246).
+  assert.equal(totalSections, 246, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     ["systemQuestions", "pageLayout", "questionPalette", "draftSaving", "answersElsewhere"],

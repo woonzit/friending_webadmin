@@ -10,6 +10,7 @@ import {
   AUDIENCE_VISIBILITY_IDENTITY_ACTIONS,
 } from "@/lib/audienceVisibilityAdmin";
 import { FEATURE_SWITCHES_ACTIONS } from "@/lib/featureSwitches";
+import { INTO_TAG_MODERATION_ACTIONS } from "@/lib/intoTagModeration";
 import { PROFILE_TEXT_MODERATION_ACTIONS } from "@/lib/profileTextModeration";
 import { VERIFICATION_METHOD_ACTIONS } from "@/lib/verificationMethod";
 import { OUTBOUND_MESSAGING_ACTIONS } from "@/lib/outboundMessaging";
@@ -190,6 +191,7 @@ export const ADMIN_ACTIONS = [
   ...CANNED_TEMPLATE_ADMIN_ACTIONS,
   ...ACTIVE_OUTBOUND_MESSAGING_ACTIONS,
   ...REPORTED_CONTENT_ADMIN_ACTIONS,
+  ...INTO_TAG_MODERATION_ACTIONS,
   ...ACTIVE_PERSONA_ADMIN_ACTIONS,
   ...ACTIVE_VERIFICATION_ADMIN_ACTIONS,
   ...ACTIVE_ADMIN_GRANTED_VERIFICATION_ACTIONS,
@@ -371,6 +373,16 @@ export const ADMIN_ACTION_ACCESS = {
   // reported-content capability before accepting any mutation.
   moderation_reported_list: "read",
   moderation_report_action: "write",
+
+  // Into-tag moderation (D-107 R10). Core gates these on its own
+  // `into_tag_moderation_read` / `into_tag_moderation` capabilities and
+  // rechecks them on every call; these rows add only the independent global
+  // viewer/editor floor. A decision approves a tag into everyone's vocabulary
+  // or bans it out of every profile that holds it, so both mutations sit at
+  // the write floor and the queue read sits at the read floor.
+  into_tag_moderation_list: "read",
+  into_tag_moderation_decide: "write",
+  into_tag_moderation_settings: "write",
 
   // Persona has its own exact per-action capability block, rechecked by the
   // bridge. These rows add the independent global viewer/editor floor.

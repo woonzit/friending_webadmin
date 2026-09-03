@@ -8,7 +8,7 @@ import AdminHelp from "@/components/AdminHelp";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import { PROFILE_TEXT_MODERATION_CONTRACT_READY } from "@/lib/contractReadiness";
 
-type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "templates" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit";
+type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "templates" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "intoTagModeration" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit";
 
 const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; ready?: boolean }> = [
   { href: "/", key: "overview", icon: "overview", exact: true },
@@ -17,6 +17,7 @@ const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; r
   { href: "/photo-moderation", key: "photoModeration", icon: "photoModeration" },
   { href: "/reported-content", key: "reportedContent", icon: "reportedContent" },
   { href: "/text-moderation", key: "textModeration", icon: "reportedContent", ready: PROFILE_TEXT_MODERATION_CONTRACT_READY },
+  { href: "/into-tag-moderation", key: "intoTagModeration", icon: "intoTagModeration" },
   { href: "/profile-verification", key: "profileVerification", icon: "verification" },
   { href: "/verification", key: "verificationSettings", icon: "verification" },
   { href: "/persona", key: "persona", icon: "persona" },
@@ -56,6 +57,11 @@ const PATHS: Record<IconName, React.ReactNode> = {
   userGroups: <><circle cx="9" cy="10" r="3"/><circle cx="15" cy="10" r="3"/><path d="M4 19a5 5 0 0 1 8-3.5A5 5 0 0 1 20 19"/><path d="M3 3v4M3 3h4M21 3v4M21 3h-4"/></>,
   photoModeration: <><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 5-5 3.5 3.5 2-2 5.5 5.5"/><path d="m14.5 8.5 2 2 4-4"/></>,
   reportedContent: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M12 7v5"/><path d="M12 16h.01"/></>,
+  // A price-tag outline with its eyelet and a review tick: the into-tag
+  // vocabulary a moderator judges. Deliberately not the `reportedContent`
+  // shield (that queue is about people) and not `profileFields` (that grid is
+  // about catalogue structure, not one tag's verdict).
+  intoTagModeration: <><path d="M11.4 3H4v7.4a2 2 0 0 0 .6 1.4l6.6 6.6a2 2 0 0 0 2.8 0l5.4-5.4a2 2 0 0 0 0-2.8l-6.6-6.6A2 2 0 0 0 11.4 3Z"/><circle cx="7.8" cy="7.8" r="1.3"/><path d="m14 19.5 2 2 4.5-4.5"/></>,
   verification: <><path d="M12 2.8 14.1 4l2.4-.1 1.2 2.1 2.1 1.2-.1 2.4 1.2 2.1-1.2 2.1.1 2.4-2.1 1.2-1.2 2.1-2.4-.1L12 20.6l-2.1-1.2-2.4.1-1.2-2.1-2.1-1.2.1-2.4L3.1 11.7l1.2-2.1-.1-2.4L6.3 6l1.2-2.1 2.4.1L12 2.8Z"/><path d="m8.5 11.8 2.2 2.2 4.8-5"/></>,
   persona: <><path d="M12 22s7-3.7 7-10V5l-7-3-7 3v7c0 6.3 7 10 7 10Z"/><circle cx="12" cy="9" r="2.4"/><path d="M8.7 16a3.5 3.5 0 0 1 6.6 0"/></>,
   profileLocation: <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></>,

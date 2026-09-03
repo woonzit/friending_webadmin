@@ -1820,6 +1820,71 @@
           }
         }
       },
+      "intoTagModeration": {
+        "title": "Into-tag moderálás súgó",
+        "summary": "Itt dől el a szótár minden into-tagjának sorsa: a tagok által javasoltaké, a legacy import által behozottaké és a seed soroké is. A döntés megváltoztatja, mit választhat bármelyik tag, ezért az elfogadás, a tiltás és az összevonás is nyugtát kap.",
+        "steps": {
+          "1": "Nyisd meg a Függő fület, és döntés előtt olvasd el minden sor eredetét, létrehozóját és tagi darabszámát.",
+          "2": "Fogadd el a valódi érdeklődést, utasítsd el, ami nem az, vagy vond össze a változatot azzal az elfogadott címkével, amit ismétel.",
+          "3": "Minden döntés után ellenőrizd a nyugtát, és töltsd újra a sort, ha a Core jelzi, hogy a revízió elmozdult."
+        },
+        "sections": {
+          "queueTabs": {
+            "title": "Függő, elfogadott, elutasított és összevont",
+            "purpose": "A négy fül egyetlen szótár négy moderálási állapota, mellettük a Core által vezetett élő darabszámmal.",
+            "actions": {
+              "1": "Kezdd a Függő fülnél, itt van minden, amit még senki nem ítélt meg.",
+              "2": "Az Elutasított fül a tiltólista, az Összevont fül az aliaslista."
+            },
+            "guidance": "A darabszám a Core-tól jön, nem a betöltött oldalról, így a látható soroknál nagyobb szám csak további oldalakat jelent."
+          },
+          "rowFacts": {
+            "title": "Mit mond el egy sor",
+            "purpose": "Egy sor hordozza a kétnyelvű címkét, az állandó kulcsot, a címke eredetét, a létrehozóját, a jelenlegi tagi darabszámot és azt, hány legacy tag írta be.",
+            "actions": {
+              "1": "Nyisd meg a létrehozó UID-ját, ha a javaslat mögötti profilra vagy kíváncsi.",
+              "2": "Elutasítás előtt vesd össze a jelenlegi és a legacy tagi darabszámot."
+            },
+            "guidance": "Az eredet számít: a tag által létrehozott címke javaslat, az importált viszont már használatban van azoknál, akiket az import megszámolt."
+          },
+          "verdicts": {
+            "title": "Elfogadás, elutasítás és összevonás",
+            "purpose": "Az elfogadás mindenki számára választhatóvá teszi a címkét, az elutasítás véglegesen tiltja a kulcsot és a pontos címkéjét, az összevonás pedig egy elfogadott címke aliasává teszi.",
+            "actions": {
+              "1": "Elutasításhoz és összevonáshoz írj belső indoklást; a tag ezt soha nem látja.",
+              "2": "Az összevonási célt a választóban látható elfogadott, aktív címkékből válaszd."
+            },
+            "guidance": "Az elutasítás kiveszi a címkét minden profilból, szűrőből és keresésből, és többé nem hozható létre, ezért ha egy elfogadott címke már ugyanazt jelenti, inkább vond össze."
+          },
+          "bulkDecisions": {
+            "title": "Több sor eldöntése egyszerre",
+            "purpose": "A kijelölő négyzetek a betöltött sorok egy csoportját fogadják el vagy utasítják el, egymás után, mindegyiket saját kérésazonosítóval és az előző által előállított revízióval.",
+            "actions": {
+              "1": "Jelöld ki a sorokat, és az eszköztárból fogadd el vagy utasítsd el őket együtt.",
+              "2": "Olvasd el a részleges eredményről szóló üzenetet, ha a köteg félúton megállt."
+            },
+            "guidance": "A köteg az első elutasításnál megáll, nem erőlteti tovább, így az utána következő sorok érintetlenek maradnak és újratöltés után újra átnézhetők."
+          },
+          "memberCreation": {
+            "title": "A tagi létrehozás kapcsolója",
+            "purpose": "A kapcsoló dönti el, javasolhatnak-e a tagok egyáltalán új into-tagot; amit létrehoznak, az a Függő fülre kerül, nem a szótárba.",
+            "actions": {
+              "1": "Hagyd kikapcsolva, amíg egy tagimport a próbafutás és az alkalmazás között van.",
+              "2": "Csak akkor kapcsold be, ha a címkelétrehozást kínáló app-verzió már megjelent."
+            },
+            "guidance": "A címkeszótár bármely írása egy import ablakában megakadályozza az import alkalmazását, és ez a kapcsoló is ilyen írás."
+          },
+          "receiptConflict": {
+            "title": "Nyugták és revízióütközés",
+            "purpose": "Minden döntés és minden kapcsolóírás audit nyugtával válaszol, és egyetlen közös revízió védi az egész síkot, hogy két operátor ne dönthessen egymás fölött.",
+            "actions": {
+              "1": "A nyugtából derül ki, hogy a Core alkalmazta vagy lejátszotta a kérést.",
+              "2": "A bizonytalan írást a mentett request ID-jával küldd újra, ne dönts újra."
+            },
+            "guidance": "Az ütközés nem hiba: a Core visszaadja az aktuális állapotot, a sor újratöltődik, és a döntést egyszerűen a most igaz állapot ellen hozod meg."
+          }
+        }
+      },
       "profileTextModeration": {
         "title": "Profilszöveg-moderáció súgó",
         "summary": "Ez a nyugtaalapú sor lehetővé teszi a függő tagi címsorok és bemutatkozások mezőnkénti ellenőrzését, miközben megőrzi a pontos szöveget, a Core által kezelt jogosultságot, a független mezőrevíziókat, a belső audit adatvédelmét és a fail-closed sorszemantikát.",
@@ -2059,6 +2124,15 @@
               "2": "Egyetlen célcsoportba mozgass elemet, vagy duplikált azonosság nélkül archiváld."
             },
             "guidance": "A tagi selection darabszám mutatja a hatást. A kijelölt elem mozgatása vagy archiválása nyugdíjazottként és eltávolíthatóként őrzi meg, nem írja át csendben a profilokat."
+          },
+          "moderationState": {
+            "title": "Elem moderációs állapota",
+            "purpose": "Minden elem mutatja a Core által tárolt moderációs állapotát, és a mentés ezt az állapotot vissza is viszi, hogy egy sima átrendezés ne oldhassa fel csendben egy tiltott címke tiltását.",
+            "actions": {
+              "1": "Archiválás vagy aktiválás előtt olvasd el az állapotjelzőt.",
+              "2": "Az állapotot az Into-tag moderálás oldalon változtasd; ez a szerkesztő soha nem teszi."
+            },
+            "guidance": "Elutasított vagy összevont elem itt egyáltalán nem aktiválható, és a Core az egész mentést elutasítja, ha a draft mégis megkísérli."
           },
           "audience": {
             "title": "Csoport- és elemaudience",
@@ -2716,6 +2790,7 @@
     "photoModeration": "Képmoderáció",
     "reportedContent": "Jelentett tartalom",
     "textModeration": "Profilszöveg-moderáció",
+    "intoTagModeration": "Into-tag moderálás",
     "profileVerification": "Videó-hitelesítési sor",
     "verificationSettings": "Ellenőrzési beállítások",
     "persona": "Persona műveletek",
@@ -4488,6 +4563,105 @@
       "receiptWriteFailed": "A nyugtaeredmény bizonytalan. Őrizd meg és próbáld újra a pontos mentett azonosságot.",
       "writeFailed": "A mezőírás eredménye bizonytalan. Őrizd meg a pontos azonosságot, és olvasd be a hiteles állapotot.",
       "generic": "A Core ismeretlen elutasítást adott. Nem feltételeztünk sikert, és a pontos azonosság mentve marad."
+    }
+  },
+  "intoTagModeration": {
+    "eyebrow": "Biztonság és moderáció",
+    "title": "Into-tag moderálás",
+    "subtitle": "Ítélj meg minden into-tagot, ami bekerült a szótárba — tag által javasoltat, a legacy katalógusból importáltat és seed sort is —, majd fogadd el, tiltsd le, vagy vond össze egy elfogadott címkével.",
+    "loadError": "Az into-tag moderálási sort nem sikerült teljes, érvényes Core válaszként beolvasni. Üres sort nem feltételeztünk.",
+    "forbiddenTitle": "Nincs jogosultság",
+    "forbiddenCopy": "A Core nem adta meg ennek az operátornak az into-tag moderálási jogosultságot. Owner emelheti a katalógus-szerepkörödet az Admin userek oldalon.",
+    "pendingTitle": "Egy írás kimenetele még bizonytalan.",
+    "pendingCopy": "Próbáld újra az eredeti request ID-jével. A Core az azonos kérést lejátssza, nem dönt másodszor.",
+    "retryPending": "Mentett kérés újraküldése",
+    "retrySummary": "Újraküldött kérés",
+    "viewerNotice": "A Core olvasási hozzáférést adott, döntési jogosultságot nem. Csak megtekintheted a sort.",
+    "settingsTitle": "Moderálási sík",
+    "settingsCopy": "Egyetlen revízió véd minden döntést és ezt a kapcsolót. Az elavult revízióval érkező írást a Core az aktuális állapottal utasítja el, nem alkalmazza.",
+    "revision": "Revízió: {revision}",
+    "memberCreation": "Tagok létrehozhatnak címkét",
+    "memberCreationOn": "A tagok javasolhatnak új into-tagot; mindegyik függőként kerül ide.",
+    "memberCreationOff": "A tagi létrehozás ki van kapcsolva. Csak import és adminisztrátor ad hozzá címkét.",
+    "settingsSaved": "A tagi létrehozás kapcsolója elmentve.",
+    "receiptAction": "Művelet",
+    "receiptRequestId": "Request ID",
+    "receiptAuditId": "Audit nyugta",
+    "receiptOutcome": "Eredmény",
+    "receiptReplayed": "Lejátszva — a Core ezt a pontos kérést már alkalmazta.",
+    "receiptApplied": "Alkalmazva",
+    "receiptVerified": "a nyugta ehhez a kéréshez tartozik",
+    "receiptUnverified": "a nyugta nem ehhez a kéréshez tartozik",
+    "tabsLabel": "Moderálási állapotok",
+    "tabs": {
+      "pending": "Függő",
+      "approved": "Elfogadott",
+      "rejected": "Elutasított",
+      "merged": "Összevont"
+    },
+    "queueCopy": "A sorok címkekulcs szerint követik egymást. Az elfogadás mindenkinek felkínálja a címkét; az elutasítás véglegesen tiltja, és kiveszi minden profilból, ami tartalmazza.",
+    "loaded": "{count} betöltve",
+    "selectedCount": "{count} kijelölve",
+    "selectAll": "Minden betöltött sor kijelölése",
+    "emptyTitle": "Itt nincs mit átnézni",
+    "emptyCopy": "A Core teljes, érvényes üres oldalt adott vissza erre az állapotra.",
+    "columnTag": "Címke",
+    "columnProvenance": "Eredet",
+    "columnCreator": "Létrehozta",
+    "columnMembers": "Tagok",
+    "provenance": {
+      "seed": "Seed",
+      "member": "Tag által létrehozott",
+      "legacy-user-created": "Importált",
+      "admin": "Adminisztrátor",
+      "unknown": "Ismeretlen"
+    },
+    "uid": "UID {uid}",
+    "noCreator": "Nincs tag",
+    "sourceMembers": "{count} legacy tag írta be",
+    "mergedInto": "Összevonva ide: {key}",
+    "states": {
+      "approved": "Elfogadva",
+      "pending": "Függő",
+      "rejected": "Elutasítva (tiltva)",
+      "merged": "Összevonva"
+    },
+    "verdicts": {
+      "approve": "Elfogad",
+      "reject": "Elutasít",
+      "merge": "Összevon"
+    },
+    "readOnlyRow": "Csak olvasható",
+    "loadMore": "További címkék",
+    "confirm": {
+      "approveTitle": "Into-tagok elfogadása",
+      "approveCopy": "{count, plural, one {Egy címke mindenki számára választhatóvá válik, és megjelenik a tagi kiegészítésben.} other {# címke mindenki számára választhatóvá válik, és megjelenik a tagi kiegészítésben.}}",
+      "rejectTitle": "Into-tagok elutasítása",
+      "rejectCopy": "{count, plural, one {A címke véglegesen tiltva lesz, és eltűnik minden profilból, szűrőből és keresésből, ami tartalmazza. Senki nem hozhatja létre újra.} other {# címke véglegesen tiltva lesz, és eltűnik minden profilból, szűrőből és keresésből, ami tartalmazza. Senki nem hozhatja létre őket újra.}}",
+      "mergeTitle": "Összevonás elfogadott címkével",
+      "mergeCopy": "{count, plural, one {Minden tag, aki ezt a címkét tartja, átkerül a célcímkére, és maga az alias soha többé nem választható.} other {Minden tag, aki ezt a # címkét tartja, átkerül a célcímkére, és maguk az aliasok soha többé nem választhatók.}}"
+    },
+    "mergeSearch": "Elfogadott címkék",
+    "mergeHint": "Csak elfogadott, aktív címke lehet összevonási cél.",
+    "reason": "Belső indoklás",
+    "reasonHint": "{count} / 500 karakter. Az indoklás az operátoroknak szól, a tag soha nem látja.",
+    "decisionSaved": "{count, plural, one {A döntés rögzítve.} other {# döntés rögzítve.}}",
+    "decisionPartial": "{total} döntésből {done} rögzült; a többit meg sem kíséreltük.",
+    "errors": {
+      "conflict": "A moderálási revízió elmozdult, amíg döntöttél. A sort újratöltöttük — nézd át újra a sort, mielőtt döntesz.",
+      "itemNotFound": "A Core nem ismeri ezt a címkekulcsot.",
+      "verdictInvalid": "A Core elutasította a döntést.",
+      "mergeTargetInvalid": "Az összevonási célnak elfogadott, aktív címkének kell lennie, és nem lehet maga az összevont címke.",
+      "requestInvalid": "A Core elutasította a kérés azonosítóját vagy az indoklást.",
+      "stateInvalid": "A Core elutasította a kért sorállapotot.",
+      "unavailable": "A Core nem tudta beolvasni a moderálási szótárat. Semmi nem dőlt el.",
+      "writeFailed": "A Core nem tudta kiírni a döntést. Semmi nem dőlt el.",
+      "sessionInvalid": "Ez az operátor nem ismert Core adminisztrátor.",
+      "revoked": "Ezt az adminisztrátori fiókot visszavonták.",
+      "capabilityRequired": "A Core jogosultságaid nem engedik a döntést.",
+      "reasonInvalid": "Az indoklás 500 karakternél hosszabb, vagy a Core által tiltott karaktert tartalmaz.",
+      "mergeTargets": "Az elfogadott címkék listáját nem sikerült beolvasni, így nem kínálható összevonási cél.",
+      "generic": "A döntést nem sikerült befejezni. A request ID-t megtartottuk, így az újrapróbálkozás lejátszás lesz, nem második döntés."
     }
   },
   "reportedContent": {
@@ -6879,7 +7053,18 @@
     "previewError": "A célközönség-előnézet nem tölthető be vagy hibás.",
     "previewLimit": "{min}–{max} választás",
     "previewEmpty": "Ebben a környezetben nincs jogosult aktív elem.",
-    "loadError": "A profilcímke-katalógusok nem tölthetők be."
+    "loadError": "A profilcímke-katalógusok nem tölthetők be.",
+    "moderationState": "Moderációs állapot",
+    "moderationStateHint": "Az elfogadás, elutasítás és összevonás az Into-tag moderálás oldalon történik, nem itt.",
+    "moderationLockedHint": "Az elutasított vagy összevont címke zárolt. Ebből a szerkesztőből soha nem aktiválható újra.",
+    "moderationLocked": "A Core elutasította a mentést: elutasított vagy összevont címke a katalógusszerkesztőből nem aktiválható és nem írható át.",
+    "moderationStates": {
+      "approved": "Elfogadva",
+      "pending": "Függő",
+      "rejected": "Elutasítva",
+      "merged": "Összevonva",
+      "unstated": "Nincs megadva"
+    }
   },
   "icebreakers": {
     "eyebrow": "Beszélgetésindítók",

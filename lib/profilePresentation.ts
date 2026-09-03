@@ -80,6 +80,25 @@ export type TagAudience = {
   segments: string[];
 };
 
+/**
+ * D-107 R2/R11. `moderation_state` sits BESIDE `active`, never on top of it:
+ * `active` stays the administrator's archival switch, and the invariant that
+ * ties them is one-directional — `active === true` implies `approved`.
+ *
+ * `null` means "this read did not state one", which is exactly how Core's
+ * `normalizeAdminCatalog` reads an absent value: keep whatever is stored. It is
+ * NOT a synonym for `approved`, and the distinction is the difference between a
+ * save that preserves a ban and one that erases it.
+ */
+export const TAG_MODERATION_STATES = ["approved", "pending", "rejected", "merged"] as const;
+
+export type TagModerationState = (typeof TAG_MODERATION_STATES)[number];
+
+/** A row a catalogue save may neither activate nor re-state (`profile-tag-item-moderation-locked`). */
+export function isTagModerationLocked(state: TagModerationState | null): boolean {
+  return state === "rejected" || state === "merged";
+}
+
 export type ProfileTagItem = {
   key: string;
   labels: LocalizedText;
@@ -90,6 +109,7 @@ export type ProfileTagItem = {
   emoji: string;
   revision: number;
   selected_member_count: number;
+  moderation_state: TagModerationState | null;
 };
 
 export type ProfileTagGroup = {
@@ -414,10 +434,23 @@ function tagItem(value: unknown): ProfileTagItem | null {
   const managedIcon = icon(source?.icon);
   const revision = integer(source?.revision);
   const selectedCount = integer(source?.selected_member_count);
+  // Absent (or an explicit null) is the only tolerated non-value: it survives a
+  // Core that predates D-107, and it round-trips a catalogue this module itself
+  // parsed. Either way it means "not stated", which keeps the stored state.
+  const moderationState = source?.moderation_state === undefined || source?.moderation_state === null
+    ? null
+    : (TAG_MODERATION_STATES as readonly unknown[]).includes(source?.moderation_state)
+      ? source?.moderation_state as TagModerationState
+      : undefined;
   if (
     !source || !key || !labels || order === null || typeof source.active !== "boolean"
     || !parsedAudience || !managedIcon || typeof source.emoji !== "string"
-    || revision === null || selectedCount === null
+    || revision === null || selectedCount === null || moderationState === undefined
+    // The invariant, checked on the read: a row served active while not
+    // approved is a half-applied migration or a direct database edit, and
+    // rendering it as an ordinary active tag would invite a save that Core
+    // then refuses with `profile-tag-item-moderation-locked`.
+    || (source.active && moderationState !== null && moderationState !== "approved")
   ) return null;
   return {
     key,
@@ -429,6 +462,7 @@ function tagItem(value: unknown): ProfileTagItem | null {
     emoji: source.emoji,
     revision,
     selected_member_count: selectedCount,
+    moderation_state: moderationState,
   };
 }
 
@@ -676,6 +710,11 @@ export function serializeTagCatalog(catalog: ProfileTagCatalog): Record<string, 
       sort_order: group.sort_order,
       active: group.active,
       audience: group.audience,
+      // T-686 B-5 / D-107 R11: the whole catalogue round-trips, so a row's
+      // moderation state has to travel with it. Without this field an ordinary
+      // drag-and-drop save would restate every banned row as unmoderated and
+      // silently un-ban it. A row whose read stated nothing sends nothing —
+      // absent means "keep what is stored", which is not the same as approved.
       items: group.items.map((item) => ({
         key: item.key,
         labels: item.labels,
@@ -684,6 +723,7 @@ export function serializeTagCatalog(catalog: ProfileTagCatalog): Record<string, 
         audience: item.audience,
         icon: item.icon,
         emoji: item.emoji,
+        ...(item.moderation_state === null ? {} : { moderation_state: item.moderation_state }),
       })),
     })),
   };
