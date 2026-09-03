@@ -1851,15 +1851,15 @@
                     {
                         "key": "woman",
                         "labels": {
-                            "en": "woman",
-                            "hu": "woman"
+                            "en": "Woman",
+                            "hu": "Nő"
                         }
                     },
                     {
                         "key": "man",
                         "labels": {
-                            "en": "man",
-                            "hu": "man"
+                            "en": "Man",
+                            "hu": "Férfi"
                         }
                     }
                 ]
@@ -1917,7 +1917,7 @@
             "key": "signup_pages_v1",
             "pages": [
                 {
-                    "key": "p_0fa95c5e",
+                    "key": "p_5e68af0b",
                     "hidden": false,
                     "title": {
                         "en": "More about you",
@@ -1939,7 +1939,7 @@
                     ]
                 },
                 {
-                    "key": "p_84110085",
+                    "key": "p_27fdf78e",
                     "hidden": true,
                     "title": {
                         "en": "More about you",
@@ -1959,7 +1959,7 @@
             ],
             "dropped_items": [],
             "revision": 1,
-            "updated_at": 1788388217,
+            "updated_at": 1788398368,
             "updated_by": "pages-editor@example.test"
         },
         "eligible_fields": [
@@ -2578,15 +2578,15 @@
                     {
                         "key": "woman",
                         "labels": {
-                            "en": "woman",
-                            "hu": "woman"
+                            "en": "Woman",
+                            "hu": "Nő"
                         }
                     },
                     {
                         "key": "man",
                         "labels": {
-                            "en": "man",
-                            "hu": "man"
+                            "en": "Man",
+                            "hu": "Férfi"
                         }
                     }
                 ]
@@ -2644,7 +2644,7 @@
             "key": "signup_pages_v1",
             "pages": [
                 {
-                    "key": "p_0fa95c5e",
+                    "key": "p_5e68af0b",
                     "hidden": false,
                     "title": {
                         "en": "More about you",
@@ -2666,7 +2666,7 @@
                     ]
                 },
                 {
-                    "key": "p_84110085",
+                    "key": "p_27fdf78e",
                     "hidden": true,
                     "title": {
                         "en": "More about you",
@@ -2686,7 +2686,7 @@
             ],
             "dropped_items": [],
             "revision": 1,
-            "updated_at": 1788388217,
+            "updated_at": 1788398368,
             "updated_by": "pages-editor@example.test"
         },
         "message": 200,
@@ -2701,13 +2701,13 @@
             "items": [
                 {
                     "index": 0,
-                    "page_key": "p_ee459bb5",
+                    "page_key": "p_eafc3fed",
                     "field_key": "smoking",
                     "reason": "duplicate-field"
                 },
                 {
                     "index": 1,
-                    "page_key": "p_3671fb4a",
+                    "page_key": "p_f495783a",
                     "field_key": "",
                     "reason": "blank-title"
                 }
@@ -3949,7 +3949,7 @@
             "key": "signup_pages_v1",
             "pages": [
                 {
-                    "key": "p_0fa95c5e",
+                    "key": "p_5e68af0b",
                     "hidden": false,
                     "title": {
                         "en": "More about you",
@@ -3971,7 +3971,7 @@
                     ]
                 },
                 {
-                    "key": "p_84110085",
+                    "key": "p_27fdf78e",
                     "hidden": true,
                     "title": {
                         "en": "More about you",
@@ -3991,7 +3991,7 @@
             ],
             "dropped_items": [],
             "revision": 1,
-            "updated_at": 1788388217,
+            "updated_at": 1788398368,
             "updated_by": "pages-editor@example.test"
         },
         "eligible_fields": [
@@ -4610,15 +4610,15 @@
                     {
                         "key": "woman",
                         "labels": {
-                            "en": "woman",
-                            "hu": "woman"
+                            "en": "Woman",
+                            "hu": "Nő"
                         }
                     },
                     {
                         "key": "man",
                         "labels": {
-                            "en": "man",
-                            "hu": "man"
+                            "en": "Man",
+                            "hu": "Férfi"
                         }
                     }
                 ]

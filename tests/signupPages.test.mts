@@ -29,7 +29,7 @@ import {
 } from "../lib/signupPages.ts";
 
 const CORPUS = new URL(
-  "./fixtures/signup_pages_handoff/t670-signup-composer-envelopes.json",
+  "./fixtures/signup_pages_handoff/t689-signup-composer-envelopes.json",
   import.meta.url,
 );
 const CORPUS_BYTES = readFileSync(CORPUS);
@@ -53,14 +53,18 @@ function emptyLayout(): SignupPageLayout {
   return { revision: 3, updated_at: 100, updated_by: "admin@example.test", pages: [] };
 }
 
-test("the fixture is the published T-670 capture, byte for byte", () => {
+test("the fixture is the published T-689 capture, byte for byte", () => {
   // Provenance, not decoration: Core has no committed `list_signup_options`
   // corpus, so this file IS the record of what the wire looks like. An edited
   // body must fail here rather than drift into the decoder's expectations.
+  //
+  // T-683 re-pins it from the T-670 capture to the T-689 one, which is the same
+  // five envelopes served by a Core that finally localizes the gender options
+  // (see the assertion below); the T-670 bodies carried the placeholder labels.
   assert.equal(
     createHash("sha256").update(CORPUS_BYTES).digest("hex"),
-    "e28422821ae30a5f23a78b316755743e27d24635ca7237fb1039731c04668d71",
-    "re-copy team/handoffs/t670-signup-composer-envelopes.json and update this digest",
+    "6aa8a94c8e510850960621307758c1d1e941627b8ce297ee899ce7b3837e610d",
+    "re-copy team/handoffs/t689-signup-composer-envelopes.json and update this digest",
   );
   assert.deepEqual(Object.keys(envelopes).sort(), [
     "list_signup_options.composed",
@@ -117,6 +121,15 @@ test("the captured read decodes the complete composer surface", () => {
   ]);
   assert.equal(parsed.system_questions[1].labels.hu, "Ki láthatja az adatlapomat");
   assert.equal(parsed.system_questions[1].labels.en, "Who can see my profile");
+  // T-689: the gender options are localized copy, not the raw storage values
+  // the T-670 capture served. The composer renders these labels verbatim, so a
+  // Core that regresses to "woman"/"man" must fail here rather than ship a
+  // signup screen with lowercase English in the Hungarian locale.
+  assert.deepEqual(parsed.system_questions[0].options.map((row) => row.key), ["woman", "man"]);
+  assert.deepEqual(parsed.system_questions[0].options.map((row) => row.labels), [
+    { en: "Woman", hu: "Nő" },
+    { en: "Man", hu: "Férfi" },
+  ]);
   assert.deepEqual(parsed.system_questions[1].options.map((row) => row.key), ["male", "female", "both"]);
   assert.equal(JSON.stringify(parsed.system_questions).includes("relationship_status"), false);
   assert.equal(JSON.stringify(parsed).includes("subgender"), false);

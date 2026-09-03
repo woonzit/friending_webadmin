@@ -14,7 +14,7 @@ import {
 } from "../lib/signupPages.ts";
 
 const envelopes = JSON.parse(readFileSync(
-  new URL("./fixtures/signup_pages_handoff/t670-signup-composer-envelopes.json", import.meta.url),
+  new URL("./fixtures/signup_pages_handoff/t689-signup-composer-envelopes.json", import.meta.url),
   "utf8",
 )) as Record<string, unknown>;
 

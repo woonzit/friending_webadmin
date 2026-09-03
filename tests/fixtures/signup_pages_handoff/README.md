@@ -3,17 +3,20 @@
 Status: **real Core corpus, captured from the deployed contract** (was a hand-written handoff
 shape until T-671 landed).
 
-`t670-signup-composer-envelopes.json` is a byte-identical copy of
+`t689-signup-composer-envelopes.json` is a byte-identical copy of
 
-    team/handoffs/t670-signup-composer-envelopes.json
-    sha256 e28422821ae30a5f23a78b316755743e27d24635ca7237fb1039731c04668d71   (187710 bytes)
+    team/handoffs/t689-signup-composer-envelopes.json
+    sha256 6aa8a94c8e510850960621307758c1d1e941627b8ce297ee899ce7b3837e610d   (187713 bytes)
 
-published by the T-670 Core landing lane
-(`team/messages/20260902T2236Z-opus-api-land-t670-done.md`). It was dumped by calling
-`WebadminController::listSignupOptions` / `::saveSignupPageLayout` at Core `main`
-`7c6e5aaad7829d61f070c27d52860f94569db8ec` against a throwaway replica set, with the generator
-published beside it (`team/handoffs/t670-signup-composer-envelopes-generator.php`,
-sha256 `baea729fe8b44be8f1be290a15d08bd97435bee0d44885f5ff53983ba770e611`).
+published by the T-689 Core lane, which re-captured the T-670 corpus after Core began serving
+localized gender labels (`Woman`/`Nő`, `Man`/`Férfi`) where the T-670 bodies carried the raw
+storage values `woman`/`man`. Nothing else changed but the per-run page keys and `updated_at`.
+T-683 re-pinned the Webadmin test to it and asserts those four labels. It was dumped by calling
+`WebadminController::listSignupOptions` / `::saveSignupPageLayout` against a throwaway replica set
+with the published, unchanged generator (`team/handoffs/t670-signup-composer-envelopes-generator.php`,
+sha256 `baea729fe8b44be8f1be290a15d08bd97435bee0d44885f5ff53983ba770e611`) — run at Core
+`7c6e5aaad7829d61f070c27d52860f94569db8ec` for the T-670 capture and re-run at the T-689 tip
+`4969ae4` for this one (`team/messages/20260903T012612Z-opus-api-t689-done.md`).
 
 Core has NO committed `list_signup_options` fixture corpus of its own, so this file — not a
 Core-side manifest — is the provenance record. `tests/signupPages.test.mts` re-checks the sha256
@@ -34,3 +37,5 @@ keys and the `updated_at` epoch.
 
 To re-capture: re-run the published generator against a throwaway replica set at the Core tip
 under test, replace this file, and update the sha256 above and in `tests/signupPages.test.mts`.
+Name the replacement after the task that captured it, so the file name records which Core tip
+these bytes came from.
