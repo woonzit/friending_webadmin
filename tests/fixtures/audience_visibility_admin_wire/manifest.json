@@ -1,7 +1,7 @@
 {
     "schema_version": 1,
-    "source_commit": "5cf741f9f313558f954aead53f2e5dd48156deef",
-    "fixture_set_sha256": "6dfacf0c5586806c9de39c67ad36da6df4653b70a391154e7e8a76d366bd5aec",
+    "source_commit": "9e418b323b9183e9c2bc9d7ad8bb74a57967bc5f",
+    "fixture_set_sha256": "956909cab7a0e2371aa4f343ead6388d9d6095a91b7d4d795adf544388aa6622",
     "provenance": {
         "generator": "tests/audience_visibility_fixture_dump.php",
         "generator_sha256": "a7521674eb451bc83538b1ab8b657eb05570efe46749fd175dd04e337c8ccba4",
@@ -679,7 +679,7 @@
             "route": "/v1/webadmin/audience_visibility_catalog",
             "case": "catalog_read",
             "consumer": "webadmin",
-            "sha256": "1885f7c24e86b242083c9f1200a0153486cc62c32d8f777c3331d97ab8308452"
+            "sha256": "68287cf52d16bb52e2cda6a7b71262262716d6fcaae556e7d90c59890c9769c1"
         },
         {
             "file": "admin-member-binary.json",

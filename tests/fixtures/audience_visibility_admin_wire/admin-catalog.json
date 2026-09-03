@@ -17,8 +17,8 @@
             {
                 "key": "male_for_male",
                 "labels": {
-                    "en": "Gay men",
-                    "hu": "Meleg férfiak"
+                    "en": "Men visible to men",
+                    "hu": "Férfiak, akiket férfiak láthatnak"
                 },
                 "rules": [
                     {
@@ -44,8 +44,8 @@
             {
                 "key": "male_for_female",
                 "labels": {
-                    "en": "Heterosexual men",
-                    "hu": "Heteroszexuális férfiak"
+                    "en": "Men visible to women",
+                    "hu": "Férfiak, akiket nők láthatnak"
                 },
                 "rules": [
                     {
@@ -71,8 +71,8 @@
             {
                 "key": "male_for_both",
                 "labels": {
-                    "en": "Bisexual men",
-                    "hu": "Biszexuális férfiak"
+                    "en": "Men visible to everyone",
+                    "hu": "Férfiak, akiket mindenki láthat"
                 },
                 "rules": [
                     {
@@ -98,8 +98,8 @@
             {
                 "key": "female_for_male",
                 "labels": {
-                    "en": "Heterosexual women",
-                    "hu": "Heteroszexuális nők"
+                    "en": "Women visible to men",
+                    "hu": "Nők, akiket férfiak láthatnak"
                 },
                 "rules": [
                     {
@@ -125,8 +125,8 @@
             {
                 "key": "female_for_female",
                 "labels": {
-                    "en": "Lesbian women",
-                    "hu": "Leszbikus nők"
+                    "en": "Women visible to women",
+                    "hu": "Nők, akiket nők láthatnak"
                 },
                 "rules": [
                     {
@@ -152,8 +152,8 @@
             {
                 "key": "female_for_both",
                 "labels": {
-                    "en": "Bisexual women",
-                    "hu": "Biszexuális nők"
+                    "en": "Women visible to everyone",
+                    "hu": "Nők, akiket mindenki láthat"
                 },
                 "rules": [
                     {
@@ -204,7 +204,7 @@
                 ]
             }
         ],
-        "group_manifest_sha256": "a4201559105e9061d8ee748b1a61df49dc683d84c12391a897a3e2802f31a5f7",
+        "group_manifest_sha256": "8e1906021ccf78d40b2fbb3fb2abbcd4f20da9ffffa2d44a791b8d0e0c834755",
         "retirement_manifest": {
             "sha256": "6bbd46df631a50cf4e9b7eb6bb5fd409269965d03c89a536c90c1d4588c637e1",
             "matching_orientation": "retired",
@@ -336,6 +336,7 @@
             },
             "intents_revision": 4,
             "selection_min": 0,
+            "selection_required_min": 0,
             "selection_max": 5,
             "items": [
                 {

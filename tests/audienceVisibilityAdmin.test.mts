@@ -455,14 +455,12 @@ test("all 59 published Core Webadmin fixtures are unchanged, manifest-bound, and
     "fixtures",
   ]);
   assert.equal(manifest.schema_version, 1);
-  // Re-pinned by T-680 from deployed Core `main` `7c6e5aa`. The published
-  // manifest is source-bound to `5cf741f9`; its full fixture set moved because
-  // the two iOS signup catalogues were regenerated with the final synthetic
-  // question copy, including "Ki láthatja az adatlapomat" in Hungarian. This
-  // curated directory still holds the 59 Webadmin bodies plus the one shared
-  // owner-profile body, all byte-identical to that Core archive.
-  assert.equal(manifest.source_commit, "5cf741f9f313558f954aead53f2e5dd48156deef");
-  assert.equal(manifest.fixture_set_sha256, "6dfacf0c5586806c9de39c67ad36da6df4653b70a391154e7e8a76d366bd5aec");
+  // Re-pinned by T-716 from Core `9e418b3`. The six compatibility segment
+  // keys are unchanged; only their owner-facing English/Hungarian labels in
+  // `admin-catalog.json` moved to neutral gender-plus-audience wording. The
+  // remaining curated rows retain their previously published body hashes.
+  assert.equal(manifest.source_commit, "9e418b323b9183e9c2bc9d7ad8bb74a57967bc5f");
+  assert.equal(manifest.fixture_set_sha256, "956909cab7a0e2371aa4f343ead6388d9d6095a91b7d4d795adf544388aa6622");
   assert.equal(manifest.provenance.generator, "tests/audience_visibility_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, "a7521674eb451bc83538b1ab8b657eb05570efe46749fd175dd04e337c8ccba4");
   assert.equal(manifest.provenance.admin_wire_adapter, "Friending\\Support\\Webadmin::noStoreReply");

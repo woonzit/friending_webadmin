@@ -9,43 +9,43 @@
                 {
                     "key": "male_hetero",
                     "labels": {
-                        "en": "Heterosexual men",
-                        "hu": "Heteroszexuális férfiak"
+                        "en": "Men visible to women",
+                        "hu": "Férfiak, akiket nők láthatnak"
                     }
                 },
                 {
                     "key": "male_gay",
                     "labels": {
-                        "en": "Gay men",
-                        "hu": "Meleg férfiak"
+                        "en": "Men visible to men",
+                        "hu": "Férfiak, akiket férfiak láthatnak"
                     }
                 },
                 {
                     "key": "male_bisexual",
                     "labels": {
-                        "en": "Bisexual men",
-                        "hu": "Biszexuális férfiak"
+                        "en": "Men visible to everyone",
+                        "hu": "Férfiak, akiket mindenki láthat"
                     }
                 },
                 {
                     "key": "female_hetero",
                     "labels": {
-                        "en": "Heterosexual women",
-                        "hu": "Heteroszexuális nők"
+                        "en": "Women visible to men",
+                        "hu": "Nők, akiket férfiak láthatnak"
                     }
                 },
                 {
                     "key": "female_lesbian",
                     "labels": {
-                        "en": "Lesbian women",
-                        "hu": "Leszbikus nők"
+                        "en": "Women visible to women",
+                        "hu": "Nők, akiket nők láthatnak"
                     }
                 },
                 {
                     "key": "female_bisexual",
                     "labels": {
-                        "en": "Bisexual women",
-                        "hu": "Biszexuális nők"
+                        "en": "Women visible to everyone",
+                        "hu": "Nők, akiket mindenki láthat"
                     }
                 },
                 {
@@ -1917,7 +1917,7 @@
             "key": "signup_pages_v1",
             "pages": [
                 {
-                    "key": "p_5e68af0b",
+                    "key": "p_3214d045",
                     "hidden": false,
                     "title": {
                         "en": "More about you",
@@ -1939,7 +1939,7 @@
                     ]
                 },
                 {
-                    "key": "p_27fdf78e",
+                    "key": "p_1e038ba5",
                     "hidden": true,
                     "title": {
                         "en": "More about you",
@@ -1959,7 +1959,7 @@
             ],
             "dropped_items": [],
             "revision": 1,
-            "updated_at": 1788398368,
+            "updated_at": 1788472457,
             "updated_by": "pages-editor@example.test"
         },
         "eligible_fields": [
@@ -2644,7 +2644,7 @@
             "key": "signup_pages_v1",
             "pages": [
                 {
-                    "key": "p_5e68af0b",
+                    "key": "p_3214d045",
                     "hidden": false,
                     "title": {
                         "en": "More about you",
@@ -2666,7 +2666,7 @@
                     ]
                 },
                 {
-                    "key": "p_27fdf78e",
+                    "key": "p_1e038ba5",
                     "hidden": true,
                     "title": {
                         "en": "More about you",
@@ -2686,7 +2686,7 @@
             ],
             "dropped_items": [],
             "revision": 1,
-            "updated_at": 1788398368,
+            "updated_at": 1788472457,
             "updated_by": "pages-editor@example.test"
         },
         "message": 200,
@@ -2701,13 +2701,13 @@
             "items": [
                 {
                     "index": 0,
-                    "page_key": "p_eafc3fed",
+                    "page_key": "p_c70c5d83",
                     "field_key": "smoking",
                     "reason": "duplicate-field"
                 },
                 {
                     "index": 1,
-                    "page_key": "p_f495783a",
+                    "page_key": "p_4df59350",
                     "field_key": "",
                     "reason": "blank-title"
                 }
@@ -2727,43 +2727,43 @@
                 {
                     "key": "male_hetero",
                     "labels": {
-                        "en": "Heterosexual men",
-                        "hu": "Heteroszexuális férfiak"
+                        "en": "Men visible to women",
+                        "hu": "Férfiak, akiket nők láthatnak"
                     }
                 },
                 {
                     "key": "male_gay",
                     "labels": {
-                        "en": "Gay men",
-                        "hu": "Meleg férfiak"
+                        "en": "Men visible to men",
+                        "hu": "Férfiak, akiket férfiak láthatnak"
                     }
                 },
                 {
                     "key": "male_bisexual",
                     "labels": {
-                        "en": "Bisexual men",
-                        "hu": "Biszexuális férfiak"
+                        "en": "Men visible to everyone",
+                        "hu": "Férfiak, akiket mindenki láthat"
                     }
                 },
                 {
                     "key": "female_hetero",
                     "labels": {
-                        "en": "Heterosexual women",
-                        "hu": "Heteroszexuális nők"
+                        "en": "Women visible to men",
+                        "hu": "Nők, akiket férfiak láthatnak"
                     }
                 },
                 {
                     "key": "female_lesbian",
                     "labels": {
-                        "en": "Lesbian women",
-                        "hu": "Leszbikus nők"
+                        "en": "Women visible to women",
+                        "hu": "Nők, akiket nők láthatnak"
                     }
                 },
                 {
                     "key": "female_bisexual",
                     "labels": {
-                        "en": "Bisexual women",
-                        "hu": "Biszexuális nők"
+                        "en": "Women visible to everyone",
+                        "hu": "Nők, akiket mindenki láthat"
                     }
                 },
                 {
@@ -3949,7 +3949,7 @@
             "key": "signup_pages_v1",
             "pages": [
                 {
-                    "key": "p_5e68af0b",
+                    "key": "p_3214d045",
                     "hidden": false,
                     "title": {
                         "en": "More about you",
@@ -3971,7 +3971,7 @@
                     ]
                 },
                 {
-                    "key": "p_27fdf78e",
+                    "key": "p_1e038ba5",
                     "hidden": true,
                     "title": {
                         "en": "More about you",
@@ -3991,7 +3991,7 @@
             ],
             "dropped_items": [],
             "revision": 1,
-            "updated_at": 1788398368,
+            "updated_at": 1788472457,
             "updated_by": "pages-editor@example.test"
         },
         "eligible_fields": [

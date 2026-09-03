@@ -6,7 +6,7 @@ shape until T-671 landed).
 `t689-signup-composer-envelopes.json` is a byte-identical copy of
 
     team/handoffs/t689-signup-composer-envelopes.json
-    sha256 6aa8a94c8e510850960621307758c1d1e941627b8ce297ee899ce7b3837e610d   (187713 bytes)
+    sha256 9ace11ca374d0efc012ab77f4633d02ce7824197d7cbe5707f4b95e4703dc7bc   (187965 bytes)
 
 published by the T-689 Core lane, which re-captured the T-670 corpus after Core began serving
 localized gender labels (`Woman`/`Nő`, `Man`/`Férfi`) where the T-670 bodies carried the raw
@@ -16,7 +16,9 @@ T-683 re-pinned the Webadmin test to it and asserts those four labels. It was du
 with the published, unchanged generator (`team/handoffs/t670-signup-composer-envelopes-generator.php`,
 sha256 `baea729fe8b44be8f1be290a15d08bd97435bee0d44885f5ff53983ba770e611`) — run at Core
 `7c6e5aaad7829d61f070c27d52860f94569db8ec` for the T-670 capture and re-run at the T-689 tip
-`4969ae4` for this one (`team/messages/20260903T012612Z-opus-api-t689-done.md`).
+`4969ae4` for that capture (`team/messages/20260903T012612Z-opus-api-t689-done.md`).
+T-716 re-ran the same generator at Core `672b25e` so the unchanged segment keys now carry the
+neutral gender-plus-audience labels; only those labels and the documented per-run values moved.
 
 Core has NO committed `list_signup_options` fixture corpus of its own, so this file — not a
 Core-side manifest — is the provenance record. `tests/signupPages.test.mts` re-checks the sha256

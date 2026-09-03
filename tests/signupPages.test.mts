@@ -127,7 +127,7 @@ test("the fixture is the published T-689 capture, byte for byte", () => {
   // (see the assertion below); the T-670 bodies carried the placeholder labels.
   assert.equal(
     createHash("sha256").update(CORPUS_BYTES).digest("hex"),
-    "6aa8a94c8e510850960621307758c1d1e941627b8ce297ee899ce7b3837e610d",
+    "9ace11ca374d0efc012ab77f4633d02ce7824197d7cbe5707f4b95e4703dc7bc",
     "re-copy team/handoffs/t689-signup-composer-envelopes.json and update this digest",
   );
   assert.deepEqual(Object.keys(envelopes).sort(), [
