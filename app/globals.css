@@ -3869,8 +3869,120 @@ body .verification-level-pill.level-strong {
   padding-top: 2px;
 }
 
+/* D-120 soft-off teaser, inside each section-availability control. */
+.section-teaser {
+  display: grid;
+  gap: 10px;
+}
+
+.section-teaser-hidden {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 11px;
+  background: var(--surface-raised);
+}
+
+.section-teaser-hidden strong,
+.section-teaser-hidden small {
+  display: block;
+}
+
+.section-teaser-hidden small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.section-teaser-note {
+  margin: 0;
+}
+
+.section-teaser-copy {
+  display: grid;
+  gap: 12px;
+}
+
+.section-teaser-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.section-teaser-fields textarea.input {
+  min-height: 74px;
+  resize: vertical;
+}
+
+.section-teaser-preview {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: #0b0e12;
+}
+
+.section-teaser-preview-line {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.section-teaser-actions {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 13px;
+  background: var(--surface-raised);
+}
+
+.section-teaser-actions-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.section-teaser-actions-heading h4 {
+  margin: 0;
+}
+
+.section-teaser-actions-heading p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.section-teaser-actions .button {
+  justify-self: start;
+}
+
+.section-teaser-notice {
+  margin: 0;
+}
+
+.section-teaser-notice-error {
+  color: var(--danger);
+}
+
+.section-teaser-notice-success {
+  color: var(--green);
+}
+
 @media (max-width: 980px) {
   .section-availability-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .section-teaser-fields {
     grid-template-columns: 1fr;
   }
 }

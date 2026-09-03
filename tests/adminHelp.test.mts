@@ -101,8 +101,10 @@ test("every inventoried functional section has detailed English and Hungarian he
   // T-712 adds the D-114 looking-for answer-limits topic, which documents the
   // first WRITE this page performs outside the layout save (247).
   // T-706 adds the Mode switcher cards section on /appearance, where D-115's two
-  // operator-editable mode cards live (248).
-  assert.equal(totalSections, 248, "review the functional-section census when the UI changes");
+  // operator-editable mode cards live (248). T-723 adds the D-120 soft-off
+  // teaser topic on /configuration, the first control on that page that changes
+  // what a member SEES while the section stays refused server-side (249).
+  assert.equal(totalSections, 249, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [

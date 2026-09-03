@@ -1,0 +1,18 @@
+{
+    "status_code": 200,
+    "data": {
+        "section_teasers": {
+            "contract_version": 1,
+            "teasers": {
+                "travel": null,
+                "dates": {
+                    "title": "Hamarosan",
+                    "description": "A Friending ennek a része még nem érhető el. Nézz vissza hamarosan."
+                }
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

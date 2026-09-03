@@ -2611,6 +2611,16 @@
               "2": "Follow the deployment or secret-management procedure for anything outside the allow-list."
             },
             "guidance": "A missing infrastructure control is a security property, not an incomplete screen. Never move a secret into Webadmin to make it editable."
+          },
+          "sectionTeasers": {
+            "title": "Soft off and the teaser modal",
+            "purpose": "Each switched-off section carries a Hidden switch: on hides Travel or AreYouIn completely, off keeps its entry point visible and opens a bilingual title and description in a modal with a close button.",
+            "actions": {
+              "1": "Read the Hidden switch of both sections and the teaser revision before editing anything.",
+              "2": "Turn Hidden off only for a section you are also switching off, then write a title and description in English and Hungarian, or leave a field blank for the compiled copy.",
+              "3": "Enter an internal reason and use the teaser save button, which is separate from the section-availability save above."
+            },
+            "guidance": "A teaser is presentation only: the section stays refused server-side, so a member who reaches it another way is still blocked. Nothing is published while the section is available, and nothing at all changes until you save."
           }
         }
       },
@@ -6734,6 +6744,76 @@
         "revision": "The shared settings revision is invalid. Reload before saving.",
         "refusedSetting": "Core refused a section availability value. Reload and review both section controls.",
         "refusedStorefront": "Core does not accept storefront {code}. Replace or remove that override."
+      },
+      "teaser": {
+        "title": "Soft off — teaser modal",
+        "copy": "When a section is switched off you can still show its entry point and explain why. This copy has its own revision and its own save; it is not part of the section-availability save above.",
+        "revision": "Teaser revision {revision}",
+        "loading": "Loading teaser copy…",
+        "loadError": "Teaser copy could not be loaded. Nothing on this card was changed.",
+        "reload": "Reload teaser copy",
+        "allHidden": "Both sections are fully hidden when off. Turn a Hidden switch off to author a teaser.",
+        "hiddenTitle": "Hidden when off",
+        "hiddenCopy": "On is today's behaviour: a switched-off section disappears completely. Off keeps the entry point visible and opens the teaser modal instead.",
+        "hiddenActive": "Fully hidden when off: no icon, no drawer row, no modal.",
+        "onlyWhenOff": "This section is currently available, so no teaser is published. The copy is stored and takes effect as soon as the section is switched off for a storefront.",
+        "blankFallback": "Leave a field blank to publish Friending's compiled copy for that language.",
+        "fields": {
+          "title": "Title",
+          "description": "Description"
+        },
+        "languages": {
+          "en": "English",
+          "hu": "Hungarian"
+        },
+        "counter": "{count}/{max} characters",
+        "previewTitle": "What members see in the modal",
+        "reasonLabel": "Internal reason",
+        "reasonHint": "Required, 1–300 characters. It is recorded in the audit trail, never shown to members.",
+        "save": "Save teaser copy",
+        "saving": "Saving teaser copy…",
+        "retry": "Retry the same teaser save",
+        "live": {
+          "pending": "The last teaser save has an unknown outcome. Retry sends the same command; it never starts a second one.",
+          "converged": "The retained teaser save is confirmed applied.",
+          "saved": "Teaser copy saved.",
+          "noChange": "Nothing changed: the stored teaser copy already matches this draft.",
+          "replayed": "This teaser save had already been applied; the stored result was returned.",
+          "conflict": "Someone else saved teaser copy first. Revision {revision} is now shown; review it and save again.",
+          "conflictAlreadyApplied": "Revision {revision} already carries exactly this teaser copy, so nothing was written.",
+          "draftInvalid": "A teaser title or description is too long, untrimmed or blank-but-spaced. Fix the flagged field.",
+          "reasonRequired": "Enter an internal reason of 1–300 characters before saving teaser copy.",
+          "requestIdUnavailable": "This browser cannot mint a request id, so the teaser save was not sent.",
+          "errorCode": "Teaser copy was not saved: {message}",
+          "unknownError": "Core returned an unusable teaser response. Nothing was changed here."
+        },
+        "errors": {
+          "sessionInvalid": "your session is no longer valid",
+          "badOrigin": "the request origin was rejected",
+          "routeNotFound": "this console action is not available on the server",
+          "readRequired": "you do not have teaser read access",
+          "editRequired": "editor access is required to change teaser copy",
+          "requestInvalid": "the request was malformed",
+          "tooLarge": "the request body was too large",
+          "temporarilyUnavailable": "Core is temporarily unavailable",
+          "invalidResponse": "Core returned an unreadable response",
+          "contractVersion": "this console speaks a contract version Core refused",
+          "sectionsInvalid": "the two sections were not accepted as sent",
+          "hiddenInvalid": "the Hidden switch was not accepted as a boolean",
+          "titleInvalid": "a title is too long, untrimmed or blank-but-spaced",
+          "descriptionInvalid": "a description is too long, untrimmed or blank-but-spaced",
+          "auditReasonInvalid": "the internal reason must be 1–300 trimmed characters",
+          "revisionInvalid": "the expected revision was refused",
+          "requestIdInvalid": "the request id was refused",
+          "conflict": "another operator saved first",
+          "requestIdConflict": "this request id was already used for different teaser copy",
+          "requestInProgress": "the same save is still running; retry in a moment",
+          "storedInvalid": "the stored teaser document could not be read",
+          "auditWriteFailed": "the audit record could not be written, so nothing was saved",
+          "receiptWriteFailed": "the receipt could not be written, so nothing was saved",
+          "writeFailed": "the write failed",
+          "generic": "the reason was not recognised"
+        }
       }
     },
     "authPolicy": {

@@ -429,6 +429,10 @@ export const ADMIN_HELP_PAGES = [
     route: "/configuration",
     sections: [
       "productControls",
+      // D-120's soft-off teaser lives in the section-availability card at the
+      // top of this page, and it is the one control here that changes what a
+      // member sees while the section stays refused server-side.
+      "sectionTeasers",
       "featureSwitches",
       "session",
       "appearance",

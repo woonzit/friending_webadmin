@@ -1,0 +1,9 @@
+{
+    "success": false,
+    "status_code": 422,
+    "error": "section-teasers-audit-reason-invalid",
+    "field": "audit_reason",
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -2611,6 +2611,16 @@
               "2": "Allow-listen kívüli dologhoz a deployment- vagy secret-management eljárást kövesd."
             },
             "guidance": "A hiányzó infrastruktúravezérlő biztonsági tulajdonság, nem befejezetlen képernyő. Secretet soha ne tegyél a Webadminba szerkeszthetőség miatt."
+          },
+          "sectionTeasers": {
+            "title": "Lágy kikapcsolás és a figyelmeztető ablak",
+            "purpose": "Minden kikapcsolt szekcióhoz tartozik egy Rejtett kapcsoló: bekapcsolva a Travel vagy az AreYouIn teljesen eltűnik, kikapcsolva a belépési pont látható marad, és kétnyelvű címet meg leírást nyit egy bezárható ablakban.",
+            "actions": {
+              "1": "Szerkesztés előtt olvasd el mindkét szekció Rejtett kapcsolóját és a szöveg revízióját.",
+              "2": "Csak olyan szekciónál kapcsold ki a Rejtett beállítást, amelyet ki is kapcsolsz, majd írj angol és magyar címet meg leírást, vagy hagyd üresen a beépített szöveghez.",
+              "3": "Adj meg belső indoklást, és a figyelmeztető szöveg saját mentőgombját használd, amely különbözik a fenti szekcióelérhetőség-mentéstől."
+            },
+            "guidance": "A figyelmeztető ablak csak megjelenítés: a szekció a szerveren továbbra is tiltott marad, így a más úton odajutó tagot is elutasítja. Elérhető szekciónál semmi nem jelenik meg, és mentésig egyáltalán semmi nem változik."
           }
         }
       },
@@ -6734,6 +6744,76 @@
         "revision": "A közös beállításrevízió érvénytelen. Mentés előtt töltsd újra az oldalt.",
         "refusedSetting": "A Core visszautasított egy szekcióelérhetőségi értéket. Töltsd újra és ellenőrizd mindkét szekcióvezérlőt.",
         "refusedStorefront": "A Core nem fogadja el a(z) {code} storefrontot. Cseréld le vagy távolítsd el a felülírást."
+      },
+      "teaser": {
+        "title": "Lágy kikapcsolás — figyelmeztető ablak",
+        "copy": "Ha egy szekció ki van kapcsolva, a belépési pontja megmaradhat és elmagyarázhatod, miért nem elérhető. Ennek a szövegnek saját revíziója és saját mentése van; nem része a fenti szekcióelérhetőség-mentésnek.",
+        "revision": "Figyelmeztető szöveg {revision}. revíziója",
+        "loading": "Figyelmeztető szöveg betöltése…",
+        "loadError": "A figyelmeztető szöveget nem sikerült betölteni. Ezen a kártyán semmi nem változott.",
+        "reload": "Figyelmeztető szöveg újratöltése",
+        "allHidden": "Kikapcsolt állapotban mindkét szekció teljesen rejtett. Kapcsold ki a Rejtett kapcsolót, ha szöveget szeretnél megadni.",
+        "hiddenTitle": "Rejtett kikapcsolva",
+        "hiddenCopy": "Bekapcsolva a mai működés: a kikapcsolt szekció teljesen eltűnik. Kikapcsolva a belépési pont látható marad, és a rákattintás a figyelmeztető ablakot nyitja meg.",
+        "hiddenActive": "Kikapcsolt állapotban teljesen rejtett: nincs ikon, nincs menüsor, nincs ablak.",
+        "onlyWhenOff": "Ez a szekció jelenleg elérhető, ezért nem jelenik meg figyelmeztető ablak. A szöveg mentve marad, és akkor lép életbe, amint a szekciót egy storefrontnál kikapcsolod.",
+        "blankFallback": "Hagyd üresen a mezőt, ha az adott nyelven a Friending beépített szövegét szeretnéd közzétenni.",
+        "fields": {
+          "title": "Cím",
+          "description": "Leírás"
+        },
+        "languages": {
+          "en": "Angol",
+          "hu": "Magyar"
+        },
+        "counter": "{count}/{max} karakter",
+        "previewTitle": "Ezt látják a tagok az ablakban",
+        "reasonLabel": "Belső indoklás",
+        "reasonHint": "Kötelező, 1–300 karakter. Az audit naplóba kerül, a tagok soha nem látják.",
+        "save": "Figyelmeztető szöveg mentése",
+        "saving": "Figyelmeztető szöveg mentése…",
+        "retry": "Ugyanannak a mentésnek az újrapróbálása",
+        "live": {
+          "pending": "A legutóbbi mentés kimenetele ismeretlen. Az újrapróbálás ugyanazt a parancsot küldi el, soha nem indít másodikat.",
+          "converged": "A megőrzött mentés igazoltan érvénybe lépett.",
+          "saved": "A figyelmeztető szöveg mentve.",
+          "noChange": "Semmi nem változott: a tárolt szöveg már megegyezik ezzel a piszkozattal.",
+          "replayed": "Ez a mentés már korábban érvénybe lépett; a tárolt eredményt kaptad vissza.",
+          "conflict": "Valaki más mentett előbb. Most a(z) {revision}. revízió látható; ellenőrizd, majd mentsd újra.",
+          "conflictAlreadyApplied": "A(z) {revision}. revízió pontosan ezt a szöveget tartalmazza, ezért nem történt írás.",
+          "draftInvalid": "Egy cím vagy leírás túl hosszú, nem vágott, vagy csak szóközöket tartalmaz. Javítsd a megjelölt mezőt.",
+          "reasonRequired": "Mentés előtt adj meg 1–300 karakteres belső indoklást.",
+          "requestIdUnavailable": "Ez a böngésző nem tud kérésazonosítót előállítani, ezért a mentés nem indult el.",
+          "errorCode": "A figyelmeztető szöveg nem mentődött: {message}",
+          "unknownError": "A Core értelmezhetetlen választ adott. Itt semmi nem változott."
+        },
+        "errors": {
+          "sessionInvalid": "a munkameneted már nem érvényes",
+          "badOrigin": "a kérés forrását elutasítottuk",
+          "routeNotFound": "ez a konzolművelet nem érhető el a szerveren",
+          "readRequired": "nincs olvasási jogosultságod a figyelmeztető szöveghez",
+          "editRequired": "a szöveg módosításához szerkesztői jogosultság szükséges",
+          "requestInvalid": "a kérés hibás volt",
+          "tooLarge": "a kérés törzse túl nagy volt",
+          "temporarilyUnavailable": "a Core átmenetileg nem érhető el",
+          "invalidResponse": "a Core olvashatatlan választ adott",
+          "contractVersion": "a Core elutasította a konzol szerződésverzióját",
+          "sectionsInvalid": "a két szekciót nem fogadta el a küldött formában",
+          "hiddenInvalid": "a Rejtett kapcsolót nem fogadta el logikai értékként",
+          "titleInvalid": "egy cím túl hosszú, nem vágott, vagy csak szóközöket tartalmaz",
+          "descriptionInvalid": "egy leírás túl hosszú, nem vágott, vagy csak szóközöket tartalmaz",
+          "auditReasonInvalid": "a belső indoklásnak 1–300 vágott karakternek kell lennie",
+          "revisionInvalid": "az elvárt revíziót elutasította",
+          "requestIdInvalid": "a kérésazonosítót elutasította",
+          "conflict": "egy másik operátor mentett előbb",
+          "requestIdConflict": "ezt a kérésazonosítót már más szöveghez használták",
+          "requestInProgress": "ugyanez a mentés még fut; próbáld újra egy pillanat múlva",
+          "storedInvalid": "a tárolt dokumentumot nem sikerült beolvasni",
+          "auditWriteFailed": "az audit bejegyzést nem sikerült kiírni, ezért semmi nem mentődött",
+          "receiptWriteFailed": "a nyugtát nem sikerült kiírni, ezért semmi nem mentődött",
+          "writeFailed": "az írás nem sikerült",
+          "generic": "az okot nem sikerült felismerni"
+        }
       }
     },
     "authPolicy": {

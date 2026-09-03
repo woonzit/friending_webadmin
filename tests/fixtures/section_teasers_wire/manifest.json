@@ -1,0 +1,311 @@
+{
+    "schema_version": 1,
+    "contract_version": 1,
+    "app_contract_version": 1,
+    "source_commit": "75437c5798504f77249082e283e959f8079233da",
+    "contract_manifest_sha256": "eb9dc908fd0f3d888716dd457f2a074a06d19383888ba250c28df30fb84fb939",
+    "fixture_set_sha256": "1d863d45a2c7b30731984f9b9c16375837e499db1cc564e0f08025aef8842e4d",
+    "provenance": {
+        "generator": "tests/section_teasers_fixture_dump.php",
+        "generator_sha256": "e5158e438352e8124d2d9339f382f7c18ede8f771b5f91cf38dc2be241380e1f",
+        "wire_adapters": {
+            "versioned_actions": "Friending\\Support\\Webadmin::noStoreReply",
+            "member_routes": "Friending\\Core\\Response::wirePayload"
+        },
+        "cache_policy": {
+            "versioned_actions": "no-store",
+            "member_routes": "route-default"
+        },
+        "evaluated_at": 1787800000,
+        "source_paths": [
+            "config/routes.php",
+            "src/Core/Response.php",
+            "src/Http/Controllers/AppController.php",
+            "src/Http/Controllers/WebadminSectionTeasersController.php",
+            "src/Http/Middleware/WebadminSecretMiddleware.php",
+            "src/Services/SectionTeasersAdminException.php",
+            "src/Services/SectionTeasersAdminService.php",
+            "src/Services/SectionTeasersReadinessService.php",
+            "src/Services/SectionTeasersService.php",
+            "src/Support/SectionAvailabilityPolicy.php",
+            "src/Support/SectionTeasersPolicy.php",
+            "src/Support/Webadmin.php",
+            "src/Support/WebadminRolePolicy.php",
+            "tests/section_teasers_fixture_dump.php"
+        ]
+    },
+    "fixtures": [
+        {
+            "file": "appconfig-available-never-teased.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "both sections on with hidden false: still no teaser",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "49a18ecd8eade2d010613eab54d9f8101da85852dcc5cbb169f17aaf6440794c"
+        },
+        {
+            "file": "appconfig-both-teased.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "both sections off and un-hidden: authored copy beside compiled copy",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "8a810f90bcdf3ad992ca90d5d3780d64251281096c524dc58b1b96ccf99b1f37"
+        },
+        {
+            "file": "appconfig-compiled-all-hidden.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "seeded and everything hidden: both sections off, no teaser at all",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "49a18ecd8eade2d010613eab54d9f8101da85852dcc5cbb169f17aaf6440794c"
+        },
+        {
+            "file": "appconfig-dates-teased-en.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "dates off and un-hidden with blank copy: the compiled English modal",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "3c4eb6f7b530e68d84ab1a6891f34debf3b56e110b9a0d3ed76dc83827bec8d2"
+        },
+        {
+            "file": "appconfig-dates-teased-hu.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "the same row in Hungarian: the compiled Hungarian modal, never the English one",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "aa7e35f14adec886505cd9c27e7eb4b15c4fada73f140cc680099ff18c491e86"
+        },
+        {
+            "file": "appconfig-travel-teased.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "travel off and un-hidden with authored copy: the operator copy is served",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "e8f3554716bae01c83f9f4279479ead635f6babd7e5f327a41d17bec95c26ee6"
+        },
+        {
+            "file": "error-admin-revoked.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: admin-revoked",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "7ca14279ec3e818347b77f76b3b2c68550e2977556e39510f0b89c138cfafa9b"
+        },
+        {
+            "file": "error-admin-session-invalid.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: admin-session-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "40972c7f616df32648d2df4eebaf02ea4510e9eb357e2248b18fe2f69769561e"
+        },
+        {
+            "file": "error-section-teasers-audit-reason-invalid.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-audit-reason-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "0e67711e94eae57a9ee78cebcf0d94d76b9b6c1c14d0415d791d501b5db0655f"
+        },
+        {
+            "file": "error-section-teasers-audit-write-failed.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-audit-write-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "8a711bb32aae4817f84158f05e641c4262250638173fc601669472a3f9e2608a"
+        },
+        {
+            "file": "error-section-teasers-contract-version-invalid.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-contract-version-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "e469c3422e4c2d0af04688bbb243dd28f9412dee9a85b5d4507a306422c25c34"
+        },
+        {
+            "file": "error-section-teasers-contract-version-required.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-contract-version-required",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "45369e969c928da852fdf5858e94c5ce684deebeff86e41b1b36f4e03eeaf632"
+        },
+        {
+            "file": "error-section-teasers-description-invalid.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-description-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "952150ec021d8405d19e018e5d86e64222ec996a548e7415567e7d179a4d43e2"
+        },
+        {
+            "file": "error-section-teasers-edit-required.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-edit-required",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "0a61c3b4cdabc021d47b3790dfa39b4f642272d76649c145cf821761f01475b7"
+        },
+        {
+            "file": "error-section-teasers-hidden-invalid.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-hidden-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "080ff27935bbc61f89ce9b456452aaaa251d51e9223404ef031e7db809ea6f0b"
+        },
+        {
+            "file": "error-section-teasers-read-failed.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-read-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "74e2a20ca59453c49cb5cf8b83b65b63b3c16d6c0113a4f417b97f3e3000cb2a"
+        },
+        {
+            "file": "error-section-teasers-read-required.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-read-required",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "622da2c71dee365e2c421880bfd1337e225d305cb297c546394e921d17b53415"
+        },
+        {
+            "file": "error-section-teasers-receipt-write-failed.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-receipt-write-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "62725230ee95e1ed220421d27accaa78e4a27413d29b84bca77d656d28f2b9a6"
+        },
+        {
+            "file": "error-section-teasers-request-id-conflict.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-request-id-conflict",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "79a27f724eaf2734602d9a1c6f06361e5df1833c29c2f180f55aff3fc937133b"
+        },
+        {
+            "file": "error-section-teasers-request-id-invalid.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-request-id-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "56d82563f13db7f3092eeb665c3eaa9f0014a74114c56e36ae0324f4033880b4"
+        },
+        {
+            "file": "error-section-teasers-request-in-progress.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-request-in-progress",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "19124ad8aee9d48dbf5596797e7f45f127514f64174cab2c330353c709606697"
+        },
+        {
+            "file": "error-section-teasers-request-invalid.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-request-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "73ac45df4f80141964b46be3baaa45388e33a2220af4d93dd6146b09349e25ba"
+        },
+        {
+            "file": "error-section-teasers-revision-invalid.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-revision-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "24f3191bec10d8df84ee94c8d69ccd8d4e2ab3006eaab4bc3f1bc0ddc9121fea"
+        },
+        {
+            "file": "error-section-teasers-sections-invalid.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-sections-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "7ed2a362cbcc0e761bb80840fe4babf4ab23292cd4b75db0446a5c7ebe4a7f43"
+        },
+        {
+            "file": "error-section-teasers-stored-invalid.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-stored-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "b9be8b857751dbc817b7c2e8d7a3cdd6d2e38d0a2e8592d56c884292f20afea3"
+        },
+        {
+            "file": "error-section-teasers-title-invalid.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-title-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "dff52b6349a17e3799a2c9a45561d4f420f57b65129cafa786b83686886ba803"
+        },
+        {
+            "file": "error-section-teasers-write-failed.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: section-teasers-write-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "1c8eb6c171ebe0a98181b98f5ebe031c9199aa06c015a7bf72c0507e6a665119"
+        },
+        {
+            "file": "error-unauthorized.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "closed refusal: unauthorized",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "92a1f1484a7aae426dbcce31512c40eb078ddeb28fa893a4c7354c1303499c29"
+        },
+        {
+            "file": "get-edited.json",
+            "route": "/v1/webadmin/section_teasers_get",
+            "case": "console read after a save: revision 3, shared provenance, blanks shown as blank",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "8ddabacd9dd7c1a75f6061c870e0ae6c679302dbd8d715eaea19a209b7130a72"
+        },
+        {
+            "file": "get-seeded.json",
+            "route": "/v1/webadmin/section_teasers_get",
+            "case": "console read of the bootstrapped singleton: revision 0, no provenance",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "f3dd4eaeb2e05fb71f91078f2f4d410db7a065c37a827f66c0f60aaf0c8086f7"
+        },
+        {
+            "file": "save-committed.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "first commit of the operator copy",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "d8f5e2a5ca5e798700638530ee1fcabb6665f4e5589a658025b76e063efdcf33"
+        },
+        {
+            "file": "save-conflict.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "stale expected_revision: the only refusal that carries data",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "3fda81e2c12cd506f6ef8d486595cf17abeecbf72c67a2947ac7be2034ea35db"
+        },
+        {
+            "file": "save-no-change.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "domain no-op: identical sections, no write and no revision bump",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "012630465d5a6ea59446b9f7bdaf3d1088fa43ce21d4f434d2f2958ce58da514"
+        },
+        {
+            "file": "save-replayed.json",
+            "route": "/v1/webadmin/save_section_teasers",
+            "case": "receipt replay: the same request id returns the committed result",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "c3b024328760308ab38609588ea521c992a26524ee6467d2925e81b3de09ccff"
+        }
+    ]
+}

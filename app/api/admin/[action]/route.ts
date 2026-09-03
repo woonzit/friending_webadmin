@@ -12,6 +12,7 @@ import {
 } from "@/lib/audienceVisibilityAdmin";
 import { normalizeAppearanceProxyBody } from "@/lib/appearanceRules";
 import { normalizeModeCardsProxyBody } from "@/lib/modeCards";
+import { normalizeSectionTeasersProxyBody } from "@/lib/sectionTeasers";
 import { datesAvailabilityWriteIsRetired } from "@/lib/datesAdmin";
 import {
   featureSwitchesProxyCapabilityAuthorized,
@@ -293,6 +294,17 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedModeCardsBody !== undefined) body = normalizedModeCardsBody;
+
+  // Section teasers travel as one strict command whose `sections` object
+  // carries exactly the two sections and exactly three keys each, plus the
+  // bounded `audit_reason`; `coreCall` JSON-encodes `sections` into one form
+  // field. Refused here rather than forwarded, so an undeclared field never
+  // reaches Core at all.
+  const normalizedSectionTeasersBody = normalizeSectionTeasersProxyBody(action, body);
+  if (normalizedSectionTeasersBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedSectionTeasersBody !== undefined) body = normalizedSectionTeasersBody;
 
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer

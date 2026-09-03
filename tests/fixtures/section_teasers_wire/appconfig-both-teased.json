@@ -1,0 +1,21 @@
+{
+    "status_code": 200,
+    "data": {
+        "section_teasers": {
+            "contract_version": 1,
+            "teasers": {
+                "travel": {
+                    "title": "Az utazás hamarosan indul",
+                    "description": "Az utak és az utazók hamarosan itt nyílnak meg. Egyelőre nincs teendő."
+                },
+                "dates": {
+                    "title": "Hamarosan",
+                    "description": "A Friending ennek a része még nem érhető el. Nézz vissza hamarosan."
+                }
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

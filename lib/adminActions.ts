@@ -12,6 +12,7 @@ import {
 import { FEATURE_SWITCHES_ACTIONS } from "@/lib/featureSwitches";
 import { INTO_TAG_MODERATION_ACTIONS } from "@/lib/intoTagModeration";
 import { MODE_CARDS_ACTIONS } from "@/lib/modeCards";
+import { SECTION_TEASERS_ACTIONS } from "@/lib/sectionTeasers";
 import { PROFILE_TEXT_MODERATION_ACTIONS } from "@/lib/profileTextModeration";
 import { VERIFICATION_METHOD_ACTIONS } from "@/lib/verificationMethod";
 import { OUTBOUND_MESSAGING_ACTIONS } from "@/lib/outboundMessaging";
@@ -100,6 +101,13 @@ const ACTIVE_APPEARANCE_ACTIONS = APPEARANCE_ACTIONS;
  * is live before an operator touches it changes nothing.
  */
 const ACTIVE_MODE_CARDS_ACTIONS = MODE_CARDS_ACTIONS;
+
+/**
+ * T-723 / D-120 section teasers. Released with their Core provider: `hidden`
+ * defaults to true for both sections, which is today's full hide, so a live
+ * console changes nothing a member sees until an operator saves.
+ */
+const ACTIVE_SECTION_TEASERS_ACTIONS = SECTION_TEASERS_ACTIONS;
 
 export const ADMIN_ACTIONS = [
   "overview",
@@ -213,6 +221,7 @@ export const ADMIN_ACTIONS = [
   ...ACTIVE_FEATURE_SWITCHES_ACTIONS,
   ...ACTIVE_APPEARANCE_ACTIONS,
   ...ACTIVE_MODE_CARDS_ACTIONS,
+  ...ACTIVE_SECTION_TEASERS_ACTIONS,
   ...DATES_ADMIN_ACTIONS,
 ] as const;
 
@@ -496,6 +505,15 @@ export const ADMIN_ACTION_ACCESS = {
   // matches Core's editor gate, its receipt and its audit row.
     mode_cards_get: "read",
     save_mode_cards: "write",
+
+  // T-723 section teasers. `admin_me` does NOT advertise a `section_teasers`
+  // block, exactly as it does not advertise `mode_cards`, so these rows are the
+  // independent global floor and nothing is reconstructed optimistically:
+  // Core still checks `section_teasers_read` (viewer and up) on the read and
+  // `section_teasers_edit` (admin/owner) on the receipted save, and answers
+  // `section-teasers-read-required` / `section-teasers-edit-required` itself.
+    section_teasers_get: "read",
+    save_section_teasers: "write",
 
   admin_me: "read",
   dates_activity_list: "dates_read",

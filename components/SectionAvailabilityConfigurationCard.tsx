@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatDate } from "@/lib/format";
 import {
@@ -10,6 +10,11 @@ import {
   type SectionAvailabilitySection,
 } from "@/lib/sectionAvailability";
 import { localizedAuthPolicyStorefronts } from "@/lib/authPolicyConfiguration";
+import {
+  SectionTeaserControls,
+  SectionTeasersSaveRow,
+  useSectionTeasers,
+} from "@/components/SectionTeasersPanel";
 
 type Props = {
   value: SectionAvailabilityConfiguration;
@@ -36,6 +41,10 @@ export default function SectionAvailabilityConfigurationCard({
   const warningCodes = [...new Set(SECTION_AVAILABILITY_SECTIONS.flatMap(
     (section) => value[section].invalidCodes,
   ))].sort((left, right) => left.localeCompare(right));
+  // D-120's "soft off" copy is a SEPARATE receipted family with its own
+  // revision, so it loads and saves on its own inside this card rather than
+  // riding the availability transaction the header button commits.
+  const teasers = useSectionTeasers();
 
   function patch(
     section: SectionAvailabilitySection,
@@ -112,6 +121,13 @@ export default function SectionAvailabilityConfigurationCard({
                     <span className="switch-track" />
                   </span>
                 </label>
+
+                <SectionTeaserControls
+                  section={section}
+                  teasers={teasers}
+                  sectionEnabled={control.enabled}
+                  disabled={busy}
+                />
 
                 <div className="section-availability-overrides-heading">
                   <div>
@@ -230,6 +246,8 @@ export default function SectionAvailabilityConfigurationCard({
             );
           })}
         </div>
+
+        <SectionTeasersSaveRow teasers={teasers} disabled={busy} />
       </div>
     </section>
   );
