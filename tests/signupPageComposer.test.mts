@@ -62,6 +62,7 @@ function render(
   issues: SignupPageIssue[] = [],
   droppedItems: SignupDroppedItem[] = [],
   source: SignupPagesPayload = payload,
+  editable = true,
 ): string {
   return renderToStaticMarkup(createElement(
     NextIntlClientProvider,
@@ -79,6 +80,7 @@ function render(
       onCreatePage() {},
       onReset() {},
       onSave() {},
+      onSelectionLimitsSaved: editable ? () => {} : undefined,
     }),
   ));
 }
@@ -139,7 +141,7 @@ test("the two Core-served System cards are locked and no retired card is invente
   assert.doesNotMatch(render("hu", emptyLayout()), /Legalább \d+ válasz kötelező/u);
 });
 
-test("the real third System card renders 14 read-only answers and its stored pair", () => {
+test("the real third System card renders 14 read-only answers and its current range", () => {
   const en = render("en", systemIntentsPayload.pages, [], [], systemIntentsPayload);
   const hu = render("hu", systemIntentsPayload.pages, [], [], systemIntentsPayload);
   assert.equal([...en.matchAll(/data-system-question=/gu)].length, 3);
@@ -157,16 +159,39 @@ test("the real third System card renders 14 read-only answers and its stored pai
   assert.match(huCard, /Bármi/u);
   assert.match(enCard, /<span class="badge badge-warning">SYSTEM<\/span>/u);
 
-  // Core ships the row at required_min 0, so it reads OPTIONAL until the owner
-  // raises the minimum in the console; T-701's handoff fixture guessed 1.
+  // D-114: the card names the stored pair and offers the settings dialog. Core
+  // ships the row at 0–2; the minimum only moves when the owner saves.
+  assert.match(enCard, /<span class="signup-system-limits-range">0–2 answers<\/span>/u);
+  assert.match(huCard, /<span class="signup-system-limits-range">0–2 válasz<\/span>/u);
+  assert.match(enCard, />Settings</u);
+  assert.match(huCard, />Beállítások</u);
   assert.match(enCard, /<span class="badge badge-inactive">OPTIONAL<\/span>/u);
-  assert.match(huCard, /<span class="badge badge-inactive">OPCIONÁLIS<\/span>/u);
   assert.doesNotMatch(enCard, /At least \d+ answers required/u);
-  assert.doesNotMatch(enCard, /<(?:a|button|input|select|textarea)\b/u);
-  assert.doesNotMatch(huCard, /<(?:a|button|input|select|textarea)\b/u);
+
+  // The answers themselves stay read-only: the settings button is the ONLY
+  // interactive element the locked card gained.
+  for (const card of [enCard, huCard]) {
+    assert.equal([...card.matchAll(/<(?:a|button|input|select|textarea)\b/gu)].length, 1);
+    assert.equal([...card.matchAll(/<button/gu)].length, 1);
+  }
+
+  // The other two System cards carry neither the range nor the control: their
+  // maximum is structural, not admin-settable.
+  for (const key of ["gender", "visible_to"]) {
+    assert.doesNotMatch(systemCard(en, key), /signup-system-limits/u);
+    assert.doesNotMatch(systemCard(en, key), /<button/u);
+  }
+
+  // A caller that cannot re-read after a save is not offered the control.
+  const readOnly = systemCard(
+    render("en", systemIntentsPayload.pages, [], [], systemIntentsPayload, false),
+    "intents",
+  );
+  assert.match(readOnly, /0–2 answers/u);
+  assert.doesNotMatch(readOnly, /<(?:a|button|input|select|textarea)\b/u);
 });
 
-test("the raised minimum renders as REQUIRED with its caption", () => {
+test("the raised minimum renders as REQUIRED, its caption and a 1–2 range", () => {
   const en = render("en", raisedMinimumPayload.pages, [], [], raisedMinimumPayload);
   const hu = render("hu", raisedMinimumPayload.pages, [], [], raisedMinimumPayload);
   const enCard = systemCard(en, "intents");
@@ -175,6 +200,8 @@ test("the raised minimum renders as REQUIRED with its caption", () => {
   assert.match(huCard, /<span class="badge badge-active">KÖTELEZŐ<\/span>/u);
   assert.match(enCard, /At least 1 answers required/u);
   assert.match(huCard, /Legalább 1 válasz kötelező/u);
+  assert.match(enCard, /1–2 answers/u);
+  assert.match(huCard, /1–2 válasz/u);
 });
 
 test("an unknown fourth System key is omitted from the cards and rendered as a warning", () => {

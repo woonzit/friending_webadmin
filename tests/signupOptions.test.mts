@@ -5,6 +5,11 @@ import {
   adminActionAccess,
   isAdminActionAllowed,
 } from "../lib/adminActions.ts";
+import {
+  SIGNUP_INTENTS_REVISION_READ_ACTION,
+  SIGNUP_INTENTS_SELECTION_LIMITS_ACTION,
+  SIGNUP_SELECTION_LIMITS_QUESTION_KEY,
+} from "../lib/signupPages.ts";
 
 const page = readFileSync(
   new URL("../app/(dashboard)/signup-options/page.tsx", import.meta.url),
@@ -28,6 +33,10 @@ const profileFields = readFileSync(
 );
 const shell = readFileSync(new URL("../components/Shell.tsx", import.meta.url), "utf8");
 const decoder = readFileSync(new URL("../lib/signupPages.ts", import.meta.url), "utf8");
+const limitsDialog = readFileSync(
+  new URL("../components/SignupIntentsLimitsDialog.tsx", import.meta.url),
+  "utf8",
+);
 
 test("signup options is a one-read one-write page composer", () => {
   assert.match(page, /adminCall\("list_signup_options"\)/);
@@ -84,6 +93,39 @@ test("the composer wires nested drag, keyboard ordering and exact profile-field 
   assert.match(page, /warnings=\{payload\.warnings\}/);
   assert.match(decoder, /SIGNUP_SYSTEM_QUESTION_KEYS = \["gender", "visible_to", "intents"\]/);
   assert.match(decoder, /code: "unknown-system-question"/);
+});
+
+test("the D-114 settings write is registered under Core's own action name", () => {
+  // The console constant and the allow-list must be the same string, or the
+  // dialog posts to an action the bridge answers with a 404.
+  assert.equal(SIGNUP_INTENTS_SELECTION_LIMITS_ACTION, "save_intents_selection_limits");
+  assert.match(actionAllowList, /"save_intents_selection_limits"/);
+  assert.equal(isAdminActionAllowed(SIGNUP_INTENTS_SELECTION_LIMITS_ACTION), true);
+  assert.equal(adminActionAccess(SIGNUP_INTENTS_SELECTION_LIMITS_ACTION), "write");
+
+  // It reads its optimistic axis from an existing read-floor action, and it is
+  // deliberately NOT a member of the audience-visibility action family: that
+  // array is matched exactly against Core's `audience_visibility.actions`.
+  assert.equal(SIGNUP_INTENTS_REVISION_READ_ACTION, "audience_visibility_catalog");
+  assert.equal(adminActionAccess(SIGNUP_INTENTS_REVISION_READ_ACTION), "read");
+  const audienceVisibility = readFileSync(
+    new URL("../lib/audienceVisibilityAdmin.ts", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(audienceVisibility, /save_intents_selection_limits/);
+
+  // The card offers the control only for the row whose pair is admin-settable.
+  assert.equal(SIGNUP_SELECTION_LIMITS_QUESTION_KEY, "intents");
+  assert.match(composer, /question\.key === SIGNUP_SELECTION_LIMITS_QUESTION_KEY/);
+  assert.match(composer, /selectionRange/);
+  assert.match(composer, /selectionSettings/);
+  assert.match(composer, /<SignupIntentsLimitsDialog/);
+  assert.match(page, /onSelectionLimitsSaved=\{\(\) => void load\(\)\}/);
+
+  // The dialog is the only place this action is posted from.
+  assert.match(limitsDialog, /adminCall\(SIGNUP_INTENTS_SELECTION_LIMITS_ACTION, body\)/);
+  assert.doesNotMatch(page, /save_intents_selection_limits/);
+  assert.doesNotMatch(composer, /save_intents_selection_limits/);
 });
 
 test("conflicts reload authority and 422 reasons stay on their page or item", () => {
@@ -147,6 +189,35 @@ test("both locale trees remove editor copy and carry the composer copy", () => {
     "audiencesRequired",
   ];
   const added = [
+    "selectionRange",
+    "selectionSettings",
+    "limitsTitle",
+    "limitsCopy",
+    "limitsMax",
+    "limitsMaxHint",
+    "limitsMin",
+    "limitsMinHint",
+    "limitsReason",
+    "limitsReasonHint",
+    "limitsRevisionLoading",
+    "limitsRevisionError",
+    "limitsSaved",
+    "limitsReplayed",
+    "limitsConflict",
+    "limitsRefused",
+    "limitsSaveError",
+    "limitsInvalidDraft",
+    "limitsIssueMaxRange",
+    "limitsIssueMinRange",
+    "limitsIssueMinAboveMax",
+    "limitsIssueReasonRequired",
+    "limitsIssueRefused",
+    "limitsReceiptOutcome",
+    "limitsReceiptApplied",
+    "limitsReceiptReplayed",
+    "limitsReceiptRequestId",
+    "limitsReceiptLimits",
+    "limitsReceiptRevision",
     "systemTitle",
     "systemBadge",
     "systemRequired",

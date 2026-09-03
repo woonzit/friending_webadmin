@@ -890,3 +890,291 @@ export function signupPageSaveIssues(value: unknown): SignupPageIssue[] | null {
   const parsed = details.items.map(issue);
   return parsed.some((row) => row === null) ? null : parsed as SignupPageIssue[];
 }
+
+/* -------------------------------------------------------------------------- *
+ * D-114 — the "What are you looking for?" row's selection limits
+ *
+ * The owner rules that the intents row is multi-select with a maximum of 2 and
+ * a required minimum of 1, and that BOTH numbers are editable from the console.
+ * Core T-702 publishes one receipted, revision-guarded write for the pair
+ * (`save_intents_selection_limits`); this block is the console half of it.
+ * -------------------------------------------------------------------------- */
+
+/**
+ * The one System row whose limits an operator may edit. `gender` and
+ * `visible_to` have no admin-settable pair: their maximum is structural, so the
+ * settings control and the range caption belong to this key alone.
+ */
+export const SIGNUP_SELECTION_LIMITS_QUESTION_KEY = "intents" as const;
+
+/**
+ * Core's action name, verbatim.
+ *
+ * It is deliberately NOT a member of `audience_visibility.actions`: that array
+ * is decoded with an exact ordered match, so an eighth entry would darken the
+ * whole `/audience-visibility` workspace and break the capability check for the
+ * seven actions that already work (the T-653 lesson, repeated in the T-702
+ * report §6.2). It rides a sibling `admin_me` block instead, and on this side
+ * it is a plain write-floor action in `lib/adminActions.ts`.
+ */
+export const SIGNUP_INTENTS_SELECTION_LIMITS_ACTION = "save_intents_selection_limits" as const;
+
+/**
+ * `list_signup_options` serves the row's CURRENT pair but no revision, and this
+ * write is revision-guarded, so the console reads `intents_revision` from the
+ * catalogue action before it may post. Reading it is a `read`-floor action; the
+ * write itself stays at the write floor.
+ */
+export const SIGNUP_INTENTS_REVISION_READ_ACTION = "audience_visibility_catalog" as const;
+
+export const SIGNUP_INTENTS_CONTRACT_VERSION = 1 as const;
+
+/**
+ * The ceiling is 5, NOT the option count.
+ *
+ * The owner said "at most the option count"; the installed iOS decoder
+ * validates the served maximum against the closed 1...5 range and throws out of
+ * the WHOLE schema-2 catalogue on a 6 — the same class of failure as risk K-1.
+ * So the rule is `0 <= min <= max <= min(5, option count)`: the option count
+ * can only LOWER this bound, never raise it (T-702 report §6.1).
+ */
+export const SIGNUP_INTENTS_SELECTION_MAX_CEILING = 5;
+
+/** `AudienceVisibilityAdminPolicy`'s audit reason bound, mirrored for the form. */
+export const SIGNUP_INTENTS_AUDIT_REASON_MAX_LENGTH = 300;
+
+/** Survives a reload so an uncertain write is retried as a replay, not a second command. */
+export const SIGNUP_INTENTS_LIMITS_REQUEST_STORAGE_KEY =
+  "friending.signup-options.intents-limits.request.v1";
+
+const REQUEST_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
+
+/**
+ * The three numbers this console reads off the intents singleton.
+ *
+ * Deliberately narrow: the vocabulary itself — adding, renaming and archiving
+ * the fourteen answers — belongs to `/audience-visibility` and its own decoder.
+ * This one is used for three bodies that all carry the same block: the
+ * catalogue read that supplies the revision, the accepted write, and the 409.
+ */
+export type SignupIntentsSelectionLimits = {
+  intents_revision: number;
+  /** Additive on T-702; a Core that predates it reads as the shipped 0. */
+  selection_required_min: number;
+  selection_max: number;
+};
+
+export type SignupIntentsLimitsDraft = {
+  selection_max: number;
+  selection_required_min: number;
+  audit_reason: string;
+};
+
+export type SignupIntentsLimitsField =
+  | "selection_max"
+  | "selection_required_min"
+  | "audit_reason";
+
+export const SIGNUP_INTENTS_LIMITS_ISSUE_CODES = [
+  "max-range",
+  "min-range",
+  "min-above-max",
+  "reason-required",
+  "refused",
+] as const;
+
+export type SignupIntentsLimitsIssueCode = (typeof SIGNUP_INTENTS_LIMITS_ISSUE_CODES)[number];
+
+export type SignupIntentsLimitsIssue = {
+  field: SignupIntentsLimitsField;
+  code: SignupIntentsLimitsIssueCode;
+};
+
+export type SignupIntentsLimitsReceipt = {
+  request_id: string;
+  limits: SignupIntentsSelectionLimits;
+  /** Core answered a request id it had already applied; nothing was written twice. */
+  replayed: boolean;
+};
+
+/**
+ * `min(5, option count)`. The row Core serves today has fourteen answers, so
+ * the ceiling is 5; a vocabulary archived down to three answers lowers it to 3.
+ */
+export function signupIntentsSelectionCeiling(question: SignupSystemQuestion): number {
+  return Math.min(SIGNUP_INTENTS_SELECTION_MAX_CEILING, question.options.length);
+}
+
+/** The row whose limits are editable, or `null` when Core is not serving it yet. */
+export function signupSelectionLimitsQuestion(
+  questions: readonly SignupSystemQuestion[],
+): SignupSystemQuestion | null {
+  return questions.find((row) => row.key === SIGNUP_SELECTION_LIMITS_QUESTION_KEY) ?? null;
+}
+
+/**
+ * The audit reason rule Core's `AudienceVisibilityAdminPolicy` enforces, so the
+ * form refuses locally what the route would refuse anyway rather than spending
+ * a receipt on a certain refusal. Core stays the authority.
+ */
+function auditReason(value: string): string | null {
+  if (value !== value.trim() || value !== value.normalize("NFC")) return null;
+  for (const character of value) {
+    const code = character.codePointAt(0) ?? 0;
+    if (code < 0x20 || (code >= 0x7f && code <= 0x9f)) return null;
+  }
+  const length = [...value].length;
+  return length >= 1 && length <= SIGNUP_INTENTS_AUDIT_REASON_MAX_LENGTH ? value : null;
+}
+
+/**
+ * Every reason this draft cannot be posted, one row per field.
+ *
+ * Core's 422 is `audience-visibility-request-invalid` and carries NO per-field
+ * details — the refusal happens in the pure parser before storage is read at
+ * all — so these rows are the ONLY per-field reasons an operator can be shown.
+ * They are therefore computed from Core's own published rule rather than from a
+ * looser console convenience: `0 <= min <= max <= min(5, option count)`.
+ */
+export function signupIntentsLimitsIssues(
+  draft: SignupIntentsLimitsDraft,
+  ceiling: number,
+): SignupIntentsLimitsIssue[] {
+  const issues: SignupIntentsLimitsIssue[] = [];
+  const maximum = integer(draft.selection_max, 1, ceiling);
+  const minimum = integer(draft.selection_required_min, 0, ceiling);
+  if (maximum === null) issues.push({ field: "selection_max", code: "max-range" });
+  if (minimum === null) issues.push({ field: "selection_required_min", code: "min-range" });
+  if (maximum !== null && minimum !== null && minimum > maximum) {
+    issues.push({ field: "selection_required_min", code: "min-above-max" });
+  }
+  if (auditReason(draft.audit_reason) === null) {
+    issues.push({ field: "audit_reason", code: "reason-required" });
+  }
+  return issues;
+}
+
+/**
+ * The exact six-field command, in the contract's order, or `null`.
+ *
+ * `expected_intents_revision` comes from a read this browser actually made —
+ * never from a number the operator can type — so a console that never read the
+ * catalogue cannot guess a revision to guard with.
+ */
+export function signupIntentsLimitsBody(
+  draft: SignupIntentsLimitsDraft,
+  ceiling: number,
+  requestId: string,
+  expectedRevision: number,
+): Record<string, unknown> | null {
+  const reason = auditReason(draft.audit_reason);
+  const maximum = integer(draft.selection_max, 1, ceiling);
+  const minimum = integer(draft.selection_required_min, 0, ceiling);
+  const revision = integer(expectedRevision, 1, 2_147_483_647);
+  if (
+    signupIntentsLimitsIssues(draft, ceiling).length > 0
+    || !REQUEST_ID.test(requestId)
+    || reason === null
+    || maximum === null
+    || minimum === null
+    || revision === null
+  ) return null;
+  return {
+    contract_version: SIGNUP_INTENTS_CONTRACT_VERSION,
+    request_id: requestId,
+    expected_intents_revision: revision,
+    audit_reason: reason,
+    selection_max: maximum,
+    selection_required_min: minimum,
+  };
+}
+
+/** A persisted request id is reused only when it is still a v4 UUID. */
+export function signupIntentsLimitsRequestId(value: unknown): string | null {
+  return typeof value === "string" && REQUEST_ID.test(value) ? value : null;
+}
+
+/**
+ * The intents singleton's limits, from any body that carries the block.
+ *
+ * `selection_min` is pinned to the literal 0 it must stay forever (risk K-1:
+ * the installed iOS decoder asserts it and throws out of the whole schema-2
+ * catalogue on anything else), and `selection_required_min` — the additive key
+ * that carries the real minimum — defaults to 0 on a Core that predates T-702.
+ */
+export function signupIntentsSelectionLimits(value: unknown): SignupIntentsSelectionLimits | null {
+  const source = record(value);
+  const revision = integer(source?.intents_revision, 1, 2_147_483_647);
+  const maximum = integer(source?.selection_max, 1, SIGNUP_INTENTS_SELECTION_MAX_CEILING);
+  const minimum = source?.selection_required_min === undefined
+    ? 0
+    : integer(source.selection_required_min, 0, SIGNUP_INTENTS_SELECTION_MAX_CEILING);
+  if (
+    !source
+    || source.schema_version !== 2
+    || source.selection_min !== 0
+    || revision === null
+    || maximum === null
+    || minimum === null
+    || minimum > maximum
+  ) return null;
+  return {
+    intents_revision: revision,
+    selection_required_min: minimum,
+    selection_max: maximum,
+  };
+}
+
+function dataSuccess(value: unknown): Record<string, unknown> | null {
+  const source = record(value);
+  return source?.success === true && source.status_code === 200 ? record(source.data) : null;
+}
+
+/** `audience_visibility_catalog`'s 200, read for the one axis this write guards on. */
+export function signupIntentsLimitsRead(value: unknown): SignupIntentsSelectionLimits | null {
+  const data = dataSuccess(value);
+  return data?.contract_version === SIGNUP_INTENTS_CONTRACT_VERSION
+    ? signupIntentsSelectionLimits(data.intents)
+    : null;
+}
+
+/** The accepted write: the whole singleton beside the replay flag. */
+export function signupIntentsLimitsSaved(
+  value: unknown,
+): { limits: SignupIntentsSelectionLimits; replayed: boolean } | null {
+  const data = dataSuccess(value);
+  const limits = data?.contract_version === SIGNUP_INTENTS_CONTRACT_VERSION
+    ? signupIntentsSelectionLimits(data.intents)
+    : null;
+  return limits && typeof data?.replayed === "boolean"
+    ? { limits, replayed: data.replayed }
+    : null;
+}
+
+/**
+ * A lost race. The 409 carries the CURRENT singleton, so the console recovers
+ * authority from the refusal itself instead of guessing a revision.
+ */
+export function signupIntentsLimitsConflict(value: unknown): SignupIntentsSelectionLimits | null {
+  const source = record(value);
+  if (
+    source?.success !== false
+    || source.status_code !== 409
+    || source.error !== "audience-visibility-conflict"
+  ) return null;
+  const data = record(source.data);
+  return data?.contract_version === SIGNUP_INTENTS_CONTRACT_VERSION
+    ? signupIntentsSelectionLimits(data.intents)
+    : null;
+}
+
+/**
+ * The pure parser's refusal. It carries no `details`, so the caller renders the
+ * per-field rows `signupIntentsLimitsIssues` derives from Core's own rule.
+ */
+export function signupIntentsLimitsRefused(value: unknown): boolean {
+  const source = record(value);
+  return source?.success === false
+    && source.status_code === 422
+    && source.error === "audience-visibility-request-invalid";
+}

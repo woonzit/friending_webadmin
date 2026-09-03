@@ -335,7 +335,14 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "signupOptions",
     route: "/signup-options",
-    sections: ["systemQuestions", "pageLayout", "questionPalette", "draftSaving", "answersElsewhere"],
+    sections: [
+      "systemQuestions",
+      "selectionLimits",
+      "pageLayout",
+      "questionPalette",
+      "draftSaving",
+      "answersElsewhere",
+    ],
     matches: exact("/signup-options"),
   },
   {

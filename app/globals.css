@@ -7751,6 +7751,36 @@ body .verification-level-pill.level-strong {
   font-size: 12px;
 }
 
+/* D-114: the intents row's editable selection range and its settings control. */
+.signup-system-limits {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.signup-system-limits-range {
+  padding: 3px 9px;
+  border: 1px solid rgba(245, 185, 66, 0.32);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.signup-limits-receipt {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--bg-soft);
+}
+
+.signup-limits-receipt code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+}
+
 .signup-system-copy ul,
 .signup-answer-preview ul {
   display: flex;

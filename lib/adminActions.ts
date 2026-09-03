@@ -115,6 +115,7 @@ export const ADMIN_ACTIONS = [
   "save_invite_configuration",
   "list_signup_options",
   "save_signup_page_layout",
+  "save_intents_selection_limits",
   "list_profile_fields",
   "support_threads",
   "support_messages",
@@ -257,6 +258,17 @@ export const ADMIN_ACTION_ACCESS = {
   save_invite_configuration: "write",
   list_signup_options: "read",
   save_signup_page_layout: "write",
+  // D-114 (T-702 §6). One receipted, revision-guarded write for the "What are
+  // you looking for?" row's maximum and required minimum, posted from the
+  // signup composer's System card. It is deliberately NOT a member of
+  // `AUDIENCE_VISIBILITY_ADMIN_ACTIONS`: that array is decoded against Core's
+  // `audience_visibility.actions` with an exact ordered match, so an eighth
+  // entry would darken the whole `/audience-visibility` workspace and refuse
+  // the seven actions that already work (the T-653 lesson). Core publishes it
+  // in a sibling `admin_me` block instead and rechecks `CAP_INTENT_WRITE` on
+  // every call; this row adds the independent global editor floor, matching
+  // Core's `viewer`-refusing write gate and never weaker than it.
+  save_intents_selection_limits: "write",
   list_profile_fields: "read",
   support_threads: "read",
   // Reading a member's messages clears the operator-side unread counter —

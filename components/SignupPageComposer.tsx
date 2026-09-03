@@ -4,9 +4,11 @@
 import Link from "next/link";
 import React, { useMemo, useState, type DragEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import SignupIntentsLimitsDialog from "@/components/SignupIntentsLimitsDialog";
 import {
   SIGNUP_PAGE_ITEM_LIMIT,
   SIGNUP_PAGE_LIMIT,
+  SIGNUP_SELECTION_LIMITS_QUESTION_KEY,
   addItem,
   moveItem,
   movePage,
@@ -67,6 +69,12 @@ export type SignupPageComposerProps = {
   onCreatePage: () => void;
   onReset: () => void;
   onSave: () => void;
+  /**
+   * D-114. Core moved the intents singleton, so the composer read behind this
+   * page is stale. Absent, the settings control is not offered at all — which
+   * is what a caller that cannot re-read should do.
+   */
+  onSelectionLimitsSaved?: () => void;
 };
 
 export default function SignupPageComposer({
@@ -84,10 +92,12 @@ export default function SignupPageComposer({
   onCreatePage,
   onReset,
   onSave,
+  onSelectionLimitsSaved,
 }: SignupPageComposerProps) {
   const t = useTranslations("signupOptions");
   const locale = useLocale();
   const [dragged, setDragged] = useState<Dragged | null>(null);
+  const [limitsQuestion, setLimitsQuestion] = useState<SignupSystemQuestion | null>(null);
   const fieldMap = useMemo(
     () => new Map(eligibleFields.map((field) => [field.field_key, field])),
     [eligibleFields],
@@ -144,6 +154,16 @@ export default function SignupPageComposer({
     <>
       {notice ? <div className="alert alert-success page-alert" role="status">{notice}</div> : null}
 
+      {limitsQuestion ? (
+        <SignupIntentsLimitsDialog
+          question={limitsQuestion}
+          onClose={(changed) => {
+            setLimitsQuestion(null);
+            if (changed) onSelectionLimitsSaved?.();
+          }}
+        />
+      ) : null}
+
       <section className="panel signup-system-panel">
         <div className="panel-header">
           <div><h2>{t("systemTitle")}</h2><p>{t("systemCopy")}</p></div>
@@ -174,6 +194,28 @@ export default function SignupPageComposer({
                     <p className="signup-system-required-caption">
                       {t("systemRequiredMinimum", { count: question.required_min })}
                     </p>
+                  ) : null}
+                  {/*
+                    D-114: only the `intents` row has an admin-settable pair.
+                    `gender` and `visible_to` have a structural maximum, so
+                    neither the range nor the settings control belongs to them.
+                  */}
+                  {question.key === SIGNUP_SELECTION_LIMITS_QUESTION_KEY ? (
+                    <div className="signup-system-limits">
+                      <span className="signup-system-limits-range">
+                        {t("selectionRange", { min: question.required_min, max: question.max })}
+                      </span>
+                      {onSelectionLimitsSaved ? (
+                        <button
+                          className="button button-secondary button-small"
+                          type="button"
+                          disabled={busy}
+                          onClick={() => setLimitsQuestion(question)}
+                        >
+                          {t("selectionSettings")}
+                        </button>
+                      ) : null}
+                    </div>
                   ) : null}
                   <ul>{question.options.map((option) => (
                     <li key={option.key}>{localeText(option.labels, locale)}</li>

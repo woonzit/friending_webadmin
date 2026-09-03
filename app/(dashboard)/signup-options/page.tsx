@@ -181,6 +181,10 @@ export default function SignupOptionsPage() {
           setNotice("");
         }}
         onSave={() => void save()}
+        // D-114: the settings dialog writes the intents singleton, not this
+        // layout, so nothing here is a draft to reconcile — the card's pair
+        // simply has to be re-read from Core.
+        onSelectionLimitsSaved={() => void load()}
       />
     </>
   );

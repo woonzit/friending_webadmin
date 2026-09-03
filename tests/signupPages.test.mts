@@ -3,8 +3,15 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
+  SIGNUP_INTENTS_AUDIT_REASON_MAX_LENGTH,
+  SIGNUP_INTENTS_CONTRACT_VERSION,
+  SIGNUP_INTENTS_LIMITS_REQUEST_STORAGE_KEY,
+  SIGNUP_INTENTS_REVISION_READ_ACTION,
+  SIGNUP_INTENTS_SELECTION_LIMITS_ACTION,
+  SIGNUP_INTENTS_SELECTION_MAX_CEILING,
   SIGNUP_PAGE_ITEM_LIMIT,
   SIGNUP_PAGE_LIMIT,
+  SIGNUP_SELECTION_LIMITS_QUESTION_KEY,
   SIGNUP_SYSTEM_QUESTION_KEYS,
   addItem,
   addPage,
@@ -22,9 +29,20 @@ import {
   signupPageConflictLayout,
   signupPageSaveIssues,
   signupPageSaveRevision,
+  signupIntentsLimitsBody,
+  signupIntentsLimitsConflict,
+  signupIntentsLimitsIssues,
+  signupIntentsLimitsRead,
+  signupIntentsLimitsRefused,
+  signupIntentsLimitsRequestId,
+  signupIntentsLimitsSaved,
+  signupIntentsSelectionCeiling,
+  signupIntentsSelectionLimits,
   signupPagesPayload,
+  signupSelectionLimitsQuestion,
   validate,
   withRevision,
+  type SignupIntentsLimitsDraft,
   type SignupPageLayout,
   type SignupPagesPayload,
 } from "../lib/signupPages.ts";
@@ -865,4 +883,267 @@ test("the 422 decoder refuses the shapes Core does not send", () => {
       field_key: "smoking",
     }], reason);
   }
+});
+
+/* -------------------------------------------------------------------------- *
+ * D-114 — `save_intents_selection_limits`
+ * -------------------------------------------------------------------------- */
+
+const REQUEST_ID = "00000000-0000-4000-8000-00000000a001";
+
+function intentsQuestion() {
+  const parsed = signupPagesPayload(threeRowRead());
+  assert.ok(parsed);
+  const question = signupSelectionLimitsQuestion(parsed.system_questions);
+  assert.ok(question, "the editable row must be found by key, not by position");
+  return question;
+}
+
+function draft(overrides: Partial<SignupIntentsLimitsDraft> = {}): SignupIntentsLimitsDraft {
+  return { selection_max: 2, selection_required_min: 1, audit_reason: "Owner ruling D-114", ...overrides };
+}
+
+test("the editable row is named by key and its ceiling is min(5, option count)", () => {
+  assert.equal(SIGNUP_SELECTION_LIMITS_QUESTION_KEY, "intents");
+  assert.equal(SIGNUP_INTENTS_SELECTION_LIMITS_ACTION, "save_intents_selection_limits");
+  assert.equal(SIGNUP_INTENTS_REVISION_READ_ACTION, "audience_visibility_catalog");
+  assert.equal(SIGNUP_INTENTS_CONTRACT_VERSION, 1);
+  assert.equal(SIGNUP_INTENTS_SELECTION_MAX_CEILING, 5);
+  assert.equal(SIGNUP_INTENTS_AUDIT_REASON_MAX_LENGTH, 300);
+
+  const question = intentsQuestion();
+  // Fourteen answers, so the installed iOS decoder's 1...5 range is the binding
+  // half: the option count can only LOWER this, never raise it.
+  assert.equal(question.options.length, 14);
+  assert.equal(signupIntentsSelectionCeiling(question), 5);
+  assert.equal(
+    signupIntentsSelectionCeiling({ ...question, options: question.options.slice(0, 3) }),
+    3,
+    "a vocabulary archived below the ceiling lowers it",
+  );
+
+  const parsed = signupPagesPayload(raw());
+  assert.ok(parsed);
+  assert.equal(
+    signupSelectionLimitsQuestion(parsed.system_questions),
+    null,
+    "a two-row read offers no settings row at all",
+  );
+});
+
+test("the draft validator states Core's rule per field", () => {
+  const ceiling = 5;
+  assert.deepEqual(signupIntentsLimitsIssues(draft(), ceiling), []);
+  assert.deepEqual(signupIntentsLimitsIssues(draft({ selection_required_min: 0 }), ceiling), []);
+  assert.deepEqual(
+    signupIntentsLimitsIssues(draft({ selection_max: 5, selection_required_min: 5 }), ceiling),
+    [],
+    "0 <= min <= max <= min(5, option count) — the bounds themselves are legal",
+  );
+  assert.deepEqual(signupIntentsLimitsIssues(draft({ selection_max: 6 }), ceiling), [
+    { field: "selection_max", code: "max-range" },
+  ]);
+  assert.deepEqual(signupIntentsLimitsIssues(draft({ selection_max: 0 }), ceiling), [
+    { field: "selection_max", code: "max-range" },
+  ]);
+  assert.deepEqual(signupIntentsLimitsIssues(draft({ selection_max: 2.5 }), ceiling), [
+    { field: "selection_max", code: "max-range" },
+  ]);
+  assert.deepEqual(signupIntentsLimitsIssues(draft({ selection_required_min: -1 }), ceiling), [
+    { field: "selection_required_min", code: "min-range" },
+  ]);
+  assert.deepEqual(signupIntentsLimitsIssues(draft({ selection_max: 1, selection_required_min: 2 }), ceiling), [
+    { field: "selection_required_min", code: "min-above-max" },
+  ]);
+  assert.deepEqual(signupIntentsLimitsIssues(draft({ audit_reason: "" }), ceiling), [
+    { field: "audit_reason", code: "reason-required" },
+  ]);
+  assert.deepEqual(signupIntentsLimitsIssues(draft({ audit_reason: " padded" }), ceiling), [
+    { field: "audit_reason", code: "reason-required" },
+  ]);
+  assert.deepEqual(signupIntentsLimitsIssues(draft({ audit_reason: "a".repeat(301) }), ceiling), [
+    { field: "audit_reason", code: "reason-required" },
+  ]);
+  assert.deepEqual(signupIntentsLimitsIssues(draft({ audit_reason: "line\nbreak" }), ceiling), [
+    { field: "audit_reason", code: "reason-required" },
+  ]);
+  // A vocabulary archived down to three answers lowers the bound for both.
+  assert.deepEqual(signupIntentsLimitsIssues(draft({ selection_max: 4 }), 3), [
+    { field: "selection_max", code: "max-range" },
+  ]);
+});
+
+test("the posted body is exactly the six fields the capture shows", () => {
+  const captured = lookingForEnvelope("save_intents_selection_limits_200").request as Record<string, unknown>;
+  const body = signupIntentsLimitsBody(draft(), 5, REQUEST_ID, 3);
+  assert.ok(body);
+  assert.deepEqual(Object.keys(body), Object.keys(captured));
+  // Core's wire is form-encoded, so the capture echoes every value as a string;
+  // the console posts JSON to its own proxy and sends the numbers themselves.
+  assert.deepEqual(body, {
+    contract_version: 1,
+    request_id: REQUEST_ID,
+    expected_intents_revision: 3,
+    audit_reason: "Owner ruling D-114",
+    selection_max: 2,
+    selection_required_min: 1,
+  });
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(body).map(([key, value]) => [key, String(value)])),
+    { ...captured, audit_reason: "Owner ruling D-114" },
+    "every field but the free-text reason matches the captured request",
+  );
+
+  // A body is refused for exactly the reasons the validator names, plus the two
+  // axes an operator cannot type: the request id and the revision.
+  assert.equal(signupIntentsLimitsBody(draft({ selection_max: 6 }), 5, REQUEST_ID, 3), null);
+  assert.equal(signupIntentsLimitsBody(draft({ audit_reason: "" }), 5, REQUEST_ID, 3), null);
+  assert.equal(signupIntentsLimitsBody(draft(), 5, "not-a-uuid", 3), null);
+  assert.equal(signupIntentsLimitsBody(draft(), 5, REQUEST_ID.toUpperCase(), 3), null);
+  assert.equal(signupIntentsLimitsBody(draft(), 5, REQUEST_ID, 0), null, "revision 0 is not a stored singleton");
+  assert.equal(signupIntentsLimitsBody(draft(), 5, REQUEST_ID, 1.5), null);
+});
+
+test("a persisted request id is reused only while it is still a v4 UUID", () => {
+  assert.equal(SIGNUP_INTENTS_LIMITS_REQUEST_STORAGE_KEY, "friending.signup-options.intents-limits.request.v1");
+  assert.equal(signupIntentsLimitsRequestId(REQUEST_ID), REQUEST_ID);
+  for (const value of [null, "", "nope", REQUEST_ID.toUpperCase(), 7, `${REQUEST_ID} `]) {
+    assert.equal(signupIntentsLimitsRequestId(value), null, String(value));
+  }
+});
+
+test("the captured 200 decodes as a receipt and moves the revision", () => {
+  const response = lookingForEnvelope("save_intents_selection_limits_200").body;
+  const saved = signupIntentsLimitsSaved(response);
+  assert.ok(saved, "the captured accepted write must decode");
+  assert.deepEqual(saved.limits, {
+    intents_revision: 4,
+    selection_required_min: 1,
+    selection_max: 2,
+  });
+  assert.equal(saved.replayed, false);
+
+  // The stored singleton the Core lane read back through its strict authority.
+  const stored = lookingForEnvelope("catalogue_after_the_save").projection;
+  assert.deepEqual(signupIntentsSelectionLimits(stored), saved.limits);
+
+  // A 200 is not a 409 and not a refusal.
+  assert.equal(signupIntentsLimitsConflict(response), null);
+  assert.equal(signupIntentsLimitsRefused(response), false);
+});
+
+test("the captured 409 hands back the current singleton", () => {
+  const response = lookingForEnvelope("save_intents_selection_limits_409").body;
+  const conflict = signupIntentsLimitsConflict(response);
+  assert.ok(conflict, "the captured conflict must decode");
+  assert.deepEqual(conflict, {
+    intents_revision: 4,
+    selection_required_min: 1,
+    selection_max: 2,
+  });
+  assert.equal(signupIntentsLimitsSaved(response), null, "a 409 is never a receipt");
+  assert.equal(signupIntentsLimitsRefused(response), false);
+
+  // The console must not adopt a conflict that names a different refusal.
+  const otherError = structuredClone(response) as Record<string, unknown>;
+  otherError.error = "audience-visibility-forbidden";
+  assert.equal(signupIntentsLimitsConflict(otherError), null);
+});
+
+test("the captured 422 is a bare refusal, so the per-field rows are ours", () => {
+  const response = lookingForEnvelope("save_intents_selection_limits_422").body as Record<string, unknown>;
+  assert.equal(signupIntentsLimitsRefused(response), true);
+  assert.equal(signupIntentsLimitsSaved(response), null);
+  assert.equal(signupIntentsLimitsConflict(response), null);
+  // The whole point of deriving the rows: Core's refusal carries no details.
+  assert.equal(Object.hasOwn(response, "details"), false);
+  assert.equal(Object.hasOwn(response, "data"), false);
+  assert.equal(response.error, "audience-visibility-request-invalid");
+
+  for (const value of [
+    { ...response, status_code: 400 },
+    { ...response, error: "audience-visibility-conflict" },
+    { ...response, success: true },
+  ]) {
+    assert.equal(signupIntentsLimitsRefused(value), false);
+  }
+});
+
+test("the catalogue read supplies the one revision this write may guard on", () => {
+  // `list_signup_options` serves the pair but no revision, so the console reads
+  // it from the catalogue action before it may post at all.
+  const parsed = signupPagesPayload(threeRowRead());
+  assert.ok(parsed);
+  assert.equal(
+    JSON.stringify(parsed.system_questions).includes("intents_revision"),
+    false,
+    "the composer read carries no revision; that is why the catalogue read exists",
+  );
+
+  // The catalogue read serves the SAME singleton the write answers with, so the
+  // real block from the capture is what this decoder is pinned on.
+  const singleton = ((lookingForEnvelope("save_intents_selection_limits_200").body as Record<string, unknown>)
+    .data as Record<string, unknown>).intents;
+  const catalogue: Record<string, unknown> = {
+    success: true,
+    status_code: 200,
+    data: { contract_version: 1, intents: singleton },
+    message: 200,
+    status: 200,
+    can_send: 0,
+  };
+  assert.deepEqual(signupIntentsLimitsRead(catalogue), {
+    intents_revision: 4,
+    selection_required_min: 1,
+    selection_max: 2,
+  });
+
+  for (const mutate of [
+    (value: Record<string, unknown>) => { (value.data as Record<string, unknown>).contract_version = 2; },
+    (value: Record<string, unknown>) => { value.status_code = 503; },
+    (value: Record<string, unknown>) => { value.success = false; },
+    (value: Record<string, unknown>) => {
+      ((value.data as Record<string, unknown>).intents as Record<string, unknown>).selection_min = 1;
+    },
+    (value: Record<string, unknown>) => {
+      ((value.data as Record<string, unknown>).intents as Record<string, unknown>).schema_version = 3;
+    },
+    (value: Record<string, unknown>) => {
+      ((value.data as Record<string, unknown>).intents as Record<string, unknown>).selection_max = 6;
+    },
+    (value: Record<string, unknown>) => {
+      ((value.data as Record<string, unknown>).intents as Record<string, unknown>).intents_revision = 0;
+    },
+    (value: Record<string, unknown>) => {
+      ((value.data as Record<string, unknown>).intents as Record<string, unknown>).selection_required_min = 3;
+    },
+  ]) {
+    const value = structuredClone(catalogue) as Record<string, unknown>;
+    mutate(value);
+    assert.equal(signupIntentsLimitsRead(value), null);
+  }
+
+  // A Core older than T-702 has no `selection_required_min` at all; that reads
+  // as the shipped 0 rather than refusing the whole block.
+  const older = structuredClone(catalogue) as Record<string, unknown>;
+  delete ((older.data as Record<string, unknown>).intents as Record<string, unknown>).selection_required_min;
+  assert.equal(signupIntentsLimitsRead(older)?.selection_required_min, 0);
+});
+
+test("the member-side register refusal is pinned as the reason this edit matters", () => {
+  // Informational: nothing in this console calls `/v1/iosuser/register`. It is
+  // pinned because it is what the owner's saved minimum finally DOES — a
+  // console that could not explain that would be editing a number for its own
+  // sake (D-112 R3).
+  const refusal = lookingForEnvelope("register_intents_count_invalid");
+  assert.equal(refusal.route, "POST /v1/iosuser/register");
+  assert.deepEqual(refusal.with_marker, {
+    success: false,
+    status_code: 422,
+    error: "signup-intents-count-invalid",
+  });
+  assert.deepEqual(refusal.without_marker_reaches_a_different_refusal, {
+    error: "signup-photos-invalid",
+    status_code: 422,
+  });
 });

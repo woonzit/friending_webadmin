@@ -98,10 +98,19 @@ test("every inventoried functional section has detailed English and Hungarian he
   // locked question without changing that census, so the total remains 239. T-683 adds
   // the six into-tag moderation topics and one moderation-state topic on
   // /profile-tags, where the item badge and the locked-row refusal now live (246).
-  assert.equal(totalSections, 246, "review the functional-section census when the UI changes");
+  // T-712 adds the D-114 looking-for answer-limits topic, which documents the
+  // first WRITE this page performs outside the layout save (247).
+  assert.equal(totalSections, 247, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
-    ["systemQuestions", "pageLayout", "questionPalette", "draftSaving", "answersElsewhere"],
+    [
+      "systemQuestions",
+      "selectionLimits",
+      "pageLayout",
+      "questionPalette",
+      "draftSaving",
+      "answersElsewhere",
+    ],
     "the signup-options guide must inventory the composer rather than the retired option editor",
   );
 
@@ -134,6 +143,18 @@ test("every inventoried functional section has detailed English and Hungarian he
         assert.match(
           nonEmpty(systemQuestions.purpose, `${locale}.${page.key}.systemQuestions.purpose`, 55),
           locale === "en" ? /What are you looking for\?/u : /Mit keresel\?/u,
+        );
+        // D-114. The console can now CHANGE that row's limits, and the ceiling
+        // is NOT the answer count — installed iOS builds refuse a maximum above
+        // five outright. A guide that omitted that would invite the one edit
+        // that breaks every signup.
+        const selectionLimits = record(
+          sections.selectionLimits,
+          `${locale}.${page.key}.selectionLimits`,
+        );
+        assert.match(
+          nonEmpty(selectionLimits.guidance, `${locale}.${page.key}.selectionLimits.guidance`, 45),
+          locale === "en" ? /five/u : /ötnél/u,
         );
       }
       for (const sectionKey of page.sections) {
