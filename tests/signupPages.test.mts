@@ -779,6 +779,14 @@ test("serialization trims bilingual copy and carries one optimistic revision", (
       items: [{ field_key: "smoking", required: false }],
     }],
   });
+  // T-714: Core's `localizedMap` refuses a blank label even on the OPTIONAL
+  // subtitle and reports it as `blank-title`; the console therefore sends only
+  // the filled locales, `{}` when the operator left both empty.
+  const blankSubtitle = setSubtitle(setSubtitle(layout, "p_00000001", "en", "   "), "p_00000001", "hu", "");
+  assert.deepEqual(serialize(blankSubtitle).pages[0].subtitle, {});
+  const huOnly = setSubtitle(blankSubtitle, "p_00000001", "hu", " Csak magyarul ");
+  assert.deepEqual(serialize(huOnly).pages[0].subtitle, { hu: "Csak magyarul" });
+  assert.deepEqual(serialize(huOnly).pages[0].title, { en: "Title", hu: "Cím" });
   const revised = withRevision(layout, 4);
   assert.equal(revised?.revision, 4);
   assert.equal(sameLayout(layout, revised as SignupPageLayout), true);

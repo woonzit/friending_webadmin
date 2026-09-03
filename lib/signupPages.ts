@@ -139,7 +139,8 @@ export type SignupPageSaveBody = {
     key: string;
     hidden: boolean;
     title: SignupPageText;
-    subtitle: SignupPageText;
+    /** Only the filled-in locales; `{}` when the optional subtitle is blank. */
+    subtitle: Partial<SignupPageText>;
     items: SignupPageItem[];
   }>;
 };
@@ -791,6 +792,23 @@ export function sameLayout(left: SignupPageLayout, right: SignupPageLayout): boo
   return JSON.stringify(left.pages) === JSON.stringify(right.pages);
 }
 
+/**
+ * The optional subtitle goes over the wire with its FILLED locales only.
+ * Core's `ProfileFieldPolicy::localizedMap` refuses a blank label even on an
+ * optional map and `SignupPagePolicy` reports that refusal as `blank-title`,
+ * so a page whose operator left the subtitle empty was refused with a reason
+ * pointing at a title that was fine (T-714). An absent locale is what Core
+ * reads as "no subtitle"; `{}` is the whole-subtitle-blank case.
+ */
+function optionalText(value: SignupPageText): Partial<SignupPageText> {
+  const result: Partial<SignupPageText> = {};
+  const en = value.en.trim();
+  const hu = value.hu.trim();
+  if (en !== "") result.en = en;
+  if (hu !== "") result.hu = hu;
+  return result;
+}
+
 export function serialize(layout: SignupPageLayout): SignupPageSaveBody {
   return {
     expected_revision: layout.revision,
@@ -798,7 +816,7 @@ export function serialize(layout: SignupPageLayout): SignupPageSaveBody {
       key: row.key,
       hidden: row.hidden,
       title: { en: row.title.en.trim(), hu: row.title.hu.trim() },
-      subtitle: { en: row.subtitle.en.trim(), hu: row.subtitle.hu.trim() },
+      subtitle: optionalText(row.subtitle),
       items: row.items.map((item) => ({ ...item })),
     })),
   };
