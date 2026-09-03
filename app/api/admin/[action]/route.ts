@@ -11,6 +11,7 @@ import {
   audienceVisibilityProxyCapabilityAuthorized,
 } from "@/lib/audienceVisibilityAdmin";
 import { normalizeAppearanceProxyBody } from "@/lib/appearanceRules";
+import { normalizeModeCardsProxyBody } from "@/lib/modeCards";
 import { datesAvailabilityWriteIsRetired } from "@/lib/datesAdmin";
 import {
   featureSwitchesProxyCapabilityAuthorized,
@@ -282,6 +283,16 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedAppearanceBody !== undefined) body = normalizedAppearanceBody;
+
+  // Mode cards travel as one strict command whose `cards` object carries
+  // exactly the two cards and exactly four keys each; `coreCall` JSON-encodes
+  // it into one form field. Refused here rather than forwarded, so an
+  // undeclared field never reaches Core at all.
+  const normalizedModeCardsBody = normalizeModeCardsProxyBody(action, body);
+  if (normalizedModeCardsBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedModeCardsBody !== undefined) body = normalizedModeCardsBody;
 
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer

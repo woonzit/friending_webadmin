@@ -1,0 +1,9 @@
+{
+    "success": false,
+    "status_code": 422,
+    "error": "mode-cards-icon-invalid",
+    "field": "cards.people.icon",
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

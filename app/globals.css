@@ -14231,3 +14231,121 @@ body .verification-level-pill.level-strong {
   gap: 6px;
   justify-items: start;
 }
+
+/* T-706 / D-115 — the Módválasztó section on Appearance & placements. */
+.mode-cards-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.mode-card-list {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.mode-card-editor {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+}
+
+.mode-card-editor-header h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.mode-card-editor-header p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/*
+ * The preview is the contract, not decoration. D-115: the app draws the BARE
+ * PNG — no rounded background, no tint — exactly as tall as the title+subtitle
+ * block, with the top, bottom and left insets all equal to the title's distance
+ * from the card's top edge. One token carries that distance so the three
+ * cannot drift apart, and the icon takes its height from the text row rather
+ * than from a fixed box, which is what makes the preview honest.
+ */
+.mode-card-preview {
+  --mode-card-inset: 16px;
+  display: flex;
+  align-items: center;
+  gap: var(--mode-card-inset);
+  padding: var(--mode-card-inset);
+  padding-right: 20px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.mode-card-preview-icon {
+  align-self: stretch;
+  width: auto;
+  height: auto;
+  min-height: 44px;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  /* No background and no radius: an icon that looks framed here would look
+     unframed in the app, which is exactly the mistake D-115 rules out. */
+  background: none;
+  border-radius: 0;
+}
+
+.mode-card-preview-empty {
+  border: 1px dashed var(--border);
+  border-radius: 0;
+}
+
+.mode-card-preview-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mode-card-preview-text strong {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.mode-card-preview-text span {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.mode-card-preview-note {
+  margin: -6px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.mode-card-icon {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+
+.mode-card-fields {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.mode-card-fields input[aria-invalid="true"] {
+  border-color: color-mix(in srgb, #f06a78 60%, var(--border));
+}
+
+.mode-cards-notice-error {
+  color: #f06a78;
+}
+
+.mode-cards-notice-success {
+  color: #44c77b;
+}

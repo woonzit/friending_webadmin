@@ -100,7 +100,9 @@ test("every inventoried functional section has detailed English and Hungarian he
   // /profile-tags, where the item badge and the locked-row refusal now live (246).
   // T-712 adds the D-114 looking-for answer-limits topic, which documents the
   // first WRITE this page performs outside the layout save (247).
-  assert.equal(totalSections, 247, "review the functional-section census when the UI changes");
+  // T-706 adds the Mode switcher cards section on /appearance, where D-115's two
+  // operator-editable mode cards live (248).
+  assert.equal(totalSections, 248, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [

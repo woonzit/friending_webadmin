@@ -7,6 +7,15 @@ import {
 /** Accepted Verification Policy v1 contract. Every vocabulary is closed. */
 export const VERIFICATION_CONTRACT_VERSION = 1 as const;
 export const VERIFICATION_METHODS = ["video", "persona"] as const;
+
+/**
+ * Core's closed import provenance set (`VerificationPolicy::IMPORT_PROVENANCES`,
+ * two members since T-650 B1): the legacy member import and the App Review
+ * seed. Held here as a constant so widening it is one edit rather than a
+ * literal buried in a decoder (T-705 R-1).
+ */
+export const VERIFICATION_IMPORT_PROVENANCES = ["apifriending", "app_review_seed"] as const;
+export type VerificationImportProvenance = (typeof VERIFICATION_IMPORT_PROVENANCES)[number];
 export const VERIFICATION_METHOD_STATUSES = ["not_started", "pending", "verified", "rejected"] as const;
 export const VERIFICATION_LEVELS = ["none", "light", "strong"] as const;
 export const VERIFICATION_REQUIREMENTS = ["inherit", "none", "light", "strong"] as const;
@@ -439,7 +448,7 @@ export type VerificationUserProjection = {
   methods: Record<VerificationMethod, VerificationAdminMethodProjection>;
   badge_visible: boolean;
   derived_level: VerificationLevel;
-  imported: null | { level: "light" | "strong"; method_hint: "persona" | "video" | "manual"; imported_from: "apifriending"; imported_at: number };
+  imported: null | { level: "light" | "strong"; method_hint: "persona" | "video" | "manual"; imported_from: VerificationImportProvenance; imported_at: number };
   import_integrity: "absent" | "valid" | "invalid";
   grant: VerificationGrant | null;
   grant_revision: number;
@@ -1285,8 +1294,15 @@ function userProjection(value: unknown): VerificationUserProjection | null {
     const hint = oneOf(row?.method_hint, ["persona", "video", "manual"] as const);
     const importedAt = integer(row?.imported_at);
     const expectedImportedLevel = hint === "persona" ? "strong" : "light";
-    if (!level || !hint || level !== expectedImportedLevel || row?.imported_from !== "apifriending" || importedAt === null || integrity !== "valid") return null;
-    imported = { level, method_hint: hint, imported_from: "apifriending", imported_at: importedAt };
+    // T-705 R-1: the provenance is a CLOSED SET, and it has had two members
+    // since Core T-650 B1 (`VerificationPolicy::IMPORT_PROVENANCES`). Accepting
+    // only `apifriending` made this panel a permanent error+Retry on exactly
+    // one account — the App Review reviewer, whose mark reads `app_review_seed`
+    // — and that is the account an operator opens to check the reviewer.
+    // Measured live on uid 687268 (`team/reports/t705-review-account`).
+    const provenance = oneOf(row?.imported_from, VERIFICATION_IMPORT_PROVENANCES);
+    if (!level || !hint || level !== expectedImportedLevel || !provenance || importedAt === null || integrity !== "valid") return null;
+    imported = { level, method_hint: hint, imported_from: provenance, imported_at: importedAt };
   } else if (integrity === "valid") return null;
   if (parsedGrant !== null && (parsedGrant.revision !== grantRevision
     || parsedGrant.evaluated_at !== evaluated

@@ -1,0 +1,39 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "cards": [
+            {
+                "key": "people",
+                "title": {
+                    "en": "People",
+                    "hu": "People"
+                },
+                "subtitle": {
+                    "en": "People — meet new people around you",
+                    "hu": "People — ismerj meg új embereket a közeledben"
+                },
+                "icon": null
+            },
+            {
+                "key": "dates",
+                "title": {
+                    "en": "AreYouIn",
+                    "hu": "AreYouIn"
+                },
+                "subtitle": {
+                    "en": "AreYouIn — make moves to find that spark",
+                    "hu": "AreYouIn — tedd meg az első lépést, és találd meg a szikrát"
+                },
+                "icon": null
+            }
+        ],
+        "revision": 0,
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

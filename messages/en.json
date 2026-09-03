@@ -1038,8 +1038,8 @@
         }
       },
       "datesActivities": {
-        "title": "Dates activities help",
-        "summary": "Dates is the member-created activity area of Friending. This screen lets support and safety staff search every activity, understand its lifecycle and open a bounded operational detail without browsing raw database records.",
+        "title": "AreYouIn activities help",
+        "summary": "AreYouIn is the member-created activity area of Friending. This screen lets support and safety staff search every activity, understand its lifecycle and open a bounded operational detail without browsing raw database records.",
         "steps": {
           "1": "Search by a known activity, title, city or host and narrow the lifecycle or moderation state.",
           "2": "Read host, timing, attendance and moderation columns together before opening a result.",
@@ -1047,7 +1047,7 @@
         },
         "sections": {
           "navigation": {
-            "title": "Dates workspace tabs",
+            "title": "AreYouIn workspace tabs",
             "purpose": "The tabs separate ordinary activity operations, the moderation queue and product configuration so operators do not mix content support with safety decisions or rollout controls.",
             "actions": {
               "1": "Stay on Activities for search and lifecycle support.",
@@ -1085,8 +1085,8 @@
         }
       },
       "datesConfiguration": {
-        "title": "Dates configuration help",
-        "summary": "This page owns the bounded Dates capability and retention settings, member-visible activity types, and bilingual report reasons. Dates section availability is managed once on Configuration.",
+        "title": "AreYouIn configuration help",
+        "summary": "This page owns the bounded AreYouIn capability and retention settings, member-visible activity types, and bilingual report reasons. AreYouIn section availability is managed once on Configuration.",
         "steps": {
           "1": "Read the effective value and the dedicated runtime help before changing a feature, limit or retention rule.",
           "2": "Keep stable catalog keys intact and update bilingual labels or active state with an audit reason.",
@@ -1124,8 +1124,8 @@
         }
       },
       "datesModeration": {
-        "title": "Dates moderation queue help",
-        "summary": "This is the safety queue for reports and prepublication cases associated with Dates. It exposes SLA, severity, assignment and redacted target context without opening sensitive evidence in the list.",
+        "title": "AreYouIn moderation queue help",
+        "summary": "This is the safety queue for reports and prepublication cases associated with AreYouIn. It exposes SLA, severity, assignment and redacted target context without opening sensitive evidence in the list.",
         "steps": {
           "1": "Choose the queue and status you are authorized to handle, then filter by assignment or an exact case identifier.",
           "2": "Prioritize breached SLA, critical severity and escalated cases according to the moderation procedure.",
@@ -1133,7 +1133,7 @@
         },
         "sections": {
           "navigation": {
-            "title": "Dates workspace tabs",
+            "title": "AreYouIn workspace tabs",
             "purpose": "Navigation keeps moderation separate from general activity support and configuration work.",
             "actions": {
               "1": "Use Moderation for case handling.",
@@ -1162,8 +1162,8 @@
         }
       },
       "datesModerationDetail": {
-        "title": "Dates moderation case help",
-        "summary": "This restricted workspace handles one Dates safety case from assignment through evidence review and immutable resolution. Capability, conflict-of-interest, revision and audit boundaries apply independently to every sensitive function.",
+        "title": "AreYouIn moderation case help",
+        "summary": "This restricted workspace handles one AreYouIn safety case from assignment through evidence review and immutable resolution. Capability, conflict-of-interest, revision and audit boundaries apply independently to every sensitive function.",
         "steps": {
           "1": "Confirm case target, severity, SLA and conflict state, then claim the five-minute lease.",
           "2": "Read only the evidence necessary for the decision and add a concise internal note when it helps later reviewers.",
@@ -1254,8 +1254,8 @@
         }
       },
       "datesActivityDetail": {
-        "title": "Dates activity detail help",
-        "summary": "This page is the bounded operational record for one member-hosted Dates activity. It combines public state, support history, guarded edits, administrative commands, linked moderation and limited membership or chat summaries.",
+        "title": "AreYouIn activity detail help",
+        "summary": "This page is the bounded operational record for one member-hosted AreYouIn activity. It combines public state, support history, guarded edits, administrative commands, linked moderation and limited membership or chat summaries.",
         "steps": {
           "1": "Confirm activity ID, host, lifecycle, moderation state and current revision.",
           "2": "Use a read-only section first; open sensitive location or a mutation only when the support case requires it.",
@@ -1621,6 +1621,16 @@
               "2": "Check the matched scope, the palette swatches and the hero list before going live."
             },
             "guidance": "The preview is computed by Core, not the browser, so it reflects the stored rules of the moment you run it."
+          },
+          "modeSwitcher": {
+            "title": "Mode switcher cards",
+            "purpose": "This section owns the two mode cards the app shows in its mode drawer: the title, the subtitle and the optional icon of the People card and the AreYouIn card, in English and Hungarian.",
+            "actions": {
+              "1": "Edit a title or subtitle in both languages; the counter shows how much room is left before Core refuses the value.",
+              "2": "Upload a square transparent PNG of at most 512 pixels a side, or remove the icon to let the app draw its own.",
+              "3": "Press Save once; the console keeps the request identity so a retry after a lost answer never writes twice."
+            },
+            "guidance": "Both cards travel in one save with one revision. If somebody else saved first you get a conflict, the stored copy is loaded here, and you re-apply your change on top of it. Nothing is stored until the first save, so until then the app renders its own built-in copy."
           },
           "saving": {
             "title": "Saving, conflicts and uncertain results",
@@ -2633,7 +2643,7 @@
           },
           "counts": {
             "title": "Scoped document witnesses",
-            "purpose": "The complete count census covers profile, media, relationships, chats, notifications, membership and Dates records belonging to the protected fixture scope.",
+            "purpose": "The complete count census covers profile, media, relationships, chats, notifications, membership and AreYouIn records belonging to the protected fixture scope.",
             "actions": {
               "1": "Compare every actual count with its expected witness.",
               "2": "Use a mismatch to identify which fixture area needs a guarded reset or server investigation."
@@ -2642,7 +2652,7 @@
           },
           "checks": {
             "title": "Readiness checks",
-            "purpose": "The 33 closed checks prove control, environment match, account state, complete content, valid media, PLUS access and Dates semantics.",
+            "purpose": "The 33 closed checks prove control, environment match, account state, complete content, valid media, PLUS access and AreYouIn semantics.",
             "actions": {
               "1": "Inspect every failing check and its associated count or lifecycle clue.",
               "2": "Claim readiness only when the complete set is green."
@@ -2695,7 +2705,7 @@
               "1": "Review role beside email and activity before changing access state.",
               "2": "Use the approved owner process for any role change not offered by this screen."
             },
-            "guidance": "The UI does not reconstruct permissions from labels. Core remains authoritative, and Dates or catalog capabilities can add separate bounded ladders."
+            "guidance": "The UI does not reconstruct permissions from labels. Core remains authoritative, and AreYouIn or catalog capabilities can add separate bounded ladders."
           },
           "activeAccess": {
             "title": "Active state, lock and removal",
@@ -2805,7 +2815,7 @@
     "verificationSettings": "Verification settings",
     "persona": "Persona operations",
     "profileLocation": "Profile location",
-    "dates": "Dates operations",
+    "dates": "AreYouIn operations",
     "heroes": "People hero",
     "landing": "Join landing",
     "appLanding": "App landing",
@@ -3896,7 +3906,7 @@
       },
       "dates": {
         "access": {
-          "title": "Open Dates"
+          "title": "Open AreYouIn"
         },
         "create": {
           "title": "Create a Date"
@@ -6523,6 +6533,94 @@
         "on_accent": "Text and icons on accent",
         "inactive": "Inactive element"
       }
+    },
+    "modeSwitcher": {
+      "title": "Mode switcher",
+      "subtitle": "The two mode cards the app shows in the “Choose a mode” drawer: their title, subtitle and icon, in English and Hungarian.",
+      "loadError": "The mode cards could not be loaded.",
+      "retry": "Retry the same save",
+      "revision": "Stored revision {revision}.",
+      "cards": {
+        "people": "People card",
+        "dates": "AreYouIn card"
+      },
+      "cardsCopy": {
+        "people": "The people mode: browsing and meeting people nearby.",
+        "dates": "The dating mode: activities members host and join."
+      },
+      "preview": {
+        "untitled": "No title yet",
+        "nosubtitle": "No subtitle yet",
+        "note": "The app draws the icon bare, with no rounded background, exactly as tall as the title and subtitle together."
+      },
+      "fields": {
+        "counter": "{count} of {max} characters",
+        "title": {
+          "en": "Title · English",
+          "hu": "Title · Hungarian"
+        },
+        "subtitle": {
+          "en": "Subtitle · English",
+          "hu": "Subtitle · Hungarian"
+        }
+      },
+      "icon": {
+        "label": "Icon",
+        "hint": "Transparent PNG, square, at most {max} px on a side. Leave it empty to let the app draw its own icon.",
+        "remove": "Remove the icon",
+        "uploading": "Uploading…",
+        "errors": {
+          "empty": "That file is empty.",
+          "size": "That PNG is larger than 2 MiB.",
+          "type": "Only PNG is accepted here.",
+          "signature": "That file is not a valid PNG.",
+          "dimensions": "The icon must be square and at most 512 px on a side.",
+          "upload": "The icon could not be uploaded. Try again."
+        }
+      },
+      "live": {
+        "pending": "A save is still unresolved. Press the button again to retry the same request rather than sending a second one.",
+        "saved": "Saved.",
+        "noChange": "Nothing changed — the stored cards already match this copy.",
+        "replayed": "The earlier save had already been recorded; this reply is that result.",
+        "converged": "The earlier save did land. The cards below are the stored ones.",
+        "conflict": "Somebody else changed the mode cards first. The stored copy is loaded below; re-apply your change and save again.",
+        "conflictAlreadyApplied": "Somebody else saved exactly this copy first. Nothing was written twice.",
+        "draftInvalid": "Every title and subtitle needs text in both English and Hungarian.",
+        "requestIdUnavailable": "This browser cannot mint a request identifier, so the save was not sent.",
+        "persistenceUnavailable": "This browser cannot remember an unresolved save, so the save was not sent.",
+        "persistenceCleanupFailed": "The save finished, but the retry identity could not be cleared. Reload before saving again.",
+        "errorCode": "The save was refused: {message}",
+        "unknownError": "The answer could not be read, so the save may or may not have landed. Reload before trying again."
+      },
+      "errors": {
+        "sessionInvalid": "your session is no longer valid",
+        "badOrigin": "the request did not come from this console",
+        "routeNotFound": "this console is newer than Core",
+        "readRequired": "your role cannot read the mode cards",
+        "editRequired": "your role cannot change the mode cards",
+        "requestInvalid": "the request was malformed",
+        "tooLarge": "the request was too large",
+        "temporarilyUnavailable": "Core is temporarily unavailable",
+        "invalidResponse": "Core answered with something this console cannot read",
+        "contractVersion": "this console and Core disagree about the contract version",
+        "cardsInvalid": "the two cards were not in the shape Core expects",
+        "titleInvalid": "a title is empty or too long",
+        "subtitleInvalid": "a subtitle is empty or too long",
+        "iconInvalid": "an icon file is missing or is not a PNG",
+        "iconUnmanaged": "an icon is not stored on the managed image host",
+        "iconDimensions": "an icon is not square, or is larger than 512 px",
+        "revisionInvalid": "the revision was malformed",
+        "requestIdInvalid": "the request identifier was malformed",
+        "conflict": "somebody else changed the cards first",
+        "requestIdConflict": "that request identifier was already used for different content",
+        "requestInProgress": "the same save is still running",
+        "storedInvalid": "the stored document is unreadable",
+        "auditWriteFailed": "the audit record could not be written",
+        "receiptWriteFailed": "the receipt could not be written",
+        "writeFailed": "the write failed",
+        "generic": "an unknown refusal"
+      }
     }
   },
   "configuration": {
@@ -6595,7 +6693,7 @@
     "webBaseCopy": "The origin the legal, marketing and giveaway links in the apps are built from — privacy policy, terms and similar. Free text, because these only ever open in a browser: a wrong value costs a broken link, not a broken screen. It must be an https origin with no path; each consumer appends its own.",
     "sectionAvailability": {
       "eyebrow": "Product section availability",
-      "title": "Travel and Dates",
+      "title": "Travel and AreYouIn",
       "copy": "Set each section once: a global answer plus deliberate App Store storefront overrides. The App Store supplies the storefront; member location is not used.",
       "revision": "Revision {revision}",
       "save": "Save section availability",
@@ -6610,8 +6708,8 @@
         "copy": "Controls the Travel section and its plane entry point for the resolved storefront."
       },
       "dates": {
-        "title": "Dates",
-        "copy": "Controls the Dates section and its hamburger-drawer entry for the resolved storefront."
+        "title": "AreYouIn",
+        "copy": "Controls the AreYouIn section and its hamburger-drawer entry for the resolved storefront."
       },
       "globalTitle": "Global availability",
       "globalCopy": "Used when no usable storefront is supplied or that storefront has no override.",
@@ -7199,17 +7297,17 @@
   "datesAdmin": {
     "recordWithheld": "{count, plural, =1 {# more field withheld} other {# more fields withheld}}",
     "tabs": {
-      "label": "Dates administration",
+      "label": "AreYouIn administration",
       "activities": "Activities",
       "moderation": "Moderation",
       "configuration": "Configuration"
     },
     "activities": {
-      "eyebrow": "Dates operations",
+      "eyebrow": "AreYouIn operations",
       "title": "Activities",
-      "subtitle": "Search, inspect and operate every Dates activity through bounded Core controls.",
+      "subtitle": "Search, inspect and operate every AreYouIn activity through bounded Core controls.",
       "searchLabel": "Activity, title, city or host",
-      "searchPlaceholder": "Search Dates activities…",
+      "searchPlaceholder": "Search AreYouIn activities…",
       "lifecycle": "Lifecycle",
       "moderation": "Moderation",
       "deleted": "Soft deleted",
@@ -7247,7 +7345,7 @@
       "untitled": "Untitled activity",
       "empty": "No matching activities.",
       "emptyCopy": "Try a broader search or reset one of the filters.",
-      "loadError": "Dates activities could not be loaded.",
+      "loadError": "AreYouIn activities could not be loaded.",
       "roles": {
         "support_viewer": "Support viewer",
         "moderator": "Moderator",
@@ -7292,11 +7390,11 @@
       }
     },
     "activityDetail": {
-      "back": "Back to Dates activities",
-      "eyebrow": "Dates activity",
+      "back": "Back to AreYouIn activities",
+      "eyebrow": "AreYouIn activity",
       "subtitle": "{id} · revision {revision}",
-      "notFound": "This Dates activity does not exist.",
-      "loadError": "The Dates activity could not be loaded.",
+      "notFound": "This AreYouIn activity does not exist.",
+      "loadError": "The AreYouIn activity could not be loaded.",
       "operationFailed": "The operation failed ({error}). Refresh before retrying.",
       "overview": "Operational overview",
       "overviewCopy": "Server-authored lifecycle, moderation and attendance state.",
@@ -7381,7 +7479,7 @@
       "confirmCommand": "Execute command"
     },
     "moderation": {
-      "eyebrow": "Dates trust and safety",
+      "eyebrow": "AreYouIn trust and safety",
       "title": "Moderation queue",
       "subtitle": "Claim-based case handling with SLA visibility, redacted reporters and audited evidence access.",
       "openCases": "Open cases",
@@ -7413,7 +7511,7 @@
       "breached": "Breached",
       "empty": "No cases match these filters.",
       "emptyCopy": "Change the queue, status or assignee filter.",
-      "loadError": "The Dates moderation queue could not be loaded.",
+      "loadError": "The AreYouIn moderation queue could not be loaded.",
       "queues": {
         "activities": "Activities",
         "users": "Users",
@@ -7433,7 +7531,7 @@
     },
     "caseDetail": {
       "back": "Back to moderation queue",
-      "eyebrow": "Dates moderation case",
+      "eyebrow": "AreYouIn moderation case",
       "subtitle": "{queue} queue · revision {revision}",
       "notFound": "This moderation case does not exist.",
       "loadError": "The moderation case could not be loaded.",
@@ -7539,23 +7637,23 @@
         "cancel_activity": "Cancel activity",
         "remove_activity": "Remove activity",
         "warn": "Warn user",
-        "restrict_dates": "Restrict Dates access",
+        "restrict_dates": "Restrict AreYouIn access",
         "suspend_account": "Suspend account",
         "remove_review": "Remove review",
         "remove_participant": "Remove participant"
       }
     },
     "configuration": {
-      "eyebrow": "Dates runtime",
+      "eyebrow": "AreYouIn runtime",
       "title": "Configuration and catalogs",
       "subtitle": "Revision-checked feature controls, activity labels and bilingual reporting reasons.",
-      "loadError": "Dates configuration could not be loaded.",
+      "loadError": "AreYouIn configuration could not be loaded.",
       "operationFailed": "The change failed ({error}). Refresh before retrying.",
-      "readOnly": "Your Dates role can read these controls but cannot change them.",
+      "readOnly": "Your AreYouIn role can read these controls but cannot change them.",
       "noCatalogRole": "Your administrator account has no catalogue role, so Core refuses this catalogue.",
       "noCatalogRoleHint": "This is a permission, not an outage. An owner has to set catalog_role on your admin_emails record; there is no console control for it yet.",
       "runtimeTitle": "Runtime settings",
-      "runtimeCopy": "Section availability is managed once in Configuration; this page exposes the remaining explicit Dates keys, which cannot be deleted here.",
+      "runtimeCopy": "Section availability is managed once in Configuration; this page exposes the remaining explicit AreYouIn keys, which cannot be deleted here.",
       "settingCount": "{count} settings",
       "revision": "revision {revision}",
       "effective": "effective: {value}",
@@ -7565,18 +7663,18 @@
       "settingSaved": "The runtime setting was saved.",
       "runtimeHelp": {
         "button": "? Help",
-        "eyebrow": "Dates operations guide",
+        "eyebrow": "AreYouIn operations guide",
         "title": "Runtime settings help",
-        "intro": "This guide describes the Core-owned behavior behind every Dates runtime setting. It shows the value currently returned by Core, the stored value, the safe default and the validation bounds. Saving a value is immediate for new requests, but it does not migrate existing records or start background infrastructure.",
+        "intro": "This guide describes the Core-owned behavior behind every AreYouIn runtime setting. It shows the value currently returned by Core, the stored value, the safe default and the validation bounds. Saving a value is immediate for new requests, but it does not migrate existing records or start background infrastructure.",
         "beforeChangingTitle": "Safe rollout order",
-        "beforeChangingCopy": "Treat feature switches, retention rules and workers as one release unit. Use this order when enabling Dates or a high-impact capability:",
+        "beforeChangingCopy": "Treat feature switches, retention rules and workers as one release unit. Use this order when enabling AreYouIn or a high-impact capability:",
         "rolloutStepRetention": "Approve the privacy and legal retention values, especially live trails and moderation evidence.",
-        "rolloutStepWorker": "Deploy and verify the Dates background worker, monitoring and delivery dependencies.",
-        "rolloutStepMaster": "In Configuration, set Dates availability for the controlled storefronts and verify the client bootstrap and entry point.",
+        "rolloutStepWorker": "Deploy and verify the AreYouIn background worker, monitoring and delivery dependencies.",
+        "rolloutStepMaster": "In Configuration, set AreYouIn availability for the controlled storefronts and verify the client bootstrap and entry point.",
         "rolloutStepCapabilities": "Enable creation, live sharing, reviews and digest separately; do not switch them all on at once.",
         "rolloutStepVerify": "Watch errors, moderation queues, worker lag and audit logs before widening rollout.",
         "effectiveNoteLabel": "Stored vs effective:",
-        "effectiveNote": "Dates section availability is edited in Configuration, not on this page. A subordinate effective value can still be OFF while its stored value is ON; the effective value is the operational witness.",
+        "effectiveNote": "AreYouIn section availability is edited in Configuration, not on this page. A subordinate effective value can still be OFF while its stored value is ON; the effective value is the operational witness.",
         "timingNoteLabel": "Timing:",
         "timingNote": "Durations and retention values are usually copied into a record when an activity, decline, case or purge schedule is created. Changing the default does not rewrite existing deadlines unless a dedicated migration or operation does so.",
         "sectionsLabel": "Runtime help sections",
@@ -7599,7 +7697,7 @@
         "groups": {
           "rollout": {
             "title": "Feature rollout switches",
-            "copy": "Independent Dates capability controls. Section availability itself is managed once in Configuration. OFF preserves data; it does not delete anything."
+            "copy": "Independent AreYouIn capability controls. Section availability itself is managed once in Configuration. OFF preserves data; it does not delete anything."
           },
           "activityLifecycle": {
             "title": "Activity lifecycle and limits",
@@ -7621,39 +7719,39 @@
         "settings": {
           "dates_creation_enabled": {
             "title": "Activity creation",
-            "purpose": "Controls creation drafts and publishing of new Dates activities, including whether the app advertises the creation capability.",
+            "purpose": "Controls creation drafts and publishing of new AreYouIn activities, including whether the app advertises the creation capability.",
             "effect": "ON permits eligible users to create and publish subject to validation, moderation and rate limits. OFF blocks the new-activity flow; existing activity data and allowed management operations remain available.",
-            "caution": "Dates section availability is managed in Configuration. Disable creation first when stopping new supply while keeping existing activities operational."
+            "caution": "AreYouIn section availability is managed in Configuration. Disable creation first when stopping new supply while keeping existing activities operational."
           },
           "dates_live_sharing_enabled": {
             "title": "Host live-location sharing",
             "purpose": "Controls the host's live session, pause/resume state and ingestion of bounded location trail points for an active activity.",
             "effect": "ON permits live operations only when a positive live-trail retention is configured. OFF denies live session and point operations and exposes the capability as unavailable.",
-            "caution": "This handles highly sensitive location data. Set and approve dates_live_trail_retention_days, deploy the Dates worker and verify purge monitoring before enabling it."
+            "caution": "This handles highly sensitive location data. Set and approve dates_live_trail_retention_days, deploy the AreYouIn worker and verify purge monitoring before enabling it."
           },
           "dates_reviews_enabled": {
             "title": "Post-activity reviews",
-            "purpose": "Controls participant review and host check-in capabilities after an activity ends, plus visibility of Dates review surfaces.",
+            "purpose": "Controls participant review and host check-in capabilities after an activity ends, plus visibility of AreYouIn review surfaces.",
             "effect": "ON lets eligible participants submit/view the supported review flow. OFF fails review operations closed and removes the capability from the app; stored reviews and moderation history are not deleted.",
-            "caution": "Review moderation and evidence retention remain separate safety concerns. Dates section availability is managed in Configuration."
+            "caution": "Review moderation and evidence retention remain separate safety concerns. AreYouIn section availability is managed in Configuration."
           },
           "dates_digest_enabled": {
             "title": "Nearby activity digest",
             "purpose": "Controls the background job that evaluates opted-in users and queues grouped nearby-activity suggestion notifications.",
             "effect": "ON lets the worker process eligible users according to frequency, quiet hours, origin and personal preferences. OFF makes digest batches exit without producing new digest events.",
-            "caution": "This does not disable ordinary activity, reminder or moderation notifications. A running Dates worker and notification delivery path are required."
+            "caution": "This does not disable ordinary activity, reminder or moderation notifications. A running AreYouIn worker and notification delivery path are required."
           },
           "dates_default_scheduled_duration_minutes": {
             "title": "Default scheduled duration",
             "purpose": "The suggested activity length sent to clients when they build a new scheduled activity.",
             "effect": "A larger value proposes a later end time; a smaller value proposes a shorter activity. It is a creation default, not the maximum duration enforced on every activity.",
-            "caution": "Existing drafts and activities are not rewritten. Clients normally pick up the new default after refreshing their Dates bootstrap."
+            "caution": "Existing drafts and activities are not rewritten. Clients normally pick up the new default after refreshing their AreYouIn bootstrap."
           },
           "dates_tbd_expiry_days": {
             "title": "TBD activity lifetime",
             "purpose": "Sets the automatic expiry deadline assigned to a newly created activity whose time is still to be decided.",
             "effect": "After this many days the worker ends an unresolved TBD activity, invalidates pending membership states and makes its chat read-only. Longer values leave undecided activities discoverable longer.",
-            "caution": "The deadline is stored on creation and is not retroactively recalculated for existing TBD activities. Automatic expiry requires the Dates worker."
+            "caution": "The deadline is stored on creation and is not retroactively recalculated for existing TBD activities. Automatic expiry requires the AreYouIn worker."
           },
           "dates_now_lifetime_hours": {
             "title": "Now activity lifetime",
@@ -7687,7 +7785,7 @@
           },
           "dates_creation_rate_limit": {
             "title": "Activity publish limit",
-            "purpose": "Limits how many successfully published Dates activities one user can create in the preceding 24 hours.",
+            "purpose": "Limits how many successfully published AreYouIn activities one user can create in the preceding 24 hours.",
             "effect": "When the completed publish count reaches the limit, further publishes return a rate-limit error until earlier publishes leave the window. Draft editing is not itself a successful publish.",
             "caution": "Lowering the value does not unpublish activities. Set it high enough for legitimate hosts but low enough to contain spam and moderation load."
           },
@@ -7705,7 +7803,7 @@
           },
           "dates_chat_message_rate_limit": {
             "title": "Chat messages per minute",
-            "purpose": "Caps messages sent by one user to one Dates thread during the preceding 60 seconds, including supported update/pin messages.",
+            "purpose": "Caps messages sent by one user to one AreYouIn thread during the preceding 60 seconds, including supported update/pin messages.",
             "effect": "At the limit, another message to that thread returns a rate-limit error. Different senders and threads have independent counts.",
             "caution": "Raising this increases write, notification and abuse load. Lowering it does not delete or delay messages already accepted."
           },
@@ -7717,7 +7815,7 @@
           },
           "dates_report_sla_hours": {
             "title": "Report moderation SLA",
-            "purpose": "Sets the due-time target attached to new user-submitted Dates reports and their active moderation case.",
+            "purpose": "Sets the due-time target attached to new user-submitted AreYouIn reports and their active moderation case.",
             "effect": "The due timestamp is report creation time plus this many hours; a case keeps the earliest due time across attached reports. Queue SLA metrics and breach indicators use that timestamp.",
             "caution": "Changing the value does not recalculate existing case deadlines, and it does not change the separate prepublication review deadline."
           },
@@ -7729,7 +7827,7 @@
           },
           "dates_activity_soft_delete_retention_days": {
             "title": "Soft-deleted activity retention",
-            "purpose": "Sets the earliest hard-purge eligibility date when an administrator soft-deletes a Dates activity.",
+            "purpose": "Sets the earliest hard-purge eligibility date when an administrator soft-deletes a AreYouIn activity.",
             "effect": "Soft delete immediately removes the activity from normal operation and writes purge_eligible_at for this many days later. Actual hard purge remains a separate authorized operation.",
             "caution": "Changing the default does not reschedule already soft-deleted activities. Legal, audit, moderation and related-record constraints may require longer preservation."
           },
@@ -7737,23 +7835,23 @@
             "title": "Live trail retention",
             "purpose": "Defines how long terminated live-location sessions and point trails remain before worker-driven purge.",
             "effect": "A positive day count enables safe live operations and supplies purge scheduling when an activity ends, is canceled or deleted. An empty value means unconfigured: live operations fail and the worker refuses unsafe processing.",
-            "caution": "This is a privacy-critical prerequisite for live sharing. Approve the period, run the Dates worker and monitor purge lag before turning live sharing ON; case evidence copied under authorization has its own policy."
+            "caution": "This is a privacy-critical prerequisite for live sharing. Approve the period, run the AreYouIn worker and monitor purge lag before turning live sharing ON; case evidence copied under authorization has its own policy."
           },
           "moderation_evidence_retention_days": {
             "title": "Moderation evidence retention",
-            "purpose": "Defines the post-hold retention period for restricted evidence snapshots stored with Dates moderation cases.",
+            "purpose": "Defines the post-hold retention period for restricted evidence snapshots stored with AreYouIn moderation cases.",
             "effect": "When an automatic or legal hold is closed, a positive value schedules evidence purge this many days later. An empty value does not create a new automatic purge deadline.",
             "caution": "An active legal hold takes precedence. This setting does not purge case decisions or audit history and should be approved with privacy/legal owners before use."
           },
           "dates_digest_frequency": {
             "title": "Digest frequency",
-            "purpose": "Selects the normal interval used by the Dates worker when rescheduling eligible nearby-activity digest evaluation.",
+            "purpose": "Selects the normal interval used by the AreYouIn worker when rescheduling eligible nearby-activity digest evaluation.",
             "effect": "daily uses a one-day interval; weekly uses a seven-day interval. A digest is queued only when the user is eligible, opted in and has new joinable nearby activities.",
             "caution": "This is not a promise of an exact delivery time. Existing next-run timestamps, quiet hours, worker cadence and notification delivery can defer processing."
           },
           "dates_digest_quiet_hours": {
             "title": "Default digest quiet hours",
-            "purpose": "Provides the default local-time quiet-hour start and end advertised for Dates notification settings.",
+            "purpose": "Provides the default local-time quiet-hour start and end advertised for AreYouIn notification settings.",
             "effect": "When quiet hours are enabled for a user, scheduled digest delivery is deferred while the user's local clock is inside this interval. A range such as 22:00–08:00 crosses midnight.",
             "caution": "This is a default, not a mandatory global blackout. Existing explicit user preferences remain authoritative, and the user's timezone is used with UTC as a safe fallback."
           }
@@ -8655,12 +8753,12 @@
       "blocks": "Blocks",
       "plus_grant": "PLUS grant",
       "verification_grant": "Verification grant",
-      "dates_activities": "Dates activities",
-      "dates_memberships": "Dates memberships",
-      "dates_threads": "Dates threads",
-      "dates_thread_members": "Dates thread members",
-      "dates_messages": "Dates messages",
-      "dates_notifications": "Dates notifications"
+      "dates_activities": "AreYouIn activities",
+      "dates_memberships": "AreYouIn memberships",
+      "dates_threads": "AreYouIn threads",
+      "dates_thread_members": "AreYouIn thread members",
+      "dates_messages": "AreYouIn messages",
+      "dates_notifications": "AreYouIn notifications"
     },
     "checks": {
       "control": "Control record ready",
@@ -8690,16 +8788,16 @@
       "notifications": "Notifications",
       "plus_grant": "Reviewer PLUS grant",
       "verification_grant": "Reviewer verification grant",
-      "dates_activities": "Dates activities",
-      "dates_memberships": "Dates memberships",
-      "dates_threads": "Dates threads",
-      "dates_thread_members": "Dates thread members",
-      "dates_messages": "Dates messages",
-      "dates_notifications": "Dates notifications",
-      "dates_semantics": "Dates fixture roles and states"
+      "dates_activities": "AreYouIn activities",
+      "dates_memberships": "AreYouIn memberships",
+      "dates_threads": "AreYouIn threads",
+      "dates_thread_members": "AreYouIn thread members",
+      "dates_messages": "AreYouIn messages",
+      "dates_notifications": "AreYouIn notifications",
+      "dates_semantics": "AreYouIn fixture roles and states"
     },
     "resetTitle": "Reset to baseline",
-    "resetCopy": "Reconciles every scoped document and reviewer-keyed runtime row, rebuilds the baseline transactionally, then validates media, notifications, PLUS and Dates after commit. Unrelated live members are never touched. Type the confirmation phrase exactly.",
+    "resetCopy": "Reconciles every scoped document and reviewer-keyed runtime row, rebuilds the baseline transactionally, then validates media, notifications, PLUS and AreYouIn after commit. Unrelated live members are never touched. Type the confirmation phrase exactly.",
     "resetPhraseLabel": "Confirmation phrase",
     "resetButton": "Reset sandbox",
     "resetting": "Resetting…",

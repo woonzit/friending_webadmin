@@ -11,6 +11,7 @@ import {
 } from "@/lib/audienceVisibilityAdmin";
 import { FEATURE_SWITCHES_ACTIONS } from "@/lib/featureSwitches";
 import { INTO_TAG_MODERATION_ACTIONS } from "@/lib/intoTagModeration";
+import { MODE_CARDS_ACTIONS } from "@/lib/modeCards";
 import { PROFILE_TEXT_MODERATION_ACTIONS } from "@/lib/profileTextModeration";
 import { VERIFICATION_METHOD_ACTIONS } from "@/lib/verificationMethod";
 import { OUTBOUND_MESSAGING_ACTIONS } from "@/lib/outboundMessaging";
@@ -91,6 +92,14 @@ const ACTIVE_FEATURE_SWITCHES_ACTIONS = FEATURE_SWITCHES_CONTRACT_READY
 
 /** Released D-052 appearance-rule actions; Core rechecks its editor gate on every mutation. */
 const ACTIVE_APPEARANCE_ACTIONS = APPEARANCE_ACTIONS;
+
+/**
+ * T-706 / D-115 mode cards. Released with their Core provider: the copy they
+ * edit reaches members only through the existing public `ios_appconfig` read,
+ * and an unsaved singleton serves the app's compiled strings, so a console that
+ * is live before an operator touches it changes nothing.
+ */
+const ACTIVE_MODE_CARDS_ACTIONS = MODE_CARDS_ACTIONS;
 
 export const ADMIN_ACTIONS = [
   "overview",
@@ -203,6 +212,7 @@ export const ADMIN_ACTIONS = [
   ...ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS,
   ...ACTIVE_FEATURE_SWITCHES_ACTIONS,
   ...ACTIVE_APPEARANCE_ACTIONS,
+  ...ACTIVE_MODE_CARDS_ACTIONS,
   ...DATES_ADMIN_ACTIONS,
 ] as const;
 
@@ -481,6 +491,11 @@ export const ADMIN_ACTION_ACCESS = {
     appearance_rules_delete: "write",
     appearance_rules_preview: "read",
     appearance_city_geocode: "write",
+
+  // T-706 mode cards. The read is safe for every active administrator; the save
+  // matches Core's editor gate, its receipt and its audit row.
+    mode_cards_get: "read",
+    save_mode_cards: "write",
 
   admin_me: "read",
   dates_activity_list: "dates_read",

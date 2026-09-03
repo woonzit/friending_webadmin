@@ -303,7 +303,7 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "appearance",
     route: "/appearance",
-    sections: ["rules", "targeting", "window", "landing", "hero", "palette", "mapSearch", "testPreview", "saving"],
+    sections: ["rules", "targeting", "window", "landing", "hero", "palette", "mapSearch", "testPreview", "modeSwitcher", "saving"],
     matches: exact("/appearance"),
   },
   {

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import AppearanceRuleEditor from "@/components/AppearanceRuleEditor";
 import AppearanceTestPreview from "@/components/AppearanceTestPreview";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ModeCardsPanel from "@/components/ModeCardsPanel";
 import PageHeader from "@/components/PageHeader";
 import { EmptyPanel, ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
@@ -346,6 +347,13 @@ export default function AppearanceConsole() {
         </section>
       )}
       {state === "ready" && <AppearanceTestPreview countries={countries} ruleNames={ruleNames} />}
+      {/*
+        T-706 / D-115. Its own revision, its own receipt and its own save: the
+        mode switcher is one global answer, while an appearance rule is a
+        targeted, geo-scoped document. Folding it into the rule draft would let
+        a copy edit conflict with an unrelated city rule.
+      */}
+      {state === "ready" && <ModeCardsPanel />}
       {draft && payload && (
         <AppearanceRuleEditor
           value={draft}

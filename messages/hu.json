@@ -1038,8 +1038,8 @@
         }
       },
       "datesActivities": {
-        "title": "Dates aktivitások súgó",
-        "summary": "A Dates a Friending tagok által létrehozott programterülete. Ezen a képernyőn a támogatási és biztonsági csapat minden aktivitást megkereshet, megértheti annak életciklusát, és nyers adatbázisrekordok böngészése nélkül nyithat korlátozott üzemeltetési részletet.",
+        "title": "AreYouIn aktivitások súgó",
+        "summary": "A AreYouIn a Friending tagok által létrehozott programterülete. Ezen a képernyőn a támogatási és biztonsági csapat minden aktivitást megkereshet, megértheti annak életciklusát, és nyers adatbázisrekordok böngészése nélkül nyithat korlátozott üzemeltetési részletet.",
         "steps": {
           "1": "Keress ismert aktivitás, cím, város vagy host alapján, és szűkítsd az életciklus- vagy moderációs állapotot.",
           "2": "Megnyitás előtt együtt olvasd a host, időzítés, résztvevői és moderációs oszlopokat.",
@@ -1047,7 +1047,7 @@
         },
         "sections": {
           "navigation": {
-            "title": "Dates munkaterületfülek",
+            "title": "AreYouIn munkaterületfülek",
             "purpose": "A fülek elkülönítik a normál aktivitáskezelést, moderációs queue-t és termékkonfigurációt, így az operátor nem keveri a tartalomtámogatást a biztonsági döntésekkel vagy rolloutvezérlőkkel.",
             "actions": {
               "1": "Kereséshez és életciklus-támogatáshoz maradj az Aktivitásokon.",
@@ -1085,8 +1085,8 @@
         }
       },
       "datesConfiguration": {
-        "title": "Dates konfiguráció súgó",
-        "summary": "Ez az oldal kezeli a Dates korlátozott képesség- és megőrzési beállításait, a tagok által látott aktivitástípusokat és a kétnyelvű jelentési okokat. A Dates szekció elérhetőségének egyetlen helye a Konfiguráció.",
+        "title": "AreYouIn konfiguráció súgó",
+        "summary": "Ez az oldal kezeli a AreYouIn korlátozott képesség- és megőrzési beállításait, a tagok által látott aktivitástípusokat és a kétnyelvű jelentési okokat. A AreYouIn szekció elérhetőségének egyetlen helye a Konfiguráció.",
         "steps": {
           "1": "Feature, limit vagy retention szabály módosítása előtt olvasd el az effektív értéket és a részletes runtime súgót.",
           "2": "A stabil katalóguskulcsokat hagyd változatlanul, a kétnyelvű címkét vagy aktív állapotot auditindokkal frissítsd.",
@@ -1124,8 +1124,8 @@
         }
       },
       "datesModeration": {
-        "title": "Dates moderációs queue súgó",
-        "summary": "Ez a Dates bejelentéseinek és publikálás előtti ügyeinek biztonsági sora. SLA-t, súlyosságot, hozzárendelést és kitakart célkontextust mutat anélkül, hogy érzékeny bizonyítékot nyitna a listában.",
+        "title": "AreYouIn moderációs queue súgó",
+        "summary": "Ez a AreYouIn bejelentéseinek és publikálás előtti ügyeinek biztonsági sora. SLA-t, súlyosságot, hozzárendelést és kitakart célkontextust mutat anélkül, hogy érzékeny bizonyítékot nyitna a listában.",
         "steps": {
           "1": "Válaszd ki a jogosultságod szerinti queue-t és állapotot, majd szűrj hozzárendelés vagy pontos ügyazonosító alapján.",
           "2": "A moderációs eljárás szerint kezeld előre az SLA-t túllépő, kritikus vagy eszkalált ügyeket.",
@@ -1133,7 +1133,7 @@
         },
         "sections": {
           "navigation": {
-            "title": "Dates munkaterületfülek",
+            "title": "AreYouIn munkaterületfülek",
             "purpose": "A navigáció elkülöníti a moderációt az általános aktivitástámogatástól és konfigurációs munkától.",
             "actions": {
               "1": "Ügykezeléshez a Moderációt használd.",
@@ -1162,8 +1162,8 @@
         }
       },
       "datesModerationDetail": {
-        "title": "Dates moderációs ügy súgó",
-        "summary": "Ez a korlátozott munkaterület egy Dates biztonsági ügyet kezel a hozzárendeléstől a bizonyíték vizsgálatán át a megváltoztathatatlan lezárásig. Minden érzékeny funkcióra külön vonatkozik capability-, összeférhetetlenségi, revíziós és audithatár.",
+        "title": "AreYouIn moderációs ügy súgó",
+        "summary": "Ez a korlátozott munkaterület egy AreYouIn biztonsági ügyet kezel a hozzárendeléstől a bizonyíték vizsgálatán át a megváltoztathatatlan lezárásig. Minden érzékeny funkcióra külön vonatkozik capability-, összeférhetetlenségi, revíziós és audithatár.",
         "steps": {
           "1": "Ellenőrizd az ügy célját, súlyosságát, SLA-ját és összeférhetetlenségi állapotát, majd foglald le az ötperces lease-t.",
           "2": "Csak a döntéshez szükséges bizonyítékot olvasd, és ha segíti a későbbi reviewert, írj tömör belső jegyzetet.",
@@ -1254,8 +1254,8 @@
         }
       },
       "datesActivityDetail": {
-        "title": "Dates aktivitásrészlet súgó",
-        "summary": "Ez az oldal egy tag által hostolt Dates aktivitás korlátozott üzemeltetési rekordja. Egyesíti a nyilvános állapotot, támogatási előzményt, védett szerkesztést, adminisztrátori parancsokat, kapcsolt moderációt és korlátozott tagsági vagy chatösszefoglalót.",
+        "title": "AreYouIn aktivitásrészlet súgó",
+        "summary": "Ez az oldal egy tag által hostolt AreYouIn aktivitás korlátozott üzemeltetési rekordja. Egyesíti a nyilvános állapotot, támogatási előzményt, védett szerkesztést, adminisztrátori parancsokat, kapcsolt moderációt és korlátozott tagsági vagy chatösszefoglalót.",
         "steps": {
           "1": "Ellenőrizd az aktivitásazonosítót, hostot, életciklust, moderációs állapotot és aktuális revíziót.",
           "2": "Először csak olvasható részt használj; érzékeny helyet vagy módosítást csak az ügy szükségességekor nyiss.",
@@ -1621,6 +1621,16 @@
               "2": "Élesítés előtt ellenőrizd az illeszkedő hatókört, a palettamintákat és a hero-listát."
             },
             "guidance": "Az előnézetet a Core számolja, nem a böngésző, ezért a futtatás pillanatában tárolt szabályokat tükrözi."
+          },
+          "modeSwitcher": {
+            "title": "Módválasztó kártyák",
+            "purpose": "Ez a szakasz kezeli a két módkártyát, amit az app a módválasztó fiókban mutat: a People és az AreYouIn kártya címét, alcímét és opcionális ikonját, angolul és magyarul.",
+            "actions": {
+              "1": "Szerkeszd a címet vagy az alcímet mindkét nyelven; a számláló mutatja, mennyi hely maradt, mielőtt a Core elutasítaná az értéket.",
+              "2": "Tölts fel négyzetes, átlátszó PNG-t legfeljebb 512 pixel oldalhosszúsággal, vagy távolítsd el az ikont, hogy az app a sajátját rajzolja.",
+              "3": "Nyomd meg egyszer a Mentést; a konzol megőrzi a kérés azonosítóját, így egy elveszett válasz utáni újrapróbálkozás soha nem ír kétszer."
+            },
+            "guidance": "Mindkét kártya egyetlen mentéssel, egyetlen revízióval utazik. Ha valaki más előbb mentett, ütközést kapsz, a tárolt változat betöltődik ide, és arra viszed fel újra a módosításod. Az első mentésig semmi nincs tárolva, addig az app a saját beépített szövegét mutatja."
           },
           "saving": {
             "title": "Mentés, ütközés és bizonytalan eredmény",
@@ -2633,7 +2643,7 @@
           },
           "counts": {
             "title": "Scoped dokumentum-witness-ek",
-            "purpose": "A teljes darabszám-census a védett fixture scope profil-, média-, kapcsolat-, chat-, notification-, tagsági és Dates rekordjait fedi le.",
+            "purpose": "A teljes darabszám-census a védett fixture scope profil-, média-, kapcsolat-, chat-, notification-, tagsági és AreYouIn rekordjait fedi le.",
             "actions": {
               "1": "Minden tényleges darabszámot hasonlíts össze a várt witness-szel.",
               "2": "Az eltérésből azonosítsd, mely fixture-terület igényel védett resetet vagy szervervizsgálatot."
@@ -2642,7 +2652,7 @@
           },
           "checks": {
             "title": "Readiness checkek",
-            "purpose": "A 33 zárt check a controlt, környezeti egyezést, fiókállapotot, teljes tartalmat, érvényes médiát, PLUS hozzáférést és Dates szemantikát bizonyítja.",
+            "purpose": "A 33 zárt check a controlt, környezeti egyezést, fiókállapotot, teljes tartalmat, érvényes médiát, PLUS hozzáférést és AreYouIn szemantikát bizonyítja.",
             "actions": {
               "1": "Vizsgálj meg minden hibás checket és kapcsolódó darabszám- vagy életciklus-támpontot.",
               "2": "Csak a teljesen zöld készletnél állíts readiness-t."
@@ -2695,7 +2705,7 @@
               "1": "Hozzáférési állapot előtt a szerepet, e-mailt és aktivitást együtt vizsgáld.",
               "2": "Az ezen a képernyőn nem kínált szerepmódosításhoz a jóváhagyott owner eljárást használd."
             },
-            "guidance": "A UI nem építi újra optimistán a jogosultságot a címkéből. A Core hiteles, a Dates vagy catalog capability pedig külön korlátozott ladder lehet."
+            "guidance": "A UI nem építi újra optimistán a jogosultságot a címkéből. A Core hiteles, a AreYouIn vagy catalog capability pedig külön korlátozott ladder lehet."
           },
           "activeAccess": {
             "title": "Aktív állapot, lock és eltávolítás",
@@ -2805,7 +2815,7 @@
     "verificationSettings": "Ellenőrzési beállítások",
     "persona": "Persona műveletek",
     "profileLocation": "Profilhelyzet",
-    "dates": "Dates üzemeltetés",
+    "dates": "AreYouIn üzemeltetés",
     "heroes": "People hero",
     "landing": "Join nyitóoldal",
     "appLanding": "App nyitóképernyő",
@@ -3896,7 +3906,7 @@
       },
       "dates": {
         "access": {
-          "title": "Dates megnyitása"
+          "title": "AreYouIn megnyitása"
         },
         "create": {
           "title": "Date létrehozása"
@@ -6523,6 +6533,94 @@
         "on_accent": "Szöveg és ikon accenten",
         "inactive": "Inaktív elem"
       }
+    },
+    "modeSwitcher": {
+      "title": "Módválasztó",
+      "subtitle": "A két módkártya, amit az app a „Válassz módot” fiókban mutat: címük, alcímük és ikonjuk, angolul és magyarul.",
+      "loadError": "A módkártyák nem tölthetők be.",
+      "retry": "Ugyanannak a mentésnek az újraküldése",
+      "revision": "Tárolt revízió: {revision}.",
+      "cards": {
+        "people": "People kártya",
+        "dates": "AreYouIn kártya"
+      },
+      "cardsCopy": {
+        "people": "A people mód: böngészés és ismerkedés a közelben.",
+        "dates": "A randi mód: a tagok által szervezett és választott programok."
+      },
+      "preview": {
+        "untitled": "Még nincs cím",
+        "nosubtitle": "Még nincs alcím",
+        "note": "Az app csupaszon rajzolja az ikont, lekerekített háttér nélkül, pontosan olyan magasan, mint a cím és az alcím együtt."
+      },
+      "fields": {
+        "counter": "{count} / {max} karakter",
+        "title": {
+          "en": "Cím · angol",
+          "hu": "Cím · magyar"
+        },
+        "subtitle": {
+          "en": "Alcím · angol",
+          "hu": "Alcím · magyar"
+        }
+      },
+      "icon": {
+        "label": "Ikon",
+        "hint": "Átlátszó PNG, négyzetes, legfeljebb {max} px oldalhosszúsággal. Hagyd üresen, ha az app saját ikonját szeretnéd.",
+        "remove": "Ikon eltávolítása",
+        "uploading": "Feltöltés…",
+        "errors": {
+          "empty": "Ez a fájl üres.",
+          "size": "Ez a PNG nagyobb 2 MiB-nál.",
+          "type": "Itt csak PNG fogadható el.",
+          "signature": "Ez a fájl nem érvényes PNG.",
+          "dimensions": "Az ikonnak négyzetesnek kell lennie, legfeljebb 512 px oldalhosszúsággal.",
+          "upload": "Az ikon feltöltése nem sikerült. Próbáld újra."
+        }
+      },
+      "live": {
+        "pending": "Egy mentés még eldöntetlen. Nyomd meg újra a gombot, hogy ugyanaz a kérés menjen újra, ne egy második.",
+        "saved": "Mentve.",
+        "noChange": "Semmi nem változott — a tárolt kártyák már ezt a szöveget tartalmazzák.",
+        "replayed": "A korábbi mentés már rögzült; ez a válasz annak az eredménye.",
+        "converged": "A korábbi mentés végül bekövetkezett. Alább a tárolt kártyák láthatók.",
+        "conflict": "Valaki más előbb módosította a módkártyákat. A tárolt változat betöltődött; vidd fel újra a módosításod, és ments újra.",
+        "conflictAlreadyApplied": "Valaki más pontosan ezt a szöveget mentette előbb. Semmi nem íródott kétszer.",
+        "draftInvalid": "Minden címnek és alcímnek kell szöveg angolul és magyarul is.",
+        "requestIdUnavailable": "Ez a böngésző nem tud kérésazonosítót létrehozni, ezért a mentés nem ment el.",
+        "persistenceUnavailable": "Ez a böngésző nem tud eldöntetlen mentést megjegyezni, ezért a mentés nem ment el.",
+        "persistenceCleanupFailed": "A mentés lefutott, de az újraküldési azonosító nem törlődött. Tölts újra, mielőtt ismét mentesz.",
+        "errorCode": "A mentés elutasítva: {message}",
+        "unknownError": "A válasz nem értelmezhető, így nem biztos, hogy a mentés bekövetkezett. Tölts újra, mielőtt újrapróbálod."
+      },
+      "errors": {
+        "sessionInvalid": "a munkameneted már nem érvényes",
+        "badOrigin": "a kérés nem erről a konzolról érkezett",
+        "routeNotFound": "ez a konzol újabb, mint a Core",
+        "readRequired": "a szerepköröd nem olvashatja a módkártyákat",
+        "editRequired": "a szerepköröd nem módosíthatja a módkártyákat",
+        "requestInvalid": "a kérés hibás volt",
+        "tooLarge": "a kérés túl nagy volt",
+        "temporarilyUnavailable": "a Core átmenetileg nem elérhető",
+        "invalidResponse": "a Core olyasmit válaszolt, amit ez a konzol nem tud értelmezni",
+        "contractVersion": "ez a konzol és a Core más szerződésverziót beszél",
+        "cardsInvalid": "a két kártya nem a Core által várt alakban érkezett",
+        "titleInvalid": "egy cím üres vagy túl hosszú",
+        "subtitleInvalid": "egy alcím üres vagy túl hosszú",
+        "iconInvalid": "egy ikonfájl hiányzik, vagy nem PNG",
+        "iconUnmanaged": "egy ikon nem a kezelt képkiszolgálón van",
+        "iconDimensions": "egy ikon nem négyzetes, vagy nagyobb 512 px-nél",
+        "revisionInvalid": "a revízió hibás volt",
+        "requestIdInvalid": "a kérésazonosító hibás volt",
+        "conflict": "valaki más előbb módosította a kártyákat",
+        "requestIdConflict": "ezt a kérésazonosítót már más tartalomhoz használtuk",
+        "requestInProgress": "ugyanez a mentés még fut",
+        "storedInvalid": "a tárolt dokumentum nem olvasható",
+        "auditWriteFailed": "az auditbejegyzés nem íródott meg",
+        "receiptWriteFailed": "a nyugta nem íródott meg",
+        "writeFailed": "az írás nem sikerült",
+        "generic": "ismeretlen elutasítás"
+      }
     }
   },
   "configuration": {
@@ -6595,7 +6693,7 @@
     "webBaseCopy": "Ebből az alapcímből épülnek az appokban a jogi, marketing- és nyereményjáték-linkek — adatvédelem, ÁSZF és hasonlók. Szabad szöveg, mert ezek mindig böngészőben nyílnak: egy rossz érték elromló linket jelent, nem elromló képernyőt. https alapcím legyen, útvonal nélkül; az útvonalat minden felhasználó maga fűzi hozzá.",
     "sectionAvailability": {
       "eyebrow": "Termékszekciók elérhetősége",
-      "title": "Travel és Dates",
+      "title": "Travel és AreYouIn",
       "copy": "Szekciónként egy helyen add meg a globális választ és a szándékos App Store-storefront felülírásokat. A storefrontot az App Store adja; a tag helyadata nem vesz részt benne.",
       "revision": "{revision}. revízió",
       "save": "Szekcióelérhetőség mentése",
@@ -6610,8 +6708,8 @@
         "copy": "A feloldott storefrontnál a Travel szekciót és a repülőgép belépési pontját szabályozza."
       },
       "dates": {
-        "title": "Dates",
-        "copy": "A feloldott storefrontnál a Dates szekciót és a hamburger menü bejegyzését szabályozza."
+        "title": "AreYouIn",
+        "copy": "A feloldott storefrontnál a AreYouIn szekciót és a hamburger menü bejegyzését szabályozza."
       },
       "globalTitle": "Globális elérhetőség",
       "globalCopy": "Akkor érvényes, ha nincs használható storefront, vagy ahhoz nem tartozik felülírás.",
@@ -7199,17 +7297,17 @@
   "datesAdmin": {
     "recordWithheld": "{count, plural, =1 {# további mező visszatartva} other {# további mező visszatartva}}",
     "tabs": {
-      "label": "Dates adminisztráció",
+      "label": "AreYouIn adminisztráció",
       "activities": "Aktivitások",
       "moderation": "Moderáció",
       "configuration": "Konfiguráció"
     },
     "activities": {
-      "eyebrow": "Dates üzemeltetés",
+      "eyebrow": "AreYouIn üzemeltetés",
       "title": "Aktivitások",
-      "subtitle": "Minden Dates aktivitás keresése, ellenőrzése és kezelése a Core korlátozott műveleteivel.",
+      "subtitle": "Minden AreYouIn aktivitás keresése, ellenőrzése és kezelése a Core korlátozott műveleteivel.",
       "searchLabel": "Aktivitás, cím, város vagy host",
-      "searchPlaceholder": "Keresés a Dates aktivitások között…",
+      "searchPlaceholder": "Keresés a AreYouIn aktivitások között…",
       "lifecycle": "Életciklus",
       "moderation": "Moderáció",
       "deleted": "Soft delete állapot",
@@ -7247,7 +7345,7 @@
       "untitled": "Cím nélküli aktivitás",
       "empty": "Nincs a szűrőknek megfelelő aktivitás.",
       "emptyCopy": "Próbálj tágabb keresést, vagy állíts alaphelyzetbe egy szűrőt.",
-      "loadError": "A Dates aktivitások nem tölthetők be.",
+      "loadError": "A AreYouIn aktivitások nem tölthetők be.",
       "roles": {
         "support_viewer": "Support megtekintő",
         "moderator": "Moderátor",
@@ -7292,11 +7390,11 @@
       }
     },
     "activityDetail": {
-      "back": "Vissza a Dates aktivitásokhoz",
-      "eyebrow": "Dates aktivitás",
+      "back": "Vissza a AreYouIn aktivitásokhoz",
+      "eyebrow": "AreYouIn aktivitás",
       "subtitle": "{id} · {revision}. revízió",
-      "notFound": "Ez a Dates aktivitás nem létezik.",
-      "loadError": "A Dates aktivitás nem tölthető be.",
+      "notFound": "Ez a AreYouIn aktivitás nem létezik.",
+      "loadError": "A AreYouIn aktivitás nem tölthető be.",
       "operationFailed": "A művelet sikertelen ({error}). Frissíts az újrapróbálás előtt.",
       "overview": "Üzemeltetési áttekintés",
       "overviewCopy": "A szerver által kezelt életciklus-, moderációs és részvételi állapot.",
@@ -7381,7 +7479,7 @@
       "confirmCommand": "Művelet végrehajtása"
     },
     "moderation": {
-      "eyebrow": "Dates trust and safety",
+      "eyebrow": "AreYouIn trust and safety",
       "title": "Moderációs queue",
       "subtitle": "Claim-alapú ügykezelés SLA-nézettel, kitakart bejelentőkkel és naplózott evidence-hozzáféréssel.",
       "openCases": "Nyitott ügyek",
@@ -7413,7 +7511,7 @@
       "breached": "Túllépve",
       "empty": "Nincs a szűrőknek megfelelő ügy.",
       "emptyCopy": "Módosítsd a queue, állapot vagy felelős szűrőt.",
-      "loadError": "A Dates moderációs queue nem tölthető be.",
+      "loadError": "A AreYouIn moderációs queue nem tölthető be.",
       "queues": {
         "activities": "Aktivitások",
         "users": "Userek",
@@ -7433,7 +7531,7 @@
     },
     "caseDetail": {
       "back": "Vissza a moderációs queue-hoz",
-      "eyebrow": "Dates moderációs ügy",
+      "eyebrow": "AreYouIn moderációs ügy",
       "subtitle": "{queue} queue · {revision}. revízió",
       "notFound": "Ez a moderációs ügy nem létezik.",
       "loadError": "A moderációs ügy nem tölthető be.",
@@ -7539,23 +7637,23 @@
         "cancel_activity": "Aktivitás lemondása",
         "remove_activity": "Aktivitás eltávolítása",
         "warn": "User figyelmeztetése",
-        "restrict_dates": "Dates hozzáférés korlátozása",
+        "restrict_dates": "AreYouIn hozzáférés korlátozása",
         "suspend_account": "Fiók felfüggesztése",
         "remove_review": "Értékelés eltávolítása",
         "remove_participant": "Résztvevő eltávolítása"
       }
     },
     "configuration": {
-      "eyebrow": "Dates runtime",
+      "eyebrow": "AreYouIn runtime",
       "title": "Konfiguráció és katalógusok",
       "subtitle": "Revízió-ellenőrzött feature kapcsolók, aktivitáscímkék és kétnyelvű jelentési indokok.",
-      "loadError": "A Dates konfiguráció nem tölthető be.",
+      "loadError": "A AreYouIn konfiguráció nem tölthető be.",
       "operationFailed": "A módosítás sikertelen ({error}). Frissíts az újrapróbálás előtt.",
-      "readOnly": "A Dates szerepköröd olvashatja, de nem módosíthatja ezeket a beállításokat.",
+      "readOnly": "A AreYouIn szerepköröd olvashatja, de nem módosíthatja ezeket a beállításokat.",
       "noCatalogRole": "Az admin fiókodon nincs katalógus szerepkör, ezért a Core elutasítja ezt a katalógust.",
       "noCatalogRoleHint": "Ez jogosultsági kérdés, nem üzemzavar. Egy tulajdonosnak be kell állítania a catalog_role mezőt az admin_emails rekordodon; erre a konzolon még nincs vezérlő.",
       "runtimeTitle": "Runtime beállítások",
-      "runtimeCopy": "A szekcióelérhetőségnek egyetlen helye van a Konfigurációban; ezen az oldalon a többi explicit Dates kulcs látható, és itt egyik sem törölhető.",
+      "runtimeCopy": "A szekcióelérhetőségnek egyetlen helye van a Konfigurációban; ezen az oldalon a többi explicit AreYouIn kulcs látható, és itt egyik sem törölhető.",
       "settingCount": "{count} beállítás",
       "revision": "{revision}. revízió",
       "effective": "effektív érték: {value}",
@@ -7565,18 +7663,18 @@
       "settingSaved": "A runtime beállítás elmentve.",
       "runtimeHelp": {
         "button": "? Súgó",
-        "eyebrow": "Dates üzemeltetési útmutató",
+        "eyebrow": "AreYouIn üzemeltetési útmutató",
         "title": "Runtime beállítások súgója",
-        "intro": "Ez az útmutató minden Dates runtime beállítás Core által vezérelt működését ismerteti. Megmutatja a Core-tól jelenleg kapott effektív és tárolt értéket, a biztonságos alapértéket és a megengedett határokat. A mentés az új kéréseknél azonnal érvényesül, de nem migrálja a meglévő rekordokat és nem indítja el a háttér-infrastruktúrát.",
+        "intro": "Ez az útmutató minden AreYouIn runtime beállítás Core által vezérelt működését ismerteti. Megmutatja a Core-tól jelenleg kapott effektív és tárolt értéket, a biztonságos alapértéket és a megengedett határokat. A mentés az új kéréseknél azonnal érvényesül, de nem migrálja a meglévő rekordokat és nem indítja el a háttér-infrastruktúrát.",
         "beforeChangingTitle": "Biztonságos bekapcsolási sorrend",
-        "beforeChangingCopy": "A feature kapcsolókat, a megőrzési szabályokat és a workert egy kiadási egységként kezeld. A Dates vagy egy nagy hatású képesség bekapcsolásakor ezt a sorrendet használd:",
+        "beforeChangingCopy": "A feature kapcsolókat, a megőrzési szabályokat és a workert egy kiadási egységként kezeld. A AreYouIn vagy egy nagy hatású képesség bekapcsolásakor ezt a sorrendet használd:",
         "rolloutStepRetention": "Hagyd jóvá az adatvédelmi és jogi megőrzési értékeket, különösen a live trail és a moderációs bizonyíték esetében.",
-        "rolloutStepWorker": "Telepítsd és ellenőrizd a Dates háttér-workert, a monitorozást és a kézbesítési függőségeket.",
-        "rolloutStepMaster": "A Konfigurációban állítsd be a Dates elérhetőségét az ellenőrzött storefrontokra, majd ellenőrizd a kliens bootstrapot és a belépési pontot.",
+        "rolloutStepWorker": "Telepítsd és ellenőrizd a AreYouIn háttér-workert, a monitorozást és a kézbesítési függőségeket.",
+        "rolloutStepMaster": "A Konfigurációban állítsd be a AreYouIn elérhetőségét az ellenőrzött storefrontokra, majd ellenőrizd a kliens bootstrapot és a belépési pontot.",
         "rolloutStepCapabilities": "A létrehozást, live sharinget, értékeléseket és digestet külön-külön kapcsold be; ne egyszerre mindet.",
         "rolloutStepVerify": "A szélesebb bevezetés előtt figyeld a hibákat, moderációs sorokat, worker-késést és auditnaplókat.",
         "effectiveNoteLabel": "Tárolt és effektív érték:",
-        "effectiveNote": "A Dates szekció elérhetősége a Konfigurációban szerkeszthető, nem ezen az oldalon. Egy alárendelt effektív érték akkor is lehet OFF, ha a tárolt értéke ON; az üzemeltetési tényt az effektív érték mutatja.",
+        "effectiveNote": "A AreYouIn szekció elérhetősége a Konfigurációban szerkeszthető, nem ezen az oldalon. Egy alárendelt effektív érték akkor is lehet OFF, ha a tárolt értéke ON; az üzemeltetési tényt az effektív érték mutatja.",
         "timingNoteLabel": "Időzítés:",
         "timingNote": "Az időtartamok és megőrzési értékek általában egy aktivitás, elutasítás, ügy vagy törlési ütemezés létrehozásakor kerülnek a rekordba. Az alapérték módosítása nem írja át a meglévő határidőket külön migráció vagy művelet nélkül.",
         "sectionsLabel": "Runtime súgó fejezetei",
@@ -7599,7 +7697,7 @@
         "groups": {
           "rollout": {
             "title": "Feature bevezetési kapcsolók",
-            "copy": "Egymástól független Dates képességvezérlők. A szekcióelérhetőségnek egyetlen helye van a Konfigurációban. Az OFF megőrzi az adatokat; nem töröl semmit."
+            "copy": "Egymástól független AreYouIn képességvezérlők. A szekcióelérhetőségnek egyetlen helye van a Konfigurációban. Az OFF megőrzi az adatokat; nem töröl semmit."
           },
           "activityLifecycle": {
             "title": "Aktivitás-életciklus és korlátok",
@@ -7621,39 +7719,39 @@
         "settings": {
           "dates_creation_enabled": {
             "title": "Aktivitás létrehozása",
-            "purpose": "Az új Dates aktivitások piszkozatát és publikálását, valamint a létrehozási képesség appban való megjelenítését vezérli.",
+            "purpose": "Az új AreYouIn aktivitások piszkozatát és publikálását, valamint a létrehozási képesség appban való megjelenítését vezérli.",
             "effect": "ON állapotban a jogosult felhasználók validáció, moderáció és rate limit mellett létrehozhatnak és publikálhatnak. OFF letiltja az új aktivitás folyamatát; a meglévő aktivitásadatok és engedélyezett kezelési műveletek megmaradnak.",
-            "caution": "A Dates szekció elérhetősége a Konfigurációban kezelhető. Új kínálat leállításakor először ezt a képességet kapcsold ki, ha a meglévő aktivitásokat még működtetni szeretnéd."
+            "caution": "A AreYouIn szekció elérhetősége a Konfigurációban kezelhető. Új kínálat leállításakor először ezt a képességet kapcsold ki, ha a meglévő aktivitásokat még működtetni szeretnéd."
           },
           "dates_live_sharing_enabled": {
             "title": "Host live helymegosztása",
             "purpose": "Az aktív aktivitás hostjának live sessionjét, szüneteltetését/folytatását és a korlátozott helynyomvonal-pontok fogadását vezérli.",
             "effect": "ON csak akkor engedi a live műveleteket, ha pozitív live-trail megőrzés van beállítva. OFF letiltja a live session- és pontműveleteket, és a képességet elérhetetlenként adja az appnak.",
-            "caution": "Ez különösen érzékeny helyadatot kezel. Bekapcsolás előtt állítsd be és hagyd jóvá a dates_live_trail_retention_days értékét, telepítsd a Dates workert és ellenőrizd a törlés monitorozását."
+            "caution": "Ez különösen érzékeny helyadatot kezel. Bekapcsolás előtt állítsd be és hagyd jóvá a dates_live_trail_retention_days értékét, telepítsd a AreYouIn workert és ellenőrizd a törlés monitorozását."
           },
           "dates_reviews_enabled": {
             "title": "Aktivitás utáni értékelések",
-            "purpose": "Az aktivitás befejezése utáni résztvevői értékelést, host check-int és a Dates értékelési felületek láthatóságát vezérli.",
+            "purpose": "Az aktivitás befejezése utáni résztvevői értékelést, host check-int és a AreYouIn értékelési felületek láthatóságát vezérli.",
             "effect": "ON engedi a jogosult résztvevők támogatott értékelési folyamatát. OFF fail-closed módon letiltja az értékelési műveleteket és eltávolítja a képességet az appból; a tárolt értékelések és moderációs előzmények nem törlődnek.",
-            "caution": "Az értékelés moderációja és a bizonyítékmegőrzés külön biztonsági terület. A Dates szekció elérhetősége a Konfigurációban kezelhető."
+            "caution": "Az értékelés moderációja és a bizonyítékmegőrzés külön biztonsági terület. A AreYouIn szekció elérhetősége a Konfigurációban kezelhető."
           },
           "dates_digest_enabled": {
             "title": "Közeli aktivitások digestje",
             "purpose": "A feliratkozott felhasználókat értékelő és csoportos közeliaktivitás-ajánló értesítéseket sorba állító háttérfeladatot vezérli.",
             "effect": "ON lehetővé teszi, hogy a worker gyakoriság, csendes időszak, keresési eredet és személyes beállítások szerint dolgozzon. OFF esetén a digest batch új digest esemény nélkül kilép.",
-            "caution": "Ez nem tiltja le a normál aktivitás-, emlékeztető- vagy moderációs értesítéseket. Futó Dates worker és működő értesítéskézbesítés szükséges hozzá."
+            "caution": "Ez nem tiltja le a normál aktivitás-, emlékeztető- vagy moderációs értesítéseket. Futó AreYouIn worker és működő értesítéskézbesítés szükséges hozzá."
           },
           "dates_default_scheduled_duration_minutes": {
             "title": "Ütemezett aktivitás alap-időtartama",
             "purpose": "Az új ütemezett aktivitás összeállításakor a klienseknek küldött javasolt aktivitáshossz.",
             "effect": "Nagyobb érték későbbi befejezést, kisebb érték rövidebb aktivitást javasol. Ez létrehozási alapérték, nem minden aktivitásra kötelező maximális időtartam.",
-            "caution": "A meglévő piszkozatokat és aktivitásokat nem írja át. A kliensek jellemzően a Dates bootstrap frissítése után veszik át az új alapértéket."
+            "caution": "A meglévő piszkozatokat és aktivitásokat nem írja át. A kliensek jellemzően a AreYouIn bootstrap frissítése után veszik át az új alapértéket."
           },
           "dates_tbd_expiry_days": {
             "title": "Időpont nélküli aktivitás élettartama",
             "purpose": "Az új, még egyeztetés alatt álló időpontú aktivitáshoz rendelt automatikus lejárati határidőt adja meg.",
             "effect": "Ennyi nap után a worker lezárja a továbbra is időpont nélküli aktivitást, érvényteleníti a függő tagsági állapotokat és írásvédetté teszi a chatet. A nagyobb érték tovább hagyja felfedezhetően a döntetlen aktivitást.",
-            "caution": "A határidő létrehozáskor kerül a rekordba, és a meglévő TBD aktivitásoknál nem számolódik újra visszamenőleg. Az automatikus lejárathoz Dates worker kell."
+            "caution": "A határidő létrehozáskor kerül a rekordba, és a meglévő TBD aktivitásoknál nem számolódik újra visszamenőleg. Az automatikus lejárathoz AreYouIn worker kell."
           },
           "dates_now_lifetime_hours": {
             "title": "Azonnali aktivitás élettartama",
@@ -7687,7 +7785,7 @@
           },
           "dates_creation_rate_limit": {
             "title": "Aktivitáspublikálási limit",
-            "purpose": "Korlátozza, hogy egy felhasználó az előző 24 órában hány Dates aktivitást publikálhat sikeresen.",
+            "purpose": "Korlátozza, hogy egy felhasználó az előző 24 órában hány AreYouIn aktivitást publikálhat sikeresen.",
             "effect": "Ha a befejezett publikálások száma eléri a limitet, az új publikálás rate-limit hibát kap, amíg egy korábbi ki nem kerül az időablakból. A piszkozat szerkesztése önmagában nem sikeres publikálás.",
             "caution": "Az érték csökkentése nem von vissza aktivitást. Legyen elég magas a valódi hostoknak, de elég alacsony a spam és moderációs terhelés korlátozásához."
           },
@@ -7705,7 +7803,7 @@
           },
           "dates_chat_message_rate_limit": {
             "title": "Chatüzenetek percenként",
-            "purpose": "Korlátozza, hogy egy felhasználó az előző 60 másodpercben hány üzenetet küldhet egy Dates beszélgetésbe, beleértve a támogatott update/pin üzeneteket.",
+            "purpose": "Korlátozza, hogy egy felhasználó az előző 60 másodpercben hány üzenetet küldhet egy AreYouIn beszélgetésbe, beleértve a támogatott update/pin üzeneteket.",
             "effect": "A limitnél az adott beszélgetés következő üzenete rate-limit hibát kap. A különböző küldők és beszélgetések számlálása független.",
             "caution": "Az emelés növeli az írási, értesítési és visszaélési terhelést. A csökkentés nem törli és nem késlelteti a már elfogadott üzeneteket."
           },
@@ -7717,7 +7815,7 @@
           },
           "dates_report_sla_hours": {
             "title": "Bejelentések moderációs SLA-ja",
-            "purpose": "Az új, felhasználók által beküldött Dates jelentésekhez és aktív moderációs ügyükhöz rendelt céldátumot állítja be.",
+            "purpose": "Az új, felhasználók által beküldött AreYouIn jelentésekhez és aktív moderációs ügyükhöz rendelt céldátumot állítja be.",
             "effect": "A határidő a jelentés létrehozási ideje plusz ennyi óra; az ügy a hozzákapcsolt jelentések közül a legkorábbi határidőt tartja meg. A queue SLA-mutatói és határidőtúllépései ezt használják.",
             "caution": "Az érték módosítása nem számolja újra a meglévő ügyek határidejét, és nem módosítja a külön kezelt publikálás előtti ellenőrzés határidejét."
           },
@@ -7729,7 +7827,7 @@
           },
           "dates_activity_soft_delete_retention_days": {
             "title": "Soft-delete aktivitás megőrzése",
-            "purpose": "A legkorábbi végleges törlési jogosultsági dátumot állítja be, amikor egy admin soft-delete-tel töröl egy Dates aktivitást.",
+            "purpose": "A legkorábbi végleges törlési jogosultsági dátumot állítja be, amikor egy admin soft-delete-tel töröl egy AreYouIn aktivitást.",
             "effect": "A soft delete azonnal kiveszi az aktivitást a normál működésből, és ennyi nappal későbbi purge_eligible_at értéket ír. A tényleges hard purge külön, jogosultsághoz kötött művelet marad.",
             "caution": "Az alapérték módosítása nem ütemezi újra a már soft-delete-tel törölt aktivitásokat. Jogi, audit-, moderációs és kapcsolódórekord-korlátok hosszabb megőrzést követelhetnek."
           },
@@ -7737,23 +7835,23 @@
             "title": "Live nyomvonal megőrzése",
             "purpose": "Meghatározza, hogy a befejezett live helysessionök és pontnyomvonalak mennyi ideig maradnak meg a worker által végzett törlés előtt.",
             "effect": "Pozitív napszám lehetővé teszi a biztonságos live működést, és törlési ütemezést ad az aktivitás befejezésekor, lemondásakor vagy törlésekor. Az üres érték konfigurálatlant jelent: a live műveletek hibával leállnak, a worker pedig megtagadja a nem biztonságos feldolgozást.",
-            "caution": "Ez a live sharing adatvédelmi szempontból kritikus előfeltétele. Bekapcsolás előtt hagyd jóvá az időszakot, futtasd a Dates workert és figyeld a törlési késést; az engedéllyel ügybizonyítékba másolt adatnak külön szabálya van."
+            "caution": "Ez a live sharing adatvédelmi szempontból kritikus előfeltétele. Bekapcsolás előtt hagyd jóvá az időszakot, futtasd a AreYouIn workert és figyeld a törlési késést; az engedéllyel ügybizonyítékba másolt adatnak külön szabálya van."
           },
           "moderation_evidence_retention_days": {
             "title": "Moderációs bizonyíték megőrzése",
-            "purpose": "A Dates moderációs ügyekhez tárolt, korlátozott bizonyíték-pillanatképek hold utáni megőrzési idejét adja meg.",
+            "purpose": "A AreYouIn moderációs ügyekhez tárolt, korlátozott bizonyíték-pillanatképek hold utáni megőrzési idejét adja meg.",
             "effect": "Automatikus vagy jogi hold lezárásakor a pozitív érték ennyi nappal későbbre ütemezi a bizonyíték törlését. Az üres érték nem hoz létre új automatikus törlési határidőt.",
             "caution": "Az aktív legal hold elsőbbséget élvez. Ez nem törli az ügy döntéseit vagy auditelőzményeit, és használat előtt adatvédelmi/jogi jóváhagyást igényel."
           },
           "dates_digest_frequency": {
             "title": "Digest gyakorisága",
-            "purpose": "A Dates worker által a jogosult közeliaktivitás-digest következő vizsgálatának ütemezéséhez használt normál időközt választja ki.",
+            "purpose": "A AreYouIn worker által a jogosult közeliaktivitás-digest következő vizsgálatának ütemezéséhez használt normál időközt választja ki.",
             "effect": "A daily egy napos, a weekly hét napos intervallumot használ. Digest csak akkor kerül sorba, ha a felhasználó jogosult, feliratkozott és új, csatlakozható közeli aktivitása van.",
             "caution": "Ez nem garantál pontos kézbesítési időt. A meglévő következő futási idő, a csendes időszak, a worker üteme és az értesítéskézbesítés késleltetheti a feldolgozást."
           },
           "dates_digest_quiet_hours": {
             "title": "Digest alapértelmezett csendes időszaka",
-            "purpose": "A Dates értesítési beállításokhoz ajánlott alapértelmezett helyi csendes időszak kezdetét és végét adja meg.",
+            "purpose": "A AreYouIn értesítési beállításokhoz ajánlott alapértelmezett helyi csendes időszak kezdetét és végét adja meg.",
             "effect": "Ha a felhasználónál engedélyezett a csendes időszak, az ütemezett digest kézbesítése halasztódik, amíg a helyi órája ebbe az intervallumba esik. A 22:00–08:00 jellegű tartomány átnyúlik éjfélen.",
             "caution": "Ez alapérték, nem kötelező globális értesítési tilalom. A meglévő explicit felhasználói beállítás az irányadó, az idő számítása pedig a felhasználó időzónáját használja, biztonságos UTC fallbackkel."
           }
@@ -8655,12 +8753,12 @@
       "blocks": "Blokkolások",
       "plus_grant": "PLUS grant",
       "verification_grant": "Ellenőrzési grant",
-      "dates_activities": "Dates programok",
-      "dates_memberships": "Dates tagságok",
-      "dates_threads": "Dates beszélgetések",
-      "dates_thread_members": "Dates beszélgetéstagok",
-      "dates_messages": "Dates üzenetek",
-      "dates_notifications": "Dates értesítések"
+      "dates_activities": "AreYouIn programok",
+      "dates_memberships": "AreYouIn tagságok",
+      "dates_threads": "AreYouIn beszélgetések",
+      "dates_thread_members": "AreYouIn beszélgetéstagok",
+      "dates_messages": "AreYouIn üzenetek",
+      "dates_notifications": "AreYouIn értesítések"
     },
     "checks": {
       "control": "Kontrollrekord kész",
@@ -8690,16 +8788,16 @@
       "notifications": "Értesítések",
       "plus_grant": "Reviewer PLUS grant",
       "verification_grant": "Reviewer ellenőrzési grant",
-      "dates_activities": "Dates programok",
-      "dates_memberships": "Dates tagságok",
-      "dates_threads": "Dates beszélgetések",
-      "dates_thread_members": "Dates beszélgetéstagok",
-      "dates_messages": "Dates üzenetek",
-      "dates_notifications": "Dates értesítések",
-      "dates_semantics": "Dates fixture-szerepek és állapotok"
+      "dates_activities": "AreYouIn programok",
+      "dates_memberships": "AreYouIn tagságok",
+      "dates_threads": "AreYouIn beszélgetések",
+      "dates_thread_members": "AreYouIn beszélgetéstagok",
+      "dates_messages": "AreYouIn üzenetek",
+      "dates_notifications": "AreYouIn értesítések",
+      "dates_semantics": "AreYouIn fixture-szerepek és állapotok"
     },
     "resetTitle": "Visszaállítás baseline-ra",
-    "resetCopy": "Egyeztet minden scope-olt dokumentumot és reviewerhez kulcsolt futásidejű sort, tranzakcióban újraépíti a baseline-t, majd commit után ellenőrzi a médiát, értesítéseket, PLUS-t és Dates-t. Más éles felhasználókat soha nem érint. Írd be pontosan a megerősítő kifejezést.",
+    "resetCopy": "Egyeztet minden scope-olt dokumentumot és reviewerhez kulcsolt futásidejű sort, tranzakcióban újraépíti a baseline-t, majd commit után ellenőrzi a médiát, értesítéseket, PLUS-t és AreYouIn-t. Más éles felhasználókat soha nem érint. Írd be pontosan a megerősítő kifejezést.",
     "resetPhraseLabel": "Megerősítő kifejezés",
     "resetButton": "Sandbox reset",
     "resetting": "Reset folyamatban…",

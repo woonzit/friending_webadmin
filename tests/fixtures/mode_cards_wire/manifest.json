@@ -1,0 +1,303 @@
+{
+    "schema_version": 1,
+    "contract_version": 1,
+    "app_contract_version": 1,
+    "source_commit": "48f458c474f08706b0b5de4291a762b8dae85284",
+    "contract_manifest_sha256": "8067bc6d01894fc15ca08866c1228c1f6b9707b751cd6064aa04dfa70b0d7f83",
+    "fixture_set_sha256": "bffbde1515cf3be08232fc6d21739571961da3eca74aeb178d48adf5c58b42bb",
+    "provenance": {
+        "generator": "tests/mode_cards_fixture_dump.php",
+        "generator_sha256": "099413b62ef880a39022d54ac0038aeb158d67f2bc3cc3922fc966722f453bec",
+        "wire_adapters": {
+            "versioned_actions": "Friending\\Support\\Webadmin::noStoreReply",
+            "member_routes": "Friending\\Core\\Response::wirePayload"
+        },
+        "cache_policy": {
+            "versioned_actions": "no-store",
+            "member_routes": "route-default"
+        },
+        "evaluated_at": 1787800000,
+        "source_paths": [
+            "config/routes.php",
+            "src/Core/Response.php",
+            "src/Http/Controllers/AppController.php",
+            "src/Http/Controllers/WebadminModeCardsController.php",
+            "src/Http/Middleware/WebadminSecretMiddleware.php",
+            "src/Services/AdminProfileIconUploadService.php",
+            "src/Services/ModeCardsAdminException.php",
+            "src/Services/ModeCardsAdminService.php",
+            "src/Services/ModeCardsReadinessService.php",
+            "src/Services/ModeCardsService.php",
+            "src/Support/ModeCardsPolicy.php",
+            "src/Support/Webadmin.php",
+            "src/Support/WebadminRolePolicy.php",
+            "tests/mode_cards_fixture_dump.php"
+        ]
+    },
+    "fixtures": [
+        {
+            "file": "appconfig-compiled-defaults.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "nothing stored: the compiled copy, both cards, no icon",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "bf510d3b04edc6989a5071eaa62324826bbf11e95e107207725791802cd55b9d"
+        },
+        {
+            "file": "appconfig-edited.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "operator copy with a managed PNG on the people card",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "0c610c5109c600ae89574dbcad1f77ed8c902464f1230f7d9d519ce3cc855d35"
+        },
+        {
+            "file": "appconfig-foreign-icon-dropped.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "fail-closed: an unmanaged icon origin serves no icon at all",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "bf510d3b04edc6989a5071eaa62324826bbf11e95e107207725791802cd55b9d"
+        },
+        {
+            "file": "appconfig-partial-row.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "one stored leaf: every other leaf falls back to the compiled copy",
+            "consumer": "ios",
+            "valid": true,
+            "sha256": "9dc11e923dd38f0b6e1077dae27c0c7ca9f1ceba55059794c82395cef493aa85"
+        },
+        {
+            "file": "error-admin-revoked.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: admin-revoked",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "7ca14279ec3e818347b77f76b3b2c68550e2977556e39510f0b89c138cfafa9b"
+        },
+        {
+            "file": "error-admin-session-invalid.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: admin-session-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "40972c7f616df32648d2df4eebaf02ea4510e9eb357e2248b18fe2f69769561e"
+        },
+        {
+            "file": "error-mode-cards-audit-write-failed.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-audit-write-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "c00850e44b5f57b6e9fc817cb31d573c0260dc684e07bd60f4ca83c7e93b205c"
+        },
+        {
+            "file": "error-mode-cards-cards-invalid.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-cards-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "a21b3b18892e968e173be52dd7bf41b9d3d6000675785e1756e9f291b5a9860d"
+        },
+        {
+            "file": "error-mode-cards-contract-version-invalid.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-contract-version-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "99ae2d7d878e0b3d3a77a059ccdbf64a9aa5a0c7b24d1a98e30995a1b51190d1"
+        },
+        {
+            "file": "error-mode-cards-contract-version-required.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-contract-version-required",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "2d35a76db4b7a8180f8466587dbff0c989cff78a18e6ec9bf41fe71ac7dfb5d7"
+        },
+        {
+            "file": "error-mode-cards-edit-required.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-edit-required",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "f00aaf368c84abcacb1530752036e898e36881c1ea28ab45579aa0a7ca2e9814"
+        },
+        {
+            "file": "error-mode-cards-icon-dimensions-invalid.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-icon-dimensions-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "944958a773c3254cf17359d7309667de808c173258d127e3284c2b7b5eadfc79"
+        },
+        {
+            "file": "error-mode-cards-icon-invalid.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-icon-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "5919a9ca0ab92faa972cb63e6d339306fc81611727818e63acfd64c5126f25a1"
+        },
+        {
+            "file": "error-mode-cards-icon-unmanaged.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-icon-unmanaged",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "2630e89b23d41a9b6b389ad7c4bf62f32b21cfe494495047d5f43a787c77b0fa"
+        },
+        {
+            "file": "error-mode-cards-read-failed.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-read-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "0690b6612b7c2f9b1bd7a41c41499477a85c7f2d40b5bfdecb647658a5f73804"
+        },
+        {
+            "file": "error-mode-cards-read-required.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-read-required",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "bb2a223cc223084cab4fa98cc42e42d4688faec87eba3f1e53d45fcd42c8f43b"
+        },
+        {
+            "file": "error-mode-cards-receipt-write-failed.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-receipt-write-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "a5b1d8adc735c3ca0ef6a2f31cbd7b1fb87ba757ead815859dbd0abbcfd2e2e2"
+        },
+        {
+            "file": "error-mode-cards-request-id-conflict.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-request-id-conflict",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "da8eae3ea145c9603d9cad1db7bb90989e85ab0e0e4e2be3bdae9b683916daf9"
+        },
+        {
+            "file": "error-mode-cards-request-id-invalid.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-request-id-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "fa8f04ffc8bed66f7b51f1198754f3e792772b653f2c0358ff9820ad46d6385f"
+        },
+        {
+            "file": "error-mode-cards-request-in-progress.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-request-in-progress",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "8a3bfc05dd103fde18a41297992bce69dcd13a3ae41dad202a1b5bb3284f6cb4"
+        },
+        {
+            "file": "error-mode-cards-request-invalid.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-request-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "1b2013b3d269e879fa504eb3457b826529f2af6c7cd8e4bf87cc2a51b8e71942"
+        },
+        {
+            "file": "error-mode-cards-revision-invalid.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-revision-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "efd6d9c1e5e5d67dce2216c24e6a979de90ec28daf1ae6663196a9b67e4269c2"
+        },
+        {
+            "file": "error-mode-cards-stored-invalid.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-stored-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "21bb49e82279c27b098bcc05663f30668fe03af79e735c79001cd36432024244"
+        },
+        {
+            "file": "error-mode-cards-subtitle-invalid.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-subtitle-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "bb149c56a269c2a7325f96897419fa12122132e02ce92f9b926a5e1d4113b38f"
+        },
+        {
+            "file": "error-mode-cards-title-invalid.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-title-invalid",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "528dc0f2c0887561629e7ac511feae92ac9058f736ac1e8bfa892c2d393257bc"
+        },
+        {
+            "file": "error-mode-cards-write-failed.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: mode-cards-write-failed",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "e47ddb625f63ae0b2f7da833fe321cf913cd451287ded6f23b650dcf18a1e162"
+        },
+        {
+            "file": "error-unauthorized.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "closed refusal: unauthorized",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "92a1f1484a7aae426dbcce31512c40eb078ddeb28fa893a4c7354c1303499c29"
+        },
+        {
+            "file": "get-compiled-defaults.json",
+            "route": "/v1/webadmin/mode_cards_get",
+            "case": "console read before the first save: revision 0, no provenance",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "34a4c33483743c97fec564cc1d6d0a7becdb1648a21682550141ded32ef4076e"
+        },
+        {
+            "file": "get-edited.json",
+            "route": "/v1/webadmin/mode_cards_get",
+            "case": "console read after a save: revision 4 and shared provenance",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "63516921f08c5cda6f249af709d8d2cd48391aee2f6e7bdabb25e483737d77b1"
+        },
+        {
+            "file": "save-committed.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "first commit of the operator copy",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "b53ec3330149f98b38454bbb061b9e3370bb8a723bb8a6a8af526ef25931949f"
+        },
+        {
+            "file": "save-conflict.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "stale expected_revision: the only refusal that carries data",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "b8e4e8a4d967217e30c1bdf8fdc7cba31d7545127d4693e5f5043a3dc2b852dc"
+        },
+        {
+            "file": "save-no-change.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "domain no-op: identical cards, no write and no revision bump",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "76a78983bde3334c8013458f5bdbb6b8b75b2ba51da544bcf6c4cd7e7c7b21ee"
+        },
+        {
+            "file": "save-replayed.json",
+            "route": "/v1/webadmin/save_mode_cards",
+            "case": "receipt replay: the same request id returns the committed result",
+            "consumer": "webadmin",
+            "valid": true,
+            "sha256": "e3d76d43039238fe8c56a3cd77a211e73073e9c7a314d4153c762de592ca2ce2"
+        }
+    ]
+}
