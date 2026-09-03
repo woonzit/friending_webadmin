@@ -35,21 +35,54 @@ const CORPUS = new URL(
 );
 const CORPUS_BYTES = readFileSync(CORPUS);
 const envelopes = JSON.parse(CORPUS_BYTES.toString("utf8")) as Record<string, unknown>;
-const SYSTEM_INTENTS_HANDOFF = new URL(
-  "./fixtures/signup_pages_handoff/system-intents-handoff.json",
+const LOOKING_FOR = new URL(
+  "./fixtures/signup_pages_handoff/t702-looking-for-envelopes.json",
   import.meta.url,
 );
-const SYSTEM_INTENTS_HANDOFF_BYTES = readFileSync(SYSTEM_INTENTS_HANDOFF);
-const systemIntentsEnvelopes = JSON.parse(
-  SYSTEM_INTENTS_HANDOFF_BYTES.toString("utf8"),
-) as Record<string, unknown>;
+const LOOKING_FOR_BYTES = readFileSync(LOOKING_FOR);
+const lookingFor = JSON.parse(LOOKING_FOR_BYTES.toString("utf8")) as {
+  task: string;
+  decisions: string[];
+  generated_by: string;
+  core_commit: string;
+  release_order: string;
+  envelopes: Record<string, Record<string, unknown>>;
+};
+
+/** The three `list_signup_options` bodies the T-689 capture serves in full. */
+const COMPLETE_PAYLOADS = [
+  "list_signup_options.empty",
+  "save_signup_page_layout.200",
+  "list_signup_options.composed",
+] as const;
 
 function envelope(key: string): Record<string, unknown> {
   return structuredClone(envelopes[key]) as Record<string, unknown>;
 }
 
-function systemIntentsEnvelope(key: string): Record<string, unknown> {
-  return structuredClone(systemIntentsEnvelopes[key]) as Record<string, unknown>;
+function lookingForEnvelope(key: string): Record<string, unknown> {
+  return structuredClone(lookingFor.envelopes[key]);
+}
+
+function realSystemQuestions(): Record<string, unknown>[] {
+  return structuredClone(
+    lookingFor.envelopes.list_signup_options_system_questions
+      .system_questions as Record<string, unknown>[],
+  );
+}
+
+/**
+ * The composer read as Core will serve it once the third row is switched on.
+ *
+ * Both halves are REAL captures and neither is hand-written: the T-702 dump
+ * carries the `system_questions` array only, the T-689 dump carries the whole
+ * body, and the test below proves the T-702 array's first two rows are exactly
+ * the T-689 rows this splice replaces.
+ */
+function threeRowRead(key: (typeof COMPLETE_PAYLOADS)[number] = "list_signup_options.composed"): Record<string, unknown> {
+  const value = envelope(key);
+  value.system_questions = realSystemQuestions();
+  return value;
 }
 
 function raw(): Record<string, unknown> {
@@ -88,55 +121,74 @@ test("the fixture is the published T-689 capture, byte for byte", () => {
   ]);
 });
 
-test("the temporary T-702 handoff appends only the contract-only intents row", () => {
+test("the looking-for fixture is the published T-702 capture, byte for byte", () => {
+  // Provenance, not decoration. T-701 shipped a HAND-WRITTEN
+  // `system-intents-handoff.json` as a placeholder; this replaces it with the
+  // real capture the Core lane published, and that file is deleted. An edited
+  // body must fail here rather than drift into the decoder's expectations.
   assert.equal(
-    createHash("sha256").update(SYSTEM_INTENTS_HANDOFF_BYTES).digest("hex"),
-    "79851687152d6193129edb9a03496e586b7b746f4dc9cd2120f77f0b33dfe1b5",
-    "replace this handoff with Core T-702's real envelope when it is published",
+    createHash("sha256").update(LOOKING_FOR_BYTES).digest("hex"),
+    "e66bfba768b636b93ba9cfd9740c8e5178bd0d7c295d2e4ef71a01e0a374deb2",
+    "re-copy team/handoffs/t702-looking-for-envelopes.json and update this digest",
   );
-  assert.equal(SYSTEM_INTENTS_HANDOFF_BYTES.byteLength, 199_338);
-  assert.deepEqual(Object.keys(systemIntentsEnvelopes).sort(), Object.keys(envelopes).sort());
+  assert.equal(LOOKING_FOR_BYTES.byteLength, 45_696);
+  assert.equal(lookingFor.task, "T-702");
+  assert.deepEqual(lookingFor.decisions, ["D-111", "D-112", "D-113", "D-114"]);
+  assert.equal(lookingFor.core_commit, "4ce08364b4390d3e2dff84249fcd7dbf884496c3");
+  assert.equal(lookingFor.generated_by, "tests/t702_looking_for_envelope_dump.php");
+  assert.equal(Object.keys(lookingFor.envelopes).length, 14);
+  for (const key of [
+    "list_signup_options_system_questions",
+    "list_signup_options_system_questions_minimum_one",
+    "save_intents_selection_limits_200",
+    "save_intents_selection_limits_409",
+    "save_intents_selection_limits_422",
+    "register_intents_count_invalid",
+  ]) {
+    assert.ok(Object.hasOwn(lookingFor.envelopes, key), `the capture must carry ${key}`);
+  }
+});
 
-  const completePayloads = [
-    "list_signup_options.empty",
-    "save_signup_page_layout.200",
-    "list_signup_options.composed",
-  ];
-  let pinnedIntents: Record<string, unknown> | null = null;
-  for (const key of completePayloads) {
-    const deployed = envelope(key);
-    const handoff = systemIntentsEnvelope(key);
-    const deployedRows = deployed.system_questions as Record<string, unknown>[];
-    const handoffRows = handoff.system_questions as Record<string, unknown>[];
-    assert.deepEqual(handoffRows.slice(0, deployedRows.length), deployedRows, `${key}: deployed rows`);
-    assert.equal(handoffRows.length, deployedRows.length + 1, `${key}: one additive row`);
-
-    const withoutIntents = structuredClone(handoff);
-    withoutIntents.system_questions = handoffRows.slice(0, deployedRows.length);
-    assert.deepEqual(withoutIntents, deployed, `${key}: no other envelope material changed`);
-    pinnedIntents ??= handoffRows.at(-1) ?? null;
-    assert.deepEqual(handoffRows.at(-1), pinnedIntents, `${key}: identical hand-written row`);
+test("the real third System row is additive: the deployed pair is byte-identical", () => {
+  // This is what makes the splice above legitimate rather than a hand-written
+  // body: the T-702 capture's first two rows ARE the T-689 capture's two rows,
+  // in all three complete payloads, so switching the third row on is the only
+  // change the console will see.
+  const rows = realSystemQuestions();
+  assert.equal(rows.length, 3);
+  for (const key of COMPLETE_PAYLOADS) {
+    assert.deepEqual(rows.slice(0, 2), envelope(key).system_questions, `${key}: deployed pair`);
   }
 
-  assert.ok(pinnedIntents);
-  assert.deepEqual(Object.keys(pinnedIntents).sort(), [
+  const intents = rows[2];
+  assert.deepEqual(Object.keys(intents).sort(), [
+    "icon",
     "key",
     "kind",
     "labels",
+    "locked",
+    "max",
     "options",
+    "required",
     "required_min",
     "synthetic",
   ]);
-  assert.equal(pinnedIntents.key, "intents");
-  assert.equal(pinnedIntents.kind, "system");
-  assert.equal(pinnedIntents.synthetic, true);
-  assert.equal(pinnedIntents.required_min, 1);
-  assert.deepEqual(pinnedIntents.labels, {
+  assert.equal(intents.key, "intents");
+  assert.equal(intents.kind, "system");
+  assert.equal(intents.locked, true);
+  assert.equal(intents.synthetic, true);
+  assert.equal(intents.required, true);
+  // D-114 as Core ships it: the maximum is already 2, and the minimum is still
+  // the shipped 0 until the owner raises it in the console.
+  assert.equal(intents.required_min, 0);
+  assert.equal(intents.max, 2);
+  assert.deepEqual(intents.icon, { url: "", mime: "" });
+  assert.deepEqual(intents.labels, {
     en: "What are you looking for?",
     hu: "Mit keresel?",
   });
   assert.deepEqual(
-    (pinnedIntents.options as Array<{ key: string; labels: { en: string; hu: string } }>).map(
+    (intents.options as Array<{ key: string; labels: { en: string; hu: string } }>).map(
       (row) => [row.key, row.labels.en, row.labels.hu],
     ),
     [
@@ -156,6 +208,49 @@ test("the temporary T-702 handoff appends only the contract-only intents row", (
       ["anything", "Anything", "Bármi"],
     ],
   );
+
+  // The same row after the owner raises the minimum: only `required_min` moves.
+  const raised = lookingForEnvelope("list_signup_options_system_questions_minimum_one")
+    .intents_row as Record<string, unknown>;
+  assert.equal(raised.required_min, 1);
+  assert.equal(raised.max, 2);
+  assert.deepEqual({ ...raised, required_min: 0 }, intents);
+});
+
+test("the three-row composer read decodes with the real required_min and max", () => {
+  const parsed = signupPagesPayload(threeRowRead());
+  assert.ok(parsed, "the real three-row body must decode");
+  assert.deepEqual(
+    parsed.system_questions.map((question) => question.key),
+    SIGNUP_SYSTEM_QUESTION_KEYS,
+  );
+  assert.deepEqual(parsed.system_questions.map((question) => question.required_min), [0, 0, 0]);
+  // An absent maximum is the CATALOGUE maximum: gender offers two answers and
+  // visible_to three, so those are their limits. The intents row carries D-114's
+  // explicit 2.
+  assert.deepEqual(parsed.system_questions.map((question) => question.max), [2, 3, 2]);
+  assert.deepEqual(parsed.system_questions.map((question) => question.locked), [true, true, true]);
+  assert.deepEqual(parsed.system_questions[2].icon, { url: "", mime: "" });
+  assert.equal(parsed.system_questions[2].options.length, 14);
+  assert.deepEqual(parsed.warnings, []);
+
+  // Every complete payload carries the same three rows once Core serves them.
+  for (const key of COMPLETE_PAYLOADS) {
+    assert.deepEqual(
+      signupPagesPayload(threeRowRead(key))?.system_questions.map((row) => [row.key, row.required_min, row.max]),
+      [["gender", 0, 2], ["visible_to", 0, 3], ["intents", 0, 2]],
+      key,
+    );
+  }
+
+  // The owner's console save is what a member finally meets: minimum 1, max 2.
+  const raised = threeRowRead();
+  (raised.system_questions as Record<string, unknown>[])[2] = structuredClone(
+    lookingForEnvelope("list_signup_options_system_questions_minimum_one").intents_row,
+  ) as Record<string, unknown>;
+  const raisedParsed = signupPagesPayload(raised);
+  assert.equal(raisedParsed?.system_questions[2].required_min, 1);
+  assert.equal(raisedParsed?.system_questions[2].max, 2);
 });
 
 test("the captured read decodes the complete composer surface", () => {
@@ -232,17 +327,17 @@ test("the fresh-install read is a deliberate zero-page layout, not a failure", (
 });
 
 test("the System decoder accepts canonical subsets and warns while skipping an unknown key", () => {
-  const complete = systemIntentsEnvelope("list_signup_options.composed");
+  const complete = threeRowRead();
   const allRows = complete.system_questions as Record<string, unknown>[];
   const completeParsed = signupPagesPayload(complete);
-  assert.ok(completeParsed, "the three-row handoff body must decode");
+  assert.ok(completeParsed, "the real three-row body must decode");
   assert.deepEqual(
     completeParsed.system_questions.map((question) => question.key),
     SIGNUP_SYSTEM_QUESTION_KEYS,
   );
   assert.deepEqual(
     completeParsed.system_questions.map((question) => question.required_min),
-    [0, 0, 1],
+    [0, 0, 0],
   );
   assert.deepEqual(completeParsed.system_questions[2].icon, { url: "", mime: "" });
   assert.equal(completeParsed.system_questions[2].locked, true);
@@ -252,7 +347,7 @@ test("the System decoder accepts canonical subsets and warns while skipping an u
   // A read may carry any subset of the closed set while Core rolls a question
   // out or back. Relative order, not an exact pair or exact triple, is the pin.
   for (let mask = 0; mask < 2 ** allRows.length; mask += 1) {
-    const value = systemIntentsEnvelope("list_signup_options.composed");
+    const value = threeRowRead();
     value.system_questions = allRows.filter((_, index) => (mask & (1 << index)) !== 0);
     assert.deepEqual(
       signupPagesPayload(value)?.system_questions.map((question) => question.key),
@@ -266,12 +361,12 @@ test("the System decoder accepts canonical subsets and warns while skipping an u
     [allRows[0], allRows[2], allRows[1]],
     [allRows[0], allRows[0]],
   ]) {
-    const value = systemIntentsEnvelope("list_signup_options.composed");
+    const value = threeRowRead();
     value.system_questions = rows;
     assert.equal(signupPagesPayload(value), null, "known rows remain unique and ordered");
   }
 
-  const withUnknown = systemIntentsEnvelope("list_signup_options.composed");
+  const withUnknown = threeRowRead();
   (withUnknown.system_questions as Record<string, unknown>[]).push({
     key: "future_system_question",
     // Deliberately malformed apart from its identity: unknown material is not
@@ -292,7 +387,7 @@ test("the System decoder accepts canonical subsets and warns while skipping an u
     index: 3,
   }]);
 
-  const interleavedUnknown = systemIntentsEnvelope("list_signup_options.composed");
+  const interleavedUnknown = threeRowRead();
   (interleavedUnknown.system_questions as Record<string, unknown>[]).splice(1, 0, {
     key: "future_identity",
   });
@@ -303,16 +398,33 @@ test("the System decoder accepts canonical subsets and warns while skipping an u
   }]);
 });
 
-test("the additive intents row defaults required_min and fails closed on malformed known material", () => {
-  const absent = systemIntentsEnvelope("list_signup_options.composed");
+test("the additive pair defaults and fails closed on malformed known material", () => {
+  // An absent minimum is 0 — that is what the two deployed rows carry, and it
+  // is what a Core older than T-702 serves on every row.
+  const absent = threeRowRead();
   delete (absent.system_questions as Record<string, unknown>[])[2].required_min;
   assert.equal(signupPagesPayload(absent)?.system_questions[2].required_min, 0);
+
+  // An absent maximum is the CATALOGUE maximum, not an unbounded one: the row
+  // offers fourteen answers, so a row that names no limit allows fourteen.
+  const noMaximum = threeRowRead();
+  delete (noMaximum.system_questions as Record<string, unknown>[])[2].max;
+  assert.equal(signupPagesPayload(noMaximum)?.system_questions[2].max, 14);
 
   const cases: Array<(row: Record<string, unknown>) => void> = [
     (row) => { row.required_min = -1; },
     (row) => { row.required_min = 1.5; },
     (row) => { row.required_min = "1"; },
     (row) => { row.required_min = 15; },
+    (row) => { row.max = 0; },
+    (row) => { row.max = 15; },
+    (row) => { row.max = 1.5; },
+    (row) => { row.max = "2"; },
+    (row) => { row.max = null; },
+    // The pair itself: Core clamps a stored inversion on the member wire, so a
+    // row that still reaches the console saying "at least 3, at most 2" is not
+    // a row Core sent.
+    (row) => { row.required_min = 3; },
     (row) => { row.kind = "audience"; },
     (row) => { row.synthetic = false; },
     (row) => { delete row.synthetic; },
@@ -322,10 +434,20 @@ test("the additive intents row defaults required_min and fails closed on malform
     (row) => { row.unknown = true; },
   ];
   for (const mutate of cases) {
-    const value = systemIntentsEnvelope("list_signup_options.composed");
+    const value = threeRowRead();
     mutate((value.system_questions as Record<string, unknown>[])[2]);
     assert.equal(signupPagesPayload(value), null);
   }
+
+  // Widening must not have loosened the KNOWN values: a maximum equal to the
+  // minimum is legal, one below it is not.
+  const equal = threeRowRead();
+  Object.assign((equal.system_questions as Record<string, unknown>[])[2], { required_min: 2, max: 2 });
+  assert.equal(signupPagesPayload(equal)?.system_questions[2].max, 2);
+
+  // The two deployed rows never carried either key and must still decode.
+  const deployed = signupPagesPayload(raw());
+  assert.deepEqual(deployed?.system_questions.map((row) => [row.required_min, row.max]), [[0, 2], [0, 3]]);
 });
 
 test("the legacy option catalogue travels beside the composer blocks and is ignored", () => {

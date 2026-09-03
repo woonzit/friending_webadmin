@@ -54,6 +54,13 @@ export type SignupSystemQuestion = {
   synthetic: boolean;
   /** Additive on T-702; deployed two-row bodies decode an absent value as 0. */
   required_min: number;
+  /**
+   * Additive on T-702 beside `required_min`. Absent means the catalogue's own
+   * maximum — every answer the row offers — which is what the two deployed rows
+   * carry and what a System question with no admin-settable limit means. Only
+   * the `intents` row is served with an explicit value today (D-114: 2).
+   */
+  max: number;
   labels: SignupPageText;
   icon: SignupPageIcon;
   /** System membership itself locks the card; the new row need not repeat it. */
@@ -345,6 +352,7 @@ function systemQuestion(value: unknown): SignupSystemQuestion | null {
       "synthetic",
       "required",
       "required_min",
+      "max",
       "labels",
       "icon",
       "options",
@@ -359,22 +367,35 @@ function systemQuestion(value: unknown): SignupSystemQuestion | null {
   const requiredMin = source.required_min === undefined
     ? 0
     : integer(source.required_min, 0, 1_000);
+  // An absent maximum is the CATALOGUE maximum, not an unbounded one: a row
+  // that names no limit lets a member pick every answer it offers. Both
+  // deployed rows are read that way, and the pair is then held to Core's own
+  // `0 <= min <= max <= option count` rule so a stored inversion cannot reach
+  // the card. Core clamps the same pair on the member wire
+  // (`VisibilityIntentsPolicy::requiredMin()`), so the two never disagree.
+  const maximum = parsedOptions === null
+    ? null
+    : source.max === undefined
+      ? parsedOptions.length
+      : integer(source.max, 1, parsedOptions.length);
   if (
     source.kind !== contract.kind
     || synthetic !== contract.synthetic
     || (source.required !== undefined && source.required !== true)
     || (source.locked !== undefined && source.locked !== true)
     || requiredMin === null
+    || maximum === null
     || !labels
     || !icon
     || !parsedOptions
-    || requiredMin > parsedOptions.length
+    || requiredMin > maximum
   ) return null;
   return {
     key: source.key,
     kind: contract.kind,
     synthetic: contract.synthetic,
     required_min: requiredMin,
+    max: maximum,
     labels,
     icon,
     locked: true,

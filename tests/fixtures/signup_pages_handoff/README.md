@@ -22,19 +22,6 @@ Core has NO committed `list_signup_options` fixture corpus of its own, so this f
 Core-side manifest — is the provenance record. `tests/signupPages.test.mts` re-checks the sha256
 on every run, so an edited body fails the suite instead of silently drifting from the wire.
 
-`system-intents-handoff.json` is the **handoff shape until Core T-702 publishes the real
-envelope**:
-
-    sha256 79851687152d6193129edb9a03496e586b7b746f4dc9cd2120f77f0b33dfe1b5   (199338 bytes)
-
-It began as a byte-identical copy of `t689-signup-composer-envelopes.json`. The only hand-written
-change is one contract-only `intents` System row appended to each of the three complete payloads
-(`list_signup_options.empty`, `save_signup_page_layout.200`, and
-`list_signup_options.composed`). Each row carries `kind: "system"`, `synthetic: true`,
-`required_min: 1`, the binding bilingual title, and the live catalogue's 14 ordered bilingual
-options; it deliberately does not pretend to be a Core capture. Tests pin both its bytes and the
-fact that every pre-existing envelope member and System row is unchanged.
-
 Five envelopes, keyed by `<action>.<case>`:
 
 | key | what it is |
@@ -47,6 +34,38 @@ Five envelopes, keyed by `<action>.<case>`:
 
 Two values are per-run and must never be equality-checked by a test: the minted `p_<8hex>` page
 keys and the `updated_at` epoch.
+
+`t702-looking-for-envelopes.json` is a **byte-identical copy of the REAL Core capture**
+published by the T-702 lane, and it REPLACES the hand-written `system-intents-handoff.json`
+that T-701 shipped as a placeholder (that file is deleted):
+
+    team/handoffs/t702-looking-for-envelopes.json
+    sha256 e66bfba768b636b93ba9cfd9740c8e5178bd0d7c295d2e4ef71a01e0a374deb2   (45696 bytes)
+
+Fourteen envelopes, `core_commit` `4ce08364b4390d3e2dff84249fcd7dbf884496c3`, every one captured
+by driving the real controller against a disposable replica set with the committed generator
+`tests/t702_looking_for_envelope_dump.php` (`team/messages/20260903T1237Z-opus-api-t702-done.md`).
+`tests/signupPages.test.mts` re-checks the sha256 on every run.
+
+Five of those envelopes are what this console reads or writes:
+
+| key | what it is |
+|---|---|
+| `list_signup_options_system_questions` | the REAL three-row `system_questions` array, `required_min` 0 and `max` 2 on the third row |
+| `list_signup_options_system_questions_minimum_one` | the same third row after the owner raises the minimum (`required_min` 1) |
+| `save_intents_selection_limits_200` | the accepted D-114 write: the whole intents singleton beside `replayed` |
+| `save_intents_selection_limits_409` | `audience-visibility-conflict`, carrying the CURRENT singleton under `data.intents` |
+| `save_intents_selection_limits_422` | `audience-visibility-request-invalid`, with NO per-field details — the console derives them |
+
+`register_intents_count_invalid` is pinned too, informationally: it is the member-side 422 the
+raised minimum produces, and it is the reason an operator's edit here is not cosmetic. Nothing in
+this console reads that route.
+
+The T-702 capture carries only the `system_questions` array, not a whole `list_signup_options`
+body, so the composer read under test is that array spliced into the T-689 capture above. That is
+not a hand-written body: the test asserts that the T-702 array's FIRST TWO rows are deep-equal to
+the T-689 capture's two rows in all three complete payloads, so the splice is provably the same
+body Core will serve once the third row is switched on.
 
 To re-capture: re-run the published generator against a throwaway replica set at the Core tip
 under test, replace this file, and update the sha256 above and in `tests/signupPages.test.mts`.

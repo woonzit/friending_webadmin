@@ -21,14 +21,35 @@ const envelopes = JSON.parse(readFileSync(
 
 const payload = signupPagesPayload(envelopes["list_signup_options.composed"]);
 assert.ok(payload, "the captured read envelope must decode");
-const systemIntentsEnvelopes = JSON.parse(readFileSync(
-  new URL("./fixtures/signup_pages_handoff/system-intents-handoff.json", import.meta.url),
+const lookingFor = JSON.parse(readFileSync(
+  new URL("./fixtures/signup_pages_handoff/t702-looking-for-envelopes.json", import.meta.url),
   "utf8",
-)) as Record<string, unknown>;
-const systemIntentsPayload = signupPagesPayload(
-  systemIntentsEnvelopes["list_signup_options.composed"],
-);
-assert.ok(systemIntentsPayload, "the temporary three-row handoff envelope must decode");
+)) as { envelopes: Record<string, Record<string, unknown>> };
+
+/**
+ * The composer read as Core will serve it: the T-702 capture's REAL three-row
+ * `system_questions` array spliced into the T-689 capture's whole body.
+ * `tests/signupPages.test.mts` proves the array's first two rows are exactly
+ * the two rows this replaces, so nothing here is hand-written.
+ */
+function threeRowRead(raisedMinimum = false): Record<string, unknown> {
+  const value = structuredClone(envelopes["list_signup_options.composed"]) as Record<string, unknown>;
+  const rows = structuredClone(
+    lookingFor.envelopes.list_signup_options_system_questions.system_questions,
+  ) as Record<string, unknown>[];
+  if (raisedMinimum) {
+    rows[2] = structuredClone(
+      lookingFor.envelopes.list_signup_options_system_questions_minimum_one.intents_row,
+    ) as Record<string, unknown>;
+  }
+  value.system_questions = rows;
+  return value;
+}
+
+const systemIntentsPayload = signupPagesPayload(threeRowRead());
+assert.ok(systemIntentsPayload, "the real three-row envelope must decode");
+const raisedMinimumPayload = signupPagesPayload(threeRowRead(true));
+assert.ok(raisedMinimumPayload, "the raised-minimum row must decode");
 
 const MESSAGES = {
   en: JSON.parse(readFileSync(new URL("../messages/en.json", import.meta.url), "utf8")),
@@ -118,7 +139,7 @@ test("the two Core-served System cards are locked and no retired card is invente
   assert.doesNotMatch(render("hu", emptyLayout()), /Legalább \d+ válasz kötelező/u);
 });
 
-test("the handoff's third System card renders 14 read-only answers and its required minimum", () => {
+test("the real third System card renders 14 read-only answers and its stored pair", () => {
   const en = render("en", systemIntentsPayload.pages, [], [], systemIntentsPayload);
   const hu = render("hu", systemIntentsPayload.pages, [], [], systemIntentsPayload);
   assert.equal([...en.matchAll(/data-system-question=/gu)].length, 3);
@@ -135,18 +156,29 @@ test("the handoff's third System card renders 14 read-only answers and its requi
   assert.match(huCard, /Élőben találkozni/u);
   assert.match(huCard, /Bármi/u);
   assert.match(enCard, /<span class="badge badge-warning">SYSTEM<\/span>/u);
-  assert.match(enCard, /<span class="badge badge-active">REQUIRED<\/span>/u);
-  assert.match(huCard, /<span class="badge badge-active">KÖTELEZŐ<\/span>/u);
-  assert.match(enCard, /At least 1 answers required/u);
-  assert.match(huCard, /Legalább 1 válasz kötelező/u);
+
+  // Core ships the row at required_min 0, so it reads OPTIONAL until the owner
+  // raises the minimum in the console; T-701's handoff fixture guessed 1.
+  assert.match(enCard, /<span class="badge badge-inactive">OPTIONAL<\/span>/u);
+  assert.match(huCard, /<span class="badge badge-inactive">OPCIONÁLIS<\/span>/u);
+  assert.doesNotMatch(enCard, /At least \d+ answers required/u);
   assert.doesNotMatch(enCard, /<(?:a|button|input|select|textarea)\b/u);
   assert.doesNotMatch(huCard, /<(?:a|button|input|select|textarea)\b/u);
 });
 
+test("the raised minimum renders as REQUIRED with its caption", () => {
+  const en = render("en", raisedMinimumPayload.pages, [], [], raisedMinimumPayload);
+  const hu = render("hu", raisedMinimumPayload.pages, [], [], raisedMinimumPayload);
+  const enCard = systemCard(en, "intents");
+  const huCard = systemCard(hu, "intents");
+  assert.match(enCard, /<span class="badge badge-active">REQUIRED<\/span>/u);
+  assert.match(huCard, /<span class="badge badge-active">KÖTELEZŐ<\/span>/u);
+  assert.match(enCard, /At least 1 answers required/u);
+  assert.match(huCard, /Legalább 1 válasz kötelező/u);
+});
+
 test("an unknown fourth System key is omitted from the cards and rendered as a warning", () => {
-  const value = structuredClone(
-    systemIntentsEnvelopes["list_signup_options.composed"],
-  ) as Record<string, unknown>;
+  const value = threeRowRead();
   (value.system_questions as Record<string, unknown>[]).push({ key: "future_system_question" });
   const parsed = signupPagesPayload(value);
   assert.ok(parsed);

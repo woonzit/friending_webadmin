@@ -1,0 +1,1141 @@
+{
+    "task": "T-702",
+    "decisions": [
+        "D-111",
+        "D-112",
+        "D-113",
+        "D-114"
+    ],
+    "generated_by": "tests/t702_looking_for_envelope_dump.php",
+    "core_commit": "4ce08364b4390d3e2dff84249fcd7dbf884496c3",
+    "release_order": "Webadmin T-701 -> Core T-702 -> iOS T-703 -> the owner raises the minimum in the console. The third System row must NOT reach a Webadmin older than T-701: the deployed decoder pins `system_questions` to the exact ordered pair [\"gender\",\"visible_to\"] and returns null for anything else, which darkens the whole /signup-options page (T-700 risk K-2).",
+    "envelopes": {
+        "signup_options_en": {
+            "route": "POST /v1/app/signup_options",
+            "status_code": 200,
+            "error": null,
+            "request": {
+                "audience_visibility_contract_version": "1",
+                "platform": "ios",
+                "lang": "en"
+            },
+            "note": "D-112 R2: `v2.intents.selection_required_min` is ADDITIVE. `selection_min` is still the literal 0 that build 236 asserts.",
+            "top_level_keys": [
+                "schema_version",
+                "language",
+                "cast_groups",
+                "groups",
+                "v2",
+                "photo_experience",
+                "profile_section3",
+                "signup_pages"
+            ],
+            "v2_intents": {
+                "title": "What are you looking for?",
+                "selection_min": 0,
+                "selection_required_min": 0,
+                "selection_max": 2,
+                "intents_revision": 3,
+                "items": [
+                    {
+                        "key": "people_to_meet_irl",
+                        "name": "People to meet IRL",
+                        "sort_order": 1
+                    },
+                    {
+                        "key": "couple_friends",
+                        "name": "Couple friends",
+                        "sort_order": 2
+                    },
+                    {
+                        "key": "gaming",
+                        "name": "Gaming",
+                        "sort_order": 3
+                    },
+                    {
+                        "key": "volunteer",
+                        "name": "Volunteer",
+                        "sort_order": 4
+                    },
+                    {
+                        "key": "workouts_sports",
+                        "name": "Workouts & Sports",
+                        "sort_order": 5
+                    },
+                    {
+                        "key": "travel",
+                        "name": "Travel",
+                        "sort_order": 6
+                    },
+                    {
+                        "key": "live_music",
+                        "name": "Live music",
+                        "sort_order": 7
+                    },
+                    {
+                        "key": "nights_out",
+                        "name": "Nights out",
+                        "sort_order": 8
+                    },
+                    {
+                        "key": "coworking",
+                        "name": "Coworking",
+                        "sort_order": 9
+                    },
+                    {
+                        "key": "faith_studies",
+                        "name": "Faith studies",
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "arts_culture",
+                        "name": "Arts & Culture",
+                        "sort_order": 11
+                    },
+                    {
+                        "key": "roommate",
+                        "name": "Roommate",
+                        "sort_order": 12
+                    },
+                    {
+                        "key": "kid_playdates",
+                        "name": "Kid playdates",
+                        "sort_order": 13
+                    },
+                    {
+                        "key": "anything",
+                        "name": "Anything",
+                        "sort_order": 14
+                    }
+                ]
+            },
+            "v2_intents_keys": [
+                "title",
+                "selection_min",
+                "selection_required_min",
+                "selection_max",
+                "intents_revision",
+                "items"
+            ]
+        },
+        "signup_options_hu": {
+            "route": "POST /v1/app/signup_options",
+            "status_code": 200,
+            "error": null,
+            "request": {
+                "audience_visibility_contract_version": "1",
+                "platform": "ios",
+                "lang": "hu"
+            },
+            "note": "D-112 R2: `v2.intents.selection_required_min` is ADDITIVE. `selection_min` is still the literal 0 that build 236 asserts.",
+            "top_level_keys": [
+                "schema_version",
+                "language",
+                "cast_groups",
+                "groups",
+                "v2",
+                "photo_experience",
+                "profile_section3",
+                "signup_pages"
+            ],
+            "v2_intents": {
+                "title": "Mit keresel?",
+                "selection_min": 0,
+                "selection_required_min": 0,
+                "selection_max": 2,
+                "intents_revision": 3,
+                "items": [
+                    {
+                        "key": "people_to_meet_irl",
+                        "name": "Élőben találkozni",
+                        "sort_order": 1
+                    },
+                    {
+                        "key": "couple_friends",
+                        "name": "Páros barátok",
+                        "sort_order": 2
+                    },
+                    {
+                        "key": "gaming",
+                        "name": "Gaming",
+                        "sort_order": 3
+                    },
+                    {
+                        "key": "volunteer",
+                        "name": "Önkénteskedés",
+                        "sort_order": 4
+                    },
+                    {
+                        "key": "workouts_sports",
+                        "name": "Edzés és sport",
+                        "sort_order": 5
+                    },
+                    {
+                        "key": "travel",
+                        "name": "Utazás",
+                        "sort_order": 6
+                    },
+                    {
+                        "key": "live_music",
+                        "name": "Élő zene",
+                        "sort_order": 7
+                    },
+                    {
+                        "key": "nights_out",
+                        "name": "Esti programok",
+                        "sort_order": 8
+                    },
+                    {
+                        "key": "coworking",
+                        "name": "Coworking",
+                        "sort_order": 9
+                    },
+                    {
+                        "key": "faith_studies",
+                        "name": "Hitélet",
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "arts_culture",
+                        "name": "Művészet és kultúra",
+                        "sort_order": 11
+                    },
+                    {
+                        "key": "roommate",
+                        "name": "Lakótárs",
+                        "sort_order": 12
+                    },
+                    {
+                        "key": "kid_playdates",
+                        "name": "Gyerekprogramok",
+                        "sort_order": 13
+                    },
+                    {
+                        "key": "anything",
+                        "name": "Bármi",
+                        "sort_order": 14
+                    }
+                ]
+            },
+            "v2_intents_keys": [
+                "title",
+                "selection_min",
+                "selection_required_min",
+                "selection_max",
+                "intents_revision",
+                "items"
+            ]
+        },
+        "list_signup_options_system_questions": {
+            "route": "POST /v1/webadmin/list_signup_options",
+            "note": "D-112 R5 + D-114. THREE rows now. The third carries `required_min` and `max`, which no System row had before — the console decoder must widen its per-row key allow-list as well as its length/order pins (risk K-2: a third row currently returns null and darkens the page).",
+            "status_code": 200,
+            "system_questions": [
+                {
+                    "key": "gender",
+                    "kind": "identity",
+                    "locked": true,
+                    "required": true,
+                    "labels": {
+                        "en": "Gender",
+                        "hu": "Nem"
+                    },
+                    "icon": {
+                        "url": "",
+                        "mime": ""
+                    },
+                    "options": [
+                        {
+                            "key": "woman",
+                            "labels": {
+                                "en": "Woman",
+                                "hu": "Nő"
+                            }
+                        },
+                        {
+                            "key": "man",
+                            "labels": {
+                                "en": "Man",
+                                "hu": "Férfi"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "key": "visible_to",
+                    "kind": "audience",
+                    "locked": true,
+                    "synthetic": true,
+                    "required": true,
+                    "labels": {
+                        "en": "Who can see my profile",
+                        "hu": "Ki láthatja az adatlapomat"
+                    },
+                    "icon": {
+                        "url": "",
+                        "mime": ""
+                    },
+                    "options": [
+                        {
+                            "key": "male",
+                            "labels": {
+                                "en": "Men",
+                                "hu": "Férfiak"
+                            }
+                        },
+                        {
+                            "key": "female",
+                            "labels": {
+                                "en": "Women",
+                                "hu": "Nők"
+                            }
+                        },
+                        {
+                            "key": "both",
+                            "labels": {
+                                "en": "Everyone",
+                                "hu": "Mindenki"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "key": "intents",
+                    "kind": "system",
+                    "locked": true,
+                    "synthetic": true,
+                    "required": true,
+                    "labels": {
+                        "en": "What are you looking for?",
+                        "hu": "Mit keresel?"
+                    },
+                    "icon": {
+                        "url": "",
+                        "mime": ""
+                    },
+                    "required_min": 0,
+                    "max": 2,
+                    "options": [
+                        {
+                            "key": "people_to_meet_irl",
+                            "labels": {
+                                "en": "People to meet IRL",
+                                "hu": "Élőben találkozni"
+                            }
+                        },
+                        {
+                            "key": "couple_friends",
+                            "labels": {
+                                "en": "Couple friends",
+                                "hu": "Páros barátok"
+                            }
+                        },
+                        {
+                            "key": "gaming",
+                            "labels": {
+                                "en": "Gaming",
+                                "hu": "Gaming"
+                            }
+                        },
+                        {
+                            "key": "volunteer",
+                            "labels": {
+                                "en": "Volunteer",
+                                "hu": "Önkénteskedés"
+                            }
+                        },
+                        {
+                            "key": "workouts_sports",
+                            "labels": {
+                                "en": "Workouts & Sports",
+                                "hu": "Edzés és sport"
+                            }
+                        },
+                        {
+                            "key": "travel",
+                            "labels": {
+                                "en": "Travel",
+                                "hu": "Utazás"
+                            }
+                        },
+                        {
+                            "key": "live_music",
+                            "labels": {
+                                "en": "Live music",
+                                "hu": "Élő zene"
+                            }
+                        },
+                        {
+                            "key": "nights_out",
+                            "labels": {
+                                "en": "Nights out",
+                                "hu": "Esti programok"
+                            }
+                        },
+                        {
+                            "key": "coworking",
+                            "labels": {
+                                "en": "Coworking",
+                                "hu": "Coworking"
+                            }
+                        },
+                        {
+                            "key": "faith_studies",
+                            "labels": {
+                                "en": "Faith studies",
+                                "hu": "Hitélet"
+                            }
+                        },
+                        {
+                            "key": "arts_culture",
+                            "labels": {
+                                "en": "Arts & Culture",
+                                "hu": "Művészet és kultúra"
+                            }
+                        },
+                        {
+                            "key": "roommate",
+                            "labels": {
+                                "en": "Roommate",
+                                "hu": "Lakótárs"
+                            }
+                        },
+                        {
+                            "key": "kid_playdates",
+                            "labels": {
+                                "en": "Kid playdates",
+                                "hu": "Gyerekprogramok"
+                            }
+                        },
+                        {
+                            "key": "anything",
+                            "labels": {
+                                "en": "Anything",
+                                "hu": "Bármi"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "save_intents_selection_limits_200": {
+            "route": "POST /v1/webadmin/save_intents_selection_limits",
+            "note": "D-114. One receipted, revision-guarded write for both numbers. The action is NOT in `audience_visibility.actions` — it rides the new sibling `admin_me` block `audience_visibility_selection_limits`, because that array is decoded with an exact ordered match.",
+            "request": {
+                "contract_version": "1",
+                "request_id": "00000000-0000-4000-8000-00000000a001",
+                "expected_intents_revision": "3",
+                "audit_reason": "<free text, required>",
+                "selection_max": "2",
+                "selection_required_min": "1"
+            },
+            "body": {
+                "success": true,
+                "status_code": 200,
+                "data": {
+                    "contract_version": 1,
+                    "intents": {
+                        "schema_version": 2,
+                        "title": {
+                            "en": "What are you looking for?",
+                            "hu": "Mit keresel?"
+                        },
+                        "intents_revision": 4,
+                        "selection_min": 0,
+                        "selection_required_min": 1,
+                        "selection_max": 2,
+                        "items": [
+                            {
+                                "key": "people_to_meet_irl",
+                                "labels": {
+                                    "en": "People to meet IRL",
+                                    "hu": "Élőben találkozni"
+                                },
+                                "sort_order": 1,
+                                "archived": false
+                            },
+                            {
+                                "key": "couple_friends",
+                                "labels": {
+                                    "en": "Couple friends",
+                                    "hu": "Páros barátok"
+                                },
+                                "sort_order": 2,
+                                "archived": false
+                            },
+                            {
+                                "key": "gaming",
+                                "labels": {
+                                    "en": "Gaming",
+                                    "hu": "Gaming"
+                                },
+                                "sort_order": 3,
+                                "archived": false
+                            },
+                            {
+                                "key": "volunteer",
+                                "labels": {
+                                    "en": "Volunteer",
+                                    "hu": "Önkénteskedés"
+                                },
+                                "sort_order": 4,
+                                "archived": false
+                            },
+                            {
+                                "key": "workouts_sports",
+                                "labels": {
+                                    "en": "Workouts & Sports",
+                                    "hu": "Edzés és sport"
+                                },
+                                "sort_order": 5,
+                                "archived": false
+                            },
+                            {
+                                "key": "travel",
+                                "labels": {
+                                    "en": "Travel",
+                                    "hu": "Utazás"
+                                },
+                                "sort_order": 6,
+                                "archived": false
+                            },
+                            {
+                                "key": "live_music",
+                                "labels": {
+                                    "en": "Live music",
+                                    "hu": "Élő zene"
+                                },
+                                "sort_order": 7,
+                                "archived": false
+                            },
+                            {
+                                "key": "nights_out",
+                                "labels": {
+                                    "en": "Nights out",
+                                    "hu": "Esti programok"
+                                },
+                                "sort_order": 8,
+                                "archived": false
+                            },
+                            {
+                                "key": "coworking",
+                                "labels": {
+                                    "en": "Coworking",
+                                    "hu": "Coworking"
+                                },
+                                "sort_order": 9,
+                                "archived": false
+                            },
+                            {
+                                "key": "faith_studies",
+                                "labels": {
+                                    "en": "Faith studies",
+                                    "hu": "Hitélet"
+                                },
+                                "sort_order": 10,
+                                "archived": false
+                            },
+                            {
+                                "key": "arts_culture",
+                                "labels": {
+                                    "en": "Arts & Culture",
+                                    "hu": "Művészet és kultúra"
+                                },
+                                "sort_order": 11,
+                                "archived": false
+                            },
+                            {
+                                "key": "roommate",
+                                "labels": {
+                                    "en": "Roommate",
+                                    "hu": "Lakótárs"
+                                },
+                                "sort_order": 12,
+                                "archived": false
+                            },
+                            {
+                                "key": "kid_playdates",
+                                "labels": {
+                                    "en": "Kid playdates",
+                                    "hu": "Gyerekprogramok"
+                                },
+                                "sort_order": 13,
+                                "archived": false
+                            },
+                            {
+                                "key": "anything",
+                                "labels": {
+                                    "en": "Anything",
+                                    "hu": "Bármi"
+                                },
+                                "sort_order": 14,
+                                "archived": false
+                            }
+                        ]
+                    },
+                    "replayed": false
+                },
+                "message": 200,
+                "status": 200,
+                "can_send": 0
+            }
+        },
+        "save_intents_selection_limits_409": {
+            "route": "POST /v1/webadmin/save_intents_selection_limits",
+            "note": "A stale `expected_intents_revision`. The 409 carries the CURRENT catalogue so the console can reload without a second round trip.",
+            "body": {
+                "success": false,
+                "status_code": 409,
+                "error": "audience-visibility-conflict",
+                "data": {
+                    "contract_version": 1,
+                    "intents": {
+                        "schema_version": 2,
+                        "title": {
+                            "en": "What are you looking for?",
+                            "hu": "Mit keresel?"
+                        },
+                        "intents_revision": 4,
+                        "selection_min": 0,
+                        "selection_required_min": 1,
+                        "selection_max": 2,
+                        "items": [
+                            {
+                                "key": "people_to_meet_irl",
+                                "labels": {
+                                    "en": "People to meet IRL",
+                                    "hu": "Élőben találkozni"
+                                },
+                                "sort_order": 1,
+                                "archived": false
+                            },
+                            {
+                                "key": "couple_friends",
+                                "labels": {
+                                    "en": "Couple friends",
+                                    "hu": "Páros barátok"
+                                },
+                                "sort_order": 2,
+                                "archived": false
+                            },
+                            {
+                                "key": "gaming",
+                                "labels": {
+                                    "en": "Gaming",
+                                    "hu": "Gaming"
+                                },
+                                "sort_order": 3,
+                                "archived": false
+                            },
+                            {
+                                "key": "volunteer",
+                                "labels": {
+                                    "en": "Volunteer",
+                                    "hu": "Önkénteskedés"
+                                },
+                                "sort_order": 4,
+                                "archived": false
+                            },
+                            {
+                                "key": "workouts_sports",
+                                "labels": {
+                                    "en": "Workouts & Sports",
+                                    "hu": "Edzés és sport"
+                                },
+                                "sort_order": 5,
+                                "archived": false
+                            },
+                            {
+                                "key": "travel",
+                                "labels": {
+                                    "en": "Travel",
+                                    "hu": "Utazás"
+                                },
+                                "sort_order": 6,
+                                "archived": false
+                            },
+                            {
+                                "key": "live_music",
+                                "labels": {
+                                    "en": "Live music",
+                                    "hu": "Élő zene"
+                                },
+                                "sort_order": 7,
+                                "archived": false
+                            },
+                            {
+                                "key": "nights_out",
+                                "labels": {
+                                    "en": "Nights out",
+                                    "hu": "Esti programok"
+                                },
+                                "sort_order": 8,
+                                "archived": false
+                            },
+                            {
+                                "key": "coworking",
+                                "labels": {
+                                    "en": "Coworking",
+                                    "hu": "Coworking"
+                                },
+                                "sort_order": 9,
+                                "archived": false
+                            },
+                            {
+                                "key": "faith_studies",
+                                "labels": {
+                                    "en": "Faith studies",
+                                    "hu": "Hitélet"
+                                },
+                                "sort_order": 10,
+                                "archived": false
+                            },
+                            {
+                                "key": "arts_culture",
+                                "labels": {
+                                    "en": "Arts & Culture",
+                                    "hu": "Művészet és kultúra"
+                                },
+                                "sort_order": 11,
+                                "archived": false
+                            },
+                            {
+                                "key": "roommate",
+                                "labels": {
+                                    "en": "Roommate",
+                                    "hu": "Lakótárs"
+                                },
+                                "sort_order": 12,
+                                "archived": false
+                            },
+                            {
+                                "key": "kid_playdates",
+                                "labels": {
+                                    "en": "Kid playdates",
+                                    "hu": "Gyerekprogramok"
+                                },
+                                "sort_order": 13,
+                                "archived": false
+                            },
+                            {
+                                "key": "anything",
+                                "labels": {
+                                    "en": "Anything",
+                                    "hu": "Bármi"
+                                },
+                                "sort_order": 14,
+                                "archived": false
+                            }
+                        ]
+                    }
+                },
+                "message": 200,
+                "status": 200,
+                "can_send": 0
+            }
+        },
+        "save_intents_selection_limits_422": {
+            "route": "POST /v1/webadmin/save_intents_selection_limits",
+            "note": "A minimum above the maximum. Refused by the PURE parser, before storage is read at all. A maximum above 5 is refused the same way: the installed iOS decoder validates 1...5 and throws out of the whole schema-2 catalogue on a 6.",
+            "body": {
+                "success": false,
+                "status_code": 422,
+                "error": "audience-visibility-request-invalid",
+                "message": 200,
+                "status": 200,
+                "can_send": 0
+            }
+        },
+        "catalogue_after_the_save": {
+            "note": "The stored singleton after the 200, through the strict authority.",
+            "projection": {
+                "schema_version": 2,
+                "intents_revision": 4,
+                "selection_min": 0,
+                "selection_required_min": 1,
+                "selection_max": 2
+            }
+        },
+        "signup_options_en_minimum_one": {
+            "route": "POST /v1/app/signup_options",
+            "note": "The SAME block with the console minimum raised to 1. Note what did NOT move: `selection_min` is still 0. That is the whole design (risk K-1) — build 236 asserts that zero and throws out of the entire schema-2 catalogue on anything else.",
+            "v2_intents": {
+                "title": "What are you looking for?",
+                "selection_min": 0,
+                "selection_required_min": 1,
+                "selection_max": 2,
+                "intents_revision": 4,
+                "items": [
+                    {
+                        "key": "people_to_meet_irl",
+                        "name": "People to meet IRL",
+                        "sort_order": 1
+                    },
+                    {
+                        "key": "couple_friends",
+                        "name": "Couple friends",
+                        "sort_order": 2
+                    },
+                    {
+                        "key": "gaming",
+                        "name": "Gaming",
+                        "sort_order": 3
+                    },
+                    {
+                        "key": "volunteer",
+                        "name": "Volunteer",
+                        "sort_order": 4
+                    },
+                    {
+                        "key": "workouts_sports",
+                        "name": "Workouts & Sports",
+                        "sort_order": 5
+                    },
+                    {
+                        "key": "travel",
+                        "name": "Travel",
+                        "sort_order": 6
+                    },
+                    {
+                        "key": "live_music",
+                        "name": "Live music",
+                        "sort_order": 7
+                    },
+                    {
+                        "key": "nights_out",
+                        "name": "Nights out",
+                        "sort_order": 8
+                    },
+                    {
+                        "key": "coworking",
+                        "name": "Coworking",
+                        "sort_order": 9
+                    },
+                    {
+                        "key": "faith_studies",
+                        "name": "Faith studies",
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "arts_culture",
+                        "name": "Arts & Culture",
+                        "sort_order": 11
+                    },
+                    {
+                        "key": "roommate",
+                        "name": "Roommate",
+                        "sort_order": 12
+                    },
+                    {
+                        "key": "kid_playdates",
+                        "name": "Kid playdates",
+                        "sort_order": 13
+                    },
+                    {
+                        "key": "anything",
+                        "name": "Anything",
+                        "sort_order": 14
+                    }
+                ]
+            }
+        },
+        "list_signup_options_system_questions_minimum_one": {
+            "note": "The third System row with the minimum raised: `required_min` is 1.",
+            "intents_row": {
+                "key": "intents",
+                "kind": "system",
+                "locked": true,
+                "synthetic": true,
+                "required": true,
+                "labels": {
+                    "en": "What are you looking for?",
+                    "hu": "Mit keresel?"
+                },
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "required_min": 1,
+                "max": 2,
+                "options": [
+                    {
+                        "key": "people_to_meet_irl",
+                        "labels": {
+                            "en": "People to meet IRL",
+                            "hu": "Élőben találkozni"
+                        }
+                    },
+                    {
+                        "key": "couple_friends",
+                        "labels": {
+                            "en": "Couple friends",
+                            "hu": "Páros barátok"
+                        }
+                    },
+                    {
+                        "key": "gaming",
+                        "labels": {
+                            "en": "Gaming",
+                            "hu": "Gaming"
+                        }
+                    },
+                    {
+                        "key": "volunteer",
+                        "labels": {
+                            "en": "Volunteer",
+                            "hu": "Önkénteskedés"
+                        }
+                    },
+                    {
+                        "key": "workouts_sports",
+                        "labels": {
+                            "en": "Workouts & Sports",
+                            "hu": "Edzés és sport"
+                        }
+                    },
+                    {
+                        "key": "travel",
+                        "labels": {
+                            "en": "Travel",
+                            "hu": "Utazás"
+                        }
+                    },
+                    {
+                        "key": "live_music",
+                        "labels": {
+                            "en": "Live music",
+                            "hu": "Élő zene"
+                        }
+                    },
+                    {
+                        "key": "nights_out",
+                        "labels": {
+                            "en": "Nights out",
+                            "hu": "Esti programok"
+                        }
+                    },
+                    {
+                        "key": "coworking",
+                        "labels": {
+                            "en": "Coworking",
+                            "hu": "Coworking"
+                        }
+                    },
+                    {
+                        "key": "faith_studies",
+                        "labels": {
+                            "en": "Faith studies",
+                            "hu": "Hitélet"
+                        }
+                    },
+                    {
+                        "key": "arts_culture",
+                        "labels": {
+                            "en": "Arts & Culture",
+                            "hu": "Művészet és kultúra"
+                        }
+                    },
+                    {
+                        "key": "roommate",
+                        "labels": {
+                            "en": "Roommate",
+                            "hu": "Lakótárs"
+                        }
+                    },
+                    {
+                        "key": "kid_playdates",
+                        "labels": {
+                            "en": "Kid playdates",
+                            "hu": "Gyerekprogramok"
+                        }
+                    },
+                    {
+                        "key": "anything",
+                        "labels": {
+                            "en": "Anything",
+                            "hu": "Bármi"
+                        }
+                    }
+                ]
+            }
+        },
+        "register_intents_count_invalid": {
+            "route": "POST /v1/iosuser/register",
+            "note": "D-112 R3. WITH `signup_intents_version=1` and an empty selection under a served minimum of 1: 422 `signup-intents-count-invalid`. WITHOUT the marker the same request walks past the intents gate and fails later on whatever else it is missing — the point being that it is NOT refused for the count. Build 236 sends no marker.",
+            "with_marker": {
+                "success": false,
+                "status_code": 422,
+                "error": "signup-intents-count-invalid"
+            },
+            "without_marker_reaches_a_different_refusal": {
+                "error": "signup-photos-invalid",
+                "status_code": 422
+            }
+        },
+        "profile_view_presentation_hero_en": {
+            "route": "POST /v1/profile/view (data.presentation)",
+            "note": "D-113, the DEFAULT placement (hero tags): ONE CHIP PER SELECTED VALUE, each carrying `source_label` = the source label and `label` = the catalogue label, with `id` = builtin:intents:<catalogue key>. `ProfilePresentationSourceKind` stays the closed two-case enum — this rides as `builtin`. The member here holds people_to_meet_irl + travel.",
+            "highlight_chips": [
+                {
+                    "id": "builtin:age:29",
+                    "source_kind": "builtin",
+                    "source_key": "age",
+                    "source_label": "Age",
+                    "value_key": "29",
+                    "label": "29",
+                    "icon": {
+                        "url": "",
+                        "mime": ""
+                    }
+                },
+                {
+                    "id": "builtin:intents:people_to_meet_irl",
+                    "source_kind": "builtin",
+                    "source_key": "intents",
+                    "source_label": "What I'm looking for",
+                    "value_key": "people_to_meet_irl",
+                    "label": "People to meet IRL",
+                    "icon": {
+                        "url": "",
+                        "mime": ""
+                    }
+                },
+                {
+                    "id": "builtin:intents:travel",
+                    "source_kind": "builtin",
+                    "source_key": "intents",
+                    "source_label": "What I'm looking for",
+                    "value_key": "travel",
+                    "label": "Travel",
+                    "icon": {
+                        "url": "",
+                        "mime": ""
+                    }
+                }
+            ],
+            "more_about_me_rows": []
+        },
+        "profile_view_presentation_hero_hu": {
+            "note": "The same layout in Hungarian: the chip labels come from the catalogue, the source label from the presentation definition.",
+            "highlight_chips": [
+                {
+                    "id": "builtin:age:29",
+                    "source_kind": "builtin",
+                    "source_key": "age",
+                    "source_label": "Életkor",
+                    "value_key": "29",
+                    "label": "29",
+                    "icon": {
+                        "url": "",
+                        "mime": ""
+                    }
+                },
+                {
+                    "id": "builtin:intents:people_to_meet_irl",
+                    "source_kind": "builtin",
+                    "source_key": "intents",
+                    "source_label": "Mit keresek",
+                    "value_key": "people_to_meet_irl",
+                    "label": "Élőben találkozni",
+                    "icon": {
+                        "url": "",
+                        "mime": ""
+                    }
+                },
+                {
+                    "id": "builtin:intents:travel",
+                    "source_kind": "builtin",
+                    "source_key": "intents",
+                    "source_label": "Mit keresek",
+                    "value_key": "travel",
+                    "label": "Utazás",
+                    "icon": {
+                        "url": "",
+                        "mime": ""
+                    }
+                }
+            ]
+        },
+        "profile_view_presentation_more_about_me_en": {
+            "route": "POST /v1/profile/view (data.presentation)",
+            "note": "The same source placed in More About Me instead: ONE ROW, values comma-joined into `value`, and NO `source_label` (a row's `label` IS the question). A source may sit in only ONE placement — inspectLayout dedupes `kind:key` across both with one shared set.",
+            "highlight_chips": [
+                {
+                    "id": "builtin:age:29",
+                    "source_kind": "builtin",
+                    "source_key": "age",
+                    "source_label": "Age",
+                    "value_key": "29",
+                    "label": "29",
+                    "icon": {
+                        "url": "",
+                        "mime": ""
+                    }
+                }
+            ],
+            "more_about_me_rows": [
+                {
+                    "id": "builtin:intents",
+                    "source_kind": "builtin",
+                    "source_key": "intents",
+                    "label": "What I'm looking for",
+                    "value": "People to meet IRL, Travel",
+                    "icon": {
+                        "url": "",
+                        "mime": ""
+                    }
+                }
+            ]
+        },
+        "profile_completion_intents_needed": {
+            "route": "POST /v1/profile/completion (data.completion) and the own read (data.profile_completion)",
+            "note": "D-112 R4. 0/1, beside `into_tags_needed`, on both surfaces. Under the served minimum of 1 a member holding none reads 1 and a member holding two reads 0.",
+            "own_read_prompts_member_with_two_intents": {
+                "into_tags_needed": 3,
+                "display_name_needed": false,
+                "intents_needed": 0
+            },
+            "own_read_prompts_member_with_none": {
+                "into_tags_needed": 3,
+                "display_name_needed": false,
+                "intents_needed": 1
+            },
+            "profile_completion_endpoint": {
+                "schema_version": 4,
+                "percent": 4,
+                "filled": 1,
+                "total": 28,
+                "blocks": [
+                    {
+                        "key": "main_data",
+                        "filled": 1,
+                        "total": 7
+                    },
+                    {
+                        "key": "more_about_you",
+                        "filled": 0,
+                        "total": 15
+                    },
+                    {
+                        "key": "bios",
+                        "filled": 0,
+                        "total": 2
+                    },
+                    {
+                        "key": "icebreakers",
+                        "filled": 0,
+                        "total": 1
+                    },
+                    {
+                        "key": "tags",
+                        "filled": 0,
+                        "total": 3
+                    }
+                ],
+                "into_tags_needed": 3,
+                "display_name_needed": false,
+                "intents_needed": 1
+            }
+        }
+    }
+}
