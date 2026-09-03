@@ -79,7 +79,11 @@ const ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS = PROFILE_TEXT_MODERATION_CONTRACT_
   ? PROFILE_TEXT_MODERATION_ACTIONS
   : [] as const;
 
-/** Dormant T-218b actions stay absent until the reviewed T-126 provider release. */
+/**
+ * Released T-218b actions (T-687), gated by Core's `admin_me.feature_switches`
+ * block: the proxy re-checks `contract_ready` and the principal's capability on
+ * every call, so this constant is the rollback lever, not the authorization.
+ */
 const ACTIVE_FEATURE_SWITCHES_ACTIONS = FEATURE_SWITCHES_CONTRACT_READY
   ? FEATURE_SWITCHES_ACTIONS
   : [] as const;

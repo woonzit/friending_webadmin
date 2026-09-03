@@ -40,6 +40,8 @@ import {
   ADMIN_ACTIONS,
   adminActionAccess,
   adminPrincipalFrom,
+  isAdminActionAllowed,
+  isAdminActionAuthorized,
   isAdminBridgeActionAuthorized,
 } from "../lib/adminActions.ts";
 import { FEATURE_SWITCHES_CONTRACT_READY } from "../lib/contractReadiness.ts";
@@ -415,18 +417,36 @@ test("every released corpus body is run through the production Webadmin decoders
   }
 });
 
-test("the dormant family vocabulary and conditional proxy surface are exact", () => {
+test("the released family vocabulary and allow-listed proxy surface are exact", () => {
   assert.deepEqual([...FEATURE_SWITCHES], ["hey", "footprints", "likes"]);
   assert.deepEqual([...FEATURE_SWITCHES_ACTIONS], ["feature_switches_get", "feature_switches_set"]);
   assert.deepEqual([...FEATURE_SWITCHES_CAPABILITIES], [
     "feature_switches_read",
     "feature_switches_edit",
   ]);
-  assert.equal(FEATURE_SWITCHES_CONTRACT_READY, false);
+  // T-687 released the consumer cutover (the T-686 audit's blocker C-1): the
+  // deployed Core 7c6e5aa serves `admin_me.feature_switches.contract_ready`, so
+  // both actions cross the proxy instead of 404ing.
+  assert.equal(FEATURE_SWITCHES_CONTRACT_READY, true);
   for (const action of FEATURE_SWITCHES_ACTIONS) {
-    assert.equal((ADMIN_ACTIONS as readonly string[]).includes(action), false);
-    assert.equal(adminActionAccess(action), null);
+    assert.equal((ADMIN_ACTIONS as readonly string[]).includes(action), true, action);
+    assert.equal(isAdminActionAllowed(action), true, action);
   }
+  // Each action keeps the role floor Core enforces for the same route, so the
+  // allow-listing widened the surface by exactly two rows and no ladder moved.
+  assert.equal(adminActionAccess("feature_switches_get"), "read");
+  assert.equal(adminActionAccess("feature_switches_set"), "write");
+  const viewer = adminPrincipalFrom({ role: "viewer", email: "viewer@friending.com" });
+  const admin = adminPrincipalFrom({ role: "admin", email: "admin@friending.com" });
+  assert.equal(isAdminActionAuthorized("feature_switches_get", viewer), true);
+  assert.equal(isAdminActionAuthorized("feature_switches_set", viewer), false);
+  assert.equal(isAdminActionAuthorized("feature_switches_get", admin), true);
+  assert.equal(isAdminActionAuthorized("feature_switches_set", admin), true);
+  // The allow-list is a floor, never the authorization. A Core that still
+  // reports `contract_ready: false` refuses both actions at the proxy — proved
+  // by "the bridge trusts only the exact family capability block" below.
+  assert.equal(adminActionAccess("feature_switches_toggle"), null);
+  assert.equal(isAdminActionAllowed("feature_switches"), false);
 });
 
 test("admin_me requires known fields, is capability-authored, action-ordered, and readiness-gated", () => {
@@ -857,7 +877,7 @@ test("every no-data refusal has an exact status, localized class, and safe retry
   ]) assert.equal(featureSwitchesShouldRetainMutation(terminal), false, `should release: ${terminal}`);
 });
 
-test("the panel, proxy, locales and Help share one dormant family cutover", async () => {
+test("the panel, proxy, locales and Help share one released family cutover", async () => {
   const [configuration, footprints, panel, bridge, actions, readiness, help, enRaw, huRaw] = await Promise.all([
     readFile(new URL("../app/(dashboard)/configuration/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/(dashboard)/footprints/page.tsx", import.meta.url), "utf8"),
@@ -872,7 +892,7 @@ test("the panel, proxy, locales and Help share one dormant family cutover", asyn
 
   assert.match(configuration, /FEATURE_SWITCHES_CONTRACT_READY \? <FeatureSwitchesPanel \/> : null/);
   assert.match(footprints, /href="\/configuration#feature-switches"/);
-  assert.match(readiness, /export const FEATURE_SWITCHES_CONTRACT_READY: boolean = false;/);
+  assert.match(readiness, /export const FEATURE_SWITCHES_CONTRACT_READY: boolean = true;/);
   assert.match(actions, /ACTIVE_FEATURE_SWITCHES_ACTIONS/);
   assert.match(bridge, /featureSwitchesProxyCapabilityAuthorized/);
   assert.match(bridge, /normalizeFeatureSwitchesProxyBody/);

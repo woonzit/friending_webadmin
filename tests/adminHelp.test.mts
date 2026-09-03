@@ -264,14 +264,35 @@ test("a guide is withheld exactly while its screen refuses to render", () => {
   );
 });
 
-test("a section is withheld exactly while its panel is behind a dormant switch", () => {
-  assert.equal(FEATURE_SWITCHES_CONTRACT_READY, false);
+test("a section is shown or withheld exactly as its own panel renders", () => {
+  assert.equal(FEATURE_SWITCHES_CONTRACT_READY, true);
   assert.equal(ADMIN_GRANTED_VERIFICATION_CONTRACT_READY, false);
   assert.equal(PERSONA_START_EDITOR_VISIBLE, false);
 
-  const gated: Array<[string, string]> = [
+  // T-687 released the feature-switch cutover (T-686 C-1), so both of its
+  // sections are shown. Their `sectionReady` gates STAY and keep carrying the
+  // live constant, so a rollback flip withholds them again with no edit here.
+  const released: Array<[string, string]> = [
     ["/configuration", "featureSwitches"],
     ["/footprints", "featureSwitchesPointer"],
+  ];
+
+  for (const [route, section] of released) {
+    const page = adminHelpPageForPath(route);
+    assert.ok(page, `${route} has no help entry`);
+    assert.ok(page.sections.includes(section), `${section} must stay in the ${route} census`);
+    assert.equal(
+      page.sectionReady?.[section],
+      FEATURE_SWITCHES_CONTRACT_READY,
+      `${route} must keep gating ${section} on the released constant, not on a literal`,
+    );
+    assert.ok(
+      adminHelpSections(page).includes(section),
+      `${route} must show ${section} now that its panel renders`,
+    );
+  }
+
+  const gated: Array<[string, string]> = [
     ["/users/example-id", "adminGrantedVerification"],
     ["/persona", "startConfig"],
     ["/persona", "preview"],
@@ -305,7 +326,7 @@ test("a section is withheld exactly while its panel is behind a dormant switch",
   }
 });
 
-test("withheld copy stays in both locale files so flipping a switch restores the guide", async () => {
+test("gated copy stays in both locale files so either side of a switch has its guide", async () => {
   for (const locale of ["en", "hu"]) {
     const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));
     const pages = record(record(messages.adminHelp, "adminHelp").pages, "adminHelp.pages");

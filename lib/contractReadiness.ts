@@ -27,13 +27,19 @@ export const ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: boolean = false;
 export const PROFILE_TEXT_MODERATION_CONTRACT_READY: boolean = false;
 
 /**
- * T-126/T-218b are deployed dormant; their consumer cutover has not been
- * released.
+ * T-126/T-218b are RELEASED (T-687, the T-686 audit's blocker C-1). Core
+ * `7c6e5aa` is deployed and serves `admin_me.feature_switches.contract_ready`
+ * from `FeatureSwitchesReadinessService::ready()`, so the console may mount the
+ * panel and allow-list `feature_switches_get` / `_set`.
  * This is the CONSUMER cutover, not either product state. Both Core values
  * default to enabled (A1); launch posture is a later explicit administrator
- * flip (Hey on, Footprints off), never an inverted code default.
+ * flip (Hey on, Footprints off), never an inverted code default. Core's own
+ * `contract_ready` still gates every action: a Core that reports `false` leaves
+ * the panel mounted but refuses both calls, so this constant is the rollback
+ * lever only, and it is deleted with its guarded branches once the rollback
+ * release has shipped.
  */
-export const FEATURE_SWITCHES_CONTRACT_READY: boolean = false;
+export const FEATURE_SWITCHES_CONTRACT_READY: boolean = true;
 
 /**
  * T-581 reversible visibility gate. The current app does not read the legacy
