@@ -3112,6 +3112,8 @@
       "finiteUtcDay": "{value} per UTC day",
       "finiteConcurrent": "{value} concurrent",
       "invalidRule": "Invalid draft rule",
+      "switchedOff": "Switched-off feature — not shown to members",
+      "switchStateUnreadable": "Feature-switch state unavailable — not shown to members",
       "presetsTitle": "Administrator grant presets",
       "presetsCopy": "Each preset creates audited, time-bounded PLUS access. It does not record a payment or change Store billing.",
       "presetResult": "Grants {tier} access",

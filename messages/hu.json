@@ -3112,6 +3112,8 @@
       "finiteUtcDay": "{value} UTC naponként",
       "finiteConcurrent": "{value} egyidejű",
       "invalidRule": "Hibás tervszabály",
+      "switchedOff": "Kikapcsolt funkció — nem jelenik meg a tagoknak",
+      "switchStateUnreadable": "A funkciókapcsoló állapota nem olvasható — nem jelenik meg a tagoknak",
       "presetsTitle": "Admin-hozzáférési időtartamok",
       "presetsCopy": "Minden időtartam auditált és időben korlátozott PLUS hozzáférést hoz létre. Nem rögzít fizetést és nem módosít Store-számlázást.",
       "presetResult": "{tier} hozzáférést ad",

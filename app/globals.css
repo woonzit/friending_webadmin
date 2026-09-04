@@ -11024,6 +11024,10 @@ body .verification-level-pill.level-strong {
   color: var(--danger);
 }
 
+.membership-tier-preview li .membership-preview-feature-unavailable {
+  color: var(--amber);
+}
+
 .membership-preset-summary {
   display: grid;
   gap: 14px;

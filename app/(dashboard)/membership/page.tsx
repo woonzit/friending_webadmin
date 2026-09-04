@@ -2,9 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { MembershipQuotaPreviewList } from "@/components/MembershipQuotaPreview";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
+import {
+  featureSwitchesStateResponse,
+  type FeatureSwitchesState,
+} from "@/lib/featureSwitches";
 import {
   MEMBERSHIP_CAPABILITIES,
   MEMBERSHIP_QUOTAS,
@@ -43,6 +48,7 @@ export default function MembershipConfigurationPage() {
   const locale = useLocale();
   const [catalogue, setCatalogue] = useState<MembershipConfiguration | null>(null);
   const [draft, setDraft] = useState<MembershipPlanConfiguration | null>(null);
+  const [featureSwitches, setFeatureSwitches] = useState<FeatureSwitchesState | null>(null);
   const [adminRole, setAdminRole] = useState("");
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [saving, setSaving] = useState(false);
@@ -70,10 +76,13 @@ export default function MembershipConfigurationPage() {
   const load = useCallback(async () => {
     setState("loading");
     setNotice(null);
-    const [response, principal] = await Promise.all([
+    setFeatureSwitches(null);
+    const [response, principal, featureSwitchesResponse] = await Promise.all([
       adminCall("membership_configuration"),
       adminCall("admin_me"),
+      adminCall("feature_switches_get", { contract_version: 1 }),
     ]);
+    setFeatureSwitches(featureSwitchesStateResponse(featureSwitchesResponse));
     const role = typeof principal?.role === "string"
       ? principal.role.trim().toLowerCase()
       : "";
@@ -389,26 +398,12 @@ export default function MembershipConfigurationPage() {
                 </div>
                 <div>
                   <h4>{t("preview.quotas")}</h4>
-                  <ul>{tierPreview.quotas.map((quota) => {
-                    const invalid = validationIssues.some((issue) => (
-                      issue.quota === quota.key && (issue.tier === null || issue.tier === tierPreview.tier)
-                    ));
-                    const value = invalid
-                      ? t("preview.invalidRule")
-                      : quota.mode === "disabled"
-                        ? t("preview.unavailable")
-                        : quota.mode === "unlimited"
-                          ? t("preview.unlimited")
-                          : quota.scope === "utc_day"
-                            ? t("preview.finiteUtcDay", { value: quota.value ?? 0 })
-                            : t("preview.finiteConcurrent", { value: quota.value ?? 0 });
-                    return (
-                      <li key={quota.key}>
-                        <span>{t(`quotas.${quota.key}`)}</span>
-                        <strong className={invalid ? "membership-preview-invalid" : ""}>{value}</strong>
-                      </li>
-                    );
-                  })}</ul>
+                  <MembershipQuotaPreviewList
+                    quotas={tierPreview.quotas}
+                    tier={tierPreview.tier}
+                    validationIssues={validationIssues}
+                    featureSwitches={featureSwitches}
+                  />
                 </div>
               </article>
             ))}

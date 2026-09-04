@@ -1,6 +1,17 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { NextIntlClientProvider } from "next-intl";
+import {
+  MEMBERSHIP_QUOTA_FEATURE_FAMILIES,
+  MembershipQuotaPreviewList,
+} from "../components/MembershipQuotaPreview.tsx";
+import {
+  featureSwitchesStateResponse,
+  type FeatureSwitchesState,
+} from "../lib/featureSwitches.ts";
 import {
   membershipActionErrorKey,
   membershipConfiguration,
@@ -21,6 +32,10 @@ import { adminActionAccess } from "../lib/adminActions.ts";
 
 const ISO = "2026-08-15T12:00:00Z";
 const LATER = "2026-09-15T12:00:00Z";
+const RENDER_MESSAGES = {
+  en: JSON.parse(readFileSync(new URL("../messages/en.json", import.meta.url), "utf8")),
+  hu: JSON.parse(readFileSync(new URL("../messages/hu.json", import.meta.url), "utf8")),
+};
 
 function configurationFixture() {
   return {
@@ -139,6 +154,64 @@ function userDetailFixture() {
       request_id: "SENSITIVE-IDEMPOTENCY-KEY",
     }],
   };
+}
+
+function decodedFeatureSwitches(
+  heyEnabled: boolean,
+  footprintsEnabled: boolean,
+): FeatureSwitchesState {
+  const parsed = featureSwitchesStateResponse({
+    success: true,
+    status_code: 200,
+    data: {
+      contract_version: 1,
+      hey: { enabled: heyEnabled, updated_at: 1, updated_by: "owner@friending.com" },
+      footprints: { enabled: footprintsEnabled, updated_at: 1, updated_by: "owner@friending.com" },
+      likes: { enabled: true, updated_at: 1, updated_by: "owner@friending.com" },
+      revision: 4,
+    },
+    message: 200,
+    status: 200,
+    can_send: 0,
+  });
+  assert.ok(parsed);
+  return parsed;
+}
+
+function unreadableFeatureSwitches(): null {
+  const parsed = featureSwitchesStateResponse({
+    success: false,
+    status_code: 503,
+    error: "feature-switches-read-failed",
+    message: 200,
+    status: 200,
+    can_send: 0,
+  });
+  assert.equal(parsed, null, "a 503 refusal is not a switch state");
+  return parsed;
+}
+
+function renderMembershipQuota(
+  key: "footprint_send" | "pinger_send",
+  featureSwitches: FeatureSwitchesState | null,
+  locale: "en" | "hu" = "en",
+): string {
+  const configuration = membershipConfiguration(configurationFixture());
+  assert.ok(configuration);
+  const tier = membershipPlanPreview(configuration.configuration).tiers.find((row) => row.tier === "plus");
+  assert.ok(tier);
+  const quota = tier.quotas.find((row) => row.key === key);
+  assert.ok(quota);
+  return renderToStaticMarkup(createElement(
+    NextIntlClientProvider,
+    { locale, messages: RENDER_MESSAGES[locale], timeZone: "UTC" },
+    createElement(MembershipQuotaPreviewList, {
+      quotas: [quota],
+      tier: tier.tier,
+      validationIssues: [],
+      featureSwitches,
+    }),
+  ));
 }
 
 test("membership configuration ignores additive catalogue fields, stays bounded, and projects a safe save body", () => {
@@ -264,6 +337,55 @@ test("member benefit and administrator preset previews derive only from the draf
       ["plus_month", "plus", "P1M"],
       ["plus_quarter", "plus", "P3M"],
     ],
+  );
+});
+
+test("the preview's quota-to-family map follows the Footprints and Hey switches", () => {
+  assert.deepEqual(MEMBERSHIP_QUOTA_FEATURE_FAMILIES, {
+    footprint_send: "footprints",
+    pinger_send: "hey",
+    private_album_access: null,
+    quick_phrase_slots: null,
+  });
+});
+
+for (const row of [
+  { quota: "footprint_send", family: "footprints", onValue: "20 per UTC day" },
+  { quota: "pinger_send", family: "hey", onValue: "Unlimited" },
+] as const) {
+  test(`${row.quota} renders its quota when the ${row.family} family is switched on`, () => {
+    const markup = renderMembershipQuota(row.quota, decodedFeatureSwitches(true, true));
+    assert.match(markup, /data-feature-switch-state="on"/u);
+    assert.match(markup, new RegExp(`>${row.onValue}<`, "u"));
+    assert.doesNotMatch(markup, /not shown to members/u);
+  });
+
+  test(`${row.quota} renders the explicit note when the ${row.family} family is switched off`, () => {
+    const state = row.family === "hey"
+      ? decodedFeatureSwitches(false, true)
+      : decodedFeatureSwitches(true, false);
+    const markup = renderMembershipQuota(row.quota, state);
+    assert.match(markup, /data-feature-switch-state="off"/u);
+    assert.match(markup, />Switched-off feature — not shown to members</u);
+    assert.doesNotMatch(markup, new RegExp(`>${row.onValue}<`, "u"));
+  });
+
+  test(`${row.quota} renders the unreadable note after a 503 instead of a silent quota`, () => {
+    const markup = renderMembershipQuota(row.quota, unreadableFeatureSwitches());
+    assert.match(markup, /data-feature-switch-state="unreadable"/u);
+    assert.match(markup, />Feature-switch state unavailable — not shown to members</u);
+    assert.doesNotMatch(markup, new RegExp(`>${row.onValue}<`, "u"));
+  });
+}
+
+test("the switched-off and unreadable notes render with the required Hungarian copy", () => {
+  assert.match(
+    renderMembershipQuota("footprint_send", decodedFeatureSwitches(true, false), "hu"),
+    />Kikapcsolt funkció — nem jelenik meg a tagoknak</u,
+  );
+  assert.match(
+    renderMembershipQuota("pinger_send", unreadableFeatureSwitches(), "hu"),
+    />A funkciókapcsoló állapota nem olvasható — nem jelenik meg a tagoknak</u,
   );
 });
 
@@ -512,6 +634,9 @@ test("the plan editor wires dirty guards, full validation, and draft previews", 
   assert.match(page, /membershipPlanPreview\(draft\)/);
   assert.match(page, /planPreview\.tiers\.map/);
   assert.match(page, /planPreview\.presets\.map/);
+  assert.match(page, /adminCall\("feature_switches_get", \{ contract_version: 1 \}\)/);
+  assert.match(page, /featureSwitchesStateResponse\(featureSwitchesResponse\)/);
+  assert.match(page, /featureSwitches=\{featureSwitches\}/);
   assert.match(page, /errorKey === "configurationConflict"[\s\S]*adopt\(response\?\.data\)/);
   assert.doesNotMatch(page, /saveError[\s\S]*\{ code:/);
 });
