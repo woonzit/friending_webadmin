@@ -1,0 +1,324 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "schema_version": 1,
+        "language": "hu",
+        "cast_groups": [
+            {
+                "id": "000000000000000000000002",
+                "key": "male_for_male",
+                "rules": [
+                    {
+                        "genders": [
+                            "man"
+                        ],
+                        "visible_to": [
+                            "male"
+                        ]
+                    }
+                ],
+                "legacy_segment": "male_gay"
+            },
+            {
+                "id": "000000000000000000000001",
+                "key": "male_for_female",
+                "rules": [
+                    {
+                        "genders": [
+                            "man"
+                        ],
+                        "visible_to": [
+                            "female"
+                        ]
+                    }
+                ],
+                "legacy_segment": "male_hetero"
+            },
+            {
+                "id": "000000000000000000000003",
+                "key": "male_for_both",
+                "rules": [
+                    {
+                        "genders": [
+                            "man"
+                        ],
+                        "visible_to": [
+                            "both"
+                        ]
+                    }
+                ],
+                "legacy_segment": "male_bisexual"
+            },
+            {
+                "id": "000000000000000000000004",
+                "key": "female_for_male",
+                "rules": [
+                    {
+                        "genders": [
+                            "woman"
+                        ],
+                        "visible_to": [
+                            "male"
+                        ]
+                    }
+                ],
+                "legacy_segment": "female_hetero"
+            },
+            {
+                "id": "000000000000000000000005",
+                "key": "female_for_female",
+                "rules": [
+                    {
+                        "genders": [
+                            "woman"
+                        ],
+                        "visible_to": [
+                            "female"
+                        ]
+                    }
+                ],
+                "legacy_segment": "female_lesbian"
+            },
+            {
+                "id": "000000000000000000000006",
+                "key": "female_for_both",
+                "rules": [
+                    {
+                        "genders": [
+                            "woman"
+                        ],
+                        "visible_to": [
+                            "both"
+                        ]
+                    }
+                ],
+                "legacy_segment": "female_bisexual"
+            },
+            {
+                "id": "0c5e779988ceae850aeb6803",
+                "key": "nonbinary_for_both",
+                "rules": [
+                    {
+                        "genders": [
+                            "nonbinary"
+                        ],
+                        "visible_to": [
+                            "both"
+                        ]
+                    }
+                ],
+                "legacy_segment": "other"
+            }
+        ],
+        "groups": [
+            {
+                "key": "gender",
+                "name": "Nem",
+                "profile_field": "gender",
+                "question_pack": "identity",
+                "system_owned": true,
+                "required": true,
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "audience": {
+                    "mode": "global",
+                    "genders": [],
+                    "group_ids": [],
+                    "segments": []
+                },
+                "options": [
+                    {
+                        "key": "male",
+                        "name": "Férfi",
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "female",
+                        "name": "Nő",
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "other",
+                        "name": "Nembináris",
+                        "sort_order": 30
+                    }
+                ]
+            }
+        ],
+        "v2": {
+            "schema_version": 2,
+            "language": "hu",
+            "identity": {
+                "genders": [
+                    {
+                        "key": "woman",
+                        "name": "Nő",
+                        "localized": true,
+                        "glossary": null,
+                        "sort_order": 0
+                    },
+                    {
+                        "key": "man",
+                        "name": "Férfi",
+                        "localized": true,
+                        "glossary": null,
+                        "sort_order": 10
+                    }
+                ]
+            },
+            "visibility": {
+                "default": "both",
+                "nonbinary_fixed": "both",
+                "options": [
+                    {
+                        "key": "male",
+                        "name": "Férfiak",
+                        "sort_order": 0
+                    },
+                    {
+                        "key": "female",
+                        "name": "Nők",
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "both",
+                        "name": "Mindenki",
+                        "sort_order": 20
+                    }
+                ],
+                "title": "Ki láthatja az adatlapomat",
+                "nonbinary_note": "Mindenki láthatja"
+            },
+            "intents": {
+                "title": "Mit keresel?",
+                "selection_min": 0,
+                "selection_required_min": 0,
+                "selection_max": 5,
+                "intents_revision": 4,
+                "items": [
+                    {
+                        "key": "people_to_meet_irl",
+                        "name": "Élőben találkozni",
+                        "sort_order": 1
+                    },
+                    {
+                        "key": "couple_friends",
+                        "name": "Páros barátok",
+                        "sort_order": 2
+                    },
+                    {
+                        "key": "gaming",
+                        "name": "Gaming",
+                        "sort_order": 3
+                    },
+                    {
+                        "key": "volunteer",
+                        "name": "Önkénteskedés",
+                        "sort_order": 4
+                    },
+                    {
+                        "key": "workouts_sports",
+                        "name": "Edzés és sport",
+                        "sort_order": 5
+                    },
+                    {
+                        "key": "travel",
+                        "name": "Utazás",
+                        "sort_order": 6
+                    },
+                    {
+                        "key": "live_music",
+                        "name": "Élő zene",
+                        "sort_order": 7
+                    },
+                    {
+                        "key": "nights_out",
+                        "name": "Esti programok",
+                        "sort_order": 8
+                    },
+                    {
+                        "key": "coworking",
+                        "name": "Coworking",
+                        "sort_order": 9
+                    },
+                    {
+                        "key": "faith_studies",
+                        "name": "Hitélet",
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "arts_culture",
+                        "name": "Művészet és kultúra",
+                        "sort_order": 11
+                    },
+                    {
+                        "key": "roommate",
+                        "name": "Lakótárs",
+                        "sort_order": 12
+                    },
+                    {
+                        "key": "kid_playdates",
+                        "name": "Gyerekprogramok",
+                        "sort_order": 13
+                    },
+                    {
+                        "key": "anything",
+                        "name": "Bármi",
+                        "sort_order": 14
+                    }
+                ]
+            }
+        },
+        "photo_experience": {
+            "schema_version": 1,
+            "language": "hu",
+            "revision": 3,
+            "min_photos": 2,
+            "max_photos": 6,
+            "moderation": {
+                "enabled": true,
+                "text": "A profilképeket moderáljuk.",
+                "link_title": "Moderálási elveink",
+                "link_url": "https://friending.com/moderalasi-elvek"
+            },
+            "avatar": {
+                "title": "Töltsd fel az első képed",
+                "subtitle": "Ez lesz a fő profilképed."
+            },
+            "tips": {
+                "title": "Milyen képet töltsek fel?",
+                "items": [
+                    {
+                        "key": "clear_face",
+                        "caption": "Legyen jól látható az arcod",
+                        "verdict": "good",
+                        "sort_order": 10,
+                        "image_female": "https://img.friending.co/api/cache/admin/uploads/fixture/clear-face-a.jpg",
+                        "image_male": "https://img.friending.co/api/cache/admin/uploads/fixture/clear-face-b.jpg"
+                    }
+                ]
+            }
+        },
+        "profile_section3": {
+            "hidden": false,
+            "gate": {
+                "layer2_keys": []
+            },
+            "title": "Menjünk mélyebbre",
+            "subtitle": "Személyesebb kérdések, a te határaid szerint",
+            "shared": [],
+            "groups_by_pack": {}
+        },
+        "signup_pages": {
+            "contract_version": 1,
+            "revision": 0,
+            "pages": []
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

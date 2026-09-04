@@ -1,0 +1,474 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "gender_values": [
+            "man",
+            "woman",
+            "nonbinary"
+        ],
+        "visible_to_values": [
+            "male",
+            "female",
+            "both"
+        ],
+        "groups": [
+            {
+                "key": "male_for_male",
+                "labels": {
+                    "en": "Men visible to men",
+                    "hu": "Férfiak, akiket férfiak láthatnak"
+                },
+                "rules": [
+                    {
+                        "genders": [
+                            "man"
+                        ],
+                        "visible_to": [
+                            "male"
+                        ]
+                    }
+                ],
+                "legacy_segment": "male_gay",
+                "sort_order": 100,
+                "active": true,
+                "id": "000000000000000000000002",
+                "protected": true,
+                "revision": 3,
+                "editable_fields": [
+                    "labels",
+                    "sort_order"
+                ]
+            },
+            {
+                "key": "male_for_female",
+                "labels": {
+                    "en": "Men visible to women",
+                    "hu": "Férfiak, akiket nők láthatnak"
+                },
+                "rules": [
+                    {
+                        "genders": [
+                            "man"
+                        ],
+                        "visible_to": [
+                            "female"
+                        ]
+                    }
+                ],
+                "legacy_segment": "male_hetero",
+                "sort_order": 200,
+                "active": true,
+                "id": "000000000000000000000001",
+                "protected": true,
+                "revision": 3,
+                "editable_fields": [
+                    "labels",
+                    "sort_order"
+                ]
+            },
+            {
+                "key": "male_for_both",
+                "labels": {
+                    "en": "Men visible to everyone",
+                    "hu": "Férfiak, akiket mindenki láthat"
+                },
+                "rules": [
+                    {
+                        "genders": [
+                            "man"
+                        ],
+                        "visible_to": [
+                            "both"
+                        ]
+                    }
+                ],
+                "legacy_segment": "male_bisexual",
+                "sort_order": 300,
+                "active": true,
+                "id": "000000000000000000000003",
+                "protected": true,
+                "revision": 3,
+                "editable_fields": [
+                    "labels",
+                    "sort_order"
+                ]
+            },
+            {
+                "key": "female_for_male",
+                "labels": {
+                    "en": "Women visible to men",
+                    "hu": "Nők, akiket férfiak láthatnak"
+                },
+                "rules": [
+                    {
+                        "genders": [
+                            "woman"
+                        ],
+                        "visible_to": [
+                            "male"
+                        ]
+                    }
+                ],
+                "legacy_segment": "female_hetero",
+                "sort_order": 400,
+                "active": true,
+                "id": "000000000000000000000004",
+                "protected": true,
+                "revision": 3,
+                "editable_fields": [
+                    "labels",
+                    "sort_order"
+                ]
+            },
+            {
+                "key": "female_for_female",
+                "labels": {
+                    "en": "Women visible to women",
+                    "hu": "Nők, akiket nők láthatnak"
+                },
+                "rules": [
+                    {
+                        "genders": [
+                            "woman"
+                        ],
+                        "visible_to": [
+                            "female"
+                        ]
+                    }
+                ],
+                "legacy_segment": "female_lesbian",
+                "sort_order": 500,
+                "active": true,
+                "id": "000000000000000000000005",
+                "protected": true,
+                "revision": 3,
+                "editable_fields": [
+                    "labels",
+                    "sort_order"
+                ]
+            },
+            {
+                "key": "female_for_both",
+                "labels": {
+                    "en": "Women visible to everyone",
+                    "hu": "Nők, akiket mindenki láthat"
+                },
+                "rules": [
+                    {
+                        "genders": [
+                            "woman"
+                        ],
+                        "visible_to": [
+                            "both"
+                        ]
+                    }
+                ],
+                "legacy_segment": "female_bisexual",
+                "sort_order": 600,
+                "active": true,
+                "id": "000000000000000000000006",
+                "protected": true,
+                "revision": 3,
+                "editable_fields": [
+                    "labels",
+                    "sort_order"
+                ]
+            },
+            {
+                "key": "nonbinary_for_both",
+                "labels": {
+                    "en": "Other or unresolved identity",
+                    "hu": "Egyéb vagy még nem besorolt identitás"
+                },
+                "rules": [
+                    {
+                        "genders": [
+                            "nonbinary"
+                        ],
+                        "visible_to": [
+                            "both"
+                        ]
+                    }
+                ],
+                "legacy_segment": "other",
+                "sort_order": 700,
+                "active": true,
+                "id": "0c5e779988ceae850aeb6803",
+                "protected": true,
+                "revision": 1,
+                "editable_fields": [
+                    "labels",
+                    "sort_order"
+                ]
+            }
+        ],
+        "group_manifest_sha256": "8e1906021ccf78d40b2fbb3fb2abbcd4f20da9ffffa2d44a791b8d0e0c834755",
+        "retirement_manifest": {
+            "sha256": "6bbd46df631a50cf4e9b7eb6bb5fd409269965d03c89a536c90c1d4588c637e1",
+            "matching_orientation": "retired",
+            "layer1_intent": "retired",
+            "legacy_catalogue_types": [
+                "sex_cut",
+                "sex_dick",
+                "sex_dirty",
+                "sex_fetish",
+                "sex_fisting",
+                "sex_hiv_status",
+                "sex_meet",
+                "sex_preference",
+                "sex_safety",
+                "sex_sm",
+                "sexualty",
+                "filter_position",
+                "i_am_into",
+                "my_tribes"
+            ],
+            "profile_questions": [
+                {
+                    "key": "piercings",
+                    "labels": {
+                        "en": "Piercings",
+                        "hu": "Piercingek"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "tattoos",
+                    "labels": {
+                        "en": "Tattoos",
+                        "hu": "Tetoválások"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "beard",
+                    "labels": {
+                        "en": "Facial hair",
+                        "hu": "Arcszőrzet"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "sexual_position",
+                    "labels": {
+                        "en": "Position",
+                        "hu": "Pozíció"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "safer_sex",
+                    "labels": {
+                        "en": "Safer sex",
+                        "hu": "Biztonságosabb szex"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "circumcision",
+                    "labels": {
+                        "en": "Circumcision",
+                        "hu": "Körülmetélés"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "dick_size",
+                    "labels": {
+                        "en": "Penis size",
+                        "hu": "Péniszméret"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "body_hair",
+                    "labels": {
+                        "en": "Body hair",
+                        "hu": "Testszőrzet"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "hair_color",
+                    "labels": {
+                        "en": "Hair color",
+                        "hu": "Hajszín"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "eye_color",
+                    "labels": {
+                        "en": "Eye color",
+                        "hu": "Szemszín"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                },
+                {
+                    "key": "body_type",
+                    "labels": {
+                        "en": "Body type",
+                        "hu": "Testalkat"
+                    },
+                    "reason": "dating_specific",
+                    "state": "retired"
+                }
+            ],
+            "retained_questions": []
+        },
+        "intents": {
+            "schema_version": 2,
+            "title": {
+                "en": "What are you looking for?",
+                "hu": "Mit keresel?"
+            },
+            "intents_revision": 4,
+            "selection_min": 0,
+            "selection_required_min": 0,
+            "selection_max": 5,
+            "items": [
+                {
+                    "key": "people_to_meet_irl",
+                    "labels": {
+                        "en": "People to meet IRL",
+                        "hu": "Élőben találkozni"
+                    },
+                    "sort_order": 1,
+                    "archived": false
+                },
+                {
+                    "key": "couple_friends",
+                    "labels": {
+                        "en": "Couple friends",
+                        "hu": "Páros barátok"
+                    },
+                    "sort_order": 2,
+                    "archived": false
+                },
+                {
+                    "key": "gaming",
+                    "labels": {
+                        "en": "Gaming",
+                        "hu": "Gaming"
+                    },
+                    "sort_order": 3,
+                    "archived": false
+                },
+                {
+                    "key": "volunteer",
+                    "labels": {
+                        "en": "Volunteer",
+                        "hu": "Önkénteskedés"
+                    },
+                    "sort_order": 4,
+                    "archived": false
+                },
+                {
+                    "key": "workouts_sports",
+                    "labels": {
+                        "en": "Workouts & Sports",
+                        "hu": "Edzés és sport"
+                    },
+                    "sort_order": 5,
+                    "archived": false
+                },
+                {
+                    "key": "travel",
+                    "labels": {
+                        "en": "Travel",
+                        "hu": "Utazás"
+                    },
+                    "sort_order": 6,
+                    "archived": false
+                },
+                {
+                    "key": "live_music",
+                    "labels": {
+                        "en": "Live music",
+                        "hu": "Élő zene"
+                    },
+                    "sort_order": 7,
+                    "archived": false
+                },
+                {
+                    "key": "nights_out",
+                    "labels": {
+                        "en": "Nights out",
+                        "hu": "Esti programok"
+                    },
+                    "sort_order": 8,
+                    "archived": false
+                },
+                {
+                    "key": "coworking",
+                    "labels": {
+                        "en": "Coworking",
+                        "hu": "Coworking"
+                    },
+                    "sort_order": 9,
+                    "archived": false
+                },
+                {
+                    "key": "faith_studies",
+                    "labels": {
+                        "en": "Faith studies",
+                        "hu": "Hitélet"
+                    },
+                    "sort_order": 10,
+                    "archived": false
+                },
+                {
+                    "key": "arts_culture",
+                    "labels": {
+                        "en": "Arts & Culture",
+                        "hu": "Művészet és kultúra"
+                    },
+                    "sort_order": 11,
+                    "archived": false
+                },
+                {
+                    "key": "roommate",
+                    "labels": {
+                        "en": "Roommate",
+                        "hu": "Lakótárs"
+                    },
+                    "sort_order": 12,
+                    "archived": false
+                },
+                {
+                    "key": "kid_playdates",
+                    "labels": {
+                        "en": "Kid playdates",
+                        "hu": "Gyerekprogramok"
+                    },
+                    "sort_order": 13,
+                    "archived": false
+                },
+                {
+                    "key": "anything",
+                    "labels": {
+                        "en": "Anything",
+                        "hu": "Bármi"
+                    },
+                    "sort_order": 14,
+                    "archived": false
+                }
+            ]
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

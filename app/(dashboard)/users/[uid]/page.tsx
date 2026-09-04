@@ -153,7 +153,7 @@ export default function UserDetailPage() {
           inside this panel is the only console write for them (T-653). The
           detailed-gender options are Core's own served catalogue, so the panel
           never pins that vocabulary itself. */}
-      <AudienceVisibilityUserPanel uid={uid} identityGroups={identityGroups} onIdentitySaved={load} />
+      <AudienceVisibilityUserPanel uid={uid} onIdentitySaved={load} />
       <ProductPopupPanel key={`product-popup-${uid}`} uid={uid} />
       <OutboundMessagingPanel uid={uid} displayName={profile.display_name} codename={profile.codename} />
       <UserContentEditor

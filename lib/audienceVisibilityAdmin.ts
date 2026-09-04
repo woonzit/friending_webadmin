@@ -100,20 +100,6 @@ export const AUDIENCE_VISIBILITY_INITIAL_INTENT_KEYS = [
   "anything",
 ] as const;
 
-/**
- * The legacy gender token the signup-option catalogue tags a detailed-gender
- * option's `audiences` with, for each canonical V2 gender. Core's own
- * projection (`IdentityV2Policy::legacyGender()`) is the authority; this is the
- * one place the console crosses between the two vocabularies, so the member
- * panel can filter the served `identity_options` without pinning the 25
- * detail keys themselves.
- */
-export const AUDIENCE_VISIBILITY_LEGACY_GENDER = {
-  man: "male",
-  woman: "female",
-  nonbinary: "other",
-} as const;
-
 export type AudienceVisibilityGender = (typeof AUDIENCE_VISIBILITY_GENDERS)[number];
 export type AudienceVisibilityValue = (typeof AUDIENCE_VISIBILITY_VALUES)[number];
 export type AudienceVisibilityCapability = (typeof AUDIENCE_VISIBILITY_CAPABILITIES)[number];
@@ -222,23 +208,26 @@ export type AudienceVisibilityCatalog = {
 };
 
 /**
- * The three keys T-653 appends to `audience_visibility_member_detail`, kept
- * together in one optional container.
+ * The T-653 identity block of `audience_visibility_member_detail`.
  *
- * They travel as three sibling keys on the wire (contract §7a). They are
- * modelled as one nullable object because they only mean anything together:
- * without `identity_revision` there is no second optimistic axis to guard, so
- * the editor cannot be offered at all. A Core that predates T-653 serves none
- * of them and this reads `null` — the member row still decodes and still
- * renders read-only. A Core that serves them malformed fails the whole decode,
- * as every other field in this family does.
+ * T-669 (D-103 §6.4) retires the detailed gender, so `identity_revision` — the
+ * second optimistic axis — is the whole terminal block. A Core that predates
+ * T-653 serves none of it and this reads `null`: the member row still decodes
+ * and still renders read-only.
+ *
+ * `legacy_gender_detail` is NOT a console feature. It exists only because the
+ * DEPLOYED Core (`364c89e8`) still requires `gender_detail` in the save body
+ * (`AudienceVisibilityAdminPolicy::parseMemberIdentitySave` builds its field
+ * list with `strictRequired`, which demands every listed field), while the
+ * T-669 Core refuses the same key as retired. Carrying what was served lets the
+ * save echo it back unchanged on the old Core and omit it on the new one, so
+ * the console never rewrites a member's retired detail and never invents one.
+ * `undefined` is the terminal Core; a string or `null` is the deployed one.
  */
 export type AudienceVisibilityMemberIdentity = {
   /** `identity_v2.revision`; 0 means the member has no canonical document yet. */
   identity_revision: number;
-  gender_detail: string | null;
-  /** The member's own disclosure toggle. Read-only on this contract. */
-  show_gender_detail: boolean;
+  legacy_gender_detail?: string | null;
 };
 
 export type AudienceVisibilityMemberDetail = {
@@ -278,12 +267,12 @@ type JsonObject = Record<string, unknown>;
 
 const GROUP_KEY = /^[a-z][a-z0-9_]{0,63}$/u;
 /**
- * Shape only. The gender-detail vocabulary belongs to Core
- * (`IdentityV2Policy::genderDetails()`), which answers
- * `identity-gender-detail-invalid` / `-mismatch` for a value outside it or
- * belonging to another gender. Pinning the 25 keys here would put a second
- * authority in the browser and would have to be re-pinned on every catalogue
- * change; the console renders the labels Core serves and validates the form.
+ * Shape only, and only for the RETIRED detail the deployed Core still serves
+ * and still requires back. The vocabulary belonged to Core
+ * (`IdentityV2Policy::genderDetails()`); pinning the 25 keys here would have
+ * put a second authority in the browser. T-669 removes the console's control
+ * for it entirely — this is what keeps a malformed served value from being
+ * echoed back into a save.
  */
 const GENDER_DETAIL = /^[a-z][a-z0-9_]{0,63}$/u;
 const MONGO_ID = /^[0-9a-f]{24}$/u;
@@ -740,35 +729,50 @@ export function audienceVisibilityIntentMutationResponse(value: unknown): Audien
   });
 }
 
-const MEMBER_IDENTITY_KEYS = ["identity_revision", "gender_detail", "show_gender_detail"] as const;
+/** The whole terminal block after T-669: one key, the second optimistic axis. */
+const MEMBER_IDENTITY_KEYS = ["identity_revision"] as const;
+/** The retired T-653 siblings the DEPLOYED Core still serves beside it. */
+const MEMBER_IDENTITY_LEGACY_KEYS = ["gender_detail", "show_gender_detail"] as const;
 
 /**
- * The T-653 keys, decoded tolerantly: all three, or none.
+ * The T-653 block, decoded against BOTH served shapes.
  *
- * `{ identity: null }` is a Core that predates the amendment — the member row
- * still decodes and the panel stays read-only, because without
- * `identity_revision` there is no second axis to guard a write with. A partial
- * or malformed set is `null`, which fails the whole member decode: this family
- * never renders a half-read payload as a proven state.
+ * `identity_revision` alone is the T-669 Core; the same key with
+ * `gender_detail` and `show_gender_detail` beside it is the deployed one. Both
+ * decode. `{ identity: null }` is a Core that predates T-653 entirely — the
+ * member row still decodes and the panel stays read-only, because without
+ * `identity_revision` there is no second axis to guard a write with.
+ *
+ * The retired pair is still VALIDATED when served, and still all-or-none: a
+ * half-served or malformed legacy pair fails the whole member decode, exactly
+ * as it did before. What changed is that its ABSENCE is now the expected
+ * terminal shape rather than a partial read.
  */
 function memberIdentity(source: JsonObject): { identity: AudienceVisibilityMemberIdentity | null } | null {
-  const present = MEMBER_IDENTITY_KEYS.filter((key) => Object.hasOwn(source, key));
-  if (present.length === 0) return { identity: null };
-  if (present.length !== MEMBER_IDENTITY_KEYS.length) return null;
+  if (!MEMBER_IDENTITY_KEYS.every((key) => Object.hasOwn(source, key))) {
+    // A pre-T-653 Core serves neither the axis nor the retired pair. A body
+    // that carries the retired pair without the axis is not a shape any Core
+    // ever served and cannot be guarded, so it fails closed.
+    return MEMBER_IDENTITY_LEGACY_KEYS.some((key) => Object.hasOwn(source, key))
+      ? null
+      : { identity: null };
+  }
   const revision = integer(source.identity_revision, 0, 2_147_483_647);
+  if (revision === null) return null;
+  const legacy = MEMBER_IDENTITY_LEGACY_KEYS.filter((key) => Object.hasOwn(source, key));
+  if (legacy.length === 0) return { identity: { identity_revision: revision } };
+  if (legacy.length !== MEMBER_IDENTITY_LEGACY_KEYS.length) return null;
   const raw = source.gender_detail;
   const detail = raw === null
     ? null
     : typeof raw === "string" && GENDER_DETAIL.test(raw) ? raw : undefined;
   const shown = source.show_gender_detail;
-  if (revision === null || detail === undefined || typeof shown !== "boolean") return null;
+  if (detail === undefined || typeof shown !== "boolean") return null;
   // Core forces the disclosure toggle false when there is no detail to
   // disclose (`AudienceVisibilityAdminService::memberGenderDetail`), so the
   // pair cannot legitimately arrive as "no detail, shown".
   if (detail === null && shown) return null;
-  return {
-    identity: { identity_revision: revision, gender_detail: detail, show_gender_detail: shown },
-  };
+  return { identity: { identity_revision: revision, legacy_gender_detail: detail } };
 }
 
 function memberDetail(data: unknown): AudienceVisibilityMemberDetail | null {
@@ -785,7 +789,7 @@ function memberDetail(data: unknown): AudienceVisibilityMemberDetail | null {
     // An unresolved member has no canonical gender, so Core projects no detail
     // and no derived group, and the audience can only be the open default.
     return source.group === null && visibleTo === "both"
-      && (identity.identity === null || identity.identity.gender_detail === null)
+      && (identity.identity?.legacy_gender_detail ?? null) === null
       ? {
         contract_version: 1,
         uid,
@@ -1076,20 +1080,40 @@ function normalizeIntentLimit(body: JsonObject): JsonObject | null {
 }
 
 /**
- * T-653 §7b. The exact nine-field body, in the contract's order.
+ * T-653 §7b, in the contract's order — the EIGHT-field terminal body, or the
+ * deployed nine-field one when `gender_detail` is present.
+ *
+ * Both Cores validate this body with `strictRequired`, which refuses an
+ * unlisted key AND a missing listed one, so exactly one of the two bodies is
+ * acceptable at a time and the difference is not optional:
+ *
+ * - deployed `364c89e8` lists `gender_detail` → the eight-field body is
+ *   refused `audience-visibility-request-invalid`;
+ * - T-669 `1d108591` lists `gender_detail` as RETIRED → the nine-field body is
+ *   refused `feature-retired` (410).
+ *
+ * The choice is therefore made from what Core SERVED on the member, never from
+ * a console flag: `audienceVisibilityMemberIdentityBody()` includes the key iff
+ * the member payload carried it, and echoes the served value so the retired
+ * axis is never rewritten by a console that no longer edits it.
  *
  * `gender_detail` is a form field, so the empty string is the absent detail and
  * Core stores it as `null`. `expected_identity_revision` may be 0 — that is the
  * value a member with no canonical `identity_v2` echoes back, and the one that
- * creates the document. The retired identity axes have no branch here at all:
- * an exact body cannot carry `orientation` or `relationship_status`, so this
- * console can never reach the `feature-retired` refusal from its own controls.
+ * creates the document. The other retired identity axes have no branch here at
+ * all: an exact body cannot carry `orientation` or `relationship_status`.
  */
 function normalizeMemberIdentitySave(body: JsonObject): JsonObject | null {
-  const source = exactBody(body, [
-    "contract_version", "request_id", "expected_revision", "expected_identity_revision",
-    "audit_reason", "uid", "gender", "gender_detail", "visible_to",
-  ]);
+  const legacyDetail = Object.hasOwn(body, "gender_detail");
+  const source = exactBody(body, legacyDetail
+    ? [
+      "contract_version", "request_id", "expected_revision", "expected_identity_revision",
+      "audit_reason", "uid", "gender", "gender_detail", "visible_to",
+    ]
+    : [
+      "contract_version", "request_id", "expected_revision", "expected_identity_revision",
+      "audit_reason", "uid", "gender", "visible_to",
+    ]);
   const request = requestId(source?.request_id);
   const revision = integer(source?.expected_revision, 1, 2_147_483_647);
   const identityRevision = integer(source?.expected_identity_revision, 0, 2_147_483_647);
@@ -1098,13 +1122,15 @@ function normalizeMemberIdentitySave(body: JsonObject): JsonObject | null {
   const gender = oneOf(source?.gender, AUDIENCE_VISIBILITY_GENDERS);
   const visibleTo = oneOf(source?.visible_to, AUDIENCE_VISIBILITY_VALUES);
   const rawDetail = source?.gender_detail;
-  const detail = rawDetail === "" ? "" : typeof rawDetail === "string" && GENDER_DETAIL.test(rawDetail) ? rawDetail : null;
+  const detail = !legacyDetail
+    ? ""
+    : rawDetail === "" ? "" : typeof rawDetail === "string" && GENDER_DETAIL.test(rawDetail) ? rawDetail : null;
   if (source?.contract_version !== 1 || !request || revision === null || identityRevision === null
     || !reason || uid === null || !gender || !visibleTo || detail === null) return null;
   // Core enforces the same rule on the owner route; refusing it here keeps a
   // fixed-audience gender from spending a receipt on a certain refusal.
   if (gender === "nonbinary" && visibleTo !== "both") return null;
-  return Object.assign(Object.create(null), {
+  const normalized: JsonObject = Object.assign(Object.create(null), {
     contract_version: 1,
     request_id: request,
     expected_revision: revision,
@@ -1112,9 +1138,10 @@ function normalizeMemberIdentitySave(body: JsonObject): JsonObject | null {
     audit_reason: reason,
     uid,
     gender,
-    gender_detail: detail,
-    visible_to: visibleTo,
   });
+  if (legacyDetail) normalized.gender_detail = detail;
+  normalized.visible_to = visibleTo;
+  return normalized;
 }
 
 /** `undefined` is another family, `null` is refused, and an object alone may reach Core. */
@@ -1277,8 +1304,6 @@ export function audienceVisibilityGroupDraft(value: unknown) {
 export type AudienceVisibilityIdentityDraft = {
   /** `""` while an unresolved member has no gender chosen yet. */
   gender: AudienceVisibilityGender | "";
-  /** `""` is the absent detail, exactly as the form field travels. */
-  gender_detail: string;
   visible_to: AudienceVisibilityValue;
   audit_reason: string;
 };
@@ -1291,6 +1316,10 @@ export type AudienceVisibilityIdentityDraft = {
  * read the member cannot guess a revision. `null` covers a Core with no T-653
  * keys (nothing to guard with), an unchosen gender, an unusable audit reason,
  * and every shape the proxy would refuse anyway.
+ *
+ * The retired `gender_detail` is included iff the SERVED member carried it, and
+ * then only as an echo of the served value — the console has no control for it
+ * after T-669, so a save must leave that axis exactly as Core reported it.
  */
 export function audienceVisibilityMemberIdentityBody(
   member: AudienceVisibilityMemberDetail,
@@ -1298,7 +1327,7 @@ export function audienceVisibilityMemberIdentityBody(
   request: string,
 ): JsonObject | null {
   if (!member.identity || draft.gender === "") return null;
-  return normalizeMemberIdentitySave(Object.assign(Object.create(null), {
+  const command: JsonObject = Object.assign(Object.create(null), {
     contract_version: 1,
     request_id: request,
     expected_revision: member.revision,
@@ -1306,9 +1335,12 @@ export function audienceVisibilityMemberIdentityBody(
     audit_reason: draft.audit_reason,
     uid: member.uid,
     gender: draft.gender,
-    gender_detail: draft.gender_detail,
-    visible_to: draft.visible_to,
-  }));
+  });
+  if (member.identity.legacy_gender_detail !== undefined) {
+    command.gender_detail = member.identity.legacy_gender_detail ?? "";
+  }
+  command.visible_to = draft.visible_to;
+  return normalizeMemberIdentitySave(command);
 }
 
 /**
@@ -1324,7 +1356,7 @@ export function audienceVisibilityIdentityUnchanged(
   draft: AudienceVisibilityIdentityDraft,
 ): boolean {
   if (!member.identity || member.identity.identity_revision < 1) return false;
-  return member.gender === draft.gender
-    && (member.identity.gender_detail ?? "") === draft.gender_detail
-    && member.visible_to === draft.visible_to;
+  // The retired detail is echoed, never edited, so it can never differ and has
+  // no place in this comparison.
+  return member.gender === draft.gender && member.visible_to === draft.visible_to;
 }

@@ -122,16 +122,16 @@ export type UserProfileFields = {
   language: string;
   segment: { key: string; label: string };
   /**
-   * `gender`, `subgender`, `subgender_selected` and `updated_at` are the whole
-   * identity block under the active D-019 projection; `orientation`,
-   * `audience_status`, `channels` and `question_packs` are legacy keys that Core
-   * stops serving once audience-visibility readiness is true, and decode as `""`
-   * / `[]` from then on. See `userProfileFields()` for the two accepted shapes.
+   * `gender` and `updated_at` are the whole identity block after T-669
+   * (D-103 §6.4). `subgender` and `subgender_selected` were the D-019 pair and
+   * are no longer modelled: the T-669 Core stops serving them, the deployed
+   * Core still does, and the console renders neither. `orientation`,
+   * `audience_status`, `channels` and `question_packs` are the older legacy
+   * keys, absent under audience-visibility readiness and decoding as `""` /
+   * `[]` from then on. See `userProfileFields()` for the accepted shapes.
    */
   identity: {
     gender: string;
-    subgender: string;
-    subgender_selected: boolean;
     orientation: string;
     updated_at: number;
     audience_status: string;
@@ -140,17 +140,15 @@ export type UserProfileFields = {
   };
   /**
    * True only for the LEGACY identity shape — the one Core serves while
-   * `AudienceVisibilityReadinessService::ready()` is false, and the only state
-   * in which `save_user_profile_identity` still writes.
+   * `AudienceVisibilityReadinessService::ready()` is false.
    *
-   * Under readiness that route answers 410 `feature-retired` before it even
-   * reads the uid (`WebadminController::saveUserProfileIdentity()`), because
-   * canonical gender lives in `identity_v2` and the legacy write would
-   * re-derive the orientation-shaped keys the retirement migration cleared.
-   * The two facts move together — the closed four-key identity block and the
-   * refused write are both `ready()` — so the served shape is a sound
-   * indicator, and the editor renders the identity read-only rather than
-   * offering a save that can only fail. The V2 write arrives with T-653.
+   * It no longer gates an editor. T-669 makes
+   * `WebadminController::saveUserProfileIdentity()` answer 410
+   * `feature-retired` UNCONDITIONALLY, so the console has no legacy identity
+   * write left at all and canonical gender is edited only through the T-653
+   * audience-visibility panel. What this flag still says is whether Core is
+   * serving the pre-D-019 sidecar (`channels`, `question_packs`), which the
+   * derived-group summary renders when present.
    */
   identity_editable: boolean;
   /**
@@ -475,23 +473,24 @@ export function userProfileFields(value: unknown): UserProfileFields | null {
   const segment = record(source?.segment);
   const identity = record(source?.identity);
   const layout = record(source?.layout);
-  // The two identity shapes this route can carry.
+  // The identity shapes this route can carry. All three decode; only the
+  // required key set differs, and `gender` plus `updated_at` is the whole of it.
   //
-  // ACTIVE (post-D-019, what the deployed Core serves): exactly the four keys
-  // `gender`, `subgender`, `subgender_selected`, `updated_at`, assembled by
-  // `ProfileAttributeService::identityPayloadFromAudience()` whenever
+  // TERMINAL (T-669, `api` 1d108591): exactly `gender` and `updated_at`, from
+  // `ProfileAttributeService::identityPayloadFromAudience()`. Pinned at
+  // `tests/fixtures/audience_visibility_admin_wire_t669/owner-profile-fields-identity.json`.
+  //
+  // DEPLOYED (post-D-019, `api` 364c89e8): those two plus `subgender` and
+  // `subgender_selected`, served whenever
   // `AudienceVisibilityReadinessService::ready()` is true — true on the live
-  // server since 2026-08-28. Core pins the shape in
-  // `api/tests/fixtures/audience_visibility_wire/owner-profile-fields-identity.json`,
-  // mirrored byte-identically at
+  // server since 2026-08-28. Pinned byte-identically at
   // `tests/fixtures/audience_visibility_admin_wire/owner-profile-fields-identity.json`.
   //
-  // LEGACY (pre-D-019): those four keys plus `orientation`, `audience_status`,
-  // `channels` and `question_packs`. Served only while readiness is false, and
-  // kept here for the transition; T-634 may delete this branch once no Core in
-  // the fleet can produce it.
+  // LEGACY (pre-D-019): the deployed four plus `orientation`, `audience_status`,
+  // `channels` and `question_packs`. Served only while readiness is false.
   //
-  // A legacy key that IS present is validated exactly as it always was, so this
+  // The retired pair is IGNORED, not refused, so both shapes decode; every
+  // legacy key that IS present is validated exactly as it always was, so this
   // widens what is accepted without weakening any known value. `audience_status`
   // has been optional-with-a-default since the key existed and stays that way.
   const legacyIdentity = identity !== null && (
@@ -511,8 +510,6 @@ export function userProfileFields(value: unknown): UserProfileFields | null {
     || typeof segment.label !== "string"
     || !identity
     || typeof identity.gender !== "string"
-    || typeof identity.subgender !== "string"
-    || typeof identity.subgender_selected !== "boolean"
     || (legacyIdentity && typeof identity.orientation !== "string")
     || !channels
     || !questionPacks
@@ -617,8 +614,6 @@ export function userProfileFields(value: unknown): UserProfileFields | null {
     identity_editable: legacyIdentity,
     identity: {
       gender: identity.gender,
-      subgender: identity.subgender,
-      subgender_selected: identity.subgender_selected,
       orientation: typeof identity.orientation === "string" ? identity.orientation : "",
       updated_at: typeof identity.updated_at === "number" ? identity.updated_at : 0,
       audience_status: typeof identity.audience_status === "string" ? identity.audience_status : "",
@@ -667,12 +662,16 @@ export function identityOptionGroups(value: unknown): IdentityOptionGroup[] | nu
     });
   }
   const keys = result.map((group) => group.key);
-  // Core omits retired identity groups from the admin catalogue. Gender and
-  // detailed gender remain required for this editor; a legacy orientation
-  // group may coexist during a rolling deployment but is ignored by the UI.
-  return (result.length === 2 || result.length === 3)
+  // Core omits retired identity groups from the admin catalogue, and T-669
+  // leaves exactly one: `WebadminController::userProfileFields()` now projects
+  // `gender` alone, where the deployed Core projects gender, subgender and
+  // orientation. Gender is the only group any surface reads, so it is the only
+  // one required; the two retired groups may coexist during a rolling
+  // deployment and are ignored by the UI rather than refused.
+  return result.length >= 1
+    && result.length <= 3
     && new Set(keys).size === result.length
-    && ["gender", "subgender"].every((key) => keys.includes(key as IdentityOptionGroup["key"]))
+    && keys.includes("gender")
     ? result
     : null;
 }

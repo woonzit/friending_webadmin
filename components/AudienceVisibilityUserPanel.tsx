@@ -1,15 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
 import AudienceVisibilityIdentityEditor, {
-  type AudienceVisibilityDetailOption,
   type AudienceVisibilityIdentityNotice,
 } from "@/components/AudienceVisibilityIdentityEditor";
 import {
   AUDIENCE_VISIBILITY_IDENTITY_ACTIONS,
-  AUDIENCE_VISIBILITY_LEGACY_GENDER,
   audienceVisibilityAdminMe,
   audienceVisibilityConflict,
   audienceVisibilityError,
@@ -21,7 +19,6 @@ import {
   type AudienceVisibilityIdentityDraft,
   type AudienceVisibilityMemberDetail,
 } from "@/lib/audienceVisibilityAdmin";
-import type { IdentityOptionGroup } from "@/lib/profileFields";
 
 /**
  * Refusals that mean the panel's copy of the member is no longer the state Core
@@ -38,7 +35,14 @@ const RELOAD_ERRORS: ReadonlySet<string> = new Set([
   "feature-retired",
 ]);
 
-/** Error codes this editor has real copy for; anything else reports its code. */
+/**
+ * Error codes this editor has real copy for; anything else reports its code.
+ *
+ * The two gender-detail refusals stay mapped although T-669 removes the control
+ * that could provoke them: the DEPLOYED Core still validates the echoed detail,
+ * and a member holding a value its catalogue later retires would otherwise get
+ * a bare error code.
+ */
 const EDITOR_ERRORS: ReadonlySet<string> = new Set([
   "feature-retired",
   "identity-gender-invalid",
@@ -48,14 +52,9 @@ const EDITOR_ERRORS: ReadonlySet<string> = new Set([
   "audience-visibility-member-unresolved",
 ]);
 
-function localized(labels: Record<string, string>, locale: string): string {
-  return labels[locale] || labels[locale.split("-")[0]] || labels.en || labels.hu || "";
-}
-
 function draftFrom(detail: AudienceVisibilityMemberDetail): AudienceVisibilityIdentityDraft {
   return {
     gender: detail.gender === "nonbinary" ? "" : detail.gender ?? "",
-    gender_detail: detail.identity?.gender_detail ?? "",
     visible_to: detail.visible_to,
     audit_reason: "",
   };
@@ -63,17 +62,9 @@ function draftFrom(detail: AudienceVisibilityMemberDetail): AudienceVisibilityId
 
 export default function AudienceVisibilityUserPanel({
   uid,
-  identityGroups = [],
   onIdentitySaved,
 }: {
   uid: number;
-  /**
-   * Core's served detailed-gender catalogue (`user_profile_fields` →
-   * `identity_options`). The panel reads the labels from it rather than pinning
-   * the 25 detail keys, so an archived option still renders for the member who
-   * holds it and a catalogue change does not need a console release.
-   */
-  identityGroups?: readonly IdentityOptionGroup[];
   /**
    * A successful identity write changes the derived segment and the legacy
    * gender projection the rest of this page renders, so the page re-reads.
@@ -81,7 +72,6 @@ export default function AudienceVisibilityUserPanel({
   onIdentitySaved?: () => void;
 }) {
   const t = useTranslations("userDetail.audienceVisibility");
-  const locale = useLocale();
   const [state, setState] = useState<"loading" | "ready" | "error" | "hidden">("loading");
   const [detail, setDetail] = useState<AudienceVisibilityMemberDetail | null>(null);
   const [canWrite, setCanWrite] = useState(false);
@@ -123,17 +113,6 @@ export default function AudienceVisibilityUserPanel({
   }, [uid]);
 
   useEffect(() => { void load(); }, [load]);
-
-  const detailOptions = useMemo<AudienceVisibilityDetailOption[]>(() => {
-    const gender = draft?.gender;
-    if (!gender) return [];
-    const audience = AUDIENCE_VISIBILITY_LEGACY_GENDER[gender];
-    const options = identityGroups.find((group) => group.key === "subgender")?.options ?? [];
-    return options
-      .filter((option) => option.audiences.includes(audience)
-        && (option.active || option.key === draft?.gender_detail))
-      .map((option) => ({ key: option.key, label: localized(option.labels, locale) || option.key }));
-  }, [draft?.gender, draft?.gender_detail, identityGroups, locale]);
 
   function adopt(member: AudienceVisibilityMemberDetail, message: AudienceVisibilityIdentityNotice) {
     requestRef.current = null;
@@ -193,14 +172,12 @@ export default function AudienceVisibilityUserPanel({
         {state === "ready" && detail ? <dl className="detail-list">
           <div className="detail-row"><dt>{t("gender")}</dt><dd>{detail.gender ? t(`genders.${detail.gender}`) : t("unresolved")}</dd></div>
           <div className="detail-row"><dt>{t("visibleTo")}</dt><dd>{t(`visibleToValues.${detail.visible_to}`)}{detail.gender === "nonbinary" ? <small className="audience-visibility-fixed-note">{t("nonbinaryFixed")}</small> : null}</dd></div>
-          <div className="detail-row"><dt>{t("genderDetail")}</dt><dd>{detail.identity?.gender_detail ?? t("noGenderDetail")}</dd></div>
           <div className="detail-row"><dt>{t("group")}</dt><dd>{detail.group ? <><code>{detail.group.key}</code><small>{detail.group.legacy_segment}</small></> : t("groupUnresolved")}</dd></div>
           <div className="detail-row"><dt>{t("revision")}</dt><dd>{detail.revision}</dd></div>
         </dl> : null}
         {state === "ready" && detail && draft && canWrite && detail.identity ? (
           <AudienceVisibilityIdentityEditor
             member={detail}
-            detailOptions={detailOptions}
             draft={draft}
             busy={busy}
             notice={notice}

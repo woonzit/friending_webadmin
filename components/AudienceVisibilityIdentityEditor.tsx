@@ -25,8 +25,6 @@ export const AUDIENCE_VISIBILITY_OFFERED_GENDERS = ["woman", "man"] as const;
 /** "Ki láthatja az adatlapomat", in the owner's order (Nők / Férfiak / Mindenki). */
 export const AUDIENCE_VISIBILITY_OFFERED_AUDIENCES = ["female", "male", "both"] as const;
 
-export type AudienceVisibilityDetailOption = { key: string; label: string };
-
 export type AudienceVisibilityIdentityNotice = {
   tone: "success" | "error";
   text: string;
@@ -50,7 +48,6 @@ export function audienceVisibilityAuditReasonValid(value: string): boolean {
  */
 export default function AudienceVisibilityIdentityEditor({
   member,
-  detailOptions,
   draft,
   busy,
   notice,
@@ -58,7 +55,6 @@ export default function AudienceVisibilityIdentityEditor({
   onSubmit,
 }: {
   member: AudienceVisibilityMemberDetail;
-  detailOptions: readonly AudienceVisibilityDetailOption[];
   draft: AudienceVisibilityIdentityDraft;
   busy: boolean;
   notice: AudienceVisibilityIdentityNotice | null;
@@ -91,13 +87,7 @@ export default function AudienceVisibilityIdentityEditor({
     const gender = (AUDIENCE_VISIBILITY_OFFERED_GENDERS as readonly string[]).includes(value)
       ? value as AudienceVisibilityGender
       : "";
-    // A detail belongs to exactly one gender, so a stored `trans_woman` cannot
-    // survive a change to `man` — Core would answer
-    // `identity-gender-detail-mismatch`. Clearing it here keeps the refusal off
-    // the wire and shows the operator what will be written.
-    const keep = detailOptions.some((option) => option.key === draft.gender_detail)
-      && gender === draft.gender;
-    onChange({ ...draft, gender, gender_detail: keep ? draft.gender_detail : "" });
+    onChange({ ...draft, gender });
   }
 
   function setVisibleTo(value: string) {
@@ -121,19 +111,6 @@ export default function AudienceVisibilityIdentityEditor({
             : null}
           {AUDIENCE_VISIBILITY_OFFERED_GENDERS.map((gender) => (
             <option value={gender} key={gender}>{t(`genders.${gender}`)}</option>
-          ))}
-        </select>
-      </label>
-      <label className="field">
-        <span>{t("editor.genderDetail")}</span>
-        <select
-          value={draft.gender_detail}
-          disabled={busy || draft.gender === "" || detailOptions.length === 0}
-          onChange={(event) => onChange({ ...draft, gender_detail: event.target.value })}
-        >
-          <option value="">{t("editor.genderDetailNone")}</option>
-          {detailOptions.map((option) => (
-            <option value={option.key} key={option.key}>{option.label}</option>
           ))}
         </select>
       </label>
@@ -163,10 +140,7 @@ export default function AudienceVisibilityIdentityEditor({
         </small>
       </label>
       <p className="page-subtitle field-full">
-        {t("editor.disclosure", {
-          state: member.identity?.show_gender_detail ? common("yes") : common("no"),
-          revision: member.identity?.identity_revision ?? 0,
-        })}
+        {t("editor.disclosure", { revision: member.identity?.identity_revision ?? 0 })}
       </p>
       {notice ? (
         <div className={`alert alert-${notice.tone === "success" ? "success" : "error"} field-full`} role="status">

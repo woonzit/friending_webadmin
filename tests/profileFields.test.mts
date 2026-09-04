@@ -6,7 +6,6 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import UserProfileDataEditor, {
-  profileIdentityPayload,
 } from "../components/UserProfileDataEditor.tsx";
 import {
   identityOptionGroups,
@@ -374,16 +373,36 @@ test("identity option parser accepts the served gender catalogue without orienta
       }],
     },
   ];
+  // TERMINAL (T-669, Core 1d108591): `WebadminController::userProfileFields()`
+  // projects the gender group alone. This is the shape the console must decode
+  // or the whole /users/[uid] page darkens.
+  const terminal = identityOptionGroups(groups.slice(0, 1));
+  assert.deepEqual(terminal?.map((group) => group.key), ["gender"]);
+
+  // DEPLOYED (Core 364c89e8): gender plus the two retired groups, still
+  // decoded, still ignored by every surface.
   const parsed = identityOptionGroups(groups.slice(0, 2));
   assert.deepEqual(parsed?.map((group) => group.key), ["gender", "subgender"]);
   assert.deepEqual(parsed?.[1]?.options[0]?.audiences, ["male"]);
   assert.equal(identityOptionGroups(groups)?.length, 3, "a legacy orientation group stays rollout-compatible");
-  assert.equal(identityOptionGroups([]), null, "a missing gender vocabulary is not two loaded-empty selectors");
-  assert.equal(identityOptionGroups(groups.slice(1)), null, "gender and detailed gender remain required");
+
+  // Widening did not weaken the group that is actually read: gender is still
+  // required, duplicates are still refused, and a malformed row still fails.
+  assert.equal(identityOptionGroups([]), null, "a missing gender vocabulary is not a loaded-empty selector");
+  assert.equal(identityOptionGroups(groups.slice(1)), null, "the gender vocabulary remains required");
   assert.equal(identityOptionGroups([...groups, groups[0]]), null, "duplicates cannot stand in for a missing group");
+  assert.equal(
+    identityOptionGroups([{ ...groups[0], options: [{ key: 7, name_en: "Man", name_hu: "Férfi", audiences: [] }] }]),
+    null,
+    "a malformed option in the one served group is still a refusal",
+  );
 });
 
-test("registered-user identity editor renders and saves gender without orientation", async () => {
+test("the registered-user identity block is a read-only fact and offers no write", async () => {
+  // T-669 (D-103 §6.4): `save_user_profile_identity` is terminally 410
+  // `feature-retired`, so the editor keeps no identity draft, no gender select
+  // and no detailed-gender control at all — canonical gender is edited only in
+  // the T-653 audience-visibility panel.
   const identityGroups = identityOptionGroups([
     {
       key: "gender",
@@ -391,14 +410,8 @@ test("registered-user identity editor renders and saves gender without orientati
       name_hu: "Nem",
       options: [{ key: "male", name_en: "Man", name_hu: "Férfi", audiences: [], active: true }],
     },
-    {
-      key: "subgender",
-      name_en: "Detailed gender",
-      name_hu: "Részletes nemi identitás",
-      options: [{ key: "man", name_en: "Man", name_hu: "Férfi", audiences: ["male"], active: true }],
-    },
   ]);
-  assert.ok(identityGroups);
+  assert.ok(identityGroups, "the terminal single-group catalogue must decode");
   const data: UserProfileFields = {
     schema_version: 1,
     catalog_version: 1,
@@ -407,16 +420,14 @@ test("registered-user identity editor renders and saves gender without orientati
     segment: { key: "everyone", label: "Everyone" },
     identity: {
       gender: "male",
-      subgender: "man",
-      subgender_selected: true,
       orientation: "heterosexual",
       updated_at: 44,
       audience_status: "active",
       channels: ["people"],
       question_packs: ["common"],
     },
-    // The legacy (pre-D-019) shape is the only one whose identity write Core
-    // still accepts, so this is the branch that renders the two selects.
+    // A pre-D-019 Core still serves the sidecar; it renders the derived-group
+    // summary and nothing else.
     identity_editable: true,
     height: null,
     sections: [],
@@ -435,28 +446,16 @@ test("registered-user identity editor renders and saves gender without orientati
       onChange: () => {},
     }),
   ));
-  assert.match(markup, />Gender</);
-  assert.match(markup, />Detailed gender</);
+  assert.match(markup, />Gender</, "the gender the member holds is still shown");
+  assert.match(markup, />Man</, "and rendered through Core's own label");
+  assert.doesNotMatch(markup, /Detailed gender/);
   assert.doesNotMatch(markup, /Orientation/);
-  assert.equal(markup.match(/<select/g)?.length, 2);
+  assert.equal(markup.match(/<select/g)?.length, undefined, "no identity control at all");
 
-  assert.deepEqual(
-    profileIdentityPayload(123, 44, {
-      gender: "male",
-      subgender: "man",
-      subgenderSelected: true,
-    }, "en"),
-    {
-      uid: 123,
-      expected_updated_at: 44,
-      gender: "male",
-      subgender: "man",
-      subgender_selected: true,
-      lang: "en",
-    },
-  );
   const source = await readFile(new URL("../components/UserProfileDataEditor.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(source, /\borientation\b/);
+  assert.doesNotMatch(source, /adminCall\("save_user_profile_identity"/u);
+  assert.doesNotMatch(source, /profileIdentityPayload|subgender/u);
 });
 
 test("registered-user editor forwards the editable height only while Core serves it", async () => {
@@ -499,31 +498,64 @@ test("profile-field audience editor uses the shared gender and user-group select
   assert.match(userPage, /!parsedIdentityGroups/);
 });
 
-test("the deployed post-D-019 member payload decodes and renders (T-641)", async () => {
-  // Provenance: byte-identical copy of Core's
-  // `tests/fixtures/audience_visibility_wire/owner-profile-fields-identity.json`
-  // (generator `tests/audience_visibility_fixture_dump.php`, which asserts
-  // `array_keys($identity) === ['gender','subgender','subgender_selected','updated_at']`).
-  // The row and its sha256 were already published in this repository's copied
-  // manifest, so the body is manifest-bound without a manifest edit.
-  const fixtureDirectory = new URL("./fixtures/audience_visibility_admin_wire/", import.meta.url);
+/**
+ * Read the manifest-bound identity fragment from one of the two pinned corpora.
+ *
+ * `audience_visibility_admin_wire` is the DEPLOYED Core (`364c89e8`) and
+ * `audience_visibility_admin_wire_t669` is the T-669 Core (`1d108591`). Both
+ * bodies are byte-identical copies of Core's own
+ * `tests/fixtures/audience_visibility_wire/owner-profile-fields-identity.json`
+ * (generator `tests/audience_visibility_fixture_dump.php`), and both rows plus
+ * their sha256 come from the manifest Core published beside them.
+ */
+async function pinnedIdentityFragment(directory: string): Promise<Record<string, unknown>> {
+  const fixtureDirectory = new URL(`./fixtures/${directory}/`, import.meta.url);
   const manifest = JSON.parse(await readFile(new URL("manifest.json", fixtureDirectory), "utf8"));
   const row = manifest.fixtures.find(
     (entry: Record<string, string>) => entry.file === "owner-profile-fields-identity.json",
   );
-  assert.ok(row, "the identity fragment must stay listed in the copied Core manifest");
+  assert.ok(row, `${directory}: the identity fragment must stay listed in the copied Core manifest`);
   assert.equal(row.case, "owner_profile_fields_identity_fragment");
   const bytes = await readFile(new URL(row.file, fixtureDirectory));
   assert.equal(
     createHash("sha256").update(bytes).digest("hex"),
     row.sha256,
-    "owner-profile-fields-identity.json changed after Core publication",
+    `${directory}/owner-profile-fields-identity.json changed after Core publication`,
   );
-  const identity = JSON.parse(bytes.toString("utf8")).data.profile_fields.identity;
+  return JSON.parse(bytes.toString("utf8")).data.profile_fields.identity;
+}
+
+test("the T-669 identity fragment is the terminal two-key block and decodes", async () => {
+  const identity = await pinnedIdentityFragment("audience_visibility_admin_wire_t669");
+  assert.deepEqual(
+    Object.keys(identity),
+    ["gender", "updated_at"],
+    "the terminal identity contract is closed to exactly these two keys",
+  );
+  const parsed = userProfileFields({
+    schema_version: 1,
+    catalog_version: 1,
+    revision: 3,
+    language: "en",
+    segment: { key: "male_gay", label: "Gay men" },
+    identity,
+    layout: { schema_version: 1, revision: 2, sections: [] },
+    fields: [],
+  });
+  // `app/(dashboard)/users/[uid]/page.tsx` treats a null here as a page-level
+  // failure, so this single assertion is the whole member console under T-669.
+  assert.ok(parsed, "the T-669 Core payload must not darken /users/[uid]");
+  assert.equal(parsed.identity.gender, identity.gender);
+  assert.equal(parsed.identity.updated_at, identity.updated_at);
+  assert.equal(parsed.identity_editable, false);
+});
+
+test("the deployed post-D-019 member payload decodes and renders (T-641)", async () => {
+  const identity = await pinnedIdentityFragment("audience_visibility_admin_wire");
   assert.deepEqual(
     Object.keys(identity),
     ["gender", "subgender", "subgender_selected", "updated_at"],
-    "the active identity contract is closed to exactly these four keys",
+    "the deployed identity contract is closed to exactly these four keys",
   );
 
   // The shape `ProfileAttributeService::payload()` answers today: the four-key
@@ -585,9 +617,10 @@ test("the deployed post-D-019 member payload decodes and renders (T-641)", async
   // failure, so this single assertion is the whole member console.
   assert.ok(parsed, "the deployed Core payload must not darken /users/[uid]");
   assert.equal(parsed.identity.gender, identity.gender);
-  assert.equal(parsed.identity.subgender, identity.subgender);
-  assert.equal(parsed.identity.subgender_selected, identity.subgender_selected);
   assert.equal(parsed.identity.updated_at, identity.updated_at);
+  // The retired D-019 pair is IGNORED, not modelled and not refused.
+  assert.equal("subgender" in parsed.identity, false);
+  assert.equal("subgender_selected" in parsed.identity, false);
   // The retired keys decode as empty rather than as a refusal.
   assert.equal(parsed.identity.orientation, "");
   assert.equal(parsed.identity.audience_status, "");
@@ -651,7 +684,10 @@ test("the deployed post-D-019 member payload decodes and renders (T-641)", async
   // The stored values still read, resolved through the whole option list so an
   // archived row or a mismatched audience cannot blank them out.
   assert.match(markup, />Man</);
-  assert.match(markup, />Trans man</);
+  // T-669: the detailed gender is retired, so the fact row goes with the
+  // control even though this deployed Core still serves a catalogue for it.
+  assert.doesNotMatch(markup, />Trans man</);
+  assert.doesNotMatch(markup, /Detailed gender/);
   assert.equal(markup.match(/<select/g), null);
   assert.doesNotMatch(markup, /Save gender/);
   assert.doesNotMatch(markup, /Discovery channels/);
@@ -678,6 +714,20 @@ test("widening the member payload leaves every present value validated (T-641)",
   };
   assert.ok(userProfileFields(structuredClone(base)));
 
+  // T-669: the retired D-019 pair is ignored on read, so the terminal block
+  // decodes and a malformed leftover no longer darkens the page.
+  const terminal = structuredClone(base);
+  terminal.identity = { gender: "man", updated_at: 1800000000 };
+  assert.ok(userProfileFields(terminal));
+  for (const value of ["", 7, null, false]) {
+    const stale = structuredClone(base);
+    stale.identity = { ...terminal.identity, subgender: value, subgender_selected: value };
+    assert.ok(
+      userProfileFields(stale),
+      `a retired subgender leftover is ignored, not refused: ${JSON.stringify(value)}`,
+    );
+  }
+
   // A legacy identity is still decoded exactly as strictly as before: all four
   // retired keys must be present and well-typed together.
   const legacy = structuredClone(base);
@@ -694,7 +744,6 @@ test("widening the member payload leaves every present value validated (T-641)",
     ["channels", "mlm"],
     ["question_packs", [7]],
     ["gender", 1],
-    ["subgender_selected", "yes"],
   ] as Array<[string, unknown]>) {
     const broken = structuredClone(legacy);
     broken.identity = { ...broken.identity, [key]: value };

@@ -9,7 +9,6 @@ import {
   AUDIENCE_VISIBILITY_IDENTITY_ACTIONS,
   AUDIENCE_VISIBILITY_IDENTITY_CAPABILITIES,
   AUDIENCE_VISIBILITY_INITIAL_INTENT_KEYS,
-  AUDIENCE_VISIBILITY_LEGACY_GENDER,
   AUDIENCE_VISIBILITY_LEGACY_TYPES,
   AUDIENCE_VISIBILITY_MUTATION_ACTIONS,
   AUDIENCE_VISIBILITY_PENDING_STORAGE_KEY,
@@ -44,6 +43,7 @@ import {
   isAdminBridgeActionAuthorized,
 } from "../lib/adminActions.ts";
 import { adminHelpPageForPath } from "../lib/adminHelp.ts";
+import { signupPagesPayload } from "../lib/signupPages.ts";
 
 type Json = Record<string, any>;
 
@@ -581,6 +581,173 @@ test("all 59 published Core Webadmin fixtures are unchanged, manifest-bound, and
   }
 });
 
+test("the T-669 Core corpus is pinned beside the deployed one and every body still decodes", async () => {
+  // The SECOND pinned corpus. `audience_visibility_admin_wire` stays the
+  // DEPLOYED Core (`364c89e8`), byte-identical and untouched; this directory is
+  // the same 59 Webadmin bodies plus the identity fragment and the two signup
+  // catalogues, taken from the accepted T-669 tip (`api` 1d108591) with its own
+  // manifest. Until Core deploys, the console must satisfy BOTH — which is what
+  // pinning both, rather than replacing one, is for.
+  const directory = new URL("./fixtures/audience_visibility_admin_wire_t669/", import.meta.url);
+  const manifest = JSON.parse(await readFile(new URL("manifest.json", directory), "utf8"));
+  assert.deepEqual(Object.keys(manifest), [
+    "schema_version",
+    "source_commit",
+    "fixture_set_sha256",
+    "provenance",
+    "fixtures",
+  ]);
+  assert.equal(manifest.schema_version, 1);
+  // `9cf5c142` is the T-669 source commit ("retire legacy identity answers end
+  // to end"); `1d108591` is the branch tip, whose later commits touch only the
+  // Android contract fixture and the mechanical manifest rebind.
+  assert.equal(manifest.source_commit, "9cf5c14231abe4766bd028f0b64bfd41029f92c9");
+  assert.equal(
+    manifest.fixture_set_sha256,
+    "e8546d3d84110d52c1aaa362c44e98df001a80c7d46374bcc1202a38f609d815",
+  );
+  assert.equal(manifest.provenance.generator, "tests/audience_visibility_fixture_dump.php");
+  assert.equal(manifest.provenance.admin_wire_adapter, "Friending\\Support\\Webadmin::noStoreReply");
+  // The two corpora are two different Cores, not a copy of one.
+  const deployed = JSON.parse(await readFile(
+    new URL("manifest.json", FIXTURE_DIRECTORY),
+    "utf8",
+  ));
+  assert.notEqual(manifest.source_commit, deployed.source_commit);
+  assert.notEqual(manifest.fixture_set_sha256, deployed.fixture_set_sha256);
+
+  const rows = manifest.fixtures.filter((row: Json) => row.consumer === "webadmin");
+  assert.equal(rows.length, 59, "the Webadmin surface neither grew nor shrank under T-669");
+  const deployedRows = deployed.fixtures.filter((row: Json) => row.consumer === "webadmin");
+  assert.deepEqual(
+    rows.map((row: Json) => row.file),
+    deployedRows.map((row: Json) => row.file),
+    "the same 59 cases, so a body that changed changed because Core changed it",
+  );
+  const extra = ["owner-profile-fields-identity.json", "signup-catalog-en.json", "signup-catalog-hu.json"];
+  assert.deepEqual(
+    (await readdir(directory)).sort(),
+    [...rows.map((row: Json) => row.file), ...extra, "manifest.json"].sort(),
+  );
+
+  // Every body is manifest-bound and decodes by case, exactly as the deployed
+  // corpus does — the same branches, so a shape this console cannot read is a
+  // failure here rather than a blank panel in production.
+  const changed: string[] = [];
+  for (const row of [...rows, ...extra.map((file) => ({ file }))]) {
+    const bytes = await readFile(new URL(row.file, directory));
+    const published = manifest.fixtures.find((entry: Json) => entry.file === row.file);
+    assert.ok(published, row.file);
+    assert.equal(
+      createHash("sha256").update(bytes).digest("hex"),
+      published.sha256,
+      `${row.file} changed after Core publication`,
+    );
+    const deployedBytes = await readFile(new URL(row.file, FIXTURE_DIRECTORY)).catch(() => null);
+    if (deployedBytes !== null && !deployedBytes.equals(bytes)) changed.push(row.file);
+    if (extra.includes(row.file)) continue;
+    const body = JSON.parse(bytes.toString("utf8"));
+    if (row.file === "admin-catalog.json") {
+      assert.ok(audienceVisibilityCatalogResponse(body), row.file);
+    } else if (row.file.startsWith("admin-me-identity-")) {
+      assert.ok(audienceVisibilityIdentityAdminMe(body.data?.audience_visibility_identity), row.file);
+    } else if (row.file.startsWith("admin-me-")) {
+      assert.ok(audienceVisibilityAdminMe(body.data?.audience_visibility), row.file);
+    } else if (row.file === "admin-member-identity-conflict.json") {
+      assert.equal(audienceVisibilityConflict(body)?.kind, "member", row.file);
+    } else if (row.file.startsWith("admin-member-identity-error-")) {
+      assert.ok(audienceVisibilityError(body), row.file);
+    } else if (row.file.startsWith("admin-member-identity-")) {
+      assert.ok(audienceVisibilityMemberIdentityMutationResponse(body), row.file);
+    } else if (row.file === "admin-group-conflict.json" || row.file === "admin-intent-conflict.json") {
+      assert.ok(audienceVisibilityConflict(body), row.file);
+    } else if (row.file.startsWith("admin-group-") && row.file !== "admin-group-protected.json") {
+      assert.ok(audienceVisibilityGroupMutationResponse(body), row.file);
+    } else if (row.file.startsWith("admin-intent-")) {
+      assert.ok(audienceVisibilityIntentMutationResponse(body), row.file);
+    } else if (row.file.startsWith("admin-member-")) {
+      assert.ok(audienceVisibilityMemberDetailResponse(body), row.file);
+    } else {
+      assert.ok(audienceVisibilityError(body), row.file);
+    }
+  }
+
+  // What T-669 actually moved on this surface, named exactly. Anything else
+  // differing between the two corpora is drift this task did not intend.
+  assert.deepEqual(changed.sort(), [
+    // `selection_required_min`, additive on the intents row — a LATER Core
+    // change than the deployed corpus, unrelated to T-669 and not re-pinned
+    // here (the decoder already treats an absent minimum as 0).
+    "admin-intent-archive.json",
+    "admin-intent-conflict.json",
+    "admin-intent-create.json",
+    "admin-intent-edit.json",
+    "admin-intent-limit.json",
+    "admin-intent-noop.json",
+    "admin-intent-replay.json",
+    "admin-intent-restore.json",
+    // The retired identity pair leaves `memberProjection()`.
+    "admin-member-binary.json",
+    "admin-member-canonical.json",
+    "admin-member-identity-conflict.json",
+    // `identity-gender-detail-invalid` / `-mismatch` (422) become
+    // `feature-retired` (410).
+    "admin-member-identity-error-detail-mismatch.json",
+    "admin-member-identity-error-detail.json",
+    "admin-member-identity-noop.json",
+    "admin-member-identity-replay.json",
+    "admin-member-identity-save.json",
+    "admin-member-nonbinary.json",
+    "admin-member-unresolved.json",
+    // `{gender, subgender, subgender_selected, updated_at}` → `{gender, updated_at}`.
+    "owner-profile-fields-identity.json",
+  ]);
+});
+
+test("the T-669 signup identity catalogue is terminal, and the composer tolerates the deployed one", async () => {
+  // D-103 §6.4 in the wire Core actually serves: `groups` is exactly `gender`
+  // and `v2.identity` carries `genders` alone — no `gender_details`, no
+  // `gender_detail_note`, no `relationship_statuses`.
+  const directory = new URL("./fixtures/audience_visibility_admin_wire_t669/", import.meta.url);
+  for (const file of ["signup-catalog-en.json", "signup-catalog-hu.json"]) {
+    const data = JSON.parse(await readFile(new URL(file, directory), "utf8")).data;
+    assert.deepEqual(data.groups.map((group: Json) => group.key), ["gender"], file);
+    assert.deepEqual(Object.keys(data.v2.identity), ["genders"], file);
+    assert.deepEqual(
+      data.v2.identity.genders.map((row: Json) => row.key).sort(),
+      ["man", "woman"],
+      `${file}: the D-097 #1 gender vocabulary itself is untouched`,
+    );
+  }
+
+  // The console's own composer read (`list_signup_options`) carries the same
+  // catalogue under `catalog.groups`, which T-669 shrinks from nine groups to
+  // one. `signupPagesPayload` decodes the additive composer blocks and ignores
+  // that sibling entirely, so BOTH catalogues produce the same page layout.
+  const envelopes = JSON.parse(await readFile(
+    new URL("./fixtures/signup_pages_handoff/t689-signup-composer-envelopes.json", import.meta.url),
+    "utf8",
+  ));
+  for (const key of ["list_signup_options.empty", "list_signup_options.composed"]) {
+    const deployedEnvelope = envelopes[key];
+    assert.equal(
+      deployedEnvelope.catalog.groups.length,
+      9,
+      `${key}: the deployed catalogue still carries the retired groups`,
+    );
+    const terminalEnvelope = structuredClone(deployedEnvelope);
+    terminalEnvelope.catalog.groups = deployedEnvelope.catalog.groups.filter(
+      (group: Json) => group.key === "gender",
+    );
+    assert.deepEqual(
+      signupPagesPayload(terminalEnvelope),
+      signupPagesPayload(deployedEnvelope),
+      `${key}: the composer reads the same layout on either catalogue`,
+    );
+    assert.ok(signupPagesPayload(terminalEnvelope), key);
+  }
+});
+
 test("custom group material enforces canonical rules and the nonbinary fixed state", () => {
   const valid = {
     key: "friends_in_budapest",
@@ -628,7 +795,7 @@ test("member detail exposes only canonical known fields and one protected group"
   );
 });
 
-test("the three T-653 member keys decode all together, or not at all", () => {
+test("the T-653 member identity decodes on BOTH the deployed and the T-669 Core shapes", () => {
   const base = {
     contract_version: 1,
     uid: 7001,
@@ -637,30 +804,53 @@ test("the three T-653 member keys decode all together, or not at all", () => {
     revision: 3,
     group: { id: IDS[5], key: "female_for_both", legacy_segment: "female_bisexual" },
   };
-  const identity = { identity_revision: 4, gender_detail: "trans_woman", show_gender_detail: true };
+
+  // TERMINAL (T-669, Core 1d108591): `identity_revision` alone.
   assert.deepEqual(
-    audienceVisibilityMemberDetailResponse(success({ ...base, ...identity })),
-    { ...base, identity },
+    audienceVisibilityMemberDetailResponse(success({ ...base, identity_revision: 4 })),
+    { ...base, identity: { identity_revision: 4 } },
   );
+
+  // DEPLOYED (Core 364c89e8): the same axis with the retired pair beside it.
+  // The detail is carried as `legacy_gender_detail` only so the save can echo
+  // it back to a Core that still requires the field; nothing renders it.
+  const served = { identity_revision: 4, gender_detail: "trans_woman", show_gender_detail: true };
+  assert.deepEqual(
+    audienceVisibilityMemberDetailResponse(success({ ...base, ...served })),
+    { ...base, identity: { identity_revision: 4, legacy_gender_detail: "trans_woman" } },
+  );
+
   // 0 is the revision a member with no canonical document echoes back, and the
-  // one that creates it.
+  // one that creates it — on either shape.
   const created = { identity_revision: 0, gender_detail: null, show_gender_detail: false };
   assert.deepEqual(
     audienceVisibilityMemberDetailResponse(success({ ...base, ...created })),
-    { ...base, identity: created },
+    { ...base, identity: { identity_revision: 0, legacy_gender_detail: null } },
+  );
+  assert.deepEqual(
+    audienceVisibilityMemberDetailResponse(success({ ...base, identity_revision: 0 })),
+    { ...base, identity: { identity_revision: 0 } },
   );
 
-  // Partial, malformed, or internally impossible sets fail the whole decode
-  // rather than rendering half a payload as a proven state.
+  // A Core that predates T-653 serves no block at all: the row still decodes
+  // and the panel stays read-only.
+  assert.deepEqual(
+    audienceVisibilityMemberDetailResponse(success(base)),
+    { ...base, identity: null },
+  );
+
+  // Widening the accepted set did NOT weaken validation of a served pair: a
+  // partial, malformed, or internally impossible one still fails the whole
+  // decode rather than rendering half a payload as a proven state.
   for (const broken of [
     { identity_revision: 4, gender_detail: "trans_woman" },
     { identity_revision: 4, show_gender_detail: true },
     { gender_detail: "trans_woman", show_gender_detail: true },
-    { ...identity, identity_revision: -1 },
-    { ...identity, identity_revision: "4" },
-    { ...identity, gender_detail: "Trans_Woman" },
-    { ...identity, gender_detail: 7 },
-    { ...identity, show_gender_detail: "true" },
+    { ...served, identity_revision: -1 },
+    { ...served, identity_revision: "4" },
+    { ...served, gender_detail: "Trans_Woman" },
+    { ...served, gender_detail: 7 },
+    { ...served, show_gender_detail: "true" },
     { identity_revision: 4, gender_detail: null, show_gender_detail: true },
   ]) {
     assert.equal(
@@ -673,8 +863,9 @@ test("the three T-653 member keys decode all together, or not at all", () => {
   // An unresolved member has no canonical gender, so Core projects no detail.
   const unresolved = { ...base, gender: null, group: null };
   assert.ok(audienceVisibilityMemberDetailResponse(success({ ...unresolved, ...created })));
+  assert.ok(audienceVisibilityMemberDetailResponse(success({ ...unresolved, identity_revision: 0 })));
   assert.equal(
-    audienceVisibilityMemberDetailResponse(success({ ...unresolved, ...identity })),
+    audienceVisibilityMemberDetailResponse(success({ ...unresolved, ...served })),
     null,
   );
 });
@@ -938,7 +1129,7 @@ test("released routes and panels rely on Core capability gates without a second 
   assert.doesNotMatch(actions, /ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS/);
   assert.match(
     memberPage,
-    /<AudienceVisibilityUserPanel uid=\{uid\} identityGroups=\{identityGroups\} onIdentitySaved=\{load\} \/>/,
+    /<AudienceVisibilityUserPanel uid=\{uid\} onIdentitySaved=\{load\} \/>/,
   );
   assert.match(memberPanel, /audience_visibility_member_detail/);
   assert.doesNotMatch(memberPanel, /user_detail/);
@@ -1168,9 +1359,9 @@ test("the sibling identity block is decoded on its own and never widens the pinn
   assert.equal(adminActionAccess(SAVE), "write");
 });
 
-test("the identity save posts exactly the nine contract fields, and nothing else reaches Core", () => {
+test("the identity save posts the eight terminal fields, or the deployed nine, chosen by what Core SERVED", () => {
   const SAVE = AUDIENCE_VISIBILITY_IDENTITY_ACTIONS[0];
-  const member = audienceVisibilityMemberDetailResponse(success({
+  const memberBase = {
     contract_version: 1,
     uid: 880124,
     gender: "woman",
@@ -1178,70 +1369,129 @@ test("the identity save posts exactly the nine contract fields, and nothing else
     revision: 2,
     group: { id: IDS[4], key: "female_for_female", legacy_segment: "female_lesbian" },
     identity_revision: 4,
-    gender_detail: "trans_woman",
-    show_gender_detail: true,
-  }));
-  assert.ok(member);
-  const body = audienceVisibilityMemberIdentityBody(member, {
+  };
+  const draft = {
     gender: "man",
-    gender_detail: "trans_man",
     visible_to: "male",
     audit_reason: "Support ticket 4711: member asked for the correction",
-  }, UUID);
-  assert.deepEqual({ ...body }, {
+  } as const;
+  const common = {
     contract_version: 1,
     request_id: UUID,
     expected_revision: 2,
     expected_identity_revision: 4,
-    audit_reason: "Support ticket 4711: member asked for the correction",
+    audit_reason: draft.audit_reason,
     uid: 880124,
     gender: "man",
-    gender_detail: "trans_man",
-    visible_to: "male",
-  });
+  };
+
+  // TERMINAL Core (1d108591): eight fields, no `gender_detail`. Sending the
+  // key there is refused `feature-retired` (410), because T-669 moved it into
+  // `AudienceVisibilityAdminPolicy::RETIRED_IDENTITY_FIELDS`.
+  const terminal = audienceVisibilityMemberDetailResponse(success(memberBase));
+  assert.ok(terminal);
+  const terminalBody = audienceVisibilityMemberIdentityBody(terminal, draft, UUID);
+  assert.deepEqual({ ...terminalBody }, { ...common, visible_to: "male" });
+  assert.deepEqual(Object.keys(terminalBody ?? {}), [
+    "contract_version", "request_id", "expected_revision", "expected_identity_revision",
+    "audit_reason", "uid", "gender", "visible_to",
+  ]);
+
+  // DEPLOYED Core (364c89e8): nine fields. `strictRequired` there lists
+  // `gender_detail`, so the eight-field body is refused
+  // `audience-visibility-request-invalid`. The console echoes the SERVED value
+  // rather than inventing or clearing one — it no longer has a control for it.
+  const deployed = audienceVisibilityMemberDetailResponse(success({
+    ...memberBase,
+    gender_detail: "trans_woman",
+    show_gender_detail: true,
+  }));
+  assert.ok(deployed);
+  const deployedBody = audienceVisibilityMemberIdentityBody(deployed, draft, UUID);
+  assert.deepEqual({ ...deployedBody }, { ...common, gender_detail: "trans_woman", visible_to: "male" });
+  assert.deepEqual(Object.keys(deployedBody ?? {}), [
+    "contract_version", "request_id", "expected_revision", "expected_identity_revision",
+    "audit_reason", "uid", "gender", "gender_detail", "visible_to",
+  ]);
+  // A member the deployed Core serves with no detail echoes the empty string,
+  // which is how the absent detail travels on a form body.
+  const deployedNoDetail = audienceVisibilityMemberDetailResponse(success({
+    ...memberBase,
+    gender_detail: null,
+    show_gender_detail: false,
+  }));
+  assert.ok(deployedNoDetail);
+  assert.equal(
+    audienceVisibilityMemberIdentityBody(deployedNoDetail, draft, UUID)?.gender_detail,
+    "",
+  );
+
   // Both axes come from the payload the panel is displaying, so the command a
   // stale console builds is refused by Core, not silently repaired here.
-  assert.equal(body?.expected_revision, member.revision);
-  assert.equal(body?.expected_identity_revision, member.identity?.identity_revision);
+  assert.equal(terminalBody?.expected_revision, terminal.revision);
+  assert.equal(terminalBody?.expected_identity_revision, terminal.identity?.identity_revision);
 
-  // The proxy forwards this body unchanged and refuses every drift.
-  assert.deepEqual({ ...normalizeAudienceVisibilityProxyBody(SAVE, body as Record<string, unknown>) }, { ...body });
-  for (const drift of [
-    { orientation: "bisexual" },
-    { relationship_status: "single" },
-    { subgender: "trans_man" },
-    { show_gender_detail: true },
-    { lang: "hu" },
-    { admin_email: "someone@friending.com" },
-  ]) {
-    assert.equal(
-      normalizeAudienceVisibilityProxyBody(SAVE, { ...body, ...drift } as Record<string, unknown>),
-      null,
-      JSON.stringify(drift),
+  // The proxy forwards BOTH bodies unchanged and refuses every drift on each.
+  for (const body of [terminalBody, deployedBody]) {
+    assert.deepEqual(
+      { ...normalizeAudienceVisibilityProxyBody(SAVE, body as Record<string, unknown>) },
+      { ...body },
     );
+    for (const drift of [
+      { orientation: "bisexual" },
+      { relationship_status: "single" },
+      { subgender: "trans_man" },
+      { show_gender_detail: true },
+      { lang: "hu" },
+      { admin_email: "someone@friending.com" },
+    ]) {
+      assert.equal(
+        normalizeAudienceVisibilityProxyBody(SAVE, { ...body, ...drift } as Record<string, unknown>),
+        null,
+        JSON.stringify(drift),
+      );
+    }
+    for (const drift of [
+      { gender: "man " },
+      { gender: "male" },
+      { visible_to: "everyone" },
+      { expected_revision: 0 },
+      { expected_identity_revision: -1 },
+      { request_id: "not-a-uuid" },
+      { audit_reason: "" },
+      { audit_reason: " padded" },
+      { uid: 0 },
+      { gender: "nonbinary", visible_to: "male" },
+    ]) {
+      assert.equal(
+        normalizeAudienceVisibilityProxyBody(SAVE, { ...body, ...drift } as Record<string, unknown>),
+        null,
+        JSON.stringify(drift),
+      );
+    }
+    // 0 is the create path on either shape.
+    assert.ok(normalizeAudienceVisibilityProxyBody(
+      SAVE,
+      { ...body, expected_identity_revision: 0 } as Record<string, unknown>,
+    ));
   }
-  for (const drift of [
-    { gender: "man ", },
-    { gender: "male" },
-    { gender_detail: "Trans_Man" },
-    { visible_to: "everyone" },
-    { expected_revision: 0 },
-    { expected_identity_revision: -1 },
-    { request_id: "not-a-uuid" },
-    { audit_reason: "" },
-    { audit_reason: " padded" },
-    { uid: 0 },
-    { gender: "nonbinary", visible_to: "male" },
-  ]) {
-    assert.equal(
-      normalizeAudienceVisibilityProxyBody(SAVE, { ...body, ...drift } as Record<string, unknown>),
-      null,
-      JSON.stringify(drift),
-    );
-  }
-  // The empty string is the absent detail, and 0 is the create path.
-  assert.ok(normalizeAudienceVisibilityProxyBody(SAVE, { ...body, gender_detail: "" } as Record<string, unknown>));
-  assert.ok(normalizeAudienceVisibilityProxyBody(SAVE, { ...body, expected_identity_revision: 0 } as Record<string, unknown>));
+  // Widening did not weaken the retired field's own validation: a malformed
+  // echo is still refused, and the empty string is still the absent detail.
+  assert.equal(
+    normalizeAudienceVisibilityProxyBody(
+      SAVE,
+      { ...deployedBody, gender_detail: "Trans_Man" } as Record<string, unknown>,
+    ),
+    null,
+  );
+  assert.ok(normalizeAudienceVisibilityProxyBody(
+    SAVE,
+    { ...deployedBody, gender_detail: "" } as Record<string, unknown>,
+  ));
+  // The proxy accepts either exact body, so the CHOICE is the builder's alone:
+  // it is the only place that knows which shape Core served.
+  assert.equal(Object.hasOwn(terminalBody ?? {}, "gender_detail"), false);
+  assert.equal(Object.hasOwn(deployedBody ?? {}, "gender_detail"), true);
 
   // No T-653 keys on the member means no revisions to guard with, so no command.
   const preAmendment = audienceVisibilityMemberDetailResponse(success({
@@ -1256,35 +1506,42 @@ test("the identity save posts exactly the nine contract fields, and nothing else
   assert.equal(preAmendment.identity, null);
   assert.equal(
     audienceVisibilityMemberIdentityBody(preAmendment, {
-      gender: "man", gender_detail: "", visible_to: "male", audit_reason: "Reviewed",
+      gender: "man", visible_to: "male", audit_reason: "Reviewed",
     }, UUID),
     null,
   );
   // An unresolved member has no gender chosen yet, and an unusable reason is
   // refused before a receipt is spent.
   assert.equal(
-    audienceVisibilityMemberIdentityBody(member, {
-      gender: "", gender_detail: "", visible_to: "male", audit_reason: "Reviewed",
+    audienceVisibilityMemberIdentityBody(terminal, {
+      gender: "", visible_to: "male", audit_reason: "Reviewed",
     }, UUID),
     null,
   );
   assert.equal(
-    audienceVisibilityMemberIdentityBody(member, {
-      gender: "man", gender_detail: "", visible_to: "male", audit_reason: "x".repeat(301),
+    audienceVisibilityMemberIdentityBody(terminal, {
+      gender: "man", visible_to: "male", audit_reason: "x".repeat(301),
     }, UUID),
     null,
   );
 
   // An exact no-op is not offered: it would spend a receipt and an audit row
-  // for nothing. A member with no canonical document is never "unchanged".
-  assert.equal(audienceVisibilityIdentityUnchanged(member, {
-    gender: "woman", gender_detail: "trans_woman", visible_to: "female", audit_reason: "Reviewed",
-  }), true);
-  assert.equal(audienceVisibilityIdentityUnchanged(member, {
-    gender: "woman", gender_detail: "", visible_to: "female", audit_reason: "Reviewed",
-  }), false);
+  // for nothing. The retired detail is echoed, never edited, so it plays no
+  // part in the comparison on either shape.
+  for (const member of [terminal, deployed]) {
+    assert.equal(audienceVisibilityIdentityUnchanged(member, {
+      gender: "woman", visible_to: "female", audit_reason: "Reviewed",
+    }), true);
+    assert.equal(audienceVisibilityIdentityUnchanged(member, {
+      gender: "man", visible_to: "female", audit_reason: "Reviewed",
+    }), false);
+    assert.equal(audienceVisibilityIdentityUnchanged(member, {
+      gender: "woman", visible_to: "both", audit_reason: "Reviewed",
+    }), false);
+  }
+  // A member with no canonical document is never "unchanged".
   assert.equal(audienceVisibilityIdentityUnchanged(preAmendment, {
-    gender: "woman", gender_detail: "", visible_to: "female", audit_reason: "Reviewed",
+    gender: "woman", visible_to: "female", audit_reason: "Reviewed",
   }), false);
 });
 
@@ -1300,11 +1557,28 @@ test("the identity mutation, its conflict and its six refusals are decoded by na
     gender_detail: "trans_man",
     show_gender_detail: false,
   };
+  // The T-669 Core answers the same mutation with the terminal member body.
+  const terminalCanonical = {
+    contract_version: 1,
+    uid: 880124,
+    gender: "man",
+    visible_to: "male",
+    revision: 3,
+    group: { id: IDS[1], key: "male_for_male", legacy_segment: "male_gay" },
+    identity_revision: 5,
+  };
   const saved = audienceVisibilityMemberIdentityMutationResponse(success({
     contract_version: 1, member: canonical, replayed: false,
   }));
   assert.equal(saved?.replayed, false);
   assert.equal(saved?.member.identity?.identity_revision, 5);
+  assert.equal(
+    audienceVisibilityMemberIdentityMutationResponse(success({
+      contract_version: 1, member: terminalCanonical, replayed: false,
+    }))?.member.identity?.identity_revision,
+    5,
+    "the terminal mutation body is adopted exactly as the deployed one is",
+  );
   assert.equal(
     audienceVisibilityMemberIdentityMutationResponse(success({
       contract_version: 1, member: canonical, replayed: true,
@@ -1356,18 +1630,14 @@ test("the identity mutation, its conflict and its six refusals are decoded by na
   assert.equal(audienceVisibilityShouldRetainMutation("audience-visibility-stored-invalid"), true);
 });
 
-test("the console crosses between the V2 and legacy gender vocabularies in exactly one place", async () => {
-  // Core's `IdentityV2Policy::legacyGender()`, mirrored so the panel can filter
-  // the served `identity_options` — whose `audiences` carry the legacy tokens —
-  // without pinning the 25 detail keys themselves.
-  assert.deepEqual(AUDIENCE_VISIBILITY_LEGACY_GENDER, { man: "male", woman: "female", nonbinary: "other" });
-  for (const gender of AUDIENCE_VISIBILITY_GENDERS) {
-    assert.equal(typeof AUDIENCE_VISIBILITY_LEGACY_GENDER[gender], "string");
-  }
+test("the retired detailed-gender vocabulary and its cross-walk are gone from the console", async () => {
   const lib = await readFile(new URL("../lib/audienceVisibilityAdmin.ts", import.meta.url), "utf8");
-  // The detail vocabulary stays Core's. A pinned list here would be a second
-  // authority in the browser and a re-pin on every catalogue change.
+  // The detail vocabulary was always Core's; T-669 removes the console's last
+  // reason to name any of it. `AUDIENCE_VISIBILITY_LEGACY_GENDER` existed only
+  // to filter the served `identity_options` for the detail select that is now
+  // retired, so it goes with the control.
   assert.doesNotMatch(lib, /cis_woman|trans_woman|transfeminine|genderqueer/u);
+  assert.doesNotMatch(lib, /AUDIENCE_VISIBILITY_LEGACY_GENDER/u);
 });
 
 test("the users detail panel gates the editor on the sibling block and the page feeds it Core's catalogue", async () => {
@@ -1385,7 +1655,11 @@ test("the users detail panel gates the editor on the sibling block and the page 
   assert.doesNotMatch(panel, /save_user_profile_identity|orientation/u);
   // The read capability still comes from the block beside it, unchanged.
   assert.match(panel, /audienceVisibilityAdminMe\(meResponse\?\.audience_visibility\)/);
-  assert.match(page, /identityGroups=\{identityGroups\}/);
+  // T-669: the panel neither renders nor edits the retired detail, so it needs
+  // no catalogue from the page and offers no detail control.
+  assert.doesNotMatch(panel, /identityGroups|detailOptions|gender_detail/u);
+  assert.doesNotMatch(editor, /detailOptions|gender_detail|show_gender_detail/u);
+  assert.match(page, /<AudienceVisibilityUserPanel uid=\{uid\} onIdentitySaved=\{load\} \/>/);
   // T-653 §2a: the server session decodes the sibling block, tolerantly.
   assert.match(session, /audienceVisibilityIdentityWriteAuthorized\(result\.data\)/);
   assert.match(session, /audience_visibility_identity\?: unknown/);

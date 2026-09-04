@@ -427,7 +427,7 @@ test("the user-detail section gates are derived from the panels that page render
   // The released panel and its guide are no longer behind a source switch.
   // T-653 gave it two props: Core's served detailed-gender catalogue and the
   // page re-read a successful identity write needs. Neither is a gate.
-  assert.match(source, /<AudienceVisibilityUserPanel uid=\{uid\} identityGroups=\{identityGroups\} onIdentitySaved=\{load\} \/>/);
+  assert.match(source, /<AudienceVisibilityUserPanel uid=\{uid\} onIdentitySaved=\{load\} \/>/);
   assert.equal(page.sectionReady?.audienceVisibility, undefined);
   assert.ok(adminHelpSections(page).includes("audienceVisibility"));
 });

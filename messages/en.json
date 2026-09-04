@@ -5633,7 +5633,7 @@
         "visibleTo": "Who can see my profile",
         "auditReason": "Audit reason",
         "auditHint": "{count} of 300 characters. Core stores this reason on the audit record, not on the member.",
-        "disclosure": "The member's own choice to display the detailed gender is {state}; identity revision {revision}.",
+        "disclosure": "Identity revision {revision}.",
         "save": "Save identity",
         "saved": "Identity saved. Core recalculated the derived group and audited the change.",
         "replayed": "Core replayed the earlier command; nothing was written twice.",

@@ -5633,7 +5633,7 @@
         "visibleTo": "Ki láthatja az adatlapomat",
         "auditReason": "Naplózási indok",
         "auditHint": "{count} / 300 karakter. A Core ezt az indokot a naplóbejegyzésre menti, nem a tagra.",
-        "disclosure": "A tag saját döntése a részletes identitás megjelenítéséről: {state}; identitásrevízió: {revision}.",
+        "disclosure": "Identitásrevízió: {revision}.",
         "save": "Identitás mentése",
         "saved": "Az identitás mentve. A Core újraszámolta a származtatott csoportot, és naplózta a változást.",
         "replayed": "A Core a korábbi parancsot játszotta vissza; semmi nem íródott ki kétszer.",

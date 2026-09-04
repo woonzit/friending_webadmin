@@ -10,28 +10,6 @@ import {
   type UserProfileFields,
 } from "@/lib/profileFields";
 
-type IdentityDraft = {
-  gender: string;
-  subgender: string;
-  subgenderSelected: boolean;
-};
-
-export function profileIdentityPayload(
-  uid: number,
-  updatedAt: number,
-  identity: IdentityDraft,
-  lang: string,
-) {
-  return {
-    uid,
-    expected_updated_at: updatedAt,
-    gender: identity.gender,
-    subgender: identity.subgender,
-    subgender_selected: identity.subgenderSelected,
-    lang,
-  };
-}
-
 function localized(labels: Record<string, string>, locale: string): string {
   return labels[locale] || labels[locale.split("-")[0]] || labels.en || labels.hu || "";
 }
@@ -68,14 +46,6 @@ export function profileAnswersPayload(
   return payload;
 }
 
-function identityState(data: UserProfileFields): IdentityDraft {
-  return {
-    gender: data.identity.gender,
-    subgender: data.identity.subgender,
-    subgenderSelected: data.identity.subgender_selected,
-  };
-}
-
 export default function UserProfileDataEditor({
   uid,
   data,
@@ -92,25 +62,17 @@ export default function UserProfileDataEditor({
   const locale = useLocale();
   const [answers, setAnswers] = useState<Record<string, string[]>>(() => answerState(data));
   const [heightCm, setHeightCm] = useState<number | null>(data.height?.value ?? null);
-  const [identity, setIdentity] = useState<IdentityDraft>(() => identityState(data));
   const [fieldBusy, setFieldBusy] = useState(false);
-  const [identityBusy, setIdentityBusy] = useState(false);
   const [fieldNotice, setFieldNotice] = useState<{ kind: "success" | "error"; text: string } | null>(null);
-  const [identityNotice, setIdentityNotice] = useState<{ kind: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     setAnswers(answerState(data));
     setHeightCm(data.height?.value ?? null);
-    setIdentity(identityState(data));
   }, [data]);
 
   const groups = useMemo(
     () => Object.fromEntries(identityGroups.map((group) => [group.key, group])),
     [identityGroups],
-  );
-  const genderOptions = groups.gender?.options.filter((option) => option.active) ?? [];
-  const subgenderOptions = (groups.subgender?.options ?? []).filter(
-    (option) => option.active && option.audiences.includes(identity.gender),
   );
   const fieldsByKey = useMemo(
     () => new Map(data.fields.map((field) => [field.key, field])),
@@ -142,21 +104,10 @@ export default function UserProfileDataEditor({
    * audiences no longer include the member's canonical gender. An unknown key
    * falls back to itself rather than rendering as blank.
    */
-  function identityLabel(groupKey: "gender" | "subgender", value: string): string {
+  function identityLabel(value: string): string {
     if (!value) return "";
-    const option = (groups[groupKey]?.options ?? []).find((row) => row.key === value);
+    const option = (groups.gender?.options ?? []).find((row) => row.key === value);
     return option ? localized(option.labels, locale) || value : value;
-  }
-
-  function updateIdentity(nextGender: string) {
-    const validSubgender = (groups.subgender?.options ?? []).some(
-      (option) => option.key === identity.subgender && option.audiences.includes(nextGender),
-    );
-    setIdentity({
-      gender: nextGender,
-      subgender: validSubgender ? identity.subgender : "",
-      subgenderSelected: validSubgender && identity.subgenderSelected,
-    });
   }
 
   function toggle(field: ProfileField, optionKey: string, checked: boolean) {
@@ -203,38 +154,6 @@ export default function UserProfileDataEditor({
     }
     onChange(parsed);
     setFieldNotice({ kind: "success", text: t("saved") });
-  }
-
-  async function saveIdentity() {
-    if (!identity.gender) {
-      setIdentityNotice({ kind: "error", text: t("identityRequired") });
-      return;
-    }
-    setIdentityBusy(true);
-    setIdentityNotice(null);
-    const response = await adminCall(
-      "save_user_profile_identity",
-      profileIdentityPayload(uid, data.identity.updated_at, identity, locale),
-    );
-    setIdentityBusy(false);
-    const parsed = userProfileFields(response?.data);
-    if (!response?.success || !parsed) {
-      setIdentityNotice({
-        kind: "error",
-        text: response?.error === "profile-identity-conflict"
-          ? t("conflict")
-          // Core answers 410 `feature-retired` under audience-visibility
-          // readiness. The read-only branch below normally keeps this
-          // unreachable; it stays mapped so a Core that flips readiness
-          // between the read and the write explains itself.
-          : response?.error === "feature-retired"
-            ? t("identityRetired")
-            : t("identitySaveError"),
-      });
-      return;
-    }
-    onChange(parsed);
-    setIdentityNotice({ kind: "success", text: t("identitySaved") });
   }
 
   function renderHeightEditor(height: NonNullable<UserProfileFields["height"]>) {
@@ -338,40 +257,19 @@ export default function UserProfileDataEditor({
           <span className="badge badge-warning">{data.segment.label}</span>
         </div>
         <div className="panel-body form-grid">
-          {data.identity_editable ? (
-            <>
-              <label className="field">
-                <span>{t("gender")}</span>
-                <select value={identity.gender} disabled={identityBusy} onChange={(event) => updateIdentity(event.target.value)}>
-                  <option value="">{t("select")}</option>
-                  {genderOptions.map((option) => <option value={option.key} key={option.key}>{localized(option.labels, locale)}</option>)}
-                </select>
-              </label>
-              <label className="field">
-                <span>{t("subgender")}</span>
-                <select value={identity.subgender} disabled={identityBusy || !identity.gender} onChange={(event) => setIdentity({ ...identity, subgender: event.target.value, subgenderSelected: event.target.value ? identity.subgenderSelected : false })}>
-                  <option value="">{t("noSubgender")}</option>
-                  {subgenderOptions.map((option) => <option value={option.key} key={option.key}>{localized(option.labels, locale)}</option>)}
-                </select>
-              </label>
-              <label className="checkbox-field user-identity-display"><input type="checkbox" checked={identity.subgenderSelected} disabled={identityBusy || !identity.subgender} onChange={(event) => setIdentity({ ...identity, subgenderSelected: event.target.checked })} /><span>{t("showSubgender")}</span></label>
-            </>
-          ) : (
-            // Core refuses the legacy identity write under audience-visibility
-            // readiness, so an editable control here could only produce a
-            // failing save. The values stay visible as read-only facts; the V2
-            // write is the editor in the audience-visibility panel above
-            // (T-653), which carries the two revisions Core guards.
-            <>
-              <div className="system-option-notice field-full" role="note">
-                <strong>{t("identityReadOnlyTitle")}</strong>
-                <span>{t("identityReadOnlyCopy")}</span>
-              </div>
-              {renderBuiltinFact({ key: "gender", label: t("gender"), display_value: identityLabel("gender", identity.gender) })}
-              {renderBuiltinFact({ key: "subgender", label: t("subgender"), display_value: identityLabel("subgender", identity.subgender) })}
-              {renderBuiltinFact({ key: "subgender_selected", label: t("showSubgender"), display_value: identity.subgenderSelected ? common("yes") : common("no") })}
-            </>
-          )}
+          {/*
+            T-669 (D-103 §6.4): `save_user_profile_identity` answers 410
+            `feature-retired` unconditionally, so this panel has no write left
+            and the identity block is a read-only fact. Canonical gender is
+            edited in the T-653 audience-visibility panel above, which carries
+            the two revisions Core guards. The detailed gender is retired
+            outright and is not shown at all.
+          */}
+          <div className="system-option-notice field-full" role="note">
+            <strong>{t("identityReadOnlyTitle")}</strong>
+            <span>{t("identityReadOnlyCopy")}</span>
+          </div>
+          {renderBuiltinFact({ key: "gender", label: t("gender"), display_value: identityLabel(data.identity.gender) })}
           <div className="field-full user-cast-summary">
             <span><b>{t("derivedGroup")}</b>{data.segment.label}<code>{data.segment.key}</code></span>
             {data.identity_editable ? (
@@ -381,10 +279,6 @@ export default function UserProfileDataEditor({
               </>
             ) : null}
           </div>
-          {identityNotice ? <div className={`alert alert-${identityNotice.kind} field-full`} role="status">{identityNotice.text}</div> : null}
-          {data.identity_editable ? (
-            <div className="field-full editor-actions"><button className="button button-primary" type="button" disabled={identityBusy} onClick={() => void saveIdentity()}>{identityBusy ? common("saving") : t("saveIdentity")}</button></div>
-          ) : null}
         </div>
       </section>
 

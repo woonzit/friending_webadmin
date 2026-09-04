@@ -1,0 +1,1049 @@
+{
+    "schema_version": 1,
+    "source_commit": "9cf5c14231abe4766bd028f0b64bfd41029f92c9",
+    "fixture_set_sha256": "e8546d3d84110d52c1aaa362c44e98df001a80c7d46374bcc1202a38f609d815",
+    "provenance": {
+        "generator": "tests/audience_visibility_fixture_dump.php",
+        "generator_sha256": "dc95e517c1749e4c3c0f5ee23d23082b15c8f432969b905b989922771376c78d",
+        "app_wire_adapter": "Friending\\Core\\Response::wirePayload",
+        "admin_wire_adapter": "Friending\\Support\\Webadmin::noStoreReply",
+        "evaluated_at": 1800000000,
+        "source_paths": [
+            "composer.json",
+            "config/",
+            "public/",
+            "src/"
+        ]
+    },
+    "fixtures": [
+        {
+            "file": "app-capability-dormant.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "capability_dormant",
+            "consumer": "ios",
+            "sha256": "4a4bbe8a53ebb5745c42c0832c82c1dfb22d4bf8e718d1923ff293641a193c3a"
+        },
+        {
+            "file": "app-capability-ready.json",
+            "route": "/v1/app/ios_appconfig",
+            "case": "capability_ready",
+            "consumer": "ios",
+            "sha256": "3b01f0748016e0bf6855e407e0846b73fd3caf419f16c096172d6eaa760b8e97"
+        },
+        {
+            "file": "signup-catalog-en.json",
+            "route": "/v1/app/signup_options",
+            "case": "schema_2_full_en",
+            "consumer": "ios",
+            "sha256": "fc17ea812e25f274b1c18952933e5071bb2741f4d4a09640c033824a7167e23a"
+        },
+        {
+            "file": "signup-catalog-hu.json",
+            "route": "/v1/app/signup_options",
+            "case": "schema_2_full_hu",
+            "consumer": "ios",
+            "sha256": "6fd62ec0ed6e87b2dc16d34b9a43f41ae8d33f90c5510e80cbe078c38192fddc"
+        },
+        {
+            "file": "signup-catalog-unavailable.json",
+            "route": "/v1/app/signup_options",
+            "case": "selector_not_ready",
+            "consumer": "ios",
+            "sha256": "8f202e23555eeeaf60528f5714ea8dd91217cb4d0759d7ae456fb330f9b42f3d"
+        },
+        {
+            "file": "signup-catalog-version-invalid.json",
+            "route": "/v1/app/signup_options",
+            "case": "selector_version_invalid",
+            "consumer": "ios",
+            "sha256": "08697343e06760af3fc82aafecbdefb2f86f2179e0d0b1a247d59b3e31638305"
+        },
+        {
+            "file": "registration-accepted-man-male.json",
+            "route": "contract://signup-visibility-validation",
+            "case": "accepted_man_male",
+            "consumer": "provider",
+            "sha256": "168e5db2162992e2201349ddfd43eeaa80ee553b1ac97401bfa8e574f8233d58"
+        },
+        {
+            "file": "registration-accepted-man-female.json",
+            "route": "contract://signup-visibility-validation",
+            "case": "accepted_man_female",
+            "consumer": "provider",
+            "sha256": "1137e61910e03dc227bac81283509260f660799bb20c62ece0488abe3043c986"
+        },
+        {
+            "file": "registration-accepted-man-both.json",
+            "route": "contract://signup-visibility-validation",
+            "case": "accepted_man_both",
+            "consumer": "provider",
+            "sha256": "a9a985dff9709725a8564d34744ff9636959457a437368616c1f7d3511e0362d"
+        },
+        {
+            "file": "registration-accepted-woman-male.json",
+            "route": "contract://signup-visibility-validation",
+            "case": "accepted_woman_male",
+            "consumer": "provider",
+            "sha256": "a8e3c49e1f6d083d53fd1071be63b7dc472fa518fda43dbb819858ca8ddfb769"
+        },
+        {
+            "file": "registration-accepted-woman-female.json",
+            "route": "contract://signup-visibility-validation",
+            "case": "accepted_woman_female",
+            "consumer": "provider",
+            "sha256": "c91c24cb86569f088984392a1b8a8621a25053b5fe54c746c495447938f907ff"
+        },
+        {
+            "file": "registration-accepted-woman-both.json",
+            "route": "contract://signup-visibility-validation",
+            "case": "accepted_woman_both",
+            "consumer": "provider",
+            "sha256": "bc0bbd06092ef25534c2f93ad57b12a1e1b5a27b22d93a10a50a4aa6418f9350"
+        },
+        {
+            "file": "registration-accepted-nonbinary-both.json",
+            "route": "contract://signup-visibility-validation",
+            "case": "accepted_nonbinary_both",
+            "consumer": "provider",
+            "sha256": "7e8ddca1c8c29ad20f89f4c283504c2b3db8fb89156248c15fc2b43b037c2278"
+        },
+        {
+            "file": "registration-intents-empty.json",
+            "route": "contract://signup-visibility-validation",
+            "case": "accepted_intents_empty",
+            "consumer": "provider",
+            "sha256": "a2184bef0441ef93c7263d2bd01b1e3eb7c9d5c5596a3bdebf06d30745691364"
+        },
+        {
+            "file": "registration-intents-full.json",
+            "route": "contract://signup-visibility-validation",
+            "case": "accepted_intents_full",
+            "consumer": "provider",
+            "sha256": "01c6fa158657e4dc46dced39ed6c9680b322aa15eaf169626dc33015f1733782"
+        },
+        {
+            "file": "registration-legacy-default-both.json",
+            "route": "contract://legacy-registration-default",
+            "case": "legacy_default_both",
+            "consumer": "provider",
+            "sha256": "9cff15756154f1542742198251ce99f8c03aac23412a9fb7595146c20d837cd1"
+        },
+        {
+            "file": "registration-fixed-nonbinary.json",
+            "route": "/v1/iosuser/register",
+            "case": "signup-visible-to-fixed",
+            "consumer": "ios",
+            "sha256": "27ae63501f4bd49eb6f9d7a2dd8eda4e50ef3b2639e77639a36a7124a1b2fd50"
+        },
+        {
+            "file": "registration-visible-to-invalid.json",
+            "route": "/v1/iosuser/register",
+            "case": "signup-visible-to-invalid",
+            "consumer": "ios",
+            "sha256": "41cfc51d9a1844691aaa781d1da2796349461273ae624487ae62920f330956f1"
+        },
+        {
+            "file": "registration-retired-field.json",
+            "route": "/v1/iosuser/register",
+            "case": "signup-retired-field-present",
+            "consumer": "ios",
+            "sha256": "67c7e8332ed739ea4db5141782d5f5985f06e16eb8da1aeacced580823f8c3ec"
+        },
+        {
+            "file": "registration-intent-stale.json",
+            "route": "/v1/iosuser/register",
+            "case": "signup-intents-catalog-stale",
+            "consumer": "ios",
+            "sha256": "e03fc8c50691db703628c8f6600ce12c61252a5cca716c11ccba564f38e61231"
+        },
+        {
+            "file": "registration-catalog-unavailable.json",
+            "route": "/v1/iosuser/register",
+            "case": "signup-v2-catalog-unavailable",
+            "consumer": "ios",
+            "sha256": "8f202e23555eeeaf60528f5714ea8dd91217cb4d0759d7ae456fb330f9b42f3d"
+        },
+        {
+            "file": "registration-version-unsupported.json",
+            "route": "/v1/iosuser/register",
+            "case": "signup-v2-version-unsupported",
+            "consumer": "ios",
+            "sha256": "08697343e06760af3fc82aafecbdefb2f86f2179e0d0b1a247d59b3e31638305"
+        },
+        {
+            "file": "registration-identity-invalid.json",
+            "route": "/v1/iosuser/register",
+            "case": "signup-v2-identity-invalid",
+            "consumer": "ios",
+            "sha256": "7e7de1e8aa5770de8ccd2b3419f27688cff92d61c34a5dea437d4ec92375d50a"
+        },
+        {
+            "file": "registration-intents-invalid.json",
+            "route": "/v1/iosuser/register",
+            "case": "intents-selection-invalid",
+            "consumer": "ios",
+            "sha256": "a6a3fa89368a314b10ced1748b0f1ca4b0da30ae8a5a9e9cfc37ea9c6c984ea9"
+        },
+        {
+            "file": "registration-retired-gender.json",
+            "route": "/v1/iosuser/register",
+            "case": "retired_field_gender",
+            "consumer": "ios",
+            "sha256": "67c7e8332ed739ea4db5141782d5f5985f06e16eb8da1aeacced580823f8c3ec"
+        },
+        {
+            "file": "registration-retired-subgender.json",
+            "route": "/v1/iosuser/register",
+            "case": "retired_field_subgender",
+            "consumer": "ios",
+            "sha256": "67c7e8332ed739ea4db5141782d5f5985f06e16eb8da1aeacced580823f8c3ec"
+        },
+        {
+            "file": "registration-retired-subgenderselected.json",
+            "route": "/v1/iosuser/register",
+            "case": "retired_field_subgenderselected",
+            "consumer": "ios",
+            "sha256": "67c7e8332ed739ea4db5141782d5f5985f06e16eb8da1aeacced580823f8c3ec"
+        },
+        {
+            "file": "registration-retired-sexuality.json",
+            "route": "/v1/iosuser/register",
+            "case": "retired_field_sexuality",
+            "consumer": "ios",
+            "sha256": "67c7e8332ed739ea4db5141782d5f5985f06e16eb8da1aeacced580823f8c3ec"
+        },
+        {
+            "file": "registration-retired-relationshipstatus.json",
+            "route": "/v1/iosuser/register",
+            "case": "retired_field_relationshipstatus",
+            "consumer": "ios",
+            "sha256": "67c7e8332ed739ea4db5141782d5f5985f06e16eb8da1aeacced580823f8c3ec"
+        },
+        {
+            "file": "registration-retired-looking-for.json",
+            "route": "/v1/iosuser/register",
+            "case": "retired_field_looking_for",
+            "consumer": "ios",
+            "sha256": "67c7e8332ed739ea4db5141782d5f5985f06e16eb8da1aeacced580823f8c3ec"
+        },
+        {
+            "file": "registration-retired-orientation.json",
+            "route": "/v1/iosuser/register",
+            "case": "retired_field_orientation",
+            "consumer": "ios",
+            "sha256": "67c7e8332ed739ea4db5141782d5f5985f06e16eb8da1aeacced580823f8c3ec"
+        },
+        {
+            "file": "registration-retired-details-gay-body-hair.json",
+            "route": "/v1/iosuser/register",
+            "case": "retired_field_details_gay_body_hair",
+            "consumer": "ios",
+            "sha256": "67c7e8332ed739ea4db5141782d5f5985f06e16eb8da1aeacced580823f8c3ec"
+        },
+        {
+            "file": "registration-visible-to-missing.json",
+            "route": "/v1/iosuser/register",
+            "case": "visible_to_missing",
+            "consumer": "ios",
+            "sha256": "41cfc51d9a1844691aaa781d1da2796349461273ae624487ae62920f330956f1"
+        },
+        {
+            "file": "owner-profile-fields-identity.json",
+            "route": "/v1/iosuser/get_user_profile",
+            "case": "owner_profile_fields_identity_fragment",
+            "consumer": "ios",
+            "sha256": "d9b4055d8bf92a8cc121b975d5c59df98eb6ec140c1f922da279131f31f922d2"
+        },
+        {
+            "file": "owner-visibility-read-en.json",
+            "route": "/v1/profile/identity/visibility",
+            "case": "owner_read_en",
+            "consumer": "ios",
+            "sha256": "6d71f40b6c9eeea7fad342cc5192fe7a415b9fa3893ed10fdc84cf18818468d3"
+        },
+        {
+            "file": "owner-visibility-read-hu.json",
+            "route": "/v1/profile/identity/visibility",
+            "case": "owner_read_hu",
+            "consumer": "ios",
+            "sha256": "c6ffc7087b841f4288d51c0d804b06e3e5bcb8799acf26cdbfbf80317eb4fbcd"
+        },
+        {
+            "file": "owner-visibility-unresolved.json",
+            "route": "/v1/profile/identity/visibility",
+            "case": "gender_unresolved_read",
+            "consumer": "ios",
+            "sha256": "097fc12686e38de54868ad14c3696378219e62e2d8ada227501e3c44fe5d1707"
+        },
+        {
+            "file": "owner-visibility-nonbinary.json",
+            "route": "/v1/profile/identity/visibility",
+            "case": "nonbinary_fixed_read",
+            "consumer": "ios",
+            "sha256": "f2dee49e3a3a06668f3067f3b6952972083e0a5d784dce82a33df23ea47726d1"
+        },
+        {
+            "file": "owner-visibility-save-changed.json",
+            "route": "/v1/profile/identity/visibility/save",
+            "case": "changed",
+            "consumer": "ios",
+            "sha256": "a7c03485f1c2f7af410284ae3e33661b2b64dfc8761fd42e3da2963427862c5a"
+        },
+        {
+            "file": "owner-visibility-save-noop.json",
+            "route": "/v1/profile/identity/visibility/save",
+            "case": "no_op",
+            "consumer": "ios",
+            "sha256": "6d71f40b6c9eeea7fad342cc5192fe7a415b9fa3893ed10fdc84cf18818468d3"
+        },
+        {
+            "file": "owner-visibility-conflict.json",
+            "route": "/v1/profile/identity/visibility/save",
+            "case": "conflict",
+            "consumer": "ios",
+            "sha256": "3e6282b6ac1c10df3374d72264c65cf0233942aa09612abc1276381fd8368dcb"
+        },
+        {
+            "file": "owner-visibility-version-required.json",
+            "route": "/v1/profile/identity/visibility/save",
+            "case": "profile-visibility-contract-version-required",
+            "consumer": "ios",
+            "sha256": "064eb6427f5aabbb55aface62f70a51627688ae7ad7e1f58e435cd185108949e"
+        },
+        {
+            "file": "owner-visibility-version-invalid.json",
+            "route": "/v1/profile/identity/visibility/save",
+            "case": "profile-visibility-contract-version-invalid",
+            "consumer": "ios",
+            "sha256": "d7d9a56629c3382161da3e6c3d87d5b3287f37ff4ba70851339664f7472f410f"
+        },
+        {
+            "file": "owner-visibility-user-invalid.json",
+            "route": "/v1/profile/identity/visibility/save",
+            "case": "profile-visibility-user-invalid",
+            "consumer": "ios",
+            "sha256": "f8897f2623a3813ddd98f714696a71d167b794fd5b6711a48de8ddc300b39730"
+        },
+        {
+            "file": "owner-visibility-gender-unresolved-error.json",
+            "route": "/v1/profile/identity/visibility/save",
+            "case": "profile-visibility-gender-unresolved",
+            "consumer": "ios",
+            "sha256": "dc0ba1e17f05b536de3ba2269e83b4faf1ff450e54e88f168e40701b85e55398"
+        },
+        {
+            "file": "owner-visibility-value-invalid.json",
+            "route": "/v1/profile/identity/visibility/save",
+            "case": "profile-visibility-value-invalid",
+            "consumer": "ios",
+            "sha256": "73119f567b6073a071cd32ab47616dbdcf4d9f19f5d6e3ee7b32042ef7fb7b20"
+        },
+        {
+            "file": "owner-visibility-fixed-error.json",
+            "route": "/v1/profile/identity/visibility/save",
+            "case": "profile-visibility-fixed",
+            "consumer": "ios",
+            "sha256": "ca3b77ae82b8ae8e2905ca8743d036eece797923022318680f4f22e3053796bc"
+        },
+        {
+            "file": "owner-visibility-schema-unavailable.json",
+            "route": "/v1/profile/identity/visibility/save",
+            "case": "profile-visibility-schema-unavailable",
+            "consumer": "ios",
+            "sha256": "ef1f10b3e0ab59400f25e23df5980f8040ab40b4725181be4f589c18353a522d"
+        },
+        {
+            "file": "owner-visibility-write-failed.json",
+            "route": "/v1/profile/identity/visibility/save",
+            "case": "profile-visibility-write-failed",
+            "consumer": "ios",
+            "sha256": "6f9737cf6b9f609d7db94a3137964105a35d571b73e4cef1b0d9adb73c317b69"
+        },
+        {
+            "file": "owner-intents-empty.json",
+            "route": "/v1/profile/intents",
+            "case": "empty",
+            "consumer": "ios",
+            "sha256": "22c4a4fe4bbd0bbf99c0d7af58fff4f4c3def33a9e9b6751b5cf7c60992f2dfe"
+        },
+        {
+            "file": "owner-intents-selected.json",
+            "route": "/v1/profile/intents",
+            "case": "selected",
+            "consumer": "ios",
+            "sha256": "6db8ef1fce535a9cb1a59a445999babf4aba41d0da8e6315a328c6a445e11611"
+        },
+        {
+            "file": "owner-intents-blocked.json",
+            "route": "/v1/profile/intents",
+            "case": "blocked_and_stale",
+            "consumer": "ios",
+            "sha256": "2f5243214404830d15ac4424e74fedd695dd08c4e397198603d2e813cddf396a"
+        },
+        {
+            "file": "owner-intents-save.json",
+            "route": "/v1/profile/intents/save",
+            "case": "replacement_success",
+            "consumer": "ios",
+            "sha256": "6db8ef1fce535a9cb1a59a445999babf4aba41d0da8e6315a328c6a445e11611"
+        },
+        {
+            "file": "owner-intents-user-invalid.json",
+            "route": "/v1/profile/intents/save",
+            "case": "profile-intents-user-invalid",
+            "consumer": "ios",
+            "sha256": "33928876898cffe89b72735dc0502eff11dc6401a9ae1c1a38647eabfb1f521c"
+        },
+        {
+            "file": "owner-intents-version-invalid.json",
+            "route": "/v1/profile/intents/save",
+            "case": "profile-intents-version-invalid",
+            "consumer": "ios",
+            "sha256": "8601f10d762695dca035c3ade81691a1d6cfa8001fb5fbfe596133bded63e98d"
+        },
+        {
+            "file": "owner-intents-input-invalid.json",
+            "route": "/v1/profile/intents/save",
+            "case": "profile-intents-input-invalid",
+            "consumer": "ios",
+            "sha256": "6737285e7b2b678e813bb5dad7b433ff6ea34084e2a4d9ee7182ed41cdae089f"
+        },
+        {
+            "file": "owner-intents-conflict.json",
+            "route": "/v1/profile/intents/save",
+            "case": "profile-intents-conflict",
+            "consumer": "ios",
+            "sha256": "2423267ed0ccbbf4261774ff5b0993227dceeccc3b5027c952d16ca41b321bb2"
+        },
+        {
+            "file": "owner-intents-catalog-stale.json",
+            "route": "/v1/profile/intents/save",
+            "case": "profile-intents-catalog-stale",
+            "consumer": "ios",
+            "sha256": "b78765d4aa2b7c2e6a8bb6666049c0930e3bc607363490b437e4560d4700e8b5"
+        },
+        {
+            "file": "owner-intents-catalog-unavailable.json",
+            "route": "/v1/profile/intents/save",
+            "case": "profile-intents-catalog-unavailable",
+            "consumer": "ios",
+            "sha256": "b969a0ca7cb2656a7197eb7b6ad474503ba795b5be66d2fea9f86acfac11dcd4"
+        },
+        {
+            "file": "owner-intents-write-failed.json",
+            "route": "/v1/profile/intents/save",
+            "case": "profile-intents-write-failed",
+            "consumer": "ios",
+            "sha256": "9315b55aaeea9359c443a02b66720472f1042b5080533984ff86b60e21dfebf7"
+        },
+        {
+            "file": "owner-intents-retired-field.json",
+            "route": "/v1/profile/intents/save",
+            "case": "profile-intents-retired-field-present",
+            "consumer": "ios",
+            "sha256": "96e7993ba7664f17d0bfa9b73113b94622c6afa7180cd73df2a705499f99d365"
+        },
+        {
+            "file": "people-audience-empty-context.json",
+            "route": "/v1/people/audience",
+            "case": "retired_context",
+            "consumer": "ios",
+            "sha256": "59de610659f962f2701026b981132de12f0bba8ac8f9a20c7b9f76802221f0c1"
+        },
+        {
+            "file": "people-filters-looking-for-empty.json",
+            "route": "/v1/people/filters",
+            "case": "accepted_ignored_cleared",
+            "consumer": "ios",
+            "sha256": "f8c326bebf09f592c27b2e81713c40254cb506f19c1d62b9f0f775221ea8c363"
+        },
+        {
+            "file": "stranger-profile-incompatible.json",
+            "route": "/v1/iosuser/get_user_profile",
+            "case": "mutual_refusal",
+            "consumer": "ios",
+            "sha256": "7ab0df8fac4995513433f69719b0111e5836b8c10ee45ad88990d28cbc870d7d"
+        },
+        {
+            "file": "stranger-profile-compatible-scrubbed.json",
+            "route": "/v1/iosuser/get_user_profile",
+            "case": "private_fields_scrubbed",
+            "consumer": "ios",
+            "sha256": "40becd9b7e7117f4ae52672e983021c111d4179c56e57398c77c4db327913786"
+        },
+        {
+            "file": "policy-mutual-matrix.json",
+            "route": "contract://audience-visibility-policy",
+            "case": "full_bidirectional_matrix",
+            "consumer": "provider",
+            "sha256": "91314fc32baea30df177bab26b0007aec4501f2fdaf1ccfc127f6eb67b1d61bc"
+        },
+        {
+            "file": "established-friend-profile.json",
+            "route": "/v1/iosuser/get_user_profile",
+            "case": "friend_exception_before_predicate",
+            "consumer": "provider",
+            "sha256": "40becd9b7e7117f4ae52672e983021c111d4179c56e57398c77c4db327913786"
+        },
+        {
+            "file": "established-chat-profile.json",
+            "route": "/v1/ioschat/get_user_profile",
+            "case": "chat_exception_before_predicate",
+            "consumer": "provider",
+            "sha256": "40becd9b7e7117f4ae52672e983021c111d4179c56e57398c77c4db327913786"
+        },
+        {
+            "file": "blocked-established-profile.json",
+            "route": "/v1/iosuser/get_user_profile",
+            "case": "passive_access_retained",
+            "consumer": "provider",
+            "sha256": "40becd9b7e7117f4ae52672e983021c111d4179c56e57398c77c4db327913786"
+        },
+        {
+            "file": "blocked-new-outbound.json",
+            "route": "/v1/iosuser/start_new_friend",
+            "case": "block_overrides_new_reach",
+            "consumer": "provider",
+            "sha256": "7ab0df8fac4995513433f69719b0111e5836b8c10ee45ad88990d28cbc870d7d"
+        },
+        {
+            "file": "direct-album-list-incompatible.json",
+            "route": "/v1/profile/albums",
+            "case": "mutual_refusal_album_list",
+            "consumer": "provider",
+            "sha256": "7ab0df8fac4995513433f69719b0111e5836b8c10ee45ad88990d28cbc870d7d"
+        },
+        {
+            "file": "direct-album-image-incompatible.json",
+            "route": "/v1/profile/albums/images/source",
+            "case": "mutual_refusal_album_image",
+            "consumer": "provider",
+            "sha256": "7ab0df8fac4995513433f69719b0111e5836b8c10ee45ad88990d28cbc870d7d"
+        },
+        {
+            "file": "direct-footprint-catalog-incompatible.json",
+            "route": "/v1/footprints/catalog",
+            "case": "mutual_refusal_footprint_catalog",
+            "consumer": "provider",
+            "sha256": "7ab0df8fac4995513433f69719b0111e5836b8c10ee45ad88990d28cbc870d7d"
+        },
+        {
+            "file": "direct-footprint-send-incompatible.json",
+            "route": "/v1/footprints/send",
+            "case": "mutual_refusal_footprint_send",
+            "consumer": "provider",
+            "sha256": "7ab0df8fac4995513433f69719b0111e5836b8c10ee45ad88990d28cbc870d7d"
+        },
+        {
+            "file": "direct-pinger-send-incompatible.json",
+            "route": "/v1/pinger/send",
+            "case": "mutual_refusal_pinger_send",
+            "consumer": "provider",
+            "sha256": "7ab0df8fac4995513433f69719b0111e5836b8c10ee45ad88990d28cbc870d7d"
+        },
+        {
+            "file": "established-friend-album.json",
+            "route": "/v1/profile/albums",
+            "case": "friend_exception_before_predicate",
+            "consumer": "provider",
+            "sha256": "14e7f52a59dc0d2d15aa969fe24796b60d443848aef55c9b3b38ada097b0e763"
+        },
+        {
+            "file": "established-chat-album-image.json",
+            "route": "/v1/profile/albums/images/source",
+            "case": "chat_exception_before_predicate",
+            "consumer": "provider",
+            "sha256": "22e7ac792b3df7012d7effa7141695190f5d8625619bfdf68ad30bfa0fc2da5f"
+        },
+        {
+            "file": "anonymous-card-both.json",
+            "route": "/v1/public/profile",
+            "case": "anonymous_target_both",
+            "consumer": "provider",
+            "sha256": "34b9b1e54b80b1f13dd541159948f98b02980822855632c539519553be788ca4"
+        },
+        {
+            "file": "anonymous-card-male.json",
+            "route": "/v1/public/profile",
+            "case": "anonymous_target_male",
+            "consumer": "provider",
+            "sha256": "65f0a5e1d78dcb4e07254f47b8b09859d03afb3cb5a59e61fba7e0cd800ec737"
+        },
+        {
+            "file": "surface-people-list-count.json",
+            "route": "contract://visibility-people-list-count",
+            "case": "people_list_count_equivalence",
+            "consumer": "provider",
+            "sha256": "10807c4ad328122f6731e007249839443a8aa2fa82c3ac68ceb2a0f0087236a7"
+        },
+        {
+            "file": "surface-browse-list-count.json",
+            "route": "contract://visibility-browse-list-count",
+            "case": "browse_list_count_equivalence",
+            "consumer": "provider",
+            "sha256": "10807c4ad328122f6731e007249839443a8aa2fa82c3ac68ceb2a0f0087236a7"
+        },
+        {
+            "file": "surface-map-list-count.json",
+            "route": "contract://visibility-map-list-count",
+            "case": "map_list_count_equivalence",
+            "consumer": "provider",
+            "sha256": "10807c4ad328122f6731e007249839443a8aa2fa82c3ac68ceb2a0f0087236a7"
+        },
+        {
+            "file": "surface-dates-list-count.json",
+            "route": "contract://visibility-dates-list-count",
+            "case": "dates_list_count_equivalence",
+            "consumer": "provider",
+            "sha256": "10807c4ad328122f6731e007249839443a8aa2fa82c3ac68ceb2a0f0087236a7"
+        },
+        {
+            "file": "icebreaker-intents-independent.json",
+            "route": "contract://icebreaker-eligibility",
+            "case": "retired_and_replacement_intents_ignored",
+            "consumer": "provider",
+            "sha256": "c41f7a2aaf1beb6f959d173b1bda8d891f308176e36f7618f9139a15c738e37a"
+        },
+        {
+            "file": "projection-other-member-private-fields-absent.json",
+            "route": "contract://audience-private-field-projection",
+            "case": "other-member_negative_field_census",
+            "consumer": "provider",
+            "sha256": "0235627d2910a64b2e577581499d84ed06b9b4e9a4624a99a242b27daf9ef9f7"
+        },
+        {
+            "file": "projection-public-card-private-fields-absent.json",
+            "route": "contract://audience-private-field-projection",
+            "case": "public-card_negative_field_census",
+            "consumer": "provider",
+            "sha256": "ad538713371defb345ff76e88bc13fe7925cabe249ca5d0b3319a9e905ed275d"
+        },
+        {
+            "file": "projection-push-private-fields-absent.json",
+            "route": "contract://audience-private-field-projection",
+            "case": "push_negative_field_census",
+            "consumer": "provider",
+            "sha256": "ec2729fc8410466839d41e0037fc32dea308593c7865973e6e78ebb3d136b8d6"
+        },
+        {
+            "file": "projection-socket-private-fields-absent.json",
+            "route": "contract://audience-private-field-projection",
+            "case": "socket_negative_field_census",
+            "consumer": "provider",
+            "sha256": "6564a978ba8cb3b6140542fc85d69c79b890ec4d0c06599bae24e1547dc80083"
+        },
+        {
+            "file": "admin-me-dormant-editor.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "dormant-editor",
+            "consumer": "webadmin",
+            "sha256": "47160a9d2f1a249a73ca104d8cea5ee3d45f360393ff1765676a0c39d1993954"
+        },
+        {
+            "file": "admin-me-ready-viewer.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready-viewer",
+            "consumer": "webadmin",
+            "sha256": "65a923d6785cb744ba742650a88a6fc5cbf378f401ab36b9dca8905cdbb76705"
+        },
+        {
+            "file": "admin-me-ready-editor.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready-editor",
+            "consumer": "webadmin",
+            "sha256": "2357b641c73aa5e4bfc13395cdc8fe8017bd0845b3a3a6543d8cdaf879065378"
+        },
+        {
+            "file": "admin-me-ready-approver.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready-approver",
+            "consumer": "webadmin",
+            "sha256": "81d24dd8062167f3485e12bd07fd348cdf36a59796e3a7fd28149d166c5b0d27"
+        },
+        {
+            "file": "admin-me-ready-owner.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready-owner",
+            "consumer": "webadmin",
+            "sha256": "45e57f0190ae17162914686ed3711ca431aa72d04c7b8c4c990983f40f9868ee"
+        },
+        {
+            "file": "admin-me-revoked.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "revoked",
+            "consumer": "webadmin",
+            "sha256": "ea2f84c4e3f77d31dcd08660603793e24e4104022d7b2d10eaf1497cc0070abd"
+        },
+        {
+            "file": "admin-catalog.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "catalog_read",
+            "consumer": "webadmin",
+            "sha256": "68287cf52d16bb52e2cda6a7b71262262716d6fcaae556e7d90c59890c9769c1"
+        },
+        {
+            "file": "admin-member-binary.json",
+            "route": "/v1/webadmin/audience_visibility_member_detail",
+            "case": "member_binary",
+            "consumer": "webadmin",
+            "sha256": "3443b27d00130e48b766672ce9e057f835ea25a08f5cae60142b782d7f0305bf"
+        },
+        {
+            "file": "admin-member-nonbinary.json",
+            "route": "/v1/webadmin/audience_visibility_member_detail",
+            "case": "member_nonbinary",
+            "consumer": "webadmin",
+            "sha256": "890938668f50e5d4ed1b40224731b37fc9589b3de4cc0046017a249050d3081c"
+        },
+        {
+            "file": "admin-member-unresolved.json",
+            "route": "/v1/webadmin/audience_visibility_member_detail",
+            "case": "member_unresolved",
+            "consumer": "webadmin",
+            "sha256": "881c71b8be78876d30ebede62c4599ab2eb71ad3762115698e38333d5efaab24"
+        },
+        {
+            "file": "admin-member-canonical.json",
+            "route": "/v1/webadmin/audience_visibility_member_detail",
+            "case": "member_canonical",
+            "consumer": "webadmin",
+            "sha256": "1e09b0e6a1db5a8bd33d212f2208e0820ff542ac54ac5f519a7ed39d3c671205"
+        },
+        {
+            "file": "admin-member-identity-save.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "identity_save",
+            "consumer": "webadmin",
+            "sha256": "895f13dd3f53e316c13817676c0b5b1e3e2ca81703de9776e0216c146d88bc11"
+        },
+        {
+            "file": "admin-member-identity-noop.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "identity_no_op",
+            "consumer": "webadmin",
+            "sha256": "371a40857d779e2131f52cab2045553c018a4a2c3b550e918f7315f1285b7038"
+        },
+        {
+            "file": "admin-member-identity-replay.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "identity_replay",
+            "consumer": "webadmin",
+            "sha256": "8be2c8b012c29535cc3c93a5df27277cb075affdb19d79abd0d9a86eba57515d"
+        },
+        {
+            "file": "admin-member-identity-conflict.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "identity_conflict",
+            "consumer": "webadmin",
+            "sha256": "c8716a3ef7940a64de7c023a00cea72d9672e1d501a976580df5b4073cc9f78f"
+        },
+        {
+            "file": "admin-member-identity-error-retired.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "feature-retired",
+            "consumer": "webadmin",
+            "sha256": "b24cec87d1d4ec2823f5d01e5de89665c791cd8756bf618736b1242e3023b70b"
+        },
+        {
+            "file": "admin-member-identity-error-gender.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "identity-gender-invalid",
+            "consumer": "webadmin",
+            "sha256": "fd9cf6bbfaaf1a1cae6f23890a330f82d833bcc3dd214d4f5330ca1e203b92b2"
+        },
+        {
+            "file": "admin-member-identity-error-detail.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "feature-retired",
+            "consumer": "webadmin",
+            "sha256": "b24cec87d1d4ec2823f5d01e5de89665c791cd8756bf618736b1242e3023b70b"
+        },
+        {
+            "file": "admin-member-identity-error-detail-mismatch.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "feature-retired",
+            "consumer": "webadmin",
+            "sha256": "b24cec87d1d4ec2823f5d01e5de89665c791cd8756bf618736b1242e3023b70b"
+        },
+        {
+            "file": "admin-member-identity-error-fixed.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "profile-visibility-fixed",
+            "consumer": "webadmin",
+            "sha256": "ca3b77ae82b8ae8e2905ca8743d036eece797923022318680f4f22e3053796bc"
+        },
+        {
+            "file": "admin-member-identity-error-unresolved.json",
+            "route": "/v1/webadmin/save_audience_visibility_member_identity",
+            "case": "audience-visibility-member-unresolved",
+            "consumer": "webadmin",
+            "sha256": "dfdcfdc67dc49d1070f9954953f44fdcf7e803ae2a64122b2bcff2f3bd387ca8"
+        },
+        {
+            "file": "admin-me-identity-dormant-editor.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "dormant-editor",
+            "consumer": "webadmin",
+            "sha256": "185566b7efaa7638174a196d2fa01c26f1e7e7326134bbd941f76cda33732948"
+        },
+        {
+            "file": "admin-me-identity-ready-viewer.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready-viewer",
+            "consumer": "webadmin",
+            "sha256": "edd363cab400e86190c86b0906650a84abe6520b12be14d1486974addf6282e6"
+        },
+        {
+            "file": "admin-me-identity-ready-editor.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready-editor",
+            "consumer": "webadmin",
+            "sha256": "c5ec5928be067912f525cdd7005ac4f6d5319a5342bb05fb1bdf0964b383a442"
+        },
+        {
+            "file": "admin-me-identity-ready-owner.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "ready-owner",
+            "consumer": "webadmin",
+            "sha256": "63145d5290a76ae3d5d7ec90164f430e23b9c74f733f43383a5dc48e10cbeb9f"
+        },
+        {
+            "file": "admin-me-identity-revoked.json",
+            "route": "/v1/webadmin/admin_me",
+            "case": "revoked",
+            "consumer": "webadmin",
+            "sha256": "4b38f63b3088889f4ba29f3936a0540b000c1c0db219873b4fb8de228e670b19"
+        },
+        {
+            "file": "admin-group-create.json",
+            "route": "/v1/webadmin/save_audience_visibility_group",
+            "case": "create",
+            "consumer": "webadmin",
+            "sha256": "32c698c310350b5141c1a8f6e41c779cb397a9f930cd8119c03ff15849cc670d"
+        },
+        {
+            "file": "admin-group-update.json",
+            "route": "/v1/webadmin/save_audience_visibility_group",
+            "case": "update",
+            "consumer": "webadmin",
+            "sha256": "07bc4537e6f9b6eecffe03ca8cc60e6f7c56656b7cf12f6d0a3e74f68ee06760"
+        },
+        {
+            "file": "admin-group-noop.json",
+            "route": "/v1/webadmin/save_audience_visibility_group",
+            "case": "no_op",
+            "consumer": "webadmin",
+            "sha256": "07bc4537e6f9b6eecffe03ca8cc60e6f7c56656b7cf12f6d0a3e74f68ee06760"
+        },
+        {
+            "file": "admin-group-archive.json",
+            "route": "/v1/webadmin/save_audience_visibility_group",
+            "case": "archive",
+            "consumer": "webadmin",
+            "sha256": "ff5d350ea1b99d8d6abc71a51c4f5dc69d3c15d82d58af4592d6b62d50cfc91c"
+        },
+        {
+            "file": "admin-group-restore.json",
+            "route": "/v1/webadmin/save_audience_visibility_group",
+            "case": "restore",
+            "consumer": "webadmin",
+            "sha256": "6b9ae11e6710f5a2d063cd4e9c70ebf289d91f4f4ec7cc44345c2a984c6ed4a9"
+        },
+        {
+            "file": "admin-group-replay.json",
+            "route": "/v1/webadmin/save_audience_visibility_group",
+            "case": "replay",
+            "consumer": "webadmin",
+            "sha256": "2e2025224922bd61f2dcc7c80aa4090e7c6e5b72a0ba677033df39494963ce41"
+        },
+        {
+            "file": "admin-group-conflict.json",
+            "route": "/v1/webadmin/save_audience_visibility_group",
+            "case": "conflict",
+            "consumer": "webadmin",
+            "sha256": "f3520bf432fa9a877a7194468415b9b27416b4aa9dac92522989295a5b493fda"
+        },
+        {
+            "file": "admin-group-protected.json",
+            "route": "/v1/webadmin/archive_audience_visibility_group",
+            "case": "protected",
+            "consumer": "webadmin",
+            "sha256": "54bdbbf926813c6535057fe586ef1144b74076451647c202b12198b8428d947d"
+        },
+        {
+            "file": "admin-intent-create.json",
+            "route": "/v1/webadmin/save_audience_visibility_intent",
+            "case": "create",
+            "consumer": "webadmin",
+            "sha256": "aeb62fdec4dcc06da394fd98b1c7efcf94dcee3e6f81447dc713a6bf840c9ca6"
+        },
+        {
+            "file": "admin-intent-edit.json",
+            "route": "/v1/webadmin/save_audience_visibility_intent",
+            "case": "edit",
+            "consumer": "webadmin",
+            "sha256": "b1ef3270ec81d076faa45e0d459ac47d005e476db293b97be88dade7b3ae056f"
+        },
+        {
+            "file": "admin-intent-noop.json",
+            "route": "/v1/webadmin/save_audience_visibility_intent",
+            "case": "no_op",
+            "consumer": "webadmin",
+            "sha256": "46d3394456dee62ae6e85a6833092b9876b96469644fcfe11f421a529bb25135"
+        },
+        {
+            "file": "admin-intent-archive.json",
+            "route": "/v1/webadmin/save_audience_visibility_intent",
+            "case": "archive",
+            "consumer": "webadmin",
+            "sha256": "3b7d373b01ef641e1ff92002a3223dfd939494b16dac7bbb38ed2defe454c2e1"
+        },
+        {
+            "file": "admin-intent-restore.json",
+            "route": "/v1/webadmin/save_audience_visibility_intent",
+            "case": "restore",
+            "consumer": "webadmin",
+            "sha256": "31270628b21d98979aa305487540f78c97ee83e4b643830ccc71cdb8ca3d11ca"
+        },
+        {
+            "file": "admin-intent-limit.json",
+            "route": "/v1/webadmin/save_audience_visibility_intent",
+            "case": "limit",
+            "consumer": "webadmin",
+            "sha256": "e14a9439d4030ae3d9cdeaabc6747d03cc7ea978dd1d196c2ccbb6eaf8217d73"
+        },
+        {
+            "file": "admin-intent-replay.json",
+            "route": "/v1/webadmin/save_audience_visibility_intent",
+            "case": "replay",
+            "consumer": "webadmin",
+            "sha256": "ea12812237c580ceeb5daa32b7b4c8728b98b83bc9f8822c69ba97b8050abb73"
+        },
+        {
+            "file": "admin-intent-conflict.json",
+            "route": "/v1/webadmin/save_audience_visibility_intent",
+            "case": "conflict",
+            "consumer": "webadmin",
+            "sha256": "23d5a4bfabec206595de711e9f097b297974da149dc6cb1af52da5b3a7e790ed"
+        },
+        {
+            "file": "admin-error-unauthorized.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "unauthorized",
+            "consumer": "webadmin",
+            "sha256": "92a1f1484a7aae426dbcce31512c40eb078ddeb28fa893a4c7354c1303499c29"
+        },
+        {
+            "file": "admin-error-session-invalid.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "admin-session-invalid",
+            "consumer": "webadmin",
+            "sha256": "40972c7f616df32648d2df4eebaf02ea4510e9eb357e2248b18fe2f69769561e"
+        },
+        {
+            "file": "admin-error-revoked.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "admin-revoked",
+            "consumer": "webadmin",
+            "sha256": "7ca14279ec3e818347b77f76b3b2c68550e2977556e39510f0b89c138cfafa9b"
+        },
+        {
+            "file": "admin-error-capability.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "catalog-admin-capability-required",
+            "consumer": "webadmin",
+            "sha256": "efdc41d8ad5bbadc400596526a78579eb62990f28945bd8ef1a46c93558ca30c"
+        },
+        {
+            "file": "admin-error-version-required.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "audience-visibility-contract-version-required",
+            "consumer": "webadmin",
+            "sha256": "732327939e0e975c025561d764c1064ff15275ea4b0bbcde6d01c675a91f3656"
+        },
+        {
+            "file": "admin-error-version-invalid.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "audience-visibility-contract-version-invalid",
+            "consumer": "webadmin",
+            "sha256": "976866a1fb658b95dd07aa7e7f52060ae048d6b399d297583e2f8f01234f62b4"
+        },
+        {
+            "file": "admin-error-request-invalid.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "audience-visibility-request-invalid",
+            "consumer": "webadmin",
+            "sha256": "19bf1e477ba11b7425bc10d4b35a5d68a6eb17f20c5f5bcfbe07ed4f620e26b0"
+        },
+        {
+            "file": "admin-error-request-id-invalid.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "audience-visibility-request-id-invalid",
+            "consumer": "webadmin",
+            "sha256": "0eb59a7f5d8db003fc73290c0d106503335a1d95cfdecdcbfc062529c33a155c"
+        },
+        {
+            "file": "admin-error-request-id-conflict.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "audience-visibility-request-id-conflict",
+            "consumer": "webadmin",
+            "sha256": "d443cefd07ca945432233dcd6ab257c4916563995d66eb8c9d3672e97f03c486"
+        },
+        {
+            "file": "admin-error-request-in-progress.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "audience-visibility-request-in-progress",
+            "consumer": "webadmin",
+            "sha256": "df40966f706c7c5d5239f14538333dcd8b8c59d5afd946c905cc615e25de7be1"
+        },
+        {
+            "file": "admin-error-group-invalid.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "audience-visibility-group-invalid",
+            "consumer": "webadmin",
+            "sha256": "7aaeeaf3e84a6364659ce8c4be6bbdf612a686324340a64da3a224d4da09bca7"
+        },
+        {
+            "file": "admin-error-group-not-found.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "audience-visibility-group-not-found",
+            "consumer": "webadmin",
+            "sha256": "6a11f0f0e22c43f9f341b15b6f113d975251aa3dd382e51a5234acb9f8680d8a"
+        },
+        {
+            "file": "admin-error-member-not-found.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "audience-visibility-member-not-found",
+            "consumer": "webadmin",
+            "sha256": "085154370fa13f42807dc303349035ceb85d59b79d8524aeab992c41d923a171"
+        },
+        {
+            "file": "admin-error-stored-invalid.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "audience-visibility-stored-invalid",
+            "consumer": "webadmin",
+            "sha256": "d7fd270a9242d938d9f4afe96bbe46fa6faa02486affd2c773c6874bede48def"
+        },
+        {
+            "file": "admin-error-schema-unavailable.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "audience-visibility-schema-unavailable",
+            "consumer": "webadmin",
+            "sha256": "b7676a138c658deaae48367c96c16f35785ebf273d0c092eb4293a223fcbaaf9"
+        },
+        {
+            "file": "admin-error-write-failed.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "audience-visibility-write-failed",
+            "consumer": "webadmin",
+            "sha256": "a3f94ec0b9c970b32978840641d340f6f0150de4b7bdf2e0d408006b8000dad9"
+        },
+        {
+            "file": "admin-error-audit-write-failed.json",
+            "route": "/v1/webadmin/audience_visibility_catalog",
+            "case": "audience-visibility-audit-write-failed",
+            "consumer": "webadmin",
+            "sha256": "bfc2b92cbefe7a762b23c22c384da4e9400be6cb215594c6cd50339dcf2ab08c"
+        }
+    ]
+}
