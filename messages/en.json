@@ -5406,6 +5406,31 @@
     "notFound": "The requested user does not exist.",
     "noImages": "No profile images are available.",
     "noTags": "No profile tags are available.",
+    "trip": {
+      "title": "Trip",
+      "empty": "No active trip",
+      "destination": "Destination",
+      "arrival": "Arrival",
+      "departure": "Departure",
+      "visibleToLocals": "Visible to locals",
+      "yes": "yes",
+      "no": "no",
+      "intentsLabel": "Interests for this trip",
+      "intents": {
+        "new_friends": "New friends",
+        "activities": "Activities",
+        "networking": "Networking",
+        "local_tips": "Local tips",
+        "events": "Events",
+        "dates": "Dates"
+      },
+      "status": "Status",
+      "statuses": {
+        "active": "Active",
+        "cancelled": "Cancelled"
+      },
+      "updatedAt": "Last updated"
+    },
     "imageStatusActive": "Active",
     "imageStatusPending": "Pending review",
     "imageStatusRejected": "Rejected",

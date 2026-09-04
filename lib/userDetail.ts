@@ -39,6 +39,20 @@ export const AGE_DISPLAY_VALUES = ["exact", "generation", "hidden"] as const;
 
 export type AgeDisplay = (typeof AGE_DISPLAY_VALUES)[number];
 
+export const TRIP_INTENTS = ["new_friends", "activities", "networking", "local_tips", "events", "dates"] as const;
+export type TripIntent = (typeof TRIP_INTENTS)[number];
+
+export type UserDetailTrip = {
+  city: string;
+  country: string;
+  arrival_at: number;
+  departure_at: number;
+  show_to_locals: boolean;
+  intents: TripIntent[];
+  status: string;
+  updated_at: number;
+};
+
 export type UserDetailLocation = {
   city: string;
   region: string;
@@ -106,6 +120,8 @@ export type UserDetail = {
   push_channels: PushChannels | null;
   /** Bounded Core-authored gate for the separate Verification support read. */
   verification_access: VerificationAccess | null;
+  /** Stored operator data, independent of the member-facing Travel switch. */
+  trip: UserDetailTrip | null;
 };
 
 const MOD_STATUSES = ["accepted", "pending", "denied"] as const;
@@ -129,6 +145,38 @@ function ageDisplay(value: unknown): AgeDisplay | null {
   return typeof value === "string" && (AGE_DISPLAY_VALUES as readonly string[]).includes(value)
     ? value as AgeDisplay
     : null;
+}
+
+/** D-123: only this additive block degrades to null when absent or malformed. */
+function trip(value: unknown): UserDetailTrip | null {
+  const source = record(value);
+  if (!source) return null;
+  const boundedText = (value: unknown, max: number): value is string =>
+    typeof value === "string" && [...value].length <= max && !/[\u0000-\u001f\u007f]/u.test(value);
+  const timestamp = (value: unknown): value is number =>
+    typeof value === "number" && Number.isSafeInteger(value) && value >= 0 && value <= 8_640_000_000_000;
+  if (!boundedText(source.city, 120) || source.city.trim() === ""
+    || !boundedText(source.country, 120)
+    || !timestamp(source.arrival_at) || !timestamp(source.departure_at)
+    || source.departure_at < source.arrival_at || !timestamp(source.updated_at)
+    || typeof source.show_to_locals !== "boolean"
+    || !boundedText(source.status, 80) || source.status.trim() === ""
+    || !Array.isArray(source.intents) || source.intents.length > TRIP_INTENTS.length
+    || !source.intents.every((intent): intent is TripIntent =>
+      typeof intent === "string" && (TRIP_INTENTS as readonly string[]).includes(intent))
+    || new Set(source.intents).size !== source.intents.length) return null;
+
+  // Project only the eight display fields; extra keys (including coordinates) stay out of state.
+  return {
+    city: source.city,
+    country: source.country,
+    arrival_at: source.arrival_at,
+    departure_at: source.departure_at,
+    show_to_locals: source.show_to_locals,
+    intents: [...source.intents],
+    status: source.status,
+    updated_at: source.updated_at,
+  };
 }
 
 /** Non-finite and non-numeric both become 0, which every consumer renders as an em dash. */
@@ -268,5 +316,6 @@ export function userDetail(
     membership,
     push_channels: parsedPushChannels,
     verification_access: parsedVerificationAccess,
+    trip: trip(source.trip),
   };
 }

@@ -5406,6 +5406,31 @@
     "notFound": "A kért user nem létezik.",
     "noImages": "Nincsenek elérhető profilképek.",
     "noTags": "Nincsenek elérhető profilcímkék.",
+    "trip": {
+      "title": "Utazás",
+      "empty": "Nincs aktív utazás",
+      "destination": "Úti cél",
+      "arrival": "Érkezés",
+      "departure": "Távozás",
+      "visibleToLocals": "Helyieknek látható",
+      "yes": "igen",
+      "no": "nem",
+      "intentsLabel": "Az utazás céljai",
+      "intents": {
+        "new_friends": "Új barátok",
+        "activities": "Közös programok",
+        "networking": "Kapcsolatépítés",
+        "local_tips": "Helyi tippek",
+        "events": "Események",
+        "dates": "Randik"
+      },
+      "status": "Állapot",
+      "statuses": {
+        "active": "Aktív",
+        "cancelled": "Lemondva"
+      },
+      "updatedAt": "Utolsó frissítés"
+    },
     "imageStatusActive": "Aktív",
     "imageStatusPending": "Moderációra vár",
     "imageStatusRejected": "Elutasítva",

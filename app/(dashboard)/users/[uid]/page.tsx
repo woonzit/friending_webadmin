@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
 import { MemberAgePolicyRows } from "@/components/MemberAgePolicyRows";
+import { MemberTripPanel } from "@/components/MemberTripPanel";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import UserProfileDataEditor from "@/components/UserProfileDataEditor";
 import UserAlbumsPanel from "@/components/UserAlbumsPanel";
@@ -179,6 +180,7 @@ export default function UserDetailPage() {
         onChange={setProfileFields}
       />
       <div className="section-grid">
+        <MemberTripPanel trip={data.trip} />
         {detailSections.map((section) => (
           <section className="panel" key={section.title}>
             <div className="panel-header"><h2>{section.title}</h2></div>
