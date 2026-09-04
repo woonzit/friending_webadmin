@@ -1,0 +1,377 @@
+{
+    "schema_version": 1,
+    "task": "T-730",
+    "decision": "D-122",
+    "capture": {
+        "presentation_seeded": {
+            "note": "POST /v1/webadmin/profile_presentation -> data, with no profile_presentation_sources document stored.",
+            "generation_builtin": {
+                "schema_version": 1,
+                "source_kind": "builtin",
+                "source_key": "generation",
+                "labels": {
+                    "en": "Generation",
+                    "hu": "Generáció"
+                },
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "option_labels": {
+                    "genZ": {
+                        "en": "Gen Z",
+                        "hu": "Z generáció"
+                    },
+                    "millennial": {
+                        "en": "Millennial",
+                        "hu": "Millenniumi generáció"
+                    },
+                    "genX": {
+                        "en": "Gen X",
+                        "hu": "X generáció"
+                    },
+                    "boomer": {
+                        "en": "Boomer",
+                        "hu": "Baby boomer"
+                    }
+                },
+                "option_icons": {
+                    "genZ": {
+                        "url": "",
+                        "mime": ""
+                    },
+                    "millennial": {
+                        "url": "",
+                        "mime": ""
+                    },
+                    "genX": {
+                        "url": "",
+                        "mime": ""
+                    },
+                    "boomer": {
+                        "url": "",
+                        "mime": ""
+                    }
+                },
+                "layout_allowed": true,
+                "dedicated_section": "",
+                "revision": 0,
+                "updated_at": 0
+            },
+            "builtin_without_option_vocabulary": {
+                "schema_version": 1,
+                "source_kind": "builtin",
+                "source_key": "work",
+                "labels": {
+                    "en": "Work",
+                    "hu": "Munkahely"
+                },
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "option_labels": [],
+                "option_icons": [],
+                "layout_allowed": true,
+                "dedicated_section": "",
+                "revision": 0,
+                "updated_at": 0
+            }
+        },
+        "save_four_icons_structured": {
+            "note": "POST /v1/webadmin/save_profile_presentation_source with option_icons + option_labels.",
+            "request": {
+                "source_key": "generation",
+                "expected_revision": 0,
+                "labels": {
+                    "en": "Generation",
+                    "hu": "Generáció"
+                },
+                "icon_url": "",
+                "icon_mime": "",
+                "option_icons": {
+                    "genZ": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/genz.svg",
+                        "mime": "image/svg+xml"
+                    },
+                    "millennial": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/millennial.svg",
+                        "mime": "image/svg+xml"
+                    },
+                    "genX": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/genx.svg",
+                        "mime": "image/svg+xml"
+                    },
+                    "boomer": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/boomer.png",
+                        "mime": "image/png"
+                    }
+                },
+                "option_labels": {
+                    "genZ": {
+                        "en": "Gen Z",
+                        "hu": "Z generáció"
+                    },
+                    "millennial": {
+                        "en": "Millennial",
+                        "hu": "Millenniumi generáció"
+                    },
+                    "genX": {
+                        "en": "Gen X",
+                        "hu": "X generáció"
+                    },
+                    "boomer": {
+                        "en": "Boomer",
+                        "hu": "Baby boomer"
+                    }
+                }
+            },
+            "generation_builtin": {
+                "schema_version": 1,
+                "source_kind": "builtin",
+                "source_key": "generation",
+                "labels": {
+                    "en": "Generation",
+                    "hu": "Generáció"
+                },
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "option_labels": {
+                    "genZ": {
+                        "en": "Gen Z",
+                        "hu": "Z generáció"
+                    },
+                    "millennial": {
+                        "en": "Millennial",
+                        "hu": "Millenniumi generáció"
+                    },
+                    "genX": {
+                        "en": "Gen X",
+                        "hu": "X generáció"
+                    },
+                    "boomer": {
+                        "en": "Boomer",
+                        "hu": "Baby boomer"
+                    }
+                },
+                "option_icons": {
+                    "genZ": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/genz.svg",
+                        "mime": "image/svg+xml"
+                    },
+                    "millennial": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/millennial.svg",
+                        "mime": "image/svg+xml"
+                    },
+                    "genX": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/genx.svg",
+                        "mime": "image/svg+xml"
+                    },
+                    "boomer": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/boomer.png",
+                        "mime": "image/png"
+                    }
+                },
+                "layout_allowed": true,
+                "dedicated_section": "",
+                "revision": 1,
+                "updated_at": 1788537777,
+                "updated_by": "fixture@friending.test"
+            }
+        },
+        "save_labels_only": {
+            "note": "The console omits every option the operator did not touch; Core keeps what is stored.",
+            "request": {
+                "source_key": "generation",
+                "expected_revision": 1,
+                "labels": {
+                    "en": "Generation",
+                    "hu": "Korosztály"
+                },
+                "icon_url": "",
+                "icon_mime": ""
+            },
+            "generation_builtin": {
+                "schema_version": 1,
+                "source_kind": "builtin",
+                "source_key": "generation",
+                "labels": {
+                    "en": "Generation",
+                    "hu": "Korosztály"
+                },
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "option_labels": {
+                    "genZ": {
+                        "en": "Gen Z",
+                        "hu": "Z generáció"
+                    },
+                    "millennial": {
+                        "en": "Millennial",
+                        "hu": "Millenniumi generáció"
+                    },
+                    "genX": {
+                        "en": "Gen X",
+                        "hu": "X generáció"
+                    },
+                    "boomer": {
+                        "en": "Boomer",
+                        "hu": "Baby boomer"
+                    }
+                },
+                "option_icons": {
+                    "genZ": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/genz.svg",
+                        "mime": "image/svg+xml"
+                    },
+                    "millennial": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/millennial.svg",
+                        "mime": "image/svg+xml"
+                    },
+                    "genX": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/genx.svg",
+                        "mime": "image/svg+xml"
+                    },
+                    "boomer": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/boomer.png",
+                        "mime": "image/png"
+                    }
+                },
+                "layout_allowed": true,
+                "dedicated_section": "",
+                "revision": 2,
+                "updated_at": 1788537777,
+                "updated_by": "fixture@friending.test"
+            }
+        },
+        "save_clear_one_icon": {
+            "note": "Clearing is an empty url on that option only; the other three survive.",
+            "request": {
+                "source_key": "generation",
+                "expected_revision": 2,
+                "labels": {
+                    "en": "Generation",
+                    "hu": "Korosztály"
+                },
+                "icon_url": "",
+                "icon_mime": "",
+                "option_icons": {
+                    "boomer": {
+                        "url": "",
+                        "mime": ""
+                    }
+                }
+            },
+            "generation_builtin": {
+                "schema_version": 1,
+                "source_kind": "builtin",
+                "source_key": "generation",
+                "labels": {
+                    "en": "Generation",
+                    "hu": "Korosztály"
+                },
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "option_labels": {
+                    "genZ": {
+                        "en": "Gen Z",
+                        "hu": "Z generáció"
+                    },
+                    "millennial": {
+                        "en": "Millennial",
+                        "hu": "Millenniumi generáció"
+                    },
+                    "genX": {
+                        "en": "Gen X",
+                        "hu": "X generáció"
+                    },
+                    "boomer": {
+                        "en": "Boomer",
+                        "hu": "Baby boomer"
+                    }
+                },
+                "option_icons": {
+                    "genZ": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/genz.svg",
+                        "mime": "image/svg+xml"
+                    },
+                    "millennial": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/millennial.svg",
+                        "mime": "image/svg+xml"
+                    },
+                    "genX": {
+                        "url": "https://img.friending.co/api/cache/admin/profile-icons/genx.svg",
+                        "mime": "image/svg+xml"
+                    },
+                    "boomer": {
+                        "url": "",
+                        "mime": ""
+                    }
+                },
+                "layout_allowed": true,
+                "dedicated_section": "",
+                "revision": 3,
+                "updated_at": 1788537777,
+                "updated_by": "fixture@friending.test"
+            }
+        },
+        "refusals": {
+            "unmanaged_option_icon": {
+                "success": false,
+                "status_code": 422,
+                "error": "profile-presentation-icon-unmanaged"
+            },
+            "unknown_option_key": {
+                "success": false,
+                "status_code": 422,
+                "error": "profile-presentation-source-definition-invalid"
+            },
+            "stale_revision": {
+                "success": false,
+                "status_code": 409,
+                "error": "profile-presentation-source-conflict"
+            }
+        },
+        "member_page_facts": {
+            "note": "POST /v1/webadmin/user_detail -> data.profile, the three T-730 keys only.",
+            "rows": {
+                "exact_confirmed_unlocked": {
+                    "age_display": "exact",
+                    "birthday_locked": false,
+                    "realdob": true
+                },
+                "generation_imported_fabricated": {
+                    "age_display": "generation",
+                    "birthday_locked": false,
+                    "realdob": false
+                },
+                "exact_locked_after_one_change": {
+                    "age_display": "exact",
+                    "birthday_locked": true,
+                    "realdob": true
+                },
+                "generation_locked_confirmed": {
+                    "age_display": "generation",
+                    "birthday_locked": true,
+                    "realdob": true
+                },
+                "hidden_no_birthday_realdob_absent": {
+                    "age_display": "hidden",
+                    "birthday_locked": false,
+                    "realdob": true
+                }
+            },
+            "closed_age_display_values": [
+                "exact",
+                "generation",
+                "hidden"
+            ]
+        }
+    }
+}
