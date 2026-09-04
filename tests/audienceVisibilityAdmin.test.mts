@@ -708,7 +708,7 @@ test("the T-669 Core corpus is pinned beside the deployed one and every body sti
   ]);
 });
 
-test("the T-669 signup identity catalogue is terminal, and the composer tolerates the deployed one", async () => {
+test("the T-669 signup identity catalogue is terminal, and the composer ignores it either way", async () => {
   // D-103 §6.4 in the wire Core actually serves: `groups` is exactly `gender`
   // and `v2.identity` carries `genders` alone — no `gender_details`, no
   // `gender_detail_note`, no `relationship_statuses`.
@@ -725,30 +725,55 @@ test("the T-669 signup identity catalogue is terminal, and the composer tolerate
   }
 
   // The console's own composer read (`list_signup_options`) carries the same
-  // catalogue under `catalog.groups`, which T-669 shrinks from nine groups to
-  // one. `signupPagesPayload` decodes the additive composer blocks and ignores
-  // that sibling entirely, so BOTH catalogues produce the same page layout.
+  // catalogue under `catalog.groups`. The T-689 capture was taken from a
+  // pre-T-669 Core and carried NINE groups; the T-771 re-capture is taken from
+  // a Core that has T-669, so it carries the terminal one. The bodies either
+  // side of that release are the only thing that moved here — the console never
+  // read the sibling, and this is what pins that: `signupPagesPayload` produces
+  // the identical payload on the terminal catalogue, on the deployed nine-key
+  // catalogue, on an empty one, and with the whole `catalog` sibling removed.
+  //
+  // The nine-group body itself is not lost: it stays on the board as
+  // `team/handoffs/t689-signup-composer-envelopes.json`
+  // (sha256 9ace11ca374d0efc012ab77f4633d02ce7824197d7cbe5707f4b95e4703dc7bc).
+  const RETIRED_GROUP_KEYS = [
+    "subgender", "orientation", "relationship_status", "looking_for",
+    "education_level", "smoking", "profession", "have_kids",
+  ];
   const envelopes = JSON.parse(await readFile(
-    new URL("./fixtures/signup_pages_handoff/t689-signup-composer-envelopes.json", import.meta.url),
+    new URL("./fixtures/signup_pages_handoff/t771-signup-composer-envelopes.json", import.meta.url),
     "utf8",
   ));
   for (const key of ["list_signup_options.empty", "list_signup_options.composed"]) {
-    const deployedEnvelope = envelopes[key];
-    assert.equal(
-      deployedEnvelope.catalog.groups.length,
-      9,
-      `${key}: the deployed catalogue still carries the retired groups`,
-    );
-    const terminalEnvelope = structuredClone(deployedEnvelope);
-    terminalEnvelope.catalog.groups = deployedEnvelope.catalog.groups.filter(
-      (group: Json) => group.key === "gender",
-    );
+    const terminalEnvelope = envelopes[key];
     assert.deepEqual(
-      signupPagesPayload(terminalEnvelope),
-      signupPagesPayload(deployedEnvelope),
-      `${key}: the composer reads the same layout on either catalogue`,
+      terminalEnvelope.catalog.groups.map((group: Json) => group.key),
+      ["gender"],
+      `${key}: the captured catalogue is the terminal one`,
     );
-    assert.ok(signupPagesPayload(terminalEnvelope), key);
+    const expected = signupPagesPayload(terminalEnvelope);
+    assert.ok(expected, key);
+
+    const deployedEnvelope = structuredClone(terminalEnvelope);
+    deployedEnvelope.catalog.groups = [
+      ...terminalEnvelope.catalog.groups,
+      ...RETIRED_GROUP_KEYS.map((groupKey) => ({ key: groupKey })),
+    ];
+    const emptyEnvelope = structuredClone(terminalEnvelope);
+    emptyEnvelope.catalog.groups = [];
+    const noCatalogEnvelope = structuredClone(terminalEnvelope);
+    delete noCatalogEnvelope.catalog;
+    for (const [name, variant] of [
+      ["the deployed nine-key catalogue", deployedEnvelope],
+      ["an empty catalogue", emptyEnvelope],
+      ["no catalogue at all", noCatalogEnvelope],
+    ] as const) {
+      assert.deepEqual(
+        signupPagesPayload(variant),
+        expected,
+        `${key}: the composer reads the same layout with ${name}`,
+      );
+    }
   }
 });
 

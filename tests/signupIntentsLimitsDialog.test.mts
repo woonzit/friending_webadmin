@@ -12,7 +12,7 @@ import {
 } from "../lib/signupPages.ts";
 
 const envelopes = JSON.parse(readFileSync(
-  new URL("./fixtures/signup_pages_handoff/t689-signup-composer-envelopes.json", import.meta.url),
+  new URL("./fixtures/signup_pages_handoff/t771-signup-composer-envelopes.json", import.meta.url),
   "utf8",
 )) as Record<string, unknown>;
 const lookingFor = JSON.parse(readFileSync(
@@ -30,7 +30,7 @@ const source = readFileSync(
   "utf8",
 );
 
-/** The real three-row read: the T-702 array spliced into the T-689 body. */
+/** The real three-row read: the T-702 array spliced into the T-771 body. */
 function question(raisedMinimum = false): SignupSystemQuestion {
   const value = structuredClone(envelopes["list_signup_options.composed"]) as Record<string, unknown>;
   const rows = structuredClone(

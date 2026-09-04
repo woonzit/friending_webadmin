@@ -46,9 +46,10 @@ import {
   type SignupPageLayout,
   type SignupPagesPayload,
 } from "../lib/signupPages.ts";
+import { userCastGroup } from "../lib/userCastGroups.ts";
 
 const CORPUS = new URL(
-  "./fixtures/signup_pages_handoff/t689-signup-composer-envelopes.json",
+  "./fixtures/signup_pages_handoff/t771-signup-composer-envelopes.json",
   import.meta.url,
 );
 const CORPUS_BYTES = readFileSync(CORPUS);
@@ -67,7 +68,7 @@ const lookingFor = JSON.parse(LOOKING_FOR_BYTES.toString("utf8")) as {
   envelopes: Record<string, Record<string, unknown>>;
 };
 
-/** The three `list_signup_options` bodies the T-689 capture serves in full. */
+/** The three `list_signup_options` bodies the T-771 capture serves in full. */
 const COMPLETE_PAYLOADS = [
   "list_signup_options.empty",
   "save_signup_page_layout.200",
@@ -93,9 +94,9 @@ function realSystemQuestions(): Record<string, unknown>[] {
  * The composer read as Core will serve it once the third row is switched on.
  *
  * Both halves are REAL captures and neither is hand-written: the T-702 dump
- * carries the `system_questions` array only, the T-689 dump carries the whole
+ * carries the `system_questions` array only, the T-771 dump carries the whole
  * body, and the test below proves the T-702 array's first two rows are exactly
- * the T-689 rows this splice replaces.
+ * the T-771 rows this splice replaces.
  */
 function threeRowRead(key: (typeof COMPLETE_PAYLOADS)[number] = "list_signup_options.composed"): Record<string, unknown> {
   const value = envelope(key);
@@ -117,18 +118,23 @@ function emptyLayout(): SignupPageLayout {
   return { revision: 3, updated_at: 100, updated_by: "admin@example.test", pages: [] };
 }
 
-test("the fixture is the published T-689 capture, byte for byte", () => {
+test("the fixture is the published T-771 capture, byte for byte", () => {
   // Provenance, not decoration: Core has no committed `list_signup_options`
   // corpus, so this file IS the record of what the wire looks like. An edited
   // body must fail here rather than drift into the decoder's expectations.
   //
-  // T-683 re-pins it from the T-670 capture to the T-689 one, which is the same
-  // five envelopes served by a Core that finally localizes the gender options
-  // (see the assertion below); the T-670 bodies carried the placeholder labels.
+  // T-683 re-pinned it from the T-670 capture to the T-689 one, which is the
+  // same five envelopes served by a Core that finally localizes the gender
+  // options (see the assertion below); the T-670 bodies carried the placeholder
+  // labels. T-771 re-captured the same five cases at Core
+  // `b3a45fb04bc694d4091d5cfdad75d2ff716d8cf4` with the same generator inputs
+  // and one seeded difference: `user_cast_groups` now holds the seven D-019
+  // system rows, so `catalog.cast_groups` arrives POPULATED instead of `[]`
+  // (RULES 47 — a value every deployed corpus had only ever carried empty).
   assert.equal(
     createHash("sha256").update(CORPUS_BYTES).digest("hex"),
-    "9ace11ca374d0efc012ab77f4633d02ce7824197d7cbe5707f4b95e4703dc7bc",
-    "re-copy team/handoffs/t689-signup-composer-envelopes.json and update this digest",
+    "ccf0c231a23f0aa9fba621a21c5903f64e9f4941ccbdd7a4a6c70009c90870d3",
+    "re-copy team/handoffs/t771-signup-composer-envelopes.json and update this digest",
   );
   assert.deepEqual(Object.keys(envelopes).sort(), [
     "list_signup_options.composed",
@@ -137,6 +143,45 @@ test("the fixture is the published T-689 capture, byte for byte", () => {
     "save_signup_page_layout.409",
     "save_signup_page_layout.422",
   ]);
+});
+
+test("the composer read carries the seven V2 cast groups, and every one decodes", () => {
+  // RULES 47, which is what this re-capture is for. `catalog.cast_groups` was
+  // `[]` in every corpus this console has ever pinned (T-670, T-689, T-716),
+  // because the generator ran against an empty `user_cast_groups` collection —
+  // so no decoder was ever exercised on a populated row from THIS read, and the
+  // console shipped a row parser (T-769) that would have refused the live one.
+  //
+  // The rows are not a second, weaker copy of the audience corpus: they are
+  // deep-equal to `audience_visibility_admin_wire_t669/admin-catalog.json`'s
+  // `data.groups`, which is the same array Core builds once in
+  // `UserCastGroupService::visibilityGroups(true)` and publishes under every
+  // admin `cast_groups` key. If Core's projection moves, these two disagree.
+  const pinned = JSON.parse(readFileSync(new URL(
+    "./fixtures/audience_visibility_admin_wire_t669/admin-catalog.json",
+    import.meta.url,
+  )).toString("utf8")).data.groups;
+  assert.equal(pinned.length, 7);
+
+  for (const key of ["list_signup_options.empty", "list_signup_options.composed"]) {
+    const catalog = envelope(key).catalog as Record<string, unknown>;
+    const rows = catalog.cast_groups as unknown[];
+    assert.ok(Array.isArray(rows), `${key}: cast_groups must be an array`);
+    assert.equal(rows.length, 7, `${key}: the seven D-019 system groups`);
+    assert.deepEqual(rows, pinned, `${key}: the same array the audience console pins`);
+    for (const row of rows) {
+      assert.ok(
+        userCastGroup(row),
+        `${key}: ${JSON.stringify((row as Record<string, unknown>).key)} must decode`,
+      );
+    }
+  }
+
+  // And the composer itself is still indifferent to them — the sibling rides
+  // along unread (T-769 §3), which is why populating it is safe.
+  const withoutGroups = raw();
+  ((withoutGroups.catalog as Record<string, unknown>).cast_groups as unknown[]).length = 0;
+  assert.deepEqual(signupPagesPayload(withoutGroups), payload());
 });
 
 test("the looking-for fixture is the published T-702 capture, byte for byte", () => {
@@ -169,7 +214,7 @@ test("the looking-for fixture is the published T-702 capture, byte for byte", ()
 
 test("the real third System row is additive: the deployed pair is byte-identical", () => {
   // This is what makes the splice above legitimate rather than a hand-written
-  // body: the T-702 capture's first two rows ARE the T-689 capture's two rows,
+  // body: the T-702 capture's first two rows ARE the T-771 capture's two rows,
   // in all three complete payloads, so switching the third row on is the only
   // change the console will see.
   const rows = realSystemQuestions();

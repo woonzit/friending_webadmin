@@ -15,7 +15,7 @@ import {
 } from "../lib/signupPages.ts";
 
 const envelopes = JSON.parse(readFileSync(
-  new URL("./fixtures/signup_pages_handoff/t689-signup-composer-envelopes.json", import.meta.url),
+  new URL("./fixtures/signup_pages_handoff/t771-signup-composer-envelopes.json", import.meta.url),
   "utf8",
 )) as Record<string, unknown>;
 
@@ -28,7 +28,7 @@ const lookingFor = JSON.parse(readFileSync(
 
 /**
  * The composer read as Core will serve it: the T-702 capture's REAL three-row
- * `system_questions` array spliced into the T-689 capture's whole body.
+ * `system_questions` array spliced into the T-771 capture's whole body.
  * `tests/signupPages.test.mts` proves the array's first two rows are exactly
  * the two rows this replaces, so nothing here is hand-written.
  */

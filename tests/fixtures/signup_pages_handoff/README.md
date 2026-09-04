@@ -3,22 +3,53 @@
 Status: **real Core corpus, captured from the deployed contract** (was a hand-written handoff
 shape until T-671 landed).
 
-`t689-signup-composer-envelopes.json` is a byte-identical copy of
+`t771-signup-composer-envelopes.json` is a byte-identical copy of
 
-    team/handoffs/t689-signup-composer-envelopes.json
-    sha256 9ace11ca374d0efc012ab77f4633d02ce7824197d7cbe5707f4b95e4703dc7bc   (187965 bytes)
+    team/handoffs/t771-signup-composer-envelopes.json
+    sha256 ccf0c231a23f0aa9fba621a21c5903f64e9f4941ccbdd7a4a6c70009c90870d3   (103243 bytes)
 
-published by the T-689 Core lane, which re-captured the T-670 corpus after Core began serving
-localized gender labels (`Woman`/`Nő`, `Man`/`Férfi`) where the T-670 bodies carried the raw
-storage values `woman`/`man`. Nothing else changed but the per-run page keys and `updated_at`.
-T-683 re-pinned the Webadmin test to it and asserts those four labels. It was dumped by calling
+It is the fourth capture of the same five cases. The chain: T-670 dumped them by calling
 `WebadminController::listSignupOptions` / `::saveSignupPageLayout` against a throwaway replica set
-with the published, unchanged generator (`team/handoffs/t670-signup-composer-envelopes-generator.php`,
-sha256 `baea729fe8b44be8f1be290a15d08bd97435bee0d44885f5ff53983ba770e611`) — run at Core
-`7c6e5aaad7829d61f070c27d52860f94569db8ec` for the T-670 capture and re-run at the T-689 tip
-`4969ae4` for that capture (`team/messages/20260903T012612Z-opus-api-t689-done.md`).
-T-716 re-ran the same generator at Core `672b25e` so the unchanged segment keys now carry the
-neutral gender-plus-audience labels; only those labels and the documented per-run values moved.
+with `team/handoffs/t670-signup-composer-envelopes-generator.php`
+(sha256 `baea729fe8b44be8f1be290a15d08bd97435bee0d44885f5ff53983ba770e611`) at Core
+`7c6e5aaad7829d61f070c27d52860f94569db8ec`; T-689 re-ran it at `4969ae4` after Core began serving
+localized gender labels (`Woman`/`Nő`, `Man`/`Férfi`) where the T-670 bodies carried the raw storage
+values `woman`/`man` (`team/messages/20260903T012612Z-opus-api-t689-done.md`); T-716 re-ran it at
+`672b25e` so the unchanged segment keys carry the neutral gender-plus-audience labels. T-683 pinned
+the Webadmin test to the T-689 bytes and asserts those four labels.
+
+**T-771 re-captured at Core `b3a45fb04bc694d4091d5cfdad75d2ff716d8cf4`** (`api` origin/main at capture
+time, and an ancestor of it since) with
+`team/handoffs/t771-signup-composer-envelopes-generator.php`
+(sha256 `c36ff03c42cb22479321721ee119ddfc8f8ad2f278f80865eac0da8bc3a0d5f4`), which is the T-670
+generator with its five cases, their order and their inputs unchanged plus ONE seeded difference:
+the seven D-019 system rows are inserted into `user_cast_groups` before the read. Every earlier
+capture ran against an empty collection, so `catalog.cast_groups` was `[]` in all of them — a wire
+value no deployed decoder had ever been exercised on, and precisely the shape that darkened three
+admin pages in T-769 (RULES 47). The seeded documents are the same `_id`s, labels, rules and
+revisions Core's own `tests/audience_visibility_fixture_dump.php` seeds, and they are INSERTED, so
+the capture proves `UserCastGroupService::visibilityRowFromDocument()` accepted them on the read
+path the controller takes.
+
+Exactly two things moved beyond the documented per-run values:
+
+| field | T-689 (Core `672b25e`) | T-771 (Core `b3a45fb0`) | why |
+|---|---|---|---|
+| `catalog.cast_groups` (both `list_signup_options` bodies) | `[]` | the seven D-019 system rows | this re-capture's purpose; deep-equal to `audience_visibility_admin_wire_t669/admin-catalog.json`'s `data.groups`, asserted |
+| `catalog.groups` (both `list_signup_options` bodies) | 9 groups | `gender` alone | T-669 retired the legacy identity answers end to end; not this task's change, and the composer never reads the sibling |
+
+Nothing else differs. Re-running this generator against Core `cf0b3790d331352be7e3fb5dc18db91a1f79421e`
+(the T-718 release, `api` origin/main at hand-over) reproduces this capture except for the two per-run
+values below, and none of the composer path — `WebadminController`, `SignupOptionCatalog`,
+`SignupPageCatalog`, `UserCastGroupService`, `AudienceVisibilityPolicy`, `ProfileFieldPolicy`,
+`SignupPagePolicy`, `Webadmin`, `Response`, `Request` — moved between the two commits, so these bytes
+are the current contract.
+
+The nine-group body is not lost — it stays on the board as
+`team/handoffs/t689-signup-composer-envelopes.json`
+(sha256 `9ace11ca374d0efc012ab77f4633d02ce7824197d7cbe5707f4b95e4703dc7bc`, 187965 bytes) — and
+`tests/audienceVisibilityAdmin.test.mts` still proves the composer decodes identically on the
+terminal catalogue, on a nine-key one, on an empty one and with the whole `catalog` sibling removed.
 
 Core has NO committed `list_signup_options` fixture corpus of its own, so this file — not a
 Core-side manifest — is the provenance record. `tests/signupPages.test.mts` re-checks the sha256
@@ -64,10 +95,11 @@ raised minimum produces, and it is the reason an operator's edit here is not cos
 this console reads that route.
 
 The T-702 capture carries only the `system_questions` array, not a whole `list_signup_options`
-body, so the composer read under test is that array spliced into the T-689 capture above. That is
+body, so the composer read under test is that array spliced into the T-771 capture above. That is
 not a hand-written body: the test asserts that the T-702 array's FIRST TWO rows are deep-equal to
-the T-689 capture's two rows in all three complete payloads, so the splice is provably the same
-body Core will serve once the third row is switched on.
+the T-771 capture's two rows in all three complete payloads, so the splice is provably the same
+body Core will serve once the third row is switched on. Those two rows did not move between the
+T-689 and the T-771 captures.
 
 To re-capture: re-run the published generator against a throwaway replica set at the Core tip
 under test, replace this file, and update the sha256 above and in `tests/signupPages.test.mts`.

@@ -1,0 +1,2818 @@
+{
+    "list_signup_options.empty": {
+        "success": true,
+        "status_code": 200,
+        "catalog": {
+            "schema_version": 1,
+            "cast_groups": [
+                {
+                    "key": "male_for_male",
+                    "labels": {
+                        "en": "Men visible to men",
+                        "hu": "Férfiak, akiket férfiak láthatnak"
+                    },
+                    "rules": [
+                        {
+                            "genders": [
+                                "man"
+                            ],
+                            "visible_to": [
+                                "male"
+                            ]
+                        }
+                    ],
+                    "legacy_segment": "male_gay",
+                    "sort_order": 100,
+                    "active": true,
+                    "id": "000000000000000000000002",
+                    "protected": true,
+                    "revision": 3,
+                    "editable_fields": [
+                        "labels",
+                        "sort_order"
+                    ]
+                },
+                {
+                    "key": "male_for_female",
+                    "labels": {
+                        "en": "Men visible to women",
+                        "hu": "Férfiak, akiket nők láthatnak"
+                    },
+                    "rules": [
+                        {
+                            "genders": [
+                                "man"
+                            ],
+                            "visible_to": [
+                                "female"
+                            ]
+                        }
+                    ],
+                    "legacy_segment": "male_hetero",
+                    "sort_order": 200,
+                    "active": true,
+                    "id": "000000000000000000000001",
+                    "protected": true,
+                    "revision": 3,
+                    "editable_fields": [
+                        "labels",
+                        "sort_order"
+                    ]
+                },
+                {
+                    "key": "male_for_both",
+                    "labels": {
+                        "en": "Men visible to everyone",
+                        "hu": "Férfiak, akiket mindenki láthat"
+                    },
+                    "rules": [
+                        {
+                            "genders": [
+                                "man"
+                            ],
+                            "visible_to": [
+                                "both"
+                            ]
+                        }
+                    ],
+                    "legacy_segment": "male_bisexual",
+                    "sort_order": 300,
+                    "active": true,
+                    "id": "000000000000000000000003",
+                    "protected": true,
+                    "revision": 3,
+                    "editable_fields": [
+                        "labels",
+                        "sort_order"
+                    ]
+                },
+                {
+                    "key": "female_for_male",
+                    "labels": {
+                        "en": "Women visible to men",
+                        "hu": "Nők, akiket férfiak láthatnak"
+                    },
+                    "rules": [
+                        {
+                            "genders": [
+                                "woman"
+                            ],
+                            "visible_to": [
+                                "male"
+                            ]
+                        }
+                    ],
+                    "legacy_segment": "female_hetero",
+                    "sort_order": 400,
+                    "active": true,
+                    "id": "000000000000000000000004",
+                    "protected": true,
+                    "revision": 3,
+                    "editable_fields": [
+                        "labels",
+                        "sort_order"
+                    ]
+                },
+                {
+                    "key": "female_for_female",
+                    "labels": {
+                        "en": "Women visible to women",
+                        "hu": "Nők, akiket nők láthatnak"
+                    },
+                    "rules": [
+                        {
+                            "genders": [
+                                "woman"
+                            ],
+                            "visible_to": [
+                                "female"
+                            ]
+                        }
+                    ],
+                    "legacy_segment": "female_lesbian",
+                    "sort_order": 500,
+                    "active": true,
+                    "id": "000000000000000000000005",
+                    "protected": true,
+                    "revision": 3,
+                    "editable_fields": [
+                        "labels",
+                        "sort_order"
+                    ]
+                },
+                {
+                    "key": "female_for_both",
+                    "labels": {
+                        "en": "Women visible to everyone",
+                        "hu": "Nők, akiket mindenki láthat"
+                    },
+                    "rules": [
+                        {
+                            "genders": [
+                                "woman"
+                            ],
+                            "visible_to": [
+                                "both"
+                            ]
+                        }
+                    ],
+                    "legacy_segment": "female_bisexual",
+                    "sort_order": 600,
+                    "active": true,
+                    "id": "000000000000000000000006",
+                    "protected": true,
+                    "revision": 3,
+                    "editable_fields": [
+                        "labels",
+                        "sort_order"
+                    ]
+                },
+                {
+                    "key": "nonbinary_for_both",
+                    "labels": {
+                        "en": "Other or unresolved identity",
+                        "hu": "Egyéb vagy még nem besorolt identitás"
+                    },
+                    "rules": [
+                        {
+                            "genders": [
+                                "nonbinary"
+                            ],
+                            "visible_to": [
+                                "both"
+                            ]
+                        }
+                    ],
+                    "legacy_segment": "other",
+                    "sort_order": 700,
+                    "active": true,
+                    "id": "0c5e779988ceae850aeb6803",
+                    "protected": true,
+                    "revision": 1,
+                    "editable_fields": [
+                        "labels",
+                        "sort_order"
+                    ]
+                }
+            ],
+            "segments": [
+                {
+                    "key": "male_hetero",
+                    "labels": {
+                        "en": "Men visible to women",
+                        "hu": "Férfiak, akiket nők láthatnak"
+                    }
+                },
+                {
+                    "key": "male_gay",
+                    "labels": {
+                        "en": "Men visible to men",
+                        "hu": "Férfiak, akiket férfiak láthatnak"
+                    }
+                },
+                {
+                    "key": "male_bisexual",
+                    "labels": {
+                        "en": "Men visible to everyone",
+                        "hu": "Férfiak, akiket mindenki láthat"
+                    }
+                },
+                {
+                    "key": "female_hetero",
+                    "labels": {
+                        "en": "Women visible to men",
+                        "hu": "Nők, akiket férfiak láthatnak"
+                    }
+                },
+                {
+                    "key": "female_lesbian",
+                    "labels": {
+                        "en": "Women visible to women",
+                        "hu": "Nők, akiket nők láthatnak"
+                    }
+                },
+                {
+                    "key": "female_bisexual",
+                    "labels": {
+                        "en": "Women visible to everyone",
+                        "hu": "Nők, akiket mindenki láthat"
+                    }
+                },
+                {
+                    "key": "identity_unresolved",
+                    "labels": {
+                        "en": "Other or unresolved identity",
+                        "hu": "Egyéb vagy még nem besorolt identitás"
+                    }
+                }
+            ],
+            "groups": [
+                {
+                    "name_en": "Gender",
+                    "name_hu": "Nem",
+                    "system_owned": true,
+                    "custom_allowed": false,
+                    "profile_field": "gender",
+                    "question_pack": "identity",
+                    "key": "gender",
+                    "required": true,
+                    "revision": 0,
+                    "icon": {
+                        "url": "",
+                        "mime": ""
+                    },
+                    "audience": {
+                        "mode": "global",
+                        "genders": [],
+                        "group_ids": [],
+                        "segments": []
+                    },
+                    "exclude_identity_unresolved": false,
+                    "options": [
+                        {
+                            "key": "male",
+                            "name_en": "Man",
+                            "name_hu": "Férfi",
+                            "sort_order": 10,
+                            "active": true,
+                            "is_custom": false,
+                            "system_owned": true
+                        },
+                        {
+                            "key": "female",
+                            "name_en": "Woman",
+                            "name_hu": "Nő",
+                            "sort_order": 20,
+                            "active": true,
+                            "is_custom": false,
+                            "system_owned": true
+                        },
+                        {
+                            "key": "other",
+                            "name_en": "Nonbinary",
+                            "name_hu": "Nembináris",
+                            "sort_order": 30,
+                            "active": true,
+                            "is_custom": false,
+                            "system_owned": true
+                        }
+                    ]
+                }
+            ]
+        },
+        "pages": {
+            "schema_version": 1,
+            "key": "signup_pages_v1",
+            "revision": 0,
+            "pages": [],
+            "dropped_items": [],
+            "updated_at": 0,
+            "updated_by": ""
+        },
+        "eligible_fields": [
+            {
+                "key": "education_level",
+                "field_key": "education_level",
+                "profile_field": "education_level",
+                "labels": {
+                    "en": "Education level",
+                    "hu": "Iskolai végzettség"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 10,
+                "options": [
+                    {
+                        "key": "high_school",
+                        "labels": {
+                            "en": "High School",
+                            "hu": "Középiskola"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "some_college",
+                        "labels": {
+                            "en": "Some College",
+                            "hu": "Megkezdett felsőfokú tanulmányok"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "associates_degree",
+                        "labels": {
+                            "en": "Associate's Degree",
+                            "hu": "Felsőfokú szakképzettség"
+                        },
+                        "sort_order": 30
+                    },
+                    {
+                        "key": "bachelors_degree",
+                        "labels": {
+                            "en": "Bachelor's Degree",
+                            "hu": "Alapképzés / főiskolai diploma"
+                        },
+                        "sort_order": 40
+                    },
+                    {
+                        "key": "masters_degree",
+                        "labels": {
+                            "en": "Master's Degree",
+                            "hu": "Mesterképzés / egyetemi diploma"
+                        },
+                        "sort_order": 50
+                    },
+                    {
+                        "key": "doctorate__postdoctoral",
+                        "labels": {
+                            "en": "Doctorate / Postdoctoral",
+                            "hu": "Doktori / posztdoktori fokozat"
+                        },
+                        "sort_order": 60
+                    }
+                ]
+            },
+            {
+                "key": "smoking",
+                "field_key": "smoking",
+                "profile_field": "smoking",
+                "labels": {
+                    "en": "Smoking",
+                    "hu": "Dohányzás"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 20,
+                "options": [
+                    {
+                        "key": "no",
+                        "labels": {
+                            "en": "No, I don't smoke",
+                            "hu": "Nem dohányzom"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "socially",
+                        "labels": {
+                            "en": "I smoke sometimes",
+                            "hu": "Alkalmanként dohányzom"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "yes",
+                        "labels": {
+                            "en": "Yes, I smoke",
+                            "hu": "Dohányzom"
+                        },
+                        "sort_order": 30
+                    }
+                ]
+            },
+            {
+                "key": "profession",
+                "field_key": "profession",
+                "profile_field": "profession",
+                "labels": {
+                    "en": "Profession",
+                    "hu": "Foglalkozás"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 30,
+                "options": [
+                    {
+                        "key": "administrative_assistant",
+                        "labels": {
+                            "en": "Administrative Assistant",
+                            "hu": "Adminisztratív asszisztens"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "executive__c_level_management",
+                        "labels": {
+                            "en": "Executive / C-Level Management",
+                            "hu": "Felsővezető / cégvezetés"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "secretarial__office_support",
+                        "labels": {
+                            "en": "Secretarial / Office Support",
+                            "hu": "Titkárság / irodai támogatás"
+                        },
+                        "sort_order": 30
+                    },
+                    {
+                        "key": "advertising__marketing__pr",
+                        "labels": {
+                            "en": "Advertising / Marketing / PR",
+                            "hu": "Reklám / marketing / PR"
+                        },
+                        "sort_order": 40
+                    },
+                    {
+                        "key": "media__content__journalism",
+                        "labels": {
+                            "en": "Media / Content / Journalism",
+                            "hu": "Média / tartalom / újságírás"
+                        },
+                        "sort_order": 50
+                    },
+                    {
+                        "key": "architecture",
+                        "labels": {
+                            "en": "Architecture",
+                            "hu": "Építészet"
+                        },
+                        "sort_order": 60
+                    },
+                    {
+                        "key": "interior_designer",
+                        "labels": {
+                            "en": "Interior Designer",
+                            "hu": "Belsőépítész"
+                        },
+                        "sort_order": 70
+                    },
+                    {
+                        "key": "graphic_designer__visual_arts",
+                        "labels": {
+                            "en": "Graphic Designer / Visual Arts",
+                            "hu": "Grafikus / vizuális művészetek"
+                        },
+                        "sort_order": 80
+                    },
+                    {
+                        "key": "artist__performer__musician",
+                        "labels": {
+                            "en": "Artist / Performer / Musician",
+                            "hu": "Művész / előadó / zenész"
+                        },
+                        "sort_order": 90
+                    },
+                    {
+                        "key": "creative_director__producer",
+                        "labels": {
+                            "en": "Creative Director / Producer",
+                            "hu": "Kreatív igazgató / producer"
+                        },
+                        "sort_order": 100
+                    },
+                    {
+                        "key": "chef__cook__baker",
+                        "labels": {
+                            "en": "Chef / Cook / Baker",
+                            "hu": "Séf / szakács / pék"
+                        },
+                        "sort_order": 110
+                    },
+                    {
+                        "key": "food_beverage__hospitality",
+                        "labels": {
+                            "en": "Food & Beverage / Hospitality",
+                            "hu": "Vendéglátás / szállodaipar"
+                        },
+                        "sort_order": 120
+                    },
+                    {
+                        "key": "fashion__modeling__beauty",
+                        "labels": {
+                            "en": "Fashion / Modeling / Beauty",
+                            "hu": "Divat / modellkedés / szépségipar"
+                        },
+                        "sort_order": 130
+                    },
+                    {
+                        "key": "finance__banking__accounting",
+                        "labels": {
+                            "en": "Finance / Banking / Accounting",
+                            "hu": "Pénzügy / bank / számvitel"
+                        },
+                        "sort_order": 140
+                    },
+                    {
+                        "key": "construction__skilled_labor",
+                        "labels": {
+                            "en": "Construction / Skilled Labor",
+                            "hu": "Építőipar / szakmunka"
+                        },
+                        "sort_order": 150
+                    },
+                    {
+                        "key": "legal__law",
+                        "labels": {
+                            "en": "Legal / Law",
+                            "hu": "Jogi terület"
+                        },
+                        "sort_order": 160
+                    },
+                    {
+                        "key": "healthcare_doctor__nurse__dentist",
+                        "labels": {
+                            "en": "Healthcare (Doctor / Nurse / Dentist)",
+                            "hu": "Egészségügy (orvos / ápoló / fogorvos)"
+                        },
+                        "sort_order": 170
+                    },
+                    {
+                        "key": "veterinary__animal_care",
+                        "labels": {
+                            "en": "Veterinary / Animal Care",
+                            "hu": "Állatorvoslás / állatgondozás"
+                        },
+                        "sort_order": 180
+                    },
+                    {
+                        "key": "government__public_service",
+                        "labels": {
+                            "en": "Government / Public Service",
+                            "hu": "Államigazgatás / közszolgálat"
+                        },
+                        "sort_order": 190
+                    },
+                    {
+                        "key": "military__defense",
+                        "labels": {
+                            "en": "Military / Defense",
+                            "hu": "Honvédelem / katonaság"
+                        },
+                        "sort_order": 200
+                    },
+                    {
+                        "key": "retail__sales_associate",
+                        "labels": {
+                            "en": "Retail / Sales Associate",
+                            "hu": "Kiskereskedelem / értékesítés"
+                        },
+                        "sort_order": 210
+                    },
+                    {
+                        "key": "customer_service__call_center",
+                        "labels": {
+                            "en": "Customer Service / Call Center",
+                            "hu": "Ügyfélszolgálat / call center"
+                        },
+                        "sort_order": 220
+                    },
+                    {
+                        "key": "self_employed__entrepreneur",
+                        "labels": {
+                            "en": "Self-Employed / Entrepreneur",
+                            "hu": "Önfoglalkoztató / vállalkozó"
+                        },
+                        "sort_order": 230
+                    },
+                    {
+                        "key": "student_full_time_or_part_time",
+                        "labels": {
+                            "en": "Student (Full-time or Part-time)",
+                            "hu": "Diák / hallgató"
+                        },
+                        "sort_order": 240
+                    },
+                    {
+                        "key": "teacher__educator__professor",
+                        "labels": {
+                            "en": "Teacher / Educator / Professor",
+                            "hu": "Tanár / oktató / professzor"
+                        },
+                        "sort_order": 250
+                    },
+                    {
+                        "key": "technology__software_development",
+                        "labels": {
+                            "en": "Technology / Software Development",
+                            "hu": "Technológia / szoftverfejlesztés"
+                        },
+                        "sort_order": 260
+                    },
+                    {
+                        "key": "it__systems__networking",
+                        "labels": {
+                            "en": "IT / Systems / Networking",
+                            "hu": "IT / rendszerek / hálózatok"
+                        },
+                        "sort_order": 270
+                    },
+                    {
+                        "key": "engineering_mechanical__civil__other",
+                        "labels": {
+                            "en": "Engineering (Mechanical / Civil / Other)",
+                            "hu": "Mérnöki terület"
+                        },
+                        "sort_order": 280
+                    },
+                    {
+                        "key": "tradesperson__technician",
+                        "labels": {
+                            "en": "Tradesperson / Technician",
+                            "hu": "Szakember / technikus"
+                        },
+                        "sort_order": 290
+                    },
+                    {
+                        "key": "transportation__logistics__delivery",
+                        "labels": {
+                            "en": "Transportation / Logistics / Delivery",
+                            "hu": "Közlekedés / logisztika / kézbesítés"
+                        },
+                        "sort_order": 300
+                    },
+                    {
+                        "key": "tourism__travel_industry",
+                        "labels": {
+                            "en": "Tourism / Travel Industry",
+                            "hu": "Turizmus / utazási ágazat"
+                        },
+                        "sort_order": 310
+                    },
+                    {
+                        "key": "retired",
+                        "labels": {
+                            "en": "Retired",
+                            "hu": "Nyugdíjas"
+                        },
+                        "sort_order": 320
+                    },
+                    {
+                        "key": "currently_unemployed__between_jobs",
+                        "labels": {
+                            "en": "Currently Unemployed / Between Jobs",
+                            "hu": "Jelenleg nem dolgozik / álláskereső"
+                        },
+                        "sort_order": 330
+                    },
+                    {
+                        "key": "other__not_listed",
+                        "labels": {
+                            "en": "Other / Not Listed",
+                            "hu": "Egyéb / nincs a listában"
+                        },
+                        "sort_order": 340
+                    }
+                ]
+            },
+            {
+                "key": "have_kids",
+                "field_key": "have_kids",
+                "profile_field": "have_kids",
+                "labels": {
+                    "en": "Children",
+                    "hu": "Gyerekek"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 40,
+                "options": [
+                    {
+                        "key": "no_kids",
+                        "labels": {
+                            "en": "No kids",
+                            "hu": "Nincs gyerekem"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "expecting",
+                        "labels": {
+                            "en": "Expecting",
+                            "hu": "Gyermeket várunk"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "new_parent",
+                        "labels": {
+                            "en": "New parent",
+                            "hu": "Friss szülő"
+                        },
+                        "sort_order": 30
+                    },
+                    {
+                        "key": "toddlers",
+                        "labels": {
+                            "en": "Toddler(s)",
+                            "hu": "Kisgyerek(ek)"
+                        },
+                        "sort_order": 40
+                    },
+                    {
+                        "key": "school_age",
+                        "labels": {
+                            "en": "School age",
+                            "hu": "Iskoláskorú gyerek(ek)"
+                        },
+                        "sort_order": 50
+                    },
+                    {
+                        "key": "tweens",
+                        "labels": {
+                            "en": "Tween(s)",
+                            "hu": "Kiskamasz(ok)"
+                        },
+                        "sort_order": 60
+                    },
+                    {
+                        "key": "teens",
+                        "labels": {
+                            "en": "Teen(s)",
+                            "hu": "Tinédzser(ek)"
+                        },
+                        "sort_order": 70
+                    },
+                    {
+                        "key": "college",
+                        "labels": {
+                            "en": "College",
+                            "hu": "Felsőoktatásban tanuló gyerek(ek)"
+                        },
+                        "sort_order": 80
+                    },
+                    {
+                        "key": "grown",
+                        "labels": {
+                            "en": "Grown",
+                            "hu": "Felnőtt gyerek(ek)"
+                        },
+                        "sort_order": 90
+                    }
+                ]
+            },
+            {
+                "key": "languages",
+                "field_key": "languages",
+                "profile_field": "languages",
+                "labels": {
+                    "en": "Languages",
+                    "hu": "Nyelvek"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "multi",
+                    "min_selected": 0,
+                    "max_selected": 10
+                },
+                "sort_order": 70,
+                "options": [
+                    {
+                        "key": "english",
+                        "labels": {
+                            "en": "English",
+                            "hu": "Angol"
+                        },
+                        "sort_order": 38
+                    },
+                    {
+                        "key": "hungarian",
+                        "labels": {
+                            "en": "Hungarian",
+                            "hu": "Magyar"
+                        },
+                        "sort_order": 62
+                    }
+                ]
+            },
+            {
+                "key": "relationship_status",
+                "field_key": "relationship_status",
+                "profile_field": "relationship_status",
+                "labels": {
+                    "en": "Relationship status",
+                    "hu": "Kapcsolati állapot"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 150,
+                "options": [
+                    {
+                        "key": "single",
+                        "labels": {
+                            "en": "Single",
+                            "hu": "Egyedülálló"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "partner",
+                        "labels": {
+                            "en": "In a relationship",
+                            "hu": "Kapcsolatban"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "open",
+                        "labels": {
+                            "en": "Open relationship",
+                            "hu": "Nyitott kapcsolatban"
+                        },
+                        "sort_order": 30
+                    },
+                    {
+                        "key": "married",
+                        "labels": {
+                            "en": "Married",
+                            "hu": "Házas"
+                        },
+                        "sort_order": 40
+                    }
+                ]
+            }
+        ],
+        "system_questions": [
+            {
+                "key": "gender",
+                "kind": "identity",
+                "locked": true,
+                "required": true,
+                "labels": {
+                    "en": "Gender",
+                    "hu": "Nem"
+                },
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "options": [
+                    {
+                        "key": "woman",
+                        "labels": {
+                            "en": "Woman",
+                            "hu": "Nő"
+                        }
+                    },
+                    {
+                        "key": "man",
+                        "labels": {
+                            "en": "Man",
+                            "hu": "Férfi"
+                        }
+                    }
+                ]
+            },
+            {
+                "key": "visible_to",
+                "kind": "audience",
+                "locked": true,
+                "synthetic": true,
+                "required": true,
+                "labels": {
+                    "en": "Who can see my profile",
+                    "hu": "Ki láthatja az adatlapomat"
+                },
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "options": [
+                    {
+                        "key": "male",
+                        "labels": {
+                            "en": "Men",
+                            "hu": "Férfiak"
+                        }
+                    },
+                    {
+                        "key": "female",
+                        "labels": {
+                            "en": "Women",
+                            "hu": "Nők"
+                        }
+                    },
+                    {
+                        "key": "both",
+                        "labels": {
+                            "en": "Everyone",
+                            "hu": "Mindenki"
+                        }
+                    }
+                ]
+            }
+        ],
+        "dropped_items": [],
+        "message": 200,
+        "status": 200,
+        "can_send": 0
+    },
+    "save_signup_page_layout.200": {
+        "success": true,
+        "status_code": 200,
+        "revision": 1,
+        "pages": {
+            "schema_version": 1,
+            "key": "signup_pages_v1",
+            "pages": [
+                {
+                    "key": "p_b54caee1",
+                    "hidden": false,
+                    "title": {
+                        "en": "More about you",
+                        "hu": "Többet rólad"
+                    },
+                    "subtitle": {
+                        "en": "Lifestyle",
+                        "hu": "Életmód"
+                    },
+                    "items": [
+                        {
+                            "field_key": "smoking",
+                            "required": true
+                        },
+                        {
+                            "field_key": "relationship_status",
+                            "required": false
+                        }
+                    ]
+                },
+                {
+                    "key": "p_af53cd7f",
+                    "hidden": true,
+                    "title": {
+                        "en": "More about you",
+                        "hu": "Többet rólad"
+                    },
+                    "subtitle": {
+                        "en": "Lifestyle",
+                        "hu": "Életmód"
+                    },
+                    "items": [
+                        {
+                            "field_key": "have_kids",
+                            "required": false
+                        }
+                    ]
+                }
+            ],
+            "dropped_items": [],
+            "revision": 1,
+            "updated_at": 1788557216,
+            "updated_by": "pages-editor@example.test"
+        },
+        "eligible_fields": [
+            {
+                "key": "education_level",
+                "field_key": "education_level",
+                "profile_field": "education_level",
+                "labels": {
+                    "en": "Education level",
+                    "hu": "Iskolai végzettség"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 10,
+                "options": [
+                    {
+                        "key": "high_school",
+                        "labels": {
+                            "en": "High School",
+                            "hu": "Középiskola"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "some_college",
+                        "labels": {
+                            "en": "Some College",
+                            "hu": "Megkezdett felsőfokú tanulmányok"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "associates_degree",
+                        "labels": {
+                            "en": "Associate's Degree",
+                            "hu": "Felsőfokú szakképzettség"
+                        },
+                        "sort_order": 30
+                    },
+                    {
+                        "key": "bachelors_degree",
+                        "labels": {
+                            "en": "Bachelor's Degree",
+                            "hu": "Alapképzés / főiskolai diploma"
+                        },
+                        "sort_order": 40
+                    },
+                    {
+                        "key": "masters_degree",
+                        "labels": {
+                            "en": "Master's Degree",
+                            "hu": "Mesterképzés / egyetemi diploma"
+                        },
+                        "sort_order": 50
+                    },
+                    {
+                        "key": "doctorate__postdoctoral",
+                        "labels": {
+                            "en": "Doctorate / Postdoctoral",
+                            "hu": "Doktori / posztdoktori fokozat"
+                        },
+                        "sort_order": 60
+                    }
+                ]
+            },
+            {
+                "key": "smoking",
+                "field_key": "smoking",
+                "profile_field": "smoking",
+                "labels": {
+                    "en": "Smoking",
+                    "hu": "Dohányzás"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 20,
+                "options": [
+                    {
+                        "key": "no",
+                        "labels": {
+                            "en": "No, I don't smoke",
+                            "hu": "Nem dohányzom"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "socially",
+                        "labels": {
+                            "en": "I smoke sometimes",
+                            "hu": "Alkalmanként dohányzom"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "yes",
+                        "labels": {
+                            "en": "Yes, I smoke",
+                            "hu": "Dohányzom"
+                        },
+                        "sort_order": 30
+                    }
+                ]
+            },
+            {
+                "key": "profession",
+                "field_key": "profession",
+                "profile_field": "profession",
+                "labels": {
+                    "en": "Profession",
+                    "hu": "Foglalkozás"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 30,
+                "options": [
+                    {
+                        "key": "administrative_assistant",
+                        "labels": {
+                            "en": "Administrative Assistant",
+                            "hu": "Adminisztratív asszisztens"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "executive__c_level_management",
+                        "labels": {
+                            "en": "Executive / C-Level Management",
+                            "hu": "Felsővezető / cégvezetés"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "secretarial__office_support",
+                        "labels": {
+                            "en": "Secretarial / Office Support",
+                            "hu": "Titkárság / irodai támogatás"
+                        },
+                        "sort_order": 30
+                    },
+                    {
+                        "key": "advertising__marketing__pr",
+                        "labels": {
+                            "en": "Advertising / Marketing / PR",
+                            "hu": "Reklám / marketing / PR"
+                        },
+                        "sort_order": 40
+                    },
+                    {
+                        "key": "media__content__journalism",
+                        "labels": {
+                            "en": "Media / Content / Journalism",
+                            "hu": "Média / tartalom / újságírás"
+                        },
+                        "sort_order": 50
+                    },
+                    {
+                        "key": "architecture",
+                        "labels": {
+                            "en": "Architecture",
+                            "hu": "Építészet"
+                        },
+                        "sort_order": 60
+                    },
+                    {
+                        "key": "interior_designer",
+                        "labels": {
+                            "en": "Interior Designer",
+                            "hu": "Belsőépítész"
+                        },
+                        "sort_order": 70
+                    },
+                    {
+                        "key": "graphic_designer__visual_arts",
+                        "labels": {
+                            "en": "Graphic Designer / Visual Arts",
+                            "hu": "Grafikus / vizuális művészetek"
+                        },
+                        "sort_order": 80
+                    },
+                    {
+                        "key": "artist__performer__musician",
+                        "labels": {
+                            "en": "Artist / Performer / Musician",
+                            "hu": "Művész / előadó / zenész"
+                        },
+                        "sort_order": 90
+                    },
+                    {
+                        "key": "creative_director__producer",
+                        "labels": {
+                            "en": "Creative Director / Producer",
+                            "hu": "Kreatív igazgató / producer"
+                        },
+                        "sort_order": 100
+                    },
+                    {
+                        "key": "chef__cook__baker",
+                        "labels": {
+                            "en": "Chef / Cook / Baker",
+                            "hu": "Séf / szakács / pék"
+                        },
+                        "sort_order": 110
+                    },
+                    {
+                        "key": "food_beverage__hospitality",
+                        "labels": {
+                            "en": "Food & Beverage / Hospitality",
+                            "hu": "Vendéglátás / szállodaipar"
+                        },
+                        "sort_order": 120
+                    },
+                    {
+                        "key": "fashion__modeling__beauty",
+                        "labels": {
+                            "en": "Fashion / Modeling / Beauty",
+                            "hu": "Divat / modellkedés / szépségipar"
+                        },
+                        "sort_order": 130
+                    },
+                    {
+                        "key": "finance__banking__accounting",
+                        "labels": {
+                            "en": "Finance / Banking / Accounting",
+                            "hu": "Pénzügy / bank / számvitel"
+                        },
+                        "sort_order": 140
+                    },
+                    {
+                        "key": "construction__skilled_labor",
+                        "labels": {
+                            "en": "Construction / Skilled Labor",
+                            "hu": "Építőipar / szakmunka"
+                        },
+                        "sort_order": 150
+                    },
+                    {
+                        "key": "legal__law",
+                        "labels": {
+                            "en": "Legal / Law",
+                            "hu": "Jogi terület"
+                        },
+                        "sort_order": 160
+                    },
+                    {
+                        "key": "healthcare_doctor__nurse__dentist",
+                        "labels": {
+                            "en": "Healthcare (Doctor / Nurse / Dentist)",
+                            "hu": "Egészségügy (orvos / ápoló / fogorvos)"
+                        },
+                        "sort_order": 170
+                    },
+                    {
+                        "key": "veterinary__animal_care",
+                        "labels": {
+                            "en": "Veterinary / Animal Care",
+                            "hu": "Állatorvoslás / állatgondozás"
+                        },
+                        "sort_order": 180
+                    },
+                    {
+                        "key": "government__public_service",
+                        "labels": {
+                            "en": "Government / Public Service",
+                            "hu": "Államigazgatás / közszolgálat"
+                        },
+                        "sort_order": 190
+                    },
+                    {
+                        "key": "military__defense",
+                        "labels": {
+                            "en": "Military / Defense",
+                            "hu": "Honvédelem / katonaság"
+                        },
+                        "sort_order": 200
+                    },
+                    {
+                        "key": "retail__sales_associate",
+                        "labels": {
+                            "en": "Retail / Sales Associate",
+                            "hu": "Kiskereskedelem / értékesítés"
+                        },
+                        "sort_order": 210
+                    },
+                    {
+                        "key": "customer_service__call_center",
+                        "labels": {
+                            "en": "Customer Service / Call Center",
+                            "hu": "Ügyfélszolgálat / call center"
+                        },
+                        "sort_order": 220
+                    },
+                    {
+                        "key": "self_employed__entrepreneur",
+                        "labels": {
+                            "en": "Self-Employed / Entrepreneur",
+                            "hu": "Önfoglalkoztató / vállalkozó"
+                        },
+                        "sort_order": 230
+                    },
+                    {
+                        "key": "student_full_time_or_part_time",
+                        "labels": {
+                            "en": "Student (Full-time or Part-time)",
+                            "hu": "Diák / hallgató"
+                        },
+                        "sort_order": 240
+                    },
+                    {
+                        "key": "teacher__educator__professor",
+                        "labels": {
+                            "en": "Teacher / Educator / Professor",
+                            "hu": "Tanár / oktató / professzor"
+                        },
+                        "sort_order": 250
+                    },
+                    {
+                        "key": "technology__software_development",
+                        "labels": {
+                            "en": "Technology / Software Development",
+                            "hu": "Technológia / szoftverfejlesztés"
+                        },
+                        "sort_order": 260
+                    },
+                    {
+                        "key": "it__systems__networking",
+                        "labels": {
+                            "en": "IT / Systems / Networking",
+                            "hu": "IT / rendszerek / hálózatok"
+                        },
+                        "sort_order": 270
+                    },
+                    {
+                        "key": "engineering_mechanical__civil__other",
+                        "labels": {
+                            "en": "Engineering (Mechanical / Civil / Other)",
+                            "hu": "Mérnöki terület"
+                        },
+                        "sort_order": 280
+                    },
+                    {
+                        "key": "tradesperson__technician",
+                        "labels": {
+                            "en": "Tradesperson / Technician",
+                            "hu": "Szakember / technikus"
+                        },
+                        "sort_order": 290
+                    },
+                    {
+                        "key": "transportation__logistics__delivery",
+                        "labels": {
+                            "en": "Transportation / Logistics / Delivery",
+                            "hu": "Közlekedés / logisztika / kézbesítés"
+                        },
+                        "sort_order": 300
+                    },
+                    {
+                        "key": "tourism__travel_industry",
+                        "labels": {
+                            "en": "Tourism / Travel Industry",
+                            "hu": "Turizmus / utazási ágazat"
+                        },
+                        "sort_order": 310
+                    },
+                    {
+                        "key": "retired",
+                        "labels": {
+                            "en": "Retired",
+                            "hu": "Nyugdíjas"
+                        },
+                        "sort_order": 320
+                    },
+                    {
+                        "key": "currently_unemployed__between_jobs",
+                        "labels": {
+                            "en": "Currently Unemployed / Between Jobs",
+                            "hu": "Jelenleg nem dolgozik / álláskereső"
+                        },
+                        "sort_order": 330
+                    },
+                    {
+                        "key": "other__not_listed",
+                        "labels": {
+                            "en": "Other / Not Listed",
+                            "hu": "Egyéb / nincs a listában"
+                        },
+                        "sort_order": 340
+                    }
+                ]
+            },
+            {
+                "key": "have_kids",
+                "field_key": "have_kids",
+                "profile_field": "have_kids",
+                "labels": {
+                    "en": "Children",
+                    "hu": "Gyerekek"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 40,
+                "options": [
+                    {
+                        "key": "no_kids",
+                        "labels": {
+                            "en": "No kids",
+                            "hu": "Nincs gyerekem"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "expecting",
+                        "labels": {
+                            "en": "Expecting",
+                            "hu": "Gyermeket várunk"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "new_parent",
+                        "labels": {
+                            "en": "New parent",
+                            "hu": "Friss szülő"
+                        },
+                        "sort_order": 30
+                    },
+                    {
+                        "key": "toddlers",
+                        "labels": {
+                            "en": "Toddler(s)",
+                            "hu": "Kisgyerek(ek)"
+                        },
+                        "sort_order": 40
+                    },
+                    {
+                        "key": "school_age",
+                        "labels": {
+                            "en": "School age",
+                            "hu": "Iskoláskorú gyerek(ek)"
+                        },
+                        "sort_order": 50
+                    },
+                    {
+                        "key": "tweens",
+                        "labels": {
+                            "en": "Tween(s)",
+                            "hu": "Kiskamasz(ok)"
+                        },
+                        "sort_order": 60
+                    },
+                    {
+                        "key": "teens",
+                        "labels": {
+                            "en": "Teen(s)",
+                            "hu": "Tinédzser(ek)"
+                        },
+                        "sort_order": 70
+                    },
+                    {
+                        "key": "college",
+                        "labels": {
+                            "en": "College",
+                            "hu": "Felsőoktatásban tanuló gyerek(ek)"
+                        },
+                        "sort_order": 80
+                    },
+                    {
+                        "key": "grown",
+                        "labels": {
+                            "en": "Grown",
+                            "hu": "Felnőtt gyerek(ek)"
+                        },
+                        "sort_order": 90
+                    }
+                ]
+            },
+            {
+                "key": "languages",
+                "field_key": "languages",
+                "profile_field": "languages",
+                "labels": {
+                    "en": "Languages",
+                    "hu": "Nyelvek"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "multi",
+                    "min_selected": 0,
+                    "max_selected": 10
+                },
+                "sort_order": 70,
+                "options": [
+                    {
+                        "key": "english",
+                        "labels": {
+                            "en": "English",
+                            "hu": "Angol"
+                        },
+                        "sort_order": 38
+                    },
+                    {
+                        "key": "hungarian",
+                        "labels": {
+                            "en": "Hungarian",
+                            "hu": "Magyar"
+                        },
+                        "sort_order": 62
+                    }
+                ]
+            },
+            {
+                "key": "relationship_status",
+                "field_key": "relationship_status",
+                "profile_field": "relationship_status",
+                "labels": {
+                    "en": "Relationship status",
+                    "hu": "Kapcsolati állapot"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 150,
+                "options": [
+                    {
+                        "key": "single",
+                        "labels": {
+                            "en": "Single",
+                            "hu": "Egyedülálló"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "partner",
+                        "labels": {
+                            "en": "In a relationship",
+                            "hu": "Kapcsolatban"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "open",
+                        "labels": {
+                            "en": "Open relationship",
+                            "hu": "Nyitott kapcsolatban"
+                        },
+                        "sort_order": 30
+                    },
+                    {
+                        "key": "married",
+                        "labels": {
+                            "en": "Married",
+                            "hu": "Házas"
+                        },
+                        "sort_order": 40
+                    }
+                ]
+            }
+        ],
+        "system_questions": [
+            {
+                "key": "gender",
+                "kind": "identity",
+                "locked": true,
+                "required": true,
+                "labels": {
+                    "en": "Gender",
+                    "hu": "Nem"
+                },
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "options": [
+                    {
+                        "key": "woman",
+                        "labels": {
+                            "en": "Woman",
+                            "hu": "Nő"
+                        }
+                    },
+                    {
+                        "key": "man",
+                        "labels": {
+                            "en": "Man",
+                            "hu": "Férfi"
+                        }
+                    }
+                ]
+            },
+            {
+                "key": "visible_to",
+                "kind": "audience",
+                "locked": true,
+                "synthetic": true,
+                "required": true,
+                "labels": {
+                    "en": "Who can see my profile",
+                    "hu": "Ki láthatja az adatlapomat"
+                },
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "options": [
+                    {
+                        "key": "male",
+                        "labels": {
+                            "en": "Men",
+                            "hu": "Férfiak"
+                        }
+                    },
+                    {
+                        "key": "female",
+                        "labels": {
+                            "en": "Women",
+                            "hu": "Nők"
+                        }
+                    },
+                    {
+                        "key": "both",
+                        "labels": {
+                            "en": "Everyone",
+                            "hu": "Mindenki"
+                        }
+                    }
+                ]
+            }
+        ],
+        "dropped_items": [],
+        "message": 200,
+        "status": 200,
+        "can_send": 0
+    },
+    "save_signup_page_layout.409": {
+        "success": false,
+        "status_code": 409,
+        "error": "signup-page-conflict",
+        "pages": {
+            "schema_version": 1,
+            "key": "signup_pages_v1",
+            "pages": [
+                {
+                    "key": "p_b54caee1",
+                    "hidden": false,
+                    "title": {
+                        "en": "More about you",
+                        "hu": "Többet rólad"
+                    },
+                    "subtitle": {
+                        "en": "Lifestyle",
+                        "hu": "Életmód"
+                    },
+                    "items": [
+                        {
+                            "field_key": "smoking",
+                            "required": true
+                        },
+                        {
+                            "field_key": "relationship_status",
+                            "required": false
+                        }
+                    ]
+                },
+                {
+                    "key": "p_af53cd7f",
+                    "hidden": true,
+                    "title": {
+                        "en": "More about you",
+                        "hu": "Többet rólad"
+                    },
+                    "subtitle": {
+                        "en": "Lifestyle",
+                        "hu": "Életmód"
+                    },
+                    "items": [
+                        {
+                            "field_key": "have_kids",
+                            "required": false
+                        }
+                    ]
+                }
+            ],
+            "dropped_items": [],
+            "revision": 1,
+            "updated_at": 1788557216,
+            "updated_by": "pages-editor@example.test"
+        },
+        "message": 200,
+        "status": 200,
+        "can_send": 0
+    },
+    "save_signup_page_layout.422": {
+        "success": false,
+        "status_code": 422,
+        "error": "signup-page-layout-refused",
+        "details": {
+            "items": [
+                {
+                    "index": 0,
+                    "page_key": "p_1e3301dd",
+                    "field_key": "smoking",
+                    "reason": "duplicate-field"
+                },
+                {
+                    "index": 1,
+                    "page_key": "p_635238c1",
+                    "field_key": "",
+                    "reason": "blank-title"
+                }
+            ]
+        },
+        "message": 200,
+        "status": 200,
+        "can_send": 0
+    },
+    "list_signup_options.composed": {
+        "success": true,
+        "status_code": 200,
+        "catalog": {
+            "schema_version": 1,
+            "cast_groups": [
+                {
+                    "key": "male_for_male",
+                    "labels": {
+                        "en": "Men visible to men",
+                        "hu": "Férfiak, akiket férfiak láthatnak"
+                    },
+                    "rules": [
+                        {
+                            "genders": [
+                                "man"
+                            ],
+                            "visible_to": [
+                                "male"
+                            ]
+                        }
+                    ],
+                    "legacy_segment": "male_gay",
+                    "sort_order": 100,
+                    "active": true,
+                    "id": "000000000000000000000002",
+                    "protected": true,
+                    "revision": 3,
+                    "editable_fields": [
+                        "labels",
+                        "sort_order"
+                    ]
+                },
+                {
+                    "key": "male_for_female",
+                    "labels": {
+                        "en": "Men visible to women",
+                        "hu": "Férfiak, akiket nők láthatnak"
+                    },
+                    "rules": [
+                        {
+                            "genders": [
+                                "man"
+                            ],
+                            "visible_to": [
+                                "female"
+                            ]
+                        }
+                    ],
+                    "legacy_segment": "male_hetero",
+                    "sort_order": 200,
+                    "active": true,
+                    "id": "000000000000000000000001",
+                    "protected": true,
+                    "revision": 3,
+                    "editable_fields": [
+                        "labels",
+                        "sort_order"
+                    ]
+                },
+                {
+                    "key": "male_for_both",
+                    "labels": {
+                        "en": "Men visible to everyone",
+                        "hu": "Férfiak, akiket mindenki láthat"
+                    },
+                    "rules": [
+                        {
+                            "genders": [
+                                "man"
+                            ],
+                            "visible_to": [
+                                "both"
+                            ]
+                        }
+                    ],
+                    "legacy_segment": "male_bisexual",
+                    "sort_order": 300,
+                    "active": true,
+                    "id": "000000000000000000000003",
+                    "protected": true,
+                    "revision": 3,
+                    "editable_fields": [
+                        "labels",
+                        "sort_order"
+                    ]
+                },
+                {
+                    "key": "female_for_male",
+                    "labels": {
+                        "en": "Women visible to men",
+                        "hu": "Nők, akiket férfiak láthatnak"
+                    },
+                    "rules": [
+                        {
+                            "genders": [
+                                "woman"
+                            ],
+                            "visible_to": [
+                                "male"
+                            ]
+                        }
+                    ],
+                    "legacy_segment": "female_hetero",
+                    "sort_order": 400,
+                    "active": true,
+                    "id": "000000000000000000000004",
+                    "protected": true,
+                    "revision": 3,
+                    "editable_fields": [
+                        "labels",
+                        "sort_order"
+                    ]
+                },
+                {
+                    "key": "female_for_female",
+                    "labels": {
+                        "en": "Women visible to women",
+                        "hu": "Nők, akiket nők láthatnak"
+                    },
+                    "rules": [
+                        {
+                            "genders": [
+                                "woman"
+                            ],
+                            "visible_to": [
+                                "female"
+                            ]
+                        }
+                    ],
+                    "legacy_segment": "female_lesbian",
+                    "sort_order": 500,
+                    "active": true,
+                    "id": "000000000000000000000005",
+                    "protected": true,
+                    "revision": 3,
+                    "editable_fields": [
+                        "labels",
+                        "sort_order"
+                    ]
+                },
+                {
+                    "key": "female_for_both",
+                    "labels": {
+                        "en": "Women visible to everyone",
+                        "hu": "Nők, akiket mindenki láthat"
+                    },
+                    "rules": [
+                        {
+                            "genders": [
+                                "woman"
+                            ],
+                            "visible_to": [
+                                "both"
+                            ]
+                        }
+                    ],
+                    "legacy_segment": "female_bisexual",
+                    "sort_order": 600,
+                    "active": true,
+                    "id": "000000000000000000000006",
+                    "protected": true,
+                    "revision": 3,
+                    "editable_fields": [
+                        "labels",
+                        "sort_order"
+                    ]
+                },
+                {
+                    "key": "nonbinary_for_both",
+                    "labels": {
+                        "en": "Other or unresolved identity",
+                        "hu": "Egyéb vagy még nem besorolt identitás"
+                    },
+                    "rules": [
+                        {
+                            "genders": [
+                                "nonbinary"
+                            ],
+                            "visible_to": [
+                                "both"
+                            ]
+                        }
+                    ],
+                    "legacy_segment": "other",
+                    "sort_order": 700,
+                    "active": true,
+                    "id": "0c5e779988ceae850aeb6803",
+                    "protected": true,
+                    "revision": 1,
+                    "editable_fields": [
+                        "labels",
+                        "sort_order"
+                    ]
+                }
+            ],
+            "segments": [
+                {
+                    "key": "male_hetero",
+                    "labels": {
+                        "en": "Men visible to women",
+                        "hu": "Férfiak, akiket nők láthatnak"
+                    }
+                },
+                {
+                    "key": "male_gay",
+                    "labels": {
+                        "en": "Men visible to men",
+                        "hu": "Férfiak, akiket férfiak láthatnak"
+                    }
+                },
+                {
+                    "key": "male_bisexual",
+                    "labels": {
+                        "en": "Men visible to everyone",
+                        "hu": "Férfiak, akiket mindenki láthat"
+                    }
+                },
+                {
+                    "key": "female_hetero",
+                    "labels": {
+                        "en": "Women visible to men",
+                        "hu": "Nők, akiket férfiak láthatnak"
+                    }
+                },
+                {
+                    "key": "female_lesbian",
+                    "labels": {
+                        "en": "Women visible to women",
+                        "hu": "Nők, akiket nők láthatnak"
+                    }
+                },
+                {
+                    "key": "female_bisexual",
+                    "labels": {
+                        "en": "Women visible to everyone",
+                        "hu": "Nők, akiket mindenki láthat"
+                    }
+                },
+                {
+                    "key": "identity_unresolved",
+                    "labels": {
+                        "en": "Other or unresolved identity",
+                        "hu": "Egyéb vagy még nem besorolt identitás"
+                    }
+                }
+            ],
+            "groups": [
+                {
+                    "name_en": "Gender",
+                    "name_hu": "Nem",
+                    "system_owned": true,
+                    "custom_allowed": false,
+                    "profile_field": "gender",
+                    "question_pack": "identity",
+                    "key": "gender",
+                    "required": true,
+                    "revision": 0,
+                    "icon": {
+                        "url": "",
+                        "mime": ""
+                    },
+                    "audience": {
+                        "mode": "global",
+                        "genders": [],
+                        "group_ids": [],
+                        "segments": []
+                    },
+                    "exclude_identity_unresolved": false,
+                    "options": [
+                        {
+                            "key": "male",
+                            "name_en": "Man",
+                            "name_hu": "Férfi",
+                            "sort_order": 10,
+                            "active": true,
+                            "is_custom": false,
+                            "system_owned": true
+                        },
+                        {
+                            "key": "female",
+                            "name_en": "Woman",
+                            "name_hu": "Nő",
+                            "sort_order": 20,
+                            "active": true,
+                            "is_custom": false,
+                            "system_owned": true
+                        },
+                        {
+                            "key": "other",
+                            "name_en": "Nonbinary",
+                            "name_hu": "Nembináris",
+                            "sort_order": 30,
+                            "active": true,
+                            "is_custom": false,
+                            "system_owned": true
+                        }
+                    ]
+                }
+            ]
+        },
+        "pages": {
+            "schema_version": 1,
+            "key": "signup_pages_v1",
+            "pages": [
+                {
+                    "key": "p_b54caee1",
+                    "hidden": false,
+                    "title": {
+                        "en": "More about you",
+                        "hu": "Többet rólad"
+                    },
+                    "subtitle": {
+                        "en": "Lifestyle",
+                        "hu": "Életmód"
+                    },
+                    "items": [
+                        {
+                            "field_key": "smoking",
+                            "required": true
+                        },
+                        {
+                            "field_key": "relationship_status",
+                            "required": false
+                        }
+                    ]
+                },
+                {
+                    "key": "p_af53cd7f",
+                    "hidden": true,
+                    "title": {
+                        "en": "More about you",
+                        "hu": "Többet rólad"
+                    },
+                    "subtitle": {
+                        "en": "Lifestyle",
+                        "hu": "Életmód"
+                    },
+                    "items": [
+                        {
+                            "field_key": "have_kids",
+                            "required": false
+                        }
+                    ]
+                }
+            ],
+            "dropped_items": [],
+            "revision": 1,
+            "updated_at": 1788557216,
+            "updated_by": "pages-editor@example.test"
+        },
+        "eligible_fields": [
+            {
+                "key": "education_level",
+                "field_key": "education_level",
+                "profile_field": "education_level",
+                "labels": {
+                    "en": "Education level",
+                    "hu": "Iskolai végzettség"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 10,
+                "options": [
+                    {
+                        "key": "high_school",
+                        "labels": {
+                            "en": "High School",
+                            "hu": "Középiskola"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "some_college",
+                        "labels": {
+                            "en": "Some College",
+                            "hu": "Megkezdett felsőfokú tanulmányok"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "associates_degree",
+                        "labels": {
+                            "en": "Associate's Degree",
+                            "hu": "Felsőfokú szakképzettség"
+                        },
+                        "sort_order": 30
+                    },
+                    {
+                        "key": "bachelors_degree",
+                        "labels": {
+                            "en": "Bachelor's Degree",
+                            "hu": "Alapképzés / főiskolai diploma"
+                        },
+                        "sort_order": 40
+                    },
+                    {
+                        "key": "masters_degree",
+                        "labels": {
+                            "en": "Master's Degree",
+                            "hu": "Mesterképzés / egyetemi diploma"
+                        },
+                        "sort_order": 50
+                    },
+                    {
+                        "key": "doctorate__postdoctoral",
+                        "labels": {
+                            "en": "Doctorate / Postdoctoral",
+                            "hu": "Doktori / posztdoktori fokozat"
+                        },
+                        "sort_order": 60
+                    }
+                ]
+            },
+            {
+                "key": "smoking",
+                "field_key": "smoking",
+                "profile_field": "smoking",
+                "labels": {
+                    "en": "Smoking",
+                    "hu": "Dohányzás"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 20,
+                "options": [
+                    {
+                        "key": "no",
+                        "labels": {
+                            "en": "No, I don't smoke",
+                            "hu": "Nem dohányzom"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "socially",
+                        "labels": {
+                            "en": "I smoke sometimes",
+                            "hu": "Alkalmanként dohányzom"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "yes",
+                        "labels": {
+                            "en": "Yes, I smoke",
+                            "hu": "Dohányzom"
+                        },
+                        "sort_order": 30
+                    }
+                ]
+            },
+            {
+                "key": "profession",
+                "field_key": "profession",
+                "profile_field": "profession",
+                "labels": {
+                    "en": "Profession",
+                    "hu": "Foglalkozás"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 30,
+                "options": [
+                    {
+                        "key": "administrative_assistant",
+                        "labels": {
+                            "en": "Administrative Assistant",
+                            "hu": "Adminisztratív asszisztens"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "executive__c_level_management",
+                        "labels": {
+                            "en": "Executive / C-Level Management",
+                            "hu": "Felsővezető / cégvezetés"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "secretarial__office_support",
+                        "labels": {
+                            "en": "Secretarial / Office Support",
+                            "hu": "Titkárság / irodai támogatás"
+                        },
+                        "sort_order": 30
+                    },
+                    {
+                        "key": "advertising__marketing__pr",
+                        "labels": {
+                            "en": "Advertising / Marketing / PR",
+                            "hu": "Reklám / marketing / PR"
+                        },
+                        "sort_order": 40
+                    },
+                    {
+                        "key": "media__content__journalism",
+                        "labels": {
+                            "en": "Media / Content / Journalism",
+                            "hu": "Média / tartalom / újságírás"
+                        },
+                        "sort_order": 50
+                    },
+                    {
+                        "key": "architecture",
+                        "labels": {
+                            "en": "Architecture",
+                            "hu": "Építészet"
+                        },
+                        "sort_order": 60
+                    },
+                    {
+                        "key": "interior_designer",
+                        "labels": {
+                            "en": "Interior Designer",
+                            "hu": "Belsőépítész"
+                        },
+                        "sort_order": 70
+                    },
+                    {
+                        "key": "graphic_designer__visual_arts",
+                        "labels": {
+                            "en": "Graphic Designer / Visual Arts",
+                            "hu": "Grafikus / vizuális művészetek"
+                        },
+                        "sort_order": 80
+                    },
+                    {
+                        "key": "artist__performer__musician",
+                        "labels": {
+                            "en": "Artist / Performer / Musician",
+                            "hu": "Művész / előadó / zenész"
+                        },
+                        "sort_order": 90
+                    },
+                    {
+                        "key": "creative_director__producer",
+                        "labels": {
+                            "en": "Creative Director / Producer",
+                            "hu": "Kreatív igazgató / producer"
+                        },
+                        "sort_order": 100
+                    },
+                    {
+                        "key": "chef__cook__baker",
+                        "labels": {
+                            "en": "Chef / Cook / Baker",
+                            "hu": "Séf / szakács / pék"
+                        },
+                        "sort_order": 110
+                    },
+                    {
+                        "key": "food_beverage__hospitality",
+                        "labels": {
+                            "en": "Food & Beverage / Hospitality",
+                            "hu": "Vendéglátás / szállodaipar"
+                        },
+                        "sort_order": 120
+                    },
+                    {
+                        "key": "fashion__modeling__beauty",
+                        "labels": {
+                            "en": "Fashion / Modeling / Beauty",
+                            "hu": "Divat / modellkedés / szépségipar"
+                        },
+                        "sort_order": 130
+                    },
+                    {
+                        "key": "finance__banking__accounting",
+                        "labels": {
+                            "en": "Finance / Banking / Accounting",
+                            "hu": "Pénzügy / bank / számvitel"
+                        },
+                        "sort_order": 140
+                    },
+                    {
+                        "key": "construction__skilled_labor",
+                        "labels": {
+                            "en": "Construction / Skilled Labor",
+                            "hu": "Építőipar / szakmunka"
+                        },
+                        "sort_order": 150
+                    },
+                    {
+                        "key": "legal__law",
+                        "labels": {
+                            "en": "Legal / Law",
+                            "hu": "Jogi terület"
+                        },
+                        "sort_order": 160
+                    },
+                    {
+                        "key": "healthcare_doctor__nurse__dentist",
+                        "labels": {
+                            "en": "Healthcare (Doctor / Nurse / Dentist)",
+                            "hu": "Egészségügy (orvos / ápoló / fogorvos)"
+                        },
+                        "sort_order": 170
+                    },
+                    {
+                        "key": "veterinary__animal_care",
+                        "labels": {
+                            "en": "Veterinary / Animal Care",
+                            "hu": "Állatorvoslás / állatgondozás"
+                        },
+                        "sort_order": 180
+                    },
+                    {
+                        "key": "government__public_service",
+                        "labels": {
+                            "en": "Government / Public Service",
+                            "hu": "Államigazgatás / közszolgálat"
+                        },
+                        "sort_order": 190
+                    },
+                    {
+                        "key": "military__defense",
+                        "labels": {
+                            "en": "Military / Defense",
+                            "hu": "Honvédelem / katonaság"
+                        },
+                        "sort_order": 200
+                    },
+                    {
+                        "key": "retail__sales_associate",
+                        "labels": {
+                            "en": "Retail / Sales Associate",
+                            "hu": "Kiskereskedelem / értékesítés"
+                        },
+                        "sort_order": 210
+                    },
+                    {
+                        "key": "customer_service__call_center",
+                        "labels": {
+                            "en": "Customer Service / Call Center",
+                            "hu": "Ügyfélszolgálat / call center"
+                        },
+                        "sort_order": 220
+                    },
+                    {
+                        "key": "self_employed__entrepreneur",
+                        "labels": {
+                            "en": "Self-Employed / Entrepreneur",
+                            "hu": "Önfoglalkoztató / vállalkozó"
+                        },
+                        "sort_order": 230
+                    },
+                    {
+                        "key": "student_full_time_or_part_time",
+                        "labels": {
+                            "en": "Student (Full-time or Part-time)",
+                            "hu": "Diák / hallgató"
+                        },
+                        "sort_order": 240
+                    },
+                    {
+                        "key": "teacher__educator__professor",
+                        "labels": {
+                            "en": "Teacher / Educator / Professor",
+                            "hu": "Tanár / oktató / professzor"
+                        },
+                        "sort_order": 250
+                    },
+                    {
+                        "key": "technology__software_development",
+                        "labels": {
+                            "en": "Technology / Software Development",
+                            "hu": "Technológia / szoftverfejlesztés"
+                        },
+                        "sort_order": 260
+                    },
+                    {
+                        "key": "it__systems__networking",
+                        "labels": {
+                            "en": "IT / Systems / Networking",
+                            "hu": "IT / rendszerek / hálózatok"
+                        },
+                        "sort_order": 270
+                    },
+                    {
+                        "key": "engineering_mechanical__civil__other",
+                        "labels": {
+                            "en": "Engineering (Mechanical / Civil / Other)",
+                            "hu": "Mérnöki terület"
+                        },
+                        "sort_order": 280
+                    },
+                    {
+                        "key": "tradesperson__technician",
+                        "labels": {
+                            "en": "Tradesperson / Technician",
+                            "hu": "Szakember / technikus"
+                        },
+                        "sort_order": 290
+                    },
+                    {
+                        "key": "transportation__logistics__delivery",
+                        "labels": {
+                            "en": "Transportation / Logistics / Delivery",
+                            "hu": "Közlekedés / logisztika / kézbesítés"
+                        },
+                        "sort_order": 300
+                    },
+                    {
+                        "key": "tourism__travel_industry",
+                        "labels": {
+                            "en": "Tourism / Travel Industry",
+                            "hu": "Turizmus / utazási ágazat"
+                        },
+                        "sort_order": 310
+                    },
+                    {
+                        "key": "retired",
+                        "labels": {
+                            "en": "Retired",
+                            "hu": "Nyugdíjas"
+                        },
+                        "sort_order": 320
+                    },
+                    {
+                        "key": "currently_unemployed__between_jobs",
+                        "labels": {
+                            "en": "Currently Unemployed / Between Jobs",
+                            "hu": "Jelenleg nem dolgozik / álláskereső"
+                        },
+                        "sort_order": 330
+                    },
+                    {
+                        "key": "other__not_listed",
+                        "labels": {
+                            "en": "Other / Not Listed",
+                            "hu": "Egyéb / nincs a listában"
+                        },
+                        "sort_order": 340
+                    }
+                ]
+            },
+            {
+                "key": "have_kids",
+                "field_key": "have_kids",
+                "profile_field": "have_kids",
+                "labels": {
+                    "en": "Children",
+                    "hu": "Gyerekek"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 40,
+                "options": [
+                    {
+                        "key": "no_kids",
+                        "labels": {
+                            "en": "No kids",
+                            "hu": "Nincs gyerekem"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "expecting",
+                        "labels": {
+                            "en": "Expecting",
+                            "hu": "Gyermeket várunk"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "new_parent",
+                        "labels": {
+                            "en": "New parent",
+                            "hu": "Friss szülő"
+                        },
+                        "sort_order": 30
+                    },
+                    {
+                        "key": "toddlers",
+                        "labels": {
+                            "en": "Toddler(s)",
+                            "hu": "Kisgyerek(ek)"
+                        },
+                        "sort_order": 40
+                    },
+                    {
+                        "key": "school_age",
+                        "labels": {
+                            "en": "School age",
+                            "hu": "Iskoláskorú gyerek(ek)"
+                        },
+                        "sort_order": 50
+                    },
+                    {
+                        "key": "tweens",
+                        "labels": {
+                            "en": "Tween(s)",
+                            "hu": "Kiskamasz(ok)"
+                        },
+                        "sort_order": 60
+                    },
+                    {
+                        "key": "teens",
+                        "labels": {
+                            "en": "Teen(s)",
+                            "hu": "Tinédzser(ek)"
+                        },
+                        "sort_order": 70
+                    },
+                    {
+                        "key": "college",
+                        "labels": {
+                            "en": "College",
+                            "hu": "Felsőoktatásban tanuló gyerek(ek)"
+                        },
+                        "sort_order": 80
+                    },
+                    {
+                        "key": "grown",
+                        "labels": {
+                            "en": "Grown",
+                            "hu": "Felnőtt gyerek(ek)"
+                        },
+                        "sort_order": 90
+                    }
+                ]
+            },
+            {
+                "key": "languages",
+                "field_key": "languages",
+                "profile_field": "languages",
+                "labels": {
+                    "en": "Languages",
+                    "hu": "Nyelvek"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "multi",
+                    "min_selected": 0,
+                    "max_selected": 10
+                },
+                "sort_order": 70,
+                "options": [
+                    {
+                        "key": "english",
+                        "labels": {
+                            "en": "English",
+                            "hu": "Angol"
+                        },
+                        "sort_order": 38
+                    },
+                    {
+                        "key": "hungarian",
+                        "labels": {
+                            "en": "Hungarian",
+                            "hu": "Magyar"
+                        },
+                        "sort_order": 62
+                    }
+                ]
+            },
+            {
+                "key": "relationship_status",
+                "field_key": "relationship_status",
+                "profile_field": "relationship_status",
+                "labels": {
+                    "en": "Relationship status",
+                    "hu": "Kapcsolati állapot"
+                },
+                "descriptions": [],
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "selection": {
+                    "mode": "single",
+                    "min_selected": 0,
+                    "max_selected": 1
+                },
+                "sort_order": 150,
+                "options": [
+                    {
+                        "key": "single",
+                        "labels": {
+                            "en": "Single",
+                            "hu": "Egyedülálló"
+                        },
+                        "sort_order": 10
+                    },
+                    {
+                        "key": "partner",
+                        "labels": {
+                            "en": "In a relationship",
+                            "hu": "Kapcsolatban"
+                        },
+                        "sort_order": 20
+                    },
+                    {
+                        "key": "open",
+                        "labels": {
+                            "en": "Open relationship",
+                            "hu": "Nyitott kapcsolatban"
+                        },
+                        "sort_order": 30
+                    },
+                    {
+                        "key": "married",
+                        "labels": {
+                            "en": "Married",
+                            "hu": "Házas"
+                        },
+                        "sort_order": 40
+                    }
+                ]
+            }
+        ],
+        "system_questions": [
+            {
+                "key": "gender",
+                "kind": "identity",
+                "locked": true,
+                "required": true,
+                "labels": {
+                    "en": "Gender",
+                    "hu": "Nem"
+                },
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "options": [
+                    {
+                        "key": "woman",
+                        "labels": {
+                            "en": "Woman",
+                            "hu": "Nő"
+                        }
+                    },
+                    {
+                        "key": "man",
+                        "labels": {
+                            "en": "Man",
+                            "hu": "Férfi"
+                        }
+                    }
+                ]
+            },
+            {
+                "key": "visible_to",
+                "kind": "audience",
+                "locked": true,
+                "synthetic": true,
+                "required": true,
+                "labels": {
+                    "en": "Who can see my profile",
+                    "hu": "Ki láthatja az adatlapomat"
+                },
+                "icon": {
+                    "url": "",
+                    "mime": ""
+                },
+                "options": [
+                    {
+                        "key": "male",
+                        "labels": {
+                            "en": "Men",
+                            "hu": "Férfiak"
+                        }
+                    },
+                    {
+                        "key": "female",
+                        "labels": {
+                            "en": "Women",
+                            "hu": "Nők"
+                        }
+                    },
+                    {
+                        "key": "both",
+                        "labels": {
+                            "en": "Everyone",
+                            "hu": "Mindenki"
+                        }
+                    }
+                ]
+            }
+        ],
+        "dropped_items": [],
+        "message": 200,
+        "status": 200,
+        "can_send": 0
+    }
+}
