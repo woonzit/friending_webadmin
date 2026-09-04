@@ -18,7 +18,7 @@ const CORPUS = new URL(
   "./fixtures/profile_presentation_generation_wire/t730-generation-console-envelopes.json",
   import.meta.url,
 );
-const CORPUS_SHA256 = "9cacf66a4b1c17053ba4bae79b61a124a90c3376327fa34b2893bd2a35b0f5e3";
+const CORPUS_SHA256 = "2cfa78253a02add9fab538435ce4280f6de7848a84fe3aaeb2e7c75c2b19dd57";
 
 type MemberFacts = {
   age_display: string;
@@ -66,7 +66,7 @@ async function rows(profile: UserDetailProfile, locale: "en" | "hu"): Promise<Ar
     { locale, messages },
     createElement(MemberAgePolicyRows, { profile }),
   ));
-  return [...markup.matchAll(/<dt>([^<]*)<\/dt><dd>([^<]*)<\/dd>/g)]
+  return [...markup.matchAll(/<dt>([^<]*)<\/dt><dd(?: class="[^"]*")?><span>([^<]*)<\/span>/g)]
     .map((match) => [match[1], match[2]] as [string, string]);
 }
 

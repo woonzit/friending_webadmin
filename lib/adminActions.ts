@@ -113,6 +113,7 @@ export const ADMIN_ACTIONS = [
   "overview",
   "list_users",
   "user_detail",
+  "reset_member_birthday_lock",
   "membership_configuration",
   "save_membership_configuration",
   "membership_user_detail",
@@ -254,6 +255,9 @@ export const ADMIN_ACTION_ACCESS = {
   overview: "read",
   list_users: "read",
   user_detail: "read",
+  // T-759: a receipted, audited member allowance reset. Core rechecks the
+  // viewer-refusing global write role on every call; this is the same floor.
+  reset_member_birthday_lock: "write",
   membership_configuration: "read",
   save_membership_configuration: "write",
   membership_user_detail: "read",

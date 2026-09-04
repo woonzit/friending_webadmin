@@ -12,6 +12,7 @@ import {
 } from "@/lib/audienceVisibilityAdmin";
 import { normalizeAppearanceProxyBody } from "@/lib/appearanceRules";
 import { normalizeModeCardsProxyBody } from "@/lib/modeCards";
+import { normalizeMemberBirthdayLockProxyBody } from "@/lib/memberBirthdayLock";
 import { normalizeSectionTeasersProxyBody } from "@/lib/sectionTeasers";
 import { datesAvailabilityWriteIsRetired } from "@/lib/datesAdmin";
 import {
@@ -305,6 +306,14 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedSectionTeasersBody !== undefined) body = normalizedSectionTeasersBody;
+
+  // The member reset accepts only its contract, positive uid and UUIDv4
+  // receipt identity. Core remains the authority for membership and lock state.
+  const normalizedBirthdayLockBody = normalizeMemberBirthdayLockProxyBody(action, body);
+  if (normalizedBirthdayLockBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedBirthdayLockBody !== undefined) body = normalizedBirthdayLockBody;
 
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer

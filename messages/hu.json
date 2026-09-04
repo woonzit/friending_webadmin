@@ -5377,6 +5377,26 @@
       "locked": "Zárolt",
       "changeable": "Módosítható"
     },
+    "birthdayReset": {
+      "unlock": "Zárolás feloldása",
+      "retry": "Visszaállítás újrapróbálása",
+      "working": "Visszaállítás…",
+      "confirm": "Visszaállítod a user születésnap-módosítási lehetőségét pontosan egyre? A születésnap és a kormegjelenítési beállítások nem változnak.",
+      "changed": "A születésnap zárolása feloldva. Egy módosítás elérhető.",
+      "notLocked": "A születésnap már módosítható volt; useradat nem változott.",
+      "result": "Visszaállítás eredménye",
+      "receipt": "Nyugta",
+      "replayed": "újrajátszva",
+      "errors": {
+        "authorization": "Az adminisztrátori szerepköröd nem oldhatja fel ezt a zárolást.",
+        "invalidRequest": "A Core érvénytelenként elutasította a visszaállítási kérést.",
+        "memberNotFound": "Ez a user már nem létezik.",
+        "conflict": "A visszaállítás ütközött egy másik paranccsal. Biztonságos esetben az újrapróbálás ugyanazt a nyugtát használja.",
+        "storedInvalid": "A Core nem tudja biztonságosan értelmezni a user tárolt születésnap-zárolási állapotát.",
+        "unavailable": "A születésnap-zárolás feloldása átmenetileg nem érhető el.",
+        "uncertain": "Az eredmény bizonytalan. A user adatai frissültek; az újrapróbálás ugyanazt a nyugtát használja."
+      }
+    },
     "realdob": "Születésnap eredete",
     "realdobValues": {
       "confirmed": "Megerősített",

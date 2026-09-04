@@ -54,7 +54,9 @@ export default function UserDetailPage() {
       setState("not-found");
       return;
     }
-    setState("loading");
+    // Keep an already-rendered member page mounted while a mutation refreshes
+    // it, so the T-759 receipt remains visible beside the authoritative state.
+    setState((current) => current === "ready" ? current : "loading");
     const [response, profileResponse] = await Promise.all([
       adminCall("user_detail", { uid }),
       adminCall("user_profile_fields", { uid, lang: locale }),
@@ -126,9 +128,9 @@ export default function UserDetailPage() {
         [t("headline"), profile.headline || "—"],
         [t("about"), profile.about_me || "—"],
       ],
-      // D-122 (T-730). Read-only: the birthday-lock reset is T-759, and it
-      // needs a receipted Core action this console cannot fake.
-      extra: <MemberAgePolicyRows profile={profile} />,
+      // D-122 / T-759. The row stays diagnostic; its one control invokes the
+      // dedicated receipted Core action and then reloads this authoritative page.
+      extra: <MemberAgePolicyRows profile={profile} uid={uid} onReset={load} />,
     },
   ];
   const tags = data.tags;

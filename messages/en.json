@@ -5377,6 +5377,26 @@
       "locked": "Locked",
       "changeable": "Changeable"
     },
+    "birthdayReset": {
+      "unlock": "Unlock birthday",
+      "retry": "Retry reset",
+      "working": "Resetting…",
+      "confirm": "Restore this member's birthday-change allowance to one? Their birthday and age-display settings will not change.",
+      "changed": "Birthday lock cleared. One birthday change is available.",
+      "notLocked": "The birthday was already changeable; no member data changed.",
+      "result": "Reset result",
+      "receipt": "Receipt",
+      "replayed": "replayed",
+      "errors": {
+        "authorization": "Your administrator role cannot reset this lock.",
+        "invalidRequest": "The reset request was refused as invalid.",
+        "memberNotFound": "This member no longer exists.",
+        "conflict": "The reset conflicted with another command. Retry uses the same receipt when safe.",
+        "storedInvalid": "Core cannot safely interpret this member's stored birthday-lock state.",
+        "unavailable": "The birthday-lock reset is temporarily unavailable.",
+        "uncertain": "The result is uncertain. The member was refreshed; retry will reuse the same receipt."
+      }
+    },
     "realdob": "Birthday origin",
     "realdobValues": {
       "confirmed": "Confirmed",

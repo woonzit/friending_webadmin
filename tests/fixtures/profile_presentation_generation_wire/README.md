@@ -7,12 +7,12 @@ Status: **real Core corpus, captured in-process from Core's own services.**
     team/handoffs/t730-generation-console-envelopes-generator.php
     sha256 fa9e8fc3cbaa6d09ada14e90bc046964a455480ead953ee23e6041ad5ee0d52a
 
-run against Core `dad0df7bd9d3df91e1b4342572e22d39bfa8f8e7` (`api` `main`, which
-contains the T-729 tip `8d18f32cefc170c7f4bfdd122b8ef367d2323b68` this console is pinned on) with a disposable
-loopback `mongod`. Nothing in it was written by hand: every body is what
+run against Core `b60cf6bf483116b375fff92e1fcc8add9584fa20` (the T-762 transport
+fix stacked after T-759 and the T-729 source contract) with a disposable loopback
+`mongod`. Nothing in it was written by hand: every body is what
 `ProfilePresentationAdminService` and `AgeDisplayPolicy` returned.
 
-    sha256 9cacf66a4b1c17053ba4bae79b61a124a90c3376327fa34b2893bd2a35b0f5e3   (13809 bytes)
+    sha256 2cfa78253a02add9fab538435ce4280f6de7848a84fe3aaeb2e7c75c2b19dd57   (13809 bytes)
 
 `tests/generationOptionIcons.test.mts` re-checks that sha256 on every run, so an
 edited body fails the suite instead of drifting into the decoder's expectations.
@@ -49,21 +49,15 @@ edited body fails the suite instead of drifting into the decoder's expectations.
   returns `true` when the key is missing, which is the opposite of what a
   missing boolean usually implies; `hidden_no_birthday_realdob_absent` pins it.
 
-## Known Core gap this corpus makes visible
+## Core transport proof
 
-The corpus was captured by calling `ProfilePresentationAdminService::saveSource`
-**directly**, which is also what Core's own `tests/generation_display_storage_test.php`
-does. The HTTP transport in front of it,
-`WebadminProfilePresentationController::saveSource`, forwards only
-`source_key`, `expected_revision`, `labels`, `labels_json`, `icon`, `icon_url`
-and `icon_mime` — it does **not** forward `option_icons`, `option_labels`,
-`option_labels_json` or the flat `option_icon_<key>_url` / `_mime` pairs. Over
-the wire every option field is therefore dropped before
-`ProfilePresentationDefinitionCatalog::save()` sees it, the save succeeds, and
-"an option the request does not mention keeps what is stored" quietly means
-*nothing an operator uploads is ever stored*. Reported with T-730; the console
-half is complete and correct against the contract, and starts working the
-moment the controller forwards the fields.
+The corpus deliberately captures the service contract. T-762 additionally
+pins the HTTP boundary in Core's `tests/generation_display_storage_test.php`:
+`WebadminProfilePresentationController::saveSource` forwards the structured
+`option_icons`, `option_labels`, `option_labels_json`, and flat
+`option_icon_<key>_url` / `_mime` forms. That route-level test uses the JSON
+strings produced by Webadmin's form encoder, verifies the saved icon in the
+returned admin projection, and proves that an unmentioned icon stays stored.
 
 ## To re-capture
 

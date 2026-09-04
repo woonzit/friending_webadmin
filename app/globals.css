@@ -1577,6 +1577,13 @@ textarea:focus {
   color: var(--text-soft);
 }
 
+.birthday-lock-policy-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
