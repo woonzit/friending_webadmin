@@ -35,3 +35,13 @@ Admin manifests and their independently accepted provenance unchanged:
 
 T-621 records this decision only. It does not modify any corpus body, manifest,
 test constant or fixture hash.
+
+## Pin reachability (added 2026-09-04, T-771)
+
+A `source_commit` must be a commit that exists on Core `main` (an ancestor of the published tip), never a lane's
+pre-rebase commit. A body can be byte-identical while its pin names a commit no Core release can verify (T-771
+found two such pins: a T-669 lane commit and a T-706 lane commit). Verify with
+`git -C ../api merge-base --is-ancestor <source_commit> main`; when a pin is unreachable, re-pin to the FIRST
+published Core commit whose manifest carries the same `fixture_set_sha256` (Core's own manifest history is the
+proof — a blob-equality proof over coarse `source_paths` cannot work for a rebased lane commit), in a
+manifest-only commit. Do not re-pin reachable pins just to move the sha (the rule above still stands).
