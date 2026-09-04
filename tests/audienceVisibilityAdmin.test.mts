@@ -585,8 +585,8 @@ test("the T-669 Core corpus is pinned beside the deployed one and every body sti
   // The SECOND pinned corpus. `audience_visibility_admin_wire` stays the
   // DEPLOYED Core (`364c89e8`), byte-identical and untouched; this directory is
   // the same 59 Webadmin bodies plus the identity fragment and the two signup
-  // catalogues, taken from the accepted T-669 tip (`api` 1d108591) with its own
-  // manifest. Until Core deploys, the console must satisfy BOTH — which is what
+  // catalogues, taken from the published T-669 release (`api` cde98f52) with its
+  // own manifest. Until Core deploys, the console must satisfy BOTH — which is what
   // pinning both, rather than replacing one, is for.
   const directory = new URL("./fixtures/audience_visibility_admin_wire_t669/", import.meta.url);
   const manifest = JSON.parse(await readFile(new URL("manifest.json", directory), "utf8"));
@@ -598,10 +598,14 @@ test("the T-669 Core corpus is pinned beside the deployed one and every body sti
     "fixtures",
   ]);
   assert.equal(manifest.schema_version, 1);
-  // `9cf5c142` is the T-669 source commit ("retire legacy identity answers end
-  // to end"); `1d108591` is the branch tip, whose later commits touch only the
-  // Android contract fixture and the mechanical manifest rebind.
-  assert.equal(manifest.source_commit, "9cf5c14231abe4766bd028f0b64bfd41029f92c9");
+  // `cde98f52` is the PUBLISHED T-669 source commit ("retire legacy identity
+  // answers end to end") on `api` main — the commit whose regeneration produced
+  // this body set. T-771 re-pinned it from the lane commit `9cf5c142`, which
+  // carried the same work before the rebase and is not an ancestor of `api` main,
+  // so its provenance could not be verified against any Core release. Regenerating
+  // with the pinned generator at `cde98f52` reproduces every body and the whole
+  // manifest byte for byte apart from this line.
+  assert.equal(manifest.source_commit, "cde98f523a45eae8b16aa9f1a4005c905c591973");
   assert.equal(
     manifest.fixture_set_sha256,
     "e8546d3d84110d52c1aaa362c44e98df001a80c7d46374bcc1202a38f609d815",

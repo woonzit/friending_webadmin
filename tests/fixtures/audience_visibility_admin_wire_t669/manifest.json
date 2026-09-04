@@ -1,6 +1,6 @@
 {
     "schema_version": 1,
-    "source_commit": "9cf5c14231abe4766bd028f0b64bfd41029f92c9",
+    "source_commit": "cde98f523a45eae8b16aa9f1a4005c905c591973",
     "fixture_set_sha256": "e8546d3d84110d52c1aaa362c44e98df001a80c7d46374bcc1202a38f609d815",
     "provenance": {
         "generator": "tests/audience_visibility_fixture_dump.php",

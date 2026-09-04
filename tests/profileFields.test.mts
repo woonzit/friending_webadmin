@@ -503,7 +503,8 @@ test("profile-field audience editor uses the shared gender and user-group select
  * Read the manifest-bound identity fragment from one of the two pinned corpora.
  *
  * `audience_visibility_admin_wire` is the DEPLOYED Core (`364c89e8`) and
- * `audience_visibility_admin_wire_t669` is the T-669 Core (`1d108591`). Both
+ * `audience_visibility_admin_wire_t669` is the published T-669 Core (`cde98f52`;
+ * re-pinned by T-771 from the rebased-away lane commit `1d108591`). Both
  * bodies are byte-identical copies of Core's own
  * `tests/fixtures/audience_visibility_wire/owner-profile-fields-identity.json`
  * (generator `tests/audience_visibility_fixture_dump.php`), and both rows plus
