@@ -1,4 +1,4 @@
-import type { UserCastGroup } from "@/lib/userCastGroups";
+import { castGroupProfileSegment, type UserCastGroup } from "@/lib/userCastGroups";
 
 export type MigratedMemberAudience = {
   groupIds: string[];
@@ -10,6 +10,10 @@ export type MigratedMemberAudience = {
  * is provably equivalent. Custom groups may reuse a legacy projection for
  * other purposes, and an inactive system group no longer matches members, so
  * neither is safe as an automatic replacement.
+ *
+ * The group row spells the non-binary segment `other` while the catalogue's
+ * own `segments` list spells it `identity_unresolved`; both name one segment
+ * (T-769), so the comparison runs through `castGroupProfileSegment()`.
  */
 export function migrateLegacyAudience(
   groupIds: string[],
@@ -20,9 +24,9 @@ export function migrateLegacyAudience(
   const retainedLegacySegments: string[] = [];
   for (const segment of legacySegments) {
     const canonical = groups.find((group) => (
-      group.system
+      group.protected
       && group.active
-      && group.legacy_segment === segment
+      && castGroupProfileSegment(group.legacy_segment) === segment
     ));
     if (!canonical) {
       if (!retainedLegacySegments.includes(segment)) retainedLegacySegments.push(segment);
@@ -36,6 +40,6 @@ export function migrateLegacyAudience(
 /** Only canonical system groups suppress an unselected compatibility option. */
 export function representedLegacySegments(groups: UserCastGroup[]): Set<string> {
   return new Set(groups
-    .filter((group) => group.system && group.legacy_segment !== "")
-    .map((group) => group.legacy_segment));
+    .filter((group) => group.protected && group.legacy_segment !== "")
+    .map((group) => castGroupProfileSegment(group.legacy_segment)));
 }

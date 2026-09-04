@@ -1,5 +1,7 @@
 "use client";
 
+// Imported explicitly so a test can render this component (repo convention).
+import React from "react";
 import type { UserCastGroup } from "@/lib/userCastGroups";
 import { representedLegacySegments } from "@/lib/memberAudience";
 

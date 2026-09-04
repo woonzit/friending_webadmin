@@ -40,15 +40,17 @@ const valid = {
   }],
 };
 
+// The V2 row shape Core has served here since T-736 (D-019/D-119): gender ×
+// who-can-see-me, `protected` rather than `system`, no `orientations`.
 const castGroup = {
   id: "64f000000000000000000001",
-  key: "women_who_date_women",
-  labels: { en: "Women who date women", hu: "Nőkkel ismerkedő nők" },
-  rules: [{ genders: ["female"], orientations: ["lesbian", "bisexual"] }],
+  key: "female_for_female",
+  labels: { en: "Women visible to women", hu: "Nők, akiket nők láthatnak" },
+  rules: [{ genders: ["woman"], visible_to: ["female"] }],
   legacy_segment: "female_lesbian",
   sort_order: 100,
   active: true,
-  system: true,
+  protected: true,
   revision: 1,
 };
 

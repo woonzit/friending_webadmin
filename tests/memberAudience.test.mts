@@ -9,13 +9,13 @@ import type { UserCastGroup } from "../lib/userCastGroups.ts";
 function group(overrides: Partial<UserCastGroup>): UserCastGroup {
   return {
     id: "64f000000000000000000001",
-    key: "male_gay",
-    labels: { en: "Gay men", hu: "Meleg férfiak" },
-    rules: [{ genders: ["male"], orientations: ["gay"] }],
+    key: "male_for_male",
+    labels: { en: "Men visible to men", hu: "Férfiak, akiket férfiak láthatnak" },
+    rules: [{ genders: ["man"], visible_to: ["male"] }],
     legacy_segment: "male_gay",
     sort_order: 100,
     active: true,
-    system: true,
+    protected: true,
     revision: 1,
     ...overrides,
   };
@@ -25,7 +25,7 @@ test("legacy audiences migrate only to an equivalent active system group", () =>
   const custom = group({
     id: "64f000000000000000000002",
     key: "custom_projection",
-    system: false,
+    protected: false,
     sort_order: 1,
   });
   const canonical = group({ id: "64f000000000000000000003" });
@@ -42,9 +42,33 @@ test("legacy audiences migrate only to an equivalent active system group", () =>
 });
 
 test("custom projections do not hide compatibility choices", () => {
-  const custom = group({ system: false });
+  const custom = group({ protected: false });
   assert.equal(representedLegacySegments([custom]).has("male_gay"), false);
   assert.equal(representedLegacySegments([group({})]).has("male_gay"), true);
+});
+
+/**
+ * T-769: Core spells the non-binary group's compatibility segment `other` on
+ * the group row and `identity_unresolved` in the `segments` list published
+ * beside it. Compared verbatim, the console would offer the same audience
+ * twice — once as the group chip, once as an unrepresented legacy chip — and
+ * would never migrate a stored `identity_unresolved` selection.
+ */
+test("the non-binary group represents the identity_unresolved segment", () => {
+  const nonbinary = group({
+    id: "64f000000000000000000007",
+    key: "nonbinary_for_both",
+    labels: { en: "Other or unresolved identity", hu: "Egyéb vagy még nem besorolt identitás" },
+    rules: [{ genders: ["nonbinary"], visible_to: ["both"] }],
+    legacy_segment: "other",
+    sort_order: 700,
+  });
+  assert.equal(representedLegacySegments([nonbinary]).has("identity_unresolved"), true);
+  assert.equal(representedLegacySegments([nonbinary]).has("other"), false);
+  assert.deepEqual(
+    migrateLegacyAudience([], ["identity_unresolved"], [nonbinary]),
+    { groupIds: [nonbinary.id], legacySegments: [] },
+  );
 });
 
 /**
@@ -141,4 +165,56 @@ test("console-owned segment labels name gender and visibility, never an orientat
     }
   }
   assert.deepEqual(Object.keys(en.profileTags.segments), Object.keys(hu.profileTags.segments));
+});
+
+/**
+ * T-769, the rendering: with the seven V2 rows Core serves today the audience
+ * picker draws seven group chips and drops the `identity_unresolved`
+ * compatibility chip, because the non-binary group already represents it.
+ * Before the fix `userCastGroup()` refused all seven rows, so `/profile-fields`
+ * never reached this component at all.
+ */
+test("the audience picker draws the seven served groups and no duplicate legacy chip", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { createElement } = await import("react");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const MemberAudienceSelector = (await import("../components/MemberAudienceSelector.tsx")).default;
+  const { userCastGroup } = await import("../lib/userCastGroups.ts");
+
+  const envelope = JSON.parse(await readFile(
+    new URL("./fixtures/audience_visibility_admin_wire_t669/admin-catalog.json", import.meta.url),
+    "utf8",
+  ));
+  const groups = (envelope.data.groups as unknown[]).map((row) => userCastGroup(row)!);
+  assert.equal(groups.filter(Boolean).length, 7);
+
+  const legacyOptions = [
+    "male_hetero", "male_gay", "male_bisexual",
+    "female_hetero", "female_lesbian", "female_bisexual",
+    "identity_unresolved",
+  ].map((key) => ({ key, labels: { en: key, hu: key } }));
+
+  const labels = {
+    legend: "Audience", help: "help", global: "Everyone", custom: "Custom",
+    globalHint: "hint", genders: "Genders", groups: "Groups", matchAny: "any",
+    groupsRecorded: "recorded", groupsNotEnforced: "not enforced",
+    required: "required", inactive: "inactive", legacy: "legacy",
+    gender: { male: "Men", female: "Women", other: "Other" },
+  };
+  const markup = renderToStaticMarkup(createElement(MemberAudienceSelector, {
+    value: { mode: "segments" as const, genders: [], groupIds: [groups[0].id], legacySegments: [] },
+    groups,
+    legacyOptions,
+    locale: "hu",
+    labels,
+    onChange: () => {},
+  }));
+
+  for (const group of groups) {
+    assert.ok(markup.includes(group.labels.hu), `${group.key} is drawn`);
+  }
+  // Six compatibility chips, not seven: the non-binary group represents the
+  // seventh (`other` === `identity_unresolved`).
+  assert.equal((markup.match(/is-legacy/gu) ?? []).length, 0);
+  assert.ok(!markup.includes("identity_unresolved"), "no duplicate legacy chip");
 });

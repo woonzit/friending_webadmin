@@ -162,15 +162,16 @@ test("profile field parsers preserve translations, eligibility and identity revi
     null,
     "a missing cast-group catalogue is not an empty audience vocabulary",
   );
+  // The V2 row shape Core has served here since T-736 (D-019/D-119).
   const castGroup = {
     id: "64f000000000000000000001",
-    key: "men_who_date_men",
-    labels: { en: "Men who date men", hu: "Férfiakkal ismerkedő férfiak" },
-    rules: [{ genders: ["male"], orientations: ["gay", "bisexual"] }],
+    key: "male_for_male",
+    labels: { en: "Men visible to men", hu: "Férfiak, akiket férfiak láthatnak" },
+    rules: [{ genders: ["man"], visible_to: ["male"] }],
     legacy_segment: "male_gay",
     sort_order: 100,
     active: true,
-    system: true,
+    protected: true,
     revision: 1,
   };
   const targetedField = structuredClone(field) as Record<string, any>;
