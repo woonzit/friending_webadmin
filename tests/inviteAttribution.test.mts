@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -18,76 +19,54 @@ import {
 /**
  * T-757 / D-126. The `attribution` block Core (T-768) appends to the invite-configuration envelope.
  *
- * The shape asserted here is the one Core's own storage suite pins and its report quotes: the
- * populated, the empty and the `null` case. Phase 2 replaces the hand-written bodies below with the
- * captured corpus in `tests/fixtures/invite_configuration_wire/`.
+ * Everything asserted here is checked against Core's own bytes:
+ * `tests/fixtures/invite_configuration_wire/` is the in-process output of
+ * `InviteConfigurationService::adminPayload()` and `InviteAttributionService::adminSummary()` at
+ * Core `d47bb451`, over rows written by the real `record()` / `attributeRegistration()` writers —
+ * not a hand-written stand-in. See that directory's README for the capture and the seed.
  */
-const POPULATED: InviteAttributionSummary = {
-  schema_version: 1,
-  generated_at: 1788547519,
-  totals: {
-    recorded: 9,
-    converted: 4,
-    senders: 4,
-    converted_members: 2,
-    expiring_within_7d: 2,
-    by_channel: {
-      device_sms: { recorded: 5, converted: 3, expiring_within_7d: 1 },
-      server_sms: { recorded: 4, converted: 1, expiring_within_7d: 1 },
-    },
-  },
-  senders: [
-    { uid: 950101, display_name: "Invite Sender A", recorded: 4, converted: 2, last_recorded_at: 1788594000, last_converted_at: 1788599900 },
-    { uid: 950102, display_name: "Invite Sender B", recorded: 2, converted: 1, last_recorded_at: 1788596000, last_converted_at: 1788599700 },
-    { uid: 950104, display_name: "Invite Sender D", recorded: 2, converted: 1, last_recorded_at: 1788598000, last_converted_at: 1788599600 },
-    { uid: 950103, display_name: "", recorded: 1, converted: 0, last_recorded_at: 1788597000, last_converted_at: 0 },
-  ],
-  limit: 100,
-  truncated: false,
-};
+const CORPUS = new URL(
+  "./fixtures/invite_configuration_wire/t757-invite-configuration-envelopes.json",
+  import.meta.url,
+);
+const CORPUS_SHA256 = "7f4252dc4106343a3c3548cf5182bf24494a88148a927c4a188634543b354f36";
 
-const EMPTY: InviteAttributionSummary = {
-  schema_version: 1,
-  generated_at: 1788600000,
-  totals: {
-    recorded: 0,
-    converted: 0,
-    senders: 0,
-    converted_members: 0,
-    expiring_within_7d: 0,
-    by_channel: {
-      device_sms: { recorded: 0, converted: 0, expiring_within_7d: 0 },
-      server_sms: { recorded: 0, converted: 0, expiring_within_7d: 0 },
-    },
-  },
-  senders: [],
-  limit: 100,
-  truncated: false,
-};
-
-/** The configuration half, exactly as Core serves it beside the summary. */
-function configurationPayload(): Record<string, unknown> {
-  return {
-    configuration: {
-      schema_version: 2,
-      revision: 4,
-      enabled: true,
-      global: {
-        mode: "device_sms",
-        messages: { en: "Join me on Friending {user_url}", hu: "Csatlakozz hozzám: {user_url}" },
-      },
-      overrides: [],
-      updated_at: 1788599500,
-    },
-    modes: ["server_sms", "device_sms"],
-    placeholders: ["{user_url}", "{display_name}"],
-    limits: { template_length: 600, overrides: 250 },
+type Envelope = { payload: Record<string, unknown> };
+type Corpus = {
+  capture: {
+    configuration_with_attribution: Envelope;
+    attribution_truncated_limit_2: { attribution: Record<string, unknown> };
+    configuration_with_empty_attribution: Envelope;
+    configuration_with_null_attribution: Envelope;
   };
-}
+};
+
+const bytes = await readFile(CORPUS);
+assert.equal(
+  createHash("sha256").update(bytes).digest("hex"),
+  CORPUS_SHA256,
+  "the pinned Core corpus must match its published byte hash",
+);
+const capture = (JSON.parse(bytes.toString("utf8")) as Corpus).capture;
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
+
+/** The served envelope, populated / empty / fail-soft, straight out of the corpus. */
+const SERVED = clone(capture.configuration_with_attribution.payload);
+const SERVED_EMPTY = clone(capture.configuration_with_empty_attribution.payload);
+const SERVED_NULL = clone(capture.configuration_with_null_attribution.payload);
+const TRUNCATED = clone(capture.attribution_truncated_limit_2.attribution);
+
+function summary(envelope: Record<string, unknown>): InviteAttributionSummary {
+  const parsed = parseInviteAttributionSummary(clone(envelope.attribution));
+  assert.ok(parsed, "the corpus body must decode");
+  return parsed;
+}
+
+const POPULATED = summary(SERVED);
+const EMPTY = summary(SERVED_EMPTY);
 
 async function render(attribution: InviteAttributionSummary | null, locale: "en" | "hu"): Promise<string> {
   const messages = JSON.parse(await readFile(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
@@ -98,24 +77,62 @@ async function render(attribution: InviteAttributionSummary | null, locale: "en"
   ));
 }
 
+test("Core's served envelope carries the four configuration keys and the additive fifth", () => {
+  assert.deepEqual(
+    Object.keys(SERVED),
+    ["configuration", "modes", "placeholders", "limits", "attribution"],
+    "the statistics key is a sibling appended after limits, never a replacement",
+  );
+  assert.deepEqual(Object.keys(SERVED_NULL), Object.keys(SERVED));
+  assert.equal(SERVED_NULL.attribution, null, "the fail-soft case sends the key as null, never absent");
+});
+
 test("the served summary decodes field for field, in the order Core sent the senders", () => {
-  const parsed = parseInviteAttributionSummary(clone(POPULATED));
-  assert.deepEqual(parsed, POPULATED);
-  assert.deepEqual(parsed?.senders.map((sender) => sender.uid), [950101, 950102, 950104, 950103]);
+  assert.deepEqual(POPULATED, clone(SERVED.attribution));
+  assert.deepEqual(POPULATED.senders.map((sender) => sender.uid), [950101, 950102, 950104, 950103]);
+  // converted desc, recorded desc, uid asc — 950102 and 950104 tie on (1, 2).
+  assert.deepEqual(POPULATED.senders.map((sender) => [sender.converted, sender.recorded]), [[2, 4], [1, 2], [1, 2], [0, 1]]);
+  // Nine rows, four converted ROWS but only two distinct converted MEMBERS.
+  assert.equal(POPULATED.totals.recorded, 9);
+  assert.equal(POPULATED.totals.converted, 4);
+  assert.equal(POPULATED.totals.senders, 4);
+  assert.equal(POPULATED.totals.converted_members, 2);
+  assert.equal(POPULATED.totals.expiring_within_7d, 2);
+  assert.deepEqual(POPULATED.totals.by_channel.device_sms, { recorded: 5, converted: 3, expiring_within_7d: 1 });
+  assert.deepEqual(POPULATED.totals.by_channel.server_sms, { recorded: 4, converted: 1, expiring_within_7d: 1 });
+  // The per-channel counts add up to the flat ones, in all three columns.
+  for (const key of ["recorded", "converted", "expiring_within_7d"] as const) {
+    assert.equal(
+      POPULATED.totals.by_channel.device_sms[key] + POPULATED.totals.by_channel.server_sms[key],
+      POPULATED.totals[key],
+    );
+  }
   // A sender whose account is gone keeps its counts and loses only the name, and a sender who has
   // converted nobody carries 0 — both are values, not absences.
-  assert.equal(parsed?.senders[3]?.display_name, "");
-  assert.equal(parsed?.senders[3]?.last_converted_at, 0);
+  assert.equal(POPULATED.senders[3]?.uid, 950103);
+  assert.equal(POPULATED.senders[3]?.display_name, "");
+  assert.equal(POPULATED.senders[3]?.last_converted_at, 0);
+  assert.equal(POPULATED.senders[0]?.display_name, "Anna Kovacs");
+});
+
+test("the corpus carries no phone number, no hash and no converted member uid", () => {
+  const encoded = bytes.toString("utf8");
+  assert.doesNotMatch(encoded, /phone_hash|converted_uid/);
+  assert.doesNotMatch(encoded, /[0-9a-f]{64}/);
+  assert.doesNotMatch(encoded, /\+?362011100\d\d/);
+  for (const member of ["960001", "960002"]) {
+    assert.equal(encoded.includes(member), false, "a converted member uid must never reach the console");
+  }
 });
 
 test("an empty senders array is as valid as a populated one", () => {
-  assert.deepEqual(parseInviteAttributionSummary(clone(EMPTY)), EMPTY);
+  assert.deepEqual(EMPTY, clone(SERVED_EMPTY.attribution));
+  assert.deepEqual(EMPTY.senders, []);
+  assert.equal(EMPTY.totals.recorded, 0);
+  assert.deepEqual(Object.keys(EMPTY.totals.by_channel).sort(), ["device_sms", "server_sms"]);
   // RULES 47: the cohort's first recorded invite moves this array from empty to populated. A
   // decoder that accepted only one of the two shapes would break on that ordinary day.
-  assert.notEqual(parseInviteAttributionSummary(clone(POPULATED)), null);
-  const single = clone(EMPTY);
-  single.senders = [{ uid: 7, display_name: "One", recorded: 1, converted: 0, last_recorded_at: 1788600000, last_converted_at: 0 }];
-  assert.deepEqual(parseInviteAttributionSummary(single)?.senders.length, 1);
+  assert.notEqual(parseInviteAttributionSummary(clone(SERVED.attribution)), null);
 });
 
 test("absent, null and every malformed summary degrade to null and never throw", () => {
@@ -158,15 +175,21 @@ test("absent, null and every malformed summary degrade to null and never throw",
   }
 });
 
-test("the page of senders may never exceed the limit Core states", () => {
+test("a truncated page is Core's own, and the page may never exceed the stated limit", () => {
+  const truncated = parseInviteAttributionSummary(clone(TRUNCATED));
+  assert.ok(truncated, "the captured limit-2 page must decode");
+  assert.equal(truncated.truncated, true);
+  assert.equal(truncated.limit, 2);
+  assert.deepEqual(truncated.senders.map((sender) => sender.uid), [950101, 950102]);
+  // The page is cut; the totals still describe the whole collection.
+  assert.deepEqual(truncated.totals, POPULATED.totals);
+
   const overLimit = clone(POPULATED);
   overLimit.limit = 3;
   assert.equal(parseInviteAttributionSummary(overLimit), null, "four senders under a limit of three is not a page");
-
   const exact = clone(POPULATED);
   exact.limit = 4;
-  exact.truncated = true;
-  assert.equal(parseInviteAttributionSummary(exact)?.truncated, true, "a full page is legal and says it is truncated");
+  assert.equal(parseInviteAttributionSummary(exact)?.senders.length, 4, "a full page is legal");
 });
 
 test("the channel map must name exactly the two known delivery modes", () => {
@@ -183,17 +206,23 @@ test("the channel map must name exactly the two known delivery modes", () => {
 });
 
 test("the configuration half is fail-closed and the statistics half is fail-open, in the same envelope", () => {
-  const withSummary = { ...configurationPayload(), attribution: clone(POPULATED) };
-  const parsed = parseInviteConfigurationPayload(withSummary);
+  const parsed = parseInviteConfigurationPayload(clone(SERVED));
   assert.ok(parsed);
   assert.deepEqual(parsed.attribution, POPULATED);
-  assert.equal(parsed.configuration.revision, 4);
+  assert.equal(parsed.configuration.revision, 1);
+  assert.equal(parsed.configuration.overrides[0]?.storefront, "HUN");
 
-  // Fail-open: every broken statistics value still yields a working configuration console.
+  // The fail-soft envelope Core really serves when the aggregation throws.
+  const soft = parseInviteConfigurationPayload(clone(SERVED_NULL));
+  assert.ok(soft, "an unreadable statistics collection must not take the console down");
+  assert.equal(soft.attribution, null);
+  assert.deepEqual(soft.configuration, parsed.configuration);
+
+  // Fail-open for every other broken shape too, including the key being absent.
+  const withoutKey = clone(SERVED) as Record<string, unknown>;
+  delete withoutKey.attribution;
   for (const attribution of [undefined, null, {}, [], "nope", { ...clone(POPULATED), schema_version: 9 }]) {
-    const value = attribution === undefined
-      ? configurationPayload()
-      : { ...configurationPayload(), attribution };
+    const value = attribution === undefined ? withoutKey : { ...clone(SERVED), attribution };
     const degraded = parseInviteConfigurationPayload(value);
     assert.ok(degraded, JSON.stringify(attribution ?? null));
     assert.equal(degraded.attribution, null);
@@ -201,13 +230,13 @@ test("the configuration half is fail-closed and the statistics half is fail-open
   }
 
   // Fail-closed, unchanged: a valid summary cannot rescue a broken configuration.
-  const brokenRule = { ...configurationPayload(), attribution: clone(POPULATED) } as Record<string, unknown>;
+  const brokenRule = clone(SERVED) as Record<string, unknown>;
   (brokenRule.configuration as { global: { mode: string } }).global.mode = "email";
   assert.equal(parseInviteConfigurationPayload(brokenRule), null);
 });
 
 test("the save body never carries the statistics back to Core", () => {
-  const parsed = parseInviteConfigurationPayload({ ...configurationPayload(), attribution: clone(POPULATED) });
+  const parsed = parseInviteConfigurationPayload(clone(SERVED));
   assert.ok(parsed);
   const body = inviteSaveBody(cloneInviteConfiguration(parsed.configuration));
   assert.deepEqual(Object.keys(body).sort(), ["configuration", "expected_revision"]);
@@ -217,8 +246,8 @@ test("the save body never carries the statistics back to Core", () => {
 });
 
 test("the conversion rate is a ratio, and an unanswerable one is null rather than zero", () => {
-  assert.equal(inviteConversionRate(9, 4), 4 / 9);
-  assert.equal(inviteConversionRate(0, 0), null);
+  assert.equal(inviteConversionRate(POPULATED.totals.recorded, POPULATED.totals.converted), 4 / 9);
+  assert.equal(inviteConversionRate(EMPTY.totals.recorded, EMPTY.totals.converted), null);
   assert.equal(inviteConversionRate(4, 4), 1);
 });
 
@@ -238,15 +267,19 @@ test("the populated panel renders five tiles, both channels and one row per send
     }
     // The erased sender is labelled by its uid, because "" is not a name.
     assert.match(html, /<a href="\/users\/950103">950103<\/a>/);
-    assert.match(html, /<a href="\/users\/950101">Invite Sender A<\/a>/);
+    assert.match(html, /<a href="\/users\/950101">Anna Kovacs<\/a>/);
     // 4 of 9 recorded.
     assert.match(html, locale === "hu" ? /44,4%/ : /44\.4%/);
-    assert.match(html, new RegExp(formatDate(1788599900, locale).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    const lastConversion = POPULATED.senders[0]!.last_converted_at;
+    assert.match(html, new RegExp(formatDate(lastConversion, locale).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     // last_converted_at 0 prints an em dash, never 1970.
     assert.doesNotMatch(html, /1970/);
     assert.match(html, /—/);
     assert.doesNotMatch(html, /invite-attribution-truncated/);
     assert.doesNotMatch(html, /empty-state-inner/);
+    // Nothing about the invited people can appear, because nothing about them was served.
+    assert.doesNotMatch(html, /960001|960002/, "a converted member uid must never be rendered");
+    assert.doesNotMatch(html, /\d{8}/, "no phone-shaped digit run may appear in the panel");
   }
 
   const hu = await render(POPULATED, "hu");
@@ -264,12 +297,14 @@ test("the populated panel renders five tiles, both channels and one row per send
 });
 
 test("a truncated page says so with the limit Core stated", async () => {
-  const truncated = clone(POPULATED);
-  truncated.limit = 4;
-  truncated.truncated = true;
-  truncated.totals.senders = 87;
-  assert.match(await render(truncated, "hu"), /Az első 4 meghívó látható/);
-  assert.match(await render(truncated, "en"), /Showing the first 4 senders/);
+  const truncated = parseInviteAttributionSummary(clone(TRUNCATED));
+  assert.ok(truncated);
+  assert.match(await render(truncated, "hu"), /Az első 2 meghívó látható/);
+  assert.match(await render(truncated, "en"), /Showing the first 2 senders/);
+  // The table is the page; the tiles keep answering for the whole collection.
+  const html = await render(truncated, "en");
+  assert.equal((html.match(/data-invite-sender-uid="/g) ?? []).length, 2);
+  assert.match(html, /<span class="stat-value">4<\/span>/);
 });
 
 test("an empty collection reads as nothing recorded yet, with the zeros still shown", async () => {
@@ -288,8 +323,10 @@ test("an empty collection reads as nothing recorded yet, with the zeros still sh
 });
 
 test("an unavailable summary is one muted line, never an error panel and never a fabricated zero", async () => {
+  const soft = parseInviteConfigurationPayload(clone(SERVED_NULL));
+  assert.ok(soft);
   for (const locale of ["en", "hu"] as const) {
-    const html = await render(null, locale);
+    const html = await render(soft.attribution, locale);
     assert.match(html, /data-invite-attribution="unavailable"/);
     assert.match(html, /invite-attribution-unavailable/);
     assert.doesNotMatch(html, /data-invite-tile/);

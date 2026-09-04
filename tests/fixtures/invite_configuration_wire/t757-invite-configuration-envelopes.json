@@ -1,0 +1,258 @@
+{
+    "generator": "t757-invite-configuration-envelopes-generator.php",
+    "task": "T-757",
+    "capture": {
+        "configuration_with_attribution": {
+            "note": "POST /v1/webadmin/invite_configuration -> data. `save_invite_configuration` returns the same adminPayload().",
+            "payload": {
+                "configuration": {
+                    "schema_version": 2,
+                    "revision": 1,
+                    "enabled": true,
+                    "global": {
+                        "mode": "device_sms",
+                        "messages": {
+                            "en": "Join me on Friending {user_url}",
+                            "hu": "Csatlakozz hozzám: {user_url}"
+                        }
+                    },
+                    "overrides": [
+                        {
+                            "storefront": "HUN",
+                            "mode": "server_sms",
+                            "active": true,
+                            "messages": {
+                                "hu": "Szia {display_name}, itt vagyok: {user_url}"
+                            }
+                        }
+                    ],
+                    "updated_at": 1788554976
+                },
+                "modes": [
+                    "server_sms",
+                    "device_sms"
+                ],
+                "placeholders": [
+                    "{user_url}",
+                    "{display_name}"
+                ],
+                "limits": {
+                    "template_length": 600,
+                    "overrides": 250
+                },
+                "attribution": {
+                    "schema_version": 1,
+                    "generated_at": 1788554976,
+                    "totals": {
+                        "recorded": 9,
+                        "converted": 4,
+                        "senders": 4,
+                        "converted_members": 2,
+                        "expiring_within_7d": 2,
+                        "by_channel": {
+                            "device_sms": {
+                                "recorded": 5,
+                                "converted": 3,
+                                "expiring_within_7d": 1
+                            },
+                            "server_sms": {
+                                "recorded": 4,
+                                "converted": 1,
+                                "expiring_within_7d": 1
+                            }
+                        }
+                    },
+                    "senders": [
+                        {
+                            "uid": 950101,
+                            "display_name": "Anna Kovacs",
+                            "recorded": 4,
+                            "converted": 2,
+                            "last_recorded_at": 1786135776,
+                            "last_converted_at": 1787777376
+                        },
+                        {
+                            "uid": 950102,
+                            "display_name": "Bence Toth",
+                            "recorded": 2,
+                            "converted": 1,
+                            "last_recorded_at": 1786049376,
+                            "last_converted_at": 1787690976
+                        },
+                        {
+                            "uid": 950104,
+                            "display_name": "Dora Szabo",
+                            "recorded": 2,
+                            "converted": 1,
+                            "last_recorded_at": 1786222176,
+                            "last_converted_at": 1787777376
+                        },
+                        {
+                            "uid": 950103,
+                            "display_name": "",
+                            "recorded": 1,
+                            "converted": 0,
+                            "last_recorded_at": 1774298976,
+                            "last_converted_at": 0
+                        }
+                    ],
+                    "limit": 100,
+                    "truncated": false
+                }
+            }
+        },
+        "attribution_truncated_limit_2": {
+            "note": "InviteAttributionService::adminSummary(2) — the page is cut, the totals are not.",
+            "attribution": {
+                "schema_version": 1,
+                "generated_at": 1788554976,
+                "totals": {
+                    "recorded": 9,
+                    "converted": 4,
+                    "senders": 4,
+                    "converted_members": 2,
+                    "expiring_within_7d": 2,
+                    "by_channel": {
+                        "device_sms": {
+                            "recorded": 5,
+                            "converted": 3,
+                            "expiring_within_7d": 1
+                        },
+                        "server_sms": {
+                            "recorded": 4,
+                            "converted": 1,
+                            "expiring_within_7d": 1
+                        }
+                    }
+                },
+                "senders": [
+                    {
+                        "uid": 950101,
+                        "display_name": "Anna Kovacs",
+                        "recorded": 4,
+                        "converted": 2,
+                        "last_recorded_at": 1786135776,
+                        "last_converted_at": 1787777376
+                    },
+                    {
+                        "uid": 950102,
+                        "display_name": "Bence Toth",
+                        "recorded": 2,
+                        "converted": 1,
+                        "last_recorded_at": 1786049376,
+                        "last_converted_at": 1787690976
+                    }
+                ],
+                "limit": 2,
+                "truncated": true
+            }
+        },
+        "configuration_with_empty_attribution": {
+            "note": "The same envelope with no invite_matches rows at all.",
+            "payload": {
+                "configuration": {
+                    "schema_version": 2,
+                    "revision": 1,
+                    "enabled": true,
+                    "global": {
+                        "mode": "device_sms",
+                        "messages": {
+                            "en": "Join me on Friending {user_url}",
+                            "hu": "Csatlakozz hozzám: {user_url}"
+                        }
+                    },
+                    "overrides": [
+                        {
+                            "storefront": "HUN",
+                            "mode": "server_sms",
+                            "active": true,
+                            "messages": {
+                                "hu": "Szia {display_name}, itt vagyok: {user_url}"
+                            }
+                        }
+                    ],
+                    "updated_at": 1788554976
+                },
+                "modes": [
+                    "server_sms",
+                    "device_sms"
+                ],
+                "placeholders": [
+                    "{user_url}",
+                    "{display_name}"
+                ],
+                "limits": {
+                    "template_length": 600,
+                    "overrides": 250
+                },
+                "attribution": {
+                    "schema_version": 1,
+                    "generated_at": 1788554976,
+                    "totals": {
+                        "recorded": 0,
+                        "converted": 0,
+                        "senders": 0,
+                        "converted_members": 0,
+                        "expiring_within_7d": 0,
+                        "by_channel": {
+                            "device_sms": {
+                                "recorded": 0,
+                                "converted": 0,
+                                "expiring_within_7d": 0
+                            },
+                            "server_sms": {
+                                "recorded": 0,
+                                "converted": 0,
+                                "expiring_within_7d": 0
+                            }
+                        }
+                    },
+                    "senders": [],
+                    "limit": 100,
+                    "truncated": false
+                }
+            }
+        },
+        "configuration_with_null_attribution": {
+            "note": "The aggregation failed; adminPayload() still serves the configuration and the key is present as null.",
+            "payload": {
+                "configuration": {
+                    "schema_version": 2,
+                    "revision": 1,
+                    "enabled": true,
+                    "global": {
+                        "mode": "device_sms",
+                        "messages": {
+                            "en": "Join me on Friending {user_url}",
+                            "hu": "Csatlakozz hozzám: {user_url}"
+                        }
+                    },
+                    "overrides": [
+                        {
+                            "storefront": "HUN",
+                            "mode": "server_sms",
+                            "active": true,
+                            "messages": {
+                                "hu": "Szia {display_name}, itt vagyok: {user_url}"
+                            }
+                        }
+                    ],
+                    "updated_at": 1788554976
+                },
+                "modes": [
+                    "server_sms",
+                    "device_sms"
+                ],
+                "placeholders": [
+                    "{user_url}",
+                    "{display_name}"
+                ],
+                "limits": {
+                    "template_length": 600,
+                    "overrides": 250
+                },
+                "attribution": null
+            }
+        }
+    }
+}
