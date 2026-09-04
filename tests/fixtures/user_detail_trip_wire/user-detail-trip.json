@@ -1,0 +1,480 @@
+{
+    "source_commit": "717fe3465a8d4e6d45aca6477f1aa5984098cd03",
+    "generator_sha256": "4c82643b96eff09ecf80c27d066a9d52855e04c7db095f185decd8ce0e089862",
+    "source_sha256": {
+        "src/Http/Controllers/WebadminController.php": "f36ea8c7537e664589bacee8d4f6786c805105df6509cfa5a9b0d99bc06e261e",
+        "src/Http/Controllers/PeopleController.php": "e048c1eb594fdf7bcb02b6c25e9bd79a12ca7f736240f37441b2f5fcd05ade85",
+        "src/Services/PeopleService.php": "1e80f66d60f67a3b4b03b01502639d9b709008ac6e2e7048a3f1a0cba08ea193",
+        "src/Support/Webadmin.php": "355caceacd13df50346abda6f1c41ae33b168dafa80c2950732c108349962071"
+    },
+    "route": "/v1/webadmin/user_detail",
+    "evaluated_at": 1788100000,
+    "envelopes": {
+        "absent_row": {
+            "success": true,
+            "status_code": 200,
+            "profile": {
+                "uid": 749001,
+                "display_name": "Trip fixture",
+                "user_name": "",
+                "codename": "T749",
+                "about_me": "",
+                "headline": "",
+                "birthday_stamp": 0,
+                "birthyear": 0,
+                "birthmonth": 0,
+                "birthday": 0,
+                "age": 0,
+                "generation": "",
+                "show_age": false,
+                "age_display": "hidden",
+                "birthday_locked": false,
+                "realdob": true,
+                "gender_raw": "",
+                "city": "",
+                "region": "",
+                "country_code": "",
+                "country_name": "",
+                "location_name": "",
+                "last_location": {
+                    "city": "",
+                    "region": "",
+                    "state_code": "",
+                    "country": "",
+                    "country_code": "",
+                    "location_name": "",
+                    "lat": 0,
+                    "lng": 0
+                },
+                "hometown": {
+                    "city": "",
+                    "region": "",
+                    "state_code": "",
+                    "country": "",
+                    "country_code": "",
+                    "location_name": "",
+                    "lat": 0,
+                    "lng": 0,
+                    "is_implicit": true
+                },
+                "created": 1700000000,
+                "last_seen": 0,
+                "apple_id": "",
+                "facebook_id": "",
+                "instagram": "",
+                "facebook_handle": "",
+                "twitter": "",
+                "tiktok": "",
+                "phone_e164": "",
+                "email": "",
+                "email_is_real": false,
+                "email_source": "",
+                "avatar_thumb": ""
+            },
+            "images": [],
+            "about_me": [],
+            "into_tags": [],
+            "my_life_tags": [],
+            "sport_tags": [],
+            "interest_tags": [],
+            "membership": {
+                "schema_version": 1,
+                "uid": 749001,
+                "effective_membership": {
+                    "schema_version": 1,
+                    "tier": "free",
+                    "entitled": false,
+                    "lifecycle_state": "none",
+                    "effective_starts_at": null,
+                    "effective_expires_at": null,
+                    "next_transition_at": null,
+                    "first_subscribed_at": null,
+                    "sources": [],
+                    "revision": 0,
+                    "server_time": "2026-08-30T14:26:40Z",
+                    "configuration_revision": 0,
+                    "configuration_ready_for_enforcement": false,
+                    "capabilities": {
+                        "invisible_presence": false,
+                        "hide_profile_visit": false,
+                        "vip_badge": false,
+                        "quick_phrases": false
+                    },
+                    "quotas": {
+                        "footprint_send": {
+                            "scope": "utc_day",
+                            "mode": "finite",
+                            "used": 0,
+                            "limit": 5,
+                            "remaining": 5,
+                            "reset_at": "2026-08-31T00:00:00Z"
+                        },
+                        "pinger_send": {
+                            "scope": "utc_day",
+                            "mode": "finite",
+                            "used": 0,
+                            "limit": 0,
+                            "remaining": 0,
+                            "reset_at": "2026-08-31T00:00:00Z"
+                        },
+                        "private_album_access": {
+                            "scope": "concurrent",
+                            "mode": "finite",
+                            "used": 0,
+                            "limit": 0,
+                            "remaining": 0
+                        },
+                        "quick_phrase_slots": {
+                            "scope": "concurrent",
+                            "mode": "disabled",
+                            "used": 0
+                        }
+                    },
+                    "badge": {
+                        "eligible": false,
+                        "hidden": false,
+                        "visible": false
+                    }
+                },
+                "store_sources": [],
+                "admin_grant": null,
+                "history": []
+            },
+            "push_channels": {
+                "fcm_token_present": false,
+                "onesignal_id_present": false
+            },
+            "trip": null,
+            "verification_access": {
+                "contract_version": 1,
+                "contract_ready": true,
+                "capabilities": [
+                    "verification_grant_edit",
+                    "verification_grant_read"
+                ]
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "active": {
+            "success": true,
+            "status_code": 200,
+            "profile": {
+                "uid": 749001,
+                "display_name": "Trip fixture",
+                "user_name": "",
+                "codename": "T749",
+                "about_me": "",
+                "headline": "",
+                "birthday_stamp": 0,
+                "birthyear": 0,
+                "birthmonth": 0,
+                "birthday": 0,
+                "age": 0,
+                "generation": "",
+                "show_age": false,
+                "age_display": "hidden",
+                "birthday_locked": false,
+                "realdob": true,
+                "gender_raw": "",
+                "city": "",
+                "region": "",
+                "country_code": "",
+                "country_name": "",
+                "location_name": "",
+                "last_location": {
+                    "city": "",
+                    "region": "",
+                    "state_code": "",
+                    "country": "",
+                    "country_code": "",
+                    "location_name": "",
+                    "lat": 0,
+                    "lng": 0
+                },
+                "hometown": {
+                    "city": "",
+                    "region": "",
+                    "state_code": "",
+                    "country": "",
+                    "country_code": "",
+                    "location_name": "",
+                    "lat": 0,
+                    "lng": 0,
+                    "is_implicit": true
+                },
+                "created": 1700000000,
+                "last_seen": 0,
+                "apple_id": "",
+                "facebook_id": "",
+                "instagram": "",
+                "facebook_handle": "",
+                "twitter": "",
+                "tiktok": "",
+                "phone_e164": "",
+                "email": "",
+                "email_is_real": false,
+                "email_source": "",
+                "avatar_thumb": ""
+            },
+            "images": [],
+            "about_me": [],
+            "into_tags": [],
+            "my_life_tags": [],
+            "sport_tags": [],
+            "interest_tags": [],
+            "membership": {
+                "schema_version": 1,
+                "uid": 749001,
+                "effective_membership": {
+                    "schema_version": 1,
+                    "tier": "free",
+                    "entitled": false,
+                    "lifecycle_state": "none",
+                    "effective_starts_at": null,
+                    "effective_expires_at": null,
+                    "next_transition_at": null,
+                    "first_subscribed_at": null,
+                    "sources": [],
+                    "revision": 0,
+                    "server_time": "2026-08-30T14:26:40Z",
+                    "configuration_revision": 0,
+                    "configuration_ready_for_enforcement": false,
+                    "capabilities": {
+                        "invisible_presence": false,
+                        "hide_profile_visit": false,
+                        "vip_badge": false,
+                        "quick_phrases": false
+                    },
+                    "quotas": {
+                        "footprint_send": {
+                            "scope": "utc_day",
+                            "mode": "finite",
+                            "used": 0,
+                            "limit": 5,
+                            "remaining": 5,
+                            "reset_at": "2026-08-31T00:00:00Z"
+                        },
+                        "pinger_send": {
+                            "scope": "utc_day",
+                            "mode": "finite",
+                            "used": 0,
+                            "limit": 0,
+                            "remaining": 0,
+                            "reset_at": "2026-08-31T00:00:00Z"
+                        },
+                        "private_album_access": {
+                            "scope": "concurrent",
+                            "mode": "finite",
+                            "used": 0,
+                            "limit": 0,
+                            "remaining": 0
+                        },
+                        "quick_phrase_slots": {
+                            "scope": "concurrent",
+                            "mode": "disabled",
+                            "used": 0
+                        }
+                    },
+                    "badge": {
+                        "eligible": false,
+                        "hidden": false,
+                        "visible": false
+                    }
+                },
+                "store_sources": [],
+                "admin_grant": null,
+                "history": []
+            },
+            "push_channels": {
+                "fcm_token_present": false,
+                "onesignal_id_present": false
+            },
+            "trip": {
+                "city": "Vienna",
+                "country": "Austria",
+                "arrival_at": 1788480000,
+                "departure_at": 1788912000,
+                "show_to_locals": true,
+                "intents": [
+                    "new_friends",
+                    "activities",
+                    "networking",
+                    "local_tips",
+                    "events",
+                    "dates"
+                ],
+                "status": "active",
+                "updated_at": 1788100007
+            },
+            "verification_access": {
+                "contract_version": 1,
+                "contract_ready": true,
+                "capabilities": [
+                    "verification_grant_edit",
+                    "verification_grant_read"
+                ]
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "cancelled_hidden_past_travel_off": {
+            "success": true,
+            "status_code": 200,
+            "profile": {
+                "uid": 749001,
+                "display_name": "Trip fixture",
+                "user_name": "",
+                "codename": "T749",
+                "about_me": "",
+                "headline": "",
+                "birthday_stamp": 0,
+                "birthyear": 0,
+                "birthmonth": 0,
+                "birthday": 0,
+                "age": 0,
+                "generation": "",
+                "show_age": false,
+                "age_display": "hidden",
+                "birthday_locked": false,
+                "realdob": true,
+                "gender_raw": "",
+                "city": "",
+                "region": "",
+                "country_code": "",
+                "country_name": "",
+                "location_name": "",
+                "last_location": {
+                    "city": "",
+                    "region": "",
+                    "state_code": "",
+                    "country": "",
+                    "country_code": "",
+                    "location_name": "",
+                    "lat": 0,
+                    "lng": 0
+                },
+                "hometown": {
+                    "city": "",
+                    "region": "",
+                    "state_code": "",
+                    "country": "",
+                    "country_code": "",
+                    "location_name": "",
+                    "lat": 0,
+                    "lng": 0,
+                    "is_implicit": true
+                },
+                "created": 1700000000,
+                "last_seen": 0,
+                "apple_id": "",
+                "facebook_id": "",
+                "instagram": "",
+                "facebook_handle": "",
+                "twitter": "",
+                "tiktok": "",
+                "phone_e164": "",
+                "email": "",
+                "email_is_real": false,
+                "email_source": "",
+                "avatar_thumb": ""
+            },
+            "images": [],
+            "about_me": [],
+            "into_tags": [],
+            "my_life_tags": [],
+            "sport_tags": [],
+            "interest_tags": [],
+            "membership": {
+                "schema_version": 1,
+                "uid": 749001,
+                "effective_membership": {
+                    "schema_version": 1,
+                    "tier": "free",
+                    "entitled": false,
+                    "lifecycle_state": "none",
+                    "effective_starts_at": null,
+                    "effective_expires_at": null,
+                    "next_transition_at": null,
+                    "first_subscribed_at": null,
+                    "sources": [],
+                    "revision": 0,
+                    "server_time": "2026-08-30T14:26:40Z",
+                    "configuration_revision": 0,
+                    "configuration_ready_for_enforcement": false,
+                    "capabilities": {
+                        "invisible_presence": false,
+                        "hide_profile_visit": false,
+                        "vip_badge": false,
+                        "quick_phrases": false
+                    },
+                    "quotas": {
+                        "footprint_send": {
+                            "scope": "utc_day",
+                            "mode": "finite",
+                            "used": 0,
+                            "limit": 5,
+                            "remaining": 5,
+                            "reset_at": "2026-08-31T00:00:00Z"
+                        },
+                        "pinger_send": {
+                            "scope": "utc_day",
+                            "mode": "finite",
+                            "used": 0,
+                            "limit": 0,
+                            "remaining": 0,
+                            "reset_at": "2026-08-31T00:00:00Z"
+                        },
+                        "private_album_access": {
+                            "scope": "concurrent",
+                            "mode": "finite",
+                            "used": 0,
+                            "limit": 0,
+                            "remaining": 0
+                        },
+                        "quick_phrase_slots": {
+                            "scope": "concurrent",
+                            "mode": "disabled",
+                            "used": 0
+                        }
+                    },
+                    "badge": {
+                        "eligible": false,
+                        "hidden": false,
+                        "visible": false
+                    }
+                },
+                "store_sources": [],
+                "admin_grant": null,
+                "history": []
+            },
+            "push_channels": {
+                "fcm_token_present": false,
+                "onesignal_id_present": false
+            },
+            "trip": {
+                "city": "Vienna",
+                "country": "Austria",
+                "arrival_at": 1700000000,
+                "departure_at": 1700086400,
+                "show_to_locals": false,
+                "intents": [],
+                "status": "cancelled",
+                "updated_at": 1788100007
+            },
+            "verification_access": {
+                "contract_version": 1,
+                "contract_ready": true,
+                "capabilities": [
+                    "verification_grant_edit",
+                    "verification_grant_read"
+                ]
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        }
+    }
+}
