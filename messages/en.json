@@ -5366,6 +5366,22 @@
     "about": "About",
     "headline": "Headline",
     "generation": "Generation",
+    "ageDisplay": "Age display",
+    "ageDisplayValues": {
+      "exact": "Exact age",
+      "generation": "Generation",
+      "hidden": "Hidden"
+    },
+    "birthdayLocked": "Birthday lock",
+    "birthdayLockedValues": {
+      "locked": "Locked",
+      "changeable": "Changeable"
+    },
+    "realdob": "Birthday origin",
+    "realdobValues": {
+      "confirmed": "Confirmed",
+      "legacy": "Carried over from the old system"
+    },
     "loadError": "This user profile could not be loaded.",
     "notFound": "The requested user does not exist.",
     "noImages": "No profile images are available.",
@@ -7132,9 +7148,16 @@
     "removeIcon": "Remove icon",
     "uploadingIcon": "Uploading…",
     "iconError": "Choose a valid PNG or SVG no larger than 2 MB.",
+    "optionIconsTitle": "Per-value icons and labels",
+    "optionIconsCopy": "This source is presented per value. Each value carries its own bilingual label and its own trusted PNG or sanitized SVG icon. A value with no icon of its own falls back to the source icon above.",
+    "optionIcon": "{name} icon",
+    "optionIconsUntouched": "Only values you actually change are sent. Existing uploads survive a label-only save.",
     "sourceValidation": "Enter both the English and Hungarian labels.",
+    "optionLabelValidation": "Enter both the English and the Hungarian label for: {keys}.",
     "sourceConflict": "This built-in definition changed in another session. Your draft remains open.",
     "sourceSaveError": "The built-in presentation source could not be saved.",
+    "sourceIconUnmanaged": "Core refused an icon that was not uploaded through this console. Upload the file here and save again.",
+    "sourceDefinitionInvalid": "Core refused this definition: a label or a value key is not one it recognises.",
     "sourceSaved": "Built-in presentation source saved.",
     "previewTitle": "Semantic profile preview",
     "previewCopy": "Preview the layout roles with the client-owned male, female and neutral accent semantics. Colors are not stored in Core.",

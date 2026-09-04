@@ -3,15 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
-import ProfileIconUploadField from "@/components/ProfileIconUploadField";
+import { PresentationSourceDialog } from "@/components/PresentationSourceDialog";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import {
+  incompletePresentationOptionLabels,
+  localizedText,
   movePresentationSource,
-  normalizeManagedIcon,
   parsePresentationAdminPayload,
   parsePresentationRefusal,
   serializePresentationLayout,
+  serializePresentationSource,
   sourceIdentity,
   type PresentationAdminPayload,
   type PresentationBuiltinSource,
@@ -23,74 +25,16 @@ import {
 
 type Destination = "highlight_cloud" | "more_about_me" | "unused";
 
-function localeText(labels: Record<string, string>, locale: string): string {
-  return labels[locale] || labels[locale.split("-")[0]] || labels.en || labels.hu || "";
-}
-
 function sourceSample(source: PresentationSource, locale: string): string {
   if (source.kind === "field") {
-    return localeText(source.sample_values, locale) || localeText(source.labels, locale);
+    return localizedText(source.sample_values, locale) || localizedText(source.labels, locale);
   }
-  return localeText(source.labels, locale);
+  return localizedText(source.labels, locale);
 }
 
 function sameLayout(left: PresentationLayout, right: PresentationLayout): boolean {
   return JSON.stringify({ h: left.highlight_cloud, m: left.more_about_me })
     === JSON.stringify({ h: right.highlight_cloud, m: right.more_about_me });
-}
-
-function BuiltinSourceDialog({
-  source,
-  busy,
-  error,
-  onChange,
-  onClose,
-  onSave,
-}: {
-  source: PresentationBuiltinSource;
-  busy: boolean;
-  error: string;
-  onChange: (source: PresentationBuiltinSource) => void;
-  onClose: () => void;
-  onSave: () => void;
-}) {
-  const t = useTranslations("profilePresentation");
-  const common = useTranslations("common");
-  return (
-    <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => {
-      if (event.currentTarget === event.target && !busy) onClose();
-    }}>
-      <section className="dialog profile-presentation-source-dialog" role="dialog" aria-modal="true" aria-labelledby="presentation-source-title">
-        <div className="dialog-header">
-          <div><h2 id="presentation-source-title">{t("sourceEditorTitle")}</h2><p>{t("sourceEditorCopy")}</p></div>
-          <button className="dialog-close" type="button" onClick={onClose} disabled={busy} aria-label={common("close")}>×</button>
-        </div>
-        <div className="dialog-body form-grid">
-          <label className="field field-full"><span>{t("stableKey")}</span><input value={source.key} disabled /></label>
-          <label className="field"><span>{t("labelEn")}</span><input maxLength={100} disabled={busy} value={source.labels.en ?? ""} onChange={(event) => onChange({ ...source, labels: { ...source.labels, en: event.target.value } })} /></label>
-          <label className="field"><span>{t("labelHu")}</span><input maxLength={100} disabled={busy} value={source.labels.hu ?? ""} onChange={(event) => onChange({ ...source, labels: { ...source.labels, hu: event.target.value } })} /></label>
-          <div className="field-full">
-            <ProfileIconUploadField
-              label={t("icon")}
-              hint={t("iconHint")}
-              chooseLabel={t("chooseIcon")}
-              removeLabel={t("removeIcon")}
-              uploadingLabel={t("uploadingIcon")}
-              errorLabel={t("iconError")}
-              value={source.icon.url}
-              disabled={busy}
-              onChange={(icon) => {
-                const normalized = normalizeManagedIcon(icon);
-                if (normalized) onChange({ ...source, icon: normalized });
-              }}
-            />
-          </div>
-          {error ? <div className="alert alert-error field-full" role="alert">{error}</div> : null}
-        </div>
-        <div className="dialog-actions"><button className="button button-secondary" type="button" disabled={busy} onClick={onClose}>{common("cancel")}</button><button className="button button-primary" type="button" disabled={busy} onClick={onSave}>{busy ? common("saving") : common("save")}</button></div>
-      </section>
-    </div>
-  );
 }
 
 export default function ProfilePresentationPage() {
@@ -110,6 +54,11 @@ export default function ProfilePresentationPage() {
   const [toast, setToast] = useState("");
   const [dragged, setDragged] = useState<PresentationSourceRef | null>(null);
   const [accent, setAccent] = useState<"male" | "female" | "neutral">("neutral");
+  // Two copies on purpose: `sourceOriginal` is what Core served, `sourceEditor`
+  // is what the operator holds. The save body is the DIFFERENCE, because an
+  // option Core is not told about keeps what is stored — sending all four every
+  // time would make a labels-only edit look identical to four fresh uploads.
+  const [sourceOriginal, setSourceOriginal] = useState<PresentationBuiltinSource | null>(null);
   const [sourceEditor, setSourceEditor] = useState<PresentationBuiltinSource | null>(null);
   const [sourceBusy, setSourceBusy] = useState(false);
   const [sourceError, setSourceError] = useState("");
@@ -205,11 +154,11 @@ export default function ProfilePresentationPage() {
         onDrop={(event) => { event.preventDefault(); event.stopPropagation(); drop(destination, index); }}
       >
         <span className="drag-handle" aria-hidden="true">⋮⋮</span>
-        <span className="presentation-source-icon">{/* eslint-disable-next-line @next/next/no-img-element */}{source.icon.url ? <img src={source.icon.url} alt="" /> : <b>{localeText(source.labels, locale).slice(0, 1)}</b>}</span>
-        <span className="presentation-source-copy"><strong>{localeText(source.labels, locale)}</strong><small><code>{source.kind}:{source.key}</code> · {sourceSample(source, locale)}</small></span>
+        <span className="presentation-source-icon">{/* eslint-disable-next-line @next/next/no-img-element */}{source.icon.url ? <img src={source.icon.url} alt="" /> : <b>{localizedText(source.labels, locale).slice(0, 1)}</b>}</span>
+        <span className="presentation-source-copy"><strong>{localizedText(source.labels, locale)}</strong><small><code>{source.kind}:{source.key}</code> · {sourceSample(source, locale)}</small></span>
         <span className="presentation-source-actions">
-          <button className="icon-action" type="button" disabled={busy || index === 0} onClick={() => move(source, destination, index - 1)} aria-label={t("moveUp", { name: localeText(source.labels, locale) })}>↑</button>
-          <button className="icon-action" type="button" disabled={busy || index === count - 1} onClick={() => move(source, destination, index + 1)} aria-label={t("moveDown", { name: localeText(source.labels, locale) })}>↓</button>
+          <button className="icon-action" type="button" disabled={busy || index === 0} onClick={() => move(source, destination, index - 1)} aria-label={t("moveUp", { name: localizedText(source.labels, locale) })}>↑</button>
+          <button className="icon-action" type="button" disabled={busy || index === count - 1} onClick={() => move(source, destination, index + 1)} aria-label={t("moveDown", { name: localizedText(source.labels, locale) })}>↓</button>
           <button className="text-button danger-text" type="button" disabled={busy} onClick={() => move(source, "unused")}>{t("remove")}</button>
         </span>
       </li>
@@ -241,29 +190,38 @@ export default function ProfilePresentationPage() {
   }
 
   async function saveSource() {
-    if (!sourceEditor) return;
+    if (!sourceEditor || !sourceOriginal) return;
     if (!sourceEditor.labels.en?.trim() || !sourceEditor.labels.hu?.trim()) {
       setSourceError(t("sourceValidation"));
       return;
     }
+    const incomplete = incompletePresentationOptionLabels(sourceEditor);
+    if (incomplete.length > 0) {
+      setSourceError(t("optionLabelValidation", { keys: incomplete.join(", ") }));
+      return;
+    }
     setSourceBusy(true);
     setSourceError("");
-    const response = await adminCall("save_profile_presentation_source", {
-      source_key: sourceEditor.key,
-      expected_revision: sourceEditor.revision,
-      labels: { ...sourceEditor.labels, en: sourceEditor.labels.en.trim(), hu: sourceEditor.labels.hu.trim() },
-      icon_url: sourceEditor.icon.url,
-      icon_mime: sourceEditor.icon.mime,
-    });
+    const response = await adminCall(
+      "save_profile_presentation_source",
+      serializePresentationSource(sourceOriginal, sourceEditor),
+    );
     setSourceBusy(false);
     if (!response?.success) {
-      setSourceError(response?.error === "profile-presentation-source-conflict" ? t("sourceConflict") : t("sourceSaveError"));
+      setSourceError(response?.error === "profile-presentation-source-conflict"
+        ? t("sourceConflict")
+        : response?.error === "profile-presentation-icon-unmanaged"
+          ? t("sourceIconUnmanaged")
+          : response?.error === "profile-presentation-source-definition-invalid"
+            ? t("sourceDefinitionInvalid")
+            : t("sourceSaveError"));
       return;
     }
     if (!applyPayload(response.data, true)) {
       setSourceError(t("invalidResponse"));
       return;
     }
+    setSourceOriginal(null);
     setSourceEditor(null);
     setToast(t("sourceSaved"));
   }
@@ -340,11 +298,11 @@ export default function ProfilePresentationPage() {
           {unused.map((source) => {
             const assignable = isAssignable(source);
             return <article className={`presentation-inventory-card${assignable ? "" : " is-reserved"}`} draggable={assignable} onDragStart={() => setDragged(source)} onDragEnd={() => setDragged(null)} key={sourceIdentity(source)}>
-              <span className="presentation-source-icon">{/* eslint-disable-next-line @next/next/no-img-element */}{source.icon.url ? <img src={source.icon.url} alt="" /> : <b>{localeText(source.labels, locale).slice(0, 1)}</b>}</span>
-              <span className="presentation-source-copy"><strong>{localeText(source.labels, locale)}</strong><small><code>{source.kind}:{source.key}</code>{source.dedicated_section ? ` · ${t("dedicated", { section: source.dedicated_section })}` : ""}{source.kind === "field" && !source.active ? ` · ${t("inactive")}` : ""}</small><em>{sourceSample(source, locale)}</em></span>
+              <span className="presentation-source-icon">{/* eslint-disable-next-line @next/next/no-img-element */}{source.icon.url ? <img src={source.icon.url} alt="" /> : <b>{localizedText(source.labels, locale).slice(0, 1)}</b>}</span>
+              <span className="presentation-source-copy"><strong>{localizedText(source.labels, locale)}</strong><small><code>{source.kind}:{source.key}</code>{source.dedicated_section ? ` · ${t("dedicated", { section: source.dedicated_section })}` : ""}{source.kind === "field" && !source.active ? ` · ${t("inactive")}` : ""}</small><em>{sourceSample(source, locale)}</em></span>
               <div className="presentation-inventory-actions">
                 {assignable ? <><button className="button button-secondary button-small" type="button" onClick={() => move(source, "highlight_cloud")}>{t("toHighlights")}</button><button className="button button-secondary button-small" type="button" onClick={() => move(source, "more_about_me")}>{t("toMore")}</button></> : <span className="badge badge-inactive">{t("reserved")}</span>}
-                {source.kind === "builtin" ? <button className="text-button" type="button" onClick={() => { setSourceError(""); setSourceEditor(structuredClone(source)); }}>{t("editDefinition")}</button> : null}
+                {source.kind === "builtin" ? <button className="text-button" type="button" onClick={() => { setSourceError(""); setSourceOriginal(structuredClone(source)); setSourceEditor(structuredClone(source)); }}>{t("editDefinition")}</button> : null}
               </div>
             </article>;
           })}
@@ -355,15 +313,15 @@ export default function ProfilePresentationPage() {
         <div className="panel-header"><div><h2>{t("previewTitle")}</h2><p>{t("previewCopy")}</p></div><div className="segmented-control" role="group" aria-label={t("accentRole")}>{payload.accent_roles.map((role) => <button type="button" className={accent === role ? "active" : ""} aria-pressed={accent === role} onClick={() => setAccent(role)} key={role}>{t(`accents.${role}`)}</button>)}</div></div>
         <div className={`presentation-phone-preview accent-${accent}`}>
           <div className="presentation-preview-hero" />
-          <div className="presentation-preview-chips"><span>{previewChip ? localeText(previewChip.labels, locale) : t("previewChip")}</span><span>{t("previewChipSecond")}</span></div>
+          <div className="presentation-preview-chips"><span>{previewChip ? localizedText(previewChip.labels, locale) : t("previewChip")}</span><span>{t("previewChipSecond")}</span></div>
           <p>{t("previewBiography")}</p>
           <div className="presentation-preview-spacer" />
-          <div className="presentation-preview-fact"><span className="presentation-source-icon">{previewRow ? localeText(previewRow.labels, locale).slice(0, 1) : "i"}</span><span><small>{previewRow ? localeText(previewRow.labels, locale) : t("previewRow")}</small><strong>{previewRow ? sourceSample(previewRow, locale) : t("previewValue")}</strong></span></div>
+          <div className="presentation-preview-fact"><span className="presentation-source-icon">{previewRow ? localizedText(previewRow.labels, locale).slice(0, 1) : "i"}</span><span><small>{previewRow ? localizedText(previewRow.labels, locale) : t("previewRow")}</small><strong>{previewRow ? sourceSample(previewRow, locale) : t("previewValue")}</strong></span></div>
         </div>
         <details className="presentation-section-order"><summary>{t("sectionOrder")}</summary><ol>{payload.section_order.map((section) => <li key={section}><code>{section}</code></li>)}</ol></details>
       </section>
 
-      {sourceEditor ? <BuiltinSourceDialog source={sourceEditor} busy={sourceBusy} error={sourceError} onChange={setSourceEditor} onClose={() => { if (!sourceBusy) setSourceEditor(null); }} onSave={() => void saveSource()} /> : null}
+      {sourceEditor ? <PresentationSourceDialog source={sourceEditor} busy={sourceBusy} error={sourceError} onChange={setSourceEditor} onClose={() => { if (!sourceBusy) { setSourceOriginal(null); setSourceEditor(null); } }} onSave={() => void saveSource()} /> : null}
     </>
   );
 }

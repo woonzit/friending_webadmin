@@ -388,11 +388,16 @@ test("Webadmin pages keep conflicts local, expose managed icons, warnings and al
   ]) assert.ok(ADMIN_ACTIONS.includes(action as never));
 
   const layoutPage = await readFile(new URL("../app/(dashboard)/profile-presentation/page.tsx", import.meta.url), "utf8");
+  // T-730 lifted the built-in source editor out of the page so its markup can be
+  // asserted directly; the managed-upload guarantee moved with it and is checked
+  // on both halves rather than dropped.
+  const sourceDialog = await readFile(new URL("../components/PresentationSourceDialog.tsx", import.meta.url), "utf8");
   const tagPage = await readFile(new URL("../app/(dashboard)/profile-tags/page.tsx", import.meta.url), "utf8");
   const albumPanel = await readFile(new URL("../components/UserAlbumsPanel.tsx", import.meta.url), "utf8");
   const bridge = await readFile(new URL("../app/api/admin/[action]/route.ts", import.meta.url), "utf8");
   assert.match(layoutPage, /profile-presentation-conflict/);
-  assert.match(layoutPage, /ProfileIconUploadField/);
+  assert.match(layoutPage, /PresentationSourceDialog/);
+  assert.match(sourceDialog, /ProfileIconUploadField/);
   assert.match(layoutPage, /setError\(response\?\.error/);
   assert.match(tagPage, /profile-tag-catalog-conflict/);
   assert.match(tagPage, /window\.confirm/);

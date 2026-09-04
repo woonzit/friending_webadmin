@@ -29,6 +29,16 @@ import {
 import { pushChannels, type PushChannels } from "@/lib/pushAdmin";
 import { verificationAccess, type VerificationAccess } from "@/lib/verificationAdmin";
 
+/**
+ * D-122 (T-729/T-730). Core's own closed vocabulary for how the app shows an
+ * age. `null` is the console's fourth state and NOT one of Core's: it means
+ * "this response did not state one", which is what a Core older than T-729
+ * sends and what an unrecognised value has to become here.
+ */
+export const AGE_DISPLAY_VALUES = ["exact", "generation", "hidden"] as const;
+
+export type AgeDisplay = (typeof AGE_DISPLAY_VALUES)[number];
+
 export type UserDetailLocation = {
   city: string;
   region: string;
@@ -47,6 +57,25 @@ export type UserDetailProfile = {
   age: number;
   birthyear: number;
   generation: string;
+  /**
+   * The three D-122 support facts, decoded ADDITIVELY and fail-open: an absent
+   * key is `null` and prints as an em dash, never a guessed `hidden` /`false`.
+   *
+   * Fail-open is deliberate here and is the opposite of the rule the member
+   * clients follow. A client that cannot read `age_display` must fall back to
+   * `hidden`, because guessing wrong exposes an age the member asked to keep
+   * private. This console renders no age from these fields at all — they are a
+   * diagnostic that answers "why can this member not turn 'show my age' on?" —
+   * so printing a definite "Hidden" for a value the server never sent would
+   * invent a support answer, which is the failure that matters here.
+   *
+   * `realdob === false` is the whole point of the trio: it is the only field
+   * that explains a `profile-birthday-unconfirmed` refusal on a member whose
+   * age looks perfectly ordinary from this page.
+   */
+  age_display: AgeDisplay | null;
+  birthday_locked: boolean | null;
+  realdob: boolean | null;
   created: number;
   last_seen: number;
   phone_e164: string;
@@ -89,6 +118,17 @@ function record(value: unknown): Record<string, unknown> | null {
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : "";
+}
+
+/** Absent, null and anything that is not a boolean all read as "not stated". */
+function optionalBoolean(value: unknown): boolean | null {
+  return typeof value === "boolean" ? value : null;
+}
+
+function ageDisplay(value: unknown): AgeDisplay | null {
+  return typeof value === "string" && (AGE_DISPLAY_VALUES as readonly string[]).includes(value)
+    ? value as AgeDisplay
+    : null;
 }
 
 /** Non-finite and non-numeric both become 0, which every consumer renders as an em dash. */
@@ -210,6 +250,9 @@ export function userDetail(
       age: count(profileSource.age),
       birthyear: count(profileSource.birthyear),
       generation: text(profileSource.generation),
+      age_display: ageDisplay(profileSource.age_display),
+      birthday_locked: optionalBoolean(profileSource.birthday_locked),
+      realdob: optionalBoolean(profileSource.realdob),
       created: count(profileSource.created),
       last_seen: count(profileSource.last_seen),
       phone_e164: text(profileSource.phone_e164),

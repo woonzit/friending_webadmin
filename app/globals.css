@@ -8151,6 +8151,57 @@ body .verification-level-pill.level-strong {
   width: min(100%, 780px);
 }
 
+/* D-122 / T-730: per-value icon and label rows on a presentation source. */
+
+.presentation-option-icons {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.presentation-option-icons h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.presentation-option-icons > .page-subtitle {
+  margin: 4px 0 12px;
+}
+
+.presentation-option-icon-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.presentation-option-icon-row {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-soft);
+}
+
+.presentation-option-icon-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.presentation-option-icon-heading code {
+  color: var(--text-soft);
+  font-size: 12px;
+}
+
+.presentation-option-icons > .field-hint {
+  display: block;
+  margin-top: 10px;
+  color: var(--text-soft);
+}
+
 /* Profile tag catalogs */
 
 .profile-tag-catalog-settings textarea {

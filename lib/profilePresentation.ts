@@ -43,10 +43,41 @@ export type PresentationSourceIssue = {
   reason: string;
 };
 
+/**
+ * D-122 / T-730. The per-VALUE vocabulary of a source, when it has one.
+ *
+ * `generation` is the only source with one today: its four buckets fall out of
+ * the birth year, nothing is selectable, and one icon on the source could never
+ * say WHICH generation a chip means. Core keys both maps by the source's own
+ * option keys and emits them in the order the console shows them.
+ *
+ * Both maps are EMPTY for a source that takes no option values, and that is the
+ * discriminator this console uses: a non-empty `option_icons` means "takes
+ * option icons, however many are uploaded", an empty one means "does not take
+ * them". Verified against Core bytes, not prose — see
+ * `tests/fixtures/profile_presentation_generation_wire/README.md`. Core's
+ * `ProfilePresentationDefinitionCatalog::definitions()` writes both keys on
+ * EVERY builtin, so a source without a vocabulary arrives as a JSON `[]` (an
+ * empty PHP array) rather than being omitted; the parser reads absent, `[]` and
+ * `{}` as the same "no vocabulary".
+ */
+export type PresentationOptionVocabulary = {
+  labels: Record<string, LocalizedText>;
+  icons: Record<string, ManagedIcon>;
+};
+
+export type PresentationOptionRow = {
+  key: string;
+  labels: LocalizedText;
+  icon: ManagedIcon;
+};
+
 export type PresentationBuiltinSource = PresentationSourceRef & {
   kind: "builtin";
   labels: LocalizedText;
   icon: ManagedIcon;
+  option_labels: Record<string, LocalizedText>;
+  option_icons: Record<string, ManagedIcon>;
   layout_allowed: boolean;
   dedicated_section: string;
   revision: number;
@@ -361,25 +392,96 @@ function fieldSource(value: unknown): PresentationFieldSource | null {
   };
 }
 
+/**
+ * "This source has no per-value vocabulary", in the three shapes it arrives in:
+ * absent (a Core older than T-729), `[]` (PHP's empty array, which is what the
+ * deployed Core emits) and `{}`. Anything else must be a keyed object.
+ */
+function emptyOptionMap(value: unknown): boolean {
+  return value === undefined || value === null || (Array.isArray(value) && value.length === 0);
+}
+
+/**
+ * A non-empty vocabulary is parsed STRICTLY, the way every other builtin field
+ * is: Core normalizes both maps before it serves them (`storedOptionLabels` /
+ * `storedOptionIcons` guarantee a localized pair and a managed icon per key),
+ * so a member that fails here means the console is not talking to the Core it
+ * was written against, and rendering four upload rows against a shape nobody
+ * verified is worse than the load error.
+ *
+ * The KEY SET is whatever the server sent, never a hard-coded genZ/millennial/
+ * genX/boomer: the vocabulary is Core's, and a fifth bucket must not need a
+ * console release.
+ */
+function optionLabelMap(value: unknown): Record<string, LocalizedText> | null {
+  if (emptyOptionMap(value)) return {};
+  const source = record(value);
+  if (!source || Object.keys(source).length > 64) return null;
+  const result: Record<string, LocalizedText> = {};
+  for (const [optionKey, raw] of Object.entries(source)) {
+    const labels = localized(raw);
+    if (!/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(optionKey) || !labels) return null;
+    result[optionKey] = labels;
+  }
+  return result;
+}
+
+function optionIconMap(value: unknown): Record<string, ManagedIcon> | null {
+  if (emptyOptionMap(value)) return {};
+  const source = record(value);
+  if (!source || Object.keys(source).length > 64) return null;
+  const result: Record<string, ManagedIcon> = {};
+  for (const [optionKey, raw] of Object.entries(source)) {
+    const managedIcon = icon(raw);
+    if (!/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(optionKey) || !managedIcon) return null;
+    result[optionKey] = managedIcon;
+  }
+  return result;
+}
+
 function builtinSource(value: unknown): PresentationBuiltinSource | null {
   const source = record(value);
   const key = stableKey(source?.source_key ?? source?.key);
   const labels = localized(source?.labels);
   const managedIcon = icon(source?.icon);
   const revision = integer(source?.revision);
+  const optionLabels = optionLabelMap(source?.option_labels);
+  const optionIcons = optionIconMap(source?.option_icons);
   if (
     !source || !key || !labels || !managedIcon || revision === null
     || typeof source.layout_allowed !== "boolean" || typeof source.dedicated_section !== "string"
+    || !optionLabels || !optionIcons
   ) return null;
   return {
     kind: "builtin",
     key,
     labels,
     icon: managedIcon,
+    option_labels: optionLabels,
+    option_icons: optionIcons,
     layout_allowed: source.layout_allowed,
     dedicated_section: source.dedicated_section,
     revision,
   };
+}
+
+/** Whether the source takes per-option icons at all — the render gate. */
+export function sourceTakesOptionIcons(source: PresentationBuiltinSource): boolean {
+  return Object.keys(source.option_icons).length > 0;
+}
+
+/**
+ * One row per option, in the order Core served the icons (youngest generation
+ * first). A key that carries an icon but no label still gets a row, because a
+ * row the operator cannot see is an upload they cannot replace; the label falls
+ * back to the key, which is what the operator would have to quote anyway.
+ */
+export function presentationOptionRows(source: PresentationBuiltinSource): PresentationOptionRow[] {
+  return Object.keys(source.option_icons).map((key) => ({
+    key,
+    labels: source.option_labels[key] ?? {},
+    icon: source.option_icons[key],
+  }));
 }
 
 export function parsePresentationAdminPayload(value: unknown): PresentationAdminPayload | null {
@@ -621,6 +723,11 @@ export function parseProfilePhotoInsights(value: unknown): ProfilePhotoInsights 
   return { uid, display_name: source.display_name, total_likes: total, liked_photo_count: likedCount, top_photo_id: topId, photos };
 }
 
+/** One localized map read in the operator's language, with the usual fallbacks. */
+export function localizedText(labels: LocalizedText, locale: string): string {
+  return labels[locale] || labels[locale.split("-")[0]] || labels.en || labels.hu || "";
+}
+
 export function sourceIdentity(source: PresentationSourceRef): string {
   return `${source.kind}:${source.key}`;
 }
@@ -654,6 +761,72 @@ export function serializePresentationLayout(layout: PresentationLayout): {
       highlight_cloud: layout.highlight_cloud.map((row) => ({ ...row })),
       more_about_me: layout.more_about_me.map((row) => ({ ...row })),
     },
+  };
+}
+
+function sameIcon(left: ManagedIcon, right: ManagedIcon): boolean {
+  return left.url === right.url && left.mime === right.mime;
+}
+
+function trimLocalized(labels: LocalizedText): LocalizedText {
+  return Object.fromEntries(Object.entries(labels).map(([language, text]) => [language, text.trim()]));
+}
+
+function sameLocalized(left: LocalizedText, right: LocalizedText): boolean {
+  const trimmedLeft = trimLocalized(left);
+  const trimmedRight = trimLocalized(right);
+  const keys = new Set([...Object.keys(trimmedLeft), ...Object.keys(trimmedRight)]);
+  return [...keys].every((language) => (trimmedLeft[language] ?? "") === (trimmedRight[language] ?? ""));
+}
+
+/**
+ * Option keys whose EN or HU label the operator emptied. Core refuses those
+ * (`ProfileFieldPolicy::localizedMap($map, true, 100)` requires both), and a
+ * refusal that names the whole source would not say which of four rows is at
+ * fault — so the console names them before it posts.
+ */
+export function incompletePresentationOptionLabels(draft: PresentationBuiltinSource): string[] {
+  return Object.entries(draft.option_labels)
+    .filter(([, labels]) => !labels.en?.trim() || !labels.hu?.trim())
+    .map(([key]) => key);
+}
+
+/**
+ * The `save_profile_presentation_source` body, in the STRUCTURED shape.
+ *
+ * The rule this function exists to keep (Core: `inputOptionIcons` /
+ * `inputOptionLabels`): an option the request does not MENTION keeps what is
+ * stored. So only the options the operator actually changed are sent, and a
+ * labels-only edit posts no `option_icons` at all — four uploads survive it.
+ * Clearing one icon is still explicit and still travels, as an empty `url`,
+ * because the draft then differs from what was served.
+ *
+ * `original` is the source as Core served it; `draft` is what the dialog holds.
+ * Diffing the two rather than tracking "touched" flags also means an operator
+ * who uploads an icon and then removes it again sends nothing.
+ */
+export function serializePresentationSource(
+  original: PresentationBuiltinSource,
+  draft: PresentationBuiltinSource,
+): Record<string, unknown> {
+  const optionIcons: Record<string, ManagedIcon> = {};
+  for (const [key, value] of Object.entries(draft.option_icons)) {
+    const before = original.option_icons[key];
+    if (!before || !sameIcon(before, value)) optionIcons[key] = { ...value };
+  }
+  const optionLabels: Record<string, LocalizedText> = {};
+  for (const [key, value] of Object.entries(draft.option_labels)) {
+    const before = original.option_labels[key];
+    if (!before || !sameLocalized(before, value)) optionLabels[key] = trimLocalized(value);
+  }
+  return {
+    source_key: draft.key,
+    expected_revision: draft.revision,
+    labels: trimLocalized(draft.labels),
+    icon_url: draft.icon.url,
+    icon_mime: draft.icon.mime,
+    ...(Object.keys(optionIcons).length > 0 ? { option_icons: optionIcons } : {}),
+    ...(Object.keys(optionLabels).length > 0 ? { option_labels: optionLabels } : {}),
   };
 }
 

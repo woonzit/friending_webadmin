@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
+import { MemberAgePolicyRows } from "@/components/MemberAgePolicyRows";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import UserProfileDataEditor from "@/components/UserProfileDataEditor";
 import UserAlbumsPanel from "@/components/UserAlbumsPanel";
@@ -86,7 +87,11 @@ export default function UserDetailPage() {
   if (state === "error" || !data || !profileFields) return <ErrorPanel message={t("loadError")} retry={load} />;
 
   const profile = data.profile;
-  const detailSections: Array<{ title: string; rows: Array<[string, React.ReactNode]> }> = [
+  const detailSections: Array<{
+    title: string;
+    rows: Array<[string, React.ReactNode]>;
+    extra?: React.ReactNode;
+  }> = [
     {
       title: t("identity"),
       rows: [
@@ -121,6 +126,9 @@ export default function UserDetailPage() {
         [t("headline"), profile.headline || "—"],
         [t("about"), profile.about_me || "—"],
       ],
+      // D-122 (T-730). Read-only: the birthday-lock reset is T-759, and it
+      // needs a receipted Core action this console cannot fake.
+      extra: <MemberAgePolicyRows profile={profile} />,
     },
   ];
   const tags = data.tags;
@@ -177,6 +185,7 @@ export default function UserDetailPage() {
                 {section.rows.map(([label, value]) => (
                   <div className="detail-row" key={label}><dt>{label}</dt><dd>{value}</dd></div>
                 ))}
+                {section.extra}
               </dl>
             </div>
           </section>

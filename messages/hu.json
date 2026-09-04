@@ -5366,6 +5366,22 @@
     "about": "Bemutatkozás",
     "headline": "Címsor",
     "generation": "Generáció",
+    "ageDisplay": "Kor megjelenítése",
+    "ageDisplayValues": {
+      "exact": "Pontos kor",
+      "generation": "Generáció",
+      "hidden": "Rejtett"
+    },
+    "birthdayLocked": "Születésnap zárolása",
+    "birthdayLockedValues": {
+      "locked": "Zárolt",
+      "changeable": "Módosítható"
+    },
+    "realdob": "Születésnap eredete",
+    "realdobValues": {
+      "confirmed": "Megerősített",
+      "legacy": "Régi rendszerből átvett"
+    },
     "loadError": "Ez a userprofil nem tölthető be.",
     "notFound": "A kért user nem létezik.",
     "noImages": "Nincsenek elérhető profilképek.",
@@ -7132,9 +7148,16 @@
     "removeIcon": "Ikon eltávolítása",
     "uploadingIcon": "Feltöltés…",
     "iconError": "Legfeljebb 2 MB-os, érvényes PNG vagy SVG fájlt válassz.",
+    "optionIconsTitle": "Értékenkénti ikonok és címkék",
+    "optionIconsCopy": "Ez a forrás értékenként jelenik meg. Minden érték saját kétnyelvű címkét és saját, megbízható PNG- vagy tisztított SVG-ikont kap. Saját ikon nélküli érték a fenti forrásikont örökli.",
+    "optionIcon": "{name} ikonja",
+    "optionIconsUntouched": "Csak a ténylegesen módosított értékek kerülnek elküldésre. A meglévő feltöltéseket a csak címkét érintő mentés nem törli.",
     "sourceValidation": "Add meg az angol és a magyar címkét is.",
+    "optionLabelValidation": "Add meg az angol és a magyar címkét is ezekhez az értékekhez: {keys}.",
     "sourceConflict": "Ezt a beépített definíciót egy másik munkamenet módosította. A vázlat nyitva marad.",
     "sourceSaveError": "A beépített megjelenítési forrás nem menthető.",
+    "sourceIconUnmanaged": "A Core elutasított egy olyan ikont, amelyet nem ezen a konzolon töltöttek fel. Töltsd fel itt a fájlt, majd mentsd újra.",
+    "sourceDefinitionInvalid": "A Core elutasította ezt a definíciót: valamelyik címke vagy értékkulcs ismeretlen a számára.",
     "sourceSaved": "A beépített megjelenítési forrás mentve.",
     "previewTitle": "Szemantikus profil-előnézet",
     "previewCopy": "Az elrendezés férfi, női és semleges kliensoldali szín-szerepeinek előnézete. A Core nem tárol színkódot.",
