@@ -28,11 +28,54 @@ export type InviteConfiguration = {
   updated_at: number;
 };
 
+/**
+ * The invite-attribution summary Core (T-768) appends to `adminPayload()` as one additive sibling
+ * key. It is STATISTICS, not configuration: this console renders it read-only and never posts it
+ * back, so it is decoded FAIL-OPEN — absent, `null` or malformed all become `null` and the
+ * configuration form keeps working. Every rule below the `attribution` key stays fail-closed.
+ */
+export const INVITE_ATTRIBUTION_CHANNELS = ["device_sms", "server_sms"] as const;
+export type InviteAttributionChannel = (typeof INVITE_ATTRIBUTION_CHANNELS)[number];
+
+export type InviteAttributionChannelCounts = {
+  recorded: number;
+  converted: number;
+  expiring_within_7d: number;
+};
+
+export type InviteAttributionTotals = {
+  recorded: number;
+  converted: number;
+  senders: number;
+  converted_members: number;
+  expiring_within_7d: number;
+  by_channel: Record<InviteAttributionChannel, InviteAttributionChannelCounts>;
+};
+
+export type InviteAttributionSender = {
+  uid: number;
+  display_name: string;
+  recorded: number;
+  converted: number;
+  last_recorded_at: number;
+  last_converted_at: number;
+};
+
+export type InviteAttributionSummary = {
+  schema_version: 1;
+  generated_at: number;
+  totals: InviteAttributionTotals;
+  senders: InviteAttributionSender[];
+  limit: number;
+  truncated: boolean;
+};
+
 export type InviteConfigurationPayload = {
   configuration: InviteConfiguration;
   modes: InviteDeliveryMode[];
   placeholders: string[];
   limits: { template_length: number; overrides: number };
+  attribution: InviteAttributionSummary | null;
 };
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -84,6 +127,104 @@ function override(value: unknown): InviteStorefrontOverride | null {
   return { storefront, mode: parsedMode, active: source.active, messages: parsedMessages };
 }
 
+function attributionChannelCounts(value: unknown): InviteAttributionChannelCounts | null {
+  const source = record(value);
+  if (!source) return null;
+  const recorded = integer(source.recorded);
+  const converted = integer(source.converted);
+  const expiring = integer(source.expiring_within_7d);
+  if (recorded === null || converted === null || expiring === null) return null;
+  return { recorded, converted, expiring_within_7d: expiring };
+}
+
+function attributionSender(value: unknown): InviteAttributionSender | null {
+  const source = record(value);
+  if (!source || typeof source.display_name !== "string") return null;
+  const uid = integer(source.uid);
+  const recorded = integer(source.recorded);
+  const converted = integer(source.converted);
+  const lastRecordedAt = integer(source.last_recorded_at);
+  // 0 is the value Core serves for a sender who has converted nobody yet; it is a real answer,
+  // not a missing one, and the console prints an em dash for it (T-768 assumption 1).
+  const lastConvertedAt = integer(source.last_converted_at);
+  if (uid === null || uid <= 0 || recorded === null || converted === null) return null;
+  if (lastRecordedAt === null || lastConvertedAt === null) return null;
+  return {
+    uid,
+    display_name: source.display_name,
+    recorded,
+    converted,
+    last_recorded_at: lastRecordedAt,
+    last_converted_at: lastConvertedAt,
+  };
+}
+
+/**
+ * Fail-open by contract: every refusal below returns `null`, which the page renders as "statistics
+ * are not available right now" beside a fully working configuration form. `senders: []` and a
+ * populated `senders` are EQUALLY valid — the first conversion of the cohort moves that array from
+ * empty to populated and that is normal operation, never a schema change (RULES 47, and the T-768
+ * report's decoder note).
+ */
+export function parseInviteAttributionSummary(value: unknown): InviteAttributionSummary | null {
+  const source = record(value);
+  if (!source || source.schema_version !== 1 || typeof source.truncated !== "boolean") return null;
+  const generatedAt = integer(source.generated_at);
+  const limit = integer(source.limit);
+  const rawTotals = record(source.totals);
+  if (generatedAt === null || limit === null || limit <= 0 || !rawTotals) return null;
+  if (!Array.isArray(source.senders) || source.senders.length > limit) return null;
+  const rawChannels = record(rawTotals.by_channel);
+  if (!rawChannels) return null;
+  const channelKeys = Object.keys(rawChannels);
+  if (
+    channelKeys.length !== INVITE_ATTRIBUTION_CHANNELS.length
+    || INVITE_ATTRIBUTION_CHANNELS.some((channel) => !channelKeys.includes(channel))
+  ) return null;
+  const byChannel = {} as Record<InviteAttributionChannel, InviteAttributionChannelCounts>;
+  for (const channel of INVITE_ATTRIBUTION_CHANNELS) {
+    const counts = attributionChannelCounts(rawChannels[channel]);
+    if (!counts) return null;
+    byChannel[channel] = counts;
+  }
+  const recorded = integer(rawTotals.recorded);
+  const converted = integer(rawTotals.converted);
+  const senderCount = integer(rawTotals.senders);
+  const convertedMembers = integer(rawTotals.converted_members);
+  const expiring = integer(rawTotals.expiring_within_7d);
+  if (recorded === null || converted === null || senderCount === null) return null;
+  if (convertedMembers === null || expiring === null) return null;
+  const senders: InviteAttributionSender[] = [];
+  for (const raw of source.senders) {
+    const parsed = attributionSender(raw);
+    if (!parsed) return null;
+    senders.push(parsed);
+  }
+  return {
+    schema_version: 1,
+    generated_at: generatedAt,
+    totals: {
+      recorded,
+      converted,
+      senders: senderCount,
+      converted_members: convertedMembers,
+      expiring_within_7d: expiring,
+      by_channel: byChannel,
+    },
+    senders,
+    limit,
+    truncated: source.truncated,
+  };
+}
+
+/**
+ * `converted / recorded`, or `null` when nothing has been recorded — a console that printed "0%"
+ * for a cohort with no invites at all would be reporting a failure that has not happened.
+ */
+export function inviteConversionRate(recorded: number, converted: number): number | null {
+  return Number.isFinite(recorded) && recorded > 0 ? converted / recorded : null;
+}
+
 export function parseInviteConfigurationPayload(value: unknown): InviteConfigurationPayload | null {
   const source = record(value);
   const rawConfiguration = record(source?.configuration);
@@ -130,6 +271,9 @@ export function parseInviteConfigurationPayload(value: unknown): InviteConfigura
       template_length: INVITE_TEMPLATE_MAX_LENGTH,
       overrides: INVITE_OVERRIDE_MAX_COUNT,
     },
+    // Fail-open, and deliberately the LAST thing decoded: nothing above this line can be refused
+    // because the statistics half is missing or wrong.
+    attribution: parseInviteAttributionSummary(source.attribution),
   };
 }
 

@@ -2387,6 +2387,15 @@
               "2": "Remove an override to return that storefront to the global fallback."
             },
             "guidance": "Storefront is read when the app opens this screen and is not written to the member profile. It may differ from residence or current location."
+          },
+          "inviteResults": {
+            "title": "Invite results",
+            "purpose": "The read-only conversion summary Core builds from recorded invitations: the totals, the split by delivery mode, and the inviting members with their own recorded and converted counts.",
+            "actions": {
+              "1": "Read the totals before changing a delivery mode, so a later drop can be attributed to that change.",
+              "2": "Open an inviting member from the table when a support question is about their invitations."
+            },
+            "guidance": "Counts only — no phone number or recipient identity is served or shown. Unconverted invitations expire, so the expiring-within-seven-days figure explains a fall that is not a product failure. The table is the first page of senders while the totals describe the whole collection, and the panel prints one muted line instead of failing when Core cannot build the summary."
           }
         }
       },
@@ -8112,6 +8121,37 @@
       "templates": "Optional country-specific copy",
       "inherit": "Leave a language blank to inherit its global template.",
       "inheritPlaceholder": "Use the global template"
+    },
+    "attribution": {
+      "title": "Invite results",
+      "copy": "Read-only conversion statistics for mobile invitations. Counts only — no phone number or recipient identity is served or shown.",
+      "unavailable": "Statistics are not available right now",
+      "tiles": {
+        "recorded": "Invites recorded",
+        "converted": "Converted",
+        "rate": "Conversion rate",
+        "senders": "Inviting members",
+        "expiring": "Expiring within 7 days"
+      },
+      "convertedMembers": "{count} distinct members joined",
+      "channels": {
+        "title": "By delivery mode",
+        "device_sms": "Device SMS",
+        "server_sms": "Server SMS",
+        "recorded": "recorded",
+        "converted": "converted",
+        "expiring": "expiring"
+      },
+      "table": {
+        "title": "Inviting members",
+        "sender": "Member",
+        "uid": "UID",
+        "recorded": "Invites",
+        "converted": "Converted",
+        "lastConversion": "Last conversion"
+      },
+      "empty": "No invites recorded yet",
+      "truncated": "Showing the first {limit} senders"
     },
     "validation": {
       "globalMode": "Choose a global delivery method.",

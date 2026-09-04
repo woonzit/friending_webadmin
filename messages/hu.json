@@ -2387,6 +2387,15 @@
               "2": "Távolítsd el az override-ot, ha a storefrontnak vissza kell térnie a globális fallbackre."
             },
             "guidance": "A storefrontot az app a képernyő megnyitásakor olvassa, és nem írja a tag profiljába. Eltérhet a lakóhelytől vagy aktuális helytől."
+          },
+          "inviteResults": {
+            "title": "Meghívások eredménye",
+            "purpose": "A Core által a rögzített meghívásokból épített, csak olvasható összesítés: a teljes darabszámok, a küldési mód szerinti bontás, és a meghívó tagok a saját rögzített és beváltott számaikkal.",
+            "actions": {
+              "1": "Küldési mód módosítása előtt olvasd le a számokat, hogy egy későbbi visszaesés a változáshoz köthető legyen.",
+              "2": "Támogatási kérdésnél a táblázatból nyisd meg az érintett meghívó tag adatlapját."
+            },
+            "guidance": "Kizárólag darabszámok — telefonszám és címzettazonosító nem érkezik és nem jelenik meg. A beváltatlan meghívások lejárnak, ezért a hét napon belül lejáró darabszám magyaráz egy olyan visszaesést, ami nem termékhiba. A táblázat a meghívók első oldala, az összesítés a teljes adathalmazt írja le, és ha a Core nem tudja felépíteni az összesítést, a panel egyetlen halvány sort ír ki hiba helyett."
           }
         }
       },
@@ -8112,6 +8121,37 @@
       "templates": "Opcionális országspecifikus szöveg",
       "inherit": "Hagyd üresen a nyelvet a globális sablon örökléséhez.",
       "inheritPlaceholder": "Globális sablon használata"
+    },
+    "attribution": {
+      "title": "Meghívások eredménye",
+      "copy": "Csak olvasható beváltási statisztika a mobilos meghívásokról. Kizárólag darabszámok — telefonszám és címzettazonosító nem érkezik és nem jelenik meg.",
+      "unavailable": "A statisztika most nem érhető el",
+      "tiles": {
+        "recorded": "Rögzített meghívás",
+        "converted": "Beváltott",
+        "rate": "Beváltási arány",
+        "senders": "Meghívó tagok",
+        "expiring": "7 napon belül lejár"
+      },
+      "convertedMembers": "{count} különböző tag lépett be",
+      "channels": {
+        "title": "Küldési mód szerint",
+        "device_sms": "Készülékről küldött SMS",
+        "server_sms": "Szerverről küldött SMS",
+        "recorded": "rögzített",
+        "converted": "beváltott",
+        "expiring": "lejáró"
+      },
+      "table": {
+        "title": "Meghívó tagok",
+        "sender": "Tag",
+        "uid": "UID",
+        "recorded": "Meghívás",
+        "converted": "Beváltott",
+        "lastConversion": "Utolsó beváltás"
+      },
+      "empty": "Még nincs rögzített meghívás",
+      "truncated": "Az első {limit} meghívó látható"
     },
     "validation": {
       "globalMode": "Válassz globális küldési módot.",

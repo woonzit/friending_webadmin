@@ -220,6 +220,62 @@
   background: rgba(240, 106, 120, 0.09);
 }
 
+/* T-757: the read-only invite-conversion summary panel (D-124 point 3 / D-126). */
+.invite-attribution-body {
+  display: grid;
+  gap: 22px;
+}
+
+.invite-attribution-unavailable {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.invite-attribution-tiles {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-bottom: 0;
+}
+
+.invite-attribution-tiles .stat-card {
+  min-height: 118px;
+  padding: 18px;
+}
+
+.invite-attribution-tiles .stat-value {
+  margin-top: 14px;
+  font-size: 28px;
+}
+
+.invite-attribution-channels h3,
+.invite-attribution-senders h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.invite-attribution-channel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0 0 6px;
+  color: var(--text-soft);
+  font-size: 13px;
+}
+
+.invite-attribution-channel strong {
+  min-width: 210px;
+  color: var(--text);
+}
+
+.invite-attribution-senders .data-table code {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.invite-attribution-truncated {
+  margin-top: 10px;
+}
+
 @media (max-width: 760px) {
   .invite-mode-grid,
   .invite-template-grid {
@@ -236,6 +292,13 @@
   .invite-language-add input {
     flex: 1;
     width: auto;
+  }
+
+  /* `.stat-grid`'s own 1120px/620px steps already narrow the tiles; only the
+     channel line needs its own break. */
+  .invite-attribution-channel strong {
+    min-width: 0;
+    width: 100%;
   }
 }
 

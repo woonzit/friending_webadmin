@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import InviteAttributionPanel from "@/components/InviteAttributionPanel";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
@@ -14,6 +15,7 @@ import {
   inviteSaveBody,
   normalizedStorefront,
   parseInviteConfigurationPayload,
+  type InviteAttributionSummary,
   type InviteConfiguration,
   type InviteDeliveryMode,
   type InviteMessages,
@@ -34,6 +36,9 @@ export default function InviteConfigurationPage() {
   const common = useTranslations("common");
   const [saved, setSaved] = useState<InviteConfiguration | null>(null);
   const [draft, setDraft] = useState<InviteConfiguration | null>(null);
+  // Statistics, kept beside the configuration and never merged into the draft: the save body is
+  // built from `draft` alone, so nothing here can travel back to Core.
+  const [attribution, setAttribution] = useState<InviteAttributionSummary | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [busy, setBusy] = useState(false);
   const [message, setStatusMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
@@ -44,6 +49,8 @@ export default function InviteConfigurationPage() {
     if (!parsed) return false;
     setSaved(parsed.configuration);
     setDraft(cloneInviteConfiguration(parsed.configuration));
+    // Both invite actions answer with the same envelope, so a save refreshes the summary too.
+    setAttribution(parsed.attribution);
     return true;
   }, []);
 
@@ -289,6 +296,8 @@ export default function InviteConfigurationPage() {
           ))}
         </div>
       </section>
+
+      <InviteAttributionPanel attribution={attribution} />
 
       <div className="invite-sticky-actions">
         <span>{dirty ? t("unsaved") : t("revision", { revision: saved.revision })}</span>

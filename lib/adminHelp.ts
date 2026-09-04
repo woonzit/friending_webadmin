@@ -409,7 +409,7 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "inviteConfiguration",
     route: "/invite-configuration",
-    sections: ["globalFallback", "deliveryModes", "templates", "storefrontOverrides"],
+    sections: ["globalFallback", "deliveryModes", "templates", "storefrontOverrides", "inviteResults"],
     matches: exact("/invite-configuration"),
   },
   {
