@@ -1018,6 +1018,7 @@ textarea:focus {
   display: grid;
   flex: 1 1 auto;
   gap: 6px;
+  min-height: 0;
   padding: 22px 14px;
   overflow-y: auto;
 }
@@ -1065,10 +1066,12 @@ textarea:focus {
   height: 20px;
 }
 
-.sidebar-footer {
-  margin-top: auto;
+/* T-799: the account block sits between the brand and the nav, so it never
+   scrolls out of reach; `.main-nav` keeps the sidebar's only scroll area. */
+.sidebar-account {
+  flex: 0 0 auto;
   padding: 18px;
-  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .admin-identity {

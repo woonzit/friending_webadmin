@@ -136,6 +136,19 @@ export default function Shell({
             <small>{common("adminBadge")}</small>
           </span>
         </Link>
+        {/* T-799: the account block sits directly under the logo, above the
+            scrolling nav, so it stays reachable without scrolling on short
+            viewports. Same components and behaviour as the former footer. */}
+        <div className="sidebar-account">
+          <div className="admin-identity">
+            <span className="avatar-dot">{adminEmail.slice(0, 1).toUpperCase()}</span>
+            <span title={adminEmail}>{adminEmail}</span>
+          </div>
+          <div className="sidebar-actions">
+            <LocaleSwitcher />
+            <button className="text-button" onClick={logout}>{common("logout")}</button>
+          </div>
+        </div>
         <nav className="main-nav" aria-label={common("mainNavigation")}>
           {NAV.filter((item) => item.ready !== false
             && (item.key !== "persona" || personaConsoleReady)
@@ -157,16 +170,6 @@ export default function Shell({
             );
           })}
         </nav>
-        <div className="sidebar-footer">
-          <div className="admin-identity">
-            <span className="avatar-dot">{adminEmail.slice(0, 1).toUpperCase()}</span>
-            <span title={adminEmail}>{adminEmail}</span>
-          </div>
-          <div className="sidebar-actions">
-            <LocaleSwitcher />
-            <button className="text-button" onClick={logout}>{common("logout")}</button>
-          </div>
-        </div>
       </aside>
       <div className="content-column">
         <header className="topbar">
