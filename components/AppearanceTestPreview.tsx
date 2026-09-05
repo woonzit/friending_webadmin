@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import AppearanceLandingPreview from "@/components/AppearanceLandingPreview";
 import AppearancePalettePreview from "@/components/AppearancePalettePreview";
 import { adminCall } from "@/lib/adminClient";
+import { appearancePreviewLabels } from "@/lib/appearancePreviewLabels";
 import {
   APPEARANCE_PALETTE_MODES,
   APPEARANCE_PALETTE_ROLES,
@@ -147,7 +148,8 @@ export default function AppearanceTestPreview({ countries, ruleNames }: Props) {
                   palette={result.palette.light}
                   paletteMode="light"
                   authMethods="both"
-                  labels={{ apple: t("appleButton"), divider: t("divider"), qr: t("qrButton") }}
+                  // T-802: the preview chrome follows the previewed language, not the console locale.
+                  labels={appearancePreviewLabels(lang)}
                 />
               </div>
               <div className="appearance-test-palettes">

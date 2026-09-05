@@ -6,6 +6,7 @@ import AppearanceLandingPreview, { type AppearanceAuthPreviewMode } from "@/comp
 import ImageUploadField from "@/components/ImageUploadField";
 import VideoUploadField from "@/components/VideoUploadField";
 import { adminCall } from "@/lib/adminClient";
+import { appearancePreviewLabels } from "@/lib/appearancePreviewLabels";
 import {
   APPEARANCE_LANDING_ALIGNS,
   APPEARANCE_LANDING_APPLE_STYLES,
@@ -673,7 +674,8 @@ export default function AppearanceLandingComposer({
             palette={previewPalette[paletteMode]}
             paletteMode={paletteMode}
             authMethods={authMethods}
-            labels={{ apple: t("preview.apple"), divider: t("preview.divider"), qr: t("preview.qr") }}
+            // T-802: the preview chrome follows the preview language, not the console locale.
+            labels={appearancePreviewLabels(language)}
           />
         </div>
         <div className="appearance-landing-core-compare">
