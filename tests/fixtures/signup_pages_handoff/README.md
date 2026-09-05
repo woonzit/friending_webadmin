@@ -47,7 +47,8 @@ are the current contract.
 
 The nine-group body is not lost — it stays on the board as
 `team/handoffs/t689-signup-composer-envelopes.json`
-(sha256 `9ace11ca374d0efc012ab77f4633d02ce7824197d7cbe5707f4b95e4703dc7bc`, 187965 bytes) — and
+(sha256 `9ace11ca374d0efc012ab77f4633d02ce7824197d7cbe5707f4b95e4703dc7bc`, 187965 bytes; pinned
+with its provenance under **History** at the end of this file) — and
 `tests/audienceVisibilityAdmin.test.mts` still proves the composer decodes identically on the
 terminal catalogue, on a nine-key one, on an empty one and with the whole `catalog` sibling removed.
 
@@ -105,3 +106,30 @@ To re-capture: re-run the published generator against a throwaway replica set at
 under test, replace this file, and update the sha256 above and in `tests/signupPages.test.mts`.
 Name the replacement after the task that captured it, so the file name records which Core tip
 these bytes came from.
+
+## History — the superseded nine-group capture
+
+`t689-signup-composer-envelopes.json` was this corpus's body until T-771 replaced it. It is the last
+capture in which `catalog.groups` still carried the **nine** legacy identity groups — `gender`,
+`subgender`, `orientation`, `relationship_status`, `looking_for`, `education_level`, `smoking`,
+`profession`, `have_kids` — and in which `catalog.cast_groups` was `[]` in every envelope, the empty
+value RULES 47 was written about.
+
+It is kept as **history, not evidence**: it describes a pre-T-669 Core, nothing in this repository
+reads it any more, and no test re-checks its bytes. Read it to see what the deployed body looked
+like before that release; do not treat it as a statement about the current wire — `t771-…` above is
+that. Its bytes are nevertheless pinned here, in two independent places, so a future reader can
+verify them rather than trusting a filename:
+
+| | |
+|---|---|
+| board copy | `team/handoffs/t689-signup-composer-envelopes.json` |
+| sha256 | `9ace11ca374d0efc012ab77f4633d02ce7824197d7cbe5707f4b95e4703dc7bc` |
+| size | 187965 bytes |
+| generator | `team/handoffs/t670-signup-composer-envelopes-generator.php` (sha256 `baea729fe8b44be8f1be290a15d08bd97435bee0d44885f5ff53983ba770e611`) |
+| Core commit these bytes came from | `672b25e72578a7835226e98b842f01077daed4ab` — T-716 regenerated the board copy in place with that generator (`team/messages/20260903T222246Z-codex-api-t716-done.md`). The file keeps its T-689 name from the T-683 pin; the original T-689 capture, at Core `4969ae4535018e23430c75777869fb5d9fbf40ca`, was sha256 `6aa8a94c8e510850960621307758c1d1e941627b8ce297ee899ce7b3837e610d` (187713 bytes) and is no longer on the board. |
+| superseded by | Webadmin `d201d5f4cffa293c01b08627ce3c8070d794b4ce` (T-771), which deleted the repo copy and pinned `t771-signup-composer-envelopes.json` in its place |
+| second copy of the same bytes | `git show d201d5f4cffa293c01b08627ce3c8070d794b4ce^:tests/fixtures/signup_pages_handoff/t689-signup-composer-envelopes.json` — byte-identical to the board copy (T-784 compared them) |
+
+So the bytes survive even if the board file is pruned: the deleted blob is still reachable from Git
+history at the commit above, and either copy verifies against the sha256 in this table.
