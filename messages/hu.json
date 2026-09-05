@@ -2676,7 +2676,7 @@
               "1": "Vizsgálj meg minden hibás checket és kapcsolódó darabszám- vagy életciklus-támpontot.",
               "2": "Csak a teljesen zöld készletnél állíts readiness-t."
             },
-            "guidance": "Részben zöld oldal nem release-ready. A parser szándékosan elutasítja az ismeretlen vagy hiányos success payloadot a hiányok elrejtése helyett."
+            "guidance": "Részben zöld oldal nem release-ready. A parser szándékosan elutasítja az ismeretlen vagy hiányos success payloadot a hiányok elrejtése helyett. A halványított sor nem hiba: az adott check mögötti funkció ki van kapcsolva, így a tartalma a reviewer számára elérhetetlen, és a check nem tanúja a teljességnek — a readiness enélkül is zöld marad."
           },
           "reset": {
             "title": "Védett reset baseline-ra",
@@ -8925,6 +8925,7 @@
     "checksTitle": "Készültségi ellenőrzések",
     "checkActual": "tényleges: {actual}",
     "checkExpected": "elvárt: {expected}",
+    "checkNotApplicable": "Nem alkalmazható (a funkció ki van kapcsolva)",
     "counts": {
       "members": "Fixture-tagok",
       "albums": "Reviewer-albumok",

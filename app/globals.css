@@ -1481,6 +1481,17 @@ textarea:focus {
   background: var(--amber);
 }
 
+/*
+ * T-812. The App Review readiness list's third state: a check Core answered
+ * `ok: true, actual: "not_applicable"` because the feature behind it is
+ * switched off. It must not read as a pass, so the whole row is muted; the
+ * passed and failed rows keep the list's default colour.
+ */
+.check-na,
+.check-na small {
+  color: var(--muted);
+}
+
 .pagination {
   display: flex;
   align-items: center;

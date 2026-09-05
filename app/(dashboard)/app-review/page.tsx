@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { AppReviewCheckList } from "@/components/AppReviewCheckList";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import {
-  APP_REVIEW_CHECK_KEYS,
   APP_REVIEW_COUNT_KEYS,
   appReviewResetAvailable,
   appReviewPendingReset,
@@ -15,7 +15,6 @@ import {
   appReviewResetResult,
   appReviewResetShouldRetainRequest,
   appReviewSandboxStatus,
-  type AppReviewCheckKey,
   type AppReviewCountKey,
   type AppReviewPendingReset,
   type AppReviewSandboxStatus,
@@ -24,11 +23,6 @@ import { formatDate, formatNumber } from "@/lib/format";
 
 type Notice = { tone: "success" | "error"; text: string };
 const PENDING_RESET_STORAGE_KEY = "friending.app-review.pending-reset.v1";
-
-function scalarText(value: string | number | boolean): string {
-  if (typeof value === "boolean") return value ? "true" : "false";
-  return String(value);
-}
 
 export default function AppReviewSandboxPage() {
   const t = useTranslations("appReview");
@@ -244,25 +238,7 @@ export default function AppReviewSandboxPage() {
 
       <section className="panel" aria-labelledby="app-review-checks">
         <h2 id="app-review-checks">{t("checksTitle")}</h2>
-        <ul className="check-list">
-          {status.checks.map((check) => (
-            <li key={check.key} className={check.ok ? "check-ok" : "check-failed"}>
-              <span className={`badge ${check.ok ? "badge-success" : "badge-error"}`} aria-hidden="true">
-                {check.ok ? "✓" : "✕"}
-              </span>
-              <span>{t(`checks.${check.key as AppReviewCheckKey}`)}</span>
-              {!check.ok && (
-                <small>
-                  {" "}{t("checkActual", { actual: scalarText(check.actual) })}
-                  {" · "}{t("checkExpected", { expected: scalarText(check.expected) })}
-                </small>
-              )}
-            </li>
-          ))}
-          {APP_REVIEW_CHECK_KEYS.every((key) => status.checks.some((check) => check.key === key)) ? null : (
-            <li className="check-failed"><small>{t("checkExpected", { expected: APP_REVIEW_CHECK_KEYS.join(", ") })}</small></li>
-          )}
-        </ul>
+        <AppReviewCheckList checks={status.checks} />
       </section>
 
       <section className="panel" aria-labelledby="app-review-reset">
