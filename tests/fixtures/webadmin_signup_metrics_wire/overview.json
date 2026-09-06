@@ -1,0 +1,28 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "total_users": 22,
+        "new_users_7d": 19,
+        "signup_metrics": {
+            "schema_version": 1,
+            "as_of": 1800000000,
+            "last_24h": {
+                "total": 11,
+                "persona_verified": 2
+            },
+            "last_7d": {
+                "total": 13,
+                "persona_verified": 4
+            }
+        },
+        "demo_profiles": 1,
+        "profiles_with_avatar": 0,
+        "active_heroes": 0,
+        "active_admins": 1,
+        "recent_audit": []
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -1,0 +1,73 @@
+{
+    "schema_version": 1,
+    "source_commit": "948d67ecde1108662616b5aa3d4d3d4fc297d1c6",
+    "fixture_set_sha256": "5bfd444e2510fac6bd0bcb8ca2911d1e2abb4654714d2c6696ffef32773380c5",
+    "provenance": {
+        "generator": "tests/webadmin_signup_metrics_storage_test.php",
+        "generator_sha256": "8402ce39e4cb1f8a1b8889fa325fa83758bc408af2e3eb61992f74dcefac3177",
+        "wire_adapter": "Friending\\Core\\Response::send",
+        "source_paths": [
+            "src/Core/Response.php",
+            "src/Http/Controllers/WebadminController.php",
+            "src/Services/PersonaVisibilityService.php",
+            "src/Services/WebadminSignupMetricsService.php",
+            "src/Support/PersonaPolicy.php",
+            "src/Support/PersonaVisibilityPolicy.php",
+            "src/Support/VerificationPolicy.php",
+            "src/Support/Webadmin.php",
+            "tests/webadmin_signup_metrics_fixture.php",
+            "tests/webadmin_signup_metrics_storage_test.php"
+        ],
+        "source_artifacts": [
+            {
+                "path": "src/Core/Response.php",
+                "sha256": "b7e4a94affa4470c3aabad13ac5e74ba8f39b8a68b39de864741480afc49acfb"
+            },
+            {
+                "path": "src/Http/Controllers/WebadminController.php",
+                "sha256": "559555d7f6d15a13ed5b5ca149a2b17b2d5550497261ce56b8d014e5ce029d5e"
+            },
+            {
+                "path": "src/Services/PersonaVisibilityService.php",
+                "sha256": "87b8b957b37fb686424ef4cd8dda3318ffdbae1827f47bd171d0d8cc262087bb"
+            },
+            {
+                "path": "src/Services/WebadminSignupMetricsService.php",
+                "sha256": "a8910f3ae63c38487c5044d1f99834afce5c8a8320b7131992f4092f02bbbdd0"
+            },
+            {
+                "path": "src/Support/PersonaPolicy.php",
+                "sha256": "9de4ed6c6462a5246d22e8ca4131bfc4947dcdaa07b3c3a253021c16dc671917"
+            },
+            {
+                "path": "src/Support/PersonaVisibilityPolicy.php",
+                "sha256": "3f3de14924c5303b5ef4f37e5df8364cc9bddaee670741d2be012f6f25a72f33"
+            },
+            {
+                "path": "src/Support/VerificationPolicy.php",
+                "sha256": "07dc1db8a8d49348c548f72b0e40b51c95692140beec521c6e96d20125277d0e"
+            },
+            {
+                "path": "src/Support/Webadmin.php",
+                "sha256": "355caceacd13df50346abda6f1c41ae33b168dafa80c2950732c108349962071"
+            },
+            {
+                "path": "tests/webadmin_signup_metrics_fixture.php",
+                "sha256": "1373acad4cc646914b86b9b6d5915388895eb468a32127f7d092e27ab122f6ba"
+            },
+            {
+                "path": "tests/webadmin_signup_metrics_storage_test.php",
+                "sha256": "8402ce39e4cb1f8a1b8889fa325fa83758bc408af2e3eb61992f74dcefac3177"
+            }
+        ]
+    },
+    "fixtures": [
+        {
+            "file": "overview.json",
+            "route": "/v1/webadmin/overview",
+            "case": "populated rolling signup cohorts with Persona subsets",
+            "consumer": "webadmin",
+            "sha256": "ec11beda69222a7a77160c6d4215e0a707e55f9c537f3a511598b076bd3072a0"
+        }
+    ]
+}

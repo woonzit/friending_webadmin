@@ -8,6 +8,7 @@ import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import { avatarUrl, formatDate, formatNumber } from "@/lib/format";
 import { membershipListSummary, membershipUtcInstant } from "@/lib/membership";
+import { isRegistrationPeriod, REGISTRATION_PERIODS, registrationRange, type RegistrationPeriod } from "@/lib/signupMetrics";
 
 type UserRow = {
   uid: number;
@@ -33,9 +34,13 @@ type Filters = {
   query: string;
   demoMode: "all" | "real" | "demo";
   hasAvatar: boolean;
+  registrationPeriod: RegistrationPeriod;
+  registrationAsOf: number;
 };
 
-const EMPTY_FILTERS: Filters = { query: "", demoMode: "all", hasAvatar: false };
+const EMPTY_FILTERS: Filters = {
+  query: "", demoMode: "all", hasAvatar: false, registrationPeriod: "all", registrationAsOf: 0,
+};
 const PAGE_SIZE = 25;
 
 export default function UsersPage() {
@@ -61,10 +66,12 @@ export default function UsersPage() {
       query: filters.query,
       demo_mode: filters.demoMode,
       has_avatar: filters.hasAvatar,
+      ...registrationRange(filters.registrationPeriod, filters.registrationAsOf),
       page,
       page_size: PAGE_SIZE,
     }, signal);
-    if (!response?.success || !Array.isArray(response.data)) {
+    if (signal?.aborted) return;
+    if (response?.success !== true || response.status_code !== 200 || !Array.isArray(response.data)) {
       if (!signal?.aborted) setState("error");
       return;
     }
@@ -82,7 +89,7 @@ export default function UsersPage() {
   function apply(event: React.FormEvent) {
     event.preventDefault();
     setPage(1);
-    setFilters({ ...draft, query: draft.query.trim() });
+    setFilters({ ...draft, query: draft.query.trim(), registrationAsOf: Math.floor(Date.now() / 1000) });
   }
 
   function reset() {
@@ -135,7 +142,7 @@ export default function UsersPage() {
   return (
     <>
       <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
-      <form className="filter-bar" onSubmit={apply}>
+      <form className="filter-bar users-filter-bar" onSubmit={apply}>
         <label className="field">
           <span>{t("searchLabel")}</span>
           <input
@@ -156,6 +163,20 @@ export default function UsersPage() {
             <option value="all">{t("typeAll")}</option>
             <option value="real">{t("typeReal")}</option>
             <option value="demo">{t("typeDemo")}</option>
+          </select>
+        </label>
+        <label className="field">
+          <span>{t("registrationPeriod")}</span>
+          <select
+            value={draft.registrationPeriod}
+            onChange={(event) => {
+              const value = event.target.value;
+              if (isRegistrationPeriod(value)) setDraft((current) => ({ ...current, registrationPeriod: value }));
+            }}
+          >
+            {REGISTRATION_PERIODS.map((period) => (
+              <option key={period} value={period}>{t(`registrationPeriods.${period}`)}</option>
+            ))}
           </select>
         </label>
         <label className="checkbox-field">
