@@ -5,8 +5,8 @@
     "decision": "D-107",
     "generated_by": "team/handoffs/t682-into-tag-moderation-envelopes-generator.php",
     "source_corpus": "api/tests/fixtures/into_tag_moderation_wire",
-    "source_commit": "01f2383b68c891d91950189e3c658f3547db3064",
-    "fixture_set_sha256": "389a9612d3ad04f9c759f52bd07567fc67575bfa7da2546c4e1b0861bf99b6cf",
+    "source_commit": "d9732ecb25ab28219b960ef2f82429d41d89946a",
+    "fixture_set_sha256": "2bd422d40f1186c6d4254cb80ceac3ea9722856582d7f1d037d86800fd93de81",
     "contract_errors": [
         "into-tag-banned",
         "into-tag-pending",
@@ -1844,10 +1844,10 @@
                         "status_code": 200,
                         "data": {
                             "completion": {
-                                "schema_version": 2,
+                                "schema_version": 4,
                                 "percent": 7,
                                 "filled": 2,
-                                "total": 27,
+                                "total": 28,
                                 "blocks": [
                                     {
                                         "key": "main_data",
@@ -1857,7 +1857,7 @@
                                     {
                                         "key": "more_about_you",
                                         "filled": 0,
-                                        "total": 14
+                                        "total": 15
                                     },
                                     {
                                         "key": "bios",
@@ -1875,7 +1875,9 @@
                                         "total": 3
                                     }
                                 ],
-                                "into_tags_needed": 1
+                                "into_tags_needed": 1,
+                                "display_name_needed": false,
+                                "intents_needed": 0
                             }
                         },
                         "message": 200,
@@ -1902,7 +1904,9 @@
                         ],
                         "path": "data.profile_completion",
                         "block": {
-                            "into_tags_needed": 1
+                            "into_tags_needed": 1,
+                            "display_name_needed": false,
+                            "intents_needed": 0
                         }
                     }
                 }

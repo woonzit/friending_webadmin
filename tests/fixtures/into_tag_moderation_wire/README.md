@@ -5,14 +5,14 @@ Status: **real Core corpus, captured from the deployed contract.**
 `t682-into-tag-moderation-envelopes.json` is a byte-identical copy of
 
     team/handoffs/t682-into-tag-moderation-envelopes.json
-    sha256 42bf71bcd5178e9579dbb8118cc9c21d60ef769fd30a35f05cc46786b61ba1ce   (95935 bytes)
+    sha256 9dc4b91ab1246cf1e9ac20a198c245d3e0b2540a345dc97513096d0b6cb5fcad   (96157 bytes)
 
 published by the T-682 Core lane for contract `into-tag-moderation-v1` (D-107). Every body in it
 is the exact bytes the production controller served through the production encoder at Core
-`01f2383b68c891d91950189e3c658f3547db3064`; none was written by hand. It was produced by the
+`d9732ecb25ab28219b960ef2f82429d41d89946a`; none was written by hand. It was produced by the
 generator published beside it (`team/handoffs/t682-into-tag-moderation-envelopes-generator.php`)
 over Core's own committed corpus `api/tests/fixtures/into_tag_moderation_wire`
-(`fixture_set_sha256` `389a9612d3ad04f9c759f52bd07567fc67575bfa7da2546c4e1b0861bf99b6cf`).
+(`fixture_set_sha256` `2bd422d40f1186c6d4254cb80ceac3ea9722856582d7f1d037d86800fd93de81`).
 
 `tests/intoTagModeration.test.mts` re-checks the sha256 on every run, so an edited body fails the
 suite instead of drifting into the decoder's expectations.

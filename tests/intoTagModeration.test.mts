@@ -80,7 +80,7 @@ test("the fixture is the published T-682 capture, byte for byte", () => {
   // bytes rather than the design prose, so an edited body must fail here.
   assert.equal(
     createHash("sha256").update(CORPUS_BYTES).digest("hex"),
-    "42bf71bcd5178e9579dbb8118cc9c21d60ef769fd30a35f05cc46786b61ba1ce",
+    "9dc4b91ab1246cf1e9ac20a198c245d3e0b2540a345dc97513096d0b6cb5fcad",
     "re-copy team/handoffs/t682-into-tag-moderation-envelopes.json and update this digest",
   );
   assert.deepEqual(Object.keys(corpus.webadmin_actions).sort(), [
