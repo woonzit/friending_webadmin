@@ -135,8 +135,10 @@ test("every inventoried functional section has detailed English and Hungarian he
   // availability, the sign-in policy and its allowed phone countries on
   // /configuration, and the landing buttons, footer and QR reader on /appearance
   // (247). T-863 S5 (P-073) adds the location access panel on /configuration, which
-  // has its own revision and its own save (248).
-  assert.equal(totalSections, 248, "review the functional-section census when the UI changes");
+  // has its own revision and its own save (248). T-863 S9 (P-101) adds the member
+  // topic for restoring PLUS after a re-registration, a support procedure that the
+  // membership panel's grant controls carry out (249).
+  assert.equal(totalSections, 249, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [
@@ -211,6 +213,7 @@ test("every inventoried functional section has detailed English and Hungarian he
 test("independently saved or operator-facing embedded tools have dedicated help topics", () => {
   const required: Record<string, string[]> = {
     overview: ["metrics", "signupMetrics"],
+    userDetail: ["membership", "membershipRestore"],
     photoModeration: ["imageEditing"],
     configuration: ["sectionAvailability", "sectionTeasers", "featureSwitches", "authPolicy", "phoneCountries", "locationAccess"],
     appearance: ["landing", "landingButtons", "landingFooter", "landingQr", "modeSwitcher", "saving"],
@@ -524,5 +527,40 @@ test("the audience-visibility member panel is documented in both locales", async
     const guidance = nonEmpty(section.guidance, `${locale}.userDetail.audienceVisibility.guidance`, 45);
     // Honest about the gate the catalogue cannot express: the panel is per-operator.
     assert.match(guidance, /Core/u, `${locale} guidance must name the Core projection that gates the panel`);
+  }
+});
+
+test("member help explains restoring PLUS after re-registration with the panel's own controls", async () => {
+  const page = ADMIN_HELP_PAGES.find((entry) => entry.key === "userDetail");
+  assert.ok(page);
+  const order = page.sections as readonly string[];
+  assert.equal(order.indexOf("membershipRestore"), order.indexOf("membership") + 1, "the topic follows the membership panel");
+  const english = JSON.parse(await readFile(path.join(root, "messages", "en.json"), "utf8"));
+  const hungarian = JSON.parse(await readFile(path.join(root, "messages", "hu.json"), "utf8"));
+  const topic = (messages: { adminHelp: { pages: { userDetail: { sections: Record<string, unknown> } } } }) =>
+    JSON.stringify(messages.adminHelp.pages.userDetail.sections.membershipRestore);
+  const en = topic(english);
+  // The procedure names the controls exactly as the panel labels them.
+  for (const label of [
+    english.membershipUser.grant.startNow,
+    english.membershipUser.grant.customExpiry,
+    english.membershipUser.manage.newExpiry,
+    english.nav.support,
+  ]) {
+    assert.ok(en.includes(label), `EN restore help names "${label}"`);
+  }
+  for (const phrase of [/deleted their Friending account/, /still active/, /Apple period end/, /Each period/, /cancels/, /Never move, copy or edit store rows/]) {
+    assert.match(en, phrase);
+  }
+  const hu = topic(hungarian);
+  for (const label of [
+    `„${hungarian.membershipUser.grant.startNow}”`,
+    `„${hungarian.membershipUser.manage.newExpiry}”`,
+    hungarian.nav.support,
+  ]) {
+    assert.ok(hu.includes(label), `HU restore help names ${label}`);
+  }
+  for (const phrase of [/újra regisztrált/, /még aktív/, /egyéni lejárattal/, /Minden időszakban/, /lemondja/, /Store-sorokat és vásárlási kötéseket soha ne mozgass/]) {
+    assert.match(hu, phrase);
   }
 });

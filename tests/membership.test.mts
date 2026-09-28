@@ -917,3 +917,41 @@ test("the member panel labels plan values against the rollout and badges test pu
   assert.doesNotMatch(english.capabilities.title, /Effective/, "saved plan values are never titled as live");
   assert.match(english.rollout.legacy, /not enforced/);
 });
+
+test("membership help uses the page's own headings and plain Hungarian terms", () => {
+  const english = RENDER_MESSAGES.en;
+  const hungarian = RENDER_MESSAGES.hu;
+  for (const messages of [english, hungarian]) {
+    const sections = messages.adminHelp.pages.membership.sections;
+    for (const key of ["rollout", "benefits", "limits", "preview", "products", "readiness"]) {
+      assert.equal(sections[key].title, messages.membershipConfig[key].title, `${key}: help topic title equals the page heading`);
+    }
+  }
+  assert.deepEqual(
+    ["rollout", "benefits", "limits", "preview", "products", "readiness"].map((key) => hungarian.membershipConfig[key].title),
+    ["Kiadási kapuk", "Jogosultságok", "Kvóták és erőforrás-korlátok", "Mit kapnak a tagok", "Store-termékek", "Konfiguráció készenléte"],
+  );
+  const values = (value: unknown): string[] => typeof value === "string"
+    ? [value]
+    : value && typeof value === "object" ? Object.values(value).flatMap(values) : [];
+  const help = hungarian.adminHelp.pages;
+  const hungarianCopy = [
+    help.membership,
+    help.userDetail.sections.membership,
+    help.userDetail.sections.membershipRestore,
+    help.users.sections.membershipSummary,
+    hungarian.membershipConfig,
+    hungarian.membershipUser,
+    hungarian.membershipErrors,
+  ].flatMap(values).join("\n");
+  for (const jargon of [
+    /enforcement/i, /shadow/i, /\blive\b/i, /\bgate/i, /readiness/i, /\bReady\b/, /\bdraft/i, /grant/i,
+    /release/i, /allow-list/i, /rollout/i, /\bowner\b/i, /deploy/i, /billing/i, /lease/i, /entitlement/i,
+    /\buser/i, /\bpreset/i, /payload/i, /receipt/i, /provider/i, /projekci/i, /Base plan/,
+  ]) {
+    assert.doesNotMatch(hungarianCopy, jargon, `Hungarian membership copy still uses ${jargon}`);
+  }
+  // The readiness copy states exactly what Core does: both the marker and the server switch.
+  assert.match(english.membershipConfig.readiness.hint, /marker and the server's enforcement switch are both on/);
+  assert.match(hungarian.membershipConfig.readiness.hint, /jelölő és a szerver érvényesítési kapcsolója is be van kapcsolva/);
+});

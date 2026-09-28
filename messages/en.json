@@ -178,13 +178,23 @@
           },
           "membership": {
             "title": "Effective membership",
-            "purpose": "This panel explains what the member can use now, public badge visibility, verified Store evidence and any time-bounded administrator grant.",
+            "purpose": "This panel shows the member's effective membership state, the capabilities and limits of the saved plan together with whether Core enforces that plan now, the public badge, the store evidence and any time-bounded administrator grant.",
             "actions": {
-              "1": "Review effective capabilities and the independent subscriber-badge result.",
+              "1": "Read whether the saved plan is enforced before relying on the capability and limit values, and review the separate subscriber-badge result.",
               "2": "Preview and issue or extend a PLUS grant when policy permits.",
               "3": "For owner-only shortening or revocation, inspect overlap warnings and membership history first."
             },
-            "guidance": "An administrator grant never records payment and does not pause, cancel or extend Apple or Google billing. Avoid creating overlapping access unless the support decision explicitly requires it."
+            "guidance": "An administrator grant never records payment and does not pause, cancel or extend Apple or Google billing. If a grant's outcome is unknown, the panel keeps the exact request and locks the grant form, expiry changes and revocation: resend it (Core answers a repeated request with its earlier result, so it cannot grant twice), or discard it after the member has been read again. The pending request survives a page reload in the same browser tab for up to 30 minutes. Avoid overlapping access unless the support decision requires it."
+          },
+          "membershipRestore": {
+            "title": "Restoring PLUS after re-registration",
+            "purpose": "Use this when a member deleted their Friending account, registered again, and the app cannot restore their still-renewing Apple subscription on the new account. Deleting the account removed its store evidence and its purchase link, but Apple keeps renewing the subscription under the old account's identifier, so Core refuses to attach it to the new account.",
+            "actions": {
+              "1": "In the Support inbox, ask the member for proof that the Apple subscription is still active: a screenshot of Settings › [name] › Subscriptions, or the Apple receipt e-mail, showing Friending PLUS and the date the current period ends.",
+              "2": "Issue an administrator grant with Start now and a Custom expiry equal to that Apple period end, and name the re-registration in the reason.",
+              "3": "Each period, once the member confirms that Apple renewed, set the current grant's Exact new expiry to the new period end (if the grant has already expired, issue a new Start now grant instead). Stop when the member cancels the Apple subscription."
+            },
+            "guidance": "Never move, copy or edit store rows or purchase links by hand. The grant records no payment and does not change Apple billing, and an empty Store evidence table on the new account is expected. The manual renewals can end once the member cancels the old subscription in Apple's settings and, after its last period has ended, subscribes again in the app on the new account: that purchase attaches to the new account on its own."
           },
           "moderation": {
             "title": "Moderation and access controls",
@@ -386,20 +396,20 @@
         "steps": {
           "1": "Review release gates and Core validation before editing benefits or quotas.",
           "2": "Use the member and grant previews to read the complete effect of the draft.",
-          "3": "Save only a validated revision, then verify readiness separately from live enforcement."
+          "3": "Save only a plan that passes validation; the readiness marker on its own does not turn on enforcement."
         },
         "sections": {
           "rollout": {
             "title": "Release gates",
-            "purpose": "Read-only rollout switches explain whether membership enforcement is still in shadow mode or permitted to affect live access.",
+            "purpose": "Read-only server switches show whether Core may enforce the saved plan or still applies the legacy rules.",
             "actions": {
-              "1": "Confirm which environment gates are active before interpreting a saved draft as live behavior.",
+              "1": "Check which server switches are on before treating a saved plan as live behavior.",
               "2": "Use the warnings to identify missing client, provider or server dependencies."
             },
-            "guidance": "Saving configuration does not enable enforcement. Rollout gates are deployment-owned and must never be toggled merely to make this page appear complete."
+            "guidance": "Saving the configuration does not enable enforcement. The switches belong to the server's deployment settings and must never be turned on merely to make this page look complete."
           },
           "benefits": {
-            "title": "Tier capabilities",
+            "title": "Capabilities",
             "purpose": "Capabilities state whether each named feature is available to FREE and PLUS members, with Core remaining the final authority.",
             "actions": {
               "1": "Compare the two tiers for every benefit and change only reviewed product policy.",
@@ -417,7 +427,7 @@
             "guidance": "Lower limits can affect members immediately when enforcement is live. Understand whether a rule is daily or concurrent before changing its value."
           },
           "preview": {
-            "title": "Member and grant previews",
+            "title": "What members receive",
             "purpose": "The preview translates the draft into member-facing entitlements and shows the time-bounded administrator grant presets available on member accounts.",
             "actions": {
               "1": "Switch preview tiers to verify that benefits and limits read as intended.",
@@ -426,7 +436,7 @@
             "guidance": "The preview includes unsaved draft values and is not a promise that rollout gates are enabled. Grant presets never represent a Store purchase."
           },
           "products": {
-            "title": "Store product allow-list",
+            "title": "Store products",
             "purpose": "This read-only inventory names the Apple and Google products Core recognizes as possible membership evidence.",
             "actions": {
               "1": "Confirm the expected products exist for each platform.",
@@ -441,7 +451,7 @@
               "1": "Mark ready only after validation and cross-client review are complete.",
               "2": "Save the marker with the same optimistic revision as the rest of the configuration."
             },
-            "guidance": "Ready is an operator assertion, not the enforcement switch. External provider and physical-device gates may still block release."
+            "guidance": "Enforcement starts only when this marker and the server's enforcement switch are both on. External Apple or Google requirements and physical-device tests may still hold the release back."
           }
         }
       },
@@ -3114,7 +3124,7 @@
     "disabled": "Disabled",
     "revision": "Revision {revision}",
     "updated": "Updated {date} by {actor}",
-    "readyConfirm": "Mark this configuration ready for enforcement? This is a review marker only; the separate server rollout switch still controls enforcement.",
+    "readyConfirm": "Mark this configuration ready for enforcement? Core starts enforcing the plan once this marker and the server's enforcement switch are both on.",
     "dirty": {
       "unsaved": "Unsaved changes",
       "clean": "Matches server",
@@ -3221,7 +3231,7 @@
       "title": "Configuration readiness",
       "copy": "Use this marker only after the values, copy, migrations and compatibility matrix have been reviewed.",
       "label": "This revision is ready for enforcement",
-      "hint": "This does not enable enforcement. A separately deployed environment gate remains required.",
+      "hint": "Enforcement starts only when this marker and the server's enforcement switch are both on.",
       "ownerOnly": "Only an owner can change the readiness marker; administrators can still edit plan benefits and limits."
     }
   },

@@ -131,10 +131,10 @@
             "title": "Tagsági összefoglaló",
             "purpose": "Minden sor külön mutatja a csomagot, életciklust, tényleges lejáratot, hozzájáruló forrásokat és az első ismert forrás dátumát, hogy a támogatás ne keverje össze a PLUS jelvényt az igazolt számlázási bizonyítékkal.",
             "actions": {
-              "1": "Ellenőrizd, hogy a hozzáférés jelenleg tényleges-e, és Store-bizonyítékból, adminisztrátori grantből vagy más normalizált forrásból ered-e.",
-              "2": "A teljes bizonyítékhoz, grantelőzményhez és biztonságos tagsági vezérlőkhöz nyisd meg a tag részleteit."
+              "1": "Ellenőrizd, hogy a hozzáférés most ténylegesen él-e, és Store-bizonyítékból, admin-hozzáférésből vagy más normalizált forrásból ered-e.",
+              "2": "A teljes bizonyítékhoz, a hozzáférési előzményekhez és a biztonságos előfizetési vezérlőkhöz nyisd meg a tag részleteit."
             },
-            "guidance": "Nem elérhető vagy bizonytalan bizonyítékból nem szabad kitalált FREE vagy PLUS választ készíteni. A Core kivetítését tekintsd hitelesnek."
+            "guidance": "Nem elérhető vagy bizonytalan bizonyítékból nem szabad kitalált FREE vagy PLUS választ adni. A Core által számított állapotot tekintsd hitelesnek."
           },
           "results": {
             "title": "Tagtalálatok és demóláthatóság",
@@ -178,13 +178,23 @@
           },
           "membership": {
             "title": "Tényleges tagság",
-            "purpose": "Ez a panel elmagyarázza, mit használhat most a tag, látszik-e a nyilvános előfizetői jelvény, milyen igazolt Store-bizonyíték és időkorlátos adminisztrátori grant létezik.",
+            "purpose": "Ez a panel mutatja a tag tényleges előfizetési állapotát, a mentett csomag szerinti jogosultságokat és korlátokat azzal együtt, hogy a Core most érvényesíti-e a csomagot, továbbá a nyilvános előfizetői jelvényt, a Store-bizonyítékokat és az esetleges időkorlátos admin-hozzáférést.",
             "actions": {
-              "1": "Nézd át a tényleges képességeket és a külön számított előfizetői jelvényeredményt.",
-              "2": "Ha az eljárás engedi, készíts előnézetet, majd adj vagy hosszabbíts PLUS grantet.",
-              "3": "Tulajdonosi rövidítés vagy visszavonás előtt vizsgáld meg az átfedési figyelmeztetést és tagsági előzményeket."
+              "1": "Mielőtt a jogosultságokra és a korlátokra támaszkodnál, olvasd el, hogy a mentett csomag érvényben van-e, az előfizetői jelvény eredményét pedig külön nézd meg.",
+              "2": "Ha az eljárás megengedi, kérj előnézetet, majd adj vagy hosszabbíts PLUS hozzáférést.",
+              "3": "Rövidítés vagy visszavonás előtt (ezekhez tulajdonosi szerepkör kell) nézd át az átfedési figyelmeztetéseket és az előfizetési előzményeket."
             },
-            "guidance": "Az adminisztrátori grant nem rögzít fizetést, és nem szünetelteti, mondja le vagy hosszabbítja meg az Apple- vagy Google-számlázást. Átfedő hozzáférést csak kifejezetten indokolt támogatási döntésnél hozz létre."
+            "guidance": "Az admin-hozzáférés nem rögzít fizetést, és nem szünetelteti, mondja le vagy hosszabbítja meg az Apple- vagy Google-számlázást. Ha egy hozzáférés megadásának eredménye nem ismert, a panel megtartja a pontos kérést, és zárolja az űrlapot, a lejárat módosítását és a visszavonást: küldd újra (a Core az ismételt kérésre a korábbi eredményt adja vissza, így nem adhat kétszer hozzáférést), vagy vesd el, miután a panel újra beolvasta a tagot. A függőben lévő kérés ugyanabban a böngészőlapon az oldal újratöltése után is megmarad legfeljebb 30 percig. Átfedő hozzáférést csak akkor adj, ha a támogatási döntés kifejezetten ezt kívánja."
+          },
+          "membershipRestore": {
+            "title": "PLUS visszaállítása újraregisztráció után",
+            "purpose": "Akkor használd, ha a tag törölte a Friending-fiókját, újra regisztrált, és az app az új fiókon nem tudja visszaállítani a még megújuló Apple-előfizetését. A fióktörlés eltávolította a régi Store-bizonyítékokat és a vásárlás fiókhoz kötését, az Apple viszont a régi fiók azonosítójával újítja meg tovább az előfizetést, ezért a Core nem köti azt az új fiókhoz.",
+            "actions": {
+              "1": "A Support üzenetekben kérj a tagtól igazolást arról, hogy az Apple-előfizetése még aktív: képernyőképet a Beállítások › [név] › Előfizetések oldalról vagy az Apple nyugtáját e-mailben, amelyen látszik a Friending PLUS és az aktuális időszak vége.",
+              "2": "Adj admin-hozzáférést „Kezdés most” móddal és egyéni lejárattal, amely megegyezik ezzel az Apple-időszakvéggel; az indoklásban említsd meg az újraregisztrációt.",
+              "3": "Minden időszakban, amikor a tag igazolja, hogy az Apple megújította az előfizetést, állítsd a jelenlegi hozzáférés „Pontos új lejárat” mezőjét az új időszakvégre (ha a hozzáférés már lejárt, adj helyette új hozzáférést „Kezdés most” móddal). Ha a tag lemondja az Apple-előfizetést, ne hosszabbíts tovább."
+            },
+            "guidance": "Store-sorokat és vásárlási kötéseket soha ne mozgass, másolj vagy szerkessz kézzel. Az admin-hozzáférés nem rögzít fizetést, és nem módosítja az Apple-számlázást; az új fiók üres Store-bizonyíték táblázata így rendben van. A kézi hosszabbítás akkor érhet véget, ha a tag az Apple beállításaiban lemondja a régi előfizetést, és miután az utolsó időszaka lejárt, az új fiókon az appban újra előfizet: ez a vásárlás már magától az új fiókhoz kötődik."
           },
           "moderation": {
             "title": "Moderációs és hozzáférési vezérlők",
@@ -381,67 +391,67 @@
         }
       },
       "membership": {
-        "title": "Tagsági csomagok súgó",
-        "summary": "Ez a munkaterület határozza meg a FREE és PLUS képességmodellt, kvótákat és operátori grantpreseteket. A szerver által kezelt tagsági működést készíti elő; a deploymentkapcsolók és Store-termékazonosítók nem hétköznapi szerkesztési elemek.",
+        "title": "Előfizetési csomagok súgó",
+        "summary": "Ezen az oldalon állítod be, milyen jogosultságokat és korlátokat kapnak a FREE és a PLUS tagok, és milyen időtartamokkal adhatnak az adminok PLUS hozzáférést. A mentett csomagot a szerver alkalmazza; a szerveroldali kapcsolókat és a Store-termékazonosítókat nem itt lehet módosítani.",
         "steps": {
-          "1": "Képesség vagy kvóta szerkesztése előtt nézd át a release gate-eket és a Core validációját.",
-          "2": "A tag- és grantelőnézetben olvasd el a draft teljes hatását.",
-          "3": "Csak validált revíziót ments, majd a readiness állapotát a live enforcementtől külön ellenőrizd."
+          "1": "Mielőtt jogosultságot vagy kvótát módosítanál, nézd meg a Kiadási kapuk kapcsolóit és az ellenőrzés eredményét.",
+          "2": "A Mit kapnak a tagok előnézetben olvasd el, pontosan mit jelent a terv a FREE és a PLUS tagoknak.",
+          "3": "Csak hibátlan tervet ments; a készenléti jelölő önmagában még nem kapcsolja be az érvényesítést."
         },
         "sections": {
           "rollout": {
-            "title": "Release gate-ek",
-            "purpose": "A csak olvasható rolloutkapcsolók megmutatják, hogy a tagsági enforcement még shadow módban van-e, vagy hathat a live hozzáférésre.",
+            "title": "Kiadási kapuk",
+            "purpose": "A csak olvasható szerveroldali kapcsolók mutatják, hogy a Core érvényesítheti-e már a mentett csomagot, vagy még a régi szabályokat alkalmazza.",
             "actions": {
-              "1": "Mielőtt egy mentett draftot élő viselkedésnek értelmeznél, ellenőrizd az aktív környezeti gate-eket.",
-              "2": "A figyelmeztetésekből azonosítsd a hiányzó kliens-, provider- vagy szerverfüggőségeket."
+              "1": "Mielőtt egy mentett tervet éles működésnek tekintenél, nézd meg, mely szerveroldali kapcsolók vannak bekapcsolva.",
+              "2": "A figyelmeztetésekből derül ki, ha még hiányzik egy app-, szolgáltatói vagy szerveroldali feltétel."
             },
-            "guidance": "A konfiguráció mentése nem kapcsolja be az enforcementet. A rollout gate-eket deployment kezeli, és tilos csak azért aktiválni őket, hogy az oldal késznek tűnjön."
+            "guidance": "A csomag mentése nem kapcsolja be az érvényesítést. A kapcsolókat a szerver beállításai kezelik; soha ne kapcsold be őket csak azért, hogy az oldal késznek tűnjön."
           },
           "benefits": {
-            "title": "Csomagképességek",
-            "purpose": "A képességek megadják, hogy az egyes funkciók elérhetők-e FREE és PLUS tagoknak; a végső döntést mindig a Core hozza.",
+            "title": "Jogosultságok",
+            "purpose": "Minden funkciónál megadod, hogy elérhető-e a FREE és a PLUS tagoknak; a végső döntést mindig a Core hozza.",
             "actions": {
-              "1": "Minden előnynél hasonlítsd össze a két csomagot, és csak jóváhagyott termékszabályzatot módosíts.",
-              "2": "Olvasd el a képességek alatti magyarázatot a tag által érzékelt hatás megértéséhez."
+              "1": "Minden előnynél hasonlítsd össze a két szintet, és csak jóváhagyott termékdöntést vezess át.",
+              "2": "Olvasd el a jogosultságok alatti magyarázatot, hogy lásd, mit tapasztal ebből a tag."
             },
-            "guidance": "Egy elavult kliens még mutathat régi szöveget, de a Core-t nem írhatja felül. A képességváltozást minden támogatott klienssel hangold össze."
+            "guidance": "Egy régi appverzió még mutathat elavult szöveget, de a Core döntését nem írhatja felül. Jogosultságot csak úgy módosíts, hogy minden támogatott app fel legyen rá készítve."
           },
           "limits": {
-            "title": "Kvóták és erőforráskorlátok",
-            "purpose": "Minden kvóta csomagonként egyértelmű: kikapcsolt, véges vagy korlátlan. A napi számlálók UTC szerint, a párhuzamos korlátok aktív erőforrások alapján működnek.",
+            "title": "Kvóták és erőforrás-korlátok",
+            "purpose": "Minden kvóta szintenként egyértelmű: tiltott, véges vagy korlátlan. A napi számlálók UTC szerint nullázódnak, az egyidejű korlátok az éppen aktív erőforrásokat számolják.",
             "actions": {
-              "1": "Válaszd ki a módot csomagonként, és csak véges módnál adj meg korlátozott számot.",
-              "2": "Mentés előtt olvass el minden validációs hibát."
+              "1": "Szintenként válaszd ki a módot, és csak véges módnál adj meg számot a megengedett tartományban.",
+              "2": "Mentés előtt nézd át az összes ellenőrzési hibát."
             },
-            "guidance": "Élő enforcement mellett az alacsonyabb korlát azonnal érintheti a tagokat. Módosítás előtt értsd meg, hogy napi vagy párhuzamos szabályról van szó."
+            "guidance": "Ha a csomag érvényben van, egy alacsonyabb korlát azonnal érintheti a tagokat. Módosítás előtt nézd meg, hogy napi vagy egyidejű szabályról van-e szó."
           },
           "preview": {
-            "title": "Tag- és grantelőnézetek",
-            "purpose": "Az előnézet a draftot tag számára érthető jogosultságokká alakítja, és megmutatja a tagfiókoknál használható időkorlátos adminisztrátori grantpreseteket.",
+            "title": "Mit kapnak a tagok",
+            "purpose": "Az előnézet a szerkesztett tervet a tagok szemszögéből mutatja meg, és felsorolja, milyen időtartamokkal adhatnak az adminok PLUS hozzáférést egy tagnak.",
             "actions": {
-              "1": "Válts a csomagelőnézetek között, és ellenőrizd az előnyök, korlátok értelmezését.",
-              "2": "Mielőtt az operátorok támogatási granthez használják, ellenőrizd a preset időtartamát és eredményét."
+              "1": "Nézd át mindkét szint előnézetét, és ellenőrizd, hogy az előnyök és a korlátok a szándékod szerint olvashatók.",
+              "2": "Mielőtt a támogatás használná őket, ellenőrizd az admin-hozzáférési időtartamokat és azok eredményét."
             },
-            "guidance": "Az előnézet mentetlen draftértékeket is tartalmaz, és nem ígéret arra, hogy a rollout gate-ek aktívak. A grantpreset soha nem jelent Store-vásárlást."
+            "guidance": "Az előnézet a még nem mentett értékeket is mutatja, és nem jelenti, hogy a szerveroldali kapcsolók be vannak kapcsolva. Az admin-hozzáférés soha nem jelent Store-vásárlást."
           },
           "products": {
-            "title": "Store-termék allow-list",
-            "purpose": "Ez a csak olvasható leltár felsorolja azokat az Apple- és Google-termékeket, amelyeket a Core lehetséges tagsági bizonyítékként felismer.",
+            "title": "Store-termékek",
+            "purpose": "Ez a csak olvasható lista azokat az Apple- és Google-termékeket sorolja fel, amelyeket a Core előfizetési bizonyítékként elfogad.",
             "actions": {
-              "1": "Ellenőrizd, hogy minden platformnál szerepelnek-e a várt termékek.",
-              "2": "A readiness figyelmeztetéseiből azonosítsd a Webadminon kívüli provider-előkészítést."
+              "1": "Ellenőrizd, hogy mindkét platformnál ott vannak-e a várt termékek.",
+              "2": "A figyelmeztetésekből derül ki, milyen Apple- vagy Google-oldali beállítás hiányzik még a Webadminon kívül."
             },
-            "guidance": "A listázott termék nem bizonyítja a receiptellenőrzés, notification vagy aláírt eszközös vásárlás teljességét. Termékazonosítót itt nem lehet létrehozni."
+            "guidance": "Egy listázott termék még nem bizonyítja, hogy a vásárlások ellenőrzése, az értesítések vagy az eszközön aláírt vásárlás teljesen működik. Termékazonosítót itt nem lehet létrehozni."
           },
           "readiness": {
-            "title": "Konfigurációs readiness",
-            "purpose": "A readiness jelölő rögzíti, hogy az értékeket, szövegeket, migrációkat és kompatibilitást ennél a revíziónál átvizsgálták.",
+            "title": "Konfiguráció készenléte",
+            "purpose": "A készenléti jelölő azt rögzíti, hogy ennél a revíziónál átnézték az értékeket, a szövegeket, a migrációkat és az appok közötti összhangot.",
             "actions": {
-              "1": "Csak validáció és keresztkliens-ellenőrzés után jelöld késznek.",
-              "2": "A konfiguráció többi részével azonos optimista revízióval mentsd a jelölőt."
+              "1": "Csak akkor jelöld késznek, ha az ellenőrzés hibátlan, és minden app fel van rá készítve.",
+              "2": "A jelölőt a csomag többi részével együtt, ugyanazzal a revízióval mentsd."
             },
-            "guidance": "A Ready operátori állítás, nem enforcementkapcsoló. Külső provider- és fizikai eszközös gate-ek továbbra is blokkolhatják a release-t."
+            "guidance": "Az érvényesítés csak akkor indul el, ha ez a jelölő és a szerver érvényesítési kapcsolója is be van kapcsolva. Külső Apple- vagy Google-feltételek és a valódi eszközös tesztek továbbra is visszatarthatják a bevezetést."
           }
         }
       },
@@ -3106,7 +3116,7 @@
   "membershipConfig": {
     "eyebrow": "Hozzáférés és monetizáció",
     "title": "Előfizetési csomagok",
-    "subtitle": "A FREE és PLUS userek közös előnyeinek és egyértelmű korlátainak beállítása. A store-termékazonosítók deploy által kezeltek, itt nem módosíthatók.",
+    "subtitle": "A FREE és a PLUS tagok előnyeinek és egyértelmű korlátainak beállítása. A Store-termékazonosítókat a szerver telepítése határozza meg, itt nem módosíthatók.",
     "save": "Előfizetési konfiguráció mentése",
     "saved": "Az előfizetési konfiguráció elmentve.",
     "loadError": "Az előfizetési konfiguráció nem tölthető be.",
@@ -3114,7 +3124,7 @@
     "disabled": "Kikapcsolva",
     "revision": "{revision}. revízió",
     "updated": "Frissítve: {date}, {actor}",
-    "readyConfirm": "Késznek jelölöd ezt a konfigurációt a korlátozások érvényesítésére? Ez csak ellenőrzési jelölő; az éles működést továbbra is külön szerveroldali kapcsoló vezérli.",
+    "readyConfirm": "Késznek jelölöd ezt a konfigurációt a korlátozások érvényesítésére? A Core akkor kezdi érvényesíteni a csomagot, ha ez a jelölő és a szerver érvényesítési kapcsolója is be van kapcsolva.",
     "dirty": {
       "unsaved": "Nem mentett változások",
       "clean": "Megegyezik a szerverrel",
@@ -3132,12 +3142,12 @@
     },
     "rollout": {
       "title": "Kiadási kapuk",
-      "copy": "A deploy által kezelt kapcsolók itt csak olvashatók. Megakadályozzák, hogy egy mentett terv az összes kliens- és szerverkapu teljesítése előtt megváltoztassa az éles hozzáférést.",
-      "projection": "Entitlement-projekció írása",
+      "copy": "A szerver beállításaiban kezelt kapcsolók itt csak olvashatók. Megakadályozzák, hogy egy mentett csomag megváltoztassa az éles hozzáférést, mielőtt minden app- és szerveroldali feltétel teljesül.",
+      "projection": "Jogosultsági összesítő írása",
       "enforcement": "Funkciókorlátozások érvényesítése",
       "legacy": "Régi előfizetés-kompatibilitás",
       "shadowWarning": "A funkciókorlátozások érvényesítése ki van kapcsolva. A változások ellenőrizhetők és tesztelhetők, de még nem írják felül a jelenlegi éles korlátozásokat.",
-      "featureDependencyUnknown": "A Membership V1 nem közli a külön Pinger-főkapcsoló és a mentett mondatok rollout kapcsolójának állapotát. Az alábbi limitek nem bizonyítják, hogy bármelyik funkció éles."
+      "featureDependencyUnknown": "A Membership V1 nem közli a külön Pinger-főkapcsoló és a mentett mondatok bevezetési kapcsolójának állapotát. Az alábbi korlátok nem bizonyítják, hogy bármelyik funkció élesben elérhető."
     },
     "benefits": {
       "title": "Jogosultságok",
@@ -3155,9 +3165,9 @@
       "vip_badge": "VIP profiljelvény"
     },
     "capabilityHelp": {
-      "invisible_presence": "Engedélyezi az Invisible módot; kiválasztva a Core soha nem mutatja online-nak a usert.",
-      "hide_profile_visit": "Engedélyezi a 20 másodperces szerver lease-t és a visszaigazolt rejtett látogatást.",
-      "vip_badge": "Jogosulttá teszi a PLUS jelvényre; a user a Beállításokban elrejtheti."
+      "invisible_presence": "Engedélyezi a láthatatlan módot; bekapcsolt állapotban a Core soha nem mutatja online-nak a tagot.",
+      "hide_profile_visit": "Engedélyezi a 20 másodperces szerveroldali foglalást és a visszaigazolt rejtett látogatást.",
+      "vip_badge": "Jogosulttá teszi a tagot a PLUS jelvényre; a tag a Beállításokban elrejtheti."
     },
     "limits": {
       "title": "Kvóták és erőforrás-korlátok",
@@ -3184,9 +3194,9 @@
       "unlimited": "Korlátlan"
     },
     "preview": {
-      "title": "Mit kapnak a userek",
-      "copy": "Ez a szerkesztő aktuális tervének user felé értelmezett előnézete. A nem mentett értékek és a kikapcsolt rollout kapuk nem jelentenek éles ígéretet.",
-      "memberTier": "{tier} user",
+      "title": "Mit kapnak a tagok",
+      "copy": "A szerkesztett terv előnézete a tagok szemszögéből. A nem mentett értékek és a kikapcsolt bevezetési kapcsolók nem jelentenek éles ígéretet.",
+      "memberTier": "{tier} tag",
       "capabilities": "Jogosultságok",
       "quotas": "Korlátok",
       "included": "Tartalmazza",
@@ -3209,20 +3219,20 @@
     },
     "products": {
       "title": "Store-termékek",
-      "copy": "Ez az engedélyezési lista a Core-ba van fordítva. Egy kvóta módosítása soha nem tehet jogosulttá tetszőleges billing-terméket.",
+      "copy": "Ez az engedélyezési lista a Core-ba van beépítve. Egy kvóta módosítása soha nem engedélyezhet tetszőleges számlázási terméket.",
       "platforms": {
         "apple": "Apple App Store",
         "google": "Google Play"
       },
       "googlePending": "A Google Play katalógus még hiányzik",
-      "googlePendingCopy": "Az Android billing blokkolva marad, amíg a Play Console-termékek és a szerveroldali ellenőrzési jogosultság el nem készülnek."
+      "googlePendingCopy": "Az androidos számlázás tiltva marad, amíg a Play Console-termékek és a szerveroldali ellenőrzés jogosultsága el nem készül."
     },
     "readiness": {
       "title": "Konfiguráció készenléte",
       "copy": "Csak az értékek, szövegek, migrációk és kompatibilitási mátrix ellenőrzése után használd ezt a jelölőt.",
       "label": "Ez a revízió készen áll a korlátozások érvényesítésére",
-      "hint": "Ez nem kapcsolja be az érvényesítést. Ahhoz továbbra is külön deployolt környezeti kapu szükséges.",
-      "ownerOnly": "A készenléti jelölőt csak owner módosíthatja; az adminok továbbra is szerkeszthetik a csomag előnyeit és korlátait."
+      "hint": "Az érvényesítés csak akkor indul el, ha ez a jelölő és a szerver érvényesítési kapcsolója is be van kapcsolva.",
+      "ownerOnly": "A készenléti jelölőt csak tulajdonos módosíthatja; az adminok továbbra is szerkeszthetik a csomag előnyeit és korlátait."
     }
   },
   "membershipErrors": {
@@ -3234,7 +3244,7 @@
     "requestConflict": "Ezt a műveleti azonosítót már más előfizetési módosításhoz használták. Indítsd újra a műveletet az aktuális hiteles állapotból.",
     "expiryInvalid": "A lejáratnak érvényes, jövőbeli UTC időpontnak kell lennie az admin-hozzáférés kezdete után.",
     "horizonExceeded": "Az admin-hozzáférés nem nyúlhat az aktuális szerveridőtől számított 730 napon túl.",
-    "ownerRequired": "Ezt az előfizetési műveletet csak owner végezheti el.",
+    "ownerRequired": "Ezt az előfizetési műveletet csak tulajdonos végezheti el.",
     "writeRequired": "Ez az adminszerepkör csak olvashatja az előfizetési adatokat.",
     "accessRevoked": "Ezt az adminfiókot visszavonták, ezért nem módosíthat előfizetési állapotot.",
     "sessionInvalid": "Az admin-munkamenet már nem érvényes. A folytatáshoz jelentkezz be újra.",
@@ -3242,15 +3252,15 @@
     "unavailable": "Az előfizetési döntési pont átmenetileg nem elérhető. Újrapróbálás előtt frissítsd a hiteles állapotot.",
     "timeout": "A Core időtúllépést jelzett. A művelet ettől még befejeződhetett; újrapróbálás előtt frissítsd a hiteles előfizetési állapotot.",
     "grantUncertain": "A hozzáférés megadásának eredménye nem ismert, és az utána beolvasott tagállapot sem mutatja végrehajtottnak. A pontos kérést megtartottuk, az űrlapot zároltuk: az újraküldés ugyanazt a kérést küldi el, így nem adhat kétszer hozzáférést.",
-    "grantNotFound": "Ehhez a userhez nincs jelenlegi, szerkeszthető admin-hozzáférés. Másik művelet előtt frissítsd az állapotot.",
+    "grantNotFound": "Ehhez a taghoz nincs jelenlegi, szerkeszthető admin-hozzáférés. Másik művelet előtt frissítsd az állapotot.",
     "useExpiryUpdate": "Ez a művelet nem hosszabbítaná meg a hozzáférést. Ehhez a pontos lejárat szerkesztőjét használd.",
-    "userNotFound": "A user már nem létezik, vagy ez az admin már nem fér hozzá.",
+    "userNotFound": "A tag már nem létezik, vagy ez az admin már nem fér hozzá.",
     "invalidResponse": "A Core nem olvasható előfizetési választ adott. Nem feltételezünk sikert; újrapróbálás előtt frissíts.",
     "unknown": "Az előfizetési művelet ismeretlen válasszal hiúsult meg. Újrapróbálás előtt frissítsd a hiteles állapotot."
   },
   "membershipUser": {
     "title": "Előfizetés",
-    "copy": "Tényleges szerveroldali jogosultság, store-bizonyítékok és auditált admin-hozzáférések.",
+    "copy": "Tényleges szerveroldali jogosultság, Store-bizonyítékok és auditált admin-hozzáférések.",
     "refresh": "Előfizetés frissítése",
     "unavailable": "Az előfizetési állapot nem érhető el. Nem feltételezünk PLUS hozzáférést; módosítás előtt próbáld újra.",
     "rollout": {
@@ -3308,9 +3318,9 @@
     },
     "badge": {
       "title": "Nyilvános előfizetői jelvény",
-      "copy": "A jogosultság, a user elrejtési beállítása és az ebből következő nyilvános láthatóság külön tény.",
+      "copy": "A jogosultság, a tag elrejtési beállítása és az ebből következő nyilvános láthatóság külön tény.",
       "eligible": "Jogosult",
-      "hidden": "A user elrejtette",
+      "hidden": "A tag elrejtette",
       "visible": "Nyilvánosan látható"
     },
     "quotaModes": {
@@ -3332,7 +3342,7 @@
     "unlimited": "Korlátlan",
     "disabled": "Nem elérhető",
     "quotaUsage": "{used} / {limit} felhasználva",
-    "writeRequired": "Az adminszerepköröd csak olvasásra jogosult. Admin vagy owner adhat és hosszabbíthat hozzáférést.",
+    "writeRequired": "Az adminszerepköröd csak olvasásra jogosult. Hozzáférést admin vagy tulajdonos adhat és hosszabbíthat.",
     "reason": "Audit indoklás",
     "reasonPlaceholder": "Miért kapja vagy miért módosítod ezt a hozzáférést?",
     "reasonHint": "Kötelező, 3–500 karakter. Bekerül az auditnaplóba.",
@@ -3340,7 +3350,7 @@
     "expiryConfirm": "Erre az időpontra állítod az admin-hozzáférés lejáratát: {date}?",
     "expiryShortenConfirm": "Ez az admin-hozzáférést {from} időpontról {to} időpontra rövidíti, ezért a PLUS hozzáférés korábban megszűnhet. Folytatod?",
     "expirySaved": "Az admin-hozzáférés lejárata frissült.",
-    "revokeConfirm": "Most visszavonod ezt az admin-hozzáférést? Külön aktív store-előfizetés esetén a PLUS jogosultság megmarad.",
+    "revokeConfirm": "Most visszavonod ezt az admin-hozzáférést? Ha a tagnak külön aktív Store-előfizetése van, a PLUS jogosultsága megmarad.",
     "revoked": "Az admin-hozzáférést visszavontuk, a tényleges előfizetési állapotot újraszámoltuk.",
     "grant": {
       "title": "PLUS hozzáférés adása vagy hosszabbítása",
@@ -3349,16 +3359,16 @@
       "startMode": "Kezdés számítása",
       "extend": "Tényleges hozzáférés hosszabbítása",
       "startNow": "Kezdés most",
-      "startNowWarning": "A Kezdés most átfedhet ellenőrzött Store-hozzáféréssel. Soha nem szünetelteti, mondja le vagy hosszabbítja meg az Apple- vagy Google-számlázást.",
+      "startNowWarning": "A „Kezdés most” átfedhet ellenőrzött Store-hozzáféréssel. Soha nem szünetelteti, mondja le vagy hosszabbítja meg az Apple- vagy Google-számlázást.",
       "customExpiry": "Egyéni lejárat",
       "preview": "Változás előnézete",
       "previewTitle": "Ellenőrzés a hozzáférés megadása előtt",
       "starts": "Admin-hozzáférés kezdete",
       "expires": "Admin-hozzáférés vége",
       "resultExpiry": "Eredményül kapott tényleges lejárat",
-      "storeOverlap": "Aktív store-hozzáféréssel átfed",
+      "storeOverlap": "Aktív Store-hozzáféréssel átfed",
       "overlapWarning": "Ez a hozzáférés aktív Store-hozzáféréssel fed át. A Store-előfizetés ettől függetlenül tovább fut és számlázódik.",
-      "overlapConfirm": "Ez a Kezdés most hozzáférés aktív Store-hozzáféréssel fed át, és nem szünetelteti a Store számlázását. Megadod az átfedő hozzáférést?",
+      "overlapConfirm": "Ez a „Kezdés most” hozzáférés aktív Store-hozzáféréssel fed át, és nem szünetelteti a Store számlázását. Megadod az átfedő hozzáférést?",
       "confirm": "PLUS hozzáférés jóváhagyása",
       "retry": "Ugyanannak a kérésnek az újraküldése",
       "discard": "Kérés elvetése",
@@ -3370,7 +3380,7 @@
       "pendingTitle": "Függőben lévő hozzáférési kérés",
       "pendingCopy": "Egy korábban elküldött hozzáférési kérés eredménye még nem ismert. A beállításai fent láthatók, és zárolva maradnak. Az újraküldés pontosan ugyanazt a kérést küldi el, így nem adhat kétszer hozzáférést; az elvetés előbb újra beolvassa a tagot, és összeveti az admin-hozzáférését azzal, amelyre a kérés épült.",
       "restoreExpired": "Egy ismeretlen kimenetelű hozzáférési kérés több mint {minutes} perce került függőbe, ezért az oldal újratöltése után nem állítottuk vissza. Újabb hozzáférés megadása előtt frissíts, és nézd át a tag admin-hozzáférését és előzményeit.",
-      "extendAutoRenewWarning": "A tag store-előfizetése automatikusan megújul. „Tényleges hozzáférés hosszabbítása” módban a hozzáférés a jelenlegi store-időszak végén indul, így amíg a megújítások sikeresek, a fizetett idővel párhuzamosan fut, és nem ad hozzá semmit; csak akkor számít, ha a tag lemondja az előfizetést, vagy egy megújítás meghiúsul. Azonnali kárpótláshoz válaszd a „Kezdés most” módot."
+      "extendAutoRenewWarning": "A tag Store-előfizetése automatikusan megújul. „Tényleges hozzáférés hosszabbítása” módban a hozzáférés a jelenlegi Store-időszak végén indul, így amíg a megújítások sikeresek, a fizetett idővel párhuzamosan fut, és nem ad hozzá semmit; csak akkor számít, ha a tag lemondja az előfizetést, vagy egy megújítás meghiúsul. Azonnali kárpótláshoz válaszd a „Kezdés most” módot."
     },
     "presets": {
       "plus_week": "1 hét",
@@ -3380,7 +3390,7 @@
     },
     "manage": {
       "title": "Jelenlegi admin-hozzáférés",
-      "copy": "Itt hosszabbítható a meglévő hozzáférés. Rövidítéshez és visszavonáshoz owner szerepkör kell.",
+      "copy": "Itt hosszabbítható a meglévő hozzáférés. Rövidítéshez és visszavonáshoz tulajdonosi szerepkör kell.",
       "status": "Állapot",
       "period": "Legutóbbi időtartam",
       "starts": "Kezdés",
@@ -3393,9 +3403,9 @@
       "updatedAt": "Utolsó frissítés ideje",
       "revokedBy": "Visszavonta",
       "revokedAt": "Visszavonás ideje",
-      "none": "Ehhez a userhez nem tartozik admin-hozzáférés.",
+      "none": "Ehhez a taghoz nem tartozik admin-hozzáférés.",
       "newExpiry": "Pontos új lejárat",
-      "shortenOwnerOnly": "Az admin későbbre állíthatja ezt a dátumot. Korábbra csak owner módosíthatja.",
+      "shortenOwnerOnly": "Az admin későbbre állíthatja ezt a dátumot. Korábbra csak tulajdonos módosíthatja.",
       "shortenWarning": "Ez a dátum korábbi a jelenlegi lejáratnál. A mentés lerövidíti az admin-hozzáférést.",
       "saveExpiry": "Lejárat frissítése",
       "revoke": "Admin-hozzáférés visszavonása",
@@ -3403,11 +3413,11 @@
     },
     "store": {
       "title": "Store-bizonyítékok",
-      "copy": "Minden megőrzött sor mutatja az ellenőrzési állapotát, valamint a biztonságosan összekapcsolt tényleges hozzájárulását, vagy azt, hogy nincs biztonságos kapcsolat. Receipt, token és szolgáltatói payload-hash soha nem kerül a böngészőbe.",
-      "none": "Ehhez a userhez nincs eltárolt Apple- vagy Google-bizonyíték.",
+      "copy": "Minden megőrzött sor mutatja az ellenőrzési állapotát, és azt, hogy biztonságosan összekapcsolható-e a tényleges hozzáféréssel, vagy nincs biztonságos kapcsolat. Nyugták, tokenek és a szolgáltatói adatok ujjlenyomatai soha nem kerülnek a böngészőbe.",
+      "none": "Ehhez a taghoz nincs eltárolt Apple- vagy Google-bizonyíték.",
       "platform": "Platform",
       "product": "Termék",
-      "basePlan": "Base plan",
+      "basePlan": "Alapcsomag",
       "state": "Állapot",
       "verification": "Ellenőrzés",
       "contribution": "Tényleges hozzáférés",

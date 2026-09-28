@@ -97,6 +97,9 @@ export const ADMIN_HELP_PAGES = [
       "identity",
       "albums",
       "membership",
+      // Support procedure for a member whose still-renewing Apple subscription cannot follow
+      // them to a re-registered account; documented beside the panel whose controls it uses.
+      "membershipRestore",
       "verificationGrant",
       "adminGrantedVerification",
       "audienceVisibility",
