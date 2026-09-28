@@ -58,7 +58,7 @@
     "guidanceTitle": "Keep in mind:",
     "boundaryTitle": "Permissions and source of truth",
     "roleBoundary": "Your role determines which controls are shown and which changes Core will accept. A missing button may mean read-only access, not a broken page.",
-    "sourceBoundary": "The values shown after a successful refresh come from Core. After a conflict, timeout, or uncertain save, refresh the authoritative state before trying another mutation.",
+    "sourceBoundary": "Values shown after a successful load come from Core. After a conflict, timeout or uncertain save, use the panel's own Retry, which resends the same request, or reload the authoritative state; never start a second, new change to find out whether the first one landed.",
     "unavailableTitle": "Page help unavailable",
     "unavailableCopy": "This route is not in the current bounded help catalogue. Do not make a change until its operator guide is added and reviewed.",
     "pages": {
@@ -66,23 +66,32 @@
         "title": "Overview help",
         "summary": "This is the operations starting point. It combines a current community snapshot with shortcuts and the newest administrator activity so a new operator can decide where attention is needed without changing any member data.",
         "steps": {
-          "1": "Read the snapshot first and look for an unexpected change in registrations, avatar coverage, demo profiles, campaigns or active administrators.",
+          "1": "Read the snapshot first and look for an unexpected change in registered members, recent signups, avatar coverage, demo profiles or active administrators.",
           "2": "Open the focused module for the task you actually need; the overview itself is informational.",
           "3": "Use Recent audit to confirm that an important change was recorded and to see who made it."
         },
         "sections": {
           "metrics": {
             "title": "Community snapshot",
-            "purpose": "The six cards summarize registered members, the last seven days of registrations, isolated demo profiles, active People campaigns, active administrators and avatar coverage.",
+            "purpose": "The four cards summarize registered members, isolated demo profiles, active administrators and the share of members with a profile picture.",
             "actions": {
               "1": "Compare the counts with the expected operating state and use them as navigation clues.",
-              "2": "Open Registered users or People hero when a number needs investigation; these cards do not edit the underlying records."
+              "2": "Open Registered users when a number needs investigation; these cards do not edit the underlying records."
             },
             "guidance": "The values are live counts, not historical charts. Demo profiles are intentionally isolated and should never be interpreted as ordinary community growth."
           },
+          "signupMetrics": {
+            "title": "Recent signups",
+            "purpose": "Real accounts registered in the last 24 hours and the last 7 days, each with how many of them currently hold a successful Persona verification. Demo and test accounts are excluded.",
+            "actions": {
+              "1": "Compare the two rolling periods to spot an unexpected drop or spike in registrations.",
+              "2": "Use Refresh to reload the figures, then open Registered users with the matching Registered within filter to see the accounts themselves."
+            },
+            "guidance": "The Persona figure counts current successful verification only; administrator exemptions are not included. When Core cannot build the figures, the panel says they are unavailable instead of showing zero."
+          },
           "quickActions": {
             "title": "Quick actions",
-            "purpose": "These links take you to the most common support and content areas: registered members, the Discover hero carousel and allow-listed product configuration.",
+            "purpose": "These links take you to the most common support and content areas: registered members, Appearance & placements (landing screen, hero carousel and palette) and allow-listed product configuration.",
             "actions": {
               "1": "Go straight to the relevant workspace without searching the long navigation menu.",
               "2": "Return here after the task if you want a fresh operational snapshot."
@@ -111,9 +120,9 @@
         "sections": {
           "filters": {
             "title": "Search and account filters",
-            "purpose": "Search accepts a name, email, UID or username. Account type separates regular members from the isolated demo realm, and the avatar switch limits results to profiles with a picture.",
+            "purpose": "Search accepts a name, email, UID or username. Account type separates regular members from the isolated demo realm, Registered within limits results to accounts created in the last 24 hours, 2, 3 or 7 days, and the avatar switch limits results to profiles with a picture.",
             "actions": {
-              "1": "Combine search, account type and avatar state, then apply the filter.",
+              "1": "Combine search, account type, registration period and avatar state, then apply the filter.",
               "2": "Reset all criteria when a known member is not found, and use pagination for broader result sets."
             },
             "guidance": "Always verify UID and contact data in the result row. Similar display names are not enough to identify the correct member."
@@ -459,9 +468,18 @@
             "purpose": "Each card joins the original image, member and album context, creation time, automated likelihoods and the reasons it needs review.",
             "actions": {
               "1": "Open the original at full size and, when necessary, open the member account for surrounding context.",
-              "2": "Use Edit or square crop to correct presentation when the content itself is acceptable."
+              "2": "Use Crop / rotate or Square thumb to correct presentation when the content itself is acceptable."
             },
             "guidance": "Automated labels support the review; they do not decide it. Verify the actual image and current policy before pressing a terminal action."
+          },
+          "imageEditing": {
+            "title": "Crop, rotate and square thumbnail",
+            "purpose": "Crop / rotate reframes, zooms or turns the picture and overwrites it, which also approves it. Square thumb only reframes the square thumbnail on the profile picture strip and leaves the picture and its moderation status unchanged.",
+            "actions": {
+              "1": "Drag or use the arrow keys to move the picture, pinch or use the zoom controls to magnify, and rotate left or right in quarter turns when needed.",
+              "2": "Press Save and approve, or Save square thumbnail, once and read the confirmation; the two confirmations differ on purpose."
+            },
+            "guidance": "Square framing needs the original picture dimensions from Core; without them the editor shows a load error instead of letting you frame a crop that would be saved wrong. The editing and decision buttons appear only for the owner and admin roles."
           },
           "approve": {
             "title": "Approve an image",
@@ -1345,62 +1363,6 @@
           }
         }
       },
-      "heroes": {
-        "title": "People hero campaigns help",
-        "summary": "Hero campaigns are the image or video cards shown at the top of the People discovery experience. This page controls their media, bilingual copy, destination, presentation order and active state.",
-        "steps": {
-          "1": "Review existing active cards and their order before creating or editing a campaign.",
-          "2": "Prepare approved media and complete both languages, then preview platform-specific styling.",
-          "3": "Save the campaign and confirm its active state and placement; archive or delete only the intended card."
-        },
-        "sections": {
-          "campaignList": {
-            "title": "Campaign inventory",
-            "purpose": "The list shows every active and inactive Discover hero with media preview, copy, destination and ordering information.",
-            "actions": {
-              "1": "Review the current sequence and open a card for editing.",
-              "2": "Create a new campaign from the page action."
-            },
-            "guidance": "Several active campaigns can coexist; sort order determines their sequence. Check for overlapping or outdated messaging before adding another."
-          },
-          "mediaCopy": {
-            "title": "Media, bilingual copy and destination",
-            "purpose": "A campaign combines an approved image or video with English and Hungarian title, subtitle, optional link label and optional HTTPS destination.",
-            "actions": {
-              "1": "Upload an optimized image or use an approved CDN video URL.",
-              "2": "Write both locales and add a destination only when the campaign should open another surface."
-            },
-            "guidance": "English is the client fallback. Verify that the destination is safe and that video playback is supported before activating the card."
-          },
-          "targetOrder": {
-            "title": "Order and active state",
-            "purpose": "Sort order controls carousel placement and Active decides whether Core includes the campaign in Discover.",
-            "actions": {
-              "1": "Set a deliberate order relative to existing active campaigns.",
-              "2": "Keep a draft inactive until content and media are approved."
-            },
-            "guidance": "Changing active state can affect discovery immediately. An inactive record remains editable and is safer than deleting a campaign that may return later."
-          },
-          "typography": {
-            "title": "Web and mobile typography",
-            "purpose": "Optional title and subtitle size, color and weight overrides tune readability separately for web and mobile clients.",
-            "actions": {
-              "1": "Leave fields empty to use the app's proven default styling.",
-              "2": "Set only valid reviewed values and check contrast over the selected media."
-            },
-            "guidance": "A value that looks good in one preview may fail on another screen size. Prefer defaults unless a tested campaign design requires overrides."
-          },
-          "lifecycle": {
-            "title": "Edit, deactivate and delete",
-            "purpose": "Existing campaigns can be revised, taken out of Discover without data loss, or removed from the campaign inventory.",
-            "actions": {
-              "1": "Deactivate for a reversible pause.",
-              "2": "Delete only after the confirmation identifies the exact campaign."
-            },
-            "guidance": "Deleting the campaign record does not remove its stored media file. Deactivation is normally the safer option for reusable assets."
-          }
-        }
-      },
       "landing": {
         "title": "Join landing backgrounds help",
         "summary": "This screen controls the responsive visual background behind sign-in and signup on friending.com. A protected image-free fallback always exists, while optional global, country and city campaigns can provide images or video.",
@@ -1475,71 +1437,6 @@
           }
         }
       },
-      "appLanding": {
-        "title": "App landing screen help",
-        "summary": "This page controls the iOS screen shown before sign-in: background, Friending title treatment and bilingual description. A global rule supplies defaults and country or city overrides may inherit any blank field.",
-        "steps": {
-          "1": "Establish and review the global rule because every override and built-in fallback resolves through it.",
-          "2": "For an override, fill only the fields that genuinely differ and verify its geographic priority.",
-          "3": "Use the resolved preview to confirm the final background, title and description before activation."
-        },
-        "sections": {
-          "rules": {
-            "title": "Landing rule inventory",
-            "purpose": "Cards list the global source and every geographic override with active state, priority and resolved presentation preview.",
-            "actions": {
-              "1": "Create the required global rule first, then add or edit overrides.",
-              "2": "Review which values each override supplies and which it inherits."
-            },
-            "guidance": "The protected global rule cannot be deleted like an ordinary override. Without it, the app uses only its built-in screen."
-          },
-          "targeting": {
-            "title": "Geographic targeting and priority",
-            "purpose": "A rule can be global, country-wide or centered on a city radius, with priority resolving overlapping matches.",
-            "actions": {
-              "1": "Choose a canonical ISO country and bounded city radius where applicable.",
-              "2": "Set priority relative to other rules that can match the same user context."
-            },
-            "guidance": "Targeting chooses presentation and is not written to the member profile. Equal-priority cities use the nearest center."
-          },
-          "background": {
-            "title": "Background image or video",
-            "purpose": "The rule may supply an approved image or CDN video with an optional poster, or leave the background blank to inherit.",
-            "actions": {
-              "1": "Select the media type and upload or enter the trusted asset.",
-              "2": "Leave an override blank when the global background should continue to apply."
-            },
-            "guidance": "Blank means inherit, not black. Test video loading and poster behavior on a supported app build before activation."
-          },
-          "title": {
-            "title": "Text or image title",
-            "purpose": "The Friending title can be bilingual text or a transparent PNG treatment, with blank override text inheriting the global or built-in title.",
-            "actions": {
-              "1": "Choose text and complete both locales, or upload the required transparent title image.",
-              "2": "Switch back to text before removing an image title."
-            },
-            "guidance": "A title-image rule without its asset is invalid. Keep transparent artwork readable over every resolved background."
-          },
-          "description": {
-            "title": "Bilingual description",
-            "purpose": "The short English and Hungarian copy explains the pre-sign-in value proposition under the title.",
-            "actions": {
-              "1": "Write concise, consistent copy in both languages.",
-              "2": "Leave override copy blank only when inheritance is intentional."
-            },
-            "guidance": "The preview resolves blank values, so review the final sentence rather than assuming an empty editor means no description."
-          },
-          "previewInheritance": {
-            "title": "Resolved preview and lifecycle",
-            "purpose": "The preview calculates the actual rule, then global rule, then built-in fallback chain and shows what the app should receive.",
-            "actions": {
-              "1": "Verify every resolved visual and localized string before saving or activating.",
-              "2": "Deactivate for a reversible pause or delete only the intended non-global rule."
-            },
-            "guidance": "A preview is meaningful only for the loaded revision. Refresh after conflicts, and remember that deleting a rule retains its stored media files."
-          }
-        }
-      },
       "appearance": {
         "title": "Appearance & placements help",
         "summary": "This page is the single place for the iOS landing screen, the Discover hero carousel and the light/dark palette. A permanent global rule supplies the base, store-country rules override it for one App Store storefront, and geo rules override both for members currently inside a city or map circle. Blank fields always inherit; Core resolves the chain and the app renders the compiled defaults as the last level.",
@@ -1584,6 +1481,33 @@
               "2": "Use the phone preview to confirm the resolved background, title and description."
             },
             "guidance": "Blank means inherit, never black. An image title without its asset is refused at save time instead of shipping a broken image, and a poster inherits on its own but shows only over a video background."
+          },
+          "landingButtons": {
+            "title": "Landing buttons",
+            "purpose": "Sets the phone and e-mail button labels in both languages, their background and text colours, font and size, the Sign in with Apple style, and the app-wide primary-button corner radius.",
+            "actions": {
+              "1": "Fill only the labels and colours that differ from the inherited values, and check both languages in the preview.",
+              "2": "Use the preview's Phone + e-mail, Phone only and E-mail only switch to see the layout for each sign-in combination."
+            },
+            "guidance": "The corner radius is shared by the apps' primary action buttons everywhere, including signup and account screens, not only this landing screen. The preview switch only simulates which methods are offered; for members, the authentication policy on Configuration decides that."
+          },
+          "landingFooter": {
+            "title": "Landing footer",
+            "purpose": "The footer pinned to the bottom of the landing screen: legal text in both languages, background colour and opacity, text colour, font, size and minimum height.",
+            "actions": {
+              "1": "Write each footer text with exactly one <terms>…</terms> and one <privacy>…</privacy> pair so both legal links render.",
+              "2": "Check the minimum height in the preview: the background reaches the bottom edge while the text stays above the safe area."
+            },
+            "guidance": "A blank field inherits. The console refuses a footer text without exactly one pair of each marker, so the member-facing legal links cannot silently disappear."
+          },
+          "landingQr": {
+            "title": "QR reader button",
+            "purpose": "Shows or hides the circular QR scanner button in the top-right safe area of the landing screen and sets its background, icon tint, diameter, icon padding and an optional uploaded PNG icon.",
+            "actions": {
+              "1": "Switch the reader on or off, then set the diameter and icon padding together so an icon box of at least 8 × 8 pt remains.",
+              "2": "Upload a PNG icon of at most 4 MB, or leave it blank for the built-in glyph, and choose Tinted or Original colours for it."
+            },
+            "guidance": "If an inherited diameter and padding pair would leave too small an icon box, Core publishes a clamped padding and the preview shows it. Original colours affect uploaded PNGs only; the built-in glyph is always tinted."
           },
           "hero": {
             "title": "Discover hero carousel",
@@ -2531,7 +2455,7 @@
       },
       "configuration": {
         "title": "Configuration help",
-        "summary": "Configuration contains only approved product controls that can change without a deployment. It covers reversible feature behavior, Join session timing, iOS appearance, global push delivery, public link origins, presence availability and the complete profile-video-verification member flow.",
+        "summary": "Configuration contains only approved product controls that can change without a deployment. It covers Travel and AreYouIn availability with their teaser modals, the Hey, Footprints and photo-likes switches, sign-in methods and allowed phone countries, reversible feature behavior, Join session timing, iOS appearance, global push delivery, public link origins, presence availability and the complete profile-video-verification member flow.",
         "steps": {
           "1": "Identify the exact product surface and read its current value, bounds and member consequence.",
           "2": "Change one coherent setting group, including both languages where copy is involved.",
@@ -2547,6 +2471,16 @@
             },
             "guidance": "Turning a feature off normally preserves its records. Demo controls never merge demo and regular users, and a disabled hero response does not delete campaigns."
           },
+          "sectionAvailability": {
+            "title": "Travel and AreYouIn availability",
+            "purpose": "Sets whether released apps present the Travel and AreYouIn sections and their entry points: one global answer per section plus optional overrides for individual App Store storefronts.",
+            "actions": {
+              "1": "Read the global answer and every storefront override of both sections, together with the shared revision, before editing.",
+              "2": "Change a global answer or add, edit or remove a storefront override, then press Save section availability once.",
+              "3": "After a conflict your edits are kept on top of the newly loaded revision; after an unconfirmed save the stored settings are reloaded. Review them, then save again."
+            },
+            "guidance": "The storefront comes from the App Store, never from the member's location. Saving changes what released apps present for that storefront; the teaser copy below has its own revision and its own save."
+          },
           "featureSwitches": {
             "title": "Hey, Footprints and photo-likes feature switches",
             "purpose": "This independent, receipted control family governs global Hey, Footprint-badge and photo-like availability. Each command changes one switch, while all three share one authoritative family revision; Visitors is always available.",
@@ -2556,6 +2490,25 @@
               "3": "After an unknown outcome, retry the retained command or reload for authoritative convergence; never start a second logical command."
             },
             "guidance": "Hey off removes the Pinger button, profile gesture, Heys tab and Hey notifications. Footprints off removes the Footprint-badge controls, feed, counter and notifications, while visits and Visitors remain available. Photo likes off removes photo-like controls, counters, feed and notifications. Visitors is always available. The three switches share one family revision, but badge settings and general runtime settings do not. Launch posture is an explicit audited choice: Hey on, Footprints off."
+          },
+          "authPolicy": {
+            "title": "Sign-in and sign-up methods",
+            "purpose": "Chooses whether phone and e-mail sign-up and sign-in are offered, globally and through overrides for individual App Store storefronts. Sign in with Apple is always available and cannot be switched off here.",
+            "actions": {
+              "1": "Set the global default first; phone and e-mail cannot both be disabled there.",
+              "2": "Add a storefront override only where that App Store country must differ; it replaces both method values for that storefront.",
+              "3": "Press Save authentication policy once, and after a conflict review your preserved edits on the new revision before saving again."
+            },
+            "guidance": "The storefront is supplied by the App Store, never inferred from location. Stored values outside Core's current vocabulary are flagged and must be replaced before the policy can be saved."
+          },
+          "phoneCountries": {
+            "title": "Allowed phone countries and number formats",
+            "purpose": "Inside the authentication policy, the allowed-country rule decides which countries appear in the app's phone picker and derives the calling-code allow-list Core enforces; optional masks format numbers per calling code.",
+            "actions": {
+              "1": "Choose All countries or a selected list globally, and add a storefront country override only where one App Store country needs a different list.",
+              "2": "Add a number mask only for a calling code the selected countries use; each * is a digit, and an empty mask keeps the app's automatic formatting."
+            },
+            "guidance": "Countries and calling codes are saved together with the sign-in methods, so they cannot drift apart. A rule that allows no country leaves that scope without a phone picker entry, and a mask for a code no selected country uses stays stored but inert."
           },
           "session": {
             "title": "Join idle session timeout",
@@ -2662,7 +2615,7 @@
           },
           "counts": {
             "title": "Scoped document witnesses",
-            "purpose": "The complete count census covers profile, media, relationships, chats, notifications, membership and AreYouIn records belonging to the protected fixture scope.",
+            "purpose": "The complete census of 23 counts covers profile, media, relationships, chats, notifications, membership, verification and AreYouIn records belonging to the protected fixture scope.",
             "actions": {
               "1": "Compare every actual count with its expected witness.",
               "2": "Use a mismatch to identify which fixture area needs a guarded reset or server investigation."
@@ -2671,7 +2624,7 @@
           },
           "checks": {
             "title": "Readiness checks",
-            "purpose": "The 33 closed checks prove control, environment match, account state, complete content, valid media, PLUS access and AreYouIn semantics.",
+            "purpose": "The 34 closed checks prove control, environment match, account state, complete content, valid media, the PLUS and verification grants and AreYouIn semantics.",
             "actions": {
               "1": "Inspect every failing check and its associated count or lifecycle clue.",
               "2": "Claim readiness only when the complete set is green."

@@ -81,7 +81,7 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "overview",
     route: "/",
-    sections: ["metrics", "quickActions", "recentAudit"],
+    sections: ["metrics", "signupMetrics", "quickActions", "recentAudit"],
     matches: exact("/"),
   },
   {
@@ -141,7 +141,7 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "photoModeration",
     route: "/photo-moderation",
-    sections: ["queueScopes", "reviewCards", "approve", "reject"],
+    sections: ["queueScopes", "reviewCards", "imageEditing", "approve", "reject"],
     matches: exact("/photo-moderation"),
   },
   {
@@ -303,14 +303,22 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "appearance",
     route: "/appearance",
-    sections: ["rules", "targeting", "window", "landing", "hero", "palette", "mapSearch", "testPreview", "modeSwitcher", "saving"],
+    sections: [
+      "rules",
+      "targeting",
+      "window",
+      "landing",
+      "landingButtons",
+      "landingFooter",
+      "landingQr",
+      "hero",
+      "palette",
+      "mapSearch",
+      "testPreview",
+      "modeSwitcher",
+      "saving",
+    ],
     matches: exact("/appearance"),
-  },
-  {
-    key: "heroes",
-    route: "/heroes",
-    sections: ["campaignList", "mediaCopy", "targetOrder", "typography", "lifecycle"],
-    matches: exact("/heroes"),
   },
   {
     key: "landing",
@@ -325,12 +333,6 @@ export const ADMIN_HELP_PAGES = [
       "priorityLifecycle",
     ],
     matches: exact("/landing"),
-  },
-  {
-    key: "appLanding",
-    route: "/app-landing",
-    sections: ["rules", "targeting", "background", "title", "description", "previewInheritance"],
-    matches: exact("/app-landing"),
   },
   {
     key: "signupOptions",
@@ -429,11 +431,16 @@ export const ADMIN_HELP_PAGES = [
     route: "/configuration",
     sections: [
       "productControls",
-      // D-120's soft-off teaser lives in the section-availability card at the
-      // top of this page, and it is the one control here that changes what a
-      // member sees while the section stays refused server-side.
+      // The section-availability card at the top of this page, and D-120's
+      // soft-off teaser inside it, which is the one control here that changes
+      // what a member sees while the section stays refused server-side.
+      "sectionAvailability",
       "sectionTeasers",
       "featureSwitches",
+      // One card, one save: sign-in methods, and the allowed phone countries
+      // with their number formats (D-049).
+      "authPolicy",
+      "phoneCountries",
       "session",
       "appearance",
       "pushDelivery",
@@ -470,12 +477,26 @@ export const ADMIN_HELP_PAGES = [
 export type AdminHelpPageKey = (typeof ADMIN_HELP_PAGES)[number]["key"];
 
 /**
+ * Retired route files that only `redirect()` to a live screen (D-052/T-468).
+ * They keep a place in the route census, but not a guide of their own: a guide
+ * for a screen nobody can render is dead copy the census would otherwise force
+ * everyone to maintain. Their path resolves to the destination's guide.
+ */
+export const ADMIN_HELP_REDIRECTS = [
+  { route: "/heroes", destination: "/appearance" },
+  { route: "/app-landing", destination: "/appearance" },
+] as const;
+
+/**
  * The catalogue lookup: which entry DOCUMENTS this route, regardless of whether
  * the route currently renders. This is the coverage question, and it is what
- * the route census asserts against the filesystem.
+ * the route census asserts against the filesystem. A retired redirect route
+ * resolves here, before the readiness check, so the destination's own gates
+ * still decide whether its guide is shown.
  */
 export function adminHelpPageForPath(pathname: string): AdminHelpPage | null {
-  return ADMIN_HELP_PAGES.find((page) => page.matches(pathname)) ?? null;
+  const resolved = ADMIN_HELP_REDIRECTS.find((entry) => entry.route === pathname)?.destination ?? pathname;
+  return ADMIN_HELP_PAGES.find((page) => page.matches(resolved)) ?? null;
 }
 
 /** Fail-closed: an undeclared gate is open, a declared one must be satisfied. */

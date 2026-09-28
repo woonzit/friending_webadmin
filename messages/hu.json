@@ -58,7 +58,7 @@
     "guidanceTitle": "Fontos:",
     "boundaryTitle": "Jogosultságok és hiteles adatforrás",
     "roleBoundary": "A szerepköröd határozza meg, mely vezérlők jelennek meg, és mely változtatásokat fogadja el a Core. Egy hiányzó gomb jelenthet csak olvasási jogosultságot is, nem feltétlenül hibás oldalt.",
-    "sourceBoundary": "Sikeres frissítés után a megjelenített értékek a Core-ból származnak. Ütközés, időtúllépés vagy bizonytalan mentés után újabb módosítás előtt frissítsd a hiteles állapotot.",
+    "sourceBoundary": "A sikeres betöltés után megjelenített értékek a Core-ból származnak. Ütközés, időtúllépés vagy bizonytalan mentés után használd a panel saját Újrapróbálás gombját, amely ugyanazt a kérést küldi el újra, vagy töltsd be újra a hiteles állapotot; soha ne indíts egy második, új módosítást annak kiderítésére, hogy az első megtörtént-e.",
     "unavailableTitle": "Ehhez az oldalhoz nincs súgó",
     "unavailableCopy": "Ez az útvonal nem része a jelenlegi zárt súgókatalógusnak. Ne végezz változtatást addig, amíg az operátori útmutató el nem készül és át nem vizsgálják.",
     "pages": {
@@ -66,23 +66,32 @@
         "title": "Áttekintés súgó",
         "summary": "Ez az üzemeltetési munka kiindulópontja. Az aktuális közösségi állapotot, a fontos gyorshivatkozásokat és a legújabb adminisztrátori tevékenységet egyesíti, így egy új operátor adatmódosítás nélkül eldöntheti, hol van szükség figyelemre.",
         "steps": {
-          "1": "Először olvasd át a pillanatképet, és keresd a regisztrációk, avatarlefedettség, demóprofilok, kampányok vagy aktív adminisztrátorok váratlan változását.",
+          "1": "Először olvasd át a pillanatképet, és keresd a regisztrált tagok, a friss regisztrációk, az avatarlefedettség, a demóprofilok vagy az aktív adminisztrátorok váratlan változását.",
           "2": "Nyisd meg a tényleges feladathoz tartozó célmodult; maga az Áttekintés csak tájékoztat.",
           "3": "A Legutóbbi audit részen ellenőrizd, hogy a fontos változás rögzült-e, és ki végezte."
         },
         "sections": {
           "metrics": {
             "title": "Közösségi pillanatkép",
-            "purpose": "A hat kártya összefoglalja a regisztrált tagokat, az elmúlt hét regisztrációit, az elkülönített demóprofilokat, az aktív People-kampányokat, az aktív adminisztrátorokat és az avatarlefedettséget.",
+            "purpose": "A négy kártya összefoglalja a regisztrált tagokat, az elkülönített demóprofilokat, az aktív adminisztrátorokat és a profilképpel rendelkező tagok arányát.",
             "actions": {
               "1": "Hasonlítsd össze a számokat a várt üzemállapottal, és használd őket támpontként a továbblépéshez.",
-              "2": "Ha egy számot ki kell vizsgálni, nyisd meg a Regisztrált felhasználók vagy a People hero oldalt; ezek a kártyák nem módosítanak rekordot."
+              "2": "Ha egy számot ki kell vizsgálni, nyisd meg a Regisztrált userek oldalt; ezek a kártyák nem módosítanak rekordot."
             },
             "guidance": "Az értékek aktuális számlálók, nem idősoros grafikonok. A demóprofilok szándékosan elkülönülnek, ezért nem szabad őket normál közösségi növekedésnek tekinteni."
           },
+          "signupMetrics": {
+            "title": "Friss regisztrációk",
+            "purpose": "Az elmúlt 24 órában és az elmúlt 7 napban regisztrált valódi fiókok száma, mindkettőnél azzal együtt, hányan rendelkeznek jelenleg sikeres Persona-ellenőrzéssel. A demó- és tesztfiókok nem számítanak bele.",
+            "actions": {
+              "1": "Hasonlítsd össze a két gördülő időszakot, hogy észrevedd a regisztrációk váratlan visszaesését vagy kiugrását.",
+              "2": "A Frissítés gombbal töltsd újra a számokat, majd a fiókok megtekintéséhez nyisd meg a Regisztrált userek oldalt a megfelelő Regisztráció időszaka szűrővel."
+            },
+            "guidance": "A Persona-szám csak a jelenlegi sikeres ellenőrzést számolja, az adminisztrátori felmentést nem. Ha a Core nem tudja előállítani a számokat, a panel jelzi, hogy nem érhetők el, és nem nullát mutat."
+          },
           "quickActions": {
             "title": "Gyorsműveletek",
-            "purpose": "Ezek a hivatkozások a leggyakoribb támogatási és tartalomkezelési területekre visznek: regisztrált tagok, Discover hero carousel és engedélyezett termékkonfiguráció.",
+            "purpose": "Ezek a hivatkozások a leggyakoribb támogatási és tartalomkezelési területekre visznek: regisztrált tagok, Megjelenés és elhelyezések (nyitóképernyő, hero carousel és paletta), valamint az engedélyezett termékkonfiguráció.",
             "actions": {
               "1": "A hosszú navigáció átböngészése nélkül lépj közvetlenül a megfelelő munkaterületre.",
               "2": "A feladat után térj vissza ide, ha friss üzemeltetési pillanatképre van szükséged."
@@ -111,9 +120,9 @@
         "sections": {
           "filters": {
             "title": "Keresés és fiókszűrők",
-            "purpose": "Név, e-mail, UID vagy felhasználónév alapján lehet keresni. A fióktípus elkülöníti a normál tagokat a demókörnyezettől, az avatarkapcsoló pedig a képpel rendelkező profilokra szűkít.",
+            "purpose": "Név, e-mail, UID vagy felhasználónév alapján lehet keresni. A fióktípus elkülöníti a normál tagokat a demókörnyezettől, a Regisztráció időszaka az elmúlt 24 órában, 2, 3 vagy 7 napban létrehozott fiókokra szűkít, az avatarkapcsoló pedig a képpel rendelkező profilokra.",
             "actions": {
-              "1": "Kombináld a keresést, fióktípust és avatarállapotot, majd alkalmazd a szűrőt.",
+              "1": "Kombináld a keresést, a fióktípust, a regisztráció időszakát és az avatarállapotot, majd alkalmazd a szűrőt.",
               "2": "Ha egy ismert tag nem található, állítsd alaphelyzetbe a feltételeket, szélesebb találati halmaznál pedig lapozz."
             },
             "guidance": "Mindig ellenőrizd a UID-t és a kapcsolati adatot a találati sorban. A hasonló megjelenített nevek nem elegendők a helyes tag azonosításához."
@@ -459,9 +468,18 @@
             "purpose": "Minden kártya egyesíti az eredeti képet, a tag és album hátterét, a létrehozás idejét, automatikus valószínűségeket és az ellenőrzés okait.",
             "actions": {
               "1": "Nyisd meg teljes méretben az eredetit, és szükség esetén a tagfiókot is a környezet megértéséhez.",
-              "2": "Ha a tartalom elfogadható, de a megjelenítés hibás, használd a Szerkesztés vagy négyzetes vágás funkciót."
+              "2": "Ha a tartalom elfogadható, de a megjelenítés hibás, használd a Vágás / forgatás vagy a Kocka-thumb funkciót."
             },
             "guidance": "Az automatikus címkék segítik az ellenőrzést, de nem döntenek. Terminális művelet előtt az aktuális szabályzat szerint vizsgáld meg a tényleges képet."
+          },
+          "imageEditing": {
+            "title": "Vágás, forgatás és kocka-thumb",
+            "purpose": "A Vágás / forgatás áthelyezi, nagyítja vagy elforgatja a képet és felülírja, ami egyben jóvá is hagyja. A Kocka-thumb csak a profilkép-sáv négyzetes bélyegképét keretezi újra, a kép és a moderációs állapota változatlan marad.",
+            "actions": {
+              "1": "Húzással vagy a nyílbillentyűkkel mozgasd a képet, két ujjal vagy a vezérlőkkel nagyíts, és szükség esetén forgasd negyedfordulatonként balra vagy jobbra.",
+              "2": "Egyszer nyomd meg a Mentés és jóváhagyás vagy a Négyzetes bélyegkép mentése gombot, és olvasd el a visszajelzést; a kettő szándékosan eltér."
+            },
+            "guidance": "A négyzetes keretezéshez a Core-tól kapott eredeti képméret kell; ennek hiányában a szerkesztő betöltési hibát mutat, ahelyett hogy hibásan mentődő kivágást engedne. A szerkesztő- és döntési gombok csak owner és admin szerepkörrel jelennek meg."
           },
           "approve": {
             "title": "Kép jóváhagyása",
@@ -1345,62 +1363,6 @@
           }
         }
       },
-      "heroes": {
-        "title": "People hero kampányok súgó",
-        "summary": "A hero kampányok a People discovery tetején megjelenő kép- vagy videókártyák. Ez az oldal vezérli a médiát, kétnyelvű szöveget, célhivatkozást, megjelenítési sorrendet és aktív állapotot.",
-        "steps": {
-          "1": "Új kampány előtt nézd át a meglévő aktív kártyákat és sorrendjüket.",
-          "2": "Készíts jóváhagyott médiát, töltsd ki mindkét nyelvet, majd ellenőrizd a platformonkénti tipográfiát.",
-          "3": "Mentsd a kampányt, ellenőrizd az aktív állapotot és helyét; csak a kívánt kártyát inaktiváld vagy töröld."
-        },
-        "sections": {
-          "campaignList": {
-            "title": "Kampányleltár",
-            "purpose": "A lista minden aktív és inaktív Discover hero médiáját, szövegét, célját és sorrendjét előnézettel mutatja.",
-            "actions": {
-              "1": "Nézd át az aktuális sorrendet, és nyiss meg egy kártyát szerkesztésre.",
-              "2": "Az oldalműveletből hozz létre új kampányt."
-            },
-            "guidance": "Több aktív kampány együtt is létezhet; a sort order határozza meg a sorrendet. Új hozzáadása előtt ellenőrizd az átfedő vagy elavult üzeneteket."
-          },
-          "mediaCopy": {
-            "title": "Média, kétnyelvű szöveg és cél",
-            "purpose": "A kampány jóváhagyott képet vagy videót egyesít angol és magyar címmel, alcímmel, opcionális linkcímkével és opcionális HTTPS céllal.",
-            "actions": {
-              "1": "Tölts fel optimalizált képet, vagy használj jóváhagyott CDN-videó URL-t.",
-              "2": "Írd meg mindkét locale-t, és csak akkor adj célt, ha a kampánynak másik felületet kell megnyitnia."
-            },
-            "guidance": "Az angol a kliensfallback. Aktiválás előtt ellenőrizd a cél biztonságát és a videólejátszás támogatását."
-          },
-          "targetOrder": {
-            "title": "Sorrend és aktív állapot",
-            "purpose": "A sort order vezérli a carousel helyét, az Active pedig azt, hogy a Core belefoglalja-e a kampányt a Discoverbe.",
-            "actions": {
-              "1": "A meglévő aktív kampányokhoz képest tudatos sorrendet állíts.",
-              "2": "A draftot tartsd inaktívan, amíg a tartalom és média nincs jóváhagyva."
-            },
-            "guidance": "Az aktív állapot módosítása azonnal érintheti a discoveryt. Egy inaktív rekord szerkeszthető marad, és biztonságosabb a később visszatérő kampány törlésénél."
-          },
-          "typography": {
-            "title": "Webes és mobil tipográfia",
-            "purpose": "Az opcionális cím- és alcímméret, szín és vastagság külön hangolja a webes és mobil olvashatóságot.",
-            "actions": {
-              "1": "Hagyd üresen a mezőket az app kipróbált alapstílusához.",
-              "2": "Csak érvényes, ellenőrzött értéket állíts, és vizsgáld meg a kontrasztot a kiválasztott médián."
-            },
-            "guidance": "Ami egy előnézetben jó, más képernyőméreten hibás lehet. Alapértelmezést használj, hacsak tesztelt kampánydesign nem igényel felülírást."
-          },
-          "lifecycle": {
-            "title": "Szerkesztés, inaktiválás és törlés",
-            "purpose": "A meglévő kampány módosítható, adatvesztés nélkül kivehető a Discoverből, vagy eltávolítható a kampányleltárból.",
-            "actions": {
-              "1": "Visszafordítható szünethez inaktiválj.",
-              "2": "Csak akkor törölj, ha a megerősítés a pontos kampányt azonosítja."
-            },
-            "guidance": "A kampányrekord törlése nem távolítja el a tárolt médiafájlt. Újra felhasználható assetnél általában az inaktiválás a biztonságosabb."
-          }
-        }
-      },
       "landing": {
         "title": "Join landing hátterek súgó",
         "summary": "Ez a képernyő a friending.com belépési és regisztrációs felülete mögötti reszponzív látványt vezérli. Egy védett, kép nélküli fallback mindig létezik, opcionális globális, ország- és városkampányok pedig képet vagy videót adhatnak.",
@@ -1475,71 +1437,6 @@
           }
         }
       },
-      "appLanding": {
-        "title": "App nyitóképernyő súgó",
-        "summary": "Ez az oldal a bejelentkezés előtt látható iOS-képernyőt vezérli: hátteret, Friending címmegjelenítést és kétnyelvű leírást. A globális szabály adja az alapot, az ország- vagy városfelülírások pedig bármely üres mezőt örökölhetnek.",
-        "steps": {
-          "1": "Először hozd létre és vizsgáld át a globális szabályt, mert minden override és beépített fallback ezen keresztül oldódik fel.",
-          "2": "Override-nál csak a ténylegesen eltérő mezőket töltsd, és ellenőrizd a földrajzi prioritást.",
-          "3": "A feloldott előnézetben ellenőrizd a végső hátteret, címet és leírást aktiválás előtt."
-        },
-        "sections": {
-          "rules": {
-            "title": "Landing szabályleltár",
-            "purpose": "A kártyák a globális forrást és minden földrajzi override-ot mutatnak aktív állapottal, prioritással és feloldott megjelenítési előnézettel.",
-            "actions": {
-              "1": "Először a kötelező globális szabályt hozd létre, majd adj hozzá vagy szerkessz override-okat.",
-              "2": "Nézd át, mely értékeket adja maga az override, és melyeket örökli."
-            },
-            "guidance": "A védett globális szabály nem törölhető úgy, mint egy normál override. Nélküle az app csak a beépített nyitóképernyőt használja."
-          },
-          "targeting": {
-            "title": "Földrajzi célzás és prioritás",
-            "purpose": "A szabály lehet globális, országos vagy városi sugarú, az átfedő találatokat pedig prioritás oldja fel.",
-            "actions": {
-              "1": "Szükség szerint kanonikus ISO országot és korlátozott városi sugarat válassz.",
-              "2": "A prioritást az ugyanazt a környezetet elérő többi szabályhoz viszonyítva állítsd."
-            },
-            "guidance": "A célzás megjelenítést választ, és nem íródik a tag profiljába. Azonos prioritású városoknál a legközelebbi középpont nyer."
-          },
-          "background": {
-            "title": "Háttérkép vagy videó",
-            "purpose": "A szabály adhat jóváhagyott képet vagy CDN-videót opcionális posterrel, illetve üresen hagyhatja a hátteret örökléshez.",
-            "actions": {
-              "1": "Válaszd ki a médiatípust, majd töltsd fel vagy add meg a megbízható assetet.",
-              "2": "Override-nál hagyd üresen, ha továbbra is a globális hátteret kell használni."
-            },
-            "guidance": "Az üres öröklést jelent, nem fekete hátteret. Aktiválás előtt támogatott app builden teszteld a videóbetöltést és poster viselkedést."
-          },
-          "title": {
-            "title": "Szöveges vagy képes cím",
-            "purpose": "A Friending cím kétnyelvű szöveg vagy átlátszó PNG lehet; az üres override-szöveg a globális vagy beépített címet örökli.",
-            "actions": {
-              "1": "Válassz szöveget és töltsd ki mindkét locale-t, vagy töltsd fel a kötelező átlátszó címképet.",
-              "2": "Képes cím eltávolítása előtt válts vissza szövegre."
-            },
-            "guidance": "Asset nélküli képcímszabály érvénytelen. Az átlátszó artwork minden feloldott háttéren maradjon olvasható."
-          },
-          "description": {
-            "title": "Kétnyelvű leírás",
-            "purpose": "A rövid angol és magyar szöveg a cím alatt magyarázza el a bejelentkezés előtti értékígéretet.",
-            "actions": {
-              "1": "Mindkét nyelven tömör és egymással összhangban lévő szöveget írj.",
-              "2": "Override-nál csak szándékos örökléshez hagyd üresen."
-            },
-            "guidance": "Az előnézet feloldja az üres értékeket, ezért a végső mondatot ellenőrizd, ne feltételezd, hogy az üres szerkesztő leíráshiányt jelent."
-          },
-          "previewInheritance": {
-            "title": "Feloldott előnézet és életciklus",
-            "purpose": "Az előnézet kiszámítja a tényleges szabály → globális szabály → beépített fallback láncot, és megmutatja, mit kell kapnia az appnak.",
-            "actions": {
-              "1": "Mentés vagy aktiválás előtt ellenőrizd minden feloldott vizuált és lokalizált szöveget.",
-              "2": "Visszafordítható szünethez inaktiválj, vagy csak a kívánt nem globális szabályt töröld."
-            },
-            "guidance": "Az előnézet csak a betöltött revíziónál érvényes. Ütközés után frissíts, és számolj azzal, hogy a szabály törlése megtartja a médiafájlokat."
-          }
-        }
-      },
       "appearance": {
         "title": "Megjelenés és elhelyezések súgó",
         "summary": "Ez az oldal az egyetlen hely az iOS nyitóképernyő, a Discover hero-karusszel és a világos/sötét paletta kezelésére. Az állandó globális szabály adja az alapot, az áruház-ország szabályok egy App Store áruház-országra írják felül, a geo szabályok pedig mindkettőt felülírják a városban vagy térképkörben tartózkodó tagoknál. Az üres mezők mindig öröklődnek; a láncot a Core oldja fel, az app pedig a beépített alapértelmezéseket rendereli utolsó szintként.",
@@ -1584,6 +1481,33 @@
               "2": "A telefonos előnézetben ellenőrizd a feloldott hátteret, címet és leírást."
             },
             "guidance": "Az üres öröklést jelent, sosem fekete hátteret. Az asset nélküli képcímet a mentés visszautasítja, nem törött képet küld; az előkép önállóan öröklődik, de csak videóháttér fölött jelenik meg."
+          },
+          "landingButtons": {
+            "title": "Nyitóképernyő gombjai",
+            "purpose": "Beállítja a telefonos és az e-mailes gomb feliratát mindkét nyelven, a háttér- és szövegszínüket, a betűtípusukat és a méretüket, a Sign in with Apple stílusát, valamint az appszintű elsődleges gombok sarokkerekítését.",
+            "actions": {
+              "1": "Csak azokat a feliratokat és színeket töltsd ki, amelyek eltérnek az örökölt értéktől, és az előnézetben ellenőrizd mindkét nyelvet.",
+              "2": "Az előnézet Telefon + e-mail, Csak telefon és Csak e-mail kapcsolójával nézd meg az elrendezést minden bejelentkezési kombinációra."
+            },
+            "guidance": "A sarokkerekítés az appok összes elsődleges műveleti gombjára vonatkozik, a regisztrációs és fiókképernyőkön is, nem csak erre a nyitóképernyőre. Az előnézet kapcsolója csak szimulálja a felkínált módokat; a tagoknál ezt a Konfiguráció hitelesítési szabályzata dönti el."
+          },
+          "landingFooter": {
+            "title": "Nyitóképernyő lábléce",
+            "purpose": "A nyitóképernyő aljára rögzített lábléc: jogi szöveg mindkét nyelven, háttérszín és átlátszóság, szövegszín, betűtípus, méret és minimális magasság.",
+            "actions": {
+              "1": "Minden láblécszövegbe pontosan egy <terms>…</terms> és egy <privacy>…</privacy> párt írj, hogy mindkét jogi link megjelenjen.",
+              "2": "Az előnézetben ellenőrizd a minimális magasságot: a háttér a képernyő aljáig ér, a szöveg a biztonságos terület felett marad."
+            },
+            "guidance": "Az üres mező öröklést jelent. A konzol nem fogad el olyan láblécszöveget, amelyben nincs pontosan egy-egy jelölőpár, így a tagoknak szóló jogi linkek nem tűnhetnek el észrevétlenül."
+          },
+          "landingQr": {
+            "title": "QR-olvasó gomb",
+            "purpose": "Megjeleníti vagy elrejti a nyitóképernyő jobb felső biztonságos területén lévő kerek QR-olvasó gombot, és beállítja a hátterét, az ikon színezését, az átmérőjét, az ikon belső margóját és egy opcionálisan feltöltött PNG ikont.",
+            "actions": {
+              "1": "Kapcsold be vagy ki az olvasót, majd az átmérőt és az ikon belső margóját együtt állítsd be úgy, hogy legalább 8 × 8 pt-os ikonterület maradjon.",
+              "2": "Tölts fel legfeljebb 4 MB-os PNG ikont, vagy hagyd üresen a beépített jelhez, és válaszd hozzá a Színezett vagy az Eredeti színek megjelenítést."
+            },
+            "guidance": "Ha egy örökölt átmérő–margó pár túl kicsi ikonterületet hagyna, a Core lecsökkentett margót tesz közzé, és az előnézet is ezt mutatja. Az Eredeti színek csak a feltöltött PNG-re hatnak; a beépített jel mindig színezett."
           },
           "hero": {
             "title": "Discover hero-karusszel",
@@ -2531,7 +2455,7 @@
       },
       "configuration": {
         "title": "Konfiguráció súgó",
-        "summary": "A Konfiguráció csak jóváhagyott, deployment nélkül módosítható termékvezérlőket tartalmaz. Lefedi a visszafordítható feature működést, Join sessionidőt, iOS appearance-et, globális pushkézbesítést, nyilvános linkorigint, presence elérhetőséget és a teljes profilvideó-verifikációs tagi folyamatot.",
+        "summary": "A Konfiguráció csak jóváhagyott, deployment nélkül módosítható termékvezérlőket tartalmaz. Lefedi a Travel és az AreYouIn elérhetőségét és figyelmeztető ablakát, a Hey, Footprints és fotókedvelés kapcsolókat, a bejelentkezési módokat és az engedélyezett telefonos országokat, a visszafordítható feature működést, Join sessionidőt, iOS appearance-et, globális pushkézbesítést, nyilvános linkorigint, presence elérhetőséget és a teljes profilvideó-verifikációs tagi folyamatot.",
         "steps": {
           "1": "Azonosítsd a pontos termékfelületet, és olvasd el az aktuális értéket, korlátot és tagi következményt.",
           "2": "Egy összefüggő beállításcsoportot módosíts, szövegnél mindkét nyelvvel.",
@@ -2547,6 +2471,16 @@
             },
             "guidance": "Egy feature kikapcsolása általában megőrzi rekordjait. A demóvezérlő soha nem egyesíti a demó- és normál tagokat, a hero kikapcsolása pedig nem törli a kampányokat."
           },
+          "sectionAvailability": {
+            "title": "Travel és AreYouIn elérhetősége",
+            "purpose": "Meghatározza, hogy a kiadott appok megjelenítik-e a Travel és az AreYouIn szekciót és belépési pontjukat: szekciónként egy globális érték, valamint opcionális felülírások egyes App Store storefrontokra.",
+            "actions": {
+              "1": "Szerkesztés előtt olvasd el mindkét szekció globális értékét, minden storefront-felülírását és a közös revíziót.",
+              "2": "Módosíts egy globális értéket, vagy adj hozzá, szerkessz vagy törölj storefront-felülírást, majd egyszer nyomd meg a Szekcióelérhetőség mentése gombot.",
+              "3": "Ütközés után a módosításaid megmaradnak az újonnan betöltött revízió fölött, meg nem erősített mentés után pedig a tárolt beállítások töltődnek be újra. Nézd át őket, és csak utána ments újra."
+            },
+            "guidance": "A storefrontot az App Store adja, sosem a tag tartózkodási helye. A mentés azt változtatja meg, mit jelenítenek meg a kiadott appok az adott storefrontban; az alatta lévő figyelmeztető szövegnek saját revíziója és saját mentése van."
+          },
           "featureSwitches": {
             "title": "Hey, Footprints és fotókedvelés funkciókapcsolók",
             "purpose": "Ez a független, nyugtázott vezérlőcsalád szabályozza a Hey, a Footprint-jelvények és a fotókedvelések globális elérhetőségét. Egy parancs egy kapcsolót módosít, miközben mindhárom egy hiteles családrevízión osztozik; a Látogatók lista mindig elérhető.",
@@ -2556,6 +2490,25 @@
               "3": "Ismeretlen kimenet után a megtartott parancsot küldd újra, vagy a hiteles állapot megerősítéséhez tölts újra; soha ne indíts második logikai parancsot."
             },
             "guidance": "A Hey kikapcsolása eltávolítja a Pinger gombot, a profilgesztust, a Hey-k fület és a Hey-értesítéseket. A Footprints kikapcsolása eltávolítja a Footprint-jelvény vezérlőit, hírfolyamát, számlálóját és értesítéseit, miközben a látogatások és a Látogatók lista elérhető marad. A fotókedvelések kikapcsolása eltávolítja a kedvelési vezérlőket, számlálókat, hírfolyamot és értesítéseket. A Látogatók lista mindig elérhető. A három kapcsoló egy családrevízión osztozik, a jelvénybeállításokkal és általános futásidejű beállításokkal viszont nem. Az indulási állapot kifejezett, auditált döntés: Hey bekapcsolva, Footprints kikapcsolva."
+          },
+          "authPolicy": {
+            "title": "Regisztrációs és bejelentkezési módok",
+            "purpose": "Eldönti, hogy a telefonos és az e-mailes regisztráció és bejelentkezés elérhető-e, globálisan és egyes App Store storefrontok felülírásain keresztül. A Sign in with Apple mindig elérhető, itt nem kapcsolható ki.",
+            "actions": {
+              "1": "Először a globális alapértéket állítsd be; ott a telefon és az e-mail nem tiltható le egyszerre.",
+              "2": "Storefront-felülírást csak ott adj hozzá, ahol az adott App Store országnak el kell térnie; ez az adott storefrontra mindkét mód értékét lecseréli.",
+              "3": "Egyszer nyomd meg a Hitelesítési szabályzat mentése gombot, ütközés után pedig az új revízión nézd át a megőrzött módosításaidat, mielőtt újra mentesz."
+            },
+            "guidance": "A storefrontot az App Store adja, sosem a tag helyzetéből következik. A Core aktuális szókészletén kívüli tárolt értékeket a felület megjelöli, és ezeket a szabályzat mentése előtt le kell cserélni."
+          },
+          "phoneCountries": {
+            "title": "Engedélyezett telefonos országok és számformátumok",
+            "purpose": "A hitelesítési szabályzaton belül az engedélyezett országok szabálya dönti el, mely országok jelennek meg az app telefonos országválasztójában, és ebből származik a Core által érvényesített hívókód-lista; az opcionális maszkok hívókódonként formázzák a számot.",
+            "actions": {
+              "1": "Globálisan válaszd a Minden ország beállítást vagy egy kiválasztott listát, és storefront-országfelülírást csak ott adj hozzá, ahol egy App Store országnak más lista kell.",
+              "2": "Számmaszkot csak olyan hívókódhoz adj meg, amelyet a kiválasztott országok használnak; minden * egy számjegy, az üres maszk pedig megtartja az app automatikus formázását."
+            },
+            "guidance": "Az országok és a hívókódok a bejelentkezési módokkal együtt mentődnek, így nem csúszhatnak szét. Ha a szabály egyetlen országot sem enged, az adott hatókörben nincs telefonos országválasztó elem, a kiválasztott országok által nem használt hívókód maszkja pedig tárolva marad, de nem hat."
           },
           "session": {
             "title": "Join idle session timeout",
@@ -2662,7 +2615,7 @@
           },
           "counts": {
             "title": "Scoped dokumentum-witness-ek",
-            "purpose": "A teljes darabszám-census a védett fixture scope profil-, média-, kapcsolat-, chat-, notification-, tagsági és AreYouIn rekordjait fedi le.",
+            "purpose": "A 23 darabszámból álló teljes census a védett fixture scope profil-, média-, kapcsolat-, chat-, notification-, tagsági, verifikációs és AreYouIn rekordjait fedi le.",
             "actions": {
               "1": "Minden tényleges darabszámot hasonlíts össze a várt witness-szel.",
               "2": "Az eltérésből azonosítsd, mely fixture-terület igényel védett resetet vagy szervervizsgálatot."
@@ -2671,7 +2624,7 @@
           },
           "checks": {
             "title": "Readiness checkek",
-            "purpose": "A 33 zárt check a controlt, környezeti egyezést, fiókállapotot, teljes tartalmat, érvényes médiát, PLUS hozzáférést és AreYouIn szemantikát bizonyítja.",
+            "purpose": "A 34 zárt check a controlt, környezeti egyezést, fiókállapotot, teljes tartalmat, érvényes médiát, a PLUS- és verifikációs jogosultságot, valamint az AreYouIn szemantikát bizonyítja.",
             "actions": {
               "1": "Vizsgálj meg minden hibás checket és kapcsolódó darabszám- vagy életciklus-támpontot.",
               "2": "Csak a teljesen zöld készletnél állíts readiness-t."

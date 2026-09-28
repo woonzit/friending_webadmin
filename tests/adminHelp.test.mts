@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   ADMIN_HELP_PAGES,
+  ADMIN_HELP_REDIRECTS,
   adminHelpGuideForPath,
   adminHelpPageForPath,
   adminHelpSections,
@@ -16,6 +17,7 @@ import {
   PERSONA_START_EDITOR_VISIBLE,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
 } from "../lib/contractReadiness.ts";
+import { APP_REVIEW_CHECK_KEYS, APP_REVIEW_COUNT_KEYS } from "../lib/appReviewSandbox.ts";
 
 type JsonObject = Record<string, unknown>;
 
@@ -53,17 +55,36 @@ function examplePath(route: string): string {
   return route.replace(/\[[^\]]+\]/g, "example-id");
 }
 
-test("all authenticated page routes have one closed contextual help entry", async () => {
+test("all authenticated routes have a live guide or an explicit redirect to one", async () => {
   const files = await pageFiles(path.join(root, "app", "(dashboard)"));
   const actualRoutes = files.map(routeForPageFile).sort();
-  const helpRoutes = ADMIN_HELP_PAGES.map((page) => page.route).sort();
+  const helpRoutes = [
+    ...ADMIN_HELP_PAGES.map((page) => page.route),
+    ...ADMIN_HELP_REDIRECTS.map((entry) => entry.route),
+  ].sort();
 
   // 39: 41 with T-468's Appearance & placements page (the map document lives
   // outside the dashboard shell), minus the two T-565 retired ones. T-683 adds
-  // the into-tag moderation queue (40).
+  // the into-tag moderation queue (40). T-863 splits the census: the two
+  // redirect-only D-052 routes (/heroes, /app-landing) no longer carry guides of
+  // their own, so 38 live guides plus 2 redirects.
   assert.equal(actualRoutes.length, 40, "the current screen census changed; review every new or removed screen");
+  assert.equal(ADMIN_HELP_PAGES.length, 38, "review the live-screen census");
+  assert.equal(ADMIN_HELP_REDIRECTS.length, 2, "review the retired-route census");
   assert.deepEqual(helpRoutes, actualRoutes);
   assert.equal(new Set(helpRoutes).size, helpRoutes.length, "a screen may have only one help document");
+});
+
+test("retired redirect routes resolve to the live guide and stay redirect-only pages", async () => {
+  for (const entry of ADMIN_HELP_REDIRECTS) {
+    const destination = ADMIN_HELP_PAGES.find((page) => page.route === entry.destination);
+    assert.ok(destination, `${entry.route} must target an inventoried live screen`);
+    assert.equal(adminHelpPageForPath(entry.route)?.key, destination.key);
+    assert.equal(adminHelpGuideForPath(entry.route, ALL_READY)?.key, destination.key);
+    const source = await readFile(path.join(root, "app", "(dashboard)", entry.route.slice(1), "page.tsx"), "utf8");
+    assert.ok(source.includes(`redirect("${entry.destination}")`), `${entry.route} must redirect to ${entry.destination}`);
+    assert.doesNotMatch(source, /<[^>]+>/, "a redirect route must not silently grow an unreviewed interface");
+  }
 });
 
 test("exact and dynamic routes resolve to the intended guide and nothing generic", () => {
@@ -78,6 +99,8 @@ test("exact and dynamic routes resolve to the intended guide and nothing generic
     "/profile-verification/case/evidence",
     "/dates/configuration/extra",
     "/dates/moderation/case/extra",
+    "/heroes/extra",
+    "/app-landing/extra",
   ]) {
     assert.equal(adminHelpPageForPath(unknown), null, `${unknown} must not receive unrelated help`);
   }
@@ -106,8 +129,13 @@ test("every inventoried functional section has detailed English and Hungarian he
   // what a member SEES while the section stays refused server-side (249). T-757
   // adds the Invite results topic on /invite-configuration, the first panel on
   // that page that renders Core-computed statistics rather than the stored
-  // configuration (250).
-  assert.equal(totalSections, 250, "review the functional-section census when the UI changes");
+  // configuration (250). T-863 retires the eleven sections of the two redirect-only
+  // guides (/heroes 5, /app-landing 6) and documents eight panels the audit found
+  // with no topic: Overview's signup metrics, the photo editor, section
+  // availability, the sign-in policy and its allowed phone countries on
+  // /configuration, and the landing buttons, footer and QR reader on /appearance
+  // (247).
+  assert.equal(totalSections, 247, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [
@@ -176,6 +204,44 @@ test("every inventoried functional section has detailed English and Hungarian he
         }
       }
     }
+  }
+});
+
+test("independently saved or operator-facing embedded tools have dedicated help topics", () => {
+  const required: Record<string, string[]> = {
+    overview: ["metrics", "signupMetrics"],
+    photoModeration: ["imageEditing"],
+    configuration: ["sectionAvailability", "sectionTeasers", "featureSwitches", "authPolicy", "phoneCountries"],
+    appearance: ["landing", "landingButtons", "landingFooter", "landingQr", "modeSwitcher", "saving"],
+  };
+  for (const [key, sections] of Object.entries(required)) {
+    const page = ADMIN_HELP_PAGES.find((entry) => entry.key === key);
+    assert.ok(page, key);
+    for (const section of sections) {
+      assert.ok((page.sections as readonly string[]).includes(section), `${key}.${section}`);
+    }
+  }
+});
+
+test("App Review help counts stay aligned with the closed runtime contract in both languages", async () => {
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));
+    const sections = messages.adminHelp.pages.appReview.sections;
+    assert.match(sections.checks.purpose, new RegExp(`\\b${APP_REVIEW_CHECK_KEYS.length}\\b`));
+    assert.match(sections.counts.purpose, new RegExp(`\\b${APP_REVIEW_COUNT_KEYS.length}\\b`));
+  }
+});
+
+test("the overview guide describes the cards the page renders, not the retired campaign counter", async () => {
+  const source = await readFile(path.join(root, "app", "(dashboard)", "page.tsx"), "utf8");
+  const cards = source.slice(source.indexOf("const stats = ["), source.indexOf("];", source.indexOf("const stats = [")));
+  assert.equal(cards.match(/label: t\(/g)?.length, 4, "the overview renders four stat cards");
+  assert.doesNotMatch(cards, /activeHeroes/);
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));
+    const overview = messages.adminHelp.pages.overview.sections;
+    assert.match(overview.metrics.purpose, locale === "en" ? /\bfour\b/u : /\bnégy\b/u);
+    assert.doesNotMatch(JSON.stringify(overview), locale === "en" ? /\bsix\b|People campaigns/u : /\bhat\b|People-kampány/u);
   }
 });
 
@@ -248,6 +314,11 @@ test("every help entry declares the same readiness its route checks", async () =
   for (const file of files) {
     const route = routeForPageFile(file);
     const source = await readFile(file, "utf8");
+    if (ADMIN_HELP_REDIRECTS.some((entry) => entry.route === route)) {
+      // A redirect-only route has no gate of its own; its destination's entry carries the readiness.
+      assert.doesNotMatch(source, /notFound\(\)/u, `${route} is redirect-only and must not grow a gate`);
+      continue;
+    }
     const page = byRoute.get(route);
     assert.ok(page, `${route} has no help entry`);
 
