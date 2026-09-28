@@ -249,6 +249,18 @@ test("the overview guide describes the cards the page renders, not the retired c
   }
 });
 
+test("the overview quick action to Appearance & placements describes that page, not People hero media", async () => {
+  const source = await readFile(path.join(root, "app", "(dashboard)", "page.tsx"), "utf8");
+  assert.match(source, /href="\/appearance">\s*<strong>\{t\("manageAppearance"\)\}<\/strong><span>\{t\("manageAppearanceCopy"\)\}<\/span>/);
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));
+    const overview = messages.overview;
+    assert.equal(overview.manageHeroes, undefined, `${locale}: the People hero shortcut copy is retired`);
+    assert.ok(overview.manageAppearance.includes(messages.appearance.title), `${locale}: the shortcut names the page it opens`);
+    assert.doesNotMatch(overview.manageAppearanceCopy, /People hero|reorder|átrendez/u);
+  }
+});
+
 test("the feature-switch Help census names all three gates and permanent Visitors", async () => {
   for (const locale of ["en", "hu"] as const) {
     const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));

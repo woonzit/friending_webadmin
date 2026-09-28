@@ -112,7 +112,7 @@ export default function OverviewPage() {
               <strong>{t("manageUsers")}</strong><span>{t("manageUsersCopy")}</span>
             </Link>
             <Link className="quick-link" href="/appearance">
-              <strong>{t("manageHeroes")}</strong><span>{t("manageHeroesCopy")}</span>
+              <strong>{t("manageAppearance")}</strong><span>{t("manageAppearanceCopy")}</span>
             </Link>
             <Link className="quick-link" href="/configuration">
               <strong>{t("manageConfig")}</strong><span>{t("manageConfigCopy")}</span>
