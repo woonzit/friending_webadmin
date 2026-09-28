@@ -72,9 +72,14 @@ export function LocationAccessPolicyView({
   const dirty = locationAccessPolicyDirty(configuration, draft);
   const notice = model.notice;
   const noticeText = notice === null ? null
-    : notice.key === "saved" || notice.key === "conflict"
-      ? t(notice.key, { revision: notice.revision })
-      : t(notice.key);
+    : notice.key === "conflict"
+      // "Your choices are still shown" is true only while the kept draft
+      // differs from the winning revision; otherwise Save is disabled anyway.
+      ? [t("conflict", { revision: notice.revision }), dirty ? t("conflictDraftKept") : null]
+        .filter(Boolean).join(" ")
+      : notice.key === "saved"
+        ? t("saved", { revision: notice.revision })
+        : t(notice.key);
   const showReload = !dirty || notice?.tone === "error";
 
   return (

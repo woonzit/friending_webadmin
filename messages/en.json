@@ -2557,11 +2557,11 @@
           },
           "locationAccess": {
             "title": "Location access",
-            "purpose": "Two independent, default-off switches tell compatible iOS apps whether a device location is required before nearby discovery on People and before signup. The panel has its own revision and its own save.",
+            "purpose": "Two independent, default-off switches tell compatible iOS apps whether a device location is required before the Nearby tab on People and before signup. The panel has its own revision and its own save.",
             "actions": {
               "1": "Read both switches, the revision and who saved last before changing anything.",
               "2": "Change a switch, press Save location access, and confirm when you are making location required.",
-              "3": "After a conflict your choices stay on the switches over the newer revision: review them, then save again or discard them. After an unconfirmed save, reload before trying again."
+              "3": "After a conflict the panel loads the newer revision but the switches keep your unsaved choices: review them, then save again or discard them. After an unconfirmed save, reload before trying again."
             },
             "guidance": "This sets app behavior, it does not enforce anything: Core never checks it, and older iOS versions, Android and the Join website ignore it. Requiring location at signup risks App Store rejection under guideline 5.1.1(iv), so switch it on only for a version App Review has seen behaving this way. Viewers can read the policy but cannot save it."
           },
@@ -7048,9 +7048,9 @@
     },
     "locationAccess": {
       "title": "Location access",
-      "subtitle": "Decides whether the app needs the device's location before nearby discovery and before signup. The two switches are independent, both are off by default, and this panel saves on its own.",
+      "subtitle": "Decides whether the app needs the device's location before the Nearby tab and before signup. The two switches are independent, both are off by default, and this panel saves on its own.",
       "scope": "Only iOS app versions that read this policy apply it. Older iOS versions, Android and the Join website ignore it, and Core does not enforce it.",
-      "reviewRisk": "Requiring location at signup can get the app rejected by App Review (guideline 5.1.1(iv)). Never switch on a stricter policy after review that the reviewed version did not show. Approximate location while the app is in use is enough.",
+      "reviewRisk": "Requiring location at signup can get the app rejected by App Review (guideline 5.1.1(iv)). After review, never switch on a stricter policy that the reviewed version did not show. Approximate location while the app is in use is enough.",
       "revision": "Revision {revision}",
       "neverSaved": "Never saved: the default applies and nothing is required.",
       "updatedAt": "Last saved",
@@ -7060,9 +7060,9 @@
       "changed": "unsaved",
       "flags": {
         "required_for_nearby": {
-          "title": "Require location for nearby discovery",
-          "short": "nearby discovery",
-          "copy": "Without location access, People shows a location prompt instead of nearby results. Chat, profiles, travel and a manually chosen city stay available."
+          "title": "Require location for the Nearby tab",
+          "short": "the Nearby tab",
+          "copy": "Without location access, the Nearby tab on People shows a location prompt instead of results. Chat, profiles, travel and a manually chosen city stay available."
         },
         "required_for_signup": {
           "title": "Require location at signup",
@@ -7081,7 +7081,8 @@
       "loadError": "The location access policy could not be read. Nothing has been assumed about the current setting.",
       "saved": "Location access saved as revision {revision}.",
       "unchanged": "Nothing to save: the stored policy already matches.",
-      "conflict": "Someone else saved this policy while you were editing. The stored version is now revision {revision}, and the switches still show your unsaved choices. Review them, then save again or discard them.",
+      "conflict": "Someone else saved this policy while you were editing. The stored version is now revision {revision}.",
+      "conflictDraftKept": "The switches still show your unsaved choices. Review them, then save again or discard them.",
       "conflictReloadFailed": "Someone else saved this policy while you were editing, and the new version could not be loaded. Your unsaved choices are still shown; reload before saving again.",
       "notConfirmed": "The save could not be confirmed because Core did not answer normally. Your choices are still shown; reload to check what is stored before saving again.",
       "writeRequired": "Your role can no longer change this policy. The stored values are shown.",

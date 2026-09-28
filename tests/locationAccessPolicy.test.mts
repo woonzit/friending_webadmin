@@ -507,7 +507,7 @@ test("the panel explains a conflict over the kept draft and shows an unavailable
   ], loaded);
   const html = await render(rebased);
   assert.match(html, /data-location-access-notice="conflict"/);
-  assert.match(html, /The stored version is now revision 2/);
+  assert.match(html, /The stored version is now revision 2\. The switches still show your unsaved choices\./);
   // Nearby shows the operator's unsaved "on"; signup shows the winning revision's "on".
   assert.match(html, /data-location-access-flag="required_for_nearby"[\s\S]*?checked=""[\s\S]*?data-location-access-flag="required_for_signup"/);
   assert.match(html, /Required · unsaved/);
@@ -522,6 +522,48 @@ test("the panel explains a conflict over the kept draft and shows an unavailable
   const huHtml = await render(unavailable, "hu");
   assert.match(huHtml, /A Core most nem tudja kiolvasni a helyhozzáférési szabályt/);
   assert.match(huHtml, />Újratöltés<\/button>/);
+});
+
+function winner(revision: number, nearby: boolean, signup: boolean): Json {
+  const body = base();
+  Object.assign(body.data.configuration, {
+    revision,
+    required_for_nearby: nearby,
+    required_for_signup: signup,
+  });
+  return body;
+}
+
+test("the conflict notice reads correctly for any winning revision and claims a kept draft only when one differs", async () => {
+  const responses = await corpus();
+  const editing = run([
+    { type: "loaded", outcome: locationAccessPolicyReadOutcome(responses["owner-default"]) },
+    { type: "toggled", flag: "required_for_nearby", value: true },
+    { type: "saveStarted" },
+    { type: "saveFinished", outcome: { kind: "conflict" } },
+  ]);
+  // Revision 1 is the likeliest winner. Hungarian needs "az 1." but "a 5.", so
+  // no article may sit directly before the number in either language.
+  for (const revision of [1, 5]) {
+    const same = run([{ type: "conflictReloaded", outcome: locationAccessPolicyReadOutcome(winner(revision, true, false)) }], editing);
+    const different = run([{ type: "conflictReloaded", outcome: locationAccessPolicyReadOutcome(winner(revision, false, true)) }], editing);
+    assert.equal(locationAccessPolicyDirty(same.stored!.configuration, same.draft!), false);
+    assert.equal(locationAccessPolicyDirty(different.stored!.configuration, different.draft!), true);
+
+    const huSame = await render(same, "hu");
+    assert.match(huSame, new RegExp(`A jelenlegi revízió: ${revision}\\.`));
+    assert.doesNotMatch(huSame, new RegExp(`\\baz? ${revision}\\.`), "no article directly before the number");
+    assert.doesNotMatch(huSame, /nem mentett beállításaidat mutatják/, "an equal draft is not an unsaved choice");
+    const huDifferent = await render(different, "hu");
+    assert.match(huDifferent, new RegExp(`A jelenlegi revízió: ${revision}\\. A kapcsolók továbbra is a te nem mentett beállításaidat mutatják\\.`));
+
+    const enSame = await render(same, "en");
+    assert.match(enSame, new RegExp(`The stored version is now revision ${revision}\\.`));
+    assert.doesNotMatch(enSame, /still show your unsaved choices/);
+    assert.doesNotMatch(enSame, /<button[^>]*data-location-access-save="save"(?![^>]*disabled)/, "nothing to save");
+    const enDifferent = await render(different, "en");
+    assert.match(enDifferent, /still show your unsaved choices/);
+  }
 });
 
 test("the panel copy exists in both languages with the same keys", async () => {

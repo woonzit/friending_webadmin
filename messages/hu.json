@@ -2557,11 +2557,11 @@
           },
           "locationAccess": {
             "title": "Helyhozzáférés",
-            "purpose": "Két független, alapból kikapcsolt kapcsoló mondja meg a kompatibilis iOS-appoknak, hogy kell-e a készülék helyadata a People közeli böngészéséhez és a regisztrációhoz. A panelnek saját revíziója és saját mentése van.",
+            "purpose": "Két független, alapból kikapcsolt kapcsoló mondja meg a kompatibilis iOS-appoknak, hogy kell-e a készülék helyadata a People Közelben füléhez és a regisztrációhoz. A panelnek saját revíziója és saját mentése van.",
             "actions": {
               "1": "Bármilyen módosítás előtt nézd meg mindkét kapcsolót, a revíziót és azt, hogy ki mentett utoljára.",
               "2": "Állíts át egy kapcsolót, nyomd meg a Helyhozzáférés mentése gombot, és erősítsd meg, ha kötelezővé teszed a helyadatot.",
-              "3": "Ütközés után a választásaid az újabb revízió fölött is a kapcsolókon maradnak: nézd át őket, aztán mentsd újra, vagy vesd el őket. Meg nem erősített mentés után újbóli próbálkozás előtt töltsd újra a panelt."
+              "3": "Ütközés után a panel betölti az újabb revíziót, de a kapcsolók továbbra is a te nem mentett beállításaidat mutatják: nézd át őket, aztán mentsd újra, vagy vesd el őket. Ha a mentést nem sikerült megerősíteni, újabb próbálkozás előtt töltsd újra a panelt."
             },
             "guidance": "Ez az app viselkedését állítja, nem kényszerít ki semmit: a Core nem ellenőrzi, a régebbi iOS-verziók, az Android és a Join weboldal pedig figyelmen kívül hagyják. A regisztrációnál kötelező helyadat az 5.1.1(iv) irányelv miatt App Store-elutasítást kockáztat, ezért csak olyan verziónál kapcsold be, amelyet az App Review már így látott. A viewer szerepkör látja a szabályt, de nem mentheti."
           },
@@ -7048,7 +7048,7 @@
     },
     "locationAccess": {
       "title": "Helyhozzáférés",
-      "subtitle": "Eldönti, kell-e az appnak a készülék helyadata a közeli böngészés és a regisztráció előtt. A két kapcsoló egymástól független, alapból mindkettő ki van kapcsolva, és ez a panel külön ment.",
+      "subtitle": "Eldönti, kell-e az appnak a készülék helyadata a Közelben fül és a regisztráció előtt. A két kapcsoló egymástól független, alapból mindkettő ki van kapcsolva, és ezt a panelt külön kell menteni.",
       "scope": "Csak azok az iOS-appverziók alkalmazzák, amelyek már olvassák ezt a beállítást. A régebbi iOS-verziók, az Android és a Join weboldal figyelmen kívül hagyják, és a Core sem kényszeríti ki.",
       "reviewRisk": "Ha a regisztrációhoz kötelező a helyadat, az App Review elutasíthatja az appot (5.1.1(iv) irányelv). Review után soha ne kapcsolj be olyan szigorúbb szabályt, amelyet az átnézett verzió nem mutatott. A hozzávetőleges, csak az app használata közbeni helyhozzáférés is elég.",
       "revision": "{revision}. revízió",
@@ -7060,13 +7060,13 @@
       "changed": "nincs mentve",
       "flags": {
         "required_for_nearby": {
-          "title": "Helyadat kötelező a közeli böngészéshez",
-          "short": "közeli böngészés",
-          "copy": "Helyhozzáférés nélkül a People a közeli találatok helyett helyengedélyt kérő képernyőt mutat. A chat, a profilok, az utazás és a kézzel választott város továbbra is elérhető."
+          "title": "Helyadat kötelező a Közelben fülhöz",
+          "short": "a Közelben fül",
+          "copy": "Helyhozzáférés nélkül a People Közelben füle a találatok helyett helyengedélyt kérő képernyőt mutat. A chat, a profilok, az utazás és a kézzel választott város továbbra is elérhető."
         },
         "required_for_signup": {
           "title": "Helyadat kötelező a regisztrációhoz",
-          "short": "regisztráció",
+          "short": "a regisztráció",
           "copy": "A regisztráció helyhozzáférést kér, és a kiinduló várost a készülék helye alapján állítja be, nem a tag választja ki. A várost a tag a regisztráció után módosíthatja."
         }
       },
@@ -7081,7 +7081,8 @@
       "loadError": "A helyhozzáférési szabályt nem sikerült beolvasni. Az aktuális beállításról semmit sem feltételeztünk.",
       "saved": "Helyhozzáférés elmentve ({revision}. revízió).",
       "unchanged": "Nincs mit menteni: a tárolt szabály már pontosan ez.",
-      "conflict": "Amíg szerkesztettél, valaki más elmentette ezt a szabályt. A tárolt változat most a {revision}. revízió, a kapcsolók pedig még a te nem mentett választásaidat mutatják. Nézd át őket, aztán mentsd újra, vagy vesd el őket.",
+      "conflict": "Amíg szerkesztettél, valaki más elmentette ezt a szabályt. A jelenlegi revízió: {revision}.",
+      "conflictDraftKept": "A kapcsolók továbbra is a te nem mentett beállításaidat mutatják. Nézd át őket, aztán mentsd újra, vagy vesd el őket.",
       "conflictReloadFailed": "Amíg szerkesztettél, valaki más elmentette ezt a szabályt, és az új változatot nem sikerült betölteni. A nem mentett választásaid láthatók maradnak; újbóli mentés előtt töltsd újra a panelt.",
       "notConfirmed": "A mentést nem sikerült megerősíteni, mert a Core nem válaszolt rendesen. A választásaid megmaradtak; újbóli mentés előtt töltsd újra a panelt, és nézd meg, mi van tárolva.",
       "writeRequired": "A szerepköröd már nem engedi a szabály módosítását. A tárolt értékeket látod.",
