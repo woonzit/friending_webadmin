@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import AdminImageEditor from "@/components/AdminImageEditor";
 import { adminCall } from "@/lib/adminClient";
+import { isAdminWriteRole } from "@/lib/authPolicy";
 import { avatarUrl, formatDate } from "@/lib/format";
 
 type SafeSearchScan = {
@@ -129,23 +130,45 @@ export default function PhotoModerationPage() {
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [scope, setScope] = useState<ModerationScope>("profile");
   const [editing, setEditing] = useState<{ uid: number; imageId: string; mode: "replace" | "square" } | null>(null);
+  // Core refuses every write to a viewer; the console offers the write controls only once
+  // admin_me has proven a write role, and an unreadable admin_me fails closed.
+  const [access, setAccess] = useState<"loading" | "write" | "read" | "error">("loading");
+  const canWrite = access === "write";
+  const loadGeneration = useRef(0);
 
+  useEffect(() => {
+    let active = true;
+    void adminCall("admin_me").then((response) => {
+      if (!active) return;
+      if (response?.success !== true || typeof response.role !== "string") {
+        setAccess("error");
+        return;
+      }
+      setAccess(isAdminWriteRole(response.role) ? "write" : "read");
+    });
+    return () => { active = false; loadGeneration.current += 1; };
+  }, []);
+
+  // Only the newest request may settle the queue: a slower answer for a tab the operator has
+  // already left must not overwrite the list shown under the tab now selected.
   const load = useCallback(async () => {
-    setState((current) => items.length === 0 || current === "error" ? "loading" : current);
+    const generation = ++loadGeneration.current;
+    setState("loading");
     const response = await adminCall("moderation_pic_list", { media_scope: scope });
-    const parsed = response?.success ? parseQueue(response.data) : null;
+    if (generation !== loadGeneration.current) return;
+    const parsed = response?.success === true ? parseQueue(response.data) : null;
     if (!parsed) {
       setState("error");
       return;
     }
     setItems(parsed);
     setState("ready");
-  }, [items.length, scope]);
+  }, [scope]);
 
-  useEffect(() => { void load(); }, [scope]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void load(); }, [load]);
 
   async function decide(item: QueueItem, action: "accept" | "deny") {
-    if (busy) return;
+    if (busy || !canWrite) return;
     if (action === "deny" && !window.confirm(t("rejectConfirm"))) return;
     setBusy(item.id);
     setNotice(null);
@@ -155,7 +178,7 @@ export default function PhotoModerationPage() {
       avatar_type: "profile",
     });
     setBusy("");
-    if (!response?.success) {
+    if (response?.success !== true) {
       setNotice({ tone: "error", text: t("actionError") });
       return;
     }
@@ -174,7 +197,8 @@ export default function PhotoModerationPage() {
           onSaved={() => {
             setEditing(null);
             // Core marks a replaced picture accepted, so it leaves this queue.
-            setNotice({ tone: "success", text: editor("saved") });
+            // A square-thumbnail save changes neither the picture nor its moderation status.
+            setNotice({ tone: "success", text: editor(editing.mode === "square" ? "squareSaved" : "saved") });
             void load();
           }}
         />
@@ -183,12 +207,13 @@ export default function PhotoModerationPage() {
       <div className="photo-moderation-toolbar">
         <div className="photo-moderation-tabs" role="tablist" aria-label={t("scopeLabel")}>
           {(["profile", "private_album", "public_album"] as const).map((item) => (
-            <button type="button" role="tab" aria-selected={scope === item} className={scope === item ? "is-active" : ""} key={item} onClick={() => setScope(item)}>{t(`scopes.${item}`)}</button>
+            <button type="button" role="tab" aria-selected={scope === item} className={scope === item ? "is-active" : ""} key={item} disabled={Boolean(busy) || Boolean(editing)} onClick={() => setScope(item)}>{t(`scopes.${item}`)}</button>
           ))}
         </div>
         <span>{t("queueCount", { count: items.length })}</span>
         <button type="button" className="button button-secondary" disabled={Boolean(busy)} onClick={() => void load()}>{common("refresh")}</button>
       </div>
+      {access === "read" || access === "error" ? <div className={`alert ${access === "error" ? "alert-error" : "alert-info"} page-alert`} role="status">{t(access === "error" ? "accessError" : "readOnly")}</div> : null}
       {notice ? <div className={`alert ${notice.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{notice.text}</div> : null}
       {state === "loading" ? <LoadingPanel /> : state === "error" ? <ErrorPanel message={t("loadError")} retry={() => void load()} /> : items.length === 0 ? (
         <div className="empty-state photo-moderation-empty"><div className="empty-state-inner"><h3>{t("empty")}</h3><p>{t("emptyCopy")}</p></div></div>
@@ -214,7 +239,7 @@ export default function PhotoModerationPage() {
                     {scan ? <dl>{Object.entries(scan.likelihoods).map(([key, value]) => <div key={key}><dt>{t(`categories.${key}`)}</dt><dd>{value.replaceAll("_", " ")}</dd></div>)}</dl> : <p>{t("legacyPending")}</p>}
                     {scan?.reasons.length ? <div className="photo-moderation-reasons">{scan.reasons.map((reason) => <span key={reason}>{reason.replaceAll("_", " ")}</span>)}</div> : null}
                   </div>
-                  <footer>
+                  {canWrite ? <footer>
                     {/* Needs the owning uid: Core scopes the replacement to that
                         member's gallery and refuses an image it does not own. */}
                     {item.data.userId > 0 ? (
@@ -225,7 +250,7 @@ export default function PhotoModerationPage() {
                     ) : null}
                     <button type="button" className="button button-danger" disabled={Boolean(busy)} onClick={() => void decide(item, "deny")}>{busy === item.id ? common("loading") : t("reject")}</button>
                     <button type="button" className="button button-primary" disabled={Boolean(busy)} onClick={() => void decide(item, "accept")}>{busy === item.id ? common("loading") : t("approve")}</button>
-                  </footer>
+                  </footer> : null}
                 </div>
               </article>
             );

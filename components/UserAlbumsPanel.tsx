@@ -66,7 +66,7 @@ export default function UserAlbumsPanel({ uid }: { uid: number }) {
   const [error, setError] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
   const [editing, setEditing] = useState<{ imageId: string; mode: "replace" | "square" } | null>(null);
-  const [edited, setEdited] = useState(false);
+  const [edited, setEdited] = useState<"replace" | "square" | null>(null);
 
   const load = useCallback(async () => {
     const [albumResponse, insightResponse] = await Promise.all([
@@ -122,7 +122,7 @@ export default function UserAlbumsPanel({ uid }: { uid: number }) {
           onCancel={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
-            setEdited(true);
+            setEdited(editing.mode);
             // The replacement gets a new hash, so the old thumbnail URL is
             // stale. Reload rather than patching it in place.
             void load();
@@ -132,7 +132,7 @@ export default function UserAlbumsPanel({ uid }: { uid: number }) {
       <div className="panel-header"><div><h2>{t("allAlbums")}</h2><p>{t("allAlbumsCopy")}</p></div></div>
       <div className="panel-body">
         {deleteError ? <p className="alert alert-error" role="alert">{t("deleteAlbumImageError")}</p> : null}
-        {edited ? <p className="alert alert-success" role="status">{editor("saved")}</p> : null}
+        {edited ? <p className="alert alert-success" role="status">{editor(edited === "square" ? "squareSaved" : "saved")}</p> : null}
         {error ? <p className="alert alert-error">{t("albumLoadError")}</p> : albums === null || insights === null ? <p className="page-subtitle">…</p> : albums.length === 0 ? <p className="page-subtitle">{t("noAlbums")}</p> : (
           <>
             <div className="album-insight-summary" aria-label={t("popularityTitle")}>

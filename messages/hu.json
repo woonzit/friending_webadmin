@@ -3382,7 +3382,9 @@
     "rejectConfirm": "Elutasítod ezt a képet? A user értesítést kap, a kép pedig rejtve marad.",
     "approved": "A képet jóváhagytuk, a user értesítést kapott.",
     "rejected": "A képet elutasítottuk, a user értesítést kapott.",
-    "actionError": "A moderációs döntést nem sikerült menteni. Próbáld újra."
+    "actionError": "A moderációs döntést nem sikerült menteni. Próbáld újra.",
+    "accessError": "Nem sikerült megerősíteni az admin szerepkörödet, ezért a moderációs vezérlők rejtve maradnak. Frissítsd az oldalt az újrapróbáláshoz.",
+    "readOnly": "Csak olvasási jogod van: a sort megnézheted, de képet nem hagyhatsz jóvá, nem utasíthatsz el és nem szerkeszthetsz."
   },
   "personaAdmin": {
     "eyebrow": "Azonossági műveletek",
@@ -8069,21 +8071,23 @@
   },
   "imageEditor": {
     "title": "Vágás, forgatás és nagyítás",
-    "copy": "Húzd a képet az áthelyezéshez. A mentés mindenhol felülírja a tag képét, és jóváhagyottra állítja.",
+    "copy": "Húzással vagy a nyílbillentyűkkel helyezd át a képet, két ujjal vagy a vezérlőkkel nagyíts. A mentés mindenhol felülírja a tag képét, és jóváhagyottra állítja.",
     "squareTitle": "Kocka-thumb kivágás",
-    "squareCopy": "A profilkép-sávban látható kocka-thumb keretezése. Maga a kép érintetlen marad; csak a kocka variáns generálódik újra.",
+    "squareCopy": "Húzással és kétujjas nagyítással keretezd a profilkép-sávban látható kocka-thumbot. Csak a thumb változik; maga a kép és a moderációs állapota érintetlen marad.",
     "squareEdit": "Kocka-thumb",
-    "canvasLabel": "Képkivágás előnézete. Húzással helyezhető át.",
+    "canvasLabel": "Képkivágás előnézete. Húzással vagy nyílbillentyűkkel helyezhető át, két ujjal nagyítható.",
     "zoom": "Nagyítás",
     "zoomIn": "Nagyítás",
     "zoomOut": "Kicsinyítés",
-    "rotate": "Forgatás 90°-kal",
+    "rotate": "Forgatás jobbra 90°-kal",
+    "rotateLeft": "Forgatás balra 90°-kal",
     "reset": "Alaphelyzet",
-    "save": "Kép felülírása",
+    "save": "Mentés és jóváhagyás",
     "edit": "Vágás / forgatás",
     "loadError": "A képet nem sikerült betölteni szerkesztésre.",
     "saveError": "A képet nem sikerült menteni. Próbáld újra.",
-    "saved": "A kép felül lett írva.",
+    "saved": "A képet módosítottuk és jóváhagytuk.",
+    "squareSaved": "A négyzetes bélyegképet mentettük. A moderációs állapot nem változott.",
     "squareSave": "Négyzetes bélyegkép mentése"
   },
   "inviteConfiguration": {

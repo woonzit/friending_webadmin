@@ -1,8 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
+import {
+  clampCropZoom, cropGeometry, INITIAL_CROP, MAX_CROP_ZOOM, MIN_CROP_ZOOM,
+  panCrop, pinchCrop, squareCropInOriginalSpace,
+  type CropPoint, type CropTransform,
+} from "@/lib/imageEditorGeometry";
 
 /**
  * Re-crops a member's picture and overwrites it.
@@ -21,8 +27,6 @@ import { adminCall } from "@/lib/adminClient";
 
 const CANVAS_WIDTH = 720;
 const CANVAS_HEIGHT = 900;
-const MIN_ZOOM = 1;
-const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.15;
 
 /**
@@ -51,16 +55,18 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
-  const dragRef = useRef<{ x: number; y: number } | null>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const pointersRef = useRef(new Map<number, CropPoint>());
+  const cancel = useRef(onCancel);
+  cancel.current = onCancel;
+  const savingRef = useRef(false);
 
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [zoom, setZoom] = useState(1);
-  const [rotation, setRotation] = useState(0);
-  const [positionX, setPositionX] = useState(0);
-  const [positionY, setPositionY] = useState(0);
+  const [transform, setTransform] = useState<CropTransform>(INITIAL_CROP);
+  const { zoom, rotation } = transform;
   // Original pixel dimensions from Core: the loaded data URL may be a resized
   // variant, so the square crop is scaled back into original space on save.
   const [originalSize, setOriginalSize] = useState<{ width: number; height: number } | null>(null);
@@ -73,21 +79,9 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
     if (!ctx) return;
 
     const radians = (rotation * Math.PI) / 180;
-    const swapped = Math.abs(rotation % 180) === 90;
-    const effectiveWidth = swapped ? image.naturalHeight : image.naturalWidth;
-    const effectiveHeight = swapped ? image.naturalWidth : image.naturalHeight;
-    // Cover, never contain: the crop must not leave empty bars in a picture
-    // that is about to become the member's public photo.
-    const scale = Math.max(
-      canvas.width / effectiveWidth,
-      canvas.height / effectiveHeight,
-    ) * zoom;
-    const drawnWidth = effectiveWidth * scale;
-    const drawnHeight = effectiveHeight * scale;
-    // Pan is expressed as -1..1 of the overflow, so it cannot drag the image
-    // off the canvas no matter the zoom or rotation.
-    const offsetX = (positionX * Math.max(0, drawnWidth - canvas.width)) / 2;
-    const offsetY = (positionY * Math.max(0, drawnHeight - canvas.height)) / 2;
+    const { scale, offsetX, offsetY } = cropGeometry(
+      { width: image.naturalWidth, height: image.naturalHeight }, canvas, transform,
+    );
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#000000";
@@ -103,7 +97,7 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
       image.naturalHeight * scale,
     );
     ctx.restore();
-  }, [positionX, positionY, rotation, zoom]);
+  }, [rotation, transform]);
 
   useEffect(() => {
     draw();
@@ -111,19 +105,30 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
 
   useEffect(() => {
     let cancelled = false;
+    imageRef.current = null;
+    pointersRef.current.clear();
+    setReady(false);
+    setLoadError("");
+    setSaveError("");
+    setOriginalSize(null);
+    setTransform(INITIAL_CROP);
     (async () => {
       const response = await adminCall("admin_get_image_data", { uid, image_id: imageId });
       if (cancelled) return;
       const dataUrl = typeof response?.data_url === "string" ? response.data_url : "";
-      if (!response?.success || !dataUrl.startsWith("data:image/")) {
+      if (response?.success !== true || !dataUrl.startsWith("data:image/")) {
         setLoadError(typeof response?.error === "string" ? response.error : "load-failed");
         return;
       }
       if (
-        typeof response.width === "number" && response.width > 0
-        && typeof response.height === "number" && response.height > 0
+        typeof response.width === "number" && Number.isSafeInteger(response.width) && response.width >= 50
+        && typeof response.height === "number" && Number.isSafeInteger(response.height) && response.height >= 50
       ) {
         setOriginalSize({ width: response.width, height: response.height });
+      } else if (isSquare) {
+        // A resized bitmap is not an authority for original-space crop coordinates.
+        setLoadError("image-dimensions-unknown");
+        return;
       }
       const image = new Image();
       image.onload = () => {
@@ -139,59 +144,117 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
     return () => {
       cancelled = true;
     };
-  }, [imageId, uid]);
+  }, [imageId, uid, isSquare]);
 
   useEffect(() => {
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     cancelRef.current?.focus();
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !busy) onCancel();
+      if (event.key === "Escape" && !savingRef.current) {
+        event.preventDefault();
+        cancel.current();
+      } else if (event.key === "Tab") {
+        const controls = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled), [tabindex="0"]',
+        ) ?? []);
+        const first = controls[0];
+        const last = controls.at(-1);
+        if (!first) {
+          event.preventDefault();
+          dialogRef.current?.focus();
+        } else if (!dialogRef.current?.contains(document.activeElement)
+          || (event.shiftKey && document.activeElement === first)
+          || (!event.shiftKey && document.activeElement === last)) {
+          event.preventDefault();
+          (event.shiftKey ? last : first)?.focus();
+        }
+      }
     }
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [busy, onCancel]);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = oldOverflow;
+      previous?.focus();
+    };
+  }, []);
 
   function onPointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
-    if (!ready || busy) return;
-    dragRef.current = { x: event.clientX, y: event.clientY };
+    if (!ready || busy || event.button !== 0 || pointersRef.current.size >= 2) return;
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     event.currentTarget.setPointerCapture(event.pointerId);
   }
 
   function onPointerMove(event: React.PointerEvent<HTMLCanvasElement>) {
-    const start = dragRef.current;
+    const pointers = pointersRef.current;
+    const start = pointers.get(event.pointerId);
     const canvas = canvasRef.current;
-    if (!start || !canvas) return;
+    const image = imageRef.current;
+    if (!start || !canvas || !image || !ready || busy) return;
     const bounds = canvas.getBoundingClientRect();
     if (bounds.width <= 0 || bounds.height <= 0) return;
-    // Two CSS pixels of drag should move the image two canvas pixels, so the
-    // delta is scaled by how much the canvas is shrunk on screen.
-    setPositionX((value) => clamp(value - ((event.clientX - start.x) * 2) / bounds.width));
-    setPositionY((value) => clamp(value - ((event.clientY - start.y) * 2) / bounds.height));
-    dragRef.current = { x: event.clientX, y: event.clientY };
+    const before = Array.from(pointers.values());
+    const end = { x: event.clientX, y: event.clientY };
+    pointers.set(event.pointerId, end);
+    const after = Array.from(pointers.values());
+    const imageSize = { width: image.naturalWidth, height: image.naturalHeight };
+    if (before.length === 2) {
+      const inCanvas = (point: CropPoint) => ({
+        x: (point.x - bounds.left) * canvas.width / bounds.width,
+        y: (point.y - bounds.top) * canvas.height / bounds.height,
+      });
+      setTransform((value) => pinchCrop(imageSize, canvas, value,
+        [inCanvas(before[0]), inCanvas(before[1])], [inCanvas(after[0]), inCanvas(after[1])],
+      ));
+    } else {
+      setTransform((value) => panCrop(imageSize, canvas, bounds, value, { x: end.x - start.x, y: end.y - start.y }));
+    }
   }
 
   function onPointerUp(event: React.PointerEvent<HTMLCanvasElement>) {
-    dragRef.current = null;
+    pointersRef.current.delete(event.pointerId);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
   }
 
   function reset() {
-    setZoom(1);
-    setRotation(0);
-    setPositionX(0);
-    setPositionY(0);
+    pointersRef.current.clear();
+    setTransform(INITIAL_CROP);
+  }
+
+  function rotate(degrees: number) {
+    pointersRef.current.clear();
+    setTransform((value) => ({ ...value, rotation: (value.rotation + degrees + 360) % 360 }));
+  }
+
+  function onCanvasKeyDown(event: React.KeyboardEvent<HTMLCanvasElement>) {
+    if (!ready || busy || !imageRef.current) return;
+    const delta = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key];
+    if (!delta) return;
+    event.preventDefault();
+    const imageSize = { width: imageRef.current.naturalWidth, height: imageRef.current.naturalHeight };
+    const canvas = event.currentTarget;
+    const bounds = canvas.getBoundingClientRect();
+    setTransform((value) => panCrop(imageSize, canvas, bounds, value, { x: delta[0], y: delta[1] }));
   }
 
   async function save() {
     const canvas = canvasRef.current;
-    if (!canvas || !ready || busy) return;
+    if (!canvas || !ready || savingRef.current) return;
+    savingRef.current = true;
+    pointersRef.current.clear();
     setBusy(true);
     setSaveError("");
     if (isSquare) {
-      const crop = squareCropInOriginalSpace();
+      const image = imageRef.current;
+      const crop = image && originalSize ? squareCropInOriginalSpace(
+        { width: image.naturalWidth, height: image.naturalHeight }, canvas, originalSize, transform,
+      ) : null;
       if (!crop) {
         setSaveError("encode-failed");
+        savingRef.current = false;
         setBusy(false);
         return;
       }
@@ -202,8 +265,9 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
         y: crop.y,
         size: crop.size,
       });
+      savingRef.current = false;
       setBusy(false);
-      if (!response?.success) {
+      if (response?.success !== true) {
         setSaveError(typeof response?.error === "string" ? response.error : "save-failed");
         return;
       }
@@ -212,9 +276,11 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
     }
     let encoded: string;
     try {
+      draw();
       encoded = canvas.toDataURL("image/jpeg", 0.92);
     } catch {
       setSaveError("encode-failed");
+      savingRef.current = false;
       setBusy(false);
       return;
     }
@@ -223,59 +289,29 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
       image_id: imageId,
       image_b64: encoded,
     });
+    savingRef.current = false;
     setBusy(false);
-    if (!response?.success) {
+    if (response?.success !== true) {
       setSaveError(typeof response?.error === "string" ? response.error : "save-failed");
       return;
     }
     onSaved();
   }
 
-  /**
-   * Invert the draw() geometry (rotation is always 0 in square mode): the
-   * visible canvas square maps to a source-space square, scaled from the
-   * loaded bitmap into Core's original pixel space.
-   */
-  function squareCropInOriginalSpace(): { x: number; y: number; size: number } | null {
-    const canvas = canvasRef.current;
-    const image = imageRef.current;
-    if (!canvas || !image) return null;
-    const width = image.naturalWidth;
-    const height = image.naturalHeight;
-    if (width < 1 || height < 1) return null;
-    const scale = Math.max(canvas.width / width, canvas.height / height) * zoom;
-    const drawnWidth = width * scale;
-    const drawnHeight = height * scale;
-    const offsetX = (positionX * Math.max(0, drawnWidth - canvas.width)) / 2;
-    const offsetY = (positionY * Math.max(0, drawnHeight - canvas.height)) / 2;
-    let x = width / 2 - (canvas.width / 2 + offsetX) / scale;
-    let y = height / 2 - (canvas.height / 2 + offsetY) / scale;
-    let size = canvas.width / scale;
-    const factor = originalSize && originalSize.width > 0
-      ? originalSize.width / width
-      : 1;
-    const boundWidth = originalSize?.width ?? width;
-    const boundHeight = originalSize?.height ?? height;
-    x = Math.round(x * factor);
-    y = Math.round(y * factor);
-    size = Math.round(size * factor);
-    size = Math.max(50, Math.min(size, Math.min(boundWidth, boundHeight)));
-    x = Math.max(0, Math.min(x, boundWidth - size));
-    y = Math.max(0, Math.min(y, boundHeight - size));
-    return { x, y, size };
-  }
-
-  return (
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div
-      className="dialog-backdrop"
+      className="dialog-backdrop image-editor-backdrop"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !busy) onCancel();
       }}
     >
       <section
+        ref={dialogRef}
         className="dialog image-editor-dialog"
         role="dialog"
+        tabIndex={-1}
         aria-modal="true"
         aria-labelledby="image-editor-title"
       >
@@ -310,6 +346,9 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerUp}
+              onLostPointerCapture={(event) => pointersRef.current.delete(event.pointerId)}
+              onKeyDown={onCanvasKeyDown}
+              tabIndex={ready && !busy ? 0 : -1}
               aria-label={t("canvasLabel")}
             />
             {!ready && !loadError ? <span>{common("loading")}</span> : null}
@@ -320,40 +359,51 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
               <span>{t("zoom")}</span>
               <input
                 type="range"
-                min={MIN_ZOOM}
-                max={MAX_ZOOM}
+                min={MIN_CROP_ZOOM}
+                max={MAX_CROP_ZOOM}
                 step="0.01"
                 value={zoom}
                 disabled={!ready || busy}
-                onChange={(event) => setZoom(Number(event.target.value))}
+                onChange={(event) => setTransform((value) => ({ ...value, zoom: clampCropZoom(Number(event.target.value)) }))}
               />
+              <output>{Math.round(zoom * 100)}%</output>
             </label>
             <div className="image-editor-buttons">
               <button
                 type="button"
                 className="button button-secondary"
-                disabled={!ready || busy || zoom <= MIN_ZOOM}
-                onClick={() => setZoom((value) => clampZoom(value - ZOOM_STEP))}
+                disabled={!ready || busy || zoom <= MIN_CROP_ZOOM}
+                onClick={() => setTransform((value) => ({ ...value, zoom: clampCropZoom(value.zoom - ZOOM_STEP) }))}
               >
                 {t("zoomOut")}
               </button>
               <button
                 type="button"
                 className="button button-secondary"
-                disabled={!ready || busy || zoom >= MAX_ZOOM}
-                onClick={() => setZoom((value) => clampZoom(value + ZOOM_STEP))}
+                disabled={!ready || busy || zoom >= MAX_CROP_ZOOM}
+                onClick={() => setTransform((value) => ({ ...value, zoom: clampCropZoom(value.zoom + ZOOM_STEP) }))}
               >
                 {t("zoomIn")}
               </button>
               {isSquare ? null : (
-                <button
-                  type="button"
-                  className="button button-secondary"
-                  disabled={!ready || busy}
-                  onClick={() => setRotation((value) => (value + 90) % 360)}
-                >
-                  {t("rotate")}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className="button button-secondary"
+                    disabled={!ready || busy}
+                    onClick={() => rotate(-90)}
+                  >
+                    {t("rotateLeft")}
+                  </button>
+                  <button
+                    type="button"
+                    className="button button-secondary"
+                    disabled={!ready || busy}
+                    onClick={() => rotate(90)}
+                  >
+                    {t("rotate")}
+                  </button>
+                </>
               )}
               <button
                 type="button"
@@ -385,14 +435,7 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
           </button>
         </div>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
-}
-
-function clamp(value: number): number {
-  return Math.min(1, Math.max(-1, value));
-}
-
-function clampZoom(value: number): number {
-  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Number(value.toFixed(2))));
 }

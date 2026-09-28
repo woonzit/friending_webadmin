@@ -5101,6 +5101,33 @@ body .verification-level-pill.level-strong {
 
 .image-editor-dialog {
   width: min(100%, 560px);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 24px);
+  overflow: hidden;
+}
+
+.image-editor-backdrop {
+  padding: 12px;
+}
+
+/* Header and actions stay pinned; only the body scrolls, so Cancel and Save are always
+   reachable on a short viewport. */
+.image-editor-dialog .dialog-header,
+.image-editor-dialog .dialog-actions {
+  flex-shrink: 0;
+}
+
+.image-editor-dialog .dialog-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.image-editor-dialog .dialog-close {
+  flex-basis: 44px;
+  width: 44px;
+  height: 44px;
 }
 
 /* The stage keeps the canvas's own 4:5 ratio whatever width is available, so
@@ -5110,7 +5137,8 @@ body .verification-level-pill.level-strong {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 16px 0;
+  width: min(100%, 38dvh);
+  margin: 16px auto;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   background: #000;
@@ -5129,12 +5157,12 @@ body .verification-level-pill.level-strong {
 /* Square mode: the buffer is 1:1; the 4:5 display rule would stretch it into
    a portrait and lie about the crop. Bound the height so the square plus the
    dialog chrome stays on screen. */
+.image-editor-stage.is-square {
+  width: min(100%, 48dvh);
+}
+
 .image-editor-stage.is-square canvas {
   aspect-ratio: 1 / 1;
-  max-height: min(62vh, 560px);
-  width: auto;
-  max-width: 100%;
-  margin: 0 auto;
 }
 
 .image-editor-stage canvas:active {
@@ -5167,12 +5195,47 @@ body .verification-level-pill.level-strong {
 
 .image-editor-controls input[type="range"] {
   flex: 1;
+  min-width: 0;
+  min-height: 44px;
+}
+
+.image-editor-controls output {
+  min-width: 4ch;
+  font-variant-numeric: tabular-nums;
 }
 
 .image-editor-buttons {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+.image-editor-buttons .button,
+.image-editor-dialog .dialog-actions .button {
+  min-height: 44px;
+  white-space: normal;
+}
+
+@media (max-width: 560px) {
+  .image-editor-dialog .dialog-header,
+  .image-editor-dialog .dialog-body,
+  .image-editor-dialog .dialog-actions {
+    padding: 14px;
+  }
+
+  .image-editor-dialog .dialog-header h2 {
+    font-size: 20px;
+  }
+
+  .image-editor-dialog .dialog-actions {
+    flex-direction: row;
+  }
+
+  .image-editor-dialog .dialog-actions .button {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
 }
 
 .dialog-wide {

@@ -3382,7 +3382,9 @@
     "rejectConfirm": "Reject this picture? The user will be notified and the picture will remain hidden.",
     "approved": "The picture was approved and the user was notified.",
     "rejected": "The picture was rejected and the user was notified.",
-    "actionError": "The moderation decision could not be saved. Please try again."
+    "actionError": "The moderation decision could not be saved. Please try again.",
+    "accessError": "Your admin role could not be confirmed, so the moderation controls stay hidden. Refresh the page to try again.",
+    "readOnly": "Read-only: your role can view this queue but cannot approve, reject or edit pictures."
   },
   "personaAdmin": {
     "eyebrow": "Identity operations",
@@ -8069,21 +8071,23 @@
   },
   "imageEditor": {
     "title": "Crop, rotate and zoom",
-    "copy": "Drag the picture to reposition it. Saving overwrites the member's picture everywhere and marks it approved.",
+    "copy": "Drag or use the arrow keys to reposition; pinch or use the zoom controls to magnify. Saving overwrites the member's picture everywhere and marks it approved.",
     "squareTitle": "Square thumbnail crop",
-    "squareCopy": "Frame the square thumbnail shown on the profile picture strip. The picture itself stays untouched; only the square variant is regenerated.",
+    "squareCopy": "Drag and pinch to frame the square thumbnail shown on the profile picture strip. Only the thumbnail changes; the picture itself and its moderation status stay untouched.",
     "squareEdit": "Square thumb",
-    "canvasLabel": "Picture crop preview. Drag to reposition.",
+    "canvasLabel": "Picture crop preview. Drag or use the arrow keys to reposition; pinch to zoom.",
     "zoom": "Zoom",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
-    "rotate": "Rotate 90°",
+    "rotate": "Rotate right 90°",
+    "rotateLeft": "Rotate left 90°",
     "reset": "Reset",
-    "save": "Overwrite picture",
+    "save": "Save and approve",
     "edit": "Crop / rotate",
     "loadError": "The picture could not be loaded for editing.",
     "saveError": "The picture could not be saved. Please try again.",
-    "saved": "The picture was overwritten.",
+    "saved": "The picture was updated and approved.",
+    "squareSaved": "The square thumbnail was saved. The moderation status is unchanged.",
     "squareSave": "Save square thumbnail"
   },
   "inviteConfiguration": {
