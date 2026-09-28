@@ -56,16 +56,19 @@ const RENDER_MESSAGES = {
 
 // Copied byte-identically from the lead-accepted Core tip. Body identity is
 // pinned separately so provenance-only manifest moves cannot be mistaken for
-// changes to the 50 released wire blobs — which is exactly what the last move
-// was: re-copied from Core `main` 7c6e5aa (the T-670/T-668 landing) after
-// T-659 had bound the lane's own provider commit, all 50 bodies unchanged and
-// only `source_commit` and the manifest digest different.
-const FIXTURE_ACCEPTED_CORE_TIP = "7c6e5aaad7829d61f070c27d52860f94569db8ec";
-const FIXTURE_SOURCE_COMMIT = "968e2fda92fb325584089df81fef2e83c30fcc14";
+// changes to the 50 released wire blobs. The last move (T-863 S6, P-039) was
+// re-copied from Core `main` 886c7110: Core 16b42f8b retired the unmetered
+// POST /v1/iosuser/like Hey vote (410 tombstone), so member-hey-disabled.json
+// is now bound to POST /v1/ping/send, which emits the same hey-disabled 403.
+// All 50 bodies, `fixture_set_sha256` and `contract_manifest_sha256` are
+// unchanged; the route, `source_commit`, the generator digest and the
+// recorded source paths (WebadminRolePolicy.php joined earlier) moved.
+const FIXTURE_ACCEPTED_CORE_TIP = "886c7110e43a2505a9f5e5ce32f860c904a57659";
+const FIXTURE_SOURCE_COMMIT = "16b42f8b893b218e2c07805c9543908e9ba98145";
 const FIXTURE_CONTRACT_MANIFEST_SHA256 = "c854019e6be2046ad81af294719774beca04346d5f078b746daba313a787f083";
-const FIXTURE_GENERATOR_SHA256 = "7d4588c7336808f90f778c837ca15b61268594641709f489180a7b1d6a9f913f";
+const FIXTURE_GENERATOR_SHA256 = "cf089b491770757072fd5bdcc2edadfd51582aa0c5befe17c5e6f5d9beb86895";
 const FIXTURE_SET_SHA256 = "f8af93a1dee24a7c83cfd8deb03757bead16d0c2fd13494a73dbfc778db1fd8b";
-const FIXTURE_MANIFEST_SHA256 = "b378bf039859bccab2cedee0d0104d1542ee9de5858aff726bc246ac27a52a5e";
+const FIXTURE_MANIFEST_SHA256 = "71ba1580165d5922b958bcf4dcd49433035b8f63d58d0b054fc6abd0977a2059";
 const FIXTURE_BODY_COUNT = 50;
 
 const FIXTURE_BODY_FILES = [
@@ -140,6 +143,7 @@ const FIXTURE_SOURCE_PATHS = [
   "src/Services/SocketNotifyService.php",
   "src/Support/FeatureSwitchesAdminPolicy.php",
   "src/Support/Webadmin.php",
+  "src/Support/WebadminRolePolicy.php",
 ] as const;
 
 type Json = Record<string, any>;
@@ -360,7 +364,7 @@ test("the released Core corpus is manifest-bound with body identity kept separat
         "/v1/app/ios_appconfig",
         "/v1/footprints/photo-likes",
         "/v1/footprints/send",
-        "/v1/iosuser/like",
+        "/v1/ping/send",
         "/v1/profile/photos/like",
       ].includes(row.route));
     } else {
@@ -377,6 +381,13 @@ test("the released Core corpus is manifest-bound with body identity kept separat
     { ios: 12, push: 5, webadmin: 33 },
   );
   assert.equal(sha256(aggregateRows.join("\n")), FIXTURE_SET_SHA256);
+  // P-039: POST /v1/iosuser/like is a 410 tombstone; the hey-disabled 403 body
+  // is bound to the Pinger send route that still emits it.
+  assert.equal(
+    (manifest.fixtures as Json[]).find((row) => row.file === "member-hey-disabled.json")?.route,
+    "/v1/ping/send",
+  );
+  assert.equal((manifest.fixtures as Json[]).some((row) => row.route === "/v1/iosuser/like"), false);
   assert.match(FIXTURE_ACCEPTED_CORE_TIP, /^[0-9a-f]{40}$/);
   assert.notEqual(FIXTURE_ACCEPTED_CORE_TIP, FIXTURE_SOURCE_COMMIT, "the accepted provenance tip follows its source commit");
 });

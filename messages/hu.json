@@ -9121,9 +9121,9 @@
     "switches": {
       "hey": {
         "title": "Hey",
-        "summary": "A Pinger bevezetési beállítása és a profilkapcsolati gesztus felett álló teljes termékszintű kapu.",
+        "summary": "A Pinger bevezetési beállítása felett álló teljes termékszintű kapu.",
         "consequenceOff": "A Hey kikapcsolása elrejti a Pinger gombot, a profil Hey gesztust és a Hey-k gyűjtőfület, elutasítja az új küldéseket, és leállítja a Hey-értesítési bejegyzéseket és push értesítéseket. A meglévő Hey-k és matchek megmaradnak; egy korábbi Hey visszavonható marad.",
-        "consequenceOn": "A Hey bekapcsolása újra engedi a kapcsolati gesztust. A Pinger gomb továbbra is csak akkor jelenik meg, ha a külön bevezetési konfigurációja aktív; a kikapcsolt időszakból semmi nem épül újra.",
+        "consequenceOn": "A Hey bekapcsolása újra engedi a Hey-küldést. A Pinger gomb továbbra is csak akkor jelenik meg, ha a külön bevezetési konfigurációja aktív; a kikapcsolt időszakból semmi nem épül újra.",
         "enable": "Hey bekapcsolása",
         "disable": "Hey kikapcsolása"
       },

@@ -2,12 +2,12 @@
     "schema_version": 1,
     "contract_version": 1,
     "app_contract_version": 2,
-    "source_commit": "968e2fda92fb325584089df81fef2e83c30fcc14",
+    "source_commit": "16b42f8b893b218e2c07805c9543908e9ba98145",
     "contract_manifest_sha256": "c854019e6be2046ad81af294719774beca04346d5f078b746daba313a787f083",
     "fixture_set_sha256": "f8af93a1dee24a7c83cfd8deb03757bead16d0c2fd13494a73dbfc778db1fd8b",
     "provenance": {
         "generator": "tests/feature_switches_fixture_dump.php",
-        "generator_sha256": "7d4588c7336808f90f778c837ca15b61268594641709f489180a7b1d6a9f913f",
+        "generator_sha256": "cf089b491770757072fd5bdcc2edadfd51582aa0c5befe17c5e6f5d9beb86895",
         "wire_adapters": {
             "admin_me": "Friending\\Support\\Webadmin::reply",
             "versioned_actions": "Friending\\Support\\Webadmin::noStoreReply",
@@ -37,7 +37,8 @@
             "src/Services/ProfileVisitDeferralService.php",
             "src/Services/SocketNotifyService.php",
             "src/Support/FeatureSwitchesAdminPolicy.php",
-            "src/Support/Webadmin.php"
+            "src/Support/Webadmin.php",
+            "src/Support/WebadminRolePolicy.php"
         ]
     },
     "fixtures": [
@@ -331,7 +332,7 @@
         },
         {
             "file": "member-hey-disabled.json",
-            "route": "/v1/iosuser/like",
+            "route": "/v1/ping/send",
             "case": "the Hey gesture refused while the switch is off",
             "consumer": "ios",
             "valid": true,

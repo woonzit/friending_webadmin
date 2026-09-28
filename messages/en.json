@@ -9121,9 +9121,9 @@
     "switches": {
       "hey": {
         "title": "Hey",
-        "summary": "The product-wide gate above the Pinger rollout setting and the profile relation gesture.",
+        "summary": "The product-wide gate above the Pinger rollout setting.",
         "consequenceOff": "Turning Hey off hides the Pinger button, the profile Hey gesture and the Heys collector tab, refuses new sends, and stops Hey bell rows and pushes. Existing Heys and matches remain; withdrawing a previous Hey stays possible.",
-        "consequenceOn": "Turning Hey on permits the relation gesture again. The Pinger button still appears only when its separate rollout configuration is enabled; nothing is reconstructed for the off period.",
+        "consequenceOn": "Turning Hey on permits sending Heys again. The Pinger button still appears only when its separate rollout configuration is enabled; nothing is reconstructed for the off period.",
         "enable": "Turn Hey on",
         "disable": "Turn Hey off"
       },
