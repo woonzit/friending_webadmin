@@ -174,7 +174,7 @@
               "2": "Replace or re-crop an image when the content is acceptable but presentation is wrong.",
               "3": "Choose the accepted main photo or remove a specific image when policy and the support case justify it."
             },
-            "guidance": "Private album visibility in Webadmin is privileged support access. Do not copy, download or expose it beyond the case, and remember that deletion affects the member immediately."
+            "guidance": "Private album visibility in Webadmin is privileged support access. Do not copy, download or expose it beyond the case, and remember that deletion affects the member immediately. The edit, square, main-photo and delete controls appear only for the owner and admin roles; a viewer sees the albums read-only."
           },
           "membership": {
             "title": "Effective membership",

@@ -174,7 +174,7 @@
               "2": "Cseréld vagy vágd újra a képet, ha a tartalom elfogadható, de a megjelenítés hibás.",
               "3": "Válaszd ki az elfogadott főfotót, vagy távolíts el egy konkrét képet, ha a szabályzat és az ügy ezt indokolja."
             },
-            "guidance": "A privát album Webadmin-láthatósága kiemelt támogatási hozzáférés. Ne másold, töltsd le vagy add tovább az ügyön kívül, és számolj azzal, hogy a törlés azonnal érinti a tagot."
+            "guidance": "A privát album Webadmin-láthatósága kiemelt támogatási hozzáférés. Ne másold, töltsd le vagy add tovább az ügyön kívül, és számolj azzal, hogy a törlés azonnal érinti a tagot. A vágás-, négyzetes bélyegkép-, főfotó- és törlésgombok csak tulajdonosi és admin szerepkörrel jelennek meg; olvasási jogosultsággal az albumok csak megtekinthetők."
           },
           "membership": {
             "title": "Tényleges tagság",

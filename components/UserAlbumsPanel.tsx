@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
+import { isAdminWriteRole } from "@/lib/authPolicy";
 import { parseProfilePhotoInsights, type ProfilePhotoInsights } from "@/lib/profilePresentation";
 import AdminImageEditor from "@/components/AdminImageEditor";
 
@@ -67,6 +68,23 @@ export default function UserAlbumsPanel({ uid }: { uid: number }) {
   const [deleteError, setDeleteError] = useState(false);
   const [editing, setEditing] = useState<{ imageId: string; mode: "replace" | "square" } | null>(null);
   const [edited, setEdited] = useState<"replace" | "square" | null>(null);
+  // Core refuses every media write to a viewer. The crop, square, make-main and delete controls
+  // appear only once admin_me has proven a write role; an unreadable admin_me fails closed.
+  const [access, setAccess] = useState<"loading" | "write" | "read" | "error">("loading");
+  const canWrite = access === "write";
+
+  useEffect(() => {
+    let active = true;
+    void adminCall("admin_me").then((response) => {
+      if (!active) return;
+      if (response?.success !== true || typeof response.role !== "string") {
+        setAccess("error");
+        return;
+      }
+      setAccess(isAdminWriteRole(response.role) ? "write" : "read");
+    });
+    return () => { active = false; };
+  }, []);
 
   const load = useCallback(async () => {
     const [albumResponse, insightResponse] = await Promise.all([
@@ -83,7 +101,7 @@ export default function UserAlbumsPanel({ uid }: { uid: number }) {
   useEffect(() => { void load(); }, [load]);
 
   async function remove(image: AlbumImage) {
-    if (!window.confirm(t("deleteAlbumImageConfirm"))) return;
+    if (!canWrite || !window.confirm(t("deleteAlbumImageConfirm"))) return;
     setBusy(image.id);
     const response = await adminCall("admin_delete_profile_album_image", { image_id: image.id });
     setBusy("");
@@ -100,7 +118,7 @@ export default function UserAlbumsPanel({ uid }: { uid: number }) {
   // Reorders the profile gallery server-side so this picture leads; Core
   // resynchronizes the legacy avatar hash from the new order.
   async function makeMain(image: AlbumImage) {
-    if (!window.confirm(t("makeMainConfirm"))) return;
+    if (!canWrite || !window.confirm(t("makeMainConfirm"))) return;
     setBusy(image.id);
     const response = await adminCall("admin_set_main_photo", { uid, image_id: image.id });
     setBusy("");
@@ -114,7 +132,7 @@ export default function UserAlbumsPanel({ uid }: { uid: number }) {
 
   return (
     <section className="panel user-albums-panel">
-      {editing ? (
+      {editing && canWrite ? (
         <AdminImageEditor
           uid={uid}
           imageId={editing.imageId}
@@ -151,7 +169,7 @@ export default function UserAlbumsPanel({ uid }: { uid: number }) {
                     return <figure className={`gallery-item${insights.top_photo_id === image.id ? " is-top-photo" : ""}`} key={image.id}>
                     <a href={image.full_url || image.thumbnail_url} target="_blank" rel="noopener noreferrer"><img src={image.thumbnail_url || image.full_url} alt="" loading="lazy" /></a>
                     {insights.top_photo_id === image.id ? <span className="top-photo-marker">{t("topPhotoMarker")}</span> : null}
-                    <figcaption><span>{t(`albumScopes.${image.media_scope === "private_album" || image.media_scope === "public_album" ? image.media_scope : "profile"}`)} · <b className={`status-badge status-${status === "active" ? "accepted" : status === "rejected" ? "denied" : "pending"}`}>{status}</b></span>{insight ? <span className="album-photo-stats"><b>{t("likesValue", { count: insight.likes_count })}</b><b>{insight.rank === null ? t("unranked") : t("rankValue", { rank: insight.rank })}</b><b>{t("orderValue", { order: insight.order })}</b></span> : <span className="album-photo-stats">{t("nonProfileInsight")}</span>}{album.kind === "profile" && image.media_scope === "profile" ? <button type="button" className="text-button" disabled={Boolean(busy)} onClick={() => void makeMain(image)}>{busy === image.id ? "…" : t("makeMain")}</button> : null}<button type="button" className="text-button" disabled={Boolean(busy)} onClick={() => setEditing({ imageId: image.id, mode: "replace" })}>{editor("edit")}</button><button type="button" className="text-button" disabled={Boolean(busy)} onClick={() => setEditing({ imageId: image.id, mode: "square" })}>{editor("squareEdit")}</button><button type="button" className="text-button danger-text" disabled={Boolean(busy)} onClick={() => void remove(image)}>{busy === image.id ? "…" : t("deleteImage")}</button></figcaption>
+                    <figcaption><span>{t(`albumScopes.${image.media_scope === "private_album" || image.media_scope === "public_album" ? image.media_scope : "profile"}`)} · <b className={`status-badge status-${status === "active" ? "accepted" : status === "rejected" ? "denied" : "pending"}`}>{status}</b></span>{insight ? <span className="album-photo-stats"><b>{t("likesValue", { count: insight.likes_count })}</b><b>{insight.rank === null ? t("unranked") : t("rankValue", { rank: insight.rank })}</b><b>{t("orderValue", { order: insight.order })}</b></span> : <span className="album-photo-stats">{t("nonProfileInsight")}</span>}{canWrite ? <>{album.kind === "profile" && image.media_scope === "profile" ? <button type="button" className="text-button" disabled={Boolean(busy)} onClick={() => void makeMain(image)}>{busy === image.id ? "…" : t("makeMain")}</button> : null}<button type="button" className="text-button" disabled={Boolean(busy)} onClick={() => setEditing({ imageId: image.id, mode: "replace" })}>{editor("edit")}</button><button type="button" className="text-button" disabled={Boolean(busy)} onClick={() => setEditing({ imageId: image.id, mode: "square" })}>{editor("squareEdit")}</button><button type="button" className="text-button danger-text" disabled={Boolean(busy)} onClick={() => void remove(image)}>{busy === image.id ? "…" : t("deleteImage")}</button></> : null}</figcaption>
                   </figure>})}
                 </div>}
               </section>

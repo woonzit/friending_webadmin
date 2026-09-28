@@ -48,6 +48,14 @@ test("the queue ignores stale loads, offers write controls only to write roles a
     assert.ok(ADMIN_ACTIONS.includes(action as typeof ADMIN_ACTIONS[number]));
     assert.ok(editor.includes(`adminCall("${action}"`));
   }
+  // The member album panel follows the same rule: its crop, square, make-main and delete
+  // controls render only for a proven write role, and each write handler re-checks it.
+  assert.match(albums, /isAdminWriteRole\(response.role\)/);
+  assert.match(albums, /const canWrite = access === "write";/);
+  assert.match(albums, /\{canWrite \? <>\{album\.kind === "profile"[\s\S]*t\("deleteImage"\)\}<\/button><\/> : null\}/);
+  assert.match(albums, /if \(!canWrite \|\| !window.confirm\(t\("deleteAlbumImageConfirm"\)\)\) return;/);
+  assert.match(albums, /if \(!canWrite \|\| !window.confirm\(t\("makeMainConfirm"\)\)\) return;/);
+  assert.match(albums, /\{editing && canWrite \? \(/);
   // A square save neither overwrites nor approves the picture, so it has its own receipt.
   assert.match(source, /editing.mode === "square" \? "squareSaved" : "saved"/);
   assert.match(albums, /edited === "square" \? "squareSaved" : "saved"/);
