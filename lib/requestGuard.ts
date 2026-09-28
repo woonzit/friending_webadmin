@@ -28,17 +28,24 @@ export function isTrustedAdminRequest(headers: HeaderReader): boolean {
 
 /**
  * Same-origin guard for cookie-authenticated media subresources. `<video>` and
- * `<img>` GET requests cannot attach the custom mutation header and commonly
- * omit `Origin`, so they must carry a same-host Referer (or Origin) and may not
- * report a cross-site Fetch Metadata value. Directly opening an evidence URL
- * therefore fails even with a copied path.
+ * `<img>` GET requests cannot attach the custom mutation header and omit
+ * `Origin`, and the console's `Referrer-Policy: no-referrer` also strips
+ * `Referer` — so a request is trusted when EITHER a same-host Referer/Origin
+ * accompanies a non-cross-site Fetch Metadata value, OR, with no such header,
+ * the browser itself reports `Sec-Fetch-Site: same-origin` (a forbidden header
+ * no page script or other site can set). Directly opening an evidence URL
+ * (`Sec-Fetch-Site: none`) or embedding it elsewhere therefore still fails.
+ *
+ * Before the second branch existed, every private evidence `<img>`/`<video>`
+ * (sent without Referer under the console policy) got 403.
  */
 export function isTrustedAdminMediaRead(headers: HeaderReader): boolean {
   const host = headers.get("host") ?? "";
   const source = headers.get("origin") ?? headers.get("referer") ?? "";
   const fetchSite = headers.get("sec-fetch-site")?.toLowerCase();
-  return host !== ""
-    && source !== ""
-    && sameHost(source, host)
-    && (!fetchSite || fetchSite === "same-origin");
+  if (host === "") return false;
+  if (source !== "") {
+    return sameHost(source, host) && (!fetchSite || fetchSite === "same-origin");
+  }
+  return fetchSite === "same-origin";
 }

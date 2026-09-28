@@ -69,6 +69,34 @@ test("private media subresources require a same-host source and fail direct or c
     host: "friendingapp.com",
     "sec-fetch-site": "none",
   })), false, "a copied evidence URL may not be opened directly");
+  // The console sends `Referrer-Policy: no-referrer`, so an evidence <img>/<video> arrives with
+  // neither Referer nor Origin: the browser's own same-origin Fetch Metadata is the proof.
+  assert.equal(isTrustedAdminMediaRead(headers({
+    host: "friendingapp.com",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-dest": "image",
+  })), true, "an evidence image on the console page");
+  assert.equal(isTrustedAdminMediaRead(headers({
+    host: "friendingapp.com",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-dest": "video",
+  })), true, "an evidence video on the console page");
+  for (const site of ["cross-site", "same-site", "none", ""]) {
+    assert.equal(isTrustedAdminMediaRead(headers({ host: "friendingapp.com", ...(site ? { "sec-fetch-site": site } : {}) })), false,
+      `no Referer/Origin and Sec-Fetch-Site ${site || "absent"}`);
+  }
+  assert.equal(isTrustedAdminMediaRead(headers({ "sec-fetch-site": "same-origin" })), false, "no Host");
+  // A present Referer/Origin must still name this host, even when Fetch Metadata claims same-origin.
+  assert.equal(isTrustedAdminMediaRead(headers({
+    referer: "https://evil.example/",
+    host: "friendingapp.com",
+    "sec-fetch-site": "same-origin",
+  })), false, "a foreign Referer is never overridden by Fetch Metadata");
+  assert.equal(isTrustedAdminMediaRead(headers({
+    origin: "https://friendingapp.com",
+    host: "friendingapp.com",
+    "sec-fetch-site": "cross-site",
+  })), false, "a same-host Origin with cross-site Fetch Metadata");
   assert.equal(isTrustedAdminMediaRead(headers({
     referer: "https://evil.example/",
     host: "friendingapp.com",

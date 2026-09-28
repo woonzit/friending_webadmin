@@ -237,7 +237,7 @@ export default function ProfileVerificationDetailPage() {
               <h3>{t("evidence.avatarSnapshot")}</h3>
               {item.has_avatar_snapshot && snapshotUrl
                 // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={snapshotUrl} alt={t("evidence.avatarSnapshot")} />
+                ? <img src={snapshotUrl} alt={t("evidence.avatarSnapshot")} referrerPolicy="same-origin" />
                 : <p className="page-subtitle">{t("evidence.missing")}</p>}
               <dl className="detail-list compact">
                 <div className="detail-row"><dt>{t("displayNameAtCase")}</dt><dd>{item.identity_snapshot.display_name || "—"}</dd></div>
