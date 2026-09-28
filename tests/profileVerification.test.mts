@@ -335,7 +335,32 @@ test("the existing Configuration route owns the editor and the queue has its own
   assert.match(evidenceRoute, /Cache-Control.*private, no-store/s);
   assert.match(evidenceRoute, /Cross-Origin-Resource-Policy/);
   assert.match(detailPage, /identity\?\.success === true \? normalizeAdminRole/);
-  assert.match(detailPage, /!parsed \|\| !actorRole \|\| !actorEmail\.includes\("@"\)/);
+  assert.match(detailPage, /!parsed \|\| parsed\.user\.uid !== uid \|\| !actorRole \|\| !actorEmail\.includes\("@"\)/);
   assert.match(detailPage, /state === "error" \|\| !detail \|\| !adminActor/);
   assert.doesNotMatch(detailPage, /setCanWrite\(isAdminWriteRole/);
+});
+
+test("the case page drops stale answers and sends exactly the decision the operator confirmed", async () => {
+  const page = await readFile(new URL("../app/(dashboard)/profile-verification/[caseId]/page.tsx", import.meta.url), "utf8");
+  // Every await re-checks the generation and the case scope it started for.
+  assert.match(page, /const generation = \+\+loadGeneration\.current;/);
+  assert.match(page, /if \(generation !== loadGeneration\.current \|\| liveScope\.current !== scope\) return;/);
+  assert.equal(page.match(/if \(liveScope\.current !== scope\) return;/g)?.length, 3, "load entry, lease and decision");
+  // Navigating to another case resets every per-case state and invalidates in-flight loads.
+  const reset = page.slice(page.indexOf("useEffect(() => {\n    setState(\"loading\");"));
+  for (const call of ["setDetail(null)", "setAdminActor(null)", "setConfirmation(null)", "setEvidenceOpen(false)", "setBusy(false)", "setFeedback(null)"]) {
+    assert.ok(reset.slice(0, 400).includes(call), call);
+  }
+  assert.match(page, /return \(\) => \{ loadGeneration\.current \+= 1; \};/);
+  // The confirmation freezes case, revision, request id, reason and note at confirm time ...
+  assert.match(page, /caseId: detail\.case\.case_id,\s+revision: detail\.case\.revision,\s+requestId: crypto\.randomUUID\(\),/);
+  // ... execution reloads instead of sending when the case moved on ...
+  assert.match(page, /confirmation\.caseId !== detail\.case\.case_id \|\| confirmation\.revision !== detail\.case\.revision/);
+  // ... and the decision body carries only the frozen values.
+  const body = page.slice(page.indexOf('adminCall("profile_verification_decision"'), page.indexOf("});", page.indexOf('adminCall("profile_verification_decision"')));
+  for (const field of ["case_id: confirmation.caseId", "reason: confirmation.reason", "note: confirmation.note",
+    "expected_revision: confirmation.revision", "request_id: confirmation.requestId"]) {
+    assert.ok(body.includes(field), field);
+  }
+  assert.doesNotMatch(body, /detail\.case|note\.trim\(\)|randomUUID/);
 });

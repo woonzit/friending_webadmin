@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -20,7 +20,9 @@ import {
 
 type DecisionAction = "approve" | "reject" | "request_new_video";
 type Feedback = { tone: "success" | "error"; text: string };
-type Confirmation = { action: DecisionAction };
+// The confirmation freezes exactly what the operator confirmed; execution sends these values and
+// never re-reads the live case, form or a freshly minted request id.
+type Confirmation = { action: DecisionAction; caseId: string; revision: number; requestId: string; reason: string; note: string };
 type AdminActor = { email: string; role: string };
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -52,8 +54,16 @@ export default function ProfileVerificationDetailPage() {
   const [reason, setReason] = useState(PROFILE_VERIFICATION_REJECTION_REASONS[0]);
   const [note, setNote] = useState("");
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  // Every await re-checks that the page still shows the case it started for: a slower answer for a
+  // case the operator has already left must not land on the one now open.
+  const loadGeneration = useRef(0);
+  const scope = `${slug}:${uid}`;
+  const liveScope = useRef(scope);
+  liveScope.current = scope;
 
   const load = useCallback(async () => {
+    if (liveScope.current !== scope) return;
+    const generation = ++loadGeneration.current;
     if (!Number.isInteger(uid) || uid <= 0 || (requestedCaseId === "" && !slug.startsWith("uid-"))) {
       setState("not-found");
       return;
@@ -63,6 +73,7 @@ export default function ProfileVerificationDetailPage() {
       adminCall("profile_verification_detail", { uid, case_id: requestedCaseId }),
       adminCall("admin_me"),
     ]);
+    if (generation !== loadGeneration.current || liveScope.current !== scope) return;
     if (response?.error === "profile-verification-state-not-found" || response?.error === "profile-verification-case-not-found") {
       setState("not-found");
       return;
@@ -73,7 +84,7 @@ export default function ProfileVerificationDetailPage() {
     const actor = record(identity);
     const actorRole = identity?.success === true ? normalizeAdminRole(actor?.role) : "";
     const actorEmail = typeof actor?.email === "string" ? actor.email.trim().toLowerCase() : "";
-    if (!parsed || !actorRole || !actorEmail.includes("@")) {
+    if (!parsed || parsed.user.uid !== uid || !actorRole || !actorEmail.includes("@")) {
       setAdminActor(null);
       setState("error");
       return;
@@ -81,9 +92,19 @@ export default function ProfileVerificationDetailPage() {
     setAdminActor({ email: actorEmail, role: actorRole });
     setDetail(parsed);
     setState("ready");
-  }, [detail, requestedCaseId, slug, uid]);
+  }, [detail, requestedCaseId, slug, uid, scope]);
 
-  useEffect(() => { void load(); }, [slug, uid]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setState("loading");
+    setDetail(null);
+    setAdminActor(null);
+    setConfirmation(null);
+    setEvidenceOpen(false);
+    setBusy(false);
+    setFeedback(null);
+    void load();
+    return () => { loadGeneration.current += 1; };
+  }, [slug, uid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function lease(operation: "claim" | "heartbeat" | "release") {
     if (!detail?.case || busy) return;
@@ -94,6 +115,7 @@ export default function ProfileVerificationDetailPage() {
       action: operation,
       expected_revision: detail.case.revision,
     });
+    if (liveScope.current !== scope) return;
     setBusy(false);
     if (!response?.success) {
       setFeedback({ tone: "error", text: t("operationFailed", { error: String(response?.error || "core-unavailable") }) });
@@ -111,21 +133,36 @@ export default function ProfileVerificationDetailPage() {
       setFeedback({ tone: "error", text: t("reasonRequired") });
       return;
     }
-    setConfirmation({ action });
+    setConfirmation({
+      action,
+      caseId: detail.case.case_id,
+      revision: detail.case.revision,
+      requestId: crypto.randomUUID(),
+      reason: action === "approve" ? "" : reason,
+      note: note.trim(),
+    });
   }
 
   async function executeDecision() {
     if (!confirmation || !detail?.case || busy) return;
+    // The case moved on (reload, lease change or navigation) since the operator confirmed: show
+    // the fresh state instead of sending a decision about something they did not see.
+    if (confirmation.caseId !== detail.case.case_id || confirmation.revision !== detail.case.revision) {
+      setConfirmation(null);
+      await load();
+      return;
+    }
     setBusy(true);
     setFeedback(null);
     const response = await adminCall("profile_verification_decision", {
-      case_id: detail.case.case_id,
+      case_id: confirmation.caseId,
       action: confirmation.action,
-      reason: confirmation.action === "approve" ? "" : reason,
-      note: note.trim(),
-      expected_revision: detail.case.revision,
-      request_id: crypto.randomUUID(),
+      reason: confirmation.reason,
+      note: confirmation.note,
+      expected_revision: confirmation.revision,
+      request_id: confirmation.requestId,
     });
+    if (liveScope.current !== scope) return;
     setBusy(false);
     setConfirmation(null);
     if (!response?.success) {
