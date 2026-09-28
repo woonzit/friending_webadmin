@@ -576,3 +576,24 @@ test("member help explains restoring PLUS after re-registration with the panel's
     assert.match(hu, phrase);
   }
 });
+
+test("the retry boundary and the square-thumbnail wording say what the console actually does", async () => {
+  const english = JSON.parse(await readFile(path.join(root, "messages", "en.json"), "utf8"));
+  const hungarian = JSON.parse(await readFile(path.join(root, "messages", "hu.json"), "utf8"));
+  // Most panels' retry only reloads; only some keep a pending change and resend the same request.
+  assert.doesNotMatch(english.adminHelp.sourceBoundary, /use the panel's own Retry, which resends the same request/);
+  assert.ok(english.adminHelp.sourceBoundary.includes(english.common.retry), "EN names the generic reload button");
+  assert.match(english.adminHelp.sourceBoundary, /Some panels keep an uncertain change pending/);
+  assert.ok(hungarian.adminHelp.sourceBoundary.includes(`az ${hungarian.common.retry} gomb csak újra betölti`), "HU names the generic reload button");
+  assert.match(hungarian.adminHelp.sourceBoundary, /Néhány panel függőben tartja/);
+
+  const values = (value: unknown): string[] => typeof value === "string"
+    ? [value]
+    : value && typeof value === "object" ? Object.values(value).flatMap(values) : [];
+  const allHungarian = values(hungarian).join("\n");
+  assert.doesNotMatch(allHungarian, /kocka-thumb|thumbot|\bthumb\b/iu, "one Hungarian term: négyzetes bélyegkép");
+  assert.equal(hungarian.imageEditor.squareEdit, "Négyzetes bélyegkép");
+  assert.match(hungarian.imageEditor.squareSaved, /^A négyzetes bélyegképet elmentettük\./u);
+  assert.ok(allHungarian.includes(`„${hungarian.pinger.icon.useBundled}”`), "the bundled-icons label is quoted where the help names it");
+  assert.doesNotMatch(allHungarian, /A gomb feliratának módosítása lejjebb/u);
+});

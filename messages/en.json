@@ -58,7 +58,7 @@
     "guidanceTitle": "Keep in mind:",
     "boundaryTitle": "Permissions and source of truth",
     "roleBoundary": "Your role determines which controls are shown and which changes Core will accept. A missing button may mean read-only access, not a broken page.",
-    "sourceBoundary": "Values shown after a successful load come from Core. After a conflict, timeout or uncertain save, use the panel's own Retry, which resends the same request, or reload the authoritative state; never start a second, new change to find out whether the first one landed.",
+    "sourceBoundary": "Values shown after a successful load come from Core. After a conflict, timeout or uncertain save, first reload the authoritative state and check whether the change landed. Some panels keep an uncertain change pending and offer to resend exactly the same request; everywhere else, Try again only loads the data again. Never start a second, new change to find out whether the first one landed.",
     "unavailableTitle": "Page help unavailable",
     "unavailableCopy": "This route is not in the current bounded help catalogue. Do not make a change until its operator guide is added and reviewed.",
     "pages": {
@@ -2957,7 +2957,7 @@
         },
         "upload": {
           "title": "Uploading icons",
-          "purpose": "Each slot accepts a PNG or an SVG, which Core turns into managed PNG variants. With Use the app's bundled icons on, no upload is needed.",
+          "purpose": "Each slot accepts a PNG or an SVG, which Core turns into managed PNG variants. With “Use the app's bundled icons” on, no upload is needed.",
           "effect": "An upload is only staged: its URL is published when you save the configuration. Uploads stay stored while the bundled switch is on, so switching it off brings them back.",
           "example": "Upload all four files, check the previews, then save once; switching to the bundled icons later does not delete them."
         },

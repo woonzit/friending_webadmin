@@ -58,7 +58,7 @@
     "guidanceTitle": "Fontos:",
     "boundaryTitle": "Jogosultságok és hiteles adatforrás",
     "roleBoundary": "A szerepköröd határozza meg, mely vezérlők jelennek meg, és mely változtatásokat fogadja el a Core. Egy hiányzó gomb jelenthet csak olvasási jogosultságot is, nem feltétlenül hibás oldalt.",
-    "sourceBoundary": "A sikeres betöltés után megjelenített értékek a Core-ból származnak. Ütközés, időtúllépés vagy bizonytalan mentés után használd a panel saját Újrapróbálás gombját, amely ugyanazt a kérést küldi el újra, vagy töltsd be újra a hiteles állapotot; soha ne indíts egy második, új módosítást annak kiderítésére, hogy az első megtörtént-e.",
+    "sourceBoundary": "A sikeres betöltés után megjelenített értékek a Core-ból származnak. Ütközés, időtúllépés vagy bizonytalan mentés után előbb töltsd be újra a hiteles állapotot, és nézd meg, hogy a módosítás megtörtént-e. Néhány panel függőben tartja a bizonytalan módosítást, és felajánlja, hogy pontosan ugyanazt a kérést küldje el újra; máshol az Újra gomb csak újra betölti az adatokat. Soha ne indíts egy második, új módosítást annak kiderítésére, hogy az első megtörtént-e.",
     "unavailableTitle": "Ehhez az oldalhoz nincs súgó",
     "unavailableCopy": "Ez az útvonal nem része a jelenlegi zárt súgókatalógusnak. Ne végezz változtatást addig, amíg az operátori útmutató el nem készül és át nem vizsgálják.",
     "pages": {
@@ -478,18 +478,18 @@
             "purpose": "Minden kártya egyesíti az eredeti képet, a tag és album hátterét, a létrehozás idejét, automatikus valószínűségeket és az ellenőrzés okait.",
             "actions": {
               "1": "Nyisd meg teljes méretben az eredetit, és szükség esetén a tagfiókot is a környezet megértéséhez.",
-              "2": "Ha a tartalom elfogadható, de a megjelenítés hibás, használd a Vágás / forgatás vagy a Kocka-thumb funkciót."
+              "2": "Ha a tartalom elfogadható, de a megjelenítés hibás, használd a „Vágás / forgatás” vagy a „Négyzetes bélyegkép” funkciót."
             },
             "guidance": "Az automatikus címkék segítik az ellenőrzést, de nem döntenek. Terminális művelet előtt az aktuális szabályzat szerint vizsgáld meg a tényleges képet."
           },
           "imageEditing": {
-            "title": "Vágás, forgatás és kocka-thumb",
-            "purpose": "A Vágás / forgatás áthelyezi, nagyítja vagy elforgatja a képet és felülírja, ami egyben jóvá is hagyja. A Kocka-thumb csak a profilkép-sáv négyzetes bélyegképét keretezi újra, a kép és a moderációs állapota változatlan marad.",
+            "title": "Vágás, forgatás és négyzetes bélyegkép",
+            "purpose": "A „Vágás / forgatás” áthelyezi, nagyítja vagy elforgatja a képet és felülírja, ami egyben jóvá is hagyja. A „Négyzetes bélyegkép” csak a profilkép-sáv négyzetes bélyegképét keretezi újra, a kép és a moderációs állapota változatlan marad.",
             "actions": {
               "1": "Húzással vagy a nyílbillentyűkkel mozgasd a képet, két ujjal vagy a vezérlőkkel nagyíts, és szükség esetén forgasd negyedfordulatonként balra vagy jobbra.",
-              "2": "Egyszer nyomd meg a Mentés és jóváhagyás vagy a Négyzetes bélyegkép mentése gombot, és olvasd el a visszajelzést; a kettő szándékosan eltér."
+              "2": "Egyszer nyomd meg a „Mentés és jóváhagyás” vagy a „Négyzetes bélyegkép mentése” gombot, és olvasd el a visszajelzést; a kettő szándékosan eltér."
             },
-            "guidance": "A négyzetes keretezéshez a Core-tól kapott eredeti képméret kell; ennek hiányában a szerkesztő betöltési hibát mutat, ahelyett hogy hibásan mentődő kivágást engedne. A szerkesztő- és döntési gombok csak owner és admin szerepkörrel jelennek meg."
+            "guidance": "A négyzetes keretezéshez a Core-tól kapott eredeti képméret kell; ennek hiányában a szerkesztő betöltési hibát mutat, ahelyett hogy hibásan mentődő kivágást engedne. A szerkesztő- és döntési gombok csak tulajdonosi és admin szerepkörrel jelennek meg."
           },
           "approve": {
             "title": "Kép jóváhagyása",
@@ -2947,7 +2947,7 @@
           "title": "Stabil action key",
           "purpose": "A belső azonosító, amelyet minden tárolt Hey visz magával a wire-on. A Technikai beállítások alatt csak olvasható, és nem része a tagoknak szóló szövegeknek.",
           "effect": "Az app elutasítja azt a Hey-ek oldalt, amelynek sorai más kulcsot hordoznak, így az átnevezés minden tag Hey-ek fülét elrontaná, amíg a régi Hey-ek le nem járnak.",
-          "example": "A gomb feliratának módosítása lejjebb, ezen az oldalon szövegmódosítás; az action key marad ping."
+          "example": "A gomb feliratát lejjebb, „A tagoknak szóló szövegek” résznél módosíthatod; ez csak szövegmódosítás, az action key marad ping."
         },
         "states": {
           "title": "Alap és elküldött állapot",
@@ -2957,7 +2957,7 @@
         },
         "upload": {
           "title": "Ikonok feltöltése",
-          "purpose": "Minden hely PNG-t vagy SVG-t fogad, amelyből a Core kezelt PNG-változatokat készít. Ha Az alkalmazás beépített ikonjai be van kapcsolva, nem kell semmit feltölteni.",
+          "purpose": "Minden hely PNG-t vagy SVG-t fogad, amelyből a Core kezelt PNG-változatokat készít. Ha „Az alkalmazás beépített ikonjai” be van kapcsolva, nem kell semmit feltölteni.",
           "effect": "A feltöltés csak előkészít: az URL a konfiguráció mentésekor kerül ki. A feltöltések a beépített ikonok kapcsolója mellett is tárolva maradnak, így kikapcsolásakor visszatérnek.",
           "example": "Töltsd fel mind a négy fájlt, nézd meg az előnézeteket, majd egyszer ments; ha később a beépített ikonokra váltasz, a feltöltések nem törlődnek."
         },
@@ -8221,9 +8221,9 @@
   "imageEditor": {
     "title": "Vágás, forgatás és nagyítás",
     "copy": "Húzással vagy a nyílbillentyűkkel helyezd át a képet, két ujjal vagy a vezérlőkkel nagyíts. A mentés mindenhol felülírja a tag képét, és jóváhagyottra állítja.",
-    "squareTitle": "Kocka-thumb kivágás",
-    "squareCopy": "Húzással és kétujjas nagyítással keretezd a profilkép-sávban látható kocka-thumbot. Csak a thumb változik; maga a kép és a moderációs állapota érintetlen marad.",
-    "squareEdit": "Kocka-thumb",
+    "squareTitle": "Négyzetes bélyegkép kivágása",
+    "squareCopy": "Húzással és kétujjas nagyítással keretezd a profilkép-sávban látható négyzetes bélyegképet. Csak a bélyegkép változik; maga a kép és a moderációs állapota érintetlen marad.",
+    "squareEdit": "Négyzetes bélyegkép",
     "canvasLabel": "Képkivágás előnézete. Húzással vagy nyílbillentyűkkel helyezhető át, két ujjal nagyítható.",
     "zoom": "Nagyítás",
     "zoomIn": "Nagyítás",
@@ -8236,7 +8236,7 @@
     "loadError": "A képet nem sikerült betölteni szerkesztésre.",
     "saveError": "A képet nem sikerült menteni. Próbáld újra.",
     "saved": "A képet módosítottuk és jóváhagytuk.",
-    "squareSaved": "A négyzetes bélyegképet mentettük. A moderációs állapot nem változott.",
+    "squareSaved": "A négyzetes bélyegképet elmentettük. A moderációs állapot nem változott.",
     "squareSave": "Négyzetes bélyegkép mentése"
   },
   "inviteConfiguration": {
