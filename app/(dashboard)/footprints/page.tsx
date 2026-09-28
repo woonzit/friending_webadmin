@@ -4,10 +4,11 @@
 // with its two-sided audiences, the per-user daily-limit override, and the
 // reported-footprints queue.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import FootprintReportsPanel from "@/components/FootprintReportsPanel";
 import ImageUploadField from "@/components/ImageUploadField";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -15,10 +16,8 @@ import { adminCall } from "@/lib/adminClient";
 import { FEATURE_SWITCHES_CONTRACT_READY } from "@/lib/contractReadiness";
 import {
   FOOTPRINT_GENDERS,
-  footprintReports,
   footprintsAdminPayload,
   type FootprintBadge,
-  type FootprintReport,
   type FootprintsAdminPayload,
 } from "@/lib/footprints";
 
@@ -84,12 +83,6 @@ export default function FootprintsPage() {
   const [badgeError, setBadgeError] = useState("");
   const [archiveTarget, setArchiveTarget] = useState<FootprintBadge | null>(null);
 
-  const [reports, setReports] = useState<FootprintReport[] | null>(null);
-  const [reportStatus, setReportStatus] = useState<"open" | "resolved">("open");
-  const [reportsLoading, setReportsLoading] = useState(false);
-  const [reportsFailed, setReportsFailed] = useState(false);
-  const reportRequest = useRef(0);
-
   const adopt = useCallback((parsed: FootprintsAdminPayload) => {
     setPayload(parsed);
     setDailyLimit(String(parsed.settings.dailyLimit));
@@ -109,23 +102,18 @@ export default function FootprintsPage() {
     adopt(parsed);
   }, [adopt]);
 
-  const loadReports = useCallback(async (status: "open" | "resolved") => {
-    const requestId = ++reportRequest.current;
-    setReportStatus(status);
-    setReportsLoading(true);
-    setReportsFailed(false);
-    const response = await adminCall("footprint_reports", { status });
-    if (requestId !== reportRequest.current) return;
-    const parsed = response?.success ? footprintReports(response, status) : null;
-    setReportsLoading(false);
-    setReportsFailed(parsed === null);
-    setReports(parsed);
+  // After a report resolution only the open count moves; re-reading the whole
+  // payload through adopt() would also reset unsaved settings inputs.
+  const refreshOpenCount = useCallback(async () => {
+    const response = await adminCall("footprints_admin", {});
+    const parsed = response?.success ? footprintsAdminPayload(response) : null;
+    if (!parsed) return;
+    setPayload((current) => (current ? { ...current, openReports: parsed.openReports } : current));
   }, []);
 
   useEffect(() => {
     void load();
-    void loadReports("open");
-  }, [load, loadReports]);
+  }, [load]);
 
   async function saveSettings() {
     if (!payload) return;
@@ -224,18 +212,6 @@ export default function FootprintsPage() {
     } else {
       setNotice(t("saveError"));
       void load();
-    }
-  }
-
-  async function resolveReport(report: FootprintReport) {
-    setBusy(true);
-    const response = await adminCall("resolve_footprint_report", { id: report.id });
-    setBusy(false);
-    if (response?.success) {
-      void loadReports(reportStatus);
-      void load();
-    } else {
-      setNotice(t("saveError"));
     }
   }
 
@@ -407,85 +383,10 @@ export default function FootprintsPage() {
         </div>
       </section>
 
-      <section className="panel">
-        <div className="panel-head-row">
-          <h2>{t("reportsTitle", { count: payload.openReports })}</h2>
-          <div className="footprints-report-tabs" role="tablist">
-            {(["open", "resolved"] as const).map((status) => (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={reportStatus === status}
-                className={reportStatus === status ? "is-active" : ""}
-                key={status}
-                onClick={() => void loadReports(status)}
-              >
-                {t(`reportStatus.${status}`)}
-              </button>
-            ))}
-          </div>
-        </div>
-        {reportsLoading ? (
-          <p className="panel-lead">{common("loading")}</p>
-        ) : reportsFailed ? (
-          <div className="footprints-report-error" role="alert">
-            <p>{t("reportLoadError")}</p>
-            <button type="button" className="button button-secondary button-small" onClick={() => void loadReports(reportStatus)}>
-              {common("retry")}
-            </button>
-          </div>
-        ) : reports === null ? (
-          <p className="panel-lead">{t("reportLoadError")}</p>
-        ) : reports.length === 0 ? (
-          <p className="panel-lead">{t("noReports")}</p>
-        ) : (
-          <table className="data-table footprints-report-table">
-            <thead>
-              <tr>
-                <th>{t("reportWhen")}</th>
-                <th>{t("reportReporter")}</th>
-                <th>{t("reportSender")}</th>
-                <th>{t("reportBadge")}</th>
-                <th>{t("reportMessage")}</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {reports.map((report) => (
-                <tr key={report.id}>
-                  <td>{report.createdAt ? new Date(report.createdAt * 1000).toLocaleString() : "—"}</td>
-                  <td>{report.reporter ? `${report.reporter.name} (#${report.reporter.id})` : "—"}</td>
-                  <td>{report.sender ? `${report.sender.name} (#${report.sender.id})` : "—"}</td>
-                  <td>
-                    <span className="footprints-report-badge">
-                      {report.badgeImage ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={report.badgeImage} alt="" />
-                      ) : null}
-                      {report.badgeLabel || "—"}
-                    </span>
-                  </td>
-                  <td className="footprints-report-message">{report.message || "—"}</td>
-                  <td>
-                    {report.status === "open" ? (
-                      <button
-                        type="button"
-                        className="button button-secondary button-small"
-                        disabled={busy}
-                        onClick={() => void resolveReport(report)}
-                      >
-                        {t("resolve")}
-                      </button>
-                    ) : (
-                      <small>{report.resolvedBy}</small>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+      <FootprintReportsPanel
+        openReports={payload.openReports}
+        onResolved={() => void refreshOpenCount()}
+      />
 
       {draft ? (
         <div className="dialog-backdrop" role="presentation">
