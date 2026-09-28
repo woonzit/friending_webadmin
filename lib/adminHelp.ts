@@ -446,6 +446,8 @@ export const ADMIN_HELP_PAGES = [
       "pushDelivery",
       "publicLinks",
       "presence",
+      // P-073: the location access panel, with its own revision and save.
+      "locationAccess",
       "verificationFlow",
       "safetyBoundary",
     ],

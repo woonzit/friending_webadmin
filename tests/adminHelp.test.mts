@@ -134,8 +134,9 @@ test("every inventoried functional section has detailed English and Hungarian he
   // with no topic: Overview's signup metrics, the photo editor, section
   // availability, the sign-in policy and its allowed phone countries on
   // /configuration, and the landing buttons, footer and QR reader on /appearance
-  // (247).
-  assert.equal(totalSections, 247, "review the functional-section census when the UI changes");
+  // (247). T-863 S5 (P-073) adds the location access panel on /configuration, which
+  // has its own revision and its own save (248).
+  assert.equal(totalSections, 248, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [
@@ -211,7 +212,7 @@ test("independently saved or operator-facing embedded tools have dedicated help 
   const required: Record<string, string[]> = {
     overview: ["metrics", "signupMetrics"],
     photoModeration: ["imageEditing"],
-    configuration: ["sectionAvailability", "sectionTeasers", "featureSwitches", "authPolicy", "phoneCountries"],
+    configuration: ["sectionAvailability", "sectionTeasers", "featureSwitches", "authPolicy", "phoneCountries", "locationAccess"],
     appearance: ["landing", "landingButtons", "landingFooter", "landingQr", "modeSwitcher", "saving"],
   };
   for (const [key, sections] of Object.entries(required)) {

@@ -11,6 +11,7 @@ import {
   audienceVisibilityProxyCapabilityAuthorized,
 } from "@/lib/audienceVisibilityAdmin";
 import { normalizeAppearanceProxyBody } from "@/lib/appearanceRules";
+import { normalizeLocationAccessPolicyProxyBody } from "@/lib/locationAccessPolicy";
 import { normalizeModeCardsProxyBody } from "@/lib/modeCards";
 import { normalizeMemberBirthdayLockProxyBody } from "@/lib/memberBirthdayLock";
 import { normalizeSectionTeasersProxyBody } from "@/lib/sectionTeasers";
@@ -306,6 +307,15 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedSectionTeasersBody !== undefined) body = normalizedSectionTeasersBody;
+
+  // The location access policy read carries nothing, and its save carries
+  // exactly the expected revision and the three candidate keys; `coreCall`
+  // JSON-encodes `configuration` into one form field.
+  const normalizedLocationAccessBody = normalizeLocationAccessPolicyProxyBody(action, body);
+  if (normalizedLocationAccessBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedLocationAccessBody !== undefined) body = normalizedLocationAccessBody;
 
   // The member reset accepts only its contract, positive uid and UUIDv4
   // receipt identity. Core remains the authority for membership and lock state.

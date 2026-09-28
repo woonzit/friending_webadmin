@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import AuthPolicyConfigurationCard from "@/components/AuthPolicyConfigurationCard";
 import FeatureSwitchesPanel from "@/components/FeatureSwitchesPanel";
+import LocationAccessConfiguration from "@/components/LocationAccessConfiguration";
 import PageHeader from "@/components/PageHeader";
 import ProfilePresenceConfiguration from "@/components/ProfilePresenceConfiguration";
 import ProfileVerificationConfiguration from "@/components/ProfileVerificationConfiguration";
@@ -596,6 +597,7 @@ export default function ConfigurationPage() {
         </aside>
       </div>
       <ProfilePresenceConfiguration />
+      <LocationAccessConfiguration />
       <ProfileVerificationConfiguration />
     </>
   );

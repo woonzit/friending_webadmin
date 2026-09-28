@@ -10412,6 +10412,11 @@ body .verification-level-pill.level-strong {
   opacity: 0.72;
 }
 
+/* Location access: the same cards as presence, two switches wide. */
+.location-access-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .presence-config-footnote {
   margin: 0;
   padding: 14px 16px;

@@ -2455,7 +2455,7 @@
       },
       "configuration": {
         "title": "Configuration help",
-        "summary": "Configuration contains only approved product controls that can change without a deployment. It covers Travel and AreYouIn availability with their teaser modals, the Hey, Footprints and photo-likes switches, sign-in methods and allowed phone countries, reversible feature behavior, Join session timing, iOS appearance, global push delivery, public link origins, presence availability and the complete profile-video-verification member flow.",
+        "summary": "Configuration contains only approved product controls that can change without a deployment. It covers Travel and AreYouIn availability with their teaser modals, the Hey, Footprints and photo-likes switches, sign-in methods and allowed phone countries, reversible feature behavior, Join session timing, iOS appearance, global push delivery, public link origins, presence availability, location access requirements and the complete profile-video-verification member flow.",
         "steps": {
           "1": "Identify the exact product surface and read its current value, bounds and member consequence.",
           "2": "Change one coherent setting group, including both languages where copy is involved.",
@@ -2554,6 +2554,16 @@
               "2": "Update localized presentation or availability and confirm any affected-member reconciliation."
             },
             "guidance": "Disabling a mode can rewrite affected member profiles to a safe fallback. Treat it as a data-impacting change, not copy-only configuration."
+          },
+          "locationAccess": {
+            "title": "Location access",
+            "purpose": "Two independent, default-off switches tell compatible iOS apps whether a device location is required before nearby discovery on People and before signup. The panel has its own revision and its own save.",
+            "actions": {
+              "1": "Read both switches, the revision and who saved last before changing anything.",
+              "2": "Change a switch, press Save location access, and confirm when you are making location required.",
+              "3": "After a conflict your choices stay on the switches over the newer revision: review them, then save again or discard them. After an unconfirmed save, reload before trying again."
+            },
+            "guidance": "This sets app behavior, it does not enforce anything: Core never checks it, and older iOS versions, Android and the Join website ignore it. Requiring location at signup risks App Store rejection under guideline 5.1.1(iv), so switch it on only for a version App Review has seen behaving this way. Viewers can read the policy but cannot save it."
           },
           "verificationFlow": {
             "title": "Profile video verification flow",
@@ -7035,6 +7045,52 @@
         "dialFormats": "Phone formats must be a list of exact code-and-mask pairs.",
         "revision": "The authentication-policy revision is invalid. Reload before saving."
       }
+    },
+    "locationAccess": {
+      "title": "Location access",
+      "subtitle": "Decides whether the app needs the device's location before nearby discovery and before signup. The two switches are independent, both are off by default, and this panel saves on its own.",
+      "scope": "Only iOS app versions that read this policy apply it. Older iOS versions, Android and the Join website ignore it, and Core does not enforce it.",
+      "reviewRisk": "Requiring location at signup can get the app rejected by App Review (guideline 5.1.1(iv)). Never switch on a stricter policy after review that the reviewed version did not show. Approximate location while the app is in use is enough.",
+      "revision": "Revision {revision}",
+      "neverSaved": "Never saved: the default applies and nothing is required.",
+      "updatedAt": "Last saved",
+      "updatedBy": "Saved by",
+      "required": "Required",
+      "notRequired": "Not required",
+      "changed": "unsaved",
+      "flags": {
+        "required_for_nearby": {
+          "title": "Require location for nearby discovery",
+          "short": "nearby discovery",
+          "copy": "Without location access, People shows a location prompt instead of nearby results. Chat, profiles, travel and a manually chosen city stay available."
+        },
+        "required_for_signup": {
+          "title": "Require location at signup",
+          "short": "signup",
+          "copy": "Signup asks for location access and sets the starting city from the device instead of letting the member pick it. Members can change their city after signup."
+        }
+      },
+      "readOnly": "Your role can view this policy but cannot change it. Ask an owner or an admin.",
+      "unsaved": "You have unsaved changes.",
+      "discard": "Discard changes",
+      "save": "Save location access",
+      "saving": "Saving…",
+      "reload": "Reload",
+      "loading": "Loading the location access policy…",
+      "unavailable": "Core cannot read the location access policy right now. Nothing has been assumed about the current setting; try again shortly.",
+      "loadError": "The location access policy could not be read. Nothing has been assumed about the current setting.",
+      "saved": "Location access saved as revision {revision}.",
+      "unchanged": "Nothing to save: the stored policy already matches.",
+      "conflict": "Someone else saved this policy while you were editing. The stored version is now revision {revision}, and the switches still show your unsaved choices. Review them, then save again or discard them.",
+      "conflictReloadFailed": "Someone else saved this policy while you were editing, and the new version could not be loaded. Your unsaved choices are still shown; reload before saving again.",
+      "notConfirmed": "The save could not be confirmed because Core did not answer normally. Your choices are still shown; reload to check what is stored before saving again.",
+      "writeRequired": "Your role can no longer change this policy. The stored values are shown.",
+      "invalid": "Core refused this policy as invalid. Reload and try again.",
+      "unexpected": "Core answered in an unexpected way. Reload to check what is stored before saving again.",
+      "confirmTitle": "Make location required?",
+      "confirmCopy": "Compatible iOS apps will require location access for: {flags}. Members who do not allow it cannot use that part of the app.",
+      "confirmSignupRisk": "Requiring location at signup can lead to App Store rejection; switch it on only for a version App Review has seen behaving this way.",
+      "confirmAction": "Switch on"
     }
   },
   "signupOptions": {

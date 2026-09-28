@@ -156,6 +156,8 @@ export const ADMIN_ACTIONS = [
   "save_profile_verification_config",
   "profile_presence_configuration",
   "save_profile_presence_configuration",
+  "location_access_policy",
+  "save_location_access_policy",
   "profile_verification_queue",
   "profile_verification_detail",
   "profile_verification_decision",
@@ -321,6 +323,11 @@ export const ADMIN_ACTION_ACCESS = {
   // a mode rewrites affected member profiles, so only editors may save it.
   profile_presence_configuration: "read",
   save_profile_presence_configuration: "write",
+  // P-073 location access policy. Any active administrator may read it and
+  // Core tells the console whether this actor can write; the compare-and-set
+  // save is audited by Core and matches its viewer-refusing write gate.
+  location_access_policy: "read",
+  save_location_access_policy: "write",
   profile_verification_queue: "read",
   profile_verification_detail: "read",
   profile_verification_decision: "write",

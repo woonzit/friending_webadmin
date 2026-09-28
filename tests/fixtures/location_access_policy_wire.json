@@ -1,0 +1,161 @@
+{
+    "generator": "php tests/location_access_policy_storage_test.php --write",
+    "provenance": "Actual Core controller responses from an owned disposable Mongo replica set; synthetic principals only. Nonzero updated_at normalised to 1700000000.",
+    "routes": {
+        "read": "/v1/webadmin/location_access_policy",
+        "save": "/v1/webadmin/save_location_access_policy",
+        "public": "/v1/app/location_access_policy"
+    },
+    "responses": {
+        "viewer-default": {
+            "success": true,
+            "status_code": 200,
+            "data": {
+                "configuration": {
+                    "schema_version": 1,
+                    "revision": 0,
+                    "required_for_nearby": false,
+                    "required_for_signup": false,
+                    "updated_at": 0,
+                    "updated_by": ""
+                },
+                "can_write": false
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "viewer-write-refused": {
+            "success": false,
+            "status_code": 403,
+            "error": "admin-write-required",
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "owner-default": {
+            "success": true,
+            "status_code": 200,
+            "data": {
+                "configuration": {
+                    "schema_version": 1,
+                    "revision": 0,
+                    "required_for_nearby": false,
+                    "required_for_signup": false,
+                    "updated_at": 0,
+                    "updated_by": ""
+                },
+                "can_write": true
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "public-default": {
+            "success": true,
+            "status_code": 200,
+            "data": {
+                "schema_version": 1,
+                "revision": 0,
+                "required_for_nearby": false,
+                "required_for_signup": false
+            }
+        },
+        "invalid": {
+            "success": false,
+            "status_code": 422,
+            "error": "location-access-policy-invalid",
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "saved-1": {
+            "success": true,
+            "status_code": 200,
+            "data": {
+                "configuration": {
+                    "schema_version": 1,
+                    "revision": 1,
+                    "required_for_nearby": true,
+                    "required_for_signup": false,
+                    "updated_at": 1700000000,
+                    "updated_by": "owner@example.test"
+                },
+                "can_write": true
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "noop": {
+            "success": true,
+            "status_code": 200,
+            "data": {
+                "configuration": {
+                    "schema_version": 1,
+                    "revision": 1,
+                    "required_for_nearby": true,
+                    "required_for_signup": false,
+                    "updated_at": 1700000000,
+                    "updated_by": "owner@example.test"
+                },
+                "can_write": true
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "conflict": {
+            "success": false,
+            "status_code": 409,
+            "error": "location-access-policy-conflict",
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "saved-2": {
+            "success": true,
+            "status_code": 200,
+            "data": {
+                "configuration": {
+                    "schema_version": 1,
+                    "revision": 2,
+                    "required_for_nearby": false,
+                    "required_for_signup": true,
+                    "updated_at": 1700000000,
+                    "updated_by": "owner@example.test"
+                },
+                "can_write": true
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "owner-after-saves": {
+            "success": true,
+            "status_code": 200,
+            "data": {
+                "configuration": {
+                    "schema_version": 1,
+                    "revision": 2,
+                    "required_for_nearby": false,
+                    "required_for_signup": true,
+                    "updated_at": 1700000000,
+                    "updated_by": "owner@example.test"
+                },
+                "can_write": true
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "stored-invalid": {
+            "success": false,
+            "status_code": 503,
+            "error": "location-access-policy-unavailable",
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        }
+    }
+}
