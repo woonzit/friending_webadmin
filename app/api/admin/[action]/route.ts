@@ -14,6 +14,7 @@ import { normalizeAppearanceProxyBody } from "@/lib/appearanceRules";
 import { normalizeLocationAccessPolicyProxyBody } from "@/lib/locationAccessPolicy";
 import { normalizeModeCardsProxyBody } from "@/lib/modeCards";
 import { normalizeMemberBirthdayLockProxyBody } from "@/lib/memberBirthdayLock";
+import { normalizeUserModerationInsightProxyBody } from "@/lib/userModerationInsight";
 import { normalizeSectionTeasersProxyBody } from "@/lib/sectionTeasers";
 import { datesAvailabilityWriteIsRetired } from "@/lib/datesAdmin";
 import {
@@ -324,6 +325,14 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedBirthdayLockBody !== undefined) body = normalizedBirthdayLockBody;
+
+  // The moderation insight reads sign-in addresses: forward exactly the one
+  // canonical uid Core reads, nothing else.
+  const normalizedInsightBody = normalizeUserModerationInsightProxyBody(action, body);
+  if (normalizedInsightBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedInsightBody !== undefined) body = normalizedInsightBody;
 
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer

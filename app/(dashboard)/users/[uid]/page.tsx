@@ -11,6 +11,7 @@ import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import UserProfileDataEditor from "@/components/UserProfileDataEditor";
 import UserAlbumsPanel from "@/components/UserAlbumsPanel";
 import UserModerationPanel from "@/components/UserModerationPanel";
+import UserModerationInsight from "@/components/UserModerationInsight";
 import UserMembershipPanel from "@/components/UserMembershipPanel";
 import UserContentEditor from "@/components/UserContentEditor";
 import ProductPopupPanel from "@/components/ProductPopupPanel";
@@ -157,6 +158,9 @@ export default function UserDetailPage() {
       <UserAlbumsPanel uid={uid} />
       <UserMembershipPanel uid={uid} initial={data.membership} />
       <UserModerationPanel uid={uid} />
+      {/* P-074: sign-in addresses and shared-address accounts, collapsed until
+          an operator opens it; it loads on its own and cannot hide this page. */}
+      <UserModerationInsight key={`moderation-insight-${uid}`} uid={uid} />
       <VerificationUserPanel uid={uid} access={data.verification_access} />
       {ADMIN_GRANTED_VERIFICATION_CONTRACT_READY ? <AdminGrantedVerificationPanel key={`admin-granted-verification-${uid}`} uid={uid} /> : null}
       {/* The canonical identity surface of this page: gender, detailed gender

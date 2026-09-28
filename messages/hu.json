@@ -5879,6 +5879,99 @@
     "makeMain": "Legyen főkép",
     "makeMainConfirm": "Ezt a képet állítod be a profil főképének? A galéria átrendeződik, és az avatár követi."
   },
+  "userInsight": {
+    "title": "Moderációs háttér",
+    "subtitle": "Hol és hogyan jött létre ez a fiók, azóta hogyan jelentkezett be, és milyen más fiókokat láttunk ugyanazokról a címekről. Csak olvasható.",
+    "sensitive": "Érzékeny adat: ez a rész IP-címeket és az azokon osztozó fiókokat mutatja. Csak akkor nyisd meg, ha a moderáláshoz szükség van rá, és ne másold ki a konzolból.",
+    "show": "Megjelenítés",
+    "hide": "Elrejtés",
+    "reload": "Újratöltés",
+    "loading": "A moderációs háttér betöltése…",
+    "error": "Nem sikerült beolvasni a moderációs hátteret. Semmit nem tekintettünk üresnek.",
+    "unknown": "ismeretlen",
+    "none": "nincs",
+    "locationUnknown": "ismeretlen hely",
+    "rawKey": "Nincs katalógusneve: egyedi vagy visszavont érdeklődési kör",
+    "flagsLabel": "Érdemes jobban megnézni",
+    "noFlags": "A tárolt adatokban semmi nem feltűnő.",
+    "flags": {
+      "signup-ip-country-differs": "A regisztrációs cím más országban van, mint a választott hely",
+      "shared-signup-ip": "Ugyanarról a regisztrációs címről más fiókokat is regisztráltak",
+      "shared-login-ip": "Ugyanazokról a címekről más fiókok is bejelentkeztek",
+      "all-interests-selected": "Az összes választható érdeklődési kört kitöltötte",
+      "empty-about": "Nincs bemutatkozás",
+      "no-return-after-signup": "A regisztráció óta nem jelentkezett be újra",
+      "logins-from-several-countries": "Több országból is bejelentkezett"
+    },
+    "platforms": {
+      "web": "Web",
+      "ios": "iOS",
+      "android": "Android",
+      "unknown": "Ismeretlen"
+    },
+    "methods": {
+      "email": "E-mail",
+      "phone": "Telefon",
+      "apple": "Apple",
+      "google": "Google",
+      "facebook": "Facebook"
+    },
+    "signup": {
+      "title": "Regisztráció",
+      "when": "Regisztrált",
+      "platform": "Regisztrációs platform",
+      "ip": "Regisztrációs cím",
+      "chosen": "Választott hely",
+      "source": "forrás: {source}",
+      "sameIp": "Ugyanez a regisztrációs cím",
+      "sameIpCount": "{count, plural, =0 {nincs más fiók} other {# másik fiók}}",
+      "methods": "Bejelentkezési módok",
+      "emailVerified": "e-mail megerősítve",
+      "emailUnverified": "e-mail nincs megerősítve",
+      "legal": "Feltételek elfogadásának helye"
+    },
+    "logins": {
+      "title": "Bejelentkezések",
+      "total": "Rögzített bejelentkezések",
+      "totalValue": "Összesen {total} · ebből {after} a regisztráció után",
+      "last": "Utolsó bejelentkezés",
+      "never": "nincs rögzített bejelentkezés",
+      "lastIp": "Utolsó cím",
+      "lastSeen": "Utoljára látva",
+      "spread": "Címek és országok",
+      "spreadValue": "{addresses, plural, other {# cím}} · {countries, plural, =0 {nincs ismert ország} other {# ország}}",
+      "platforms": "Platformonként"
+    },
+    "provided": {
+      "title": "Amit a tag megadott",
+      "interests": "Érdeklődési körök ({count}/{maximum})",
+      "identity": "Nem · ki láthatja a profilt (tárolt értékek)",
+      "about": "Bemutatkozás ({length} karakter)"
+    },
+    "shared": {
+      "title": "Fiókok ugyanazokon a címeken ({count})",
+      "member": "Tag",
+      "registered": "Regisztrált",
+      "platform": "Platform",
+      "relation": "Kapcsolat",
+      "lastSeen": "Ott utoljára látva",
+      "demo": "Demo",
+      "sameSignupIp": "ugyanarról a címről regisztrált",
+      "sameLoginIp": "{count, plural, other {# közös címről jelentkezett be}}",
+      "none": "Ezeken a címeken más fiókot nem láttunk.",
+      "truncated": "Csak az első {shown} látható."
+    },
+    "recent": {
+      "title": "Legutóbbi bejelentkezések",
+      "when": "Mikor",
+      "platform": "Platform",
+      "ip": "Cím",
+      "place": "Hely",
+      "build": "Build",
+      "none": "Nincs rögzített bejelentkezés."
+    },
+    "caveat": "A helyek csak közelítőek, a cím akkori helyéből származnak. Közös címet mobilhálózat, munkahely vagy VPN is okozhat, így önmagában egy közös cím semmit nem bizonyít."
+  },
   "moderation": {
     "title": "Moderáció",
     "copy": "Felfüggesztés, tiltás és munkamenet-kezelés. A korlátozott profil eltűnik a listákból, és a beszélgetései rejtve lesznek a többi tag elől.",

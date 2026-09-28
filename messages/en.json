@@ -5879,6 +5879,99 @@
     "makeMain": "Make main photo",
     "makeMainConfirm": "Set this picture as the profile's main photo? The gallery is reordered and the avatar follows."
   },
+  "userInsight": {
+    "title": "Moderation insight",
+    "subtitle": "Where and how this account was created, how it has signed in since, and which other accounts were seen on the same addresses. Read-only.",
+    "sensitive": "Sensitive data: this section shows IP addresses and the accounts that share them. Open it only when you need it for moderation, and do not copy it out of this console.",
+    "show": "Show",
+    "hide": "Hide",
+    "reload": "Reload",
+    "loading": "Loading moderation insight…",
+    "error": "The moderation insight could not be read. Nothing here was assumed to be empty.",
+    "unknown": "unknown",
+    "none": "none",
+    "locationUnknown": "location unknown",
+    "rawKey": "No catalogue name: a custom or withdrawn interest",
+    "flagsLabel": "Worth a second look",
+    "noFlags": "Nothing in the stored facts stands out.",
+    "flags": {
+      "signup-ip-country-differs": "The signup address is in a different country from the chosen location",
+      "shared-signup-ip": "Other accounts were registered from the same signup address",
+      "shared-login-ip": "Other accounts have signed in from the same addresses",
+      "all-interests-selected": "Every available interest slot is filled",
+      "empty-about": "No introduction",
+      "no-return-after-signup": "Has not signed in again since registering",
+      "logins-from-several-countries": "Sign-ins from more than one country"
+    },
+    "platforms": {
+      "web": "Web",
+      "ios": "iOS",
+      "android": "Android",
+      "unknown": "Unknown"
+    },
+    "methods": {
+      "email": "E-mail",
+      "phone": "Phone",
+      "apple": "Apple",
+      "google": "Google",
+      "facebook": "Facebook"
+    },
+    "signup": {
+      "title": "Signup",
+      "when": "Registered",
+      "platform": "Registered on",
+      "ip": "Signup address",
+      "chosen": "Chosen location",
+      "source": "source: {source}",
+      "sameIp": "Same signup address",
+      "sameIpCount": "{count, plural, =0 {no other account} one {# other account} other {# other accounts}}",
+      "methods": "Sign-in methods",
+      "emailVerified": "e-mail verified",
+      "emailUnverified": "e-mail not verified",
+      "legal": "Terms accepted on"
+    },
+    "logins": {
+      "title": "Sign-ins",
+      "total": "Sign-ins recorded",
+      "totalValue": "{total} in total · {after} after signup",
+      "last": "Last sign-in",
+      "never": "no sign-in recorded",
+      "lastIp": "Last address",
+      "lastSeen": "Last seen",
+      "spread": "Addresses and countries",
+      "spreadValue": "{addresses, plural, one {# address} other {# addresses}} · {countries, plural, =0 {no country known} one {# country} other {# countries}}",
+      "platforms": "By platform"
+    },
+    "provided": {
+      "title": "What the member provided",
+      "interests": "Interests ({count}/{maximum})",
+      "identity": "Gender · who can see the profile (stored values)",
+      "about": "Introduction ({length} characters)"
+    },
+    "shared": {
+      "title": "Accounts on the same addresses ({count})",
+      "member": "Member",
+      "registered": "Registered",
+      "platform": "Platform",
+      "relation": "Connection",
+      "lastSeen": "Last seen there",
+      "demo": "Demo",
+      "sameSignupIp": "registered from the same address",
+      "sameLoginIp": "{count, plural, one {signed in from # shared address} other {signed in from # shared addresses}}",
+      "none": "No other account was seen on these addresses.",
+      "truncated": "Only the first {shown} are listed."
+    },
+    "recent": {
+      "title": "Recent sign-ins",
+      "when": "When",
+      "platform": "Platform",
+      "ip": "Address",
+      "place": "Location",
+      "build": "Build",
+      "none": "No sign-in is recorded."
+    },
+    "caveat": "Locations are approximate, taken from the address at the time. Shared addresses also happen on mobile networks, at workplaces and behind VPNs, so a shared address alone proves nothing."
+  },
   "moderation": {
     "title": "Moderation",
     "copy": "Suspend, ban and session controls. A restricted profile disappears from discovery and its conversations are hidden from other members.",

@@ -1,0 +1,137 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "schema_version": 1,
+        "uid": 900,
+        "signup": {
+            "at": 1000000,
+            "platform": "android",
+            "ip": "50.39.166.245",
+            "ip_geo": {
+                "country": "United States",
+                "country_code": "US",
+                "city": "Hillsboro"
+            },
+            "chosen_location": {
+                "city": "Budapest",
+                "country": "Hungary",
+                "country_code": "HU",
+                "source": "map"
+            },
+            "legal_source": "android",
+            "email_verified": true,
+            "methods": [
+                "email",
+                "google"
+            ]
+        },
+        "last_login": {
+            "at": 1000800,
+            "ip": "84.0.76.105",
+            "platform": "ios",
+            "app_build": "88",
+            "country": "Hungary",
+            "country_code": "HU",
+            "city": "Budapest"
+        },
+        "last_seen_at": 1000900,
+        "logins": {
+            "total": 3,
+            "after_signup": 2,
+            "distinct_addresses": 2,
+            "distinct_countries": 2,
+            "by_platform": {
+                "web": 0,
+                "ios": 1,
+                "android": 1,
+                "unknown": 1
+            },
+            "recent": [
+                {
+                    "at": 1000800,
+                    "ip": "84.0.76.105",
+                    "platform": "ios",
+                    "app_build": "88",
+                    "country": "Hungary",
+                    "country_code": "HU",
+                    "city": "Budapest"
+                },
+                {
+                    "at": 1000500,
+                    "ip": "50.39.166.245",
+                    "platform": "unknown",
+                    "app_build": "88",
+                    "country": "United States",
+                    "country_code": "US",
+                    "city": "Hillsboro"
+                },
+                {
+                    "at": 1000000,
+                    "ip": "50.39.166.245",
+                    "platform": "android",
+                    "app_build": "88",
+                    "country": "United States",
+                    "country_code": "US",
+                    "city": "Hillsboro"
+                }
+            ],
+            "scanned": 3
+        },
+        "shared_addresses": {
+            "registered_from_signup_ip": 1,
+            "seen_on_any_address": 2,
+            "accounts": [
+                {
+                    "uid": 901,
+                    "display_name": "First",
+                    "created_at": 998000,
+                    "platform": "web",
+                    "registered_from_signup_ip": true,
+                    "shared_address_count": 1,
+                    "last_seen_on_shared_address_at": 999000,
+                    "demo": false
+                },
+                {
+                    "uid": 902,
+                    "display_name": "Second",
+                    "created_at": 997000,
+                    "platform": "android",
+                    "registered_from_signup_ip": false,
+                    "shared_address_count": 2,
+                    "last_seen_on_shared_address_at": 1000700,
+                    "demo": true
+                }
+            ]
+        },
+        "profile": {
+            "interests": 10,
+            "interests_maximum": 10,
+            "about_length": 0
+        },
+        "flags": [
+            "signup-ip-country-differs",
+            "shared-signup-ip",
+            "all-interests-selected",
+            "empty-about",
+            "logins-from-several-countries"
+        ],
+        "provided": {
+            "interests": [
+                {
+                    "key": "coffee",
+                    "name": "Coffee",
+                    "named": true
+                },
+                {
+                    "key": "my-own-tag",
+                    "name": "my-own-tag",
+                    "named": false
+                }
+            ],
+            "gender": "female",
+            "visible_to": "both",
+            "about_me": "Hi there"
+        }
+    }
+}

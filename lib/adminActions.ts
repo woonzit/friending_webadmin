@@ -113,6 +113,7 @@ export const ADMIN_ACTIONS = [
   "overview",
   "list_users",
   "user_detail",
+  "user_moderation_insight",
   "reset_member_birthday_lock",
   "membership_configuration",
   "save_membership_configuration",
@@ -257,6 +258,8 @@ export const ADMIN_ACTION_ACCESS = {
   overview: "read",
   list_users: "read",
   user_detail: "read",
+  // P-074: Core's requireAdminActor, a viewer included; read-only and no-store.
+  user_moderation_insight: "read",
   // T-759: a receipted, audited member allowance reset. Core rechecks the
   // viewer-refusing global write role on every call; this is the same floor.
   reset_member_birthday_lock: "write",
