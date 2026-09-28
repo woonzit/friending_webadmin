@@ -12,6 +12,7 @@ import {
   profileVerificationEvidenceUrl,
   profileVerificationQueue,
   profileVerificationSavePayload,
+  trimProfileVerificationDraft,
 } from "../lib/profileVerification.ts";
 
 const l10n = (en: string, hu = `${en} hu`) => ({ en, hu });
@@ -195,6 +196,41 @@ test("the complete bilingual configuration round-trips without audit fields on t
     ...payload,
   });
   assert.equal(rebuilt?.copy.account_card.pending.icon_color.light, "#AABBCC");
+});
+
+test("a draft with stray leading or trailing spaces is trimmed before validation instead of failing as invalid", () => {
+  const parsed = normalizeProfileVerificationConfig(validConfig());
+  assert.ok(parsed);
+  const draft = cloneProfileVerificationConfig(parsed);
+  draft.copy.account_card.pending.title.en = "Pending title ";
+  draft.copy.account_card.pending.subtitle.hu = "  Folyamatban";
+  // The raw draft is what the editor used to validate, and one space refused the whole document.
+  assert.equal(normalizeProfileVerificationConfig({ ...validConfig(), ...profileVerificationSavePayload(draft) }), null);
+
+  const trimmed = trimProfileVerificationDraft(draft);
+  const validated = normalizeProfileVerificationConfig({ ...validConfig(), ...profileVerificationSavePayload(trimmed) });
+  assert.ok(validated);
+  assert.equal(validated.copy.account_card.pending.title.en, "Pending title");
+  assert.equal(validated.copy.account_card.pending.subtitle.hu, "Folyamatban");
+  // The operator's draft is a separate object and is not mutated.
+  assert.equal(draft.copy.account_card.pending.title.en, "Pending title ");
+  assert.equal(draft.copy.account_card.pending.subtitle.hu, "  Folyamatban");
+
+  // Trimming never rescues an otherwise invalid value: a blank required field still fails.
+  draft.copy.account_card.pending.title.en = "   ";
+  assert.equal(normalizeProfileVerificationConfig({ ...validConfig(), ...profileVerificationSavePayload(trimProfileVerificationDraft(draft)) }), null);
+});
+
+test("the editor's typing sanitiser strips exactly the control class the validator refuses", async () => {
+  const [lib, editor] = await Promise.all([
+    readFile(new URL("../lib/profileVerification.ts", import.meta.url), "utf8"),
+    readFile(new URL("../components/ProfileVerificationConfiguration.tsx", import.meta.url), "utf8"),
+  ]);
+  const validatorClass = lib.match(/const CONTROL = \/(\[[^\]]+\])\/u;/)?.[1];
+  const sanitiserClass = editor.match(/value\.replace\(\/(\[[^\]]+\])\/gu, " "\)/)?.[1];
+  assert.ok(validatorClass && sanitiserClass);
+  assert.equal(sanitiserClass, validatorClass);
+  assert.match(editor, /normalizeProfileVerificationConfig\(trimProfileVerificationDraft\(draft\)\)/);
 });
 
 test("all four Light/Dark status colours are strict #RRGGBB values", () => {

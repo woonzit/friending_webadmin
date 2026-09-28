@@ -421,6 +421,26 @@ export function cloneProfileVerificationConfig(config: ProfileVerificationConfig
   return JSON.parse(JSON.stringify(config)) as ProfileVerificationConfig;
 }
 
+function deepTrim<T>(value: T): T {
+  if (typeof value === "string") return value.trim() as T;
+  if (Array.isArray(value)) return value.map((entry) => deepTrim(entry)) as T;
+  if (value !== null && typeof value === "object") {
+    const row = value as Record<string, unknown>;
+    for (const key of Object.keys(row)) row[key] = deepTrim(row[key]);
+  }
+  return value;
+}
+
+/**
+ * Operators type or paste leading/trailing spaces, and `boundedText` refuses
+ * untrimmed text, so one stray space used to fail the whole save with a generic
+ * "invalid". Trim every string leaf of a CLONE before validation and save; the
+ * draft the operator is editing is left untouched.
+ */
+export function trimProfileVerificationDraft(config: ProfileVerificationConfig): ProfileVerificationConfig {
+  return deepTrim(cloneProfileVerificationConfig(config));
+}
+
 export function profileVerificationQueue(value: unknown): ProfileVerificationQueue | null {
   const source = record(value);
   const rawItems = list(source?.items);

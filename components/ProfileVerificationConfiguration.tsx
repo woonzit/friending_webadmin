@@ -19,6 +19,7 @@ import {
   normalizeProfileVerificationConfig,
   profileVerificationResponseData,
   profileVerificationSavePayload,
+  trimProfileVerificationDraft,
   type ProfileVerificationConfig,
   type ProfileVerificationIconColor,
   type ProfileVerificationLocalizedText,
@@ -27,6 +28,11 @@ import {
 type Language = "en" | "hu";
 type Feedback = { tone: "success" | "error"; text: string };
 
+/**
+ * Drop control characters and bound the code-point length while the operator types. The class
+ * must stay identical to `CONTROL` in lib/profileVerification.ts, so nothing the input accepts
+ * can fail validation at save time.
+ */
 function plainText(value: string, maximum: number): string {
   const clean = value.replace(/[\u0000-\u001F\u007F]/gu, " ");
   return Array.from(clean).slice(0, maximum).join("");
@@ -185,7 +191,7 @@ export default function ProfileVerificationConfiguration() {
 
   async function save() {
     if (!draft || !stored || busy) return;
-    const validated = normalizeProfileVerificationConfig(draft);
+    const validated = normalizeProfileVerificationConfig(trimProfileVerificationDraft(draft));
     if (!validated) {
       setFeedback({ tone: "error", text: t("invalid") });
       return;
