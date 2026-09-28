@@ -2236,7 +2236,7 @@
               "2": "A chatszerződést csak explicit migrációs readiness után engedélyezd.",
               "3": "Válaszd ki, hogy az új tagok alapból csak azoktól kapjanak-e üzenetet, akiknek Hey-t küldtek."
             },
-            "guidance": "A stabil action key wire identity, és szövegváltozással nem módosulhat. A rolloutkapcsolók safety gate-ek, nem adatmigrációs eszközök."
+            "guidance": "A stabil action key wire identity: a Technikai beállítások alatt csak olvasható, és szövegváltozással sosem módosul. A tagok csak akkor küldhetnek Hey-t, ha a Konfiguráció termékszintű Hey-kapcsolója is be van kapcsolva; az oldal tetején lévő áttekintés a mentett kombinációt mutatja."
           },
           "icons": {
             "title": "Hey ikonállapotok",
@@ -2815,6 +2815,20 @@
     "title": "Pinger",
     "subtitle": "A szerver által vezérelt érdeklődési jelzés, az ikonok és minden felhasználói szöveg beállítása.",
     "saved": "A Pinger beállításai elmentve.",
+    "overview": {
+      "title": "Hey elérhetősége",
+      "copy": "A tagok csak akkor küldhetnek Hey-t, ha az oldal kapcsolója és a Konfiguráció oldalon lévő, termékszintű Hey-kapcsoló is be van kapcsolva. Az alábbi állapot a mentett beállításokat mutatja, nem a mentetlen módosításokat.",
+      "boundary": "Ez csak a beállítások szerinti jogosultság. A tagot ettől még elutasíthatja a páronkénti várakozás vagy a tagsági csomagja szerinti napi Hey-keret, a Footprints és a fotókedvelés pedig saját kapcsolóval rendelkezik.",
+      "savedState": "Mentett állapot:",
+      "states": {
+        "off": "Ezen az oldalon ki van kapcsolva. A tagok nem küldhetnek Hey-t.",
+        "globalOff": "Itt be van kapcsolva, de a Konfiguráció termékszintű Hey-kapcsolója ki van kapcsolva, ezért a tagok nem küldhetnek Hey-t.",
+        "unknown": "Itt be van kapcsolva, de a termékszintű Hey-kapcsolót nem sikerült beolvasni. Mielőtt feltételeznéd, hogy a tagok küldhetnek Hey-t, ellenőrizd a Konfiguráció oldalt.",
+        "on": "Bekapcsolva. A tagok küldhetnek Hey-t, a páronkénti várakozástól és a csomagjuk napi keretétől függően."
+      },
+      "globalSettings": "A funkciókapcsolók megnyitása a Konfiguráció oldalon",
+      "unsaved": "Mentetlen módosításaid vannak. Mentésig a fenti állapot a mentett beállításokat írja le."
+    },
     "runtime": {
       "title": "Működési szabályok",
       "copy": "A főkapcsoló hibánál zár. Maradjon kikapcsolva, amíg a Core, az iOS és a web ugyanazon szerződés tesztjein nem ment át.",
@@ -2822,13 +2836,17 @@
       "actionKeyHelp": "Csak wire azonosító. Szövegváltozáskor soha ne nevezd át.",
       "cooldown": "Páronkénti várakozás",
       "retention": "Gyűjtő megőrzési ideje",
+      "cooldownHelp": "Ennyit kell várnia egy tagnak, mielőtt ugyanannak a személynek újabb Hey-t küldhet.",
+      "retentionHelp": "Ennyi ideig marad egy kapott Hey a címzett Hey-ek fülén. A változás a mentés után küldött Hey-ekre érvényes.",
       "seconds": "Másodperc",
       "chatContract": "Chat szerződés",
       "chatContractOff": "0 — kapu rejtve",
       "chatContractOn": "1 — kérések és kapu aktív",
       "chatContractHelp": "Az 1-es verziót csak a chat-migráció befejezése után kapcsold be.",
       "chatContractLocked": "Zárolva marad, amíg nincs ellenőrzött migráció és külön production kiadási engedély.",
-      "gateDefault": "Új tagoknál alapból csak az írhasson, akinek Hey-t küldtek"
+      "technical": "Technikai beállítások",
+      "gateDefault": "Új tagoknál alapból csak az írhasson, akinek Hey-t küldtek",
+      "gateDefaultHelp": "Minden olyan tagra vonatkozik, aki ezt a beállítást nem maga választotta ki; a tag saját választása mindig elsőbbséget élvez."
     },
     "icon": {
       "title": "Művelet ikonja",
@@ -2864,6 +2882,84 @@
       "copy": "A legutóbbi konfigurációs és ikonműveletek.",
       "empty": "Még nincs naplózott Pinger-művelet.",
       "system": "rendszer"
+    },
+    "sectionHelp": {
+      "sections": {
+        "runtime": "Súgó: működési szabályok",
+        "icons": "Súgó: a művelet ikonja",
+        "copy": "Súgó: a tagoknak szóló szövegek",
+        "audit": "Súgó: audit napló"
+      },
+      "effect": "Hatás:",
+      "example": "Példa:",
+      "topics": {
+        "enabled": {
+          "title": "Az oldal Hey-kapcsolója",
+          "purpose": "A Hey főkapcsolója ezen az oldalon. Hibánál zár, ezért maradjon kikapcsolva, amíg a Core és a kiadott appok ugyanazon szerződés ellenőrzésein át nem mentek.",
+          "effect": "Kikapcsolva a Core minden Hey-t elutasít, függetlenül a termékszintű kapcsolótól. A bekapcsolás önmagában nem elég: a Konfiguráció termékszintű Hey-kapcsolójának is bekapcsolva kell lennie.",
+          "example": "Ha egy incidens miatt szüneteltetnéd a Hey-t, kapcsold ki itt és ments; a fenti áttekintés ekkor kikapcsolt állapotot mutat, visszakapcsoláskor pedig ugyanazok a beállítások élnek."
+        },
+        "cooldown": {
+          "title": "Páronkénti várakozás",
+          "purpose": "A legrövidebb idő másodpercben két olyan Hey között, amelyet ugyanaz a küldő ugyanannak a címzettnek küld. A mező alatti segítség napokban, órákban és percekben is kiírja.",
+          "effect": "Aki ennél korábban próbálkozik, a várakozási hibaüzenetet kapja, amely a hátralévő időt a remaining helyőrzőn keresztül mutatja.",
+          "example": "A 86400 másodperc 1 nap: egy Hey után a küldő azonnal küldhet Hey-t valaki másnak, ugyanannak a személynek viszont csak egy nap múlva."
+        },
+        "retention": {
+          "title": "Gyűjtő megőrzési ideje",
+          "purpose": "Ennyi másodpercig marad egy kapott Hey a címzett Hey-ek fülén. A mező alatti segítség napokban, órákban és percekben is kiírja.",
+          "effect": "Minden Hey a küldéskor kapja meg a lejáratát, így az új érték a mentés után küldött Hey-ekre érvényes; a már megkapott Hey-ek megtartják a saját lejáratukat.",
+          "example": "A 604800 másodperc 7 nap: egy ma küldött Hey egy hét múlva tűnik el a címzett Hey-ek füléről."
+        },
+        "chatDefault": {
+          "title": "Alapértelmezett chatkapu a tagoknak",
+          "purpose": "Annak a tagi beállításnak a kezdőértéke, amellyel csak azok írhatnak a tagnak, akiknek ő maga küldött Hey-t.",
+          "effect": "Minden olyan tagra vonatkozik, aki ezt a beállítást nem maga választotta ki; a tag saját választása mindig elsőbbséget élvez, és az alapérték módosítása nem írja át a tárolt választást. Csak az 1-es chat szerződésnél számít, 0-nál a kapu rejtve van.",
+          "example": "Kapcsold be, ha alapból védenéd a tagokat a kéretlen első üzenetektől; aki az appban kikapcsolta a beállítást, annál kikapcsolva marad."
+        },
+        "chatContract": {
+          "title": "Chat szerződés verziója",
+          "purpose": "Eldönti, hogy a Hey-hez kötött chatkérés és chatkapu működik-e: a 0 rejtve tartja a kaput, az 1 bekapcsolja a kéréseket és a kaput.",
+          "effect": "Az 1-es verzió csak akkor választható, ha a Core jelzi, hogy az ellenőrzött chat-migráció és a kiadási engedély megvan; addig a vezérlő zárolva marad.",
+          "example": "A bevezetés alatt hagyd 0-n; amikor az oldal feloldja az 1-es verziót, egyetlen mentéssel kapcsold át."
+        },
+        "actionKey": {
+          "title": "Stabil action key",
+          "purpose": "A belső azonosító, amelyet minden tárolt Hey visz magával a wire-on. A Technikai beállítások alatt csak olvasható, és nem része a tagoknak szóló szövegeknek.",
+          "effect": "Az app elutasítja azt a Hey-ek oldalt, amelynek sorai más kulcsot hordoznak, így az átnevezés minden tag Hey-ek fülét elrontaná, amíg a régi Hey-ek le nem járnak.",
+          "example": "A gomb feliratának módosítása lejjebb, ezen az oldalon szövegmódosítás; az action key marad ping."
+        },
+        "states": {
+          "title": "Alap és elküldött állapot",
+          "purpose": "Négy ikonhely: a Hey gomb alapállapotban és azután, hogy a néző Hey-t küldött a tagnak, mindkettő világos és sötét megjelenésben.",
+          "effect": "Az app addig az alapikont mutatja, amíg a néző nem küldött Hey-t az adott tagnak, utána az elküldött ikont. Az üres hely az app beépített ikonjára esik vissza.",
+          "example": "Töltsd fel az elküldött állapot párját, ha a gombnak Hey után láthatóan változnia kell; ha üresen hagyod, a beépített elküldött ikon marad."
+        },
+        "upload": {
+          "title": "Ikonok feltöltése",
+          "purpose": "Minden hely PNG-t vagy SVG-t fogad, amelyből a Core kezelt PNG-változatokat készít. Ha Az alkalmazás beépített ikonjai be van kapcsolva, nem kell semmit feltölteni.",
+          "effect": "A feltöltés csak előkészít: az URL a konfiguráció mentésekor kerül ki. A feltöltések a beépített ikonok kapcsolója mellett is tárolva maradnak, így kikapcsolásakor visszatérnek.",
+          "example": "Töltsd fel mind a négy fájlt, nézd meg az előnézeteket, majd egyszer ments; ha később a beépített ikonokra váltasz, a feltöltések nem törlődnek."
+        },
+        "messages": {
+          "title": "A tagoknak szóló szövegek",
+          "purpose": "Minden szöveg, amelyet a tagok a Hey körül látnak: a gomb akadálymentes címkéje, a sikeres küldés toast, a várakozási és az általános elutasítás, a Hey-ek fül címe, a push címe és szövege, az appon belüli banner és a zárt chatkapu megjegyzése.",
+          "effect": "Az angol és a magyar szöveg is kötelező; az app a tag nyelvén mutatja, és minden mezőre az alatta látható hosszkorlát vonatkozik.",
+          "example": "A Hey-ek fül átnevezéséhez mindkét nyelven módosítsd a címét és ments; az action key és a tárolt Hey-ek ettől nem változnak."
+        },
+        "placeholders": {
+          "title": "Helyőrzők a szövegekben",
+          "purpose": "Néhány szövegnek meg kell tartania egy helyőrzőt, amelyet az app vagy a Core tölt ki: a várakozási hibához a remaining, a push szövegéhez és a bannerhez a sender helyőrző kell.",
+          "effect": "Az a szöveg, amelyből hiányzik a kötelező helyőrző, vagy amelybe ismeretlen kerül, nem megy át az ellenőrzésen és nem menthető, így a tagok sosem látnak hiányos mondatot.",
+          "example": "A várakozási üzenetet írd teljes mondatként, és a kapcsos zárójeles remaining helyőrzőt pontosan úgy tartsd meg, ahogy a jelenlegi szövegben áll; csak a körülötte lévő szavak változnak."
+        },
+        "history": {
+          "title": "Konfigurációs előzmények",
+          "purpose": "A legutóbbi konfigurációs és ikonműveletek az adminisztrátorral, a revízióváltással és az időponttal; a fejlécben lévő jelvény az aktuális revízió.",
+          "effect": "Minden mentés új revíziót hoz létre. Ha egy másik admin előbb mentett, a mentésedet ütközésként elutasítja a Core, és az újabb változat töltődik be átnézésre.",
+          "example": "Mielőtt a várakozási időt módosítod, itt nézd meg, változtatta-e valaki nemrég; a napló azt rögzíti, ki és mikor, azt nem, hogy miért."
+        }
+      }
     },
     "errors": {
       "load": "A Pinger konfigurációja nem tölthető be.",

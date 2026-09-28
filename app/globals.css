@@ -460,8 +460,90 @@ img {
 }
 
 /* Pinger v1 */
+.pinger-overview,
 .pinger-panel {
   margin-bottom: 22px;
+}
+
+/* Hey availability overview: what the SAVED settings let members do. */
+.pinger-overview .panel-body {
+  display: grid;
+  gap: 12px;
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+}
+
+.pinger-overview h2,
+.pinger-overview p,
+.pinger-help-grid h3,
+.pinger-help-grid p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.pinger-overview p,
+.pinger-help-grid p {
+  line-height: 1.6;
+}
+
+.pinger-overview-boundary,
+.pinger-field-note,
+.pinger-help-example {
+  color: var(--muted);
+}
+
+.pinger-status {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  line-height: 1.5;
+}
+
+.pinger-field-note {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* Per-section operator help and the technical disclosure. */
+.pinger-section-help {
+  padding: 0 22px 20px;
+}
+
+.pinger-section-help > summary,
+.pinger-technical > summary {
+  width: fit-content;
+  max-width: 100%;
+  padding: 10px 0;
+  color: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pinger-help-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.pinger-help-grid article {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  font-size: 14px;
+}
+
+.pinger-help-grid h3 {
+  font-size: 16px;
+}
+
+.pinger-technical > .form-grid {
+  margin-top: 10px;
 }
 
 .pinger-form-grid {
@@ -560,6 +642,7 @@ img {
 }
 
 @media (max-width: 900px) {
+  .pinger-help-grid,
   .pinger-icons,
   .pinger-copy-row {
     grid-template-columns: 1fr;

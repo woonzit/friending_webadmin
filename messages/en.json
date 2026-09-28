@@ -2236,7 +2236,7 @@
               "2": "Enable the chat contract only after its migration readiness is explicitly reported.",
               "3": "Choose whether new members default to receiving messages only from people they sent a Hey."
             },
-            "guidance": "The stable action key is wire identity and must not change with wording. Rollout switches are safety gates, not data migration tools."
+            "guidance": "The stable action key is wire identity: it is read-only under Technical settings and never changes with wording. Members can send a Hey only while the product-wide Hey switch on Configuration is also on; the overview at the top of the page shows the saved combination."
           },
           "icons": {
             "title": "Hey icon states",
@@ -2815,6 +2815,20 @@
     "title": "Pinger",
     "subtitle": "Configure the server-authoritative interest signal, its artwork and every member-facing message.",
     "saved": "Pinger configuration saved.",
+    "overview": {
+      "title": "Hey availability",
+      "copy": "Members can send a Hey only while both this page's switch and the product-wide Hey switch on Configuration are on. The state below reads the saved settings, not unsaved edits.",
+      "boundary": "This is configuration eligibility only. A member can still be refused by the pair cooldown or by the daily Hey allowance of their membership plan, and Footprints and photo likes have switches of their own.",
+      "savedState": "Saved state:",
+      "states": {
+        "off": "Off on this page. Members cannot send a Hey.",
+        "globalOff": "On here, but the product-wide Hey switch on Configuration is off, so members cannot send a Hey.",
+        "unknown": "On here, but the product-wide Hey switch could not be read. Check Configuration before assuming members can send a Hey.",
+        "on": "On. Members can send a Hey, subject to the pair cooldown and their plan's daily allowance."
+      },
+      "globalSettings": "Open the feature switches on Configuration",
+      "unsaved": "You have unsaved changes. Until you save, the state above describes the saved settings."
+    },
     "runtime": {
       "title": "Runtime policy",
       "copy": "The master switch fails closed. Keep it off until Core, iOS and web have passed the same contract gates.",
@@ -2822,13 +2836,17 @@
       "actionKeyHelp": "Wire identity only. Never rename it when copy changes.",
       "cooldown": "Pair cooldown",
       "retention": "Collector retention",
+      "cooldownHelp": "How long one member must wait before sending another Hey to the same person.",
+      "retentionHelp": "How long a received Hey stays in the recipient's Heys tab. A change applies to Heys sent after saving.",
       "seconds": "Seconds",
       "chatContract": "Chat contract",
       "chatContractOff": "0 — gate hidden",
       "chatContractOn": "1 — requests and gate active",
       "chatContractHelp": "Enable version 1 only after the chat migration has completed.",
       "chatContractLocked": "Locked until the verified migration and an explicit production release permit are present.",
-      "gateDefault": "Default new members to ‘only people I sent a Hey may message me’"
+      "technical": "Technical settings",
+      "gateDefault": "Default new members to ‘only people I sent a Hey may message me’",
+      "gateDefaultHelp": "Applies to every member who has not chosen this setting themselves; a member's own choice always wins."
     },
     "icon": {
       "title": "Action icon",
@@ -2864,6 +2882,84 @@
       "copy": "Recent configuration and icon operations.",
       "empty": "No Pinger operations have been recorded yet.",
       "system": "system"
+    },
+    "sectionHelp": {
+      "sections": {
+        "runtime": "Help: runtime policy",
+        "icons": "Help: action icon",
+        "copy": "Help: member-facing messages",
+        "audit": "Help: audit trail"
+      },
+      "effect": "Effect:",
+      "example": "Example:",
+      "topics": {
+        "enabled": {
+          "title": "Page switch for Hey",
+          "purpose": "The master switch for Hey on this page. It fails closed, so keep it off until Core and the released apps have passed the same contract checks.",
+          "effect": "Off makes Core refuse every Hey, whatever the product-wide switch says. On is not enough by itself: the product-wide Hey switch on Configuration must be on as well.",
+          "example": "To pause Hey during an incident, switch it off here and save; the overview above then shows Off, and switching it back on restores the same settings."
+        },
+        "cooldown": {
+          "title": "Pair cooldown",
+          "purpose": "The minimum wait, in seconds, between two Heys from the same sender to the same recipient. The hint under the field shows the value in days, hours and minutes.",
+          "effect": "A sender who tries again sooner is refused with the cooldown message, which shows the remaining time through its remaining placeholder.",
+          "example": "86400 seconds reads as 1 day: after a Hey to one person, the sender can send a Hey to someone else at once, but to that same person only a day later."
+        },
+        "retention": {
+          "title": "Collector retention",
+          "purpose": "How long, in seconds, a received Hey stays in the recipient's Heys tab. The hint under the field shows the value in days, hours and minutes.",
+          "effect": "Each Hey gets its expiry when it is sent, so a new value applies to Heys sent after the save; Heys already received keep the expiry they were given.",
+          "example": "604800 seconds reads as 7 days: a Hey sent today disappears from the recipient's Heys tab a week later."
+        },
+        "chatDefault": {
+          "title": "Default chat gate for members",
+          "purpose": "The starting value of the member setting that lets only people the member has sent a Hey to message them.",
+          "effect": "It applies to every member who has not chosen this setting themselves; a member's own choice always wins, and changing the default never rewrites a stored choice. It matters only at chat contract version 1; at 0 the gate is hidden.",
+          "example": "Turn it on to protect members from unsolicited first messages by default; anyone who switched the setting off in the app keeps it off."
+        },
+        "chatContract": {
+          "title": "Chat contract version",
+          "purpose": "Chooses whether the chat request and gate behaviour tied to Hey is active: 0 keeps the gate hidden, 1 turns requests and the gate on.",
+          "effect": "Version 1 can be chosen only when Core reports that the verified chat migration and the release permit are in place; until then the control stays locked.",
+          "example": "Keep it at 0 during rollout; once the page unlocks version 1, switch to it with a single save."
+        },
+        "actionKey": {
+          "title": "Stable action key",
+          "purpose": "The internal identity every stored Hey carries on the wire. It is shown read-only under Technical settings and is not part of the member-facing copy.",
+          "effect": "The app rejects a Heys page whose rows carry a different key, so renaming it would break every member's Heys tab until the old Heys expire.",
+          "example": "Changing the button text is a copy change further down this page; the action key stays ping."
+        },
+        "states": {
+          "title": "Resting and sent states",
+          "purpose": "Four icon slots: the Hey button at rest and after the viewer has sent that member a Hey, each in the light and the dark appearance.",
+          "effect": "The app shows the resting icon until the viewer has sent that member a Hey, then the sent icon. An empty slot falls back to the app's bundled artwork.",
+          "example": "Upload the sent-state pair when the button should visibly change after a Hey; leave it empty to keep the bundled sent icon."
+        },
+        "upload": {
+          "title": "Uploading icons",
+          "purpose": "Each slot accepts a PNG or an SVG, which Core turns into managed PNG variants. With Use the app's bundled icons on, no upload is needed.",
+          "effect": "An upload is only staged: its URL is published when you save the configuration. Uploads stay stored while the bundled switch is on, so switching it off brings them back.",
+          "example": "Upload all four files, check the previews, then save once; switching to the bundled icons later does not delete them."
+        },
+        "messages": {
+          "title": "Member-facing messages",
+          "purpose": "Every text members see around Hey: the button accessibility label, the success toast, the cooldown and generic refusals, the Heys tab title, the push title and body, the in-app banner and the closed chat gate note.",
+          "effect": "English and Hungarian are both required; the app shows the member's language, and each field has the length limit shown under it.",
+          "example": "To rename the Heys tab, change its title in both languages and save; the action key and stored Heys are not affected."
+        },
+        "placeholders": {
+          "title": "Placeholders in messages",
+          "purpose": "Some messages must keep a placeholder that the app or Core fills in: the cooldown error needs the remaining placeholder, and the push body and the banner need the sender placeholder.",
+          "effect": "A message that loses its required placeholder, or gains an unknown one, fails validation and cannot be saved, so members never see a sentence with a gap.",
+          "example": "Write the cooldown message as a full sentence and keep the remaining placeholder, in braces, exactly as in the current text; only the words around it change."
+        },
+        "history": {
+          "title": "Configuration history",
+          "purpose": "The most recent configuration and icon operations, each with the administrator, the revision change and the time; the badge in the header is the current revision.",
+          "effect": "Every save creates a new revision. If another administrator saved first, your save is refused as a conflict and the newer version is loaded for review.",
+          "example": "Before changing the cooldown, check here whether someone changed it recently; the trail records who and when, not why."
+        }
+      }
     },
     "errors": {
       "load": "The Pinger configuration could not be loaded.",

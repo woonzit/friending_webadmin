@@ -1,10 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
+import PingerSectionHelp from "@/components/PingerSectionHelp";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall, adminUploadPingerIcon, type PingerIconVariant } from "@/lib/adminClient";
+import { featureSwitchesStateResponse } from "@/lib/featureSwitches";
+import { pingerAvailability, pingerDuration } from "@/lib/pingerHelp";
 import {
   PINGER_COPY_KEYS,
   pingerIconURL,
@@ -37,6 +41,7 @@ const ICON_SLOTS = [
 }[];
 
 export default function PingerPage() {
+  const locale = useLocale();
   const t = useTranslations("pinger");
   const common = useTranslations("common");
   const [saved, setSaved] = useState<PingerConfiguration | null>(null);
@@ -44,6 +49,9 @@ export default function PingerPage() {
   const [audit, setAudit] = useState<PingerAuditRow[]>([]);
   const [limits, setLimits] = useState<PingerLimits | null>(null);
   const [chatContractReady, setChatContractReady] = useState(false);
+  // The product-wide Hey feature switch on Configuration. Null means it could not be read, which
+  // shows as "unknown" rather than blocking this page or guessing a state.
+  const [globalEnabled, setGlobalEnabled] = useState<boolean | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState<PingerIconVariant | null>(null);
@@ -63,7 +71,11 @@ export default function PingerPage() {
   const load = useCallback(async () => {
     setState("loading");
     setNotice(null);
-    const response = await adminCall("pinger_admin");
+    const [response, switches] = await Promise.all([
+      adminCall("pinger_admin"),
+      adminCall("feature_switches_get", { contract_version: 1 }),
+    ]);
+    setGlobalEnabled(featureSwitchesStateResponse(switches)?.hey.enabled ?? null);
     setState(response?.success && adopt(response) ? "ready" : "error");
   }, [adopt]);
 
@@ -140,6 +152,7 @@ export default function PingerPage() {
 
   const validation = validatePingerConfiguration(draft, limits);
   const hasValidationErrors = Object.keys(validation).length > 0;
+  const availability = pingerAvailability(saved?.enabled ?? false, globalEnabled);
   const fieldError = (key: string) => validation[key]
     ? <small className="field-error">{t("errors.field")}</small>
     : null;
@@ -160,6 +173,19 @@ export default function PingerPage() {
 
       {notice && <div className={`notice ${notice.tone === "error" ? "notice-error" : "notice-success"}`} role="status">{notice.text}</div>}
 
+      <section className="panel pinger-overview" aria-labelledby="pinger-overview-title">
+        <div className="panel-body">
+          <h2 id="pinger-overview-title">{t("overview.title")}</h2>
+          <p>{t("overview.copy")}</p>
+          <p className="pinger-overview-boundary">{t("overview.boundary")}</p>
+          <div className="pinger-status" role="status" data-pinger-availability={availability}>
+            <strong>{t("overview.savedState")}</strong> {t(`overview.states.${availability}`)}
+          </div>
+          {availability === "globalOff" && <Link className="button-link" href="/configuration#feature-switches">{t("overview.globalSettings")}</Link>}
+          {dirty && <p className="alert alert-warning" role="status">{t("overview.unsaved")}</p>}
+        </div>
+      </section>
+
       <section className="panel pinger-panel">
         <div className="panel-header">
           <div><h2>{t("runtime.title")}</h2><p>{t("runtime.copy")}</p></div>
@@ -169,12 +195,22 @@ export default function PingerPage() {
           </label>
         </div>
         <div className="panel-body form-grid pinger-form-grid">
-          <label className="field"><span>{t("runtime.actionKey")}</span><input value={draft.actionKey} maxLength={32} disabled={busy} onChange={(event) => patch({ actionKey: event.target.value.toLowerCase() })} /><small>{t("runtime.actionKeyHelp")}</small>{fieldError("actionKey")}</label>
-          <label className="field"><span>{t("runtime.cooldown")}</span><input type="number" min={limits.cooldownMin} max={limits.cooldownMax} value={draft.cooldownSeconds} disabled={busy} onChange={(event) => patch({ cooldownSeconds: Number(event.target.value) })} /><small>{t("runtime.seconds")}</small>{fieldError("cooldownSeconds")}</label>
-          <label className="field"><span>{t("runtime.retention")}</span><input type="number" min={limits.retentionMin} max={limits.retentionMax} value={draft.retentionSeconds} disabled={busy} onChange={(event) => patch({ retentionSeconds: Number(event.target.value) })} /><small>{t("runtime.seconds")}</small>{fieldError("retentionSeconds")}</label>
-          <label className="field"><span>{t("runtime.chatContract")}</span><select value={draft.chatContractVersion} disabled={busy || (!chatContractReady && draft.chatContractVersion === 0)} onChange={(event) => patch({ chatContractVersion: Number(event.target.value) as 0 | 1 })}><option value={0}>{t("runtime.chatContractOff")}</option><option value={1} disabled={!chatContractReady}>{t("runtime.chatContractOn")}</option></select><small>{chatContractReady ? t("runtime.chatContractHelp") : t("runtime.chatContractLocked")}</small>{fieldError("chatContractVersion")}</label>
+          <label className="field"><span>{t("runtime.cooldown")}</span><input type="number" min={limits.cooldownMin} max={limits.cooldownMax} value={draft.cooldownSeconds} disabled={busy} onChange={(event) => patch({ cooldownSeconds: Number(event.target.value) })} /><small>{t("runtime.seconds")} · {pingerDuration(draft.cooldownSeconds, locale) ?? "—"}</small><small>{t("runtime.cooldownHelp")}</small>{fieldError("cooldownSeconds")}</label>
+          <label className="field"><span>{t("runtime.retention")}</span><input type="number" min={limits.retentionMin} max={limits.retentionMax} value={draft.retentionSeconds} disabled={busy} onChange={(event) => patch({ retentionSeconds: Number(event.target.value) })} /><small>{t("runtime.seconds")} · {pingerDuration(draft.retentionSeconds, locale) ?? "—"}</small><small>{t("runtime.retentionHelp")}</small>{fieldError("retentionSeconds")}</label>
           <label className="switch-field pinger-gate-switch"><input type="checkbox" checked={draft.chatGateDefault} disabled={busy} onChange={(event) => patch({ chatGateDefault: event.target.checked })} /><span>{t("runtime.gateDefault")}</span></label>
+          <p className="pinger-field-note field-full">{t("runtime.gateDefaultHelp")}</p>
+          {/* Wire identity and a migration-gated contract: out of the everyday controls. The action
+              key is read-only because every stored Hey carries it and the app rejects a Heys page
+              whose rows do not match the current key. */}
+          <details className="pinger-technical field-full">
+            <summary>{t("runtime.technical")}</summary>
+            <div className="form-grid pinger-form-grid">
+              <label className="field"><span>{t("runtime.actionKey")}</span><input value={draft.actionKey} readOnly /><small>{t("runtime.actionKeyHelp")}</small>{fieldError("actionKey")}</label>
+              <label className="field"><span>{t("runtime.chatContract")}</span><select value={draft.chatContractVersion} disabled={busy || (!chatContractReady && draft.chatContractVersion === 0)} onChange={(event) => patch({ chatContractVersion: Number(event.target.value) as 0 | 1 })}><option value={0}>{t("runtime.chatContractOff")}</option><option value={1} disabled={!chatContractReady}>{t("runtime.chatContractOn")}</option></select><small>{chatContractReady ? t("runtime.chatContractHelp") : t("runtime.chatContractLocked")}</small>{fieldError("chatContractVersion")}</label>
+            </div>
+          </details>
         </div>
+        <PingerSectionHelp section="runtime" />
       </section>
 
       <section className="panel pinger-panel">
@@ -217,6 +253,7 @@ export default function PingerPage() {
             })}
           </div>
         </div>
+        <PingerSectionHelp section="icons" />
       </section>
 
       <section className="panel pinger-panel">
@@ -231,6 +268,7 @@ export default function PingerPage() {
             </div>
           ))}
         </div>
+        <PingerSectionHelp section="copy" />
       </section>
 
       <section className="panel pinger-panel">
@@ -244,6 +282,7 @@ export default function PingerPage() {
             </div>
           ))}
         </div>
+        <PingerSectionHelp section="audit" />
       </section>
     </>
   );
