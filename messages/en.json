@@ -5887,7 +5887,7 @@
     "hide": "Hide",
     "reload": "Reload",
     "loading": "Loading moderation insight…",
-    "error": "The moderation insight could not be read. Nothing here was assumed to be empty.",
+    "error": "The moderation insight could not be read. This does not mean there is no data.",
     "unknown": "unknown",
     "none": "none",
     "locationUnknown": "location unknown",
@@ -5898,7 +5898,7 @@
       "signup-ip-country-differs": "The signup address is in a different country from the chosen location",
       "shared-signup-ip": "Other accounts were registered from the same signup address",
       "shared-login-ip": "Other accounts have signed in from the same addresses",
-      "all-interests-selected": "Every available interest slot is filled",
+      "all-interests-selected": "Selected the maximum number of interests",
       "empty-about": "No introduction",
       "no-return-after-signup": "Has not signed in again since registering",
       "logins-from-several-countries": "Sign-ins from more than one country"
@@ -5920,7 +5920,7 @@
       "title": "Signup",
       "when": "Registered",
       "platform": "Registered on",
-      "ip": "Signup address",
+      "ip": "Signup IP address",
       "chosen": "Chosen location",
       "source": "source: {source}",
       "sameIp": "Same signup address",
@@ -5936,7 +5936,7 @@
       "totalValue": "{total} in total · {after} after signup",
       "last": "Last sign-in",
       "never": "no sign-in recorded",
-      "lastIp": "Last address",
+      "lastIp": "Last IP address",
       "lastSeen": "Last seen",
       "spread": "Addresses and countries",
       "spreadValue": "{addresses, plural, one {# address} other {# addresses}} · {countries, plural, =0 {no country known} one {# country} other {# countries}}",
@@ -5965,12 +5965,12 @@
       "title": "Recent sign-ins",
       "when": "When",
       "platform": "Platform",
-      "ip": "Address",
+      "ip": "IP address",
       "place": "Location",
       "build": "Build",
       "none": "No sign-in is recorded."
     },
-    "caveat": "Locations are approximate, taken from the address at the time. Shared addresses also happen on mobile networks, at workplaces and behind VPNs, so a shared address alone proves nothing."
+    "caveat": "Locations are approximate, taken from the IP address at the time. Shared IP addresses also happen on mobile networks, at workplaces and behind VPNs, so a shared IP address alone proves nothing."
   },
   "moderation": {
     "title": "Moderation",
@@ -9074,7 +9074,7 @@
     "reportDismissedNotice": "Report dismissed.",
     "reportMessageRemovedNotice": "Message removed and report closed.",
     "reportRemoveNotConfirmed": "The report was closed, but Core did not confirm that the message was removed. Check the footprint's state on the Resolved tab.",
-    "reportActionError": "The action did not go through ({code}). The list has been reloaded: check the report before trying again.",
+    "reportActionError": "The action could not be confirmed ({code}). The list has been reloaded: check the report before trying again.",
     "reportReadOnly": "Read-only: your role cannot close reports, or it could not be checked. Admins and owners can dismiss reports and remove messages.",
     "reportLoadMore": "Load more",
     "reportLoadMoreError": "Could not load more reports. The list above is unchanged.",
@@ -9122,7 +9122,7 @@
       "hey": {
         "title": "Hey",
         "summary": "The product-wide gate above the Pinger rollout setting.",
-        "consequenceOff": "Turning Hey off hides the Pinger button, the profile Hey gesture and the Heys collector tab, refuses new sends, and stops Hey bell rows and pushes. Existing Heys and matches remain; withdrawing a previous Hey stays possible.",
+        "consequenceOff": "Turning Hey off hides the Pinger button and the Heys collector tab, refuses new sends, and stops Hey bell rows and pushes. Existing Heys and matches remain; withdrawing a previous Hey stays possible.",
         "consequenceOn": "Turning Hey on permits sending Heys again. The Pinger button still appears only when its separate rollout configuration is enabled; nothing is reconstructed for the off period.",
         "enable": "Turn Hey on",
         "disable": "Turn Hey off"

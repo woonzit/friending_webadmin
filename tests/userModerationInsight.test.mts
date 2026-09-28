@@ -302,6 +302,8 @@ test("the panel is collapsed by default, loads only when opened and forgets on c
   assert.match(component, /const \[open, setOpen\] = useState\(false\);/);
   assert.match(component, /if \(open\) void load\(\);\s*return \(\) => \{\s*inFlight\.current\?\.abort\(\);\s*setData\(null\);/);
   assert.match(component, /aria-expanded=\{open\}/);
+  assert.match(component, /<Link href=\{`\/users\/\$\{account\.uid\}`\} prefetch=\{false\}>/);
+  assert.equal([...component.matchAll(/<Link /g)].length, [...component.matchAll(/prefetch=\{false\}/g)].length);
   const page = await readFile(new URL("../app/(dashboard)/users/[uid]/page.tsx", import.meta.url), "utf8");
   assert.match(page, /<UserModerationInsight key=\{`moderation-insight-\$\{uid\}`\} uid=\{uid\} \/>/);
 
@@ -323,6 +325,8 @@ test("the opened view renders the capture in both locales with member links", as
     const html = render(locale, createElement(UserModerationInsightView, { data }));
     for (const address of ["50.39.166.245", "84.0.76.105"]) assert.ok(html.includes(address), address);
     assert.match(html, /href="\/users\/901"/);
+    // Shared-account links do not prefetch member pages when the panel opens.
+    assert.equal([...html.matchAll(/href="\/users\/90[12]"/g)].length, 2);
     assert.match(html, /href="\/users\/902"/);
     assert.doesNotMatch(html, /\/preview/u);
     for (const flag of data.flags) {

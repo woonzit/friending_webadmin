@@ -481,18 +481,22 @@ export function footprintReportPage(
 }
 
 /**
- * The `resolve_footprint_report` success. `resolved: true` is the proof of the
- * mutation; the resolved row is additive (a Core without P-066 sends none), and
- * an unreadable one is not trusted: both come back as `report: null`, and the
- * page reloads authoritative state instead.
+ * The `resolve_footprint_report` success for the report `expectedId`.
+ * `resolved: true` is the proof of the mutation; the resolved row is additive
+ * (a Core without P-066 sends none), and an unreadable one is not trusted: both
+ * come back as `report: null`, and the page reloads authoritative state instead.
+ * A readable row for ANOTHER report is not an answer to this request at all.
  */
 export function footprintReportResolveResult(
   value: unknown,
+  expectedId: string,
 ): { report: FootprintReport | null } | null {
   const body = record(value);
   if (!body || body.success !== true || body.resolved !== true) return null;
   if (!Object.hasOwn(body, "report")) return { report: null };
-  return { report: footprintReportRow(body.report, "resolved") };
+  const report = footprintReportRow(body.report, "resolved");
+  if (report && report.id !== expectedId) return null;
+  return { report };
 }
 
 /**

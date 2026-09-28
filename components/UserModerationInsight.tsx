@@ -147,7 +147,8 @@ export function UserModerationInsightView({ data }: { data: Insight }) {
               {data.shared_addresses.accounts.map((account) => (
                 <tr key={account.uid}>
                   <td>
-                    <Link href={`/users/${account.uid}`}>{account.display_name || `#${account.uid}`}</Link>{" "}
+                    {/* No prefetch: opening the panel must not fire a request per shared account. */}
+                    <Link href={`/users/${account.uid}`} prefetch={false}>{account.display_name || `#${account.uid}`}</Link>{" "}
                     <small>#{account.uid}</small>
                     {account.demo ? <> <span className="status-badge">{t("shared.demo")}</span></> : null}
                   </td>

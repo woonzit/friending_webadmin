@@ -297,13 +297,21 @@ test("pagination follows Core's cursor exactly and refuses anything half-said", 
 
 test("the resolve answer proves the mutation; the resolved row is trusted only when it reads", () => {
   const answer = { success: true, status_code: 200, resolved: true, report: RESOLVED_ROW, message: 200, status: 200, can_send: 0 };
-  const result = footprintReportResolveResult(answer);
+  const result = footprintReportResolveResult(answer, REPORT_ID_2);
+  assert.equal(result?.report?.id, REPORT_ID_2);
   assert.equal(result?.report?.resolution, "message_removed");
-  assert.deepEqual(footprintReportResolveResult({ success: true, status_code: 200, resolved: true }), { report: null });
-  assert.deepEqual(footprintReportResolveResult({ ...answer, report: OPEN_ROW }), { report: null });
-  assert.equal(footprintReportResolveResult({ ...answer, resolved: false }), null);
-  assert.equal(footprintReportResolveResult({ success: false, status_code: 422, error: "footprint-report-action-invalid" }), null);
-  assert.equal(footprintReportResolveResult(null), null);
+  assert.deepEqual(footprintReportResolveResult({ success: true, status_code: 200, resolved: true }, REPORT_ID_2), { report: null });
+  assert.deepEqual(footprintReportResolveResult({ ...answer, report: OPEN_ROW }, REPORT_ID), { report: null });
+  assert.equal(footprintReportResolveResult({ ...answer, resolved: false }, REPORT_ID_2), null);
+  assert.equal(footprintReportResolveResult({ success: false, status_code: 422, error: "footprint-report-action-invalid" }, REPORT_ID_2), null);
+  assert.equal(footprintReportResolveResult(null, REPORT_ID_2), null);
+});
+
+test("a resolved row for another report is not an answer to this request", () => {
+  // RESOLVED_ROW is report REPORT_ID_2; the console asked to resolve REPORT_ID.
+  const answer = { success: true, status_code: 200, resolved: true, report: RESOLVED_ROW };
+  assert.equal(footprintReportResolveResult(answer, REPORT_ID), null);
+  assert.equal(footprintReportResolveResult({ ...answer, report: { ...RESOLVED_ROW, id: REPORT_ID } }, REPORT_ID)?.report?.id, REPORT_ID);
 });
 
 test("the resolution note is normalized like Core's and bounded instead of cut", () => {
@@ -348,7 +356,9 @@ test("the queue pages, gates both resolutions on a write role and confirms with 
   assert.equal([...panel.matchAll(/adminCall\("resolve_footprint_report"/g)].length, 1);
   assert.match(panel, /adminCall\("resolve_footprint_report", \{\s*id: report\.id,\s*action,\s*note: normalizedNote,\s*\}\)/);
   assert.match(panel, /canRemoveFootprintMessage\(report\) \?/);
-  // An uncertain answer re-reads the queue instead of offering a blind retry.
+  // The answer is bound to the requested report; an uncertain or foreign one
+  // re-reads the queue instead of offering a blind retry.
+  assert.match(panel, /footprintReportResolveResult\(response, report\.id\)/);
   assert.match(panel, /if \(!result\) \{[\s\S]*?void load\(status\);/);
   // Member links from the raw uids, so a member without a card still links.
   assert.match(panel, /href=\{`\/users\/\$\{uid\}`\}/);

@@ -32,7 +32,9 @@ type PendingAction = { report: FootprintReport; action: FootprintReportAction };
 type Notice = { tone: "success" | "error"; text: string };
 
 function errorCode(response: AdminResponse | null): string {
-  return typeof response?.error === "string" && response.error.trim() !== "" ? response.error : "request-failed";
+  if (typeof response?.error === "string" && response.error.trim() !== "") return response.error;
+  // A success the console cannot bind to its request (e.g. a row for another report).
+  return response?.success === true ? "unexpected-response" : "request-failed";
 }
 
 export default function FootprintReportsPanel({
@@ -153,10 +155,11 @@ export default function FootprintReportsPanel({
     setPending(null);
     setNote("");
     onResolved();
-    const result = footprintReportResolveResult(response);
+    const result = footprintReportResolveResult(response, report.id);
     if (!result) {
-      // Refused, lost or timed out: the write may or may not have landed, so the
-      // console re-reads the queue instead of offering a blind retry.
+      // Refused, lost, timed out or answered for another report: the write may or
+      // may not have landed, so the console re-reads the queue instead of
+      // offering a blind retry.
       setNotice({ tone: "error", text: t("reportActionError", { code: errorCode(response) }) });
       void load(status);
       return;

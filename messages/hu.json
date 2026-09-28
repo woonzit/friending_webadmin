@@ -5887,7 +5887,7 @@
     "hide": "Elrejtés",
     "reload": "Újratöltés",
     "loading": "A moderációs háttér betöltése…",
-    "error": "Nem sikerült beolvasni a moderációs hátteret. Semmit nem tekintettünk üresnek.",
+    "error": "Nem sikerült beolvasni a moderációs hátteret. Ez nem jelenti azt, hogy nincs adat.",
     "unknown": "ismeretlen",
     "none": "nincs",
     "locationUnknown": "ismeretlen hely",
@@ -5898,7 +5898,7 @@
       "signup-ip-country-differs": "A regisztrációs cím más országban van, mint a választott hely",
       "shared-signup-ip": "Ugyanarról a regisztrációs címről más fiókokat is regisztráltak",
       "shared-login-ip": "Ugyanazokról a címekről más fiókok is bejelentkeztek",
-      "all-interests-selected": "Az összes választható érdeklődési kört kitöltötte",
+      "all-interests-selected": "Elérte a választható érdeklődési körök maximumát",
       "empty-about": "Nincs bemutatkozás",
       "no-return-after-signup": "A regisztráció óta nem jelentkezett be újra",
       "logins-from-several-countries": "Több országból is bejelentkezett"
@@ -5920,7 +5920,7 @@
       "title": "Regisztráció",
       "when": "Regisztrált",
       "platform": "Regisztrációs platform",
-      "ip": "Regisztrációs cím",
+      "ip": "Regisztrációs IP-cím",
       "chosen": "Választott hely",
       "source": "forrás: {source}",
       "sameIp": "Ugyanez a regisztrációs cím",
@@ -5936,7 +5936,7 @@
       "totalValue": "Összesen {total} · ebből {after} a regisztráció után",
       "last": "Utolsó bejelentkezés",
       "never": "nincs rögzített bejelentkezés",
-      "lastIp": "Utolsó cím",
+      "lastIp": "Utolsó IP-cím",
       "lastSeen": "Utoljára látva",
       "spread": "Címek és országok",
       "spreadValue": "{addresses, plural, other {# cím}} · {countries, plural, =0 {nincs ismert ország} other {# ország}}",
@@ -5965,12 +5965,12 @@
       "title": "Legutóbbi bejelentkezések",
       "when": "Mikor",
       "platform": "Platform",
-      "ip": "Cím",
+      "ip": "IP-cím",
       "place": "Hely",
       "build": "Build",
       "none": "Nincs rögzített bejelentkezés."
     },
-    "caveat": "A helyek csak közelítőek, a cím akkori helyéből származnak. Közös címet mobilhálózat, munkahely vagy VPN is okozhat, így önmagában egy közös cím semmit nem bizonyít."
+    "caveat": "A helyek csak közelítőek, az IP-cím akkori helyéből származnak. Közös IP-címet mobilhálózat, munkahely vagy VPN is okozhat, így önmagában egy közös IP-cím semmit nem bizonyít."
   },
   "moderation": {
     "title": "Moderáció",
@@ -9074,8 +9074,8 @@
     "reportDismissedNotice": "A jelentés elutasítva.",
     "reportMessageRemovedNotice": "Az üzenet eltávolítva, a jelentés lezárva.",
     "reportRemoveNotConfirmed": "A jelentés lezárult, de a Core nem erősítette meg, hogy az üzenet törlődött. Nézd meg a footprint állapotát a Lezárt fülön.",
-    "reportActionError": "A művelet nem sikerült ({code}). A listát újratöltöttük: mielőtt újra próbálod, nézd meg a jelentést.",
-    "reportReadOnly": "Csak olvasás: a szerepköröddel nem zárhatsz le jelentést, vagy nem sikerült ellenőrizni. Jelentést elutasítani és üzenetet eltávolítani adminok és tulajdonosok tudnak.",
+    "reportActionError": "A műveletet nem sikerült megerősíteni ({code}). A listát újratöltöttük: mielőtt újra próbálod, nézd meg a jelentést.",
+    "reportReadOnly": "Csak olvasás: a szerepköröddel nem zárhatsz le jelentést, vagy a szerepkörödet nem sikerült ellenőrizni. Jelentést elutasítani és üzenetet eltávolítani adminok és tulajdonosok tudnak.",
     "reportLoadMore": "Továbbiak betöltése",
     "reportLoadMoreError": "Nem sikerült további jelentéseket betölteni. A fenti lista nem változott.",
     "gender": {
@@ -9122,7 +9122,7 @@
       "hey": {
         "title": "Hey",
         "summary": "A Pinger bevezetési beállítása felett álló teljes termékszintű kapu.",
-        "consequenceOff": "A Hey kikapcsolása elrejti a Pinger gombot, a profil Hey gesztust és a Hey-k gyűjtőfület, elutasítja az új küldéseket, és leállítja a Hey-értesítési bejegyzéseket és push értesítéseket. A meglévő Hey-k és matchek megmaradnak; egy korábbi Hey visszavonható marad.",
+        "consequenceOff": "A Hey kikapcsolása elrejti a Pinger gombot és a Hey-k gyűjtőfület, elutasítja az új küldéseket, és leállítja a Hey-értesítési bejegyzéseket és push értesítéseket. A meglévő Hey-k és matchek megmaradnak; egy korábbi Hey visszavonható marad.",
         "consequenceOn": "A Hey bekapcsolása újra engedi a Hey-küldést. A Pinger gomb továbbra is csak akkor jelenik meg, ha a külön bevezetési konfigurációja aktív; a kikapcsolt időszakból semmi nem épül újra.",
         "enable": "Hey bekapcsolása",
         "disable": "Hey kikapcsolása"
