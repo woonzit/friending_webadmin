@@ -560,7 +560,7 @@ export function profileVerificationDetail(value: unknown): ProfileVerificationDe
     if (!row || !actions || !diagnostics || typeof row.audio !== "boolean" || typeof row.has_video !== "boolean") return null;
     const identifiers = ["submission_id", "challenge_id", "sha256", "mime", "codec", "lifecycle"] as const;
     const values = identifiers.map((key) => boundedText(row[key] ?? "", key === "sha256" ? 64 : 120, true));
-    const numeric = [row.config_revision, row.consent_revision, row.bytes, row.width, row.height].map(integer);
+    const numeric = [row.config_revision, row.consent_revision, row.bytes, row.width, row.height].map((value) => integer(value));
     const duration = finite(row.duration_seconds);
     const createdAt = epoch(row.created_at);
     const parsedActions = actions.map((entry) => boundedText(entry, 48)).filter((entry): entry is string => entry !== null);

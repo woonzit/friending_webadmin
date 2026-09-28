@@ -288,6 +288,31 @@ test("detail parsing tolerates PHP empty-map arrays without accepting populated 
   assert.equal(profileVerificationDetail(malformed), null);
 });
 
+test("submission revisions and media dimensions accept every non-negative integer Core can emit", () => {
+  // Core's submission projection floors each of these at 0. A point-free `.map(integer)` passed the
+  // array index as the minimum, so 0 revisions or 1-3 pixel/byte values failed the whole detail.
+  const small = validDetail();
+  small.submission.config_revision = 0;
+  small.submission.consent_revision = 0;
+  small.submission.bytes = 1;
+  small.submission.width = 2;
+  small.submission.height = 3;
+  const parsed = profileVerificationDetail(small);
+  assert.ok(parsed);
+  assert.equal(parsed.submission?.config_revision, 0);
+  assert.equal(parsed.submission?.consent_revision, 0);
+  assert.equal(parsed.submission?.bytes, 1);
+  assert.equal(parsed.submission?.width, 2);
+  assert.equal(parsed.submission?.height, 3);
+
+  const negative = validDetail();
+  negative.submission.height = -1;
+  assert.equal(profileVerificationDetail(negative), null);
+  const fractional = validDetail();
+  fractional.submission.bytes = 1.5;
+  assert.equal(profileVerificationDetail(fractional), null);
+});
+
 test("evidence URLs accept only opaque case IDs and a closed kind", () => {
   const caseId = "a".repeat(32);
   assert.equal(
