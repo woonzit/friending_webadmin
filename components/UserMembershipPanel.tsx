@@ -1,24 +1,45 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import { normalizeAdminRole } from "@/lib/authPolicy";
 import {
   membershipActionErrorKey,
+  membershipConfiguration,
   membershipExpiryChange,
   membershipGrantPreview,
-  membershipStoreContribution,
+  membershipMutationOutcome,
+  membershipNonProductionOnlyAccess,
+  membershipRolloutMode,
+  membershipStoreAutoRenews,
+  membershipStoreEnvironment,
+  membershipStoreRowContribution,
   membershipUserDetail,
   type MembershipAdminGrant,
   type MembershipAction,
   type MembershipGrantPreview,
+  type MembershipRolloutMode,
   type MembershipUserDetail,
 } from "@/lib/membership";
+import {
+  MEMBERSHIP_PENDING_GRANT_TTL_MS,
+  membershipAdminScope,
+  membershipCheckPendingGrant,
+  membershipReadUserDetail,
+  membershipRememberPendingGrant,
+  membershipRestorePendingGrant,
+  membershipSessionStorage,
+  membershipSubmitGrant,
+  type MembershipPendingGrant,
+} from "@/lib/membershipFlows";
 
 type GrantPreset = "plus_week" | "plus_month" | "plus_quarter" | "custom";
 type StartMode = "extend" | "start_now";
+type Notice = { tone: "success" | "warning" | "error"; text: string };
+/** What Core's gates apply now; `unknown` when the membership configuration could not be read. */
+type RolloutState = "loading" | MembershipRolloutMode | "unknown";
 
 function formatInstant(value: string | null, locale: string, withTime = true): string {
   if (!value) return "—";
@@ -64,8 +85,12 @@ function toLocalInput(value: string | null): string {
   return local.toISOString().slice(0, 19);
 }
 
+function normalizedReason(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
+
 function validReason(value: string): boolean {
-  const length = value.trim().replace(/\s+/g, " ").length;
+  const length = normalizedReason(value).length;
   return length >= 3 && length <= 500;
 }
 
@@ -91,16 +116,21 @@ export default function UserMembershipPanel({
   const locale = useLocale();
   const [detail, setDetail] = useState(initial);
   const [adminRole, setAdminRole] = useState("");
+  // The signed-in administrator's e-mail scopes the tab-local copy of a pinned grant request.
+  const [adminScope, setAdminScope] = useState<string | null>(null);
   const [adminAccess, setAdminAccess] = useState<"loading" | "ready" | "error">("loading");
+  const [rollout, setRollout] = useState<RolloutState>("loading");
   const [busy, setBusy] = useState("");
-  const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
   const [preset, setPreset] = useState<GrantPreset>("plus_month");
   const [startMode, setStartMode] = useState<StartMode>("extend");
   const [customExpiry, setCustomExpiry] = useState("");
   const [reason, setReason] = useState("");
   const [preview, setPreview] = useState<MembershipGrantPreview | null>(null);
+  const [pendingGrant, setPendingGrant] = useState<MembershipPendingGrant | null>(null);
   const [expiryEdit, setExpiryEdit] = useState(() => toLocalInput(initial.admin_grant?.expires_at ?? null));
   const [expiryReason, setExpiryReason] = useState("");
+  const restoreChecked = useRef<string | null>(null);
 
   const loadAdminAccess = useCallback(async () => {
     setAdminAccess("loading");
@@ -112,25 +142,71 @@ export default function UserMembershipPanel({
       return;
     }
     setAdminRole(role);
+    setAdminScope(membershipAdminScope(response?.email));
     setAdminAccess("ready");
   }, []);
 
+  // One extra read: whether Core enforces the saved plan now, or still runs the legacy rules.
+  const loadRollout = useCallback(async () => {
+    const response = await adminCall("membership_configuration");
+    const parsed = response?.success === true ? membershipConfiguration(response.data) : null;
+    setRollout(parsed ? membershipRolloutMode(parsed) : "unknown");
+  }, []);
+
   useEffect(() => { void loadAdminAccess(); }, [loadAdminAccess]);
+  useEffect(() => { void loadRollout(); }, [loadRollout]);
+
+  const detailReadable = detail.effective_membership.lifecycle_state !== "unavailable";
+
+  // A grant request pinned before a page reload comes back for the same administrator and member
+  // with the same lock, retry and discard controls, so a retry replays that exact request instead
+  // of minting a new identity. Runs once per scope, as soon as a readable member detail exists.
+  useEffect(() => {
+    if (!adminScope || !detailReadable || restoreChecked.current === adminScope) return;
+    restoreChecked.current = adminScope;
+    const restored = membershipRestorePendingGrant(membershipSessionStorage(), {
+      admin: adminScope,
+      uid,
+      detail,
+      now: Date.now(),
+    });
+    if (restored.kind === "restored") {
+      setPendingGrant(restored.pending);
+      setPreset(restored.request.preset_id);
+      setStartMode(restored.request.start_mode);
+      setCustomExpiry(toLocalInput(restored.request.custom_expires_at));
+      setReason(restored.request.reason);
+      setPreview(null);
+    } else if (restored.kind === "resolved") {
+      setNotice({ tone: "warning", text: t("grant.uncertainResolved") });
+    } else if (restored.kind === "expired") {
+      setNotice({
+        tone: "warning",
+        text: t("grant.restoreExpired", { minutes: MEMBERSHIP_PENDING_GRANT_TTL_MS / 60_000 }),
+      });
+    }
+  }, [adminScope, detail, detailReadable, t, uid]);
 
   const status = detail.effective_membership;
   const activeSources = useMemo(
     () => status.sources.filter((source) => source.contributes_to_access).map((source) => source.kind),
     [status.sources],
   );
+  const storeAutoRenews = membershipStoreAutoRenews(status);
+  const nonProductionOnly = membershipNonProductionOnlyAccess(detail);
+  // No label while the rollout read is in flight; an unreadable read is labeled as unknown.
+  const planLabel = rollout === "loading" ? null : t(`plan.${rollout}`);
   const editor = adminAccess === "ready" && (adminRole === "owner" || adminRole === "admin");
   const owner = adminAccess === "ready" && adminRole === "owner";
   const customWire = preset === "custom" ? toWireInstant(customExpiry) : null;
   const grantInputValid = editor && validReason(reason) && (preset !== "custom" || customWire !== null);
   const currentGrant = detail.admin_grant;
   const canEditGrant = editor && isEditableGrant(currentGrant);
+  // While a grant request is pinned, no other grant mutation may run against the same member.
+  const grantLocked = pendingGrant !== null;
   const expiryWire = toWireInstant(expiryEdit);
   const expiryChange = membershipExpiryChange(currentGrant?.expires_at ?? null, expiryWire);
-  const expiryValid = canEditGrant && expiryWire !== null && validReason(expiryReason)
+  const expiryValid = canEditGrant && !grantLocked && expiryWire !== null && validReason(expiryReason)
     && (expiryChange !== "shorten" || owner);
 
   function resetPreview() {
@@ -138,11 +214,15 @@ export default function UserMembershipPanel({
     setNotice(null);
   }
 
+  function adoptParsed(parsed: MembershipUserDetail) {
+    setDetail(parsed);
+    setExpiryEdit(toLocalInput(parsed.admin_grant?.expires_at ?? null));
+  }
+
   function adopt(value: unknown): boolean {
     const parsed = membershipUserDetail(value);
     if (!parsed || parsed.uid !== uid) return false;
-    setDetail(parsed);
-    setExpiryEdit(toLocalInput(parsed.admin_grant?.expires_at ?? null));
+    adoptParsed(parsed);
     return true;
   }
 
@@ -150,14 +230,47 @@ export default function UserMembershipPanel({
     return membershipErrors(membershipActionErrorKey(action, error));
   }
 
-  async function reload() {
+  /** Reads the authoritative member state; `null` when it could not be read. */
+  async function reloadDetail(): Promise<MembershipUserDetail | null> {
     setBusy("reload");
-    setNotice(null);
-    const response = await adminCall("membership_user_detail", { uid });
+    const parsed = await membershipReadUserDetail(adminCall, uid);
     setBusy("");
-    if (!response?.success || !adopt(response.data)) {
-      setNotice({ tone: "error", text: t("loadError") });
+    if (parsed) adoptParsed(parsed);
+    return parsed;
+  }
+
+  /** Keeps the in-memory pin and its tab-local stored copy together; `null` releases both. */
+  function rememberPendingGrant(pending: MembershipPendingGrant | null) {
+    setPendingGrant(pending);
+    membershipRememberPendingGrant(membershipSessionStorage(), adminScope, uid, pending, Date.now());
+  }
+
+  /** Releases a pinned grant whose outcome is now known to be most likely applied. */
+  function releaseResolvedGrant() {
+    rememberPendingGrant(null);
+    setPreview(null);
+    setReason("");
+    setNotice({ tone: "warning", text: t("grant.uncertainResolved") });
+  }
+
+  async function reload() {
+    setNotice(null);
+    void loadRollout();
+    if (pendingGrant) {
+      // A still-unchanged grant keeps the request pinned; only a changed grant releases it.
+      setBusy("reload");
+      const result = await membershipCheckPendingGrant(adminCall, uid, pendingGrant);
+      setBusy("");
+      if (result.kind === "unreadable") {
+        setNotice({ tone: "error", text: t("loadError") });
+        return;
+      }
+      adoptParsed(result.detail);
+      if (result.kind === "changed") releaseResolvedGrant();
+      return;
     }
+    const refreshed = await reloadDetail();
+    if (!refreshed) setNotice({ tone: "error", text: t("loadError") });
   }
 
   function grantBody(): Record<string, unknown> {
@@ -170,7 +283,7 @@ export default function UserMembershipPanel({
   }
 
   async function previewGrant() {
-    if (!grantInputValid) return;
+    if (!grantInputValid || grantLocked) return;
     setBusy("preview");
     setNotice(null);
     setPreview(null);
@@ -189,37 +302,78 @@ export default function UserMembershipPanel({
   }
 
   async function confirmGrant() {
-    if (!preview || !grantInputValid) return;
-    if (startMode === "start_now" && preview.store_overlap
+    // A retry replays the pinned body and needs no preview (a restored pin has none); a first
+    // attempt needs a preview of valid input.
+    if (!editor || (!pendingGrant && (!preview || !grantInputValid))) return;
+    if (!pendingGrant && startMode === "start_now" && preview?.store_overlap
       && !window.confirm(t("grant.overlapConfirm"))) return;
+    // The first attempt pins the exact body; a retry after an uncertain result resends it
+    // unchanged, so Core replays its receipt instead of granting twice. The pin is stored before
+    // each send, so a reload mid-request restores the same identity.
     setBusy("grant");
     setNotice(null);
-    const response = await adminCall("membership_admin_grant", {
-      ...grantBody(),
-      expected_revision: preview.current_grant_revision,
-      reason: reason.trim().replace(/\s+/g, " "),
-      request_id: crypto.randomUUID(),
+    const result = await membershipSubmitGrant(adminCall, {
+      uid,
+      pending: pendingGrant,
+      detail,
+      preview,
+      body: { ...grantBody(), reason: normalizedReason(reason) },
+      mintRequestId: () => crypto.randomUUID(),
+      persist: (pinned) => {
+        membershipRememberPendingGrant(membershipSessionStorage(), adminScope, uid, pinned, Date.now());
+      },
     });
     setBusy("");
-    if (!response?.success) {
-      const errorKey = membershipActionErrorKey("grant_create", response?.error);
-      if (errorKey === "grantConflict" && response?.data) adopt(response.data);
+    rememberPendingGrant(result.pending);
+    if (result.detail) adoptParsed(result.detail);
+    if (result.kind === "granted") {
+      setReason("");
       setPreview(null);
-      setNotice({ tone: "error", text: membershipErrors(errorKey) });
+      setNotice({ tone: "success", text: t("grantSaved") });
       return;
     }
-    if (!adopt(response.data)) {
-      setPreview(null);
-      setNotice({ tone: "error", text: membershipErrors("invalidResponse") });
+    if (result.kind === "uncertainResolved") {
+      releaseResolvedGrant();
       return;
     }
-    setReason("");
+    if (result.kind === "uncertain") {
+      setNotice({ tone: "error", text: membershipErrors("grantUncertain") });
+      return;
+    }
+    if (result.kind === "previewStale") {
+      // Nothing was sent: the grant moved since the preview, so the operator previews again.
+      setPreview(null);
+      setNotice({ tone: "warning", text: t("grant.previewStale") });
+      return;
+    }
+    // A definite refusal or a conflict released the request identity.
     setPreview(null);
-    setNotice({ tone: "success", text: t("grantSaved") });
+    setNotice({ tone: "error", text: membershipErrors(result.errorKey) });
+  }
+
+  async function discardPendingGrant() {
+    if (!pendingGrant || !window.confirm(t("grant.discardConfirm"))) return;
+    setBusy("reload");
+    setNotice(null);
+    const result = await membershipCheckPendingGrant(adminCall, uid, pendingGrant);
+    setBusy("");
+    if (result.kind === "unreadable") {
+      // Without a fresh read the outcome cannot be compared, so the request stays pinned.
+      setNotice({ tone: "error", text: t("grant.discardUnreadable") });
+      return;
+    }
+    adoptParsed(result.detail);
+    if (result.kind === "changed") {
+      releaseResolvedGrant();
+      return;
+    }
+    rememberPendingGrant(null);
+    setPreview(null);
+    setNotice({ tone: "warning", text: t("grant.discarded") });
   }
 
   async function updateExpiry() {
-    if (!currentGrant || !expiryValid || !expiryWire) return;
+    if (!currentGrant || !expiryValid || !expiryWire || grantLocked) return;
     const confirmation = expiryChange === "shorten"
       ? t("expiryShortenConfirm", {
         from: formatInstant(currentGrant.expires_at, locale),
@@ -233,18 +387,23 @@ export default function UserMembershipPanel({
       uid,
       expected_revision: currentGrant.revision,
       expires_at: expiryWire,
-      reason: expiryReason.trim().replace(/\s+/g, " "),
+      reason: normalizedReason(expiryReason),
       request_id: crypto.randomUUID(),
     });
     setBusy("");
-    if (!response?.success) {
-      const errorKey = membershipActionErrorKey("expiry_update", response?.error);
-      if (errorKey === "expiryConflict" && response?.data) adopt(response.data);
-      setNotice({ tone: "error", text: membershipErrors(errorKey) });
-      return;
-    }
-    if (!adopt(response.data)) {
-      setNotice({ tone: "error", text: membershipErrors("invalidResponse") });
+    const adopted = response?.success === true && adopt(response.data);
+    const outcome = membershipMutationOutcome("expiry_update", response, adopted);
+    if (outcome !== "success") {
+      // The expected revision fences a second attempt; an unknown outcome reads the authoritative
+      // state so the operator sees whether the change landed before trying again.
+      if (outcome === "uncertain") await reloadDetail();
+      if (outcome === "conflict" && response?.data) adopt(response.data);
+      setNotice({
+        tone: "error",
+        text: response?.success === true
+          ? membershipErrors("invalidResponse")
+          : actionErrorText("expiry_update", response?.error),
+      });
       return;
     }
     setExpiryReason("");
@@ -252,25 +411,28 @@ export default function UserMembershipPanel({
   }
 
   async function revokeGrant() {
-    if (!owner || !currentGrant || !isEditableGrant(currentGrant) || !validReason(expiryReason)) return;
+    if (!owner || grantLocked || !currentGrant || !isEditableGrant(currentGrant) || !validReason(expiryReason)) return;
     if (!window.confirm(t("revokeConfirm"))) return;
     setBusy("revoke");
     setNotice(null);
     const response = await adminCall("membership_admin_grant_revoke", {
       uid,
       expected_revision: currentGrant.revision,
-      reason: expiryReason.trim().replace(/\s+/g, " "),
+      reason: normalizedReason(expiryReason),
       request_id: crypto.randomUUID(),
     });
     setBusy("");
-    if (!response?.success) {
-      const errorKey = membershipActionErrorKey("grant_revoke", response?.error);
-      if (errorKey === "revokeConflict" && response?.data) adopt(response.data);
-      setNotice({ tone: "error", text: membershipErrors(errorKey) });
-      return;
-    }
-    if (!adopt(response.data)) {
-      setNotice({ tone: "error", text: membershipErrors("invalidResponse") });
+    const adopted = response?.success === true && adopt(response.data);
+    const outcome = membershipMutationOutcome("grant_revoke", response, adopted);
+    if (outcome !== "success") {
+      if (outcome === "uncertain") await reloadDetail();
+      if (outcome === "conflict" && response?.data) adopt(response.data);
+      setNotice({
+        tone: "error",
+        text: response?.success === true
+          ? membershipErrors("invalidResponse")
+          : actionErrorText("grant_revoke", response?.error),
+      });
       return;
     }
     setExpiryReason("");
@@ -290,6 +452,7 @@ export default function UserMembershipPanel({
           </button>
         </div>
         <div className="panel-body membership-user-body">
+          {notice ? <p className={`alert alert-${notice.tone}`} role="status">{notice.text}</p> : null}
           <p className="alert alert-error" role="alert">{t("unavailable")}</p>
         </div>
       </section>
@@ -314,9 +477,21 @@ export default function UserMembershipPanel({
       </div>
       <div className="panel-body membership-user-body">
         {notice ? (
-          <p className={`alert ${notice.tone === "success" ? "alert-success" : "alert-error"}`} role="status">
+          <p className={`alert alert-${notice.tone}`} role="status">
             {notice.text}
           </p>
+        ) : null}
+        {rollout === "loading" ? null : rollout === "enforced" ? (
+          <p className="alert alert-success" role="status" data-rollout-state="enforced">{t("rollout.enforced")}</p>
+        ) : rollout === "deny" ? (
+          <p className="alert alert-error" role="alert" data-rollout-state="deny">{t("rollout.deny")}</p>
+        ) : rollout === "legacy" ? (
+          <p className="alert alert-warning" role="status" data-rollout-state="legacy">{t("rollout.legacy")}</p>
+        ) : (
+          <p className="alert alert-warning" role="status" data-rollout-state="unknown">{t("rollout.unknown")}</p>
+        )}
+        {nonProductionOnly ? (
+          <p className="alert alert-warning" role="status" data-non-production-only="true">{t("store.nonProductionOnly")}</p>
         ) : null}
         <div className="membership-summary-grid">
           <div><span>{t("state")}</span><strong>{t(`states.${status.lifecycle_state}`)}</strong></div>
@@ -329,7 +504,10 @@ export default function UserMembershipPanel({
 
         <div className="membership-policy-grid">
           <section className="membership-subpanel">
-            <div className="membership-subpanel-head"><div><h3>{t("capabilities.title")}</h3><p>{t("capabilities.copy")}</p></div></div>
+            <div className="membership-subpanel-head">
+              <div><h3>{t("capabilities.title")}</h3><p>{t("capabilities.copy")}</p></div>
+              {planLabel ? <span className="badge badge-info membership-plan-label" data-plan-label={rollout}>{planLabel}</span> : null}
+            </div>
             <div className="membership-capability-list">
               {(["invisible_presence", "hide_profile_visit", "quick_phrases", "vip_badge"] as const).map((key) => (
                 <div key={key}>
@@ -367,6 +545,7 @@ export default function UserMembershipPanel({
             return (
               <div className="membership-benefit" key={key}>
                 <span>{t(`quotas.${key}`)}</span>
+                {planLabel ? <small className="membership-plan-label" data-plan-label={rollout}>{planLabel}</small> : null}
                 <strong>{t(`quotaModes.${quota.mode}`)}</strong>
                 <dl className="membership-quota-detail">
                   <div><dt>{t("quota.scope")}</dt><dd>{t(`scopes.${quota.scope}`)}</dd></div>
@@ -391,7 +570,7 @@ export default function UserMembershipPanel({
             <div className="form-grid">
               <label className="field">
                 <span>{t("grant.preset")}</span>
-                <select value={preset} disabled={!editor || Boolean(busy)} onChange={(event) => { setPreset(event.target.value as GrantPreset); resetPreview(); }}>
+                <select value={preset} disabled={!editor || Boolean(busy) || grantLocked} onChange={(event) => { setPreset(event.target.value as GrantPreset); resetPreview(); }}>
                   <option value="plus_week">{t("presets.plus_week")}</option>
                   <option value="plus_month">{t("presets.plus_month")}</option>
                   <option value="plus_quarter">{t("presets.plus_quarter")}</option>
@@ -400,7 +579,7 @@ export default function UserMembershipPanel({
               </label>
               <label className="field">
                 <span>{t("grant.startMode")}</span>
-                <select value={startMode} disabled={!editor || Boolean(busy)} onChange={(event) => { setStartMode(event.target.value as StartMode); resetPreview(); }}>
+                <select value={startMode} disabled={!editor || Boolean(busy) || grantLocked} onChange={(event) => { setStartMode(event.target.value as StartMode); resetPreview(); }}>
                   <option value="extend">{t("grant.extend")}</option>
                   <option value="start_now">{t("grant.startNow")}</option>
                 </select>
@@ -408,20 +587,23 @@ export default function UserMembershipPanel({
               {startMode === "start_now" ? (
                 <p className="alert alert-warning field-full">{t("grant.startNowWarning")}</p>
               ) : null}
+              {startMode === "extend" && storeAutoRenews ? (
+                <p className="alert alert-warning field-full" data-extend-auto-renew="true">{t("grant.extendAutoRenewWarning")}</p>
+              ) : null}
               {preset === "custom" ? (
                 <label className="field field-full">
                   <span>{t("grant.customExpiry")}</span>
-                  <input type="datetime-local" step={1} value={customExpiry} disabled={!editor || Boolean(busy)} onChange={(event) => { setCustomExpiry(event.target.value); resetPreview(); }} />
+                  <input type="datetime-local" step={1} value={customExpiry} disabled={!editor || Boolean(busy) || grantLocked} onChange={(event) => { setCustomExpiry(event.target.value); resetPreview(); }} />
                 </label>
               ) : null}
               <label className="field field-full">
                 <span>{t("reason")}</span>
-                <textarea maxLength={500} value={reason} disabled={!editor || Boolean(busy)} placeholder={t("reasonPlaceholder")} onChange={(event) => { setReason(event.target.value); resetPreview(); }} />
+                <textarea maxLength={500} value={reason} disabled={!editor || Boolean(busy) || grantLocked} placeholder={t("reasonPlaceholder")} onChange={(event) => { setReason(event.target.value); resetPreview(); }} />
                 <small className="field-hint">{t("reasonHint")}</small>
               </label>
             </div>
             <div className="row-actions">
-              <button type="button" className="button button-secondary" disabled={!grantInputValid || Boolean(busy)} onClick={() => void previewGrant()}>
+              <button type="button" className="button button-secondary" disabled={!grantInputValid || Boolean(busy) || grantLocked} onClick={() => void previewGrant()}>
                 {busy === "preview" ? common("loading") : t("grant.preview")}
               </button>
             </div>
@@ -437,9 +619,30 @@ export default function UserMembershipPanel({
                 {startMode === "start_now" && preview.store_overlap ? (
                   <p className="alert alert-warning">{t("grant.overlapWarning")}</p>
                 ) : null}
-                <button type="button" className="button button-primary" disabled={Boolean(busy)} onClick={() => void confirmGrant()}>
-                  {busy === "grant" ? common("saving") : t("grant.confirm")}
-                </button>
+                <div className="row-actions">
+                  <button type="button" className="button button-primary" disabled={Boolean(busy)} onClick={() => void confirmGrant()}>
+                    {busy === "grant" ? common("saving") : pendingGrant?.uncertain ? t("grant.retry") : t("grant.confirm")}
+                  </button>
+                  {pendingGrant?.uncertain ? (
+                    <button type="button" className="button button-secondary" disabled={Boolean(busy)} onClick={() => void discardPendingGrant()}>
+                      {t("grant.discard")}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+            {!preview && pendingGrant?.uncertain ? (
+              <div className="membership-preview" role="status" data-grant-pending="true">
+                <h4>{t("grant.pendingTitle")}</h4>
+                <p className="alert alert-warning">{t("grant.pendingCopy")}</p>
+                <div className="row-actions">
+                  <button type="button" className="button button-primary" disabled={!editor || Boolean(busy)} onClick={() => void confirmGrant()}>
+                    {busy === "grant" ? common("saving") : t("grant.retry")}
+                  </button>
+                  <button type="button" className="button button-secondary" disabled={Boolean(busy)} onClick={() => void discardPendingGrant()}>
+                    {t("grant.discard")}
+                  </button>
+                </div>
               </div>
             ) : null}
           </section>
@@ -471,12 +674,13 @@ export default function UserMembershipPanel({
               <div className="form-stack membership-expiry-form">
                 <label className="field">
                   <span>{t("manage.newExpiry")}</span>
-                  <input type="datetime-local" step={1} value={expiryEdit} disabled={!editor || Boolean(busy)} onChange={(event) => setExpiryEdit(event.target.value)} />
+                  <input type="datetime-local" step={1} value={expiryEdit} disabled={!editor || Boolean(busy) || grantLocked} onChange={(event) => setExpiryEdit(event.target.value)} />
                 </label>
                 <label className="field">
                   <span>{t("reason")}</span>
-                  <textarea maxLength={500} value={expiryReason} disabled={!editor || Boolean(busy)} placeholder={t("reasonPlaceholder")} onChange={(event) => setExpiryReason(event.target.value)} />
+                  <textarea maxLength={500} value={expiryReason} disabled={!editor || Boolean(busy) || grantLocked} placeholder={t("reasonPlaceholder")} onChange={(event) => setExpiryReason(event.target.value)} />
                 </label>
+                {grantLocked ? <p className="alert alert-warning" data-grant-locked="true">{t("manage.lockedByPendingGrant")}</p> : null}
                 {!owner ? <p className="field-hint">{t("manage.shortenOwnerOnly")}</p> : null}
                 {expiryChange === "shorten" ? <p className="alert alert-warning">{t("manage.shortenWarning")}</p> : null}
                 <div className="row-actions">
@@ -484,7 +688,7 @@ export default function UserMembershipPanel({
                     {busy === "expiry" ? common("saving") : t("manage.saveExpiry")}
                   </button>
                   {owner ? (
-                    <button type="button" className="button button-danger" disabled={!validReason(expiryReason) || Boolean(busy)} onClick={() => void revokeGrant()}>
+                    <button type="button" className="button button-danger" disabled={!validReason(expiryReason) || Boolean(busy) || grantLocked} onClick={() => void revokeGrant()}>
                       {busy === "revoke" ? common("saving") : t("manage.revoke")}
                     </button>
                   ) : null}
@@ -514,14 +718,26 @@ export default function UserMembershipPanel({
                   <th>{t("store.lastVerified")}</th>
                 </tr></thead>
                 <tbody>{detail.store_sources.map((source, index) => {
-                  const contribution = membershipStoreContribution(
+                  const contribution = membershipStoreRowContribution(
                     source,
                     status.sources,
                     detail.store_sources,
                   );
+                  const environment = membershipStoreEnvironment(source.environment);
                   return (
                     <tr key={`${source.platform}-${source.product_id}-${source.expires_at ?? index}`}>
-                      <td>{source.platform} · {source.environment || "—"}</td>
+                      <td>
+                        <span>{source.platform}</span>
+                        {environment === "sandbox" || environment === "test" ? (
+                          <span className="badge badge-warning membership-environment-badge" data-store-environment={environment}>
+                            {t(`store.environments.${environment}`)}
+                          </span>
+                        ) : (
+                          <small className="table-subline" data-store-environment={environment ?? "unknown"}>
+                            {t(`store.environments.${environment ?? "unknown"}`)}
+                          </small>
+                        )}
+                      </td>
                       <td>{source.product_id || "—"}</td>
                       <td>{source.base_plan_id || "—"}</td>
                       <td><span>{source.normalized_state || "—"}</span><small className="table-subline">{source.provider_state || "—"}</small></td>
@@ -531,12 +747,11 @@ export default function UserMembershipPanel({
                         </span>
                       </td>
                       <td>
-                        <span className={`badge ${contribution === true ? "badge-active" : contribution === false ? "badge-inactive" : "badge-warning"}`}>
-                          {contribution === true
-                            ? t("store.contributing")
-                            : contribution === false
-                              ? t("store.notContributing")
-                              : t("store.unknown")}
+                        <span
+                          className={`badge ${contribution === "contributing" ? "badge-active" : contribution === "unknown" ? "badge-warning" : "badge-inactive"}`}
+                          data-store-contribution={contribution}
+                        >
+                          {t(`store.${contribution}`)}
                         </span>
                       </td>
                       <td><InstantValue value={source.first_purchased_at} locale={locale} /></td>

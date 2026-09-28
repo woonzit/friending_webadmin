@@ -3241,6 +3241,7 @@
     "validation": "A Core egy vagy több előfizetési értéket elutasított. Újrapróbálás előtt nézd át az űrlapot és az ellenőrzési összefoglalót.",
     "unavailable": "Az előfizetési döntési pont átmenetileg nem elérhető. Újrapróbálás előtt frissítsd a hiteles állapotot.",
     "timeout": "A Core időtúllépést jelzett. A művelet ettől még befejeződhetett; újrapróbálás előtt frissítsd a hiteles előfizetési állapotot.",
+    "grantUncertain": "A hozzáférés megadásának eredménye nem ismert, és az utána beolvasott tagállapot sem mutatja végrehajtottnak. A pontos kérést megtartottuk, az űrlapot zároltuk: az újraküldés ugyanazt a kérést küldi el, így nem adhat kétszer hozzáférést.",
     "grantNotFound": "Ehhez a userhez nincs jelenlegi, szerkeszthető admin-hozzáférés. Másik művelet előtt frissítsd az állapotot.",
     "useExpiryUpdate": "Ez a művelet nem hosszabbítaná meg a hozzáférést. Ehhez a pontos lejárat szerkesztőjét használd.",
     "userNotFound": "A user már nem létezik, vagy ez az admin már nem fér hozzá.",
@@ -3252,6 +3253,18 @@
     "copy": "Tényleges szerveroldali jogosultság, store-bizonyítékok és auditált admin-hozzáférések.",
     "refresh": "Előfizetés frissítése",
     "unavailable": "Az előfizetési állapot nem érhető el. Nem feltételezünk PLUS hozzáférést; módosítás előtt próbáld újra.",
+    "rollout": {
+      "enforced": "A Core érvényesíti a mentett csomagot: a lenti jogosultságok és korlátok most is érvényesek erre a tagra.",
+      "legacy": "A mentett csomag még nincs érvényesítve: a Friending továbbra is a régi szabályokat alkalmazza. A lenti jogosultságok és korlátok azt mutatják, mit adna a mentett csomag ennek a tagnak, és nem feltétlenül azt, amit most ténylegesen használhat.",
+      "deny": "Az érvényesítés be van kapcsolva, de még nincs mentett előfizetési csomag, ezért a Core minden tagnál letilt minden fizetős jogosultságot és kvótát, amíg az Előfizetési csomagok oldalon valaki nem ment egy csomagot.",
+      "unknown": "Nem sikerült kiolvasni, hogy a Core érvényesíti-e a mentett csomagot. A lenti jogosultságok és korlátok csak a mentett csomagot mutatják; mielőtt ezekre támaszkodnál, frissíts."
+    },
+    "plan": {
+      "enforced": "Mentett csomag · érvényben",
+      "legacy": "Mentett csomag · nincs érvényesítve",
+      "deny": "Letiltva · nincs mentett csomag",
+      "unknown": "Mentett csomag · érvényesítés nem ismert"
+    },
     "tiers": {
       "free": "FREE",
       "plus": "PLUS",
@@ -3284,8 +3297,8 @@
       "quick_phrase_slots": "Mentett mondatok"
     },
     "capabilities": {
-      "title": "Tényleges jogosultságok",
-      "copy": "A Core által ehhez a userhez feloldott hozzáférések, a mentett mondatok származtatott jogosultságával együtt.",
+      "title": "Jogosultságok a mentett csomag szerint",
+      "copy": "Amit a mentett csomag ad a tag szintjének, a mentett mondatok származtatott jogosultságával együtt. A fenti megjegyzés mutatja, hogy a Core most alkalmazza-e.",
       "items": {
         "invisible_presence": "Láthatatlan jelenlét",
         "hide_profile_visit": "Profillátogatások elrejtése",
@@ -3346,7 +3359,18 @@
       "storeOverlap": "Aktív store-hozzáféréssel átfed",
       "overlapWarning": "Ez a hozzáférés aktív Store-hozzáféréssel fed át. A Store-előfizetés ettől függetlenül tovább fut és számlázódik.",
       "overlapConfirm": "Ez a Kezdés most hozzáférés aktív Store-hozzáféréssel fed át, és nem szünetelteti a Store számlázását. Megadod az átfedő hozzáférést?",
-      "confirm": "PLUS hozzáférés jóváhagyása"
+      "confirm": "PLUS hozzáférés jóváhagyása",
+      "retry": "Ugyanannak a kérésnek az újraküldése",
+      "discard": "Kérés elvetése",
+      "discardConfirm": "Elveted a függőben lévő hozzáférési kérést? Előbb újra beolvassuk a tagot. Ha az admin-hozzáférése még változatlan, a kérést elvetjük, bár az eredménye nem ismert; ha a Core később mégis végrehajtja, egy most megadott új hozzáférés másodszor is hozzáférést adna.",
+      "discarded": "A függőben lévő kérést elvetettük. Az ellenőrzéskor a tag admin-hozzáférése változatlan volt; újabb hozzáférés megadása előtt frissíts.",
+      "discardUnreadable": "A tagot nem sikerült beolvasni, ezért a függőben lévő kérést megtartottuk, és zárolva marad. Próbáld újra, amikor a Core válaszol.",
+      "uncertainResolved": "Egy ismeretlen kimenetelű kérés után megváltozott a tag admin-hozzáférése, tehát a kérés valószínűleg végrehajtódott. Újabb hozzáférés megadása előtt nézd át a frissített állapotot.",
+      "previewStale": "A tag admin-hozzáférése az előnézet óta megváltozott, vagy nem sikerült beolvasni az ellenőrzéshez. Semmit nem küldtünk el: nézd át a frissített állapotot, és kérj új előnézetet.",
+      "pendingTitle": "Függőben lévő hozzáférési kérés",
+      "pendingCopy": "Egy korábban elküldött hozzáférési kérés eredménye még nem ismert. A beállításai fent láthatók, és zárolva maradnak. Az újraküldés pontosan ugyanazt a kérést küldi el, így nem adhat kétszer hozzáférést; az elvetés előbb újra beolvassa a tagot, és összeveti az admin-hozzáférését azzal, amelyre a kérés épült.",
+      "restoreExpired": "Egy ismeretlen kimenetelű hozzáférési kérés több mint {minutes} perce került függőbe, ezért az oldal újratöltése után nem állítottuk vissza. Újabb hozzáférés megadása előtt frissíts, és nézd át a tag admin-hozzáférését és előzményeit.",
+      "extendAutoRenewWarning": "A tag store-előfizetése automatikusan megújul. „Tényleges hozzáférés hosszabbítása” módban a hozzáférés a jelenlegi store-időszak végén indul, így amíg a megújítások sikeresek, a fizetett idővel párhuzamosan fut, és nem ad hozzá semmit; csak akkor számít, ha a tag lemondja az előfizetést, vagy egy megújítás meghiúsul. Azonnali kárpótláshoz válaszd a „Kezdés most” módot."
     },
     "presets": {
       "plus_week": "1 hét",
@@ -3374,7 +3398,8 @@
       "shortenOwnerOnly": "Az admin későbbre állíthatja ezt a dátumot. Korábbra csak owner módosíthatja.",
       "shortenWarning": "Ez a dátum korábbi a jelenlegi lejáratnál. A mentés lerövidíti az admin-hozzáférést.",
       "saveExpiry": "Lejárat frissítése",
-      "revoke": "Admin-hozzáférés visszavonása"
+      "revoke": "Admin-hozzáférés visszavonása",
+      "lockedByPendingGrant": "Egy ismeretlen kimenetelű PLUS hozzáférési kérés függőben van. A lejárat módosítása és a visszavonás zárolva marad, amíg ez el nem dől: előbb frissíts, küldd újra vagy vesd el a kérést."
     },
     "store": {
       "title": "Store-bizonyítékok",
@@ -3389,12 +3414,20 @@
       "contributing": "Hozzájárul",
       "notContributing": "Nem járul hozzá",
       "unknown": "Nem kapcsolható biztonságosan",
+      "notCounted": "Nem számít bele (tesztvásárlási szabály)",
       "purchased": "Első vásárlás",
       "periodStart": "Jelenlegi időszak kezdete",
       "expires": "Lejárat",
       "graceEnd": "Türelmi idő vége",
       "renewal": "Automatikus megújítás",
-      "lastVerified": "Utolsó ellenőrzés"
+      "lastVerified": "Utolsó ellenőrzés",
+      "nonProductionOnly": "Csak tesztvásárlás: a tag PLUS hozzáférését adó összes forrás Apple sandbox (TestFlight vagy Xcode) vagy Google Play licenctesztes vásárlás. Ezért a hozzáférésért senki nem fizetett.",
+      "environments": {
+        "production": "Éles",
+        "sandbox": "Sandbox · tesztvásárlás",
+        "test": "Licencteszt · tesztvásárlás",
+        "unknown": "Ismeretlen környezet"
+      }
     },
     "history": {
       "title": "Előfizetési előzmények",

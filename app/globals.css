@@ -11475,6 +11475,23 @@ body .verification-level-pill.level-strong {
   font-size: 15px;
 }
 
+/* Says whether the saved plan values beside it are what Core enforces now. */
+.membership-plan-label {
+  flex: none;
+  white-space: nowrap;
+}
+
+.membership-benefit small.membership-plan-label {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.membership-environment-badge {
+  display: inline-flex;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
 .membership-quota-detail {
   display: grid;
   gap: 6px;

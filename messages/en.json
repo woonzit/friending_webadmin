@@ -3241,6 +3241,7 @@
     "validation": "Core rejected one or more membership values. Review the form and its validation summary before retrying.",
     "unavailable": "The membership authority is temporarily unavailable. Refresh the authoritative state before retrying.",
     "timeout": "Core timed out. The operation may have completed; refresh the authoritative membership state before retrying.",
+    "grantUncertain": "The grant's outcome is unknown, and the member read afterwards does not show it applied. The exact request is kept and the grant form is locked: resending sends the same request, so it cannot add access twice.",
     "grantNotFound": "There is no current editable administrator grant for this member. Refresh before choosing another action.",
     "useExpiryUpdate": "This grant would not extend access. Use the exact expiry editor for this change.",
     "userNotFound": "The member no longer exists or is no longer available to this administrator.",
@@ -3252,6 +3253,18 @@
     "copy": "Effective server entitlement, store evidence and audited administrator grants.",
     "refresh": "Refresh membership",
     "unavailable": "Membership state is unavailable. No PLUS access is assumed; retry before making a change.",
+    "rollout": {
+      "enforced": "Core enforces the saved plan: the capabilities and limits below are what this member gets right now.",
+      "legacy": "The saved plan is not enforced yet: Friending still applies the legacy rules. The capabilities and limits below show what the saved plan would give this member, not necessarily what the member can do right now.",
+      "deny": "Enforcement is switched on, but no membership plan has been saved yet, so Core disables every paid capability and quota for every member until a plan is saved on the Membership plans page.",
+      "unknown": "Could not read whether Core enforces the saved plan. The capabilities and limits below are the saved plan only; refresh before relying on them."
+    },
+    "plan": {
+      "enforced": "Saved plan · enforced",
+      "legacy": "Saved plan · not enforced",
+      "deny": "Disabled · no saved plan",
+      "unknown": "Saved plan · enforcement unknown"
+    },
     "tiers": {
       "free": "FREE",
       "plus": "PLUS",
@@ -3284,8 +3297,8 @@
       "quick_phrase_slots": "Saved phrases"
     },
     "capabilities": {
-      "title": "Effective capabilities",
-      "copy": "Core-resolved access for this member, including the derived saved-phrases capability.",
+      "title": "Capabilities in the saved plan",
+      "copy": "What the saved plan gives this member's tier, including the derived saved-phrases capability. The note above says whether Core applies it right now.",
       "items": {
         "invisible_presence": "Invisible presence",
         "hide_profile_visit": "Hide profile visits",
@@ -3346,7 +3359,18 @@
       "storeOverlap": "Overlaps active store access",
       "overlapWarning": "This grant overlaps active Store access. The Store subscription keeps billing and running independently.",
       "overlapConfirm": "This Start now grant overlaps active Store access and will not pause Store billing. Issue the overlapping grant?",
-      "confirm": "Confirm PLUS grant"
+      "confirm": "Confirm PLUS grant",
+      "retry": "Resend the same grant request",
+      "discard": "Discard this request",
+      "discardConfirm": "Discard the pending grant request? The member is read again first. If their administrator grant is still unchanged, the request is dropped even though its outcome is unknown; if Core applies it later anyway, a new grant issued now would add access a second time.",
+      "discarded": "The pending request was discarded. The member's administrator grant was unchanged when checked; refresh before issuing another grant.",
+      "discardUnreadable": "The member could not be read, so the pending request was kept and stays locked. Try again when Core answers.",
+      "uncertainResolved": "The member's administrator grant changed after a request whose outcome was unknown, so that request most likely went through. Check the refreshed state before issuing another grant.",
+      "previewStale": "The member's administrator grant changed since this preview, or could not be read to confirm it. Nothing was sent: check the refreshed state and preview the grant again.",
+      "pendingTitle": "Pending grant request",
+      "pendingCopy": "A grant request sent earlier still has no confirmed outcome. Its settings are shown above and stay locked. Resending sends exactly the same request, so it cannot add access twice; discarding first reads the member again and compares their grant with the one the request was based on.",
+      "restoreExpired": "A grant request with an unknown outcome was pinned more than {minutes} minutes ago, so it was not restored after the reload. Refresh and check the member's administrator grant and history before issuing another grant.",
+      "extendAutoRenewWarning": "This member's store subscription renews automatically. With “Extend effective access” the grant starts when the current store period ends, so while renewals succeed it runs alongside paid time and adds nothing; it only matters if the member cancels or a renewal fails. Use “Start now” to compensate right away."
     },
     "presets": {
       "plus_week": "1 week",
@@ -3374,7 +3398,8 @@
       "shortenOwnerOnly": "An admin may extend this date. Only an owner may shorten it.",
       "shortenWarning": "This date is earlier than the current expiry. Saving it will shorten the administrator grant.",
       "saveExpiry": "Update expiry",
-      "revoke": "Revoke admin grant"
+      "revoke": "Revoke admin grant",
+      "lockedByPendingGrant": "A PLUS grant request with an unknown outcome is pending. Expiry changes and revocation stay locked until it is settled: refresh, resend or discard that request first."
     },
     "store": {
       "title": "Store evidence",
@@ -3389,12 +3414,20 @@
       "contributing": "Contributes",
       "notContributing": "Does not contribute",
       "unknown": "Not safely linkable",
+      "notCounted": "Not counted (test purchase policy)",
       "purchased": "First purchase",
       "periodStart": "Current period starts",
       "expires": "Expires",
       "graceEnd": "Grace ends",
       "renewal": "Auto-renews",
-      "lastVerified": "Last verified"
+      "lastVerified": "Last verified",
+      "nonProductionOnly": "Test purchase only: every source giving this member PLUS is Apple sandbox (TestFlight or Xcode) or Google Play license-test evidence. Nobody paid for this access.",
+      "environments": {
+        "production": "Production",
+        "sandbox": "Sandbox · test purchase",
+        "test": "License test · test purchase",
+        "unknown": "Unknown environment"
+      }
     },
     "history": {
       "title": "Membership history",

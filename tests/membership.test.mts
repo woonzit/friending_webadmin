@@ -17,18 +17,27 @@ import {
   membershipConfiguration,
   membershipConfigurationCandidate,
   membershipExpiryChange,
+  membershipGrantChanged,
   membershipGrantPreview,
   membershipListSummary,
+  membershipMutationOutcome,
+  membershipNonProductionOnlyAccess,
+  membershipPinnedMutation,
   membershipPlanIsDirty,
   membershipPlanPreview,
   membershipPlanValidationIssues,
+  membershipRolloutMode,
   membershipShouldGuardInternalNavigation,
+  membershipStoreAutoRenews,
   membershipStoreContribution,
+  membershipStoreEnvironment,
   membershipStoreProductRows,
+  membershipStoreRowContribution,
   membershipUtcInstant,
   membershipUserDetail,
 } from "../lib/membership.ts";
 import { adminActionAccess } from "../lib/adminActions.ts";
+import UserMembershipPanel from "../components/UserMembershipPanel.tsx";
 
 const ISO = "2026-08-15T12:00:00Z";
 const LATER = "2026-09-15T12:00:00Z";
@@ -667,12 +676,15 @@ test("the user panel renders truthful owner detail and stronger warning paths", 
   ]) {
     assert.equal(panel.includes(field), true, `${field} must remain visible in the operator panel`);
   }
-  assert.match(panel, /membershipStoreContribution\([\s\S]*source,[\s\S]*status\.sources,[\s\S]*detail\.store_sources/);
+  assert.match(panel, /membershipStoreRowContribution\([\s\S]*source,[\s\S]*status\.sources,[\s\S]*detail\.store_sources/);
   assert.match(panel, /grant\.overlapConfirm/);
   assert.match(panel, /expiryShortenConfirm/);
-  assert.match(panel, /membershipActionErrorKey\("grant_create"/);
-  assert.match(panel, /membershipActionErrorKey\("expiry_update"/);
-  assert.match(panel, /membershipActionErrorKey\("grant_revoke"/);
+  // Grant errors are mapped inside the pinned grant flow; expiry and revoke map theirs in the panel.
+  const flows = readFileSync(new URL("../lib/membershipFlows.ts", import.meta.url), "utf8");
+  assert.match(flows, /membershipActionErrorKey\("grant_create"/);
+  assert.match(panel, /actionErrorText\("expiry_update"/);
+  assert.match(panel, /actionErrorText\("grant_revoke"/);
+  assert.match(panel, /return membershipErrors\(membershipActionErrorKey\(action, error\)\);/);
   assert.doesNotMatch(panel, /actionError[\s\S]*code/);
   assert.match(panel, /response\?\.success === true \? normalizeAdminRole\(response\.role\) : ""/);
   assert.match(panel, /adminAccess === "loading" \? <LoadingPanel \/> : adminAccess === "error" \? \(/);
@@ -752,4 +764,156 @@ test("global membership filters and paid-versus-granted dates stay blocked on an
   assert.match(contract, /before `total`, sort, skip and limit/);
   assert.match(contract, /must not emulate it by filtering or sorting the 25 already-returned rows/);
   assert.match(contract, /not proof of a verified payment/);
+});
+
+test("store rows accept Core's additive counts_for_access and reject a loosely typed one", () => {
+  const absent = membershipUserDetail(userDetailFixture());
+  assert.equal(absent?.store_sources[0]?.counts_for_access, null, "an older Core without the key reads as unknown");
+  for (const value of [true, false]) {
+    const wire = userDetailFixture();
+    Object.assign(wire.store_sources[0]!, { counts_for_access: value });
+    assert.equal(membershipUserDetail(wire)?.store_sources[0]?.counts_for_access, value);
+  }
+  for (const value of ["false", 0, null]) {
+    const wire = userDetailFixture();
+    Object.assign(wire.store_sources[0]!, { counts_for_access: value });
+    assert.equal(membershipUserDetail(wire), null, `counts_for_access ${JSON.stringify(value)} fails closed`);
+  }
+});
+
+test("store rows name the test-purchase policy only for verified evidence Core does not count", () => {
+  const detail = membershipUserDetail(userDetailFixture());
+  assert.ok(detail);
+  const store = detail.store_sources[0]!;
+  const sources = detail.effective_membership.sources;
+  assert.equal(membershipStoreRowContribution(store, sources, detail.store_sources), "contributing");
+  assert.equal(membershipStoreRowContribution({ ...store, counts_for_access: false }, sources, detail.store_sources), "notCounted");
+  // Core also reports false for an unverified row; that is not the environment policy.
+  assert.equal(membershipStoreRowContribution(
+    { ...store, counts_for_access: false, verification_status: "pending" },
+    sources,
+    detail.store_sources,
+  ), "notContributing");
+  assert.equal(membershipStoreRowContribution(store, [...sources, ...sources], detail.store_sources), "unknown");
+
+  assert.equal(membershipStoreEnvironment("Production"), "production");
+  assert.equal(membershipStoreEnvironment(" sandbox "), "sandbox");
+  assert.equal(membershipStoreEnvironment("test"), "test");
+  assert.equal(membershipStoreEnvironment(""), null);
+  assert.equal(membershipStoreEnvironment("xcode"), null);
+});
+
+test("sandbox-only PLUS is flagged and the Extend auto-renew warning follows contributing store sources", () => {
+  const paid = membershipUserDetail(userDetailFixture());
+  assert.ok(paid);
+  assert.equal(membershipNonProductionOnlyAccess(paid), false, "production evidence is paid access");
+  assert.equal(membershipStoreAutoRenews(paid.effective_membership), true);
+
+  const sandboxWire = userDetailFixture();
+  sandboxWire.store_sources[0]!.environment = "sandbox";
+  const sandbox = membershipUserDetail(sandboxWire);
+  assert.ok(sandbox);
+  assert.equal(membershipNonProductionOnlyAccess(sandbox), true, "an allow-listed sandbox purchase is test access");
+  assert.equal(membershipNonProductionOnlyAccess({
+    ...sandbox,
+    store_sources: [...sandbox.store_sources, { ...sandbox.store_sources[0]! }],
+  }), false, "an ambiguous store link is never flagged");
+
+  const mixed = structuredClone(sandboxWire);
+  mixed.effective_membership.sources.push({
+    kind: "admin_grant", state: "active", starts_at: ISO, expires_at: LATER, auto_renews: null, contributes_to_access: true,
+  } as never);
+  const mixedDetail = membershipUserDetail(mixed);
+  assert.ok(mixedDetail);
+  assert.equal(membershipNonProductionOnlyAccess(mixedDetail), false, "an administrator grant is not a test purchase");
+
+  const manual = structuredClone(userDetailFixture());
+  manual.effective_membership.sources[0]!.auto_renews = false;
+  const manualDetail = membershipUserDetail(manual);
+  assert.ok(manualDetail);
+  assert.equal(membershipStoreAutoRenews(manualDetail.effective_membership), false);
+  const lapsed = structuredClone(userDetailFixture());
+  lapsed.effective_membership.sources[0]!.contributes_to_access = false;
+  const lapsedDetail = membershipUserDetail(lapsed);
+  assert.ok(lapsedDetail);
+  assert.equal(membershipStoreAutoRenews(lapsedDetail.effective_membership), false, "only a source giving access now counts");
+});
+
+test("the rollout mode mirrors Core's legacy / enforced / deny decision", () => {
+  const base = membershipConfiguration(configurationFixture());
+  assert.ok(base);
+  const mode = (enforcement: boolean, ready: boolean, revision: number) => membershipRolloutMode({
+    ...base,
+    configuration: { ...base.configuration, ready_for_enforcement: ready, revision },
+    rollout: { ...base.rollout, feature_enforcement_enabled: enforcement },
+  });
+  assert.equal(mode(false, false, 3), "legacy");
+  assert.equal(mode(false, true, 3), "legacy", "the switch off keeps the legacy rules even for a ready plan");
+  assert.equal(mode(true, false, 3), "legacy", "a plan not marked ready is not enforced");
+  assert.equal(mode(true, true, 3), "enforced");
+  assert.equal(mode(true, false, 0), "deny", "no stored plan while armed: Core refuses paid access");
+});
+
+test("mutation outcomes release a request identity only on a definite answer", () => {
+  assert.equal(membershipMutationOutcome("grant_create", { success: true }, true), "success");
+  assert.equal(membershipMutationOutcome("grant_create", { success: true }, false), "uncertain", "an unreadable success is unknown");
+  for (const error of ["core-timeout", "core-unavailable", "membership-admin-write-failed", "invalid-core-response", "something-new"]) {
+    assert.equal(membershipMutationOutcome("grant_create", { success: false, error }, false), "uncertain", error);
+  }
+  assert.equal(membershipMutationOutcome("grant_create", null, false), "uncertain", "a lost response is unknown");
+  assert.equal(membershipMutationOutcome("expiry_update", { success: false, error: "membership-admin-conflict" }, false), "conflict");
+  assert.equal(membershipMutationOutcome("grant_revoke", { success: false, error: "admin-owner-required" }, false), "refused");
+  assert.equal(membershipMutationOutcome("grant_create", { success: false, error: "membership-admin-request-id-conflict" }, false), "refused");
+});
+
+test("a pinned mutation keeps its request_id only while the material body is unchanged", () => {
+  let minted = 0;
+  const mint = () => `00000000-0000-4000-8000-${String(++minted).padStart(12, "0")}`;
+  const first = membershipPinnedMutation(null, { uid: 1, reason: "why", expected_revision: 0 }, mint);
+  const reordered = membershipPinnedMutation(first, { expected_revision: 0, reason: "why", uid: 1, request_id: "ignored" }, mint);
+  assert.equal(reordered, first, "key order and a caller request_id never change the identity");
+  const edited = membershipPinnedMutation(first, { uid: 1, reason: "why not", expected_revision: 0 }, mint);
+  assert.notEqual(edited.body.request_id, first.body.request_id, "a material edit is a new operation");
+
+  const detail = membershipUserDetail({ ...userDetailFixture(), admin_grant: {
+    grant_id: "g1", tier: "plus", preset_id: "plus_month", starts_at: ISO, expires_at: LATER, status: "active",
+    current: true, revision: 2, reason: "x", created_by: "a@example.invalid", created_at: ISO,
+    updated_by: "a@example.invalid", updated_at: ISO, revoked_by: "", revoked_at: null,
+  } });
+  assert.ok(detail);
+  assert.equal(membershipGrantChanged({ grant_id: "g1", revision: 2 }, detail), false);
+  assert.equal(membershipGrantChanged({ grant_id: "g1", revision: 1 }, detail), true);
+  assert.equal(membershipGrantChanged({ grant_id: null, revision: 0 }, detail), true);
+});
+
+test("the member panel labels plan values against the rollout and badges test purchases", () => {
+  const wire = userDetailFixture();
+  Object.assign(wire.store_sources[0]!, { environment: "sandbox", counts_for_access: true });
+  const detail = membershipUserDetail(wire);
+  assert.ok(detail);
+  for (const locale of ["en", "hu"] as const) {
+    const html = renderToStaticMarkup(createElement(
+      NextIntlClientProvider,
+      { locale, messages: RENDER_MESSAGES[locale], timeZone: "UTC" },
+      createElement(UserMembershipPanel, { uid: 123, initial: detail }),
+    ));
+    const store = RENDER_MESSAGES[locale].membershipUser.store;
+    assert.ok(html.includes(store.nonProductionOnly), `${locale}: sandbox-only access is flagged`);
+    assert.ok(html.includes('data-store-environment="sandbox"'));
+    assert.ok(html.includes(store.environments.sandbox));
+    assert.ok(html.includes('data-store-contribution="contributing"'));
+    assert.equal(html.includes("data-rollout-state"), false, "no rollout claim before Core's configuration is read");
+    assert.equal(html.includes("data-plan-label"), false, "no plan label before Core's configuration is read");
+  }
+
+  const panel = readFileSync(new URL("../components/UserMembershipPanel.tsx", import.meta.url), "utf8");
+  assert.match(panel, /adminCall\("membership_configuration"\)/);
+  assert.match(panel, /setRollout\(parsed \? membershipRolloutMode\(parsed\) : "unknown"\)/);
+  assert.match(panel, /startMode === "extend" && storeAutoRenews \?/);
+  for (const state of ["enforced", "legacy", "deny", "unknown"]) {
+    assert.ok(panel.includes(`data-rollout-state="${state}"`), state);
+  }
+  const english = RENDER_MESSAGES.en.membershipUser;
+  assert.doesNotMatch(english.capabilities.title, /Effective/, "saved plan values are never titled as live");
+  assert.match(english.rollout.legacy, /not enforced/);
 });

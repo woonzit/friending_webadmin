@@ -152,6 +152,12 @@ export type MembershipUserDetail = {
   store_sources: Array<{
     platform: "apple" | "google";
     environment: string;
+    /**
+     * Additive in Core: `false` for a row that is not verified evidence, or for sandbox /
+     * license-test evidence that Core's store environment policy does not let this account use.
+     * `null` when the Core that answered does not report it.
+     */
+    counts_for_access: boolean | null;
     product_id: string;
     base_plan_id: string;
     tier: "plus";
@@ -707,6 +713,155 @@ export function membershipStoreContribution(
   return rowsForWindow.length === 1 ? matches[0].contributes_to_access : null;
 }
 
+export type MembershipStoreRowContribution = "contributing" | "notContributing" | "notCounted" | "unknown";
+
+/**
+ * The operator label for one retained store row. Core reports `counts_for_access: false` both for
+ * unverified rows and for verified sandbox / license-test evidence its store environment policy
+ * does not let this account use; only the second is labeled as the test-purchase policy.
+ */
+export function membershipStoreRowContribution(
+  store: MembershipUserDetail["store_sources"][number],
+  effectiveSources: MembershipStatus["sources"],
+  retainedSources: MembershipUserDetail["store_sources"],
+): MembershipStoreRowContribution {
+  if (store.verification_status === "verified" && store.counts_for_access === false) return "notCounted";
+  const contribution = membershipStoreContribution(store, effectiveSources, retainedSources);
+  return contribution === null ? "unknown" : contribution ? "contributing" : "notContributing";
+}
+
+/** Store evidence environments as Core stores them (Apple: production/sandbox, Google: production/test). */
+export const MEMBERSHIP_STORE_ENVIRONMENTS = ["production", "sandbox", "test"] as const;
+export type MembershipStoreEnvironment = (typeof MEMBERSHIP_STORE_ENVIRONMENTS)[number];
+
+/** A retained row's environment; empty or unrecognized text is `null` and shown as unknown. */
+export function membershipStoreEnvironment(value: string): MembershipStoreEnvironment | null {
+  return oneOf(value.trim().toLowerCase(), MEMBERSHIP_STORE_ENVIRONMENTS);
+}
+
+/** Whether an Apple or Google source that currently gives access renews automatically. */
+export function membershipStoreAutoRenews(status: MembershipStatus): boolean {
+  return status.sources.some((source) => (
+    (source.kind === "apple" || source.kind === "google")
+    && source.contributes_to_access
+    && source.auto_renews === true
+  ));
+}
+
+/**
+ * True when every source currently giving this member access is verified store evidence from a
+ * non-production environment (Apple sandbox / TestFlight / Xcode, or a Google Play license test),
+ * i.e. nobody paid. Core marks the environment only on `store_sources[]`, so each contributing
+ * source needs exactly one counted, verified row in the same window; an unlinkable source is
+ * never flagged.
+ */
+export function membershipNonProductionOnlyAccess(detail: MembershipUserDetail): boolean {
+  const contributing = detail.effective_membership.sources.filter((source) => source.contributes_to_access);
+  if (contributing.length === 0) return false;
+  return contributing.every((source) => {
+    if (source.kind !== "apple" && source.kind !== "google") return false;
+    const rows = detail.store_sources.filter((row) => {
+      if (row.verification_status !== "verified" || row.platform !== source.kind
+        || row.counts_for_access === false) return false;
+      const startsAt = row.current_period_started_at ?? row.first_purchased_at;
+      const expiresAt = row.normalized_state === "grace" && row.grace_expires_at !== null
+        ? row.grace_expires_at
+        : row.expires_at;
+      return startsAt === source.starts_at && expiresAt === source.expires_at;
+    });
+    const environment = rows.length === 1 ? membershipStoreEnvironment(rows[0].environment) : null;
+    return environment === "sandbox" || environment === "test";
+  });
+}
+
+/**
+ * What Core's feature gates apply right now, derived exactly as Core's
+ * `MembershipAccessService::rolloutMode` does from the facts `membership_configuration` returns:
+ *
+ * - `legacy`: the enforcement switch is off, or on while the saved plan is not marked ready. The
+ *   legacy rules decide; the saved plan is not enforced.
+ * - `enforced`: the switch is on and the saved plan is marked ready.
+ * - `deny`: the switch is on but no plan has ever been saved (Core answers the defaults at
+ *   revision 0, and a stored plan always has revision 1 or more), so Core refuses every paid
+ *   capability. A stored plan that cannot be read never reaches this function: that read fails.
+ */
+export type MembershipRolloutMode = "legacy" | "enforced" | "deny";
+
+export function membershipRolloutMode(value: MembershipConfiguration): MembershipRolloutMode {
+  if (!value.rollout.feature_enforcement_enabled) return "legacy";
+  if (value.configuration.revision === 0) return "deny";
+  return value.configuration.ready_for_enforcement ? "enforced" : "legacy";
+}
+
+export type MembershipMutationOutcome = "success" | "uncertain" | "conflict" | "refused";
+
+/**
+ * Classifies one mutation response. Only a definite answer may release the operation's identity:
+ * a transport failure, timeout, unreadable or unrecognized body, or a success body that fails the
+ * strict parser leaves the outcome unknown, so the caller keeps the exact request (same request ID
+ * and expected revision) or reads the authoritative state.
+ */
+export function membershipMutationOutcome(
+  action: MembershipAction,
+  response: { success?: unknown; error?: unknown } | null | undefined,
+  adopted: boolean,
+): MembershipMutationOutcome {
+  if (response?.success === true) return adopted ? "success" : "uncertain";
+  const key = membershipActionErrorKey(action, response?.error);
+  if (key === "timeout" || key === "unavailable" || key === "invalidResponse" || key === "unknown") {
+    return "uncertain";
+  }
+  if (key === "configurationConflict" || key === "grantConflict"
+    || key === "expiryConflict" || key === "revokeConflict") return "conflict";
+  return "refused";
+}
+
+/** A committed mutation body pinned to one caller-minted request identity. */
+export type MembershipPinnedMutation = {
+  fingerprint: string;
+  body: Record<string, unknown> & { request_id: string };
+};
+
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    const source = value as Record<string, unknown>;
+    return `{${Object.keys(source).sort()
+      .filter((key) => source[key] !== undefined)
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson(source[key])}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value) ?? "null";
+}
+
+/**
+ * Reuses the pinned request while the material body (including `expected_revision`) is unchanged,
+ * so a retry after an uncertain result replays Core's receipt instead of creating a second logical
+ * change. Any material edit is a new operation with a new identity.
+ */
+export function membershipPinnedMutation(
+  pending: MembershipPinnedMutation | null,
+  body: Record<string, unknown>,
+  mintRequestId: () => string,
+): MembershipPinnedMutation {
+  const { request_id: _ignored, ...material } = body;
+  const fingerprint = canonicalJson(material);
+  if (pending && pending.fingerprint === fingerprint) return pending;
+  return { fingerprint, body: { ...material, request_id: mintRequestId() } };
+}
+
+/** The administrator grant a grant request was based on: its identity and revision. */
+export type MembershipGrantBaseline = { grant_id: string | null; revision: number };
+
+/** True once the member's current administrator grant is no longer the one a request was based on. */
+export function membershipGrantChanged(
+  baseline: MembershipGrantBaseline,
+  detail: MembershipUserDetail,
+): boolean {
+  return (detail.admin_grant?.grant_id ?? null) !== baseline.grant_id
+    || (detail.admin_grant?.revision ?? 0) !== baseline.revision;
+}
+
 function usageRule(value: unknown): MembershipUsageRule | null {
   const source = record(value);
   const scope = oneOf(source?.scope, QUOTA_SCOPES);
@@ -926,14 +1081,18 @@ export function membershipUserDetail(value: unknown): MembershipUserDetail | nul
     const providerState = boundedText(row?.provider_state, 120);
     const normalizedState = boundedText(row?.normalized_state, 120);
     const verificationStatus = boundedText(row?.verification_status, 120);
+    // Additive key: absent is an older Core; present it must be a boolean.
+    const countsForAccess = row?.counts_for_access;
     if (!row || !platform || !tier
       || [firstPurchased, periodStarted, expiresAt, graceAt, lastVerified].includes(undefined)
       || environment === null || productId === null || basePlanId === null
       || providerState === null || normalizedState === null || verificationStatus === null
+      || !(countsForAccess === undefined || typeof countsForAccess === "boolean")
       || !(row.auto_renews === null || typeof row.auto_renews === "boolean")) return null;
     storeSources.push({
       platform,
       environment,
+      counts_for_access: countsForAccess ?? null,
       product_id: productId,
       base_plan_id: basePlanId,
       tier,
