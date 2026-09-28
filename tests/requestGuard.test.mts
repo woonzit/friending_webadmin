@@ -81,6 +81,32 @@ test("private media subresources require a same-host source and fail direct or c
     "sec-fetch-site": "same-origin",
     "sec-fetch-dest": "video",
   })), true, "an evidence video on the console page");
+  assert.equal(isTrustedAdminMediaRead(headers({
+    host: "friendingapp.com",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-dest": "audio",
+  })), true, "an evidence audio element on the console page");
+  assert.equal(isTrustedAdminMediaRead(headers({
+    host: "friendingapp.com",
+    "sec-fetch-site": "SAME-ORIGIN",
+    "sec-fetch-dest": "Video",
+  })), true, "Fetch Metadata values compare case-insensitively");
+  // Without Referer/Origin, same-origin Fetch Metadata alone is not enough: a same-origin link
+  // click or script fetch to an evidence URL is not a media element and is refused.
+  for (const dest of ["document", "iframe", "frame", "embed", "object", "empty", "script", "worker", ""]) {
+    assert.equal(isTrustedAdminMediaRead(headers({
+      host: "friendingapp.com",
+      "sec-fetch-site": "same-origin",
+      ...(dest ? { "sec-fetch-dest": dest } : {}),
+    })), false, `same-origin Sec-Fetch-Dest ${dest || "absent"} is not a media element`);
+  }
+  for (const site of ["cross-site", "same-site", "none", ""]) {
+    assert.equal(isTrustedAdminMediaRead(headers({
+      host: "friendingapp.com",
+      "sec-fetch-dest": "video",
+      ...(site ? { "sec-fetch-site": site } : {}),
+    })), false, `a media destination does not rescue Sec-Fetch-Site ${site || "absent"}`);
+  }
   for (const site of ["cross-site", "same-site", "none", ""]) {
     assert.equal(isTrustedAdminMediaRead(headers({ host: "friendingapp.com", ...(site ? { "sec-fetch-site": site } : {}) })), false,
       `no Referer/Origin and Sec-Fetch-Site ${site || "absent"}`);
@@ -102,4 +128,20 @@ test("private media subresources require a same-host source and fail direct or c
     host: "friendingapp.com",
     "sec-fetch-site": "cross-site",
   })), false);
+});
+
+test("private evidence is only ever loaded by media elements the guard accepts", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const page = await readFile(new URL("../app/(dashboard)/profile-verification/[caseId]/page.tsx", import.meta.url), "utf8");
+  // <video> requests carry Sec-Fetch-Dest: video; the <img> keeps a same-origin Referer and, if a
+  // browser strips it, carries Sec-Fetch-Dest: image. No link, frame or fetch opens the URL.
+  assert.match(page, /<video controls controlsList="nodownload" playsInline preload="metadata" src=\{videoUrl\} \/>/);
+  assert.match(page, /<img src=\{snapshotUrl\} alt=\{t\("evidence\.avatarSnapshot"\)\} referrerPolicy="same-origin" \/>/);
+  for (const url of ["videoUrl", "snapshotUrl"]) {
+    const uses = page.match(new RegExp(`\\{${url}\\}`, "gu")) ?? [];
+    assert.equal(uses.length, 1, `${url} is used by exactly one media element`);
+    assert.doesNotMatch(page, new RegExp(`href=\\{${url}\\}|fetch\\(${url}`, "u"));
+  }
+  const route = await readFile(new URL("../app/api/admin/profile-verification-evidence/route.ts", import.meta.url), "utf8");
+  assert.match(route, /if \(!isTrustedAdminMediaRead\(request\.headers\)\) \{\s*return jsonError\("bad-origin", 403\);/);
 });

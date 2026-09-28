@@ -262,7 +262,7 @@ export default function ProfileVerificationDetailPage() {
           {!item ? <p className="page-subtitle">{t("evidence.noCase")}</p> : !canWrite ? <p className="page-subtitle">{t("evidence.writerRequired")}</p> : !evidenceOpen ? <p className="page-subtitle">{t("evidence.closedHint")}</p> : <div className="verification-evidence-grid">
             <article>
               <h3>{t("evidence.video")}</h3>
-              {detail.submission?.has_video && videoUrl ? <video controls playsInline preload="metadata" src={videoUrl} /> : <p className="page-subtitle">{t("evidence.missing")}</p>}
+              {detail.submission?.has_video && videoUrl ? <video controls controlsList="nodownload" playsInline preload="metadata" src={videoUrl} /> : <p className="page-subtitle">{t("evidence.missing")}</p>}
               {detail.submission && <dl className="detail-list compact">
                 <div className="detail-row"><dt>{t("duration")}</dt><dd>{detail.submission.duration_seconds.toFixed(2)} s</dd></div>
                 <div className="detail-row"><dt>{t("dimensions")}</dt><dd>{detail.submission.width}×{detail.submission.height}</dd></div>
