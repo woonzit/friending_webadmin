@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useLocale, useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
 import { formatDate, formatNumber } from "@/lib/format";
+import { registeredUsersHref } from "@/lib/registeredUsers";
 import {
   REGISTRATION_STATS_RANGES,
   SIGNUP_PLATFORMS,
@@ -278,11 +279,12 @@ export function RegistrationPlatformStatsView({
                     <span className="registration-tile-meta">{t("tileRecent", {
                       today: block.new_today, week: block.new_7_days, month: block.new_30_days,
                     })}</span>
-                    <Link className="button-link" href={`/users?platform=${platform}`} prefetch={false}>{t("openList")}</Link>
+                    <Link className="button-link" href={registeredUsersHref(platform, "real")} prefetch={false}>{t("openList")}</Link>
                   </article>
                 );
               })}
             </div>
+            <p className="registration-list-note">{t("openListNote")}</p>
 
             <div className="registration-chart-head">
               <h3>{t("chartTitle", { days: data.days })}</h3>

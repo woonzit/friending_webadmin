@@ -13,7 +13,9 @@ import {
   isAdminActionAuthorized,
 } from "../lib/adminActions.ts";
 import {
+  accountTypeFilterFrom,
   registeredUserSignup,
+  registeredUsersHref,
   registeredUsersRefusal,
   signupPlatformFilterApplied,
 } from "../lib/registeredUsers.ts";
@@ -178,10 +180,12 @@ test("the panel renders the capture in both locales: cards, list links, details 
     assert.ok(html.includes(escaped(copy.title)));
     for (const platform of SIGNUP_PLATFORMS) {
       // Unknown shows because two registrations in the capture lack a platform.
-      assert.ok(html.includes(`href="/users?platform=${platform}"`), platform);
+      // The card counts member accounts only, so its list opens without demo accounts.
+      assert.ok(html.includes(`href="/users?platform=${platform}&amp;type=real"`), platform);
       assert.ok(html.includes(escaped(copy.platforms[platform])), platform);
     }
     assert.equal([...html.matchAll(/<a [^>]*href="\/users\?platform=/g)].length, 4);
+    assert.ok(html.includes(escaped(copy.openListNote)), "the note explains why the list count can differ");
     assert.ok(html.includes(escaped(copy.detailsTitle)));
     assert.ok(html.includes(escaped(copy.rows.legacy)));
     assert.ok(html.includes("HU 5 · US 2 · ?"), "top countries in Core's order, unknown last");
@@ -258,10 +262,24 @@ test("Core echoes the applied platform filter in every successful envelope; refu
   assert.equal(registeredUsersRefusal({ success: false, status_code: 500, error: "query-failed" }), null);
 });
 
+test("the Registered users address carries platform and account type, defaults left out", () => {
+  assert.equal(registeredUsersHref("all", "all"), "/users");
+  assert.equal(registeredUsersHref("ios", "all"), "/users?platform=ios");
+  assert.equal(registeredUsersHref("all", "real"), "/users?type=real");
+  assert.equal(registeredUsersHref("web", "real"), "/users?platform=web&type=real");
+  assert.equal(accountTypeFilterFrom("real"), "real");
+  assert.equal(accountTypeFilterFrom("demo"), "demo");
+  assert.equal(accountTypeFilterFrom("REAL"), "all");
+  assert.equal(accountTypeFilterFrom(null), "all");
+});
+
 test("Registered users sends the filter, follows ?platform= and shows the column", async () => {
   const page = await readFile(new URL("../app/(dashboard)/users/page.tsx", import.meta.url), "utf8");
   assert.match(page, /signup_platform: filters\.platform,/);
   assert.match(page, /signupPlatformFilterFrom\(search\.get\("platform"\)\)/);
+  assert.match(page, /accountTypeFilterFrom\(search\.get\("type"\)\)/);
+  assert.match(page, /showFilters\(draft\.platform, draft\.demoMode\);/);
+  assert.match(page, /if \(urlPlatform === filters\.platform && urlType === filters\.demoMode\) return;/);
   assert.match(page, /<Suspense fallback=\{<LoadingPanel \/>\}>/);
   assert.match(page, /<th>\{t\("signupPlatform"\)\}<\/th>/);
   assert.match(page, /t\(`filterRefused\.\$\{refusal\}`\)/);

@@ -469,7 +469,7 @@
               "1": "Read the notice at the top of the page: when it says the plan is marked ready, every switch, limit control and Save button stays disabled for your role.",
               "2": "Ask an owner to change a plan that is marked ready. An owner edits it like any other revision."
             },
-            "guidance": "Core enforces the same rule: it refuses a non-owner's change to a plan marked ready and writes nothing. If an owner marks the plan ready while you are editing, your save is refused and the page reloads the current plan in place of your changes."
+            "guidance": "Core enforces the same rule: it refuses a non-owner's change to a plan marked ready and writes nothing. If an owner marks the plan ready while you are editing, or your owner role is removed while the page is open, your save is refused and the page reloads the current plan in place of your changes."
           }
         }
       },
@@ -3308,8 +3308,8 @@
     "userNotFound": "The member no longer exists or is no longer available to this administrator.",
     "invalidResponse": "Core returned an unreadable membership response. No success is assumed; refresh before retrying.",
     "unknown": "The membership operation failed with an unrecognized response. Refresh the authoritative state before retrying.",
-    "planLiveOwnerRequired": "This plan is marked ready for enforcement, so only an owner can change it. Nothing was saved.",
-    "planLiveOwnerRequiredAdopted": "An owner marked this plan ready for enforcement after you opened the page, so only an owner can change it now. Nothing was saved: the current plan has been reloaded in place of your changes."
+    "planLiveOwnerRequired": "Core refused the save: this plan is marked ready for enforcement, and only an owner can change it. Nothing was saved.",
+    "planLiveOwnerRequiredAdopted": "Core refused the save: this plan is marked ready for enforcement, and only an owner can change it. Either it was marked ready after you opened the page, or your account no longer has the owner role. Nothing was saved: the current plan has been reloaded in place of your changes; reload the page to see your current role."
   },
   "membershipUser": {
     "title": "Membership",
@@ -9491,6 +9491,7 @@
       "legacy": "Members imported from the old Friending app keep their original registration date, so they rarely appear among recent registrations; the imports of the last 30 days are shown next to their total.",
       "signedIn": "Sign-ins count the platform used to sign in, which can differ from the signup platform: a member using two platforms counts on both, and once under All platforms. Days are Budapest days.",
       "generated": "Calculated {time}."
-    }
+    },
+    "openListNote": "Open these members lists the platform's existing non-demo accounts. The list leaves out suspended accounts and can still include App Review and test accounts, so its count can differ from the card."
   }
 }

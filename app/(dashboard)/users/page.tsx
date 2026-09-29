@@ -11,12 +11,15 @@ import { avatarUrl, formatDate, formatNumber } from "@/lib/format";
 import { membershipListSummary, membershipUtcInstant } from "@/lib/membership";
 import {
   PHONE_CHECK_FILTERS,
+  accountTypeFilterFrom,
   phoneCheckFilterApplied,
   phoneCheckFilterFrom,
   registeredUserPhoneCheck,
   registeredUserSignup,
+  registeredUsersHref,
   registeredUsersRefusal,
   signupPlatformFilterApplied,
+  type AccountTypeFilter,
   type PhoneCheckFilter,
   type RegisteredUsersRefusal,
 } from "@/lib/registeredUsers";
@@ -54,7 +57,7 @@ type UserRow = {
 
 type Filters = {
   query: string;
-  demoMode: "all" | "real" | "demo";
+  demoMode: AccountTypeFilter;
   hasAvatar: boolean;
   registrationPeriod: RegistrationPeriod;
   registrationAsOf: number;
@@ -91,10 +94,11 @@ function RegisteredUsers() {
   const router = useRouter();
   const pathname = usePathname();
   const search = useSearchParams();
-  // The overview's platform cards open this list pre-filtered (`?platform=web`).
+  // The overview's platform cards open this list pre-filtered (`?platform=web&type=real`).
   const urlPlatform = signupPlatformFilterFrom(search.get("platform"));
-  const [draft, setDraft] = useState<Filters>(() => ({ ...EMPTY_FILTERS, platform: urlPlatform }));
-  const [filters, setFilters] = useState<Filters>(() => ({ ...EMPTY_FILTERS, platform: urlPlatform }));
+  const urlType = accountTypeFilterFrom(search.get("type"));
+  const [draft, setDraft] = useState<Filters>(() => ({ ...EMPTY_FILTERS, platform: urlPlatform, demoMode: urlType }));
+  const [filters, setFilters] = useState<Filters>(() => ({ ...EMPTY_FILTERS, platform: urlPlatform, demoMode: urlType }));
   const [rows, setRows] = useState<UserRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -142,30 +146,32 @@ function RegisteredUsers() {
     return () => controller.abort();
   }, [filters, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // A later address change (an overview card, back/forward) re-applies the platform from it.
+  // A later address change (an overview card, back/forward) re-applies platform and type from it.
   useEffect(() => {
-    if (urlPlatform === filters.platform) return;
-    setDraft((value) => ({ ...value, platform: urlPlatform }));
-    setFilters((value) => ({ ...value, platform: urlPlatform }));
+    if (urlPlatform === filters.platform && urlType === filters.demoMode) return;
+    setDraft((value) => ({ ...value, platform: urlPlatform, demoMode: urlType }));
+    setFilters((value) => ({ ...value, platform: urlPlatform, demoMode: urlType }));
     setPage(1);
-  }, [urlPlatform]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [urlPlatform, urlType]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function showPlatform(platform: SignupPlatformFilter) {
-    router.replace(platform === "all" ? pathname : `${pathname}?platform=${platform}`, { scroll: false });
+  // The address carries both filters, so the effect above never undoes a choice made in the form.
+  function showFilters(platform: SignupPlatformFilter, type: AccountTypeFilter) {
+    const href = registeredUsersHref(platform, type);
+    router.replace(href === "/users" ? pathname : `${pathname}${href.slice("/users".length)}`, { scroll: false });
   }
 
   function apply(event: React.FormEvent) {
     event.preventDefault();
     setPage(1);
     setFilters({ ...draft, query: draft.query.trim(), registrationAsOf: Math.floor(Date.now() / 1000) });
-    showPlatform(draft.platform);
+    showFilters(draft.platform, draft.demoMode);
   }
 
   function reset() {
     setDraft(EMPTY_FILTERS);
     setFilters(EMPTY_FILTERS);
     setPage(1);
-    showPlatform("all");
+    showFilters("all", "all");
   }
 
   async function setDemoVisibilityPermission(row: UserRow, enabled: boolean) {
@@ -227,7 +233,7 @@ function RegisteredUsers() {
             value={draft.demoMode}
             onChange={(event) => setDraft((value) => ({
               ...value,
-              demoMode: event.target.value as Filters["demoMode"],
+              demoMode: accountTypeFilterFrom(event.target.value),
             }))}
           >
             <option value="all">{t("typeAll")}</option>

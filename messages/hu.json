@@ -469,7 +469,7 @@
               "1": "Olvasd el az oldal tetején megjelenő figyelmeztetést: ha azt írja, hogy a csomag készre van jelölve, a te szerepköröddel minden kapcsoló, korlátmező és a mentés gomb is le van tiltva.",
               "2": "Készre jelölt csomag módosítását kérd egy tulajdonostól. A tulajdonos ugyanúgy szerkeszti, mint bármely más revíziót."
             },
-            "guidance": "A Core ugyanezt a szabályt alkalmazza: készre jelölt csomag módosítását nem tulajdonostól elutasítja, és semmit nem ment. Ha szerkesztés közben egy tulajdonos készre jelöli a csomagot, a mentésed elutasítást kap, és az oldal a módosításaid helyett betölti a jelenlegi csomagot."
+            "guidance": "A Core ugyanezt a szabályt alkalmazza: készre jelölt csomag módosítását nem tulajdonostól elutasítja, és semmit nem ment. Ha szerkesztés közben egy tulajdonos készre jelöli a csomagot, vagy megszűnik a tulajdonosi szerepköröd, a mentésed elutasítást kap, és az oldal a módosításaid helyett betölti a jelenlegi csomagot."
           }
         }
       },
@@ -3283,7 +3283,7 @@
     },
     "liveLock": {
       "title": "Ez a csomag készre van jelölve az érvényesítéshez. Csak tulajdonos módosíthatja.",
-      "copy": "Ha a szerver érvényesítési kapcsolója be van kapcsolva, a csomag minden módosítása azonnal minden tagra hat, ezért a Core csak tulajdonostól fogad el rajta módosítást. A szerkesztő és a mentés a te szerepköröddel csak olvasható; a módosítást kérd egy tulajdonostól."
+      "copy": "Ha a szerver érvényesítési kapcsolója be van kapcsolva, a csomag minden módosítása azonnal minden tagra hat, ezért a Core csak tulajdonostól fogad el rajta módosítást. A te szerepköröddel a szerkesztő csak olvasható, a mentés gomb le van tiltva; a módosítást kérd egy tulajdonostól."
     }
   },
   "membershipErrors": {
@@ -3308,8 +3308,8 @@
     "userNotFound": "A tag már nem létezik, vagy ez az admin már nem fér hozzá.",
     "invalidResponse": "A Core nem olvasható előfizetési választ adott. Nem feltételezünk sikert; újrapróbálás előtt frissíts.",
     "unknown": "Az előfizetési művelet ismeretlen válasszal hiúsult meg. Újrapróbálás előtt frissítsd a hiteles állapotot.",
-    "planLiveOwnerRequired": "Ez a csomag készre van jelölve az érvényesítéshez, ezért csak tulajdonos módosíthatja. Semmi nem mentődött el.",
-    "planLiveOwnerRequiredAdopted": "Miután megnyitottad az oldalt, egy tulajdonos készre jelölte a csomagot az érvényesítéshez, ezért mostantól csak tulajdonos módosíthatja. Semmi nem mentődött el: a módosításaid helyett betöltöttük a jelenlegi csomagot."
+    "planLiveOwnerRequired": "A Core nem mentette el a módosítást: ez a csomag készre van jelölve az érvényesítéshez, és csak tulajdonos módosíthatja. Semmi nem mentődött el.",
+    "planLiveOwnerRequiredAdopted": "A Core nem mentette el a módosítást: ez a csomag készre van jelölve az érvényesítéshez, és csak tulajdonos módosíthatja. Vagy azután jelölték készre, hogy megnyitottad az oldalt, vagy a fiókodnak már nincs tulajdonosi szerepköre. Semmi nem mentődött el: a módosításaid helyett betöltöttük a jelenlegi csomagot; a jelenlegi szerepkörödet az oldal újratöltése után látod."
   },
   "membershipUser": {
     "title": "Előfizetés",
@@ -3507,7 +3507,7 @@
       "planRule": "a mentett csomag szerint",
       "legacyRule": "a régi szabály szerint, a mentett csomag nem érvényes",
       "quickPhrasesOff": "A szerveren ki van kapcsolva",
-      "invalid": "A Core olyan formában küldte el a tag jelenlegi hozzáférését, amelyet ez a felület nem tud beolvasni, ezért lent csak a mentett csomag látszik. Mielőtt ezekre támaszkodnál, frissíts.",
+      "invalid": "A Core olyan formában küldte el a tag jelenlegi hozzáférését, amelyet ez a felület nem tud beolvasni, ezért lent csak a mentett csomag látszik. Frissítsd az oldalt, mielőtt erre támaszkodnál.",
       "rollout": {
         "legacy": "A Friending továbbra is a régi szabályokat alkalmazza. A Jelenleg érték mutatja, mit használhat most ténylegesen ez a tag; mellette a mentett csomag azt, amit az érvényesítés után kapna.",
         "enforced": "A Core érvényesíti a mentett csomagot. A Jelenleg érték azt mutatja, mit kap most ez a tag, a moderátor által beállított egyéni korláttal együtt.",
@@ -9206,7 +9206,7 @@
     },
     "limitRollout": {
       "legacy": "A Friending a régi előfizetési szabályokat alkalmazza, ezért az itteni napi keret minden tagra érvényes, a lenti tagonkénti egyedi keret pedig felülírja.",
-      "enforced": "A napi Footprint-keretet most az előfizetési csomag határozza meg, ezért az itteni napi keret már nem érvényes. A lenti tagonkénti egyedi keret a csomag fölötti plafon: csökkentheti a tag keretét, de nem növelheti.",
+      "enforced": "A napi Footprint-keretet most az előfizetési csomag határozza meg, ezért az itteni napi keret már nem érvényes. A lenti tagonkénti egyedi keret felső határt szab a csomag keretének: csökkentheti a tag keretét, de nem növelheti.",
       "deny": "Az érvényesítés mentett előfizetési csomag nélkül van bekapcsolva, ezért most senki nem küldhet Footprintet, bármit mutat ez az oldal. Ments egy csomagot az Előfizetési csomagok oldalon."
     }
   },
@@ -9460,7 +9460,7 @@
     "today": "Ma",
     "dayTotal": "Összesen",
     "dayDeleted": "Aznap törölt",
-    "dailyTable": "A napi számok táblázatban",
+    "dailyTable": "Napi számok megjelenítése táblázatban",
     "date": "Nap",
     "detailsTitle": "Részletek platformonként",
     "metric": "Mutató",
@@ -9491,6 +9491,7 @@
       "legacy": "A régi Friending appból átvett tagok megtartják az eredeti regisztrációs dátumukat, ezért ritkán látszanak a friss regisztrációk között; az elmúlt 30 nap átvételei az összesítés mellett szerepelnek.",
       "signedIn": "A belépéseknél a belépéshez használt platform számít, ami eltérhet a regisztrációs platformtól: aki két platformot is használ, mindkettőnél szerepel, a Minden platform oszlopban viszont csak egyszer. A napok budapesti idő szerint értendők.",
       "generated": "Számítva: {time}."
-    }
+    },
+    "openListNote": "A Tagok megnyitása az adott platform meglévő, nem demó fiókjait listázza. A lista a felfüggesztett fiókokat nem mutatja, az App Review- és tesztfiókokat viszont tartalmazhatja, ezért a darabszáma eltérhet a kártyán látottól."
   }
 }

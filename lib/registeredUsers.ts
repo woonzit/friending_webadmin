@@ -32,6 +32,28 @@ export function registeredUserSignup(row: unknown): RegisteredUserSignup {
   };
 }
 
+/** The Registered users account-type filter (`demo_mode`), also readable from `?type=`. */
+export const ACCOUNT_TYPE_FILTERS = ["all", "real", "demo"] as const;
+export type AccountTypeFilter = (typeof ACCOUNT_TYPE_FILTERS)[number];
+
+export function accountTypeFilterFrom(value: string | null | undefined): AccountTypeFilter {
+  return typeof value === "string" && (ACCOUNT_TYPE_FILTERS as readonly string[]).includes(value)
+    ? value as AccountTypeFilter
+    : "all";
+}
+
+/**
+ * The Registered users address for a platform and account type; defaults are left out, so the
+ * plain list stays `/users`. The overview's platform cards open `?platform=<p>&type=real`.
+ */
+export function registeredUsersHref(platform: SignupPlatformFilter, type: AccountTypeFilter): string {
+  const query = new URLSearchParams();
+  if (platform !== "all") query.set("platform", platform);
+  if (type !== "all") query.set("type", type);
+  const text = query.toString();
+  return text ? `/users?${text}` : "/users";
+}
+
 /**
  * Whether Core applied the requested signup-platform filter: it echoes the normalised value
  * (`all` when none was sent) in every successful envelope, the early empty answer included.
