@@ -641,3 +641,32 @@ test("Dates pages use the authenticated bridge and keep destructive controls exp
   assert.match(moderation, /state === "ready" && sla/);
   assert.doesNotMatch(moderation, /as unknown as Sla/);
 });
+
+test("D-116: the console names the dating mode AreYouIn in both languages, never Date/Randi", () => {
+  const en = JSON.parse(readFileSync(new URL("../messages/en.json", import.meta.url), "utf8"));
+  const hu = JSON.parse(readFileSync(new URL("../messages/hu.json", import.meta.url), "utf8"));
+  // The verification console's AreYouIn feature rows.
+  assert.deepEqual(
+    ["access", "create", "join"].map((key) => en.verificationAdmin.features.dates[key].title),
+    ["Open AreYouIn", "Create an AreYouIn activity", "Join an AreYouIn activity"],
+  );
+  assert.deepEqual(
+    ["access", "create", "join"].map((key) => hu.verificationAdmin.features.dates[key].title),
+    ["AreYouIn megnyitása", "AreYouIn aktivitás létrehozása", "Csatlakozás AreYouIn aktivitáshoz"],
+  );
+  // The mode-card editor's description of the card and the button-radius help.
+  assert.equal(en.appearance.modeSwitcher.cardsCopy.dates, "The AreYouIn mode: activities members host and join.");
+  assert.equal(hu.appearance.modeSwitcher.cardsCopy.dates, "Az AreYouIn mód: programok, amelyeket a tagok szerveznek, és amelyekhez csatlakozhatnak.");
+  assert.match(en.appearance.landingComposer.buttons.radiusHelp, /account and AreYouIn—/);
+  assert.match(hu.appearance.landingComposer.buttons.radiusHelp, /az AreYouIn szekcióban is;/);
+  for (const [locale, messages] of [["en", en], ["hu", hu]] as const) {
+    const text = JSON.stringify([
+      messages.verificationAdmin.features.dates,
+      messages.appearance.modeSwitcher.cardsCopy,
+      messages.appearance.landingComposer.buttons.radiusHelp,
+    ]);
+    assert.doesNotMatch(text, /\bDates?\b|[Rr]andi|dating/, `${locale} still names the mode Date/Randi`);
+  }
+  // English takes "an" before AreYouIn.
+  assert.doesNotMatch(readFileSync(new URL("../messages/en.json", import.meta.url), "utf8"), /\b[Aa] AreYouIn\b/);
+});

@@ -4149,10 +4149,10 @@
           "title": "Open AreYouIn"
         },
         "create": {
-          "title": "Create a Date"
+          "title": "Create an AreYouIn activity"
         },
         "join": {
-          "title": "Join a Date"
+          "title": "Join an AreYouIn activity"
         }
       },
       "footprints": {
@@ -6711,7 +6711,7 @@
         "title": "Buttons",
         "copy": "Phone and e-mail have independent labels and colours. Apple keeps one of Apple's mandated styles; all three share the app-wide primary-button corner radius.",
         "radius": "App primary-button corner radius",
-        "radiusHelp": "Applies to the apps' shared primary action buttons everywhere, including landing, signup, account and dates—not to cards, chips or icon buttons.",
+        "radiusHelp": "Applies to the apps' shared primary action buttons everywhere, including landing, signup, account and AreYouIn—not to cards, chips or icon buttons.",
         "phone": "Phone",
         "email": "E-mail",
         "labelEn": "Label · English",
@@ -6964,7 +6964,7 @@
       },
       "cardsCopy": {
         "people": "The people mode: browsing and meeting people nearby.",
-        "dates": "The dating mode: activities members host and join."
+        "dates": "The AreYouIn mode: activities members host and join."
       },
       "preview": {
         "untitled": "No title yet",
@@ -8420,7 +8420,7 @@
           },
           "dates_activity_soft_delete_retention_days": {
             "title": "Soft-deleted activity retention",
-            "purpose": "Sets the earliest hard-purge eligibility date when an administrator soft-deletes a AreYouIn activity.",
+            "purpose": "Sets the earliest hard-purge eligibility date when an administrator soft-deletes an AreYouIn activity.",
             "effect": "Soft delete immediately removes the activity from normal operation and writes purge_eligible_at for this many days later. Actual hard purge remains a separate authorized operation.",
             "caution": "Changing the default does not reschedule already soft-deleted activities. Legal, audit, moderation and related-record constraints may require longer preservation."
           },

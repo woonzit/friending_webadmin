@@ -4149,10 +4149,10 @@
           "title": "AreYouIn megnyitása"
         },
         "create": {
-          "title": "Date létrehozása"
+          "title": "AreYouIn aktivitás létrehozása"
         },
         "join": {
-          "title": "Csatlakozás Date-hez"
+          "title": "Csatlakozás AreYouIn aktivitáshoz"
         }
       },
       "footprints": {
@@ -6711,7 +6711,7 @@
         "title": "Gombok",
         "copy": "A telefon és e-mail külön feliratot és színeket kap. Az Apple az előírt stílusok egyikét használja; mindhárom az alkalmazásszintű elsődlegesgomb-saroksugarat használja.",
         "radius": "App elsődleges gombjainak saroksugara",
-        "radiusHelp": "Az appok közös elsődleges műveletgombjaira mindenhol érvényes, így a landingen, regisztrációnál, fiókban és randiknál is; kártyákra, chipekre és ikongombokra nem.",
+        "radiusHelp": "Az appok közös elsődleges műveletgombjaira mindenhol érvényes, így a landingen, a regisztrációnál, a fiókban és az AreYouIn szekcióban is; kártyákra, chipekre és ikongombokra nem.",
         "phone": "Telefon",
         "email": "E-mail",
         "labelEn": "Felirat · angol",
@@ -6964,7 +6964,7 @@
       },
       "cardsCopy": {
         "people": "A people mód: böngészés és ismerkedés a közelben.",
-        "dates": "A randi mód: a tagok által szervezett és választott programok."
+        "dates": "Az AreYouIn mód: programok, amelyeket a tagok szerveznek, és amelyekhez csatlakozhatnak."
       },
       "preview": {
         "untitled": "Még nincs cím",
