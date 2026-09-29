@@ -10979,6 +10979,76 @@ body .verification-level-pill.level-strong {
   padding: 8px 0;
 }
 
+/* T-863 S11 (D-135): whole-set review of a gesture photo selfie. */
+.verification-photo-review {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.verification-photo-review > article {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+}
+
+.verification-photo-review > .verification-photo-snapshot {
+  border-color: rgba(0, 189, 255, 0.35);
+  background: var(--accent-soft);
+}
+
+.verification-photo-review h3,
+.verification-photo-review p {
+  margin: 0;
+}
+
+.verification-photo-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.verification-photo-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.verification-photo-pair figure {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  margin: 0;
+}
+
+.verification-photo-pair figcaption {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.verification-photo-review img {
+  display: block;
+  width: 100%;
+  max-height: 420px;
+  border-radius: 12px;
+  background: #000;
+  object-fit: contain;
+}
+
+.verification-photo-unavailable {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 12px;
+}
+
 .verification-challenge-sequence {
   margin-top: 24px;
   padding: 18px;

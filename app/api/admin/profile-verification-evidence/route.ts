@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { coreBinaryCall } from "@/lib/core";
+import {
+  isProfileVerificationEvidenceKind,
+  profileVerificationEvidenceContentType,
+} from "@/lib/profileVerification";
 import { isTrustedAdminMediaRead } from "@/lib/requestGuard";
 import { requireAdminWriter } from "@/lib/session";
 
@@ -16,6 +20,14 @@ function jsonError(error: string, status: number) {
   );
 }
 
+/**
+ * Private verification evidence: the video, the case-time avatar snapshot and
+ * (D-135) the gesture photos `photo_1` … `photo_10`, all through Core's
+ * audited `profile_verification_evidence`. The request guard is unchanged for
+ * every kind (T-863 S3/S9): same-origin, and with no Referer only a media
+ * element's own Fetch Metadata (`Sec-Fetch-Site: same-origin` +
+ * `Sec-Fetch-Dest: image|video|audio`).
+ */
 export async function GET(request: NextRequest) {
   if (!isTrustedAdminMediaRead(request.headers)) {
     return jsonError("bad-origin", 403);
@@ -25,7 +37,7 @@ export async function GET(request: NextRequest) {
 
   const caseId = (request.nextUrl.searchParams.get("case_id") ?? "").trim();
   const kind = (request.nextUrl.searchParams.get("kind") ?? "").trim();
-  if (!CASE_ID.test(caseId) || !["video", "avatar_snapshot"].includes(kind)) {
+  if (!CASE_ID.test(caseId) || !isProfileVerificationEvidenceKind(kind)) {
     return jsonError("profile-verification-evidence-invalid", 422);
   }
   const range = request.headers.get("range");
@@ -64,7 +76,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const expectedType = kind === "video" ? "video/mp4" : "image/jpeg";
+  const expectedType = profileVerificationEvidenceContentType(kind);
   if (![200, 206].includes(upstream.status) || !contentType.toLowerCase().startsWith(expectedType)) {
     upstream.body?.cancel().catch(() => undefined);
     return jsonError("invalid-core-response", 502);

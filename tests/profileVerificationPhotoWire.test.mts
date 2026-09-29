@@ -261,3 +261,96 @@ test("the two save refusals keep their Core statuses and the editor maps each on
   assert.match(editor, /error === "profile-verification-config-invalid"[\s\S]{0,300}setShowIssues\(true\)/);
   assert.match(editor, /error === "admin-write-required"/);
 });
+
+// ---------------------------------------------------------------------------
+// 3. Whole-set case review (profile_verification_detail / _decision / _evidence)
+// ---------------------------------------------------------------------------
+
+test("the photo case detail decodes: the mode everywhere, the ordered set, the frozen bilingual gestures", async () => {
+  const {
+    profileVerificationDetail,
+    profileVerificationPhotoSetComplete,
+    profileVerificationResponseData,
+  } = await import("../lib/profileVerification.ts");
+  const parsed = profileVerificationDetail(profileVerificationResponseData(await fixture("webadmin-detail-photo.json")));
+  assert.ok(parsed);
+  assert.equal(parsed.state.verification_mode, "photo");
+  assert.equal(parsed.case?.verification_mode, "photo");
+  assert.equal(parsed.case?.has_avatar_snapshot, true, "the set is reviewed beside the case-time avatar snapshot");
+  assert.ok(parsed.submission);
+  assert.equal(parsed.submission.verification_mode, "photo");
+  assert.equal(parsed.submission.photo_gesture_count, 3);
+  assert.equal(parsed.submission.has_video, false);
+  assert.deepEqual(parsed.submission.photos.map((photo) => [photo.kind, photo.position]), [["photo_1", 1], ["photo_2", 2], ["photo_3", 3]]);
+  assert.deepEqual(parsed.submission.photos[0].gesture.title, { en: "Hand on chin", hu: "Kéz az állon" });
+  assert.equal(parsed.submission.photos[0].gesture.preferred_example, "female");
+  assert.ok(parsed.submission.photos.every((photo) => photo.has_photo && photo.mime === "image/jpeg" && /^[a-f0-9]{64}$/u.test(photo.sha256)));
+  assert.equal(profileVerificationPhotoSetComplete(parsed.submission), true);
+  assert.equal(parsed.history[0].event_type, "photos_submitted");
+});
+
+test("the approve and refusal bodies: approve acts on the set, an incomplete set is a 409, no replacement for a set", async () => {
+  const approved = await fixture("webadmin-decision-photo-approved.json");
+  assert.equal(approved.success, true);
+  assert.deepEqual([approved.data.verification_mode, approved.data.status, approved.data.decision], ["photo", "approved", "approve"]);
+  const incomplete = await fixture("webadmin-refusal-profile-verification-evidence-not-found.json");
+  assert.deepEqual([incomplete.error, incomplete.status_code], ["profile-verification-evidence-not-found", 409]);
+  assert.equal(incomplete.data.verification_mode, "photo", "the refusal carries the case it refused");
+  const invalid = await fixture("webadmin-refusal-profile-verification-decision-invalid.json");
+  assert.deepEqual([invalid.error, invalid.status_code], ["profile-verification-decision-invalid", 422]);
+  const page = await readFile(new URL("../app/(dashboard)/profile-verification/[caseId]/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /error === "profile-verification-evidence-not-found" && photoCase\(current\)\) return t\("photo\.evidenceIncomplete"\)/);
+  assert.match(page, /error === "profile-verification-decision-invalid" && photoCase\(current\)\) return t\("photo\.wholeSetDecision"\)/);
+  assert.match(page, /text: decisionRefusal\(String\(response\?\.error \|\| "core-unavailable"\), detail\)/);
+});
+
+test("the evidence route takes photo_1..photo_10 as JPEG and keeps the S3/S9 request guard first", async () => {
+  const {
+    PROFILE_VERIFICATION_EVIDENCE_KINDS,
+    isProfileVerificationEvidenceKind,
+    profileVerificationEvidenceContentType,
+    profileVerificationEvidenceUrl,
+  } = await import("../lib/profileVerification.ts");
+  const parsed = await manifest();
+  assert.deepEqual([...PROFILE_VERIFICATION_EVIDENCE_KINDS], parsed.evidence_kinds, "the manifest's closed kind list");
+  for (const kind of PROFILE_VERIFICATION_EVIDENCE_KINDS) {
+    assert.equal(isProfileVerificationEvidenceKind(kind), true, kind);
+    assert.equal(profileVerificationEvidenceContentType(kind), kind === "video" ? "video/mp4" : "image/jpeg", kind);
+  }
+  for (const kind of ["photo_0", "photo_11", "PHOTO_1", " photo_1", "photo_01", "photo", "avatar", ""]) {
+    assert.equal(isProfileVerificationEvidenceKind(kind), false, kind);
+  }
+  const caseId = "6".repeat(32);
+  assert.equal(profileVerificationEvidenceUrl(caseId, "photo_10"), `/api/admin/profile-verification-evidence?case_id=${caseId}&kind=photo_10`);
+  assert.equal(profileVerificationEvidenceUrl(caseId, "photo_11" as never), "");
+  assert.deepEqual(await fixture("webadmin-refusal-evidence-kind-invalid.json"), {
+    success: false, status_code: 422, error: "profile-verification-evidence-invalid", message: 200, status: 200, can_send: 0,
+  });
+
+  const route = await readFile(new URL("../app/api/admin/profile-verification-evidence/route.ts", import.meta.url), "utf8");
+  const guard = route.indexOf("if (!isTrustedAdminMediaRead(request.headers))");
+  assert.ok(guard > 0 && guard < route.indexOf("requireAdminWriter()") && guard < route.indexOf("coreBinaryCall("),
+    "the same-origin / Fetch Metadata guard still runs before the session and Core");
+  assert.match(route, /if \(!CASE_ID\.test\(caseId\) \|\| !isProfileVerificationEvidenceKind\(kind\)\) \{\s+return jsonError\("profile-verification-evidence-invalid", 422\);/);
+  assert.match(route, /const expectedType = profileVerificationEvidenceContentType\(kind\);/);
+  assert.match(route, /!contentType\.toLowerCase\(\)\.startsWith\(expectedType\)/, "a photo must come back as image/jpeg");
+  assert.doesNotMatch(route, /\["video", "avatar_snapshot"\]/);
+});
+
+test("the case page reviews the whole set, gates Approve on every loaded photo and hides the replacement request", async () => {
+  const page = await readFile(new URL("../app/(dashboard)/profile-verification/[caseId]/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /return \(current\?\.case\?\.verification_mode \?\? current\?\.submission\?\.verification_mode\) === "photo";/,
+    "the case projection decides, even when the submission row is gone");
+  assert.match(page, /if \(!current \|\| !currentCase \|\| !evidenceOpen \|\| !profileVerificationPhotoSetComplete\(current\.submission\)\) return false;\s+return allProfileVerificationPhotosLoaded\(currentCase\.case_id, current\.submission\?\.photos \?\? \[\], loadedPhotos\);/);
+  // Approve is refused at prepare time, at execute time and by the disabled button.
+  assert.match(page, /if \(action === "approve" && photoCase\(detail\) && !photosReadyFor\(detail\)\) \{/);
+  assert.match(page, /if \(confirmation\.action === "approve" && photoCase\(detail\) && !photosReadyFor\(detail\)\) \{/);
+  assert.match(page, /disabled=\{busy \|\| \(action === "approve" && \(profileIncomplete \|\| \(isPhoto && !photosReady\)\)\)\}/);
+  assert.match(page, /\.filter\(\(value\) => !isPhoto \|\| value !== "request_new_video"\)/);
+  assert.match(page, /if \(photoCase\(detail\) && action === "request_new_video"\) \{/);
+  assert.match(page, /isPhoto && photos\.map\(\(photo\) => <PhotoVerificationEvidence key=\{`\$\{item\.case_id\}-\$\{photo\.kind\}`\} caseId=\{item\.case_id\}/);
+  // A route change forgets every rendered photo, so another case can never unlock Approve.
+  const reset = page.slice(page.indexOf("useEffect(() => {\n    setState(\"loading\");"));
+  assert.ok(reset.slice(0, 400).includes("setLoadedPhotos({})"));
+  assert.match(page, /\{detail\.submission && !isPhoto && <div className="verification-challenge-sequence">/);
+});

@@ -274,3 +274,103 @@ test("EN and HU carry the catalogue and wording copy with identical key trees", 
   }
   assert.deepEqual(Object.keys(MESSAGES.en.profileVerification.configuration.photoFlow.fields), [...PROFILE_VERIFICATION_PHOTO_FLOW_KEYS]);
 });
+
+// ---------------------------------------------------------------------------
+// Whole-set review
+// ---------------------------------------------------------------------------
+
+const DETAIL = JSON.parse(readFileSync(new URL("./fixtures/profile_verification_photo_wire/webadmin-detail-photo.json", import.meta.url), "utf8"));
+
+function detailData(): Record<string, any> {
+  return structuredClone(DETAIL.data);
+}
+
+test("the detail decoder fails closed on a malformed set and keeps a purged set readable", async () => {
+  const { profileVerificationDetail, profileVerificationPhotoSetComplete } = await import("../lib/profileVerification.ts");
+  const cases: Array<[string, (value: Record<string, any>) => void]> = [
+    ["no case mode", (value) => { delete value.case.verification_mode; }],
+    ["unknown case mode", (value) => { value.case.verification_mode = "photo_selfie"; }],
+    ["no state mode", (value) => { delete value.state.verification_mode; }],
+    ["no submission mode", (value) => { delete value.submission.verification_mode; }],
+    ["photos out of order", (value) => { value.submission.photos.reverse(); }],
+    ["a wrong position", (value) => { value.submission.photos[1].position = 3; }],
+    ["an unknown kind", (value) => { value.submission.photos[0].kind = "photo_0"; }],
+    ["a PNG photo", (value) => { value.submission.photos[0].mime = "image/png"; }],
+    ["has_photo as a string", (value) => { value.submission.photos[0].has_photo = "true"; }],
+    ["a malformed digest", (value) => { value.submission.photos[0].sha256 = "xyz"; }],
+    ["a gesture without Hungarian", (value) => { delete value.submission.photos[0].gesture.title.hu; }],
+    ["an http example", (value) => { value.submission.photos[0].gesture.male_image_url = "http://img.friending.co/a.jpg"; }],
+    ["an unknown preferred example", (value) => { value.submission.photos[0].gesture.preferred_example = "any"; }],
+    ["count 11", (value) => { value.submission.photo_gesture_count = 11; }],
+    ["eleven photos", (value) => {
+      value.submission.photos = Array.from({ length: 11 }, (_, index) => ({ ...value.submission.photos[0], kind: `photo_${index + 1}`, position: index + 1 }));
+    }],
+    ["a video with photos", (value) => { value.submission.verification_mode = "video"; value.submission.photo_gesture_count = null; }],
+    ["a video with a count", (value) => { value.submission.verification_mode = "video"; value.submission.photos = []; }],
+  ];
+  for (const [name, mutate] of cases) {
+    const value = detailData();
+    mutate(value);
+    assert.equal(profileVerificationDetail(value), null, name);
+  }
+
+  const purged = detailData();
+  purged.submission.photos = [];
+  purged.submission.lifecycle = "purged";
+  const parsedPurged = profileVerificationDetail(purged);
+  assert.ok(parsedPurged, "a purged set keeps its mode with no photos");
+  assert.equal(profileVerificationPhotoSetComplete(parsedPurged.submission), false);
+
+  const short = detailData();
+  short.submission.photos.pop();
+  assert.equal(profileVerificationPhotoSetComplete(profileVerificationDetail(short)!.submission), false, "two of three photos");
+  const gone = detailData();
+  gone.submission.photos[2].has_photo = false;
+  assert.equal(profileVerificationPhotoSetComplete(profileVerificationDetail(gone)!.submission), false, "a photo without a file");
+});
+
+test("Approve waits for every photo of THIS case to render; a failure or another case never unlocks it", async () => {
+  const {
+    allProfileVerificationPhotosLoaded,
+    profileVerificationDetail,
+    profileVerificationPhotoLoadKey,
+  } = await import("../lib/profileVerification.ts");
+  const parsed = profileVerificationDetail(detailData());
+  assert.ok(parsed?.case && parsed.submission);
+  const caseId = parsed.case.case_id;
+  const photos = parsed.submission.photos;
+  const all = Object.fromEntries(photos.map((photo) => [profileVerificationPhotoLoadKey(caseId, photo.kind), true]));
+  assert.equal(allProfileVerificationPhotosLoaded(caseId, photos, all), true);
+  assert.equal(allProfileVerificationPhotosLoaded(caseId, photos, {}), false);
+  assert.equal(allProfileVerificationPhotosLoaded(caseId, [], all), false, "an empty set is never reviewed");
+  assert.equal(allProfileVerificationPhotosLoaded(caseId, photos, { ...all, [`${caseId}:photo_2`]: false }), false, "a failed image closes the gate");
+  const other = "7".repeat(32);
+  const foreign = Object.fromEntries(photos.map((photo) => [profileVerificationPhotoLoadKey(other, photo.kind), true]));
+  assert.equal(allProfileVerificationPhotosLoaded(caseId, photos, foreign), false, "another case's images never count");
+  const missing = photos.map((photo, index) => (index === 0 ? { ...photo, has_photo: false } : photo));
+  assert.equal(allProfileVerificationPhotosLoaded(caseId, missing, all), false, "a photo without a file never counts");
+});
+
+test("a photo card shows the private photo through the bridge beside the example it copies", async () => {
+  const { default: PhotoVerificationEvidence } = await import("../components/PhotoVerificationEvidence.tsx");
+  const { profileVerificationDetail } = await import("../lib/profileVerification.ts");
+  const parsed = profileVerificationDetail(detailData());
+  assert.ok(parsed?.case && parsed.submission);
+  const render = (locale: "en" | "hu", photo = parsed.submission!.photos[0]) => renderToStaticMarkup(createElement(
+    NextIntlClientProvider,
+    { locale, messages: MESSAGES[locale], timeZone: "UTC" },
+    createElement(PhotoVerificationEvidence, { caseId: parsed.case!.case_id, photo, count: 3, onAvailability() {} }),
+  ));
+  const en = render("en");
+  assert.match(en, /Photo 1 of 3/);
+  assert.match(en, /Hand on chin/);
+  assert.match(en, new RegExp(`src="/api/admin/profile-verification-evidence\\?case_id=${parsed.case.case_id}&amp;kind=photo_1"[^>]*referrerPolicy="same-origin"`, "u"));
+  assert.match(en, /src="https:\/\/img\.friending\.co\/api\/cache\/admin\/uploads\/[^"]+bbbbbbb3\.jpg"/, "the preferred (female) example");
+  assert.doesNotMatch(en, /aaaaaaa3\.jpg/, "one example when the member's gender picks it");
+  assert.match(render("hu"), /1\/3\. fotó[\s\S]*Kéz az állon/);
+  const both = render("en", { ...parsed.submission.photos[0], gesture: { ...parsed.submission.photos[0].gesture, preferred_example: "both" } });
+  assert.match(both, /aaaaaaa3\.jpg[\s\S]*bbbbbbb3\.jpg/, "both examples for an unknown gender");
+  const gone = render("en", { ...parsed.submission.photos[0], has_photo: false });
+  assert.doesNotMatch(gone, /profile-verification-evidence/);
+  assert.match(gone, /This photo is missing from the server\./);
+});

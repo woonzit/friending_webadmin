@@ -9166,6 +9166,44 @@
         "transition": "Transition",
         "actor": "Actor",
         "reason": "Reason"
+      },
+      "mode": "Method",
+      "modes": {
+        "video": "Video selfie",
+        "photo": "Gesture photo selfie"
+      },
+      "photo": {
+        "wholeSet": "This is a gesture photo set. Compare every photo with the case-time avatar snapshot and check that each one copies its assigned gesture. The set is approved or rejected as a whole.",
+        "step": "Photo {index} of {count}",
+        "submitted": "Submitted photo",
+        "example": "Example to copy",
+        "exampleMale": "Male example",
+        "exampleFemale": "Female example",
+        "unavailable": "This photo could not be loaded.",
+        "missing": "This photo is missing from the server.",
+        "retry": "Load again",
+        "reviewBeforeApprove": "Approve unlocks once every photo of the set has loaded on this page.",
+        "openEvidenceFirst": "Open the evidence and look at every photo before approving.",
+        "loadedCount": "{loaded} of {count} photos loaded.",
+        "incomplete": "The photo set is incomplete ({present} of {count} photos on the server), so it cannot be approved. Reject it: the member can start again right away with new gestures.",
+        "incompleteShort": "The photo set is incomplete and cannot be approved.",
+        "evidenceIncomplete": "Core refused the approval: not every photo of the set is still intact on the server. The case has been reloaded; reject the set so the member can start again with new gestures.",
+        "wholeSetDecision": "A photo set cannot get a replacement request: approve or reject it as a whole.",
+        "decisionCopy": "Approve only when every photo shows the same person as the current accepted avatar and each one copies its assigned gesture.",
+        "confirm": {
+          "approveCopy": "The whole photo set is approved. The verified badge becomes public only for the exact current avatar hash.",
+          "rejectCopy": "The whole photo set is rejected. The member can start again right away with a new set of gestures."
+        },
+        "reasons": {
+          "face_mismatch": "Face does not match the avatar",
+          "face_not_visible": "Face is not clearly visible",
+          "multiple_people": "Multiple people are visible",
+          "challenge_not_followed": "A gesture was not copied",
+          "video_quality": "Photo quality is insufficient",
+          "avatar_not_comparable": "Avatar cannot be compared",
+          "suspected_replay": "Suspected reused photo or screen capture",
+          "other_policy_reason": "Other policy reason"
+        }
       }
     }
   },

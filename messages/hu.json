@@ -9166,6 +9166,44 @@
         "transition": "Átmenet",
         "actor": "Végrehajtó",
         "reason": "Ok"
+      },
+      "mode": "Módszer",
+      "modes": {
+        "video": "Videós szelfi",
+        "photo": "Gesztusos fotós szelfi"
+      },
+      "photo": {
+        "wholeSet": "Ez egy gesztusos fotósorozat. Minden fotót vess össze az ügy idején készült profilkép-pillanatképpel, és ellenőrizd, hogy mindegyiken a kiosztott gesztus látható. A sorozatot csak egyben lehet jóváhagyni vagy elutasítani.",
+        "step": "{index}/{count}. fotó",
+        "submitted": "Beküldött fotó",
+        "example": "Utánzandó minta",
+        "exampleMale": "Férfi minta",
+        "exampleFemale": "Női minta",
+        "unavailable": "Ezt a fotót nem sikerült betölteni.",
+        "missing": "Ez a fotó hiányzik a szerverről.",
+        "retry": "Újratöltés",
+        "reviewBeforeApprove": "A jóváhagyás akkor válik elérhetővé, ha a sorozat minden fotója betöltődött ezen az oldalon.",
+        "openEvidenceFirst": "Jóváhagyás előtt nyisd meg a bizonyítékokat, és nézd meg az összes fotót.",
+        "loadedCount": "{count} fotóból {loaded} betöltve.",
+        "incomplete": "A fotósorozat hiányos ({count} fotóból {present} van a szerveren), ezért nem hagyható jóvá. Utasítsd el: a tag azonnal újrakezdheti új gesztusokkal.",
+        "incompleteShort": "A fotósorozat hiányos, ezért nem hagyható jóvá.",
+        "evidenceIncomplete": "A Core elutasította a jóváhagyást: a sorozat nem minden fotója van már épen a szerveren. Az ügyet újratöltöttük; utasítsd el a sorozatot, hogy a tag új gesztusokkal újrakezdhesse.",
+        "wholeSetDecision": "Fotósorozathoz nem kérhető pótlás: egyben hagyd jóvá vagy utasítsd el.",
+        "decisionCopy": "Csak akkor hagyd jóvá, ha minden fotón ugyanaz a személy látható, mint a jelenlegi elfogadott profilképen, és mindegyiken a kiosztott gesztus szerepel.",
+        "confirm": {
+          "approveCopy": "A teljes fotósorozatot jóváhagyod. A hitelesített jelvény csak a pontosan jelenlegi profilkép-hash-hez válik nyilvánossá.",
+          "rejectCopy": "A teljes fotósorozatot elutasítod. A tag azonnal újrakezdheti egy új gesztussorozattal."
+        },
+        "reasons": {
+          "face_mismatch": "Az arc nem egyezik a profilképpel",
+          "face_not_visible": "Az arc nem látható egyértelműen",
+          "multiple_people": "Több ember látható",
+          "challenge_not_followed": "Nem utánozta a kért gesztust",
+          "video_quality": "A fotók minősége nem megfelelő",
+          "avatar_not_comparable": "A profilkép nem hasonlítható össze",
+          "suspected_replay": "Újrahasznosított fotó vagy képernyőkép gyanúja",
+          "other_policy_reason": "Egyéb szabályzati ok"
+        }
       }
     }
   },

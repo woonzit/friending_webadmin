@@ -105,6 +105,7 @@ function validDetail() {
     state: {
       uid: 42,
       status: "pending",
+      verification_mode: "video",
       revision: 2,
       active_submission_id: "b".repeat(32),
       active_case_id: caseId,
@@ -120,6 +121,7 @@ function validDetail() {
       case_id: caseId,
       uid: 42,
       submission_id: "b".repeat(32),
+      verification_mode: "video",
       trigger: "initial_submission",
       avatar_hash: "avatar_hash",
       has_avatar_snapshot: true,
@@ -154,6 +156,9 @@ function validDetail() {
       lifecycle: "active",
       has_video: true,
       created_at: 1786300000,
+      verification_mode: "video",
+      photo_gesture_count: null as number | null,
+      photos: [] as unknown[],
     },
     user: {
       uid: 42,

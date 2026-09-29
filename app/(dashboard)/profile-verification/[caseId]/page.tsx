@@ -6,14 +6,18 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PageHeader from "@/components/PageHeader";
+import PhotoVerificationEvidence from "@/components/PhotoVerificationEvidence";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import { isAdminWriteRole, normalizeAdminRole } from "@/lib/authPolicy";
 import { formatDate, formatNumber } from "@/lib/format";
 import {
   PROFILE_VERIFICATION_REJECTION_REASONS,
+  allProfileVerificationPhotosLoaded,
   profileVerificationDetail,
   profileVerificationEvidenceUrl,
+  profileVerificationPhotoLoadKey,
+  profileVerificationPhotoSetComplete,
   profileVerificationResponseData,
   type ProfileVerificationDetail,
 } from "@/lib/profileVerification";
@@ -50,6 +54,11 @@ export default function ProfileVerificationDetailPage() {
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
+  // D-135 whole-set review: which private photos of which case actually rendered (`<case>:<kind>`).
+  const [loadedPhotos, setLoadedPhotos] = useState<Record<string, boolean>>({});
+  const photoAvailability = useCallback((key: string, loaded: boolean) => {
+    setLoadedPhotos((current) => (current[key] === loaded ? current : { ...current, [key]: loaded }));
+  }, []);
   const [action, setAction] = useState<DecisionAction>("approve");
   const [reason, setReason] = useState(PROFILE_VERIFICATION_REJECTION_REASONS[0]);
   const [note, setNote] = useState("");
@@ -100,8 +109,10 @@ export default function ProfileVerificationDetailPage() {
     setAdminActor(null);
     setConfirmation(null);
     setEvidenceOpen(false);
+    setLoadedPhotos({});
     setBusy(false);
     setFeedback(null);
+    setAction("approve");
     void load();
     return () => { loadGeneration.current += 1; };
   }, [slug, uid]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -126,9 +137,39 @@ export default function ProfileVerificationDetailPage() {
     await load();
   }
 
+  /** A photo case (D-135) is approved or rejected as a whole set; the case projection carries the mode. */
+  function photoCase(current: ProfileVerificationDetail | null): boolean {
+    return (current?.case?.verification_mode ?? current?.submission?.verification_mode) === "photo";
+  }
+
+  /**
+   * Approve on a photo case needs the complete set AND every private photo of
+   * THIS case rendered on this page: the reviewer must have seen the whole
+   * set. Core re-checks the set on disk.
+   */
+  function photosReadyFor(current: ProfileVerificationDetail | null): boolean {
+    const currentCase = current?.case;
+    if (!current || !currentCase || !evidenceOpen || !profileVerificationPhotoSetComplete(current.submission)) return false;
+    return allProfileVerificationPhotosLoaded(currentCase.case_id, current.submission?.photos ?? [], loadedPhotos);
+  }
+
+  function decisionRefusal(error: string, current: ProfileVerificationDetail | null): string {
+    if (error === "profile-verification-evidence-not-found" && photoCase(current)) return t("photo.evidenceIncomplete");
+    if (error === "profile-verification-decision-invalid" && photoCase(current)) return t("photo.wholeSetDecision");
+    return t("operationFailed", { error });
+  }
+
   function prepareDecision(event: React.FormEvent) {
     event.preventDefault();
     if (!detail?.case || detail.case.status !== "pending") return;
+    if (photoCase(detail) && action === "request_new_video") {
+      setFeedback({ tone: "error", text: t("photo.wholeSetDecision") });
+      return;
+    }
+    if (action === "approve" && photoCase(detail) && !photosReadyFor(detail)) {
+      setFeedback({ tone: "error", text: t("photo.reviewBeforeApprove") });
+      return;
+    }
     if (action !== "approve" && !PROFILE_VERIFICATION_REJECTION_REASONS.includes(reason as never)) {
       setFeedback({ tone: "error", text: t("reasonRequired") });
       return;
@@ -152,6 +193,11 @@ export default function ProfileVerificationDetailPage() {
       await load();
       return;
     }
+    if (confirmation.action === "approve" && photoCase(detail) && !photosReadyFor(detail)) {
+      setConfirmation(null);
+      setFeedback({ tone: "error", text: t("photo.reviewBeforeApprove") });
+      return;
+    }
     setBusy(true);
     setFeedback(null);
     const response = await adminCall("profile_verification_decision", {
@@ -166,7 +212,7 @@ export default function ProfileVerificationDetailPage() {
     setBusy(false);
     setConfirmation(null);
     if (!response?.success) {
-      setFeedback({ tone: "error", text: t("operationFailed", { error: String(response?.error || "core-unavailable") }) });
+      setFeedback({ tone: "error", text: decisionRefusal(String(response?.error || "core-unavailable"), detail) });
       await load();
       return;
     }
@@ -190,6 +236,14 @@ export default function ProfileVerificationDetailPage() {
   const profileIncomplete = !detail.user.gender || !detail.user.birthday;
   const videoUrl = item ? profileVerificationEvidenceUrl(item.case_id, "video") : "";
   const snapshotUrl = item ? profileVerificationEvidenceUrl(item.case_id, "avatar_snapshot") : "";
+  const isPhoto = photoCase(detail);
+  const photos = isPhoto ? detail.submission?.photos ?? [] : [];
+  const photoCount = detail.submission?.photo_gesture_count ?? photos.length;
+  const photoSetComplete = profileVerificationPhotoSetComplete(detail.submission);
+  const photosReady = photosReadyFor(detail);
+  const photosLoaded = item ? photos.filter((photo) => loadedPhotos[profileVerificationPhotoLoadKey(item.case_id, photo.kind)] === true).length : 0;
+  const decisionActions = (["approve", "reject", "request_new_video"] as const).filter((value) => !isPhoto || value !== "request_new_video");
+  const reasonLabel = (value: string) => (isPhoto ? t(`photo.reasons.${value}`) : t(`reasons.${value}`));
 
   return (
     <>
@@ -233,6 +287,7 @@ export default function ProfileVerificationDetailPage() {
           <div className="panel-body">
             {!item ? <p className="page-subtitle">{t("noActiveCase")}</p> : <dl className="detail-list">
               <div className="detail-row"><dt>{t("caseId")}</dt><dd><code>{item.case_id}</code></dd></div>
+              <div className="detail-row"><dt>{t("mode")}</dt><dd><span className={`badge verification-mode-badge mode-${item.verification_mode}`}>{t(`modes.${item.verification_mode}`)}</span></dd></div>
               <div className="detail-row"><dt>{common("status")}</dt><dd>{humanize(item.status)}</dd></div>
               <div className="detail-row"><dt>{t("trigger")}</dt><dd>{humanize(item.trigger)}</dd></div>
               <div className="detail-row"><dt>{t("revision")}</dt><dd>{item.revision}</dd></div>
@@ -259,8 +314,10 @@ export default function ProfileVerificationDetailPage() {
       <section className="panel verification-evidence-panel">
         <div className="panel-header"><div><h2>{t("evidence.title")}</h2><p>{t("evidence.copy")}</p></div>{canWrite && item && !evidenceOpen && <button className="button button-danger" onClick={() => setEvidenceOpen(true)}>{t("evidence.open")}</button>}</div>
         <div className="panel-body">
-          {!item ? <p className="page-subtitle">{t("evidence.noCase")}</p> : !canWrite ? <p className="page-subtitle">{t("evidence.writerRequired")}</p> : !evidenceOpen ? <p className="page-subtitle">{t("evidence.closedHint")}</p> : <div className="verification-evidence-grid">
-            <article>
+          {isPhoto && item && <div className="alert alert-info">{t("photo.wholeSet")}</div>}
+          {isPhoto && item?.status === "pending" && !photoSetComplete && <div className="alert alert-error" role="alert" data-photo-set-incomplete="true">{t("photo.incomplete", { present: photos.filter((photo) => photo.has_photo).length, count: photoCount })}</div>}
+          {!item ? <p className="page-subtitle">{t("evidence.noCase")}</p> : !canWrite ? <p className="page-subtitle">{t("evidence.writerRequired")}</p> : !evidenceOpen ? <p className="page-subtitle">{t("evidence.closedHint")}</p> : <div className={isPhoto ? "verification-photo-review" : "verification-evidence-grid"}>
+            {!isPhoto && <article>
               <h3>{t("evidence.video")}</h3>
               {detail.submission?.has_video && videoUrl ? <video controls controlsList="nodownload" playsInline preload="metadata" src={videoUrl} /> : <p className="page-subtitle">{t("evidence.missing")}</p>}
               {detail.submission && <dl className="detail-list compact">
@@ -269,8 +326,9 @@ export default function ProfileVerificationDetailPage() {
                 <div className="detail-row"><dt>{t("size")}</dt><dd>{formatNumber(detail.submission.bytes, locale)} B</dd></div>
                 <div className="detail-row"><dt>{t("codec")}</dt><dd>{detail.submission.codec} · {detail.submission.audio ? t("withAudio") : t("silent")}</dd></div>
               </dl>}
-            </article>
-            <article>
+            </article>}
+            {/* The case-time avatar snapshot, beside the video or first in the whole photo set. */}
+            <article className={isPhoto ? "verification-photo-snapshot" : undefined}>
               <h3>{t("evidence.avatarSnapshot")}</h3>
               {item.has_avatar_snapshot && snapshotUrl
                 // eslint-disable-next-line @next/next/no-img-element
@@ -282,19 +340,21 @@ export default function ProfileVerificationDetailPage() {
                 <div className="detail-row"><dt>{t("birthday")}</dt><dd>{item.identity_snapshot.birthday ? formatDate(item.identity_snapshot.birthday, locale) : "—"}</dd></div>
               </dl>
             </article>
+            {isPhoto && photos.map((photo) => <PhotoVerificationEvidence key={`${item.case_id}-${photo.kind}`} caseId={item.case_id} photo={photo} count={photoCount} onAvailability={photoAvailability} />)}
           </div>}
-          {detail.submission && <div className="verification-challenge-sequence"><h3>{t("challengeTitle")}</h3><p>{t("challengeCopy")}</p><ol>{detail.submission.actions.map((prompt) => <li key={prompt}>{t.has(`prompts.${prompt}`) ? t(`prompts.${prompt}`) : humanize(prompt)}</li>)}</ol></div>}
+          {detail.submission && !isPhoto && <div className="verification-challenge-sequence"><h3>{t("challengeTitle")}</h3><p>{t("challengeCopy")}</p><ol>{detail.submission.actions.map((prompt) => <li key={prompt}>{t.has(`prompts.${prompt}`) ? t(`prompts.${prompt}`) : humanize(prompt)}</li>)}</ol></div>}
         </div>
       </section>
 
       {item && <section className="panel verification-decision-panel">
-        <div className="panel-header"><div><h2>{t("decisions.title")}</h2><p>{t("decisions.copy")}</p></div></div>
+        <div className="panel-header"><div><h2>{t("decisions.title")}</h2><p>{isPhoto ? t("photo.decisionCopy") : t("decisions.copy")}</p></div></div>
         <div className="panel-body">
           {!mayDecide ? <p className="page-subtitle">{item.status !== "pending" ? t("decisions.closed") : t("decisions.unavailable")}</p> : <form className="form-stack" onSubmit={prepareDecision}>
-            <label className="field"><span>{t("decisions.action")}</span><select value={action} disabled={busy} onChange={(event) => setAction(event.target.value as DecisionAction)}>{(["approve", "reject", "request_new_video"] as const).map((value) => <option value={value} key={value}>{t(`decisions.actions.${value}`)}</option>)}</select></label>
-            {action !== "approve" && <label className="field"><span>{t("decisions.reason")}</span><select value={reason} disabled={busy} onChange={(event) => setReason(event.target.value as typeof reason)}>{PROFILE_VERIFICATION_REJECTION_REASONS.map((value) => <option value={value} key={value}>{t(`reasons.${value}`)}</option>)}</select></label>}
+            <label className="field"><span>{t("decisions.action")}</span><select value={action} disabled={busy} onChange={(event) => setAction(event.target.value as DecisionAction)}>{decisionActions.map((value) => <option value={value} key={value}>{t(`decisions.actions.${value}`)}</option>)}</select></label>
+            {action !== "approve" && <label className="field"><span>{t("decisions.reason")}</span><select value={reason} disabled={busy} onChange={(event) => setReason(event.target.value as typeof reason)}>{PROFILE_VERIFICATION_REJECTION_REASONS.map((value) => <option value={value} key={value}>{reasonLabel(value)}</option>)}</select></label>}
             <label className="field"><span>{t("decisions.note")}</span><textarea rows={4} maxLength={1000} value={note} disabled={busy} onChange={(event) => setNote(event.target.value)} /><small>{t("decisions.noteHint")}</small></label>
-            <button className={`button ${action === "approve" ? "button-primary" : "button-danger"}`} type="submit" disabled={busy || (action === "approve" && profileIncomplete)}>{t(`decisions.actions.${action}`)}</button>
+            {isPhoto && action === "approve" && !photosReady && <p className="field-hint" role="status" data-photo-approve-gate="true">{!photoSetComplete ? t("photo.incompleteShort") : !evidenceOpen ? t("photo.openEvidenceFirst") : `${t("photo.reviewBeforeApprove")} ${t("photo.loadedCount", { loaded: photosLoaded, count: photos.length })}`}</p>}
+            <button className={`button ${action === "approve" ? "button-primary" : "button-danger"}`} type="submit" disabled={busy || (action === "approve" && (profileIncomplete || (isPhoto && !photosReady)))}>{t(`decisions.actions.${action}`)}</button>
           </form>}
         </div>
       </section>}
@@ -304,7 +364,7 @@ export default function ProfileVerificationDetailPage() {
         {detail.history.length === 0 ? <div className="empty-state"><p>{t("history.empty")}</p></div> : <div className="table-wrap"><table className="data-table"><thead><tr><th>{t("history.event")}</th><th>{t("history.transition")}</th><th>{t("history.actor")}</th><th>{t("history.reason")}</th><th>{common("createdAt")}</th></tr></thead><tbody>{detail.history.map((event) => <tr key={event.event_id}><td><div className="cell-stack"><strong>{humanize(event.event_type)}</strong><small>{event.case_id || "—"}</small></div></td><td>{event.previous_status || "—"} → {event.new_status || "—"}</td><td>{event.actor_kind}{event.actor_id ? ` · ${event.actor_id}` : ""}</td><td>{event.reason ? humanize(event.reason) : "—"}</td><td>{event.created_at ? formatDate(event.created_at, locale, true) : "—"}</td></tr>)}</tbody></table></div>}
       </section>
 
-      {confirmation && <ConfirmDialog title={t(`decisions.confirm.${confirmation.action}Title`)} copy={t(`decisions.confirm.${confirmation.action}Copy`)} confirmLabel={t(`decisions.actions.${confirmation.action}`)} busy={busy} onCancel={() => setConfirmation(null)} onConfirm={() => void executeDecision()} />}
+      {confirmation && <ConfirmDialog title={t(`decisions.confirm.${confirmation.action}Title`)} copy={isPhoto && confirmation.action !== "request_new_video" ? t(`photo.confirm.${confirmation.action}Copy`) : t(`decisions.confirm.${confirmation.action}Copy`)} confirmLabel={t(`decisions.actions.${confirmation.action}`)} busy={busy} onCancel={() => setConfirmation(null)} onConfirm={() => void executeDecision()} />}
     </>
   );
 }

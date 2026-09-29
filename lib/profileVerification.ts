@@ -95,6 +95,58 @@ export type ProfileVerificationPhotoGesture = {
   female_image_url: string;
 };
 
+/**
+ * Which capture produced a state, case, submission or queue row (Core
+ * `PhotoVerificationPolicy::MODES`); a row written before D-135 is `video`.
+ */
+export const PROFILE_VERIFICATION_MODES = ["video", "photo"] as const;
+export type ProfileVerificationMode = (typeof PROFILE_VERIFICATION_MODES)[number];
+
+/** The closed evidence vocabulary of `profile_verification_evidence` (manifest `evidence_kinds`). */
+export const PROFILE_VERIFICATION_PHOTO_KINDS = [
+  "photo_1", "photo_2", "photo_3", "photo_4", "photo_5",
+  "photo_6", "photo_7", "photo_8", "photo_9", "photo_10",
+] as const;
+export type ProfileVerificationPhotoKind = (typeof PROFILE_VERIFICATION_PHOTO_KINDS)[number];
+export const PROFILE_VERIFICATION_EVIDENCE_KINDS = ["video", "avatar_snapshot", ...PROFILE_VERIFICATION_PHOTO_KINDS] as const;
+export type ProfileVerificationEvidenceKind = (typeof PROFILE_VERIFICATION_EVIDENCE_KINDS)[number];
+
+export function isProfileVerificationEvidenceKind(value: unknown): value is ProfileVerificationEvidenceKind {
+  return typeof value === "string" && (PROFILE_VERIFICATION_EVIDENCE_KINDS as readonly string[]).includes(value);
+}
+
+/** The one media type Core serves for a kind: the video is MP4, every image (snapshot, photo) JPEG. */
+export function profileVerificationEvidenceContentType(kind: ProfileVerificationEvidenceKind): "video/mp4" | "image/jpeg" {
+  return kind === "video" ? "video/mp4" : "image/jpeg";
+}
+
+export const PROFILE_VERIFICATION_PREFERRED_EXAMPLES = ["male", "female", "both"] as const;
+export type ProfileVerificationPreferredExample = (typeof PROFILE_VERIFICATION_PREFERRED_EXAMPLES)[number];
+
+/**
+ * One reviewed photo of a set: its evidence kind (never a storage path), its
+ * position, the gesture frozen at challenge time in both languages with both
+ * example images, and the stored image facts.
+ */
+export type ProfileVerificationPhoto = {
+  kind: ProfileVerificationPhotoKind;
+  position: number;
+  gesture: {
+    id: string;
+    title: ProfileVerificationLocalizedText;
+    subtitle: ProfileVerificationLocalizedText;
+    male_image_url: string;
+    female_image_url: string;
+    preferred_example: ProfileVerificationPreferredExample;
+  };
+  width: number;
+  height: number;
+  bytes: number;
+  sha256: string;
+  mime: "image/jpeg";
+  has_photo: boolean;
+};
+
 export type ProfileVerificationBadgeStatus = (typeof PROFILE_VERIFICATION_BADGE_STATUSES)[number];
 export type ProfileVerificationStatus = (typeof PROFILE_VERIFICATION_STATUSES)[number];
 export type ProfileVerificationDetailStatus = (typeof PROFILE_VERIFICATION_DETAIL_STATUSES)[number];
@@ -188,6 +240,8 @@ export type ProfileVerificationCase = {
   case_id: string;
   uid: number;
   submission_id: string;
+  /** The capture this case reviews; a photo case is approved or rejected as a whole set. */
+  verification_mode: ProfileVerificationMode;
   trigger: string;
   avatar_hash: string;
   has_avatar_snapshot: boolean;
@@ -209,6 +263,7 @@ export type ProfileVerificationDetail = {
   state: {
     uid: number;
     status: ProfileVerificationStatus;
+    verification_mode: ProfileVerificationMode;
     revision: number;
     active_submission_id: string;
     active_case_id: string;
@@ -239,6 +294,11 @@ export type ProfileVerificationDetail = {
     lifecycle: string;
     has_video: boolean;
     created_at: number | null;
+    verification_mode: ProfileVerificationMode;
+    /** The set size the challenge assigned (photo only; `null` for a video). */
+    photo_gesture_count: number | null;
+    /** The photo set in order (`[]` for a video, and for a purged photo set). */
+    photos: ProfileVerificationPhoto[];
   };
   user: {
     uid: number;
@@ -732,6 +792,111 @@ export function profileVerificationQueue(value: unknown): ProfileVerificationQue
   };
 }
 
+function verificationMode(value: unknown): ProfileVerificationMode | null {
+  return typeof value === "string" && (PROFILE_VERIFICATION_MODES as readonly string[]).includes(value)
+    ? value as ProfileVerificationMode
+    : null;
+}
+
+function photo(value: unknown, index: number): ProfileVerificationPhoto | null {
+  const row = record(value);
+  const gesture = record(row?.gesture);
+  if (!row || !gesture) return null;
+  const kind = PROFILE_VERIFICATION_PHOTO_KINDS[index];
+  const title = localized(gesture.title, PHOTO_GESTURE_TITLE_MAX);
+  const subtitle = localized(gesture.subtitle, PHOTO_GESTURE_SUBTITLE_MAX);
+  const maleUrl = httpsUrl(gesture.male_image_url);
+  const femaleUrl = httpsUrl(gesture.female_image_url);
+  const preferred = PROFILE_VERIFICATION_PREFERRED_EXAMPLES.find((entry) => entry === gesture.preferred_example);
+  const [width, height, bytes] = [row.width, row.height, row.bytes].map((entry) => integer(entry));
+  const sha256 = typeof row.sha256 === "string" && /^(?:[a-f0-9]{64})?$/.test(row.sha256) ? row.sha256 : null;
+  if (!kind || row.kind !== kind || row.position !== index + 1
+    || typeof gesture.id !== "string" || !IDENTIFIER.test(gesture.id)
+    || !title || !subtitle || !maleUrl || !femaleUrl || !preferred
+    || width === null || height === null || bytes === null || sha256 === null
+    || row.mime !== "image/jpeg" || typeof row.has_photo !== "boolean") return null;
+  return {
+    kind,
+    position: index + 1,
+    gesture: {
+      id: gesture.id,
+      title,
+      subtitle,
+      male_image_url: maleUrl,
+      female_image_url: femaleUrl,
+      preferred_example: preferred,
+    },
+    width,
+    height,
+    bytes,
+    sha256,
+    mime: "image/jpeg",
+    has_photo: row.has_photo,
+  };
+}
+
+/**
+ * The capture half of a submission. A video carries no photo count and no
+ * photos; a photo set carries its assigned count (Core floors it at 0) and at
+ * most ten photos in `photo_1 … photo_N` order. A purged set keeps its mode
+ * with an empty list, so the list may be shorter than the count — the review
+ * then reports an incomplete set instead of failing to load.
+ */
+function submissionCapture(row: Record<string, unknown>): Pick<
+  NonNullable<ProfileVerificationDetail["submission"]>, "verification_mode" | "photo_gesture_count" | "photos"
+> | null {
+  const mode = verificationMode(row.verification_mode);
+  const rawPhotos = list(row.photos);
+  if (!mode || !rawPhotos || rawPhotos.length > PROFILE_VERIFICATION_PHOTO_KINDS.length) return null;
+  if (mode === "video") {
+    return row.photo_gesture_count === null && rawPhotos.length === 0
+      ? { verification_mode: "video", photo_gesture_count: null, photos: [] }
+      : null;
+  }
+  const count = integer(row.photo_gesture_count);
+  if (count === null || count > PHOTO_GESTURE_COUNT_MAX) return null;
+  const photos: ProfileVerificationPhoto[] = [];
+  for (const [index, raw] of rawPhotos.entries()) {
+    const parsed = photo(raw, index);
+    if (!parsed) return null;
+    photos.push(parsed);
+  }
+  return { verification_mode: "photo", photo_gesture_count: count, photos };
+}
+
+/**
+ * Core approves a photo set only whole: the assigned count, every photo in
+ * order and present (it re-checks each digest on disk). The console blocks
+ * Approve on anything less and says the set is incomplete.
+ */
+export function profileVerificationPhotoSetComplete(submission: ProfileVerificationDetail["submission"]): boolean {
+  return submission !== null
+    && submission.verification_mode === "photo"
+    && submission.photo_gesture_count !== null
+    && submission.photo_gesture_count >= PHOTO_GESTURE_COUNT_MIN
+    && submission.photos.length === submission.photo_gesture_count
+    && submission.photos.every((entry) => entry.has_photo);
+}
+
+/** The key the review page records a rendered photo under: bound to the case, never reusable across cases. */
+export function profileVerificationPhotoLoadKey(caseId: string, kind: ProfileVerificationPhotoKind): string {
+  return `${caseId}:${kind}`;
+}
+
+/**
+ * Approve waits until every private photo of THIS case has actually rendered
+ * (the reviewer has seen the whole set). A failed image closes the gate again,
+ * and a photo loaded for another case never counts.
+ */
+export function allProfileVerificationPhotosLoaded(
+  caseId: string,
+  photos: readonly ProfileVerificationPhoto[],
+  loaded: Readonly<Record<string, boolean>>,
+): boolean {
+  return photos.length > 0
+    && photos.every((entry) => entry.has_photo && loaded[profileVerificationPhotoLoadKey(caseId, entry.kind)] === true);
+}
+
 function verificationCase(value: unknown): ProfileVerificationCase | null | undefined {
   if (value === null) return null;
   const row = record(value);
@@ -741,6 +906,7 @@ function verificationCase(value: unknown): ProfileVerificationCase | null | unde
   const uid = integer(row.uid, 1);
   const revision = integer(row.revision, 1);
   const birthday = epoch(identity.birthday);
+  const mode = verificationMode(row.verification_mode);
   const fields = ["submission_id", "trigger", "avatar_hash", "status"] as const;
   const texts = fields.map((key) => boundedText(row[key] ?? "", key === "avatar_hash" ? 200 : 80, key === "avatar_hash"));
   const identityName = boundedText(identity.display_name ?? "", 180, true);
@@ -752,11 +918,12 @@ function verificationCase(value: unknown): ProfileVerificationCase | null | unde
   if (!caseId || !IDENTIFIER.test(caseId) || uid === null || revision === null || birthday === undefined
     || texts.some((entry) => entry === null) || identityName === null || identityGender === null
     || nullableValues.some((entry) => entry === undefined) || dates.some((entry) => entry === undefined)
-    || typeof row.has_avatar_snapshot !== "boolean") return undefined;
+    || typeof row.has_avatar_snapshot !== "boolean" || !mode) return undefined;
   return {
     case_id: caseId,
     uid,
     submission_id: texts[0] as string,
+    verification_mode: mode,
     trigger: texts[1] as string,
     avatar_hash: texts[2] as string,
     has_avatar_snapshot: row.has_avatar_snapshot,
@@ -791,9 +958,10 @@ export function profileVerificationDetail(value: unknown): ProfileVerificationDe
     state.approved_avatar_hash, state.updated_trigger,
   ].map((entry) => boundedText(entry ?? "", 200, true));
   const lastReason = nullableText(state.last_rejection_reason, 80);
+  const stateMode = verificationMode(state.verification_mode);
   if (stateUid === null || stateRevision === null || !stateStatus || !STATUS_SET.has(stateStatus)
     || stateDates.some((entry) => entry === undefined) || stateTexts.some((entry) => entry === null)
-    || lastReason === undefined) return null;
+    || lastReason === undefined || !stateMode) return null;
 
   const userUid = integer(user.uid, 1);
   const userBirthday = epoch(user.birthday);
@@ -822,8 +990,9 @@ export function profileVerificationDetail(value: unknown): ProfileVerificationDe
     const duration = finite(row.duration_seconds);
     const createdAt = epoch(row.created_at);
     const parsedActions = actions.map((entry) => boundedText(entry, 48)).filter((entry): entry is string => entry !== null);
+    const capture = submissionCapture(row);
     if (values.some((entry) => entry === null) || numeric.some((entry) => entry === null)
-      || duration === null || createdAt === undefined || parsedActions.length !== actions.length) return null;
+      || duration === null || createdAt === undefined || parsedActions.length !== actions.length || !capture) return null;
     submission = {
       submission_id: values[0] as string,
       challenge_id: values[1] as string,
@@ -842,6 +1011,7 @@ export function profileVerificationDetail(value: unknown): ProfileVerificationDe
       lifecycle: values[5] as string,
       has_video: row.has_video,
       created_at: createdAt,
+      ...capture,
     };
   }
 
@@ -875,6 +1045,7 @@ export function profileVerificationDetail(value: unknown): ProfileVerificationDe
     state: {
       uid: stateUid,
       status: stateStatus as ProfileVerificationStatus,
+      verification_mode: stateMode,
       revision: stateRevision,
       active_submission_id: stateTexts[0] as string,
       active_case_id: stateTexts[1] as string,
@@ -900,8 +1071,8 @@ export function profileVerificationDetail(value: unknown): ProfileVerificationDe
   };
 }
 
-export function profileVerificationEvidenceUrl(caseId: string, kind: "video" | "avatar_snapshot"): string {
-  if (!IDENTIFIER.test(caseId)) return "";
+export function profileVerificationEvidenceUrl(caseId: string, kind: ProfileVerificationEvidenceKind): string {
+  if (!IDENTIFIER.test(caseId) || !isProfileVerificationEvidenceKind(kind)) return "";
   return `/api/admin/profile-verification-evidence?case_id=${encodeURIComponent(caseId)}&kind=${kind}`;
 }
 
