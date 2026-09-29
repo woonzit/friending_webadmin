@@ -38,10 +38,10 @@ import {
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/appearance_rules_wire/", import.meta.url);
 const FIXTURE_ACCEPTED_CORE_TIP = "94b891bbf8e138906f1664293b9ddba813a6f479";
-const FIXTURE_SOURCE_COMMIT = "24aae647f976e0f014088d62a088e95c331e126b";
-const FIXTURE_GENERATOR_SHA256 = "884833008bb586b1711a28d7c980a851e5f8a024960456fc127e680dd254763e";
+const FIXTURE_SOURCE_COMMIT = "0ecd34e2fc2cd7d8f28398b9ca1f93ecb53a6aa4";
+const FIXTURE_GENERATOR_SHA256 = "4b65adb0dcd60dd1dd69d9d1b789d5d92ef8142f92a9fc3ceb9d83bfae811834";
 const FIXTURE_SET_SHA256 = "bb11653a043ad328d7794f52e8f8d90a450aa799aff3ddec04474118344288e7";
-const FIXTURE_MANIFEST_SHA256 = "3fa0313ae27b18b63edf82a732946e31c082ed59e404caba5a1bd9e3f274ea91";
+const FIXTURE_MANIFEST_SHA256 = "174b4157b7ec47c0bcfc70b1b857f14f1e3c99137f456ce6c3dfee6466b0a241";
 const FIXTURE_BODY_FILES = [
   "app-appearance-default-en.json",
   "app-appearance-geo-hu.json",
@@ -84,6 +84,7 @@ const FIXTURE_BODY_FILES = [
 ] as const;
 const FIXTURE_SOURCE_PATHS = [
   "config/routes.php",
+  "src/Core/Config.php",
   "src/Core/Mongo.php",
   "src/Core/Request.php",
   "src/Core/Response.php",
@@ -100,6 +101,7 @@ const FIXTURE_SOURCE_PATHS = [
   "src/Services/AppearanceRulesAdminService.php",
   "src/Services/AppearanceTransaction.php",
   "src/Services/PeopleService.php",
+  "src/Support/AppSettings.php",
   "src/Support/AppearancePolicy.php",
   "src/Support/GoogleGeo.php",
   "src/Support/StrictJson.php",

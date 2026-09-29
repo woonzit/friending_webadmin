@@ -56,19 +56,20 @@ const RENDER_MESSAGES = {
 
 // Copied byte-identically from the lead-accepted Core tip. Body identity is
 // pinned separately so provenance-only manifest moves cannot be mistaken for
-// changes to the 50 released wire blobs. The last move (T-863 S6, P-039) was
+// changes to the 50 released wire blobs. The route move (T-863 S6, P-039) was
 // re-copied from Core `main` 886c7110: Core 16b42f8b retired the unmetered
 // POST /v1/iosuser/like Hey vote (410 tombstone), so member-hey-disabled.json
 // is now bound to POST /v1/ping/send, which emits the same hey-disabled 403.
 // All 50 bodies, `fixture_set_sha256` and `contract_manifest_sha256` are
 // unchanged; the route, `source_commit`, the generator digest and the
 // recorded source paths (WebadminRolePolicy.php joined earlier) moved.
+// T-866 refreshes only the source-commit and manifest pins to current Core.
 const FIXTURE_ACCEPTED_CORE_TIP = "886c7110e43a2505a9f5e5ce32f860c904a57659";
-const FIXTURE_SOURCE_COMMIT = "16b42f8b893b218e2c07805c9543908e9ba98145";
+const FIXTURE_SOURCE_COMMIT = "0ecd34e2fc2cd7d8f28398b9ca1f93ecb53a6aa4";
 const FIXTURE_CONTRACT_MANIFEST_SHA256 = "c854019e6be2046ad81af294719774beca04346d5f078b746daba313a787f083";
 const FIXTURE_GENERATOR_SHA256 = "cf089b491770757072fd5bdcc2edadfd51582aa0c5befe17c5e6f5d9beb86895";
 const FIXTURE_SET_SHA256 = "f8af93a1dee24a7c83cfd8deb03757bead16d0c2fd13494a73dbfc778db1fd8b";
-const FIXTURE_MANIFEST_SHA256 = "71ba1580165d5922b958bcf4dcd49433035b8f63d58d0b054fc6abd0977a2059";
+const FIXTURE_MANIFEST_SHA256 = "ebf7bef3399d7151bad93a3f7a9c0fb79d62030b0ee48e15aee408642dd6454e";
 const FIXTURE_BODY_COUNT = 50;
 
 const FIXTURE_BODY_FILES = [

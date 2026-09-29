@@ -30,14 +30,11 @@ import {
  * back — the four cases a decoder can get wrong without noticing.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/mode_cards_wire/", import.meta.url);
-// T-771: re-pinned from the T-706 LANE commit `48f458c4`, which was rebased away
-// before publication and is not an ancestor of `api` main, to the published T-706
-// release `48d52009` — the commit that introduced this corpus. Regenerating with the
-// pinned generator at `48d52009` reproduces all 33 bodies and the whole manifest byte
-// for byte apart from this line, so no body and no set hash moved.
-const FIXTURE_SOURCE_COMMIT = "48d520097cea21b6284e88ed66a1a20878b51bf4";
+// T-866: the current Core source provenance is pinned separately from the
+// unchanged 33 fixture bodies and their fixture-set hash.
+const FIXTURE_SOURCE_COMMIT = "f2a48f11d45f6fde06ac24ac2f858d97c426e613";
 const FIXTURE_MANIFEST_SHA256 =
-  "de144557d8980f5d25fae02b1f1ef4083e518cf8f26dcf112d1271c05f59fef7";
+  "d2bd1ab2d5af81b25e1761e07eac3fec518b59fdaf0ac8491649f9614fb9d0d5";
 const FIXTURE_SET_SHA256 =
   "bffbde1515cf3be08232fc6d21739571961da3eca74aeb178d48adf5c58b42bb";
 const FIXTURE_CONTRACT_MANIFEST_SHA256 =

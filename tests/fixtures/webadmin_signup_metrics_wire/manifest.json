@@ -1,6 +1,6 @@
 {
     "schema_version": 1,
-    "source_commit": "948d67ecde1108662616b5aa3d4d3d4fc297d1c6",
+    "source_commit": "0ecd34e2fc2cd7d8f28398b9ca1f93ecb53a6aa4",
     "fixture_set_sha256": "5bfd444e2510fac6bd0bcb8ca2911d1e2abb4654714d2c6696ffef32773380c5",
     "provenance": {
         "generator": "tests/webadmin_signup_metrics_storage_test.php",
@@ -25,7 +25,7 @@
             },
             {
                 "path": "src/Http/Controllers/WebadminController.php",
-                "sha256": "559555d7f6d15a13ed5b5ca149a2b17b2d5550497261ce56b8d014e5ce029d5e"
+                "sha256": "7f69417da02ff4aa19d163dd50419b5b0aff828cf903822cdbddfdd521c50e0f"
             },
             {
                 "path": "src/Services/PersonaVisibilityService.php",

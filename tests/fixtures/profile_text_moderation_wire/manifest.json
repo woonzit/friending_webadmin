@@ -1,12 +1,12 @@
 {
     "schema_version": 1,
     "contract_version": 1,
-    "source_commit": "6a8d226aad51bbacebd478d122b6907447e74f5b",
+    "source_commit": "0ecd34e2fc2cd7d8f28398b9ca1f93ecb53a6aa4",
     "provider_manifest_sha256": "5f84f81c5c85d0f48aca52620843c7151547dd8653d01fdd7e0ea502488cf85c",
     "fixture_set_sha256": "34d2584376c163df123edc0f5c460fc28cc6c962c78fccafde4766c7045024cf",
     "provenance": {
         "generator": "tests/profile_text_moderation_fixture_dump.php",
-        "generator_sha256": "37a56c4dcb64bf7998d84c4e4bf0c7ab9d3070289def99f58b1f4b9ffcdde8c8",
+        "generator_sha256": "478c0ce9a19cb8a16d5da4a04623a6c517c2a5f6eb6da915bce1efe61edc258c",
         "wire_adapters": {
             "admin_me": "Friending\\Support\\Webadmin::reply",
             "versioned_actions": "Friending\\Support\\Webadmin::noStoreReply"
@@ -17,10 +17,20 @@
         },
         "evaluated_at": 1800000000,
         "source_paths": [
-            "composer.json",
-            "config/",
-            "public/",
-            "src/"
+            "config/routes.php",
+            "src/Core/Response.php",
+            "src/Http/Controllers/WebadminController.php",
+            "src/Http/Controllers/WebadminProfileTextModerationController.php",
+            "src/Services/ProfileTextModerationAdminException.php",
+            "src/Services/ProfileTextModerationAdminService.php",
+            "src/Services/ProfileTextModerationReadinessService.php",
+            "src/Support/ProfileContentTextPolicy.php",
+            "src/Support/ProfileTextModerationAdminPolicy.php",
+            "src/Support/ProfileTextModerationReadinessPolicy.php",
+            "src/Support/ProfileTextModerationReceiptProtector.php",
+            "src/Support/ProfileTextModerationSourceCensus.php",
+            "src/Support/Webadmin.php",
+            "src/Support/WebadminRolePolicy.php"
         ]
     },
     "fixtures": [

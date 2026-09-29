@@ -61,13 +61,11 @@ const FIXTURE_DIRECTORY = new URL("./fixtures/admin_granted_verification_wire/",
 // Body identity is the 44 published wire blobs plus their aggregate set hash.
 // Manifest provenance is pinned separately because an overlapping Core source
 // path can legitimately advance source_commit without changing a wire byte.
-// T-617 re-pin: the corpus BODIES are byte-identical to the pre-T-617 set; only
-// the provenance moved, because Core regenerated it at `835801a` inside the
-// `b988f05` release (the grant resource's `enabled_methods` now means "methods
-// serviceable for a NEW grant", which does not change any published body).
-const FIXTURE_SOURCE_COMMIT = "835801a49c16bd8e93fa25df2edae66a9b634077";
-const FIXTURE_GENERATOR_COMMIT = "408c99f5e5bb6560ef2b0d9ad2450c8147e636a1";
-const FIXTURE_GENERATOR_SHA256 = "3430c91c98649c0474f0d3580fdaf27cfa0e93a273219697e492e060b495e3e6";
+// T-866 re-pin: Core's current manifest adds its attestation and policy source
+// dependencies. All 44 fixture bodies and the fixture-set hash remain unchanged.
+const FIXTURE_SOURCE_COMMIT = "8518f7f96e915b435c3e6f6f563a6c6a5a7781a4";
+const FIXTURE_GENERATOR_COMMIT = "2c8b4707f841136796e02c54a386fcab638c8dff";
+const FIXTURE_GENERATOR_SHA256 = "c595592c098929d5fcecb96691dee7829bd628d2d3e8ec3199d299ea7e84ce8b";
 const FIXTURE_SET_SHA256 = "5dfd7f261c383c7dc7533824152779a38fd2902405d4c2085c10110aad8d9706";
 const FIXTURE_BODY_COUNT = 44;
 
@@ -141,6 +139,7 @@ const IOS_FORBIDDEN_KEYS = [
 
 const FIXTURE_SOURCE_PATHS = [
   "config/routes.php",
+  "src/Core/Request.php",
   "src/Core/Response.php",
   "src/Http/Controllers/VerificationAdminController.php",
   "src/Http/Controllers/WebadminController.php",
@@ -148,6 +147,7 @@ const FIXTURE_SOURCE_PATHS = [
   "src/Services/AdminGrantedVerificationTransaction.php",
   "src/Services/MongoVerificationPolicyDataSource.php",
   "src/Services/PersonaAdminService.php",
+  "src/Services/StorefrontAttestationService.php",
   "src/Services/VerificationAdminActorService.php",
   "src/Services/VerificationAdminException.php",
   "src/Services/VerificationAdminMemberService.php",
@@ -156,6 +156,7 @@ const FIXTURE_SOURCE_PATHS = [
   "src/Services/VerificationAdminReadService.php",
   "src/Services/VerificationAdminSchemaService.php",
   "src/Services/VerificationGrantService.php",
+  "src/Services/VerificationPolicyDataSource.php",
   "src/Services/VerificationPolicySchemaService.php",
   "src/Services/VerificationPolicyService.php",
   "src/Services/VerificationRequestContext.php",
@@ -163,11 +164,14 @@ const FIXTURE_SOURCE_PATHS = [
   "src/Services/WebadminMutationService.php",
   "src/Support/AdminGrantedVerificationPolicy.php",
   "src/Support/PersonaPolicy.php",
+  "src/Support/ProfileVerificationPolicy.php",
   "src/Support/VerificationAdminPolicy.php",
   "src/Support/VerificationMemberEvaluator.php",
+  "src/Support/VerificationMethodMigrationPolicy.php",
   "src/Support/VerificationPolicy.php",
   "src/Support/Webadmin.php",
   "src/Support/WebadminMutationPolicy.php",
+  "src/Support/WebadminRolePolicy.php",
 ] as const;
 
 function sha256(value: string): string {

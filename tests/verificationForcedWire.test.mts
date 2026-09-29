@@ -40,16 +40,16 @@ import {
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/verification_forced_wire/", import.meta.url);
 const FIXTURE_CONTRACT = "forced-verification-waiting-room-v1.5";
-/** Core `2b97662` "Regenerate verification policy and grant corpora", released in `b988f05`. */
-const FIXTURE_SOURCE_COMMIT = "2b97662d83346de3722fdcbf6f3903bb2ff4a367";
+/** T-866: current Core provenance and route census; all 37 fixture bodies remain unchanged. */
+const FIXTURE_SOURCE_COMMIT = "48e3d795d5f92764e14c6e5e92680d7bf88790ab";
 /** Was `59e521560ecdd90a6efd836a9ebe055aee4dc731b2b4ddb4ee3d058552792c0e` before T-617. */
 const FIXTURE_SET_SHA256 = "885c464a5748d534df784590ff69486bcf2619186c873f784951580244e443f1";
-const FIXTURE_GENERATOR_SHA256 = "9359842f8a4ae09f5cc3b72ee02132507f341e52c371ad6675b8667973c6cfc9";
-const FIXTURE_MANIFEST_SHA256 = "c4af296af127f14e2ae8e9b970df134764eca1824af609862c74554b6e880f02";
+const FIXTURE_GENERATOR_SHA256 = "0ebd65a7ef91ba2e24f4c12e6089057641985ae2bc4825fe42d573629c161a06";
+const FIXTURE_MANIFEST_SHA256 = "037be9152afa9511ed4418cd9b5fe97efafeb9063f8266fd5180f0411db1fcfd";
 /** The legacy `data.verification` block's own hash on all three own reads (it moved with T-617; see below). */
 const FIXTURE_COMPATIBILITY_SHA256 = "87793955d01bc71e63f2ac0d37fcf58009b3a85b4dad719c24e65da3855d2d26";
 const FIXTURE_BODY_COUNT = 37;
-const FIXTURE_SOURCE_PATH_COUNT = 39;
+const FIXTURE_SOURCE_PATH_COUNT = 42;
 
 /** Core's published control-plane map, which the T-617 Admin no longer calls but still pins. */
 const PUBLISHED_CONTROL_PLANE: Readonly<Record<string, number>> = {

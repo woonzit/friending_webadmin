@@ -16,10 +16,10 @@ import {
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/auth_policy_wire/", import.meta.url);
 const FIXTURE_ACCEPTED_CORE_TIP = "476b1b74dd78eb503ea5b2090d0aec3c3b96b5b2";
-const FIXTURE_SOURCE_COMMIT = "2994068b40a7a16d3948baec0d0b13b75659a380";
+const FIXTURE_SOURCE_COMMIT = "0ecd34e2fc2cd7d8f28398b9ca1f93ecb53a6aa4";
 const FIXTURE_GENERATOR_SHA256 = "945e131e811f2eef72e6fd7a6324516577753b8238108d6c797fa1f20887a80d";
 const FIXTURE_SET_SHA256 = "512f4af57e84bc57e5705ed0d1111b8c5082efc54ea6f221636e2c6b0bbeb6cf";
-const FIXTURE_MANIFEST_SHA256 = "408eed645d02ab66dc2a277d4630593077fc86548512a1911390e787efe63833";
+const FIXTURE_MANIFEST_SHA256 = "23afa3dd00c58ab6a03e96cbe6dcd00186d26e353c1e9b2754d5ec9cb3cf4ac0";
 const FIXTURE_BODY_FILES = [
   "appconfig-all-phone-regions.json",
   "appconfig-default-hun.json",

@@ -599,7 +599,7 @@ test("route, navigation, session, UI, locales, and Help share one dormant no-bul
  * survive, so a provider regeneration cannot silently change consumer meaning.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/profile_text_moderation_wire/", import.meta.url);
-const FIXTURE_SOURCE_COMMIT = "6a8d226aad51bbacebd478d122b6907447e74f5b";
+const FIXTURE_SOURCE_COMMIT = "0ecd34e2fc2cd7d8f28398b9ca1f93ecb53a6aa4";
 const FIXTURE_SET_SHA256 = "34d2584376c163df123edc0f5c460fc28cc6c962c78fccafde4766c7045024cf";
 const FIXTURE_PROVIDER_MANIFEST_SHA256 = "5f84f81c5c85d0f48aca52620843c7151547dd8653d01fdd7e0ea502488cf85c";
 const FIXTURE_ROUTES = [
@@ -739,7 +739,22 @@ test("the 63 published Core fixtures are byte-identical, manifest-bound, and inv
     admin_me: "pre-version-route-default",
     versioned_actions: "no-store",
   });
-  assert.deepEqual(manifest.provenance.source_paths, ["composer.json", "config/", "public/", "src/"]);
+  assert.deepEqual(manifest.provenance.source_paths, [
+    "config/routes.php",
+    "src/Core/Response.php",
+    "src/Http/Controllers/WebadminController.php",
+    "src/Http/Controllers/WebadminProfileTextModerationController.php",
+    "src/Services/ProfileTextModerationAdminException.php",
+    "src/Services/ProfileTextModerationAdminService.php",
+    "src/Services/ProfileTextModerationReadinessService.php",
+    "src/Support/ProfileContentTextPolicy.php",
+    "src/Support/ProfileTextModerationAdminPolicy.php",
+    "src/Support/ProfileTextModerationReadinessPolicy.php",
+    "src/Support/ProfileTextModerationReceiptProtector.php",
+    "src/Support/ProfileTextModerationSourceCensus.php",
+    "src/Support/Webadmin.php",
+    "src/Support/WebadminRolePolicy.php",
+  ]);
 
   const rows: Json[] = manifest.fixtures;
   assert.equal(rows.length, 63);

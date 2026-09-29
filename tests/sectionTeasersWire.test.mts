@@ -67,9 +67,9 @@ import type { SectionAvailabilityConfiguration } from "../lib/sectionAvailabilit
 const FIXTURE_DIRECTORY = new URL("./fixtures/section_teasers_wire/", import.meta.url);
 /** The Core tip this console was accepted against; the corpus commit is below. */
 const FIXTURE_ACCEPTED_CORE_TIP = "a426ef4b4d1ea5855b487a393214de4bfa7476a2";
-const FIXTURE_SOURCE_COMMIT = "75437c5798504f77249082e283e959f8079233da";
+const FIXTURE_SOURCE_COMMIT = "f2a48f11d45f6fde06ac24ac2f858d97c426e613";
 const FIXTURE_MANIFEST_SHA256 =
-  "60f3f4ff0d2c759f059cf95efa3d48f17c781c629f25886fad4d74d2fce9d3e0";
+  "fd4ef6516ee4c94921fad54dad06c20f4d8d50eba10dcc775ce4aab6fb0a5f04";
 const FIXTURE_SET_SHA256 =
   "1d863d45a2c7b30731984f9b9c16375837e499db1cc564e0f08025aef8842e4d";
 const FIXTURE_CONTRACT_MANIFEST_SHA256 =

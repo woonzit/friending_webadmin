@@ -1,18 +1,19 @@
 {
     "schema_version": 1,
     "contract": "admin-granted-verification-v1",
-    "source_commit": "835801a49c16bd8e93fa25df2edae66a9b634077",
-    "generator_commit": "408c99f5e5bb6560ef2b0d9ad2450c8147e636a1",
+    "source_commit": "8518f7f96e915b435c3e6f6f563a6c6a5a7781a4",
+    "generator_commit": "2c8b4707f841136796e02c54a386fcab638c8dff",
     "fixture_set_sha256": "5dfd7f261c383c7dc7533824152779a38fd2902405d4c2085c10110aad8d9706",
     "provenance": {
         "generator": "tests/admin_granted_verification_fixture_dump.php",
-        "generator_sha256": "3430c91c98649c0474f0d3580fdaf27cfa0e93a273219697e492e060b495e3e6",
+        "generator_sha256": "c595592c098929d5fcecb96691dee7829bd628d2d3e8ec3199d299ea7e84ce8b",
         "webadmin_wire_adapter": "Friending\\Support\\Webadmin::noStoreReply",
         "ios_wire_adapter": "Friending\\Core\\Response::wirePayload",
         "resource_shaper": "Friending\\Services\\AdminGrantedVerificationService::resourceFromProjection",
         "evaluated_at": 1800000000,
         "source_paths": [
             "config/routes.php",
+            "src/Core/Request.php",
             "src/Core/Response.php",
             "src/Http/Controllers/VerificationAdminController.php",
             "src/Http/Controllers/WebadminController.php",
@@ -20,6 +21,7 @@
             "src/Services/AdminGrantedVerificationTransaction.php",
             "src/Services/MongoVerificationPolicyDataSource.php",
             "src/Services/PersonaAdminService.php",
+            "src/Services/StorefrontAttestationService.php",
             "src/Services/VerificationAdminActorService.php",
             "src/Services/VerificationAdminException.php",
             "src/Services/VerificationAdminMemberService.php",
@@ -28,6 +30,7 @@
             "src/Services/VerificationAdminReadService.php",
             "src/Services/VerificationAdminSchemaService.php",
             "src/Services/VerificationGrantService.php",
+            "src/Services/VerificationPolicyDataSource.php",
             "src/Services/VerificationPolicySchemaService.php",
             "src/Services/VerificationPolicyService.php",
             "src/Services/VerificationRequestContext.php",
@@ -35,11 +38,14 @@
             "src/Services/WebadminMutationService.php",
             "src/Support/AdminGrantedVerificationPolicy.php",
             "src/Support/PersonaPolicy.php",
+            "src/Support/ProfileVerificationPolicy.php",
             "src/Support/VerificationAdminPolicy.php",
             "src/Support/VerificationMemberEvaluator.php",
+            "src/Support/VerificationMethodMigrationPolicy.php",
             "src/Support/VerificationPolicy.php",
             "src/Support/Webadmin.php",
-            "src/Support/WebadminMutationPolicy.php"
+            "src/Support/WebadminMutationPolicy.php",
+            "src/Support/WebadminRolePolicy.php"
         ]
     },
     "fixtures": [
