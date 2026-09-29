@@ -13,11 +13,14 @@ import { operationalRecordSummary } from "@/lib/auditLog";
 import {
   createAdminIdempotencyKey,
   datesActivityEditChanges,
+  datesActivityTypeAvailability,
+  datesActivityTypeChoices,
   datesAdminPrincipal,
   hasDatesCapability,
   humanizeMachineKey,
   localInputFromEpoch,
   type DatesActivityEditDraft,
+  type DatesActivityTypeAvailability,
   type DatesAdminPrincipal,
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
@@ -113,6 +116,7 @@ export default function DatesActivityDetailPage() {
   const [data, setData] = useState<ActivityDetail | null>(null);
   const [principal, setPrincipal] = useState<DatesAdminPrincipal | null>(null);
   const [draft, setDraft] = useState<EditDraft | null>(null);
+  const [activityTypes, setActivityTypes] = useState<DatesActivityTypeAvailability[] | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error" | "not-found">("loading");
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -132,9 +136,10 @@ export default function DatesActivityDetailPage() {
       return;
     }
     if (!data) setState("loading");
-    const [response, identity] = await Promise.all([
+    const [response, identity, configuration] = await Promise.all([
       adminCall("dates_activity_detail", { activity_id: activityId }),
       adminCall("admin_me"),
+      adminCall("dates_configuration"),
     ]);
     if (response?.error === "dates-admin-activity-unavailable") {
       setState("not-found");
@@ -148,6 +153,7 @@ export default function DatesActivityDetailPage() {
     }
     const next = response as unknown as ActivityDetail;
     setData(next);
+    setActivityTypes(datesActivityTypeAvailability(configuration));
     setDraft(draftFromActivity(next.activity));
     setPrincipal(nextPrincipal);
     setState("ready");
@@ -159,6 +165,10 @@ export default function DatesActivityDetailPage() {
     event.preventDefault();
     if (!data || !draft || busy) return;
     setFeedback(null);
+    if (!datesActivityTypeChoices(activityTypes, data.activity.activity_type).includes(draft.activityType)) {
+      setFeedback({ tone: "error", text: t("typeUnavailable") });
+      return;
+    }
     let audience: Record<string, unknown>;
     try {
       const parsed = JSON.parse(draft.audience || "{}");
@@ -310,7 +320,7 @@ export default function DatesActivityDetailPage() {
         <form className="panel-body form-grid" onSubmit={saveActivity}>
           <label className="field field-full"><span>{t("titleLabel")}</span><input required minLength={3} maxLength={120} value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
           <label className="field field-full"><span>{t("detailsLabel")}</span><textarea maxLength={2000} value={draft.details} onChange={(event) => setDraft({ ...draft, details: event.target.value })} /></label>
-          <label className="field"><span>{t("type")}</span><select value={draft.activityType} onChange={(event) => setDraft({ ...draft, activityType: event.target.value })}>{["sport", "date", "travel", "hangout"].map((value) => <option key={value} value={value}>{values(value)}</option>)}</select></label>
+          <label className="field"><span>{t("type")}</span><select value={draft.activityType} disabled={activityTypes === null} onChange={(event) => setDraft({ ...draft, activityType: event.target.value })}>{datesActivityTypeChoices(activityTypes, activity.activity_type).map((value) => <option key={value} value={value}>{values(value)}</option>)}</select>{activityTypes === null && <small>{t("typeCatalogUnavailable")}</small>}</label>
           <label className="field"><span>{t("locationMode")}</span><select value={draft.locationMode} onChange={(event) => setDraft({ ...draft, locationMode: event.target.value })}>{["live", "exact", "city"].map((value) => <option key={value} value={value}>{values(value)}</option>)}</select></label>
           <label className="field"><span>{t("city")}</span><input maxLength={120} value={draft.city} onChange={(event) => setDraft({ ...draft, city: event.target.value })} /></label>
           <label className="field"><span>{t("countryCode")}</span><input maxLength={3} value={draft.countryCode} onChange={(event) => setDraft({ ...draft, countryCode: event.target.value.toUpperCase() })} /></label>

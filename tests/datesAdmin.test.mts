@@ -9,6 +9,9 @@ import {
   DATES_REPORT_ENTRY_POINTS,
   DATES_REPORT_SCOPES,
   datesActivityEditChanges,
+  datesActivityTypeAvailability,
+  datesActivityTypeChoices,
+  datesActivityTypeRetired,
   datesAdminPrincipal,
   datesAppealBlockedByRole,
   datesCaseClaimableByRole,
@@ -60,6 +63,46 @@ const EXPECTED_DATES_ACTIONS = [
   "dates_reason_save",
   "dates_reason_deactivate",
 ] as const;
+
+test("retired and inactive activity types are readable but never newly assigned", () => {
+  const oldCore = { success: true, activity_types: ["sport", "date", "travel", "hangout"].map((key) => ({ key, active: true })) };
+  const oldTypes = datesActivityTypeAvailability(oldCore);
+  assert.ok(oldTypes);
+  assert.deepEqual(datesActivityTypeChoices(oldTypes), ["sport", "travel", "hangout"]);
+  assert.deepEqual(datesActivityTypeChoices(oldTypes, "sport"), ["sport", "travel", "hangout"]);
+  assert.deepEqual(datesActivityTypeChoices(oldTypes, "date"), ["sport", "date", "travel", "hangout"]);
+  const newCore = structuredClone(oldCore);
+  newCore.activity_types[1].active = false;
+  assert.deepEqual(datesActivityTypeAvailability(newCore), oldTypes, "old and P0 Core converge");
+  newCore.activity_types[0].active = false;
+  const inactive = datesActivityTypeAvailability(newCore);
+  assert.deepEqual(datesActivityTypeChoices(inactive), ["travel", "hangout"]);
+  assert.deepEqual(datesActivityTypeChoices(inactive, "sport"), ["sport", "travel", "hangout"]);
+  assert.deepEqual(datesActivityTypeChoices(null), []);
+  assert.deepEqual(datesActivityTypeChoices(null, "date"), ["date"]);
+  for (const value of [null, {}, { success: false, activity_types: oldCore.activity_types },
+    { success: true, activity_types: [] },
+    { success: true, activity_types: [...oldCore.activity_types.slice(1), oldCore.activity_types[1]] },
+    { success: true, activity_types: oldCore.activity_types.map((row) => ({ ...row, active: "true" })) },
+    { success: true, activity_types: oldCore.activity_types.map((row) => ({ ...row, key: "future" })) }]) {
+    assert.equal(datesActivityTypeAvailability(value), null, JSON.stringify(value));
+  }
+  assert.equal(datesActivityTypeRetired("date"), true);
+  assert.equal(datesActivityTypeRetired("sport"), false);
+  const detail = readFileSync(new URL("../app/(dashboard)/dates/[activityId]/page.tsx", import.meta.url), "utf8");
+  assert.match(detail, /datesActivityTypeAvailability\(configuration\)/);
+  assert.match(detail, /datesActivityTypeChoices\(activityTypes, data\.activity\.activity_type\)\.includes\(draft\.activityType\)/);
+  assert.match(detail, /datesActivityTypeChoices\(activityTypes, activity\.activity_type\)\.map/);
+  const configuration = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
+  assert.match(configuration, /active: !retired && active/);
+  assert.match(configuration, /retired && activityType\.active/);
+  assert.match(configuration, /disabled=\{!canManage \|\| busy \|\| retired\}/);
+  for (const [locale, label] of [["en", "Activity"], ["hu", "Program"]]) {
+    const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
+    assert.equal(messages.datesAdmin.activities.values.date, label);
+    assert.ok(messages.datesAdmin.configuration.retirementPending);
+  }
+});
 
 const EXPECTED_RUNTIME_HELP_KEYS = [
   "dates_creation_enabled",

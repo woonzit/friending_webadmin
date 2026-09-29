@@ -7,7 +7,7 @@ import DatesAdminTabs from "@/components/DatesAdminTabs";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
-import { datesAdminPrincipal, epochFromLocalInput, humanizeMachineKey, type DatesAdminPrincipal } from "@/lib/datesAdmin";
+import { DATES_ACTIVITY_TYPES, datesAdminPrincipal, epochFromLocalInput, humanizeMachineKey, type DatesAdminPrincipal } from "@/lib/datesAdmin";
 import { formatDate, formatNumber } from "@/lib/format";
 
 type ActivityRow = {
@@ -213,7 +213,7 @@ export default function DatesActivitiesPage() {
         <label className="field">
           <span>{t("activityType")}</span>
           <select value={draft.activityType} onChange={(event) => setDraft((value) => ({ ...value, activityType: event.target.value }))}>
-            {["all", "sport", "date", "travel", "hangout"].map((value) => <option key={value} value={value}>{value === "all" ? common("all") : t(`values.${value}`)}</option>)}
+            {["all", ...DATES_ACTIVITY_TYPES].map((value) => <option key={value} value={value}>{value === "all" ? common("all") : t(`values.${value}`)}</option>)}
           </select>
         </label>
         <label className="field">

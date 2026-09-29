@@ -270,6 +270,40 @@ export function localInputFromEpoch(value: number | null | undefined): string {
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
+/** Frozen Core vocabulary, including the readable legacy key. */
+export const DATES_ACTIVITY_TYPES = ["sport", "date", "travel", "hangout"] as const;
+export type DatesActivityTypeAvailability = { key: string; active: boolean };
+
+export function datesActivityTypeRetired(key: string): boolean {
+  return key === "date";
+}
+
+/** Both old and P0 Core return the frozen four-key catalogue. Never infer availability. */
+export function datesActivityTypeAvailability(value: unknown): DatesActivityTypeAvailability[] | null {
+  const response = record(value);
+  if (response?.success !== true || !Array.isArray(response.activity_types)
+    || response.activity_types.length !== DATES_ACTIVITY_TYPES.length) return null;
+  const result: DatesActivityTypeAvailability[] = [];
+  const seen = new Set<string>();
+  for (const value of response.activity_types) {
+    const row = record(value);
+    if (!row || typeof row.key !== "string" || typeof row.active !== "boolean"
+      || !DATES_ACTIVITY_TYPES.some((key) => key === row.key) || seen.has(row.key)) return null;
+    seen.add(row.key);
+    result.push({ key: row.key, active: row.active && !datesActivityTypeRetired(row.key) });
+  }
+  return result;
+}
+
+/** Existing inactive types may be retained, but never newly assigned (AYI-077). */
+export function datesActivityTypeChoices(
+  catalogue: DatesActivityTypeAvailability[] | null,
+  existingType?: string,
+): string[] {
+  return DATES_ACTIVITY_TYPES.filter((key) => key === existingType
+    || (!datesActivityTypeRetired(key) && catalogue?.some((row) => row.key === key && row.active)));
+}
+
 /** The activity edit form, as the console holds it before building Core's change set. */
 export type DatesActivityEditDraft = {
   title: string;

@@ -12,6 +12,7 @@ import {
   createAdminIdempotencyKey,
   DATES_REPORT_SCOPES,
   datesAdminPrincipal,
+  datesActivityTypeRetired,
   datesReasonEntryPoints,
   datesReasonEntryPointsRefused,
   datesReportEntryPointsFor,
@@ -217,10 +218,11 @@ function SettingEditor({ setting, canManage, onSaved, onError }: { setting: Sett
 function ActivityTypeEditor({ activityType, canManage, locale, onSaved, onError }: { activityType: ActivityType; canManage: boolean; locale: string; onSaved: () => Promise<void>; onError: (error: unknown) => void }) {
   const t = useTranslations("datesAdmin.configuration");
   const common = useTranslations("common");
-  const [nameEn, setNameEn] = useState(activityType.name_en);
-  const [nameHu, setNameHu] = useState(activityType.name_hu);
+  const retired = datesActivityTypeRetired(activityType.key);
+  const [nameEn, setNameEn] = useState(retired ? t("retiredNameEn") : activityType.name_en);
+  const [nameHu, setNameHu] = useState(retired ? t("retiredNameHu") : activityType.name_hu);
   const [order, setOrder] = useState(String(activityType.order));
-  const [active, setActive] = useState(activityType.active);
+  const [active, setActive] = useState(!retired && activityType.active);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -230,7 +232,7 @@ function ActivityTypeEditor({ activityType, canManage, locale, onSaved, onError 
     setBusy(true);
     const response = await adminCall("dates_activity_type_save", {
       key: activityType.key,
-      name_en: nameEn.trim(), name_hu: nameHu.trim(), order: Number(order), active,
+      name_en: nameEn.trim(), name_hu: nameHu.trim(), order: Number(order), active: !retired && active,
       expected_revision: activityType.revision,
       reason: reason.trim(), idempotency_key: createAdminIdempotencyKey("dates-activity-type-save"),
     });
@@ -240,8 +242,10 @@ function ActivityTypeEditor({ activityType, canManage, locale, onSaved, onError 
   }
 
   return <form className="dates-config-card" onSubmit={save}>
-    <div className="dates-config-card-heading"><div><strong>{activityType.key}</strong><small>{t("revision", { revision: activityType.revision })}{activityType.updated_at ? ` · ${formatDate(activityType.updated_at, locale, true)}` : ""}</small></div><span className={`badge ${active ? "badge-active" : "badge-inactive"}`}>{active ? common("active") : common("inactive")}</span></div>
-    <div className="form-grid"><label className="field"><span>{t("nameEn")}</span><input required maxLength={80} disabled={!canManage || busy} value={nameEn} onChange={(event) => setNameEn(event.target.value)} /></label><label className="field"><span>{t("nameHu")}</span><input required maxLength={80} disabled={!canManage || busy} value={nameHu} onChange={(event) => setNameHu(event.target.value)} /></label><label className="field"><span>{t("order")}</span><input type="number" min={0} max={100000} disabled={!canManage || busy} value={order} onChange={(event) => setOrder(event.target.value)} /></label><label className="checkbox-field"><input type="checkbox" disabled={!canManage || busy} checked={active} onChange={(event) => setActive(event.target.checked)} /><span>{t("activeType")}</span></label>{canManage && <label className="field field-full"><span>{t("auditReason")}</span><input required value={reason} onChange={(event) => setReason(event.target.value)} /></label>}</div>
+    <div className="dates-config-card-heading"><div><strong>{retired ? t("retiredType") : activityType.key}</strong><small>{t("revision", { revision: activityType.revision })}{activityType.updated_at ? ` · ${formatDate(activityType.updated_at, locale, true)}` : ""}</small></div><span className={`badge ${active ? "badge-active" : "badge-inactive"}`}>{retired ? t("retiredBadge") : active ? common("active") : common("inactive")}</span></div>
+    {retired && <p>{t("retiredTypeCopy")}</p>}
+    {retired && activityType.active && <p className="alert alert-warning">{t("retirementPending")}</p>}
+    <div className="form-grid"><label className="field"><span>{t("nameEn")}</span><input required maxLength={80} disabled={!canManage || busy || retired} value={nameEn} onChange={(event) => setNameEn(event.target.value)} /></label><label className="field"><span>{t("nameHu")}</span><input required maxLength={80} disabled={!canManage || busy || retired} value={nameHu} onChange={(event) => setNameHu(event.target.value)} /></label><label className="field"><span>{t("order")}</span><input type="number" min={0} max={100000} disabled={!canManage || busy} value={order} onChange={(event) => setOrder(event.target.value)} /></label><label className="checkbox-field"><input type="checkbox" disabled={!canManage || busy || retired} checked={active} onChange={(event) => setActive(event.target.checked)} /><span>{t("activeType")}</span></label>{canManage && <label className="field field-full"><span>{t("auditReason")}</span><input required value={reason} onChange={(event) => setReason(event.target.value)} /></label>}</div>
     {canManage && <button className="button button-primary button-small" type="submit" disabled={busy}>{busy ? common("saving") : common("save")}</button>}
   </form>;
 }
