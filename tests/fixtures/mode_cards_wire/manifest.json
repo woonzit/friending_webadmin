@@ -2,9 +2,9 @@
     "schema_version": 1,
     "contract_version": 1,
     "app_contract_version": 1,
-    "source_commit": "f2a48f11d45f6fde06ac24ac2f858d97c426e613",
-    "contract_manifest_sha256": "8067bc6d01894fc15ca08866c1228c1f6b9707b751cd6064aa04dfa70b0d7f83",
-    "fixture_set_sha256": "bffbde1515cf3be08232fc6d21739571961da3eca74aeb178d48adf5c58b42bb",
+    "source_commit": "bb3a7d6d1046aa2484d700fe40d592fb5edc4a65",
+    "contract_manifest_sha256": "2541cd803a068d62cbd442e72a56fa5d3dac515e553cabb6e90a07c0498e3c9e",
+    "fixture_set_sha256": "d89d998020d2a1b08ffddc31fc5ddc99455574adf99bfffef490d361d5209836",
     "provenance": {
         "generator": "tests/mode_cards_fixture_dump.php",
         "generator_sha256": "099413b62ef880a39022d54ac0038aeb158d67f2bc3cc3922fc966722f453bec",
@@ -41,7 +41,7 @@
             "case": "nothing stored: the compiled copy, both cards, no icon",
             "consumer": "ios",
             "valid": true,
-            "sha256": "bf510d3b04edc6989a5071eaa62324826bbf11e95e107207725791802cd55b9d"
+            "sha256": "8f08d2760bd333023afdbcb79b554afdf3ce4eb30b1f70a9808c8171f1241489"
         },
         {
             "file": "appconfig-edited.json",
@@ -65,7 +65,7 @@
             "case": "one stored leaf: every other leaf falls back to the compiled copy",
             "consumer": "ios",
             "valid": true,
-            "sha256": "9dc11e923dd38f0b6e1077dae27c0c7ca9f1ceba55059794c82395cef493aa85"
+            "sha256": "b065eecdb7b89d8bc232bc9861d6b12e400921c97fa2293a02fbb071df1314f1"
         },
         {
             "file": "error-admin-revoked.json",
@@ -257,7 +257,7 @@
             "case": "console read before the first save: revision 0, no provenance",
             "consumer": "webadmin",
             "valid": true,
-            "sha256": "34a4c33483743c97fec564cc1d6d0a7becdb1648a21682550141ded32ef4076e"
+            "sha256": "5a0c3f4ec1b7d87c3aa577f05c0eb9a2d1586d274ca1373b3b61976d47f8890d"
         },
         {
             "file": "get-edited.json",

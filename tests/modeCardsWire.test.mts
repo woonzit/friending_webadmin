@@ -19,7 +19,7 @@ import {
 
 /**
  * Core's production-generated wire corpus (`tests/fixtures/mode_cards_wire/`),
- * copied byte-identically from the Core commit that introduced it. Every body
+ * copied byte-identically from the accepted Core P0 handoff. Every body
  * came out of the production projection and the production encoders, so this
  * console's decoder is verified against what Core actually publishes rather
  * than against a reading of the contract.
@@ -30,15 +30,16 @@ import {
  * back — the four cases a decoder can get wrong without noticing.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/mode_cards_wire/", import.meta.url);
-// T-866: the current Core source provenance is pinned separately from the
-// unchanged 33 fixture bodies and their fixture-set hash.
-const FIXTURE_SOURCE_COMMIT = "f2a48f11d45f6fde06ac24ac2f858d97c426e613";
+// T-865: copied from Core tip 3f715f3245211c933bfaae53b2398847d42d514e.
+// Three fallback subtitle bodies now use friendship copy (AYI-051). The
+// manifest records the newest scoped source commit, not the mechanical tip.
+const FIXTURE_SOURCE_COMMIT = "bb3a7d6d1046aa2484d700fe40d592fb5edc4a65";
 const FIXTURE_MANIFEST_SHA256 =
-  "d2bd1ab2d5af81b25e1761e07eac3fec518b59fdaf0ac8491649f9614fb9d0d5";
+  "40ce1b0003fba129d1846d60833be997d9b8b4c5be7d89e95d79d1f07ca5da3f";
 const FIXTURE_SET_SHA256 =
-  "bffbde1515cf3be08232fc6d21739571961da3eca74aeb178d48adf5c58b42bb";
+  "d89d998020d2a1b08ffddc31fc5ddc99455574adf99bfffef490d361d5209836";
 const FIXTURE_CONTRACT_MANIFEST_SHA256 =
-  "8067bc6d01894fc15ca08866c1228c1f6b9707b751cd6064aa04dfa70b0d7f83";
+  "2541cd803a068d62cbd442e72a56fa5d3dac515e553cabb6e90a07c0498e3c9e";
 const FIXTURE_GENERATOR_SHA256 =
   "099413b62ef880a39022d54ac0038aeb158d67f2bc3cc3922fc966722f453bec";
 const FIXTURE_BODY_COUNT = 33;
@@ -124,6 +125,10 @@ test("the compiled body carries the ruled mode names and no retired one", async 
   const body = await fixture("appconfig-compiled-defaults.json");
   const block = modeCardsAppBlock(body.data.mode_cards);
   assert.ok(block);
+  assert.deepEqual(block.cards.find((card) => card.key === "dates")?.subtitle, {
+    en: "AreYouIn — join or host activities near you",
+    hu: "AreYouIn — csatlakozz programokhoz, vagy szervezz egyet a közeledben",
+  });
   for (const card of block.cards) {
     for (const language of MODE_CARD_LANGUAGES) {
       assert.equal(card.title[language], COMPILED_TITLES[card.key],

@@ -45,3 +45,20 @@ found two such pins: a T-669 lane commit and a T-706 lane commit). Verify with
 published Core commit whose manifest carries the same `fixture_set_sha256` (Core's own manifest history is the
 proof — a blob-equality proof over coarse `source_paths` cannot work for a rebased lane commit), in a
 manifest-only commit. Do not re-pin reachable pins just to move the sha (the rule above still stands).
+
+## T-865 coordinated P0 provider/consumer handoff
+
+The task explicitly pins this consumer to the completed Core lane tip
+`3f715f3245211c933bfaae53b2398847d42d514e`; publish that provider before this
+consumer. `mode_cards_wire` is copied byte-for-byte from that tip, whose manifest
+records scoped source `bb3a7d6d1046aa2484d700fe40d592fb5edc4a65`. Only three
+fallback subtitle responses change, replacing romantic copy with joining/hosting
+activities in EN/HU; the 33-body inventory and decoder shape stay unchanged.
+
+The Dates console also follows that provider's existing four-key activity
+catalogue and `active` flags, including old Core's still-active legacy row.
+It never newly assigns the retired key, but retains it for existing activities.
+The three invite-limit/cooldown settings appear only when Core returns them;
+the help panel explicitly marks absent settings as not returned. The additive
+`effective_by_storefront` answer remains optional for compatibility with old Core.
+Presence retains `date_enabled` and the `date` key; only its EN/HU labels change.
