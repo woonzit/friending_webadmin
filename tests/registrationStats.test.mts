@@ -272,7 +272,7 @@ test("Registered users sends the filter, follows ?platform= and shows the column
   assert.match(component, /adminCall\("registration_platform_stats", \{ days \}, controller\.signal\)/);
   for (const locale of ["en", "hu"] as const) {
     const users = MESSAGES[locale].users;
-    for (const key of ["platformLabel", "platformAll", "signupPlatform", "legacyConverted", "platformFilterIgnored"]) {
+    for (const key of ["platformLabel", "platformAll", "signupPlatform", "legacyConverted", "filterIgnored"]) {
       assert.equal(typeof users[key], "string", `${locale}.users.${key}`);
     }
     assert.equal(typeof users.filterRefused.signupPlatformInvalid, "string");

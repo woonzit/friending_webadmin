@@ -10,9 +10,14 @@ import { adminCall } from "@/lib/adminClient";
 import { avatarUrl, formatDate, formatNumber } from "@/lib/format";
 import { membershipListSummary, membershipUtcInstant } from "@/lib/membership";
 import {
+  PHONE_CHECK_FILTERS,
+  phoneCheckFilterApplied,
+  phoneCheckFilterFrom,
+  registeredUserPhoneCheck,
   registeredUserSignup,
   registeredUsersRefusal,
   signupPlatformFilterApplied,
+  type PhoneCheckFilter,
   type RegisteredUsersRefusal,
 } from "@/lib/registeredUsers";
 import {
@@ -43,6 +48,8 @@ type UserRow = {
   /** P-092: web | ios | android | unknown, and the old-app import marker. */
   signup_platform?: unknown;
   legacy_converted?: unknown;
+  /** P-093: {phone_verified, phone_country}. */
+  phone_check?: unknown;
 };
 
 type Filters = {
@@ -52,10 +59,17 @@ type Filters = {
   registrationPeriod: RegistrationPeriod;
   registrationAsOf: number;
   platform: SignupPlatformFilter;
+  phoneCheck: PhoneCheckFilter;
 };
 
 const EMPTY_FILTERS: Filters = {
-  query: "", demoMode: "all", hasAvatar: false, registrationPeriod: "all", registrationAsOf: 0, platform: "all",
+  query: "",
+  demoMode: "all",
+  hasAvatar: false,
+  registrationPeriod: "all",
+  registrationAsOf: 0,
+  platform: "all",
+  phoneCheck: "all",
 };
 const PAGE_SIZE = 25;
 
@@ -86,7 +100,7 @@ function RegisteredUsers() {
   const [page, setPage] = useState(1);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [refusal, setRefusal] = useState<RegisteredUsersRefusal | null>(null);
-  const [platformIgnored, setPlatformIgnored] = useState(false);
+  const [filterIgnored, setFilterIgnored] = useState(false);
   const [permissionBusyUid, setPermissionBusyUid] = useState<number | null>(null);
   const [permissionMessage, setPermissionMessage] = useState<{
     tone: "success" | "error";
@@ -101,6 +115,7 @@ function RegisteredUsers() {
       has_avatar: filters.hasAvatar,
       ...registrationRange(filters.registrationPeriod, filters.registrationAsOf),
       signup_platform: filters.platform,
+      phone_check: filters.phoneCheck,
       page,
       page_size: PAGE_SIZE,
     }, signal);
@@ -113,8 +128,9 @@ function RegisteredUsers() {
       return;
     }
     setRefusal(null);
-    // Core echoes the filter it applied; a mismatch means the list is not what was asked for.
-    setPlatformIgnored(!signupPlatformFilterApplied(response, filters.platform));
+    // Core echoes the filters it applied; a mismatch means the list is not what was asked for.
+    setFilterIgnored(!signupPlatformFilterApplied(response, filters.platform)
+      || !phoneCheckFilterApplied(response, filters.phoneCheck));
     setRows(response.data as UserRow[]);
     setTotal(Number(response.total) || 0);
     setState("ready");
@@ -248,6 +264,20 @@ function RegisteredUsers() {
             ))}
           </select>
         </label>
+        <label className="field">
+          <span>{t("phoneCheckLabel")}</span>
+          <select
+            value={draft.phoneCheck}
+            onChange={(event) => setDraft((value) => ({
+              ...value,
+              phoneCheck: phoneCheckFilterFrom(event.target.value),
+            }))}
+          >
+            {PHONE_CHECK_FILTERS.map((filter) => (
+              <option key={filter} value={filter}>{t(`phoneCheckFilters.${filter}`)}</option>
+            ))}
+          </select>
+        </label>
         <label className="checkbox-field">
           <input
             type="checkbox"
@@ -288,8 +318,8 @@ function RegisteredUsers() {
             <Link href="/configuration">{t("demoAccessConfiguration")}</Link>
           </p>
           <p className="list-note membership-list-note">{t("membershipSummaryNote")}</p>
-          {platformIgnored && (
-            <div className="alert alert-warning page-alert" role="status">{t("platformFilterIgnored")}</div>
+          {filterIgnored && (
+            <div className="alert alert-warning page-alert" role="status">{t("filterIgnored")}</div>
           )}
           <div className="table-wrap">
             {rows.length === 0 ? (
@@ -302,6 +332,7 @@ function RegisteredUsers() {
                   <tr>
                     <th>{t("user")}</th>
                     <th>{t("contact")}</th>
+                    <th>{t("phoneCheck")}</th>
                     <th>{t("location")}</th>
                     <th>{t("joined")}</th>
                     <th>{t("signupPlatform")}</th>
@@ -319,6 +350,7 @@ function RegisteredUsers() {
                     const membershipExpiry = membershipUtcInstant(membership.effective_expires_at);
                     const membershipFirstSource = membershipUtcInstant(membership.first_subscribed_at);
                     const signup = registeredUserSignup(row);
+                    const phoneCheck = registeredUserPhoneCheck(row);
                     const membershipSources = membership.source_kinds.length > 0
                       ? membership.source_kinds.map((kind) => t(`membershipSources.${kind}`)).join(" · ")
                       : membership.lifecycle_state === "unavailable"
@@ -345,6 +377,16 @@ function RegisteredUsers() {
                             <span>{row.email || "—"}</span>
                             <small>{row.phone_e164 || (row.is_apple_signup ? "Apple" : "—")}</small>
                           </div>
+                        </td>
+                        <td>
+                          {phoneCheck?.verified ? (
+                            <div className="cell-stack">
+                              <span className="badge badge-active">{t("phoneVerified")}</span>
+                              {phoneCheck.country ? <small>{phoneCheck.country}</small> : null}
+                            </div>
+                          ) : phoneCheck && row.has_phone ? (
+                            <span className="badge badge-inactive">{t("phoneUnverified")}</span>
+                          ) : <span>—</span>}
                         </td>
                         <td>{location || "—"}</td>
                         <td>{formatDate(row.created, locale)}</td>

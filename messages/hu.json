@@ -129,7 +129,7 @@
         "sections": {
           "filters": {
             "title": "Keresés és fiókszűrők",
-            "purpose": "Név, e-mail, UID vagy felhasználónév alapján lehet keresni. A fióktípus elkülöníti a normál tagokat a demókörnyezettől, a Regisztráció időszaka az elmúlt 24 órában, 2, 3 vagy 7 napban létrehozott fiókokra szűkít, a Regisztrációs platform csak a weboldalon, az iOS appban, az Android appban vagy rögzített platform nélkül létrehozott fiókokat mutatja, az avatarkapcsoló pedig a képpel rendelkező profilokra szűkít.",
+            "purpose": "Név, e-mail, UID vagy felhasználónév alapján lehet keresni. A fióktípus elkülöníti a normál tagokat a demókörnyezettől, a Regisztráció időszaka az elmúlt 24 órában, 2, 3 vagy 7 napban létrehozott fiókokra szűkít, a Regisztrációs platform csak a weboldalon, az iOS appban, az Android appban vagy rögzített platform nélkül létrehozott fiókokat mutatja, a Telefonszám szűrő az igazolt telefonszámú (bármely, amerikai/kanadai vagy magyar) tagokat, illetve a soha nem igazolt számmal rendelkezőket mutatja, az avatarkapcsoló pedig a képpel rendelkező profilokra szűkít.",
             "actions": {
               "1": "Kombináld a keresést, a fióktípust, a regisztráció időszakát és az avatarállapotot, majd alkalmazd a szűrőt.",
               "2": "Ha egy ismert tag nem található, állítsd alaphelyzetbe a feltételeket, szélesebb találati halmaznál pedig lapozz."
@@ -147,13 +147,13 @@
           },
           "results": {
             "title": "Tagtalálatok és demóláthatóság",
-            "purpose": "A táblázat az azonosságot, elérhetőséget, hozzávetőleges helyet, regisztrációt, a regisztráció helyét (a régi Friending appból átvett tagok jelölésével), fióktípust, tagságot és azt a kifejezett engedélyt mutatja, amellyel egy jóváhagyott normál fiók láthat demóprofilokat.",
+            "purpose": "A táblázat az azonosságot, elérhetőséget, azt, hogy igazolt-e a telefonszám és melyik országra szól az igazolás, a hozzávetőleges helyet, regisztrációt, a regisztráció helyét (a régi Friending appból átvett tagok jelölésével), fióktípust, tagságot és azt a kifejezett engedélyt mutatja, amellyel egy jóváhagyott normál fiók láthat demóprofilokat.",
             "actions": {
               "1": "Nyisd meg a sorból a teljes fiókmunkaterületet.",
               "2": "Csak jóváhagyott támogatási vagy review célra adj vagy vonj vissza demóláthatóságot, ha a vezérlő elérhető.",
               "3": "A beállított szűrők megtartásával lapozz a szerveroldali találatok között."
             },
-            "guidance": "A demóláthatóság nem alakítja demóazonossággá a fiókot, és soha nem egyesíti a két környezetet. Ha az eljárás előírja, a működési indokot a listán kívül is rögzítsd."
+            "guidance": "A demóláthatóság nem alakítja demóazonossággá a fiókot, és soha nem egyesíti a két környezetet. Ha az eljárás előírja, a működési indokot a listán kívül is rögzítsd. Csak az igazolt telefonszám számít bizonyítottnak; az Elérhetőség oszlopban látható számot lehet, hogy soha senki nem ellenőrizte."
           }
         }
       },
@@ -3134,10 +3134,22 @@
     "platformAll": "Minden platform",
     "signupPlatform": "Regisztráció helye",
     "legacyConverted": "A régi appból átvett",
-    "platformFilterIgnored": "A Core nem igazolta vissza a regisztrációs platform szűrőt, ezért a lista minden platformot tartalmazhat.",
     "filterRefused": {
-      "signupPlatformInvalid": "A Core nem fogadta el a regisztrációs platform szűrőt. Állítsd alaphelyzetbe a szűrőket, és próbáld újra."
-    }
+      "signupPlatformInvalid": "A Core nem fogadta el a regisztrációs platform szűrőt. Állítsd alaphelyzetbe a szűrőket, és próbáld újra.",
+      "phoneCheckInvalid": "A Core nem fogadta el a telefonszám szűrőt. Állítsd alaphelyzetbe a szűrőket, és próbáld újra."
+    },
+    "filterIgnored": "A Core nem igazolta vissza a regisztrációs platform vagy a telefonszám szűrőt, ezért lehet, hogy a lista nem a kért szűrés szerint jelenik meg.",
+    "phoneCheckLabel": "Telefonszám",
+    "phoneCheckFilters": {
+      "all": "Mindegy",
+      "verified_any": "Igazolt telefonszám (bármely ország)",
+      "verified_nanp": "Igazolt amerikai vagy kanadai szám (+1)",
+      "verified_hu": "Igazolt magyar szám (+36)",
+      "unverified": "Soha nem igazolt telefonszám"
+    },
+    "phoneCheck": "Telefonszám-igazolás",
+    "phoneVerified": "Igazolt",
+    "phoneUnverified": "Nem igazolt"
   },
   "membershipConfig": {
     "eyebrow": "Hozzáférés és monetizáció",

@@ -129,7 +129,7 @@
         "sections": {
           "filters": {
             "title": "Search and account filters",
-            "purpose": "Search accepts a name, email, UID or username. Account type separates regular members from the isolated demo realm, Registered within limits results to accounts created in the last 24 hours, 2, 3 or 7 days, Signup platform shows only accounts created on the website, in the iOS app, in the Android app or with no recorded platform, and the avatar switch limits results to profiles with a picture.",
+            "purpose": "Search accepts a name, email, UID or username. Account type separates regular members from the isolated demo realm, Registered within limits results to accounts created in the last 24 hours, 2, 3 or 7 days, Signup platform shows only accounts created on the website, in the iOS app, in the Android app or with no recorded platform, Phone shows members with a verified phone (any, US/Canada or Hungarian) or with a stored number that was never verified, and the avatar switch limits results to profiles with a picture.",
             "actions": {
               "1": "Combine search, account type, registration period and avatar state, then apply the filter.",
               "2": "Reset all criteria when a known member is not found, and use pagination for broader result sets."
@@ -147,13 +147,13 @@
           },
           "results": {
             "title": "Member results and demo visibility",
-            "purpose": "The table shows identity, contact, approximate location, registration time, the signup platform (with a mark for members imported from the old Friending app), account type, membership and the explicit permission that lets an approved regular account see demo profiles.",
+            "purpose": "The table shows identity, contact, whether the phone is verified and which country the verification covers, approximate location, registration time, the signup platform (with a mark for members imported from the old Friending app), account type, membership and the explicit permission that lets an approved regular account see demo profiles.",
             "actions": {
               "1": "Open the full account workspace from the row.",
               "2": "Grant or revoke demo visibility only for an approved support or review purpose when the control is available.",
               "3": "Move between server-paged results without changing the active filters."
             },
-            "guidance": "Demo visibility does not convert an account into a demo identity and never merges the two realms. Record the operational reason outside this list when your procedure requires one."
+            "guidance": "Demo visibility does not convert an account into a demo identity and never merges the two realms. Record the operational reason outside this list when your procedure requires one. Only a verified phone counts as proven; a number shown under Contact may never have been checked."
           }
         }
       },
@@ -3134,10 +3134,22 @@
     "platformAll": "All platforms",
     "signupPlatform": "Signed up on",
     "legacyConverted": "Imported from the old app",
-    "platformFilterIgnored": "Core did not confirm the signup platform filter, so this list may include every platform.",
     "filterRefused": {
-      "signupPlatformInvalid": "Core refused the signup platform filter. Reset the filters and try again."
-    }
+      "signupPlatformInvalid": "Core refused the signup platform filter. Reset the filters and try again.",
+      "phoneCheckInvalid": "Core refused the phone filter. Reset the filters and try again."
+    },
+    "filterIgnored": "Core did not confirm the signup platform or phone filter, so this list may not be filtered the way you asked.",
+    "phoneCheckLabel": "Phone",
+    "phoneCheckFilters": {
+      "all": "Any",
+      "verified_any": "Verified phone (any country)",
+      "verified_nanp": "Verified US or Canadian phone (+1)",
+      "verified_hu": "Verified Hungarian phone (+36)",
+      "unverified": "Phone number never verified"
+    },
+    "phoneCheck": "Phone check",
+    "phoneVerified": "Verified",
+    "phoneUnverified": "Not verified"
   },
   "membershipConfig": {
     "eyebrow": "Access and monetization",

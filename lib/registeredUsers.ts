@@ -7,7 +7,8 @@ import {
 /**
  * The Registered users (`list_users`) additions of T-863 S9: the signup platform and the
  * old-app import marker on every row, with a closed `signup_platform` filter that Core echoes
- * in the envelope (P-092).
+ * in the envelope (P-092); and whether the stored phone is PROVEN, with the country the proof
+ * covers, with a closed `phone_check` filter Core echoes the same way (P-093).
  */
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -39,12 +40,51 @@ export function signupPlatformFilterApplied(response: unknown, requested: Signup
   return record(response)?.signup_platform === requested;
 }
 
-export type RegisteredUsersRefusal = "signupPlatformInvalid";
+/** Core's `AdminPhoneCheckView::FILTERS`, in the order the console offers them. */
+export const PHONE_CHECK_FILTERS = ["all", "verified_any", "verified_nanp", "verified_hu", "unverified"] as const;
+export type PhoneCheckFilter = (typeof PHONE_CHECK_FILTERS)[number];
+
+export function phoneCheckFilterFrom(value: unknown): PhoneCheckFilter {
+  return typeof value === "string" && (PHONE_CHECK_FILTERS as readonly string[]).includes(value)
+    ? value as PhoneCheckFilter
+    : "all";
+}
+
+export type RegisteredUserPhoneCheck = {
+  /** Only a stored `phone_is_verified === true` proves the phone. */
+  verified: boolean;
+  /** The countries the proof covers, e.g. "US/CA" or "HU"; "" when unproven or unknown. */
+  country: string;
+};
+
+/**
+ * A row's `phone_check` ({phone_verified, phone_country}, `AdminPhoneCheckView::row`), or null
+ * when it is absent or not Core's shape: the column then shows nothing rather than a guess.
+ * The country is "" or ISO alpha-2 codes joined by "/", and only a proven phone has one.
+ */
+export function registeredUserPhoneCheck(row: unknown): RegisteredUserPhoneCheck | null {
+  const check = record(record(row)?.phone_check);
+  if (!check || Object.keys(check).length !== 2) return null;
+  const verified = check.phone_verified;
+  const country = check.phone_country;
+  if (typeof verified !== "boolean" || typeof country !== "string") return null;
+  if (!/^(?:[A-Z]{2}(?:\/[A-Z]{2})*)?$/u.test(country)) return null;
+  if (!verified && country !== "") return null;
+  return { verified, country };
+}
+
+/** Whether Core applied the requested phone filter (echoed like the platform filter). */
+export function phoneCheckFilterApplied(response: unknown, requested: PhoneCheckFilter): boolean {
+  return record(response)?.phone_check === requested;
+}
+
+export type RegisteredUsersRefusal = "signupPlatformInvalid" | "phoneCheckInvalid";
 
 /** Core's definite 422 refusals of a Registered users filter value. */
 export function registeredUsersRefusal(response: unknown): RegisteredUsersRefusal | null {
   const envelope = record(response);
   if (envelope?.success !== false || envelope.status_code !== 422) return null;
   if (envelope.error === "signup-platform-invalid") return "signupPlatformInvalid";
+  if (envelope.error === "phone-check-filter-invalid") return "phoneCheckInvalid";
   return null;
 }
