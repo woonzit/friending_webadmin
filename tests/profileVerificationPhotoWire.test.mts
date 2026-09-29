@@ -204,3 +204,60 @@ test("the scopes table names the photo blocker, points at the catalogue editor a
   assert.match(table, /data-verification-method-photo-rollout="true"/);
   assert.match(table, /photo: shared\("preview\.primaryPhoto"\)/);
 });
+
+// ---------------------------------------------------------------------------
+// 2. The gesture catalogue editor (profile_verification_config)
+// ---------------------------------------------------------------------------
+
+test("the corpus configuration decodes with its catalogue, count and eighteen photo sentences", async () => {
+  const {
+    PROFILE_VERIFICATION_PHOTO_FLOW_KEYS,
+    normalizeProfileVerificationConfig,
+    photoCatalogueSufficient,
+    profileVerificationConfigIssues,
+    profileVerificationResponseData,
+  } = await import("../lib/profileVerification.ts");
+  const body = await fixture("webadmin-config.json");
+  const parsed = normalizeProfileVerificationConfig(profileVerificationResponseData(body));
+  assert.ok(parsed);
+  assert.equal(parsed.photo_gesture_count, 3);
+  assert.deepEqual(parsed.photo_gestures.map((row) => row.id), [1, 2, 3, 4].map((n) => String(n).padStart(32, "0")));
+  assert.equal(parsed.photo_gestures[0].title.hu, "Felfelé mutató hüvelykujj");
+  assert.deepEqual(Object.keys(parsed.copy.photo_flow), [...PROFILE_VERIFICATION_PHOTO_FLOW_KEYS]);
+  assert.equal(PROFILE_VERIFICATION_PHOTO_FLOW_KEYS.length, 18);
+  assert.deepEqual(Object.keys(parsed.copy.photo_flow), Object.keys(body.data.copy.photo_flow), "Core's field order");
+  assert.equal(photoCatalogueSufficient(parsed.photo_gestures, parsed.photo_gesture_count), true);
+  assert.deepEqual(profileVerificationConfigIssues(parsed), [], "Core's own document has no field problem");
+});
+
+test("the save body is exactly the corpus request: copy with photo_flow, prompts, gestures, count", async () => {
+  const {
+    normalizeProfileVerificationConfig,
+    profileVerificationResponseData,
+    profileVerificationSavePayload,
+  } = await import("../lib/profileVerification.ts");
+  const request = await fixture("webadmin-request-save-config.json");
+  const parsed = normalizeProfileVerificationConfig(profileVerificationResponseData(await fixture("webadmin-config.json")));
+  assert.ok(parsed);
+  const payload = profileVerificationSavePayload(parsed);
+  assert.deepEqual(payload, request.form_fields.configuration_json);
+  assert.deepEqual(Object.keys(payload), Object.keys(request.form_fields.configuration_json));
+  // Core SAVE_REQUIRED_KEYS + the two catalogue keys; `enabled` is derived and never sent.
+  assert.deepEqual(request.required_configuration_keys, ["copy", "prompts"]);
+  assert.deepEqual(request.optional_configuration_keys, ["enabled", "photo_gesture_count", "photo_gestures"]);
+  assert.equal("enabled" in payload, false);
+  for (const key of Object.keys(payload)) {
+    assert.ok([...request.required_configuration_keys, ...request.optional_configuration_keys].includes(key), key);
+  }
+});
+
+test("the two save refusals keep their Core statuses and the editor maps each one", async () => {
+  const invalid = await fixture("webadmin-refusal-profile-verification-config-invalid.json");
+  const insufficient = await fixture("webadmin-refusal-profile-verification-gestures-insufficient.json");
+  assert.deepEqual([invalid.error, invalid.status_code, "data" in invalid], ["profile-verification-config-invalid", 422, false]);
+  assert.deepEqual([insufficient.error, insufficient.status_code, "data" in insufficient], ["profile-verification-gestures-insufficient", 409, false]);
+  const editor = await readFile(new URL("../components/ProfileVerificationConfiguration.tsx", import.meta.url), "utf8");
+  assert.match(editor, /error === "profile-verification-gestures-insufficient"[\s\S]{0,200}setCountRefused\(true\)/);
+  assert.match(editor, /error === "profile-verification-config-invalid"[\s\S]{0,300}setShowIssues\(true\)/);
+  assert.match(editor, /error === "admin-write-required"/);
+});

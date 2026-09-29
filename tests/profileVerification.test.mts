@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import {
   PROFILE_VERIFICATION_BADGE_STATUSES,
   PROFILE_VERIFICATION_DETAIL_STATUSES,
+  PROFILE_VERIFICATION_PHOTO_FLOW_KEYS,
   PROFILE_VERIFICATION_PROMPTS,
   cloneProfileVerificationConfig,
   isProfileVerificationColor,
@@ -61,12 +62,15 @@ function validConfig(): Record<string, unknown> {
         link_title: l10n("Privacy information"),
         link_url: "https://friending.com/privacy",
       },
+      photo_flow: Object.fromEntries(PROFILE_VERIFICATION_PHOTO_FLOW_KEYS.map((field) => [field, l10n(`${field} text`)])),
     },
     prompts: PROFILE_VERIFICATION_PROMPTS.map((key) => ({
       key,
       enabled: true,
       label: l10n(key),
     })),
+    photo_gesture_count: 2,
+    photo_gestures: [],
     updated_at: 1786300000,
     updated_by: "admin@example.invalid",
   };
@@ -222,15 +226,19 @@ test("a draft with stray leading or trailing spaces is trimmed before validation
 });
 
 test("the editor's typing sanitiser strips exactly the control class the validator refuses", async () => {
-  const [lib, editor] = await Promise.all([
+  const [lib, fields, editor] = await Promise.all([
     readFile(new URL("../lib/profileVerification.ts", import.meta.url), "utf8"),
+    readFile(new URL("../components/LocalizedFields.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/ProfileVerificationConfiguration.tsx", import.meta.url), "utf8"),
   ]);
   const validatorClass = lib.match(/const CONTROL = \/(\[[^\]]+\])\/u;/)?.[1];
-  const sanitiserClass = editor.match(/value\.replace\(\/(\[[^\]]+\])\/gu, " "\)/)?.[1];
+  const sanitiserClass = fields.match(/value\.replace\(\/(\[[^\]]+\])\/gu, " "\)/)?.[1];
   assert.ok(validatorClass && sanitiserClass);
   assert.equal(sanitiserClass, validatorClass);
-  assert.match(editor, /normalizeProfileVerificationConfig\(trimProfileVerificationDraft\(draft\)\)/);
+  // The shared field pair (video copy, photo wording, gesture rows) is the only sanitiser.
+  assert.match(editor, /import LocalizedFields, \{ plainText, type Language \} from "@\/components\/LocalizedFields";/);
+  assert.doesNotMatch(editor, /value\.replace\(/);
+  assert.match(editor, /const trimmed = trimProfileVerificationDraft\(draft\);\s+const validated = normalizeProfileVerificationConfig\(trimmed\);/);
 });
 
 test("all four Light/Dark status colours are strict #RRGGBB values", () => {

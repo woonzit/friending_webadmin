@@ -10672,6 +10672,16 @@ body .verification-level-pill.level-strong {
   font-size: 12px;
 }
 
+/* T-863 S11 (D-135): the gesture catalogue editor. */
+.photo-gesture-list {
+  display: grid;
+  gap: 16px;
+}
+
+.photo-gesture-count {
+  max-width: 360px;
+}
+
 .verification-color-preview {
   display: flex;
   overflow: hidden;

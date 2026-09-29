@@ -47,6 +47,54 @@ export const PROFILE_VERIFICATION_REJECTION_REASONS = [
   "other_policy_reason",
 ] as const;
 
+/**
+ * D-135 gesture photo selfie: the eighteen editable sentences of
+ * `copy.photo_flow`, in Core `ProfileVerificationPolicy::PHOTO_FLOW_FIELDS`
+ * order, each with Core's code-point bound. A member in a photo scope sees
+ * these instead of the matching video sentences.
+ */
+export const PROFILE_VERIFICATION_PHOTO_FLOW_FIELDS = {
+  intro_body: 1200,
+  step_title: 180,
+  step_body: 700,
+  camera_title: 180,
+  camera_framing: 320,
+  camera_ready: 120,
+  preview_title: 180,
+  preview_body: 700,
+  pending_card_subtitle: 320,
+  status_not_started_subtitle: 500,
+  status_pending_title: 180,
+  status_pending_subtitle: 500,
+  status_pending_re_review_subtitle: 500,
+  status_awaiting_avatar_subtitle: 500,
+  status_rejected_subtitle: 500,
+  status_new_video_requested_title: 180,
+  status_new_video_requested_subtitle: 500,
+  consent_body: 1800,
+} as const;
+export type ProfileVerificationPhotoFlowField = keyof typeof PROFILE_VERIFICATION_PHOTO_FLOW_FIELDS;
+export const PROFILE_VERIFICATION_PHOTO_FLOW_KEYS = Object.keys(
+  PROFILE_VERIFICATION_PHOTO_FLOW_FIELDS,
+) as ProfileVerificationPhotoFlowField[];
+
+/** Core `PhotoVerificationPolicy`: 1-10 photos per set, at most 100 catalogue rows. */
+export const PHOTO_GESTURE_COUNT_MIN = 1;
+export const PHOTO_GESTURE_COUNT_MAX = 10;
+export const PHOTO_GESTURES_MAX = 100;
+export const PHOTO_GESTURE_TITLE_MAX = 180;
+export const PHOTO_GESTURE_SUBTITLE_MAX = 700;
+export const PHOTO_GESTURE_EXAMPLE_GENDERS = ["male", "female"] as const;
+export type PhotoGestureExampleGender = (typeof PHOTO_GESTURE_EXAMPLE_GENDERS)[number];
+
+export type ProfileVerificationPhotoGesture = {
+  id: string;
+  title: ProfileVerificationLocalizedText;
+  subtitle: ProfileVerificationLocalizedText;
+  male_image_url: string;
+  female_image_url: string;
+};
+
 export type ProfileVerificationBadgeStatus = (typeof PROFILE_VERIFICATION_BADGE_STATUSES)[number];
 export type ProfileVerificationStatus = (typeof PROFILE_VERIFICATION_STATUSES)[number];
 export type ProfileVerificationDetailStatus = (typeof PROFILE_VERIFICATION_DETAIL_STATUSES)[number];
@@ -98,12 +146,17 @@ export type ProfileVerificationConfig = {
       link_title: ProfileVerificationLocalizedText;
       link_url: string;
     };
+    photo_flow: Record<ProfileVerificationPhotoFlowField, ProfileVerificationLocalizedText>;
   };
   prompts: Array<{
     key: ProfileVerificationPromptKey;
     enabled: boolean;
     label: ProfileVerificationLocalizedText;
   }>;
+  /** How many gestures (1-10) one member photographs; each set is drawn at random from the catalogue. */
+  photo_gesture_count: number;
+  /** The operator-owned gesture catalogue (it starts empty). */
+  photo_gestures: ProfileVerificationPhotoGesture[];
   updated_at: number | null;
   updated_by: string;
 };
@@ -287,6 +340,71 @@ function iconColor(value: unknown): ProfileVerificationIconColor | null {
   return light && dark ? { light, dark } : null;
 }
 
+/**
+ * A gesture example image must be one of this console's own `upload_image`
+ * results: Core (`PhotoVerificationPolicy::exampleUrl`) accepts only its
+ * managed `/api/cache/admin/uploads/YYYY/MM/<14 digits>-<32 hex>.(jpg|png|webp)`
+ * URLs on the public image host. The console pins the scheme and that exact
+ * path; Core stays the authority for the host.
+ */
+const PHOTO_EXAMPLE_PATH = /^\/api\/cache\/admin\/uploads\/[0-9]{4}\/[0-9]{2}\/[0-9]{14}-[a-f0-9]{32}\.(jpg|png|webp)$/;
+
+export function isPhotoGestureExampleUrl(value: unknown): value is string {
+  if (typeof value !== "string" || value === "" || value.length > 2048 || value.trim() !== value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.username === "" && url.password === ""
+      && url.search === "" && url.hash === "" && !value.includes("?") && !value.includes("#")
+      && PHOTO_EXAMPLE_PATH.test(url.pathname);
+  } catch {
+    return false;
+  }
+}
+
+/** A fresh catalogue row id: 32 lowercase hex, the Core identifier shape. */
+export function newPhotoGestureId(): string {
+  return crypto.randomUUID().replaceAll("-", "");
+}
+
+export function emptyPhotoGesture(id: string = newPhotoGestureId()): ProfileVerificationPhotoGesture {
+  return {
+    id,
+    title: { en: "", hu: "" },
+    subtitle: { en: "", hu: "" },
+    male_image_url: "",
+    female_image_url: "",
+  };
+}
+
+function photoGesture(value: unknown): ProfileVerificationPhotoGesture | null {
+  const row = record(value);
+  if (!row) return null;
+  const id = typeof row.id === "string" && IDENTIFIER.test(row.id) ? row.id : null;
+  const title = localized(row.title, PHOTO_GESTURE_TITLE_MAX);
+  const subtitle = localized(row.subtitle, PHOTO_GESTURE_SUBTITLE_MAX);
+  if (!id || !title || !subtitle
+    || !isPhotoGestureExampleUrl(row.male_image_url)
+    || !isPhotoGestureExampleUrl(row.female_image_url)) return null;
+  return {
+    id,
+    title,
+    subtitle,
+    male_image_url: row.male_image_url,
+    female_image_url: row.female_image_url,
+  };
+}
+
+function photoGestureCount(value: unknown): number | null {
+  return Number.isInteger(value) && Number(value) >= PHOTO_GESTURE_COUNT_MIN && Number(value) <= PHOTO_GESTURE_COUNT_MAX
+    ? Number(value)
+    : null;
+}
+
+/** Whether one set of `count` DISTINCT gestures can be drawn (Core `catalogueSufficient`). */
+export function photoCatalogueSufficient(gestures: readonly unknown[], count: number): boolean {
+  return count >= PHOTO_GESTURE_COUNT_MIN && count <= PHOTO_GESTURE_COUNT_MAX && gestures.length >= count;
+}
+
 function httpsUrl(value: unknown): string | null {
   const text = boundedText(value, 2048);
   if (!text) return null;
@@ -370,6 +488,28 @@ export function normalizeProfileVerificationConfig(value: unknown): ProfileVerif
   const consentLinkUrl = httpsUrl(consent.link_url);
   if (!consentBody || !consentLinkTitle || !consentLinkUrl) return null;
 
+  // D-135: Core 60b7814e always projects the photo wording, the count and the
+  // catalogue; a body without them is not the live contract and fails closed.
+  const photoFlowRaw = record(copy.photo_flow);
+  if (!photoFlowRaw) return null;
+  const photoFlow = {} as ProfileVerificationConfig["copy"]["photo_flow"];
+  for (const field of PROFILE_VERIFICATION_PHOTO_FLOW_KEYS) {
+    const text = localized(photoFlowRaw[field], PROFILE_VERIFICATION_PHOTO_FLOW_FIELDS[field]);
+    if (!text) return null;
+    photoFlow[field] = text;
+  }
+  const count = photoGestureCount(source.photo_gesture_count);
+  const rawGestures = list(source.photo_gestures);
+  if (count === null || !rawGestures || rawGestures.length > PHOTO_GESTURES_MAX) return null;
+  const gestures: ProfileVerificationPhotoGesture[] = [];
+  const gestureIds = new Set<string>();
+  for (const raw of rawGestures) {
+    const gesture = photoGesture(raw);
+    if (!gesture || gestureIds.has(gesture.id)) return null;
+    gestureIds.add(gesture.id);
+    gestures.push(gesture);
+  }
+
   const rawPrompts = list(source.prompts);
   if (!rawPrompts || rawPrompts.length !== PROFILE_VERIFICATION_PROMPTS.length) return null;
   const prompts: ProfileVerificationConfig["prompts"] = [];
@@ -396,17 +536,23 @@ export function normalizeProfileVerificationConfig(value: unknown): ProfileVerif
       account_card: accountCards,
       status: statusCopy,
       consent: { body: consentBody, link_title: consentLinkTitle, link_url: consentLinkUrl },
+      photo_flow: photoFlow,
     },
     prompts,
+    photo_gesture_count: count,
+    photo_gestures: gestures,
     updated_at: updatedAt,
     updated_by: updatedBy,
   };
 }
 
 /**
- * T-617 contract §6.4: the save payload is exactly `{copy, prompts}`. `enabled`
- * is a DERIVED read-only boolean on Core's side — it is true when video is the
- * live mandatory method somewhere and the deployment can start it — so the
+ * T-617 contract §6.4 plus D-135: the save payload is exactly `{copy, prompts,
+ * photo_gestures, photo_gesture_count}` (Core `SAVE_REQUIRED_KEYS` +
+ * the two optional catalogue keys), with `copy.photo_flow` inside `copy` — the
+ * shape of the corpus `webadmin-request-save-config.json`. `enabled` is a
+ * DERIVED read-only boolean on Core's side — it is true when video or photo is
+ * the live mandatory method somewhere and the deployment can start it — so the
  * console must never send it. Core refuses an attempted change with
  * `profile-verification-enabled-derived`.
  */
@@ -414,7 +560,99 @@ export function profileVerificationSavePayload(config: ProfileVerificationConfig
   return {
     copy: config.copy,
     prompts: config.prompts,
+    photo_gestures: config.photo_gestures,
+    photo_gesture_count: config.photo_gesture_count,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Field-by-field validation (the console's reading of Core's refusals)
+// ---------------------------------------------------------------------------
+
+export type ProfileVerificationFieldProblem = "required" | "tooLong" | "invalid" | "duplicate";
+/**
+ * One field the draft cannot save with. `path` is dotted from the document
+ * root; gesture rows are addressed by id (`photo_gestures.<id>.title.en`) so a
+ * problem stays on its row when rows are added or removed.
+ */
+export type ProfileVerificationFieldIssue = { path: string; problem: ProfileVerificationFieldProblem };
+
+/**
+ * Core answers an invalid document with ONE code
+ * (`profile-verification-config-invalid`, 422) and never names the field. The
+ * console therefore walks the (trimmed) draft with the same rules the decoder
+ * and Core apply and names every offending field, so the operator sees where
+ * to look instead of a generic refusal. Anything this walker accepts, the
+ * decoder accepts too; Core stays the authority (e.g. for the image host).
+ */
+export function profileVerificationConfigIssues(config: ProfileVerificationConfig): ProfileVerificationFieldIssue[] {
+  const issues: ProfileVerificationFieldIssue[] = [];
+  const text = (path: string, value: unknown, maximum: number) => {
+    if (typeof value !== "string" || CONTROL.test(value) || value.trim() !== value) {
+      issues.push({ path, problem: "invalid" });
+    } else if (value === "") {
+      issues.push({ path, problem: "required" });
+    } else if (Array.from(value).length > maximum) {
+      issues.push({ path, problem: "tooLong" });
+    }
+  };
+  const pair = (path: string, value: ProfileVerificationLocalizedText | undefined, maximum: number) => {
+    text(`${path}.en`, value?.en, maximum);
+    text(`${path}.hu`, value?.hu, maximum);
+  };
+  const { copy } = config;
+  pair("copy.intro.title", copy.intro.title, 180);
+  pair("copy.intro.body", copy.intro.body, 1200);
+  copy.intro.steps.forEach((step, index) => {
+    pair(`copy.intro.steps.${index}.title`, step.title, 180);
+    pair(`copy.intro.steps.${index}.body`, step.body, 700);
+  });
+  pair("copy.intro.action", copy.intro.action, 120);
+  pair("copy.camera.title", copy.camera.title, 180);
+  pair("copy.camera.framing", copy.camera.framing, 320);
+  pair("copy.camera.ready", copy.camera.ready, 120);
+  pair("copy.camera.recording", copy.camera.recording, 240);
+  pair("copy.preview.title", copy.preview.title, 180);
+  pair("copy.preview.body", copy.preview.body, 700);
+  pair("copy.preview.retake", copy.preview.retake, 120);
+  pair("copy.preview.submit", copy.preview.submit, 120);
+  for (const status of PROFILE_VERIFICATION_BADGE_STATUSES) {
+    const card = copy.account_card[status];
+    pair(`copy.account_card.${status}.title`, card.title, 160);
+    pair(`copy.account_card.${status}.subtitle`, card.subtitle, 320);
+    for (const mode of ["light", "dark"] as const) {
+      if (color(card.icon_color[mode]) === null) issues.push({ path: `copy.account_card.${status}.icon_color.${mode}`, problem: "invalid" });
+    }
+  }
+  for (const status of PROFILE_VERIFICATION_DETAIL_STATUSES) {
+    pair(`copy.status.${status}.title`, copy.status[status].title, 180);
+    pair(`copy.status.${status}.subtitle`, copy.status[status].subtitle, 500);
+  }
+  pair("copy.consent.body", copy.consent.body, 1800);
+  pair("copy.consent.link_title", copy.consent.link_title, 180);
+  if (httpsUrl(copy.consent.link_url) === null) issues.push({ path: "copy.consent.link_url", problem: copy.consent.link_url === "" ? "required" : "invalid" });
+  for (const field of PROFILE_VERIFICATION_PHOTO_FLOW_KEYS) {
+    pair(`copy.photo_flow.${field}`, copy.photo_flow[field], PROFILE_VERIFICATION_PHOTO_FLOW_FIELDS[field]);
+  }
+  config.prompts.forEach((prompt, index) => pair(`prompts.${index}.label`, prompt.label, 180));
+
+  if (photoGestureCount(config.photo_gesture_count) === null) issues.push({ path: "photo_gesture_count", problem: "invalid" });
+  if (config.photo_gestures.length > PHOTO_GESTURES_MAX) issues.push({ path: "photo_gestures", problem: "tooLong" });
+  const seen = new Set<string>();
+  for (const gesture of config.photo_gestures) {
+    const base = `photo_gestures.${gesture.id}`;
+    if (!IDENTIFIER.test(gesture.id)) issues.push({ path: `${base}.id`, problem: "invalid" });
+    else if (seen.has(gesture.id)) issues.push({ path: `${base}.id`, problem: "duplicate" });
+    seen.add(gesture.id);
+    pair(`${base}.title`, gesture.title, PHOTO_GESTURE_TITLE_MAX);
+    pair(`${base}.subtitle`, gesture.subtitle, PHOTO_GESTURE_SUBTITLE_MAX);
+    for (const gender of PHOTO_GESTURE_EXAMPLE_GENDERS) {
+      const url = gesture[`${gender}_image_url`];
+      if (url === "") issues.push({ path: `${base}.${gender}_image_url`, problem: "required" });
+      else if (!isPhotoGestureExampleUrl(url)) issues.push({ path: `${base}.${gender}_image_url`, problem: "invalid" });
+    }
+  }
+  return issues;
 }
 
 export function cloneProfileVerificationConfig(config: ProfileVerificationConfig): ProfileVerificationConfig {
