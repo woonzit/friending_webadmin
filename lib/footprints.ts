@@ -30,11 +30,22 @@ export type FootprintCastGroup = {
   active: boolean;
 };
 
+/** Core's membership rollout (`MembershipAccessService::rolloutMode`), as footprints_admin reports it. */
+export const FOOTPRINT_ROLLOUT_MODES = ["legacy", "enforced", "deny"] as const;
+export type FootprintRolloutMode = (typeof FOOTPRINT_ROLLOUT_MODES)[number];
+
 export type FootprintsAdminPayload = {
   settings: FootprintSettings;
   badges: FootprintBadge[];
   castGroups: FootprintCastGroup[];
   openReports: number;
+  /**
+   * P-045: which daily limit is live. `legacy`: this page's daily limit, replaced by a
+   * per-member value; `enforced`: the membership plan, with the per-member value as a
+   * ceiling; `deny`: nothing can be sent. Null when Core does not say (an older Core, or
+   * a value this console does not know): the page then makes no claim.
+   */
+  rolloutMode: FootprintRolloutMode | null;
 };
 
 export type FootprintReportUser = {
@@ -265,6 +276,9 @@ export function footprintsAdminPayload(value: unknown): FootprintsAdminPayload |
     badges,
     castGroups,
     openReports,
+    rolloutMode: FOOTPRINT_ROLLOUT_MODES.includes(body.rollout_mode as FootprintRolloutMode)
+      ? body.rollout_mode as FootprintRolloutMode
+      : null,
   };
 }
 

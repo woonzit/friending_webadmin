@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { ADMIN_ACTIONS, adminActionAccess } from "../lib/adminActions.ts";
 import {
+  FOOTPRINT_ROLLOUT_MODES,
   FOOTPRINT_REPORT_REASONS,
   FOOTPRINT_REPORT_RESOLUTIONS,
   canRemoveFootprintMessage,
@@ -410,5 +411,27 @@ test("the badge audience editor no longer promises cast-group narrowing", async 
     assert.equal(Object.hasOwn(messages.footprints, "groupsNotEnforced"), true);
     // The old hint asserted "must BOTH pass" and had zero call sites.
     assert.doesNotMatch(JSON.stringify(messages.footprints), /BOTH|EGYÜTT/);
+  }
+});
+
+test("P-045: the footprint admin reports which daily limit is live, and an unknown value claims nothing", async () => {
+  assert.equal(footprintsAdminPayload(ADMIN_PAYLOAD)?.rolloutMode, null, "an older Core says nothing");
+  for (const mode of FOOTPRINT_ROLLOUT_MODES) {
+    assert.equal(footprintsAdminPayload({ ...ADMIN_PAYLOAD, rollout_mode: mode })?.rolloutMode, mode);
+  }
+  for (const value of ["Legacy", "shadow", "", 1, null, true]) {
+    const parsed = footprintsAdminPayload({ ...ADMIN_PAYLOAD, rollout_mode: value });
+    assert.ok(parsed, `${JSON.stringify(value)}: the rest of the page still loads`);
+    assert.equal(parsed.rolloutMode, null, JSON.stringify(value));
+  }
+  const page = await readFile(new URL("../app/(dashboard)/footprints/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /\{payload\.rolloutMode \? \(/);
+  assert.match(page, /data-footprint-rollout=\{payload\.rolloutMode\}/);
+  assert.match(page, /t\(`limitRollout\.\$\{payload\.rolloutMode\}`\)/);
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(await readFile(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
+    assert.deepEqual(Object.keys(messages.footprints.limitRollout), [...FOOTPRINT_ROLLOUT_MODES]);
+    assert.match(messages.adminHelp.pages.footprints.sections.memberOverride.guidance,
+      new RegExp(messages.footprints.settingsTitle));
   }
 });

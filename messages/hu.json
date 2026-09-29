@@ -2225,7 +2225,7 @@
               "1": "Ellenőrizd a UID-t, és add meg a kívánt korlátozott keretet.",
               "2": "Töröld az értéket a globális alapérték visszaállításához."
             },
-            "guidance": "Ez üzemeltetési kivétel, nem moderációs tiltás. Fiókkorlátozáshoz a tag moderációs paneljét használd."
+            "guidance": "Ez üzemeltetési kivétel, nem moderációs tiltás. Fiókkorlátozáshoz a tag moderációs paneljét használd. Ha az előfizetési csomag érvényesítése elindul, ez az érték már csak csökkentheti a csomag keretét; a Limitek panel jelzi, melyik szabály érvényes."
           },
           "reports": {
             "title": "Bejelentett Footprintek",
@@ -9203,6 +9203,11 @@
       "title": "Funkciók elérhetősége",
       "copy": "A globális Hey-, Footprint-jelvény- és fotókedvelés-kapcsolók együtt találhatók a Konfiguráció oldalon. A Látogatók lista mindig elérhető; az ezen az oldalon lévő jelvénylimitek és katalógusbeállítások saját dokumentumot és revíziót használnak.",
       "action": "Funkciókapcsolók megnyitása"
+    },
+    "limitRollout": {
+      "legacy": "A Friending a régi előfizetési szabályokat alkalmazza, ezért az itteni napi keret minden tagra érvényes, a lenti tagonkénti egyedi keret pedig felülírja.",
+      "enforced": "A napi Footprint-keretet most az előfizetési csomag határozza meg, ezért az itteni napi keret már nem érvényes. A lenti tagonkénti egyedi keret a csomag fölötti plafon: csökkentheti a tag keretét, de nem növelheti.",
+      "deny": "Az érvényesítés mentett előfizetési csomag nélkül van bekapcsolva, ezért most senki nem küldhet Footprintet, bármit mutat ez az oldal. Ments egy csomagot az Előfizetési csomagok oldalon."
     }
   },
   "featureSwitches": {

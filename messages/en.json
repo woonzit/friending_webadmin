@@ -2225,7 +2225,7 @@
               "1": "Confirm the UID and enter the intended bounded allowance.",
               "2": "Clear the value to return the member to the global default."
             },
-            "guidance": "This is an operational exception, not a moderation ban. Use the member moderation panel when account restriction is the intended action."
+            "guidance": "This is an operational exception, not a moderation ban. Use the member moderation panel when account restriction is the intended action. Once the membership plan is enforced, this value can only lower the plan's limit; the Limits panel says which rule applies."
           },
           "reports": {
             "title": "Reported Footprints",
@@ -9203,6 +9203,11 @@
       "title": "Feature availability",
       "copy": "The global Hey, Footprint-badge and photo-like switches live together in Configuration. Visitors is always available; badge limits and catalogue settings on this page keep their own document and revision.",
       "action": "Open feature switches"
+    },
+    "limitRollout": {
+      "legacy": "Friending runs the legacy membership rules, so the daily limit on this page applies to every member, and a member-specific allowance below replaces it.",
+      "enforced": "The membership plan now decides each member's daily Footprint limit, so the daily limit on this page no longer applies. A member-specific allowance below is a ceiling on the plan: it can lower the member's limit but never raise it.",
+      "deny": "Enforcement is switched on without a saved membership plan, so nobody can send Footprints right now, whatever this page says. Save a plan on the Membership plans page."
     }
   },
   "featureSwitches": {

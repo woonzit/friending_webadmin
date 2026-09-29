@@ -270,6 +270,15 @@ export default function FootprintsPage() {
       <section className="panel">
         <h2>{t("settingsTitle")}</h2>
         <p className="panel-lead">{t("settingsLead")}</p>
+        {payload.rolloutMode ? (
+          <p
+            className={`alert ${payload.rolloutMode === "deny" ? "alert-error" : payload.rolloutMode === "enforced" ? "alert-warning" : "alert-info"} footprints-rollout-note`}
+            role="status"
+            data-footprint-rollout={payload.rolloutMode}
+          >
+            {t(`limitRollout.${payload.rolloutMode}`)}
+          </p>
+        ) : null}
         <div className="footprints-settings-grid">
           <label className="field">
             <span>{t("dailyLimit")}</span>
