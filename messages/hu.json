@@ -461,6 +461,15 @@
               "2": "A jelölőt a csomag többi részével együtt, ugyanazzal a revízióval mentsd."
             },
             "guidance": "Az érvényesítés csak akkor indul el, ha ez a jelölő és a szerver érvényesítési kapcsolója is be van kapcsolva. Külső Apple- vagy Google-feltételek és a valódi eszközös tesztek továbbra is visszatarthatják a bevezetést."
+          },
+          "editAccess": {
+            "title": "Ki módosíthatja a csomagot",
+            "purpose": "Amíg a mentett csomag készre van jelölve az érvényesítéshez, az előnyeit, korlátait és a készenlétét csak tulajdonos módosíthatja. Addig az adminok is szerkeszthetik az előnyöket és a korlátokat, a készenlétet viszont csak tulajdonos módosíthatja. A csak olvasási joggal rendelkezők csak megnézhetik az oldalt.",
+            "actions": {
+              "1": "Olvasd el az oldal tetején megjelenő figyelmeztetést: ha azt írja, hogy a csomag készre van jelölve, a te szerepköröddel minden kapcsoló, korlátmező és a mentés gomb is le van tiltva.",
+              "2": "Készre jelölt csomag módosítását kérd egy tulajdonostól. A tulajdonos ugyanúgy szerkeszti, mint bármely más revíziót."
+            },
+            "guidance": "A Core ugyanezt a szabályt alkalmazza: készre jelölt csomag módosítását nem tulajdonostól elutasítja, és semmit nem ment. Ha szerkesztés közben egy tulajdonos készre jelöli a csomagot, a mentésed elutasítást kap, és az oldal a módosításaid helyett betölti a jelenlegi csomagot."
           }
         }
       },
@@ -3271,6 +3280,10 @@
       "label": "Ez a revízió készen áll a korlátozások érvényesítésére",
       "hint": "Az érvényesítés csak akkor indul el, ha ez a jelölő és a szerver érvényesítési kapcsolója is be van kapcsolva.",
       "ownerOnly": "A készenléti jelölőt csak tulajdonos módosíthatja; az adminok továbbra is szerkeszthetik a csomag előnyeit és korlátait."
+    },
+    "liveLock": {
+      "title": "Ez a csomag készre van jelölve az érvényesítéshez. Csak tulajdonos módosíthatja.",
+      "copy": "Ha a szerver érvényesítési kapcsolója be van kapcsolva, a csomag minden módosítása azonnal minden tagra hat, ezért a Core csak tulajdonostól fogad el rajta módosítást. A szerkesztő és a mentés a te szerepköröddel csak olvasható; a módosítást kérd egy tulajdonostól."
     }
   },
   "membershipErrors": {
@@ -3294,7 +3307,9 @@
     "useExpiryUpdate": "Ez a művelet nem hosszabbítaná meg a hozzáférést. Ehhez a pontos lejárat szerkesztőjét használd.",
     "userNotFound": "A tag már nem létezik, vagy ez az admin már nem fér hozzá.",
     "invalidResponse": "A Core nem olvasható előfizetési választ adott. Nem feltételezünk sikert; újrapróbálás előtt frissíts.",
-    "unknown": "Az előfizetési művelet ismeretlen válasszal hiúsult meg. Újrapróbálás előtt frissítsd a hiteles állapotot."
+    "unknown": "Az előfizetési művelet ismeretlen válasszal hiúsult meg. Újrapróbálás előtt frissítsd a hiteles állapotot.",
+    "planLiveOwnerRequired": "Ez a csomag készre van jelölve az érvényesítéshez, ezért csak tulajdonos módosíthatja. Semmi nem mentődött el.",
+    "planLiveOwnerRequiredAdopted": "Miután megnyitottad az oldalt, egy tulajdonos készre jelölte a csomagot az érvényesítéshez, ezért mostantól csak tulajdonos módosíthatja. Semmi nem mentődött el: a módosításaid helyett betöltöttük a jelenlegi csomagot."
   },
   "membershipUser": {
     "title": "Előfizetés",

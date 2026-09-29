@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import {
+  MembershipCapabilityTable,
+  MembershipPlanAccessNotice,
+  MembershipQuotaTable,
+} from "@/components/MembershipPlanEditor";
 import { MembershipQuotaPreviewList } from "@/components/MembershipQuotaPreview";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -12,11 +17,10 @@ import {
 } from "@/lib/featureSwitches";
 import {
   MEMBERSHIP_CAPABILITIES,
-  MEMBERSHIP_QUOTAS,
-  MEMBERSHIP_TIERS,
   membershipActionErrorKey,
   membershipConfiguration,
   membershipConfigurationCandidate,
+  membershipPlanEditAccess,
   membershipPlanIsDirty,
   membershipPlanPreview,
   membershipPlanValidationIssues,
@@ -172,10 +176,16 @@ export default function MembershipConfigurationPage() {
   }
 
   async function save() {
-    const editor = adminRole === "owner" || adminRole === "admin";
-    if (!catalogue || !draft || saving || !editor || !dirty || validationIssues.length > 0) return;
+    if (!catalogue || !draft || saving || !dirty || validationIssues.length > 0) return;
+    // Access follows the STORED plan (P-058): while it is marked ready only an owner may change it.
+    const access = membershipPlanEditAccess(adminRole, catalogue.configuration);
+    if (access === "liveOwnerOnly") {
+      setNotice({ tone: "error", text: membershipErrors("planLiveOwnerRequired") });
+      return;
+    }
+    if (access === "readOnly") return;
     if (draft.ready_for_enforcement !== catalogue.configuration.ready_for_enforcement
-      && adminRole !== "owner") {
+      && access !== "owner") {
       setNotice({ tone: "error", text: t("readiness.ownerOnly") });
       return;
     }
@@ -191,8 +201,17 @@ export default function MembershipConfigurationPage() {
     setSaving(false);
     if (!response?.success) {
       const errorKey = membershipActionErrorKey("configuration_save", response?.error);
-      // Only a revision conflict is allowed to replace a dirty draft, and only
-      // when its attached authoritative catalogue passes the strict parser.
+      // Only a revision conflict, or Core's live-plan refusal (P-058: someone marked the
+      // plan ready since this page loaded), may replace a dirty draft, and only when the
+      // attached authoritative catalogue passes the strict parser. Nothing was written.
+      if (errorKey === "planLiveOwnerRequired") {
+        const liveAdopted = adopt(response?.data);
+        setNotice({
+          tone: "error",
+          text: membershipErrors(liveAdopted ? "planLiveOwnerRequiredAdopted" : "planLiveOwnerRequired"),
+        });
+        return;
+      }
       const conflictAdopted = errorKey === "configurationConflict"
         && adopt(response?.data);
       setNotice({
@@ -236,9 +255,11 @@ export default function MembershipConfigurationPage() {
 
   const rollout = catalogue.rollout;
   const storeProducts = membershipStoreProductRows(catalogue);
-  const editor = adminRole === "owner" || adminRole === "admin";
-  const owner = adminRole === "owner";
-  const saveDisabled = saving || !editor || !dirty || validationIssues.length > 0;
+  // A stored plan marked ready is read-only for every role but owner; Core refuses the save anyway.
+  const access = membershipPlanEditAccess(adminRole, catalogue.configuration);
+  const planEditable = access === "owner" || access === "editor";
+  const owner = access === "owner";
+  const saveDisabled = saving || !planEditable || !dirty || validationIssues.length > 0;
   return (
     <div className="membership-config-page">
       <PageHeader
@@ -256,6 +277,8 @@ export default function MembershipConfigurationPage() {
       />
 
       {notice ? <p className={`alert ${notice.tone === "success" ? "alert-success" : "alert-error"}`} role="status">{notice.text}</p> : null}
+
+      <MembershipPlanAccessNotice access={access} />
 
       <div
         className={`alert membership-validation-summary ${validationIssues.length === 0 ? "alert-success" : "alert-error"}`}
@@ -303,72 +326,21 @@ export default function MembershipConfigurationPage() {
           </div>
         </div>
         <div className="panel-body">
-          <div className="table-wrap membership-config-table">
-            <table className="data-table">
-              <thead><tr><th>{t("benefits.capability")}</th><th>{t("tiers.free")}</th><th>{t("tiers.plus")}</th></tr></thead>
-              <tbody>{MEMBERSHIP_CAPABILITIES.map((key) => (
-                <tr key={key}>
-                  <td><strong>{t(`capabilities.${key}`)}</strong><small className="table-subline">{t(`capabilityHelp.${key}`)}</small></td>
-                  {MEMBERSHIP_TIERS.map((tier) => (
-                    <td key={tier}>
-                      <label className="switch membership-switch">
-                        <span className="sr-only">{t("benefits.capabilityToggle", { capability: t(`capabilities.${key}`), tier: t(`tiers.${tier}`) })}</span>
-                        <input type="checkbox" disabled={!editor} checked={draft.capabilities[key][tier]} onChange={(event) => capability(key, tier, event.target.checked)} />
-                        <span className="switch-track" />
-                      </label>
-                    </td>
-                  ))}
-                </tr>
-              ))}</tbody>
-            </table>
-          </div>
+          <MembershipCapabilityTable draft={draft} editable={planEditable} onChange={capability} />
         </div>
       </section>
 
       <section className="panel">
         <div className="panel-header"><div><h2>{t("limits.title")}</h2><p>{t("limits.copy")}</p></div></div>
         <div className="panel-body">
-          <div className="table-wrap membership-config-table">
-            <table className="data-table">
-              <thead><tr><th>{t("limits.quota")}</th><th>{t("limits.scope")}</th><th>{t("tiers.free")}</th><th>{t("tiers.plus")}</th></tr></thead>
-              <tbody>{MEMBERSHIP_QUOTAS.map((key) => {
-                const bound = catalogue.bounds[key];
-                return (
-                  <tr key={key}>
-                    <td><strong>{t(`quotas.${key}`)}</strong><small className="table-subline">{t("limits.bounds", { min: bound.min, max: bound.max })}</small></td>
-                    <td>{t(`scopes.${draft.quotas[key].scope}`)}</td>
-                    {MEMBERSHIP_TIERS.map((tier) => {
-                      const rule = draft.quotas[key][tier];
-                      return (
-                        <td key={tier}>
-                          <div className="membership-rule-control">
-                            <select disabled={!editor} value={rule.mode} aria-label={t("limits.modeLabel", { quota: t(`quotas.${key}`), tier: t(`tiers.${tier}`) })} onChange={(event) => quotaMode(key, tier, event.target.value as MembershipQuotaMode)}>
-                              <option value="disabled">{t("modes.disabled")}</option>
-                              <option value="finite">{t("modes.finite")}</option>
-                              <option value="unlimited">{t("modes.unlimited")}</option>
-                            </select>
-                            {rule.mode === "finite" ? (
-                              <input
-                                disabled={!editor}
-                                type="number"
-                                min={bound.min}
-                                max={bound.max}
-                                step={1}
-                                value={rule.value ?? ""}
-                                aria-invalid={validationIssues.some((issue) => issue.quota === key && (issue.tier === null || issue.tier === tier))}
-                                aria-label={t("limits.valueLabel", { quota: t(`quotas.${key}`), tier: t(`tiers.${tier}`) })}
-                                onChange={(event) => quotaValue(key, tier, event.target.value)}
-                              />
-                            ) : null}
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}</tbody>
-            </table>
-          </div>
+          <MembershipQuotaTable
+            draft={draft}
+            bounds={catalogue.bounds}
+            editable={planEditable}
+            validationIssues={validationIssues}
+            onMode={quotaMode}
+            onValue={quotaValue}
+          />
         </div>
       </section>
 
@@ -451,7 +423,9 @@ export default function MembershipConfigurationPage() {
             <span>{t("readiness.label")}</span>
           </label>
           <p className="field-hint">{t("readiness.hint")}</p>
-          {!owner ? <p className="field-hint">{t("readiness.ownerOnly")}</p> : null}
+          {access === "liveOwnerOnly"
+            ? <p className="field-hint">{t("liveLock.title")}</p>
+            : !owner ? <p className="field-hint">{t("readiness.ownerOnly")}</p> : null}
           <div className="row-actions membership-save-row">
             <button type="button" className="button button-primary" disabled={saveDisabled} onClick={() => void save()}>{saving ? common("saving") : t("save")}</button>
           </div>

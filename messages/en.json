@@ -461,6 +461,15 @@
               "2": "Save the marker with the same optimistic revision as the rest of the configuration."
             },
             "guidance": "Enforcement starts only when this marker and the server's enforcement switch are both on. External Apple or Google requirements and physical-device tests may still hold the release back."
+          },
+          "editAccess": {
+            "title": "Who can change the plan",
+            "purpose": "While the saved plan is marked ready for enforcement, only an owner can change its benefits, limits or readiness. Before that, administrators edit benefits and limits, and only an owner changes readiness. Viewers only read the page.",
+            "actions": {
+              "1": "Read the notice at the top of the page: when it says the plan is marked ready, every switch, limit control and Save button stays disabled for your role.",
+              "2": "Ask an owner to change a plan that is marked ready. An owner edits it like any other revision."
+            },
+            "guidance": "Core enforces the same rule: it refuses a non-owner's change to a plan marked ready and writes nothing. If an owner marks the plan ready while you are editing, your save is refused and the page reloads the current plan in place of your changes."
           }
         }
       },
@@ -3271,6 +3280,10 @@
       "label": "This revision is ready for enforcement",
       "hint": "Enforcement starts only when this marker and the server's enforcement switch are both on.",
       "ownerOnly": "Only an owner can change the readiness marker; administrators can still edit plan benefits and limits."
+    },
+    "liveLock": {
+      "title": "This plan is marked ready for enforcement. Only an owner can change it.",
+      "copy": "Once the server's enforcement switch is on, every change to this plan reaches all members at once, so Core accepts changes to it only from an owner. The editor and Save stay read-only for your role; ask an owner to make the change."
     }
   },
   "membershipErrors": {
@@ -3294,7 +3307,9 @@
     "useExpiryUpdate": "This grant would not extend access. Use the exact expiry editor for this change.",
     "userNotFound": "The member no longer exists or is no longer available to this administrator.",
     "invalidResponse": "Core returned an unreadable membership response. No success is assumed; refresh before retrying.",
-    "unknown": "The membership operation failed with an unrecognized response. Refresh the authoritative state before retrying."
+    "unknown": "The membership operation failed with an unrecognized response. Refresh the authoritative state before retrying.",
+    "planLiveOwnerRequired": "This plan is marked ready for enforcement, so only an owner can change it. Nothing was saved.",
+    "planLiveOwnerRequiredAdopted": "An owner marked this plan ready for enforcement after you opened the page, so only an owner can change it now. Nothing was saved: the current plan has been reloaded in place of your changes."
   },
   "membershipUser": {
     "title": "Membership",

@@ -139,7 +139,8 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "membership",
     route: "/membership",
-    sections: ["rollout", "benefits", "limits", "preview", "products", "readiness"],
+    // P-058: who may change the plan, and why a plan marked ready is owner-only.
+    sections: ["editAccess", "rollout", "benefits", "limits", "preview", "products", "readiness"],
     matches: exact("/membership"),
   },
   {

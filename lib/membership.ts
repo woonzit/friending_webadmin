@@ -268,6 +268,7 @@ export type MembershipActionErrorKey =
   | "timeout"
   | "grantNotFound"
   | "useExpiryUpdate"
+  | "planLiveOwnerRequired"
   | "userNotFound"
   | "invalidResponse"
   | "unknown";
@@ -631,6 +632,9 @@ export function membershipActionErrorKey(
   if (code === "admin-session-invalid") return "sessionInvalid";
   if (code === "membership-admin-grant-not-found") return "grantNotFound";
   if (code === "membership-admin-use-expiry-update") return "useExpiryUpdate";
+  // P-058, a definite refusal (nothing written): the stored plan is marked ready for
+  // enforcement and only an owner may change it. Core attaches the current configuration.
+  if (code === "membership-configuration-owner-required") return "planLiveOwnerRequired";
   if (code === "membership-user-not-found") return "userNotFound";
   if (code === "core-timeout") return "timeout";
   if (code === "core-unavailable"
@@ -651,6 +655,32 @@ export function membershipActionErrorKey(
     || code === "membership-admin-revision-invalid"
     || code === "membership-user-invalid") return "validation";
   return "unknown";
+}
+
+export type MembershipPlanEditAccess =
+  /** Every field, readiness included. */
+  | "owner"
+  /** An administrator on a plan that is not marked ready: benefits and limits, never readiness. */
+  | "editor"
+  /** Any other role while the stored plan is marked ready: read-only, Core refuses a material change. */
+  | "liveOwnerOnly"
+  /** A read-only role (or an unrecognised one) on a plan that is not marked ready. */
+  | "readOnly";
+
+/**
+ * Who may change the loaded plan (P-058). While the STORED plan is marked ready for enforcement,
+ * Core refuses a material change from anyone but an owner (`membership-configuration-owner-required`),
+ * so the editor is read-only for every other role. Otherwise an administrator edits benefits and
+ * limits, and readiness stays owner-only. Pass the stored plan, never the draft: an owner's
+ * unsaved readiness change must not lock or unlock anything. Core still decides every save.
+ */
+export function membershipPlanEditAccess(
+  role: string,
+  stored: MembershipPlanConfiguration,
+): MembershipPlanEditAccess {
+  if (role === "owner") return "owner";
+  if (stored.ready_for_enforcement) return "liveOwnerOnly";
+  return role === "admin" ? "editor" : "readOnly";
 }
 
 /** One truthful operator list; a populated Google catalogue must never disappear behind Apple. */

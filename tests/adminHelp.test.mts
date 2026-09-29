@@ -139,8 +139,9 @@ test("every inventoried functional section has detailed English and Hungarian he
   // topic for restoring PLUS after a re-registration, a support procedure that the
   // membership panel's grant controls carry out (249). T-863 S9 (P-091) adds the
   // new-member welcome message panel on /configuration, saved on its own (250). T-863 S9
-  // (P-092) adds the registrations-by-platform panel on the overview (251).
-  assert.equal(totalSections, 251, "review the functional-section census when the UI changes");
+  // (P-092) adds the registrations-by-platform panel on the overview (251). T-863 S9
+  // (P-058) adds the membership topic on who may change a plan marked ready (252).
+  assert.equal(totalSections, 252, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [
