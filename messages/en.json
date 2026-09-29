@@ -8458,6 +8458,7 @@
       "entryPointsHint": "Values for this scope: {values}. The app offers a reason only on the screens listed in its entry points.",
       "entryPointsEmpty": "Add at least one entry point for this scope.",
       "entryPointsUnknown": "Not an entry point for this scope: {values}. Use only: {allowed}.",
+      "entryPointsRefused": "Core refused these entry points. List at least one value for this scope, using only: {allowed}.",
       "escalationCategory": "Escalation category (optional)",
       "activeReason": "Reason is active",
       "commentRequired": "Reporter comment is required",

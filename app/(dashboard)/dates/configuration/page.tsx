@@ -13,6 +13,7 @@ import {
   DATES_REPORT_SCOPES,
   datesAdminPrincipal,
   datesReasonEntryPoints,
+  datesReasonEntryPointsRefused,
   datesReportEntryPointsFor,
   datesRuntimeSettingVisible,
   hasDatesCapability,
@@ -275,7 +276,14 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
       reason: auditReason.trim(), idempotency_key: createAdminIdempotencyKey("dates-reason-save"),
     });
     setBusy(false);
-    if (!response?.success) { onError(response?.error); return; }
+    if (!response?.success) {
+      if (datesReasonEntryPointsRefused(response?.error)) {
+        setEntryPointsError(t("entryPointsRefused", { allowed: allowedEntryPoints }));
+        return;
+      }
+      onError(response?.error);
+      return;
+    }
     await onSaved();
   }
 

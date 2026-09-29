@@ -14,6 +14,7 @@ import {
   datesCaseClaimableByRole,
   datesCaseInternalNotes,
   datesReasonEntryPoints,
+  datesReasonEntryPointsRefused,
   datesReportEntryPointsFor,
   datesAvailabilityWriteIsRetired,
   datesModerationSla,
@@ -428,6 +429,26 @@ test("report-reason entry points use the vocabulary Core seeds and clients send 
     assert.equal(typeof configuration.entryPointsEmpty, "string");
     assert.match(configuration.entryPointsUnknown, /\{values\}.*\{allowed\}/);
     assert.doesNotMatch(JSON.stringify(configuration), /activity_menu|profile_menu/);
+  }
+});
+
+test("Core's entry-point refusal is shown under the field, like the console's own check", () => {
+  // Core 8997bee3: dates_reason_save refuses an empty or unknown list with this code.
+  assert.equal(datesReasonEntryPointsRefused("dates-report-entry-points-invalid"), true);
+  for (const error of ["dates-report-entry-point-invalid", "dates-report-reason-order-invalid", "core-unavailable", "", null, undefined]) {
+    assert.equal(datesReasonEntryPointsRefused(error), false, String(error));
+  }
+
+  const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
+  const save = page.slice(page.indexOf("adminCall(\"dates_reason_save\""), page.indexOf("async function deactivate()"));
+  assert.match(save, /if \(datesReasonEntryPointsRefused\(response\?\.error\)\) \{\s*setEntryPointsError\(t\("entryPointsRefused", \{ allowed: allowedEntryPoints \}\)\);\s*return;\s*\}\s*onError\(response\?\.error\);/);
+  // The same inline slot the client-side check writes to.
+  assert.match(page, /\{entryPointsError && <small className="field-error" role="alert">\{entryPointsError\}<\/small>\}/);
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
+    const refused = messages.datesAdmin.configuration.entryPointsRefused;
+    assert.match(refused, /\{allowed\}/, `${locale}.entryPointsRefused`);
+    assert.doesNotMatch(refused, /dates-report-entry-points-invalid/, "a readable sentence, not the code");
   }
 });
 

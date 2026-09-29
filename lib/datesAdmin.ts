@@ -335,6 +335,9 @@ export const DATES_REPORT_SCOPES = ["user", "activity", "message", "review"] as 
  *   (a chat message and its sender).
  * The seeded-only values (`card`, `profile`, `participant`, `chat_header`,
  * `message`) stay valid so a seeded reason can still be edited and saved.
+ * Core validates a saved reason against the same per-scope lists
+ * (DatesContract::REPORT_ENTRY_POINTS) and refuses an empty list or any other
+ * value with dates-report-entry-points-invalid.
  */
 export const DATES_REPORT_ENTRY_POINTS: Readonly<Record<typeof DATES_REPORT_SCOPES[number], readonly string[]>> = {
   user: ["detail", "participant", "profile", "check_in", "chat_header", "direct_chat_header", "message_action"],
@@ -371,6 +374,15 @@ export function datesReasonEntryPoints(scope: string, value: string): DatesReaso
   const unknown = tokens.filter((item) => !allowed.includes(item));
   if (unknown.length > 0) return { ok: false, error: "unknown", tokens: unknown };
   return { ok: true, entryPoints: tokens };
+}
+
+/**
+ * Whether a reason save was refused for its entry points. The editor shows
+ * this under the entry-point field, like its own check, instead of as a raw
+ * error code at the top of the page.
+ */
+export function datesReasonEntryPointsRefused(error: unknown): boolean {
+  return error === "dates-report-entry-points-invalid";
 }
 
 export function configurationInputValue(type: string, raw: string): unknown {

@@ -8458,6 +8458,7 @@
       "entryPointsHint": "Ehhez a hatókörhöz ezek az értékek használhatók: {values}. Az app csak azokon a képernyőkön kínálja fel az indokot, amelyek szerepelnek a belépési pontjai között.",
       "entryPointsEmpty": "Adj meg legalább egy belépési pontot ehhez a hatókörhöz.",
       "entryPointsUnknown": "Ehhez a hatókörhöz nem tartozó belépési pont: {values}. Csak ezek használhatók: {allowed}.",
+      "entryPointsRefused": "A Core elutasította ezeket a belépési pontokat. Adj meg legalább egy értéket ehhez a hatókörhöz, és csak ezeket használd: {allowed}.",
       "escalationCategory": "Eszkalációs kategória (opcionális)",
       "activeReason": "Az indok aktív",
       "commentRequired": "A bejelentő megjegyzése kötelező",
