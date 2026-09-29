@@ -8369,6 +8369,12 @@
             "effect": "Az elutasítás ebből az értékből cooldown határidőt ír. Addig az új join/request próbálkozás elutasításra kerül. A nagyobb érték csökkenti az ismételt kéréseket, de a jogos újrapróbálást is késlelteti.",
             "caution": "A módosítás a jövőbeli elutasításoknál létrejövő cooldownokra hat; a már tárolt cooldown_until értéket nem írja át."
           },
+          "dates_reinvite_cooldown_hours": {
+            "title": "Újrameghívási várakozás elutasított meghívás után",
+            "purpose": "Megakadályozza, hogy a host közvetlenül azután újra meghívjon egy tagot ugyanarra az aktivitásra, hogy a tag elutasította a meghívást.",
+            "effect": "A tag elutasítása után ennyi óráig a Core dates-invite-cooldown hibával elutasítja, ha a host újra meghívja a tagot ugyanarra az aktivitásra, és a tag nem szerepel a host meghívható tagjai között. A host által elutasított csatlakozási kérés nem indít ilyen várakozást.",
+            "caution": "A várakozás a tárolt elutasítási időponttól számít, ezért a módosítás a már meglévő elutasításokra is azonnal hat. Ha a tag elnémította a hostot, a meghívást ettől az értéktől függetlenül mindig elutasítja a Core."
+          },
           "dates_invalidated_visibility_hours": {
             "title": "Érvénytelenített tagsági állapot láthatósága",
             "purpose": "A rövid türelmi időt határozza meg, ameddig egy befejezés, lejárat vagy lemondás miatt érvénytelen meghívás vagy kérés előzményként még látható marad.",
@@ -8398,6 +8404,18 @@
             "purpose": "Korlátozza, hogy egy automatikus csatlakozású aktivitást elhagyó felhasználó egy 24 órás ablakban hányszor csatlakozhat újra ugyanoda.",
             "effect": "Az első csatlakozás nem rejoin. A későbbi left állapotból joined állapotba lépések növelik a tagsági rejoin számlálót, és a limit elérésekor elutasításra kerülnek.",
             "caution": "A tagsági és értesítési állapot ide-oda váltását védi. Nem módosítja a hostmeghívásokat, jóváhagyási döntéseket vagy más aktivitásokhoz csatlakozást."
+          },
+          "dates_invite_daily_limit": {
+            "title": "Host napi meghívási limitje",
+            "purpose": "Korlátozza, hogy egy host az összes aktivitásában összesen hány meghívást küldhet egy gördülő 24 órás időszakban.",
+            "effect": "Minden elküldött meghívás beleszámít. A limit elérésekor a Core dates-invite-rate-limited hibával elutasítja a következő meghívást, amíg az időszak legrégebbi meghívása 24 óránál régebbi nem lesz.",
+            "caution": "Túl alacsony érték mellett a host nem tud egyszerre egy egész társaságot meghívni; túl magas érték mellett egy host sok idegennek küldhet meghívást, és vele push-értesítést is. A csatlakozási kéréseket és a jóváhagyásokat nem korlátozza."
+          },
+          "dates_invite_activity_daily_limit": {
+            "title": "Aktivitásonkénti napi meghívási limit",
+            "purpose": "Korlátozza, hogy egy host egy aktivitáshoz hány meghívást küldhet egy gördülő 24 órás időszakban.",
+            "effect": "A host napi összesített limitjétől külön számít. Amelyik limit előbb betelik, az utasítja el a következő meghívást dates-invite-rate-limited hibával.",
+            "caution": "Ne legyen nagyobb a host napi limitjénél: a nagyobb érték hatástalan, mert előbb az összesített limit telik be."
           },
           "dates_chat_message_rate_limit": {
             "title": "Chatüzenetek percenként",

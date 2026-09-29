@@ -8369,6 +8369,12 @@
             "effect": "A decline writes a cooldown deadline using this value. Until that deadline, another join/request attempt is rejected. Larger values reduce repeat requests but also delay legitimate retries.",
             "caution": "Changing the setting affects cooldowns written by future declines; it does not rewrite an already stored cooldown_until value."
           },
+          "dates_reinvite_cooldown_hours": {
+            "title": "Re-invite cooldown after a declined invitation",
+            "purpose": "Stops a host from inviting a member to the same activity again right after the member declined the invitation.",
+            "effect": "For this many hours after the member's decline, Core refuses another invite of that member to that activity with dates-invite-cooldown and leaves the member out of the host's invite candidates. A join request the host declined starts no invite cooldown.",
+            "caution": "The cooldown is measured from the stored decline time, so a change applies at once to existing declines too. An invite to a member who muted the host is refused whatever this value is."
+          },
           "dates_invalidated_visibility_hours": {
             "title": "Invalidated membership visibility",
             "purpose": "Defines the short grace period during which an invitation or request invalidated by an activity ending, expiring or being canceled remains visible as historical state.",
@@ -8398,6 +8404,18 @@
             "purpose": "Limits how often a user who left an auto-join activity can rejoin that same activity inside a 24-hour attempt window.",
             "effect": "The first join is not a rejoin. Subsequent left-to-joined transitions increment the per-membership rejoin counter and are rejected once the limit is reached.",
             "caution": "This protects membership and notification churn. It does not change host invitations, approval decisions or joins to other activities."
+          },
+          "dates_invite_daily_limit": {
+            "title": "Host invite limit per day",
+            "purpose": "Limits how many invitations one host can send across all of their activities in a rolling 24 hours.",
+            "effect": "Every completed invite counts. At the limit, Core refuses the next invite with dates-invite-rate-limited until the oldest invite in the window is more than 24 hours old.",
+            "caution": "Too low a value stops a host from inviting a whole group at once; too high a value lets one host send invitations, and their pushes, to many strangers. It does not limit join requests or approvals."
+          },
+          "dates_invite_activity_daily_limit": {
+            "title": "Invite limit per activity per day",
+            "purpose": "Limits how many invitations a host can send for one activity in a rolling 24 hours.",
+            "effect": "Counted separately from the host's daily total. Whichever limit is reached first refuses the next invite with dates-invite-rate-limited.",
+            "caution": "Keep it at or below the host's daily limit: a higher value has no effect, because the daily total is reached first."
           },
           "dates_chat_message_rate_limit": {
             "title": "Chat messages per minute",
