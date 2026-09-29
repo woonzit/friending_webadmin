@@ -451,6 +451,8 @@ export const ADMIN_HELP_PAGES = [
       "presence",
       // P-073: the location access panel, with its own revision and save.
       "locationAccess",
+      // P-091: the new-member welcome message, saved on its own.
+      "welcomeMessage",
       "verificationFlow",
       "safetyBoundary",
     ],

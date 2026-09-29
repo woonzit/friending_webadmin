@@ -9,6 +9,7 @@ import PageHeader from "@/components/PageHeader";
 import ProfilePresenceConfiguration from "@/components/ProfilePresenceConfiguration";
 import ProfileVerificationConfiguration from "@/components/ProfileVerificationConfiguration";
 import SectionAvailabilityConfigurationCard from "@/components/SectionAvailabilityConfigurationCard";
+import WelcomeMessageConfiguration from "@/components/WelcomeMessageConfiguration";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
 import {
@@ -596,6 +597,7 @@ export default function ConfigurationPage() {
           <div className="panel-body"><p className="page-subtitle">{t("safetyCopy")}</p></div>
         </aside>
       </div>
+      <WelcomeMessageConfiguration />
       <ProfilePresenceConfiguration />
       <LocationAccessConfiguration />
       <ProfileVerificationConfiguration />

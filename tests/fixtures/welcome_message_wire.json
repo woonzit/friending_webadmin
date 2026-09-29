@@ -1,0 +1,182 @@
+{
+    "generator": "php tests/welcome_message_storage_test.php --write",
+    "provenance": "Actual Core controller responses from an owned disposable Mongo replica set; synthetic principals only. Only the welcome_message entry of the settings map is kept (other corpora own the rest); the vocabulary block is dropped; nonzero updated_at normalised to 1700000000.",
+    "routes": {
+        "read": "/v1/webadmin/get_settings",
+        "save": "/v1/webadmin/set_settings"
+    },
+    "setting_key": "welcome_message",
+    "save_body_example": {
+        "settings": {
+            "welcome_message": {
+                "enabled": true,
+                "body": {
+                    "hu": "Új magyar szöveg.\n\nMásodik bekezdés.",
+                    "en": "New English text."
+                }
+            }
+        }
+    },
+    "limits": {
+        "locales": [
+            "hu",
+            "en"
+        ],
+        "max_body_code_points": 4000,
+        "allowed_control_characters": [
+            "\\t",
+            "\\n"
+        ]
+    },
+    "responses": {
+        "viewer-default": {
+            "success": true,
+            "status_code": 200,
+            "settings": {
+                "welcome_message": {
+                    "value": {
+                        "enabled": true,
+                        "body": {
+                            "hu": "Szia!\n\nÜdvözlünk a Friendingen – örülünk, hogy itt vagy!\n\nAz új Friending app nemrég indult, ezért a közösségünk még kicsi, de minden nap érkeznek új tagok.\n\nEgy kérésünk van: ne töröld rögtön a fiókodat. Hagyd meg a profilodat egy ideig, és adj neki esélyt – lehet, hogy épp most csatlakoznak azok, akikkel szívesen megismerkednél.\n\nHa valaki ír neked, értesítést kapsz, így nem kell folyton figyelned az appot.\n\nKérdésed van, vagy valami nem működik? Válaszolj nyugodtan erre az üzenetre – minden üzenetet elolvasunk.\n\nKöszönjük, hogy velünk vagy!\nA Friending csapata",
+                            "en": "Hi there,\n\nWelcome to Friending – we're glad you're here!\n\nThe new Friending app launched only recently, so our community is still small, but new members join every day.\n\nWe have one request: please don't delete your account right away. Keep your profile for a while and give it a chance – the people you'd enjoy meeting may be joining right now.\n\nWhen someone writes to you, you'll get a notification, so there's no need to keep checking the app.\n\nQuestions, or something not working? Just reply to this message – we read every one.\n\nThanks for being with us!\nThe Friending team"
+                        }
+                    },
+                    "type": "welcome_message",
+                    "allowed_values": [],
+                    "minimum": null,
+                    "maximum": null,
+                    "updated_at": 0,
+                    "updated_by": ""
+                }
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "owner-default": {
+            "success": true,
+            "status_code": 200,
+            "settings": {
+                "welcome_message": {
+                    "value": {
+                        "enabled": true,
+                        "body": {
+                            "hu": "Szia!\n\nÜdvözlünk a Friendingen – örülünk, hogy itt vagy!\n\nAz új Friending app nemrég indult, ezért a közösségünk még kicsi, de minden nap érkeznek új tagok.\n\nEgy kérésünk van: ne töröld rögtön a fiókodat. Hagyd meg a profilodat egy ideig, és adj neki esélyt – lehet, hogy épp most csatlakoznak azok, akikkel szívesen megismerkednél.\n\nHa valaki ír neked, értesítést kapsz, így nem kell folyton figyelned az appot.\n\nKérdésed van, vagy valami nem működik? Válaszolj nyugodtan erre az üzenetre – minden üzenetet elolvasunk.\n\nKöszönjük, hogy velünk vagy!\nA Friending csapata",
+                            "en": "Hi there,\n\nWelcome to Friending – we're glad you're here!\n\nThe new Friending app launched only recently, so our community is still small, but new members join every day.\n\nWe have one request: please don't delete your account right away. Keep your profile for a while and give it a chance – the people you'd enjoy meeting may be joining right now.\n\nWhen someone writes to you, you'll get a notification, so there's no need to keep checking the app.\n\nQuestions, or something not working? Just reply to this message – we read every one.\n\nThanks for being with us!\nThe Friending team"
+                        }
+                    },
+                    "type": "welcome_message",
+                    "allowed_values": [],
+                    "minimum": null,
+                    "maximum": null,
+                    "updated_at": 0,
+                    "updated_by": ""
+                }
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "viewer-write-refused": {
+            "success": false,
+            "status_code": 403,
+            "error": "admin-write-required",
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "disabled-saved": {
+            "success": true,
+            "status_code": 200,
+            "settings": {
+                "welcome_message": {
+                    "value": {
+                        "enabled": false,
+                        "body": {
+                            "hu": "Szia!\n\nÜdvözlünk a Friendingen – örülünk, hogy itt vagy!\n\nAz új Friending app nemrég indult, ezért a közösségünk még kicsi, de minden nap érkeznek új tagok.\n\nEgy kérésünk van: ne töröld rögtön a fiókodat. Hagyd meg a profilodat egy ideig, és adj neki esélyt – lehet, hogy épp most csatlakoznak azok, akikkel szívesen megismerkednél.\n\nHa valaki ír neked, értesítést kapsz, így nem kell folyton figyelned az appot.\n\nKérdésed van, vagy valami nem működik? Válaszolj nyugodtan erre az üzenetre – minden üzenetet elolvasunk.\n\nKöszönjük, hogy velünk vagy!\nA Friending csapata",
+                            "en": "Hi there,\n\nWelcome to Friending – we're glad you're here!\n\nThe new Friending app launched only recently, so our community is still small, but new members join every day.\n\nWe have one request: please don't delete your account right away. Keep your profile for a while and give it a chance – the people you'd enjoy meeting may be joining right now.\n\nWhen someone writes to you, you'll get a notification, so there's no need to keep checking the app.\n\nQuestions, or something not working? Just reply to this message – we read every one.\n\nThanks for being with us!\nThe Friending team"
+                        }
+                    },
+                    "type": "welcome_message",
+                    "allowed_values": [],
+                    "minimum": null,
+                    "maximum": null,
+                    "updated_at": 1700000000,
+                    "updated_by": "admin@example.test"
+                }
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "edited-saved": {
+            "success": true,
+            "status_code": 200,
+            "settings": {
+                "welcome_message": {
+                    "value": {
+                        "enabled": true,
+                        "body": {
+                            "hu": "Új magyar szöveg.\n\nMásodik bekezdés.",
+                            "en": "New English text."
+                        }
+                    },
+                    "type": "welcome_message",
+                    "allowed_values": [],
+                    "minimum": null,
+                    "maximum": null,
+                    "updated_at": 1700000000,
+                    "updated_by": "owner@example.test"
+                }
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "invalid-empty": {
+            "success": false,
+            "status_code": 422,
+            "error": "setting-invalid",
+            "field": "welcome_message",
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "invalid-shape": {
+            "success": false,
+            "status_code": 422,
+            "error": "setting-invalid",
+            "field": "welcome_message",
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "invalid-too-long": {
+            "success": false,
+            "status_code": 422,
+            "error": "setting-invalid",
+            "field": "welcome_message",
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "corrupt-read": {
+            "success": true,
+            "status_code": 200,
+            "settings": {
+                "welcome_message": {
+                    "value": null,
+                    "type": "welcome_message",
+                    "allowed_values": [],
+                    "minimum": null,
+                    "maximum": null,
+                    "updated_at": 1700000000,
+                    "updated_by": "owner@example.test"
+                }
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        }
+    }
+}

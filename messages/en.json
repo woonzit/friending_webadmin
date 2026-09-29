@@ -2603,6 +2603,16 @@
               "3": "Enter an internal reason and use the teaser save button, which is separate from the section-availability save above."
             },
             "guidance": "A teaser is presentation only: the section stays refused server-side, so a member who reaches it another way is still blocked. Nothing is published while the section is available, and nothing at all changes until you save."
+          },
+          "welcomeMessage": {
+            "title": "Welcome message for new members",
+            "purpose": "This separately saved panel holds the automatic message every new member finds in their Support conversation right after registering, in Hungarian or in English.",
+            "actions": {
+              "1": "Edit the Hungarian and the English text, then press Save welcome message; the next registration already gets the new text.",
+              "2": "Switch it off and save when new members should no longer get it.",
+              "3": "If the panel says the saved message is damaged, nobody is getting it: write a new message and save it."
+            },
+            "guidance": "It is on by default. The language follows the signup language: Hungarian signups get the Hungarian text, everyone else the English one. Each member gets it once, only at registration; earlier members are never messaged. It arrives as a support message, so replies show up in the Support inbox. Viewers can read it but cannot save it."
           }
         }
       },
@@ -7227,6 +7237,43 @@
       "confirmCopy": "Compatible iOS apps will require location access for: {flags}. Members who do not allow it cannot use that part of the app.",
       "confirmSignupRisk": "Requiring location at signup can lead to App Store rejection; switch it on only for a version App Review has seen behaving this way.",
       "confirmAction": "Switch on"
+    },
+    "welcomeMessage": {
+      "title": "Welcome message for new members",
+      "subtitle": "Right after registering, every new member finds this message in their Support conversation in the app. This panel saves on its own.",
+      "defaultOn": "On by default: unless it is switched off here, every new member gets this message in their Support conversation (Profile › Support) with an unread badge and a notification. Members who signed up in Hungarian get the Hungarian text, everyone else the English one. A change only affects later registrations; members who registered earlier are never messaged. Replies arrive in the Support inbox.",
+      "loading": "Loading the welcome message…",
+      "loadError": "The welcome message could not be loaded. Nothing has been assumed about the current setting, and editing stays off until it can be read.",
+      "corrupt": "The saved welcome message is damaged, so new members currently receive nothing. Write a new message and save it to fix this.",
+      "neverSaved": "Never edited: the built-in message is in use.",
+      "replacing": "You are writing a replacement for the damaged message.",
+      "updatedAt": "Last saved",
+      "updatedBy": "Saved by",
+      "enabled": "Send the welcome message",
+      "enabledOn": "On: every new member receives it right after registering.",
+      "enabledOff": "Off: new members receive no welcome message.",
+      "locales": {
+        "hu": "Hungarian text (members who signed up in Hungarian)",
+        "en": "English text (everyone else)"
+      },
+      "length": "{count} / {maximum} characters",
+      "issues": {
+        "empty": "Enter the message.",
+        "tooLong": "The message can be at most {maximum} characters long.",
+        "control": "Remove the invisible control characters; only line breaks and tabs are allowed."
+      },
+      "readOnly": "Your role can view this message but cannot change it. Ask an owner or an admin.",
+      "unsaved": "You have unsaved changes.",
+      "discard": "Discard changes",
+      "save": "Save welcome message",
+      "saving": "Saving…",
+      "reload": "Reload",
+      "replace": "Write a new message",
+      "saved": "Welcome message saved. Members who register from now on get this version.",
+      "invalid": "Core refused the message: both texts must be filled in, at most 4,000 characters each, without control characters. Nothing was saved.",
+      "writeRequired": "Your role cannot change the welcome message. Nothing was saved.",
+      "refused": "Core refused the save ({error}). Nothing was saved.",
+      "notApplied": "The save could not be confirmed, and the stored message differs from yours, so your change was most likely not applied. The stored version has been reloaded and your text is still in the editor: review it and save again."
     }
   },
   "signupOptions": {

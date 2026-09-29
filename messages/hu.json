@@ -2603,6 +2603,16 @@
               "3": "Adj meg belső indoklást, és a figyelmeztető szöveg saját mentőgombját használd, amely különbözik a fenti szekcióelérhetőség-mentéstől."
             },
             "guidance": "A figyelmeztető ablak csak megjelenítés: a szekció a szerveren továbbra is tiltott marad, így a más úton odajutó tagot is elutasítja. Elérhető szekciónál semmi nem jelenik meg, és mentésig egyáltalán semmi nem változik."
+          },
+          "welcomeMessage": {
+            "title": "Üdvözlő üzenet az új tagoknak",
+            "purpose": "Ez a külön menthető panel azt az automatikus üzenetet kezeli, amelyet minden új tag a regisztráció után rögtön megkap a Támogatás beszélgetésében, magyarul vagy angolul.",
+            "actions": {
+              "1": "Írd át a magyar és az angol szöveget, majd nyomd meg az Üdvözlő üzenet mentése gombot; már a következő regisztráció az új szöveget kapja.",
+              "2": "Ha az új tagoknak már nem kell, kapcsold ki, és mentsd el.",
+              "3": "Ha a panel azt írja, hogy a mentett üzenet sérült, akkor most senki nem kapja meg: írj egy új üzenetet, és mentsd el."
+            },
+            "guidance": "Alapból be van kapcsolva. A nyelv a regisztráció nyelvét követi: aki magyarul regisztrált, a magyar szöveget kapja, mindenki más az angolt. Minden tag csak egyszer, a regisztrációkor kapja meg; a korábbi tagoknak nem megy ki. Támogatási üzenetként érkezik, így a válaszok a Support üzenetek közé futnak be. A csak olvasási joggal rendelkezők megnézhetik, de nem menthetik."
           }
         }
       },
@@ -7227,6 +7237,43 @@
       "confirmCopy": "A kompatibilis iOS-appok a következőknél kötelezővé teszik a helyhozzáférést: {flags}. Aki nem engedélyezi, az app ezen részét nem tudja használni.",
       "confirmSignupRisk": "A regisztrációnál kötelező helyadat App Store-elutasításhoz vezethet; csak olyan verziónál kapcsold be, amelyet az App Review már így látott.",
       "confirmAction": "Bekapcsolás"
+    },
+    "welcomeMessage": {
+      "title": "Üdvözlő üzenet az új tagoknak",
+      "subtitle": "Minden új tag a regisztráció után rögtön megkapja ezt az üzenetet az appban, a Támogatás beszélgetésében. Ez a panel külön mentődik.",
+      "defaultOn": "Alapból be van kapcsolva: amíg itt ki nem kapcsolod, minden új tag megkapja ezt az üzenetet a Támogatás beszélgetésében (Profil › Támogatás), olvasatlan jelzéssel és értesítéssel. Aki magyarul regisztrált, a magyar szöveget kapja, mindenki más az angolt. A módosítás csak a későbbi regisztrációkra vonatkozik, a korábban regisztrált tagok nem kapják meg. A válaszok a Support üzenetek közé érkeznek.",
+      "loading": "Az üdvözlő üzenet betöltése…",
+      "loadError": "Az üdvözlő üzenetet nem sikerült betölteni. A jelenlegi beállításról semmit nem feltételezünk, és a szerkesztés addig ki van kapcsolva, amíg be nem töltődik.",
+      "corrupt": "A mentett üdvözlő üzenet sérült, ezért az új tagok most semmit nem kapnak. Írj egy új üzenetet, és mentsd el, hogy ez rendbe jöjjön.",
+      "neverSaved": "Még senki nem szerkesztette: a beépített üzenet van használatban.",
+      "replacing": "Új üzenetet írsz a sérült helyett.",
+      "updatedAt": "Utoljára mentve",
+      "updatedBy": "Mentette",
+      "enabled": "Üdvözlő üzenet küldése",
+      "enabledOn": "Bekapcsolva: minden új tag megkapja rögtön a regisztráció után.",
+      "enabledOff": "Kikapcsolva: az új tagok nem kapnak üdvözlő üzenetet.",
+      "locales": {
+        "hu": "Magyar szöveg (akik magyarul regisztráltak)",
+        "en": "Angol szöveg (mindenki más)"
+      },
+      "length": "{count} / {maximum} karakter",
+      "issues": {
+        "empty": "Add meg az üzenetet.",
+        "tooLong": "Az üzenet legfeljebb {maximum} karakter lehet.",
+        "control": "Töröld a láthatatlan vezérlőkaraktereket; csak sortörés és tabulátor lehet benne."
+      },
+      "readOnly": "A szerepköröddel megnézheted, de nem módosíthatod ezt az üzenetet. Módosításhoz kérj meg egy tulajdonost vagy adminisztrátort.",
+      "unsaved": "Nem mentett módosításaid vannak.",
+      "discard": "Módosítások elvetése",
+      "save": "Üdvözlő üzenet mentése",
+      "saving": "Mentés…",
+      "reload": "Újratöltés",
+      "replace": "Új üzenet írása",
+      "saved": "Az üdvözlő üzenet elmentve. Aki mostantól regisztrál, már ezt a változatot kapja.",
+      "invalid": "A Core nem fogadta el az üzenetet: mindkét szöveget ki kell tölteni, nyelvenként legfeljebb 4000 karakterben, vezérlőkarakterek nélkül. Semmi nem mentődött el.",
+      "writeRequired": "A szerepköröddel nem módosíthatod az üdvözlő üzenetet. Semmi nem mentődött el.",
+      "refused": "A Core elutasította a mentést ({error}). Semmi nem mentődött el.",
+      "notApplied": "A mentést nem sikerült visszaigazolni, és a tárolt üzenet eltér a tiédtől, így a módosításod valószínűleg nem ment át. Újratöltöttük a tárolt változatot, a szövegszerkesztőben viszont megmaradt, amit írtál: nézd át, és mentsd el újra."
     }
   },
   "signupOptions": {

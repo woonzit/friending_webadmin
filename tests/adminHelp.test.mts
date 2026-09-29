@@ -137,8 +137,9 @@ test("every inventoried functional section has detailed English and Hungarian he
   // (247). T-863 S5 (P-073) adds the location access panel on /configuration, which
   // has its own revision and its own save (248). T-863 S9 (P-101) adds the member
   // topic for restoring PLUS after a re-registration, a support procedure that the
-  // membership panel's grant controls carry out (249).
-  assert.equal(totalSections, 249, "review the functional-section census when the UI changes");
+  // membership panel's grant controls carry out (249). T-863 S9 (P-091) adds the
+  // new-member welcome message panel on /configuration, saved on its own (250).
+  assert.equal(totalSections, 250, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [
@@ -215,7 +216,7 @@ test("independently saved or operator-facing embedded tools have dedicated help 
     overview: ["metrics", "signupMetrics"],
     userDetail: ["membership", "membershipRestore"],
     photoModeration: ["imageEditing"],
-    configuration: ["sectionAvailability", "sectionTeasers", "featureSwitches", "authPolicy", "phoneCountries", "locationAccess"],
+    configuration: ["sectionAvailability", "sectionTeasers", "featureSwitches", "authPolicy", "phoneCountries", "locationAccess", "welcomeMessage"],
     appearance: ["landing", "landingButtons", "landingFooter", "landingQr", "modeSwitcher", "saving"],
   };
   for (const [key, sections] of Object.entries(required)) {
