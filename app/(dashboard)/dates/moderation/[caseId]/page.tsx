@@ -15,6 +15,9 @@ import {
   epochFromLocalInput,
   hasDatesCapability,
   humanizeMachineKey,
+  datesAppealBlockedByRole,
+  datesCaseClaimableByRole,
+  permittedResolutionActions,
   resolutionActions,
   type DatesAdminPrincipal,
   type DatesCaseSummary,
@@ -106,7 +109,8 @@ export default function DatesModerationCasePage() {
     const next = response as unknown as CaseDetail;
     setData(next);
     setPrincipal(nextPrincipal);
-    setResolutionAction((current) => current || resolutionActions(next.case)[0] || "dismiss");
+    const permitted = permittedResolutionActions(next.case, nextPrincipal);
+    setResolutionAction((current) => permitted.includes(current) ? current : permitted[0] || "");
     setState("ready");
   }, [caseId, data]);
 
@@ -236,7 +240,8 @@ export default function DatesModerationCasePage() {
 
   function prepareResolution(event: React.FormEvent) {
     event.preventDefault();
-    if (!data || resolutionReason.trim().length < 3 || visibleReasonEn.trim().length < 1 || visibleReasonHu.trim().length < 1) return;
+    if (!data || !principal || !permittedResolutionActions(data.case, principal).includes(resolutionAction)) return;
+    if (resolutionReason.trim().length < 3 || visibleReasonEn.trim().length < 1 || visibleReasonHu.trim().length < 1) return;
     setConfirmed({
       kind: "resolve",
       label: t(`actions.${resolutionAction}`),
@@ -289,7 +294,8 @@ export default function DatesModerationCasePage() {
   const assignedToMe = item.assignee_email?.toLowerCase() === principal.email.toLowerCase();
   const leaseActive = (item.claim_expires_at || 0) > Math.floor(Date.now() / 1000);
   const canBreakGlass = item.capabilities.can_break_glass && principal.break_glass;
-  const mayClaim = item.capabilities.can_claim || (item.conflict_of_interest && canBreakGlass);
+  const appealBlocked = datesAppealBlockedByRole(item, principal);
+  const mayClaim = datesCaseClaimableByRole(item, principal) && (item.capabilities.can_claim || (item.conflict_of_interest && canBreakGlass));
   const mayReadEvidence = item.capabilities.can_read_evidence || (item.conflict_of_interest && canBreakGlass);
   const mayCaptureTrail = Boolean(
     item.activity_id
@@ -297,8 +303,9 @@ export default function DatesModerationCasePage() {
     && hasDatesCapability(principal, "dates_trail_evidence_capture")
     && (!item.conflict_of_interest || (canBreakGlass && breakGlass)),
   );
-  const mayResolve = item.capabilities.can_resolve || (item.conflict_of_interest && canBreakGlass && assignedToMe && leaseActive);
-  const actions = resolutionActions(item);
+  const actions = permittedResolutionActions(item, principal);
+  const mayResolve = actions.length > 0 && (item.capabilities.can_resolve || (item.conflict_of_interest && canBreakGlass && assignedToMe && leaseActive));
+  const restrictionActionsHidden = actions.length > 0 && resolutionActions(item).some((action) => !actions.includes(action));
 
   return (
     <>
@@ -331,7 +338,8 @@ export default function DatesModerationCasePage() {
               {mayClaim && <button className="button button-primary" onClick={() => void claim()} disabled={busy || (item.conflict_of_interest && !breakGlass)}>{t("claim")}</button>}
               {assignedToMe && leaseActive && <><button className="button button-secondary" onClick={() => void lease("heartbeat")} disabled={busy}>{t("heartbeat")}</button><button className="button button-danger" onClick={() => void lease("release")} disabled={busy}>{t("release")}</button></>}
             </div>
-            {!mayClaim && !assignedToMe && <p className="page-subtitle">{t("claimUnavailable")}</p>}
+            {!mayClaim && !assignedToMe && <p className="page-subtitle">{appealBlocked ? t("appealClaimUnavailable") : t("claimUnavailable")}</p>}
+            {appealBlocked && assignedToMe && leaseActive && <p className="alert alert-info">{t("appealDecisionUnavailable")}</p>}
           </div>
         </section>
       </div>
@@ -373,7 +381,7 @@ export default function DatesModerationCasePage() {
       {mayResolve && <section className="panel dates-section dates-resolution-panel">
         <div className="panel-header"><div><h2>{t("resolutionTitle")}</h2><p>{t("resolutionCopy")}</p></div></div>
         <form className="panel-body form-grid" onSubmit={prepareResolution}>
-          <label className="field"><span>{t("action")}</span><select value={resolutionAction} onChange={(event) => setResolutionAction(event.target.value)}>{actions.map((action) => <option key={action} value={action}>{t(`actions.${action}`)}</option>)}</select></label>
+          <label className="field"><span>{t("action")}</span><select value={resolutionAction} onChange={(event) => setResolutionAction(event.target.value)}>{actions.map((action) => <option key={action} value={action}>{t(`actions.${action}`)}</option>)}</select>{restrictionActionsHidden && <small className="field-hint">{t("restrictionActionsUnavailable")}</small>}</label>
           {resolutionAction === "restrict_dates" && <label className="field"><span>{t("restrictionExpiry")}</span><input type="datetime-local" value={restrictionExpiry} onChange={(event) => setRestrictionExpiry(event.target.value)} /></label>}
           <label className="field field-full"><span>{t("internalReason")}</span><textarea required maxLength={1000} value={resolutionReason} onChange={(event) => setResolutionReason(event.target.value)} /></label>
           <label className="field"><span>{t("visibleReasonEn")}</span><textarea required maxLength={500} value={visibleReasonEn} onChange={(event) => setVisibleReasonEn(event.target.value)} /></label>

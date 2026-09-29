@@ -9,6 +9,8 @@ import {
   DATES_REPORT_SCOPES,
   datesActivityEditChanges,
   datesAdminPrincipal,
+  datesAppealBlockedByRole,
+  datesCaseClaimableByRole,
   datesReasonEntryPoints,
   datesReportEntryPointsFor,
   datesAvailabilityWriteIsRetired,
@@ -16,6 +18,7 @@ import {
   datesRuntimeSettingVisible,
   hasDatesCapability,
   normalizeDatesPrincipal,
+  permittedResolutionActions,
   resolutionActions,
 } from "../lib/datesAdmin.ts";
 import {
@@ -171,6 +174,59 @@ test("resolution options remain bounded by case target and kind", () => {
   assert.deepEqual(resolutionActions({ queue: "messages", case_kind: "reports", target_type: "message" }), ["dismiss", "restore_content", "remove_content", "warn", "restrict_dates", "suspend_account"]);
   assert.equal(resolutionActions({ queue: "users", case_kind: "reports", target_type: "user" }).includes("remove_participant"), true);
   assert.equal(resolutionActions({ queue: "users", case_kind: "reports", target_type: "user" }).includes("purge"), false);
+});
+
+test("resolution and claim options follow the principal's capabilities (AYI-076)", () => {
+  // Core's DatesAdminAuthorizationService::capabilities() per role.
+  const base = ["dates_activity_read", "dates_case_read", "dates_reason_read", "dates_sla_read", "dates_audit_read", "dates_configuration_read"];
+  const supportViewer = { capabilities: base };
+  const moderator = { capabilities: [...base, "dates_case_claim", "dates_case_resolve", "dates_evidence_read", "dates_case_note"] };
+  const senior = { capabilities: [...moderator.capabilities, "dates_appeal_resolve", "dates_restrict_user", "dates_legal_hold", "dates_trail_evidence_capture"] };
+
+  const userCase = { queue: "users", case_kind: "reports", target_type: "user" };
+  const activityCase = { queue: "activities", case_kind: "reports", target_type: "activity" };
+  const messageCase = { queue: "messages", case_kind: "reports", target_type: "message" };
+  const reviewCase = { queue: "reviews", case_kind: "reports", target_type: "review" };
+  const appealCase = { queue: "appeals", case_kind: "appeal", target_type: "activity" };
+  const prepublication = { queue: "activities", case_kind: "prepublication", target_type: "activity" };
+
+  // A moderator is never offered what Core refuses with dates-admin-capability-required.
+  for (const item of [userCase, activityCase, messageCase, reviewCase]) {
+    const offered = permittedResolutionActions(item, moderator);
+    assert.equal(offered.includes("restrict_dates"), false);
+    assert.equal(offered.includes("suspend_account"), false);
+    assert.deepEqual(offered, resolutionActions(item).filter((action) => !["restrict_dates", "suspend_account"].includes(action)));
+    assert.deepEqual(permittedResolutionActions(item, senior), resolutionActions(item));
+  }
+  assert.deepEqual(permittedResolutionActions(userCase, moderator), ["dismiss", "warn", "remove_participant"]);
+  assert.deepEqual(permittedResolutionActions(prepublication, moderator), ["approve_content", "reject_content"]);
+  assert.deepEqual(permittedResolutionActions(appealCase, moderator), []);
+  assert.deepEqual(permittedResolutionActions({ ...appealCase, queue: "activities" }, moderator), [], "an appeal kind outside the appeals queue is still an appeal");
+  assert.deepEqual(permittedResolutionActions(appealCase, senior), ["uphold", "overturn"]);
+  for (const item of [userCase, activityCase, appealCase, prepublication]) {
+    assert.deepEqual(permittedResolutionActions(item, supportViewer), []);
+  }
+
+  assert.equal(datesAppealBlockedByRole(appealCase, moderator), true);
+  assert.equal(datesAppealBlockedByRole(appealCase, senior), false);
+  assert.equal(datesAppealBlockedByRole(userCase, moderator), false);
+  assert.equal(datesCaseClaimableByRole(userCase, moderator), true);
+  assert.equal(datesCaseClaimableByRole(appealCase, moderator), false, "a moderator's claim would only hold the appeal's lease");
+  assert.equal(datesCaseClaimableByRole(appealCase, senior), true);
+  assert.equal(datesCaseClaimableByRole(userCase, supportViewer), false);
+
+  const page = readFileSync(new URL("../app/(dashboard)/dates/moderation/[caseId]/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /const actions = permittedResolutionActions\(item, principal\)/);
+  assert.match(page, /const mayResolve = actions\.length > 0 &&/);
+  assert.match(page, /datesCaseClaimableByRole\(item, principal\) &&/);
+  assert.match(page, /permittedResolutionActions\(data\.case, principal\)\.includes\(resolutionAction\)/);
+  assert.equal(/resolutionActions\(next\.case\)/.test(page), false, "the initial choice comes from the permitted list");
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
+    for (const key of ["appealClaimUnavailable", "appealDecisionUnavailable", "restrictionActionsUnavailable"]) {
+      assert.equal(typeof messages.datesAdmin.caseDetail[key], "string", `${locale}.${key}`);
+    }
+  }
 });
 
 test("activity edits leave maximum_people out in approval mode (AYI-013)", () => {

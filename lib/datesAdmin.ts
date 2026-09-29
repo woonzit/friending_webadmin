@@ -313,8 +313,13 @@ export function datesAvailabilityWriteIsRetired(action: string, value: unknown):
   return action === "dates_configuration_save" && record(value)?.key === "dates_enabled";
 }
 
+export function isDatesAppealCase(value: Pick<DatesCaseSummary, "queue" | "case_kind">): boolean {
+  return value.queue === "appeals" || value.case_kind === "appeal";
+}
+
+/** Every decision Core accepts for this kind of case, before role gates. */
 export function resolutionActions(value: Pick<DatesCaseSummary, "queue" | "case_kind" | "target_type">): string[] {
-  if (value.queue === "appeals" || value.case_kind === "appeal") return ["uphold", "overturn"];
+  if (isDatesAppealCase(value)) return ["uphold", "overturn"];
   if (value.case_kind === "prepublication") {
     return ["approve_content", "reject_content"];
   }
@@ -328,6 +333,51 @@ export function resolutionActions(value: Pick<DatesCaseSummary, "queue" | "case_
     return ["dismiss", "restore_content", "remove_content", "warn", "restrict_dates", "suspend_account"];
   }
   return ["dismiss", "warn", "restrict_dates", "suspend_account", "remove_participant"];
+}
+
+const RESTRICTING_RESOLUTIONS = new Set(["restrict_dates", "suspend_account"]);
+
+/**
+ * The decisions this principal may take on the case (AYI-076). Core's
+ * can_resolve only covers the claim, lease and conflict state, so the role
+ * gates Core applies at resolve time are mirrored here:
+ * - every resolution needs dates_case_resolve;
+ * - an appeal needs dates_appeal_resolve (DatesModerationCommandService::resolve);
+ * - restrict_dates and suspend_account need dates_restrict_user
+ *   (DatesModerationCommandService::resolveStandard).
+ * Core still enforces all three; this only stops offering what it refuses.
+ */
+export function permittedResolutionActions(
+  value: Pick<DatesCaseSummary, "queue" | "case_kind" | "target_type">,
+  principal: Pick<DatesAdminPrincipal, "capabilities">,
+): string[] {
+  if (!principal.capabilities.includes("dates_case_resolve")) return [];
+  if (isDatesAppealCase(value)) {
+    return principal.capabilities.includes("dates_appeal_resolve") ? resolutionActions(value) : [];
+  }
+  const restrict = principal.capabilities.includes("dates_restrict_user");
+  return resolutionActions(value).filter((action) => restrict || !RESTRICTING_RESOLUTIONS.has(action));
+}
+
+/** An appeal needs dates_appeal_resolve; without it the principal cannot decide one. */
+export function datesAppealBlockedByRole(
+  value: Pick<DatesCaseSummary, "queue" | "case_kind">,
+  principal: Pick<DatesAdminPrincipal, "capabilities">,
+): boolean {
+  return isDatesAppealCase(value) && !principal.capabilities.includes("dates_appeal_resolve");
+}
+
+/**
+ * Whether the principal's role allows claiming this case. Core's can_claim
+ * reflects only case state (open, unclaimed or expired, no conflict); the
+ * claim command itself needs dates_case_claim, and claiming an appeal the
+ * principal cannot decide would only hold the lease against those who can.
+ */
+export function datesCaseClaimableByRole(
+  value: Pick<DatesCaseSummary, "queue" | "case_kind">,
+  principal: Pick<DatesAdminPrincipal, "capabilities">,
+): boolean {
+  return principal.capabilities.includes("dates_case_claim") && !datesAppealBlockedByRole(value, principal);
 }
 
 export function humanizeMachineKey(value: string): string {
