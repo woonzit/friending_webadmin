@@ -1104,7 +1104,7 @@
       },
       "datesActivities": {
         "title": "AreYouIn aktivitások súgó",
-        "summary": "A AreYouIn a Friending tagok által létrehozott programterülete. Ezen a képernyőn a támogatási és biztonsági csapat minden aktivitást megkereshet, megértheti annak életciklusát, és nyers adatbázisrekordok böngészése nélkül nyithat korlátozott üzemeltetési részletet.",
+        "summary": "Az AreYouIn a Friending tagok által létrehozott programterülete. Ezen a képernyőn a támogatási és biztonsági csapat minden aktivitást megkereshet, megértheti annak életciklusát, és nyers adatbázisrekordok böngészése nélkül nyithat korlátozott üzemeltetési részletet.",
         "steps": {
           "1": "Keress ismert aktivitás, cím, város vagy host alapján, és szűkítsd az életciklus- vagy moderációs állapotot.",
           "2": "Megnyitás előtt együtt olvasd a host, időzítés, résztvevői és moderációs oszlopokat.",
@@ -1151,7 +1151,7 @@
       },
       "datesConfiguration": {
         "title": "AreYouIn konfiguráció súgó",
-        "summary": "Ez az oldal kezeli a AreYouIn korlátozott képesség- és megőrzési beállításait, a tagok által látott aktivitástípusokat és a kétnyelvű jelentési okokat. A AreYouIn szekció elérhetőségének egyetlen helye a Konfiguráció.",
+        "summary": "Ez az oldal kezeli az AreYouIn korlátozott képesség- és megőrzési beállításait, a tagok által látott aktivitástípusokat és a kétnyelvű jelentési okokat. Az AreYouIn szekció elérhetőségének egyetlen helye a Konfiguráció.",
         "steps": {
           "1": "Feature, limit vagy retention szabály módosítása előtt olvasd el az effektív értéket és a részletes runtime súgót.",
           "2": "A stabil katalóguskulcsokat hagyd változatlanul, a kétnyelvű címkét vagy aktív állapotot auditindokkal frissítsd.",
@@ -1190,7 +1190,7 @@
       },
       "datesModeration": {
         "title": "AreYouIn moderációs queue súgó",
-        "summary": "Ez a AreYouIn bejelentéseinek és publikálás előtti ügyeinek biztonsági sora. SLA-t, súlyosságot, hozzárendelést és kitakart célkontextust mutat anélkül, hogy érzékeny bizonyítékot nyitna a listában.",
+        "summary": "Ez az AreYouIn bejelentéseinek és publikálás előtti ügyeinek biztonsági sora. SLA-t, súlyosságot, hozzárendelést és kitakart célkontextust mutat anélkül, hogy érzékeny bizonyítékot nyitna a listában.",
         "steps": {
           "1": "Válaszd ki a jogosultságod szerinti queue-t és állapotot, majd szűrj hozzárendelés vagy pontos ügyazonosító alapján.",
           "2": "A moderációs eljárás szerint kezeld előre az SLA-t túllépő, kritikus vagy eszkalált ügyeket.",
@@ -2754,7 +2754,7 @@
               "1": "Hozzáférési állapot előtt a szerepet, e-mailt és aktivitást együtt vizsgáld.",
               "2": "Az ezen a képernyőn nem kínált szerepmódosításhoz a jóváhagyott owner eljárást használd."
             },
-            "guidance": "A UI nem építi újra optimistán a jogosultságot a címkéből. A Core hiteles, a AreYouIn vagy catalog capability pedig külön korlátozott ladder lehet."
+            "guidance": "A UI nem építi újra optimistán a jogosultságot a címkéből. A Core hiteles, az AreYouIn vagy catalog capability pedig külön korlátozott ladder lehet."
           },
           "activeAccess": {
             "title": "Aktív állapot, lock és eltávolítás",
@@ -7116,7 +7116,7 @@
       },
       "dates": {
         "title": "AreYouIn",
-        "copy": "A feloldott storefrontnál a AreYouIn szekciót és a hamburger menü bejegyzését szabályozza."
+        "copy": "A feloldott storefrontnál az AreYouIn szekciót és a hamburger menü bejegyzését szabályozza."
       },
       "globalTitle": "Globális elérhetőség",
       "globalCopy": "Akkor érvényes, ha nincs használható storefront, vagy ahhoz nem tartozik felülírás.",
@@ -7875,7 +7875,7 @@
       "title": "Aktivitások",
       "subtitle": "Minden AreYouIn aktivitás keresése, ellenőrzése és kezelése a Core korlátozott műveleteivel.",
       "searchLabel": "Aktivitás, cím, város vagy host",
-      "searchPlaceholder": "Keresés a AreYouIn aktivitások között…",
+      "searchPlaceholder": "Keresés az AreYouIn aktivitások között…",
       "lifecycle": "Életciklus",
       "moderation": "Moderáció",
       "deleted": "Soft delete állapot",
@@ -7913,7 +7913,7 @@
       "untitled": "Cím nélküli aktivitás",
       "empty": "Nincs a szűrőknek megfelelő aktivitás.",
       "emptyCopy": "Próbálj tágabb keresést, vagy állíts alaphelyzetbe egy szűrőt.",
-      "loadError": "A AreYouIn aktivitások nem tölthetők be.",
+      "loadError": "Az AreYouIn aktivitások nem tölthetők be.",
       "roles": {
         "support_viewer": "Support megtekintő",
         "moderator": "Moderátor",
@@ -7958,11 +7958,11 @@
       }
     },
     "activityDetail": {
-      "back": "Vissza a AreYouIn aktivitásokhoz",
+      "back": "Vissza az AreYouIn aktivitásokhoz",
       "eyebrow": "AreYouIn aktivitás",
       "subtitle": "{id} · {revision}. revízió",
-      "notFound": "Ez a AreYouIn aktivitás nem létezik.",
-      "loadError": "A AreYouIn aktivitás nem tölthető be.",
+      "notFound": "Ez az AreYouIn aktivitás nem létezik.",
+      "loadError": "Az AreYouIn aktivitás nem tölthető be.",
       "operationFailed": "A művelet sikertelen ({error}). Frissíts az újrapróbálás előtt.",
       "overview": "Üzemeltetési áttekintés",
       "overviewCopy": "A szerver által kezelt életciklus-, moderációs és részvételi állapot.",
@@ -8079,7 +8079,7 @@
       "breached": "Túllépve",
       "empty": "Nincs a szűrőknek megfelelő ügy.",
       "emptyCopy": "Módosítsd a queue, állapot vagy felelős szűrőt.",
-      "loadError": "A AreYouIn moderációs queue nem tölthető be.",
+      "loadError": "Az AreYouIn moderációs queue nem tölthető be.",
       "queues": {
         "activities": "Aktivitások",
         "users": "Userek",
@@ -8225,9 +8225,9 @@
       "eyebrow": "AreYouIn runtime",
       "title": "Konfiguráció és katalógusok",
       "subtitle": "Revízió-ellenőrzött feature kapcsolók, aktivitáscímkék és kétnyelvű jelentési indokok.",
-      "loadError": "A AreYouIn konfiguráció nem tölthető be.",
+      "loadError": "Az AreYouIn konfiguráció nem tölthető be.",
       "operationFailed": "A módosítás sikertelen ({error}). Frissíts az újrapróbálás előtt.",
-      "readOnly": "A AreYouIn szerepköröd olvashatja, de nem módosíthatja ezeket a beállításokat.",
+      "readOnly": "Az AreYouIn szerepköröd olvashatja, de nem módosíthatja ezeket a beállításokat.",
       "noCatalogRole": "Az admin fiókodon nincs katalógus szerepkör, ezért a Core elutasítja ezt a katalógust.",
       "noCatalogRoleHint": "Ez jogosultsági kérdés, nem üzemzavar. Egy tulajdonosnak be kell állítania a catalog_role mezőt az admin_emails rekordodon; erre a konzolon még nincs vezérlő.",
       "runtimeTitle": "Runtime beállítások",
@@ -8248,14 +8248,14 @@
         "title": "Runtime beállítások súgója",
         "intro": "Ez az útmutató minden AreYouIn runtime beállítás Core által vezérelt működését ismerteti. Megmutatja a Core-tól jelenleg kapott effektív és tárolt értéket, a biztonságos alapértéket és a megengedett határokat. A mentés az új kéréseknél azonnal érvényesül, de nem migrálja a meglévő rekordokat és nem indítja el a háttér-infrastruktúrát.",
         "beforeChangingTitle": "Biztonságos bekapcsolási sorrend",
-        "beforeChangingCopy": "A feature kapcsolókat, a megőrzési szabályokat és a workert egy kiadási egységként kezeld. A AreYouIn vagy egy nagy hatású képesség bekapcsolásakor ezt a sorrendet használd:",
+        "beforeChangingCopy": "A feature kapcsolókat, a megőrzési szabályokat és a workert egy kiadási egységként kezeld. Az AreYouIn vagy egy nagy hatású képesség bekapcsolásakor ezt a sorrendet használd:",
         "rolloutStepRetention": "Hagyd jóvá az adatvédelmi és jogi megőrzési értékeket, különösen a live trail és a moderációs bizonyíték esetében.",
-        "rolloutStepWorker": "Telepítsd és ellenőrizd a AreYouIn háttér-workert, a monitorozást és a kézbesítési függőségeket.",
-        "rolloutStepMaster": "A Konfigurációban állítsd be a AreYouIn elérhetőségét az ellenőrzött storefrontokra, majd ellenőrizd a kliens bootstrapot és a belépési pontot.",
+        "rolloutStepWorker": "Telepítsd és ellenőrizd az AreYouIn háttér-workert, a monitorozást és a kézbesítési függőségeket.",
+        "rolloutStepMaster": "A Konfigurációban állítsd be az AreYouIn elérhetőségét az ellenőrzött storefrontokra, majd ellenőrizd a kliens bootstrapot és a belépési pontot.",
         "rolloutStepCapabilities": "A létrehozást, live sharinget, értékeléseket és digestet külön-külön kapcsold be; ne egyszerre mindet.",
         "rolloutStepVerify": "A szélesebb bevezetés előtt figyeld a hibákat, moderációs sorokat, worker-késést és auditnaplókat.",
         "effectiveNoteLabel": "Tárolt és effektív érték:",
-        "effectiveNote": "A AreYouIn szekció elérhetősége a Konfigurációban szerkeszthető, nem ezen az oldalon. Egy alárendelt effektív érték akkor is lehet OFF, ha a tárolt értéke ON; az üzemeltetési tényt az effektív érték mutatja.",
+        "effectiveNote": "Az AreYouIn szekció elérhetősége a Konfigurációban szerkeszthető, nem ezen az oldalon. Egy alárendelt effektív érték akkor is lehet OFF, ha a tárolt értéke ON; az üzemeltetési tényt az effektív érték mutatja.",
         "timingNoteLabel": "Időzítés:",
         "timingNote": "Az időtartamok és megőrzési értékek általában egy aktivitás, elutasítás, ügy vagy törlési ütemezés létrehozásakor kerülnek a rekordba. Az alapérték módosítása nem írja át a meglévő határidőket külön migráció vagy művelet nélkül.",
         "sectionsLabel": "Runtime súgó fejezetei",
@@ -8303,19 +8303,19 @@
             "title": "Aktivitás létrehozása",
             "purpose": "Az új AreYouIn aktivitások piszkozatát és publikálását, valamint a létrehozási képesség appban való megjelenítését vezérli.",
             "effect": "ON állapotban a jogosult felhasználók validáció, moderáció és rate limit mellett létrehozhatnak és publikálhatnak. OFF letiltja az új aktivitás folyamatát; a meglévő aktivitásadatok és engedélyezett kezelési műveletek megmaradnak.",
-            "caution": "A AreYouIn szekció elérhetősége a Konfigurációban kezelhető. Új kínálat leállításakor először ezt a képességet kapcsold ki, ha a meglévő aktivitásokat még működtetni szeretnéd."
+            "caution": "Az AreYouIn szekció elérhetősége a Konfigurációban kezelhető. Új kínálat leállításakor először ezt a képességet kapcsold ki, ha a meglévő aktivitásokat még működtetni szeretnéd."
           },
           "dates_live_sharing_enabled": {
             "title": "Host live helymegosztása",
             "purpose": "Az aktív aktivitás hostjának live sessionjét, szüneteltetését/folytatását és a korlátozott helynyomvonal-pontok fogadását vezérli.",
             "effect": "ON csak akkor engedi a live műveleteket, ha pozitív live-trail megőrzés van beállítva. OFF letiltja a live session- és pontműveleteket, és a képességet elérhetetlenként adja az appnak.",
-            "caution": "Ez különösen érzékeny helyadatot kezel. Bekapcsolás előtt állítsd be és hagyd jóvá a dates_live_trail_retention_days értékét, telepítsd a AreYouIn workert és ellenőrizd a törlés monitorozását."
+            "caution": "Ez különösen érzékeny helyadatot kezel. Bekapcsolás előtt állítsd be és hagyd jóvá a dates_live_trail_retention_days értékét, telepítsd az AreYouIn workert és ellenőrizd a törlés monitorozását."
           },
           "dates_reviews_enabled": {
             "title": "Aktivitás utáni értékelések",
-            "purpose": "Az aktivitás befejezése utáni résztvevői értékelést, host check-int és a AreYouIn értékelési felületek láthatóságát vezérli.",
+            "purpose": "Az aktivitás befejezése utáni résztvevői értékelést, host check-int és az AreYouIn értékelési felületek láthatóságát vezérli.",
             "effect": "ON engedi a jogosult résztvevők támogatott értékelési folyamatát. OFF fail-closed módon letiltja az értékelési műveleteket és eltávolítja a képességet az appból; a tárolt értékelések és moderációs előzmények nem törlődnek.",
-            "caution": "Az értékelés moderációja és a bizonyítékmegőrzés külön biztonsági terület. A AreYouIn szekció elérhetősége a Konfigurációban kezelhető."
+            "caution": "Az értékelés moderációja és a bizonyítékmegőrzés külön biztonsági terület. Az AreYouIn szekció elérhetősége a Konfigurációban kezelhető."
           },
           "dates_digest_enabled": {
             "title": "Közeli aktivitások digestje",
@@ -8327,7 +8327,7 @@
             "title": "Ütemezett aktivitás alap-időtartama",
             "purpose": "Az új ütemezett aktivitás összeállításakor a klienseknek küldött javasolt aktivitáshossz.",
             "effect": "Nagyobb érték későbbi befejezést, kisebb érték rövidebb aktivitást javasol. Ez létrehozási alapérték, nem minden aktivitásra kötelező maximális időtartam.",
-            "caution": "A meglévő piszkozatokat és aktivitásokat nem írja át. A kliensek jellemzően a AreYouIn bootstrap frissítése után veszik át az új alapértéket."
+            "caution": "A meglévő piszkozatokat és aktivitásokat nem írja át. A kliensek jellemzően az AreYouIn bootstrap frissítése után veszik át az új alapértéket."
           },
           "dates_tbd_expiry_days": {
             "title": "Időpont nélküli aktivitás élettartama",
@@ -8417,23 +8417,23 @@
             "title": "Live nyomvonal megőrzése",
             "purpose": "Meghatározza, hogy a befejezett live helysessionök és pontnyomvonalak mennyi ideig maradnak meg a worker által végzett törlés előtt.",
             "effect": "Pozitív napszám mellett engedélyezett az élő helymegosztás, és az aktivitás befejezésekor, lemondásakor vagy törlésekor ütemeződik a nyomvonal törlése. Amíg üres, a Core elutasítja az élő helymegosztást, akkor is, ha a kapcsolója be van kapcsolva; az AreYouIn worker közben tovább fut (az értesítések, a lejáratok és az ütemezett törlések működnek), és figyelmeztetést naplóz.",
-            "caution": "Ez a live sharing adatvédelmi szempontból kritikus előfeltétele. Bekapcsolás előtt hagyd jóvá az időszakot, futtasd a AreYouIn workert és figyeld a törlési késést; az engedéllyel ügybizonyítékba másolt adatnak külön szabálya van."
+            "caution": "Ez a live sharing adatvédelmi szempontból kritikus előfeltétele. Bekapcsolás előtt hagyd jóvá az időszakot, futtasd az AreYouIn workert és figyeld a törlési késést; az engedéllyel ügybizonyítékba másolt adatnak külön szabálya van."
           },
           "moderation_evidence_retention_days": {
             "title": "Moderációs bizonyíték megőrzése",
-            "purpose": "A AreYouIn moderációs ügyekhez tárolt, korlátozott bizonyíték-pillanatképek hold utáni megőrzési idejét adja meg.",
+            "purpose": "Az AreYouIn moderációs ügyekhez tárolt, korlátozott bizonyíték-pillanatképek hold utáni megőrzési idejét adja meg.",
             "effect": "Automatikus vagy jogi hold lezárásakor a pozitív érték ennyi nappal későbbre ütemezi a bizonyíték törlését. Az üres érték nem hoz létre új automatikus törlési határidőt.",
             "caution": "Az aktív legal hold elsőbbséget élvez. Ez nem törli az ügy döntéseit vagy auditelőzményeit, és használat előtt adatvédelmi/jogi jóváhagyást igényel."
           },
           "dates_digest_frequency": {
             "title": "Digest gyakorisága",
-            "purpose": "A AreYouIn worker által a jogosult közeliaktivitás-digest következő vizsgálatának ütemezéséhez használt normál időközt választja ki.",
+            "purpose": "Az AreYouIn worker által a jogosult közeliaktivitás-digest következő vizsgálatának ütemezéséhez használt normál időközt választja ki.",
             "effect": "A daily egy napos, a weekly hét napos intervallumot használ. Digest csak akkor kerül sorba, ha a felhasználó jogosult, feliratkozott és új, csatlakozható közeli aktivitása van.",
             "caution": "Ez nem garantál pontos kézbesítési időt. A meglévő következő futási idő, a csendes időszak, a worker üteme és az értesítéskézbesítés késleltetheti a feldolgozást."
           },
           "dates_digest_quiet_hours": {
             "title": "Digest alapértelmezett csendes időszaka",
-            "purpose": "A AreYouIn értesítési beállításokhoz ajánlott alapértelmezett helyi csendes időszak kezdetét és végét adja meg.",
+            "purpose": "Az AreYouIn értesítési beállításokhoz ajánlott alapértelmezett helyi csendes időszak kezdetét és végét adja meg.",
             "effect": "Ha a felhasználónál engedélyezett a csendes időszak, az ütemezett digest kézbesítése halasztódik, amíg a helyi órája ebbe az intervallumba esik. A 22:00–08:00 jellegű tartomány átnyúlik éjfélen.",
             "caution": "Ez alapérték, nem kötelező globális értesítési tilalom. A meglévő explicit felhasználói beállítás az irányadó, az idő számítása pedig a felhasználó időzónáját használja, biztonságos UTC fallbackkel."
           }
