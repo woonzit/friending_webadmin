@@ -123,4 +123,13 @@ test("English and Hungarian presence-copy trees stay identical", async () => {
   }
 
   assert.deepEqual(paths(en.profilePresence), paths(hu.profilePresence));
+  assert.equal(en.profilePresence.configuration.modes.date.title, "Open to plans");
+  assert.equal(hu.profilePresence.configuration.modes.date.title, "Nyitott közös programokra");
+  for (const messages of [en, hu]) {
+    // The wire key stays date; the visible copy no longer promises romance.
+    const presence = messages.profilePresence.configuration;
+    const copy = [presence.subtitle, presence.fallbackRule,
+      ...Object.values(presence.modes).flatMap((mode: any) => [mode.title, mode.copy])].join(" ");
+    assert.doesNotMatch(copy, /\bdate\b|\bdating\b|randi/i);
+  }
 });

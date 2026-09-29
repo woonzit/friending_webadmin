@@ -8865,7 +8865,7 @@
   "profilePresence": {
     "configuration": {
       "title": "Online állapotok",
-      "subtitle": "Itt állítható, mely jelenléti módokat választhatják a userek. Az Online és a Láthatatlan állandó; a Randi és a Most egymástól függetlenül kikapcsolható.",
+      "subtitle": "Itt állítható, mely jelenléti módokat választhatják a tagok. Az Online és a Láthatatlan állandó; a Nyitott közös programokra és a Most egymástól függetlenül kikapcsolható.",
       "revision": "{revision}. revízió",
       "updatedAt": "Utolsó módosítás",
       "updatedBy": "Módosította",
@@ -8881,7 +8881,7 @@
       "alwaysAvailable": "Mindig elérhető",
       "available": "Elérhető",
       "unavailable": "Nem elérhető",
-      "fallbackRule": "A Randi vagy a Most kikapcsolásakor a Core minden érintett profilt azonnal és véglegesen Online állapotra állít. A mód későbbi visszakapcsolása nem állítja vissza a korábbi választást. A Láthatatlan módnál továbbra is a meglévő előfizetési jogosultság érvényes.",
+      "fallbackRule": "A Nyitott közös programokra vagy a Most kikapcsolásakor a Core minden érintett profilt azonnal és véglegesen Online állapotra állít. A mód későbbi visszakapcsolása nem állítja vissza a korábbi választást. A Láthatatlan módnál továbbra is a meglévő előfizetési jogosultság érvényes.",
       "disableConfirmTitle": "Kikapcsolod az online állapotokat?",
       "disableConfirmCopy": "Ezeket kapcsolod ki: {modes}. A Core {count} érintett user profilját azonnal és véglegesen Online állapotra állítja. A lehetőségek későbbi visszakapcsolása nem állítja vissza a korábbi státuszt.",
       "disableConfirmAction": "Kikapcsolás és Online-ra állítás",
@@ -8891,12 +8891,12 @@
           "copy": "Az alap látható állapot, valamint minden kikapcsolt vagy érvénytelen választás fallbackje."
         },
         "date": {
-          "title": "Randi",
-          "copy": "Jelzi, hogy a user nyitott egy randi megszervezésére."
+          "title": "Nyitott közös programokra",
+          "copy": "Jelzi, hogy a tag szívesen szervezne közös programot, és találkozna barátokkal."
         },
         "now": {
           "title": "Most",
-          "copy": "A lángos mód azoknak, akik most keresnek valamit."
+          "copy": "Jelzi, hogy a tag most szívesen részt venne egy spontán közös programban."
         },
         "invisible": {
           "title": "Láthatatlan",

@@ -8865,7 +8865,7 @@
   "profilePresence": {
     "configuration": {
       "title": "Online status choices",
-      "subtitle": "Choose which presence modes members may select. Online and Invisible are permanent; Date and Now can be withdrawn independently.",
+      "subtitle": "Choose which presence modes members may select. Online and Invisible are permanent; Open to plans and Now can be withdrawn independently.",
       "revision": "Revision {revision}",
       "updatedAt": "Last updated",
       "updatedBy": "Updated by",
@@ -8881,7 +8881,7 @@
       "alwaysAvailable": "Always available",
       "available": "Available",
       "unavailable": "Unavailable",
-      "fallbackRule": "When Date or Now is disabled, Core immediately and permanently changes every affected profile to Online. Re-enabling a mode never restores the previous selection. Invisible remains subject to the member's existing subscription entitlement.",
+      "fallbackRule": "When Open to plans or Now is disabled, Core immediately and permanently changes every affected profile to Online. Re-enabling a mode never restores the previous selection. Invisible remains subject to the member's existing subscription entitlement.",
       "disableConfirmTitle": "Disable online status choices?",
       "disableConfirmCopy": "You are disabling {modes}. Core will immediately and permanently change {count} affected member profiles to Online. Re-enabling these choices later will not restore their former status.",
       "disableConfirmAction": "Disable and reset to Online",
@@ -8891,12 +8891,12 @@
           "copy": "The standard visible status and the fallback for every disabled or invalid choice."
         },
         "date": {
-          "title": "Date",
-          "copy": "Shows that the member is open to arranging a date."
+          "title": "Open to plans",
+          "copy": "Shows that the member is open to making plans and meeting friends."
         },
         "now": {
           "title": "Now",
-          "copy": "Shows the flame-mode status for members looking for something now."
+          "copy": "Shows that the member is open to spontaneous plans right now."
         },
         "invisible": {
           "title": "Invisible",
