@@ -5,12 +5,14 @@ import { DATES_ADMIN_ACTIONS, isAdminActionAllowed } from "../lib/adminActions.t
 import {
   configurationInputValue,
   createAdminIdempotencyKey,
+  DATES_CASE_NOTE_LIMIT,
   DATES_REPORT_ENTRY_POINTS,
   DATES_REPORT_SCOPES,
   datesActivityEditChanges,
   datesAdminPrincipal,
   datesAppealBlockedByRole,
   datesCaseClaimableByRole,
+  datesCaseInternalNotes,
   datesReasonEntryPoints,
   datesReportEntryPointsFor,
   datesAvailabilityWriteIsRetired,
@@ -226,6 +228,100 @@ test("resolution and claim options follow the principal's capabilities (AYI-076)
     for (const key of ["appealClaimUnavailable", "appealDecisionUnavailable", "restrictionActionsUnavailable"]) {
       assert.equal(typeof messages.datesAdmin.caseDetail[key], "string", `${locale}.${key}`);
     }
+  }
+});
+
+test("case detail internal notes decode strictly and tolerate an older Core (AYI-044, AYI-075)", () => {
+  const first = { note_id: `nt_${"a".repeat(32)}`, author_email: "moderator@example.test", text: "Called the host, waiting for screenshots.", created_at: 1_790_000_000 };
+  const second = { note_id: `nt_${"b".repeat(32)}`, author_email: "senior@example.test", text: "Screenshots arrived via support ticket 123.\nSecond line.", created_at: 1_790_000_600 };
+  const sameSecond = { note_id: `nt_${"c".repeat(32)}`, author_email: "moderator@example.test", text: "Same second, written later.", created_at: 1_790_000_600 };
+  const detail = (extra: Record<string, unknown>) => ({ success: true, case: { case_id: "cas_1" }, reports: [], decisions: [], appeal: null, ...extra });
+
+  // Core 140d5bd0: oldest first, exact keys.
+  assert.deepEqual(
+    datesCaseInternalNotes(detail({ internal_notes: [first, second], internal_notes_withheld: false })),
+    { status: "ready", notes: [first, second] },
+  );
+  assert.deepEqual(
+    datesCaseInternalNotes(detail({ internal_notes: [], internal_notes_withheld: false })),
+    { status: "ready", notes: [] },
+  );
+  // Rendered oldest first even if the order drifts; same-second notes keep Core's order.
+  assert.deepEqual(
+    datesCaseInternalNotes(detail({ internal_notes: [second, sameSecond, first], internal_notes_withheld: false })),
+    { status: "ready", notes: [first, second, sameSecond] },
+  );
+  // Conflict of interest: Core sends [] and true.
+  assert.deepEqual(datesCaseInternalNotes(detail({ internal_notes: [], internal_notes_withheld: true })), { status: "withheld" });
+  // A Core from before 140d5bd0 sends neither key: not an empty list.
+  assert.deepEqual(datesCaseInternalNotes(detail({})), { status: "unsupported" });
+
+  const invalid = { status: "invalid" };
+  assert.deepEqual(datesCaseInternalNotes(null), invalid);
+  assert.deepEqual(datesCaseInternalNotes([]), invalid);
+  assert.deepEqual(datesCaseInternalNotes(detail({ internal_notes: [first] })), invalid, "the withheld flag is part of the contract");
+  assert.deepEqual(datesCaseInternalNotes(detail({ internal_notes_withheld: false })), invalid, "the list is part of the contract");
+  assert.deepEqual(datesCaseInternalNotes(detail({ internal_notes: null, internal_notes_withheld: false })), invalid);
+  assert.deepEqual(datesCaseInternalNotes(detail({ internal_notes: {}, internal_notes_withheld: false })), invalid);
+  assert.deepEqual(datesCaseInternalNotes(detail({ internal_notes: [], internal_notes_withheld: "false" })), invalid);
+  assert.deepEqual(datesCaseInternalNotes(detail({ internal_notes: [first], internal_notes_withheld: true })), invalid, "notes are never shown to a conflicted principal");
+  assert.deepEqual(datesCaseInternalNotes(detail({ internal_notes: [first, first], internal_notes_withheld: false })), invalid, "duplicate note ids");
+  assert.deepEqual(
+    datesCaseInternalNotes(detail({ internal_notes: Array.from({ length: DATES_CASE_NOTE_LIMIT + 1 }, (_, index) => ({ ...first, note_id: `nt_${index.toString(16).padStart(32, "0")}` })), internal_notes_withheld: false })),
+    invalid,
+    "more than Core ever returns",
+  );
+  assert.equal(
+    datesCaseInternalNotes(detail({ internal_notes: Array.from({ length: DATES_CASE_NOTE_LIMIT }, (_, index) => ({ ...first, note_id: `nt_${index.toString(16).padStart(32, "0")}` })), internal_notes_withheld: false })).status,
+    "ready",
+  );
+  const { text: _text, ...missingText } = first;
+  for (const note of [
+    missingText,
+    { ...first, extra: true },
+    { ...first, note_id: "" },
+    { ...first, note_id: "nt_123" },
+    { ...first, note_id: 42 },
+    { ...first, author_email: "" },
+    { ...first, author_email: "moderator" },
+    { ...first, author_email: null },
+    { ...first, text: "" },
+    { ...first, text: "   " },
+    { ...first, text: "x".repeat(1001) },
+    { ...first, text: ["not text"] },
+    { ...first, created_at: 0 },
+    { ...first, created_at: -5 },
+    { ...first, created_at: 1.5 },
+    { ...first, created_at: "1790000000" },
+    { ...first, created_at: 9_000_000_000_000 },
+    "note",
+    null,
+  ]) {
+    assert.deepEqual(datesCaseInternalNotes(detail({ internal_notes: [second, note], internal_notes_withheld: false })), invalid, JSON.stringify(note));
+  }
+  // Core bounds a note at 1,000 characters, not UTF-16 units.
+  assert.equal(datesCaseInternalNotes(detail({ internal_notes: [{ ...first, text: "😀".repeat(1000) }], internal_notes_withheld: false })).status, "ready");
+
+  const page = readFileSync(new URL("../app/(dashboard)/dates/moderation/[caseId]/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /setNotes\(datesCaseInternalNotes\(response\)\)/);
+  assert.match(page, /notes\.status === "withheld" \? <p className="alert alert-warning">\{t\("notesWithheld"\)\}/);
+  assert.match(page, /notes\.status === "invalid" \? <p className="alert alert-error">\{t\("notesInvalid"\)\}/);
+  assert.match(page, /notes\.status === "unsupported" \? <p className="page-subtitle">\{t\("notesUnsupported"\)\}/);
+  assert.match(page, /notes\.notes\.map\(\(entry\) => <li key=\{entry\.note_id\}>/);
+  assert.match(page, /\{entry\.author_email\}/);
+  assert.match(page, /formatDate\(entry\.created_at, locale, true\)/);
+  assert.match(page, /\{entry\.text\}/);
+  assert.doesNotMatch(page, /dangerouslySetInnerHTML/);
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
+    const copy = messages.datesAdmin.caseDetail;
+    for (const key of ["notesTitle", "notesCopy", "noNotes", "notesWithheld", "notesUnsupported", "notesInvalid"]) {
+      assert.equal(typeof copy[key], "string", `${locale}.${key}`);
+    }
+    assert.match(copy.notesLimited, /\{limit\}/);
+    // The old copy promised a visibility the console never delivered.
+    assert.doesNotMatch(copy.noteCopy, /audit readers|audit-olvasók/);
+    assert.doesNotMatch(messages.adminHelp.pages.datesModerationDetail.sections.history.purpose, /claims, notes|claimet, jegyzetet/);
   }
 });
 

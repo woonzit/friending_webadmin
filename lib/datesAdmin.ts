@@ -167,6 +167,87 @@ export function datesModerationSla(value: unknown): DatesModerationSla | null {
   };
 }
 
+export type DatesCaseInternalNote = {
+  note_id: string;
+  author_email: string;
+  text: string;
+  created_at: number;
+};
+
+/**
+ * The internal notes of a case detail (AYI-044 / AYI-075). Core returns
+ * `internal_notes` (oldest first, the newest DATES_CASE_NOTE_LIMIT) and
+ * `internal_notes_withheld`, which is true with an empty list when the
+ * principal has a conflict of interest on the case.
+ * - "unsupported": neither key, i.e. a Core from before notes were returned.
+ *   The page says the notes cannot be shown; it never implies there are none.
+ * - "withheld": the conflict-of-interest answer.
+ * - "ready": the decoded notes, oldest first.
+ * - "invalid": anything else. It is never rendered as an empty list.
+ */
+export type DatesCaseInternalNotes =
+  | { status: "unsupported" }
+  | { status: "withheld" }
+  | { status: "ready"; notes: DatesCaseInternalNote[] }
+  | { status: "invalid" };
+
+/** Core's cap on returned notes (DatesModerationReadService::INTERNAL_NOTE_LIMIT). */
+export const DATES_CASE_NOTE_LIMIT = 200;
+/** Core's bound on a note, in characters (DatesModerationReadService::reason). */
+const DATES_CASE_NOTE_TEXT_LIMIT = 1000;
+const DATES_CASE_NOTE_KEYS = ["note_id", "author_email", "text", "created_at"];
+/** The largest epoch second a Date can hold; beyond it rendering the time throws. */
+const MAX_EPOCH_SECONDS = 8_640_000_000_000;
+
+function datesCaseInternalNote(value: unknown): DatesCaseInternalNote | null {
+  const row = record(value);
+  if (
+    !row
+    || Object.keys(row).length !== DATES_CASE_NOTE_KEYS.length
+    || DATES_CASE_NOTE_KEYS.some((key) => !Object.hasOwn(row, key))
+  ) return null;
+  const { note_id: noteId, author_email: authorEmail, text, created_at: createdAt } = row;
+  if (
+    typeof noteId !== "string"
+    || !/^nt_[a-f0-9]{32}$/.test(noteId)
+    || typeof authorEmail !== "string"
+    || !authorEmail.includes("@")
+    || authorEmail.length > 320
+    || typeof text !== "string"
+    || text.trim() === ""
+    || Array.from(text).length > DATES_CASE_NOTE_TEXT_LIMIT
+    || !Number.isInteger(createdAt)
+    || Number(createdAt) <= 0
+    || Number(createdAt) > MAX_EPOCH_SECONDS
+  ) return null;
+  return { note_id: noteId, author_email: authorEmail, text, created_at: Number(createdAt) };
+}
+
+export function datesCaseInternalNotes(value: unknown): DatesCaseInternalNotes {
+  const response = record(value);
+  if (!response) return { status: "invalid" };
+  const hasNotes = Object.hasOwn(response, "internal_notes");
+  const hasWithheld = Object.hasOwn(response, "internal_notes_withheld");
+  if (!hasNotes && !hasWithheld) return { status: "unsupported" };
+  const notes = response.internal_notes;
+  const withheld = response.internal_notes_withheld;
+  if (!Array.isArray(notes) || typeof withheld !== "boolean") return { status: "invalid" };
+  if (withheld) return notes.length === 0 ? { status: "withheld" } : { status: "invalid" };
+  if (notes.length > DATES_CASE_NOTE_LIMIT) return { status: "invalid" };
+  const decoded: DatesCaseInternalNote[] = [];
+  const ids = new Set<string>();
+  for (const item of notes) {
+    const note = datesCaseInternalNote(item);
+    if (!note || ids.has(note.note_id)) return { status: "invalid" };
+    ids.add(note.note_id);
+    decoded.push(note);
+  }
+  // Core already sends them oldest first; the sort is stable, so notes written
+  // in the same second keep Core's order.
+  decoded.sort((left, right) => left.created_at - right.created_at);
+  return { status: "ready", notes: decoded };
+}
+
 export function createAdminIdempotencyKey(prefix: string): string {
   const safePrefix = prefix.toLowerCase().replace(/[^a-z0-9._:-]+/g, "-").slice(0, 35) || "dates-admin";
   return `${safePrefix}:${crypto.randomUUID()}`;

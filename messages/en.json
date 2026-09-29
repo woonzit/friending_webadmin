@@ -1284,10 +1284,10 @@
             "title": "Internal notes and escalation",
             "purpose": "Notes preserve concise reviewer context; escalation raises the case to critical severity for senior attention.",
             "actions": {
-              "1": "Add a factual, case-relevant internal note.",
+              "1": "Read the earlier notes first, then add a factual, case-relevant internal note.",
               "2": "Escalate when severity, uncertainty or procedure requires a higher-level review."
             },
-            "guidance": "Notes are restricted but durable. Do not include unnecessary personal data, speculation or copied evidence. Escalation is not a final decision."
+            "guidance": "Everyone who can open the case sees its notes, except a moderator with a conflict of interest. A note cannot be edited or deleted. Do not include unnecessary personal data, speculation or copied evidence. Escalation is not a final decision."
           },
           "resolution": {
             "title": "Immutable resolution",
@@ -1309,7 +1309,7 @@
           },
           "history": {
             "title": "Decision and appeal history",
-            "purpose": "Append-only records show claims, notes, evidence operations, decisions, appeals, holds and other case lifecycle events.",
+            "purpose": "Immutable server records of the decisions taken on this case and of its appeal. Internal notes have their own section.",
             "actions": {
               "1": "Verify the expected record after every sensitive operation.",
               "2": "Use chronology to understand reopened or appealed cases without changing earlier facts."
@@ -8140,6 +8140,13 @@
       "reason": "Reason",
       "entryPoint": "Entry point",
       "note": "Reporter note",
+      "notesTitle": "Internal notes",
+      "notesCopy": "Notes moderators added to this case, oldest first.",
+      "noNotes": "No internal notes have been added to this case yet.",
+      "notesWithheld": "Internal notes on this case are withheld from you because you have a conflict of interest. Break-glass access does not show them either.",
+      "notesUnsupported": "This Core version does not return internal notes, so they cannot be shown here. That does not mean the case has none.",
+      "notesInvalid": "The internal notes could not be read, so none are shown rather than an incomplete list. Refresh the case.",
+      "notesLimited": "Only the newest {limit} notes are shown.",
       "evidenceTitle": "Audited evidence",
       "evidenceCopy": "Every read is logged. Sensitive locations require separate capability and a reason.",
       "evidenceUnavailable": "Your account cannot read this case evidence.",
@@ -8162,7 +8169,7 @@
       "trailEvidenceInputInvalid": "Choose a valid time window and provide a reason.",
       "trailEvidenceCaptured": "The bounded trail window was copied into restricted case evidence.",
       "noteTitle": "Internal case note",
-      "noteCopy": "Visible only to authorized moderators and audit readers.",
+      "noteCopy": "Everyone who can open this case in the AreYouIn console sees the note, except anyone with a conflict of interest on it. Notes cannot be edited or deleted, and the audit log records only that a note was added.",
       "internalNote": "Internal note",
       "addNote": "Add note",
       "noteAdded": "The internal note was added.",

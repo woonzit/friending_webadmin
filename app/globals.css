@@ -6219,6 +6219,49 @@ body .verification-level-pill.level-strong {
   overflow-wrap: anywhere;
 }
 
+.dates-note-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dates-note-list li {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-soft);
+}
+
+.dates-note-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.dates-note-meta strong {
+  color: var(--text-soft);
+  overflow-wrap: anywhere;
+}
+
+.dates-note-meta time {
+  color: var(--muted);
+}
+
+.dates-note-text {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .dates-resolution-panel {
   border-color: rgba(245, 185, 66, 0.28);
 }

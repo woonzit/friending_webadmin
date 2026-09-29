@@ -1284,10 +1284,10 @@
             "title": "Belső jegyzet és eszkaláció",
             "purpose": "A jegyzet tömör reviewerhátteret őriz, az eszkaláció pedig kritikus súlyosságra emeli az ügyet magasabb szintű figyelemhez.",
             "actions": {
-              "1": "Írj tényszerű, az ügyhöz kapcsolódó belső jegyzetet.",
+              "1": "Előbb olvasd el a korábbi jegyzeteket, aztán írj tényszerű, az ügyhöz kapcsolódó belső jegyzetet.",
               "2": "Eszkalálj, ha a súlyosság, bizonytalanság vagy eljárás magasabb szintű vizsgálatot kíván."
             },
-            "guidance": "A jegyzet korlátozott, de tartós. Ne tartalmazzon szükségtelen személyes adatot, spekulációt vagy bemásolt bizonyítékot. Az eszkaláció nem végső döntés."
+            "guidance": "Az ügy jegyzeteit mindenki látja, aki megnyithatja az ügyet, kivéve az összeférhetetlenséggel érintett moderátort. A jegyzet nem szerkeszthető és nem törölhető. Ne tartalmazzon szükségtelen személyes adatot, spekulációt vagy bemásolt bizonyítékot. Az eszkaláció nem végső döntés."
           },
           "resolution": {
             "title": "Megváltoztathatatlan resolution",
@@ -1309,7 +1309,7 @@
           },
           "history": {
             "title": "Döntési és appeal előzmény",
-            "purpose": "Az append-only rekordok a claimet, jegyzetet, bizonyítékműveletet, döntést, appealt, holdot és más ügyéletciklus-eseményt mutatnak.",
+            "purpose": "Az ügyben hozott döntések és a fellebbezés megváltoztathatatlan szerverrekordjai. A belső jegyzetek külön szakaszban láthatók.",
             "actions": {
               "1": "Minden érzékeny művelet után ellenőrizd a várt rekordot.",
               "2": "Az időrendből értsd meg az újranyitott vagy megfellebbezett ügyet a korábbi tények módosítása nélkül."
@@ -8140,6 +8140,13 @@
       "reason": "Indok",
       "entryPoint": "Belépési pont",
       "note": "Bejelentő megjegyzése",
+      "notesTitle": "Belső jegyzetek",
+      "notesCopy": "A moderátorok által az ügyhöz írt jegyzetek, a legrégebbivel kezdve.",
+      "noNotes": "Ehhez az ügyhöz még senki nem írt belső jegyzetet.",
+      "notesWithheld": "Összeférhetetlenség miatt nem láthatod az ügy belső jegyzeteit. Break-glass hozzáféréssel sem jelennek meg.",
+      "notesUnsupported": "Ez a Core-verzió nem adja vissza a belső jegyzeteket, ezért itt nem jeleníthetők meg. Ez nem jelenti azt, hogy az ügyhöz nincs jegyzet.",
+      "notesInvalid": "A belső jegyzetek nem olvashatók be, ezért hiányos lista helyett egy sem jelenik meg. Frissítsd az ügyet.",
+      "notesLimited": "Csak a legújabb {limit} jegyzet látható.",
       "evidenceTitle": "Naplózott bizonyíték",
       "evidenceCopy": "Minden olvasás naplózott. Az érzékeny helyszínhez külön jogosultság és indoklás szükséges.",
       "evidenceUnavailable": "A fiókod nem olvashatja ennek az ügynek a bizonyítékait.",
@@ -8162,7 +8169,7 @@
       "trailEvidenceInputInvalid": "Válassz érvényes időablakot, és adj meg indoklást.",
       "trailEvidenceCaptured": "A korlátozott trail-időablak bekerült az ügy bizonyítékai közé.",
       "noteTitle": "Belső ügyjegyzet",
-      "noteCopy": "Csak az engedélyezett moderátorok és audit-olvasók látják.",
+      "noteCopy": "A jegyzetet mindenki látja, aki az AreYouIn-konzolban megnyithatja az ügyet, kivéve azt, aki az ügyben összeférhetetlen. A jegyzet nem szerkeszthető és nem törölhető, az auditnapló pedig csak azt rögzíti, hogy jegyzet került az ügyhöz.",
       "internalNote": "Belső jegyzet",
       "addNote": "Jegyzet hozzáadása",
       "noteAdded": "A belső jegyzet hozzáadva.",

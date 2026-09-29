@@ -11,7 +11,9 @@ import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import {
   createAdminIdempotencyKey,
+  DATES_CASE_NOTE_LIMIT,
   datesAdminPrincipal,
+  datesCaseInternalNotes,
   epochFromLocalInput,
   hasDatesCapability,
   humanizeMachineKey,
@@ -20,6 +22,7 @@ import {
   permittedResolutionActions,
   resolutionActions,
   type DatesAdminPrincipal,
+  type DatesCaseInternalNotes,
   type DatesCaseSummary,
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
@@ -60,6 +63,7 @@ export default function DatesModerationCasePage() {
   const caseId = useMemo(() => decodeURIComponent(params.caseId || ""), [params.caseId]);
   const [data, setData] = useState<CaseDetail | null>(null);
   const [principal, setPrincipal] = useState<DatesAdminPrincipal | null>(null);
+  const [notes, setNotes] = useState<DatesCaseInternalNotes>({ status: "unsupported" });
   const [evidence, setEvidence] = useState<Array<Record<string, unknown>> | null>(null);
   const [evidenceRedacted, setEvidenceRedacted] = useState(0);
   const [state, setState] = useState<"loading" | "ready" | "error" | "not-found">("loading");
@@ -108,6 +112,7 @@ export default function DatesModerationCasePage() {
     }
     const next = response as unknown as CaseDetail;
     setData(next);
+    setNotes(datesCaseInternalNotes(response));
     setPrincipal(nextPrincipal);
     const permitted = permittedResolutionActions(next.case, nextPrincipal);
     setResolutionAction((current) => permitted.includes(current) ? current : permitted[0] || "");
@@ -347,6 +352,18 @@ export default function DatesModerationCasePage() {
       <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("reportsTitle")}</h2><p>{t("reportsCopy")}</p></div></div>
         <div className="table-wrap dates-embedded-table">{data.reports.length === 0 ? <div className="empty-state dates-compact-empty"><p>{t("noReports")}</p></div> : <table className="data-table"><thead><tr><th>{t("reportId")}</th><th>{t("reason")}</th><th>{t("entryPoint")}</th><th>{t("note")}</th><th>{common("createdAt")}</th></tr></thead><tbody>{data.reports.map((report) => <tr key={report.report_id}><td>{report.report_id}</td><td><div className="cell-stack"><span>{displayReason(report.reason_label_snapshot, locale)}</span><small>{report.reason_key} · {humanizeMachineKey(report.severity)}</small></div></td><td>{humanizeMachineKey(report.entry_point)}</td><td className="dates-wrapping-cell">{report.note || "—"}</td><td>{formatDate(report.created_at, locale, true)}</td></tr>)}</tbody></table>}</div>
+      </section>
+
+      <section className="panel dates-section">
+        <div className="panel-header"><div><h2>{t("notesTitle")}</h2><p>{t("notesCopy")}</p></div></div>
+        <div className="panel-body">
+          {notes.status === "withheld" ? <p className="alert alert-warning">{t("notesWithheld")}</p>
+            : notes.status === "invalid" ? <p className="alert alert-error">{t("notesInvalid")}</p>
+              : notes.status === "unsupported" ? <p className="page-subtitle">{t("notesUnsupported")}</p>
+                : notes.notes.length === 0 ? <p className="page-subtitle">{t("noNotes")}</p>
+                  : <ol className="dates-note-list">{notes.notes.map((entry) => <li key={entry.note_id}><div className="dates-note-meta"><strong>{entry.author_email}</strong><time dateTime={new Date(entry.created_at * 1000).toISOString()}>{formatDate(entry.created_at, locale, true)}</time></div><p className="dates-note-text">{entry.text}</p></li>)}</ol>}
+          {notes.status === "ready" && notes.notes.length >= DATES_CASE_NOTE_LIMIT && <p className="field-hint">{t("notesLimited", { limit: DATES_CASE_NOTE_LIMIT })}</p>}
+        </div>
       </section>
 
       <section className="panel dates-section">
