@@ -6153,7 +6153,17 @@
     "headlineLabel": "Headline",
     "aboutLabel": "About",
     "contentSave": "Save texts",
-    "contentSaved": "Texts saved."
+    "contentSaved": "Texts saved.",
+    "contentConflict": "The member's profile text changed meanwhile. Your draft is still below. Review the latest text before saving again.",
+    "contentCurrentHeadline": "Latest saved headline",
+    "contentCurrentAbout": "Latest saved About text",
+    "contentReviewed": "I reviewed the latest text — keep my draft",
+    "contentReloadFailed": "The latest text could not be loaded. Your draft is preserved; load the current text before trying to save again.",
+    "contentReload": "Load latest text",
+    "contentRevisionInvalid": "The profile text revision is invalid. This is a technical error; reload the page and report it if it happens again.",
+    "contentInvalid": "The profile text was refused. Check the headline and About text before trying again.",
+    "contentSaveFailed": "The profile text could not be saved. Your draft is preserved. Try again shortly.",
+    "contentResponseInvalid": "The save response could not be read. Your draft is preserved; check the member's current profile before trying again."
   },
   "profileLocation": {
     "eyebrow": "Profile privacy",

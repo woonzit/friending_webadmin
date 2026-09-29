@@ -6153,7 +6153,17 @@
     "headlineLabel": "Címsor",
     "aboutLabel": "Bemutatkozás",
     "contentSave": "Szövegek mentése",
-    "contentSaved": "Szövegek elmentve."
+    "contentSaved": "Szövegek elmentve.",
+    "contentConflict": "A tag profilszövege időközben megváltozott. A piszkozatod lent megmaradt. Újabb mentés előtt nézd át a legfrissebb szöveget.",
+    "contentCurrentHeadline": "Legutóbb mentett címsor",
+    "contentCurrentAbout": "Legutóbb mentett bemutatkozás",
+    "contentReviewed": "Átnéztem az új szöveget, megtartom a piszkozatomat",
+    "contentReloadFailed": "Nem sikerült betölteni a legfrissebb szöveget. A piszkozatod megmaradt; újabb mentés előtt töltsd be az aktuális szöveget.",
+    "contentReload": "Legfrissebb szöveg betöltése",
+    "contentRevisionInvalid": "A profilszöveg verziószáma érvénytelen. Ez technikai hiba; töltsd újra az oldalt, és ha ismét előfordul, jelezd a hibát.",
+    "contentInvalid": "A profilszöveget nem fogadta el a rendszer. Újrapróbálás előtt ellenőrizd a címsort és a bemutatkozást.",
+    "contentSaveFailed": "Nem sikerült menteni a profilszöveget. A piszkozatod megmaradt. Próbáld újra egy kicsit később.",
+    "contentResponseInvalid": "A mentés eredménye nem olvasható. A piszkozatod megmaradt; újrapróbálás előtt ellenőrizd a tag aktuális profilját."
   },
   "profileLocation": {
     "eyebrow": "Profiladatvédelem",

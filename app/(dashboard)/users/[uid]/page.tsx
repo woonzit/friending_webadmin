@@ -176,6 +176,7 @@ export default function UserDetailPage() {
         uid={uid}
         initialHeadline={profile.headline}
         initialAbout={profile.about_me}
+        initialRevision={profile.content_revision}
       />
       <UserProfileDataEditor
         uid={uid}

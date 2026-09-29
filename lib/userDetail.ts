@@ -28,6 +28,7 @@ import {
 } from "@/lib/membership";
 import { pushChannels, type PushChannels } from "@/lib/pushAdmin";
 import { verificationAccess, type VerificationAccess } from "@/lib/verificationAdmin";
+import { userContentRevision, type UserContentRevision } from "@/lib/userContent";
 
 /**
  * D-122 (T-729/T-730). Core's own closed vocabulary for how the app shows an
@@ -68,6 +69,7 @@ export type UserDetailProfile = {
   codename: string;
   about_me: string;
   headline: string;
+  content_revision: UserContentRevision;
   age: number;
   birthyear: number;
   generation: string;
@@ -295,6 +297,7 @@ export function userDetail(
       codename: text(profileSource.codename),
       about_me: text(profileSource.about_me),
       headline: text(profileSource.headline),
+      content_revision: userContentRevision(profileSource.content_revision),
       age: count(profileSource.age),
       birthyear: count(profileSource.birthyear),
       generation: text(profileSource.generation),
