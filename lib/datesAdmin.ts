@@ -185,6 +185,59 @@ export function localInputFromEpoch(value: number | null | undefined): string {
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
+/** The activity edit form, as the console holds it before building Core's change set. */
+export type DatesActivityEditDraft = {
+  title: string;
+  details: string;
+  activityType: string;
+  locationMode: string;
+  city: string;
+  countryCode: string;
+  timeMode: string;
+  startAt: string;
+  endAt: string;
+  timezone: string;
+  joinMode: string;
+  maximumPeople: string;
+  audience: string;
+  reason: string;
+};
+
+/**
+ * The `changes` object for `dates_activity_update`.
+ *
+ * An approval-mode activity has no capacity. Core sets `maximum_people` to null
+ * itself when the resulting join mode is approval, but it refuses an explicit
+ * `maximum_people: null` with dates-admin-activity-value-invalid (AYI-013), so
+ * the key is left out in approval mode instead of being sent as null. That is
+ * accepted both by a Core that refuses the null and by one that tolerates it.
+ */
+export function datesActivityEditChanges(
+  draft: DatesActivityEditDraft,
+  audience: Record<string, unknown>,
+): Record<string, unknown> {
+  const changes: Record<string, unknown> = {
+    title: draft.title.trim(),
+    details: draft.details.trim() || null,
+    activity_type: draft.activityType,
+    location_mode: draft.locationMode,
+    city: draft.city.trim() || null,
+    country_code: draft.countryCode.trim().toUpperCase() || null,
+    time_mode: draft.timeMode,
+    timezone: draft.timezone.trim(),
+    audience,
+    join_mode: draft.joinMode,
+  };
+  if (draft.joinMode === "auto") {
+    changes.maximum_people = Number.parseInt(draft.maximumPeople, 10);
+  }
+  if (draft.timeMode === "scheduled") {
+    changes.start_at = epochFromLocalInput(draft.startAt);
+    changes.end_at = epochFromLocalInput(draft.endAt);
+  }
+  return changes;
+}
+
 export function parseEntryPoints(value: string): string[] {
   return Array.from(new Set(
     value.split(",")

@@ -12,11 +12,12 @@ import { adminCall } from "@/lib/adminClient";
 import { operationalRecordSummary } from "@/lib/auditLog";
 import {
   createAdminIdempotencyKey,
+  datesActivityEditChanges,
   datesAdminPrincipal,
-  epochFromLocalInput,
   hasDatesCapability,
   humanizeMachineKey,
   localInputFromEpoch,
+  type DatesActivityEditDraft,
   type DatesAdminPrincipal,
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
@@ -72,22 +73,7 @@ type ActivityDetail = {
   audit_history: Array<Record<string, unknown>>;
 };
 
-type EditDraft = {
-  title: string;
-  details: string;
-  activityType: string;
-  locationMode: string;
-  city: string;
-  countryCode: string;
-  timeMode: string;
-  startAt: string;
-  endAt: string;
-  timezone: string;
-  joinMode: string;
-  maximumPeople: string;
-  audience: string;
-  reason: string;
-};
+type EditDraft = DatesActivityEditDraft;
 
 type Feedback = { tone: "success" | "error"; text: string };
 type PendingCommand = { action: string; reason: string };
@@ -186,23 +172,7 @@ export default function DatesActivityDetailPage() {
       setFeedback({ tone: "error", text: t("reasonRequired") });
       return;
     }
-    const changes: Record<string, unknown> = {
-      title: draft.title.trim(),
-      details: draft.details.trim() || null,
-      activity_type: draft.activityType,
-      location_mode: draft.locationMode,
-      city: draft.city.trim() || null,
-      country_code: draft.countryCode.trim().toUpperCase() || null,
-      time_mode: draft.timeMode,
-      timezone: draft.timezone.trim(),
-      audience,
-      join_mode: draft.joinMode,
-      maximum_people: draft.joinMode === "auto" ? Number.parseInt(draft.maximumPeople, 10) : null,
-    };
-    if (draft.timeMode === "scheduled") {
-      changes.start_at = epochFromLocalInput(draft.startAt);
-      changes.end_at = epochFromLocalInput(draft.endAt);
-    }
+    const changes = datesActivityEditChanges(draft, audience);
     setBusy(true);
     const response = await adminCall("dates_activity_update", {
       activity_id: data.activity.activity_id,

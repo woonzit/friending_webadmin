@@ -5,6 +5,7 @@ import { DATES_ADMIN_ACTIONS, isAdminActionAllowed } from "../lib/adminActions.t
 import {
   configurationInputValue,
   createAdminIdempotencyKey,
+  datesActivityEditChanges,
   datesAdminPrincipal,
   datesAvailabilityWriteIsRetired,
   datesModerationSla,
@@ -167,6 +168,53 @@ test("resolution options remain bounded by case target and kind", () => {
   assert.deepEqual(resolutionActions({ queue: "messages", case_kind: "reports", target_type: "message" }), ["dismiss", "restore_content", "remove_content", "warn", "restrict_dates", "suspend_account"]);
   assert.equal(resolutionActions({ queue: "users", case_kind: "reports", target_type: "user" }).includes("remove_participant"), true);
   assert.equal(resolutionActions({ queue: "users", case_kind: "reports", target_type: "user" }).includes("purge"), false);
+});
+
+test("activity edits leave maximum_people out in approval mode (AYI-013)", () => {
+  const draft = {
+    title: "  Morning run  ",
+    details: "",
+    activityType: "sport",
+    locationMode: "city",
+    city: "Budapest",
+    countryCode: "hu",
+    timeMode: "tbd",
+    startAt: "",
+    endAt: "",
+    timezone: "Europe/Budapest",
+    joinMode: "approval",
+    maximumPeople: "",
+    audience: "{}",
+    reason: "typo",
+  };
+  const approval = datesActivityEditChanges(draft, {});
+  // Core refuses an explicit null capacity; approval mode clears it on its own.
+  assert.equal(Object.hasOwn(approval, "maximum_people"), false);
+  assert.doesNotMatch(JSON.stringify(approval), /maximum_people/);
+  assert.equal(approval.join_mode, "approval");
+  assert.equal(approval.title, "Morning run");
+  assert.equal(approval.details, null);
+  assert.equal(approval.country_code, "HU");
+  assert.equal(Object.hasOwn(approval, "start_at"), false);
+
+  // A leftover capacity in the draft is still not sent once the mode is approval.
+  assert.equal(Object.hasOwn(datesActivityEditChanges({ ...draft, maximumPeople: "8" }, {}), "maximum_people"), false);
+
+  const auto = datesActivityEditChanges({ ...draft, joinMode: "auto", maximumPeople: "12" }, {});
+  assert.equal(auto.maximum_people, 12);
+
+  const scheduled = datesActivityEditChanges({
+    ...draft,
+    timeMode: "scheduled",
+    startAt: "2026-10-01T10:00",
+    endAt: "2026-10-01T12:00",
+  }, {});
+  assert.equal(typeof scheduled.start_at, "number");
+  assert.equal(Number(scheduled.end_at) - Number(scheduled.start_at), 7200);
+
+  const page = readFileSync(new URL("../app/(dashboard)/dates/[activityId]/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /datesActivityEditChanges\(draft, audience\)/);
+  assert.equal(/maximum_people:\s*draft/.test(page), false, "the page no longer builds the capacity change itself");
 });
 
 test("admin payload helpers normalize idempotency, catalog and setting values", () => {
