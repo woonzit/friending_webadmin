@@ -106,6 +106,15 @@
               "2": "Régebbi eseményekhez vagy biztonságosan megjelenített részletekhez nyisd meg a teljes Auditnaplót."
             },
             "guidance": "Az üres lista azt jelenti, hogy nem érkezett sor; nem jelent engedélyt egy bizonytalan módosítás megismétlésére. Előbb frissíts vagy nézd meg a teljes auditnaplót."
+          },
+          "registrations": {
+            "title": "Regisztrációk platformonként",
+            "purpose": "Megmutatja, hány tag regisztrált a weboldalon, az iOS appban és az Android appban: az összesítést meglévő és törölt fiókokra bontva, a mai, 7 és 30 napos számokat, egy 30 vagy 90 napos napi halmozott grafikont, valamint egy részletes táblázatot a régi Friending appból átvett tagokról, a profilképekről, az aktivitásról, a belépésekről, a nemekről és a top országokról.",
+            "actions": {
+              "1": "Válts a grafikonon 30 és 90 nap között; egy napra mutatva, vagy a napi táblázatot kinyitva látod a pontos számokat.",
+              "2": "Egy platformkártya Tagok megnyitása gombjával a Regisztrált felhasználók listájában az adott platform fiókjait látod."
+            },
+            "guidance": "Csak a tagfiókok számítanak; a rendszer-, demó-, App Review- és tesztfiókok kimaradnak. A törölt fiókok a regisztrációjuk napján maradnak, az átvett tagok megtartják a régi regisztrációs dátumukat, a napok pedig budapesti idő szerint értendők. Sikertelen betöltéskor hibaüzenet jelenik meg, soha nem nullák."
           }
         }
       },
@@ -120,7 +129,7 @@
         "sections": {
           "filters": {
             "title": "Keresés és fiókszűrők",
-            "purpose": "Név, e-mail, UID vagy felhasználónév alapján lehet keresni. A fióktípus elkülöníti a normál tagokat a demókörnyezettől, a Regisztráció időszaka az elmúlt 24 órában, 2, 3 vagy 7 napban létrehozott fiókokra szűkít, az avatarkapcsoló pedig a képpel rendelkező profilokra.",
+            "purpose": "Név, e-mail, UID vagy felhasználónév alapján lehet keresni. A fióktípus elkülöníti a normál tagokat a demókörnyezettől, a Regisztráció időszaka az elmúlt 24 órában, 2, 3 vagy 7 napban létrehozott fiókokra szűkít, a Regisztrációs platform csak a weboldalon, az iOS appban, az Android appban vagy rögzített platform nélkül létrehozott fiókokat mutatja, az avatarkapcsoló pedig a képpel rendelkező profilokra szűkít.",
             "actions": {
               "1": "Kombináld a keresést, a fióktípust, a regisztráció időszakát és az avatarállapotot, majd alkalmazd a szűrőt.",
               "2": "Ha egy ismert tag nem található, állítsd alaphelyzetbe a feltételeket, szélesebb találati halmaznál pedig lapozz."
@@ -138,7 +147,7 @@
           },
           "results": {
             "title": "Tagtalálatok és demóláthatóság",
-            "purpose": "A táblázat az azonosságot, elérhetőséget, hozzávetőleges helyet, regisztrációt, fióktípust, tagságot és azt a kifejezett engedélyt mutatja, amellyel egy jóváhagyott normál fiók láthat demóprofilokat.",
+            "purpose": "A táblázat az azonosságot, elérhetőséget, hozzávetőleges helyet, regisztrációt, a regisztráció helyét (a régi Friending appból átvett tagok jelölésével), fióktípust, tagságot és azt a kifejezett engedélyt mutatja, amellyel egy jóváhagyott normál fiók láthat demóprofilokat.",
             "actions": {
               "1": "Nyisd meg a sorból a teljes fiókmunkaterületet.",
               "2": "Csak jóváhagyott támogatási vagy review célra adj vagy vonj vissza demóláthatóságot, ha a vezérlő elérhető.",
@@ -3120,7 +3129,15 @@
     "noRowsCopy": "Próbálj tágabb névkeresést vagy másik fióktípus-szűrőt.",
     "loadError": "A regisztrált userek nem tölthetők be.",
     "page": "{page}. oldal",
-    "unknownUser": "Névtelen user"
+    "unknownUser": "Névtelen user",
+    "platformLabel": "Regisztrációs platform",
+    "platformAll": "Minden platform",
+    "signupPlatform": "Regisztráció helye",
+    "legacyConverted": "A régi appból átvett",
+    "platformFilterIgnored": "A Core nem igazolta vissza a regisztrációs platform szűrőt, ezért a lista minden platformot tartalmazhat.",
+    "filterRefused": {
+      "signupPlatformInvalid": "A Core nem fogadta el a regisztrációs platform szűrőt. Állítsd alaphelyzetbe a szűrőket, és próbáld újra."
+    }
   },
   "membershipConfig": {
     "eyebrow": "Hozzáférés és monetizáció",
@@ -9365,6 +9382,68 @@
       "writeRequired": "Az adminszereped nem resetelheti a sandboxot.",
       "unavailable": "A sandbox-szolgáltatás most nem elérhető.",
       "generic": "A reset visszautasítva."
+    }
+  },
+  "registrationStats": {
+    "title": "Regisztrációk platformonként",
+    "subtitle": "Hol regisztráltak a tagok: a weboldalon, az iOS appban vagy az Android appban.",
+    "rangeLabel": "A napi grafikon időszaka",
+    "rangeDays": "{days} nap",
+    "reload": "Frissítés",
+    "loading": "A regisztrációs statisztika betöltése…",
+    "failures": {
+      "daysInvalid": "A Core nem fogadta el ezt az időszakot. Válaszd a 30 vagy a 90 napot, és próbáld újra.",
+      "unavailable": "A Core most nem tudja kiszámolni a regisztrációs statisztikát. Az áttekintés többi része ettől működik; kicsit később próbáld újra a Frissítés gombbal.",
+      "error": "A regisztrációs statisztikát nem sikerült betölteni. Az áttekintés többi része ettől működik; próbáld újra a Frissítés gombbal."
+    },
+    "platforms": {
+      "web": "Web",
+      "ios": "iOS",
+      "android": "Android",
+      "unknown": "Ismeretlen"
+    },
+    "shareOfAll": "az összes {share}%-a",
+    "tileAccounts": "{accounts} meglévő · {deleted} törölt",
+    "tileRecent": "Ma {today} · 7 nap {week} · 30 nap {month}",
+    "openList": "Tagok megnyitása",
+    "chartTitle": "Új regisztrációk naponta, az elmúlt {days} napban",
+    "chartTotal": "Ebben az időszakban összesen {total}",
+    "chartLabel": "Napi regisztrációk platformonként halmozva, {days} nap, összesen {total}",
+    "legendLabel": "Platformok",
+    "today": "Ma",
+    "dayTotal": "Összesen",
+    "dayDeleted": "Aznap törölt",
+    "dailyTable": "A napi számok táblázatban",
+    "date": "Nap",
+    "detailsTitle": "Részletek platformonként",
+    "metric": "Mutató",
+    "allPlatforms": "Minden platform",
+    "unknownCountry": "?",
+    "rows": {
+      "registered": "Regisztrációk (összesen)",
+      "accounts": "Meglévő fiókok",
+      "deleted": "Azóta törölt",
+      "newToday": "Ma regisztrált",
+      "new7": "Az elmúlt 7 napban regisztrált",
+      "new30": "Az elmúlt 30 napban regisztrált",
+      "deleted30": "Az elmúlt 30 napban törölt",
+      "legacy": "A régi Friending appból átvett",
+      "legacy30": "30 nap alatt {count}",
+      "photo": "Profilképpel",
+      "active7": "Aktív az elmúlt 7 napban",
+      "signedIn30": "Ezen a platformon belépett (30 nap)",
+      "suspended": "Felfüggesztett",
+      "male": "Férfi",
+      "female": "Nő",
+      "otherGender": "Egyéb vagy nincs megadva",
+      "countries": "Top országok"
+    },
+    "notes": {
+      "scope": "Csak a tagfiókok számítanak: a rendszer-, demó-, App Review- és tesztfiókok kimaradnak.",
+      "deleted": "Egy regisztráció a regisztráció napján és platformján marad akkor is, ha a tag azóta törölte a fiókját. Az üzemeltető által eltávolított fiók minden számból kiesik.",
+      "legacy": "A régi Friending appból átvett tagok megtartják az eredeti regisztrációs dátumukat, ezért ritkán látszanak a friss regisztrációk között; az elmúlt 30 nap átvételei az összesítés mellett szerepelnek.",
+      "signedIn": "A belépéseknél a belépéshez használt platform számít, ami eltérhet a regisztrációs platformtól: aki két platformot is használ, mindkettőnél szerepel, a Minden platform oszlopban viszont csak egyszer. A napok budapesti idő szerint értendők.",
+      "generated": "Számítva: {time}."
     }
   }
 }

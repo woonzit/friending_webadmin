@@ -15,6 +15,7 @@ import { normalizeLocationAccessPolicyProxyBody } from "@/lib/locationAccessPoli
 import { normalizeModeCardsProxyBody } from "@/lib/modeCards";
 import { normalizeMemberBirthdayLockProxyBody } from "@/lib/memberBirthdayLock";
 import { normalizeUserModerationInsightProxyBody } from "@/lib/userModerationInsight";
+import { normalizeRegistrationPlatformStatsProxyBody } from "@/lib/registrationStats";
 import { normalizeSectionTeasersProxyBody } from "@/lib/sectionTeasers";
 import { datesAvailabilityWriteIsRetired } from "@/lib/datesAdmin";
 import {
@@ -333,6 +334,13 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedInsightBody !== undefined) body = normalizedInsightBody;
+
+  // The registration statistics take one closed range (30 or 90 days) and nothing else.
+  const normalizedRegistrationStatsBody = normalizeRegistrationPlatformStatsProxyBody(action, body);
+  if (normalizedRegistrationStatsBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedRegistrationStatsBody !== undefined) body = normalizedRegistrationStatsBody;
 
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer

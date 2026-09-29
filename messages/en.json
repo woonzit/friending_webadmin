@@ -106,6 +106,15 @@
               "2": "Open the full Audit log when you need filters, older events or safe event details."
             },
             "guidance": "An empty feed means no rows were returned; it is not permission to repeat an uncertain mutation. Refresh or inspect the full audit log first."
+          },
+          "registrations": {
+            "title": "Registrations by platform",
+            "purpose": "Shows how many members signed up on the website, in the iOS app and in the Android app: all-time totals split into existing and deleted accounts, today, 7 and 30 days, a daily stacked chart for 30 or 90 days, and a details table with imports from the old Friending app, profile photos, activity, sign-ins, gender and top countries.",
+            "actions": {
+              "1": "Switch the chart between 30 and 90 days; hover a day, or open the daily table, for its exact numbers.",
+              "2": "Use Open these members on a platform card to see that platform's accounts in Registered users."
+            },
+            "guidance": "Only member accounts count; system, demo, App Review and test accounts are left out. Deleted accounts stay on their signup day, imported members keep their old registration date, and days are Budapest days. A failed load shows an error, never zeros."
           }
         }
       },
@@ -120,7 +129,7 @@
         "sections": {
           "filters": {
             "title": "Search and account filters",
-            "purpose": "Search accepts a name, email, UID or username. Account type separates regular members from the isolated demo realm, Registered within limits results to accounts created in the last 24 hours, 2, 3 or 7 days, and the avatar switch limits results to profiles with a picture.",
+            "purpose": "Search accepts a name, email, UID or username. Account type separates regular members from the isolated demo realm, Registered within limits results to accounts created in the last 24 hours, 2, 3 or 7 days, Signup platform shows only accounts created on the website, in the iOS app, in the Android app or with no recorded platform, and the avatar switch limits results to profiles with a picture.",
             "actions": {
               "1": "Combine search, account type, registration period and avatar state, then apply the filter.",
               "2": "Reset all criteria when a known member is not found, and use pagination for broader result sets."
@@ -138,7 +147,7 @@
           },
           "results": {
             "title": "Member results and demo visibility",
-            "purpose": "The table shows identity, contact, approximate location, registration time, account type, membership and the explicit permission that lets an approved regular account see demo profiles.",
+            "purpose": "The table shows identity, contact, approximate location, registration time, the signup platform (with a mark for members imported from the old Friending app), account type, membership and the explicit permission that lets an approved regular account see demo profiles.",
             "actions": {
               "1": "Open the full account workspace from the row.",
               "2": "Grant or revoke demo visibility only for an approved support or review purpose when the control is available.",
@@ -3120,7 +3129,15 @@
     "noRowsCopy": "Try a broader name search or switch the account-type filter.",
     "loadError": "Registered users could not be loaded.",
     "page": "Page {page}",
-    "unknownUser": "Unnamed user"
+    "unknownUser": "Unnamed user",
+    "platformLabel": "Signup platform",
+    "platformAll": "All platforms",
+    "signupPlatform": "Signed up on",
+    "legacyConverted": "Imported from the old app",
+    "platformFilterIgnored": "Core did not confirm the signup platform filter, so this list may include every platform.",
+    "filterRefused": {
+      "signupPlatformInvalid": "Core refused the signup platform filter. Reset the filters and try again."
+    }
   },
   "membershipConfig": {
     "eyebrow": "Access and monetization",
@@ -9365,6 +9382,68 @@
       "writeRequired": "Your administrator role cannot reset the sandbox.",
       "unavailable": "The sandbox service is unavailable right now.",
       "generic": "The reset was refused."
+    }
+  },
+  "registrationStats": {
+    "title": "Registrations by platform",
+    "subtitle": "Where members signed up: on the website, in the iOS app or in the Android app.",
+    "rangeLabel": "Daily chart period",
+    "rangeDays": "{days} days",
+    "reload": "Refresh",
+    "loading": "Loading registration statistics…",
+    "failures": {
+      "daysInvalid": "Core refused this period. Choose 30 or 90 days and try again.",
+      "unavailable": "Core cannot calculate the registration statistics right now. The rest of the overview is unaffected; try Refresh in a moment.",
+      "error": "Registration statistics could not be loaded. The rest of the overview is unaffected; try Refresh."
+    },
+    "platforms": {
+      "web": "Web",
+      "ios": "iOS",
+      "android": "Android",
+      "unknown": "Unknown"
+    },
+    "shareOfAll": "{share}% of all",
+    "tileAccounts": "{accounts} existing · {deleted} deleted",
+    "tileRecent": "Today {today} · 7 days {week} · 30 days {month}",
+    "openList": "Open these members",
+    "chartTitle": "New registrations per day, last {days} days",
+    "chartTotal": "{total} in this period",
+    "chartLabel": "Daily registrations stacked by platform over {days} days, {total} in total",
+    "legendLabel": "Platforms",
+    "today": "Today",
+    "dayTotal": "Total",
+    "dayDeleted": "Deleted that day",
+    "dailyTable": "Show the daily numbers as a table",
+    "date": "Day",
+    "detailsTitle": "Details by platform",
+    "metric": "Metric",
+    "allPlatforms": "All platforms",
+    "unknownCountry": "?",
+    "rows": {
+      "registered": "Registrations (all time)",
+      "accounts": "Existing accounts",
+      "deleted": "Deleted since",
+      "newToday": "Registered today",
+      "new7": "Registered in the last 7 days",
+      "new30": "Registered in the last 30 days",
+      "deleted30": "Deleted in the last 30 days",
+      "legacy": "Imported from the old Friending app",
+      "legacy30": "{count} in 30 days",
+      "photo": "With a profile photo",
+      "active7": "Active in the last 7 days",
+      "signedIn30": "Signed in on this platform (30 days)",
+      "suspended": "Suspended",
+      "male": "Men",
+      "female": "Women",
+      "otherGender": "Other or not given",
+      "countries": "Top countries"
+    },
+    "notes": {
+      "scope": "Only member accounts count: system, demo, App Review and test accounts are left out.",
+      "deleted": "A registration stays on its signup day and platform even if the member has deleted the account since. An account removed by an operator drops out of every figure.",
+      "legacy": "Members imported from the old Friending app keep their original registration date, so they rarely appear among recent registrations; the imports of the last 30 days are shown next to their total.",
+      "signedIn": "Sign-ins count the platform used to sign in, which can differ from the signup platform: a member using two platforms counts on both, and once under All platforms. Days are Budapest days.",
+      "generated": "Calculated {time}."
     }
   }
 }

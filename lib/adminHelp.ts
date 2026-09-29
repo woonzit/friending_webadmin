@@ -81,7 +81,8 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "overview",
     route: "/",
-    sections: ["metrics", "signupMetrics", "quickActions", "recentAudit"],
+    // P-092: the self-loading registrations-by-platform panel under the signup metrics.
+    sections: ["metrics", "signupMetrics", "registrations", "quickActions", "recentAudit"],
     matches: exact("/"),
   },
   {

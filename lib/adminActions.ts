@@ -112,6 +112,7 @@ const ACTIVE_SECTION_TEASERS_ACTIONS = SECTION_TEASERS_ACTIONS;
 export const ADMIN_ACTIONS = [
   "overview",
   "list_users",
+  "registration_platform_stats",
   "user_detail",
   "user_moderation_insight",
   "reset_member_birthday_lock",
@@ -257,6 +258,8 @@ export type AdminActionAccess = "read" | "write" | "owner" | "dates_read" | "dat
 export const ADMIN_ACTION_ACCESS = {
   overview: "read",
   list_users: "read",
+  // P-092: Core's requireAdminActor, a viewer included; read-only and no-store.
+  registration_platform_stats: "read",
   user_detail: "read",
   // P-074: Core's requireAdminActor, a viewer included; read-only and no-store.
   user_moderation_insight: "read",

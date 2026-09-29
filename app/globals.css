@@ -1299,6 +1299,69 @@ textarea:focus {
   .signup-metrics .panel-header { align-items: flex-start; flex-wrap: wrap; }
 }
 
+/* Registrations by platform (overview) and the signup-platform badge (Registered users).
+   The colour always sits beside a text label, never alone. */
+:root {
+  --platform-web: #3987e5;
+  --platform-ios: #d95926;
+  --platform-android: #199e70;
+  --platform-unknown: #6b7480;
+}
+.platform-badge { justify-self: start; }
+.platform-badge::before { background: var(--platform-unknown); }
+.platform-badge-web::before { background: var(--platform-web); }
+.platform-badge-ios::before { background: var(--platform-ios); }
+.platform-badge-android::before { background: var(--platform-android); }
+.registration-stats { margin-bottom: 24px; }
+.registration-stats .panel-header .row-actions { align-items: center; }
+.registration-stats-body.is-refreshing { opacity: 0.6; transition: opacity 0.2s; }
+.registration-swatch { display: inline-block; width: 10px; height: 10px; margin-right: 7px; border-radius: 3px; background: var(--platform-unknown); vertical-align: -1px; }
+.registration-swatch-web, .registration-fill-web { background: var(--platform-web); fill: var(--platform-web); }
+.registration-swatch-ios, .registration-fill-ios { background: var(--platform-ios); fill: var(--platform-ios); }
+.registration-swatch-android, .registration-fill-android { background: var(--platform-android); fill: var(--platform-android); }
+.registration-fill-unknown { fill: var(--platform-unknown); }
+.registration-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.registration-tile { display: grid; gap: 6px; align-content: start; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-raised); }
+.registration-tile-label { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; color: var(--text-soft); font-size: 14px; font-weight: 700; }
+.registration-tile-label small { margin-left: auto; color: var(--muted); font-weight: 600; }
+.registration-tile-value { color: var(--text); font-size: 34px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
+.registration-tile-meta { color: var(--muted); font-size: 13px; }
+.registration-tile .button-link { justify-self: start; margin-top: 4px; }
+.registration-chart-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; margin: 28px 0 8px; }
+.registration-chart-head h3, .registration-section-title { margin: 0; font-size: 16px; }
+.registration-chart-head span { color: var(--muted); font-size: 13px; }
+.registration-section-title { margin: 28px 0 12px; }
+.registration-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 8px; padding: 0; list-style: none; color: var(--text-soft); font-size: 13px; }
+.registration-chart { position: relative; min-height: 220px; }
+.registration-chart svg { display: block; overflow: visible; }
+.registration-chart-grid { stroke: var(--border); stroke-width: 1; }
+.registration-chart-baseline { stroke: var(--border-strong); stroke-width: 1; }
+.registration-chart-tick { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.registration-chart-hit { fill: transparent; cursor: crosshair; }
+.registration-chart-focus { fill: rgba(255, 255, 255, 0.05); }
+.registration-tooltip { position: absolute; top: 4px; z-index: 2; display: grid; gap: 3px; min-width: 170px; padding: 10px 12px; transform: translateX(-50%); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface-raised); box-shadow: var(--shadow); color: var(--text-soft); font-size: 12px; pointer-events: none; }
+.registration-tooltip strong { color: var(--text); font-size: 13px; }
+.registration-tooltip-row { display: flex; align-items: center; }
+.registration-tooltip-row b { margin-left: auto; padding-left: 14px; color: var(--text); font-variant-numeric: tabular-nums; }
+.registration-tooltip-row.is-total { margin-top: 3px; padding-top: 5px; border-top: 1px solid var(--border); }
+.registration-tooltip-row.is-muted, .registration-tooltip-row.is-muted b { color: var(--muted); }
+.registration-daily-table { margin-top: 10px; }
+.registration-daily-table summary { color: var(--text-soft); font-size: 13px; cursor: pointer; }
+.registration-daily-table .table-wrap { max-height: 360px; margin-top: 10px; overflow-y: auto; }
+.registration-details tbody th[scope="row"], .registration-daily-table tbody th[scope="row"] {
+  min-width: 150px; background: transparent; color: var(--text-soft); font-size: 13px; font-weight: 600;
+  letter-spacing: 0; text-transform: none; white-space: normal;
+}
+.registration-details th, .registration-details td { padding: 11px 14px; }
+.registration-details td { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.registration-details td small { color: var(--muted); }
+.registration-notes { margin: 16px 0 0; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+@media (max-width: 720px) {
+  .registration-stats .panel-header { flex-direction: column; align-items: flex-start; }
+  .registration-details tbody th[scope="row"] { min-width: 120px; }
+  .registration-tile-value { font-size: 28px; }
+}
+
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

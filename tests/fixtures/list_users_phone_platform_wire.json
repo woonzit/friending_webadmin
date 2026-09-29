@@ -1,0 +1,298 @@
+{
+    "generator": "php tests/admin_phone_check_storage_test.php --write",
+    "provenance": "Actual list_users controller responses from an owned disposable Mongo; synthetic rows only. Each row is reduced to uid + the fields T-863 S9 P-092/P-093 add; the envelope is kept whole.",
+    "route": "/v1/webadmin/list_users",
+    "filters": {
+        "phone_check": [
+            "all",
+            "verified_any",
+            "verified_nanp",
+            "verified_hu",
+            "unverified"
+        ],
+        "signup_platform": [
+            "all",
+            "web",
+            "ios",
+            "android",
+            "unknown"
+        ]
+    },
+    "responses": {
+        "all": {
+            "success": true,
+            "status_code": 200,
+            "total": 7,
+            "page": 1,
+            "page_size": 50,
+            "signup_platform": "all",
+            "phone_check": "all",
+            "data": [
+                {
+                    "uid": 1,
+                    "signup_platform": "ios",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": false,
+                        "phone_country": ""
+                    }
+                },
+                {
+                    "uid": 2,
+                    "signup_platform": "ios",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": true,
+                        "phone_country": "US/CA"
+                    }
+                },
+                {
+                    "uid": 3,
+                    "signup_platform": "android",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": true,
+                        "phone_country": "US/CA"
+                    }
+                },
+                {
+                    "uid": 4,
+                    "signup_platform": "ios",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": true,
+                        "phone_country": "HU"
+                    }
+                },
+                {
+                    "uid": 5,
+                    "signup_platform": "ios",
+                    "legacy_converted": true,
+                    "phone_check": {
+                        "phone_verified": true,
+                        "phone_country": "GB"
+                    }
+                },
+                {
+                    "uid": 6,
+                    "signup_platform": "unknown",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": false,
+                        "phone_country": ""
+                    }
+                },
+                {
+                    "uid": 7,
+                    "signup_platform": "unknown",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": false,
+                        "phone_country": ""
+                    }
+                }
+            ],
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "phone_check=verified_any": {
+            "success": true,
+            "status_code": 200,
+            "total": 4,
+            "page": 1,
+            "page_size": 50,
+            "signup_platform": "all",
+            "phone_check": "verified_any",
+            "data": [
+                {
+                    "uid": 2,
+                    "signup_platform": "ios",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": true,
+                        "phone_country": "US/CA"
+                    }
+                },
+                {
+                    "uid": 3,
+                    "signup_platform": "android",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": true,
+                        "phone_country": "US/CA"
+                    }
+                },
+                {
+                    "uid": 4,
+                    "signup_platform": "ios",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": true,
+                        "phone_country": "HU"
+                    }
+                },
+                {
+                    "uid": 5,
+                    "signup_platform": "ios",
+                    "legacy_converted": true,
+                    "phone_check": {
+                        "phone_verified": true,
+                        "phone_country": "GB"
+                    }
+                }
+            ],
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "phone_check=verified_nanp": {
+            "success": true,
+            "status_code": 200,
+            "total": 2,
+            "page": 1,
+            "page_size": 50,
+            "signup_platform": "all",
+            "phone_check": "verified_nanp",
+            "data": [
+                {
+                    "uid": 2,
+                    "signup_platform": "ios",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": true,
+                        "phone_country": "US/CA"
+                    }
+                },
+                {
+                    "uid": 3,
+                    "signup_platform": "android",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": true,
+                        "phone_country": "US/CA"
+                    }
+                }
+            ],
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "phone_check=verified_hu": {
+            "success": true,
+            "status_code": 200,
+            "total": 1,
+            "page": 1,
+            "page_size": 50,
+            "signup_platform": "all",
+            "phone_check": "verified_hu",
+            "data": [
+                {
+                    "uid": 4,
+                    "signup_platform": "ios",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": true,
+                        "phone_country": "HU"
+                    }
+                }
+            ],
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "phone_check=unverified": {
+            "success": true,
+            "status_code": 200,
+            "total": 1,
+            "page": 1,
+            "page_size": 50,
+            "signup_platform": "all",
+            "phone_check": "unverified",
+            "data": [
+                {
+                    "uid": 6,
+                    "signup_platform": "unknown",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": false,
+                        "phone_country": ""
+                    }
+                }
+            ],
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "phone_check-refused": {
+            "success": false,
+            "status_code": 422,
+            "error": "phone-check-filter-invalid",
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "phone_check=verified_any&signup_platform=ios": {
+            "success": true,
+            "status_code": 200,
+            "total": 3,
+            "page": 1,
+            "page_size": 50,
+            "signup_platform": "ios",
+            "phone_check": "verified_any",
+            "data": [
+                {
+                    "uid": 2,
+                    "signup_platform": "ios",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": true,
+                        "phone_country": "US/CA"
+                    }
+                },
+                {
+                    "uid": 4,
+                    "signup_platform": "ios",
+                    "legacy_converted": false,
+                    "phone_check": {
+                        "phone_verified": true,
+                        "phone_country": "HU"
+                    }
+                },
+                {
+                    "uid": 5,
+                    "signup_platform": "ios",
+                    "legacy_converted": true,
+                    "phone_check": {
+                        "phone_verified": true,
+                        "phone_country": "GB"
+                    }
+                }
+            ],
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "signup_platform-refused": {
+            "success": false,
+            "status_code": 422,
+            "error": "signup-platform-invalid",
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "early-empty": {
+            "success": true,
+            "status_code": 200,
+            "total": 0,
+            "page": 1,
+            "page_size": 50,
+            "signup_platform": "all",
+            "phone_check": "verified_hu",
+            "data": [],
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        }
+    }
+}

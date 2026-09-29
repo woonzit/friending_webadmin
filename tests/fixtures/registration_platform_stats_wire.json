@@ -1,0 +1,400 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "schema_version": 1,
+        "generated_at": 1790416800,
+        "timezone": "Europe/Budapest",
+        "days": 30,
+        "platforms": {
+            "web": {
+                "registered": 5,
+                "accounts": 4,
+                "deleted": 1,
+                "new_today": 1,
+                "new_7_days": 4,
+                "new_30_days": 4,
+                "deleted_30_days": 1,
+                "legacy_converted": 0,
+                "legacy_converted_30_days": 0,
+                "with_photo": 2,
+                "active_7_days": 3,
+                "suspended": 1,
+                "signed_in_30_days": 2,
+                "gender": {
+                    "male": 3,
+                    "female": 1,
+                    "other": 0
+                },
+                "top_countries": [
+                    {
+                        "country_code": "HU",
+                        "count": 2
+                    },
+                    {
+                        "country_code": "US",
+                        "count": 2
+                    }
+                ]
+            },
+            "ios": {
+                "registered": 2,
+                "accounts": 1,
+                "deleted": 1,
+                "new_today": 0,
+                "new_7_days": 1,
+                "new_30_days": 1,
+                "deleted_30_days": 0,
+                "legacy_converted": 0,
+                "legacy_converted_30_days": 0,
+                "with_photo": 0,
+                "active_7_days": 1,
+                "suspended": 0,
+                "signed_in_30_days": 1,
+                "gender": {
+                    "male": 0,
+                    "female": 0,
+                    "other": 1
+                },
+                "top_countries": [
+                    {
+                        "country_code": "HU",
+                        "count": 1
+                    }
+                ]
+            },
+            "android": {
+                "registered": 1,
+                "accounts": 1,
+                "deleted": 0,
+                "new_today": 0,
+                "new_7_days": 0,
+                "new_30_days": 0,
+                "deleted_30_days": 0,
+                "legacy_converted": 1,
+                "legacy_converted_30_days": 1,
+                "with_photo": 0,
+                "active_7_days": 0,
+                "suspended": 0,
+                "signed_in_30_days": 0,
+                "gender": {
+                    "male": 1,
+                    "female": 0,
+                    "other": 0
+                },
+                "top_countries": [
+                    {
+                        "country_code": "HU",
+                        "count": 1
+                    }
+                ]
+            },
+            "unknown": {
+                "registered": 2,
+                "accounts": 2,
+                "deleted": 0,
+                "new_today": 0,
+                "new_7_days": 2,
+                "new_30_days": 2,
+                "deleted_30_days": 0,
+                "legacy_converted": 0,
+                "legacy_converted_30_days": 0,
+                "with_photo": 0,
+                "active_7_days": 2,
+                "suspended": 0,
+                "signed_in_30_days": 1,
+                "gender": {
+                    "male": 2,
+                    "female": 0,
+                    "other": 0
+                },
+                "top_countries": [
+                    {
+                        "country_code": "HU",
+                        "count": 1
+                    },
+                    {
+                        "country_code": "",
+                        "count": 1
+                    }
+                ]
+            }
+        },
+        "all": {
+            "registered": 10,
+            "accounts": 8,
+            "deleted": 2,
+            "new_today": 1,
+            "new_7_days": 7,
+            "new_30_days": 7,
+            "deleted_30_days": 1,
+            "legacy_converted": 1,
+            "legacy_converted_30_days": 1,
+            "with_photo": 2,
+            "active_7_days": 6,
+            "suspended": 1,
+            "signed_in_30_days": 3,
+            "gender": {
+                "male": 6,
+                "female": 1,
+                "other": 1
+            },
+            "top_countries": [
+                {
+                    "country_code": "HU",
+                    "count": 5
+                },
+                {
+                    "country_code": "US",
+                    "count": 2
+                },
+                {
+                    "country_code": "",
+                    "count": 1
+                }
+            ]
+        },
+        "daily": [
+            {
+                "date": "2026-08-28",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-08-29",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-08-30",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-08-31",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-01",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-02",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-03",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-04",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-05",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-06",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-07",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-08",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-09",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-10",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-11",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-12",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-13",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-14",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-15",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-16",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-17",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-18",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-19",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-20",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-21",
+                "web": 1,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-22",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-23",
+                "web": 2,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-24",
+                "web": 0,
+                "ios": 0,
+                "android": 0,
+                "unknown": 2,
+                "deleted": 1
+            },
+            {
+                "date": "2026-09-25",
+                "web": 0,
+                "ios": 1,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            },
+            {
+                "date": "2026-09-26",
+                "web": 1,
+                "ios": 0,
+                "android": 0,
+                "unknown": 0,
+                "deleted": 0
+            }
+        ]
+    }
+}

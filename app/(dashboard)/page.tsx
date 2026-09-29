@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
+import RegistrationPlatformStats from "@/components/RegistrationPlatformStats";
 import { EmptyPanel, ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import { formatDate, formatNumber } from "@/lib/format";
@@ -102,6 +103,7 @@ export default function OverviewPage() {
           </div>
         ) : <div className="panel-body" role="status">{t("signupsUnavailable")}</div>}
       </section>
+      <RegistrationPlatformStats />
       <section className="section-grid">
         <article className="panel">
           <div className="panel-header">

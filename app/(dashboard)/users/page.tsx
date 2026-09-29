@@ -1,13 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import { avatarUrl, formatDate, formatNumber } from "@/lib/format";
 import { membershipListSummary, membershipUtcInstant } from "@/lib/membership";
+import {
+  registeredUserSignup,
+  registeredUsersRefusal,
+  signupPlatformFilterApplied,
+  type RegisteredUsersRefusal,
+} from "@/lib/registeredUsers";
+import {
+  SIGNUP_PLATFORMS,
+  signupPlatformFilterFrom,
+  type SignupPlatformFilter,
+} from "@/lib/registrationStats";
 import { isRegistrationPeriod, REGISTRATION_PERIODS, registrationRange, type RegistrationPeriod } from "@/lib/signupMetrics";
 
 type UserRow = {
@@ -28,6 +40,9 @@ type UserRow = {
   can_see_demo_users: boolean;
   profile_suspended: boolean;
   membership?: unknown;
+  /** P-092: web | ios | android | unknown, and the old-app import marker. */
+  signup_platform?: unknown;
+  legacy_converted?: unknown;
 };
 
 type Filters = {
@@ -36,24 +51,42 @@ type Filters = {
   hasAvatar: boolean;
   registrationPeriod: RegistrationPeriod;
   registrationAsOf: number;
+  platform: SignupPlatformFilter;
 };
 
 const EMPTY_FILTERS: Filters = {
-  query: "", demoMode: "all", hasAvatar: false, registrationPeriod: "all", registrationAsOf: 0,
+  query: "", demoMode: "all", hasAvatar: false, registrationPeriod: "all", registrationAsOf: 0, platform: "all",
 };
 const PAGE_SIZE = 25;
 
 export default function UsersPage() {
+  // useSearchParams needs a Suspense boundary for the static build.
+  return (
+    <Suspense fallback={<LoadingPanel />}>
+      <RegisteredUsers />
+    </Suspense>
+  );
+}
+
+function RegisteredUsers() {
   const t = useTranslations("users");
+  const platformT = useTranslations("registrationStats.platforms");
   const membershipT = useTranslations("membershipUser");
   const common = useTranslations("common");
   const locale = useLocale();
-  const [draft, setDraft] = useState<Filters>(EMPTY_FILTERS);
-  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const router = useRouter();
+  const pathname = usePathname();
+  const search = useSearchParams();
+  // The overview's platform cards open this list pre-filtered (`?platform=web`).
+  const urlPlatform = signupPlatformFilterFrom(search.get("platform"));
+  const [draft, setDraft] = useState<Filters>(() => ({ ...EMPTY_FILTERS, platform: urlPlatform }));
+  const [filters, setFilters] = useState<Filters>(() => ({ ...EMPTY_FILTERS, platform: urlPlatform }));
   const [rows, setRows] = useState<UserRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [refusal, setRefusal] = useState<RegisteredUsersRefusal | null>(null);
+  const [platformIgnored, setPlatformIgnored] = useState(false);
   const [permissionBusyUid, setPermissionBusyUid] = useState<number | null>(null);
   const [permissionMessage, setPermissionMessage] = useState<{
     tone: "success" | "error";
@@ -67,14 +100,21 @@ export default function UsersPage() {
       demo_mode: filters.demoMode,
       has_avatar: filters.hasAvatar,
       ...registrationRange(filters.registrationPeriod, filters.registrationAsOf),
+      signup_platform: filters.platform,
       page,
       page_size: PAGE_SIZE,
     }, signal);
     if (signal?.aborted) return;
     if (response?.success !== true || response.status_code !== 200 || !Array.isArray(response.data)) {
-      if (!signal?.aborted) setState("error");
+      if (!signal?.aborted) {
+        setRefusal(registeredUsersRefusal(response));
+        setState("error");
+      }
       return;
     }
+    setRefusal(null);
+    // Core echoes the filter it applied; a mismatch means the list is not what was asked for.
+    setPlatformIgnored(!signupPlatformFilterApplied(response, filters.platform));
     setRows(response.data as UserRow[]);
     setTotal(Number(response.total) || 0);
     setState("ready");
@@ -86,16 +126,30 @@ export default function UsersPage() {
     return () => controller.abort();
   }, [filters, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // A later address change (an overview card, back/forward) re-applies the platform from it.
+  useEffect(() => {
+    if (urlPlatform === filters.platform) return;
+    setDraft((value) => ({ ...value, platform: urlPlatform }));
+    setFilters((value) => ({ ...value, platform: urlPlatform }));
+    setPage(1);
+  }, [urlPlatform]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function showPlatform(platform: SignupPlatformFilter) {
+    router.replace(platform === "all" ? pathname : `${pathname}?platform=${platform}`, { scroll: false });
+  }
+
   function apply(event: React.FormEvent) {
     event.preventDefault();
     setPage(1);
     setFilters({ ...draft, query: draft.query.trim(), registrationAsOf: Math.floor(Date.now() / 1000) });
+    showPlatform(draft.platform);
   }
 
   function reset() {
     setDraft(EMPTY_FILTERS);
     setFilters(EMPTY_FILTERS);
     setPage(1);
+    showPlatform("all");
   }
 
   async function setDemoVisibilityPermission(row: UserRow, enabled: boolean) {
@@ -179,6 +233,21 @@ export default function UsersPage() {
             ))}
           </select>
         </label>
+        <label className="field">
+          <span>{t("platformLabel")}</span>
+          <select
+            value={draft.platform}
+            onChange={(event) => setDraft((value) => ({
+              ...value,
+              platform: signupPlatformFilterFrom(event.target.value),
+            }))}
+          >
+            <option value="all">{t("platformAll")}</option>
+            {SIGNUP_PLATFORMS.map((platform) => (
+              <option key={platform} value={platform}>{platformT(platform)}</option>
+            ))}
+          </select>
+        </label>
         <label className="checkbox-field">
           <input
             type="checkbox"
@@ -207,7 +276,7 @@ export default function UsersPage() {
       {state === "loading" ? (
         <LoadingPanel />
       ) : state === "error" ? (
-        <ErrorPanel message={t("loadError")} retry={() => void load()} />
+        <ErrorPanel message={refusal ? t(`filterRefused.${refusal}`) : t("loadError")} retry={() => void load()} />
       ) : (
         <>
           <div className="list-summary">
@@ -219,6 +288,9 @@ export default function UsersPage() {
             <Link href="/configuration">{t("demoAccessConfiguration")}</Link>
           </p>
           <p className="list-note membership-list-note">{t("membershipSummaryNote")}</p>
+          {platformIgnored && (
+            <div className="alert alert-warning page-alert" role="status">{t("platformFilterIgnored")}</div>
+          )}
           <div className="table-wrap">
             {rows.length === 0 ? (
               <div className="empty-state">
@@ -232,6 +304,7 @@ export default function UsersPage() {
                     <th>{t("contact")}</th>
                     <th>{t("location")}</th>
                     <th>{t("joined")}</th>
+                    <th>{t("signupPlatform")}</th>
                     <th>{t("account")}</th>
                     <th>{t("membership")}</th>
                     <th>{t("demoAccess")}</th>
@@ -245,6 +318,7 @@ export default function UsersPage() {
                     const membership = membershipListSummary(row.membership);
                     const membershipExpiry = membershipUtcInstant(membership.effective_expires_at);
                     const membershipFirstSource = membershipUtcInstant(membership.first_subscribed_at);
+                    const signup = registeredUserSignup(row);
                     const membershipSources = membership.source_kinds.length > 0
                       ? membership.source_kinds.map((kind) => t(`membershipSources.${kind}`)).join(" · ")
                       : membership.lifecycle_state === "unavailable"
@@ -274,6 +348,16 @@ export default function UsersPage() {
                         </td>
                         <td>{location || "—"}</td>
                         <td>{formatDate(row.created, locale)}</td>
+                        <td>
+                          <div className="cell-stack">
+                            {signup.platform ? (
+                              <span className={`badge platform-badge platform-badge-${signup.platform}`}>
+                                {platformT(signup.platform)}
+                              </span>
+                            ) : <span>—</span>}
+                            {signup.legacyConverted && <small>{t("legacyConverted")}</small>}
+                          </div>
+                        </td>
                         <td>
                           <div className="cell-stack">
                             <span className={`badge ${row.demo_user ? "badge-demo" : ""}`}>

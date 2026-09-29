@@ -138,8 +138,9 @@ test("every inventoried functional section has detailed English and Hungarian he
   // has its own revision and its own save (248). T-863 S9 (P-101) adds the member
   // topic for restoring PLUS after a re-registration, a support procedure that the
   // membership panel's grant controls carry out (249). T-863 S9 (P-091) adds the
-  // new-member welcome message panel on /configuration, saved on its own (250).
-  assert.equal(totalSections, 250, "review the functional-section census when the UI changes");
+  // new-member welcome message panel on /configuration, saved on its own (250). T-863 S9
+  // (P-092) adds the registrations-by-platform panel on the overview (251).
+  assert.equal(totalSections, 251, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [
@@ -213,7 +214,7 @@ test("every inventoried functional section has detailed English and Hungarian he
 
 test("independently saved or operator-facing embedded tools have dedicated help topics", () => {
   const required: Record<string, string[]> = {
-    overview: ["metrics", "signupMetrics"],
+    overview: ["metrics", "signupMetrics", "registrations"],
     userDetail: ["membership", "membershipRestore"],
     photoModeration: ["imageEditing"],
     configuration: ["sectionAvailability", "sectionTeasers", "featureSwitches", "authPolicy", "phoneCountries", "locationAccess", "welcomeMessage"],
