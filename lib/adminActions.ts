@@ -666,6 +666,9 @@ const APPEARANCE_RULE_BODY_LIMIT_BYTES = TAG_CATALOG_BODY_LIMIT_BYTES;
  * publication carry only a revision, so they keep the default ceiling.
  */
 const VERIFICATION_METHOD_BODY_LIMIT_BYTES = 2_400_000;
+// Core accepts 100 gestures with bilingual titles (180) and subtitles (700).
+// Maximum-length Hungarian text alone takes the catalogue past the default ceiling.
+const PROFILE_VERIFICATION_CONFIG_BODY_LIMIT_BYTES = 512_000;
 
 /**
  * `save_signup_photo_config` deliberately does NOT appear below. Its `tips_json` carries at most 12
@@ -682,6 +685,7 @@ const ADMIN_ACTION_BODY_LIMIT: Readonly<Record<string, number>> = {
   admin_replace_image: REPLACE_IMAGE_BODY_LIMIT_BYTES,
   appearance_rules_save: APPEARANCE_RULE_BODY_LIMIT_BYTES,
   verification_method_save: VERIFICATION_METHOD_BODY_LIMIT_BYTES,
+  save_profile_verification_config: PROFILE_VERIFICATION_CONFIG_BODY_LIMIT_BYTES,
   // A1: this is the effective guard on Apache 2.4.52 and therefore stays
   // pinned independently of the Verification capability projection.
   verification_badge_upload: MAX_VERIFICATION_BADGE_FORM_BYTES,

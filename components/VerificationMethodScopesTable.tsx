@@ -867,9 +867,8 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
                 </table>
               </div>
               <small className="field-hint">{t("computedAt", { time: new Date(impact.evaluated_at * 1000).toISOString() })}</small>
-              {impact.publish_guard.blocking_codes.map((code) => (code === VERIFICATION_METHOD_PHOTO_UNAVAILABLE
-                ? <div key={code}>{photoBlockedAlert()}</div>
-                : <div className="alert alert-warning" key={code}>{t("publishBlocked", { code })}</div>
+              {impact.publish_guard.blocking_codes.filter((code) => code !== VERIFICATION_METHOD_PHOTO_UNAVAILABLE).map((code) => (
+                <div className="alert alert-warning" key={code}>{t("publishBlocked", { code })}</div>
               ))}
               <label className="field">
                 <span>{t("publishReason")}</span>

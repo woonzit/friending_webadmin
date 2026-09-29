@@ -98,6 +98,7 @@ const RAISED_BODY_LIMITS: Partial<Record<(typeof ADMIN_ACTIONS)[number], number>
   // those maxima is derived and built below. The impact preview and the
   // publication carry only a revision, so they keep the default ceiling.
   verification_method_save: 2_400_000,
+  save_profile_verification_config: 512_000,
 };
 
 test("the per-action body ceiling is raised only where it is named", () => {

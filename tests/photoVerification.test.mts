@@ -6,8 +6,11 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import PhotoGestureCatalogue, { PhotoFlowWording } from "../components/PhotoVerificationEditor.tsx";
+import { adminActionBodyLimit } from "../lib/adminActions.ts";
 import {
   PHOTO_GESTURES_MAX,
+  PHOTO_GESTURE_TITLE_MAX,
+  PHOTO_GESTURE_SUBTITLE_MAX,
   PROFILE_VERIFICATION_PHOTO_FLOW_FIELDS,
   PROFILE_VERIFICATION_PHOTO_FLOW_KEYS,
   cloneProfileVerificationConfig,
@@ -46,6 +49,24 @@ function corpusConfig(): ProfileVerificationConfig {
 function paths(config: ProfileVerificationConfig): string[] {
   return profileVerificationConfigIssues(config).map((issue) => `${issue.path}:${issue.problem}`);
 }
+
+test("a maximal bilingual gesture catalogue fits the dedicated save body ceiling", () => {
+  const config = corpusConfig();
+  const pair = (length: number) => ({ en: "x".repeat(length), hu: "ő".repeat(length) });
+  config.photo_gestures = Array.from({ length: PHOTO_GESTURES_MAX }, (_, index) => ({
+    id: index.toString(16).padStart(32, "0"),
+    title: pair(PHOTO_GESTURE_TITLE_MAX), subtitle: pair(PHOTO_GESTURE_SUBTITLE_MAX),
+    male_image_url: IMAGE, female_image_url: IMAGE,
+  }));
+  assert.ok(normalizeProfileVerificationConfig(config));
+  assert.deepEqual(paths(config), []);
+  const body = { configuration: profileVerificationSavePayload(config), expected_revision: config.revision };
+  const bytes = Buffer.byteLength(JSON.stringify(body), "utf8");
+  assert.ok(bytes > 256_000, `${bytes} bytes reproduce the old 413 refusal`);
+  assert.ok(bytes <= adminActionBodyLimit("save_profile_verification_config"), `${bytes} bytes fit the new limit`);
+  assert.equal(adminActionBodyLimit("save_profile_verification_config"), 512_000);
+  assert.equal(adminActionBodyLimit("profile_verification_config"), 256_000);
+});
 
 test("the example URL is a managed console upload: https, exact upload path, no query or credentials", () => {
   assert.equal(isPhotoGestureExampleUrl(IMAGE), true);

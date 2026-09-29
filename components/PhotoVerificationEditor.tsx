@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import ImageUploadField from "@/components/ImageUploadField";
 import LocalizedFields, { type Language } from "@/components/LocalizedFields";
@@ -61,6 +61,13 @@ export default function PhotoGestureCatalogue({
   const fields = useTranslations("profileVerification.configuration.fields");
   const [uploading, setUploading] = useState<ReadonlySet<string>>(new Set());
   const uploadingRef = useRef<Set<string>>(new Set());
+  const catalogueRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // This anchor mounts after the configuration read, too late for the browser's initial hash scroll.
+    if (window.location.hash === `#${VERIFICATION_METHOD_PHOTO_CATALOGUE_ANCHOR}`) {
+      catalogueRef.current?.scrollIntoView({ block: "start" });
+    }
+  }, []);
   const locked = disabled || uploading.size > 0;
   const count = value.photo_gesture_count;
   const size = value.photo_gestures.length;
@@ -100,7 +107,7 @@ export default function PhotoGestureCatalogue({
     );
 
   return (
-    <div className="verification-editor-section" id={VERIFICATION_METHOD_PHOTO_CATALOGUE_ANCHOR}>
+    <div className="verification-editor-section" id={VERIFICATION_METHOD_PHOTO_CATALOGUE_ANCHOR} ref={catalogueRef}>
       <div className="verification-section-heading"><h3>{t("title")}</h3><p>{t("copy")}</p></div>
       {coverage === null
         ? <p className="field-hint">{t("coverageUnknown")}</p>
