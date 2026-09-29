@@ -238,12 +238,58 @@ export function datesActivityEditChanges(
   return changes;
 }
 
-export function parseEntryPoints(value: string): string[] {
-  return Array.from(new Set(
+export const DATES_REPORT_SCOPES = ["user", "activity", "message", "review"] as const;
+
+/**
+ * Report entry points a reason can list, per reason scope (AYI-014).
+ *
+ * A reason is offered and accepted only where its entry_points contain the
+ * entry point the report arrives with, so a value no client sends makes the
+ * reason unreachable. Each list is the union of Core's seeded catalogue
+ * (config/dates_v1_fixture.json) and what reaches Core today:
+ * - iOS sends `detail` for the activity and for its host and participants,
+ *   and `review` for reviews;
+ * - Core's own report targets carry `check_in` (post-activity check-in),
+ *   `direct_chat_header` (direct chat counterpart) and `message_action`
+ *   (a chat message and its sender).
+ * The seeded-only values (`card`, `profile`, `participant`, `chat_header`,
+ * `message`) stay valid so a seeded reason can still be edited and saved.
+ */
+export const DATES_REPORT_ENTRY_POINTS: Readonly<Record<typeof DATES_REPORT_SCOPES[number], readonly string[]>> = {
+  user: ["detail", "participant", "profile", "check_in", "chat_header", "direct_chat_header", "message_action"],
+  activity: ["detail", "card", "check_in"],
+  message: ["message_action", "message"],
+  review: ["review"],
+};
+
+export function datesReportEntryPointsFor(scope: string): readonly string[] {
+  return Object.hasOwn(DATES_REPORT_ENTRY_POINTS, scope)
+    ? DATES_REPORT_ENTRY_POINTS[scope as keyof typeof DATES_REPORT_ENTRY_POINTS]
+    : [];
+}
+
+export type DatesReasonEntryPoints =
+  | { ok: true; entryPoints: string[] }
+  | { ok: false; error: "empty" }
+  | { ok: false; error: "unknown"; tokens: string[] };
+
+/**
+ * Reads the comma-separated entry-point field of a report reason. Nothing is
+ * dropped silently: an empty list and any token outside the scope's
+ * vocabulary are refused and named, because Core stores both and the reason
+ * then either matches no report or is refused on every submission.
+ */
+export function datesReasonEntryPoints(scope: string, value: string): DatesReasonEntryPoints {
+  const allowed = datesReportEntryPointsFor(scope);
+  const tokens = Array.from(new Set(
     value.split(",")
       .map((item) => item.trim().toLowerCase())
-      .filter((item) => /^[a-z][a-z0-9_]{1,63}$/.test(item)),
+      .filter((item) => item !== ""),
   ));
+  if (tokens.length === 0) return { ok: false, error: "empty" };
+  const unknown = tokens.filter((item) => !allowed.includes(item));
+  if (unknown.length > 0) return { ok: false, error: "unknown", tokens: unknown };
+  return { ok: true, entryPoints: tokens };
 }
 
 export function configurationInputValue(type: string, raw: string): unknown {

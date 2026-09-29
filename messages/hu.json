@@ -8445,7 +8445,9 @@
       "explanationHu": "Magyarázat · magyar",
       "severity": "Súlyosság",
       "entryPoints": "Belépési pontok (vesszővel elválasztva)",
-      "entryPointsPlaceholder": "activity_menu, chat_message, profile_menu",
+      "entryPointsHint": "Ehhez a hatókörhöz ezek az értékek használhatók: {values}. Az app csak azokon a képernyőkön kínálja fel az indokot, amelyek szerepelnek a belépési pontjai között.",
+      "entryPointsEmpty": "Adj meg legalább egy belépési pontot ehhez a hatókörhöz.",
+      "entryPointsUnknown": "Ehhez a hatókörhöz nem tartozó belépési pont: {values}. Csak ezek használhatók: {allowed}.",
       "escalationCategory": "Eszkalációs kategória (opcionális)",
       "activeReason": "Az indok aktív",
       "commentRequired": "A bejelentő megjegyzése kötelező",
@@ -8453,7 +8455,7 @@
       "reasonCreated": "A jelentési indok létrehozva.",
       "reasonSaved": "A jelentési indok elmentve.",
       "scopes": {
-        "user": "User",
+        "user": "Felhasználó",
         "activity": "Aktivitás",
         "message": "Üzenet",
         "review": "Értékelés"

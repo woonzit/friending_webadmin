@@ -10,11 +10,13 @@ import { adminCall } from "@/lib/adminClient";
 import {
   configurationInputValue,
   createAdminIdempotencyKey,
+  DATES_REPORT_SCOPES,
   datesAdminPrincipal,
+  datesReasonEntryPoints,
+  datesReportEntryPointsFor,
   datesRuntimeSettingVisible,
   hasDatesCapability,
   humanizeMachineKey,
-  parseEntryPoints,
   type DatesAdminPrincipal,
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
@@ -245,20 +247,30 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
   const [active, setActive] = useState(reason?.active ?? true);
   const [commentRequired, setCommentRequired] = useState(reason?.comment_required ?? false);
   const [entryPoints, setEntryPoints] = useState((reason?.entry_points || []).join(", "));
+  const [entryPointsError, setEntryPointsError] = useState<string | null>(null);
   const [escalationCategory, setEscalationCategory] = useState(reason?.escalation_category || "");
   const [auditReason, setAuditReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const allowedEntryPoints = datesReportEntryPointsFor(scope).join(", ");
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
     if (auditReason.trim().length < 3 || busy) return;
+    const parsedEntryPoints = datesReasonEntryPoints(scope, entryPoints);
+    if (!parsedEntryPoints.ok) {
+      setEntryPointsError(parsedEntryPoints.error === "empty"
+        ? t("entryPointsEmpty")
+        : t("entryPointsUnknown", { values: parsedEntryPoints.tokens.join(", "), allowed: allowedEntryPoints }));
+      return;
+    }
+    setEntryPointsError(null);
     setBusy(true);
     const response = await adminCall("dates_reason_save", {
       reason_id: reason?.reason_id || "", scope, key: keyName.trim().toLowerCase(),
       name_en: nameEn.trim(), name_hu: nameHu.trim(),
       explanation_en: explanationEn.trim() || null, explanation_hu: explanationHu.trim() || null,
       severity, order: Number(order), active, comment_required: commentRequired,
-      entry_points: parseEntryPoints(entryPoints), escalation_category: escalationCategory.trim() || null,
+      entry_points: parsedEntryPoints.entryPoints, escalation_category: escalationCategory.trim() || null,
       ...(reason ? { expected_revision: reason.revision } : {}),
       reason: auditReason.trim(), idempotency_key: createAdminIdempotencyKey("dates-reason-save"),
     });
@@ -284,7 +296,7 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
       <div><strong>{isNew ? t("newReason") : `${reason.reason_id} · ${localeLabel(reason)}`}</strong><small>{isNew ? t("newReasonCopy") : `${t(`scopes.${reason.scope}`)} · ${humanizeMachineKey(reason.severity)} · ${t("revision", { revision: reason.revision })}`}</small></div><span className={`badge ${reason?.active || isNew ? "badge-active" : "badge-inactive"}`}>{expanded ? t("collapse") : (isNew ? common("create") : common("edit"))}</span>
     </button>
     {expanded && <form className="dates-reason-form" onSubmit={save}>
-      <div className="form-grid"><label className="field"><span>{t("scope")}</span><select value={scope} disabled={!isNew || !canManage || busy} onChange={(event) => setScope(event.target.value)}>{["user", "activity", "message", "review"].map((value) => <option key={value} value={value}>{t(`scopes.${value}`)}</option>)}</select></label><label className="field"><span>{t("reasonKey")}</span><input required pattern="[a-z][a-z0-9_]{1,63}" disabled={!isNew || !canManage || busy} value={keyName} onChange={(event) => setKeyName(event.target.value.toLowerCase())} /></label><label className="field"><span>{t("nameEn")}</span><input required maxLength={120} disabled={!canManage || busy} value={nameEn} onChange={(event) => setNameEn(event.target.value)} /></label><label className="field"><span>{t("nameHu")}</span><input required maxLength={120} disabled={!canManage || busy} value={nameHu} onChange={(event) => setNameHu(event.target.value)} /></label><label className="field"><span>{t("explanationEn")}</span><textarea maxLength={500} disabled={!canManage || busy} value={explanationEn} onChange={(event) => setExplanationEn(event.target.value)} /></label><label className="field"><span>{t("explanationHu")}</span><textarea maxLength={500} disabled={!canManage || busy} value={explanationHu} onChange={(event) => setExplanationHu(event.target.value)} /></label><label className="field"><span>{t("severity")}</span><select value={severity} disabled={!canManage || busy} onChange={(event) => setSeverity(event.target.value)}>{["low", "medium", "high", "critical"].map((value) => <option key={value} value={value}>{humanizeMachineKey(value)}</option>)}</select></label><label className="field"><span>{t("order")}</span><input type="number" min={0} max={100000} value={order} disabled={!canManage || busy} onChange={(event) => setOrder(event.target.value)} /></label><label className="field field-full"><span>{t("entryPoints")}</span><input value={entryPoints} disabled={!canManage || busy} onChange={(event) => setEntryPoints(event.target.value)} placeholder={t("entryPointsPlaceholder")} /></label><label className="field"><span>{t("escalationCategory")}</span><input value={escalationCategory} disabled={!canManage || busy} onChange={(event) => setEscalationCategory(event.target.value)} /></label><div className="dates-checkbox-stack"><label className="checkbox-field"><input type="checkbox" checked={active} disabled={!canManage || busy || (!isNew && reason?.active === true)} onChange={(event) => setActive(event.target.checked)} /><span>{t("activeReason")}</span></label><label className="checkbox-field"><input type="checkbox" checked={commentRequired} disabled={!canManage || busy} onChange={(event) => setCommentRequired(event.target.checked)} /><span>{t("commentRequired")}</span></label></div>{canManage && <label className="field field-full"><span>{t("auditReason")}</span><textarea required value={auditReason} onChange={(event) => setAuditReason(event.target.value)} /></label>}</div>
+      <div className="form-grid"><label className="field"><span>{t("scope")}</span><select value={scope} disabled={!isNew || !canManage || busy} onChange={(event) => { setScope(event.target.value); setEntryPointsError(null); }}>{DATES_REPORT_SCOPES.map((value) => <option key={value} value={value}>{t(`scopes.${value}`)}</option>)}</select></label><label className="field"><span>{t("reasonKey")}</span><input required pattern="[a-z][a-z0-9_]{1,63}" disabled={!isNew || !canManage || busy} value={keyName} onChange={(event) => setKeyName(event.target.value.toLowerCase())} /></label><label className="field"><span>{t("nameEn")}</span><input required maxLength={120} disabled={!canManage || busy} value={nameEn} onChange={(event) => setNameEn(event.target.value)} /></label><label className="field"><span>{t("nameHu")}</span><input required maxLength={120} disabled={!canManage || busy} value={nameHu} onChange={(event) => setNameHu(event.target.value)} /></label><label className="field"><span>{t("explanationEn")}</span><textarea maxLength={500} disabled={!canManage || busy} value={explanationEn} onChange={(event) => setExplanationEn(event.target.value)} /></label><label className="field"><span>{t("explanationHu")}</span><textarea maxLength={500} disabled={!canManage || busy} value={explanationHu} onChange={(event) => setExplanationHu(event.target.value)} /></label><label className="field"><span>{t("severity")}</span><select value={severity} disabled={!canManage || busy} onChange={(event) => setSeverity(event.target.value)}>{["low", "medium", "high", "critical"].map((value) => <option key={value} value={value}>{humanizeMachineKey(value)}</option>)}</select></label><label className="field"><span>{t("order")}</span><input type="number" min={0} max={100000} value={order} disabled={!canManage || busy} onChange={(event) => setOrder(event.target.value)} /></label><label className="field field-full"><span>{t("entryPoints")}</span><input value={entryPoints} disabled={!canManage || busy} aria-invalid={entryPointsError ? true : undefined} onChange={(event) => { setEntryPoints(event.target.value); setEntryPointsError(null); }} placeholder={allowedEntryPoints} /><small className="field-hint">{t("entryPointsHint", { values: allowedEntryPoints })}</small>{entryPointsError && <small className="field-error" role="alert">{entryPointsError}</small>}</label><label className="field"><span>{t("escalationCategory")}</span><input value={escalationCategory} disabled={!canManage || busy} onChange={(event) => setEscalationCategory(event.target.value)} /></label><div className="dates-checkbox-stack"><label className="checkbox-field"><input type="checkbox" checked={active} disabled={!canManage || busy || (!isNew && reason?.active === true)} onChange={(event) => setActive(event.target.checked)} /><span>{t("activeReason")}</span></label><label className="checkbox-field"><input type="checkbox" checked={commentRequired} disabled={!canManage || busy} onChange={(event) => setCommentRequired(event.target.checked)} /><span>{t("commentRequired")}</span></label></div>{canManage && <label className="field field-full"><span>{t("auditReason")}</span><textarea required value={auditReason} onChange={(event) => setAuditReason(event.target.value)} /></label>}</div>
       {canManage && <div className="row-actions"><button className="button button-primary button-small" type="submit" disabled={busy}>{busy ? common("saving") : common("save")}</button>{reason?.active && <button className="button button-danger button-small" type="button" onClick={() => void deactivate()} disabled={busy}>{t("deactivate")}</button>}</div>}
     </form>}
   </article>;

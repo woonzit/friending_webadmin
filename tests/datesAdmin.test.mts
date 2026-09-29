@@ -5,14 +5,17 @@ import { DATES_ADMIN_ACTIONS, isAdminActionAllowed } from "../lib/adminActions.t
 import {
   configurationInputValue,
   createAdminIdempotencyKey,
+  DATES_REPORT_ENTRY_POINTS,
+  DATES_REPORT_SCOPES,
   datesActivityEditChanges,
   datesAdminPrincipal,
+  datesReasonEntryPoints,
+  datesReportEntryPointsFor,
   datesAvailabilityWriteIsRetired,
   datesModerationSla,
   datesRuntimeSettingVisible,
   hasDatesCapability,
   normalizeDatesPrincipal,
-  parseEntryPoints,
   resolutionActions,
 } from "../lib/datesAdmin.ts";
 import {
@@ -217,9 +220,67 @@ test("activity edits leave maximum_people out in approval mode (AYI-013)", () =>
   assert.equal(/maximum_people:\s*draft/.test(page), false, "the page no longer builds the capacity change itself");
 });
 
+test("report-reason entry points use the vocabulary Core seeds and clients send (AYI-014)", () => {
+  assert.deepEqual([...DATES_REPORT_SCOPES], ["user", "activity", "message", "review"]);
+  // Core's seeded catalogue (config/dates_v1_fixture.json) must stay editable.
+  const seeded: Record<string, string[]> = {
+    user: ["profile", "participant", "chat_header", "check_in"],
+    activity: ["card", "detail", "check_in"],
+    message: ["message"],
+    review: ["review"],
+  };
+  // What reaches Core today: iOS literals and the targets Core itself serializes.
+  const sent: Record<string, string[]> = {
+    user: ["detail", "check_in", "direct_chat_header", "message_action"],
+    activity: ["detail", "check_in"],
+    message: ["message_action"],
+    review: ["review"],
+  };
+  for (const scope of DATES_REPORT_SCOPES) {
+    const allowed = DATES_REPORT_ENTRY_POINTS[scope];
+    assert.equal(new Set(allowed).size, allowed.length, `${scope} has no duplicates`);
+    for (const value of [...seeded[scope], ...sent[scope]]) {
+      assert.ok(allowed.includes(value), `${scope} allows ${value}`);
+    }
+    assert.deepEqual(datesReasonEntryPoints(scope, allowed.join(",")), { ok: true, entryPoints: [...allowed] });
+  }
+  assert.deepEqual(datesReportEntryPointsFor("owner"), []);
+
+  assert.deepEqual(
+    datesReasonEntryPoints("user", " Detail, participant ,detail,, "),
+    { ok: true, entryPoints: ["detail", "participant"] },
+  );
+  assert.deepEqual(datesReasonEntryPoints("user", ""), { ok: false, error: "empty" });
+  assert.deepEqual(datesReasonEntryPoints("user", " , ,"), { ok: false, error: "empty" });
+  // The retired placeholder values are named, not silently dropped.
+  assert.deepEqual(
+    datesReasonEntryPoints("activity", "detail, activity_menu, chat_message, profile_menu"),
+    { ok: false, error: "unknown", tokens: ["activity_menu", "chat_message", "profile_menu"] },
+  );
+  assert.deepEqual(datesReasonEntryPoints("user", "profile, INVALID VALUE"), { ok: false, error: "unknown", tokens: ["invalid value"] });
+  // A value is valid only for the scopes that can report from it.
+  assert.deepEqual(datesReasonEntryPoints("review", "detail"), { ok: false, error: "unknown", tokens: ["detail"] });
+  assert.deepEqual(datesReasonEntryPoints("message", "review"), { ok: false, error: "unknown", tokens: ["review"] });
+  assert.deepEqual(datesReasonEntryPoints("owner", "detail"), { ok: false, error: "unknown", tokens: ["detail"] });
+
+  const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /datesReasonEntryPoints\(scope, entryPoints\)/);
+  assert.match(page, /entry_points: parsedEntryPoints\.entryPoints/);
+  assert.match(page, /placeholder=\{allowedEntryPoints\}/);
+  assert.equal(page.includes("entryPointsPlaceholder"), false);
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
+    const configuration = messages.datesAdmin.configuration;
+    assert.equal(Object.hasOwn(configuration, "entryPointsPlaceholder"), false, `${locale} placeholder retired`);
+    assert.match(configuration.entryPointsHint, /\{values\}/);
+    assert.equal(typeof configuration.entryPointsEmpty, "string");
+    assert.match(configuration.entryPointsUnknown, /\{values\}.*\{allowed\}/);
+    assert.doesNotMatch(JSON.stringify(configuration), /activity_menu|profile_menu/);
+  }
+});
+
 test("admin payload helpers normalize idempotency, catalog and setting values", () => {
   assert.match(createAdminIdempotencyKey("Dates Setting Save"), /^dates-setting-save:[0-9a-f-]{36}$/);
-  assert.deepEqual(parseEntryPoints("chat_message, activity_menu, chat_message, INVALID VALUE"), ["chat_message", "activity_menu"]);
   assert.equal(configurationInputValue("boolean", "false"), false);
   assert.equal(configurationInputValue("integer", "42"), 42);
   assert.equal(configurationInputValue("nullable_integer", ""), null);
