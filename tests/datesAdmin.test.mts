@@ -328,6 +328,20 @@ test("case detail internal notes decode strictly and tolerate an older Core (AYI
   }
 });
 
+test("the Hungarian claim panel says \"átvétel\", like the appeal sentences", () => {
+  const hu = JSON.parse(readFileSync(new URL("../messages/hu.json", import.meta.url), "utf8")).datesAdmin.caseDetail;
+  assert.equal(hu.claim, "Ügy átvétele");
+  // The appeal sentences already say "átvesz"; the rest of the panel matches them.
+  assert.match(hu.appealClaimUnavailable, /nem veheted át/);
+  assert.match(hu.appealDecisionUnavailable, /átvehesse/);
+  for (const key of ["claimTitle", "claimCopy", "claimExpiry", "heartbeat", "claimUnavailable", "claimed", "leaseExtended"]) {
+    assert.match(hu[key], /[Áá]tvé|[Áá]tvett|vehető át|át kell venned/, key);
+  }
+  for (const [key, value] of Object.entries(hu)) {
+    if (typeof value === "string") assert.doesNotMatch(value, /claim|lease/i, `hu.caseDetail.${key}`);
+  }
+});
+
 test("activity edits leave maximum_people out in approval mode (AYI-013)", () => {
   const draft = {
     title: "  Morning run  ",
