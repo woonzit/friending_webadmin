@@ -126,6 +126,8 @@ export default function DatesConfigurationPage() {
 
   function success(message: string) { setFeedback({ tone: "success", text: message }); }
   function failure(error: unknown) { setFeedback({ tone: "error", text: t("operationFailed", { error: String(error || "core-unavailable") }) }); }
+  /** An inline refusal replaces the page-level error of an earlier attempt, which would otherwise stay above it. */
+  function clearFailure() { setFeedback((current) => current?.tone === "error" ? null : current); }
 
   if (state === "loading") return <LoadingPanel />;
   if (state === "error" || !principal) return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
@@ -160,8 +162,8 @@ export default function DatesConfigurationPage() {
       <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("reasonsTitle")}</h2><p>{t("reasonsCopy")}</p></div><label className="field dates-scope-filter"><span>{t("scope")}</span><select value={scope} onChange={(event) => setScope(event.target.value)}>{["all", "user", "activity", "message", "review"].map((value) => <option key={value} value={value}>{value === "all" ? common("all") : t(`scopes.${value}`)}</option>)}</select></label></div>
         <div className="dates-card-list">
-          {canManageReasons && <ReasonEditor reason={null} defaultScope={scope === "all" ? "activity" : scope} onSaved={async () => { success(t("reasonCreated")); await load(); }} onError={failure} />}
-          {reasons.map((reason) => <ReasonEditor key={`${reason.reason_id}-${reason.revision}`} reason={reason} defaultScope={reason.scope} canManage={canManageReasons} onSaved={async () => { success(t("reasonSaved")); await load(); }} onError={failure} />)}
+          {canManageReasons && <ReasonEditor reason={null} defaultScope={scope === "all" ? "activity" : scope} onSaved={async () => { success(t("reasonCreated")); await load(); }} onError={failure} onInlineError={clearFailure} />}
+          {reasons.map((reason) => <ReasonEditor key={`${reason.reason_id}-${reason.revision}`} reason={reason} defaultScope={reason.scope} canManage={canManageReasons} onSaved={async () => { success(t("reasonSaved")); await load(); }} onError={failure} onInlineError={clearFailure} />)}
         </div>
       </section>
       {runtimeHelpOpen && <DatesRuntimeSettingsHelp settings={settings} onClose={() => setRuntimeHelpOpen(false)} />}
@@ -237,7 +239,7 @@ function ActivityTypeEditor({ activityType, canManage, locale, onSaved, onError 
   </form>;
 }
 
-function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError }: { reason: Reason | null; defaultScope: string; canManage?: boolean; onSaved: () => Promise<void>; onError: (error: unknown) => void }) {
+function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError, onInlineError }: { reason: Reason | null; defaultScope: string; canManage?: boolean; onSaved: () => Promise<void>; onError: (error: unknown) => void; onInlineError: () => void }) {
   const t = useTranslations("datesAdmin.configuration");
   const common = useTranslations("common");
   const isNew = reason === null;
@@ -259,12 +261,17 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
   const [busy, setBusy] = useState(false);
   const allowedEntryPoints = datesReportEntryPointsFor(scope).join(", ");
 
+  function showEntryPointsError(message: string) {
+    setEntryPointsError(message);
+    onInlineError();
+  }
+
   async function save(event: React.FormEvent) {
     event.preventDefault();
     if (auditReason.trim().length < 3 || busy) return;
     const parsedEntryPoints = datesReasonEntryPoints(scope, entryPoints);
     if (!parsedEntryPoints.ok) {
-      setEntryPointsError(parsedEntryPoints.error === "empty"
+      showEntryPointsError(parsedEntryPoints.error === "empty"
         ? t("entryPointsEmpty")
         : t("entryPointsUnknown", { values: parsedEntryPoints.tokens.join(", "), allowed: allowedEntryPoints }));
       return;
@@ -283,7 +290,7 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
     setBusy(false);
     if (!response?.success) {
       if (datesReasonEntryPointsRefused(response?.error)) {
-        setEntryPointsError(t("entryPointsRefused", { allowed: allowedEntryPoints }));
+        showEntryPointsError(t("entryPointsRefused", { allowed: allowedEntryPoints }));
         return;
       }
       onError(response?.error);

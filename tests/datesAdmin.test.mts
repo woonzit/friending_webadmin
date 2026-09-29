@@ -289,7 +289,6 @@ test("case detail internal notes decode strictly and tolerate an older Core (AYI
     { ...first, author_email: "moderator" },
     { ...first, author_email: null },
     { ...first, text: "" },
-    { ...first, text: "   " },
     { ...first, text: "x".repeat(1001) },
     { ...first, text: ["not text"] },
     { ...first, created_at: 0 },
@@ -301,6 +300,15 @@ test("case detail internal notes decode strictly and tolerate an older Core (AYI
     null,
   ]) {
     assert.deepEqual(datesCaseInternalNotes(detail({ internal_notes: [second, note], internal_notes_withheld: false })), invalid, JSON.stringify(note));
+  }
+  // Only "" is refused: Core's PHP trim() keeps NBSP and the Unicode spaces
+  // that JS trim() strips, so such a stored note is valid and is rendered.
+  for (const text of ["\u00a0", "\u2003", "\u3000note", "note\u00a0"]) {
+    assert.deepEqual(
+      datesCaseInternalNotes(detail({ internal_notes: [{ ...first, text }], internal_notes_withheld: false })),
+      { status: "ready", notes: [{ ...first, text }] },
+      JSON.stringify(text),
+    );
   }
   // Core bounds a note at 1,000 characters, not UTF-16 units.
   assert.equal(datesCaseInternalNotes(detail({ internal_notes: [{ ...first, text: "😀".repeat(1000) }], internal_notes_withheld: false })).status, "ready");
@@ -457,9 +465,17 @@ test("Core's entry-point refusal is shown under the field, like the console's ow
 
   const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
   const save = page.slice(page.indexOf("adminCall(\"dates_reason_save\""), page.indexOf("async function deactivate()"));
-  assert.match(save, /if \(datesReasonEntryPointsRefused\(response\?\.error\)\) \{\s*setEntryPointsError\(t\("entryPointsRefused", \{ allowed: allowedEntryPoints \}\)\);\s*return;\s*\}\s*onError\(response\?\.error\);/);
+  assert.match(save, /if \(datesReasonEntryPointsRefused\(response\?\.error\)\) \{\s*showEntryPointsError\(t\("entryPointsRefused", \{ allowed: allowedEntryPoints \}\)\);\s*return;\s*\}\s*onError\(response\?\.error\);/);
   // The same inline slot the client-side check writes to.
   assert.match(page, /\{entryPointsError && <small className="field-error" role="alert">\{entryPointsError\}<\/small>\}/);
+  // An inline refusal (Core's or the console's own) clears the page-level error
+  // an earlier failed save left above it, and leaves a success notice alone.
+  assert.match(page, /function showEntryPointsError\(message: string\) \{\s*setEntryPointsError\(message\);\s*onInlineError\(\);\s*\}/);
+  assert.match(page, /function clearFailure\(\) \{ setFeedback\(\(current\) => current\?\.tone === "error" \? null : current\); \}/);
+  assert.equal(page.match(/onInlineError=\{clearFailure\}/g)?.length, 2, "both reason editors clear it");
+  const localCheck = page.slice(page.indexOf("const parsedEntryPoints = datesReasonEntryPoints"), page.indexOf("setEntryPointsError(null);\n    setBusy(true);"));
+  assert.match(localCheck, /showEntryPointsError\(parsedEntryPoints\.error === "empty"/);
+  assert.doesNotMatch(page.slice(page.indexOf("async function save(event: React.FormEvent) {\n    event.preventDefault();\n    if (auditReason")), /setEntryPointsError\(t\(/);
   for (const locale of ["en", "hu"]) {
     const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
     const refused = messages.datesAdmin.configuration.entryPointsRefused;
@@ -562,7 +578,7 @@ test("unset live-trail retention turns live sharing off, not the worker (Core be
 
   const en = JSON.parse(readFileSync(new URL("../messages/en.json", import.meta.url), "utf8"));
   const hu = JSON.parse(readFileSync(new URL("../messages/hu.json", import.meta.url), "utf8"));
-  assert.equal(hu.datesAdmin.configuration.liveRetentionUnsetTitle, "Élő helymegosztás kikapcsolva, amíg nincs megőrzési idő beállítva.");
+  assert.equal(hu.datesAdmin.configuration.liveRetentionUnsetTitle, "Az élő helymegosztás ki van kapcsolva, amíg nincs beállítva megőrzési idő.");
   for (const messages of [en, hu]) {
     const configuration = messages.datesAdmin.configuration;
     for (const key of ["liveRetentionPlaceholder", "liveRetentionUnsetTitle", "liveRetentionUnsetCopy"]) {

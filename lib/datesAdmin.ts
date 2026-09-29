@@ -214,7 +214,11 @@ function datesCaseInternalNote(value: unknown): DatesCaseInternalNote | null {
     || !authorEmail.includes("@")
     || authorEmail.length > 320
     || typeof text !== "string"
-    || text.trim() === ""
+    // Core stores the note after PHP trim(), which strips only ASCII space,
+    // \t, \n, \r, \0 and \x0B. JS trim() also strips NBSP and the Unicode
+    // spaces, so a note Core accepted (for example a lone NBSP) would turn the
+    // whole list invalid. Only the empty string is outside Core's contract.
+    || text === ""
     || Array.from(text).length > DATES_CASE_NOTE_TEXT_LIMIT
     || !Number.isInteger(createdAt)
     || Number(createdAt) <= 0
