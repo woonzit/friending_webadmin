@@ -93,12 +93,13 @@ export default function ProfileVerificationQueuePage() {
         ) : (
           <div className="table-wrap">
             <table className="data-table verification-queue-table">
-              <thead><tr><th>{t("member")}</th><th>{common("status")}</th><th>{t("trigger")}</th><th>{t("submitted")}</th><th>{t("avatar")}</th><th>{t("assignee")}</th><th>{common("actions")}</th></tr></thead>
+              <thead><tr><th>{t("member")}</th><th>{t("mode")}</th><th>{common("status")}</th><th>{t("trigger")}</th><th>{t("submitted")}</th><th>{t("avatar")}</th><th>{t("assignee")}</th><th>{common("actions")}</th></tr></thead>
               <tbody>{rows.map((row) => {
                 const slug = row.case_id || `uid-${row.uid}`;
                 return (
                   <tr key={`${row.uid}-${row.case_id || row.status}-${row.updated_at || 0}`}>
                     <td data-label={t("member")}><div className="cell-stack"><strong>{row.display_name || t("unnamed")}</strong><small>UID {row.uid} · {row.gender || "—"}{row.birthday ? ` · ${formatDate(row.birthday, locale)}` : ""}</small></div></td>
+                    <td data-label={t("mode")}><span className={`badge verification-mode-badge mode-${row.verification_mode}`} data-verification-mode={row.verification_mode}>{t(`modes.${row.verification_mode}`)}</span></td>
                     <td data-label={common("status")}><span className={`badge verification-status-badge status-${row.status}`}>{t(`statuses.${row.status}`)}</span></td>
                     <td data-label={t("trigger")}>{row.trigger ? t.has(`triggers.${row.trigger}`) ? t(`triggers.${row.trigger}`) : row.trigger : "—"}</td>
                     <td data-label={t("submitted")}>{row.submitted_at ? formatDate(row.submitted_at, locale, true) : "—"}</td>

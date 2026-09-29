@@ -2831,7 +2831,7 @@
     "reportedContent": "Jelentett tartalom",
     "textModeration": "Profilszöveg-moderáció",
     "intoTagModeration": "Into-tag moderálás",
-    "profileVerification": "Videó-hitelesítési sor",
+    "profileVerification": "Szelfis hitelesítési sor",
     "verificationSettings": "Ellenőrzési beállítások",
     "persona": "Persona műveletek",
     "profileLocation": "Profilhelyzet",
@@ -8995,7 +8995,7 @@
     "queue": {
       "eyebrow": "Bizalom és biztonság",
       "title": "Profilhitelesítés",
-      "subtitle": "Privát videószelfik összehasonlítása az aktuális elfogadott fő profilképpel, egyértelmű foglalással és teljes hitelesítési előzménnyel.",
+      "subtitle": "Privát szelfik (egy videó vagy egy gesztusos fotósorozat) összehasonlítása az aktuális elfogadott fő profilképpel, egyértelmű foglalással és teljes hitelesítési előzménnyel.",
       "configuration": "Hitelesítési szövegek szerkesztése",
       "loadError": "A profilhitelesítési várólista nem tölthető be.",
       "filters": {
@@ -9013,7 +9013,7 @@
       },
       "loadedCases": "betöltött sor",
       "cases": "Hitelesítési esetek",
-      "casesCopy": "A várólista csak metaadatot tartalmaz. A videó vagy profilkép-bizonyíték megnyitása külön auditált művelet, amit csak szerkesztő és owner végezhet.",
+      "casesCopy": "A várólista csak metaadatot tartalmaz. A Módszer oszlop mutatja, hogy az eset videót vagy gesztusos fotósorozatot ellenőriz. A videó, a fotók vagy a profilkép-bizonyíték megnyitása külön auditált művelet, amit csak szerkesztő és owner végezhet.",
       "emptyTitle": "Nincs megfelelő hitelesítési eset",
       "emptyCopy": "Jelenleg semmi nem felel meg ennek a státuszszűrőnek.",
       "member": "User",
@@ -9031,6 +9031,11 @@
         "avatar_changed": "A fő profilkép megváltozott",
         "avatar_restored": "A fő profilkép visszaállt",
         "moderator_requested_video": "Cserevideó"
+      },
+      "mode": "Módszer",
+      "modes": {
+        "video": "Videós szelfi",
+        "photo": "Gesztusos fotósorozat"
       }
     },
     "detail": {

@@ -354,3 +354,23 @@ test("the case page reviews the whole set, gates Approve on every loaded photo a
   assert.ok(reset.slice(0, 400).includes("setLoadedPhotos({})"));
   assert.match(page, /\{detail\.submission && !isPhoto && <div className="verification-challenge-sequence">/);
 });
+
+// ---------------------------------------------------------------------------
+// 4. The queue names each case's review
+// ---------------------------------------------------------------------------
+
+test("the corpus queue decodes a photo set and a video row, and a row without a mode fails closed", async () => {
+  const { profileVerificationQueue, profileVerificationResponseData } = await import("../lib/profileVerification.ts");
+  const body = await fixture("webadmin-queue-photo.json");
+  const parsed = profileVerificationQueue(profileVerificationResponseData(body));
+  assert.ok(parsed);
+  assert.deepEqual(parsed.items.map((row) => [row.uid, row.verification_mode]), [[995480, "photo"], [995481, "video"]]);
+  for (const mode of [undefined, "photo_selfie", "", null]) {
+    const broken = structuredClone(body.data);
+    if (mode === undefined) delete broken.items[0].verification_mode; else broken.items[0].verification_mode = mode;
+    assert.equal(profileVerificationQueue(broken), null, String(mode));
+  }
+  const page = await readFile(new URL("../app/(dashboard)/profile-verification/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /<th>\{t\("mode"\)\}<\/th>/);
+  assert.match(page, /data-verification-mode=\{row\.verification_mode\}>\{t\(`modes\.\$\{row\.verification_mode\}`\)\}/);
+});

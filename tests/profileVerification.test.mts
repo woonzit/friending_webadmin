@@ -81,6 +81,7 @@ function validQueue() {
     items: [{
       uid: 42,
       status: "pending",
+      verification_mode: "video",
       case_id: "a".repeat(32),
       submission_id: "b".repeat(32),
       trigger: "initial_submission",

@@ -2831,7 +2831,7 @@
     "reportedContent": "Reported content",
     "textModeration": "Profile text moderation",
     "intoTagModeration": "Into-tag moderation",
-    "profileVerification": "Video verification queue",
+    "profileVerification": "Selfie verification queue",
     "verificationSettings": "Verification settings",
     "persona": "Persona operations",
     "profileLocation": "Profile location",
@@ -8995,7 +8995,7 @@
     "queue": {
       "eyebrow": "Trust and safety",
       "title": "Profile verification",
-      "subtitle": "Review private video selfies against the current accepted main photo, with explicit leases and a complete verification history.",
+      "subtitle": "Review private selfies (a video, or a set of gesture photos) against the current accepted main photo, with explicit leases and a complete verification history.",
       "configuration": "Edit verification copy",
       "loadError": "The profile verification queue could not be loaded.",
       "filters": {
@@ -9013,7 +9013,7 @@
       },
       "loadedCases": "loaded rows",
       "cases": "Verification cases",
-      "casesCopy": "Queue rows contain metadata only. Opening video or avatar evidence is a separate audited action available only to editors and owners.",
+      "casesCopy": "Queue rows contain metadata only. The Method column says whether a case reviews a video or a gesture photo set. Opening video, photo or avatar evidence is a separate audited action available only to editors and owners.",
       "emptyTitle": "No matching verification cases",
       "emptyCopy": "Nothing currently matches this status filter.",
       "member": "Member",
@@ -9031,6 +9031,11 @@
         "avatar_changed": "Main avatar changed",
         "avatar_restored": "Main avatar restored",
         "moderator_requested_video": "Replacement video"
+      },
+      "mode": "Method",
+      "modes": {
+        "video": "Video selfie",
+        "photo": "Gesture photo set"
       }
     },
     "detail": {

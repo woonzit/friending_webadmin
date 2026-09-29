@@ -216,6 +216,8 @@ export type ProfileVerificationConfig = {
 export type ProfileVerificationQueueItem = {
   uid: number;
   status: ProfileVerificationStatus;
+  /** Which review the row opens: a video, or a gesture photo set (D-135). */
+  verification_mode: ProfileVerificationMode;
   case_id: string;
   submission_id: string;
   trigger: string;
@@ -757,7 +759,8 @@ export function profileVerificationQueue(value: unknown): ProfileVerificationQue
     const updatedAt = epoch(row?.updated_at);
     const leaseExpiresAt = epoch(row?.lease_expires_at);
     const leaseOwner = nullableText(row?.lease_owner, 320);
-    if (!row || uid === null || !status || !STATUS_SET.has(status)
+    const mode = verificationMode(row?.verification_mode);
+    if (!row || uid === null || !status || !STATUS_SET.has(status) || !mode
       || typeof row.avatar_available !== "boolean" || birthday === undefined
       || submittedAt === undefined || updatedAt === undefined || leaseExpiresAt === undefined
       || leaseOwner === undefined) return null;
@@ -771,6 +774,7 @@ export function profileVerificationQueue(value: unknown): ProfileVerificationQue
     items.push({
       uid,
       status: status as ProfileVerificationStatus,
+      verification_mode: mode,
       case_id: caseId,
       submission_id: submissionId,
       trigger,
