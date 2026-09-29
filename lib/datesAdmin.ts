@@ -400,6 +400,71 @@ export function configurationInputValue(type: string, raw: string): unknown {
   return raw;
 }
 
+/**
+ * The "effective" text of a runtime setting row: always Core's effective_value,
+ * never the unsaved draft (AYI-074). Quiet hours are an object on the wire;
+ * a malformed one is shown as unknown rather than guessed.
+ */
+export function datesSettingEffectiveText(
+  type: string,
+  effective: unknown,
+  booleans?: { on: string; off: string },
+): string {
+  if (type === "quiet_hours") {
+    const row = record(effective);
+    return row && typeof row.start === "string" && typeof row.end === "string"
+      ? `${row.start}–${row.end}`
+      : "—";
+  }
+  if (booleans && typeof effective === "boolean") return effective ? booleans.on : booleans.off;
+  return String(effective ?? "null");
+}
+
+export type DatesStorefrontEffectiveRow = { storefront: string; effective: boolean };
+
+/**
+ * AYI-074: a setting row's `effective_value` is the GLOBAL answer (no
+ * storefront), which is what members get where AreYouIn has no storefront
+ * override. A Core that fixes AYI-074 also sends `effective_by_storefront` on
+ * the rollout switches: what each switch resolves to in every storefront that
+ * has its own AreYouIn availability.
+ * - "unsupported": the key is absent (a Core from before it); only the global
+ *   answer is known and the console says so.
+ * - "notApplicable": null, a setting that does not depend on the storefront.
+ * - "ready": the storefront rows, sorted; empty when no storefront overrides.
+ * - "invalid": anything else. It is reported, never shown as "no overrides".
+ */
+export type DatesStorefrontEffective =
+  | { status: "unsupported" }
+  | { status: "notApplicable" }
+  | { status: "ready"; rows: DatesStorefrontEffectiveRow[] }
+  | { status: "invalid" };
+
+export function datesSettingStorefrontEffective(setting: unknown): DatesStorefrontEffective {
+  const row = record(setting);
+  if (!row || !Object.hasOwn(row, "effective_by_storefront")) return { status: "unsupported" };
+  const value = row.effective_by_storefront;
+  if (value === null) return { status: "notApplicable" };
+  if (!Array.isArray(value) || value.length > 512) return { status: "invalid" };
+  const rows: DatesStorefrontEffectiveRow[] = [];
+  const seen = new Set<string>();
+  for (const item of value) {
+    const entry = record(item);
+    if (
+      !entry
+      || Object.keys(entry).length !== 2
+      || typeof entry.storefront !== "string"
+      || !/^[A-Z]{3}$/.test(entry.storefront)
+      || seen.has(entry.storefront)
+      || typeof entry.effective_value !== "boolean"
+    ) return { status: "invalid" };
+    seen.add(entry.storefront);
+    rows.push({ storefront: entry.storefront, effective: entry.effective_value });
+  }
+  rows.sort((left, right) => left.storefront.localeCompare(right.storefront));
+  return { status: "ready", rows };
+}
+
 /** `dates_enabled` has one home: the shared section-availability control. */
 export function datesRuntimeSettingVisible(key: unknown): boolean {
   return typeof key === "string" && key !== "dates_enabled";

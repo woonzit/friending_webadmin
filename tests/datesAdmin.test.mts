@@ -19,6 +19,8 @@ import {
   datesAvailabilityWriteIsRetired,
   datesModerationSla,
   datesRuntimeSettingVisible,
+  datesSettingEffectiveText,
+  datesSettingStorefrontEffective,
   hasDatesCapability,
   normalizeDatesPrincipal,
   permittedResolutionActions,
@@ -669,4 +671,69 @@ test("D-116: the console names the dating mode AreYouIn in both languages, never
   }
   // English takes "an" before AreYouIn.
   assert.doesNotMatch(readFileSync(new URL("../messages/en.json", import.meta.url), "utf8"), /\b[Aa] AreYouIn\b/);
+});
+
+test("a setting row's effective text is Core's effective value, never the unsaved draft (AYI-074)", () => {
+  assert.equal(datesSettingEffectiveText("quiet_hours", { start: "23:00", end: "07:30" }), "23:00–07:30");
+  for (const malformed of [null, "22:00|08:00", { start: "22:00" }, { start: 22, end: 8 }, []]) {
+    assert.equal(datesSettingEffectiveText("quiet_hours", malformed), "—", JSON.stringify(malformed));
+  }
+  assert.equal(datesSettingEffectiveText("boolean", false), "false");
+  assert.equal(datesSettingEffectiveText("boolean", false, { on: "Enabled", off: "Disabled" }), "Disabled");
+  assert.equal(datesSettingEffectiveText("boolean", true, { on: "Enabled", off: "Disabled" }), "Enabled");
+  assert.equal(datesSettingEffectiveText("integer", 120, { on: "Enabled", off: "Disabled" }), "120");
+  assert.equal(datesSettingEffectiveText("nullable_integer", null), "null");
+  const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /t\("effective", \{ value: datesSettingEffectiveText\(setting\.type, setting\.effective_value, booleans\) \}\)/);
+  assert.doesNotMatch(page, /value\.replace\("\|", "–"\)/, "the draft is not shown as the effective value");
+});
+
+test("rollout switches show the per-storefront answer next to the global one (AYI-074)", () => {
+  // Core before the fix: no key at all; only the global answer is known.
+  assert.deepEqual(datesSettingStorefrontEffective({ key: "dates_creation_enabled", effective_value: false }), { status: "unsupported" });
+  // Core with the fix: null on settings that do not depend on the storefront.
+  assert.deepEqual(datesSettingStorefrontEffective({ key: "dates_tbd_expiry_days", effective_by_storefront: null }), { status: "notApplicable" });
+  // "Off globally, on for HUN": the HUN row carries HUN's answer.
+  assert.deepEqual(
+    datesSettingStorefrontEffective({
+      key: "dates_creation_enabled",
+      effective_value: false,
+      effective_scope: "global",
+      effective_by_storefront: [{ storefront: "USA", effective_value: false }, { storefront: "HUN", effective_value: true }],
+    }),
+    { status: "ready", rows: [{ storefront: "HUN", effective: true }, { storefront: "USA", effective: false }] },
+  );
+  assert.deepEqual(datesSettingStorefrontEffective({ effective_by_storefront: [] }), { status: "ready", rows: [] });
+  for (const malformed of [
+    {},
+    [{ storefront: "HUN" }],
+    [{ storefront: "HUN", effective_value: "true" }],
+    [{ storefront: "hun", effective_value: true }],
+    [{ storefront: "HU", effective_value: true }],
+    [{ storefront: "HUN", effective_value: true, extra: 1 }],
+    [{ storefront: "HUN", effective_value: true }, { storefront: "HUN", effective_value: false }],
+    "HUN",
+  ]) {
+    assert.deepEqual(datesSettingStorefrontEffective({ effective_by_storefront: malformed }), { status: "invalid" }, JSON.stringify(malformed));
+  }
+  assert.deepEqual(datesSettingStorefrontEffective(null), { status: "unsupported" });
+
+  const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /const storefronts = datesSettingStorefrontEffective\(setting\);/);
+  assert.match(page, /storefronts\.status === "ready" && storefronts\.rows\.length > 0 && <small>\{t\("effectiveByStorefront"/);
+  assert.match(page, /storefronts\.status === "invalid" && <span className="dates-danger-text">\{t\("effectiveByStorefrontInvalid"\)\}/);
+  assert.match(page, /datesSettingStorefrontEffective\(setting\)\.status === "unsupported"\) && <p className="alert alert-info">\{t\("effectiveByStorefrontUnsupported"\)\}/);
+  const help = readFileSync(new URL("../components/DatesRuntimeSettingsHelp.tsx", import.meta.url), "utf8");
+  assert.match(help, /datesSettingStorefrontEffective\(setting\)/);
+  for (const locale of ["en", "hu"]) {
+    const configuration = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8")).datesAdmin.configuration;
+    assert.match(configuration.effective, /\{value\}/);
+    assert.match(configuration.effective, /global|globális/);
+    assert.match(configuration.effectiveByStorefront, /\{values\}/);
+    for (const key of ["effectiveByStorefrontInvalid", "effectiveByStorefrontUnsupported"]) assert.equal(typeof configuration[key], "string");
+    assert.match(configuration.runtimeHelp.effectiveValue, /global|globális/);
+    // The old note called the (global) effective value "the operational witness".
+    assert.doesNotMatch(configuration.runtimeHelp.effectiveNote, /operational witness|üzemeltetési tényt/);
+    assert.match(configuration.runtimeHelp.effectiveNote, /global|globális/);
+  }
 });

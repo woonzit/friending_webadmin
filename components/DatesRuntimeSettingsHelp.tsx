@@ -8,12 +8,14 @@ import {
   DATES_RUNTIME_HELP_KEY_SET,
   datesLiveRetentionUnset,
 } from "@/lib/datesRuntimeHelp";
+import { datesSettingStorefrontEffective } from "@/lib/datesAdmin";
 
 type HelpSetting = {
   key: string;
   type: string;
   value: unknown;
   effective_value: unknown;
+  effective_by_storefront?: unknown;
   default_value: unknown;
   minimum: number | null;
   maximum: number | null;
@@ -43,6 +45,7 @@ function SettingHelpCard({ settingKey, setting }: { settingKey: string; setting?
   const common = useTranslations("common");
   const type = setting?.type ?? "unknown";
   const emptyLabel = t("notSet");
+  const storefronts = setting ? datesSettingStorefrontEffective(setting) : null;
   const value = (item: unknown) => displayValue(
     item,
     type,
@@ -74,6 +77,18 @@ function SettingHelpCard({ settingKey, setting }: { settingKey: string; setting?
           <dt>{t("effectiveValue")}</dt>
           <dd>{setting ? value(setting.effective_value) : t("notReturned")}</dd>
         </div>
+        {storefronts?.status === "ready" && storefronts.rows.length > 0 && (
+          <div>
+            <dt>{t("effectiveByStorefront")}</dt>
+            <dd>{storefronts.rows.map((row) => `${row.storefront}: ${value(row.effective)}`).join(" · ")}</dd>
+          </div>
+        )}
+        {storefronts?.status === "invalid" && (
+          <div>
+            <dt>{t("effectiveByStorefront")}</dt>
+            <dd>{t("effectiveByStorefrontInvalid")}</dd>
+          </div>
+        )}
         <div>
           <dt>{t("storedValue")}</dt>
           <dd>{setting ? value(setting.value) : t("notReturned")}</dd>

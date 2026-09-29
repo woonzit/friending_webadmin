@@ -16,6 +16,8 @@ import {
   datesReasonEntryPointsRefused,
   datesReportEntryPointsFor,
   datesRuntimeSettingVisible,
+  datesSettingEffectiveText,
+  datesSettingStorefrontEffective,
   hasDatesCapability,
   humanizeMachineKey,
   type DatesAdminPrincipal,
@@ -31,6 +33,8 @@ type Setting = {
   type: string;
   value: unknown;
   effective_value: unknown;
+  /** AYI-074: per-storefront answers of a rollout switch; absent on an older Core. */
+  effective_by_storefront?: unknown;
   default_value: unknown;
   minimum: number | null;
   maximum: number | null;
@@ -145,6 +149,7 @@ export default function DatesConfigurationPage() {
 
       <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("runtimeTitle")}</h2><p>{t("runtimeCopy")}</p></div><div className="row-actions"><button className="button button-secondary button-small dates-help-trigger" type="button" onClick={() => setRuntimeHelpOpen(true)}>{t("runtimeHelp.button")}</button><span className="badge">{t("settingCount", { count: settings.length })}</span></div></div>
+        {settings.some((setting) => datesSettingStorefrontEffective(setting).status === "unsupported") && <p className="alert alert-info">{t("effectiveByStorefrontUnsupported")}</p>}
         <div className="dates-setting-list">
           {settings.map((setting) => <SettingEditor key={`${setting.key}-${setting.revision}`} setting={setting} canManage={canManageConfiguration} onSaved={async () => { success(t("settingSaved")); await load(); }} onError={failure} />)}
         </div>
@@ -195,8 +200,10 @@ function SettingEditor({ setting, canManage, onSaved, onError }: { setting: Sett
   }
 
   const quiet = setting.type === "quiet_hours" ? value.split("|") : null;
+  const booleans = { on: common("enabled"), off: common("disabled") };
+  const storefronts = datesSettingStorefrontEffective(setting);
   return <form className="dates-setting-row" onSubmit={save}>
-    <div className="dates-setting-copy"><strong>{humanizeMachineKey(setting.key)}</strong><small>{t("revision", { revision: setting.revision })} · {t("effective", { value: setting.type === "quiet_hours" ? value.replace("|", "–") : String(setting.effective_value ?? "null") })}</small>{!setting.valid && <span className="dates-danger-text">{t("invalidStoredValue")}</span>}</div>
+    <div className="dates-setting-copy"><strong>{humanizeMachineKey(setting.key)}</strong><small>{t("revision", { revision: setting.revision })} · {t("effective", { value: datesSettingEffectiveText(setting.type, setting.effective_value, booleans) })}</small>{storefronts.status === "ready" && storefronts.rows.length > 0 && <small>{t("effectiveByStorefront", { values: storefronts.rows.map((row) => `${row.storefront}: ${row.effective ? booleans.on : booleans.off}`).join(" · ") })}</small>}{storefronts.status === "invalid" && <span className="dates-danger-text">{t("effectiveByStorefrontInvalid")}</span>}{!setting.valid && <span className="dates-danger-text">{t("invalidStoredValue")}</span>}</div>
     <div className="dates-setting-control">
       {setting.type === "boolean" ? <select value={value} disabled={!canManage || busy} onChange={(event) => setValue(event.target.value)}><option value="true">{common("enabled")}</option><option value="false">{common("disabled")}</option></select>
         : setting.type === "enum" ? <select value={value} disabled={!canManage || busy} onChange={(event) => setValue(event.target.value)}>{(setting.allowed_values || []).map((item) => <option key={item} value={item}>{humanizeMachineKey(item)}</option>)}</select>
