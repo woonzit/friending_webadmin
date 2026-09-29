@@ -3318,7 +3318,8 @@
   "membershipErrors": {
     "configurationConflict": "Újabb előfizetési konfiguráció van a szerveren. Töltsd újra a hiteles verziót, mielőtt tovább szerkeszted.",
     "configurationConflictAdopted": "Egy másik operátor újabb előfizetési konfigurációt mentett. A hiteles verzió lecserélte ezt a tervet; további szerkesztés előtt nézd át.",
-    "grantConflict": "A PLUS hozzáférés szerkesztése közben megváltozott az előfizetési állapot. Frissítsd a hiteles állapotot, készíts új előnézetet, majd próbáld újra.",
+    "grantConflict": "A tag PLUS hozzáférése időközben megváltozott. Nézd át a legfrissebb előfizetési állapotot, készíts új előnézetet, majd próbáld újra.",
+    "grantIdInvalid": "Az adminfelület érvénytelen hozzáférés-azonosítót küldött. Ez technikai hiba; töltsd újra az oldalt, és ha ismét előfordul, jelezd a hibát.",
     "expiryConflict": "Az admin-hozzáférés a lejárat frissítése előtt megváltozott. Újrapróbálás előtt nézd át a legfrissebb hiteles állapotot.",
     "revokeConflict": "Az admin-hozzáférés a visszavonás előtt megváltozott. Újrapróbálás előtt nézd át a legfrissebb hiteles állapotot.",
     "requestConflict": "Ezt a műveleti azonosítót már más előfizetési módosításhoz használták. Indítsd újra a műveletet az aktuális hiteles állapotból.",

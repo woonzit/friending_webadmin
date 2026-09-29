@@ -227,6 +227,8 @@ export type MembershipGrantPreview = {
   uid: number;
   server_time: string;
   current_grant_revision: number;
+  /** Absent on older previews; null means the preview was made without a grant. */
+  current_grant_id?: string | null;
   current_effective_expires_at: string | null;
   schedule: {
     tier: "plus";
@@ -290,6 +292,7 @@ export type MembershipActionErrorKey =
   | "expiryConflict"
   | "revokeConflict"
   | "requestConflict"
+  | "grantIdInvalid"
   | "expiryInvalid"
   | "horizonExceeded"
   | "ownerRequired"
@@ -658,6 +661,7 @@ export function membershipActionErrorKey(
   if (code === "membership-configuration-request-id-conflict"
     || code === "membership-admin-request-id-conflict") return "requestConflict";
   if (code === "membership-admin-grant-expiry-invalid") return "expiryInvalid";
+  if (code === "membership-admin-grant-id-invalid") return "grantIdInvalid";
   if (code === "membership-admin-grant-horizon-exceeded") return "horizonExceeded";
   if (code === "admin-owner-required") return "ownerRequired";
   if (code === "admin-write-required") return "writeRequired";
@@ -1347,6 +1351,11 @@ export function membershipGrantPreview(value: unknown): MembershipGrantPreview |
   const schedule = record(source?.schedule);
   const uid = finiteInteger(source?.uid, 1);
   const revision = finiteInteger(source?.current_grant_revision);
+  const grantId = source?.current_grant_id;
+  if (grantId !== undefined && grantId !== null
+    && (typeof grantId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(grantId))) return null;
+  if (grantId === null && revision !== 0) return null;
+  if (typeof grantId === "string" && revision === 0) return null;
   const serverTime = instant(source?.server_time);
   const currentExpiry = instant(source?.current_effective_expires_at);
   const resultingExpiry = instant(source?.resulting_effective_expires_at);
@@ -1366,6 +1375,7 @@ export function membershipGrantPreview(value: unknown): MembershipGrantPreview |
     uid,
     server_time: serverTime,
     current_grant_revision: revision,
+    ...(grantId === undefined ? {} : { current_grant_id: grantId }),
     current_effective_expires_at: currentExpiry ?? null,
     schedule: {
       tier: "plus",

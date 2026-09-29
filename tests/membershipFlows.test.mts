@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   membershipGrantPreview,
+  membershipPinnedMutation,
   membershipUserDetail,
   type MembershipGrantPreview,
   type MembershipUserDetail,
@@ -107,12 +108,13 @@ function detail(grant: ReturnType<typeof grantWire> | null): MembershipUserDetai
   return parsed;
 }
 
-function preview(currentRevision: number): MembershipGrantPreview {
+function preview(currentRevision: number, currentId?: string | null): MembershipGrantPreview {
   const parsed = membershipGrantPreview({
     schema_version: 1,
     uid: 321,
     server_time: ISO,
     current_grant_revision: currentRevision,
+    ...(currentId === undefined ? {} : { current_grant_id: currentId }),
     current_effective_expires_at: null,
     schedule: { tier: "plus", preset_id: "plus_month", start_mode: "extend", base_at: ISO, starts_at: ISO, expires_at: LATER, status: "active" },
     store_overlap: false,
@@ -123,6 +125,80 @@ function preview(currentRevision: number): MembershipGrantPreview {
 }
 
 const GRANT_BODY = { preset_id: "plus_month", start_mode: "extend", custom_expires_at: null, reason: "Support recovery" };
+const GRANT_A = "11111111-1111-4111-8111-111111111111";
+const GRANT_B = "22222222-2222-4222-8222-222222222222";
+
+test("grant previews accept the optional identity and refuse malformed or inconsistent identities", () => {
+  assert.equal(preview(1, GRANT_A).current_grant_id, GRANT_A);
+  assert.equal(preview(0, null).current_grant_id, null);
+  assert.equal(preview(1).current_grant_id, undefined);
+  const wire = { schema_version: 1, ...preview(1) };
+  for (const current_grant_id of ["", "g1", 123, [], {}, null]) {
+    assert.equal(membershipGrantPreview({ ...wire, current_grant_id }), null);
+  }
+  assert.equal(membershipGrantPreview({ ...wire, current_grant_id: GRANT_A, current_grant_revision: 0 }), null);
+});
+
+test("a preview identity distinguishes replacement grants with the same revision", async () => {
+  const stale = mockCall([["membership_user_detail", { success: true, data: detailWire(grantWire(GRANT_B, 1)) }]]);
+  const refused = await membershipSubmitGrant(stale.call, {
+    uid: 321, pending: null, detail: detail(grantWire(GRANT_B, 1)), preview: preview(1, GRANT_A), body: GRANT_BODY,
+    mintRequestId: () => assert.fail("a stale preview cannot mint a request"),
+  });
+  stale.done();
+  assert.equal(refused.kind, "previewStale");
+  assert.equal(refused.detail?.admin_grant?.grant_id, GRANT_B);
+
+  const current = mockCall([["membership_admin_grant", { success: true, data: detailWire(grantWire(GRANT_A, 2)) }]]);
+  await membershipSubmitGrant(current.call, {
+    uid: 321, pending: null, detail: detail(grantWire(GRANT_A, 1)), preview: preview(1, GRANT_A), body: GRANT_BODY, mintRequestId: minter(),
+  });
+  current.done();
+  assert.equal(current.calls[0]!.body!.expected_grant_id, GRANT_A);
+  assert.equal(current.calls[0]!.body!.expected_revision, 1);
+});
+
+test("every pinned retry checks identity and revision first, including old pins without a grant fence", async () => {
+  for (const legacy of [false, true]) {
+    const pending: MembershipPendingGrant = {
+      pinned: membershipPinnedMutation(null, {
+        ...GRANT_BODY, uid: 321, expected_revision: 1, ...(legacy ? {} : { expected_grant_id: GRANT_A }),
+      }, minter()),
+      baseline: { grant_id: GRANT_A, revision: 1 }, uncertain: true,
+    };
+    for (const changed of [grantWire(GRANT_B, 1), grantWire(GRANT_A, 2), null]) {
+      const bridge = mockCall([["membership_user_detail", { success: true, data: detailWire(changed) }]]);
+      const result = await membershipSubmitGrant(bridge.call, {
+        uid: 321, pending, detail: detail(grantWire(GRANT_A, 1)), preview: null, body: GRANT_BODY,
+        mintRequestId: () => assert.fail("a retry cannot mint a request"),
+        persist: () => assert.fail("a stopped retry cannot be sent"),
+      });
+      bridge.done();
+      assert.equal(result.kind, "refused");
+      assert.equal(result.kind === "refused" && result.errorKey, "grantConflict");
+      assert.equal(result.pending, null);
+    }
+    const bridge = mockCall([
+      ["membership_user_detail", { success: true, data: detailWire(grantWire(GRANT_A, 1)) }],
+      ["membership_admin_grant", { success: true, data: detailWire(grantWire(GRANT_A, 2)) }],
+    ]);
+    const result = await membershipSubmitGrant(bridge.call, {
+      uid: 321, pending, detail: detail(grantWire(GRANT_A, 1)), preview: null, body: GRANT_BODY, mintRequestId: minter(),
+    });
+    bridge.done();
+    assert.equal(result.kind, "granted");
+    assert.equal(JSON.stringify(bridge.calls[1]!.body), JSON.stringify(pending.pinned.body), "the original receipt body is preserved byte for byte");
+  }
+});
+
+test("invalid grant identities are definite technical refusals and release the pin", async () => {
+  const bridge = mockCall([["membership_admin_grant", { success: false, error: "membership-admin-grant-id-invalid" }]]);
+  const result = await membershipSubmitGrant(bridge.call, {
+    uid: 321, pending: null, detail: detail(grantWire(GRANT_A, 1)), preview: preview(1, GRANT_A), body: GRANT_BODY, mintRequestId: minter(),
+  });
+  bridge.done();
+  assert.deepEqual(result, { kind: "refused", errorKey: "grantIdInvalid", detail: null, pending: null });
+});
 
 test("a grant Core answers is adopted; the body is pinned to the preview revision", async () => {
   const bridge = mockCall([["membership_admin_grant", { success: true, data: detailWire(grantWire("g1", 1)) }]]);
@@ -133,7 +209,7 @@ test("a grant Core answers is adopted; the body is pinned to the preview revisio
   assert.equal(result.kind, "granted");
   assert.equal(result.pending, null);
   assert.deepEqual(bridge.calls[0]!.body, {
-    ...GRANT_BODY, uid: 321, expected_revision: 0, request_id: "00000000-0000-4000-8000-000000000001",
+    ...GRANT_BODY, uid: 321, expected_revision: 0, expected_grant_id: null, request_id: "00000000-0000-4000-8000-000000000001",
   });
 });
 
@@ -152,6 +228,7 @@ test("a timed-out grant stays pinned; the retry replays the same request_id and 
   assert.deepEqual(uncertain.pending.baseline, { grant_id: null, revision: 0 });
 
   const retry = mockCall([
+    ["membership_user_detail", { success: true, data: detailWire(null) }],
     ["membership_admin_grant", null],
     ["membership_user_detail", { success: true, data: detailWire(grantWire("g9", 1)) }],
   ]);
@@ -159,13 +236,12 @@ test("a timed-out grant stays pinned; the retry replays the same request_id and 
     uid: 321, pending: uncertain.pending, detail: detail(null), preview: preview(0), body: { ...GRANT_BODY, reason: "edited" }, mintRequestId: mint,
   });
   retry.done();
-  assert.deepEqual(retry.calls[0]!.body, first.calls[0]!.body, "a retry replays the pinned body, never the edited form");
-  assert.equal(retry.calls[0]!.body!.request_id, "00000000-0000-4000-8000-000000000001", "the request_id is reused");
+  assert.deepEqual(retry.calls[1]!.body, first.calls[0]!.body, "a retry replays the pinned body, never the edited form");
+  assert.equal(retry.calls[1]!.body!.request_id, "00000000-0000-4000-8000-000000000001", "the request_id is reused");
   assert.equal(resolved.kind, "uncertainResolved", "a new grant identity after an unknown outcome most likely is this request");
   assert.equal(resolved.pending, null);
 
   const unreadable = mockCall([
-    ["membership_admin_grant", { success: false, error: "membership-admin-write-failed" }],
     ["membership_user_detail", { success: false, error: "core-unavailable" }],
   ]);
   const stillUnknown = await membershipSubmitGrant(unreadable.call, {
@@ -175,6 +251,7 @@ test("a timed-out grant stays pinned; the retry replays the same request_id and 
   assert.equal(stillUnknown.detail, null);
   assert.ok(stillUnknown.pending?.uncertain, "an unreadable member keeps the request pinned and locked");
   assert.equal(stillUnknown.pending?.pinned.body.request_id, uncertain.pending.pinned.body.request_id);
+  unreadable.done();
 });
 
 test("a success body that fails the strict parser is uncertain, never a success", async () => {
@@ -212,6 +289,7 @@ test("a stale member view is re-read so the grant baseline pairs identity with t
   bridge.done();
   assert.equal(result.kind, "uncertain", "the other operator's grant is not mistaken for this request");
   assert.deepEqual(result.pending?.baseline, { grant_id: "g2", revision: 1 });
+  assert.equal(bridge.calls[1]!.body!.expected_grant_id, "g2", "older previews still pin the loaded baseline identity");
 });
 
 test("a grant revision that moved since the preview returns previewStale and sends nothing", async () => {
@@ -249,21 +327,22 @@ test("a grant revision that moved since the preview returns previewStale and sen
   assert.equal(none.calls.length, 0);
 });
 
-test("grant conflicts adopt Core's member and refusals release the request", async () => {
+test("grant conflicts re-read Core's member and refusals release the request", async () => {
   const conflict = mockCall([["membership_admin_grant", {
     success: false, error: "membership-admin-conflict", data: detailWire(grantWire("g3", 2)),
-  }]]);
+  }], ["membership_user_detail", { success: true, data: detailWire(grantWire("g3", 3)) }]]);
   const conflictResult = await membershipSubmitGrant(conflict.call, {
     uid: 321, pending: null, detail: detail(grantWire("g3", 1)), preview: preview(1), body: GRANT_BODY, mintRequestId: minter(),
   });
   assert.equal(conflictResult.kind, "refused");
   assert.equal(conflictResult.pending, null);
   assert.equal(conflictResult.kind === "refused" && conflictResult.errorKey, "grantConflict");
-  assert.equal(conflictResult.detail?.admin_grant?.revision, 2);
+  assert.equal(conflictResult.detail?.admin_grant?.revision, 3);
+  conflict.done();
 
   const foreign = mockCall([["membership_admin_grant", {
     success: false, error: "membership-admin-conflict", data: detailWire(grantWire("g3", 2), 999),
-  }]]);
+  }], ["membership_user_detail", { success: true, data: detailWire(null, 999) }]]);
   const foreignResult = await membershipSubmitGrant(foreign.call, {
     uid: 321, pending: null, detail: detail(null), preview: preview(0), body: GRANT_BODY, mintRequestId: minter(),
   });
@@ -396,14 +475,17 @@ test("a pinned grant is stored before the send and a reload restores the same re
   }, "the locked form shows exactly what a retry resends");
 
   // Retry after the reload needs no preview and replays the pinned body byte for byte.
-  const retry = mockCall([["membership_admin_grant", { success: true, data: detailWire(grantWire("g1", 1)) }]]);
+  const retry = mockCall([
+    ["membership_user_detail", { success: true, data: detailWire(null) }],
+    ["membership_admin_grant", { success: true, data: detailWire(grantWire("g1", 1)) }],
+  ]);
   const replayed = await membershipSubmitGrant(retry.call, {
     uid: 321, pending: restored.pending, detail: detail(null), preview: null, body: { ...GRANT_BODY, reason: "edited" },
     mintRequestId: () => assert.fail("a replay never mints a new request identity"),
     persist: (pinned) => { membershipRememberPendingGrant(storage, ADMIN, 321, pinned, T0 + 11 * 60_000); },
   });
   retry.done();
-  assert.deepEqual(retry.calls[0]!.body, bridge.calls[0]!.body);
+  assert.deepEqual(retry.calls[1]!.body, bridge.calls[0]!.body);
   assert.equal(replayed.kind, "granted");
   assert.equal(JSON.parse(entries.get(key!)!).created_at, T0, "a retry never extends the expiry");
   membershipRememberPendingGrant(storage, ADMIN, 321, replayed.pending, T0 + 11 * 60_000);
@@ -428,6 +510,21 @@ test("a custom-expiry grant pin round-trips through storage", async () => {
   if (restored.kind === "restored") {
     assert.deepEqual(restored.request, body);
     assert.deepEqual(restored.pending.baseline, { grant_id: "g4", revision: 2 });
+  }
+});
+
+test("a pre-fence pin restores without adding an identity to its receipt body", () => {
+  const { storage } = memoryStorage();
+  const pending: MembershipPendingGrant = {
+    pinned: membershipPinnedMutation(null, { ...GRANT_BODY, uid: 321, expected_revision: 1 }, minter()),
+    baseline: { grant_id: GRANT_A, revision: 1 }, uncertain: true,
+  };
+  assert.equal(membershipStorePendingGrant(storage, ADMIN, 321, pending, T0), true);
+  const result = membershipRestorePendingGrant(storage, { admin: ADMIN, uid: 321, detail: detail(grantWire(GRANT_A, 1)), now: T0 });
+  assert.equal(result.kind, "restored");
+  if (result.kind === "restored") {
+    assert.deepEqual(result.pending, pending);
+    assert.equal("expected_grant_id" in result.pending.pinned.body, false);
   }
 });
 
@@ -502,6 +599,7 @@ test("a malformed or tampered stored grant pin is removed and never replayed", a
     ["another member", { ...valid, uid: 999 }],
     ["a malformed request ID", { ...valid, request_id: "retry-1" }],
     ["a baseline at another revision than the body", { ...valid, baseline: { grant_id: null, revision: 1 } }],
+    ["a baseline at another identity than the body", { ...valid, baseline: { grant_id: GRANT_A, revision: 0 } }],
     ["an empty baseline grant ID", { ...valid, baseline: { grant_id: "", revision: 0 } }],
     ["a non-canonical fingerprint", { ...valid, fingerprint: JSON.stringify(fingerprint, null, 1) }],
     ["a body for another member", { ...valid, fingerprint: JSON.stringify({ ...fingerprint, uid: 999 }) }],
@@ -548,7 +646,10 @@ test("an unavailable member detail neither restores nor releases a stored pin", 
 test("a definite refusal or a discard clears the stored pin; an unreadable member keeps it", async () => {
   const refusal = memoryStorage();
   const { pending } = await uncertainPinnedGrant(refusal.storage);
-  const refused = mockCall([["membership_admin_grant", { success: false, error: "membership-admin-reason-invalid" }]]);
+  const refused = mockCall([
+    ["membership_user_detail", { success: true, data: detailWire(null) }],
+    ["membership_admin_grant", { success: false, error: "membership-admin-reason-invalid" }],
+  ]);
   const refusedResult = await membershipSubmitGrant(refused.call, {
     uid: 321, pending, detail: detail(null), preview: null, body: GRANT_BODY, mintRequestId: minter(),
     persist: (pinned) => { membershipRememberPendingGrant(refusal.storage, ADMIN, 321, pinned, T0 + 60_000); },
@@ -619,8 +720,10 @@ test("the member panel routes grants through the pinned flow and locks competing
   assert.match(panel, /if \(!owner \|\| grantLocked \|\|/);
   assert.match(panel, /disabled=\{!validReason\(expiryReason\) \|\| Boolean\(busy\) \|\| grantLocked\}/);
   // Expiry and revoke read the authoritative member after an unknown outcome.
-  assert.match(panel, /membershipMutationOutcome\("expiry_update", response, adopted\)[\s\S]*if \(outcome === "uncertain"\) await reloadDetail\(\);/);
-  assert.match(panel, /membershipMutationOutcome\("grant_revoke", response, adopted\)[\s\S]*if \(outcome === "uncertain"\) await reloadDetail\(\);/);
+  for (const [action, kind] of [["membership_admin_grant_update", "expiry_update"], ["membership_admin_grant_revoke", "grant_revoke"]]) {
+    assert.match(panel, new RegExp(`adminCall\\("${action}", \\{\\s*uid,\\s*expected_revision: currentGrant.revision,\\s*expected_grant_id: currentGrant.grant_id,`));
+    assert.match(panel, new RegExp(`membershipMutationOutcome\\("${kind}", response, adopted\\)[\\s\\S]*if \\(outcome === "uncertain" \\|\\| outcome === "conflict"\\) await reloadDetail\\(\\);`));
+  }
   // A discard reads first and keeps the pin when the member cannot be read.
   assert.match(panel, /async function discardPendingGrant\(\) \{[\s\S]*membershipCheckPendingGrant\([\s\S]*grant\.discardUnreadable/);
 });

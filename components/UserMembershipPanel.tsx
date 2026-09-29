@@ -401,18 +401,19 @@ export default function UserMembershipPanel({
     const response = await adminCall("membership_admin_grant_update", {
       uid,
       expected_revision: currentGrant.revision,
+      expected_grant_id: currentGrant.grant_id,
       expires_at: expiryWire,
       reason: normalizedReason(expiryReason),
       request_id: crypto.randomUUID(),
     });
-    setBusy("");
     const adopted = response?.success === true && adopt(response.data);
     const outcome = membershipMutationOutcome("expiry_update", response, adopted);
     if (outcome !== "success") {
       // The expected revision fences a second attempt; an unknown outcome reads the authoritative
       // state so the operator sees whether the change landed before trying again.
-      if (outcome === "uncertain") await reloadDetail();
       if (outcome === "conflict" && response?.data) adopt(response.data);
+      if (outcome === "uncertain" || outcome === "conflict") await reloadDetail();
+      setBusy("");
       setNotice({
         tone: "error",
         text: response?.success === true
@@ -421,6 +422,7 @@ export default function UserMembershipPanel({
       });
       return;
     }
+    setBusy("");
     setExpiryReason("");
     setNotice({ tone: "success", text: t("expirySaved") });
   }
@@ -433,15 +435,16 @@ export default function UserMembershipPanel({
     const response = await adminCall("membership_admin_grant_revoke", {
       uid,
       expected_revision: currentGrant.revision,
+      expected_grant_id: currentGrant.grant_id,
       reason: normalizedReason(expiryReason),
       request_id: crypto.randomUUID(),
     });
-    setBusy("");
     const adopted = response?.success === true && adopt(response.data);
     const outcome = membershipMutationOutcome("grant_revoke", response, adopted);
     if (outcome !== "success") {
-      if (outcome === "uncertain") await reloadDetail();
       if (outcome === "conflict" && response?.data) adopt(response.data);
+      if (outcome === "uncertain" || outcome === "conflict") await reloadDetail();
+      setBusy("");
       setNotice({
         tone: "error",
         text: response?.success === true
@@ -451,6 +454,7 @@ export default function UserMembershipPanel({
       return;
     }
     setExpiryReason("");
+    setBusy("");
     setNotice({ tone: "success", text: t("revoked") });
   }
 

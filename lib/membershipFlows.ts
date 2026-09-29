@@ -73,7 +73,9 @@ export type MembershipGrantSubmitResult =
  * right grant identity with it. Otherwise nothing is sent and a new preview is required: a baseline
  * taken from a different grant could later be misread as "most likely applied".
  *
- * A replay (`pending` set) needs no preview: it resends the pinned body. `persist` runs with the
+ * A replay (`pending` set) re-reads the member first and stops if the baseline changed or cannot
+ * be read. It needs no preview and never edits the pinned body, including for older pins without
+ * an identity fence. `persist` runs with the
  * exact request immediately before every send, so a page reload during or after the call can
  * restore the same identity; a failed storage write never blocks the send.
  */
@@ -91,13 +93,23 @@ export async function membershipSubmitGrant(
 ): Promise<MembershipGrantSubmitResult> {
   let attempt = input.pending;
   let known: MembershipUserDetail | null = null;
-  if (!attempt) {
+  if (attempt) {
+    known = await membershipReadUserDetail(call, input.uid);
+    if (!known) return { kind: "uncertain", detail: null, pending: { ...attempt, uncertain: true } };
+    if (membershipGrantChanged(attempt.baseline, known)) {
+      return { kind: "refused", errorKey: "grantConflict", detail: known, pending: null };
+    }
+  } else {
     const preview = input.preview;
     if (!preview) return { kind: "previewStale", detail: null, pending: null };
     let baselineDetail = input.detail;
-    if ((baselineDetail.admin_grant?.revision ?? 0) !== preview.current_grant_revision) {
+    const matchesPreview = (detail: MembershipUserDetail) =>
+      (detail.admin_grant?.revision ?? 0) === preview.current_grant_revision
+      && (preview.current_grant_id === undefined
+        || (detail.admin_grant?.grant_id ?? null) === preview.current_grant_id);
+    if (!matchesPreview(baselineDetail)) {
       known = await membershipReadUserDetail(call, input.uid);
-      if (!known || (known.admin_grant?.revision ?? 0) !== preview.current_grant_revision) {
+      if (!known || !matchesPreview(known)) {
         return { kind: "previewStale", detail: known, pending: null };
       }
       baselineDetail = known;
@@ -107,6 +119,7 @@ export async function membershipSubmitGrant(
         ...input.body,
         uid: input.uid,
         expected_revision: preview.current_grant_revision,
+        expected_grant_id: baselineDetail.admin_grant?.grant_id ?? null,
       }, input.mintRequestId),
       baseline: {
         grant_id: baselineDetail.admin_grant?.grant_id ?? null,
@@ -131,10 +144,11 @@ export async function membershipSubmitGrant(
   }
   // A definite refusal or a conflict releases the request identity.
   const conflict = outcome === "conflict" ? membershipUserDetail(response?.data) : null;
+  if (outcome === "conflict") known = await membershipReadUserDetail(call, input.uid);
   return {
     kind: "refused",
     errorKey: membershipActionErrorKey("grant_create", response?.error),
-    detail: conflict && conflict.uid === input.uid ? conflict : known,
+    detail: known ?? (conflict && conflict.uid === input.uid ? conflict : null),
     pending: null,
   };
 }
@@ -171,7 +185,7 @@ export async function membershipCheckPendingGrant(
  * signed-in administrator and member. The entry holds only what a replay or a discard needs:
  * member UID, request ID, body fingerprint, baseline grant identity and revision, and when the
  * request was first pinned. The fingerprint is the canonical material body (preset, start mode,
- * custom expiry, normalized reason, UID, expected revision), so a restored retry resends exactly
+ * custom expiry, normalized reason, UID, expected revision and optional grant ID), so a restored retry resends exactly
  * the pinned request. No session, credential or Core secret is ever stored.
  */
 export const MEMBERSHIP_PENDING_GRANT_STORAGE_PREFIX = "friending.membership.pending-grant.v1";
@@ -254,6 +268,7 @@ function pendingGrantRequest(
   fingerprint: string,
   uid: number,
   expectedRevision: number,
+  expectedGrantId: string | null,
   requestId: string,
 ): { pinned: MembershipPinnedMutation; request: MembershipPendingGrantRequest } | null {
   let parsed: unknown;
@@ -262,8 +277,13 @@ function pendingGrantRequest(
   } catch {
     return null;
   }
-  const body = exactRecord(parsed, PENDING_GRANT_BODY_KEYS);
+  // Old pins retain their original body and receipt fingerprint. Never add a fence on restore.
+  const hasGrantId = !!parsed && typeof parsed === "object" && "expected_grant_id" in parsed;
+  const body = exactRecord(parsed, hasGrantId
+    ? [...PENDING_GRANT_BODY_KEYS, "expected_grant_id"].sort()
+    : PENDING_GRANT_BODY_KEYS);
   if (!body || body.uid !== uid || body.expected_revision !== expectedRevision) return null;
+  if (hasGrantId && body.expected_grant_id !== expectedGrantId) return null;
   const preset = PENDING_GRANT_PRESETS.find((value) => value === body.preset_id);
   const startMode = PENDING_GRANT_START_MODES.find((value) => value === body.start_mode);
   const reason = body.reason;
@@ -295,7 +315,7 @@ function storedPendingGrant(value: unknown, uid: number): StoredPendingGrant | n
   if (!nonNegativeInteger(createdAt) || createdAt === 0 || !baseline || !nonNegativeInteger(baseline.revision)) return null;
   const grantId = baseline.grant_id;
   if (grantId !== null && (typeof grantId !== "string" || grantId === "" || grantId.length > 120)) return null;
-  const decoded = pendingGrantRequest(fingerprint, uid, baseline.revision, requestId);
+  const decoded = pendingGrantRequest(fingerprint, uid, baseline.revision, grantId, requestId);
   if (!decoded) return null;
   return {
     pending: { pinned: decoded.pinned, baseline: { grant_id: grantId, revision: baseline.revision }, uncertain: true },

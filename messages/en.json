@@ -3318,7 +3318,8 @@
   "membershipErrors": {
     "configurationConflict": "A newer membership configuration exists. Reload the authoritative version before editing again.",
     "configurationConflictAdopted": "Another operator saved a newer membership configuration. Its authoritative version replaced this draft; review it before editing again.",
-    "grantConflict": "Membership changed while the PLUS grant was open. Refresh the authoritative member state, preview again, and then retry.",
+    "grantConflict": "This member's PLUS grant changed meanwhile. Review the latest membership state, preview again, and then retry.",
+    "grantIdInvalid": "The console sent an invalid grant identifier. This is a technical error; reload the page and report it if it happens again.",
     "expiryConflict": "The administrator grant changed before the expiry update completed. Review the latest authoritative state before retrying.",
     "revokeConflict": "The administrator grant changed before revocation completed. Review the latest authoritative state before retrying.",
     "requestConflict": "This operation identifier was already used for a different membership change. Start the action again from the current authoritative state.",

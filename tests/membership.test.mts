@@ -403,6 +403,10 @@ test("membership machine errors map to closed action-specific localized keys", (
   assert.equal(membershipActionErrorKey("grant_create", "membership-admin-conflict"), "grantConflict");
   assert.equal(membershipActionErrorKey("expiry_update", "membership-admin-conflict"), "expiryConflict");
   assert.equal(membershipActionErrorKey("grant_revoke", "membership-admin-conflict"), "revokeConflict");
+  for (const action of ["grant_create", "expiry_update", "grant_revoke"] as const) {
+    assert.equal(membershipActionErrorKey(action, "membership-admin-grant-id-invalid"), "grantIdInvalid");
+    assert.equal(membershipMutationOutcome(action, { success: false, error: "membership-admin-grant-id-invalid" }, false), "refused");
+  }
   assert.equal(membershipActionErrorKey("grant_preview", "membership-admin-grant-expiry-invalid"), "expiryInvalid");
   assert.equal(membershipActionErrorKey("grant_preview", "membership-admin-grant-horizon-exceeded"), "horizonExceeded");
   assert.equal(membershipActionErrorKey("grant_revoke", "admin-owner-required"), "ownerRequired");
@@ -420,6 +424,7 @@ test("membership machine errors map to closed action-specific localized keys", (
     "membership-admin-grant-expiry-invalid",
     "membership-admin-grant-horizon-exceeded",
     "membership-admin-grant-invalid",
+    "membership-admin-grant-id-invalid",
     "membership-admin-grant-not-found",
     "membership-admin-unavailable",
     "membership-admin-reason-invalid",
