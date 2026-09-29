@@ -179,7 +179,40 @@ export type MembershipUserDetail = {
     reason: string;
     created_at: string | null;
   }>;
+  /**
+   * P-100 Part B: what Core's gates answer for this member right now (admin-only,
+   * additive). `absent` on a Core that does not send it, or when Core could not read
+   * the member's membership completely (absent means unknown, never FREE); `invalid`
+   * when it arrived in a shape this console cannot vouch for.
+   */
+  live_access: MembershipLiveAccessRead;
 };
+
+/** One live quota as `MembershipQuotaGateService::liveQuota` builds it. */
+export type MembershipLiveQuota = {
+  scope: MembershipQuotaScope;
+  mode: MembershipQuotaMode;
+  limit: number | null;
+  used: number;
+  remaining: number | null;
+  /** The next UTC midnight for a per-day quota; null for a concurrent one. */
+  reset_at: string | null;
+  /** False when the legacy path answers instead of the saved plan (legacy rollout). */
+  enforced: boolean;
+};
+
+export type MembershipLiveAccess = {
+  rollout_mode: MembershipRolloutMode;
+  /** The server-wide saved-phrases switch (`MEMBERSHIP_QUICK_PHRASES_ENABLED`). */
+  quick_phrases_available: boolean;
+  capabilities: Record<MembershipCapabilityKey, boolean>;
+  quotas: Record<MembershipQuotaKey, MembershipLiveQuota>;
+};
+
+export type MembershipLiveAccessRead =
+  | { state: "present"; access: MembershipLiveAccess }
+  | { state: "absent" }
+  | { state: "invalid" };
 
 export type MembershipListSummary = {
   tier: MembershipTier | "unknown";
@@ -1044,7 +1077,92 @@ export function unavailableMembershipUserDetail(uid: number): MembershipUserDeta
     store_sources: [],
     admin_grant: null,
     history: [],
+    live_access: { state: "absent" },
   };
+}
+
+/** The fixed scope of each quota (`MembershipPlanPolicy::QUOTAS`). */
+const LIVE_QUOTA_SCOPES: Record<MembershipQuotaKey, MembershipQuotaScope> = {
+  footprint_send: "utc_day",
+  pinger_send: "utc_day",
+  private_album_access: "concurrent",
+  quick_phrase_slots: "concurrent",
+};
+
+function liveQuota(value: unknown, key: MembershipQuotaKey): MembershipLiveQuota | null {
+  const source = record(value);
+  const mode = oneOf(source?.mode, QUOTA_MODES);
+  if (!source || source.scope !== LIVE_QUOTA_SCOPES[key] || !mode || typeof source.enforced !== "boolean") return null;
+  if (typeof source.used !== "number" || !Number.isSafeInteger(source.used) || source.used < 0) return null;
+  const used = source.used;
+  let limit: number | null = null;
+  let remaining: number | null = null;
+  if (mode === "finite") {
+    if (typeof source.limit !== "number" || !Number.isSafeInteger(source.limit) || source.limit < 0) return null;
+    limit = source.limit;
+    remaining = Math.max(0, limit - used);
+    if (source.remaining !== remaining) return null;
+  } else if (source.limit !== null || source.remaining !== null) {
+    return null;
+  }
+  // A per-day quota always names its next reset; a concurrent one never has one.
+  let resetAt: string | null = null;
+  if (LIVE_QUOTA_SCOPES[key] === "utc_day") {
+    const parsed = instant(source.reset_at);
+    if (typeof parsed !== "string") return null;
+    resetAt = parsed;
+  } else if (Object.hasOwn(source, "reset_at")) {
+    return null;
+  }
+  return { scope: LIVE_QUOTA_SCOPES[key], mode, limit, used, remaining, reset_at: resetAt, enforced: source.enforced };
+}
+
+/**
+ * Decodes Core's admin-only `live_access` block (P-100 Part B). Absent is `absent` (an older
+ * Core, or a membership Core could not read completely: unknown, never FREE); anything that is
+ * not Core's shape is `invalid`, so the panel falls back to the saved plan and says so instead
+ * of failing. Unknown extra keys are ignored, like the rest of this detail.
+ */
+export function membershipLiveAccess(value: unknown): MembershipLiveAccessRead {
+  if (value === undefined) return { state: "absent" };
+  const source = record(value);
+  const rolloutMode = oneOf(source?.rollout_mode, ["legacy", "enforced", "deny"] as const);
+  const capabilities = record(source?.capabilities);
+  const quotas = record(source?.quotas);
+  if (!source || !rolloutMode || typeof source.quick_phrases_available !== "boolean"
+    || !capabilities || !quotas) return { state: "invalid" };
+  const liveCapabilities = {} as Record<MembershipCapabilityKey, boolean>;
+  for (const key of MEMBERSHIP_CAPABILITIES) {
+    const enabled = capabilities[key];
+    if (typeof enabled !== "boolean") return { state: "invalid" };
+    liveCapabilities[key] = enabled;
+  }
+  const liveQuotas = {} as Record<MembershipQuotaKey, MembershipLiveQuota>;
+  for (const key of MEMBERSHIP_QUOTAS) {
+    const quota = liveQuota(quotas[key], key);
+    if (!quota) return { state: "invalid" };
+    liveQuotas[key] = quota;
+  }
+  return {
+    state: "present",
+    access: {
+      rollout_mode: rolloutMode,
+      quick_phrases_available: source.quick_phrases_available,
+      capabilities: liveCapabilities,
+      quotas: liveQuotas,
+    },
+  };
+}
+
+/**
+ * Whether saved chat phrases work for this member right now: the server switch, then the live
+ * quick-phrase rule with the same test Core uses (`QuickPhraseService` eligibility: unlimited,
+ * or finite above zero).
+ */
+export function membershipLiveQuickPhrases(access: MembershipLiveAccess): "enabled" | "disabled" | "unavailable" {
+  if (!access.quick_phrases_available) return "unavailable";
+  const rule = access.quotas.quick_phrase_slots;
+  return rule.mode === "unlimited" || (rule.mode === "finite" && (rule.limit ?? 0) > 0) ? "enabled" : "disabled";
 }
 
 function adminGrant(value: unknown): MembershipAdminGrant | null | undefined {
@@ -1158,6 +1276,7 @@ export function membershipUserDetail(value: unknown): MembershipUserDetail | nul
     store_sources: storeSources,
     admin_grant: grant,
     history,
+    live_access: membershipLiveAccess(source.live_access),
   };
 }
 

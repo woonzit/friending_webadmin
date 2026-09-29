@@ -10,6 +10,7 @@ import {
   membershipConfiguration,
   membershipExpiryChange,
   membershipGrantPreview,
+  membershipLiveQuickPhrases,
   membershipMutationOutcome,
   membershipNonProductionOnlyAccess,
   membershipRolloutMode,
@@ -20,6 +21,7 @@ import {
   type MembershipAdminGrant,
   type MembershipAction,
   type MembershipGrantPreview,
+  type MembershipQuotaMode,
   type MembershipRolloutMode,
   type MembershipUserDetail,
 } from "@/lib/membership";
@@ -154,7 +156,12 @@ export default function UserMembershipPanel({
   }, []);
 
   useEffect(() => { void loadAdminAccess(); }, [loadAdminAccess]);
-  useEffect(() => { void loadRollout(); }, [loadRollout]);
+  // P-100 Part B: when Core sends this member's live access, its rollout mode replaces the
+  // configuration read below (the Part A inference), which stays the fallback without it.
+  const liveAccessPresent = detail.live_access.state === "present";
+  useEffect(() => {
+    if (!liveAccessPresent) void loadRollout();
+  }, [liveAccessPresent, loadRollout]);
 
   const detailReadable = detail.effective_membership.lifecycle_state !== "unavailable";
 
@@ -194,8 +201,11 @@ export default function UserMembershipPanel({
   );
   const storeAutoRenews = membershipStoreAutoRenews(status);
   const nonProductionOnly = membershipNonProductionOnlyAccess(detail);
+  // What Core's gates answer for this member now (P-100 Part B); null falls back to the inference.
+  const live = detail.live_access.state === "present" ? detail.live_access.access : null;
+  const shownRollout: RolloutState = live ? live.rollout_mode : rollout;
   // No label while the rollout read is in flight; an unreadable read is labeled as unknown.
-  const planLabel = rollout === "loading" ? null : t(`plan.${rollout}`);
+  const planLabel = shownRollout === "loading" ? null : t(`plan.${shownRollout}`);
   const editor = adminAccess === "ready" && (adminRole === "owner" || adminRole === "admin");
   const owner = adminAccess === "ready" && adminRole === "owner";
   const customWire = preset === "custom" ? toWireInstant(customExpiry) : null;
@@ -208,6 +218,11 @@ export default function UserMembershipPanel({
   const expiryChange = membershipExpiryChange(currentGrant?.expires_at ?? null, expiryWire);
   const expiryValid = canEditGrant && !grantLocked && expiryWire !== null && validReason(expiryReason)
     && (expiryChange !== "shorten" || owner);
+
+  /** A quota limit or remainder as the saved-plan cards show it. */
+  function quotaAmount(mode: MembershipQuotaMode, value: number | null): string {
+    return mode === "unlimited" ? t("unlimited") : mode === "disabled" ? t("disabled") : String(value ?? 0);
+  }
 
   function resetPreview() {
     setPreview(null);
@@ -255,7 +270,7 @@ export default function UserMembershipPanel({
 
   async function reload() {
     setNotice(null);
-    void loadRollout();
+    if (!liveAccessPresent) void loadRollout();
     if (pendingGrant) {
       // A still-unchanged grant keeps the request pinned; only a changed grant releases it.
       setBusy("reload");
@@ -481,7 +496,15 @@ export default function UserMembershipPanel({
             {notice.text}
           </p>
         ) : null}
-        {rollout === "loading" ? null : rollout === "enforced" ? (
+        {live ? (
+          <p
+            className={`alert ${live.rollout_mode === "enforced" ? "alert-success" : live.rollout_mode === "deny" ? "alert-error" : "alert-warning"}`}
+            role={live.rollout_mode === "deny" ? "alert" : "status"}
+            data-live-rollout-state={live.rollout_mode}
+          >
+            {t(`live.rollout.${live.rollout_mode}`)}
+          </p>
+        ) : rollout === "loading" ? null : rollout === "enforced" ? (
           <p className="alert alert-success" role="status" data-rollout-state="enforced">{t("rollout.enforced")}</p>
         ) : rollout === "deny" ? (
           <p className="alert alert-error" role="alert" data-rollout-state="deny">{t("rollout.deny")}</p>
@@ -490,6 +513,9 @@ export default function UserMembershipPanel({
         ) : (
           <p className="alert alert-warning" role="status" data-rollout-state="unknown">{t("rollout.unknown")}</p>
         )}
+        {detail.live_access.state === "invalid" ? (
+          <p className="alert alert-warning" role="status" data-live-access="invalid">{t("live.invalid")}</p>
+        ) : null}
         {nonProductionOnly ? (
           <p className="alert alert-warning" role="status" data-non-production-only="true">{t("store.nonProductionOnly")}</p>
         ) : null}
@@ -505,18 +531,40 @@ export default function UserMembershipPanel({
         <div className="membership-policy-grid">
           <section className="membership-subpanel">
             <div className="membership-subpanel-head">
-              <div><h3>{t("capabilities.title")}</h3><p>{t("capabilities.copy")}</p></div>
-              {planLabel ? <span className="badge badge-info membership-plan-label" data-plan-label={rollout}>{planLabel}</span> : null}
+              <div>
+                <h3>{live ? t("capabilities.titleLive") : t("capabilities.title")}</h3>
+                <p>{live ? t("capabilities.copyLive") : t("capabilities.copy")}</p>
+              </div>
+              {planLabel ? <span className="badge badge-info membership-plan-label" data-plan-label={shownRollout}>{planLabel}</span> : null}
             </div>
             <div className="membership-capability-list">
-              {(["invisible_presence", "hide_profile_visit", "quick_phrases", "vip_badge"] as const).map((key) => (
-                <div key={key}>
-                  <span>{t(`capabilities.items.${key}`)}</span>
+              {(["invisible_presence", "hide_profile_visit", "quick_phrases", "vip_badge"] as const).map((key) => {
+                const saved = (
                   <strong className={`badge ${status.capabilities[key] ? "badge-active" : "badge-inactive"}`}>
                     {status.capabilities[key] ? common("enabled") : common("disabled")}
                   </strong>
-                </div>
-              ))}
+                );
+                if (!live) {
+                  return <div key={key}><span>{t(`capabilities.items.${key}`)}</span>{saved}</div>;
+                }
+                const now = key === "quick_phrases"
+                  ? membershipLiveQuickPhrases(live)
+                  : live.capabilities[key] ? "enabled" : "disabled";
+                return (
+                  <div key={key}>
+                    <span>{t(`capabilities.items.${key}`)}</span>
+                    <span className="membership-access-compare">
+                      <span className="membership-access-value"><small>{t("live.saved")}</small>{saved}</span>
+                      <span className="membership-access-value" data-live-capability={key} data-live-value={now}>
+                        <small>{t("live.now")}</small>
+                        <strong className={`badge ${now === "enabled" ? "badge-active" : "badge-inactive"}`}>
+                          {now === "enabled" ? common("enabled") : now === "disabled" ? common("disabled") : t("live.quickPhrasesOff")}
+                        </strong>
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </section>
           <section className="membership-subpanel">
@@ -545,7 +593,7 @@ export default function UserMembershipPanel({
             return (
               <div className="membership-benefit" key={key}>
                 <span>{t(`quotas.${key}`)}</span>
-                {planLabel ? <small className="membership-plan-label" data-plan-label={rollout}>{planLabel}</small> : null}
+                {planLabel ? <small className="membership-plan-label" data-plan-label={shownRollout}>{planLabel}</small> : null}
                 <strong>{t(`quotaModes.${quota.mode}`)}</strong>
                 <dl className="membership-quota-detail">
                   <div><dt>{t("quota.scope")}</dt><dd>{t(`scopes.${quota.scope}`)}</dd></div>
@@ -554,6 +602,23 @@ export default function UserMembershipPanel({
                   <div><dt>{t("quota.remaining")}</dt><dd>{remaining}</dd></div>
                   <div><dt>{t("quota.reset")}</dt><dd><InstantValue value={quota.reset_at} locale={locale} /></dd></div>
                 </dl>
+                {live ? (() => {
+                  const now = live.quotas[key];
+                  return (
+                    <div className="membership-live-quota" data-live-quota={key} data-live-enforced={String(now.enforced)}>
+                      <span>{t("live.now")} · {now.enforced ? t("live.planRule") : t("live.legacyRule")}</span>
+                      <strong>{t(`quotaModes.${now.mode}`)}</strong>
+                      <dl className="membership-quota-detail">
+                        <div><dt>{t("quota.used")}</dt><dd>{now.used}</dd></div>
+                        <div><dt>{t("quota.limit")}</dt><dd>{quotaAmount(now.mode, now.limit)}</dd></div>
+                        <div><dt>{t("quota.remaining")}</dt><dd>{quotaAmount(now.mode, now.remaining)}</dd></div>
+                        {now.reset_at ? (
+                          <div><dt>{t("quota.reset")}</dt><dd><InstantValue value={now.reset_at} locale={locale} /></dd></div>
+                        ) : null}
+                      </dl>
+                    </div>
+                  );
+                })() : null}
               </div>
             );
           })}

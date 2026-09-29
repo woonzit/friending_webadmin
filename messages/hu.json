@@ -3367,7 +3367,9 @@
         "hide_profile_visit": "Profillátogatások elrejtése",
         "quick_phrases": "Mentett chatmondatok",
         "vip_badge": "Előfizetői jelvény jogosultsága"
-      }
+      },
+      "titleLive": "Jogosultságok: mentett csomag és jelenlegi állapot",
+      "copyLive": "Mentett csomag: amit a mentett csomag ad a tag szintjének. Jelenleg: amit a Core ellenőrzései most ténylegesen megengednek ennek a tagnak."
     },
     "badge": {
       "title": "Nyilvános előfizetői jelvény",
@@ -3498,7 +3500,20 @@
       "none": "Még nincs rögzített előfizetési előzmény."
     },
     "loadError": "A hiteles előfizetési állapotot nem sikerült frissíteni.",
-    "accessUnavailable": "Az adminisztrátori hozzáférést nem sikerült ellenőrizni. Az előfizetési vezérlőket elrejtettük; művelet előtt próbáld újra."
+    "accessUnavailable": "Az adminisztrátori hozzáférést nem sikerült ellenőrizni. Az előfizetési vezérlőket elrejtettük; művelet előtt próbáld újra.",
+    "live": {
+      "saved": "Mentett csomag",
+      "now": "Jelenleg",
+      "planRule": "a mentett csomag szerint",
+      "legacyRule": "a régi szabály szerint, a mentett csomag nem érvényes",
+      "quickPhrasesOff": "A szerveren ki van kapcsolva",
+      "invalid": "A Core olyan formában küldte el a tag jelenlegi hozzáférését, amelyet ez a felület nem tud beolvasni, ezért lent csak a mentett csomag látszik. Mielőtt ezekre támaszkodnál, frissíts.",
+      "rollout": {
+        "legacy": "A Friending továbbra is a régi szabályokat alkalmazza. A Jelenleg érték mutatja, mit használhat most ténylegesen ez a tag; mellette a mentett csomag azt, amit az érvényesítés után kapna.",
+        "enforced": "A Core érvényesíti a mentett csomagot. A Jelenleg érték azt mutatja, mit kap most ez a tag, a moderátor által beállított egyéni korláttal együtt.",
+        "deny": "Az érvényesítés be van kapcsolva, de még nincs mentett előfizetési csomag, ezért a Core ennél a tagnál is letilt minden fizetős jogosultságot és korlátot, amíg az Előfizetési csomagok oldalon valaki nem ment egy csomagot."
+      }
+    }
   },
   "photoModeration": {
     "eyebrow": "Biztonság és bizalom",

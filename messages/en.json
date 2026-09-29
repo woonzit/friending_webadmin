@@ -3367,7 +3367,9 @@
         "hide_profile_visit": "Hide profile visits",
         "quick_phrases": "Saved chat phrases",
         "vip_badge": "Subscriber badge eligibility"
-      }
+      },
+      "titleLive": "Capabilities: saved plan and right now",
+      "copyLive": "Saved plan: what the saved plan gives this member's tier. Right now: what Core's checks allow this member at this moment."
     },
     "badge": {
       "title": "Public subscriber badge",
@@ -3498,7 +3500,20 @@
       "none": "No membership history has been recorded yet."
     },
     "loadError": "The authoritative membership state could not be refreshed.",
-    "accessUnavailable": "Administrator access could not be verified. Membership controls are withheld; retry before acting."
+    "accessUnavailable": "Administrator access could not be verified. Membership controls are withheld; retry before acting.",
+    "live": {
+      "saved": "Saved plan",
+      "now": "Right now",
+      "planRule": "the saved plan applies",
+      "legacyRule": "legacy rule, the saved plan does not apply",
+      "quickPhrasesOff": "Switched off on the server",
+      "invalid": "Core sent this member's current access in a form this console cannot read, so only the saved plan is shown below. Refresh before relying on it.",
+      "rollout": {
+        "legacy": "Friending still applies the legacy rules. Right now shows what this member can actually do; the saved plan beside it is what they would get once the plan is enforced.",
+        "enforced": "Core enforces the saved plan. Right now shows what this member gets at this moment, including any per-member limit a moderator set.",
+        "deny": "Enforcement is switched on, but no membership plan has been saved yet, so Core disables every paid capability and limit for this member until a plan is saved on the Membership plans page."
+      }
+    }
   },
   "photoModeration": {
     "eyebrow": "Trust and safety",

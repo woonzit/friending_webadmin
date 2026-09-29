@@ -1,0 +1,240 @@
+{
+    "generator": "php tests/membership_gate_reads_storage_test.php --write",
+    "provenance": "MembershipAdminService::userDetail()[live_access] from an owned disposable replica set; synthetic members; reset_at normalised to 2023-11-15T00:00:00Z. The block rides on /v1/webadmin/membership_user_detail (and the grant mutations that answer with the detail) and on the /v1/webadmin/user_detail membership fallback; absent = unknown.",
+    "routes": [
+        "/v1/webadmin/membership_user_detail",
+        "/v1/webadmin/user_detail"
+    ],
+    "rollout_modes": [
+        "legacy",
+        "enforced",
+        "deny"
+    ],
+    "live_access": {
+        "legacy-free": {
+            "rollout_mode": "legacy",
+            "quick_phrases_available": true,
+            "capabilities": {
+                "invisible_presence": false,
+                "hide_profile_visit": false,
+                "vip_badge": false
+            },
+            "quotas": {
+                "footprint_send": {
+                    "scope": "utc_day",
+                    "mode": "finite",
+                    "limit": 1,
+                    "used": 0,
+                    "remaining": 1,
+                    "reset_at": "2023-11-15T00:00:00Z",
+                    "enforced": false
+                },
+                "pinger_send": {
+                    "scope": "utc_day",
+                    "mode": "unlimited",
+                    "limit": null,
+                    "used": 0,
+                    "remaining": null,
+                    "reset_at": "2023-11-15T00:00:00Z",
+                    "enforced": false
+                },
+                "private_album_access": {
+                    "scope": "concurrent",
+                    "mode": "unlimited",
+                    "limit": null,
+                    "used": 1,
+                    "remaining": null,
+                    "enforced": false
+                },
+                "quick_phrase_slots": {
+                    "scope": "concurrent",
+                    "mode": "disabled",
+                    "limit": null,
+                    "used": 0,
+                    "remaining": null,
+                    "enforced": true
+                }
+            }
+        },
+        "legacy-plus-admin-grant": {
+            "rollout_mode": "legacy",
+            "quick_phrases_available": true,
+            "capabilities": {
+                "invisible_presence": true,
+                "hide_profile_visit": true,
+                "vip_badge": true
+            },
+            "quotas": {
+                "footprint_send": {
+                    "scope": "utc_day",
+                    "mode": "finite",
+                    "limit": 1,
+                    "used": 0,
+                    "remaining": 1,
+                    "reset_at": "2023-11-15T00:00:00Z",
+                    "enforced": false
+                },
+                "pinger_send": {
+                    "scope": "utc_day",
+                    "mode": "unlimited",
+                    "limit": null,
+                    "used": 0,
+                    "remaining": null,
+                    "reset_at": "2023-11-15T00:00:00Z",
+                    "enforced": false
+                },
+                "private_album_access": {
+                    "scope": "concurrent",
+                    "mode": "unlimited",
+                    "limit": null,
+                    "used": 0,
+                    "remaining": null,
+                    "enforced": false
+                },
+                "quick_phrase_slots": {
+                    "scope": "concurrent",
+                    "mode": "finite",
+                    "limit": 4,
+                    "used": 0,
+                    "remaining": 4,
+                    "enforced": true
+                }
+            }
+        },
+        "enforced-free-ceiling-2": {
+            "rollout_mode": "enforced",
+            "quick_phrases_available": true,
+            "capabilities": {
+                "invisible_presence": false,
+                "hide_profile_visit": false,
+                "vip_badge": false
+            },
+            "quotas": {
+                "footprint_send": {
+                    "scope": "utc_day",
+                    "mode": "finite",
+                    "limit": 2,
+                    "used": 0,
+                    "remaining": 2,
+                    "reset_at": "2023-11-15T00:00:00Z",
+                    "enforced": true
+                },
+                "pinger_send": {
+                    "scope": "utc_day",
+                    "mode": "finite",
+                    "limit": 0,
+                    "used": 0,
+                    "remaining": 0,
+                    "reset_at": "2023-11-15T00:00:00Z",
+                    "enforced": true
+                },
+                "private_album_access": {
+                    "scope": "concurrent",
+                    "mode": "finite",
+                    "limit": 1,
+                    "used": 1,
+                    "remaining": 0,
+                    "enforced": true
+                },
+                "quick_phrase_slots": {
+                    "scope": "concurrent",
+                    "mode": "disabled",
+                    "limit": null,
+                    "used": 0,
+                    "remaining": null,
+                    "enforced": true
+                }
+            }
+        },
+        "enforced-plus": {
+            "rollout_mode": "enforced",
+            "quick_phrases_available": true,
+            "capabilities": {
+                "invisible_presence": true,
+                "hide_profile_visit": true,
+                "vip_badge": true
+            },
+            "quotas": {
+                "footprint_send": {
+                    "scope": "utc_day",
+                    "mode": "finite",
+                    "limit": 20,
+                    "used": 0,
+                    "remaining": 20,
+                    "reset_at": "2023-11-15T00:00:00Z",
+                    "enforced": true
+                },
+                "pinger_send": {
+                    "scope": "utc_day",
+                    "mode": "unlimited",
+                    "limit": null,
+                    "used": 0,
+                    "remaining": null,
+                    "reset_at": "2023-11-15T00:00:00Z",
+                    "enforced": true
+                },
+                "private_album_access": {
+                    "scope": "concurrent",
+                    "mode": "unlimited",
+                    "limit": null,
+                    "used": 0,
+                    "remaining": null,
+                    "enforced": true
+                },
+                "quick_phrase_slots": {
+                    "scope": "concurrent",
+                    "mode": "finite",
+                    "limit": 4,
+                    "used": 0,
+                    "remaining": 4,
+                    "enforced": true
+                }
+            }
+        },
+        "deny-free": {
+            "rollout_mode": "deny",
+            "quick_phrases_available": true,
+            "capabilities": {
+                "invisible_presence": false,
+                "hide_profile_visit": false,
+                "vip_badge": false
+            },
+            "quotas": {
+                "footprint_send": {
+                    "scope": "utc_day",
+                    "mode": "disabled",
+                    "limit": null,
+                    "used": 0,
+                    "remaining": null,
+                    "reset_at": "2023-11-15T00:00:00Z",
+                    "enforced": true
+                },
+                "pinger_send": {
+                    "scope": "utc_day",
+                    "mode": "disabled",
+                    "limit": null,
+                    "used": 0,
+                    "remaining": null,
+                    "reset_at": "2023-11-15T00:00:00Z",
+                    "enforced": true
+                },
+                "private_album_access": {
+                    "scope": "concurrent",
+                    "mode": "disabled",
+                    "limit": null,
+                    "used": 1,
+                    "remaining": null,
+                    "enforced": true
+                },
+                "quick_phrase_slots": {
+                    "scope": "concurrent",
+                    "mode": "disabled",
+                    "limit": null,
+                    "used": 0,
+                    "remaining": null,
+                    "enforced": true
+                }
+            }
+        }
+    }
+}
