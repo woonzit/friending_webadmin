@@ -1,0 +1,136 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "principal": {
+            "role": "owner",
+            "capabilities": [
+                "verification_badge_edit",
+                "verification_copy_edit",
+                "verification_grant_edit",
+                "verification_grant_read",
+                "verification_pending_read",
+                "verification_policy_edit",
+                "verification_policy_publish",
+                "verification_policy_read",
+                "verification_simulate"
+            ]
+        },
+        "evaluated_at": 1800000000,
+        "policy": {
+            "schema_version": 1,
+            "revision": 4,
+            "draft": {
+                "document": {
+                    "global": "persona",
+                    "overrides": {
+                        "HUN": "photo"
+                    },
+                    "waiting_room_copy": {
+                        "default": {
+                            "en": {
+                                "title": "One more step before you meet people",
+                                "subtitle": "Verification is required in your region",
+                                "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members.",
+                                "help_url": null
+                            },
+                            "hu": {
+                                "title": "Még egy lépés, mielőtt ismerkedsz",
+                                "subtitle": "A régiódban hitelesítés szükséges",
+                                "description": "A Friending biztonsága érdekében a régiódban minden tagnak igazolnia kell a személyazonosságát, mielőtt használná az appot. Ez körülbelül két percet vesz igénybe, és a dokumentumaidat más tagok soha nem látják.",
+                                "help_url": null
+                            }
+                        },
+                        "overrides": {
+                            "HUN": {
+                                "en": [],
+                                "hu": []
+                            }
+                        }
+                    }
+                },
+                "saved_at": 1800000000,
+                "saved_by": "owner@friending.com"
+            },
+            "live": {
+                "document": {
+                    "global": "persona",
+                    "overrides": {
+                        "HUN": "photo"
+                    },
+                    "waiting_room_copy": {
+                        "default": {
+                            "en": {
+                                "title": "One more step before you meet people",
+                                "subtitle": "Verification is required in your region",
+                                "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members.",
+                                "help_url": null
+                            },
+                            "hu": {
+                                "title": "Még egy lépés, mielőtt ismerkedsz",
+                                "subtitle": "A régiódban hitelesítés szükséges",
+                                "description": "A Friending biztonsága érdekében a régiódban minden tagnak igazolnia kell a személyazonosságát, mielőtt használná az appot. Ez körülbelül két percet vesz igénybe, és a dokumentumaidat más tagok soha nem látják.",
+                                "help_url": null
+                            }
+                        },
+                        "overrides": {
+                            "HUN": {
+                                "en": [],
+                                "hu": []
+                            }
+                        }
+                    }
+                },
+                "published_at": 1800000000,
+                "published_by": "owner@friending.com"
+            },
+            "updated_at": 1800000000,
+            "updated_by": "owner@friending.com"
+        },
+        "method_availability": {
+            "video": {
+                "method": "video",
+                "policy_enable_allowed": true,
+                "new_start_available": true,
+                "reason": null
+            },
+            "persona": {
+                "method": "persona",
+                "policy_enable_allowed": true,
+                "new_start_available": true,
+                "reason": null
+            },
+            "photo": {
+                "method": "photo",
+                "policy_enable_allowed": true,
+                "new_start_available": true,
+                "reason": null
+            }
+        },
+        "publish_guard": {
+            "ready": true,
+            "blocking_codes": []
+        },
+        "compiled_defaults": {
+            "waiting_room_copy": {
+                "en": {
+                    "title": "One more step before you meet people",
+                    "subtitle": "Verification is required in your region",
+                    "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members.",
+                    "help_url": null
+                },
+                "hu": {
+                    "title": "Még egy lépés, mielőtt ismerkedsz",
+                    "subtitle": "A régiódban hitelesítés szükséges",
+                    "description": "A Friending biztonsága érdekében a régiódban minden tagnak igazolnia kell a személyazonosságát, mielőtt használná az appot. Ez körülbelül két percet vesz igénybe, és a dokumentumaidat más tagok soha nem látják.",
+                    "help_url": null
+                }
+            }
+        },
+        "storefront_catalogue_hint": "alpha-3"
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

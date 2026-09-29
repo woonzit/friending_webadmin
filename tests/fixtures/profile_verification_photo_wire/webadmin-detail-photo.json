@@ -1,0 +1,169 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "state": {
+            "uid": 995480,
+            "status": "pending",
+            "verification_mode": "photo",
+            "revision": 3,
+            "active_submission_id": "55555555555555555555555555555555",
+            "active_case_id": "66666666666666666666666666666666",
+            "current_avatar_hash": "fixtureavatarhash",
+            "approved_avatar_hash": "",
+            "submitted_at": 1799996400,
+            "last_decision_at": null,
+            "last_rejection_reason": null,
+            "updated_trigger": "initial_submission",
+            "updated_at": 1799999400
+        },
+        "case": {
+            "case_id": "66666666666666666666666666666666",
+            "uid": 995480,
+            "submission_id": "55555555555555555555555555555555",
+            "verification_mode": "photo",
+            "trigger": "initial_submission",
+            "avatar_hash": "fixtureavatarhash",
+            "has_avatar_snapshot": true,
+            "identity_snapshot": {
+                "display_name": "Fixture Member",
+                "gender": "female",
+                "birthday": 631152000
+            },
+            "status": "pending",
+            "revision": 1,
+            "lease_owner": null,
+            "lease_expires_at": null,
+            "decision": null,
+            "decision_reason": null,
+            "decision_note": null,
+            "decided_by": null,
+            "decided_at": null,
+            "created_at": 1799996400,
+            "updated_at": 1799996400
+        },
+        "submission": {
+            "submission_id": "55555555555555555555555555555555",
+            "challenge_id": "cccccccccccccccccccccccccccccccc",
+            "config_revision": 7,
+            "consent_revision": 7,
+            "sha256": "",
+            "bytes": 540003,
+            "mime": "image/jpeg",
+            "duration_seconds": 0,
+            "width": 0,
+            "height": 0,
+            "codec": "jpeg",
+            "audio": false,
+            "actions": [],
+            "client_diagnostics": [],
+            "lifecycle": "active",
+            "has_video": false,
+            "created_at": 1799996400,
+            "verification_mode": "photo",
+            "photo_gesture_count": 3,
+            "photos": [
+                {
+                    "kind": "photo_1",
+                    "position": 1,
+                    "gesture": {
+                        "id": "00000000000000000000000000000003",
+                        "title": {
+                            "en": "Hand on chin",
+                            "hu": "Kéz az állon"
+                        },
+                        "subtitle": {
+                            "en": "Rest your chin on the back of one hand.",
+                            "hu": "Támaszd az álladat az egyik kézfejedre."
+                        },
+                        "male_image_url": "https://img.friending.co/api/cache/admin/uploads/2026/09/20260929120000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa3.jpg",
+                        "female_image_url": "https://img.friending.co/api/cache/admin/uploads/2026/09/20260929120000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb3.jpg",
+                        "preferred_example": "female"
+                    },
+                    "width": 1080,
+                    "height": 1440,
+                    "bytes": 180000,
+                    "sha256": "8eed019f98305b29443ec3e4c7a5169f9db683d7adac0e3efe7790a155fc0768",
+                    "mime": "image/jpeg",
+                    "has_photo": true
+                },
+                {
+                    "kind": "photo_2",
+                    "position": 2,
+                    "gesture": {
+                        "id": "00000000000000000000000000000001",
+                        "title": {
+                            "en": "Thumbs up",
+                            "hu": "Felfelé mutató hüvelykujj"
+                        },
+                        "subtitle": {
+                            "en": "Hold one thumb up next to your cheek.",
+                            "hu": "Tartsd fel az egyik hüvelykujjadat az arcod mellett."
+                        },
+                        "male_image_url": "https://img.friending.co/api/cache/admin/uploads/2026/09/20260929120000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1.jpg",
+                        "female_image_url": "https://img.friending.co/api/cache/admin/uploads/2026/09/20260929120000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1.jpg",
+                        "preferred_example": "female"
+                    },
+                    "width": 1080,
+                    "height": 1440,
+                    "bytes": 180001,
+                    "sha256": "147faba362766b068687d647198126d9cf8e8a32daa19ffad57e45284596bf9f",
+                    "mime": "image/jpeg",
+                    "has_photo": true
+                },
+                {
+                    "kind": "photo_3",
+                    "position": 3,
+                    "gesture": {
+                        "id": "00000000000000000000000000000004",
+                        "title": {
+                            "en": "Wave",
+                            "hu": "Integetés"
+                        },
+                        "subtitle": {
+                            "en": "Raise an open hand beside your head.",
+                            "hu": "Emeld fel nyitott tenyérrel a kezed a fejed mellett."
+                        },
+                        "male_image_url": "https://img.friending.co/api/cache/admin/uploads/2026/09/20260929120000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa4.jpg",
+                        "female_image_url": "https://img.friending.co/api/cache/admin/uploads/2026/09/20260929120000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb4.jpg",
+                        "preferred_example": "female"
+                    },
+                    "width": 1080,
+                    "height": 1440,
+                    "bytes": 180002,
+                    "sha256": "47c109d6d8f208f96491c5fd3c83b4dfc73facd5c47246e6d0bfafdd459281d6",
+                    "mime": "image/jpeg",
+                    "has_photo": true
+                }
+            ]
+        },
+        "user": {
+            "uid": 995480,
+            "display_name": "Fixture Member",
+            "gender": "female",
+            "current_avatar_hash": "fixtureavatarhash",
+            "current_avatar_url": "https://img.friending.co/api/cache/fi/fixture/fixtureavatarhash_free_pop_up.jpeg",
+            "birthday": 631152000
+        },
+        "history": [
+            {
+                "event_id": "99999999999999999999999999999999",
+                "event_type": "photos_submitted",
+                "submission_id": "55555555555555555555555555555555",
+                "case_id": "66666666666666666666666666666666",
+                "actor_kind": "member",
+                "actor_id": "995480",
+                "previous_status": "not_started",
+                "new_status": "pending",
+                "previous_avatar_hash": "",
+                "new_avatar_hash": "fixtureavatarhash",
+                "reason": "initial_submission",
+                "metadata": [],
+                "created_at": 1799996400
+            }
+        ]
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

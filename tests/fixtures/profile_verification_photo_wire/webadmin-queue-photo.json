@@ -1,0 +1,46 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "items": [
+            {
+                "uid": 995480,
+                "status": "pending",
+                "verification_mode": "photo",
+                "case_id": "66666666666666666666666666666666",
+                "submission_id": "55555555555555555555555555555555",
+                "trigger": "initial_submission",
+                "display_name": "Fixture Member",
+                "gender": "female",
+                "avatar_available": true,
+                "submitted_at": 1799996400,
+                "updated_at": 1799999400,
+                "lease_owner": null,
+                "lease_expires_at": null,
+                "birthday": 631152000
+            },
+            {
+                "uid": 995481,
+                "status": "pending",
+                "verification_mode": "video",
+                "case_id": "88888888888888888888888888888888",
+                "submission_id": "77777777777777777777777777777777",
+                "trigger": "initial_submission",
+                "display_name": "Video Member",
+                "gender": "male",
+                "avatar_available": true,
+                "submitted_at": 1799992800,
+                "updated_at": 1799992800,
+                "lease_owner": null,
+                "lease_expires_at": null,
+                "birthday": 631152000
+            }
+        ],
+        "has_more": false,
+        "next_before_millis": null,
+        "next_before_uid": null
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

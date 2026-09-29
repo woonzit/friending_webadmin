@@ -1,0 +1,32 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "case_id": "66666666666666666666666666666666",
+        "uid": 995480,
+        "submission_id": "55555555555555555555555555555555",
+        "verification_mode": "photo",
+        "trigger": "initial_submission",
+        "avatar_hash": "fixtureavatarhash",
+        "has_avatar_snapshot": true,
+        "identity_snapshot": {
+            "display_name": "Fixture Member",
+            "gender": "female",
+            "birthday": 631152000
+        },
+        "status": "approved",
+        "revision": 2,
+        "lease_owner": null,
+        "lease_expires_at": null,
+        "decision": "approve",
+        "decision_reason": null,
+        "decision_note": null,
+        "decided_by": "moderator@friending.com",
+        "decided_at": 1800000000,
+        "created_at": 1799996400,
+        "updated_at": 1800000000
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

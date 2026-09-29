@@ -1,0 +1,590 @@
+{
+    "schema_version": 1,
+    "contract": "profile-verification-photo-v1",
+    "source_commit": "b52fa634e99f66fae0ef31678fb858143e0eea81",
+    "fixture_set_sha256": "583f8d0d5060aa736474f97ec1236bab4998803f0911f883be031dc487b8ebcc",
+    "provenance": {
+        "generator": "tests/profile_verification_photo_fixture_dump.php",
+        "generator_sha256": "93b0001a834a05cc4b741d8fc9e8cb79e7bb4d5773fcf78ccfa9b5d89a6ecb98",
+        "ios_wire_adapter": "Friending\\Core\\Response::wirePayload",
+        "webadmin_wire_adapters": {
+            "profile_verification": "Friending\\Support\\Webadmin::reply",
+            "verification_method": "Friending\\Support\\Webadmin::noStoreReply"
+        },
+        "evaluated_at": 1800000000,
+        "source_paths": [
+            "config/auth_policy_vocabulary.json",
+            "config/routes.php",
+            "docs/PROFILE_VERIFICATION_PHOTO_V1.md",
+            "src/Core/Config.php",
+            "src/Core/Request.php",
+            "src/Core/Response.php",
+            "src/Http/Controllers/ProfileVerificationController.php",
+            "src/Http/Controllers/VerificationMethodAdminController.php",
+            "src/Http/Controllers/WebadminProfileVerificationController.php",
+            "src/Services/AdminGrantedVerificationService.php",
+            "src/Services/AdminImageUploadService.php",
+            "src/Services/ForcedVerificationService.php",
+            "src/Services/ProfileVerificationAdminService.php",
+            "src/Services/ProfileVerificationConfigService.php",
+            "src/Services/ProfileVerificationEvidenceStorage.php",
+            "src/Services/ProfileVerificationException.php",
+            "src/Services/ProfileVerificationService.php",
+            "src/Services/ProfileVerificationSubmissionMedia.php",
+            "src/Services/VerificationMethodAdminException.php",
+            "src/Services/VerificationMethodAdminService.php",
+            "src/Services/VerificationMethodAvailabilityService.php",
+            "src/Support/AdminGrantedVerificationPolicy.php",
+            "src/Support/AuthMethodPolicy.php",
+            "src/Support/AuthPolicyVocabulary.php",
+            "src/Support/ForcedVerificationEvaluator.php",
+            "src/Support/ForcedVerificationPolicy.php",
+            "src/Support/PersonaPolicy.php",
+            "src/Support/PersonaVisibilityPolicy.php",
+            "src/Support/PhotoVerificationPolicy.php",
+            "src/Support/ProfileVerificationPolicy.php",
+            "src/Support/ProfileVerificationStatusPolicy.php",
+            "src/Support/StrictJson.php",
+            "src/Support/VerificationAdminPolicy.php",
+            "src/Support/VerificationCompletion.php",
+            "src/Support/VerificationMethodAdminPolicy.php",
+            "src/Support/VerificationMethodContract.php",
+            "src/Support/VerificationMethodMigrationPolicy.php",
+            "src/Support/VerificationMethodPolicy.php",
+            "src/Support/VerificationMethodPublicationGuard.php",
+            "src/Support/VerificationPolicy.php",
+            "src/Support/Webadmin.php",
+            "src/Support/WebadminRolePolicy.php",
+            "tests/profile_verification_photo_fixture_dump.php"
+        ]
+    },
+    "client_contract": {
+        "parameter": "verification_method_contract_version",
+        "photo_value": "2",
+        "rule": "photo reaches a request only when the parameter is exactly 2; any other request gets the shipped vocabulary"
+    },
+    "methods": [
+        "persona",
+        "video",
+        "photo",
+        "none"
+    ],
+    "satisfied_by": [
+        "persona",
+        "video",
+        "photo",
+        "grant"
+    ],
+    "photo_start_surface": "verification.photo",
+    "multipart": {
+        "route": "/v1/profile/verification/submit",
+        "mode_field": "verification_mode",
+        "photo_fields": [
+            "photo_1",
+            "photo_2",
+            "photo_3",
+            "photo_4",
+            "photo_5",
+            "photo_6",
+            "photo_7",
+            "photo_8",
+            "photo_9",
+            "photo_10"
+        ],
+        "content_type": "image/jpeg",
+        "photo_limits": {
+            "maximum_count": 10,
+            "maximum_photo_bytes": 2097152,
+            "maximum_total_bytes": 20971520,
+            "minimum_short_edge": 480,
+            "maximum_long_edge": 2160
+        }
+    },
+    "evidence_kinds": [
+        "video",
+        "avatar_snapshot",
+        "photo_1",
+        "photo_2",
+        "photo_3",
+        "photo_4",
+        "photo_5",
+        "photo_6",
+        "photo_7",
+        "photo_8",
+        "photo_9",
+        "photo_10"
+    ],
+    "photo_availability_reasons": [
+        "deployment_unlock_disabled",
+        "service_config_disabled",
+        "processing_unavailable",
+        "catalogue_insufficient"
+    ],
+    "member_error_statuses": {
+        "profile-verification-challenge-stale": 409,
+        "profile-verification-disabled": 403,
+        "profile-verification-gestures-insufficient": 409,
+        "profile-verification-mode-invalid": 422,
+        "profile-verification-photo-count-invalid": 422,
+        "profile-verification-photo-dimensions-invalid": 422,
+        "profile-verification-photo-duplicate": 422,
+        "profile-verification-photo-format-invalid": 422,
+        "profile-verification-photo-invalid": 422,
+        "profile-verification-photo-orientation-invalid": 422,
+        "profile-verification-photo-processing-unavailable": 503,
+        "profile-verification-photo-too-large": 422,
+        "profile-verification-photo-upload-failed": 422,
+        "verification-forced-waiting-room": 403
+    },
+    "control_plane_error_statuses": {
+        "profile-verification-config-invalid": 422,
+        "profile-verification-decision-invalid": 422,
+        "profile-verification-evidence-invalid": 422,
+        "profile-verification-evidence-not-found": 409,
+        "profile-verification-gestures-insufficient": 409,
+        "verification-method-photo-unavailable": 409
+    },
+    "fixtures": [
+        {
+            "file": "ios-challenge-photo-en.json",
+            "route": "/v1/profile/verification/challenge",
+            "case": "the schema-2 photo challenge: three ordered gestures, their multipart fields and the limits",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "0cadc337c8b8e36c692143b9205d80816f46f708c9afb2b751019217aafdc8ef"
+        },
+        {
+            "file": "ios-challenge-photo-hu.json",
+            "route": "/v1/profile/verification/challenge",
+            "case": "the same challenge in Hungarian",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "51f6662a9fd968aa02c0490fbd7115bcb16885949f505b06178c1f8312806cad"
+        },
+        {
+            "file": "ios-gate-photo-failed-contract.json",
+            "route": "/v1/iosuser/verification_gate",
+            "case": "a rejected photo set: failed photo, the start surface stays",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "9dc898f9e263dfffbc4542d350eff28a5aa0dd6eee60b6a37e6b1a182e5ace14"
+        },
+        {
+            "file": "ios-gate-photo-pending-contract.json",
+            "route": "/v1/iosuser/verification_gate",
+            "case": "a photo set under review: pending photo",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "31e1ac848f7f81ca13f166f233944ff62bfa211b90fae74a4c5ed68194b479a4"
+        },
+        {
+            "file": "ios-gate-photo-satisfied-contract.json",
+            "route": "/v1/iosuser/verification_gate",
+            "case": "an approved photo set: gate none, satisfied_by photo",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "a2f2bfac55b8f2a61cbdadc84dea45b3aac489817c5b647aca4f52d4c9fe4215"
+        },
+        {
+            "file": "ios-gate-photo-satisfied-legacy.json",
+            "route": "/v1/iosuser/verification_gate",
+            "case": "the same on a build without the contract: satisfied_by video",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "5fad87b584306b647e906fbc549a04071c5f738508be702eb9a3587f4c1cf28f"
+        },
+        {
+            "file": "ios-gate-photo-unstartable-contract.json",
+            "route": "/v1/iosuser/verification_gate",
+            "case": "photo contract, photo cannot start (e.g. the catalogue): the room holds, no photo surface",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "e8100eb9d6b776201ce527b3cf598cd8cca1670ff0ec7376a2edfbc9a3ee5d35"
+        },
+        {
+            "file": "ios-gate-photo-waiting-contract.json",
+            "route": "/v1/iosuser/verification_gate",
+            "case": "photo scope, not verified, photo contract: forced photo with its start surface",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "8e8f3752413f719c282f7e90d002cf19dc29a52c492e2fd6636681e19d1e52de"
+        },
+        {
+            "file": "ios-gate-photo-waiting-legacy.json",
+            "route": "/v1/iosuser/verification_gate",
+            "case": "the same member on a build without the contract: forced video, no start surface at all",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "2592f717de74698043634d1ee4726b02b01fe82c65b783fbc4da103ebee7f00d"
+        },
+        {
+            "file": "ios-own-read-verification-method-photo-contract.json",
+            "route": "/v1/iosuser/get_own_profile_data | get_user_own | get_user_profile",
+            "case": "data.verification_method of a held photo-scope member, photo contract (sibling of data.verification)",
+            "consumer": "ios",
+            "kind": "fragment",
+            "http_status": 200,
+            "sha256": "217c062671238f73a45bfccc02416d13a688b526dad9281f93748a359eaa40f6"
+        },
+        {
+            "file": "ios-own-read-verification-method-photo-legacy.json",
+            "route": "/v1/iosuser/get_own_profile_data | get_user_own | get_user_profile",
+            "case": "the same block for a build without the contract: mandatory_method video",
+            "consumer": "ios",
+            "kind": "fragment",
+            "http_status": 200,
+            "sha256": "ffaeed832630a44321345abac654a2ee45c54f2381313b3391ccae519ced3e0d"
+        },
+        {
+            "file": "ios-own-read-verification-method-photo-satisfied.json",
+            "route": "/v1/iosuser/get_own_profile_data | get_user_own | get_user_profile",
+            "case": "an approved photo set, photo contract: satisfied_by photo",
+            "consumer": "ios",
+            "kind": "fragment",
+            "http_status": 200,
+            "sha256": "c5da0fbfb67ccdc5f61d4c0e9024fa19bf3ed836faa2ec0111da3049a48965ef"
+        },
+        {
+            "file": "ios-refusal-profile-verification-challenge-stale.json",
+            "route": "/v1/profile/verification/submit",
+            "case": "the configuration or the member's method moved since the challenge",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 409,
+            "sha256": "e1f9f2199f465784404aff9f530106473c21cbf2e8b9eb5158a4f090ce3b70cf"
+        },
+        {
+            "file": "ios-refusal-profile-verification-disabled.json",
+            "route": "/v1/profile/verification/challenge",
+            "case": "no startable capture for this member or build",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 403,
+            "sha256": "b2a41be014b0e50be1d7e61bbe4e4e1c14c1deff802b47582d36eeb6b3b89fd2"
+        },
+        {
+            "file": "ios-refusal-profile-verification-gestures-insufficient.json",
+            "route": "/v1/profile/verification/challenge",
+            "case": "the operator catalogue cannot fill a set (the budget is not spent)",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 409,
+            "sha256": "78736dbfe4d5046562889fa86518f16ea1a5e0e64415c2e9c3a1d0abb50eb467"
+        },
+        {
+            "file": "ios-refusal-profile-verification-mode-invalid.json",
+            "route": "/v1/profile/verification/submit",
+            "case": "verification_mode is not video, photo or absent",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 422,
+            "sha256": "0b8ff2a854b7cee618f9b0c6c54b2aae19612513e911463051a7f3f80444835b"
+        },
+        {
+            "file": "ios-refusal-profile-verification-photo-count-invalid.json",
+            "route": "/v1/profile/verification/submit",
+            "case": "not exactly photo_1 … photo_N, or a foreign file field",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 422,
+            "sha256": "758fdccc156575d238c9d4dc35a191cb57227a4b1e01611152686617ad68d195"
+        },
+        {
+            "file": "ios-refusal-profile-verification-photo-dimensions-invalid.json",
+            "route": "/v1/profile/verification/submit",
+            "case": "short edge under 480 or long edge over 2160",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 422,
+            "sha256": "f7ff8938e02d6fab65f4f415f5ded5b91e45884c394f374927524d67edf8e643"
+        },
+        {
+            "file": "ios-refusal-profile-verification-photo-duplicate.json",
+            "route": "/v1/profile/verification/submit",
+            "case": "two photos of the set are the same image",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 422,
+            "sha256": "0e15ab26c4097cb73c8db583ba5549440b76944789f4625a3089ff9c2bc798fd"
+        },
+        {
+            "file": "ios-refusal-profile-verification-photo-format-invalid.json",
+            "route": "/v1/profile/verification/submit",
+            "case": "a photo is not a JPEG",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 422,
+            "sha256": "7cb5cd03606c5b8610ca2e2735b09598721df845f21ccc8d9850f5f6c04029dc"
+        },
+        {
+            "file": "ios-refusal-profile-verification-photo-invalid.json",
+            "route": "/v1/profile/verification/submit",
+            "case": "a photo is empty or undecodable",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 422,
+            "sha256": "c6e480d464c8ae7fa746cce5e0ad492bf8bac2dad0312683d7693c7fb84ae5f6"
+        },
+        {
+            "file": "ios-refusal-profile-verification-photo-orientation-invalid.json",
+            "route": "/v1/profile/verification/submit",
+            "case": "a non-upright EXIF orientation",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 422,
+            "sha256": "6d676f858e338f20bdae3d5ed56796f6be339c0bb4359384d8476d4cb53b79eb"
+        },
+        {
+            "file": "ios-refusal-profile-verification-photo-processing-unavailable.json",
+            "route": "/v1/profile/verification/submit",
+            "case": "the server cannot re-encode photos",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 503,
+            "sha256": "58de108227fef88e8819d6db68fd62ef63903186616fd08c016fc756305b4d2f"
+        },
+        {
+            "file": "ios-refusal-profile-verification-photo-too-large.json",
+            "route": "/v1/profile/verification/submit",
+            "case": "a photo is over 2 MiB",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 422,
+            "sha256": "6d260dd55403660caaa1157233afcf0e4be52cb3e7ce6f59ea8c6b16a0b10855"
+        },
+        {
+            "file": "ios-refusal-profile-verification-photo-upload-failed.json",
+            "route": "/v1/profile/verification/submit",
+            "case": "a photo field arrived with an upload error",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 422,
+            "sha256": "7a0b5d0ee954dbb2f4b5ec71cc01deb11fc6f2ffe2675c2e7274ee34b527af0d"
+        },
+        {
+            "file": "ios-refusal-waiting-room-photo-contract.json",
+            "route": "(any gated member route)",
+            "case": "the 403 a gated route answers a held member of a photo scope, photo contract",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 403,
+            "sha256": "f86660344bb70476b4338a28dfd1d1d49c04d48358ddbe602c5701fed21c1aa1"
+        },
+        {
+            "file": "ios-refusal-waiting-room-photo-legacy.json",
+            "route": "(any gated member route)",
+            "case": "the same 403 for a build without the contract",
+            "consumer": "ios",
+            "kind": "refusal",
+            "http_status": 403,
+            "sha256": "eb5d460ee6ae70cdccc940e20829737050809dd78f82e2e6eae0841120b0e66e"
+        },
+        {
+            "file": "ios-request-submit-photo.json",
+            "route": "/v1/profile/verification/submit",
+            "case": "what the client sends for a three-gesture set (multipart/form-data); the response is the v2 status",
+            "consumer": "ios",
+            "kind": "request",
+            "http_status": 200,
+            "sha256": "f2d3606c4eaab3ed5b52c1840c1cd58dc25f94e862674da20a79860d599498d3"
+        },
+        {
+            "file": "ios-response-submit-photo.json",
+            "route": "/v1/profile/verification/submit",
+            "case": "the submit answer: the v2 status of the pending set",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "7f7091cbf9232ef5e1b39c5cb1573950ce8f42d568316992c2ef48250ae4dd29"
+        },
+        {
+            "file": "ios-status-legacy-photo-scope.json",
+            "route": "/v1/profile/verification/status",
+            "case": "a build WITHOUT verification_method_contract_version=2 in a photo scope: the shipped body, the capture disabled",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "33c8fc886c96363c0f04974edb9f197bf2505bdeec2399811de88317d48becc5"
+        },
+        {
+            "file": "ios-status-photo-not-started-en.json",
+            "route": "/v1/profile/verification/status",
+            "case": "photo contract, photo scope, not started: the photo capture and its wording",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "653bb2a2561fcba8b21fa246654173d7d3f47fc87170a63e9ba466e2152ddfbc"
+        },
+        {
+            "file": "ios-status-photo-not-started-hu.json",
+            "route": "/v1/profile/verification/status",
+            "case": "the same in Hungarian",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "5afdd72d63a0c03aa57ea42c81460bad12530f098643becfc7ad885cd5200321"
+        },
+        {
+            "file": "ios-status-photo-pending.json",
+            "route": "/v1/profile/verification/status",
+            "case": "a photo set under review; no second set while it is open",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "7f7091cbf9232ef5e1b39c5cb1573950ce8f42d568316992c2ef48250ae4dd29"
+        },
+        {
+            "file": "ios-status-photo-rejected-restart.json",
+            "route": "/v1/profile/verification/status",
+            "case": "a rejected photo set: can_record true, the member restarts with new gestures",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "92532669e3f4e558fc7ca3adef4fd3f498f089acabc06eb6a937cbcc8f5f1a77"
+        },
+        {
+            "file": "ios-status-photo-verified.json",
+            "route": "/v1/profile/verification/status",
+            "case": "an approved photo set: verified, no capture",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "6122c084fabeacb84fde0dc1b5a13c7e6e4d7cb0d62c5677cae51a28e2f43d18"
+        },
+        {
+            "file": "ios-status-video-scope-contract.json",
+            "route": "/v1/profile/verification/status",
+            "case": "photo contract in a VIDEO scope: verification_mode video, the video wording",
+            "consumer": "ios",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "24ad979b2ff430efdb0a4cc7ec7804c1205143dd26de493454c2c187ce376151"
+        },
+        {
+            "file": "webadmin-config.json",
+            "route": "/v1/webadmin/profile_verification_config",
+            "case": "the verification singleton with the gesture catalogue, the count and the photo wording",
+            "consumer": "webadmin",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "549b159e9851ffc8580b948f259f36080a0177a11d861d9a270c3c1974db45ee"
+        },
+        {
+            "file": "webadmin-decision-photo-approved.json",
+            "route": "/v1/webadmin/profile_verification_decision",
+            "case": "approve acts on the whole set",
+            "consumer": "webadmin",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "5c47b7b1a7d0a3df0a595426b1c6a032e0b7944599a69c43a40b349526707276"
+        },
+        {
+            "file": "webadmin-detail-photo.json",
+            "route": "/v1/webadmin/profile_verification_detail",
+            "case": "a photo case: every photo in order with its frozen bilingual gesture and evidence kind, beside the avatar snapshot",
+            "consumer": "webadmin",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "6707a999d0e4835cb28491a9918ba4868699c426adeed4807847ccea08511585"
+        },
+        {
+            "file": "webadmin-method-console-photo-blocked.json",
+            "route": "/v1/webadmin/verification_method_console",
+            "case": "a draft that assigns photo while the catalogue is insufficient: the named blocker",
+            "consumer": "webadmin",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "5bcf16884445cae54d6210fe69f0ff5607d5e2e79ab9b9a69b23e3ba911ac9ae"
+        },
+        {
+            "file": "webadmin-method-console-photo-ready.json",
+            "route": "/v1/webadmin/verification_method_console",
+            "case": "photo live in one storefront and the catalogue sufficient: ready",
+            "consumer": "webadmin",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "49f6ecd8c9c75a40edd4a69e0f2c91e2a0fda75eee564820f12baf9e4d06a334"
+        },
+        {
+            "file": "webadmin-method-refusal-verification-method-photo-unavailable.json",
+            "route": "/v1/webadmin/verification_method_apply",
+            "case": "publishing photo while it cannot start",
+            "consumer": "webadmin",
+            "kind": "refusal",
+            "http_status": 200,
+            "sha256": "22438ecef6901d157214cff3075d8d2648c90eb069a06059bee6b328623e5762"
+        },
+        {
+            "file": "webadmin-queue-photo.json",
+            "route": "/v1/webadmin/profile_verification_queue",
+            "case": "the queue names each case's review: a photo set and a video",
+            "consumer": "webadmin",
+            "kind": "response",
+            "http_status": 200,
+            "sha256": "c71823fb8cf63801792a08b7369cd8899148070f12187414d1bd9037850df2f7"
+        },
+        {
+            "file": "webadmin-refusal-evidence-kind-invalid.json",
+            "route": "/v1/webadmin/profile_verification_evidence",
+            "case": "an evidence kind outside video | avatar_snapshot | photo_1 … photo_10",
+            "consumer": "webadmin",
+            "kind": "refusal",
+            "http_status": 200,
+            "sha256": "bdc0c51e5e64683bf0ae9a1dede3984b839c8719f02cfa80ec65fea13cb355a9"
+        },
+        {
+            "file": "webadmin-refusal-profile-verification-config-invalid.json",
+            "route": "/v1/webadmin/save_profile_verification_config",
+            "case": "an invalid catalogue row, count or key",
+            "consumer": "webadmin",
+            "kind": "refusal",
+            "http_status": 200,
+            "sha256": "74c73f432cfb413968c365a7cafaa21f3e03cab4bb6fffca2f3ad7147cbec663"
+        },
+        {
+            "file": "webadmin-refusal-profile-verification-decision-invalid.json",
+            "route": "/v1/webadmin/profile_verification_decision",
+            "case": "request_new_video on a photo case: a set is approved or rejected whole",
+            "consumer": "webadmin",
+            "kind": "refusal",
+            "http_status": 200,
+            "sha256": "0c8ac4d73ca1532ee3bdb47db36e3740c875feee0c7c7bb11fb16ed4d57c611e"
+        },
+        {
+            "file": "webadmin-refusal-profile-verification-evidence-not-found.json",
+            "route": "/v1/webadmin/profile_verification_decision",
+            "case": "approve of a set whose photos are not all present and intact; carries the case",
+            "consumer": "webadmin",
+            "kind": "refusal",
+            "http_status": 200,
+            "sha256": "a9f693dd9858e51d81b715c2726310807337466e4ee1fd7c7fef3dc7852609fc"
+        },
+        {
+            "file": "webadmin-refusal-profile-verification-gestures-insufficient.json",
+            "route": "/v1/webadmin/save_profile_verification_config",
+            "case": "a save that would leave a LIVE photo scope unable to draw one set",
+            "consumer": "webadmin",
+            "kind": "refusal",
+            "http_status": 200,
+            "sha256": "ab9683a5e73474dc1a5ca3a30ab37c786c00cb41596e1c7280f7a12e948096c4"
+        },
+        {
+            "file": "webadmin-request-save-config.json",
+            "route": "/v1/webadmin/save_profile_verification_config",
+            "case": "the save body: configuration_json carries copy (with photo_flow), prompts, photo_gestures and photo_gesture_count",
+            "consumer": "webadmin",
+            "kind": "request",
+            "http_status": 200,
+            "sha256": "e98721d7b8731bccb0bbead62442c395f26f587d9d5be9bfc92341009abe0b5a"
+        }
+    ]
+}

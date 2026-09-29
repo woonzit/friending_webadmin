@@ -1,0 +1,429 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "config": "profile_video_verification",
+        "schema_version": 1,
+        "enabled": false,
+        "copy": {
+            "intro": {
+                "title": {
+                    "en": "Verify your profile",
+                    "hu": "Hitelesítsd a profilodat"
+                },
+                "body": {
+                    "en": "Record a short video selfie so our moderators can compare you with your current main profile photo.",
+                    "hu": "Készíts egy rövid videószelfit, hogy a moderátoraink összehasonlíthassanak a jelenlegi fő profilképeddel."
+                },
+                "steps": [
+                    {
+                        "key": "record",
+                        "title": {
+                            "en": "Record a video selfie",
+                            "hu": "Készíts videószelfit"
+                        },
+                        "body": {
+                            "en": "Follow the head-movement and expression prompts. You can review and retake the video before sending it.",
+                            "hu": "Kövesd a fejmozgásra és arckifejezésre vonatkozó utasításokat. Küldés előtt visszanézheted és újra is készítheted a videót."
+                        }
+                    },
+                    {
+                        "key": "badge",
+                        "title": {
+                            "en": "Show that your profile is authentic",
+                            "hu": "Mutasd meg, hogy valódi a profilod"
+                        },
+                        "body": {
+                            "en": "Approval grants the verified profile badge. It is not an identity-document or safety guarantee.",
+                            "hu": "Jóváhagyás után megkapod a hitelesített profil jelvényt. Ez nem személyi okmányos vagy biztonsági garancia."
+                        }
+                    }
+                ],
+                "action": {
+                    "en": "Verify my profile",
+                    "hu": "Hitelesítem a profilomat"
+                }
+            },
+            "camera": {
+                "title": {
+                    "en": "Get ready for your video selfie",
+                    "hu": "Készülj a videószelfire"
+                },
+                "framing": {
+                    "en": "Place your face in the oval",
+                    "hu": "Igazítsd az arcodat az ovális keretbe"
+                },
+                "ready": {
+                    "en": "I'm ready",
+                    "hu": "Készen állok"
+                },
+                "recording": {
+                    "en": "Follow the instruction",
+                    "hu": "Kövesd az utasítást"
+                }
+            },
+            "preview": {
+                "title": {
+                    "en": "Review your video selfie",
+                    "hu": "Nézd vissza a videószelfidet"
+                },
+                "body": {
+                    "en": "Make sure your face and every requested movement are clearly visible.",
+                    "hu": "Ellenőrizd, hogy az arcod és minden kért mozdulat jól látható-e."
+                },
+                "retake": {
+                    "en": "Retake",
+                    "hu": "Újra készítem"
+                },
+                "submit": {
+                    "en": "Submit for review",
+                    "hu": "Elküldöm ellenőrzésre"
+                }
+            },
+            "account_card": {
+                "not_started": {
+                    "title": {
+                        "en": "Verify yourself",
+                        "hu": "Hitelesítsd magad"
+                    },
+                    "subtitle": {
+                        "en": "Get the verified profile badge",
+                        "hu": "Szerezd meg a hitelesített profil jelvényt"
+                    },
+                    "icon_color": {
+                        "light": "#5C5C60",
+                        "dark": "#F2F2F7"
+                    }
+                },
+                "pending": {
+                    "title": {
+                        "en": "Verification pending",
+                        "hu": "Hitelesítés folyamatban"
+                    },
+                    "subtitle": {
+                        "en": "We are reviewing your video selfie",
+                        "hu": "Ellenőrizzük a videószelfidet"
+                    },
+                    "icon_color": {
+                        "light": "#B77900",
+                        "dark": "#FFD60A"
+                    }
+                },
+                "denied": {
+                    "title": {
+                        "en": "Verification not approved",
+                        "hu": "A hitelesítést nem fogadtuk el"
+                    },
+                    "subtitle": {
+                        "en": "Tap to see the status and next step",
+                        "hu": "Koppints a státusz és a következő lépés megtekintéséhez"
+                    },
+                    "icon_color": {
+                        "light": "#D70015",
+                        "dark": "#FF453A"
+                    }
+                },
+                "verified": {
+                    "title": {
+                        "en": "Verified profile",
+                        "hu": "Hitelesített profil"
+                    },
+                    "subtitle": {
+                        "en": "Your verified badge is active",
+                        "hu": "A hitelesített jelvényed aktív"
+                    },
+                    "icon_color": {
+                        "light": "#248A3D",
+                        "dark": "#30D158"
+                    }
+                }
+            },
+            "status": {
+                "not_started": {
+                    "title": {
+                        "en": "Verify your profile",
+                        "hu": "Hitelesítsd a profilodat"
+                    },
+                    "subtitle": {
+                        "en": "Record a short video selfie to request the verified profile badge.",
+                        "hu": "Készíts egy rövid videószelfit a hitelesített profil jelvény igényléséhez."
+                    }
+                },
+                "missing_requirements": {
+                    "title": {
+                        "en": "Complete the required profile details",
+                        "hu": "Töltsd ki a szükséges profiladatokat"
+                    },
+                    "subtitle": {
+                        "en": "A current main photo, gender and birthday are required.",
+                        "hu": "Jelenlegi fő profilkép, nem és születési dátum szükséges."
+                    }
+                },
+                "pending": {
+                    "title": {
+                        "en": "Your video is being reviewed",
+                        "hu": "A videód ellenőrzés alatt áll"
+                    },
+                    "subtitle": {
+                        "en": "You cannot submit another video while this review is open.",
+                        "hu": "A nyitott ellenőrzés alatt nem küldhetsz újabb videót."
+                    }
+                },
+                "verified": {
+                    "title": {
+                        "en": "Your profile is verified",
+                        "hu": "A profilod hitelesített"
+                    },
+                    "subtitle": {
+                        "en": "The badge is active while your approved main photo stays unchanged.",
+                        "hu": "A jelvény addig aktív, amíg a jóváhagyott fő profilképed változatlan."
+                    }
+                },
+                "pending_re_review": {
+                    "title": {
+                        "en": "Your new photo is being compared",
+                        "hu": "Az új képed összehasonlítás alatt áll"
+                    },
+                    "subtitle": {
+                        "en": "We retained your video selfie and started a new review.",
+                        "hu": "Megőriztük a videószelfidet, és új ellenőrzést indítottunk."
+                    }
+                },
+                "awaiting_avatar": {
+                    "title": {
+                        "en": "Add a main profile photo",
+                        "hu": "Tölts fel fő profilképet"
+                    },
+                    "subtitle": {
+                        "en": "Your video is retained, but the badge needs a current approved main photo.",
+                        "hu": "A videódat megőriztük, de a jelvényhez jelenlegi, jóváhagyott fő profilkép szükséges."
+                    }
+                },
+                "rejected": {
+                    "title": {
+                        "en": "Verification was not approved",
+                        "hu": "A hitelesítést nem fogadtuk el"
+                    },
+                    "subtitle": {
+                        "en": "Open this screen to see the result. A moderator can request a replacement video when appropriate.",
+                        "hu": "Itt megtekintheted az eredményt. Szükség esetén a moderátor új videót kérhet."
+                    }
+                },
+                "new_video_requested": {
+                    "title": {
+                        "en": "A new video selfie is needed",
+                        "hu": "Új videószelfire van szükség"
+                    },
+                    "subtitle": {
+                        "en": "You may now record one replacement video.",
+                        "hu": "Most egy új videót készíthetsz."
+                    }
+                }
+            },
+            "consent": {
+                "body": {
+                    "en": "I consent to Friending storing this video selfie and private avatar snapshots for manual profile-photo comparison, re-review after main-photo changes, and the stated retention period. I can withdraw this consent from the verification screen.",
+                    "hu": "Hozzájárulok, hogy a Friending a videószelfit és a privát profilkép-pillanatképeket kézi összehasonlításhoz, főprofilkép-változás utáni újraellenőrzéshez és a megadott megőrzési időre tárolja. A hozzájárulást a hitelesítési képernyőn visszavonhatom."
+                },
+                "link_title": {
+                    "en": "Privacy information",
+                    "hu": "Adatvédelmi tájékoztató"
+                },
+                "link_url": "https://friending.com/privacy"
+            },
+            "photo_flow": {
+                "intro_body": {
+                    "en": "Take a few selfies copying the example gestures. Our moderators compare the whole set with your main profile photo.",
+                    "hu": "Készíts néhány szelfit a mintaképeken látható gesztusokkal. A moderátoraink a teljes sorozatot összevetik a fő profilképeddel."
+                },
+                "step_title": {
+                    "en": "Copy the gestures",
+                    "hu": "Utánozd a gesztusokat"
+                },
+                "step_body": {
+                    "en": "Take one photo for each gesture. You can retake any of them before sending, and every photo has to pass the review.",
+                    "hu": "Minden gesztushoz készíts egy fotót. Küldés előtt bármelyiket újra elkészítheted, és mindegyik képnek meg kell felelnie az ellenőrzésen."
+                },
+                "camera_title": {
+                    "en": "Take a verification selfie",
+                    "hu": "Készíts ellenőrző szelfit"
+                },
+                "camera_framing": {
+                    "en": "Keep your face and the gesture clearly visible",
+                    "hu": "Az arcod és a gesztus is jól látsszon"
+                },
+                "camera_ready": {
+                    "en": "Take photo",
+                    "hu": "Fotó készítése"
+                },
+                "preview_title": {
+                    "en": "Check your selfie",
+                    "hu": "Nézd meg a szelfidet"
+                },
+                "preview_body": {
+                    "en": "Are your face and the requested gesture clearly visible?",
+                    "hu": "Jól látszik az arcod és a kért gesztus?"
+                },
+                "pending_card_subtitle": {
+                    "en": "We are reviewing your selfies",
+                    "hu": "Ellenőrizzük a szelfijeidet"
+                },
+                "status_not_started_subtitle": {
+                    "en": "Take a few gesture selfies to request the verified profile badge.",
+                    "hu": "Készíts néhány gesztusos szelfit a hitelesített profil jelvény igényléséhez."
+                },
+                "status_pending_title": {
+                    "en": "Your selfies are being reviewed",
+                    "hu": "A szelfijeid ellenőrzés alatt állnak"
+                },
+                "status_pending_subtitle": {
+                    "en": "We are reviewing the whole set. You cannot send another set while the review is open.",
+                    "hu": "A teljes sorozatot ellenőrizzük. Amíg az ellenőrzés tart, nem küldhetsz újabb sorozatot."
+                },
+                "status_pending_re_review_subtitle": {
+                    "en": "We kept your selfies and started a new comparison with your new photo.",
+                    "hu": "Megőriztük a szelfijeidet, és új összehasonlítást indítottunk az új képeddel."
+                },
+                "status_awaiting_avatar_subtitle": {
+                    "en": "Your selfies are kept, but the badge needs a current approved main photo.",
+                    "hu": "A szelfijeidet megőriztük, de a jelvényhez jelenlegi, jóváhagyott fő profilkép szükséges."
+                },
+                "status_rejected_subtitle": {
+                    "en": "Verification was not successful. You can start again right away with a new set of gestures.",
+                    "hu": "A hitelesítés nem sikerült. Új gesztusokkal azonnal újrakezdheted."
+                },
+                "status_new_video_requested_title": {
+                    "en": "A new selfie set is needed",
+                    "hu": "Új szelfisorozatra van szükség"
+                },
+                "status_new_video_requested_subtitle": {
+                    "en": "Start again and complete every newly assigned gesture.",
+                    "hu": "Kezdd újra, és teljesítsd az összes újonnan kiosztott gesztust."
+                },
+                "consent_body": {
+                    "en": "I consent to Friending storing these verification selfies and private avatar snapshots for manual comparison with my main profile photo, re-review after main-photo changes, and the stated retention period. I can withdraw this consent from the verification screen.",
+                    "hu": "Hozzájárulok, hogy a Friending ezeket az ellenőrző szelfiket és a privát profilkép-pillanatképeket a fő profilképemmel való kézi összehasonlításhoz, főprofilkép-változás utáni újraellenőrzéshez és a megadott megőrzési időre tárolja. A hozzájárulást a hitelesítési képernyőn visszavonhatom."
+                }
+            }
+        },
+        "prompts": [
+            {
+                "key": "turn_left",
+                "enabled": true,
+                "label": {
+                    "en": "Turn your head left",
+                    "hu": "Fordítsd balra a fejed"
+                }
+            },
+            {
+                "key": "turn_right",
+                "enabled": true,
+                "label": {
+                    "en": "Turn your head right",
+                    "hu": "Fordítsd jobbra a fejed"
+                }
+            },
+            {
+                "key": "smile",
+                "enabled": true,
+                "label": {
+                    "en": "Smile",
+                    "hu": "Mosolyogj"
+                }
+            },
+            {
+                "key": "wink",
+                "enabled": true,
+                "label": {
+                    "en": "Wink",
+                    "hu": "Kacsints"
+                }
+            },
+            {
+                "key": "blink",
+                "enabled": true,
+                "label": {
+                    "en": "Blink",
+                    "hu": "Pislogj"
+                }
+            },
+            {
+                "key": "raise_eyebrows",
+                "enabled": true,
+                "label": {
+                    "en": "Raise your eyebrows",
+                    "hu": "Emeld fel a szemöldököd"
+                }
+            },
+            {
+                "key": "open_mouth",
+                "enabled": true,
+                "label": {
+                    "en": "Open your mouth",
+                    "hu": "Nyisd ki a szád"
+                }
+            }
+        ],
+        "photo_gesture_count": 3,
+        "photo_gestures": [
+            {
+                "id": "00000000000000000000000000000001",
+                "title": {
+                    "en": "Thumbs up",
+                    "hu": "Felfelé mutató hüvelykujj"
+                },
+                "subtitle": {
+                    "en": "Hold one thumb up next to your cheek.",
+                    "hu": "Tartsd fel az egyik hüvelykujjadat az arcod mellett."
+                },
+                "male_image_url": "https://img.friending.co/api/cache/admin/uploads/2026/09/20260929120000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1.jpg",
+                "female_image_url": "https://img.friending.co/api/cache/admin/uploads/2026/09/20260929120000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1.jpg"
+            },
+            {
+                "id": "00000000000000000000000000000002",
+                "title": {
+                    "en": "Peace sign",
+                    "hu": "Béke jel"
+                },
+                "subtitle": {
+                    "en": "Show two fingers in a V next to your face.",
+                    "hu": "Mutass két ujjal V betűt az arcod mellett."
+                },
+                "male_image_url": "https://img.friending.co/api/cache/admin/uploads/2026/09/20260929120000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa2.jpg",
+                "female_image_url": "https://img.friending.co/api/cache/admin/uploads/2026/09/20260929120000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb2.jpg"
+            },
+            {
+                "id": "00000000000000000000000000000003",
+                "title": {
+                    "en": "Hand on chin",
+                    "hu": "Kéz az állon"
+                },
+                "subtitle": {
+                    "en": "Rest your chin on the back of one hand.",
+                    "hu": "Támaszd az álladat az egyik kézfejedre."
+                },
+                "male_image_url": "https://img.friending.co/api/cache/admin/uploads/2026/09/20260929120000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa3.jpg",
+                "female_image_url": "https://img.friending.co/api/cache/admin/uploads/2026/09/20260929120000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb3.jpg"
+            },
+            {
+                "id": "00000000000000000000000000000004",
+                "title": {
+                    "en": "Wave",
+                    "hu": "Integetés"
+                },
+                "subtitle": {
+                    "en": "Raise an open hand beside your head.",
+                    "hu": "Emeld fel nyitott tenyérrel a kezed a fejed mellett."
+                },
+                "male_image_url": "https://img.friending.co/api/cache/admin/uploads/2026/09/20260929120000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa4.jpg",
+                "female_image_url": "https://img.friending.co/api/cache/admin/uploads/2026/09/20260929120000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb4.jpg"
+            }
+        ],
+        "revision": 7,
+        "updated_at": 1800000000,
+        "updated_by": "editor@friending.com"
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
