@@ -25,8 +25,10 @@ import {
   resolutionActions,
 } from "../lib/datesAdmin.ts";
 import {
+  DATES_LIVE_TRAIL_RETENTION_KEY,
   DATES_RUNTIME_HELP_GROUPS,
   DATES_RUNTIME_HELP_KEYS,
+  datesLiveRetentionUnset,
 } from "../lib/datesRuntimeHelp.ts";
 
 const EXPECTED_DATES_ACTIONS = [
@@ -520,6 +522,47 @@ test("Dates runtime help covers every bounded Core setting in both locales", () 
       assert.equal(typeof entry?.caution, "string", `${locale}.${key}.caution`);
     }
   }
+});
+
+test("unset live-trail retention turns live sharing off, not the worker (Core be03922a)", () => {
+  const retention = (effective: unknown) => ({ key: DATES_LIVE_TRAIL_RETENTION_KEY, effective_value: effective });
+  const other = { key: "dates_live_sharing_enabled", effective_value: true };
+  assert.equal(DATES_LIVE_TRAIL_RETENTION_KEY, "dates_live_trail_retention_days");
+  // Production with the seeded null: Core's effective value is 0.
+  assert.equal(datesLiveRetentionUnset([other, retention(0)]), true);
+  assert.equal(datesLiveRetentionUnset([retention(null)]), true);
+  assert.equal(datesLiveRetentionUnset([retention(-1)]), true);
+  assert.equal(datesLiveRetentionUnset([retention("30")]), true, "a malformed value does not prove a retention");
+  assert.equal(datesLiveRetentionUnset([retention(1.5)]), true);
+  assert.equal(datesLiveRetentionUnset([other, retention(1)]), false);
+  assert.equal(datesLiveRetentionUnset([retention(30)]), false);
+  assert.equal(datesLiveRetentionUnset([other]), false, "a missing row proves nothing");
+  assert.equal(datesLiveRetentionUnset([]), false);
+
+  const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /\{datesLiveRetentionUnset\(settings\) && <div className="alert alert-warning page-alert" role="status"><strong>\{t\("liveRetentionUnsetTitle"\)\}<\/strong> \{t\("liveRetentionUnsetCopy"\)\}<\/div>\}/);
+  assert.match(page, /setting\.key === DATES_LIVE_TRAIL_RETENTION_KEY \? t\("liveRetentionPlaceholder"\)/);
+  const help = readFileSync(new URL("../components/DatesRuntimeSettingsHelp.tsx", import.meta.url), "utf8");
+  assert.match(help, /settingKey === DATES_LIVE_TRAIL_RETENTION_KEY && setting && datesLiveRetentionUnset\(\[setting\]\)/);
+  assert.match(help, /t\("liveRetentionUnset"\)/);
+
+  const en = JSON.parse(readFileSync(new URL("../messages/en.json", import.meta.url), "utf8"));
+  const hu = JSON.parse(readFileSync(new URL("../messages/hu.json", import.meta.url), "utf8"));
+  assert.equal(hu.datesAdmin.configuration.liveRetentionUnsetTitle, "Élő helymegosztás kikapcsolva, amíg nincs megőrzési idő beállítva.");
+  for (const messages of [en, hu]) {
+    const configuration = messages.datesAdmin.configuration;
+    for (const key of ["liveRetentionPlaceholder", "liveRetentionUnsetTitle", "liveRetentionUnsetCopy"]) {
+      assert.equal(typeof configuration[key], "string", key);
+    }
+    assert.equal(typeof configuration.runtimeHelp.liveRetentionUnset, "string");
+    const effect = configuration.runtimeHelp.settings.dates_live_trail_retention_days.effect;
+    // The worker no longer refuses to run while retention is unset.
+    assert.doesNotMatch(effect, /refuses unsafe processing|megtagadja a nem biztonságos feldolgozást/);
+    assert.match(effect, /worker/);
+    assert.match(configuration.liveRetentionUnsetCopy, /dates_live_trail_retention_days/);
+  }
+  assert.match(en.datesAdmin.configuration.runtimeHelp.settings.dates_live_trail_retention_days.effect, /keeps running.*logs a warning/);
+  assert.match(hu.datesAdmin.configuration.runtimeHelp.settings.dates_live_trail_retention_days.effect, /tovább fut.*figyelmeztetést naplóz/);
 });
 
 test("Dates pages use the authenticated bridge and keep destructive controls explicit", () => {

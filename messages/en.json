@@ -8237,6 +8237,9 @@
       "effective": "effective: {value}",
       "invalidStoredValue": "Stored value is invalid; runtime uses a safe fallback.",
       "noLimit": "No retention limit",
+      "liveRetentionPlaceholder": "Not set: live sharing is off",
+      "liveRetentionUnsetTitle": "Live location sharing is off until a retention period is set.",
+      "liveRetentionUnsetCopy": "While dates_live_trail_retention_days is empty, Core refuses live sharing (starting it, sending locations and the live map), even with the live-sharing switch on. Everything else keeps working: the AreYouIn worker still delivers notifications, ends expired activities and runs scheduled purges, and logs a warning. Save an approved number of days below to allow live sharing.",
       "auditReason": "Audited change reason",
       "settingSaved": "The runtime setting was saved.",
       "runtimeHelp": {
@@ -8259,6 +8262,7 @@
         "valid": "valid",
         "invalid": "invalid",
         "notSet": "not configured",
+        "liveRetentionUnset": "Not set, so live sharing is off. The AreYouIn worker keeps running and logs a warning; notifications, expiry and scheduled purges are unaffected.",
         "notReturned": "not returned by Core",
         "effectiveValue": "Effective now",
         "storedValue": "Stored value",
@@ -8412,7 +8416,7 @@
           "dates_live_trail_retention_days": {
             "title": "Live trail retention",
             "purpose": "Defines how long terminated live-location sessions and point trails remain before worker-driven purge.",
-            "effect": "A positive day count enables safe live operations and supplies purge scheduling when an activity ends, is canceled or deleted. An empty value means unconfigured: live operations fail and the worker refuses unsafe processing.",
+            "effect": "A positive day count allows live sharing and schedules the trail purge when an activity ends, is canceled or deleted. While it is empty, Core refuses live sharing, even with the live-sharing switch on; the AreYouIn worker keeps running (notifications, expiry and scheduled purges continue) and logs a warning.",
             "caution": "This is a privacy-critical prerequisite for live sharing. Approve the period, run the AreYouIn worker and monitor purge lag before turning live sharing ON; case evidence copied under authorization has its own policy."
           },
           "moderation_evidence_retention_days": {

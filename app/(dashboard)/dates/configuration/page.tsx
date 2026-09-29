@@ -20,6 +20,10 @@ import {
   humanizeMachineKey,
   type DatesAdminPrincipal,
 } from "@/lib/datesAdmin";
+import {
+  DATES_LIVE_TRAIL_RETENTION_KEY,
+  datesLiveRetentionUnset,
+} from "@/lib/datesRuntimeHelp";
 import { formatDate } from "@/lib/format";
 
 type Setting = {
@@ -135,6 +139,7 @@ export default function DatesConfigurationPage() {
       <DatesAdminTabs />
       {feedback && <div className={`alert ${feedback.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{feedback.text}</div>}
       {!canManageConfiguration && <div className="alert alert-info page-alert">{t("readOnly")}</div>}
+      {datesLiveRetentionUnset(settings) && <div className="alert alert-warning page-alert" role="status"><strong>{t("liveRetentionUnsetTitle")}</strong> {t("liveRetentionUnsetCopy")}</div>}
 
       <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("runtimeTitle")}</h2><p>{t("runtimeCopy")}</p></div><div className="row-actions"><button className="button button-secondary button-small dates-help-trigger" type="button" onClick={() => setRuntimeHelpOpen(true)}>{t("runtimeHelp.button")}</button><span className="badge">{t("settingCount", { count: settings.length })}</span></div></div>
@@ -194,7 +199,7 @@ function SettingEditor({ setting, canManage, onSaved, onError }: { setting: Sett
       {setting.type === "boolean" ? <select value={value} disabled={!canManage || busy} onChange={(event) => setValue(event.target.value)}><option value="true">{common("enabled")}</option><option value="false">{common("disabled")}</option></select>
         : setting.type === "enum" ? <select value={value} disabled={!canManage || busy} onChange={(event) => setValue(event.target.value)}>{(setting.allowed_values || []).map((item) => <option key={item} value={item}>{humanizeMachineKey(item)}</option>)}</select>
           : quiet ? <div className="dates-quiet-hours"><input type="time" value={quiet[0] || ""} disabled={!canManage || busy} onChange={(event) => setValue(`${event.target.value}|${quiet[1] || ""}`)} /><span>→</span><input type="time" value={quiet[1] || ""} disabled={!canManage || busy} onChange={(event) => setValue(`${quiet[0] || ""}|${event.target.value}`)} /></div>
-            : <input type="number" min={setting.minimum ?? undefined} max={setting.maximum ?? undefined} value={value} disabled={!canManage || busy} placeholder={setting.type === "nullable_integer" ? t("noLimit") : undefined} onChange={(event) => setValue(event.target.value)} />}
+            : <input type="number" min={setting.minimum ?? undefined} max={setting.maximum ?? undefined} value={value} disabled={!canManage || busy} placeholder={setting.key === DATES_LIVE_TRAIL_RETENTION_KEY ? t("liveRetentionPlaceholder") : setting.type === "nullable_integer" ? t("noLimit") : undefined} onChange={(event) => setValue(event.target.value)} />}
     </div>
     {canManage && <><label className="field"><span>{t("auditReason")}</span><input required maxLength={1000} value={reason} onChange={(event) => setReason(event.target.value)} /></label><button className="button button-primary button-small" disabled={busy} type="submit">{busy ? common("saving") : common("save")}</button></>}
   </form>;

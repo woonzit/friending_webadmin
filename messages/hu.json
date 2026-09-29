@@ -8237,6 +8237,9 @@
       "effective": "effektív érték: {value}",
       "invalidStoredValue": "A tárolt érték hibás; a runtime biztonságos fallbacket használ.",
       "noLimit": "Nincs megőrzési korlát",
+      "liveRetentionPlaceholder": "Nincs beállítva: élő helymegosztás kikapcsolva",
+      "liveRetentionUnsetTitle": "Élő helymegosztás kikapcsolva, amíg nincs megőrzési idő beállítva.",
+      "liveRetentionUnsetCopy": "Amíg a dates_live_trail_retention_days üres, a Core elutasítja az élő helymegosztást (az indítását, a helyadatok küldését és az élő térképet), akkor is, ha a helymegosztás kapcsolója be van kapcsolva. Minden más működik tovább: az AreYouIn worker továbbra is kézbesíti az értesítéseket, lezárja a lejárt aktivitásokat, elvégzi az ütemezett törléseket, és figyelmeztetést naplóz. Az élő helymegosztáshoz ments el lent egy jóváhagyott napszámot.",
       "auditReason": "Naplózott módosítási indok",
       "settingSaved": "A runtime beállítás elmentve.",
       "runtimeHelp": {
@@ -8259,6 +8262,7 @@
         "valid": "érvényes",
         "invalid": "hibás",
         "notSet": "nincs beállítva",
+        "liveRetentionUnset": "Nincs beállítva, ezért az élő helymegosztás ki van kapcsolva. Az AreYouIn worker tovább fut, és figyelmeztetést naplóz; az értesítéseket, a lejáratokat és az ütemezett törléseket ez nem érinti.",
         "notReturned": "a Core nem adta vissza",
         "effectiveValue": "Jelenleg effektív",
         "storedValue": "Tárolt érték",
@@ -8412,7 +8416,7 @@
           "dates_live_trail_retention_days": {
             "title": "Live nyomvonal megőrzése",
             "purpose": "Meghatározza, hogy a befejezett live helysessionök és pontnyomvonalak mennyi ideig maradnak meg a worker által végzett törlés előtt.",
-            "effect": "Pozitív napszám lehetővé teszi a biztonságos live működést, és törlési ütemezést ad az aktivitás befejezésekor, lemondásakor vagy törlésekor. Az üres érték konfigurálatlant jelent: a live műveletek hibával leállnak, a worker pedig megtagadja a nem biztonságos feldolgozást.",
+            "effect": "Pozitív napszám mellett engedélyezett az élő helymegosztás, és az aktivitás befejezésekor, lemondásakor vagy törlésekor ütemeződik a nyomvonal törlése. Amíg üres, a Core elutasítja az élő helymegosztást, akkor is, ha a kapcsolója be van kapcsolva; az AreYouIn worker közben tovább fut (az értesítések, a lejáratok és az ütemezett törlések működnek), és figyelmeztetést naplóz.",
             "caution": "Ez a live sharing adatvédelmi szempontból kritikus előfeltétele. Bekapcsolás előtt hagyd jóvá az időszakot, futtasd a AreYouIn workert és figyeld a törlési késést; az engedéllyel ügybizonyítékba másolt adatnak külön szabálya van."
           },
           "moderation_evidence_retention_days": {

@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
 import {
+  DATES_LIVE_TRAIL_RETENTION_KEY,
   DATES_RUNTIME_HELP_GROUPS,
   DATES_RUNTIME_HELP_KEY_SET,
+  datesLiveRetentionUnset,
 } from "@/lib/datesRuntimeHelp";
 
 type HelpSetting = {
@@ -62,6 +64,10 @@ function SettingHelpCard({ settingKey, setting }: { settingKey: string; setting?
           </span>
         )}
       </div>
+
+      {settingKey === DATES_LIVE_TRAIL_RETENTION_KEY && setting && datesLiveRetentionUnset([setting]) && (
+        <p className="alert alert-warning dates-help-warning" role="status">{t("liveRetentionUnset")}</p>
+      )}
 
       <dl className="dates-help-values">
         <div>

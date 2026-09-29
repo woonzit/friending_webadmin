@@ -54,3 +54,25 @@ export const DATES_RUNTIME_HELP_KEYS = DATES_RUNTIME_HELP_GROUPS.flatMap(
 );
 
 export const DATES_RUNTIME_HELP_KEY_SET = new Set<string>(DATES_RUNTIME_HELP_KEYS);
+
+export const DATES_LIVE_TRAIL_RETENTION_KEY = "dates_live_trail_retention_days";
+
+/**
+ * Whether live sharing is refused because no live-trail retention is set.
+ *
+ * While the effective `dates_live_trail_retention_days` is below one day, Core
+ * refuses every live-sharing operation (start, location points, pause, resume,
+ * stop and the live map) with dates-live-retention-unconfigured, whatever the
+ * live-sharing switch says. Since Core be03922a the dates-worker no longer
+ * stops for it: it logs a warning and keeps delivering notifications, expiring
+ * activities and running scheduled purges. A missing row proves nothing, so
+ * it is not reported as unset; a malformed value cannot prove a positive
+ * retention, so it is.
+ */
+export function datesLiveRetentionUnset(
+  settings: ReadonlyArray<{ key: unknown; effective_value: unknown }>,
+): boolean {
+  const setting = settings.find((item) => item?.key === DATES_LIVE_TRAIL_RETENTION_KEY);
+  if (!setting) return false;
+  return !(Number.isInteger(setting.effective_value) && Number(setting.effective_value) >= 1);
+}

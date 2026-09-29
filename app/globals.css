@@ -6434,6 +6434,10 @@ body .verification-level-pill.level-strong {
   background: var(--surface-raised);
 }
 
+.dates-help-warning {
+  margin: 0;
+}
+
 .dates-help-card-heading {
   display: flex;
   align-items: flex-start;
