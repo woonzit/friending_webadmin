@@ -4041,7 +4041,8 @@
         "helpUrl": "A „?” gomb ezt nyitja meg az alkalmazáson belüli böngészőben: {url}",
         "noHelpUrl": "Ehhez a storefronthoz és nyelvhez nincs súgó URL — a „?” gomb nem jelenik meg.",
         "nonInteractive": "A WR-01 tervezői keret statikus előnézete; a gombfeliratok és állapotszövegek az alkalmazásban élnek, itt nem szerkeszthetők.",
-        "compiledCopy": "Beépített szöveg jelenik meg itt: {fields}. A vázlat értéke ott érvénytelen, mentéskor elutasításra kerülne; az előnézet csak azt a szöveget cseréli, a kötelező módszereket soha."
+        "compiledCopy": "Beépített szöveg jelenik meg itt: {fields}. A vázlat értéke ott érvénytelen, mentéskor elutasításra kerülne; az előnézet csak azt a szöveget cseréli, a kötelező módszereket soha.",
+        "primaryPhoto": "Gesztusos szelfik készítése"
       },
       "validation": {
         "storefront": "Minden felülíráshoz a katalógusból választott storefront kell.",
@@ -4382,7 +4383,9 @@
       "methodReasons": {
         "deployment_unlock_disabled": "a telepítési feloldás ki van kapcsolva",
         "service_config_disabled": "a szolgáltatás beállítása ki van kapcsolva",
-        "provider_unconfigured": "a provider nincs beállítva"
+        "provider_unconfigured": "a provider nincs beállítva",
+        "processing_unavailable": "a szerver nem tud fotókat feldolgozni (hiányzik a képfeldolgozás)",
+        "catalogue_insufficient": "a gesztuskatalógusban kevesebb gesztus van, mint ahány fotót egy tag készít"
       },
       "draftRequirement": "Mentett piszkozatkövetelmény",
       "effectiveRequirement": "Aktuális élő követelmény",
@@ -4511,7 +4514,8 @@
       "methods": {
         "none": "Nincs",
         "persona": "Persona igazolvány-ellenőrzés",
-        "video": "Szelfivideó"
+        "video": "Videós szelfi",
+        "photo": "Gesztusos fotós szelfi"
       },
       "methodAvailable": "Közzétehető",
       "methodUnavailable": "Nem tehető közzé: {reason}",
@@ -4556,7 +4560,18 @@
       "retryExact": "Pontos parancs újrapróbálása",
       "uncertain": "Az eredmény bizonytalan. Őrizd meg, és csak a pontosan megtartott parancsot próbáld újra.",
       "persistenceUnavailable": "A biztonságos session receipt-tároló nem érhető el; a módszerszabályzat-módosítások zároltak.",
-      "persistenceCleanupFailed": "A Core konvergált, de a megtartott parancs nem törölhető; a vezérlők zároltak maradnak."
+      "persistenceCleanupFailed": "A Core konvergált, de a megtartott parancs nem törölhető; a vezérlők zároltak maradnak.",
+      "photoBlocked": {
+        "title": "A gesztusos fotós szelfi még nem tehető közzé.",
+        "catalogue": "A gesztuskatalógus túl kicsi: legalább annyi gesztusnak kell benne lennie, ahány fotót egy tag készít. Vegyél fel új gesztusokat, vagy csökkentsd a fotók számát a gesztuskatalógus szerkesztőjében. A vázlat mentve marad; akkor tedd közzé, amikor a katalógus már elég nagy.",
+        "other": "A Core szerint {reason}. Amíg a módszer újra elérhető nem lesz, a közzététel blokkolva marad; a vázlat mentve marad.",
+        "refused": "A Core nem engedte a közzétételt: a gesztusos fotós szelfi még nem indítható. Semmi sem lett élő, a vázlat mentve marad.",
+        "openCatalogue": "Gesztuskatalógus megnyitása"
+      },
+      "photoRollout": {
+        "title": "Előbb az új iOS-appnak kell megjelennie.",
+        "copy": "Ne tedd közzé a gesztusos fotós szelfit egyetlen sorban se, se globálisan, se storefrontban, amíg az App Store-ban meg nem jelenik az az iOS-verzió, amelyik el tudja készíteni. A régebbi appverziót használó tagok a Váróteremben ragadnának, és nem tudnák igazolni magukat."
+      }
     },
     "requirementsInactive": "A funkciókövetelmények inaktívak, amíg a kliensaktiválási védelem nem áll készen."
   },

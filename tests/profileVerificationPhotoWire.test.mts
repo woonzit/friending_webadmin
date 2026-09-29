@@ -108,3 +108,99 @@ test("the manifest pins the vocabularies this console decodes", async () => {
     "verification-method-photo-unavailable": 409,
   });
 });
+
+// ---------------------------------------------------------------------------
+// 1. Method scopes: `photo` in the one method-scopes table (D-092a, D-135)
+// ---------------------------------------------------------------------------
+
+async function fixture(file: string): Promise<Json> {
+  return JSON.parse(await readFile(new URL(file, FIXTURE_DIRECTORY), "utf8")) as Json;
+}
+
+/**
+ * Core's generator re-reads every body with `json_decode($bytes, true)`, which
+ * turns each empty JSON object into `[]`. On the live wire
+ * `VerificationMethodPolicy::wireDocument` emits `{}` (stdClass) for both
+ * override maps and for every override's locale containers, and the console
+ * decoder keeps refusing a list where an object belongs. The test restores
+ * exactly those positions — nothing else — before decoding.
+ */
+function restoreMethodPolicyObjects(body: Json): Json {
+  const copy = structuredClone(body);
+  const emptyObject = (value: unknown) => (Array.isArray(value) && value.length === 0 ? {} : value);
+  for (const snapshot of [copy.data.policy.draft, copy.data.policy.live]) {
+    const document = snapshot.document;
+    document.overrides = emptyObject(document.overrides);
+    document.waiting_room_copy.overrides = emptyObject(document.waiting_room_copy.overrides);
+    for (const locales of Object.values(document.waiting_room_copy.overrides) as Json[]) {
+      locales.en = emptyObject(locales.en);
+      locales.hu = emptyObject(locales.hu);
+    }
+  }
+  return copy;
+}
+
+test("the photo-blocked console decodes: a photo draft, the named blocker and the catalogue reason", async () => {
+  const {
+    documentUsesMethod,
+    verificationMethodConsoleResponse,
+  } = await import("../lib/verificationMethod.ts");
+  const raw = await fixture("webadmin-method-console-photo-blocked.json");
+  assert.equal(verificationMethodConsoleResponse(raw), null, "the generator's `[]` for an empty map stays refused");
+  const parsed = verificationMethodConsoleResponse(restoreMethodPolicyObjects(raw));
+  assert.ok(parsed);
+  assert.equal(parsed.policy.draft.document.global, "photo");
+  assert.equal(parsed.policy.live.document.global, "persona");
+  assert.equal(documentUsesMethod(parsed.policy.draft.document, "photo"), true);
+  assert.equal(documentUsesMethod(parsed.policy.live.document, "photo"), false);
+  assert.deepEqual(parsed.method_availability.photo, {
+    method: "photo", policy_enable_allowed: false, new_start_available: false, reason: "catalogue_insufficient",
+  });
+  assert.deepEqual(parsed.publish_guard, { ready: false, blocking_codes: ["verification-method-photo-unavailable"] });
+});
+
+test("the photo-ready console decodes: photo live in one storefront, the guard ready", async () => {
+  const {
+    photoStorefronts,
+    resolveMandatoryMethod,
+    verificationMethodConsoleResponse,
+  } = await import("../lib/verificationMethod.ts");
+  const parsed = verificationMethodConsoleResponse(restoreMethodPolicyObjects(await fixture("webadmin-method-console-photo-ready.json")));
+  assert.ok(parsed);
+  assert.deepEqual(photoStorefronts(parsed.policy.live.document), ["HUN"]);
+  assert.equal(resolveMandatoryMethod(parsed.policy.live.document, "HUN"), "photo");
+  assert.equal(resolveMandatoryMethod(parsed.policy.live.document, "USA"), "persona");
+  assert.deepEqual(parsed.method_availability.photo, {
+    method: "photo", policy_enable_allowed: true, new_start_available: true, reason: null,
+  });
+  assert.deepEqual(parsed.publish_guard, { ready: true, blocking_codes: [] });
+});
+
+test("the publish refusal decodes as the photo blocker: terminal, never retained for a retry", async () => {
+  const {
+    VERIFICATION_METHOD_PHOTO_UNAVAILABLE,
+    verificationMethodErrorResponse,
+    verificationMethodShouldRetainMutation,
+  } = await import("../lib/verificationMethod.ts");
+  const error = verificationMethodErrorResponse(await fixture("webadmin-method-refusal-verification-method-photo-unavailable.json"));
+  assert.equal(error, VERIFICATION_METHOD_PHOTO_UNAVAILABLE);
+  assert.equal(verificationMethodShouldRetainMutation(error), false, "a 409 proves nothing became live");
+});
+
+test("the scopes table names the photo blocker, points at the catalogue editor and warns about the iOS rollout", async () => {
+  const [table, lib] = await Promise.all([
+    readFile(new URL("../components/VerificationMethodScopesTable.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/verificationMethod.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(lib, /VERIFICATION_METHOD_PHOTO_CATALOGUE_HREF = `\/configuration#\$\{VERIFICATION_METHOD_PHOTO_CATALOGUE_ANCHOR\}`/);
+  assert.match(table, /const consoleBlockers = guardRevision === data\.policy\.revision \? data\.publish_guard\.blocking_codes : \[\];/,
+    "the console guard is shown only for the revision it was computed for");
+  assert.match(table, /consoleBlockers\.includes\(VERIFICATION_METHOD_PHOTO_UNAVAILABLE\)/,
+    "the console guard over the saved draft shows the blocker before any preview");
+  assert.match(table, /draftUsesPhoto && !availability\.photo\.policy_enable_allowed/,
+    "an unsaved photo draft learns about the catalogue before pressing anything");
+  assert.match(table, /if \(error === VERIFICATION_METHOD_PHOTO_UNAVAILABLE\) setPhotoRefused\(true\);/);
+  assert.match(table, /href=\{VERIFICATION_METHOD_PHOTO_CATALOGUE_HREF\}/);
+  assert.match(table, /data-verification-method-photo-rollout="true"/);
+  assert.match(table, /photo: shared\("preview\.primaryPhoto"\)/);
+});

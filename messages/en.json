@@ -4041,7 +4041,8 @@
         "helpUrl": "The “?” button opens {url} in an in-app browser.",
         "noHelpUrl": "No help URL for this storefront and language — the “?” button is not shown.",
         "nonInteractive": "Static preview of the designer frame WR-01; button labels and status strings live in the app and are not editable here.",
-        "compiledCopy": "Compiled text is shown for: {fields}. The draft value there is invalid and would be refused on save; the preview degrades only that text, never the forced methods."
+        "compiledCopy": "Compiled text is shown for: {fields}. The draft value there is invalid and would be refused on save; the preview degrades only that text, never the forced methods.",
+        "primaryPhoto": "Take gesture selfies"
       },
       "validation": {
         "storefront": "Every override needs a storefront from the catalogue.",
@@ -4382,7 +4383,9 @@
       "methodReasons": {
         "deployment_unlock_disabled": "deployment unlock is disabled",
         "service_config_disabled": "service configuration is disabled",
-        "provider_unconfigured": "provider is not configured"
+        "provider_unconfigured": "provider is not configured",
+        "processing_unavailable": "the server cannot process photos (image processing is missing)",
+        "catalogue_insufficient": "the gesture catalogue has fewer gestures than the number of photos a member takes"
       },
       "draftRequirement": "Saved draft requirement",
       "effectiveRequirement": "Current live requirement",
@@ -4511,7 +4514,8 @@
       "methods": {
         "none": "None",
         "persona": "Persona ID check",
-        "video": "Selfie video"
+        "video": "Video selfie",
+        "photo": "Gesture photo selfie"
       },
       "methodAvailable": "Available for publication",
       "methodUnavailable": "Cannot be published: {reason}",
@@ -4556,7 +4560,18 @@
       "retryExact": "Retry the exact command",
       "uncertain": "The result is uncertain. Keep and retry only the exact retained command.",
       "persistenceUnavailable": "Safe session receipt storage is unavailable; method-policy mutations remain locked.",
-      "persistenceCleanupFailed": "Core converged, but the retained command could not be cleared; controls remain locked."
+      "persistenceCleanupFailed": "Core converged, but the retained command could not be cleared; controls remain locked.",
+      "photoBlocked": {
+        "title": "The gesture photo selfie cannot be published yet.",
+        "catalogue": "The gesture catalogue is too small: it must hold at least as many gestures as the number of photos each member takes. Add gestures or lower the photo count in the gesture catalogue editor. The draft stays saved; publish it once the catalogue is large enough.",
+        "other": "Core reports that {reason}. Publishing stays blocked until the method is available again; the draft stays saved.",
+        "refused": "Core refused to publish: the gesture photo selfie cannot start yet. Nothing became live and the draft stays saved.",
+        "openCatalogue": "Open the gesture catalogue"
+      },
+      "photoRollout": {
+        "title": "The new iOS app has to be out first.",
+        "copy": "Do not publish the gesture photo selfie for any row, global or storefront, until the iOS app version that can take it is available in the App Store. Members on older app versions would be held in the Waiting Room with no way to verify."
+      }
     },
     "requirementsInactive": "Feature requirements are inactive until the client activation guard is ready."
   },

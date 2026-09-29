@@ -20,13 +20,17 @@ import {
 import {
   MANDATORY_METHODS,
   VERIFICATION_METHOD_ACTIONS,
+  VERIFICATION_METHOD_AVAILABILITY_REASONS,
   VERIFICATION_METHOD_CONFIRMATION_PHRASE,
   VERIFICATION_METHOD_ERROR_STATUSES,
   VERIFICATION_METHOD_MAX_OVERRIDES,
   VERIFICATION_METHOD_PENDING_STORAGE_KEY,
+  VERIFICATION_START_METHODS,
+  documentUsesMethod,
   liveNonVideoStorefronts,
   liveVideoStorefronts,
   normalizeVerificationMethodProxyBody,
+  photoStorefronts,
   resolveMandatoryMethod,
   validateVerificationMethodDraft,
   verificationMethodAccess,
@@ -151,6 +155,7 @@ function withOverrideHelp(base: VerificationMethodDocument, help: unknown): unkn
 const AVAILABILITY = {
   video: { method: "video", policy_enable_allowed: false, new_start_available: false, reason: "deployment_unlock_disabled" },
   persona: { method: "persona", policy_enable_allowed: true, new_start_available: true, reason: null },
+  photo: { method: "photo", policy_enable_allowed: false, new_start_available: false, reason: "catalogue_insufficient" },
 } as const;
 
 const PRINCIPAL = {
@@ -355,17 +360,68 @@ test("the console material is exact, fails closed, and the publish guard agrees 
     ...consolePayload(),
     publish_guard: { ready: false, blocking_codes: ["verification-method-persona-unavailable", "verification-method-video-unavailable"] },
   })), "both blocking codes, in the sorted order Core emits");
+  assert.ok(verificationMethodConsoleResponse(success({
+    ...consolePayload(),
+    publish_guard: {
+      ready: false,
+      blocking_codes: ["verification-method-persona-unavailable", "verification-method-photo-unavailable", "verification-method-video-unavailable"],
+    },
+  })), "all three blocking codes, SORT_STRING order: persona < photo < video");
+  assert.equal(verificationMethodConsoleResponse(success({
+    ...consolePayload(),
+    publish_guard: { ready: false, blocking_codes: ["verification-method-video-unavailable", "verification-method-photo-unavailable"] },
+  })), null, "the photo code sorts before video");
   assert.equal(verificationMethodConsoleResponse(success({
     ...consolePayload(),
     publish_guard: { ready: false, blocking_codes: ["verification-method-video-unavailable", "verification-method-persona-unavailable"] },
   })), null, "an unsorted code list is not proven material");
   assert.equal(verificationMethodConsoleResponse(success({
     ...consolePayload(), method_availability: { video: AVAILABILITY.video },
-  })), null, "both methods are required");
+  })), null, "every start method is required");
+  assert.equal(verificationMethodConsoleResponse(success({
+    ...consolePayload(), method_availability: { video: AVAILABILITY.video, persona: AVAILABILITY.persona },
+  })), null, "Core 60b7814e projects `photo` too; a map without it is not proven material");
   assert.equal(verificationMethodConsoleResponse(success({
     ...consolePayload(),
     method_availability: { ...AVAILABILITY, persona: { ...AVAILABILITY.persona, reason: "provider_unconfigured" } },
   })), null, "a reason with new_start_available=true contradicts itself");
+});
+
+test("availability reasons are closed per method: photo names its own four, video and Persona keep theirs", () => {
+  assert.deepEqual([...VERIFICATION_START_METHODS], ["video", "persona", "photo"]);
+  assert.deepEqual([...VERIFICATION_METHOD_AVAILABILITY_REASONS.photo], [
+    "deployment_unlock_disabled", "service_config_disabled", "processing_unavailable", "catalogue_insufficient",
+  ]);
+  const withPhoto = (photo: Record<string, unknown>) => verificationMethodConsoleResponse(success({
+    ...consolePayload(), method_availability: { ...AVAILABILITY, photo: { ...AVAILABILITY.photo, ...photo } },
+  }));
+  for (const reason of VERIFICATION_METHOD_AVAILABILITY_REASONS.photo) {
+    assert.equal(withPhoto({ reason })?.method_availability.photo.reason, reason, reason);
+  }
+  assert.equal(withPhoto({ reason: "provider_unconfigured" }), null, "photo has no provider");
+  assert.equal(withPhoto({ method: "video" }), null, "the entry names its own method");
+  assert.equal(withPhoto({ reason: null }), null, "no reason means startable; the booleans must say so");
+  assert.ok(withPhoto({ reason: null, policy_enable_allowed: true, new_start_available: true }));
+  assert.equal(verificationMethodConsoleResponse(success({
+    ...consolePayload(),
+    method_availability: { ...AVAILABILITY, video: { ...AVAILABILITY.video, reason: "catalogue_insufficient" } },
+  })), null, "a photo-only reason never decodes on video");
+});
+
+test("documentUsesMethod and photoStorefronts see photo in the global row and in every override", () => {
+  assert.equal(documentUsesMethod(document(), "photo"), false);
+  assert.equal(documentUsesMethod(document({ global: "photo" }), "photo"), true);
+  const row = withRow("HUN", "photo");
+  assert.equal(documentUsesMethod(row, "photo"), true);
+  assert.equal(documentUsesMethod(row, "video"), false);
+  assert.deepEqual(photoStorefronts(withRow("USA", "photo", {}, withRow("HUN", "photo"))), ["HUN", "USA"]);
+  assert.deepEqual(liveVideoStorefronts(row), [], "a photo row is not video coverage");
+  assert.equal(resolveMandatoryMethod(row, "HUN"), "photo");
+  assert.equal(resolveMandatoryMethod(row, "USA"), "none");
+  // A photo row round-trips through the ONE row model like any other method.
+  const draft = verificationMethodDraft(row);
+  assert.equal(draft.overrides[0].method, "photo");
+  assert.ok(verificationMethodDocumentsEqual(verificationMethodDocumentFromDraft(draft)!, row));
 });
 
 test("the impact material is counts-only and its totals must add up", () => {
@@ -441,6 +497,7 @@ test("the refusal vocabulary equals Core's errorStatus map exactly and is status
     ["verification-method-document-invalid", 422],
     ["verification-method-forbidden", 403],
     ["verification-method-persona-unavailable", 409],
+    ["verification-method-photo-unavailable", 409],
     ["verification-method-preview-stale", 409],
     ["verification-method-read-failed", 503],
     ["verification-method-request-id-conflict", 409],
@@ -476,6 +533,7 @@ test("the refusal vocabulary equals Core's errorStatus map exactly and is status
   for (const terminal of [
     "verification-method-conflict", "verification-method-preview-stale", "verification-method-document-invalid",
     "verification-method-confirmation-invalid", "verification-method-video-unavailable",
+    "verification-method-photo-unavailable",
     "verification-method-request-id-conflict", "verification-method-forbidden", "invalid-input",
   ] as const) {
     assert.equal(verificationMethodShouldRetainMutation(terminal), false, terminal);
@@ -992,7 +1050,8 @@ test("the retained command is canonical, durable and replayed byte-for-byte", as
 });
 
 test("every mandatory method is a closed scalar and `both` is gone from the vocabulary", () => {
-  assert.deepEqual([...MANDATORY_METHODS], ["persona", "video", "none"]);
+  // Core `VerificationMethodPolicy::METHODS` (D-135 adds `photo`, the gesture photo selfie).
+  assert.deepEqual([...MANDATORY_METHODS], ["persona", "video", "photo", "none"]);
   assert.equal((MANDATORY_METHODS as readonly string[]).includes("both"), false);
   const draft = verificationMethodDraft(document());
   for (const method of MANDATORY_METHODS) {

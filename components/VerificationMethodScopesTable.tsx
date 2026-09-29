@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
@@ -29,9 +30,13 @@ import {
   VERIFICATION_METHOD_CONFIRMATION_PHRASE,
   VERIFICATION_METHOD_MAX_OVERRIDES,
   VERIFICATION_METHOD_PENDING_STORAGE_KEY,
+  VERIFICATION_METHOD_PHOTO_CATALOGUE_HREF,
+  VERIFICATION_METHOD_PHOTO_UNAVAILABLE,
+  VERIFICATION_METHOD_PUBLISH_BLOCKING_CODES,
   VERIFICATION_METHOD_REASON_MAX,
   VERIFICATION_METHOD_UNAVAILABLE_ERROR,
   VERIFICATION_START_METHODS,
+  documentUsesMethod,
   validateVerificationMethodDraft,
   verificationMethodConflictResponse,
   verificationMethodConsoleResponse,
@@ -84,7 +89,7 @@ function PhoneFrame({
   storefrontLabel: string;
   copy: WaitingRoomCopy;
   method: MandatoryMethod;
-  labels: { persona: string; video: string; footer: string[]; notForced: string; help: string; modeLabel: string };
+  labels: { persona: string; video: string; photo: string; footer: string[]; notForced: string; help: string; modeLabel: string };
 }) {
   const palette = PHONE_PALETTE[mode];
   return (
@@ -106,7 +111,7 @@ function PhoneFrame({
         ) : (
           // D-092: exactly one method is mandatory, so the room shows exactly one call to action.
           <span className="forced-phone-button" style={{ background: palette.accent, color: palette.onAccent, borderColor: palette.accent }}>
-            {method === "persona" ? labels.persona : labels.video}
+            {method === "persona" ? labels.persona : method === "photo" ? labels.photo : labels.video}
           </span>
         )}
       </div>
@@ -121,9 +126,13 @@ function PhoneFrame({
  * Verification console → Scopes / Területek: the ONE mandatory-method editor
  * (T-617, D-092a §8, contract §7.1). Rows are Global plus catalogue-picked App
  * Store storefront overrides; each row carries exactly one scalar
- * `persona | video | none` and, beneath it, that row's bilingual Waiting Room
- * copy. Core owns the document, its single revision over `{draft, live}`,
- * availability, validation, the impact scan, publication and audit.
+ * `persona | video | photo | none` and, beneath it, that row's bilingual
+ * Waiting Room copy. `photo` (the gesture photo selfie, D-135) is chosen here
+ * and nowhere else; while it cannot start, Core names the
+ * `verification-method-photo-unavailable` blocker and this table points the
+ * operator at the gesture catalogue editor. Core owns the document, its single
+ * revision over `{draft, live}`, availability, validation, the impact scan,
+ * publication and audit.
  *
  * Discipline: exact decoders, closed refusal vocabulary, CAS on the observed
  * revision, and one durable retained command in `sessionStorage` that is
@@ -148,6 +157,14 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
+  /** The last publish was refused with the photo blocker; cleared by the next authoritative read. */
+  const [photoRefused, setPhotoRefused] = useState(false);
+  /**
+   * The console's `publish_guard` describes the draft of the revision it was
+   * read at. A save adopts a newer policy without a new guard, so the guard is
+   * shown only while the revision it was computed for is still the one on screen.
+   */
+  const [guardRevision, setGuardRevision] = useState<number | null>(null);
   const [pending, setPending] = useState<VerificationMethodPendingMutation | null>(null);
   const pendingRef = useRef<VerificationMethodPendingMutation | null>(null);
 
@@ -174,6 +191,8 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     setDraft((current) => (keepDraft && current ? current : verificationMethodDraft(parsed.policy.draft.document)));
     setImpact(null);
     setConfirmation("");
+    setPhotoRefused(false);
+    setGuardRevision(parsed.policy.revision);
     setState("ready");
   }, []);
 
@@ -227,7 +246,10 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
 
   function refusalNotice(error: ReturnType<typeof verificationMethodErrorResponse>): Notice {
     if (error === null) return { tone: "error", text: t("uncertain") };
-    if (error === "verification-method-video-unavailable" || error === "verification-method-persona-unavailable") {
+    if (error === VERIFICATION_METHOD_PHOTO_UNAVAILABLE) {
+      return { tone: "error", text: t("photoBlocked.refused") };
+    }
+    if ((VERIFICATION_METHOD_PUBLISH_BLOCKING_CODES as readonly string[]).includes(error)) {
       return { tone: "error", text: t("publishBlocked", { code: error }) };
     }
     if (error.startsWith("verification-method-") && error.endsWith("-invalid")) {
@@ -296,6 +318,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     }
     const error = verificationMethodErrorResponse(response);
     if (!verificationMethodShouldRetainMutation(error)) clearPending();
+    if (error === VERIFICATION_METHOD_PHOTO_UNAVAILABLE) setPhotoRefused(true);
     setNotice(refusalNotice(error));
     setBusy(false);
   }
@@ -434,6 +457,19 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     || left.storefront.localeCompare(right.storefront)
   ));
   const normalizedReason = verificationMethodReason(reason);
+  /**
+   * The photo blocker is shown whenever Core names it (console guard over the
+   * saved draft, the bound impact preview, or a refused publish) and whenever
+   * the local draft uses `photo` while Core reports it unavailable — so the
+   * operator learns about the catalogue before pressing anything.
+   */
+  const draftUsesPhoto = draftDocument !== null && documentUsesMethod(draftDocument, "photo");
+  const consoleBlockers = guardRevision === data.policy.revision ? data.publish_guard.blocking_codes : [];
+  const photoBlocked = photoRefused
+    || consoleBlockers.includes(VERIFICATION_METHOD_PHOTO_UNAVAILABLE)
+    || (impactBound && impact !== null && impact.publish_guard.blocking_codes.includes(VERIFICATION_METHOD_PHOTO_UNAVAILABLE))
+    || (draftUsesPhoto && !availability.photo.policy_enable_allowed);
+  const otherConsoleBlockers = consoleBlockers.filter((code) => code !== VERIFICATION_METHOD_PHOTO_UNAVAILABLE);
   const publishReady = impactBound
     && impact !== null
     && impact.publish_guard.ready
@@ -450,6 +486,19 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   function methodSelectable(method: MandatoryMethod, current: MandatoryMethod): boolean {
     if (method === "none" || method === current) return true;
     return availability[method].policy_enable_allowed;
+  }
+
+  function photoBlockedAlert() {
+    const reason = availability.photo.reason;
+    return (
+      <div className="alert alert-error" role="alert" data-verification-method-photo-blocked="true">
+        <strong>{t("photoBlocked.title")}</strong>{" "}
+        {reason === "catalogue_insufficient" || reason === null
+          ? t("photoBlocked.catalogue")
+          : t("photoBlocked.other", { reason: methodReason(reason) })}{" "}
+        <Link className="button button-secondary button-small" href={VERIFICATION_METHOD_PHOTO_CATALOGUE_HREF}>{t("photoBlocked.openCatalogue")}</Link>
+      </div>
+    );
   }
 
   function copyField(row: RowKey, copyLocale: WaitingRoomLocale, field: WaitingRoomCopyField) {
@@ -543,6 +592,9 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
                 {t(`methods.${method}`)}: {entry.policy_enable_allowed
                   ? t("methodAvailable")
                   : t("methodUnavailable", { reason: entry.reason === null ? "" : methodReason(entry.reason) })}
+                {method === "photo" && entry.reason === "catalogue_insufficient"
+                  ? <> <Link href={VERIFICATION_METHOD_PHOTO_CATALOGUE_HREF}>{t("photoBlocked.openCatalogue")}</Link></>
+                  : null}
               </li>
             );
           })}
@@ -617,6 +669,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
               labels={{
                 persona: shared("preview.primaryPersona"),
                 video: shared("preview.primaryVideo"),
+                photo: shared("preview.primaryPhoto"),
                 footer: [shared("preview.footerEdit"), shared("preview.footerSupport"), shared("preview.footerSignOut"), shared("preview.footerDelete")],
                 notForced: shared("preview.notForced"),
                 help: shared("preview.help"),
@@ -734,6 +787,15 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
             </button>
           </div>
           {draftIssue ? <p className="field-error" role="alert">{shared(`validation.${draftIssue}`)}</p> : null}
+          {draftUsesPhoto ? (
+            <div className="alert alert-warning" data-verification-method-photo-rollout="true">
+              <strong>{t("photoRollout.title")}</strong> {t("photoRollout.copy")}
+            </div>
+          ) : null}
+          {photoBlocked ? photoBlockedAlert() : null}
+          {otherConsoleBlockers.map((code) => (
+            <div className="alert alert-warning" key={code}>{t("publishBlocked", { code })}</div>
+          ))}
           <div className="forced-save-bar">
             <div className="row-actions">
               <button type="button" className="button button-secondary" disabled={busy || locked} onClick={() => void load(false)}>{shared("reload")}</button>
@@ -805,8 +867,9 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
                 </table>
               </div>
               <small className="field-hint">{t("computedAt", { time: new Date(impact.evaluated_at * 1000).toISOString() })}</small>
-              {impact.publish_guard.blocking_codes.map((code) => (
-                <div className="alert alert-warning" key={code}>{t("publishBlocked", { code })}</div>
+              {impact.publish_guard.blocking_codes.map((code) => (code === VERIFICATION_METHOD_PHOTO_UNAVAILABLE
+                ? <div key={code}>{photoBlockedAlert()}</div>
+                : <div className="alert alert-warning" key={code}>{t("publishBlocked", { code })}</div>
               ))}
               <label className="field">
                 <span>{t("publishReason")}</span>

@@ -27,9 +27,12 @@ import { verificationAdminPrincipal, type VerificationAdminPrincipal } from "@/l
  * `handoffs/verification-method-console-contract.md` (T-617, D-092 / D-092a /
  * D-092b), bound to deployed Core `b988f05`.
  *
- * ONE editor owns the mandatory method: a scalar `persona | video | none` for
- * the global row and for each App Store storefront override, with that row's
- * bilingual Waiting Room copy underneath it. Core owns availability,
+ * ONE editor owns the mandatory method: a scalar `persona | video | photo |
+ * none` for the global row and for each App Store storefront override, with
+ * that row's bilingual Waiting Room copy underneath it. `photo` is the gesture
+ * photo selfie (D-135, Core 60b7814e): it is chosen here and nowhere else, and
+ * Core refuses to publish it (`verification-method-photo-unavailable`) until
+ * the gesture catalogue can fill one set. Core owns availability,
  * validation, the single revision over `{draft, live}`, idempotency, the impact
  * scan, publication and audit; this module decodes Core's exact material, keeps
  * the editor draft coherent and refuses to forward anything Core would reject.
@@ -60,15 +63,33 @@ export const VERIFICATION_METHOD_MUTATION_ACTIONS = [
 export type VerificationMethodMutationAction = (typeof VERIFICATION_METHOD_MUTATION_ACTIONS)[number];
 
 /**
- * The scalar a row carries. `none` is the explicit non-mandatory value — there
- * is no deactivate operation and no `both` (D-092a §6).
+ * The scalar a row carries, in Core's `VerificationMethodPolicy::METHODS`
+ * order. `none` is the explicit non-mandatory value — there is no deactivate
+ * operation and no `both` (D-092a §6). `photo` is the gesture photo selfie
+ * (D-135).
  */
-export const MANDATORY_METHODS = ["persona", "video", "none"] as const;
+export const MANDATORY_METHODS = ["persona", "video", "photo", "none"] as const;
 export type MandatoryMethod = (typeof MANDATORY_METHODS)[number];
 
-/** The two methods a deployment can actually start; `none` has no availability entry. */
-export const VERIFICATION_START_METHODS = ["video", "persona"] as const;
+/** The methods a deployment can actually start; `none` has no availability entry. */
+export const VERIFICATION_START_METHODS = ["video", "persona", "photo"] as const;
 export type VerificationStartMethod = (typeof VERIFICATION_START_METHODS)[number];
+
+/**
+ * Why a method cannot start, per method (Core
+ * `VerificationMethodAvailabilityService`). Video and Persona keep the shared
+ * three-value vocabulary the console always accepted; `photo` names the first
+ * missing condition of its own four (the manifest's
+ * `photo_availability_reasons`). `catalogue_insufficient` means the gesture
+ * catalogue holds fewer gestures than `photo_gesture_count`.
+ */
+export const VERIFICATION_METHOD_AVAILABILITY_REASONS = {
+  video: ["deployment_unlock_disabled", "service_config_disabled", "provider_unconfigured"],
+  persona: ["deployment_unlock_disabled", "service_config_disabled", "provider_unconfigured"],
+  photo: ["deployment_unlock_disabled", "service_config_disabled", "processing_unavailable", "catalogue_insufficient"],
+} as const satisfies Record<VerificationStartMethod, readonly string[]>;
+export type VerificationMethodAvailabilityReason =
+  (typeof VERIFICATION_METHOD_AVAILABILITY_REASONS)[VerificationStartMethod][number];
 
 /** Core `VerificationMethodPolicy::MAX_OVERRIDES`, equal to the closed storefront catalogue size. */
 export const VERIFICATION_METHOD_MAX_OVERRIDES = 249;
@@ -78,14 +99,27 @@ export const VERIFICATION_METHOD_CONFIRMATION_PHRASE = "PUBLISH VERIFICATION MET
 export const VERIFICATION_METHOD_STOREFRONT_HINT = "alpha-3";
 export const VERIFICATION_METHOD_REASON_MAX = 300;
 
+/** Core `VerificationMethodPublicationGuard` sorts these with `SORT_STRING`; this is that order. */
 export const VERIFICATION_METHOD_PUBLISH_BLOCKING_CODES = [
   "verification-method-persona-unavailable",
+  "verification-method-photo-unavailable",
   "verification-method-video-unavailable",
 ] as const;
 export type VerificationMethodPublishBlockingCode =
   (typeof VERIFICATION_METHOD_PUBLISH_BLOCKING_CODES)[number];
 
 export const VERIFICATION_METHOD_UNAVAILABLE_ERROR = "verification-method-unavailable";
+
+/**
+ * The photo blocker: a draft uses `photo` somewhere while the method cannot
+ * start. In practice this is the gesture catalogue (it starts empty), so the
+ * console points the operator at the catalogue editor on /configuration.
+ */
+export const VERIFICATION_METHOD_PHOTO_UNAVAILABLE = "verification-method-photo-unavailable";
+
+/** The gesture catalogue editor: its anchor inside the profile-verification configuration panel. */
+export const VERIFICATION_METHOD_PHOTO_CATALOGUE_ANCHOR = "profile-verification-photo";
+export const VERIFICATION_METHOD_PHOTO_CATALOGUE_HREF = `/configuration#${VERIFICATION_METHOD_PHOTO_CATALOGUE_ANCHOR}`;
 
 // ---------------------------------------------------------------------------
 // Types (contract §3)
@@ -95,12 +129,13 @@ export type VerificationMethodAvailability = {
   method: VerificationStartMethod;
   policy_enable_allowed: boolean;
   new_start_available: boolean;
-  reason: null | "deployment_unlock_disabled" | "service_config_disabled" | "provider_unconfigured";
+  reason: null | VerificationMethodAvailabilityReason;
 };
 
 export type VerificationMethodAvailabilityMap = {
   video: VerificationMethodAvailability & { method: "video" };
   persona: VerificationMethodAvailability & { method: "persona" };
+  photo: VerificationMethodAvailability & { method: "photo" };
 };
 
 export type VerificationMethodDocument = {
@@ -297,7 +332,7 @@ function availability<M extends VerificationStartMethod>(
   const raw = requiredObject(value, ["method", "policy_enable_allowed", "new_start_available", "reason"]);
   const reason = raw?.reason === null
     ? null
-    : oneOf(raw?.reason, ["deployment_unlock_disabled", "service_config_disabled", "provider_unconfigured"] as const);
+    : oneOf(raw?.reason, VERIFICATION_METHOD_AVAILABILITY_REASONS[expected]);
   if (!raw || raw.method !== expected
     || typeof raw.policy_enable_allowed !== "boolean"
     || typeof raw.new_start_available !== "boolean"
@@ -311,11 +346,16 @@ function availability<M extends VerificationStartMethod>(
   };
 }
 
+/**
+ * Core 60b7814e projects all three start methods on every console, impact,
+ * mutation and conflict body; a map without `photo` is not proven material.
+ */
 export function verificationMethodAvailabilityMap(value: unknown): VerificationMethodAvailabilityMap | null {
   const raw = requiredObject(value, VERIFICATION_START_METHODS);
   const video = availability(raw?.video, "video");
   const persona = availability(raw?.persona, "persona");
-  return video && persona ? { video, persona } : null;
+  const photo = availability(raw?.photo, "photo");
+  return video && persona && photo ? { video, persona, photo } : null;
 }
 
 function mandatoryMethod(value: unknown): MandatoryMethod | null {
@@ -552,6 +592,7 @@ export const VERIFICATION_METHOD_ERROR_STATUSES = {
   "verification-method-conflict": 409,
   "verification-method-video-unavailable": 409,
   "verification-method-persona-unavailable": 409,
+  "verification-method-photo-unavailable": 409,
   "verification-method-preview-stale": 409,
   "verification-method-confirmation-invalid": 422,
   "verification-method-request-id-conflict": 409,
@@ -879,6 +920,16 @@ export function resolveMandatoryMethod(
     return document.overrides[storefront];
   }
   return document.global;
+}
+
+/** Whether a document mandates `method` anywhere: globally or in one storefront override. */
+export function documentUsesMethod(document: VerificationMethodDocument, method: MandatoryMethod): boolean {
+  return document.global === method || Object.values(document.overrides).includes(method);
+}
+
+/** Every storefront whose method is `photo`, ascending. */
+export function photoStorefronts(document: VerificationMethodDocument): string[] {
+  return Object.keys(document.overrides).filter((key) => document.overrides[key] === "photo").sort();
 }
 
 /** Every storefront whose LIVE method is `video`, ascending — the `/configuration` coverage line. */
