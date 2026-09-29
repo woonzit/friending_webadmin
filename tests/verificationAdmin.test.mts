@@ -991,6 +991,8 @@ test("English and Hungarian UI and eleven Help topics stay key-identical and cov
     "simulator",
     "teamGrant",
     "forcedWaitingRoom",
+    // T-863 S11 (D-135): the gesture photo selfie and its iOS rollout precondition.
+    "photoMethod",
     "conflictsAndRetry",
     "privacyAndAudit",
   ];
@@ -1044,6 +1046,11 @@ test("English and Hungarian UI and eleven Help topics stay key-identical and cov
     "fingerprinthez",
     "30 perc",
     "rózsaszín pecsét",
+    // D-135: the photo method is assigned only after the iOS app that can take it is out.
+    "until the iOS app version that can take gesture photos is out in the App Store",
+    "held in the Waiting Room with no way to verify",
+    "amíg meg nem jelenik az App Store-ban az az iOS-verzió, amelyik gesztusos fotókat tud készíteni",
+    "a Váróteremben ragadnának",
   ]) assert.match(help, new RegExp(evidence.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), evidence);
   assert.doesNotMatch(help, /all eleven|mind a tizenegy|dormant|nyugalmi|local calculation|helyi számítás/i);
 });

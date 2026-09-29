@@ -193,7 +193,8 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "profileVerificationDetail",
     route: "/profile-verification/[caseId]",
-    sections: ["member", "case", "lease", "evidence", "challenge", "decisions", "history"],
+    // T-863 S11 (D-135): the whole-set review of a gesture photo case.
+    sections: ["member", "case", "lease", "evidence", "photoSet", "challenge", "decisions", "history"],
     matches: dynamic("/profile-verification"),
   },
   {
@@ -210,6 +211,8 @@ export const ADMIN_HELP_PAGES = [
       "simulator",
       "teamGrant",
       "forcedWaitingRoom",
+      // T-863 S11 (D-135): the gesture photo selfie and its rollout precondition.
+      "photoMethod",
       "conflictsAndRetry",
       "privacyAndAudit",
     ],
@@ -456,6 +459,8 @@ export const ADMIN_HELP_PAGES = [
       // P-091: the new-member welcome message, saved on its own.
       "welcomeMessage",
       "verificationFlow",
+      // T-863 S11 (D-135): the gesture catalogue and photo wording inside the same panel.
+      "photoCatalogue",
       "safetyBoundary",
     ],
     // `app/(dashboard)/configuration/page.tsx:348` renders the panel only while

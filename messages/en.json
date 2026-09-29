@@ -652,7 +652,7 @@
       },
       "profileVerificationQueue": {
         "title": "Profile verification queue help",
-        "summary": "This page lists members who submitted a private video selfie for manual comparison with their current accepted main photo. Queue rows contain metadata; private evidence opens only inside a claimed case.",
+        "summary": "This page lists members who submitted a private video selfie or a gesture photo set for manual comparison with their current accepted main photo. Queue rows contain metadata; private evidence opens only inside a claimed case.",
         "steps": {
           "1": "Filter to the status you are assigned to handle and open one case at a time.",
           "2": "Check age, avatar-change and lease metadata before requesting evidence.",
@@ -699,7 +699,7 @@
       },
       "profileVerificationDetail": {
         "title": "Verification case help",
-        "summary": "This is the restricted manual-review workspace for one profile-video case. It separates current member facts, immutable case-time context, reviewer ownership, private evidence, decision controls and append-only history.",
+        "summary": "This is the restricted manual-review workspace for one profile selfie case: a video, or a gesture photo set reviewed as a whole. It separates current member facts, immutable case-time context, reviewer ownership, private evidence, decision controls and append-only history.",
         "steps": {
           "1": "Confirm the member, case revision and avatar warnings, then claim the reviewer lease.",
           "2": "Open evidence only for this review and compare the exact challenge sequence with the current accepted avatar.",
@@ -741,6 +741,15 @@
               "2": "Review the video and accepted-avatar snapshot without downloading or redistributing them."
             },
             "guidance": "These files are sensitive biometric comparison material, not public URLs. Do not capture them in screenshots, tickets or audit notes."
+          },
+          "photoSet": {
+            "title": "Gesture photo sets",
+            "purpose": "A photo case shows every photo of the set beside the case-time avatar snapshot, each next to the example of the gesture it had to copy. The set is approved or rejected as a whole.",
+            "actions": {
+              "1": "Open the evidence and look at every photo; Approve unlocks only after all photos of this case have loaded, and a photo that failed offers Load again.",
+              "2": "Reject the set when any photo fails the comparison: the member can start again right away with new gestures. A photo set has no replacement request."
+            },
+            "guidance": "If Core refuses an approval because the set is no longer complete on the server, reload the case and reject it. The photos are private biometric evidence like the video: never copy them into tickets, notes or screenshots."
           },
           "challenge": {
             "title": "Issued challenge sequence",
@@ -793,7 +802,7 @@
           },
           "methodsAndLevels": {
             "title": "Mandatory method and completion",
-            "purpose": "Each storefront resolves exactly one mandatory method or none. Persona, video, imported verification or an active admin grant can satisfy completion without tier language.",
+            "purpose": "Each storefront resolves exactly one mandatory method or none: Persona, the video selfie or the gesture photo selfie. Persona, a video approval, an approved photo set, imported verification or an active admin grant can satisfy completion without tier language.",
             "actions": {
               "1": "Inspect the live global/storefront mandatory method separately from location feature requirements.",
               "2": "Confirm that completed, imported and admin-granted members remain satisfied when the mandatory method changes."
@@ -873,6 +882,16 @@
               "3": "Keep both locales complete, validate the light/dark preview and use a credential-free HTTPS help URL only when members need more information."
             },
             "guidance": "Method publication is independent of the feature-requirement client guard. An unavailable method stays visible but cannot be published; completed, imported and admin-granted members remain satisfied across method switches."
+          },
+          "photoMethod": {
+            "title": "Gesture photo selfie (the photo method)",
+            "purpose": "The gesture photo selfie is the third mandatory method, next to Persona and the video selfie. A member takes 1–10 photos, each copying a gesture drawn at random from the gesture catalogue, and a moderator approves or rejects the whole set. It is assigned only in the mandatory method table on Scopes, globally or per storefront.",
+            "actions": {
+              "1": "Before assigning it, fill the gesture catalogue on Configuration → Profile selfie verification: it needs at least as many gestures as the photo count. Until then Core blocks publishing with verification-method-photo-unavailable, and the table links straight to the catalogue.",
+              "2": "Do not assign the photo method to any scope until the iOS app version that can take gesture photos is out in the App Store. Members on older app versions in that scope would be held in the Waiting Room with no way to verify.",
+              "3": "Once both hold, save the draft, preview the impact and publish it like any other method change, then watch the verification queue for the first photo sets."
+            },
+            "guidance": "Completion stays method-agnostic: Persona, an earlier video approval, an import or an admin grant still satisfy a photo scope, and an approved photo set satisfies any scope. While the method is live, Core refuses a catalogue save that would leave fewer gestures than the photo count."
           },
           "conflictsAndRetry": {
             "title": "Conflicts and uncertain saves",
@@ -2483,7 +2502,7 @@
       },
       "configuration": {
         "title": "Configuration help",
-        "summary": "Configuration contains only approved product controls that can change without a deployment. It covers Travel and AreYouIn availability with their teaser modals, the Hey, Footprints and photo-likes switches, sign-in methods and allowed phone countries, reversible feature behavior, Join session timing, iOS appearance, global push delivery, public link origins, presence availability, location access requirements and the complete profile-video-verification member flow.",
+        "summary": "Configuration contains only approved product controls that can change without a deployment. It covers Travel and AreYouIn availability with their teaser modals, the Hey, Footprints and photo-likes switches, sign-in methods and allowed phone countries, reversible feature behavior, Join session timing, iOS appearance, global push delivery, public link origins, presence availability, location access requirements and the complete profile selfie verification member flow (video selfie and gesture photo selfie, with the gesture catalogue).",
         "steps": {
           "1": "Identify the exact product surface and read its current value, bounds and member consequence.",
           "2": "Change one coherent setting group, including both languages where copy is involved.",
@@ -2594,14 +2613,24 @@
             "guidance": "This sets app behavior, it does not enforce anything: Core never checks it, and older iOS versions, Android and the Join website ignore it. Requiring location at signup risks App Store rejection under guideline 5.1.1(iv), so switch it on only for a version App Review has seen behaving this way. Viewers can read the policy but cannot save it."
           },
           "verificationFlow": {
-            "title": "Profile video verification flow",
+            "title": "Profile selfie verification flow",
             "purpose": "This editor owns status cards, introduction, camera guidance, preview, detailed owner messages, challenge prompts, consent and privacy link in both languages and appearances.",
             "actions": {
               "1": "Review every step as one member journey and keep both required head turns plus an enabled expression.",
               "2": "Maintain accurate consent, purpose, retention, withdrawal and deletion copy before enabling the flow.",
               "3": "Preview Light and Dark colors and save against the independent verification revision."
             },
-            "guidance": "The flow proves a manual video-to-current-photo comparison only. It must not claim identity-document verification, automated liveness or general member safety."
+            "guidance": "The flow proves a manual comparison of a video or a gesture photo set with the current photo only. It must not claim identity-document verification, automated liveness or general member safety."
+          },
+          "photoCatalogue": {
+            "title": "Gesture catalogue and photo wording",
+            "purpose": "Part of the profile selfie verification panel: the gestures members copy for the gesture photo selfie (English and Hungarian title and instruction, a male and a female example image), how many photos each member takes (1–10), and the eighteen sentences members read in the photo flow.",
+            "actions": {
+              "1": "Add gestures until the sufficiency line says the catalogue is enough for a set, and upload both example images for every gesture from this console.",
+              "2": "Set the photo count and edit the photo wording in both languages, then save; every field that needs fixing is highlighted with its problem.",
+              "3": "If Core refuses the save because the method is live, add gestures or lower the photo count; the catalogue must always hold at least one full set."
+            },
+            "guidance": "Editing the catalogue changes nothing for members until a scope uses the photo method, which is chosen only on Verification settings. Viewers see the panel read-only. Example images are public in the app, so never use a member's photo as an example."
           },
           "safetyBoundary": {
             "title": "Safe configuration boundary",

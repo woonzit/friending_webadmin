@@ -141,7 +141,10 @@ test("every inventoried functional section has detailed English and Hungarian he
   // new-member welcome message panel on /configuration, saved on its own (250). T-863 S9
   // (P-092) adds the registrations-by-platform panel on the overview (251). T-863 S9
   // (P-058) adds the membership topic on who may change a plan marked ready (252).
-  assert.equal(totalSections, 252, "review the functional-section census when the UI changes");
+  // T-863 S11 (P-007, D-135) adds the gesture photo selfie: the photo-method topic on
+  // /verification (with its iOS rollout precondition), the gesture catalogue and photo
+  // wording topic on /configuration, and the whole-set photo review on the case page (255).
+  assert.equal(totalSections, 255, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [

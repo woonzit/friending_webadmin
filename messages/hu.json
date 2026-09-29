@@ -652,7 +652,7 @@
       },
       "profileVerificationQueue": {
         "title": "Profilverifikációs sor súgó",
-        "summary": "Ez az oldal azokat a tagokat listázza, akik privát videós szelfit küldtek be az aktuális elfogadott főfotóval való kézi összehasonlításhoz. A sor csak metaadatot tartalmaz; a privát bizonyíték kizárólag lefoglalt ügyben nyílik meg.",
+        "summary": "Ez az oldal azokat a tagokat listázza, akik privát videós szelfit vagy gesztusos fotósorozatot küldtek be az aktuális elfogadott főfotóval való kézi összehasonlításhoz. A sor csak metaadatot tartalmaz; a privát bizonyíték kizárólag lefoglalt ügyben nyílik meg.",
         "steps": {
           "1": "Szűrj a rád bízott állapotra, és egyszerre egy ügyet nyiss meg.",
           "2": "Bizonyítékkérés előtt ellenőrizd az életkort, avatarváltozást és lease-metaadatot.",
@@ -699,7 +699,7 @@
       },
       "profileVerificationDetail": {
         "title": "Verifikációs ügy súgó",
-        "summary": "Ez egy profilvideós ügy korlátozott kézi vizsgálati munkaterülete. Külön kezeli az aktuális tagi tényeket, a megváltoztathatatlan ügykori kontextust, reviewer tulajdonlást, privát bizonyítékot, döntési vezérlőket és append-only előzményt.",
+        "summary": "Ez egy szelfis profilhitelesítési ügy korlátozott kézi vizsgálati munkaterülete: egy videóé vagy egy egyben elbírálandó gesztusos fotósorozaté. Külön kezeli az aktuális tagi tényeket, a megváltoztathatatlan ügykori kontextust, reviewer tulajdonlást, privát bizonyítékot, döntési vezérlőket és append-only előzményt.",
         "steps": {
           "1": "Ellenőrizd a tagot, ügyrevíziót és avatarriasztásokat, majd foglald le a reviewer lease-t.",
           "2": "Csak ehhez a vizsgálathoz nyisd meg a bizonyítékot, és a pontos challenge-sorrendet vesd össze az aktuális elfogadott avatarral.",
@@ -741,6 +741,15 @@
               "2": "A videót és elfogadottavatar-pillanatképet letöltés vagy továbbadás nélkül vizsgáld."
             },
             "guidance": "Ezek érzékeny biometrikus összehasonlítási anyagok, nem nyilvános URL-ek. Ne kerüljenek screenshotba, ticketbe vagy auditjegyzetbe."
+          },
+          "photoSet": {
+            "title": "Gesztusos fotósorozatok",
+            "purpose": "Egy fotós eset a sorozat minden fotóját az ügy idején készült profilkép-pillanatkép mellett mutatja, mindegyiket az utánzandó gesztus mintája mellett. A sorozatot csak egyben lehet jóváhagyni vagy elutasítani.",
+            "actions": {
+              "1": "Nyisd meg a bizonyítékokat, és nézd meg az összes fotót; a Jóváhagyás csak akkor válik elérhetővé, ha az eset minden fotója betöltődött, a hibás fotónál pedig Újratöltés gomb jelenik meg.",
+              "2": "Utasítsd el a sorozatot, ha bármelyik fotó nem felel meg az összevetésen: a tag azonnal újrakezdheti új gesztusokkal. Fotósorozathoz nem kérhető pótlás."
+            },
+            "guidance": "Ha a Core azért utasítja el a jóváhagyást, mert a sorozat már nem teljes a szerveren, töltsd újra az esetet, és utasítsd el. A fotók a videóhoz hasonlóan privát biometrikus bizonyítékok: soha ne másold őket jegyekbe, jegyzetekbe vagy képernyőképekre."
           },
           "challenge": {
             "title": "Kiadott challenge-sorrend",
@@ -793,7 +802,7 @@
           },
           "methodsAndLevels": {
             "title": "Kötelező módszer és teljesítés",
-            "purpose": "Minden storefront pontosan egy kötelező módszert vagy a nincs értéket old fel. Persona, videó, importált hitelesítés vagy aktív admin grant szintnyelv nélkül teljesítheti.",
+            "purpose": "Minden storefront pontosan egy kötelező módszert vagy a nincs értéket old fel: Persona, videós szelfi vagy gesztusos fotós szelfi. Persona, videós jóváhagyás, jóváhagyott fotósorozat, importált hitelesítés vagy aktív admin grant szintnyelv nélkül teljesítheti.",
             "actions": {
               "1": "Az élő globális/storefront kötelező módszert a helyalapú funkciókövetelményektől külön vizsgáld.",
               "2": "Ellenőrizd, hogy a már teljesített, importált és admin granttel rendelkező tagok kötelezőmódszer-váltáskor is teljesített állapotúak maradnak."
@@ -873,6 +882,16 @@
               "3": "Tartsd teljesen mindkét nyelvet, ellenőrizd a világos/sötét előnézetet, és csak akkor használj hitelesítő adat nélküli HTTPS súgó URL-t, ha a tagoknak további információ kell."
             },
             "guidance": "A módszer közzététele független a funkciókövetelmények kliensvédelmétől. A nem elérhető módszer látható marad, de nem tehető közzé; a már teljesített, importált és admin-granttel rendelkező tagok módszerváltás után is teljesített állapotúak maradnak."
+          },
+          "photoMethod": {
+            "title": "Gesztusos fotós szelfi (a fotós módszer)",
+            "purpose": "A gesztusos fotós szelfi a harmadik kötelező módszer a Persona és a videós szelfi mellett. A tag 1–10 fotót készít, mindegyiken a gesztuskatalógusból véletlenszerűen kiválasztott egy-egy gesztust utánozva, a moderátor pedig a teljes sorozatot egyben hagyja jóvá vagy utasítja el. Csak a Területek lapon, a kötelező módszerek táblázatában lehet kijelölni, globálisan vagy storefrontonként.",
+            "actions": {
+              "1": "Kijelölés előtt töltsd fel a gesztuskatalógust a Konfiguráció → Szelfis profilhitelesítés részben: legalább annyi gesztus kell bele, ahány fotót egy tag készít. Addig a Core a verification-method-photo-unavailable kóddal blokkolja a közzétételt, a táblázat pedig egyenesen a katalógusra mutat.",
+              "2": "Ne jelöld ki a fotós módszert egyetlen területen se, amíg meg nem jelenik az App Store-ban az az iOS-verzió, amelyik gesztusos fotókat tud készíteni. A régebbi appverziót használó tagok az adott területen a Váróteremben ragadnának, és nem tudnák igazolni magukat.",
+              "3": "Ha mindkét feltétel teljesül, mentsd a vázlatot, nézd meg a hatáselőnézetet, és tedd közzé, mint bármely más módszerváltást; utána figyeld a hitelesítési várólistán az első fotósorozatokat."
+            },
+            "guidance": "A teljesítés továbbra is módszerfüggetlen: a Persona, egy korábbi videós jóváhagyás, egy import vagy egy admin grant egy fotós területen is elég, és egy jóváhagyott fotósorozat bármely területen elég. Amíg a módszer élő, a Core elutasítja az olyan katalógusmentést, amely a fotók számánál kevesebb gesztust hagyna."
           },
           "conflictsAndRetry": {
             "title": "Ütközések és bizonytalan mentések",
@@ -2483,7 +2502,7 @@
       },
       "configuration": {
         "title": "Konfiguráció súgó",
-        "summary": "A Konfiguráció csak jóváhagyott, deployment nélkül módosítható termékvezérlőket tartalmaz. Lefedi a Travel és az AreYouIn elérhetőségét és figyelmeztető ablakát, a Hey, Footprints és fotókedvelés kapcsolókat, a bejelentkezési módokat és az engedélyezett telefonos országokat, a visszafordítható feature működést, Join sessionidőt, iOS appearance-et, globális pushkézbesítést, nyilvános linkorigint, presence elérhetőséget, helyhozzáférési követelményeket és a teljes profilvideó-verifikációs tagi folyamatot.",
+        "summary": "A Konfiguráció csak jóváhagyott, deployment nélkül módosítható termékvezérlőket tartalmaz. Lefedi a Travel és az AreYouIn elérhetőségét és figyelmeztető ablakát, a Hey, Footprints és fotókedvelés kapcsolókat, a bejelentkezési módokat és az engedélyezett telefonos országokat, a visszafordítható feature működést, Join sessionidőt, iOS appearance-et, globális pushkézbesítést, nyilvános linkorigint, presence elérhetőséget, helyhozzáférési követelményeket és a teljes szelfis profilhitelesítési tagi folyamatot (videós szelfi és gesztusos fotós szelfi, a gesztuskatalógussal együtt).",
         "steps": {
           "1": "Azonosítsd a pontos termékfelületet, és olvasd el az aktuális értéket, korlátot és tagi következményt.",
           "2": "Egy összefüggő beállításcsoportot módosíts, szövegnél mindkét nyelvvel.",
@@ -2594,14 +2613,24 @@
             "guidance": "Ez az app viselkedését állítja, nem kényszerít ki semmit: a Core nem ellenőrzi, a régebbi iOS-verziók, az Android és a Join weboldal pedig figyelmen kívül hagyják. A regisztrációnál kötelező helyadat az 5.1.1(iv) irányelv miatt App Store-elutasítást kockáztat, ezért csak olyan verziónál kapcsold be, amelyet az App Review már így látott. A viewer szerepkör látja a szabályt, de nem mentheti."
           },
           "verificationFlow": {
-            "title": "Profilvideó-verifikációs folyamat",
+            "title": "Szelfis profilhitelesítési folyamat",
             "purpose": "Ez a szerkesztő kezeli az állapotkártyát, intro-, kamera- és preview szöveget, részletes ownerüzenetet, challenge promptot, consentet és privacy linket mindkét nyelven és appearance-ben.",
             "actions": {
               "1": "Egy tagi útként vizsgáld az összes lépést, és tartsd meg mindkét kötelező fejfordítást plusz egy aktív arckifejezést.",
               "2": "Engedélyezés előtt legyen pontos consent-, cél-, hozzáférés-, retention-, withdrawal- és deletion-szöveg.",
               "3": "Nézd meg a Light és Dark színeket, majd a külön verifikációs revízióval ments."
             },
-            "guidance": "A folyamat csak kézi videó–aktuális fotó összehasonlítást bizonyít. Nem állíthat személyiokmány-verifikációt, automatikus livenesst vagy általános tagbiztonságot."
+            "guidance": "A folyamat csak egy videó vagy egy gesztusos fotósorozat és az aktuális fotó kézi összehasonlítását bizonyítja. Nem állíthat személyiokmány-verifikációt, automatikus livenesst vagy általános tagbiztonságot."
+          },
+          "photoCatalogue": {
+            "title": "Gesztuskatalógus és fotós szövegek",
+            "purpose": "A szelfis profilhitelesítési panel része: a gesztusok, amelyeket a tagok a gesztusos fotós szelfinél utánoznak (angol és magyar cím és instrukció, egy férfi és egy női mintakép), hogy tagonként hány fotó készül (1–10), és a tizennyolc mondat, amelyet a tagok a fotós folyamatban olvasnak.",
+            "actions": {
+              "1": "Addig vegyél fel gesztusokat, amíg az elégségességi sor szerint a katalógus elég egy sorozathoz, és minden gesztushoz mindkét mintaképet ebből a konzolból töltsd fel.",
+              "2": "Állítsd be a fotók számát, szerkeszd a fotós szövegeket mindkét nyelven, majd ments; minden javítandó mező a hibájával együtt ki van emelve.",
+              "3": "Ha a Core azért utasítja el a mentést, mert a módszer élő, vegyél fel gesztusokat vagy csökkentsd a fotók számát; a katalógusnak mindig legalább egy teljes sorozatot ki kell adnia."
+            },
+            "guidance": "A katalógus szerkesztése semmit sem változtat a tagoknak, amíg egy terület nem használja a fotós módszert, amelyet csak az Ellenőrzési beállításokban lehet kiválasztani. Megtekintő szerepkörrel a panel csak olvasható. A mintaképek nyilvánosan megjelennek az appban, ezért tag fotóját soha ne használd mintának."
           },
           "safetyBoundary": {
             "title": "Biztonságos konfigurációs határ",
