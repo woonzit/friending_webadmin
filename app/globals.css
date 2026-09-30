@@ -6551,6 +6551,44 @@ body .verification-level-pill.level-strong {
   gap: 2px;
 }
 
+.dates-external-fields {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+fieldset.dates-external-fields {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.panel.dates-external-fields { padding: 24px; margin-bottom: 24px; }
+.dates-external-facts { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(0, 3fr); gap: 12px 24px; }
+.dates-external-facts dt { font-weight: 600; }
+.dates-external-facts dd { margin: 0; overflow-wrap: anywhere; }
+.dates-external-payload { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 400px; overflow: auto; }
+.dates-external-fields .preserve-whitespace { white-space: pre-wrap; overflow-wrap: anywhere; }
+.dates-external-place-search { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; }
+.dates-external-place-search h4 { margin: 0; }
+.dates-external-place-search > .button { justify-self: start; }
+.dates-external-google { font-family: inherit; font-style: normal; font-weight: 400; font-size: 14px; letter-spacing: normal; white-space: nowrap; color: #fff; }
+.dates-external-place-results { display: grid; gap: 16px; padding: 0; list-style: none; }
+@media (max-width: 640px) { .dates-external-facts { grid-template-columns: 1fr; gap: 8px; } }
+
+.dates-external-fields > legend {
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+.dates-external-fields > h3 {
+  margin: 12px 0 0;
+}
+
+.dates-external-fields > .button {
+  justify-self: start;
+}
+
 .dates-scope-filter {
   width: 190px;
 }

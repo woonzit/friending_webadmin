@@ -15,6 +15,7 @@ import { MODE_CARDS_ACTIONS } from "@/lib/modeCards";
 import { SECTION_TEASERS_ACTIONS } from "@/lib/sectionTeasers";
 import { PROFILE_TEXT_MODERATION_ACTIONS } from "@/lib/profileTextModeration";
 import { VERIFICATION_METHOD_ACTIONS } from "@/lib/verificationMethod";
+import { DATES_EXTERNAL_ACTIONS } from "@/lib/datesExternalAdmin";
 import { OUTBOUND_MESSAGING_ACTIONS } from "@/lib/outboundMessaging";
 import { PERSONA_ADMIN_ACTIONS } from "@/lib/personaAdmin";
 import { PERSONA_SCREENS_ACTIONS } from "@/lib/personaScreens";
@@ -49,6 +50,7 @@ export const DATES_ADMIN_ACTIONS = [
   "dates_reason_list",
   "dates_reason_save",
   "dates_reason_deactivate",
+  ...DATES_EXTERNAL_ACTIONS,
 ] as const;
 
 const REPORTED_CONTENT_ADMIN_ACTIONS = ["moderation_reported_list", "moderation_report_action"] as const;
@@ -557,6 +559,12 @@ export const ADMIN_ACTION_ACCESS = {
   dates_reason_list: "dates_read",
   dates_reason_save: "dates_write",
   dates_reason_deactivate: "dates_write",
+  dates_external_event_list: "dates_read",
+  dates_external_event_detail: "dates_read",
+  dates_external_event_publish: "dates_write",
+  dates_external_event_update: "dates_write",
+  dates_external_event_command: "dates_write",
+  dates_external_event_place_search: "dates_write",
 } as Record<AdminAction, AdminActionAccess>;
 
 // A Map, not the record itself: a plain-object lookup would resolve inherited

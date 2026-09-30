@@ -1188,6 +1188,111 @@
           }
         }
       },
+      "datesExternalList": {
+        "title": "Külső események listájának súgója",
+        "summary": "Az üzemeltetői listán adminisztrátor által felvitt, külső szervezésű események szerepelnek. A forrásellenőrzés, a publikálási állapot és a nyers létszám elkülönül a tagok adatvédelmi szűrésen átment nézetétől.",
+        "steps": {
+          "1": "Válassz állapotot, ellenőrzési szintet, kategóriát, várost vagy felviteli csatornát, majd szűrj.",
+          "2": "Megnyitás előtt ellenőrizd az esemény azonosítóját, helyi kezdését, szervezőjét és következő ellenőrzését.",
+          "3": "Csak jogosultsággal és a kiadás vezetője által engedélyezett publikálás mellett hozz létre eseményt."
+        },
+        "sections": {
+          "filters": {
+            "title": "Szűrés és lapozás",
+            "purpose": "A szűrők a külső eseményrekordokat szűkítik, és nem keverik azok állapotát a tagok által szervezett programokéval.",
+            "guidance": "A lista időhatárai UTC-ben értendők; a sorok a helyszín helyi idejét mutatják. Olvasási hiba nem bizonyít üres listát.",
+            "actions": {
+              "1": "Adj meg pontos UTC-időhatárokat, és nézd meg az eredmény helyszíni időzónáját.",
+              "2": "Másik üzemeltető módosítása után frissíts; az oldal és a darabszám külön olvasásból jön."
+            }
+          },
+          "results": {
+            "title": "Találatok és jogosultságok",
+            "purpose": "A sor megmutatja a külső szervezőt, ellenőrzési szintet, eseményállapotot, létszámokat és a következő emberi ellenőrzést.",
+            "guidance": "A nyers létszám csak üzemeltetői adat. A rekord megnyitása nem ad írási jogot; minden írás friss Core-jogosultságot ellenőriz.",
+            "actions": {
+              "1": "Új előfordulás létrehozása helyett előbb nyisd meg a pontosan egyező külső eseményt.",
+              "2": "Ügyekhez a programelőzményt, adatjavításhoz a külsőesemény-szerkesztőt használd."
+            }
+          }
+        }
+      },
+      "datesExternalNew": {
+        "title": "Külső esemény létrehozásának súgója",
+        "summary": "A létrehozás és publikálás azonnali, auditált művelet, nem mentett piszkozat vagy MI-alapú feldolgozás. A jogosult admin önállóan ellenőrzi az adatokat, a nyilvános helyszínt és a forrást; a kép kategóriakép.",
+        "steps": {
+          "1": "Ellenőrizd a hivatalos forrást, és írj tárgyilagos angol és magyar összefoglalót a megfelelő kategóriával.",
+          "2": "Ellenőrizd a koordinátákat, az IANA-időzónát és a pontos UTC-eltéréseket, majd jelöld a négy friss megerősítést.",
+          "3": "Tekintsd át a publikálást és az auditindokot; bizonytalan nyugtánál ugyanazt a mentett műveletet próbáld újra."
+        },
+        "sections": {
+          "facts": {
+            "title": "Kézi adatok és időpontok",
+            "purpose": "Az űrlap kétnyelvű tényeket, szervezőt és HTTPS-forráslinkeket rögzít forrásletöltés vagy automatikus ellenőrzési állítás nélkül.",
+            "guidance": "Adj meg helyszíni időzónát és pontos UTC-eltérést az óraátállításkor ismétlődő időpontoknál is. Üres befejezésnél kategóriabecslés készül.",
+            "actions": {
+              "1": "Fizetős eseményhez adj hivatalos linket, és ellenőrizd a jegylink engedélyezett gazdáját.",
+              "2": "Jelöld pontosan az érzékeny tartalmat; ilyenkor csak résztvevői létszám jelenhet meg."
+            }
+          },
+          "venue": {
+            "title": "Helyszínkeresés és nyilvános pont",
+            "purpose": "Az opcionális, Core-on át kért Google Maps-találatok segítenek a helyszín megadásában; szolgáltatói hiba mellett is marad kézi bevitel.",
+            "guidance": "A találat nem bizonyít nyilvános intézményt. Ellenőrizd önállóan, tartsd meg a forrásmegjelölést, és erősítsd meg a térképpontot.",
+            "actions": {
+              "1": "Használat előtt vesd össze a javasolt címet a szervező hivatalos forrásával.",
+              "2": "Keresési hiba esetén add meg kézzel a koordinátákat és az időzónát; ne találj ki hiányzó adatot."
+            }
+          },
+          "publication": {
+            "title": "Publikálás és biztonságos újrapróbálás",
+            "purpose": "Az alapból kikapcsolt kiadási kapcsoló a kompatibilis Core és Webadmin élesítéséig tiltja a publikálást, a tagi láthatóságtól függetlenül.",
+            "guidance": "Csak a kiadás vezetője engedélyezze. Azonos forrás és helyi dátum, vagy cím, helyszín és helyi dátum esetén a második előfordulás elutasított.",
+            "actions": {
+              "1": "Az azonnali publikálást csak minden adat és az auditindok ellenőrzése után erősítsd meg.",
+              "2": "Őrizd meg a bizonytalan mentett kérést; ugyanazzal az azonosítóval próbáld újra, ne töröld egy új kérés kedvéért."
+            }
+          }
+        }
+      },
+      "datesExternalDetail": {
+        "title": "Külső esemény részleteinek súgója",
+        "summary": "Az oldal egy külső eseményrekordot és a hozzá kapcsolt, házigazda nélküli programot olvassa, külön revíziókkal és biztonságos forrásadatokkal. Az adatjavítás, emberi ellenőrzés és állapotmódosítás külön jogosított, auditált művelet.",
+        "steps": {
+          "1": "Módosítás előtt ellenőrizd a forrást, a szervezőt, az időpontokat, az állapotot és a kapcsolt programot.",
+          "2": "Javíts adatot négy új megerősítéssel, vagy válaszd a szükséges állapotműveletet vagy hivatalos frissítést.",
+          "3": "Ellenőrizd a szervernyugtát; ütközésnél olvass újra és tekintsd át az adatokat, bizonytalanságnál csak a mentett kérést próbáld újra."
+        },
+        "sections": {
+          "provenance": {
+            "title": "Forrás és házigazda nélküli azonosság",
+            "purpose": "A forráslinkek, kategóriakép, ellenőrzési szint és adminisztrátori felvitel egy ember által ellenőrzött külső ajánlást azonosítanak, nem tagi házigazdát.",
+            "guidance": "Nem állítunk MI-eredetet és nem találunk ki tagi beküldőt. A kapcsolt program őrzi a részvételi, beszélgetési és moderációs előzményeket.",
+            "actions": {
+              "1": "Új emberi megerősítés vagy szervezői lemondás rögzítése előtt olvasd el a forrást.",
+              "2": "Biztonsági döntéshez a kapcsolt moderációs ügyet használd; az adatjavítás nem old fel függő ellenőrzést."
+            }
+          },
+          "changes": {
+            "title": "Javítások és nyugtavisszaállítás",
+            "purpose": "Az adatjavítás az eseményrekord, az általános állapotművelet a program revízióját használja; a konzol megőrzi a különbséget.",
+            "guidance": "Elavult módosításnál a piszkozat megmarad, de kifejezett újraolvasás és áttekintés kell. Lejárt vagy olvashatatlan újrapróbálási adat tiltja az új írást.",
+            "actions": {
+              "1": "Friss adatokkal vesd össze a javítást az elvárt revízió észrevétlen cseréje helyett.",
+              "2": "Elveszett válasznál ugyanazt a mentett műveletet próbáld újra akkor is, ha a végleges törlés eltüntette a részletet."
+            }
+          },
+          "commands": {
+            "title": "Állapotműveletek és hivatalos frissítés",
+            "purpose": "A visszavonás, ellenőrzött lemondás, emberi újraellenőrzés és hivatalos frissítés eltérő hatású, és nem publikál újra észrevétlenül lezárt tartalmat.",
+            "guidance": "A visszaállítás csak az ideiglenes törlést vonja vissza. A végleges törlés visszafordíthatatlan, megőrzési feltételhez, szuperadminhoz és ügy- vagy jogi zárolás hiányához kötött.",
+            "actions": {
+              "1": "Válaszd a pontos műveletet, és az auditindok megadása előtt olvasd el a megerősítést.",
+              "2": "Újraellenőrzéshez friss megerősítések kellenek; hivatalos szöveget csak írható eseménybeszélgetésbe küldj."
+            }
+          }
+        }
+      },
       "datesModeration": {
         "title": "AreYouIn moderációs queue súgó",
         "summary": "Ez az AreYouIn bejelentéseinek és publikálás előtti ügyeinek biztonsági sora. SLA-t, súlyosságot, hozzárendelést és kitakart célkontextust mutat anélkül, hogy érzékeny bizonyítékot nyitna a listában.",
@@ -7882,8 +7987,165 @@
     "tabs": {
       "label": "AreYouIn adminisztráció",
       "activities": "Aktivitások",
+      "external": "Külső események",
       "moderation": "Moderáció",
       "configuration": "Konfiguráció"
+    },
+    "external": {
+      "eyebrow": "AreYouIn üzemeltetés",
+      "title": "Külső események",
+      "subtitle": "Külső szervezők kézzel felvitt eseményei. A forrásellenőrzés, a revízió és a publikálás a Core fennhatósága alatt marad.",
+      "create": "Létrehozás és publikálás",
+      "badge": "Ajánlott esemény — külső szervező",
+      "apply": "Szűrés",
+      "reset": "Szűrők törlése",
+      "filterError": "Adj meg érvényes UTC-időhatárokat; a kezdő határ ne legyen későbbi a zárónál.",
+      "loadError": "A külső események nem olvashatók be. Ez nem jelenti azt, hogy a lista üres. Frissíts az újrapróbáláshoz.",
+      "operatorCounts": "Az üzemeltetői felület nyers összesített létszámokat mutat. A tagok adatvédelmi szűrésen átment létszámokat és résztvevőlistákat látnak.",
+      "empty": "Nincs a szűrőknek megfelelő külső esemény.",
+      "emptyPage": "Ezen az oldalon nincs esemény. A lista betöltés közben változhatott; frissíts, vagy lépj az előző oldalra.",
+      "origin": { "label": "Esemény eredete", "all": "Minden eredet", "member": "Tagi programok", "external": "Külső események" },
+      "provenance": {
+        "title": "Ellenőrzés és források", "tier": "Ellenőrzési szint", "submitter": "Beküldő", "adminEntered": "Adminisztrátor rögzítette; nincs tagi beküldő",
+        "anonymous": "Névtelen vagy nem közölt", "member": "Tag UID: {uid}", "channel": "Beküldési csatorna",
+        "assistance": "MI-segítség", "noAi": "Nincs — kézzel rögzített és ellenőrzött",
+        "boundary": "Ezeket a biztonságosan megjeleníthető forrás- és beküldőadatokat a Core adja vissza. A forráshivatkozás weboldalt nyit meg; nem tölti le, ellenőrzi vagy publikálja újra annak tartalmát. Itt nem jelenik meg kezelői személyazonosság vagy bizalmas bizonyíték."
+      },
+      "counts": "{going} megy · {interested} érdeklődik",
+      "pagination": "{page}. oldal / {pages} · {total} esemény",
+      "previous": "Előző",
+      "next": "Következő",
+      "filters": {
+        "query": "Cím tartalmazza", "city": "Város", "status": "Állapot", "tier": "Ellenőrzési szint",
+        "category": "Kategória", "channel": "Felviteli csatorna", "startFrom": "Kezdés ettől (UTC)", "startTo": "Kezdés eddig (UTC)"
+      },
+      "columns": { "event": "Esemény és szervező", "status": "Állapot", "venue": "Helyszín", "start": "Helyi kezdés", "counts": "Részvétel", "recheck": "Következő ellenőrzés" },
+      "statusValues": { "in_review": "Ellenőrzés alatt", "published": "Publikált", "rechecking": "Újraellenőrzés alatt", "canceled_upstream": "Szervező által lemondva", "withdrawn": "Visszavonva", "ended": "Befejeződött", "merged_into": "Összevonva", "rejected": "Elutasítva" },
+      "tierValues": { "admin": "Admin által ellenőrzött", "official": "Hivatalos forrás", "corroborated": "Több forrásból megerősített", "single_source": "Egyetlen forrás" },
+      "channelValues": { "admin": "Adminisztrátor", "member_suggestion": "Tag javaslata", "ai_research": "MI-kutatás" },
+      "editor": {
+        "createTitle": "Külső esemény létrehozása", "detailTitle": "Külső esemény adatai", "editTitle": "Eseményadatok javítása",
+        "subtitle": "Ember által ellenőrzött tények, nyilvános helyszín és kategóriakép. Nem a Friending az esemény szervezője.",
+        "back": "Külső események", "publish": "Létrehozás és publikálás", "save": "Javítások mentése",
+        "reviewPublish": "Publikálás áttekintése", "reviewSave": "Javítások áttekintése", "reviewCommand": "Művelet áttekintése",
+        "confirmCopy": "Erősítsd meg ezt a pontos műveletet és az auditindokot. A publikálás azonnali. A módosítás nem hagy jóvá függő moderációt, és a lemondott vagy visszavont esemény itt nem publikálható újra.",
+        "reloadCopy": "Újraolvasod az aktuális eseményadatokat és jogosultságokat? A nem mentett űrlapmódosítások elvesznek, és új megerősítések szükségesek. A már mentett, függő művelet megmarad az azonos újrapróbáláshoz.",
+        "activity": "Program- és moderációs előzmények", "revisions": "Eseményrevízió: {ledger} · Programrevízió: {activity}",
+        "activityRedirect": "Az eseménynek külső szervezője van, nem tagi házigazdája. Az adatellenőrzést és az auditált műveleteket a külsőesemény-konzolon végezd. A házigazda-átadás és az élő vagy privát helyzet kezelése itt nem alkalmazható.",
+        "deleted": "Az esemény ideiglenesen törölt. A visszaállítás csak a törlést vonja vissza; nem publikál újra lezárt eseményt és nem oldja fel a moderációt.",
+        "moderationNotice": "Az adatjavítás vagy a forrás megerősítése nem oldja fel a függő moderációt és a nyitott bejelentéseket.",
+        "estimated": "A befejezés a kategória alapján becsült; a szerkesztőben üresen hagyott befejezés megőrzi a becslést.",
+        "organizerSite": "Szervező honlapja", "priceUnknown": "Az árat a hivatalos forrásban ellenőrizd", "minimumAge": "Korhatár: {age}+",
+        "checked": "Utoljára ellenőrizve", "readOnly": "A jelenlegi jogosultságaiddal nem módosíthatsz külső eseményt.",
+        "terminal": "Az esemény a jelenlegi állapotában nem szerkeszthető. Nincs újrapublikálási művelet.",
+        "commandsTitle": "Auditált eseményműveletek", "command": "Művelet", "updateText": "Hivatalos frissítés (legfeljebb 500 karakter)",
+        "confirmations": {
+          "source": "Újra összevetettem az eseményt a forrásával.", "public_venue": "Megerősítettem, hogy a helyszín nyilvános.",
+          "timezone": "Ellenőriztem a helyszín időzónáját és a helyi időpontokat.", "content_safe": "Ellenőriztem az esemény tartalmának biztonságát."
+        }
+      },
+      "places": {
+        "title": "Opcionális helyszínkeresés", "hint": "A találatok átmeneti segítséget adnak, nem bizonyítják a helyszín nyilvánosságát. Publikálás előtt önállóan ellenőrizd a tényeket a hivatalos forrásban. A kézi bevitel mindig elérhető marad.",
+        "query": "Helyszín neve és városa", "search": "Helyszínek keresése", "loading": "Keresés…", "select": "Használat kiindulópontként",
+        "invalid": "Adj meg 2–200 karaktert vezérlőkarakterek nélkül, vagy folytasd a kézi bevitelt.",
+        "unavailable": "Az opcionális helyszínszolgáltató nem érhető el. Add meg és ellenőrizd kézzel a helyszínt.",
+        "rateLimited": "A helyszínkeresés ideiglenesen korlátozott. A kézi bevitelt folytathatod.",
+        "empty": "Nincs találat. Add meg kézzel a helyszínt.",
+        "publicWarning": "Ez lehet egyszerű cím, nem nyilvános intézmény. Ellenőrizd, hogy a résztvevők biztonságosan találkozhatnak-e itt."
+      },
+      "commands": {
+        "end": { "label": "Esemény lezárása", "copy": "Lezárja az eseményt, a beszélgetést pedig csak olvashatóvá teszi. A részvételi előzmények megmaradnak; nem keletkezik házigazda-értékelés vagy bejelentkezési felszólítás." },
+        "soft_delete": { "label": "Esemény ideiglenes törlése", "copy": "Elrejti az eseményt az eseményrekord, a részvétel és az előzmények megtartásával. A meghívók megszűnnek, a beszélgetés csak olvasható lesz. Visszaállítható a lezárt vagy függő állapot megváltoztatása nélkül." },
+        "restore": { "label": "Ideiglenes törlés visszavonása", "copy": "Csak a megőrzött rekordot állítja vissza. A visszavont, lemondott vagy befejeződött esemény lezárt marad; a függő moderáció továbbra is függő. Élőhelyzet-hozzáférést nem ad." },
+        "purge": { "label": "Esemény végleges törlése", "copy": "A megőrzési idő után visszafordíthatatlanul törli az eseményt. A Core szuperadmin-jogosultságot követel, és nem lehet nyitott ügy vagy jogi/bizonyítékmegőrzés. A külső eseményrekord és az érdeklődések is törlődnek. Ez nem vonható vissza." },
+        "withdraw": { "label": "Publikálás visszavonása", "copy": "Az ajánlás kikerül az aktív felfedezésből. A részvételi előzmények megmaradnak, a meghívók megszűnnek, a beszélgetés csak olvasható lesz. Ez nem állítja, hogy a szervező lemondta az eseményt." },
+        "cancel": { "label": "Szervezői lemondás rögzítése", "copy": "Csak a szervezői lemondás ellenőrzése után használd. A részvételi előzmények megmaradnak, a meghívók megszűnnek, a beszélgetés csak olvasható lesz." },
+        "reverify": { "label": "Forrás újbóli megerősítése", "copy": "Új emberi ellenőrzést rögzít négy friss megerősítéssel. Nem indít MI- vagy hálózati feladatot, nem küld értesítést, és nem hagy jóvá függő moderációt." },
+        "official_update": { "label": "Hivatalos frissítés közzététele", "copy": "Rendszerfrissítést ír és rögzít az esemény beszélgetésében. A tagok Friending-frissítést látnak, nem az üzemeltetői személyazonosságodat. Az eseménynek aktívnak, a beszélgetésnek írhatónak kell lennie." }
+      },
+      "pending": {
+        "title": "Megerősítésre váró mentett művelet", "copy": "Ne hozz létre második műveletet. Az újrapróbálás ugyanazt a mentett kérést és elvárt revíziót küldi el, oldalfrissítés után is.",
+        "blocked": "A mentett műveletek tárolója nem érhető el vagy nem olvasható. A módosítás tiltott, hogy az újrapróbálás bizonyítéka ne vesszen el. Állítsd helyre a böngészőtár elérését, majd frissíts; ne töröld a tisztázatlan műveletet.",
+        "payload": "Pontos mentett kérés megtekintése", "open": "Függő művelet megnyitása", "retry": "Ugyanazon művelet újrapróbálása"
+      },
+      "feedback": {
+        "success": "A Core megerősítette az auditált műveletet.",
+        "publishingDisabled": "A kiadási kapcsoló tiltja a publikálást és az adatjavítást. Csak a kiadás vezetője engedélyezze a kompatibilis Core és Webadmin élesítése után. A lemondás, a visszavonás és a korábbi sikeres nyugták azonos újrapróbálása elérhető marad.",
+        "recoveryOnly": "Az aktuális eseményadatok nem érhetők el. Csak a mentett művelet próbálható újra; ez sikeres végleges törlés után is visszaadhatja a nyugtát. Új eseménymódosítás nincs engedélyezve.",
+        "successRetained": "A Core megerősítette a műveletet, de a helyi újrapróbálási rekord nem törölhető. A módosítás továbbra is tiltott. Állítsd helyre a böngészőtár elérését, majd ugyanazt a műveletet próbáld újra a nyugta egyeztetéséhez.",
+        "refusedRetained": "A Core elutasította a műveletet, de a helyi újrapróbálási rekord nem törölhető. Állítsd helyre a böngészőtár elérését, majd ugyanazt a műveletet próbáld újra; még ne hozz létre helyettesítő kérést.",
+        "access": "Az üzemeltető friss jogosultsága vagy a Core ideje nem ellenőrizhető. Nem küldtünk új műveletet; a korábbi újrapróbálási bizonyíték megmaradt. Az elérés helyreállítása után frissíts.",
+        "invalid": "Ellenőrizd az adatokat, az auditindokot és a kötelező megerősítéseket.",
+        "uncertain": "A művelet sikerülhetett, de a nyugta nem ellenőrizhető. A pontos kérés elmentve. Ugyanazt a műveletet próbáld újra; ne küldj helyettesítő kérést.",
+        "blocked": "A művelet nem folytatható biztonságosan. Újrapróbálás előtt ellenőrizd a mentett művelet paneljét és a böngészőtárat.",
+        "expired": "Ez a mentett művelet túl régi a biztonságos újrapróbáláshoz. Ne töröld, és ne küldj helyettesítő kérést. Előbb az üzemeltetés vezetője egyeztesse az eseményt az auditnaplóval.",
+        "conflict": "A Core elutasította az elavult vagy nem elérhető eseményállapotot. A piszkozat megmaradt. Olvasd újra az aktuális adatokat, tekintsd át az eltéréseket, majd készíts új műveletet; a revíziót nem cseréljük le észrevétlenül.",
+        "duplicate": "A Core ugyanazt az előfordulást találta: azonos forrás-URL és helyi dátum, vagy azonos normalizált cím, helyszín és helyi dátum. Duplikálás helyett tekintsd át a meglévő eseményt. Az ismétlődő esemény valóban eltérő dátuma továbbra is megengedett.",
+        "refused": "A Core elutasította a műveletet. Javított kérés előtt ellenőrizd az adatokat, időhatárokat, forrás- és jegylinkeket, auditindokot és az esemény aktuális állapotát."
+      },
+      "form": {
+        "factsTitle": "Kézzel ellenőrzött eseményadatok",
+        "manualOnly": "A forrással összevetett tényeket add meg. Ez az űrlap nem használ MI-t, és nem ellenőrzi automatikusan a szervezőt vagy a helyszínt.",
+        "title": "Cím (3–120 karakter)",
+        "summaryEn": "Tárgyilagos összefoglaló · angol (legfeljebb 500 karakter)",
+        "summaryHu": "Tárgyilagos összefoglaló · magyar (legfeljebb 500 karakter)",
+        "category": "Kategória",
+        "sensitive": "Érzékeny esemény",
+        "sensitiveReason": "Az érzékenység indoka",
+        "attendeeList": "Résztvevők láthatósága",
+        "attendeeVisible": "A jogosult tagok láthatják a résztvevőlistát",
+        "attendeeCountOnly": "Csak létszám",
+        "sensitiveHint": "Érzékeny eseménynél mindig csak a létszám látható. Az egyéni részvételi adatvédelem továbbra is érvényes.",
+        "timeTitle": "Időpont a helyszínen",
+        "timeHint": "Add meg a helyi időt, a helyszín IANA-időzónáját (például Europe/Budapest) és az akkor érvényes UTC-eltolást (például +02:00). Az eltolás megkülönbözteti az óraátállításkor ismétlődő időpontokat. A böngésző időzónáját nem feltételezzük.",
+        "timezone": "Helyszín időzónája (IANA)",
+        "startLocal": "Kezdés helyi idő szerint",
+        "startOffset": "Kezdés UTC-eltolása (±ÓÓ:PP)",
+        "endLocal": "Befejezés helyi idő szerint (opcionális)",
+        "endOffset": "Befejezés UTC-eltolása (±ÓÓ:PP)",
+        "allDay": "Egész napos esemény (a megadott időpontok érvényesek)",
+        "endHint": "Befejezés nélkül a Core koncertnél és színháznál 3, klubestnél 5, fesztiválnál 10, más kategóriáknál 2 órát becsül. A maximális időtartam fesztiválnál 14 nap, máskor 24 óra.",
+        "venueTitle": "Nyilvános helyszín",
+        "venueName": "Helyszín neve",
+        "venueAddress": "Nyilvános utcai cím",
+        "city": "Város",
+        "countryCode": "Ország (két nagybetű)",
+        "latitude": "Szélesség (tizedesponttal)",
+        "longitude": "Hosszúság (tizedesponttal)",
+        "mapTitle": "Nyilvános eseményhelyszín ellenőrzése",
+        "mapHint": "Helyezd a jelölőt a nyilvános helyszínre. A kézi jelölő admin-megerősítés, nem Places-ellenőrzés. Az elmozdítás törli az alábbi megerősítéseket.",
+        "mapUnavailable": "Az opcionális térkép nem érhető el. Fent add meg a nyilvános helyszín ellenőrzött koordinátáit tizedesponttal; ne helyettesítsd privát találkozóponttal.",
+        "sourceTitle": "Szervező, forrás és belépés",
+        "organizerName": "Szervező neve",
+        "organizerWebsite": "Szervező weboldala (opcionális)",
+        "sourceUrl": "Ellenőrzött forrás URL-je",
+        "officialUrl": "Hivatalos eseményoldal (fizetős eseménynél kötelező)",
+        "ticketUrl": "Jegyoldal URL-je (opcionális)",
+        "isFree": "Ingyenes belépés",
+        "priceText": "Belépés részletei (opcionális)",
+        "ageRestriction": "Alsó korhatár (18–99, opcionális)",
+        "linksHint": "HTTPS-domainlinket használj hitelesítési adatok és egyedi port nélkül. A jegyoldal hosztneve pontosan egyezzen a hivatalos vagy szervezői oldaléval, vagy a Core által engedélyezett domain legyen. A mentés nem tölti le az URL-t.",
+        "imagePolicy": "A P1 csak kategóriaképet használ. Tag által beküldött flyer soha nem lehet eseménykép. Ez az űrlap nem tölt fel képet, nem generál MI-képet és nem igazol képlicencet.",
+        "confirmationsTitle": "Friss ellenőrzések mentés előtt",
+        "confirmSource": "Összevetettem ezeket az adatokat a forrással.",
+        "confirmPublicVenue": "Ellenőriztem a nyilvános helyszínt, a jelölőt és a címet.",
+        "confirmTimezone": "Ellenőriztem a helyszín időzónáját, a helyi időpontokat és az UTC-eltolásokat.",
+        "confirmContentSafe": "Ellenőriztem a tartalom biztonságát és megfelelőségét.",
+        "reason": "Audit indoklás (legalább 3 karakter)",
+        "errors": {
+          "startTime": "Ellenőrizd a kezdés dátumát, UTC-eltolását és a helyszín időzónáját. Nem létező helyi időpont vagy eltérő eltolás nem fogadható el.",
+          "endTime": "Ellenőrizd a befejezés dátumát, UTC-eltolását és a helyszín időzónáját.",
+          "confirmations": "Az adatok utolsó módosítása után végezd el mind a négy megerősítést.",
+          "facts": "Ellenőrizd a kötelező szövegeket, HTTPS-linkeket, koordinátákat, országkódot, időtartamot és belépési adatokat. Hibás vagy túlméretes adat nem küldhető be.",
+          "reason": "Adj meg legalább 3 karakteres audit indoklást."
+        },
+        "categories": {
+          "sport_match": "Sportmérkőzés", "sport_participation": "Közös sportolás", "concert": "Koncert",
+          "club_night": "Klubest", "festival": "Fesztivál", "theatre": "Színház", "cinema": "Mozi",
+          "exhibition": "Kiállítás", "talk": "Előadás", "workshop": "Workshop", "market": "Piac",
+          "food_drink": "Étel és ital", "community": "Közösségi esemény", "outdoor": "Szabadtéri program", "other": "Egyéb"
+        }
+      }
     },
     "activities": {
       "eyebrow": "AreYouIn üzemeltetés",
@@ -8280,6 +8542,8 @@
       "liveRetentionUnsetCopy": "Amíg a dates_live_trail_retention_days üres, a Core elutasítja az élő helymegosztást (az indítását, a helyadatok küldését és az élő térképet), akkor is, ha a helymegosztás kapcsolója be van kapcsolva. Minden más működik tovább: az AreYouIn worker továbbra is kézbesíti az értesítéseket, lezárja a lejárt aktivitásokat, elvégzi az ütemezett törléseket, és figyelmeztetést naplóz. Az élő helymegosztáshoz ments el lent egy jóváhagyott napszámot.",
       "auditReason": "Naplózott módosítási indok",
       "settingSaved": "A runtime beállítás elmentve.",
+      "storefrontOverridesLabel": "Storefront-felülírások (JSON)",
+      "storefrontOverridesHelp": "Nagybetűs, hárombetűs storefront-kódokhoz rendelj true vagy false értéket. Üres objektummal mindenhol a globális kapcsoló érvényesül. A támogatott országkódokat a Core ellenőrzi; ez önmagában nem kapcsolja be az AreYouIn szekciót.",
       "runtimeHelp": {
         "button": "? Súgó",
         "eyebrow": "AreYouIn üzemeltetési útmutató",
@@ -8336,9 +8600,49 @@
           "digest": {
             "title": "Közeli digest alapértékek",
             "copy": "A közeli aktivitásajánlók háttérbeli ütemezése. A felhasználói engedély, jogosultság, időzóna és személyes csendes időszak továbbra is érvényes."
+          },
+          "externalEvents": {
+            "title": "Külső események",
+            "copy": "A kézzel felvitt külső események elérhetősége, résztvevői meghívási korlátai és időhorizontja. Ezek nem kapcsolnak be MI-t, automatikus publikálást vagy kutatást."
           }
         },
         "settings": {
+          "dates_external_events_enabled": {
+            "title": "Külső események",
+            "purpose": "A külső események AreYouIn-en belüli elérhetőségét vezérli; a tárolt alapérték ON.",
+            "effect": "Az effektív engedélyhez az AreYouIn szekciónak is elérhetőnek kell lennie a tag storefrontján, és kompatibilis klienskérés szükséges. A Core globális és storefrontonkénti eredményt ad vissza.",
+            "caution": "Ez nem az AreYouIn szekció kapcsolója, és nem engedélyezi a régi klienseket. A kikapcsolás megőrzi az eseményrekordokat."
+          },
+          "dates_external_events_enabled_overrides": {
+            "title": "Külső események storefrontonként",
+            "purpose": "Nagybetűs, hárombetűs storefront-kódonként felülírja a külső események kapcsolóját.",
+            "effect": "A hiányzó kód a külső események globális kapcsolóját örökli; üres térkép minden felülírást eltávolít. A true érték sem írhatja felül a kikapcsolt AreYouIn szekciót.",
+            "caution": "Az értékek JSON-logikai értékek legyenek, ne szövegek. Az effektív eredményt a külső események kapcsolójának sorában ellenőrizd; a tárolt felülírás önmagában nem bizonyítja az elérhetőséget."
+          },
+          "dates_external_publishing_enabled": {
+            "title": "Külső események publikálási bevezetése",
+            "purpose": "Külön kapcsoló a publikáláshoz és az adatjavításhoz. Alapértéke KI; csak a pontosan true logikai érték enged új írást.",
+            "effect": "KI állapotban a publikálás és a javítás mellékhatás nélkül elutasított. A korábbi sikeres nyugták újra lekérhetők; a lemondás és a visszavonás továbbra is elérhető.",
+            "caution": "A kiadás vezetője csak a kompatibilis Core és Webadmin P1 élesítése után engedélyezze. Független a tagi és storefront-láthatóságtól; telepítés vagy sémalétrehozás nem kapcsolja be."
+          },
+          "dates_event_invite_daily_limit": {
+            "title": "Külső események napi meghívási korlátja",
+            "purpose": "Tagonként korlátozza a külső eseményekre naponta küldhető meghívók számát.",
+            "effect": "Az alapérték 20; a Core 1 és 1000 közötti egész számot fogad el. Az eseményre és a címzett adatvédelmére vonatkozó feltételek külön is érvényesek.",
+            "caution": "Ez különbözik a tagok által szervezett programok meghívási korlátjától. Az emelés nem kerüli meg a tiltásokat, várakozási időket vagy a klienskompatibilitást."
+          },
+          "dates_event_invite_per_event_limit": {
+            "title": "Külső eseményenkénti meghívási korlát",
+            "purpose": "Korlátozza, hogy egy tag ugyanarra a külső eseményre hány meghívót küldhet.",
+            "effect": "Az alapérték 10; a Core 1 és 1000 közötti egész számot fogad el. A napi korlát ezzel együtt érvényes.",
+            "caution": "A nagyobb korlát sem tesz meghívhatóvá egy nem jogosult címzettet, és nem hoz létre ismételt függő meghívókat."
+          },
+          "dates_event_lookahead_days": {
+            "title": "Kézi eseményfelvitel időhorizontja",
+            "purpose": "Korlátozza, hogy a kézzel felvitt külső esemény kezdete milyen távoli jövőre eshet.",
+            "effect": "Az alapérték 180 nap; a Core 1 és 730 közötti egész számot fogad el, és a visszajátszható műveleten belül ellenőrzi az esemény időpontját.",
+            "caution": "Ez nem az esemény időtartama vagy MI-kutatási ütemezés. A már sikeres művelet újrapróbálása az eredeti nyugtát adja vissza."
+          },
           "dates_creation_enabled": {
             "title": "Aktivitás létrehozása",
             "purpose": "Az új AreYouIn aktivitások piszkozatát és publikálását, valamint a létrehozási képesség appban való megjelenítését vezérli.",

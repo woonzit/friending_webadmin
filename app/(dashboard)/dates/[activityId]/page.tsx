@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
+import DatesExternalProvenance from "@/components/DatesExternalProvenance";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
@@ -24,40 +25,9 @@ import {
   type DatesAdminPrincipal,
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
+import { decodeDatesActivityOriginDetail, type DatesActivityDetailRow, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
 
-type Activity = {
-  activity_id: string;
-  title: string;
-  details: string | null;
-  photo: unknown;
-  activity_type: string;
-  host: { uid: number; display_name: string };
-  lifecycle: string;
-  moderation_state: string;
-  pending_public_moderation_state: string | null;
-  pending_public_revision: Record<string, unknown> | null;
-  time_mode: string;
-  start_at: number | null;
-  end_at: number | null;
-  auto_end_at: number | null;
-  tbd_expires_at: number | null;
-  timezone: string | null;
-  location_mode: string;
-  city: string | null;
-  country_code: string | null;
-  audience: Record<string, unknown> | null;
-  join_mode: string;
-  maximum_people: number | null;
-  going_count: number;
-  pending_count: number;
-  report_count: number;
-  live_sharing_state: string;
-  soft_deleted: boolean;
-  purge_eligible_at: number | null;
-  revision: number;
-  created_at: number;
-  updated_at: number;
-};
+type Activity = DatesActivityDetailRow;
 
 type CaseRow = { case_id: string; queue: string; status: string; case_kind: string; severity: string; created_at: number };
 type Membership = { uid?: number; relationship?: string; live_access?: boolean; updated_at?: number };
@@ -65,6 +35,7 @@ type Chat = { thread_id?: string; kind?: string; read_only?: boolean; member_cou
 type Report = { report_id?: string; case_id?: string; target_type?: string; status?: string; severity?: string; created_at?: number };
 type ActivityDetail = {
   activity: Activity;
+  external_event?: DatesExternalDetailRow;
   location: { mode?: string; city?: string | null; country_code?: string | null; public_location?: unknown; exact_location_redacted?: boolean };
   memberships: Membership[];
   memberships_truncated?: boolean;
@@ -110,6 +81,7 @@ export default function DatesActivityDetailPage() {
   const t = useTranslations("datesAdmin.activityDetail");
   const values = useTranslations("datesAdmin.activities.values");
   const common = useTranslations("common");
+  const external = useTranslations("datesAdmin.external");
   const locale = useLocale();
   const params = useParams<{ activityId: string }>();
   const activityId = useMemo(() => decodeURIComponent(params.activityId || ""), [params.activityId]);
@@ -129,8 +101,11 @@ export default function DatesActivityDetailPage() {
   const [privateLocation, setPrivateLocation] = useState<Record<string, unknown> | null>(null);
   const [transferUid, setTransferUid] = useState("");
   const [transferReason, setTransferReason] = useState("");
+  const loadGeneration = useRef(0);
 
   const load = useCallback(async () => {
+    const generation = ++loadGeneration.current;
+    setPrivateLocation(null);
     if (!/^act_[A-Za-z0-9_-]+$/.test(activityId)) {
       setState("not-found");
       return;
@@ -141,12 +116,14 @@ export default function DatesActivityDetailPage() {
       adminCall("admin_me"),
       adminCall("dates_configuration"),
     ]);
+    if (generation !== loadGeneration.current) return;
     if (response?.error === "dates-admin-activity-unavailable") {
       setState("not-found");
       return;
     }
     const nextPrincipal = datesAdminPrincipal(identity);
-    if (!response?.success || !response.activity || !Array.isArray(response.notifications) || !nextPrincipal) {
+    const origin = nextPrincipal ? decodeDatesActivityOriginDetail(response, activityId, nextPrincipal.capabilities) : null;
+    if (!origin || !response || !Array.isArray(response.notifications) || !nextPrincipal) {
       setPrincipal(null);
       setState("error");
       return;
@@ -159,11 +136,11 @@ export default function DatesActivityDetailPage() {
     setState("ready");
   }, [activityId, data]);
 
-  useEffect(() => { void load(); }, [activityId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void load(); return () => { ++loadGeneration.current; }; }, [activityId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function saveActivity(event: React.FormEvent) {
     event.preventDefault();
-    if (!data || !draft || busy) return;
+    if (!data || data.activity.host === null || !draft || busy) return;
     setFeedback(null);
     if (!datesActivityTypeChoices(activityTypes, data.activity.activity_type).includes(draft.activityType)) {
       setFeedback({ tone: "error", text: t("typeUnavailable") });
@@ -201,7 +178,7 @@ export default function DatesActivityDetailPage() {
   }
 
   async function executeCommand() {
-    if (!data || !pendingCommand || busy) return;
+    if (!data || data.activity.host === null || !pendingCommand || busy) return;
     setBusy(true);
     const response = await adminCall("dates_activity_command", {
       activity_id: data.activity.activity_id,
@@ -227,7 +204,7 @@ export default function DatesActivityDetailPage() {
 
   async function revealLocation(event: React.FormEvent) {
     event.preventDefault();
-    if (!data || busy || !locationCaseId.trim() || locationReason.trim().length < 3) return;
+    if (!data || data.activity.host === null || busy || !locationCaseId.trim() || locationReason.trim().length < 3) return;
     setBusy(true);
     const response = await adminCall("dates_activity_location", {
       activity_id: data.activity.activity_id,
@@ -246,7 +223,7 @@ export default function DatesActivityDetailPage() {
 
   async function requestTransfer(event: React.FormEvent) {
     event.preventDefault();
-    if (!data || busy || !Number.isInteger(Number(transferUid)) || transferReason.trim().length < 3) return;
+    if (!data || data.activity.host === null || busy || !Number.isInteger(Number(transferUid)) || transferReason.trim().length < 3) return;
     setBusy(true);
     const response = await adminCall("dates_activity_host_transfer", {
       activity_id: data.activity.activity_id,
@@ -271,23 +248,27 @@ export default function DatesActivityDetailPage() {
   if (state === "error" || !data || !draft || !principal) return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
 
   const activity = data.activity;
-  const canEdit = hasDatesCapability(principal, "dates_activity_edit");
-  const canCommand = hasDatesCapability(principal, "dates_activity_command");
-  const canTransfer = hasDatesCapability(principal, "dates_host_transfer");
-  const canLocation = principal.sensitive_location && hasDatesCapability(principal, "dates_evidence_read");
+  const isExternal = activity.host === null;
+  const canEdit = !isExternal && hasDatesCapability(principal, "dates_activity_edit");
+  const canCommand = !isExternal && hasDatesCapability(principal, "dates_activity_command");
+  const canTransfer = !isExternal && hasDatesCapability(principal, "dates_host_transfer");
+  const canLocation = !isExternal && principal.sensitive_location && hasDatesCapability(principal, "dates_evidence_read");
 
   return (
     <>
       <Link className="back-link" href="/dates">← {t("back")}</Link>
       <PageHeader eyebrow={t("eyebrow")} title={activity.title || activity.activity_id} subtitle={t("subtitle", { id: activity.activity_id, revision: activity.revision })} actions={<button className="button button-secondary" onClick={() => void load()} disabled={busy}>{common("refresh")}</button>} />
       <DatesAdminTabs />
+      {data.external_event && <section className="panel dates-external-fields"><span className="badge badge-demo">{external("badge")}</span>
+        <p>{external("editor.activityRedirect")}</p><Link className="button button-primary" href={`/dates/external/${data.external_event.external_event_id}`}>{external("editor.detailTitle")}</Link></section>}
+      {data.external_event && <DatesExternalProvenance event={data.external_event} />}
       {feedback && <div className={`alert ${feedback.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{feedback.text}</div>}
 
       <div className="dates-detail-grid">
         <section className="panel">
           <div className="panel-header"><div><h2>{t("overview")}</h2><p>{t("overviewCopy")}</p></div><div className="row-actions"><span className={`badge ${activity.soft_deleted ? "badge-warning" : "badge-active"}`}>{activity.soft_deleted ? t("softDeleted") : values(activity.lifecycle)}</span><span className={`badge ${activity.moderation_state === "ok" || activity.moderation_state === "approved" ? "badge-active" : "badge-warning"}`}>{values(activity.moderation_state)}</span></div></div>
           <div className="panel-body"><dl className="detail-list">
-            <div className="detail-row"><dt>{t("host")}</dt><dd>{activity.host.display_name || "—"} · UID {activity.host.uid}</dd></div>
+            <div className="detail-row"><dt>{isExternal ? external("form.organizerName") : t("host")}</dt><dd>{activity.host === null ? activity.organizer_name : <>{activity.host.display_name || "—"} · UID {activity.host.uid}</>}</dd></div>
             <div className="detail-row"><dt>{t("type")}</dt><dd>{values(activity.activity_type)}</dd></div>
             <div className="detail-row"><dt>{t("schedule")}</dt><dd>{values(activity.time_mode)} · {activity.start_at ? formatDate(activity.start_at, locale, true) : "—"} → {activity.end_at ? formatDate(activity.end_at, locale, true) : "—"}</dd></div>
             <div className="detail-row"><dt>{t("location")}</dt><dd>{values(activity.location_mode)} · {[activity.city, activity.country_code].filter(Boolean).join(", ") || "—"}</dd></div>
@@ -335,7 +316,7 @@ export default function DatesActivityDetailPage() {
         </form>
       </section>}
 
-      <div className="section-grid dates-section">
+      {!isExternal && <div className="section-grid dates-section">
         <section className="panel">
           <div className="panel-header"><div><h2>{t("exactLocation")}</h2><p>{t("exactLocationCopy")}</p></div></div>
           <div className="panel-body">
@@ -359,7 +340,7 @@ export default function DatesActivityDetailPage() {
             </form>}
           </div>
         </section>
-      </div>
+      </div>}
 
       {canTransfer && <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("hostTransfer")}</h2><p>{t("hostTransferCopy")}</p></div></div>

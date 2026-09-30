@@ -50,6 +50,17 @@ export const DATES_RUNTIME_HELP_GROUPS = [
       "dates_digest_quiet_hours",
     ],
   },
+  {
+    id: "externalEvents",
+    settingKeys: [
+      "dates_external_events_enabled",
+      "dates_external_events_enabled_overrides",
+      "dates_external_publishing_enabled",
+      "dates_event_invite_daily_limit",
+      "dates_event_invite_per_event_limit",
+      "dates_event_lookahead_days",
+    ],
+  },
 ] as const;
 
 export const DATES_RUNTIME_HELP_KEYS = DATES_RUNTIME_HELP_GROUPS.flatMap(

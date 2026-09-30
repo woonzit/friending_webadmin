@@ -18,6 +18,7 @@ import { normalizeUserModerationInsightProxyBody } from "@/lib/userModerationIns
 import { normalizeRegistrationPlatformStatsProxyBody } from "@/lib/registrationStats";
 import { normalizeSectionTeasersProxyBody } from "@/lib/sectionTeasers";
 import { datesAvailabilityWriteIsRetired } from "@/lib/datesAdmin";
+import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "@/lib/datesExternalAdmin";
 import {
   featureSwitchesProxyCapabilityAuthorized,
   normalizeFeatureSwitchesProxyBody,
@@ -120,6 +121,9 @@ export async function POST(
   // purpose: the session is valid, so `adminClient` must not send the operator
   // back to /login.
   const principal = adminPrincipalFrom(membership.data);
+  if (datesExternalProxyCapabilityAuthorized(action, membership.data) === false) {
+    return bridgeError("dates-admin-capability-required", 403);
+  }
   const legacyAdminGrantRetryAuthorized = ADMIN_GRANTED_VERIFICATION_CONTRACT_READY
     ? adminGrantedVerificationLegacyReceiptRetryAuthorized(action, membership.data)
     : null;
@@ -200,6 +204,10 @@ export async function POST(
   if (datesAvailabilityWriteIsRetired(action, body)) {
     return bridgeError("invalid-input", 400);
   }
+
+  const externalBody = normalizeDatesExternalProxyBody(action, body);
+  if (externalBody === null) return bridgeError("invalid-input", 400);
+  if (externalBody !== undefined) body = externalBody;
 
   const normalizedPersonaBody = normalizePersonaProxyBody(action, body);
   if (normalizedPersonaBody === null) {

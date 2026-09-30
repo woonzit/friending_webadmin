@@ -62,6 +62,12 @@ const EXPECTED_DATES_ACTIONS = [
   "dates_reason_list",
   "dates_reason_save",
   "dates_reason_deactivate",
+  "dates_external_event_list",
+  "dates_external_event_detail",
+  "dates_external_event_publish",
+  "dates_external_event_update",
+  "dates_external_event_command",
+  "dates_external_event_place_search",
 ] as const;
 
 test("retired and inactive activity types are readable but never newly assigned", () => {
@@ -131,6 +137,12 @@ const EXPECTED_RUNTIME_HELP_KEYS = [
   "moderation_evidence_retention_days",
   "dates_digest_frequency",
   "dates_digest_quiet_hours",
+  "dates_external_events_enabled",
+  "dates_external_events_enabled_overrides",
+  "dates_external_publishing_enabled",
+  "dates_event_invite_daily_limit",
+  "dates_event_invite_per_event_limit",
+  "dates_event_lookahead_days",
 ] as const;
 
 test("Dates Core bridge actions are an exact explicit allow-list", () => {
@@ -575,7 +587,7 @@ test("Dates availability has no second control, writer, route, permission, or na
 test("Dates runtime help covers every bounded Core setting in both locales", () => {
   assert.deepEqual(DATES_RUNTIME_HELP_KEYS, EXPECTED_RUNTIME_HELP_KEYS);
   assert.equal(new Set(DATES_RUNTIME_HELP_KEYS).size, EXPECTED_RUNTIME_HELP_KEYS.length);
-  assert.equal(DATES_RUNTIME_HELP_GROUPS.length, 5);
+  assert.equal(DATES_RUNTIME_HELP_GROUPS.length, 6);
 
   const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
   const component = readFileSync(new URL("../components/DatesRuntimeSettingsHelp.tsx", import.meta.url), "utf8");

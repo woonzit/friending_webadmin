@@ -9,6 +9,7 @@ import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import {
   configurationInputValue,
+  datesConfigurationRawValue,
   createAdminIdempotencyKey,
   DATES_REPORT_SCOPES,
   datesAdminPrincipal,
@@ -80,15 +81,6 @@ type Reason = {
 };
 
 type Feedback = { tone: "success" | "error"; text: string };
-
-function settingRawValue(setting: Setting): string {
-  if (setting.type === "quiet_hours" && setting.value && typeof setting.value === "object") {
-    const row = setting.value as Record<string, unknown>;
-    return `${String(row.start || "22:00")}|${String(row.end || "08:00")}`;
-  }
-  if (setting.value === null || setting.value === undefined) return "";
-  return String(setting.value);
-}
 
 export default function DatesConfigurationPage() {
   const t = useTranslations("datesAdmin.configuration");
@@ -180,7 +172,7 @@ export default function DatesConfigurationPage() {
 function SettingEditor({ setting, canManage, onSaved, onError }: { setting: Setting; canManage: boolean; onSaved: () => Promise<void>; onError: (error: unknown) => void }) {
   const t = useTranslations("datesAdmin.configuration");
   const common = useTranslations("common");
-  const [value, setValue] = useState(settingRawValue(setting));
+  const [value, setValue] = useState(datesConfigurationRawValue(setting.type, setting.value));
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -190,7 +182,7 @@ function SettingEditor({ setting, canManage, onSaved, onError }: { setting: Sett
     setBusy(true);
     const response = await adminCall("dates_configuration_save", {
       key: setting.key,
-      value: configurationInputValue(setting.type, value),
+      value: configurationInputValue(setting.type, value, setting.key),
       expected_revision: setting.revision,
       reason: reason.trim(),
       idempotency_key: createAdminIdempotencyKey("dates-configuration-save"),
@@ -208,7 +200,8 @@ function SettingEditor({ setting, canManage, onSaved, onError }: { setting: Sett
     <div className="dates-setting-control">
       {setting.type === "boolean" ? <select value={value} disabled={!canManage || busy} onChange={(event) => setValue(event.target.value)}><option value="true">{common("enabled")}</option><option value="false">{common("disabled")}</option></select>
         : setting.type === "enum" ? <select value={value} disabled={!canManage || busy} onChange={(event) => setValue(event.target.value)}>{(setting.allowed_values || []).map((item) => <option key={item} value={item}>{humanizeMachineKey(item)}</option>)}</select>
-          : quiet ? <div className="dates-quiet-hours"><input type="time" value={quiet[0] || ""} disabled={!canManage || busy} onChange={(event) => setValue(`${event.target.value}|${quiet[1] || ""}`)} /><span>→</span><input type="time" value={quiet[1] || ""} disabled={!canManage || busy} onChange={(event) => setValue(`${quiet[0] || ""}|${event.target.value}`)} /></div>
+          : setting.type === "storefront_overrides" ? <label className="field"><span>{t("storefrontOverridesLabel")}</span><textarea value={value} maxLength={16000} rows={4} spellCheck={false} disabled={!canManage || busy} onChange={(event) => setValue(event.target.value)} /><small>{t("storefrontOverridesHelp")}</small></label>
+            : quiet ? <div className="dates-quiet-hours"><input type="time" value={quiet[0] || ""} disabled={!canManage || busy} onChange={(event) => setValue(`${event.target.value}|${quiet[1] || ""}`)} /><span>→</span><input type="time" value={quiet[1] || ""} disabled={!canManage || busy} onChange={(event) => setValue(`${quiet[0] || ""}|${event.target.value}`)} /></div>
             : <input type="number" min={setting.minimum ?? undefined} max={setting.maximum ?? undefined} value={value} disabled={!canManage || busy} placeholder={setting.key === DATES_LIVE_TRAIL_RETENTION_KEY ? t("liveRetentionPlaceholder") : setting.type === "nullable_integer" ? t("noLimit") : undefined} onChange={(event) => setValue(event.target.value)} />}
     </div>
     {canManage && <><label className="field"><span>{t("auditReason")}</span><input required maxLength={1000} value={reason} onChange={(event) => setReason(event.target.value)} /></label><button className="button button-primary button-small" disabled={busy} type="submit">{busy ? common("saving") : common("save")}</button></>}

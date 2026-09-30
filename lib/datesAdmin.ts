@@ -423,7 +423,11 @@ export function datesReasonEntryPointsRefused(error: unknown): boolean {
   return error === "dates-report-entry-points-invalid";
 }
 
-export function configurationInputValue(type: string, raw: string): unknown {
+export function configurationInputValue(type: string, raw: string, settingKey = ""): unknown {
+  // These P1 settings use Core's strict integer parser. Do not turn 1.5,
+  // 01 or 20days into an accepted integer before Core sees the request.
+  if (type === "integer" && ["dates_event_invite_daily_limit", "dates_event_invite_per_event_limit",
+    "dates_event_lookahead_days"].includes(settingKey)) return raw;
   if (type === "boolean") return raw === "true";
   if (type === "integer") return Number.parseInt(raw, 10);
   if (type === "nullable_integer") return raw.trim() === "" ? null : Number.parseInt(raw, 10);
@@ -432,6 +436,18 @@ export function configurationInputValue(type: string, raw: string): unknown {
     return { start, end };
   }
   return raw;
+}
+
+export function datesConfigurationRawValue(type: string, value: unknown): string {
+  if (type === "quiet_hours" && value && typeof value === "object") {
+    const row = value as Record<string, unknown>;
+    return `${String(row.start || "22:00")}|${String(row.end || "08:00")}`;
+  }
+  if (type === "storefront_overrides" && value && typeof value === "object") {
+    // PHP's empty associative map is [] on the read wire; the edit is a JSON map.
+    return JSON.stringify(Array.isArray(value) && value.length === 0 ? {} : value, null, 2);
+  }
+  return value === null || value === undefined ? "" : String(value);
 }
 
 /**
@@ -444,6 +460,12 @@ export function datesSettingEffectiveText(
   effective: unknown,
   booleans?: { on: string; off: string },
 ): string {
+  if (type === "storefront_overrides") {
+    if (Array.isArray(effective) && effective.length === 0) return "{}";
+    const map = record(effective);
+    return map && Object.entries(map).every(([code, enabled]) => /^[A-Z]{3}$/.test(code) && typeof enabled === "boolean")
+      ? JSON.stringify(map) : "—";
+  }
   if (type === "quiet_hours") {
     const row = record(effective);
     return row && typeof row.start === "string" && typeof row.end === "string"

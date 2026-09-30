@@ -67,9 +67,10 @@ test("all authenticated routes have a live guide or an explicit redirect to one"
   // outside the dashboard shell), minus the two T-565 retired ones. T-683 adds
   // the into-tag moderation queue (40). T-863 splits the census: the two
   // redirect-only D-052 routes (/heroes, /app-landing) no longer carry guides of
-  // their own, so 38 live guides plus 2 redirects.
-  assert.equal(actualRoutes.length, 40, "the current screen census changed; review every new or removed screen");
-  assert.equal(ADMIN_HELP_PAGES.length, 38, "review the live-screen census");
+  // their own, so 38 live guides plus 2 redirects. T-865 P1 adds the external
+  // events list, create and detail screens: 41 live guides plus 2 redirects.
+  assert.equal(actualRoutes.length, 43, "the current screen census changed; review every new or removed screen");
+  assert.equal(ADMIN_HELP_PAGES.length, 41, "review the live-screen census");
   assert.equal(ADMIN_HELP_REDIRECTS.length, 2, "review the retired-route census");
   assert.deepEqual(helpRoutes, actualRoutes);
   assert.equal(new Set(helpRoutes).size, helpRoutes.length, "a screen may have only one help document");
@@ -144,7 +145,8 @@ test("every inventoried functional section has detailed English and Hungarian he
   // T-863 S11 (P-007, D-135) adds the gesture photo selfie: the photo-method topic on
   // /verification (with its iOS rollout precondition), the gesture catalogue and photo
   // wording topic on /configuration, and the whole-set photo review on the case page (255).
-  assert.equal(totalSections, 255, "review the functional-section census when the UI changes");
+  // T-865 P1 adds eight sections across external list, create and detail.
+  assert.equal(totalSections, 263, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [

@@ -1188,6 +1188,111 @@
           }
         }
       },
+      "datesExternalList": {
+        "title": "External-event list help",
+        "summary": "This operator list contains externally organized events entered and checked by administrators. It separates source verification, publication state and raw operator counts from the privacy-filtered member experience.",
+        "steps": {
+          "1": "Select status, verification tier, category, city or entry channel, then apply the filters.",
+          "2": "Compare event identity, local start time, organizer and next verification before opening a record.",
+          "3": "Use Create and publish only when authorized and the release lead has enabled publication."
+        },
+        "sections": {
+          "filters": {
+            "title": "Filters and pagination",
+            "purpose": "Filters narrow the external ledger without mixing its statuses with ordinary member-hosted activity states.",
+            "guidance": "Time bounds on the list are UTC; event rows display venue-local time. A read error is never evidence that no events exist.",
+            "actions": {
+              "1": "Apply explicit UTC start bounds and inspect the venue timezone in each result.",
+              "2": "Refresh after another operator changes the list; page and total are separate reads."
+            }
+          },
+          "results": {
+            "title": "Event results and authority",
+            "purpose": "Each row identifies the outside organizer, verification tier, event state, participation totals and next human check.",
+            "guidance": "Raw counts are for operators only. Opening a record does not grant edit rights; every write rechecks current Core capabilities.",
+            "actions": {
+              "1": "Open the exact external event rather than creating a second occurrence.",
+              "2": "Use the activity-history link for cases and the external editor for event content."
+            }
+          }
+        }
+      },
+      "datesExternalNew": {
+        "title": "Create an external event help",
+        "summary": "Create and publish is an immediate, audited operation, not a saved draft or AI intake. An authorized administrator independently checks manual facts, public venue and source, and uses category art for the image.",
+        "steps": {
+          "1": "Check the official source and enter a neutral English and Hungarian summary with the correct category.",
+          "2": "Verify venue coordinates, IANA timezone and explicit offsets, then complete all four fresh confirmations.",
+          "3": "Review the exact publication and audit reason; if its receipt is uncertain, retry the saved operation unchanged."
+        },
+        "sections": {
+          "facts": {
+            "title": "Manual facts and dates",
+            "purpose": "The form captures bilingual facts, organizer and HTTPS evidence links without fetching sources or claiming automated verification.",
+            "guidance": "Use an explicit venue timezone and UTC offset, including ambiguous daylight-saving times. A blank end requests the category estimate.",
+            "actions": {
+              "1": "Supply an official link for paid events and check that ticket links use an allowed host.",
+              "2": "Mark sensitive content accurately; it forces count-only attendee visibility."
+            }
+          },
+          "venue": {
+            "title": "Venue lookup and public pin",
+            "purpose": "Optional Core-proxied Google Maps suggestions assist with locating a venue while manual entry remains available on provider failure.",
+            "guidance": "A suggestion is not proof of a public establishment. Verify it independently, retain attribution and confirm the public map pin.",
+            "actions": {
+              "1": "Check the suggested address against the organizer source before using it.",
+              "2": "Enter coordinates and timezone manually when lookup is unavailable; do not guess missing values."
+            }
+          },
+          "publication": {
+            "title": "Publication and safe retries",
+            "purpose": "A default-OFF release switch blocks publication until compatible Core and Webadmin are live, separately from member storefront visibility.",
+            "guidance": "Only the release lead enables the switch. Duplicate source plus local date, or title plus venue plus local date, refuses a second occurrence.",
+            "actions": {
+              "1": "Confirm the immediate publication only after reviewing all facts and the audit reason.",
+              "2": "Keep an uncertain saved request; retry the same identity and never erase it to submit a replacement."
+            }
+          }
+        }
+      },
+      "datesExternalDetail": {
+        "title": "External-event detail help",
+        "summary": "This page reads one external ledger and its linked hostless activity, with separate revisions and safe source provenance. Content corrections, human checks and lifecycle commands remain independently authorized and audited.",
+        "steps": {
+          "1": "Verify the source, organizer, timestamps, current event state and linked activity before making a change.",
+          "2": "Edit facts with four new confirmations, or choose the precise lifecycle or official-update action needed.",
+          "3": "Check the server receipt; on conflict reload and review, and on uncertainty retry only the saved request."
+        },
+        "sections": {
+          "provenance": {
+            "title": "Provenance and hostless identity",
+            "purpose": "Source links, category art, verification tier and administrator-entry credit identify a human-reviewed external recommendation, not a member host.",
+            "guidance": "No AI provenance or member submitter is invented. The linked activity keeps attendance, conversation and moderation history.",
+            "actions": {
+              "1": "Read the source before recording a new manual confirmation or organizer cancellation.",
+              "2": "Use the linked moderation case for safety decisions; content edits do not approve pending review."
+            }
+          },
+          "changes": {
+            "title": "Corrections and receipt recovery",
+            "purpose": "Content corrections use the ledger revision while generic lifecycle commands use the activity revision; the console preserves this distinction.",
+            "guidance": "A stale edit keeps its draft but requires explicit reload and review. Expired or unreadable retry evidence blocks new changes until reconciled.",
+            "actions": {
+              "1": "Review changes against fresh details instead of silently replacing an expected revision.",
+              "2": "Retry the exact saved operation after a lost response, even if a purge removed its detail."
+            }
+          },
+          "commands": {
+            "title": "Lifecycle and official updates",
+            "purpose": "Withdraw, confirmed cancellation, manual re-verification and official updates have distinct effects and never silently republish terminal content.",
+            "guidance": "Restore only undoes soft deletion. Purge is irreversible and requires retention eligibility, superadmin rights and no open case or legal hold.",
+            "actions": {
+              "1": "Choose the exact action and read its confirmation before providing an audit reason.",
+              "2": "Use fresh attestations for re-verification; post official text only when the event thread is writable."
+            }
+          }
+        }
+      },
       "datesModeration": {
         "title": "AreYouIn moderation queue help",
         "summary": "This is the safety queue for reports and prepublication cases associated with AreYouIn. It exposes SLA, severity, assignment and redacted target context without opening sensitive evidence in the list.",
@@ -7882,8 +7987,165 @@
     "tabs": {
       "label": "AreYouIn administration",
       "activities": "Activities",
+      "external": "External events",
       "moderation": "Moderation",
       "configuration": "Configuration"
+    },
+    "external": {
+      "eyebrow": "AreYouIn operations",
+      "title": "External events",
+      "subtitle": "Manually entered events by external organizers. Source checks, revisions and publication remain Core-owned.",
+      "create": "Create and publish",
+      "badge": "Recommended event — external organizer",
+      "apply": "Apply filters",
+      "reset": "Reset filters",
+      "filterError": "Choose valid UTC start bounds, with the beginning no later than the end.",
+      "loadError": "The external events could not be read. No empty-list conclusion can be drawn. Refresh to retry.",
+      "operatorCounts": "Counts on this operator surface are raw totals. Members see privacy-filtered counts and attendee lists.",
+      "empty": "No external events match these filters.",
+      "emptyPage": "This page contains no events. The list may have changed while loading; refresh or return to the previous page.",
+      "origin": { "label": "Event origin", "all": "All origins", "member": "Member programs", "external": "External events" },
+      "provenance": {
+        "title": "Verification and sources", "tier": "Verification tier", "submitter": "Submitted by", "adminEntered": "Entered by an administrator; no member submitter",
+        "anonymous": "Anonymous or not disclosed", "member": "Member UID {uid}", "channel": "Submission channel",
+        "assistance": "AI assistance", "noAi": "None — manually entered and checked",
+        "boundary": "These are the safe source and credit fields provided by Core. Source links open a website; they do not fetch, verify or republish its content. No operator identity or private evidence is exposed here."
+      },
+      "counts": "{going} going · {interested} interested",
+      "pagination": "Page {page} of {pages} · {total} events",
+      "previous": "Previous",
+      "next": "Next",
+      "filters": {
+        "query": "Title contains", "city": "City", "status": "Status", "tier": "Verification tier",
+        "category": "Category", "channel": "Entry channel", "startFrom": "Starts from (UTC)", "startTo": "Starts through (UTC)"
+      },
+      "columns": { "event": "Event and organizer", "status": "Status", "venue": "Venue", "start": "Local start", "counts": "Participation", "recheck": "Next check" },
+      "statusValues": { "in_review": "In review", "published": "Published", "rechecking": "Rechecking", "canceled_upstream": "Canceled by organizer", "withdrawn": "Withdrawn", "ended": "Ended", "merged_into": "Merged", "rejected": "Rejected" },
+      "tierValues": { "admin": "Administrator checked", "official": "Official source", "corroborated": "Corroborated", "single_source": "Single source" },
+      "channelValues": { "admin": "Administrator", "member_suggestion": "Member suggestion", "ai_research": "AI research" },
+      "editor": {
+        "createTitle": "Create an external event", "detailTitle": "External event details", "editTitle": "Correct event facts",
+        "subtitle": "Human-reviewed facts, a public venue and category art. Friending is not the event organizer.",
+        "back": "External events", "publish": "Create and publish", "save": "Save corrections",
+        "reviewPublish": "Review publication", "reviewSave": "Review corrections", "reviewCommand": "Review action",
+        "confirmCopy": "Confirm this exact operation and audit reason. Publication is immediate. Changes do not approve pending moderation, and a canceled or withdrawn event cannot be republished here.",
+        "reloadCopy": "Reload authoritative event details and permissions? This discards unsaved form edits and requires fresh confirmations. Any outstanding saved operation is retained for exact retry.",
+        "activity": "Activity and moderation history", "revisions": "Event revision {ledger} · Activity revision {activity}",
+        "activityRedirect": "This event has an external organizer, not a member host. Review facts and perform audited event actions in the external-event console. Host transfer and live/private-location controls do not apply.",
+        "deleted": "This event is soft-deleted. Restore only undoes deletion; it does not republish a terminal event or clear moderation.",
+        "moderationNotice": "Editing facts or confirming a source does not clear pending moderation or open reports.",
+        "estimated": "The end time is estimated from the category; leaving the editor end blank preserves that estimate.",
+        "organizerSite": "Organizer website", "priceUnknown": "See the official source for pricing", "minimumAge": "Age {age}+",
+        "checked": "Last checked", "readOnly": "Your current permissions do not allow external-event changes.",
+        "terminal": "This event cannot be edited in its current state. There is no republish action.",
+        "commandsTitle": "Audited event actions", "command": "Action", "updateText": "Official update (up to 500 characters)",
+        "confirmations": {
+          "source": "I have checked the event against its source again.", "public_venue": "I have confirmed that the venue is public.",
+          "timezone": "I have confirmed the venue timezone and local times.", "content_safe": "I have checked the event content for safety."
+        }
+      },
+      "places": {
+        "title": "Optional venue lookup", "hint": "Suggestions are temporary assistance, not proof of a public venue. Independently confirm the facts against the official source before publishing. Manual entry always remains available.",
+        "query": "Venue name and city", "search": "Search venues", "loading": "Searching…", "select": "Use as a starting point",
+        "invalid": "Enter 2–200 characters without control characters, or continue with manual entry.",
+        "unavailable": "The optional venue provider is unavailable. Enter and confirm the venue manually.",
+        "rateLimited": "Venue searches are temporarily rate-limited. You can continue with manual entry.",
+        "empty": "No suggestions found. Enter the venue manually.",
+        "publicWarning": "This may be an address rather than a public establishment. Verify that attendees may safely meet here."
+      },
+      "commands": {
+        "end": { "label": "End event", "copy": "End this event and make its conversation read-only. Attendance history remains; no host review or check-in prompts are created." },
+        "soft_delete": { "label": "Soft-delete event", "copy": "Hide the event while retaining its ledger, attendance and history. Invitations end and the conversation becomes read-only. This can be restored without changing a terminal or pending state." },
+        "restore": { "label": "Undo soft deletion", "copy": "Restore the retained record only. A withdrawn, canceled or ended event stays terminal; pending moderation stays pending. No live-location access is granted." },
+        "purge": { "label": "Permanently purge event", "copy": "Irreversibly remove the event after retention eligibility. Core requires superadmin permission, no open case and no legal/evidence hold. The external ledger and interests are also removed. This cannot be undone." },
+        "withdraw": { "label": "Withdraw publication", "copy": "Remove this recommendation from active discovery. Attendance history is retained, invitations end and the conversation becomes read-only. This is not an upstream cancellation claim." },
+        "cancel": { "label": "Record organizer cancellation", "copy": "Use only after confirming that the organizer canceled the event. Attendance history is retained, invitations end and the conversation becomes read-only." },
+        "reverify": { "label": "Confirm source again", "copy": "Record a new human check with four fresh confirmations. This starts no AI or network job, sends no notification and does not approve pending moderation." },
+        "official_update": { "label": "Post official update", "copy": "Post and pin a system update in the event conversation. Members see a Friending update, not your operator identity. The event must still be active and its conversation writable." }
+      },
+      "pending": {
+        "title": "Saved operation awaiting confirmation", "copy": "Do not create a second operation. Retry sends the identical saved request and expected revision, including after a page reload.",
+        "blocked": "The saved-operation store is unavailable or unreadable. Changes are blocked to avoid losing retry evidence. Restore browser storage access and reload; do not delete an unresolved saved operation.",
+        "payload": "Review exact saved request", "open": "Open the outstanding operation", "retry": "Retry the same operation"
+      },
+      "feedback": {
+        "success": "Core confirmed the audited operation.",
+        "publishingDisabled": "Publication and content corrections are disabled by the release switch. Only the release lead should enable it after compatible Core and Webadmin releases. Cancellation, withdrawal and saved successful receipt retries remain available.",
+        "recoveryOnly": "Current event details are unavailable. Only the saved operation can be retried; this can recover a receipt after a successful purge. No new event change is enabled.",
+        "successRetained": "Core confirmed the operation, but its local retry record could not be cleared. Changes remain blocked. Restore browser storage access and retry the same operation to reconcile the receipt.",
+        "refusedRetained": "Core refused the operation, but its local retry record could not be cleared. Restore browser storage access and retry the same operation; do not create a replacement yet.",
+        "access": "Fresh permissions or Core time could not be confirmed for this operator. No new operation was sent; existing retry evidence remains saved. Reload after restoring access.",
+        "invalid": "Check the facts, audit reason and required confirmations before continuing.",
+        "uncertain": "The operation may have succeeded, but its receipt is unconfirmed. The exact request is saved. Retry the same operation; do not submit a replacement.",
+        "blocked": "The operation could not safely proceed. Check the saved-operation panel and browser storage before retrying.",
+        "expired": "This saved operation is too old for a safe retry. Do not delete it or submit a replacement. Ask the operations lead to reconcile the event and audit history first.",
+        "conflict": "Core refused this stale or unavailable event state. Your draft is retained. Reload current details, review the differences, then prepare a new operation; the revision is never replaced silently.",
+        "duplicate": "Core found the same occurrence: an identical source URL and local date, or the same normalized title, venue and local date. Review the existing event instead of publishing a duplicate. A genuinely different recurring date remains allowed.",
+        "refused": "Core refused this operation. Review the facts, time bounds, source and ticket links, audit reason and current event state before preparing a corrected request."
+      },
+      "form": {
+        "factsTitle": "Manual event facts",
+        "manualOnly": "Enter facts checked against the source. This form does not use AI or automatically verify the organizer or venue.",
+        "title": "Title (3–120 characters)",
+        "summaryEn": "Neutral summary · English (up to 500 characters)",
+        "summaryHu": "Neutral summary · Hungarian (up to 500 characters)",
+        "category": "Category",
+        "sensitive": "Sensitive event",
+        "sensitiveReason": "Why this event is sensitive",
+        "attendeeList": "Attendee visibility",
+        "attendeeVisible": "Eligible members may see the attendee list",
+        "attendeeCountOnly": "Count only",
+        "sensitiveHint": "Sensitive events always show counts only. Individual attendance privacy still applies.",
+        "timeTitle": "Time at the venue",
+        "timeHint": "Enter the local clock time, the venue's IANA timezone (for example Europe/Budapest), and its UTC offset at that time (for example +02:00). The offset distinguishes repeated times at daylight-saving transitions. The browser's timezone is never assumed.",
+        "timezone": "Venue timezone (IANA)",
+        "startLocal": "Local start",
+        "startOffset": "Start UTC offset (±HH:MM)",
+        "endLocal": "Local end (optional)",
+        "endOffset": "End UTC offset (±HH:MM)",
+        "allDay": "All-day event (the explicit times still apply)",
+        "endHint": "With no end, Core estimates 3 hours for concerts/theatre, 5 for club nights, 10 for festivals and 2 for other categories. The maximum duration is 14 days for festivals and 24 hours otherwise.",
+        "venueTitle": "Public venue",
+        "venueName": "Venue name",
+        "venueAddress": "Public street address",
+        "city": "City",
+        "countryCode": "Country (two uppercase letters)",
+        "latitude": "Latitude (decimal)",
+        "longitude": "Longitude (decimal)",
+        "mapTitle": "Confirm the public event venue",
+        "mapHint": "Move the pin to the public venue. A manual pin is an administrator confirmation, not a Places verification. Moving it clears the confirmations below.",
+        "mapUnavailable": "The optional map is unavailable. Enter the public venue's checked decimal coordinates above; do not substitute a private meeting point.",
+        "sourceTitle": "Organizer, source and admission",
+        "organizerName": "Organizer name",
+        "organizerWebsite": "Organizer website (optional)",
+        "sourceUrl": "Checked source URL",
+        "officialUrl": "Official event URL (required for paid events)",
+        "ticketUrl": "Ticket URL (optional)",
+        "isFree": "Free admission",
+        "priceText": "Admission details (optional)",
+        "ageRestriction": "Minimum age (18–99, optional)",
+        "linksHint": "Use HTTPS domain links without credentials or custom ports. Ticket links must use the exact official or organizer hostname, or a Core-approved domain. Saving never fetches the URL.",
+        "imagePolicy": "P1 uses category artwork only. Member flyers are never event images. This form does not upload images, generate AI art or assert image licensing.",
+        "confirmationsTitle": "Fresh checks before saving",
+        "confirmSource": "I checked these facts against the source.",
+        "confirmPublicVenue": "I confirmed this is a public venue and the pin/address are correct.",
+        "confirmTimezone": "I confirmed the venue timezone, local times and UTC offsets.",
+        "confirmContentSafe": "I checked the content for safety and suitability.",
+        "reason": "Audit reason (at least 3 characters)",
+        "errors": {
+          "startTime": "Check the start date, explicit UTC offset and venue timezone. Nonexistent local times and mismatched offsets are refused.",
+          "endTime": "Check the end date, explicit UTC offset and venue timezone.",
+          "confirmations": "Complete all four confirmations after the last facts edit.",
+          "facts": "Check the required text, HTTPS links, decimal coordinates, country code, duration and admission details. Invalid or oversized facts cannot be submitted.",
+          "reason": "Enter an audit reason of at least 3 characters."
+        },
+        "categories": {
+          "sport_match": "Sports match", "sport_participation": "Participatory sport", "concert": "Concert",
+          "club_night": "Club night", "festival": "Festival", "theatre": "Theatre", "cinema": "Cinema",
+          "exhibition": "Exhibition", "talk": "Talk", "workshop": "Workshop", "market": "Market",
+          "food_drink": "Food and drink", "community": "Community", "outdoor": "Outdoors", "other": "Other"
+        }
+      }
     },
     "activities": {
       "eyebrow": "AreYouIn operations",
@@ -8280,6 +8542,8 @@
       "liveRetentionUnsetCopy": "While dates_live_trail_retention_days is empty, Core refuses live sharing (starting it, sending locations and the live map), even with the live-sharing switch on. Everything else keeps working: the AreYouIn worker still delivers notifications, ends expired activities and runs scheduled purges, and logs a warning. Save an approved number of days below to allow live sharing.",
       "auditReason": "Audited change reason",
       "settingSaved": "The runtime setting was saved.",
+      "storefrontOverridesLabel": "Storefront overrides (JSON)",
+      "storefrontOverridesHelp": "Map uppercase three-letter storefront codes to true or false. Use an empty object to inherit the global switch everywhere. Core validates the supported country codes; this never enables the AreYouIn section itself.",
       "runtimeHelp": {
         "button": "? Help",
         "eyebrow": "AreYouIn operations guide",
@@ -8336,9 +8600,49 @@
           "digest": {
             "title": "Nearby digest defaults",
             "copy": "Background nearby-suggestion scheduling. User opt-in, eligibility, timezone and personal quiet-hour preferences still apply."
+          },
+          "externalEvents": {
+            "title": "External events",
+            "copy": "Manual external-event availability, participant invitation limits and the entry window. These controls do not enable AI, automatic publication or research."
           }
         },
         "settings": {
+          "dates_external_events_enabled": {
+            "title": "External events",
+            "purpose": "Controls external-event availability within AreYouIn; the stored default is ON.",
+            "effect": "The effective result also requires AreYouIn availability in the member's storefront and a compatible client request. Core returns the global result and storefront-specific results.",
+            "caution": "This is not the AreYouIn section switch and does not enable older clients. Turning it off preserves event records."
+          },
+          "dates_external_events_enabled_overrides": {
+            "title": "External events by storefront",
+            "purpose": "Overrides the external-event switch for individual uppercase three-letter storefront codes.",
+            "effect": "A missing code inherits the external-event global switch; an empty map removes all overrides. A true value cannot override a disabled AreYouIn section.",
+            "caution": "Values must be JSON booleans, not strings. Check the effective result on the external-event switch row; do not treat the stored override as proof of availability."
+          },
+          "dates_external_publishing_enabled": {
+            "title": "External-event publication rollout",
+            "purpose": "Separate publication and content-correction switch. Its default is OFF; only the exact stored boolean true enables new writes.",
+            "effect": "OFF refuses publication and corrections without creating artifacts. Previous successful receipts can still be replayed, and safety commands such as cancellation and withdrawal stay available.",
+            "caution": "The release lead enables this only after compatible Core and Webadmin P1 are both live. This is independent of member/storefront visibility and is never enabled by deployment or schema installation."
+          },
+          "dates_event_invite_daily_limit": {
+            "title": "External-event invitations per day",
+            "purpose": "Sets the daily invitation ceiling for each member inviting others to external events.",
+            "effect": "The default is 20; Core accepts whole numbers from 1 to 1000. Event eligibility and recipient privacy checks remain separate requirements.",
+            "caution": "This is separate from member-hosted activity invitation limits. Raising it does not bypass blocks, cooldowns or client compatibility."
+          },
+          "dates_event_invite_per_event_limit": {
+            "title": "External-event invitations per inviter and event",
+            "purpose": "Caps the invitations one member may send for the same external event.",
+            "effect": "The default is 10; Core accepts whole numbers from 1 to 1000. The daily ceiling applies as well.",
+            "caution": "A larger limit does not make an ineligible recipient invitable or create repeated pending invitations."
+          },
+          "dates_event_lookahead_days": {
+            "title": "Manual event entry window",
+            "purpose": "Limits how far into the future a manually entered external event may start.",
+            "effect": "The default is 180 days; Core accepts whole numbers from 1 to 730 and checks the event time inside the receipted command.",
+            "caution": "This is not the event duration or an AI research schedule. Existing successful retries keep their original receipt."
+          },
           "dates_creation_enabled": {
             "title": "Activity creation",
             "purpose": "Controls creation drafts and publishing of new AreYouIn activities, including whether the app advertises the creation capability.",

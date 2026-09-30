@@ -271,6 +271,24 @@ export const ADMIN_HELP_PAGES = [
     matches: exact("/dates/configuration"),
   },
   {
+    key: "datesExternalList",
+    route: "/dates/external",
+    sections: ["filters", "results"],
+    matches: exact("/dates/external"),
+  },
+  {
+    key: "datesExternalNew",
+    route: "/dates/external/new",
+    sections: ["facts", "venue", "publication"],
+    matches: exact("/dates/external/new"),
+  },
+  {
+    key: "datesExternalDetail",
+    route: "/dates/external/[externalId]",
+    sections: ["provenance", "changes", "commands"],
+    matches: dynamic("/dates/external"),
+  },
+  {
     key: "datesModeration",
     route: "/dates/moderation",
     sections: ["navigation", "filters", "caseQueue"],

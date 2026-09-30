@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import PageHeader from "@/components/PageHeader";
@@ -9,33 +9,12 @@ import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import { DATES_ACTIVITY_TYPES, datesAdminPrincipal, epochFromLocalInput, humanizeMachineKey, type DatesAdminPrincipal } from "@/lib/datesAdmin";
 import { formatDate, formatNumber } from "@/lib/format";
+import { decodeDatesActivityList, type DatesActivityListRow } from "@/lib/datesExternalAdmin";
 
-type ActivityRow = {
-  activity_id: string;
-  title: string;
-  activity_type: string;
-  host: { uid: number; display_name: string };
-  lifecycle: string;
-  moderation_state: string;
-  pending_public_moderation_state: string | null;
-  time_mode: string;
-  start_at: number | null;
-  end_at: number | null;
-  location_mode: string;
-  city: string | null;
-  country_code: string | null;
-  join_mode: string;
-  maximum_people: number | null;
-  going_count: number;
-  pending_count: number;
-  report_count: number;
-  soft_deleted: boolean;
-  revision: number;
-  created_at: number;
-  updated_at: number;
-};
+type ActivityRow = DatesActivityListRow;
 
 type Filters = {
+  origin: string;
   search: string;
   lifecycle: string;
   moderation: string;
@@ -66,6 +45,7 @@ type Filters = {
 };
 
 const EMPTY_FILTERS: Filters = {
+  origin: "all",
   search: "",
   lifecycle: "all",
   moderation: "all",
@@ -105,6 +85,7 @@ function badgeClass(value: string, warning = false): string {
 export default function DatesActivitiesPage() {
   const t = useTranslations("datesAdmin.activities");
   const common = useTranslations("common");
+  const external = useTranslations("datesAdmin.external");
   const locale = useLocale();
   const [draft, setDraft] = useState<Filters>(EMPTY_FILTERS);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
@@ -113,10 +94,14 @@ export default function DatesActivitiesPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const loadGeneration = useRef(0);
 
   const load = useCallback(async (signal?: AbortSignal) => {
-    if (rows.length === 0) setState("loading");
+    if (signal?.aborted) return;
+    const generation = ++loadGeneration.current;
+    setState("loading");
     const payload: Record<string, unknown> = {
+      origin: filters.origin,
       search: filters.search,
       lifecycle: filters.lifecycle,
       moderation_state: filters.moderation,
@@ -144,25 +129,24 @@ export default function DatesActivitiesPage() {
       adminCall("dates_activity_list", payload, signal),
       adminCall("admin_me", {}, signal),
     ]);
+    if (signal?.aborted || generation !== loadGeneration.current) return;
     const nextPrincipal = datesAdminPrincipal(identity);
-    if (!response?.success || !Array.isArray(response.activities) || !nextPrincipal) {
-      if (!signal?.aborted) {
-        setPrincipal(null);
-        setState("error");
-      }
+    const decoded = decodeDatesActivityList(response, { page, limit: PAGE_SIZE });
+    if (!decoded || !nextPrincipal) {
+      setRows([]); setPrincipal(null); setState("error");
       return;
     }
-    setRows(response.activities as ActivityRow[]);
-    setTotal(Number(response.total) || 0);
+    setRows(decoded.activities);
+    setTotal(decoded.total);
     setPrincipal(nextPrincipal);
     setState("ready");
-  }, [filters, page, rows.length]);
+  }, [filters, page]);
 
   useEffect(() => {
     const controller = new AbortController();
     void load(controller.signal);
-    return () => controller.abort();
-  }, [filters, page]); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => { controller.abort(); ++loadGeneration.current; };
+  }, [load]);
 
   function apply(event: React.FormEvent) {
     event.preventDefault();
@@ -186,6 +170,9 @@ export default function DatesActivitiesPage() {
       />
       <DatesAdminTabs />
       <form className="dates-filter-grid" onSubmit={apply}>
+        <label className="field"><span>{external("origin.label")}</span><select value={draft.origin} onChange={(event) => setDraft((value) => ({ ...value, origin: event.target.value }))}>
+          {["all", "member", "external"].map((origin) => <option key={origin} value={origin}>{external(`origin.${origin}`)}</option>)}
+        </select></label>
         <label className="field dates-search-field">
           <span>{t("searchLabel")}</span>
           <input value={draft.search} maxLength={100} placeholder={t("searchPlaceholder")} onChange={(event) => setDraft((value) => ({ ...value, search: event.target.value }))} />
@@ -266,8 +253,9 @@ export default function DatesActivitiesPage() {
                 <thead><tr><th>{t("activity")}</th><th>{t("host")}</th><th>{t("state")}</th><th>{t("schedule")}</th><th>{t("attendance")}</th><th>{t("reports")}</th><th><span className="sr-only">{common("actions")}</span></th></tr></thead>
                 <tbody>{rows.map((row) => (
                   <tr key={row.activity_id}>
-                    <td><div className="cell-stack"><strong>{row.title || t("untitled")}</strong><small>{row.activity_id} · {t(`values.${row.activity_type}`)}</small><small>{[row.city, row.country_code].filter(Boolean).join(", ") || "—"}</small></div></td>
-                    <td><div className="cell-stack"><span>{row.host?.display_name || `#${row.host?.uid || 0}`}</span><small>UID {row.host?.uid || 0}</small></div></td>
+                    <td><div className="cell-stack"><strong>{row.title || t("untitled")}</strong>{row.host === null && <span className="badge badge-demo">{external("badge")}</span>}<small>{row.activity_id} · {t(`values.${row.activity_type}`)}</small><small>{[row.city, row.country_code].filter(Boolean).join(", ") || "—"}</small></div></td>
+                    <td><div className="cell-stack">{row.host === null ? <><span>{row.organizer_name}</span><small>{external(`tierValues.${row.verification_tier}`)}</small><Link href={`/dates/external/${row.external_event_id}`}>{external("editor.detailTitle")}</Link></>
+                      : <><span>{row.host.display_name || `#${row.host.uid}`}</span><small>UID {row.host.uid}</small></>}</div></td>
                     <td><div className="cell-stack"><span className={badgeClass(row.lifecycle, row.soft_deleted)}>{row.soft_deleted ? t("softDeleted") : t(`values.${row.lifecycle}`)}</span><span className={badgeClass(row.moderation_state)}>{t(`values.${row.moderation_state}`)}</span></div></td>
                     <td><div className="cell-stack"><span>{t(`values.${row.time_mode}`)}</span><small>{row.start_at ? formatDate(row.start_at, locale, true) : "—"}</small></div></td>
                     <td>{row.going_count}{row.maximum_people ? ` / ${row.maximum_people}` : ""}<small className="table-subline">{t("pendingCount", { count: row.pending_count })}</small></td>

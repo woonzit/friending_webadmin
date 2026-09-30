@@ -1,0 +1,32 @@
+{
+    "success": true,
+    "status_code": 200,
+    "manual_entry": true,
+    "provider": "google_maps",
+    "attribution": "Google Maps",
+    "server_now": 1790000000,
+    "available": true,
+    "unavailable_reason": null,
+    "places": [
+        {
+            "place_id": "ChIJ_synthetic_venue",
+            "name": "Közösségi tér",
+            "formatted_address": "Budapest, Közösségi tér 1.",
+            "latitude": 47.4979,
+            "longitude": 19.0402,
+            "city": "Budapest",
+            "country_code": "HU",
+            "timezone": "Europe/Budapest",
+            "public_venue_warning": false,
+            "attributions": [
+                {
+                    "provider": "Synthetic provider",
+                    "uri": "https://source.example.test/"
+                }
+            ]
+        }
+    ],
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
