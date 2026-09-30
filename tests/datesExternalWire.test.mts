@@ -10,14 +10,14 @@ import { datesExternalResolutionReceipt, prepareDatesExternalResolution, runDate
 import { datesConfigurationRawValue, datesSettingEffectiveText } from "../lib/datesAdmin.ts";
 import { DATES_RUNTIME_HELP_GROUPS } from "../lib/datesRuntimeHelp.ts";
 
-// Actual Router/Webadmin capture, byte-identical to Core b522827c9b10745610dcdef52777e56e951c1401.
+// Actual Router/Webadmin capture, byte-identical to Core e6316dfcf248cbc91907200e727cc74fbfb1dcb1.
 // The source/generator pin is intentionally independent of the vendored manifest.
 const DIRECTORY = new URL("./fixtures/dates_external_admin_wire/", import.meta.url);
-const SOURCE = "83872f97d70ff8bfa381fd98c9ee47578febfabc";
-const SOURCE_SHA = "e07353485e3c68eb3bc419c8c116c8ff461d4f9cacc3cfdec3bcd32cf46fca2f";
-const MANIFEST_SHA = "6ee836e010de97868bdc3988cfe92ebe65d7b50c34b3b95d69dcf71393dd128b";
-const GENERATOR_SHA = "8a63d3657be4c35240c120144a6f19f4e3da71585316fac9548154c9870737d8";
-const SET_SHA = "8a0b8fac6340a2d28c119e46f5bd2be3863c073b18c49368710b95ceb214775c";
+const SOURCE = "c1db4d13d5383f7a7495209f3cebd0fd2e501626";
+const SOURCE_SHA = "47aeeac8dffad44e00ad1408ff7ae0cbdea5d799e5e32c9cebcdb05cfda95863";
+const MANIFEST_SHA = "ba2d99708acee8425f314228ff5fd5123a15ca5a5d8fe9c28aa00e42986aba2a";
+const GENERATOR_SHA = "0cbacbf3927c17945f792a12743284d88eedac37c2a72c2bf7f0c3a84387f9b9";
+const SET_SHA = "31192ee2d6c17fcfa4305d03fde6d44f653ee90645863ce8d91594fdfc96f26a";
 const LISTS = ["admin", "canceled", "empty", "filter-empty", "page-empty", "viewer"];
 const DETAILS = ["admin", "canceled", "estimated", "viewer"];
 const PLACES = ["available", "empty", "rate-limited", "unavailable"];
@@ -35,7 +35,7 @@ const CONSOLE_REFUSALS = ["activity-command-stale", "activity-command-viewer", "
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`${name}.json`, DIRECTORY), "utf8"));
 
-test("external console corpus is the complete 88-response genuine capture with independent provenance pins", () => {
+test("external console corpus is the complete 95-response genuine capture with independent provenance pins", () => {
   const manifest = fixture("manifest");
   assert.equal(hash(readFileSync(new URL("manifest.json", DIRECTORY))), MANIFEST_SHA);
   assert.equal(manifest.schema_version, 1);
@@ -44,7 +44,7 @@ test("external console corpus is the complete 88-response genuine capture with i
   assert.equal(manifest.source_checksum, SOURCE_SHA);
   assert.equal(manifest.provenance.generator, "tests/dates_external_admin_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
-  assert.equal(manifest.fixture_count, 88);
+  assert.equal(manifest.fixture_count, 95);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   const names = ["admin-activity-list-external.json", ...LISTS.map((name) => `admin-list-${name}.json`),
     ...DETAILS.map((name) => `admin-detail-${name}.json`), ...PLACES.map((name) => `admin-places-${name}.json`),
@@ -53,7 +53,9 @@ test("external console corpus is the complete 88-response genuine capture with i
     "admin-configuration-default-off.json", "admin-configuration-publishing-on.json",
     ...MODERATION_DETAILS.map((name) => `admin-moderation-detail-${name}.json`),
     ...["queue", "evidence", "claim", "claim-replay", "hold-place", "hold-release", ...MODERATION_DECISIONS].map((name) => `admin-moderation-${name}.json`),
-    ...CONSOLE_REFUSALS.map((name) => `admin-${name}-denied.json`)].sort();
+    ...CONSOLE_REFUSALS.map((name) => `admin-${name}-denied.json`),
+    "admin-reason-list-external.json", "admin-reason-save-external.json", "admin-reason-save-external-replay.json",
+    ...["cohort", "member-cohort", "mixed", "save-viewer"].map((name) => `admin-reason-${name}-denied.json`)].sort();
   assert.deepEqual(manifest.fixtures.map((entry: { file: string }) => entry.file), names);
   assert.deepEqual(readdirSync(DIRECTORY).sort(), ["manifest.json", ...names].sort());
   const lines = manifest.fixtures.map((entry: { file: string; sha256: string; consumer: string; http_status: number; status_code: number }) => {

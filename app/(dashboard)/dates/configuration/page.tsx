@@ -29,6 +29,7 @@ import {
   datesLiveRetentionUnset,
 } from "@/lib/datesRuntimeHelp";
 import { formatDate } from "@/lib/format";
+import { datesAdminReasons, datesReasonSaveReceipt, type DatesAdminReason as Reason } from "@/lib/datesReasons";
 
 type Setting = {
   key: string;
@@ -60,26 +61,6 @@ type ActivityType = {
   updated_at: number | null;
 };
 
-type Reason = {
-  reason_id: string;
-  scope: string;
-  key: string;
-  name_en: string;
-  name_hu: string;
-  explanation_en: string | null;
-  explanation_hu: string | null;
-  active: boolean;
-  order: number;
-  severity: string;
-  comment_required: boolean;
-  entry_points: string[];
-  escalation_category: string | null;
-  system_owned: boolean;
-  catalog_version: number;
-  revision: number;
-  updated_at: number;
-};
-
 type Feedback = { tone: "success" | "error"; text: string };
 
 export default function DatesConfigurationPage() {
@@ -104,7 +85,8 @@ export default function DatesConfigurationPage() {
       adminCall("admin_me"),
     ]);
     const nextPrincipal = datesAdminPrincipal(identity);
-    if (!configuration?.success || !Array.isArray(configuration.settings) || !Array.isArray(configuration.activity_types) || !reasonResponse?.success || !Array.isArray(reasonResponse.reasons) || !nextPrincipal) {
+    const nextReasons = datesAdminReasons(reasonResponse, scope);
+    if (!configuration?.success || !Array.isArray(configuration.settings) || !Array.isArray(configuration.activity_types) || !nextReasons || !nextPrincipal) {
       setPrincipal(null);
       setState("error");
       return;
@@ -113,7 +95,7 @@ export default function DatesConfigurationPage() {
       (setting) => datesRuntimeSettingVisible(setting?.key),
     ));
     setActivityTypes(configuration.activity_types as ActivityType[]);
-    setReasons(reasonResponse.reasons as Reason[]);
+    setReasons(nextReasons);
     setLimitation(String(configuration.known_limitation || ""));
     setPrincipal(nextPrincipal);
     setState("ready");
@@ -263,7 +245,7 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
   const [escalationCategory, setEscalationCategory] = useState(reason?.escalation_category || "");
   const [auditReason, setAuditReason] = useState("");
   const [busy, setBusy] = useState(false);
-  const allowedEntryPoints = datesReportEntryPointsFor(scope).join(", ");
+  const allowedEntryPoints = datesReportEntryPointsFor(scope, reason?.entry_points).join(", ");
 
   function showEntryPointsError(message: string) {
     setEntryPointsError(message);
@@ -272,17 +254,19 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
-    if (auditReason.trim().length < 3 || busy) return;
-    const parsedEntryPoints = datesReasonEntryPoints(scope, entryPoints);
+    if (!canManage || auditReason.trim().length < 3 || busy) return;
+    const parsedEntryPoints = datesReasonEntryPoints(scope, entryPoints, reason?.entry_points);
     if (!parsedEntryPoints.ok) {
       showEntryPointsError(parsedEntryPoints.error === "empty"
         ? t("entryPointsEmpty")
+        : parsedEntryPoints.error === "mixedExternal" ? t("entryPointsMixedExternal")
+        : parsedEntryPoints.error === "cohort" ? t("entryPointsCohort")
         : t("entryPointsUnknown", { values: parsedEntryPoints.tokens.join(", "), allowed: allowedEntryPoints }));
       return;
     }
     setEntryPointsError(null);
     setBusy(true);
-    const response = await adminCall("dates_reason_save", {
+    const submitted = {
       reason_id: reason?.reason_id || "", scope, key: keyName.trim().toLowerCase(),
       name_en: nameEn.trim(), name_hu: nameHu.trim(),
       explanation_en: explanationEn.trim() || null, explanation_hu: explanationHu.trim() || null,
@@ -290,7 +274,8 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
       entry_points: parsedEntryPoints.entryPoints, escalation_category: escalationCategory.trim() || null,
       ...(reason ? { expected_revision: reason.revision } : {}),
       reason: auditReason.trim(), idempotency_key: createAdminIdempotencyKey("dates-reason-save"),
-    });
+    };
+    const response = await adminCall("dates_reason_save", submitted);
     setBusy(false);
     if (!response?.success) {
       if (datesReasonEntryPointsRefused(response?.error)) {
@@ -300,6 +285,7 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
       onError(response?.error);
       return;
     }
+    if (!datesReasonSaveReceipt(response, submitted)) { onError("dates-reason-contract-invalid"); return; }
     await onSaved();
   }
 

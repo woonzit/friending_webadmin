@@ -1,13 +1,13 @@
 {
     "schema_version": 1,
     "contract": "dates-external-admin-v1",
-    "source_commit": "83872f97d70ff8bfa381fd98c9ee47578febfabc",
-    "source_checksum": "e07353485e3c68eb3bc419c8c116c8ff461d4f9cacc3cfdec3bcd32cf46fca2f",
-    "fixture_count": 88,
-    "fixture_set_sha256": "8a0b8fac6340a2d28c119e46f5bd2be3863c073b18c49368710b95ceb214775c",
+    "source_commit": "c1db4d13d5383f7a7495209f3cebd0fd2e501626",
+    "source_checksum": "47aeeac8dffad44e00ad1408ff7ae0cbdea5d799e5e32c9cebcdb05cfda95863",
+    "fixture_count": 95,
+    "fixture_set_sha256": "31192ee2d6c17fcfa4305d03fde6d44f653ee90645863ce8d91594fdfc96f26a",
     "provenance": {
         "generator": "tests/dates_external_admin_fixture_dump.php",
-        "generator_sha256": "8a63d3657be4c35240c120144a6f19f4e3da71585316fac9548154c9870737d8",
+        "generator_sha256": "0cbacbf3927c17945f792a12743284d88eedac37c2a72c2bf7f0c3a84387f9b9",
         "wire_adapters": [
             "Friending\\Core\\Router::dispatch -> Friending\\Support\\Webadmin::reply/noStoreReply"
         ],
@@ -152,6 +152,7 @@
             "src/Services/DatesExternalEventPublisher.php",
             "src/Services/DatesExternalPlacesProvider.php",
             "src/Services/DatesExternalPlacesService.php",
+            "src/Services/DatesExternalReportService.php",
             "src/Services/DatesLiveRetentionService.php",
             "src/Services/DatesMembershipBundleService.php",
             "src/Services/DatesModerationCommandService.php",
@@ -161,6 +162,7 @@
             "src/Services/DatesModerationTargetService.php",
             "src/Services/DatesPhotoCleanupService.php",
             "src/Services/DatesPrepublicationModerationService.php",
+            "src/Services/DatesReasonAdminService.php",
             "src/Services/DatesReferenceService.php",
             "src/Services/DatesRuntimeConfiguration.php",
             "src/Services/DatesTransaction.php",
@@ -755,6 +757,55 @@
             "http_status": 200,
             "status_code": 403,
             "sha256": "7d9ebd966d59ce972e32d518a670ffe96994baf42d2b0c92dbc5eebebd22cd0e"
+        },
+        {
+            "file": "admin-reason-cohort-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "ca724a20775513e9301988b5d9a091ca534c1b3e0d5d4e3871ece93e015fbc81"
+        },
+        {
+            "file": "admin-reason-list-external.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "b9618dc94321025e4f40fa22167f2f8c9ee78210a83339b88bec3994580d2abd"
+        },
+        {
+            "file": "admin-reason-member-cohort-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "ca724a20775513e9301988b5d9a091ca534c1b3e0d5d4e3871ece93e015fbc81"
+        },
+        {
+            "file": "admin-reason-mixed-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "ca724a20775513e9301988b5d9a091ca534c1b3e0d5d4e3871ece93e015fbc81"
+        },
+        {
+            "file": "admin-reason-save-external-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "02fb8dbb3d4fa0dec43b84b9ccca21598c1c0bdb4f5bde3bc327d2125b92c02d"
+        },
+        {
+            "file": "admin-reason-save-external.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "924c214823eeb94e211045ef38f6d2d89e34cad67be57d2719db57d61fe1ef31"
+        },
+        {
+            "file": "admin-reason-save-viewer-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
         },
         {
             "file": "admin-reverify.json",

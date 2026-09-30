@@ -17,15 +17,28 @@ can still replay after the switch is turned off. Safety/lifecycle commands remai
 available according to their own capabilities and state rules.
 
 The incremental console capture in `tests/fixtures/dates_external_admin_wire`
-comes byte-for-byte from Core `b522827c9b10745610dcdef52777e56e951c1401`.
-Its manifest names generator/source `83872f97d70ff8bfa381fd98c9ee47578febfabc`.
+comes byte-for-byte from Core `e6316dfcf248cbc91907200e727cc74fbfb1dcb1`.
+Its manifest names generator/source `c1db4d13d5383f7a7495209f3cebd0fd2e501626`.
 `tests/datesExternalWire.test.mts` independently pins its manifest, generator,
-source checksum, complete 88-file inventory and every response byte hash.
-The original 43 editor bodies are unchanged; the 45 additions cover hostless
+source checksum, complete 95-file inventory and every response byte hash.
+The original 43 editor bodies are unchanged; the next 45 additions cover hostless
 moderation, existing activity-detail/lifecycle adapters and settings. They use
 actual routed responses, audits and completed receipts; case/report intake is
 synthetic setup, not proof of member intake. This incremental capture is **not
-the final P1 release pin**; final provider repinning remains required.
+the final P1 release pin**; final provider repinning remains required. Seven more
+actual routed bodies cover the external reason catalogue, a seeded copy-only
+save and replay, mixed/cohort refusals and a viewer capability refusal. Every
+preceding 88-body response remains byte-identical.
+
+The existing reason editor accepts `external_event` only for activity reasons
+and only as a singleton. A stored reason cannot cross the member/external
+boundary; its bilingual copy, severity, order and same-cohort entry points stay
+editable. The five unreleased external seeds use canonical
+`reason_activity_{wrong_details,canceled,fake_or_scam,inappropriate,duplicate}`
+IDs. No released IDs are renamed. The virtual `reason_activity_external_other`
+fallback is not a stored editable row. The console validates the full catalogue
+and binds successful save receipts to the submitted identity, revision and
+fields; malformed/unknown replies never become a successful or empty catalogue.
 
 ## Served actions and authority
 

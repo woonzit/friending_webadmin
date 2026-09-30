@@ -479,7 +479,8 @@ test("report-reason entry points use the vocabulary Core seeds and clients send 
     for (const value of [...seeded[scope], ...sent[scope]]) {
       assert.ok(allowed.includes(value), `${scope} allows ${value}`);
     }
-    assert.deepEqual(datesReasonEntryPoints(scope, allowed.join(",")), { ok: true, entryPoints: [...allowed] });
+    const member = allowed.filter((entry) => entry !== "external_event");
+    assert.deepEqual(datesReasonEntryPoints(scope, member.join(",")), { ok: true, entryPoints: member });
   }
   assert.deepEqual(datesReportEntryPointsFor("owner"), []);
 
@@ -501,7 +502,7 @@ test("report-reason entry points use the vocabulary Core seeds and clients send 
   assert.deepEqual(datesReasonEntryPoints("owner", "detail"), { ok: false, error: "unknown", tokens: ["detail"] });
 
   const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
-  assert.match(page, /datesReasonEntryPoints\(scope, entryPoints\)/);
+  assert.match(page, /datesReasonEntryPoints\(scope, entryPoints, reason\?\.entry_points\)/);
   assert.match(page, /entry_points: parsedEntryPoints\.entryPoints/);
   assert.match(page, /placeholder=\{allowedEntryPoints\}/);
   assert.equal(page.includes("entryPointsPlaceholder"), false);

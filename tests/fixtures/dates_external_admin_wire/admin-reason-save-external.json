@@ -1,0 +1,32 @@
+{
+    "success": true,
+    "status_code": 200,
+    "reason": {
+        "reason_id": "reason_activity_wrong_details",
+        "scope": "activity",
+        "key": "wrong_details",
+        "name_en": "Incorrect event details",
+        "name_hu": "Pontatlan eseményadatok",
+        "explanation_en": "The event time, venue or other information is incorrect.",
+        "explanation_hu": "Az esemény időpontja, helyszíne vagy más adata hibás.",
+        "active": true,
+        "order": 10,
+        "severity": "medium",
+        "comment_required": true,
+        "entry_points": [
+            "external_event"
+        ],
+        "escalation_category": "integrity",
+        "system_owned": true,
+        "catalog_version": 1,
+        "revision": 2,
+        "updated_at": 1790000000
+    },
+    "revision": 2,
+    "audit_id": "aud_00000000000000000000000000000018",
+    "idempotency_replayed": false,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

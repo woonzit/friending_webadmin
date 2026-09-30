@@ -380,24 +380,30 @@ export const DATES_REPORT_SCOPES = ["user", "activity", "message", "review"] as 
  * `message`) stay valid so a seeded reason can still be edited and saved.
  * Core validates a saved reason against the same per-scope lists
  * (DatesContract::REPORT_ENTRY_POINTS) and refuses an empty list or any other
- * value with dates-report-entry-points-invalid.
+ * value with dates-report-entry-points-invalid. P1 external_event is activity-
+ * only and must stand alone; an existing reason's member/external cohort is
+ * immutable even though its labels and other entry points remain editable.
  */
 export const DATES_REPORT_ENTRY_POINTS: Readonly<Record<typeof DATES_REPORT_SCOPES[number], readonly string[]>> = {
   user: ["detail", "participant", "profile", "check_in", "chat_header", "direct_chat_header", "message_action"],
-  activity: ["detail", "card", "check_in"],
+  activity: ["detail", "card", "check_in", "external_event"],
   message: ["message_action", "message"],
   review: ["review"],
 };
 
-export function datesReportEntryPointsFor(scope: string): readonly string[] {
-  return Object.hasOwn(DATES_REPORT_ENTRY_POINTS, scope)
+export function datesReportEntryPointsFor(scope: string, existing?: readonly string[]): readonly string[] {
+  const allowed = Object.hasOwn(DATES_REPORT_ENTRY_POINTS, scope)
     ? DATES_REPORT_ENTRY_POINTS[scope as keyof typeof DATES_REPORT_ENTRY_POINTS]
     : [];
+  return existing === undefined ? allowed
+    : allowed.filter((entry) => (entry === "external_event") === existing.includes("external_event"));
 }
 
 export type DatesReasonEntryPoints =
   | { ok: true; entryPoints: string[] }
   | { ok: false; error: "empty" }
+  | { ok: false; error: "mixedExternal" }
+  | { ok: false; error: "cohort" }
   | { ok: false; error: "unknown"; tokens: string[] };
 
 /**
@@ -406,7 +412,7 @@ export type DatesReasonEntryPoints =
  * vocabulary are refused and named, because Core stores both and the reason
  * then either matches no report or is refused on every submission.
  */
-export function datesReasonEntryPoints(scope: string, value: string): DatesReasonEntryPoints {
+export function datesReasonEntryPoints(scope: string, value: string, existing?: readonly string[]): DatesReasonEntryPoints {
   const allowed = datesReportEntryPointsFor(scope);
   const tokens = Array.from(new Set(
     value.split(",")
@@ -416,6 +422,9 @@ export function datesReasonEntryPoints(scope: string, value: string): DatesReaso
   if (tokens.length === 0) return { ok: false, error: "empty" };
   const unknown = tokens.filter((item) => !allowed.includes(item));
   if (unknown.length > 0) return { ok: false, error: "unknown", tokens: unknown };
+  const external = tokens.includes("external_event");
+  if (external && tokens.length !== 1) return { ok: false, error: "mixedExternal" };
+  if (existing !== undefined && external !== existing.includes("external_event")) return { ok: false, error: "cohort" };
   return { ok: true, entryPoints: tokens };
 }
 
