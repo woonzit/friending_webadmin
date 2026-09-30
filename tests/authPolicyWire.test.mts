@@ -15,11 +15,12 @@ import {
  * provider bytes and preserve the app-facing inert-format witnesses.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/auth_policy_wire/", import.meta.url);
-const FIXTURE_ACCEPTED_CORE_TIP = "476b1b74dd78eb503ea5b2090d0aec3c3b96b5b2";
-const FIXTURE_SOURCE_COMMIT = "0ecd34e2fc2cd7d8f28398b9ca1f93ecb53a6aa4";
+const FIXTURE_ACCEPTED_CORE_TIP = "8fe14ecf8507ab20a7c9014063db276fc96c054b";
+// T-872: source-only manifest refresh to Core 8fe14ecf; bodies and generator unchanged.
+const FIXTURE_SOURCE_COMMIT = "9b32a516a7c10ef3b6b3072a9e45bd2cac409f23";
 const FIXTURE_GENERATOR_SHA256 = "945e131e811f2eef72e6fd7a6324516577753b8238108d6c797fa1f20887a80d";
 const FIXTURE_SET_SHA256 = "512f4af57e84bc57e5705ed0d1111b8c5082efc54ea6f221636e2c6b0bbeb6cf";
-const FIXTURE_MANIFEST_SHA256 = "23afa3dd00c58ab6a03e96cbe6dcd00186d26e353c1e9b2754d5ec9cb3cf4ac0";
+const FIXTURE_MANIFEST_SHA256 = "6b4ce58b128acf315c39cc010a5fc068744407d2fb4d789c34274a24920e614a";
 const FIXTURE_BODY_FILES = [
   "appconfig-all-phone-regions.json",
   "appconfig-default-hun.json",

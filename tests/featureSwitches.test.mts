@@ -64,12 +64,13 @@ const RENDER_MESSAGES = {
 // unchanged; the route, `source_commit`, the generator digest and the
 // recorded source paths (WebadminRolePolicy.php joined earlier) moved.
 // T-866 refreshes only the source-commit and manifest pins to current Core.
-const FIXTURE_ACCEPTED_CORE_TIP = "886c7110e43a2505a9f5e5ce32f860c904a57659";
-const FIXTURE_SOURCE_COMMIT = "0ecd34e2fc2cd7d8f28398b9ca1f93ecb53a6aa4";
+const FIXTURE_ACCEPTED_CORE_TIP = "8fe14ecf8507ab20a7c9014063db276fc96c054b";
+// T-872: source-only manifest refresh to Core 8fe14ecf; bodies and generator unchanged.
+const FIXTURE_SOURCE_COMMIT = "b992c6e9902eb5ba2163efb231468f99049b8ad3";
 const FIXTURE_CONTRACT_MANIFEST_SHA256 = "c854019e6be2046ad81af294719774beca04346d5f078b746daba313a787f083";
 const FIXTURE_GENERATOR_SHA256 = "cf089b491770757072fd5bdcc2edadfd51582aa0c5befe17c5e6f5d9beb86895";
 const FIXTURE_SET_SHA256 = "f8af93a1dee24a7c83cfd8deb03757bead16d0c2fd13494a73dbfc778db1fd8b";
-const FIXTURE_MANIFEST_SHA256 = "ebf7bef3399d7151bad93a3f7a9c0fb79d62030b0ee48e15aee408642dd6454e";
+const FIXTURE_MANIFEST_SHA256 = "7cf18e1811c42205dc0cd7d0df1f4a73d6c2bce90738853f3b965f5a5e1d96fd";
 const FIXTURE_BODY_COUNT = 50;
 
 const FIXTURE_BODY_FILES = [

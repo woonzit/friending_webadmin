@@ -39,8 +39,9 @@ import {
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/persona_screens_wire/", import.meta.url);
 const FIXTURE_CONTRACT_VERSION = 1;
-const FIXTURE_SOURCE_COMMIT = "f2a48f11d45f6fde06ac24ac2f858d97c426e613";
-const FIXTURE_MANIFEST_SHA256 = "4fdc3a344565fb07c89abecd6edca163c51ded67bd603c7d524cc91a0cc2dd86";
+// T-872: source-only manifest refresh to Core 8fe14ecf; bodies and generator unchanged.
+const FIXTURE_SOURCE_COMMIT = "9b32a516a7c10ef3b6b3072a9e45bd2cac409f23";
+const FIXTURE_MANIFEST_SHA256 = "8f92500b8ab5828bb74031dc2a850d1f27dd75657a8325ff9e38cbd2cce3eccd";
 const FIXTURE_SET_SHA256 = "58ca9942651ed65adda2516f9ed2d38123b2a70276c6262bfe8a44d0193b1784";
 const FIXTURE_CONTRACT_MANIFEST_SHA256 =
   "68bc244bc2781d1679bb88b87d4145a24fb1d9cafaf9c87bafdb7e9757a29f74";

@@ -31,17 +31,18 @@ import {
 } from "../lib/appearanceRules.ts";
 
 /**
- * T-493/T-496/T-501's production-generated wire corpus (lead-accepted Core tip `94b891bbf8e138906f1664293b9ddba813a6f479`,
+ * T-493/T-496/T-501's production-generated wire corpus (lead-accepted Core tip `8fe14ecf8507ab20a7c9014063db276fc96c054b`,
  * `tests/fixtures/appearance_rules_wire/`), copied byte-identically. The production decoders must
  * accept every Webadmin body exactly as Core publishes it and classify every refusal by the
  * manifest's closed status map — this is the cross-lane binding the released consumer rests on.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/appearance_rules_wire/", import.meta.url);
-const FIXTURE_ACCEPTED_CORE_TIP = "94b891bbf8e138906f1664293b9ddba813a6f479";
-const FIXTURE_SOURCE_COMMIT = "0ecd34e2fc2cd7d8f28398b9ca1f93ecb53a6aa4";
+const FIXTURE_ACCEPTED_CORE_TIP = "8fe14ecf8507ab20a7c9014063db276fc96c054b";
+// T-872: source-only manifest refresh to Core 8fe14ecf; bodies and generator unchanged.
+const FIXTURE_SOURCE_COMMIT = "9b32a516a7c10ef3b6b3072a9e45bd2cac409f23";
 const FIXTURE_GENERATOR_SHA256 = "4b65adb0dcd60dd1dd69d9d1b789d5d92ef8142f92a9fc3ceb9d83bfae811834";
 const FIXTURE_SET_SHA256 = "bb11653a043ad328d7794f52e8f8d90a450aa799aff3ddec04474118344288e7";
-const FIXTURE_MANIFEST_SHA256 = "174b4157b7ec47c0bcfc70b1b857f14f1e3c99137f456ce6c3dfee6466b0a241";
+const FIXTURE_MANIFEST_SHA256 = "025e602a74244e1640f7af6da1ba4947d72582493d1b338ddb5d0ab928b2e709";
 const FIXTURE_BODY_FILES = [
   "app-appearance-default-en.json",
   "app-appearance-geo-hu.json",

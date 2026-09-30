@@ -2,7 +2,7 @@
     "schema_version": 1,
     "contract_version": 1,
     "app_contract_version": 2,
-    "source_commit": "0ecd34e2fc2cd7d8f28398b9ca1f93ecb53a6aa4",
+    "source_commit": "b992c6e9902eb5ba2163efb231468f99049b8ad3",
     "contract_manifest_sha256": "c854019e6be2046ad81af294719774beca04346d5f078b746daba313a787f083",
     "fixture_set_sha256": "f8af93a1dee24a7c83cfd8deb03757bead16d0c2fd13494a73dbfc778db1fd8b",
     "provenance": {

@@ -1,7 +1,7 @@
 {
     "schema_version": 1,
     "contract_version": 1,
-    "source_commit": "2ef32c6be172c2120e040d6b74f786fc022d653c",
+    "source_commit": "9b32a516a7c10ef3b6b3072a9e45bd2cac409f23",
     "contract_manifest_sha256": "3396392034cf102d25d306951d68a769b079d7237a76337dfdaba5b2bb1a5fdd",
     "fixture_set_sha256": "1c26425543a77b05933ec9f38c52ab89855f24d287554196c0f997d2b89e4882",
     "provenance": {

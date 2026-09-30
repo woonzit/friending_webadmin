@@ -9,11 +9,12 @@ import DatesCaseHistory from "../components/DatesCaseHistory.tsx";
 import { DatesCaseReadFence, datesCaseDetail, datesEvidenceRead, datesLegalHoldAllowed } from "../lib/datesModerationRead.ts";
 import type { DatesAdminPrincipal } from "../lib/datesAdmin.ts";
 
-// Byte-for-byte provider capture from Core tip 66cfbe39e9fca2ea2e42fba64c29aececbc94120.
+// Byte-for-byte provider corpus from released Core tip 8fe14ecf8507ab20a7c9014063db276fc96c054b.
 // Source commit names the generator/runtime inputs, not its mechanical capture commit.
 const DIRECTORY = new URL("./fixtures/dates_moderation_wire/", import.meta.url);
-const SOURCE = "e27c2847bc500ea1135cdf432335b181ea26a8cb";
-const MANIFEST_SHA = "ede2fddfdbb00a3daf570277ac0d3c06db7eb3209e2053b92b451595c225f4ee";
+// T-872: source-only manifest refresh to Core 8fe14ecf; bodies and generator unchanged.
+const SOURCE = "9b32a516a7c10ef3b6b3072a9e45bd2cac409f23";
+const MANIFEST_SHA = "26cdfea5c282672e559305601ca407fa0d7c01148331b07973e2729b6d2a067b";
 const GENERATOR_SHA = "e212ec243b70589995a8d6c15c38873724f84d4fb9185f87be77cff2a5202354";
 const SET_SHA = "f1a67c9a0c16b8c9f6e410e5ed4691351e01af8c10f87f387e06726ca768dd1e";
 const hash = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");

@@ -54,7 +54,7 @@ import type { SectionAvailabilityConfiguration } from "../lib/sectionAvailabilit
 
 /**
  * Core's production-generated wire corpus (`tests/fixtures/section_teasers_wire/`),
- * copied byte-identically from released Core `66cfbe39` (T-872 provenance
+ * copied byte-identically from released Core `8fe14ecf` (T-872 provenance
  * refresh; all 34 bodies unchanged). Every body came out of the production
  * projection and the production
  * encoders, so this console's decoder is verified against what Core actually
@@ -67,10 +67,11 @@ import type { SectionAvailabilityConfiguration } from "../lib/sectionAvailabilit
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/section_teasers_wire/", import.meta.url);
 /** The accepted Core tip copied for this handoff; the generator source is below. */
-const FIXTURE_ACCEPTED_CORE_TIP = "66cfbe39e9fca2ea2e42fba64c29aececbc94120";
-const FIXTURE_SOURCE_COMMIT = "2ef32c6be172c2120e040d6b74f786fc022d653c";
+const FIXTURE_ACCEPTED_CORE_TIP = "8fe14ecf8507ab20a7c9014063db276fc96c054b";
+// T-872: source-only manifest refresh to Core 8fe14ecf; bodies and generator unchanged.
+const FIXTURE_SOURCE_COMMIT = "9b32a516a7c10ef3b6b3072a9e45bd2cac409f23";
 const FIXTURE_MANIFEST_SHA256 =
-  "3776a4bd4811a3180f11dee2e40969f3d343b5c4ff5a6757d685c7fd6b60f40e";
+  "690070de1452fbb3bf2680e90aec059d89e4acca35111f3074784cf3a7a2a8a7";
 const FIXTURE_SET_SHA256 =
   "1d863d45a2c7b30731984f9b9c16375837e499db1cc564e0f08025aef8842e4d";
 const FIXTURE_CONTRACT_MANIFEST_SHA256 =

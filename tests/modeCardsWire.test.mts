@@ -33,9 +33,10 @@ const FIXTURE_DIRECTORY = new URL("./fixtures/mode_cards_wire/", import.meta.url
 // T-865: copied from Core tip 3f715f3245211c933bfaae53b2398847d42d514e.
 // Three fallback subtitle bodies now use friendship copy (AYI-051). The
 // manifest records the newest scoped source commit, not the mechanical tip.
-const FIXTURE_SOURCE_COMMIT = "bb3a7d6d1046aa2484d700fe40d592fb5edc4a65";
+// T-872: source-only manifest refresh to Core 8fe14ecf; bodies and generator unchanged.
+const FIXTURE_SOURCE_COMMIT = "9b32a516a7c10ef3b6b3072a9e45bd2cac409f23";
 const FIXTURE_MANIFEST_SHA256 =
-  "40ce1b0003fba129d1846d60833be997d9b8b4c5be7d89e95d79d1f07ca5da3f";
+  "89488c35bac23a73f7921f17911858588e1247601f061c814441de4c6565ffa4";
 const FIXTURE_SET_SHA256 =
   "d89d998020d2a1b08ffddc31fc5ddc99455574adf99bfffef490d361d5209836";
 const FIXTURE_CONTRACT_MANIFEST_SHA256 =

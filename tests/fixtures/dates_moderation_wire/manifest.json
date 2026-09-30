@@ -1,7 +1,7 @@
 {
     "schema_version": 1,
     "contract": "dates-moderation-read-v1",
-    "source_commit": "e27c2847bc500ea1135cdf432335b181ea26a8cb",
+    "source_commit": "9b32a516a7c10ef3b6b3072a9e45bd2cac409f23",
     "fixture_set_sha256": "f1a67c9a0c16b8c9f6e410e5ed4691351e01af8c10f87f387e06726ca768dd1e",
     "provenance": {
         "generator": "tests/dates_moderation_fixture_dump.php",
