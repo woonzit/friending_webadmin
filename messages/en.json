@@ -4585,6 +4585,10 @@
       "publishBlocked": "Publication is blocked: {code}. The draft remains saved.",
       "conflict": "Another administrator changed the policy. The authoritative revision is shown; review it before a new command.",
       "invalid": "Core refused the method-policy document ({code}). Nothing became live.",
+      "photoHelp": {
+        "default": "Core refused the default Waiting Room copy ({code}). Review the text and help links. For Gesture photo selfie as the global method, the English and Hungarian defaults must each include a valid HTTPS help link.",
+        "overrides": "Core refused the storefront Waiting Room copy ({code}). Review the text and help links. Every Gesture photo selfie storefront needs a valid HTTPS help link in both English and Hungarian; each link may be inherited from the defaults."
+      },
       "refused": "Core refused the request ({code}). No success was assumed.",
       "pendingMutation": "An exact method-policy command is retained for safe retry.",
       "retryExact": "Retry the exact command",

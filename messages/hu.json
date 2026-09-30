@@ -4585,6 +4585,10 @@
       "publishBlocked": "A közzététel blokkolt: {code}. A draft mentve marad.",
       "conflict": "Egy másik adminisztrátor módosította a szabályzatot. A hiteles revízió látszik; új parancs előtt tekintsd át.",
       "invalid": "A Core elutasította a módszerszabályzat dokumentumát ({code}). Semmi sem vált élővé.",
+      "photoHelp": {
+        "default": "A Core elutasította a Váróterem alapértelmezett szövegét ({code}). Ellenőrizd a szöveget és a súgólinkeket. Ha a globális módszer a gesztusos fotós szelfi, az angol és a magyar alapbeállításokban is meg kell adni egy érvényes HTTPS-súgólinket.",
+        "overrides": "A Core elutasította a Váróterem storefrontonkénti szövegét ({code}). Ellenőrizd a szöveget és a súgólinkeket. A gesztusos fotós szelfit előíró minden storefrontnál angol és magyar nyelven is kell egy érvényes HTTPS-súgólink; ez az adott nyelv alapbeállításából is örökölhető."
+      },
       "refused": "A Core elutasította a kérést ({code}). Nem feltételeztünk sikert.",
       "pendingMutation": "Egy pontos módszerszabályzat-parancs biztonságos újrapróbálásra megmaradt.",
       "retryExact": "Pontos parancs újrapróbálása",

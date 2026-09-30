@@ -970,6 +970,29 @@ export function verificationMethodPendingFrom(value: unknown): VerificationMetho
     : null;
 }
 
+/**
+ * Contextual guidance, not a diagnosis: these Core codes can also reject other
+ * copy fields. Inspect the retained save, never an editor that changed in flight.
+ * Core alone validates the effective photo help links, including inheritance.
+ */
+export function verificationMethodPhotoCopyGuidance(
+  error: VerificationMethodError | null,
+  pending: unknown,
+): "default" | "overrides" | null {
+  if (error !== "verification-method-copy-default-invalid"
+    && error !== "verification-method-copy-overrides-invalid") return null;
+  const command = verificationMethodPendingFrom(pending);
+  if (command?.action !== "verification_method_save") return null;
+  const document = verificationMethodDocument(command.payload.draft_json, "exact");
+  if (!document) return null;
+  if (error === "verification-method-copy-default-invalid" && document.global === "photo") {
+    return "default";
+  }
+  if (error === "verification-method-copy-overrides-invalid"
+    && Object.values(document.overrides).includes("photo")) return "overrides";
+  return null;
+}
+
 export async function verificationMethodPersistBeforeMutation<T>(
   storage: Pick<Storage, "setItem">,
   pending: VerificationMethodPendingMutation,

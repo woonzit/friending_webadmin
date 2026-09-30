@@ -49,6 +49,7 @@ import {
   verificationMethodPendingFrom,
   verificationMethodPendingMutation,
   verificationMethodPersistBeforeMutation,
+  verificationMethodPhotoCopyGuidance,
   verificationMethodReason,
   verificationMethodShouldRetainMutation,
   type MandatoryMethod,
@@ -244,8 +245,13 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     return true;
   }
 
-  function refusalNotice(error: ReturnType<typeof verificationMethodErrorResponse>): Notice {
+  function refusalNotice(
+    error: ReturnType<typeof verificationMethodErrorResponse>,
+    command: VerificationMethodPendingMutation,
+  ): Notice {
     if (error === null) return { tone: "error", text: t("uncertain") };
+    const photoCopy = verificationMethodPhotoCopyGuidance(error, command);
+    if (photoCopy) return { tone: "error", text: t(`photoHelp.${photoCopy}`, { code: error }) };
     if (error === VERIFICATION_METHOD_PHOTO_UNAVAILABLE) {
       return { tone: "error", text: t("photoBlocked.refused") };
     }
@@ -319,7 +325,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     const error = verificationMethodErrorResponse(response);
     if (!verificationMethodShouldRetainMutation(error)) clearPending();
     if (error === VERIFICATION_METHOD_PHOTO_UNAVAILABLE) setPhotoRefused(true);
-    setNotice(refusalNotice(error));
+    setNotice(refusalNotice(error, durable));
     setBusy(false);
   }
 
