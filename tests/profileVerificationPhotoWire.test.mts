@@ -8,7 +8,7 @@ import { readFile, readdir } from "node:fs/promises";
  * method. The Webadmin half of Core's `profile-verification-photo-v1` wire
  * corpus is vendored byte for byte from Core `b094c3ee` (T-868). The manifest
  * binds source `20788534`; the two method-console bodies now include the
- * bilingual photo help links. Core `main` b8b594f5 carries the same bytes.
+ * bilingual photo help links. Core `main` 66cfbe39 carries the same bytes.
  *
  * Only the `webadmin-*` bodies and the manifest are copied. The manifest still
  * lists the iOS rows, so the fixture-set digest is recomputed over every row

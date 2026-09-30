@@ -1,7 +1,7 @@
 {
     "schema_version": 1,
     "contract": "forced-verification-waiting-room-v1.5",
-    "source_commit": "48e3d795d5f92764e14c6e5e92680d7bf88790ab",
+    "source_commit": "2078853481f46911bd74e3613ceb2fabb619431e",
     "fixture_set_sha256": "885c464a5748d534df784590ff69486bcf2619186c873f784951580244e443f1",
     "provenance": {
         "generator": "tests/forced_verification_fixture_dump.php",

@@ -54,8 +54,9 @@ import type { SectionAvailabilityConfiguration } from "../lib/sectionAvailabilit
 
 /**
  * Core's production-generated wire corpus (`tests/fixtures/section_teasers_wire/`),
- * copied byte-identically from the Core commit that introduced it (T-722,
- * D-120). Every body came out of the production projection and the production
+ * copied byte-identically from released Core `66cfbe39` (T-872 provenance
+ * refresh; all 34 bodies unchanged). Every body came out of the production
+ * projection and the production
  * encoders, so this console's decoder is verified against what Core actually
  * publishes rather than against a reading of the contract.
  *
@@ -65,11 +66,11 @@ import type { SectionAvailabilityConfiguration } from "../lib/sectionAvailabilit
  * that never teases, and the whole refusal vocabulary with its field pointers.
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/section_teasers_wire/", import.meta.url);
-/** The Core tip this console was accepted against; the corpus commit is below. */
-const FIXTURE_ACCEPTED_CORE_TIP = "a426ef4b4d1ea5855b487a393214de4bfa7476a2";
-const FIXTURE_SOURCE_COMMIT = "f2a48f11d45f6fde06ac24ac2f858d97c426e613";
+/** The accepted Core tip copied for this handoff; the generator source is below. */
+const FIXTURE_ACCEPTED_CORE_TIP = "66cfbe39e9fca2ea2e42fba64c29aececbc94120";
+const FIXTURE_SOURCE_COMMIT = "2ef32c6be172c2120e040d6b74f786fc022d653c";
 const FIXTURE_MANIFEST_SHA256 =
-  "fd4ef6516ee4c94921fad54dad06c20f4d8d50eba10dcc775ce4aab6fb0a5f04";
+  "3776a4bd4811a3180f11dee2e40969f3d343b5c4ff5a6757d685c7fd6b60f40e";
 const FIXTURE_SET_SHA256 =
   "1d863d45a2c7b30731984f9b9c16375837e499db1cc564e0f08025aef8842e4d";
 const FIXTURE_CONTRACT_MANIFEST_SHA256 =

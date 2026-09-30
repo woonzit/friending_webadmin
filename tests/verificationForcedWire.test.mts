@@ -16,11 +16,11 @@ import {
 
 /**
  * The production-generated wire corpus of the mandatory-verification plane,
- * copied byte-identically from Core `b988f05` (`tests/fixtures/
+ * copied byte-identically from released Core `66cfbe39` (`tests/fixtures/
  * verification_forced_wire/`).
  *
- * T-617 re-pin. The corpus moved for three reasons and this file pins all
- * three:
+ * T-617 introduced the current body shapes at Core `b988f05` for three reasons;
+ * this file pins all three:
  *
  * 1. `verification_forced_save` is now a hard refusal — Core answers
  *    `verification-forced-read-only` (logical 409) and no longer writes. The
@@ -40,12 +40,12 @@ import {
  */
 const FIXTURE_DIRECTORY = new URL("./fixtures/verification_forced_wire/", import.meta.url);
 const FIXTURE_CONTRACT = "forced-verification-waiting-room-v1.5";
-/** T-866: current Core provenance and route census; all 37 fixture bodies remain unchanged. */
-const FIXTURE_SOURCE_COMMIT = "48e3d795d5f92764e14c6e5e92680d7bf88790ab";
+/** T-872: current Core provenance; all 37 fixture bodies remain unchanged. */
+const FIXTURE_SOURCE_COMMIT = "2078853481f46911bd74e3613ceb2fabb619431e";
 /** Was `59e521560ecdd90a6efd836a9ebe055aee4dc731b2b4ddb4ee3d058552792c0e` before T-617. */
 const FIXTURE_SET_SHA256 = "885c464a5748d534df784590ff69486bcf2619186c873f784951580244e443f1";
 const FIXTURE_GENERATOR_SHA256 = "0ebd65a7ef91ba2e24f4c12e6089057641985ae2bc4825fe42d573629c161a06";
-const FIXTURE_MANIFEST_SHA256 = "037be9152afa9511ed4418cd9b5fe97efafeb9063f8266fd5180f0411db1fcfd";
+const FIXTURE_MANIFEST_SHA256 = "e28a08d049acae53c178e42b7eea59bbee5e8949a6ddf7ebe9aa6e24a2e47311";
 /** The legacy `data.verification` block's own hash on all three own reads (it moved with T-617; see below). */
 const FIXTURE_COMPATIBILITY_SHA256 = "87793955d01bc71e63f2ac0d37fcf58009b3a85b4dad719c24e65da3855d2d26";
 const FIXTURE_BODY_COUNT = 37;

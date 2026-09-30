@@ -22,12 +22,13 @@ import {
 } from "../lib/authPolicyConfiguration.ts";
 
 const FIXTURE_DIRECTORY = new URL("./fixtures/section_availability_wire/", import.meta.url);
-const FIXTURE_ACCEPTED_CORE_TIP = "8894352a7d8d462c0f9c7899114305ce8249a727";
-const FIXTURE_SOURCE_COMMIT = "0ecd34e2fc2cd7d8f28398b9ca1f93ecb53a6aa4";
+/** T-872 handoff: released Core provenance; all 14 bodies remain unchanged. */
+const FIXTURE_ACCEPTED_CORE_TIP = "66cfbe39e9fca2ea2e42fba64c29aececbc94120";
+const FIXTURE_SOURCE_COMMIT = "2ef32c6be172c2120e040d6b74f786fc022d653c";
 const FIXTURE_CONTRACT_MANIFEST_SHA256 = "3396392034cf102d25d306951d68a769b079d7237a76337dfdaba5b2bb1a5fdd";
 const FIXTURE_GENERATOR_SHA256 = "539bbfc3998e1a5fce62eb93942671e6ba5d8934b999c7fdf842cdad6901b3a5";
 const FIXTURE_SET_SHA256 = "1c26425543a77b05933ec9f38c52ab89855f24d287554196c0f997d2b89e4882";
-const FIXTURE_MANIFEST_SHA256 = "5ee7c439afe03573c5a0696cc41d673c022870b3d521d5a87051941ae5f1b62d";
+const FIXTURE_MANIFEST_SHA256 = "902789cab3e46f5a6bda6a9a9f1e4814dff39c92dba6e565f624305d97e76eba";
 
 const FIXTURE_BODY_FILES = [
   "appconfig-compiled-defaults.json",
