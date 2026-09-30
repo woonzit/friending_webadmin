@@ -102,6 +102,8 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
 
   function commandAllowed(action: Command): boolean {
     if (!event || !principal) return false;
+    // Correcting held facts is not permission to write to its read-only thread.
+    if (action === "official_update" && event.status === "in_review") return false;
     if (ACTIVITY_COMMANDS.includes(action as typeof ACTIVITY_COMMANDS[number])) {
       if (!hasDatesCapability(principal, "dates_activity_command")) return false;
       if (action === "purge") return event.soft_deleted && hasDatesCapability(principal, "dates_activity_purge");
@@ -212,6 +214,7 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
     {editorOpened && <section className="panel dates-external-fields">
       <h2>{t(externalId ? "editor.editTitle" : "editor.createTitle")}</h2>
       {externalId && !event?.can_edit && <p className="alert alert-info">{t("editor.terminal")}</p>}
+      {event?.status === "in_review" && <p className="alert alert-info">{t("editor.held")}</p>}
       <DatesExternalEventForm key={formGeneration} initial={event?.editor_input} disabled={locked}
         submitLabel={t(externalId ? "editor.reviewSave" : "editor.reviewPublish")} onSubmit={(facts, reason) => {
           if (locked) return;

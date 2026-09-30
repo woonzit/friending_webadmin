@@ -248,6 +248,16 @@ test("actual decision retry replays the frozen pair after the authoritative case
   h.response.resolve({ ...receipt(), idempotency_replayed: true }); await retry;
   assert.equal(readDatesExternalResolution(h.store, actor).kind, "empty"); assert.ok(h.writes.includes("load"));
 });
+test("actual decision callback does not dispatch dismissal removed by a fresh held-case read", async () => {
+  const h = pageHarness(), proposed = operation(); proposed.payload.action = "dismiss";
+  const first = h.execute(proposed), detail = sample();
+  detail.case.allowed_actions = ["restore_content", "remove_content", "cancel_activity", "remove_activity"];
+  detail.case.external_status = "in_review";
+  h.authorize(detail); await first;
+  assert.equal(h.sent.length, 0);
+  assert.equal(readDatesExternalResolution(h.store, actor).kind, "empty");
+  assert.equal(h.writes.includes("ResolutionReason"), false);
+});
 test("actual decision navigation fence blocks preflight dispatch and post-dispatch UI adoption", async () => {
   for (const stage of ["before", "after"] as const) {
     const h = pageHarness(), first = h.execute(operation());

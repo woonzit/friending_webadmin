@@ -7,17 +7,17 @@ import { decodeDatesActivityList, decodeDatesActivityOriginDetail, decodeDatesEx
   type DatesExternalMutationBaseline } from "../lib/datesExternalAdmin.ts";
 import { datesCaseDetail, datesConsoleCommandReceipt, datesEvidenceRead, datesLegalHoldReceipt, datesModerationQueue } from "../lib/datesModerationRead.ts";
 import { datesExternalResolutionReceipt, prepareDatesExternalResolution, runDatesExternalResolution } from "../lib/datesExternalModeration.ts";
-import { datesConfigurationRawValue, datesSettingEffectiveText } from "../lib/datesAdmin.ts";
+import { datesConfigurationRawValue, datesSettingEffectiveText, permittedResolutionActions } from "../lib/datesAdmin.ts";
 import { DATES_RUNTIME_HELP_GROUPS } from "../lib/datesRuntimeHelp.ts";
 
-// Actual Router/Webadmin capture, byte-identical to Core e6316dfcf248cbc91907200e727cc74fbfb1dcb1.
+// Actual Router/Webadmin capture, byte-identical to Core 7fd200b042cfe148ab122f7547c49e606f4dd7d6.
 // The source/generator pin is intentionally independent of the vendored manifest.
 const DIRECTORY = new URL("./fixtures/dates_external_admin_wire/", import.meta.url);
-const SOURCE = "c1db4d13d5383f7a7495209f3cebd0fd2e501626";
-const SOURCE_SHA = "47aeeac8dffad44e00ad1408ff7ae0cbdea5d799e5e32c9cebcdb05cfda95863";
-const MANIFEST_SHA = "ba2d99708acee8425f314228ff5fd5123a15ca5a5d8fe9c28aa00e42986aba2a";
-const GENERATOR_SHA = "0cbacbf3927c17945f792a12743284d88eedac37c2a72c2bf7f0c3a84387f9b9";
-const SET_SHA = "31192ee2d6c17fcfa4305d03fde6d44f653ee90645863ce8d91594fdfc96f26a";
+const SOURCE = "b044e8f3ddcc326caa83055304f042f024d4879a";
+const SOURCE_SHA = "ded4f1d773ae1a2a58b5d09ad962944e3eb7a2a7d2e10c4fafd8c247944f49bd";
+const MANIFEST_SHA = "03c76b41bd4299066346e89781e563d7f14e64d29b8c6aa92e9749eab77fc653";
+const GENERATOR_SHA = "00597e8c26c5c2d5881da8f3490e8a6fecb2bba3b91af83290f3043f2aeb813b";
+const SET_SHA = "d5c5d504d0453c429516769adb08f142d2a00a7775c1a99c93f8a8a05c949525";
 const LISTS = ["admin", "canceled", "empty", "filter-empty", "page-empty", "viewer"];
 const DETAILS = ["admin", "canceled", "estimated", "viewer"];
 const PLACES = ["available", "empty", "rate-limited", "unavailable"];
@@ -29,13 +29,15 @@ const ACTIVITY_WRITES = ["end", "end-replay", "soft-delete", "soft-delete-replay
 const MODERATION_DETAILS = ["claimed", "closed", "purged", "viewer"];
 const MODERATION_DECISIONS = ["resolve", "resolve-replay", "restore", "cancel", "remove-activity", "dismiss"];
 const CONSOLE_REFUSALS = ["activity-command-stale", "activity-command-viewer", "activity-purge-hold", "activity-purge-open-case", "activity-purge-retention",
-  "moderation-action-invalid", "moderation-claim-viewer", "moderation-conflict", "moderation-evidence-viewer", "moderation-hold-open",
+  "moderation-action-invalid", "moderation-claim-viewer", "moderation-conflict", "moderation-dismiss-held", "moderation-evidence-viewer", "moderation-hold-open",
   "moderation-hold-viewer", "moderation-key-conflict", "moderation-resolve-viewer", "moderation-restore-terminal", "moderation-revision-invalid",
   "moderation-revision-missing", "moderation-revision-stale", "moderation-target-invalid"];
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`${name}.json`, DIRECTORY), "utf8"));
+const HELD_DETAILS = ["detail", "detail-updated", "detail-reverified", "detail-canceled"];
+const HELD_WRITES = ["update", "update-replay", "reverify", "reverify-replay", "cancel", "cancel-replay"];
 
-test("external console corpus is the complete 95-response genuine capture with independent provenance pins", () => {
+test("external console corpus is the complete 107-response genuine capture with independent provenance pins", () => {
   const manifest = fixture("manifest");
   assert.equal(hash(readFileSync(new URL("manifest.json", DIRECTORY))), MANIFEST_SHA);
   assert.equal(manifest.schema_version, 1);
@@ -44,7 +46,7 @@ test("external console corpus is the complete 95-response genuine capture with i
   assert.equal(manifest.source_checksum, SOURCE_SHA);
   assert.equal(manifest.provenance.generator, "tests/dates_external_admin_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
-  assert.equal(manifest.fixture_count, 95);
+  assert.equal(manifest.fixture_count, 107);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   const names = ["admin-activity-list-external.json", ...LISTS.map((name) => `admin-list-${name}.json`),
     ...DETAILS.map((name) => `admin-detail-${name}.json`), ...PLACES.map((name) => `admin-places-${name}.json`),
@@ -55,7 +57,8 @@ test("external console corpus is the complete 95-response genuine capture with i
     ...["queue", "evidence", "claim", "claim-replay", "hold-place", "hold-release", ...MODERATION_DECISIONS].map((name) => `admin-moderation-${name}.json`),
     ...CONSOLE_REFUSALS.map((name) => `admin-${name}-denied.json`),
     "admin-reason-list-external.json", "admin-reason-save-external.json", "admin-reason-save-external-replay.json",
-    ...["cohort", "member-cohort", "mixed", "save-viewer"].map((name) => `admin-reason-${name}-denied.json`)].sort();
+    ...["cohort", "member-cohort", "mixed", "save-viewer"].map((name) => `admin-reason-${name}-denied.json`),
+    ...["list", ...HELD_DETAILS, ...HELD_WRITES].map((name) => `admin-held-${name}.json`)].sort();
   assert.deepEqual(manifest.fixtures.map((entry: { file: string }) => entry.file), names);
   assert.deepEqual(readdirSync(DIRECTORY).sort(), ["manifest.json", ...names].sort());
   const lines = manifest.fixtures.map((entry: { file: string; sha256: string; consumer: string; http_status: number; status_code: number }) => {
@@ -162,6 +165,59 @@ for (const name of DETAILS) test(`genuine external detail ${name} passes the pro
   assert.equal(body.event.editor_input.end_at === null, name === "estimated" || name === "canceled");
   assert.equal(body.event.ai_assisted, false);
   assert.deepEqual(body.event.credit, { channel: "admin", submitted_by_uid: null, anonymous: true, first_submitter_uid: null });
+});
+test("genuine held list permits corrections without treating pending content as approved", () => {
+  const body = fixture("admin-held-list");
+  assert.deepEqual(decodeDatesExternalList(body, { page: 1, limit: 40 }), body);
+  assert.equal(body.events.length, 1);
+  assert.equal(body.events[0].can_edit, true);
+  assert.equal(body.events[0].status, "in_review");
+  assert.equal(body.events[0].moderation_state, "pending");
+  for (const change of [{ can_edit: false }, { can_edit: "true" }, { status: "new_review_state" },
+    { lifecycle: "ended" }, { soft_deleted: true }]) {
+    const invalid = structuredClone(body); Object.assign(invalid.events[0], change);
+    assert.equal(decodeDatesExternalList(invalid, { page: 1, limit: 40 }), null, JSON.stringify(change));
+  }
+  const viewer = structuredClone(body);
+  viewer.capabilities = viewer.capabilities.filter((cap: string) => cap !== "dates_external_event_manage");
+  assert.equal(decodeDatesExternalList(viewer, { page: 1, limit: 40 }), null);
+  viewer.events[0].can_edit = false;
+  assert.deepEqual(decodeDatesExternalList(viewer, { page: 1, limit: 40 }), viewer);
+});
+for (const [index, name] of HELD_DETAILS.entries()) test(`genuine held ${name} preserves pending moderation after correction or cancellation`, () => {
+  const body = fixture(`admin-held-${name}`), canceled = name === "detail-canceled";
+  assert.deepEqual(decodeDatesExternalDetail(body, body.event.external_event_id), body);
+  assert.equal(body.event.revision, index + 1);
+  assert.equal(body.event.activity_revision, index + 1);
+  assert.equal(body.event.status, canceled ? "canceled_upstream" : "in_review");
+  assert.equal(body.event.lifecycle, canceled ? "canceled" : "active");
+  assert.equal(body.event.moderation_state, "pending");
+  assert.equal(body.event.can_edit, !canceled);
+  assert.ok(Object.values(body.event.editor_input.confirmations).every((value) => value === false));
+});
+for (const name of HELD_WRITES) test(`genuine held ${name} receipt binds current CAS and never implicitly approves`, () => {
+  const command = name.replace(/-replay$/, ""), before = command === "update" ? "detail" : command === "reverify" ? "detail-updated" : "detail-reverified";
+  const baseline = fixture(`admin-held-${before}`).event as DatesExternalMutationBaseline;
+  const request = { external_event_id: baseline.external_event_id, expected_revision: baseline.revision, action: command };
+  const action = command === "update" ? "dates_external_event_update" : "dates_external_event_command";
+  const body = fixture(`admin-held-${name}`);
+  assert.deepEqual(decodeDatesExternalReceipt(body, action, request, baseline), body);
+  assert.equal(body.replayed, name.endsWith("-replay"));
+  assert.equal(body.event_status, command === "cancel" ? "canceled_upstream" : "in_review");
+  for (const change of [{ event_status: "published" }, { revision: baseline.revision }, { activity_revision: baseline.activity_revision },
+    { external_event_id: "xev_" + "f".repeat(32) }])
+    assert.equal(decodeDatesExternalReceipt({ ...body, ...change }, action, request, baseline), null, JSON.stringify(change));
+});
+test("genuine held case offers explicit approval or safety decisions, never a stranding dismissal", () => {
+  const body = fixture("admin-moderation-detail-claimed"), detail = datesCaseDetail(body, body.case.case_id)!;
+  const principal = { capabilities: ["dates_case_resolve", "dates_external_event_review"] };
+  assert.deepEqual(permittedResolutionActions(detail.case, principal), ["restore_content", "remove_content", "cancel_activity", "remove_activity"]);
+  assert.equal(permittedResolutionActions(detail.case, principal).includes("dismiss"), false);
+  const queue = fixture("admin-moderation-queue"), cases = datesModerationQueue(queue, { page: 1, limit: 40 })!.cases;
+  assert.ok(cases.length > 0);
+  for (const item of cases) assert.equal(permittedResolutionActions(item, principal).includes("dismiss"), false);
+  const refusal = fixture("admin-moderation-dismiss-held-denied");
+  assert.deepEqual(datesExternalRefusal(refusal), { kind: "refused", status: 409, error: "dates-external-command-state-invalid" });
 });
 for (const name of PLACES) test(`genuine Places ${name} keeps provider provenance and manual fallback`, () => {
   const body = fixture(`admin-places-${name}`);

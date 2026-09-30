@@ -34,7 +34,6 @@
             "external_status": "in_review",
             "external_target_available": true,
             "allowed_actions": [
-                "dismiss",
                 "restore_content",
                 "remove_content",
                 "cancel_activity",

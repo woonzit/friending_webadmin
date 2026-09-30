@@ -1,0 +1,186 @@
+{
+    "success": true,
+    "status_code": 200,
+    "event": {
+        "external_event_id": "xev_00000000000000000000000000000006",
+        "activity_id": "act_00000000000000000000000000000006",
+        "revision": 4,
+        "activity_revision": 4,
+        "status": "canceled_upstream",
+        "lifecycle": "canceled",
+        "moderation_state": "pending",
+        "soft_deleted": false,
+        "title": "Corrected held event",
+        "category": "concert",
+        "sensitive": false,
+        "start_at": 1790172800,
+        "end_at": 1790183600,
+        "start_local": "2026-09-23T16:13:20+02:00",
+        "end_local": "2026-09-23T19:13:20+02:00",
+        "timezone": "Europe/Budapest",
+        "city": "Budapest",
+        "country_code": "HU",
+        "venue_name": "Közösségi tér",
+        "organizer_name": "Community Orchestra",
+        "verification_tier": "admin",
+        "checked_at": 1790000000,
+        "next_reverify_at": 1790086400,
+        "credit_channel": "admin",
+        "going_count": 0,
+        "interested_count": 0,
+        "created_at": 1790000000,
+        "updated_at": 1790000000,
+        "can_edit": false,
+        "facts": {
+            "title": "Corrected held event",
+            "summary": {
+                "hu": "Nyilvános koncert a közösségi téren.",
+                "en": "A public concert in the community square."
+            },
+            "category": "concert",
+            "sensitive": {
+                "flag": false,
+                "reason": null
+            },
+            "start_at": 1790172800,
+            "end_at": 1790183600,
+            "start_local": "2026-09-23T16:13:20+02:00",
+            "end_local": "2026-09-23T19:13:20+02:00",
+            "end_estimated": false,
+            "all_day": false,
+            "timezone": "Europe/Budapest",
+            "is_free": true,
+            "price_text": null,
+            "age_restriction": null
+        },
+        "venue": {
+            "place_id": null,
+            "name": "Közösségi tér",
+            "formatted_address": "Budapest, Közösségi tér 1.",
+            "point": {
+                "type": "Point",
+                "coordinates": [
+                    19.0402,
+                    47.4979
+                ]
+            },
+            "city": "Budapest",
+            "city_key": "budapest",
+            "country_code": "HU",
+            "resolved_by": "admin_pin",
+            "resolved_at": 1790000000
+        },
+        "organizer": {
+            "name": "Community Orchestra",
+            "website": "https://orchestra.example.test/"
+        },
+        "links": {
+            "official_url": "https://orchestra.example.test/concert",
+            "ticket_url": null
+        },
+        "attendee_list": "visible",
+        "verification": {
+            "tier": "admin",
+            "admin_confirmations": {
+                "source": true,
+                "public_venue": true,
+                "timezone": true,
+                "content_safe": true
+            },
+            "checked_at": 1790000000,
+            "next_reverify_at": 1790086400
+        },
+        "image": {
+            "kind": "category_art",
+            "url": null,
+            "credit": null,
+            "license_note": null
+        },
+        "sources": [
+            {
+                "kind": "admin",
+                "url": "https://events.example.test/console-held",
+                "hostname": "events.example.test",
+                "source_id": "src_00000000000000000000000000000005",
+                "confirmed_at": 1790000000
+            }
+        ],
+        "ai_assisted": false,
+        "credit": {
+            "channel": "admin",
+            "submitted_by_uid": null,
+            "anonymous": true,
+            "first_submitter_uid": null
+        },
+        "editor_input": {
+            "title": "Corrected held event",
+            "summary": {
+                "hu": "Nyilvános koncert a közösségi téren.",
+                "en": "A public concert in the community square."
+            },
+            "category": "concert",
+            "sensitive": {
+                "flag": false,
+                "reason": null
+            },
+            "start_at": 1790172800,
+            "end_at": 1790183600,
+            "timezone": "Europe/Budapest",
+            "all_day": false,
+            "is_free": true,
+            "price_text": null,
+            "age_restriction": null,
+            "venue": {
+                "name": "Közösségi tér",
+                "formatted_address": "Budapest, Közösségi tér 1.",
+                "longitude": 19.0402,
+                "latitude": 47.4979,
+                "city": "Budapest",
+                "country_code": "HU"
+            },
+            "organizer": {
+                "name": "Community Orchestra",
+                "website": "https://orchestra.example.test/"
+            },
+            "links": {
+                "official_url": "https://orchestra.example.test/concert",
+                "ticket_url": null
+            },
+            "source_url": "https://events.example.test/console-held",
+            "attendee_list": "visible",
+            "confirmations": {
+                "source": false,
+                "public_venue": false,
+                "timezone": false,
+                "content_safe": false
+            }
+        }
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

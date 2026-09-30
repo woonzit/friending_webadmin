@@ -17,18 +17,21 @@ can still replay after the switch is turned off. Safety/lifecycle commands remai
 available according to their own capabilities and state rules.
 
 The incremental console capture in `tests/fixtures/dates_external_admin_wire`
-comes byte-for-byte from Core `e6316dfcf248cbc91907200e727cc74fbfb1dcb1`.
-Its manifest names generator/source `c1db4d13d5383f7a7495209f3cebd0fd2e501626`.
+comes byte-for-byte from Core `7fd200b042cfe148ab122f7547c49e606f4dd7d6`.
+Its manifest names generator/source `b044e8f3ddcc326caa83055304f042f024d4879a`.
 `tests/datesExternalWire.test.mts` independently pins its manifest, generator,
-source checksum, complete 95-file inventory and every response byte hash.
+source checksum, complete 107-file inventory and every response byte hash.
 The original 43 editor bodies are unchanged; the next 45 additions cover hostless
 moderation, existing activity-detail/lifecycle adapters and settings. They use
 actual routed responses, audits and completed receipts; case/report intake is
 synthetic setup, not proof of member intake. This incremental capture is **not
 the final P1 release pin**; final provider repinning remains required. Seven more
 actual routed bodies cover the external reason catalogue, a seeded copy-only
-save and replay, mixed/cohort refusals and a viewer capability refusal. Every
-preceding 88-body response remains byte-identical.
+save and replay, mixed/cohort refusals and a viewer capability refusal. The final
+twelve additions capture report-held list/detail, non-approving corrections and
+reverification, safety cancellation, exact replays, post-write details and refused
+held-case dismissal. Only the two earlier held queue/detail `allowed_actions`
+arrays change, removing `dismiss`; the other 93 preceding bodies stay identical.
 
 The existing reason editor accepts `external_event` only for activity reasons
 and only as a singleton. A stored reason cannot cross the member/external
@@ -132,6 +135,13 @@ moderation or grant live access. Purge still requires Core's elevated capability
 retention eligibility and absence of open cases/legal holds. Reverify does not
 start a fetch/AI job, clear moderation or send a notification.
 
+Active, undeleted `in_review` events remain editable with Core's manage
+capability. Corrections and fresh verification keep pending moderation, review
+metadata and the read-only thread; they do not approve publication. The editor
+explains this distinction in both languages and disables official thread updates
+while held. Cancellation, withdrawal and end remain safety actions. Unknown or
+contradictory `can_edit` projections still fail the closed decoder.
+
 The implemented moderation-A contract requires `target_type:external_event`,
 `target_id:xev_*`, linked `activity_id:act_*`, non-member `target_uid:0`, separate
 resolution actions and `dates_external_event_review`. Its closed case variant
@@ -152,7 +162,13 @@ Late navigation suppresses UI adoption but cannot discard an already dispatched
 request's durable identity. A missing or mismatched second facts read blocks
 new writes while preserving readable case history and exact receipt recovery.
 
-Dismissal leaves content unchanged. Moderation cancellation marks it withdrawn,
+Dismissal leaves content unchanged. While active content is held, Core removes
+`dismiss` from `allowed_actions` and refuses it with
+`dates-external-command-state-invalid`; closing that case would strand approval.
+The console intersects its action vocabulary with those current server actions
+and repeats that check before dispatch. Approval is an explicit, current-CAS
+`restore_content` decision; a correction or source check cannot substitute for it.
+Moderation cancellation marks it withdrawn,
 not canceled upstream. Restore only approves nonterminal, undeleted, unexpired
 content and never revives live sharing. Removal preserves an existing terminal
 state. Explicit legal holds survive resolution; automatic case holds do not.

@@ -8049,6 +8049,7 @@
         "organizerSite": "Szervező honlapja", "priceUnknown": "Az árat a hivatalos forrásban ellenőrizd", "minimumAge": "Korhatár: {age}+",
         "checked": "Utoljára ellenőrizve", "readOnly": "A jelenlegi jogosultságaiddal nem módosíthatsz külső eseményt.",
         "terminal": "Az esemény a jelenlegi állapotában nem szerkeszthető. Nincs újrapublikálási művelet.",
+        "held": "Az esemény moderációs felülvizsgálat alatt áll. A javítás és a forrás újbóli ellenőrzése nem hagyja jóvá, és nem nyitja meg újra a beszélgetést. A jóváhagyáshoz külön moderációs döntés kell; a biztonsági lemondás és visszavonás továbbra is elérhető.",
         "commandsTitle": "Auditált eseményműveletek", "command": "Művelet", "updateText": "Hivatalos frissítés (legfeljebb 500 karakter)",
         "confirmations": {
           "source": "Újra összevetettem az eseményt a forrásával.", "public_venue": "Megerősítettem, hogy a helyszín nyilvános.",

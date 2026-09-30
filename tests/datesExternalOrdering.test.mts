@@ -96,6 +96,24 @@ test("optional place lookup rejects late or newly locked responses without overw
 });
 
 const editor = component("../components/DatesExternalEditorPage.tsx", "DatesExternalEditorPage");
+const commandAllowed = editor.body.statements.find((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && node.name?.text === "commandAllowed");
+assert.ok(commandAllowed);
+test("actual held editor offers non-approving corrections and safety actions but no thread update", () => {
+  const body = JSON.parse(readFileSync(new URL("./fixtures/dates_external_admin_wire/admin-held-detail.json", import.meta.url), "utf8"));
+  assert.ok(decodeDatesExternalDetail(body, body.event.external_event_id));
+  const context: any = { exports: {}, event: body.event, principal: { ...identity.dates, capabilities: body.capabilities },
+    ACTIVITY_COMMANDS: ["end", "soft_delete", "restore", "purge"], hasDatesCapability };
+  vm.runInNewContext(compile(`${commandAllowed.getText(editor.tree)}; exports.allowed = commandAllowed;`), context);
+  for (const action of ["reverify", "cancel", "withdraw", "end", "soft_delete"]) assert.equal(context.exports.allowed(action), true, action);
+  for (const action of ["official_update", "restore", "purge"]) assert.equal(context.exports.allowed(action), false, action);
+  context.event = { ...body.event, can_edit: false };
+  for (const action of ["reverify", "cancel", "withdraw", "official_update", "end"]) assert.equal(context.exports.allowed(action), false, action);
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
+    assert.ok(messages.datesAdmin.external.editor.held.length > 80);
+  }
+  assert.match(editor.source, /event\?\.status === "in_review".*t\("editor\.held"\)/);
+});
 const execute = editor.body.statements.find((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && node.name?.text === "execute");
 assert.ok(execute);
 const actor = "operator@example.test", now = envelope.server_now;

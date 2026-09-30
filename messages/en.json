@@ -8049,6 +8049,7 @@
         "organizerSite": "Organizer website", "priceUnknown": "See the official source for pricing", "minimumAge": "Age {age}+",
         "checked": "Last checked", "readOnly": "Your current permissions do not allow external-event changes.",
         "terminal": "This event cannot be edited in its current state. There is no republish action.",
+        "held": "This event is held for moderation. Corrections and fresh source checks do not approve it or reopen its conversation. Approval requires an explicit moderation decision; safety cancellation and withdrawal remain available.",
         "commandsTitle": "Audited event actions", "command": "Action", "updateText": "Official update (up to 500 characters)",
         "confirmations": {
           "source": "I have checked the event against its source again.", "public_venue": "I have confirmed that the venue is public.",

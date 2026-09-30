@@ -126,7 +126,7 @@ function rowConsistent(row: DatesExternalRow, caps: string[], now: number): bool
     && datesExternalTimeFromInput(row.end_local.slice(0, 19), row.end_local.slice(19), row.timezone) === row.end_at
     && row.created_at <= row.updated_at && row.updated_at <= now && row.checked_at <= now
     && row.next_reverify_at >= row.checked_at
-    && row.can_edit === (caps.includes("dates_external_event_manage") && ["published", "rechecking"].includes(row.status)
+    && row.can_edit === (caps.includes("dates_external_event_manage") && ["published", "rechecking", "in_review"].includes(row.status)
       && row.lifecycle === "active" && !row.soft_deleted);
 }
 
