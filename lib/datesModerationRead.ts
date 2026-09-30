@@ -1,7 +1,9 @@
-import { datesCaseInternalNotes, datesModerationSla, hasDatesCapability,
+import { DATES_EXTERNAL_MODERATION_ACTIONS, datesCaseInternalNotes, datesModerationSla, hasDatesCapability,
   type DatesAdminPrincipal, type DatesCaseSummary, type DatesModerationSla } from "./datesAdmin";
+import { DATES_EXTERNAL_STATUSES } from "./datesExternalAdmin";
 
 type LocalizedReason = { en: string | null; hu: string | null } | null;
+type ReportReason = LocalizedReason | { locale: "en" | "hu"; label: string };
 export type DatesDecisionMetadata = {
   decision_id: string; case_id: string; target_type: string; target_id: string;
   activity_id: string | null; target_path: string; action: string; severity: string;
@@ -14,7 +16,7 @@ export type DatesAppealMetadata = {
   user_visible_reason: LocalizedReason; created_at: number; updated_at: number; resolved_at: number | null;
 };
 export type DatesReportMetadata = {
-  report_id: string; reason_id: string; reason_key: string; reason_label_snapshot: LocalizedReason;
+  report_id: string; reason_id: string; reason_key: string; reason_label_snapshot: ReportReason;
   entry_point: string; note: string | null; severity: string; status: string;
   created_at: number; reporter_identity_redacted: true;
 };
@@ -62,7 +64,8 @@ const appealRules = {
   user_visible_reason: reason, created_at: epoch, updated_at: epoch, resolved_at: nullable(epoch),
 };
 const reportRules = {
-  report_id: id("rpt"), reason_id: text(128), reason_key: text(80), reason_label_snapshot: reason,
+  report_id: id("rpt"), reason_id: text(128), reason_key: text(80), reason_label_snapshot: (v: unknown) => reason(v)
+    || shape(v, { locale: (locale) => locale === "en" || locale === "hu", label: text(500) }),
   entry_point: text(80), note: nullable(text(1000)), severity: text(40), status: text(40),
   created_at: epoch, reporter_identity_redacted: (value: unknown) => value === true,
 };
@@ -75,6 +78,25 @@ const caseRules = {
   conflict_of_interest: boolean,
   capabilities: (value: unknown) => shape(value, { can_claim: boolean, can_read_evidence: boolean, can_resolve: boolean, can_break_glass: boolean }),
 };
+
+/** A known non-member target is a separate closed variant, not a UID0 member. */
+function caseRow(value: unknown): value is DatesCaseSummary {
+  if (!record(value)) return false;
+  if (value.target_type !== "external_event") return shape(value, caseRules);
+  if (!shape(value, { ...caseRules,
+    external_revision: nullable((v) => integer(v) && Number(v) > 0),
+    external_status: nullable((v) => typeof v === "string" && DATES_EXTERNAL_STATUSES.includes(v as typeof DATES_EXTERNAL_STATUSES[number])),
+    external_target_available: boolean,
+    allowed_actions: (v) => Array.isArray(v) && v.every((action) => typeof action === "string"
+      && DATES_EXTERNAL_MODERATION_ACTIONS.includes(action as typeof DATES_EXTERNAL_MODERATION_ACTIONS[number])) && new Set(v).size === v.length,
+  }) || value.queue !== "activities" || value.case_kind !== "reports" || value.target_uid !== 0
+    || !id("xev")(value.target_id) || !id("act")(value.activity_id)) return false;
+  const actions = value.allowed_actions as string[], caps = value.capabilities as DatesCaseSummary["capabilities"];
+  if (!["new", "in_review", "appealed"].includes(String(value.status)) && (actions.length > 0 || caps.can_claim || caps.can_resolve)) return false;
+  return value.external_target_available
+    ? value.external_revision !== null && value.external_status !== null && (!caps.can_resolve || actions.length > 0)
+    : value.external_revision === null && value.external_status === null && actions.length === 0 && !caps.can_resolve;
+}
 
 function uniqueRows(rows: unknown[], rules: Record<string, Rule>, key: string): boolean {
   const seen = new Set<unknown>();
@@ -94,7 +116,8 @@ export function datesModerationQueue(value: unknown, requested: { page: number; 
     || Number(value.page) < 1 || Number(value.page) > 10000
     || Number(value.limit) < 1 || Number(value.limit) > 100) return null;
   const rows = value.cases as unknown[];
-  if (rows.length > Number(value.limit) || !uniqueRows(rows, caseRules, "case_id")) return null;
+  if (rows.length > Number(value.limit) || !rows.every(caseRow)
+    || new Set(rows.map((row) => row.case_id)).size !== rows.length) return null;
   // Core reads the page and count separately: concurrent changes can make them
   // disagree. Preserve both authoritative values instead of inventing rows/counts.
   return { cases: rows as DatesCaseSummary[], page: value.page as number,
@@ -141,9 +164,19 @@ export function datesConsoleCommandReceipt(value: unknown, action: string,
     audit_id: value.audit_id as string, idempotency_replayed: value.idempotency_replayed as boolean };
 }
 
+/** Legal holds have no case-CAS increment or break_glass_used receipt field. */
+export function datesLegalHoldReceipt(value: unknown, caseId: string, action: unknown, reviewAt: unknown): boolean {
+  return (action === "place" || action === "release")
+    && shape(value, { ...envelope, case_id: id("cas"), legal_hold: boolean, review_at: nullable(epoch),
+      evidence_count: integer, audit_id: id("aud"), idempotency_replayed: boolean, server_now: epoch })
+    && value.case_id === caseId && value.legal_hold === (action === "place")
+    && value.review_at === (action === "place" ? reviewAt : null)
+    && (action !== "place" || (epoch(reviewAt) && Number(reviewAt) > 0));
+}
+
 /** Metadata is closed; raw before/after, actor identities and appeal notes fail closed. */
 export function datesCaseDetail(value: unknown, expectedCaseId: string): DatesCaseDetail | null {
-  if (!shape(value, { ...envelope, case: (v) => shape(v, caseRules), reports: Array.isArray,
+  if (!shape(value, { ...envelope, case: caseRow, reports: Array.isArray,
     report_notes_withheld: boolean, decisions: Array.isArray, appeal: (v) => v === null || shape(v, appealRules),
     internal_notes: Array.isArray, internal_notes_withheld: boolean,
     evidence_requires_separate_audited_read: (v) => v === true, server_now: epoch })) return null;
@@ -159,6 +192,13 @@ export function datesCaseDetail(value: unknown, expectedCaseId: string): DatesCa
     || decisions.some((row) => (row as DatesDecisionMetadata).case_id !== expectedCaseId)
     || (item.conflict_of_interest && reports.some((row) => (row as DatesReportMetadata).note !== null))
     || (item.case_kind === "appeal" ? !appeal || appeal.case_id !== expectedCaseId || appeal.appeal_id !== item.target_id : appeal !== null)) return null;
+  if (item.target_type === "external_event" && decisions.some((row) => {
+    const decision = row as DatesDecisionMetadata;
+    return decision.target_type !== item.target_type || decision.target_id !== item.target_id || decision.activity_id !== item.activity_id
+      || !DATES_EXTERNAL_MODERATION_ACTIONS.includes(decision.action as typeof DATES_EXTERNAL_MODERATION_ACTIONS[number])
+      || decision.target_path !== (decision.action === "dismiss" ? "unchanged" : "published")
+      || decision.expires_at !== null || decision.appeal_outcome !== null || decision.appeal_resolved_at !== null;
+  })) return null;
   return { case: item, reports: reports as DatesReportMetadata[], report_notes_withheld: value.report_notes_withheld as boolean,
     decisions: decisions as DatesDecisionMetadata[], appeal, evidence_requires_separate_audited_read: true };
 }

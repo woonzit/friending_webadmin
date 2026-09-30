@@ -30,6 +30,11 @@ export type DatesCaseSummary = {
   created_at: number;
   updated_at: number;
   conflict_of_interest: boolean;
+  // Present only on the closed, validated external-event case variant.
+  external_revision?: number | null;
+  external_status?: string | null;
+  external_target_available?: boolean;
+  allowed_actions?: string[];
   capabilities: {
     can_claim: boolean;
     can_read_evidence: boolean;
@@ -535,8 +540,20 @@ export function isDatesAppealCase(value: Pick<DatesCaseSummary, "queue" | "case_
   return value.queue === "appeals" || value.case_kind === "appeal";
 }
 
+export const DATES_EXTERNAL_MODERATION_ACTIONS = ["dismiss", "restore_content", "remove_content", "cancel_activity", "remove_activity"] as const;
+type ResolutionCase = Pick<DatesCaseSummary, "queue" | "case_kind" | "target_type" | "external_revision" | "external_target_available" | "allowed_actions">;
+
+export function datesExternalReviewAllowed(value: Pick<DatesCaseSummary, "target_type">, principal: Pick<DatesAdminPrincipal, "capabilities">): boolean {
+  return value.target_type !== "external_event" || principal.capabilities.includes("dates_external_event_review");
+}
+
 /** Every decision Core accepts for this kind of case, before role gates. */
-export function resolutionActions(value: Pick<DatesCaseSummary, "queue" | "case_kind" | "target_type">): string[] {
+export function resolutionActions(value: ResolutionCase): string[] {
+  if (value.target_type === "external_event") {
+    if (value.queue !== "activities" || value.case_kind !== "reports" || value.external_target_available !== true
+      || !Number.isSafeInteger(value.external_revision) || Number(value.external_revision) < 1 || !Array.isArray(value.allowed_actions)) return [];
+    return DATES_EXTERNAL_MODERATION_ACTIONS.filter((action) => value.allowed_actions!.includes(action));
+  }
   if (isDatesAppealCase(value)) return ["uphold", "overturn"];
   if (value.case_kind === "prepublication") {
     return ["approve_content", "reject_content"];
@@ -566,10 +583,10 @@ const RESTRICTING_RESOLUTIONS = new Set(["restrict_dates", "suspend_account"]);
  * Core still enforces all three; this only stops offering what it refuses.
  */
 export function permittedResolutionActions(
-  value: Pick<DatesCaseSummary, "queue" | "case_kind" | "target_type">,
+  value: ResolutionCase,
   principal: Pick<DatesAdminPrincipal, "capabilities">,
 ): string[] {
-  if (!principal.capabilities.includes("dates_case_resolve")) return [];
+  if (!principal.capabilities.includes("dates_case_resolve") || !datesExternalReviewAllowed(value, principal)) return [];
   if (isDatesAppealCase(value)) {
     return principal.capabilities.includes("dates_appeal_resolve") ? resolutionActions(value) : [];
   }
@@ -592,10 +609,11 @@ export function datesAppealBlockedByRole(
  * principal cannot decide would only hold the lease against those who can.
  */
 export function datesCaseClaimableByRole(
-  value: Pick<DatesCaseSummary, "queue" | "case_kind">,
+  value: Pick<DatesCaseSummary, "queue" | "case_kind"> & Partial<Pick<DatesCaseSummary, "target_type" | "external_target_available">>,
   principal: Pick<DatesAdminPrincipal, "capabilities">,
 ): boolean {
-  return principal.capabilities.includes("dates_case_claim") && !datesAppealBlockedByRole(value, principal);
+  return principal.capabilities.includes("dates_case_claim") && !datesAppealBlockedByRole(value, principal)
+    && (value.target_type !== "external_event" || (value.external_target_available === true && principal.capabilities.includes("dates_external_event_review")));
 }
 
 export function humanizeMachineKey(value: string): string {

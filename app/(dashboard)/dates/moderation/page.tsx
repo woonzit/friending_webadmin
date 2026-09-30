@@ -35,6 +35,7 @@ function duration(seconds: number | null | undefined): string {
 
 export default function DatesModerationQueuePage() {
   const t = useTranslations("datesAdmin.moderation");
+  const external = useTranslations("datesAdmin.external");
   const common = useTranslations("common");
   const locale = useLocale();
   const [draft, setDraft] = useState<Filters>(EMPTY_FILTERS);
@@ -127,7 +128,8 @@ export default function DatesModerationQueuePage() {
           <thead><tr><th>{t("case")}</th><th>{t("target")}</th><th>{common("status")}</th><th>{t("severity")}</th><th>{t("reports")}</th><th>{t("assignee")}</th><th>{t("sla")}</th><th><span className="sr-only">{common("actions")}</span></th></tr></thead>
           <tbody>{rows.map((row) => <tr key={row.case_id} className={row.sla_breached ? "dates-row-breached" : ""}>
             <td><div className="cell-stack"><strong>{row.case_id}</strong><small>{t(`queues.${row.queue}`)} · {humanizeMachineKey(row.case_kind)}</small>{row.conflict_of_interest && <small className="dates-danger-text">{t("conflict")}</small>}</div></td>
-            <td><div className="cell-stack"><span>{humanizeMachineKey(row.target_type)} · {row.target_id}</span><small>{row.activity_id || `UID ${row.target_uid}`}</small></div></td>
+            <td><div className="cell-stack"><span>{row.target_type === "external_event" ? external("moderation.target") : humanizeMachineKey(row.target_type)} · {row.target_id}</span>
+              {row.target_type === "external_event" && <span className="badge badge-demo">{external("moderation.nonmember")}</span>}<small>{row.activity_id || `UID ${row.target_uid}`}</small></div></td>
             <td><span className={`badge ${row.status === "new" || row.status === "in_review" ? "badge-warning" : ""}`}>{t(`statuses.${row.status}`)}</span></td>
             <td><span className={`badge ${row.severity === "high" || row.severity === "critical" ? "badge-warning" : ""}`}>{humanizeMachineKey(row.severity)}</span>{row.escalated && <small className="table-subline dates-danger-text">{t("escalated")}</small>}</td>
             <td>{row.report_count}<small className="table-subline">{t("distinct", { count: row.distinct_reporter_count })}</small></td>

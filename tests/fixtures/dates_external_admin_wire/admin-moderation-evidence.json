@@ -1,0 +1,37 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case_id": "cas_00000000000000000000000000000001",
+    "evidence": [
+        {
+            "evidence_id": "evi_00000000000000000000000000000001",
+            "case_id": "cas_00000000000000000000000000000001",
+            "report_id": "rpt_00000000000000000000000000000001",
+            "evidence_type": "activity_public_snapshot",
+            "sensitive_location": false,
+            "snapshot": {
+                "activity_id": "act_00000000000000000000000000000004",
+                "origin": "external",
+                "external_event_id": "xev_00000000000000000000000000000004",
+                "title": "Immutable synthetic public event",
+                "venue": {
+                    "name": "Community square"
+                }
+            },
+            "immutable": true,
+            "legal_hold": true,
+            "hold_started_at": 1790000000,
+            "hold_reason": "open_safety_case",
+            "review_at": null,
+            "created_at": 1790000000
+        }
+    ],
+    "appeal_note": null,
+    "redacted_sensitive_location_count": 0,
+    "break_glass_used": false,
+    "audit_id": "aud_0000000000000000000000000000000e",
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

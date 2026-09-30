@@ -19,6 +19,7 @@ import { normalizeRegistrationPlatformStatsProxyBody } from "@/lib/registrationS
 import { normalizeSectionTeasersProxyBody } from "@/lib/sectionTeasers";
 import { datesAvailabilityWriteIsRetired } from "@/lib/datesAdmin";
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "@/lib/datesExternalAdmin";
+import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody } from "@/lib/datesExternalModeration";
 import {
   featureSwitchesProxyCapabilityAuthorized,
   normalizeFeatureSwitchesProxyBody,
@@ -208,6 +209,11 @@ export async function POST(
   const externalBody = normalizeDatesExternalProxyBody(action, body);
   if (externalBody === null) return bridgeError("invalid-input", 400);
   if (externalBody !== undefined) body = externalBody;
+  const externalResolution = normalizeDatesExternalResolutionProxyBody(action, body);
+  if (externalResolution === null) return bridgeError("invalid-input", 400);
+  if (externalResolution !== undefined && !datesExternalResolutionAuthorized(membership.data)) {
+    return bridgeError("dates-admin-capability-required", 403);
+  }
 
   const normalizedPersonaBody = normalizePersonaProxyBody(action, body);
   if (normalizedPersonaBody === null) {

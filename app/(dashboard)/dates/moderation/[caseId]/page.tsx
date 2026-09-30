@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesCaseHistory from "@/components/DatesCaseHistory";
+import DatesExternalProvenance from "@/components/DatesExternalProvenance";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
@@ -20,13 +21,18 @@ import {
   humanizeMachineKey,
   datesAppealBlockedByRole,
   datesCaseClaimableByRole,
+  datesExternalReviewAllowed,
   permittedResolutionActions,
   resolutionActions,
   type DatesAdminPrincipal,
   type DatesCaseInternalNotes,
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
-import { DatesCaseReadFence, datesCaseDetail, datesEvidenceRead, datesLegalHoldAllowed,
+import { decodeDatesExternalDetail, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
+import { datesExternalBrowserStorage } from "@/lib/datesExternalMutations";
+import { datesExternalResolutionMatches, prepareDatesExternalResolution, readDatesExternalResolution, readDatesExternalResolutionAccess,
+  runDatesExternalResolution, type DatesExternalResolutionPending, type DatesExternalResolutionRead } from "@/lib/datesExternalModeration";
+import { DatesCaseReadFence, datesCaseDetail, datesEvidenceRead, datesLegalHoldAllowed, datesLegalHoldReceipt,
   datesConsoleCommandReceipt, isDatesConsoleCommand,
   type DatesCaseDetail, type DatesEvidenceRead } from "@/lib/datesModerationRead";
 
@@ -47,10 +53,15 @@ export default function DatesModerationCasePage() {
 
 function DatesModerationCase({ caseId }: { caseId: string }) {
   const t = useTranslations("datesAdmin.caseDetail");
+  const external = useTranslations("datesAdmin.external");
   const common = useTranslations("common");
   const locale = useLocale();
   const readFence = useRef(new DatesCaseReadFence()).current;
+  const lifetime = useRef(0), mutationBusy = useRef(false);
   const [data, setData] = useState<DatesCaseDetail | null>(null);
+  const [externalEvent, setExternalEvent] = useState<DatesExternalDetailRow | null>(null);
+  const [externalPending, setExternalPending] = useState<DatesExternalResolutionRead>({ kind: "blocked" });
+  const [externalNeedsReload, setExternalNeedsReload] = useState(false);
   const [principal, setPrincipal] = useState<DatesAdminPrincipal | null>(null);
   const [notes, setNotes] = useState<DatesCaseInternalNotes>({ status: "unsupported" });
   const [evidence, setEvidence] = useState<DatesEvidenceRead | null>(null);
@@ -82,6 +93,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     const ticket = readFence.begin();
     setEvidence(null);
     setData(null);
+    setExternalEvent(null);
     setPrincipal(null);
     setConfirmed(null);
     setBreakGlass(false);
@@ -107,37 +119,63 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       setState("error");
       return;
     }
+    let factsUnavailable = false;
+    if (next.case.target_type === "external_event" && next.case.external_target_available) {
+      const eventResponse = await adminCall("dates_external_event_detail", { external_event_id: next.case.target_id });
+      if (!readFence.accepts(ticket)) return;
+      const detail = decodeDatesExternalDetail(eventResponse, next.case.target_id);
+      if (!detail || detail.event.revision !== next.case.external_revision || detail.event.activity_id !== next.case.activity_id) {
+        factsUnavailable = true;
+        setFeedback({ tone: "error", text: external("moderation.factsUnavailable") });
+      } else setExternalEvent(detail.event);
+    }
     setData(next);
     setNotes(datesCaseInternalNotes(response));
     setPrincipal(nextPrincipal);
+    setExternalPending(next.case.target_type === "external_event"
+      ? readDatesExternalResolution(datesExternalBrowserStorage(), nextPrincipal.email) : { kind: "empty" });
+    // Retained case history and exact receipt recovery do not depend on a
+    // second successful facts read. New decisions still require a coherent pair.
+    setExternalNeedsReload(factsUnavailable);
     const permitted = permittedResolutionActions(next.case, nextPrincipal);
     setResolutionAction((current) => permitted.includes(current) ? current : permitted[0] || "");
     setState("ready");
-  }, [caseId, readFence]);
+  }, [caseId, readFence, external]);
 
-  useEffect(() => { void load(); return () => readFence.invalidate(); }, [load, readFence]);
+  useEffect(() => { void load(); return () => { readFence.invalidate(); ++lifetime.current; }; }, [load, readFence]);
+
+  const writeLocked = busy || externalPending.kind !== "empty" || externalNeedsReload;
 
   async function mutate(action: string, payload: Record<string, unknown>, successMessage: string) {
-    if (busy) return false;
-    const ticket = readFence.begin();
+    if (writeLocked || mutationBusy.current) return false;
+    mutationBusy.current = true;
+    const ticket = readFence.begin(), currentLifetime = lifetime.current;
     setEvidence(null);
     setBusy(true);
     setFeedback(null);
-    const response = await adminCall(action, payload);
-    if (!readFence.accepts(ticket)) return false;
-    setBusy(false);
-    if (!response?.success || (isDatesConsoleCommand(action)
-      && !datesConsoleCommandReceipt(response, action, caseId, payload.expected_revision))) {
-      setFeedback({ tone: "error", text: t("operationFailed", { error: String(response?.error || "core-unavailable") }) });
+    try {
+      const response = await adminCall(action, payload);
+      if (!readFence.accepts(ticket)) return false;
+      if (!response?.success || (isDatesConsoleCommand(action)
+        && !datesConsoleCommandReceipt(response, action, caseId, payload.expected_revision))
+        || (action === "dates_moderation_legal_hold" && !datesLegalHoldReceipt(response, caseId, payload.action, payload.review_at))) {
+        setFeedback({ tone: "error", text: t("operationFailed", { error: String(response?.error || "core-unavailable") }) });
+        return false;
+      }
+      setFeedback({ tone: "success", text: successMessage });
+      await load();
+      return true;
+    } catch {
+      if (readFence.accepts(ticket)) setFeedback({ tone: "error", text: t("operationFailed", { error: "core-unavailable" }) });
       return false;
+    } finally {
+      mutationBusy.current = false;
+      if (currentLifetime === lifetime.current) setBusy(false);
     }
-    setFeedback({ tone: "success", text: successMessage });
-    await load();
-    return true;
   }
 
   async function claim() {
-    if (!data) return;
+    if (!data || !principal || !datesCaseClaimableByRole(data.case, principal)) return;
     const usedBreakGlass = data.case.conflict_of_interest && breakGlass;
     if (usedBreakGlass && breakGlassReason.trim().length < 3) {
       setFeedback({ tone: "error", text: t("breakGlassReasonRequired") });
@@ -164,7 +202,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
 
   async function readEvidence(event: React.FormEvent) {
     event.preventDefault();
-    if (!data || busy) return;
+    if (!data || !principal || !datesExternalReviewAllowed(data.case, principal) || busy) return;
     setEvidence(null);
     const conflictBreakGlass = data.case.conflict_of_interest && breakGlass;
     if ((evidenceSensitive || conflictBreakGlass) && evidenceReason.trim().length < 3) {
@@ -212,7 +250,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
 
   async function captureTrailEvidence(event: React.FormEvent) {
     event.preventDefault();
-    if (!data || busy || !data.case.activity_id) return;
+    if (!data || busy || data.case.target_type === "external_event" || !data.case.activity_id) return;
     const capturedFrom = epochFromLocalInput(trailFrom);
     const capturedTo = epochFromLocalInput(trailTo);
     if (!capturedFrom || !capturedTo || capturedTo <= capturedFrom || trailReason.trim().length < 3) {
@@ -250,7 +288,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
 
   function prepareResolution(event: React.FormEvent) {
     event.preventDefault();
-    if (!data || !principal || !permittedResolutionActions(data.case, principal).includes(resolutionAction)) return;
+    if (writeLocked || !data || !principal || !permittedResolutionActions(data.case, principal).includes(resolutionAction)) return;
     if (resolutionReason.trim().length < 3 || visibleReasonEn.trim().length < 1 || visibleReasonHu.trim().length < 1) return;
     setConfirmed({
       kind: "resolve",
@@ -258,6 +296,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       payload: {
         case_id: caseId,
         expected_revision: data.case.revision,
+        ...(data.case.target_type === "external_event" ? { expected_external_revision: data.case.external_revision } : {}),
         action: resolutionAction,
         reason: resolutionReason.trim(),
         user_visible_reason_en: visibleReasonEn.trim(),
@@ -271,7 +310,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
 
   function prepareLegalHold(event: React.FormEvent) {
     event.preventDefault();
-    if (!data || !principal || !datesLegalHoldAllowed(data.case, principal, holdAction, breakGlass)) return;
+    if (writeLocked || !data || !principal || !datesLegalHoldAllowed(data.case, principal, holdAction, breakGlass)) return;
     if (holdReason.trim().length < 3 || legalBasis.trim().length < 3 || (holdAction === "place" && !holdReviewAt)) return;
     setConfirmed({
       kind: "legal_hold",
@@ -291,10 +330,52 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
   async function executeConfirmed() {
     if (!confirmed) return;
     const operation = confirmed;
+    if (operation.kind === "resolve" && data?.case.target_type === "external_event") {
+      await executeExternalResolution(operation); return;
+    }
     const ok = await mutate(operation.kind === "resolve" ? "dates_moderation_resolve" : "dates_moderation_legal_hold", operation.payload, t(operation.kind === "resolve" ? "resolved" : "legalHoldUpdated"));
     setConfirmed(null);
     if (ok && operation.kind === "resolve") {
       setResolutionReason(""); setVisibleReasonEn(""); setVisibleReasonHu(""); setRestrictionExpiry("");
+    }
+  }
+
+  async function executeExternalResolution(operation: ConfirmedOperation | null, retry: DatesExternalResolutionPending | null = null) {
+    if (mutationBusy.current || !principal || (!operation && !retry) || (!retry && writeLocked)) return;
+    mutationBusy.current = true; setBusy(true); setEvidence(null); setFeedback(null);
+    const ticket = readFence.begin(), currentLifetime = lifetime.current;
+    try {
+      const body = retry?.body ?? operation!.payload;
+      const access = await readDatesExternalResolutionAccess(adminCall, String(body.case_id));
+      if (!readFence.accepts(ticket)) return;
+      if (!access || access.actor !== principal.email || (retry && retry.actor !== access.actor)) {
+        setConfirmed(null); setFeedback({ tone: "error", text: external("moderation.reviewRequired") }); return;
+      }
+      const baseline = retry?.baseline ?? (externalEvent ? { external_event_id: externalEvent.external_event_id,
+        activity_id: externalEvent.activity_id, activity_revision: externalEvent.activity_revision } : null);
+      if (!baseline || (!retry && (!datesExternalResolutionMatches(access.item, body, baseline)
+        || !permittedResolutionActions(access.item, access.principal).includes(String(body.action))))) {
+        setExternalNeedsReload(true); setConfirmed(null); setFeedback({ tone: "error", text: external("moderation.reloadRequired") }); return;
+      }
+      const pending = retry ?? prepareDatesExternalResolution(access.actor, body, baseline, access.serverNow);
+      if (!pending) { setConfirmed(null); setFeedback({ tone: "error", text: external("feedback.invalid") }); return; }
+      const storage = datesExternalBrowserStorage();
+      const result = await runDatesExternalResolution(pending, storage, access.serverNow, adminCall);
+      if (!readFence.accepts(ticket)) return;
+      setExternalPending(readDatesExternalResolution(storage, access.actor)); setConfirmed(null);
+      if (result.kind === "success") {
+        setFeedback({ tone: "success", text: external(result.retained ? "feedback.successRetained" : "feedback.success") });
+        if (!result.retained) {
+          setResolutionReason(""); setVisibleReasonEn(""); setVisibleReasonHu("");
+          await load();
+        }
+      } else if (result.kind === "refused") {
+        setExternalNeedsReload(true);
+        setFeedback({ tone: "error", text: external(result.retained ? "feedback.refusedRetained" : "moderation.reloadRequired") });
+      } else setFeedback({ tone: "error", text: external(`feedback.${result.kind}`) });
+    } finally {
+      mutationBusy.current = false;
+      if (currentLifetime === lifetime.current) setBusy(false);
     }
   }
 
@@ -303,14 +384,16 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
   if (state === "error" || !data || !principal) return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
 
   const item = data.case;
+  const isExternal = item.target_type === "external_event";
   const assignedToMe = item.assignee_email?.toLowerCase() === principal.email.toLowerCase();
   const leaseActive = (item.claim_expires_at || 0) > Math.floor(Date.now() / 1000);
   const canBreakGlass = item.capabilities.can_break_glass && principal.break_glass;
   const appealBlocked = datesAppealBlockedByRole(item, principal);
   const mayClaim = datesCaseClaimableByRole(item, principal) && (item.capabilities.can_claim || (item.conflict_of_interest && canBreakGlass));
-  const mayReadEvidence = item.capabilities.can_read_evidence || (item.conflict_of_interest && canBreakGlass);
+  const mayReadEvidence = datesExternalReviewAllowed(item, principal)
+    && (item.capabilities.can_read_evidence || (item.conflict_of_interest && canBreakGlass));
   const mayCaptureTrail = Boolean(
-    item.activity_id
+    !isExternal && item.activity_id
     && principal.sensitive_location
     && hasDatesCapability(principal, "dates_trail_evidence_capture")
     && (!item.conflict_of_interest || (canBreakGlass && breakGlass)),
@@ -326,14 +409,33 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       <DatesAdminTabs />
       {feedback && <div className={`alert ${feedback.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{feedback.text}</div>}
       {item.conflict_of_interest && <div className="alert alert-error page-alert"><strong>{t("conflictTitle")}</strong> {t("conflictCopy")}</div>}
+      {isExternal && <section className="panel dates-external-fields">
+        <span className="badge badge-demo">{external("badge")}</span>
+        <p>{external("moderation.boundary")}</p>
+        <p>{item.external_target_available ? external("moderation.revisions", { caseRevision: item.revision, eventRevision: item.external_revision! }) : external("moderation.unavailable")}</p>
+        {!datesExternalReviewAllowed(item, principal) && <p className="alert alert-info">{external("moderation.reviewRequired")}</p>}
+        {externalEvent && <><h2>{externalEvent.title}</h2><p className="preserve-whitespace">{locale === "hu" ? externalEvent.facts.summary.hu : externalEvent.facts.summary.en}</p>
+          <Link href={`/dates/external/${item.target_id}`}>{external("editor.detailTitle")}</Link></>}
+      </section>}
+      {externalEvent && <DatesExternalProvenance event={externalEvent} />}
+      {isExternal && externalPending.kind !== "empty" && <section className="panel dates-external-fields">
+        <h2>{external("moderation.pendingTitle")}</h2>
+        {externalPending.kind === "blocked" ? <p>{external("pending.blocked")}</p> : <>
+          <p>{external("moderation.pendingCopy")}</p><code>{externalPending.pending.body.idempotency_key}</code>
+          <details><summary>{external("pending.payload")}</summary><pre className="dates-external-payload">{JSON.stringify(externalPending.pending.body, null, 2)}</pre></details>
+          {externalPending.pending.body.case_id !== caseId ? <Link href={`/dates/moderation/${externalPending.pending.body.case_id}`}>{external("pending.open")}</Link>
+            : <button className="button button-primary" disabled={busy || !datesExternalReviewAllowed(item, principal) || !hasDatesCapability(principal, "dates_case_resolve")}
+              onClick={() => void executeExternalResolution(null, externalPending.pending)}>{external("pending.retry")}</button>}
+        </>}
+      </section>}
 
       <div className="dates-detail-grid">
         <section className="panel">
           <div className="panel-header"><div><h2>{t("caseOverview")}</h2><p>{t("caseOverviewCopy")}</p></div><div className="row-actions"><span className={`badge ${["new", "in_review", "appealed"].includes(item.status) ? "badge-warning" : "badge-active"}`}>{humanizeMachineKey(item.status)}</span><span className={`badge ${["high", "critical"].includes(item.severity) ? "badge-warning" : ""}`}>{humanizeMachineKey(item.severity)}</span></div></div>
           <div className="panel-body"><dl className="detail-list">
             <div className="detail-row"><dt>{t("queue")}</dt><dd>{humanizeMachineKey(item.queue)} · {humanizeMachineKey(item.case_kind)}</dd></div>
-            <div className="detail-row"><dt>{t("target")}</dt><dd>{humanizeMachineKey(item.target_type)} · {item.target_id}</dd></div>
-            <div className="detail-row"><dt>{t("subject")}</dt><dd>UID {item.target_uid}{item.activity_id ? ` · ${item.activity_id}` : ""}</dd></div>
+            <div className="detail-row"><dt>{t("target")}</dt><dd>{isExternal ? external("moderation.target") : humanizeMachineKey(item.target_type)} · {item.target_id}</dd></div>
+            <div className="detail-row"><dt>{t("subject")}</dt><dd>{isExternal ? external("moderation.nonmember") : `UID ${item.target_uid}`}{item.activity_id ? ` · ${item.activity_id}` : ""}</dd></div>
             <div className="detail-row"><dt>{t("reports")}</dt><dd>{item.report_count} · {t("distinctReporters", { count: item.distinct_reporter_count })}</dd></div>
             <div className="detail-row"><dt>{t("assignee")}</dt><dd>{item.assignee_email || t("unassigned")}</dd></div>
             <div className="detail-row"><dt>{t("claimExpiry")}</dt><dd>{item.claim_expires_at ? formatDate(item.claim_expires_at, locale, true) : "—"}</dd></div>
@@ -347,8 +449,8 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
           <div className="panel-body form-stack">
             {item.conflict_of_interest && canBreakGlass && <><label className="checkbox-field"><input type="checkbox" checked={breakGlass} disabled={busy} onChange={(event) => { readFence.invalidate(); setEvidence(null); setBreakGlass(event.target.checked); }} /><span>{t("useBreakGlass")}</span></label><label className="field"><span>{t("breakGlassReason")}</span><textarea required={breakGlass} value={breakGlassReason} onChange={(event) => setBreakGlassReason(event.target.value)} /></label></>}
             <div className="row-actions">
-              {mayClaim && <button className="button button-primary" onClick={() => void claim()} disabled={busy || (item.conflict_of_interest && !breakGlass)}>{t("claim")}</button>}
-              {assignedToMe && leaseActive && <><button className="button button-secondary" onClick={() => void lease("heartbeat")} disabled={busy}>{t("heartbeat")}</button><button className="button button-danger" onClick={() => void lease("release")} disabled={busy}>{t("release")}</button></>}
+              {mayClaim && <button className="button button-primary" onClick={() => void claim()} disabled={writeLocked || (item.conflict_of_interest && !breakGlass)}>{t("claim")}</button>}
+              {assignedToMe && leaseActive && <><button className="button button-secondary" onClick={() => void lease("heartbeat")} disabled={writeLocked}>{t("heartbeat")}</button><button className="button button-danger" onClick={() => void lease("release")} disabled={writeLocked}>{t("release")}</button></>}
             </div>
             {!mayClaim && !assignedToMe && <p className="page-subtitle">{appealBlocked ? t("appealClaimUnavailable") : t("claimUnavailable")}</p>}
             {appealBlocked && assignedToMe && leaseActive && <p className="alert alert-info">{t("appealDecisionUnavailable")}</p>}
@@ -378,7 +480,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
         <div className="panel-header"><div><h2>{t("evidenceTitle")}</h2><p>{t("evidenceCopy")}</p></div></div>
         <div className="panel-body">
           {!mayReadEvidence ? <p className="page-subtitle">{t("evidenceUnavailable")}</p> : <form className="dates-evidence-controls" onSubmit={readEvidence}>
-            {principal.sensitive_location && <label className="checkbox-field"><input type="checkbox" checked={evidenceSensitive} disabled={busy} onChange={(event) => { readFence.invalidate(); setEvidence(null); setEvidenceSensitive(event.target.checked); }} /><span>{t("includeSensitiveLocation")}</span></label>}
+            {!isExternal && principal.sensitive_location && <label className="checkbox-field"><input type="checkbox" checked={evidenceSensitive} disabled={busy} onChange={(event) => { readFence.invalidate(); setEvidence(null); setEvidenceSensitive(event.target.checked); }} /><span>{t("includeSensitiveLocation")}</span></label>}
             <label className="field"><span>{t("auditReason")}</span><input value={evidenceReason} required={evidenceSensitive || (item.conflict_of_interest && breakGlass)} onChange={(event) => setEvidenceReason(event.target.value)} placeholder={t("auditReasonPlaceholder")} /></label>
             <button className="button button-danger" type="submit" disabled={busy || (item.conflict_of_interest && !breakGlass)}>{t("readEvidence")}</button>
           </form>}
@@ -392,21 +494,21 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
         </div>
       </section>
 
-      {principal.sensitive_location && hasDatesCapability(principal, "dates_trail_evidence_capture") && item.activity_id && <section className="panel dates-section">
+      {!isExternal && principal.sensitive_location && hasDatesCapability(principal, "dates_trail_evidence_capture") && item.activity_id && <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("trailEvidenceTitle")}</h2><p>{t("trailEvidenceCopy")}</p></div></div>
         <div className="panel-body">
           <form className="dates-evidence-controls" onSubmit={captureTrailEvidence}>
             <label className="field"><span>{t("trailFrom")}</span><input type="datetime-local" required value={trailFrom} onChange={(event) => setTrailFrom(event.target.value)} /></label>
             <label className="field"><span>{t("trailTo")}</span><input type="datetime-local" required value={trailTo} onChange={(event) => setTrailTo(event.target.value)} /></label>
             <label className="field"><span>{t("trailReason")}</span><input required minLength={3} maxLength={500} value={trailReason} onChange={(event) => setTrailReason(event.target.value)} /></label>
-            <button className="button button-danger" type="submit" disabled={busy || !mayCaptureTrail}>{t("captureTrailEvidence")}</button>
+            <button className="button button-danger" type="submit" disabled={writeLocked || !mayCaptureTrail}>{t("captureTrailEvidence")}</button>
           </form>
         </div>
       </section>}
 
       {assignedToMe && leaseActive && <div className="section-grid dates-section">
-        {hasDatesCapability(principal, "dates_case_note") && <section className="panel"><div className="panel-header"><div><h2>{t("noteTitle")}</h2><p>{t("noteCopy")}</p></div></div><form className="panel-body form-stack" onSubmit={addNote}><label className="field"><span>{t("internalNote")}</span><textarea required maxLength={1000} value={note} onChange={(event) => setNote(event.target.value)} /></label><label className="field"><span>{t("auditReasonOptional")}</span><input value={noteReason} onChange={(event) => setNoteReason(event.target.value)} /></label><button className="button button-primary" type="submit" disabled={busy}>{t("addNote")}</button></form></section>}
-        {hasDatesCapability(principal, "dates_case_resolve") && !item.conflict_of_interest && <section className="panel"><div className="panel-header"><div><h2>{t("escalateTitle")}</h2><p>{t("escalateCopy")}</p></div></div><form className="panel-body form-stack" onSubmit={escalate}><label className="field"><span>{t("auditReason")}</span><textarea required value={escalationReason} onChange={(event) => setEscalationReason(event.target.value)} /></label><button className="button button-danger" type="submit" disabled={busy || item.escalated}>{item.escalated ? t("alreadyEscalated") : t("escalate")}</button></form></section>}
+        {hasDatesCapability(principal, "dates_case_note") && <section className="panel"><div className="panel-header"><div><h2>{t("noteTitle")}</h2><p>{t("noteCopy")}</p></div></div><form className="panel-body form-stack" onSubmit={addNote}><label className="field"><span>{t("internalNote")}</span><textarea required maxLength={1000} value={note} onChange={(event) => setNote(event.target.value)} /></label><label className="field"><span>{t("auditReasonOptional")}</span><input value={noteReason} onChange={(event) => setNoteReason(event.target.value)} /></label><button className="button button-primary" type="submit" disabled={writeLocked}>{t("addNote")}</button></form></section>}
+        {hasDatesCapability(principal, "dates_case_resolve") && !item.conflict_of_interest && <section className="panel"><div className="panel-header"><div><h2>{t("escalateTitle")}</h2><p>{t("escalateCopy")}</p></div></div><form className="panel-body form-stack" onSubmit={escalate}><label className="field"><span>{t("auditReason")}</span><textarea required value={escalationReason} onChange={(event) => setEscalationReason(event.target.value)} /></label><button className="button button-danger" type="submit" disabled={writeLocked || item.escalated}>{item.escalated ? t("alreadyEscalated") : t("escalate")}</button></form></section>}
       </div>}
 
       {mayResolve && <section className="panel dates-section dates-resolution-panel">
@@ -417,7 +519,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
           <label className="field field-full"><span>{t("internalReason")}</span><textarea required maxLength={1000} value={resolutionReason} onChange={(event) => setResolutionReason(event.target.value)} /></label>
           <label className="field"><span>{t("visibleReasonEn")}</span><textarea required maxLength={500} value={visibleReasonEn} onChange={(event) => setVisibleReasonEn(event.target.value)} /></label>
           <label className="field"><span>{t("visibleReasonHu")}</span><textarea required maxLength={500} value={visibleReasonHu} onChange={(event) => setVisibleReasonHu(event.target.value)} /></label>
-          <div className="field-full"><button className="button button-danger" type="submit" disabled={busy || (item.conflict_of_interest && !breakGlass)}>{t("prepareResolution")}</button></div>
+          <div className="field-full"><button className="button button-danger" type="submit" disabled={writeLocked || (item.conflict_of_interest && !breakGlass)}>{t("prepareResolution")}</button></div>
         </form>
       </section>}
 
@@ -430,7 +532,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
           {holdAction === "place" && <label className="field"><span>{t("reviewAt")}</span><input type="datetime-local" required value={holdReviewAt} onChange={(event) => setHoldReviewAt(event.target.value)} /></label>}
           <label className="field"><span>{t("auditReason")}</span><textarea required value={holdReason} onChange={(event) => setHoldReason(event.target.value)} /></label>
           <label className="field"><span>{t("legalBasis")}</span><textarea required value={legalBasis} onChange={(event) => setLegalBasis(event.target.value)} /></label>
-          <div className="field-full"><button className="button button-danger" type="submit" disabled={busy || !datesLegalHoldAllowed(item, principal, holdAction, breakGlass)}>{t("prepareLegalHold")}</button></div>
+          <div className="field-full"><button className="button button-danger" type="submit" disabled={writeLocked || !datesLegalHoldAllowed(item, principal, holdAction, breakGlass)}>{t("prepareLegalHold")}</button></div>
         </form>
       </section>}
 
@@ -444,6 +546,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
 function displayReason(value: unknown, locale: string): string {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     const row = value as Record<string, unknown>;
+    if ((row.locale === "en" || row.locale === "hu") && typeof row.label === "string") return row.label;
     const key = locale.startsWith("hu") ? "hu" : "en";
     return String(row[key] || row.en || row.hu || "—");
   }

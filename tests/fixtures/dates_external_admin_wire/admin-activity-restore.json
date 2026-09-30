@@ -1,0 +1,19 @@
+{
+    "success": true,
+    "status_code": 200,
+    "external_event_id": "xev_00000000000000000000000000000003",
+    "activity_id": "act_00000000000000000000000000000003",
+    "revision": 4,
+    "activity_revision": 4,
+    "action": "restore",
+    "event_status": "ended",
+    "lifecycle": "ended",
+    "soft_deleted": false,
+    "external_revision": 4,
+    "audit_id": "aud_0000000000000000000000000000000b",
+    "idempotency_replayed": false,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

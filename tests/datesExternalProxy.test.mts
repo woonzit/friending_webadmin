@@ -8,6 +8,7 @@ import { isTrustedAdminRequest } from "../lib/requestGuard.ts";
 import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
 import { datesAvailabilityWriteIsRetired } from "../lib/datesAdmin.ts";
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "../lib/datesExternalAdmin.ts";
+import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody } from "../lib/datesExternalModeration.ts";
 
 // Execute the production POST function, not a reimplementation. Session/Core
 // I/O and NextResponse are controlled adapters; unrelated domain predicates
@@ -33,6 +34,7 @@ function harness() {
   // is tested without the artificial vm Object.prototype mismatch.
   const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError,
     datesAvailabilityWriteIsRetired, datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody,
+    datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody,
     ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
     readAdminSession: async () => state.session,
     coreCall: async (action: string, body: any) => { state.calls.push({ action, body }); return action === "admin_me" ? state.member : state.response; },
@@ -121,4 +123,26 @@ test("proxy retains Core logical refusal bytes and normalizes only transport/ses
   }
   h.state.response = { status: 403, data: { success: false, error: "admin-revoked" } };
   assert.equal((await h.send()).status, 401);
+});
+
+test("external resolve proxy freshly requires both capabilities and forwards the two independent revisions", async () => {
+  const payload = { case_id: "cas_" + "b".repeat(32), expected_revision: 2, expected_external_revision: 7, action: "remove_content",
+    reason: "Checked source and report", user_visible_reason_en: "Removed", user_visible_reason_hu: "Eltávolítva",
+    expires_at: null, break_glass: false, idempotency_key: "external-review:000000000001" };
+  const h = harness(); h.state.member.data.dates.capabilities = ["dates_case_resolve", "dates_external_event_review"];
+  assert.equal((await h.send("dates_moderation_resolve", payload)).status, 200);
+  assert.deepEqual(JSON.parse(JSON.stringify(h.state.calls[1].body)), { ...payload, admin_email: email });
+  for (const missing of ["dates_case_resolve", "dates_external_event_review"]) {
+    h.state.member.data.dates.capabilities = ["dates_case_resolve", "dates_external_event_review"].filter((cap) => cap !== missing);
+    assert.equal((await h.send("dates_moderation_resolve", payload)).body.error, "dates-admin-capability-required");
+  }
+  h.state.member.data.dates.capabilities = ["dates_case_resolve", "dates_external_event_review"];
+  for (const change of [{ expected_external_revision: "7" }, { expected_revision: 0 }, { action: "warn" }, { subject_uid: 0 }])
+    assert.equal((await h.send("dates_moderation_resolve", { ...payload, ...change })).status, 400);
+  assert.equal(h.state.calls.filter((call) => call.action === "dates_moderation_resolve").length, 1);
+  // The member path retains its existing request hash/shape without the new CAS.
+  const member: any = { ...payload, action: "warn" }; delete member.expected_external_revision;
+  h.state.member.data.dates.capabilities = ["dates_case_resolve"];
+  assert.equal((await h.send("dates_moderation_resolve", member)).status, 200);
+  assert.equal(Object.hasOwn(h.state.calls.at(-1)!.body, "expected_external_revision"), false);
 });

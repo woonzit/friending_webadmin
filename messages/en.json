@@ -1327,7 +1327,7 @@
               "1": "Open the exact case that matches the task and SLA priority.",
               "2": "Refresh after another moderator may have claimed or resolved it."
             },
-            "guidance": "The list is not a decision surface. Evidence, conflicts of interest, legal holds and immutable resolution live in case detail."
+            "guidance": "The list is not a decision surface. Evidence, conflicts of interest, legal holds and immutable resolution live in case detail. An external-event badge identifies a non-member organizer, not a UID 0 member account."
           }
         }
       },
@@ -1347,7 +1347,7 @@
               "1": "Verify this is the intended case and inspect any conflict-of-interest block.",
               "2": "Use the status badges to understand whether normal handling is still allowed."
             },
-            "guidance": "A detected conflict blocks ordinary evidence and decisions. Only an explicitly approved break-glass path may cross that boundary."
+            "guidance": "A detected conflict blocks ordinary evidence and decisions. Only an explicitly approved break-glass path may cross that boundary. External cases display independent case and event-content revisions; retained history remains readable after the event is purged."
           },
           "claim": {
             "title": "Claim lease",
@@ -1374,7 +1374,7 @@
               "1": "Open only the evidence type needed for the current question.",
               "2": "Supply the required reason for sensitive location access."
             },
-            "guidance": "Every read is audited. Avoid copying sensitive evidence into notes, screenshots or external systems."
+            "guidance": "Every read is audited. Avoid copying sensitive evidence into notes, screenshots or external systems. External-event evidence also requires external-event review permission; member-location capture is not offered for that target."
           },
           "trailEvidence": {
             "title": "Live-trail evidence capture",
@@ -1401,7 +1401,7 @@
               "1": "Choose only an option valid for this target and case kind.",
               "2": "Review the confirmation and user-visible consequence, then submit once."
             },
-            "guidance": "A completed decision is immutable and audited. A stale or unsafe request is refused; refresh rather than selecting a different outcome to bypass it."
+            "guidance": "A completed decision is immutable and audited. External cases offer only dismissal, content restore/removal, event cancellation or event removal—never member sanctions. Dismissal does not republish; moderation cancellation withdraws without claiming upstream cancellation. External decisions preserve both revisions and their key before dispatch. Retry only the saved request after an unknown outcome; stale content requires fresh review. Do not discard blocked or expired recovery records."
           },
           "legalHold": {
             "title": "Legal hold",
@@ -8010,6 +8010,17 @@
         "anonymous": "Anonymous or not disclosed", "member": "Member UID {uid}", "channel": "Submission channel",
         "assistance": "AI assistance", "noAi": "None — manually entered and checked",
         "boundary": "These are the safe source and credit fields provided by Core. Source links open a website; they do not fetch, verify or republish its content. No operator identity or private evidence is exposed here."
+      },
+      "moderation": {
+        "target": "External event", "nonmember": "External organizer — not a member account",
+        "revisions": "Case revision {caseRevision} · event content revision {eventRevision}",
+        "unavailable": "The event is no longer available. Retained case history and permitted evidence remain readable; event actions are unavailable.",
+        "reviewRequired": "External-event review permission is required to read evidence or decide this case.",
+        "factsUnavailable": "The event details could not be read at this case's content revision. Case history and a saved decision receipt can still be read or retried. New changes are blocked until you refresh and review matching case and event details.",
+        "reloadRequired": "The decision was not confirmed against this case and content revision. Refresh the case and event details, review them again, and confirm a new decision. Your written reasons are retained.",
+        "pendingTitle": "Unconfirmed external-event decision",
+        "pendingCopy": "A decision is awaiting an authoritative receipt. Other case changes are blocked. Retry only the saved request with its original case revision, event revision and key; an expired or unreadable record must not be silently discarded.",
+        "boundary": "This case has no member subject. Member warnings, restrictions, account suspensions, participant or photo removal are not offered. Dismissal does not republish pending content. A moderation cancellation withdraws the event; it does not claim the organizer canceled it. Restore is limited to nonterminal, undeleted, unexpired content."
       },
       "counts": "{going} going · {interested} interested",
       "pagination": "Page {page} of {pages} · {total} events",

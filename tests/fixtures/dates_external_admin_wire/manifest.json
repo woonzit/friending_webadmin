@@ -1,13 +1,13 @@
 {
     "schema_version": 1,
     "contract": "dates-external-admin-v1",
-    "source_commit": "bc0a69a36a325b21a3eac9d5e2a3c4d169da1755",
-    "source_checksum": "2fe4788bd3698e4464522749efd042c4d70c78c4c8c724f29e5167a32e02ec40",
-    "fixture_count": 43,
-    "fixture_set_sha256": "2935f5df31e7003d395da8a386ec2def6e01e7be0824b2ccc02f78e22c058610",
+    "source_commit": "83872f97d70ff8bfa381fd98c9ee47578febfabc",
+    "source_checksum": "e07353485e3c68eb3bc419c8c116c8ff461d4f9cacc3cfdec3bcd32cf46fca2f",
+    "fixture_count": 88,
+    "fixture_set_sha256": "8a0b8fac6340a2d28c119e46f5bd2be3863c073b18c49368710b95ceb214775c",
     "provenance": {
         "generator": "tests/dates_external_admin_fixture_dump.php",
-        "generator_sha256": "5178d5e8c01e58065f3016e2c3430031487d0e65102852b3b856b2750467414a",
+        "generator_sha256": "8a63d3657be4c35240c120144a6f19f4e3da71585316fac9548154c9870737d8",
         "wire_adapters": [
             "Friending\\Core\\Router::dispatch -> Friending\\Support\\Webadmin::reply/noStoreReply"
         ],
@@ -30,6 +30,7 @@
             "sources[].source_id": "exact equality with the bounded stored source before mapping",
             "thread_id/message_id": "stored official system message, activity/thread cross-links, sequence/text/pin and absent member sender verified before mapping"
         },
+        "additional_console_capture": "Existing activity detail/lifecycle, configuration and hostless moderation use the actual routes, audited transactions and completed receipts. Case/report intake is synthetic; evidence uses the production immutable writer. P1 member report intake is not claimed by this admin corpus.",
         "source_paths": [
             "config/dates_v1_fixture.json",
             "config/routes.php",
@@ -134,22 +135,32 @@
             "src/Services/AdministrativeMessageConsentService.php",
             "src/Services/AdministrativeMessageConsentStore.php",
             "src/Services/AppleOidcVerifier.php",
+            "src/Services/DatesActivityPhotoService.php",
+            "src/Services/DatesActivityPurgeService.php",
             "src/Services/DatesAdminActivityService.php",
             "src/Services/DatesAdminAuditService.php",
             "src/Services/DatesAdminAuthorizationService.php",
             "src/Services/DatesAdminException.php",
             "src/Services/DatesAdminIdempotencyService.php",
+            "src/Services/DatesConfigurationAdminService.php",
             "src/Services/DatesDomainException.php",
             "src/Services/DatesDomainOutbox.php",
             "src/Services/DatesDraftService.php",
             "src/Services/DatesExternalEventAdminService.php",
             "src/Services/DatesExternalEventCommandService.php",
+            "src/Services/DatesExternalEventModerationService.php",
             "src/Services/DatesExternalEventPublisher.php",
             "src/Services/DatesExternalPlacesProvider.php",
             "src/Services/DatesExternalPlacesService.php",
             "src/Services/DatesLiveRetentionService.php",
             "src/Services/DatesMembershipBundleService.php",
+            "src/Services/DatesModerationCommandService.php",
+            "src/Services/DatesModerationConflictService.php",
+            "src/Services/DatesModerationEvidenceService.php",
             "src/Services/DatesModerationReadService.php",
+            "src/Services/DatesModerationTargetService.php",
+            "src/Services/DatesPhotoCleanupService.php",
+            "src/Services/DatesPrepublicationModerationService.php",
             "src/Services/DatesReferenceService.php",
             "src/Services/DatesRuntimeConfiguration.php",
             "src/Services/DatesTransaction.php",
@@ -192,16 +203,117 @@
             "src/Support/WelcomeMessage.php",
             "tests/dates_external_admin_fixture_dump.php",
             "tests/fixture_manifest_provenance.php",
-            "tests/support/dates_external_admin_wire_contract.php"
+            "tests/helpers/dates_external_moderation_checks.php",
+            "tests/support/dates_external_admin_wire_contract.php",
+            "tests/support/dates_external_console_capture.php",
+            "tests/support/dates_external_console_contract.php"
         ]
     },
     "fixtures": [
+        {
+            "file": "admin-activity-command-stale-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "984a8beeed2f59fd49636435d2acafc353e776cb4968549ff37fe6207564e9b6"
+        },
+        {
+            "file": "admin-activity-command-viewer-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-activity-detail-external.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "0b500a843cae67a2d5adcfb1f77aa65414bee556fd1173478d9c663471d73550"
+        },
+        {
+            "file": "admin-activity-end-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "49ce1f9a35574f5a1fa226dd40f8d91826af44ad4b24905cbc47393e0a0483bb"
+        },
+        {
+            "file": "admin-activity-end.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "b4dd1a3fa517595c2f7db709f9b2917e21b8decf9d7c1458d884a3a799c8e3f5"
+        },
         {
             "file": "admin-activity-list-external.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
             "sha256": "77e202d9c8daf541ede741f3b35b6e657a594892bb9c7a63441d3ee1c444ed6c"
+        },
+        {
+            "file": "admin-activity-purge-hold-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "f9ed55714a81c9b70a3d2ef5910f003895dff4c78ad80ba107bb2c86b1c3fc49"
+        },
+        {
+            "file": "admin-activity-purge-open-case-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "ffa9d964cb95b1e9499d5f01a30b30366aee512a5e759c960de54fd41664e534"
+        },
+        {
+            "file": "admin-activity-purge-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "e97b5fa3afa6d001747334da491cb2338ea9ebb26ea23f738099bd6647aa947b"
+        },
+        {
+            "file": "admin-activity-purge-retention-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "f2c675320c2ae9e0ec8274688f1e6f6fc8505010348959339d55cf719abff646"
+        },
+        {
+            "file": "admin-activity-purge.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "102bf65ad622b078372e52a0b3b22acc87f80a8258fb39df5c2a49c9c1f9c022"
+        },
+        {
+            "file": "admin-activity-restore-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c66e6d0a2095342587046947dd672eb66503c81cc0de0eed4caf2a6d7693e65a"
+        },
+        {
+            "file": "admin-activity-restore.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "ec95cd3669751c9404825993908ad8b9df7e3ef8956ae13a1216feb41109dad2"
+        },
+        {
+            "file": "admin-activity-soft-delete-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c4f0ddd08c8c5294574d8360813b2a82cb390f07c53a7712f872a3db5584536a"
+        },
+        {
+            "file": "admin-activity-soft-delete.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "96549428bfc4634c64b7f7fdd83090107b0419ce56cb3075fc2df22c326f4387"
         },
         {
             "file": "admin-cancel.json",
@@ -223,6 +335,20 @@
             "http_status": 200,
             "status_code": 409,
             "sha256": "d6b08d88665c9fd82fb3dedb358dc4cafbad6977a1f4efa2fb8e25e7bc332afa"
+        },
+        {
+            "file": "admin-configuration-default-off.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "db826e3665cd3aaaaf6c4200961f140561878b1d3bdd8e2302e8ef73721152fc"
+        },
+        {
+            "file": "admin-configuration-publishing-on.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "b97015edcea6096478d0221794dfd5d02154cac12363e2bb0101db12276e3481"
         },
         {
             "file": "admin-confirmation-required-denied.json",
@@ -335,6 +461,209 @@
             "http_status": 200,
             "status_code": 200,
             "sha256": "dbf208b9ee866bfe596d98070e65109bf92607fde3a1d20895c239f6b59cb808"
+        },
+        {
+            "file": "admin-moderation-action-invalid-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "4efd7bfba67db5ef529959129ded0e6dfe8ffd23bf9f0ab967b5449618ad5dda"
+        },
+        {
+            "file": "admin-moderation-cancel.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "9dbb7ea1771123dfd369951fe5fbe874b00f573366d3485fd81193d2d5ebfebc"
+        },
+        {
+            "file": "admin-moderation-claim-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "7dee9ba12e8869a40b660336af6cd7e06281386c7dd7c916046f161b01b0b153"
+        },
+        {
+            "file": "admin-moderation-claim-viewer-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-moderation-claim.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "b9cff39ee05bc92bf832bd1c8d86c3968219459d306c8deb0d6f60a2290820a7"
+        },
+        {
+            "file": "admin-moderation-conflict-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "0f737e2d88dac54a27b52033586823a0bc0710558347cced0a084a3edb049465"
+        },
+        {
+            "file": "admin-moderation-detail-claimed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "9359670fa5dd3559be09f53efd1f2fd9abc8e474879323ec36ea070d67c56372"
+        },
+        {
+            "file": "admin-moderation-detail-closed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "b468b7ea4b23bd867b9490566470f69836f56a4276b436349a986f1a97a3b6c0"
+        },
+        {
+            "file": "admin-moderation-detail-purged.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "5c7a5db7cefd431bcd875166833db5e84a4e3e1537e1c6d6240ee8a2d724c626"
+        },
+        {
+            "file": "admin-moderation-detail-viewer.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "e3b786f190c772343bdb71744eb6711e37022d997d4de4c9caca7c064a5b0722"
+        },
+        {
+            "file": "admin-moderation-dismiss.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c32f6163c20a24f6753ac1c3055c1928c35002d43b4fb5eb88c35d599dad859d"
+        },
+        {
+            "file": "admin-moderation-evidence-viewer-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-moderation-evidence.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "635591074868cd36cfcaa9169d9151192b3bb4c8fe77c65de470bfde1861bfe1"
+        },
+        {
+            "file": "admin-moderation-hold-open-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "b9e857e13e4b8ebe00eedd6b11f72cba97f498618eeb755cac2bfd5b5aeaf5f5"
+        },
+        {
+            "file": "admin-moderation-hold-place.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "a0ba20bf9b7be9c767df0f66a702bdf653f605411934a5354a9f424639a37dee"
+        },
+        {
+            "file": "admin-moderation-hold-release.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "fdfdf3fd7b6a234b1e6851f2779685e1a9db8a4e8460a7a9a1e51bce5ce17141"
+        },
+        {
+            "file": "admin-moderation-hold-viewer-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-moderation-key-conflict-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "91492440b5eae5714835505289f8d819b32dbde248a4a333280388c1dc642ace"
+        },
+        {
+            "file": "admin-moderation-queue.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "fbb9aeea0a968b64fb5c11c4be4558f1996bc4055c55b6cc0eb9caad5c5972b5"
+        },
+        {
+            "file": "admin-moderation-remove-activity.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "0c96c7e2dcb88f86172ee2a9d93e245910e86056c2968feb471567108fd8d192"
+        },
+        {
+            "file": "admin-moderation-resolve-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "2a8d683e006fcb8800e02d882fd4ea713623cb86d433c6a19121b9d3cc9ae44a"
+        },
+        {
+            "file": "admin-moderation-resolve-viewer-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-moderation-resolve.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "085f4334ab3f8edfb0274fd07194ac3ec1a777f209d592992d693630d1a38f06"
+        },
+        {
+            "file": "admin-moderation-restore-terminal-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "d6b08d88665c9fd82fb3dedb358dc4cafbad6977a1f4efa2fb8e25e7bc332afa"
+        },
+        {
+            "file": "admin-moderation-restore.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "19dc6dd234c7cab463c8ff40ff47658d4dd9217a2f1b288d1f516390f479f528"
+        },
+        {
+            "file": "admin-moderation-revision-invalid-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "96ae1e8e3a05ead33b09907bf2e1618da596565f60f9b70bc4885fd8815113c6"
+        },
+        {
+            "file": "admin-moderation-revision-missing-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "96ae1e8e3a05ead33b09907bf2e1618da596565f60f9b70bc4885fd8815113c6"
+        },
+        {
+            "file": "admin-moderation-revision-stale-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "bd07aa4742ab00ed8612c585fe95a12b379cb6b56669e86561a53d0e1e745d8a"
+        },
+        {
+            "file": "admin-moderation-target-invalid-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "155b6e3e25ad0485cbf8859be1438edeeac69b580e4ccc60894d4a2f4ad37b77"
         },
         {
             "file": "admin-not-found-denied.json",

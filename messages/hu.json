@@ -1327,7 +1327,7 @@
               "1": "A feladathoz és SLA-prioritáshoz illeszkedő pontos ügyet nyisd meg.",
               "2": "Frissíts, ha egy másik moderátor lefoglalhatta vagy lezárhatta."
             },
-            "guidance": "A lista nem döntési felület. A bizonyíték, összeférhetetlenség, legal hold és megváltoztathatatlan resolution az ügy részleteiben található."
+            "guidance": "A lista nem döntési felület. A bizonyíték, összeférhetetlenség, legal hold és megváltoztathatatlan resolution az ügy részleteiben található. A külsőesemény-jelvény nem tagi szervezőt jelöl, nem egy UID 0 azonosítójú tagi fiókot."
           }
         }
       },
@@ -1347,7 +1347,7 @@
               "1": "Ellenőrizd, hogy ez a megfelelő ügy, és vizsgáld meg az összeférhetetlenségi blokkot.",
               "2": "Az állapotjelvényekből értsd meg, engedélyezett-e még a normál kezelés."
             },
-            "guidance": "Az észlelt összeférhetetlenség blokkolja a normál bizonyítékot és döntést. Csak kifejezetten jóváhagyott break-glass út lépheti át ezt a határt."
+            "guidance": "Az észlelt összeférhetetlenség blokkolja a normál bizonyítékot és döntést. Csak kifejezetten jóváhagyott break-glass út lépheti át ezt a határt. Külső eseménynél az ügy és az eseménytartalom revíziója külön jelenik meg; a megőrzött ügytörténet az esemény végleges törlése után is olvasható."
           },
           "claim": {
             "title": "Claim lease",
@@ -1374,7 +1374,7 @@
               "1": "Csak az aktuális kérdéshez szükséges bizonyítéktípust nyisd meg.",
               "2": "Érzékeny helyhozzáféréshez add meg a kötelező indokot."
             },
-            "guidance": "Minden olvasás auditált. Ne másolj érzékeny bizonyítékot jegyzetbe, screenshotba vagy külső rendszerbe."
+            "guidance": "Minden olvasás auditált. Ne másolj érzékeny bizonyítékot jegyzetbe, screenshotba vagy külső rendszerbe. Külső esemény bizonyítékához külsőesemény-ellenőrzési jogosultság is kell; tagi helyadat rögzítése ehhez a célhoz nem választható."
           },
           "trailEvidence": {
             "title": "Live trail bizonyítékrögzítése",
@@ -1401,7 +1401,7 @@
               "1": "Csak ehhez a célhoz és ügytípushoz érvényes opciót válassz.",
               "2": "Nézd át a megerősítést és a tag által érzékelt következményt, majd egyszer küldd be."
             },
-            "guidance": "A befejezett döntés megváltoztathatatlan és auditált. Elavult vagy nem biztonságos kérésnél frissíts, ne másik eredménnyel próbáld megkerülni."
+            "guidance": "A befejezett döntés megváltoztathatatlan és auditált. Külső ügyben csak a bejelentés elutasítása, tartalom visszaállítása vagy eltávolítása, esemény lemondása vagy eltávolítása választható; tagi szankció nem. Az elutasítás nem publikál újra, a moderációs lemondás pedig visszavon, nem szervezői lemondást állít. A külső döntés mindkét revízióját és kulcsát küldés előtt megőrzi. Ismeretlen kimenetelnél csak a mentett kérést ismételd; elavult tartalomhoz új ellenőrzés kell. Blokkolt vagy lejárt helyreállítási rekordot ne dobj el."
           },
           "legalHold": {
             "title": "Legal hold",
@@ -8010,6 +8010,17 @@
         "anonymous": "Névtelen vagy nem közölt", "member": "Tag UID: {uid}", "channel": "Beküldési csatorna",
         "assistance": "MI-segítség", "noAi": "Nincs — kézzel rögzített és ellenőrzött",
         "boundary": "Ezeket a biztonságosan megjeleníthető forrás- és beküldőadatokat a Core adja vissza. A forráshivatkozás weboldalt nyit meg; nem tölti le, ellenőrzi vagy publikálja újra annak tartalmát. Itt nem jelenik meg kezelői személyazonosság vagy bizalmas bizonyíték."
+      },
+      "moderation": {
+        "target": "Külső esemény", "nonmember": "Külső szervező — nem tagi fiók",
+        "revisions": "Ügyrevízió: {caseRevision} · eseménytartalom-revízió: {eventRevision}",
+        "unavailable": "Az esemény már nem érhető el. A megőrzött ügytörténet és az engedélyezett bizonyítékok továbbra is olvashatók; eseményművelet nem végezhető.",
+        "reviewRequired": "A bizonyítékok olvasásához és a döntéshez külsőesemény-ellenőrzési jogosultság szükséges.",
+        "factsUnavailable": "Az esemény részletei nem olvashatók az ügyhöz tartozó tartalomrevízión. Az ügytörténet továbbra is olvasható, a mentett döntés visszaigazolása újrakérhető. Új változtatás csak az egyező ügy- és eseményadatok frissítése és ellenőrzése után indítható.",
+        "reloadRequired": "A döntés nem nyert megerősítést ehhez az ügy- és tartalomrevízióhoz. Frissítsd az ügyet és az esemény adatait, ellenőrizd őket újra, majd erősíts meg egy új döntést. A leírt indokok megmaradnak.",
+        "pendingTitle": "Meg nem erősített külsőesemény-döntés",
+        "pendingCopy": "Egy döntés hiteles visszaigazolásra vár. Más ügyváltoztatás nem indítható. Kizárólag a mentett kérést ismételd az eredeti ügyrevízióval, eseményrevízióval és kulccsal; lejárt vagy olvashatatlan rekordot nem szabad észrevétlenül eldobni.",
+        "boundary": "Ennek az ügynek nincs tagi alanya. Tagi figyelmeztetés, korlátozás, fiókfelfüggesztés, résztvevő- vagy fotóeltávolítás nem választható. Az elutasított bejelentés nem publikálja újra a függő tartalmat. A moderációs lemondás visszavonja az eseményt; nem állítja, hogy a szervező mondta le. Visszaállítás csak nem lezárt, nem törölt és még le nem járt tartalomnál lehetséges."
       },
       "counts": "{going} megy · {interested} érdeklődik",
       "pagination": "{page}. oldal / {pages} · {total} esemény",

@@ -16,14 +16,16 @@ updates after looking up successful idempotent receipts, so completed requests
 can still replay after the switch is turned off. Safety/lifecycle commands remain
 available according to their own capabilities and state rules.
 
-The incremental editor capture in `tests/fixtures/dates_external_admin_wire`
-comes byte-for-byte from Core `0893e25edf31fc281427f492869bfebd0e6681fb`.
-Its manifest names generator/source `bc0a69a36a325b21a3eac9d5e2a3c4d169da1755`.
+The incremental console capture in `tests/fixtures/dates_external_admin_wire`
+comes byte-for-byte from Core `b522827c9b10745610dcdef52777e56e951c1401`.
+Its manifest names generator/source `83872f97d70ff8bfa381fd98c9ee47578febfabc`.
 `tests/datesExternalWire.test.mts` independently pins its manifest, generator,
-source checksum, complete 43-file inventory and every response byte hash.
-This initial capture is **not the final P1 release pin**. Hostless moderation,
-the existing activity-detail/lifecycle adapters and settings require their
-additional committed captures and final provider repin before handover.
+source checksum, complete 88-file inventory and every response byte hash.
+The original 43 editor bodies are unchanged; the 45 additions cover hostless
+moderation, existing activity-detail/lifecycle adapters and settings. They use
+actual routed responses, audits and completed receipts; case/report intake is
+synthetic setup, not proof of member intake. This incremental capture is **not
+the final P1 release pin**; final provider repinning remains required.
 
 ## Served actions and authority
 
@@ -117,11 +119,35 @@ moderation or grant live access. Purge still requires Core's elevated capability
 retention eligibility and absence of open cases/legal holds. Reverify does not
 start a fetch/AI job, clear moderation or send a notification.
 
-The lead's moderation-A ruling requires `target_type:external_event`,
+The implemented moderation-A contract requires `target_type:external_event`,
 `target_id:xev_*`, linked `activity_id:act_*`, non-member `target_uid:0`, separate
-resolution actions and `dates_external_event_review`. Member sanctions must
-never be offered for that target. The committed provider contract/corpus is the
-authority for the final integration, not this description of the ruling.
+resolution actions and `dates_external_event_review`. Its closed case variant
+adds `external_revision`, `external_status`, `external_target_available` and
+`allowed_actions`. Both case-resolve and external-review capabilities are
+freshly checked even for a completed receipt retry. The only five actions are
+dismiss, restore content, remove content, cancel activity and remove activity;
+there is no member sanction, participant/photo removal, prepublication or appeal
+fallback. Queue membership does not grant evidence access or location capture.
+
+Resolution saves the independent case/content revision pair, target baseline,
+exact reasons, request key, actor and Core time before dispatch. A separate
+per-actor/tab moderation journal blocks competing case writes while unresolved.
+It follows the same six-day, never-silent-discard recovery policy as the editor.
+A stale case or event revision requires explicit refresh and human review, not
+automatic rebasing. Closed-case replay does not require claiming another lease.
+Late navigation suppresses UI adoption but cannot discard an already dispatched
+request's durable identity. A missing or mismatched second facts read blocks
+new writes while preserving readable case history and exact receipt recovery.
+
+Dismissal leaves content unchanged. Moderation cancellation marks it withdrawn,
+not canceled upstream. Restore only approves nonterminal, undeleted, unexpired
+content and never revives live sharing. Removal preserves an existing terminal
+state. Explicit legal holds survive resolution; automatic case holds do not.
+After permitted content purge, history remains readable with null content
+revision/status and no event actions. Decision metadata is cross-bound to the
+case's non-member target. Report reason snapshots accept only the two served
+closed shapes: bilingual EN/HU or one captured locale/label; a captured label
+is displayed as-is, never represented as a translation.
 
 The six runtime settings are external visibility/default plus storefront
 overrides, independent publication enablement, daily/per-event invite limits and

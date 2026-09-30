@@ -114,7 +114,7 @@ test("closed metadata does not invent a member-host or historical-target policy"
   const body = fixture("admin-queue-page-one");
   // Synthetic compatibility controls: not claimed as provider captures.
   body.cases[0].target_uid = 0;
-  body.cases[0].target_type = "external_event";
+  body.cases[0].target_type = "historical_nonmember";
   body.cases[0].target_id = "future-target";
   body.cases[0].activity_id = null;
   assert.ok(datesModerationQueue(body, { page: 1, limit: 2 }));
