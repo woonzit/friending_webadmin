@@ -685,7 +685,7 @@ test("Dates pages use the authenticated bridge and keep destructive controls exp
   assert.match(activity, /Array\.isArray\(response\.notifications\)/);
   assert.doesNotMatch(activity, /notifications\s*\|\|\s*\[\]/);
   const moderation = readFileSync(new URL("../app/(dashboard)/dates/moderation/page.tsx", import.meta.url), "utf8");
-  assert.match(moderation, /datesModerationSla\(slaResponse\)/);
+  assert.match(moderation, /datesModerationConsoleSla\(slaResponse\)/);
   assert.match(moderation, /state === "ready" && sla/);
   assert.doesNotMatch(moderation, /as unknown as Sla/);
 });

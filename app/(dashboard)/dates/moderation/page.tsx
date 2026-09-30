@@ -8,11 +8,11 @@ import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import {
-  datesModerationSla,
   humanizeMachineKey,
   type DatesCaseSummary,
   type DatesModerationSla,
 } from "@/lib/datesAdmin";
+import { datesModerationConsoleSla, datesModerationQueue } from "@/lib/datesModerationRead";
 import { formatDate, formatNumber } from "@/lib/format";
 
 type Filters = {
@@ -59,16 +59,18 @@ export default function DatesModerationQueuePage() {
       }, signal),
       adminCall("dates_moderation_sla", {}, signal),
     ]);
-    const nextSla = datesModerationSla(slaResponse);
-    if (!response?.success || !Array.isArray(response.cases) || !nextSla) {
+    if (signal?.aborted) return;
+    const nextQueue = datesModerationQueue(response, { page, limit: PAGE_SIZE });
+    const nextSla = datesModerationConsoleSla(slaResponse);
+    if (!nextQueue || !nextSla) {
       if (!signal?.aborted) {
         setSla(null);
         setState("error");
       }
       return;
     }
-    setRows(response.cases as DatesCaseSummary[]);
-    setTotal(Number(response.total) || 0);
+    setRows(nextQueue.cases);
+    setTotal(nextQueue.total);
     setSla(nextSla);
     setState("ready");
   }, [filters, page, rows.length]);

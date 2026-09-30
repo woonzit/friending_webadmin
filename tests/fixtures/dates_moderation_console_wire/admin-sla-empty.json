@@ -1,0 +1,21 @@
+{
+    "success": true,
+    "status_code": 200,
+    "open_count": 0,
+    "unassigned_count": 0,
+    "sla_breach_count": 0,
+    "oldest_unassigned_at": null,
+    "age_buckets": {
+        "under_1h": 0,
+        "1h_to_6h": 0,
+        "6h_to_24h": 0,
+        "over_24h": 0
+    },
+    "median_seconds_to_claim": null,
+    "median_seconds_to_resolve": null,
+    "appeals_waiting": 0,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

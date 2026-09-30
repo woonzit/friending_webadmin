@@ -1,0 +1,14 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case_id": "cas_00000000000000000000000000000003",
+    "case_status": "new",
+    "claim_expires_at": null,
+    "revision": 2,
+    "audit_id": "aud_00000000000000000000000000000004",
+    "idempotency_replayed": false,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

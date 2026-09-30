@@ -27,6 +27,7 @@ import {
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
 import { DatesCaseReadFence, datesCaseDetail, datesEvidenceRead, datesLegalHoldAllowed,
+  datesConsoleCommandReceipt, isDatesConsoleCommand,
   type DatesCaseDetail, type DatesEvidenceRead } from "@/lib/datesModerationRead";
 
 type Feedback = { tone: "success" | "error"; text: string };
@@ -125,7 +126,8 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     const response = await adminCall(action, payload);
     if (!readFence.accepts(ticket)) return false;
     setBusy(false);
-    if (!response?.success) {
+    if (!response?.success || (isDatesConsoleCommand(action)
+      && !datesConsoleCommandReceipt(response, action, caseId, payload.expected_revision))) {
       setFeedback({ tone: "error", text: t("operationFailed", { error: String(response?.error || "core-unavailable") }) });
       return false;
     }

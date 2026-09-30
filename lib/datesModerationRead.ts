@@ -1,4 +1,5 @@
-import { datesCaseInternalNotes, hasDatesCapability, type DatesAdminPrincipal, type DatesCaseSummary } from "./datesAdmin";
+import { datesCaseInternalNotes, datesModerationSla, hasDatesCapability,
+  type DatesAdminPrincipal, type DatesCaseSummary, type DatesModerationSla } from "./datesAdmin";
 
 type LocalizedReason = { en: string | null; hu: string | null } | null;
 export type DatesDecisionMetadata = {
@@ -82,6 +83,62 @@ function uniqueRows(rows: unknown[], rules: Record<string, Rule>, key: string): 
     seen.add(row[key]);
     return true;
   });
+}
+
+export type DatesModerationQueue = { cases: DatesCaseSummary[]; page: number; limit: number; total: number };
+
+/** Queue rows use the same closed metadata projection as detail, never evidence. */
+export function datesModerationQueue(value: unknown, requested: { page: number; limit: number }): DatesModerationQueue | null {
+  if (!shape(value, { ...envelope, cases: Array.isArray, page: integer, limit: integer,
+    total: integer, server_now: epoch }) || value.page !== requested.page || value.limit !== requested.limit
+    || Number(value.page) < 1 || Number(value.page) > 10000
+    || Number(value.limit) < 1 || Number(value.limit) > 100) return null;
+  const rows = value.cases as unknown[];
+  if (rows.length > Number(value.limit) || !uniqueRows(rows, caseRules, "case_id")) return null;
+  // Core reads the page and count separately: concurrent changes can make them
+  // disagree. Preserve both authoritative values instead of inventing rows/counts.
+  return { cases: rows as DatesCaseSummary[], page: value.page as number,
+    limit: value.limit as number, total: value.total as number };
+}
+
+/** The HTTP-200 legacy envelope must also represent a logical success. */
+export function datesModerationConsoleSla(value: unknown): DatesModerationSla | null {
+  if (!shape(value, { ...envelope, open_count: integer, unassigned_count: integer,
+    sla_breach_count: integer, oldest_unassigned_at: nullable(epoch), age_buckets: (v) => shape(v, {
+      under_1h: integer, "1h_to_6h": integer, "6h_to_24h": integer, over_24h: integer,
+    }), median_seconds_to_claim: nullable(integer), median_seconds_to_resolve: nullable(integer),
+    appeals_waiting: integer, server_now: epoch })) return null;
+  return datesModerationSla(value);
+}
+
+const commandRules: Record<string, Record<string, Rule>> = {
+  dates_moderation_claim: { case_status: (v) => v === "in_review", assignee_email: email,
+    claim_expires_at: epoch, break_glass_used: boolean },
+  dates_moderation_heartbeat: { case_status: (v) => v === "in_review", claim_expires_at: epoch },
+  dates_moderation_release: { case_status: (v) => v === "new", claim_expires_at: (v) => v === null },
+  dates_moderation_note: { note_id: id("nt") },
+  dates_moderation_escalate: { escalated: (v) => v === true, severity: (v) => v === "critical" },
+};
+
+export function isDatesConsoleCommand(action: string): boolean {
+  return Object.hasOwn(commandRules, action);
+}
+
+export type DatesConsoleCommandReceipt = {
+  case_id: string; revision: number; audit_id: string; idempotency_replayed: boolean;
+};
+
+/** A durable receipt acknowledges this command, not the current case/lease state. */
+export function datesConsoleCommandReceipt(value: unknown, action: string,
+  expectedCaseId: string, expectedRevision: unknown): DatesConsoleCommandReceipt | null {
+  if (!isDatesConsoleCommand(action) || !integer(expectedRevision)
+    || !shape(value, { ...envelope, ...commandRules[action], case_id: id("cas"), revision: integer,
+      audit_id: id("aud"), idempotency_replayed: boolean, server_now: epoch })
+    || value.case_id !== expectedCaseId || value.revision !== Number(expectedRevision) + 1) return null;
+  // A replay may contain an already-expired lease. Do not compare its timestamp
+  // with server_now or install it as live state; the page re-reads case detail.
+  return { case_id: value.case_id as string, revision: value.revision as number,
+    audit_id: value.audit_id as string, idempotency_replayed: value.idempotency_replayed as boolean };
 }
 
 /** Metadata is closed; raw before/after, actor identities and appeal notes fail closed. */
