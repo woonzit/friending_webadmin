@@ -6,11 +6,9 @@ import { readFile, readdir } from "node:fs/promises";
 /**
  * T-863 S11 (P-007, D-135): the gesture photo selfie, the third verification
  * method. The Webadmin half of Core's `profile-verification-photo-v1` wire
- * corpus is vendored byte for byte from Core `63240043` — the last Core commit
- * that touched `tests/fixtures/profile_verification_photo_wire/` (its manifest
- * rebind; every `webadmin-*` body is unchanged since the corpus commit
- * `b52fa634`, the manifest's `source_commit`). Core `main` 60b7814e, the live
- * release, carries the same bytes.
+ * corpus is vendored byte for byte from Core `b094c3ee` (T-868). The manifest
+ * binds source `20788534`; the two method-console bodies now include the
+ * bilingual photo help links. Core `main` b8b594f5 carries the same bytes.
  *
  * Only the `webadmin-*` bodies and the manifest are copied. The manifest still
  * lists the iOS rows, so the fixture-set digest is recomputed over every row
@@ -21,11 +19,11 @@ type Json = Record<string, any>;
 
 const FIXTURE_DIRECTORY = new URL("./fixtures/profile_verification_photo_wire/", import.meta.url);
 const FIXTURE_CONTRACT = "profile-verification-photo-v1";
-const FIXTURE_COPIED_FROM = "63240043";
-const FIXTURE_SOURCE_COMMIT = "b52fa634e99f66fae0ef31678fb858143e0eea81";
-const FIXTURE_SET_SHA256 = "583f8d0d5060aa736474f97ec1236bab4998803f0911f883be031dc487b8ebcc";
-const FIXTURE_GENERATOR_SHA256 = "93b0001a834a05cc4b741d8fc9e8cb79e7bb4d5773fcf78ccfa9b5d89a6ecb98";
-const FIXTURE_MANIFEST_SHA256 = "8e1ce7734655aa66331528fce142cbc6f75c3e57211b9c8202cbef17290a14b4";
+const FIXTURE_COPIED_FROM = "b094c3ee";
+const FIXTURE_SOURCE_COMMIT = "2078853481f46911bd74e3613ceb2fabb619431e";
+const FIXTURE_SET_SHA256 = "4d11f962acc5d5497645412fbd221e6afb312fe0a66dfb04bd3091b668ab53fb";
+const FIXTURE_GENERATOR_SHA256 = "4a80f0abc3651bf02f9b1b1e97f4df6ab311b0440fea5f26e06225c7b6a6af3e";
+const FIXTURE_MANIFEST_SHA256 = "b93ca1dfc517dff21d8e66d174f3efce6954d5f7d6955478a3b56d592394c165";
 const WEBADMIN_FILES = [
   "webadmin-config.json",
   "webadmin-decision-photo-approved.json",
@@ -66,6 +64,7 @@ test(`the photo corpus is Core ${FIXTURE_COPIED_FROM}'s Webadmin half, byte for 
   });
 
   const rows = parsed.fixtures as Json[];
+  assert.equal(rows.length, 49, "the full Core manifest includes 36 iOS and 13 Webadmin entries");
   const files = rows.map((row) => row.file as string);
   assert.deepEqual(files, [...files].sort(), "the manifest lists fixtures in sorted order");
   assert.equal(new Set(files).size, files.length);

@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
     "contract": "profile-verification-photo-v1",
-    "source_commit": "b52fa634e99f66fae0ef31678fb858143e0eea81",
-    "fixture_set_sha256": "583f8d0d5060aa736474f97ec1236bab4998803f0911f883be031dc487b8ebcc",
+    "source_commit": "2078853481f46911bd74e3613ceb2fabb619431e",
+    "fixture_set_sha256": "4d11f962acc5d5497645412fbd221e6afb312fe0a66dfb04bd3091b668ab53fb",
     "provenance": {
         "generator": "tests/profile_verification_photo_fixture_dump.php",
-        "generator_sha256": "93b0001a834a05cc4b741d8fc9e8cb79e7bb4d5773fcf78ccfa9b5d89a6ecb98",
+        "generator_sha256": "4a80f0abc3651bf02f9b1b1e97f4df6ab311b0440fea5f26e06225c7b6a6af3e",
         "ios_wire_adapter": "Friending\\Core\\Response::wirePayload",
         "webadmin_wire_adapters": {
             "profile_verification": "Friending\\Support\\Webadmin::reply",
@@ -170,7 +170,7 @@
             "consumer": "ios",
             "kind": "response",
             "http_status": 200,
-            "sha256": "9dc898f9e263dfffbc4542d350eff28a5aa0dd6eee60b6a37e6b1a182e5ace14"
+            "sha256": "fae4322459dcfc600dc4a90176fea5a687123c3b564a5a5975197512e35718b2"
         },
         {
             "file": "ios-gate-photo-pending-contract.json",
@@ -179,7 +179,7 @@
             "consumer": "ios",
             "kind": "response",
             "http_status": 200,
-            "sha256": "31e1ac848f7f81ca13f166f233944ff62bfa211b90fae74a4c5ed68194b479a4"
+            "sha256": "7290141ada6e32d787219775d2fd091b2832985005dcd2254561ced47c86910e"
         },
         {
             "file": "ios-gate-photo-satisfied-contract.json",
@@ -188,7 +188,7 @@
             "consumer": "ios",
             "kind": "response",
             "http_status": 200,
-            "sha256": "a2f2bfac55b8f2a61cbdadc84dea45b3aac489817c5b647aca4f52d4c9fe4215"
+            "sha256": "ed3826ad7fe6d98dea0d5b8dc53ff1ca1c901baf941f9411d3f4a1847b8911c7"
         },
         {
             "file": "ios-gate-photo-satisfied-legacy.json",
@@ -197,7 +197,7 @@
             "consumer": "ios",
             "kind": "response",
             "http_status": 200,
-            "sha256": "5fad87b584306b647e906fbc549a04071c5f738508be702eb9a3587f4c1cf28f"
+            "sha256": "a0281fbb1498669ed83200c96f0211893023ac5869f2f4d891e9d0dbd9f5f42f"
         },
         {
             "file": "ios-gate-photo-unstartable-contract.json",
@@ -206,7 +206,7 @@
             "consumer": "ios",
             "kind": "response",
             "http_status": 200,
-            "sha256": "e8100eb9d6b776201ce527b3cf598cd8cca1670ff0ec7376a2edfbc9a3ee5d35"
+            "sha256": "8334153c426ae15b9c05902f61fca2304f2d2e2a918e77a1653fc63ea2a13dac"
         },
         {
             "file": "ios-gate-photo-waiting-contract.json",
@@ -215,7 +215,7 @@
             "consumer": "ios",
             "kind": "response",
             "http_status": 200,
-            "sha256": "8e8f3752413f719c282f7e90d002cf19dc29a52c492e2fd6636681e19d1e52de"
+            "sha256": "54b7558b43985a81fdcf5c3762aa0a671cd0f11ca27bd312e148a190127a9bfd"
         },
         {
             "file": "ios-gate-photo-waiting-legacy.json",
@@ -224,7 +224,7 @@
             "consumer": "ios",
             "kind": "response",
             "http_status": 200,
-            "sha256": "2592f717de74698043634d1ee4726b02b01fe82c65b783fbc4da103ebee7f00d"
+            "sha256": "7d8d87fd3090d67638279bf5b23eb6602b56f74e0f709cbd20911d81df984069"
         },
         {
             "file": "ios-own-read-verification-method-photo-contract.json",
@@ -377,7 +377,7 @@
             "consumer": "ios",
             "kind": "refusal",
             "http_status": 403,
-            "sha256": "f86660344bb70476b4338a28dfd1d1d49c04d48358ddbe602c5701fed21c1aa1"
+            "sha256": "1e0e080dda4064c5dd337e67baf4aeaef218222b1391aeb445102b1ab70847ea"
         },
         {
             "file": "ios-refusal-waiting-room-photo-legacy.json",
@@ -386,7 +386,7 @@
             "consumer": "ios",
             "kind": "refusal",
             "http_status": 403,
-            "sha256": "eb5d460ee6ae70cdccc940e20829737050809dd78f82e2e6eae0841120b0e66e"
+            "sha256": "1a76a3829943f93ea503e32888363ff8533d2942a0ecacfc3cc510659debcd87"
         },
         {
             "file": "ios-request-submit-photo.json",
@@ -503,7 +503,7 @@
             "consumer": "webadmin",
             "kind": "response",
             "http_status": 200,
-            "sha256": "5bcf16884445cae54d6210fe69f0ff5607d5e2e79ab9b9a69b23e3ba911ac9ae"
+            "sha256": "ca3c5a2607173331effe59f90ee8be2b72ef0f0256b416ee06294f5377799fcf"
         },
         {
             "file": "webadmin-method-console-photo-ready.json",
@@ -512,7 +512,7 @@
             "consumer": "webadmin",
             "kind": "response",
             "http_status": 200,
-            "sha256": "49f6ecd8c9c75a40edd4a69e0f2c91e2a0fda75eee564820f12baf9e4d06a334"
+            "sha256": "2f907b5c4d4a3966e8bd70610e933a04f6029eea62504619a46a9a9468b52d82"
         },
         {
             "file": "webadmin-method-refusal-verification-method-photo-unavailable.json",
