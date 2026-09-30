@@ -1,0 +1,79 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case": {
+        "case_id": "cas_00000000000000000000000000000001",
+        "queue": "activities",
+        "case_kind": "reports",
+        "target_type": "activity",
+        "target_id": "act_00000000000000000000000000000001",
+        "target_uid": 70001,
+        "activity_id": "act_00000000000000000000000000000001",
+        "status": "new",
+        "severity": "high",
+        "escalated": false,
+        "distinct_reporter_count": 1,
+        "report_count": 1,
+        "assignee_email": null,
+        "claimed_at": null,
+        "claim_expires_at": null,
+        "sla_due_at": 1789999999,
+        "sla_breached": true,
+        "revision": 3,
+        "created_at": 1789999800,
+        "updated_at": 1789999900,
+        "conflict_of_interest": true,
+        "capabilities": {
+            "can_claim": false,
+            "can_read_evidence": false,
+            "can_resolve": false,
+            "can_break_glass": true
+        }
+    },
+    "reports": [
+        {
+            "report_id": "rpt_00000000000000000000000000000001",
+            "reason_id": "reason_unsafe_content",
+            "reason_key": "unsafe_content",
+            "reason_label_snapshot": {
+                "en": "Unsafe content",
+                "hu": "Veszélyes tartalom"
+            },
+            "entry_point": "activity_detail",
+            "note": null,
+            "severity": "high",
+            "status": "new",
+            "created_at": 1789999800,
+            "reporter_identity_redacted": true
+        }
+    ],
+    "report_notes_withheld": true,
+    "decisions": [
+        {
+            "decision_id": "dec_00000000000000000000000000000001",
+            "case_id": "cas_00000000000000000000000000000001",
+            "target_type": "activity",
+            "target_id": "act_00000000000000000000000000000001",
+            "activity_id": "act_00000000000000000000000000000001",
+            "target_path": "published",
+            "action": "remove_photo",
+            "severity": "high",
+            "user_visible_reason": {
+                "en": "Photo removed",
+                "hu": "Fénykép eltávolítva"
+            },
+            "created_at": 1789999850,
+            "expires_at": null,
+            "appeal_outcome": null,
+            "appeal_resolved_at": null
+        }
+    ],
+    "appeal": null,
+    "internal_notes": [],
+    "internal_notes_withheld": true,
+    "evidence_requires_separate_audited_read": true,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

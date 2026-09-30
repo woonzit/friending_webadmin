@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
+import DatesCaseHistory from "@/components/DatesCaseHistory";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
@@ -23,30 +24,10 @@ import {
   resolutionActions,
   type DatesAdminPrincipal,
   type DatesCaseInternalNotes,
-  type DatesCaseSummary,
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
-
-type ReportRow = {
-  report_id: string;
-  reason_id: string;
-  reason_key: string;
-  reason_label_snapshot: unknown;
-  entry_point: string;
-  note: string | null;
-  severity: string;
-  status: string;
-  created_at: number;
-  reporter_identity_redacted: boolean;
-};
-
-type CaseDetail = {
-  case: DatesCaseSummary;
-  reports: ReportRow[];
-  decisions: Array<Record<string, unknown>>;
-  appeal: Record<string, unknown> | null;
-  evidence_requires_separate_audited_read: boolean;
-};
+import { DatesCaseReadFence, datesCaseDetail, datesEvidenceRead, datesLegalHoldAllowed,
+  type DatesCaseDetail, type DatesEvidenceRead } from "@/lib/datesModerationRead";
 
 type Feedback = { tone: "success" | "error"; text: string };
 type ConfirmedOperation = { kind: "resolve" | "legal_hold"; label: string; payload: Record<string, unknown> };
@@ -56,16 +37,22 @@ function safeJson(value: unknown): string {
 }
 
 export default function DatesModerationCasePage() {
+  const params = useParams<{ caseId: string }>();
+  const caseId = useMemo(() => {
+    try { return decodeURIComponent(params.caseId || ""); } catch { return ""; }
+  }, [params.caseId]);
+  return <DatesModerationCase key={caseId} caseId={caseId} />;
+}
+
+function DatesModerationCase({ caseId }: { caseId: string }) {
   const t = useTranslations("datesAdmin.caseDetail");
   const common = useTranslations("common");
   const locale = useLocale();
-  const params = useParams<{ caseId: string }>();
-  const caseId = useMemo(() => decodeURIComponent(params.caseId || ""), [params.caseId]);
-  const [data, setData] = useState<CaseDetail | null>(null);
+  const readFence = useRef(new DatesCaseReadFence()).current;
+  const [data, setData] = useState<DatesCaseDetail | null>(null);
   const [principal, setPrincipal] = useState<DatesAdminPrincipal | null>(null);
   const [notes, setNotes] = useState<DatesCaseInternalNotes>({ status: "unsupported" });
-  const [evidence, setEvidence] = useState<Array<Record<string, unknown>> | null>(null);
-  const [evidenceRedacted, setEvidenceRedacted] = useState(0);
+  const [evidence, setEvidence] = useState<DatesEvidenceRead | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error" | "not-found">("loading");
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -91,41 +78,52 @@ export default function DatesModerationCasePage() {
   const [holdReviewAt, setHoldReviewAt] = useState("");
 
   const load = useCallback(async () => {
-    if (!/^cas_[A-Za-z0-9_-]+$/.test(caseId)) {
+    const ticket = readFence.begin();
+    setEvidence(null);
+    setData(null);
+    setPrincipal(null);
+    setConfirmed(null);
+    setBreakGlass(false);
+    setEvidenceSensitive(false);
+    if (!/^cas_[a-f0-9]{32}$/.test(caseId)) {
       setState("not-found");
       return;
     }
-    if (!data) setState("loading");
+    setState("loading");
     const [response, identity] = await Promise.all([
       adminCall("dates_moderation_detail", { case_id: caseId }),
       adminCall("admin_me"),
     ]);
+    if (!readFence.accepts(ticket)) return;
     if (response?.error === "dates-moderation-case-unavailable") {
       setState("not-found");
       return;
     }
     const nextPrincipal = datesAdminPrincipal(identity);
-    if (!response?.success || !response.case || !nextPrincipal) {
+    const next = datesCaseDetail(response, caseId);
+    if (!next || !nextPrincipal) {
       setPrincipal(null);
       setState("error");
       return;
     }
-    const next = response as unknown as CaseDetail;
     setData(next);
     setNotes(datesCaseInternalNotes(response));
     setPrincipal(nextPrincipal);
     const permitted = permittedResolutionActions(next.case, nextPrincipal);
     setResolutionAction((current) => permitted.includes(current) ? current : permitted[0] || "");
     setState("ready");
-  }, [caseId, data]);
+  }, [caseId, readFence]);
 
-  useEffect(() => { void load(); }, [caseId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void load(); return () => readFence.invalidate(); }, [load, readFence]);
 
   async function mutate(action: string, payload: Record<string, unknown>, successMessage: string) {
     if (busy) return false;
+    const ticket = readFence.begin();
+    setEvidence(null);
     setBusy(true);
     setFeedback(null);
     const response = await adminCall(action, payload);
+    if (!readFence.accepts(ticket)) return false;
     setBusy(false);
     if (!response?.success) {
       setFeedback({ tone: "error", text: t("operationFailed", { error: String(response?.error || "core-unavailable") }) });
@@ -165,25 +163,30 @@ export default function DatesModerationCasePage() {
   async function readEvidence(event: React.FormEvent) {
     event.preventDefault();
     if (!data || busy) return;
+    setEvidence(null);
     const conflictBreakGlass = data.case.conflict_of_interest && breakGlass;
     if ((evidenceSensitive || conflictBreakGlass) && evidenceReason.trim().length < 3) {
       setFeedback({ tone: "error", text: t("evidenceReasonRequired") });
       return;
     }
+    const ticket = readFence.begin();
     setBusy(true);
+    setFeedback(null);
     const response = await adminCall("dates_moderation_evidence", {
       case_id: caseId,
       include_sensitive_location: evidenceSensitive,
       break_glass: conflictBreakGlass,
       reason: evidenceReason.trim() || null,
     });
+    if (!readFence.accepts(ticket)) return;
     setBusy(false);
-    if (!response?.success || !Array.isArray(response.evidence)) {
+    const decoded = datesEvidenceRead(response, { case_id: caseId, appeal_id: data.appeal?.appeal_id ?? null,
+      include_sensitive_location: evidenceSensitive, break_glass: conflictBreakGlass });
+    if (!decoded) {
       setFeedback({ tone: "error", text: t("operationFailed", { error: String(response?.error || "core-unavailable") }) });
       return;
     }
-    setEvidence(response.evidence as Array<Record<string, unknown>>);
-    setEvidenceRedacted(Number(response.redacted_sensitive_location_count) || 0);
+    setEvidence(decoded);
     setFeedback({ tone: "success", text: t("evidenceLoaded") });
   }
 
@@ -266,6 +269,7 @@ export default function DatesModerationCasePage() {
 
   function prepareLegalHold(event: React.FormEvent) {
     event.preventDefault();
+    if (!data || !principal || !datesLegalHoldAllowed(data.case, principal, holdAction, breakGlass)) return;
     if (holdReason.trim().length < 3 || legalBasis.trim().length < 3 || (holdAction === "place" && !holdReviewAt)) return;
     setConfirmed({
       kind: "legal_hold",
@@ -275,6 +279,7 @@ export default function DatesModerationCasePage() {
         action: holdAction,
         reason: holdReason.trim(),
         legal_basis: legalBasis.trim(),
+        break_glass: data.case.conflict_of_interest && breakGlass,
         review_at: holdAction === "place" ? epochFromLocalInput(holdReviewAt) : null,
         idempotency_key: createAdminIdempotencyKey(`dates-legal-hold-${holdAction}`),
       },
@@ -338,7 +343,7 @@ export default function DatesModerationCasePage() {
         <section className="panel">
           <div className="panel-header"><div><h2>{t("claimTitle")}</h2><p>{t("claimCopy")}</p></div></div>
           <div className="panel-body form-stack">
-            {item.conflict_of_interest && canBreakGlass && <><label className="checkbox-field"><input type="checkbox" checked={breakGlass} onChange={(event) => setBreakGlass(event.target.checked)} /><span>{t("useBreakGlass")}</span></label><label className="field"><span>{t("breakGlassReason")}</span><textarea required={breakGlass} value={breakGlassReason} onChange={(event) => setBreakGlassReason(event.target.value)} /></label></>}
+            {item.conflict_of_interest && canBreakGlass && <><label className="checkbox-field"><input type="checkbox" checked={breakGlass} disabled={busy} onChange={(event) => { readFence.invalidate(); setEvidence(null); setBreakGlass(event.target.checked); }} /><span>{t("useBreakGlass")}</span></label><label className="field"><span>{t("breakGlassReason")}</span><textarea required={breakGlass} value={breakGlassReason} onChange={(event) => setBreakGlassReason(event.target.value)} /></label></>}
             <div className="row-actions">
               {mayClaim && <button className="button button-primary" onClick={() => void claim()} disabled={busy || (item.conflict_of_interest && !breakGlass)}>{t("claim")}</button>}
               {assignedToMe && leaseActive && <><button className="button button-secondary" onClick={() => void lease("heartbeat")} disabled={busy}>{t("heartbeat")}</button><button className="button button-danger" onClick={() => void lease("release")} disabled={busy}>{t("release")}</button></>}
@@ -351,6 +356,7 @@ export default function DatesModerationCasePage() {
 
       <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("reportsTitle")}</h2><p>{t("reportsCopy")}</p></div></div>
+        {data.report_notes_withheld && <p className="alert alert-warning">{t("reportNotesWithheld")}</p>}
         <div className="table-wrap dates-embedded-table">{data.reports.length === 0 ? <div className="empty-state dates-compact-empty"><p>{t("noReports")}</p></div> : <table className="data-table"><thead><tr><th>{t("reportId")}</th><th>{t("reason")}</th><th>{t("entryPoint")}</th><th>{t("note")}</th><th>{common("createdAt")}</th></tr></thead><tbody>{data.reports.map((report) => <tr key={report.report_id}><td>{report.report_id}</td><td><div className="cell-stack"><span>{displayReason(report.reason_label_snapshot, locale)}</span><small>{report.reason_key} · {humanizeMachineKey(report.severity)}</small></div></td><td>{humanizeMachineKey(report.entry_point)}</td><td className="dates-wrapping-cell">{report.note || "—"}</td><td>{formatDate(report.created_at, locale, true)}</td></tr>)}</tbody></table>}</div>
       </section>
 
@@ -370,11 +376,17 @@ export default function DatesModerationCasePage() {
         <div className="panel-header"><div><h2>{t("evidenceTitle")}</h2><p>{t("evidenceCopy")}</p></div></div>
         <div className="panel-body">
           {!mayReadEvidence ? <p className="page-subtitle">{t("evidenceUnavailable")}</p> : <form className="dates-evidence-controls" onSubmit={readEvidence}>
-            {principal.sensitive_location && <label className="checkbox-field"><input type="checkbox" checked={evidenceSensitive} onChange={(event) => setEvidenceSensitive(event.target.checked)} /><span>{t("includeSensitiveLocation")}</span></label>}
+            {principal.sensitive_location && <label className="checkbox-field"><input type="checkbox" checked={evidenceSensitive} disabled={busy} onChange={(event) => { readFence.invalidate(); setEvidence(null); setEvidenceSensitive(event.target.checked); }} /><span>{t("includeSensitiveLocation")}</span></label>}
             <label className="field"><span>{t("auditReason")}</span><input value={evidenceReason} required={evidenceSensitive || (item.conflict_of_interest && breakGlass)} onChange={(event) => setEvidenceReason(event.target.value)} placeholder={t("auditReasonPlaceholder")} /></label>
             <button className="button button-danger" type="submit" disabled={busy || (item.conflict_of_interest && !breakGlass)}>{t("readEvidence")}</button>
           </form>}
-          {evidence && <div className="dates-evidence-list">{evidence.length === 0 ? <p className="page-subtitle">{t("noEvidence")}</p> : evidence.map((entry, index) => <article key={String(entry.evidence_id || index)}><div className="dates-evidence-header"><strong>{String(entry.evidence_id || t("evidenceItem", { index: index + 1 }))}</strong><span className="badge">{humanizeMachineKey(String(entry.evidence_type || entry.kind || "evidence"))}</span></div><pre>{safeJson(entry)}</pre></article>)}{evidenceRedacted > 0 && <p className="alert alert-info">{t("redactedEvidence", { count: evidenceRedacted })}</p>}</div>}
+          {evidence && <div className="dates-evidence-list">
+            <p className="field-hint">{t("evidenceAuditReceipt", { id: evidence.audit_id })}</p>
+            {evidence.appeal_note && <article><div className="dates-evidence-header"><strong>{t("appellantNote")}</strong><time dateTime={new Date(evidence.appeal_note.created_at * 1000).toISOString()}>{formatDate(evidence.appeal_note.created_at, locale, true)}</time></div><p className="dates-note-text">{evidence.appeal_note.note ?? t("noAppellantNote")}</p></article>}
+            {evidence.evidence.length === 0 && evidence.appeal_note === null && <p className="page-subtitle">{t("noEvidence")}</p>}
+            {evidence.evidence.map((entry) => <article key={String(entry.evidence_id)}><div className="dates-evidence-header"><strong>{String(entry.evidence_id)}</strong><span className="badge">{humanizeMachineKey(String(entry.evidence_type))}</span></div><pre>{safeJson(entry)}</pre></article>)}
+            {evidence.redacted_sensitive_location_count > 0 && <p className="alert alert-info">{t("redactedEvidence", { count: evidence.redacted_sensitive_location_count })}</p>}
+          </div>}
         </div>
       </section>
 
@@ -410,18 +422,17 @@ export default function DatesModerationCasePage() {
       {hasDatesCapability(principal, "dates_legal_hold") && <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("legalHoldTitle")}</h2><p>{t("legalHoldCopy")}</p></div></div>
         <form className="panel-body form-grid" onSubmit={prepareLegalHold}>
-          <label className="field"><span>{t("holdAction")}</span><select value={holdAction} onChange={(event) => setHoldAction(event.target.value)}><option value="place">{t("placeHold")}</option><option value="release">{t("releaseHold")}</option></select></label>
+          <label className="field"><span>{t("holdAction")}</span><select value={holdAction} onChange={(event) => setHoldAction(event.target.value)}><option value="place">{t("placeHold")}</option><option value="release" disabled={["new", "in_review", "appealed"].includes(item.status)}>{t("releaseHold")}</option></select></label>
+          {["new", "in_review", "appealed"].includes(item.status) && <p className="field-full field-hint">{t("holdReleaseCaseOpen")}</p>}
+          {item.conflict_of_interest && !(canBreakGlass && breakGlass) && <p className="field-full alert alert-warning">{t("holdConflictUnavailable")}</p>}
           {holdAction === "place" && <label className="field"><span>{t("reviewAt")}</span><input type="datetime-local" required value={holdReviewAt} onChange={(event) => setHoldReviewAt(event.target.value)} /></label>}
           <label className="field"><span>{t("auditReason")}</span><textarea required value={holdReason} onChange={(event) => setHoldReason(event.target.value)} /></label>
           <label className="field"><span>{t("legalBasis")}</span><textarea required value={legalBasis} onChange={(event) => setLegalBasis(event.target.value)} /></label>
-          <div className="field-full"><button className="button button-danger" type="submit" disabled={busy}>{t("prepareLegalHold")}</button></div>
+          <div className="field-full"><button className="button button-danger" type="submit" disabled={busy || !datesLegalHoldAllowed(item, principal, holdAction, breakGlass)}>{t("prepareLegalHold")}</button></div>
         </form>
       </section>}
 
-      {(data.decisions.length > 0 || data.appeal) && <section className="panel dates-section">
-        <div className="panel-header"><div><h2>{t("historyTitle")}</h2><p>{t("historyCopy")}</p></div></div>
-        <div className="panel-body dates-evidence-list">{data.appeal && <article><div className="dates-evidence-header"><strong>{t("appeal")}</strong></div><pre>{safeJson(data.appeal)}</pre></article>}{data.decisions.map((decision, index) => <article key={String(decision.decision_id || index)}><div className="dates-evidence-header"><strong>{String(decision.decision_id || t("decision", { index: index + 1 }))}</strong></div><pre>{safeJson(decision)}</pre></article>)}</div>
-      </section>}
+      <DatesCaseHistory decisions={data.decisions} appeal={data.appeal} />
 
       {confirmed && <ConfirmDialog title={t("confirmTitle", { action: confirmed.label })} copy={t("confirmCopy")} confirmLabel={t("confirmAction")} busy={busy} onCancel={() => setConfirmed(null)} onConfirm={() => void executeConfirmed()} />}
     </>

@@ -1,0 +1,41 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case_id": "cas_00000000000000000000000000000001",
+    "evidence": [
+        {
+            "evidence_id": "evi_00000000000000000000000000000001",
+            "case_id": "cas_00000000000000000000000000000001",
+            "activity_id": "act_00000000000000000000000000000001",
+            "evidence_type": "activity_public_snapshot",
+            "snapshot": {
+                "photo": {
+                    "url": "https://example.invalid/EVIDENCE_ONLY_removed_photo.jpg"
+                }
+            },
+            "sensitive_location": false,
+            "legal_hold": true,
+            "created_at": 1789999800
+        },
+        {
+            "evidence_id": "evi_00000000000000000000000000000003",
+            "case_id": "cas_00000000000000000000000000000001",
+            "activity_id": "act_00000000000000000000000000000001",
+            "evidence_type": "activity_private_location_snapshot",
+            "snapshot": {
+                "exact_address": "EVIDENCE_ONLY_private_address"
+            },
+            "sensitive_location": true,
+            "legal_hold": true,
+            "created_at": 1789999801
+        }
+    ],
+    "appeal_note": null,
+    "redacted_sensitive_location_count": 0,
+    "break_glass_used": true,
+    "audit_id": "aud_00000000000000000000000000000009",
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
