@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import PageHeader from "@/components/PageHeader";
@@ -44,8 +44,11 @@ export default function DatesModerationQueuePage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const loadGeneration = useRef(0);
 
   const load = useCallback(async (signal?: AbortSignal) => {
+    if (signal?.aborted) return;
+    const generation = ++loadGeneration.current;
     if (rows.length === 0) setState("loading");
     const [response, slaResponse] = await Promise.all([
       adminCall("dates_moderation_queue", {
@@ -59,14 +62,12 @@ export default function DatesModerationQueuePage() {
       }, signal),
       adminCall("dates_moderation_sla", {}, signal),
     ]);
-    if (signal?.aborted) return;
+    if (signal?.aborted || generation !== loadGeneration.current) return;
     const nextQueue = datesModerationQueue(response, { page, limit: PAGE_SIZE });
     const nextSla = datesModerationConsoleSla(slaResponse);
     if (!nextQueue || !nextSla) {
-      if (!signal?.aborted) {
-        setSla(null);
-        setState("error");
-      }
+      setSla(null);
+      setState("error");
       return;
     }
     setRows(nextQueue.cases);
@@ -78,7 +79,11 @@ export default function DatesModerationQueuePage() {
   useEffect(() => {
     const controller = new AbortController();
     void load(controller.signal);
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      // Refresh/Retry have no effect-owned signal, but lose ownership too.
+      loadGeneration.current += 1;
+    };
   }, [filters, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function apply(event: React.FormEvent) {

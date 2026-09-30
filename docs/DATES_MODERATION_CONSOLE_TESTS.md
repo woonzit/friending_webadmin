@@ -21,6 +21,17 @@ the same closed case-row projection. Unknown target labels and zero target UIDs
 remain readable; this boundary adds no member-host policy. Counts are not forced
 to match rows because Core reads them separately and concurrent changes are real.
 
+Every queue load, including manual Refresh and Retry, owns a generation shared
+across renders. A newer load or filter/page effect cleanup invalidates earlier
+callbacks before any rows, count, SLA or ready/error state can be installed.
+Already-aborted invocations issue no reads and cannot displace a current load.
+`tests/datesModerationQueueOrdering.test.mts` executes the actual load and cleanup
+callbacks through TypeScript AST extraction with the production decoders and
+held pinned Core replies. Its ordering, stale-success/refusal, cleanup and abort
+controls are source-handler tests, not a mounted React/browser or live traffic
+claim. The control keeps later fresh authority adoptable; no contract or
+moderation policy is changed.
+
 Claim, heartbeat, release, note and escalation use a closed audited receipt
 boundary before success feedback. The receipt must belong to the requested case,
 action and exact next revision, including on replay. It acknowledges the original
@@ -35,7 +46,7 @@ EN/HU copy or moderation product decision is introduced.
 
 ```sh
 npm ci
-npx tsx --test tests/datesModerationConsole.test.mts tests/datesModerationRead.test.mts tests/datesAdmin.test.mts tests/localizationParity.test.mts
+npx tsx --test tests/datesModerationQueueOrdering.test.mts tests/datesModerationConsole.test.mts tests/datesModerationRead.test.mts tests/datesAdmin.test.mts tests/localizationParity.test.mts
 npm test
 npm run typecheck
 npm run build
