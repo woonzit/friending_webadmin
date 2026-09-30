@@ -15,6 +15,9 @@ export default function DatesCaseHistory({ decisions, appeal }: {
   const queue = useTranslations("datesAdmin.moderation");
   const locale = useLocale();
   const time = (value: number | null) => value === null ? "—" : formatDate(value, locale, true);
+  // Resolved outcomes describe the original decision, not a new moderation action.
+  const resolvedAppealLabel = (value: string) => value === "upheld" || value === "overturned"
+    ? t(`appealOutcomes.${value}`) : null;
   if (decisions.length === 0 && !appeal) return null;
   return <section className="panel dates-section">
     <div className="panel-header"><div><h2>{t("historyTitle")}</h2><p>{t("historyCopy")}</p></div></div>
@@ -24,8 +27,8 @@ export default function DatesCaseHistory({ decisions, appeal }: {
         <dl className="detail-list">
           <div className="detail-row"><dt>{t("recordId")}</dt><dd>{appeal.appeal_id}</dd></div>
           <div className="detail-row"><dt>{t("originalDecision")}</dt><dd>{appeal.decision_id}</dd></div>
-          <div className="detail-row"><dt>{t("recordStatus")}</dt><dd>{queue.has(`statuses.${appeal.status}`) ? queue(`statuses.${appeal.status}`) : humanizeMachineKey(appeal.status)}</dd></div>
-          <div className="detail-row"><dt>{t("appealOutcome")}</dt><dd>{appeal.resolution ? (t.has(`actions.${appeal.resolution}`) ? t(`actions.${appeal.resolution}`) : humanizeMachineKey(appeal.resolution)) : "—"}</dd></div>
+          <div className="detail-row"><dt>{t("recordStatus")}</dt><dd>{resolvedAppealLabel(appeal.status) ?? (queue.has(`statuses.${appeal.status}`) ? queue(`statuses.${appeal.status}`) : humanizeMachineKey(appeal.status))}</dd></div>
+          <div className="detail-row"><dt>{t("appealOutcome")}</dt><dd>{appeal.resolution ? (resolvedAppealLabel(appeal.resolution) ?? (t.has(`actions.${appeal.resolution}`) ? t(`actions.${appeal.resolution}`) : humanizeMachineKey(appeal.resolution))) : "—"}</dd></div>
           <div className="detail-row"><dt>{common("createdAt")}</dt><dd>{time(appeal.created_at)}</dd></div>
           <div className="detail-row"><dt>{t("resolvedAt")}</dt><dd>{time(appeal.resolved_at)}</dd></div>
           <div className="detail-row"><dt>{t("visibleReasonEn")}</dt><dd>{appeal.user_visible_reason?.en ?? "—"}</dd></div>
@@ -43,7 +46,7 @@ export default function DatesCaseHistory({ decisions, appeal }: {
           <div className="detail-row"><dt>{t("decisionExpiresAt")}</dt><dd>{time(decision.expires_at)}</dd></div>
           <div className="detail-row"><dt>{t("visibleReasonEn")}</dt><dd>{decision.user_visible_reason?.en ?? "—"}</dd></div>
           <div className="detail-row"><dt>{t("visibleReasonHu")}</dt><dd>{decision.user_visible_reason?.hu ?? "—"}</dd></div>
-          <div className="detail-row"><dt>{t("appealOutcome")}</dt><dd>{decision.appeal_outcome ? humanizeMachineKey(decision.appeal_outcome) : "—"}</dd></div>
+          <div className="detail-row"><dt>{t("appealOutcome")}</dt><dd>{decision.appeal_outcome ? (resolvedAppealLabel(decision.appeal_outcome) ?? humanizeMachineKey(decision.appeal_outcome)) : "—"}</dd></div>
           <div className="detail-row"><dt>{t("resolvedAt")}</dt><dd>{time(decision.appeal_resolved_at)}</dd></div>
         </dl>
       </article>)}

@@ -211,3 +211,60 @@ for (const locale of ["en", "hu"]) {
     assert.doesNotMatch(html, /<pre|EVIDENCE_ONLY_|actor_email|appellant_uid|before|after/);
   });
 }
+
+for (const locale of ["en", "hu"] as const) {
+  const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
+  const copy = messages.datesAdmin.caseDetail;
+  const renderHistory = (status: string, resolution: string | null, outcome: string | null) => {
+    // Synthetic populated variants of provider captures, with values written by
+    // DatesModerationCommandService::resolveAppeal; the pinned bytes stay untouched.
+    const reportWire = structuredClone(report);
+    reportWire.decisions[0].appeal_outcome = outcome;
+    reportWire.decisions[0].appeal_resolved_at = outcome === null ? null : 1_790_000_000;
+    const appealWire = structuredClone(appeal);
+    Object.assign(appealWire.appeal, {
+      status, resolution, resolved_at: resolution === null ? null : 1_790_000_000,
+      updated_at: 1_790_000_000,
+    });
+    const decisionDetail = datesCaseDetail(reportWire, reportWire.case.case_id);
+    const appealDetail = datesCaseDetail(appealWire, appealWire.case.case_id);
+    assert.ok(decisionDetail && appealDetail, "populated outcomes must pass the production decoder");
+    return renderToStaticMarkup(createElement(NextIntlClientProvider, {
+      locale, messages, timeZone: "UTC", onError: (error) => { throw error; },
+    }, createElement(DatesCaseHistory, { decisions: decisionDetail.decisions, appeal: appealDetail.appeal })));
+  };
+  const assertRow = (html: string, title: string, value: string, count = 1) => {
+    const row = renderToStaticMarkup(createElement("dt", null, title))
+      + renderToStaticMarkup(createElement("dd", null, value));
+    assert.equal(html.split(row).length - 1, count, `${title}: ${value}`);
+  };
+
+  for (const outcome of ["upheld", "overturned"] as const) {
+    test(`resolved ${outcome} has explicit ${locale} copy in all three history fields`, () => {
+      const expected = {
+        en: { upheld: "Original decision upheld", overturned: "Original decision overturned" },
+        hu: { upheld: "Az eredeti döntés helybenhagyva", overturned: "Az eredeti döntés visszavonva" },
+      }[locale][outcome];
+      const html = renderHistory(outcome, outcome, outcome);
+      assertRow(html, copy.recordStatus, expected);
+      assertRow(html, copy.appealOutcome, expected, 2);
+      assert.doesNotMatch(html, />(?:upheld|overturned)</i, "no raw machine outcome in any field");
+    });
+  }
+
+  test(`unresolved, unknown and action fallbacks stay intact in ${locale} history`, () => {
+    const unresolved = renderHistory("new", null, null);
+    assertRow(unresolved, copy.recordStatus, messages.datesAdmin.moderation.statuses.new);
+    assertRow(unresolved, copy.appealOutcome, "—", 2);
+
+    // Negative control: an unknown future value must not acquire a known outcome label.
+    const unknown = renderHistory("future_status", "future_outcome", "future_outcome");
+    assertRow(unknown, copy.recordStatus, "future status");
+    assertRow(unknown, copy.appealOutcome, "future outcome", 2);
+    for (const action of ["uphold", "overturn"] as const) {
+      const legacy = renderHistory("new", action, null);
+      assertRow(legacy, copy.appealOutcome, copy.actions[action]);
+      assertRow(legacy, copy.appealOutcome, "—");
+    }
+  });
+}

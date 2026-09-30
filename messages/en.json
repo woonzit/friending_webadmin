@@ -8219,6 +8219,10 @@
       "recordStatus": "Status",
       "originalDecision": "Original decision",
       "appealOutcome": "Appeal outcome",
+      "appealOutcomes": {
+        "upheld": "Original decision upheld",
+        "overturned": "Original decision overturned"
+      },
       "resolvedAt": "Resolved at",
       "targetRevision": "Content version",
       "decisionExpiresAt": "Decision expires",
