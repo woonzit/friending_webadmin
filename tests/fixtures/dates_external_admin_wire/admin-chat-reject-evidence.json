@@ -1,0 +1,42 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case_id": "cas_00000000000000000000000000001772",
+    "evidence": [
+        {
+            "evidence_id": "evi_00000000000000000000000000001772",
+            "case_id": "cas_00000000000000000000000000001772",
+            "report_id": null,
+            "evidence_type": "message_prepublication_snapshot",
+            "sensitive_location": false,
+            "snapshot": {
+                "message_id": "msg_00000000000000000000000000001773",
+                "thread_id": "thr_00000000000000000000000000001771",
+                "activity_id": "act_00000000000000000000000000001771",
+                "sender_uid": 6000,
+                "sequence": 4,
+                "revision": 1,
+                "kind": "text",
+                "actor_kind": "external_chat",
+                "moderation_state": "pending",
+                "text": "Eladó jegy a koncertre",
+                "created_at": 1790000000
+            },
+            "target_revision": 1,
+            "immutable": true,
+            "legal_hold": false,
+            "hold_started_at": null,
+            "hold_reason": null,
+            "review_at": null,
+            "created_at": 1790000000
+        }
+    ],
+    "appeal_note": null,
+    "redacted_sensitive_location_count": 0,
+    "break_glass_used": false,
+    "audit_id": "aud_00000000000000000000000000001774",
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

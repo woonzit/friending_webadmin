@@ -43,8 +43,12 @@ Resolve, trail-evidence and legal-hold flows remain unchanged.
 The later T-865 external-message prepublication extension is documented in
 `DATES_EXTERNAL_CONSOLE.md`. Its separate resolve journal/receipt boundary and
 external-target location-scope guard do not change these ordinary-member
-command receipts or the original pinned corpora. The new held-message controls
-are labelled synthetic until genuine routed provider captures are adopted.
+command receipts or the original pinned corpora. The held-message extension now
+adopts 21 genuine routed additions from Core `3ba2cda2` in its separate
+128-response external corpus. Production decoders and durable decision handlers
+consume those unchanged bodies; actual page callbacks also recover captured
+approve/reject replays after controlled lost responses. The original
+counterfactual controls and controlled I/O remain explicitly synthetic.
 
 The existing nine-body `dates_moderation_wire` metadata/evidence corpus and its
 privacy/conflict/hold tests remain independently pinned and unchanged. No new

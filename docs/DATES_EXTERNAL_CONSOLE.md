@@ -17,10 +17,15 @@ can still replay after the switch is turned off. Safety/lifecycle commands remai
 available according to their own capabilities and state rules.
 
 The incremental console capture in `tests/fixtures/dates_external_admin_wire`
-comes byte-for-byte from Core `7fd200b042cfe148ab122f7547c49e606f4dd7d6`.
-Its manifest names generator/source `b044e8f3ddcc326caa83055304f042f024d4879a`.
+comes byte-for-byte from Core `3ba2cda203ba4c8eee07951908da305fee923814`.
+Its manifest names generator/source `242fd5dece73bc123e891a929f3a6f5186ff9de0`.
 `tests/datesExternalWire.test.mts` independently pins its manifest, generator,
-source checksum, complete 107-file inventory and every response byte hash.
+source checksum, complete 128-file inventory and every response byte hash:
+84 successful responses and 44 refusals. The most recent 21 additions leave all
+107 preceding bodies byte-identical. They are captured from actual member sends
+through automatic prepublication cases, audited operator evidence/claim/decision
+routes, current-state retries and author withdrawal. Both consumer corpora use
+that same routed scenario; no held message or prepublication case is fabricated.
 The original 43 editor bodies are unchanged; the next 45 additions cover hostless
 moderation, existing activity-detail/lifecycle adapters and settings. They use
 actual routed responses, audits and completed receipts; case/report intake is
@@ -28,7 +33,7 @@ synthetic setup, not proof of member intake. This incremental capture is **not
 the final P1 release pin**; final provider repinning remains required. Seven more
 actual routed bodies cover the external reason catalogue, a seeded copy-only
 save and replay, mixed/cohort refusals and a viewer capability refusal. The final
-twelve additions capture report-held list/detail, non-approving corrections and
+twelve preceding additions capture report-held list/detail, non-approving corrections and
 reverification, safety cancellation, exact replays, post-write details and refused
 held-case dismissal. Only the two earlier held queue/detail `allowed_actions`
 arrays change, removing `dismiss`; the other 93 preceding bodies stay identical.
@@ -190,10 +195,14 @@ provider pin; no guessed keys or production fixture reset are introduced.
 
 The lead's narrow prepublication extension uses the existing messages queue and
 `dates_moderation_resolve`; it does not widen ordinary member-message actions.
-This implementation is prepared against committed Core `1db0a709`'s serializer
-and decision service. Its new tests are explicitly synthetic controls, **not a
-genuine member-send corpus or release acceptance**. Routed message/moderation
-captures and a final compatible provider pin remain required before handover.
+The initial preparation against committed Core `1db0a709` is now exercised by
+the genuine combined capture at `3ba2cda2`. `datesExternalMessageWire.test.mts`
+exercises all 21 additions through the production metadata/evidence/claim/decision
+boundaries; the page-handler tests also recover actual approve/reject replay
+bodies after controlled lost replies. Counterfactuals and controlled transports
+remain labelled synthetic. This is local consumer evidence, not production or
+authenticated-browser acceptance; final compatible provider repinning still
+belongs to the coordinated P1 release.
 
 The closed case variant has `target_type:message`, `case_kind:prepublication`,
 `queue:messages`, a real member author and `external_message` metadata containing
@@ -222,6 +231,10 @@ current page authority. Unknown replies retain the original request for explicit
 retry; exact no-land refusals require refreshed human review. Navigation fences
 prevent late replies from repopulating another page. EN/HU identifies this as
 message publication review, never approval or republication of the event.
+In particular, Core's captured `dates-admin-stale-revision`409 originates from
+the claimed-case check inside the receipted transaction before the target
+decision. It clears only its exact journal and requires fresh human review;
+the same machine name with a different status remains uncertain.
 
 ## Evidence boundaries
 

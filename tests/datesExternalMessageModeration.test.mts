@@ -265,10 +265,10 @@ const compile = (source: string) => ts.transpileModule(source, { compilerOptions
 function deferred() { let resolve!: (value: any) => void; const promise = new Promise<any>((done) => { resolve = done; }); return { promise, resolve }; }
 const flush = () => new Promise((done) => setImmediate(done));
 const operation = () => ({ kind: "resolve", label: "Approve", payload: request() });
-function harness(store = storage()) {
+function harness(store = storage(), initial = sample(), initialPrincipal = principal) {
   const access = deferred(), response = deferred(), state: any = {}, writes: string[] = [], sent: Array<{ action: string; body: unknown }> = [];
   const readFence = new DatesCaseReadFence(), lifetime = { current: 0 };
-  const context: any = { exports: {}, JSON, principal, caseId: request().case_id, data: sample(), writeLocked: false, mutationBusy: { current: false }, readFence, lifetime,
+  const context: any = { exports: {}, JSON, principal: initialPrincipal, caseId: initial.case.case_id, data: initial, writeLocked: false, mutationBusy: { current: false }, readFence, lifetime,
     messageReview: (key: string) => key, isDatesExternalMessageCase, datesExternalMessageResolutionBaseline, datesExternalMessageResolutionMayStart,
     prepareDatesExternalMessageResolution, readDatesExternalMessageResolution, readDatesExternalMessageResolutionAccess, runDatesExternalMessageResolution,
     datesExternalBrowserStorage: () => store, load: async () => { writes.push("load"); },
@@ -280,7 +280,7 @@ function harness(store = storage()) {
     context[`set${name}`] = (value: unknown) => { state[name] = value; writes.push(name); };
   vm.runInNewContext(compile(`${callback("executeMessageResolution")}; exports.execute = executeMessageResolution;`), context);
   return { store, context, access, response, state, sent, writes, readFence, lifetime, execute: context.exports.execute as (operation: unknown, retry?: unknown) => Promise<void>,
-    authorize: (detail = sample(), identity: unknown = { success: true, dates: principal }) => access.resolve({ detail, identity }),
+    authorize: (detail = initial, identity: unknown = { success: true, dates: initialPrincipal }) => access.resolve({ detail, identity }),
     unmount: () => { readFence.invalidate(); lifetime.current++; } };
 }
 
@@ -315,6 +315,30 @@ test("actual message callback recovers an identical receipt after the case is re
   const h = harness(first.store), retry = h.execute(null, saved.pending); h.authorize(closedSample()); await flush();
   assert.equal(JSON.stringify(h.sent), JSON.stringify(first.sent)); h.response.resolve({ ...receipt(), idempotency_replayed: true }); await retry;
   assert.equal(readDatesExternalMessageResolution(h.store, actor).kind, "empty"); assert.ok(h.writes.includes("load"));
+});
+
+for (const label of ["approve", "reject"] as const) test(`actual page callback recovers genuine Core ${label} bytes after a controlled lost reply`, async () => {
+  // These case/decision bodies are genuine Core3ba2cda2. The principal and
+  // delayed I/O are controlled consumer seams, not a live browser session.
+  const fixture = (phase: string) => JSON.parse(readFileSync(new URL(
+    `./fixtures/dates_external_admin_wire/admin-chat-${label}-${phase}.json`, import.meta.url), "utf8"));
+  const initial = fixture("claimed"), currentPrincipal = { ...principal, email: "chat-admin@example.test" };
+  const command = { case_id: initial.case.case_id, expected_revision: 2, action: `${label}_content`,
+    reason: "Reviewed the immutable synthetic message.", user_visible_reason_en: "Reviewed by support.",
+    user_visible_reason_hu: "Az ügyfélszolgálat ellenőrizte.", idempotency_key: `chat-wire-resolve-${label}`,
+    expires_at: null, break_glass: false };
+  const first = harness(storage(), initial, currentPrincipal);
+  const work = first.execute({ kind: "resolve", label, payload: command }); first.authorize(); await flush();
+  assert.equal(first.sent.length, 1); assert.equal(JSON.stringify(first.sent[0].body), JSON.stringify(command));
+  first.response.resolve(null); await work;
+  const saved = readDatesExternalMessageResolution(first.store, currentPrincipal.email);
+  assert.equal(saved.kind, "pending"); if (saved.kind !== "pending") return;
+  const second = harness(first.store, fixture("resolved"), currentPrincipal);
+  const retry = second.execute(null, saved.pending); second.authorize(); await flush();
+  assert.equal(JSON.stringify(second.sent), JSON.stringify(first.sent));
+  second.response.resolve(fixture("resolve-replay")); await retry;
+  assert.equal(readDatesExternalMessageResolution(first.store, currentPrincipal.email).kind, "empty");
+  assert.equal(second.state.Feedback.text, "success"); assert.ok(second.writes.includes("load"));
 });
 
 test("actual message callback rejects replaced-page work before dispatch or UI adoption", async () => {

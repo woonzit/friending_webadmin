@@ -135,6 +135,9 @@ function clear(storage: DatesExternalStorage, pending: DatesExternalMessageResol
   try { storage.removeItem(storageKey(pending.actor)); return storage.getItem(storageKey(pending.actor)) === null; } catch { return false; }
 }
 const noLand: Record<string, number> = {
+  // Core checks the claimed case revision inside the receipted transaction,
+  // before applying the target decision; a failed CAS cannot have landed.
+  "dates-admin-stale-revision": 409,
   "dates-moderation-case-closed": 409, "dates-moderation-case-conflict": 409, "dates-moderation-claim-required": 409,
   "dates-moderation-resolution-conflict": 409, "dates-moderation-target-stale": 409,
   "dates-moderation-action-invalid": 422, "dates-moderation-target-invalid": 422, "dates-user-visible-reason-invalid": 422,

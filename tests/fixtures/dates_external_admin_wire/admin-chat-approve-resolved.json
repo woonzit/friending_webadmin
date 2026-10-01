@@ -1,0 +1,70 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case": {
+        "case_id": "cas_00000000000000000000000000001771",
+        "queue": "messages",
+        "case_kind": "prepublication",
+        "target_type": "message",
+        "target_id": "msg_00000000000000000000000000001772",
+        "target_uid": 6000,
+        "activity_id": "act_00000000000000000000000000001771",
+        "status": "actioned",
+        "severity": "medium",
+        "escalated": false,
+        "distinct_reporter_count": 0,
+        "report_count": 0,
+        "assignee_email": "chat-admin@example.test",
+        "claimed_at": 1790000000,
+        "claim_expires_at": null,
+        "sla_due_at": 1790086400,
+        "sla_breached": false,
+        "revision": 3,
+        "created_at": 1790000000,
+        "updated_at": 1790000000,
+        "conflict_of_interest": false,
+        "capabilities": {
+            "can_claim": false,
+            "can_read_evidence": true,
+            "can_resolve": false,
+            "can_break_glass": false
+        },
+        "external_message": {
+            "thread_id": "thr_00000000000000000000000000001771",
+            "revision": 2,
+            "moderation_state": "visible",
+            "available": false
+        },
+        "allowed_actions": []
+    },
+    "reports": [],
+    "report_notes_withheld": false,
+    "decisions": [
+        {
+            "decision_id": "dec_00000000000000000000000000001771",
+            "case_id": "cas_00000000000000000000000000001771",
+            "target_type": "message",
+            "target_id": "msg_00000000000000000000000000001772",
+            "activity_id": "act_00000000000000000000000000001771",
+            "target_path": "published",
+            "action": "approve_content",
+            "severity": "medium",
+            "user_visible_reason": {
+                "en": "Reviewed by support.",
+                "hu": "Az ügyfélszolgálat ellenőrizte."
+            },
+            "created_at": 1790000000,
+            "expires_at": null,
+            "appeal_outcome": null,
+            "appeal_resolved_at": null
+        }
+    ],
+    "appeal": null,
+    "internal_notes": [],
+    "internal_notes_withheld": false,
+    "evidence_requires_separate_audited_read": true,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

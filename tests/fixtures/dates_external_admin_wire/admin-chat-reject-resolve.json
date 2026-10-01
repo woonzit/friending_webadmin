@@ -1,0 +1,33 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case_id": "cas_00000000000000000000000000001772",
+    "case_status": "actioned",
+    "action": "reject_content",
+    "decision_id": "dec_00000000000000000000000000001772",
+    "target_result": {
+        "target_type": "message",
+        "target_id": "msg_00000000000000000000000000001773",
+        "subject_uid": 6000,
+        "activity_id": "act_00000000000000000000000000001771",
+        "target_path": "published",
+        "before": {
+            "moderation_state": "pending",
+            "revision": 1,
+            "sequence": 4
+        },
+        "after": {
+            "moderation_state": "rejected",
+            "revision": 2,
+            "sequence": 4
+        }
+    },
+    "revision": 3,
+    "break_glass_used": false,
+    "audit_id": "aud_00000000000000000000000000001776",
+    "idempotency_replayed": false,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
