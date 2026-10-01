@@ -1,4 +1,4 @@
-import { DATES_EXTERNAL_MODERATION_ACTIONS, datesCaseInternalNotes, datesModerationSla, hasDatesCapability,
+import { DATES_EXTERNAL_MODERATION_ACTIONS, DATES_EXTERNAL_MESSAGE_ACTIONS, datesCaseInternalNotes, datesModerationSla, hasDatesCapability,
   type DatesAdminPrincipal, type DatesCaseSummary, type DatesModerationSla } from "./datesAdmin";
 import { DATES_EXTERNAL_STATUSES } from "./datesExternalAdmin";
 
@@ -79,9 +79,28 @@ const caseRules = {
   capabilities: (value: unknown) => shape(value, { can_claim: boolean, can_read_evidence: boolean, can_resolve: boolean, can_break_glass: boolean }),
 };
 
-/** A known non-member target is a separate closed variant, not a UID0 member. */
+/** Explicit external variants stay closed before the ordinary metadata fallback. */
 function caseRow(value: unknown): value is DatesCaseSummary {
   if (!record(value)) return false;
+  if (Object.hasOwn(value, "external_message") || (value.target_type === "message" && value.case_kind === "prepublication")) {
+    if (!shape(value, { ...caseRules,
+      external_message: (v) => shape(v, {
+        thread_id: nullable(id("thr")), revision: nullable((v) => integer(v) && Number(v) > 0),
+        moderation_state: nullable((v) => typeof v === "string" && ["visible", "pending", "rejected"].includes(v)), available: boolean,
+      }),
+      allowed_actions: (v) => Array.isArray(v) && v.every((action) => typeof action === "string"
+        && DATES_EXTERNAL_MESSAGE_ACTIONS.includes(action as typeof DATES_EXTERNAL_MESSAGE_ACTIONS[number])) && new Set(v).size === v.length,
+    }) || value.target_type !== "message" || value.queue !== "messages" || value.case_kind !== "prepublication"
+      || !id("msg")(value.target_id) || !id("act")(value.activity_id) || Number(value.target_uid) <= 1 || Number(value.revision) < 1) return false;
+    const message = value.external_message as NonNullable<DatesCaseSummary["external_message"]>;
+    const actions = value.allowed_actions as string[], caps = value.capabilities as DatesCaseSummary["capabilities"];
+    const bound = message.thread_id !== null && message.revision !== null && message.moderation_state !== null;
+    const unbound = message.thread_id === null && message.revision === null && message.moderation_state === null;
+    if (!bound && !unbound) return false;
+    if (!["new", "in_review", "appealed"].includes(String(value.status)) && (actions.length > 0 || caps.can_claim || caps.can_resolve)) return false;
+    if (!message.available) return actions.length === 0 && !caps.can_claim && !caps.can_resolve;
+    return bound && message.moderation_state === "pending" && (!caps.can_resolve || actions.length > 0);
+  }
   if (value.target_type !== "external_event") return shape(value, caseRules);
   if (!shape(value, { ...caseRules,
     external_revision: nullable((v) => integer(v) && Number(v) > 0),
@@ -198,6 +217,13 @@ export function datesCaseDetail(value: unknown, expectedCaseId: string): DatesCa
       || !DATES_EXTERNAL_MODERATION_ACTIONS.includes(decision.action as typeof DATES_EXTERNAL_MODERATION_ACTIONS[number])
       || decision.target_path !== (decision.action === "dismiss" ? "unchanged" : "published")
       || decision.expires_at !== null || decision.appeal_outcome !== null || decision.appeal_resolved_at !== null;
+  })) return null;
+  if (item.external_message && decisions.some((row) => {
+    const decision = row as DatesDecisionMetadata;
+    return decision.target_type !== "message" || decision.target_id !== item.target_id || decision.activity_id !== item.activity_id
+      || !DATES_EXTERNAL_MESSAGE_ACTIONS.includes(decision.action as typeof DATES_EXTERNAL_MESSAGE_ACTIONS[number])
+      || decision.target_path !== "published" || decision.expires_at !== null
+      || decision.appeal_outcome !== null || decision.appeal_resolved_at !== null;
   })) return null;
   return { case: item, reports: reports as DatesReportMetadata[], report_notes_withheld: value.report_notes_withheld as boolean,
     decisions: decisions as DatesDecisionMetadata[], appeal, evidence_requires_separate_audited_read: true };

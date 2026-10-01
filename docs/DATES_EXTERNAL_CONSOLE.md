@@ -186,6 +186,43 @@ storefront map is JSON, never `[object Object]` or an accidental numeric control
 App Review's released 34-check/23-count closed keyset is unchanged at the initial
 provider pin; no guessed keys or production fixture reset are introduced.
 
+## Held external-thread message review
+
+The lead's narrow prepublication extension uses the existing messages queue and
+`dates_moderation_resolve`; it does not widen ordinary member-message actions.
+This implementation is prepared against committed Core `1db0a709`'s serializer
+and decision service. Its new tests are explicitly synthetic controls, **not a
+genuine member-send corpus or release acceptance**. Routed message/moderation
+captures and a final compatible provider pin remain required before handover.
+
+The closed case variant has `target_type:message`, `case_kind:prepublication`,
+`queue:messages`, a real member author and `external_message` metadata containing
+only `thread_id`, `revision`, `moderation_state` and `available`. Its current
+`allowed_actions` can offer only `approve_content` and `reject_content`.
+Unavailable but still-bound messages retain their current metadata; an unbound
+target has a complete null identity/revision/state tuple. Neither grants a new
+decision. Private text and immutable snapshots are absent from queue/detail and
+remain behind the separately audited evidence read. Neither external target
+offers live-location evidence scope or trail capture.
+
+The decision body keeps the existing case revision; no invented target-CAS field
+is sent. Core binds the original message revision/content hash inside the case.
+A fresh actor, capability, case revision, target identity, current action and
+unexpired own claim are checked before a new decision. The exact reasons/key and
+safe message/activity/thread/author/revision baseline are saved before dispatch
+in a separate per-actor/tab journal, never with message text or evidence. Closed
+case recovery reuses that exact command after fresh permission/time checks and
+does not require a new claim. Competing, unreadable or expired journals block
+new message-case writes instead of silently discarding uncertainty.
+
+Success requires the exact audited case/target revision transition: approval
+makes the message visible with a fresh public sequence; rejection keeps the same
+sequence and author-private rejected state. A receipt does not itself supply
+current page authority. Unknown replies retain the original request for explicit
+retry; exact no-land refusals require refreshed human review. Navigation fences
+prevent late replies from repopulating another page. EN/HU identifies this as
+message publication review, never approval or republication of the event.
+
 ## Evidence boundaries
 
 Tests distinguish actual provider bytes, synthetic negative controls, production

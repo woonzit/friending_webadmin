@@ -171,7 +171,7 @@ test("late replies cannot repopulate evidence after refresh, scope change or unm
   const page = readFileSync(new URL("../app/(dashboard)/dates/moderation/[caseId]/page.tsx", import.meta.url), "utf8");
   assert.match(page, /<DatesModerationCase key=\{caseId\} caseId=\{caseId\}/);
   assert.match(page, /return \(\) => \{ readFence\.invalidate\(\); \+\+lifetime\.current;/);
-  assert.equal((page.match(/if \(!readFence\.accepts\(ticket\)\)/g) ?? []).length, 6, "detail, external facts, evidence, ordinary mutation and both external decision boundaries check their generation");
+  assert.equal((page.match(/if \(!readFence\.accepts\(ticket\)\)/g) ?? []).length, 8, "detail, external facts, evidence, ordinary mutation and both preflight/receipt boundaries for external-event and held-message decisions check their generation");
   const evidenceFunction = page.slice(page.indexOf("async function readEvidence"), page.indexOf("async function addNote"));
   assert.ok(evidenceFunction.indexOf("setEvidence(null)") < evidenceFunction.indexOf("await adminCall"));
   assert.match(evidenceFunction, /datesEvidenceRead\(response, \{ case_id: caseId/);

@@ -22,6 +22,7 @@ import {
   datesAppealBlockedByRole,
   datesCaseClaimableByRole,
   datesExternalReviewAllowed,
+  isDatesExternalMessageCase,
   permittedResolutionActions,
   resolutionActions,
   type DatesAdminPrincipal,
@@ -32,6 +33,9 @@ import { decodeDatesExternalDetail, type DatesExternalDetailRow } from "@/lib/da
 import { datesExternalBrowserStorage } from "@/lib/datesExternalMutations";
 import { datesExternalResolutionMatches, prepareDatesExternalResolution, readDatesExternalResolution, readDatesExternalResolutionAccess,
   runDatesExternalResolution, type DatesExternalResolutionPending, type DatesExternalResolutionRead } from "@/lib/datesExternalModeration";
+import { datesExternalMessageResolutionBaseline, datesExternalMessageResolutionMayStart, prepareDatesExternalMessageResolution,
+  readDatesExternalMessageResolution, readDatesExternalMessageResolutionAccess, runDatesExternalMessageResolution,
+  type DatesExternalMessageResolutionPending, type DatesExternalMessageResolutionRead } from "@/lib/datesExternalMessageModeration";
 import { DatesCaseReadFence, datesCaseDetail, datesEvidenceRead, datesLegalHoldAllowed, datesLegalHoldReceipt,
   datesConsoleCommandReceipt, isDatesConsoleCommand,
   type DatesCaseDetail, type DatesEvidenceRead } from "@/lib/datesModerationRead";
@@ -54,6 +58,7 @@ export default function DatesModerationCasePage() {
 function DatesModerationCase({ caseId }: { caseId: string }) {
   const t = useTranslations("datesAdmin.caseDetail");
   const external = useTranslations("datesAdmin.external");
+  const messageReview = useTranslations("datesAdmin.external.messageModeration");
   const common = useTranslations("common");
   const locale = useLocale();
   const readFence = useRef(new DatesCaseReadFence()).current;
@@ -62,6 +67,8 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
   const [externalEvent, setExternalEvent] = useState<DatesExternalDetailRow | null>(null);
   const [externalPending, setExternalPending] = useState<DatesExternalResolutionRead>({ kind: "blocked" });
   const [externalNeedsReload, setExternalNeedsReload] = useState(false);
+  const [messagePending, setMessagePending] = useState<DatesExternalMessageResolutionRead>({ kind: "blocked" });
+  const [messageNeedsReload, setMessageNeedsReload] = useState(false);
   const [principal, setPrincipal] = useState<DatesAdminPrincipal | null>(null);
   const [notes, setNotes] = useState<DatesCaseInternalNotes>({ status: "unsupported" });
   const [evidence, setEvidence] = useState<DatesEvidenceRead | null>(null);
@@ -134,6 +141,9 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     setPrincipal(nextPrincipal);
     setExternalPending(next.case.target_type === "external_event"
       ? readDatesExternalResolution(datesExternalBrowserStorage(), nextPrincipal.email) : { kind: "empty" });
+    setMessagePending(isDatesExternalMessageCase(next.case)
+      ? readDatesExternalMessageResolution(datesExternalBrowserStorage(), nextPrincipal.email) : { kind: "empty" });
+    setMessageNeedsReload(false);
     // Retained case history and exact receipt recovery do not depend on a
     // second successful facts read. New decisions still require a coherent pair.
     setExternalNeedsReload(factsUnavailable);
@@ -144,7 +154,8 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
 
   useEffect(() => { void load(); return () => { readFence.invalidate(); ++lifetime.current; }; }, [load, readFence]);
 
-  const writeLocked = busy || externalPending.kind !== "empty" || externalNeedsReload;
+  const writeLocked = busy || externalPending.kind !== "empty" || externalNeedsReload
+    || messagePending.kind !== "empty" || messageNeedsReload;
 
   async function mutate(action: string, payload: Record<string, unknown>, successMessage: string) {
     if (writeLocked || mutationBusy.current) return false;
@@ -205,7 +216,9 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     if (!data || !principal || !datesExternalReviewAllowed(data.case, principal) || busy) return;
     setEvidence(null);
     const conflictBreakGlass = data.case.conflict_of_interest && breakGlass;
-    if ((evidenceSensitive || conflictBreakGlass) && evidenceReason.trim().length < 3) {
+    const includeSensitiveLocation = data.case.target_type !== "external_event"
+      && !isDatesExternalMessageCase(data.case) && evidenceSensitive;
+    if ((includeSensitiveLocation || conflictBreakGlass) && evidenceReason.trim().length < 3) {
       setFeedback({ tone: "error", text: t("evidenceReasonRequired") });
       return;
     }
@@ -214,14 +227,14 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     setFeedback(null);
     const response = await adminCall("dates_moderation_evidence", {
       case_id: caseId,
-      include_sensitive_location: evidenceSensitive,
+      include_sensitive_location: includeSensitiveLocation,
       break_glass: conflictBreakGlass,
       reason: evidenceReason.trim() || null,
     });
     if (!readFence.accepts(ticket)) return;
     setBusy(false);
     const decoded = datesEvidenceRead(response, { case_id: caseId, appeal_id: data.appeal?.appeal_id ?? null,
-      include_sensitive_location: evidenceSensitive, break_glass: conflictBreakGlass });
+      include_sensitive_location: includeSensitiveLocation, break_glass: conflictBreakGlass });
     if (!decoded) {
       setFeedback({ tone: "error", text: t("operationFailed", { error: String(response?.error || "core-unavailable") }) });
       return;
@@ -250,7 +263,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
 
   async function captureTrailEvidence(event: React.FormEvent) {
     event.preventDefault();
-    if (!data || busy || data.case.target_type === "external_event" || !data.case.activity_id) return;
+    if (!data || busy || data.case.target_type === "external_event" || isDatesExternalMessageCase(data.case) || !data.case.activity_id) return;
     const capturedFrom = epochFromLocalInput(trailFrom);
     const capturedTo = epochFromLocalInput(trailTo);
     if (!capturedFrom || !capturedTo || capturedTo <= capturedFrom || trailReason.trim().length < 3) {
@@ -333,6 +346,9 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     if (operation.kind === "resolve" && data?.case.target_type === "external_event") {
       await executeExternalResolution(operation); return;
     }
+    if (operation.kind === "resolve" && data && isDatesExternalMessageCase(data.case)) {
+      await executeMessageResolution(operation); return;
+    }
     const ok = await mutate(operation.kind === "resolve" ? "dates_moderation_resolve" : "dates_moderation_legal_hold", operation.payload, t(operation.kind === "resolve" ? "resolved" : "legalHoldUpdated"));
     setConfirmed(null);
     if (ok && operation.kind === "resolve") {
@@ -379,12 +395,52 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     }
   }
 
+  async function executeMessageResolution(operation: ConfirmedOperation | null, retry: DatesExternalMessageResolutionPending | null = null) {
+    if (mutationBusy.current || !principal || !data || !isDatesExternalMessageCase(data.case)
+      || (!operation && !retry) || (!retry && writeLocked)) return;
+    const body = retry?.body ?? operation!.payload;
+    if (body.case_id !== caseId) return;
+    const baseline = retry?.baseline ?? datesExternalMessageResolutionBaseline(data.case);
+    mutationBusy.current = true; setBusy(true); setEvidence(null); setFeedback(null);
+    const ticket = readFence.begin(), currentLifetime = lifetime.current;
+    try {
+      const access = await readDatesExternalMessageResolutionAccess(adminCall, caseId);
+      if (!readFence.accepts(ticket)) return;
+      if (!access || access.actor !== principal.email || (retry && retry.actor !== access.actor)) {
+        setConfirmed(null); setFeedback({ tone: "error", text: messageReview("reviewRequired") }); return;
+      }
+      if (!baseline || (!retry && !datesExternalMessageResolutionMayStart(access.item, access.principal, body, baseline, access.serverNow))) {
+        setMessageNeedsReload(true); setConfirmed(null); setFeedback({ tone: "error", text: messageReview("reloadRequired") }); return;
+      }
+      const pending = retry ?? prepareDatesExternalMessageResolution(access.actor, body, baseline, access.serverNow);
+      if (!pending) { setConfirmed(null); setFeedback({ tone: "error", text: messageReview("invalid") }); return; }
+      const storage = datesExternalBrowserStorage();
+      const result = await runDatesExternalMessageResolution(pending, storage, access.serverNow, adminCall);
+      if (!readFence.accepts(ticket)) return;
+      setMessagePending(readDatesExternalMessageResolution(storage, access.actor)); setConfirmed(null);
+      if (result.kind === "success") {
+        setFeedback({ tone: "success", text: messageReview(result.retained ? "successRetained" : "success") });
+        if (!result.retained) {
+          setResolutionReason(""); setVisibleReasonEn(""); setVisibleReasonHu("");
+          await load();
+        }
+      } else if (result.kind === "refused") {
+        setMessageNeedsReload(true);
+        setFeedback({ tone: "error", text: messageReview(result.retained ? "refusedRetained" : "reloadRequired") });
+      } else setFeedback({ tone: "error", text: messageReview(result.kind) });
+    } finally {
+      mutationBusy.current = false;
+      if (currentLifetime === lifetime.current) setBusy(false);
+    }
+  }
+
   if (state === "loading") return <LoadingPanel />;
   if (state === "not-found") return <ErrorPanel message={t("notFound")} retry={() => void load()} />;
   if (state === "error" || !data || !principal) return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
 
   const item = data.case;
   const isExternal = item.target_type === "external_event";
+  const isExternalMessage = isDatesExternalMessageCase(item);
   const assignedToMe = item.assignee_email?.toLowerCase() === principal.email.toLowerCase();
   const leaseActive = (item.claim_expires_at || 0) > Math.floor(Date.now() / 1000);
   const canBreakGlass = item.capabilities.can_break_glass && principal.break_glass;
@@ -393,7 +449,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
   const mayReadEvidence = datesExternalReviewAllowed(item, principal)
     && (item.capabilities.can_read_evidence || (item.conflict_of_interest && canBreakGlass));
   const mayCaptureTrail = Boolean(
-    !isExternal && item.activity_id
+    !isExternal && !isExternalMessage && item.activity_id
     && principal.sensitive_location
     && hasDatesCapability(principal, "dates_trail_evidence_capture")
     && (!item.conflict_of_interest || (canBreakGlass && breakGlass)),
@@ -418,6 +474,13 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
           <Link href={`/dates/external/${item.target_id}`}>{external("editor.detailTitle")}</Link></>}
       </section>}
       {externalEvent && <DatesExternalProvenance event={externalEvent} />}
+      {isExternalMessage && <section className="panel dates-external-fields">
+        <span className="badge badge-demo">{messageReview("badge")}</span>
+        <h2>{messageReview("title")}</h2><p>{messageReview("boundary")}</p>
+        {typeof item.external_message?.revision === "number" && <p>{messageReview("revisions", { caseRevision: item.revision, messageRevision: item.external_message.revision })}</p>}
+        {item.external_message?.moderation_state && <p>{messageReview(`states.${item.external_message.moderation_state}`)}</p>}
+        {!item.external_message?.available && <p className="alert alert-info">{messageReview("unavailable")}</p>}
+      </section>}
       {isExternal && externalPending.kind !== "empty" && <section className="panel dates-external-fields">
         <h2>{external("moderation.pendingTitle")}</h2>
         {externalPending.kind === "blocked" ? <p>{external("pending.blocked")}</p> : <>
@@ -426,6 +489,16 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
           {externalPending.pending.body.case_id !== caseId ? <Link href={`/dates/moderation/${externalPending.pending.body.case_id}`}>{external("pending.open")}</Link>
             : <button className="button button-primary" disabled={busy || !datesExternalReviewAllowed(item, principal) || !hasDatesCapability(principal, "dates_case_resolve")}
               onClick={() => void executeExternalResolution(null, externalPending.pending)}>{external("pending.retry")}</button>}
+        </>}
+      </section>}
+      {isExternalMessage && messagePending.kind !== "empty" && <section className="panel dates-external-fields">
+        <h2>{messageReview("pendingTitle")}</h2>
+        {messagePending.kind === "blocked" ? <p>{messageReview("blocked")}</p> : <>
+          <p>{messageReview("pendingCopy")}</p><code>{messagePending.pending.body.idempotency_key}</code>
+          <details><summary>{external("pending.payload")}</summary><pre className="dates-external-payload">{JSON.stringify(messagePending.pending.body, null, 2)}</pre></details>
+          {messagePending.pending.body.case_id !== caseId ? <Link href={`/dates/moderation/${messagePending.pending.body.case_id}`}>{external("pending.open")}</Link>
+            : <button className="button button-primary" disabled={busy || !hasDatesCapability(principal, "dates_case_resolve")}
+              onClick={() => void executeMessageResolution(null, messagePending.pending)}>{external("pending.retry")}</button>}
         </>}
       </section>}
 
@@ -480,7 +553,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
         <div className="panel-header"><div><h2>{t("evidenceTitle")}</h2><p>{t("evidenceCopy")}</p></div></div>
         <div className="panel-body">
           {!mayReadEvidence ? <p className="page-subtitle">{t("evidenceUnavailable")}</p> : <form className="dates-evidence-controls" onSubmit={readEvidence}>
-            {!isExternal && principal.sensitive_location && <label className="checkbox-field"><input type="checkbox" checked={evidenceSensitive} disabled={busy} onChange={(event) => { readFence.invalidate(); setEvidence(null); setEvidenceSensitive(event.target.checked); }} /><span>{t("includeSensitiveLocation")}</span></label>}
+            {!isExternal && !isExternalMessage && principal.sensitive_location && <label className="checkbox-field"><input type="checkbox" checked={evidenceSensitive} disabled={busy} onChange={(event) => { readFence.invalidate(); setEvidence(null); setEvidenceSensitive(event.target.checked); }} /><span>{t("includeSensitiveLocation")}</span></label>}
             <label className="field"><span>{t("auditReason")}</span><input value={evidenceReason} required={evidenceSensitive || (item.conflict_of_interest && breakGlass)} onChange={(event) => setEvidenceReason(event.target.value)} placeholder={t("auditReasonPlaceholder")} /></label>
             <button className="button button-danger" type="submit" disabled={busy || (item.conflict_of_interest && !breakGlass)}>{t("readEvidence")}</button>
           </form>}
@@ -494,7 +567,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
         </div>
       </section>
 
-      {!isExternal && principal.sensitive_location && hasDatesCapability(principal, "dates_trail_evidence_capture") && item.activity_id && <section className="panel dates-section">
+      {!isExternal && !isExternalMessage && principal.sensitive_location && hasDatesCapability(principal, "dates_trail_evidence_capture") && item.activity_id && <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("trailEvidenceTitle")}</h2><p>{t("trailEvidenceCopy")}</p></div></div>
         <div className="panel-body">
           <form className="dates-evidence-controls" onSubmit={captureTrailEvidence}>

@@ -40,6 +40,12 @@ fresh detail instead of applying the receipt as live state. This does not change
 request IDs, mutation retries, Core authority, evidence access or role policy.
 Resolve, trail-evidence and legal-hold flows remain unchanged.
 
+The later T-865 external-message prepublication extension is documented in
+`DATES_EXTERNAL_CONSOLE.md`. Its separate resolve journal/receipt boundary and
+external-target location-scope guard do not change these ordinary-member
+command receipts or the original pinned corpora. The new held-message controls
+are labelled synthetic until genuine routed provider captures are adopted.
+
 The existing nine-body `dates_moderation_wire` metadata/evidence corpus and its
 privacy/conflict/hold tests remain independently pinned and unchanged. No new
 EN/HU copy or moderation product decision is introduced.

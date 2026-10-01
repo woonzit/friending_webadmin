@@ -8,6 +8,13 @@ export type DatesAdminPrincipal = {
   capabilities: string[];
 };
 
+export type DatesExternalMessageMetadata = {
+  thread_id: string | null;
+  revision: number | null;
+  moderation_state: "visible" | "pending" | "rejected" | null;
+  available: boolean;
+};
+
 export type DatesCaseSummary = {
   case_id: string;
   queue: string;
@@ -34,6 +41,9 @@ export type DatesCaseSummary = {
   external_revision?: number | null;
   external_status?: string | null;
   external_target_available?: boolean;
+  // Only the closed external-thread prepublication message variant has this.
+  external_message?: DatesExternalMessageMetadata;
+  // Current Core actions, shared by the two explicit external variants only.
   allowed_actions?: string[];
   capabilities: {
     can_claim: boolean;
@@ -550,7 +560,13 @@ export function isDatesAppealCase(value: Pick<DatesCaseSummary, "queue" | "case_
 }
 
 export const DATES_EXTERNAL_MODERATION_ACTIONS = ["dismiss", "restore_content", "remove_content", "cancel_activity", "remove_activity"] as const;
-type ResolutionCase = Pick<DatesCaseSummary, "queue" | "case_kind" | "target_type" | "external_revision" | "external_target_available" | "allowed_actions">;
+export const DATES_EXTERNAL_MESSAGE_ACTIONS = ["approve_content", "reject_content"] as const;
+type ResolutionCase = Pick<DatesCaseSummary, "queue" | "case_kind" | "target_type" | "external_revision" | "external_target_available" | "external_message" | "allowed_actions">;
+
+export function isDatesExternalMessageCase(value: Pick<DatesCaseSummary, "queue" | "case_kind" | "target_type" | "external_message">): boolean {
+  return value.target_type === "message" && value.queue === "messages" && value.case_kind === "prepublication"
+    && value.external_message !== undefined;
+}
 
 export function datesExternalReviewAllowed(value: Pick<DatesCaseSummary, "target_type">, principal: Pick<DatesAdminPrincipal, "capabilities">): boolean {
   return value.target_type !== "external_event" || principal.capabilities.includes("dates_external_event_review");
@@ -562,6 +578,11 @@ export function resolutionActions(value: ResolutionCase): string[] {
     if (value.queue !== "activities" || value.case_kind !== "reports" || value.external_target_available !== true
       || !Number.isSafeInteger(value.external_revision) || Number(value.external_revision) < 1 || !Array.isArray(value.allowed_actions)) return [];
     return DATES_EXTERNAL_MODERATION_ACTIONS.filter((action) => value.allowed_actions!.includes(action));
+  }
+  if (Object.hasOwn(value, "external_message") || (value.target_type === "message" && value.case_kind === "prepublication")) {
+    if (!isDatesExternalMessageCase(value) || value.external_message?.available !== true
+      || value.external_message.moderation_state !== "pending" || !Array.isArray(value.allowed_actions)) return [];
+    return DATES_EXTERNAL_MESSAGE_ACTIONS.filter((action) => value.allowed_actions!.includes(action));
   }
   if (isDatesAppealCase(value)) return ["uphold", "overturn"];
   if (value.case_kind === "prepublication") {
@@ -618,11 +639,14 @@ export function datesAppealBlockedByRole(
  * principal cannot decide would only hold the lease against those who can.
  */
 export function datesCaseClaimableByRole(
-  value: Pick<DatesCaseSummary, "queue" | "case_kind"> & Partial<Pick<DatesCaseSummary, "target_type" | "external_target_available">>,
+  value: Pick<DatesCaseSummary, "queue" | "case_kind"> & Partial<Pick<DatesCaseSummary, "target_type" | "external_target_available" | "external_message">>,
   principal: Pick<DatesAdminPrincipal, "capabilities">,
 ): boolean {
   return principal.capabilities.includes("dates_case_claim") && !datesAppealBlockedByRole(value, principal)
-    && (value.target_type !== "external_event" || (value.external_target_available === true && principal.capabilities.includes("dates_external_event_review")));
+    && (value.target_type !== "external_event" || (value.external_target_available === true && principal.capabilities.includes("dates_external_event_review")))
+    && (!(Object.hasOwn(value, "external_message") || (value.target_type === "message" && value.case_kind === "prepublication"))
+      || (value.target_type === "message" && value.queue === "messages" && value.case_kind === "prepublication"
+        && value.external_message?.available === true && value.external_message.moderation_state === "pending"));
 }
 
 export function humanizeMachineKey(value: string): string {

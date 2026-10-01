@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
-import { DATES_EXTERNAL_MODERATION_ACTIONS, datesAdminPrincipal, datesCaseInternalNotes, datesCaseClaimableByRole, datesExternalReviewAllowed, permittedResolutionActions, resolutionActions } from "../lib/datesAdmin.ts";
+import { DATES_EXTERNAL_MODERATION_ACTIONS, datesAdminPrincipal, datesCaseInternalNotes, datesCaseClaimableByRole, datesExternalReviewAllowed, isDatesExternalMessageCase, permittedResolutionActions, resolutionActions } from "../lib/datesAdmin.ts";
 import { DatesCaseReadFence, datesCaseDetail, datesModerationQueue } from "../lib/datesModerationRead.ts";
 import { decodeDatesExternalDetail } from "../lib/datesExternalAdmin.ts";
 import { datesExternalResolutionMatches, datesExternalResolutionReceipt, normalizeDatesExternalResolutionProxyBody, prepareDatesExternalResolution,
@@ -272,11 +272,11 @@ test("actual decision navigation fence blocks preflight dispatch and post-dispat
 test("actual case loader preserves history and durable recovery but blocks writes when facts are unavailable or stale", async () => {
   for (const variant of ["unavailable", "mismatch"] as const) {
     const state: any = {}, journal = pending(), context: any = { exports: {}, caseId: request().case_id, readFence: new DatesCaseReadFence(),
-      datesAdminPrincipal, datesCaseDetail, datesCaseInternalNotes, decodeDatesExternalDetail, permittedResolutionActions,
+      datesAdminPrincipal, datesCaseDetail, datesCaseInternalNotes, decodeDatesExternalDetail, permittedResolutionActions, isDatesExternalMessageCase,
       datesExternalBrowserStorage: () => null, readDatesExternalResolution: () => ({ kind: "pending", pending: journal }), external: (key: string) => key,
       adminCall: async (action: string) => action === "admin_me" ? { success: true, dates: principal } : action === "dates_moderation_detail" ? sample()
         : variant === "unavailable" ? null : JSON.parse(readFileSync(new URL("./fixtures/dates_external_admin_wire/admin-detail-admin.json", import.meta.url), "utf8")) };
-    for (const name of ["Evidence", "Data", "ExternalEvent", "Principal", "Confirmed", "BreakGlass", "EvidenceSensitive", "State", "Feedback", "Notes", "ExternalPending", "ExternalNeedsReload", "ResolutionAction"])
+    for (const name of ["Evidence", "Data", "ExternalEvent", "Principal", "Confirmed", "BreakGlass", "EvidenceSensitive", "State", "Feedback", "Notes", "ExternalPending", "ExternalNeedsReload", "MessagePending", "MessageNeedsReload", "ResolutionAction"])
       context[`set${name}`] = (value: unknown) => { state[name] = value; };
     vm.runInNewContext(compile(`exports.load = ${loader.initializer.arguments[0].getText(pageTree)};`), context);
     await context.exports.load(); assert.equal(state.State, "ready"); assert.equal(state.Data.case.case_id, request().case_id);
