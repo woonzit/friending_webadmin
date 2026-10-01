@@ -110,6 +110,40 @@ async function renderChecks(
   };
 }
 
+test("fixture-v4 expected Dates counts decode and render in both locales using the unchanged closed keys", async () => {
+  // Explicit synthetic contract probe. The historical genuine v3 capture is
+  // retained unchanged; this does not claim a live reset or Router capture.
+  const datesCounts = { dates_activities: 3, dates_memberships: 4, dates_threads: 3,
+    dates_thread_members: 5, dates_messages: 2, dates_notifications: 1 };
+  const payload = statusPayload((key) => Object.hasOwn(datesCounts, key)
+    ? { ok: true, actual: datesCounts[key as keyof typeof datesCounts], expected: datesCounts[key as keyof typeof datesCounts] }
+    : { ok: true, actual: 1, expected: 1 });
+  payload.fixture_version = 4;
+  (payload.control as Record<string, unknown>).fixture_version = 4;
+  Object.assign(payload.counts as Record<string, unknown>, datesCounts);
+  const status = appReviewSandboxStatus(payload); assert.ok(status);
+  assert.equal(status.fixtureVersion, 4); assert.equal(status.control.fixtureVersion, 4);
+  assert.equal(status.ready, true); assert.equal(status.checks.length, 34); assert.equal(Object.keys(status.counts).length, 23);
+  for (const [key, expected] of Object.entries(datesCounts)) {
+    assert.equal(status.counts[key as keyof typeof status.counts], expected);
+    assert.deepEqual(status.checks.find((check) => check.key === key), { key, ok: true, actual: expected, expected });
+  }
+  for (const locale of ["en", "hu"] as const) {
+    const green = await renderChecks(locale, payload); assert.equal(green.rows.length, 34); assert.doesNotMatch(green.markup, /check-failed/);
+    for (const [key, expected] of Object.entries(datesCounts)) {
+      const stale = structuredClone(payload);
+      const check = (stale.checks as Array<Record<string, unknown>>).find((row) => row.key === key)!;
+      Object.assign(check, { ok: false, actual: 0 }); stale.ready = false;
+      const rendered = await renderChecks(locale, stale);
+      assert.equal(rendered.ready, false);
+      const failed = rendered.rows.filter((row) => row.startsWith('<li class="check-failed">'));
+      assert.equal(failed.length, 1);
+      assert.ok(failed[0].includes(locale === "en" ? `expected ${expected}` : `elvárt: ${expected}`));
+      assert.ok(failed[0].includes(locale === "en" ? "actual 0" : "tényleges: 0"));
+    }
+  }
+});
+
 const COPY = {
   en: {
     notApplicable: "Not applicable (the feature is switched off)",

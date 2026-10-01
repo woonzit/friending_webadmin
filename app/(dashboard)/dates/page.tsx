@@ -9,9 +9,9 @@ import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import { DATES_ACTIVITY_TYPES, datesAdminPrincipal, epochFromLocalInput, humanizeMachineKey, type DatesAdminPrincipal } from "@/lib/datesAdmin";
 import { formatDate, formatNumber } from "@/lib/format";
-import { decodeDatesActivityList, type DatesActivityListRow } from "@/lib/datesExternalAdmin";
+import { projectDatesActivityList, type DatesActivityDisplayRow, type DatesActivityUnreadableRow } from "@/lib/datesExternalAdmin";
 
-type ActivityRow = DatesActivityListRow;
+type ActivityRow = DatesActivityDisplayRow;
 
 type Filters = {
   origin: string;
@@ -90,6 +90,7 @@ export default function DatesActivitiesPage() {
   const [draft, setDraft] = useState<Filters>(EMPTY_FILTERS);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [rows, setRows] = useState<ActivityRow[]>([]);
+  const [unreadableRows, setUnreadableRows] = useState<DatesActivityUnreadableRow[]>([]);
   const [principal, setPrincipal] = useState<DatesAdminPrincipal | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -131,12 +132,13 @@ export default function DatesActivitiesPage() {
     ]);
     if (signal?.aborted || generation !== loadGeneration.current) return;
     const nextPrincipal = datesAdminPrincipal(identity);
-    const decoded = decodeDatesActivityList(response, { page, limit: PAGE_SIZE });
+    const decoded = projectDatesActivityList(response, { page, limit: PAGE_SIZE });
     if (!decoded || !nextPrincipal) {
-      setRows([]); setPrincipal(null); setState("error");
+      setRows([]); setUnreadableRows([]); setPrincipal(null); setState("error");
       return;
     }
     setRows(decoded.activities);
+    setUnreadableRows(decoded.unreadable_rows);
     setTotal(decoded.total);
     setPrincipal(nextPrincipal);
     setState("ready");
@@ -247,13 +249,17 @@ export default function DatesActivitiesPage() {
       ) : (
         <>
           <div className="list-summary"><strong>{t("resultCount", { count: total })}</strong><span>{t("page", { page })}</span></div>
+          {unreadableRows.map((row) => <div className="alert alert-error page-alert" key={`unreadable-${row.index}`}>
+            {common("unreadableField")} {row.activity_id ?? `#${row.index + 1}`}
+            {row.activity_id && <Link className="button button-secondary button-small" href={`/dates/${encodeURIComponent(row.activity_id)}`}>{common("view")}</Link>}
+          </div>)}
           <div className="table-wrap">
-            {rows.length === 0 ? <div className="empty-state"><div className="empty-state-inner"><h3>{t("empty")}</h3><p>{t("emptyCopy")}</p></div></div> : (
+            {rows.length === 0 ? (unreadableRows.length === 0 && <div className="empty-state"><div className="empty-state-inner"><h3>{t("empty")}</h3><p>{t("emptyCopy")}</p></div></div>) : (
               <table className="data-table dates-activity-table">
                 <thead><tr><th>{t("activity")}</th><th>{t("host")}</th><th>{t("state")}</th><th>{t("schedule")}</th><th>{t("attendance")}</th><th>{t("reports")}</th><th><span className="sr-only">{common("actions")}</span></th></tr></thead>
                 <tbody>{rows.map((row) => (
                   <tr key={row.activity_id}>
-                    <td><div className="cell-stack"><strong>{row.title || t("untitled")}</strong>{row.host === null && <span className="badge badge-demo">{external("badge")}</span>}<small>{row.activity_id} · {t(`values.${row.activity_type}`)}</small><small>{[row.city, row.country_code].filter(Boolean).join(", ") || "—"}</small></div></td>
+                    <td><div className="cell-stack"><strong>{row.title || t("untitled")}</strong>{row.unreadable_fields?.length ? <small role="status">{common("unreadableField")} · {row.unreadable_fields.join(", ")}</small> : null}{row.host === null && <span className="badge badge-demo">{external("badge")}</span>}<small>{row.activity_id} · {t(`values.${row.activity_type}`)}</small><small>{[row.city, row.country_code].filter(Boolean).join(", ") || "—"}</small></div></td>
                     <td><div className="cell-stack">{row.host === null ? <><span>{row.organizer_name}</span><small>{external(`tierValues.${row.verification_tier}`)}</small><Link href={`/dates/external/${row.external_event_id}`}>{external("editor.detailTitle")}</Link></>
                       : <><span>{row.host.display_name || `#${row.host.uid}`}</span><small>UID {row.host.uid}</small></>}</div></td>
                     <td><div className="cell-stack"><span className={badgeClass(row.lifecycle, row.soft_deleted)}>{row.soft_deleted ? t("softDeleted") : t(`values.${row.lifecycle}`)}</span><span className={badgeClass(row.moderation_state)}>{t(`values.${row.moderation_state}`)}</span></div></td>

@@ -1,6 +1,6 @@
 import { DATES_ACTIVITY_TYPES, datesAdminPrincipal, hasDatesCapability } from "@/lib/datesAdmin";
 import {
-  DATES_EXTERNAL_CATEGORIES, datesExternalDefaultDuration, datesExternalHttpsUrl, datesExternalTimeFromInput,
+  DATES_EXTERNAL_CATEGORIES, datesExternalDefaultDuration, datesExternalHttpsUrl,
   normalizeDatesExternalEditorInput, normalizeDatesExternalManualEvent,
   type DatesExternalEditorInput,
 } from "@/lib/datesExternalInput";
@@ -122,8 +122,8 @@ export type DatesExternalDetail = Parsed<typeof detailGuard>;
 
 function rowConsistent(row: DatesExternalRow, caps: string[], now: number): boolean {
   return row.end_at > row.start_at && row.end_at - row.start_at <= (row.category === "festival" ? 14 : 1) * 86400
-    && datesExternalTimeFromInput(row.start_local.slice(0, 19), row.start_local.slice(19), row.timezone) === row.start_at
-    && datesExternalTimeFromInput(row.end_local.slice(0, 19), row.end_local.slice(19), row.timezone) === row.end_at
+    // Core owns venue-local strings. Browser/PHP timezone databases can differ;
+    // decoding a read must not reinterpret them through the browser database.
     && row.created_at <= row.updated_at && row.updated_at <= now && row.checked_at <= now
     && row.next_reverify_at >= row.checked_at
     && row.can_edit === (caps.includes("dates_external_event_manage") && ["published", "rechecking", "in_review"].includes(row.status)
@@ -187,11 +187,17 @@ const activityShape = {
   city: nullable(text(0, 120)), country_code: nullable(text(2, 3)), join_mode: oneOf(["auto", "approval"] as const), maximum_people: nullable(integer(1)),
   going_count: integer(), pending_count: integer(), report_count: integer(), soft_deleted: bool, revision: integer(1), created_at: epoch, updated_at: epoch,
 };
-const memberHost = object({ uid: integer(1), display_name: text(0, 200) });
+// Member writers bound graphemes but permit interior tabs/newlines. Do not
+// apply the stricter external editor's text policy to existing member rows.
+const memberText = (maximum: number): Guard<string> => (value): value is string => typeof value === "string"
+  && value.length <= 64000 && !/[\uD800-\uDFFF]/u.test(value) && [...segmenter.segment(value)].length <= maximum;
+const memberActivityShape = { ...activityShape, title: memberText(120), city: nullable(memberText(120)) };
+// Core projects the stored profile name as-is; there is no 200-grapheme DTO bound.
+const memberHost = object({ uid: integer(1), display_name: memberText(64000) });
 const externalActivityShape = { origin: literal("external"), external_event_id: id("xev"), host: literal(null),
   organizer_name: text(1, 160), organizer_url: nullable(datesExternalHttpsUrl), verification_tier: oneOf(DATES_EXTERNAL_TIERS),
   ai_assisted: literal(false), can_host_transfer: literal(false) };
-const memberActivityGuard = object({ ...activityShape, host: memberHost });
+const memberActivityGuard = object({ ...memberActivityShape, host: memberHost });
 const externalActivityGuard = object({ ...activityShape, ...externalActivityShape });
 export type DatesActivityListRow = Parsed<typeof memberActivityGuard> | Parsed<typeof externalActivityGuard>;
 const activityRowGuard: Guard<DatesActivityListRow> = (value): value is DatesActivityListRow => memberActivityGuard(value)
@@ -203,12 +209,57 @@ export function decodeDatesActivityList(value: unknown, expected: { page: number
     && new Set(value.activities.map((row) => row.activity_id)).size === value.activities.length ? value : null;
 }
 
+export type DatesActivityUnreadableRow = { index: number; activity_id: string | null };
+export type DatesActivityDisplayRow = DatesActivityListRow & { unreadable_fields?: string[] };
+
+/** Repair presentation fields only; never invent identity, CAS, origin or host UID. */
+function projectMemberActivity(value: unknown, detail: boolean) {
+  if (!record(value) || Object.hasOwn(value, "origin") || Object.hasOwn(value, "external_event_id") || !record(value.host)) return null;
+  const row: Record<string, unknown> & { host: Record<string, unknown> } = { ...value, host: { ...value.host } };
+  const fields: string[] = [];
+  if (!memberText(120)(row.title)) { row.title = ""; fields.push("title"); }
+  if (!nullable(memberText(120))(row.city)) { row.city = null; fields.push("city"); }
+  if (!memberText(64000)(row.host.display_name)) { row.host.display_name = ""; fields.push("host.display_name"); }
+  if (detail && !(row.details === null || typeof row.details === "string")) { row.details = null; fields.push("details"); }
+  if (detail ? !memberActivityDetailGuard(row) : !memberActivityGuard(row)) return null;
+  return { row, fields };
+}
+
+/** Operator list projection: a damaged row cannot suppress its neighbours. */
+export function projectDatesActivityList(value: unknown, expected: { page: number; limit: number }) {
+  const guard = object({ ...envelope, activities: array(((_: unknown): _ is unknown => true), 100),
+    page: integer(1, 10000), limit: integer(1, 100), total: integer() });
+  if (!guard(value) || value.page !== expected.page || value.limit !== expected.limit || value.activities.length > value.limit) return null;
+  const activities: DatesActivityDisplayRow[] = [], unreadable_rows: DatesActivityUnreadableRow[] = [];
+  const ids = value.activities.map((row) => record(row) && id("act")(row.activity_id) ? row.activity_id : null);
+  for (const [index, item] of value.activities.entries()) {
+    const duplicate = ids[index] !== null && ids.filter((candidate) => candidate === ids[index]).length > 1;
+    if (!duplicate && activityRowGuard(item)) { activities.push(item); continue; }
+    const repaired = duplicate ? null : projectMemberActivity(item, false);
+    if (repaired && memberActivityGuard(repaired.row)) activities.push({ ...repaired.row, unreadable_fields: repaired.fields });
+    else unreadable_rows.push({ index, activity_id: ids[index] });
+  }
+  return { ...value, activities, unreadable_rows };
+}
+
 const activityDetailExtras = { details: nullable(((value: unknown): value is string => typeof value === "string")), photo: ((_: unknown): _ is unknown => true),
   timezone: nullable(text(1, 80)), auto_end_at: nullable(epoch), tbd_expires_at: nullable(epoch), audience: nullable(record),
   pending_public_revision: nullable(record), live_sharing_state: oneOf(["off", "on", "paused"] as const), purge_eligible_at: nullable(epoch) };
-const memberActivityDetailGuard = object({ ...activityShape, host: memberHost, ...activityDetailExtras });
+const memberActivityDetailGuard = object({ ...memberActivityShape, host: memberHost, ...activityDetailExtras });
 const externalActivityDetailGuard = object({ ...activityShape, ...externalActivityShape, ...activityDetailExtras });
 export type DatesActivityDetailRow = Parsed<typeof memberActivityDetailGuard> | Parsed<typeof externalActivityDetailGuard>;
+export type DatesActivityDisplayDetail = DatesActivityDetailRow & { unreadable_fields?: string[] };
+
+export function projectDatesActivityOriginDetail(response: unknown, activityId: string, caps: string[]):
+  { activity: DatesActivityDisplayDetail; external: DatesExternalDetailRow | null } | null {
+  const strict = decodeDatesActivityOriginDetail(response, activityId, caps);
+  if (strict) return strict;
+  if (!record(response) || response.success !== true || response.status_code !== 200 || response.status !== 200
+    || response.message !== 200 || response.can_send !== 0 || !epoch(response.server_now) || Object.hasOwn(response, "external_event")) return null;
+  const repaired = projectMemberActivity(response.activity, true);
+  return repaired && memberActivityDetailGuard(repaired.row) && repaired.row.activity_id === activityId
+    ? { activity: { ...repaired.row, unreadable_fields: repaired.fields }, external: null } : null;
+}
 
 /** Validate the changed origin boundary without trusting UID0 or mixed revisions. */
 export function decodeDatesActivityOriginDetail(response: unknown, activityId: string, caps: string[]):

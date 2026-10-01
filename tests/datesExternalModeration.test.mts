@@ -235,8 +235,15 @@ test("actual decision callback rejects stale case/content pairs and changed capa
     assert.equal(h.sent.length, 0); assert.equal(readDatesExternalResolution(h.store, actor).kind, "empty");
     assert.equal(h.writes.includes("ResolutionReason"), false);
     if (changed === "case" || changed === "event") assert.equal(h.state.ExternalNeedsReload, true);
-    else assert.equal(h.state.Feedback.text, "moderation.reviewRequired");
+    else assert.equal(h.state.Feedback.text, changed === "capability" ? "moderation.accessUnconfirmed" : "moderation.reviewRequired");
   }
+});
+test("an unconfirmed fresh access read never claims permission was denied or dispatches a decision", async () => {
+  const h = pageHarness(), first = h.execute(operation());
+  h.authorize(null, { success: false, status_code: 503 }); await first;
+  assert.equal(h.sent.length, 0); assert.equal(h.state.Feedback.text, "moderation.accessUnconfirmed");
+  assert.equal(h.writes.includes("ResolutionReason"), false); assert.equal(h.state.Busy, false);
+  assert.equal(readDatesExternalResolution(h.store, actor).kind, "empty");
 });
 test("actual decision retry replays the frozen pair after the authoritative case is already closed", async () => {
   const original = pageHarness(), first = original.execute(operation()); original.authorize(); await flush(); original.response.resolve(null); await first;

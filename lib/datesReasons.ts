@@ -55,6 +55,35 @@ export function datesAdminReasons(value: unknown, scope: string): DatesAdminReas
   return value.reasons;
 }
 
+export type DatesReasonDisplayRow = DatesAdminReason & { unreadable_fields?: string[] };
+export type DatesReasonUnreadableRow = { index: number; reason_id: string | null };
+
+/** Read-only display projection; command receipts and reason cohorts stay closed. */
+export function projectDatesAdminReasons(value: unknown, scope: string) {
+  if (scope !== "all" && !(DATES_REPORT_SCOPES as readonly string[]).includes(scope)) return null;
+  if (!envelope(value, ["catalog_version", "reasons"]) || value.catalog_version !== 1 || !Array.isArray(value.reasons)) return null;
+  const reasons: DatesReasonDisplayRow[] = [], unreadable_rows: DatesReasonUnreadableRow[] = [];
+  const ids = value.reasons.map((row) => record(row) && typeof row.reason_id === "string"
+    && /^reason_[a-z0-9_]{3,80}$/.test(row.reason_id) ? row.reason_id : null);
+  for (const [index, item] of value.reasons.entries()) {
+    const duplicate = ids[index] !== null && ids.filter((candidate) => candidate === ids[index]).length > 1;
+    if (!duplicate && reasonRow(item) && (scope === "all" || item.scope === scope)) { reasons.push(item); continue; }
+    if (record(item) && !duplicate) {
+      const row = { ...item }, fields: string[] = [];
+      for (const key of ["name_en", "name_hu"]) if (!text(row[key], 120)) { row[key] = ""; fields.push(key); }
+      for (const key of ["explanation_en", "explanation_hu"]) if (!nullableText(row[key], 500)) { row[key] = null; fields.push(key); }
+      // A sentinel exists only during validation, never in displayed/sent state.
+      const checked = { ...row, name_en: row.name_en || "_", name_hu: row.name_hu || "_" };
+      if (fields.length && reasonRow(checked) && (scope === "all" || checked.scope === scope)) {
+        reasons.push({ ...checked, name_en: row.name_en as string, name_hu: row.name_hu as string, unreadable_fields: fields });
+        continue;
+      }
+    }
+    unreadable_rows.push({ index, reason_id: ids[index] });
+  }
+  return { reasons, unreadable_rows };
+}
+
 /** A successful save must acknowledge the submitted identity, CAS and edits. */
 export function datesReasonSaveReceipt(value: unknown, submitted: Record<string, unknown>): DatesAdminReason | null {
   if (!envelope(value, ["reason", "revision", "audit_id", "idempotency_replayed"])

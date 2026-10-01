@@ -39,6 +39,7 @@
     "role": "Role",
     "email": "Email",
     "notAvailable": "Not available",
+    "unreadableField": "Unreadable field — authoritative identity and revision are not changed",
     "never": "Never",
     "you": "you"
   },
@@ -8016,6 +8017,7 @@
         "revisions": "Case revision {caseRevision} · event content revision {eventRevision}",
         "unavailable": "The event is no longer available. Retained case history and permitted evidence remain readable; event actions are unavailable.",
         "reviewRequired": "External-event review permission is required to read evidence or decide this case.",
+        "accessUnconfirmed": "Current access could not be confirmed. Refresh the case and try again; no decision was sent.",
         "factsUnavailable": "The event details could not be read at this case's content revision. Case history and a saved decision receipt can still be read or retried. New changes are blocked until you refresh and review matching case and event details.",
         "reloadRequired": "The decision was not confirmed against this case and content revision. Refresh the case and event details, review them again, and confirm a new decision. Your written reasons are retained.",
         "pendingTitle": "Unconfirmed external-event decision",

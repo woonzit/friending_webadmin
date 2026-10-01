@@ -25,9 +25,9 @@ import {
   type DatesAdminPrincipal,
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
-import { decodeDatesActivityOriginDetail, type DatesActivityDetailRow, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
+import { projectDatesActivityOriginDetail, type DatesActivityDisplayDetail, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
 
-type Activity = DatesActivityDetailRow;
+type Activity = DatesActivityDisplayDetail;
 
 type CaseRow = { case_id: string; queue: string; status: string; case_kind: string; severity: string; created_at: number };
 type Membership = { uid?: number; relationship?: string; live_access?: boolean; updated_at?: number };
@@ -122,13 +122,13 @@ export default function DatesActivityDetailPage() {
       return;
     }
     const nextPrincipal = datesAdminPrincipal(identity);
-    const origin = nextPrincipal ? decodeDatesActivityOriginDetail(response, activityId, nextPrincipal.capabilities) : null;
+    const origin = nextPrincipal ? projectDatesActivityOriginDetail(response, activityId, nextPrincipal.capabilities) : null;
     if (!origin || !response || !Array.isArray(response.notifications) || !nextPrincipal) {
       setPrincipal(null);
       setState("error");
       return;
     }
-    const next = response as unknown as ActivityDetail;
+    const next = { ...response, activity: origin.activity } as unknown as ActivityDetail;
     setData(next);
     setActivityTypes(datesActivityTypeAvailability(configuration));
     setDraft(draftFromActivity(next.activity));
@@ -259,6 +259,7 @@ export default function DatesActivityDetailPage() {
       <Link className="back-link" href="/dates">← {t("back")}</Link>
       <PageHeader eyebrow={t("eyebrow")} title={activity.title || activity.activity_id} subtitle={t("subtitle", { id: activity.activity_id, revision: activity.revision })} actions={<button className="button button-secondary" onClick={() => void load()} disabled={busy}>{common("refresh")}</button>} />
       <DatesAdminTabs />
+      {activity.unreadable_fields?.length ? <div className="alert alert-error page-alert" role="status">{common("unreadableField")} · {activity.unreadable_fields.join(", ")}</div> : null}
       {data.external_event && <section className="panel dates-external-fields"><span className="badge badge-demo">{external("badge")}</span>
         <p>{external("editor.activityRedirect")}</p><Link className="button button-primary" href={`/dates/external/${data.external_event.external_event_id}`}>{external("editor.detailTitle")}</Link></section>}
       {data.external_event && <DatesExternalProvenance event={data.external_event} />}

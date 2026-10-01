@@ -57,7 +57,8 @@ export function decodeDatesExternalPending(value: unknown, actor: string): Dates
     if (!datesExternalBaseline(row.baseline) || body.activity_id !== row.baseline.activity_id || body.expected_revision !== row.baseline.activity_revision) return null;
   } else if (!datesExternalBaseline(row.baseline) || body.external_event_id !== row.baseline.external_event_id
     || body.expected_revision !== row.baseline.revision || row.baseline.soft_deleted || row.baseline.lifecycle !== "active"
-    || !["published", "rechecking"].includes(row.baseline.status)) return null;
+    || !["published", "rechecking", "in_review"].includes(row.baseline.status)
+    || (row.baseline.status === "in_review" && row.action === "dates_external_event_command" && body.action === "official_update")) return null;
   return row as DatesExternalPending;
 }
 

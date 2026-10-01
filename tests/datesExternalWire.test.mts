@@ -9,6 +9,7 @@ import { datesCaseDetail, datesConsoleCommandReceipt, datesEvidenceRead, datesLe
 import { datesExternalResolutionReceipt, prepareDatesExternalResolution, runDatesExternalResolution } from "../lib/datesExternalModeration.ts";
 import { datesConfigurationRawValue, datesSettingEffectiveText, permittedResolutionActions } from "../lib/datesAdmin.ts";
 import { DATES_RUNTIME_HELP_GROUPS } from "../lib/datesRuntimeHelp.ts";
+import { prepareDatesExternalPending, readDatesExternalPending, runDatesExternalMutation } from "../lib/datesExternalMutations.ts";
 
 // Actual Router/Webadmin capture, byte-identical to Core 3ba2cda203ba4c8eee07951908da305fee923814.
 // The source/generator pin is intentionally independent of the vendored manifest.
@@ -212,6 +213,58 @@ for (const name of HELD_WRITES) test(`genuine held ${name} receipt binds current
   for (const change of [{ event_status: "published" }, { revision: baseline.revision }, { activity_revision: baseline.activity_revision },
     { external_event_id: "xev_" + "f".repeat(32) }])
     assert.equal(decodeDatesExternalReceipt({ ...body, ...change }, action, request, baseline), null, JSON.stringify(change));
+});
+for (const command of ["update", "reverify", "cancel"] as const) test(`genuine held ${command} runs the durable journal and identical lost-response replay`, async () => {
+  const before = fixture(`admin-held-${command === "update" ? "detail" : command === "reverify" ? "detail-updated" : "detail-reverified"}`);
+  assert.ok(decodeDatesExternalDetail(before, before.event.external_event_id));
+  const { external_event_id, activity_id, revision, activity_revision, status, lifecycle, soft_deleted } = before.event;
+  const baseline = { external_event_id, activity_id, revision, activity_revision, status, lifecycle, soft_deleted };
+  const actor = "held-journal@example.test", now = before.server_now;
+  const action = command === "update" ? "dates_external_event_update" : "dates_external_event_command";
+  const confirmations = { source: true, public_venue: true, timezone: true, content_safe: true };
+  const body = { external_event_id, expected_revision: revision, reason: "Confirmed held-event correction",
+    ...(command === "update" ? { event: { ...before.event.editor_input, confirmations } }
+      : { action: command, ...(command === "reverify" ? { confirmations } : {}) }) };
+  for (const lostResponse of [false, true]) {
+    const pending = prepareDatesExternalPending(actor, action, body, baseline, now);
+    assert.ok(pending, "a genuine editable held detail can prepare the complete command");
+    const values = new Map<string, string>();
+    const store = { getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => { values.set(key, value); }, removeItem: (key: string) => { values.delete(key); } };
+    const sends: string[] = [];
+    const first = await runDatesExternalMutation(pending, store, now, async (sentAction, sentBody) => {
+      assert.deepEqual(readDatesExternalPending(store, actor), { kind: "pending", pending }, "persisted before dispatch");
+      sends.push(JSON.stringify({ action: sentAction, body: sentBody }));
+      if (lostResponse) throw Error("lost response after Core committed");
+      return fixture(`admin-held-${command}`);
+    });
+    if (lostResponse) {
+      assert.equal(first.kind, "uncertain");
+      const recovered = readDatesExternalPending(store, actor); assert.equal(recovered.kind, "pending");
+      assert.ok(recovered.kind === "pending");
+      const replay = await runDatesExternalMutation(recovered.pending, store, now + 60, async (sentAction, sentBody) => {
+        sends.push(JSON.stringify({ action: sentAction, body: sentBody })); return fixture(`admin-held-${command}-replay`);
+      });
+      assert.equal(replay.kind, "success");
+      assert.ok(replay.kind === "success" && !replay.retained);
+      assert.equal(new Set(sends).size, 1, "reload keeps the original request bytes and identity");
+    } else {
+      assert.equal(first.kind, "success"); assert.ok(first.kind === "success" && !first.retained);
+    }
+    assert.deepEqual(readDatesExternalPending(store, actor), { kind: "empty" });
+  }
+  assert.equal(prepareDatesExternalPending(actor, action, { ...body, expected_revision: revision + 1 }, baseline, now), null);
+  for (const changed of [{ ...baseline, soft_deleted: true }, { ...baseline, lifecycle: "canceled" as const },
+    { ...baseline, status: "withdrawn" as const }])
+    assert.equal(prepareDatesExternalPending(actor, action, body, changed, now), null);
+});
+test("held withdraw can prepare without inventing a capture; held official updates remain read-only", () => {
+  const { external_event_id, activity_id, revision, activity_revision, status, lifecycle, soft_deleted } = fixture("admin-held-detail").event;
+  const baseline = { external_event_id, activity_id, revision, activity_revision, status, lifecycle, soft_deleted };
+  const body = { external_event_id, expected_revision: revision, reason: "Safety withdrawal" };
+  assert.ok(prepareDatesExternalPending("held-journal@example.test", "dates_external_event_command", { ...body, action: "withdraw" }, baseline, 1_790_000_000));
+  assert.equal(prepareDatesExternalPending("held-journal@example.test", "dates_external_event_command",
+    { ...body, action: "official_update", text: "Public official update" }, baseline, 1_790_000_000), null);
 });
 test("genuine held case offers explicit approval or safety decisions, never a stranding dismissal", () => {
   const body = fixture("admin-moderation-detail-claimed"), detail = datesCaseDetail(body, body.case.case_id)!;

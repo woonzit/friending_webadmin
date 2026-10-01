@@ -29,7 +29,7 @@ import {
   datesLiveRetentionUnset,
 } from "@/lib/datesRuntimeHelp";
 import { formatDate } from "@/lib/format";
-import { datesAdminReasons, datesReasonSaveReceipt, type DatesAdminReason as Reason } from "@/lib/datesReasons";
+import { projectDatesAdminReasons, datesReasonSaveReceipt, type DatesReasonDisplayRow as Reason, type DatesReasonUnreadableRow } from "@/lib/datesReasons";
 
 type Setting = {
   key: string;
@@ -70,6 +70,7 @@ export default function DatesConfigurationPage() {
   const [settings, setSettings] = useState<Setting[]>([]);
   const [activityTypes, setActivityTypes] = useState<ActivityType[]>([]);
   const [reasons, setReasons] = useState<Reason[]>([]);
+  const [unreadableReasons, setUnreadableReasons] = useState<DatesReasonUnreadableRow[]>([]);
   const [principal, setPrincipal] = useState<DatesAdminPrincipal | null>(null);
   const [scope, setScope] = useState("all");
   const [limitation, setLimitation] = useState("");
@@ -85,7 +86,7 @@ export default function DatesConfigurationPage() {
       adminCall("admin_me"),
     ]);
     const nextPrincipal = datesAdminPrincipal(identity);
-    const nextReasons = datesAdminReasons(reasonResponse, scope);
+    const nextReasons = projectDatesAdminReasons(reasonResponse, scope);
     if (!configuration?.success || !Array.isArray(configuration.settings) || !Array.isArray(configuration.activity_types) || !nextReasons || !nextPrincipal) {
       setPrincipal(null);
       setState("error");
@@ -95,7 +96,7 @@ export default function DatesConfigurationPage() {
       (setting) => datesRuntimeSettingVisible(setting?.key),
     ));
     setActivityTypes(configuration.activity_types as ActivityType[]);
-    setReasons(nextReasons);
+    setReasons(nextReasons.reasons); setUnreadableReasons(nextReasons.unreadable_rows);
     setLimitation(String(configuration.known_limitation || ""));
     setPrincipal(nextPrincipal);
     setState("ready");
@@ -143,7 +144,11 @@ export default function DatesConfigurationPage() {
         <div className="panel-header"><div><h2>{t("reasonsTitle")}</h2><p>{t("reasonsCopy")}</p></div><label className="field dates-scope-filter"><span>{t("scope")}</span><select value={scope} onChange={(event) => setScope(event.target.value)}>{["all", "user", "activity", "message", "review"].map((value) => <option key={value} value={value}>{value === "all" ? common("all") : t(`scopes.${value}`)}</option>)}</select></label></div>
         <div className="dates-card-list">
           {canManageReasons && <ReasonEditor reason={null} defaultScope={scope === "all" ? "activity" : scope} onSaved={async () => { success(t("reasonCreated")); await load(); }} onError={failure} onInlineError={clearFailure} />}
-          {reasons.map((reason) => <ReasonEditor key={`${reason.reason_id}-${reason.revision}`} reason={reason} defaultScope={reason.scope} canManage={canManageReasons} onSaved={async () => { success(t("reasonSaved")); await load(); }} onError={failure} onInlineError={clearFailure} />)}
+          {unreadableReasons.map((reason) => <div className="alert alert-error" key={`unreadable-${reason.index}`}>{common("unreadableField")} · {reason.reason_id ?? `#${reason.index + 1}`}</div>)}
+          {reasons.map((reason) => <div key={`${reason.reason_id}-${reason.revision}`}>
+            {reason.unreadable_fields?.length ? <p role="status">{common("unreadableField")} · {reason.unreadable_fields.join(", ")}</p> : null}
+            <ReasonEditor reason={reason} defaultScope={reason.scope} canManage={canManageReasons} onSaved={async () => { success(t("reasonSaved")); await load(); }} onError={failure} onInlineError={clearFailure} />
+          </div>)}
         </div>
       </section>
       {runtimeHelpOpen && <DatesRuntimeSettingsHelp settings={settings} onClose={() => setRuntimeHelpOpen(false)} />}

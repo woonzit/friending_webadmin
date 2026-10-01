@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
 import { datesReasonEntryPoints, datesReasonEntryPointsRefused, datesReportEntryPointsFor } from "../lib/datesAdmin.ts";
-import { datesAdminReasons, datesReasonSaveReceipt } from "../lib/datesReasons.ts";
+import { datesAdminReasons, datesReasonSaveReceipt, projectDatesAdminReasons } from "../lib/datesReasons.ts";
 
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/dates_external_admin_wire/admin-reason-${name}.json`, import.meta.url), "utf8"));
 const list = fixture("list-external");
@@ -128,13 +128,35 @@ test("production editor preserves Core's inline cohort refusals and rejects malf
   assert.deepEqual(viewer.errors, ["dates-admin-capability-required"]); assert.equal(viewer.saved(), 0);
 });
 
-test("the configuration read uses the closed reason decoder and both locales explain cohort immutability", () => {
-  assert.match(source, /datesAdminReasons\(reasonResponse, scope\)/);
-  assert.match(source, /setReasons\(nextReasons\)/);
+test("the configuration read isolates row diagnostics and both locales explain cohort immutability", () => {
+  assert.match(source, /projectDatesAdminReasons\(reasonResponse, scope\)/);
+  assert.match(source, /setReasons\(nextReasons\.reasons\)/);
+  assert.match(source, /setUnreadableReasons\(nextReasons\.unreadable_rows\)/);
   for (const locale of ["en", "hu"]) {
     const copy = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8")).datesAdmin.configuration;
     for (const key of ["entryPointsMixedExternal", "entryPointsCohort", "entryPointsRefused"])
       assert.ok(typeof copy[key] === "string" && copy[key].length > 30);
     assert.match(copy.entryPointsHint, /external_event/);
   }
+});
+
+test("a legacy or unreadable reason cannot hide the publishing settings or other reasons", () => {
+  const valid = projectDatesAdminReasons(list, "activity"); assert.ok(valid);
+  assert.deepEqual(valid, { reasons: list.reasons, unreadable_rows: [] });
+  const display = structuredClone(list); Object.assign(display.reasons[0], { name_en: null, explanation_hu: ["not displayed"] });
+  const projected = projectDatesAdminReasons(display, "activity"); assert.ok(projected);
+  assert.equal(projected.reasons.length, 14); assert.deepEqual(projected.unreadable_rows, []);
+  assert.equal(projected.reasons[0].reason_id, list.reasons[0].reason_id); assert.equal(projected.reasons[0].revision, list.reasons[0].revision);
+  assert.equal(projected.reasons[0].name_en, ""); assert.equal(projected.reasons[0].explanation_hu, null);
+  assert.deepEqual(projected.reasons[0].unreadable_fields, ["name_en", "explanation_hu"]);
+  for (const changed of [{ entry_points: [] }, { entry_points: ["legacy_entry"] }, { revision: "1" }, { reason_id: "invalid" },
+    { scope: "external_event" }, { severity: ["medium"] }]) {
+    const legacy = structuredClone(list); Object.assign(legacy.reasons[0], changed);
+    const page = projectDatesAdminReasons(legacy, "activity"); assert.ok(page);
+    assert.equal(page.reasons.length, 13); assert.equal(page.unreadable_rows.length, 1);
+    assert.equal(page.unreadable_rows[0].reason_id, changed.reason_id === "invalid" ? null : list.reasons[0].reason_id);
+    assert.equal(datesAdminReasons(legacy, "activity"), null, "the strict command/read witness is not weakened");
+  }
+  assert.equal(projectDatesAdminReasons({ ...list, success: false }, "activity"), null);
+  assert.equal(projectDatesAdminReasons({ ...list, reasons: null }, "activity"), null);
 });

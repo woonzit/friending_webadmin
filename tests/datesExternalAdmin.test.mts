@@ -6,6 +6,7 @@ import {
   decodeDatesExternalList, normalizeDatesExternalProxyBody,
   decodeDatesExternalReceipt, datesExternalRefusal, type DatesExternalMutationBaseline,
   decodeDatesActivityList, decodeDatesActivityOriginDetail,
+  projectDatesActivityList, projectDatesActivityOriginDetail,
 } from "../lib/datesExternalAdmin.ts";
 import { datesExternalTimeToInput, normalizeDatesExternalEditorInput, normalizeDatesExternalManualEvent } from "../lib/datesExternalInput.ts";
 import { isAdminActionAllowed } from "../lib/adminActions.ts";
@@ -76,12 +77,31 @@ test("every required list row key is checked and unknown keys do not become trus
   assert.equal(decodeDatesExternalList(value, { page: 1, limit: 40 }), null);
 });
 
+test("sport categories and a trailing non-ASCII organizer space are accepted without altering the DTO", () => {
+  // Synthetic counterfactuals; genuine additive member captures are Core-owned.
+  for (const category of ["sport_match", "sport_participation"]) {
+    const value: any = sample(), name = "Community sport\u00a0";
+    value.row.category = category; value.row.organizer_name = name;
+    value.detail.event.category = category; value.detail.event.organizer_name = name;
+    value.detail.event.facts.category = category; value.detail.event.editor_input.category = category;
+    value.detail.event.organizer.name = name; value.detail.event.editor_input.organizer.name = name;
+    assert.deepEqual(decodeDatesExternalList(value.list, { page: 1, limit: 40 }), value.list);
+    assert.deepEqual(decodeDatesExternalDetail(value.detail, externalId), value.detail);
+    assert.equal(decodeDatesExternalDetail(value.detail, externalId)?.event.organizer_name, name);
+    const activity = activitySample(); activity.activity.activity_type = "sport"; activity.activity.organizer_name = name;
+    activity.detail.activity.activity_type = "sport"; activity.detail.activity.organizer_name = name;
+    activity.detail.external_event = value.detail.event;
+    assert.ok(decodeDatesActivityList(activity.list, { page: 1, limit: 40 }));
+    assert.ok(decodeDatesActivityOriginDetail(activity.detail, activityId, caps));
+  }
+});
+
 test("list refuses envelope, pagination, duplicate, ordering and loosely typed success defects", () => {
   const mutations: Array<(v: any) => void> = [
     (v) => { v.status = "published"; }, (v) => { v.data = {}; }, (v) => { v.message = "200"; },
     (v) => { v.events[0].going_count = "0"; }, (v) => { v.events[0].interested_count = -1; },
     (v) => { v.events[0].can_edit = "true"; }, (v) => { v.events[0].start_at *= 1000; },
-    (v) => { v.events[0].start_local = "2026-11-10T18:00:00+02:00"; },
+    (v) => { v.events[0].start_local = "not-a-Core-local-timestamp"; },
     (v) => { v.events[0].credit_channel = "browser"; }, (v) => { v.capabilities = []; },
     (v) => { v.capabilities.push(v.capabilities[0]); }, (v) => { v.total = -1; },
     (v) => { v.events.push(v.events[0]); v.total = 2; }, (v) => { v.page = 2; },
@@ -93,6 +113,16 @@ test("list refuses envelope, pagination, duplicate, ordering and loosely typed s
   value.events.reverse(); assert.ok(decodeDatesExternalList(value, { page: 1, limit: 40 }));
   assert.ok(decodeDatesExternalList({ ...sample().list, total: 0 }, { page: 1, limit: 40 }), "separate count may observe a later purge");
   assert.ok(decodeDatesExternalList({ ...sample().list, events: [] }, { page: 1, limit: 40 }), "separate count may observe a later publication");
+});
+
+test("Core local strings remain authoritative when browser timezone rules disagree", () => {
+  const value = sample();
+  value.row.start_local = "2026-11-10T18:00:00+02:00";
+  value.row.end_local = "2026-11-10T21:00:00+02:00";
+  assert.deepEqual(decodeDatesExternalList(value.list, { page: 1, limit: 40 }), value.list);
+  Object.assign(value.detail.event, { start_local: value.row.start_local, end_local: value.row.end_local });
+  Object.assign(value.detail.event.facts, { start_local: value.row.start_local, end_local: value.row.end_local });
+  assert.deepEqual(decodeDatesExternalDetail(value.detail, externalId), value.detail);
 });
 
 test("support-viewer rows remain read-only; a forged edit flag fails closed", () => {
@@ -252,6 +282,42 @@ test("activity list discriminates real hostless external rows from unchanged mem
   assert.equal(decodeDatesActivityList(member, { page: 1, limit: 40 }), null);
 });
 
+test("member activity list and detail preserve Core-authored free text without weakening external DTOs", () => {
+  // Synthetic writer-shaped probes, not claimed as Router captures.
+  const memberId = "act_" + "f".repeat(32);
+  function memberSample() {
+    const value: any = activitySample();
+    for (const activity of [value.list.activities[0], value.detail.activity]) {
+      for (const key of ["origin", "external_event_id", "organizer_name", "organizer_url", "verification_tier", "ai_assisted", "can_host_transfer"]) delete activity[key];
+      activity.activity_id = memberId; activity.host = { uid: 12, display_name: "Member" }; activity.maximum_people = 4;
+    }
+    delete value.detail.external_event;
+    return value;
+  }
+  for (const changed of [{ title: "Evening\trun" }, { title: "Evening\nrun" }, { city: "New\tYork" },
+    { city: "New\nYork" }, { host: { uid: 12, display_name: "Member\nname" } },
+    { title: "A\u0001B" }, { host: { uid: 12, display_name: "M".repeat(201) } }, { title: "👨‍👩‍👧‍👦".repeat(120) }]) {
+    const value = memberSample();
+    Object.assign(value.list.activities[0], changed); Object.assign(value.detail.activity, changed);
+    assert.deepEqual(decodeDatesActivityList(value.list, { page: 1, limit: 40 }), value.list, JSON.stringify(changed));
+    assert.deepEqual(decodeDatesActivityOriginDetail(value.detail, memberId, caps), { activity: value.detail.activity, external: null });
+    value.list.activities.push(activitySample().activity); value.list.total = 2;
+    assert.ok(decodeDatesActivityList(value.list, { page: 1, limit: 40 }), "one legal member row must not strand a mixed page");
+  }
+  for (const changed of [{ title: "A".repeat(121) }, { city: "A".repeat(121) }, { title: ["bad"] },
+    { city: false }, { title: "\uD800" }, { host: { uid: 0, display_name: "Member" } },
+    { host: { uid: 12, display_name: null } }, { unknown: "field" }]) {
+    const value = memberSample(); Object.assign(value.list.activities[0], changed); Object.assign(value.detail.activity, changed);
+    assert.equal(decodeDatesActivityList(value.list, { page: 1, limit: 40 }), null);
+    assert.equal(decodeDatesActivityOriginDetail(value.detail, memberId, caps), null);
+  }
+  for (const changed of [{ title: "Evening\trun" }, { city: "New\nYork" }, { host: { uid: 12, display_name: "Member" } }]) {
+    const value = activitySample(); Object.assign(value.list.activities[0], changed); Object.assign(value.detail.activity, changed);
+    assert.equal(decodeDatesActivityList(value.list, { page: 1, limit: 40 }), null, "external text/host boundaries remain closed");
+    assert.equal(decodeDatesActivityOriginDetail(value.detail, activityId, caps), null);
+  }
+});
+
 test("activity detail binds ledger and activity identity, revision, facts and non-host controls", () => {
   assert.ok(decodeDatesActivityOriginDetail(activitySample().detail, activityId, caps));
   for (const mutate of [(value: any) => { value.external_event.activity_revision++; },
@@ -264,6 +330,36 @@ test("activity detail binds ledger and activity identity, revision, facts and no
   for (const capability of ["dates_activity_edit", "dates_activity_command", "dates_host_transfer"])
     assert.match(source, new RegExp(`!isExternal && hasDatesCapability\\(principal, "${capability}"\\)`));
   assert.equal((source.match(/data\.activity\.host === null/g) ?? []).length, 4, "handlers as well as visible controls reject hostless generic writes");
+});
+
+test("operator display isolates unreadable member fields while keeping genuine identity and CAS", () => {
+  const value: any = activitySample(), memberId = "act_" + "f".repeat(32);
+  for (const row of [value.list.activities[0], value.detail.activity]) {
+    for (const key of ["origin", "external_event_id", "organizer_name", "organizer_url", "verification_tier", "ai_assisted", "can_host_transfer"]) delete row[key];
+    row.activity_id = memberId; row.title = ["untrusted"]; row.city = { private: "not rendered" };
+    row.host = { uid: 12, display_name: null }; row.maximum_people = 4;
+  }
+  value.detail.activity.details = ["not text"]; delete value.detail.external_event;
+  value.list.activities.push(activitySample().activity); value.list.total = 2;
+  const page = projectDatesActivityList(value.list, { page: 1, limit: 40 }); assert.ok(page);
+  assert.equal(page.activities.length, 2); assert.deepEqual(page.unreadable_rows, []);
+  const member = page.activities[0]; assert.equal(member.activity_id, memberId); assert.equal(member.revision, 5);
+  assert.deepEqual(member.host, { uid: 12, display_name: "" }); assert.equal(member.title, ""); assert.equal(member.city, null);
+  assert.deepEqual(member.unreadable_fields, ["title", "city", "host.display_name"]);
+  const detail = projectDatesActivityOriginDetail(value.detail, memberId, caps); assert.ok(detail);
+  assert.equal(detail.activity.revision, 5); assert.equal(detail.external, null);
+  assert.deepEqual(detail.activity.unreadable_fields, ["title", "city", "host.display_name", "details"]);
+  assert.equal(detail.activity.details, null);
+  for (const changed of [{ revision: "5" }, { activity_id: "invalid" }, { origin: "member" }, { host: { uid: 0, display_name: "" } }]) {
+    const damaged = structuredClone(value); Object.assign(damaged.list.activities[0], changed); Object.assign(damaged.detail.activity, changed);
+    const isolated = projectDatesActivityList(damaged.list, { page: 1, limit: 40 }); assert.ok(isolated);
+    assert.equal(isolated.activities.length, 1); assert.equal(isolated.unreadable_rows.length, 1);
+    assert.equal(isolated.unreadable_rows[0].activity_id, changed.activity_id === "invalid" ? null : memberId);
+    assert.equal(projectDatesActivityOriginDetail(damaged.detail, memberId, caps), null, "no invented command-bound authority");
+  }
+  const external = activitySample(); external.list.activities[0].title = "Bad\ttitle";
+  assert.equal(projectDatesActivityList(external.list, { page: 1, limit: 40 })?.unreadable_rows.length, 1, "external DTO is never repaired");
+  assert.equal(projectDatesActivityList({ ...value.list, status_code: 403 }, { page: 1, limit: 40 }), null);
 });
 
 test("external activity-command receipts keep activity CAS separate from ledger revision", () => {

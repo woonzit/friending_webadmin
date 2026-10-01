@@ -364,7 +364,10 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       const body = retry?.body ?? operation!.payload;
       const access = await readDatesExternalResolutionAccess(adminCall, String(body.case_id));
       if (!readFence.accepts(ticket)) return;
-      if (!access || access.actor !== principal.email || (retry && retry.actor !== access.actor)) {
+      if (!access) {
+        setConfirmed(null); setFeedback({ tone: "error", text: external("moderation.accessUnconfirmed") }); return;
+      }
+      if (access.actor !== principal.email || (retry && retry.actor !== access.actor)) {
         setConfirmed(null); setFeedback({ tone: "error", text: external("moderation.reviewRequired") }); return;
       }
       const baseline = retry?.baseline ?? (externalEvent ? { external_event_id: externalEvent.external_event_id,

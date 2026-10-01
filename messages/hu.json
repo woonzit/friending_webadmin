@@ -39,6 +39,7 @@
     "role": "Szerepkör",
     "email": "E-mail",
     "notAvailable": "Nem elérhető",
+    "unreadableField": "Nem olvasható mező — a hiteles azonosító és verzió nem változik",
     "never": "Soha",
     "you": "te"
   },
@@ -8016,6 +8017,7 @@
         "revisions": "Ügyrevízió: {caseRevision} · eseménytartalom-revízió: {eventRevision}",
         "unavailable": "Az esemény már nem érhető el. A megőrzött ügytörténet és az engedélyezett bizonyítékok továbbra is olvashatók; eseményművelet nem végezhető.",
         "reviewRequired": "A bizonyítékok olvasásához és a döntéshez külsőesemény-ellenőrzési jogosultság szükséges.",
+        "accessUnconfirmed": "Az aktuális hozzáférést nem sikerült ellenőrizni. Frissítsd az ügyet, majd próbáld újra; nem küldtünk döntést.",
         "factsUnavailable": "Az esemény részletei nem olvashatók az ügyhöz tartozó tartalomrevízión. Az ügytörténet továbbra is olvasható, a mentett döntés visszaigazolása újrakérhető. Új változtatás csak az egyező ügy- és eseményadatok frissítése és ellenőrzése után indítható.",
         "reloadRequired": "A döntés nem nyert megerősítést ehhez az ügy- és tartalomrevízióhoz. Frissítsd az ügyet és az esemény adatait, ellenőrizd őket újra, majd erősíts meg egy új döntést. A leírt indokok megmaradnak.",
         "pendingTitle": "Meg nem erősített külsőesemény-döntés",
@@ -8640,14 +8642,14 @@
         "settings": {
           "dates_external_events_enabled": {
             "title": "Külső események",
-            "purpose": "A külső események AreYouIn-en belüli elérhetőségét vezérli; a tárolt alapérték ON.",
+            "purpose": "A külső események AreYouIn-en belüli elérhetőségét vezérli; a tárolt alapérték BE.",
             "effect": "Az effektív engedélyhez az AreYouIn szekciónak is elérhetőnek kell lennie a tag storefrontján, és kompatibilis klienskérés szükséges. A Core globális és storefrontonkénti eredményt ad vissza.",
             "caution": "Ez nem az AreYouIn szekció kapcsolója, és nem engedélyezi a régi klienseket. A kikapcsolás megőrzi az eseményrekordokat."
           },
           "dates_external_events_enabled_overrides": {
             "title": "Külső események storefrontonként",
             "purpose": "Nagybetűs, hárombetűs storefront-kódonként felülírja a külső események kapcsolóját.",
-            "effect": "A hiányzó kód a külső események globális kapcsolóját örökli; üres térkép minden felülírást eltávolít. A true érték sem írhatja felül a kikapcsolt AreYouIn szekciót.",
+            "effect": "A hiányzó kód a külső események globális kapcsolóját örökli; üres objektum minden felülírást eltávolít. A true érték sem írhatja felül a kikapcsolt AreYouIn szekciót.",
             "caution": "Az értékek JSON-logikai értékek legyenek, ne szövegek. Az effektív eredményt a külső események kapcsolójának sorában ellenőrizd; a tárolt felülírás önmagában nem bizonyítja az elérhetőséget."
           },
           "dates_external_publishing_enabled": {
