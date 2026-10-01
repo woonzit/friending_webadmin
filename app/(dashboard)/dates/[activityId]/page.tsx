@@ -140,7 +140,7 @@ export default function DatesActivityDetailPage() {
 
   async function saveActivity(event: React.FormEvent) {
     event.preventDefault();
-    if (!data || data.activity.host === null || !draft || busy) return;
+    if (!data || data.activity.host === null || data.activity.unreadable_fields?.length || !draft || busy) return;
     setFeedback(null);
     if (!datesActivityTypeChoices(activityTypes, data.activity.activity_type).includes(draft.activityType)) {
       setFeedback({ tone: "error", text: t("typeUnavailable") });
@@ -249,7 +249,7 @@ export default function DatesActivityDetailPage() {
 
   const activity = data.activity;
   const isExternal = activity.host === null;
-  const canEdit = !isExternal && hasDatesCapability(principal, "dates_activity_edit");
+  const canEdit = !isExternal && !activity.unreadable_fields?.length && hasDatesCapability(principal, "dates_activity_edit");
   const canCommand = !isExternal && hasDatesCapability(principal, "dates_activity_command");
   const canTransfer = !isExternal && hasDatesCapability(principal, "dates_host_transfer");
   const canLocation = !isExternal && principal.sensitive_location && hasDatesCapability(principal, "dates_evidence_read");

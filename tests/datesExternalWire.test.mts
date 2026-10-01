@@ -11,14 +11,14 @@ import { datesConfigurationRawValue, datesSettingEffectiveText, permittedResolut
 import { DATES_RUNTIME_HELP_GROUPS } from "../lib/datesRuntimeHelp.ts";
 import { prepareDatesExternalPending, readDatesExternalPending, runDatesExternalMutation } from "../lib/datesExternalMutations.ts";
 
-// Actual Router/Webadmin capture, byte-identical to Core 3ba2cda203ba4c8eee07951908da305fee923814.
+// FINAL E1 actual Router/Webadmin capture, byte-identical to Core 51140a6f2b995207af2e8140bf5d7d1e2323293c.
 // The source/generator pin is intentionally independent of the vendored manifest.
 const DIRECTORY = new URL("./fixtures/dates_external_admin_wire/", import.meta.url);
-const SOURCE = "242fd5dece73bc123e891a929f3a6f5186ff9de0";
-const SOURCE_SHA = "042a37e22dc6e6a3b01baf939a959e6ced4d993418a98042d53070fe088b9d43";
-const MANIFEST_SHA = "bbe2623b6ab13be3c8754d3018c91e05e6c9a76045fca20097f48e4817db244e";
-const GENERATOR_SHA = "98b9ff0cbffcb40c5807cfee0caf5931049734223228c6c09331f99820fbff6c";
-const SET_SHA = "3e0919c1af4a4256b2fd523a6d314d30683198c0a317e51fdef63c32b4849de5";
+const SOURCE = "c94d144691b93c3aea3dd180def345c4d03a4e55";
+const SOURCE_SHA = "690ab9c5da0d6fb0133398c41988ab5166faec487c15ccbd267d0781b069e3b0";
+const MANIFEST_SHA = "41bd137bb1bd37b1115f9f9dae201f43b5b6b10fb54159d796d36868a61246a9";
+const GENERATOR_SHA = "51e746e0946ddac4319b56cdff0adcc7107a320ed08e1ca1a1f70fa7d90fbf3d";
+const SET_SHA = "d84a3e162703db1578db59f0a0a972de24fffc8562f23a13bf5715101306e4ed";
 const LISTS = ["admin", "canceled", "empty", "filter-empty", "page-empty", "viewer"];
 const DETAILS = ["admin", "canceled", "estimated", "viewer"];
 const PLACES = ["available", "empty", "rate-limited", "unavailable"];
@@ -39,7 +39,7 @@ const HELD_DETAILS = ["detail", "detail-updated", "detail-reverified", "detail-c
 const HELD_WRITES = ["update", "update-replay", "reverify", "reverify-replay", "cancel", "cancel-replay"];
 const CHAT_REVIEW = ["queue", "detail", "evidence", "claim", "claim-replay", "claimed", "stale-denied", "resolve", "resolve-replay", "resolved"];
 
-test("external console corpus is the complete 128-response genuine capture with independent provenance pins", () => {
+test("external console corpus is the complete 138-response FINAL genuine capture with independent provenance pins", () => {
   const manifest = fixture("manifest");
   assert.equal(hash(readFileSync(new URL("manifest.json", DIRECTORY))), MANIFEST_SHA);
   assert.equal(manifest.schema_version, 1);
@@ -48,7 +48,8 @@ test("external console corpus is the complete 128-response genuine capture with 
   assert.equal(manifest.source_checksum, SOURCE_SHA);
   assert.equal(manifest.provenance.generator, "tests/dates_external_admin_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
-  assert.equal(manifest.fixture_count, 128);
+  assert.equal(manifest.fixture_count, 138);
+  assert.equal(manifest.provenance.source_paths.length, 313);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   const names = ["admin-activity-list-external.json", ...LISTS.map((name) => `admin-list-${name}.json`),
     ...DETAILS.map((name) => `admin-detail-${name}.json`), ...PLACES.map((name) => `admin-places-${name}.json`),
@@ -62,7 +63,8 @@ test("external console corpus is the complete 128-response genuine capture with 
     ...["cohort", "member-cohort", "mixed", "save-viewer"].map((name) => `admin-reason-${name}-denied.json`),
     ...["list", ...HELD_DETAILS, ...HELD_WRITES].map((name) => `admin-held-${name}.json`),
     ...["approve", "reject"].flatMap((action) => CHAT_REVIEW.map((name) => `admin-chat-${action}-${name}.json`)),
-    "admin-chat-withdrawn-unavailable.json"].sort();
+    "admin-chat-withdrawn-unavailable.json",
+    ...["match", "participation", "paid", "sensitive", "pacific"].flatMap((name) => ["list", "detail"].map((action) => `admin-variety-${name}-${action}.json`))].sort();
   assert.deepEqual(manifest.fixtures.map((entry: { file: string }) => entry.file), names);
   assert.deepEqual(readdirSync(DIRECTORY).sort(), ["manifest.json", ...names].sort());
   const lines = manifest.fixtures.map((entry: { file: string; sha256: string; consumer: string; http_status: number; status_code: number }) => {
@@ -74,7 +76,7 @@ test("external console corpus is the complete 128-response genuine capture with 
     return `${entry.file}\0${entry.sha256}`;
   });
   assert.equal(hash(lines.join("\n")), SET_SHA);
-  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 84);
+  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 94);
   assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code !== 200).length, 44);
 });
 

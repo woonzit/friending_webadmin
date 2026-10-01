@@ -8173,10 +8173,10 @@
           "reason": "Enter an audit reason of at least 3 characters."
         },
         "categories": {
-          "sport_match": "Sports match", "sport_participation": "Participatory sport", "concert": "Concert",
+          "sport_match": "Sports match", "sport_participation": "Sports activity", "concert": "Concert",
           "club_night": "Club night", "festival": "Festival", "theatre": "Theatre", "cinema": "Cinema",
           "exhibition": "Exhibition", "talk": "Talk", "workshop": "Workshop", "market": "Market",
-          "food_drink": "Food and drink", "community": "Community", "outdoor": "Outdoors", "other": "Other"
+          "food_drink": "Food and drink", "community": "Community", "outdoor": "Outdoors", "other": "Other event"
         }
       }
     },

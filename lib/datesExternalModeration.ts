@@ -68,11 +68,14 @@ export function prepareDatesExternalResolution(actor: string, body: Record<strin
 export async function readDatesExternalResolutionAccess(send: Send, caseId: string) {
   try {
     const [identity, body] = await Promise.all([send("admin_me", {}), send("dates_moderation_detail", { case_id: caseId })]);
-    const principal = datesAdminPrincipal(identity), detail = datesCaseDetail(body, caseId);
-    if (!principal || !actorValid(principal.email) || !datesExternalResolutionAuthorized(identity) || !detail || detail.case.target_type !== "external_event"
-      || !record(body) || !positive(body.server_now) || body.server_now > 4_102_444_800) return null;
-    return { actor: principal.email, principal, item: detail.case, serverNow: body.server_now };
-  } catch { return null; }
+    const principal = datesAdminPrincipal(identity);
+    if (!principal || !actorValid(principal.email)) return { kind: "unconfirmed" as const };
+    if (!datesExternalResolutionAuthorized(identity)) return { kind: "denied" as const };
+    const detail = datesCaseDetail(body, caseId);
+    if (!detail || detail.case.target_type !== "external_event"
+      || !record(body) || !positive(body.server_now) || body.server_now > 4_102_444_800) return { kind: "unconfirmed" as const };
+    return { kind: "authorized" as const, actor: principal.email, principal, item: detail.case, serverNow: body.server_now };
+  } catch { return { kind: "unconfirmed" as const }; }
 }
 function targetState(v: unknown): v is Record<string, unknown> {
   return keys(v, ["event_status", "revision", "activity_revision", "lifecycle", "moderation_state", "soft_deleted"])

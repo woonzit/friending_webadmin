@@ -127,6 +127,13 @@ test("production editor preserves Core's inline cohort refusals and rejects malf
   const viewer = harness(fixture("save-viewer-denied")); await viewer.save();
   assert.deepEqual(viewer.errors, ["dates-admin-capability-required"]); assert.equal(viewer.saved(), 0);
 });
+test("display-only reason repairs cannot be written back as cleared fields", async () => {
+  for (const field of ["name_en", "name_hu", "explanation_en", "explanation_hu"]) {
+    const h = harness(receipt, { reason: { ...external, unreadable_fields: [field] } });
+    await h.save(); assert.equal(h.calls.length, 0); assert.equal(h.saved(), 0);
+  }
+  assert.match(source, /canManage=\{canManageReasons && !reason\.unreadable_fields\?\.length\}/);
+});
 
 test("the configuration read isolates row diagnostics and both locales explain cohort immutability", () => {
   assert.match(source, /projectDatesAdminReasons\(reasonResponse, scope\)/);

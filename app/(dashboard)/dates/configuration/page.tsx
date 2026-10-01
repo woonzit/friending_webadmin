@@ -147,7 +147,7 @@ export default function DatesConfigurationPage() {
           {unreadableReasons.map((reason) => <div className="alert alert-error" key={`unreadable-${reason.index}`}>{common("unreadableField")} · {reason.reason_id ?? `#${reason.index + 1}`}</div>)}
           {reasons.map((reason) => <div key={`${reason.reason_id}-${reason.revision}`}>
             {reason.unreadable_fields?.length ? <p role="status">{common("unreadableField")} · {reason.unreadable_fields.join(", ")}</p> : null}
-            <ReasonEditor reason={reason} defaultScope={reason.scope} canManage={canManageReasons} onSaved={async () => { success(t("reasonSaved")); await load(); }} onError={failure} onInlineError={clearFailure} />
+            <ReasonEditor reason={reason} defaultScope={reason.scope} canManage={canManageReasons && !reason.unreadable_fields?.length} onSaved={async () => { success(t("reasonSaved")); await load(); }} onError={failure} onInlineError={clearFailure} />
           </div>)}
         </div>
       </section>
@@ -259,7 +259,7 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
-    if (!canManage || auditReason.trim().length < 3 || busy) return;
+    if (!canManage || reason?.unreadable_fields?.length || auditReason.trim().length < 3 || busy) return;
     const parsedEntryPoints = datesReasonEntryPoints(scope, entryPoints, reason?.entry_points);
     if (!parsedEntryPoints.ok) {
       showEntryPointsError(parsedEntryPoints.error === "empty"

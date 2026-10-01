@@ -327,8 +327,10 @@ test("activity detail binds ledger and activity identity, revision, facts and no
     const value = activitySample().detail; mutate(value); assert.equal(decodeDatesActivityOriginDetail(value, activityId, caps), null);
   }
   const source = readFileSync(new URL("../app/(dashboard)/dates/[activityId]/page.tsx", import.meta.url), "utf8");
-  for (const capability of ["dates_activity_edit", "dates_activity_command", "dates_host_transfer"])
+  for (const capability of ["dates_activity_command", "dates_host_transfer"])
     assert.match(source, new RegExp(`!isExternal && hasDatesCapability\\(principal, "${capability}"\\)`));
+  assert.match(source, /!isExternal && !activity\.unreadable_fields\?\.length && hasDatesCapability\(principal, "dates_activity_edit"\)/);
+  assert.match(source, /if \(!data \|\| data\.activity\.host === null \|\| data\.activity\.unreadable_fields\?\.length \|\| !draft \|\| busy\) return;/);
   assert.equal((source.match(/data\.activity\.host === null/g) ?? []).length, 4, "handlers as well as visible controls reject hostless generic writes");
 });
 

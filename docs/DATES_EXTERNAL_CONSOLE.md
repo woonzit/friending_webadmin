@@ -17,11 +17,16 @@ can still replay after the switch is turned off. Safety/lifecycle commands remai
 available according to their own capabilities and state rules.
 
 The incremental console capture in `tests/fixtures/dates_external_admin_wire`
-comes byte-for-byte from Core `3ba2cda203ba4c8eee07951908da305fee923814`.
-Its manifest names generator/source `242fd5dece73bc123e891a929f3a6f5186ff9de0`.
+comes byte-for-byte from FINAL E1 Core `51140a6f2b995207af2e8140bf5d7d1e2323293c`.
+Its manifest names generator/source `c94d144691b93c3aea3dd180def345c4d03a4e55`.
 `tests/datesExternalWire.test.mts` independently pins its manifest, generator,
-source checksum, complete 128-file inventory and every response byte hash:
-84 successful responses and 44 refusals. The most recent 21 additions leave all
+source checksum, complete 138-file inventory and every response byte hash:
+94 successful responses and 44 refusals. The newest ten real list/detail bodies
+cover sports match/participation, paid ticket and age18 Admin facts, sensitive
+count-only attendance and America/Los_Angeles venue-local strings. All preceding
+128 bodies remain byte-identical. Production editor round-trip and both-locale
+controlled SSR probes exercise these genuine bodies; they are not browser mounts.
+The earlier 21 additions left all
 107 preceding bodies byte-identical. They are captured from actual member sends
 through automatic prepublication cases, audited operator evidence/claim/decision
 routes, current-state retries and author withdrawal. Both consumer corpora use
@@ -29,8 +34,8 @@ that same routed scenario; no held message or prepublication case is fabricated.
 The original 43 editor bodies are unchanged; the next 45 additions cover hostless
 moderation, existing activity-detail/lifecycle adapters and settings. They use
 actual routed responses, audits and completed receipts; case/report intake is
-synthetic setup, not proof of member intake. This incremental capture is **not
-the final P1 release pin**; final provider repinning remains required. Seven more
+synthetic setup, not proof of member intake. This is the **FINAL E1 provider
+pin**, frozen for coordinated client adoption. Seven more
 actual routed bodies cover the external reason catalogue, a seeded copy-only
 save and replay, mixed/cohort refusals and a viewer capability refusal. The final
 twelve preceding additions capture report-held list/detail, non-approving corrections and
@@ -47,6 +52,15 @@ IDs. No released IDs are renamed. The virtual `reason_activity_external_other`
 fallback is not a stored editable row. The console validates the full catalogue
 and binds successful save receipts to the submitted identity, revision and
 fields; malformed/unknown replies never become a successful or empty catalogue.
+The operator display isolates damaged reason rows instead of suppressing runtime
+settings and publication controls. Only presentation copy can be shown as an
+explicit unreadable field. Invalid reason identity, revision or cohort receives
+a diagnostic with no editor; none is invented or repaired. Save receipts remain
+strict and bound to the original identity/CAS and submitted edits.
+Rows with unreadable presentation fields are read-only: their display substitutes
+must never seed a whole-row save that clears stored copy. Fresh moderation access
+distinguishes confirmed capability loss from failed/undecodable reads; neither
+dispatches a decision or discards written reasons or a pending receipt journal.
 
 ## Served actions and authority
 
@@ -68,7 +82,14 @@ encoding and HTTP-200 legacy logical-status envelope are unchanged.
 List/detail decoders reject partial, loose, contradictory or unknown successful
 shapes. An invalid response is an error, not an empty list. List and count are
 separate Core reads, so count skew under concurrent changes is accepted without
-inventing snapshot consistency. Source URLs are navigation links, not permission
+inventing snapshot consistency. Existing member rows permit Core's grapheme-
+bounded free text (including interior tabs/newlines); only damaged presentation
+fields are marked unreadable. Bad identity, host UID, CAS or origin is a
+diagnostic row with no mutation controls, and a detail link exists only for a
+valid activity ID. Other rows remain visible. External DTOs and every command
+receipt retain strict decoding. Core's venue-local read strings are authoritative;
+the decoder does not reinterpret them through a possibly different browser
+timezone database. Source URLs are navigation links, not permission
 to fetch arbitrary URLs. Private evidence is never part of the safe event DTO.
 
 ## Facts and publication
@@ -146,6 +167,10 @@ metadata and the read-only thread; they do not approve publication. The editor
 explains this distinction in both languages and disables official thread updates
 while held. Cancellation, withdrawal and end remain safety actions. Unknown or
 contradictory `can_edit` projections still fail the closed decoder.
+Durable `in_review` journals use the same exact actor/key/CAS recovery as other
+editable states; official updates stay refused while held. A failed fresh
+capability read reports unconfirmed access and sends no decision, rather than
+asserting a permission denial that Core did not return.
 
 The implemented moderation-A contract requires `target_type:external_event`,
 `target_id:xev_*`, linked `activity_id:act_*`, non-member `target_uid:0`, separate
@@ -188,6 +213,13 @@ overrides, independent publication enablement, daily/per-event invite limits and
 event lookahead. They use Core's existing audited CAS configuration path. The
 three integer inputs preserve their raw strings for Core's strict parser. A
 storefront map is JSON, never `[object Object]` or an accidental numeric control.
+Availability's stored default is BE/ON; the independent publication rollout
+default is KI/OFF. The full EN/HU category vocabulary follows the canonical
+member-app labels, including Sports activity / Sportprogram and Other event /
+Egyéb esemény. The closed App Review v4 expected external totals are 3 activities,
+4 memberships, 3 threads, 5 thread members, 2 messages and 1 notification.
+The protected fixture's operator-control distinction is follow-up T-880, not a
+new P1 control or additional status key.
 App Review's released 34-check/23-count closed keyset is unchanged at the initial
 provider pin; no guessed keys or production fixture reset are introduced.
 

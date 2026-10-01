@@ -112,8 +112,8 @@ test("unknown resolution is saved before dispatch and retries the exact immutabl
 test("fresh authorization is required even when a closed case can replay an old receipt", async () => {
   const body = sample(); Object.assign(body.case, { status: "actioned", allowed_actions: [], capabilities: { ...body.case.capabilities, can_resolve: false } });
   const send = async (action: string) => action === "admin_me" ? { success: true, dates: principal } : body;
-  assert.ok(await readDatesExternalResolutionAccess(send, body.case.case_id));
-  assert.equal(await readDatesExternalResolutionAccess(async (action) => action === "admin_me" ? { success: true, dates: { ...principal, capabilities: ["dates_case_resolve"] } } : body, body.case.case_id), null);
+  assert.equal((await readDatesExternalResolutionAccess(send, body.case.case_id)).kind, "authorized");
+  assert.deepEqual(await readDatesExternalResolutionAccess(async (action) => action === "admin_me" ? { success: true, dates: { ...principal, capabilities: ["dates_case_resolve"] } } : body, body.case.case_id), { kind: "denied" });
 });
 test("auth/transport/key conflict retain resolution identity; known content/case conflicts release only this identity", async () => {
   for (const [error, status, expected] of [["dates-admin-capability-required", 403, "uncertain"], ["dates-admin-idempotency-conflict", 409, "uncertain"],
@@ -235,7 +235,7 @@ test("actual decision callback rejects stale case/content pairs and changed capa
     assert.equal(h.sent.length, 0); assert.equal(readDatesExternalResolution(h.store, actor).kind, "empty");
     assert.equal(h.writes.includes("ResolutionReason"), false);
     if (changed === "case" || changed === "event") assert.equal(h.state.ExternalNeedsReload, true);
-    else assert.equal(h.state.Feedback.text, changed === "capability" ? "moderation.accessUnconfirmed" : "moderation.reviewRequired");
+    else assert.equal(h.state.Feedback.text, "moderation.reviewRequired");
   }
 });
 test("an unconfirmed fresh access read never claims permission was denied or dispatches a decision", async () => {
@@ -244,6 +244,17 @@ test("an unconfirmed fresh access read never claims permission was denied or dis
   assert.equal(h.sent.length, 0); assert.equal(h.state.Feedback.text, "moderation.accessUnconfirmed");
   assert.equal(h.writes.includes("ResolutionReason"), false); assert.equal(h.state.Busy, false);
   assert.equal(readDatesExternalResolution(h.store, actor).kind, "empty");
+});
+test("fresh access distinguishes confirmed capability loss from failed or undecodable reads", async () => {
+  const detail = sample(), identity = { success: true, dates: principal };
+  for (const [me, body] of [[null, detail], [{ success: false, status_code: 503 }, detail], [identity, null], [identity, { success: true }]]) {
+    assert.deepEqual(await readDatesExternalResolutionAccess(async (action) => action === "admin_me" ? me : body, detail.case.case_id), { kind: "unconfirmed" });
+  }
+  assert.deepEqual(await readDatesExternalResolutionAccess(async () => { throw new Error("network"); }, detail.case.case_id), { kind: "unconfirmed" });
+  for (const capabilities of [[], ["dates_case_resolve"], ["dates_external_event_review"]]) {
+    assert.deepEqual(await readDatesExternalResolutionAccess(async (action) => action === "admin_me"
+      ? { success: true, dates: { ...principal, capabilities } } : detail, detail.case.case_id), { kind: "denied" });
+  }
 });
 test("actual decision retry replays the frozen pair after the authoritative case is already closed", async () => {
   const original = pageHarness(), first = original.execute(operation()); original.authorize(); await flush(); original.response.resolve(null); await first;

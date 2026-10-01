@@ -39,7 +39,7 @@
     "role": "Szerepkör",
     "email": "E-mail",
     "notAvailable": "Nem elérhető",
-    "unreadableField": "Nem olvasható mező — a hiteles azonosító és verzió nem változik",
+    "unreadableField": "Nem olvasható mező — a hiteles azonosító és revízió nem változik",
     "never": "Soha",
     "you": "te"
   },
@@ -8173,10 +8173,10 @@
           "reason": "Adj meg legalább 3 karakteres audit indoklást."
         },
         "categories": {
-          "sport_match": "Sportmérkőzés", "sport_participation": "Közös sportolás", "concert": "Koncert",
+          "sport_match": "Sportmérkőzés", "sport_participation": "Sportprogram", "concert": "Koncert",
           "club_night": "Klubest", "festival": "Fesztivál", "theatre": "Színház", "cinema": "Mozi",
-          "exhibition": "Kiállítás", "talk": "Előadás", "workshop": "Workshop", "market": "Piac",
-          "food_drink": "Étel és ital", "community": "Közösségi esemény", "outdoor": "Szabadtéri program", "other": "Egyéb"
+          "exhibition": "Kiállítás", "talk": "Előadás", "workshop": "Műhelyfoglalkozás", "market": "Piac",
+          "food_drink": "Étel és ital", "community": "Közösségi program", "outdoor": "Szabadtéri program", "other": "Egyéb esemény"
         }
       }
     },
