@@ -193,6 +193,25 @@ test("create forwards a link or a line of text as a form call with the server's 
   assert.equal(link.state.calls[1].files, undefined);
 });
 
+test("the create route hands the browser the receipt's named fields, and Core's refusal as its six keys - never the raw body", async () => {
+  const receipt = fixture("admin-create-url-existing");
+  const wider = harness({ ...receipt, input_fingerprint: "UNNAMED-VALUE", intake: { ...receipt.intake, submitter_uid: 0, open_claim: "UNNAMED-VALUE" } });
+  const reply = await serveDatesIntakeCreate(multipart({ kind: "url", url: "https://akvariumklub.hu/programok/acidarab/", locale: "en", idempotency_key: KEY }), wider.deps);
+  assert.equal(reply.status, 200);
+  assert.deepEqual("json" in reply && reply.json, receipt);
+  assert.doesNotMatch(JSON.stringify(reply), /UNNAMED-VALUE|fingerprint|open_claim|submitter_uid/);
+  // The marker and the binding fields are all there: the page lands on the existing draft as before.
+  assert.deepEqual("json" in reply && (reply.json as any).existing, true);
+  const refusal = fixture("admin-create-drafts-disabled-denied");
+  const refused = harness({ ...refusal, debug: { trace: "UNNAMED-VALUE" } });
+  refused.state.answer = { status: refusal.status_code, data: { ...refusal, debug: { trace: "UNNAMED-VALUE" } } };
+  const answer = await serveDatesIntakeCreate(multipart({ kind: "text", text: "A line", locale: "hu", idempotency_key: KEY }), refused.deps);
+  assert.equal(answer.status, refusal.status_code); assert.deepEqual("json" in answer && answer.json, refusal);
+  const source = readFileSync(new URL("../lib/datesIntakeBridge.ts", import.meta.url), "utf8");
+  assert.equal((source.match(/json: projectDatesAdminResponse\("dates_event_intake_create", result\.data\)/g) ?? []).length, 2, "the receipt and the refusal");
+  assert.doesNotMatch(source, /json: result\.data/);
+});
+
 test("create forwards one or two flyers as image_1 / image_2, unchanged, after the size and type check", async () => {
   const h = harness(fixture("admin-create-images-with-text"));
   const reply = await serveDatesIntakeCreate(multipart({ kind: "images", text: "Városligeti programok novemberben", locale: "hu", idempotency_key: KEY,

@@ -88,6 +88,67 @@ rule; the provider is the Core lane's contract `dates-event-intake-admin-v1`.
   outside what it decodes with or without the selector.
 - Publishing a draft also needs the P1 switch `dates_external_publishing_enabled`.
 
+### What leaves the server: named fields only (lead's ruling on D-143)
+
+Tolerating a key is not the same as passing it on. The browser never receives
+a raw Core body of a Dates Admin route: the bridge (`app/api/admin/[action]`
+and the intake create route) hands it the body's **projection** - the fields
+this console names (`DATES_ADMIN_NAMED` in `lib/datesAdminProjection.ts`, one
+tree per route) - and nothing else. A refusal is Core's six refusal keys.
+
+- **A key the console does not name is dropped**, silently: that is every
+  additive change of Core until the console names the key. It is not in the
+  response, so it cannot be rendered or read from the browser's memory.
+- **A key on the deny-list is dropped and reported.** The list below is a
+  maintained contract: a key Core must never send to this surface. When one
+  arrives, the page is NOT failed; the key never reaches the browser; and the
+  server writes one warning per response and key -
+  `webadmin.dates_denied_key route=<route> family=<family> key=<path> count=<n>` -
+  with the key's name and never its value, so that a leak in Core's projection
+  is noticed instead of hidden. To add a key: put it in
+  `DATES_ADMIN_DENIED_KEYS` and in this table (a test compares the two).
+- **The value rules stay in the decoders**: a reporter that is not redacted, a
+  note on a conflicted case, a decision of another case, a sensitive location
+  without the scope are refused as before.
+
+| Route (body family) | A key Core must never send here | Why |
+|---|---|---|
+| `dates_moderation_queue` (moderation-queue) | `cases[].internal_notes`, `cases[].text`, `cases[].message_text`, `cases[].snapshot`, `cases[].target_content_hash`, `cases[].reporter_uid`, `cases[].reporter_uids`, `cases[].external_message.text`, `cases[].external_message.snapshot`, `cases[].external_message.target_content_hash` | A queue row is metadata: never a note, never the reported content, never who reported. |
+| `dates_moderation_detail` (moderation-case) | `case.text`, `case.message_text`, `case.snapshot`, `case.target_content_hash`, `case.reporter_uid`, `case.reporter_uids`, `case.external_message.text`, `case.external_message.snapshot`, `case.external_message.target_content_hash`, `decisions[].before`, `decisions[].after`, `decisions[].actor_email`, `decisions[].subject_uid`, `decisions[].text`, `reports[].reporter_uid`, `reports[].reporter_email`, `appeal.note`, `appeal.appellant_uid` | Case metadata: never the reported content, never who reported or appealed, never the acting moderator, the sanctioned member or the raw before / after of a decision; the appeal's note comes only from the audited evidence read. |
+| `dates_moderation_evidence` (moderation-evidence) | `appeal_note.appellant_uid` | The appeal note is the appellant's words, not their identity. |
+| `dates_moderation_resolve` (moderation-decision-receipt) | `target_result.text`, `target_result.before.text`, `target_result.after.text` | A receipt names states and revisions, never a message text. |
+| `dates_external_event_list` (external-event-list) | `events[]._id`, `events[].host`, `events[].submitted_by_uid` | A list row has no member host, no database id and no submitter. |
+| `dates_external_event_detail` (external-event) | `event._id`, `event.host`, `event.intake.provider`, `event.intake.admin_principal`, `event.intake.submitter_uid` | The reference to the intake names the intake, its channel and the event index: never the AI provider behind the draft, never a person. |
+| `dates_activity_detail` (activity) | `external_event._id`, `external_event.host`, `external_event.intake.provider`, `external_event.intake.admin_principal`, `external_event.intake.submitter_uid` | The same, for the event embedded in an activity detail. |
+| `dates_external_event_place_search` (place-search) | `places[].raw_provider` | A place is the fields the picker copies, never the provider's raw answer. |
+| `dates_event_intake_list` (intake-queue) | `intakes[].submitter_uid`, `intakes[].member`, `intakes[].admin_principal`, `intakes[].source_texts`, `intakes[].inputs` | A queue row names no member and carries nothing of what was submitted. |
+| `dates_event_intake_detail` (intake) | `intake.submitter_uid`, `intake.consent`, `intake.input_fingerprint`, `intake.open_claim`, `intake.structured_events`, `intake.processing`, `intake.notify`, `intake.inputs.origin_hint`, `intake.inputs.url_hash`, `intake.inputs.url_hashes`, `intake.inputs.images[].storage_key`, `intake.inputs.images[].sha256`, `intake.member.email`, `intake.member.phone`, `intake.member.name`, `intake.member.display_name`, `intake.ai_runs[].prompt`, `intake.ai_runs[].response`, `intake.ai_runs[].request`, `intake.ai_runs[].raw` | Of a member only what the `member` block serves; never the stored consent record, the member's origin hint, a storage key or a fingerprint; an AI run is usage metadata, never what was asked of the model or what it answered. |
+
+`[]` stands for every element of a list. The keys come from three places: the
+ones the released decoders used to catch by refusing the whole body; what
+Core stores beside what it serves (read from Core's source: a decision's
+`actor_email`, `subject_uid`, `before`, `after`; a report's `reporter_uid`; an
+appeal's `appellant_uid` and `note`; an intake's `submitter_uid`, `consent`,
+`inputs.origin_hint`, storage keys and fingerprints); and what an AI run must
+never carry.
+
+**Kept whole, by design** (`DATES_ADMIN_OPAQUE`) - the only parts of a Dates
+body that reach the browser without being named field by field:
+
+| Route | Part | What bounds it |
+|---|---|---|
+| `dates_activity_location` | `private_location` | The break-glass read of one activity's exact location: its own capability, a case and a reason per read, audited by Core; shown only after the operator asks. |
+| `dates_moderation_evidence` | `evidence[].snapshot` | The evidence of one case: the separately authorised, audited evidence read; refused to a conflicted operator. The row around the snapshot is named fields. |
+| `dates_activity_detail` | `activity.photo`, `activity.audience`, `activity.pending_public_revision` | An activity's own public data, which the activity editor shows and sends back unchanged (narrowing it here would write the narrowed value back). |
+| `dates_configuration` | `settings[].value`, `settings[].effective_value`, `settings[].default_value`, `settings[].allowed_values` | A setting's values: data the editors show and send back; a setting row's other fields are named. |
+
+One more reduction: the activity detail's `reports`, `notifications`,
+`moderation_decisions` and `audit_history` are documents Core passes through
+whole. They leave the server as their safe keys (the list the history panel
+already used, `OPERATIONAL_RECORD_SAFE_KEYS`) and a count, `withheld_fields`;
+until this change the whole documents reached the browser and were filtered
+at render.
+
 ### The check that stays in the gate
 
 `tests/datesAdminCompatibility.test.mts` (part of `npm test`):

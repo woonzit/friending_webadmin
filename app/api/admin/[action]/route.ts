@@ -40,6 +40,7 @@ import {
 import { ADMIN_GRANTED_VERIFICATION_CONTRACT_READY } from "@/lib/contractReadiness";
 import { coreCall, mergeCoreParams } from "@/lib/core";
 import { withDatesAdminContract } from "@/lib/datesAdminContract";
+import { isDatesAdminRoute, projectDatesAdminResponse } from "@/lib/datesAdminProjection";
 import {
   normalizePersonaProxyBody,
   personaProxyCapabilityAuthorized,
@@ -385,6 +386,13 @@ export async function POST(
     return bridgeError("auth-required", 401);
   }
   if (result.data === null) return bridgeError("core-unavailable", result.status || 502);
+  if (isDatesAdminRoute(action)) {
+    // The browser never receives a raw Core body of a Dates route: only the fields this console names. A key on the
+    // deny-list is dropped and reported by name (never by value) from the projection; the page is not failed for it.
+    const projected = projectDatesAdminResponse(action, result.data);
+    if (projected === undefined) return bridgeError("invalid-core-response", 502);
+    return NextResponse.json(projected, { status: result.status || 502, headers: NO_STORE_HEADERS });
+  }
   return NextResponse.json(
     result.data,
     { status: result.status || 502, headers: NO_STORE_HEADERS },

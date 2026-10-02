@@ -169,8 +169,22 @@ export const OPERATIONAL_RECORD_SAFE_KEYS = [
 
 const OPERATIONAL_SAFE_KEYS: ReadonlySet<string> = new Set(OPERATIONAL_RECORD_SAFE_KEYS);
 
+/**
+ * The count the server puts beside a record's safe keys when it withholds the
+ * rest: the Dates bridge reduces a passed-through record to its safe keys
+ * before it leaves the server (lib/datesAdminProjection.ts), so the history
+ * panel is told how many fields it was not sent.
+ */
+export const OPERATIONAL_RECORD_WITHHELD_KEY = "withheld_fields";
+
 export function operationalRecordSummary(value: unknown): AuditDetailSummary {
-  return summarise(record(value), OPERATIONAL_RECORD_SAFE_KEYS, OPERATIONAL_SAFE_KEYS);
+  const source = record(value);
+  if (!source) return { shown: [], withheld: 0 };
+  const { [OPERATIONAL_RECORD_WITHHELD_KEY]: counted, ...rest } = source;
+  const summary = summarise(rest, OPERATIONAL_RECORD_SAFE_KEYS, OPERATIONAL_SAFE_KEYS);
+  // What the server withheld, plus anything this render still withholds of what did arrive.
+  const sent = typeof counted === "number" && Number.isSafeInteger(counted) && counted > 0 ? counted : 0;
+  return { shown: summary.shown, withheld: summary.withheld + sent };
 }
 
 /**

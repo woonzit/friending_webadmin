@@ -2,6 +2,7 @@ import { adminBridgeCoreTransportError } from "@/lib/adminBridge";
 import { invalidatesAdminSession } from "@/lib/adminActions";
 import { datesAdminPrincipal, hasDatesCapability } from "@/lib/datesAdmin";
 import { datesAdminContractParams } from "@/lib/datesAdminContract";
+import { projectDatesAdminResponse } from "@/lib/datesAdminProjection";
 import {
   DATES_INTAKE_MAX_IMAGE_BYTES, DATES_INTAKE_MAX_IMAGES, datesIntakeId, datesIntakeImageBytes, datesIntakeRefusal, datesIntakeUploadType,
   decodeDatesIntakeImage, normalizeDatesIntakeCreateFields, type DatesIntakeUploadType,
@@ -75,8 +76,8 @@ function coreFailure(result: CoreAnswer): DatesIntakeBridgeReply {
   const answered = datesIntakeRefusal(result.data);
   if (answered.kind === "unreadable") return refusal("invalid-core-response", 502);
   if (invalidatesAdminSession(answered.status, answered.error)) return refusal("auth-required", 401);
-  // Core's closed refusal travels on unchanged, so the page can show exactly what Core said.
-  return { status: answered.status, headers: { ...DATES_INTAKE_NO_STORE }, json: result.data };
+  // Core's refusal travels on as its six refusal keys, so the page can show exactly what Core said - and nothing beside it.
+  return { status: answered.status, headers: { ...DATES_INTAKE_NO_STORE }, json: projectDatesAdminResponse("dates_event_intake_create", result.data) };
 }
 
 /**
@@ -160,6 +161,8 @@ export async function serveDatesIntakeCreate(request: { headers: HeaderReader; f
     result = await deps.core("dates_event_intake_create", payload, CREATE_TIMEOUT_MS);
   }
   const data = result.data as { success?: unknown } | null;
-  if (result.status === 200 && data?.success === true) return { status: 200, headers: { ...DATES_INTAKE_NO_STORE }, json: result.data };
+  // The browser is handed the receipt's named fields only (lib/datesAdminProjection.ts), never Core's raw body.
+  if (result.status === 200 && data?.success === true)
+    return { status: 200, headers: { ...DATES_INTAKE_NO_STORE }, json: projectDatesAdminResponse("dates_event_intake_create", result.data) };
   return coreFailure(result);
 }

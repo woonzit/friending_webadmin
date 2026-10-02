@@ -8,6 +8,7 @@ import * as actions from "../lib/adminActions.ts";
 import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
 import { datesAvailabilityWriteIsRetired } from "../lib/datesAdmin.ts";
 import { DATES_ADMIN_INTAKE_CONTRACT_SELECTOR, datesAdminContractParams, withDatesAdminContract } from "../lib/datesAdminContract.ts";
+import { isDatesAdminRoute, projectDatesAdminResponse } from "../lib/datesAdminProjection.ts";
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "../lib/datesExternalAdmin.ts";
 import { datesExternalDraftInput } from "../lib/datesExternalInput.ts";
 import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody } from "../lib/datesExternalModeration.ts";
@@ -82,10 +83,20 @@ async function capture<T>(answer: unknown, task: (core: typeof coreCall) => Prom
   }) as typeof globalThis.fetch;
   try { return { result: await task(coreCall), sent }; } finally { globalThis.fetch = realFetch; }
 }
+/** What the route wrote to the server log during the last `bridge` call. */
+let serverLog: string[] = [];
 /** The browser's request to the generic bridge, through the actual route handler and the real coreCall. */
 async function bridge(action: string, browserBody: unknown, answer: unknown = { success: true, status_code: 200 }) {
+  serverLog = [];
+  // The projection writes a denied key to the server log itself (`console.warn`); the log is captured for the call.
+  const realWarn = console.warn;
+  console.warn = (line: unknown) => { serverLog.push(String(line)); };
+  try { return await forward(action, browserBody, answer); } finally { console.warn = realWarn; }
+}
+async function forward(action: string, browserBody: unknown, answer: unknown) {
   return capture(answer, async (core) => {
     const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, datesAvailabilityWriteIsRetired, withDatesAdminContract,
+      isDatesAdminRoute, projectDatesAdminResponse,
       datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody, datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody,
       datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody, ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
       readAdminSession: async () => ({ email }), coreCall: core, mergeCoreParams, isReservedCoreParam,
@@ -261,6 +272,47 @@ test("D-143: the selector is the server's - a browser value under its name is ov
   // A browser cannot smuggle a selector-like field through a closed request shape either.
   const forged = await bridge("dates_event_intake_list", { page: 1, limit: 1, dates_event_intake_admin_contract_version: 1 });
   assert.equal(forged.result.status, 400); assert.equal(forged.sent.length, 0);
+});
+
+test("response shape: the browser receives the named fields of a Dates body through the real bridge - an unknown key is dropped, a denied one is dropped and logged by name", async () => {
+  // The generic bridge, as it is: Core's genuine queue body with a key the console does not name, a member's number on a
+  // row (deny-list) and a nested unknown key.
+  const genuine = fixture("admin-list-in-review");
+  const leaking = JSON.parse(JSON.stringify(genuine));
+  leaking.future_envelope_key = { trace: "UNNAMED-VALUE" }; leaking.intakes[0].submitter_uid = 4242777; leaking.intakes[0].lease.future = "UNNAMED-VALUE";
+  const list = await bridge("dates_event_intake_list", { status: "in_review", page: 1, limit: 40 }, leaking);
+  assert.equal(list.result.status, 200);
+  assert.deepEqual(list.result.body, genuine, "what the browser receives is the genuine body: named fields only");
+  assert.doesNotMatch(JSON.stringify(list.result.body), /UNNAMED-VALUE|4242777|submitter_uid|future/);
+  // One warning on the server log, with the route, the family and the key's name - not the member's number.
+  assert.deepEqual(serverLog, ["webadmin.dates_denied_key route=dates_event_intake_list family=intake-queue key=intakes[].submitter_uid count=1"]);
+  // The detail of a member's suggestion: the stored consent record and the origin hint never leave the server; the member block stays what the contract serves.
+  const detail = fixture("admin-detail-member-in-review"), wider = JSON.parse(JSON.stringify(detail));
+  wider.intake.consent = { version: 1, accepted_at: 1790000000, ip: "203.0.113.9" }; wider.intake.inputs.origin_hint = { latitude: 47.4979, longitude: 19.0402 };
+  wider.intake.member.email = "member@example.test"; wider.intake.member.future = 1;
+  const read = await bridge("dates_event_intake_detail", { intake_id: detail.intake.intake_id }, wider);
+  assert.deepEqual(read.result.body, detail);
+  assert.doesNotMatch(JSON.stringify(read.result.body), /203\.0\.113\.9|47\.4979|member@example\.test/);
+  assert.deepEqual([...serverLog].sort(), ["intake.consent", "intake.inputs.origin_hint", "intake.member.email"].map((key) =>
+    `webadmin.dates_denied_key route=dates_event_intake_detail family=intake key=${key} count=1`));
+  assert.doesNotMatch(serverLog.join("\n"), /203\.0\.113\.9|47\.4979|member@example\.test/);
+  // A genuine body logs nothing; a refusal is Core's six keys; a receipt is its named fields.
+  const clean = await bridge("dates_event_intake_list", { status: "in_review", page: 1, limit: 40 }, genuine);
+  assert.deepEqual(clean.result.body, genuine); assert.deepEqual(serverLog, []);
+  const refusal = fixture("admin-list-viewer-denied");
+  const refused = await bridge("dates_event_intake_list", { page: 1, limit: 40 }, { ...refusal, debug: "UNNAMED-VALUE" });
+  assert.deepEqual(refused.result.body, refusal, "Core's refusal travels as it came, minus what is not a refusal key");
+  assert.equal(refused.result.status, refusal.status_code);
+  const receipt = fixture("admin-lease-claim");
+  const claimed = await bridge("dates_event_intake_lease", { intake_id: receipt.intake.intake_id, expected_revision: receipt.intake.revision - 1, action: "claim" },
+    { ...receipt, holder_session: "UNNAMED-VALUE" });
+  assert.deepEqual(claimed.result.body, receipt);
+  // A P1 route through the same bridge: the external detail with the AI provider behind its intake reference.
+  const external = fixture("admin-external-detail-ai-assisted"), named = JSON.parse(JSON.stringify(external));
+  named.event.intake.provider = "openai"; named.event._id = "65f0c0ffee";
+  const event = await bridge("dates_external_event_detail", { external_event_id: external.event.external_event_id }, named);
+  assert.deepEqual(event.result.body, external);
+  assert.deepEqual([...serverLog].sort(), ["event._id", "event.intake.provider"].map((key) => `webadmin.dates_denied_key route=dates_external_event_detail family=external-event key=${key} count=1`));
 });
 
 test("request shape: nothing the browser adds reaches Core - not an actor, not a credential, not a typed-only or unknown field", async () => {

@@ -8,6 +8,7 @@ import { isTrustedAdminRequest } from "../lib/requestGuard.ts";
 import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
 import { datesAvailabilityWriteIsRetired } from "../lib/datesAdmin.ts";
 import { withDatesAdminContract } from "../lib/datesAdminContract.ts";
+import { isDatesAdminRoute, projectDatesAdminResponse } from "../lib/datesAdminProjection.ts";
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "../lib/datesExternalAdmin.ts";
 import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody } from "../lib/datesExternalModeration.ts";
 
@@ -35,6 +36,8 @@ function harness() {
   // is tested without the artificial vm Object.prototype mismatch.
   // D-143: the route adds the Admin intake contract selector to Dates requests itself (the real function, as it is).
   const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, withDatesAdminContract,
+    // The route hands the browser the projection of a Dates body (lead's ruling on D-143): the real functions, as they are.
+    isDatesAdminRoute, projectDatesAdminResponse,
     datesAvailabilityWriteIsRetired, datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody,
     datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody,
     ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
