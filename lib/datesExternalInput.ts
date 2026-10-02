@@ -49,7 +49,7 @@ function document(value: unknown): value is Record<string, unknown> {
  * READS from Core (D-143: a body is bound on its fields, an added key is
  * tolerated).
  */
-function closed(value: unknown, keys: readonly string[], exact = true): value is Record<string, unknown> {
+function closed(value: unknown, keys: readonly string[], exact: boolean): value is Record<string, unknown> {
   return document(value) && (!exact || Object.keys(value).length === keys.length)
     && keys.every((key) => Object.hasOwn(value, key));
 }
