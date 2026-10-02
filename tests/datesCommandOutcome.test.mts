@@ -188,10 +188,9 @@ for (const action of ["place", "release"] as const) test(`legal hold ${action}: 
     await h.api.executeConfirmed();
     assert.equal(model.writes.length, 1, `${name}: Core applied the hold`);
     // The page does not call it a failure, keeps the command with its key, and reads the case again.
-    assert.equal(h.state.Feedback.tone, "error");
-    assert.equal(h.state.Feedback.text, token === null ? "outcome.kept:" : `outcome.keptAnswered:${token}`, name);
+    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: token === null ? "outcome.kept:" : `outcome.keptAnswered:${token}`, refresh: true }, name);
     assert.deepEqual(plain(h.state.HoldCommand), prepared.payload, `${name}: the same command, key included, is what a retry sends`);
-    assert.equal(h.state.Confirmed, null); assert.ok(h.writes.includes("load"));
+    assert.equal(h.state.Confirmed, null); assert.equal(h.writes.includes("load"), false, "the page does not reread by itself");
     // Nothing is locked: the form could prepare another hold (that would be a new request - see the next test).
     // The operator sends the same request again; Core answers with the first attempt's receipt.
     lose = false;
@@ -332,8 +331,13 @@ test("a revision-fenced case command is worded as unknown when nothing says whet
   const note = fixture("admin-moderation-claim");
   for (const [name, lost, token] of LOST) {
     const h = caseHarness(() => lost); await h.api.addNote(submit);
-    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: token === null ? "outcome.unknown:" : `outcome.unknownAnswered:${token}` }, name);
-    assert.ok(h.writes.includes("load"), "the case is read again: its revision and notes show whether it landed");
+    // Wording only (review finding): the message, with the operator's own "Refresh the case" beside it - and nothing else.
+    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: token === null ? "outcome.unknown:" : `outcome.unknownAnswered:${token}`, refresh: true }, name);
+    // No reread: `load()` would clear the evidence that was read, the principal, the confirmation, the break-glass choice
+    // and the sensitive-evidence selection, and under a continuing outage put the load-error surface in the page's place.
+    assert.equal(h.writes.includes("load"), false, "the page does not reread by itself");
+    assert.deepEqual(h.writes.filter((name) => !["Evidence", "Busy", "Feedback"].includes(name)), [], "no other state is written");
+    assert.deepEqual(h.writes.filter((name) => name === "Evidence").length, 1, "only what every command did before: the evidence view is closed when a command starts");
     assert.equal(h.writes.includes("Note"), false, "what the operator typed stays");
     assert.equal(h.writes.includes("HoldCommand") || h.writes.includes("TrailCommand"), false, "a fenced command is not kept: Core refuses a stale repeat");
   }
@@ -345,6 +349,11 @@ test("a revision-fenced case command is worded as unknown when nothing says whet
   // A receipt of another command is not a receipt (the genuine claim receipt in answer to a note).
   const wrong = caseHarness(() => note); await wrong.api.addNote(submit);
   assert.equal(wrong.state.Feedback.text, "outcome.unknown:");
+  // The reread is the operator's: one button beside the message, and `mutate` itself calls `load()` only after a receipt.
+  assert.match(casePage.source, /\{feedback\.refresh && <> <button type="button" className="button button-secondary button-small" disabled=\{busy\} onClick=\{\(\) => void load\(\)\}>\{commandOutcome\("refreshCase"\)\}<\/button><\/>\}/);
+  const mutateSource = casePage.text("mutate");
+  assert.equal((mutateSource.match(/await load\(\)/g) ?? []).length, 1, "after success only");
+  assert.ok(mutateSource.indexOf("await load()") > mutateSource.indexOf('setFeedback({ tone: "success"'));
   // Each attempt of a fenced command still carries its own key; the legal hold and the capture are the only kept ones.
   assert.equal((casePage.source.match(/, "kept"\)/g) ?? []).length, 2, "sendTrailEvidence and retryLegalHold");
   assert.match(casePage.source, /operation\.kind === "legal_hold" \? "kept" : "fresh"\);/);
@@ -517,12 +526,12 @@ test("configuration saves: a lost reply is an unknown outcome; creating a reason
 // ---------------------------------------------------------------- copy
 
 test("the unknown-outcome copy exists in both languages and the kept-command block renders", () => {
-  const keys = ["unknown", "unknownAnswered", "kept", "keptAnswered", "pending", "retry", "discard", "discardHint"];
+  const keys = ["unknown", "unknownAnswered", "kept", "keptAnswered", "pending", "retry", "discard", "discardHint", "refreshCase"];
   for (const locale of ["en", "hu"]) {
     const copy = messagesOf(locale).datesAdmin.commandOutcome;
     assert.deepEqual(Object.keys(copy), keys, locale);
     for (const key of ["unknownAnswered", "keptAnswered"]) assert.match(copy[key], /\{error\}/, `${locale}.${key}`);
-    for (const key of ["unknown", "kept", "pending", "retry", "discard", "discardHint"]) assert.doesNotMatch(copy[key], /\{/, `${locale}.${key}`);
+    for (const key of ["unknown", "kept", "pending", "retry", "discard", "discardHint", "refreshCase"]) assert.doesNotMatch(copy[key], /\{/, `${locale}.${key}`);
     const errors: string[] = [];
     const html = renderToStaticMarkup(createElement(NextIntlClientProvider, { locale, messages: messagesOf(locale), timeZone: "UTC", onError: (error: unknown) => errors.push(String(error)) },
       createElement(DatesUnansweredCommand, { busy: false, onRetry: () => undefined, onDiscard: () => undefined })));

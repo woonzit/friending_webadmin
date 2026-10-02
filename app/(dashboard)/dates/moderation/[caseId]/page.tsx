@@ -41,7 +41,8 @@ import { DatesCaseReadFence, datesCaseDetail, datesEvidenceRead, datesLegalHoldA
   datesConsoleCommandReceipt, datesTrailEvidenceReceipt, isDatesConsoleCommand,
   type DatesCaseDetail, type DatesEvidenceRead } from "@/lib/datesModerationRead";
 
-type Feedback = { tone: "success" | "error"; text: string };
+/** `refresh` adds the operator's own "Refresh the case" beside the message; the page never rereads by itself after an unknown outcome. */
+type Feedback = { tone: "success" | "error"; text: string; refresh?: boolean };
 type ConfirmedOperation = { kind: "resolve" | "legal_hold"; label: string; payload: Record<string, unknown> };
 
 function safeJson(value: unknown): string {
@@ -168,7 +169,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
   /**
    * One command. `skipped`: nothing was sent. `abandoned`: it was sent, and the page moved on before the answer.
    * `refused`: an answer that wrote nothing. `uncertain`: nothing says whether it landed - no answer, an unreadable
-   * one, a transport or server failure - so the page says exactly that and reads the case again.
+   * one, a transport or server failure - so the page says exactly that, and changes nothing else.
    * `identity` is `kept` for the commands the page holds for a same-request retry (see `datesCommandOutcome`).
    */
   async function mutate(action: string, payload: Record<string, unknown>, successMessage: string, identity: "kept" | "fresh" = "fresh") {
@@ -193,8 +194,10 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       }
       if (outcome.kind === "uncertain") {
         const key = `${identity === "kept" ? "kept" : "unknown"}${outcome.error === null ? "" : "Answered"}`;
-        setFeedback({ tone: "error", text: commandOutcome(key, { error: outcome.error ?? "" }) });
-        await load();
+        // Wording only. Nothing on the page changes: a reread would clear the evidence the operator has read, the
+        // break-glass choice and the confirmation, and under a continuing outage replace the page with an error.
+        // Whether to read the case again is the operator's decision, offered beside the message.
+        setFeedback({ tone: "error", text: commandOutcome(key, { error: outcome.error ?? "" }), refresh: true });
         return "uncertain" as const;
       }
       setFeedback({ tone: "success", text: successMessage });
@@ -515,7 +518,8 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       <Link className="back-link" href="/dates/moderation">← {t("back")}</Link>
       <PageHeader eyebrow={t("eyebrow")} title={item.case_id} subtitle={t("subtitle", { queue: humanizeMachineKey(item.queue), revision: item.revision })} actions={<button className="button button-secondary" onClick={() => void load()} disabled={busy}>{common("refresh")}</button>} />
       <DatesAdminTabs />
-      {feedback && <div className={`alert ${feedback.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{feedback.text}</div>}
+      {feedback && <div className={`alert ${feedback.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{feedback.text}
+        {feedback.refresh && <> <button type="button" className="button button-secondary button-small" disabled={busy} onClick={() => void load()}>{commandOutcome("refreshCase")}</button></>}</div>}
       {item.conflict_of_interest && <div className="alert alert-error page-alert"><strong>{t("conflictTitle")}</strong> {t("conflictCopy")}</div>}
       {isExternal && <section className="panel dates-external-fields">
         <span className="badge badge-demo">{external("badge")}</span>

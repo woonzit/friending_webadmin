@@ -9784,7 +9784,8 @@
       "pending": "Egy ismeretlen kimenetelű kérés innen ugyanazon kérésként újraküldhető.",
       "retry": "Ugyanazon kérés újraküldése",
       "discard": "Elrejtés",
-      "discardHint": "A Core nem tudja megkülönböztetni az ismétlést az új kéréstől: ha ezt elrejted, és újból elindítod a kérést, akkor is végrehajtja még egyszer, ha az első kísérlet megtörtént."
+      "discardHint": "A Core nem tudja megkülönböztetni az ismétlést az új kéréstől: ha ezt elrejted, és újból elindítod a kérést, akkor is végrehajtja még egyszer, ha az első kísérlet megtörtént.",
+      "refreshCase": "Ügy frissítése"
     }
   },
   "imageEditor": {

@@ -9784,7 +9784,8 @@
       "pending": "A request with an unknown outcome can be sent again from here as the same request.",
       "retry": "Send the same request again",
       "discard": "Dismiss",
-      "discardHint": "Core has no way to tell a repeat from a new request: if you dismiss this and make the request anew, it is applied again even if the first attempt landed."
+      "discardHint": "Core has no way to tell a repeat from a new request: if you dismiss this and make the request anew, it is applied again even if the first attempt landed.",
+      "refreshCase": "Refresh the case"
     }
   },
   "imageEditor": {
