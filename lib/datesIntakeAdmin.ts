@@ -331,15 +331,20 @@ export type DatesIntakeDetail = DatesIntakeQueueRow & {
   inputs: { kind: typeof DATES_INTAKE_INPUT_KINDS[number]; url: string | null; text: string | null; locale: string;
     images: DatesIntakeRows<DatesIntakeImage> } | null;
   fetch: Parsed<typeof fetchGuard> | null;
-  source_texts: DatesIntakeRows<DatesIntakeSourceText>;
+  /** Null when the whole section cannot be read. That is "unknown", never "none": the page must say so. */
+  source_texts: DatesIntakeRows<DatesIntakeSourceText> | null;
   result: typeof DATES_INTAKE_RESULTS[number] | null;
   result_note: string | null;
   prohibited_category: string | null;
   prompt_injection_suspected: boolean;
   validated_at: number | null;
-  /** Position-preserving: `events[i]` is Core's event `i`, or null when it cannot be read. */
-  events: Array<DatesIntakeEvent | null>;
-  ai_runs: DatesIntakeRows<DatesIntakeAiRun>;
+  /**
+   * Position-preserving: `events[i]` is Core's event `i`, or null when it cannot be read.
+   * The whole list is null when the section itself cannot be read: unknown, not empty.
+   */
+  events: Array<DatesIntakeEvent | null> | null;
+  /** Null when the whole section cannot be read. */
+  ai_runs: DatesIntakeRows<DatesIntakeAiRun> | null;
   decision: DatesIntakeDecision | null;
   duplicate_of: DatesIntakeReference | null;
   budget_waiting_since: number | null;
@@ -379,7 +384,8 @@ export function projectDatesIntakeDetail(value: unknown, intakeId: string): Date
   const texts = rows(source.source_texts, sourceTextGuard, 20), runs = rows(source.ai_runs, aiRunGuard, 100);
   if (!texts) unreadable.push("source_texts");
   if (!runs) unreadable.push("ai_runs");
-  let events: Array<DatesIntakeEvent | null> = [];
+  // An unreadable list is kept apart from an empty one all the way to the page.
+  let events: Array<DatesIntakeEvent | null> | null = null;
   if (Array.isArray(source.events) && source.events.length <= 100) events = source.events.map(projectEvent);
   else unreadable.push("events");
   const intake: DatesIntakeDetail = {
@@ -387,14 +393,14 @@ export function projectDatesIntakeDetail(value: unknown, intakeId: string): Date
     admin_principal: section("admin_principal", nullable(string(320)), null),
     inputs,
     fetch: section("fetch", nullable(fetchGuard), null),
-    source_texts: texts ?? { items: [], unreadable: [] },
+    source_texts: texts,
     result: section("result", nullable(oneOf(DATES_INTAKE_RESULTS)), null),
     result_note: section("result_note", nullable(string()), null),
     prohibited_category: section("prohibited_category", nullable(string(200)), null),
     prompt_injection_suspected: section("prompt_injection_suspected", bool, false),
     validated_at: section("validated_at", nullable(clock), null),
     events,
-    ai_runs: runs ?? { items: [], unreadable: [] },
+    ai_runs: runs,
     decision: section("decision", nullable(decisionGuard), null),
     duplicate_of: section("duplicate_of", nullable(referenceGuard), null),
     budget_waiting_since: section("budget_waiting_since", nullable(clock), null),
@@ -457,7 +463,16 @@ export function datesIntakeAffordances(intake: Pick<DatesIntakeQueueRow, "status
 /** The events of an intake that can still be opened in the editor. */
 export function datesIntakePublishableEvents(intake: Pick<DatesIntakeDetail, "events" | "status">): number[] {
   if (intake.status !== "in_review") return [];
-  return intake.events.flatMap((event, index) => event && event.published_external_event_id === null && event.editor_input !== null ? [index] : []);
+  return (intake.events ?? []).flatMap((event, index) => event && event.published_external_event_id === null && event.editor_input !== null ? [index] : []);
+}
+
+/**
+ * The events of an intake this console cannot account for: an event it could
+ * not decode (whether it was published is unknown too) and an unpublished
+ * event whose editor prefill it could not decode. Unknown is not absent.
+ */
+export function datesIntakeUnreadableEvents(intake: Pick<DatesIntakeDetail, "events">): number[] {
+  return (intake.events ?? []).flatMap((event, index) => event === null || (event.editor_unreadable && event.published_external_event_id === null) ? [index] : []);
 }
 
 /** Seconds Core will still honour the reviewer's hold; never negative. */

@@ -141,7 +141,8 @@ test("a flyer is private evidence: fetched only on request through the console's
 
 test("the review screen says in both languages that the content is AI-extracted, and publishes only through the P1 publisher", () => {
   const review = readFileSync(new URL("../components/DatesIntakeReviewPage.tsx", import.meta.url), "utf8");
-  for (const key of ["aiNotice", "detail.extractionNotice", "editor.notice", "editor.formNotice", "editor.confirm"]) assert.ok(review.includes(`t("${key}")`), key);
+  for (const key of ["aiNotice", "editor.notice", "editor.formNotice", "editor.confirm"]) assert.ok(review.includes(`t("${key}")`), key);
+  assert.ok(readFileSync(new URL("../components/DatesIntakePanels.tsx", import.meta.url), "utf8").includes('t("detail.extractionNotice")'));
   assert.match(review, /runDatesIntakePublish\(adminCall, storage, actor/);
   assert.doesNotMatch(review, /adminCall\("dates_(event_intake_publish|external_event_publish)"/, "publication never bypasses the journal");
   assert.match(review, /<ConfirmDialog title=\{external\("editor\.publish"\)\}/);
@@ -332,4 +333,50 @@ test("review finding: an intake's address is a link only over https; http and ev
     const source = readFileSync(new URL(file, import.meta.url), "utf8");
     assert.doesNotMatch(source, /datesIntakeLink|<a href=/, file);
   }
+});
+
+test("review finding: a whole section that cannot be read is said to be unreadable, never worded as empty", async () => {
+  const { DatesIntakeExtractionPanel, DatesIntakeRejectWarning } = await import("../components/DatesIntakePanels.tsx");
+  const base = fixture("admin-detail-in-review-multi"), id = base.intake.intake_id;
+  // DERIVED: the genuine four-event intake with its lists served in shapes this console does not know.
+  const broken = (change: Record<string, unknown>) => projectDatesIntakeDetail({ ...base, intake: { ...base.intake, ...change } }, id)!.intake;
+  for (const locale of LOCALES) {
+    const copy = messagesOf(locale).datesAdmin.intake;
+    const unreadable = broken({ events: { rows: base.intake.events }, ai_runs: "20 calls", source_texts: null });
+    assert.deepEqual([unreadable.events, unreadable.ai_runs, unreadable.source_texts], [null, null, null]);
+    const html = render(locale, createElement(DatesIntakeStatusPanel, { intake: unreadable }), createElement(DatesIntakeInputsPanel, { intake: unreadable }),
+      createElement(DatesIntakeExtractionPanel, { intake: unreadable, manage: true, draftsOff: false }), createElement(DatesIntakeRunsPanel, { intake: unreadable }),
+      createElement(DatesIntakeRejectWarning, { intake: unreadable }));
+    // Each section says it could not be read...
+    for (const key of ["eventsUnreadable", "runsUnreadable", "textsUnreadable"]) assert.ok(html.includes(escaped(copy.detail[key])), `${locale}: ${key}`);
+    // ...and none of them claims that there is nothing: not "no event", not "no AI call".
+    assert.equal(html.includes(escaped(copy.detail.noEvents)), false, "never 'the AI did not produce an event'");
+    assert.equal(html.includes(escaped(copy.detail.noRuns)), false, "never 'no AI call has been made'");
+    // The reviewer who rejects now is told that the extraction is not on screen.
+    assert.ok(html.includes(escaped(copy.reject.eventsUnreadable)));
+    // A result or a decision that cannot be read is not "no answer yet".
+    const blind = broken({ result: "maybe", decision: { by: 7 } });
+    const status = render(locale, createElement(DatesIntakeStatusPanel, { intake: blind }));
+    assert.equal(status.includes(escaped(copy.detail.noResult)), false);
+    assert.equal(status.split(escaped(copy.detail.couldNotRead)).length - 1, 2, "the result and the decision");
+    // Genuinely empty lists keep the ordinary wording: an intake the worker has not touched has no event and no AI call.
+    const received = detail("admin-detail-received");
+    const plain = render(locale, createElement(DatesIntakeExtractionPanel, { intake: received, manage: true, draftsOff: false }), createElement(DatesIntakeRunsPanel, { intake: received }),
+      createElement(DatesIntakeRejectWarning, { intake: received }));
+    assert.ok(plain.includes(escaped(copy.detail.noEvents)) && plain.includes(escaped(copy.detail.noRuns)));
+    for (const key of ["eventsUnreadable", "runsUnreadable"]) assert.equal(plain.includes(escaped(copy.detail[key])), false);
+    assert.equal(plain.includes(escaped(copy.reject.eventsUnreadable)), false);
+    // Some unreadable events: the rejection warning counts them; unreadable rows of AI calls do not turn into "no AI call".
+    const partial = projectDatesIntakeDetail({ ...base, intake: { ...base.intake, events: base.intake.events.map((event: any, index: number) => index === 1 ? { ...event, draft: null } : event),
+      ai_runs: [{ provider: "mistral" }] } }, id)!.intake;
+    const some = render(locale, createElement(DatesIntakeRejectWarning, { intake: partial }), createElement(DatesIntakeRunsPanel, { intake: partial }));
+    assert.ok(some.includes(escaped(copy.reject.someUnreadable.replace("{count}", "1"))));
+    assert.ok(some.includes(escaped(copy.detail.unreadableRuns.replace("{count}", "1"))));
+    assert.equal(some.includes(escaped(copy.detail.noRuns)), false);
+  }
+  // The page renders these states through the panels; it has no empty-state wording of its own.
+  const review = readFileSync(new URL("../components/DatesIntakeReviewPage.tsx", import.meta.url), "utf8");
+  assert.match(review, /<DatesIntakeExtractionPanel intake=\{intake\} manage=\{access\.manage\} draftsOff=\{result\?\.draftsEnabled === false\} \/>/);
+  assert.match(review, /<DatesIntakeRejectWarning intake=\{intake\} \/>/);
+  assert.doesNotMatch(review, /detail\.noEvents|detail\.noRuns/);
 });

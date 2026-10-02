@@ -9254,7 +9254,11 @@
         },
         "refreshFailed": "The intake could not be read again just now. What you see may be out of date; nothing was changed. Try Refresh again.",
         "progressStopped": "The worker is still on it. Use Refresh to see where it stands.",
-        "notLinked": "(not an https address: shown as text, not as a link)"
+        "notLinked": "(not an https address: shown as text, not as a link)",
+        "eventsUnreadable": "The extracted events could not be read: Core served them in a shape this console does not know. They are not missing, and this does not mean the AI found no event. Nothing can be published from this page until the console can read them.",
+        "runsUnreadable": "The AI calls of this intake could not be read. That does not mean no AI call was made; the monthly figures are on the AI usage page.",
+        "textsUnreadable": "The text Core holds of the source could not be read. It is not empty; it is unknown.",
+        "couldNotRead": "Could not be read"
       },
       "checks": {
         "weekday_match": "The weekday in the source matches the date",
@@ -9310,7 +9314,9 @@
         "submit": "Reject",
         "invalid": "Choose a reason and write an audit note first.",
         "uncertain": "Core's answer did not arrive, so the rejection may or may not have landed. The intake was read again: if it is still in review, send the same rejection again.",
-        "done": "The intake was rejected."
+        "done": "The intake was rejected.",
+        "eventsUnreadable": "The extracted events could not be read on this page. If you reject now, you decide without having seen what the AI extracted. Prefer leaving the intake until the console can read it.",
+        "someUnreadable": "Events of this intake that could not be read: {count}. A rejection covers them too, although you have not seen them."
       },
       "publish": {
         "done": "The event is published and the intake is finished.",

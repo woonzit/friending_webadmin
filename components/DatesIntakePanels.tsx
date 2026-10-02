@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { sourceLabel } from "@/components/DatesIntakeEventPanel";
 import DatesIntakeUrl from "@/components/DatesIntakeUrl";
 import {
-  datesIntakeInProgress, datesIntakeMediaUrl, datesIntakeReferenceHref, datesMicroUsd,
+  datesIntakeInProgress, datesIntakeMediaUrl, datesIntakeReferenceHref, datesIntakeUnreadableEvents, datesMicroUsd,
   type DatesIntakeDetail,
 } from "@/lib/datesIntakeAdmin";
 import { formatDate, formatNumber } from "@/lib/format";
@@ -30,9 +30,10 @@ export function DatesIntakeStatusPanel({ intake, polling = false }: { intake: Da
       <dt>{t("detail.channel")}</dt><dd>{intake.channel ? t(`channelValues.${intake.channel}`) : "—"}{intake.admin_principal ? ` · ${intake.admin_principal}` : ""}</dd>
       <dt>{t("queue.columns.created")}</dt><dd>{formatDate(intake.created_at, locale, true)} · {t("detail.updated", { date: formatDate(intake.updated_at, locale, true) })}</dd>
       <dt>{t("detail.revision")}</dt><dd>{intake.revision ?? "—"}</dd>
-      <dt>{t("detail.result")}</dt><dd>{intake.result ? t(`resultValues.${intake.result}`) : t("detail.noResult")}{intake.result_note ? ` · ${intake.result_note}` : ""}
+      <dt>{t("detail.result")}</dt><dd>{intake.unreadable_sections.includes("result") ? t("detail.couldNotRead") : intake.result ? t(`resultValues.${intake.result}`) : t("detail.noResult")}{intake.result_note ? ` · ${intake.result_note}` : ""}
         {intake.prohibited_category ? ` · ${t.has(`prohibitedCategories.${intake.prohibited_category}`) ? t(`prohibitedCategories.${intake.prohibited_category}`) : intake.prohibited_category}` : ""}</dd>
       {intake.budget_waiting_since !== null && <><dt>{t("detail.waitingSince")}</dt><dd>{formatDate(intake.budget_waiting_since, locale, true)}</dd></>}
+      {intake.unreadable_sections.includes("decision") && <><dt>{t("detail.decision")}</dt><dd>{t("detail.couldNotRead")}</dd></>}
       {decision && <><dt>{t("detail.decision")}</dt><dd>{t(`decisionValues.${decision.action}`)} · {decision.by === "system" ? t("detail.bySystem") : decision.by} · {formatDate(decision.at, locale, true)}
         {decision.reason_code && <div>{t(`rejectReasons.${decision.reason_code}`)}</div>}
         {decision.statement && <blockquote className="preserve-whitespace">{locale === "hu" ? decision.statement.hu : decision.statement.en}</blockquote>}</dd></>}
@@ -78,12 +79,38 @@ export function DatesIntakeInputsPanel({ intake }: { intake: DatesIntakeDetail }
             : <button type="button" className="button button-secondary" onClick={() => setShown((current) => [...current, image.index])}>{t("detail.flyerShow")}</button>}
       </figure>;
     })}
-    {intake.source_texts.unreadable.length > 0 && <p className="alert alert-error" role="status">{t("detail.unreadableTexts", { count: intake.source_texts.unreadable.length })}</p>}
-    {intake.source_texts.items.map((text) => <details key={text.label}>
+    {intake.source_texts === null && <p className="alert alert-error" role="status">{t("detail.textsUnreadable")}</p>}
+    {intake.source_texts && intake.source_texts.unreadable.length > 0 && <p className="alert alert-error" role="status">{t("detail.unreadableTexts", { count: intake.source_texts.unreadable.length })}</p>}
+    {intake.source_texts?.items.map((text) => <details key={text.label}>
       <summary>{sourceLabel(t, text.label)}{text.truncated ? ` · ${t("detail.truncated")}` : ""}</summary>
       <pre className="dates-external-payload">{text.text}</pre>
     </details>)}
   </section>;
+}
+
+/**
+ * The head of the extraction: that it is an AI draft, and what is known about
+ * its events. A list that could not be read is said to be unreadable - it is
+ * unknown, never "the AI produced no event".
+ */
+export function DatesIntakeExtractionPanel({ intake, manage, draftsOff }: { intake: DatesIntakeDetail; manage: boolean; draftsOff: boolean }) {
+  const t = useTranslations("datesAdmin.intake");
+  return <section className="panel dates-external-fields" aria-label={t("detail.extractionTitle")}>
+    <h2>{t("detail.extractionTitle")}</h2>
+    <p className="alert alert-warning">{t("detail.extractionNotice")}</p>
+    {intake.events === null ? <p className="alert alert-error" role="status">{t("detail.eventsUnreadable")}</p>
+      : intake.events.length === 0 && <p>{t("detail.noEvents")}</p>}
+    {intake.status === "in_review" && !manage && <p className="alert alert-info">{t("access.manageRequired")}</p>}
+    {intake.status === "in_review" && manage && draftsOff && <p className="alert alert-info">{t("queue.draftsOff")}</p>}
+  </section>;
+}
+
+/** A rejection decided without (all of) the extraction on screen is said to be one. */
+export function DatesIntakeRejectWarning({ intake }: { intake: DatesIntakeDetail }) {
+  const t = useTranslations("datesAdmin.intake");
+  const unreadable = datesIntakeUnreadableEvents(intake).length;
+  return intake.events === null ? <p className="alert alert-error" role="status">{t("reject.eventsUnreadable")}</p>
+    : unreadable > 0 ? <p className="alert alert-warning" role="status">{t("reject.someUnreadable", { count: unreadable })}</p> : null;
 }
 
 /** The AI calls made for this intake: which provider and model answered, and what each cost. */
@@ -92,8 +119,10 @@ export function DatesIntakeRunsPanel({ intake }: { intake: DatesIntakeDetail }) 
   const runs = intake.ai_runs;
   return <section className="panel dates-external-fields" aria-label={t("detail.runsTitle")}>
     <h2>{t("detail.runsTitle")}</h2>
-    {runs.unreadable.length > 0 && <p className="alert alert-error" role="status">{t("detail.unreadableRuns", { count: runs.unreadable.length })}</p>}
-    {runs.items.length === 0 ? <p>{t("detail.noRuns")}</p> : <div className="table-wrap"><table className="data-table">
+    {runs && runs.unreadable.length > 0 && <p className="alert alert-error" role="status">{t("detail.unreadableRuns", { count: runs.unreadable.length })}</p>}
+    {/* Unreadable is unknown: it is never worded as "no AI call". */}
+    {runs === null ? <p className="alert alert-error" role="status">{t("detail.runsUnreadable")}</p>
+      : runs.items.length === 0 ? (runs.unreadable.length === 0 ? <p>{t("detail.noRuns")}</p> : null) : <div className="table-wrap"><table className="data-table">
       <thead><tr><th>{t("usage.columns.provider")}</th><th>{t("usage.columns.task")}</th><th>{t("detail.columns.outcome")}</th><th>{t("usage.columns.tokens")}</th><th>{t("usage.columns.cost")}</th><th>{t("detail.columns.at")}</th></tr></thead>
       <tbody>{runs.items.map((run, index) => <tr key={index}>
         <td>{t(`providerValues.${run.provider}`)}<div><small><code>{run.model || "—"}</code></small></div></td>

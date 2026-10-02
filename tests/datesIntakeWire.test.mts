@@ -8,7 +8,7 @@ import { prepareDatesExternalPending, readDatesExternalPending, runDatesExternal
 import {
   DATES_INTAKE_REFUSALS, DATES_INTAKE_REJECT_REASONS, DATES_INTAKE_STATUSES, DATES_INTAKE_VOCABULARIES,
   datesAiUsageShare, datesIntakeAffordances, datesIntakeCapabilityRefused, datesIntakeEditorDraft, datesIntakeEditorGaps,
-  datesIntakeImageBytes, datesIntakeInProgress, datesIntakePublishableEvents, datesIntakeReferenceHref, datesIntakeRefusal,
+  datesIntakeImageBytes, datesIntakeInProgress, datesIntakePublishableEvents, datesIntakeReferenceHref, datesIntakeRefusal, datesIntakeUnreadableEvents,
   decodeDatesIntakeCreateReceipt, decodeDatesIntakeImage, decodeDatesIntakeLeaseReceipt, decodeDatesIntakePublishReceipt,
   decodeDatesIntakeRejectReceipt, projectDatesAiUsage, projectDatesIntakeDetail, projectDatesIntakeQueue,
   type DatesIntakeLeaseAction,
@@ -407,7 +407,16 @@ test("DERIVED: an unreadable part of a detail is named and never shown as empty,
     const intake = read((source) => { source[key] = value; })!.intake;
     assert.deepEqual(intake.unreadable_sections, [key], key);
     assert.equal(intake.intake_id, id); assert.equal(intake.controls, true);
+    // Review finding: a list that cannot be read is null - unknown - and never an empty list the page would word as "none".
+    if (key === "events" || key === "ai_runs" || key === "source_texts") assert.equal(intake[key], null, key);
   }
+  const whole = read((source) => { source.events = { rows: source.events }; source.ai_runs = "20 calls"; source.source_texts = null; })!.intake;
+  assert.deepEqual([whole.events, whole.ai_runs, whole.source_texts], [null, null, null]);
+  assert.deepEqual([...whole.unreadable_sections].sort(), ["ai_runs", "events", "source_texts"]);
+  assert.deepEqual(datesIntakePublishableEvents(whole), []); assert.deepEqual(datesIntakeUnreadableEvents(whole), []);
+  // Genuinely empty lists stay empty lists.
+  const empty = projectDatesIntakeDetail(fixture("admin-detail-received"), fixture("admin-detail-received").intake.intake_id)!.intake;
+  assert.deepEqual([empty.events, empty.ai_runs, empty.source_texts], [[], { items: [], unreadable: [] }, { items: [], unreadable: [] }]);
   const runs = read((intake) => { intake.ai_runs.push({ provider: "mistral" }); })!.intake;
   assert.deepEqual(runs.ai_runs.unreadable, [base.intake.ai_runs.length]); assert.equal(runs.ai_runs.items.length, base.intake.ai_runs.length);
   const texts = read((intake) => { intake.source_texts[0].label = "pdf:1"; })!.intake;

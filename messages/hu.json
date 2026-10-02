@@ -9254,7 +9254,11 @@
         },
         "refreshFailed": "A beküldést most nem sikerült újraolvasni. Amit látsz, elavult lehet; semmi nem változott. Próbáld újra a frissítést.",
         "progressStopped": "A feldolgozó még dolgozik rajta. A Frissítés gombbal nézheted meg, hol tart.",
-        "notLinked": "(nem https-cím: csak szövegként jelenik meg, hivatkozásként nem)"
+        "notLinked": "(nem https-cím: csak szövegként jelenik meg, hivatkozásként nem)",
+        "eventsUnreadable": "A kiolvasott események nem olvashatók: a Core olyan alakban adta őket, amelyet ez a konzol nem ismer. Nem hiányoznak, és ez nem jelenti azt, hogy az MI nem talált eseményt. Erről az oldalról semmi nem publikálható, amíg a konzol nem tudja olvasni őket.",
+        "runsUnreadable": "A beküldés MI-hívásai nem olvashatók. Ez nem jelenti azt, hogy nem volt MI-hívás; a havi adatok az MI-költés oldalon láthatók.",
+        "textsUnreadable": "A Core által a forrásból őrzött szöveg nem olvasható. Nem üres, hanem ismeretlen.",
+        "couldNotRead": "Nem olvasható"
       },
       "checks": {
         "weekday_match": "A forrásban szereplő nap egyezik a dátummal",
@@ -9310,7 +9314,9 @@
         "submit": "Elutasítás",
         "invalid": "Előbb válassz okot, és írj auditmegjegyzést.",
         "uncertain": "A Core válasza nem érkezett meg, így nem tudni, hogy az elutasítás megtörtént-e. A beküldést újraolvastuk: ha még ellenőrzés alatt áll, küldd el újra ugyanazt az elutasítást.",
-        "done": "A beküldés elutasítva."
+        "done": "A beküldés elutasítva.",
+        "eventsUnreadable": "A kiolvasott események ezen az oldalon nem olvashatók. Ha most elutasítod, úgy döntesz, hogy nem láttad, mit olvasott ki az MI. Inkább hagyd a beküldést, amíg a konzol olvasni nem tudja.",
+        "someUnreadable": "A beküldés nem olvasható eseményeinek száma: {count}. Az elutasítás ezekre is vonatkozik, bár nem láttad őket."
       },
       "publish": {
         "done": "Az esemény publikálva, a beküldés lezárult.",

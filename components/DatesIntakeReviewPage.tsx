@@ -7,7 +7,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesExternalEventForm from "@/components/DatesExternalEventForm";
 import DatesIntakeEventPanel from "@/components/DatesIntakeEventPanel";
-import { DatesIntakeInputsPanel, DatesIntakeRunsPanel, DatesIntakeStatusPanel } from "@/components/DatesIntakePanels";
+import { DatesIntakeExtractionPanel, DatesIntakeInputsPanel, DatesIntakeRejectWarning, DatesIntakeRunsPanel, DatesIntakeStatusPanel } from "@/components/DatesIntakePanels";
 import DatesIntakeRefusal from "@/components/DatesIntakeRefusal";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -206,7 +206,8 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
     draftsEnabled: result?.draftsEnabled !== false };
   const can = intake ? datesIntakeAffordances(intake, access) : null;
   const publishable = intake ? datesIntakePublishableEvents(intake) : [];
-  const editing = openEvent !== null && intake ? intake.events[openEvent] ?? null : null;
+  const events = intake?.events ?? null;
+  const editing = openEvent !== null && events ? events[openEvent] ?? null : null;
   const ownPending = pending.kind === "pending" && pending.pending.action === "dates_event_intake_publish"
     && pending.pending.body.intake_id === intakeId ? pending.pending : null;
   // A hold or a rejection needs no journal; a publication does, and only one command may be outstanding in it.
@@ -261,16 +262,10 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
 
       <DatesIntakeInputsPanel intake={intake} />
 
-      <section className="panel dates-external-fields" aria-label={t("detail.extractionTitle")}>
-        <h2>{t("detail.extractionTitle")}</h2>
-        <p className="alert alert-warning">{t("detail.extractionNotice")}</p>
-        {intake.events.length === 0 && <p>{t("detail.noEvents")}</p>}
-        {intake.status === "in_review" && !access.manage && <p className="alert alert-info">{t("access.manageRequired")}</p>}
-        {intake.status === "in_review" && access.manage && result?.draftsEnabled === false && <p className="alert alert-info">{t("queue.draftsOff")}</p>}
-      </section>
-      {intake.events.map((event, index) => event === null
+      <DatesIntakeExtractionPanel intake={intake} manage={access.manage} draftsOff={result?.draftsEnabled === false} />
+      {events?.map((event, index) => event === null
         ? <p className="alert alert-error" key={index} role="status">{t("detail.unreadableEvent", { index: index + 1 })}</p>
-        : <DatesIntakeEventPanel key={index} event={event} total={intake.events.length}>
+        : <DatesIntakeEventPanel key={index} event={event} total={events.length}>
           {intake.status === "in_review" && event.published_external_event_id === null && <div className="row-actions">
             {event.editor_unreadable ? <p className="alert alert-error" role="status">{t("editor.unreadable")}</p>
               : event.editor_input === null ? <p className="field-hint">{t("editor.noPrefill")}</p>
@@ -281,7 +276,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
         </DatesIntakeEventPanel>)}
 
       {editing && editing.editor_input && openEvent !== null && publishable.includes(openEvent) && <section className="panel dates-external-fields" aria-label={t("editor.title")}>
-        <div className="row-actions"><h2>{t("editor.title")}: {t("detail.eventTitle", { index: openEvent + 1, total: intake.events.length })}</h2>
+        <div className="row-actions"><h2>{t("editor.title")}: {t("detail.eventTitle", { index: openEvent + 1, total: events?.length ?? 0 })}</h2>
           <button className="button button-secondary" type="button" disabled={busy} onClick={() => { setOpenEvent(null); setCandidate(null); }}>{t("editor.close")}</button></div>
         <p className="alert alert-warning">{t("editor.notice")}</p>
         {/* A lost hold keeps what the reviewer typed; the form only waits for the hold to be taken again. */}
@@ -303,6 +298,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
       {intake.status === "in_review" && access.review && <section className="panel dates-external-fields" aria-label={t("reject.title")}>
         <h2>{t("reject.title")}</h2>
         <p>{t("reject.copy")}</p>
+        <DatesIntakeRejectWarning intake={intake} />
         {!can.reject && <p className="field-hint">{t(intake.published_count ? "reject.afterPublish" : "reject.holdFirst")}</p>}
         <form onSubmit={(submit) => { submit.preventDefault(); if (can.reject && !commandBlocked && rejectNote.trim() !== "") setConfirmReject(true); }}>
           <fieldset className="dates-external-fields" disabled={!can.reject || commandBlocked}>
