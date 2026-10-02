@@ -81,6 +81,13 @@ A flyer is private evidence.
   status or key set cannot be trusted is reported by position. On the review
   screen events, AI calls, source texts, flyers and whole sections degrade one
   by one and are named, never shown as empty.
+- Unknown is not empty. When a whole list (`events`, `ai_runs`, `source_texts`)
+  cannot be read the projection holds `null` for it, not `[]`, and the page says
+  that the section could not be read; the empty-state wording ("the AI produced
+  no event", "no AI call") is used only for a list Core served empty. An
+  unreadable result or decision is "could not be read", not "no answer yet".
+  While events are unreadable the reject section says that the reviewer decides
+  without having seen them.
 - A value Core recomputes (counts, unions, derived booleans, clocks) never fails
   a page.
 - Receipts of create, lease, reject, publish and the flyer read are strictly
@@ -90,8 +97,12 @@ A flyer is private evidence.
 
 - The hold (Core's five-minute review lease) is taken explicitly, renewed every
   two minutes while the review screen is open, and released explicitly. Every
-  lease action moves the intake's revision; commands and renewals are serialised
-  so that a command always carries the newest revision. A superadmin may release
+  lease action moves the intake's revision. One queue orders everything that
+  reads or moves that revision: the first read, the worker poll, Refresh, the
+  renewal and every command, so a slow read can neither overtake a renewal nor
+  be overtaken by one. The revision the page holds only moves forward: a
+  receipt raises it, and a read whose body is older than what the page holds is
+  not adopted but issued once more. A superadmin may release
   another reviewer's hold (Core's rule); nobody can take over an unexpired one.
 - Rejection: one of Core's nine reasons plus the audit note Core requires. The
   statement of reasons is Core's template for the reason, not free text.
@@ -104,7 +115,18 @@ A flyer is private evidence.
   releases it. Core records the intake on the event's ledger, which is what makes
   the event `ai_assisted`.
 - A multi-event intake is published one event at a time; `complete` says that an
-  event is the last one the reviewer takes from it.
+  event is the last one the reviewer takes from it. The console implies it only
+  when it can see that nothing else is left and nothing is unknown
+  (`datesIntakeCompletion`). With other readable events the reviewer may tick
+  "this is the last one". With an event the console could not read - or whose
+  editor prefill it could not read - the intake is never closed implicitly: the
+  reviewer chooses between publishing and leaving the intake open (the default)
+  and closing it knowing how many events were not read, and that choice is what
+  is sent and what the confirmation repeats.
+- Addresses that came with an intake (the submitted link, the page Core fetched,
+  the three validation links) are untrusted. `DatesIntakeUrl` renders all of
+  them: only a plain `https:` address without credentials is a link; `http:` and
+  every other scheme is shown as text with a note.
 
 ## Command outcomes
 
@@ -149,7 +171,9 @@ it came from:
   `{intake_id, channel, event_index}`. The provenance panel links back to
   `/dates/intakes/<intake_id>` and names the channel and which of the intake's
   events it was. Core derives the label and the reference from the same ledger
-  record, so the decoder refuses one without the other.
+  record, so the decoder refuses one without the other. The activity detail
+  carries the label on both of its projections (the activity and the embedded
+  event); the decoder refuses a body in which the two disagree.
 
 Both keys are closed like the rest of the projection. A console without this
 change refuses the new list and detail bodies (closed key sets), so this console
