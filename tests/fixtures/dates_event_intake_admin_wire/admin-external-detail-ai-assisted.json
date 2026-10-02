@@ -154,6 +154,11 @@
                 "timezone": false,
                 "content_safe": false
             }
+        },
+        "intake": {
+            "intake_id": "xin_00000000000000000000000000000005",
+            "channel": "admin_draft",
+            "event_index": 0
         }
     },
     "capabilities": [

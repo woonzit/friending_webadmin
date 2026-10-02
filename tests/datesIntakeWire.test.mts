@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { datesExternalDraftInput } from "../lib/datesExternalInput.ts";
-import { decodeDatesActivityOriginDetail, decodeDatesExternalDetail, decodeDatesExternalReceipt, datesExternalRefusal } from "../lib/datesExternalAdmin.ts";
+import { decodeDatesActivityOriginDetail, decodeDatesExternalDetail, decodeDatesExternalList, decodeDatesExternalReceipt, datesExternalRefusal } from "../lib/datesExternalAdmin.ts";
 import { prepareDatesExternalPending, readDatesExternalPending, runDatesExternalMutation } from "../lib/datesExternalMutations.ts";
 import {
   DATES_INTAKE_REFUSALS, DATES_INTAKE_REJECT_REASONS, DATES_INTAKE_STATUSES, DATES_INTAKE_VOCABULARIES,
@@ -15,17 +15,24 @@ import {
 } from "../lib/datesIntakeAdmin.ts";
 
 // T-865 P2a. The event-intake Admin wire, vendored byte-identically from the
-// Core lane's tip 06c8c3eaa51785b097b0005d3a23322ed4853179 (T-884): 113 genuine
+// Core lane's tip 285b14a87c2e9977130d4b8a0bae19cb8bbb18b9 (T-884): 114 genuine
 // bodies captured as real HTTP POSTs encoded the way lib/core.ts encodes them.
+// Against the previous pin (Core 06c8c3ea, 113 bodies, set fcf9b1ab...) one body
+// is new - the external list with an AI-assisted row - and two changed by the
+// one key Core appended: the intake reference on the two AI-assisted details.
 // Every pin below is transcribed from the Core hand-over, not derived from the
 // vendored manifest. Rows marked DERIVED are built from a genuine body for a
 // branch no genuine body carries; they are named in the lane's report.
 const DIRECTORY = new URL("./fixtures/dates_event_intake_admin_wire/", import.meta.url);
-const SOURCE = "0109e37035581eaf5e81c7d59c2621b7b3231672";
-const SOURCE_SHA = "7b3a7c3603e6889f7fdaaf717990a5127e44c3212b394dd7c7d7157311b67ed8";
-const MANIFEST_SHA = "8c0508902ba069bc0fbd7025571f7b66358c61526b586620d07d1ed4244eddd2";
-const GENERATOR_SHA = "12f4de45de9157ddb59cfb9b88e51f725fb1694d08fc28ec3ad13471aa7a5634";
-const SET_SHA = "fcf9b1ab7086b7535a2035223c00459d680051df77d2c1c1168b8a87737554ee";
+const SOURCE = "3d4a0b40c57bc254e8c59480bc06e9f398d6791e";
+const SOURCE_SHA = "ce44d184d9d88f875569a9098b4d9138a6ea8420856c62c85151dcca52b8cec4";
+const MANIFEST_SHA = "eaaa55d43dc156855b9300e778be99d873b0f163fd6cfd1fbf663fae6d584b92";
+const GENERATOR_SHA = "1f89e5c52543056d05c7f3586cc0855ae4c2c91a471aa5ad84f4ba11b4530913";
+const SET_SHA = "fc099c0b960ae628c29a82654a4917eca79611588875e643c1716a13fbd58d14";
+// The set digest of the previous pin (Core 06c8c3ea, 113 bodies), announced by the Core lane at 06:28Z.
+const PREVIOUS_SET_SHA = "fcf9b1ab7086b7535a2035223c00459d680051df77d2c1c1168b8a87737554ee";
+const ADDED = "admin-external-list-ai-assisted.json";
+const GAINED_INTAKE = ["admin-activity-detail-ai-assisted.json", "admin-external-detail-ai-assisted.json"];
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`${name}.json`, DIRECTORY), "utf8"));
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
@@ -65,7 +72,7 @@ const REFUSALS: Record<string, [string, number]> = {
   "publish-drafts-disabled": ["dates-intake-admin-drafts-disabled", 403], "usage-filter-invalid": ["dates-intake-filter-invalid", 422],
 };
 
-test("intake corpus is the complete 113-response genuine capture with independent provenance pins", () => {
+test("intake corpus is the complete 114-response genuine capture with independent provenance pins", () => {
   const manifest = fixture("manifest");
   assert.equal(hash(readFileSync(new URL("manifest.json", DIRECTORY))), MANIFEST_SHA);
   assert.equal(manifest.schema_version, 1);
@@ -75,16 +82,16 @@ test("intake corpus is the complete 113-response genuine capture with independen
   assert.equal(manifest.provenance.generator, "tests/dates_event_intake_admin_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
   assert.match(manifest.provenance.transport, /real HTTP.*application\/x-www-form-urlencoded.*No Admin route is handed a PHP int, bool or array/s);
-  assert.equal(manifest.fixture_count, 113);
+  assert.equal(manifest.fixture_count, 114);
   assert.equal(manifest.provenance.source_paths.length, 260);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   const names = [...LISTS.map((name) => `admin-list-${name}.json`), ...DETAILS.map((name) => `admin-detail-${name}.json`),
     ...CREATES.map((name) => `admin-create-${name}.json`), ...LEASES.map((name) => `admin-lease-${name}.json`),
     ...REJECT_SUCCESSES.map((name) => `admin-reject-${name}.json`), ...PUBLISHES.map((name) => `admin-${name}.json`),
     ...USAGES.map((name) => `admin-usage-${name}.json`), "admin-image-read.json", "admin-external-detail-ai-assisted.json",
-    "admin-activity-detail-ai-assisted.json", ...Object.keys(REFUSALS).map((name) => `admin-${name}-denied.json`),
+    "admin-activity-detail-ai-assisted.json", ADDED, ...Object.keys(REFUSALS).map((name) => `admin-${name}-denied.json`),
     "member-ai-assisted-detail.json", "member-ai-assisted-discover.json"].sort();
-  assert.equal(names.length, 113);
+  assert.equal(names.length, 114);
   assert.deepEqual(manifest.fixtures.map((entry: { file: string }) => entry.file), names);
   assert.deepEqual(readdirSync(DIRECTORY).sort(), ["manifest.json", ...names].sort());
   const lines = manifest.fixtures.map((entry: { file: string; sha256: string; consumer: string; http_status: number; status_code: number }) => {
@@ -97,7 +104,19 @@ test("intake corpus is the complete 113-response genuine capture with independen
     return `${entry.file}\0${entry.sha256}`;
   });
   assert.equal(hash(lines.join("\n")), SET_SHA);
-  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 73);
+  // Against the previous pin: one body is new, two gained the populated intake reference as their last key,
+  // and the other 111 are byte-identical. Without the new body and that one key the previous set digest comes back.
+  const reference = /,\n\s*"intake": \{\n\s*"intake_id": "xin_[a-f0-9]{32}",\n\s*"channel": "[a-z_]+",\n\s*"event_index": \d+\n\s*\}(?=\n\s*\})/g;
+  let changed = 0;
+  const previous = manifest.fixtures.filter((entry: { file: string }) => entry.file !== ADDED).map((entry: { file: string }) => {
+    const raw = readFileSync(new URL(entry.file, DIRECTORY), "utf8"), removed = (raw.match(reference) ?? []).length;
+    assert.equal(removed, GAINED_INTAKE.includes(entry.file) ? 1 : 0, entry.file);
+    changed += removed;
+    return `${entry.file}\0${hash(raw.replace(reference, ""))}`;
+  });
+  assert.equal(changed, 2); assert.equal(previous.length, 113); assert.equal(lines.length - changed - 1, 111);
+  assert.equal(hash(previous.join("\n")), PREVIOUS_SET_SHA);
+  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 74);
   assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code !== 200).length, 40);
 });
 
@@ -628,15 +647,46 @@ test("genuine flyer read is a closed, audited JPEG receipt; its bytes are checke
 
 // ---------------------------------------------------------------- the published event
 
-test("genuine external detail of an event published from an intake: AI-assisted, with its Places venue", () => {
+test("genuine external list with an AI-assisted row carries the label on the row", () => {
+  const body = fixture("admin-external-list-ai-assisted");
+  assert.deepEqual(decodeDatesExternalList(body, { page: body.page, limit: body.limit }), body);
+  assert.equal(body.events.length, 1);
+  assert.equal(body.events[0].ai_assisted, true); assert.equal(Object.keys(body.events[0]).at(-1), "ai_assisted");
+  // The row is the event the two AI-assisted details describe.
+  assert.equal(body.events[0].external_event_id, fixture("admin-external-detail-ai-assisted").event.external_event_id);
+  // The label is a strict boolean and part of the closed row: missing, loosely typed or joined by the detail's key is not a list.
+  for (const change of [{ ai_assisted: "true" }, { ai_assisted: 1 }, { ai_assisted: undefined }, { intake: { intake_id: xin(5), channel: "admin_draft", event_index: 0 } }]) {
+    const value = copy(body); Object.assign(value.events[0], change);
+    if (Object.hasOwn(change, "ai_assisted") && change.ai_assisted === undefined) delete value.events[0].ai_assisted;
+    assert.equal(decodeDatesExternalList(value, { page: body.page, limit: body.limit }), null, JSON.stringify(change));
+  }
+});
+test("genuine external detail of an event published from an intake: AI-assisted, its Places venue, and the intake it came from", () => {
   const body = fixture("admin-external-detail-ai-assisted");
   assert.deepEqual(decodeDatesExternalDetail(body, body.event.external_event_id), body);
   assert.equal(body.event.ai_assisted, true);
   assert.deepEqual([body.event.venue.resolved_by, body.event.venue.place_id], ["places", "ChIJ4-4EKkDcQUcRPGkz1ExWaWg"]);
   assert.equal(body.event.verification_tier, "admin"); assert.equal(body.event.credit_channel, "admin");
-  // Core serves neither the intake's id nor its channel on the event: the key set is the P1 one.
-  assert.equal(Object.keys(body.event).some((key) => /intake/.test(key)), false);
-  assert.equal(JSON.stringify(body).includes("xin_"), false);
+  // The event names the intake, its channel and which of the intake's events it was - and nothing else of it.
+  assert.deepEqual(body.event.intake, { intake_id: xin(5), channel: "admin_draft", event_index: 0 });
+  assert.equal(Object.keys(body.event).at(-1), "intake");
+  assert.doesNotMatch(JSON.stringify(body), /provider|admin_principal|source_texts|openai|gemini/);
+  // The reference is closed, and it goes with the label: Core derives both from one ledger record.
+  for (const change of [null, { intake_id: xin(5), channel: "admin_draft" }, { intake_id: xin(5), channel: "admin_draft", event_index: 0, provider: "openai" },
+    { intake_id: "xin_5", channel: "admin_draft", event_index: 0 }, { intake_id: xin(5), channel: "partner_feed", event_index: 0 },
+    { intake_id: xin(5), channel: "admin_draft", event_index: -1 }, { intake_id: xin(5), channel: "admin_draft", event_index: "0" }]) {
+    const value = copy(body); value.event.intake = change;
+    assert.equal(decodeDatesExternalDetail(value, body.event.external_event_id), null, JSON.stringify(change));
+  }
+  const unlabelled = copy(body); unlabelled.event.ai_assisted = false;
+  assert.equal(decodeDatesExternalDetail(unlabelled, body.event.external_event_id), null, "an intake reference on an event that is not AI-assisted");
+  const dropped = copy(body); delete dropped.event.intake;
+  assert.equal(decodeDatesExternalDetail(dropped, body.event.external_event_id), null);
+  // DERIVED: the two channels P2b and P3 will write decode as references too.
+  for (const channel of ["member_suggestion", "ai_research"]) {
+    const value = copy(body); value.event.intake = { intake_id: xin(9), channel, event_index: 3 };
+    assert.ok(decodeDatesExternalDetail(value, body.event.external_event_id), channel);
+  }
   assert.ok(Object.values(body.event.editor_input.confirmations).every((value) => value === false));
   // A Places venue without its id, or a pin that claims one, is not Core's ledger.
   for (const change of [{ place_id: null }, { resolved_by: "admin_pin" }]) {
@@ -649,6 +699,11 @@ test("genuine activity detail of an AI-assisted event binds the same ledger", ()
   const read = decodeDatesActivityOriginDetail(body, body.activity.activity_id, ["dates_external_event_read", "dates_external_event_manage"]);
   assert.deepEqual(read, { activity: body.activity, external: body.external_event });
   assert.equal(body.activity.ai_assisted, true); assert.equal(body.external_event.ai_assisted, true);
+  // The embedded event carries the same reference as the external detail.
+  assert.deepEqual(read!.external!.intake, { intake_id: xin(5), channel: "admin_draft", event_index: 0 });
+  assert.deepEqual(body.external_event.intake, fixture("admin-external-detail-ai-assisted").event.intake);
+  const value = copy(body); value.external_event.intake = null;
+  assert.equal(decodeDatesActivityOriginDetail(value, body.activity.activity_id, ["dates_external_event_read", "dates_external_event_manage"]), null);
 });
 test("the two member bodies of the corpus are not the console's to decode", () => {
   for (const name of ["member-ai-assisted-detail", "member-ai-assisted-discover"]) {

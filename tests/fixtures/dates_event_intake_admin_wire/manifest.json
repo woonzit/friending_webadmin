@@ -1,10 +1,10 @@
 {
     "schema_version": 1,
     "contract": "dates-event-intake-admin-v1",
-    "source_commit": "0109e37035581eaf5e81c7d59c2621b7b3231672",
-    "source_checksum": "7b3a7c3603e6889f7fdaaf717990a5127e44c3212b394dd7c7d7157311b67ed8",
-    "fixture_count": 113,
-    "fixture_set_sha256": "fcf9b1ab7086b7535a2035223c00459d680051df77d2c1c1168b8a87737554ee",
+    "source_commit": "3d4a0b40c57bc254e8c59480bc06e9f398d6791e",
+    "source_checksum": "ce44d184d9d88f875569a9098b4d9138a6ea8420856c62c85151dcca52b8cec4",
+    "fixture_count": 114,
+    "fixture_set_sha256": "fc099c0b960ae628c29a82654a4917eca79611588875e643c1716a13fbd58d14",
     "vocabularies": {
         "status": [
             "received",
@@ -578,7 +578,7 @@
     },
     "provenance": {
         "generator": "tests/dates_event_intake_admin_fixture_dump.php",
-        "generator_sha256": "12f4de45de9157ddb59cfb9b88e51f725fb1694d08fc28ec3ad13471aa7a5634",
+        "generator_sha256": "1f89e5c52543056d05c7f3586cc0855ae4c2c91a471aa5ad84f4ba11b4530913",
         "transport": "Admin bodies: real HTTP. Core's public/index.php runs under PHP's own web server on 127.0.0.1 and every call is a POST encoded as the Webadmin's lib/core.ts encodes it - application/x-www-form-urlencoded;charset=UTF-8 with every value a string (boolean \"1\"/\"0\", number its decimal string, object one JSON string), multipart/form-data for a flyer upload - so PHP's own body parsing, $_POST, $_FILES and the Router serve it (tests/support/event_intake_http.php). No Admin route is handed a PHP int, bool or array. Member bodies: in-process Router dispatch, as the P1 member corpus.",
         "wire_adapters": [
             "public/index.php -> Friending\\Core\\Router::dispatch -> Friending\\Support\\Webadmin::noStoreReply",
@@ -864,7 +864,7 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "d7f449ca3a6e293e1623521192ca10a8935004195bdd0775f8e8967cb91d6898"
+            "sha256": "cc0b89c299cda17fcf19f0c8999acbd0ba86ff33263c7941d007b92f0bf8adf3"
         },
         {
             "file": "admin-create-drafts-disabled-denied.json",
@@ -1242,7 +1242,14 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "d614019155291078d9ad0a51c0954c6303948d3ac1bda8c056fe1de2ae1a8b8b"
+            "sha256": "08e890c97a7334ea4b4b83c93d364bfb702a5cab052e70d568616ab1b342ba5d"
+        },
+        {
+            "file": "admin-external-list-ai-assisted.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "9c855433bb0c2a8be91fb2b17fe15c0a854c8ac19cf4328dd278324fcd546320"
         },
         {
             "file": "admin-image-read.json",

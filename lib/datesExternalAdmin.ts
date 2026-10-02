@@ -4,7 +4,7 @@ import {
   normalizeDatesExternalEditorInput, normalizeDatesExternalManualEvent,
   type DatesExternalEditorInput,
 } from "@/lib/datesExternalInput";
-import { decodeDatesIntakePublishReceipt, normalizeDatesIntakePublishBody, type DatesIntakePublishReceipt } from "@/lib/datesIntakeAdmin";
+import { DATES_INTAKE_CHANNELS, decodeDatesIntakePublishReceipt, normalizeDatesIntakePublishBody, type DatesIntakePublishReceipt } from "@/lib/datesIntakeAdmin";
 
 export const DATES_EXTERNAL_ACTIONS = [
   "dates_external_event_list", "dates_external_event_detail",
@@ -59,8 +59,13 @@ const rowShape = {
   checked_at: epoch, next_reverify_at: epoch, credit_channel: oneOf(DATES_EXTERNAL_CHANNELS),
   going_count: integer(), interested_count: integer(), created_at: epoch, updated_at: epoch, can_edit: bool,
 };
-const rowGuard = object(rowShape);
+// P2a: the list row ends with the label the detail carries. `rowShape` stays the
+// part both share; the detail has its own `ai_assisted` among its extra keys.
+const rowGuard = object({ ...rowShape, ai_assisted: bool });
 export type DatesExternalRow = Parsed<typeof rowGuard>;
+/** The intake an event was published from, as Core's ledger recorded it: never the provider, never a person. */
+const intakeReferenceGuard = object({ intake_id: id("xin"), channel: oneOf(DATES_INTAKE_CHANNELS), event_index: integer(0) });
+export type DatesExternalIntakeReference = Parsed<typeof intakeReferenceGuard>;
 
 const envelope = { success: literal(true), status_code: literal(200), message: literal(200), status: literal(200), can_send: literal(0), server_now: epoch };
 const placeText = (minimum: number, maximum: number): Guard<string> => (value): value is string => text(minimum, maximum)(value)
@@ -120,7 +125,8 @@ const detailRowGuard = object({ ...rowShape, facts: object(factsShape), venue: o
   image: object({ kind: literal("category_art"), url: literal(null), credit: literal(null), license_note: literal(null) }),
   credit: object({ channel: oneOf(DATES_EXTERNAL_CHANNELS), submitted_by_uid: nullable(integer(1)), anonymous: bool, first_submitter_uid: nullable(integer(1)) }),
   // P2a: true exactly when Core's ledger records the AI intake that drafted the event.
-  sources: array(sourceGuard, 20, 1), ai_assisted: bool, editor_input: freshEditor });
+  // `intake` is null for a manual event and names the intake of an AI-drafted one.
+  sources: array(sourceGuard, 20, 1), ai_assisted: bool, editor_input: freshEditor, intake: nullable(intakeReferenceGuard) });
 export type DatesExternalDetailRow = Parsed<typeof detailRowGuard>;
 const detailGuard = object({ ...envelope, event: detailRowGuard, capabilities });
 export type DatesExternalDetail = Parsed<typeof detailGuard>;
@@ -179,6 +185,8 @@ export function decodeDatesExternalEvent(value: unknown, caps: string[], now: nu
     || row.next_reverify_at !== row.verification.next_reverify_at || row.sources[0].url !== editor.source_url
     || row.credit.channel !== row.credit_channel
     || (row.venue.resolved_by === "places") !== (row.venue.place_id !== null)
+    // Core derives both from the same ledger record: an AI-assisted event names its intake, a manual one has none.
+    || row.ai_assisted !== (row.intake !== null)
     || (row.credit.channel === "admin" && (row.credit.submitted_by_uid !== null || row.credit.first_submitter_uid !== null || !row.credit.anonymous))
     || new Set(row.sources.map((source) => source.source_id)).size !== row.sources.length
     || row.sources.some((source) => new URL(source.url).hostname !== source.hostname || source.confirmed_at > now)) return null;

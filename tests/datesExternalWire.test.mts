@@ -11,20 +11,32 @@ import { datesConfigurationRawValue, datesSettingEffectiveText, permittedResolut
 import { DATES_RUNTIME_HELP_GROUPS } from "../lib/datesRuntimeHelp.ts";
 import { prepareDatesExternalPending, readDatesExternalPending, runDatesExternalMutation } from "../lib/datesExternalMutations.ts";
 
-// Actual Router/Webadmin capture, byte-identical to Core 06c8c3eaa51785b097b0005d3a23322ed4853179 (T-884, P2a).
-// Against the FINAL P1 pin (Core 51140a6f, set d84a3e16...) exactly two bodies changed - the two
-// configuration reads, which gained the eight intake settings - and the other 136 are byte-identical;
-// `P1_BODIES` below pins that, body by body. The generator is the P1 one, unchanged.
-// The source/generator pin is intentionally independent of the vendored manifest.
+// Actual Router/Webadmin capture, byte-identical to Core 285b14a87c2e9977130d4b8a0bae19cb8bbb18b9 (T-884, P2a).
+// Three pins of the same directory are kept apart, so that a change cannot hide behind the newest set digest:
+// - the current set (Core 285b14a8);
+// - the previous one (Core 06c8c3ea), from which exactly 23 bodies differ, each by ONE appended key:
+//   nine list bodies whose rows gained `ai_assisted: false`, thirteen detail bodies and the external
+//   activity detail whose event gained `intake: null`; the other 115 are byte-identical;
+// - the accepted P1 pin (Core 51140a6f, set d84a3e16...), from which the two configuration reads also
+//   differ (they gained the eight intake settings); 113 bodies are byte-identical to it.
+// The generator is the P1 one, unchanged. The source/generator pin is independent of the vendored manifest.
 const DIRECTORY = new URL("./fixtures/dates_external_admin_wire/", import.meta.url);
-const SOURCE = "74de12591f9d0f24e6a80316dfe397bc695177c7";
-const SOURCE_SHA = "0202c584b025c4509391ed9db5732fd9add8e3fb74975b8671e5ab82c85b1704";
-const MANIFEST_SHA = "2010f3ea75f2c9f283bcd8943140101cd074a7a2c1c4b68c5c2b0779c116548a";
+const SOURCE = "3d4a0b40c57bc254e8c59480bc06e9f398d6791e";
+const SOURCE_SHA = "d6d45fffc7fb0c4559cef7b02909a3a7f9debbcc1383560fe2ec1b88638f90dd";
+const MANIFEST_SHA = "11f99cd2bf5b72f6a13a5ca80efe02a800cc02baecee02ccc4527a41551e28b4";
 const GENERATOR_SHA = "51e746e0946ddac4319b56cdff0adcc7107a320ed08e1ca1a1f70fa7d90fbf3d";
-const SET_SHA = "9ac34b0ba9b466c199d5984d7f1a607fadc9d9bb18d0cb27b4a75a48357c29a3";
-// The body set of the accepted P1 pin with the two configuration bodies taken out: 136 entries.
-const P1_UNCHANGED_SET_SHA = "b97e6e547021e7a6bec01487872366880d74910d6ddb4b9d58c628d7d0cfe7c1";
-const P1_CHANGED = ["admin-configuration-default-off.json", "admin-configuration-publishing-on.json"];
+const SET_SHA = "112db40de1134bffbfebda663b8f4d79e09e9d9e87fc312b3ec7c3c225911958";
+// The set digest of the previous pin (Core 06c8c3ea), announced by the Core lane at 06:28Z.
+const PREVIOUS_SET_SHA = "9ac34b0ba9b466c199d5984d7f1a607fadc9d9bb18d0cb27b4a75a48357c29a3";
+// The body set of the accepted P1 pin with the 25 bodies P2a changed taken out: 113 entries
+// (computed from the P1 manifest at Webadmin 7825bc13).
+const P1_UNCHANGED_SET_SHA = "390d733b3ac98ee850735087c90863411aa0cef37dd2cda4826f9bebbd5cd631";
+const CONFIGURATION_CHANGED = ["admin-configuration-default-off.json", "admin-configuration-publishing-on.json"];
+const LIST_GAINED_LABEL = ["admin-held-list.json", "admin-list-admin.json", "admin-list-canceled.json", "admin-list-viewer.json",
+  ...["match", "pacific", "paid", "participation", "sensitive"].map((name) => `admin-variety-${name}-list.json`)];
+const DETAIL_GAINED_INTAKE = ["admin-detail-admin.json", "admin-detail-canceled.json", "admin-detail-estimated.json", "admin-detail-viewer.json",
+  "admin-held-detail.json", "admin-held-detail-canceled.json", "admin-held-detail-reverified.json", "admin-held-detail-updated.json",
+  ...["match", "pacific", "paid", "participation", "sensitive"].map((name) => `admin-variety-${name}-detail.json`), "admin-activity-detail-external.json"];
 const LISTS = ["admin", "canceled", "empty", "filter-empty", "page-empty", "viewer"];
 const DETAILS = ["admin", "canceled", "estimated", "viewer"];
 const PLACES = ["available", "empty", "rate-limited", "unavailable"];
@@ -82,9 +94,35 @@ test("external console corpus is the complete 138-response genuine capture with 
     return `${entry.file}\0${entry.sha256}`;
   });
   assert.equal(hash(lines.join("\n")), SET_SHA);
-  // P2a changed two bodies and nothing else: the other 136 hash to what the accepted P1 pin held.
-  assert.equal(hash(lines.filter((line: string) => !P1_CHANGED.includes(line.split("\0")[0])).join("\n")), P1_UNCHANGED_SET_SHA);
-  assert.equal(lines.length - P1_CHANGED.length, 136);
+  // Against the previous pin: exactly 23 bodies changed, each by one appended key, and 115 are byte-identical.
+  // Taking that one key out of the raw bytes of each of the 23 gives the previous set digest back.
+  const gained = [...LIST_GAINED_LABEL, ...DETAIL_GAINED_INTAKE];
+  assert.equal(LIST_GAINED_LABEL.length, 9); assert.equal(DETAIL_GAINED_INTAKE.length, 14); assert.equal(new Set(gained).size, 23);
+  const appended = /,\n\s*"(?:ai_assisted": false|intake": null)(?=\n\s*\})/g;
+  let changed = 0;
+  const previous = manifest.fixtures.map((entry: { file: string; sha256: string }) => {
+    const raw = readFileSync(new URL(entry.file, DIRECTORY), "utf8"), without = raw.replace(appended, "");
+    const removed = (raw.match(appended) ?? []).length;
+    if (gained.includes(entry.file)) {
+      changed++;
+      const body = JSON.parse(raw);
+      if (LIST_GAINED_LABEL.includes(entry.file)) {
+        // Every row ends with the label; these are all manually entered events.
+        assert.ok(body.events.length > 0 && removed === body.events.length, entry.file);
+        for (const row of body.events) { assert.equal(Object.keys(row).at(-1), "ai_assisted"); assert.equal(row.ai_assisted, false); }
+      } else {
+        const event = body.event ?? body.external_event;
+        assert.equal(removed, 1, entry.file); assert.equal(Object.keys(event).at(-1), "intake"); assert.equal(event.intake, null);
+      }
+    } else assert.equal(removed, 0, `${entry.file} carries neither appended key`);
+    return `${entry.file}\0${hash(without)}`;
+  });
+  assert.equal(changed, 23); assert.equal(lines.length - changed, 115);
+  assert.equal(hash(previous.join("\n")), PREVIOUS_SET_SHA);
+  // Against the accepted P1 pin: the same 23 and the two configuration reads; the other 113 hash to what P1 held.
+  const sinceP1 = [...gained, ...CONFIGURATION_CHANGED];
+  assert.equal(hash(lines.filter((line: string) => !sinceP1.includes(line.split("\0")[0])).join("\n")), P1_UNCHANGED_SET_SHA);
+  assert.equal(lines.length - sinceP1.length, 113);
   assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 94);
   assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code !== 200).length, 44);
 });
@@ -174,6 +212,8 @@ for (const name of CONSOLE_REFUSALS) test(`genuine console ${name} is never a su
 for (const name of LISTS) test(`genuine external list ${name} passes the production decoder unchanged`, () => {
   const body = fixture(`admin-list-${name}`);
   assert.deepEqual(decodeDatesExternalList(body, { page: body.page, limit: body.limit }), body);
+  // P2a: every row carries the label; none of these P1 events was drafted by the AI.
+  for (const row of body.events) assert.equal(row.ai_assisted, false);
 });
 for (const name of DETAILS) test(`genuine external detail ${name} passes the production decoder unchanged`, () => {
   const body = fixture(`admin-detail-${name}`);
@@ -182,6 +222,7 @@ for (const name of DETAILS) test(`genuine external detail ${name} passes the pro
   assert.equal(body.event.can_edit, name === "admin" || name === "estimated");
   assert.equal(body.event.editor_input.end_at === null, name === "estimated" || name === "canceled");
   assert.equal(body.event.ai_assisted, false);
+  assert.equal(body.event.intake, null, "a manually entered event was published from no intake");
   assert.deepEqual([body.event.venue.place_id, body.event.venue.resolved_by], [null, "admin_pin"]);
   assert.deepEqual(body.event.credit, { channel: "admin", submitted_by_uid: null, anonymous: true, first_submitter_uid: null });
 });

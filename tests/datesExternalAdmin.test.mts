@@ -53,9 +53,12 @@ function sample() {
       credit: { channel: "admin", submitted_by_uid: null, anonymous: true, first_submitter_uid: null },
       sources: [{ source_id: "src_" + "c".repeat(32), kind: "admin", url: input.source_url, hostname: "events.example", confirmed_at: now - 60 }],
       ai_assisted: false, editor_input: { ...input, confirmations: { source: false, public_venue: false, timezone: false, content_safe: false } },
+      // P2a: the detail ends with the intake it was published from; a manual event has none.
+      intake: null as null | Record<string, unknown>,
     },
   };
-  return { input, row, detail, list: { ...envelope, capabilities: [...caps], events: [row], page: 1, limit: 40, total: 1 } };
+  // P2a: the list row ends with the label the detail carries.
+  return { input, row, detail, list: { ...envelope, capabilities: [...caps], events: [{ ...row, ai_assisted: false }], page: 1, limit: 40, total: 1 } };
 }
 
 test("strict external reads accept populated and empty pages and distinguish ledger/activity revisions", () => {
@@ -103,6 +106,9 @@ test("list refuses envelope, pagination, duplicate, ordering and loosely typed s
     (v) => { v.events[0].can_edit = "true"; }, (v) => { v.events[0].start_at *= 1000; },
     (v) => { v.events[0].start_local = "not-a-Core-local-timestamp"; },
     (v) => { v.events[0].credit_channel = "browser"; }, (v) => { v.capabilities = []; },
+    // P2a: the row's label is a strict boolean and part of the closed key set.
+    (v) => { delete v.events[0].ai_assisted; }, (v) => { v.events[0].ai_assisted = "false"; }, (v) => { v.events[0].ai_assisted = null; },
+    (v) => { v.events[0].intake = null; },
     (v) => { v.capabilities.push(v.capabilities[0]); }, (v) => { v.total = -1; },
     (v) => { v.events.push(v.events[0]); v.total = 2; }, (v) => { v.page = 2; },
   ];
@@ -149,13 +155,21 @@ test("detail binds all editor facts to the projected event and never reuses hist
     // P2a: a Places venue carries its place id, an administrator's pin never does.
     (v) => { v.event.venue.place_id = "ChIJ4-4EKkDcQUcRPGkz1ExWaWg"; }, (v) => { v.event.venue.resolved_by = "places"; },
     (v) => { v.event.venue.resolved_by = "geocode"; }, (v) => { v.event.venue.place_id = "bad/id"; },
+    // P2a: the intake reference is closed, and Core derives it and the label from one ledger record.
+    (v) => { delete v.event.intake; }, (v) => { v.event.intake = { intake_id: "xin_" + "5".repeat(32), channel: "admin_draft", event_index: 0 }; },
+    (v) => { v.event.ai_assisted = true; },
     (v) => { v.event.credit.submitted_by_uid = 12; }, (v) => { v.event.credit.anonymous = false; },
   ];
   for (const mutate of mutations) { const value = sample().detail; mutate(value); assert.equal(decodeDatesExternalDetail(value, externalId), null); }
   // P2a (derived from the synthetic sample): an AI-assisted event with a Places venue decodes.
   const assisted = sample().detail;
   assisted.event.ai_assisted = true; assisted.event.venue.place_id = "ChIJ4-4EKkDcQUcRPGkz1ExWaWg"; assisted.event.venue.resolved_by = "places";
+  assisted.event.intake = { intake_id: "xin_" + "5".repeat(32), channel: "member_suggestion", event_index: 3 };
   assert.ok(decodeDatesExternalDetail(assisted, externalId));
+  for (const change of [{ intake_id: "xin_5" }, { channel: "partner_feed" }, { event_index: -1 }, { event_index: "0" }, { provider: "openai" }, { admin_principal: "a@example.test" }]) {
+    const value = JSON.parse(JSON.stringify(assisted)); Object.assign(value.event.intake, change);
+    assert.equal(decodeDatesExternalDetail(value, externalId), null, JSON.stringify(change));
+  }
   const { input, detail } = sample();
   assert.ok(normalizeDatesExternalManualEvent(input));
   assert.equal(normalizeDatesExternalManualEvent(detail.event.editor_input), null);
