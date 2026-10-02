@@ -704,6 +704,21 @@ test("genuine activity detail of an AI-assisted event binds the same ledger", ()
   assert.deepEqual(body.external_event.intake, fixture("admin-external-detail-ai-assisted").event.intake);
   const value = copy(body); value.external_event.intake = null;
   assert.equal(decodeDatesActivityOriginDetail(value, body.activity.activity_id, ["dates_external_event_read", "dates_external_event_manage"]), null);
+  // Review finding (T-885, 3f6eb526): the label is one ledger fact. An activity that says "not AI" beside an
+  // intake-backed event - or the reverse - is contradictory provenance and is refused, whichever side is flipped.
+  const caps = ["dates_external_event_read", "dates_external_event_manage"];
+  const activityOff = copy(body); activityOff.activity.ai_assisted = false;
+  assert.equal(decodeDatesActivityOriginDetail(activityOff, body.activity.activity_id, caps), null, "activity says manual, the event names its intake");
+  // The nested event made self-consistently manual (no label, no reference) while the activity still says AI-assisted.
+  const eventOff = copy(body); eventOff.external_event.ai_assisted = false; eventOff.external_event.intake = null;
+  assert.equal(decodeDatesExternalDetail({ ...fixture("admin-external-detail-ai-assisted"), event: eventOff.external_event }, eventOff.external_event.external_event_id) !== null, true,
+    "the nested event alone is a valid manual event, so only the cross-check can refuse the pair");
+  assert.equal(decodeDatesActivityOriginDetail(eventOff, body.activity.activity_id, caps), null, "activity says AI-assisted, the event is manual");
+  // The same check on a genuine manual pair: flipping the activity's label alone is refused.
+  const manual = JSON.parse(readFileSync(new URL("./fixtures/dates_external_admin_wire/admin-activity-detail-external.json", import.meta.url), "utf8"));
+  assert.ok(decodeDatesActivityOriginDetail(manual, manual.activity.activity_id, caps));
+  const manualOn = copy(manual); manualOn.activity.ai_assisted = true;
+  assert.equal(decodeDatesActivityOriginDetail(manualOn, manual.activity.activity_id, caps), null);
 });
 test("the two member bodies of the corpus are not the console's to decode", () => {
   for (const name of ["member-ai-assisted-detail", "member-ai-assisted-discover"]) {

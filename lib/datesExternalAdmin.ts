@@ -293,7 +293,9 @@ export function decodeDatesActivityOriginDetail(response: unknown, activityId: s
     || external.country_code !== activity.country_code || external.soft_deleted !== activity.soft_deleted
     || external.lifecycle !== activity.lifecycle || external.moderation_state !== activity.moderation_state
     || external.organizer_name !== activity.organizer_name || external.organizer.website !== activity.organizer_url
-    || external.verification_tier !== activity.verification_tier) return null;
+    || external.verification_tier !== activity.verification_tier
+    // One ledger record says whether the AI drafted the event; the two projections cannot disagree about it.
+    || external.ai_assisted !== activity.ai_assisted) return null;
   return { activity, external };
 }
 
