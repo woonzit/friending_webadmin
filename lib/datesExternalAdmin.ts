@@ -391,16 +391,21 @@ const refusalCodes: Readonly<Record<number, readonly string[]>> = {
   // `dates-trail-evidence-window-invalid`), and the conflict-of-interest refusals
   // (`dates-moderation-conflict`), which the accepted external-resolution
   // journal already treats as not settling a command.
+  // The host-transfer request is the third command Core does not durably fence (its pending guard ends on a decline or
+  // an expiry), so its tokens are named as well: all raised inside the request's transaction or by a check of the
+  // request alone. Not named: `dates-disabled`, which is read from a switch before the receipt lookup.
   403: ["dates-external-publishing-disabled", "dates-intake-admin-drafts-disabled", "dates-intake-lease-owner-required"],
   404: ["dates-external-unavailable", "dates-admin-activity-unavailable", "dates-intake-unavailable",
-    "dates-moderation-case-unavailable", "dates-moderation-evidence-unavailable", "dates-trail-evidence-unavailable"],
+    "dates-moderation-case-unavailable", "dates-moderation-evidence-unavailable", "dates-trail-evidence-unavailable",
+    "dates-activity-unavailable"],
   409: ["dates-external-conflict", "dates-external-duplicate", "dates-external-content-state-invalid",
     "dates-external-projection-unavailable", "dates-external-command-state-invalid", "dates-external-thread-unavailable", "dates-thread-read-only",
     "dates-admin-stale-revision", "dates-admin-activity-purge-not-eligible", "dates-admin-activity-open-case", "dates-admin-activity-legal-hold",
     "dates-admin-activity-not-deleted", "dates-admin-activity-deleted", "dates-admin-activity-terminal",
     "dates-intake-conflict", "dates-intake-lease-required", "dates-intake-event-unavailable",
     "dates-intake-claimed", "dates-intake-lease-lost", "dates-intake-state-invalid",
-    "dates-legal-hold-case-open", "dates-legal-hold-media-purge-started", "dates-trail-evidence-activity-unavailable"],
+    "dates-legal-hold-case-open", "dates-legal-hold-media-purge-started", "dates-trail-evidence-activity-unavailable",
+    "dates-host-transfer-already-pending", "dates-host-transfer-target-not-joined", "dates-host-transfer-ineligible", "dates-stale-revision"],
   // A request larger than Core reads at all.
   413: ["dates-intake-image-invalid"],
   422: ["dates-external-id-invalid", "dates-external-revision-invalid", "dates-external-filter-invalid", "dates-external-input-invalid",
@@ -415,7 +420,8 @@ const refusalCodes: Readonly<Record<number, readonly string[]>> = {
     "dates-intake-text-invalid", "dates-intake-origin-invalid", "dates-intake-image-invalid", "dates-intake-reason-invalid",
     "dates-intake-lease-invalid",
     "dates-moderation-case-id-invalid", "dates-moderation-target-invalid", "dates-legal-hold-action-invalid",
-    "dates-admin-revision-invalid", "dates-trail-evidence-range-too-large"],
+    "dates-admin-revision-invalid", "dates-trail-evidence-range-too-large",
+    "dates-host-transfer-target-invalid", "dates-admin-activity-id-invalid", "dates-admin-revision-required"],
 };
 
 /** Only pinned Core no-land refusals release an attempted command's identity. */

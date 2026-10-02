@@ -370,8 +370,8 @@ test("a revision-fenced case command is worded as unknown when nothing says whet
 // ---------------------------------------------------------------- the activity page
 
 const activityPage = functionsOf("../app/(dashboard)/dates/[activityId]/page.tsx", "DatesActivityDetailPage");
-const activityCode = compile(`${["reportFailure", "executeCommand", "requestTransfer"].map(activityPage.text).join("\n")}
-  exports.executeCommand = executeCommand; exports.requestTransfer = requestTransfer;`);
+const activityCode = compile(`${["reportFailure", "executeCommand", "requestTransfer", "sendTransfer"].map(activityPage.text).join("\n")}
+  exports.executeCommand = executeCommand; exports.requestTransfer = requestTransfer; exports.sendTransfer = sendTransfer;`);
 const ACTIVITY_ID = "act_" + "0".repeat(31) + "2";
 
 /**
@@ -388,12 +388,13 @@ function activityModel(revision: number) {
 }
 function activityHarness(reply: (action: string, body: Record<string, any>) => unknown) {
   const sent: Array<{ action: string; body: Record<string, any> }> = [], state: Record<string, any> = {}, writes: string[] = [];
-  const context: any = { exports: {}, busy: false, data: { activity: { activity_id: ACTIVITY_ID, revision: 4, host: { uid: 7 } } }, pendingCommand: { action: "end", reason: "Reported as over." },
+  const context: any = { exports: {}, busy: false, activityId: ACTIVITY_ID, transferCommand: null,
+    data: { activity: { activity_id: ACTIVITY_ID, revision: 4, host: { uid: 7 } } }, pendingCommand: { action: "end", reason: "Reported as over." },
     transferUid: "42", transferReason: "The host asked for it.", datesCommandOutcome, createAdminIdempotencyKey, t: translator(""), commandOutcome: translator("outcome."),
     load: async () => { writes.push("load"); }, window: { location: { assign: (target: string) => { writes.push(`go:${target}`); } } },
     adminCall: async (action: string, body: Record<string, any>) => { sent.push({ action, body: plain(body) }); return reply(action, plain(body)); } };
-  for (const name of ["Busy", "Feedback", "PendingCommand", "CommandReason", "TransferUid", "TransferReason"])
-    context[`set${name}`] = (value: unknown) => { state[name] = value; writes.push(name); };
+  for (const name of ["Busy", "Feedback", "PendingCommand", "CommandReason", "TransferUid", "TransferReason", "TransferCommand"])
+    context[`set${name}`] = (value: unknown) => { state[name] = value; writes.push(name); if (name === "TransferCommand") context.transferCommand = value; };
   vm.runInNewContext(activityCode, context);
   return { context, state, writes, sent, api: context.exports as Record<string, (...values: any[]) => Promise<any>> };
 }
@@ -426,14 +427,100 @@ test("activity commands: a lost reply is an unknown outcome, and Core's revision
     const body = fixture(name), h = activityHarness(() => body); await h.api.executeCommand();
     assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: `operationFailed:${body.error}` }, name);
   }
-  // The host transfer: the same two wordings. Core fences it with `dates-host-transfer-already-pending` (TRANSCRIBED:
-  // DatesHostTransferService::request 59-65), which is a refusal like any other.
-  const lost = activityHarness(() => null); await lost.api.requestTransfer(submit);
-  assert.equal(lost.state.Feedback.text, "outcome.unknown:"); assert.equal(lost.writes.includes("TransferUid"), false);
-  const pending = activityHarness(() => core("dates-host-transfer-already-pending", 409)); await pending.api.requestTransfer(submit);
-  assert.equal(pending.state.Feedback.text, "operationFailed:dates-host-transfer-already-pending");
-  assert.equal((activityPage.source.match(/datesCommandOutcome\(response, response\?\.success === true, "fresh"\)/g) ?? []).length, 3, "save, command, host transfer");
-  assert.doesNotMatch(activityPage.source, /"kept"/);
+  assert.equal((activityPage.source.match(/datesCommandOutcome\(response, response\?\.success === true, "fresh"\)/g) ?? []).length, 2, "the edit and the lifecycle command");
+});
+
+/**
+ * TRANSCRIBED from Core main 07215298, DatesHostTransferService. `request` (20-135) checks the activity's revision
+ * (eligibleActivity, 452-470) but does not move it, and refuses only while a transfer of the activity is active and
+ * pending (59-65). `resolve` with a decline (241-249) and `expireDue` (184-207) unset that mark without touching the
+ * activity. So after a decline or an expiry the same request under a NEW key is inserted again: a second transfer, a
+ * second outbox notification, a second audit row (74-119). Under the SAME key the stored receipt is replayed.
+ */
+function transferModel(revision: number) {
+  const receipts = new Map<string, Record<string, unknown>>(), inserted: string[] = [];
+  let pending = false, sequence = 0;
+  return { inserted, decline() { pending = false; }, answer(body: Record<string, any>) {
+    const replay = receipts.get(body.idempotency_key);
+    if (replay) return { ...replay, idempotency_replayed: true };
+    if (body.expected_revision !== revision) return core("dates-stale-revision", 409);
+    if (pending) return core("dates-host-transfer-already-pending", 409);
+    pending = true; inserted.push(body.idempotency_key);
+    const receipt = { success: true, status_code: 200, transfer_id: `trf_${(++sequence).toString(16).padStart(32, "0")}`, activity_id: body.activity_id, target_uid: body.target_uid,
+      transfer_status: "pending", revision: 1, idempotency_replayed: false, server_now: 1790000000, message: 200, status: 200, can_send: 0 };
+    receipts.set(body.idempotency_key, receipt);
+    return receipt;
+  } };
+}
+
+test("review finding: a host transfer is not durably fenced - the page offers the same request again, and says what a new one would do", async () => {
+  // The hazard, on the model of Core: the request lands, the target declines, and the same request under a new key is a second transfer.
+  const hazard = transferModel(4), request = { activity_id: ACTIVITY_ID, target_uid: 42, expected_revision: 4, reason: "The host asked for it." };
+  hazard.answer({ ...request, idempotency_key: "dates-host-transfer:00000000-0000-4000-8000-000000000001" });
+  assert.equal(hazard.answer({ ...request, idempotency_key: "dates-host-transfer:00000000-0000-4000-8000-000000000002" }).error, "dates-host-transfer-already-pending", "refused only while it is pending");
+  hazard.decline();
+  hazard.answer({ ...request, idempotency_key: "dates-host-transfer:00000000-0000-4000-8000-000000000003" });
+  assert.equal(hazard.inserted.length, 2, "after a decline the pending guard is gone and the revision never moved");
+
+  for (const [name, lost, token] of LOST) {
+    // adminCall never throws (it answers null), and this route has no receipt check yet: see the next test.
+    if (lost instanceof Error || (lost as any)?.success === true) continue;
+    const model = transferModel(4);
+    let lose = true;
+    const h = activityHarness((_action, body) => { const answer = model.answer(body); return lose ? lost : answer; });
+    await h.api.requestTransfer(submit);
+    assert.equal(model.inserted.length, 1, `${name}: Core created the transfer`);
+    const first = h.sent[0].body;
+    assert.deepEqual({ ...first, idempotency_key: null }, { ...request, idempotency_key: null });
+    assert.match(first.idempotency_key, /^dates-host-transfer:[0-9a-f-]{36}$/);
+    // Not "failed": the outcome is not known, and the request - key included - is offered again.
+    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: token === null ? "outcome.kept:" : `outcome.keptAnswered:${token}` }, name);
+    assert.deepEqual(plain(h.state.TransferCommand), first, name);
+    for (const field of ["TransferUid", "TransferReason"]) assert.equal(h.writes.includes(field), false, "the form keeps what was sent");
+    assert.equal(h.writes.includes("load"), false);
+    // The target declines meanwhile - the case in which a new key would be a second transfer. The operator sends the
+    // SAME request again: Core answers with the first attempt's receipt and inserts nothing.
+    model.decline(); lose = false;
+    await h.api.sendTransfer(h.context.transferCommand);
+    assert.equal(model.inserted.length, 1, `${name}: one transfer`);
+    assert.deepEqual(h.sent[1].body, first, "byte-for-byte the same request");
+    assert.deepEqual(plain(h.state.Feedback), { tone: "success", text: "transferRequested" });
+    assert.equal(h.state.TransferCommand, null); assert.ok(h.writes.includes("load"));
+    for (const field of ["TransferUid", "TransferReason"]) assert.equal(h.state[field], "", field);
+  }
+  // What the console does NOT prevent (nothing is locked, nothing is stored): the form submitted anew after the decline
+  // is a new key, and Core inserts a second transfer. That is the Core finding (T-891), shown here on the model.
+  {
+    const model = transferModel(4);
+    let lose = true;
+    const h = activityHarness((_action, body) => { const answer = model.answer(body); return lose ? null : answer; });
+    await h.api.requestTransfer(submit);
+    model.decline(); lose = false;
+    await h.api.requestTransfer(submit);
+    assert.notEqual(h.sent[1].body.idempotency_key, h.sent[0].body.idempotency_key);
+    assert.equal(model.inserted.length, 2);
+    assert.equal(h.state.TransferCommand, null, "the answered request leaves nothing to offer");
+  }
+  // Which answers end the offer: Core's refusals raised inside the request's transaction or by a check of the request.
+  for (const [answer, settled] of [[core("dates-host-transfer-already-pending", 409), true], [core("dates-host-transfer-target-not-joined", 409), true],
+    [core("dates-host-transfer-ineligible", 409), true], [core("dates-stale-revision", 409), true], [core("dates-activity-unavailable", 404), true],
+    [core("dates-host-transfer-target-invalid", 422), true], [core("dates-admin-revision-required", 422), true],
+    // read from a switch before the receipt lookup; a capability check; Core still running the first attempt
+    [core("dates-disabled", 403), false], [core("dates-admin-capability-required", 403), false], [core("dates-admin-command-in-progress", 409), false]] as const) {
+    const h = activityHarness(() => answer); await h.api.requestTransfer(submit);
+    assert.equal(h.state.TransferCommand !== null, !settled, answer.error);
+    assert.equal(h.state.Feedback.text, settled ? `operationFailed:${answer.error}` : `outcome.keptAnswered:${answer.error}`);
+  }
+  // A request kept for another activity is never sent from this page, and a running request is not doubled.
+  const foreign = activityHarness(() => assert.fail("not sent"));
+  await foreign.api.sendTransfer({ ...request, activity_id: "act_" + "f".repeat(32), idempotency_key: "dates-host-transfer:00000000-0000-4000-8000-000000000001" });
+  const running = activityHarness(() => assert.fail("not sent")); running.context.busy = true;
+  await running.api.sendTransfer({ ...request, idempotency_key: "dates-host-transfer:00000000-0000-4000-8000-000000000001" });
+  assert.equal(foreign.sent.length + running.sent.length, 0);
+  // The page: the offer is the shared notice, with a free dismissal; no field is closed and nothing is stored.
+  assert.match(activityPage.source, /\{transferCommand && transferCommand\.activity_id === activityId && <div className="panel-body"><DatesUnansweredCommand busy=\{busy\}\s+onRetry=\{\(\) => void sendTransfer\(transferCommand\)\} onDiscard=\{\(\) => setTransferCommand\(null\)\} \/><\/div>\}/);
+  assert.match(activityPage.source, /datesCommandOutcome\(response, response\?\.success === true, "kept"\)/);
+  assert.doesNotMatch(activityPage.source, /sessionStorage|localStorage|setItem|disabled=\{[^}]*transferCommand/);
 });
 
 // ---------------------------------------------------------------- the configuration page

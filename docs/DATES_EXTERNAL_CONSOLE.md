@@ -148,23 +148,28 @@ review rather than an automatic rebase of an unreviewed mutation.
 ### Commands outside the journal (T-890)
 
 The member-plane commands of the Dates console - case claim, heartbeat, release,
-note, escalation and member resolution; activity edit, command and host
-transfer; setting, activity-type and report-reason saves - are not journal
-commands. `datesCommandOutcome` (`lib/datesExternalAdmin.ts`) reads their
+note, escalation and member resolution; activity edit, lifecycle command and
+host transfer; setting, activity-type and report-reason saves; legal hold and
+trail capture - are not journal commands. `datesCommandOutcome` (`lib/datesExternalAdmin.ts`) reads their
 replies with the journal's classifier and one of two identities:
 
-- **fresh** - the command is fenced in Core by a revision (a new report reason
-  by its own existence, a host transfer by the pending one), so a repeat cannot
-  write twice and each attempt carries a new key. Any readable refusal below
+- **fresh** - the command is fenced in Core by a revision that its own write
+  moves and that never moves back (a new report reason by its own existence,
+  a purge by the activity being gone), so a repeat cannot write twice and each
+  attempt carries a new key. Any readable refusal below
   500 answers the request and is worded as before. No answer, an unreadable
   one, the bridge's transport failure, a 5xx and `dates-admin-command-in-progress`
-  are worded "the outcome is not known", not "failed"; the case page also reads
-  the case again.
-- **kept** - Core has no compare-and-set for a legal hold (place, release) and
-  checks but does not move the case revision for a live-trail capture, so
-  either is applied again under a new key. That is a Core finding (reported to
+  are worded "the outcome is not known", not "failed". Nothing else changes on
+  the page: there is no automatic reread (on the case page it would clear the
+  evidence read, the break-glass choice and the confirmation); the case page
+  offers "Refresh the case" beside the message.
+- **kept** - three commands Core does not durably fence: a legal hold (place,
+  release) has no compare-and-set; a live-trail capture checks the case
+  revision but does not move it; a host-transfer request does not move the
+  activity's revision and its "one pending transfer" guard ends when the target
+  declines or the request expires. Each is applied again under a new key. That is a Core finding (reported to
   lead with file and line); the browser does not compensate for it with a
-  durable record of its own. What the case page does is the safe and useful
+  durable record of its own. What the page does is the safe and useful
   part: while it is open it keeps such a command, key included, after an
   unknown outcome and offers "send the same request again", which Core answers
   with the first attempt's receipt. A receipt bound to the request or a pinned

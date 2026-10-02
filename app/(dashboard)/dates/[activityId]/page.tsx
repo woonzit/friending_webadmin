@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesExternalProvenance from "@/components/DatesExternalProvenance";
+import DatesUnansweredCommand from "@/components/DatesUnansweredCommand";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
@@ -102,6 +103,8 @@ export default function DatesActivityDetailPage() {
   const [privateLocation, setPrivateLocation] = useState<Record<string, unknown> | null>(null);
   const [transferUid, setTransferUid] = useState("");
   const [transferReason, setTransferReason] = useState("");
+  // A transfer request whose outcome is not known, kept only while this page is open (see `sendTransfer`).
+  const [transferCommand, setTransferCommand] = useState<Record<string, unknown> | null>(null);
   const loadGeneration = useRef(0);
 
   const load = useCallback(async () => {
@@ -140,9 +143,10 @@ export default function DatesActivityDetailPage() {
   useEffect(() => { void load(); return () => { ++loadGeneration.current; }; }, [activityId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
-   * Every command of this page is fenced by the activity's revision in Core, so a repeat cannot write twice and
-   * each attempt carries a new key. A refusal is shown as it is. When nothing says whether the command landed -
-   * no answer, an unreadable one, a transport or server failure - the page says that, not "failed".
+   * The edit and the lifecycle commands of this page are fenced by the activity's revision in Core, which each of
+   * them moves: a repeat cannot write twice, and each attempt carries a new key. A refusal is shown as it is. When
+   * nothing says whether the command landed - no answer, an unreadable one, a transport or server failure - the
+   * page says that, not "failed". (The host transfer is the exception: see `sendTransfer`.)
    */
   function reportFailure(outcome: Exclude<DatesCommandOutcome, { kind: "success" }>) {
     setFeedback({ tone: "error", text: outcome.kind === "refused" ? t("operationFailed", { error: outcome.error })
@@ -231,17 +235,34 @@ export default function DatesActivityDetailPage() {
   async function requestTransfer(event: React.FormEvent) {
     event.preventDefault();
     if (!data || data.activity.host === null || busy || !Number.isInteger(Number(transferUid)) || transferReason.trim().length < 3) return;
-    setBusy(true);
-    const response = await adminCall("dates_activity_host_transfer", {
+    await sendTransfer({
       activity_id: data.activity.activity_id,
       target_uid: Number(transferUid),
       expected_revision: data.activity.revision,
       reason: transferReason.trim(),
       idempotency_key: createAdminIdempotencyKey("dates-host-transfer"),
     });
+  }
+
+  /**
+   * A transfer request is not durably fenced in Core: creating it does not move the activity's revision, and the
+   * "one pending transfer" guard ends when the target declines or the request expires - so a repeat under a new key can
+   * then be a second transfer, audit row and notification (a Core finding, T-891). While this page is open, a request
+   * whose outcome is not known is therefore kept - key included - and offered again as the SAME request, which Core
+   * answers with the first attempt's receipt. Nothing is locked, nothing is stored, and the offer can be dismissed.
+   */
+  async function sendTransfer(command: Record<string, unknown>) {
+    if (busy || command.activity_id !== activityId) return;
+    setBusy(true);
+    const response = await adminCall("dates_activity_host_transfer", command);
     setBusy(false);
-    const outcome = datesCommandOutcome(response, response?.success === true, "fresh");
-    if (outcome.kind !== "success") { reportFailure(outcome); return; }
+    const outcome = datesCommandOutcome(response, response?.success === true, "kept");
+    setTransferCommand(outcome.kind === "uncertain" ? command : null);
+    if (outcome.kind === "refused") { reportFailure(outcome); return; }
+    if (outcome.kind === "uncertain") {
+      setFeedback({ tone: "error", text: commandOutcome(outcome.error === null ? "kept" : "keptAnswered", { error: outcome.error ?? "" }) });
+      return;
+    }
     setTransferUid("");
     setTransferReason("");
     setFeedback({ tone: "success", text: t("transferRequested") });
@@ -351,6 +372,8 @@ export default function DatesActivityDetailPage() {
 
       {canTransfer && <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("hostTransfer")}</h2><p>{t("hostTransferCopy")}</p></div></div>
+        {transferCommand && transferCommand.activity_id === activityId && <div className="panel-body"><DatesUnansweredCommand busy={busy}
+          onRetry={() => void sendTransfer(transferCommand)} onDiscard={() => setTransferCommand(null)} /></div>}
         <form className="panel-body dates-inline-form" onSubmit={requestTransfer}>
           <label className="field"><span>{t("targetUid")}</span><input type="number" min={1} required value={transferUid} onChange={(event) => setTransferUid(event.target.value)} /></label>
           <label className="field"><span>{t("adminReason")}</span><input required maxLength={1000} value={transferReason} onChange={(event) => setTransferReason(event.target.value)} /></label>
