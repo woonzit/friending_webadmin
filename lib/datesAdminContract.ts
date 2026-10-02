@@ -19,14 +19,17 @@
  *
  *   export const DATES_ADMIN_INTAKE_CONTRACT_SELECTOR = { parameter: "<name>", value: <version> } as const;
  */
-export const DATES_ADMIN_INTAKE_CONTRACT_SELECTOR: { readonly parameter: string; readonly value: number | string } | null = null;
+export type DatesAdminContractSelector = { readonly parameter: string; readonly value: number | string };
+export const DATES_ADMIN_INTAKE_CONTRACT_SELECTOR: DatesAdminContractSelector | null = null;
 
 /**
  * What the SERVER adds to a request to Core, by action: the selector on every
  * Dates Admin route (`dates_*`), nothing on any other. It is merged after the
- * browser's body, so the browser can neither set nor remove it.
+ * browser's body, so the browser can neither set nor remove it. `selector` is
+ * the constant above; it is a parameter only so that the rule can be tested
+ * before the name is announced.
  */
-export function datesAdminContractParams(action: string): Record<string, number | string> {
-  const selector = DATES_ADMIN_INTAKE_CONTRACT_SELECTOR;
+export function datesAdminContractParams(action: string, selector: DatesAdminContractSelector | null = DATES_ADMIN_INTAKE_CONTRACT_SELECTOR):
+  Record<string, number | string> {
   return selector !== null && /^dates_[a-z0-9_]+$/.test(action) ? { [selector.parameter]: selector.value } : {};
 }

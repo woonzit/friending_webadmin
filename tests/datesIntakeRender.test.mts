@@ -694,6 +694,9 @@ test("T-886: an event that came from a member's suggestion says who is credited,
     const partly = { ...credited, verification: { ...credited.verification, admin_confirmations: { ...credited.verification.admin_confirmations, timezone: false } } };
     const some = render(locale, createElement(DatesExternalProvenance, { event: partly }));
     assert.ok(some.includes(escaped(copy.provenance.partlyConfirmed))); assert.equal(some.includes(escaped(copy.provenance.unconfirmed)), false);
+    // D-143: the four confirmations are counted by name; a key Core might add beside them is not a fifth confirmation.
+    const widened = { ...alone, verification: { ...alone.verification, admin_confirmations: { ...alone.verification.admin_confirmations, reviewed: true } } };
+    assert.ok(render(locale, createElement(DatesExternalProvenance, { event: widened as typeof alone })).includes(escaped(copy.provenance.unconfirmed)));
     // The P1 event entered by an administrator is unchanged: no such line.
     const p1 = fixture("admin-external-detail-ai-assisted"), manual = decodeDatesExternalDetail(p1, p1.event.external_event_id)!.event;
     assert.doesNotMatch(render(locale, createElement(DatesExternalProvenance, { event: manual })), /alert-warning" role="status"/);

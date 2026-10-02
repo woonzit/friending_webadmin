@@ -215,6 +215,14 @@ test("D-143: the Admin intake contract selector is one constant, attached by the
       assert.deepEqual(datesAdminContractParams(action), { [parameter]: value }, action);
     for (const action of ["users_list", "admin_me", "appearance_rules", "date", "dates"]) assert.deepEqual(datesAdminContractParams(action), {}, action);
   }
+  // The rule itself, with a stand-in for the name Core has not announced yet: every Dates Admin route, and no other.
+  const standIn = { parameter: "dates_event_intake_admin_contract_version", value: 1 };
+  for (const action of ["dates_external_event_list", "dates_external_event_detail", "dates_activity_list", "dates_activity_detail", "dates_configuration",
+    "dates_moderation_queue", "dates_event_intake_list", "dates_event_intake_create", "dates_event_intake_image", "dates_event_intake_ask_member"])
+    assert.deepEqual(datesAdminContractParams(action, standIn), { dates_event_intake_admin_contract_version: 1 }, action);
+  for (const action of ["users_list", "admin_me", "appearance_rules", "date", "dates", "dates_", "xdates_event_intake_list", "Dates_configuration", "dates_event-intake"])
+    assert.deepEqual(datesAdminContractParams(action, standIn), {}, action);
+  assert.deepEqual(datesAdminContractParams("dates_configuration", null), {});
   // Server-owned: merged after the browser's body in the generic bridge and in the two dedicated intake routes, so a browser cannot set or unset it.
   const route = readFileSync(new URL("../app/api/admin/[action]/route.ts", import.meta.url), "utf8");
   assert.match(route, /mergeCoreParams\([^)]*\{ admin_email: [^}]*\.\.\.datesAdminContractParams\(action\) \}\)/s);
