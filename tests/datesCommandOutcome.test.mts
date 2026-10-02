@@ -8,7 +8,7 @@ import { NextIntlClientProvider } from "next-intl";
 import ts from "typescript";
 import DatesUnansweredCommand from "../components/DatesUnansweredCommand.tsx";
 import { createAdminIdempotencyKey, datesReasonEntryPoints, datesReasonEntryPointsRefused } from "../lib/datesAdmin.ts";
-import { datesCommandOutcome, datesExternalRefusal } from "../lib/datesExternalAdmin.ts";
+import { DATES_RECEIPT_CHECKS_PENDING, datesCommandOutcome, datesExternalRefusal, datesUncheckedReceipt } from "../lib/datesExternalAdmin.ts";
 import { DatesCaseReadFence, datesConsoleCommandReceipt, datesLegalHoldReceipt, datesTrailEvidenceReceipt, isDatesConsoleCommand } from "../lib/datesModerationRead.ts";
 
 // T-890: what a reply means for the commands of the Dates console that do not
@@ -149,7 +149,7 @@ function caseHarness(reply: (action: string, body: Record<string, any>) => unkno
   const sent: Array<{ action: string; body: Record<string, any> }> = [], state: Record<string, any> = {}, writes: string[] = [];
   const readFence = new DatesCaseReadFence();
   const context: any = { exports: {}, caseId: CASE_ID, writeLocked: false, busy: false, mutationBusy: { current: false }, readFence, lifetime: { current: 0 },
-    isDatesConsoleCommand, datesConsoleCommandReceipt, datesLegalHoldReceipt, datesTrailEvidenceReceipt, datesCommandOutcome, createAdminIdempotencyKey,
+    isDatesConsoleCommand, datesConsoleCommandReceipt, datesLegalHoldReceipt, datesTrailEvidenceReceipt, datesCommandOutcome, datesUncheckedReceipt, createAdminIdempotencyKey,
     t: translator(""), commandOutcome: translator("outcome."), load: async () => { writes.push("load"); },
     isDatesExternalMessageCase: () => false, datesLegalHoldAllowed: () => true, epochFromLocalInput: (value: string) => Number(value),
     data: { case: { case_id: CASE_ID, revision: 7, target_type: "activity", activity_id: "act_" + "0".repeat(31) + "2", conflict_of_interest: false, status: "actioned" } },
@@ -390,7 +390,7 @@ function activityHarness(reply: (action: string, body: Record<string, any>) => u
   const sent: Array<{ action: string; body: Record<string, any> }> = [], state: Record<string, any> = {}, writes: string[] = [];
   const context: any = { exports: {}, busy: false, activityId: ACTIVITY_ID, transferCommand: null,
     data: { activity: { activity_id: ACTIVITY_ID, revision: 4, host: { uid: 7 } } }, pendingCommand: { action: "end", reason: "Reported as over." },
-    transferUid: "42", transferReason: "The host asked for it.", datesCommandOutcome, createAdminIdempotencyKey, t: translator(""), commandOutcome: translator("outcome."),
+    transferUid: "42", transferReason: "The host asked for it.", datesCommandOutcome, datesUncheckedReceipt, createAdminIdempotencyKey, t: translator(""), commandOutcome: translator("outcome."),
     load: async () => { writes.push("load"); }, window: { location: { assign: (target: string) => { writes.push(`go:${target}`); } } },
     adminCall: async (action: string, body: Record<string, any>) => { sent.push({ action, body: plain(body) }); return reply(action, plain(body)); } };
   for (const name of ["Busy", "Feedback", "PendingCommand", "CommandReason", "TransferUid", "TransferReason", "TransferCommand"])
@@ -401,10 +401,17 @@ function activityHarness(reply: (action: string, body: Record<string, any>) => u
 
 test("activity commands: a lost reply is an unknown outcome, and Core's revision keeps the blind repeat from writing twice", async () => {
   for (const [name, lost, token] of LOST) {
-    // adminCall never throws: it answers null. And this page has no receipt decoder: any body that says success is
-    // taken as one, as before (not changed here).
-    if (lost instanceof Error || (lost as any)?.success === true) continue;
+    if (lost instanceof Error) continue; // adminCall never throws: it answers null
     const model = activityModel(4);
+    if ((lost as any)?.success === true) {
+      // NOT SKIPPED, STATED: this route has no receipt check yet (DATES_RECEIPT_CHECKS_PENDING - no genuine Core body of a
+      // member activity's command is vendored), so a body that only says `success: true` is taken as the receipt, as on
+      // the released page. This assertion flips to "outcome.unknown:" on the day the check is added.
+      const h = activityHarness((_action, body) => { model.answer(body); return lost; });
+      await h.api.executeCommand();
+      assert.deepEqual(plain(h.state.Feedback), { tone: "success", text: "commandDone" }, "unchecked receipt: announced as success");
+      continue;
+    }
     let lose = true;
     const h = activityHarness((_action, body) => { const answer = model.answer(body); return lose ? lost : answer; });
     await h.api.executeCommand();
@@ -427,7 +434,8 @@ test("activity commands: a lost reply is an unknown outcome, and Core's revision
     const body = fixture(name), h = activityHarness(() => body); await h.api.executeCommand();
     assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: `operationFailed:${body.error}` }, name);
   }
-  assert.equal((activityPage.source.match(/datesCommandOutcome\(response, response\?\.success === true, "fresh"\)/g) ?? []).length, 2, "the edit and the lifecycle command");
+  assert.match(activityPage.source, /datesCommandOutcome\(response, datesUncheckedReceipt\("dates_activity_update", response\), "fresh"\)/);
+  assert.match(activityPage.source, /datesCommandOutcome\(response, datesUncheckedReceipt\("dates_activity_command", response\), "fresh"\)/);
 });
 
 /**
@@ -463,9 +471,16 @@ test("review finding: a host transfer is not durably fenced - the page offers th
   assert.equal(hazard.inserted.length, 2, "after a decline the pending guard is gone and the revision never moved");
 
   for (const [name, lost, token] of LOST) {
-    // adminCall never throws (it answers null), and this route has no receipt check yet: see the next test.
-    if (lost instanceof Error || (lost as any)?.success === true) continue;
+    if (lost instanceof Error) continue; // adminCall never throws: it answers null
     const model = transferModel(4);
+    if ((lost as any)?.success === true) {
+      // NOT SKIPPED, STATED: no receipt check for this route yet (no genuine body is vendored), so the bare success flag
+      // is taken as the receipt and nothing is offered again. Flips to "outcome.kept:" when the check is added.
+      const h = activityHarness((_action, body) => { model.answer(body); return lost; });
+      await h.api.requestTransfer(submit);
+      assert.deepEqual(plain(h.state.Feedback), { tone: "success", text: "transferRequested" }); assert.equal(h.state.TransferCommand, null);
+      continue;
+    }
     let lose = true;
     const h = activityHarness((_action, body) => { const answer = model.answer(body); return lose ? lost : answer; });
     await h.api.requestTransfer(submit);
@@ -519,7 +534,7 @@ test("review finding: a host transfer is not durably fenced - the page offers th
   assert.equal(foreign.sent.length + running.sent.length, 0);
   // The page: the offer is the shared notice, with a free dismissal; no field is closed and nothing is stored.
   assert.match(activityPage.source, /\{transferCommand && transferCommand\.activity_id === activityId && <div className="panel-body"><DatesUnansweredCommand busy=\{busy\}\s+onRetry=\{\(\) => void sendTransfer\(transferCommand\)\} onDiscard=\{\(\) => setTransferCommand\(null\)\} \/><\/div>\}/);
-  assert.match(activityPage.source, /datesCommandOutcome\(response, response\?\.success === true, "kept"\)/);
+  assert.match(activityPage.source, /datesCommandOutcome\(response, datesUncheckedReceipt\("dates_activity_host_transfer", response\), "kept"\)/);
   assert.doesNotMatch(activityPage.source, /sessionStorage|localStorage|setItem|disabled=\{[^}]*transferCommand/);
 });
 
@@ -555,7 +570,7 @@ test("configuration saves: a lost reply is an unknown outcome; creating a reason
     const sent: Array<Record<string, any>> = [], errors: unknown[] = [], unknown: Array<string | null> = []; let saved = 0;
     const context: any = { exports: {}, reason: null, scope: "activity", keyName: "Wrong_Details", nameEn: "Wrong details", nameHu: "Hibás adatok", explanationEn: "", explanationHu: "",
       severity: "medium", order: "10", active: true, commentRequired: false, entryPoints: "detail", escalationCategory: "", auditReason: "A reason members asked for.", canManage: true,
-      busy: false, allowedEntryPoints: "detail", datesReasonEntryPoints, datesReasonEntryPointsRefused, datesCommandOutcome, createAdminIdempotencyKey, t: translator(""),
+      busy: false, allowedEntryPoints: "detail", datesReasonEntryPoints, datesReasonEntryPointsRefused, datesCommandOutcome, datesUncheckedReceipt, createAdminIdempotencyKey, t: translator(""),
       // The receipt check itself is covered on Core's genuine bodies in tests/datesExternalReasons.test.mts.
       datesReasonSaveReceipt: (value: any) => value?.success === true ? value : null,
       setBusy: () => {}, setEntryPointsError: () => {}, onInlineError: () => {}, onError: (error: unknown) => errors.push(error), onUnknown: (error: string | null) => unknown.push(error),
@@ -564,7 +579,8 @@ test("configuration saves: a lost reply is an unknown outcome; creating a reason
     return { sent, errors, unknown, saved: () => saved, save: () => context.exports.save(submit) };
   }
   for (const [name, lost, token] of LOST) {
-    // The unreadable success is covered with the real receipt decoder in tests/datesExternalReasons.test.mts.
+    // adminCall never throws. The reason save HAS a receipt check; this harness stands in a permissive one, and the
+    // unreadable success is tested with the real decoder on Core's genuine bodies in tests/datesExternalReasons.test.mts.
     if (lost instanceof Error || (lost as any)?.success === true) continue;
     const model = reasonModel();
     let lose = true;
@@ -594,20 +610,64 @@ test("configuration saves: a lost reply is an unknown outcome; creating a reason
     [core("dates-admin-unavailable", 503), { unknown: ["dates-admin-unavailable"], errors: [], saved: 0 }],
     [core("dates-admin-stale-revision", 409), { unknown: [], errors: ["dates-admin-stale-revision"], saved: 0 }],
     [core("dates-configuration-value-invalid", 422), { unknown: [], errors: ["dates-configuration-value-invalid"], saved: 0 }],
+    // NOT SKIPPED, STATED: no receipt check for a setting save yet (no genuine body is vendored); the bare success flag is the receipt.
     [{ success: true }, { unknown: [], errors: [], saved: 1 }]] as const) {
     const errors: unknown[] = [], unknown: Array<string | null> = []; let saved = 0;
     const context: any = { exports: {}, editable: true, reason: "Raised after the pilot.", busy: false, value: "5", items: [], setting: { key: "dates_max_active_hosted", type: "integer", revision: 3 },
       DATES_AI_MODEL_SETTING_KEYS: [], datesModelIdValid: () => true, datesStringListProblem: () => null, configurationInputValue: (_type: string, value: string) => Number(value),
-      datesCommandOutcome, createAdminIdempotencyKey, t: translator(""), setProblem: () => {}, setBusy: () => {}, adminCall: async () => reply,
+      datesCommandOutcome, datesUncheckedReceipt, createAdminIdempotencyKey, t: translator(""), setProblem: () => {}, setBusy: () => {}, adminCall: async () => reply,
       onError: (error: unknown) => errors.push(error), onUnknown: (error: string | null) => unknown.push(error), onSaved: async () => { saved++; } };
     vm.runInNewContext(settingCode, context);
     await context.exports.save(submit);
     assert.deepEqual({ unknown, errors, saved }, expected, JSON.stringify(reply));
   }
-  assert.equal((configuration.match(/datesCommandOutcome\(response, response\?\.success === true, "fresh"\)/g) ?? []).length, 3, "setting, activity type, deactivation");
+  for (const route of ["dates_configuration_save", "dates_activity_type_save", "dates_reason_deactivate"])
+    assert.ok(configuration.includes(`datesCommandOutcome(response, datesUncheckedReceipt("${route}", response), "fresh")`), route);
   assert.equal((configuration.match(/onError=\{failure\} onUnknown=\{unknown\}/g) ?? []).length, 4, "every editor reports an unknown outcome");
   assert.match(configuration, /function unknown\(error: string \| null\) \{\s+setFeedback\(\{ tone: "error", text: commandOutcome\(error === null \? "unknown" : "unknownAnswered", \{ error: error \?\? "" \}\) \}\);\s+\}/);
   assert.doesNotMatch(configuration, /"kept"/);
+});
+
+// ---------------------------------------------------------------- receipts
+
+test("review finding: a success body is a receipt only where a check proven on genuine Core bodies exists; the rest is listed, not hidden", () => {
+  // The routes whose check is still off, because no genuine body of the route - or of the outcome these pages receive -
+  // is vendored (asked from lead: team/chat/...-t890-receipt-bodies-needed.md). Their shape is not guessed from Core's source.
+  assert.deepEqual([...DATES_RECEIPT_CHECKS_PENDING], ["dates_activity_update", "dates_activity_command", "dates_activity_host_transfer",
+    "dates_configuration_save", "dates_activity_type_save", "dates_reason_deactivate", "dates_moderation_resolve"]);
+  for (const route of DATES_RECEIPT_CHECKS_PENDING) {
+    assert.equal(datesUncheckedReceipt(route, { success: true }), true, `${route}: the bare success flag is the receipt, as on the released page`);
+    for (const body of [null, undefined, "ok", [], { success: false }, { success: "true" }, { success: 1 }, core("dates-admin-stale-revision", 409)])
+      assert.equal(datesUncheckedReceipt(route, body), false, route);
+  }
+  // It is a stand-in for exactly these routes: it cannot be used to wave any other route through.
+  for (const route of ["dates_moderation_legal_hold", "dates_moderation_trail_evidence", "dates_reason_save", "dates_moderation_note", "dates_event_intake_create"])
+    assert.equal(datesUncheckedReceipt(route as any, { success: true }), false, route);
+  // Every use is named at its call site, once per route, and no bare flag is passed to the classifier any more.
+  const pages = ["../app/(dashboard)/dates/[activityId]/page.tsx", "../app/(dashboard)/dates/configuration/page.tsx", "../app/(dashboard)/dates/moderation/[caseId]/page.tsx"]
+    .map((file) => readFileSync(new URL(file, import.meta.url), "utf8")).join("\n");
+  for (const route of DATES_RECEIPT_CHECKS_PENDING) assert.equal(pages.split(`datesUncheckedReceipt("${route}", response)`).length - 1, 1, route);
+  assert.doesNotMatch(pages, /datesCommandOutcome\(response, response\?\.success/);
+  assert.equal((pages.match(/datesUncheckedReceipt\(/g) ?? []).length, DATES_RECEIPT_CHECKS_PENDING.length);
+
+  // Where a check exists it is proven on Core's genuine bodies and binds on what identifies the command, and a success
+  // body that fails it is "not known": never a failure, never a success. (The two released P1 decoders below are
+  // exact-key-set checks; the checks still to be written for the listed routes are to tolerate additional keys.)
+  const place = fixture("admin-moderation-hold-place"), release = fixture("admin-moderation-hold-release");
+  assert.equal(datesLegalHoldReceipt(place, place.case_id, "place", place.review_at), true);
+  assert.equal(datesLegalHoldReceipt(release, release.case_id, "release", null), true);
+  for (const [body, action, reviewAt] of [[{ success: true }, "place", place.review_at], [{ ...place, case_id: "cas_" + "f".repeat(32) }, "place", place.review_at],
+    [place, "release", null], [{ ...place, review_at: place.review_at + 1 }, "place", place.review_at], [release, "place", place.review_at]] as const) {
+    assert.equal(datesLegalHoldReceipt(body, place.case_id, action, reviewAt), false);
+    assert.deepEqual(datesCommandOutcome(body, datesLegalHoldReceipt(body, place.case_id, action, reviewAt), "kept"), { kind: "uncertain", error: null });
+  }
+  for (const name of ["admin-claim", "admin-heartbeat", "admin-release", "admin-note", "admin-escalate"]) {
+    const body = JSON.parse(readFileSync(new URL(`./fixtures/dates_moderation_console_wire/${name}.json`, import.meta.url), "utf8"));
+    const action = `dates_moderation_${name.slice("admin-".length)}`;
+    assert.ok(datesConsoleCommandReceipt(body, action, body.case_id, body.revision - 1), name);
+    assert.equal(datesConsoleCommandReceipt({ success: true }, action, body.case_id, body.revision - 1), null, name);
+    assert.deepEqual(datesCommandOutcome({ success: true }, false, "fresh"), { kind: "uncertain", error: null });
+  }
 });
 
 // ---------------------------------------------------------------- copy

@@ -7,7 +7,7 @@ import DatesRuntimeSettingsHelp from "@/components/DatesRuntimeSettingsHelp";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
-import { datesCommandOutcome } from "@/lib/datesExternalAdmin";
+import { datesCommandOutcome, datesUncheckedReceipt } from "@/lib/datesExternalAdmin";
 import {
   configurationInputValue,
   datesConfigurationRawValue,
@@ -206,7 +206,7 @@ function SettingEditor({ setting, canManage, onSaved, onError, onUnknown }: { se
       idempotency_key: createAdminIdempotencyKey("dates-configuration-save"),
     });
     setBusy(false);
-    const outcome = datesCommandOutcome(response, response?.success === true, "fresh");
+    const outcome = datesCommandOutcome(response, datesUncheckedReceipt("dates_configuration_save", response), "fresh");
     if (outcome.kind === "uncertain") { onUnknown(outcome.error); return; }
     if (outcome.kind === "refused") { onError(outcome.error); return; }
     await onSaved();
@@ -263,7 +263,7 @@ function ActivityTypeEditor({ activityType, canManage, locale, onSaved, onError,
       reason: reason.trim(), idempotency_key: createAdminIdempotencyKey("dates-activity-type-save"),
     });
     setBusy(false);
-    const outcome = datesCommandOutcome(response, response?.success === true, "fresh");
+    const outcome = datesCommandOutcome(response, datesUncheckedReceipt("dates_activity_type_save", response), "fresh");
     if (outcome.kind === "uncertain") { onUnknown(outcome.error); return; }
     if (outcome.kind === "refused") { onError(outcome.error); return; }
     await onSaved();
@@ -353,7 +353,7 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
       reason: auditReason.trim(), idempotency_key: createAdminIdempotencyKey("dates-reason-deactivate"),
     });
     setBusy(false);
-    const outcome = datesCommandOutcome(response, response?.success === true, "fresh");
+    const outcome = datesCommandOutcome(response, datesUncheckedReceipt("dates_reason_deactivate", response), "fresh");
     if (outcome.kind === "uncertain") { onUnknown(outcome.error); return; }
     if (outcome.kind === "refused") { onError(outcome.error); return; }
     await onSaved();

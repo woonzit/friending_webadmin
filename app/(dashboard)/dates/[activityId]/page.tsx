@@ -26,7 +26,7 @@ import {
   type DatesAdminPrincipal,
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
-import { datesCommandOutcome, projectDatesActivityOriginDetail, type DatesActivityDisplayDetail, type DatesCommandOutcome, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
+import { datesCommandOutcome, datesUncheckedReceipt, projectDatesActivityOriginDetail, type DatesActivityDisplayDetail, type DatesCommandOutcome, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
 
 type Activity = DatesActivityDisplayDetail;
 
@@ -184,7 +184,7 @@ export default function DatesActivityDetailPage() {
       idempotency_key: createAdminIdempotencyKey("dates-activity-update"),
     });
     setBusy(false);
-    const outcome = datesCommandOutcome(response, response?.success === true, "fresh");
+    const outcome = datesCommandOutcome(response, datesUncheckedReceipt("dates_activity_update", response), "fresh");
     if (outcome.kind !== "success") { reportFailure(outcome); return; }
     setFeedback({ tone: "success", text: t("saved") });
     await load();
@@ -202,7 +202,7 @@ export default function DatesActivityDetailPage() {
     });
     setBusy(false);
     setPendingCommand(null);
-    const outcome = datesCommandOutcome(response, response?.success === true, "fresh");
+    const outcome = datesCommandOutcome(response, datesUncheckedReceipt("dates_activity_command", response), "fresh");
     if (outcome.kind !== "success" || !response) { if (outcome.kind !== "success") reportFailure(outcome); return; }
     if (response.purged === true) {
       window.location.assign("/dates");
@@ -256,7 +256,7 @@ export default function DatesActivityDetailPage() {
     setBusy(true);
     const response = await adminCall("dates_activity_host_transfer", command);
     setBusy(false);
-    const outcome = datesCommandOutcome(response, response?.success === true, "kept");
+    const outcome = datesCommandOutcome(response, datesUncheckedReceipt("dates_activity_host_transfer", response), "kept");
     setTransferCommand(outcome.kind === "uncertain" ? command : null);
     if (outcome.kind === "refused") { reportFailure(outcome); return; }
     if (outcome.kind === "uncertain") {

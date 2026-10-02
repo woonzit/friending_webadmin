@@ -471,6 +471,26 @@ export function datesCommandOutcome(response: unknown, receipt: boolean, identit
     ? { kind: "refused", error: refusal.error } : { kind: "uncertain", error: refusal.error };
 }
 
+/**
+ * Routes whose success body the console cannot check yet. A command-bound
+ * receipt check has to be proven on genuine Core bodies, and none is vendored
+ * for these routes - or for the outcome these pages receive (the corpus has
+ * `dates_activity_command` only for an external-origin activity, which the
+ * activity page never sends). Their shape is NOT guessed from Core's source:
+ * until the Core lane captures the bodies, a body that says `success: true`
+ * is taken as the receipt, as it was on the released pages. Each entry leaves
+ * this list on the day its check is added.
+ */
+export const DATES_RECEIPT_CHECKS_PENDING = [
+  "dates_activity_update", "dates_activity_command", "dates_activity_host_transfer",
+  "dates_configuration_save", "dates_activity_type_save", "dates_reason_deactivate", "dates_moderation_resolve",
+] as const;
+
+/** The stand-in for a receipt check of a route in `DATES_RECEIPT_CHECKS_PENDING`: the bare success flag, and nothing more. */
+export function datesUncheckedReceipt(action: typeof DATES_RECEIPT_CHECKS_PENDING[number], response: unknown): boolean {
+  return (DATES_RECEIPT_CHECKS_PENDING as readonly string[]).includes(action) && record(response) && response.success === true;
+}
+
 export function datesExternalBaseline(value: unknown): value is DatesExternalMutationBaseline {
   return object({ external_event_id: id("xev"), activity_id: id("act"), revision: integer(1), activity_revision: integer(1),
     status: oneOf(DATES_EXTERNAL_STATUSES), lifecycle: rowShape.lifecycle, soft_deleted: bool })(value);
