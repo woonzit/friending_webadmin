@@ -382,14 +382,25 @@ const refusalCodes: Readonly<Record<number, readonly string[]>> = {
   // request itself. It never names a transport failure, a 5xx,
   // `dates-admin-command-in-progress`, `dates-admin-idempotency-conflict` or a
   // capability refusal: none of those says whether an earlier attempt landed.
+  // T-890: the two case commands no revision fences - the legal hold and the
+  // live-trail capture - keep their identity like a journal command, so the
+  // tokens with which Core (main 07215298) refuses them without writing are
+  // named too. Every one is raised inside the command's transaction, after the
+  // receipt lookup, or by a check of the request alone. Not named: the two that
+  // depend on the clock and precede the lookup (`dates-legal-hold-review-invalid`,
+  // `dates-trail-evidence-window-invalid`), and the conflict-of-interest refusals
+  // (`dates-moderation-conflict`), which the accepted external-resolution
+  // journal already treats as not settling a command.
   403: ["dates-external-publishing-disabled", "dates-intake-admin-drafts-disabled", "dates-intake-lease-owner-required"],
-  404: ["dates-external-unavailable", "dates-admin-activity-unavailable", "dates-intake-unavailable"],
+  404: ["dates-external-unavailable", "dates-admin-activity-unavailable", "dates-intake-unavailable",
+    "dates-moderation-case-unavailable", "dates-moderation-evidence-unavailable", "dates-trail-evidence-unavailable"],
   409: ["dates-external-conflict", "dates-external-duplicate", "dates-external-content-state-invalid",
     "dates-external-projection-unavailable", "dates-external-command-state-invalid", "dates-external-thread-unavailable", "dates-thread-read-only",
     "dates-admin-stale-revision", "dates-admin-activity-purge-not-eligible", "dates-admin-activity-open-case", "dates-admin-activity-legal-hold",
     "dates-admin-activity-not-deleted", "dates-admin-activity-deleted", "dates-admin-activity-terminal",
     "dates-intake-conflict", "dates-intake-lease-required", "dates-intake-event-unavailable",
-    "dates-intake-claimed", "dates-intake-lease-lost", "dates-intake-state-invalid"],
+    "dates-intake-claimed", "dates-intake-lease-lost", "dates-intake-state-invalid",
+    "dates-legal-hold-case-open", "dates-legal-hold-media-purge-started", "dates-trail-evidence-activity-unavailable"],
   // A request larger than Core reads at all.
   413: ["dates-intake-image-invalid"],
   422: ["dates-external-id-invalid", "dates-external-revision-invalid", "dates-external-filter-invalid", "dates-external-input-invalid",
@@ -402,7 +413,9 @@ const refusalCodes: Readonly<Record<number, readonly string[]>> = {
     "dates-intake-id-invalid", "dates-intake-revision-invalid", "dates-intake-input-invalid",
     "dates-intake-kind-invalid", "dates-intake-locale-invalid", "dates-intake-url-invalid", "dates-intake-source-not-readable",
     "dates-intake-text-invalid", "dates-intake-origin-invalid", "dates-intake-image-invalid", "dates-intake-reason-invalid",
-    "dates-intake-lease-invalid"],
+    "dates-intake-lease-invalid",
+    "dates-moderation-case-id-invalid", "dates-moderation-target-invalid", "dates-legal-hold-action-invalid",
+    "dates-admin-revision-invalid", "dates-trail-evidence-range-too-large"],
 };
 
 /** Only pinned Core no-land refusals release an attempted command's identity. */
@@ -420,6 +433,36 @@ export function datesExternalRefusal(value: unknown): DatesExternalRefusal {
   // that the earlier attempt did not land.
   return { kind: core && refusalCodes[value.status_code]?.includes(value.error) ? "refused" : "uncertain",
     error: value.error, status: value.status_code };
+}
+
+export type DatesCommandOutcome =
+  | { kind: "success" }
+  /** An answer to this request: it wrote nothing. */
+  | { kind: "refused"; error: string }
+  /** The command may or may not have landed. `error` is what was answered, when something readable was. */
+  | { kind: "uncertain"; error: string | null };
+
+/**
+ * What a reply means for a Dates console command that is sent outside the
+ * journal. `receipt` is the caller's own check of the success body.
+ *
+ * - `kept`: the command keeps its idempotency key across attempts, like a
+ *   journal command, and the journal's rule applies unchanged: only a receipt
+ *   or a pinned no-land refusal in Core's own envelope settles it.
+ * - `fresh`: the command is fenced by a revision (or by the existence of what
+ *   it creates) and is sent under a new key each time, so a repeat cannot
+ *   write twice. Every readable refusal below 500 answers this request. What
+ *   stays unknown is whether an attempt landed when no answer came back, the
+ *   answer was unreadable, the bridge named a transport failure, Core failed
+ *   (5xx), or Core said the command is still in progress.
+ */
+export function datesCommandOutcome(response: unknown, receipt: boolean, identity: "kept" | "fresh"): DatesCommandOutcome {
+  if (receipt) return { kind: "success" };
+  const refusal = datesExternalRefusal(response);
+  if (refusal.kind === "refused") return { kind: "refused", error: refusal.error };
+  if (refusal.status === 0) return { kind: "uncertain", error: null };
+  return identity === "fresh" && refusal.status < 500 && refusal.error !== "dates-admin-command-in-progress"
+    ? { kind: "refused", error: refusal.error } : { kind: "uncertain", error: refusal.error };
 }
 
 export function datesExternalBaseline(value: unknown): value is DatesExternalMutationBaseline {

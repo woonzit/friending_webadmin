@@ -9774,6 +9774,16 @@
         "admin-write-required": "A szerepköröd csak olvasásra jogosít.",
         "not-found": "A konzol nem ismeri ezt a műveletet."
       }
+    },
+    "commandOutcome": {
+      "unknown": "A művelet kimenetele nem ismert: nem érkezett olvasható válasz. Mielőtt megismétled, nézd meg, megtörtént-e a változás; a Frissítés a jelenlegi állapotot mutatja.",
+      "unknownAnswered": "A művelet kimenetele nem ismert ({error}). Mielőtt megismétled, nézd meg, megtörtént-e a változás; a Frissítés a jelenlegi állapotot mutatja.",
+      "kept": "A művelet kimenetele nem ismert: nem érkezett olvasható válasz. Küldd el újra ugyanazt a kérést: ha az első kísérlet megtörtént, a Core annak a nyugtájával válaszol, és kétszer nem hajtja végre.",
+      "keptAnswered": "A művelet kimenetele nem ismert ({error}). Küldd el újra ugyanazt a kérést: ha az első kísérlet megtörtént, a Core annak a nyugtájával válaszol, és kétszer nem hajtja végre.",
+      "pending": "Egy ismeretlen kimenetelű kérés vár. A mezői zárolva vannak, hogy az újraküldés ugyanaz a kérés legyen.",
+      "retry": "Ugyanazon kérés újraküldése",
+      "discard": "Lemondok erről a kérésről",
+      "discardHint": "Csak akkor mondj le róla, ha elfogadod, hogy az első kísérlet megtörténhetett: egy új kérés másodszor is végrehajtódna."
     }
   },
   "imageEditor": {

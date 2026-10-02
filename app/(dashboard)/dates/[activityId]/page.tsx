@@ -25,7 +25,7 @@ import {
   type DatesAdminPrincipal,
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
-import { projectDatesActivityOriginDetail, type DatesActivityDisplayDetail, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
+import { datesCommandOutcome, projectDatesActivityOriginDetail, type DatesActivityDisplayDetail, type DatesCommandOutcome, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
 
 type Activity = DatesActivityDisplayDetail;
 
@@ -82,6 +82,7 @@ export default function DatesActivityDetailPage() {
   const values = useTranslations("datesAdmin.activities.values");
   const common = useTranslations("common");
   const external = useTranslations("datesAdmin.external");
+  const commandOutcome = useTranslations("datesAdmin.commandOutcome");
   const locale = useLocale();
   const params = useParams<{ activityId: string }>();
   const activityId = useMemo(() => decodeURIComponent(params.activityId || ""), [params.activityId]);
@@ -138,6 +139,16 @@ export default function DatesActivityDetailPage() {
 
   useEffect(() => { void load(); return () => { ++loadGeneration.current; }; }, [activityId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /**
+   * Every command of this page is fenced by the activity's revision in Core, so a repeat cannot write twice and
+   * each attempt carries a new key. A refusal is shown as it is. When nothing says whether the command landed -
+   * no answer, an unreadable one, a transport or server failure - the page says that, not "failed".
+   */
+  function reportFailure(outcome: Exclude<DatesCommandOutcome, { kind: "success" }>) {
+    setFeedback({ tone: "error", text: outcome.kind === "refused" ? t("operationFailed", { error: outcome.error })
+      : commandOutcome(outcome.error === null ? "unknown" : "unknownAnswered", { error: outcome.error ?? "" }) });
+  }
+
   async function saveActivity(event: React.FormEvent) {
     event.preventDefault();
     if (!data || data.activity.host === null || data.activity.unreadable_fields?.length || !draft || busy) return;
@@ -169,10 +180,8 @@ export default function DatesActivityDetailPage() {
       idempotency_key: createAdminIdempotencyKey("dates-activity-update"),
     });
     setBusy(false);
-    if (!response?.success) {
-      setFeedback({ tone: "error", text: t("operationFailed", { error: String(response?.error || "core-unavailable") }) });
-      return;
-    }
+    const outcome = datesCommandOutcome(response, response?.success === true, "fresh");
+    if (outcome.kind !== "success") { reportFailure(outcome); return; }
     setFeedback({ tone: "success", text: t("saved") });
     await load();
   }
@@ -189,10 +198,8 @@ export default function DatesActivityDetailPage() {
     });
     setBusy(false);
     setPendingCommand(null);
-    if (!response?.success) {
-      setFeedback({ tone: "error", text: t("operationFailed", { error: String(response?.error || "core-unavailable") }) });
-      return;
-    }
+    const outcome = datesCommandOutcome(response, response?.success === true, "fresh");
+    if (outcome.kind !== "success" || !response) { if (outcome.kind !== "success") reportFailure(outcome); return; }
     if (response.purged === true) {
       window.location.assign("/dates");
       return;
@@ -233,10 +240,8 @@ export default function DatesActivityDetailPage() {
       idempotency_key: createAdminIdempotencyKey("dates-host-transfer"),
     });
     setBusy(false);
-    if (!response?.success) {
-      setFeedback({ tone: "error", text: t("operationFailed", { error: String(response?.error || "core-unavailable") }) });
-      return;
-    }
+    const outcome = datesCommandOutcome(response, response?.success === true, "fresh");
+    if (outcome.kind !== "success") { reportFailure(outcome); return; }
     setTransferUid("");
     setTransferReason("");
     setFeedback({ tone: "success", text: t("transferRequested") });

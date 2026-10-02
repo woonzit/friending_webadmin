@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
 import { datesReasonEntryPoints, datesReasonEntryPointsRefused, datesReportEntryPointsFor } from "../lib/datesAdmin.ts";
+import { datesCommandOutcome } from "../lib/datesExternalAdmin.ts";
 import { datesAdminReasons, datesReasonSaveReceipt, projectDatesAdminReasons } from "../lib/datesReasons.ts";
 
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/dates_external_admin_wire/admin-reason-${name}.json`, import.meta.url), "utf8"));
@@ -87,7 +88,7 @@ const functions = editor.body.statements.filter((node): node is ts.FunctionDecla
 const compiled = ts.transpileModule(functions.map((node) => node.getText(tree)).join("\n") + "\nexports.save = save;",
   { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
 function harness(response: unknown, overrides: Record<string, unknown> = {}) {
-  const calls: Array<{ action: string; body: any }> = [], errors: string[] = [], inline: string[] = []; let saved = 0;
+  const calls: Array<{ action: string; body: any }> = [], errors: string[] = [], inline: string[] = [], unknown: Array<string | null> = []; let saved = 0;
   const context: any = { exports: {}, reason: external, scope: "activity", keyName: "wrong_details", nameEn: submitted.name_en, nameHu: submitted.name_hu,
     explanationEn: submitted.explanation_en, explanationHu: submitted.explanation_hu, severity: "medium", order: "10", active: true, commentRequired: true,
     entryPoints: "external_event", escalationCategory: "integrity", auditReason: submitted.reason, canManage: true, busy: false,
@@ -95,9 +96,10 @@ function harness(response: unknown, overrides: Record<string, unknown> = {}) {
     createAdminIdempotencyKey: () => submitted.idempotency_key, t: (key: string) => key, setBusy: () => {},
     setEntryPointsError: (value: string | null) => { if (value) inline.push(value); }, onInlineError: () => {},
     adminCall: async (action: string, body: unknown) => { calls.push({ action, body }); return response; },
+    datesCommandOutcome, onUnknown: (error: string | null) => unknown.push(error),
     onError: (error: string) => errors.push(error), onSaved: async () => { saved++; }, ...overrides };
   vm.runInNewContext(compiled, context);
-  return { calls, errors, inline, saved: () => saved, save: () => context.exports.save({ preventDefault() {} }) };
+  return { calls, errors, inline, unknown, saved: () => saved, save: () => context.exports.save({ preventDefault() {} }) };
 }
 test("production reason editor sends the captured seed's copy-only update and accepts the real replay", async () => {
   for (const name of ["save-external", "save-external-replay"]) {
@@ -122,7 +124,9 @@ test("production editor preserves Core's inline cohort refusals and rejects malf
     assert.deepEqual(h.inline, ["entryPointsRefused"]); assert.equal(h.saved(), 0);
   }
   for (const body of [{ success: true }, { ...receipt, reason: { ...receipt.reason, reason_id: "reason_activity_canceled" } }]) {
-    const h = harness(body); await h.save(); assert.deepEqual(h.errors, ["dates-reason-contract-invalid"]); assert.equal(h.saved(), 0);
+    // T-890: a success this console cannot read as the receipt may still have been written. It is announced as an
+    // unknown outcome (still named by what was wrong with it), no longer as a plain failure.
+    const h = harness(body); await h.save(); assert.deepEqual(h.unknown, ["dates-reason-contract-invalid"]); assert.deepEqual(h.errors, []); assert.equal(h.saved(), 0);
   }
   const viewer = harness(fixture("save-viewer-denied")); await viewer.save();
   assert.deepEqual(viewer.errors, ["dates-admin-capability-required"]); assert.equal(viewer.saved(), 0);

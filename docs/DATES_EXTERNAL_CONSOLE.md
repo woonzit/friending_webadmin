@@ -145,6 +145,29 @@ but unacknowledged purge can recover its receipt through an independent fresh
 authorization check. Stale CAS keeps the form and requires explicit reload and
 review rather than an automatic rebase of an unreviewed mutation.
 
+### Commands outside the journal (T-890)
+
+The member-plane commands of the Dates console - case claim, heartbeat, release,
+note, escalation and member resolution; activity edit, command and host
+transfer; setting, activity-type and report-reason saves - are not journal
+commands. `datesCommandOutcome` (`lib/datesExternalAdmin.ts`) reads their
+replies with the journal's classifier and one of two identities:
+
+- **fresh** - the command is fenced in Core by a revision (a new report reason
+  by its own existence, a host transfer by the pending one), so a repeat cannot
+  write twice and each attempt carries a new key. Any readable refusal below
+  500 answers the request and is worded as before. No answer, an unreadable
+  one, the bridge's transport failure, a 5xx and `dates-admin-command-in-progress`
+  are worded "the outcome is not known", not "failed"; the case page also reads
+  the case again.
+- **kept** - Core has no compare-and-set for a legal hold (place, release) and
+  checks but does not move the case revision for a live-trail capture, so
+  either would be applied again under a new key. The case page keeps such a
+  command, key included, until a receipt bound to the request or a pinned
+  no-land refusal settles it; meanwhile its form is locked and the only ways on
+  are the same request or the operator's explicit discard. The identity is held
+  in memory: it does not survive a reload.
+
 ## Existing activity console and moderation boundary
 
 The activity list supports `all`, `member` and `external` origins. External rows

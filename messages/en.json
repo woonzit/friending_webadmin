@@ -9774,6 +9774,16 @@
         "admin-write-required": "Your role is read-only.",
         "not-found": "The console does not know this action."
       }
+    },
+    "commandOutcome": {
+      "unknown": "The outcome is not known: no readable answer came back. Check whether the change is there before you repeat it; Refresh shows the current state.",
+      "unknownAnswered": "The outcome is not known ({error}). Check whether the change is there before you repeat it; Refresh shows the current state.",
+      "kept": "The outcome is not known: no readable answer came back. Send the same request again: if the first attempt landed, Core answers with its receipt and does not apply it twice.",
+      "keptAnswered": "The outcome is not known ({error}). Send the same request again: if the first attempt landed, Core answers with its receipt and does not apply it twice.",
+      "pending": "A request with an unknown outcome is waiting. Its fields are locked so that the retry is the same request.",
+      "retry": "Send the same request again",
+      "discard": "Give this request up",
+      "discardHint": "Give it up only if you accept that the first attempt may have landed: a new request would be applied a second time."
     }
   },
   "imageEditor": {

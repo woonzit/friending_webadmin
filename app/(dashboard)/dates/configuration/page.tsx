@@ -7,6 +7,7 @@ import DatesRuntimeSettingsHelp from "@/components/DatesRuntimeSettingsHelp";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
+import { datesCommandOutcome } from "@/lib/datesExternalAdmin";
 import {
   configurationInputValue,
   datesConfigurationRawValue,
@@ -70,6 +71,7 @@ type Feedback = { tone: "success" | "error"; text: string };
 
 export default function DatesConfigurationPage() {
   const t = useTranslations("datesAdmin.configuration");
+  const commandOutcome = useTranslations("datesAdmin.commandOutcome");
   const common = useTranslations("common");
   const locale = useLocale();
   const [settings, setSettings] = useState<Setting[]>([]);
@@ -111,6 +113,14 @@ export default function DatesConfigurationPage() {
 
   function success(message: string) { setFeedback({ tone: "success", text: message }); }
   function failure(error: unknown) { setFeedback({ tone: "error", text: t("operationFailed", { error: String(error || "core-unavailable") }) }); }
+  /**
+   * Nothing says whether the save landed (no answer, an unreadable one, a transport or server failure). Every save of
+   * this page is fenced in Core by the row's revision - a new reason by its own existence - so a repeat cannot write
+   * twice; the operator is told that the outcome is not known instead of "failed".
+   */
+  function unknown(error: string | null) {
+    setFeedback({ tone: "error", text: commandOutcome(error === null ? "unknown" : "unknownAnswered", { error: error ?? "" }) });
+  }
   /** An inline refusal replaces the page-level error of an earlier attempt, which would otherwise stay above it. */
   function clearFailure() { setFeedback((current) => current?.tone === "error" ? null : current); }
 
@@ -132,14 +142,14 @@ export default function DatesConfigurationPage() {
         <div className="panel-header"><div><h2>{t("runtimeTitle")}</h2><p>{t("runtimeCopy")}</p></div><div className="row-actions"><button className="button button-secondary button-small dates-help-trigger" type="button" onClick={() => setRuntimeHelpOpen(true)}>{t("runtimeHelp.button")}</button><span className="badge">{t("settingCount", { count: settings.length })}</span></div></div>
         {settings.some((setting) => datesSettingStorefrontEffective(setting).status === "unsupported") && <p className="alert alert-info">{t("effectiveByStorefrontUnsupported")}</p>}
         <div className="dates-setting-list">
-          {settings.map((setting) => <SettingEditor key={`${setting.key}-${setting.revision}`} setting={setting} canManage={canManageConfiguration} onSaved={async () => { success(t("settingSaved")); await load(); }} onError={failure} />)}
+          {settings.map((setting) => <SettingEditor key={`${setting.key}-${setting.revision}`} setting={setting} canManage={canManageConfiguration} onSaved={async () => { success(t("settingSaved")); await load(); }} onError={failure} onUnknown={unknown} />)}
         </div>
       </section>
 
       <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("typesTitle")}</h2><p>{t("typesCopy")}</p></div></div>
         <div className="dates-card-list">
-          {activityTypes.map((activityType) => <ActivityTypeEditor key={`${activityType.key}-${activityType.revision}`} activityType={activityType} canManage={canManageConfiguration} locale={locale} onSaved={async () => { success(t("typeSaved")); await load(); }} onError={failure} />)}
+          {activityTypes.map((activityType) => <ActivityTypeEditor key={`${activityType.key}-${activityType.revision}`} activityType={activityType} canManage={canManageConfiguration} locale={locale} onSaved={async () => { success(t("typeSaved")); await load(); }} onError={failure} onUnknown={unknown} />)}
         </div>
       </section>
 
@@ -148,11 +158,11 @@ export default function DatesConfigurationPage() {
       <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("reasonsTitle")}</h2><p>{t("reasonsCopy")}</p></div><label className="field dates-scope-filter"><span>{t("scope")}</span><select value={scope} onChange={(event) => setScope(event.target.value)}>{["all", "user", "activity", "message", "review"].map((value) => <option key={value} value={value}>{value === "all" ? common("all") : t(`scopes.${value}`)}</option>)}</select></label></div>
         <div className="dates-card-list">
-          {canManageReasons && <ReasonEditor reason={null} defaultScope={scope === "all" ? "activity" : scope} onSaved={async () => { success(t("reasonCreated")); await load(); }} onError={failure} onInlineError={clearFailure} />}
+          {canManageReasons && <ReasonEditor reason={null} defaultScope={scope === "all" ? "activity" : scope} onSaved={async () => { success(t("reasonCreated")); await load(); }} onError={failure} onUnknown={unknown} onInlineError={clearFailure} />}
           {unreadableReasons.map((reason) => <div className="alert alert-error" key={`unreadable-${reason.index}`}>{common("unreadableField")} · {reason.reason_id ?? `#${reason.index + 1}`}</div>)}
           {reasons.map((reason) => <div key={`${reason.reason_id}-${reason.revision}`}>
             {reason.unreadable_fields?.length ? <p role="status">{common("unreadableField")} · {reason.unreadable_fields.join(", ")}</p> : null}
-            <ReasonEditor reason={reason} defaultScope={reason.scope} canManage={canManageReasons && !reason.unreadable_fields?.length} onSaved={async () => { success(t("reasonSaved")); await load(); }} onError={failure} onInlineError={clearFailure} />
+            <ReasonEditor reason={reason} defaultScope={reason.scope} canManage={canManageReasons && !reason.unreadable_fields?.length} onSaved={async () => { success(t("reasonSaved")); await load(); }} onError={failure} onUnknown={unknown} onInlineError={clearFailure} />
           </div>)}
         </div>
       </section>
@@ -161,7 +171,7 @@ export default function DatesConfigurationPage() {
   );
 }
 
-function SettingEditor({ setting, canManage, onSaved, onError }: { setting: Setting; canManage: boolean; onSaved: () => Promise<void>; onError: (error: unknown) => void }) {
+function SettingEditor({ setting, canManage, onSaved, onError, onUnknown }: { setting: Setting; canManage: boolean; onSaved: () => Promise<void>; onError: (error: unknown) => void; onUnknown: (error: string | null) => void }) {
   const t = useTranslations("datesAdmin.configuration");
   const common = useTranslations("common");
   const [value, setValue] = useState(datesConfigurationRawValue(setting.type, setting.value));
@@ -196,7 +206,9 @@ function SettingEditor({ setting, canManage, onSaved, onError }: { setting: Sett
       idempotency_key: createAdminIdempotencyKey("dates-configuration-save"),
     });
     setBusy(false);
-    if (!response?.success) { onError(response?.error); return; }
+    const outcome = datesCommandOutcome(response, response?.success === true, "fresh");
+    if (outcome.kind === "uncertain") { onUnknown(outcome.error); return; }
+    if (outcome.kind === "refused") { onError(outcome.error); return; }
     await onSaved();
   }
 
@@ -229,7 +241,7 @@ function SettingEditor({ setting, canManage, onSaved, onError }: { setting: Sett
   </form>;
 }
 
-function ActivityTypeEditor({ activityType, canManage, locale, onSaved, onError }: { activityType: ActivityType; canManage: boolean; locale: string; onSaved: () => Promise<void>; onError: (error: unknown) => void }) {
+function ActivityTypeEditor({ activityType, canManage, locale, onSaved, onError, onUnknown }: { activityType: ActivityType; canManage: boolean; locale: string; onSaved: () => Promise<void>; onError: (error: unknown) => void; onUnknown: (error: string | null) => void }) {
   const t = useTranslations("datesAdmin.configuration");
   const common = useTranslations("common");
   const retired = datesActivityTypeRetired(activityType.key);
@@ -251,7 +263,9 @@ function ActivityTypeEditor({ activityType, canManage, locale, onSaved, onError 
       reason: reason.trim(), idempotency_key: createAdminIdempotencyKey("dates-activity-type-save"),
     });
     setBusy(false);
-    if (!response?.success) { onError(response?.error); return; }
+    const outcome = datesCommandOutcome(response, response?.success === true, "fresh");
+    if (outcome.kind === "uncertain") { onUnknown(outcome.error); return; }
+    if (outcome.kind === "refused") { onError(outcome.error); return; }
     await onSaved();
   }
 
@@ -264,7 +278,7 @@ function ActivityTypeEditor({ activityType, canManage, locale, onSaved, onError 
   </form>;
 }
 
-function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError, onInlineError }: { reason: Reason | null; defaultScope: string; canManage?: boolean; onSaved: () => Promise<void>; onError: (error: unknown) => void; onInlineError: () => void }) {
+function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError, onUnknown, onInlineError }: { reason: Reason | null; defaultScope: string; canManage?: boolean; onSaved: () => Promise<void>; onError: (error: unknown) => void; onUnknown: (error: string | null) => void; onInlineError: () => void }) {
   const t = useTranslations("datesAdmin.configuration");
   const common = useTranslations("common");
   const isNew = reason === null;
@@ -316,6 +330,10 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
     };
     const response = await adminCall("dates_reason_save", submitted);
     setBusy(false);
+    // Only the receipt of this save, or a refusal, is an answer. A success this console cannot read as that receipt
+    // may still have been written: it is "not known", named by what was wrong with it.
+    const outcome = datesCommandOutcome(response, Boolean(response?.success && datesReasonSaveReceipt(response, submitted)), "fresh");
+    if (outcome.kind === "uncertain") { onUnknown(response?.success === true ? "dates-reason-contract-invalid" : outcome.error); return; }
     if (!response?.success) {
       if (datesReasonEntryPointsRefused(response?.error)) {
         showEntryPointsError(t("entryPointsRefused", { allowed: allowedEntryPoints }));
@@ -324,7 +342,6 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
       onError(response?.error);
       return;
     }
-    if (!datesReasonSaveReceipt(response, submitted)) { onError("dates-reason-contract-invalid"); return; }
     await onSaved();
   }
 
@@ -336,7 +353,9 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
       reason: auditReason.trim(), idempotency_key: createAdminIdempotencyKey("dates-reason-deactivate"),
     });
     setBusy(false);
-    if (!response?.success) { onError(response?.error); return; }
+    const outcome = datesCommandOutcome(response, response?.success === true, "fresh");
+    if (outcome.kind === "uncertain") { onUnknown(outcome.error); return; }
+    if (outcome.kind === "refused") { onError(outcome.error); return; }
     await onSaved();
   }
 

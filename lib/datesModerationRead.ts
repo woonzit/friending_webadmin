@@ -193,6 +193,17 @@ export function datesLegalHoldReceipt(value: unknown, caseId: string, action: un
     && (action !== "place" || (epoch(reviewAt) && Number(reviewAt) > 0));
 }
 
+/**
+ * The receipt of a live-trail capture, bound to its request: this case and
+ * this window. Checked by value, not as a closed key set - no genuine body of
+ * this route is vendored - and it names the snapshot Core stored.
+ */
+export function datesTrailEvidenceReceipt(value: unknown, caseId: string, capturedFrom: unknown, capturedTo: unknown): boolean {
+  return record(value) && value.success === true && value.status_code === 200 && value.case_id === caseId
+    && id("evi")(value.evidence_id) && id("aud")(value.audit_id) && epoch(capturedFrom) && epoch(capturedTo)
+    && value.captured_from === capturedFrom && value.captured_to === capturedTo;
+}
+
 /** Metadata is closed; raw before/after, actor identities and appeal notes fail closed. */
 export function datesCaseDetail(value: unknown, expectedCaseId: string): DatesCaseDetail | null {
   if (!shape(value, { ...envelope, case: caseRow, reports: Array.isArray,
