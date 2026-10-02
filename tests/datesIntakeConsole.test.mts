@@ -132,18 +132,18 @@ test("usage read needs only the read capability; the waiting-for-budget count is
 
 test("\"Draft from source\" is offered only to a manager, and disabled with the reason while the switch is off", async () => {
   const usage = fixture("admin-usage-empty");
-  // The entry also names the signed-in operator (the record of an unanswered submission is kept per operator) and Core's clock.
-  const who = { actor: "admin@example.test", serverNow: usage.server_now };
+  // The entry also names the signed-in operator: the reminder of an unanswered submission is kept per operator.
+  const who = { actor: "admin@example.test" };
   assert.deepEqual(await readDatesIntakeDraftEntry(bridge({ dates_event_intake_usage: usage, admin_me: identity() }).send), { state: "available", ...who });
   // DERIVED: Core's default, the switch off (every genuine usage body was captured with it on).
   assert.deepEqual(await readDatesIntakeDraftEntry(bridge({ dates_event_intake_usage: { ...usage, drafts_enabled: false }, admin_me: identity() }).send), { state: "disabled", ...who });
   for (const role of ["moderator", "support_viewer"] as const)
     assert.deepEqual(await readDatesIntakeDraftEntry(bridge({ dates_event_intake_usage: usage, admin_me: identity(role) }).send), { state: "noCapability", ...who });
-  assert.deepEqual(await readDatesIntakeDraftEntry(bridge({ dates_event_intake_usage: null, admin_me: identity("moderator") }).send), { state: "noCapability", actor: who.actor, serverNow: null });
+  assert.deepEqual(await readDatesIntakeDraftEntry(bridge({ dates_event_intake_usage: null, admin_me: identity("moderator") }).send), { state: "noCapability", ...who });
   // A failed read is not "off": the entry stays, and Core answers if the switch is off.
-  assert.deepEqual(await readDatesIntakeDraftEntry(bridge({ dates_event_intake_usage: null, admin_me: identity() }).send), { state: "unknown", actor: who.actor, serverNow: null });
-  // Without the identity nobody is named: the panel sends nothing for an operator it cannot name.
-  assert.deepEqual(await readDatesIntakeDraftEntry(bridge({ dates_event_intake_usage: usage, admin_me: null }).send), { state: "unknown", actor: null, serverNow: usage.server_now });
+  assert.deepEqual(await readDatesIntakeDraftEntry(bridge({ dates_event_intake_usage: null, admin_me: identity() }).send), { state: "unknown", ...who });
+  // Without the identity nobody is named, and no reminder is read or kept for anybody.
+  assert.deepEqual(await readDatesIntakeDraftEntry(bridge({ dates_event_intake_usage: usage, admin_me: null }).send), { state: "unknown", actor: null });
 });
 
 for (const action of ["claim", "heartbeat", "release"] as const) test(`lease ${action}: the genuine receipt, the genuine refusals and a lost answer`, async () => {

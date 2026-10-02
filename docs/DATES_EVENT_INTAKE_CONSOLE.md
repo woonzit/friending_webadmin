@@ -145,35 +145,29 @@ any refusal of the bridge itself, a 5xx, `dates-admin-command-in-progress`,
 receipt lookup) and any token outside the list. The notice shows the token
 that was answered, when one was.
 
-- **Create** ("Draft from source"). A create has no revision to fence it, so
-  its identity is durable (`lib/datesIntakeTombstone.ts`). Before a request
-  leaves, the console writes a *tombstone* to the browser's `localStorage`,
-  scoped to the signed-in operator: the idempotency key, the time of the first
-  and the latest attempt, the input kind, the locale and a SHA-256 fingerprint
-  of the inputs - for a flyer its digest, size and name. Never the bytes, the
-  link or the text. While a tombstone exists the source panel shows it first,
-  on any page and after any reload, and nothing else can be submitted by that
-  operator from that browser. It is retired only by:
-  1. Core's receipt for the same request: the operator enters the same source
-     again (a flyer is picked again and must hash the same; a different source
-     is not sent at all) and it goes out under the stored key and locale. Not
-     offered after six days, when Core no longer keeps the receipt.
-  2. Core's definitive no-write refusal. Two refusals Core raises before the
-     receipt lookup from state that can change between attempts
-     (`dates-intake-admin-drafts-disabled`, and `dates-intake-image-invalid`,
-     which also covers a flyer that arrived incomplete) settle a first attempt
-     only; on a resend they are not known.
-  3. A queue read made for it (`readDatesIntakeTombstoneEvidence`), at least
-     three minutes after the latest attempt: admin drafts newest first until
-     past the submission's time (with five minutes' clock allowance), and for
-     each one Core's detail says who created it. If it shows no draft of this
-     operator since the submission, the record may be closed as "did not
-     arrive"; if it shows some, they are listed with links and the record may
-     be closed as "it is in the queue". Any row, page or detail the read
-     cannot be sure of makes it "unconfirmed" and closes nothing, and a read
-     does not cover an attempt made after it.
-  The operator's wish alone retires nothing; a record the console cannot read
-  blocks the panel and is never cleared silently.
+- **Create** ("Draft from source"). A create has no revision to fence it, and
+  a browser cannot be where "exactly once" is guaranteed: it has several
+  tabs, a clock its user sets and storage that is neither atomic nor
+  trustworthy. **That a source cannot become two open drafts is Core's
+  guarantee**: Core answers an identical resubmission by the same operator,
+  while an open draft of the same source exists, with that draft (T-886; the
+  console consumes the marker of that answer with Core's next corpus pin). The
+  console does only what is safe and useful:
+  - while the panel is open, `createDatesIntakeSourceAttempts`
+    (`lib/datesIntakeConsole.ts`) keeps the key across every outcome that is
+    not known, so sending the same source again is the same request. Core's
+    receipt or definitive refusal ends it; so does an edit of the source,
+    which is another request. Nothing is locked. Two refusals Core raises
+    before the receipt lookup from state that can change between attempts
+    (`dates-intake-admin-drafts-disabled`, and `dates-intake-image-invalid`,
+    which also covers a flyer that arrived incomplete) settle a first attempt
+    only; on a retry they are not known;
+  - after an unknown outcome a reminder is kept in the browser for the
+    signed-in operator ("your submission at HH:MM may have arrived - check the
+    queue", with the link). It holds a time and a kind of source - no key, no
+    content, no file name - is shown only to that operator, gates nothing,
+    decides nothing, is never compared with the clock and can be dismissed at
+    any time.
 - **Reject** keeps its command (key included) until it is settled; the retry is
   that command.
 - **Publish** is the P1 journal, unchanged.

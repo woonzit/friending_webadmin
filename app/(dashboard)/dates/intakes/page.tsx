@@ -79,7 +79,7 @@ export default function DatesIntakeQueuePage() {
         <Link className="button button-secondary" href="/dates/ai-usage">{t("usage.open")}</Link></div>} />
     <DatesAdminTabs />
     <p className="alert alert-info">{t("aiNotice")}</p>
-    {operator?.manage && queue && <DatesIntakeSourcePanel entry={{ state: queue.drafts_enabled ? "available" : "disabled", actor: operator.principal.email, serverNow: queue.server_now }} onCreated={(intakeId) => router.push(`/dates/intakes/${intakeId}`)} />}
+    {operator?.manage && queue && <DatesIntakeSourcePanel entry={{ state: queue.drafts_enabled ? "available" : "disabled", actor: operator.principal.email }} onCreated={(intakeId) => router.push(`/dates/intakes/${intakeId}`)} />}
     <form className="dates-filter-grid" onSubmit={(event) => event.preventDefault()}>
       <label className="field"><span>{t("queue.statusFilter")}</span><select value={status} onChange={(event) => { setPage(1); setStatus(event.target.value); }}>
         <option value="">{common("all")}</option>

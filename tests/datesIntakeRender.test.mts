@@ -269,7 +269,7 @@ test("\"Draft from source\" is offered, disabled with its reason, or absent - in
   const { default: DatesIntakeSourcePanel } = await import("../components/DatesIntakeSourcePanel.tsx");
   for (const locale of LOCALES) {
     const copy = messagesOf(locale).datesAdmin.intake.source;
-    const panel = (state: "available" | "disabled" | "noCapability" | "unknown") => render(locale, createElement(DatesIntakeSourcePanel, { entry: { state, actor: "admin@example.test", serverNow: 1790000000 }, onCreated: () => undefined }));
+    const panel = (state: "available" | "disabled" | "noCapability" | "unknown") => render(locale, createElement(DatesIntakeSourcePanel, { entry: { state, actor: "admin@example.test" }, onCreated: () => undefined }));
     const available = panel("available");
     assert.ok(available.includes(escaped(copy.title)) && available.includes(escaped(copy.open)) && available.includes(escaped(copy.copy)));
     assert.equal(available.includes(escaped(copy.disabled)), false);
@@ -285,21 +285,23 @@ test("\"Draft from source\" is offered, disabled with its reason, or absent - in
     assert.ok(unknown.includes(escaped(copy.unknown)) && unknown.includes(escaped(copy.open)));
   }
   const panel = readFileSync(new URL("../components/DatesIntakeSourcePanel.tsx", import.meta.url), "utf8");
-  // The identity of a submission is the stored record's, not the component's: the panel holds no key, mints none and
-  // cannot remove a record by itself. The flyer goes to the console's own route and nowhere else.
-  assert.match(panel, /const outcome = await sendDatesIntakeSource\(\{ post: adminIntakeCreate, storage: datesIntakeTombstoneStorage\(\), actor, now: clock \},\s+draft, files\.map\(\(item\) => item\.file\), locale\);\s+setEvidence\(null\); refresh\(\);/);
-  assert.doesNotMatch(panel, /idempotency|createDatesIntakeSourceKey|submitDatesIntakeSource|removeItem|setItem|localStorage|useRef\(""\)/);
-  // The record is read when the panel appears - on any page, after any reload - and is shown before the form.
-  assert.match(panel, /useEffect\(\(\) => \{ refresh\(\); \}, \[refresh\]\);/);
-  assert.match(panel, /readDatesIntakeTombstone\(datesIntakeTombstoneStorage\(\), actor\)/);
-  assert.ok(panel.indexOf("{pending && <DatesIntakeTombstoneNotice") < panel.indexOf("<form onSubmit={submit}>"));
-  // The only removal the panel can ask for goes through the queue read shown beside the button.
-  assert.match(panel, /if \(retireDatesIntakeTombstone\(datesIntakeTombstoneStorage\(\), pending, evidence\)\) setNotice\(null\);\s+setEvidence\(null\); refresh\(\);/);
-  assert.equal((panel.match(/retireDatesIntakeTombstone\(/g) ?? []).length, 1);
-  assert.match(panel, /setEvidence\(await readDatesIntakeTombstoneEvidence\(adminCall, pending, clock\(\)\)\)/);
-  // A waiting submission fixes the kind of the form; an operator the console cannot name sends nothing.
-  assert.match(panel, /checked=\{kind === value\} disabled=\{pending !== null\}/);
-  assert.match(panel, /if \(actor === null\) \{ setNotice\(\{ kind: "problem", key: "identity" \}\); return; \}/);
+  // One identity per source while the panel is open: kept across an unknown outcome, renewed when the source changes.
+  // The panel holds no key itself, and nothing it stores can stop or decide a submission.
+  assert.match(panel, /if \(attempts\.current === null\) attempts\.current = createDatesIntakeSourceAttempts\(\);/);
+  assert.match(panel, /const outcome = await attempts\.current!\.send\(adminIntakeCreate, draft, files\.map\(\(item\) => item\.file\), locale\);/);
+  assert.match(panel, /function changed\(\) \{ attempts\.current!\.changed\(\); setNotice\(null\); \}/);
+  assert.doesNotMatch(panel, /idempotency|createDatesIntakeSourceKey|submitDatesIntakeSource|Tombstone|fingerprint|sha256|locked|expired|retire|evidence/i);
+  // The only fieldset lock is "a request is running"; no input is ever disabled by an earlier outcome.
+  assert.match(panel, /<fieldset className="dates-external-fields" disabled=\{busy\}>/);
+  assert.equal((panel.match(/disabled=\{/g) ?? []).length, 1);
+  // The reminder: read for the signed-in operator in an effect, shown only through the actor check, never consulted by submit.
+  assert.match(panel, /useEffect\(\(\) => \{\s+setReminder\(actor === null \? null : \{ actor, hint: readDatesIntakeHint\(datesIntakeHintStorage\(\), actor\) \}\);\s+\}, \[actor\]\);/);
+  assert.match(panel, /const hint = datesIntakeHintFor\(reminder, actor\);/);
+  assert.match(panel, /\{hint && <DatesIntakeSubmissionReminder hint=\{hint\} onDismiss=\{\(\) => remind\(null\)\} \/>\}/);
+  const submitBody = panel.slice(panel.indexOf("async function submit"), panel.indexOf("return <section")).replace(/\/\/.*$/gm, "");
+  assert.doesNotMatch(submitBody, /readDatesIntakeHint|datesIntakeHintFor|\breminder\b|\bhint\b/, "submit writes the reminder and never reads it: what is sent does not depend on it");
+  assert.equal((submitBody.match(/\bremind\(/g) ?? []).length, 2, "forgotten when the same request is answered, written when it is not");
+  assert.equal((panel.match(/Date\.now\(\)/g) ?? []).length, 1, "the clock is read once, to stamp the reminder with a time to show");
   assert.match(panel, /const problem = datesIntakeSourceProblem\(draft, files\);\s+if \(problem\) \{ setNotice\(\{ kind: "problem", key: problem \}\); return; \}/);
   assert.doesNotMatch(panel, /adminUploadImage|upload-image|canvas|createImageBitmap/, "never the public image upload, and no client-side resizing");
   const client = readFileSync(new URL("../lib/adminClient.ts", import.meta.url), "utf8");
@@ -435,54 +437,32 @@ test("review finding: an unknown create outcome is worded as unknown and shows w
     const refused = notice({ kind: "refused", error: "dates-intake-source-not-readable" });
     assert.ok(refused.includes(escaped(copy.refusals["dates-intake-source-not-readable"])));
     assert.equal(refused.includes(escaped(copy.source.uncertain)), false);
-    // What the console itself would not send, each in words.
-    for (const key of ["imageType", "identity", "storage", "mismatch", "expired"]) assert.ok(notice({ kind: "problem", key }).includes(escaped(copy.source.problems[key])), key);
+    assert.ok(notice({ kind: "problem", key: "imageType" }).includes(escaped(copy.source.problems.imageType)));
     assert.equal(typeof copy.source.retry, "string");
-    for (const key of ["locked", "checkQueue", "discard", "discardHint"]) assert.equal(key in copy.source, false, `${key}: the in-memory lock's copy is gone`);
+    // Nothing of a lock, a record or an evidence-gated discard is left in the copy.
+    for (const key of ["locked", "checkQueue", "discard", "discardHint", "pending"]) assert.equal(key in copy.source, false, key);
+    assert.deepEqual(Object.keys(copy.source.problems), ["url", "text", "imageCount", "imageSize", "imageType"]);
   }
 });
 
-test("review recheck: a waiting submission is shown by its time and kind, with the three ways on and what the queue read showed", async () => {
-  const { DatesIntakeTombstoneNotice } = await import("../components/DatesIntakeSourcePanel.tsx");
-  const tombstone = { version: 1 as const, actor: "admin@example.test", key: "dates-intake-create:00000000-0000-4000-8000-000000000001", at: 1790000000, last_at: 1790000060,
-    kind: "images" as const, locale: "hu" as const, fingerprint: "a".repeat(64), files: [{ sha256: "b".repeat(64), size: 3 * 1024 * 1024, name: "varosliget-november.jpg" }] };
-  const text = { ...tombstone, kind: "text" as const, files: [] };
+test("review recheck 2: the reminder of an unanswered submission is a dismissible note for one operator - a time, a kind and a link", async () => {
+  const { DatesIntakeSubmissionReminder } = await import("../components/DatesIntakeSourcePanel.tsx");
+  const { datesIntakeHintFor } = await import("../lib/datesIntakeConsole.ts");
+  const hint = { at: 1790000000, kind: "images" as const };
   for (const locale of LOCALES) {
-    const copy = messagesOf(locale).datesAdmin.intake, pending = copy.source.pending;
-    const show = (value: typeof tombstone | typeof text, evidence: any, now = 1790000400) => render(locale, createElement(DatesIntakeTombstoneNotice,
-      { tombstone: value, evidence, now, busy: false, onCheck: () => undefined, onRetire: () => undefined }));
-    const plainText = (html: string) => html.replace(/<[^>]+>/g, " ");
-    // Before any look in the queue: what waits, how to resend it, and the look itself. No way to close it.
-    const first = show(tombstone, null);
-    assert.ok(first.includes(escaped(pending.title.replace("{time}", ""))) || plainText(first).includes(pending.title.split("{time}")[0].trim()));
-    assert.ok(first.includes(escaped(copy.inputKindValues.images)) && first.includes("varosliget-november.jpg") && first.includes("3.0 MiB"), "the flyer by its name and size");
-    assert.ok(first.includes(escaped(pending.copy)) && first.includes(escaped(pending.resendFlyer)) && first.includes(escaped(pending.check)));
-    assert.match(first, /href="\/dates\/intakes"/);
-    for (const key of ["discard", "foundRetire", "resend", "resendExpired"]) assert.equal(first.includes(escaped(pending[key])), false, `${key} is not offered yet`);
-    assert.equal((first.match(/<button/g) ?? []).length, 1, "only the look in the queue");
-    assert.ok(show(text, null).includes(escaped(pending.resend)));
-    // The fingerprint and the key are never shown, and nothing of the content exists to show.
-    assert.doesNotMatch(first, /aaaaaaaa|bbbbbbbb|dates-intake-create:/);
-    // Too early, and an incomplete read: nothing can be closed.
-    for (const evidence of [{ kind: "early", retry_at: 1790000240 }, { kind: "unconfirmed" }]) {
-      const html = show(tombstone, evidence);
-      assert.ok(plainText(html).includes((evidence.kind === "early" ? pending.early.split("{time}")[0] : pending.unconfirmed).trim()));
-      assert.equal((html.match(/<button/g) ?? []).length, 1); assert.equal(html.includes(escaped(pending.discard)), false);
-    }
-    // The queue shows no draft of this operator since then: the record may be closed, and the notice says on what ground.
-    const none = show(tombstone, { kind: "none", key: tombstone.key, covers: tombstone.last_at, since: 1789999700, checked_at: 1790000400 });
-    assert.ok(plainText(none).includes(pending.none.split("{checked}")[0].trim()) && none.includes(escaped(pending.discard)));
-    assert.equal(none.includes(escaped(pending.foundRetire)), false); assert.equal((none.match(/<button/g) ?? []).length, 2);
-    // The queue shows drafts of this operator: each is a link to its review screen, and the record is closed as "it is there".
-    const found = show(tombstone, { kind: "found", key: tombstone.key, covers: tombstone.last_at, since: 1789999700, checked_at: 1790000400,
-      intakes: [{ intake_id: "xin_" + "0".repeat(31) + "5", input_kind: "images", status: "in_review", created_at: 1790000010 },
-        { intake_id: "xin_" + "0".repeat(31) + "6", input_kind: null, status: "extracting", created_at: 1790000100 }] });
-    assert.match(found, /href="\/dates\/intakes\/xin_0{31}5"/); assert.match(found, /href="\/dates\/intakes\/xin_0{31}6"/);
-    assert.ok(found.includes(escaped(copy.statusValues.in_review)) && found.includes(escaped(copy.statusValues.extracting)) && found.includes(escaped(pending.foundRetire)));
-    assert.equal(found.includes(escaped(pending.discard)), false, "never \"it did not arrive\" beside drafts that did");
-    // After six days Core no longer keeps the receipt: the resend is not offered, the look in the queue still is.
-    const old = show(tombstone, null, tombstone.at + 6 * 86400);
-    assert.ok(old.includes(escaped(pending.resendExpired))); assert.equal(old.includes(escaped(pending.resendFlyer)), false);
-    assert.equal(typeof pending.blocked, "string");
+    const copy = messagesOf(locale).datesAdmin.intake;
+    const html = render(locale, createElement(DatesIntakeSubmissionReminder, { hint, onDismiss: () => undefined }));
+    const parts = copy.source.hint.split(/\{time\}|\{kind\}/);
+    assert.equal(parts.length, 3, "the time and the kind");
+    assert.ok(html.includes(escaped(parts[0])) && html.includes(escaped(parts[2])) && html.includes(escaped(copy.inputKindValues.images)));
+    assert.match(html, /href="\/dates\/intakes"/);
+    assert.ok(html.includes(escaped(copy.source.hintLink)) && html.includes(escaped(copy.source.hintDismiss)));
+    assert.equal((html.match(/<button type="button"/g) ?? []).length, 1, "one button: dismiss");
+    assert.doesNotMatch(html, /disabled/);
   }
+  // Shown only to the operator it was read for, and to nobody while the operator is not known - synchronously, with no effect in between.
+  assert.deepEqual(datesIntakeHintFor({ actor: "a@example.test", hint }, "a@example.test"), hint);
+  assert.equal(datesIntakeHintFor({ actor: "a@example.test", hint }, "b@example.test"), null, "another operator's reminder is never painted");
+  assert.equal(datesIntakeHintFor({ actor: "a@example.test", hint }, null), null);
+  assert.equal(datesIntakeHintFor(null, "a@example.test"), null); assert.equal(datesIntakeHintFor({ actor: "a@example.test", hint: null }, "a@example.test"), null);
 });

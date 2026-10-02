@@ -6,7 +6,7 @@ import {
   type DatesExternalMutationOutcome, type DatesExternalPending, type DatesExternalStorage,
 } from "@/lib/datesExternalMutations";
 import {
-  DATES_INTAKE_MAX_IMAGE_BYTES, DATES_INTAKE_MAX_IMAGES, DATES_INTAKE_REJECT_REASONS, datesAiUsageMonth, datesIntakeAuditNote,
+  DATES_INTAKE_INPUT_KINDS, DATES_INTAKE_MAX_IMAGE_BYTES, DATES_INTAKE_MAX_IMAGES, DATES_INTAKE_REJECT_REASONS, datesAiUsageMonth, datesIntakeAuditNote,
   datesIntakeCapabilityRefused, datesIntakeId, datesIntakeRefusal, datesIntakeSourceText, datesIntakeSourceUrl, datesIntakeUploadType,
   decodeDatesIntakeCreateReceipt, decodeDatesIntakeLeaseReceipt, decodeDatesIntakeRejectReceipt, projectDatesAiUsage,
   projectDatesIntakeDetail, projectDatesIntakeQueue,
@@ -105,15 +105,15 @@ export async function readDatesAiUsage(send: DatesIntakeSend, monthFilter: strin
 /**
  * Whether the "Draft from source" entry is offered, and why not when it is not.
  * `actor` is the signed-in operator as Core names them (null when the identity
- * read failed): the record of an unanswered submission is kept per operator.
- * `serverNow` is Core's clock at the read, when the read carried one.
+ * read failed): the reminder of an unanswered submission is kept per operator
+ * and shown to nobody else.
  */
-export type DatesIntakeDraftEntry = { state: "available" | "disabled" | "noCapability" | "unknown"; actor: string | null; serverNow: number | null };
+export type DatesIntakeDraftEntry = { state: "available" | "disabled" | "noCapability" | "unknown"; actor: string | null };
 export async function readDatesIntakeDraftEntry(send: DatesIntakeSend, signal?: AbortSignal): Promise<DatesIntakeDraftEntry> {
   // The usage read is the one every Dates role may make that carries the switch.
   const [response, identity] = await pair(send, "dates_event_intake_usage", {}, signal);
   const operator = datesIntakeOperator(identity), usage = projectDatesAiUsage(response, null);
-  const who = { actor: operator?.principal.email ?? null, serverNow: usage?.server_now ?? null };
+  const who = { actor: operator?.principal.email ?? null };
   if (!operator || !usage) return { state: operator && !operator.manage ? "noCapability" : "unknown", ...who };
   if (!operator.manage) return { state: "noCapability", ...who };
   return { state: usage.drafts_enabled ? "available" : "disabled", ...who };
@@ -244,6 +244,102 @@ export async function submitDatesIntakeSource(post: DatesIntakePost, draft: Date
 
 export function createDatesIntakeSourceKey(): string {
   return createAdminIdempotencyKey("dates-intake-create");
+}
+
+/**
+ * Refusals Core's create route raises BEFORE it looks the request's identity
+ * up, from something that can differ between two attempts of one request: the
+ * default-off switch, and a flyer that did not arrive whole. For the first
+ * attempt of an identity they prove that nothing was written. After an attempt
+ * whose outcome is unknown they say nothing about that earlier attempt.
+ */
+const CREATE_REFUSED_BEFORE_REPLAY: readonly string[] = ["dates-intake-admin-drafts-disabled", "dates-intake-image-invalid"];
+
+/**
+ * The identity of one source while its panel is open. The key is minted for
+ * the first attempt and kept across every outcome that does not say whether
+ * the draft was made, so that sending the same source again is the same
+ * request. Core's receipt or Core's definitive refusal ends it; so does an
+ * edit of the source, which makes it another request.
+ *
+ * This is a convenience of the open panel, not a guarantee. It lives in
+ * memory, nothing is locked, and after a reload - or from another tab - the
+ * same source goes out under a new key. That a source cannot become two open
+ * drafts is Core's guarantee (it answers a resubmission with the draft that
+ * exists), not the browser's: a browser has several tabs, a clock its user
+ * sets and storage that is neither atomic nor trustworthy.
+ */
+export type DatesIntakeSourceAttempts = {
+  /** The last attempt of the current source has no known outcome. */
+  readonly unanswered: boolean;
+  send(post: DatesIntakePost, draft: DatesIntakeSourceDraft, files: readonly Blob[], locale: "en" | "hu"): Promise<DatesIntakeCommandOutcome<DatesIntakeCreateReceipt>>;
+  /** The operator edited the source: what is sent next is another request, with its own identity. */
+  changed(): void;
+};
+
+export function createDatesIntakeSourceAttempts(mint: () => string = createDatesIntakeSourceKey): DatesIntakeSourceAttempts {
+  let key = "", unanswered = false;
+  return {
+    get unanswered() { return unanswered; },
+    async send(post, draft, files, locale) {
+      if (key === "") key = mint();
+      const sent = key;
+      let outcome = await submitDatesIntakeSource(post, draft, files, locale, sent);
+      if (outcome.kind === "refused" && unanswered && CREATE_REFUSED_BEFORE_REPLAY.includes(outcome.error))
+        outcome = { kind: "uncertain", error: outcome.error };
+      // An answer settles only the source it was sent for: if the operator has edited it meanwhile, nothing changes.
+      if (key !== sent) return outcome;
+      if (outcome.kind === "uncertain") unanswered = true;
+      else { key = ""; unanswered = false; }
+      return outcome;
+    },
+    changed() { key = ""; unanswered = false; },
+  };
+}
+
+/**
+ * A reminder that survives a reload: "your submission at HH:MM may have
+ * arrived - check the queue". It is a note for one operator in one browser
+ * and nothing more. It holds the time and the kind of source - no key, no
+ * content, no file name. It gates nothing, decides nothing, never expires by
+ * the clock, and the operator may dismiss it at any time.
+ */
+export type DatesIntakeSubmissionHint = { at: number; kind: DatesIntakeSourceKind };
+export type DatesIntakeHintStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+const hintKey = (actor: string) => `friending:dates-intake:hint:v1:${encodeURIComponent(actor)}`;
+
+export function datesIntakeHintStorage(): DatesIntakeHintStorage | null {
+  try { return typeof window === "undefined" ? null : window.localStorage; } catch { return null; }
+}
+
+/** The reminder kept for exactly this operator, or null. Anything unreadable is no reminder. */
+export function readDatesIntakeHint(storage: DatesIntakeHintStorage | null, actor: string | null): DatesIntakeSubmissionHint | null {
+  if (!storage || !actor) return null;
+  try {
+    const value: unknown = JSON.parse(storage.getItem(hintKey(actor)) ?? "null");
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const { at, kind } = value as Record<string, unknown>;
+    return Object.keys(value).length === 2 && typeof at === "number" && Number.isSafeInteger(at) && at > 0 && at <= 4_102_444_800
+      && typeof kind === "string" && (DATES_INTAKE_INPUT_KINDS as readonly string[]).includes(kind) ? { at, kind: kind as DatesIntakeSourceKind } : null;
+  } catch { return null; }
+}
+
+/** Best effort: a browser that cannot keep the reminder simply does not show one later. */
+export function writeDatesIntakeHint(storage: DatesIntakeHintStorage | null, actor: string | null, hint: DatesIntakeSubmissionHint | null): void {
+  if (!storage || !actor) return;
+  try {
+    if (hint === null) storage.removeItem(hintKey(actor));
+    else storage.setItem(hintKey(actor), JSON.stringify({ at: hint.at, kind: hint.kind }));
+  } catch { /* nothing depends on it */ }
+}
+
+/**
+ * What the panel may show: the reminder that was read for `actor`, and only
+ * while `actor` is who is signed in now. A reminder read for one operator is
+ * never painted for another, not even for one render.
+ */
+export function datesIntakeHintFor(read: { actor: string; hint: DatesIntakeSubmissionHint | null } | null, actor: string | null): DatesIntakeSubmissionHint | null {
+  return read !== null && actor !== null && read.actor === actor ? read.hint : null;
 }
 
 // ---------------------------------------------------------------- pacing
