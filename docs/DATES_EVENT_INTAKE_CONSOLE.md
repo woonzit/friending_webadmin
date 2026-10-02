@@ -39,6 +39,7 @@ rule; the provider is the Core lane's contract `dates-event-intake-admin-v1`.
 | generic action `dates_event_intake_reject` | same | review |
 | generic action `dates_event_intake_publish` | same | manage |
 | generic action `dates_event_intake_usage` | same | `dates_external_event_read` |
+| generic action `dates_event_intake_ask_member` (T-886) | same | review |
 
 Creating an intake and reading a flyer are not generic actions: they are not in
 the allow-list and cannot be reached through `/api/admin/[action]`. The mirror
@@ -95,8 +96,16 @@ A flyer is private evidence.
   without having seen them.
 - A value Core recomputes (counts, unions, derived booleans, clocks) never fails
   a page.
-- Receipts of create, lease, reject, publish and the flyer read are strictly
-  closed and bound to their request.
+- A command's receipt (create, lease, reject, ask the member, publish) is
+  **bound**, not exact-key: what identifies the command must be there and
+  valid - `success`, the intake id, the revision the command leaves, the
+  outcome where Core echoes it (the lease's four facts, `rejected` /
+  `duplicate` with the reason, `member_confirming` with the fields asked,
+  the publication's event and activity), an audit id of the right shape, the
+  `replayed` / `existing` markers - and any other key is tolerated. A body that
+  fails this is not a receipt: the outcome is "not known".
+- The flyer read is a read (audited by Core): its body is decoded as a closed
+  shape like every other read.
 
 ## Review, hold and publication
 
@@ -133,9 +142,71 @@ A flyer is private evidence.
   them: only a plain `https:` address without credentials is a link; `http:` and
   every other scheme is shown as text with a note.
 
+## Members' suggestions (T-886)
+
+A member's suggestion is an intake of the same queue with
+`channel: member_suggestion`; Core's contract is
+`docs/DATES_EVENT_SUGGESTION_V1.md`, "The reviewer's side". What the console
+adds for it:
+
+- **Queue**: a channel filter (operators' drafts / members' suggestions) and a
+  notice when `suggestions_enabled` is false. A queue row carries no mark of a
+  second look; the review screen does.
+- **The member's side** (`DatesIntakeMemberPanel`): the intake's `member` block
+  and nothing else of the member - a member number (or "the account was
+  erased"), credit (named / asked not to be named), "going", the accepted
+  consent version, where the member's look at the draft stands (state, time,
+  due time, what a reviewer asked and the note), the member's changes as a
+  diff (event, field, the AI's value, the member's value), the second look
+  (when asked, the member's note, the first decision, the second decision) and
+  the standing (strikes inside the window of the limit; a ban). No profile is
+  linked and no other route is read. Every text of the member is rendered as
+  plain text.
+- The block is decoded part by part. A part the console cannot read is said to
+  be unreadable in its place - never "none" - and then the member is not asked
+  from this page. A block that cannot be trusted at all (or is missing on a
+  suggestion, or present on an operator's draft) makes the whole side
+  unreadable.
+- **Ask the member** (`dates_event_intake_ask_member`): one to eight of the
+  editable fields, an optional note the member reads (at most 500 graphemes),
+  the audit reason. Offered on a suggestion in review to a reviewer; allowed
+  when Core says `can_ask`, the member switch is not known to be off and the
+  reviewer holds the intake - otherwise the form says which of these is
+  missing. A dialog confirms it. The receipt names the time the answer is due,
+  and that time is what the message shows. "Needs more info" is this command:
+  Core has no other route for it, and the member's notice is `needs_info`.
+- **Reject**: the statement of reasons is Core's template for the reason. With
+  the reason `duplicate` the reviewer may name the event that is already there
+  (typed, or picked from the events Core's own duplicate check pointed at): the
+  suggestion then ends as `duplicate` of that event, and the receipt must say
+  so twice. A name that is not an event id is refused on the form, never
+  dropped. Before confirming, the reviewer reads what it means for the member:
+  the notice, a strike for `spam_or_fake` with the served strikes and limit
+  (or "standing unknown" / "nobody" for an erased account), and that a second
+  look ends with this decision.
+- **Publish**: a suggestion needs the member switch
+  (`dates_external_suggestions_enabled`) instead of the draft switch; the
+  console offers accordingly and Core decides. The confirmation says what the
+  publication does for the member: named by number or not named, joined when
+  they asked to go and the suggestion is a single event.
+- **Second look**: a suggestion back in review with `re_review` set and no
+  second decision carries a mark at the top of the review screen; its decision
+  is an ordinary publication or rejection.
+- **The published event**: the provenance panel says "published by Core without
+  a reviewer" when none of the four administrator confirmations was given (the
+  autopublish switch, default off).
+- Nine settings (`dates_external_suggestions_enabled`, six limits and the strike
+  rule, the consent version, `dates_external_autopublish_enabled`) follow the
+  eight of the admin channel, each with its editor and help.
+
+Asking and rejecting are compare-and-set on the intake's revision, like the
+hold: a request sent twice under two keys is refused by Core the second time
+(`dates-intake-conflict`). While the page is open an unanswered request keeps
+its key for the retry; nothing is stored for it.
+
 ## Command outcomes
 
-Every intake command (create, hold, reject, publish) is settled by exactly two
+Every intake command (create, hold, reject, ask the member, publish) is settled by exactly two
 things: a receipt bound to its request, or one of Core's pinned no-land
 refusals in Core's own envelope. The list is closed and is the publication
 journal's own (`refusalCodes` behind `datesExternalRefusal` in

@@ -46,15 +46,19 @@ const headers = (values: Record<string, string | null>) => { const map = new Hea
 
 // ---------------------------------------------------------------- generic bridge
 
-test("six intake routes travel as generic actions; creating an intake and reading a flyer cannot", () => {
+test("seven intake routes travel as generic actions; creating an intake and reading a flyer cannot", () => {
   assert.deepEqual([...DATES_INTAKE_PROXY_ACTIONS], ["dates_event_intake_list", "dates_event_intake_detail", "dates_event_intake_lease",
-    "dates_event_intake_reject", "dates_event_intake_publish", "dates_event_intake_usage"]);
+    "dates_event_intake_reject", "dates_event_intake_publish", "dates_event_intake_usage", "dates_event_intake_ask_member"]);
   for (const action of DATES_INTAKE_PROXY_ACTIONS) assert.equal(isAdminActionAllowed(action), true);
   for (const action of ["dates_event_intake_create", "dates_event_intake_image", "dates_event_intake_merge", "dates_event_intake_List"])
     assert.equal(isAdminActionAllowed(action), false, action);
   const access = ADMIN_ACTION_ACCESS as Record<string, string>;
   for (const action of ["dates_event_intake_list", "dates_event_intake_detail", "dates_event_intake_usage"]) assert.equal(access[action], "dates_read");
-  for (const action of ["dates_event_intake_lease", "dates_event_intake_reject", "dates_event_intake_publish"]) assert.equal(access[action], "dates_write");
+  for (const action of ["dates_event_intake_lease", "dates_event_intake_reject", "dates_event_intake_publish", "dates_event_intake_ask_member"])
+    assert.equal(access[action], "dates_write");
+  // Nothing of the member's own routes (the app's) is reachable from the console.
+  for (const action of ["dates_event_intake_ask", "dates_event_suggestion_create", "dates_event_suggestion_withdraw", "dates_event_suggestion_re_review", "dates_event_intake_re_review"])
+    assert.equal(isAdminActionAllowed(action), false, action);
   // The floor of the Dates ladder: a support viewer never reaches a command.
   const viewer = adminPrincipalFrom(membership("support_viewer"));
   assert.equal(isAdminBridgeActionAuthorized("dates_event_intake_lease", viewer, null), false);
@@ -66,7 +70,9 @@ test("six intake routes travel as generic actions; creating an intake and readin
 
 test("the bridge mirrors the one capability Core requires for each intake route", () => {
   const expected: Record<string, string> = { dates_event_intake_list: "moderator", dates_event_intake_detail: "moderator", dates_event_intake_lease: "moderator",
-    dates_event_intake_reject: "moderator", dates_event_intake_publish: "administrator", dates_event_intake_usage: "support_viewer" };
+    dates_event_intake_reject: "moderator", dates_event_intake_publish: "administrator", dates_event_intake_usage: "support_viewer",
+    // Asking the member is a reviewer's command, like the hold and the rejection (Core: self::reviewer).
+    dates_event_intake_ask_member: "moderator" };
   const order = ["support_viewer", "moderator", "administrator"] as const;
   for (const action of DATES_INTAKE_PROXY_ACTIONS) for (const role of order)
     assert.equal(datesIntakeProxyCapabilityAuthorized(action, membership(role)), order.indexOf(role) >= order.indexOf(expected[action] as typeof order[number]), `${action} as ${role}`);
@@ -101,6 +107,26 @@ test("intake commands cross the bridge only in their closed shape", () => {
     assert.equal(normalizeDatesIntakeProxyBody("dates_event_intake_lease", body), null, JSON.stringify(body));
   const reject = { intake_id: id, expected_revision: 9, reason_code: "duplicate", reason: "Already listed as another intake.", idempotency_key: key };
   assert.deepEqual(normalizeDatesIntakeProxyBody("dates_event_intake_reject", reject), reject);
+  // T-886: a duplicate may name the event that is already there - an event id, and only with the reason `duplicate`.
+  const listed = "xev_" + "5".padStart(32, "0"), named = { ...reject, duplicate_of_external_event_id: listed };
+  assert.deepEqual(normalizeDatesIntakeProxyBody("dates_event_intake_reject", named), named);
+  for (const change of [{ duplicate_of_external_event_id: "" }, { duplicate_of_external_event_id: "xev_5" }, { duplicate_of_external_event_id: id },
+    { duplicate_of_external_event_id: null }, { duplicate_of_external_event_id: listed, reason_code: "spam_or_fake" }, { duplicate_of_intake_id: id }])
+    assert.equal(normalizeDatesIntakeProxyBody("dates_event_intake_reject", { ...reject, ...change }), null, JSON.stringify(change));
+  // T-886: asking the member. The fields are a list (the form encoder writes it as the JSON string Core reads).
+  const ask = { intake_id: id, expected_revision: 9, fields: ["starts_local", "venue_address"], reason: "The flyer and the text disagree.", idempotency_key: key };
+  assert.deepEqual(normalizeDatesIntakeProxyBody("dates_event_intake_ask_member", ask), ask);
+  const noted = { ...ask, member_note: "Biztosan reggel 9-kor kezdődik?" };
+  assert.deepEqual(normalizeDatesIntakeProxyBody("dates_event_intake_ask_member", noted), noted);
+  for (const change of [{ fields: [] }, { fields: "starts_local" }, { fields: '["starts_local"]' }, { fields: ["starts_local", "starts_local"] }, { fields: ["summary"] },
+    { fields: ["title", "starts_local", "ends_local", "venue_name", "venue_address", "venue_city", "price_text", "is_free", "title"] },
+    { member_note: "" }, { member_note: "   " }, { member_note: "x".repeat(501) }, { member_note: "bell\u0007" }, { member_note: 5 }, { reason: " " }, { reason: "x".repeat(1001) },
+    { idempotency_key: "short" }, { expected_revision: 0 }, { expected_revision: "9" }, { intake_id: "xin_1" }, { submitter_uid: 19601 }, { note: "x" }, { due_at: 1 }])
+    assert.equal(normalizeDatesIntakeProxyBody("dates_event_intake_ask_member", { ...ask, ...change }), null, JSON.stringify(change).slice(0, 60));
+  for (const missing of ["intake_id", "expected_revision", "fields", "reason", "idempotency_key"]) {
+    const { [missing]: _gone, ...rest } = ask as Record<string, unknown>;
+    assert.equal(normalizeDatesIntakeProxyBody("dates_event_intake_ask_member", rest), null, missing);
+  }
   for (const change of [{ reason_code: "boring" }, { reason: " " }, { reason: "x".repeat(1001) }, { idempotency_key: "short" }, { statement: { en: "Free text" } }])
     assert.equal(normalizeDatesIntakeProxyBody("dates_event_intake_reject", { ...reject, ...change }), null, JSON.stringify(Object.keys(change)));
   // Publishing: the P1 editor document with its four confirmations, the event's index and "last one" as real values.

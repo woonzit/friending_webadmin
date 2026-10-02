@@ -18,11 +18,16 @@ import {
  *   the page still renders;
  * - a value Core recomputes (counts, unions, derived booleans, clocks) never
  *   fails a page;
- * - mutation receipts stay strictly closed and bound to the request.
+ * - a mutation receipt is bound to its request on what identifies the command
+ *   (success, the intake, the revision the command leaves, the outcome where
+ *   Core echoes it, an audit id of the right shape) and tolerates any other
+ *   key: no exact-key-set check.
  */
 export const DATES_INTAKE_PROXY_ACTIONS = [
   "dates_event_intake_list", "dates_event_intake_detail", "dates_event_intake_lease",
   "dates_event_intake_reject", "dates_event_intake_publish", "dates_event_intake_usage",
+  // T-886: a reviewer sends a member's draft back to the member, once.
+  "dates_event_intake_ask_member",
 ] as const;
 export type DatesIntakeProxyAction = typeof DATES_INTAKE_PROXY_ACTIONS[number];
 
@@ -36,6 +41,8 @@ export const DATES_INTAKE_STATUS_DETAILS = ["image-empty", "image-unreadable", "
   "ai-not-configured", "ai-budget-overrun", "venue-search-unavailable", "duplicate-source", "duplicate-event", "start-passed", "storage-unavailable",
   "attempts-exhausted", "account-erased"] as const;
 export const DATES_INTAKE_CHANNELS = ["admin_draft", "member_suggestion", "ai_research"] as const;
+/** The channels that have a writer today, offered as the queue's filter (the research channel is P3). */
+export const DATES_INTAKE_QUEUE_CHANNELS = ["admin_draft", "member_suggestion"] as const;
 export const DATES_INTAKE_INPUT_KINDS = ["url", "images", "text"] as const;
 export const DATES_INTAKE_DECISION_ACTIONS = ["published", "rejected", "duplicate", "merged", "expired", "screening_rejected", "extraction_rejected",
   "withdrawn"] as const;
@@ -152,6 +159,8 @@ const envelope = { success: literal(true), status_code: literal(200), message: l
 
 export const datesIntakeId = id("xin");
 const externalEventId = id("xev");
+/** The id of an external event, as Core writes it. */
+export const datesExternalEventId = externalEventId;
 const auditId = id("aud");
 
 /** A list whose items are read one by one: a damaged item is named, never fatal. */
@@ -165,11 +174,14 @@ function rows<T>(value: unknown, guard: Guard<T>, maximum: number): DatesIntakeR
 
 // ---------------------------------------------------------------- lease
 
-const leaseShape = closed({ holder: nullable(string(320)), until: integer(0), active: bool, mine: bool });
+const LEASE = { holder: nullable(string(320)), until: integer(0), active: bool, mine: bool };
+const leaseShape = closed(LEASE);
 export type DatesIntakeLease = Parsed<typeof leaseShape>;
+const leaseCoherent = (value: DatesIntakeLease) => value.active === (value.holder !== null) && (value.active || value.until === 0) && (!value.mine || value.active);
 /** Core's own coherence rule for a projected lease (contract `lease coherence`). */
-export const datesIntakeLease: Guard<DatesIntakeLease> = (value): value is DatesIntakeLease => leaseShape(value)
-  && value.active === (value.holder !== null) && (value.active || value.until === 0) && (!value.mine || value.active);
+export const datesIntakeLease: Guard<DatesIntakeLease> = (value): value is DatesIntakeLease => leaseShape(value) && leaseCoherent(value);
+/** The lease as a receipt echoes it: the same four facts and the same coherence, with any other key tolerated. */
+const receiptLease: Guard<DatesIntakeLease> = (value): value is DatesIntakeLease => bound(LEASE)(value) && leaseCoherent(value);
 
 // ---------------------------------------------------------------- queue row
 
@@ -346,6 +358,7 @@ const DETAIL_KEYS = ["admin_principal", "inputs", "fetch", "source_texts", "resu
 
 // The member's side of a suggestion, as Core serves it to a reviewer - and nothing of the member beyond it.
 const memberField = oneOf(DATES_INTAKE_MEMBER_EDITABLE_FIELDS);
+export type DatesIntakeMemberField = typeof DATES_INTAKE_MEMBER_EDITABLE_FIELDS[number];
 const memberConfirmation = closed({ state: oneOf(DATES_INTAKE_MEMBER_CONFIRMATION_STATES), at: nullable(clock), due_at: nullable(clock),
   asked_by_reviewer: bool, fields: list(memberField, 20), note: nullable(string(8000)) });
 /** A corrected value is shown as text; Core serves a string, and a boolean for `is_free`. */
@@ -528,24 +541,65 @@ export function datesIntakeLink(value: unknown): string | null {
 export type DatesIntakeAffordances = {
   claim: boolean; release: boolean; overrideRelease: boolean; reject: boolean; publish: boolean;
 };
+/** A rejection for one of these reasons is a strike against the member who suggested the event (Core: STRIKE_REASONS). */
+export const DATES_INTAKE_STRIKE_REASONS: readonly string[] = ["spam_or_fake"];
+/** A member's note to or from a reviewer: at most this many graphemes (Core: MAX_NOTE_GRAPHEMES). */
+export const DATES_INTAKE_MAX_MEMBER_NOTE_GRAPHEMES = 500;
 
 /**
  * What the console OFFERS. Core remains the authority: every one of these is
  * re-checked there and its refusal is shown as what it is.
  */
-export function datesIntakeAffordances(intake: Pick<DatesIntakeQueueRow, "status" | "controls" | "lease" | "published_count">,
-  access: { review: boolean; manage: boolean; superadmin: boolean; draftsEnabled: boolean }): DatesIntakeAffordances {
+export function datesIntakeAffordances(intake: Pick<DatesIntakeQueueRow, "status" | "controls" | "lease" | "published_count"> & { channel?: string | null },
+  access: { review: boolean; manage: boolean; superadmin: boolean; draftsEnabled: boolean; suggestionsEnabled?: boolean }): DatesIntakeAffordances {
   const open = intake.controls && intake.status === "in_review" && access.review && intake.lease !== null;
   const lease = intake.lease;
+  // A member's suggestion is published under the member channel's switch, an operator's draft under the draft switch.
+  const switchOn = intake.channel === "member_suggestion" ? access.suggestionsEnabled !== false : access.draftsEnabled;
   return {
     claim: open && !lease!.active,
     release: open && lease!.mine,
     overrideRelease: open && lease!.active && !lease!.mine && access.superadmin,
     // Core refuses a rejection once an event of the intake was published.
     reject: open && lease!.mine && intake.published_count === 0,
-    publish: open && lease!.mine && access.manage && access.draftsEnabled,
+    publish: open && lease!.mine && access.manage && switchOn,
   };
 }
+
+/**
+ * Whether the reviewer may send the draft back to the member, and if not, the
+ * one reason the screen gives. Core decides (`can_ask`: a member's suggestion,
+ * not asked before, the account still there, nothing published from it); the
+ * console adds only what it can see - the hold, the switch, a block it could
+ * not read - and Core re-checks all of it.
+ */
+export type DatesIntakeAskState = { offered: false } | { offered: true; allowed: true }
+  | { offered: true; allowed: false; why: "unreadable" | "notAskable" | "switchOff" | "holdFirst" };
+export function datesIntakeAskState(intake: Pick<DatesIntakeDetail, "status" | "controls" | "lease" | "channel" | "member" | "unreadable_sections">,
+  access: { review: boolean; suggestionsEnabled: boolean | null }): DatesIntakeAskState {
+  if (intake.channel !== "member_suggestion" || intake.status !== "in_review" || !access.review) return { offered: false };
+  if (intake.member === null || intake.unreadable_sections.includes("member") || intake.member.unreadable.length > 0) return { offered: true, allowed: false, why: "unreadable" };
+  if (!intake.member.can_ask) return { offered: true, allowed: false, why: "notAskable" };
+  if (access.suggestionsEnabled === false) return { offered: true, allowed: false, why: "switchOff" };
+  if (!intake.controls || intake.lease === null || !intake.lease.mine) return { offered: true, allowed: false, why: "holdFirst" };
+  return { offered: true, allowed: true };
+}
+
+/** Whether the console would send this request to the member at all: a field chosen, a usable note or none, an audit reason. */
+export function datesIntakeAskValid(fields: readonly unknown[], memberNote: string, reason: string): boolean {
+  return datesIntakeAskFields([...fields]) && datesIntakeAuditNote(reason) && (memberNote.trim() === "" || datesIntakeMemberNote(memberNote.trim()));
+}
+
+/** The fields a reviewer asks the member to look at: one to eight of the editable ones, none twice (as Core checks). */
+export const datesIntakeAskFields: Guard<DatesIntakeMemberField[]> = (value): value is DatesIntakeMemberField[] => Array.isArray(value) && value.length >= 1
+  && value.length <= DATES_INTAKE_MEMBER_EDITABLE_FIELDS.length && value.every(memberField) && new Set(value).size === value.length;
+/**
+ * The note the member reads: optional; when given, not blank, no control
+ * character but tab and line breaks, at most 500 graphemes after trimming
+ * (DatesEventIntakeAdminService::askMember).
+ */
+export const datesIntakeMemberNote: Guard<string> = (value): value is string => typeof value === "string" && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(value)
+  && phpTrim(value) !== "" && [...graphemes.segment(phpTrim(value))].length <= DATES_INTAKE_MAX_MEMBER_NOTE_GRAPHEMES;
 
 /** The events of an intake that can still be opened in the editor. */
 export function datesIntakePublishableEvents(intake: Pick<DatesIntakeDetail, "events" | "status">): number[] {
@@ -700,8 +754,11 @@ export function decodeDatesIntakeCreateReceipt(value: unknown): DatesIntakeCreat
   return (value.existing ? (DATES_INTAKE_OPEN_STATUSES as readonly string[]).includes(status) : revision === 1 && status === "received") ? value : null;
 }
 
-const leaseReceipt = closed({ ...envelope, intake: closed({ intake_id: datesIntakeId, revision: integer(2), status: literal("in_review"),
-  lease: datesIntakeLease }), audit_id: nullable(auditId) });
+// What every receipt binds first: Core said it succeeded. Everything else Core adds (its clock, the legacy envelope keys,
+// a key of a later contract) is tolerated.
+const succeeded = { success: literal(true), status_code: literal(200) };
+const leaseReceipt = bound({ ...succeeded, intake: bound({ intake_id: datesIntakeId, revision: integer(2), status: literal("in_review"),
+  lease: receiptLease }), audit_id: nullable(auditId) });
 export type DatesIntakeLeaseReceipt = Parsed<typeof leaseReceipt>;
 export type DatesIntakeLeaseAction = typeof DATES_INTAKE_LEASE_ACTIONS[number];
 /** A lease receipt answers exactly the request: this intake, the next revision, the lease that action leaves. */
@@ -716,20 +773,40 @@ export function decodeDatesIntakeLeaseReceipt(value: unknown, request: { intake_
   return value;
 }
 
-const rejectReceipt = closed({ ...envelope, replayed: bool,
-  intake: closed({ intake_id: datesIntakeId, revision: integer(2), status: literal("rejected") }),
-  decision: closed({ action: literal("rejected"), reason_code: oneOf(DATES_INTAKE_REJECT_REASONS), statement: statementGuard }), audit_id: auditId });
+const rejectOutcome = oneOf(["rejected", "duplicate"] as const);
+const rejectReceipt = bound({ ...succeeded, replayed: bool,
+  intake: bound({ intake_id: datesIntakeId, revision: integer(2), status: rejectOutcome }),
+  decision: bound({ action: rejectOutcome, reason_code: oneOf(DATES_INTAKE_REJECT_REASONS) }), audit_id: auditId });
 export type DatesIntakeRejectReceipt = Parsed<typeof rejectReceipt>;
-export function decodeDatesIntakeRejectReceipt(value: unknown, request: { intake_id: string; expected_revision: number; reason_code: string }):
-  DatesIntakeRejectReceipt | null {
-  return rejectReceipt(value) && value.intake.intake_id === request.intake_id && value.intake.revision === request.expected_revision + 1
-    && value.decision.reason_code === request.reason_code ? value : null;
+/**
+ * A rejection receipt answers its request: this intake, the next revision, the
+ * reason that was sent, and the outcome that request asks for - a rejection
+ * that names the event already there ends the intake as a `duplicate` of it,
+ * every other one as `rejected` (Core echoes the outcome twice; both must say it).
+ */
+export function decodeDatesIntakeRejectReceipt(value: unknown, request: { intake_id: string; expected_revision: number; reason_code: string;
+  duplicate_of_external_event_id?: string }): DatesIntakeRejectReceipt | null {
+  if (!rejectReceipt(value) || value.intake.intake_id !== request.intake_id || value.intake.revision !== request.expected_revision + 1
+    || value.decision.reason_code !== request.reason_code) return null;
+  const outcome = request.duplicate_of_external_event_id === undefined ? "rejected" : "duplicate";
+  return value.intake.status === outcome && value.decision.action === outcome ? value : null;
 }
 
-const publishReceipt = closed({ ...envelope, replayed: bool, external_event_id: externalEventId, revision: literal(1),
+const askReceipt = bound({ ...succeeded, replayed: bool,
+  intake: bound({ intake_id: datesIntakeId, revision: integer(2), status: literal("member_confirming") }),
+  asked: bound({ fields: list(memberField, DATES_INTAKE_MEMBER_EDITABLE_FIELDS.length), due_at: clock }), audit_id: auditId });
+export type DatesIntakeAskReceipt = Parsed<typeof askReceipt>;
+/** The draft is with the member: this intake, the next revision, and exactly the fields that were asked about. */
+export function decodeDatesIntakeAskReceipt(value: unknown, request: { intake_id: string; expected_revision: number; fields: readonly string[] }):
+  DatesIntakeAskReceipt | null {
+  return askReceipt(value) && value.intake.intake_id === request.intake_id && value.intake.revision === request.expected_revision + 1
+    && value.asked.fields.length === request.fields.length && request.fields.every((field) => (value.asked.fields as string[]).includes(field)) ? value : null;
+}
+
+const publishReceipt = bound({ ...succeeded, replayed: bool, external_event_id: externalEventId, revision: integer(1),
   // The activity is new, but not always at revision 1: a member's "going" is recorded with the publication (P2b).
   activity_id: id("act"), activity_revision: integer(1), event_status: literal("published"), audit_id: auditId,
-  intake: closed({ intake_id: datesIntakeId, revision: integer(2), status: oneOf(["in_review", "published"] as const), published_count: integer(1) }) });
+  intake: bound({ intake_id: datesIntakeId, revision: integer(2), status: oneOf(["in_review", "published"] as const), published_count: integer(1) }) });
 export type DatesIntakePublishReceipt = Parsed<typeof publishReceipt>;
 /** The P1 publish receipt plus what became of the intake, bound to the request. */
 export function decodeDatesIntakePublishReceipt(value: unknown, request: Record<string, unknown>): DatesIntakePublishReceipt | null {
@@ -895,9 +972,17 @@ export function normalizeDatesIntakeProxyBody(action: string, body: Record<strin
   }
   if (action === "dates_event_intake_lease") return bodyKeys(body, ["intake_id", "action", "expected_revision"]) && datesIntakeId(body.intake_id)
     && oneOf(DATES_INTAKE_LEASE_ACTIONS)(body.action) && integer(1)(body.expected_revision) ? body : null;
-  if (action === "dates_event_intake_reject") return bodyKeys(body, ["intake_id", "expected_revision", "reason_code", "reason", "idempotency_key"])
+  // A rejection as a duplicate may name the event that is already there; with any other reason Core refuses the name.
+  if (action === "dates_event_intake_reject") return bodyKeys(body, ["intake_id", "expected_revision", "reason_code", "reason", "idempotency_key"],
+    ["duplicate_of_external_event_id"])
     && datesIntakeId(body.intake_id) && integer(1)(body.expected_revision) && oneOf(DATES_INTAKE_REJECT_REASONS)(body.reason_code)
-    && datesIntakeAuditNote(body.reason) && requestKey(body.idempotency_key) ? body : null;
+    && datesIntakeAuditNote(body.reason) && requestKey(body.idempotency_key)
+    && (!Object.hasOwn(body, "duplicate_of_external_event_id") || (body.reason_code === "duplicate" && externalEventId(body.duplicate_of_external_event_id))) ? body : null;
+  // The fields travel as a list (the bridge's form encoder writes it as the one JSON string Core reads).
+  if (action === "dates_event_intake_ask_member") return bodyKeys(body, ["intake_id", "expected_revision", "fields", "reason", "idempotency_key"], ["member_note"])
+    && datesIntakeId(body.intake_id) && integer(1)(body.expected_revision) && datesIntakeAskFields(body.fields)
+    && datesIntakeAuditNote(body.reason) && requestKey(body.idempotency_key)
+    && (!Object.hasOwn(body, "member_note") || datesIntakeMemberNote(body.member_note)) ? body : null;
   return normalizeDatesIntakePublishBody(body);
 }
 

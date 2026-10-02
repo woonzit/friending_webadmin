@@ -486,3 +486,222 @@ test("review recheck 2: the reminder of an unanswered submission is a dismissibl
   assert.equal(datesIntakeHintFor({ actor: "a@example.test", hint }, null), null);
   assert.equal(datesIntakeHintFor(null, "a@example.test"), null); assert.equal(datesIntakeHintFor({ actor: "a@example.test", hint: null }, "a@example.test"), null);
 });
+
+// ---------------------------------------------------------------- T-886: the member-intake side
+
+const MEMBER_DETAILS = DETAILS.filter((name) => name.startsWith("admin-detail-member-"));
+const text = (template: string, values: Record<string, string | number> = {}) => Object.entries(values).reduce((made, [key, value]) => made.replaceAll(`{${key}}`, String(value)), template);
+
+test("T-886: the member's side renders for every genuine suggestion exactly what Core serves - and nothing of the member beyond it", async () => {
+  const { default: DatesIntakeMemberPanel } = await import("../components/DatesIntakeMemberPanel.tsx");
+  assert.equal(MEMBER_DETAILS.length, 14);
+  for (const name of MEMBER_DETAILS) for (const locale of LOCALES) {
+    const body = fixture(name), intake = detail(name), served = body.intake.member, copy = messagesOf(locale).datesAdmin.intake, member = copy.member;
+    const html = render(locale, createElement(DatesIntakeMemberPanel, { intake }));
+    const label = `${name} ${locale}`;
+    assert.ok(html.includes(escaped(member.title)), label);
+    // Who: a member number as served, or the erased account - no name, no address, no link to a profile.
+    assert.ok(html.includes(escaped(served.submitter_uid === null ? member.erased : text(member.submitterValue, { uid: served.submitter_uid }))), label);
+    assert.doesNotMatch(html, /<a[ >]|href=|<img/, `${label}: no link and no image`);
+    // The one address that can appear is the reviewer's who made the first decision, as Core serves it - never a member's.
+    assert.deepEqual(html.match(/[\w.+-]+@[\w.-]+/g) ?? [], served.re_review?.first_decision ? [served.re_review.first_decision.by] : [], label);
+    // The only numbers of a member on the panel are the served ones.
+    for (const uid of html.match(/\b19\d{3}\b/g) ?? []) assert.equal(Number(uid), served.submitter_uid, label);
+    // What they chose.
+    assert.ok(html.includes(escaped(served.submitter_uid === null ? member.creditErased : served.anonymous ? member.anonymous : member.named)), label);
+    assert.ok(html.includes(escaped(served.auto_going ? member.goingYes : member.goingNo)), label);
+    assert.ok(html.includes(escaped(served.consent_version === null ? member.consentNone : text(member.consentVersion, { version: served.consent_version }))), label);
+    // Where their look at the draft stands, in words; what a reviewer asked, with the note as text.
+    if (served.confirmation === null) assert.ok(html.includes(escaped(member.confirmationNone)), label);
+    else {
+      assert.ok(html.includes(`<span class="badge">${escaped(copy.memberConfirmationValues[served.confirmation.state])}</span>`), label);
+      assert.equal(html.includes(escaped(member.askedByReviewer)), served.confirmation.asked_by_reviewer, label);
+      for (const field of served.confirmation.fields) assert.ok(html.includes(escaped(copy.memberFieldValues[field])), `${label} ${field}`);
+      if (served.confirmation.note !== null) assert.ok(html.includes(`<blockquote class="preserve-whitespace">${escaped(served.confirmation.note)}</blockquote>`), label);
+    }
+    // The diff: every change, old and new value, as text.
+    if (served.corrections.length === 0) assert.ok(html.includes(escaped(member.correctionsNone)), label);
+    else {
+      assert.equal(html.includes(escaped(member.correctionsNone)), false, label);
+      assert.equal((html.match(/<tr>/g) ?? []).length, served.corrections.length + 1, label);
+      for (const row of served.corrections) for (const value of [row.from, row.to]) assert.ok(html.includes(escaped(String(value))), `${label}: ${value}`);
+    }
+    // The second look, with the first decision and the member's own words.
+    if (served.re_review === null) assert.ok(html.includes(escaped(member.secondLookNone)), label);
+    else {
+      assert.ok(html.includes(`<blockquote class="preserve-whitespace">${escaped(served.re_review.note)}</blockquote>`), label);
+      assert.ok(html.includes(escaped(copy.decisionValues[served.re_review.first_decision.action])) && html.includes(escaped(copy.rejectReasons[served.re_review.first_decision.reason_code])), label);
+      assert.ok(html.includes(escaped(served.re_review.decided_at === null ? member.secondLookWaiting : member.secondDecision)), label);
+    }
+    // Standing: the strikes as served, and a ban said as a ban.
+    if (served.standing === null) assert.ok(html.includes(escaped(member.standingNone)), label);
+    else {
+      assert.ok(html.includes(escaped(text(member.strikes, { strikes: served.standing.strikes, limit: served.standing.strike_limit }))), label);
+      assert.equal(html.includes(escaped(member.notBanned)), served.standing.banned_until === null, label);
+      assert.equal(/<strong>[^<]*<\/strong>/.test(html), served.standing.banned_until !== null, label);
+    }
+    assert.equal(html.includes(escaped(member.partUnreadable)), false, label); assert.equal(html.includes(escaped(member.unreadable)), false, label);
+    assert.doesNotMatch(html, RETIRED_BRAND);
+  }
+  // An operator's draft has no member's side at all.
+  for (const locale of LOCALES) assert.equal(render(locale, createElement(DatesIntakeMemberPanel, { intake: detail("admin-detail-in-review-official") })), "");
+});
+
+test("T-886: the member's own words are plain text, and a part that cannot be read is said to be unreadable - never shown as none", async () => {
+  const { default: DatesIntakeMemberPanel } = await import("../components/DatesIntakeMemberPanel.tsx");
+  const genuine = fixture("admin-detail-member-re-review");
+  const hostile = "<script>alert(1)</script> <a href=\"https://evil.example/\">https://evil.example/</a> <img src=x onerror=alert(1)>";
+  const made = (change: (member: any) => void) => { const body = JSON.parse(JSON.stringify(genuine)); change(body.intake.member); return projectDatesIntakeDetail(body, body.intake.intake_id)!.intake; };
+  for (const locale of LOCALES) {
+    const member = messagesOf(locale).datesAdmin.intake.member;
+    // Member-supplied text in every place it can appear: the note of a second look, a corrected value, the reviewer's note.
+    const html = render(locale, createElement(DatesIntakeMemberPanel, { intake: made((block) => {
+      block.re_review.note = hostile; block.corrections = [{ index: 0, field: "title", from: hostile, to: `${hostile}!` }, { index: 1, field: "is_free", from: false, to: true },
+        { index: 0, field: "price_text", from: null, to: "" }];
+      block.confirmation = { ...block.confirmation, state: "awaiting", due_at: 1790259200, asked_by_reviewer: true, fields: ["title"], note: hostile };
+    }) }));
+    assert.equal((html.match(/&lt;script&gt;alert\(1\)&lt;\/script&gt;/g) ?? []).length, 4, "the note, two values and the reviewer's note - all escaped");
+    // No tag and no attribute came of it: what looks like markup is escaped text.
+    assert.doesNotMatch(html, /<script|<a[ >]|<img|href="|onerror="|src="/); assert.equal(html.includes("<script>"), false);
+    assert.ok(html.includes("&lt;a href=&quot;https://evil.example/&quot;&gt;https://evil.example/&lt;/a&gt;"));
+    // A boolean reads Yes / No, an empty or absent value reads "(empty)".
+    assert.ok(html.includes(`<td>${escaped(member.no)}</td><td>${escaped(member.yes)}</td>`));
+    assert.equal((html.match(new RegExp(`<em>${escaped(member.empty).replace(/[()]/g, "\\$&")}</em>`, "g")) ?? []).length, 2);
+    // Each part, unreadable: the page says so in that place and does not print the word for "none".
+    const NONE: Record<string, string> = { confirmation: member.confirmationNone, corrections: member.correctionsNone, re_review: member.secondLookNone, standing: member.standingNone };
+    for (const [part, value] of [["confirmation", { state: "sleeping" }], ["corrections", "none"], ["re_review", { requested_at: "yesterday" }], ["standing", { strikes: -1 }]] as const) {
+      const intake = made((block) => { block[part] = value; });
+      assert.deepEqual(intake.member!.unreadable, [part]); assert.equal(intake.member!.can_ask, false, "nobody is asked on a block that could not be read whole");
+      const broken = render(locale, createElement(DatesIntakeMemberPanel, { intake }));
+      assert.equal((broken.match(new RegExp(escaped(member.partUnreadable), "g")) ?? []).length, 1, `${locale} ${part}`);
+      assert.equal(broken.includes(escaped(NONE[part])), false, `${locale} ${part}: unknown is not none`);
+    }
+    // One change that cannot be read is counted beside the ones that can; the rest of the diff is still shown.
+    const partly = made((block) => { block.corrections = [{ index: 0, field: "title", from: "A", to: "B" }, { index: 0, field: "password", from: "x", to: "y" }, { index: 0, field: "venue_city" }]; });
+    assert.deepEqual(partly.member!.unreadable, []); assert.equal(partly.member!.corrections.items.length, 1); assert.equal(partly.member!.corrections.unreadable.length, 2);
+    const some = render(locale, createElement(DatesIntakeMemberPanel, { intake: partly }));
+    assert.ok(some.includes(escaped(text(member.correctionsUnreadable, { count: 2 })))); assert.equal(some.includes(escaped(member.correctionsNone)), false);
+    // The block itself untrustworthy (or missing on a suggestion): the whole side is unreadable, never "no member".
+    for (const change of [(block: any) => { block.submitter_uid = "19602"; }, (block: any) => { block.email = "member@example.test"; }, (block: any) => { delete block.can_ask; }]) {
+      const intake = made(change);
+      assert.equal(intake.member, null); assert.ok(intake.unreadable_sections.includes("member"));
+      const whole = render(locale, createElement(DatesIntakeMemberPanel, { intake }));
+      assert.ok(whole.includes(escaped(member.unreadable))); assert.doesNotMatch(whole, /member@example\.test|19602/);
+    }
+    const missing = JSON.parse(JSON.stringify(genuine)); missing.intake.member = null;
+    const without = projectDatesIntakeDetail(missing, missing.intake.intake_id)!.intake;
+    assert.ok(without.unreadable_sections.includes("member"), "a suggestion without its member block");
+    assert.ok(render(locale, createElement(DatesIntakeMemberPanel, { intake: without })).includes(escaped(member.unreadable)));
+    // An operator's draft that carries a member block is unreadable in that part too - not silently a suggestion.
+    const draft = fixture("admin-detail-in-review-official"); draft.intake.member = genuine.intake.member;
+    const odd = projectDatesIntakeDetail(draft, draft.intake.intake_id)!.intake;
+    assert.equal(odd.member, null); assert.ok(render(locale, createElement(DatesIntakeMemberPanel, { intake: odd })).includes(escaped(member.unreadable)));
+  }
+});
+
+test("T-886: before a rejection or a publication the reviewer is told what it means for the member, from Core's figures", async () => {
+  const { DatesIntakeMemberRejectNotes, DatesIntakeMemberPublishNotes, datesIntakeSecondLookOpen } = await import("../components/DatesIntakeMemberPanel.tsx");
+  for (const locale of LOCALES) {
+    const copy = messagesOf(locale).datesAdmin.intake, reject = copy.reject, editor = copy.editor;
+    const notes = (name: string, reasonCode: string, namesEvent = false, change?: (intake: any) => void) => { const intake = detail(name); change?.(intake);
+      return render(locale, createElement(DatesIntakeMemberRejectNotes, { intake, reasonCode, namesEvent })); };
+    // An operator's draft: nothing about a member.
+    assert.equal(notes("admin-detail-in-review-official", "spam_or_fake"), "");
+    // A strike is said with the member's figures as served: 0 of 3 for the suggestion in review.
+    const strike = notes("admin-detail-member-in-review", "spam_or_fake");
+    assert.ok(strike.includes(escaped(text(reject.strike, { strikes: 0, limit: 3 }))) && strike.includes(escaped(reject.memberStatement)));
+    // Any other reason is no strike; a named duplicate is no strike either and says what the member is told instead.
+    for (const reason of ["duplicate", "not_an_event", "unverifiable", "outside_area"]) assert.doesNotMatch(notes("admin-detail-member-in-review", reason), /alert-warning/, reason);
+    const named = notes("admin-detail-member-in-review", "duplicate", true);
+    assert.ok(named.includes(escaped(reject.memberDuplicate))); assert.equal(named.includes(escaped(reject.memberStatement)), false); assert.doesNotMatch(named, /alert-warning/);
+    // The second look: 2 of 3 (the rejection under review is not counted meanwhile), and rejecting again is final.
+    const second = notes("admin-detail-member-re-review", "spam_or_fake");
+    assert.ok(second.includes(escaped(text(reject.strike, { strikes: 2, limit: 3 }))) && second.includes(escaped(reject.secondLook)));
+    assert.equal(notes("admin-detail-member-in-review", "spam_or_fake").includes(escaped(reject.secondLook)), false);
+    // A standing the console could not read is said to be unknown; an erased account is a strike against nobody.
+    assert.ok(notes("admin-detail-member-in-review", "spam_or_fake", false, (intake) => { intake.member.unreadable = ["standing"]; intake.member.standing = null; }).includes(escaped(reject.strikeUnknown)));
+    assert.ok(notes("admin-detail-member-in-review", "spam_or_fake", false, (intake) => { intake.member = null; }).includes(escaped(reject.strikeUnknown)));
+    assert.ok(notes("admin-detail-member-in-review", "spam_or_fake", false, (intake) => { intake.member.standing = null; intake.member.submitter_uid = null; }).includes(escaped(reject.strikeNobody)));
+    // Publishing: credit by number, or no name; "going" only where Core would join them.
+    const publish = (member: any, events = 1) => render(locale, createElement(DatesIntakeMemberPublishNotes, { member, events }));
+    const credited = detail("admin-detail-member-in-review").member!, anonymous = detail("admin-detail-member-re-review").member!, erased = detail("admin-detail-member-erased").member!;
+    assert.deepEqual([credited.anonymous, credited.auto_going, anonymous.anonymous, anonymous.auto_going, erased.submitter_uid], [false, true, true, false, null]);
+    const first = publish(credited);
+    assert.ok(first.includes(escaped(text(editor.memberCredit, { uid: 19601 }))) && first.includes(escaped(editor.memberGoing)));
+    assert.ok(publish(credited, 3).includes(escaped(editor.memberGoingProgramme))); assert.equal(publish(credited, 3).includes(escaped(editor.memberGoing)), false);
+    const hidden = publish(anonymous);
+    assert.ok(hidden.includes(escaped(editor.memberAnonymous))); assert.doesNotMatch(hidden, /19602/, "an anonymous member's number is not repeated in the confirmation");
+    assert.equal(hidden.includes(escaped(editor.memberGoing)), false);
+    assert.ok(publish(erased).includes(escaped(editor.memberErased)));
+    assert.ok(publish(null).includes(escaped(editor.memberUnreadable)));
+  }
+  // The second look is open exactly while the member has asked and no second decision is on record.
+  assert.deepEqual(Object.fromEntries(MEMBER_DETAILS.map((name) => [name.replace("admin-detail-member-", ""), datesIntakeSecondLookOpen(detail(name))]).filter(([, open]) => open)), { "re-review": true });
+  const decided = detail("admin-detail-member-re-review"); decided.member!.re_review!.decided_at = 1790000000;
+  assert.equal(datesIntakeSecondLookOpen(decided), false);
+});
+
+test("T-886: the ask form offers the eight editable fields and says why it is closed", async () => {
+  const { DatesIntakeAskSection } = await import("../components/DatesIntakeMemberPanel.tsx");
+  const noop = () => undefined;
+  for (const locale of LOCALES) {
+    const copy = messagesOf(locale).datesAdmin.intake, ask = copy.ask;
+    const section = (state: unknown, retry = false) => render(locale, createElement(DatesIntakeAskSection, { state: state as never, busy: false, retry, onChanged: noop, onReview: noop, onRetry: noop }));
+    assert.equal(section({ offered: false }), "");
+    const open = section({ offered: true, allowed: true });
+    assert.equal((open.match(/type="checkbox"/g) ?? []).length, 8);
+    for (const field of DATES_INTAKE_VOCABULARIES.member_editable_field) assert.ok(open.includes(`<span>${escaped(copy.memberFieldValues[field])}</span>`), field);
+    assert.ok(open.includes(escaped(ask.copy)) && open.includes(escaped(text(ask.noteHint, { maximum: 500 }))) && open.includes(escaped(ask.reasonHint)));
+    assert.match(open, /<fieldset class="dates-external-fields">/, "open");
+    // Nothing is chosen at first, so nothing can be reviewed yet; the retry button is there only for an unanswered request.
+    assert.match(open, /<button type="submit" class="button button-primary" disabled="">/);
+    assert.equal(open.includes(escaped(ask.retry)), false); assert.ok(section({ offered: true, allowed: true }, true).includes(escaped(ask.retry)));
+    for (const why of ["unreadable", "notAskable", "switchOff", "holdFirst"]) {
+      const closed = section({ offered: true, allowed: false, why });
+      assert.ok(closed.includes(escaped(ask.why[why])), why); assert.match(closed, /<fieldset class="dates-external-fields" disabled="">/, why);
+      assert.equal(/alert-error/.test(closed), why === "unreadable", why);
+    }
+    assert.deepEqual(Object.keys(ask.why).sort(), ["holdFirst", "notAskable", "switchOff", "unreadable"]);
+    // The words say who reads what.
+    assert.match(ask.noteHint, locale === "en" ? /The member reads this/ : /Ezt a tag olvassa/); assert.match(ask.reasonHint, locale === "en" ? /never shown to the member/ : /a tag soha nem látja/);
+  }
+});
+
+test("T-886: an event that came from a member's suggestion says who is credited, and one Core published by itself says nobody confirmed it", () => {
+  const credit = fixture("admin-external-detail-member-credit"), auto = fixture("admin-external-detail-auto-published");
+  const credited = decodeDatesExternalDetail(credit, credit.event.external_event_id)!.event, alone = decodeDatesExternalDetail(auto, auto.event.external_event_id)!.event;
+  for (const locale of LOCALES) {
+    const copy = messagesOf(locale).datesAdmin.external, channels = messagesOf(locale).datesAdmin.intake.channelValues;
+    const reviewed = render(locale, createElement(DatesExternalProvenance, { event: credited }));
+    assert.ok(reviewed.includes(escaped(text(copy.provenance.member, { uid: 19601 }))) && reviewed.includes(escaped(channels.member_suggestion)));
+    assert.ok(reviewed.includes(escaped(copy.tierValues.admin))); assert.equal(reviewed.includes(escaped(copy.provenance.unconfirmed)), false);
+    assert.equal(reviewed.includes(escaped(copy.provenance.partlyConfirmed)), false);
+    const unreviewed = render(locale, createElement(DatesExternalProvenance, { event: alone }));
+    assert.ok(unreviewed.includes(escaped(copy.provenance.unconfirmed)) && unreviewed.includes(escaped(copy.tierValues.single_source)));
+    assert.ok(unreviewed.includes(escaped(text(copy.provenance.member, { uid: 19604 }))));
+    // DERIVED: three of four confirmations - said as incomplete, not as "published without a reviewer".
+    const partly = { ...credited, verification: { ...credited.verification, admin_confirmations: { ...credited.verification.admin_confirmations, timezone: false } } };
+    const some = render(locale, createElement(DatesExternalProvenance, { event: partly }));
+    assert.ok(some.includes(escaped(copy.provenance.partlyConfirmed))); assert.equal(some.includes(escaped(copy.provenance.unconfirmed)), false);
+    // The P1 event entered by an administrator is unchanged: no such line.
+    const p1 = fixture("admin-external-detail-ai-assisted"), manual = decodeDatesExternalDetail(p1, p1.event.external_event_id)!.event;
+    assert.doesNotMatch(render(locale, createElement(DatesExternalProvenance, { event: manual })), /alert-warning" role="status"/);
+  }
+});
+
+test("T-886: the queue filters by channel and says when the member channel is switched off", () => {
+  const queue = readFileSync(new URL("../app/(dashboard)/dates/intakes/page.tsx", import.meta.url), "utf8");
+  assert.match(queue, /readDatesIntakeQueue\(adminCall, \{ status, channel, page, limit: PAGE_SIZE \}, signal\)/);
+  assert.match(queue, /\}, \[status, channel, page\]\);/);
+  assert.match(queue, /<select value=\{channel\} onChange=\{\(event\) => \{ setPage\(1\); setChannel\(event\.target\.value\); \}\}>/);
+  assert.match(queue, /\{DATES_INTAKE_QUEUE_CHANNELS\.map\(\(value\) => <option key=\{value\} value=\{value\}>\{t\(`channelValues\.\$\{value\}`\)\}<\/option>\)\}/);
+  assert.match(queue, /\{!queue\.suggestions_enabled && <p className="alert alert-info">\{t\("queue\.suggestionsOff"\)\}<\/p>\}/);
+  assert.match(queue, /draftsEnabled: queue\?\.drafts_enabled === true, suggestionsEnabled: queue\?\.suggestions_enabled === true \};/);
+  for (const locale of LOCALES) {
+    const copy = messagesOf(locale).datesAdmin.intake;
+    for (const key of ["channelFilter", "channelAll", "suggestionsOff"]) assert.ok(copy.queue[key].length > 5, key);
+    assert.match(copy.queue.suggestionsOff, /dates_external_suggestions_enabled/); assert.match(copy.detail.suggestionsOff, /dates_external_suggestions_enabled/);
+    // Every statement of the member panel, the ask form and the notes exists in both languages (the key trees are compared elsewhere).
+    assert.ok(Object.keys(copy.member).length >= 40 && Object.keys(copy.ask).length >= 15);
+  }
+});

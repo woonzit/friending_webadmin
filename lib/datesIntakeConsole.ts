@@ -6,7 +6,8 @@ import {
   type DatesExternalMutationOutcome, type DatesExternalPending, type DatesExternalStorage,
 } from "@/lib/datesExternalMutations";
 import {
-  DATES_INTAKE_INPUT_KINDS, DATES_INTAKE_MAX_IMAGE_BYTES, DATES_INTAKE_MAX_IMAGES, DATES_INTAKE_REJECT_REASONS, datesAiUsageMonth, datesIntakeAuditNote,
+  DATES_INTAKE_INPUT_KINDS, DATES_INTAKE_MAX_IMAGE_BYTES, DATES_INTAKE_MAX_IMAGES, DATES_INTAKE_REJECT_REASONS, datesAiUsageMonth, datesExternalEventId,
+  datesIntakeAskFields, datesIntakeAskValid, datesIntakeAuditNote, decodeDatesIntakeAskReceipt, type DatesIntakeAskReceipt, type DatesIntakeMemberField,
   datesIntakeCapabilityRefused, datesIntakeId, datesIntakeRefusal, datesIntakeSourceText, datesIntakeSourceUrl, datesIntakeUploadType,
   decodeDatesIntakeCreateReceipt, decodeDatesIntakeLeaseReceipt, decodeDatesIntakeRejectReceipt, projectDatesAiUsage,
   projectDatesIntakeDetail, projectDatesIntakeQueue,
@@ -73,18 +74,19 @@ export async function readDatesIntakeQueue(send: DatesIntakeSend, filters: Dates
 }
 
 export async function readDatesIntakeDetail(send: DatesIntakeSend, intakeId: string, signal?: AbortSignal):
-  Promise<DatesIntakeRead<{ read: DatesIntakeDetailRead; draftsEnabled: boolean | null }>> {
+  Promise<DatesIntakeRead<{ read: DatesIntakeDetailRead; draftsEnabled: boolean | null; suggestionsEnabled: boolean | null }>> {
   if (!datesIntakeId(intakeId)) return { kind: "unconfirmed" };
   let responses: [unknown, unknown, unknown];
   try {
-    // The one-row queue read tells whether the draft switch is on; the detail does not carry it.
+    // The one-row queue read tells whether the draft switch and the member channel's switch are on; the detail does not carry them.
     responses = await Promise.all([send("dates_event_intake_detail", { intake_id: intakeId }, signal), send("admin_me", {}, signal),
       send("dates_event_intake_list", { page: 1, limit: 1 }, signal)]);
   } catch { return { kind: "unconfirmed" }; }
   const operator = datesIntakeOperator(responses[1]), read = projectDatesIntakeDetail(responses[0], intakeId);
   if (!read || !operator?.review) return failedRead(responses[0], operator, "review");
   // Unknown is not "off": Core refuses with its own token when the switch is off.
-  return { kind: "ready", operator, read, draftsEnabled: projectDatesIntakeQueue(responses[2], { page: 1, limit: 1 })?.drafts_enabled ?? null };
+  const switches = projectDatesIntakeQueue(responses[2], { page: 1, limit: 1 });
+  return { kind: "ready", operator, read, draftsEnabled: switches?.drafts_enabled ?? null, suggestionsEnabled: switches?.suggestions_enabled ?? null };
 }
 
 export async function readDatesAiUsage(send: DatesIntakeSend, monthFilter: string | null, signal?: AbortSignal):
@@ -155,14 +157,25 @@ export async function runDatesIntakeLease(send: DatesIntakeSend, request: { inta
 }
 
 export type DatesIntakeRejectCommand = { intake_id: string; expected_revision: number; reason_code: typeof DATES_INTAKE_REJECT_REASONS[number];
-  reason: string; idempotency_key: string };
+  reason: string; idempotency_key: string;
+  /** Only with the reason `duplicate`: the event that is already there. The intake then ends as a duplicate OF it. */
+  duplicate_of_external_event_id?: string };
 
-/** One rejection, with the identity it keeps across a retry. Null when the console itself would not send it. */
-export function prepareDatesIntakeReject(target: { intake_id: string; revision: number | null }, reasonCode: string, note: string): DatesIntakeRejectCommand | null {
+/**
+ * One rejection, with the identity it keeps across a retry. Null when the
+ * console itself would not send it. `duplicateOf` is what the reviewer typed
+ * or picked as the event already listed: blank is "not named"; anything else
+ * must be an event id, and only the reason `duplicate` may carry it - a name
+ * that would be dropped silently is refused here instead.
+ */
+export function prepareDatesIntakeReject(target: { intake_id: string; revision: number | null }, reasonCode: string, note: string, duplicateOf = ""):
+  DatesIntakeRejectCommand | null {
   if (!datesIntakeId(target.intake_id) || target.revision === null || !Number.isSafeInteger(target.revision) || target.revision < 1
     || !(DATES_INTAKE_REJECT_REASONS as readonly string[]).includes(reasonCode) || !datesIntakeAuditNote(note)) return null;
+  const named = duplicateOf.trim();
+  if (named !== "" && (reasonCode !== "duplicate" || !datesExternalEventId(named))) return null;
   return { intake_id: target.intake_id, expected_revision: target.revision, reason_code: reasonCode as DatesIntakeRejectCommand["reason_code"],
-    reason: note.trim(), idempotency_key: createAdminIdempotencyKey("dates-intake-reject") };
+    reason: note.trim(), idempotency_key: createAdminIdempotencyKey("dates-intake-reject"), ...(named === "" ? {} : { duplicate_of_external_event_id: named }) };
 }
 
 export async function runDatesIntakeReject(send: DatesIntakeSend, command: DatesIntakeRejectCommand):
@@ -170,6 +183,33 @@ export async function runDatesIntakeReject(send: DatesIntakeSend, command: Dates
   let response: unknown;
   try { response = await send("dates_event_intake_reject", { ...command }); } catch { return { kind: "uncertain", error: null }; }
   return commandOutcome(response, decodeDatesIntakeRejectReceipt(response, command));
+}
+
+export type DatesIntakeAskCommand = { intake_id: string; expected_revision: number; fields: DatesIntakeMemberField[]; reason: string;
+  idempotency_key: string;
+  /** What the member reads; left out when the reviewer wrote nothing. */
+  member_note?: string };
+
+/**
+ * One request to the member ("please look at these fields again"), with the
+ * identity it keeps across a retry. Null when the console itself would not
+ * send it: no field chosen, a field outside the eight, a note Core would
+ * refuse, no audit reason.
+ */
+export function prepareDatesIntakeAsk(target: { intake_id: string; revision: number | null }, fields: readonly string[], memberNote: string, reason: string):
+  DatesIntakeAskCommand | null {
+  const chosen = [...fields], note = memberNote.trim();
+  if (!datesIntakeId(target.intake_id) || target.revision === null || !Number.isSafeInteger(target.revision) || target.revision < 1
+    || !datesIntakeAskValid(chosen, memberNote, reason) || !datesIntakeAskFields(chosen)) return null;
+  return { intake_id: target.intake_id, expected_revision: target.revision, fields: chosen, reason: reason.trim(),
+    idempotency_key: createAdminIdempotencyKey("dates-intake-ask"), ...(note === "" ? {} : { member_note: note }) };
+}
+
+export async function runDatesIntakeAsk(send: DatesIntakeSend, command: DatesIntakeAskCommand):
+  Promise<DatesIntakeCommandOutcome<DatesIntakeAskReceipt>> {
+  let response: unknown;
+  try { response = await send("dates_event_intake_ask_member", { ...command }); } catch { return { kind: "uncertain", error: null }; }
+  return commandOutcome(response, decodeDatesIntakeAskReceipt(response, command));
 }
 
 // ---------------------------------------------------------------- publish through the P1 publisher

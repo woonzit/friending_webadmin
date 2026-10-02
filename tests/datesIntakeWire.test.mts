@@ -9,6 +9,7 @@ import {
   DATES_INTAKE_REFUSALS, DATES_INTAKE_REJECT_REASONS, DATES_INTAKE_STATUSES, DATES_INTAKE_VOCABULARIES,
   datesAiUsageShare, datesIntakeAffordances, datesIntakeCapabilityRefused, datesIntakeCompleteFlag, datesIntakeCompletion, datesIntakeEditorDraft, datesIntakeEditorGaps,
   datesIntakeImageBytes, datesIntakeInProgress, datesIntakePublishableEvents, datesIntakeReferenceHref, datesIntakeRefusal, datesIntakeUnreadableEvents,
+  datesIntakeAskFields, datesIntakeAskState, datesIntakeAskValid, datesIntakeMemberNote, decodeDatesIntakeAskReceipt,
   decodeDatesIntakeCreateReceipt, decodeDatesIntakeImage, decodeDatesIntakeLeaseReceipt, decodeDatesIntakePublishReceipt,
   decodeDatesIntakeRejectReceipt, projectDatesAiUsage, projectDatesIntakeDetail, projectDatesIntakeQueue,
   type DatesIntakeLeaseAction,
@@ -537,7 +538,20 @@ for (const name of LEASES) test(`genuine lease ${name} answers exactly its reque
   assert.equal(decodeDatesIntakeLeaseReceipt(body, { ...request, expected_revision: request.expected_revision + 1 }), null);
   for (const other of ["claim", "heartbeat", "release"] as const) if (other !== action)
     assert.equal(decodeDatesIntakeLeaseReceipt(body, { ...request, action: other }), null, `${name} read as ${other}`);
-  assert.equal(decodeDatesIntakeLeaseReceipt({ ...body, extra: true }, request), null);
+  // Bound, not exact-key: a key this console does not know is tolerated (at the top and in the intake) ...
+  const wider = { ...body, extra: true, intake: { ...body.intake, extra: 1, lease: { ...body.intake.lease, extra: 2 } } };
+  assert.deepEqual(decodeDatesIntakeLeaseReceipt(wider, request), wider);
+  // The four facts of the lease are still all required, and still have to agree with each other.
+  const { until: _until, ...timeless } = body.intake.lease;
+  for (const lease of [timeless, { ...body.intake.lease, mine: "yes" }, { ...body.intake.lease, active: !body.intake.lease.active }])
+    assert.equal(decodeDatesIntakeLeaseReceipt({ ...body, intake: { ...body.intake, lease } }, request), null, JSON.stringify(lease));
+  const { server_now: _now, message: _message, status: _status, can_send: _send, ...core } = body;
+  assert.deepEqual(decodeDatesIntakeLeaseReceipt(core, request), core, "Core's clock and the legacy envelope are not what identifies the command");
+  // ... and each thing that does identify it is required.
+  const { audit_id: _audit, ...unaudited } = body, { lease: _lease, ...unleased } = body.intake;
+  for (const changed of [{ ...body, success: false }, { ...body, status_code: 409 }, { ...body, success: "true" }, unaudited, { ...body, audit_id: "aud_1" },
+    { ...body, intake: unleased }, { ...body, intake: { ...body.intake, status: "rejected" } }, { ...body, intake: { ...body.intake, revision: "10" } }])
+    assert.equal(decodeDatesIntakeLeaseReceipt(changed, request), null, JSON.stringify(changed).slice(0, 120));
 });
 
 for (const reason of DATES_INTAKE_REJECT_REASONS) test(`genuine rejection ${reason} carries Core's statement in both languages`, () => {
@@ -551,6 +565,146 @@ for (const reason of DATES_INTAKE_REJECT_REASONS) test(`genuine rejection ${reas
   assert.equal(decodeDatesIntakeRejectReceipt(body, { ...request, reason_code: other }), null);
   assert.equal(decodeDatesIntakeRejectReceipt(body, { ...request, expected_revision: request.expected_revision - 1 }), null);
   assert.equal(decodeDatesIntakeRejectReceipt({ ...body, intake: { ...body.intake, status: "in_review" } }, request), null);
+  // Bound, not exact-key: unknown keys are tolerated; what identifies the command is required, and both echoes of
+  // the outcome must say "rejected" for a request that named no event.
+  const wider = { ...body, extra: 1, intake: { ...body.intake, extra: 2 }, decision: { ...body.decision, extra: 3 } };
+  assert.deepEqual(decodeDatesIntakeRejectReceipt(wider, request), wider);
+  const { audit_id: _audit, ...unaudited } = body, { replayed: _replayed, ...unmarked } = body;
+  for (const changed of [{ ...body, success: false }, { ...body, status_code: 409 }, unaudited, unmarked, { ...body, audit_id: null }, { ...body, replayed: "no" },
+    { ...body, intake: { ...body.intake, status: "duplicate" } }, { ...body, decision: { ...body.decision, action: "duplicate" } },
+    { ...body, intake: { ...body.intake, status: "duplicate" }, decision: { ...body.decision, action: "duplicate" } },
+    { ...body, intake: { ...body.intake, intake_id: xin(0xabc) } }, { ...body, decision: { ...body.decision, action: "published" } }])
+    assert.equal(decodeDatesIntakeRejectReceipt(changed, request), null, JSON.stringify(changed).slice(0, 140));
+});
+
+test("genuine member decisions: a strike rejection is a rejection; naming the event that is already there ends the suggestion as a duplicate of it", () => {
+  const spam = fixture("admin-reject-member-spam");
+  const spamRequest = { intake_id: spam.intake.intake_id, expected_revision: spam.intake.revision - 1, reason_code: "spam_or_fake" };
+  assert.deepEqual(decodeDatesIntakeRejectReceipt(spam, spamRequest), spam);
+  assert.deepEqual([spam.intake.status, spam.decision.action, spam.decision.reason_code], ["rejected", "rejected", "spam_or_fake"]);
+  // The strike is Core's and is on the audit record; the receipt does not carry it, and the console does not look for it.
+  assert.doesNotMatch(JSON.stringify(spam), /strike|banned/);
+  const duplicate = fixture("admin-duplicate-of-event"), event = fixture("admin-detail-member-duplicate").intake.duplicate_of.id;
+  const request = { intake_id: duplicate.intake.intake_id, expected_revision: duplicate.intake.revision - 1, reason_code: "duplicate", duplicate_of_external_event_id: event };
+  assert.match(event, /^xev_[a-f0-9]{32}$/);
+  assert.deepEqual(decodeDatesIntakeRejectReceipt(duplicate, request), duplicate);
+  assert.deepEqual([duplicate.intake.status, duplicate.decision.action, duplicate.decision.reason_code], ["duplicate", "duplicate", "duplicate"]);
+  // The outcome is bound to what was asked: a request that named an event is answered by `duplicate` only, one that
+  // named none by `rejected` only - the genuine P2a receipt of the reason "duplicate" among them.
+  const { duplicate_of_external_event_id: _named, ...unnamed } = request;
+  assert.equal(decodeDatesIntakeRejectReceipt(duplicate, unnamed), null, "a duplicate receipt is not the answer to a plain rejection");
+  const plain = fixture("admin-reject-duplicate");
+  const plainRequest = { intake_id: plain.intake.intake_id, expected_revision: plain.intake.revision - 1, reason_code: "duplicate" };
+  assert.deepEqual(decodeDatesIntakeRejectReceipt(plain, plainRequest), plain);
+  assert.equal(decodeDatesIntakeRejectReceipt(plain, { ...plainRequest, duplicate_of_external_event_id: event }), null, "a plain rejection is not the answer to a named duplicate");
+  for (const changed of [{ ...duplicate, intake: { ...duplicate.intake, status: "rejected" } }, { ...duplicate, decision: { ...duplicate.decision, action: "rejected" } },
+    { ...duplicate, decision: { ...duplicate.decision, reason_code: "spam_or_fake" } }, { ...duplicate, intake: { ...duplicate.intake, revision: duplicate.intake.revision + 1 } }])
+    assert.equal(decodeDatesIntakeRejectReceipt(changed, request), null, JSON.stringify(changed).slice(0, 140));
+  // The detail after it names the event, and the page links to it.
+  const after = projectDatesIntakeDetail(fixture("admin-detail-member-duplicate"), duplicate.intake.intake_id)!.intake;
+  assert.deepEqual([after.status, after.decision?.action, after.duplicate_of], ["duplicate", "duplicate", { kind: "event", id: event }]);
+  assert.equal(datesIntakeReferenceHref(after.duplicate_of!), `/dates/external/${event}`);
+});
+
+for (const name of ASKS) test(`genuine ${name}: the draft is with the member, bound to the intake, the revision and the fields that were asked about`, () => {
+  const body = fixture(`admin-${name}`);
+  const request = { intake_id: body.intake.intake_id, expected_revision: body.intake.revision - 1, fields: ["starts_local", "venue_address"] };
+  assert.deepEqual(decodeDatesIntakeAskReceipt(body, request), body);
+  assert.equal(body.replayed, name.endsWith("-replay")); assert.equal(body.intake.status, "member_confirming");
+  assert.deepEqual(body.asked, { fields: ["starts_local", "venue_address"], due_at: 1790259200 });
+  // The same fields in another order are the same question; another set is another command's receipt.
+  assert.ok(decodeDatesIntakeAskReceipt(body, { ...request, fields: ["venue_address", "starts_local"] }));
+  for (const fields of [["starts_local"], ["starts_local", "venue_address", "title"], ["starts_local", "title"], []])
+    assert.equal(decodeDatesIntakeAskReceipt(body, { ...request, fields }), null, JSON.stringify(fields));
+  assert.equal(decodeDatesIntakeAskReceipt(body, { ...request, intake_id: xin(0xabc) }), null);
+  assert.equal(decodeDatesIntakeAskReceipt(body, { ...request, expected_revision: request.expected_revision + 1 }), null);
+  // Bound, not exact-key.
+  const wider = { ...body, extra: 1, intake: { ...body.intake, extra: 2 }, asked: { ...body.asked, round: 2 } };
+  assert.deepEqual(decodeDatesIntakeAskReceipt(wider, request), wider);
+  const { audit_id: _audit, ...unaudited } = body, { asked: _asked, ...unasked } = body, { replayed: _replayed, ...unmarked } = body;
+  for (const changed of [{ ...body, success: false }, { ...body, status_code: 409 }, unaudited, unasked, unmarked, { ...body, audit_id: null },
+    { ...body, intake: { ...body.intake, status: "in_review" } }, { ...body, asked: { ...body.asked, due_at: "soon" } }, { ...body, asked: { fields: body.asked.fields } },
+    { ...body, asked: { ...body.asked, fields: ["starts_local", "password"] } }])
+    assert.equal(decodeDatesIntakeAskReceipt(changed, request), null, JSON.stringify(changed).slice(0, 140));
+  // It is the receipt of this command only.
+  assert.equal(decodeDatesIntakeRejectReceipt(body, { intake_id: request.intake_id, expected_revision: request.expected_revision, reason_code: "duplicate" }), null);
+  assert.equal(decodeDatesIntakeLeaseReceipt(body, { intake_id: request.intake_id, expected_revision: request.expected_revision, action: "release" }), null);
+});
+
+test("publishing a member's suggestion is offered under the member channel's switch, an operator's draft under the draft switch", () => {
+  const held = (name: string) => { const body = fixture(`admin-detail-${name}`), intake = projectDatesIntakeDetail(body, body.intake.intake_id)!.intake;
+    return { ...intake, lease: { holder: "admin@example.test", until: 1790000300, active: true, mine: true } }; };
+  const manager = { review: true, manage: true, superadmin: false };
+  const suggestion = held("member-in-review"), draft = held("in-review-official");
+  assert.deepEqual([suggestion.channel, draft.channel], ["member_suggestion", "admin_draft"]);
+  // Each channel follows its own switch and ignores the other's.
+  assert.equal(datesIntakeAffordances(suggestion, { ...manager, draftsEnabled: false, suggestionsEnabled: true }).publish, true);
+  assert.equal(datesIntakeAffordances(suggestion, { ...manager, draftsEnabled: true, suggestionsEnabled: false }).publish, false);
+  assert.equal(datesIntakeAffordances(draft, { ...manager, draftsEnabled: true, suggestionsEnabled: false }).publish, true);
+  assert.equal(datesIntakeAffordances(draft, { ...manager, draftsEnabled: false, suggestionsEnabled: true }).publish, false);
+  // Unknown is not "off" (a caller that does not say): Core answers with its own refusal - the genuine one of this corpus.
+  assert.equal(datesIntakeAffordances(suggestion, { ...manager, draftsEnabled: false }).publish, true);
+  assert.deepEqual(datesIntakeRefusal(fixture("admin-publish-suggestions-disabled-denied")), { kind: "core", error: "dates-intake-suggestions-disabled", status: 403 });
+  // The rest is the same for both channels: a reviewer without the management capability rejects but does not publish.
+  for (const intake of [suggestion, draft])
+    assert.deepEqual(datesIntakeAffordances(intake, { review: true, manage: false, superadmin: false, draftsEnabled: true, suggestionsEnabled: true }),
+      { claim: false, release: true, overrideRelease: false, reject: true, publish: false });
+  // With the switch off a suggestion can still be rejected (Core's reject does not read the switch).
+  assert.equal(datesIntakeAffordances(suggestion, { ...manager, draftsEnabled: true, suggestionsEnabled: false }).reject, true);
+});
+
+test("what a reviewer may ask: one to eight of the editable fields, none twice; a note Core would accept or none", () => {
+  const all = [...DATES_INTAKE_VOCABULARIES.member_editable_field];
+  assert.deepEqual(all, ["title", "starts_local", "ends_local", "venue_name", "venue_address", "venue_city", "price_text", "is_free"]);
+  assert.ok(datesIntakeAskFields(all)); assert.ok(datesIntakeAskFields(["title"]));
+  for (const fields of [[], ["title", "title"], [...all, "title"], ["summary"], ["title", 1], "title", null, { 0: "title" }])
+    assert.equal(datesIntakeAskFields(fields), false, JSON.stringify(fields));
+  // Core: optional; when given not blank, no control character but tab and line breaks, at most 500 graphemes after trimming.
+  for (const note of ["Biztosan reggel 9-kor kezdődik?", "two\nlines\tand a tab", "x".repeat(500), `  ${"é".repeat(500)}  `, "👩‍👩‍👧‍👦".repeat(500)])
+    assert.equal(datesIntakeMemberNote(note), true, note.slice(0, 20));
+  for (const note of ["", "   ", "\n\t", "x".repeat(501), "bell\u0007", "escape\u001b[0m", "delete\u007f", "null\u0000", 5, null, undefined])
+    assert.equal(datesIntakeMemberNote(note), false, JSON.stringify(note)?.slice(0, 20));
+  assert.equal(datesIntakeAskValid(["title"], "", "why"), true); assert.equal(datesIntakeAskValid(["title"], "   ", "why"), true, "a blank note is no note");
+  assert.equal(datesIntakeAskValid(["title"], "Look at the date, please.", "why"), true);
+  for (const [fields, note, reason] of [[[], "", "why"], [["title"], "", ""], [["title"], "", "   "], [["title"], "x".repeat(501), "why"], [["title"], "bell\u0007", "why"],
+    [["nope"], "", "why"], [["title"], "", "x".repeat(1001)]] as const) assert.equal(datesIntakeAskValid(fields, note, reason), false, JSON.stringify([fields, reason]).slice(0, 60));
+});
+
+test("asking the member is offered on a member's suggestion in review only, and allowed only as Core's can_ask, the switch and the hold say", () => {
+  const reviewer = { review: true, suggestionsEnabled: true };
+  const held = (name: string) => { const body = fixture(`admin-detail-${name}`), intake = projectDatesIntakeDetail(body, body.intake.intake_id)!.intake;
+    return { ...intake, lease: { holder: "admin@example.test", until: 1790000300, active: true, mine: true } }; };
+  // Every genuine detail: an operator's draft is never offered it; a suggestion only while it is in review.
+  for (const name of [...DETAILS, ...MEMBER_DETAILS]) {
+    const intake = held(name), state = datesIntakeAskState(intake, reviewer);
+    assert.equal(state.offered, intake.channel === "member_suggestion" && intake.status === "in_review", name);
+    if (state.offered) assert.deepEqual(state, intake.member!.can_ask ? { offered: true, allowed: true } : { offered: true, allowed: false, why: "notAskable" }, name);
+  }
+  // Core's word per genuine suggestion in review: fresh from the member and a second look may be asked; one that was
+  // already asked (answered or not) may not.
+  assert.deepEqual(Object.fromEntries(MEMBER_DETAILS.map((name) => [name, held(name)]).filter(([, intake]) => (intake as any).status === "in_review")
+    .map(([name, intake]) => [name, (intake as any).member.can_ask])),
+    { "member-in-review": true, "member-answered": false, "member-re-review": true, "member-unchecked": true, "member-unanswered": false });
+  const askable = held("member-in-review");
+  assert.deepEqual(datesIntakeAskState(askable, { review: false, suggestionsEnabled: true }), { offered: false });
+  assert.deepEqual(datesIntakeAskState(askable, { review: true, suggestionsEnabled: false }), { offered: true, allowed: false, why: "switchOff" });
+  // Unknown is not "off": Core answers with its own refusal.
+  assert.deepEqual(datesIntakeAskState(askable, { review: true, suggestionsEnabled: null }), { offered: true, allowed: true });
+  const genuine = fixture("admin-detail-member-in-review"), unheld = projectDatesIntakeDetail(genuine, genuine.intake.intake_id)!.intake;
+  assert.deepEqual(datesIntakeAskState(unheld, reviewer), { offered: true, allowed: false, why: "holdFirst" });
+  assert.deepEqual(datesIntakeAskState({ ...askable, lease: { ...askable.lease, mine: false } }, reviewer), { offered: true, allowed: false, why: "holdFirst" });
+  assert.deepEqual(datesIntakeAskState({ ...askable, controls: false }, reviewer), { offered: true, allowed: false, why: "holdFirst" });
+  // A member block the console could not read whole is never a reason to ask - and never "no member".
+  for (const change of [{ confirmation: { state: "sleeping" } }, { standing: "good" }, { re_review: [] }, { corrections: "none" }]) {
+    const body = copy(genuine); Object.assign(body.intake.member, change); body.intake.lease = { holder: "admin@example.test", until: 1790000300, active: true, mine: true };
+    const intake = projectDatesIntakeDetail(body, body.intake.intake_id)!.intake;
+    assert.equal(intake.member!.can_ask, false, JSON.stringify(change)); assert.equal(intake.member!.unreadable.length, 1);
+    assert.deepEqual(datesIntakeAskState(intake, reviewer), { offered: true, allowed: false, why: "unreadable" }, JSON.stringify(change));
+  }
+  const broken = copy(genuine); broken.intake.member.submitter_uid = "19601"; broken.intake.lease = { holder: "admin@example.test", until: 1790000300, active: true, mine: true };
+  const unread = projectDatesIntakeDetail(broken, broken.intake.intake_id)!.intake;
+  assert.equal(unread.member, null); assert.ok(unread.unreadable_sections.includes("member"));
+  assert.deepEqual(datesIntakeAskState(unread, reviewer), { offered: true, allowed: false, why: "unreadable" });
 });
 test("genuine rejection replay is the first receipt again", () => {
   const body = fixture("admin-reject-replay"), first = fixture("admin-reject-not-an-event");
@@ -591,8 +745,14 @@ for (const name of PUBLISHES) test(`genuine intake ${name} is the P1 publish rec
   assert.equal(decodeDatesIntakePublishReceipt(body, { ...request, intake_id: xin(0xabc) }), null);
   assert.equal(decodeDatesIntakePublishReceipt(body, { ...request, intake_revision: request.intake_revision + 1 }), null);
   assert.equal(decodeDatesExternalReceipt(body, "dates_external_event_publish", {}, null), null);
-  for (const change of [{ revision: 2 }, { event_status: "in_review" }, { extra: 1 }, { intake: { ...body.intake, status: "rejected" } },
-    { intake: { ...body.intake, published_count: 0 } }]) assert.equal(decodeDatesIntakePublishReceipt({ ...body, ...change }, request), null);
+  const { audit_id: _audit, ...unaudited } = body, { external_event_id: _event, ...unnamed } = body;
+  for (const changed of [{ ...body, revision: 0 }, { ...body, revision: "1" }, { ...body, activity_revision: 0 }, { ...body, event_status: "in_review" },
+    { ...body, intake: { ...body.intake, status: "rejected" } }, { ...body, intake: { ...body.intake, published_count: 0 } }, { ...body, success: false },
+    { ...body, status_code: 409 }, unaudited, unnamed, { ...body, external_event_id: "xev_1" }, { ...body, activity_id: "act_1" }, { ...body, audit_id: null }])
+    assert.equal(decodeDatesIntakePublishReceipt(changed, request), null, JSON.stringify(changed).slice(0, 120));
+  // Bound, not exact-key: unknown keys are tolerated at the top and in the intake.
+  const wider = { ...body, extra: 1, intake: { ...body.intake, extra: 2 } };
+  assert.deepEqual(decodeDatesIntakePublishReceipt(wider, request), wider);
   // "This was the last one" must finish the intake.
   if (body.intake.status === "in_review") assert.equal(decodeDatesIntakePublishReceipt(body, { ...request, complete: true }), null);
   // Through the journal: the exact command is persisted before it leaves and cleared only by this receipt.
@@ -654,6 +814,8 @@ for (const [name, [error, status]] of Object.entries(REFUSALS)) test(`genuine re
   assert.equal(decodeDatesIntakeImage(body, 1), null);
   assert.equal(decodeDatesIntakeLeaseReceipt(body, { intake_id: xin(1), expected_revision: 9, action: "claim" }), null);
   assert.equal(decodeDatesIntakeRejectReceipt(body, { intake_id: xin(1), expected_revision: 9, reason_code: "duplicate" }), null);
+  assert.equal(decodeDatesIntakeAskReceipt(body, { intake_id: xin(1), expected_revision: 9, fields: ["title"] }), null);
+  assert.equal(decodeDatesIntakePublishReceipt(body, { intake_id: xin(1), intake_revision: 9, complete: false }), null);
 });
 test("a refusal that is not Core's closed envelope is not reported as Core's word", () => {
   const core = fixture("admin-lease-claimed-denied");

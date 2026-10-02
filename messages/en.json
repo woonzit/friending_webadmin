@@ -8151,7 +8151,9 @@
         "venuePlaces": "Google Places, as the intake resolved it and the reviewer left it:",
         "intake": "Drafted from",
         "intakeLink": "Open the intake",
-        "intakeEvent": "event {index} of the intake"
+        "intakeEvent": "event {index} of the intake",
+        "unconfirmed": "Published by Core without a reviewer: no administrator confirmed the source, the venue, the time zone or the content of this event.",
+        "partlyConfirmed": "Not all four administrator confirmations are on record for this event."
       },
       "moderation": {
         "target": "External event", "nonmember": "External organizer — not a member account",
@@ -9182,7 +9184,10 @@
           "findings": "What Core found",
           "created": "Created",
           "hold": "Held by"
-        }
+        },
+        "channelFilter": "Channel",
+        "channelAll": "All channels",
+        "suggestionsOff": "Members' suggestions are switched off (dates_external_suggestions_enabled). Members cannot send new ones, and those already here cannot be published or sent back to the member until an administrator turns them on in Configuration; they can still be read and rejected."
       },
       "lease": {
         "title": "Who is working on it",
@@ -9318,7 +9323,9 @@
         "textsUnreadable": "The text Core holds of the source could not be read. It is not empty; it is unknown.",
         "couldNotRead": "Could not be read",
         "revisionUnreadable": "The last read of this intake could not be used: Core served its revision in a shape this console does not know. The page shows the state it last read whole; your hold and the actions still work from that state. Refresh to try again.",
-        "byMember": "the member"
+        "byMember": "the member",
+        "secondLook": "Second look: the member asked for the rejection of this suggestion to be looked at again. The first decision is under \"The member's side\". Decide again by publishing an event of it or by rejecting it.",
+        "suggestionsOff": "Members' suggestions are switched off (dates_external_suggestions_enabled). This suggestion can be read and rejected, but not published and not sent back to the member, until an administrator turns them on."
       },
       "checks": {
         "weekday_match": "The weekday in the source matches the date",
@@ -9362,7 +9369,14 @@
         "keepOpen": "Publish this event and leave the intake open, so that the unread events can still be reviewed once the console can read them.",
         "closeAnyway": "Publish this event and close the intake, knowing that {count} unread and {remaining} other unpublished events will never be published from it.",
         "confirmCloseUnreadable": "This closes the intake although {count} of its events could not be read. They will never be reviewed from it.",
-        "changed": "The intake changed after you prepared this publication: other events are now left, or one of them can no longer be read. Check the choice above and review the publication again."
+        "changed": "The intake changed after you prepared this publication: other events are now left, or one of them can no longer be read. Check the choice above and review the publication again.",
+        "memberCredit": "The event will name member #{uid} as the member who suggested it.",
+        "memberAnonymous": "The member asked not to be named: the event will not show who suggested it.",
+        "memberGoing": "The member asked to go: Core joins them with this publication if a join of their own would be allowed at that moment.",
+        "memberGoingProgramme": "The member asked to go, but this suggestion holds more than one event: Core joins a member only to a single-event suggestion.",
+        "memberErased": "The member's account was erased: the event carries no submitter.",
+        "memberUnreadable": "The member's choices (credit, going) could not be read on this page. Core applies them as it stored them.",
+        "cannotPublishSuggestion": "Publishing is not available to you here: it needs the event management capability and the members' suggestion switch to be on."
       },
       "reject": {
         "title": "Reject the intake",
@@ -9381,7 +9395,19 @@
         "uncertain": "It is not known whether the rejection landed. The intake was read again: if it is still in review, send the same rejection again; it cannot be applied twice.",
         "done": "The intake was rejected.",
         "eventsUnreadable": "The extracted events could not be read on this page. If you reject now, you decide without having seen what the AI extracted. Prefer leaving the intake until the console can read it.",
-        "someUnreadable": "Events of this intake that could not be read: {count}. A rejection covers them too, although you have not seen them."
+        "someUnreadable": "Events of this intake that could not be read: {count}. A rejection covers them too, although you have not seen them.",
+        "duplicateOf": "The event it duplicates (optional)",
+        "duplicateOfHint": "The id of the event that is already listed (xev_ and 32 characters). With it the intake ends as a duplicate of that event; without it, as a rejection with the reason \"duplicate\".",
+        "duplicateInvalid": "This is not an event id: xev_ followed by 32 characters (0-9, a-f).",
+        "duplicatePick": "Use the possible duplicate {id}",
+        "confirmDuplicateOf": "Ends as a duplicate of",
+        "doneDuplicate": "The intake was closed as a duplicate of the event named.",
+        "memberStatement": "The member is notified and is shown Core's statement of reasons for this reason.",
+        "memberDuplicate": "The member is told that the event is already listed and is taken to it. Unless they asked not to be named, they are recorded on that event beside its first submitter.",
+        "strike": "Rejecting as spam or fake is a strike against the member. They have {strikes} of {limit} inside the window now; at the limit they are banned from suggesting.",
+        "strikeUnknown": "Rejecting as spam or fake is a strike against the member. Their current standing could not be read on this page.",
+        "strikeNobody": "The member's account was erased: this rejection is a strike against nobody.",
+        "secondLook": "This is the second look the member asked for. A second look can be asked for only once: rejecting again ends the suggestion."
       },
       "publish": {
         "done": "The event is published and the intake is finished.",
@@ -9492,7 +9518,7 @@
         "validating": "Core is checking the draft: quotes, date and time, venue, time zone, links and duplicates.",
         "member_confirming": "The member who suggested the event is checking the draft.",
         "in_review": "The draft is ready for a person. Take the intake, compare the draft with the source, then reject it or publish its events.",
-        "published": "A reviewer published from this intake; it is finished.",
+        "published": "An event was published from this intake; it is finished. The decision below says by whom.",
         "merged": "The source was attached to an event that already exists.",
         "rejected": "The intake was rejected and is finished.",
         "duplicate": "This source or this event is already here, so no AI was spent on it again. Open the original instead.",
@@ -9857,6 +9883,81 @@
         "venue_city": "City",
         "price_text": "Price",
         "is_free": "Free of charge"
+      },
+      "member": {
+        "title": "The member's side",
+        "copy": "What the member who suggested this event chose and did, exactly as Core serves it to a reviewer. Their own words are shown as plain text.",
+        "unreadable": "The member's part of this suggestion could not be read. It is not empty and it is not \"no member\": do not decide on what is missing here. Refresh to read it again.",
+        "partUnreadable": "This part could not be read. It is unknown, not absent.",
+        "submitter": "Suggested by",
+        "submitterValue": "Member #{uid}",
+        "erased": "The member's account was erased: there is nobody to name and nobody to ask.",
+        "credit": "Credit",
+        "named": "To be named on the event as the member who suggested it.",
+        "anonymous": "Asked not to be named: the event will not show who suggested it.",
+        "creditErased": "None: the account was erased.",
+        "going": "Going",
+        "goingYes": "Asked to go if the event is approved.",
+        "goingNo": "Did not ask to be joined.",
+        "consent": "Consent",
+        "consentVersion": "Accepted version {version} of the suggestion terms.",
+        "consentNone": "No acceptance on record.",
+        "confirmation": "The member's look at the draft",
+        "confirmationNone": "The draft has not been put to the member.",
+        "due": "answer due by {time}",
+        "askedByReviewer": "Asked by a reviewer",
+        "standing": "Standing",
+        "standingNone": "None: the account was erased.",
+        "strikes": "Strikes inside the window: {strikes} of {limit}",
+        "notBanned": "not banned",
+        "banned": "banned from suggesting until {time}",
+        "strikesHint": "A strike is a rejection as spam or fake. One that is under a second look is not counted until that look ends.",
+        "corrections": "What the member changed in the draft",
+        "correctionsNone": "The member changed nothing in the draft.",
+        "correctionsUnreadable": "Changes that could not be read: {count}. They are unknown, not absent.",
+        "correctionsHint": "A changed value is the member's own claim: the source quotes that vouched for the old value no longer apply to it.",
+        "columns": {
+          "event": "Event",
+          "field": "Field",
+          "from": "The AI's draft",
+          "to": "The member's value"
+        },
+        "empty": "(empty)",
+        "yes": "Yes",
+        "no": "No",
+        "secondLook": "Second look",
+        "secondLookNone": "No second look was asked for.",
+        "secondLookAsked": "Asked at",
+        "secondLookNote": "The member's note",
+        "secondLookNoNote": "No note.",
+        "firstDecision": "The first decision",
+        "secondDecision": "The second decision",
+        "secondLookWaiting": "Not made yet."
+      },
+      "ask": {
+        "title": "Ask the member",
+        "copy": "Send the draft back to the member, once per suggestion: choose the fields they should look at again and, if you wish, write them a note. The suggestion leaves your hold and comes back to the queue when the member answers, or when the time Core gives them runs out.",
+        "why": {
+          "unreadable": "The member's part of this suggestion could not be read whole, so the member is not asked from this page.",
+          "notAskable": "Core does not offer asking the member here: they were already asked once, their account was erased, or an event has already been published from this suggestion.",
+          "switchOff": "Members' suggestions are switched off (dates_external_suggestions_enabled), so the member cannot be asked.",
+          "holdFirst": "Take the intake to ask the member."
+        },
+        "fields": "Fields to look at again",
+        "note": "Note to the member (optional)",
+        "noteHint": "The member reads this, in your words. At most {maximum} characters. No internal remarks here.",
+        "reason": "Audit note (required, internal)",
+        "reasonHint": "Kept in the audit log only; never shown to the member.",
+        "review": "Review the request",
+        "retry": "Send the same request again",
+        "confirm": "Send this draft back to the member? They are notified, and the suggestion leaves the review queue until they answer. This can be done once per suggestion.",
+        "confirmFields": "Fields: {fields}",
+        "confirmNote": "The member will read:",
+        "confirmNoNote": "No note to the member.",
+        "submit": "Send to the member",
+        "invalid": "Choose at least one field and write an audit note. A note to the member may not be blank or longer than 500 characters.",
+        "uncertain": "It is not known whether the request reached Core. The intake was read again: if it is still in review, send the same request again; it cannot be applied twice.",
+        "done": "The draft is with the member. Their answer is due by {time}."
       }
     },
     "commandOutcome": {

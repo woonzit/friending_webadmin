@@ -16,7 +16,7 @@ import {
   datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody, projectDatesIntakeDetail,
 } from "../lib/datesIntakeAdmin.ts";
 import { serveDatesIntakeCreate, serveDatesIntakeMedia } from "../lib/datesIntakeBridge.ts";
-import { prepareDatesIntakeReject } from "../lib/datesIntakeConsole.ts";
+import { prepareDatesIntakeAsk, prepareDatesIntakeReject } from "../lib/datesIntakeConsole.ts";
 import { isTrustedAdminRequest } from "../lib/requestGuard.ts";
 
 // What the console REALLY sends to Core for each intake route, compared with
@@ -173,6 +173,48 @@ test("request shape: reject, as the console prepares it", async () => {
   assert.equal(form.reason, "No reliable source names the date.");
 });
 
+test("request shape: a rejection that names the event already there", async () => {
+  const receipt = fixture("admin-duplicate-of-event"), event = fixture("admin-detail-member-duplicate").intake.duplicate_of.id;
+  const command = prepareDatesIntakeReject({ intake_id: receipt.intake.intake_id, revision: receipt.intake.revision - 1 }, "duplicate", "Already listed.", event)!;
+  const { result, sent } = await bridge("dates_event_intake_reject", command, receipt);
+  assert.equal(result.status, 200);
+  const form = common(sent[0], "dates_event_intake_reject", ["intake_id", "expected_revision", "reason_code", "reason", "idempotency_key", "duplicate_of_external_event_id"]);
+  // Core: DatesId::isValid($duplicateOf, 'xev'), and only with reason_code duplicate.
+  assert.match(form.duplicate_of_external_event_id, /^xev_[a-f0-9]{32}$/); assert.equal(form.reason_code, "duplicate");
+  // Not named: the field is not sent at all (Core reads an empty one as "not given"; the console sends nothing).
+  const plain = prepareDatesIntakeReject({ intake_id: receipt.intake.intake_id, revision: receipt.intake.revision - 1 }, "duplicate", "Already listed.")!;
+  const unnamed = await bridge("dates_event_intake_reject", plain, fixture("admin-reject-duplicate"));
+  common(unnamed.sent[0], "dates_event_intake_reject", ["intake_id", "expected_revision", "reason_code", "reason", "idempotency_key"]);
+});
+
+test("request shape: asking the member, as the console prepares it - the fields arrive as the one JSON list Core reads", async () => {
+  const receipt = fixture("admin-ask-member");
+  const command = prepareDatesIntakeAsk({ intake_id: receipt.intake.intake_id, revision: receipt.intake.revision - 1 }, ["starts_local", "venue_address"],
+    " Biztosan reggel 9-kor kezdődik? ", " The flyer and the text disagree on the start. ")!;
+  const { result, sent } = await bridge("dates_event_intake_ask_member", command, receipt);
+  assert.equal(result.status, 200); assert.deepEqual(result.body, receipt);
+  const form = common(sent[0], "dates_event_intake_ask_member", ["intake_id", "expected_revision", "fields", "reason", "idempotency_key", "member_note"]);
+  assert.match(form.intake_id, CORE.intakeId); assert.match(form.expected_revision, CORE.revision); assert.match(form.idempotency_key, CORE.idempotencyKey);
+  // TRANSCRIBED from DatesEventIntakeAdminService::askMember (Core 32d418cf): a string of at most 512 bytes that starts
+  // with "[" and decodes (depth 2) to a non-empty list of distinct editable field names.
+  assert.ok(Buffer.byteLength(form.fields) <= 512 && form.fields.startsWith("["));
+  const decoded = JSON.parse(form.fields);
+  assert.deepEqual(decoded, ["starts_local", "venue_address"]);
+  assert.ok(Array.isArray(decoded) && decoded.length > 0 && decoded.every((field: unknown) => typeof field === "string") && new Set(decoded).size === decoded.length);
+  assert.equal(form.member_note, "Biztosan reggel 9-kor kezdődik?"); assert.equal(form.reason, "The flyer and the text disagree on the start.");
+  // All eight fields still fit Core's 512-byte bound.
+  const all = prepareDatesIntakeAsk({ intake_id: receipt.intake.intake_id, revision: 5 }, ["title", "starts_local", "ends_local", "venue_name", "venue_address", "venue_city", "price_text", "is_free"], "", "why")!;
+  const whole = await bridge("dates_event_intake_ask_member", all, receipt);
+  const every = common(whole.sent[0], "dates_event_intake_ask_member", ["intake_id", "expected_revision", "fields", "reason", "idempotency_key"]);
+  assert.ok(Buffer.byteLength(every.fields) <= 512); assert.equal(JSON.parse(every.fields).length, 8);
+  assert.equal(Object.hasOwn(every, "member_note"), false, "no note: the field is not sent");
+  // The browser cannot widen the request: an unknown field, a string for the list, or a ninth name is refused before Core.
+  for (const body of [{ ...command, submitter_uid: 19601 }, { ...command, fields: '["title"]' }, { ...command, fields: [...all.fields, "summary"] }, { ...command, admin_email: "owner@example.test" }]) {
+    const refused = await bridge("dates_event_intake_ask_member", body);
+    assert.equal(refused.result.status, 400); assert.equal(refused.sent.length, 0);
+  }
+});
+
 test("request shape: queue, detail and usage reads never send a present-but-empty number", async () => {
   // The queue page's default body carries an empty channel; the bridge sends no filter at all rather than an empty one.
   const list = await bridge("dates_event_intake_list", { status: "in_review", channel: "", page: 1, limit: 40 }, fixture("admin-list-in-review"));
@@ -181,6 +223,9 @@ test("request shape: queue, detail and usage reads never send a present-but-empt
   assert.match(queue.page, CORE.positiveInteger); assert.match(queue.limit, CORE.positiveInteger); assert.ok(Number(queue.limit) <= 100);
   const all = await bridge("dates_event_intake_list", { status: "", channel: "", page: 2, limit: 3 }, fixture("admin-list-page-two"));
   assert.deepEqual(common(all.sent[0], "dates_event_intake_list", ["page", "limit"]), { page: "2", limit: "3", admin_email: email, secret });
+  // The queue's channel filter, as the page sends it for members' suggestions.
+  const suggestions = await bridge("dates_event_intake_list", { status: "in_review", channel: "member_suggestion", page: 1, limit: 40 }, fixture("admin-list-member-channel"));
+  assert.equal(common(suggestions.sent[0], "dates_event_intake_list", ["status", "channel", "page", "limit"]).channel, "member_suggestion");
   const channel = await bridge("dates_event_intake_list", { channel: "admin_draft", page: 1, limit: 40 }, fixture("admin-list-channel"));
   assert.ok((DATES_INTAKE_CHANNELS as readonly string[]).includes(common(channel.sent[0], "dates_event_intake_list", ["channel", "page", "limit"]).channel));
   // The access probe of the detail and usage pages.

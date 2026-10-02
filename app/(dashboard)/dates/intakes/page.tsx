@@ -10,7 +10,7 @@ import DatesIntakeSourcePanel from "@/components/DatesIntakeSourcePanel";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
-import { DATES_INTAKE_STATUSES, datesIntakeAffordances, type DatesIntakeLeaseAction, type DatesIntakeQueue, type DatesIntakeQueueRow } from "@/lib/datesIntakeAdmin";
+import { DATES_INTAKE_QUEUE_CHANNELS, DATES_INTAKE_STATUSES, datesIntakeAffordances, type DatesIntakeLeaseAction, type DatesIntakeQueue, type DatesIntakeQueueRow } from "@/lib/datesIntakeAdmin";
 import { datesIntakeLanding, readDatesIntakeQueue, runDatesIntakeLease, type DatesIntakeOperator } from "@/lib/datesIntakeConsole";
 import { formatDate, formatNumber } from "@/lib/format";
 
@@ -24,6 +24,8 @@ export default function DatesIntakeQueuePage() {
   const locale = useLocale();
   const router = useRouter();
   const [status, setStatus] = useState("in_review");
+  // Both channels share the queue; the filter narrows it to operators' drafts or to members' suggestions.
+  const [channel, setChannel] = useState("");
   const [page, setPage] = useState(1);
   const [queue, setQueue] = useState<DatesIntakeQueue | null>(null);
   const [operator, setOperator] = useState<DatesIntakeOperator | null>(null);
@@ -37,7 +39,7 @@ export default function DatesIntakeQueuePage() {
     if (signal?.aborted) return;
     const generation = ++loadGeneration.current;
     setState("loading");
-    const result = await readDatesIntakeQueue(adminCall, { status, channel: "", page, limit: PAGE_SIZE }, signal);
+    const result = await readDatesIntakeQueue(adminCall, { status, channel, page, limit: PAGE_SIZE }, signal);
     // A reply to an earlier filter, page or refresh never replaces a newer one.
     if (signal?.aborted || generation !== loadGeneration.current) return;
     if (result.kind !== "ready") {
@@ -46,7 +48,7 @@ export default function DatesIntakeQueuePage() {
       return;
     }
     setQueue(result.queue); setOperator(result.operator); setProblem(null); setState("ready");
-  }, [status, page]);
+  }, [status, channel, page]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -71,7 +73,7 @@ export default function DatesIntakeQueuePage() {
 
   const totalPages = queue ? Math.max(page, Math.ceil(queue.total / PAGE_SIZE)) : 1;
   const access = { review: operator?.review === true, manage: operator?.manage === true, superadmin: operator?.superadmin === true,
-    draftsEnabled: queue?.drafts_enabled === true };
+    draftsEnabled: queue?.drafts_enabled === true, suggestionsEnabled: queue?.suggestions_enabled === true };
 
   return <>
     <PageHeader eyebrow={t("eyebrow")} title={t("queue.title")} subtitle={t("queue.subtitle")}
@@ -85,6 +87,10 @@ export default function DatesIntakeQueuePage() {
         <option value="">{common("all")}</option>
         {DATES_INTAKE_STATUSES.map((value) => <option key={value} value={value}>{t(`statusValues.${value}`)}{queue ? ` (${formatNumber(queue.status_counts[value], locale)})` : ""}</option>)}
       </select></label>
+      <label className="field"><span>{t("queue.channelFilter")}</span><select value={channel} onChange={(event) => { setPage(1); setChannel(event.target.value); }}>
+        <option value="">{t("queue.channelAll")}</option>
+        {DATES_INTAKE_QUEUE_CHANNELS.map((value) => <option key={value} value={value}>{t(`channelValues.${value}`)}</option>)}
+      </select></label>
     </form>
     {notice && (notice.key === "refused" && notice.error ? <DatesIntakeRefusal error={notice.error} />
       : <p className={`alert alert-${notice.tone}`} role="status">{t(notice.key)}{notice.error ? <> <code>{notice.error}</code></> : null}</p>)}
@@ -93,6 +99,7 @@ export default function DatesIntakeQueuePage() {
       <ErrorPanel message={t(problem?.kind === "denied" ? "access.denied" : problem?.kind === "refused" ? "access.refused" : "access.unconfirmed")} retry={() => void load()} />
     </> : <>
       {!queue.drafts_enabled && <p className="alert alert-info">{t("queue.draftsOff")}</p>}
+      {!queue.suggestions_enabled && <p className="alert alert-info">{t("queue.suggestionsOff")}</p>}
       <p className="field-hint">{t(status === "in_review" ? "queue.orderReview" : "queue.orderNewest")}</p>
       {queue.unreadable_rows.map((row) => <p className="alert alert-error" key={`unreadable-${row.index}`}>{t("queue.unreadableRow", { row: row.index + 1 })}{row.intake_id ? <> · <code>{row.intake_id}</code></> : null}</p>)}
       {queue.intakes.length === 0 && queue.unreadable_rows.length === 0 ? <section className="panel"><p>{t(queue.total === 0 ? "queue.empty" : "queue.emptyPage")}</p></section> : <div className="table-wrap"><table className="data-table">

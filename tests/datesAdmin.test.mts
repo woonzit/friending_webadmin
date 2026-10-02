@@ -76,6 +76,8 @@ const EXPECTED_DATES_ACTIONS = [
   "dates_event_intake_reject",
   "dates_event_intake_publish",
   "dates_event_intake_usage",
+  // T-886: a reviewer sends a member's draft back to the member.
+  "dates_event_intake_ask_member",
 ] as const;
 
 test("retired and inactive activity types are readable but never newly assigned", () => {

@@ -8151,7 +8151,9 @@
         "venuePlaces": "Google Places, ahogy a beküldés azonosította, és az ellenőr változatlanul hagyta:",
         "intake": "Ebből a beküldésből készült",
         "intakeLink": "Beküldés megnyitása",
-        "intakeEvent": "a beküldés {index}. eseménye"
+        "intakeEvent": "a beküldés {index}. eseménye",
+        "unconfirmed": "A Core ellenőr nélkül publikálta: az esemény forrását, helyszínét, időzónáját és tartalmát adminisztrátor nem erősítette meg.",
+        "partlyConfirmed": "Ehhez az eseményhez nem mind a négy adminisztrátori megerősítés van rögzítve."
       },
       "moderation": {
         "target": "Külső esemény", "nonmember": "Külső szervező — nem tagi fiók",
@@ -9182,7 +9184,10 @@
           "findings": "A Core megállapításai",
           "created": "Létrehozva",
           "hold": "Kinél van"
-        }
+        },
+        "channelFilter": "Csatorna",
+        "channelAll": "Minden csatorna",
+        "suggestionsOff": "A tagok javaslatai ki vannak kapcsolva (dates_external_suggestions_enabled). A tagok nem küldhetnek újat, és a már itt lévők nem publikálhatók és nem küldhetők vissza a tagnak, amíg adminisztrátor a Konfigurációban be nem kapcsolja; olvasni és elutasítani továbbra is lehet őket."
       },
       "lease": {
         "title": "Ki dolgozik rajta",
@@ -9318,7 +9323,9 @@
         "textsUnreadable": "A Core által a forrásból őrzött szöveg nem olvasható. Nem üres, hanem ismeretlen.",
         "couldNotRead": "Nem olvasható",
         "revisionUnreadable": "A beküldés legutóbbi beolvasása nem használható: a Core olyan alakban adta a revízióját, amelyet ez a konzol nem ismer. Az oldal az utoljára hiánytalanul beolvasott állapotot mutatja; a foglalásod és a műveletek ebből az állapotból továbbra is működnek. Frissíts az újrapróbáláshoz.",
-        "byMember": "a tag"
+        "byMember": "a tag",
+        "secondLook": "Felülvizsgálat: a tag kérte, hogy a javaslat elutasítását nézzük meg újra. Az első döntés „A tag oldala” alatt látható. Dönts újra: publikálj belőle eseményt, vagy utasítsd el.",
+        "suggestionsOff": "A tagok javaslatai ki vannak kapcsolva (dates_external_suggestions_enabled). Ez a javaslat olvasható és elutasítható, de nem publikálható, és nem küldhető vissza a tagnak, amíg adminisztrátor be nem kapcsolja."
       },
       "checks": {
         "weekday_match": "A forrásban szereplő nap egyezik a dátummal",
@@ -9362,7 +9369,14 @@
         "keepOpen": "Publikálom ezt az eseményt, és a beküldés nyitva marad, hogy a be nem olvasott eseményeket később, amikor a konzol már olvasni tudja őket, még ellenőrizni lehessen.",
         "closeAnyway": "Publikálom ezt az eseményt, és lezárom a beküldést, tudva, hogy {count} be nem olvasott és {remaining} további, nem publikált esemény soha nem lesz belőle publikálva.",
         "confirmCloseUnreadable": "Ezzel a beküldés lezárul, pedig {count} eseményét nem sikerült beolvasni. Ezeket ebből a beküldésből már soha nem lehet ellenőrizni.",
-        "changed": "A beküldés megváltozott, miután előkészítetted ezt a publikálást: már más események vannak hátra, vagy az egyikük nem olvasható. Nézd meg a fenti választást, és ellenőrizd újra a publikálást."
+        "changed": "A beküldés megváltozott, miután előkészítetted ezt a publikálást: már más események vannak hátra, vagy az egyikük nem olvasható. Nézd meg a fenti választást, és ellenőrizd újra a publikálást.",
+        "memberCredit": "Az esemény a(z) {uid}. számú tagot nevezi meg javaslóként.",
+        "memberAnonymous": "A tag azt kérte, ne nevezzük meg: az eseményen nem látszik, ki javasolta.",
+        "memberGoing": "A tag azt kérte, hogy ott legyen: a Core ezzel a publikálással csatlakoztatja, ha abban a pillanatban a saját csatlakozása is megengedett volna.",
+        "memberGoingProgramme": "A tag azt kérte, hogy ott legyen, de ez a javaslat több eseményt tartalmaz: a Core csak egyetlen eseményből álló javaslathoz csatlakoztat tagot.",
+        "memberErased": "A tag fiókját törölték: az eseményen nincs beküldő.",
+        "memberUnreadable": "A tag választásai (megnevezés, részvétel) ezen az oldalon nem olvashatók. A Core úgy alkalmazza őket, ahogy tárolta.",
+        "cannotPublishSuggestion": "A publikálás itt nem érhető el számodra: eseménykezelési jogosultság kell hozzá, és a tagok javaslatainak kapcsolója legyen bekapcsolva."
       },
       "reject": {
         "title": "Beküldés elutasítása",
@@ -9381,7 +9395,19 @@
         "uncertain": "Nem tudni, hogy az elutasítás megtörtént-e. A beküldést újraolvastuk: ha még ellenőrzés alatt áll, küldd el újra ugyanazt az elutasítást; kétszer nem hajtódhat végre.",
         "done": "A beküldés elutasítva.",
         "eventsUnreadable": "A kiolvasott események ezen az oldalon nem olvashatók. Ha most elutasítod, úgy döntesz, hogy nem láttad, mit olvasott ki az MI. Inkább hagyd a beküldést, amíg a konzol olvasni nem tudja.",
-        "someUnreadable": "A beküldés nem olvasható eseményeinek száma: {count}. Az elutasítás ezekre is vonatkozik, bár nem láttad őket."
+        "someUnreadable": "A beküldés nem olvasható eseményeinek száma: {count}. Az elutasítás ezekre is vonatkozik, bár nem láttad őket.",
+        "duplicateOf": "A duplikált esemény (nem kötelező)",
+        "duplicateOfHint": "A már szereplő esemény azonosítója (xev_ és 32 karakter). Ezzel a beküldés az adott esemény duplikátumaként zárul; nélküle „duplikátum” indokú elutasításként.",
+        "duplicateInvalid": "Ez nem eseményazonosító: xev_, majd 32 karakter (0-9, a-f).",
+        "duplicatePick": "A lehetséges duplikátum használata: {id}",
+        "confirmDuplicateOf": "Ennek a duplikátumaként zárul",
+        "doneDuplicate": "A beküldés a megnevezett esemény duplikátumaként lezárult.",
+        "memberStatement": "A tag értesítést kap, és megjelenik neki a Core ehhez az indokhoz tartozó indokolása.",
+        "memberDuplicate": "A tag azt az értesítést kapja, hogy az esemény már szerepel, és oda jut el. Ha nem kérte, hogy ne nevezzük meg, az adott eseményen az első beküldő mellett rögzítjük.",
+        "strike": "A „kéretlen vagy hamis” indokú elutasítás figyelmeztetés a tagnak. Jelenleg {strikes} / {limit} figyelmeztetése van az időszakban; a korlátnál eltiltjuk a javaslattételtől.",
+        "strikeUnknown": "A „kéretlen vagy hamis” indokú elutasítás figyelmeztetés a tagnak. A jelenlegi megítélése ezen az oldalon nem olvasható.",
+        "strikeNobody": "A tag fiókját törölték: ez az elutasítás senkinek nem figyelmeztetés.",
+        "secondLook": "Ez a tag által kért felülvizsgálat. Felülvizsgálat csak egyszer kérhető: az újabb elutasítás lezárja a javaslatot."
       },
       "publish": {
         "done": "Az esemény publikálva, a beküldés lezárult.",
@@ -9492,7 +9518,7 @@
         "validating": "A Core ellenőrzi a vázlatot: idézetek, dátum és idő, helyszín, időzóna, linkek és duplikátumok.",
         "member_confirming": "Az eseményt javasló tag ellenőrzi a vázlatot.",
         "in_review": "A vázlat emberi ellenőrzésre kész. Vedd magadhoz, vesd össze a forrással, majd utasítsd el, vagy publikáld az eseményeit.",
-        "published": "Egy ellenőr publikált ebből a beküldésből; lezárult.",
+        "published": "Ebből a beküldésből eseményt publikáltak; lezárult. Az alábbi döntés mutatja, ki tette.",
         "merged": "A forrást egy már létező eseményhez csatoltuk.",
         "rejected": "A beküldést elutasították; lezárult.",
         "duplicate": "Ez a forrás vagy esemény már szerepel, ezért nem költöttünk rá újra MI-t. Nyisd meg inkább az eredetit.",
@@ -9857,6 +9883,81 @@
         "venue_city": "Város",
         "price_text": "Ár",
         "is_free": "Ingyenes"
+      },
+      "member": {
+        "title": "A tag oldala",
+        "copy": "Amit az eseményt javasló tag választott és tett, pontosan úgy, ahogy a Core az ellenőrnek kiszolgálja. A tag saját szavai egyszerű szövegként jelennek meg.",
+        "unreadable": "A javaslat taghoz tartozó része nem olvasható. Ez nem üres, és nem azt jelenti, hogy nincs tag: ne dönts az itt hiányzó adatok alapján. Frissíts az újraolvasáshoz.",
+        "partUnreadable": "Ez a rész nem olvasható. Ismeretlen, nem hiányzó.",
+        "submitter": "Javasolta",
+        "submitterValue": "{uid}. számú tag",
+        "erased": "A tag fiókját törölték: nincs kit megnevezni, és nincs kit megkérdezni.",
+        "credit": "Megnevezés",
+        "named": "Az eseményen a javasló tagként lesz megnevezve.",
+        "anonymous": "Azt kérte, ne nevezzük meg: az eseményen nem látszik, ki javasolta.",
+        "creditErased": "Nincs: a fiókot törölték.",
+        "going": "Részvétel",
+        "goingYes": "Azt kérte, hogy ott legyen, ha az eseményt jóváhagyják.",
+        "goingNo": "Nem kérte, hogy csatlakoztassuk.",
+        "consent": "Hozzájárulás",
+        "consentVersion": "A javaslattételi feltételek {version}. verzióját fogadta el.",
+        "consentNone": "Nincs rögzített elfogadás.",
+        "confirmation": "A tag ellenőrzése",
+        "confirmationNone": "A vázlat még nem került a tag elé.",
+        "due": "válasz határideje: {time}",
+        "askedByReviewer": "Ellenőr kérdezett rá",
+        "standing": "Megítélés",
+        "standingNone": "Nincs: a fiókot törölték.",
+        "strikes": "Figyelmeztetések az időszakban: {strikes} / {limit}",
+        "notBanned": "nincs eltiltva",
+        "banned": "eltiltva a javaslattételtől eddig: {time}",
+        "strikesHint": "Figyelmeztetés a „kéretlen vagy hamis” indokú elutasítás. A felülvizsgálat alatt álló elutasítás nem számít, amíg a felülvizsgálat le nem zárul.",
+        "corrections": "Amit a tag a vázlaton módosított",
+        "correctionsNone": "A tag semmit nem módosított a vázlaton.",
+        "correctionsUnreadable": "Nem olvasható módosítások: {count}. Ismeretlenek, nem hiányzók.",
+        "correctionsHint": "A módosított érték a tag saját állítása: a régi értéket alátámasztó forrásidézetek rá már nem vonatkoznak.",
+        "columns": {
+          "event": "Esemény",
+          "field": "Mező",
+          "from": "Az MI vázlata",
+          "to": "A tag értéke"
+        },
+        "empty": "(üres)",
+        "yes": "Igen",
+        "no": "Nem",
+        "secondLook": "Felülvizsgálat",
+        "secondLookNone": "Nem kértek felülvizsgálatot.",
+        "secondLookAsked": "Kérés ideje",
+        "secondLookNote": "A tag megjegyzése",
+        "secondLookNoNote": "Nincs megjegyzés.",
+        "firstDecision": "Az első döntés",
+        "secondDecision": "A második döntés",
+        "secondLookWaiting": "Még nem született meg."
+      },
+      "ask": {
+        "title": "Kérdés a tagnak",
+        "copy": "Küldd vissza a vázlatot a tagnak, javaslatonként egyszer: válaszd ki, mely mezőket nézze meg újra, és ha szeretnél, írj neki megjegyzést. A javaslat kikerül a kezedből, és akkor tér vissza a sorba, amikor a tag válaszol, vagy amikor a Core által adott idő lejár.",
+        "why": {
+          "unreadable": "A javaslat taghoz tartozó része nem olvasható teljesen, ezért erről az oldalról nem kérdezzük meg a tagot.",
+          "notAskable": "A Core itt nem kínálja fel a tag megkérdezését: egyszer már megkérdezték, a fiókját törölték, vagy a javaslatból már publikáltak eseményt.",
+          "switchOff": "A tagok javaslatai ki vannak kapcsolva (dates_external_suggestions_enabled), ezért a tag nem kérdezhető meg.",
+          "holdFirst": "A tag megkérdezéséhez vedd magadhoz a beküldést."
+        },
+        "fields": "Újra megnézendő mezők",
+        "note": "Megjegyzés a tagnak (nem kötelező)",
+        "noteHint": "Ezt a tag olvassa, a te szavaiddal. Legfeljebb {maximum} karakter. Belső megjegyzés ne kerüljön ide.",
+        "reason": "Auditmegjegyzés (kötelező, belső)",
+        "reasonHint": "Csak az auditnaplóba kerül; a tag soha nem látja.",
+        "review": "Kérés áttekintése",
+        "retry": "Ugyanazon kérés újraküldése",
+        "confirm": "Visszaküldöd ezt a vázlatot a tagnak? Értesítést kap, és a javaslat a válaszáig kikerül az ellenőrzési sorból. Erre javaslatonként egyszer van lehetőség.",
+        "confirmFields": "Mezők: {fields}",
+        "confirmNote": "A tag ezt fogja olvasni:",
+        "confirmNoNote": "Nincs megjegyzés a tagnak.",
+        "submit": "Küldés a tagnak",
+        "invalid": "Válassz legalább egy mezőt, és írj auditmegjegyzést. A tagnak szóló megjegyzés nem lehet üres, és nem lehet hosszabb 500 karakternél.",
+        "uncertain": "Nem tudni, hogy a kérés eljutott-e a Core-hoz. A beküldést újraolvastuk: ha még ellenőrzés alatt áll, küldd el újra ugyanazt a kérést; kétszer nem alkalmazható.",
+        "done": "A vázlat a tagnál van. A válasz határideje: {time}."
       }
     },
     "commandOutcome": {

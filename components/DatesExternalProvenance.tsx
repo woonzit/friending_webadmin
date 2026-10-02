@@ -9,10 +9,14 @@ import type { DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
 /** Only the validated, deliberately safe Core projection reaches this panel. */
 export default function DatesExternalProvenance({ event }: { event: DatesExternalDetailRow }) {
   const t = useTranslations("datesAdmin.external"), channels = useTranslations("datesAdmin.intake.channelValues"), locale = useLocale();
+  const given = Object.values(event.verification.admin_confirmations).filter((value) => value === true).length;
   return <section className="panel dates-external-fields">
     <h2>{t("provenance.title")}</h2>
     <dl className="dates-external-facts">
-      <dt>{t("provenance.tier")}</dt><dd>{t(`tierValues.${event.verification_tier}`)}</dd>
+      <dt>{t("provenance.tier")}</dt><dd>{t(`tierValues.${event.verification_tier}`)}
+        {/* An event Core published without a reviewer carries no administrator confirmation; that is said, not implied. */}
+        {given === 0 ? <div className="alert alert-warning" role="status">{t("provenance.unconfirmed")}</div>
+          : given < 4 ? <div className="alert alert-warning" role="status">{t("provenance.partlyConfirmed")}</div> : null}</dd>
       <dt>{t("editor.checked")}</dt><dd>{formatDate(event.checked_at, locale, true)} · {t("columns.recheck")}: {formatDate(event.next_reverify_at, locale, true)}</dd>
       <dt>{t("provenance.submitter")}</dt><dd>{event.credit.channel === "admin" ? t("provenance.adminEntered")
         : event.credit.anonymous || event.credit.submitted_by_uid === null ? t("provenance.anonymous") : t("provenance.member", { uid: event.credit.submitted_by_uid })}</dd>

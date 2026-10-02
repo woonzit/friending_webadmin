@@ -7,6 +7,8 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesExternalEventForm from "@/components/DatesExternalEventForm";
 import DatesIntakeEventPanel from "@/components/DatesIntakeEventPanel";
+import DatesIntakeMemberPanel, { DatesIntakeAskSection, DatesIntakeMemberPublishNotes, DatesIntakeMemberRejectNotes, datesIntakeSecondLookOpen,
+  type DatesIntakeAskDraft } from "@/components/DatesIntakeMemberPanel";
 import { DatesIntakeAlreadySubmitted, DatesIntakeCompletionChoice, DatesIntakeExtractionPanel, DatesIntakeInputsPanel, DatesIntakeRejectWarning, DatesIntakeRunsPanel, DatesIntakeStatusPanel } from "@/components/DatesIntakePanels";
 import DatesIntakeRefusal from "@/components/DatesIntakeRefusal";
 import PageHeader from "@/components/PageHeader";
@@ -15,19 +17,21 @@ import { adminCall } from "@/lib/adminClient";
 import type { DatesExternalManualEvent } from "@/lib/datesExternalInput";
 import { datesExternalBrowserStorage, readDatesExternalPending, type DatesExternalPending, type DatesExternalPendingRead } from "@/lib/datesExternalMutations";
 import {
-  DATES_INTAKE_HEARTBEAT_SECONDS, DATES_INTAKE_REJECT_REASONS, datesIntakeAffordances, datesIntakeCompleteFlag, datesIntakeCompletion,
+  DATES_INTAKE_HEARTBEAT_SECONDS, DATES_INTAKE_REJECT_REASONS, datesExternalEventId, datesIntakeAffordances, datesIntakeAskState, datesIntakeAskValid, datesIntakeCompleteFlag, datesIntakeCompletion,
   datesIntakeCandidateCurrent, datesIntakeCompletionChoice, datesIntakeEditorDraft, datesIntakeEditorGaps, type DatesIntakeCompletionAnswer,
   datesIntakeHeartbeatDelay, datesIntakeId, datesIntakePublishableEvents,
   type DatesIntakeDetailRead, type DatesIntakeLeaseAction,
 } from "@/lib/datesIntakeAdmin";
 import {
-  createDatesIntakeSerial, datesIntakeLandedOnExisting, datesIntakePollDelay, forgetDatesIntakeLanding, prepareDatesIntakeReject, readDatesIntakeDetail, runDatesIntakeLease, runDatesIntakePublish,
-  runDatesIntakeReject, type DatesIntakeOperator, type DatesIntakeRejectCommand,
+  createDatesIntakeSerial, datesIntakeLandedOnExisting, datesIntakePollDelay, forgetDatesIntakeLanding, prepareDatesIntakeAsk, prepareDatesIntakeReject, readDatesIntakeDetail,
+  runDatesIntakeAsk, runDatesIntakeLease, runDatesIntakePublish, runDatesIntakeReject, type DatesIntakeAskCommand, type DatesIntakeOperator, type DatesIntakeRejectCommand,
 } from "@/lib/datesIntakeConsole";
 import { formatDate } from "@/lib/format";
 
 type Problem = { kind: "denied" } | { kind: "unconfirmed" } | { kind: "refused"; error: string };
-type Notice = { tone: "success" | "error" | "info"; key: string; error?: string; eventId?: string };
+type Notice = { tone: "success" | "error" | "info"; key: string; error?: string; eventId?: string;
+  /** A time Core answered with, for a message that names it. */
+  time?: number };
 type Candidate = { eventIndex: number; event: DatesExternalManualEvent; reason: string; complete: boolean; unreadable: number;
   /** The completion question this publication was prepared for (see `datesIntakeCompletion`). */
   question: string };
@@ -44,7 +48,7 @@ const GONE = ["dates-intake-event-unavailable", "dates-intake-state-invalid", "d
 export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }) {
   const t = useTranslations("datesAdmin.intake"), external = useTranslations("datesAdmin.external"), common = useTranslations("common");
   const locale = useLocale();
-  const [result, setResult] = useState<{ read: DatesIntakeDetailRead; draftsEnabled: boolean | null } | null>(null);
+  const [result, setResult] = useState<{ read: DatesIntakeDetailRead; draftsEnabled: boolean | null; suggestionsEnabled: boolean | null } | null>(null);
   const [operator, setOperator] = useState<DatesIntakeOperator | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [problem, setProblem] = useState<Problem | null>(null);
@@ -58,6 +62,10 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
   const [rejectCode, setRejectCode] = useState<string>(DATES_INTAKE_REJECT_REASONS[0]);
   const [rejectNote, setRejectNote] = useState("");
   const [rejectCommand, setRejectCommand] = useState<DatesIntakeRejectCommand | null>(null);
+  // The event a duplicate is a duplicate OF, as typed or picked; only the reason "duplicate" carries it.
+  const [duplicateOf, setDuplicateOf] = useState("");
+  const [askDraft, setAskDraft] = useState<DatesIntakeAskDraft | null>(null);
+  const [askCommand, setAskCommand] = useState<DatesIntakeAskCommand | null>(null);
   const [confirmReject, setConfirmReject] = useState(false);
   const [tick, setTick] = useState(0);
   // The last read could not be used because its revision was unreadable; the page shows the state it last read whole.
@@ -112,7 +120,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
       }
       const saved = readDatesExternalPending(datesExternalBrowserStorage(), next.operator.principal.email);
       revision.current = served; pendingRef.current = saved.kind !== "empty";
-      setResult({ read: next.read, draftsEnabled: next.draftsEnabled }); setOperator(next.operator); setPending(saved);
+      setResult({ read: next.read, draftsEnabled: next.draftsEnabled, suggestionsEnabled: next.suggestionsEnabled }); setOperator(next.operator); setPending(saved);
       setProblem(null); setState("ready"); setStaleRead(false);
       return;
     }
@@ -208,7 +216,8 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
 
   function reject(retry: DatesIntakeRejectCommand | null) {
     return command(async (life) => {
-      const prepared = retry ?? prepareDatesIntakeReject({ intake_id: intakeId, revision: revision.current }, rejectCode, rejectNote);
+      const prepared = retry ?? prepareDatesIntakeReject({ intake_id: intakeId, revision: revision.current }, rejectCode, rejectNote,
+        rejectCode === "duplicate" ? duplicateOf : "");
       setConfirmReject(false);
       if (!prepared) { setNotice({ tone: "error", key: "reject.invalid" }); return; }
       const outcome = await runDatesIntakeReject(adminCall, prepared);
@@ -219,8 +228,30 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
         setRejectCommand(prepared); setNotice({ tone: "error", key: "reject.uncertain", ...(outcome.error === null ? {} : { error: outcome.error }) });
       } else {
         setRejectCommand(null);
-        setNotice(outcome.kind === "success" ? { tone: "success", key: "reject.done" } : { tone: "error", key: "refused", error: outcome.error });
-        if (outcome.kind === "success") { setOpenEvent(null); setRejectNote(""); }
+        setNotice(outcome.kind === "success" ? { tone: "success", key: outcome.receipt.intake.status === "duplicate" ? "reject.doneDuplicate" : "reject.done" }
+          : { tone: "error", key: "refused", error: outcome.error });
+        if (outcome.kind === "success") { setOpenEvent(null); setRejectNote(""); setDuplicateOf(""); }
+      }
+      await read(undefined, "quiet");
+    });
+  }
+
+  /** Sends the draft back to the member. Like a rejection, an unanswered request keeps its identity for the retry. */
+  function ask(retry: DatesIntakeAskCommand | null) {
+    return command(async (life) => {
+      const prepared = retry ?? (askDraft ? prepareDatesIntakeAsk({ intake_id: intakeId, revision: revision.current }, askDraft.fields, askDraft.note, askDraft.reason) : null);
+      setAskDraft(null);
+      if (!prepared) { setNotice({ tone: "error", key: "ask.invalid" }); return; }
+      const outcome = await runDatesIntakeAsk(adminCall, prepared);
+      if (outcome.kind === "success") advance(outcome.receipt.intake.revision);
+      if (life !== lifetime.current) return;
+      if (outcome.kind === "uncertain") {
+        setAskCommand(prepared); setNotice({ tone: "error", key: "ask.uncertain", ...(outcome.error === null ? {} : { error: outcome.error }) });
+      } else {
+        setAskCommand(null);
+        setNotice(outcome.kind === "success" ? { tone: "success", key: "ask.done", time: outcome.receipt.asked.due_at } : { tone: "error", key: "refused", error: outcome.error });
+        // The suggestion left the reviewer's hold with the request: nothing of it stays open here.
+        if (outcome.kind === "success") { setOpenEvent(null); setCandidate(null); }
       }
       await read(undefined, "quiet");
     });
@@ -266,8 +297,14 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
 
   const access = { review: operator?.review === true, manage: operator?.manage === true, superadmin: operator?.superadmin === true,
     // Unknown is not "off": Core answers with its own refusal when the switch is off.
-    draftsEnabled: result?.draftsEnabled !== false };
+    draftsEnabled: result?.draftsEnabled !== false, suggestionsEnabled: result?.suggestionsEnabled !== false };
   const can = intake ? datesIntakeAffordances(intake, access) : null;
+  const suggestion = intake?.channel === "member_suggestion";
+  const asking = intake ? datesIntakeAskState(intake, { review: access.review, suggestionsEnabled: result?.suggestionsEnabled ?? null }) : null;
+  // Events Core's own duplicate check pointed at: offered as the event a duplicate is a duplicate of.
+  const duplicateCandidates = [...new Set((intake?.events ?? []).flatMap((event) => (event?.dedupe?.candidates ?? [])
+    .flatMap((item) => item.kind === "event" && datesExternalEventId(item.id) ? [item.id] : [])))];
+  const namedDuplicate = rejectCode === "duplicate" ? duplicateOf.trim() : "";
   const publishable = intake ? datesIntakePublishableEvents(intake) : [];
   const events = intake?.events ?? null;
   const editing = openEvent !== null && events ? events[openEvent] ?? null : null;
@@ -296,7 +333,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
     {alreadySubmitted && <DatesIntakeAlreadySubmitted onDismiss={() => setAlreadySubmitted(false)} />}
     {staleRead && state === "ready" && <p className="alert alert-warning" role="status">{t("detail.revisionUnreadable")}</p>}
     {notice && (notice.key === "refused" && notice.error ? <DatesIntakeRefusal error={notice.error} />
-      : <p className={`alert alert-${notice.tone}`} role="status">{t(notice.key)}{notice.error ? <> <code>{notice.error}</code></> : null}
+      : <p className={`alert alert-${notice.tone}`} role="status">{notice.time === undefined ? t(notice.key) : t(notice.key, { time: formatDate(notice.time, locale, true) })}{notice.error ? <> <code>{notice.error}</code></> : null}
         {notice.eventId ? <> <Link href={`/dates/external/${notice.eventId}`}>{t("publish.openEvent")}</Link></> : null}</p>)}
     {state === "loading" && <LoadingPanel />}
     {state === "error" && <>
@@ -314,6 +351,9 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
       {otherPending && otherTarget && <Link className="button button-secondary" href={otherTarget}>{external("pending.open")}</Link>}
     </section>}
     {state === "ready" && intake && can && <>
+      {datesIntakeSecondLookOpen(intake) && <p className="alert alert-warning" role="status">{t("detail.secondLook")}</p>}
+      {suggestion && result?.suggestionsEnabled === false && intake.status === "in_review" && <p className="alert alert-info" role="status">{t("detail.suggestionsOff")}
+        {" "}<Link href="/dates/configuration">{t("source.disabledLink")}</Link></p>}
       <DatesIntakeStatusPanel intake={intake} polling={datesIntakePollDelay(intake.status, Date.now() - startedAt.current) !== null} />
 
       {intake.status === "in_review" && <section className="panel dates-external-fields" aria-label={t("lease.title")}>
@@ -331,6 +371,8 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
         </div>
       </section>}
 
+      <DatesIntakeMemberPanel intake={intake} />
+
       <DatesIntakeInputsPanel intake={intake} />
 
       <DatesIntakeExtractionPanel intake={intake} manage={access.manage} draftsOff={result?.draftsEnabled === false} />
@@ -342,7 +384,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
               : event.editor_input === null ? <p className="field-hint">{t("editor.noPrefill")}</p>
                 : can.publish ? <button className="button button-primary" disabled={writeBlocked || openEvent === index}
                   onClick={() => { setNotice(null); setAnswer(null); setCandidate(null); setOpenEvent(index); }}>{t("editor.open")}</button>
-                  : <p className="field-hint">{t(mine ? "editor.cannotPublish" : "editor.holdFirst")}</p>}
+                  : <p className="field-hint">{t(!mine ? "editor.holdFirst" : suggestion ? "editor.cannotPublishSuggestion" : "editor.cannotPublish")}</p>}
           </div>}
         </DatesIntakeEventPanel>)}
 
@@ -351,7 +393,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
           <button className="button button-secondary" type="button" disabled={busy} onClick={() => { setOpenEvent(null); setCandidate(null); }}>{t("editor.close")}</button></div>
         <p className="alert alert-warning">{t("editor.notice")}</p>
         {/* A lost hold keeps what the reviewer typed; the form only waits for the hold to be taken again. */}
-        {!can.publish && <p className="alert alert-info" role="status">{t(mine ? "editor.cannotPublish" : "editor.holdFirst")}</p>}
+        {!can.publish && <p className="alert alert-info" role="status">{t(!mine ? "editor.holdFirst" : suggestion ? "editor.cannotPublishSuggestion" : "editor.cannotPublish")}</p>}
         {datesIntakeEditorGaps(editing.editor_input).length > 0 && <p className="alert alert-info">{t("editor.gaps", {
           fields: datesIntakeEditorGaps(editing.editor_input).map((gap) => t(`editor.gapFields.${gap}`)).join(", ") })}</p>}
         {completion && <DatesIntakeCompletionChoice completion={completion} close={close} disabled={writeBlocked}
@@ -363,16 +405,31 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
 
       <DatesIntakeRunsPanel intake={intake} />
 
+      {asking && <DatesIntakeAskSection state={asking} busy={commandBlocked} retry={askCommand !== null} onChanged={() => setAskCommand(null)}
+        onReview={(draft) => { if (datesIntakeAskValid(draft.fields, draft.note, draft.reason)) setAskDraft(draft); else setNotice({ tone: "error", key: "ask.invalid" }); }}
+        onRetry={() => { if (askCommand) void ask(askCommand); }} />}
+
       {intake.status === "in_review" && access.review && <section className="panel dates-external-fields" aria-label={t("reject.title")}>
         <h2>{t("reject.title")}</h2>
         <p>{t("reject.copy")}</p>
         <DatesIntakeRejectWarning intake={intake} />
         {!can.reject && <p className="field-hint">{t(intake.published_count ? "reject.afterPublish" : "reject.holdFirst")}</p>}
-        <form onSubmit={(submit) => { submit.preventDefault(); if (can.reject && !commandBlocked && rejectNote.trim() !== "") setConfirmReject(true); }}>
+        <form onSubmit={(submit) => { submit.preventDefault(); if (!can.reject || commandBlocked || rejectNote.trim() === "") return;
+          // A name that is not an event id is said to be one before anything is confirmed; it is never dropped silently.
+          if (namedDuplicate !== "" && !datesExternalEventId(namedDuplicate)) { setNotice({ tone: "error", key: "reject.duplicateInvalid" }); return; }
+          setConfirmReject(true); }}>
           <fieldset className="dates-external-fields" disabled={!can.reject || commandBlocked}>
-            <label className="field"><span>{t("reject.reason")}</span><select value={rejectCode} onChange={(change) => { setRejectCommand(null); setRejectCode(change.target.value); }}>
+            <label className="field"><span>{t("reject.reason")}</span><select value={rejectCode} onChange={(change) => { setRejectCommand(null); setDuplicateOf(""); setRejectCode(change.target.value); }}>
               {DATES_INTAKE_REJECT_REASONS.map((code) => <option key={code} value={code}>{t(`rejectReasons.${code}`)}</option>)}</select>
               <small>{t("reject.statementHint")}</small></label>
+            {rejectCode === "duplicate" && <label className="field"><span>{t("reject.duplicateOf")}</span>
+              <input type="text" value={duplicateOf} maxLength={36} placeholder="xev_" spellCheck={false} autoComplete="off"
+                onChange={(change) => { setRejectCommand(null); setDuplicateOf(change.target.value); }} />
+              <small>{t("reject.duplicateOfHint")}</small>
+              {namedDuplicate !== "" && !datesExternalEventId(namedDuplicate) && <small role="status">{t("reject.duplicateInvalid")}</small>}
+              {duplicateCandidates.length > 0 && <span className="row-actions">{duplicateCandidates.map((candidateId) => <button type="button" className="button button-secondary" key={candidateId}
+                onClick={() => { setRejectCommand(null); setDuplicateOf(candidateId); }}>{t("reject.duplicatePick", { id: candidateId })}</button>)}</span>}</label>}
+            <DatesIntakeMemberRejectNotes intake={intake} reasonCode={rejectCode} namesEvent={namedDuplicate !== ""} />
             <label className="field"><span>{t("reject.note")}</span><textarea required rows={2} maxLength={1000} value={rejectNote}
               onChange={(change) => { setRejectCommand(null); setRejectNote(change.target.value); }} /><small>{t("reject.noteHint")}</small></label>
             <div className="row-actions"><button type="submit" className="button button-danger">{t("reject.review")}</button>
@@ -383,11 +440,21 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
     </>}
     {confirmReject && <ConfirmDialog title={t("reject.title")} copy={t("reject.confirm")} confirmLabel={t("reject.submit")} busy={busy}
       onCancel={() => { if (!busyRef.current) setConfirmReject(false); }} onConfirm={() => void reject(null)}>
-      <p><strong>{t(`rejectReasons.${rejectCode}`)}</strong></p><p className="preserve-whitespace">{rejectNote.trim()}</p>
+      <p><strong>{t(`rejectReasons.${rejectCode}`)}</strong></p>
+      {namedDuplicate !== "" && <p>{t("reject.confirmDuplicateOf")} <code>{namedDuplicate}</code></p>}
+      {intake && <DatesIntakeMemberRejectNotes intake={intake} reasonCode={rejectCode} namesEvent={namedDuplicate !== ""} />}
+      <p className="preserve-whitespace">{rejectNote.trim()}</p>
+    </ConfirmDialog>}
+    {askDraft && <ConfirmDialog title={t("ask.title")} copy={t("ask.confirm")} confirmLabel={t("ask.submit")} tone="primary" busy={busy}
+      onCancel={() => { if (!busyRef.current) setAskDraft(null); }} onConfirm={() => void ask(null)}>
+      <p><strong>{t("ask.confirmFields", { fields: askDraft.fields.map((field) => t(`memberFieldValues.${field}`)).join(", ") })}</strong></p>
+      {askDraft.note.trim() === "" ? <p>{t("ask.confirmNoNote")}</p> : <><p>{t("ask.confirmNote")}</p><blockquote className="preserve-whitespace">{askDraft.note.trim()}</blockquote></>}
+      <p className="preserve-whitespace">{askDraft.reason.trim()}</p>
     </ConfirmDialog>}
     {confirmable && <ConfirmDialog title={external("editor.publish")} copy={t("editor.confirm")} confirmLabel={external("editor.publish")} tone="primary" busy={busy}
       onCancel={() => { if (!busyRef.current) setCandidate(null); }} onConfirm={() => void publish({ candidate: confirmable })}>
       <p><strong>{confirmable.event.title}</strong></p>
+      {suggestion && intake && <DatesIntakeMemberPublishNotes member={intake.member} events={intake.events?.length ?? 0} />}
       <p>{confirmable.complete && confirmable.unreadable > 0 ? t("editor.confirmCloseUnreadable", { count: confirmable.unreadable })
         : t(confirmable.complete ? "editor.confirmComplete" : "editor.confirmPartial")}</p>
       <p className="preserve-whitespace">{confirmable.reason}</p>

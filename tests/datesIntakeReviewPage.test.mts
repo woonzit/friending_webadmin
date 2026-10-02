@@ -7,7 +7,8 @@ import { datesExternalDraftInput } from "../lib/datesExternalInput.ts";
 import { readDatesExternalPending } from "../lib/datesExternalMutations.ts";
 import { datesIntakeCandidateCurrent, datesIntakeCompleteFlag, datesIntakeCompletion, datesIntakeCompletionChoice, datesIntakeEditorDraft, datesIntakeHeartbeatDelay,
   projectDatesIntakeDetail } from "../lib/datesIntakeAdmin.ts";
-import { createDatesIntakeSerial, prepareDatesIntakeReject, readDatesIntakeDetail, runDatesIntakeLease, runDatesIntakePublish, runDatesIntakeReject } from "../lib/datesIntakeConsole.ts";
+import { createDatesIntakeSerial, prepareDatesIntakeAsk, prepareDatesIntakeReject, readDatesIntakeDetail, runDatesIntakeAsk, runDatesIntakeLease, runDatesIntakePublish,
+  runDatesIntakeReject } from "../lib/datesIntakeConsole.ts";
 
 // The review screen's own callbacks (load, hold, reject, publish) executed as
 // written, with React state replaced by recorders and the bridge by genuine
@@ -26,7 +27,7 @@ const callback = (name: string) => {
   assert.ok(declaration?.initializer && ts.isCallExpression(declaration.initializer) && declaration.initializer.expression.getText(tree) === "useCallback", name);
   return (declaration.initializer as ts.CallExpression).arguments[0].getText(tree);
 };
-const FUNCTIONS = ["advance", "heartbeat", "command", "lease", "reject", "publish", "propose"];
+const FUNCTIONS = ["advance", "heartbeat", "command", "lease", "reject", "ask", "publish", "propose"];
 for (const name of FUNCTIONS) assert.ok(declared(name), name);
 const gone = tree.statements.find((node) => ts.isVariableStatement(node) && node.getText(tree).startsWith("const GONE"))!;
 const code = ts.transpileModule(`${gone.getText(tree)}
@@ -34,7 +35,7 @@ const code = ts.transpileModule(`${gone.getText(tree)}
   const load = ${callback("load")};
   ${FUNCTIONS.map((name) => declared(name).getText(tree)).join("\n")}
   exports.read = read; exports.load = load; exports.heartbeat = heartbeat;
-  exports.lease = lease; exports.reject = reject; exports.publish = publish; exports.propose = propose;`,
+  exports.lease = lease; exports.reject = reject; exports.ask = ask; exports.publish = publish; exports.propose = propose;`,
   { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
 
 const actor = "admin@example.test";
@@ -51,19 +52,22 @@ function harness(intakeId: string, answers: Record<string, unknown>) {
   const table = { admin_me: identity(), dates_event_intake_list: oneRow, dates_external_event_list: externalList, ...answers } as Record<string, unknown>;
   const context: any = { exports: {}, intakeId, generation: { current: 0 }, lifetime: { current: 0 }, busyRef: { current: false }, revision: { current: null },
     pendingRef: { current: false }, serial: { current: createDatesIntakeSerial() }, operator: null, rejectCode: "duplicate", rejectNote: "Already listed as another intake.",
+    duplicateOf: "", askDraft: null,
     readDatesIntakeDetail, runDatesIntakeLease, runDatesIntakeReject, runDatesIntakePublish, prepareDatesIntakeReject, readDatesExternalPending,
+    runDatesIntakeAsk, prepareDatesIntakeAsk,
     datesIntakeCompleteFlag, writeBlocked: false, can: { publish: true }, openEvent: null, completion: null, close: false,
     datesExternalBrowserStorage: () => storage,
     adminCall: async (action: string, body: any) => { sent.push({ action, body });
       const answer = table[action]; return typeof answer === "function" ? (answer as (body: unknown) => unknown)(body) : answer; } };
-  for (const name of ["State", "Result", "Operator", "Problem", "Notice", "Busy", "Pending", "OpenEvent", "Answer", "Candidate", "RejectCommand", "RejectNote", "ConfirmReject", "StaleRead"])
+  for (const name of ["State", "Result", "Operator", "Problem", "Notice", "Busy", "Pending", "OpenEvent", "Answer", "Candidate", "RejectCommand", "RejectNote", "ConfirmReject", "StaleRead",
+    "DuplicateOf", "AskDraft", "AskCommand"])
     context[`set${name}`] = (value: unknown) => { state[name] = typeof value === "function" ? value(state[name]) : value; writes.push(name);
       if (name === "Operator") context.operator = value; };
   vm.runInNewContext(code, context);
   const commands = sent.filter.bind(sent);
   return { context, state, writes, sent, table, rows, storage, api: context.exports as { load: (signal?: AbortSignal, mode?: string) => Promise<void>;
     read: (signal?: AbortSignal, mode?: string) => Promise<void>; heartbeat: (life: number) => Promise<void>;
-    lease: (action: string) => Promise<void>; reject: (retry: unknown) => Promise<void>; publish: (input: unknown) => Promise<void>;
+    lease: (action: string) => Promise<void>; reject: (retry: unknown) => Promise<void>; ask: (retry: unknown) => Promise<void>; publish: (input: unknown) => Promise<void>;
     propose: (facts: unknown, reason: string) => void },
     calls: (action: string) => commands((call) => call.action === action) };
 }
@@ -219,7 +223,7 @@ test("review finding: a slow read cannot take the revision back behind a heartbe
   // Every read the page issues from outside a command goes through the queue; code already in the queue reads directly.
   assert.match(source, /const load = useCallback\(\(signal\?: AbortSignal, mode: "initial" \| "quiet" \| "refresh" = "initial"\) =>\s+serial\.current\(\(\) => read\(signal, mode\)\), \[read\]\);/);
   assert.match(source, /const beat = \(\) => \{ void serial\.current\(\(\) => heartbeatRef\.current\(life\)\); \};/);
-  assert.equal((source.match(/\bread\(/g) ?? []).length, 5, "the queued wrapper, the heartbeat's follow-up and the three commands");
+  assert.equal((source.match(/\bread\(/g) ?? []).length, 6, "the queued wrapper, the heartbeat's follow-up and the four commands");
   assert.equal((source.match(/revision\.current = /g) ?? []).length, 4, "reset on a first read, reset on a lost page, a read's adoption, and advance()");
 });
 
@@ -551,4 +555,145 @@ test("review recheck: a completion choice belongs to the set of events it was ma
   assert.doesNotMatch(source, /setComplete|useState\(false\);\s+const \[candidate/);
   assert.doesNotMatch(source, /publish\(\{ candidate \}\)/);
   for (const locale of ["en", "hu"]) assert.equal(typeof JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8")).datesAdmin.intake.editor.changed, "string");
+});
+
+// ---------------------------------------------------------------- T-886: the member-intake side
+
+test("T-886: asking the member sends one request with the page's revision; the receipt moves the revision and the draft leaves the reviewer", async () => {
+  const before = fixture("admin-detail-member-in-review"), after = fixture("admin-detail-member-asked"), receipt = fixture("admin-ask-member");
+  const id = receipt.intake.intake_id;
+  assert.equal(before.intake.intake_id, id); assert.equal(after.intake.intake_id, id); assert.equal(after.intake.revision, receipt.intake.revision);
+  let asked = false;
+  // The switch is read from Core's genuine queue body of the member channel (on); the empty queue of the other tests was captured with it off.
+  const h = harness(id, { dates_event_intake_detail: () => asked ? after : before, dates_event_intake_ask_member: () => { asked = true; return receipt; },
+    dates_event_intake_list: { ...fixture("admin-list-member-channel"), limit: 1 } });
+  assert.equal(fixture("admin-list-empty").suggestions_enabled, false);
+  await h.api.load();
+  assert.equal(h.state.Result.read.intake.member.can_ask, true); assert.equal(h.state.Result.suggestionsEnabled, true);
+  // The genuine receipt answers revision 13 (the hold the reviewer took in between); the page holds that revision.
+  h.context.revision.current = receipt.intake.revision - 1;
+  h.context.askDraft = { fields: ["starts_local", "venue_address"], note: " Biztosan reggel 9-kor kezdődik? ", reason: " The flyer and the text disagree. " };
+  h.context.openEvent = 0;
+  await h.api.ask(null);
+  const sent = plain(h.calls("dates_event_intake_ask_member"));
+  assert.equal(sent.length, 1);
+  assert.deepEqual({ ...sent[0].body, idempotency_key: null }, { intake_id: id, expected_revision: receipt.intake.revision - 1, fields: ["starts_local", "venue_address"],
+    reason: "The flyer and the text disagree.", idempotency_key: null, member_note: "Biztosan reggel 9-kor kezdődik?" });
+  assert.match(sent[0].body.idempotency_key, /^dates-intake-ask:[0-9a-f-]{36}$/);
+  // The time in the message is the one Core answered with - not the browser's clock, not a constant of the console.
+  assert.deepEqual(plain(h.state.Notice), { tone: "success", key: "ask.done", time: receipt.asked.due_at });
+  assert.equal(h.state.AskDraft, null); assert.equal(h.state.AskCommand, null); assert.equal(h.state.OpenEvent, null); assert.equal(h.state.Candidate, null);
+  assert.equal(h.context.revision.current, receipt.intake.revision, "the receipt's revision, then the read's");
+  // The page then shows what Core says now: with the member, asked by a reviewer, not askable again.
+  const shown = h.state.Result.read.intake;
+  assert.equal(shown.status, "member_confirming");
+  assert.deepEqual(plain(shown.member.confirmation), { state: "awaiting", at: null, due_at: receipt.asked.due_at, asked_by_reviewer: true,
+    fields: ["starts_local", "venue_address"], note: "Biztosan reggel 9-kor kezdődik?" });
+  assert.equal(shown.member.can_ask, false);
+
+  // Nothing is sent for a request the console itself would not make, or without a draft.
+  for (const draft of [null, { fields: [], note: "", reason: "why" }, { fields: ["title"], note: "", reason: "  " }, { fields: ["title"], note: "x".repeat(501), reason: "why" }]) {
+    const none = harness(id, { dates_event_intake_detail: before, dates_event_intake_ask_member: receipt });
+    await none.api.load(); none.context.askDraft = draft;
+    await none.api.ask(null);
+    assert.equal(none.calls("dates_event_intake_ask_member").length, 0, JSON.stringify(draft)?.slice(0, 60));
+    assert.deepEqual(plain(none.state.Notice), { tone: "error", key: "ask.invalid" });
+  }
+});
+
+test("T-886: an unanswered request to the member keeps its identity for the retry; Core's refusal is shown as it is and ends it", async () => {
+  const before = fixture("admin-detail-member-in-review"), receipt = fixture("admin-ask-member"), id = receipt.intake.intake_id;
+  const draft = { fields: ["title"], note: "", reason: "The title is cut off." };
+  for (const reply of [null, { success: false, status_code: 504, error: "core-timeout" }, { success: false, status_code: 502, error: "core-unavailable" },
+    { success: false, status_code: 409, error: "dates-admin-command-in-progress", message: 200, status: 200, can_send: 0 },
+    { success: false, status_code: 503, error: "dates-admin-unavailable", message: 200, status: 200, can_send: 0 }, { success: true },
+    fixture("admin-ask-member-viewer-denied")]) {
+    const kept = harness(id, { dates_event_intake_detail: before, dates_event_intake_ask_member: reply });
+    await kept.api.load(); kept.context.revision.current = receipt.intake.revision - 1; kept.context.askDraft = draft;
+    await kept.api.ask(null);
+    const sent = plain(kept.calls("dates_event_intake_ask_member")[0].body);
+    const error = reply && (reply as { success: boolean }).success === false ? (reply as { error: string }).error : undefined;
+    // Not known: never "sent", never "refused".
+    assert.deepEqual(plain(kept.state.Notice), { tone: "error", key: "ask.uncertain", ...(error === undefined ? {} : { error }) }, JSON.stringify(reply));
+    assert.deepEqual(plain(kept.state.AskCommand), sent, "the same command, key included, is the retry");
+    // The retry is that command; Core's genuine replay settles it. A request with the title only is answered by a
+    // receipt about the title only, so the replay is DERIVED from the genuine one by its echoed fields.
+    kept.table.dates_event_intake_ask_member = { ...fixture("admin-ask-member-replay"), asked: { fields: ["title"], due_at: receipt.asked.due_at } };
+    await kept.api.ask(kept.state.AskCommand);
+    assert.deepEqual(plain(kept.calls("dates_event_intake_ask_member")[1].body), sent);
+    assert.deepEqual(plain(kept.state.Notice), { tone: "success", key: "ask.done", time: receipt.asked.due_at }); assert.equal(kept.state.AskCommand, null);
+  }
+  for (const name of ["ask-member-lease-required", "ask-member-state-invalid", "ask-member-not-a-suggestion", "ask-member-suggestions-disabled", "ask-member-input-invalid"]) {
+    const refusal = fixture(`admin-${name}-denied`);
+    const refused = harness(id, { dates_event_intake_detail: before, dates_event_intake_ask_member: refusal });
+    await refused.api.load(); refused.context.askDraft = draft;
+    await refused.api.ask(null);
+    assert.deepEqual(plain(refused.state.Notice), { tone: "error", key: "refused", error: refusal.error }, name);
+    assert.equal(refused.state.AskCommand, null, name);
+    assert.equal(refused.calls("dates_event_intake_detail").length, 2, "read again after the refusal");
+  }
+});
+
+test("T-886: a rejection names the event it duplicates only with the reason duplicate, and the outcome is said as what it is", async () => {
+  const detail = fixture("admin-detail-member-in-review"), receipt = fixture("admin-duplicate-of-event"), id = receipt.intake.intake_id;
+  const event = fixture("admin-detail-member-duplicate").intake.duplicate_of.id;
+  const body = { ...detail, intake: { ...detail.intake, intake_id: id } };
+  const h = harness(id, { dates_event_intake_detail: body, dates_event_intake_reject: receipt });
+  await h.api.load(); h.context.revision.current = receipt.intake.revision - 1;
+  Object.assign(h.context, { rejectCode: "duplicate", rejectNote: "The same yoga morning is already listed.", duplicateOf: ` ${event} ` });
+  await h.api.reject(null);
+  const sent = plain(h.calls("dates_event_intake_reject")[0].body);
+  assert.deepEqual({ ...sent, idempotency_key: null }, { intake_id: id, expected_revision: receipt.intake.revision - 1, reason_code: "duplicate",
+    reason: "The same yoga morning is already listed.", idempotency_key: null, duplicate_of_external_event_id: event });
+  assert.deepEqual(plain(h.state.Notice), { tone: "success", key: "reject.doneDuplicate" });
+  assert.equal(h.state.DuplicateOf, ""); assert.equal(h.state.RejectNote, ""); assert.equal(h.state.RejectCommand, null);
+  // With any other reason a typed name is not sent (the field is not on screen then, and the page clears it on a change of reason).
+  const other = harness(id, { dates_event_intake_detail: body, dates_event_intake_reject: fixture("admin-reject-member-spam") });
+  await other.api.load(); other.context.revision.current = 11;
+  Object.assign(other.context, { rejectCode: "spam_or_fake", rejectNote: "Not an event.", duplicateOf: event });
+  await other.api.reject(null);
+  assert.equal(Object.hasOwn(plain(other.calls("dates_event_intake_reject")[0].body), "duplicate_of_external_event_id"), false);
+  assert.match(source, /onChange=\{\(change\) => \{ setRejectCommand\(null\); setDuplicateOf\(""\); setRejectCode\(change\.target\.value\); \}\}/);
+  // A name that is not an event id is never sent and never dropped: the command is not made.
+  const wrong = harness(id, { dates_event_intake_detail: body, dates_event_intake_reject: receipt });
+  await wrong.api.load(); wrong.context.revision.current = receipt.intake.revision - 1;
+  Object.assign(wrong.context, { rejectCode: "duplicate", rejectNote: "Already listed.", duplicateOf: "xev_5" });
+  await wrong.api.reject(null);
+  assert.equal(wrong.calls("dates_event_intake_reject").length, 0); assert.deepEqual(plain(wrong.state.Notice), { tone: "error", key: "reject.invalid" });
+  assert.match(source, /if \(namedDuplicate !== "" && !datesExternalEventId\(namedDuplicate\)\) \{ setNotice\(\{ tone: "error", key: "reject\.duplicateInvalid" \}\); return; \}/);
+  // Core's genuine refusal of an event that is not there keeps nothing and says so with its token.
+  const missing = harness(id, { dates_event_intake_detail: body, dates_event_intake_reject: fixture("admin-reject-duplicate-event-unavailable-denied") });
+  await missing.api.load(); missing.context.revision.current = receipt.intake.revision - 1;
+  Object.assign(missing.context, { rejectCode: "duplicate", rejectNote: "Already listed.", duplicateOf: event });
+  await missing.api.reject(null);
+  assert.deepEqual(plain(missing.state.Notice), { tone: "error", key: "refused", error: "dates-intake-duplicate-event-unavailable" }); assert.equal(missing.state.RejectCommand, null);
+  // An unanswered named rejection keeps the name with its identity: the retry is that command.
+  const lost = harness(id, { dates_event_intake_detail: body, dates_event_intake_reject: null });
+  await lost.api.load(); lost.context.revision.current = receipt.intake.revision - 1;
+  Object.assign(lost.context, { rejectCode: "duplicate", rejectNote: "Already listed.", duplicateOf: event });
+  await lost.api.reject(null);
+  assert.equal(plain(lost.state.RejectCommand).duplicate_of_external_event_id, event);
+  lost.table.dates_event_intake_reject = { ...receipt, replayed: true }; lost.context.duplicateOf = "";
+  await lost.api.reject(lost.state.RejectCommand);
+  assert.deepEqual(plain(lost.calls("dates_event_intake_reject")[1].body), plain(lost.calls("dates_event_intake_reject")[0].body));
+  assert.deepEqual(plain(lost.state.Notice), { tone: "success", key: "reject.doneDuplicate" });
+});
+
+test("T-886: what the review screen shows and offers for a member's suggestion is wired to Core's word, not to the page's guess", () => {
+  // The member's side, the second-look mark, and the switch that publishing a suggestion needs.
+  assert.match(source, /<DatesIntakeMemberPanel intake=\{intake\} \/>/);
+  assert.match(source, /\{datesIntakeSecondLookOpen\(intake\) && <p className="alert alert-warning" role="status">\{t\("detail\.secondLook"\)\}<\/p>\}/);
+  assert.match(source, /draftsEnabled: result\?\.draftsEnabled !== false, suggestionsEnabled: result\?\.suggestionsEnabled !== false \};/);
+  assert.match(source, /const asking = intake \? datesIntakeAskState\(intake, \{ review: access\.review, suggestionsEnabled: result\?\.suggestionsEnabled \?\? null \}\) : null;/);
+  // The form proposes; a dialog confirms; the command reads the draft the dialog showed.
+  assert.match(source, /onReview=\{\(draft\) => \{ if \(datesIntakeAskValid\(draft\.fields, draft\.note, draft\.reason\)\) setAskDraft\(draft\); else setNotice\(\{ tone: "error", key: "ask\.invalid" \}\); \}\}/);
+  assert.match(source, /\{askDraft && <ConfirmDialog title=\{t\("ask\.title"\)\}[^\n]+\n\s+onCancel=\{\(\) => \{ if \(!busyRef\.current\) setAskDraft\(null\); \}\} onConfirm=\{\(\) => void ask\(null\)\}>/);
+  assert.match(source, /onRetry=\{\(\) => \{ if \(askCommand\) void ask\(askCommand\); \}\}/); assert.match(source, /onChanged=\{\(\) => setAskCommand\(null\)\}/);
+  // Before a rejection and before a publication the reviewer is told what it means for the member.
+  assert.equal((source.match(/<DatesIntakeMemberRejectNotes intake=\{intake\} reasonCode=\{rejectCode\} namesEvent=\{namedDuplicate !== ""\} \/>/g) ?? []).length, 2, "in the form and in the confirmation");
+  assert.match(source, /\{suggestion && intake && <DatesIntakeMemberPublishNotes member=\{intake\.member\} events=\{intake\.events\?\.length \?\? 0\} \/>\}/);
+  // The events Core's own duplicate check pointed at are offered as the name; nothing else is.
+  assert.match(source, /item\.kind === "event" && datesExternalEventId\(item\.id\) \? \[item\.id\] : \[\]/);
+  // No member data is fetched for this screen: the page reads the detail, the operator and the one-row queue - nothing of a member.
+  assert.doesNotMatch(source, /admin_user|user_detail|member_detail|users\/|\/members\//);
 });

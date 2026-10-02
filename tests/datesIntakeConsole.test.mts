@@ -6,8 +6,8 @@ import { readDatesExternalPending } from "../lib/datesExternalMutations.ts";
 import { datesIntakeEditorDraft, projectDatesIntakeDetail } from "../lib/datesIntakeAdmin.ts";
 import {
   createDatesIntakeSerial, createDatesIntakeSourceKey, datesIntakeOperator, datesIntakePendingPublish, datesIntakePollDelay, datesIntakeSourceProblem,
-  prepareDatesIntakeReject, readDatesAiUsage, readDatesIntakeDetail, readDatesIntakeDraftEntry, readDatesIntakeQueue, runDatesIntakeLease,
-  runDatesIntakePublish, runDatesIntakeReject, submitDatesIntakeSource,
+  prepareDatesIntakeAsk, prepareDatesIntakeReject, readDatesAiUsage, readDatesIntakeDetail, readDatesIntakeDraftEntry, readDatesIntakeQueue, runDatesIntakeAsk,
+  runDatesIntakeLease, runDatesIntakePublish, runDatesIntakeReject, submitDatesIntakeSource,
 } from "../lib/datesIntakeConsole.ts";
 
 // The intake console's calls, run as they are against the genuine Core bodies
@@ -98,6 +98,15 @@ test("detail read carries the draft switch from the queue and keeps the four ans
   // An unreadable queue leaves the switch unknown; it is not reported as off.
   const unknown = await readDatesIntakeDetail(bridge({ dates_event_intake_detail: detail, admin_me: identity(), dates_event_intake_list: null }).send, xin(4));
   assert.equal(unknown.kind === "ready" && unknown.draftsEnabled, null);
+  // The member channel's switch travels the same way: Core's genuine queue body says it, an unreadable queue leaves it unknown.
+  assert.equal(ready.kind === "ready" && ready.suggestionsEnabled, list.suggestions_enabled); assert.equal(typeof list.suggestions_enabled, "boolean");
+  const member = fixture("admin-detail-member-in-review"), channel = fixture("admin-list-member-channel");
+  const suggestion = await readDatesIntakeDetail(bridge({ dates_event_intake_detail: member, admin_me: identity("moderator"), dates_event_intake_list: { ...channel, limit: 1 } }).send, member.intake.intake_id);
+  assert.equal(suggestion.kind === "ready" && suggestion.suggestionsEnabled, true); assert.equal(suggestion.kind === "ready" && suggestion.read.intake.member?.submitter_uid, 19601);
+  // DERIVED: the same one-row queue with the member switch off.
+  const closed = await readDatesIntakeDetail(bridge({ dates_event_intake_detail: member, admin_me: identity("moderator"), dates_event_intake_list: { ...channel, limit: 1, suggestions_enabled: false } }).send, member.intake.intake_id);
+  assert.equal(closed.kind === "ready" && closed.suggestionsEnabled, false);
+  assert.equal(unknown.kind === "ready" && unknown.suggestionsEnabled, null);
   assert.deepEqual(await readDatesIntakeDetail(bridge({ dates_event_intake_detail: fixture("admin-detail-not-found-denied"), admin_me: identity(), dates_event_intake_list: list }).send, xin(0xfff)),
     { kind: "refused", error: "dates-intake-unavailable", status: 404 });
   assert.deepEqual(await readDatesIntakeDetail(bridge({ dates_event_intake_detail: capabilityRefusal, admin_me: identity("support_viewer"), dates_event_intake_list: capabilityRefusal }).send, xin(4)), { kind: "denied" });
@@ -198,6 +207,80 @@ test("rejection: one identity per command, kept across a retry, and Core's genui
     assert.deepEqual(await runDatesIntakeReject(bridge({ dates_event_intake_reject: answer }).send, command), { kind: "uncertain", error: answer.error }, String(answer.error));
   // The receipt of a rejection with another reason is not this command's receipt.
   assert.deepEqual(await runDatesIntakeReject(bridge({ dates_event_intake_reject: fixture("admin-reject-duplicate") }).send, command), { kind: "uncertain", error: null });
+});
+
+test("a rejection that names the event already there: only the reason duplicate carries the name, and the receipt must say duplicate", async () => {
+  const receipt = fixture("admin-duplicate-of-event"), event = fixture("admin-detail-member-duplicate").intake.duplicate_of.id;
+  const target = { intake_id: receipt.intake.intake_id, revision: receipt.intake.revision - 1 };
+  const command = prepareDatesIntakeReject(target, "duplicate", "The same yoga morning is already listed.", `  ${event}  `)!;
+  assert.ok(command);
+  assert.deepEqual({ ...command, idempotency_key: null }, { intake_id: target.intake_id, expected_revision: target.revision, reason_code: "duplicate",
+    reason: "The same yoga morning is already listed.", idempotency_key: null, duplicate_of_external_event_id: event });
+  // Not named: the key is absent, not empty.
+  for (const blank of ["", "   "]) assert.equal(Object.hasOwn(prepareDatesIntakeReject(target, "duplicate", "note", blank)!, "duplicate_of_external_event_id"), false);
+  assert.equal(Object.hasOwn(prepareDatesIntakeReject(target, "duplicate", "note")!, "duplicate_of_external_event_id"), false);
+  // A name that is not an event id, or a name with any other reason, is refused here - never dropped silently.
+  for (const named of ["xev_1", "xin_" + "0".repeat(32), event.toUpperCase(), `${event}0`, "https://example.test/event"])
+    assert.equal(prepareDatesIntakeReject(target, "duplicate", "note", named), null, named);
+  for (const reason of ["spam_or_fake", "not_an_event", "unverifiable"]) assert.equal(prepareDatesIntakeReject(target, reason, "note", event), null, reason);
+  const h = bridge({ dates_event_intake_reject: receipt });
+  const done = await runDatesIntakeReject(h.send, command);
+  assert.equal(done.kind === "success" && done.receipt.intake.status, "duplicate");
+  assert.deepEqual(h.sent[0].body, command);
+  // Core's genuine refusal when no such event exists: nothing was written, said with Core's token.
+  const missing = fixture("admin-reject-duplicate-event-unavailable-denied");
+  assert.deepEqual(await runDatesIntakeReject(bridge({ dates_event_intake_reject: missing }).send, command),
+    { kind: "refused", error: "dates-intake-duplicate-event-unavailable", status: 409 });
+  // ... and Core's genuine refusal of a name that goes with another reason (the console never sends that).
+  assert.deepEqual(await runDatesIntakeReject(bridge({ dates_event_intake_reject: fixture("admin-reject-duplicate-invalid-denied") }).send, command),
+    { kind: "refused", error: "dates-intake-input-invalid", status: 422 });
+  // A plain rejection's receipt is not this command's answer, and this command's receipt is not a plain rejection's.
+  assert.deepEqual(await runDatesIntakeReject(bridge({ dates_event_intake_reject: { ...receipt, intake: { ...receipt.intake, status: "rejected" }, decision: { ...receipt.decision, action: "rejected" } } }).send, command),
+    { kind: "uncertain", error: null });
+  const plain = prepareDatesIntakeReject(target, "duplicate", "note")!;
+  assert.deepEqual(await runDatesIntakeReject(bridge({ dates_event_intake_reject: receipt }).send, plain), { kind: "uncertain", error: null });
+  for (const answer of AMBIGUOUS)
+    assert.deepEqual(await runDatesIntakeReject(bridge({ dates_event_intake_reject: answer }).send, command), { kind: "uncertain", error: answer.error }, String(answer.error));
+});
+
+test("asking the member: one identity per request, kept across a retry, and Core's genuine answers", async () => {
+  const receipt = fixture("admin-ask-member");
+  const target = { intake_id: receipt.intake.intake_id, revision: receipt.intake.revision - 1 };
+  const command = prepareDatesIntakeAsk(target, ["starts_local", "venue_address"], "  Biztosan reggel 9-kor kezdődik?  ", "  The flyer and the text disagree on the start.  ")!;
+  assert.ok(command);
+  assert.deepEqual({ ...command, idempotency_key: null }, { intake_id: target.intake_id, expected_revision: target.revision, fields: ["starts_local", "venue_address"],
+    reason: "The flyer and the text disagree on the start.", idempotency_key: null, member_note: "Biztosan reggel 9-kor kezdődik?" });
+  assert.match(command.idempotency_key, /^dates-intake-ask:[0-9a-f-]{36}$/);
+  // No note: the key is absent, not empty (Core reads an empty one as "not given" too).
+  for (const blank of ["", "  \n "]) assert.equal(Object.hasOwn(prepareDatesIntakeAsk(target, ["title"], blank, "why")!, "member_note"), false);
+  // What the console itself would not send.
+  for (const [fields, note, reason, revision] of [[[], "", "why", 5], [["title", "title"], "", "why", 5], [["summary"], "", "why", 5], [["title"], "", "", 5],
+    [["title"], "x".repeat(501), "why", 5], [["title"], "bell\u0007", "why", 5], [["title"], "", "why", null], [["title"], "", "why", 0]] as const)
+    assert.equal(prepareDatesIntakeAsk({ intake_id: target.intake_id, revision }, fields, note, reason), null, JSON.stringify([fields, reason, revision]));
+  assert.equal(prepareDatesIntakeAsk({ intake_id: "xin_1", revision: 5 }, ["title"], "", "why"), null);
+  const sent = bridge({ dates_event_intake_ask_member: receipt });
+  const done = await runDatesIntakeAsk(sent.send, command);
+  assert.deepEqual(done, { kind: "success", receipt });
+  assert.deepEqual(sent.sent, [{ action: "dates_event_intake_ask_member", body: command }]);
+  // A lost answer says nothing; the retry is the same command, key included, and Core's genuine replay settles it.
+  const lost = bridge({ dates_event_intake_ask_member: null });
+  assert.deepEqual(await runDatesIntakeAsk(lost.send, command), { kind: "uncertain", error: null });
+  const replay = bridge({ dates_event_intake_ask_member: fixture("admin-ask-member-replay") });
+  const again = await runDatesIntakeAsk(replay.send, command);
+  assert.equal(again.kind === "success" && again.receipt.replayed, true); assert.deepEqual(replay.sent[0].body, lost.sent[0].body);
+  // Core's genuine refusals: each says nothing was written, except the capability one, which precedes the receipt lookup.
+  for (const name of ["ask-member-input-invalid", "ask-member-lease-required", "ask-member-state-invalid", "ask-member-not-a-suggestion", "ask-member-suggestions-disabled"]) {
+    const refusal = fixture(`admin-${name}-denied`);
+    assert.deepEqual(await runDatesIntakeAsk(bridge({ dates_event_intake_ask_member: refusal }).send, command), { kind: "refused", error: refusal.error, status: refusal.status_code }, name);
+  }
+  assert.deepEqual(await runDatesIntakeAsk(bridge({ dates_event_intake_ask_member: fixture("admin-ask-member-viewer-denied") }).send, command),
+    { kind: "uncertain", error: "dates-admin-capability-required" });
+  for (const answer of AMBIGUOUS)
+    assert.deepEqual(await runDatesIntakeAsk(bridge({ dates_event_intake_ask_member: answer }).send, command), { kind: "uncertain", error: answer.error }, String(answer.error));
+  // The receipt of a request about other fields, of another intake, or of another command is not this one's.
+  assert.deepEqual(await runDatesIntakeAsk(bridge({ dates_event_intake_ask_member: { ...receipt, asked: { ...receipt.asked, fields: ["title"] } } }).send, command), { kind: "uncertain", error: null });
+  assert.deepEqual(await runDatesIntakeAsk(bridge({ dates_event_intake_ask_member: fixture("admin-reject-member-spam") }).send, command), { kind: "uncertain", error: null });
+  assert.deepEqual(await runDatesIntakeAsk(bridge({ dates_event_intake_ask_member: { success: true } }).send, command), { kind: "uncertain", error: null });
 });
 
 /** The editor document a reviewer confirmed, built from a genuine Core prefill. */

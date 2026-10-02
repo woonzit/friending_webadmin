@@ -580,6 +580,7 @@ export const ADMIN_ACTION_ACCESS = {
   dates_event_intake_lease: "dates_write",
   dates_event_intake_reject: "dates_write",
   dates_event_intake_publish: "dates_write",
+  dates_event_intake_ask_member: "dates_write",
 } as Record<AdminAction, AdminActionAccess>;
 
 // A Map, not the record itself: a plain-object lookup would resolve inherited
