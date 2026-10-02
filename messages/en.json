@@ -9800,10 +9800,17 @@
       "unknownAnswered": "The outcome is not known ({error}). Check whether the change is there before you repeat it; Refresh shows the current state.",
       "kept": "The outcome is not known: no readable answer came back. Send the same request again: if the first attempt landed, Core answers with its receipt and does not apply it twice.",
       "keptAnswered": "The outcome is not known ({error}). Send the same request again: if the first attempt landed, Core answers with its receipt and does not apply it twice.",
-      "pending": "A request with an unknown outcome is waiting. Its fields are locked so that the retry is the same request.",
+      "pending": "Its outcome is not known. Until Core answers it, no other legal hold or trail capture can be made from this tab.",
       "retry": "Send the same request again",
-      "discard": "Give this request up",
-      "discardHint": "Give it up only if you accept that the first attempt may have landed: a new request would be applied a second time."
+      "saved": "A saved request is waiting.",
+      "open": "Open the case it belongs to",
+      "expired": "This request is more than six days old. Core no longer keeps its receipt, so it cannot be sent again; it stays here as the record of an unknown outcome until this tab is closed.",
+      "blocked": "The saved-request store of this tab is unavailable or holds a record that cannot be read. Legal holds and trail captures are blocked so that an unanswered request cannot be repeated under a new identity. Restore the browser's storage and reload.",
+      "invalid": "The request could not be saved as it is, so nothing was sent. Check its fields.",
+      "retained": "Core answered, but this tab could not clear the saved request. Send it again to clear it; it cannot be applied twice.",
+      "actionHoldPlace": "Place legal hold",
+      "actionHoldRelease": "Release legal hold",
+      "actionTrail": "Capture trail evidence"
     }
   },
   "imageEditor": {

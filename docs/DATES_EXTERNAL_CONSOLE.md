@@ -162,11 +162,18 @@ replies with the journal's classifier and one of two identities:
   the case again.
 - **kept** - Core has no compare-and-set for a legal hold (place, release) and
   checks but does not move the case revision for a live-trail capture, so
-  either would be applied again under a new key. The case page keeps such a
-  command, key included, until a receipt bound to the request or a pinned
-  no-land refusal settles it; meanwhile its form is locked and the only ways on
-  are the same request or the operator's explicit discard. The identity is held
-  in memory: it does not survive a reload.
+  either would be applied again under a new key. Such a command is saved - key
+  included - before it leaves (`lib/datesKeptCommand.ts`), in the journal's
+  way and on the journal's storage: the tab's session storage, one saved
+  command per operator, the exact bytes resent on a retry, removed only by a
+  receipt bound to the command or by a pinned no-land refusal, never by the
+  operator. Every case page reads it when the operator is established, so it
+  is shown after a reload and on other cases (with a link to its own case, the
+  only page that resends it). While one is saved - or the store cannot be
+  read - no other legal hold or capture can be made from that tab; the
+  revision-fenced commands are not affected. After six days it is no longer
+  resent (Core keeps a receipt for seven) and stays as the record of an
+  unknown outcome until the tab is closed.
 
 ## Existing activity console and moderation boundary
 

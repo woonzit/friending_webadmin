@@ -9,7 +9,8 @@ import ts from "typescript";
 import DatesUnansweredCommand from "../components/DatesUnansweredCommand.tsx";
 import { createAdminIdempotencyKey, datesReasonEntryPoints, datesReasonEntryPointsRefused } from "../lib/datesAdmin.ts";
 import { datesCommandOutcome, datesExternalRefusal } from "../lib/datesExternalAdmin.ts";
-import { DatesCaseReadFence, datesConsoleCommandReceipt, datesLegalHoldReceipt, datesTrailEvidenceReceipt, isDatesConsoleCommand } from "../lib/datesModerationRead.ts";
+import { prepareDatesKeptCommand, readDatesKeptCommand, runDatesKeptCommand } from "../lib/datesKeptCommand.ts";
+import { DatesCaseReadFence, datesConsoleCommandReceipt, datesTrailEvidenceReceipt, isDatesConsoleCommand } from "../lib/datesModerationRead.ts";
 
 // T-890: what a reply means for the commands of the Dates console that do not
 // go through the publication journal, and what the three pages do with it.
@@ -136,49 +137,99 @@ function coreModel(caseId: string) {
   return { writes, answer };
 }
 
+// ---------------------------------------------------------------- the saved command
+
+const ACTOR = "moderator@example.test", STORE_KEY = "friending:dates-case-command:pending:v1:moderator%40example.test";
+/** The tab's session storage: it outlives the component, a reload and a move to another case page. */
+function tabStorage() {
+  const rows = new Map<string, string>();
+  return { rows, storage: { getItem: (key: string) => rows.get(key) ?? null, setItem: (key: string, value: string) => { rows.set(key, value); }, removeItem: (key: string) => { rows.delete(key); } } };
+}
+const CASE_ID = fixture("admin-moderation-hold-place").case_id as string;
+const holdBody = (action: "place" | "release", key = `dates-legal-hold-${action}:00000000-0000-4000-8000-000000000001`) => ({ case_id: CASE_ID, action,
+  reason: "Preservation request 2026/118.", legal_basis: "Court order 12.Pk.50.118/2026.", break_glass: false, review_at: action === "place" ? 1790086400 : null, idempotency_key: key });
+const trailBody = { case_id: CASE_ID, expected_revision: 7, captured_from: 1789990000, captured_to: 1789993600, reason: "Route during the reported incident.", break_glass: false,
+  idempotency_key: "dates-case-trail-evidence:00000000-0000-4000-8000-000000000001" };
+
+test("a saved command is exactly one of the two bodies the case page sends, per operator, and an unreadable record blocks", async () => {
+  const hold = prepareDatesKeptCommand(ACTOR, "dates_moderation_legal_hold", holdBody("place"), 1790000000);
+  assert.deepEqual(hold, { version: 1, actor: ACTOR, issued_at: 1790000000, action: "dates_moderation_legal_hold", body: holdBody("place") });
+  assert.ok(prepareDatesKeptCommand(ACTOR, "dates_moderation_legal_hold", holdBody("release"), 1790000000));
+  assert.ok(prepareDatesKeptCommand(ACTOR, "dates_moderation_trail_evidence", trailBody, 1790000000));
+  // Core bounds a reason at 1000 characters (DatesModerationReadService::reason); the store is not stricter.
+  assert.ok(prepareDatesKeptCommand(ACTOR, "dates_moderation_trail_evidence", { ...trailBody, reason: "x".repeat(1000) }, 1790000000));
+  for (const [action, body] of [["dates_moderation_legal_hold", { ...holdBody("place"), review_at: null }], ["dates_moderation_legal_hold", { ...holdBody("release"), review_at: 1790086400 }],
+    ["dates_moderation_legal_hold", { ...holdBody("place"), action: "extend" }], ["dates_moderation_legal_hold", { ...holdBody("place"), case_id: "cas_1" }],
+    ["dates_moderation_legal_hold", { ...holdBody("place"), reason: "  " }], ["dates_moderation_legal_hold", { ...holdBody("place"), legal_basis: "x".repeat(1001) }],
+    ["dates_moderation_legal_hold", { ...holdBody("place"), idempotency_key: "short" }], ["dates_moderation_legal_hold", { ...holdBody("place"), extra: 1 }],
+    ["dates_moderation_legal_hold", trailBody], ["dates_moderation_trail_evidence", holdBody("place")], ["dates_moderation_trail_evidence", { ...trailBody, captured_to: trailBody.captured_from }],
+    ["dates_moderation_trail_evidence", { ...trailBody, expected_revision: "7" }], ["dates_moderation_trail_evidence", { ...trailBody, break_glass: "0" }],
+    ["dates_moderation_note", trailBody]] as const)
+    assert.equal(prepareDatesKeptCommand(ACTOR, action as any, body as any, 1790000000), null, JSON.stringify(body).slice(0, 80));
+  assert.equal(prepareDatesKeptCommand("Moderator@Example.test", "dates_moderation_legal_hold", holdBody("place"), 1790000000), null, "the operator as Core names them");
+  // The record is per operator, in the journal's storage; anything unreadable under the key blocks and stays.
+  const tab = tabStorage();
+  assert.deepEqual(readDatesKeptCommand(tab.storage, ACTOR), { kind: "empty" });
+  assert.deepEqual(readDatesKeptCommand(null, ACTOR), { kind: "blocked" });
+  assert.equal((await runDatesKeptCommand(hold!, tab.storage, 1790000000, async () => null)).kind, "uncertain");
+  assert.deepEqual([...tab.rows.keys()], [STORE_KEY]);
+  assert.deepEqual(readDatesKeptCommand(tab.storage, ACTOR), { kind: "pending", command: hold });
+  assert.deepEqual(readDatesKeptCommand(tab.storage, "colleague@example.test"), { kind: "empty" });
+  for (const raw of ["{", "null", JSON.stringify({ ...hold, actor: "colleague@example.test" }), JSON.stringify({ ...hold, version: 2 }), JSON.stringify({ ...hold, body: { ...hold!.body, action: "extend" } }), "x".repeat(17000)]) {
+    tab.rows.set(STORE_KEY, raw);
+    assert.deepEqual(readDatesKeptCommand(tab.storage, ACTOR), { kind: "blocked" });
+    assert.deepEqual(await runDatesKeptCommand(hold!, tab.storage, 1790000000, async () => assert.fail("not sent")), { kind: "blocked" });
+    assert.equal(tab.rows.get(STORE_KEY), raw, "never cleared silently");
+  }
+});
+
 // ---------------------------------------------------------------- the moderation case page
 
 const casePage = functionsOf("../app/(dashboard)/dates/moderation/[caseId]/page.tsx", "DatesModerationCase");
-const CASE_ID = fixture("admin-moderation-hold-place").case_id as string;
-const caseCode = compile(`${["mutate", "executeConfirmed", "retryLegalHold", "prepareLegalHold", "captureTrailEvidence", "sendTrailEvidence", "addNote"]
-  .map(casePage.text).join("\n")}
-  exports.mutate = mutate; exports.executeConfirmed = executeConfirmed; exports.retryLegalHold = retryLegalHold; exports.prepareLegalHold = prepareLegalHold;
-  exports.captureTrailEvidence = captureTrailEvidence; exports.sendTrailEvidence = sendTrailEvidence; exports.addNote = addNote;`);
+const caseCode = compile(`${["mutate", "runKept", "retryKept", "executeConfirmed", "prepareLegalHold", "captureTrailEvidence", "addNote"].map(casePage.text).join("\n")}
+  exports.mutate = mutate; exports.runKept = runKept; exports.retryKept = retryKept; exports.executeConfirmed = executeConfirmed; exports.prepareLegalHold = prepareLegalHold;
+  exports.captureTrailEvidence = captureTrailEvidence; exports.addNote = addNote;`);
 
-function caseHarness(reply: (action: string, body: Record<string, any>) => unknown) {
+/** One mounted case page. `tab` is the storage it shares with every other page of the tab; `kept` starts as the page's effect reads it. */
+function caseHarness(reply: (action: string, body: Record<string, any>) => unknown, tab = tabStorage(), options: { caseId?: string; fields?: boolean } = {}) {
   const sent: Array<{ action: string; body: Record<string, any> }> = [], state: Record<string, any> = {}, writes: string[] = [];
-  const readFence = new DatesCaseReadFence();
-  const context: any = { exports: {}, caseId: CASE_ID, writeLocked: false, busy: false, mutationBusy: { current: false }, readFence, lifetime: { current: 0 },
-    isDatesConsoleCommand, datesConsoleCommandReceipt, datesLegalHoldReceipt, datesTrailEvidenceReceipt, datesCommandOutcome, createAdminIdempotencyKey,
+  const readFence = new DatesCaseReadFence(), clock = { now: 1790000000 }, caseId = options.caseId ?? CASE_ID, filled = options.fields !== false;
+  const context: any = { exports: {}, caseId, writeLocked: false, busy: false, mutationBusy: { current: false }, readFence, lifetime: { current: 0 },
+    isDatesConsoleCommand, datesConsoleCommandReceipt, datesCommandOutcome, createAdminIdempotencyKey, prepareDatesKeptCommand, readDatesKeptCommand, runDatesKeptCommand,
+    datesExternalBrowserStorage: () => tab.storage, nowSeconds: () => clock.now,
     t: translator(""), commandOutcome: translator("outcome."), load: async () => { writes.push("load"); },
     isDatesExternalMessageCase: () => false, datesLegalHoldAllowed: () => true, epochFromLocalInput: (value: string) => Number(value),
-    data: { case: { case_id: CASE_ID, revision: 7, target_type: "activity", activity_id: "act_" + "0".repeat(31) + "2", conflict_of_interest: false, status: "actioned" } },
-    principal: { email: "moderator@example.test" }, breakGlass: false, confirmed: null, holdCommand: null, trailCommand: null,
-    holdAction: "place", holdReason: "Preservation request 2026/118.", legalBasis: "Court order 12.Pk.50.118/2026.", holdReviewAt: "1790086400",
-    trailFrom: "1789990000", trailTo: "1789993600", trailReason: "Route during the reported incident.", note: "Checked the report against the thread.", noteReason: "",
+    data: { case: { case_id: caseId, revision: 7, target_type: "activity", activity_id: "act_" + "0".repeat(31) + "2", conflict_of_interest: false, status: "actioned" } },
+    principal: { email: ACTOR }, breakGlass: false, confirmed: null, kept: readDatesKeptCommand(tab.storage, ACTOR),
+    // After a reload the forms are empty: nothing of the command lives in the component.
+    holdAction: "place", holdReason: filled ? "Preservation request 2026/118." : "", legalBasis: filled ? "Court order 12.Pk.50.118/2026." : "", holdReviewAt: filled ? "1790086400" : "",
+    trailFrom: filled ? "1789990000" : "", trailTo: filled ? "1789993600" : "", trailReason: filled ? "Route during the reported incident." : "",
+    note: "Checked the report against the thread.", noteReason: "",
     adminCall: async (action: string, body: Record<string, any>) => {
       sent.push({ action, body: plain(body) });
       const value = reply(action, plain(body));
       if (value instanceof Error) throw value;
       return value;
     } };
-  for (const name of ["Busy", "Evidence", "Feedback", "Confirmed", "HoldCommand", "TrailCommand", "HoldReason", "LegalBasis", "HoldReviewAt", "TrailFrom", "TrailTo", "TrailReason",
+  for (const name of ["Busy", "Evidence", "Feedback", "Confirmed", "Kept", "HoldReason", "LegalBasis", "HoldReviewAt", "TrailFrom", "TrailTo", "TrailReason",
     "Note", "NoteReason", "ResolutionReason", "VisibleReasonEn", "VisibleReasonHu", "RestrictionExpiry"])
     context[`set${name}`] = (value: unknown) => {
       state[name] = value; writes.push(name);
-      // The functions read these four through the component's scope.
-      if (["Confirmed", "HoldCommand", "TrailCommand"].includes(name)) context[name[0].toLowerCase() + name.slice(1)] = value;
+      // The functions read these two through the component's scope.
+      if (name === "Confirmed" || name === "Kept") context[name.toLowerCase()] = value;
     };
   vm.runInNewContext(caseCode, context);
-  return { context, state, writes, sent, readFence, api: context.exports as Record<string, (...values: any[]) => Promise<any>> };
+  return { context, state, writes, sent, readFence, clock, tab, saved: () => readDatesKeptCommand(tab.storage, ACTOR),
+    api: context.exports as Record<string, (...values: any[]) => Promise<any>> };
 }
 const submit = { preventDefault() {} };
 
-for (const action of ["place", "release"] as const) test(`legal hold ${action}: the first attempt lands, its reply is lost, and the retry ends in that attempt's receipt - one write`, async () => {
+for (const action of ["place", "release"] as const) test(`legal hold ${action}: the first attempt lands, its reply is lost, the page is reloaded, and the retry ends in that attempt's receipt - one write`, async () => {
   for (const [name, lost, token] of LOST) {
     const model = coreModel(CASE_ID);
     let lose = true;
-    const h = caseHarness((sentAction, body) => { const answer = model.answer(sentAction, body); return lose ? lost : answer; });
+    const answer = (sentAction: string, body: Record<string, any>) => { const value = model.answer(sentAction, body); return lose ? lost : value; };
+    const h = caseHarness(answer);
     h.context.holdAction = action;
     // The operator fills the form and confirms: the page's own two steps.
     h.api.prepareLegalHold(submit);
@@ -187,107 +238,137 @@ for (const action of ["place", "release"] as const) test(`legal hold ${action}: 
     assert.match(prepared.payload.idempotency_key, new RegExp(`^dates-legal-hold-${action}:[0-9a-f-]{36}$`));
     await h.api.executeConfirmed();
     assert.equal(model.writes.length, 1, `${name}: Core applied the hold`);
-    // The page does not call it a failure, keeps the command with its key, and reads the case again.
-    assert.equal(h.state.Feedback.tone, "error");
-    assert.equal(h.state.Feedback.text, token === null ? "outcome.kept:" : `outcome.keptAnswered:${token}`, name);
-    assert.deepEqual(plain(h.state.HoldCommand), prepared.payload, `${name}: the same command, key included, is what a retry sends`);
-    assert.equal(h.state.Confirmed, null); assert.ok(h.writes.includes("load"));
-    // While it is unanswered the form cannot make another command.
+    // The page does not call it a failure, and the command - key included - is in the tab's storage, not in the page.
+    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: token === null ? "outcome.kept:" : `outcome.keptAnswered:${token}` }, name);
+    const saved = h.saved();
+    assert.deepEqual(saved.kind === "pending" && saved.command, { version: 1, actor: ACTOR, issued_at: 1790000000, action: "dates_moderation_legal_hold", body: prepared.payload }, name);
+    assert.deepEqual(plain(h.state.Kept), plain(saved)); assert.equal(h.state.Confirmed, null); assert.ok(h.writes.includes("load"));
+    // While it waits the form cannot make another command.
     h.api.prepareLegalHold(submit);
     assert.equal(h.state.Confirmed, null, "no second command is prepared");
-    // The operator sends the same request again; Core answers with the first attempt's receipt.
+
+    // RELOAD (or a move to another page and back): a new page of the same tab, its forms empty. It reads the record...
     lose = false;
-    await h.api.retryLegalHold();
+    const reloaded = caseHarness(answer, h.tab, { fields: false });
+    assert.deepEqual(plain(reloaded.context.kept), plain(saved), "the record is what the new page starts from");
+    reloaded.api.prepareLegalHold(submit);
+    assert.equal(reloaded.writes.includes("Confirmed"), false, "and makes no new command");
+    // ...and sends the saved request again; Core answers with the first attempt's receipt.
+    await reloaded.api.retryKept();
     assert.equal(model.writes.length, 1, `${name}: the retry wrote nothing`);
-    assert.deepEqual(h.sent.map((call) => call.action), ["dates_moderation_legal_hold", "dates_moderation_legal_hold"]);
-    assert.deepEqual(h.sent[1].body, h.sent[0].body, "byte-for-byte the same request");
-    assert.deepEqual(plain(h.state.Feedback), { tone: "success", text: "legalHoldUpdated" });
-    assert.equal(h.state.HoldCommand, null, "settled by the receipt");
-    for (const field of ["HoldReason", "LegalBasis", "HoldReviewAt"]) assert.equal(h.state[field], "", field);
+    assert.deepEqual([h.sent.length, reloaded.sent.length], [1, 1]);
+    assert.deepEqual(reloaded.sent[0], h.sent[0], "byte-for-byte the same request, from another page instance");
+    assert.deepEqual(plain(reloaded.state.Feedback), { tone: "success", text: "legalHoldUpdated" });
+    assert.deepEqual(reloaded.saved(), { kind: "empty" }, "settled by the receipt"); assert.deepEqual(plain(reloaded.state.Kept), { kind: "empty" });
+    assert.equal(h.tab.rows.size, 0);
   }
 });
 
-test("legal hold: what Core would do with a new key, and which answers settle the kept command", async () => {
+test("legal hold: what Core would do with a new key, and which answers settle the saved command", async () => {
   // The hazard itself, on the model of Core: the same hold under a new key is applied a second time.
-  const model = coreModel(CASE_ID), body = { case_id: CASE_ID, action: "place", reason: "Preservation request.", legal_basis: "Court order.", break_glass: false, review_at: 1790086400 };
+  const model = coreModel(CASE_ID), { idempotency_key: _key, ...body } = holdBody("place");
   model.answer("dates_moderation_legal_hold", { ...body, idempotency_key: createAdminIdempotencyKey("dates-legal-hold-place") });
   model.answer("dates_moderation_legal_hold", { ...body, idempotency_key: createAdminIdempotencyKey("dates-legal-hold-place") });
   assert.equal(model.writes.length, 2, "Core has no revision for a hold: a new key is a new write");
 
-  const operation = (key = "dates-legal-hold-release:00000000-0000-4000-8000-000000000001") => ({ kind: "legal_hold", label: "Release",
-    payload: { case_id: CASE_ID, action: "release", reason: "Preservation ended.", legal_basis: "Order withdrawn.", break_glass: false, review_at: null, idempotency_key: key } });
-  // Core's genuine definitive refusal on the first attempt: shown as it is, nothing is kept.
+  const operation = () => ({ kind: "legal_hold", label: "Release", payload: holdBody("release") });
+  // Core's genuine definitive refusal on the first attempt: shown as it is, nothing stays saved.
   const open = caseHarness(() => fixture("admin-moderation-hold-open-denied"));
   open.context.confirmed = operation(); await open.api.executeConfirmed();
   assert.deepEqual(plain(open.state.Feedback), { tone: "error", text: "operationFailed:dates-legal-hold-case-open" });
-  assert.equal(open.writes.includes("HoldCommand"), false); assert.equal(open.writes.includes("load"), false, "a refusal changes nothing else on the page");
-  // The same refusal as the answer to a retry settles the kept command too: Core raises it after the receipt lookup.
+  assert.deepEqual(open.saved(), { kind: "empty" }); assert.equal(open.writes.includes("load"), false, "a refusal changes nothing else on the page");
+  // An unknown outcome, then replies that say nothing about the first attempt: Core still running it, a capability
+  // refusal (before the receipt lookup), a review date that has passed meanwhile (the clock, before the lookup), a timeout.
   let reply: unknown = null;
   const kept = caseHarness(() => reply);
   kept.context.confirmed = operation(); await kept.api.executeConfirmed();
-  assert.ok(kept.state.HoldCommand);
-  // Core still running the first attempt, then a capability refusal (before the lookup), then a hold whose review date
-  // has passed meanwhile (the clock, before the lookup): none of them says what became of the first attempt.
+  assert.equal(kept.saved().kind, "pending");
   for (const answer of [core("dates-admin-command-in-progress", 409), fixture("admin-moderation-hold-viewer-denied"), core("dates-legal-hold-review-invalid", 422), bridge("core-timeout", 504)]) {
-    reply = answer; await kept.api.retryLegalHold();
-    assert.ok(kept.context.holdCommand, String((answer as any).error));
+    reply = answer; await kept.api.retryKept();
+    assert.equal(kept.saved().kind, "pending", String((answer as any).error));
     assert.equal(kept.state.Feedback.text, `outcome.keptAnswered:${(answer as any).error}`);
   }
-  reply = fixture("admin-moderation-hold-open-denied"); await kept.api.retryLegalHold();
-  assert.equal(kept.state.HoldCommand, null); assert.equal(kept.state.Feedback.text, "operationFailed:dates-legal-hold-case-open");
-  assert.equal(new Set(kept.sent.map((call) => call.body.idempotency_key)).size, 1, "six requests, one key");
-  assert.equal(kept.sent.length, 6);
+  // The same definitive refusal as the answer to a retry settles it too: Core raises it after the receipt lookup.
+  reply = fixture("admin-moderation-hold-open-denied"); await kept.api.retryKept();
+  assert.deepEqual(kept.saved(), { kind: "empty" }); assert.equal(kept.state.Feedback.text, "operationFailed:dates-legal-hold-case-open");
+  assert.equal(kept.sent.length, 6); assert.equal(new Set(kept.sent.map((call) => JSON.stringify(call))).size, 1, "six requests, one body, one key");
   // A receipt for another case or another action is not this command's receipt.
   for (const wrong of [{ ...fixture("admin-moderation-hold-release"), case_id: "cas_" + "f".repeat(32) }, fixture("admin-moderation-hold-place")]) {
     const other = caseHarness(() => wrong); other.context.confirmed = operation(); await other.api.executeConfirmed();
-    assert.ok(other.state.HoldCommand); assert.equal(other.state.Feedback.text, "outcome.kept:");
+    assert.equal(other.saved().kind, "pending"); assert.equal(other.state.Feedback.text, "outcome.kept:");
   }
-  // The page left the case while the request was in flight: the command was sent, so it is kept, not dropped.
+  // The page left the case while the request was in flight: the record is in the storage, whatever became of the page.
   const moved = caseHarness(() => null); moved.context.confirmed = operation();
   const pending = moved.api.executeConfirmed(); moved.readFence.invalidate(); await pending;
-  assert.deepEqual(plain(moved.state.HoldCommand), operation().payload); assert.equal(moved.writes.includes("Feedback") && moved.state.Feedback !== null, false);
-  // Nothing was sent (another write is running): nothing is kept.
-  const busy = caseHarness(() => assert.fail("not sent")); busy.context.writeLocked = true; busy.context.confirmed = operation();
+  const left = moved.saved();
+  assert.deepEqual(left.kind === "pending" && left.command.body, holdBody("release"));
+  assert.equal(moved.state.Feedback, null, "nothing is announced on a page that moved on");
+  // Another write is running: nothing is sent and nothing is saved.
+  const busy = caseHarness(() => assert.fail("not sent")); busy.context.mutationBusy.current = true; busy.context.confirmed = operation();
   await busy.api.executeConfirmed();
-  assert.equal(busy.sent.length, 0); assert.equal(busy.writes.includes("HoldCommand"), false);
-  // A kept command of another case is never sent from this page.
-  const foreign = caseHarness(() => assert.fail("not sent")); foreign.context.holdCommand = { ...operation().payload, case_id: "cas_" + "f".repeat(32) };
-  await foreign.api.retryLegalHold(); assert.equal(foreign.sent.length, 0);
-  // A member-case resolution is fenced by the case revision: a refusal is a refusal, and nothing is kept.
+  assert.equal(busy.sent.length, 0); assert.deepEqual(busy.saved(), { kind: "empty" });
+  // A saved command belongs to its case: another case's page shows it (with a link) but neither resends it nor makes a new one.
+  const elsewhere = caseHarness(() => assert.fail("not sent"), kept.tab, { caseId: "cas_" + "e".repeat(32) });
+  elsewhere.tab.rows.set(STORE_KEY, JSON.stringify(prepareDatesKeptCommand(ACTOR, "dates_moderation_legal_hold", holdBody("release"), 1790000000)));
+  elsewhere.context.kept = readDatesKeptCommand(elsewhere.tab.storage, ACTOR);
+  await elsewhere.api.retryKept(); elsewhere.api.prepareLegalHold(submit); await elsewhere.api.captureTrailEvidence(submit);
+  assert.equal(elsewhere.sent.length, 0); assert.equal(elsewhere.writes.includes("Confirmed"), false); assert.equal(elsewhere.saved().kind, "pending");
+  // After six days Core no longer keeps the receipt: a resend would be a new write, so there is none. The record stays.
+  const old = caseHarness(() => assert.fail("not sent"), elsewhere.tab);
+  old.clock.now = 1790000000 + 6 * 86400;
+  await old.api.retryKept();
+  assert.deepEqual(plain(old.state.Feedback), { tone: "error", text: "outcome.expired" }); assert.equal(old.sent.length, 0); assert.equal(old.saved().kind, "pending");
+  // A tab that cannot keep the record sends nothing.
+  const none = caseHarness(() => assert.fail("not sent")); none.context.datesExternalBrowserStorage = () => null; none.context.confirmed = operation();
+  await none.api.executeConfirmed();
+  assert.deepEqual(plain(none.state.Feedback), { tone: "error", text: "outcome.blocked" }); assert.equal(none.sent.length, 0);
+  // A hold the store would not keep as it is (no review date) is not sent either.
+  const invalid = caseHarness(() => assert.fail("not sent")); invalid.context.confirmed = { kind: "legal_hold", label: "Place", payload: { ...holdBody("place"), review_at: null } };
+  await invalid.api.executeConfirmed();
+  assert.deepEqual(plain(invalid.state.Feedback), { tone: "error", text: "outcome.invalid" }); assert.equal(invalid.sent.length, 0);
+  // Core answered but the tab could not clear the record: the page says so, and the record still offers the same request.
+  const stuck = caseHarness(() => fixture("admin-moderation-hold-release"));
+  stuck.context.datesExternalBrowserStorage = () => ({ ...stuck.tab.storage, removeItem: () => { throw new Error("SecurityError"); } });
+  stuck.context.confirmed = operation(); await stuck.api.executeConfirmed();
+  assert.deepEqual(plain(stuck.state.Feedback), { tone: "success", text: "legalHoldUpdated outcome.retained" }); assert.equal(stuck.saved().kind, "pending");
+  // A member-case resolution is fenced by the case revision: a refusal is a refusal, and nothing is saved.
   const resolve = caseHarness(() => fixture("admin-moderation-hold-viewer-denied"));
   resolve.context.confirmed = { kind: "resolve", label: "Dismiss", payload: { case_id: CASE_ID, expected_revision: 7, action: "dismiss", idempotency_key: "dates-case-resolve:00000000-0000-4000-8000-000000000001" } };
   await resolve.api.executeConfirmed();
-  assert.equal(resolve.state.Feedback.text, "operationFailed:dates-admin-capability-required"); assert.equal(resolve.writes.includes("HoldCommand"), false);
+  assert.equal(resolve.state.Feedback.text, "operationFailed:dates-admin-capability-required"); assert.deepEqual(resolve.saved(), { kind: "empty" });
 });
 
-test("trail capture: the first attempt lands, its reply is lost, and the retry ends in that attempt's receipt - one snapshot", async () => {
+test("trail capture: the first attempt lands, its reply is lost, the page is reloaded, and the retry ends in that attempt's receipt - one snapshot", async () => {
   for (const [name, lost, token] of LOST) {
     const model = coreModel(CASE_ID);
     let lose = true;
-    const h = caseHarness((action, body) => { const answer = model.answer(action, body); return lose ? lost : answer; });
+    const answer = (action: string, body: Record<string, any>) => { const value = model.answer(action, body); return lose ? lost : value; };
+    const h = caseHarness(answer);
     await h.api.captureTrailEvidence(submit);
     assert.equal(model.writes.length, 1, `${name}: Core stored the snapshot`);
     const first = h.sent[0].body;
-    assert.deepEqual({ ...first, idempotency_key: null }, { case_id: CASE_ID, expected_revision: 7, captured_from: 1789990000, captured_to: 1789993600,
-      reason: "Route during the reported incident.", break_glass: false, idempotency_key: null });
+    assert.deepEqual({ ...first, idempotency_key: null }, { ...trailBody, idempotency_key: null });
     assert.match(first.idempotency_key, /^dates-case-trail-evidence:[0-9a-f-]{36}$/);
     assert.equal(h.state.Feedback.text, token === null ? "outcome.kept:" : `outcome.keptAnswered:${token}`, name);
-    assert.deepEqual(plain(h.state.TrailCommand), first, `${name}: the command is kept with its key`);
+    const saved = h.saved();
+    assert.deepEqual(saved.kind === "pending" && saved.command.body, first, `${name}: the command is saved with its key`);
     for (const field of ["TrailFrom", "TrailTo", "TrailReason"]) assert.equal(h.writes.includes(field), false, "the form keeps what was sent");
-    // Submitting the form again makes no new command while this one is unanswered.
+    // Submitting the form again makes no new command while this one waits.
     await h.api.captureTrailEvidence(submit);
     assert.equal(h.sent.length, 1);
-    // The same request again; Core replays the first attempt's receipt, and no second snapshot exists.
+    // RELOAD: a new page, empty form. The saved request again; Core replays the first attempt's receipt.
     lose = false;
-    await h.api.sendTrailEvidence(h.context.trailCommand);
+    const reloaded = caseHarness(answer, h.tab, { fields: false });
+    await reloaded.api.captureTrailEvidence(submit);
+    assert.equal(reloaded.sent.length, 0, "the empty form sends nothing, and the saved command is not replaced");
+    await reloaded.api.retryKept();
     assert.equal(model.writes.length, 1, `${name}: one snapshot`);
-    assert.deepEqual(h.sent[1].body, first);
-    assert.deepEqual(plain(h.state.Feedback), { tone: "success", text: "trailEvidenceCaptured" });
-    assert.equal(h.state.TrailCommand, null);
-    for (const field of ["TrailFrom", "TrailTo", "TrailReason"]) assert.equal(h.state[field], "", field);
+    assert.deepEqual(reloaded.sent[0].body, first);
+    assert.deepEqual(plain(reloaded.state.Feedback), { tone: "success", text: "trailEvidenceCaptured" });
+    assert.deepEqual(reloaded.saved(), { kind: "empty" });
   }
   // The hazard on the model of Core: the case revision is checked, not moved, so a new key stores a second snapshot.
-  const model = coreModel(CASE_ID), body = { case_id: CASE_ID, expected_revision: 7, captured_from: 1789990000, captured_to: 1789993600, reason: "Route.", break_glass: false };
+  const model = coreModel(CASE_ID), { idempotency_key: _key, ...body } = trailBody;
   for (let attempt = 0; attempt < 2; attempt++) model.answer("dates_moderation_trail_evidence", { ...body, idempotency_key: createAdminIdempotencyKey("dates-case-trail-evidence") });
   assert.equal(model.writes.length, 2);
   // Core's definitive refusals settle it (first attempt and retry alike); the window check against the clock does not.
@@ -295,12 +376,13 @@ test("trail capture: the first attempt lands, its reply is lost, and the retry e
     [core("dates-trail-evidence-range-too-large", 422), true], [core("dates-trail-evidence-window-invalid", 422), false],
     [core("dates-sensitive-location-capability-required", 403), false]] as const) {
     const h = caseHarness(() => answer); await h.api.captureTrailEvidence(submit);
-    assert.equal(h.state.TrailCommand !== null && h.state.TrailCommand !== undefined, !settled, answer.error);
+    assert.equal(h.saved().kind, settled ? "empty" : "pending", answer.error);
     assert.equal(h.state.Feedback.text, settled ? `operationFailed:${answer.error}` : `outcome.keptAnswered:${answer.error}`);
   }
   // An invalid window never becomes a command.
   const invalid = caseHarness(() => assert.fail("not sent")); invalid.context.trailTo = "1789980000";
   await invalid.api.captureTrailEvidence(submit); assert.equal(invalid.sent.length, 0); assert.equal(invalid.state.Feedback.text, "trailEvidenceInputInvalid");
+  assert.deepEqual(invalid.saved(), { kind: "empty" });
 });
 
 test("a revision-fenced case command is worded as unknown when nothing says whether it landed, and its refusals stay refusals", async () => {
@@ -310,7 +392,7 @@ test("a revision-fenced case command is worded as unknown when nothing says whet
     assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: token === null ? "outcome.unknown:" : `outcome.unknownAnswered:${token}` }, name);
     assert.ok(h.writes.includes("load"), "the case is read again: its revision and notes show whether it landed");
     assert.equal(h.writes.includes("Note"), false, "what the operator typed stays");
-    assert.equal(h.writes.includes("HoldCommand") || h.writes.includes("TrailCommand"), false, "a fenced command is not kept: Core refuses a stale repeat");
+    assert.deepEqual(h.saved(), { kind: "empty" }, "a fenced command is not saved: Core refuses a stale repeat");
   }
   // Core's genuine refusals answer the request: the wording and the behaviour are what they were.
   for (const name of ["admin-moderation-revision-stale-denied", "admin-moderation-hold-viewer-denied", "admin-moderation-key-conflict-denied"]) {
@@ -320,15 +402,25 @@ test("a revision-fenced case command is worded as unknown when nothing says whet
   // A receipt of another command is not a receipt (the genuine claim receipt in answer to a note).
   const wrong = caseHarness(() => note); await wrong.api.addNote(submit);
   assert.equal(wrong.state.Feedback.text, "outcome.unknown:");
-  // Each attempt of a fenced command still carries its own key; the legal hold and the capture are the only kept ones.
-  assert.equal((casePage.source.match(/, "kept"\)/g) ?? []).length, 2, "sendTrailEvidence and retryLegalHold");
-  assert.match(casePage.source, /operation\.kind === "legal_hold" \? "kept" : "fresh"\);/);
-  assert.match(casePage.source, /\{holdPending && <DatesUnansweredCommand busy=\{busy\} onRetry=\{\(\) => void retryLegalHold\(\)\} onDiscard=\{\(\) => setHoldCommand\(null\)\} \/>\}/);
-  assert.match(casePage.source, /\{trailPending && <DatesUnansweredCommand busy=\{busy\} onRetry=\{\(\) => \{ if \(trailCommand\) void sendTrailEvidence\(trailCommand\); \}\} onDiscard=\{\(\) => setTrailCommand\(null\)\} \/>\}/);
-  assert.equal((casePage.source.match(/setHoldCommand\(null\)/g) ?? []).length, 2, "the receipt or a refusal, and the operator's own discard");
-  assert.equal((casePage.source.match(/setTrailCommand\(null\)/g) ?? []).length, 1, "the operator's own discard (the receipt and a refusal go through sendTrailEvidence)");
-  assert.equal((casePage.source.match(/disabled=\{holdPending\}/g) ?? []).length, 4, "the four fields of the hold form are locked");
-  assert.equal((casePage.source.match(/disabled=\{trailPending\}/g) ?? []).length, 3, "the three fields of the capture form are locked");
+  // A saved command does not block the fenced commands of the case.
+  const tab = tabStorage(); tab.rows.set(STORE_KEY, JSON.stringify(prepareDatesKeptCommand(ACTOR, "dates_moderation_legal_hold", holdBody("place"), 1790000000)));
+  const beside = caseHarness(() => bridge("core-timeout", 504), tab); await beside.api.addNote(submit);
+  assert.equal(beside.sent.length, 1); assert.equal(beside.saved().kind, "pending");
+
+  // The page: the record is read whenever the operator is established, shown before everything else, and never removed by the page.
+  const source = casePage.source;
+  assert.match(source, /useEffect\(\(\) => \{ if \(operatorEmail !== null\) setKept\(readDatesKeptCommand\(datesExternalBrowserStorage\(\), operatorEmail\)\); \}, \[operatorEmail\]\);/);
+  assert.match(source, /\{kept\.kind !== "empty" && <DatesUnansweredCommand read=\{kept\} caseId=\{caseId\} now=\{nowSeconds\(\)\} busy=\{busy\} onRetry=\{\(\) => void retryKept\(\)\} \/>\}/);
+  assert.ok(source.indexOf("<DatesUnansweredCommand") < source.indexOf("onSubmit={captureTrailEvidence}"));
+  assert.equal((source.match(/setKept\(/g) ?? []).length, 2, "the effect, and the runner after each attempt - both from the storage");
+  assert.doesNotMatch(source, /removeItem|setItem|sessionStorage|localStorage|onDiscard|holdCommand|trailCommand/);
+  assert.equal((source.match(/disabled=\{keptLocked\}/g) ?? []).length, 7, "the four fields of the hold form and the three of the capture form");
+  assert.match(source, /const keptLocked = kept\.kind !== "empty";/);
+  // `mutate` sends only fenced commands now; the two unfenced ones cannot reach Core except through the saved record.
+  assert.equal((source.match(/datesCommandOutcome\(response, receipt, "fresh"\)/g) ?? []).length, 1);
+  assert.equal((source.match(/"dates_moderation_legal_hold"/g) ?? []).length, 2, "prepared for saving, and named in the retry - never passed to mutate");
+  assert.equal((source.match(/"dates_moderation_trail_evidence"/g) ?? []).length, 1);
+  assert.doesNotMatch(source, /mutate\("dates_moderation_(legal_hold|trail_evidence)"/);
 });
 
 // ---------------------------------------------------------------- the activity page
@@ -489,22 +581,42 @@ test("configuration saves: a lost reply is an unknown outcome; creating a reason
 
 // ---------------------------------------------------------------- copy
 
-test("the unknown-outcome copy exists in both languages and the kept-command block renders", () => {
-  const keys = ["unknown", "unknownAnswered", "kept", "keptAnswered", "pending", "retry", "discard", "discardHint"];
+test("the unknown-outcome copy exists in both languages and the saved-command notice renders each of its states", () => {
+  const keys = ["unknown", "unknownAnswered", "kept", "keptAnswered", "pending", "retry", "saved", "open", "expired", "blocked", "invalid", "retained",
+    "actionHoldPlace", "actionHoldRelease", "actionTrail"];
+  const place = prepareDatesKeptCommand(ACTOR, "dates_moderation_legal_hold", holdBody("place"), 1790000000)!;
+  const trail = prepareDatesKeptCommand(ACTOR, "dates_moderation_trail_evidence", trailBody, 1790000000)!;
   for (const locale of ["en", "hu"]) {
     const copy = messagesOf(locale).datesAdmin.commandOutcome;
     assert.deepEqual(Object.keys(copy), keys, locale);
     for (const key of ["unknownAnswered", "keptAnswered"]) assert.match(copy[key], /\{error\}/, `${locale}.${key}`);
-    for (const key of ["unknown", "kept", "pending", "retry", "discard", "discardHint"]) assert.doesNotMatch(copy[key], /\{/, `${locale}.${key}`);
-    const errors: string[] = [];
-    const html = renderToStaticMarkup(createElement(NextIntlClientProvider, { locale, messages: messagesOf(locale), timeZone: "UTC", onError: (error: unknown) => errors.push(String(error)) },
-      createElement(DatesUnansweredCommand, { busy: false, onRetry: () => undefined, onDiscard: () => undefined })));
-    assert.deepEqual(errors, []);
-    for (const key of ["pending", "retry", "discard", "discardHint"]) assert.ok(html.includes(copy[key].replaceAll("'", "&#x27;")), `${locale}.${key}`);
-    assert.equal((html.match(/<button type="button"/g) ?? []).length, 2);
-    const busy = renderToStaticMarkup(createElement(NextIntlClientProvider, { locale, messages: messagesOf(locale), timeZone: "UTC" },
-      createElement(DatesUnansweredCommand, { busy: true, onRetry: () => undefined, onDiscard: () => undefined })));
-    assert.equal((busy.match(/disabled=""/g) ?? []).length, 2, "neither button while a request is running");
+    for (const key of keys.filter((name) => !name.endsWith("Answered"))) assert.doesNotMatch(copy[key], /\{/, `${locale}.${key}`);
+    const show = (read: any, caseId = CASE_ID, now = 1790000100, busy = false) => {
+      const errors: string[] = [];
+      const html = renderToStaticMarkup(createElement(NextIntlClientProvider, { locale, messages: messagesOf(locale), timeZone: "UTC", onError: (error: unknown) => errors.push(String(error)) },
+        createElement(DatesUnansweredCommand, { read, caseId, now, busy, onRetry: () => undefined })));
+      assert.deepEqual(errors, []); return html;
+    };
+    const has = (html: string, key: string) => html.includes(copy[key].replaceAll("'", "&#x27;"));
+    assert.equal(show({ kind: "empty" }), "");
+    // On the page of its case: what it is, when, why - and one button, the same request again. No discard anywhere.
+    const here = show({ kind: "pending", command: place });
+    for (const key of ["saved", "pending", "actionHoldPlace", "retry"]) assert.ok(has(here, key), `${locale}.${key}`);
+    assert.ok(here.includes("Preservation request 2026/118.") && here.includes(CASE_ID));
+    assert.equal((here.match(/<button/g) ?? []).length, 1); assert.doesNotMatch(here, /href=/);
+    assert.doesNotMatch(here, /dates-legal-hold-place:|Court order/, "neither the key nor the legal basis is shown");
+    assert.ok(has(show({ kind: "pending", command: { ...place, body: holdBody("release") } }), "actionHoldRelease"));
+    assert.ok(has(show({ kind: "pending", command: trail }), "actionTrail"));
+    assert.match(show({ kind: "pending", command: place }, CASE_ID, 1790000100, true), /<button[^>]* disabled=""/);
+    // On another case's page: a link to its case, no button.
+    const elsewhere = show({ kind: "pending", command: place }, "cas_" + "e".repeat(32));
+    assert.ok(has(elsewhere, "open") && elsewhere.includes(`href="/dates/moderation/${CASE_ID}"`)); assert.doesNotMatch(elsewhere, /<button/);
+    // After six days: it stays, and cannot be sent.
+    const old = show({ kind: "pending", command: place }, CASE_ID, 1790000000 + 6 * 86400);
+    assert.ok(has(old, "expired")); assert.doesNotMatch(old, /<button/);
+    // A store that cannot be read.
+    const blocked = show({ kind: "blocked" });
+    assert.ok(has(blocked, "blocked")); assert.doesNotMatch(blocked, /<button/);
   }
   assert.notEqual(messagesOf("en").datesAdmin.commandOutcome.unknown, messagesOf("hu").datesAdmin.commandOutcome.unknown);
 });

@@ -9800,10 +9800,17 @@
       "unknownAnswered": "A művelet kimenetele nem ismert ({error}). Mielőtt megismétled, nézd meg, megtörtént-e a változás; a Frissítés a jelenlegi állapotot mutatja.",
       "kept": "A művelet kimenetele nem ismert: nem érkezett olvasható válasz. Küldd el újra ugyanazt a kérést: ha az első kísérlet megtörtént, a Core annak a nyugtájával válaszol, és kétszer nem hajtja végre.",
       "keptAnswered": "A művelet kimenetele nem ismert ({error}). Küldd el újra ugyanazt a kérést: ha az első kísérlet megtörtént, a Core annak a nyugtájával válaszol, és kétszer nem hajtja végre.",
-      "pending": "Egy ismeretlen kimenetelű kérés vár. A mezői zárolva vannak, hogy az újraküldés ugyanaz a kérés legyen.",
+      "pending": "A kimenetele nem ismert. Amíg a Core nem válaszol rá, erről a lapról nem indítható másik jogi zárolás vagy útvonal-rögzítés.",
       "retry": "Ugyanazon kérés újraküldése",
-      "discard": "Lemondok erről a kérésről",
-      "discardHint": "Csak akkor mondj le róla, ha elfogadod, hogy az első kísérlet megtörténhetett: egy új kérés másodszor is végrehajtódna."
+      "saved": "Egy mentett kérés vár.",
+      "open": "A hozzá tartozó ügy megnyitása",
+      "expired": "Ez a kérés hat napnál régebbi. A Core már nem őrzi a nyugtáját, ezért nem küldhető el újra; ismeretlen kimenetelű kérésként itt marad, amíg ezt a lapot be nem zárod.",
+      "blocked": "A lap mentettkérés-tárolója nem érhető el, vagy olvashatatlan bejegyzést őriz. A jogi zárolás és az útvonal-rögzítés le van tiltva, hogy megválaszolatlan kérést ne lehessen új azonosítóval megismételni. Állítsd helyre a böngésző tárolóját, és töltsd újra az oldalt.",
+      "invalid": "A kérést ebben a formában nem lehetett elmenteni, ezért semmi nem ment el. Ellenőrizd a mezőit.",
+      "retained": "A Core válaszolt, de ez a lap nem tudta törölni a mentett kérést. Küldd el újra a törléséhez; kétszer nem hajtódhat végre.",
+      "actionHoldPlace": "Jogi zárolás elrendelése",
+      "actionHoldRelease": "Jogi zárolás feloldása",
+      "actionTrail": "Útvonal-bizonyíték rögzítése"
     }
   },
   "imageEditor": {

@@ -356,7 +356,10 @@ test("actual confirm dispatcher isolates held messages from ordinary and externa
   for (const mode of ["message", "ordinary", "event", "hold"] as const) {
     const calls: string[] = [], data = sample(), context: any = { exports: {}, confirmed: operation(), data, isDatesExternalMessageCase,
       executeMessageResolution: async () => calls.push("message"), executeExternalResolution: async () => calls.push("event"),
-      mutate: async (action: string) => { calls.push(action); return false; }, t: (key: string) => key, setConfirmed: () => {} };
+      mutate: async (action: string) => { calls.push(action); return false; }, t: (key: string) => key, setConfirmed: () => {},
+      // T-890: a legal hold is not sent by `mutate` any more; it is saved first and goes through the kept-command runner.
+      principal: { email: "moderator@example.test" }, nowSeconds: () => 1790000000, commandOutcome: (key: string) => key, setFeedback: () => {},
+      prepareDatesKeptCommand: (_actor: string, action: string) => ({ action }), runKept: async (command: { action: string }) => { calls.push(command.action); return "refused"; } };
     if (mode === "ordinary") { delete data.case.external_message; data.case.case_kind = "reports"; }
     if (mode === "event") data.case.target_type = "external_event";
     if (mode === "hold") context.confirmed.kind = "legal_hold";
