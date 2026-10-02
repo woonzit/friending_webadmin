@@ -66,28 +66,50 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
    * reviewer's unsaved editor included - unless Core says the intake or the
    * permission is gone.
    */
-  const load = useCallback(async (signal?: AbortSignal, mode: "initial" | "quiet" | "refresh" = "initial") => {
+  const read = useCallback(async (signal?: AbortSignal, mode: "initial" | "quiet" | "refresh" = "initial") => {
     if (signal?.aborted) return;
     const current = ++generation.current;
-    if (mode === "initial") setState("loading");
-    const next = await readDatesIntakeDetail(adminCall, intakeId, signal);
-    // A reply to an earlier read never replaces a newer one.
-    if (signal?.aborted || current !== generation.current) return;
-    if (next.kind !== "ready") {
-      // A read that merely failed proves nothing: the page stays as it was, and a Refresh says so.
-      if (mode !== "initial" && next.kind === "unconfirmed") {
+    // A first read (or a retry after an error) starts from nothing: the page holds no revision to protect.
+    if (mode === "initial") { setState("loading"); revision.current = null; }
+    for (let attempt = 0; ; attempt++) {
+      const next = await readDatesIntakeDetail(adminCall, intakeId, signal);
+      // A reply to an earlier read never replaces a newer one.
+      if (signal?.aborted || current !== generation.current) return;
+      if (next.kind !== "ready") {
+        // A read that merely failed proves nothing: the page stays as it was, and a Refresh says so.
+        if (mode !== "initial" && next.kind === "unconfirmed") {
+          if (mode === "refresh") setNotice({ tone: "error", key: "detail.refreshFailed" });
+          return;
+        }
+        setResult(null); setOperator(null); revision.current = null; setState("error");
+        setProblem(next.kind === "refused" ? { kind: "refused", error: next.error } : { kind: next.kind });
+        return;
+      }
+      // The page's revision only moves forward. A body Core served before this page's own heartbeat or
+      // command succeeded is older than what the page already holds: it is not adopted, and the read is
+      // issued once more instead.
+      const served = next.read.intake.revision;
+      if (revision.current !== null && served !== null && served < revision.current) {
+        if (attempt === 0) continue;
         if (mode === "refresh") setNotice({ tone: "error", key: "detail.refreshFailed" });
         return;
       }
-      setResult(null); setOperator(null); revision.current = null; setState("error");
-      setProblem(next.kind === "refused" ? { kind: "refused", error: next.error } : { kind: next.kind });
+      const saved = readDatesExternalPending(datesExternalBrowserStorage(), next.operator.principal.email);
+      revision.current = served; pendingRef.current = saved.kind !== "empty";
+      setResult({ read: next.read, draftsEnabled: next.draftsEnabled }); setOperator(next.operator); setPending(saved);
+      setProblem(null); setState("ready");
       return;
     }
-    const saved = readDatesExternalPending(datesExternalBrowserStorage(), next.operator.principal.email);
-    revision.current = next.read.intake.revision; pendingRef.current = saved.kind !== "empty";
-    setResult({ read: next.read, draftsEnabled: next.draftsEnabled }); setOperator(next.operator); setPending(saved);
-    setProblem(null); setState("ready");
   }, [intakeId]);
+
+  /**
+   * Reads take their turn with the heartbeat and the commands: one queue orders
+   * everything that reads or moves the intake's revision, so a slow read can
+   * neither overtake a heartbeat nor be overtaken by one. Code that already
+   * runs inside the queue (a command, the heartbeat) calls `read` directly.
+   */
+  const load = useCallback((signal?: AbortSignal, mode: "initial" | "quiet" | "refresh" = "initial") =>
+    serial.current(() => read(signal, mode)), [read]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -113,27 +135,34 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
   // The reviewer's hold lasts five minutes; it is renewed while this page is open.
   const firstBeat = useRef(0);
   firstBeat.current = datesIntakeHeartbeatDelay(intake?.lease ?? null, result?.read.server_now ?? 0);
+  /** A receipt raises the revision this page holds; nothing ever lowers it. */
+  function advance(next: number) {
+    if (revision.current === null || next > revision.current) revision.current = next;
+  }
+
+  /** One renewal of the hold. It runs inside the queue, with the revision the page holds at that moment. */
+  async function heartbeat(life: number) {
+    // A saved publish command keeps the revision it was written with.
+    if (life !== lifetime.current || busyRef.current || pendingRef.current || revision.current === null) return;
+    const expected = revision.current;
+    const outcome = await runDatesIntakeLease(adminCall, { intake_id: intakeId, expected_revision: expected, action: "heartbeat" });
+    if (life !== lifetime.current) return;
+    if (outcome.kind !== "success") { await read(undefined, "quiet"); return; }
+    advance(outcome.receipt.intake.revision);
+    setResult((current) => current && current.read.intake.revision === expected ? { ...current, read: { ...current.read,
+      intake: { ...current.read.intake, revision: outcome.receipt.intake.revision, lease: outcome.receipt.intake.lease } } } : current);
+  }
+  const heartbeatRef = useRef(heartbeat);
+  heartbeatRef.current = heartbeat;
   useEffect(() => {
     if (!mine) return;
     const life = lifetime.current;
-    const beat = () => {
-      void serial.current(async () => {
-        // A saved publish command keeps the revision it was written with.
-        if (life !== lifetime.current || busyRef.current || pendingRef.current || revision.current === null) return;
-        const expected = revision.current;
-        const outcome = await runDatesIntakeLease(adminCall, { intake_id: intakeId, expected_revision: expected, action: "heartbeat" });
-        if (life !== lifetime.current) return;
-        if (outcome.kind !== "success") { await load(undefined, "quiet"); return; }
-        revision.current = outcome.receipt.intake.revision;
-        setResult((current) => current && current.read.intake.revision === expected ? { ...current, read: { ...current.read,
-          intake: { ...current.read.intake, revision: outcome.receipt.intake.revision, lease: outcome.receipt.intake.lease } } } : current);
-      });
-    };
+    const beat = () => { void serial.current(() => heartbeatRef.current(life)); };
     // A hold taken a while ago (from the queue, or before a reload) is renewed before it runs out, not on the next round.
     const early = firstBeat.current < DATES_INTAKE_HEARTBEAT_SECONDS * 1000 ? setTimeout(beat, firstBeat.current) : null;
     const timer = setInterval(beat, DATES_INTAKE_HEARTBEAT_SECONDS * 1000);
     return () => { if (early !== null) clearTimeout(early); clearInterval(timer); };
-  }, [mine, intakeId, load]);
+  }, [mine]);
 
   /** One command at a time, each against the newest revision this page holds. */
   async function command(task: (life: number) => Promise<void>) {
@@ -150,11 +179,13 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
     return command(async (life) => {
       if (revision.current === null) return;
       const outcome = await runDatesIntakeLease(adminCall, { intake_id: intakeId, expected_revision: revision.current, action });
+      // The receipt is the newest revision this page knows, whatever the read that follows returns.
+      if (outcome.kind === "success") advance(outcome.receipt.intake.revision);
       if (life !== lifetime.current) return;
       setNotice(outcome.kind === "success" ? { tone: "success", key: `lease.done.${action}` }
         : outcome.kind === "refused" ? { tone: "error", key: "refused", error: outcome.error } : { tone: "error", key: "lease.uncertain" });
       if (action === "release") { setOpenEvent(null); setCandidate(null); }
-      await load(undefined, "quiet");
+      await read(undefined, "quiet");
     });
   }
 
@@ -164,6 +195,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
       setConfirmReject(false);
       if (!prepared) { setNotice({ tone: "error", key: "reject.invalid" }); return; }
       const outcome = await runDatesIntakeReject(adminCall, prepared);
+      if (outcome.kind === "success") advance(outcome.receipt.intake.revision);
       if (life !== lifetime.current) return;
       if (outcome.kind === "uncertain") {
         // The same command, with the same identity, is the only safe retry.
@@ -173,7 +205,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
         setNotice(outcome.kind === "success" ? { tone: "success", key: "reject.done" } : { tone: "error", key: "refused", error: outcome.error });
         if (outcome.kind === "success") { setOpenEvent(null); setRejectNote(""); }
       }
-      await load(undefined, "quiet");
+      await read(undefined, "quiet");
     });
   }
 
@@ -185,6 +217,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
       const outcome = await runDatesIntakePublish(adminCall, storage, actor, "retry" in input ? input : { candidate: {
         intake_id: intakeId, intake_revision: revision.current!, event_index: input.candidate.eventIndex, complete: input.candidate.complete,
         event: input.candidate.event, reason: input.candidate.reason } });
+      if (outcome.kind === "success" && outcome.receipt && "intake" in outcome.receipt) advance(outcome.receipt.intake.revision);
       // Once sent, the journal finishes reconciling the receipt even after
       // navigation; only what this page shows is guarded by its lifetime.
       if (life !== lifetime.current) return;
@@ -198,7 +231,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
         setNotice({ tone: "error", key: outcome.retained ? "publish.refusedRetained" : "refused", error: outcome.error });
         if (GONE.includes(outcome.error)) setOpenEvent(null);
       } else setNotice({ tone: "error", key: `publish.${outcome.kind}` });
-      await load(undefined, "quiet");
+      await read(undefined, "quiet");
     });
   }
 

@@ -20,14 +20,20 @@ const tree = ts.createSourceFile("DatesIntakeReviewPage.tsx", source, ts.ScriptT
 const page = tree.statements.find((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && node.name?.text === "DatesIntakeReviewPage")!;
 assert.ok(page?.body);
 const declared = (name: string) => page.body!.statements.find((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && node.name?.text === name)!;
-const loadDeclaration = page.body!.statements.flatMap((node) => ts.isVariableStatement(node) ? [...node.declarationList.declarations] : []).find((node) => node.name.getText(tree) === "load")!;
-assert.ok(loadDeclaration.initializer && ts.isCallExpression(loadDeclaration.initializer));
-for (const name of ["command", "lease", "reject", "publish", "propose"]) assert.ok(declared(name), name);
+const callback = (name: string) => {
+  const declaration = page.body!.statements.flatMap((node) => ts.isVariableStatement(node) ? [...node.declarationList.declarations] : []).find((node) => node.name.getText(tree) === name)!;
+  assert.ok(declaration?.initializer && ts.isCallExpression(declaration.initializer) && declaration.initializer.expression.getText(tree) === "useCallback", name);
+  return (declaration.initializer as ts.CallExpression).arguments[0].getText(tree);
+};
+const FUNCTIONS = ["advance", "heartbeat", "command", "lease", "reject", "publish", "propose"];
+for (const name of FUNCTIONS) assert.ok(declared(name), name);
 const gone = tree.statements.find((node) => ts.isVariableStatement(node) && node.getText(tree).startsWith("const GONE"))!;
 const code = ts.transpileModule(`${gone.getText(tree)}
-  const load = ${(loadDeclaration.initializer as ts.CallExpression).arguments[0].getText(tree)};
-  ${["command", "lease", "reject", "publish", "propose"].map((name) => declared(name).getText(tree)).join("\n")}
-  exports.load = load; exports.lease = lease; exports.reject = reject; exports.publish = publish; exports.propose = propose;`,
+  const read = ${callback("read")};
+  const load = ${callback("load")};
+  ${FUNCTIONS.map((name) => declared(name).getText(tree)).join("\n")}
+  exports.read = read; exports.load = load; exports.heartbeat = heartbeat;
+  exports.lease = lease; exports.reject = reject; exports.publish = publish; exports.propose = propose;`,
   { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
 
 const actor = "admin@example.test";
@@ -50,10 +56,12 @@ function harness(intakeId: string, answers: Record<string, unknown>) {
     adminCall: async (action: string, body: any) => { sent.push({ action, body });
       const answer = table[action]; return typeof answer === "function" ? (answer as (body: unknown) => unknown)(body) : answer; } };
   for (const name of ["State", "Result", "Operator", "Problem", "Notice", "Busy", "Pending", "OpenEvent", "Complete", "Candidate", "RejectCommand", "RejectNote", "ConfirmReject"])
-    context[`set${name}`] = (value: unknown) => { state[name] = value; writes.push(name); if (name === "Operator") context.operator = value; };
+    context[`set${name}`] = (value: unknown) => { state[name] = typeof value === "function" ? value(state[name]) : value; writes.push(name);
+      if (name === "Operator") context.operator = value; };
   vm.runInNewContext(code, context);
   const commands = sent.filter.bind(sent);
   return { context, state, writes, sent, table, rows, storage, api: context.exports as { load: (signal?: AbortSignal, mode?: string) => Promise<void>;
+    read: (signal?: AbortSignal, mode?: string) => Promise<void>; heartbeat: (life: number) => Promise<void>;
     lease: (action: string) => Promise<void>; reject: (retry: unknown) => Promise<void>; publish: (input: unknown) => Promise<void>;
     propose: (facts: unknown, reason: string) => void },
     calls: (action: string) => commands((call) => call.action === action) };
@@ -93,34 +101,140 @@ test("the first read shows the intake; a later read that merely fails never wipe
   assert.equal(failed.state.State, "error"); assert.deepEqual(plain(failed.state.Problem), { kind: "unconfirmed" });
 });
 
-test("a reply to an earlier read never replaces a newer one", async () => {
+const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+test("reads take their turn; a reply to an earlier read never replaces a newer one, and nothing is adopted after unmount", async () => {
   const older = fixture("admin-detail-in-review-multi"), newer = fixture("admin-detail-in-review-partial");
-  let release!: (value: unknown) => void;
-  const slow = new Promise((resolve) => { release = resolve; });
-  let first = true;
-  const h = harness(xin(6), { dates_event_intake_detail: () => { if (first) { first = false; return slow; } return newer; } });
-  const stale = h.api.load(), fresh = h.api.load(undefined, "quiet");
+  assert.ok(older.intake.revision < newer.intake.revision);
+  const slowFirst = () => {
+    let release!: (value: unknown) => void, first = true;
+    const slow = new Promise((resolve) => { release = resolve; });
+    return { answer: () => { if (first) { first = false; return slow; } return newer; }, release };
+  };
+  // Through the page's queue the second read is not even issued until the first is answered.
+  const queued = slowFirst(), q = harness(xin(6), { dates_event_intake_detail: queued.answer });
+  const one = q.api.load(), two = q.api.load(undefined, "quiet");
+  await settle();
+  assert.equal(q.calls("dates_event_intake_detail").length, 1, "the second read waits for the first");
+  queued.release(older); await one;
+  assert.equal(q.context.revision.current, older.intake.revision);
+  await two;
+  assert.equal(q.calls("dates_event_intake_detail").length, 2);
+  assert.equal(q.state.Result.read.intake.published_count, 1); assert.equal(q.context.revision.current, newer.intake.revision);
+  // Two reads that do overlap (outside the queue): the earlier one's reply is dropped.
+  const direct = slowFirst(), h = harness(xin(6), { dates_event_intake_detail: direct.answer });
+  const stale = h.api.read(), fresh = h.api.read(undefined, "quiet");
   await fresh;
   assert.equal(h.state.Result.read.intake.published_count, 1);
   const writes = [...h.writes];
-  release(older); await stale;
+  direct.release(older); await stale;
   assert.deepEqual(h.writes, writes); assert.equal(h.state.Result.read.intake.published_count, 1); assert.equal(h.context.revision.current, newer.intake.revision);
-  // After unmount nothing is adopted either.
+  // After unmount nothing is adopted either: not from a read in flight, not from one still waiting for its turn.
   const controller = new AbortController(), gone = harness(xin(6), { dates_event_intake_detail: newer });
-  const pending = gone.api.load(controller.signal); controller.abort(); await pending;
+  const pending = gone.api.read(controller.signal); controller.abort(); await pending;
   assert.deepEqual(gone.writes, ["State"], "only the loading state set before the request");
+  const waiting = new AbortController(), never = harness(xin(6), { dates_event_intake_detail: newer });
+  const turn = never.api.load(waiting.signal); waiting.abort(); await turn;
+  assert.deepEqual(never.writes, []); assert.equal(never.calls("dates_event_intake_detail").length, 0);
+});
+
+test("review finding: a slow read cannot take the revision back behind a heartbeat, and the next command sends the newest revision", async () => {
+  // One intake through its genuine receipts: claimed at revision 10, heartbeat to 11, release to 12.
+  const text = fixture("admin-detail-in-review-text"), claim = fixture("admin-lease-claim"), beat = fixture("admin-lease-heartbeat"), release = fixture("admin-lease-release");
+  const id = text.intake.intake_id;
+  assert.deepEqual([claim.intake.intake_id, beat.intake.intake_id, release.intake.intake_id], [id, id, id]);
+  assert.deepEqual([claim.intake.revision, beat.intake.revision, release.intake.revision], [10, 11, 12]);
+  // DERIVED: the genuine detail as Core serves it at each of those revisions.
+  const at = (receipt: any) => ({ ...text, intake: { ...text.intake, revision: receipt.intake.revision, lease: receipt.intake.lease } });
+  const leaseAnswer = (body: any) => body.action === "heartbeat" ? beat : release;
+  const slowDetail = () => { let open!: (value: unknown) => void; const reply = new Promise((resolve) => { open = resolve; }); return { reply, open }; };
+
+  // 1. The reviewer's interleaving, as the page now orders it: the read was issued first, so the heartbeat waits for it.
+  {
+    const h = harness(id, { dates_event_intake_detail: at(claim), dates_event_intake_lease: leaseAnswer });
+    await h.api.load();
+    assert.equal(h.context.revision.current, 10);
+    const slow = slowDetail(); h.table.dates_event_intake_detail = () => slow.reply;
+    const poll = h.api.load(undefined, "quiet");
+    const tick = h.context.serial.current(() => h.api.heartbeat(0));
+    await settle();
+    assert.equal(h.calls("dates_event_intake_lease").length, 0, "no heartbeat while the read is unanswered");
+    h.table.dates_event_intake_detail = at(release);
+    slow.open(at(claim)); await poll; await tick;
+    assert.deepEqual(plain(h.calls("dates_event_intake_lease")[0].body), { intake_id: id, expected_revision: 10, action: "heartbeat" });
+    assert.equal(h.context.revision.current, 11, "the heartbeat's receipt is the last word");
+    assert.equal(h.state.Result.read.intake.revision, 11); assert.equal(h.state.Result.read.intake.lease.until, beat.intake.lease.until);
+    // The next command is sent with 11 and Core accepts it: no false conflict.
+    await h.api.lease("release");
+    assert.deepEqual(plain(h.calls("dates_event_intake_lease")[1].body), { intake_id: id, expected_revision: 11, action: "release" });
+    assert.deepEqual(plain(h.state.Notice), { tone: "success", key: "lease.done.release" });
+    assert.equal(h.context.revision.current, 12);
+  }
+
+  // 2. The revision never moves backwards even when a read does overlap a heartbeat (the read is called outside the
+  //    queue here, which is exactly the interleaving the page had): the older body is not adopted, the read is issued again.
+  for (const second of ["current", "stale"] as const) {
+    const h = harness(id, { dates_event_intake_detail: at(claim), dates_event_intake_lease: leaseAnswer });
+    await h.api.load();
+    const slow = slowDetail(); h.table.dates_event_intake_detail = () => slow.reply;
+    const late = h.api.read(undefined, "quiet");
+    await h.api.heartbeat(0);
+    assert.equal(h.context.revision.current, 11);
+    const writes = [...h.writes];
+    h.table.dates_event_intake_detail = second === "current" ? at(beat) : at(claim);
+    slow.open(at(claim)); await late;
+    assert.equal(h.calls("dates_event_intake_detail").length, 3, "the first read, the overtaken one, and its one re-issue");
+    assert.equal(h.context.revision.current, 11, "never 10 again");
+    if (second === "current") assert.equal(h.state.Result.read.intake.revision, 11);
+    else assert.deepEqual(h.writes, writes, "a body older than the page's revision is not adopted at all");
+    await h.api.lease("release");
+    assert.deepEqual(plain(h.calls("dates_event_intake_lease")[1].body), { intake_id: id, expected_revision: 11, action: "release" });
+  }
+
+  // 3. A Refresh that only ever gets an older body says that it could not refresh.
+  {
+    const h = harness(id, { dates_event_intake_detail: at(beat) });
+    await h.api.load(); h.table.dates_event_intake_detail = at(claim);
+    await h.api.load(undefined, "refresh");
+    assert.equal(h.context.revision.current, 11); assert.equal(h.state.Result.read.intake.revision, 11);
+    assert.deepEqual(plain(h.state.Notice), { tone: "error", key: "detail.refreshFailed" });
+    // A first read after an error starts from nothing and adopts what Core serves.
+    await h.api.load(undefined, "initial");
+    assert.equal(h.context.revision.current, 10); assert.equal(h.state.State, "ready");
+  }
+
+  // The heartbeat renews nothing while a command is busy, a publication is saved, or the page was left.
+  for (const change of [{ busyRef: { current: true } }, { pendingRef: { current: true } }, { lifetime: { current: 1 } }]) {
+    const h = harness(id, { dates_event_intake_detail: at(claim), dates_event_intake_lease: leaseAnswer });
+    await h.api.load(); Object.assign(h.context, change); await h.api.heartbeat(0);
+    assert.equal(h.calls("dates_event_intake_lease").length, 0, JSON.stringify(change));
+  }
+  // A heartbeat Core refuses is followed by a read (inside the queue, so directly), not by a guess.
+  const lost = harness(id, { dates_event_intake_detail: at(claim), dates_event_intake_lease: fixture("admin-lease-lost-denied") });
+  await lost.api.load(); await lost.api.heartbeat(0);
+  assert.equal(lost.calls("dates_event_intake_detail").length, 2); assert.equal(lost.context.revision.current, 10);
+
+  // Every read the page issues from outside a command goes through the queue; code already in the queue reads directly.
+  assert.match(source, /const load = useCallback\(\(signal\?: AbortSignal, mode: "initial" \| "quiet" \| "refresh" = "initial"\) =>\s+serial\.current\(\(\) => read\(signal, mode\)\), \[read\]\);/);
+  assert.match(source, /const beat = \(\) => \{ void serial\.current\(\(\) => heartbeatRef\.current\(life\)\); \};/);
+  assert.equal((source.match(/\bread\(/g) ?? []).length, 5, "the queued wrapper, the heartbeat's follow-up and the three commands");
+  assert.equal((source.match(/revision\.current = /g) ?? []).length, 4, "reset on a first read, reset on a lost page, a read's adoption, and advance()");
 });
 
 test("a hold is taken with the revision the page holds, once, and the intake is read again", async () => {
   const detail = fixture("admin-detail-in-review-text"), receipt = fixture("admin-lease-claim");
-  const h = harness(detail.intake.intake_id, { dates_event_intake_detail: detail, dates_event_intake_lease: receipt });
+  assert.equal(detail.intake.revision, receipt.intake.revision - 1);
+  // After the claim Core serves the intake at the receipt's revision, held by the reviewer (DERIVED from the two genuine bodies).
+  const claimed = { ...detail, intake: { ...detail.intake, revision: receipt.intake.revision, lease: receipt.intake.lease } };
+  const h: ReturnType<typeof harness> = harness(detail.intake.intake_id, { dates_event_intake_lease: receipt,
+    dates_event_intake_detail: () => h.calls("dates_event_intake_lease").length > 0 ? claimed : detail });
   await h.api.load();
-  h.context.revision.current = receipt.intake.revision - 1;
   const first = h.api.lease("claim"); await h.api.lease("claim"); await first;
   assert.equal(h.calls("dates_event_intake_lease").length, 1, "a second click while busy sends nothing");
   assert.deepEqual(plain(h.calls("dates_event_intake_lease")[0].body), { intake_id: detail.intake.intake_id, expected_revision: receipt.intake.revision - 1, action: "claim" });
   assert.deepEqual(plain(h.state.Notice), { tone: "success", key: "lease.done.claim" });
   assert.equal(h.calls("dates_event_intake_detail").length, 2, "read again after the command");
+  assert.equal(h.context.revision.current, receipt.intake.revision); assert.equal(h.state.Result.read.intake.lease.mine, true);
   assert.equal(h.context.busyRef.current, false); assert.equal(h.state.Busy, false);
   // Core's genuine refusals are shown as their tokens.
   for (const name of ["lease-claimed", "lease-conflict", "lease-owner-required"]) {
