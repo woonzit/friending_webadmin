@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
+import DatesIntakeSourceEntry from "@/components/DatesIntakeSourceEntry";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
@@ -74,6 +75,7 @@ export default function DatesExternalEventsPage() {
       actions={<div className="row-actions"><button className="button button-secondary" onClick={() => void load()}>{common("refresh")}</button>
         {canCreate && <Link className="button button-primary" href="/dates/external/new">{t("create")}</Link>}</div>} />
     <DatesAdminTabs />
+    <DatesIntakeSourceEntry />
     <form className="dates-filter-grid" onSubmit={apply}>
       {(["query", "city"] as const).map((key) => <label className="field" key={key}><span>{t(`filters.${key}`)}</span><input value={draft[key]} maxLength={120} onChange={(event) => setDraft((current) => ({ ...current, [key]: event.target.value }))} /></label>)}
       {([["status", DATES_EXTERNAL_STATUSES], ["tier", DATES_EXTERNAL_TIERS], ["category", DATES_EXTERNAL_CATEGORIES], ["channel", DATES_EXTERNAL_CHANNELS]] as const).map(([key, values]) =>

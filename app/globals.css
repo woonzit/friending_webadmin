@@ -6574,6 +6574,18 @@ fieldset.dates-external-fields {
 .dates-external-place-search > .button { justify-self: start; }
 .dates-external-google { font-family: inherit; font-style: normal; font-weight: 400; font-size: 14px; letter-spacing: normal; white-space: nowrap; color: #fff; }
 .dates-external-place-results { display: grid; gap: 16px; padding: 0; list-style: none; }
+/* T-865 P2a: the AI event intake console. */
+.dates-external-fields h4 { margin: 8px 0 0; }
+.dates-external-fields q { font-style: italic; }
+.dates-external-fields blockquote { margin: 8px 0 0; padding-left: 12px; border-left: 3px solid var(--border-strong); color: var(--text-soft); }
+.dates-intake-flyer { display: grid; gap: 8px; margin: 0; padding: 16px; border: 1px solid var(--border); border-radius: 12px; }
+.dates-intake-flyer img { max-width: min(100%, 520px); height: auto; border-radius: 8px; border: 1px solid var(--border-strong); }
+.dates-intake-flyer > .button { justify-self: start; }
+.dates-intake-budget { width: 100%; height: 12px; margin: 0 0 24px; accent-color: var(--accent); }
+.dates-ordered-list { display: grid; gap: 8px; margin: 0 0 8px; padding-left: 24px; }
+.dates-ordered-list li { padding-left: 4px; }
+.dates-ordered-list li > span:first-child { display: inline-block; min-width: 140px; }
+.dates-ordered-list .row-actions { display: inline-flex; gap: 6px; }
 @media (max-width: 640px) { .dates-external-facts { grid-template-columns: 1fr; gap: 8px; } }
 
 .dates-external-fields > legend {

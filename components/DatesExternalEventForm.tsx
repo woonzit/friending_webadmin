@@ -12,12 +12,16 @@ import {
 
 type TextField = { [K in keyof DatesExternalDraft]: DatesExternalDraft[K] extends string ? K : never }[keyof DatesExternalDraft];
 
-export default function DatesExternalEventForm({ initial, disabled, submitLabel, onSubmit }: {
+export default function DatesExternalEventForm({ initial, initialDraft, notice, disabled, submitLabel, onSubmit }: {
   initial?: DatesExternalManualEvent | DatesExternalEditorInput | null; disabled: boolean; submitLabel: string;
+  /** P2a: Core's prefill for an AI intake, where a field Core does not know is left empty for the reviewer. */
+  initialDraft?: DatesExternalDraft;
+  /** Replaces the "entered by hand" note when the draft did not start with a person. */
+  notice?: string;
   onSubmit: (event: DatesExternalManualEvent, reason: string) => void | Promise<void>;
 }) {
   const t = useTranslations("datesAdmin.external.form");
-  const [draft, setDraft] = useState(() => datesExternalDraft(initial));
+  const [draft, setDraft] = useState(() => initialDraft ?? datesExternalDraft(initial));
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
   function edit<K extends keyof DatesExternalDraft>(key: K, value: DatesExternalDraft[K]) {
@@ -46,7 +50,7 @@ export default function DatesExternalEventForm({ initial, disabled, submitLabel,
   return <form className="dates-external-form" onSubmit={submit}>
     <fieldset className="dates-external-fields" disabled={disabled}>
       <legend>{t("factsTitle")}</legend>
-      <p className="alert alert-info">{t("manualOnly")}</p>
+      <p className="alert alert-info">{notice ?? t("manualOnly")}</p>
       <div className="form-grid">
         {input("title", 32000, "text", true)}
         <label className="field"><span>{t("category")}</span><select value={draft.category} onChange={(event) => edit("category", event.target.value as DatesExternalDraft["category"])}>

@@ -261,6 +261,7 @@ export default function DatesActivityDetailPage() {
       <DatesAdminTabs />
       {activity.unreadable_fields?.length ? <div className="alert alert-error page-alert" role="status">{common("unreadableField")} · {activity.unreadable_fields.join(", ")}</div> : null}
       {data.external_event && <section className="panel dates-external-fields"><span className="badge badge-demo">{external("badge")}</span>
+        {data.external_event.ai_assisted && <span className="badge badge-warning">{external("aiBadge")}</span>}
         <p>{external("editor.activityRedirect")}</p><Link className="button button-primary" href={`/dates/external/${data.external_event.external_event_id}`}>{external("editor.detailTitle")}</Link></section>}
       {data.external_event && <DatesExternalProvenance event={data.external_event} />}
       {feedback && <div className={`alert ${feedback.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{feedback.text}</div>}

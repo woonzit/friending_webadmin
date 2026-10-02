@@ -96,8 +96,10 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
   const event = data?.event;
   const writeLocked = busy || candidate !== null || pending.kind !== "empty" || needsReload || completedCreate || state !== "ready" || !canManage;
   const locked = writeLocked || (externalId !== undefined && !event?.can_edit);
-  const pendingTarget = pending.kind === "pending" ? (pending.pending.action === "dates_external_event_publish"
-    ? "/dates/external/new" : `/dates/external/${pending.pending.baseline!.external_event_id}`) : null;
+  // P2a: a publication begun from an AI intake is resumed where its draft and its hold are.
+  const pendingTarget = pending.kind === "pending" ? (pending.pending.action === "dates_event_intake_publish"
+    ? `/dates/intakes/${String(pending.pending.body.intake_id)}` : pending.pending.action === "dates_external_event_publish"
+      ? "/dates/external/new" : `/dates/external/${pending.pending.baseline!.external_event_id}`) : null;
   const currentTarget = externalId ? `/dates/external/${externalId}` : "/dates/external/new";
 
   function commandAllowed(action: Command): boolean {
@@ -168,7 +170,7 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
     setCandidate({ action: generic ? "dates_activity_command" : "dates_external_event_command", body, baseline: baseline() });
   }
   function operationLabel(action: string, body: Record<string, unknown>) {
-    return action === "dates_external_event_publish" ? t("editor.publish") : action === "dates_external_event_update"
+    return action === "dates_external_event_publish" || action === "dates_event_intake_publish" ? t("editor.publish") : action === "dates_external_event_update"
       ? t("editor.save") : t(`commands.${String(body.action)}.label`);
   }
 
@@ -192,7 +194,7 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
       </>}
     </section>}
     {event && <section className="panel dates-external-fields">
-      <div className="row-actions"><span className="badge badge-demo">{t("badge")}</span><span>{t(`statusValues.${event.status}`)}</span>
+      <div className="row-actions"><span className="badge badge-demo">{t("badge")}</span>{event.ai_assisted && <span className="badge badge-warning">{t("aiBadge")}</span>}<span>{t(`statusValues.${event.status}`)}</span>
         <span>{t(`tierValues.${event.verification_tier}`)}</span><Link href={`/dates/${event.activity_id}`}>{t("editor.activity")}</Link></div>
       <p>{t("editor.revisions", { ledger: event.revision, activity: event.activity_revision })}</p>
       <p>{t("editor.moderationNotice")}</p>

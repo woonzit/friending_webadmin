@@ -1215,6 +1215,15 @@
               "1": "Új előfordulás létrehozása helyett előbb nyisd meg a pontosan egyező külső eseményt.",
               "2": "Ügyekhez a programelőzményt, adatjavításhoz a külsőesemény-szerkesztőt használd."
             }
+          },
+          "draftFromSource": {
+            "title": "Vázlat forrásból",
+            "purpose": "Egy link, egy plakátfotó vagy egy sornyi szöveg az esemény-MI-hez kerül, amely adatlapvázlatot készít emberi ellenőrzésre.",
+            "guidance": "A belépési pont csak adminisztrátoroknak és csak bekapcsolt vázlatkapcsoló mellett érhető el. Az MI soha nem publikál, a plakát soha nem nyilvános.",
+            "actions": {
+              "1": "A szervező vagy a helyszín saját oldalát részesítsd előnyben; a bejelentkezés mögötti oldal nem olvasható.",
+              "2": "Megválaszolatlan kérés után ugyanazt küldd újra: második vázlatot nem hozhat létre."
+            }
           }
         }
       },
@@ -2918,6 +2927,129 @@
               "2": "A withheld darabszámot jegyezd fel, ha jogosult szerveroldali vizsgálathoz eszkalálsz."
             },
             "guidance": "A withheld nem hiányzó bizonyítékot jelent. Megakadályozza, hogy secret, privát adat vagy korlátlan payload kerüljön böngészőbe vagy screenshotba."
+          }
+        }
+      },
+      "datesIntakeQueue": {
+        "title": "Beküldések sorának súgója",
+        "summary": "Ez a sor az esemény-MI-nek átadott forrásokat és az azokból készült vázlatokat mutatja. Az ellenőr magához veszi a beküldést, összeveti a vázlatot a forrással, majd elutasítja, vagy publikálja az eseményeit; a sorból a tagok semmit nem látnak.",
+        "steps": {
+          "1": "Szűrj állapot szerint; az ellenőrzésre váró beküldések a legkorábbi eseménnyel az élen állnak.",
+          "2": "Vedd magadhoz a beküldést, hogy más ellenőr ne dolgozzon rajta egyszerre, majd nyisd meg.",
+          "3": "Engedd el azt a beküldést, amelyet nem fejezel be, hogy ne a foglalásod lejártára várjon."
+        },
+        "sections": {
+          "draftFromSource": {
+            "title": "Vázlat forrásból",
+            "purpose": "Egy link, egy plakátfotó vagy egy sornyi szöveg az esemény-MI-hez kerül, amely adatlapvázlatot készít emberi ellenőrzésre.",
+            "guidance": "A belépési pont csak adminisztrátoroknak és csak bekapcsolt vázlatkapcsoló mellett érhető el. Az MI soha nem publikál, a plakát soha nem nyilvános.",
+            "actions": {
+              "1": "A szervező vagy a helyszín saját oldalát részesítsd előnyben; a bejelentkezés mögötti oldal nem olvasható.",
+              "2": "Megválaszolatlan kérés után ugyanazt küldd újra: második vázlatot nem hozhat létre."
+            }
+          },
+          "queue": {
+            "title": "Sor, szűrők és megállapítások",
+            "purpose": "Minden sor megmutatja, honnan jött a beküldés, hol tart, hány eseményt talált az MI, és mit jeleztek a Core ellenőrzései.",
+            "guidance": "A nem olvasható sort megnevezzük, nem rejtjük el, és az olvasási hiba soha nem bizonyítja, hogy a sor üres.",
+            "actions": {
+              "1": "Vázlat megnyitása előtt olvasd el a kizáró hibákat és a figyelmeztetéseket.",
+              "2": "Frissíts, ha más ellenőr is dolgozik; az állapotok melletti számok a teljes sorra vonatkoznak."
+            }
+          },
+          "holds": {
+            "title": "Magadhoz vétel és elengedés",
+            "purpose": "A foglalás öt percre egy ellenőrnek tartja fenn a beküldést, és megújul, amíg az oldala nyitva van.",
+            "guidance": "Akinek nem járt le az ideje, attól senki nem veheti el a beküldést; más foglalását csak szuperadmin oldhatja fel.",
+            "actions": {
+              "1": "Csak akkor vedd magadhoz a beküldést, amikor valóban ellenőrizni kezded.",
+              "2": "Ha abbahagyod, engedd el, ne hagyd lejárni."
+            }
+          }
+        }
+      },
+      "datesIntakeDetail": {
+        "title": "Beküldés ellenőrzésének súgója",
+        "summary": "Ez az oldal egyetlen beküldést mutat: mit küldtek be, mit olvasott ki belőle az MI és mi az egyes mezők bizonyítéka, mit mondanak a Core determinisztikus ellenőrzései, és mit tehet az ellenőr. A tartalom MI-vázlat, amíg egy ember az eseményszerkesztőben nem publikálja.",
+        "steps": {
+          "1": "Olvasd el az állapotot, és vedd magadhoz a beküldést; amíg a feldolgozás tart, az oldal magától újra ellenőriz.",
+          "2": "Vesd össze minden mezőt az idézetével és magával a forrással, és olvasd el a kizáró hibákat és figyelmeztetéseket.",
+          "3": "Nyiss meg egy eseményt a szerkesztőben, javítsd, jelöld be a négy megerősítést, és publikáld – vagy utasítsd el a beküldést egy okkal."
+        },
+        "sections": {
+          "status": {
+            "title": "Állapot, foglalás és megőrzés",
+            "purpose": "Az állapot megmutatja, hol tart a beküldés és miért állt meg, ki döntött, és meddig őrizzük a plakátjait, szövegeit és a bejegyzést.",
+            "guidance": "A sikertelen, duplikált, lejárt és keretre váró beküldés megmagyarázza önmagát; egyik sem publikált semmit.",
+            "actions": {
+              "1": "Döntés előtt vedd magadhoz a beküldést; az elutasításhoz és a publikáláshoz nálad kell lennie.",
+              "2": "Elveszett válasz után frissíts, ne ismételd vakon a műveletet."
+            }
+          },
+          "inputs": {
+            "title": "Beküldött forrás és plakátok",
+            "purpose": "A beküldött link, szöveg és plakátok, valamint az a szöveg, amelyet a Core ezekből őriz, és amelyhez minden idézetet hozzámér.",
+            "guidance": "A plakát bizalmas bizonyíték: csak kérésre, a konzolon keresztül töltődik be, minden megtekintést rögzítünk, és soha nem lehet eseménykép.",
+            "actions": {
+              "1": "Nyisd meg a forráslinket új lapon, és olvasd el ott magad az eseményt.",
+              "2": "Plakátot csak akkor jeleníts meg, ha az összevetéshez kell."
+            }
+          },
+          "evidence": {
+            "title": "MI-vázlat és bizonyíték mezőnként",
+            "purpose": "Az oldal minden mezőnél megmutatja az MI állítását, az idézett szavakat, és hogy a Core megtalálta-e ezeket a forrásban.",
+            "guidance": "Az „ellenőrzött” azt jelenti, hogy a forrás ezt állítja, nem azt, hogy igaza van. A nem ellenőrzött mező csak az MI állítása, magadnak kell utánanézned.",
+            "actions": {
+              "1": "Minden nem ellenőrzött mezőt és figyelmeztetést kézzel ellenőrizendőnek tekints.",
+              "2": "Publikálás előtt vesd össze az azonosított helyszínt és a duplikátumjelölteket."
+            }
+          },
+          "editor": {
+            "title": "Szerkesztő és publikálás",
+            "purpose": "A „Megnyitás a szerkesztőben” a megszokott külsőesemény-űrlapot tölti ki a Core vázlatával; a publikálás ugyanazon a közzétevőn és megerősítéseken megy át, mint a kézi eseménynél.",
+            "guidance": "A négy megerősítés mindig a tiéd, az üres mezőt a Core nem tudta megállapítani, és az esemény a tagoknál MI-segítséggel készültként jelenik meg.",
+            "actions": {
+              "1": "Több eseményt tartalmazó beküldésnél egyenként publikálj, és jelezd, melyik az utolsó.",
+              "2": "Megválaszolatlan publikálás után a mentett kérést próbáld újra; az eseményt soha ne publikáld újra."
+            }
+          },
+          "reject": {
+            "title": "Elutasítás",
+            "purpose": "Az elutasítás kilenc ok egyikével zárja le a beküldést; az indokolás a Core adott okhoz tartozó kötött szövege.",
+            "guidance": "Az auditmegjegyzés kötelező és belső. Az a beküldés, amelyből már publikáltak eseményt, nem utasítható el.",
+            "actions": {
+              "1": "Azt az okot válaszd, amelyet a beküldőnek tudnia kell.",
+              "2": "Úgy írd meg az auditmegjegyzést, hogy más ellenőr is értse a döntést."
+            }
+          }
+        }
+      },
+      "datesAiUsage": {
+        "title": "MI-költés súgója",
+        "summary": "Ez az oldal azt mutatja, mennyibe került az esemény-MI egy naptári hónapban az adminisztrátor által beállított havi kerethez képest, szolgáltató, modell, feladat és csatorna szerint. Csak használati adatokat tartalmaz: se forrást, se promptot, se kiolvasott tartalmat.",
+        "steps": {
+          "1": "Nézd meg a költést a kerethez képest, és hogy látszik-e a 80%-os figyelmeztetés vagy a kimerült keret.",
+          "2": "Nézd meg, hány beküldés vár keretre, mielőtt eldöntöd, hogy a Konfigurációban emeled-e a keretet.",
+          "3": "A bontásból kiderül, melyik szolgáltatóból, modellből és feladatból ered a költés."
+        },
+        "sections": {
+          "budget": {
+            "title": "Havi keret és figyelmeztetések",
+            "purpose": "A költés, a folyamatban lévő hívásokra lefoglalt összeg és a keret maradéka, a 80%-os figyelmeztetéssel és a kimerült állapottal.",
+            "guidance": "A 0 keret kikapcsolja az MI-t. Ha a keret elfogy, nem indul MI-hívás, az új beküldések várnak; a feldolgozó óránként újrapróbálja őket.",
+            "actions": {
+              "1": "Emeld a keretet a Konfigurációban, ha beküldések várnak, és a költés indokolt.",
+              "2": "Vesd össze az összeget a szolgáltató számlájával; listaárakból számított érték."
+            }
+          },
+          "breakdown": {
+            "title": "Bontás szolgáltató, modell, feladat és csatorna szerint",
+            "purpose": "Hívások, tokenek és költség szolgáltató, modell, feladat és csatorna szerint, a ténylegesen válaszoló modellel.",
+            "guidance": "A válasz nélküli és a becsült költségű hívások külön látszanak, így a szolgáltató kiesése a számokból is kiolvasható.",
+            "actions": {
+              "1": "Korábbi hónapokkal összevetve látod egy modellváltás költségét.",
+              "2": "Sok válasz nélküli hívásnál ellenőrizd a szolgáltatók sorrendjét és a kulcsokat."
+            }
           }
         }
       }
@@ -7990,7 +8122,9 @@
       "activities": "Aktivitások",
       "external": "Külső események",
       "moderation": "Moderáció",
-      "configuration": "Konfiguráció"
+      "configuration": "Konfiguráció",
+      "intakes": "Beküldések",
+      "usage": "MI-költés"
     },
     "external": {
       "eyebrow": "AreYouIn üzemeltetés",
@@ -8010,7 +8144,11 @@
         "title": "Ellenőrzés és források", "tier": "Ellenőrzési szint", "submitter": "Beküldő", "adminEntered": "Adminisztrátor rögzítette; nincs tagi beküldő",
         "anonymous": "Névtelen vagy nem közölt", "member": "Tag UID: {uid}", "channel": "Beküldési csatorna",
         "assistance": "MI-segítség", "noAi": "Nincs — kézzel rögzített és ellenőrzött",
-        "boundary": "Ezeket a biztonságosan megjeleníthető forrás- és beküldőadatokat a Core adja vissza. A forráshivatkozás weboldalt nyit meg; nem tölti le, ellenőrzi vagy publikálja újra annak tartalmát. Itt nem jelenik meg kezelői személyazonosság vagy bizalmas bizonyíték."
+        "boundary": "Ezeket a biztonságosan megjeleníthető forrás- és beküldőadatokat a Core adja vissza. A forráshivatkozás weboldalt nyit meg; nem tölti le, ellenőrzi vagy publikálja újra annak tartalmát. Itt nem jelenik meg kezelői személyazonosság vagy bizalmas bizonyíték.",
+        "aiAssisted": "A vázlatát MI készítette egy beküldött forrásból; ember vetette össze a forrással, és ő publikálta.",
+        "venue": "A helyszín eredete",
+        "venuePin": "Adminisztrátor által megerősített jelölő",
+        "venuePlaces": "Google Places, ahogy a beküldés azonosította, és az ellenőr változatlanul hagyta:"
       },
       "moderation": {
         "target": "Külső esemény", "nonmember": "Külső szervező — nem tagi fiók",
@@ -8178,7 +8316,8 @@
           "exhibition": "Kiállítás", "talk": "Előadás", "workshop": "Műhelyfoglalkozás", "market": "Piac",
           "food_drink": "Étel és ital", "community": "Közösségi program", "outdoor": "Szabadtéri program", "other": "Egyéb esemény"
         }
-      }
+      },
+      "aiBadge": "MI-segítséggel készült"
     },
     "activities": {
       "eyebrow": "AreYouIn üzemeltetés",
@@ -8637,6 +8776,10 @@
           "externalEvents": {
             "title": "Külső események",
             "copy": "A kézzel felvitt külső események elérhetősége, résztvevői meghívási korlátai és időhorizontja. Ezek nem kapcsolnak be MI-t, automatikus publikálást vagy kutatást."
+          },
+          "eventIntake": {
+            "title": "MI-alapú eseménybeküldés (Vázlat forrásból)",
+            "copy": "A kapcsoló, a keret, a szolgáltatók és modelljeik ahhoz az MI-hez, amely linkből, plakátról vagy egy sornyi szövegből készít külsőesemény-vázlatot. Amíg a vázlatkapcsoló ki van kapcsolva, itt semmi nem lép érvénybe, és az MI soha nem publikál: minden vázlatot ember ellenőriz."
           }
         },
         "settings": {
@@ -8831,6 +8974,54 @@
             "purpose": "Az AreYouIn értesítési beállításokhoz ajánlott alapértelmezett helyi csendes időszak kezdetét és végét adja meg.",
             "effect": "Ha a felhasználónál engedélyezett a csendes időszak, az ütemezett digest kézbesítése halasztódik, amíg a helyi órája ebbe az intervallumba esik. A 22:00–08:00 jellegű tartomány átnyúlik éjfélen.",
             "caution": "Ez alapérték, nem kötelező globális értesítési tilalom. A meglévő explicit felhasználói beállítás az irányadó, az idő számítása pedig a felhasználó időzónáját használja, biztonságos UTC fallbackkel."
+          },
+          "dates_external_admin_drafts_enabled": {
+            "title": "Vázlat forrásból",
+            "purpose": "Az adminisztrátori MI-eseménybeküldés főkapcsolója. Alapértéke KI; csak a pontosan true logikai érték kapcsolja be.",
+            "effect": "KI állapotban nem hozható létre beküldés és nem publikálható belőle esemény, semmi nem tárolódik, és a feldolgozónak nincs dolga, így MI-költés sem keletkezhet. A sorban lévő beküldések továbbra is olvashatók és elutasíthatók.",
+            "caution": "Csak akkor kapcsold be, ha az MI-szolgáltatók kulcsai fent vannak a szerveren, és a havi keret be van állítva. Független a külső események publikálási kapcsolójától, amelyre a vázlat publikálásához szintén szükség van."
+          },
+          "dates_ai_monthly_budget_usd": {
+            "title": "Havi MI-keret (USD)",
+            "purpose": "Ennyit költhet legfeljebb az esemény-MI egy naptári hónapban, egész amerikai dollárban, listaárakon számolva.",
+            "effect": "Minden MI-hívás előbb lefoglalja a becsült költségét. A keret elérésekor az új beküldések keretre várnak, és óránként újrapróbáljuk őket; 80%-nál az MI-költés oldal figyelmeztet. A 0 a vázlatkapcsoló érintése nélkül kikapcsolja az MI-t.",
+            "caution": "A keret emelése után a várakozó beküldések egy órán belül folytatódnak. Az összeg a konzol saját nyilvántartása, nem a szolgáltató számlája; mielőtt építesz rá, vesd össze a kettőt."
+          },
+          "dates_ai_provider_order": {
+            "title": "MI-szolgáltatók sorrendje",
+            "purpose": "Ebben a sorrendben próbáljuk az MI-szolgáltatókat egy kiolvasáshoz: az OpenAI, a Google Gemini és az Anthropic közül egy-három, mindegyik legfeljebb egyszer.",
+            "effect": "Elsőként az első szolgáltatót kérdezzük; a következőt csak akkor, ha az előző nem ad használható eseményt, megtagadja a választ vagy nem érhető el. Akinek nincs kulcsa a szerveren, azt kihagyjuk, a listából kihagyottat pedig soha nem hívjuk.",
+            "caution": "A tartalék szolgáltatótól származó vázlatot az ellenőrnek külön jelezzük. A sorrend megváltoztatása azt is megváltoztatja, hová kerülnek a források, ezért egyeznie kell az adatkezelési tájékoztatóban megnevezett adatfeldolgozókkal."
+          },
+          "dates_ai_openai_model": {
+            "title": "OpenAI-modell",
+            "purpose": "Az az OpenAI-modell, amely beolvassa a forrást, és elkészíti az esemény adatlapjának vázlatát.",
+            "effect": "Az azonosítót változtatás nélkül küldjük a szolgáltatónak. Minden MI-hívásnál azt a modellt rögzítjük, amelyik ténylegesen válaszolt; ezt mutatja az MI-költés oldal és a beküldés is.",
+            "caution": "A Core csak az azonosító alakját ellenőrzi. Ha a kulcs nem használhatja a modellt, minden OpenAI-hívás „nem érhető el” választ ad, és a következő szolgáltató veszi át; előbb ellenőrizd a nevet a szolgáltató aktuális dokumentációjában."
+          },
+          "dates_ai_openai_adjudication_model": {
+            "title": "OpenAI-modell események összevetéséhez",
+            "purpose": "Ezt az OpenAI-modellt kérdezzük meg, hogy két vázlat ugyanazt az eseményt írja-e le, ha a determinisztikus összevetés nem döntő.",
+            "effect": "A válasza csak tájékoztatja az ellenőrnek megjelenő duplikátumvizsgálatot; magától soha nem utasít el és nem von össze semmit.",
+            "caution": "Ugyanabból a havi keretből fut. Ehhez a feladathoz kisebb, olcsóbb modell is elég; módosítás előtt ellenőrizd a nevet a szolgáltató aktuális dokumentációjában."
+          },
+          "dates_ai_gemini_model": {
+            "title": "Google Gemini-modell",
+            "purpose": "Az a Gemini-modell, amelyet akkor használunk, ha a kiolvasásra a Gemini válaszol.",
+            "effect": "Az azonosítót változtatás nélkül küldjük a szolgáltatónak, és minden hívásnál rögzítjük a ténylegesen válaszoló modellt.",
+            "caution": "A Core csak az azonosító alakját ellenőrzi. A nevet a szolgáltató aktuális dokumentációjában ellenőrizd; ismeretlen modellnél a Gemini „nem érhető el” választ ad."
+          },
+          "dates_event_intake_retention_days": {
+            "title": "Beküldések tartalmának megőrzése (nap)",
+            "purpose": "A döntés után ennyi napig őrizzük a beküldés plakátjait és forrásszövegeit, 1 és 365 között.",
+            "effect": "Ezután a feldolgozó törli a plakátfájlokat és a forrásszövegeket; maga a döntési bejegyzés auditcélból 180 napig megmarad. Az idő akkor indul, amikor a beküldést publikálják, elutasítják vagy más módon lezárul.",
+            "caution": "A rövidítés semmit nem töröl azonnal: a feldolgozó következő futása érvényesíti. Egyeznie kell az adatkezelési tájékoztatóban megadott megőrzési idővel."
+          },
+          "dates_event_ticket_domains": {
+            "title": "Engedélyezett jegyértékesítők",
+            "purpose": "Azok a jegyértékesítő oldalak, amelyekre a szervező és a helyszín saját oldalán kívül jegylink mutathat: legfeljebb 50 kisbetűs hosztnév.",
+            "effect": "A forrásban talált jegylinket csak ezeken az oldalakon tartjuk meg; a többit elvetjük, és ezt jelezzük az ellenőrnek. Ugyanez a lista érvényes, amikor egy MI által készített eseményt később szerkesztenek.",
+            "caution": "Csak hivatalos jegyértékesítőt vegyél fel, viszonteladót soha. A hosztnévben nincs https://, útvonal és www. előtag. Üres listával egyik sem engedélyezett."
           }
         }
       },
@@ -8877,6 +9068,693 @@
         "activity": "Aktivitás",
         "message": "Üzenet",
         "review": "Értékelés"
+      },
+      "unknownTypeLabel": "Tárolt érték ({type} típus)",
+      "unknownTypeHelp": "A konzolnak ehhez a beállítástípushoz nincs szerkesztője, ezért az érték csak olvasható, és innen nem menthető. A módosításához újabb Webadmin-kiadás kell.",
+      "stringLabel": "Érték",
+      "stringHelp": "Szöveg. Mentéskor a Core ellenőrzi az értéket.",
+      "modelIdHelp": "A modell azonosítója pontosan úgy, ahogy a szolgáltató írja, például gpt-6.1-sol: kisbetűk és számjegyek, ponttal, kötőjellel vagy aláhúzással tagolva. A Core csak az alakját ellenőrzi; ha a kulcs nem használhatja a modellt, az „nem érhető el” választ ad, és a következő szolgáltató jön.",
+      "modelIdInvalid": "Ez nem modellazonosító alakú. Kisbetűvel kezdődjön, és csak kisbetűt, számjegyet, pontot, kötőjelet és aláhúzást tartalmazzon, legfeljebb 64 karakterben.",
+      "orderedListLabel": "A próbálkozás sorrendje",
+      "orderedListUp": "{item} előrébb",
+      "orderedListDown": "{item} hátrébb",
+      "orderedListRemove": "{item} kihagyása",
+      "orderedListAdd": "{item} hozzáadása",
+      "orderedListHelp": "Elsőként a lista első szolgáltatóját kérdezzük. A következő csak akkor jön, ha az előző nem ad használható eseményt, megtagadja a választ vagy nem érhető el – attól soha, hogy a vázlat megbukott az ellenőrzésen. A kihagyott szolgáltatót soha nem hívjuk; legalább egy kötelező.",
+      "stringListLabel": "Soronként egy elem",
+      "stringListHelp": "Soronként egy elem. Mentéskor a Core minden elemet ellenőriz.",
+      "ticketDomainsHelp": "Soronként egy hosztnév: kisbetűvel, https://, útvonal és www. nélkül – például jegy.hu. Jegylinket csak akkor tartunk meg, ha a szervező vagy a helyszín saját oldalán, vagy ezek egyikén van. Üres listával egyetlen jegyértékesítő sem engedélyezett.",
+      "stringListProblems": {
+        "count": "A listának legalább {minimum} és legfeljebb {maximum} eleme lehet.",
+        "duplicate": "Az egyik elem kétszer szerepel.",
+        "value": "Az egyik elem nincs a megengedett értékek között.",
+        "length": "Az egyik elem üres, vagy hosszabb 253 karakternél.",
+        "host": "Az egyik elem nem egyszerű hosztnév: kisbetűvel, https://, útvonal és www. előtag nélkül – például jegy.hu."
+      }
+    },
+    "intake": {
+      "eyebrow": "AreYouIn üzemeltetés",
+      "aiNotice": "Ezeken az oldalakon minden adatot MI olvasott ki egy linkből, plakátról vagy egy sornyi szövegből. Semmi nem kerül közzétételre, amíg egy ember össze nem veti a forrással és nem publikálja. A tagok a beküldést soha nem látják.",
+      "badgeExtracted": "MI által kiolvasva",
+      "queue": {
+        "title": "Beküldések",
+        "subtitle": "Az esemény-MI-nek átadott források és az azokból készült vázlatok. Az ellenőr magához veszi a beküldést, összeveti a vázlatot a forrással, majd elutasítja, vagy publikálja az eseményeit.",
+        "statusFilter": "Állapot",
+        "draftsOff": "A forrásból készülő vázlat ki van kapcsolva (dates_external_admin_drafts_enabled). Amíg egy adminisztrátor a Konfigurációban be nem kapcsolja, új beküldés nem hozható létre és nem publikálható; a meglévők továbbra is olvashatók és elutasíthatók.",
+        "orderReview": "Az ellenőrzésre váró beküldések a legkorábban kezdődő eseménnyel az élen jelennek meg.",
+        "orderNewest": "A legújabb beküldés van elöl.",
+        "unreadableRow": "Az oldal {row}. sora nem olvasható, ezért nem jelenik meg.",
+        "empty": "Nincs a szűrőnek megfelelő beküldés.",
+        "emptyPage": "Ezen az oldalon nincs beküldés. A sor betöltés közben megváltozhatott; frissíts, vagy lépj vissza egy oldalt.",
+        "untitled": "Még nincs cím",
+        "events": "Események: {count} · publikálva: {published}",
+        "images": "plakát: {count}",
+        "noHardFails": "Nincs kizáró hiba",
+        "hardFails": "Kizáró hiba: {count}",
+        "warnings": "Figyelmeztetés: {count}",
+        "starts": "Kezdés: {date}",
+        "pagination": "{page}. oldal / {pages} · {total} beküldés",
+        "columns": {
+          "intake": "Beküldés",
+          "status": "Állapot",
+          "source": "Csatorna és forrás",
+          "findings": "A Core megállapításai",
+          "created": "Létrehozva",
+          "hold": "Kinél van"
+        }
+      },
+      "lease": {
+        "title": "Ki dolgozik rajta",
+        "copy": "Ha magadhoz veszed a beküldést, öt percre a tiéd, és amíg az oldal nyitva van, ez magától megújul. Elutasítani és publikálni csak akkor lehet, ha nálad van; amíg valakinek nem járt le az ideje, tőle nem vehető el.",
+        "free": "Senkinél nincs",
+        "mine": "Nálad van",
+        "other": "{holder}",
+        "until": "eddig: {time}",
+        "mineUntil": "A beküldés nálad van eddig: {time}.",
+        "otherUntil": "A beküldés nála van: {holder}, eddig: {time}.",
+        "unreadable": "Nem olvasható, hogy a Core szerint kinél van a beküldés, ezért itt most nem kínálunk műveletet. Frissíts az újraolvasáshoz.",
+        "claim": "Magamhoz veszem",
+        "release": "Elengedem",
+        "override": "Más ellenőr foglalásának feloldása",
+        "uncertain": "A Core válasza nem érkezett meg. A beküldést újraolvastuk; mielőtt folytatod, nézd meg, kinél van.",
+        "done": {
+          "claim": "A beküldés a következő öt percre a tiéd.",
+          "release": "A foglalás megszűnt.",
+          "heartbeat": "A foglalásod megújult."
+        }
+      },
+      "access": {
+        "denied": "A szerepköröd ezt nem tartalmazza. A beküldések ellenőrzéséhez eseményellenőri jogosultság, az MI-költés megtekintéséhez a külső események olvasási joga kell. Nem hiba rejtette el előled.",
+        "refused": "A Core elutasította a kérést. A válasza fent olvasható.",
+        "unconfirmed": "Ezt nem sikerült beolvasni. Ez nem mond semmit a jogosultságaidról, és nem jelenti azt, hogy nincs mit mutatni. Frissíts az újrapróbáláshoz.",
+        "reviewRequired": "A beküldés magadhoz vételéhez, elutasításához és olvasásához eseményellenőri jogosultság kell.",
+        "manageRequired": "Ellenőrizhetsz és elutasíthatsz, de esemény publikálásához adminisztrátori eseménykezelési jogosultság kell."
+      },
+      "detail": {
+        "title": "Beküldés",
+        "subtitle": "A forrás, amit az MI kiolvasott belőle, az egyes mezők bizonyítéka és a Core saját ellenőrzéseinek eredménye. Döntés előtt vesd össze a forrással.",
+        "back": "Beküldések",
+        "statusTitle": "Hol tart",
+        "progress": "Az oldal magától újra ellenőrzi.",
+        "unreadableSections": "A Core válaszának ezek a részei nem olvashatók, ezért nem jelennek meg: {sections}. Nem üresek, hanem ismeretlenek.",
+        "injection": "Az MI olyan szöveget jelzett a forrásban, amely utasítani próbálja. A Core semmit nem használt fel belőle, de ezt a vázlatot különös figyelemmel olvasd.",
+        "purgedAt": "A beküldés plakátjait és forrásszövegeit a megőrzési beállítás szerint töröltük: {date}. Maga a bejegyzés auditcélból megmarad.",
+        "channel": "Csatorna és beküldő",
+        "updated": "módosítva: {date}",
+        "revision": "Revízió",
+        "result": "Az MI megállapítása",
+        "noResult": "Még nincs válasz",
+        "waitingSince": "Keretre vár ettől",
+        "decision": "Döntés",
+        "bySystem": "a Core, automatikusan",
+        "duplicateOf": "Már szerepel itt",
+        "retention": "Megőrzés",
+        "retentionCopy": "a plakátok és forrásszövegek eddig: {content}; a bejegyzés eddig: {record}",
+        "inputsTitle": "Mit küldtek be",
+        "unreadableInputs": "A Core válaszából nem olvasható ki, mit küldtek be.",
+        "kind": "A forrás fajtája",
+        "fetch": "A Core által beolvasott oldal",
+        "truncated": "csonkítva",
+        "unreadableImages": "A Core válaszából nem olvasható plakát: {count}.",
+        "flyer": "{index}. plakát",
+        "safeSearch": "tartalomszűrés: felnőtt tartalom {adult}, erőszak {violence}",
+        "flyerPrivate": "Bizalmas bizonyíték. A plakát soha nem jelenik meg nyilvánosan, soha nem lehet eseménykép, és a Core minden megtekintésnél rögzíti, ki nézte meg.",
+        "flyerNotReady": "A plakát nem érhető el: a Core még nem kódolta újra, vagy már törölték.",
+        "flyerAlt": "A beküldött {index}. plakát, a Core által újrakódolva",
+        "flyerShow": "Plakát megjelenítése (a megtekintést rögzítjük)",
+        "unreadableTexts": "A Core válaszából nem olvasható forrásszöveg: {count}.",
+        "runsTitle": "MI-hívások",
+        "unreadableRuns": "A Core válaszából nem olvasható MI-hívás: {count}.",
+        "noRuns": "Ehhez a beküldéshez még nem volt MI-hívás.",
+        "extractionTitle": "Mit olvasott ki belőle az MI",
+        "extractionNotice": "Ez MI-vázlat, nem tény. Minden mezőnél látod, mit idézett hozzá az MI, és hogy a Core megtalálta-e ezt a forrásban. A „Nem ellenőrzött” mező csak az MI állítása.",
+        "noEvents": "Az MI ebből a forrásból nem készített eseményt.",
+        "unreadableEvent": "A(z) {index}. esemény nem olvasható a Core válaszából. Nem jelenik meg, és innen nem publikálható.",
+        "noControls": "A beküldés revíziója vagy foglalása nem olvasható, ezért erről az oldalról most semmi nem módosítható. Frissíts az újraolvasáshoz.",
+        "eventTitle": "{index}. esemény (összesen {total})",
+        "needsMoreInfo": "További adat kell",
+        "published": "Publikálva — esemény megnyitása",
+        "notValidated": "A Core ezt az eseményt még nem ellenőrizte.",
+        "hardFails": "Így nem publikálható:",
+        "warnings": "Publikálás előtt ellenőrizd:",
+        "publicVenueConfirmation": "A helyszín magáncím lehet. Csak akkor publikálható, ha a szerkesztőben megerősíted, hogy nyilvános hely.",
+        "evidenceTitle": "Mezőnként: az MI állítása és a bizonyítéka",
+        "noEvidence": "A Core még nem ellenőrizte ennek az eseménynek a bizonyítékait.",
+        "unverifiedFields": "A forrással nem igazolt mezők: {fields}. Ezeket magad ellenőrizd.",
+        "allVerified": "A Core minden mező idézetét megtalálta a forrásban. Ez azt igazolja, mit állít a forrás, nem azt, hogy a forrásnak igaza van.",
+        "noQuote": "Nincs idézet",
+        "quoteSource": "innen: {source}",
+        "verified": "Ellenőrzött",
+        "unverified": "Nem ellenőrzött",
+        "checkNoQuote": "Az MI ehhez a mezőhöz nem adott idézetet.",
+        "checkFound": "Az idézet szerepel a forrásban ({match}).",
+        "checkNotFound": "Az idézet nem található a forrásban.",
+        "denotes": "Az idézet valóban ezt az értéket jelenti.",
+        "denotesNot": "Az idézet nem ezt az értéket jelenti.",
+        "confidence": "megbízhatóság: {value}",
+        "draftTitle": "Az MI vázlatának további adatai",
+        "attendance": "Részvétel módja",
+        "draftEnds": "Befejezés a forrás szerint",
+        "notStated": "nem szerepel",
+        "publicVenueClaim": "Az MI szerint a helyszín nyilvános",
+        "notChecked": "Nem ellenőrzött",
+        "readAs": "így értelmezve: {value}",
+        "yearInferred": "A forrásban nincs évszám; az MI feltételezte.",
+        "timeNotStated": "A forrás nem ad meg kezdési időt.",
+        "priceUnknown": "A forrásból nem derül ki, hogy ingyenes-e.",
+        "scheduleTitle": "Időpont a Core számítása szerint",
+        "unknown": "Ismeretlen",
+        "endEstimated": "Nem szerepel; a Core a kategóriából becsülné",
+        "venueTitle": "A Core által azonosított helyszín",
+        "venueUnresolved": "A Core nem tudta helyhez kötni a helyszínt. A szerkesztőben add meg és erősítsd meg kézzel.",
+        "purged": "(törölve)",
+        "coordinates": "Koordináták és időzóna",
+        "placeId": "Hely",
+        "similarity": "Egyezés a forrásbeli helyszínnel",
+        "venueCandidates": "A Core által mérlegelt helyek: {count}",
+        "privateAddressWarning": "magáncím lehet",
+        "checksTitle": "A Core ellenőrzései",
+        "noWitness": "Az oldalon nem volt géppel olvasható eseményadat, amellyel össze lehetett volna vetni.",
+        "linksTitle": "A Core által megtartott linkek",
+        "droppedLink": "{field} elvetve: {reason}",
+        "automaticTitle": "Megfelelne az automatikus publikálásnak?",
+        "automaticYes": "Minden feltételnek megfelel. Ennek nincs következménye: továbbra is ember ellenőriz és publikál.",
+        "automaticNo": "Nem. Ennek egyébként sincs következménye; ezek a feltételek hiányoznak:",
+        "dedupeTitle": "Szerepel már?",
+        "columns": {
+          "field": "Mező",
+          "claimed": "Az MI állítása",
+          "quote": "Idézet a forrásból",
+          "check": "A Core ellenőrzése",
+          "outcome": "Eredmény",
+          "at": "Mikor"
+        },
+        "refreshFailed": "A beküldést most nem sikerült újraolvasni. Amit látsz, elavult lehet; semmi nem változott. Próbáld újra a frissítést.",
+        "progressStopped": "A feldolgozó még dolgozik rajta. A Frissítés gombbal nézheted meg, hol tart."
+      },
+      "checks": {
+        "weekday_match": "A forrásban szereplő nap egyezik a dátummal",
+        "venue_resolved": "A helyszín azonosítva",
+        "public_place": "A hely nyilvános helyszín",
+        "tz_from_venue": "Az időzóna a helyszínből származik",
+        "urls_from_evidence": "Minden link szerepel a forrásokban",
+        "quotes_verified": "A dátum és az idő idézete megtalálható a forrásban",
+        "content_safe": "A plakát megfelelt a tartalomszűrésen",
+        "witness": "Az oldal saját eseményadatai"
+      },
+      "sourceLabels": {
+        "image": "a(z) {number}. plakátról leolvasott szöveg",
+        "page": "az oldal szövege",
+        "text": "a beküldött szöveg"
+      },
+      "editor": {
+        "open": "Megnyitás a szerkesztőben",
+        "title": "Ellenőrzés és publikálás",
+        "close": "Szerkesztő bezárása",
+        "unreadable": "A Core ehhez az eseményhez adott előtöltése nem olvasható, ezért nem nyitható meg a szerkesztőben.",
+        "noPrefill": "A Core ehhez az eseményhez nem ad szerkesztői előtöltést.",
+        "holdFirst": "A publikáláshoz előbb vedd magadhoz a beküldést.",
+        "cannotPublish": "Itt nem publikálhatsz: ehhez eseménykezelési jogosultság és bekapcsolt vázlatkapcsoló kell.",
+        "notice": "Az űrlapot az MI vázlata töltötte ki. Minden mezőt javíts a forrás alapján, a négy megerősítést magad jelöld be, és adj meg auditindokot. A publikálással az esemény azonnal láthatóvá válik a tagoknak.",
+        "formNotice": "Az MI töltötte ki a beküldött forrásból. Itt még semmit nem erősített meg ember; az üres mezőt a Core nem tudta megállapítani.",
+        "gaps": "Ezeket a Core nem tudta kitölteni, neked kell: {fields}.",
+        "complete": "Ez az utolsó esemény, amelyet ebből a beküldésből publikálok (a többi {remaining} nem kerül publikálásra).",
+        "confirm": "MI által készített, általad ellenőrzött tartalmat publikálsz. Az esemény azonnal megjelenik a tagoknak, MI-segítséggel készültként megjelölve.",
+        "confirmComplete": "Ezzel a beküldés lezárul.",
+        "confirmPartial": "A beküldés a többi eseménye miatt nálad marad.",
+        "gapFields": {
+          "start": "kezdési időpont",
+          "timezone": "időzóna",
+          "venue": "helyszín és annak helye",
+          "organizer": "szervező",
+          "source": "forráslink",
+          "price": "ingyenes-e"
+        }
+      },
+      "reject": {
+        "title": "Beküldés elutasítása",
+        "copy": "Az elutasítás lezárja a beküldést. Válaszd ki az okot; az indokolás a Core adott okhoz tartozó kötött szövege, nem szabad szöveg.",
+        "holdFirst": "Az elutasításhoz előbb vedd magadhoz a beküldést.",
+        "afterPublish": "Ebből a beküldésből már publikáltak eseményt, ezért nem utasítható el. A szerkesztőből zárd le.",
+        "reason": "Ok",
+        "statementHint": "A beküldő a Core ehhez az okhoz tartozó indokolását kapja.",
+        "note": "Auditmegjegyzés (kötelező, belső)",
+        "noteHint": "Csak az auditnaplóba kerül; a beküldő soha nem látja.",
+        "review": "Elutasítás áttekintése",
+        "retry": "Ugyanazon elutasítás újraküldése",
+        "confirm": "Elutasítod a beküldést az alábbi okkal? Ez a konzolból nem vonható vissza.",
+        "submit": "Elutasítás",
+        "invalid": "Előbb válassz okot, és írj auditmegjegyzést.",
+        "uncertain": "A Core válasza nem érkezett meg, így nem tudni, hogy az elutasítás megtörtént-e. A beküldést újraolvastuk: ha még ellenőrzés alatt áll, küldd el újra ugyanazt az elutasítást.",
+        "done": "A beküldés elutasítva."
+      },
+      "publish": {
+        "done": "Az esemény publikálva, a beküldés lezárult.",
+        "donePartial": "Az esemény publikálva. A beküldés a többi eseménye miatt még nálad van.",
+        "doneRetained": "A Core publikálta az eseményt, de a mentett kérés nem törölhető ebből a böngészőből. Állítsd helyre a böngészőtár elérését, majd ugyanazt a kérést próbáld újra az egyeztetéshez.",
+        "refusedRetained": "A Core elutasította a publikálást, de a mentett kérés nem törölhető ebből a böngészőből. Állítsd helyre a böngészőtár elérését, majd ugyanazt a kérést próbáld újra; újat még ne indíts.",
+        "uncertain": "A publikálás sikerülhetett, de a nyugta nem érkezett meg. A pontos kérés el van mentve. Ugyanazt a kérést próbáld újra; ne publikáld újra az eseményt.",
+        "blocked": "A publikálás nem folytatható biztonságosan. Újrapróbálás előtt ellenőrizd a mentett művelet paneljét és a böngészőtárat.",
+        "expired": "Ez a mentett kérés túl régi a biztonságos újrapróbáláshoz. Ne töröld, és ne publikálj újra; előbb az üzemeltetés vezetője egyeztesse az eseményt az auditnaplóval.",
+        "access": "A friss jogosultságod vagy a Core ideje nem ellenőrizhető. Nem küldtünk semmit. Frissíts, majd próbáld újra.",
+        "invalid": "A konzol ezt a kérést nem küldi el. Ellenőrizd az adatokat, az auditindokot és a négy megerősítést.",
+        "openEvent": "Esemény megnyitása",
+        "pendingEvent": "A(z) {index}. esemény publikálása"
+      },
+      "source": {
+        "title": "Vázlat forrásból",
+        "open": "Új vázlat forrásból",
+        "close": "Bezárás",
+        "copy": "Adj az MI-nek egy linket, egy plakátfotót vagy egy sornyi szöveget. Elkészíti az esemény adatlapjának vázlatát; te ellenőrzöd, és a megszokott szerkesztőben publikálod. Az MI soha nem publikál.",
+        "disabled": "A forrásból készülő vázlat ki van kapcsolva (dates_external_admin_drafts_enabled). Adminisztrátor kapcsolhatja be itt:",
+        "disabledLink": "Konfiguráció",
+        "unknown": "Nem olvasható, hogy a vázlatkészítés be van-e kapcsolva. Megpróbálhatod; ha ki van kapcsolva, a Core jelezni fogja.",
+        "kind": "A forrás fajtája",
+        "url": "Az esemény oldalának linkje",
+        "urlHint": "A szervező vagy a helyszín saját oldala működik a legjobban. Bejelentkezés mögötti oldal (Facebook, Instagram) nem olvasható be.",
+        "images": "Plakátfotók (egy vagy kettő)",
+        "imagesHint": "JPEG, PNG, WEBP vagy HEIC, egyenként legfeljebb 10 MiB. A fotót változtatás nélkül küldjük el; a Core eltávolítja a metaadatait, és bizalmasan őrzi.",
+        "imageText": "Egy sornyi szöveg a plakát mellé (nem kötelező)",
+        "text": "Egy sornyi szöveg az eseményről",
+        "textHint": "Legfeljebb {maximum} karakter. Ha tudod, írd meg az esemény nevét, napját, időpontját és helyszínét.",
+        "privacy": "A forrás a Konfigurációban beállított MI-szolgáltatóhoz kerül. Ne küldj be embereket ábrázoló fotót vagy magáncímet. A plakát soha nem jelenik meg nyilvánosan, és soha nem lesz eseménykép.",
+        "uncertain": "A válasz nem érkezett meg, így nem tudni, hogy a vázlat létrejött-e. Küldd el újra ugyanazt a kérést: ha a vázlat létrejött, megtalálja, és másodikat nem hozhat létre.",
+        "retry": "Ugyanazon kérés újraküldése",
+        "submit": "Vázlat létrehozása",
+        "problems": {
+          "url": "Teljes webcímet adj meg, amely http:// vagy https:// előtaggal kezdődik.",
+          "text": "1 és 500 karakter közötti szöveget írj.",
+          "imageCount": "Egy vagy két fotót válassz.",
+          "imageSize": "Az egyik fotó üres, vagy nagyobb 10 MiB-nál.",
+          "imageType": "Az egyik fájl nem JPEG-, PNG-, WEBP- vagy HEIC-kép."
+        }
+      },
+      "usage": {
+        "open": "MI-költés",
+        "title": "MI-költés",
+        "subtitle": "Az esemény-MI havi költése a havi kerethez mérve, szolgáltató, modell, feladat és csatorna szerint. Csak használati adatok: se forrás, se prompt, se tartalom.",
+        "month": "Hónap",
+        "monthHint": "Hagyd üresen az aktuális hónaphoz, ahogy a Core számolja (UTC).",
+        "show": "Megjelenítés",
+        "current": "Aktuális hónap",
+        "capZero": "A havi keret 0, vagyis az MI ki van kapcsolva: nem indul MI-hívás, az új beküldések keretre várnak.",
+        "exhausted": "A havi keret elfogyott. Ebben a hónapban több MI-hívás nem indul; az új beküldések keretre várnak, amíg a keret nem nő, vagy a hónap véget nem ér.",
+        "alert": "A havi keret több mint 80%-a elfogyott.",
+        "alertAt": "A határt ekkor lépte át: {date}.",
+        "spent": "Költés: {month}",
+        "noCap": "nincs keret, amelyhez mérhető",
+        "ofCap": "{share} a {cap} keretből, a lefoglalt összeggel együtt",
+        "remaining": "Maradék",
+        "reserved": "folyamatban lévő hívásokra lefoglalva: {amount}",
+        "calls": "MI-hívások",
+        "callsHint": "minden hívás, akár érkezett rá válasz, akár nem",
+        "awaitingBudget": "Keretre vár",
+        "awaitingBudgetHint": "beküldés, amelyet a feldolgozó újrapróbál, ha lesz keret",
+        "awaitingBudgetUnread": "az ellenőrzési sor nem olvasható",
+        "awaitingBudgetReviewOnly": "csak ellenőröknek látható",
+        "progress": "A havi keret elköltött vagy lefoglalt része",
+        "breakdown": "Szolgáltató, modell, feladat és csatorna szerint",
+        "breakdownHint": "A megjelenített modell az, amelyik ténylegesen válaszolt. A költség listaárakból számított érték, nem számla.",
+        "unreadableRows": "Nem olvasható, ezért nem megjelenített sorok: {count}.",
+        "empty": "Ebben a hónapban nem rögzítettünk MI-hívást.",
+        "unanswered": "válasz nélkül: {count}",
+        "tokenDetail": "gyorsítótárból {read} · gyorsítótárba {write} · gondolkodás {reasoning}",
+        "estimatedCalls": "{count} hívásnál becsült",
+        "estimated": "becsült",
+        "columns": {
+          "provider": "Szolgáltató és modell",
+          "task": "Feladat",
+          "channel": "Csatorna",
+          "calls": "Hívások",
+          "tokens": "Tokenek be / ki",
+          "cost": "Költség"
+        }
+      },
+      "statusValues": {
+        "received": "Beérkezett",
+        "screening": "Szűrés alatt",
+        "extracting": "Az MI olvassa",
+        "validating": "Ellenőrzés folyamatban",
+        "member_confirming": "A tagra vár",
+        "in_review": "Ellenőrzésre vár",
+        "published": "Publikálva",
+        "merged": "Összevonva",
+        "rejected": "Elutasítva",
+        "duplicate": "Duplikátum",
+        "failed": "Sikertelen",
+        "withdrawn": "Visszavonva",
+        "expired": "Lejárt",
+        "awaiting_budget": "Keretre vár"
+      },
+      "statusHelp": {
+        "received": "A Core eltárolta a forrást. A feldolgozó még nem vette fel.",
+        "screening": "A plakát újrakódolása és szűrése, illetve az oldal letöltése zajlik. MI-hívás még nem történt.",
+        "extracting": "Az MI olvassa a forrást, és készíti az esemény adatlapjának vázlatát.",
+        "validating": "A Core ellenőrzi a vázlatot: idézetek, dátum és idő, helyszín, időzóna, linkek és duplikátumok.",
+        "member_confirming": "Az eseményt javasló tag ellenőrzi a vázlatot.",
+        "in_review": "A vázlat emberi ellenőrzésre kész. Vedd magadhoz, vesd össze a forrással, majd utasítsd el, vagy publikáld az eseményeit.",
+        "published": "Egy ellenőr publikált ebből a beküldésből; lezárult.",
+        "merged": "A forrást egy már létező eseményhez csatoltuk.",
+        "rejected": "A beküldést elutasították; lezárult.",
+        "duplicate": "Ez a forrás vagy esemény már szerepel, ezért nem költöttünk rá újra MI-t. Nyisd meg inkább az eredetit.",
+        "failed": "A feldolgozás nem tudott végigmenni. Az ok lent olvasható; semmi nem került publikálásra. Ha az ok átmeneti volt, küldd be újra a forrást.",
+        "withdrawn": "A beküldő fiókját törölték, ezért a beküldést visszavontuk.",
+        "expired": "Az esemény kezdetéig senki nem döntött, vagy lejárt a keretre várakozás. Semmi nem került publikálásra.",
+        "awaiting_budget": "A havi MI-keret elfogyott, vagy nullára van állítva. A feldolgozó óránként újrapróbálja; a Konfigurációban emeld a keretet, ha hamarabb folytatnád."
+      },
+      "statusDetailValues": {
+        "image-empty": "Üres plakátfájl",
+        "image-unreadable": "A plakát nem olvasható",
+        "image-too-large": "Túl nagy plakátfájl",
+        "image-dimensions": "A plakát mérete nem megfelelő",
+        "image-encode-failed": "A plakát nem kódolható újra",
+        "image-content-rejected": "A plakát tartalma elutasítva",
+        "screening-unavailable": "A tartalomszűrés nem érhető el",
+        "image-missing": "Hiányzó plakátfájl",
+        "source-not-readable": "Bejelentkezés mögötti oldal",
+        "source-not-fetchable": "A cím nem tölthető le",
+        "source-unreachable": "Az oldal nem érhető el",
+        "source-not-text": "Nem weboldal",
+        "source-too-large": "Túl nagy oldal",
+        "source-empty": "Az oldalon nincs szöveg",
+        "not-an-event": "Nem esemény",
+        "prohibited-category": "Nem engedélyezett kategória",
+        "ai-unavailable": "Az MI nem érhető el",
+        "ai-refused": "Az MI elutasította",
+        "ai-not-configured": "Az MI nincs beállítva",
+        "venue-search-unavailable": "A helyszínkeresés nem érhető el",
+        "duplicate-source": "Ugyanezt a forrást már beküldték",
+        "duplicate-event": "Ugyanez az esemény már szerepel",
+        "start-passed": "Az esemény már elkezdődött",
+        "storage-unavailable": "A bizalmas tárhely nem érhető el",
+        "attempts-exhausted": "Ismételt hiba után feladva",
+        "account-erased": "A beküldő fiókja törölve"
+      },
+      "statusDetailHelp": {
+        "image-empty": "A feltöltött fájl üres volt. Töltsd fel újra a fotót.",
+        "image-unreadable": "A Core nem tudta képként értelmezni a fájlt. Próbáld a plakát JPEG- vagy PNG-másolatával.",
+        "image-too-large": "A fájl nagyobb 10 MiB-nál.",
+        "image-dimensions": "A kép túl kicsi, vagy több képpontból áll, mint amennyit a Core elfogad.",
+        "image-encode-failed": "A Core nem tudta elkészíteni a plakát saját, megtisztított másolatát.",
+        "image-content-rejected": "A tartalomszűrés valószínűleg felnőtt vagy erőszakos tartalmat talált, ezért a plakátot még az MI-hívás előtt elutasítottuk.",
+        "screening-unavailable": "A tartalomszűrő szolgáltatás nem válaszolt. A feldolgozó magától újrapróbálja.",
+        "image-missing": "A tárolt plakátfájl már nincs meg.",
+        "source-not-readable": "Az oldal bejelentkezés mögött van, nem olvasható be. A szervező vagy a helyszín saját oldalát használd.",
+        "source-not-fetchable": "A Core ezt a címet nem tölti le: nem nyilvános webcím.",
+        "source-unreachable": "Az oldal nem válaszolt, vagy hibát adott.",
+        "source-not-text": "A cím nem olyan weboldalt ad, amelyet a Core olvasni tud.",
+        "source-too-large": "Az oldal nagyobb annál, amennyit a Core beolvas.",
+        "source-empty": "Az oldalon nem volt olvasható szöveg.",
+        "not-an-event": "Az MI szerint a forrás nem olyan eseményt ír le, amelyen részt lehet venni.",
+        "prohibited-category": "Az esemény olyan kategóriába tartozik, amely itt nem jelenhet meg.",
+        "ai-unavailable": "Egyik MI-szolgáltató sem válaszolt. A feldolgozó magától újrapróbálja; ha ez tartós, ellenőrizd a szolgáltatók sorrendjét és a kulcsokat.",
+        "ai-refused": "Az MI-szolgáltató megtagadta a forrás feldolgozását.",
+        "ai-not-configured": "A beállított sorrendben egyik MI-szolgáltatóhoz sincs kulcs a szerveren.",
+        "venue-search-unavailable": "A helykereső nem válaszolt, ezért a helyszín nem azonosítható. A szerkesztőben add meg kézzel.",
+        "duplicate-source": "Ugyanezt a címet már beküldték; nem költöttünk rá újra MI-t.",
+        "duplicate-event": "A Core megtalálta ugyanezt az eseményt a publikált események vagy a nyitott beküldések között.",
+        "start-passed": "Az esemény elkezdődött, mielőtt bárki döntött volna, ezért a beküldés lejárt.",
+        "storage-unavailable": "A Core plakátokhoz használt bizalmas tárhelye nem érhető el.",
+        "attempts-exhausted": "Ugyanaz a lépés hatszor egymás után meghiúsult, ezért a Core feladta.",
+        "account-erased": "A beküldő tag törölte a fiókját."
+      },
+      "channelValues": {
+        "admin_draft": "Adminisztrátori vázlat",
+        "member_suggestion": "Tag javaslata",
+        "ai_research": "MI-kutatás"
+      },
+      "inputKindValues": {
+        "url": "Link",
+        "images": "Plakátfotó",
+        "text": "Szöveg"
+      },
+      "decisionValues": {
+        "published": "Ellenőr publikálta",
+        "rejected": "Ellenőr elutasította",
+        "duplicate": "Duplikátumként lezárva",
+        "merged": "Meglévő eseménybe olvasztva",
+        "expired": "Lejárt",
+        "screening_rejected": "A szűrésen elutasítva",
+        "extraction_rejected": "A kiolvasáskor elutasítva"
+      },
+      "rejectReasons": {
+        "not_an_event": "Nem esemény",
+        "date_unclear_or_past": "Az időpont nem egyértelmű, vagy már elmúlt",
+        "private_event": "Zártkörű esemény vagy magáncím",
+        "duplicate": "Már szerepel",
+        "prohibited_content": "Nem engedélyezett kategória",
+        "unverifiable": "Megbízható forrásból nem ellenőrizhető",
+        "outside_area": "Az AreYouIn területén kívül esik",
+        "sensitive_not_allowed": "Érzékeny téma, amelyet nem teszünk közzé",
+        "spam_or_fake": "Kéretlen tartalom vagy nem valódi esemény"
+      },
+      "resultValues": {
+        "event": "Egy esemény",
+        "multiple_events": "Több esemény",
+        "not_an_event": "Nem esemény",
+        "insufficient_information": "Nincs elég információ",
+        "prohibited": "Nem engedélyezett kategória"
+      },
+      "hardFails": {
+        "not_an_event": "A forrás nem eseményt ír le.",
+        "prohibited_category": "Az esemény nem engedélyezett kategóriába tartozik.",
+        "insufficient_information": "A forrásban nincs elég adat ahhoz, hogy esemény legyen belőle.",
+        "title_missing": "Nincs cím.",
+        "start_missing": "Nincs kezdési dátum.",
+        "time_missing": "A forrás nem ad meg kezdési időt.",
+        "midnight_unconfirmed": "A kezdés éjfél, és ezt a forrás nem erősíti meg.",
+        "relative_date_unconfirmed": "A dátum relatív (például „szombaton”), és nem köthető biztosan naptári naphoz.",
+        "local_time_nonexistent": "Ez a helyi idő azon a napon nem létezik (óraátállítás).",
+        "local_time_ambiguous": "Ez a helyi idő azon a napon kétszer fordul elő (óraátállítás).",
+        "start_in_past": "A kezdés a múltban van.",
+        "start_beyond_lookahead": "A kezdés távolabb van, mint ameddig esemény rögzíthető.",
+        "end_not_after_start": "A befejezés nem a kezdés után van.",
+        "duration_too_long": "Az esemény hosszabb a megengedettnél.",
+        "weekday_mismatch": "A forrásban szereplő nap nem egyezik a dátummal.",
+        "online_only": "Az esemény csak online zajlik.",
+        "venue_not_public": "A helyszín nem nyilvános hely.",
+        "venue_unresolved": "A helyszín nem azonosítható.",
+        "venue_ambiguous": "Több hely is ugyanúgy megfelel a helyszínnek.",
+        "venue_country_unavailable": "A helyszín olyan országban van, ahol az AreYouIn külső eseményei nem érhetők el.",
+        "timezone_unknown": "A helyszín időzónája nem ismert."
+      },
+      "warnings": {
+        "prompt_injection_suspected": "A forrásban olyan szöveg van, amely utasítani próbálja az MI-t.",
+        "fallback_provider": "A tartalék MI-szolgáltató válaszolt, nem az első.",
+        "year_inferred": "A forrásban nincs évszám; feltételezett érték.",
+        "start_at_midnight": "A kezdés éjfélkor van.",
+        "start_is_doors_time": "A kezdési idő a kapunyitás lehet, nem a program kezdete.",
+        "end_estimated": "A befejezés nem szerepel; a kategóriából becsült érték lenne.",
+        "date_ambiguous": "A dátum többféleképpen is értelmezhető.",
+        "multiple_dates": "A forrás több dátumot is megnevez.",
+        "low_confidence_date": "Az MI bizonytalan a dátumban.",
+        "low_confidence_time": "Az MI bizonytalan az időpontban.",
+        "low_confidence_venue": "Az MI bizonytalan a helyszínben.",
+        "date_quote_unverified": "A dátum idézete nem található a forrásban.",
+        "time_quote_unverified": "Az időpont idézete nem található a forrásban.",
+        "quotes_unverified": "Néhány idézet nem található a forrásban.",
+        "witness_disagrees_date": "Az oldal saját eseményadatai más dátumot adnak.",
+        "witness_disagrees_time": "Az oldal saját eseményadatai más időpontot adnak.",
+        "witness_disagrees_venue": "Az oldal saját eseményadatai más helyszínt adnak.",
+        "venue_similarity_low": "A talált hely neve gyengén egyezik a helyszínével.",
+        "possible_private_address": "A helyszín magáncím lehet.",
+        "venue_search_unavailable": "A helykereső nem volt elérhető.",
+        "venue_unbounded": "A helyszínt nem lehetett városhoz vagy területhez kötve ellenőrizni.",
+        "venue_unclear": "A forrásból nem egyértelmű a helyszín.",
+        "city_missing": "A forrás nem nevez meg várost.",
+        "possibly_private": "Az esemény zártkörű lehet.",
+        "possibly_online": "Az esemény online lehet.",
+        "official_url_dropped": "A hivatalos linket elvetettük.",
+        "ticket_url_dropped": "A jegylinket elvetettük.",
+        "organizer_url_dropped": "A szervező linkjét elvetettük.",
+        "paid_without_official_link": "Fizetős esemény hivatalos link nélkül.",
+        "organizer_missing": "A forrás nem nevez meg szervezőt.",
+        "price_unclear": "A belépő ára nem egyértelmű.",
+        "sensitive": "A téma érzékeny lehet.",
+        "status_canceled": "A forrás szerint az esemény elmarad.",
+        "status_postponed": "A forrás szerint az eseményt elhalasztották.",
+        "status_sold_out": "A forrás szerint minden jegy elkelt.",
+        "low_legibility": "A plakát nehezen olvasható.",
+        "language_uncertain": "A forrás nyelve bizonytalan.",
+        "conflicting_information": "A forrás ellentmond önmagának.",
+        "content_unscreened": "A plakát tartalmát nem szűrtük."
+      },
+      "autoBlockers": {
+        "no_hard_fail": "kizáró hibája van",
+        "warnings_benign": "olyan figyelmeztetése van, amelyhez ember kell",
+        "primary_provider": "nem az első MI-szolgáltató válaszolt",
+        "quotes_verified": "nem minden idézet található a forrásban",
+        "time_explicit": "a kezdési idő nincs kifejezetten megadva",
+        "confident": "az MI nem elég biztos",
+        "venue_place_matches": "a helyszín nem egyezik elég pontosan egy hellyel",
+        "timezone_known": "az időzóna nem ismert",
+        "country_available": "az országban nem érhetők el a külső események",
+        "content_screened": "a plakát tartalmát nem szűrtük"
+      },
+      "tierValues": {
+        "official": "Hivatalos forrás",
+        "single_source": "Egyetlen forrás"
+      },
+      "witnessValues": {
+        "agrees": "egyezik",
+        "disagrees": "eltér",
+        "absent": "nincs megadva"
+      },
+      "evidenceFields": {
+        "title": "Cím",
+        "date": "Dátum",
+        "time": "Időpont",
+        "venue": "Helyszín",
+        "organizer": "Szervező",
+        "price": "Belépő",
+        "status": "Állapot"
+      },
+      "matchValues": {
+        "exact": "szó szerint",
+        "loose": "kisebb eltérésekkel"
+      },
+      "dedupeValues": {
+        "new": "Új: nem találtunk hasonlót.",
+        "review": "Lehet, hogy duplikátum: vesd össze a jelöltekkel.",
+        "duplicate": "Már szereplő tétel duplikátuma."
+      },
+      "dedupeVerdicts": {
+        "duplicate": "ugyanaz",
+        "review": "nézd meg"
+      },
+      "dedupeKinds": {
+        "event": "Publikált esemény",
+        "intake": "Beküldés"
+      },
+      "linkDropReasons": {
+        "not_in_sources": "nem szerepel a forrásokban",
+        "not_https": "nem https-cím",
+        "domain_not_allowed": "az oldal nem engedélyezett jegyértékesítő"
+      },
+      "providerValues": {
+        "openai": "OpenAI",
+        "gemini": "Google Gemini",
+        "anthropic": "Anthropic"
+      },
+      "outcomeValues": {
+        "sheet": "Adatlap érkezett",
+        "verdict": "Ítélet érkezett",
+        "refused": "Megtagadva",
+        "unavailable": "Nem érhető el",
+        "truncated": "Csonka válasz",
+        "invalid_output": "Használhatatlan válasz",
+        "not_configured": "Nincs beállítva"
+      },
+      "likelihoodValues": {
+        "UNKNOWN": "ismeretlen",
+        "VERY_UNLIKELY": "nagyon valószínűtlen",
+        "UNLIKELY": "valószínűtlen",
+        "POSSIBLE": "lehetséges",
+        "LIKELY": "valószínű",
+        "VERY_LIKELY": "nagyon valószínű"
+      },
+      "attendanceModes": {
+        "in_person": "Személyesen",
+        "online": "Online",
+        "hybrid": "Személyesen és online",
+        "unknown": "Nem szerepel"
+      },
+      "statusSignals": {
+        "scheduled": "Megtartják",
+        "canceled": "Elmarad",
+        "postponed": "Elhalasztva",
+        "sold_out": "Minden jegy elkelt",
+        "unknown": "Nem szerepel"
+      },
+      "prohibitedCategories": {
+        "sexual_services": "szexuális szolgáltatás",
+        "weapons": "fegyverek",
+        "drugs": "kábítószer",
+        "gambling_promotion": "szerencsejáték reklámja",
+        "hate": "gyűlöletkeltés",
+        "mlm_or_business_opportunity": "MLM vagy üzleti lehetőség",
+        "crypto_seminar": "kriptoszeminárium",
+        "private_party": "zártkörű buli",
+        "other": "egyéb"
+      },
+      "taskValues": {
+        "flyer_extract": "Plakát kiolvasása",
+        "url_extract": "Oldal kiolvasása",
+        "text_extract": "Szöveg kiolvasása",
+        "same_event": "Két esemény összevetése"
+      },
+      "linkFields": {
+        "official_url": "Hivatalos oldal",
+        "ticket_url": "Jegyoldal",
+        "organizer_url": "A szervező oldala"
+      },
+      "refusals": {
+        "unknown": "A Core olyan okkal utasította el a kérést, amelyhez a konzolnak nincs magyarázata:",
+        "dates-intake-admin-drafts-disabled": "A forrásból készülő vázlat ki van kapcsolva. Adminisztrátor kapcsolhatja be a Konfigurációban (dates_external_admin_drafts_enabled).",
+        "dates-intake-claimed": "A beküldés másik ellenőrnél van.",
+        "dates-intake-conflict": "A beküldés megváltozott, mióta az oldal beolvasta. Újraolvastuk; nézd át, mielőtt megismétled a műveletet.",
+        "dates-intake-event-unavailable": "A beküldés adott eseménye nem létezik, vagy már publikálták.",
+        "dates-intake-filter-invalid": "A Core nem fogadja el ezt a szűrőt.",
+        "dates-intake-id-invalid": "Ez nem beküldésazonosító.",
+        "dates-intake-image-invalid": "A Core nem fogadta el a fotót: legfeljebb 10 MiB-os JPEG-, PNG-, WEBP- vagy HEIC-kép lehet, és legfeljebb kettő.",
+        "dates-intake-image-unavailable": "A plakát nem érhető el: még nincs újrakódolva, vagy már törölték.",
+        "dates-intake-input-invalid": "A Core nem fogadta el a kérést ebben a formában: pontosan egy, a választott fajtának megfelelő forrást adj meg.",
+        "dates-intake-kind-invalid": "A Core nem ismeri ezt a forrásfajtát.",
+        "dates-intake-lease-invalid": "A Core nem ismeri ezt a foglalási műveletet.",
+        "dates-intake-lease-lost": "A beküldésre vonatkozó foglalásod lejárt. A folytatáshoz vedd újra magadhoz.",
+        "dates-intake-lease-owner-required": "A beküldés másik ellenőrnél van; csak ő vagy egy szuperadmin engedheti el.",
+        "dates-intake-lease-required": "Ehhez nálad kell lennie a beküldésnek. Előbb vedd magadhoz.",
+        "dates-intake-locale-invalid": "A Core nem fogadja el ezt a nyelvet.",
+        "dates-intake-origin-invalid": "A Core nem fogadja el ezt a helymegjelölést.",
+        "dates-intake-reason-invalid": "A Core nem ismeri ezt az elutasítási okot.",
+        "dates-intake-revision-invalid": "A kéréssel küldött revízió érvénytelen. Frissítsd az oldalt.",
+        "dates-intake-source-not-readable": "Ez az oldal bejelentkezés mögött van, nem olvasható be. Használd inkább a szervező vagy a helyszín saját oldalát.",
+        "dates-intake-state-invalid": "A beküldés már nincs olyan állapotban, amely ezt megengedi.",
+        "dates-intake-storage-unavailable": "A Core plakátokhoz használt bizalmas tárhelye nem érhető el. Próbáld újra később.",
+        "dates-intake-text-invalid": "A Core nem fogadta el a szöveget: 1 és 500 karakter között lehet.",
+        "dates-intake-unavailable": "Nincs ilyen beküldés.",
+        "dates-intake-url-invalid": "A Core nem fogadja el ezt a címet: nyilvános http- vagy https-webcím lehet.",
+        "dates-admin-capability-required": "A szerepköröd ezt nem engedi meg.",
+        "dates-admin-reason-required": "Auditmegjegyzés szükséges.",
+        "dates-admin-reason-invalid": "Az auditmegjegyzés nem megfelelő: legfeljebb 1000 karakter lehet.",
+        "dates-admin-idempotency-invalid": "A kérés azonosítója érvénytelen. Frissítsd az oldalt, és próbáld újra.",
+        "dates-admin-idempotency-conflict": "Ezzel az azonosítóval már más kérés ment el. Frissítsd az oldalt, és kezdd újra.",
+        "dates-admin-command-in-progress": "Ugyanez a kérés még feldolgozás alatt áll. Várj egy kicsit, majd próbáld újra.",
+        "dates-admin-unavailable": "A Core nem tudta feldolgozni a kérést. Próbáld újra később.",
+        "dates-external-publishing-disabled": "A külső események publikálását a kiadási kapcsoló tiltja. Csak a kiadás vezetője kapcsolhatja be.",
+        "dates-external-duplicate": "Ugyanez az esemény már publikálva van: azonos forrás és nap, vagy azonos cím, helyszín és nap.",
+        "dates-external-confirmation-required": "Mind a négy megerősítést be kell jelölni.",
+        "dates-external-source-required": "Forráslink megadása kötelező.",
+        "dates-external-input-invalid": "A Core nem fogadta el az esemény adatlapját ebben a formában.",
+        "dates-external-start-invalid": "A kezdés a múltban van, vagy távolabb, mint ameddig esemény rögzíthető.",
+        "dates-external-duration-invalid": "A befejezés nem a kezdés után van, vagy az esemény hosszabb a megengedettnél.",
+        "dates-external-time-invalid": "Az időpont érvénytelen.",
+        "dates-external-venue-invalid": "A helyszín hiányos vagy érvénytelen.",
+        "dates-external-url-invalid": "Az egyik link nem érvényes https-cím.",
+        "dates-external-ticket-domain-invalid": "A jegylink nem a szervező oldalán vagy engedélyezett jegyértékesítőnél van.",
+        "dates-external-paid-official-link-required": "Fizetős eseményhez hivatalos link kell.",
+        "dates-external-category-invalid": "A kategória érvénytelen.",
+        "dates-external-summary-invalid": "Hiányzik egy összefoglaló, vagy túl hosszú.",
+        "dates-external-organizer-invalid": "A szervező hiányzik vagy érvénytelen.",
+        "dates-external-price-invalid": "A belépő szövege érvénytelen.",
+        "dates-external-age-invalid": "A korhatár 18 és 99 között lehet.",
+        "dates-external-sensitive-invalid": "Érzékeny eseményhez indok kell.",
+        "dates-external-attendee-list-invalid": "A résztvevőlista beállítása érvénytelen.",
+        "dates-timezone-invalid": "Az időzóna nem érvényes IANA-név.",
+        "dates-title-invalid": "A cím 3 és 120 karakter között lehet.",
+        "admin-revoked": "Az adminisztrátori hozzáférésedet visszavonták.",
+        "unauthorized": "A Core nem fogadta el a konzol hitelesítő adatát.",
+        "bad-origin": "A konzol elutasította a kérést, mert nem magából a konzolból érkezett.",
+        "auth-required": "A munkameneted véget ért. Jelentkezz be újra.",
+        "invalid-input": "A konzol nem küldte el a kérést, mert nem a várt formában volt.",
+        "too-large": "A kérés túl nagy.",
+        "image-too-large": "Az egyik fotó nagyobb 10 MiB-nál.",
+        "image-type-unsupported": "Az egyik fájl nem JPEG-, PNG-, WEBP- vagy HEIC-kép.",
+        "core-unavailable": "A Core nem érhető el. Ebből semmire nem lehet következtetni; próbáld újra.",
+        "core-timeout": "A Core nem válaszolt időben. A kérés ettől még megérkezhetett; mielőtt megismétled, olvasd újra az oldalt.",
+        "invalid-core-response": "A Core válasza nem olvasható.",
+        "admin-write-required": "A szerepköröd csak olvasásra jogosít.",
+        "not-found": "A konzol nem ismeri ezt a műveletet."
       }
     }
   },

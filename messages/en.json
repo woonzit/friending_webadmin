@@ -1215,6 +1215,15 @@
               "1": "Open the exact external event rather than creating a second occurrence.",
               "2": "Use the activity-history link for cases and the external editor for event content."
             }
+          },
+          "draftFromSource": {
+            "title": "Draft from source",
+            "purpose": "A link, a flyer photo or a line of text is handed to the event AI, which drafts an event sheet for a person to review.",
+            "guidance": "The entry is offered only to administrators and only while the draft switch is on. The AI never publishes, and a flyer is never shown publicly.",
+            "actions": {
+              "1": "Prefer the organizer's or the venue's own page; pages behind a login cannot be read.",
+              "2": "After an unanswered request send the same one again: it cannot create a second draft."
+            }
           }
         }
       },
@@ -2918,6 +2927,129 @@
               "2": "Note the withheld count when escalating through an authorized server-side investigation."
             },
             "guidance": "Withheld does not mean missing evidence. It protects secrets, private data and unbounded payloads from entering the browser or screenshots."
+          }
+        }
+      },
+      "datesIntakeQueue": {
+        "title": "Intake queue help",
+        "summary": "This queue lists the sources handed to the event AI and the drafts it made. A reviewer takes an intake, compares the draft with the source and then rejects it or publishes its events; nothing in the queue is visible to members.",
+        "steps": {
+          "1": "Filter by status; intakes in review are ordered with the soonest event first.",
+          "2": "Take an intake so that no other reviewer works on it at the same time, then open it.",
+          "3": "Let go of an intake you will not finish, so that it does not wait for your hold to run out."
+        },
+        "sections": {
+          "draftFromSource": {
+            "title": "Draft from source",
+            "purpose": "A link, a flyer photo or a line of text is handed to the event AI, which drafts an event sheet for a person to review.",
+            "guidance": "The entry is offered only to administrators and only while the draft switch is on. The AI never publishes, and a flyer is never shown publicly.",
+            "actions": {
+              "1": "Prefer the organizer's or the venue's own page; pages behind a login cannot be read.",
+              "2": "After an unanswered request send the same one again: it cannot create a second draft."
+            }
+          },
+          "queue": {
+            "title": "Queue, filters and findings",
+            "purpose": "Each row shows where an intake came from, where it stands, how many events the AI found and what Core's checks flagged.",
+            "guidance": "A row that cannot be read is named instead of hidden, and a read error is never evidence of an empty queue.",
+            "actions": {
+              "1": "Read the blocking problems and warnings before opening a draft.",
+              "2": "Refresh after another reviewer acts; counts beside the statuses cover the whole queue."
+            }
+          },
+          "holds": {
+            "title": "Taking and releasing",
+            "purpose": "A hold reserves an intake for one reviewer for five minutes and is renewed while its page is open.",
+            "guidance": "Nobody can take an intake from a reviewer whose time has not run out; only a superadmin can release another reviewer's hold.",
+            "actions": {
+              "1": "Take an intake only when you are about to review it.",
+              "2": "Release it when you stop, instead of leaving it to expire."
+            }
+          }
+        }
+      },
+      "datesIntakeDetail": {
+        "title": "Intake review help",
+        "summary": "This page shows one intake: what was submitted, what the AI read from it with the evidence for each field, what Core's deterministic checks say, and the actions a reviewer has. The content is an AI draft until a person publishes it through the event editor.",
+        "steps": {
+          "1": "Read the status and take the intake; while the pipeline is still working the page checks again by itself.",
+          "2": "Compare each field with its quote and with the source itself, and read the blocking problems and warnings.",
+          "3": "Open an event in the editor, correct it, tick the four confirmations and publish - or reject the intake with a reason."
+        },
+        "sections": {
+          "status": {
+            "title": "Status, hold and retention",
+            "purpose": "The status says where the intake stands and why it stopped, who decided, and how long its flyers, texts and record are kept.",
+            "guidance": "Failed, duplicate, expired and waiting-for-budget intakes explain themselves; none of them published anything.",
+            "actions": {
+              "1": "Take the intake before deciding; rejecting and publishing need your hold.",
+              "2": "Use Refresh after a lost answer instead of repeating an action blindly."
+            }
+          },
+          "inputs": {
+            "title": "Submitted source and flyers",
+            "purpose": "The link, the text and the flyers that were submitted, plus the text Core holds of them and checks every quote against.",
+            "guidance": "A flyer is private evidence: it is fetched only on request through the console, each view is recorded, and it is never an event image.",
+            "actions": {
+              "1": "Open the source link in a new tab and read the event there yourself.",
+              "2": "Show a flyer only when you need it for the comparison."
+            }
+          },
+          "evidence": {
+            "title": "AI draft and evidence per field",
+            "purpose": "For every field the page shows the AI's claim, the words it quoted and whether Core found those words in the source.",
+            "guidance": "Verified means the source says so, not that the source is right. An unverified field is the AI's claim alone and needs your own check.",
+            "actions": {
+              "1": "Treat every unverified field and every warning as something to check by hand.",
+              "2": "Compare the resolved venue and the duplicate candidates before publishing."
+            }
+          },
+          "editor": {
+            "title": "Editor and publication",
+            "purpose": "Open in editor prefills the usual external-event form with Core's draft; publication goes through the same publisher and confirmations as a manual event.",
+            "guidance": "The four confirmations are always yours, an empty field is one Core could not determine, and the event is marked as AI-assisted for members.",
+            "actions": {
+              "1": "Publish the events of a multi-event intake one at a time, and say when one is the last.",
+              "2": "After an unanswered publication retry the saved request; never publish the event again."
+            }
+          },
+          "reject": {
+            "title": "Rejection",
+            "purpose": "A rejection ends the intake with one of nine reasons; the statement of reasons is Core's fixed wording for that reason.",
+            "guidance": "The audit note is required and internal. An intake from which an event was already published can no longer be rejected.",
+            "actions": {
+              "1": "Choose the reason that the submitter should be told.",
+              "2": "Write the audit note so that another reviewer understands the decision."
+            }
+          }
+        }
+      },
+      "datesAiUsage": {
+        "title": "AI usage help",
+        "summary": "This page shows what the event AI has cost in a calendar month against the monthly cap an administrator set, broken down by provider, model, task and channel. It holds usage figures only: no source, no prompt and no extracted content.",
+        "steps": {
+          "1": "Read the spend against the cap and whether the 80% alert or the exhausted state is shown.",
+          "2": "Check how many intakes wait for budget before deciding whether to raise the cap in Configuration.",
+          "3": "Use the breakdown to see which provider, model and task the spend comes from."
+        },
+        "sections": {
+          "budget": {
+            "title": "Monthly budget and alerts",
+            "purpose": "The spend, what is reserved for calls in flight and what remains of the cap, with the alert at 80% and the exhausted state.",
+            "guidance": "A cap of 0 switches the AI off. When the cap is used up no AI call is made and new intakes wait; the worker retries them every hour.",
+            "actions": {
+              "1": "Raise the cap in Configuration when intakes are waiting and the spend is expected.",
+              "2": "Compare the figure with the provider's invoice; it is computed from list prices."
+            }
+          },
+          "breakdown": {
+            "title": "Breakdown by provider, model, task and channel",
+            "purpose": "Calls, tokens and cost per provider, model, task and channel, with the model that actually answered.",
+            "guidance": "Unanswered calls and calls with an estimated cost are shown separately, so that a provider outage is visible in the figures.",
+            "actions": {
+              "1": "Look at earlier months to compare the cost of a change of model.",
+              "2": "Treat many unanswered calls as a sign to check the provider order and keys."
+            }
           }
         }
       }
@@ -7990,7 +8122,9 @@
       "activities": "Activities",
       "external": "External events",
       "moderation": "Moderation",
-      "configuration": "Configuration"
+      "configuration": "Configuration",
+      "intakes": "Intakes",
+      "usage": "AI usage"
     },
     "external": {
       "eyebrow": "AreYouIn operations",
@@ -8010,7 +8144,11 @@
         "title": "Verification and sources", "tier": "Verification tier", "submitter": "Submitted by", "adminEntered": "Entered by an administrator; no member submitter",
         "anonymous": "Anonymous or not disclosed", "member": "Member UID {uid}", "channel": "Submission channel",
         "assistance": "AI assistance", "noAi": "None — manually entered and checked",
-        "boundary": "These are the safe source and credit fields provided by Core. Source links open a website; they do not fetch, verify or republish its content. No operator identity or private evidence is exposed here."
+        "boundary": "These are the safe source and credit fields provided by Core. Source links open a website; they do not fetch, verify or republish its content. No operator identity or private evidence is exposed here.",
+        "aiAssisted": "Drafted by AI from a submitted source; a person checked it against the source and published it.",
+        "venue": "Where the venue comes from",
+        "venuePin": "A pin an administrator confirmed",
+        "venuePlaces": "Google Places, as the intake resolved it and the reviewer left it:"
       },
       "moderation": {
         "target": "External event", "nonmember": "External organizer — not a member account",
@@ -8178,7 +8316,8 @@
           "exhibition": "Exhibition", "talk": "Talk", "workshop": "Workshop", "market": "Market",
           "food_drink": "Food and drink", "community": "Community", "outdoor": "Outdoors", "other": "Other event"
         }
-      }
+      },
+      "aiBadge": "AI-assisted"
     },
     "activities": {
       "eyebrow": "AreYouIn operations",
@@ -8637,6 +8776,10 @@
           "externalEvents": {
             "title": "External events",
             "copy": "Manual external-event availability, participant invitation limits and the entry window. These controls do not enable AI, automatic publication or research."
+          },
+          "eventIntake": {
+            "title": "AI event intake (Draft from source)",
+            "copy": "The switch, the budget, the providers and their models for the AI that drafts external events from a link, a flyer or a line of text. Nothing here takes effect while the draft switch is off, and the AI never publishes: a person reviews every draft."
           }
         },
         "settings": {
@@ -8831,6 +8974,54 @@
             "purpose": "Provides the default local-time quiet-hour start and end advertised for AreYouIn notification settings.",
             "effect": "When quiet hours are enabled for a user, scheduled digest delivery is deferred while the user's local clock is inside this interval. A range such as 22:00–08:00 crosses midnight.",
             "caution": "This is a default, not a mandatory global blackout. Existing explicit user preferences remain authoritative, and the user's timezone is used with UTC as a safe fallback."
+          },
+          "dates_external_admin_drafts_enabled": {
+            "title": "Draft from source",
+            "purpose": "Master switch of the AI event intake for administrators. Its default is OFF; only the exact stored boolean true turns it on.",
+            "effect": "OFF refuses creating an intake and publishing from one, stores nothing and leaves the intake worker with nothing to do, so no AI spend can occur. Intakes already in the queue can still be read and rejected.",
+            "caution": "Turn it on only after the AI provider keys are installed on the server and the monthly budget is set. It is independent of the external-event publication switch, which publishing a draft also needs."
+          },
+          "dates_ai_monthly_budget_usd": {
+            "title": "Monthly AI budget (USD)",
+            "purpose": "The most the event AI may spend in a calendar month, in whole US dollars, counted from list prices.",
+            "effect": "Each AI call reserves its estimated cost first. When the cap is reached, new intakes wait for budget and are retried hourly; at 80% the usage page shows an alert. 0 switches the AI off without touching the draft switch.",
+            "caution": "Raising the cap lets waiting intakes continue within the hour. The figure is the console's own ledger, not the provider's invoice; compare the two before relying on it."
+          },
+          "dates_ai_provider_order": {
+            "title": "AI provider order",
+            "purpose": "The order in which the AI providers are tried for an extraction: one to three of OpenAI, Google Gemini and Anthropic, each at most once.",
+            "effect": "The first provider is asked first; the next only when the one before returns no usable event, declines or is unavailable. A provider without a key on the server is skipped, and one left out of the list is never called.",
+            "caution": "A draft from a backup provider is marked as such for the reviewer. Changing the order changes where sources are sent, so it must match the processors named in the privacy notice."
+          },
+          "dates_ai_openai_model": {
+            "title": "OpenAI model",
+            "purpose": "The OpenAI model that reads a source and drafts the event sheet.",
+            "effect": "The identifier is sent to the provider as it is. Each AI call records the model that actually answered, which is what the usage page and the intake show.",
+            "caution": "Core checks only the shape of the identifier. A model the key cannot use makes every OpenAI call answer as unavailable, so the next provider takes over; confirm the name in the provider's current documentation first."
+          },
+          "dates_ai_openai_adjudication_model": {
+            "title": "OpenAI model for comparing events",
+            "purpose": "The OpenAI model that is asked whether two drafts describe the same event when the deterministic comparison is not conclusive.",
+            "effect": "Its answer only informs the duplicate check shown to the reviewer; it never rejects or merges anything by itself.",
+            "caution": "It runs within the same monthly budget. A smaller, cheaper model is enough for this task; check the name in the provider's current documentation before changing it."
+          },
+          "dates_ai_gemini_model": {
+            "title": "Google Gemini model",
+            "purpose": "The Gemini model used when Gemini is the provider that answers an extraction.",
+            "effect": "The identifier is sent to the provider as it is, and the model that actually answered is recorded with each call.",
+            "caution": "Core checks only the shape of the identifier. Confirm the name in the provider's current documentation; an unknown model makes Gemini answer as unavailable."
+          },
+          "dates_event_intake_retention_days": {
+            "title": "Intake content retention (days)",
+            "purpose": "How many days after a decision the flyers and source texts of an intake are kept, between 1 and 365.",
+            "effect": "After that the worker deletes the flyer files and the source texts; the decision record itself is kept 180 days for audit. The clock starts when an intake is published, rejected or otherwise finished.",
+            "caution": "Shortening it does not delete anything at once: the next run of the worker applies it. It must agree with the retention stated in the privacy notice."
+          },
+          "dates_event_ticket_domains": {
+            "title": "Allowed ticketing sites",
+            "purpose": "The ticketing sites a ticket link may point at besides the organizer's and the venue's own site: up to 50 lower-case host names.",
+            "effect": "A ticket link found in a source is kept only on one of those sites; any other is dropped and the reviewer is told. The same list applies when an AI-drafted event is edited later.",
+            "caution": "List only official ticket sellers, never resale sites. A host name has no https://, no path and no www. prefix. An empty list allows none."
           }
         }
       },
@@ -8877,6 +9068,693 @@
         "activity": "Activity",
         "message": "Message",
         "review": "Review"
+      },
+      "unknownTypeLabel": "Stored value (type {type})",
+      "unknownTypeHelp": "This console has no editor for this type of setting, so the value is shown read-only and cannot be saved from here. A newer Webadmin release is needed to change it.",
+      "stringLabel": "Value",
+      "stringHelp": "Text. Core validates the value when it is saved.",
+      "modelIdHelp": "The model identifier exactly as the provider writes it, for example gpt-6.1-sol: lower-case letters and digits, joined by dots, hyphens or underscores. Core checks only the shape; a model the key cannot use answers as unavailable and the next provider is tried.",
+      "modelIdInvalid": "This does not look like a model identifier. Start with a lower-case letter and use only lower-case letters, digits, dots, hyphens and underscores, at most 64 characters.",
+      "orderedListLabel": "Order in which they are tried",
+      "orderedListUp": "Move {item} earlier",
+      "orderedListDown": "Move {item} later",
+      "orderedListRemove": "Leave out {item}",
+      "orderedListAdd": "Add {item}",
+      "orderedListHelp": "The first provider is asked first. The next one is tried only when the one before returns no usable event, declines or is unavailable - never because a draft failed validation. A provider left out is never called; at least one is required.",
+      "stringListLabel": "One item per line",
+      "stringListHelp": "One item per line. Core validates every item when the list is saved.",
+      "ticketDomainsHelp": "One host name per line: lower-case, without https://, a path or www. - for example jegy.hu. A ticket link is kept only when it is on the organizer's or the venue's own site or on one of these. An empty list allows no ticketing site.",
+      "stringListProblems": {
+        "count": "The list must have between {minimum} and {maximum} items.",
+        "duplicate": "An item appears twice.",
+        "value": "An item is not one of the allowed values.",
+        "length": "An item is empty or longer than 253 characters.",
+        "host": "An item is not a plain host name: lower-case, no https://, no path, no www. prefix - for example jegy.hu."
+      }
+    },
+    "intake": {
+      "eyebrow": "AreYouIn operations",
+      "aiNotice": "Everything on these pages was extracted by AI from a link, a flyer or a line of text. Nothing is published until a person has checked it against the source and published it. Members never see an intake.",
+      "badgeExtracted": "AI-extracted",
+      "queue": {
+        "title": "Intakes",
+        "subtitle": "Sources handed to the event AI and the drafts it made of them. A reviewer takes an intake, checks the draft against the source, then rejects it or publishes its events.",
+        "statusFilter": "Status",
+        "draftsOff": "Drafting from a source is switched off (dates_external_admin_drafts_enabled). No new intake can be created or published until an administrator turns it on in Configuration; the intakes already here can still be read and rejected.",
+        "orderReview": "Intakes in review are listed with the soonest event first.",
+        "orderNewest": "Newest intake first.",
+        "unreadableRow": "Row {row} of this page could not be read and is not shown.",
+        "empty": "No intake matches this filter.",
+        "emptyPage": "This page has no intakes. The queue may have changed while loading; refresh or go back a page.",
+        "untitled": "No title yet",
+        "events": "Events: {count} · published: {published}",
+        "images": "flyers: {count}",
+        "noHardFails": "No blocking problem",
+        "hardFails": "Blocking problems: {count}",
+        "warnings": "Warnings: {count}",
+        "starts": "Starts {date}",
+        "pagination": "Page {page} of {pages} · {total} intakes",
+        "columns": {
+          "intake": "Intake",
+          "status": "Status",
+          "source": "Channel and source",
+          "findings": "What Core found",
+          "created": "Created",
+          "hold": "Held by"
+        }
+      },
+      "lease": {
+        "title": "Who is working on it",
+        "copy": "Taking an intake reserves it for you for five minutes, and the page keeps renewing that while it is open. Rejecting and publishing need your hold; nobody can take an intake from a reviewer whose time has not run out.",
+        "free": "Nobody holds it",
+        "mine": "You",
+        "other": "{holder}",
+        "until": "until {time}",
+        "mineUntil": "You hold this intake until {time}.",
+        "otherUntil": "{holder} holds this intake until {time}.",
+        "unreadable": "Core's answer about who holds this intake could not be read, so no action is offered. Refresh to read it again.",
+        "claim": "Take it",
+        "release": "Let it go",
+        "override": "Release another reviewer's hold",
+        "uncertain": "Core's answer did not arrive. The intake was read again; check who holds it before continuing.",
+        "done": {
+          "claim": "The intake is yours for the next five minutes.",
+          "release": "The hold was released.",
+          "heartbeat": "Your hold was renewed."
+        }
+      },
+      "access": {
+        "denied": "Your role does not include this. Reviewing intakes needs the event review capability, and the AI usage needs read access to external events. Nothing was hidden from you by an error.",
+        "refused": "Core refused this request. Its answer is shown above.",
+        "unconfirmed": "This could not be read. That says nothing about your permissions and does not mean there is nothing to show. Refresh to try again.",
+        "reviewRequired": "Taking, rejecting and reading an intake need the event review capability.",
+        "manageRequired": "You can review and reject, but publishing an event needs the event management capability of an administrator."
+      },
+      "detail": {
+        "title": "Intake",
+        "subtitle": "The source, what the AI read from it, the evidence for each field and what Core's own checks say. Compare it with the source before you decide.",
+        "back": "Intakes",
+        "statusTitle": "Where it stands",
+        "progress": "This page checks again by itself.",
+        "unreadableSections": "These parts of Core's answer could not be read and are not shown: {sections}. They are not empty; they are unknown.",
+        "injection": "The AI flagged text in the source that tries to give it instructions. Core used none of it, but read this draft with extra care.",
+        "purgedAt": "The flyers and source texts of this intake were deleted on {date}, as the retention setting requires. The record itself is kept for audit.",
+        "channel": "Channel and submitter",
+        "updated": "updated {date}",
+        "revision": "Revision",
+        "result": "What the AI concluded",
+        "noResult": "No answer yet",
+        "waitingSince": "Waiting for budget since",
+        "decision": "Decision",
+        "bySystem": "Core, automatically",
+        "duplicateOf": "Already here as",
+        "retention": "Kept until",
+        "retentionCopy": "flyers and source texts until {content}; the record until {record}",
+        "inputsTitle": "What was submitted",
+        "unreadableInputs": "What was submitted could not be read from Core's answer.",
+        "kind": "Kind of source",
+        "fetch": "Page that Core read",
+        "truncated": "cut short",
+        "unreadableImages": "Flyers that could not be read from Core's answer: {count}.",
+        "flyer": "Flyer {index}",
+        "safeSearch": "content screening: adult {adult}, violence {violence}",
+        "flyerPrivate": "Private evidence. The flyer is never published, never used as the event image, and every time it is shown here Core records who looked.",
+        "flyerNotReady": "The flyer is not available: Core has not re-encoded it yet, or it has been deleted.",
+        "flyerAlt": "Submitted flyer {index}, as Core re-encoded it",
+        "flyerShow": "Show the flyer (the view is recorded)",
+        "unreadableTexts": "Source texts that could not be read from Core's answer: {count}.",
+        "runsTitle": "AI calls",
+        "unreadableRuns": "AI calls that could not be read from Core's answer: {count}.",
+        "noRuns": "No AI call has been made for this intake.",
+        "extractionTitle": "What the AI made of it",
+        "extractionNotice": "This is an AI draft, not a fact. Each field below shows the words the AI quoted for it and whether Core found those words in the source. A field marked Unverified is the AI's claim alone.",
+        "noEvents": "The AI did not produce an event from this source.",
+        "unreadableEvent": "Event {index} could not be read from Core's answer. It is not shown and cannot be published from here.",
+        "noControls": "Core's revision or hold for this intake could not be read, so nothing can be changed from this page. Refresh to read it again.",
+        "eventTitle": "Event {index} of {total}",
+        "needsMoreInfo": "Needs more information",
+        "published": "Published — open the event",
+        "notValidated": "Core has not validated this event yet.",
+        "hardFails": "It cannot be published as it stands:",
+        "warnings": "Check before publishing:",
+        "publicVenueConfirmation": "The venue may be a private address. It can only be published if you confirm in the editor that it is a public place.",
+        "evidenceTitle": "Field by field: the AI's claim and its evidence",
+        "noEvidence": "Core has not checked the evidence of this event yet.",
+        "unverifiedFields": "Not verified against the source: {fields}. Check these yourself.",
+        "allVerified": "Core found the quoted words for every field in the source. That confirms what the source says, not that the source is right.",
+        "noQuote": "No quote",
+        "quoteSource": "from: {source}",
+        "verified": "Verified",
+        "unverified": "Unverified",
+        "checkNoQuote": "The AI gave no quote for this field.",
+        "checkFound": "The quote is in the source ({match}).",
+        "checkNotFound": "The quote was not found in the source.",
+        "denotes": "The quote says this value.",
+        "denotesNot": "The quote does not say this value.",
+        "confidence": "confidence {value}",
+        "draftTitle": "The rest of the AI's draft",
+        "attendance": "How people attend",
+        "draftEnds": "End, as the source states it",
+        "notStated": "not stated",
+        "publicVenueClaim": "The AI considers the venue public",
+        "notChecked": "Not checked",
+        "readAs": "read as {value}",
+        "yearInferred": "The source gives no year; the AI assumed one.",
+        "timeNotStated": "The source states no start time.",
+        "priceUnknown": "The source does not say whether it is free.",
+        "scheduleTitle": "Time, as Core computed it",
+        "unknown": "Unknown",
+        "endEstimated": "Not stated; Core would estimate it from the category",
+        "venueTitle": "Venue that Core resolved",
+        "venueUnresolved": "Core could not resolve the venue to a place. Enter and confirm it by hand in the editor.",
+        "purged": "(deleted)",
+        "coordinates": "Coordinates and time zone",
+        "placeId": "Place",
+        "similarity": "Match with the venue in the source",
+        "venueCandidates": "Places Core considered: {count}",
+        "privateAddressWarning": "may be a private address",
+        "checksTitle": "Core's checks",
+        "noWitness": "The page carried no machine-readable event data to compare with.",
+        "linksTitle": "Links Core kept",
+        "droppedLink": "{field} was dropped: {reason}",
+        "automaticTitle": "Would it qualify for automatic publication?",
+        "automaticYes": "It meets every condition. Nothing acts on this: a person still reviews and publishes.",
+        "automaticNo": "No. Nothing acts on this either way; these are the conditions it misses:",
+        "dedupeTitle": "Is it already here?",
+        "columns": {
+          "field": "Field",
+          "claimed": "What the AI wrote",
+          "quote": "Quote from the source",
+          "check": "Core's check",
+          "outcome": "Outcome",
+          "at": "When"
+        },
+        "refreshFailed": "The intake could not be read again just now. What you see may be out of date; nothing was changed. Try Refresh again.",
+        "progressStopped": "The worker is still on it. Use Refresh to see where it stands."
+      },
+      "checks": {
+        "weekday_match": "The weekday in the source matches the date",
+        "venue_resolved": "The venue was resolved to a place",
+        "public_place": "The place is a public venue",
+        "tz_from_venue": "The time zone comes from the venue",
+        "urls_from_evidence": "Every link appears in the sources",
+        "quotes_verified": "The date and time quotes were found in the source",
+        "content_safe": "The flyer passed content screening",
+        "witness": "The page's own event data"
+      },
+      "sourceLabels": {
+        "image": "text read from flyer {number}",
+        "page": "text of the page",
+        "text": "the submitted text"
+      },
+      "editor": {
+        "open": "Open in editor",
+        "title": "Check and publish",
+        "close": "Close the editor",
+        "unreadable": "Core's prefill for this event could not be read, so it cannot be opened in the editor.",
+        "noPrefill": "Core offers no editor prefill for this event.",
+        "holdFirst": "Take the intake to publish from it.",
+        "cannotPublish": "Publishing is not available to you here: it needs the event management capability and the draft switch to be on.",
+        "notice": "The form is prefilled with the AI's draft. Correct every field against the source, tick the four confirmations yourself and give an audit reason. Publishing makes the event visible to members at once.",
+        "formNotice": "Prefilled by AI from the submitted source. Nothing here has been confirmed by a person yet; an empty field is one Core could not determine.",
+        "gaps": "Core could not fill these in; you have to: {fields}.",
+        "complete": "This is the last event I publish from this intake (the other {remaining} will not be published).",
+        "confirm": "You are publishing content an AI drafted and you have checked. The event appears for members immediately and is marked as AI-assisted.",
+        "confirmComplete": "This finishes the intake.",
+        "confirmPartial": "The intake stays with you for its other events.",
+        "gapFields": {
+          "start": "start time",
+          "timezone": "time zone",
+          "venue": "venue and its location",
+          "organizer": "organizer",
+          "source": "source link",
+          "price": "whether it is free"
+        }
+      },
+      "reject": {
+        "title": "Reject the intake",
+        "copy": "A rejection ends the intake. Pick the reason; the statement of reasons is Core's fixed wording for that reason, not free text.",
+        "holdFirst": "Take the intake to reject it.",
+        "afterPublish": "An event of this intake has already been published, so it can no longer be rejected. Finish it from the editor instead.",
+        "reason": "Reason",
+        "statementHint": "The submitter is shown Core's statement for this reason.",
+        "note": "Audit note (required, internal)",
+        "noteHint": "Kept in the audit log only; never shown to the submitter.",
+        "review": "Review the rejection",
+        "retry": "Send the same rejection again",
+        "confirm": "Reject this intake with the reason below? This cannot be undone from the console.",
+        "submit": "Reject",
+        "invalid": "Choose a reason and write an audit note first.",
+        "uncertain": "Core's answer did not arrive, so the rejection may or may not have landed. The intake was read again: if it is still in review, send the same rejection again.",
+        "done": "The intake was rejected."
+      },
+      "publish": {
+        "done": "The event is published and the intake is finished.",
+        "donePartial": "The event is published. The intake is still yours for its other events.",
+        "doneRetained": "Core published the event, but the saved request could not be cleared from this browser. Restore browser storage access and retry the same request to reconcile it.",
+        "refusedRetained": "Core refused the publication, but the saved request could not be cleared from this browser. Restore browser storage access and retry the same request; do not start a new one yet.",
+        "uncertain": "The publication may have succeeded, but its receipt did not arrive. The exact request is saved. Retry the same request; do not publish the event again.",
+        "blocked": "The publication could not safely proceed. Check the saved-operation panel and browser storage before retrying.",
+        "expired": "This saved request is too old for a safe retry. Do not delete it or publish again; ask the operations lead to reconcile the event with the audit log first.",
+        "access": "Your current permissions or Core's time could not be confirmed. Nothing was sent. Refresh and try again.",
+        "invalid": "The console would not send this request. Check the facts, the audit reason and the four confirmations.",
+        "openEvent": "Open the event",
+        "pendingEvent": "Publication of event {index}"
+      },
+      "source": {
+        "title": "Draft from source",
+        "open": "New draft from a source",
+        "close": "Close",
+        "copy": "Give the AI a link, a flyer photo or a line of text. It drafts the event sheet; you review the draft and publish it through the usual editor. The AI never publishes.",
+        "disabled": "Drafting from a source is switched off (dates_external_admin_drafts_enabled). An administrator can turn it on in",
+        "disabledLink": "Configuration",
+        "unknown": "Whether drafting is switched on could not be read. You can try; Core answers if it is off.",
+        "kind": "Kind of source",
+        "url": "Link to the event page",
+        "urlHint": "The organizer's or the venue's own page works best. Pages behind a login (Facebook, Instagram) cannot be read.",
+        "images": "Flyer photos (one or two)",
+        "imagesHint": "JPEG, PNG, WEBP or HEIC, at most 10 MiB each. The photo is sent as it is; Core removes its metadata and keeps it privately.",
+        "imageText": "A line of text to go with the flyer (optional)",
+        "text": "A line of text about the event",
+        "textHint": "At most {maximum} characters. Name the event, the day, the time and the venue if you know them.",
+        "privacy": "The source goes to the AI provider set in Configuration. Do not submit photos of people or private addresses. A flyer is never published and never becomes the event image.",
+        "uncertain": "The answer did not arrive, so the draft may or may not have been created. Send the same request again: it finds the draft if it was made and cannot create a second one.",
+        "retry": "Send the same request again",
+        "submit": "Create the draft",
+        "problems": {
+          "url": "Enter a full web address starting with http:// or https://.",
+          "text": "Write between 1 and 500 characters.",
+          "imageCount": "Choose one or two photos.",
+          "imageSize": "A photo is empty or larger than 10 MiB.",
+          "imageType": "A file is not a JPEG, PNG, WEBP or HEIC image."
+        }
+      },
+      "usage": {
+        "open": "AI usage",
+        "title": "AI usage",
+        "subtitle": "What the event AI has cost this month against the monthly cap, by provider, model, task and channel. Usage figures only: no source, no prompt, no content.",
+        "month": "Month",
+        "monthHint": "Leave empty for the current month, as Core counts it (UTC).",
+        "show": "Show",
+        "current": "Current month",
+        "capZero": "The monthly cap is 0, so the AI is switched off: no AI call is made and new intakes wait for budget.",
+        "exhausted": "The monthly cap is used up. No further AI call is made this month; new intakes wait for budget until the cap is raised or the month ends.",
+        "alert": "More than 80% of the monthly cap has been spent.",
+        "alertAt": "The line was crossed on {date}.",
+        "spent": "Spent in {month}",
+        "noCap": "no cap to measure against",
+        "ofCap": "{share} of the {cap} cap, with what is reserved",
+        "remaining": "Remaining",
+        "reserved": "reserved for calls in flight: {amount}",
+        "calls": "AI calls",
+        "callsHint": "every call, answered or not",
+        "awaitingBudget": "Waiting for budget",
+        "awaitingBudgetHint": "intakes the worker will retry when there is budget",
+        "awaitingBudgetUnread": "the review queue could not be read",
+        "awaitingBudgetReviewOnly": "shown to reviewers only",
+        "progress": "Share of the monthly cap spent or reserved",
+        "breakdown": "By provider, model, task and channel",
+        "breakdownHint": "The model shown is the one that actually answered. Costs are computed from list prices and are not an invoice.",
+        "unreadableRows": "Rows that could not be read and are not shown: {count}.",
+        "empty": "No AI call was recorded in this month.",
+        "unanswered": "unanswered: {count}",
+        "tokenDetail": "cache read {read} · cache write {write} · reasoning {reasoning}",
+        "estimatedCalls": "estimated for {count} calls",
+        "estimated": "estimated",
+        "columns": {
+          "provider": "Provider and model",
+          "task": "Task",
+          "channel": "Channel",
+          "calls": "Calls",
+          "tokens": "Tokens in / out",
+          "cost": "Cost"
+        }
+      },
+      "statusValues": {
+        "received": "Received",
+        "screening": "Being screened",
+        "extracting": "AI is reading it",
+        "validating": "Being checked",
+        "member_confirming": "Waiting for the member",
+        "in_review": "In review",
+        "published": "Published",
+        "merged": "Merged",
+        "rejected": "Rejected",
+        "duplicate": "Duplicate",
+        "failed": "Failed",
+        "withdrawn": "Withdrawn",
+        "expired": "Expired",
+        "awaiting_budget": "Waiting for budget"
+      },
+      "statusHelp": {
+        "received": "Core has stored the source. The intake worker has not picked it up yet.",
+        "screening": "The flyer is being re-encoded and screened, or the page is being fetched. No AI has been called yet.",
+        "extracting": "The AI is reading the source and drafting the event sheet.",
+        "validating": "Core is checking the draft: quotes, date and time, venue, time zone, links and duplicates.",
+        "member_confirming": "The member who suggested the event is checking the draft.",
+        "in_review": "The draft is ready for a person. Take the intake, compare the draft with the source, then reject it or publish its events.",
+        "published": "A reviewer published from this intake; it is finished.",
+        "merged": "The source was attached to an event that already exists.",
+        "rejected": "The intake was rejected and is finished.",
+        "duplicate": "This source or this event is already here, so no AI was spent on it again. Open the original instead.",
+        "failed": "The pipeline could not finish. The reason is shown below; nothing was published. Submit the source again if the cause was temporary.",
+        "withdrawn": "The submitter's account was erased, so the intake was withdrawn.",
+        "expired": "Nobody decided before the event started, or the wait for budget ran out. Nothing was published.",
+        "awaiting_budget": "The monthly AI budget is used up or set to zero. The worker tries again every hour; raise the cap in Configuration to continue sooner."
+      },
+      "statusDetailValues": {
+        "image-empty": "Empty flyer file",
+        "image-unreadable": "Flyer cannot be read",
+        "image-too-large": "Flyer file too large",
+        "image-dimensions": "Flyer dimensions not accepted",
+        "image-encode-failed": "Flyer could not be re-encoded",
+        "image-content-rejected": "Flyer content rejected",
+        "screening-unavailable": "Content screening unavailable",
+        "image-missing": "Flyer file missing",
+        "source-not-readable": "Page behind a login",
+        "source-not-fetchable": "Address may not be fetched",
+        "source-unreachable": "Page unreachable",
+        "source-not-text": "Not a web page",
+        "source-too-large": "Page too large",
+        "source-empty": "Page has no text",
+        "not-an-event": "Not an event",
+        "prohibited-category": "Category not allowed",
+        "ai-unavailable": "AI unavailable",
+        "ai-refused": "AI declined",
+        "ai-not-configured": "AI not configured",
+        "venue-search-unavailable": "Venue search unavailable",
+        "duplicate-source": "Same source already submitted",
+        "duplicate-event": "Same event already here",
+        "start-passed": "The event has started",
+        "storage-unavailable": "Private storage unavailable",
+        "attempts-exhausted": "Gave up after repeated failures",
+        "account-erased": "Submitter's account erased"
+      },
+      "statusDetailHelp": {
+        "image-empty": "The uploaded file had no content. Upload the photo again.",
+        "image-unreadable": "Core could not decode the file as an image. Try a JPEG or PNG copy of the flyer.",
+        "image-too-large": "The file is larger than 10 MiB.",
+        "image-dimensions": "The image is too small or has more pixels than Core accepts.",
+        "image-encode-failed": "Core could not write its own clean copy of the flyer.",
+        "image-content-rejected": "Content screening found likely adult or violent content, so the flyer was rejected before any AI was called.",
+        "screening-unavailable": "The content screening service did not answer. The worker tries again by itself.",
+        "image-missing": "The stored flyer file is no longer there.",
+        "source-not-readable": "The page is behind a login and cannot be read. Use the organizer's or the venue's own page.",
+        "source-not-fetchable": "Core does not fetch this address: it is not a public web address.",
+        "source-unreachable": "The page did not answer, or answered with an error.",
+        "source-not-text": "The address does not serve a web page Core can read.",
+        "source-too-large": "The page is larger than Core reads.",
+        "source-empty": "The page had no readable text.",
+        "not-an-event": "The AI concluded that the source does not describe an event people can attend.",
+        "prohibited-category": "The event belongs to a category that is not listed here.",
+        "ai-unavailable": "No AI provider answered. The worker tries again by itself; if this stays, check the provider order and the keys.",
+        "ai-refused": "The AI provider declined to process this source.",
+        "ai-not-configured": "No AI provider in the configured order has a key on the server.",
+        "venue-search-unavailable": "The place search did not answer, so the venue could not be resolved. Enter it by hand in the editor.",
+        "duplicate-source": "The same address was already submitted; no AI was spent on it again.",
+        "duplicate-event": "Core found the same event among the published events or the open intakes.",
+        "start-passed": "The event started before anyone decided, so the intake expired.",
+        "storage-unavailable": "Core's private storage for flyers is not available.",
+        "attempts-exhausted": "The same step failed six times in a row, so Core gave up.",
+        "account-erased": "The member who submitted this erased their account."
+      },
+      "channelValues": {
+        "admin_draft": "Administrator's draft",
+        "member_suggestion": "Member's suggestion",
+        "ai_research": "AI research"
+      },
+      "inputKindValues": {
+        "url": "Link",
+        "images": "Flyer photo",
+        "text": "Text"
+      },
+      "decisionValues": {
+        "published": "Published by a reviewer",
+        "rejected": "Rejected by a reviewer",
+        "duplicate": "Closed as a duplicate",
+        "merged": "Merged into an existing event",
+        "expired": "Expired",
+        "screening_rejected": "Rejected at screening",
+        "extraction_rejected": "Rejected at extraction"
+      },
+      "rejectReasons": {
+        "not_an_event": "Not an event",
+        "date_unclear_or_past": "Date unclear or already past",
+        "private_event": "Private event or private address",
+        "duplicate": "Already listed",
+        "prohibited_content": "Category not allowed",
+        "unverifiable": "Cannot be verified from a reliable source",
+        "outside_area": "Outside the area AreYouIn serves",
+        "sensitive_not_allowed": "Sensitive topic that is not listed",
+        "spam_or_fake": "Spam or not a genuine event"
+      },
+      "resultValues": {
+        "event": "One event",
+        "multiple_events": "Several events",
+        "not_an_event": "Not an event",
+        "insufficient_information": "Not enough information",
+        "prohibited": "A category that is not allowed"
+      },
+      "hardFails": {
+        "not_an_event": "The source does not describe an event.",
+        "prohibited_category": "The event is in a category that is not allowed.",
+        "insufficient_information": "The source does not say enough to make an event of it.",
+        "title_missing": "There is no title.",
+        "start_missing": "There is no start date.",
+        "time_missing": "The source states no start time.",
+        "midnight_unconfirmed": "The start is midnight, and the source does not confirm that.",
+        "relative_date_unconfirmed": "The date is relative (for example \"on Saturday\") and cannot be tied to a calendar day with certainty.",
+        "local_time_nonexistent": "That local time does not exist on that day (clock change).",
+        "local_time_ambiguous": "That local time occurs twice on that day (clock change).",
+        "start_in_past": "The start is in the past.",
+        "start_beyond_lookahead": "The start is further ahead than events may be entered.",
+        "end_not_after_start": "The end is not after the start.",
+        "duration_too_long": "The event is longer than allowed.",
+        "weekday_mismatch": "The weekday in the source does not match the date.",
+        "online_only": "The event is online only.",
+        "venue_not_public": "The venue is not a public place.",
+        "venue_unresolved": "The venue could not be resolved to a place.",
+        "venue_ambiguous": "Several places match the venue equally well.",
+        "venue_country_unavailable": "The venue is in a country where AreYouIn external events are not available.",
+        "timezone_unknown": "The time zone of the venue is not known."
+      },
+      "warnings": {
+        "prompt_injection_suspected": "The source contains text that tries to instruct the AI.",
+        "fallback_provider": "The backup AI provider answered, not the first one.",
+        "year_inferred": "The source gives no year; it was assumed.",
+        "start_at_midnight": "The start is at midnight.",
+        "start_is_doors_time": "The start time may be the doors-open time, not the start of the programme.",
+        "end_estimated": "The end is not stated; it would be estimated from the category.",
+        "date_ambiguous": "The date can be read in more than one way.",
+        "multiple_dates": "The source names several dates.",
+        "low_confidence_date": "The AI is not confident about the date.",
+        "low_confidence_time": "The AI is not confident about the time.",
+        "low_confidence_venue": "The AI is not confident about the venue.",
+        "date_quote_unverified": "The quote for the date was not found in the source.",
+        "time_quote_unverified": "The quote for the time was not found in the source.",
+        "quotes_unverified": "Some quotes were not found in the source.",
+        "witness_disagrees_date": "The page's own event data gives a different date.",
+        "witness_disagrees_time": "The page's own event data gives a different time.",
+        "witness_disagrees_venue": "The page's own event data gives a different venue.",
+        "venue_similarity_low": "The place found does not match the venue's name well.",
+        "possible_private_address": "The venue may be a private address.",
+        "venue_search_unavailable": "The place search was unavailable.",
+        "venue_unbounded": "The venue could not be checked against a city or an area.",
+        "venue_unclear": "The source is unclear about the venue.",
+        "city_missing": "The source names no city.",
+        "possibly_private": "The event may be private.",
+        "possibly_online": "The event may be online.",
+        "official_url_dropped": "The official link was dropped.",
+        "ticket_url_dropped": "The ticket link was dropped.",
+        "organizer_url_dropped": "The organizer's link was dropped.",
+        "paid_without_official_link": "A paid event with no official link.",
+        "organizer_missing": "The source names no organizer.",
+        "price_unclear": "The price is unclear.",
+        "sensitive": "The topic may be sensitive.",
+        "status_canceled": "The source says the event is canceled.",
+        "status_postponed": "The source says the event is postponed.",
+        "status_sold_out": "The source says the event is sold out.",
+        "low_legibility": "The flyer is hard to read.",
+        "language_uncertain": "The language of the source is uncertain.",
+        "conflicting_information": "The source contradicts itself.",
+        "content_unscreened": "The flyer was not screened for content."
+      },
+      "autoBlockers": {
+        "no_hard_fail": "it has a blocking problem",
+        "warnings_benign": "it has a warning that needs a person",
+        "primary_provider": "the first AI provider did not answer it",
+        "quotes_verified": "not every quote was found in the source",
+        "time_explicit": "the start time is not stated explicitly",
+        "confident": "the AI is not confident enough",
+        "venue_place_matches": "the venue does not match a place closely enough",
+        "timezone_known": "the time zone is not known",
+        "country_available": "the country is not one where external events are available",
+        "content_screened": "the flyer was not screened for content"
+      },
+      "tierValues": {
+        "official": "Official source",
+        "single_source": "Single source"
+      },
+      "witnessValues": {
+        "agrees": "agrees",
+        "disagrees": "disagrees",
+        "absent": "not given"
+      },
+      "evidenceFields": {
+        "title": "Title",
+        "date": "Date",
+        "time": "Time",
+        "venue": "Venue",
+        "organizer": "Organizer",
+        "price": "Price",
+        "status": "Status"
+      },
+      "matchValues": {
+        "exact": "word for word",
+        "loose": "with small differences"
+      },
+      "dedupeValues": {
+        "new": "New: nothing like it was found.",
+        "review": "Possibly a duplicate: compare with the candidates.",
+        "duplicate": "Duplicate of something already here."
+      },
+      "dedupeVerdicts": {
+        "duplicate": "the same",
+        "review": "needs a look"
+      },
+      "dedupeKinds": {
+        "event": "Published event",
+        "intake": "Intake"
+      },
+      "linkDropReasons": {
+        "not_in_sources": "it does not appear in the sources",
+        "not_https": "it is not an https address",
+        "domain_not_allowed": "its site is not an allowed ticketing site"
+      },
+      "providerValues": {
+        "openai": "OpenAI",
+        "gemini": "Google Gemini",
+        "anthropic": "Anthropic"
+      },
+      "outcomeValues": {
+        "sheet": "Event sheet returned",
+        "verdict": "Verdict returned",
+        "refused": "Declined",
+        "unavailable": "Unavailable",
+        "truncated": "Answer cut short",
+        "invalid_output": "Unusable answer",
+        "not_configured": "Not configured"
+      },
+      "likelihoodValues": {
+        "UNKNOWN": "unknown",
+        "VERY_UNLIKELY": "very unlikely",
+        "UNLIKELY": "unlikely",
+        "POSSIBLE": "possible",
+        "LIKELY": "likely",
+        "VERY_LIKELY": "very likely"
+      },
+      "attendanceModes": {
+        "in_person": "In person",
+        "online": "Online",
+        "hybrid": "In person and online",
+        "unknown": "Not stated"
+      },
+      "statusSignals": {
+        "scheduled": "Scheduled",
+        "canceled": "Canceled",
+        "postponed": "Postponed",
+        "sold_out": "Sold out",
+        "unknown": "Not stated"
+      },
+      "prohibitedCategories": {
+        "sexual_services": "sexual services",
+        "weapons": "weapons",
+        "drugs": "drugs",
+        "gambling_promotion": "gambling promotion",
+        "hate": "hate",
+        "mlm_or_business_opportunity": "MLM or business opportunity",
+        "crypto_seminar": "crypto seminar",
+        "private_party": "private party",
+        "other": "other"
+      },
+      "taskValues": {
+        "flyer_extract": "Reading a flyer",
+        "url_extract": "Reading a page",
+        "text_extract": "Reading a line of text",
+        "same_event": "Comparing two events"
+      },
+      "linkFields": {
+        "official_url": "Official page",
+        "ticket_url": "Ticket page",
+        "organizer_url": "Organizer's site"
+      },
+      "refusals": {
+        "unknown": "Core refused this request with a reason this console has no explanation for:",
+        "dates-intake-admin-drafts-disabled": "Drafting from a source is switched off. An administrator turns it on in Configuration (dates_external_admin_drafts_enabled).",
+        "dates-intake-claimed": "Another reviewer holds this intake.",
+        "dates-intake-conflict": "The intake changed since this page read it. It was read again; look at it before repeating the action.",
+        "dates-intake-event-unavailable": "That event of the intake is not there, or has already been published.",
+        "dates-intake-filter-invalid": "Core does not accept this filter.",
+        "dates-intake-id-invalid": "This is not an intake identifier.",
+        "dates-intake-image-invalid": "Core did not accept the photo: it must be a JPEG, PNG, WEBP or HEIC image of at most 10 MiB and at most two photos.",
+        "dates-intake-image-unavailable": "The flyer is not available: it has not been re-encoded yet, or it has been deleted.",
+        "dates-intake-input-invalid": "Core did not accept the request as it was sent: give exactly one source of the chosen kind.",
+        "dates-intake-kind-invalid": "Core does not know this kind of source.",
+        "dates-intake-lease-invalid": "Core does not know this hold action.",
+        "dates-intake-lease-lost": "Your hold on this intake ran out. Take it again to continue.",
+        "dates-intake-lease-owner-required": "Another reviewer holds this intake, and only they or a superadmin can release it.",
+        "dates-intake-lease-required": "You have to hold the intake to do this. Take it first.",
+        "dates-intake-locale-invalid": "Core does not accept this language.",
+        "dates-intake-origin-invalid": "Core does not accept this location hint.",
+        "dates-intake-reason-invalid": "Core does not know this rejection reason.",
+        "dates-intake-revision-invalid": "The revision sent with the request is not valid. Refresh the page.",
+        "dates-intake-source-not-readable": "That site is behind a login and cannot be read. Use the organizer's or the venue's own page instead.",
+        "dates-intake-state-invalid": "The intake is no longer in a state that allows this.",
+        "dates-intake-storage-unavailable": "Core's private storage for flyers is not available. Try again later.",
+        "dates-intake-text-invalid": "Core did not accept the text: between 1 and 500 characters.",
+        "dates-intake-unavailable": "There is no such intake.",
+        "dates-intake-url-invalid": "Core does not accept this address: it must be a public http or https web address.",
+        "dates-admin-capability-required": "Your role does not allow this.",
+        "dates-admin-reason-required": "An audit note is required.",
+        "dates-admin-reason-invalid": "The audit note is not acceptable: at most 1000 characters.",
+        "dates-admin-idempotency-invalid": "The request identity is not valid. Refresh the page and try again.",
+        "dates-admin-idempotency-conflict": "A different request was already sent with this identity. Refresh the page and start again.",
+        "dates-admin-command-in-progress": "The same request is still being processed. Wait a moment and retry it.",
+        "dates-admin-unavailable": "Core could not process the request. Try again later.",
+        "dates-external-publishing-disabled": "Publishing external events is switched off by the release switch. Only the release lead turns it on.",
+        "dates-external-duplicate": "The same event is already published: the same source and day, or the same title, venue and day.",
+        "dates-external-confirmation-required": "All four confirmations have to be ticked.",
+        "dates-external-source-required": "A source link is required.",
+        "dates-external-input-invalid": "Core did not accept the event sheet as it was sent.",
+        "dates-external-start-invalid": "The start is in the past or further ahead than events may be entered.",
+        "dates-external-duration-invalid": "The end is not after the start, or the event is longer than allowed.",
+        "dates-external-time-invalid": "The time is not valid.",
+        "dates-external-venue-invalid": "The venue is incomplete or not valid.",
+        "dates-external-url-invalid": "A link is not a valid https address.",
+        "dates-external-ticket-domain-invalid": "The ticket link is not on the organizer's site or an allowed ticketing site.",
+        "dates-external-paid-official-link-required": "A paid event needs an official link.",
+        "dates-external-category-invalid": "The category is not valid.",
+        "dates-external-summary-invalid": "A summary is missing or too long.",
+        "dates-external-organizer-invalid": "The organizer is missing or not valid.",
+        "dates-external-price-invalid": "The price text is not valid.",
+        "dates-external-age-invalid": "The age limit must be between 18 and 99.",
+        "dates-external-sensitive-invalid": "A sensitive event needs a reason.",
+        "dates-external-attendee-list-invalid": "The attendee list setting is not valid.",
+        "dates-timezone-invalid": "The time zone is not a valid IANA name.",
+        "dates-title-invalid": "The title must be between 3 and 120 characters.",
+        "admin-revoked": "Your administrator access was revoked.",
+        "unauthorized": "Core did not accept the console's credential.",
+        "bad-origin": "The console refused this request because it did not come from the console itself.",
+        "auth-required": "Your session has ended. Sign in again.",
+        "invalid-input": "The console did not send this request because it was not in the expected form.",
+        "too-large": "The request is too large.",
+        "image-too-large": "A photo is larger than 10 MiB.",
+        "image-type-unsupported": "A file is not a JPEG, PNG, WEBP or HEIC image.",
+        "core-unavailable": "Core could not be reached. Nothing can be concluded from this; try again.",
+        "core-timeout": "Core did not answer in time. The request may still have landed; read the page again before repeating it.",
+        "invalid-core-response": "Core's answer could not be read.",
+        "admin-write-required": "Your role is read-only.",
+        "not-found": "The console does not know this action."
       }
     }
   },

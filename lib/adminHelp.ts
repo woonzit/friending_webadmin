@@ -273,7 +273,8 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "datesExternalList",
     route: "/dates/external",
-    sections: ["filters", "results"],
+    // T-865 P2a: "Draft from source" is offered on the list and on the intake queue.
+    sections: ["filters", "results", "draftFromSource"],
     matches: exact("/dates/external"),
   },
   {
@@ -287,6 +288,24 @@ export const ADMIN_HELP_PAGES = [
     route: "/dates/external/[externalId]",
     sections: ["provenance", "changes", "commands"],
     matches: dynamic("/dates/external"),
+  },
+  {
+    key: "datesIntakeQueue",
+    route: "/dates/intakes",
+    sections: ["draftFromSource", "queue", "holds"],
+    matches: exact("/dates/intakes"),
+  },
+  {
+    key: "datesIntakeDetail",
+    route: "/dates/intakes/[intakeId]",
+    sections: ["status", "inputs", "evidence", "editor", "reject"],
+    matches: dynamic("/dates/intakes"),
+  },
+  {
+    key: "datesAiUsage",
+    route: "/dates/ai-usage",
+    sections: ["budget", "breakdown"],
+    matches: exact("/dates/ai-usage"),
   },
   {
     key: "datesModeration",

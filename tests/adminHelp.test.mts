@@ -69,8 +69,10 @@ test("all authenticated routes have a live guide or an explicit redirect to one"
   // redirect-only D-052 routes (/heroes, /app-landing) no longer carry guides of
   // their own, so 38 live guides plus 2 redirects. T-865 P1 adds the external
   // events list, create and detail screens: 41 live guides plus 2 redirects.
-  assert.equal(actualRoutes.length, 43, "the current screen census changed; review every new or removed screen");
-  assert.equal(ADMIN_HELP_PAGES.length, 41, "review the live-screen census");
+  // T-865 P2a adds the intake queue, the intake review screen and the AI usage
+  // page: 44 live guides plus 2 redirects.
+  assert.equal(actualRoutes.length, 46, "the current screen census changed; review every new or removed screen");
+  assert.equal(ADMIN_HELP_PAGES.length, 44, "review the live-screen census");
   assert.equal(ADMIN_HELP_REDIRECTS.length, 2, "review the retired-route census");
   assert.deepEqual(helpRoutes, actualRoutes);
   assert.equal(new Set(helpRoutes).size, helpRoutes.length, "a screen may have only one help document");
@@ -146,7 +148,9 @@ test("every inventoried functional section has detailed English and Hungarian he
   // /verification (with its iOS rollout precondition), the gesture catalogue and photo
   // wording topic on /configuration, and the whole-set photo review on the case page (255).
   // T-865 P1 adds eight sections across external list, create and detail.
-  assert.equal(totalSections, 263, "review the functional-section census when the UI changes");
+  // T-865 P2a adds eleven: "Draft from source" on the external list (1), the
+  // intake queue (3), the intake review screen (5) and the AI usage page (2).
+  assert.equal(totalSections, 274, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [
