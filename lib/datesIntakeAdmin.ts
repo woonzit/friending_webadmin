@@ -251,7 +251,8 @@ const draftGuard = closed({
   venue: closed({ name: nullable(string()), address_text: nullable(string()), city: nullable(string()),
     country_code: nullable(string(16)), is_public_venue: nullable(bool) }),
   organizer_name: nullable(string()), price_text: nullable(string()), is_free: nullable(bool),
-  age_restriction: nullable(integer(0, 200)), status_signal: string(64),
+  // The model's own number, before Core bounds it for the editor: any integer is shown as it is.
+  age_restriction: nullable(integer(Number.MIN_SAFE_INTEGER)), status_signal: string(64),
 });
 const placeShape = { place_id: nullable(string(512)), name: nullable(string()), formatted_address: nullable(string()),
   latitude: nullable(number), longitude: nullable(number), city: nullable(string()), country_code: nullable(string(16)),
