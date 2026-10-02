@@ -1,0 +1,15 @@
+{
+    "success": true,
+    "status_code": 200,
+    "reason_id": "reason_activity_fixture_one",
+    "active": false,
+    "revision": 2,
+    "referenced_report_count": 0,
+    "hard_delete_allowed": false,
+    "audit_id": "aud_00000000000000000000000000000012",
+    "idempotency_replayed": false,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

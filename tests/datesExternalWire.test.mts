@@ -21,15 +21,25 @@ import { prepareDatesExternalPending, readDatesExternalPending, runDatesExternal
 //   differ (they gained the eight intake settings); 113 bodies are byte-identical to it.
 // The generator is the P1 one, unchanged. The source/generator pin is independent of the vendored manifest.
 const DIRECTORY = new URL("./fixtures/dates_external_admin_wire/", import.meta.url);
-// Pin of 2026-10-02 19:43Z (Core lane tip b5b2b299, D-143). This corpus is captured WITHOUT the Admin intake contract
-// selector, and so it is the released P1 corpus again: every body is byte-identical to Core main 07215298 (set
-// d84a3e16...), only the manifest's source binding differs. What Core serves WITH the selector on these routes is in
-// the intake corpus (admin-external-*-manual, admin-configuration); tests/datesAdminCompatibility.test.mts reads both.
-const SOURCE = "2df1849c356ef443e8ac2318c6507a6e3cd799e4";
-const SOURCE_SHA = "c7ad7d1b9389d5a1969da9b4c6142ecde493b1d87867b6d3f0245492fee2818f";
-const MANIFEST_SHA = "15ce284a2b7f01821ad90bfc07eac27208317135bfdae4107e911d9525045595";
+// Pin of 2026-10-02 23:39Z (Core lane opus-core-fix, T-891, branch claude/core-hardening-20261002, tip 33265e46).
+// This corpus is captured WITHOUT the Admin intake contract selector (D-143). Against the released corpus of Core main
+// 07215298 (set d84a3e16..., vendored beside it) exactly FOUR bodies differ, each by ONE revision value: T-891 makes a
+// legal hold move the case revision, and the capture places a hold on case 01 before resolving it and releases it
+// afterwards - admin-moderation-resolve and -resolve-replay (`revision` 3 -> 4), admin-moderation-detail-closed
+// (`case.revision` 3 -> 4), admin-moderation-detail-purged (`case.revision` 3 -> 5). No key changed; the generator is
+// the same file (same digest); the resolution request of the capture now carries `expected_revision: 3`
+// (tests/support/dates_external_console_capture.php at 33265e46). The other 134 bodies are byte-identical to main's.
+const SOURCE = "b5118909b62aa9a21571f01f28c0927252c301ae";
+const SOURCE_SHA = "d2b51f096ac0739eb5840dc06f2953141b4d3cb8bfa3907a5f6e4c2008ea1c3d";
+const MANIFEST_SHA = "1cfe811fde641ccc802bdd26f7bcd9ed21b4f605faba54781b622c10f6529aa9";
 const GENERATOR_SHA = "51e746e0946ddac4319b56cdff0adcc7107a320ed08e1ca1a1f70fa7d90fbf3d";
-const SET_SHA = "d84a3e162703db1578db59f0a0a972de24fffc8562f23a13bf5715101306e4ed";
+const SET_SHA = "ba9ebf7a93d120d0ecd8c4efc94ce67964cdb2a86c248b3d389d974c4858bae7";
+/** The released set (Core main 07215298) and the four bodies that differ from it, with the one value that moved. */
+const RELEASED_SET_SHA = "d84a3e162703db1578db59f0a0a972de24fffc8562f23a13bf5715101306e4ed";
+const MOVED: Record<string, [string, number, number]> = {
+  "admin-moderation-resolve.json": ["revision", 3, 4], "admin-moderation-resolve-replay.json": ["revision", 3, 4],
+  "admin-moderation-detail-closed.json": ["case.revision", 3, 4], "admin-moderation-detail-purged.json": ["case.revision", 3, 5],
+};
 /** The corpus of Core main 07215298, vendored for D-143: the bodies this directory must equal. */
 const RELEASED = new URL("./fixtures/dates_external_admin_wire_released/", import.meta.url);
 const LISTS = ["admin", "canceled", "empty", "filter-empty", "page-empty", "viewer"];
@@ -62,7 +72,7 @@ test("external console corpus is the complete 138-response genuine capture with 
   assert.equal(manifest.provenance.generator, "tests/dates_external_admin_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
   assert.equal(manifest.fixture_count, 138);
-  assert.equal(manifest.provenance.source_paths.length, 326);
+  assert.equal(manifest.provenance.source_paths.length, 316);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   const names = ["admin-activity-list-external.json", ...LISTS.map((name) => `admin-list-${name}.json`),
     ...DETAILS.map((name) => `admin-detail-${name}.json`), ...PLACES.map((name) => `admin-places-${name}.json`),
@@ -89,11 +99,21 @@ test("external console corpus is the complete 138-response genuine capture with 
     return `${entry.file}\0${entry.sha256}`;
   });
   assert.equal(hash(lines.join("\n")), SET_SHA);
-  // Without the selector Core serves the released P1 bodies: this corpus equals the corpus of Core main, body for body,
-  // and its set digest is main's. Only the manifest (the source binding) differs.
+  // Without the selector Core serves the released P1 shapes: this corpus equals the corpus of Core main body for body,
+  // except the four bodies in which T-891's hold moved one revision value - and in those, that value is ALL that moved.
   const released = JSON.parse(readFileSync(new URL("manifest.json", RELEASED), "utf8"));
-  assert.equal(released.fixture_set_sha256, SET_SHA); assert.notEqual(hash(readFileSync(new URL("manifest.json", RELEASED))), MANIFEST_SHA);
-  for (const name of names) assert.ok(readFileSync(new URL(name, DIRECTORY)).equals(readFileSync(new URL(name, RELEASED))), name);
+  assert.equal(released.fixture_set_sha256, RELEASED_SET_SHA); assert.notEqual(hash(readFileSync(new URL("manifest.json", RELEASED))), MANIFEST_SHA);
+  const differing = names.filter((name) => !readFileSync(new URL(name, DIRECTORY)).equals(readFileSync(new URL(name, RELEASED))));
+  assert.deepEqual(differing, Object.keys(MOVED).sort());
+  for (const [name, [path, before, after]] of Object.entries(MOVED)) {
+    const now = fixture(name.slice(0, -5)), then = JSON.parse(readFileSync(new URL(name, RELEASED), "utf8"));
+    const keys = path.split("."), at = (body: any) => keys.slice(0, -1).reduce((node, key) => node[key], body);
+    assert.deepEqual([at(then)[keys.at(-1)!], at(now)[keys.at(-1)!]], [before, after], name);
+    at(now)[keys.at(-1)!] = before;
+    assert.deepEqual(now, then, `${name}: nothing but ${path} moved`);
+    // Byte for byte too: the one number in the text is the only difference.
+    assert.equal(readFileSync(new URL(name, DIRECTORY), "utf8").replace(`"revision": ${after},`, `"revision": ${before},`), readFileSync(new URL(name, RELEASED), "utf8"), name);
+  }
   assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 94);
   assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code !== 200).length, 44);
 });
@@ -162,7 +182,9 @@ const moderationContext = {
 };
 function moderationPending(name = "resolve") {
   const ctx = moderationContext[name as keyof typeof moderationContext];
-  return prepareDatesExternalResolution("mod@example.test", { case_id: "cas_" + ctx.case.padStart(32, "0"), expected_revision: 2,
+  // Case 01 carried a legal hold before it was resolved; since T-891 the hold moved its revision 2 -> 3, and the
+  // capture's resolution request says `expected_revision: 3` (tests/support/dates_external_console_capture.php:276).
+  return prepareDatesExternalResolution("mod@example.test", { case_id: "cas_" + ctx.case.padStart(32, "0"), expected_revision: name === "resolve" ? 3 : 2,
     expected_external_revision: ctx.revision, action: ctx.action, reason: "The public event details were reviewed.",
     user_visible_reason_en: "The event details have been reviewed.", user_visible_reason_hu: "Ellenőriztük az esemény adatait.",
     idempotency_key: "console-moderation-resolve", expires_at: null, break_glass: false }, {

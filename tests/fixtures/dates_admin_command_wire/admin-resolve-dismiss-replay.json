@@ -1,0 +1,25 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case_id": "cas_00000000000000000000000000000004",
+    "case_status": "dismissed",
+    "action": "dismiss",
+    "decision_id": "dec_00000000000000000000000000000001",
+    "target_result": {
+        "target_type": "activity",
+        "target_id": "act_00000000000000000000000000000004",
+        "subject_uid": 70204,
+        "activity_id": "act_00000000000000000000000000000004",
+        "target_path": "unchanged",
+        "before": null,
+        "after": null
+    },
+    "revision": 3,
+    "break_glass_used": false,
+    "audit_id": "aud_00000000000000000000000000000013",
+    "idempotency_replayed": true,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -1,0 +1,19 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case_id": "cas_00000000000000000000000000000003",
+    "activity_id": "act_00000000000000000000000000000003",
+    "evidence_id": "evi_00000000000000000000000000000002",
+    "captured_from": 1789999700,
+    "captured_to": 1789999940,
+    "point_count": 2,
+    "audit_id": "aud_00000000000000000000000000000014",
+    "break_glass_used": false,
+    "revision": 3,
+    "existing": false,
+    "idempotency_replayed": false,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

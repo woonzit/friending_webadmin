@@ -94,14 +94,33 @@ test("D-143: the released P1 corpus (Core main 07215298) is vendored whole and p
   assert.equal(hash(lines.join("\n")), RELEASED_CORPUS_PIN.set);
 });
 
-test("D-143: what the provider serves WITHOUT the selector is the released corpus, body for body", () => {
-  // The provider's selector-less capture at its pinned tip: 138 bodies, each byte-identical to Core main's. Only the
-  // manifest differs (its source binding) - the set digest of the bodies is main's.
+/**
+ * T-891 (Core claude/core-hardening-20261002, 33265e46): a legal hold moves the case revision, and the P1 capture places
+ * a hold on case 01 before resolving it and releases it afterwards. Four bodies of the provider's selector-less capture
+ * therefore differ from main's, each in ONE revision value; the resolution request of that capture says
+ * `expected_revision: 3` (tests/support/dates_external_console_capture.php:276 at 33265e46).
+ */
+const MOVED: Record<string, [string, number, number]> = {
+  "admin-moderation-resolve.json": ["revision", 3, 4], "admin-moderation-resolve-replay.json": ["revision", 3, 4],
+  "admin-moderation-detail-closed.json": ["case.revision", 3, 4], "admin-moderation-detail-purged.json": ["case.revision", 3, 5],
+};
+
+test("D-143 / T-891: what the provider serves WITHOUT the selector is the released corpus, body for body, but four revision values", () => {
+  // The provider's selector-less capture at its pinned tip: 138 bodies, the same names as main's; 134 byte-identical, and
+  // in the four others one revision value moved - no key, no other value. Only the manifest (the source binding) differs.
   const names = files(RELEASED_CORPUS);
   assert.deepEqual(files(SELECTORLESS_BODIES), names); assert.equal(names.length, 138);
-  for (const name of names) assert.ok(readFileSync(new URL(name, SELECTORLESS_BODIES)).equals(readFileSync(new URL(name, RELEASED_CORPUS))), name);
+  const differing = names.filter((name) => !readFileSync(new URL(name, SELECTORLESS_BODIES)).equals(readFileSync(new URL(name, RELEASED_CORPUS))));
+  assert.deepEqual(differing, Object.keys(MOVED).sort());
+  for (const [name, [path, before, after]] of Object.entries(MOVED)) {
+    const now = body(SELECTORLESS_BODIES, name), then = body(RELEASED_CORPUS, name), keys = path.split(".");
+    const parent = (value: any) => keys.slice(0, -1).reduce((node, key) => node[key], value);
+    assert.deepEqual([parent(then)[keys.at(-1)!], parent(now)[keys.at(-1)!]], [before, after], name);
+    parent(now)[keys.at(-1)!] = before; assert.deepEqual(now, then, name);
+  }
   const provider = JSON.parse(readFileSync(new URL("manifest.json", SELECTORLESS_BODIES), "utf8"));
-  assert.equal(provider.fixture_set_sha256, RELEASED_CORPUS_PIN.set); assert.notEqual(provider.source_commit, RELEASED_CORPUS_PIN.source_commit);
+  assert.notEqual(provider.fixture_set_sha256, RELEASED_CORPUS_PIN.set); assert.notEqual(provider.source_commit, RELEASED_CORPUS_PIN.source_commit);
+  assert.equal(provider.provenance.generator_sha256, body(RELEASED_CORPUS, "manifest.json").provenance.generator_sha256, "the same generator");
 });
 
 test("D-143: the released console's decoder modules and wire tests are vendored byte-identical to Webadmin 7825bc13", () => {
@@ -141,15 +160,54 @@ function releasedTree(bodies: URL, extra: Record<string, URL> = {}): { root: str
 }
 const count = (output: string, label: string) => Number(new RegExp(`^ℹ ${label} (\\d+)$`, "m").exec(output)?.[1] ?? NaN);
 
-test("D-143: the released console's own wire tests pass, unchanged, on the bodies Core serves without the selector", () => {
-  const tree = releasedTree(SELECTORLESS_BODIES);
+test("D-143: the released console's own wire tests pass, unchanged, on the released corpus - and on the provider's capture but for what the tests themselves transcribe", () => {
+  // On the corpus they were released with: every one of the 127.
+  const released = releasedTree(RELEASED_CORPUS);
   try {
-    const result = tree.run("tests/datesExternalWire.test.mts", "tests/datesExternalMessageWire.test.mts");
+    const result = released.run("tests/datesExternalWire.test.mts", "tests/datesExternalMessageWire.test.mts");
     assert.equal(result.status, 0, result.output.slice(-2000));
-    // Every released decoder of the corpus, with the requests and baselines the released tests bind them to.
     assert.equal(count(result.output, "tests"), 127); assert.equal(count(result.output, "pass"), 127); assert.equal(count(result.output, "fail"), 0);
     assert.equal(count(result.output, "skipped"), 0); assert.equal(count(result.output, "cancelled"), 0);
-  } finally { rmSync(tree.root, { recursive: true, force: true }); }
+  } finally { rmSync(released.root, { recursive: true, force: true }); }
+  // On the bodies the provider serves without the selector (T-891): 124 pass; the three that do not are named, and none
+  // of them is a decoder refusing a body - the corpus pin compares digests, and the two resolution tests bind the receipt
+  // to a request they transcribe with `expected_revision: 2`, which is no longer the capture's request.
+  const provider = releasedTree(SELECTORLESS_BODIES);
+  try {
+    const result = provider.run("tests/datesExternalWire.test.mts", "tests/datesExternalMessageWire.test.mts");
+    assert.equal(count(result.output, "tests"), 127); assert.equal(count(result.output, "pass"), 124); assert.equal(count(result.output, "fail"), 3);
+    assert.equal(count(result.output, "skipped"), 0); assert.equal(count(result.output, "cancelled"), 0);
+    const failing = [...new Set([...result.output.matchAll(/^✖ (.+?) \(\d[\d.]*ms\)$/gm)].map((match) => match[1]))].sort();
+    assert.deepEqual(failing, ["external console corpus is the complete 138-response FINAL genuine capture with independent provenance pins",
+      "genuine external resolve binds the independent case/content CAS and exact effect",
+      "genuine external resolve-replay binds the independent case/content CAS and exact effect"]);
+    // The released decoders themselves, on the four moved bodies, with the request the capture really sent.
+    writeFileSync(join(provider.root, "tests", "probe.test.mts"), `
+      import test from "node:test";
+      import { readFileSync } from "node:fs";
+      import { datesCaseDetail } from "../lib/datesModerationRead.ts";
+      import { datesExternalResolutionReceipt, prepareDatesExternalResolution } from "../lib/datesExternalModeration.ts";
+      const body = (name) => JSON.parse(readFileSync(new URL("./fixtures/dates_external_admin_wire/" + name, import.meta.url), "utf8"));
+      const caseId = "cas_" + "01".padStart(32, "0");
+      const pending = (expected) => prepareDatesExternalResolution("mod@example.test", { case_id: caseId, expected_revision: expected,
+        expected_external_revision: 1, action: "remove_content", reason: "The public event details were reviewed.",
+        user_visible_reason_en: "The event details have been reviewed.", user_visible_reason_hu: "Ellenőriztük az esemény adatait.",
+        idempotency_key: "console-moderation-resolve", expires_at: null, break_glass: false }, {
+        external_event_id: "xev_" + "04".padStart(32, "0"), activity_id: "act_" + "04".padStart(32, "0"), activity_revision: 1 }, 1790000000);
+      test("probe", () => {
+        const resolve = body("admin-moderation-resolve.json"), replay = body("admin-moderation-resolve-replay.json");
+        const closed = body("admin-moderation-detail-closed.json"), purged = body("admin-moderation-detail-purged.json");
+        console.log("PROBE " + JSON.stringify({
+          resolve: JSON.stringify(datesExternalResolutionReceipt(resolve, pending(3))) === JSON.stringify(resolve),
+          replay: JSON.stringify(datesExternalResolutionReceipt(replay, pending(3))) === JSON.stringify(replay),
+          staleRequest: datesExternalResolutionReceipt(resolve, pending(2)) === null,
+          closed: JSON.stringify(datesCaseDetail(closed, caseId)?.case) === JSON.stringify(closed.case),
+          purged: JSON.stringify(datesCaseDetail(purged, caseId)?.case) === JSON.stringify(purged.case) }));
+      });`);
+    const probe = provider.run("tests/probe.test.mts");
+    assert.equal(probe.status, 0, probe.output.slice(-2000));
+    assert.deepEqual(JSON.parse(/PROBE (\{.*\})/.exec(probe.output)![1]), { resolve: true, replay: true, staleRequest: true, closed: true, purged: true });
+  } finally { rmSync(provider.root, { recursive: true, force: true }); }
 });
 
 test("D-143 control: the same released decoders refuse the bodies Core serves WITH the selector - which is why the selector exists", () => {

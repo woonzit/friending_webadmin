@@ -1,0 +1,14 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case_id": "cas_00000000000000000000000000000001",
+    "legal_hold": true,
+    "review_at": 1790086400,
+    "evidence_count": 2,
+    "audit_id": "aud_00000000000000000000000000000001",
+    "idempotency_replayed": false,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

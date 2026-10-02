@@ -1,10 +1,10 @@
 {
     "schema_version": 1,
     "contract": "dates-external-admin-v1",
-    "source_commit": "2df1849c356ef443e8ac2318c6507a6e3cd799e4",
-    "source_checksum": "c7ad7d1b9389d5a1969da9b4c6142ecde493b1d87867b6d3f0245492fee2818f",
+    "source_commit": "b5118909b62aa9a21571f01f28c0927252c301ae",
+    "source_checksum": "d2b51f096ac0739eb5840dc06f2953141b4d3cb8bfa3907a5f6e4c2008ea1c3d",
     "fixture_count": 138,
-    "fixture_set_sha256": "d84a3e162703db1578db59f0a0a972de24fffc8562f23a13bf5715101306e4ed",
+    "fixture_set_sha256": "ba9ebf7a93d120d0ecd8c4efc94ce67964cdb2a86c248b3d389d974c4858bae7",
     "provenance": {
         "generator": "tests/dates_external_admin_fixture_dump.php",
         "generator_sha256": "51e746e0946ddac4319b56cdff0adcc7107a320ed08e1ca1a1f70fa7d90fbf3d",
@@ -54,7 +54,6 @@
             "src/Http/Controllers/ChatRequestController.php",
             "src/Http/Controllers/DatesChatController.php",
             "src/Http/Controllers/DatesController.php",
-            "src/Http/Controllers/DatesEventSuggestionController.php",
             "src/Http/Controllers/DatesExternalMembershipController.php",
             "src/Http/Controllers/DatesHostTransferController.php",
             "src/Http/Controllers/DatesLiveController.php",
@@ -114,7 +113,6 @@
             "src/Http/Controllers/WebadminController.php",
             "src/Http/Controllers/WebadminDatesController.php",
             "src/Http/Controllers/WebadminDatesExternalController.php",
-            "src/Http/Controllers/WebadminDatesIntakeController.php",
             "src/Http/Controllers/WebadminFeatureSwitchesController.php",
             "src/Http/Controllers/WebadminIntoTagModerationController.php",
             "src/Http/Controllers/WebadminInviteConfigurationController.php",
@@ -166,10 +164,6 @@
             "src/Services/DatesDomainOutbox.php",
             "src/Services/DatesDraftService.php",
             "src/Services/DatesEventCapabilityService.php",
-            "src/Services/DatesEventIntakeAdminService.php",
-            "src/Services/DatesEventIntakeErasure.php",
-            "src/Services/DatesEventSuggesterStore.php",
-            "src/Services/DatesEventSuggestionNotice.php",
             "src/Services/DatesExpiryService.php",
             "src/Services/DatesExternalAccessService.php",
             "src/Services/DatesExternalAttendanceService.php",
@@ -203,6 +197,7 @@
             "src/Services/DatesExternalSafetyService.php",
             "src/Services/DatesExternalThreadAccess.php",
             "src/Services/DatesFilterService.php",
+            "src/Services/DatesHostTransferService.php",
             "src/Services/DatesIdempotencyService.php",
             "src/Services/DatesLiveRetentionService.php",
             "src/Services/DatesMapService.php",
@@ -269,18 +264,14 @@
             "src/Support/AudienceVisibilityReadinessPolicy.php",
             "src/Support/AuthMethodPolicy.php",
             "src/Support/DatesActivityPolicy.php",
+            "src/Support/DatesAdminInput.php",
             "src/Support/DatesCanonicalPayload.php",
             "src/Support/DatesChatPolicy.php",
             "src/Support/DatesChatSerializer.php",
             "src/Support/DatesCityKey.php",
             "src/Support/DatesContract.php",
             "src/Support/DatesEventContract.php",
-            "src/Support/DatesEventIntakeAdminContract.php",
-            "src/Support/DatesEventIntakePolicy.php",
-            "src/Support/DatesEventIntakeSettings.php",
             "src/Support/DatesEventOrigin.php",
-            "src/Support/DatesEventSuggestionContract.php",
-            "src/Support/DatesEventSuggestionPolicy.php",
             "src/Support/DatesExternalAvailabilityPolicy.php",
             "src/Support/DatesExternalCapabilityPolicy.php",
             "src/Support/DatesExternalChatPolicy.php",
@@ -295,6 +286,7 @@
             "src/Support/DatesFilterPolicy.php",
             "src/Support/DatesId.php",
             "src/Support/DatesInput.php",
+            "src/Support/DatesLegalHoldPolicy.php",
             "src/Support/DatesLivePolicy.php",
             "src/Support/DatesMapViewport.php",
             "src/Support/DatesMembershipPolicy.php",
@@ -309,7 +301,6 @@
             "src/Support/DatesVisibilityPolicy.php",
             "src/Support/DatesWireResponse.php",
             "src/Support/EmailProofPolicy.php",
-            "src/Support/EventAi/EventImageNormalizer.php",
             "src/Support/ForcedVerificationEvaluator.php",
             "src/Support/ForcedVerificationPolicy.php",
             "src/Support/FriendRequestLifecyclePolicy.php",
@@ -331,7 +322,6 @@
             "src/Support/PushDeliveryModePolicy.php",
             "src/Support/RealtimePollPolicy.php",
             "src/Support/RealtimeProtocol.php",
-            "src/Support/SafeExternalFetch.php",
             "src/Support/Sanitize.php",
             "src/Support/SectionAvailabilityPolicy.php",
             "src/Support/SessionExpiryPolicy.php",
@@ -893,14 +883,14 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "b468b7ea4b23bd867b9490566470f69836f56a4276b436349a986f1a97a3b6c0"
+            "sha256": "0b1004c1815695f3eba4819ac57c5ea032e085df336c0e8f131bef93591dff73"
         },
         {
             "file": "admin-moderation-detail-purged.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "5c7a5db7cefd431bcd875166833db5e84a4e3e1537e1c6d6240ee8a2d724c626"
+            "sha256": "70692358447c777e5ac8b673e5affcd2f9060082716b0bc3c58b3f091b7322cf"
         },
         {
             "file": "admin-moderation-detail-viewer.json",
@@ -991,7 +981,7 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "2a8d683e006fcb8800e02d882fd4ea713623cb86d433c6a19121b9d3cc9ae44a"
+            "sha256": "754223e6cdcfc68700e8c0bab460d404d1bd51a3db8c5925a8ebf03c67b3a54a"
         },
         {
             "file": "admin-moderation-resolve-viewer-denied.json",
@@ -1005,7 +995,7 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "085f4334ab3f8edfb0274fd07194ac3ec1a777f209d592992d693630d1a38f06"
+            "sha256": "e2b6a215c397660220334d927e5363460b24763674a2e6613f3aefe1748fbb49"
         },
         {
             "file": "admin-moderation-restore-terminal-denied.json",

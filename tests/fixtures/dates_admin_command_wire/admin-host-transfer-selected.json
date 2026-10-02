@@ -1,0 +1,18 @@
+{
+    "success": true,
+    "status_code": 200,
+    "transfer_id": "trf_00000000000000000000000000000002",
+    "activity_id": "act_00000000000000000000000000000010",
+    "outgoing_host_uid": 70216,
+    "target_uid": 70316,
+    "transfer_status": "pending",
+    "expires_at": 1790604800,
+    "revision": 1,
+    "audit_id": "aud_00000000000000000000000000000015",
+    "activity_revision": 2,
+    "idempotency_replayed": false,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

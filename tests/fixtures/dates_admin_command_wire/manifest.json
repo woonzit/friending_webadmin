@@ -1,0 +1,640 @@
+{
+    "schema_version": 1,
+    "contract": "dates-admin-command-v1",
+    "source_commit": "7353371a821b26762ff0f993cf252250a408217f",
+    "fixture_set_sha256": "80c762f2b64f0e99de0a8d702b52400b7e80787c7f5e98c6c253446f7b02d135",
+    "provenance": {
+        "generator": "tests/dates_admin_command_fixture_dump.php",
+        "generator_sha256": "7d3efa7632333bc96824895321b93769f34737b01a84f60681d1a549e73fc4e0",
+        "wire_adapters": {
+            "webadmin_routes": "HTTP POST application/x-www-form-urlencoded -> public/index.php under the PHP web server -> Friending\\Core\\Router::dispatch -> Friending\\Support\\Webadmin::reply"
+        },
+        "request_encoding": "every request value is a form string, as Webadmin lib/core.ts encodeValue sends it: a boolean \"1\" / \"0\", a number its decimal, no value an empty field, an object one JSON string",
+        "released_console": "a request shaped as Webadmin 7825bc13 sends it gets a receipt of exactly the released keys: legal-hold requests without expected_revision (validated with the closed rule of lib/datesModerationRead.ts datesLegalHoldReceipt), trail captures and host transfers without dates_admin_command_contract_version. The admin-*-selected-* bodies are the answers to requests that carry the selector",
+        "declared_orchestration": [
+            "the two legal-hold cases are closed by a direct storage write before their holds are released (a real resolution would release the automatic hold and change what the hold commands find)",
+            "the activity that is purged is soft-deleted twice by the real command; its purge_eligible_at is then moved into the past by a direct storage write, because the retention is thirty days"
+        ],
+        "cache_policy": {
+            "webadmin_routes": "route-default"
+        },
+        "evaluated_at": 1790000000,
+        "normalized_clock_fields": {
+            "server_now": "bounded by the request wall clock before replacement",
+            "review_at": "exact equality to the requested time, then shift by seed epoch only; null preserved",
+            "captured_from/captured_to": "exact equality to the requested bounds, then shift by seed epoch only",
+            "expires_at": "the stored transfer expiry, exactly seven days after the stored creation time; replaced by the normalized clock plus seven days",
+            "activity_type.updated_at": "exact equality to the stored row; replaced by the normalized clock"
+        },
+        "normalized_identifier_fields": {
+            "audit_id": "top-level only; real aud_32hex of a persisted audit row; numbered by first appearance, so a repeat that names an earlier row keeps that row's number",
+            "evidence_id": "top-level only; real evi_32hex of a persisted snapshot; numbered by first appearance",
+            "transfer_id": "top-level only; real trf_32hex of a persisted transfer; numbered by first appearance",
+            "decision_id": "top-level only; real dec_32hex of the one persisted decision"
+        },
+        "source_paths": [
+            "config/routes.php",
+            "public/index.php",
+            "src/Core/Config.php",
+            "src/Core/DeferredWork.php",
+            "src/Core/LegacyProxy.php",
+            "src/Core/Mongo.php",
+            "src/Core/PerfMonitor.php",
+            "src/Core/Request.php",
+            "src/Core/Response.php",
+            "src/Core/Router.php",
+            "src/Http/Controllers/AccountController.php",
+            "src/Http/Controllers/AlbumController.php",
+            "src/Http/Controllers/AppController.php",
+            "src/Http/Controllers/AppStoreNotificationController.php",
+            "src/Http/Controllers/AppearanceController.php",
+            "src/Http/Controllers/BrowseController.php",
+            "src/Http/Controllers/ChatController.php",
+            "src/Http/Controllers/ChatRequestController.php",
+            "src/Http/Controllers/DatesChatController.php",
+            "src/Http/Controllers/DatesController.php",
+            "src/Http/Controllers/DatesExternalMembershipController.php",
+            "src/Http/Controllers/DatesHostTransferController.php",
+            "src/Http/Controllers/DatesLiveController.php",
+            "src/Http/Controllers/DatesModerationController.php",
+            "src/Http/Controllers/DatesNotificationController.php",
+            "src/Http/Controllers/DatesReviewController.php",
+            "src/Http/Controllers/DatesSafetyController.php",
+            "src/Http/Controllers/EmailVerificationController.php",
+            "src/Http/Controllers/FeedController.php",
+            "src/Http/Controllers/FootprintController.php",
+            "src/Http/Controllers/ForcedVerificationAdminController.php",
+            "src/Http/Controllers/GiveawayController.php",
+            "src/Http/Controllers/GoogleRtdnController.php",
+            "src/Http/Controllers/HealthController.php",
+            "src/Http/Controllers/HelpSupportController.php",
+            "src/Http/Controllers/IcebreakerController.php",
+            "src/Http/Controllers/IntoTagController.php",
+            "src/Http/Controllers/InvitesController.php",
+            "src/Http/Controllers/IosadminController.php",
+            "src/Http/Controllers/JoinController.php",
+            "src/Http/Controllers/LocationController.php",
+            "src/Http/Controllers/MembershipController.php",
+            "src/Http/Controllers/MembershipStoreController.php",
+            "src/Http/Controllers/ModerationController.php",
+            "src/Http/Controllers/NotificationController.php",
+            "src/Http/Controllers/PeopleController.php",
+            "src/Http/Controllers/PersonaController.php",
+            "src/Http/Controllers/PersonaScreensAdminController.php",
+            "src/Http/Controllers/PingerAdminController.php",
+            "src/Http/Controllers/PingerController.php",
+            "src/Http/Controllers/ProfileAlbumController.php",
+            "src/Http/Controllers/ProfileController.php",
+            "src/Http/Controllers/ProfileFieldController.php",
+            "src/Http/Controllers/ProfileHubController.php",
+            "src/Http/Controllers/ProfileIntentsController.php",
+            "src/Http/Controllers/ProfileMediaController.php",
+            "src/Http/Controllers/ProfileTagController.php",
+            "src/Http/Controllers/ProfileUsernameController.php",
+            "src/Http/Controllers/ProfileVerificationController.php",
+            "src/Http/Controllers/ProfileVisibilityController.php",
+            "src/Http/Controllers/QuickPhraseController.php",
+            "src/Http/Controllers/RealtimeController.php",
+            "src/Http/Controllers/RefDataController.php",
+            "src/Http/Controllers/RelationController.php",
+            "src/Http/Controllers/RelationListController.php",
+            "src/Http/Controllers/RetiredFeatureController.php",
+            "src/Http/Controllers/SessionActivityController.php",
+            "src/Http/Controllers/SettingsController.php",
+            "src/Http/Controllers/SportInterestController.php",
+            "src/Http/Controllers/SubscriptionController.php",
+            "src/Http/Controllers/UserController.php",
+            "src/Http/Controllers/VerificationAdminController.php",
+            "src/Http/Controllers/VerificationMethodAdminController.php",
+            "src/Http/Controllers/WebadminAppReviewController.php",
+            "src/Http/Controllers/WebadminAppearanceController.php",
+            "src/Http/Controllers/WebadminAudienceVisibilityController.php",
+            "src/Http/Controllers/WebadminController.php",
+            "src/Http/Controllers/WebadminDatesController.php",
+            "src/Http/Controllers/WebadminDatesExternalController.php",
+            "src/Http/Controllers/WebadminFeatureSwitchesController.php",
+            "src/Http/Controllers/WebadminIntoTagModerationController.php",
+            "src/Http/Controllers/WebadminInviteConfigurationController.php",
+            "src/Http/Controllers/WebadminLayer2Controller.php",
+            "src/Http/Controllers/WebadminLocationAccessPolicyController.php",
+            "src/Http/Controllers/WebadminMemberBirthdayLockController.php",
+            "src/Http/Controllers/WebadminMembershipController.php",
+            "src/Http/Controllers/WebadminModeCardsController.php",
+            "src/Http/Controllers/WebadminModerationController.php",
+            "src/Http/Controllers/WebadminProfilePresenceConfigurationController.php",
+            "src/Http/Controllers/WebadminProfilePresentationController.php",
+            "src/Http/Controllers/WebadminProfileTextModerationController.php",
+            "src/Http/Controllers/WebadminProfileVerificationController.php",
+            "src/Http/Controllers/WebadminSectionTeasersController.php",
+            "src/Http/Middleware/AuthMiddleware.php",
+            "src/Http/Middleware/DatesApiVersionMiddleware.php",
+            "src/Http/Middleware/DatesRestrictionMiddleware.php",
+            "src/Http/Middleware/ForcedVerificationGateMiddleware.php",
+            "src/Http/Middleware/JoinWebSecretMiddleware.php",
+            "src/Http/Middleware/SessionBoundaryMiddleware.php",
+            "src/Http/Middleware/StorefrontCountryMiddleware.php",
+            "src/Http/Middleware/VerificationGateMiddleware.php",
+            "src/Http/Middleware/WebadminSecretMiddleware.php",
+            "src/Services/AdministrativeMessageConsentService.php",
+            "src/Services/AdministrativeMessageConsentStore.php",
+            "src/Services/AppleOidcVerifier.php",
+            "src/Services/DatesActivityAggregateFactory.php",
+            "src/Services/DatesActivityPhotoService.php",
+            "src/Services/DatesActivityPurgeService.php",
+            "src/Services/DatesAdminActivityService.php",
+            "src/Services/DatesAdminAuditService.php",
+            "src/Services/DatesAdminAuthorizationService.php",
+            "src/Services/DatesAdminCommandContract.php",
+            "src/Services/DatesAdminException.php",
+            "src/Services/DatesAdminIdempotencyService.php",
+            "src/Services/DatesConfigurationAdminService.php",
+            "src/Services/DatesDomainException.php",
+            "src/Services/DatesDomainOutbox.php",
+            "src/Services/DatesDraftService.php",
+            "src/Services/DatesExternalEventPublisher.php",
+            "src/Services/DatesHostTransferService.php",
+            "src/Services/DatesLiveRetentionService.php",
+            "src/Services/DatesMembershipBundleService.php",
+            "src/Services/DatesModerationCommandService.php",
+            "src/Services/DatesModerationConflictService.php",
+            "src/Services/DatesModerationReadService.php",
+            "src/Services/DatesPhotoCleanupService.php",
+            "src/Services/DatesPrepublicationModerationService.php",
+            "src/Services/DatesReasonAdminService.php",
+            "src/Services/DatesReferenceService.php",
+            "src/Services/DatesReviewService.php",
+            "src/Services/DatesRuntimeConfiguration.php",
+            "src/Services/DatesTrailEvidenceService.php",
+            "src/Services/DatesTransaction.php",
+            "src/Services/MongoAdministrativeMessageConsentStore.php",
+            "src/Services/ProfileIntentsService.php",
+            "src/Services/UserModerationService.php",
+            "src/Support/AgePolicy.php",
+            "src/Support/AppAppearancePolicy.php",
+            "src/Support/AuthMethodPolicy.php",
+            "src/Support/DatesActivityPolicy.php",
+            "src/Support/DatesAdminInput.php",
+            "src/Support/DatesCanonicalPayload.php",
+            "src/Support/DatesCityKey.php",
+            "src/Support/DatesContract.php",
+            "src/Support/DatesEventOrigin.php",
+            "src/Support/DatesExternalAvailabilityPolicy.php",
+            "src/Support/DatesFeatureFlags.php",
+            "src/Support/DatesId.php",
+            "src/Support/DatesLegalHoldPolicy.php",
+            "src/Support/DatesReviewSandboxPolicy.php",
+            "src/Support/DatesRevisionPolicy.php",
+            "src/Support/ErrorLogDestination.php",
+            "src/Support/ForcedVerificationPolicy.php",
+            "src/Support/IpGeo.php",
+            "src/Support/ModerationPolicy.php",
+            "src/Support/MongoNamespacePolicy.php",
+            "src/Support/PeopleFilterPolicy.php",
+            "src/Support/PhoneAuth.php",
+            "src/Support/PublicProfileLinkPolicy.php",
+            "src/Support/PublicWebBasePolicy.php",
+            "src/Support/PushDeliveryModePolicy.php",
+            "src/Support/SectionAvailabilityPolicy.php",
+            "src/Support/SessionExpiryPolicy.php",
+            "src/Support/VerificationPolicy.php",
+            "src/Support/Webadmin.php",
+            "src/Support/WebadminRolePolicy.php",
+            "src/Support/WelcomeMessage.php",
+            "tests/dates_admin_command_fixture_dump.php",
+            "tests/fixture_manifest_provenance.php",
+            "tests/support/core_http_server.php",
+            "tests/support/dates_admin_command_contract.php",
+            "tests/support/dates_moderation_console_contract.php",
+            "tests/support/dates_moderation_wire_contract.php"
+        ]
+    },
+    "fixtures": [
+        {
+            "file": "admin-activity-cancel.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "bea49648325364e7fe8361fe1605856119d9369299243a8a9ca3dc1de875598d"
+        },
+        {
+            "file": "admin-activity-command-stale-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "984a8beeed2f59fd49636435d2acafc353e776cb4968549ff37fe6207564e9b6"
+        },
+        {
+            "file": "admin-activity-command-viewer-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-activity-end-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "faefa9fc2cb2a20468598fa917ea4c2dc643a74719c121d8f5358c284e88a346"
+        },
+        {
+            "file": "admin-activity-end.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "e94b7e31a9927564572498489dcd3175ab4743b1db651d8350ab78de0f6cdcb7"
+        },
+        {
+            "file": "admin-activity-purge-administrator-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-activity-purge-repeat-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 404,
+            "sha256": "6cee57f33d1f2daba4df4e2101932215de02d4aeb2e9eef44663ae01a575d0d1"
+        },
+        {
+            "file": "admin-activity-purge.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "d4b2d3f7320bba91bb5aaf1d0b4ca21b8b183dd2218dae35fc6317fa897ccd56"
+        },
+        {
+            "file": "admin-activity-restore.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f653058770d14c70cf51651f9416d5cbeb960dae1ce8118f9fa8f64f9a0f8892"
+        },
+        {
+            "file": "admin-activity-soft-delete.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "de807a8b9d7f60a51b4f70895a8239bb33ab492e3d405f07ebc9c4706a91feed"
+        },
+        {
+            "file": "admin-activity-type-save-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "1576de0c23cb825d275605542ee572917092a91b75b8129fd9bc0be0b3880ea3"
+        },
+        {
+            "file": "admin-activity-type-save-stale-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "984a8beeed2f59fd49636435d2acafc353e776cb4968549ff37fe6207564e9b6"
+        },
+        {
+            "file": "admin-activity-type-save-viewer-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-activity-type-save.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "4524118b41bdfc0b4552423141ae3d36d2f3c2519fbe1a21d96e4c888b276bd9"
+        },
+        {
+            "file": "admin-activity-update-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "d17e0fce00c7721f7d839822a9fa6093e0f080912cc6bced7da7941b6e510127"
+        },
+        {
+            "file": "admin-activity-update-stale-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "984a8beeed2f59fd49636435d2acafc353e776cb4968549ff37fe6207564e9b6"
+        },
+        {
+            "file": "admin-activity-update-viewer-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-activity-update.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "a852ce670af27fb5411db724a066ed9fc8f4a68ac0e91e2742d5fa167a2908de"
+        },
+        {
+            "file": "admin-configuration-save-first-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c6209a7563a082cbc4249bfa64e20e472c6f767a6abd4be9a1a928ec68c22a95"
+        },
+        {
+            "file": "admin-configuration-save-first.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "161675ebc77a5393bad39420f50d0ffb36b13b4ed23df63c1f02008f6d2188cb"
+        },
+        {
+            "file": "admin-configuration-save-stale-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "984a8beeed2f59fd49636435d2acafc353e776cb4968549ff37fe6207564e9b6"
+        },
+        {
+            "file": "admin-configuration-save-viewer-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-configuration-save.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "0b989b510bd8e016c873d04235108cbfbaafefff41d2ed0bea661eccf433c115"
+        },
+        {
+            "file": "admin-hold-amend.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "3fd695204ab660f604ee09d502da10627e1cd8aafe3b02731e102a935a57d566"
+        },
+        {
+            "file": "admin-hold-place-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "9853d3923130dc95641a312d5412bde7a7a40f7aecd32e90be98396057bbe7da"
+        },
+        {
+            "file": "admin-hold-place-unchanged.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "5b0e8c204843737fbb430eb2a289af51a89533b4332d1435585536cbcdc82497"
+        },
+        {
+            "file": "admin-hold-place.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "5b0e8c204843737fbb430eb2a289af51a89533b4332d1435585536cbcdc82497"
+        },
+        {
+            "file": "admin-hold-release-open-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "b9e857e13e4b8ebe00eedd6b11f72cba97f498618eeb755cac2bfd5b5aeaf5f5"
+        },
+        {
+            "file": "admin-hold-release-unchanged.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "bddbff21933e6a3ab173ae4796b1cabd8671a11164f2f5618fe91c78f389e774"
+        },
+        {
+            "file": "admin-hold-release.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "bddbff21933e6a3ab173ae4796b1cabd8671a11164f2f5618fe91c78f389e774"
+        },
+        {
+            "file": "admin-hold-selected-amended.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "3af14e3b5f44a484c1a81bf971ac9d4f098d597d0272440e02bd62c43b5a2f7c"
+        },
+        {
+            "file": "admin-hold-selected-malformed-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "beda269d6dc916e8884e04825d4423025f90788b2bdc7a0878f421d38dbf56a9"
+        },
+        {
+            "file": "admin-hold-selected-placed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "793f9e4d54b5f308aec0f689b00f21267f08c7e8014f42e48790c18c088b7165"
+        },
+        {
+            "file": "admin-hold-selected-release-unchanged.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "ebe6cd91059a26f0330f224353ea099514c014fadd02b2d8d98987d76d60b3dd"
+        },
+        {
+            "file": "admin-hold-selected-released.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "3b2799582113624ea4c0dee4ca0d145c7352786d759dbfd0e3fde43ed3197e1c"
+        },
+        {
+            "file": "admin-hold-selected-stale-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "984a8beeed2f59fd49636435d2acafc353e776cb4968549ff37fe6207564e9b6"
+        },
+        {
+            "file": "admin-hold-selected-unchanged.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "a6989918ee71cd0f84c50b8097de8e48f77cfebb4a9881dfa0bd0763db1cb275"
+        },
+        {
+            "file": "admin-hold-viewer-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-host-transfer-administrator-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-host-transfer-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "9421eee11aed4c63958576b32ae77e585a991b98880fd0ea61cef91bc20d23d7"
+        },
+        {
+            "file": "admin-host-transfer-selected-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f9c17ec6e35ed363075980a5265f3df52e2cdb327822597194b7e167ca8a69e5"
+        },
+        {
+            "file": "admin-host-transfer-selected.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "28fef7b0628ff40a320045f49651af729874e79fa8c263e66f7daf8a4162df3d"
+        },
+        {
+            "file": "admin-host-transfer-stale-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "1d962551fb98981edc8a50cc6862b9b92c0f70751f8c7ff9930cfe8a94e055ba"
+        },
+        {
+            "file": "admin-host-transfer.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "4c1ecb7f5a7517f5b3ce74bb17df5a11ca8a9d7ddc473640712cdc018bbe9b50"
+        },
+        {
+            "file": "admin-reason-deactivate-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "ea7f60925c228207fa4c3fd90c113c1047ae4ab974d267bd0ce9630fb37b7d15"
+        },
+        {
+            "file": "admin-reason-deactivate-stale-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "984a8beeed2f59fd49636435d2acafc353e776cb4968549ff37fe6207564e9b6"
+        },
+        {
+            "file": "admin-reason-deactivate-viewer-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-reason-deactivate.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "db529936f16fedd79aff87772ef30446d6304fc88886537bfd740d5fff9aa30d"
+        },
+        {
+            "file": "admin-resolve-dismiss-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f503f38ee3bb48cd88b0465a2f8fc4f99adf6b5fd0c90c38061291c9dac42f3c"
+        },
+        {
+            "file": "admin-resolve-dismiss.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "b2fa8ca60a39d5f502b2f120df1381f3a8c28178b566149ff378fa85ffaa36c2"
+        },
+        {
+            "file": "admin-resolve-stale-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "984a8beeed2f59fd49636435d2acafc353e776cb4968549ff37fe6207564e9b6"
+        },
+        {
+            "file": "admin-resolve-viewer-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-trail-capture-existing.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "e7496f1ea4139d9b6f036046191843ec5cc3ba8f6bafd64e976c6e86afa37f00"
+        },
+        {
+            "file": "admin-trail-capture-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "d7367639dd521de6b6c6640209f09ca68d1e18ad87ab3accb1c64b89f69b94c2"
+        },
+        {
+            "file": "admin-trail-capture-stale-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "984a8beeed2f59fd49636435d2acafc353e776cb4968549ff37fe6207564e9b6"
+        },
+        {
+            "file": "admin-trail-capture-viewer-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-trail-capture.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "e7496f1ea4139d9b6f036046191843ec5cc3ba8f6bafd64e976c6e86afa37f00"
+        },
+        {
+            "file": "admin-trail-selected-capture-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "3c853f26747138039d94581cd293163c04806e4d87081143d2341295277e009d"
+        },
+        {
+            "file": "admin-trail-selected-capture.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "032938fd8798aa486bb67293536a4f10510ab10041293fc5081c5252fdd1d922"
+        },
+        {
+            "file": "admin-trail-selected-existing.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "11f6b639d17c2edff51da29e19539699d31c84211de6222ea759de6032ddbffd"
+        },
+        {
+            "file": "admin-trail-selected-version-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "9c607bf349017354066820545ffdcc0af20e27e4dfdec8517c1dac9e2b1750fa"
+        }
+    ]
+}

@@ -19,7 +19,7 @@
         "claim_expires_at": null,
         "sla_due_at": 1790086400,
         "sla_breached": false,
-        "revision": 3,
+        "revision": 5,
         "created_at": 1790000000,
         "updated_at": 1790000000,
         "conflict_of_interest": false,
