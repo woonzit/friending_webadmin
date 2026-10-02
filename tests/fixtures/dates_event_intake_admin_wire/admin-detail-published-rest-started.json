@@ -27,6 +27,7 @@
         "decision_action": "published",
         "created_at": 1790924437,
         "updated_at": 1795874401,
+        "second_look": false,
         "admin_principal": "admin@example.test",
         "inputs": {
             "kind": "images",

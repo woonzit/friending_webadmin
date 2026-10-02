@@ -16,10 +16,15 @@ function CorrectedValue({ value }: { value: string | number | boolean | null }) 
   return <span className="preserve-whitespace">{String(value)}</span>;
 }
 
-/** A second look is open while the member has asked for it and no second decision is on record. */
-export function datesIntakeSecondLookOpen(intake: Pick<DatesIntakeDetail, "status" | "member">): boolean {
+/**
+ * A second look is open when Core marks the intake so (`second_look`, the mark
+ * the queue shows), or - from a Core that does not serve the mark - while the
+ * member has asked for it and no second decision is on record. Either says it:
+ * the warning before a rejection must not depend on which one was readable.
+ */
+export function datesIntakeSecondLookOpen(intake: Pick<DatesIntakeDetail, "status" | "member" | "second_look">): boolean {
   const look = intake.member?.re_review ?? null;
-  return intake.status === "in_review" && look !== null && look.decided_at === null;
+  return intake.second_look || (intake.status === "in_review" && look !== null && look.decided_at === null);
 }
 
 /**

@@ -4,10 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesRuntimeSettingsHelp from "@/components/DatesRuntimeSettingsHelp";
+import DatesSuggestionConsentStatus from "@/components/DatesSuggestionConsentStatus";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import { datesCommandOutcome, datesUncheckedReceipt } from "@/lib/datesExternalAdmin";
+import { datesSuggestionConsent, type DatesSuggestionConsent } from "@/lib/datesIntakeAdmin";
 import {
   configurationInputValue,
   datesConfigurationRawValue,
@@ -68,6 +70,8 @@ type ActivityType = {
 };
 
 type Feedback = { tone: "success" | "error"; text: string };
+const DATES_SUGGESTIONS_SWITCH = "dates_external_suggestions_enabled";
+const DATES_CONSENT_VERSION_SETTING = "dates_event_suggestion_consent_version";
 
 export default function DatesConfigurationPage() {
   const t = useTranslations("datesAdmin.configuration");
@@ -81,6 +85,8 @@ export default function DatesConfigurationPage() {
   const [principal, setPrincipal] = useState<DatesAdminPrincipal | null>(null);
   const [scope, setScope] = useState("all");
   const [limitation, setLimitation] = useState("");
+  // Where the text of the suggestion terms stands; shown beside the member switch.
+  const [consent, setConsent] = useState<DatesSuggestionConsent>({ kind: "absent" });
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [runtimeHelpOpen, setRuntimeHelpOpen] = useState(false);
@@ -105,6 +111,7 @@ export default function DatesConfigurationPage() {
     setActivityTypes(configuration.activity_types as ActivityType[]);
     setReasons(nextReasons.reasons); setUnreadableReasons(nextReasons.unreadable_rows);
     setLimitation(String(configuration.known_limitation || ""));
+    setConsent(datesSuggestionConsent(configuration));
     setPrincipal(nextPrincipal);
     setState("ready");
   }, [scope, settings.length]);
@@ -142,7 +149,9 @@ export default function DatesConfigurationPage() {
         <div className="panel-header"><div><h2>{t("runtimeTitle")}</h2><p>{t("runtimeCopy")}</p></div><div className="row-actions"><button className="button button-secondary button-small dates-help-trigger" type="button" onClick={() => setRuntimeHelpOpen(true)}>{t("runtimeHelp.button")}</button><span className="badge">{t("settingCount", { count: settings.length })}</span></div></div>
         {settings.some((setting) => datesSettingStorefrontEffective(setting).status === "unsupported") && <p className="alert alert-info">{t("effectiveByStorefrontUnsupported")}</p>}
         <div className="dates-setting-list">
-          {settings.map((setting) => <SettingEditor key={`${setting.key}-${setting.revision}`} setting={setting} canManage={canManageConfiguration} onSaved={async () => { success(t("settingSaved")); await load(); }} onError={failure} onUnknown={unknown} />)}
+          {settings.flatMap((setting) => [<SettingEditor key={`${setting.key}-${setting.revision}`} setting={setting} canManage={canManageConfiguration} onSaved={async () => { success(t("settingSaved")); await load(); }} onError={failure} onUnknown={unknown} />,
+            // The state of the consent text sits directly under the switch that opens the member channel.
+            ...(setting.key === DATES_SUGGESTIONS_SWITCH ? [<DatesSuggestionConsentStatus key="suggestion-consent" consent={consent} />] : [])])}
         </div>
       </section>
 
@@ -208,6 +217,8 @@ function SettingEditor({ setting, canManage, onSaved, onError, onUnknown }: { se
     setBusy(false);
     const outcome = datesCommandOutcome(response, datesUncheckedReceipt("dates_configuration_save", response), "fresh");
     if (outcome.kind === "uncertain") { onUnknown(outcome.error); return; }
+    // Core accepts only a consent version whose text exists in this release: said as what it is, beside the field.
+    if (outcome.kind === "refused" && setting.key === DATES_CONSENT_VERSION_SETTING && outcome.error === "dates-configuration-value-invalid") { setProblem(t("consentVersionNoText")); return; }
     if (outcome.kind === "refused") { onError(outcome.error); return; }
     await onSaved();
   }

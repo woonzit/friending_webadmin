@@ -27,6 +27,7 @@
         "decision_action": null,
         "created_at": 1790924435,
         "updated_at": 1790259200,
+        "second_look": false,
         "admin_principal": null,
         "inputs": {
             "kind": "text",

@@ -27,7 +27,8 @@
             },
             "decision_action": "rejected",
             "created_at": 1790924415,
-            "updated_at": 1790000000
+            "updated_at": 1790000000,
+            "second_look": false
         },
         {
             "intake_id": "xin_0000000000000000000000000000000e",
@@ -54,7 +55,8 @@
             },
             "decision_action": "rejected",
             "created_at": 1790924414,
-            "updated_at": 1790000000
+            "updated_at": 1790000000,
+            "second_look": false
         }
     ],
     "page": 1,
@@ -76,6 +78,7 @@
         "expired": 0,
         "awaiting_budget": 0
     },
+    "second_look_count": 0,
     "drafts_enabled": true,
     "suggestions_enabled": false,
     "capabilities": [

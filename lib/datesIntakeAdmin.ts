@@ -85,6 +85,8 @@ export const DATES_INTAKE_MEMBER_EDITABLE_FIELDS = ["title", "starts_local", "en
 export const DATES_INTAKE_OPEN_STATUSES = ["received", "screening", "extracting", "validating", "member_confirming", "in_review", "awaiting_budget"] as const;
 
 /** Manifest vocabulary name => the console's list; the pin test walks this map. */
+/** Where the text of the suggestion terms stands (the configuration read's `event_suggestion_consent.text_status`). */
+export const DATES_CONSENT_TEXT_STATUSES = ["missing", "draft", "approved"] as const;
 export const DATES_INTAKE_VOCABULARIES = {
   status: DATES_INTAKE_STATUSES, status_detail: DATES_INTAKE_STATUS_DETAILS, channel: DATES_INTAKE_CHANNELS,
   input_kind: DATES_INTAKE_INPUT_KINDS, decision_action: DATES_INTAKE_DECISION_ACTIONS, reject_reason: DATES_INTAKE_REJECT_REASONS,
@@ -94,7 +96,7 @@ export const DATES_INTAKE_VOCABULARIES = {
   dedupe_verdict: DATES_INTAKE_DEDUPE_VERDICTS, dedupe_candidate_kind: DATES_INTAKE_DEDUPE_KINDS, category: DATES_EXTERNAL_CATEGORIES,
   link_drop_reason: DATES_INTAKE_LINK_DROP_REASONS, provider: DATES_AI_PROVIDERS, ai_outcome: DATES_AI_OUTCOMES,
   safe_search_likelihood: DATES_SAFE_SEARCH_LIKELIHOODS, member_confirmation_state: DATES_INTAKE_MEMBER_CONFIRMATION_STATES,
-  member_editable_field: DATES_INTAKE_MEMBER_EDITABLE_FIELDS,
+  member_editable_field: DATES_INTAKE_MEMBER_EDITABLE_FIELDS, consent_text_status: DATES_CONSENT_TEXT_STATUSES,
 } as const;
 
 /**
@@ -201,6 +203,11 @@ const ROW_KEYS = ["intake_id", "revision", "status", "lease", ...Object.keys(row
 export type DatesIntakeQueueRow = RowDisplay & {
   intake_id: string;
   status: DatesIntakeStatus;
+  /**
+   * A member's request for a second look waits for a reviewer (Core: `re_review` set, not decided, the intake not
+   * ended). False for everything else - and when a Core that does not serve the key answers (it is optional).
+   */
+  second_look: boolean;
   /** Null when Core's value cannot be used for a compare-and-set. */
   revision: number | null;
   /** Null when Core's lease cannot be trusted. */
@@ -225,7 +232,9 @@ function projectRow(value: unknown, keys: readonly string[]): DatesIntakeQueueRo
   const lease = datesIntakeLease(value.lease) ? value.lease : null;
   if (revision === null) unreadable.push("revision");
   if (lease === null) unreadable.push("lease");
-  return { ...display, intake_id: value.intake_id, status: value.status, revision, lease,
+  // Optional: absent is "no second look"; served but not a boolean is unreadable, never "yes".
+  if (Object.hasOwn(value, "second_look") && !bool(value.second_look)) unreadable.push("second_look");
+  return { ...display, intake_id: value.intake_id, status: value.status, revision, lease, second_look: value.second_look === true,
     controls: revision !== null && lease !== null, unreadable_fields: unreadable };
 }
 
@@ -236,6 +245,8 @@ const queueGuard = bound({ ...envelope, intakes: ((value: unknown): value is unk
 export type DatesIntakeQueue = Omit<Parsed<typeof queueGuard>, "intakes"> & {
   intakes: DatesIntakeQueueRow[];
   unreadable_rows: DatesIntakeUnreadableRow[];
+  /** How many second looks wait, whatever the page is filtered by. Null when Core did not serve the figure (or it cannot be read). */
+  second_look_count: number | null;
 };
 
 /** The review queue. Null only when the page itself cannot be trusted. */
@@ -249,7 +260,28 @@ export function projectDatesIntakeQueue(value: unknown, expected: { page: number
     const row = duplicate ? null : projectRow(item, ROW_KEYS);
     if (row) intakes.push(row); else unreadable_rows.push({ index, intake_id: ids[index] });
   });
-  return { ...value, intakes, unreadable_rows };
+  // A count Core recomputes: unreadable is "not known", never a reason to lose the queue.
+  const waiting = (value as Record<string, unknown>).second_look_count;
+  return { ...value, intakes, unreadable_rows, second_look_count: integer(0)(waiting) ? waiting : null };
+}
+
+export type DatesSuggestionConsent =
+  /** Core did not serve the block: a Core that does not know it, or a request without the selector. Nothing is said. */
+  | { kind: "absent" }
+  | { kind: "known"; required_version: number; text_status: typeof DATES_CONSENT_TEXT_STATUSES[number] }
+  /** Served in a shape, or with a status, this console does not know: said to be unreadable - never "approved". */
+  | { kind: "unreadable" };
+const consentGuard = bound({ required_version: integer(1), text_status: oneOf(DATES_CONSENT_TEXT_STATUSES) });
+/**
+ * `event_suggestion_consent` of the configuration read: the version of the
+ * terms a member must have accepted, and whether its text is still a draft.
+ * Core does not enforce it on the switch; the console shows it beside the
+ * member switch so that whoever turns it sees it.
+ */
+export function datesSuggestionConsent(configuration: unknown): DatesSuggestionConsent {
+  if (!record(configuration) || !Object.hasOwn(configuration, "event_suggestion_consent")) return { kind: "absent" };
+  const served = configuration.event_suggestion_consent;
+  return consentGuard(served) ? { kind: "known", required_version: served.required_version, text_status: served.text_status } : { kind: "unreadable" };
 }
 
 // ---------------------------------------------------------------- detail
@@ -957,12 +989,17 @@ export function normalizeDatesIntakePublishBody(body: Record<string, unknown>): 
 export function normalizeDatesIntakeProxyBody(action: string, body: Record<string, unknown>): Record<string, unknown> | null | undefined {
   if (!DATES_INTAKE_PROXY_ACTIONS.includes(action as DatesIntakeProxyAction)) return undefined;
   if (action === "dates_event_intake_list") {
-    if (!bodyKeys(body, [], ["status", "channel", "page", "limit"])) return null;
+    if (!bodyKeys(body, [], ["status", "channel", "page", "limit", "second_look"])) return null;
     const forwarded: Record<string, unknown> = {};
     for (const [key, values] of [["status", DATES_INTAKE_STATUSES], ["channel", DATES_INTAKE_CHANNELS]] as const) {
       if (!Object.hasOwn(body, key) || body[key] === "") continue;
       if (!oneOf(values)(body[key])) return null;
       forwarded[key] = body[key];
+    }
+    // The second-look filter is a strict boolean (the form encoder writes it as Core's "1" / "0"); absent is "no filter".
+    if (Object.hasOwn(body, "second_look")) {
+      if (!bool(body.second_look)) return null;
+      forwarded.second_look = body.second_look;
     }
     // Core treats a present-but-empty page or limit as malformed: send a number or nothing.
     for (const [key, maximum] of [["page", 10000], ["limit", 100]] as const) {

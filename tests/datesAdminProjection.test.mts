@@ -30,6 +30,7 @@ function routeOf(corpus: string, file: string): string | null {
     ["admin-duplicate-of-event", "dates_event_intake_reject"], ["admin-ask-member", "dates_event_intake_ask_member"], ["admin-publish", "dates_event_intake_publish"],
     ["admin-usage-", "dates_event_intake_usage"], ["admin-image-", "dates_event_intake_image"], ["admin-external-detail-", "dates_external_event_detail"],
     ["admin-external-list-", "dates_external_event_list"], ["admin-activity-detail-", "dates_activity_detail"], ["admin-unauthorized", "dates_event_intake_list"],
+    ["admin-configuration-save", "dates_configuration_save"], ["admin-configuration", "dates_configuration"],
     ["admin-revoked", "dates_event_intake_list"]]) ?? "?";
   if (corpus.startsWith("dates_external_admin_wire")) {
     if (name.startsWith("admin-chat-")) {
@@ -93,8 +94,8 @@ test("the projection of every genuine body is that body: no named field is lost,
   // Each route that has a genuine success body, by name - the others are listed with the reason they have none.
   const covered = new Set(SUCCESSES.map((item) => item.route));
   assert.deepEqual(Object.keys(DATES_ADMIN_NAMED).filter((route) => !covered.has(route)).sort(), ["dates_activity_host_transfer", "dates_activity_location",
-    "dates_activity_type_save", "dates_activity_update", "dates_configuration_save", "dates_moderation_trail_evidence", "dates_reason_deactivate"],
-  "no genuine body: five unchecked receipts (the success flag is all a page reads), the break-glass location, the trail capture receipt");
+    "dates_activity_type_save", "dates_activity_update", "dates_moderation_trail_evidence", "dates_reason_deactivate"],
+  "no genuine body: four unchecked receipts (the success flag is all a page reads), the break-glass location, the trail capture receipt");
 });
 
 /** Adds a key to every object the tree names (not inside a part kept whole): what the projection must take out again. */
@@ -121,7 +122,7 @@ test("per route: a key this console does not name, at any depth, is not in what 
     perRoute.set(route, (perRoute.get(route) ?? 0) + added.count);
   }
   // Every route family with a genuine body was exercised, and deep: the intake detail alone has dozens of named objects.
-  assert.equal(perRoute.size, Object.keys(DATES_ADMIN_NAMED).length - 7);
+  assert.equal(perRoute.size, Object.keys(DATES_ADMIN_NAMED).length - 6);
   assert.ok(perRoute.get("dates_event_intake_detail")! > 500 && perRoute.get("dates_moderation_detail")! > 30 && perRoute.get("dates_external_event_detail")! > 100);
   // A refusal is Core's six keys and nothing beside them.
   const refusal = GENUINE.find((item) => item.body.success === false)!.body;
@@ -232,7 +233,8 @@ test("the parts kept whole are exactly the listed ones, each bounded by its own 
   };
   for (const [route, tree] of Object.entries(DATES_ADMIN_NAMED)) walk(tree, "", route);
   assert.deepEqual(found, { ...DATES_ADMIN_OPAQUE });
-  assert.deepEqual(Object.keys(DATES_ADMIN_OPAQUE).sort(), ["dates_activity_detail", "dates_activity_location", "dates_configuration", "dates_moderation_evidence"]);
+  assert.deepEqual(Object.keys(DATES_ADMIN_OPAQUE).sort(), ["dates_activity_detail", "dates_activity_location", "dates_configuration", "dates_configuration_save",
+    "dates_moderation_evidence"]);
   // Kept whole means whole: the evidence snapshot of the audited read arrives as Core served it.
   const evidence = SUCCESSES.find((item) => item.route === "dates_moderation_evidence" && item.body.evidence.length > 0)!.body, wider = copy(evidence);
   wider.evidence[0].snapshot.future = { any: "thing" };

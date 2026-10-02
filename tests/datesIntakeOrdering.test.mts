@@ -44,7 +44,7 @@ function queueHarness() {
   const loadGeneration = { current: 0 }, writes: string[] = [], state = { queue: null as any, status: "ready", operator: null as any, problem: null as any };
   function render(status: string, page: number, limit = 40) {
     const response = deferred(), membership = deferred(); let pending: Promise<void> | undefined;
-    const context: any = { exports: {}, AbortController, status, channel: "", page, PAGE_SIZE: limit, loadGeneration, readDatesIntakeQueue,
+    const context: any = { exports: {}, AbortController, status, channel: "", secondLook: "", page, PAGE_SIZE: limit, loadGeneration, readDatesIntakeQueue,
       adminCall: (action: string) => action === "admin_me" ? membership.promise : response.promise,
       setState: (value: string) => { state.status = value; writes.push("state"); },
       setQueue: (value: unknown) => { state.queue = value; writes.push("queue"); },

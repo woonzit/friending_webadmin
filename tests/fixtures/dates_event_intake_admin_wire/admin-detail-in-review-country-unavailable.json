@@ -29,6 +29,7 @@
         "decision_action": null,
         "created_at": 1790924426,
         "updated_at": 1790928000,
+        "second_look": false,
         "admin_principal": "admin@example.test",
         "inputs": {
             "kind": "text",

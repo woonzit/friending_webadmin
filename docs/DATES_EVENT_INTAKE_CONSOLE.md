@@ -12,9 +12,14 @@ rule; the provider is the Core lane's contract `dates-event-intake-admin-v1`.
 
 ## Release boundary and deploy order (D-143)
 
-- Provider: Core branch `claude/t865-p2-core` (T-884, T-886), tip
-  `32d418cff7a68217d9358959c297a469139586f0` at the time of writing; the tip that
-  is released also carries the Admin intake contract selector (below).
+- Provider: Core branch `claude/t865-p2-core` (T-884, T-886, D-143), pinned at
+  `b5b2b29983cf2dfb89371d7ac4eaf026a16b9e69`. Two corpora are vendored from that
+  tip, byte-identically: the intake corpus
+  (`tests/fixtures/dates_event_intake_admin_wire/`, 159 bodies, set
+  `008719da…`), every console request of which carries the Admin intake
+  contract selector (below), and the provider's capture of the P1 routes
+  WITHOUT the selector (`tests/fixtures/dates_external_admin_wire/`, 138 bodies,
+  set `d84a3e16…` - the released set, body for body).
 - **Order: Core first, then this console.** The intake pages need Core's P2
   routes, the `existing` marker on the create receipt and `suggestions_enabled`
   on the queue; an earlier Core serves none of them.
@@ -38,8 +43,13 @@ rule; the provider is the Core lane's contract `dates-event-intake-admin-v1`.
 - **Dual shape.** In this console `ai_assisted` on a list row and `intake` on an
   event are optional. Absent means "not served here": the row is not marked as
   AI-assisted and the event shows no link back to an intake. The configuration
-  page lists the settings Core serves (33, 41 or 50); the help marks a setting
-  it documents but Core did not return as "not returned".
+  page lists the settings Core serves (33 without the selector, 50 with it); the
+  help marks a setting it documents but Core did not return as "not returned".
+  The additions of the intake routes themselves are optional in the same way:
+  `second_look` on an intake row (absent: not marked), `second_look_count` on
+  the queue (absent: not known, nothing is shown) and
+  `event_suggestion_consent` on the configuration read (absent: nothing is
+  shown beside the member switch).
 - **No decoder of a Core body checks an exact key set.** Every Dates decoder
   binds on its fields - each named key present and valid - and tolerates a key
   it does not know; the screens print named fields only, so a tolerated key is
@@ -141,6 +151,7 @@ body that reach the browser without being named field by field:
 | `dates_moderation_evidence` | `evidence[].snapshot` | The evidence of one case: the separately authorised, audited evidence read; refused to a conflicted operator. The row around the snapshot is named fields. |
 | `dates_activity_detail` | `activity.photo`, `activity.audience`, `activity.pending_public_revision` | An activity's own public data, which the activity editor shows and sends back unchanged (narrowing it here would write the narrowed value back). |
 | `dates_configuration` | `settings[].value`, `settings[].effective_value`, `settings[].default_value`, `settings[].allowed_values` | A setting's values: data the editors show and send back; a setting row's other fields are named. |
+| `dates_configuration_save` | `setting.value` | The value Core echoes of the setting that was just saved - the same data. |
 
 One more reduction: the activity detail's `reports`, `notifications`,
 `moderation_decisions` and `audit_history` are documents Core passes through
@@ -161,11 +172,22 @@ at render.
   (`tests/fixtures/released_console_7825bc13/`, each file pinned by digest; not
   re-stated rules) and the wire tests are run unchanged, in a tree of their
   own, on the selector-less bodies: 127 tests must pass;
-- as a control, the same released decoders refuse the selector-carrying bodies;
-- this console's decoders read the released corpus: 113 bodies are byte-identical
-  to the ones its other tests decode, and the 25 that differ (9 lists, 13
-  details, the external activity detail, 2 configuration reads) are decoded in
-  both shapes.
+- the selector-less bodies are the PROVIDER's capture at its pinned tip
+  (`tests/fixtures/dates_external_admin_wire/`): asserted to be the released
+  corpus body for body (138 of 138; only the manifest, which binds the capture
+  to its source, differs);
+- as a control, the same released decoders refuse the genuine selector-carrying
+  bodies (a manual event's list and detail, an AI-assisted activity detail) -
+  and, of an AI-assisted event read WITHOUT the selector, they read the list
+  row and refuse the detail and the activity detail: the reason the switches
+  are turned on only after this console is live;
+- this console's decoders read both shapes of every P1 read that depends on the
+  selector, on genuine bodies: without it the 9 lists, 13 details, the external
+  activity detail and the 2 configuration reads of the P1 corpus; with it the
+  manual and AI-assisted list and detail, the AI-assisted activity detail and
+  the 50-row configuration of the intake corpus; and the three
+  `-released-console` reads, each proven to be its selector sibling minus the
+  one added key.
 
 ## Routes
 
@@ -294,8 +316,16 @@ A member's suggestion is an intake of the same queue with
 adds for it:
 
 - **Queue**: a channel filter (operators' drafts / members' suggestions) and a
-  notice when `suggestions_enabled` is false. A queue row carries no mark of a
-  second look; the review screen does.
+  notice when `suggestions_enabled` is false.
+- **Second looks in the queue**: Core marks a row that waits for a second look
+  (`second_look: true`) and counts them on every queue read
+  (`second_look_count`, whatever the page is filtered by). The row carries a
+  badge; while any wait, a notice above the table says how many and leads to
+  them; a filter shows all intakes, only the second looks or everything but
+  them (`second_look` sent as a boolean, which the form encoder writes as `1` /
+  `0`; no filter is no parameter). A mark the console cannot read is said on
+  the row and removes no action; a count it cannot read is not shown - never a
+  zero.
 - **The member's side** (`DatesIntakeMemberPanel`): the intake's `member` block
   and nothing else of the member - a member number (or "the account was
   erased"), credit (named / asked not to be named), "going", the accepted
@@ -333,9 +363,21 @@ adds for it:
   console offers accordingly and Core decides. The confirmation says what the
   publication does for the member: named by number or not named, joined when
   they asked to go and the suggestion is a single event.
-- **Second look**: a suggestion back in review with `re_review` set and no
-  second decision carries a mark at the top of the review screen; its decision
-  is an ordinary publication or rejection.
+- **Second look**: a suggestion Core marks `second_look` - or, from a Core that
+  does not serve the mark, one back in review with `re_review` set and no
+  second decision - carries a mark at the top of the review screen; its
+  decision is an ordinary publication or rejection.
+- **The consent text beside the member switch**: with the selector the
+  configuration read carries `event_suggestion_consent: { required_version,
+  text_status }`. The configuration page shows it directly under
+  `dates_external_suggestions_enabled`: `draft` (counsel has not approved the
+  text members are served - a warning; Core does not stop the switch for it)
+  and `approved` are states of the text; `missing` is a problem, shown as an
+  error: the required version has no complete text in this release, so the
+  member channel is closed whatever the switch says. A status the console does
+  not know is "could not be read" - never approved. Saving a consent version
+  that has no text is refused by Core (`dates-configuration-value-invalid`);
+  the editor says "this version has no text yet" beside the field.
 - **The published event**: the provenance panel says "published by Core without
   a reviewer" when none of the four administrator confirmations was given (the
   autopublish switch, default off).

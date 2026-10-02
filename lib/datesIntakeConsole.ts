@@ -64,7 +64,9 @@ async function pair(send: DatesIntakeSend, action: string, body: Record<string, 
   try { return await Promise.all([send(action, body, signal), send("admin_me", {}, signal)]); } catch { return [null, null]; }
 }
 
-export type DatesIntakeQueueFilters = { status: string; channel: string; page: number; limit: number };
+export type DatesIntakeQueueFilters = { status: string; channel: string; page: number; limit: number;
+  /** Only the second looks (true), everything but them (false), or no such filter (absent). */
+  second_look?: boolean };
 
 export async function readDatesIntakeQueue(send: DatesIntakeSend, filters: DatesIntakeQueueFilters, signal?: AbortSignal):
   Promise<DatesIntakeRead<{ queue: DatesIntakeQueue }>> {

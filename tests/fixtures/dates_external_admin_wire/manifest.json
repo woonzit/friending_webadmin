@@ -1,10 +1,10 @@
 {
     "schema_version": 1,
     "contract": "dates-external-admin-v1",
-    "source_commit": "7dfe04317524f3929b572a3d2a995f57147f10ed",
-    "source_checksum": "9c8c01070670d12d42b67046a3dd7a1597b02601e990136b1737f818c4af0c03",
+    "source_commit": "2df1849c356ef443e8ac2318c6507a6e3cd799e4",
+    "source_checksum": "c7ad7d1b9389d5a1969da9b4c6142ecde493b1d87867b6d3f0245492fee2818f",
     "fixture_count": 138,
-    "fixture_set_sha256": "72d12289a517cfb4a3f312274396a24e13d22f8ff7abe7f7a7e137e85827369f",
+    "fixture_set_sha256": "d84a3e162703db1578db59f0a0a972de24fffc8562f23a13bf5715101306e4ed",
     "provenance": {
         "generator": "tests/dates_external_admin_fixture_dump.php",
         "generator_sha256": "51e746e0946ddac4319b56cdff0adcc7107a320ed08e1ca1a1f70fa7d90fbf3d",
@@ -275,6 +275,7 @@
             "src/Support/DatesCityKey.php",
             "src/Support/DatesContract.php",
             "src/Support/DatesEventContract.php",
+            "src/Support/DatesEventIntakeAdminContract.php",
             "src/Support/DatesEventIntakePolicy.php",
             "src/Support/DatesEventIntakeSettings.php",
             "src/Support/DatesEventOrigin.php",
@@ -381,7 +382,7 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "e1314ca4daa4ec7b6bdb967c9e938acce63e8feaa56cff47fe2830f0d3a4efe6"
+            "sha256": "0b500a843cae67a2d5adcfb1f77aa65414bee556fd1173478d9c663471d73550"
         },
         {
             "file": "admin-activity-end-replay.json",
@@ -640,14 +641,14 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "9d000111a11e6a44f46bf60e620de166a45f78d8624b875ff50fc755785a0b30"
+            "sha256": "db826e3665cd3aaaaf6c4200961f140561878b1d3bdd8e2302e8ef73721152fc"
         },
         {
             "file": "admin-configuration-publishing-on.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "0bd14d9e7c302e9b1aa71ffd946f55da0d3d9bc71bad69578911817857a3cd78"
+            "sha256": "b97015edcea6096478d0221794dfd5d02154cac12363e2bb0101db12276e3481"
         },
         {
             "file": "admin-confirmation-required-denied.json",
@@ -661,28 +662,28 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "efd684a16b29e6507e0a4f17d8a462350f2c1034396f0f94cc327c3668daf327"
+            "sha256": "b8861f73738d5cc113e075531af288455832cf7dec697c7f6a4f78f3da9b157c"
         },
         {
             "file": "admin-detail-canceled.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "f0829b854c0ec220f2fd4512127e3c66abcd49275a5ddb5ad91a6ae7411124a8"
+            "sha256": "daaa50b37a18f7e9c3d102a4c3ce56f7872671ac588fc0af7eb3178983f1aaa5"
         },
         {
             "file": "admin-detail-estimated.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "5e459acc0aba4959ce6b0db9d1dee313316767eb52aeceeb999276727d66f33f"
+            "sha256": "00df1a7bf0de594ffe80c78954da9540dcbdaac2ce63f4cb775c30ab24bf513e"
         },
         {
             "file": "admin-detail-viewer.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "5202cefa364ebdba1f298e32471b3c9fbd68e47dbea4341e69ed5685c768a38f"
+            "sha256": "adcaa3871c0acdd0a95f68a209fc5131d14eb8f8c9ea06509967e0b3072f9c8f"
         },
         {
             "file": "admin-duplicate-denied.json",
@@ -717,35 +718,35 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "a65422627f076e0f3738be932322309f8116dac9fed315878cc0090e08276299"
+            "sha256": "e5cac8f17759a5eb1e6e454dcc44be5f4d3b71da972a263ce52bb9be42e3e1e2"
         },
         {
             "file": "admin-held-detail-reverified.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "1e8aa62bd4bf1cd7b9705d2e032597ab2b1d34fffe9dc74ac3129ad75e69761b"
+            "sha256": "a6cae0ec17c87ad6cd51685547fad3fcd6e899c28f28c96f2f7be08b66093888"
         },
         {
             "file": "admin-held-detail-updated.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "0c68dc20f7e195f7b6d02a9d84bad081410c5693a7255583eadd678902fe7533"
+            "sha256": "b6f8f04d00d024c6ddab6ca0ef22adc0e4459506ad10e9779f8eb2e909776f48"
         },
         {
             "file": "admin-held-detail.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "862996f5d70da9bb99136c139465a8384a7bafed918093bd55d955920f53d6d5"
+            "sha256": "202d3f9b807ad138a43729d8e860c2369e1a55e7a5168bf253799a57e7d411c0"
         },
         {
             "file": "admin-held-list.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "bacd5a1a3d373afe617cae35e7ff54a2cb627faaf97c1e28754ac066da44ecab"
+            "sha256": "dcb7d2a7da8a844f42df30920350be83147dc6c82e091c1d36ad51449661816c"
         },
         {
             "file": "admin-held-reverify-replay.json",
@@ -801,14 +802,14 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "21948e8339af8ffd8713995c0a8c407dae6d177ce2c29aeb4e05ba87616c329e"
+            "sha256": "1676f3199fb16af1ee20b0ce02bb5be1309b04799fd3fb4982272f730ee42942"
         },
         {
             "file": "admin-list-canceled.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "0dcf41256117c0f9a5d6fde3956e165e2a7743b4076be9e070c5557dc36f1b6a"
+            "sha256": "f686129ca5412e3444fd7be88c697e81c2ebfbcfdca9569339c2fbb74026b184"
         },
         {
             "file": "admin-list-empty.json",
@@ -836,7 +837,7 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "aaa22bbb29ea89a6f68231668a88651e175c3e2deed59c51d2f0c3aebbd095d7"
+            "sha256": "dbf208b9ee866bfe596d98070e65109bf92607fde3a1d20895c239f6b59cb808"
         },
         {
             "file": "admin-moderation-action-invalid-denied.json",
@@ -1256,70 +1257,70 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "7ffcd14211c7dff694313d26fdeb7546d9260605d06556349edb0a779c4012c0"
+            "sha256": "1a69b67cb3135846aed90d7795f16301afc21a7c9696f2339ad0dc87d5862783"
         },
         {
             "file": "admin-variety-match-list.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "7ee93151aa79f02aa2d6a5a67d70d0a86d9b09653d66d68389332b00bd082017"
+            "sha256": "919f6264ce7f5706ce6f790efa2ec6f14aa59f9431cdb6702049c77e49c14533"
         },
         {
             "file": "admin-variety-pacific-detail.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "3172a303b3aaa77779e4dce76a78a2322ba77c4f5a17bfc6e4d398a3bf72955b"
+            "sha256": "9b59c266ad926e9e52f7b02e595461465a727138df112d37b1dcd732a669ca22"
         },
         {
             "file": "admin-variety-pacific-list.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "efd8bae9f675709d6b640ec31092c25f6ebf56a693310d8dc46dfc776f7e0fc6"
+            "sha256": "f087cc2a01335f3c5bbf7ae59b0f3cfb92aa11d6e653fb570f0ab3ccd5cb6d5a"
         },
         {
             "file": "admin-variety-paid-detail.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "765b0c7bb49b479c78370f45711c4121705c53ad1d1bef7f643e31f97abf2d25"
+            "sha256": "9a0ebe795632e0a465c5bb84c823336ccb95f15eef8e864b1f3e55a66d8b57f9"
         },
         {
             "file": "admin-variety-paid-list.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "90d2d4cd3f89c05de4ff32ace33508bf99fde965928123e15f450c26ea8f4873"
+            "sha256": "7bcdf1058dfc0e2170f49d69bfc993a24a4afc94238862cd3c73647fca656d9e"
         },
         {
             "file": "admin-variety-participation-detail.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "a3a40e3400f8a78ab7a71a773e2e31996fd65c96a714670fcba21384ac1a37a1"
+            "sha256": "8778f562a7015b15e6b727e86beb0b178de549379f7559d6d2a63b1524787fc1"
         },
         {
             "file": "admin-variety-participation-list.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "4b0ac1b14e63de57fe263abbe2a02ee0914ad65d38f25a707bc646d27173e4a6"
+            "sha256": "c41ccde9f388c3bc20e674883897beedba1fc2ae1d3fd2a86f975cc95ebd23de"
         },
         {
             "file": "admin-variety-sensitive-detail.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "1a958694794d7d8decf07df972ad528b34bf0b1d82d9ecb949b9a9d24ce39184"
+            "sha256": "59615e2ca9d243ff890435ceb9a45d69da12215e21fd13163a4b5757526ed908"
         },
         {
             "file": "admin-variety-sensitive-list.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "6d8f6f9939317c2a9e37e3de6b0a6e24defef8fa503d8d964e8e9d66d475b6c3"
+            "sha256": "a9ca5bccbc4dba9102380e89929a4117a8b03cc8bcdad79e5f192c78d23ba3cb"
         },
         {
             "file": "admin-withdraw.json",

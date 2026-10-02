@@ -101,7 +101,7 @@ const REASON = leaves("reason_id scope key name_en name_hu explanation_en explan
 
 const INTAKE_ROW = {
   ...leaves("intake_id revision channel status status_detail input_kind source_host image_count provider event_count published_count first_title earliest_start_at "
-    + "hard_fails warning_count dedupe_decision decision_action created_at updated_at"),
+    + "hard_fails warning_count dedupe_decision decision_action created_at updated_at second_look"),
   lease: leaves("holder until active mine"),
 };
 const EVIDENCE = leaves("quoted verified denotes match source quote model_confidence confidence");
@@ -152,16 +152,19 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   },
   // Break-glass: the exact location, to an operator with the capability, per case, audited by Core.
   dates_activity_location: { ...ENVELOPE, private_location: OPAQUE },
-  // No genuine body is vendored for these four receipts (DATES_RECEIPT_CHECKS_PENDING): the pages read the success flag only.
+  // No genuine body is vendored for these four receipts (among DATES_RECEIPT_CHECKS_PENDING): the pages read the success flag only.
   dates_activity_update: ENVELOPE,
   dates_activity_host_transfer: ENVELOPE,
   dates_activity_type_save: ENVELOPE,
   dates_reason_deactivate: ENVELOPE,
-  dates_configuration_save: ENVELOPE,
+  // The saved setting is echoed; its value is data, like every setting's value.
+  dates_configuration_save: { ...ENVELOPE, ...leaves("audit_id idempotency_replayed"), setting: { ...leaves("key revision"), value: OPAQUE } },
   dates_activity_command: { ...ENVELOPE,
     ...leaves("external_event_id activity_id revision activity_revision action event_status lifecycle soft_deleted external_revision audit_id idempotency_replayed purged") },
   dates_configuration: {
     ...ENVELOPE, known_limitation: L,
+    // Served with the selector: the version of the suggestion terms a member must accept, and where its text stands.
+    event_suggestion_consent: leaves("required_version text_status"),
     settings: [{ ...leaves("key type effective_scope minimum maximum system_owned deletable valid revision updated_at"),
       // A setting's value is data: the editor shows it and sends it back.
       value: OPAQUE, effective_value: OPAQUE, default_value: OPAQUE, allowed_values: OPAQUE,
@@ -214,7 +217,7 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   dates_external_event_command: { ...ENVELOPE,
     ...leaves("replayed external_event_id activity_id revision activity_revision action event_status lifecycle soft_deleted audit_id thread_id message_id message_sequence") },
   dates_event_intake_list: {
-    ...ENVELOPE, ...leaves("page limit total drafts_enabled suggestions_enabled capabilities"), intakes: [INTAKE_ROW],
+    ...ENVELOPE, ...leaves("page limit total drafts_enabled suggestions_enabled second_look_count capabilities"), intakes: [INTAKE_ROW],
     // Keyed by status (a closed vocabulary of the manifest).
     status_counts: leaves("received screening extracting validating member_confirming in_review published merged rejected duplicate failed withdrawn expired awaiting_budget"),
   },
@@ -259,6 +262,7 @@ export const DATES_ADMIN_OPAQUE: Readonly<Record<string, readonly string[]>> = {
   dates_activity_detail: ["activity.photo", "activity.audience", "activity.pending_public_revision"],
   // A setting's values: the editors show them and send them back.
   dates_configuration: ["settings[].value", "settings[].effective_value", "settings[].default_value", "settings[].allowed_values"],
+  dates_configuration_save: ["setting.value"],
 };
 
 /**

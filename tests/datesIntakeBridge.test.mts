@@ -95,6 +95,10 @@ test("intake commands cross the bridge only in their closed shape", () => {
   assert.deepEqual(normalizeDatesIntakeProxyBody("dates_event_intake_list", {}), {});
   for (const body of [{ status: "paused" }, { channel: "partner" }, { page: 0 }, { page: "" }, { limit: 101 }, { limit: "1.5" }, { query: "x" }, { admin_email: "a@b" }])
     assert.equal(normalizeDatesIntakeProxyBody("dates_event_intake_list", body), null, JSON.stringify(body));
+  // The second-look filter (Core b5b2b299): a strict boolean, forwarded as one (the form encoder writes "1" / "0"); absent is no filter.
+  assert.deepEqual(normalizeDatesIntakeProxyBody("dates_event_intake_list", { status: "in_review", second_look: true, page: 1, limit: 40 }), { status: "in_review", second_look: true, page: 1, limit: 40 });
+  assert.deepEqual(normalizeDatesIntakeProxyBody("dates_event_intake_list", { second_look: false, page: 1, limit: 40 }), { second_look: false, page: 1, limit: 40 });
+  for (const value of ["1", "true", 1, 0, "", null, "only"]) assert.equal(normalizeDatesIntakeProxyBody("dates_event_intake_list", { second_look: value, page: 1, limit: 40 }), null, JSON.stringify(value));
   assert.deepEqual(normalizeDatesIntakeProxyBody("dates_event_intake_detail", { intake_id: id }), { intake_id: id });
   for (const body of [{}, { intake_id: "xin_1" }, { intake_id: id, page: 1 }, { intake_id: id.toUpperCase() }])
     assert.equal(normalizeDatesIntakeProxyBody("dates_event_intake_detail", body), null);

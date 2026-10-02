@@ -8,11 +8,12 @@ import DatesExternalProvenance from "../components/DatesExternalProvenance.tsx";
 import DatesIntakeEventPanel, { datesIntakeFieldVerified } from "../components/DatesIntakeEventPanel.tsx";
 import { DatesIntakeInputsPanel, DatesIntakeRunsPanel, DatesIntakeStatusPanel } from "../components/DatesIntakePanels.tsx";
 import DatesIntakeRefusal from "../components/DatesIntakeRefusal.tsx";
+import DatesSuggestionConsentStatus from "../components/DatesSuggestionConsentStatus.tsx";
 import { decodeDatesActivityOriginDetail, decodeDatesExternalDetail, decodeDatesExternalList } from "../lib/datesExternalAdmin.ts";
 import { DATES_EXTERNAL_CATEGORIES } from "../lib/datesExternalInput.ts";
 import {
   DATES_INTAKE_EVIDENCE_FIELDS, DATES_INTAKE_KNOWN_ATTENDANCE_MODES, DATES_INTAKE_KNOWN_LINK_FIELDS, DATES_INTAKE_KNOWN_PROHIBITED_CATEGORIES,
-  DATES_INTAKE_KNOWN_STATUS_SIGNALS, DATES_INTAKE_KNOWN_TASKS, DATES_INTAKE_REFUSALS, DATES_INTAKE_VOCABULARIES, projectDatesIntakeDetail,
+  DATES_INTAKE_KNOWN_STATUS_SIGNALS, DATES_INTAKE_KNOWN_TASKS, DATES_INTAKE_REFUSALS, DATES_INTAKE_VOCABULARIES, datesSuggestionConsent, projectDatesIntakeDetail,
 } from "../lib/datesIntakeAdmin.ts";
 
 // Static EN/HU renders of the review screen's panels from the genuine Core
@@ -184,23 +185,40 @@ test("the published event carries the AI-assisted label, its Places venue and th
     const member = render(locale, createElement(DatesExternalProvenance, { event: { ...event, intake: { ...event.intake!, channel: "member_suggestion", event_index: 2 } } }));
     assert.ok(member.includes(escaped(channels.member_suggestion)) && member.includes(escaped(copy.provenance.intakeEvent.replace("{index}", "3"))));
   }
-  // A manually entered event still says so.
-  const manual = JSON.parse(readFileSync(new URL("./fixtures/dates_external_admin_wire/admin-detail-admin.json", import.meta.url), "utf8"));
-  const html = render("en", createElement(DatesExternalProvenance, { event: decodeDatesExternalDetail(manual, manual.event.external_event_id)!.event }));
-  assert.ok(html.includes(escaped(messagesOf("en").datesAdmin.external.provenance.noAi)) && html.includes(escaped(messagesOf("en").datesAdmin.external.provenance.venuePin)));
-  assert.equal(html.includes(messagesOf("en").datesAdmin.external.aiBadge), false);
-  // ...and has no intake to link to (Core serves `intake: null`).
-  assert.equal(manual.event.intake, null);
-  assert.doesNotMatch(html, /\/dates\/intakes\//);
-  assert.equal(html.includes(escaped(messagesOf("en").datesAdmin.external.provenance.intake)), false);
+  // A manually entered event still says so, in both shapes Core serves it (D-143): with the selector (`intake: null`,
+  // the genuine admin-external-detail-manual) and without it (no `intake` key at all - the released P1 body).
+  const withSelector = fixture("admin-external-detail-manual");
+  const without = JSON.parse(readFileSync(new URL("./fixtures/dates_external_admin_wire/admin-detail-admin.json", import.meta.url), "utf8"));
+  assert.equal(withSelector.event.intake, null); assert.equal(Object.hasOwn(without.event, "intake"), false);
+  for (const manual of [withSelector, without]) {
+    const html = render("en", createElement(DatesExternalProvenance, { event: decodeDatesExternalDetail(manual, manual.event.external_event_id)!.event }));
+    assert.ok(html.includes(escaped(messagesOf("en").datesAdmin.external.provenance.noAi)) && html.includes(escaped(messagesOf("en").datesAdmin.external.provenance.venuePin)));
+    assert.equal(html.includes(messagesOf("en").datesAdmin.external.aiBadge), false);
+    // ...and has no intake to link to.
+    assert.doesNotMatch(html, /\/dates\/intakes\//);
+    assert.equal(html.includes(escaped(messagesOf("en").datesAdmin.external.provenance.intake)), false);
+  }
+  // An AI-assisted event as a request WITHOUT the selector is served it (the genuine `-released-console` body): the
+  // label is there, the reference is not - the panel says AI-assisted and offers no link back.
+  const unlinked = fixture("admin-external-detail-released-console");
+  assert.equal(unlinked.event.ai_assisted, true); assert.equal(Object.hasOwn(unlinked.event, "intake"), false);
+  const bare = render("en", createElement(DatesExternalProvenance, { event: decodeDatesExternalDetail(unlinked, unlinked.event.external_event_id)!.event }));
+  assert.ok(bare.includes(escaped(messagesOf("en").datesAdmin.external.provenance.aiAssisted))); assert.doesNotMatch(bare, /\/dates\/intakes\//);
   // The badge is on the external list row, the editor page header, the activity detail and the Activities list.
   assert.match(readFileSync(new URL("../app/(dashboard)/dates/external/page.tsx", import.meta.url), "utf8"),
     /<span className="badge badge-demo">\{t\("badge"\)\}<\/span>\{row\.ai_assisted && <span className="badge badge-warning">\{t\("aiBadge"\)\}<\/span>\}/);
   // The genuine list with an AI-assisted row decodes with the flag the badge reads; every row of the manual lists has it false.
   const assistedList = fixture("admin-external-list-ai-assisted");
   assert.deepEqual(decodeDatesExternalList(assistedList, { page: 1, limit: 40 })!.events.map((row) => row.ai_assisted), [true]);
-  const manualList = JSON.parse(readFileSync(new URL("./fixtures/dates_external_admin_wire/admin-list-admin.json", import.meta.url), "utf8"));
+  // A manual event's row with the selector says `false` (genuine admin-external-list-manual); without the selector the
+  // row carries no label at all (the released P1 list) - either way the badge, which asks for `true`, is not drawn.
+  const manualList = fixture("admin-external-list-manual");
   assert.ok(decodeDatesExternalList(manualList, { page: manualList.page, limit: manualList.limit })!.events.every((row) => row.ai_assisted === false));
+  const releasedList = JSON.parse(readFileSync(new URL("./fixtures/dates_external_admin_wire/admin-list-admin.json", import.meta.url), "utf8"));
+  assert.ok(decodeDatesExternalList(releasedList, { page: releasedList.page, limit: releasedList.limit })!.events.every((row) => row.ai_assisted === undefined));
+  // ... and the same AI-assisted row, read without the selector, has no label: the released console never drew the badge.
+  const unlabelled = fixture("admin-external-list-released-console");
+  assert.deepEqual(decodeDatesExternalList(unlabelled, { page: unlabelled.page, limit: unlabelled.limit })!.events.map((row) => row.ai_assisted), [undefined]);
   assert.match(readFileSync(new URL("../components/DatesExternalEditorPage.tsx", import.meta.url), "utf8"), /event\.ai_assisted && <span className="badge badge-warning">\{t\("aiBadge"\)\}/);
   assert.match(readFileSync(new URL("../app/(dashboard)/dates/[activityId]/page.tsx", import.meta.url), "utf8"), /data\.external_event\.ai_assisted && <span className="badge badge-warning">\{external\("aiBadge"\)\}/);
   assert.match(readFileSync(new URL("../app/(dashboard)/dates/page.tsx", import.meta.url), "utf8"), /row\.host === null && row\.ai_assisted && <span className="badge badge-warning">\{external\("aiBadge"\)\}/);
@@ -230,8 +248,14 @@ test("every closed value of the wire has words in both languages, and both trees
   };
   GROUPS.member_confirmation_state = ["memberConfirmationValues", DATES_INTAKE_VOCABULARIES.member_confirmation_state];
   GROUPS.member_editable_field = ["memberFieldValues", DATES_INTAKE_VOCABULARIES.member_editable_field];
-  // Every vocabulary of the manifest but `category` (the P1 table) and `lease_action` (button labels) has its own group.
-  assert.deepEqual(Object.keys(DATES_INTAKE_VOCABULARIES).filter((name) => !Object.hasOwn(GROUPS, name)).sort(), ["category", "lease_action"]);
+  // Every vocabulary of the manifest but `category` (the P1 table), `lease_action` (button labels) and `consent_text_status`
+  // (the configuration page's, below) has its own group.
+  assert.deepEqual(Object.keys(DATES_INTAKE_VOCABULARIES).filter((name) => !Object.hasOwn(GROUPS, name)).sort(), ["category", "consent_text_status", "lease_action"]);
+  for (const locale of LOCALES) {
+    const consent = messagesOf(locale).datesAdmin.configuration.suggestionConsent;
+    for (const status of DATES_INTAKE_VOCABULARIES.consent_text_status) { assert.ok(consent[status].length > 20, status); assert.ok(consent[`${status}Title`].length > 5, status); }
+    assert.ok(consent.unreadable.length > 20);
+  }
   for (const [group, values] of Object.values(GROUPS)) for (const copy of [en, hu]) {
     assert.deepEqual(Object.keys(copy[group]).sort(), [...values].sort(), group);
     for (const value of values) assert.ok(String(copy[group][value]).trim().length > 1, `${group}.${value}`);
@@ -648,8 +672,16 @@ test("T-886: before a rejection or a publication the reviewer is told what it me
   }
   // The second look is open exactly while the member has asked and no second decision is on record.
   assert.deepEqual(Object.fromEntries(MEMBER_DETAILS.map((name) => [name.replace("admin-detail-member-", ""), datesIntakeSecondLookOpen(detail(name))]).filter(([, open]) => open)), { "re-review": true });
-  const decided = detail("admin-detail-member-re-review"); decided.member!.re_review!.decided_at = 1790000000;
+  // DERIVED: decided - Core's mark is gone and the block carries the second decision.
+  const decided = detail("admin-detail-member-re-review"); decided.member!.re_review!.decided_at = 1790000000; decided.second_look = false;
   assert.equal(datesIntakeSecondLookOpen(decided), false);
+  // DERIVED: either source says it. Core's mark alone (the member block could not be read) ...
+  const markOnly = detail("admin-detail-member-re-review"); markOnly.member = null;
+  assert.equal(markOnly.second_look, true); assert.equal(datesIntakeSecondLookOpen(markOnly), true);
+  // ... and the member block alone (a Core that does not serve the mark).
+  const blockOnly = detail("admin-detail-member-re-review"); blockOnly.second_look = false;
+  assert.equal(datesIntakeSecondLookOpen(blockOnly), true);
+  const neither = detail("admin-detail-member-in-review"); assert.equal(datesIntakeSecondLookOpen(neither), false);
 });
 
 test("T-886: the ask form offers the eight editable fields and says why it is closed", async () => {
@@ -703,17 +735,54 @@ test("T-886: an event that came from a member's suggestion says who is credited,
   }
 });
 
+test("the state of the consent text is said beside the member switch: draft and approved as states, missing as a problem", () => {
+  const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
+  // Read from the configuration body the page loaded, and drawn directly under the switch that opens the member channel.
+  assert.match(page, /setConsent\(datesSuggestionConsent\(configuration\)\);/);
+  assert.match(page, /const DATES_SUGGESTIONS_SWITCH = "dates_external_suggestions_enabled";/);
+  assert.match(page, /\.\.\.\(setting\.key === DATES_SUGGESTIONS_SWITCH \? \[<DatesSuggestionConsentStatus key="suggestion-consent" consent=\{consent\} \/>\] : \[\]\)/);
+  for (const locale of LOCALES) {
+    const copy = messagesOf(locale).datesAdmin.configuration.suggestionConsent;
+    // The genuine body: version 1, a draft - a state, said as a warning the operator decides with; not an error.
+    const draft = render(locale, createElement(DatesSuggestionConsentStatus, { consent: datesSuggestionConsent(fixture("admin-configuration")) }));
+    assert.ok(draft.includes(escaped(copy.draftTitle)) && draft.includes(escaped(copy.draft.replace("{version}", "1"))), locale);
+    assert.match(draft, /^<p class="alert alert-warning" role="status">/);
+    const approved = render(locale, createElement(DatesSuggestionConsentStatus, { consent: { kind: "known", required_version: 3, text_status: "approved" } }));
+    assert.ok(approved.includes(escaped(copy.approvedTitle)) && approved.includes(escaped(copy.approved.replace("{version}", "3"))), locale);
+    assert.match(approved, /^<p class="alert alert-info" role="status">/);
+    // Missing: the member channel is closed whatever the switch says - an alert, and it says so.
+    const missing = render(locale, createElement(DatesSuggestionConsentStatus, { consent: { kind: "known", required_version: 2, text_status: "missing" } }));
+    assert.match(missing, /^<p class="alert alert-error" role="alert">/);
+    assert.ok(missing.includes(escaped(copy.missingTitle)) && missing.includes(escaped(copy.missing.replace("{version}", "2"))), locale);
+    assert.equal(missing.includes(escaped(copy.approvedTitle)) || missing.includes(escaped(copy.draftTitle)), false);
+    // Unreadable is said, and is neither of the three; a Core that does not serve the block (no selector) draws nothing.
+    const unreadable = render(locale, createElement(DatesSuggestionConsentStatus, { consent: datesSuggestionConsent({ event_suggestion_consent: { required_version: 1, text_status: "pending" } }) }));
+    assert.match(unreadable, /^<p class="alert alert-error" role="status">/); assert.ok(unreadable.includes(escaped(copy.unreadable)));
+    for (const key of ["draftTitle", "approvedTitle", "missingTitle"]) assert.equal(unreadable.includes(escaped(copy[key])), false, key);
+    assert.equal(render(locale, createElement(DatesSuggestionConsentStatus, { consent: datesSuggestionConsent(fixture("admin-configuration-released-console")) })), "");
+  }
+  assert.match(messagesOf("en").datesAdmin.configuration.suggestionConsent.missingTitle, /closed/);
+  assert.match(messagesOf("en").datesAdmin.configuration.consentVersionNoText, /no text yet/);
+});
+
 test("T-886: the queue filters by channel and says when the member channel is switched off", () => {
   const queue = readFileSync(new URL("../app/(dashboard)/dates/intakes/page.tsx", import.meta.url), "utf8");
-  assert.match(queue, /readDatesIntakeQueue\(adminCall, \{ status, channel, page, limit: PAGE_SIZE \}, signal\)/);
-  assert.match(queue, /\}, \[status, channel, page\]\);/);
+  assert.match(queue, /readDatesIntakeQueue\(adminCall, \{ status, channel, page, limit: PAGE_SIZE, \.\.\.\(secondLook === "" \? \{\} : \{ second_look: secondLook === "only" \}\) \}, signal\)/);
+  assert.match(queue, /\}, \[status, channel, secondLook, page\]\);/);
+  // The second look (Core b5b2b299): a filter, the count of those waiting with the way to them, a badge on the row.
+  assert.match(queue, /<select value=\{secondLook\} onChange=\{\(event\) => \{ setPage\(1\); setSecondLook\(event\.target\.value as "" \| "only" \| "without"\); \}\}>/);
+  assert.match(queue, /\{queue\.second_look_count !== null && queue\.second_look_count > 0 && secondLook !== "only" && <p className="alert alert-warning" role="status">/);
+  assert.match(queue, /\{row\.second_look && <> <span className="badge badge-warning">\{t\("queue\.secondLookBadge"\)\}<\/span><\/>\}/);
+  assert.match(queue, /t\(secondLook === "only" \? "queue\.orderSecondLook" : status === "in_review" \? "queue\.orderReview" : "queue\.orderNewest"\)/);
   assert.match(queue, /<select value=\{channel\} onChange=\{\(event\) => \{ setPage\(1\); setChannel\(event\.target\.value\); \}\}>/);
   assert.match(queue, /\{DATES_INTAKE_QUEUE_CHANNELS\.map\(\(value\) => <option key=\{value\} value=\{value\}>\{t\(`channelValues\.\$\{value\}`\)\}<\/option>\)\}/);
   assert.match(queue, /\{!queue\.suggestions_enabled && <p className="alert alert-info">\{t\("queue\.suggestionsOff"\)\}<\/p>\}/);
   assert.match(queue, /draftsEnabled: queue\?\.drafts_enabled === true, suggestionsEnabled: queue\?\.suggestions_enabled === true \};/);
   for (const locale of LOCALES) {
     const copy = messagesOf(locale).datesAdmin.intake;
-    for (const key of ["channelFilter", "channelAll", "suggestionsOff"]) assert.ok(copy.queue[key].length > 5, key);
+    for (const key of ["channelFilter", "channelAll", "suggestionsOff", "secondLookFilter", "secondLookAll", "secondLookOnly", "secondLookWithout", "secondLookBadge",
+      "secondLooksWaiting", "secondLooksShow", "orderSecondLook"]) assert.ok(copy.queue[key].length > 5, key);
+    assert.match(copy.queue.secondLooksWaiting, /\{count\}/);
     assert.match(copy.queue.suggestionsOff, /dates_external_suggestions_enabled/); assert.match(copy.detail.suggestionsOff, /dates_external_suggestions_enabled/);
     // Every statement of the member panel, the ask form and the notes exists in both languages (the key trees are compared elsewhere).
     assert.ok(Object.keys(copy.member).length >= 40 && Object.keys(copy.ask).length >= 15);

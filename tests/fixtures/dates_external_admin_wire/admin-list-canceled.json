@@ -31,8 +31,7 @@
             "interested_count": 0,
             "created_at": 1790000000,
             "updated_at": 1790000000,
-            "can_edit": false,
-            "ai_assisted": false
+            "can_edit": false
         }
     ],
     "page": 1,

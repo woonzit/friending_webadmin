@@ -27,7 +27,8 @@
             },
             "decision_action": null,
             "created_at": 1790924404,
-            "updated_at": 1790928000
+            "updated_at": 1790928000,
+            "second_look": false
         },
         {
             "intake_id": "xin_00000000000000000000000000000001",
@@ -54,7 +55,8 @@
             },
             "decision_action": null,
             "created_at": 1790924401,
-            "updated_at": 1790928000
+            "updated_at": 1790928000,
+            "second_look": false
         },
         {
             "intake_id": "xin_00000000000000000000000000000006",
@@ -81,7 +83,8 @@
             },
             "decision_action": null,
             "created_at": 1790924406,
-            "updated_at": 1790928000
+            "updated_at": 1790928000,
+            "second_look": false
         },
         {
             "intake_id": "xin_00000000000000000000000000000005",
@@ -108,7 +111,8 @@
             },
             "decision_action": null,
             "created_at": 1790924405,
-            "updated_at": 1790928000
+            "updated_at": 1790928000,
+            "second_look": false
         },
         {
             "intake_id": "xin_00000000000000000000000000000002",
@@ -135,7 +139,8 @@
             },
             "decision_action": null,
             "created_at": 1790924402,
-            "updated_at": 1790928000
+            "updated_at": 1790928000,
+            "second_look": false
         }
     ],
     "page": 1,
@@ -157,6 +162,7 @@
         "expired": 0,
         "awaiting_budget": 0
     },
+    "second_look_count": 0,
     "drafts_enabled": true,
     "suggestions_enabled": false,
     "capabilities": [

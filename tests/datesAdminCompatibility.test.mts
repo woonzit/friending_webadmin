@@ -36,14 +36,20 @@ import { datesAdminReasons } from "../lib/datesReasons.ts";
 //    released P1 corpus (what Core main serves today, and what any Core
 //    serves to a request without the selector).
 //
-// The selector-less bodies are the released P1 corpus by definition (Core's
-// gate proves the byte identity on its side). It is vendored here as a second
-// fixture set from Core main 07215298, pinned by its digests.
+// Three fixture sets take part:
+// - RELEASED_CORPUS: the P1 Admin corpus of Core main 07215298 - what the live
+//   Core serves and what the released console was released against; vendored
+//   as a second fixture set, pinned by its digests.
+// - SELECTORLESS_BODIES: the provider's own capture of the P1 routes WITHOUT
+//   the selector, at its pinned tip (tests/fixtures/dates_external_admin_wire).
+//   D-143 requires it to be the released corpus, body for body; that is
+//   asserted here, and the released console's tests are run on THESE bodies.
+// - SELECTOR_BODIES: the same routes WITH the selector (and the `-released-
+//   console` reads of an AI-assisted event without it), in the intake corpus.
 const RELEASED_CORPUS = new URL("./fixtures/dates_external_admin_wire_released/", import.meta.url);
-const NEW_CORPUS = new URL("./fixtures/dates_external_admin_wire/", import.meta.url);
+const SELECTORLESS_BODIES = new URL("./fixtures/dates_external_admin_wire/", import.meta.url);
+const SELECTOR_BODIES = new URL("./fixtures/dates_event_intake_admin_wire/", import.meta.url);
 const RELEASED_CONSOLE = new URL("./fixtures/released_console_7825bc13/", import.meta.url);
-/** What a request without the selector is answered with. One constant: when the provider ships its own capture of them, point it there. */
-const SELECTORLESS_BODIES = RELEASED_CORPUS;
 
 const RELEASED_CORPUS_PIN = { core: "0721529847602d4298f881119428f0e99eae9d53", source_commit: "c94d144691b93c3aea3dd180def345c4d03a4e55", count: 138,
   set: "d84a3e162703db1578db59f0a0a972de24fffc8562f23a13bf5715101306e4ed", manifest: "41bd137bb1bd37b1115f9f9dae201f43b5b6b10fb54159d796d36868a61246a9" };
@@ -65,7 +71,7 @@ const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).dige
 const body = (directory: URL, file: string) => JSON.parse(readFileSync(new URL(file, directory), "utf8"));
 const files = (directory: URL) => readdirSync(directory).filter((name) => name !== "manifest.json").sort();
 
-// The 25 bodies of the P1 routes that differ between the two corpora, each in one stated way.
+// The P1 reads whose shape depends on the selector: 9 lists, 13 details, the external activity detail, 2 configuration reads.
 const LISTS = ["admin-held-list.json", "admin-list-admin.json", "admin-list-canceled.json", "admin-list-viewer.json",
   ...["match", "pacific", "paid", "participation", "sensitive"].map((name) => `admin-variety-${name}-list.json`)];
 const DETAILS = ["admin-detail-admin.json", "admin-detail-canceled.json", "admin-detail-estimated.json", "admin-detail-viewer.json",
@@ -86,8 +92,16 @@ test("D-143: the released P1 corpus (Core main 07215298) is vendored whole and p
     return `${entry.file}\0${entry.sha256}`;
   });
   assert.equal(hash(lines.join("\n")), RELEASED_CORPUS_PIN.set);
-  // The same routes, body for body, as the corpus of the new Core.
-  assert.deepEqual(files(RELEASED_CORPUS), files(NEW_CORPUS));
+});
+
+test("D-143: what the provider serves WITHOUT the selector is the released corpus, body for body", () => {
+  // The provider's selector-less capture at its pinned tip: 138 bodies, each byte-identical to Core main's. Only the
+  // manifest differs (its source binding) - the set digest of the bodies is main's.
+  const names = files(RELEASED_CORPUS);
+  assert.deepEqual(files(SELECTORLESS_BODIES), names); assert.equal(names.length, 138);
+  for (const name of names) assert.ok(readFileSync(new URL(name, SELECTORLESS_BODIES)).equals(readFileSync(new URL(name, RELEASED_CORPUS))), name);
+  const provider = JSON.parse(readFileSync(new URL("manifest.json", SELECTORLESS_BODIES), "utf8"));
+  assert.equal(provider.fixture_set_sha256, RELEASED_CORPUS_PIN.set); assert.notEqual(provider.source_commit, RELEASED_CORPUS_PIN.source_commit);
 });
 
 test("D-143: the released console's decoder modules and wire tests are vendored byte-identical to Webadmin 7825bc13", () => {
@@ -101,13 +115,17 @@ test("D-143: the released console's decoder modules and wire tests are vendored 
 });
 
 /** The released console as a tree of its own: its modules under their real names, its tests, and the bodies to read. */
-function releasedTree(bodies: URL): { root: string; run: (...tests: string[]) => { status: number | null; output: string } } {
+function releasedTree(bodies: URL, extra: Record<string, URL> = {}): { root: string; run: (...tests: string[]) => { status: number | null; output: string } } {
   const root = mkdtempSync(join(tmpdir(), "released-console-"));
   for (const name of Object.keys(RELEASED_CONSOLE_PIN)) {
     mkdirSync(join(root, name.split("/")[0]), { recursive: true });
     writeFileSync(join(root, name), readFileSync(new URL(`${name}.txt`, RELEASED_CONSOLE)));
   }
-  cpSync(fileURLToPath(bodies), join(root, "tests", "fixtures", "dates_external_admin_wire"), { recursive: true });
+  const corpus = join(root, "tests", "fixtures", "dates_external_admin_wire");
+  cpSync(fileURLToPath(bodies), corpus, { recursive: true });
+  // The released wire test pins the manifest it was released with (its provenance); the BODIES are the ones under test.
+  writeFileSync(join(corpus, "manifest.json"), readFileSync(new URL("manifest.json", RELEASED_CORPUS)));
+  for (const [name, source] of Object.entries(extra)) writeFileSync(join(corpus, name), readFileSync(source));
   // `@/lib/...` resolves inside this tree: nothing of the current console is reachable from a released module.
   writeFileSync(join(root, "tsconfig.json"), JSON.stringify({ compilerOptions: { baseUrl: ".", paths: { "@/*": ["./*"] }, module: "esnext",
     moduleResolution: "bundler", target: "es2022", allowImportingTsExtensions: true } }));
@@ -135,73 +153,102 @@ test("D-143: the released console's own wire tests pass, unchanged, on the bodie
 });
 
 test("D-143 control: the same released decoders refuse the bodies Core serves WITH the selector - which is why the selector exists", () => {
-  const tree = releasedTree(NEW_CORPUS);
+  // Genuine bodies of the same routes with the selector (a manual event, so that only the added key differs), and the
+  // three reads of an AI-assisted event as a request WITHOUT the selector is served them.
+  const selector = (name: string) => new URL(name, SELECTOR_BODIES);
+  const PROBED = ["admin-external-list-manual.json", "admin-external-detail-manual.json", "admin-activity-detail-ai-assisted.json",
+    "admin-external-list-released-console.json", "admin-external-detail-released-console.json", "admin-activity-detail-released-console.json"];
+  const tree = releasedTree(SELECTORLESS_BODIES, Object.fromEntries(PROBED.map((name) => [name, selector(name)])));
   try {
-    // The reviewer's probe, kept: list, detail and the external activity detail of the new corpus through the released decoders.
+    // The reviewer's probe, kept: list, detail and activity detail through the released decoders.
     writeFileSync(join(tree.root, "tests", "probe.test.mts"), `
       import test from "node:test";
       import { readFileSync } from "node:fs";
       import { decodeDatesActivityOriginDetail, decodeDatesExternalDetail, decodeDatesExternalList } from "../lib/datesExternalAdmin.ts";
       const body = (name) => JSON.parse(readFileSync(new URL("./fixtures/dates_external_admin_wire/" + name, import.meta.url), "utf8"));
+      const list = (name) => { const value = body(name); return decodeDatesExternalList(value, { page: value.page, limit: value.limit }) !== null; };
+      const detail = (name) => { const value = body(name); return decodeDatesExternalDetail(value, value.event.external_event_id) !== null; };
+      const activity = (name) => { const value = body(name); return decodeDatesActivityOriginDetail(value, value.activity.activity_id, ${JSON.stringify(CAPABILITIES)}) !== null; };
       test("probe", () => {
-        const list = body("admin-list-admin.json"), detail = body("admin-detail-admin.json"), activity = body("${ACTIVITY_DETAIL}");
-        console.log("PROBE " + JSON.stringify({ list: decodeDatesExternalList(list, { page: list.page, limit: list.limit }) !== null,
-          detail: decodeDatesExternalDetail(detail, detail.event.external_event_id) !== null,
-          activity: decodeDatesActivityOriginDetail(activity, activity.activity.activity_id, ${JSON.stringify(CAPABILITIES)}) !== null }));
+        console.log("PROBE " + JSON.stringify({
+          selectorless: { list: list("admin-list-admin.json"), detail: detail("admin-detail-admin.json"), activity: activity("${ACTIVITY_DETAIL}") },
+          selector: { list: list("admin-external-list-manual.json"), detail: detail("admin-external-detail-manual.json"), activity: activity("admin-activity-detail-ai-assisted.json") },
+          assisted: { list: list("admin-external-list-released-console.json"), detail: detail("admin-external-detail-released-console.json"),
+            activity: activity("admin-activity-detail-released-console.json") } }));
       });`);
     const probe = tree.run("tests/probe.test.mts");
     assert.equal(probe.status, 0, probe.output.slice(-2000));
-    assert.deepEqual(JSON.parse(/PROBE (\{.*\})/.exec(probe.output)![1]), { list: false, detail: false, activity: false });
-    // And the released wire tests, on those bodies, do not pass: the check above is not one that cannot fail.
-    const wire = tree.run("tests/datesExternalWire.test.mts");
-    assert.notEqual(wire.status, 0); assert.ok(count(wire.output, "fail") > 0);
+    assert.deepEqual(JSON.parse(/PROBE (\{.*\})/.exec(probe.output)![1]), {
+      // Without the selector: the released console reads every one of them.
+      selectorless: { list: true, detail: true, activity: true },
+      // With it: none. The released console never sends it, so it is never served these.
+      selector: { list: false, detail: false, activity: false },
+      // What the selector cannot cover: an AI-assisted event read WITHOUT the selector still says `ai_assisted: true` and has
+      // a Places venue, which the released detail and activity decoders fix by literal. Its list row is the P1 row and
+      // decodes. Hence the rule: the draft and suggestion switches are turned on only after the new console is live.
+      assisted: { list: true, detail: false, activity: false },
+    });
   } finally { rmSync(tree.root, { recursive: true, force: true }); }
 });
 
-test("D-143: this console decodes the released P1 corpus - 113 bodies are the very bytes its other tests decode, the 25 that differ decode here", () => {
-  const names = files(RELEASED_CORPUS);
-  const differing = names.filter((name) => !readFileSync(new URL(name, RELEASED_CORPUS)).equals(readFileSync(new URL(name, NEW_CORPUS))));
-  assert.deepEqual(differing, [...LISTS, ...DETAILS, ACTIVITY_DETAIL, ...CONFIGURATIONS].sort());
-  assert.equal(names.length - differing.length, 113);
-  for (const corpus of [RELEASED_CORPUS, NEW_CORPUS]) {
-    const served = corpus === NEW_CORPUS;
-    for (const name of LISTS) {
-      const value = body(corpus, name), decoded = decodeDatesExternalList(value, { page: value.page, limit: value.limit });
-      assert.deepEqual(decoded, value, name); assert.ok(value.events.length > 0, name);
-      // The label: served with the selector, absent without it - and absent reads as "not AI-assisted".
-      for (const row of decoded!.events) { assert.equal(Object.hasOwn(row, "ai_assisted"), served, name); assert.equal(row.ai_assisted === true, false, name); }
-    }
-    for (const name of DETAILS) {
-      const value = body(corpus, name), decoded = decodeDatesExternalDetail(value, value.event.external_event_id);
-      assert.deepEqual(decoded, value, name);
-      // The intake reference: served (null for these manual events) with the selector, absent without it; either way no link back.
-      assert.equal(Object.hasOwn(decoded!.event, "intake"), served, name); assert.equal(decoded!.event.intake ?? null, null, name);
-      assert.equal(decoded!.event.ai_assisted, false, name);
-    }
-    const activity = body(corpus, ACTIVITY_DETAIL), origin = decodeDatesActivityOriginDetail(activity, activity.activity.activity_id, CAPABILITIES);
-    assert.deepEqual(origin, { activity: activity.activity, external: activity.external_event });
-    assert.equal(Object.hasOwn(origin!.external!, "intake"), served);
-    for (const name of CONFIGURATIONS) {
-      const settings = body(corpus, name).settings as Array<Record<string, unknown>>;
-      // 33 rows from a Core that does not know the selector (or is not sent it), 50 with it; the page lists what is served.
-      assert.equal(settings.length, served ? 50 : 33, name);
-      for (const row of settings) {
-        assert.equal(datesSettingEditable(row.type), true, `${name} ${row.key}`);
-        assert.doesNotMatch(datesConfigurationRawValue(String(row.type), row.value), /object Object/, `${name} ${row.key}`);
-        assert.notEqual(datesSettingEffectiveText(String(row.type), row.effective_value, { on: "ON", off: "OFF" }), "—", `${name} ${row.key}`);
-        assert.notEqual(datesSettingStorefrontEffective(row).status, "invalid", `${name} ${row.key}`);
-      }
-    }
-  }
-  // The released rows are the new rows without the one added key - nothing else was changed for the selector-less shape.
+test("D-143: this console decodes both shapes of every P1 read that depends on the selector, on genuine bodies", () => {
+  // Without the selector: the 9 lists, 13 details, the external activity detail and the 2 configuration reads of the
+  // P1 corpus (the released bodies). The other 113 bodies of that corpus do not depend on the selector and are decoded
+  // by this suite's other tests from the same directory.
   for (const name of LISTS) {
-    const released = body(RELEASED_CORPUS, name), added = body(NEW_CORPUS, name);
-    assert.deepEqual(added.events.map(({ ai_assisted: _label, ...row }: Record<string, unknown>) => row), released.events, name);
+    const value = body(SELECTORLESS_BODIES, name), decoded = decodeDatesExternalList(value, { page: value.page, limit: value.limit });
+    assert.deepEqual(decoded, value, name); assert.ok(value.events.length > 0, name);
+    // No label: absent reads as "not AI-assisted".
+    for (const row of decoded!.events) { assert.equal(Object.hasOwn(row, "ai_assisted"), false, name); assert.equal(row.ai_assisted === true, false, name); }
   }
   for (const name of DETAILS) {
-    const { intake: _intake, ...event } = body(NEW_CORPUS, name).event;
-    assert.deepEqual(event, body(RELEASED_CORPUS, name).event, name);
+    const value = body(SELECTORLESS_BODIES, name), decoded = decodeDatesExternalDetail(value, value.event.external_event_id);
+    assert.deepEqual(decoded, value, name);
+    // No reference to an intake: no link back is shown.
+    assert.equal(Object.hasOwn(decoded!.event, "intake"), false, name); assert.equal(decoded!.event.intake ?? null, null, name);
   }
+  const activity = body(SELECTORLESS_BODIES, ACTIVITY_DETAIL), origin = decodeDatesActivityOriginDetail(activity, activity.activity.activity_id, CAPABILITIES);
+  assert.deepEqual(origin, { activity: activity.activity, external: activity.external_event }); assert.equal(Object.hasOwn(origin!.external!, "intake"), false);
+  const rows = (settings: Array<Record<string, unknown>>, label: string) => {
+    for (const row of settings) {
+      assert.equal(datesSettingEditable(row.type), true, `${label} ${row.key}`);
+      assert.doesNotMatch(datesConfigurationRawValue(String(row.type), row.value), /object Object/, `${label} ${row.key}`);
+      assert.notEqual(datesSettingEffectiveText(String(row.type), row.effective_value, { on: "ON", off: "OFF" }), "—", `${label} ${row.key}`);
+      assert.notEqual(datesSettingStorefrontEffective(row).status, "invalid", `${label} ${row.key}`);
+    }
+  };
+  for (const name of CONFIGURATIONS) { const settings = body(SELECTORLESS_BODIES, name).settings; assert.equal(settings.length, 33, name); rows(settings, name); }
+
+  // With the selector (the intake corpus): the label and the reference are served.
+  for (const [name, assisted] of [["admin-external-list-manual.json", false], ["admin-external-list-ai-assisted.json", true]] as const) {
+    const value = body(SELECTOR_BODIES, name), decoded = decodeDatesExternalList(value, { page: value.page, limit: value.limit });
+    assert.deepEqual(decoded, value, name); assert.deepEqual(decoded!.events.map((row) => row.ai_assisted), [assisted], name);
+    assert.equal(Object.keys(value.events[0]).at(-1), "ai_assisted", name);
+  }
+  for (const [name, linked] of [["admin-external-detail-manual.json", false], ["admin-external-detail-ai-assisted.json", true]] as const) {
+    const value = body(SELECTOR_BODIES, name), decoded = decodeDatesExternalDetail(value, value.event.external_event_id);
+    assert.deepEqual(decoded, value, name); assert.equal(decoded!.event.intake !== null, linked, name); assert.equal(decoded!.event.ai_assisted, linked, name);
+    assert.equal(Object.keys(value.event).at(-1), "intake", name);
+  }
+  const assisted = body(SELECTOR_BODIES, "admin-activity-detail-ai-assisted.json");
+  assert.ok(decodeDatesActivityOriginDetail(assisted, assisted.activity.activity_id, CAPABILITIES)?.external?.intake);
+  const fifty = body(SELECTOR_BODIES, "admin-configuration.json").settings; assert.equal(fifty.length, 50); rows(fifty, "admin-configuration");
+  // The pairs Core captured both ways: each `-released-console` read is its selector sibling minus the one key - and this
+  // console reads it (an AI-assisted event from a Core that is not sent the selector: labelled where Core says so, no link).
+  for (const [without, withSelector, at] of [["admin-external-list-released-console.json", "admin-external-list-ai-assisted.json", "events.0.ai_assisted"],
+    ["admin-external-detail-released-console.json", "admin-external-detail-ai-assisted.json", "event.intake"],
+    ["admin-activity-detail-released-console.json", "admin-activity-detail-ai-assisted.json", "external_event.intake"]] as const) {
+    const bare = body(SELECTOR_BODIES, without), full = structuredClone(body(SELECTOR_BODIES, withSelector)), path = at.split(".");
+    delete path.slice(0, -1).reduce((node: any, key) => node[key], full)[path.at(-1)!];
+    assert.deepEqual(bare, full, `${without} = ${withSelector} minus ${at}`);
+  }
+  const bareList = body(SELECTOR_BODIES, "admin-external-list-released-console.json"), bareDetail = body(SELECTOR_BODIES, "admin-external-detail-released-console.json");
+  assert.deepEqual(decodeDatesExternalList(bareList, { page: bareList.page, limit: bareList.limit }), bareList);
+  assert.deepEqual(decodeDatesExternalDetail(bareDetail, bareDetail.event.external_event_id), bareDetail);
+  const bareActivity = body(SELECTOR_BODIES, "admin-activity-detail-released-console.json");
+  assert.ok(decodeDatesActivityOriginDetail(bareActivity, bareActivity.activity.activity_id, CAPABILITIES));
+  const thirtyThree = body(SELECTOR_BODIES, "admin-configuration-released-console.json").settings;
+  assert.deepEqual(thirtyThree, fifty.slice(0, 33)); rows(thirtyThree, "admin-configuration-released-console");
 });
 
 test("D-143: the Admin intake contract selector is one constant, attached by the server to Dates Admin requests only", () => {
@@ -266,7 +313,7 @@ const DECODERS: Array<{ name: string; file: string; read: (value: any) => boolea
 const at = (value: any, path: string[]) => path.reduce((inner, key) => inner[key], value);
 
 for (const decoder of DECODERS) test(`D-143 ${decoder.name}: a key this console does not know does not fail the decoder; a missing binding field does`, () => {
-  for (const corpus of [RELEASED_CORPUS, NEW_CORPUS]) {
+  for (const corpus of [RELEASED_CORPUS, SELECTORLESS_BODIES]) {
     const genuine = body(corpus, decoder.file);
     assert.equal(decoder.read(genuine), true, "the genuine body");
     // An unknown key at the top, and one inside.

@@ -19,6 +19,8 @@ import { DatesCaseReadFence, datesConsoleCommandReceipt, datesLegalHoldReceipt, 
 // defined). No browser, no mounted page, no Core process.
 const P1 = new URL("./fixtures/dates_external_admin_wire/", import.meta.url);
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`${name}.json`, P1), "utf8"));
+/** A genuine body of the intake corpus (the P1 routes as Core serves them with the Admin intake contract selector). */
+const intake = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/dates_event_intake_admin_wire/${name}.json`, import.meta.url), "utf8"));
 const messagesOf = (locale: string) => JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
 const plain = <T,>(value: T): T => JSON.parse(JSON.stringify(value ?? null));
 const core = (error: string, status: number) => ({ success: false, status_code: status, error, message: 200, status: 200, can_send: 0 });
@@ -610,17 +612,33 @@ test("configuration saves: a lost reply is an unknown outcome; creating a reason
     [core("dates-admin-unavailable", 503), { unknown: ["dates-admin-unavailable"], errors: [], saved: 0 }],
     [core("dates-admin-stale-revision", 409), { unknown: [], errors: ["dates-admin-stale-revision"], saved: 0 }],
     [core("dates-configuration-value-invalid", 422), { unknown: [], errors: ["dates-configuration-value-invalid"], saved: 0 }],
-    // NOT SKIPPED, STATED: no receipt check for a setting save yet (no genuine body is vendored); the bare success flag is the receipt.
-    [{ success: true }, { unknown: [], errors: [], saved: 1 }]] as const) {
-    const errors: unknown[] = [], unknown: Array<string | null> = []; let saved = 0;
-    const context: any = { exports: {}, editable: true, reason: "Raised after the pilot.", busy: false, value: "5", items: [], setting: { key: "dates_max_active_hosted", type: "integer", revision: 3 },
-      DATES_AI_MODEL_SETTING_KEYS: [], datesModelIdValid: () => true, datesStringListProblem: () => null, configurationInputValue: (_type: string, value: string) => Number(value),
-      datesCommandOutcome, datesUncheckedReceipt, createAdminIdempotencyKey, t: translator(""), setProblem: () => {}, setBusy: () => {}, adminCall: async () => reply,
-      onError: (error: unknown) => errors.push(error), onUnknown: (error: string | null) => unknown.push(error), onSaved: async () => { saved++; } };
-    vm.runInNewContext(settingCode, context);
-    await context.exports.save(submit);
-    assert.deepEqual({ unknown, errors, saved }, expected, JSON.stringify(reply));
+    // NOT SKIPPED, STATED: no receipt check for a setting save yet; the bare success flag is the receipt. (Core b5b2b299
+    // vendors one genuine receipt of the route - the second body below; the check that binds it is still to be written.)
+    [{ success: true }, { unknown: [], errors: [], saved: 1 }],
+    [intake("admin-configuration-save"), { unknown: [], errors: [], saved: 1 }],
+    // Core's two genuine refusals of the route (D-143): refusals, not unknown outcomes.
+    [intake("admin-configuration-save-released-console-denied"), { unknown: [], errors: ["dates-configuration-key-invalid"], saved: 0 }],
+    [intake("admin-configuration-save-consent-text-missing-denied"), { unknown: [], errors: ["dates-configuration-value-invalid"], saved: 0 }]] as const) {
+    const run = async (key: string) => {
+      const errors: unknown[] = [], unknown: Array<string | null> = [], problems: string[] = []; let saved = 0;
+      const context: any = { exports: {}, editable: true, reason: "Raised after the pilot.", busy: false, value: "5", items: [], setting: { key, type: "integer", revision: 3 },
+        DATES_AI_MODEL_SETTING_KEYS: [], datesModelIdValid: () => true, datesStringListProblem: () => null, configurationInputValue: (_type: string, value: string) => Number(value),
+        DATES_CONSENT_VERSION_SETTING: "dates_event_suggestion_consent_version",
+        datesCommandOutcome, datesUncheckedReceipt, createAdminIdempotencyKey, t: translator(""), setProblem: (text: string) => { if (text !== "") problems.push(text); }, setBusy: () => {},
+        adminCall: async () => reply, onError: (error: unknown) => errors.push(error), onUnknown: (error: string | null) => unknown.push(error), onSaved: async () => { saved++; } };
+      vm.runInNewContext(settingCode, context);
+      await context.exports.save(submit);
+      return { unknown, errors, saved, problems };
+    };
+    const { problems, ...outcome } = await run("dates_max_active_hosted");
+    assert.deepEqual(outcome, expected, JSON.stringify(reply)); assert.deepEqual(problems, []);
+    // The consent version: Core's `value-invalid` there means "this version has no text in this release", and is said
+    // so beside the field instead of as a bare token. Every other reply of that setting reads exactly as above.
+    const consent = await run("dates_event_suggestion_consent_version"), noText = (expected.errors as readonly string[]).includes("dates-configuration-value-invalid");
+    assert.deepEqual(consent, noText ? { unknown: [], errors: [], saved: 0, problems: ["consentVersionNoText"] } : { ...expected, problems: [] }, JSON.stringify(reply));
   }
+  assert.match(configuration, /const DATES_CONSENT_VERSION_SETTING = "dates_event_suggestion_consent_version";/);
+  assert.equal(intake("admin-configuration-save-consent-text-missing-denied").error, "dates-configuration-value-invalid");
   for (const route of ["dates_configuration_save", "dates_activity_type_save", "dates_reason_deactivate"])
     assert.ok(configuration.includes(`datesCommandOutcome(response, datesUncheckedReceipt("${route}", response), "fresh")`), route);
   assert.equal((configuration.match(/onError=\{failure\} onUnknown=\{unknown\}/g) ?? []).length, 4, "every editor reports an unknown outcome");

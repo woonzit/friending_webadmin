@@ -27,6 +27,7 @@
         "decision_action": "expired",
         "created_at": 1790924401,
         "updated_at": 1794380401,
+        "second_look": false,
         "admin_principal": "admin@example.test",
         "inputs": {
             "kind": "text",

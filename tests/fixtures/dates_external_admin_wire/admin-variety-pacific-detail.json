@@ -154,8 +154,7 @@
                 "timezone": false,
                 "content_safe": false
             }
-        },
-        "intake": null
+        }
     },
     "capabilities": [
         "dates_activity_read",

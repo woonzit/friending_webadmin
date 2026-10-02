@@ -8,9 +8,10 @@ import {
 import { DATES_RUNTIME_HELP_GROUPS, DATES_RUNTIME_HELP_KEYS } from "../lib/datesRuntimeHelp.ts";
 import { DATES_AI_PROVIDERS } from "../lib/datesIntakeAdmin.ts";
 
-// T-865 P2a: the eight intake settings of the Dates configuration read, as
-// Core serves them in the two genuine configuration bodies (Core 06c8c3ea).
-const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/dates_external_admin_wire/admin-configuration-${name}.json`, import.meta.url), "utf8"));
+// T-865 P2a / P2b: the intake settings of the Dates configuration read. Core serves them only to a request that
+// carries the Admin intake contract selector (D-143): the genuine 50-row body is `admin-configuration.json` of the
+// intake corpus (Core b5b2b299); without the selector the read is the 33 P1 rows (`admin-configuration-released-console`).
+const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/dates_event_intake_admin_wire/admin-${name}.json`, import.meta.url), "utf8"));
 const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
 const INTAKE: Array<[string, string, unknown]> = [
   ["dates_external_admin_drafts_enabled", "boolean", false], ["dates_ai_monthly_budget_usd", "integer", 50],
@@ -28,19 +29,22 @@ const SUGGESTION: Array<[string, string, unknown]> = [
   ["dates_external_autopublish_enabled", "boolean", false],
 ];
 
-for (const name of ["default-off", "publishing-on"]) test(`genuine configuration ${name}: the eight intake settings and the nine of the member channel follow the 33 P1 rows, default OFF, each with an editor`, () => {
-  const settings = fixture(name).settings as Array<Record<string, any>>;
+test("genuine configuration with the selector: the eight intake settings and the nine of the member channel follow the 33 P1 rows, each with an editor; the switches default OFF", () => {
+  const settings = fixture("configuration").settings as Array<Record<string, any>>;
   assert.equal(settings.length, 50);
-  assert.deepEqual(settings.slice(33, 41).map((row) => [row.key, row.type, row.value]), INTAKE);
-  assert.deepEqual(settings.slice(41).map((row) => [row.key, row.type, row.value]), SUGGESTION);
-  // Both switches of the member channel are off by default.
-  for (const key of ["dates_external_suggestions_enabled", "dates_external_autopublish_enabled"]) {
+  // Core's defaults, row by row. (In this capture the three switches had been turned on for the corpus; their default is off.)
+  assert.deepEqual(settings.slice(33, 41).map((row) => [row.key, row.type, row.default_value]), INTAKE);
+  assert.deepEqual(settings.slice(41).map((row) => [row.key, row.type, row.default_value]), SUGGESTION);
+  const SWITCHES = ["dates_external_admin_drafts_enabled", "dates_external_suggestions_enabled", "dates_external_autopublish_enabled"];
+  for (const key of SWITCHES) {
     const row = settings.find((item) => item.key === key)!;
-    assert.deepEqual([row.value, row.effective_value, row.default_value, row.revision], [false, false, false, 0], key);
+    assert.deepEqual([row.type, row.default_value, row.value, row.effective_value, row.revision], ["boolean", false, true, true, 1], key);
+    assert.equal(datesSettingEffectiveText("boolean", row.default_value, { on: "ON", off: "OFF" }), "OFF");
   }
   for (const row of settings) assert.equal(datesSettingEditable(row.type), true, `${row.key}: ${row.type}`);
   for (const row of settings.slice(33)) {
-    assert.deepEqual(row.effective_value, row.value); assert.deepEqual(row.default_value, row.value);
+    assert.deepEqual(row.effective_value, row.value);
+    if (!SWITCHES.includes(row.key)) { assert.deepEqual(row.default_value, row.value); assert.equal(row.revision, 0); }
     // Never the number field's "[object Object]" or an empty box for a list.
     const raw = datesConfigurationRawValue(row.type, row.value);
     assert.doesNotMatch(raw, /object Object/);
@@ -50,9 +54,10 @@ for (const name of ["default-off", "publishing-on"]) test(`genuine configuration
     const saved = configurationInputValue(row.type, raw, row.key);
     assert.deepEqual(row.type === "integer" ? Number(saved) : saved, row.value, row.key);
   }
-  const drafts = settings[33];
-  assert.deepEqual([drafts.value, drafts.effective_value, drafts.default_value, drafts.revision, drafts.updated_at], [false, false, false, 0, null]);
-  assert.equal(datesSettingEffectiveText("boolean", drafts.effective_value, { on: "ON", off: "OFF" }), "OFF");
+  // Without the selector Core serves the released console its 33 P1 rows: the same rows, and none of the intake's.
+  const released = fixture("configuration-released-console").settings as Array<Record<string, any>>;
+  assert.equal(released.length, 33); assert.deepEqual(released, settings.slice(0, 33));
+  assert.equal(released.some((row) => row.key.startsWith("dates_ai_") || row.key.includes("suggestion") || row.key.includes("intake")), false);
   const order = settings[35];
   assert.deepEqual([order.minimum, order.maximum, order.allowed_values], [1, 3, [...DATES_AI_PROVIDERS]]);
   assert.equal(datesSettingEffectiveText("string_list", order.effective_value), "openai, gemini, anthropic");
@@ -136,7 +141,7 @@ test("the intake settings have their own help group and full help in both langua
   assert.deepEqual([...suggestion.settingKeys], SUGGESTION.map(([key]) => key));
   assert.deepEqual(DATES_RUNTIME_HELP_KEYS.slice(-17), [...INTAKE, ...SUGGESTION].map(([key]) => key));
   // Every setting Core serves is documented: nothing falls into the "undocumented" list of the help dialog.
-  const served = (fixture("default-off").settings as Array<{ key: string }>).map((row) => row.key).filter((key) => key !== "dates_enabled");
+  const served = (fixture("configuration").settings as Array<{ key: string }>).map((row) => row.key).filter((key) => key !== "dates_enabled");
   assert.deepEqual(served.filter((key) => !(DATES_RUNTIME_HELP_KEYS as string[]).includes(key)), []);
   for (const locale of ["en", "hu"]) {
     const configuration = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8")).datesAdmin.configuration;

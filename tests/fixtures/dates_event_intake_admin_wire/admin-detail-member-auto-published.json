@@ -27,6 +27,7 @@
         "decision_action": "published",
         "created_at": 1790924438,
         "updated_at": 1790000000,
+        "second_look": false,
         "admin_principal": null,
         "inputs": {
             "kind": "url",

@@ -21,6 +21,7 @@
         "expired": 0,
         "awaiting_budget": 0
     },
+    "second_look_count": 0,
     "drafts_enabled": true,
     "suggestions_enabled": false,
     "capabilities": [

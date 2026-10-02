@@ -250,7 +250,6 @@
                 "timezone": false,
                 "content_safe": false
             }
-        },
-        "intake": null
+        }
     }
 }

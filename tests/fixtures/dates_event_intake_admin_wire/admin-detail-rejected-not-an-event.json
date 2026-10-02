@@ -27,6 +27,7 @@
         "decision_action": "extraction_rejected",
         "created_at": 1790924419,
         "updated_at": 1790928000,
+        "second_look": false,
         "admin_principal": "admin@example.test",
         "inputs": {
             "kind": "images",

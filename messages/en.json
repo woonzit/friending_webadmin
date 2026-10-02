@@ -9153,6 +9153,16 @@
         "value": "An item is not one of the allowed values.",
         "length": "An item is empty or longer than 253 characters.",
         "host": "An item is not a plain host name: lower-case, no https://, no path, no www. prefix - for example jegy.hu."
+      },
+      "consentVersionNoText": "This version has no text yet. Core accepts only a consent version whose text exists in this release.",
+      "suggestionConsent": {
+        "draftTitle": "The suggestion terms are still a draft.",
+        "draft": "Members are served version {version} of the terms, and counsel has not approved that text yet. Core does not stop the switch for it: decide knowing it.",
+        "approvedTitle": "The suggestion terms are approved.",
+        "approved": "Version {version} of the terms is approved in every language members are served.",
+        "missingTitle": "The member channel is closed.",
+        "missing": "Version {version} of the suggestion terms has no complete text in this release, so members cannot suggest events whatever this switch says. Set the required version to one that has a text, or release the text.",
+        "unreadable": "The state of the suggestion terms' text could not be read. It is not known whether the text is approved."
       }
     },
     "intake": {
@@ -9187,7 +9197,15 @@
         },
         "channelFilter": "Channel",
         "channelAll": "All channels",
-        "suggestionsOff": "Members' suggestions are switched off (dates_external_suggestions_enabled). Members cannot send new ones, and those already here cannot be published or sent back to the member until an administrator turns them on in Configuration; they can still be read and rejected."
+        "suggestionsOff": "Members' suggestions are switched off (dates_external_suggestions_enabled). Members cannot send new ones, and those already here cannot be published or sent back to the member until an administrator turns them on in Configuration; they can still be read and rejected.",
+        "secondLookFilter": "Second look",
+        "secondLookAll": "All intakes",
+        "secondLookOnly": "Second looks only",
+        "secondLookWithout": "Without second looks",
+        "secondLookBadge": "Second look",
+        "secondLooksWaiting": "Second looks waiting for a reviewer: {count}. A member asked for the rejection of a suggestion to be looked at again.",
+        "secondLooksShow": "Show them",
+        "orderSecondLook": "Second looks are listed with the oldest request first."
       },
       "lease": {
         "title": "Who is working on it",
@@ -9865,7 +9883,9 @@
         "admin-write-required": "Your role is read-only.",
         "not-found": "The console does not know this action.",
         "dates-intake-suggestions-disabled": "Members' suggestions are switched off. An administrator turns them on in Configuration (dates_external_suggestions_enabled).",
-        "dates-intake-duplicate-event-unavailable": "The event named as the one already listed does not exist. Check its identifier."
+        "dates-intake-duplicate-event-unavailable": "The event named as the one already listed does not exist. Check its identifier.",
+        "dates-configuration-key-invalid": "Core does not know this setting for this request. An intake setting can be saved only by a console that sends the intake contract selector; the released console is not shown these settings.",
+        "dates-configuration-value-invalid": "Core refused this value. For the consent version: only a version whose text exists in this release is accepted."
       },
       "memberConfirmationValues": {
         "awaiting": "Waiting for the member's answer",

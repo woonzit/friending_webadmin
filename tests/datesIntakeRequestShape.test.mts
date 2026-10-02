@@ -244,6 +244,13 @@ test("request shape: queue, detail and usage reads never send a present-but-empt
   // The queue's channel filter, as the page sends it for members' suggestions.
   const suggestions = await bridge("dates_event_intake_list", { status: "in_review", channel: "member_suggestion", page: 1, limit: 40 }, fixture("admin-list-member-channel"));
   assert.equal(common(suggestions.sent[0], "dates_event_intake_list", ["status", "channel", "page", "limit"]).channel, "member_suggestion");
+  // The second-look filter, as the page sends it: Core reads the bridge's boolean encoding, "1" / "0" - "1" is only those,
+  // "0" everything but them (TRANSCRIBED from the Core lane's hand-over of 18:16Z; the genuine body is the filtered queue).
+  const waiting = await bridge("dates_event_intake_list", { status: "", channel: "", second_look: true, page: 1, limit: 40 }, fixture("admin-list-second-look"));
+  assert.equal(common(waiting.sent[0], "dates_event_intake_list", ["second_look", "page", "limit"]).second_look, "1");
+  assert.deepEqual(waiting.result.body, fixture("admin-list-second-look"));
+  const without = await bridge("dates_event_intake_list", { second_look: false, page: 1, limit: 40 }, fixture("admin-list-all"));
+  assert.equal(common(without.sent[0], "dates_event_intake_list", ["second_look", "page", "limit"]).second_look, "0");
   const channel = await bridge("dates_event_intake_list", { channel: "admin_draft", page: 1, limit: 40 }, fixture("admin-list-channel"));
   assert.ok((DATES_INTAKE_CHANNELS as readonly string[]).includes(common(channel.sent[0], "dates_event_intake_list", ["channel", "page", "limit"]).channel));
   // The access probe of the detail and usage pages.

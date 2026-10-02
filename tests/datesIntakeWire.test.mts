@@ -9,36 +9,41 @@ import {
   DATES_INTAKE_REFUSALS, DATES_INTAKE_REJECT_REASONS, DATES_INTAKE_STATUSES, DATES_INTAKE_VOCABULARIES,
   datesAiUsageShare, datesIntakeAffordances, datesIntakeCapabilityRefused, datesIntakeCompleteFlag, datesIntakeCompletion, datesIntakeEditorDraft, datesIntakeEditorGaps,
   datesIntakeImageBytes, datesIntakeInProgress, datesIntakePublishableEvents, datesIntakeReferenceHref, datesIntakeRefusal, datesIntakeUnreadableEvents,
-  datesIntakeAskFields, datesIntakeAskState, datesIntakeAskValid, datesIntakeMemberNote, decodeDatesIntakeAskReceipt,
+  datesIntakeAskFields, datesIntakeAskState, datesIntakeAskValid, datesIntakeMemberNote, datesSuggestionConsent, decodeDatesIntakeAskReceipt,
   decodeDatesIntakeCreateReceipt, decodeDatesIntakeImage, decodeDatesIntakeLeaseReceipt, decodeDatesIntakePublishReceipt,
   decodeDatesIntakeRejectReceipt, projectDatesAiUsage, projectDatesIntakeDetail, projectDatesIntakeQueue,
   type DatesIntakeLeaseAction,
 } from "../lib/datesIntakeAdmin.ts";
 
 // T-865 P2a + P2b. The event-intake Admin wire, vendored byte-identically from the
-// Core lane's tip 32d418cff7a68217d9358959c297a469139586f0 (T-886): 148 genuine
-// bodies captured as real HTTP POSTs encoded the way lib/core.ts encodes them.
-// Against the previous pin (Core 285b14a8, 114 bodies, set fc099c0b...) 34 bodies
-// are new and 65 changed: every create receipt gained `existing`, every detail
-// `member`, every list `suggestions_enabled`, and identifiers were renumbered.
+// Core lane's tip b5b2b29983cf2dfb89371d7ac4eaf026a16b9e69 (T-886, D-143): 159
+// genuine bodies captured as real HTTP POSTs encoded the way lib/core.ts encodes
+// them, every console request carrying the Admin intake contract selector.
+// Against the pin before it (Core 32d418cf, 148 bodies, set c4b6f583...) 11 bodies
+// are new and 57 changed: every queue read gained `second_look_count`, every
+// intake row (queue rows and details) `second_look`; nothing else moved in them.
 // The set digest and the source commit are transcribed from the Core hand-over
-// (team/chat/20261002T160008Z-opus-core-p2-to-opus-admin-p2-p2b-admin-corpus-pin.md);
+// (team/chat/20261002T194348Z-opus-core-p2-to-opus-admin-p2-p2b-admin-corpus-pin.md);
 // the manifest digest, the source checksum and the generator digest were read
 // from the Core lane's git objects at that tip, not from the vendored copy.
 // Rows marked DERIVED are built from a genuine body for a branch no genuine
 // body carries; they are named in the lane's report.
 const DIRECTORY = new URL("./fixtures/dates_event_intake_admin_wire/", import.meta.url);
-const SOURCE = "7dfe04317524f3929b572a3d2a995f57147f10ed";
-const SOURCE_SHA = "9f61c7f60641ff37ff68635f25323f9e7eb398f459e0f71e00020b6b2cb73162";
-const MANIFEST_SHA = "af3117c40358c080eda62a157f005430c9215b7901ee558cf0ff55b27dfd6bf1";
-const GENERATOR_SHA = "8493247076ccd7d319095e4e0b85d8aea61cafbb63ee0644fb8b602591a4d778";
-const SET_SHA = "c4b6f5834b6fea2dd046f9a9fe1f2677934d52093e63743617347c52ab499e13";
+const SOURCE = "2df1849c356ef443e8ac2318c6507a6e3cd799e4";
+const SOURCE_SHA = "7c1ab85adf181b6686bdd38eed5b8665737bd696036b374d73ac662f44d1621a";
+const MANIFEST_SHA = "8a53f5ec4cbc280f139b6de384aebd2acca22b30b7611ed39726a23b09a81874";
+const GENERATOR_SHA = "03f11eba1e036d8d089c83b916fd34eab97d7211fdd4f334be8b67480c8c8941";
+const SET_SHA = "008719da095096506d4d583e5f5465a5b086fc4b0ef6136da4a56baf658bbfed";
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`${name}.json`, DIRECTORY), "utf8"));
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 const xin = (number: number) => "xin_" + number.toString(16).padStart(32, "0");
 
-const LISTS = ["all", "channel", "empty", "in-review", "member-channel", "moderator", "page-two", "rejected"];
+const LISTS = ["all", "channel", "empty", "in-review", "member-channel", "moderator", "page-two", "rejected", "second-look"];
+// D-143: the P1 routes as Core serves them with the selector (`manual`, `configuration`) and, for the released console,
+// without it (`released-console`); and the receipt and the two refusals of saving an intake setting.
+const SELECTOR_BODIES = ["external-detail-manual", "external-list-manual", "configuration", "configuration-save",
+  "external-detail-released-console", "external-list-released-console", "activity-detail-released-console", "configuration-released-console"];
 const DETAILS = ["awaiting-budget", "duplicate", "expired", "extracting", "extracting-retry", "failed-ai-not-configured", "failed-ai-refused",
   "failed-image", "failed-source", "in-review-ambiguous-venue", "in-review-country-unavailable", "in-review-fallback", "in-review-images",
   "in-review-multi", "in-review-needs-info", "in-review-official", "in-review-partial", "in-review-private-address", "in-review-text",
@@ -84,6 +89,8 @@ const REFUSALS: Record<string, [string, number]> = {
   "ask-member-not-a-suggestion": ["dates-intake-state-invalid", 409], "ask-member-suggestions-disabled": ["dates-intake-suggestions-disabled", 403],
   "publish-suggestions-disabled": ["dates-intake-suggestions-disabled", 403],
   "reject-duplicate-event-unavailable": ["dates-intake-duplicate-event-unavailable", 409], "reject-duplicate-invalid": ["dates-intake-input-invalid", 422],
+  // D-143: an intake setting is not saveable without the selector; a consent version needs a text in this release.
+  "configuration-save-released-console": ["dates-configuration-key-invalid", 422], "configuration-save-consent-text-missing": ["dates-configuration-value-invalid", 422],
 };
 
 test("intake corpus is the complete 148-response genuine capture with independent provenance pins", () => {
@@ -96,16 +103,16 @@ test("intake corpus is the complete 148-response genuine capture with independen
   assert.equal(manifest.provenance.generator, "tests/dates_event_intake_admin_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
   assert.match(manifest.provenance.transport, /real HTTP.*application\/x-www-form-urlencoded/s);
-  assert.equal(manifest.fixture_count, 148);
-  assert.equal(manifest.provenance.source_paths.length, 281);
+  assert.equal(manifest.fixture_count, 159);
+  assert.equal(manifest.provenance.source_paths.length, 283);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   const names = [...LISTS.map((name) => `admin-list-${name}.json`), ...[...DETAILS, ...MEMBER_DETAILS].map((name) => `admin-detail-${name}.json`),
     ...CREATES.map((name) => `admin-create-${name}.json`), ...LEASES.map((name) => `admin-lease-${name}.json`),
     ...REJECT_SUCCESSES.map((name) => `admin-reject-${name}.json`), ...[...PUBLISHES, ...ASKS, ...MEMBER_DECISIONS, ...EXTERNAL_DETAILS].map((name) => `admin-${name}.json`),
     ...USAGES.map((name) => `admin-usage-${name}.json`), "admin-image-read.json",
     "admin-activity-detail-ai-assisted.json", "admin-external-list-ai-assisted.json", ...Object.keys(REFUSALS).map((name) => `admin-${name}-denied.json`),
-    "member-ai-assisted-detail.json", "member-ai-assisted-discover.json"].sort();
-  assert.equal(names.length, 148);
+    ...SELECTOR_BODIES.map((name) => `admin-${name}.json`), "member-ai-assisted-detail.json", "member-ai-assisted-discover.json"].sort();
+  assert.equal(names.length, 159);
   assert.deepEqual(manifest.fixtures.map((entry: { file: string }) => entry.file), names);
   assert.deepEqual(readdirSync(DIRECTORY).sort(), ["manifest.json", ...names].sort());
   const lines = manifest.fixtures.map((entry: { file: string; sha256: string; consumer: string; http_status: number; status_code: number }) => {
@@ -118,8 +125,8 @@ test("intake corpus is the complete 148-response genuine capture with independen
     return `${entry.file}\0${entry.sha256}`;
   });
   assert.equal(hash(lines.join("\n")), SET_SHA);
-  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 99);
-  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code !== 200).length, 49);
+  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 108);
+  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code !== 200).length, 51);
 });
 
 test("the console's closed vocabularies are exactly the ones Core's manifest publishes", () => {
@@ -640,6 +647,64 @@ for (const name of ASKS) test(`genuine ${name}: the draft is with the member, bo
   // It is the receipt of this command only.
   assert.equal(decodeDatesIntakeRejectReceipt(body, { intake_id: request.intake_id, expected_revision: request.expected_revision, reason_code: "duplicate" }), null);
   assert.equal(decodeDatesIntakeLeaseReceipt(body, { intake_id: request.intake_id, expected_revision: request.expected_revision, action: "release" }), null);
+});
+
+test("the second look: Core marks the rows that wait for one and counts them; a Core that does not serve the mark is read as none", () => {
+  // The genuine filtered queue: one row, a member's suggestion back in review, marked; the count beside the page.
+  const waiting = fixture("admin-list-second-look"), queue = projectDatesIntakeQueue(waiting, { page: waiting.page, limit: waiting.limit })!;
+  assert.equal(queue.second_look_count, 1); assert.equal(waiting.second_look_count, 1);
+  assert.deepEqual(queue.intakes.map((row) => [row.channel, row.status, row.second_look]), [["member_suggestion", "in_review", true]]);
+  assert.deepEqual(queue.unreadable_rows, []); assert.deepEqual(queue.intakes[0].unreadable_fields, []);
+  assert.equal(Object.keys(waiting.intakes[0]).at(-1), "second_look");
+  // Every other genuine queue read: the count is served (0 in these captures) and no row is marked.
+  for (const name of LISTS.filter((item) => item !== "second-look")) {
+    const body = fixture(`admin-list-${name}`), read = projectDatesIntakeQueue(body, { page: body.page, limit: body.limit })!;
+    assert.equal(read.second_look_count, body.second_look_count, name); assert.equal(typeof body.second_look_count, "number", name);
+    assert.ok(read.intakes.every((row) => row.second_look === false), name);
+  }
+  // Every genuine detail carries the mark on its row keys, and it is what the member block says: asked for, not decided, still in review.
+  let marked = 0;
+  for (const name of [...DETAILS, ...MEMBER_DETAILS]) {
+    const body = fixture(`admin-detail-${name}`), intake = projectDatesIntakeDetail(body, body.intake.intake_id)!.intake;
+    assert.equal(intake.second_look, body.intake.second_look, name);
+    assert.equal(intake.second_look, intake.status === "in_review" && intake.member?.re_review != null && intake.member.re_review.decided_at === null, name);
+    if (intake.second_look) marked++;
+  }
+  assert.equal(marked, 1, "member-re-review");
+  // DERIVED: a Core that does not serve the two keys (D-143: additions are optional) - no mark, the count not known.
+  const older = copy(waiting); delete older.second_look_count; delete older.intakes[0].second_look;
+  const before = projectDatesIntakeQueue(older, { page: older.page, limit: older.limit })!;
+  assert.equal(before.second_look_count, null); assert.equal(before.intakes[0].second_look, false); assert.deepEqual(before.intakes[0].unreadable_fields, []);
+  // DERIVED: served in a shape this console cannot read - the row says so and is not marked; the count is not known. Never a guess.
+  for (const value of ["yes", 1, null, "true"]) {
+    const odd = copy(waiting); odd.intakes[0].second_look = value;
+    const read = projectDatesIntakeQueue(odd, { page: odd.page, limit: odd.limit })!;
+    assert.equal(read.intakes[0].second_look, false, String(value)); assert.deepEqual(read.intakes[0].unreadable_fields, ["second_look"], String(value));
+    assert.equal(read.intakes[0].controls, true, "an unreadable mark removes no action");
+  }
+  for (const value of ["1", -1, 1.5, null, { n: 1 }]) {
+    const odd = copy(waiting); odd.second_look_count = value;
+    assert.equal(projectDatesIntakeQueue(odd, { page: odd.page, limit: odd.limit })!.second_look_count, null, JSON.stringify(value));
+  }
+});
+
+test("the consent text's state: served with the selector, in a closed vocabulary; absent is silence and anything else is unreadable", () => {
+  // Genuine, with the selector: version 1, still a draft. Without it (the released console's read): not served at all.
+  assert.deepEqual(datesSuggestionConsent(fixture("admin-configuration")), { kind: "known", required_version: 1, text_status: "draft" });
+  assert.deepEqual(fixture("admin-configuration").event_suggestion_consent, { required_version: 1, text_status: "draft" });
+  assert.deepEqual(datesSuggestionConsent(fixture("admin-configuration-released-console")), { kind: "absent" });
+  assert.deepEqual(fixture("manifest").vocabularies.consent_text_status, ["missing", "draft", "approved"]);
+  // DERIVED: the two states no genuine body carries (they need another release state; the Core lane did not fabricate them).
+  const body = fixture("admin-configuration");
+  for (const text_status of ["missing", "approved"] as const)
+    assert.deepEqual(datesSuggestionConsent({ ...body, event_suggestion_consent: { required_version: 2, text_status } }), { kind: "known", required_version: 2, text_status });
+  // A key Core might add beside the two is tolerated.
+  assert.deepEqual(datesSuggestionConsent({ ...body, event_suggestion_consent: { required_version: 1, text_status: "draft", approved_by: "counsel" } }),
+    { kind: "known", required_version: 1, text_status: "draft" });
+  // A status this console does not know, or a broken block, is unreadable - never read as approved, never as silence.
+  for (const served of [{ required_version: 1, text_status: "pending" }, { required_version: 1 }, { text_status: "approved" }, { required_version: 0, text_status: "draft" },
+    { required_version: "1", text_status: "draft" }, null, "draft", []]) assert.deepEqual(datesSuggestionConsent({ ...body, event_suggestion_consent: served }), { kind: "unreadable" }, JSON.stringify(served));
+  for (const odd of [null, "x", [], {}]) assert.deepEqual(datesSuggestionConsent(odd), { kind: "absent" });
 });
 
 test("publishing a member's suggestion is offered under the member channel's switch, an operator's draft under the draft switch", () => {

@@ -9153,6 +9153,16 @@
         "value": "Az egyik elem nincs a megengedett értékek között.",
         "length": "Az egyik elem üres, vagy hosszabb 253 karakternél.",
         "host": "Az egyik elem nem egyszerű hosztnév: kisbetűvel, https://, útvonal és www. előtag nélkül – például jegy.hu."
+      },
+      "consentVersionNoText": "Ehhez a verzióhoz még nincs szöveg. A Core csak olyan hozzájárulási verziót fogad el, amelynek a szövege létezik ebben a kiadásban.",
+      "suggestionConsent": {
+        "draftTitle": "A javaslattételi feltételek még vázlatban vannak.",
+        "draft": "A tagok a feltételek {version}. verzióját kapják, és ezt a szöveget a jogász még nem hagyta jóvá. A Core emiatt nem tiltja a kapcsolót: ennek tudatában dönts.",
+        "approvedTitle": "A javaslattételi feltételek jóvá vannak hagyva.",
+        "approved": "A feltételek {version}. verziója minden olyan nyelven jóvá van hagyva, amelyen a tagok megkapják.",
+        "missingTitle": "A tagi csatorna zárva van.",
+        "missing": "A javaslattételi feltételek {version}. verziójának nincs teljes szövege ebben a kiadásban, ezért a tagok nem javasolhatnak eseményt, bármit mutat ez a kapcsoló. Állítsd a kötelező verziót olyanra, amelynek van szövege, vagy add ki a szöveget.",
+        "unreadable": "A javaslattételi feltételek szövegének állapota nem olvasható. Nem tudni, hogy a szöveg jóvá van-e hagyva."
       }
     },
     "intake": {
@@ -9187,7 +9197,15 @@
         },
         "channelFilter": "Csatorna",
         "channelAll": "Minden csatorna",
-        "suggestionsOff": "A tagok javaslatai ki vannak kapcsolva (dates_external_suggestions_enabled). A tagok nem küldhetnek újat, és a már itt lévők nem publikálhatók és nem küldhetők vissza a tagnak, amíg adminisztrátor a Konfigurációban be nem kapcsolja; olvasni és elutasítani továbbra is lehet őket."
+        "suggestionsOff": "A tagok javaslatai ki vannak kapcsolva (dates_external_suggestions_enabled). A tagok nem küldhetnek újat, és a már itt lévők nem publikálhatók és nem küldhetők vissza a tagnak, amíg adminisztrátor a Konfigurációban be nem kapcsolja; olvasni és elutasítani továbbra is lehet őket.",
+        "secondLookFilter": "Felülvizsgálat",
+        "secondLookAll": "Minden beküldés",
+        "secondLookOnly": "Csak a felülvizsgálatok",
+        "secondLookWithout": "Felülvizsgálatok nélkül",
+        "secondLookBadge": "Felülvizsgálat",
+        "secondLooksWaiting": "Ellenőrre váró felülvizsgálatok: {count}. Egy tag kérte, hogy a javaslata elutasítását nézzük meg újra.",
+        "secondLooksShow": "Megjelenítés",
+        "orderSecondLook": "A felülvizsgálatok a legrégebbi kéréssel kezdve szerepelnek."
       },
       "lease": {
         "title": "Ki dolgozik rajta",
@@ -9865,7 +9883,9 @@
         "admin-write-required": "A szerepköröd csak olvasásra jogosít.",
         "not-found": "A konzol nem ismeri ezt a műveletet.",
         "dates-intake-suggestions-disabled": "A tagok javaslatai ki vannak kapcsolva. Adminisztrátor kapcsolhatja be a Konfigurációban (dates_external_suggestions_enabled).",
-        "dates-intake-duplicate-event-unavailable": "A már szereplőként megnevezett esemény nem létezik. Ellenőrizd az azonosítóját."
+        "dates-intake-duplicate-event-unavailable": "A már szereplőként megnevezett esemény nem létezik. Ellenőrizd az azonosítóját.",
+        "dates-configuration-key-invalid": "A Core ehhez a kéréshez nem ismeri ezt a beállítást. Beküldési beállítást csak olyan konzol menthet, amely elküldi a beküldési szerződés jelölőjét; a korábban kiadott konzol nem látja ezeket a beállításokat.",
+        "dates-configuration-value-invalid": "A Core elutasította ezt az értéket. A hozzájárulás verziójánál: csak olyan verzió fogadható el, amelynek a szövege létezik ebben a kiadásban."
       },
       "memberConfirmationValues": {
         "awaiting": "A tag válaszára vár",
