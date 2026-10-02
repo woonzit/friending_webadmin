@@ -516,6 +516,9 @@ test("review recheck 2: the console keeps no record that could gate, claim, time
   // What is stored: a time and a kind, under the operator's own key. No idempotency key, no fingerprint, no file name.
   assert.deepEqual([...rows.entries()], [["friending:dates-intake:hint:v1:a%40example.test", JSON.stringify(hint)]]);
   assert.deepEqual(readDatesIntakeHint(storage, "a@example.test"), hint);
+  // Whatever the caller hands over, only the time and the kind are stored.
+  writeDatesIntakeHint(storage, "a@example.test", { ...hint, name: "varosliget-november.jpg", key: "dates-intake-create:x" } as typeof hint);
+  assert.equal(rows.get("friending:dates-intake:hint:v1:a%40example.test"), JSON.stringify(hint));
   // Another operator of the same browser has none, and without a known operator nothing is read or written.
   assert.equal(readDatesIntakeHint(storage, "b@example.test"), null); assert.equal(readDatesIntakeHint(storage, null), null);
   writeDatesIntakeHint(storage, null, hint); assert.equal(rows.size, 1);
