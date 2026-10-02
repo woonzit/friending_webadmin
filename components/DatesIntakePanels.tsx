@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { sourceLabel } from "@/components/DatesIntakeEventPanel";
 import DatesIntakeUrl from "@/components/DatesIntakeUrl";
 import {
+  type DatesIntakeCompletion,
   datesIntakeInProgress, datesIntakeMediaUrl, datesIntakeReferenceHref, datesIntakeUnreadableEvents, datesMicroUsd,
   type DatesIntakeDetail,
 } from "@/lib/datesIntakeAdmin";
@@ -103,6 +104,29 @@ export function DatesIntakeExtractionPanel({ intake, manage, draftsOff }: { inta
     {intake.status === "in_review" && !manage && <p className="alert alert-info">{t("access.manageRequired")}</p>}
     {intake.status === "in_review" && manage && draftsOff && <p className="alert alert-info">{t("queue.draftsOff")}</p>}
   </section>;
+}
+
+/**
+ * What happens to the rest of the intake when this event is published.
+ * Nothing is shown when this is plainly the last event. With other readable
+ * events left, the reviewer may tick "this is the last one". With an event
+ * the console could not read, the intake is left open unless the reviewer
+ * explicitly chooses to close it knowing what could not be read.
+ */
+export function DatesIntakeCompletionChoice({ completion, close, disabled, onChange }: {
+  completion: DatesIntakeCompletion; close: boolean; disabled: boolean; onChange: (close: boolean) => void;
+}) {
+  const t = useTranslations("datesAdmin.intake.editor");
+  if (completion.mode === "last") return null;
+  if (completion.mode === "choice") return <label className="checkbox-field"><input type="checkbox" checked={close} disabled={disabled}
+    onChange={(change) => onChange(change.target.checked)} /><span>{t("complete", { remaining: completion.remaining })}</span></label>;
+  return <fieldset className="dates-checkbox-stack" disabled={disabled}>
+    <legend className="alert alert-warning">{t("unreadableSiblings", { count: completion.unreadable })}</legend>
+    <label className="checkbox-field"><input type="radio" name="dates-intake-completion" checked={!close} onChange={() => onChange(false)} />
+      <span>{t("keepOpen")}</span></label>
+    <label className="checkbox-field"><input type="radio" name="dates-intake-completion" checked={close} onChange={() => onChange(true)} />
+      <span>{t("closeAnyway", { count: completion.unreadable, remaining: completion.remaining })}</span></label>
+  </fieldset>;
 }
 
 /** A rejection decided without (all of) the extraction on screen is said to be one. */

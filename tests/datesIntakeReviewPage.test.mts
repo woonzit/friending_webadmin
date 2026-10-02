@@ -5,7 +5,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import { datesExternalDraftInput } from "../lib/datesExternalInput.ts";
 import { readDatesExternalPending } from "../lib/datesExternalMutations.ts";
-import { datesIntakeEditorDraft, datesIntakeHeartbeatDelay, projectDatesIntakeDetail } from "../lib/datesIntakeAdmin.ts";
+import { datesIntakeCompleteFlag, datesIntakeCompletion, datesIntakeEditorDraft, datesIntakeHeartbeatDelay, projectDatesIntakeDetail } from "../lib/datesIntakeAdmin.ts";
 import { createDatesIntakeSerial, prepareDatesIntakeReject, readDatesIntakeDetail, runDatesIntakeLease, runDatesIntakePublish, runDatesIntakeReject } from "../lib/datesIntakeConsole.ts";
 
 // The review screen's own callbacks (load, hold, reject, publish) executed as
@@ -22,12 +22,12 @@ assert.ok(page?.body);
 const declared = (name: string) => page.body!.statements.find((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && node.name?.text === name)!;
 const loadDeclaration = page.body!.statements.flatMap((node) => ts.isVariableStatement(node) ? [...node.declarationList.declarations] : []).find((node) => node.name.getText(tree) === "load")!;
 assert.ok(loadDeclaration.initializer && ts.isCallExpression(loadDeclaration.initializer));
-for (const name of ["command", "lease", "reject", "publish"]) assert.ok(declared(name), name);
+for (const name of ["command", "lease", "reject", "publish", "propose"]) assert.ok(declared(name), name);
 const gone = tree.statements.find((node) => ts.isVariableStatement(node) && node.getText(tree).startsWith("const GONE"))!;
 const code = ts.transpileModule(`${gone.getText(tree)}
   const load = ${(loadDeclaration.initializer as ts.CallExpression).arguments[0].getText(tree)};
-  ${["command", "lease", "reject", "publish"].map((name) => declared(name).getText(tree)).join("\n")}
-  exports.load = load; exports.lease = lease; exports.reject = reject; exports.publish = publish;`,
+  ${["command", "lease", "reject", "publish", "propose"].map((name) => declared(name).getText(tree)).join("\n")}
+  exports.load = load; exports.lease = lease; exports.reject = reject; exports.publish = publish; exports.propose = propose;`,
   { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
 
 const actor = "admin@example.test";
@@ -45,6 +45,7 @@ function harness(intakeId: string, answers: Record<string, unknown>) {
   const context: any = { exports: {}, intakeId, generation: { current: 0 }, lifetime: { current: 0 }, busyRef: { current: false }, revision: { current: null },
     pendingRef: { current: false }, serial: { current: createDatesIntakeSerial() }, operator: null, rejectCode: "duplicate", rejectNote: "Already listed as another intake.",
     readDatesIntakeDetail, runDatesIntakeLease, runDatesIntakeReject, runDatesIntakePublish, prepareDatesIntakeReject, readDatesExternalPending,
+    datesIntakeCompleteFlag, writeBlocked: false, can: { publish: true }, openEvent: null, completion: null, complete: false,
     datesExternalBrowserStorage: () => storage,
     adminCall: async (action: string, body: any) => { sent.push({ action, body });
       const answer = table[action]; return typeof answer === "function" ? (answer as (body: unknown) => unknown)(body) : answer; } };
@@ -53,7 +54,8 @@ function harness(intakeId: string, answers: Record<string, unknown>) {
   vm.runInNewContext(code, context);
   const commands = sent.filter.bind(sent);
   return { context, state, writes, sent, table, rows, storage, api: context.exports as { load: (signal?: AbortSignal, mode?: string) => Promise<void>;
-    lease: (action: string) => Promise<void>; reject: (retry: unknown) => Promise<void>; publish: (input: unknown) => Promise<void> },
+    lease: (action: string) => Promise<void>; reject: (retry: unknown) => Promise<void>; publish: (input: unknown) => Promise<void>;
+    propose: (facts: unknown, reason: string) => void },
     calls: (action: string) => commands((call) => call.action === action) };
 }
 function confirmedEvent() {
@@ -248,4 +250,47 @@ test("a hold taken earlier is renewed before it runs out, and the regular rhythm
       "publish.access", "publish.invalid", "access.denied", "access.refused", "access.unconfirmed"])
       assert.equal(typeof key.split(".").reduce((node: any, part) => node?.[part], copy), "string", `${locale}.${key}`);
   }
+});
+
+test("review finding: with an unreadable sibling the page sends complete=false unless the reviewer explicitly closes the intake", async () => {
+  // DERIVED - the reviewer's scenario: the genuine programme intake cut to two events, the second one undecodable.
+  const base = fixture("admin-detail-in-review-multi");
+  const body = { ...base, intake: { ...base.intake, event_count: 2, events: [base.intake.events[0], { ...base.intake.events[1], draft: { ...base.intake.events[1].draft, category: "hackathon" } }] } };
+  const receipt = fixture("admin-publish-partial"), event = confirmedEvent();
+  async function run(explicitClose: boolean) {
+    const h = harness(base.intake.intake_id, { dates_event_intake_detail: body, dates_event_intake_publish: receipt });
+    await h.api.load();
+    const intake = h.state.Result.read.intake;
+    assert.equal(intake.events[1], null, "the sibling is unknown to this console");
+    h.context.revision.current = receipt.intake.revision - 1;
+    // The page's own state at the moment the form is submitted: event 0 open, the choice as the reviewer left it.
+    Object.assign(h.context, { openEvent: 0, completion: datesIntakeCompletion(intake, 0), complete: explicitClose });
+    h.api.propose(event, "Source and public venue verified.");
+    const candidate = plain(h.state.Candidate);
+    await h.api.publish({ candidate: h.state.Candidate });
+    return { candidate, sent: plain(h.calls("dates_event_intake_publish")[0].body) };
+  }
+  // Default: the readable event is published, the intake stays open; Core is NOT told this was the last event.
+  const kept = await run(false);
+  assert.equal(kept.candidate.complete, false); assert.equal(kept.candidate.unreadable, 1);
+  assert.equal(kept.sent.complete, false); assert.equal(kept.sent.event_index, 0);
+  // Only the reviewer's explicit choice closes it, and that choice is what is sent.
+  const closed = await run(true);
+  assert.equal(closed.candidate.complete, true); assert.equal(closed.sent.complete, true);
+  // Control, genuine one-event intake: nothing unknown, so the publication does finish the intake.
+  const single = fixture("admin-detail-in-review-official"), h = harness(single.intake.intake_id, { dates_event_intake_detail: single, dates_event_intake_publish: fixture("admin-publish") });
+  await h.api.load();
+  Object.assign(h.context, { openEvent: 0, completion: datesIntakeCompletion(h.state.Result.read.intake, 0), complete: false });
+  h.api.propose(event, "Source and public venue verified.");
+  assert.equal(h.state.Candidate.complete, true); assert.equal(h.state.Candidate.unreadable, 0);
+  // Nothing is proposed while the page is blocked, without the capability, or without an open event.
+  for (const change of [{ writeBlocked: true }, { can: { publish: false } }, { openEvent: null }, { completion: null }]) {
+    const blocked = harness(single.intake.intake_id, {});
+    Object.assign(blocked.context, { openEvent: 0, completion: { remaining: 0, unreadable: 0, mode: "last" }, complete: false }, change);
+    blocked.api.propose(event, "x"); assert.equal(blocked.writes.includes("Candidate"), false, JSON.stringify(change));
+  }
+  // The page takes the flag from the completion and from nothing else.
+  assert.match(source, /complete: datesIntakeCompleteFlag\(completion, complete\)/);
+  assert.doesNotMatch(source, /publishable\.length === 1/);
+  assert.match(source, /<DatesIntakeCompletionChoice completion=\{completion\} close=\{complete\} disabled=\{writeBlocked\} onChange=\{setComplete\} \/>/);
 });

@@ -475,6 +475,37 @@ export function datesIntakeUnreadableEvents(intake: Pick<DatesIntakeDetail, "eve
   return (intake.events ?? []).flatMap((event, index) => event === null || (event.editor_unreadable && event.published_external_event_id === null) ? [index] : []);
 }
 
+export type DatesIntakeCompletion = {
+  /** Other events that can still be opened in the editor. */
+  remaining: number;
+  /** Events this console could not read. They are unknown, not absent. */
+  unreadable: number;
+  /**
+   * - `last`: nothing else is left and nothing is unknown; publishing this event finishes the intake.
+   * - `choice`: other readable events remain; the reviewer may say this is the last one they take.
+   * - `unreadable`: an event of the intake could not be read. The intake is never closed implicitly:
+   *   the reviewer chooses, in words, and the choice is what is sent.
+   */
+  mode: "last" | "choice" | "unreadable";
+};
+
+/** What publishing event `eventIndex` means for the rest of the intake. */
+export function datesIntakeCompletion(intake: Pick<DatesIntakeDetail, "events" | "status">, eventIndex: number): DatesIntakeCompletion {
+  const remaining = datesIntakePublishableEvents(intake).filter((index) => index !== eventIndex).length;
+  const unreadable = datesIntakeUnreadableEvents(intake).filter((index) => index !== eventIndex).length;
+  return { remaining, unreadable, mode: unreadable > 0 ? "unreadable" : remaining > 0 ? "choice" : "last" };
+}
+
+/**
+ * Core's `complete`: "this was the last event to publish from this intake".
+ * It is implied only when the console can see that nothing else is left;
+ * otherwise it is exactly what the reviewer chose, and the default is to
+ * leave the intake open.
+ */
+export function datesIntakeCompleteFlag(completion: DatesIntakeCompletion, close: boolean): boolean {
+  return completion.mode === "last" ? true : close;
+}
+
 /** Seconds Core will still honour the reviewer's hold; never negative. */
 export function datesIntakeLeaseRemaining(lease: DatesIntakeLease | null, serverNow: number): number {
   return lease?.active ? Math.max(0, lease.until - serverNow) : 0;

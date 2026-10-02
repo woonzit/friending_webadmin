@@ -380,3 +380,27 @@ test("review finding: a whole section that cannot be read is said to be unreadab
   assert.match(review, /<DatesIntakeRejectWarning intake=\{intake\} \/>/);
   assert.doesNotMatch(review, /detail\.noEvents|detail\.noRuns/);
 });
+
+test("review finding: closing an intake with unread events is an explicit, worded choice whose default leaves it open", async () => {
+  const { DatesIntakeCompletionChoice } = await import("../components/DatesIntakePanels.tsx");
+  for (const locale of LOCALES) {
+    const copy = messagesOf(locale).datesAdmin.intake.editor;
+    const choice = (completion: { remaining: number; unreadable: number; mode: "last" | "choice" | "unreadable" }, close: boolean) =>
+      render(locale, createElement(DatesIntakeCompletionChoice, { completion, close, disabled: false, onChange: () => undefined }));
+    // Plainly the last event: nothing to choose.
+    assert.equal(choice({ remaining: 0, unreadable: 0, mode: "last" }, false), "");
+    // Other readable events: the existing "this is the last one" tick, unticked by default.
+    const tick = choice({ remaining: 3, unreadable: 0, mode: "choice" }, false);
+    assert.match(tick, /<input type="checkbox"\/?>/); assert.ok(tick.includes(escaped(copy.complete.replace("{remaining}", "3"))));
+    // An unreadable sibling: two worded options, "leave open" selected, and the count of what could not be read in both.
+    const open = choice({ remaining: 0, unreadable: 1, mode: "unreadable" }, false);
+    assert.ok(open.includes(escaped(copy.unreadableSiblings.replace("{count}", "1"))));
+    assert.ok(open.includes(escaped(copy.keepOpen)) && open.includes(escaped(copy.closeAnyway.replace("{count}", "1").replace("{remaining}", "0"))));
+    assert.equal((open.match(/type="radio"/g) ?? []).length, 2); assert.equal((open.match(/checked=""/g) ?? []).length, 1);
+    assert.ok(open.indexOf('checked=""') < open.indexOf(escaped(copy.keepOpen)), "the default is to leave the intake open");
+    const closing = choice({ remaining: 2, unreadable: 1, mode: "unreadable" }, true);
+    assert.ok(closing.indexOf('checked=""') > closing.indexOf(escaped(copy.keepOpen)));
+    assert.ok(closing.includes(escaped(copy.closeAnyway.replace("{count}", "1").replace("{remaining}", "2"))));
+    assert.match(copy.confirmCloseUnreadable, /\{count\}/);
+  }
+});

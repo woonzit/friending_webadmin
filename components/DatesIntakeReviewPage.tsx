@@ -7,7 +7,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesExternalEventForm from "@/components/DatesExternalEventForm";
 import DatesIntakeEventPanel from "@/components/DatesIntakeEventPanel";
-import { DatesIntakeExtractionPanel, DatesIntakeInputsPanel, DatesIntakeRejectWarning, DatesIntakeRunsPanel, DatesIntakeStatusPanel } from "@/components/DatesIntakePanels";
+import { DatesIntakeCompletionChoice, DatesIntakeExtractionPanel, DatesIntakeInputsPanel, DatesIntakeRejectWarning, DatesIntakeRunsPanel, DatesIntakeStatusPanel } from "@/components/DatesIntakePanels";
 import DatesIntakeRefusal from "@/components/DatesIntakeRefusal";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -15,7 +15,8 @@ import { adminCall } from "@/lib/adminClient";
 import type { DatesExternalManualEvent } from "@/lib/datesExternalInput";
 import { datesExternalBrowserStorage, readDatesExternalPending, type DatesExternalPending, type DatesExternalPendingRead } from "@/lib/datesExternalMutations";
 import {
-  DATES_INTAKE_HEARTBEAT_SECONDS, DATES_INTAKE_REJECT_REASONS, datesIntakeAffordances, datesIntakeEditorDraft, datesIntakeEditorGaps,
+  DATES_INTAKE_HEARTBEAT_SECONDS, DATES_INTAKE_REJECT_REASONS, datesIntakeAffordances, datesIntakeCompleteFlag, datesIntakeCompletion,
+  datesIntakeEditorDraft, datesIntakeEditorGaps,
   datesIntakeHeartbeatDelay, datesIntakeId, datesIntakePublishableEvents,
   type DatesIntakeDetailRead, type DatesIntakeLeaseAction,
 } from "@/lib/datesIntakeAdmin";
@@ -27,7 +28,7 @@ import { formatDate } from "@/lib/format";
 
 type Problem = { kind: "denied" } | { kind: "unconfirmed" } | { kind: "refused"; error: string };
 type Notice = { tone: "success" | "error" | "info"; key: string; error?: string; eventId?: string };
-type Candidate = { eventIndex: number; event: DatesExternalManualEvent; reason: string; complete: boolean };
+type Candidate = { eventIndex: number; event: DatesExternalManualEvent; reason: string; complete: boolean; unreadable: number };
 /** Core's refusals that mean the opened event can no longer be published from this intake at all. */
 const GONE = ["dates-intake-event-unavailable", "dates-intake-state-invalid", "dates-intake-unavailable"];
 
@@ -201,6 +202,17 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
     });
   }
 
+  /**
+   * The reviewed form becomes the command to confirm. Whether it closes the
+   * intake is implied only when nothing else is left and nothing is unknown;
+   * with an event this console could not read it is the reviewer's explicit
+   * choice, and the default leaves the intake open.
+   */
+  function propose(facts: DatesExternalManualEvent, reason: string) {
+    if (writeBlocked || !can?.publish || openEvent === null || completion === null) return;
+    setCandidate({ eventIndex: openEvent, event: facts, reason, complete: datesIntakeCompleteFlag(completion, complete), unreadable: completion.unreadable });
+  }
+
   const access = { review: operator?.review === true, manage: operator?.manage === true, superadmin: operator?.superadmin === true,
     // Unknown is not "off": Core answers with its own refusal when the switch is off.
     draftsEnabled: result?.draftsEnabled !== false };
@@ -208,6 +220,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
   const publishable = intake ? datesIntakePublishableEvents(intake) : [];
   const events = intake?.events ?? null;
   const editing = openEvent !== null && events ? events[openEvent] ?? null : null;
+  const completion = intake && openEvent !== null ? datesIntakeCompletion(intake, openEvent) : null;
   const ownPending = pending.kind === "pending" && pending.pending.action === "dates_event_intake_publish"
     && pending.pending.body.intake_id === intakeId ? pending.pending : null;
   // A hold or a rejection needs no journal; a publication does, and only one command may be outstanding in it.
@@ -283,14 +296,9 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
         {!can.publish && <p className="alert alert-info" role="status">{t(mine ? "editor.cannotPublish" : "editor.holdFirst")}</p>}
         {datesIntakeEditorGaps(editing.editor_input).length > 0 && <p className="alert alert-info">{t("editor.gaps", {
           fields: datesIntakeEditorGaps(editing.editor_input).map((gap) => t(`editor.gapFields.${gap}`)).join(", ") })}</p>}
-        {publishable.length > 1 && <label className="checkbox-field"><input type="checkbox" checked={complete} disabled={writeBlocked}
-          onChange={(change) => setComplete(change.target.checked)} /><span>{t("editor.complete", { remaining: publishable.length - 1 })}</span></label>}
+        {completion && <DatesIntakeCompletionChoice completion={completion} close={complete} disabled={writeBlocked} onChange={setComplete} />}
         <DatesExternalEventForm key={`${intakeId}:${openEvent}`} initialDraft={datesIntakeEditorDraft(editing.editor_input)} notice={t("editor.formNotice")}
-          disabled={writeBlocked || !can.publish} submitLabel={external("editor.reviewPublish")} onSubmit={(facts, reason) => {
-            if (writeBlocked || !can.publish) return;
-            // The last publishable event always finishes the intake; Core decides the same.
-            setCandidate({ eventIndex: openEvent, event: facts, reason, complete: complete || publishable.length === 1 });
-          }} />
+          disabled={writeBlocked || !can.publish} submitLabel={external("editor.reviewPublish")} onSubmit={propose} />
       </section>}
 
       <DatesIntakeRunsPanel intake={intake} />
@@ -320,7 +328,8 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
     {candidate && <ConfirmDialog title={external("editor.publish")} copy={t("editor.confirm")} confirmLabel={external("editor.publish")} tone="primary" busy={busy}
       onCancel={() => { if (!busyRef.current) setCandidate(null); }} onConfirm={() => void publish({ candidate })}>
       <p><strong>{candidate.event.title}</strong></p>
-      <p>{t(candidate.complete ? "editor.confirmComplete" : "editor.confirmPartial")}</p>
+      <p>{candidate.complete && candidate.unreadable > 0 ? t("editor.confirmCloseUnreadable", { count: candidate.unreadable })
+        : t(candidate.complete ? "editor.confirmComplete" : "editor.confirmPartial")}</p>
       <p className="preserve-whitespace">{candidate.reason}</p>
     </ConfirmDialog>}
   </>;

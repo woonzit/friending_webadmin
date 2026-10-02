@@ -7,7 +7,7 @@ import { decodeDatesActivityOriginDetail, decodeDatesExternalDetail, decodeDates
 import { prepareDatesExternalPending, readDatesExternalPending, runDatesExternalMutation } from "../lib/datesExternalMutations.ts";
 import {
   DATES_INTAKE_REFUSALS, DATES_INTAKE_REJECT_REASONS, DATES_INTAKE_STATUSES, DATES_INTAKE_VOCABULARIES,
-  datesAiUsageShare, datesIntakeAffordances, datesIntakeCapabilityRefused, datesIntakeEditorDraft, datesIntakeEditorGaps,
+  datesAiUsageShare, datesIntakeAffordances, datesIntakeCapabilityRefused, datesIntakeCompleteFlag, datesIntakeCompletion, datesIntakeEditorDraft, datesIntakeEditorGaps,
   datesIntakeImageBytes, datesIntakeInProgress, datesIntakePublishableEvents, datesIntakeReferenceHref, datesIntakeRefusal, datesIntakeUnreadableEvents,
   decodeDatesIntakeCreateReceipt, decodeDatesIntakeImage, decodeDatesIntakeLeaseReceipt, decodeDatesIntakePublishReceipt,
   decodeDatesIntakeRejectReceipt, projectDatesAiUsage, projectDatesIntakeDetail, projectDatesIntakeQueue,
@@ -339,6 +339,46 @@ test("genuine multi-event intake is published one event at a time until complete
   const mine = { ...partial, lease: { holder: "admin@example.test", until: 1790000300, active: true, mine: true } };
   const can = datesIntakeAffordances(mine, { review: true, manage: true, superadmin: false, draftsEnabled: true });
   assert.equal(can.publish, true); assert.equal(can.reject, false); assert.equal(can.release, true);
+});
+
+test("review finding: an event the console could not read is unknown, so publishing a sibling never closes the intake by itself", () => {
+  const read = (name: string, mutate: (intake: any) => void = () => undefined) => {
+    const body = copy(fixture(name)); mutate(body.intake); return projectDatesIntakeDetail(body, body.intake.intake_id)!.intake;
+  };
+  // Genuine: a one-event intake - publishing it is plainly the last publication.
+  const single = datesIntakeCompletion(read("admin-detail-in-review-official"), 0);
+  assert.deepEqual(single, { remaining: 0, unreadable: 0, mode: "last" });
+  assert.equal(datesIntakeCompleteFlag(single, false), true);
+  // Genuine: four readable events - the reviewer may say which one is the last; the default keeps the intake open.
+  const multi = datesIntakeCompletion(read("admin-detail-in-review-multi"), 0);
+  assert.deepEqual(multi, { remaining: 3, unreadable: 0, mode: "choice" });
+  assert.deepEqual([datesIntakeCompleteFlag(multi, false), datesIntakeCompleteFlag(multi, true)], [false, true]);
+  // Genuine: after one publication three remain.
+  assert.deepEqual(datesIntakeCompletion(read("admin-detail-in-review-partial"), 1), { remaining: 2, unreadable: 0, mode: "choice" });
+  // DERIVED - the reviewer's scenario: two events, event 0 readable, event 1 carrying a value this console cannot decode.
+  const twoEvents = (mutate: (second: any) => void) => read("admin-detail-in-review-multi", (intake) => {
+    intake.events = intake.events.slice(0, 2); intake.event_count = 2; mutate(intake.events[1]);
+  });
+  const damaged = twoEvents((second) => { second.draft.category = "hackathon"; });
+  assert.equal(damaged.events![1], null);
+  assert.deepEqual(datesIntakePublishableEvents(damaged), [0], "only one event can be opened in the editor...");
+  assert.deepEqual(datesIntakeUnreadableEvents(damaged), [1], "...and the other is unknown, not absent");
+  const completion = datesIntakeCompletion(damaged, 0);
+  assert.deepEqual(completion, { remaining: 0, unreadable: 1, mode: "unreadable" });
+  // The default leaves the intake open; closing it is only ever the reviewer's explicit choice.
+  assert.equal(datesIntakeCompleteFlag(completion, false), false);
+  assert.equal(datesIntakeCompleteFlag(completion, true), true);
+  // The same when only the editor prefill of the sibling is unreadable.
+  const prefill = twoEvents((second) => { second.editor_input.confirmations.source = true; });
+  assert.equal(prefill.events![1]!.editor_unreadable, true);
+  assert.deepEqual(datesIntakeCompletion(prefill, 0), { remaining: 0, unreadable: 1, mode: "unreadable" });
+  // With one unreadable and two readable siblings the mode is still "unreadable": nothing implicit, both numbers known.
+  const mixed = read("admin-detail-in-review-multi", (intake) => { intake.events[3].validation.tier = "platinum"; });
+  assert.deepEqual(datesIntakeCompletion(mixed, 0), { remaining: 2, unreadable: 1, mode: "unreadable" });
+  assert.equal(datesIntakeCompleteFlag(datesIntakeCompletion(mixed, 0), false), false);
+  // A readable sibling Core offers no prefill for (already published) is known, not unknown.
+  const published = read("admin-detail-in-review-partial");
+  assert.deepEqual(datesIntakeUnreadableEvents(published), []);
 });
 
 test("genuine hold of another reviewer leaves nothing but the superadmin's release", () => {
