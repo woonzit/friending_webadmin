@@ -582,12 +582,23 @@ test("T-886: the member's own words are plain text, and a part that cannot be re
     const some = render(locale, createElement(DatesIntakeMemberPanel, { intake: partly }));
     assert.ok(some.includes(escaped(text(member.correctionsUnreadable, { count: 2 })))); assert.equal(some.includes(escaped(member.correctionsNone)), false);
     // The block itself untrustworthy (or missing on a suggestion): the whole side is unreadable, never "no member".
-    for (const change of [(block: any) => { block.submitter_uid = "19602"; }, (block: any) => { block.email = "member@example.test"; }, (block: any) => { delete block.can_ask; }]) {
+    for (const change of [(block: any) => { block.submitter_uid = "19602"; }, (block: any) => { delete block.anonymous; }, (block: any) => { delete block.can_ask; }]) {
       const intake = made(change);
       assert.equal(intake.member, null); assert.ok(intake.unreadable_sections.includes("member"));
       const whole = render(locale, createElement(DatesIntakeMemberPanel, { intake }));
-      assert.ok(whole.includes(escaped(member.unreadable))); assert.doesNotMatch(whole, /member@example\.test|19602/);
+      assert.ok(whole.includes(escaped(member.unreadable))); assert.doesNotMatch(whole, /19602/);
     }
+    // D-143: a key Core might add to the block - or to a part of it - is tolerated, and it goes nowhere: the member's
+    // side is built from the named fields, so nothing of the member beyond the contract is kept or shown.
+    const widened = made((block) => { block.email = "member@example.test"; block.display_name = "Kovács Anna"; block.standing.reason = "three fakes";
+      block.confirmation.device = "iPhone"; block.re_review.ip = "203.0.113.9"; });
+    assert.deepEqual(widened.member!.unreadable, []); assert.equal(widened.unreadable_sections.includes("member"), false);
+    assert.deepEqual(Object.keys(widened.member!).sort(), ["anonymous", "auto_going", "can_ask", "confirmation", "consent_version", "corrections", "re_review", "standing",
+      "submitter_uid", "unreadable"]);
+    assert.doesNotMatch(JSON.stringify(widened.member), /member@example\.test|Kovács Anna|three fakes|iPhone|203\.0\.113\.9/, "not kept in the block or in any part of it");
+    const kept = render(locale, createElement(DatesIntakeMemberPanel, { intake: widened }));
+    assert.doesNotMatch(kept, /member@example\.test|Kovács Anna|three fakes|iPhone|203\.0\.113\.9/);
+    assert.ok(kept.includes(escaped(text(member.submitterValue, { uid: 19602 }))));
     const missing = JSON.parse(JSON.stringify(genuine)); missing.intake.member = null;
     const without = projectDatesIntakeDetail(missing, missing.intake.intake_id)!.intake;
     assert.ok(without.unreadable_sections.includes("member"), "a suggestion without its member block");

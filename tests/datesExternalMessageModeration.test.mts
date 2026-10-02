@@ -62,16 +62,30 @@ test("external message review is a closed member-authored metadata variant witho
   for (const change of [{ target_type: "user" }, { queue: "activities" }, { case_kind: "reports" }, { target_id: activityId },
     { activity_id: null }, { target_uid: 0 }, { target_uid: 1 }, { target_uid: "12500" }, { revision: 0 },
     { allowed_actions: ["warn"] }, { allowed_actions: ["approve_content", "approve_content"] }, { allowed_actions: [1] },
-    { external_revision: 1 }, { text: "PRIVATE_MESSAGE" }, { snapshot: {} }]) {
+    { external_message: null }]) {
     const body = sample(); Object.assign(body.case, change); assert.equal(datesCaseDetail(body, body.case.case_id), null, JSON.stringify(change));
+  }
+  // D-143: the case is bound on its fields; a key this console does not know is tolerated. It stays what it is - a
+  // message case, told by `external_message` - and no screen reads the added key.
+  for (const change of [{ external_revision: 1 }, { text: "PRIVATE_MESSAGE" }, { snapshot: {} }]) {
+    const body = sample(); Object.assign(body.case, change);
+    const read = datesCaseDetail(body, body.case.case_id);
+    assert.ok(read, JSON.stringify(change)); assert.equal(isDatesExternalMessageCase(read.case), true);
   }
   for (const key of ["external_message", "allowed_actions"]) {
     const body = sample(); delete body.case[key]; assert.equal(datesCaseDetail(body, body.case.case_id), null, key);
   }
   for (const change of [{ thread_id: activityId }, { thread_id: null }, { revision: "1" }, { revision: 0 }, { moderation_state: "approved" },
-    { moderation_state: "visible" }, { available: "true" }, { text: "PRIVATE_MESSAGE" }, { target_content_hash: "f".repeat(64) }]) {
+    { moderation_state: "visible" }, { available: "true" }]) {
     const body = sample(); Object.assign(body.case.external_message, change); assert.equal(datesCaseDetail(body, body.case.case_id), null, JSON.stringify(change));
   }
+  // D-143: tolerated inside the message metadata as well; the three bound fields still decide.
+  for (const change of [{ text: "PRIVATE_MESSAGE" }, { target_content_hash: "f".repeat(64) }]) {
+    const body = sample(); Object.assign(body.case.external_message, change); assert.ok(datesCaseDetail(body, body.case.case_id), JSON.stringify(change));
+  }
+  // What the screens of a message case read of it: the four metadata fields, never a text.
+  for (const file of ["../app/(dashboard)/dates/moderation/[caseId]/page.tsx", "../lib/datesExternalMessageModeration.ts"])
+    assert.doesNotMatch(readFileSync(new URL(file, import.meta.url), "utf8"), /external_message\??\.(?!thread_id|revision|moderation_state|available)[a-z_]+/, file);
 });
 
 test("unavailable message metadata retains a bound state or a complete null triple, never invented authority", () => {
@@ -115,9 +129,13 @@ test("message decision history binds the exact subject and cannot acquire accoun
     created_at: now, expires_at: null, appeal_outcome: null, appeal_resolved_at: null };
   value.decisions = [decision]; assert.ok(datesCaseDetail(value, value.case.case_id));
   for (const change of [{ target_type: "user" }, { target_id: activityId }, { activity_id: null }, { action: "warn" }, { action: "restore_content" },
-    { target_path: "membership" }, { expires_at: now }, { appeal_outcome: "overturned" }, { appeal_resolved_at: now }, { text: "PRIVATE_MESSAGE" }]) {
+    { target_path: "membership" }, { expires_at: now }, { appeal_outcome: "overturned" }, { appeal_resolved_at: now }]) {
     value.decisions = [{ ...decision, ...change }]; assert.equal(datesCaseDetail(value, value.case.case_id), null, JSON.stringify(change));
   }
+  // D-143: a key this console does not know is tolerated on a decision row; a missing field is not.
+  value.decisions = [{ ...decision, text: "PRIVATE_MESSAGE" }]; assert.ok(datesCaseDetail(value, value.case.case_id));
+  const { severity: _severity, ...partial } = decision;
+  value.decisions = [partial]; assert.equal(datesCaseDetail(value, value.case.case_id), null);
 });
 
 test("pending request validates closed exact fields and copies the form without storing content evidence", () => {
@@ -138,18 +156,25 @@ test("receipt requires exact case/target CAS, audit and fresh public sequence on
   assert.ok(datesExternalMessageResolutionReceipt(receipt(), pending()));
   for (const change of [{ success: false }, { status_code: 201 }, { server_now: "1790000000" }, { case_id: messageId },
     { case_status: "closed" }, { revision: 2 }, { action: "reject_content" }, { audit_id: "missing" },
-    { idempotency_replayed: 1 }, { break_glass_used: true }, { private: {} }])
+    { idempotency_replayed: 1 }, { break_glass_used: true }, { decision_id: "dec_1" }])
     assert.equal(datesExternalMessageResolutionReceipt({ ...receipt(), ...change }, pending()), null, JSON.stringify(change));
+  // D-143: the receipt binds on what identifies the decision; a key this console does not know is tolerated.
+  assert.ok(datesExternalMessageResolutionReceipt({ ...receipt(), private: {} }, pending()));
+  const { audit_id: _audit, ...unaudited } = receipt() as Record<string, unknown>;
+  assert.equal(datesExternalMessageResolutionReceipt(unaudited, pending()), null, "a missing binding field");
   for (const change of [{ target_type: "user" }, { target_id: activityId }, { activity_id: null }, { subject_uid: 0 },
-    { subject_uid: 12501 }, { target_path: "unchanged" }, { thread_id: threadId }, { text: "PRIVATE_MESSAGE" }]) {
+    { subject_uid: 12501 }, { target_path: "unchanged" }]) {
     const value = receipt(); Object.assign(value.target_result, change); assert.equal(datesExternalMessageResolutionReceipt(value, pending()), null);
   }
   for (const [section, changes] of Object.entries({ before: [{ revision: 2 }, { moderation_state: "visible" }, { sequence: 0 }],
-    after: [{ revision: 1 }, { moderation_state: "pending" }, { sequence: 4 }, { sequence: "9" }, { text: "PRIVATE_MESSAGE" }] })) {
+    after: [{ revision: 1 }, { moderation_state: "pending" }, { sequence: 4 }, { sequence: "9" }] })) {
     for (const change of changes) {
       const value = receipt(); Object.assign(value.target_result[section], change); assert.equal(datesExternalMessageResolutionReceipt(value, pending()), null);
     }
   }
+  // D-143: unknown keys in the target result and in its two states are tolerated.
+  const wider = receipt(); Object.assign(wider.target_result, { thread_id: threadId, text: "PRIVATE_MESSAGE" }); Object.assign(wider.target_result.after, { text: "PRIVATE_MESSAGE" });
+  assert.ok(datesExternalMessageResolutionReceipt(wider, pending()));
   const rejected = receipt(); rejected.action = "reject_content";
   Object.assign(rejected.target_result.after, { moderation_state: "rejected", sequence: 4 });
   const original = prepareDatesExternalMessageResolution(actor, { ...request(), action: "reject_content" }, baseline, now)!;

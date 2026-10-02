@@ -9,8 +9,9 @@ import {
  * `dates-event-intake-admin-v1`.
  *
  * Decoder rules (lessons of P1):
- * - closed about SHAPE (key sets) and about the vocabularies Core publishes in
- *   the corpus manifest;
+ * - closed about the VOCABULARIES Core publishes in the corpus manifest, each
+ *   with a fallback; bound on FIELDS, never on an exact key set (D-143): a
+ *   key this console does not know is tolerated in every body and part;
  * - never stricter than Core on a value Core can store: free text is a string,
  *   numbers are numbers, an identifier Core does not declare closed stays open;
  * - a list degrades PER ROW: an unreadable display field marks the row, an
@@ -136,14 +137,12 @@ const id = (prefix: string): Guard<string> => {
   const pattern = new RegExp(`^${prefix}_[a-f0-9]{32}$`);
   return (value): value is string => typeof value === "string" && pattern.test(value);
 };
-const closed = <S extends Shape>(shape: S): Guard<{ [K in keyof S]: Parsed<S[K]> }> => {
-  const keys = Object.keys(shape);
-  return (value): value is { [K in keyof S]: Parsed<S[K]> } => record(value) && Object.keys(value).length === keys.length
-    && keys.every((key) => Object.hasOwn(value, key) && shape[key](value[key]));
-};
 /**
- * A receipt binds on what identifies the command and tolerates keys the console
- * does not know: the named keys must be there and valid, others may be too.
+ * Every body of Core - a read, a part of one, a receipt - is bound on its
+ * fields: the named keys must be there and valid, and a key this console does
+ * not know is tolerated (D-143). No decoder checks an exact key set. Closed
+ * VOCABULARIES stay closed, each with its fallback (the part or the row is
+ * said to be unreadable).
  */
 const bound = <S extends Shape>(shape: S): Guard<{ [K in keyof S]: Parsed<S[K]> }> => {
   const keys = Object.keys(shape);
@@ -175,7 +174,7 @@ function rows<T>(value: unknown, guard: Guard<T>, maximum: number): DatesIntakeR
 // ---------------------------------------------------------------- lease
 
 const LEASE = { holder: nullable(string(320)), until: integer(0), active: bool, mine: bool };
-const leaseShape = closed(LEASE);
+const leaseShape = bound(LEASE);
 export type DatesIntakeLease = Parsed<typeof leaseShape>;
 const leaseCoherent = (value: DatesIntakeLease) => value.active === (value.holder !== null) && (value.active || value.until === 0) && (!value.mine || value.active);
 /** Core's own coherence rule for a projected lease (contract `lease coherence`). */
@@ -212,9 +211,9 @@ export type DatesIntakeQueueRow = RowDisplay & {
 };
 export type DatesIntakeUnreadableRow = { index: number; intake_id: string | null };
 
-/** `keys` is the exact key set the object must have (row, or row + detail). */
+/** `keys` are the keys the object must have (row, or row + detail); any other key is tolerated. */
 function projectRow(value: unknown, keys: readonly string[]): DatesIntakeQueueRow | null {
-  if (!record(value) || Object.keys(value).length !== keys.length || keys.some((key) => !Object.hasOwn(value, key))
+  if (!record(value) || keys.some((key) => !Object.hasOwn(value, key))
     || !datesIntakeId(value.intake_id) || !oneOf(DATES_INTAKE_STATUSES)(value.status)) return null;
   const unreadable: string[] = [];
   const display = Object.fromEntries(Object.entries(rowDisplayFields).map(([key, guard]) => {
@@ -230,8 +229,8 @@ function projectRow(value: unknown, keys: readonly string[]): DatesIntakeQueueRo
     controls: revision !== null && lease !== null, unreadable_fields: unreadable };
 }
 
-const statusCounts = closed(Object.fromEntries(DATES_INTAKE_STATUSES.map((status) => [status, integer(0)])) as Record<DatesIntakeStatus, Guard<number>>);
-const queueGuard = closed({ ...envelope, intakes: ((value: unknown): value is unknown[] => Array.isArray(value) && value.length <= 100),
+const statusCounts = bound(Object.fromEntries(DATES_INTAKE_STATUSES.map((status) => [status, integer(0)])) as Record<DatesIntakeStatus, Guard<number>>);
+const queueGuard = bound({ ...envelope, intakes: ((value: unknown): value is unknown[] => Array.isArray(value) && value.length <= 100),
   page: integer(1, 10000), limit: integer(1, 100), total: integer(0), status_counts: statusCounts, drafts_enabled: bool, suggestions_enabled: bool,
   capabilities });
 export type DatesIntakeQueue = Omit<Parsed<typeof queueGuard>, "intakes"> & {
@@ -255,31 +254,31 @@ export function projectDatesIntakeQueue(value: unknown, expected: { page: number
 
 // ---------------------------------------------------------------- detail
 
-const safeSearch = closed({ adult: oneOf(DATES_SAFE_SEARCH_LIKELIHOODS), violence: oneOf(DATES_SAFE_SEARCH_LIKELIHOODS) });
-const imageGuard = closed({ index: integer(1, DATES_INTAKE_MAX_IMAGES), ready: bool, width: nullable(integer(0)), height: nullable(integer(0)),
+const safeSearch = bound({ adult: oneOf(DATES_SAFE_SEARCH_LIKELIHOODS), violence: oneOf(DATES_SAFE_SEARCH_LIKELIHOODS) });
+const imageGuard = bound({ index: integer(1, DATES_INTAKE_MAX_IMAGES), ready: bool, width: nullable(integer(0)), height: nullable(integer(0)),
   bytes: integer(0), safe_search: nullable(safeSearch) });
 export type DatesIntakeImage = Parsed<typeof imageGuard>;
-const fetchGuard = closed({ final_url: string(8192), http_status: integer(0, 999), truncated: bool, fetched_at: clock });
-const sourceTextGuard = closed({ label: ((value: unknown): value is string => typeof value === "string" && /^(image|page|text):[0-9]$/.test(value)),
+const fetchGuard = bound({ final_url: string(8192), http_status: integer(0, 999), truncated: bool, fetched_at: clock });
+const sourceTextGuard = bound({ label: ((value: unknown): value is string => typeof value === "string" && /^(image|page|text):[0-9]$/.test(value)),
   text: string(400_000), truncated: bool });
 export type DatesIntakeSourceText = Parsed<typeof sourceTextGuard>;
-const aiRunGuard = closed({ provider: oneOf(DATES_AI_PROVIDERS), task: string(200), model: string(200), outcome: oneOf(DATES_AI_OUTCOMES),
+const aiRunGuard = bound({ provider: oneOf(DATES_AI_PROVIDERS), task: string(200), model: string(200), outcome: oneOf(DATES_AI_OUTCOMES),
   input_tokens: integer(0), output_tokens: integer(0), cost_micro_usd: integer(0), cost_estimated: bool, at: clock });
 export type DatesIntakeAiRun = Parsed<typeof aiRunGuard>;
-const statementGuard = closed({ en: string(2000), hu: string(2000) });
-const decisionShape = closed({ by: string(320), at: clock, action: oneOf(DATES_INTAKE_DECISION_ACTIONS),
+const statementGuard = bound({ en: string(2000), hu: string(2000) });
+const decisionShape = bound({ by: string(320), at: clock, action: oneOf(DATES_INTAKE_DECISION_ACTIONS),
   reason_code: nullable(oneOf(DATES_INTAKE_REJECT_REASONS)), statement: nullable(statementGuard) });
 export type DatesIntakeDecision = Parsed<typeof decisionShape>;
 const decisionGuard: Guard<DatesIntakeDecision> = (value): value is DatesIntakeDecision => decisionShape(value)
   && (value.reason_code === null) === (value.statement === null);
-const referenceGuard = closed({ kind: oneOf(DATES_INTAKE_DEDUPE_KINDS), id: string(200) });
+const referenceGuard = bound({ kind: oneOf(DATES_INTAKE_DEDUPE_KINDS), id: string(200) });
 export type DatesIntakeReference = Parsed<typeof referenceGuard>;
 
-const draftGuard = closed({
+const draftGuard = bound({
   title: string(), summary_hu: string(), summary_en: string(), category: oneOf(DATES_EXTERNAL_CATEGORIES), sensitive: bool,
   sensitive_reason: nullable(string()), date_text_verbatim: nullable(string()), starts_local: nullable(string(64)),
   ends_local: nullable(string(64)), start_time_stated: bool, all_day: bool, year_inferred: bool, attendance_mode: string(64),
-  venue: closed({ name: nullable(string()), address_text: nullable(string()), city: nullable(string()),
+  venue: bound({ name: nullable(string()), address_text: nullable(string()), city: nullable(string()),
     country_code: nullable(string(16)), is_public_venue: nullable(bool) }),
   organizer_name: nullable(string()), price_text: nullable(string()), is_free: nullable(bool),
   // The model's own number, before Core bounds it for the editor: any integer is shown as it is.
@@ -288,47 +287,47 @@ const draftGuard = closed({
 const placeShape = { place_id: nullable(string(512)), name: nullable(string()), formatted_address: nullable(string()),
   latitude: nullable(number), longitude: nullable(number), city: nullable(string()), country_code: nullable(string(16)),
   timezone: nullable(string(80)) };
-const venueGuard = closed({ ...placeShape, website_domain: nullable(string(253)), business_status: nullable(string(64)) });
-const candidateGuard = closed({ ...placeShape, similarity: number, public_venue_warning: bool });
+const venueGuard = bound({ ...placeShape, website_domain: nullable(string(253)), business_status: nullable(string(64)) });
+const candidateGuard = bound({ ...placeShape, similarity: number, public_venue_warning: bool });
 export type DatesIntakeVenue = Parsed<typeof venueGuard>;
 export type DatesIntakeVenueCandidate = Parsed<typeof candidateGuard>;
 const witness = oneOf(DATES_INTAKE_WITNESS_VERDICTS);
-const validationGuard = closed({
+const validationGuard = bound({
   hard_fails: list(oneOf(DATES_INTAKE_HARD_FAILS), 100), warnings: list(oneOf(DATES_INTAKE_WARNINGS), 100), needs_more_info: bool,
   tier: nullable(oneOf(DATES_INTAKE_TIERS)), auto_publishable: bool, auto_blockers: list(oneOf(DATES_INTAKE_AUTO_BLOCKERS), 100),
   needs_public_venue_confirmation: bool,
-  checks: closed({ weekday_match: nullable(bool), venue_resolved: bool, public_place: bool, tz_from_venue: bool, urls_from_evidence: bool,
-    quotes_verified: bool, content_safe: nullable(bool), witness: closed({ present: bool, date: witness, time: witness, venue: witness }) }),
-  schedule: closed({ timezone: nullable(string(80)), start_local: nullable(string(64)), end_local: nullable(string(64)),
+  checks: bound({ weekday_match: nullable(bool), venue_resolved: bool, public_place: bool, tz_from_venue: bool, urls_from_evidence: bool,
+    quotes_verified: bool, content_safe: nullable(bool), witness: bound({ present: bool, date: witness, time: witness, venue: witness }) }),
+  schedule: bound({ timezone: nullable(string(80)), start_local: nullable(string(64)), end_local: nullable(string(64)),
     start_at: nullable(clock), end_at: nullable(clock), end_estimated: bool, all_day: bool }),
-  links: closed({ official_url: nullable(string(8192)), ticket_url: nullable(string(8192)), organizer_url: nullable(string(8192)),
-    dropped: list(closed({ field: string(64), reason: oneOf(DATES_INTAKE_LINK_DROP_REASONS) }), 50) }),
+  links: bound({ official_url: nullable(string(8192)), ticket_url: nullable(string(8192)), organizer_url: nullable(string(8192)),
+    dropped: list(bound({ field: string(64), reason: oneOf(DATES_INTAKE_LINK_DROP_REASONS) }), 50) }),
   venue: nullable(venueGuard), venue_similarity: number, venue_candidates: list(candidateGuard, 50),
 });
 export type DatesIntakeValidation = Parsed<typeof validationGuard>;
-const evidenceState = closed({ quoted: bool, verified: bool, denotes: nullable(bool), match: nullable(oneOf(DATES_INTAKE_EVIDENCE_MATCHES)),
+const evidenceState = bound({ quoted: bool, verified: bool, denotes: nullable(bool), match: nullable(oneOf(DATES_INTAKE_EVIDENCE_MATCHES)),
   source: nullable(string(64)), quote: nullable(string()), model_confidence: nullable(number), confidence: nullable(number) });
 export type DatesIntakeEvidenceState = Parsed<typeof evidenceState>;
-const fieldEvidenceGuard = closed(Object.fromEntries(DATES_INTAKE_EVIDENCE_FIELDS.map((field) => [field, evidenceState])) as
+const fieldEvidenceGuard = bound(Object.fromEntries(DATES_INTAKE_EVIDENCE_FIELDS.map((field) => [field, evidenceState])) as
   Record<typeof DATES_INTAKE_EVIDENCE_FIELDS[number], typeof evidenceState>);
-const dedupeGuard = closed({ decision: oneOf(DATES_INTAKE_DEDUPE_DECISIONS),
-  candidates: list(closed({ kind: oneOf(DATES_INTAKE_DEDUPE_KINDS), id: string(200), similarity: number, verdict: oneOf(DATES_INTAKE_DEDUPE_VERDICTS) }), 50) });
+const dedupeGuard = bound({ decision: oneOf(DATES_INTAKE_DEDUPE_DECISIONS),
+  candidates: list(bound({ kind: oneOf(DATES_INTAKE_DEDUPE_KINDS), id: string(200), similarity: number, verdict: oneOf(DATES_INTAKE_DEDUPE_VERDICTS) }), 50) });
 
 /**
  * Core's prefill for the P1 editor. Unlike a stored event, a field Core does
  * not know is null, and the four confirmations are always the reviewer's.
  */
-const editorInputGuard = closed({
-  title: string(), summary: closed({ hu: string(), en: string() }), category: oneOf(DATES_EXTERNAL_CATEGORIES),
-  sensitive: closed({ flag: bool, reason: nullable(string()) }), start_at: nullable(integer(1)), end_at: nullable(integer(1)),
+const editorInputGuard = bound({
+  title: string(), summary: bound({ hu: string(), en: string() }), category: oneOf(DATES_EXTERNAL_CATEGORIES),
+  sensitive: bound({ flag: bool, reason: nullable(string()) }), start_at: nullable(integer(1)), end_at: nullable(integer(1)),
   timezone: nullable(string(80)), all_day: bool, is_free: nullable(bool), price_text: nullable(string()),
   age_restriction: nullable(integer(18, 99)),
-  venue: nullable(closed({ name: string(), formatted_address: string(), latitude: number, longitude: number, city: string(),
+  venue: nullable(bound({ name: string(), formatted_address: string(), latitude: number, longitude: number, city: string(),
     country_code: string(16) })),
-  organizer: closed({ name: nullable(string()), website: nullable(string(8192)) }),
-  links: closed({ official_url: nullable(string(8192)), ticket_url: nullable(string(8192)) }), source_url: nullable(string(8192)),
+  organizer: bound({ name: nullable(string()), website: nullable(string(8192)) }),
+  links: bound({ official_url: nullable(string(8192)), ticket_url: nullable(string(8192)) }), source_url: nullable(string(8192)),
   attendee_list: oneOf(["visible", "count_only"] as const),
-  confirmations: closed({ source: literal(false), public_venue: literal(false), timezone: literal(false), content_safe: literal(false) }),
+  confirmations: bound({ source: literal(false), public_venue: literal(false), timezone: literal(false), content_safe: literal(false) }),
 });
 export type DatesIntakeEditorInput = Parsed<typeof editorInputGuard>;
 
@@ -342,7 +341,7 @@ export type DatesIntakeEvent = { [K in keyof typeof eventShape]: Parsed<(typeof 
 };
 
 function projectEvent(value: unknown, position: number): DatesIntakeEvent | null {
-  if (!record(value) || Object.keys(value).length !== EVENT_KEYS.length || EVENT_KEYS.some((key) => !Object.hasOwn(value, key))) return null;
+  if (!record(value) || EVENT_KEYS.some((key) => !Object.hasOwn(value, key))) return null;
   for (const [key, guard] of Object.entries(eventShape)) if (!(guard as Guard<unknown>)(value[key])) return null;
   // The index is the event's identity towards Core's publish route.
   if (value.index !== position) return null;
@@ -359,17 +358,17 @@ const DETAIL_KEYS = ["admin_principal", "inputs", "fetch", "source_texts", "resu
 // The member's side of a suggestion, as Core serves it to a reviewer - and nothing of the member beyond it.
 const memberField = oneOf(DATES_INTAKE_MEMBER_EDITABLE_FIELDS);
 export type DatesIntakeMemberField = typeof DATES_INTAKE_MEMBER_EDITABLE_FIELDS[number];
-const memberConfirmation = closed({ state: oneOf(DATES_INTAKE_MEMBER_CONFIRMATION_STATES), at: nullable(clock), due_at: nullable(clock),
+const memberConfirmation = bound({ state: oneOf(DATES_INTAKE_MEMBER_CONFIRMATION_STATES), at: nullable(clock), due_at: nullable(clock),
   asked_by_reviewer: bool, fields: list(memberField, 20), note: nullable(string(8000)) });
 /** A corrected value is shown as text; Core serves a string, and a boolean for `is_free`. */
 const memberValue: Guard<string | number | boolean | null> = (value): value is string | number | boolean | null =>
   value === null || typeof value === "boolean" || (typeof value === "string" && value.length <= 8000) || (typeof value === "number" && Number.isFinite(value));
-const memberCorrection = closed({ index: integer(0, 99), field: memberField, from: memberValue, to: memberValue });
-const memberFirstDecision = closed({ by: string(320), at: nullable(clock), action: oneOf(DATES_INTAKE_DECISION_ACTIONS),
+const memberCorrection = bound({ index: integer(0, 99), field: memberField, from: memberValue, to: memberValue });
+const memberFirstDecision = bound({ by: string(320), at: nullable(clock), action: oneOf(DATES_INTAKE_DECISION_ACTIONS),
   reason_code: nullable(oneOf(DATES_INTAKE_REJECT_REASONS)) });
-const memberReReview = closed({ requested_at: nullable(clock), note: nullable(string(8000)), decided_at: nullable(clock),
+const memberReReview = bound({ requested_at: nullable(clock), note: nullable(string(8000)), decided_at: nullable(clock),
   first_decision: nullable(memberFirstDecision) });
-const memberStanding = closed({ strikes: integer(0), strike_limit: integer(0), banned_until: nullable(clock) });
+const memberStanding = bound({ strikes: integer(0), strike_limit: integer(0), banned_until: nullable(clock) });
 const MEMBER_KEYS = ["submitter_uid", "anonymous", "auto_going", "consent_version", "confirmation", "corrections", "re_review", "standing", "can_ask"];
 export type DatesIntakeMemberCorrection = Parsed<typeof memberCorrection>;
 export type DatesIntakeMember = {
@@ -393,7 +392,7 @@ export type DatesIntakeMember = {
 /** The member block. `undefined` when the block itself cannot be trusted; its parts degrade one by one. */
 function projectMember(value: unknown): DatesIntakeMember | null | undefined {
   if (value === null) return null;
-  if (!record(value) || Object.keys(value).length !== MEMBER_KEYS.length || MEMBER_KEYS.some((key) => !Object.hasOwn(value, key))
+  if (!record(value) || MEMBER_KEYS.some((key) => !Object.hasOwn(value, key))
     || !nullable(integer(1))(value.submitter_uid) || !bool(value.anonymous) || !bool(value.auto_going) || !nullable(integer(0))(value.consent_version)
     || !bool(value.can_ask)) return undefined;
   const unreadable: string[] = [];
@@ -404,17 +403,26 @@ function projectMember(value: unknown): DatesIntakeMember | null | undefined {
   };
   const corrections = rows(value.corrections, memberCorrection, 800);
   if (!corrections) unreadable.push("corrections");
+  // The block is rebuilt from the contract's fields, part by part: a key Core might add (D-143 tolerates it) is not
+  // kept - of a member, this console holds what the contract serves a reviewer and nothing beyond it.
+  const confirmation = part("confirmation", nullable(memberConfirmation)), look = part("re_review", nullable(memberReReview));
+  const standing = part("standing", nullable(memberStanding)), first = look?.first_decision ?? null;
   const member: DatesIntakeMember = { submitter_uid: value.submitter_uid, anonymous: value.anonymous, auto_going: value.auto_going,
-    consent_version: value.consent_version, confirmation: part("confirmation", nullable(memberConfirmation)),
-    corrections: corrections ?? { items: [], unreadable: [] }, re_review: part("re_review", nullable(memberReReview)),
-    standing: part("standing", nullable(memberStanding)),
+    consent_version: value.consent_version,
+    confirmation: confirmation && { state: confirmation.state, at: confirmation.at, due_at: confirmation.due_at, asked_by_reviewer: confirmation.asked_by_reviewer,
+      fields: [...confirmation.fields], note: confirmation.note },
+    corrections: corrections ? { items: corrections.items.map((row) => ({ index: row.index, field: row.field, from: row.from, to: row.to })), unreadable: corrections.unreadable }
+      : { items: [], unreadable: [] },
+    re_review: look && { requested_at: look.requested_at, note: look.note, decided_at: look.decided_at,
+      first_decision: first && { by: first.by, at: first.at, action: first.action, reason_code: first.reason_code } },
+    standing: standing && { strikes: standing.strikes, strike_limit: standing.strike_limit, banned_until: standing.banned_until },
     // Nobody is asked on the strength of a block the console could not read whole.
     can_ask: value.can_ask, unreadable };
   if (unreadable.length > 0) member.can_ask = false;
   return member;
 }
 
-const detailEnvelope = closed({ ...envelope, intake: record, capabilities });
+const detailEnvelope = bound({ ...envelope, intake: record, capabilities });
 
 export type DatesIntakeDetail = DatesIntakeQueueRow & {
   admin_principal: string | null;
@@ -469,9 +477,8 @@ export function projectDatesIntakeDetail(value: unknown, intakeId: string): Date
   };
   let inputs: DatesIntakeDetail["inputs"] = null;
   const rawInputs = source.inputs;
-  if (record(rawInputs) && Object.keys(rawInputs).length === 5 && closed(inputsShape)({ kind: rawInputs.kind, url: rawInputs.url,
-    text: rawInputs.text, locale: rawInputs.locale }) && Object.hasOwn(rawInputs, "images")) {
-    const images = rows(rawInputs.images, imageGuard, DATES_INTAKE_MAX_IMAGES);
+  if (record(rawInputs) && bound(inputsShape)(rawInputs) && Object.hasOwn(rawInputs, "images")) {
+    const images = rows((rawInputs as Record<string, unknown>).images, imageGuard, DATES_INTAKE_MAX_IMAGES);
     if (images) inputs = { kind: rawInputs.kind as typeof DATES_INTAKE_INPUT_KINDS[number], url: rawInputs.url as string | null,
       text: rawInputs.text as string | null, locale: rawInputs.locale as string, images };
   }
@@ -818,7 +825,7 @@ export function decodeDatesIntakePublishReceipt(value: unknown, request: Record<
 
 // ---------------------------------------------------------------- flyer read
 
-const imageReceipt = closed({ ...envelope, image: closed({ index: integer(1, DATES_INTAKE_MAX_IMAGES), mime: literal("image/jpeg"),
+const imageReceipt = bound({ ...envelope, image: bound({ index: integer(1, DATES_INTAKE_MAX_IMAGES), mime: literal("image/jpeg"),
   width: integer(0), height: integer(0), sha256: ((value: unknown): value is string => typeof value === "string" && /^[a-f0-9]{64}$/.test(value)),
   data_base64: string(20_000_000) }), audit_id: auditId });
 export type DatesIntakeImageRead = Parsed<typeof imageReceipt>;
@@ -847,12 +854,12 @@ export function datesIntakeMediaUrl(intakeId: string, index: number): string {
 
 // ---------------------------------------------------------------- usage
 
-const usageRow = closed({ provider: string(64), model: string(200), task: string(200), channel: string(64), calls: integer(0),
+const usageRow = bound({ provider: string(64), model: string(200), task: string(200), channel: string(64), calls: integer(0),
   unanswered_calls: integer(0), input_tokens: integer(0), output_tokens: integer(0), cache_read_tokens: integer(0),
   cache_write_tokens: integer(0), reasoning_tokens: integer(0), cost_micro_usd: integer(0), estimated_cost_calls: integer(0) });
 export type DatesAiUsageRow = Parsed<typeof usageRow>;
 const month: Guard<string> = (value): value is string => typeof value === "string" && /^20\d{2}-(?:0[1-9]|1[0-2])$/.test(value);
-const usageGuard = closed({ ...envelope, usage: closed({ month, cap_usd: integer(0), spent_micro_usd: integer(0), reserved_micro_usd: integer(0),
+const usageGuard = bound({ ...envelope, usage: bound({ month, cap_usd: integer(0), spent_micro_usd: integer(0), reserved_micro_usd: integer(0),
   remaining_micro_usd: integer(0), calls: integer(0), alert: bool, alert_at: nullable(clock), exhausted: bool,
   rows: ((value: unknown): value is unknown[] => Array.isArray(value) && value.length <= 500) }), drafts_enabled: bool, capabilities });
 export type DatesAiUsage = Omit<Parsed<typeof usageGuard>["usage"], "rows"> & { rows: DatesAiUsageRow[]; unreadable_rows: number[] };
@@ -906,10 +913,11 @@ export type DatesIntakeRefusal =
 export function datesIntakeRefusal(value: unknown): DatesIntakeRefusal {
   if (!record(value) || value.success !== false || typeof value.error !== "string" || !/^[a-z][a-z0-9-]{1,100}$/.test(value.error)
     || !integer(400, 599)(value.status_code)) return { kind: "unreadable" };
-  const keys = Object.keys(value).sort().join();
-  if (keys === ["can_send", "error", "message", "status", "status_code", "success"].join()
-    && value.message === 200 && value.status === 200 && value.can_send === 0) return { kind: "core", error: value.error, status: value.status_code };
-  return keys === ["error", "status_code", "success"].join() ? { kind: "bridge", error: value.error, status: value.status_code } : { kind: "unreadable" };
+  // Core's refusal carries the legacy envelope (message, status, can_send) with its fixed values; the bridge's own carries
+  // none of the three. Anything in between is neither. Another key is tolerated either way.
+  const legacy = ["message", "status", "can_send"].filter((key) => Object.hasOwn(value, key));
+  if (legacy.length === 3 && value.message === 200 && value.status === 200 && value.can_send === 0) return { kind: "core", error: value.error, status: value.status_code };
+  return legacy.length === 0 ? { kind: "bridge", error: value.error, status: value.status_code } : { kind: "unreadable" };
 }
 
 /** A refusal that proves the operator lacks the capability, as opposed to a read that merely failed. */

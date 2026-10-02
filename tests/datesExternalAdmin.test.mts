@@ -71,13 +71,18 @@ test("strict external reads accept populated and empty pages and distinguish led
   assert.equal(decodeDatesExternalList({ success: true, events: [] }, { page: 1, limit: 40 }), null);
 });
 
-test("every required list row key is checked and unknown keys do not become trusted material", () => {
+test("every required list row key is checked; the P2 label is optional; an unknown key is tolerated and never read", () => {
   for (const key of Object.keys(sample().row)) {
     const value: any = sample().list; delete value.events[0][key];
-    assert.equal(decodeDatesExternalList(value, { page: 1, limit: 40 }), null, key);
+    // D-143: `ai_assisted` is served only with the Admin intake contract selector; without it the row is the released P1 row.
+    if (key === "ai_assisted") assert.deepEqual(decodeDatesExternalList(value, { page: 1, limit: 40 }), value, "the released P1 row");
+    else assert.equal(decodeDatesExternalList(value, { page: 1, limit: 40 }), null, key);
   }
-  const value: any = sample().list; value.events[0].host = { uid: 0 };
-  assert.equal(decodeDatesExternalList(value, { page: 1, limit: 40 }), null);
+  // D-143: no exact key set. A key this console does not know does not fail the row; no page reads it.
+  const value: any = sample().list; value.events[0].host = { uid: 0 }; value.future = 1;
+  assert.deepEqual(decodeDatesExternalList(value, { page: 1, limit: 40 }), value);
+  for (const file of ["../app/(dashboard)/dates/external/page.tsx", "../components/DatesExternalProvenance.tsx"])
+    assert.doesNotMatch(readFileSync(new URL(file, import.meta.url), "utf8"), /\.host\b/, file);
 });
 
 test("sport categories and a trailing non-ASCII organizer space are accepted without altering the DTO", () => {
@@ -101,18 +106,20 @@ test("sport categories and a trailing non-ASCII organizer space are accepted wit
 
 test("list refuses envelope, pagination, duplicate, ordering and loosely typed success defects", () => {
   const mutations: Array<(v: any) => void> = [
-    (v) => { v.status = "published"; }, (v) => { v.data = {}; }, (v) => { v.message = "200"; },
+    (v) => { v.status = "published"; }, (v) => { delete v.server_now; }, (v) => { v.message = "200"; },
     (v) => { v.events[0].going_count = "0"; }, (v) => { v.events[0].interested_count = -1; },
     (v) => { v.events[0].can_edit = "true"; }, (v) => { v.events[0].start_at *= 1000; },
     (v) => { v.events[0].start_local = "not-a-Core-local-timestamp"; },
     (v) => { v.events[0].credit_channel = "browser"; }, (v) => { v.capabilities = []; },
-    // P2a: the row's label is a strict boolean and part of the closed key set.
-    (v) => { delete v.events[0].ai_assisted; }, (v) => { v.events[0].ai_assisted = "false"; }, (v) => { v.events[0].ai_assisted = null; },
-    (v) => { v.events[0].intake = null; },
+    // P2a: the row's label, when served, is a strict boolean.
+    (v) => { v.events[0].ai_assisted = "false"; }, (v) => { v.events[0].ai_assisted = null; }, (v) => { v.events[0].ai_assisted = undefined; },
     (v) => { v.capabilities.push(v.capabilities[0]); }, (v) => { v.total = -1; },
     (v) => { v.events.push(v.events[0]); v.total = 2; }, (v) => { v.page = 2; },
   ];
   for (const mutate of mutations) { const value = sample().list; mutate(value); assert.equal(decodeDatesExternalList(value, { page: 1, limit: 40 }), null); }
+  // D-143: a key this console does not know is tolerated at the top as well.
+  const wider: any = sample().list; wider.data = {};
+  assert.deepEqual(decodeDatesExternalList(wider, { page: 1, limit: 40 }), wider);
   const value = sample().list;
   value.events.push({ ...value.events[0], external_event_id: "xev_" + "0".repeat(32), activity_id: "act_" + "d".repeat(32) }); value.total = 2;
   assert.equal(decodeDatesExternalList(value, { page: 1, limit: 40 }), null, "equal timestamps require ascending ID");
@@ -151,25 +158,40 @@ test("detail binds all editor facts to the projected event and never reuses hist
     (v) => { v.event.sources.push(v.event.sources[0]); },
     (v) => { v.event.verification.checked_at -= 1; }, (v) => { v.event.image.kind = "flyer"; },
     // P2a: Core serves a strict boolean; anything else is still refused.
-    (v) => { v.event.ai_assisted = "true"; }, (v) => { v.event.ai_assisted = null; }, (v) => { v.event._id = "internal"; },
+    (v) => { v.event.ai_assisted = "true"; }, (v) => { v.event.ai_assisted = null; }, (v) => { delete v.event.ai_assisted; },
     // P2a: a Places venue carries its place id, an administrator's pin never does.
     (v) => { v.event.venue.place_id = "ChIJ4-4EKkDcQUcRPGkz1ExWaWg"; }, (v) => { v.event.venue.resolved_by = "places"; },
     (v) => { v.event.venue.resolved_by = "geocode"; }, (v) => { v.event.venue.place_id = "bad/id"; },
-    // P2a: the intake reference is closed, and Core derives it and the label from one ledger record.
-    (v) => { delete v.event.intake; }, (v) => { v.event.intake = { intake_id: "xin_" + "5".repeat(32), channel: "admin_draft", event_index: 0 }; },
-    (v) => { v.event.ai_assisted = true; },
+    // P2a: the intake reference, when served, agrees with the label: Core derives both from one ledger record.
+    (v) => { v.event.intake = { intake_id: "xin_" + "5".repeat(32), channel: "admin_draft", event_index: 0 }; },
+    (v) => { v.event.ai_assisted = true; }, (v) => { v.event.intake = undefined; }, (v) => { v.event.intake = { intake_id: "xin_5" }; },
     (v) => { v.event.credit.submitted_by_uid = 12; }, (v) => { v.event.credit.anonymous = false; },
   ];
   for (const mutate of mutations) { const value = sample().detail; mutate(value); assert.equal(decodeDatesExternalDetail(value, externalId), null); }
+  // D-143: without the selector Core serves the released P1 detail - no `intake` key at all. It decodes, and the page
+  // then shows no link back (absent is "not served here", not "manual").
+  const released: any = sample().detail; delete released.event.intake;
+  assert.deepEqual(decodeDatesExternalDetail(released, externalId), released);
+  // D-143: no exact key set - an unknown key at any level is tolerated.
+  const wider: any = sample().detail; wider.future = 1; wider.event.future = 2; wider.event.venue.future = 3; wider.event.editor_input.future = 4;
+  assert.deepEqual(decodeDatesExternalDetail(wider, externalId), wider);
   // P2a (derived from the synthetic sample): an AI-assisted event with a Places venue decodes.
   const assisted = sample().detail;
   assisted.event.ai_assisted = true; assisted.event.venue.place_id = "ChIJ4-4EKkDcQUcRPGkz1ExWaWg"; assisted.event.venue.resolved_by = "places";
   assisted.event.intake = { intake_id: "xin_" + "5".repeat(32), channel: "member_suggestion", event_index: 3 };
   assert.ok(decodeDatesExternalDetail(assisted, externalId));
-  for (const change of [{ intake_id: "xin_5" }, { channel: "partner_feed" }, { event_index: -1 }, { event_index: "0" }, { provider: "openai" }, { admin_principal: "a@example.test" }]) {
+  for (const change of [{ intake_id: "xin_5" }, { channel: "partner_feed" }, { event_index: -1 }, { event_index: "0" }]) {
     const value = JSON.parse(JSON.stringify(assisted)); Object.assign(value.event.intake, change);
     assert.equal(decodeDatesExternalDetail(value, externalId), null, JSON.stringify(change));
   }
+  // D-143: the reference is bound on its three fields. A key Core might add is tolerated - and not shown: the
+  // provenance panel names the intake, its channel and the event's index, nothing else of the reference.
+  for (const change of [{ provider: "openai" }, { admin_principal: "a@example.test" }]) {
+    const value = JSON.parse(JSON.stringify(assisted)); Object.assign(value.event.intake, change);
+    assert.deepEqual(decodeDatesExternalDetail(value, externalId), value, JSON.stringify(change));
+  }
+  assert.deepEqual([...readFileSync(new URL("../components/DatesExternalProvenance.tsx", import.meta.url), "utf8").matchAll(/event\.intake\.([a-z_]+)/g)].map((match) => match[1]).sort(),
+    ["channel", "event_index", "intake_id"]);
   const { input, detail } = sample();
   assert.ok(normalizeDatesExternalManualEvent(input));
   assert.equal(normalizeDatesExternalManualEvent(detail.event.editor_input), null);
@@ -244,8 +266,12 @@ test("receipts bind action, both identities and ledger CAS without confusing the
     event_status: "published", audit_id: "aud_" + "d".repeat(32), replayed: false };
   assert.ok(decodeDatesExternalReceipt(receipt, "dates_external_event_update", body, baseline));
   for (const change of [{ status: "published" }, { event_status: undefined }, { activity_id: "act_" + "e".repeat(32) },
-    { revision: 4 }, { activity_revision: 5 }, { replayed: "false" }, { private: "extra" }])
+    { revision: 4 }, { activity_revision: 5 }, { replayed: "false" }, { audit_id: "aud_1" }])
     assert.equal(decodeDatesExternalReceipt({ ...receipt, ...change }, "dates_external_event_update", body, baseline), null);
+  // D-143: the receipt binds on what identifies the command; a key this console does not know is tolerated.
+  assert.ok(decodeDatesExternalReceipt({ ...receipt, private: "extra" }, "dates_external_event_update", body, baseline));
+  const { audit_id: _audit, ...unaudited } = receipt;
+  assert.equal(decodeDatesExternalReceipt(unaudited, "dates_external_event_update", body, baseline), null, "a missing binding field");
   const publish = { ...receipt, revision: 1, activity_revision: 1 };
   assert.ok(decodeDatesExternalReceipt(publish, "dates_external_event_publish", {}, null));
   assert.equal(decodeDatesExternalReceipt(publish, "dates_external_event_publish", {}, baseline), null);
@@ -263,7 +289,11 @@ test("receipts bind action, both identities and ledger CAS without confusing the
 test("only exact pinned no-land refusals permit retiring a mutation identity", () => {
   const refusal = { success: false, status_code: 409, error: "dates-external-duplicate", message: 200, status: 200, can_send: 0 };
   assert.equal(datesExternalRefusal(refusal).kind, "refused");
-  for (const value of [null, { ...refusal, status: "409" }, { ...refusal, extra: true }, { ...refusal, status_code: "409" },
+  // D-143: Core's refusal is bound on its fields - the token, the status and the legacy envelope with its fixed values;
+  // another key does not make it something else. A partial envelope is neither Core's nor the bridge's.
+  assert.equal(datesExternalRefusal({ ...refusal, extra: true }).kind, "refused");
+  const { can_send: _send, ...partial } = refusal;
+  for (const value of [null, { ...refusal, status: "409" }, partial, { ...refusal, can_send: 1 }, { ...refusal, status_code: "409" },
     { success: false, status_code: 409, error: refusal.error }, { ...refusal, error: "dates-admin-idempotency-conflict" },
     { ...refusal, error: "dates-admin-command-in-progress" }, { ...refusal, status_code: 503, error: "dates-external-storage-unavailable" },
     { ...refusal, status_code: 403, error: "dates-admin-capability-required" }])
@@ -331,7 +361,7 @@ test("member activity list and detail preserve Core-authored free text without w
   }
   for (const changed of [{ title: "A".repeat(121) }, { city: "A".repeat(121) }, { title: ["bad"] },
     { city: false }, { title: "\uD800" }, { host: { uid: 0, display_name: "Member" } },
-    { host: { uid: 12, display_name: null } }, { unknown: "field" }]) {
+    { host: { uid: 12, display_name: null } }, { origin: "external" }, { external_event_id: externalId }]) {
     const value = memberSample(); Object.assign(value.list.activities[0], changed); Object.assign(value.detail.activity, changed);
     assert.equal(decodeDatesActivityList(value.list, { page: 1, limit: 40 }), null);
     assert.equal(decodeDatesActivityOriginDetail(value.detail, memberId, caps), null);
@@ -397,8 +427,12 @@ test("external activity-command receipts keep activity CAS separate from ledger 
     external_revision: 3, event_status: "published", lifecycle: "active", soft_deleted: true, action: "soft_delete",
     audit_id: "aud_" + "d".repeat(32), idempotency_replayed: false };
   assert.ok(decodeDatesExternalReceipt(receipt, "dates_activity_command", body, baseline));
-  for (const change of [{ revision: 3 }, { external_revision: 2 }, { activity_revision: 7 }, { soft_deleted: false }, { lifecycle: "canceled" }, { replayed: false }])
+  for (const change of [{ revision: 3 }, { external_revision: 2 }, { activity_revision: 7 }, { soft_deleted: false }, { lifecycle: "canceled" }, { idempotency_replayed: "no" }])
     assert.equal(decodeDatesExternalReceipt({ ...receipt, ...change }, "dates_activity_command", body, baseline), null);
+  // D-143: a key this console does not know is tolerated; a missing binding field is not.
+  assert.ok(decodeDatesExternalReceipt({ ...receipt, replayed: false }, "dates_activity_command", body, baseline));
+  const { audit_id: _audit, ...unaudited } = receipt;
+  assert.equal(decodeDatesExternalReceipt(unaudited, "dates_activity_command", body, baseline), null);
   assert.equal(decodeDatesExternalReceipt(receipt, "dates_activity_command", { ...body, expected_revision: 2 }, baseline), null);
   const purged = { ...envelope, activity_id: activityId, external_event_id: externalId, revision: 5, activity_revision: 5, external_revision: 2,
     audit_id: receipt.audit_id, idempotency_replayed: true, purged: true };

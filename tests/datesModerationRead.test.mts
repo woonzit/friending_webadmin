@@ -90,16 +90,13 @@ test("detail refuses partial, loose, duplicate, cross-case and private metadata"
   const corruptions = [
     (row: any) => { delete row.report_notes_withheld; },
     (row: any) => { row.report_notes_withheld = "false"; },
-    (row: any) => { row.decisions[0].before = { photo: { url: "private.jpg" } }; },
-    (row: any) => { row.decisions[0].actor_email = "private@example.invalid"; },
-    (row: any) => { row.decisions[0].future_private_field = "private"; },
     (row: any) => { delete row.decisions[0].appeal_outcome; },
     (row: any) => { row.decisions[0].user_visible_reason.en = {}; },
     (row: any) => { row.decisions[0].created_at = 9_000_000_000_000; },
     (row: any) => { row.decisions.push(row.decisions[0]); },
     (row: any) => { row.reports.push(row.reports[0]); },
     (row: any) => { row.reports[0].reporter_identity_redacted = false; },
-    (row: any) => { row.reports[0].reporter_uid = 123; },
+    (row: any) => { delete row.reports[0].reporter_identity_redacted; },
     (row: any) => { row.case.capabilities.can_read_evidence = "true"; },
     (row: any) => { row.case.revision = "3"; },
     (row: any) => { row.decisions[0].case_id = "cas_ffffffffffffffffffffffffffffffff"; },
@@ -112,11 +109,29 @@ test("detail refuses partial, loose, duplicate, cross-case and private metadata"
     assert.equal(datesCaseDetail(body, report.case.case_id), null, corrupt.toString());
   }
   assert.equal(datesCaseDetail(report, "cas_ffffffffffffffffffffffffffffffff"), null);
+  // D-143: no exact key set. A key this console does not know - on a decision, a report, the appeal or the case - is
+  // tolerated: the body decodes, and no Dates screen reads the key (the screens name every field they print).
+  const UNREAD = ["actor_email", "future_private_field", "reporter_uid", "appellant_uid"];
+  for (const widen of [(row: any) => { row.decisions[0].before = { photo: { url: "private.jpg" } }; },
+    (row: any) => { row.decisions[0].actor_email = "private@example.invalid"; }, (row: any) => { row.decisions[0].future_private_field = "private"; },
+    (row: any) => { row.reports[0].reporter_uid = 123; }, (row: any) => { row.case.future_private_field = "private"; }, (row: any) => { row.future_private_field = "private"; }]) {
+    const body = structuredClone(report); widen(body);
+    assert.ok(datesCaseDetail(body, report.case.case_id), widen.toString());
+  }
   for (const key of ["note", "appellant_uid", "future_private_field"]) {
     const body = structuredClone(appeal);
     body.appeal[key] = "private";
-    assert.equal(datesCaseDetail(body, appeal.case.case_id), null, key);
+    assert.ok(datesCaseDetail(body, appeal.case.case_id), key);
   }
+  const screens = ["../app/(dashboard)/dates/moderation/[caseId]/page.tsx", "../app/(dashboard)/dates/moderation/page.tsx", "../components/DatesCaseHistory.tsx"]
+    .map((file) => readFileSync(new URL(file, import.meta.url), "utf8")).join("\n");
+  for (const key of UNREAD) assert.equal(screens.includes(key), false, key);
+  // The appeal's own note is shown only from the separately audited evidence read, never from the case metadata;
+  // a decision's raw before / after is never printed.
+  assert.doesNotMatch(screens, /detail\??\.appeal\??\.note|\bappeal\??\.note\b|decision\.(before|after)\b/);
+  // What is bound stays bound: a missing field of the appeal fails the case.
+  const partial = structuredClone(appeal); delete partial.appeal.status;
+  assert.equal(datesCaseDetail(partial, appeal.case.case_id), null);
   const conflict = fixture("admin-detail-report-conflicted");
   conflict.reports[0].note = "Previously loaded note";
   assert.equal(datesCaseDetail(conflict, conflict.case.case_id), null);
@@ -131,7 +146,7 @@ test("evidence refuses a missing audit, missing/foreign appeal, leaked location 
     (row: any) => { delete row.appeal_note; },
     (row: any) => { row.appeal_note = null; },
     (row: any) => { row.appeal_note.appeal_id = "apl_ffffffffffffffffffffffffffffffff"; },
-    (row: any) => { row.appeal_note.appellant_uid = 123; },
+    (row: any) => { delete row.appeal_note.created_at; },
     (row: any) => { row.appeal_note.note = "x".repeat(501); },
     (row: any) => { row.evidence.push(row.evidence[0]); },
     (row: any) => { row.evidence[0].case_id = report.case.case_id; },
@@ -144,6 +159,9 @@ test("evidence refuses a missing audit, missing/foreign appeal, leaked location 
     assert.equal(datesEvidenceRead(body, scope), null, corrupt.toString());
   }
   assert.equal(datesEvidenceRead(source, { ...scope, appeal_id: null }), null);
+  // D-143: bound on its fields; a key this console does not know is tolerated - beside the note and at the top.
+  const wider = structuredClone(source); wider.appeal_note.appellant_uid = 123; wider.future = 1;
+  assert.ok(datesEvidenceRead(wider, scope));
   source.appeal_note.note = "😀".repeat(500);
   assert.ok(datesEvidenceRead(source, scope), "Core counts Unicode code points, not UTF-16 units");
   source.appeal_note.note = "\u00a0";

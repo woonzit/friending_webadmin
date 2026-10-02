@@ -38,9 +38,23 @@ const oneOf = <T extends readonly string[]>(values: T): Guard<T[number]> => (val
   typeof value === "string" && values.includes(value);
 const nullable = <T>(guard: Guard<T>): Guard<T | null> => (value): value is T | null => value === null || guard(value);
 const id = (prefix: string): Guard<string> => (value): value is string => typeof value === "string" && new RegExp(`^${prefix}_[a-f0-9]{32}$`).test(value);
+/**
+ * A body of Core is bound on its fields: each named key must be there and
+ * valid, and a key this console does not know is tolerated (D-143). No decoder
+ * of a Core body checks an exact key set; closed VOCABULARIES stay closed.
+ */
 const object = <S extends Shape>(shape: S): Guard<{ [K in keyof S]: Parsed<S[K]> }> => (value): value is { [K in keyof S]: Parsed<S[K]> } =>
-  record(value) && Object.keys(value).length === Object.keys(shape).length
-  && Object.entries(shape).every(([key, guard]) => Object.hasOwn(value, key) && guard(value[key]));
+  record(value) && Object.entries(shape).every(([key, guard]) => Object.hasOwn(value, key) ? guard(value[key]) : OPTIONAL.has(guard));
+/**
+ * A key Core serves only to a request that carried the Admin intake contract selector (D-143): absent, or present and
+ * valid. Present-but-undefined cannot come out of JSON and is not accepted as "absent".
+ */
+const OPTIONAL = new WeakSet<Guard<unknown>>();
+const optional = <T>(guard: Guard<T>): Guard<T | undefined> => {
+  const made: Guard<T | undefined> = (value): value is T | undefined => guard(value);
+  OPTIONAL.add(made);
+  return made;
+};
 const array = <T>(guard: Guard<T>, maximum: number, minimum = 0): Guard<T[]> => (value): value is T[] =>
   Array.isArray(value) && value.length >= minimum && value.length <= maximum && value.every(guard);
 const capabilities: Guard<string[]> = (value): value is string[] => array(text(1, 100), 100)(value)
@@ -61,7 +75,10 @@ const rowShape = {
 };
 // P2a: the list row ends with the label the detail carries. `rowShape` stays the
 // part both share; the detail has its own `ai_assisted` among its extra keys.
-const rowGuard = object({ ...rowShape, ai_assisted: bool });
+// D-143: Core serves the label only to a request that carried the Admin intake
+// contract selector. Without it the row is the released P1 row, and the label
+// is absent: absent means "not AI-assisted" (`ai_assisted !== true`).
+const rowGuard = object({ ...rowShape, ai_assisted: optional(bool) });
 export type DatesExternalRow = Parsed<typeof rowGuard>;
 /** The intake an event was published from, as Core's ledger recorded it: never the provider, never a person. */
 const intakeReferenceGuard = object({ intake_id: id("xin"), channel: oneOf(DATES_INTAKE_CHANNELS), event_index: integer(0) });
@@ -128,7 +145,8 @@ const detailRowGuard = object({ ...rowShape, facts: object(factsShape), venue: o
   credit: object({ channel: oneOf(DATES_EXTERNAL_CHANNELS), submitted_by_uid: nullable(integer(1)), anonymous: bool, first_submitter_uid: nullable(integer(1)) }),
   // P2a: true exactly when Core's ledger records the AI intake that drafted the event.
   // `intake` is null for a manual event and names the intake of an AI-drafted one.
-  sources: array(sourceGuard, 20, 1), ai_assisted: bool, editor_input: freshEditor, intake: nullable(intakeReferenceGuard) });
+  // D-143: `intake` is served only with the selector; absent means "not known here" and is shown as no link.
+  sources: array(sourceGuard, 20, 1), ai_assisted: bool, editor_input: freshEditor, intake: optional(nullable(intakeReferenceGuard)) });
 export type DatesExternalDetailRow = Parsed<typeof detailRowGuard>;
 const detailGuard = object({ ...envelope, event: detailRowGuard, capabilities });
 export type DatesExternalDetail = Parsed<typeof detailGuard>;
@@ -188,7 +206,8 @@ export function decodeDatesExternalEvent(value: unknown, caps: string[], now: nu
     || row.credit.channel !== row.credit_channel
     || (row.venue.resolved_by === "places") !== (row.venue.place_id !== null)
     // Core derives both from the same ledger record: an AI-assisted event names its intake, a manual one has none.
-    || row.ai_assisted !== (row.intake !== null)
+    // The rule binds the two when the reference is served at all (it is not, without the selector).
+    || (row.intake !== undefined && row.ai_assisted !== (row.intake !== null))
     || (row.credit.channel === "admin" && (row.credit.submitted_by_uid !== null || row.credit.first_submitter_uid !== null || !row.credit.anonymous))
     || new Set(row.sources.map((source) => source.source_id)).size !== row.sources.length
     || row.sources.some((source) => new URL(source.url).hostname !== source.hostname || source.confirmed_at > now)) return null;
@@ -213,7 +232,15 @@ const memberHost = object({ uid: integer(1), display_name: memberText(64000) });
 const externalActivityShape = { origin: literal("external"), external_event_id: id("xev"), host: literal(null),
   organizer_name: text(1, 160), organizer_url: nullable(datesExternalHttpsUrl), verification_tier: oneOf(DATES_EXTERNAL_TIERS),
   ai_assisted: bool, can_host_transfer: literal(false) };
-const memberActivityGuard = object({ ...memberActivityShape, host: memberHost });
+/**
+ * What tells the two kinds of activity apart is `origin` (and the event id that goes with it), not the size of the
+ * key set: a member's activity carries neither, an external one carries `origin: "external"`. A row that names an
+ * origin but is not a whole external row is nothing - it is never read as a member's activity.
+ */
+const externalMarked = (value: unknown) => record(value) && (Object.hasOwn(value, "origin") || Object.hasOwn(value, "external_event_id"));
+const memberActivityFields = object({ ...memberActivityShape, host: memberHost });
+const memberActivityGuard: Guard<Parsed<typeof memberActivityFields>> = (value): value is Parsed<typeof memberActivityFields> =>
+  memberActivityFields(value) && !externalMarked(value);
 const externalActivityGuard = object({ ...activityShape, ...externalActivityShape });
 export type DatesActivityListRow = Parsed<typeof memberActivityGuard> | Parsed<typeof externalActivityGuard>;
 const activityRowGuard: Guard<DatesActivityListRow> = (value): value is DatesActivityListRow => memberActivityGuard(value)
@@ -261,7 +288,9 @@ export function projectDatesActivityList(value: unknown, expected: { page: numbe
 const activityDetailExtras = { details: nullable(((value: unknown): value is string => typeof value === "string")), photo: ((_: unknown): _ is unknown => true),
   timezone: nullable(text(1, 80)), auto_end_at: nullable(epoch), tbd_expires_at: nullable(epoch), audience: nullable(record),
   pending_public_revision: nullable(record), live_sharing_state: oneOf(["off", "on", "paused"] as const), purge_eligible_at: nullable(epoch) };
-const memberActivityDetailGuard = object({ ...memberActivityShape, host: memberHost, ...activityDetailExtras });
+const memberActivityDetailFields = object({ ...memberActivityShape, host: memberHost, ...activityDetailExtras });
+const memberActivityDetailGuard: Guard<Parsed<typeof memberActivityDetailFields>> = (value): value is Parsed<typeof memberActivityDetailFields> =>
+  memberActivityDetailFields(value) && !externalMarked(value);
 const externalActivityDetailGuard = object({ ...activityShape, ...externalActivityShape, ...activityDetailExtras });
 export type DatesActivityDetailRow = Parsed<typeof memberActivityDetailGuard> | Parsed<typeof externalActivityDetailGuard>;
 export type DatesActivityDisplayDetail = DatesActivityDetailRow & { unreadable_fields?: string[] };
@@ -323,7 +352,13 @@ export function datesExternalOfficialText(value: unknown): value is string {
 
 const receiptShape = { ...envelope, external_event_id: id("xev"), activity_id: id("act"), revision: integer(1),
   activity_revision: integer(1), event_status: oneOf(DATES_EXTERNAL_STATUSES), audit_id: id("aud"), replayed: bool };
-const receiptGuard = object(receiptShape);
+/**
+ * The receipt of a publication or an update echoes no action; the receipt of a command echoes its own. That - not the
+ * size of the key set - is what keeps one from being read as the other.
+ */
+const receiptFields = object(receiptShape);
+const receiptGuard: Guard<Parsed<typeof receiptFields>> = (value): value is Parsed<typeof receiptFields> =>
+  receiptFields(value) && !Object.hasOwn(value, "action");
 const commandReceiptGuard = object({ ...receiptShape, action: oneOf(["withdraw", "cancel", "reverify"] as const),
   lifecycle: rowShape.lifecycle, soft_deleted: bool });
 const updateReceiptGuard = object({ ...receiptShape, action: literal("official_update"), lifecycle: rowShape.lifecycle,
@@ -343,7 +378,8 @@ export type DatesExternalMutationAction = "dates_external_event_publish" | "date
 export function decodeDatesExternalReceipt(value: unknown, action: DatesExternalMutationAction,
   body: Record<string, unknown>, baseline: DatesExternalMutationBaseline | null): DatesExternalReceipt | null {
   if (action === "dates_external_event_publish") {
-    return baseline === null && receiptGuard(value) && value.revision === 1 && value.activity_revision === 1
+    // A manual publication names no intake; the receipt that does is the intake publication's (decoded below).
+    return baseline === null && receiptGuard(value) && !Object.hasOwn(value, "intake") && value.revision === 1 && value.activity_revision === 1
       && value.event_status === "published" ? value : null;
   }
   if (action === "dates_event_intake_publish") return baseline === null ? decodeDatesIntakePublishReceipt(value, body) : null;
@@ -435,10 +471,12 @@ export function datesExternalRefusal(value: unknown): DatesExternalRefusal {
   const uncertain = { kind: "uncertain" as const, error: "unconfirmed", status: 0 };
   if (!record(value) || value.success !== false || typeof value.error !== "string" || !/^[a-z][a-z0-9-]{1,100}$/.test(value.error)
     || !integer(400, 599)(value.status_code)) return uncertain;
-  const keys = Object.keys(value).sort();
-  const core = keys.join() === ["success", "status_code", "error", "message", "status", "can_send"].sort().join()
-    && value.message === 200 && value.status === 200 && value.can_send === 0;
-  const bridge = keys.join() === ["success", "status_code", "error"].sort().join();
+  // Core's refusal carries the legacy envelope (message, status, can_send) with its fixed values; the bridge's own
+  // refusal carries none of the three. An envelope with only some of them, or with other values, is neither. Any
+  // other key is tolerated: a refusal is bound on what it says, not on its exact key set.
+  const legacy = ["message", "status", "can_send"].filter((key) => Object.hasOwn(value, key));
+  const core = legacy.length === 3 && value.message === 200 && value.status === 200 && value.can_send === 0;
+  const bridge = legacy.length === 0;
   if (!core && !bridge) return uncertain;
   // Revocation/proxy refusals can precede replay lookup after a prior success.
   // Conflicting keys, an in-progress command and server failures are not proof

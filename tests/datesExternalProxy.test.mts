@@ -7,6 +7,7 @@ import * as actions from "../lib/adminActions.ts";
 import { isTrustedAdminRequest } from "../lib/requestGuard.ts";
 import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
 import { datesAvailabilityWriteIsRetired } from "../lib/datesAdmin.ts";
+import { datesAdminContractParams } from "../lib/datesAdminContract.ts";
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "../lib/datesExternalAdmin.ts";
 import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody } from "../lib/datesExternalModeration.ts";
 
@@ -32,7 +33,8 @@ function harness() {
     response: { status: 200, data: { success: true, status_code: 200 } } as any, calls: [] as Array<{ action: string; body: any }> };
   // Parsing shares the production helpers' realm, so their plain-object guard
   // is tested without the artificial vm Object.prototype mismatch.
-  const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError,
+  // D-143: the route adds the Admin intake contract selector to Dates requests itself (the real function, as it is).
+  const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, datesAdminContractParams,
     datesAvailabilityWriteIsRetired, datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody,
     datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody,
     ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,

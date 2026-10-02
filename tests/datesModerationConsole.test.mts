@@ -90,14 +90,21 @@ test("queue refuses malformed metadata, duplicate cases, bad envelopes and forei
     (v: any) => { v.cases.push(v.cases[0]); }, (v: any) => { v.total = "4"; },
     (v: any) => { v.total = -1; }, (v: any) => { v.total = Number.MAX_SAFE_INTEGER + 1; },
     (v: any) => { v.page = 2; }, (v: any) => { v.limit = 40; },
-    (v: any) => { v.server_now = null; }, (v: any) => { v.private_notes = []; },
+    (v: any) => { v.server_now = null; }, (v: any) => { delete v.total; },
     (v: any) => { v.cases[0].target_uid = -1; }, (v: any) => { v.cases[0].activity_id = "wrong"; },
     (v: any) => { v.cases[0].revision = "1"; }, (v: any) => { v.cases[0].capabilities.can_claim = 1; },
-    (v: any) => { v.cases[0].internal_notes = []; }, (v: any) => { v.cases[0].future_private = "private"; },
+    (v: any) => { delete v.cases[0].capabilities.can_resolve; }, (v: any) => { delete v.cases[0].sla_due_at; },
   ];
   for (const corrupt of corruptions) {
     const body = structuredClone(source); corrupt(body);
     assert.equal(datesModerationQueue(body, scope), null, corrupt.toString());
+  }
+  // D-143: the queue and its rows are bound on their fields; a key this console does not know is tolerated - at the top,
+  // on a row and in a row's capabilities - and the queue page reads none of them.
+  for (const widen of [(v: any) => { v.private_notes = []; }, (v: any) => { v.cases[0].internal_notes = []; }, (v: any) => { v.cases[0].future_private = "private"; },
+    (v: any) => { v.cases[0].capabilities.can_future = true; }]) {
+    const body = structuredClone(source); widen(body);
+    assert.ok(datesModerationQueue(body, scope), widen.toString());
   }
   for (const key of Object.keys(source)) {
     const body = structuredClone(source); delete body[key];
@@ -145,14 +152,22 @@ test("SLA rejects contradictory/loose/partial success instead of showing zero st
   for (const corrupt of [
     (v: any) => { v.success = false; }, (v: any) => { v.status_code = 403; },
     (v: any) => { v.open_count = "4"; }, (v: any) => { v.unassigned_count = 5; },
-    (v: any) => { v.age_buckets.under_1h = 0; }, (v: any) => { v.age_buckets.future = 0; },
+    (v: any) => { v.age_buckets.under_1h = 0; }, (v: any) => { delete v.age_buckets.over_24h; },
     (v: any) => { v.oldest_unassigned_at = null; }, (v: any) => { v.median_seconds_to_claim = -1; },
     (v: any) => { v.median_seconds_to_resolve = 0.5; }, (v: any) => { v.appeals_waiting = 5; },
-    (v: any) => { v.open_count = Number.MAX_SAFE_INTEGER + 1; }, (v: any) => { v.extra = true; },
+    (v: any) => { v.open_count = Number.MAX_SAFE_INTEGER + 1; }, (v: any) => { delete v.sla_breach_count; },
   ]) {
     const body = structuredClone(source); corrupt(body);
     assert.equal(datesModerationConsoleSla(body), null, corrupt.toString());
   }
+  // D-143: bound on its fields. An unknown key is tolerated; an unknown age bucket is too, and the known buckets still
+  // have to add up to the open cases - so a bucket this console cannot show never hides cases silently.
+  for (const widen of [(v: any) => { v.extra = true; }, (v: any) => { v.age_buckets.future = 0; }]) {
+    const body = structuredClone(source); widen(body);
+    assert.ok(datesModerationConsoleSla(body), widen.toString());
+  }
+  const hidden = structuredClone(source); hidden.age_buckets.future = 1; hidden.open_count += 1;
+  assert.equal(datesModerationConsoleSla(hidden), null, "an open case counted only in a bucket this console does not know");
   for (const key of Object.keys(source)) {
     const body = structuredClone(source); delete body[key];
     assert.equal(datesModerationConsoleSla(body), null, `missing ${key}`);
@@ -211,11 +226,14 @@ test("receipt refuses malformed audits, replay flags, revisions, action shapes a
     (v: any) => { v.success = "true"; }, (v: any) => { v.status_code = 409; },
     (v: any) => { v.audit_id = "aud_unverified"; }, (v: any) => { v.revision = "3"; },
     (v: any) => { v.idempotency_replayed = "false"; }, (v: any) => { v.claim_expires_at = null; },
-    (v: any) => { v.case_status = "new"; }, (v: any) => { v.extra = "private"; },
+    (v: any) => { v.case_status = "new"; }, (v: any) => { delete v.audit_id; },
   ]) {
     const body = structuredClone(source); corrupt(body);
     assert.equal(datesConsoleCommandReceipt(body, "dates_moderation_heartbeat", source.case_id, 2), null, corrupt.toString());
   }
+  // D-143: the receipt binds on what identifies the command; a key this console does not know is tolerated and not returned.
+  const wider = structuredClone(source); wider.extra = "private";
+  assert.deepEqual(Object.keys(datesConsoleCommandReceipt(wider, "dates_moderation_heartbeat", source.case_id, 2)!).sort(), ["audit_id", "case_id", "idempotency_replayed", "revision"]);
   for (const action of ["dates_moderation_release", "dates_moderation_resolve", "unknown", "__proto__", "toString"]) {
     assert.equal(datesConsoleCommandReceipt(source, action, source.case_id, 2), null, action);
   }

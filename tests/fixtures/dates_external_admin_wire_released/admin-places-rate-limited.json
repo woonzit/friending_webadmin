@@ -1,0 +1,14 @@
+{
+    "success": true,
+    "status_code": 200,
+    "manual_entry": true,
+    "provider": "google_maps",
+    "attribution": "Google Maps",
+    "server_now": 1790000000,
+    "available": false,
+    "unavailable_reason": "rate_limited",
+    "places": [],
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

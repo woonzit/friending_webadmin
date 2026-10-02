@@ -1,0 +1,186 @@
+{
+    "success": true,
+    "status_code": 200,
+    "event": {
+        "external_event_id": "xev_000000000000000000000000000047e0",
+        "activity_id": "act_000000000000000000000000000047e0",
+        "revision": 1,
+        "activity_revision": 1,
+        "status": "published",
+        "lifecycle": "active",
+        "moderation_state": "ok",
+        "soft_deleted": false,
+        "title": "Synthetic variety pacific",
+        "category": "workshop",
+        "sensitive": false,
+        "start_at": 1790172800,
+        "end_at": 1790180000,
+        "start_local": "2026-09-23T07:13:20-07:00",
+        "end_local": "2026-09-23T09:13:20-07:00",
+        "timezone": "America/Los_Angeles",
+        "city": "San Francisco",
+        "country_code": "US",
+        "venue_name": "Community public venue",
+        "organizer_name": "Community Organizer",
+        "verification_tier": "admin",
+        "checked_at": 1790000000,
+        "next_reverify_at": 1790086400,
+        "credit_channel": "admin",
+        "going_count": 0,
+        "interested_count": 0,
+        "created_at": 1790000000,
+        "updated_at": 1790000000,
+        "can_edit": true,
+        "facts": {
+            "title": "Synthetic variety pacific",
+            "summary": {
+                "hu": "Szintetikus nyilvános esemény.",
+                "en": "A synthetic public event."
+            },
+            "category": "workshop",
+            "sensitive": {
+                "flag": false,
+                "reason": null
+            },
+            "start_at": 1790172800,
+            "end_at": 1790180000,
+            "start_local": "2026-09-23T07:13:20-07:00",
+            "end_local": "2026-09-23T09:13:20-07:00",
+            "end_estimated": false,
+            "all_day": false,
+            "timezone": "America/Los_Angeles",
+            "is_free": true,
+            "price_text": null,
+            "age_restriction": null
+        },
+        "venue": {
+            "place_id": null,
+            "name": "Community public venue",
+            "formatted_address": "San Francisco, Community Square 1.",
+            "point": {
+                "type": "Point",
+                "coordinates": [
+                    -122.4194,
+                    37.7749
+                ]
+            },
+            "city": "San Francisco",
+            "city_key": "san francisco",
+            "country_code": "US",
+            "resolved_by": "admin_pin",
+            "resolved_at": 1790000000
+        },
+        "organizer": {
+            "name": "Community Organizer",
+            "website": "https://variety.example.test/"
+        },
+        "links": {
+            "official_url": "https://variety.example.test/pacific",
+            "ticket_url": null
+        },
+        "attendee_list": "visible",
+        "verification": {
+            "tier": "admin",
+            "admin_confirmations": {
+                "source": true,
+                "public_venue": true,
+                "timezone": true,
+                "content_safe": true
+            },
+            "checked_at": 1790000000,
+            "next_reverify_at": 1790086400
+        },
+        "image": {
+            "kind": "category_art",
+            "url": null,
+            "credit": null,
+            "license_note": null
+        },
+        "sources": [
+            {
+                "kind": "admin",
+                "url": "https://events.example.test/variety-wire/pacific",
+                "hostname": "events.example.test",
+                "source_id": "src_00000000000000000000000000004e3d",
+                "confirmed_at": 1790000000
+            }
+        ],
+        "ai_assisted": false,
+        "credit": {
+            "channel": "admin",
+            "submitted_by_uid": null,
+            "anonymous": true,
+            "first_submitter_uid": null
+        },
+        "editor_input": {
+            "title": "Synthetic variety pacific",
+            "summary": {
+                "hu": "Szintetikus nyilvános esemény.",
+                "en": "A synthetic public event."
+            },
+            "category": "workshop",
+            "sensitive": {
+                "flag": false,
+                "reason": null
+            },
+            "start_at": 1790172800,
+            "end_at": 1790180000,
+            "timezone": "America/Los_Angeles",
+            "all_day": false,
+            "is_free": true,
+            "price_text": null,
+            "age_restriction": null,
+            "venue": {
+                "name": "Community public venue",
+                "formatted_address": "San Francisco, Community Square 1.",
+                "longitude": -122.4194,
+                "latitude": 37.7749,
+                "city": "San Francisco",
+                "country_code": "US"
+            },
+            "organizer": {
+                "name": "Community Organizer",
+                "website": "https://variety.example.test/"
+            },
+            "links": {
+                "official_url": "https://variety.example.test/pacific",
+                "ticket_url": null
+            },
+            "source_url": "https://events.example.test/variety-wire/pacific",
+            "attendee_list": "visible",
+            "confirmations": {
+                "source": false,
+                "public_venue": false,
+                "timezone": false,
+                "content_safe": false
+            }
+        }
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

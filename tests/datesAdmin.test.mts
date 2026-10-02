@@ -368,9 +368,10 @@ test("case detail internal notes decode strictly and tolerate an older Core (AYI
     "ready",
   );
   const { text: _text, ...missingText } = first;
+  // D-143: a note is bound on its four fields; a key this console does not know is tolerated, never rendered.
+  assert.equal(datesCaseInternalNotes(detail({ internal_notes: [second, { ...first, extra: true }], internal_notes_withheld: false })).status, "ready");
   for (const note of [
     missingText,
-    { ...first, extra: true },
     { ...first, note_id: "" },
     { ...first, note_id: "nt_123" },
     { ...first, note_id: 42 },
@@ -798,12 +799,13 @@ test("rollout switches show the per-storefront answer next to the global one (AY
     [{ storefront: "HUN", effective_value: "true" }],
     [{ storefront: "hun", effective_value: true }],
     [{ storefront: "HU", effective_value: true }],
-    [{ storefront: "HUN", effective_value: true, extra: 1 }],
     [{ storefront: "HUN", effective_value: true }, { storefront: "HUN", effective_value: false }],
     "HUN",
   ]) {
     assert.deepEqual(datesSettingStorefrontEffective({ effective_by_storefront: malformed }), { status: "invalid" }, JSON.stringify(malformed));
   }
+  // D-143: a row is bound on its two fields; an added key is tolerated.
+  assert.equal(datesSettingStorefrontEffective({ effective_by_storefront: [{ storefront: "HUN", effective_value: true, extra: 1 }] }).status, "ready");
   assert.deepEqual(datesSettingStorefrontEffective(null), { status: "unsupported" });
 
   const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");

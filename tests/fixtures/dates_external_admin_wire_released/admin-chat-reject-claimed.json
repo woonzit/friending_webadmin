@@ -1,0 +1,54 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case": {
+        "case_id": "cas_00000000000000000000000000001772",
+        "queue": "messages",
+        "case_kind": "prepublication",
+        "target_type": "message",
+        "target_id": "msg_00000000000000000000000000001773",
+        "target_uid": 6000,
+        "activity_id": "act_00000000000000000000000000001771",
+        "status": "in_review",
+        "severity": "medium",
+        "escalated": false,
+        "distinct_reporter_count": 0,
+        "report_count": 0,
+        "assignee_email": "chat-admin@example.test",
+        "claimed_at": 1790000000,
+        "claim_expires_at": 1790000300,
+        "sla_due_at": 1790086400,
+        "sla_breached": false,
+        "revision": 2,
+        "created_at": 1790000000,
+        "updated_at": 1790000000,
+        "conflict_of_interest": false,
+        "capabilities": {
+            "can_claim": true,
+            "can_read_evidence": true,
+            "can_resolve": true,
+            "can_break_glass": false
+        },
+        "external_message": {
+            "thread_id": "thr_00000000000000000000000000001771",
+            "revision": 1,
+            "moderation_state": "pending",
+            "available": true
+        },
+        "allowed_actions": [
+            "approve_content",
+            "reject_content"
+        ]
+    },
+    "reports": [],
+    "report_notes_withheld": false,
+    "decisions": [],
+    "appeal": null,
+    "internal_notes": [],
+    "internal_notes_withheld": false,
+    "evidence_requires_separate_audited_read": true,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -4,8 +4,14 @@ import { datesCaseDetail } from "./datesModerationRead";
 import { DATES_EXTERNAL_RETRY_SECONDS, type DatesExternalStorage } from "./datesExternalMutations";
 
 const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+/** Exact: the console's own request and its own saved row carry these keys and no other. */
 const keys = (v: unknown, names: string[]): v is Record<string, unknown> => record(v)
   && Object.keys(v).length === names.length && names.every((name) => Object.hasOwn(v, name));
+/** A body of Core is bound on its fields; a key this console does not know is tolerated (D-143). */
+const fields = (v: unknown, names: string[]): v is Record<string, unknown> => record(v) && names.every((name) => Object.hasOwn(v, name));
+/** Core's refusal: the legacy envelope with its fixed values, whatever else it carries. */
+const coreRefused = (v: unknown): v is Record<string, unknown> => fields(v, ["success", "status_code", "error", "message", "status", "can_send"])
+  && v.success === false && v.message === 200 && v.status === 200 && v.can_send === 0 && typeof v.error === "string";
 const positive = (v: unknown): v is number => typeof v === "number" && Number.isSafeInteger(v) && v > 0;
 const revision = (v: unknown): v is number => positive(v) && v < Number.MAX_SAFE_INTEGER;
 const clock = (v: unknown): v is number => positive(v) && v <= 4_102_444_800;
@@ -103,14 +109,14 @@ export function datesExternalMessageResolutionMayStart(item: DatesCaseSummary, p
 }
 
 function targetState(v: unknown): v is { moderation_state: string; revision: number; sequence: number } {
-  return keys(v, ["moderation_state", "revision", "sequence"]) && typeof v.moderation_state === "string"
+  return fields(v, ["moderation_state", "revision", "sequence"]) && typeof v.moderation_state === "string"
     && ["visible", "pending", "rejected"].includes(v.moderation_state) && positive(v.revision) && positive(v.sequence);
 }
 
 /** Audit/case CAS plus the immutable target identity, revision and decision effect. */
 export function datesExternalMessageResolutionReceipt(value: unknown, pending: DatesExternalMessageResolutionPending): Record<string, unknown> | null {
   if (!pendingValid(pending, pending?.actor)) return null;
-  if (!keys(value, ["success", "status_code", "message", "status", "can_send", "server_now", "case_id", "case_status", "action", "decision_id",
+  if (!fields(value, ["success", "status_code", "message", "status", "can_send", "server_now", "case_id", "case_status", "action", "decision_id",
     "target_result", "revision", "break_glass_used", "audit_id", "idempotency_replayed"])
     || value.success !== true || value.status_code !== 200 || value.message !== 200 || value.status !== 200 || value.can_send !== 0
     || !clock(value.server_now) || value.case_id !== pending.body.case_id || value.case_status !== "actioned"
@@ -118,7 +124,7 @@ export function datesExternalMessageResolutionReceipt(value: unknown, pending: D
     || !id(value.decision_id, "dec") || !id(value.audit_id, "aud") || typeof value.idempotency_replayed !== "boolean"
     || typeof value.break_glass_used !== "boolean" || (value.break_glass_used && !pending.body.break_glass)) return null;
   const result = value.target_result;
-  if (!keys(result, ["target_type", "target_id", "activity_id", "subject_uid", "target_path", "before", "after"])
+  if (!fields(result, ["target_type", "target_id", "activity_id", "subject_uid", "target_path", "before", "after"])
     || result.target_type !== "message" || result.target_id !== pending.baseline.message_id || result.activity_id !== pending.baseline.activity_id
     || result.subject_uid !== pending.baseline.target_uid || result.target_path !== "published"
     || !targetState(result.before) || !targetState(result.after)) return null;
@@ -158,9 +164,7 @@ export async function runDatesExternalMessageResolution(pending: DatesExternalMe
   let value: unknown;
   try { value = await send("dates_moderation_resolve", { ...attempt.body }); } catch { return { kind: "uncertain" as const }; }
   if (datesExternalMessageResolutionReceipt(value, attempt)) return { kind: "success" as const, retained: !clear(storage, attempt) };
-  if (keys(value, ["success", "status_code", "error", "message", "status", "can_send"]) && value.success === false
-    && value.message === 200 && value.status === 200 && value.can_send === 0 && typeof value.error === "string"
-    && Object.hasOwn(noLand, value.error) && value.status_code === noLand[value.error]) {
+  if (coreRefused(value) && Object.hasOwn(noLand, value.error as string) && value.status_code === noLand[value.error as string]) {
     return { kind: "refused" as const, retained: !clear(storage, attempt) };
   }
   return { kind: "uncertain" as const };

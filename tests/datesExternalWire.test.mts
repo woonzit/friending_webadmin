@@ -190,8 +190,13 @@ test("genuine explicit legal holds retain their separate receipt shape and targe
   for (const action of ["place", "release"]) {
     const body = fixture(`admin-moderation-hold-${action}`), reviewAt = action === "place" ? 1790086400 : null;
     assert.equal(datesLegalHoldReceipt(body, caseId, action, reviewAt), true);
-    for (const change of [{ break_glass_used: false }, { case_id: "cas_" + "ff".padStart(32, "0") }, { legal_hold: !body.legal_hold }, { evidence_count: "1" }])
+    for (const change of [{ audit_id: "aud_1" }, { case_id: "cas_" + "ff".padStart(32, "0") }, { legal_hold: !body.legal_hold }, { evidence_count: "1" }])
       assert.equal(datesLegalHoldReceipt({ ...body, ...change }, caseId, action, reviewAt), false);
+    // D-143: the receipt binds on the case, the hold it leaves, the review time and the audit id; a key this console
+    // does not know is tolerated, a missing binding field is not.
+    assert.equal(datesLegalHoldReceipt({ ...body, break_glass_used: false, already_in_place: false }, caseId, action, reviewAt), true);
+    const { audit_id: _audit, ...unaudited } = body;
+    assert.equal(datesLegalHoldReceipt(unaudited, caseId, action, reviewAt), false);
   }
 });
 const moderationContext = {

@@ -47,9 +47,11 @@ test("external case is a separate closed metadata variant, preserving case and l
   assert.equal(datesModerationQueue(queue, { page: 1, limit: 40 })?.cases[0].external_revision, 7);
   for (const change of [{ target_uid: 1 }, { target_uid: "0" }, { activity_id: null }, { target_id: activityId }, { queue: "users" },
     { case_kind: "prepublication" }, { external_revision: "7" }, { external_status: "invented" }, { external_target_available: 1 },
-    { allowed_actions: ["warn"] }, { allowed_actions: ["dismiss", "dismiss"] }, { private_field: true }]) {
+    { allowed_actions: ["warn"] }, { allowed_actions: ["dismiss", "dismiss"] }]) {
     const value = sample(); Object.assign(value.case, change); assert.equal(datesCaseDetail(value, value.case.case_id), null, JSON.stringify(change));
   }
+  // D-143: the case is bound on its fields; a key this console does not know is tolerated.
+  const wider = sample(); Object.assign(wider.case, { private_field: true }); assert.ok(datesCaseDetail(wider, wider.case.case_id));
   for (const key of ["external_revision", "external_status", "external_target_available", "allowed_actions"]) {
     const value = sample(); delete value.case[key]; assert.equal(datesCaseDetail(value, value.case.case_id), null, key);
   }
@@ -86,9 +88,13 @@ test("external resolution receipt binds both identities, both revision domains a
   for (const mutate of [(v: any) => { v.revision = 8; }, (v: any) => { v.target_result.subject_uid = 1; },
     (v: any) => { v.target_result.target_id = activityId; }, (v: any) => { v.target_result.before.revision = 6; },
     (v: any) => { v.target_result.after.activity_revision = 11; }, (v: any) => { v.target_result.after.event_status = "published"; },
-    (v: any) => { v.target_result.after.soft_deleted = true; }, (v: any) => { v.break_glass_used = true; }, (v: any) => { v.private = {}; }]) {
+    (v: any) => { v.target_result.after.soft_deleted = true; }, (v: any) => { v.break_glass_used = true; }, (v: any) => { delete v.audit_id; },
+    (v: any) => { delete v.target_result.after.revision; }]) {
     const value = receipt(); mutate(value); assert.equal(datesExternalResolutionReceipt(value, pending()), null);
   }
+  // D-143: the receipt binds on what identifies the decision and its effect; a key this console does not know is tolerated at every level.
+  const wider: any = receipt(); wider.private = {}; wider.target_result.future = 1; wider.target_result.after.future = 2;
+  assert.ok(datesExternalResolutionReceipt(wider, pending()));
   const dismiss: any = receipt(); Object.assign(dismiss, { case_status: "dismissed", action: "dismiss" });
   Object.assign(dismiss.target_result, { target_path: "unchanged", before: null, after: null });
   assert.ok(datesExternalResolutionReceipt(dismiss, prepareDatesExternalResolution(actor, { ...request(), action: "dismiss" }, baseline, now)!));
@@ -154,9 +160,12 @@ test("report labels accept only a captured locale/label or the historical biling
   for (const label of [{ locale: "hu", label: "Hibás adatok" }, { en: "Wrong details", hu: "Hibás adatok" }, null]) {
     body.reports[0].reason_label_snapshot = label; assert.ok(datesCaseDetail(body, body.case.case_id));
   }
-  for (const label of [{ locale: "de", label: "Unreviewed locale" }, { locale: "hu", label: 1 }, { locale: "hu", label: "" },
-    { locale: "hu", label: "Hibás adatok", reporter_uid: 5 }, { locale: "hu", label: "Hibás adatok", en: "Wrong details" }]) {
+  for (const label of [{ locale: "de", label: "Unreviewed locale" }, { locale: "hu", label: 1 }, { locale: "hu", label: "" }, { locale: "hu" }, { en: "Wrong details" }]) {
     body.reports[0].reason_label_snapshot = label; assert.equal(datesCaseDetail(body, body.case.case_id), null);
+  }
+  // D-143: either shape is bound on its own fields; another key beside them is tolerated.
+  for (const label of [{ locale: "hu", label: "Hibás adatok", reporter_uid: 5 }, { locale: "hu", label: "Hibás adatok", en: "Wrong details" }]) {
+    body.reports[0].reason_label_snapshot = label; assert.ok(datesCaseDetail(body, body.case.case_id), JSON.stringify(label));
   }
 });
 

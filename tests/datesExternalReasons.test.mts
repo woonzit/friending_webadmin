@@ -52,12 +52,15 @@ test("reason list rejects incomplete, loosely typed, duplicate and mixed-cohort 
   }
   for (const change of [{ scope: "external_event" }, { entry_points: ["external_event", "detail"] }, { entry_points: ["external_event", "external_event"] },
     { entry_points: ["EXTERNAL_EVENT"] }, { entry_points: [] }, { active: 1 }, { revision: "1" }, { order: -1 }, { severity: ["medium"] },
-    { catalog_version: 2 }, { extra: true }, { reason_id: "reason_user_wrong_details" }]) {
+    { catalog_version: 2 }, { reason_id: "reason_user_wrong_details" }]) {
     const invalid = structuredClone(list); Object.assign(invalid.reasons[1], change);
     assert.equal(datesAdminReasons(invalid, "activity"), null, JSON.stringify(change));
   }
   for (const change of [{ success: "true" }, { status_code: 422 }, { catalog_version: 2 }, { reasons: null },
-    { reasons: [external, external] }, { extra: true }]) assert.equal(datesAdminReasons({ ...list, ...change }, "activity"), null);
+    { reasons: [external, external] }]) assert.equal(datesAdminReasons({ ...list, ...change }, "activity"), null);
+  // D-143: the catalogue and its rows are bound on their fields; a key this console does not know is tolerated.
+  const wider = structuredClone(list); Object.assign(wider.reasons[1], { extra: true });
+  assert.ok(datesAdminReasons({ ...wider, extra: true }, "activity"));
 });
 
 for (const name of ["save-external", "save-external-replay"]) test(`genuine ${name} acknowledges the exact ID, edits and revision`, () => {
@@ -65,8 +68,10 @@ for (const name of ["save-external", "save-external-replay"]) test(`genuine ${na
   assert.deepEqual(datesReasonSaveReceipt(body, submitted), body.reason);
   for (const change of [{ expected_revision: 2 }, { reason_id: "reason_activity_canceled" }, { entry_points: ["detail"] },
     { name_en: "Other label" }, { scope: "user" }]) assert.equal(datesReasonSaveReceipt(body, { ...submitted, ...change }), null);
-  for (const change of [{ revision: "2" }, { idempotency_replayed: 1 }, { audit_id: null }, { extra: true }])
+  for (const change of [{ revision: "2" }, { idempotency_replayed: 1 }, { audit_id: null }, { reason: undefined }])
     assert.equal(datesReasonSaveReceipt({ ...body, ...change }, submitted), null);
+  // D-143: the receipt binds on the reason it acknowledges, the revision and the audit id; an unknown key is tolerated.
+  assert.deepEqual(datesReasonSaveReceipt({ ...body, extra: true }, submitted), body.reason);
 });
 
 for (const name of ["cohort", "member-cohort", "mixed", "save-viewer"]) test(`genuine ${name} refusal never becomes a list or receipt`, () => {

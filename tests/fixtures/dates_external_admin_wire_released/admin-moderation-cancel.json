@@ -1,0 +1,39 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case_id": "cas_00000000000000000000000000000003",
+    "case_status": "actioned",
+    "action": "cancel_activity",
+    "decision_id": "dec_00000000000000000000000000000003",
+    "target_result": {
+        "target_type": "external_event",
+        "target_id": "xev_00000000000000000000000000000004",
+        "activity_id": "act_00000000000000000000000000000004",
+        "subject_uid": 0,
+        "target_path": "published",
+        "before": {
+            "event_status": "published",
+            "revision": 3,
+            "activity_revision": 3,
+            "lifecycle": "active",
+            "moderation_state": "approved",
+            "soft_deleted": false
+        },
+        "after": {
+            "event_status": "withdrawn",
+            "revision": 4,
+            "activity_revision": 4,
+            "lifecycle": "canceled",
+            "moderation_state": "approved",
+            "soft_deleted": false
+        }
+    },
+    "revision": 3,
+    "break_glass_used": false,
+    "audit_id": "aud_00000000000000000000000000000014",
+    "idempotency_replayed": false,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

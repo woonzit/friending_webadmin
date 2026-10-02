@@ -7,6 +7,7 @@ import ts from "typescript";
 import * as actions from "../lib/adminActions.ts";
 import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
 import { datesAvailabilityWriteIsRetired } from "../lib/datesAdmin.ts";
+import { DATES_ADMIN_INTAKE_CONTRACT_SELECTOR, datesAdminContractParams } from "../lib/datesAdminContract.ts";
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "../lib/datesExternalAdmin.ts";
 import { datesExternalDraftInput } from "../lib/datesExternalInput.ts";
 import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody } from "../lib/datesExternalModeration.ts";
@@ -84,7 +85,7 @@ async function capture<T>(answer: unknown, task: (core: typeof coreCall) => Prom
 /** The browser's request to the generic bridge, through the actual route handler and the real coreCall. */
 async function bridge(action: string, browserBody: unknown, answer: unknown = { success: true, status_code: 200 }) {
   return capture(answer, async (core) => {
-    const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, datesAvailabilityWriteIsRetired,
+    const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, datesAvailabilityWriteIsRetired, datesAdminContractParams,
       datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody, datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody,
       datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody, ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
       readAdminSession: async () => ({ email }), coreCall: core, mergeCoreParams, isReservedCoreParam,
@@ -105,11 +106,17 @@ async function bridge(action: string, browserBody: unknown, answer: unknown = { 
   });
 }
 const fields = (form: URLSearchParams) => Object.fromEntries(form.entries());
+/** The server-owned selector as the form carries it (D-143); empty until the Core lane announces its name. */
+const owned = (action: string) => Object.fromEntries(Object.entries(datesAdminContractParams(action)).map(([key, value]) => [key, String(value)]));
 function common(sent: Sent, action: string, names: string[]) {
   assert.equal(sent.url, `https://core.invalid/v1/webadmin/${action}`);
   assert.equal(sent.contentType, "application/x-www-form-urlencoded;charset=UTF-8");
   const form = sent.form!;
-  assert.deepEqual([...form.keys()].sort(), [...names, "admin_email", "secret"].sort(), "exactly these parameters, each once");
+  // D-143: the Admin intake contract selector is server-owned and goes with every Dates Admin request - once Core has
+  // announced it (until then the constant is null and nothing is added).
+  const selector = datesAdminContractParams(action);
+  assert.deepEqual([...form.keys()].sort(), [...names, "admin_email", "secret", ...Object.keys(selector)].sort(), "exactly these parameters, each once");
+  for (const [key, value] of Object.entries(selector)) assert.equal(form.get(key), String(value), "the selector, set by the server");
   assert.equal(new Set(form.keys()).size, [...form.keys()].length, "no repeated parameter name");
   assert.equal(form.get("admin_email"), email, "the session's actor, set by the server");
   assert.equal(form.get("secret"), secret);
@@ -222,7 +229,7 @@ test("request shape: queue, detail and usage reads never send a present-but-empt
   assert.ok((DATES_INTAKE_STATUSES as readonly string[]).includes(queue.status));
   assert.match(queue.page, CORE.positiveInteger); assert.match(queue.limit, CORE.positiveInteger); assert.ok(Number(queue.limit) <= 100);
   const all = await bridge("dates_event_intake_list", { status: "", channel: "", page: 2, limit: 3 }, fixture("admin-list-page-two"));
-  assert.deepEqual(common(all.sent[0], "dates_event_intake_list", ["page", "limit"]), { page: "2", limit: "3", admin_email: email, secret });
+  assert.deepEqual(common(all.sent[0], "dates_event_intake_list", ["page", "limit"]), { page: "2", limit: "3", admin_email: email, secret, ...owned("dates_event_intake_list") });
   // The queue's channel filter, as the page sends it for members' suggestions.
   const suggestions = await bridge("dates_event_intake_list", { status: "in_review", channel: "member_suggestion", page: 1, limit: 40 }, fixture("admin-list-member-channel"));
   assert.equal(common(suggestions.sent[0], "dates_event_intake_list", ["status", "channel", "page", "limit"]).channel, "member_suggestion");
@@ -230,13 +237,30 @@ test("request shape: queue, detail and usage reads never send a present-but-empt
   assert.ok((DATES_INTAKE_CHANNELS as readonly string[]).includes(common(channel.sent[0], "dates_event_intake_list", ["channel", "page", "limit"]).channel));
   // The access probe of the detail and usage pages.
   const probe = await bridge("dates_event_intake_list", { page: 1, limit: 1 }, fixture("admin-list-empty"));
-  assert.deepEqual(common(probe.sent[0], "dates_event_intake_list", ["page", "limit"]), { page: "1", limit: "1", admin_email: email, secret });
+  assert.deepEqual(common(probe.sent[0], "dates_event_intake_list", ["page", "limit"]), { page: "1", limit: "1", admin_email: email, secret, ...owned("dates_event_intake_list") });
   const detail = await bridge("dates_event_intake_detail", { intake_id: xin(4) }, fixture("admin-detail-in-review-official"));
   assert.match(common(detail.sent[0], "dates_event_intake_detail", ["intake_id"]).intake_id, CORE.intakeId);
   const current = await bridge("dates_event_intake_usage", {}, fixture("admin-usage-month"));
   common(current.sent[0], "dates_event_intake_usage", []);
   const month = await bridge("dates_event_intake_usage", { month: "2026-09" }, fixture("admin-usage-earlier-month"));
   assert.match(common(month.sent[0], "dates_event_intake_usage", ["month"]).month, CORE.month);
+});
+
+test("D-143: the selector is the server's - a browser value under its name is overwritten, and it is not sent on a route that is not a Dates Admin route", async () => {
+  // The real merge of the bridge, with a stand-in selector (the real constant is null until Core announces the name).
+  const standIn = { dates_event_intake_admin_contract_version: 1 };
+  const merged = mergeCoreParams({ intake_id: xin(1), dates_event_intake_admin_contract_version: 99, admin_email: "owner@example.test" }, { admin_email: email, ...standIn });
+  assert.deepEqual({ ...merged }, { intake_id: xin(1), dates_event_intake_admin_contract_version: 1, admin_email: email });
+  // The production helper: every `dates_*` action, and only those.
+  if (DATES_ADMIN_INTAKE_CONTRACT_SELECTOR === null) assert.deepEqual(datesAdminContractParams("dates_event_intake_list"), {});
+  else assert.deepEqual(Object.keys(datesAdminContractParams("dates_event_intake_list")), [DATES_ADMIN_INTAKE_CONTRACT_SELECTOR.parameter]);
+  for (const action of ["admin_me", "users_list", "date_x", "xdates_event_intake_list"]) assert.deepEqual(datesAdminContractParams(action), {}, action);
+  // What the route really forwards today for a Dates read: the browser's fields, the actor, the credential - and the selector when there is one.
+  const list = await bridge("dates_event_intake_list", { page: 1, limit: 1 }, fixture("admin-list-empty"));
+  assert.deepEqual(common(list.sent[0], "dates_event_intake_list", ["page", "limit"]), { page: "1", limit: "1", admin_email: email, secret, ...owned("dates_event_intake_list") });
+  // A browser cannot smuggle a selector-like field through a closed request shape either.
+  const forged = await bridge("dates_event_intake_list", { page: 1, limit: 1, dates_event_intake_admin_contract_version: 1 });
+  assert.equal(forged.result.status, 400); assert.equal(forged.sent.length, 0);
 });
 
 test("request shape: nothing the browser adds reaches Core - not an actor, not a credential, not a typed-only or unknown field", async () => {

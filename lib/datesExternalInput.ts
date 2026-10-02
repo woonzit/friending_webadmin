@@ -42,8 +42,15 @@ function document(value: unknown): value is Record<string, unknown> {
     && [Object.prototype, null].includes(Object.getPrototypeOf(value));
 }
 
-function closed(value: unknown, keys: readonly string[]): value is Record<string, unknown> {
-  return document(value) && Object.keys(value).length === keys.length
+/**
+ * `exact`: the object has these keys and no other - what this console SENDS
+ * (a request must not carry a field the console did not put there). Without
+ * it the object must have these keys and may have more - what this console
+ * READS from Core (D-143: a body is bound on its fields, an added key is
+ * tolerated).
+ */
+function closed(value: unknown, keys: readonly string[], exact = true): value is Record<string, unknown> {
+  return document(value) && (!exact || Object.keys(value).length === keys.length)
     && keys.every((key) => Object.hasOwn(value, key));
 }
 
@@ -99,39 +106,42 @@ export function datesExternalDefaultDuration(category: DatesExternalCategory): n
   return 2 * 3600;
 }
 
+const CONFIRMATIONS = ["source", "public_venue", "timezone", "content_safe"] as const;
 /**
  * Closed browser/server-boundary payload. This console sends all fields even
  * where Core supports omission; it neither mutates the receipt payload nor
  * guesses the server's current lookahead, ticket allow-list or stored state.
+ * With `exact` false it is the same facts as Core serves them back (the
+ * editor seed): bound on the fields, any other key tolerated.
  */
-function manualEvent(value: unknown, maximumBytes: number): DatesExternalManualEvent | null {
+function manualEvent(value: unknown, maximumBytes: number, exact = true): DatesExternalManualEvent | null {
   if (!closed(value, ["title", "summary", "category", "sensitive", "start_at", "end_at",
     "timezone", "all_day", "price_text", "is_free", "age_restriction", "venue", "organizer",
-    "links", "source_url", "attendee_list", "confirmations"])) return null;
+    "links", "source_url", "attendee_list", "confirmations"], exact)) return null;
   try {
     if (new TextEncoder().encode(JSON.stringify(value)).length > maximumBytes) return null;
   } catch { return null; }
   const { summary, sensitive, venue, organizer, links, confirmations } = value;
-  if (!closed(summary, ["en", "hu"]) || !text(summary.en, 1, 500, true) || !text(summary.hu, 1, 500, true)
+  if (!closed(summary, ["en", "hu"], exact) || !text(summary.en, 1, 500, true) || !text(summary.hu, 1, 500, true)
     || !text(value.title, 3, 120) || !DATES_EXTERNAL_CATEGORIES.includes(value.category as DatesExternalCategory)
-    || !closed(sensitive, ["flag", "reason"]) || typeof sensitive.flag !== "boolean"
+    || !closed(sensitive, ["flag", "reason"], exact) || typeof sensitive.flag !== "boolean"
     || !optionalText(sensitive.reason, 300) || (sensitive.flag && sensitive.reason === null)
     || !epoch(value.start_at) || (value.end_at !== null && !epoch(value.end_at))
     || !namedTimezone(value.timezone) || typeof value.all_day !== "boolean"
     || typeof value.is_free !== "boolean" || !optionalText(value.price_text, 200)
     || (value.age_restriction !== null && (typeof value.age_restriction !== "number"
       || !Number.isInteger(value.age_restriction) || value.age_restriction < 18 || value.age_restriction > 99))
-    || !closed(venue, ["name", "formatted_address", "latitude", "longitude", "city", "country_code"])
+    || !closed(venue, ["name", "formatted_address", "latitude", "longitude", "city", "country_code"], exact)
     || !text(venue.name, 1, 200) || !text(venue.formatted_address, 1, 400) || !text(venue.city, 1, 120)
     || typeof venue.country_code !== "string" || !/^[A-Z]{2}$/.test(venue.country_code)
     || typeof venue.latitude !== "number" || !Number.isFinite(venue.latitude) || Math.abs(venue.latitude) > 90
     || typeof venue.longitude !== "number" || !Number.isFinite(venue.longitude) || Math.abs(venue.longitude) > 180
-    || !closed(organizer, ["name", "website"]) || !text(organizer.name, 1, 160) || !optionalUrl(organizer.website)
-    || !closed(links, ["official_url", "ticket_url"]) || !optionalUrl(links.official_url) || !optionalUrl(links.ticket_url)
+    || !closed(organizer, ["name", "website"], exact) || !text(organizer.name, 1, 160) || !optionalUrl(organizer.website)
+    || !closed(links, ["official_url", "ticket_url"], exact) || !optionalUrl(links.official_url) || !optionalUrl(links.ticket_url)
     || (!value.is_free && links.official_url === null) || !datesExternalHttpsUrl(value.source_url)
     || !["visible", "count_only"].includes(value.attendee_list as string)
-    || !closed(confirmations, ["source", "public_venue", "timezone", "content_safe"])
-    || Object.values(confirmations).some((item) => item !== true)) return null;
+    || !closed(confirmations, ["source", "public_venue", "timezone", "content_safe"], exact)
+    || CONFIRMATIONS.some((key) => confirmations[key] !== true)) return null;
   const duration = value.end_at === null
     ? datesExternalDefaultDuration(value.category as DatesExternalCategory) : Number(value.end_at) - value.start_at;
   if (duration <= 0 || duration > (value.category === "festival" ? 14 : 1) * 86400) return null;
@@ -144,12 +154,15 @@ export function normalizeDatesExternalManualEvent(value: unknown): DatesExternal
 
 /** Read-only editor seed: a historical attestation must never pre-check this form. */
 export function normalizeDatesExternalEditorInput(value: unknown): DatesExternalEditorInput | null {
-  if (!document(value) || !closed(value.confirmations, ["source", "public_venue", "timezone", "content_safe"])
-    || Object.values(value.confirmations).some((item) => item !== false)) return null;
+  if (!document(value) || !closed(value.confirmations, CONFIRMATIONS, false)) return null;
+  const confirmations = value.confirmations;
+  if (CONFIRMATIONS.some((key) => confirmations[key] !== false)) return null;
   // Core expands omitted optional keys/defaults on reads. The request ceiling
   // is not a DTO ceiling; submission still rechecks the original 32 KB limit.
+  // A read is bound on its fields; a key this console does not know is tolerated (the form is built from the known
+  // fields only, and what it sends is the closed request shape again).
   const checked = manualEvent({ ...value,
-    confirmations: { source: true, public_venue: true, timezone: true, content_safe: true } }, MAX_EVENT_BYTES * 2);
+    confirmations: { source: true, public_venue: true, timezone: true, content_safe: true } }, MAX_EVENT_BYTES * 2, false);
   return checked ? value as DatesExternalEditorInput : null;
 }
 

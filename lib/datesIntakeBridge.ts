@@ -1,6 +1,7 @@
 import { adminBridgeCoreTransportError } from "@/lib/adminBridge";
 import { invalidatesAdminSession } from "@/lib/adminActions";
 import { datesAdminPrincipal, hasDatesCapability } from "@/lib/datesAdmin";
+import { datesAdminContractParams } from "@/lib/datesAdminContract";
 import {
   DATES_INTAKE_MAX_IMAGE_BYTES, DATES_INTAKE_MAX_IMAGES, datesIntakeId, datesIntakeImageBytes, datesIntakeRefusal, datesIntakeUploadType,
   decodeDatesIntakeImage, normalizeDatesIntakeCreateFields, type DatesIntakeUploadType,
@@ -93,7 +94,7 @@ export async function serveDatesIntakeMedia(request: { headers: HeaderReader; se
     || !/^[1-9]$/.test(rawIndex) || Number(rawIndex) > DATES_INTAKE_MAX_IMAGES) return refusal("invalid-input", 400);
   const index = Number(rawIndex);
   const result = await deps.core("dates_event_intake_image",
-    { admin_email: who.email, intake_id: intakeId, index, admin_request_id: deps.requestId() }, MEDIA_TIMEOUT_MS);
+    { admin_email: who.email, intake_id: intakeId, index, admin_request_id: deps.requestId(), ...datesAdminContractParams("dates_event_intake_image") }, MEDIA_TIMEOUT_MS);
   const read = decodeDatesIntakeImage(result.data, index);
   if (!read) return coreFailure(result);
   const bytes = datesIntakeImageBytes(read);
@@ -139,7 +140,7 @@ export async function serveDatesIntakeCreate(request: { headers: HeaderReader; f
   if (!fields) return refusal("invalid-input", 400);
 
   const payload: Record<string, unknown> = { admin_email: who.email, kind: fields.kind, locale: fields.locale,
-    idempotency_key: fields.idempotency_key, admin_request_id: deps.requestId() };
+    idempotency_key: fields.idempotency_key, admin_request_id: deps.requestId(), ...datesAdminContractParams("dates_event_intake_create") };
   if (fields.kind === "url") payload.url = fields.url;
   else if (fields.text !== null) payload.text = fields.text;
 

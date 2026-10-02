@@ -160,7 +160,6 @@ export function datesModerationSla(value: unknown): DatesModerationSla | null {
     || medianResolve === undefined
     || appealsWaiting === null
     || !ageBuckets
-    || Object.keys(ageBuckets).length !== ageBucketKeys.length
     || ageBucketKeys.some((key) => !Object.hasOwn(ageBuckets, key))
     || ageBucketCounts.some((count) => count === null)
     || ageBucketCounts.reduce<number>((sum, count) => sum + (count ?? 0), 0) !== openCount
@@ -218,7 +217,6 @@ function datesCaseInternalNote(value: unknown): DatesCaseInternalNote | null {
   const row = record(value);
   if (
     !row
-    || Object.keys(row).length !== DATES_CASE_NOTE_KEYS.length
     || DATES_CASE_NOTE_KEYS.some((key) => !Object.hasOwn(row, key))
   ) return null;
   const { note_id: noteId, author_email: authorEmail, text, created_at: createdAt } = row;
@@ -590,7 +588,6 @@ export function datesSettingStorefrontEffective(setting: unknown): DatesStorefro
     const entry = record(item);
     if (
       !entry
-      || Object.keys(entry).length !== 2
       || typeof entry.storefront !== "string"
       || !/^[A-Z]{3}$/.test(entry.storefront)
       || seen.has(entry.storefront)

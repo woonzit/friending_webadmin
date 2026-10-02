@@ -1,0 +1,83 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case": {
+        "case_id": "cas_00000000000000000000000000000001",
+        "queue": "activities",
+        "case_kind": "reports",
+        "target_type": "external_event",
+        "target_id": "xev_00000000000000000000000000000004",
+        "target_uid": 0,
+        "activity_id": "act_00000000000000000000000000000004",
+        "status": "actioned",
+        "severity": "medium",
+        "escalated": false,
+        "distinct_reporter_count": 1,
+        "report_count": 1,
+        "assignee_email": "mod@example.test",
+        "claimed_at": 1790000000,
+        "claim_expires_at": null,
+        "sla_due_at": 1790086400,
+        "sla_breached": false,
+        "revision": 3,
+        "created_at": 1790000000,
+        "updated_at": 1790000000,
+        "conflict_of_interest": false,
+        "capabilities": {
+            "can_claim": false,
+            "can_read_evidence": true,
+            "can_resolve": false,
+            "can_break_glass": false
+        },
+        "external_revision": null,
+        "external_status": null,
+        "external_target_available": false,
+        "allowed_actions": []
+    },
+    "reports": [
+        {
+            "report_id": "rpt_00000000000000000000000000000001",
+            "reason_id": "rsn_99999999999999999999999999999999",
+            "reason_key": "wrong_details",
+            "reason_label_snapshot": {
+                "locale": "hu",
+                "label": "Hibás adatok"
+            },
+            "entry_point": "activity_detail",
+            "note": "Synthetic public event report.",
+            "severity": "medium",
+            "status": "actioned",
+            "created_at": 1790000000,
+            "reporter_identity_redacted": true
+        }
+    ],
+    "report_notes_withheld": false,
+    "decisions": [
+        {
+            "decision_id": "dec_00000000000000000000000000000001",
+            "case_id": "cas_00000000000000000000000000000001",
+            "target_type": "external_event",
+            "target_id": "xev_00000000000000000000000000000004",
+            "activity_id": "act_00000000000000000000000000000004",
+            "target_path": "published",
+            "action": "remove_content",
+            "severity": "medium",
+            "user_visible_reason": {
+                "en": "The event details have been reviewed.",
+                "hu": "Ellenőriztük az esemény adatait."
+            },
+            "created_at": 1790000000,
+            "expires_at": null,
+            "appeal_outcome": null,
+            "appeal_resolved_at": null
+        }
+    ],
+    "appeal": null,
+    "internal_notes": [],
+    "internal_notes_withheld": false,
+    "evidence_requires_separate_audited_read": true,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

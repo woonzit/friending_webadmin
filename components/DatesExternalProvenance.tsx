@@ -9,7 +9,9 @@ import type { DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
 /** Only the validated, deliberately safe Core projection reaches this panel. */
 export default function DatesExternalProvenance({ event }: { event: DatesExternalDetailRow }) {
   const t = useTranslations("datesAdmin.external"), channels = useTranslations("datesAdmin.intake.channelValues"), locale = useLocale();
-  const given = Object.values(event.verification.admin_confirmations).filter((value) => value === true).length;
+  // The four confirmations by name: a key Core might add beside them is not counted as one (D-143 tolerates it).
+  const confirmations = event.verification.admin_confirmations;
+  const given = [confirmations.source, confirmations.public_venue, confirmations.timezone, confirmations.content_safe].filter((value) => value === true).length;
   return <section className="panel dates-external-fields">
     <h2>{t("provenance.title")}</h2>
     <dl className="dates-external-facts">

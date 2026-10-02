@@ -15,8 +15,9 @@ const envelopeKeys = ["success", "status_code", "message", "status", "can_send",
 function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
+/** Bound on its fields; a key this console does not know is tolerated (D-143). */
 function keys(value: Record<string, unknown>, expected: string[]): boolean {
-  return Object.keys(value).length === expected.length && expected.every((key) => Object.hasOwn(value, key));
+  return expected.every((key) => Object.hasOwn(value, key));
 }
 const integer = (value: unknown, minimum: number, maximum = Number.MAX_SAFE_INTEGER): value is number =>
   typeof value === "number" && Number.isSafeInteger(value) && value >= minimum && value <= maximum;

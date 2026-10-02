@@ -1,0 +1,16 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case_id": "cas_00000000000000000000000000001772",
+    "case_status": "in_review",
+    "assignee_email": "chat-admin@example.test",
+    "claim_expires_at": 1790000300,
+    "revision": 2,
+    "break_glass_used": false,
+    "audit_id": "aud_00000000000000000000000000001775",
+    "idempotency_replayed": false,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

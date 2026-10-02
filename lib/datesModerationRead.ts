@@ -39,8 +39,8 @@ function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 function shape(value: unknown, rules: Record<string, Rule>): value is Record<string, unknown> {
-  return record(value) && Object.keys(value).length === Object.keys(rules).length
-    && Object.entries(rules).every(([key, rule]) => Object.hasOwn(value, key) && rule(value[key]));
+  // Bound on its fields; a key this console does not know is tolerated (D-143).
+  return record(value) && Object.entries(rules).every(([key, rule]) => Object.hasOwn(value, key) && rule(value[key]));
 }
 const text = (limit: number): Rule => (value) => typeof value === "string" && value !== "" && Array.from(value).length <= limit;
 const nullable = (rule: Rule): Rule => (value) => value === null || rule(value);
@@ -128,7 +128,7 @@ function uniqueRows(rows: unknown[], rules: Record<string, Rule>, key: string): 
 
 export type DatesModerationQueue = { cases: DatesCaseSummary[]; page: number; limit: number; total: number };
 
-/** Queue rows use the same closed metadata projection as detail, never evidence. */
+/** Queue rows use the same metadata projection as detail, never evidence. */
 export function datesModerationQueue(value: unknown, requested: { page: number; limit: number }): DatesModerationQueue | null {
   if (!shape(value, { ...envelope, cases: Array.isArray, page: integer, limit: integer,
     total: integer, server_now: epoch }) || value.page !== requested.page || value.limit !== requested.limit
@@ -204,7 +204,13 @@ export function datesTrailEvidenceReceipt(value: unknown, caseId: string, captur
     && value.captured_from === capturedFrom && value.captured_to === capturedTo;
 }
 
-/** Metadata is closed; raw before/after, actor identities and appeal notes fail closed. */
+/**
+ * Case metadata, bound on its fields (D-143): every named field must be there
+ * and valid, and a key this console does not know is tolerated and never read -
+ * the screens print named fields only. What the metadata must not carry by
+ * its own rules is still refused: a reporter that is not redacted, a note on a
+ * conflicted case, a decision of another case.
+ */
 export function datesCaseDetail(value: unknown, expectedCaseId: string): DatesCaseDetail | null {
   if (!shape(value, { ...envelope, case: caseRow, reports: Array.isArray,
     report_notes_withheld: boolean, decisions: Array.isArray, appeal: (v) => v === null || shape(v, appealRules),

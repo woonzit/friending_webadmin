@@ -10,22 +10,98 @@ and nothing of an intake is ever shown to members.
 This document describes the Webadmin side only. Core is the authority for every
 rule; the provider is the Core lane's contract `dates-event-intake-admin-v1`.
 
-## Release boundary
+## Release boundary and deploy order (D-143)
 
 - Provider: Core branch `claude/t865-p2-core` (T-884, T-886), tip
-  `32d418cff7a68217d9358959c297a469139586f0`. Core is released first, and this
-  console needs that Core or a later one: it requires the `existing` marker on
-  the create receipt and `suggestions_enabled` on the queue, which an earlier
-  Core does not serve (a create would then read as "not known" and the queue as
-  unreadable).
-- Everything is inert while `dates_external_admin_drafts_enabled` is false, which
-  is Core's default: no intake can be created or published, nothing is stored and
-  the worker has nothing to do. Deploying this console enables nothing.
+  `32d418cff7a68217d9358959c297a469139586f0` at the time of writing; the tip that
+  is released also carries the Admin intake contract selector (below).
+- **Order: Core first, then this console.** The intake pages need Core's P2
+  routes, the `existing` marker on the create receipt and `suggestions_enabled`
+  on the queue; an earlier Core serves none of them.
+- **The selector.** Core adds keys to bodies the RELEASED console (Webadmin
+  `7825bc13`) reads with exact key sets: `ai_assisted` on an external list row,
+  `intake` on an event's detail and on the event of an activity detail, and the
+  settings of the two intake channels in the configuration read. By D-143 Core
+  serves those additions only to a request that carries the Admin intake
+  contract selector; a request without it is answered with bodies
+  byte-identical to the released P1 corpus (Core main `07215298`, set
+  `d84a3e16…`). This console sends the selector on every Dates Admin request
+  (`dates_*`), server-side, as a server-owned parameter merged after the
+  browser's body: `lib/datesAdminContract.ts`,
+  `DATES_ADMIN_INTAKE_CONTRACT_SELECTOR`. **The constant is `null` until the
+  Core lane announces the parameter's name and value; then it is the one line to
+  change.** Nothing else depends on it: this console's decoders accept a P1
+  body with and without the additions.
+- **Dual shape.** In this console `ai_assisted` on a list row and `intake` on an
+  event are optional. Absent means "not served here": the row is not marked as
+  AI-assisted and the event shows no link back to an intake. The configuration
+  page lists the settings Core serves (33, 41 or 50); the help marks a setting
+  it documents but Core did not return as "not returned".
+- **No decoder of a Core body checks an exact key set.** Every Dates decoder
+  binds on its fields - each named key present and valid - and tolerates a key
+  it does not know; the screens print named fields only, so a tolerated key is
+  never shown. Closed vocabularies stay closed, each with a fallback. Where an
+  exact key set used to tell two things apart, the difference is now said
+  outright: an activity is external when it carries `origin`, a command's
+  receipt echoes its `action`, a manual publication's receipt names no
+  `intake`. What the console itself SENDS (request shapes) and what it stores
+  for itself stay closed.
+
+### What each side shows between the two deploys
+
+| Moment | Released console `7825bc13` | This console |
+|---|---|---|
+| Today: Core main `07215298`, released console | everything as released | - |
+| Core P2 deployed, console not yet (minutes) | Sends no selector, so every Dates page reads the P1 bodies it was released with: unchanged. It has no intake pages. | - |
+| Then this console deployed | - | Sends the selector: external lists carry the AI badge, events link back to their intake, the configuration lists the intake settings, the intake pages work. |
+| Wrong order: this console on Core main | - | The P1 Dates pages work: Core main ignores the selector parameter (below) and the decoders read the P1 bodies. The intake queue, review screen and AI usage page show Core's refusal / "could not be read" (the routes do not exist), never an empty queue; "Draft from source" is shown with the note that the switch could not be read, and a submission ends as "not known" (there is no such route, so nothing can have been created); the configuration lists the 33 P1 settings. Not a state to stay in: deploy Core first. |
+
+### Rollback
+
+- **A Core rollback to main `07215298` does not need a console rollback for the
+  selector.** Read from Core's source at that commit (git objects; not run):
+  the Dates Admin routes (`config/routes.php:1163-`, `WebadminDatesController`,
+  `WebadminDatesExternalController` and their services) read their parameters
+  by name with `$request->raw('…')`; `WebadminSecretMiddleware` inspects only
+  `secret` / `admin_email`; no Dates Admin route enumerates the body or refuses
+  an unknown body parameter, and the idempotent commands hash an explicit
+  payload, not the request. So the old Core ignores the selector and answers
+  with its P1 bodies, which this console decodes. If a Core is ever rolled back
+  to one that DOES refuse unknown parameters, roll this console back with it.
+- After such a rollback the intake pages lose their routes (they show the
+  refusal; nothing is cached), and the P1 Dates pages keep working.
+- A console rollback to `7825bc13` needs nothing of Core: it sends no selector.
+
+### Switches
+
+- Everything is inert while `dates_external_admin_drafts_enabled` and
+  `dates_external_suggestions_enabled` are false, which is Core's default: no
+  intake can be created or published, nothing is stored and the worker has
+  nothing to do. Deploying this console enables nothing.
+- **Turn the two switches on only after this console is live.** An event
+  published from an intake is AI-assisted and may have a Places venue; the
+  released console's detail fixes `ai_assisted` to `false`, `venue.place_id` to
+  `null` and `venue.resolved_by` to `admin_pin` by literal, so such an event is
+  outside what it decodes with or without the selector.
 - Publishing a draft also needs the P1 switch `dates_external_publishing_enabled`.
-- The two configuration bodies of the P1 corpus carry 50 settings from this Core
-  on (the 33 of P1, the eight of the admin channel, the nine of the member
-  channel). A console without this change still reads them (unknown rows fall into the
-  number field of the P1 page), which is why this console ships with Core.
+
+### The check that stays in the gate
+
+`tests/datesAdminCompatibility.test.mts` (part of `npm test`):
+
+- the released P1 corpus is vendored as a second fixture set
+  (`tests/fixtures/dates_external_admin_wire_released/`, from Core main
+  `07215298`, pinned by set and manifest digest);
+- the released console's own decoder modules and its two wire tests are
+  vendored byte-identically from `7825bc13`
+  (`tests/fixtures/released_console_7825bc13/`, each file pinned by digest; not
+  re-stated rules) and the wire tests are run unchanged, in a tree of their
+  own, on the selector-less bodies: 127 tests must pass;
+- as a control, the same released decoders refuse the selector-carrying bodies;
+- this console's decoders read the released corpus: 113 bodies are byte-identical
+  to the ones its other tests decode, and the 25 that differ (9 lists, 13
+  details, the external activity detail, 2 configuration reads) are decoded in
+  both shapes.
 
 ## Routes
 
@@ -74,17 +150,18 @@ A flyer is private evidence.
 
 ## Decoder rules
 
-- Closed about shape (key sets) and about the vocabularies Core publishes in the
-  corpus manifest; `tests/datesIntakeWire.test.mts` compares the console's lists
-  with the manifest.
+- Closed about the vocabularies Core publishes in the corpus manifest, each
+  with a fallback; `tests/datesIntakeWire.test.mts` compares the console's
+  lists with the manifest. Bound on fields, never on an exact key set (D-143).
 - Never stricter than Core on a value Core can store: free text is a string,
   a number is a number, and identifiers the contract does not declare closed
   (attendance mode, status signal, prohibited category, task, dropped-link field,
   the usage ledger's provider, model, task and channel) stay open and are shown
   as Core wrote them when the console has no translation.
 - A list degrades per row. In the queue an unreadable display field marks the
-  row; an unusable revision or hold removes its actions; a row whose identity,
-  status or key set cannot be trusted is reported by position. On the review
+  row; an unusable revision or hold removes its actions; a row whose identity
+  or status cannot be trusted, or that lacks one of its fields, is reported by
+  position. On the review
   screen events, AI calls, source texts, flyers and whole sections degrade one
   by one and are named, never shown as empty.
 - Unknown is not empty. When a whole list (`events`, `ai_runs`, `source_texts`)
@@ -104,8 +181,11 @@ A flyer is private evidence.
   the publication's event and activity), an audit id of the right shape, the
   `replayed` / `existing` markers - and any other key is tolerated. A body that
   fails this is not a receipt: the outcome is "not known".
-- The flyer read is a read (audited by Core): its body is decoded as a closed
-  shape like every other read.
+- Reads are bound on their fields in the same way (D-143): the queue, a row,
+  the detail and each of its sections, the usage read, the flyer read. A key
+  this console does not know is tolerated and never shown. The member block is
+  rebuilt from the contract's fields, so a key Core might add to it is not even
+  kept.
 
 ## Review, hold and publication
 

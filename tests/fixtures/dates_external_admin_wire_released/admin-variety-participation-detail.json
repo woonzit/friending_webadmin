@@ -1,0 +1,186 @@
+{
+    "success": true,
+    "status_code": 200,
+    "event": {
+        "external_event_id": "xev_000000000000000000000000000046b4",
+        "activity_id": "act_000000000000000000000000000046b4",
+        "revision": 1,
+        "activity_revision": 1,
+        "status": "published",
+        "lifecycle": "active",
+        "moderation_state": "ok",
+        "soft_deleted": false,
+        "title": "Synthetic variety participation",
+        "category": "sport_participation",
+        "sensitive": false,
+        "start_at": 1790172800,
+        "end_at": 1790180000,
+        "start_local": "2026-09-23T16:13:20+02:00",
+        "end_local": "2026-09-23T18:13:20+02:00",
+        "timezone": "Europe/Budapest",
+        "city": "Budapest",
+        "country_code": "HU",
+        "venue_name": "Community public venue",
+        "organizer_name": "Community Organizer",
+        "verification_tier": "admin",
+        "checked_at": 1790000000,
+        "next_reverify_at": 1790086400,
+        "credit_channel": "admin",
+        "going_count": 0,
+        "interested_count": 0,
+        "created_at": 1790000000,
+        "updated_at": 1790000000,
+        "can_edit": true,
+        "facts": {
+            "title": "Synthetic variety participation",
+            "summary": {
+                "hu": "Szintetikus nyilvános esemény.",
+                "en": "A synthetic public event."
+            },
+            "category": "sport_participation",
+            "sensitive": {
+                "flag": false,
+                "reason": null
+            },
+            "start_at": 1790172800,
+            "end_at": 1790180000,
+            "start_local": "2026-09-23T16:13:20+02:00",
+            "end_local": "2026-09-23T18:13:20+02:00",
+            "end_estimated": false,
+            "all_day": false,
+            "timezone": "Europe/Budapest",
+            "is_free": true,
+            "price_text": null,
+            "age_restriction": null
+        },
+        "venue": {
+            "place_id": null,
+            "name": "Community public venue",
+            "formatted_address": "Budapest, Közösségi tér 1.",
+            "point": {
+                "type": "Point",
+                "coordinates": [
+                    19.0402,
+                    47.4979
+                ]
+            },
+            "city": "Budapest",
+            "city_key": "budapest",
+            "country_code": "HU",
+            "resolved_by": "admin_pin",
+            "resolved_at": 1790000000
+        },
+        "organizer": {
+            "name": "Community Organizer",
+            "website": "https://variety.example.test/"
+        },
+        "links": {
+            "official_url": "https://variety.example.test/participation",
+            "ticket_url": null
+        },
+        "attendee_list": "visible",
+        "verification": {
+            "tier": "admin",
+            "admin_confirmations": {
+                "source": true,
+                "public_venue": true,
+                "timezone": true,
+                "content_safe": true
+            },
+            "checked_at": 1790000000,
+            "next_reverify_at": 1790086400
+        },
+        "image": {
+            "kind": "category_art",
+            "url": null,
+            "credit": null,
+            "license_note": null
+        },
+        "sources": [
+            {
+                "kind": "admin",
+                "url": "https://events.example.test/variety-wire/participation",
+                "hostname": "events.example.test",
+                "source_id": "src_00000000000000000000000000004e2b",
+                "confirmed_at": 1790000000
+            }
+        ],
+        "ai_assisted": false,
+        "credit": {
+            "channel": "admin",
+            "submitted_by_uid": null,
+            "anonymous": true,
+            "first_submitter_uid": null
+        },
+        "editor_input": {
+            "title": "Synthetic variety participation",
+            "summary": {
+                "hu": "Szintetikus nyilvános esemény.",
+                "en": "A synthetic public event."
+            },
+            "category": "sport_participation",
+            "sensitive": {
+                "flag": false,
+                "reason": null
+            },
+            "start_at": 1790172800,
+            "end_at": 1790180000,
+            "timezone": "Europe/Budapest",
+            "all_day": false,
+            "is_free": true,
+            "price_text": null,
+            "age_restriction": null,
+            "venue": {
+                "name": "Community public venue",
+                "formatted_address": "Budapest, Közösségi tér 1.",
+                "longitude": 19.0402,
+                "latitude": 47.4979,
+                "city": "Budapest",
+                "country_code": "HU"
+            },
+            "organizer": {
+                "name": "Community Organizer",
+                "website": "https://variety.example.test/"
+            },
+            "links": {
+                "official_url": "https://variety.example.test/participation",
+                "ticket_url": null
+            },
+            "source_url": "https://events.example.test/variety-wire/participation",
+            "attendee_list": "visible",
+            "confirmations": {
+                "source": false,
+                "public_venue": false,
+                "timezone": false,
+                "content_safe": false
+            }
+        }
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

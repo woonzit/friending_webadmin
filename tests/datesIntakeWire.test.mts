@@ -191,9 +191,9 @@ test("DERIVED: a damaged row is named, an unusable revision or hold removes its 
     assert.deepEqual(Object.values(datesIntakeAffordances(queue.intakes[0], all)), [false, false, false, false, false]);
     assert.equal(queue.intakes[1].controls, true);
   }
-  // A row whose identity, status or key set cannot be trusted is reported, never shown as a normal row.
+  // A row whose identity or status cannot be trusted, or that lacks one of its fields, is reported, never shown as a normal row.
   for (const mutate of [(rows: any[]) => { rows[0].intake_id = "xin_1"; }, (rows: any[]) => { rows[0].status = "paused"; },
-    (rows: any[]) => { delete rows[0].lease; }, (rows: any[]) => { rows[0].submitter_uid = 12; }, (rows: any[]) => { rows[0] = null; }]) {
+    (rows: any[]) => { delete rows[0].lease; }, (rows: any[]) => { delete rows[0].created_at; }, (rows: any[]) => { rows[0] = null; }]) {
     const queue = damage(mutate);
     assert.equal(queue.intakes.length, base.intakes.length - 1);
     assert.equal(queue.unreadable_rows.length, 1); assert.equal(queue.unreadable_rows[0].index, 0);
@@ -201,11 +201,19 @@ test("DERIVED: a damaged row is named, an unusable revision or hold removes its 
   const twins = damage((rows) => { rows[1].intake_id = rows[0].intake_id; });
   assert.deepEqual(twins.unreadable_rows.map((row) => row.index), [0, 1]);
   assert.equal(twins.intakes.length, base.intakes.length - 2);
-  // The page itself is closed: an unknown envelope key, a missing count or a wrong type is not a queue.
-  for (const mutate of [(body: any) => { body.next_cursor = "x"; }, (body: any) => { delete body.status_counts.merged; },
-    (body: any) => { body.status_counts.paused = 0; }, (body: any) => { body.drafts_enabled = 1; }, (body: any) => { body.total = "6"; },
+  // The page is bound on its fields: a missing switch or count, or a wrong type, is not a queue.
+  for (const mutate of [(body: any) => { delete body.suggestions_enabled; }, (body: any) => { delete body.status_counts.merged; },
+    (body: any) => { body.status_counts.merged = "0"; }, (body: any) => { body.drafts_enabled = 1; }, (body: any) => { body.total = "6"; },
     (body: any) => { body.capabilities = ["users_read"]; }, (body: any) => { body.success = false; }]) {
     const body = copy(base); mutate(body); assert.equal(projectDatesIntakeQueue(body, expected), null);
+  }
+  // D-143: a key this console does not know is tolerated - at the top, on a row, and a count of a status it does not
+  // know (the filter lists the statuses it knows; the count of another one is simply not shown).
+  for (const widen of [(body: any) => { body.next_cursor = "x"; }, (body: any) => { body.status_counts.paused = 0; }, (body: any) => { body.intakes[0].submitter_uid = 12; },
+    (body: any) => { body.intakes[0].lease.future = 1; }]) {
+    const body = copy(base); widen(body);
+    const queue = projectDatesIntakeQueue(body, expected);
+    assert.ok(queue, widen.toString()); assert.equal(queue.intakes.length, base.intakes.length); assert.deepEqual(queue.unreadable_rows, []);
   }
   // DERIVED: the three statuses no P2a writer produces still decode as rows.
   for (const status of ["member_confirming", "merged", "withdrawn"]) {
@@ -484,9 +492,12 @@ test("DERIVED: an unreadable part of a detail is named and never shown as empty,
   const stale = read((intake) => { intake.revision = null; })!.intake;
   assert.equal(stale.controls, false);
   assert.deepEqual(Object.values(datesIntakeAffordances(stale, { review: true, manage: true, superadmin: true, draftsEnabled: true })), [false, false, false, false, false]);
-  // The detail itself is closed: an unknown key, another identity or an unknown status is not this intake.
-  assert.equal(read((intake) => { intake.submitter_uid = 12; }), null);
+  // The detail is bound on its fields: a missing one, another identity or an unknown status is not this intake.
   assert.equal(read((intake) => { delete intake.retention_until; }), null);
+  // D-143: a key this console does not know is tolerated - on the intake, on an event, in a section - and the detail
+  // still reads whole.
+  const wider = read((intake) => { intake.submitter_uid = 12; intake.events[0].future = 1; intake.inputs.future = 2; intake.fetch && (intake.fetch.future = 3); })!.intake;
+  assert.deepEqual(wider.unreadable_sections, []); assert.deepEqual(wider.unreadable_fields, []); assert.ok(wider.events![0]);
   assert.equal(read((intake) => { intake.status = "paused"; }), null);
   // DERIVED vocabulary no genuine body carries: a review-grade duplicate candidate that is a published event,
   // a disagreeing witness, a dropped link, and the third provider.
@@ -822,8 +833,12 @@ test("a refusal that is not Core's closed envelope is not reported as Core's wor
   assert.deepEqual(datesIntakeRefusal({ success: false, status_code: 403, error: "dates-admin-capability-required" }),
     { kind: "bridge", error: "dates-admin-capability-required", status: 403 });
   assert.equal(datesIntakeCapabilityRefused(datesIntakeRefusal({ success: false, status_code: 403, error: "dates-admin-capability-required" })), true);
-  for (const value of [null, "refused", { ...core, extra: 1 }, { ...core, status_code: 200 }, { ...core, error: "Not Found" }, { ...core, message: 500 },
+  const { can_send: _send, ...partial } = core;
+  for (const value of [null, "refused", partial, { ...core, status_code: 200 }, { ...core, error: "Not Found" }, { ...core, message: 500 },
     { success: false, error: "core-unavailable" }]) assert.deepEqual(datesIntakeRefusal(value), { kind: "unreadable" });
+  // D-143: Core's refusal is bound on its token, its status and the legacy envelope; another key does not unmake it.
+  assert.deepEqual(datesIntakeRefusal({ ...core, extra: 1 }), { kind: "core", error: core.error, status: core.status_code });
+  assert.deepEqual(datesIntakeRefusal({ success: false, status_code: 502, error: "core-unavailable", detail: "x" }), { kind: "bridge", error: "core-unavailable", status: 502 });
   assert.equal(datesIntakeCapabilityRefused({ kind: "unreadable" }), false);
 });
 
@@ -863,18 +878,22 @@ test("DERIVED: the 80% alert, an exhausted cap, a zero cap and a damaged row of 
   assert.equal(damaged.rows.length, base.usage.rows.length); assert.deepEqual(damaged.unreadable_rows, [base.usage.rows.length]);
   // A provider or task this console does not know is still a row (Core does not declare the ledger's values closed).
   assert.equal(read({ rows: [{ ...base.usage.rows[0], provider: "mistral", task: "research_area" }] })!.usage.rows[0].provider, "mistral");
-  for (const change of [{ month: "2026-13" }, { cap_usd: -1 }, { alert: "no" }, { rows: "none" }, { extra: 1 }]) assert.equal(read(change), null);
+  for (const change of [{ month: "2026-13" }, { cap_usd: -1 }, { alert: "no" }, { rows: "none" }, { calls: undefined }]) assert.equal(read(change), null);
+  // D-143: a key this console does not know is tolerated in the usage read and on a row.
+  assert.ok(read({ extra: 1 })); assert.equal(read({ rows: [{ ...base.usage.rows[0], extra: 1 }] })!.usage.unreadable_rows.length, 0);
 });
 
 // ---------------------------------------------------------------- flyer read
 
-test("genuine flyer read is a closed, audited JPEG receipt; its bytes are checked where they are decoded", () => {
+test("genuine flyer read is an audited JPEG read bound on its fields; its bytes are checked where they are decoded", () => {
   const body = fixture("admin-image-read"), read = decodeDatesIntakeImage(body, 1);
   assert.deepEqual(read, body);
   assert.equal(read!.image.mime, "image/jpeg"); assert.match(read!.audit_id, /^aud_[a-f0-9]{32}$/);
   assert.equal(decodeDatesIntakeImage(body, 2), null, "the receipt of another flyer");
-  for (const change of [{ mime: "image/png" }, { index: 3 }, { sha256: "abc" }, { url: "https://cdn.example/flyer.jpg" }])
+  for (const change of [{ mime: "image/png" }, { index: 3 }, { sha256: "abc" }, { data_base64: undefined }])
     assert.equal(decodeDatesIntakeImage({ ...body, image: { ...body.image, ...change } }, 1), null);
+  // D-143: a key this console does not know is tolerated; the route still serves only the decoded JPEG bytes, never an address.
+  assert.ok(decodeDatesIntakeImage({ ...body, image: { ...body.image, url: "https://cdn.example/flyer.jpg" } }, 1));
   // The corpus normalises the bytes to a placeholder (they depend on the encoder build), which is not a JPEG.
   assert.match(body.image.data_base64, /^<base64 of the JPEG/);
   assert.equal(datesIntakeImageBytes(read!), null);
@@ -895,12 +914,18 @@ test("genuine external list with an AI-assisted row carries the label on the row
   assert.equal(body.events[0].ai_assisted, true); assert.equal(Object.keys(body.events[0]).at(-1), "ai_assisted");
   // The row is the event the two AI-assisted details describe.
   assert.equal(body.events[0].external_event_id, fixture("admin-external-detail-ai-assisted").event.external_event_id);
-  // The label is a strict boolean and part of the closed row: missing, loosely typed or joined by the detail's key is not a list.
-  for (const change of [{ ai_assisted: "true" }, { ai_assisted: 1 }, { ai_assisted: undefined }, { intake: { intake_id: xin(5), channel: "admin_draft", event_index: 0 } }]) {
+  // The label, when served, is a strict boolean.
+  for (const change of [{ ai_assisted: "true" }, { ai_assisted: 1 }, { ai_assisted: null }]) {
     const value = copy(body); Object.assign(value.events[0], change);
-    if (Object.hasOwn(change, "ai_assisted") && change.ai_assisted === undefined) delete value.events[0].ai_assisted;
     assert.equal(decodeDatesExternalList(value, { page: body.page, limit: body.limit }), null, JSON.stringify(change));
   }
+  // D-143: without the selector Core serves the released P1 row - no label at all. It decodes; absent reads as "not AI-assisted".
+  const released = copy(body); delete released.events[0].ai_assisted;
+  assert.deepEqual(decodeDatesExternalList(released, { page: body.page, limit: body.limit }), released);
+  assert.equal(decodeDatesExternalList(released, { page: body.page, limit: body.limit })!.events[0].ai_assisted === true, false);
+  // ... and a key this console does not know on a row is tolerated.
+  const wider = copy(body); wider.events[0].intake = { intake_id: xin(5), channel: "admin_draft", event_index: 0 };
+  assert.deepEqual(decodeDatesExternalList(wider, { page: body.page, limit: body.limit }), wider);
 });
 for (const name of ["member-credit", "auto-published"]) test(`genuine external detail ${name}: an event from a member's suggestion decodes whole, with the confirmations as they were given`, () => {
   const body = fixture(`admin-external-detail-${name}`), reviewed = name === "member-credit";
@@ -926,8 +951,8 @@ test("genuine external detail of an event published from an intake: AI-assisted,
   assert.deepEqual(body.event.intake, { intake_id: xin(5), channel: "admin_draft", event_index: 0 });
   assert.equal(Object.keys(body.event).at(-1), "intake");
   assert.doesNotMatch(JSON.stringify(body), /provider|admin_principal|source_texts|openai|gemini/);
-  // The reference is closed, and it goes with the label: Core derives both from one ledger record.
-  for (const change of [null, { intake_id: xin(5), channel: "admin_draft" }, { intake_id: xin(5), channel: "admin_draft", event_index: 0, provider: "openai" },
+  // The reference is bound on its three fields, and it goes with the label: Core derives both from one ledger record.
+  for (const change of [null, { intake_id: xin(5), channel: "admin_draft" },
     { intake_id: "xin_5", channel: "admin_draft", event_index: 0 }, { intake_id: xin(5), channel: "partner_feed", event_index: 0 },
     { intake_id: xin(5), channel: "admin_draft", event_index: -1 }, { intake_id: xin(5), channel: "admin_draft", event_index: "0" }]) {
     const value = copy(body); value.event.intake = change;
@@ -935,8 +960,12 @@ test("genuine external detail of an event published from an intake: AI-assisted,
   }
   const unlabelled = copy(body); unlabelled.event.ai_assisted = false;
   assert.equal(decodeDatesExternalDetail(unlabelled, body.event.external_event_id), null, "an intake reference on an event that is not AI-assisted");
+  // D-143: a key Core might add to the reference is tolerated (the panel prints the three named fields only) ...
+  const widened = copy(body); widened.event.intake = { ...body.event.intake, provider: "openai" };
+  assert.deepEqual(decodeDatesExternalDetail(widened, body.event.external_event_id), widened);
+  // ... and without the selector the reference is not served at all: the event still decodes, with no link back.
   const dropped = copy(body); delete dropped.event.intake;
-  assert.equal(decodeDatesExternalDetail(dropped, body.event.external_event_id), null);
+  assert.deepEqual(decodeDatesExternalDetail(dropped, body.event.external_event_id), dropped);
   // DERIVED: the two channels P2b and P3 will write decode as references too.
   for (const channel of ["member_suggestion", "ai_research"]) {
     const value = copy(body); value.event.intake = { intake_id: xin(9), channel, event_index: 3 };
