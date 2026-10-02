@@ -55,7 +55,7 @@ function harness(intakeId: string, answers: Record<string, unknown>) {
     datesExternalBrowserStorage: () => storage,
     adminCall: async (action: string, body: any) => { sent.push({ action, body });
       const answer = table[action]; return typeof answer === "function" ? (answer as (body: unknown) => unknown)(body) : answer; } };
-  for (const name of ["State", "Result", "Operator", "Problem", "Notice", "Busy", "Pending", "OpenEvent", "Complete", "Candidate", "RejectCommand", "RejectNote", "ConfirmReject"])
+  for (const name of ["State", "Result", "Operator", "Problem", "Notice", "Busy", "Pending", "OpenEvent", "Complete", "Candidate", "RejectCommand", "RejectNote", "ConfirmReject", "StaleRead"])
     context[`set${name}`] = (value: unknown) => { state[name] = typeof value === "function" ? value(state[name]) : value; writes.push(name);
       if (name === "Operator") context.operator = value; };
   vm.runInNewContext(code, context);
@@ -102,6 +102,7 @@ test("the first read shows the intake; a later read that merely fails never wipe
 });
 
 const settle = () => new Promise((resolve) => setImmediate(resolve));
+const readableRevision = (body: unknown, id: string) => projectDatesIntakeDetail(body, id)?.intake.revision ?? null;
 
 test("reads take their turn; a reply to an earlier read never replaces a newer one, and nothing is adopted after unmount", async () => {
   const older = fixture("admin-detail-in-review-multi"), newer = fixture("admin-detail-in-review-partial");
@@ -434,4 +435,54 @@ test("review finding: with an unreadable sibling the page sends complete=false u
   assert.match(source, /complete: datesIntakeCompleteFlag\(completion, complete\)/);
   assert.doesNotMatch(source, /publishable\.length === 1/);
   assert.match(source, /<DatesIntakeCompletionChoice completion=\{completion\} close=\{complete\} disabled=\{writeBlocked\} onChange=\{setComplete\} \/>/);
+});
+
+test("review recheck: a served revision this console cannot read never replaces a known one", async () => {
+  // The genuine receipts of one intake again: claimed at 10, heartbeat to 11, release to 12.
+  const text = fixture("admin-detail-in-review-text"), claim = fixture("admin-lease-claim"), beat = fixture("admin-lease-heartbeat"), release = fixture("admin-lease-release");
+  const id = text.intake.intake_id;
+  const at = (receipt: any) => ({ ...text, intake: { ...text.intake, revision: receipt.intake.revision, lease: receipt.intake.lease } });
+  // DERIVED: the same detail with the revision in shapes Core does not serve today - a future type, a fraction, nothing.
+  for (const malformed of ["12", 12.5, null, { value: 12 }, -1]) {
+    const h = harness(id, { dates_event_intake_detail: at(claim), dates_event_intake_lease: (body: any) => body.action === "heartbeat" ? beat : release });
+    await h.api.load(); await h.api.heartbeat(0);
+    assert.equal(h.context.revision.current, 11);
+    const shown = plain(h.state.Result.read.intake);
+    assert.equal(shown.revision, 11); assert.equal(shown.controls, true); assert.equal(shown.lease.mine, true);
+    const unreadable = { ...at(beat), intake: { ...at(beat).intake, revision: malformed } };
+    assert.equal(readableRevision(unreadable, id), null, `${JSON.stringify(malformed)}: the projection has no revision`);
+    h.table.dates_event_intake_detail = unreadable;
+    let writes = [...h.writes];
+    // The worker's poll and the read after a command: the page keeps what it holds, and marks the read.
+    await h.api.load(undefined, "quiet");
+    assert.equal(h.context.revision.current, 11, "the known revision stays");
+    assert.deepEqual(h.writes.slice(writes.length), ["StaleRead"]); assert.equal(h.state.StaleRead, true);
+    assert.deepEqual(plain(h.state.Result.read.intake), shown, "controls and the hold stay as they were read");
+    // Refresh says that it could not refresh.
+    writes = [...h.writes];
+    await h.api.load(undefined, "refresh");
+    assert.deepEqual(h.writes.slice(writes.length), ["StaleRead", "Notice"]);
+    assert.deepEqual(plain(h.state.Notice), { tone: "error", key: "detail.refreshFailed" }); assert.equal(h.context.revision.current, 11);
+    // The hold is still renewed, with the revision the page knows, and the next command carries the receipt's.
+    h.table.dates_event_intake_lease = (body: any) => body.action === "heartbeat" ? { ...beat, intake: { ...beat.intake, revision: 12 } } : { ...release, intake: { ...release.intake, revision: 13 } };
+    h.table.dates_event_intake_detail = unreadable;
+    await h.api.heartbeat(0);
+    assert.deepEqual(plain(h.calls("dates_event_intake_lease").at(-1)!.body), { intake_id: id, expected_revision: 11, action: "heartbeat" });
+    assert.equal(h.context.revision.current, 12);
+    await h.api.lease("release");
+    assert.deepEqual(plain(h.calls("dates_event_intake_lease").at(-1)!.body), { intake_id: id, expected_revision: 12, action: "release" });
+    assert.equal(h.context.revision.current, 13, "never null");
+    // A read that is whole again is adopted and clears the mark.
+    h.table.dates_event_intake_detail = { ...text, intake: { ...text.intake, revision: 13, lease: release.intake.lease } };
+    await h.api.load(undefined, "quiet");
+    assert.equal(h.state.StaleRead, false); assert.equal(h.state.Result.read.intake.revision, 13);
+  }
+  // A first read has nothing to protect: the unreadable revision is shown as it is, with the controls off.
+  const first = harness(id, { dates_event_intake_detail: { ...text, intake: { ...text.intake, revision: "9" } } });
+  await first.api.load();
+  assert.equal(first.state.State, "ready"); assert.equal(first.context.revision.current, null); assert.equal(first.state.Result.read.intake.controls, false);
+  await first.api.lease("claim"); assert.equal(first.calls("dates_event_intake_lease").length, 0, "no command without a revision");
+  // The mark is shown as words, in both languages.
+  assert.match(source, /\{staleRead && state === "ready" && <p className="alert alert-warning" role="status">\{t\("detail\.revisionUnreadable"\)\}<\/p>\}/);
+  for (const locale of ["en", "hu"]) assert.equal(typeof JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8")).datesAdmin.intake.detail.revisionUnreadable, "string");
 });

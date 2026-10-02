@@ -9258,7 +9258,8 @@
         "eventsUnreadable": "A kiolvasott események nem olvashatók: a Core olyan alakban adta őket, amelyet ez a konzol nem ismer. Nem hiányoznak, és ez nem jelenti azt, hogy az MI nem talált eseményt. Erről az oldalról semmi nem publikálható, amíg a konzol nem tudja olvasni őket.",
         "runsUnreadable": "A beküldés MI-hívásai nem olvashatók. Ez nem jelenti azt, hogy nem volt MI-hívás; a havi adatok az MI-költés oldalon láthatók.",
         "textsUnreadable": "A Core által a forrásból őrzött szöveg nem olvasható. Nem üres, hanem ismeretlen.",
-        "couldNotRead": "Nem olvasható"
+        "couldNotRead": "Nem olvasható",
+        "revisionUnreadable": "A beküldés legutóbbi beolvasása nem használható: a Core olyan alakban adta a revízióját, amelyet ez a konzol nem ismer. Az oldal az utoljára hiánytalanul beolvasott állapotot mutatja; a foglalásod és a műveletek ebből az állapotból továbbra is működnek. Frissíts az újrapróbáláshoz."
       },
       "checks": {
         "weekday_match": "A forrásban szereplő nap egyezik a dátummal",

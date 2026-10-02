@@ -9258,7 +9258,8 @@
         "eventsUnreadable": "The extracted events could not be read: Core served them in a shape this console does not know. They are not missing, and this does not mean the AI found no event. Nothing can be published from this page until the console can read them.",
         "runsUnreadable": "The AI calls of this intake could not be read. That does not mean no AI call was made; the monthly figures are on the AI usage page.",
         "textsUnreadable": "The text Core holds of the source could not be read. It is not empty; it is unknown.",
-        "couldNotRead": "Could not be read"
+        "couldNotRead": "Could not be read",
+        "revisionUnreadable": "The last read of this intake could not be used: Core served its revision in a shape this console does not know. The page shows the state it last read whole; your hold and the actions still work from that state. Refresh to try again."
       },
       "checks": {
         "weekday_match": "The weekday in the source matches the date",

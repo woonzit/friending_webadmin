@@ -57,6 +57,8 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
   const [rejectCommand, setRejectCommand] = useState<DatesIntakeRejectCommand | null>(null);
   const [confirmReject, setConfirmReject] = useState(false);
   const [tick, setTick] = useState(0);
+  // The last read could not be used because its revision was unreadable; the page shows the state it last read whole.
+  const [staleRead, setStaleRead] = useState(false);
   const generation = useRef(0), lifetime = useRef(0), busyRef = useRef(false), revision = useRef<number | null>(null);
   const serial = useRef(createDatesIntakeSerial()), startedAt = useRef(Date.now()), pendingRef = useRef(false);
 
@@ -89,6 +91,14 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
       // command succeeded is older than what the page already holds: it is not adopted, and the read is
       // issued once more instead.
       const served = next.read.intake.revision;
+      // A body whose revision this console cannot read proves no newer state. It never replaces a revision the page
+      // knows: the page keeps what it last read whole - its hold, its renewal and its controls with it - and says
+      // that it could not refresh.
+      if (revision.current !== null && served === null) {
+        setStaleRead(true);
+        if (mode === "refresh") setNotice({ tone: "error", key: "detail.refreshFailed" });
+        return;
+      }
       if (revision.current !== null && served !== null && served < revision.current) {
         if (attempt === 0) continue;
         if (mode === "refresh") setNotice({ tone: "error", key: "detail.refreshFailed" });
@@ -97,7 +107,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
       const saved = readDatesExternalPending(datesExternalBrowserStorage(), next.operator.principal.email);
       revision.current = served; pendingRef.current = saved.kind !== "empty";
       setResult({ read: next.read, draftsEnabled: next.draftsEnabled }); setOperator(next.operator); setPending(saved);
-      setProblem(null); setState("ready");
+      setProblem(null); setState("ready"); setStaleRead(false);
       return;
     }
   }, [intakeId]);
@@ -271,6 +281,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
         <button className="button button-secondary" disabled={busy} onClick={() => { setNotice(null); void load(undefined, result ? "refresh" : "initial"); }}>{common("refresh")}</button></div>} />
     <DatesAdminTabs />
     <p className="alert alert-warning" role="note">{t("aiNotice")}</p>
+    {staleRead && state === "ready" && <p className="alert alert-warning" role="status">{t("detail.revisionUnreadable")}</p>}
     {notice && (notice.key === "refused" && notice.error ? <DatesIntakeRefusal error={notice.error} />
       : <p className={`alert alert-${notice.tone}`} role="status">{t(notice.key)}{notice.error ? <> <code>{notice.error}</code></> : null}
         {notice.eventId ? <> <Link href={`/dates/external/${notice.eventId}`}>{t("publish.openEvent")}</Link></> : null}</p>)}
