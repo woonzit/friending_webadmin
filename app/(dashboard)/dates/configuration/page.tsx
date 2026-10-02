@@ -17,8 +17,13 @@ import {
   datesReasonEntryPoints,
   datesReasonEntryPointsRefused,
   datesReportEntryPointsFor,
+  DATES_AI_MODEL_SETTING_KEYS,
+  datesModelIdValid,
   datesRuntimeSettingVisible,
+  datesSettingEditable,
   datesSettingEffectiveText,
+  datesStringListFromInput,
+  datesStringListProblem,
   datesSettingStorefrontEffective,
   hasDatesCapability,
   humanizeMachineKey,
@@ -162,10 +167,26 @@ function SettingEditor({ setting, canManage, onSaved, onError }: { setting: Sett
   const [value, setValue] = useState(datesConfigurationRawValue(setting.type, setting.value));
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState("");
+  const providers = useTranslations("datesAdmin.intake.providerValues");
+  const itemLabel = (item: string) => providers.has(item) ? providers(item) : humanizeMachineKey(item);
+  // A row type this console does not know is shown as Core sent it and cannot be saved from here.
+  const editable = datesSettingEditable(setting.type);
+  const items = setting.type === "string_list" ? datesStringListFromInput(value) : [];
+  const ordered = setting.type === "string_list" && Array.isArray(setting.allowed_values) ? setting.allowed_values : null;
+
+  function change(next: string) { setValue(next); setProblem(""); }
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
-    if (reason.trim().length < 3 || busy) return;
+    if (!editable || reason.trim().length < 3 || busy) return;
+    // The console's own check only spares a round trip; Core validates every value again.
+    if (setting.type === "string" && (DATES_AI_MODEL_SETTING_KEYS as readonly string[]).includes(setting.key) && !datesModelIdValid(value.trim())) {
+      setProblem(t("modelIdInvalid")); return;
+    }
+    const listProblem = setting.type === "string_list" ? datesStringListProblem(setting, items) : null;
+    if (listProblem) { setProblem(t(`stringListProblems.${listProblem}`, { minimum: setting.minimum ?? 0, maximum: setting.maximum ?? 0 })); return; }
+    setProblem("");
     setBusy(true);
     const response = await adminCall("dates_configuration_save", {
       key: setting.key,
@@ -189,9 +210,22 @@ function SettingEditor({ setting, canManage, onSaved, onError }: { setting: Sett
         : setting.type === "enum" ? <select value={value} disabled={!canManage || busy} onChange={(event) => setValue(event.target.value)}>{(setting.allowed_values || []).map((item) => <option key={item} value={item}>{humanizeMachineKey(item)}</option>)}</select>
           : setting.type === "storefront_overrides" ? <label className="field"><span>{t("storefrontOverridesLabel")}</span><textarea value={value} maxLength={16000} rows={4} spellCheck={false} disabled={!canManage || busy} onChange={(event) => setValue(event.target.value)} /><small>{t("storefrontOverridesHelp")}</small></label>
             : quiet ? <div className="dates-quiet-hours"><input type="time" value={quiet[0] || ""} disabled={!canManage || busy} onChange={(event) => setValue(`${event.target.value}|${quiet[1] || ""}`)} /><span>→</span><input type="time" value={quiet[1] || ""} disabled={!canManage || busy} onChange={(event) => setValue(`${quiet[0] || ""}|${event.target.value}`)} /></div>
+            : !editable ? <label className="field"><span>{t("unknownTypeLabel", { type: setting.type })}</span><code className="dates-external-payload">{datesConfigurationRawValue(setting.type, setting.value) || "—"}</code><small>{t("unknownTypeHelp")}</small></label>
+            : setting.type === "string" ? <label className="field"><span>{t("stringLabel")}</span><input type="text" value={value} maxLength={253} spellCheck={false} autoCapitalize="none" autoCorrect="off" disabled={!canManage || busy} onChange={(event) => change(event.target.value)} /><small>{t((DATES_AI_MODEL_SETTING_KEYS as readonly string[]).includes(setting.key) ? "modelIdHelp" : "stringHelp")}</small></label>
+            : ordered ? <div className="field"><span>{t("orderedListLabel")}</span><ol className="dates-ordered-list">{items.map((item, index) => <li key={item}>
+                <span>{itemLabel(item)}</span>
+                <span className="row-actions">
+                  <button type="button" className="button button-secondary button-small" disabled={!canManage || busy || index === 0} aria-label={t("orderedListUp", { item: itemLabel(item) })} onClick={() => change(items.map((entry, position) => position === index - 1 ? item : position === index ? items[index - 1] : entry).join("\n"))}>↑</button>
+                  <button type="button" className="button button-secondary button-small" disabled={!canManage || busy || index === items.length - 1} aria-label={t("orderedListDown", { item: itemLabel(item) })} onClick={() => change(items.map((entry, position) => position === index + 1 ? item : position === index ? items[index + 1] : entry).join("\n"))}>↓</button>
+                  <button type="button" className="button button-secondary button-small" disabled={!canManage || busy} aria-label={t("orderedListRemove", { item: itemLabel(item) })} onClick={() => change(items.filter((entry) => entry !== item).join("\n"))}>×</button>
+                </span></li>)}</ol>
+                {ordered.filter((item) => !items.includes(item)).map((item) => <button key={item} type="button" className="button button-secondary button-small" disabled={!canManage || busy} onClick={() => change([...items, item].join("\n"))}>{t("orderedListAdd", { item: itemLabel(item) })}</button>)}
+                <small>{t("orderedListHelp")}</small></div>
+            : setting.type === "string_list" ? <label className="field"><span>{t("stringListLabel")}</span><textarea value={value} rows={Math.min(12, Math.max(4, items.length + 1))} maxLength={16000} spellCheck={false} autoCapitalize="none" disabled={!canManage || busy} onChange={(event) => change(event.target.value)} /><small>{t(setting.key === "dates_event_ticket_domains" ? "ticketDomainsHelp" : "stringListHelp")}</small></label>
             : <input type="number" min={setting.minimum ?? undefined} max={setting.maximum ?? undefined} value={value} disabled={!canManage || busy} placeholder={setting.key === DATES_LIVE_TRAIL_RETENTION_KEY ? t("liveRetentionPlaceholder") : setting.type === "nullable_integer" ? t("noLimit") : undefined} onChange={(event) => setValue(event.target.value)} />}
+      {problem && <small className="field-error" role="alert">{problem}</small>}
     </div>
-    {canManage && <><label className="field"><span>{t("auditReason")}</span><input required maxLength={1000} value={reason} onChange={(event) => setReason(event.target.value)} /></label><button className="button button-primary button-small" disabled={busy} type="submit">{busy ? common("saving") : common("save")}</button></>}
+    {canManage && editable && <><label className="field"><span>{t("auditReason")}</span><input required maxLength={1000} value={reason} onChange={(event) => setReason(event.target.value)} /></label><button className="button button-primary button-small" disabled={busy} type="submit">{busy ? common("saving") : common("save")}</button></>}
   </form>;
 }
 

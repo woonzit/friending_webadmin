@@ -151,6 +151,15 @@ const EXPECTED_RUNTIME_HELP_KEYS = [
   "dates_event_invite_daily_limit",
   "dates_event_invite_per_event_limit",
   "dates_event_lookahead_days",
+  // T-865 P2a: the AI event intake group.
+  "dates_external_admin_drafts_enabled",
+  "dates_ai_monthly_budget_usd",
+  "dates_ai_provider_order",
+  "dates_ai_openai_model",
+  "dates_ai_openai_adjudication_model",
+  "dates_ai_gemini_model",
+  "dates_event_intake_retention_days",
+  "dates_event_ticket_domains",
 ] as const;
 
 test("Dates Core bridge actions are an exact explicit allow-list", () => {
@@ -596,7 +605,7 @@ test("Dates availability has no second control, writer, route, permission, or na
 test("Dates runtime help covers every bounded Core setting in both locales", () => {
   assert.deepEqual(DATES_RUNTIME_HELP_KEYS, EXPECTED_RUNTIME_HELP_KEYS);
   assert.equal(new Set(DATES_RUNTIME_HELP_KEYS).size, EXPECTED_RUNTIME_HELP_KEYS.length);
-  assert.equal(DATES_RUNTIME_HELP_GROUPS.length, 6);
+  assert.equal(DATES_RUNTIME_HELP_GROUPS.length, 7);
 
   const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
   const component = readFileSync(new URL("../components/DatesRuntimeSettingsHelp.tsx", import.meta.url), "utf8");

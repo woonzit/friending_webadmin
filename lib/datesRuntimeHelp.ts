@@ -61,6 +61,20 @@ export const DATES_RUNTIME_HELP_GROUPS = [
       "dates_event_lookahead_days",
     ],
   },
+  {
+    // T-865 P2a: the AI-assisted event intake ("Draft from source").
+    id: "eventIntake",
+    settingKeys: [
+      "dates_external_admin_drafts_enabled",
+      "dates_ai_monthly_budget_usd",
+      "dates_ai_provider_order",
+      "dates_ai_openai_model",
+      "dates_ai_openai_adjudication_model",
+      "dates_ai_gemini_model",
+      "dates_event_intake_retention_days",
+      "dates_event_ticket_domains",
+    ],
+  },
 ] as const;
 
 export const DATES_RUNTIME_HELP_KEYS = DATES_RUNTIME_HELP_GROUPS.flatMap(

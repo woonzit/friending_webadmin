@@ -447,11 +447,63 @@ export function datesReasonEntryPointsRefused(error: unknown): boolean {
   return error === "dates-report-entry-points-invalid";
 }
 
+/**
+ * The setting row types this console has an editor for. Core may add a type
+ * before the console learns it; such a row is shown read-only, never through
+ * the number field of the types it does know.
+ */
+export const DATES_SETTING_EDITOR_TYPES = ["boolean", "integer", "nullable_integer", "enum", "quiet_hours", "storefront_overrides",
+  "string", "string_list"] as const;
+
+export function datesSettingEditable(type: unknown): boolean {
+  return typeof type === "string" && (DATES_SETTING_EDITOR_TYPES as readonly string[]).includes(type);
+}
+
+/** T-865 P2a: the model ids of the event AI. Core validates their shape; there is no closed list. */
+export const DATES_AI_MODEL_SETTING_KEYS = ["dates_ai_openai_model", "dates_ai_openai_adjudication_model", "dates_ai_gemini_model"] as const;
+export const DATES_TICKET_DOMAINS_SETTING_KEY = "dates_event_ticket_domains";
+
+/** Core's shape of a provider's model id (DatesEventIntakeSettings::modelId). */
+export function datesModelIdValid(value: string): boolean {
+  return value.length <= 64 && /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+){0,11}$/.test(value);
+}
+
+/** Core's shape of a ticketing site: a lower-case registrable host name, no scheme, no path, no `www.`. */
+export function datesTicketDomainValid(value: string): boolean {
+  return value.length <= 253 && !value.startsWith("www.") && /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$/.test(value);
+}
+
+/** A `string_list` as it is edited: one item per line (a comma also separates). Nothing is dropped but blank lines. */
+export function datesStringListFromInput(raw: string): string[] {
+  return raw.split(/[\n,]/).map((item) => item.trim()).filter((item) => item !== "");
+}
+
+export type DatesStringListProblem = "count" | "duplicate" | "value" | "length" | "host";
+
+/**
+ * What Core would refuse in a `string_list`, as far as the row itself says:
+ * `minimum` / `maximum` bound the number of items and `allowed_values`, when
+ * present, is the closed set an item comes from. Core checks again.
+ */
+export function datesStringListProblem(
+  setting: { key: string; minimum: number | null; maximum: number | null; allowed_values: string[] | null },
+  items: readonly string[],
+): DatesStringListProblem | null {
+  if ((setting.minimum !== null && items.length < setting.minimum) || (setting.maximum !== null && items.length > setting.maximum)) return "count";
+  if (new Set(items).size !== items.length) return "duplicate";
+  if (items.some((item) => item === "" || new TextEncoder().encode(item).length > 253)) return "length";
+  if (setting.allowed_values && items.some((item) => !setting.allowed_values!.includes(item))) return "value";
+  return setting.key === DATES_TICKET_DOMAINS_SETTING_KEY && items.some((item) => !datesTicketDomainValid(item)) ? "host" : null;
+}
+
 export function configurationInputValue(type: string, raw: string, settingKey = ""): unknown {
-  // These P1 settings use Core's strict integer parser. Do not turn 1.5,
-  // 01 or 20days into an accepted integer before Core sees the request.
+  // These settings use Core's own integer parser. Do not turn 1.5, 01 or
+  // 20days into an accepted integer before Core sees the request.
   if (type === "integer" && ["dates_event_invite_daily_limit", "dates_event_invite_per_event_limit",
-    "dates_event_lookahead_days"].includes(settingKey)) return raw;
+    "dates_event_lookahead_days", "dates_ai_monthly_budget_usd", "dates_event_intake_retention_days"].includes(settingKey)) return raw;
+  // A model id or another string is Core's to validate; a list travels as a list.
+  if (type === "string") return raw.trim();
+  if (type === "string_list") return datesStringListFromInput(raw);
   if (type === "boolean") return raw === "true";
   if (type === "integer") return Number.parseInt(raw, 10);
   if (type === "nullable_integer") return raw.trim() === "" ? null : Number.parseInt(raw, 10);
@@ -471,6 +523,9 @@ export function datesConfigurationRawValue(type: string, value: unknown): string
     // PHP's empty associative map is [] on the read wire; the edit is a JSON map.
     return JSON.stringify(Array.isArray(value) && value.length === 0 ? {} : value, null, 2);
   }
+  if (type === "string_list") return Array.isArray(value) ? value.filter((item) => typeof item === "string").join("\n") : "";
+  // A value of a type this console does not know is shown as Core sent it.
+  if (value !== null && typeof value === "object") return JSON.stringify(value);
   return value === null || value === undefined ? "" : String(value);
 }
 
@@ -497,6 +552,9 @@ export function datesSettingEffectiveText(
       : "—";
   }
   if (booleans && typeof effective === "boolean") return effective ? booleans.on : booleans.off;
+  if (type === "string_list") return Array.isArray(effective) && effective.every((item) => typeof item === "string")
+    ? effective.length === 0 ? "[]" : effective.join(", ") : "—";
+  if (effective !== null && typeof effective === "object") return JSON.stringify(effective);
   return String(effective ?? "null");
 }
 
