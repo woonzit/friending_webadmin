@@ -4,6 +4,7 @@ import {
   normalizeDatesExternalEditorInput, normalizeDatesExternalManualEvent,
   type DatesExternalEditorInput,
 } from "@/lib/datesExternalInput";
+import { decodeDatesIntakePublishReceipt, normalizeDatesIntakePublishBody, type DatesIntakePublishReceipt } from "@/lib/datesIntakeAdmin";
 
 export const DATES_EXTERNAL_ACTIONS = [
   "dates_external_event_list", "dates_external_event_detail",
@@ -100,10 +101,13 @@ const factsShape = {
 };
 const coordinates: Guard<[number, number]> = (value): value is [number, number] => Array.isArray(value) && value.length === 2
   && value.every((item) => typeof item === "number" && Number.isFinite(item)) && Math.abs(value[0]) <= 180 && Math.abs(value[1]) <= 90;
+// P2a: an event published from an intake keeps the Places id of the venue the
+// reviewer left untouched; every other venue is an administrator's pin.
 const venueShape = {
-  place_id: literal(null), name: text(1, 200), formatted_address: text(1, 400),
+  place_id: nullable(((value: unknown): value is string => typeof value === "string" && /^[A-Za-z0-9_-]{1,256}$/.test(value))),
+  name: text(1, 200), formatted_address: text(1, 400),
   point: object({ type: literal("Point"), coordinates }), city: text(1, 120), city_key: text(1, 512),
-  country_code: rowShape.country_code, resolved_by: literal("admin_pin"), resolved_at: epoch,
+  country_code: rowShape.country_code, resolved_by: oneOf(["admin_pin", "places"] as const), resolved_at: epoch,
 };
 const organizerGuard = object({ name: text(1, 160), website: nullable(datesExternalHttpsUrl) });
 const linksGuard = object({ official_url: nullable(datesExternalHttpsUrl), ticket_url: nullable(datesExternalHttpsUrl) });
@@ -115,7 +119,8 @@ const detailRowGuard = object({ ...rowShape, facts: object(factsShape), venue: o
   links: linksGuard, attendee_list: oneOf(["visible", "count_only"] as const), verification: verificationGuard,
   image: object({ kind: literal("category_art"), url: literal(null), credit: literal(null), license_note: literal(null) }),
   credit: object({ channel: oneOf(DATES_EXTERNAL_CHANNELS), submitted_by_uid: nullable(integer(1)), anonymous: bool, first_submitter_uid: nullable(integer(1)) }),
-  sources: array(sourceGuard, 20, 1), ai_assisted: literal(false), editor_input: freshEditor });
+  // P2a: true exactly when Core's ledger records the AI intake that drafted the event.
+  sources: array(sourceGuard, 20, 1), ai_assisted: bool, editor_input: freshEditor });
 export type DatesExternalDetailRow = Parsed<typeof detailRowGuard>;
 const detailGuard = object({ ...envelope, event: detailRowGuard, capabilities });
 export type DatesExternalDetail = Parsed<typeof detailGuard>;
@@ -173,6 +178,7 @@ export function decodeDatesExternalEvent(value: unknown, caps: string[], now: nu
     || row.verification_tier !== row.verification.tier || row.checked_at !== row.verification.checked_at
     || row.next_reverify_at !== row.verification.next_reverify_at || row.sources[0].url !== editor.source_url
     || row.credit.channel !== row.credit_channel
+    || (row.venue.resolved_by === "places") !== (row.venue.place_id !== null)
     || (row.credit.channel === "admin" && (row.credit.submitted_by_uid !== null || row.credit.first_submitter_uid !== null || !row.credit.anonymous))
     || new Set(row.sources.map((source) => source.source_id)).size !== row.sources.length
     || row.sources.some((source) => new URL(source.url).hostname !== source.hostname || source.confirmed_at > now)) return null;
@@ -196,7 +202,7 @@ const memberActivityShape = { ...activityShape, title: memberText(120), city: nu
 const memberHost = object({ uid: integer(1), display_name: memberText(64000) });
 const externalActivityShape = { origin: literal("external"), external_event_id: id("xev"), host: literal(null),
   organizer_name: text(1, 160), organizer_url: nullable(datesExternalHttpsUrl), verification_tier: oneOf(DATES_EXTERNAL_TIERS),
-  ai_assisted: literal(false), can_host_transfer: literal(false) };
+  ai_assisted: bool, can_host_transfer: literal(false) };
 const memberActivityGuard = object({ ...memberActivityShape, host: memberHost });
 const externalActivityGuard = object({ ...activityShape, ...externalActivityShape });
 export type DatesActivityListRow = Parsed<typeof memberActivityGuard> | Parsed<typeof externalActivityGuard>;
@@ -316,9 +322,11 @@ const activityCommandReceiptGuard = object({ ...activityReceiptShape, action: on
   event_status: oneOf(DATES_EXTERNAL_STATUSES), lifecycle: rowShape.lifecycle, soft_deleted: bool });
 const activityPurgeReceiptGuard = object({ ...activityReceiptShape, purged: literal(true) });
 export type DatesExternalReceipt = Parsed<typeof receiptGuard> | Parsed<typeof commandReceiptGuard> | Parsed<typeof updateReceiptGuard>
-  | Parsed<typeof activityCommandReceiptGuard> | Parsed<typeof activityPurgeReceiptGuard>;
+  | Parsed<typeof activityCommandReceiptGuard> | Parsed<typeof activityPurgeReceiptGuard> | DatesIntakePublishReceipt;
 export type DatesExternalMutationBaseline = Pick<DatesExternalRow, "external_event_id" | "activity_id" | "revision" | "activity_revision" | "status" | "lifecycle" | "soft_deleted">;
-export type DatesExternalMutationAction = "dates_external_event_publish" | "dates_external_event_update" | "dates_external_event_command" | "dates_activity_command";
+/** `dates_event_intake_publish` (P2a) is the same publisher, entered from a reviewed AI intake. */
+export type DatesExternalMutationAction = "dates_external_event_publish" | "dates_external_event_update" | "dates_external_event_command" | "dates_activity_command"
+  | "dates_event_intake_publish";
 
 export function decodeDatesExternalReceipt(value: unknown, action: DatesExternalMutationAction,
   body: Record<string, unknown>, baseline: DatesExternalMutationBaseline | null): DatesExternalReceipt | null {
@@ -326,6 +334,7 @@ export function decodeDatesExternalReceipt(value: unknown, action: DatesExternal
     return baseline === null && receiptGuard(value) && value.revision === 1 && value.activity_revision === 1
       && value.event_status === "published" ? value : null;
   }
+  if (action === "dates_event_intake_publish") return baseline === null ? decodeDatesIntakePublishReceipt(value, body) : null;
   if (action === "dates_activity_command") {
     if (!baseline || body.activity_id !== baseline.activity_id || Number(body.expected_revision) !== baseline.activity_revision) return null;
     if (body.action === "purge") return activityPurgeReceiptGuard(value) && value.external_event_id === baseline.external_event_id
@@ -355,19 +364,22 @@ export function decodeDatesExternalReceipt(value: unknown, action: DatesExternal
 export type DatesExternalRefusal = { kind: "refused" | "uncertain"; error: string; status: number };
 const refusalCodes: Readonly<Record<number, readonly string[]>> = {
   // Checked inside the transaction, after successful receipt replay lookup.
-  403: ["dates-external-publishing-disabled"],
-  404: ["dates-external-unavailable", "dates-admin-activity-unavailable"],
+  // The intake tokens (P2a) are raised inside the publication's transaction too.
+  403: ["dates-external-publishing-disabled", "dates-intake-admin-drafts-disabled"],
+  404: ["dates-external-unavailable", "dates-admin-activity-unavailable", "dates-intake-unavailable"],
   409: ["dates-external-conflict", "dates-external-duplicate", "dates-external-content-state-invalid",
     "dates-external-projection-unavailable", "dates-external-command-state-invalid", "dates-external-thread-unavailable", "dates-thread-read-only",
     "dates-admin-stale-revision", "dates-admin-activity-purge-not-eligible", "dates-admin-activity-open-case", "dates-admin-activity-legal-hold",
-    "dates-admin-activity-not-deleted", "dates-admin-activity-deleted", "dates-admin-activity-terminal"],
+    "dates-admin-activity-not-deleted", "dates-admin-activity-deleted", "dates-admin-activity-terminal",
+    "dates-intake-conflict", "dates-intake-lease-required", "dates-intake-event-unavailable"],
   422: ["dates-external-id-invalid", "dates-external-revision-invalid", "dates-external-filter-invalid", "dates-external-input-invalid",
     "dates-external-category-invalid", "dates-external-summary-invalid", "dates-external-sensitive-invalid", "dates-external-attendee-list-invalid",
     "dates-timezone-invalid", "dates-external-start-invalid", "dates-external-duration-invalid", "dates-external-time-invalid", "dates-external-age-invalid",
     "dates-external-organizer-invalid", "dates-external-url-invalid", "dates-external-source-required", "dates-external-price-invalid",
     "dates-external-paid-official-link-required", "dates-external-confirmation-required", "dates-external-venue-invalid", "dates-external-ticket-domain-invalid",
     "dates-title-invalid", "dates-admin-reason-required", "dates-admin-reason-invalid", "dates-admin-idempotency-invalid",
-    "dates-external-command-invalid", "dates-update-text-invalid"],
+    "dates-external-command-invalid", "dates-update-text-invalid",
+    "dates-intake-id-invalid", "dates-intake-revision-invalid", "dates-intake-input-invalid"],
 };
 
 /** Only pinned Core no-land refusals release an attempted command's identity. */
@@ -394,6 +406,7 @@ export function datesExternalBaseline(value: unknown): value is DatesExternalMut
 
 /** The existing activity command is used only with a validated external baseline. */
 export function normalizeDatesExternalPendingBody(action: string, body: Record<string, unknown>) {
+  if (action === "dates_event_intake_publish") return normalizeDatesIntakePublishBody(body);
   if (action !== "dates_activity_command") return normalizeDatesExternalProxyBody(action, body);
   return bodyKeys(body, ["activity_id", "expected_revision", "action", "reason", "idempotency_key"])
     && id("act")(body.activity_id) && formInteger(body.expected_revision, 1, Number.MAX_SAFE_INTEGER)

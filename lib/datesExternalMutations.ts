@@ -47,11 +47,12 @@ export function decodeDatesExternalPending(value: unknown, actor: string): Dates
   const row = value as Record<string, unknown>;
   if (Object.keys(row).sort().join() !== ["version", "actor", "issued_at", "action", "body", "baseline"].sort().join()
     || row.version !== 1 || row.actor !== actor || !Number.isSafeInteger(row.issued_at) || Number(row.issued_at) <= 0
-    || !["dates_external_event_publish", "dates_external_event_update", "dates_external_event_command", "dates_activity_command"].includes(String(row.action))
+    || !["dates_external_event_publish", "dates_external_event_update", "dates_external_event_command", "dates_activity_command",
+      "dates_event_intake_publish"].includes(String(row.action))
     || !row.body || typeof row.body !== "object" || Array.isArray(row.body)) return null;
   const body = row.body as Record<string, unknown>;
   if (!normalizeDatesExternalPendingBody(String(row.action), body)) return null;
-  if (row.action === "dates_external_event_publish") {
+  if (row.action === "dates_external_event_publish" || row.action === "dates_event_intake_publish") {
     if (row.baseline !== null) return null;
   } else if (row.action === "dates_activity_command") {
     if (!datesExternalBaseline(row.baseline) || body.activity_id !== row.baseline.activity_id || body.expected_revision !== row.baseline.activity_revision) return null;

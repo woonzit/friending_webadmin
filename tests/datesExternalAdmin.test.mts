@@ -144,10 +144,18 @@ test("detail binds all editor facts to the projected event and never reuses hist
     (v) => { v.event.sources = []; }, (v) => { v.event.sources[0].hostname = "trusted.example"; },
     (v) => { v.event.sources.push(v.event.sources[0]); },
     (v) => { v.event.verification.checked_at -= 1; }, (v) => { v.event.image.kind = "flyer"; },
-    (v) => { v.event.ai_assisted = true; }, (v) => { v.event._id = "internal"; },
+    // P2a: Core serves a strict boolean; anything else is still refused.
+    (v) => { v.event.ai_assisted = "true"; }, (v) => { v.event.ai_assisted = null; }, (v) => { v.event._id = "internal"; },
+    // P2a: a Places venue carries its place id, an administrator's pin never does.
+    (v) => { v.event.venue.place_id = "ChIJ4-4EKkDcQUcRPGkz1ExWaWg"; }, (v) => { v.event.venue.resolved_by = "places"; },
+    (v) => { v.event.venue.resolved_by = "geocode"; }, (v) => { v.event.venue.place_id = "bad/id"; },
     (v) => { v.event.credit.submitted_by_uid = 12; }, (v) => { v.event.credit.anonymous = false; },
   ];
   for (const mutate of mutations) { const value = sample().detail; mutate(value); assert.equal(decodeDatesExternalDetail(value, externalId), null); }
+  // P2a (derived from the synthetic sample): an AI-assisted event with a Places venue decodes.
+  const assisted = sample().detail;
+  assisted.event.ai_assisted = true; assisted.event.venue.place_id = "ChIJ4-4EKkDcQUcRPGkz1ExWaWg"; assisted.event.venue.resolved_by = "places";
+  assert.ok(decodeDatesExternalDetail(assisted, externalId));
   const { input, detail } = sample();
   assert.ok(normalizeDatesExternalManualEvent(input));
   assert.equal(normalizeDatesExternalManualEvent(detail.event.editor_input), null);
@@ -270,10 +278,13 @@ test("activity list discriminates real hostless external rows from unchanged mem
     assert.equal(decodeDatesActivityList(value, { page: 1, limit: 40 }), null, key);
   }
   for (const change of [{ host: { uid: 0, display_name: "System" } }, { host: { uid: 12, display_name: "Member" } },
-    { maximum_people: 100 }, { origin: ["external"] }, { ai_assisted: true }, { can_host_transfer: true }, { pending_count: 1 }, { start_at: null }]) {
+    { maximum_people: 100 }, { origin: ["external"] }, { ai_assisted: "true" }, { ai_assisted: 1 }, { can_host_transfer: true }, { pending_count: 1 }, { start_at: null }]) {
     const value = activitySample().list; Object.assign(value.activities[0], change);
     assert.equal(decodeDatesActivityList(value, { page: 1, limit: 40 }), null);
   }
+  // P2a: Core serves the ledger's value; true is an AI-drafted event (derived from the synthetic sample).
+  const assisted = activitySample().list; Object.assign(assisted.activities[0], { ai_assisted: true });
+  assert.ok(decodeDatesActivityList(assisted, { page: 1, limit: 40 }));
   const member: any = activitySample().list;
   for (const key of ["origin", "external_event_id", "organizer_name", "organizer_url", "verification_tier", "ai_assisted", "can_host_transfer"]) delete member.activities[0][key];
   member.activities[0].host = { uid: 12, display_name: "Member" }; member.activities[0].maximum_people = 4;
