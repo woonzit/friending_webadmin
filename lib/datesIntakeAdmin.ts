@@ -415,12 +415,18 @@ export function datesIntakeReferenceHref(reference: { kind: string; id: string }
   return null;
 }
 
-/** A web address is only ever rendered as a link when it is plainly http(s). */
+/**
+ * The address to link to, or null when the value must stay text. An intake's
+ * addresses are untrusted (submitted, fetched or extracted), so only a plain
+ * `https:` address is ever clickable: not `http:` (Core may fetch it, a
+ * reviewer's browser must not follow it over cleartext), no other scheme, and
+ * no credentials in the address.
+ */
 export function datesIntakeLink(value: unknown): string | null {
-  if (typeof value !== "string" || value.length > 8192 || /[\x00-\x20\x7f\\]/.test(value)) return null;
+  if (typeof value !== "string" || value.length > 8192 || /[\x00-\x20\x7f\\]/.test(value) || !/^https:\/\//i.test(value)) return null;
   try {
     const url = new URL(value);
-    return (url.protocol === "https:" || url.protocol === "http:") && url.username === "" && url.password === "" ? value : null;
+    return url.protocol === "https:" && url.hostname !== "" && url.username === "" && url.password === "" ? value : null;
   } catch { return null; }
 }
 

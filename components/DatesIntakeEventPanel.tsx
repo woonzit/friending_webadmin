@@ -3,8 +3,9 @@
 import Link from "next/link";
 import React from "react";
 import { useLocale, useTranslations } from "next-intl";
+import DatesIntakeUrl from "@/components/DatesIntakeUrl";
 import {
-  DATES_INTAKE_EVIDENCE_FIELDS, datesIntakeLink, datesIntakeReferenceHref,
+  DATES_INTAKE_EVIDENCE_FIELDS, datesIntakeReferenceHref,
   type DatesIntakeEvent, type DatesIntakeEvidenceState,
 } from "@/lib/datesIntakeAdmin";
 
@@ -18,12 +19,6 @@ function known(t: Translate, group: string, value: string): string {
 /** A field is "verified" only when Core found the quote in the source and did not find it to say something else. */
 export function datesIntakeFieldVerified(state: DatesIntakeEvidenceState): boolean {
   return state.quoted && state.verified && state.denotes !== false;
-}
-
-function ExternalLink({ value }: { value: string | null }) {
-  if (value === null) return <>—</>;
-  const href = datesIntakeLink(value);
-  return href ? <a href={href} target="_blank" rel="noopener noreferrer">{value}</a> : <span>{value}</span>;
 }
 
 function percent(value: number | null, locale: string): string {
@@ -134,7 +129,7 @@ export default function DatesIntakeEventPanel({ event, total, children }: { even
       <h4>{t("detail.linksTitle")}</h4>
       <dl className="dates-external-facts">
         {(["official_url", "ticket_url", "organizer_url"] as const).map((link) =>
-          <React.Fragment key={link}><dt>{t(`linkFields.${link}`)}</dt><dd><ExternalLink value={validation.links[link]} /></dd></React.Fragment>)}
+          <React.Fragment key={link}><dt>{t(`linkFields.${link}`)}</dt><dd><DatesIntakeUrl value={validation.links[link]} /></dd></React.Fragment>)}
       </dl>
       {validation.links.dropped.length > 0 && <ul>{validation.links.dropped.map((item, position) =>
         <li key={position}>{t("detail.droppedLink", { field: known(t, "linkFields", item.field), reason: t(`linkDropReasons.${item.reason}`) })}</li>)}</ul>}

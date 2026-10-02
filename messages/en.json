@@ -9253,7 +9253,8 @@
           "at": "When"
         },
         "refreshFailed": "The intake could not be read again just now. What you see may be out of date; nothing was changed. Try Refresh again.",
-        "progressStopped": "The worker is still on it. Use Refresh to see where it stands."
+        "progressStopped": "The worker is still on it. Use Refresh to see where it stands.",
+        "notLinked": "(not an https address: shown as text, not as a link)"
       },
       "checks": {
         "weekday_match": "The weekday in the source matches the date",

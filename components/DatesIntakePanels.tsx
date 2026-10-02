@@ -4,8 +4,9 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { sourceLabel } from "@/components/DatesIntakeEventPanel";
+import DatesIntakeUrl from "@/components/DatesIntakeUrl";
 import {
-  datesIntakeInProgress, datesIntakeLink, datesIntakeMediaUrl, datesIntakeReferenceHref, datesMicroUsd,
+  datesIntakeInProgress, datesIntakeMediaUrl, datesIntakeReferenceHref, datesMicroUsd,
   type DatesIntakeDetail,
 } from "@/lib/datesIntakeAdmin";
 import { formatDate, formatNumber } from "@/lib/format";
@@ -51,14 +52,14 @@ export function DatesIntakeStatusPanel({ intake, polling = false }: { intake: Da
 export function DatesIntakeInputsPanel({ intake }: { intake: DatesIntakeDetail }) {
   const t = useTranslations("datesAdmin.intake"), locale = useLocale();
   const [shown, setShown] = useState<number[]>([]);
-  const inputs = intake.inputs, url = inputs?.url ?? null, link = datesIntakeLink(url);
+  const inputs = intake.inputs, url = inputs?.url ?? null;
   return <section className="panel dates-external-fields" aria-label={t("detail.inputsTitle")}>
     <h2>{t("detail.inputsTitle")}</h2>
     {inputs === null ? <p className="alert alert-error" role="status">{t("detail.unreadableInputs")}</p> : <dl className="dates-external-facts">
       <dt>{t("detail.kind")}</dt><dd>{t(`inputKindValues.${inputs.kind}`)}</dd>
-      {url !== null && <><dt>{t("source.url")}</dt><dd>{link ? <a href={link} target="_blank" rel="noopener noreferrer">{url}</a> : url}</dd></>}
+      {url !== null && <><dt>{t("source.url")}</dt><dd><DatesIntakeUrl value={url} /></dd></>}
       {inputs.text !== null && <><dt>{t("source.text")}</dt><dd className="preserve-whitespace">{inputs.text}</dd></>}
-      {intake.fetch && <><dt>{t("detail.fetch")}</dt><dd>{intake.fetch.final_url} · HTTP {intake.fetch.http_status} · {formatDate(intake.fetch.fetched_at, locale, true)}
+      {intake.fetch && <><dt>{t("detail.fetch")}</dt><dd><DatesIntakeUrl value={intake.fetch.final_url} /> · HTTP {intake.fetch.http_status} · {formatDate(intake.fetch.fetched_at, locale, true)}
         {intake.fetch.truncated ? ` · ${t("detail.truncated")}` : ""}</dd></>}
     </dl>}
     {inputs && inputs.images.unreadable.length > 0 && <p className="alert alert-error" role="status">{t("detail.unreadableImages", { count: inputs.images.unreadable.length })}</p>}

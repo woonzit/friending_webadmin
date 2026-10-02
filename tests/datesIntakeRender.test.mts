@@ -296,3 +296,40 @@ test("\"Draft from source\" is offered, disabled with its reason, or absent - in
   assert.match(readFileSync(new URL("../app/(dashboard)/dates/external/page.tsx", import.meta.url), "utf8"), /<DatesAdminTabs \/>\s+<DatesIntakeSourceEntry \/>/);
   assert.match(readFileSync(new URL("../components/DatesIntakeSourceEntry.tsx", import.meta.url), "utf8"), /readDatesIntakeDraftEntry\(adminCall, controller\.signal\)/);
 });
+
+test("review finding: an intake's address is a link only over https; http and every other scheme stay text", async () => {
+  const { datesIntakeLink } = await import("../lib/datesIntakeAdmin.ts");
+  const { default: DatesIntakeUrl } = await import("../components/DatesIntakeUrl.tsx");
+  for (const value of ["https://akvariumklub.hu/programok/acidarab/", "https://jegy.kekhold.example/osz2026", "HTTPS://Example.test/a?b=c#d"]) assert.equal(datesIntakeLink(value), value);
+  for (const value of ["http://events.example/path", "HTTP://events.example/", "https://user:secret@example.test/", "https://user@example.test/", "javascript:alert(1)",
+    "data:text/html,<script>alert(1)</script>", "ftp://example.test/a", "mailto:a@example.test", "file:///etc/passwd", "//example.test/a", "/dates/intakes", "example.test",
+    "https://", "https:example.test", " https://example.test/", "https://example.test/a b", "https://example.test/\u0000", "", null, 7, {}])
+    assert.equal(datesIntakeLink(value), null, String(value));
+  for (const locale of LOCALES) {
+    const copy = messagesOf(locale).datesAdmin.intake.detail;
+    // DERIVED from the genuine link intake: Core accepts and fetches an http source; the reviewer sees it, but cannot click it.
+    const body = fixture("admin-detail-in-review-url"), http = "http://events.example/path?id=1";
+    const intake = projectDatesIntakeDetail({ ...body, intake: { ...body.intake, inputs: { ...body.intake.inputs, url: http },
+      fetch: { ...body.intake.fetch, final_url: http },
+      events: body.intake.events.map((event: any) => ({ ...event, validation: { ...event.validation, links: { ...event.validation.links,
+        official_url: http, ticket_url: "javascript:alert(1)", organizer_url: "https://user:secret@example.test/" } } })) } }, body.intake.intake_id)!.intake;
+    assert.deepEqual(intake.unreadable_sections, []);
+    const html = render(locale, createElement(DatesIntakeInputsPanel, { intake }), ...intake.events.map((event, index) => createElement(DatesIntakeEventPanel, { key: index, event: event!, total: 1 })));
+    assert.doesNotMatch(html, /href="(?!https:\/\/|\/dates\/)/, "no link that is not https or the console's own route");
+    assert.doesNotMatch(html, /href="[^"]*(?:events\.example|javascript|user:secret)/);
+    // The address is still shown, as text, with the note; three times for the http source (submitted, fetched, official link).
+    assert.equal(html.split(escaped(http)).length - 1, 3);
+    assert.ok(html.includes("javascript:alert(1)") && html.includes("https://user:secret@example.test/"));
+    assert.equal(html.split(escaped(copy.notLinked)).length - 1, 5);
+    // The genuine https source is a link, opened in a new tab without an opener, and carries no note.
+    const genuine = render(locale, createElement(DatesIntakeInputsPanel, { intake: detail("admin-detail-in-review-official") }));
+    assert.match(genuine, /<a href="https:\/\/akvariumklub\.hu\/programok\/acidarab\/" target="_blank" rel="noopener noreferrer">/);
+    assert.equal(genuine.includes(escaped(copy.notLinked)), false);
+    assert.equal(render(locale, createElement(DatesIntakeUrl, { value: null })), "—");
+  }
+  // One helper on these screens: no panel builds an anchor from an intake's address by itself.
+  for (const file of ["../components/DatesIntakePanels.tsx", "../components/DatesIntakeEventPanel.tsx", "../components/DatesIntakeReviewPage.tsx", "../components/DatesIntakeSourcePanel.tsx"]) {
+    const source = readFileSync(new URL(file, import.meta.url), "utf8");
+    assert.doesNotMatch(source, /datesIntakeLink|<a href=/, file);
+  }
+});

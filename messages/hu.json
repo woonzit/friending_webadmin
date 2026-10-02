@@ -9253,7 +9253,8 @@
           "at": "Mikor"
         },
         "refreshFailed": "A beküldést most nem sikerült újraolvasni. Amit látsz, elavult lehet; semmi nem változott. Próbáld újra a frissítést.",
-        "progressStopped": "A feldolgozó még dolgozik rajta. A Frissítés gombbal nézheted meg, hol tart."
+        "progressStopped": "A feldolgozó még dolgozik rajta. A Frissítés gombbal nézheted meg, hol tart.",
+        "notLinked": "(nem https-cím: csak szövegként jelenik meg, hivatkozásként nem)"
       },
       "checks": {
         "weekday_match": "A forrásban szereplő nap egyezik a dátummal",
