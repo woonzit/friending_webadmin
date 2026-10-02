@@ -9302,7 +9302,8 @@
         "unreadableSiblings": "Events of this intake that this console could not read: {count}. They are unknown, not absent. Choose what happens to the intake when this event is published.",
         "keepOpen": "Publish this event and leave the intake open, so that the unread events can still be reviewed once the console can read them.",
         "closeAnyway": "Publish this event and close the intake, knowing that {count} unread and {remaining} other unpublished events will never be published from it.",
-        "confirmCloseUnreadable": "This closes the intake although {count} of its events could not be read. They will never be reviewed from it."
+        "confirmCloseUnreadable": "This closes the intake although {count} of its events could not be read. They will never be reviewed from it.",
+        "changed": "The intake changed after you prepared this publication: other events are now left, or one of them can no longer be read. Check the choice above and review the publication again."
       },
       "reject": {
         "title": "Reject the intake",

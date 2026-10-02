@@ -16,7 +16,7 @@ import type { DatesExternalManualEvent } from "@/lib/datesExternalInput";
 import { datesExternalBrowserStorage, readDatesExternalPending, type DatesExternalPending, type DatesExternalPendingRead } from "@/lib/datesExternalMutations";
 import {
   DATES_INTAKE_HEARTBEAT_SECONDS, DATES_INTAKE_REJECT_REASONS, datesIntakeAffordances, datesIntakeCompleteFlag, datesIntakeCompletion,
-  datesIntakeEditorDraft, datesIntakeEditorGaps,
+  datesIntakeCandidateCurrent, datesIntakeCompletionChoice, datesIntakeEditorDraft, datesIntakeEditorGaps, type DatesIntakeCompletionAnswer,
   datesIntakeHeartbeatDelay, datesIntakeId, datesIntakePublishableEvents,
   type DatesIntakeDetailRead, type DatesIntakeLeaseAction,
 } from "@/lib/datesIntakeAdmin";
@@ -28,7 +28,9 @@ import { formatDate } from "@/lib/format";
 
 type Problem = { kind: "denied" } | { kind: "unconfirmed" } | { kind: "refused"; error: string };
 type Notice = { tone: "success" | "error" | "info"; key: string; error?: string; eventId?: string };
-type Candidate = { eventIndex: number; event: DatesExternalManualEvent; reason: string; complete: boolean; unreadable: number };
+type Candidate = { eventIndex: number; event: DatesExternalManualEvent; reason: string; complete: boolean; unreadable: number;
+  /** The completion question this publication was prepared for (see `datesIntakeCompletion`). */
+  question: string };
 /** Core's refusals that mean the opened event can no longer be published from this intake at all. */
 const GONE = ["dates-intake-event-unavailable", "dates-intake-state-invalid", "dates-intake-unavailable"];
 
@@ -50,7 +52,8 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<DatesExternalPendingRead>({ kind: "blocked" });
   const [openEvent, setOpenEvent] = useState<number | null>(null);
-  const [complete, setComplete] = useState(false);
+  // The reviewer's completion choice, with the question it answers: it is never applied to another one.
+  const [answer, setAnswer] = useState<DatesIntakeCompletionAnswer | null>(null);
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [rejectCode, setRejectCode] = useState<string>(DATES_INTAKE_REJECT_REASONS[0]);
   const [rejectNote, setRejectNote] = useState("");
@@ -237,7 +240,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
       if (outcome.kind === "success") {
         setNotice({ tone: "success", key: outcome.retained ? "publish.doneRetained" : outcome.receipt && "intake" in outcome.receipt
           && outcome.receipt.intake.status === "in_review" ? "publish.donePartial" : "publish.done", eventId: outcome.receipt.external_event_id });
-        setOpenEvent(null); setComplete(false);
+        setOpenEvent(null); setAnswer(null);
       } else if (outcome.kind === "refused") {
         setNotice({ tone: "error", key: outcome.retained ? "publish.refusedRetained" : "refused", error: outcome.error });
         if (GONE.includes(outcome.error)) setOpenEvent(null);
@@ -254,7 +257,8 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
    */
   function propose(facts: DatesExternalManualEvent, reason: string) {
     if (writeBlocked || !can?.publish || openEvent === null || completion === null) return;
-    setCandidate({ eventIndex: openEvent, event: facts, reason, complete: datesIntakeCompleteFlag(completion, complete), unreadable: completion.unreadable });
+    setCandidate({ eventIndex: openEvent, event: facts, reason, complete: datesIntakeCompleteFlag(completion, close), unreadable: completion.unreadable,
+      question: completion.question });
   }
 
   const access = { review: operator?.review === true, manage: operator?.manage === true, superadmin: operator?.superadmin === true,
@@ -265,6 +269,11 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
   const events = intake?.events ?? null;
   const editing = openEvent !== null && events ? events[openEvent] ?? null : null;
   const completion = intake && openEvent !== null ? datesIntakeCompletion(intake, openEvent) : null;
+  // A choice made for one set of events is not an answer to another: after a read that changes the set, or what is
+  // unreadable in it, the choice is back at the safe default and the reviewer chooses again.
+  const close = datesIntakeCompletionChoice(answer, completion);
+  // The same for a publication already waiting for its confirmation.
+  const confirmable = datesIntakeCandidateCurrent(candidate, intake) ? candidate : null;
   const ownPending = pending.kind === "pending" && pending.pending.action === "dates_event_intake_publish"
     && pending.pending.body.intake_id === intakeId ? pending.pending : null;
   // A hold or a rejection needs no journal; a publication does, and only one command may be outstanding in it.
@@ -328,7 +337,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
             {event.editor_unreadable ? <p className="alert alert-error" role="status">{t("editor.unreadable")}</p>
               : event.editor_input === null ? <p className="field-hint">{t("editor.noPrefill")}</p>
                 : can.publish ? <button className="button button-primary" disabled={writeBlocked || openEvent === index}
-                  onClick={() => { setNotice(null); setComplete(false); setOpenEvent(index); }}>{t("editor.open")}</button>
+                  onClick={() => { setNotice(null); setAnswer(null); setCandidate(null); setOpenEvent(index); }}>{t("editor.open")}</button>
                   : <p className="field-hint">{t(mine ? "editor.cannotPublish" : "editor.holdFirst")}</p>}
           </div>}
         </DatesIntakeEventPanel>)}
@@ -341,7 +350,9 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
         {!can.publish && <p className="alert alert-info" role="status">{t(mine ? "editor.cannotPublish" : "editor.holdFirst")}</p>}
         {datesIntakeEditorGaps(editing.editor_input).length > 0 && <p className="alert alert-info">{t("editor.gaps", {
           fields: datesIntakeEditorGaps(editing.editor_input).map((gap) => t(`editor.gapFields.${gap}`)).join(", ") })}</p>}
-        {completion && <DatesIntakeCompletionChoice completion={completion} close={complete} disabled={writeBlocked} onChange={setComplete} />}
+        {completion && <DatesIntakeCompletionChoice completion={completion} close={close} disabled={writeBlocked}
+          onChange={(next) => setAnswer({ question: completion.question, close: next })} />}
+        {candidate && !confirmable && <p className="alert alert-warning" role="status">{t("editor.changed")}</p>}
         <DatesExternalEventForm key={`${intakeId}:${openEvent}`} initialDraft={datesIntakeEditorDraft(editing.editor_input)} notice={t("editor.formNotice")}
           disabled={writeBlocked || !can.publish} submitLabel={external("editor.reviewPublish")} onSubmit={propose} />
       </section>}
@@ -370,12 +381,12 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
       onCancel={() => { if (!busyRef.current) setConfirmReject(false); }} onConfirm={() => void reject(null)}>
       <p><strong>{t(`rejectReasons.${rejectCode}`)}</strong></p><p className="preserve-whitespace">{rejectNote.trim()}</p>
     </ConfirmDialog>}
-    {candidate && <ConfirmDialog title={external("editor.publish")} copy={t("editor.confirm")} confirmLabel={external("editor.publish")} tone="primary" busy={busy}
-      onCancel={() => { if (!busyRef.current) setCandidate(null); }} onConfirm={() => void publish({ candidate })}>
-      <p><strong>{candidate.event.title}</strong></p>
-      <p>{candidate.complete && candidate.unreadable > 0 ? t("editor.confirmCloseUnreadable", { count: candidate.unreadable })
-        : t(candidate.complete ? "editor.confirmComplete" : "editor.confirmPartial")}</p>
-      <p className="preserve-whitespace">{candidate.reason}</p>
+    {confirmable && <ConfirmDialog title={external("editor.publish")} copy={t("editor.confirm")} confirmLabel={external("editor.publish")} tone="primary" busy={busy}
+      onCancel={() => { if (!busyRef.current) setCandidate(null); }} onConfirm={() => void publish({ candidate: confirmable })}>
+      <p><strong>{confirmable.event.title}</strong></p>
+      <p>{confirmable.complete && confirmable.unreadable > 0 ? t("editor.confirmCloseUnreadable", { count: confirmable.unreadable })
+        : t(confirmable.complete ? "editor.confirmComplete" : "editor.confirmPartial")}</p>
+      <p className="preserve-whitespace">{confirmable.reason}</p>
     </ConfirmDialog>}
   </>;
 }

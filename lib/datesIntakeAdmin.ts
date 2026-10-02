@@ -487,13 +487,45 @@ export type DatesIntakeCompletion = {
    *   the reviewer chooses, in words, and the choice is what is sent.
    */
   mode: "last" | "choice" | "unreadable";
+  /**
+   * The question the reviewer is asked, as an identity: which event is being
+   * published, how many events the intake has, which of the others can still
+   * be published and which could not be read. An answer belongs to exactly
+   * one question; when a read changes any of this, it is a new question.
+   */
+  question: string;
 };
 
 /** What publishing event `eventIndex` means for the rest of the intake. */
 export function datesIntakeCompletion(intake: Pick<DatesIntakeDetail, "events" | "status">, eventIndex: number): DatesIntakeCompletion {
-  const remaining = datesIntakePublishableEvents(intake).filter((index) => index !== eventIndex).length;
-  const unreadable = datesIntakeUnreadableEvents(intake).filter((index) => index !== eventIndex).length;
-  return { remaining, unreadable, mode: unreadable > 0 ? "unreadable" : remaining > 0 ? "choice" : "last" };
+  const others = datesIntakePublishableEvents(intake).filter((index) => index !== eventIndex);
+  const unknown = datesIntakeUnreadableEvents(intake).filter((index) => index !== eventIndex);
+  const mode = unknown.length > 0 ? "unreadable" : others.length > 0 ? "choice" : "last";
+  return { remaining: others.length, unreadable: unknown.length, mode,
+    question: [eventIndex, intake.events?.length ?? 0, mode, others.join("."), unknown.join(".")].join("|") };
+}
+
+/** The reviewer's answer, tied to the question it was given for. */
+export type DatesIntakeCompletionAnswer = { question: string; close: boolean };
+
+/**
+ * Whether the reviewer chose to close the intake - for THIS question. An
+ * answer given for another set of events (other siblings left, an event that
+ * has since become unreadable or readable) is not carried over: the question
+ * starts again from the safe default, "leave the intake open".
+ */
+export function datesIntakeCompletionChoice(answer: DatesIntakeCompletionAnswer | null, completion: DatesIntakeCompletion | null): boolean {
+  return answer !== null && completion !== null && answer.question === completion.question ? answer.close : false;
+}
+
+/**
+ * Whether a publication waiting for its confirmation still answers the
+ * question the intake poses now. One that was prepared for another set of
+ * events is not confirmable; the reviewer reviews it again.
+ */
+export function datesIntakeCandidateCurrent(candidate: { eventIndex: number; question: string } | null, intake: Pick<DatesIntakeDetail, "events" | "status"> | null): boolean {
+  return candidate !== null && intake !== null && datesIntakePublishableEvents(intake).includes(candidate.eventIndex)
+    && datesIntakeCompletion(intake, candidate.eventIndex).question === candidate.question;
 }
 
 /**

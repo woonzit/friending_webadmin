@@ -5,7 +5,8 @@ import vm from "node:vm";
 import ts from "typescript";
 import { datesExternalDraftInput } from "../lib/datesExternalInput.ts";
 import { readDatesExternalPending } from "../lib/datesExternalMutations.ts";
-import { datesIntakeCompleteFlag, datesIntakeCompletion, datesIntakeEditorDraft, datesIntakeHeartbeatDelay, projectDatesIntakeDetail } from "../lib/datesIntakeAdmin.ts";
+import { datesIntakeCandidateCurrent, datesIntakeCompleteFlag, datesIntakeCompletion, datesIntakeCompletionChoice, datesIntakeEditorDraft, datesIntakeHeartbeatDelay,
+  projectDatesIntakeDetail } from "../lib/datesIntakeAdmin.ts";
 import { createDatesIntakeSerial, prepareDatesIntakeReject, readDatesIntakeDetail, runDatesIntakeLease, runDatesIntakePublish, runDatesIntakeReject } from "../lib/datesIntakeConsole.ts";
 
 // The review screen's own callbacks (load, hold, reject, publish) executed as
@@ -51,11 +52,11 @@ function harness(intakeId: string, answers: Record<string, unknown>) {
   const context: any = { exports: {}, intakeId, generation: { current: 0 }, lifetime: { current: 0 }, busyRef: { current: false }, revision: { current: null },
     pendingRef: { current: false }, serial: { current: createDatesIntakeSerial() }, operator: null, rejectCode: "duplicate", rejectNote: "Already listed as another intake.",
     readDatesIntakeDetail, runDatesIntakeLease, runDatesIntakeReject, runDatesIntakePublish, prepareDatesIntakeReject, readDatesExternalPending,
-    datesIntakeCompleteFlag, writeBlocked: false, can: { publish: true }, openEvent: null, completion: null, complete: false,
+    datesIntakeCompleteFlag, writeBlocked: false, can: { publish: true }, openEvent: null, completion: null, close: false,
     datesExternalBrowserStorage: () => storage,
     adminCall: async (action: string, body: any) => { sent.push({ action, body });
       const answer = table[action]; return typeof answer === "function" ? (answer as (body: unknown) => unknown)(body) : answer; } };
-  for (const name of ["State", "Result", "Operator", "Problem", "Notice", "Busy", "Pending", "OpenEvent", "Complete", "Candidate", "RejectCommand", "RejectNote", "ConfirmReject", "StaleRead"])
+  for (const name of ["State", "Result", "Operator", "Problem", "Notice", "Busy", "Pending", "OpenEvent", "Answer", "Candidate", "RejectCommand", "RejectNote", "ConfirmReject", "StaleRead"])
     context[`set${name}`] = (value: unknown) => { state[name] = typeof value === "function" ? value(state[name]) : value; writes.push(name);
       if (name === "Operator") context.operator = value; };
   vm.runInNewContext(code, context);
@@ -406,7 +407,7 @@ test("review finding: with an unreadable sibling the page sends complete=false u
     assert.equal(intake.events[1], null, "the sibling is unknown to this console");
     h.context.revision.current = receipt.intake.revision - 1;
     // The page's own state at the moment the form is submitted: event 0 open, the choice as the reviewer left it.
-    Object.assign(h.context, { openEvent: 0, completion: datesIntakeCompletion(intake, 0), complete: explicitClose });
+    Object.assign(h.context, { openEvent: 0, completion: datesIntakeCompletion(intake, 0), close: explicitClose });
     h.api.propose(event, "Source and public venue verified.");
     const candidate = plain(h.state.Candidate);
     await h.api.publish({ candidate: h.state.Candidate });
@@ -422,19 +423,19 @@ test("review finding: with an unreadable sibling the page sends complete=false u
   // Control, genuine one-event intake: nothing unknown, so the publication does finish the intake.
   const single = fixture("admin-detail-in-review-official"), h = harness(single.intake.intake_id, { dates_event_intake_detail: single, dates_event_intake_publish: fixture("admin-publish") });
   await h.api.load();
-  Object.assign(h.context, { openEvent: 0, completion: datesIntakeCompletion(h.state.Result.read.intake, 0), complete: false });
+  Object.assign(h.context, { openEvent: 0, completion: datesIntakeCompletion(h.state.Result.read.intake, 0), close: false });
   h.api.propose(event, "Source and public venue verified.");
   assert.equal(h.state.Candidate.complete, true); assert.equal(h.state.Candidate.unreadable, 0);
   // Nothing is proposed while the page is blocked, without the capability, or without an open event.
   for (const change of [{ writeBlocked: true }, { can: { publish: false } }, { openEvent: null }, { completion: null }]) {
     const blocked = harness(single.intake.intake_id, {});
-    Object.assign(blocked.context, { openEvent: 0, completion: { remaining: 0, unreadable: 0, mode: "last" }, complete: false }, change);
+    Object.assign(blocked.context, { openEvent: 0, completion: { remaining: 0, unreadable: 0, mode: "last", question: "0|1|last||" }, close: false }, change);
     blocked.api.propose(event, "x"); assert.equal(blocked.writes.includes("Candidate"), false, JSON.stringify(change));
   }
   // The page takes the flag from the completion and from nothing else.
-  assert.match(source, /complete: datesIntakeCompleteFlag\(completion, complete\)/);
+  assert.match(source, /complete: datesIntakeCompleteFlag\(completion, close\)/);
   assert.doesNotMatch(source, /publishable\.length === 1/);
-  assert.match(source, /<DatesIntakeCompletionChoice completion=\{completion\} close=\{complete\} disabled=\{writeBlocked\} onChange=\{setComplete\} \/>/);
+  assert.match(source, /<DatesIntakeCompletionChoice completion=\{completion\} close=\{close\} disabled=\{writeBlocked\}\s+onChange=\{\(next\) => setAnswer\(\{ question: completion\.question, close: next \}\)\} \/>/);
 });
 
 test("review recheck: a served revision this console cannot read never replaces a known one", async () => {
@@ -485,4 +486,69 @@ test("review recheck: a served revision this console cannot read never replaces 
   // The mark is shown as words, in both languages.
   assert.match(source, /\{staleRead && state === "ready" && <p className="alert alert-warning" role="status">\{t\("detail\.revisionUnreadable"\)\}<\/p>\}/);
   for (const locale of ["en", "hu"]) assert.equal(typeof JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8")).datesAdmin.intake.detail.revisionUnreadable, "string");
+});
+
+test("review recheck: a completion choice belongs to the set of events it was made for; a Refresh that changes the set asks again", async () => {
+  // DERIVED - the reviewer's scenario: the genuine programme intake cut to two readable events...
+  const base = fixture("admin-detail-in-review-multi"), id = base.intake.intake_id;
+  const two = { ...base, intake: { ...base.intake, event_count: 2, events: base.intake.events.slice(0, 2) } };
+  // ...and the same intake as a later read serves it, the sibling now in a shape this console cannot decode.
+  const damaged = { ...two, intake: { ...two.intake, events: [two.intake.events[0], { ...two.intake.events[1], draft: { ...two.intake.events[1].draft, category: "hackathon" } }] } };
+  const before = projectDatesIntakeDetail(two, id)!.intake, after = projectDatesIntakeDetail(damaged, id)!.intake;
+  const ordinary = datesIntakeCompletion(before, 0), dangerous = datesIntakeCompletion(after, 0);
+  assert.deepEqual([ordinary.mode, dangerous.mode], ["choice", "unreadable"]);
+  assert.notEqual(ordinary.question, dangerous.question);
+  // The reviewer ticks the ordinary "this is the last one".
+  const answer = { question: ordinary.question, close: true };
+  assert.equal(datesIntakeCompletionChoice(answer, ordinary), true);
+  // After the Refresh the question is another one: the old tick is not an answer to it.
+  assert.equal(datesIntakeCompletionChoice(answer, dangerous), false, "back at the safe default");
+  assert.equal(datesIntakeCompleteFlag(dangerous, datesIntakeCompletionChoice(answer, dangerous)), false);
+  // Every change of the set asks again: a sibling published elsewhere, a sibling that became readable again, another
+  // event opened, an event added. The same set keeps the answer.
+  const partial = projectDatesIntakeDetail(fixture("admin-detail-in-review-partial"), fixture("admin-detail-in-review-partial").intake.intake_id)!.intake;
+  const whole = projectDatesIntakeDetail(base, id)!.intake;
+  const questions = [ordinary, dangerous, datesIntakeCompletion(before, 1), datesIntakeCompletion(whole, 0), datesIntakeCompletion(partial, 1),
+    datesIntakeCompletion({ ...after, events: [after.events![0], after.events![1], null] }, 0)].map((completion) => completion.question);
+  assert.equal(new Set(questions).size, questions.length, "six different questions");
+  for (const question of questions.slice(1)) assert.equal(datesIntakeCompletionChoice({ question, close: true }, ordinary), false);
+  assert.equal(datesIntakeCompletionChoice(answer, datesIntakeCompletion(projectDatesIntakeDetail(two, id)!.intake, 0)), true, "an unchanged set keeps the answer");
+  assert.equal(datesIntakeCompletionChoice(null, ordinary), false); assert.equal(datesIntakeCompletionChoice(answer, null), false);
+  // An explicit choice made under the new question is honoured, and is what the page sends.
+  assert.equal(datesIntakeCompletionChoice({ question: dangerous.question, close: true }, dangerous), true);
+
+  // The page, as it is: the read adopts the damaged body; the tick made before it does not reach Core.
+  const receipt = fixture("admin-publish-partial"), event = confirmedEvent();
+  const h = harness(id, { dates_event_intake_detail: two, dates_event_intake_publish: receipt });
+  await h.api.load();
+  const ticked = { question: datesIntakeCompletion(h.state.Result.read.intake, 0).question, close: true };
+  h.table.dates_event_intake_detail = damaged;
+  await h.api.load(undefined, "refresh");
+  const shown = h.state.Result.read.intake;
+  assert.equal(shown.events[1], null);
+  h.context.revision.current = receipt.intake.revision - 1;
+  // What the component derives on that render, with its own two functions.
+  const completion = datesIntakeCompletion(shown, 0);
+  Object.assign(h.context, { openEvent: 0, completion, close: datesIntakeCompletionChoice(ticked, completion) });
+  h.api.propose(event, "Source and public venue verified.");
+  assert.equal(h.state.Candidate.complete, false); assert.equal(h.state.Candidate.question, completion.question);
+  await h.api.publish({ candidate: h.state.Candidate });
+  assert.equal(plain(h.calls("dates_event_intake_publish")[0].body).complete, false, "the intake is left open");
+
+  // A publication already waiting for its confirmation when the set changes is not confirmable any more.
+  const prepared = { eventIndex: 0, question: ordinary.question };
+  assert.equal(datesIntakeCandidateCurrent(prepared, before), true);
+  assert.equal(datesIntakeCandidateCurrent(prepared, after), false);
+  assert.equal(datesIntakeCandidateCurrent(prepared, null), false); assert.equal(datesIntakeCandidateCurrent(null, before), false);
+  // ...nor one whose event was published meanwhile (the genuine partly published intake: event 0 is done).
+  assert.equal(datesIntakeCandidateCurrent({ eventIndex: 0, question: datesIntakeCompletion(partial, 0).question }, partial), false);
+
+  // The page derives both from the question and keeps no bare boolean.
+  assert.match(source, /const close = datesIntakeCompletionChoice\(answer, completion\);/);
+  assert.match(source, /const confirmable = datesIntakeCandidateCurrent\(candidate, intake\) \? candidate : null;/);
+  assert.match(source, /\{confirmable && <ConfirmDialog [^\n]+\n\s+onCancel=\{[^\n]+\} onConfirm=\{\(\) => void publish\(\{ candidate: confirmable \}\)\}>/);
+  assert.match(source, /\{candidate && !confirmable && <p className="alert alert-warning" role="status">\{t\("editor\.changed"\)\}<\/p>\}/);
+  assert.doesNotMatch(source, /setComplete|useState\(false\);\s+const \[candidate/);
+  assert.doesNotMatch(source, /publish\(\{ candidate \}\)/);
+  for (const locale of ["en", "hu"]) assert.equal(typeof JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8")).datesAdmin.intake.editor.changed, "string");
 });

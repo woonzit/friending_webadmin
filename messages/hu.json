@@ -9302,7 +9302,8 @@
         "unreadableSiblings": "A beküldés eseményei közül ennyit nem tudott beolvasni a konzol: {count}. Ezek ismeretlenek, nem hiányoznak. Válaszd ki, mi legyen a beküldéssel, amikor ezt az eseményt publikálod.",
         "keepOpen": "Publikálom ezt az eseményt, és a beküldés nyitva marad, hogy a be nem olvasott eseményeket később, amikor a konzol már olvasni tudja őket, még ellenőrizni lehessen.",
         "closeAnyway": "Publikálom ezt az eseményt, és lezárom a beküldést, tudva, hogy {count} be nem olvasott és {remaining} további, nem publikált esemény soha nem lesz belőle publikálva.",
-        "confirmCloseUnreadable": "Ezzel a beküldés lezárul, pedig {count} eseményét nem sikerült beolvasni. Ezeket ebből a beküldésből már soha nem lehet ellenőrizni."
+        "confirmCloseUnreadable": "Ezzel a beküldés lezárul, pedig {count} eseményét nem sikerült beolvasni. Ezeket ebből a beküldésből már soha nem lehet ellenőrizni.",
+        "changed": "A beküldés megváltozott, miután előkészítetted ezt a publikálást: már más események vannak hátra, vagy az egyikük nem olvasható. Nézd meg a fenti választást, és ellenőrizd újra a publikálást."
       },
       "reject": {
         "title": "Beküldés elutasítása",
