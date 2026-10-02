@@ -41,6 +41,19 @@ function memoryStorage() {
     removeItem: (key: string) => { rows.delete(key); } } };
 }
 const capabilityRefusal = { success: false, status_code: 403, error: "dates-admin-capability-required" };
+// What does NOT say whether a command landed (review finding, T-885): the bridge's own transport envelopes, Core's
+// in-progress and key-conflict replies, a server failure, a capability or session refusal, a token outside the closed list.
+const coreRefusal = (error: string, status: number) => ({ success: false, status_code: status, error, message: 200, status: 200, can_send: 0 });
+const AMBIGUOUS: ReadonlyArray<Record<string, unknown>> = [
+  { success: false, status_code: 504, error: "core-timeout" }, { success: false, status_code: 502, error: "core-unavailable" },
+  { success: false, status_code: 502, error: "invalid-core-response" }, { success: false, status_code: 401, error: "auth-required" },
+  capabilityRefusal, coreRefusal("dates-admin-capability-required", 403),
+  coreRefusal("dates-admin-command-in-progress", 409), coreRefusal("dates-admin-idempotency-conflict", 409),
+  coreRefusal("dates-admin-unavailable", 503), coreRefusal("dates-intake-storage-unavailable", 503),
+  coreRefusal("dates-intake-something-new", 409),
+  // A pinned token under another status, or in the bridge's envelope, is not Core's pinned refusal.
+  coreRefusal("dates-intake-conflict", 422), { success: false, status_code: 409, error: "dates-intake-conflict" },
+];
 
 test("operator affordances come from the fresh Dates identity, never from the global role", () => {
   assert.deepEqual({ ...datesIntakeOperator(identity("moderator"))!, principal: null }, { principal: null, review: true, manage: false, read: true, superadmin: false });
@@ -141,13 +154,14 @@ for (const action of ["claim", "heartbeat", "release"] as const) test(`lease ${a
   for (const name of ["lease-claimed", "lease-conflict", "lease-lost", "lease-owner-required", "lease-revision-invalid", "lease-invalid"]) {
     const refusal = fixture(`admin-${name}-denied`);
     assert.deepEqual(await runDatesIntakeLease(bridge({ dates_event_intake_lease: refusal }).send, request),
-      { kind: "refused", error: refusal.error, status: refusal.status_code, core: true });
+      { kind: "refused", error: refusal.error, status: refusal.status_code });
   }
-  assert.deepEqual(await runDatesIntakeLease(bridge({ dates_event_intake_lease: capabilityRefusal }).send, request),
-    { kind: "refused", error: "dates-admin-capability-required", status: 403, core: false });
+  // Anything that does not say whether the hold changed is "not known", with what was answered.
+  for (const answer of AMBIGUOUS)
+    assert.deepEqual(await runDatesIntakeLease(bridge({ dates_event_intake_lease: answer }).send, request), { kind: "uncertain", error: answer.error }, String(answer.error));
   // A receipt for another request, an unreadable body and a thrown transport are all "read the intake again".
   for (const answer of [fixture("admin-lease-release-idle"), null, { success: true }, new Error("offline")])
-    assert.deepEqual(await runDatesIntakeLease(bridge({ dates_event_intake_lease: answer }).send, { ...request, expected_revision: 1 }), { kind: "uncertain" });
+    assert.deepEqual(await runDatesIntakeLease(bridge({ dates_event_intake_lease: answer }).send, { ...request, expected_revision: 1 }), { kind: "uncertain", error: null });
 });
 
 test("rejection: one identity per command, kept across a retry, and Core's genuine answers", async () => {
@@ -164,7 +178,7 @@ test("rejection: one identity per command, kept across a retry, and Core's genui
   // A one-character note is Core's to accept: it requires a note, not a length.
   assert.ok(prepareDatesIntakeReject(target, "duplicate", "x"));
   const lost = bridge({ dates_event_intake_reject: null });
-  assert.deepEqual(await runDatesIntakeReject(lost.send, command), { kind: "uncertain" });
+  assert.deepEqual(await runDatesIntakeReject(lost.send, command), { kind: "uncertain", error: null });
   // The retry is the same command, key included, and Core's replay settles it.
   const replay = bridge({ dates_event_intake_reject: { ...receipt, replayed: true } });
   const done = await runDatesIntakeReject(replay.send, command);
@@ -174,10 +188,13 @@ test("rejection: one identity per command, kept across a retry, and Core's genui
   for (const name of ["reject-lease-required", "reject-conflict", "reject-state-invalid", "reject-note-required", "reject-reason-invalid"]) {
     const refusal = fixture(`admin-${name}-denied`);
     assert.deepEqual(await runDatesIntakeReject(bridge({ dates_event_intake_reject: refusal }).send, command),
-      { kind: "refused", error: refusal.error, status: refusal.status_code, core: true });
+      { kind: "refused", error: refusal.error, status: refusal.status_code });
   }
+  // A timeout, an in-progress command or a server failure does not say whether the rejection landed: the identity is kept.
+  for (const answer of AMBIGUOUS)
+    assert.deepEqual(await runDatesIntakeReject(bridge({ dates_event_intake_reject: answer }).send, command), { kind: "uncertain", error: answer.error }, String(answer.error));
   // The receipt of a rejection with another reason is not this command's receipt.
-  assert.deepEqual(await runDatesIntakeReject(bridge({ dates_event_intake_reject: fixture("admin-reject-duplicate") }).send, command), { kind: "uncertain" });
+  assert.deepEqual(await runDatesIntakeReject(bridge({ dates_event_intake_reject: fixture("admin-reject-duplicate") }).send, command), { kind: "uncertain", error: null });
 });
 
 /** The editor document a reviewer confirmed, built from a genuine Core prefill. */
@@ -297,14 +314,22 @@ test("a source travels as one multipart form with one identity; Core's genuine a
   const replay = await submitDatesIntakeSource(post(fixture("admin-create-text-replay")), { kind: "text", url: "", text: "Fradi–Újpest szombaton a Groupama Arénában" }, [], "en", key);
   assert.equal(replay.kind === "success" && replay.receipt.replayed, true);
   assert.equal(replay.kind === "success" && line.kind === "success" && replay.receipt.intake.intake_id === line.receipt.intake.intake_id, true);
+  // Core's genuine refusals that prove nothing was written.
   for (const name of ["create-drafts-disabled", "create-source-not-readable", "create-url-invalid", "create-text-invalid", "create-image-invalid",
-    "create-input-invalid", "create-kind-invalid", "create-locale-invalid", "create-key-conflict", "create-idempotency-invalid", "create-moderator"]) {
+    "create-input-invalid", "create-kind-invalid", "create-locale-invalid", "create-origin-invalid", "create-idempotency-invalid"]) {
     const refusal = fixture(`admin-${name}-denied`);
     assert.deepEqual(await submitDatesIntakeSource(post(refusal), { kind: "url", url: "https://example.test/", text: "" }, [], "hu", key),
-      { kind: "refused", error: refusal.error, status: refusal.status_code, core: true });
+      { kind: "refused", error: refusal.error, status: refusal.status_code }, name);
   }
+  // Core's genuine replies that do not: another payload under this key, and a capability check that precedes the receipt lookup.
+  for (const name of ["create-key-conflict", "create-moderator"]) {
+    const refusal = fixture(`admin-${name}-denied`);
+    assert.deepEqual(await submitDatesIntakeSource(post(refusal), { kind: "url", url: "https://example.test/", text: "" }, [], "hu", key), { kind: "uncertain", error: refusal.error }, name);
+  }
+  for (const answer of AMBIGUOUS)
+    assert.deepEqual(await submitDatesIntakeSource(post(answer), { kind: "url", url: "https://example.test/", text: "" }, [], "hu", key), { kind: "uncertain", error: answer.error }, String(answer.error));
   for (const answer of [null, new Error("offline"), { success: true }])
-    assert.deepEqual(await submitDatesIntakeSource(post(answer), { kind: "url", url: "https://example.test/", text: "" }, [], "hu", key), { kind: "uncertain" });
+    assert.deepEqual(await submitDatesIntakeSource(post(answer), { kind: "url", url: "https://example.test/", text: "" }, [], "hu", key), { kind: "uncertain", error: null });
 });
 
 test("the page keeps asking only while the worker owns the intake, and stops by itself", () => {

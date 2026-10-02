@@ -62,7 +62,8 @@ export default function DatesIntakeQueuePage() {
       const outcome = await runDatesIntakeLease(adminCall, { intake_id: row.intake_id, expected_revision: row.revision, action });
       if (generation !== loadGeneration.current) return;
       setNotice(outcome.kind === "success" ? { tone: "success", key: `lease.done.${action}` }
-        : outcome.kind === "refused" ? { tone: "error", key: "refused", error: outcome.error } : { tone: "error", key: "lease.uncertain" });
+        : outcome.kind === "refused" ? { tone: "error", key: "refused", error: outcome.error }
+          : { tone: "error", key: "lease.uncertain", ...(outcome.error === null ? {} : { error: outcome.error }) });
       // The queue is read again either way: a hold changes the row's revision.
       await load();
     } finally { busyRef.current = false; setBusy(""); }
@@ -86,7 +87,7 @@ export default function DatesIntakeQueuePage() {
       </select></label>
     </form>
     {notice && (notice.key === "refused" && notice.error ? <DatesIntakeRefusal error={notice.error} />
-      : <p className={`alert alert-${notice.tone}`} role="status">{t(notice.key)}</p>)}
+      : <p className={`alert alert-${notice.tone}`} role="status">{t(notice.key)}{notice.error ? <> <code>{notice.error}</code></> : null}</p>)}
     {state === "loading" ? <LoadingPanel /> : state === "error" || !queue ? <>
       {problem?.kind === "refused" && <DatesIntakeRefusal error={problem.error} />}
       <ErrorPanel message={t(problem?.kind === "denied" ? "access.denied" : problem?.kind === "refused" ? "access.refused" : "access.unconfirmed")} retry={() => void load()} />

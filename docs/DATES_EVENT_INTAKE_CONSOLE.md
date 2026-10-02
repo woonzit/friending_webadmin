@@ -106,6 +106,37 @@ A flyer is private evidence.
 - A multi-event intake is published one event at a time; `complete` says that an
   event is the last one the reviewer takes from it.
 
+## Command outcomes
+
+Every intake command (create, hold, reject, publish) is settled by exactly two
+things: a receipt bound to its request, or one of Core's pinned no-land
+refusals in Core's own envelope. The list is closed and is the publication
+journal's own (`refusalCodes` behind `datesExternalRefusal` in
+`lib/datesExternalAdmin.ts`); it names only tokens Core raises inside the
+command's transaction (after the receipt lookup, where the command has an
+identity) or from a check of the request itself.
+
+Everything else is **not known**, and is worded so: no answer, an unreadable
+one, the bridge's `core-timeout`, `core-unavailable` and `invalid-core-response`,
+any refusal of the bridge itself, a 5xx, `dates-admin-command-in-progress`,
+`dates-admin-idempotency-conflict`, a capability refusal (it precedes the
+receipt lookup) and any token outside the list. The notice shows the token
+that was answered, when one was.
+
+- **Create** ("Draft from source"). The source's identity is held by
+  `createDatesIntakeSourceAttempts` (`lib/datesIntakeConsole.ts`). It is retired
+  by Core's receipt, by a definitive refusal, or by the operator's explicit
+  "give this request up" - and by nothing else. While an attempt is not known
+  the source is locked, so the retry is the same request with the same key.
+  Two refusals Core raises before the receipt lookup from state that can change
+  between attempts (`dates-intake-admin-drafts-disabled`, and
+  `dates-intake-image-invalid`, which also covers a flyer that arrived
+  incomplete) settle a first attempt only; on a retry they are not known.
+- **Reject** keeps its command (key included) until it is settled; the retry is
+  that command.
+- **Publish** is the P1 journal, unchanged.
+- **Hold** has no identity; a not-known outcome is followed by a read.
+
 ## The published event
 
 From Core `3d4a0b40` on, the Admin projection of an external event says where

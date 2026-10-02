@@ -394,3 +394,104 @@ test("the form encoding Core's intake routes are pinned against: a number as its
     }
   } finally { globalThis.fetch = realFetch; }
 });
+
+test("review finding: a source keeps its identity through every answer that does not say whether the intake was made", async () => {
+  const { createDatesIntakeSourceAttempts } = await import("../lib/datesIntakeConsole.ts");
+  const draft = { kind: "text" as const, url: "", text: "Fradi–Újpest szombaton a Groupama Arénában" };
+  const core = (error: string, status: number) => ({ status, data: { success: false, status_code: status, error, message: 200, status: 200, can_send: 0 } });
+  // The console's own route, run as it is: what the panel receives is what the bridge really answers.
+  function console_() {
+    const h = harness();
+    let minted = 0;
+    const attempts = createDatesIntakeSourceAttempts(() => `dates-intake-create:00000000-0000-4000-8000-${String(++minted).padStart(12, "0")}`);
+    const post = async (form: FormData) => {
+      const reply = await serveDatesIntakeCreate({ headers: headers({ ...sameOrigin, "content-length": "4096" }), form: async () => form }, h.deps);
+      return "json" in reply ? reply.json : null;
+    };
+    const keys = () => h.state.calls.filter((call) => call.action === "dates_event_intake_create").map((call) => call.payload.idempotency_key);
+    return { h, attempts, send: () => attempts.send(post, draft, [], "hu"), keys };
+  }
+
+  // The reviewer's scenario. Core creates the intake but its reply misses the console's timeout...
+  const c = console_();
+  c.h.state.answer = { status: 504, data: { success: false, error: "core-timeout" } };
+  assert.deepEqual(await c.send(), { kind: "uncertain", error: "core-timeout" });
+  assert.equal(c.attempts.unanswered, true);
+  // ...the retry meets the first execution still running...
+  c.h.state.answer = core("dates-admin-command-in-progress", 409);
+  assert.deepEqual(await c.send(), { kind: "uncertain", error: "dates-admin-command-in-progress" });
+  // ...and every other answer that proves nothing keeps the identity as well: Core unreachable, an unreadable body,
+  // a server failure, storage down, a capability refusal that precedes the receipt lookup,
+  c.h.state.answer = { status: 502, data: { success: false, error: "core-unavailable" } };
+  assert.deepEqual(await c.send(), { kind: "uncertain", error: "core-unavailable" });
+  c.h.state.answer = { status: 200, data: { success: false, error: "Something broke" } };
+  assert.deepEqual(await c.send(), { kind: "uncertain", error: "invalid-core-response" });
+  c.h.state.answer = core("dates-admin-unavailable", 503);
+  assert.deepEqual(await c.send(), { kind: "uncertain", error: "dates-admin-unavailable" });
+  c.h.state.answer = core("dates-intake-storage-unavailable", 503);
+  assert.deepEqual(await c.send(), { kind: "uncertain", error: "dates-intake-storage-unavailable" });
+  c.h.state.answer = { status: 403, data: fixture("admin-create-moderator-denied") };
+  assert.deepEqual(await c.send(), { kind: "uncertain", error: "dates-admin-capability-required" });
+  // and - on a RETRY - the two refusals Core raises before it looks the identity up, from state that may have changed
+  // since the first attempt: the switch turned off meanwhile, a flyer that did not arrive whole this time.
+  for (const name of ["create-drafts-disabled", "create-image-invalid"]) {
+    const refusal = fixture(`admin-${name}-denied`); c.h.state.answer = { status: refusal.status_code, data: refusal };
+    assert.deepEqual(await c.send(), { kind: "uncertain", error: refusal.error }, name);
+  }
+  // A lost session answers from the bridge without reaching Core: still nothing known about the first attempt.
+  c.h.state.session = null;
+  assert.deepEqual(await c.send(), { kind: "uncertain", error: "auth-required" });
+  c.h.state.session = { email };
+  // While the outcome is unknown the source cannot become another request.
+  assert.equal(c.attempts.changed(), false); assert.equal(c.attempts.unanswered, true);
+  // The same request finally finds the intake of the first attempt: Core's genuine replay.
+  c.h.state.answer = { status: 200, data: fixture("admin-create-text-replay") };
+  const found = await c.send();
+  assert.equal(found.kind === "success" && found.receipt.replayed, true);
+  assert.equal(c.keys().length, 10, "ten requests reached Core's create route (the lost session did not)");
+  assert.deepEqual([...new Set(c.keys())], ["dates-intake-create:00000000-0000-4000-8000-000000000001"], "one identity for all of them");
+  assert.equal(c.attempts.unanswered, false); assert.equal(c.attempts.changed(), true);
+
+  // Only a definitive no-write refusal retires the identity: each of Core's genuine ones, on a first attempt.
+  for (const name of ["create-drafts-disabled", "create-source-not-readable", "create-url-invalid", "create-text-invalid", "create-image-invalid",
+    "create-input-invalid", "create-kind-invalid", "create-locale-invalid", "create-origin-invalid", "create-idempotency-invalid"]) {
+    const refusal = fixture(`admin-${name}-denied`), fresh = console_();
+    fresh.h.state.answer = { status: refusal.status_code, data: refusal };
+    assert.deepEqual(await fresh.send(), { kind: "refused", error: refusal.error, status: refusal.status_code }, name);
+    assert.equal(fresh.attempts.unanswered, false, name);
+    fresh.h.state.answer = { status: 200, data: fixture("admin-create-text") };
+    assert.equal((await fresh.send()).kind, "success");
+    assert.deepEqual(fresh.keys(), ["dates-intake-create:00000000-0000-4000-8000-000000000001", "dates-intake-create:00000000-0000-4000-8000-000000000002"], `${name}: the next request is a new command`);
+  }
+  // A refusal of the request itself is the same answer the first attempt got, so it settles a retry too.
+  const retried = console_();
+  retried.h.state.answer = { status: 504, data: { success: false, error: "core-timeout" } }; await retried.send();
+  const invalid = fixture("admin-create-text-invalid-denied"); retried.h.state.answer = { status: invalid.status_code, data: invalid };
+  assert.deepEqual(await retried.send(), { kind: "refused", error: invalid.error, status: invalid.status_code });
+  assert.equal(retried.attempts.unanswered, false);
+  // Another payload under the key says nothing about the first attempt either.
+  const conflict = console_(), taken = fixture("admin-create-key-conflict-denied");
+  conflict.h.state.answer = { status: taken.status_code, data: taken };
+  assert.deepEqual(await conflict.send(), { kind: "uncertain", error: taken.error }); assert.equal(conflict.attempts.unanswered, true);
+
+  // An edit before anything is pending is a new request; after an unknown outcome only the operator's discard is.
+  const edited = console_();
+  edited.h.state.answer = { status: 200, data: fixture("admin-create-text") };
+  assert.equal(edited.attempts.changed(), true);
+  const given = console_();
+  given.h.state.answer = { status: 504, data: { success: false, error: "core-timeout" } };
+  await given.send(); await given.send();
+  assert.equal(given.attempts.changed(), false);
+  given.attempts.discard();
+  assert.equal(given.attempts.unanswered, false); assert.equal(given.attempts.changed(), true);
+  given.h.state.answer = { status: 200, data: fixture("admin-create-text") };
+  assert.equal((await given.send()).kind, "success");
+  assert.deepEqual(given.keys(), ["dates-intake-create:00000000-0000-4000-8000-000000000001", "dates-intake-create:00000000-0000-4000-8000-000000000001",
+    "dates-intake-create:00000000-0000-4000-8000-000000000002"]);
+  // An answer that never arrives at all (the fetch failed) keeps the identity too.
+  const offline = createDatesIntakeSourceAttempts(() => KEY), sent: string[] = [];
+  const dead = async (form: FormData) => { sent.push(String(form.get("idempotency_key"))); throw new Error("offline"); };
+  assert.deepEqual(await offline.send(dead, draft, [], "hu"), { kind: "uncertain", error: null });
+  assert.deepEqual(await offline.send(async (form) => { sent.push(String(form.get("idempotency_key"))); return null; }, draft, [], "hu"), { kind: "uncertain", error: null });
+  assert.deepEqual(sent, [KEY, KEY]); assert.equal(offline.unanswered, true);
+});

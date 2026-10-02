@@ -277,6 +277,33 @@ test("a rejection keeps its identity across an unanswered attempt, and Core's re
     assert.deepEqual(plain(refused.state.Notice), { tone: "error", key: "refused", error: fixture(`admin-${name}-denied`).error });
     assert.equal(refused.state.RejectCommand, null);
   }
+  // Review finding: a timeout the bridge names, Core's in-progress reply and a server failure keep the command too -
+  // none of them says whether the rejection landed - and the notice shows what was answered.
+  for (const reply of [{ success: false, status_code: 504, error: "core-timeout" }, { success: false, status_code: 502, error: "core-unavailable" },
+    { success: false, status_code: 409, error: "dates-admin-command-in-progress", message: 200, status: 200, can_send: 0 },
+    { success: false, status_code: 503, error: "dates-admin-unavailable", message: 200, status: 200, can_send: 0 }]) {
+    const kept = harness(receipt.intake.intake_id, { dates_event_intake_detail: null, dates_event_intake_reject: reply });
+    kept.context.revision.current = 9;
+    await kept.api.reject(null);
+    const sent = plain(kept.calls("dates_event_intake_reject")[0].body);
+    assert.deepEqual(plain(kept.state.Notice), { tone: "error", key: "reject.uncertain", error: reply.error });
+    assert.deepEqual(plain(kept.state.RejectCommand), sent, `${reply.error}: the same command, key included, is the retry`);
+    // The retry is that command, and Core's replay settles it.
+    kept.table.dates_event_intake_reject = { ...receipt, replayed: true }; kept.context.revision.current = receipt.intake.revision - 1;
+    await kept.api.reject({ ...kept.state.RejectCommand, expected_revision: receipt.intake.revision - 1 });
+    assert.equal(plain(kept.calls("dates_event_intake_reject")[1].body).idempotency_key, sent.idempotency_key);
+  }
+  // The hold: the same replies are "not known" with the token, never "Core refused".
+  for (const reply of [{ success: false, status_code: 504, error: "core-timeout" },
+    { success: false, status_code: 503, error: "dates-admin-unavailable", message: 200, status: 200, can_send: 0 }]) {
+    const hold = harness(receipt.intake.intake_id, { dates_event_intake_detail: null, dates_event_intake_lease: reply });
+    hold.context.revision.current = 9;
+    await hold.api.lease("claim");
+    assert.deepEqual(plain(hold.state.Notice), { tone: "error", key: "lease.uncertain", error: reply.error });
+  }
+  const silent = harness(receipt.intake.intake_id, { dates_event_intake_detail: null, dates_event_intake_lease: null });
+  silent.context.revision.current = 9; await silent.api.lease("claim");
+  assert.deepEqual(plain(silent.state.Notice), { tone: "error", key: "lease.uncertain" });
   // No reason note, no command.
   const empty = harness(receipt.intake.intake_id, {}); empty.context.revision.current = 9; empty.context.rejectNote = "   ";
   await empty.api.reject(null);

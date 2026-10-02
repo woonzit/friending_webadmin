@@ -1,4 +1,5 @@
 import { createAdminIdempotencyKey, datesAdminPrincipal, hasDatesCapability, type DatesAdminPrincipal } from "@/lib/datesAdmin";
+import { datesExternalRefusal } from "@/lib/datesExternalAdmin";
 import type { DatesExternalManualEvent } from "@/lib/datesExternalInput";
 import {
   prepareDatesExternalPending, readDatesExternalMutationAccess, readDatesExternalPending, runDatesExternalMutation,
@@ -116,22 +117,34 @@ export async function readDatesIntakeDraftEntry(send: DatesIntakeSend, signal?: 
 
 export type DatesIntakeCommandOutcome<T> =
   | { kind: "success"; receipt: T }
-  /** Core (or the bridge) answered with a closed refusal; `core` says which of the two. */
-  | { kind: "refused"; error: string; status: number; core: boolean }
-  /** Nothing readable came back: the command may or may not have landed. Read the intake again. */
-  | { kind: "uncertain" };
+  /** Core's own pinned no-land refusal: this command wrote nothing, and its identity is spent. */
+  | { kind: "refused"; error: string; status: number }
+  /**
+   * Everything else. The command may or may not have landed: no answer, an
+   * unreadable one, the bridge's transport failure (`core-timeout`,
+   * `core-unavailable`, `invalid-core-response`), any refusal of the bridge
+   * itself, a 5xx, `dates-admin-command-in-progress`, or a token outside the
+   * closed list. `error` is what was answered, when something readable was.
+   * A command with an identity keeps it; the same request is the only retry.
+   */
+  | { kind: "uncertain"; error: string | null };
 
+/**
+ * One classification for every intake command, and it is the publication
+ * journal's own (`datesExternalRefusal`): only a receipt bound to the request,
+ * or one of Core's pinned no-land refusals in Core's own envelope, is an answer.
+ */
 function commandOutcome<T>(response: unknown, receipt: T | null): DatesIntakeCommandOutcome<T> {
   if (receipt) return { kind: "success", receipt };
-  const refusal = datesIntakeRefusal(response);
-  return refusal.kind === "unreadable" ? { kind: "uncertain" }
-    : { kind: "refused", error: refusal.error, status: refusal.status, core: refusal.kind === "core" };
+  const refusal = datesExternalRefusal(response);
+  return refusal.kind === "refused" ? { kind: "refused", error: refusal.error, status: refusal.status }
+    : { kind: "uncertain", error: refusal.status === 0 ? null : refusal.error };
 }
 
 export async function runDatesIntakeLease(send: DatesIntakeSend, request: { intake_id: string; expected_revision: number; action: DatesIntakeLeaseAction }):
   Promise<DatesIntakeCommandOutcome<DatesIntakeLeaseReceipt>> {
   let response: unknown;
-  try { response = await send("dates_event_intake_lease", { ...request }); } catch { return { kind: "uncertain" }; }
+  try { response = await send("dates_event_intake_lease", { ...request }); } catch { return { kind: "uncertain", error: null }; }
   return commandOutcome(response, decodeDatesIntakeLeaseReceipt(response, request));
 }
 
@@ -149,7 +162,7 @@ export function prepareDatesIntakeReject(target: { intake_id: string; revision: 
 export async function runDatesIntakeReject(send: DatesIntakeSend, command: DatesIntakeRejectCommand):
   Promise<DatesIntakeCommandOutcome<DatesIntakeRejectReceipt>> {
   let response: unknown;
-  try { response = await send("dates_event_intake_reject", { ...command }); } catch { return { kind: "uncertain" }; }
+  try { response = await send("dates_event_intake_reject", { ...command }); } catch { return { kind: "uncertain", error: null }; }
   return commandOutcome(response, decodeDatesIntakeRejectReceipt(response, command));
 }
 
@@ -219,12 +232,60 @@ export async function submitDatesIntakeSource(post: DatesIntakePost, draft: Date
   else if (draft.text.trim() !== "") form.set("text", draft.text);
   if (draft.kind === "images") files.forEach((file, index) => form.set(`image_${index + 1}`, file, `flyer-${index + 1}`));
   let response: unknown;
-  try { response = await post(form); } catch { return { kind: "uncertain" }; }
+  try { response = await post(form); } catch { return { kind: "uncertain", error: null }; }
   return commandOutcome(response, decodeDatesIntakeCreateReceipt(response));
 }
 
 export function createDatesIntakeSourceKey(): string {
   return createAdminIdempotencyKey("dates-intake-create");
+}
+
+/**
+ * Refusals Core's create route raises BEFORE it looks the request's identity
+ * up, from something that can differ between two attempts of one request: the
+ * default-off switch, and a flyer that did not arrive whole. For the first
+ * attempt of an identity they prove that nothing was written. After an attempt
+ * whose outcome is unknown they say nothing about that earlier attempt.
+ */
+const CREATE_REFUSED_BEFORE_REPLAY: readonly string[] = ["dates-intake-admin-drafts-disabled", "dates-intake-image-invalid"];
+
+/**
+ * The identity of one source across its attempts. The key is minted for the
+ * first attempt and retired by exactly three things: Core's receipt, Core's
+ * definitive no-write refusal, or the operator's explicit decision to give
+ * the request up. A lost, unreadable, in-progress or transport answer keeps
+ * it, and keeps the source locked, so that the retry is the same request.
+ */
+export type DatesIntakeSourceAttempts = {
+  /** An earlier attempt has no known outcome: the source may not change until it is settled or given up. */
+  readonly unanswered: boolean;
+  send(post: DatesIntakePost, draft: DatesIntakeSourceDraft, files: readonly Blob[], locale: "en" | "hu"): Promise<DatesIntakeCommandOutcome<DatesIntakeCreateReceipt>>;
+  /** The operator edited the source: a new request, a new identity. Refused (false) while an attempt is unanswered. */
+  changed(): boolean;
+  /** The operator gives the unanswered request up; the next one is a new command. */
+  discard(): void;
+};
+
+export function createDatesIntakeSourceAttempts(mint: () => string = createDatesIntakeSourceKey): DatesIntakeSourceAttempts {
+  let key = "", unanswered = false;
+  return {
+    get unanswered() { return unanswered; },
+    async send(post, draft, files, locale) {
+      if (key === "") key = mint();
+      let outcome = await submitDatesIntakeSource(post, draft, files, locale, key);
+      if (outcome.kind === "refused" && unanswered && CREATE_REFUSED_BEFORE_REPLAY.includes(outcome.error))
+        outcome = { kind: "uncertain", error: outcome.error };
+      if (outcome.kind === "uncertain") unanswered = true;
+      else { key = ""; unanswered = false; }
+      return outcome;
+    },
+    changed() {
+      if (unanswered) return false;
+      key = "";
+      return true;
+    },
+    discard() { key = ""; unanswered = false; },
+  };
 }
 
 // ---------------------------------------------------------------- pacing

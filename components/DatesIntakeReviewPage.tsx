@@ -183,7 +183,8 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
       if (outcome.kind === "success") advance(outcome.receipt.intake.revision);
       if (life !== lifetime.current) return;
       setNotice(outcome.kind === "success" ? { tone: "success", key: `lease.done.${action}` }
-        : outcome.kind === "refused" ? { tone: "error", key: "refused", error: outcome.error } : { tone: "error", key: "lease.uncertain" });
+        : outcome.kind === "refused" ? { tone: "error", key: "refused", error: outcome.error }
+          : { tone: "error", key: "lease.uncertain", ...(outcome.error === null ? {} : { error: outcome.error }) });
       if (action === "release") { setOpenEvent(null); setCandidate(null); }
       await read(undefined, "quiet");
     });
@@ -199,7 +200,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
       if (life !== lifetime.current) return;
       if (outcome.kind === "uncertain") {
         // The same command, with the same identity, is the only safe retry.
-        setRejectCommand(prepared); setNotice({ tone: "error", key: "reject.uncertain" });
+        setRejectCommand(prepared); setNotice({ tone: "error", key: "reject.uncertain", ...(outcome.error === null ? {} : { error: outcome.error }) });
       } else {
         setRejectCommand(null);
         setNotice(outcome.kind === "success" ? { tone: "success", key: "reject.done" } : { tone: "error", key: "refused", error: outcome.error });

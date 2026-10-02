@@ -7,11 +7,28 @@ import DatesIntakeRefusal from "@/components/DatesIntakeRefusal";
 import { adminIntakeCreate } from "@/lib/adminClient";
 import { DATES_INTAKE_INPUT_KINDS, DATES_INTAKE_MAX_IMAGES, DATES_INTAKE_MAX_TEXT_GRAPHEMES, DATES_INTAKE_MAX_URL_LENGTH,
   type DatesIntakeSourceKind } from "@/lib/datesIntakeAdmin";
-import { createDatesIntakeSourceKey, datesIntakeSourceProblem, submitDatesIntakeSource,
-  type DatesIntakeDraftEntry, type DatesIntakeSourceFile } from "@/lib/datesIntakeConsole";
+import { createDatesIntakeSourceAttempts, datesIntakeSourceProblem,
+  type DatesIntakeDraftEntry, type DatesIntakeSourceAttempts, type DatesIntakeSourceFile } from "@/lib/datesIntakeConsole";
 
 type Picked = DatesIntakeSourceFile & { file: File };
-type Notice = { kind: "problem"; key: string } | { kind: "refused"; error: string } | { kind: "uncertain" };
+export type DatesIntakeSourceNoticeValue = { kind: "problem"; key: string } | { kind: "refused"; error: string } | { kind: "uncertain"; error: string | null };
+
+/**
+ * What the last attempt came to. A definitive refusal is Core's own words. An
+ * unknown outcome says that it is unknown, shows what was answered when
+ * something was, and tells the operator that the retry is the same request.
+ */
+export function DatesIntakeSourceNotice({ notice }: { notice: DatesIntakeSourceNoticeValue | null }) {
+  const t = useTranslations("datesAdmin.intake.source");
+  if (notice === null) return null;
+  if (notice.kind === "problem") return <p className="alert alert-error" role="alert">{t(`problems.${notice.key}`)}</p>;
+  if (notice.kind === "refused") return <DatesIntakeRefusal error={notice.error} />;
+  return <>
+    <p className="alert alert-error" role="alert">{t("uncertain")}</p>
+    {notice.error !== null && <DatesIntakeRefusal error={notice.error} tone="info" />}
+    <p className="field-hint">{t("locked")} <Link href="/dates/intakes">{t("checkQueue")}</Link></p>
+  </>;
+}
 
 /**
  * "Draft from source" / "Vázlat forrásból": a link, a flyer photo or a line of
@@ -34,14 +51,26 @@ export default function DatesIntakeSourcePanel({ entry, onCreated }: {
   const [text, setText] = useState("");
   const [files, setFiles] = useState<Picked[]>([]);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<Notice | null>(null);
-  // One identity per source: it survives a retry and changes with the source.
-  const key = useRef(""), busyRef = useRef(false);
+  const [notice, setNotice] = useState<DatesIntakeSourceNoticeValue | null>(null);
+  // An attempt whose outcome is unknown locks the source: the retry must be the same request.
+  const [locked, setLocked] = useState(false);
+  // One identity per source. It survives everything except Core's receipt, Core's
+  // definitive refusal, an edit of a source nothing is pending for, and an explicit discard.
+  const attempts = useRef<DatesIntakeSourceAttempts | null>(null), busyRef = useRef(false);
+  if (attempts.current === null) attempts.current = createDatesIntakeSourceAttempts();
 
   if (entry.state === "noCapability") return null;
   const disabled = entry.state === "disabled";
 
-  function changed() { key.current = ""; setNotice(null); }
+  function changed() {
+    if (attempts.current!.changed()) setNotice(null);
+  }
+
+  /** The operator's own decision: the unanswered request is given up, and the next one is a new command. */
+  function discard() {
+    if (busyRef.current) return;
+    attempts.current!.discard(); setLocked(false); setNotice(null);
+  }
 
   async function pick(list: FileList | null) {
     changed();
@@ -58,12 +87,12 @@ export default function DatesIntakeSourcePanel({ entry, onCreated }: {
     if (problem) { setNotice({ kind: "problem", key: problem }); return; }
     busyRef.current = true; setBusy(true); setNotice(null);
     try {
-      if (key.current === "") key.current = createDatesIntakeSourceKey();
-      const outcome = await submitDatesIntakeSource(adminIntakeCreate, draft, files.map((item) => item.file), locale, key.current);
+      const outcome = await attempts.current!.send(adminIntakeCreate, draft, files.map((item) => item.file), locale);
+      setLocked(attempts.current!.unanswered);
       if (outcome.kind === "success") { onCreated(outcome.receipt.intake.intake_id); return; }
-      if (outcome.kind === "refused") { key.current = ""; setNotice({ kind: "refused", error: outcome.error }); }
-      // The answer was lost: the same request, with the same identity, finds the intake if it was made.
-      else setNotice({ kind: "uncertain" });
+      // Only Core's definitive refusal ends the request. Anything else may have created the intake:
+      // the same request, with the same identity, finds it if it was made.
+      setNotice(outcome.kind === "refused" ? { kind: "refused", error: outcome.error } : { kind: "uncertain", error: outcome.error });
     } finally { busyRef.current = false; setBusy(false); }
   }
 
@@ -73,7 +102,7 @@ export default function DatesIntakeSourcePanel({ entry, onCreated }: {
     <p>{t("copy")}</p>
     {disabled && <p className="alert alert-info">{t("disabled")} <Link href="/dates/configuration">{t("disabledLink")}</Link></p>}
     {entry.state === "unknown" && <p className="field-hint">{t("unknown")}</p>}
-    {open && !disabled && <form onSubmit={submit}><fieldset className="dates-external-fields" disabled={busy}>
+    {open && !disabled && <form onSubmit={submit}><fieldset className="dates-external-fields" disabled={busy || locked}>
       <div className="row-actions" role="radiogroup" aria-label={t("kind")}>
         {DATES_INTAKE_INPUT_KINDS.map((value) => <label className="checkbox-field" key={value}>
           <input type="radio" name="dates-intake-kind" checked={kind === value} onChange={() => { changed(); setKind(value); }} /><span>{kinds(value)}</span></label>)}
@@ -89,10 +118,13 @@ export default function DatesIntakeSourcePanel({ entry, onCreated }: {
         <textarea required={kind === "text"} rows={3} maxLength={8000} value={text} onChange={(change) => { changed(); setText(change.target.value); }} />
         <small>{t("textHint", { maximum: DATES_INTAKE_MAX_TEXT_GRAPHEMES })}</small></label>}
       <p className="field-hint">{t("privacy")}</p>
-      {notice?.kind === "problem" && <p className="alert alert-error" role="alert">{t(`problems.${notice.key}`)}</p>}
-      {notice?.kind === "refused" && <DatesIntakeRefusal error={notice.error} />}
-      {notice?.kind === "uncertain" && <p className="alert alert-error" role="alert">{t("uncertain")}</p>}
-      <button type="submit" className="button button-primary">{busy ? common("working") : t(notice?.kind === "uncertain" ? "retry" : "submit")}</button>
-    </fieldset></form>}
+    </fieldset>
+      <DatesIntakeSourceNotice notice={notice} />
+      <div className="row-actions">
+        <button type="submit" className="button button-primary" disabled={busy}>{busy ? common("working") : t(locked ? "retry" : "submit")}</button>
+        {locked && <button type="button" className="button button-secondary" disabled={busy} onClick={discard}>{t("discard")}</button>}
+      </div>
+      {locked && <p className="field-hint">{t("discardHint")}</p>}
+    </form>}
   </section>;
 }

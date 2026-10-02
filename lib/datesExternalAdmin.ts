@@ -375,13 +375,23 @@ export type DatesExternalRefusal = { kind: "refused" | "uncertain"; error: strin
 const refusalCodes: Readonly<Record<number, readonly string[]>> = {
   // Checked inside the transaction, after successful receipt replay lookup.
   // The intake tokens (P2a) are raised inside the publication's transaction too.
-  403: ["dates-external-publishing-disabled", "dates-intake-admin-drafts-disabled"],
+  // The same table settles the other intake commands (create, hold, reject),
+  // so it names every token with which Core (285b14a8) refuses one of them
+  // without writing: raised inside the command's transaction - after the
+  // receipt lookup where the command has an identity - or by a check of the
+  // request itself. It never names a transport failure, a 5xx,
+  // `dates-admin-command-in-progress`, `dates-admin-idempotency-conflict` or a
+  // capability refusal: none of those says whether an earlier attempt landed.
+  403: ["dates-external-publishing-disabled", "dates-intake-admin-drafts-disabled", "dates-intake-lease-owner-required"],
   404: ["dates-external-unavailable", "dates-admin-activity-unavailable", "dates-intake-unavailable"],
   409: ["dates-external-conflict", "dates-external-duplicate", "dates-external-content-state-invalid",
     "dates-external-projection-unavailable", "dates-external-command-state-invalid", "dates-external-thread-unavailable", "dates-thread-read-only",
     "dates-admin-stale-revision", "dates-admin-activity-purge-not-eligible", "dates-admin-activity-open-case", "dates-admin-activity-legal-hold",
     "dates-admin-activity-not-deleted", "dates-admin-activity-deleted", "dates-admin-activity-terminal",
-    "dates-intake-conflict", "dates-intake-lease-required", "dates-intake-event-unavailable"],
+    "dates-intake-conflict", "dates-intake-lease-required", "dates-intake-event-unavailable",
+    "dates-intake-claimed", "dates-intake-lease-lost", "dates-intake-state-invalid"],
+  // A request larger than Core reads at all.
+  413: ["dates-intake-image-invalid"],
   422: ["dates-external-id-invalid", "dates-external-revision-invalid", "dates-external-filter-invalid", "dates-external-input-invalid",
     "dates-external-category-invalid", "dates-external-summary-invalid", "dates-external-sensitive-invalid", "dates-external-attendee-list-invalid",
     "dates-timezone-invalid", "dates-external-start-invalid", "dates-external-duration-invalid", "dates-external-time-invalid", "dates-external-age-invalid",
@@ -389,7 +399,10 @@ const refusalCodes: Readonly<Record<number, readonly string[]>> = {
     "dates-external-paid-official-link-required", "dates-external-confirmation-required", "dates-external-venue-invalid", "dates-external-ticket-domain-invalid",
     "dates-title-invalid", "dates-admin-reason-required", "dates-admin-reason-invalid", "dates-admin-idempotency-invalid",
     "dates-external-command-invalid", "dates-update-text-invalid",
-    "dates-intake-id-invalid", "dates-intake-revision-invalid", "dates-intake-input-invalid"],
+    "dates-intake-id-invalid", "dates-intake-revision-invalid", "dates-intake-input-invalid",
+    "dates-intake-kind-invalid", "dates-intake-locale-invalid", "dates-intake-url-invalid", "dates-intake-source-not-readable",
+    "dates-intake-text-invalid", "dates-intake-origin-invalid", "dates-intake-image-invalid", "dates-intake-reason-invalid",
+    "dates-intake-lease-invalid"],
 };
 
 /** Only pinned Core no-land refusals release an attempted command's identity. */

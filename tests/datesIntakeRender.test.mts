@@ -286,9 +286,16 @@ test("\"Draft from source\" is offered, disabled with its reason, or absent - in
   }
   const panel = readFileSync(new URL("../components/DatesIntakeSourcePanel.tsx", import.meta.url), "utf8");
   // One identity per source, renewed when the source changes; the flyer goes to the console's own route and nowhere else.
-  assert.match(panel, /if \(key\.current === ""\) key\.current = createDatesIntakeSourceKey\(\);/);
-  assert.match(panel, /function changed\(\) \{ key\.current = ""; setNotice\(null\); \}/);
-  assert.match(panel, /submitDatesIntakeSource\(adminIntakeCreate, draft, files\.map\(\(item\) => item\.file\), locale, key\.current\)/);
+  // The identity is held by the attempts object and by nothing in the panel: the panel cannot rotate a key by itself.
+  assert.match(panel, /if \(attempts\.current === null\) attempts\.current = createDatesIntakeSourceAttempts\(\);/);
+  assert.match(panel, /const outcome = await attempts\.current!\.send\(adminIntakeCreate, draft, files\.map\(\(item\) => item\.file\), locale\);\s+setLocked\(attempts\.current!\.unanswered\);/);
+  assert.match(panel, /function changed\(\) \{\s+if \(attempts\.current!\.changed\(\)\) setNotice\(null\);\s+\}/);
+  assert.doesNotMatch(panel, /key\.current|createDatesIntakeSourceKey|submitDatesIntakeSource/);
+  // While an attempt is unanswered the source cannot be edited; the only ways on are the same request or an explicit discard.
+  assert.match(panel, /<fieldset className="dates-external-fields" disabled=\{busy \|\| locked\}>/);
+  assert.match(panel, /\{locked && <button type="button" className="button button-secondary" disabled=\{busy\} onClick=\{discard\}>\{t\("discard"\)\}<\/button>\}/);
+  assert.match(panel, /attempts\.current!\.discard\(\); setLocked\(false\); setNotice\(null\);/);
+  assert.equal((panel.match(/\.discard\(\)/g) ?? []).length, 1, "nothing but the operator's button gives a request up");
   assert.match(panel, /const problem = datesIntakeSourceProblem\(draft, files\);\s+if \(problem\) \{ setNotice\(\{ kind: "problem", key: problem \}\); return; \}/);
   assert.doesNotMatch(panel, /adminUploadImage|upload-image|canvas|createImageBitmap/, "never the public image upload, and no client-side resizing");
   const client = readFileSync(new URL("../lib/adminClient.ts", import.meta.url), "utf8");
@@ -402,5 +409,30 @@ test("review finding: closing an intake with unread events is an explicit, worde
     assert.ok(closing.indexOf('checked=""') > closing.indexOf(escaped(copy.keepOpen)));
     assert.ok(closing.includes(escaped(copy.closeAnyway.replace("{count}", "1").replace("{remaining}", "2"))));
     assert.match(copy.confirmCloseUnreadable, /\{count\}/);
+  }
+});
+
+test("review finding: an unknown create outcome is worded as unknown, shows what was answered, and offers the same request", async () => {
+  const { DatesIntakeSourceNotice } = await import("../components/DatesIntakeSourcePanel.tsx");
+  for (const locale of LOCALES) {
+    const copy = messagesOf(locale).datesAdmin.intake;
+    const notice = (value: Parameters<typeof DatesIntakeSourceNotice>[0]["notice"]) => render(locale, createElement(DatesIntakeSourceNotice, { notice: value }));
+    assert.equal(notice(null), "");
+    // No answer at all.
+    const silent = notice({ kind: "uncertain", error: null });
+    assert.ok(silent.includes(escaped(copy.source.uncertain)) && silent.includes(escaped(copy.source.locked)) && silent.includes(escaped(copy.source.checkQueue)));
+    assert.match(silent, /href="\/dates\/intakes"/); assert.doesNotMatch(silent, /<code>/);
+    // A transport failure and Core's in-progress reply: still unknown, with the token and its explanation beside it.
+    for (const error of ["core-timeout", "core-unavailable", "invalid-core-response", "dates-admin-command-in-progress"]) {
+      const html = notice({ kind: "uncertain", error });
+      assert.ok(html.includes(escaped(copy.source.uncertain)), error);
+      assert.ok(html.includes(`<code>${error}</code>`) && html.includes(escaped(copy.refusals[error])), error);
+    }
+    // A definitive refusal is Core's words alone: nothing claims that the outcome is unknown.
+    const refused = notice({ kind: "refused", error: "dates-intake-source-not-readable" });
+    assert.ok(refused.includes(escaped(copy.refusals["dates-intake-source-not-readable"])));
+    assert.equal(refused.includes(escaped(copy.source.uncertain)), false); assert.equal(refused.includes(escaped(copy.source.locked)), false);
+    assert.ok(notice({ kind: "problem", key: "imageType" }).includes(escaped(copy.source.problems.imageType)));
+    for (const key of ["retry", "discard", "discardHint"]) assert.equal(typeof copy.source[key], "string");
   }
 });
