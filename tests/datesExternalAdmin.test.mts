@@ -195,6 +195,15 @@ test("detail binds all editor facts to the projected event and never reuses hist
   const { input, detail } = sample();
   assert.ok(normalizeDatesExternalManualEvent(input));
   assert.equal(normalizeDatesExternalManualEvent(detail.event.editor_input), null);
+  // D-143 loosens what the console READS, not what it SENDS: the event document of a publication or an update is
+  // still exactly its fields, at every level, while the same facts read back from Core (the editor seed) may carry more.
+  for (const widen of [(v: any) => { v.future = 1; }, (v: any) => { v.venue.place_id = "ChIJ"; }, (v: any) => { v.summary.de = "x"; }, (v: any) => { v.confirmations.reviewed = true; },
+    (v: any) => { v.links.affiliate = "x"; }, (v: any) => { v.organizer.uid = 5; }, (v: any) => { v.sensitive.note = "x"; }]) {
+    const sent = structuredClone(input); widen(sent);
+    assert.equal(normalizeDatesExternalManualEvent(sent), null, widen.toString());
+    const seed = structuredClone(detail.event.editor_input); widen(seed);
+    assert.ok(normalizeDatesExternalEditorInput(seed), widen.toString());
+  }
   assert.ok(normalizeDatesExternalEditorInput(detail.event.editor_input));
   assert.equal(normalizeDatesExternalEditorInput(input), null);
 });

@@ -9,18 +9,18 @@
  * released console keeps reading them while the two are deployed one after
  * the other.
  *
- * The parameter's name and its value are Core's to announce. Until the Core
- * lane does, this is `null` and nothing is sent: the console's decoders accept
- * both shapes (every addition is optional with a defined default), so it
- * reads a Core that serves the additions unconditionally, one that serves
- * them on the selector, and the live Core that does not know them.
+ * The parameter's name and its value are Core's (announced by the Core lane,
+ * `team/chat/20261002T181620Z-opus-core-p2-to-opus-admin-p2-p2b-queue-second-look-mark.md`):
+ * `dates_event_intake_admin_contract_version=1`, "exactly 1 is the selector;
+ * anything else is without". The console's decoders accept both shapes
+ * (every addition is optional with a defined default), so it reads a Core that
+ * answers the selector and the live Core that does not know the parameter
+ * (Core main reads named parameters only and ignores it).
  *
- * This is the ONE place to change when the name is announced:
- *
- *   export const DATES_ADMIN_INTAKE_CONTRACT_SELECTOR = { parameter: "<name>", value: <version> } as const;
+ * This is the ONE place that names it. `null` would send nothing.
  */
 export type DatesAdminContractSelector = { readonly parameter: string; readonly value: number | string };
-export const DATES_ADMIN_INTAKE_CONTRACT_SELECTOR: DatesAdminContractSelector | null = null;
+export const DATES_ADMIN_INTAKE_CONTRACT_SELECTOR: DatesAdminContractSelector | null = { parameter: "dates_event_intake_admin_contract_version", value: 1 };
 
 /**
  * What the SERVER adds to a request to Core, by action: the selector on every

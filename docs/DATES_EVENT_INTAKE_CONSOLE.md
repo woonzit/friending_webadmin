@@ -28,10 +28,13 @@ rule; the provider is the Core lane's contract `dates-event-intake-admin-v1`.
   `d84a3e16…`). This console sends the selector on every Dates Admin request
   (`dates_*`), server-side, as a server-owned parameter merged after the
   browser's body: `lib/datesAdminContract.ts`,
-  `DATES_ADMIN_INTAKE_CONTRACT_SELECTOR`. **The constant is `null` until the
-  Core lane announces the parameter's name and value; then it is the one line to
-  change.** Nothing else depends on it: this console's decoders accept a P1
-  body with and without the additions.
+  `DATES_ADMIN_INTAKE_CONTRACT_SELECTOR` - the one place that names it:
+  **`dates_event_intake_admin_contract_version=1`** (announced by the Core
+  lane; "exactly 1 is the selector, anything else is without"). Nothing else
+  depends on it: this console's decoders accept a P1 body with and without the
+  additions. With the selector an intake setting is saveable; without it Core
+  refuses the key (`dates-configuration-key-invalid`), as it does for the
+  released console.
 - **Dual shape.** In this console `ai_assisted` on a list row and `intake` on an
   event are optional. Absent means "not served here": the row is not marked as
   AI-assisted and the event shows no link back to an intake. The configuration
@@ -304,13 +307,16 @@ that was answered, when one was.
 - **Create** ("Draft from source"). A create has no revision to fence it, and
   a browser cannot be where "exactly once" is guaranteed: it has several
   tabs, a clock its user sets and storage that is neither atomic nor
-  trustworthy. **That a source cannot become two open drafts is Core's
-  guarantee**: Core answers an identical resubmission by the same operator,
-  while an open draft of the same source exists, with that draft - the
-  ordinary create receipt with `existing: true` and the draft's id, revision
-  and status as they are now (Core's proof:
-  `tests/dates_event_intake_resubmission_storage_test.php`). The console keeps
-  no state for it and does only what is safe and useful:
+  trustworthy. **That an operator's source does not become two open drafts
+  is Core's guarantee, not this console's**: Core answers an identical
+  resubmission by the same operator, while an open draft of the same source
+  exists, with that draft - the ordinary create receipt with `existing: true`
+  and the draft's id, revision and status as they are now (Core's proof for
+  this channel: `tests/dates_event_intake_resubmission_storage_test.php`).
+  The statement is about the operator's create, which is the only create this
+  console has; what Core guarantees for the member channel is Core's contract
+  to state (`docs/DATES_EVENT_SUGGESTION_V1.md`), not this document's. The
+  console keeps no state for it and does only what is safe and useful:
   - the create receipt is bound, not closed: `success`, the intake's id,
     revision and status, the audit id and the two markers `replayed` and
     `existing` are required and checked, any other key is tolerated. A new

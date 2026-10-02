@@ -319,7 +319,9 @@ test("request shape: create from flyers is real multipart with image_1 / image_2
   assert.equal(sent[0].url, "https://core.invalid/v1/webadmin/dates_event_intake_create");
   assert.equal(sent[0].form, null); assert.equal(sent[0].contentType, null, "fetch writes the multipart boundary itself");
   const body = sent[0].multipart!;
-  assert.deepEqual([...new Set(body.keys())].sort(), ["admin_email", "admin_request_id", "idempotency_key", "image_1", "image_2", "kind", "locale", "secret", "text"]);
+  assert.deepEqual([...new Set(body.keys())].sort(), ["admin_email", "admin_request_id", "dates_event_intake_admin_contract_version", "idempotency_key", "image_1", "image_2",
+    "kind", "locale", "secret", "text"]);
+  assert.equal(body.get("dates_event_intake_admin_contract_version"), "1", "the Admin intake contract selector, set by the server (D-143)");
   assert.deepEqual([body.get("kind"), body.get("locale"), body.get("text"), body.get("admin_email"), body.get("secret")],
     ["images", "hu", "Városligeti programok novemberben", email, secret]);
   assert.match(String(body.get("idempotency_key")), CORE.idempotencyKey); assert.match(String(body.get("admin_request_id")), CORE.requestId);

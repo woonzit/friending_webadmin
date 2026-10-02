@@ -41,6 +41,8 @@ function harness(answer: unknown = fixture("admin-create-text"), role: keyof typ
   };
   return { state, deps };
 }
+// D-143: what Core announced, written out here so that a change of the constant is a change of this test too.
+const SELECTOR = { dates_event_intake_admin_contract_version: 1 };
 const sameOrigin = { origin: "https://admin.example.test", host: "admin.example.test", "sec-fetch-site": "same-origin", "x-friending-admin-request": "1" };
 const headers = (values: Record<string, string | null>) => { const map = new Headers(); for (const [key, value] of Object.entries(values)) if (value !== null) map.set(key, value); return map; };
 
@@ -181,12 +183,13 @@ test("create forwards a link or a line of text as a form call with the server's 
   assert.equal(reply.status, 200);
   assert.deepEqual("json" in reply && reply.json, fixture("admin-create-text"));
   assert.equal(reply.headers["Cache-Control"], "private, no-store, max-age=0");
+  // D-143: the Admin intake contract selector goes with it, set by the server (`SELECTOR`).
   assert.deepEqual(text.state.calls[1], { action: "dates_event_intake_create", timeout: 20_000, payload: { admin_email: email, kind: "text", locale: "hu",
-    idempotency_key: KEY, admin_request_id: "req-0000-0000-0001", text: "Fradi–Újpest szombaton a Groupama Arénában" } });
+    idempotency_key: KEY, admin_request_id: "req-0000-0000-0001", ...SELECTOR, text: "Fradi–Újpest szombaton a Groupama Arénában" } });
   const link = harness(fixture("admin-create-url"));
   await serveDatesIntakeCreate(multipart({ kind: "url", url: "https://akvariumklub.hu/programok/acidarab/", locale: "en", idempotency_key: KEY }), link.deps);
   assert.deepEqual(link.state.calls[1].payload, { admin_email: email, kind: "url", locale: "en", idempotency_key: KEY, admin_request_id: "req-0000-0000-0001",
-    url: "https://akvariumklub.hu/programok/acidarab/" });
+    ...SELECTOR, url: "https://akvariumklub.hu/programok/acidarab/" });
   assert.equal(link.state.calls[1].files, undefined);
 });
 
@@ -198,7 +201,7 @@ test("create forwards one or two flyers as image_1 / image_2, unchanged, after t
   const call = h.state.calls[1];
   assert.equal(call.action, "dates_event_intake_create"); assert.equal(call.timeout, 60_000);
   assert.deepEqual(call.payload, { admin_email: email, kind: "images", locale: "hu", idempotency_key: KEY, admin_request_id: "req-0000-0000-0001",
-    text: "Városligeti programok novemberben" });
+    ...SELECTOR, text: "Városligeti programok novemberben" });
   assert.deepEqual(call.files!.map((file) => [file.field, file.mime, file.filename]), [["image_1", "image/jpeg", "flyer-1.jpg"], ["image_2", "image/png", "flyer-2.png"]]);
   assert.deepEqual(Buffer.from(call.files![0].bytes), JPEG); assert.deepEqual(Buffer.from(call.files![1].bytes), PNG);
   // No file name, path or metadata of the operator's machine is forwarded.
@@ -305,7 +308,7 @@ test("a flyer is served only to this console's own image element, to a reviewer,
   assert.equal(reply.headers["Content-Security-Policy"], "default-src 'none'; sandbox");
   for (const name of ["ETag", "Last-Modified", "Accept-Ranges", "Access-Control-Allow-Origin", "Age"]) assert.equal(Object.keys(reply.headers).some((key) => key.toLowerCase() === name.toLowerCase()), false, name);
   assert.deepEqual(h.state.calls[1], { action: "dates_event_intake_image", timeout: 30_000,
-    payload: { admin_email: email, intake_id: xin(5), index: 1, admin_request_id: "req-0000-0000-0001" } });
+    payload: { admin_email: email, intake_id: xin(5), index: 1, admin_request_id: "req-0000-0000-0001", ...SELECTOR } });
   // The same-host Referer of the console's <img referrerPolicy="same-origin"> is accepted too.
   assert.equal((await serveDatesIntakeMedia(media(`intake_id=${xin(5)}&index=1`, { host: "admin.example.test", referer: "https://admin.example.test/dates/intakes/x" }), harness(flyer()).deps)).status, 200);
 });
