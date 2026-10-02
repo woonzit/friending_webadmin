@@ -159,7 +159,8 @@ test("a saved command is exactly one of the two bodies the case page sends, per 
   // Core bounds a reason at 1000 characters (DatesModerationReadService::reason); the store is not stricter.
   assert.ok(prepareDatesKeptCommand(ACTOR, "dates_moderation_trail_evidence", { ...trailBody, reason: "x".repeat(1000) }, 1790000000));
   for (const [action, body] of [["dates_moderation_legal_hold", { ...holdBody("place"), review_at: null }], ["dates_moderation_legal_hold", { ...holdBody("release"), review_at: 1790086400 }],
-    ["dates_moderation_legal_hold", { ...holdBody("place"), action: "extend" }], ["dates_moderation_legal_hold", { ...holdBody("place"), case_id: "cas_1" }],
+    ["dates_moderation_legal_hold", { ...holdBody("place"), action: "extend" }], ["dates_moderation_legal_hold", { ...holdBody("release"), action: "extend" }],
+    ["dates_moderation_legal_hold", { ...holdBody("place"), case_id: "cas_1" }],
     ["dates_moderation_legal_hold", { ...holdBody("place"), reason: "  " }], ["dates_moderation_legal_hold", { ...holdBody("place"), legal_basis: "x".repeat(1001) }],
     ["dates_moderation_legal_hold", { ...holdBody("place"), idempotency_key: "short" }], ["dates_moderation_legal_hold", { ...holdBody("place"), extra: 1 }],
     ["dates_moderation_legal_hold", trailBody], ["dates_moderation_trail_evidence", holdBody("place")], ["dates_moderation_trail_evidence", { ...trailBody, captured_to: trailBody.captured_from }],
@@ -175,6 +176,15 @@ test("a saved command is exactly one of the two bodies the case page sends, per 
   assert.deepEqual([...tab.rows.keys()], [STORE_KEY]);
   assert.deepEqual(readDatesKeptCommand(tab.storage, ACTOR), { kind: "pending", command: hold });
   assert.deepEqual(readDatesKeptCommand(tab.storage, "colleague@example.test"), { kind: "empty" });
+  // A receipt removes exactly the command it answers. If the slot holds another command by then (another page of the tab
+  // saved one while this request was in flight), that one stays, and the caller is told the record was not cleared.
+  const racing = tabStorage(), release = prepareDatesKeptCommand(ACTOR, "dates_moderation_legal_hold", holdBody("release"), 1790000000)!;
+  const settled = await runDatesKeptCommand(hold!, racing.storage, 1790000000, async () => { racing.rows.set(STORE_KEY, JSON.stringify(release)); return fixture("admin-moderation-hold-place"); });
+  assert.deepEqual(settled, { kind: "success", retained: true });
+  assert.deepEqual(readDatesKeptCommand(racing.storage, ACTOR), { kind: "pending", command: release });
+  // And while another command is saved, a new one is neither saved over it nor sent.
+  assert.deepEqual(await runDatesKeptCommand(hold!, racing.storage, 1790000000, async () => assert.fail("not sent")), { kind: "blocked" });
+  assert.deepEqual(readDatesKeptCommand(racing.storage, ACTOR), { kind: "pending", command: release });
   for (const raw of ["{", "null", JSON.stringify({ ...hold, actor: "colleague@example.test" }), JSON.stringify({ ...hold, version: 2 }), JSON.stringify({ ...hold, body: { ...hold!.body, action: "extend" } }), "x".repeat(17000)]) {
     tab.rows.set(STORE_KEY, raw);
     assert.deepEqual(readDatesKeptCommand(tab.storage, ACTOR), { kind: "blocked" });
@@ -353,9 +363,10 @@ test("trail capture: the first attempt lands, its reply is lost, the page is rel
     const saved = h.saved();
     assert.deepEqual(saved.kind === "pending" && saved.command.body, first, `${name}: the command is saved with its key`);
     for (const field of ["TrailFrom", "TrailTo", "TrailReason"]) assert.equal(h.writes.includes(field), false, "the form keeps what was sent");
-    // Submitting the form again makes no new command while this one waits.
+    // Submitting the form again makes no new command while this one waits: the page does not even try the store.
+    const waiting = plain(h.state.Feedback);
     await h.api.captureTrailEvidence(submit);
-    assert.equal(h.sent.length, 1);
+    assert.equal(h.sent.length, 1); assert.deepEqual(plain(h.state.Feedback), waiting, "nothing was attempted");
     // RELOAD: a new page, empty form. The saved request again; Core replays the first attempt's receipt.
     lose = false;
     const reloaded = caseHarness(answer, h.tab, { fields: false });
