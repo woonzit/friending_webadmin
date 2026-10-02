@@ -507,6 +507,69 @@ test("review finding: while its panel is open a source keeps its identity throug
     "dates-intake-create:00000000-0000-4000-8000-000000000002"]);
 });
 
+test("T-885 existing marker: the same source after a reload goes out as a new request, and Core's answer lands on the draft that is already there", async () => {
+  const { createDatesIntakeSourceAttempts, datesIntakeLanding, datesIntakeLandedOnExisting, forgetDatesIntakeLanding } = await import("../lib/datesIntakeConsole.ts");
+  const draft = { kind: "url" as const, url: "https://varosliget.example/programok/oszi-vasar", text: "" };
+  const h = harness();
+  let minted = 0;
+  const mint = () => `dates-intake-create:00000000-0000-4000-8000-${String(++minted).padStart(12, "0")}`;
+  const post = async (form: FormData) => {
+    const reply = await serveDatesIntakeCreate({ headers: headers({ ...sameOrigin, "content-length": "4096" }), form: async () => form }, h.deps);
+    return "json" in reply ? reply.json : null;
+  };
+  const keys = () => h.state.calls.filter((call) => call.action === "dates_event_intake_create").map((call) => call.payload.idempotency_key);
+  // The first submission is made, but its answer never arrives...
+  const before = createDatesIntakeSourceAttempts(mint);
+  h.state.answer = { status: 504, data: { success: false, error: "core-timeout" } };
+  assert.deepEqual(await before.send(post, draft, [], "hu"), { kind: "uncertain", error: "core-timeout" });
+  // ...and the page is reloaded: nothing of the first request is left in the browser, so the same source is a NEW
+  // request with a NEW key. The console does not prevent the second request and does not need to: Core answers it
+  // with the operator's open draft - its genuine body, `existing: true`, the draft as it is now.
+  const after = createDatesIntakeSourceAttempts(mint);
+  const existing = fixture("admin-create-url-existing");
+  h.state.answer = { status: 200, data: existing };
+  const outcome = await after.send(post, draft, [], "hu");
+  assert.deepEqual(outcome, { kind: "success", receipt: existing });
+  assert.ok(outcome.kind === "success" && outcome.receipt.existing === true && outcome.receipt.replayed === false);
+  assert.deepEqual(keys(), ["dates-intake-create:00000000-0000-4000-8000-000000000001", "dates-intake-create:00000000-0000-4000-8000-000000000002"]);
+  assert.equal(after.unanswered, false);
+  // Where it takes the operator: that draft's review screen, remembered as "already there" for that intake only.
+  const id = "xin_00000000000000000000000000000002", other = "xin_00000000000000000000000000000001";
+  assert.equal(datesIntakeLandedOnExisting(id), false, "nothing is remembered before a receipt says so");
+  assert.equal(datesIntakeLanding(existing), `/dates/intakes/${id}`);
+  assert.equal(datesIntakeLandedOnExisting(id), true); assert.equal(datesIntakeLandedOnExisting(other), false); assert.equal(datesIntakeLandedOnExisting(""), false);
+  // The review screen forgets it when it is left; a reload starts from nothing as well (the value lives in memory only).
+  forgetDatesIntakeLanding(); assert.equal(datesIntakeLandedOnExisting(id), false);
+  // A new draft lands on its review screen with nothing to say - and takes back what an earlier receipt said.
+  datesIntakeLanding(existing);
+  for (const name of ["url", "url-again", "text", "text-replay", "images", "images-with-text"]) {
+    const created = fixture(`admin-create-${name}`);
+    assert.equal(created.existing, false, name);
+    assert.equal(datesIntakeLanding(created), `/dates/intakes/${created.intake.intake_id}`);
+    assert.equal(datesIntakeLandedOnExisting(created.intake.intake_id), false, name); assert.equal(datesIntakeLandedOnExisting(id), false, name);
+  }
+  // The marker is Core's word, never the console's guess: a body without it, with a marker that is not a boolean, or
+  // one that calls an ended draft "existing" is not a receipt - the outcome is not known, and nothing is landed on.
+  const { existing: _marker, ...unmarked } = existing;
+  for (const body of [unmarked, { ...existing, existing: "true" }, { ...existing, existing: null }, { ...existing, intake: { ...existing.intake, status: "published" } },
+    { ...existing, intake: { ...existing.intake, status: "rejected" } }, { ...fixture("admin-create-url"), intake: { ...existing.intake } }]) {
+    const fresh = createDatesIntakeSourceAttempts(mint);
+    h.state.answer = { status: 200, data: body };
+    const result = await fresh.send(post, draft, [], "hu");
+    assert.equal(result.kind, "uncertain", JSON.stringify(body).slice(0, 140)); assert.equal(fresh.unanswered, true);
+  }
+  // By construction: the address carries no marker, and both entries of the panel go through the one landing.
+  const page = readFileSync(new URL("../components/DatesIntakeReviewPage.tsx", import.meta.url), "utf8");
+  assert.match(page, /useState\(\(\) => datesIntakeLandedOnExisting\(intakeId\)\)/); assert.match(page, /useEffect\(\(\) => forgetDatesIntakeLanding, \[\]\)/);
+  assert.doesNotMatch(page, /useSearchParams|location\.search|existing=/);
+  for (const file of ["../components/DatesIntakeSourceEntry.tsx", "../app/(dashboard)/dates/intakes/page.tsx"])
+    assert.match(readFileSync(new URL(file, import.meta.url), "utf8"), /onCreated=\{\(receipt\) => router\.push\(datesIntakeLanding\(receipt\)\)\}/, file);
+  assert.match(readFileSync(new URL("../components/DatesIntakeSourcePanel.tsx", import.meta.url), "utf8"), /if \(outcome\.kind === "success"\) \{ onCreated\(outcome\.receipt\); return; \}/);
+  const lib = readFileSync(new URL("../lib/datesIntakeConsole.ts", import.meta.url), "utf8");
+  const landing = lib.slice(lib.indexOf("let landedOnExisting"), lib.indexOf("export type DatesIntakeSubmissionHint")).replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
+  assert.ok(landing.length > 200); assert.doesNotMatch(landing, /storage|getItem|setItem|Date\.now|window|document/i, "memory only");
+});
+
 test("review recheck 2: the console keeps no record that could gate, claim, time or retire a submission - only a reminder", async () => {
   const { readDatesIntakeHint, writeDatesIntakeHint, datesIntakeHintStorage } = await import("../lib/datesIntakeConsole.ts");
   const rows = new Map<string, string>();

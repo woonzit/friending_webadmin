@@ -2,6 +2,7 @@
     "success": true,
     "status_code": 200,
     "replayed": false,
+    "existing": false,
     "intake": {
         "intake_id": "xin_00000000000000000000000000000001",
         "revision": 1,

@@ -1,0 +1,23 @@
+{
+    "success": true,
+    "status_code": 200,
+    "replayed": false,
+    "intake": {
+        "intake_id": "xin_0000000000000000000000000000001e",
+        "revision": 12,
+        "status": "rejected"
+    },
+    "decision": {
+        "action": "rejected",
+        "reason_code": "spam_or_fake",
+        "statement": {
+            "en": "The submission appears to be spam or not a genuine event.",
+            "hu": "A beküldés kéretlen tartalomnak vagy nem valódi eseménynek tűnik."
+        }
+    },
+    "audit_id": "aud_0000000000000000000000000000001a",
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

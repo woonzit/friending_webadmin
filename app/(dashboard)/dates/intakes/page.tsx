@@ -11,7 +11,7 @@ import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import { DATES_INTAKE_STATUSES, datesIntakeAffordances, type DatesIntakeLeaseAction, type DatesIntakeQueue, type DatesIntakeQueueRow } from "@/lib/datesIntakeAdmin";
-import { readDatesIntakeQueue, runDatesIntakeLease, type DatesIntakeOperator } from "@/lib/datesIntakeConsole";
+import { datesIntakeLanding, readDatesIntakeQueue, runDatesIntakeLease, type DatesIntakeOperator } from "@/lib/datesIntakeConsole";
 import { formatDate, formatNumber } from "@/lib/format";
 
 const PAGE_SIZE = 40;
@@ -79,7 +79,7 @@ export default function DatesIntakeQueuePage() {
         <Link className="button button-secondary" href="/dates/ai-usage">{t("usage.open")}</Link></div>} />
     <DatesAdminTabs />
     <p className="alert alert-info">{t("aiNotice")}</p>
-    {operator?.manage && queue && <DatesIntakeSourcePanel entry={{ state: queue.drafts_enabled ? "available" : "disabled", actor: operator.principal.email }} onCreated={(intakeId) => router.push(`/dates/intakes/${intakeId}`)} />}
+    {operator?.manage && queue && <DatesIntakeSourcePanel entry={{ state: queue.drafts_enabled ? "available" : "disabled", actor: operator.principal.email }} onCreated={(receipt) => router.push(datesIntakeLanding(receipt))} />}
     <form className="dates-filter-grid" onSubmit={(event) => event.preventDefault()}>
       <label className="field"><span>{t("queue.statusFilter")}</span><select value={status} onChange={(event) => { setPage(1); setStatus(event.target.value); }}>
         <option value="">{common("all")}</option>

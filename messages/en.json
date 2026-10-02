@@ -8783,6 +8783,10 @@
           "eventIntake": {
             "title": "AI event intake (Draft from source)",
             "copy": "The switch, the budget, the providers and their models for the AI that drafts external events from a link, a flyer or a line of text. Nothing here takes effect while the draft switch is off, and the AI never publishes: a person reviews every draft."
+          },
+          "eventSuggestion": {
+            "title": "Members' event suggestions",
+            "copy": "The switch, the limits, the strike rule and the consent version of the channel through which members suggest public events. A suggestion is drafted by the same AI and reviewed by a person; nothing here takes effect while the suggestion switch is off."
           }
         },
         "settings": {
@@ -9025,6 +9029,60 @@
             "purpose": "The ticketing sites a ticket link may point at besides the organizer's and the venue's own site: up to 50 lower-case host names.",
             "effect": "A ticket link found in a source is kept only on one of those sites; any other is dropped and the reviewer is told. The same list applies when an AI-drafted event is edited later.",
             "caution": "List only official ticket sellers, never resale sites. A host name has no https://, no path and no www. prefix. An empty list allows none."
+          },
+          "dates_external_suggestions_enabled": {
+            "title": "Members' suggestions",
+            "purpose": "Master switch of the channel through which members suggest events. Its default is OFF; only the exact stored boolean true turns it on.",
+            "effect": "OFF refuses a new suggestion from the app, a question to the member and the publication of a member's suggestion. Suggestions already in the queue can still be read and rejected.",
+            "caution": "Turn it on only when the AI intake works for administrators and reviewers are ready for the queue. It is independent of the administrators' draft switch and of the external-event publication switch."
+          },
+          "dates_event_suggestion_daily_limit": {
+            "title": "Suggestions per member per day",
+            "purpose": "How many suggestions one member may submit in a rolling 24 hours, between 1 and 50. The default is 5.",
+            "effect": "Every accepted submission counts, whatever became of it. Over the limit a new suggestion is refused: nothing is stored and no AI call is made.",
+            "caution": "Each suggestion costs an AI run. Raise the limit together with the monthly AI budget, not on its own."
+          },
+          "dates_event_suggestion_monthly_limit": {
+            "title": "Suggestions per member per thirty days",
+            "purpose": "How many suggestions one member may submit in a rolling thirty days, between 1 and 500. The default is 20.",
+            "effect": "Counted like the daily limit. When both are reached the app is told about this one first, because it lasts longer.",
+            "caution": "It bounds how many AI runs a single account can cause in a month. Below the daily limit it is the only limit that ever applies."
+          },
+          "dates_event_suggestion_open_limit": {
+            "title": "Open suggestions per member",
+            "purpose": "How many suggestions of one member may be open at once - being drafted, with the member, or in review - between 1 and 20. The default is 3.",
+            "effect": "A member at the limit cannot submit another until one of theirs is decided or withdrawn. A suggestion answered at once as a duplicate holds no open slot.",
+            "caution": "A low value keeps one member from filling the review queue; a value near the daily limit removes that protection."
+          },
+          "dates_event_suggestion_strike_limit": {
+            "title": "Strikes before a suggestion ban",
+            "purpose": "How many rejections as spam or fake, inside the strike window, ban a member from suggesting, between 1 and 20. The default is 3.",
+            "effect": "Only a rejection with the reason spam or fake is a strike. A rejection that is under a second look is not counted until that look ends, and a second look that ends otherwise takes the strike back.",
+            "caution": "A strike is a sanction against a member. Use the spam-or-fake reason only for that, and expect a member to ask for a second look."
+          },
+          "dates_event_suggestion_strike_window_days": {
+            "title": "Strike window (days)",
+            "purpose": "Over how many days strikes are counted towards the limit, between 1 and 365. The default is 30.",
+            "effect": "A strike older than this no longer counts. The review screen shows the member's strikes inside the window beside the limit.",
+            "caution": "A longer window makes old rejections count for longer; a shorter one forgives them sooner. A ban that has already started keeps its end date."
+          },
+          "dates_event_suggestion_ban_days": {
+            "title": "Suggestion ban (days)",
+            "purpose": "For how many days a member who reached the strike limit cannot suggest events, between 1 and 365. The default is 30.",
+            "effect": "During the ban the app refuses a new suggestion and says until when. The member can still withdraw a suggestion and ask for a second look at a rejection.",
+            "caution": "Changing it does not shorten or lengthen a ban that is already running: it applies to bans that start afterwards."
+          },
+          "dates_event_suggestion_consent_version": {
+            "title": "Suggestion consent version",
+            "purpose": "The version of the consent text a member must have accepted before suggesting an event, between 1 and 1000. The default is 1.",
+            "effect": "Raising it makes every member accept the new text before their next suggestion; an acceptance of an older version is refused as outdated. Suggestions already submitted are not affected.",
+            "caution": "Raise it only together with a new consent text in the app, never to test: every member is asked again before their next suggestion."
+          },
+          "dates_external_autopublish_enabled": {
+            "title": "Publication without a reviewer",
+            "purpose": "Lets Core publish a member's suggestion by itself when every automatic check holds. Its default is OFF; only the exact stored boolean true turns it on.",
+            "effect": "ON publishes a suggestion only when the whole allow-list holds for its single event, nothing suggests a duplicate, nobody is reviewing it, it is not a second look and its submitter has no strike. Such an event carries the tier its evidence supports and none of the four administrator confirmations.",
+            "caution": "With this on, events reach members that no person has checked. Leave it off unless the owner has decided otherwise; three member reports pull such an event back like any other."
           }
         }
       },
@@ -9259,7 +9317,8 @@
         "runsUnreadable": "The AI calls of this intake could not be read. That does not mean no AI call was made; the monthly figures are on the AI usage page.",
         "textsUnreadable": "The text Core holds of the source could not be read. It is not empty; it is unknown.",
         "couldNotRead": "Could not be read",
-        "revisionUnreadable": "The last read of this intake could not be used: Core served its revision in a shape this console does not know. The page shows the state it last read whole; your hold and the actions still work from that state. Refresh to try again."
+        "revisionUnreadable": "The last read of this intake could not be used: Core served its revision in a shape this console does not know. The page shows the state it last read whole; your hold and the actions still work from that state. Refresh to try again.",
+        "byMember": "the member"
       },
       "checks": {
         "weekday_match": "The weekday in the source matches the date",
@@ -9364,9 +9423,10 @@
           "imageSize": "A photo is empty or larger than 10 MiB.",
           "imageType": "A file is not a JPEG, PNG, WEBP or HEIC image."
         },
-        "hint": "Your submission at {time} ({kind}) got no answer, so it may or may not have arrived. Look for it in the queue before you submit the same source again.",
+        "hint": "Your submission at {time} ({kind}) got no answer, so it may or may not have arrived. You can look for it in the queue, or simply submit the same source again: while its draft is open, Core takes you to that draft instead of making a second one.",
         "hintLink": "Open the intake queue",
-        "hintDismiss": "Dismiss"
+        "hintDismiss": "Dismiss",
+        "existing": "This source had already been submitted by you, and its draft is still open: this is that draft, as it is now. Nothing new was created and no second AI run was started."
       },
       "usage": {
         "open": "AI usage",
@@ -9437,7 +9497,7 @@
         "rejected": "The intake was rejected and is finished.",
         "duplicate": "This source or this event is already here, so no AI was spent on it again. Open the original instead.",
         "failed": "The pipeline could not finish. The reason is shown below; nothing was published. Submit the source again if the cause was temporary.",
-        "withdrawn": "The submitter's account was erased, so the intake was withdrawn.",
+        "withdrawn": "The member withdrew the suggestion, or the member's account was erased.",
         "expired": "Nobody decided before the event started, or the wait for budget ran out. Nothing was published.",
         "awaiting_budget": "The monthly AI budget is used up or set to zero. The worker tries again every hour; raise the cap in Configuration to continue sooner."
       },
@@ -9467,7 +9527,8 @@
         "start-passed": "The event has started",
         "storage-unavailable": "Private storage unavailable",
         "attempts-exhausted": "Gave up after repeated failures",
-        "account-erased": "Submitter's account erased"
+        "account-erased": "Submitter's account erased",
+        "ai-budget-overrun": "AI billed beyond its limit"
       },
       "statusDetailHelp": {
         "image-empty": "The uploaded file had no content. Upload the photo again.",
@@ -9492,10 +9553,11 @@
         "venue-search-unavailable": "The place search did not answer, so the venue could not be resolved. Enter it by hand in the editor.",
         "duplicate-source": "The same address was already submitted; no AI was spent on it again.",
         "duplicate-event": "Core found the same event among the published events or the open intakes.",
-        "start-passed": "The event started before anyone decided, so the intake expired.",
+        "start-passed": "The event started before anyone decided: an undecided intake expired, and a partly published programme was closed with what had been published.",
         "storage-unavailable": "Core's private storage for flyers is not available.",
         "attempts-exhausted": "The same step failed six times in a row, so Core gave up.",
-        "account-erased": "The member who submitted this erased their account."
+        "account-erased": "The member who submitted this erased their account.",
+        "ai-budget-overrun": "A provider billed more for this intake than its per-call limit allows, so the intake failed. Nothing was published."
       },
       "channelValues": {
         "admin_draft": "Administrator's draft",
@@ -9514,7 +9576,8 @@
         "merged": "Merged into an existing event",
         "expired": "Expired",
         "screening_rejected": "Rejected at screening",
-        "extraction_rejected": "Rejected at extraction"
+        "extraction_rejected": "Rejected at extraction",
+        "withdrawn": "Withdrawn"
       },
       "rejectReasons": {
         "not_an_event": "Not an event",
@@ -9596,7 +9659,8 @@
         "low_legibility": "The flyer is hard to read.",
         "language_uncertain": "The language of the source is uncertain.",
         "conflicting_information": "The source contradicts itself.",
-        "content_unscreened": "The flyer was not screened for content."
+        "content_unscreened": "The flyer was not screened for content.",
+        "member_corrected": "The member changed the draft: the changed values are the member's own claim, with no quote from the source behind them."
       },
       "autoBlockers": {
         "no_hard_fail": "it has a blocking problem",
@@ -9773,7 +9837,26 @@
         "core-timeout": "Core did not answer in time. The request may still have landed; read the page again before repeating it.",
         "invalid-core-response": "Core's answer could not be read.",
         "admin-write-required": "Your role is read-only.",
-        "not-found": "The console does not know this action."
+        "not-found": "The console does not know this action.",
+        "dates-intake-suggestions-disabled": "Members' suggestions are switched off. An administrator turns them on in Configuration (dates_external_suggestions_enabled).",
+        "dates-intake-duplicate-event-unavailable": "The event named as the one already listed does not exist. Check its identifier."
+      },
+      "memberConfirmationValues": {
+        "awaiting": "Waiting for the member's answer",
+        "confirmed": "Confirmed by the member as drafted",
+        "corrected": "Corrected by the member",
+        "unchecked": "The member did not look at the draft in time",
+        "unanswered": "The member did not answer the reviewer's question"
+      },
+      "memberFieldValues": {
+        "title": "Title",
+        "starts_local": "Start",
+        "ends_local": "End",
+        "venue_name": "Venue name",
+        "venue_address": "Venue address",
+        "venue_city": "City",
+        "price_text": "Price",
+        "is_free": "Free of charge"
       }
     },
     "commandOutcome": {

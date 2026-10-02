@@ -2,12 +2,13 @@
     "success": true,
     "status_code": 200,
     "replayed": false,
+    "existing": false,
     "intake": {
         "intake_id": "xin_00000000000000000000000000000006",
         "revision": 1,
         "status": "received"
     },
-    "audit_id": "aud_00000000000000000000000000000006",
+    "audit_id": "aud_00000000000000000000000000000007",
     "server_now": 1790000000,
     "message": 200,
     "status": 200,

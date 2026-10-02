@@ -19,10 +19,25 @@ const INTAKE: Array<[string, string, unknown]> = [
   ["dates_event_intake_retention_days", "integer", 30], ["dates_event_ticket_domains", "string_list", ["jegy.hu", "eventim.hu", "tixa.hu", "ticketmaster.com"]],
 ];
 
-for (const name of ["default-off", "publishing-on"]) test(`genuine configuration ${name}: the eight intake settings follow the 33 P1 rows, default OFF, each with an editor`, () => {
+// The nine settings of the member channel (P2b), as Core's default configuration serves them after the eight above.
+const SUGGESTION: Array<[string, string, unknown]> = [
+  ["dates_external_suggestions_enabled", "boolean", false], ["dates_event_suggestion_daily_limit", "integer", 5],
+  ["dates_event_suggestion_monthly_limit", "integer", 20], ["dates_event_suggestion_open_limit", "integer", 3],
+  ["dates_event_suggestion_strike_limit", "integer", 3], ["dates_event_suggestion_strike_window_days", "integer", 30],
+  ["dates_event_suggestion_ban_days", "integer", 30], ["dates_event_suggestion_consent_version", "integer", 1],
+  ["dates_external_autopublish_enabled", "boolean", false],
+];
+
+for (const name of ["default-off", "publishing-on"]) test(`genuine configuration ${name}: the eight intake settings and the nine of the member channel follow the 33 P1 rows, default OFF, each with an editor`, () => {
   const settings = fixture(name).settings as Array<Record<string, any>>;
-  assert.equal(settings.length, 41);
-  assert.deepEqual(settings.slice(33).map((row) => [row.key, row.type, row.value]), INTAKE);
+  assert.equal(settings.length, 50);
+  assert.deepEqual(settings.slice(33, 41).map((row) => [row.key, row.type, row.value]), INTAKE);
+  assert.deepEqual(settings.slice(41).map((row) => [row.key, row.type, row.value]), SUGGESTION);
+  // Both switches of the member channel are off by default.
+  for (const key of ["dates_external_suggestions_enabled", "dates_external_autopublish_enabled"]) {
+    const row = settings.find((item) => item.key === key)!;
+    assert.deepEqual([row.value, row.effective_value, row.default_value, row.revision], [false, false, false, 0], key);
+  }
   for (const row of settings) assert.equal(datesSettingEditable(row.type), true, `${row.key}: ${row.type}`);
   for (const row of settings.slice(33)) {
     assert.deepEqual(row.effective_value, row.value); assert.deepEqual(row.default_value, row.value);
@@ -116,14 +131,20 @@ test("the intake settings have their own help group and full help in both langua
   const group = DATES_RUNTIME_HELP_GROUPS.find((item) => item.id === "eventIntake");
   assert.ok(group);
   assert.deepEqual([...group.settingKeys], INTAKE.map(([key]) => key));
-  assert.deepEqual(DATES_RUNTIME_HELP_KEYS.slice(-8), INTAKE.map(([key]) => key));
+  const suggestion = DATES_RUNTIME_HELP_GROUPS.find((item) => item.id === "eventSuggestion");
+  assert.ok(suggestion);
+  assert.deepEqual([...suggestion.settingKeys], SUGGESTION.map(([key]) => key));
+  assert.deepEqual(DATES_RUNTIME_HELP_KEYS.slice(-17), [...INTAKE, ...SUGGESTION].map(([key]) => key));
   // Every setting Core serves is documented: nothing falls into the "undocumented" list of the help dialog.
   const served = (fixture("default-off").settings as Array<{ key: string }>).map((row) => row.key).filter((key) => key !== "dates_enabled");
   assert.deepEqual(served.filter((key) => !(DATES_RUNTIME_HELP_KEYS as string[]).includes(key)), []);
   for (const locale of ["en", "hu"]) {
     const configuration = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8")).datesAdmin.configuration;
     assert.ok(configuration.runtimeHelp.groups.eventIntake.title.length > 10 && configuration.runtimeHelp.groups.eventIntake.copy.length > 80);
-    for (const [key] of INTAKE) for (const field of ["title", "purpose", "effect", "caution"])
+    assert.ok(configuration.runtimeHelp.groups.eventSuggestion.title.length > 10 && configuration.runtimeHelp.groups.eventSuggestion.copy.length > 80);
+    for (const key of ["dates_external_suggestions_enabled", "dates_external_autopublish_enabled"])
+      assert.match(configuration.runtimeHelp.settings[key].purpose, locale === "en" ? /default is OFF/ : /Alapértéke KI/, key);
+    for (const [key] of [...INTAKE, ...SUGGESTION]) for (const field of ["title", "purpose", "effect", "caution"])
       assert.ok(configuration.runtimeHelp.settings[key][field].length > (field === "title" ? 8 : 40), `${locale}.${key}.${field}`);
     for (const key of ["unknownTypeLabel", "unknownTypeHelp", "stringLabel", "stringHelp", "modelIdHelp", "modelIdInvalid", "orderedListLabel", "orderedListUp",
       "orderedListDown", "orderedListRemove", "orderedListAdd", "orderedListHelp", "stringListLabel", "stringListHelp", "ticketDomainsHelp"]) assert.ok(configuration[key], `${locale}.${key}`);

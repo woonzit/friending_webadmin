@@ -298,9 +298,27 @@ export function createDatesIntakeSourceAttempts(mint: () => string = createDates
 }
 
 /**
+ * Where a create receipt takes the operator: the review screen of the intake
+ * it names. Core's `existing` marker says the receipt is not a new draft but
+ * the operator's own open draft of the same source (the guarantee against a
+ * second draft is Core's; the console only says what happened). The landing
+ * remembers that for exactly this intake, in memory: the review screen says
+ * "already submitted" once, and a reload - or any later create - forgets it.
+ * It is never read from the address, so a link cannot claim it.
+ */
+let landedOnExisting: string | null = null;
+export function datesIntakeLanding(receipt: { existing: boolean; intake: { intake_id: string } }): string {
+  landedOnExisting = receipt.existing ? receipt.intake.intake_id : null;
+  return `/dates/intakes/${receipt.intake.intake_id}`;
+}
+export function datesIntakeLandedOnExisting(intakeId: string): boolean { return landedOnExisting !== null && landedOnExisting === intakeId; }
+export function forgetDatesIntakeLanding(): void { landedOnExisting = null; }
+
+/**
  * A reminder that survives a reload: "your submission at HH:MM may have
- * arrived - check the queue". It is a note for one operator in one browser
- * and nothing more. It holds the time and the kind of source - no key, no
+ * arrived - check the queue, or submit the source again". It is a note for
+ * one operator in one browser and nothing more. Submitting again is safe
+ * because Core answers the same source with the open draft (`existing`). It holds the time and the kind of source - no key, no
  * content, no file name. It gates nothing, decides nothing, never expires by
  * the clock, and the operator may dismiss it at any time.
  */

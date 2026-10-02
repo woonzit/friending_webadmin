@@ -14,7 +14,7 @@
         "event_count": 4,
         "published_count": 1,
         "first_title": "Fotókiállítás-megnyitó: Budapest fényei",
-        "earliest_start_at": 1793984400,
+        "earliest_start_at": 1794594600,
         "hard_fails": [],
         "warning_count": 1,
         "dedupe_decision": "new",
@@ -913,7 +913,8 @@
         "budget_waiting_since": null,
         "images_delete_after": null,
         "retention_until": null,
-        "content_purged_at": null
+        "content_purged_at": null,
+        "member": null
     },
     "capabilities": [
         "dates_activity_read",

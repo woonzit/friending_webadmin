@@ -1,0 +1,307 @@
+{
+    "success": true,
+    "status_code": 200,
+    "intake": {
+        "intake_id": "xin_00000000000000000000000000000024",
+        "revision": 11,
+        "channel": "member_suggestion",
+        "status": "published",
+        "status_detail": null,
+        "input_kind": "url",
+        "source_host": "dunapartikamara.example",
+        "image_count": 0,
+        "provider": "openai",
+        "event_count": 1,
+        "published_count": 1,
+        "first_title": "Tavaszváró Kamarakoncert",
+        "earliest_start_at": 1796493600,
+        "hard_fails": [],
+        "warning_count": 0,
+        "dedupe_decision": "new",
+        "lease": {
+            "holder": null,
+            "until": 0,
+            "active": false,
+            "mine": false
+        },
+        "decision_action": "published",
+        "created_at": 1790924438,
+        "updated_at": 1790000000,
+        "admin_principal": null,
+        "inputs": {
+            "kind": "url",
+            "url": "https://www.dunapartikamara.example/koncertek/tavaszvaro",
+            "text": null,
+            "locale": "hu",
+            "images": []
+        },
+        "fetch": {
+            "final_url": "https://www.dunapartikamara.example/koncertek/tavaszvaro",
+            "http_status": 200,
+            "truncated": false,
+            "fetched_at": 1790928000
+        },
+        "source_texts": [
+            {
+                "label": "page:1",
+                "text": "[title]\nTavaszváró Kamarakoncert – Óbudai Társaskör | Dunaparti Kamarazenekar\n\n[meta]\ndescription: A Dunaparti Kamarazenekar tavaszváró estje Vivaldi és Bartók műveivel az Óbudai Társaskörben.\nog:title: Tavaszváró Kamarakoncert\nog:site_name: Dunaparti Kamarazenekar\nog:type: event\n\n[structured data: schema.org Event published by the page]\nevent 1\ntype: MusicEvent\nname: Tavaszváró Kamarakoncert\nstartDate: 2026-12-05T19:00:00+01:00\nendDate: 2026-12-05T21:15:00+01:00\nlocation.type: Place\nlocation.name: Óbudai Társaskör\nlocation.address: Kiskorona utca 7., 1036 Budapest, HU\norganizer.name: Dunaparti Kamarazenekar\norganizer.url: https://www.dunapartikamara.example\noffers.url: https://jegy.dunapartikamara.example/tavaszvaro\noffers.price: 4500 HUF\neventStatus: EventScheduled\neventAttendanceMode: OfflineEventAttendanceMode\n\n[text]\nFőoldal Koncertek Rólunk\nTavaszváró Kamarakoncert\nVivaldi: A négy évszak – Tél; Bartók: Román népi táncok; Weiner: Divertimento.\nIdőpont: 2026. december 5., szombat 19:00 [datetime: 2026-12-05T19:00]\nHelyszín: Óbudai Társaskör, 1036 Budapest, Kiskorona utca 7.\nJegyár: 4 500 Ft, diákoknak és nyugdíjasoknak 3 000 Ft\nIdőtartam: kb. 2 óra 15 perc, egy szünettel\nAz est házigazdája a zenekar művészeti vezetője. A koncert előtt 18:15-től rövid bevezető beszélgetés hallható a művekről.\nJegyvásárlás\nSzervező: Dunaparti Kamarazenekar Egyesület – www.dunapartikamara.example\n© 2026 Dunaparti Kamarazenekar Egyesület · Adatkezelési tájékoztató\n\n[links]\nFőoldal | https://www.dunapartikamara.example/\nKoncertek | https://www.dunapartikamara.example/koncertek\nRólunk | https://www.dunapartikamara.example/rolunk\nJegyvásárlás | https://jegy.dunapartikamara.example/tavaszvaro\nwww.dunapartikamara.example | https://www.dunapartikamara.example",
+                "truncated": false
+            }
+        ],
+        "result": "event",
+        "result_note": null,
+        "prohibited_category": null,
+        "prompt_injection_suspected": false,
+        "validated_at": 1790928000,
+        "events": [
+            {
+                "index": 0,
+                "published_external_event_id": "xev_00000000000000000000000000000007",
+                "draft": {
+                    "title": "Tavaszváró Kamarakoncert",
+                    "summary_hu": "A Dunaparti Kamarazenekar koncertjén Vivaldi, Bartók és Weiner művei szerepelnek. A koncert előtt 18:15-től bevezető beszélgetés hallható a művekről, a koncert egy szünettel zajlik.",
+                    "summary_en": "The Dunaparti Chamber Orchestra performs works by Vivaldi, Bartók and Weiner. An introductory discussion about the works begins at 18:15 before the concert, which includes one interval.",
+                    "category": "concert",
+                    "sensitive": false,
+                    "sensitive_reason": null,
+                    "date_text_verbatim": "2026. december 5., szombat 19:00",
+                    "starts_local": "2026-12-05T19:00",
+                    "ends_local": "2026-12-05T21:15",
+                    "start_time_stated": true,
+                    "all_day": false,
+                    "year_inferred": false,
+                    "attendance_mode": "in_person",
+                    "venue": {
+                        "name": "Óbudai Társaskör",
+                        "address_text": "1036 Budapest, Kiskorona utca 7.",
+                        "city": "Budapest",
+                        "country_code": "HU",
+                        "is_public_venue": true
+                    },
+                    "organizer_name": "Dunaparti Kamarazenekar Egyesület",
+                    "price_text": "4 500 Ft, diákoknak és nyugdíjasoknak 3 000 Ft",
+                    "is_free": false,
+                    "age_restriction": null,
+                    "status_signal": "scheduled"
+                },
+                "validation": {
+                    "hard_fails": [],
+                    "warnings": [],
+                    "needs_more_info": false,
+                    "tier": "single_source",
+                    "auto_publishable": true,
+                    "auto_blockers": [],
+                    "needs_public_venue_confirmation": false,
+                    "checks": {
+                        "weekday_match": true,
+                        "venue_resolved": true,
+                        "public_place": true,
+                        "tz_from_venue": true,
+                        "urls_from_evidence": true,
+                        "quotes_verified": true,
+                        "content_safe": null,
+                        "witness": {
+                            "present": true,
+                            "date": "agrees",
+                            "time": "agrees",
+                            "venue": "agrees"
+                        }
+                    },
+                    "schedule": {
+                        "timezone": "Europe/Budapest",
+                        "start_local": "2026-12-05T19:00",
+                        "end_local": "2026-12-05T21:15",
+                        "start_at": 1796493600,
+                        "end_at": 1796501700,
+                        "end_estimated": false,
+                        "all_day": false
+                    },
+                    "links": {
+                        "official_url": "https://www.dunapartikamara.example/koncertek/tavaszvaro",
+                        "ticket_url": "https://jegy.dunapartikamara.example/tavaszvaro",
+                        "organizer_url": "https://www.dunapartikamara.example",
+                        "dropped": []
+                    },
+                    "venue": {
+                        "place_id": "ChIJ05GekV7ZQUcRCBf57RooyEg",
+                        "name": "Óbudai Társaskör",
+                        "formatted_address": "1036 Budapest, Kiskorona utca 7. [stand-in]",
+                        "latitude": 47.54,
+                        "longitude": 19.04,
+                        "city": "Budapest",
+                        "country_code": "HU",
+                        "timezone": "Europe/Budapest",
+                        "website_domain": "obudai-tarsaskor.example",
+                        "business_status": "OPERATIONAL"
+                    },
+                    "venue_similarity": 1,
+                    "venue_candidates": [
+                        {
+                            "place_id": "ChIJ05GekV7ZQUcRCBf57RooyEg",
+                            "name": "Óbudai Társaskör",
+                            "formatted_address": "1036 Budapest, Kiskorona utca 7. [stand-in]",
+                            "latitude": 47.54,
+                            "longitude": 19.04,
+                            "city": "Budapest",
+                            "country_code": "HU",
+                            "timezone": "Europe/Budapest",
+                            "similarity": 1,
+                            "public_venue_warning": false
+                        }
+                    ]
+                },
+                "field_evidence": {
+                    "title": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "page:1",
+                        "quote": "Tavaszváró Kamarakoncert",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "date": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "page:1",
+                        "quote": "Időpont: 2026. december 5., szombat 19:00",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "time": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "page:1",
+                        "quote": "Időpont: 2026. december 5., szombat 19:00",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "venue": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "page:1",
+                        "quote": "Helyszín: Óbudai Társaskör, 1036 Budapest, Kiskorona utca 7.",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "organizer": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "page:1",
+                        "quote": "Szervező: Dunaparti Kamarazenekar Egyesület – www.dunapartikamara.example",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "price": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "page:1",
+                        "quote": "Jegyár: 4 500 Ft, diákoknak és nyugdíjasoknak 3 000 Ft",
+                        "model_confidence": null,
+                        "confidence": null
+                    },
+                    "status": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "page:1",
+                        "quote": "eventStatus: EventScheduled",
+                        "model_confidence": null,
+                        "confidence": null
+                    }
+                },
+                "dedupe": {
+                    "decision": "new",
+                    "candidates": []
+                },
+                "editor_input": null
+            }
+        ],
+        "ai_runs": [
+            {
+                "provider": "openai",
+                "task": "url_extract",
+                "model": "gpt-6.1-sol",
+                "outcome": "sheet",
+                "input_tokens": 3003,
+                "output_tokens": 926,
+                "cost_micro_usd": 16766,
+                "cost_estimated": false,
+                "at": 1790905647
+            }
+        ],
+        "decision": {
+            "by": "system",
+            "at": 1790000000,
+            "action": "published",
+            "reason_code": null,
+            "statement": null
+        },
+        "duplicate_of": null,
+        "budget_waiting_since": null,
+        "images_delete_after": 1792592000,
+        "retention_until": 1805552000,
+        "content_purged_at": null,
+        "member": {
+            "submitter_uid": 19604,
+            "anonymous": false,
+            "auto_going": false,
+            "consent_version": 1,
+            "confirmation": {
+                "state": "confirmed",
+                "at": 1790000000,
+                "due_at": null,
+                "asked_by_reviewer": false,
+                "fields": [],
+                "note": null
+            },
+            "corrections": [],
+            "re_review": null,
+            "standing": {
+                "strikes": 0,
+                "strike_limit": 3,
+                "banned_until": null
+            },
+            "can_ask": false
+        }
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

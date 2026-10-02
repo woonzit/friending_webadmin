@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DatesIntakeSourcePanel from "@/components/DatesIntakeSourcePanel";
 import { adminCall } from "@/lib/adminClient";
-import { readDatesIntakeDraftEntry, type DatesIntakeDraftEntry } from "@/lib/datesIntakeConsole";
+import { datesIntakeLanding, readDatesIntakeDraftEntry, type DatesIntakeDraftEntry } from "@/lib/datesIntakeConsole";
 
 /**
  * "Draft from source" on the external events page. It asks Core whether the
@@ -21,5 +21,5 @@ export default function DatesIntakeSourceEntry() {
     void readDatesIntakeDraftEntry(adminCall, controller.signal).then((value) => { if (live) setEntry(value); });
     return () => { live = false; controller.abort(); };
   }, []);
-  return entry ? <DatesIntakeSourcePanel entry={entry} onCreated={(intakeId) => router.push(`/dates/intakes/${intakeId}`)} /> : null;
+  return entry ? <DatesIntakeSourcePanel entry={entry} onCreated={(receipt) => router.push(datesIntakeLanding(receipt))} /> : null;
 }

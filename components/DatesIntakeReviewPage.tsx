@@ -7,7 +7,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesExternalEventForm from "@/components/DatesExternalEventForm";
 import DatesIntakeEventPanel from "@/components/DatesIntakeEventPanel";
-import { DatesIntakeCompletionChoice, DatesIntakeExtractionPanel, DatesIntakeInputsPanel, DatesIntakeRejectWarning, DatesIntakeRunsPanel, DatesIntakeStatusPanel } from "@/components/DatesIntakePanels";
+import { DatesIntakeAlreadySubmitted, DatesIntakeCompletionChoice, DatesIntakeExtractionPanel, DatesIntakeInputsPanel, DatesIntakeRejectWarning, DatesIntakeRunsPanel, DatesIntakeStatusPanel } from "@/components/DatesIntakePanels";
 import DatesIntakeRefusal from "@/components/DatesIntakeRefusal";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -21,7 +21,7 @@ import {
   type DatesIntakeDetailRead, type DatesIntakeLeaseAction,
 } from "@/lib/datesIntakeAdmin";
 import {
-  createDatesIntakeSerial, datesIntakePollDelay, prepareDatesIntakeReject, readDatesIntakeDetail, runDatesIntakeLease, runDatesIntakePublish,
+  createDatesIntakeSerial, datesIntakeLandedOnExisting, datesIntakePollDelay, forgetDatesIntakeLanding, prepareDatesIntakeReject, readDatesIntakeDetail, runDatesIntakeLease, runDatesIntakePublish,
   runDatesIntakeReject, type DatesIntakeOperator, type DatesIntakeRejectCommand,
 } from "@/lib/datesIntakeConsole";
 import { formatDate } from "@/lib/format";
@@ -62,6 +62,9 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
   const [tick, setTick] = useState(0);
   // The last read could not be used because its revision was unreadable; the page shows the state it last read whole.
   const [staleRead, setStaleRead] = useState(false);
+  // Core answered the operator's create with this draft (`existing`): said once, here; a reload does not say it again.
+  const [alreadySubmitted, setAlreadySubmitted] = useState(() => datesIntakeLandedOnExisting(intakeId));
+  useEffect(() => forgetDatesIntakeLanding, []);
   const generation = useRef(0), lifetime = useRef(0), busyRef = useRef(false), revision = useRef<number | null>(null);
   const serial = useRef(createDatesIntakeSerial()), startedAt = useRef(Date.now()), pendingRef = useRef(false);
 
@@ -290,6 +293,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
         <button className="button button-secondary" disabled={busy} onClick={() => { setNotice(null); void load(undefined, result ? "refresh" : "initial"); }}>{common("refresh")}</button></div>} />
     <DatesAdminTabs />
     <p className="alert alert-warning" role="note">{t("aiNotice")}</p>
+    {alreadySubmitted && <DatesIntakeAlreadySubmitted onDismiss={() => setAlreadySubmitted(false)} />}
     {staleRead && state === "ready" && <p className="alert alert-warning" role="status">{t("detail.revisionUnreadable")}</p>}
     {notice && (notice.key === "refused" && notice.error ? <DatesIntakeRefusal error={notice.error} />
       : <p className={`alert alert-${notice.tone}`} role="status">{t(notice.key)}{notice.error ? <> <code>{notice.error}</code></> : null}

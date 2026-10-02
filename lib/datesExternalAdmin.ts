@@ -117,7 +117,9 @@ const venueShape = {
 const organizerGuard = object({ name: text(1, 160), website: nullable(datesExternalHttpsUrl) });
 const linksGuard = object({ official_url: nullable(datesExternalHttpsUrl), ticket_url: nullable(datesExternalHttpsUrl) });
 const verificationGuard = object({ tier: oneOf(DATES_EXTERNAL_TIERS), checked_at: epoch, next_reverify_at: epoch,
-  admin_confirmations: object({ source: literal(true), public_venue: literal(true), timezone: literal(true), content_safe: literal(true) }) });
+  // Each is what an administrator confirmed. An event Core published without a reviewer (the member channel's
+  // autopublish switch, default off) carries none - "no confirmation that nobody gave" - so they are booleans, not `true`.
+  admin_confirmations: object({ source: bool, public_venue: bool, timezone: bool, content_safe: bool }) });
 const sourceGuard = object({ source_id: id("src"), kind: oneOf(["admin", "flyer", "url", "web_search", "web_fetch", "research"] as const),
   url: datesExternalHttpsUrl, hostname: text(1, 253), confirmed_at: epoch });
 const detailRowGuard = object({ ...rowShape, facts: object(factsShape), venue: object(venueShape), organizer: organizerGuard,
@@ -394,7 +396,10 @@ const refusalCodes: Readonly<Record<number, readonly string[]>> = {
   // The host-transfer request is the third command Core does not durably fence (its pending guard ends on a decline or
   // an expiry), so its tokens are named as well: all raised inside the request's transaction or by a check of the
   // request alone. Not named: `dates-disabled`, which is read from a switch before the receipt lookup.
-  403: ["dates-external-publishing-disabled", "dates-intake-admin-drafts-disabled", "dates-intake-lease-owner-required"],
+  // P2b: the member channel's switch and the "duplicate of an event that is not there" refusal are raised inside the
+  // publication's / the question's / the rejection's transaction too (Core 32d418cf).
+  403: ["dates-external-publishing-disabled", "dates-intake-admin-drafts-disabled", "dates-intake-lease-owner-required",
+    "dates-intake-suggestions-disabled"],
   404: ["dates-external-unavailable", "dates-admin-activity-unavailable", "dates-intake-unavailable",
     "dates-moderation-case-unavailable", "dates-moderation-evidence-unavailable", "dates-trail-evidence-unavailable",
     "dates-activity-unavailable"],
@@ -405,7 +410,8 @@ const refusalCodes: Readonly<Record<number, readonly string[]>> = {
     "dates-intake-conflict", "dates-intake-lease-required", "dates-intake-event-unavailable",
     "dates-intake-claimed", "dates-intake-lease-lost", "dates-intake-state-invalid",
     "dates-legal-hold-case-open", "dates-legal-hold-media-purge-started", "dates-trail-evidence-activity-unavailable",
-    "dates-host-transfer-already-pending", "dates-host-transfer-target-not-joined", "dates-host-transfer-ineligible", "dates-stale-revision"],
+    "dates-host-transfer-already-pending", "dates-host-transfer-target-not-joined", "dates-host-transfer-ineligible", "dates-stale-revision",
+    "dates-intake-duplicate-event-unavailable"],
   // A request larger than Core reads at all.
   413: ["dates-intake-image-invalid"],
   422: ["dates-external-id-invalid", "dates-external-revision-invalid", "dates-external-filter-invalid", "dates-external-input-invalid",

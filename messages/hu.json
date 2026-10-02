@@ -8783,6 +8783,10 @@
           "eventIntake": {
             "title": "MI-alapú eseménybeküldés (Vázlat forrásból)",
             "copy": "A kapcsoló, a keret, a szolgáltatók és modelljeik ahhoz az MI-hez, amely linkből, plakátról vagy egy sornyi szövegből készít külsőesemény-vázlatot. Amíg a vázlatkapcsoló ki van kapcsolva, itt semmi nem lép érvénybe, és az MI soha nem publikál: minden vázlatot ember ellenőriz."
+          },
+          "eventSuggestion": {
+            "title": "A tagok eseményjavaslatai",
+            "copy": "A kapcsoló, a korlátok, a figyelmeztetési szabály és a hozzájárulás verziója ahhoz a csatornához, amelyen a tagok nyilvános eseményeket javasolnak. A javaslatból ugyanaz az MI készít vázlatot, és ember ellenőrzi; amíg a javaslatkapcsoló ki van kapcsolva, itt semmi nem lép érvénybe."
           }
         },
         "settings": {
@@ -9025,6 +9029,60 @@
             "purpose": "Azok a jegyértékesítő oldalak, amelyekre a szervező és a helyszín saját oldalán kívül jegylink mutathat: legfeljebb 50 kisbetűs hosztnév.",
             "effect": "A forrásban talált jegylinket csak ezeken az oldalakon tartjuk meg; a többit elvetjük, és ezt jelezzük az ellenőrnek. Ugyanez a lista érvényes, amikor egy MI által készített eseményt később szerkesztenek.",
             "caution": "Csak hivatalos jegyértékesítőt vegyél fel, viszonteladót soha. A hosztnévben nincs https://, útvonal és www. előtag. Üres listával egyik sem engedélyezett."
+          },
+          "dates_external_suggestions_enabled": {
+            "title": "A tagok javaslatai",
+            "purpose": "Annak a csatornának a főkapcsolója, amelyen a tagok eseményeket javasolnak. Alapértéke KI; csak a pontosan true logikai érték kapcsolja be.",
+            "effect": "KI állapotban az alkalmazásból nem küldhető új javaslat, a tagnak nem tehető fel kérdés, és tag javaslata nem publikálható. A sorban lévő javaslatok továbbra is olvashatók és elutasíthatók.",
+            "caution": "Csak akkor kapcsold be, ha az MI-beküldés az adminisztrátoroknál működik, és az ellenőrök készen állnak a sorra. Független az adminisztrátori vázlatkapcsolótól és a külső események publikálási kapcsolójától."
+          },
+          "dates_event_suggestion_daily_limit": {
+            "title": "Javaslatok tagonként naponta",
+            "purpose": "Ennyi javaslatot küldhet be egy tag gördülő 24 óra alatt, 1 és 50 között. Alapértéke 5.",
+            "effect": "Minden elfogadott beküldés számít, bármi lett is belőle. A korlát felett az új javaslat elutasításra kerül: semmi nem tárolódik, és MI-hívás sem történik.",
+            "caution": "Minden javaslat egy MI-futásba kerül. A korlátot a havi MI-kerettel együtt emeld, ne önmagában."
+          },
+          "dates_event_suggestion_monthly_limit": {
+            "title": "Javaslatok tagonként harminc nap alatt",
+            "purpose": "Ennyi javaslatot küldhet be egy tag gördülő harminc nap alatt, 1 és 500 között. Alapértéke 20.",
+            "effect": "A napi korláthoz hasonlóan számolódik. Ha mindkettő betelt, az alkalmazás először erről értesül, mert ez tart tovább.",
+            "caution": "Ez korlátozza, hány MI-futást okozhat egyetlen fiók egy hónap alatt. Ha kisebb a napi korlátnál, csak ez a korlát érvényesül."
+          },
+          "dates_event_suggestion_open_limit": {
+            "title": "Nyitott javaslatok tagonként",
+            "purpose": "Ennyi javaslata lehet egy tagnak egyszerre nyitva - vázlat készül belőle, a tagnál van vagy ellenőrzés alatt áll -, 1 és 20 között. Alapértéke 3.",
+            "effect": "A korlátot elérő tag nem küldhet újat, amíg valamelyik javaslatáról döntés nem születik, vagy vissza nem vonja. Az azonnal duplikátumként megválaszolt javaslat nem foglal nyitott helyet.",
+            "caution": "Az alacsony érték megakadályozza, hogy egy tag megtöltse az ellenőrzési sort; a napi korláthoz közeli érték megszünteti ezt a védelmet."
+          },
+          "dates_event_suggestion_strike_limit": {
+            "title": "Figyelmeztetések a javaslattiltásig",
+            "purpose": "Ennyi „kéretlen vagy hamis” indokú elutasítás tiltja el a tagot a javaslattételtől a figyelmeztetési időszakon belül, 1 és 20 között. Alapértéke 3.",
+            "effect": "Csak a „kéretlen vagy hamis” indokú elutasítás számít figyelmeztetésnek. A felülvizsgálat alatt álló elutasítás nem számít, amíg a felülvizsgálat le nem zárul, és ha az másként végződik, a figyelmeztetés törlődik.",
+            "caution": "A figyelmeztetés a taggal szembeni szankció. A „kéretlen vagy hamis” indokot csak erre használd, és számíts rá, hogy a tag felülvizsgálatot kér."
+          },
+          "dates_event_suggestion_strike_window_days": {
+            "title": "Figyelmeztetési időszak (nap)",
+            "purpose": "Ennyi napra visszamenőleg számítanak a figyelmeztetések a korlátba, 1 és 365 között. Alapértéke 30.",
+            "effect": "Az ennél régebbi figyelmeztetés már nem számít. Az ellenőrző képernyő a korlát mellett mutatja a tag időszakon belüli figyelmeztetéseit.",
+            "caution": "Hosszabb időszak mellett a régi elutasítások tovább számítanak, rövidebb mellett hamarabb elévülnek. A már elindult tiltás megtartja a lejárati idejét."
+          },
+          "dates_event_suggestion_ban_days": {
+            "title": "Javaslattiltás (nap)",
+            "purpose": "Ennyi napig nem javasolhat eseményt az a tag, aki elérte a figyelmeztetési korlátot, 1 és 365 között. Alapértéke 30.",
+            "effect": "A tiltás alatt az alkalmazás elutasítja az új javaslatot, és megmondja, meddig tart. A tag továbbra is visszavonhat javaslatot, és kérheti egy elutasítás felülvizsgálatát.",
+            "caution": "A módosítás a már futó tiltást nem rövidíti és nem hosszabbítja meg: az ezután induló tiltásokra vonatkozik."
+          },
+          "dates_event_suggestion_consent_version": {
+            "title": "A javaslattételi hozzájárulás verziója",
+            "purpose": "Annak a hozzájárulási szövegnek a verziója, amelyet a tagnak el kell fogadnia, mielőtt eseményt javasol, 1 és 1000 között. Alapértéke 1.",
+            "effect": "Az emelése után minden tagnak el kell fogadnia az új szöveget a következő javaslata előtt; a régebbi verzió elfogadása elavultként elutasításra kerül. A már beküldött javaslatokat nem érinti.",
+            "caution": "Csak az alkalmazásban megjelenő új hozzájárulási szöveggel együtt emeld, tesztelésre soha: minden tagot újra megkérdezünk a következő javaslata előtt."
+          },
+          "dates_external_autopublish_enabled": {
+            "title": "Publikálás ellenőr nélkül",
+            "purpose": "Engedélyezi, hogy a Core magától publikálja egy tag javaslatát, ha minden automatikus ellenőrzés teljesül. Alapértéke KI; csak a pontosan true logikai érték kapcsolja be.",
+            "effect": "BE állapotban csak akkor publikál javaslatot, ha az egyetlen eseményére a teljes engedélyezési lista teljesül, semmi nem utal duplikátumra, senki nem ellenőrzi éppen, nem felülvizsgálat, és a beküldőnek nincs figyelmeztetése. Az ilyen esemény a bizonyítékai szerinti szintet kapja, és a négy adminisztrátori megerősítés egyikét sem.",
+            "caution": "Bekapcsolva olyan események is eljutnak a tagokhoz, amelyeket ember nem ellenőrzött. Hagyd kikapcsolva, hacsak a tulajdonos másként nem döntött; három tagi bejelentés az ilyen eseményt is visszahúzza, mint bármelyiket."
           }
         }
       },
@@ -9259,7 +9317,8 @@
         "runsUnreadable": "A beküldés MI-hívásai nem olvashatók. Ez nem jelenti azt, hogy nem volt MI-hívás; a havi adatok az MI-költés oldalon láthatók.",
         "textsUnreadable": "A Core által a forrásból őrzött szöveg nem olvasható. Nem üres, hanem ismeretlen.",
         "couldNotRead": "Nem olvasható",
-        "revisionUnreadable": "A beküldés legutóbbi beolvasása nem használható: a Core olyan alakban adta a revízióját, amelyet ez a konzol nem ismer. Az oldal az utoljára hiánytalanul beolvasott állapotot mutatja; a foglalásod és a műveletek ebből az állapotból továbbra is működnek. Frissíts az újrapróbáláshoz."
+        "revisionUnreadable": "A beküldés legutóbbi beolvasása nem használható: a Core olyan alakban adta a revízióját, amelyet ez a konzol nem ismer. Az oldal az utoljára hiánytalanul beolvasott állapotot mutatja; a foglalásod és a műveletek ebből az állapotból továbbra is működnek. Frissíts az újrapróbáláshoz.",
+        "byMember": "a tag"
       },
       "checks": {
         "weekday_match": "A forrásban szereplő nap egyezik a dátummal",
@@ -9364,9 +9423,10 @@
           "imageSize": "Az egyik fotó üres, vagy nagyobb 10 MiB-nál.",
           "imageType": "Az egyik fájl nem JPEG-, PNG-, WEBP- vagy HEIC-kép."
         },
-        "hint": "A(z) {time} időpontú beküldésedre ({kind}) nem érkezett válasz, így nem tudni, megérkezett-e. Mielőtt ugyanazt a forrást újra beküldöd, nézd meg a beküldések között.",
+        "hint": "A(z) {time} időpontú beküldésedre ({kind}) nem érkezett válasz, így nem tudni, megérkezett-e. Megkeresheted a beküldések között, vagy egyszerűen beküldheted újra ugyanazt a forrást: amíg a vázlata nyitva van, a Core ahhoz a vázlathoz visz, és nem készít másodikat.",
         "hintLink": "Beküldések megnyitása",
-        "hintDismiss": "Elrejtés"
+        "hintDismiss": "Elrejtés",
+        "existing": "Ezt a forrást már beküldted, és a vázlata még nyitva van: ez az a vázlat, a jelenlegi állapotában. Semmi új nem jött létre, és második MI-futás sem indult."
       },
       "usage": {
         "open": "MI-költés",
@@ -9437,7 +9497,7 @@
         "rejected": "A beküldést elutasították; lezárult.",
         "duplicate": "Ez a forrás vagy esemény már szerepel, ezért nem költöttünk rá újra MI-t. Nyisd meg inkább az eredetit.",
         "failed": "A feldolgozás nem tudott végigmenni. Az ok lent olvasható; semmi nem került publikálásra. Ha az ok átmeneti volt, küldd be újra a forrást.",
-        "withdrawn": "A beküldő fiókját törölték, ezért a beküldést visszavontuk.",
+        "withdrawn": "A tag visszavonta a javaslatot, vagy a tag fiókját törölték.",
         "expired": "Az esemény kezdetéig senki nem döntött, vagy lejárt a keretre várakozás. Semmi nem került publikálásra.",
         "awaiting_budget": "A havi MI-keret elfogyott, vagy nullára van állítva. A feldolgozó óránként újrapróbálja; a Konfigurációban emeld a keretet, ha hamarabb folytatnád."
       },
@@ -9467,7 +9527,8 @@
         "start-passed": "Az esemény már elkezdődött",
         "storage-unavailable": "A bizalmas tárhely nem érhető el",
         "attempts-exhausted": "Ismételt hiba után feladva",
-        "account-erased": "A beküldő fiókja törölve"
+        "account-erased": "A beküldő fiókja törölve",
+        "ai-budget-overrun": "Az MI a keretén túl számlázott"
       },
       "statusDetailHelp": {
         "image-empty": "A feltöltött fájl üres volt. Töltsd fel újra a fotót.",
@@ -9492,10 +9553,11 @@
         "venue-search-unavailable": "A helykereső nem válaszolt, ezért a helyszín nem azonosítható. A szerkesztőben add meg kézzel.",
         "duplicate-source": "Ugyanezt a címet már beküldték; nem költöttünk rá újra MI-t.",
         "duplicate-event": "A Core megtalálta ugyanezt az eseményt a publikált események vagy a nyitott beküldések között.",
-        "start-passed": "Az esemény elkezdődött, mielőtt bárki döntött volna, ezért a beküldés lejárt.",
+        "start-passed": "Az esemény elkezdődött, mielőtt bárki döntött volna: az el nem bírált beküldés lejárt, a részben publikált program pedig a már publikált eseményekkel lezárult.",
         "storage-unavailable": "A Core plakátokhoz használt bizalmas tárhelye nem érhető el.",
         "attempts-exhausted": "Ugyanaz a lépés hatszor egymás után meghiúsult, ezért a Core feladta.",
-        "account-erased": "A beküldő tag törölte a fiókját."
+        "account-erased": "A beküldő tag törölte a fiókját.",
+        "ai-budget-overrun": "Egy szolgáltató többet számlázott ezért a beküldésért, mint amennyit a hívásonkénti korlát enged, ezért a beküldés meghiúsult. Semmi nem lett publikálva."
       },
       "channelValues": {
         "admin_draft": "Adminisztrátori vázlat",
@@ -9514,7 +9576,8 @@
         "merged": "Meglévő eseménybe olvasztva",
         "expired": "Lejárt",
         "screening_rejected": "A szűrésen elutasítva",
-        "extraction_rejected": "A kiolvasáskor elutasítva"
+        "extraction_rejected": "A kiolvasáskor elutasítva",
+        "withdrawn": "Visszavonva"
       },
       "rejectReasons": {
         "not_an_event": "Nem esemény",
@@ -9596,7 +9659,8 @@
         "low_legibility": "A plakát nehezen olvasható.",
         "language_uncertain": "A forrás nyelve bizonytalan.",
         "conflicting_information": "A forrás ellentmond önmagának.",
-        "content_unscreened": "A plakát tartalmát nem szűrtük."
+        "content_unscreened": "A plakát tartalmát nem szűrtük.",
+        "member_corrected": "A tag módosította a vázlatot: a módosított értékek a tag saját állításai, forrásidézet nélkül."
       },
       "autoBlockers": {
         "no_hard_fail": "kizáró hibája van",
@@ -9773,7 +9837,26 @@
         "core-timeout": "A Core nem válaszolt időben. A kérés ettől még megérkezhetett; mielőtt megismétled, olvasd újra az oldalt.",
         "invalid-core-response": "A Core válasza nem olvasható.",
         "admin-write-required": "A szerepköröd csak olvasásra jogosít.",
-        "not-found": "A konzol nem ismeri ezt a műveletet."
+        "not-found": "A konzol nem ismeri ezt a műveletet.",
+        "dates-intake-suggestions-disabled": "A tagok javaslatai ki vannak kapcsolva. Adminisztrátor kapcsolhatja be a Konfigurációban (dates_external_suggestions_enabled).",
+        "dates-intake-duplicate-event-unavailable": "A már szereplőként megnevezett esemény nem létezik. Ellenőrizd az azonosítóját."
+      },
+      "memberConfirmationValues": {
+        "awaiting": "A tag válaszára vár",
+        "confirmed": "A tag változtatás nélkül megerősítette",
+        "corrected": "A tag javította",
+        "unchecked": "A tag nem nézte meg időben a vázlatot",
+        "unanswered": "A tag nem válaszolt az ellenőr kérdésére"
+      },
+      "memberFieldValues": {
+        "title": "Cím",
+        "starts_local": "Kezdés",
+        "ends_local": "Befejezés",
+        "venue_name": "Helyszín neve",
+        "venue_address": "Helyszín címe",
+        "venue_city": "Város",
+        "price_text": "Ár",
+        "is_free": "Ingyenes"
       }
     },
     "commandOutcome": {

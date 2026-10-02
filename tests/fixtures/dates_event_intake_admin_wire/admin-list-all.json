@@ -104,6 +104,7 @@
         "awaiting_budget": 0
     },
     "drafts_enabled": true,
+    "suggestions_enabled": false,
     "capabilities": [
         "dates_activity_read",
         "dates_case_read",

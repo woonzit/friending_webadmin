@@ -37,7 +37,7 @@ const escaped = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<"
 const detail = (name: string) => { const body = fixture(name); return projectDatesIntakeDetail(body, body.intake.intake_id)!.intake; };
 
 test("every genuine intake detail renders whole in English and Hungarian", () => {
-  assert.equal(DETAILS.length, 33);
+  assert.equal(DETAILS.length, 49, "35 of the operators' drafts and 14 of members' suggestions");
   for (const name of DETAILS) for (const locale of LOCALES) {
     const intake = detail(name), copy = messagesOf(locale).datesAdmin.intake;
     const html = render(locale, createElement(DatesIntakeStatusPanel, { intake }), createElement(DatesIntakeInputsPanel, { intake }),
@@ -228,6 +228,8 @@ test("every closed value of the wire has words in both languages, and both trees
     prohibited: ["prohibitedCategories", DATES_INTAKE_KNOWN_PROHIBITED_CATEGORIES], tasks: ["taskValues", DATES_INTAKE_KNOWN_TASKS],
     links: ["linkFields", DATES_INTAKE_KNOWN_LINK_FIELDS],
   };
+  GROUPS.member_confirmation_state = ["memberConfirmationValues", DATES_INTAKE_VOCABULARIES.member_confirmation_state];
+  GROUPS.member_editable_field = ["memberFieldValues", DATES_INTAKE_VOCABULARIES.member_editable_field];
   // Every vocabulary of the manifest but `category` (the P1 table) and `lease_action` (button labels) has its own group.
   assert.deepEqual(Object.keys(DATES_INTAKE_VOCABULARIES).filter((name) => !Object.hasOwn(GROUPS, name)).sort(), ["category", "lease_action"]);
   for (const [group, values] of Object.values(GROUPS)) for (const copy of [en, hu]) {
@@ -442,6 +444,24 @@ test("review finding: an unknown create outcome is worded as unknown and shows w
     // Nothing of a lock, a record or an evidence-gated discard is left in the copy.
     for (const key of ["locked", "checkQueue", "discard", "discardHint", "pending"]) assert.equal(key in copy.source, false, key);
     assert.deepEqual(Object.keys(copy.source.problems), ["url", "text", "imageCount", "imageSize", "imageType"]);
+  }
+});
+
+test("T-885 existing marker: the draft that was already there is announced as already submitted - not as new, not as an error", async () => {
+  const { DatesIntakeAlreadySubmitted } = await import("../components/DatesIntakePanels.tsx");
+  for (const locale of LOCALES) {
+    const copy = messagesOf(locale).datesAdmin.intake.source;
+    const html = render(locale, createElement(DatesIntakeAlreadySubmitted, { onDismiss: () => undefined }));
+    assert.ok(html.includes(escaped(copy.existing)));
+    // Information, not an error and not a success message; the operator may put it away.
+    assert.match(html, /^<div class="alert alert-info" role="status">/); assert.doesNotMatch(html, /alert-error|alert-success|alert-warning/);
+    assert.equal((html.match(/<button type="button"/g) ?? []).length, 1); assert.ok(html.includes(escaped(copy.hintDismiss)));
+    // What it says: already submitted, still open, nothing new made.
+    assert.match(copy.existing, locale === "en" ? /already been submitted/ : /már beküldted/);
+    assert.match(copy.existing, locale === "en" ? /Nothing new was created/ : /Semmi új nem jött létre/);
+    // The reminder beside it stays true: after a reload the operator may simply submit again.
+    assert.match(copy.hint, locale === "en" ? /submit the same source again/ : /beküldheted újra ugyanazt a forrást/);
+    assert.match(copy.hint, locale === "en" ? /instead of making a second one/ : /nem készít másodikat/);
   }
 });
 

@@ -21,12 +21,22 @@ import { prepareDatesExternalPending, readDatesExternalPending, runDatesExternal
 //   differ (they gained the eight intake settings); 113 bodies are byte-identical to it.
 // The generator is the P1 one, unchanged. The source/generator pin is independent of the vendored manifest.
 const DIRECTORY = new URL("./fixtures/dates_external_admin_wire/", import.meta.url);
-const SOURCE = "3d4a0b40c57bc254e8c59480bc06e9f398d6791e";
-const SOURCE_SHA = "d6d45fffc7fb0c4559cef7b02909a3a7f9debbcc1383560fe2ec1b88638f90dd";
-const MANIFEST_SHA = "11f99cd2bf5b72f6a13a5ca80efe02a800cc02baecee02ccc4527a41551e28b4";
+// Pin of 2026-10-02 16:00Z (Core lane tip 32d418cf, T-886): only the two configuration reads changed against the
+// pin before it - nine settings of the member channel follow the eight of the admin channel.
+const SOURCE = "7dfe04317524f3929b572a3d2a995f57147f10ed";
+const SOURCE_SHA = "9c8c01070670d12d42b67046a3dd7a1597b02601e990136b1737f818c4af0c03";
+const MANIFEST_SHA = "a2db85433852e9de45ef1df9ad1ba68c6fe80a8bc5bd9128bd97cb308a45dd41";
 const GENERATOR_SHA = "51e746e0946ddac4319b56cdff0adcc7107a320ed08e1ca1a1f70fa7d90fbf3d";
-const SET_SHA = "112db40de1134bffbfebda663b8f4d79e09e9d9e87fc312b3ec7c3c225911958";
-// The set digest of the previous pin (Core 06c8c3ea), announced by the Core lane at 06:28Z.
+const SET_SHA = "72d12289a517cfb4a3f312274396a24e13d22f8ff7abe7f7a7e137e85827369f";
+// The set digest of the pin before this one, and the digests its manifest held for the two configuration reads
+// (41 settings each; read from this branch's own history at 8770a02a): with them in place of today's two, that
+// digest comes back.
+const P2A_SET_SHA = "112db40de1134bffbfebda663b8f4d79e09e9d9e87fc312b3ec7c3c225911958";
+const P2A_CONFIGURATION: Record<string, string> = {
+  "admin-configuration-default-off.json": "990116b1b5247aad9cf2fee57445659805983a928e667d04bd3b0e892e309162",
+  "admin-configuration-publishing-on.json": "be38ab3485244460eeb559e3dc79e8bb96e616e020273e7e0a6dfcfe8ccab66b",
+};
+// The set digest of the pin before that (Core 06c8c3ea), announced by the Core lane at 06:28Z.
 const PREVIOUS_SET_SHA = "9ac34b0ba9b466c199d5984d7f1a607fadc9d9bb18d0cb27b4a75a48357c29a3";
 // The body set of the accepted P1 pin with the 25 bodies P2a changed taken out: 113 entries
 // (computed from the P1 manifest at Webadmin 7825bc13).
@@ -67,7 +77,7 @@ test("external console corpus is the complete 138-response genuine capture with 
   assert.equal(manifest.provenance.generator, "tests/dates_external_admin_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
   assert.equal(manifest.fixture_count, 138);
-  assert.equal(manifest.provenance.source_paths.length, 320);
+  assert.equal(manifest.provenance.source_paths.length, 325);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   const names = ["admin-activity-list-external.json", ...LISTS.map((name) => `admin-list-${name}.json`),
     ...DETAILS.map((name) => `admin-detail-${name}.json`), ...PLACES.map((name) => `admin-places-${name}.json`),
@@ -94,7 +104,13 @@ test("external console corpus is the complete 138-response genuine capture with 
     return `${entry.file}\0${entry.sha256}`;
   });
   assert.equal(hash(lines.join("\n")), SET_SHA);
-  // Against the previous pin: exactly 23 bodies changed, each by one appended key, and 115 are byte-identical.
+  // Against the pin before this one: the two configuration reads changed and the other 136 bodies are
+  // byte-identical - with the two digests that pin held, its set digest comes back.
+  assert.deepEqual(Object.keys(P2A_CONFIGURATION), CONFIGURATION_CHANGED);
+  const atP2a = lines.map((line: string) => { const file = line.split("\0")[0]; return Object.hasOwn(P2A_CONFIGURATION, file) ? `${file}\0${P2A_CONFIGURATION[file]}` : line; });
+  assert.equal(atP2a.filter((line: string, index: number) => line !== lines[index]).length, 2);
+  assert.equal(hash(atP2a.join("\n")), P2A_SET_SHA);
+  // Against the pin before that: exactly 23 bodies changed, each by one appended key, and 115 are byte-identical.
   // Taking that one key out of the raw bytes of each of the 23 gives the previous set digest back.
   const gained = [...LIST_GAINED_LABEL, ...DETAIL_GAINED_INTAKE];
   assert.equal(LIST_GAINED_LABEL.length, 9); assert.equal(DETAIL_GAINED_INTAKE.length, 14); assert.equal(new Set(gained).size, 23);
@@ -115,7 +131,8 @@ test("external console corpus is the complete 138-response genuine capture with 
         assert.equal(removed, 1, entry.file); assert.equal(Object.keys(event).at(-1), "intake"); assert.equal(event.intake, null);
       }
     } else assert.equal(removed, 0, `${entry.file} carries neither appended key`);
-    return `${entry.file}\0${hash(without)}`;
+    // The two configuration reads are taken as that earlier pin held them (no appended key touches them).
+    return `${entry.file}\0${P2A_CONFIGURATION[entry.file] ?? hash(without)}`;
   });
   assert.equal(changed, 23); assert.equal(lines.length - changed, 115);
   assert.equal(hash(previous.join("\n")), PREVIOUS_SET_SHA);
@@ -143,8 +160,8 @@ for (const name of ACTIVITY_WRITES) test(`genuine lifecycle ${name} uses activit
 });
 for (const name of ["default-off", "publishing-on"]) test(`genuine configuration ${name} exposes all six exact P1 settings`, () => {
   const body = fixture(`admin-configuration-${name}`), group = DATES_RUNTIME_HELP_GROUPS.find((item) => item.id === "externalEvents")!;
-  // P2a: the 33 P1 rows, in their P1 order, followed by the eight intake settings.
-  assert.equal(body.settings.length, 41);
+  // The 33 P1 rows, in their P1 order, followed by the eight intake settings (P2a) and the nine of the member channel (P2b).
+  assert.equal(body.settings.length, 50);
   const expected: Record<string, unknown> = { dates_external_events_enabled: true, dates_external_events_enabled_overrides: [],
     dates_external_publishing_enabled: name === "publishing-on", dates_event_invite_daily_limit: 20, dates_event_invite_per_event_limit: 10, dates_event_lookahead_days: 180 };
   assert.deepEqual([...group.settingKeys].sort(), Object.keys(expected).sort());

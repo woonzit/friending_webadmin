@@ -75,6 +75,21 @@ export const DATES_RUNTIME_HELP_GROUPS = [
       "dates_event_ticket_domains",
     ],
   },
+  {
+    // T-865 P2b: members' event suggestions.
+    id: "eventSuggestion",
+    settingKeys: [
+      "dates_external_suggestions_enabled",
+      "dates_event_suggestion_daily_limit",
+      "dates_event_suggestion_monthly_limit",
+      "dates_event_suggestion_open_limit",
+      "dates_event_suggestion_strike_limit",
+      "dates_event_suggestion_strike_window_days",
+      "dates_event_suggestion_ban_days",
+      "dates_event_suggestion_consent_version",
+      "dates_external_autopublish_enabled",
+    ],
+  },
 ] as const;
 
 export const DATES_RUNTIME_HELP_KEYS = DATES_RUNTIME_HELP_GROUPS.flatMap(

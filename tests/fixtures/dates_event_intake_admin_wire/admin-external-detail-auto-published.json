@@ -1,0 +1,191 @@
+{
+    "success": true,
+    "status_code": 200,
+    "event": {
+        "external_event_id": "xev_00000000000000000000000000000007",
+        "activity_id": "act_00000000000000000000000000000006",
+        "revision": 1,
+        "activity_revision": 1,
+        "status": "published",
+        "lifecycle": "active",
+        "moderation_state": "ok",
+        "soft_deleted": false,
+        "title": "Tavaszváró Kamarakoncert",
+        "category": "concert",
+        "sensitive": false,
+        "start_at": 1794838400,
+        "end_at": 1794845600,
+        "start_local": "2026-11-16T15:13:20+01:00",
+        "end_local": "2026-11-16T17:13:20+01:00",
+        "timezone": "Europe/Budapest",
+        "city": "Budapest",
+        "country_code": "HU",
+        "venue_name": "Óbudai Társaskör",
+        "organizer_name": "Dunaparti Kamarazenekar Egyesület",
+        "verification_tier": "single_source",
+        "checked_at": 1790000000,
+        "next_reverify_at": 1790604800,
+        "credit_channel": "member_suggestion",
+        "going_count": 0,
+        "interested_count": 0,
+        "created_at": 1790000000,
+        "updated_at": 1790000000,
+        "can_edit": true,
+        "facts": {
+            "title": "Tavaszváró Kamarakoncert",
+            "summary": {
+                "hu": "A Dunaparti Kamarazenekar koncertjén Vivaldi, Bartók és Weiner művei szerepelnek. A koncert előtt 18:15-től bevezető beszélgetés hallható a művekről, a koncert egy szünettel zajlik.",
+                "en": "The Dunaparti Chamber Orchestra performs works by Vivaldi, Bartók and Weiner. An introductory discussion about the works begins at 18:15 before the concert, which includes one interval."
+            },
+            "category": "concert",
+            "sensitive": {
+                "flag": false,
+                "reason": null
+            },
+            "start_at": 1794838400,
+            "end_at": 1794845600,
+            "start_local": "2026-11-16T15:13:20+01:00",
+            "end_local": "2026-11-16T17:13:20+01:00",
+            "end_estimated": false,
+            "all_day": false,
+            "timezone": "Europe/Budapest",
+            "is_free": false,
+            "price_text": "4 500 Ft, diákoknak és nyugdíjasoknak 3 000 Ft",
+            "age_restriction": null
+        },
+        "venue": {
+            "place_id": "ChIJ05GekV7ZQUcRCBf57RooyEg",
+            "name": "Óbudai Társaskör",
+            "formatted_address": "1036 Budapest, Kiskorona utca 7. [stand-in]",
+            "point": {
+                "type": "Point",
+                "coordinates": [
+                    19.04,
+                    47.54
+                ]
+            },
+            "city": "Budapest",
+            "city_key": "budapest",
+            "country_code": "HU",
+            "resolved_by": "places",
+            "resolved_at": 1790928000
+        },
+        "organizer": {
+            "name": "Dunaparti Kamarazenekar Egyesület",
+            "website": "https://www.dunapartikamara.example"
+        },
+        "links": {
+            "official_url": "https://www.dunapartikamara.example/koncertek/tavaszvaro",
+            "ticket_url": "https://jegy.dunapartikamara.example/tavaszvaro"
+        },
+        "attendee_list": "visible",
+        "verification": {
+            "tier": "single_source",
+            "admin_confirmations": {
+                "source": false,
+                "public_venue": false,
+                "timezone": false,
+                "content_safe": false
+            },
+            "checked_at": 1790000000,
+            "next_reverify_at": 1790604800
+        },
+        "image": {
+            "kind": "category_art",
+            "url": null,
+            "credit": null,
+            "license_note": null
+        },
+        "sources": [
+            {
+                "kind": "admin",
+                "url": "https://www.dunapartikamara.example/koncertek/tavaszvaro",
+                "hostname": "www.dunapartikamara.example",
+                "source_id": "src_00000000000000000000000000000003",
+                "confirmed_at": 1790000000
+            }
+        ],
+        "ai_assisted": true,
+        "credit": {
+            "channel": "member_suggestion",
+            "submitted_by_uid": 19604,
+            "anonymous": false,
+            "first_submitter_uid": 19604
+        },
+        "editor_input": {
+            "title": "Tavaszváró Kamarakoncert",
+            "summary": {
+                "hu": "A Dunaparti Kamarazenekar koncertjén Vivaldi, Bartók és Weiner művei szerepelnek. A koncert előtt 18:15-től bevezető beszélgetés hallható a művekről, a koncert egy szünettel zajlik.",
+                "en": "The Dunaparti Chamber Orchestra performs works by Vivaldi, Bartók and Weiner. An introductory discussion about the works begins at 18:15 before the concert, which includes one interval."
+            },
+            "category": "concert",
+            "sensitive": {
+                "flag": false,
+                "reason": null
+            },
+            "start_at": 1794838400,
+            "end_at": 1794845600,
+            "timezone": "Europe/Budapest",
+            "all_day": false,
+            "is_free": false,
+            "price_text": "4 500 Ft, diákoknak és nyugdíjasoknak 3 000 Ft",
+            "age_restriction": null,
+            "venue": {
+                "name": "Óbudai Társaskör",
+                "formatted_address": "1036 Budapest, Kiskorona utca 7. [stand-in]",
+                "longitude": 19.04,
+                "latitude": 47.54,
+                "city": "Budapest",
+                "country_code": "HU"
+            },
+            "organizer": {
+                "name": "Dunaparti Kamarazenekar Egyesület",
+                "website": "https://www.dunapartikamara.example"
+            },
+            "links": {
+                "official_url": "https://www.dunapartikamara.example/koncertek/tavaszvaro",
+                "ticket_url": "https://jegy.dunapartikamara.example/tavaszvaro"
+            },
+            "source_url": "https://www.dunapartikamara.example/koncertek/tavaszvaro",
+            "attendee_list": "visible",
+            "confirmations": {
+                "source": false,
+                "public_venue": false,
+                "timezone": false,
+                "content_safe": false
+            }
+        },
+        "intake": {
+            "intake_id": "xin_00000000000000000000000000000024",
+            "channel": "member_suggestion",
+            "event_index": 0
+        }
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

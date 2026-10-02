@@ -14,40 +14,47 @@ import {
   type DatesIntakeLeaseAction,
 } from "../lib/datesIntakeAdmin.ts";
 
-// T-865 P2a. The event-intake Admin wire, vendored byte-identically from the
-// Core lane's tip 285b14a87c2e9977130d4b8a0bae19cb8bbb18b9 (T-884): 114 genuine
+// T-865 P2a + P2b. The event-intake Admin wire, vendored byte-identically from the
+// Core lane's tip 32d418cff7a68217d9358959c297a469139586f0 (T-886): 148 genuine
 // bodies captured as real HTTP POSTs encoded the way lib/core.ts encodes them.
-// Against the previous pin (Core 06c8c3ea, 113 bodies, set fcf9b1ab...) one body
-// is new - the external list with an AI-assisted row - and two changed by the
-// one key Core appended: the intake reference on the two AI-assisted details.
-// Every pin below is transcribed from the Core hand-over, not derived from the
-// vendored manifest. Rows marked DERIVED are built from a genuine body for a
-// branch no genuine body carries; they are named in the lane's report.
+// Against the previous pin (Core 285b14a8, 114 bodies, set fc099c0b...) 34 bodies
+// are new and 65 changed: every create receipt gained `existing`, every detail
+// `member`, every list `suggestions_enabled`, and identifiers were renumbered.
+// The set digest and the source commit are transcribed from the Core hand-over
+// (team/chat/20261002T160008Z-opus-core-p2-to-opus-admin-p2-p2b-admin-corpus-pin.md);
+// the manifest digest, the source checksum and the generator digest were read
+// from the Core lane's git objects at that tip, not from the vendored copy.
+// Rows marked DERIVED are built from a genuine body for a branch no genuine
+// body carries; they are named in the lane's report.
 const DIRECTORY = new URL("./fixtures/dates_event_intake_admin_wire/", import.meta.url);
-const SOURCE = "3d4a0b40c57bc254e8c59480bc06e9f398d6791e";
-const SOURCE_SHA = "ce44d184d9d88f875569a9098b4d9138a6ea8420856c62c85151dcca52b8cec4";
-const MANIFEST_SHA = "eaaa55d43dc156855b9300e778be99d873b0f163fd6cfd1fbf663fae6d584b92";
-const GENERATOR_SHA = "1f89e5c52543056d05c7f3586cc0855ae4c2c91a471aa5ad84f4ba11b4530913";
-const SET_SHA = "fc099c0b960ae628c29a82654a4917eca79611588875e643c1716a13fbd58d14";
-// The set digest of the previous pin (Core 06c8c3ea, 113 bodies), announced by the Core lane at 06:28Z.
-const PREVIOUS_SET_SHA = "fcf9b1ab7086b7535a2035223c00459d680051df77d2c1c1168b8a87737554ee";
-const ADDED = "admin-external-list-ai-assisted.json";
-const GAINED_INTAKE = ["admin-activity-detail-ai-assisted.json", "admin-external-detail-ai-assisted.json"];
+const SOURCE = "7dfe04317524f3929b572a3d2a995f57147f10ed";
+const SOURCE_SHA = "9f61c7f60641ff37ff68635f25323f9e7eb398f459e0f71e00020b6b2cb73162";
+const MANIFEST_SHA = "af3117c40358c080eda62a157f005430c9215b7901ee558cf0ff55b27dfd6bf1";
+const GENERATOR_SHA = "8493247076ccd7d319095e4e0b85d8aea61cafbb63ee0644fb8b602591a4d778";
+const SET_SHA = "c4b6f5834b6fea2dd046f9a9fe1f2677934d52093e63743617347c52ab499e13";
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`${name}.json`, DIRECTORY), "utf8"));
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 const xin = (number: number) => "xin_" + number.toString(16).padStart(32, "0");
 
-const LISTS = ["all", "channel", "empty", "in-review", "moderator", "page-two", "rejected"];
+const LISTS = ["all", "channel", "empty", "in-review", "member-channel", "moderator", "page-two", "rejected"];
 const DETAILS = ["awaiting-budget", "duplicate", "expired", "extracting", "extracting-retry", "failed-ai-not-configured", "failed-ai-refused",
   "failed-image", "failed-source", "in-review-ambiguous-venue", "in-review-country-unavailable", "in-review-fallback", "in-review-images",
   "in-review-multi", "in-review-needs-info", "in-review-official", "in-review-partial", "in-review-private-address", "in-review-text",
   "in-review-url", "in-review-venue-unavailable", "leased-by-other", "published", "purged", "received", "rejected", "rejected-not-an-event",
-  "rejected-prohibited", "rejected-screening", "screening", "screening-retry", "validating", "validating-retry"];
-const CREATES = ["text", "text-replay", "url", "url-again", "images", "images-with-text"];
+  "rejected-prohibited", "rejected-screening", "screening", "screening-retry", "validating", "validating-retry",
+  // the two system outcomes Core added with this pin
+  "failed-ai-budget-overrun", "published-rest-started"];
+// A member's suggestion as the reviewer is served it (P2b).
+const MEMBER_DETAILS = ["confirming", "in-review", "asked", "answered", "published", "rejected", "banned", "re-review", "duplicate", "unchecked",
+  "unanswered", "withdrawn", "erased", "auto-published"].map((name) => `member-${name}`);
+const CREATES = ["text", "text-replay", "url", "url-again", "url-existing", "images", "images-with-text"];
+const ASKS = ["ask-member", "ask-member-replay"];
+const MEMBER_DECISIONS = ["reject-member-spam", "duplicate-of-event"];
+const EXTERNAL_DETAILS = ["external-detail-ai-assisted", "external-detail-member-credit", "external-detail-auto-published"];
 const LEASES = ["claim", "heartbeat", "release", "release-idle"];
 const REJECT_SUCCESSES = [...DATES_INTAKE_REJECT_REASONS.map((reason) => reason.replaceAll("_", "-")), "replay"];
-const PUBLISHES = ["publish", "publish-replay", "publish-partial", "publish-complete", "publish-places-venue"];
+const PUBLISHES = ["publish", "publish-replay", "publish-partial", "publish-complete", "publish-places-venue", "publish-member"];
 const USAGES = ["month", "empty", "earlier-month"];
 // Refusal name => [Core's machine error, logical status], as tests/support/dates_event_intake_admin_wire_contract.php lists them.
 const REFUSALS: Record<string, [string, number]> = {
@@ -70,9 +77,15 @@ const REFUSALS: Record<string, [string, number]> = {
   "publish-conflict": ["dates-intake-conflict", 409], "publish-confirmation-required": ["dates-external-confirmation-required", 422],
   "publish-source-required": ["dates-external-source-required", 422], "publish-publishing-disabled": ["dates-external-publishing-disabled", 403],
   "publish-drafts-disabled": ["dates-intake-admin-drafts-disabled", 403], "usage-filter-invalid": ["dates-intake-filter-invalid", 422],
+  // the member channel (P2b)
+  "ask-member-input-invalid": ["dates-intake-input-invalid", 422], "ask-member-viewer": ["dates-admin-capability-required", 403],
+  "ask-member-lease-required": ["dates-intake-lease-required", 409], "ask-member-state-invalid": ["dates-intake-state-invalid", 409],
+  "ask-member-not-a-suggestion": ["dates-intake-state-invalid", 409], "ask-member-suggestions-disabled": ["dates-intake-suggestions-disabled", 403],
+  "publish-suggestions-disabled": ["dates-intake-suggestions-disabled", 403],
+  "reject-duplicate-event-unavailable": ["dates-intake-duplicate-event-unavailable", 409], "reject-duplicate-invalid": ["dates-intake-input-invalid", 422],
 };
 
-test("intake corpus is the complete 114-response genuine capture with independent provenance pins", () => {
+test("intake corpus is the complete 148-response genuine capture with independent provenance pins", () => {
   const manifest = fixture("manifest");
   assert.equal(hash(readFileSync(new URL("manifest.json", DIRECTORY))), MANIFEST_SHA);
   assert.equal(manifest.schema_version, 1);
@@ -81,17 +94,17 @@ test("intake corpus is the complete 114-response genuine capture with independen
   assert.equal(manifest.source_checksum, SOURCE_SHA);
   assert.equal(manifest.provenance.generator, "tests/dates_event_intake_admin_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
-  assert.match(manifest.provenance.transport, /real HTTP.*application\/x-www-form-urlencoded.*No Admin route is handed a PHP int, bool or array/s);
-  assert.equal(manifest.fixture_count, 114);
-  assert.equal(manifest.provenance.source_paths.length, 260);
+  assert.match(manifest.provenance.transport, /real HTTP.*application\/x-www-form-urlencoded/s);
+  assert.equal(manifest.fixture_count, 148);
+  assert.equal(manifest.provenance.source_paths.length, 281);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
-  const names = [...LISTS.map((name) => `admin-list-${name}.json`), ...DETAILS.map((name) => `admin-detail-${name}.json`),
+  const names = [...LISTS.map((name) => `admin-list-${name}.json`), ...[...DETAILS, ...MEMBER_DETAILS].map((name) => `admin-detail-${name}.json`),
     ...CREATES.map((name) => `admin-create-${name}.json`), ...LEASES.map((name) => `admin-lease-${name}.json`),
-    ...REJECT_SUCCESSES.map((name) => `admin-reject-${name}.json`), ...PUBLISHES.map((name) => `admin-${name}.json`),
-    ...USAGES.map((name) => `admin-usage-${name}.json`), "admin-image-read.json", "admin-external-detail-ai-assisted.json",
-    "admin-activity-detail-ai-assisted.json", ADDED, ...Object.keys(REFUSALS).map((name) => `admin-${name}-denied.json`),
+    ...REJECT_SUCCESSES.map((name) => `admin-reject-${name}.json`), ...[...PUBLISHES, ...ASKS, ...MEMBER_DECISIONS, ...EXTERNAL_DETAILS].map((name) => `admin-${name}.json`),
+    ...USAGES.map((name) => `admin-usage-${name}.json`), "admin-image-read.json",
+    "admin-activity-detail-ai-assisted.json", "admin-external-list-ai-assisted.json", ...Object.keys(REFUSALS).map((name) => `admin-${name}-denied.json`),
     "member-ai-assisted-detail.json", "member-ai-assisted-discover.json"].sort();
-  assert.equal(names.length, 114);
+  assert.equal(names.length, 148);
   assert.deepEqual(manifest.fixtures.map((entry: { file: string }) => entry.file), names);
   assert.deepEqual(readdirSync(DIRECTORY).sort(), ["manifest.json", ...names].sort());
   const lines = manifest.fixtures.map((entry: { file: string; sha256: string; consumer: string; http_status: number; status_code: number }) => {
@@ -104,20 +117,8 @@ test("intake corpus is the complete 114-response genuine capture with independen
     return `${entry.file}\0${entry.sha256}`;
   });
   assert.equal(hash(lines.join("\n")), SET_SHA);
-  // Against the previous pin: one body is new, two gained the populated intake reference as their last key,
-  // and the other 111 are byte-identical. Without the new body and that one key the previous set digest comes back.
-  const reference = /,\n\s*"intake": \{\n\s*"intake_id": "xin_[a-f0-9]{32}",\n\s*"channel": "[a-z_]+",\n\s*"event_index": \d+\n\s*\}(?=\n\s*\})/g;
-  let changed = 0;
-  const previous = manifest.fixtures.filter((entry: { file: string }) => entry.file !== ADDED).map((entry: { file: string }) => {
-    const raw = readFileSync(new URL(entry.file, DIRECTORY), "utf8"), removed = (raw.match(reference) ?? []).length;
-    assert.equal(removed, GAINED_INTAKE.includes(entry.file) ? 1 : 0, entry.file);
-    changed += removed;
-    return `${entry.file}\0${hash(raw.replace(reference, ""))}`;
-  });
-  assert.equal(changed, 2); assert.equal(previous.length, 113); assert.equal(lines.length - changed - 1, 111);
-  assert.equal(hash(previous.join("\n")), PREVIOUS_SET_SHA);
-  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 74);
-  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code !== 200).length, 40);
+  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 99);
+  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code !== 200).length, 49);
 });
 
 test("the console's closed vocabularies are exactly the ones Core's manifest publishes", () => {
@@ -125,7 +126,7 @@ test("the console's closed vocabularies are exactly the ones Core's manifest pub
   assert.deepEqual(Object.keys(DATES_INTAKE_VOCABULARIES).sort(), Object.keys(manifest.vocabularies).sort());
   for (const [name, values] of Object.entries(DATES_INTAKE_VOCABULARIES)) assert.deepEqual([...values], manifest.vocabularies[name], name);
   // Every refusal token of the contract has a status here, and the corpus agrees with each one it carries.
-  assert.equal(Object.keys(DATES_INTAKE_REFUSALS).length, 24);
+  assert.equal(Object.keys(DATES_INTAKE_REFUSALS).length, 26);
   for (const [error, status] of Object.values(REFUSALS)) if (error.startsWith("dates-intake-")) assert.equal(DATES_INTAKE_REFUSALS[error], status, error);
 });
 
@@ -220,9 +221,13 @@ const STATUS_OF: Record<string, string> = {
   "leased-by-other": "in_review", published: "published", purged: "expired", received: "received", rejected: "rejected",
   "rejected-not-an-event": "rejected", "rejected-prohibited": "rejected", "rejected-screening": "rejected", screening: "screening",
   "screening-retry": "screening", validating: "validating", "validating-retry": "validating",
+  "failed-ai-budget-overrun": "failed", "published-rest-started": "published",
+  "member-confirming": "member_confirming", "member-asked": "member_confirming", "member-published": "published", "member-rejected": "rejected",
+  "member-banned": "rejected", "member-duplicate": "duplicate", "member-withdrawn": "withdrawn", "member-erased": "published",
+  "member-auto-published": "published",
 };
 
-for (const name of DETAILS) test(`genuine intake detail ${name} decodes whole, with no unreadable part`, () => {
+for (const name of [...DETAILS, ...MEMBER_DETAILS]) test(`genuine intake detail ${name} decodes whole, with no unreadable part`, () => {
   const body = fixture(`admin-detail-${name}`);
   const read = projectDatesIntakeDetail(body, body.intake.intake_id);
   assert.ok(read);
@@ -239,6 +244,14 @@ for (const name of DETAILS) test(`genuine intake detail ${name} decodes whole, w
   assert.deepEqual(intake.inputs?.images.unreadable, []);
   assert.deepEqual(intake.source_texts, { items: body.intake.source_texts, unreadable: [] });
   assert.deepEqual(intake.ai_runs, { items: body.intake.ai_runs, unreadable: [] });
+  // The member's side: absent for an operator's draft, carried through value for value for a suggestion.
+  assert.equal(body.intake.member !== null, name.startsWith("member-")); assert.equal(body.intake.channel === "member_suggestion", name.startsWith("member-"));
+  if (body.intake.member === null) assert.equal(intake.member, null);
+  else {
+    assert.ok(intake.member); assert.deepEqual(intake.member.unreadable, []); assert.deepEqual(intake.member.corrections.unreadable, []);
+    const { unreadable: _unreadable, corrections, ...served } = intake.member;
+    assert.deepEqual({ ...served, corrections: corrections.items }, body.intake.member);
+  }
   assert.equal(intake.events.length, body.intake.events.length);
   intake.events.forEach((event, index) => {
     assert.ok(event, `event ${index}`);
@@ -260,11 +273,13 @@ for (const name of DETAILS) test(`genuine intake detail ${name} decodes whole, w
   assert.equal(datesIntakeInProgress(intake.status), ["received", "screening", "extracting", "validating", "awaiting_budget"].includes(intake.status));
 });
 
-test("the genuine corpus carries a detail for each of the eleven statuses and each of the three input kinds P2a produces", () => {
-  const seen = new Set<string>(), kinds = new Set<string>();
-  for (const name of DETAILS) { const body = fixture(`admin-detail-${name}`); seen.add(body.intake.status); kinds.add(body.intake.input_kind); }
+test("the genuine corpus carries a detail for each of the thirteen statuses that have a writer and each of the three input kinds", () => {
+  const seen = new Set<string>(), kinds = new Set<string>(), operator = new Set<string>();
+  for (const name of [...DETAILS, ...MEMBER_DETAILS]) { const body = fixture(`admin-detail-${name}`); seen.add(body.intake.status); kinds.add(body.intake.input_kind); }
+  for (const name of DETAILS) operator.add(fixture(`admin-detail-${name}`).intake.status);
   assert.deepEqual([...seen].sort(), fixture("manifest").coverage.status.covered.sort());
-  assert.equal(seen.size, 11);
+  assert.equal(seen.size, 13); assert.equal(operator.size, 11, "member_confirming and withdrawn are the member channel's");
+  assert.deepEqual(DATES_INTAKE_STATUSES.filter((status) => !seen.has(status)), ["merged"], "the one status no body carries");
   assert.deepEqual([...kinds].sort(), ["images", "text", "url"]);
 });
 
@@ -488,13 +503,27 @@ test("DERIVED: an unreadable part of a detail is named and never shown as empty,
 
 // ---------------------------------------------------------------- receipts
 
-for (const name of CREATES) test(`genuine create ${name} is a closed receipt of a received intake`, () => {
+for (const name of CREATES) test(`genuine create ${name} is a receipt bound to its intake, with the two markers`, () => {
   const body = fixture(`admin-create-${name}`), receipt = decodeDatesIntakeCreateReceipt(body);
   assert.deepEqual(receipt, body);
   assert.equal(receipt!.replayed, name.endsWith("-replay"));
-  for (const change of [{ extra: 1 }, { replayed: "no" }, { audit_id: null }, { intake: { ...body.intake, status: "in_review" } },
-    { intake: { ...body.intake, revision: 2 } }, { intake: { intake_id: body.intake.intake_id } }])
-    assert.equal(decodeDatesIntakeCreateReceipt({ ...body, ...change }), null);
+  // `existing`: not a new draft and not an error - the operator's own open draft of the same source, as it is now.
+  assert.equal(receipt!.existing, name.endsWith("-existing"));
+  if (receipt!.existing) assert.deepEqual(receipt!.intake, { intake_id: xin(2), revision: 9, status: "in_review" });
+  else assert.deepEqual([receipt!.intake.revision, receipt!.intake.status], [1, "received"]);
+  // What identifies the command is bound; a key the console does not know is tolerated (no exact-key-set check).
+  assert.deepEqual(decodeDatesIntakeCreateReceipt({ ...body, extra: 1, intake: { ...body.intake, extra: 2 } }), { ...body, extra: 1, intake: { ...body.intake, extra: 2 } });
+  const { existing: _existing, ...unmarked } = body, { replayed: _replayed, ...unreplayed } = body;
+  for (const changed of [unmarked, unreplayed, { ...body, existing: "true" }, { ...body, existing: 1 }, { ...body, replayed: "no" }, { ...body, audit_id: null },
+    { ...body, success: false }, { ...body, status_code: 409 }, { ...body, intake: { intake_id: body.intake.intake_id } }, { ...body, intake: { ...body.intake, intake_id: "xin_1" } },
+    { ...body, intake: { ...body.intake, revision: 0 } }, { ...body, intake: { ...body.intake, status: "sleeping" } },
+    // A new draft is revision 1 and `received`; an existing one is open - never one that already ended.
+    ...(body.existing ? ["published", "rejected", "duplicate", "failed", "withdrawn", "expired", "merged"].map((status) => ({ ...body, intake: { ...body.intake, status } }))
+      : [{ ...body, intake: { ...body.intake, status: "in_review" } }, { ...body, intake: { ...body.intake, revision: 2 } }])])
+    assert.equal(decodeDatesIntakeCreateReceipt(changed), null, JSON.stringify(changed).slice(0, 120));
+  // An existing draft may be anywhere in the pipeline, at any revision.
+  if (body.existing) for (const status of ["received", "screening", "extracting", "validating", "member_confirming", "awaiting_budget", "in_review"])
+    assert.ok(decodeDatesIntakeCreateReceipt({ ...body, intake: { ...body.intake, status, revision: 1 } }), status);
 });
 
 for (const name of LEASES) test(`genuine lease ${name} answers exactly its request`, () => {
@@ -533,7 +562,7 @@ test("genuine rejection replay is the first receipt again", () => {
 const PUBLISH_REQUEST: Record<string, { complete: boolean; status: string; count: number }> = {
   publish: { complete: false, status: "published", count: 1 }, "publish-replay": { complete: false, status: "published", count: 1 },
   "publish-partial": { complete: false, status: "in_review", count: 1 }, "publish-complete": { complete: true, status: "published", count: 2 },
-  "publish-places-venue": { complete: false, status: "published", count: 1 },
+  "publish-places-venue": { complete: false, status: "published", count: 1 }, "publish-member": { complete: false, status: "published", count: 1 },
 };
 function memoryStorage() {
   const rows = new Map<string, string>();
@@ -709,6 +738,20 @@ test("genuine external list with an AI-assisted row carries the label on the row
     const value = copy(body); Object.assign(value.events[0], change);
     if (Object.hasOwn(change, "ai_assisted") && change.ai_assisted === undefined) delete value.events[0].ai_assisted;
     assert.equal(decodeDatesExternalList(value, { page: body.page, limit: body.limit }), null, JSON.stringify(change));
+  }
+});
+for (const name of ["member-credit", "auto-published"]) test(`genuine external detail ${name}: an event from a member's suggestion decodes whole, with the confirmations as they were given`, () => {
+  const body = fixture(`admin-external-detail-${name}`), reviewed = name === "member-credit";
+  assert.deepEqual(decodeDatesExternalDetail(body, body.event.external_event_id), body);
+  assert.equal(body.event.intake.channel, "member_suggestion"); assert.equal(body.event.credit_channel, "member_suggestion"); assert.equal(body.event.ai_assisted, true);
+  // A reviewer published the one; Core published the other by itself (the autopublish switch): it carries the tier
+  // its evidence supports and no confirmation that nobody gave.
+  assert.equal(body.event.verification_tier, reviewed ? "admin" : "single_source");
+  assert.deepEqual(body.event.verification.admin_confirmations, { source: reviewed, public_venue: reviewed, timezone: reviewed, content_safe: reviewed });
+  // Each confirmation is a boolean and all four are there.
+  for (const change of [{ source: "yes" }, { source: null }, { content_safe: 1 }, { timezone: undefined }]) {
+    const value = copy(body); value.event.verification.admin_confirmations = { ...body.event.verification.admin_confirmations, ...change };
+    assert.equal(decodeDatesExternalDetail(value, body.event.external_event_id), null, JSON.stringify(change));
   }
 });
 test("genuine external detail of an event published from an intake: AI-assisted, its Places venue, and the intake it came from", () => {

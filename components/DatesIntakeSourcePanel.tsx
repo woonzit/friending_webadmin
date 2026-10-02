@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import DatesIntakeRefusal from "@/components/DatesIntakeRefusal";
 import { adminIntakeCreate } from "@/lib/adminClient";
 import { DATES_INTAKE_INPUT_KINDS, DATES_INTAKE_MAX_IMAGES, DATES_INTAKE_MAX_TEXT_GRAPHEMES, DATES_INTAKE_MAX_URL_LENGTH,
-  type DatesIntakeSourceKind } from "@/lib/datesIntakeAdmin";
+  type DatesIntakeCreateReceipt, type DatesIntakeSourceKind } from "@/lib/datesIntakeAdmin";
 import { createDatesIntakeSourceAttempts, datesIntakeHintFor, datesIntakeHintStorage, datesIntakeSourceProblem, readDatesIntakeHint, writeDatesIntakeHint,
   type DatesIntakeDraftEntry, type DatesIntakeSourceAttempts, type DatesIntakeSourceFile, type DatesIntakeSubmissionHint } from "@/lib/datesIntakeConsole";
 import { formatDate } from "@/lib/format";
@@ -56,8 +56,8 @@ export function DatesIntakeSubmissionReminder({ hint, onDismiss }: { hint: Dates
  */
 export default function DatesIntakeSourcePanel({ entry, onCreated }: {
   entry: DatesIntakeDraftEntry;
-  /** The intake exists: the caller takes the operator to its review screen. */
-  onCreated: (intakeId: string) => void;
+  /** The intake exists - new, or (`existing`) the one this source already had: the caller takes the operator to it. */
+  onCreated: (receipt: DatesIntakeCreateReceipt) => void;
 }) {
   const t = useTranslations("datesAdmin.intake.source");
   const kinds = useTranslations("datesAdmin.intake.inputKindValues");
@@ -116,7 +116,7 @@ export default function DatesIntakeSourcePanel({ entry, onCreated }: {
       const outcome = await attempts.current!.send(adminIntakeCreate, draft, files.map((item) => item.file), locale);
       // An answer to that same request settles the attempt the reminder was written for.
       if (retry && outcome.kind !== "uncertain") remind(null);
-      if (outcome.kind === "success") { onCreated(outcome.receipt.intake.intake_id); return; }
+      if (outcome.kind === "success") { onCreated(outcome.receipt); return; }
       if (outcome.kind === "refused") { setNotice({ kind: "refused", error: outcome.error }); return; }
       // Nothing says whether the draft was made. While the panel is open the same source goes out under the same
       // identity; for later, a reminder points the operator to the queue.

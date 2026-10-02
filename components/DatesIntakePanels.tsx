@@ -35,7 +35,7 @@ export function DatesIntakeStatusPanel({ intake, polling = false }: { intake: Da
         {intake.prohibited_category ? ` · ${t.has(`prohibitedCategories.${intake.prohibited_category}`) ? t(`prohibitedCategories.${intake.prohibited_category}`) : intake.prohibited_category}` : ""}</dd>
       {intake.budget_waiting_since !== null && <><dt>{t("detail.waitingSince")}</dt><dd>{formatDate(intake.budget_waiting_since, locale, true)}</dd></>}
       {intake.unreadable_sections.includes("decision") && <><dt>{t("detail.decision")}</dt><dd>{t("detail.couldNotRead")}</dd></>}
-      {decision && <><dt>{t("detail.decision")}</dt><dd>{t(`decisionValues.${decision.action}`)} · {decision.by === "system" ? t("detail.bySystem") : decision.by} · {formatDate(decision.at, locale, true)}
+      {decision && <><dt>{t("detail.decision")}</dt><dd>{t(`decisionValues.${decision.action}`)} · {decision.by === "system" ? t("detail.bySystem") : decision.by === "member" ? t("detail.byMember") : decision.by} · {formatDate(decision.at, locale, true)}
         {decision.reason_code && <div>{t(`rejectReasons.${decision.reason_code}`)}</div>}
         {decision.statement && <blockquote className="preserve-whitespace">{locale === "hu" ? decision.statement.hu : decision.statement.en}</blockquote>}</dd></>}
       {duplicate && <><dt>{t("detail.duplicateOf")}</dt><dd>{t(`dedupeKinds.${duplicate.kind}`)} · {duplicateHref
@@ -127,6 +127,19 @@ export function DatesIntakeCompletionChoice({ completion, close, disabled, onCha
     <label className="checkbox-field"><input type="radio" name="dates-intake-completion" checked={close} onChange={() => onChange(true)} />
       <span>{t("closeAnyway", { count: completion.unreadable, remaining: completion.remaining })}</span></label>
   </fieldset>;
+}
+
+/**
+ * Core answered the operator's create with the draft this source already had
+ * (`existing`). Said plainly as what it is - already submitted - not as a new
+ * submission and not as an error. The operator dismisses it.
+ */
+export function DatesIntakeAlreadySubmitted({ onDismiss }: { onDismiss: () => void }) {
+  const t = useTranslations("datesAdmin.intake.source");
+  return <div className="alert alert-info" role="status">
+    <p>{t("existing")}</p>
+    <div className="row-actions"><button type="button" className="button button-secondary" onClick={onDismiss}>{t("hintDismiss")}</button></div>
+  </div>;
 }
 
 /** A rejection decided without (all of) the extraction on screen is said to be one. */

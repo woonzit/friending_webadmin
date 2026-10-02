@@ -49,7 +49,8 @@
         "budget_waiting_since": null,
         "images_delete_after": 1793520000,
         "retention_until": 1806480000,
-        "content_purged_at": null
+        "content_purged_at": null,
+        "member": null
     },
     "capabilities": [
         "dates_activity_read",

@@ -33,11 +33,12 @@ export const DATES_INTAKE_STATUSES = ["received", "screening", "extracting", "va
 export const DATES_INTAKE_STATUS_DETAILS = ["image-empty", "image-unreadable", "image-too-large", "image-dimensions", "image-encode-failed",
   "image-content-rejected", "screening-unavailable", "image-missing", "source-not-readable", "source-not-fetchable", "source-unreachable",
   "source-not-text", "source-too-large", "source-empty", "not-an-event", "prohibited-category", "ai-unavailable", "ai-refused",
-  "ai-not-configured", "venue-search-unavailable", "duplicate-source", "duplicate-event", "start-passed", "storage-unavailable",
+  "ai-not-configured", "ai-budget-overrun", "venue-search-unavailable", "duplicate-source", "duplicate-event", "start-passed", "storage-unavailable",
   "attempts-exhausted", "account-erased"] as const;
 export const DATES_INTAKE_CHANNELS = ["admin_draft", "member_suggestion", "ai_research"] as const;
 export const DATES_INTAKE_INPUT_KINDS = ["url", "images", "text"] as const;
-export const DATES_INTAKE_DECISION_ACTIONS = ["published", "rejected", "duplicate", "merged", "expired", "screening_rejected", "extraction_rejected"] as const;
+export const DATES_INTAKE_DECISION_ACTIONS = ["published", "rejected", "duplicate", "merged", "expired", "screening_rejected", "extraction_rejected",
+  "withdrawn"] as const;
 export const DATES_INTAKE_REJECT_REASONS = ["not_an_event", "date_unclear_or_past", "private_event", "duplicate", "prohibited_content",
   "unverifiable", "outside_area", "sensitive_not_allowed", "spam_or_fake"] as const;
 export const DATES_INTAKE_LEASE_ACTIONS = ["claim", "heartbeat", "release"] as const;
@@ -52,7 +53,8 @@ export const DATES_INTAKE_WARNINGS = ["prompt_injection_suspected", "fallback_pr
   "witness_disagrees_venue", "venue_similarity_low", "possible_private_address", "venue_search_unavailable", "venue_unbounded",
   "venue_unclear", "city_missing", "possibly_private", "possibly_online", "official_url_dropped", "ticket_url_dropped",
   "organizer_url_dropped", "paid_without_official_link", "organizer_missing", "price_unclear", "sensitive", "status_canceled",
-  "status_postponed", "status_sold_out", "low_legibility", "language_uncertain", "conflicting_information", "content_unscreened"] as const;
+  "status_postponed", "status_sold_out", "low_legibility", "language_uncertain", "conflicting_information", "content_unscreened",
+  "member_corrected"] as const;
 export const DATES_INTAKE_AUTO_BLOCKERS = ["no_hard_fail", "warnings_benign", "primary_provider", "quotes_verified", "time_explicit", "confident",
   "venue_place_matches", "timezone_known", "country_available", "content_screened"] as const;
 export const DATES_INTAKE_TIERS = ["official", "single_source"] as const;
@@ -66,6 +68,13 @@ export const DATES_INTAKE_LINK_DROP_REASONS = ["not_in_sources", "not_https", "d
 export const DATES_AI_PROVIDERS = ["openai", "gemini", "anthropic"] as const;
 export const DATES_AI_OUTCOMES = ["sheet", "verdict", "refused", "unavailable", "truncated", "invalid_output", "not_configured"] as const;
 export const DATES_SAFE_SEARCH_LIKELIHOODS = ["UNKNOWN", "VERY_UNLIKELY", "UNLIKELY", "POSSIBLE", "LIKELY", "VERY_LIKELY"] as const;
+/** Where a member's look at their own draft stands (member channel). */
+export const DATES_INTAKE_MEMBER_CONFIRMATION_STATES = ["awaiting", "confirmed", "corrected", "unchecked", "unanswered"] as const;
+/** The fields of a draft a member may correct, and a reviewer may ask about. */
+export const DATES_INTAKE_MEMBER_EDITABLE_FIELDS = ["title", "starts_local", "ends_local", "venue_name", "venue_address", "venue_city", "price_text",
+  "is_free"] as const;
+/** The statuses in which an intake is still open (Core: every status that is not terminal). */
+export const DATES_INTAKE_OPEN_STATUSES = ["received", "screening", "extracting", "validating", "member_confirming", "in_review", "awaiting_budget"] as const;
 
 /** Manifest vocabulary name => the console's list; the pin test walks this map. */
 export const DATES_INTAKE_VOCABULARIES = {
@@ -76,7 +85,8 @@ export const DATES_INTAKE_VOCABULARIES = {
   evidence_field: DATES_INTAKE_EVIDENCE_FIELDS, evidence_match: DATES_INTAKE_EVIDENCE_MATCHES, dedupe_decision: DATES_INTAKE_DEDUPE_DECISIONS,
   dedupe_verdict: DATES_INTAKE_DEDUPE_VERDICTS, dedupe_candidate_kind: DATES_INTAKE_DEDUPE_KINDS, category: DATES_EXTERNAL_CATEGORIES,
   link_drop_reason: DATES_INTAKE_LINK_DROP_REASONS, provider: DATES_AI_PROVIDERS, ai_outcome: DATES_AI_OUTCOMES,
-  safe_search_likelihood: DATES_SAFE_SEARCH_LIKELIHOODS,
+  safe_search_likelihood: DATES_SAFE_SEARCH_LIKELIHOODS, member_confirmation_state: DATES_INTAKE_MEMBER_CONFIRMATION_STATES,
+  member_editable_field: DATES_INTAKE_MEMBER_EDITABLE_FIELDS,
 } as const;
 
 /**
@@ -123,6 +133,14 @@ const closed = <S extends Shape>(shape: S): Guard<{ [K in keyof S]: Parsed<S[K]>
   const keys = Object.keys(shape);
   return (value): value is { [K in keyof S]: Parsed<S[K]> } => record(value) && Object.keys(value).length === keys.length
     && keys.every((key) => Object.hasOwn(value, key) && shape[key](value[key]));
+};
+/**
+ * A receipt binds on what identifies the command and tolerates keys the console
+ * does not know: the named keys must be there and valid, others may be too.
+ */
+const bound = <S extends Shape>(shape: S): Guard<{ [K in keyof S]: Parsed<S[K]> }> => {
+  const keys = Object.keys(shape);
+  return (value): value is { [K in keyof S]: Parsed<S[K]> } => record(value) && keys.every((key) => Object.hasOwn(value, key) && shape[key](value[key]));
 };
 const list = <T>(guard: Guard<T>, maximum: number): Guard<T[]> => (value): value is T[] =>
   Array.isArray(value) && value.length <= maximum && value.every(guard);
@@ -202,7 +220,8 @@ function projectRow(value: unknown, keys: readonly string[]): DatesIntakeQueueRo
 
 const statusCounts = closed(Object.fromEntries(DATES_INTAKE_STATUSES.map((status) => [status, integer(0)])) as Record<DatesIntakeStatus, Guard<number>>);
 const queueGuard = closed({ ...envelope, intakes: ((value: unknown): value is unknown[] => Array.isArray(value) && value.length <= 100),
-  page: integer(1, 10000), limit: integer(1, 100), total: integer(0), status_counts: statusCounts, drafts_enabled: bool, capabilities });
+  page: integer(1, 10000), limit: integer(1, 100), total: integer(0), status_counts: statusCounts, drafts_enabled: bool, suggestions_enabled: bool,
+  capabilities });
 export type DatesIntakeQueue = Omit<Parsed<typeof queueGuard>, "intakes"> & {
   intakes: DatesIntakeQueueRow[];
   unreadable_rows: DatesIntakeUnreadableRow[];
@@ -323,7 +342,65 @@ function projectEvent(value: unknown, position: number): DatesIntakeEvent | null
 const inputsShape = { kind: oneOf(DATES_INTAKE_INPUT_KINDS), url: nullable(string(8192)), text: nullable(string()), locale: string(16) };
 const DETAIL_KEYS = ["admin_principal", "inputs", "fetch", "source_texts", "result", "result_note", "prohibited_category",
   "prompt_injection_suspected", "validated_at", "events", "ai_runs", "decision", "duplicate_of", "budget_waiting_since",
-  "images_delete_after", "retention_until", "content_purged_at"];
+  "images_delete_after", "retention_until", "content_purged_at", "member"];
+
+// The member's side of a suggestion, as Core serves it to a reviewer - and nothing of the member beyond it.
+const memberField = oneOf(DATES_INTAKE_MEMBER_EDITABLE_FIELDS);
+const memberConfirmation = closed({ state: oneOf(DATES_INTAKE_MEMBER_CONFIRMATION_STATES), at: nullable(clock), due_at: nullable(clock),
+  asked_by_reviewer: bool, fields: list(memberField, 20), note: nullable(string(8000)) });
+/** A corrected value is shown as text; Core serves a string, and a boolean for `is_free`. */
+const memberValue: Guard<string | number | boolean | null> = (value): value is string | number | boolean | null =>
+  value === null || typeof value === "boolean" || (typeof value === "string" && value.length <= 8000) || (typeof value === "number" && Number.isFinite(value));
+const memberCorrection = closed({ index: integer(0, 99), field: memberField, from: memberValue, to: memberValue });
+const memberFirstDecision = closed({ by: string(320), at: nullable(clock), action: oneOf(DATES_INTAKE_DECISION_ACTIONS),
+  reason_code: nullable(oneOf(DATES_INTAKE_REJECT_REASONS)) });
+const memberReReview = closed({ requested_at: nullable(clock), note: nullable(string(8000)), decided_at: nullable(clock),
+  first_decision: nullable(memberFirstDecision) });
+const memberStanding = closed({ strikes: integer(0), strike_limit: integer(0), banned_until: nullable(clock) });
+const MEMBER_KEYS = ["submitter_uid", "anonymous", "auto_going", "consent_version", "confirmation", "corrections", "re_review", "standing", "can_ask"];
+export type DatesIntakeMemberCorrection = Parsed<typeof memberCorrection>;
+export type DatesIntakeMember = {
+  /** Null once the account is erased: nobody to name, nothing to ask. */
+  submitter_uid: number | null;
+  /** The member asked not to be credited by name. */
+  anonymous: boolean;
+  auto_going: boolean;
+  consent_version: number | null;
+  confirmation: Parsed<typeof memberConfirmation> | null;
+  /** The member's changes to the AI's draft, as a diff; a row that cannot be read is named, not dropped silently. */
+  corrections: DatesIntakeRows<DatesIntakeMemberCorrection>;
+  re_review: Parsed<typeof memberReReview> | null;
+  standing: Parsed<typeof memberStanding> | null;
+  /** Core's word on whether the member may still be asked (once per suggestion). */
+  can_ask: boolean;
+  /** Parts of the block served in a shape this console cannot read: unknown, not absent. */
+  unreadable: string[];
+};
+
+/** The member block. `undefined` when the block itself cannot be trusted; its parts degrade one by one. */
+function projectMember(value: unknown): DatesIntakeMember | null | undefined {
+  if (value === null) return null;
+  if (!record(value) || Object.keys(value).length !== MEMBER_KEYS.length || MEMBER_KEYS.some((key) => !Object.hasOwn(value, key))
+    || !nullable(integer(1))(value.submitter_uid) || !bool(value.anonymous) || !bool(value.auto_going) || !nullable(integer(0))(value.consent_version)
+    || !bool(value.can_ask)) return undefined;
+  const unreadable: string[] = [];
+  const part = <T>(key: string, guard: Guard<T>): T | null => {
+    if (guard(value[key])) return value[key] as T;
+    unreadable.push(key);
+    return null;
+  };
+  const corrections = rows(value.corrections, memberCorrection, 800);
+  if (!corrections) unreadable.push("corrections");
+  const member: DatesIntakeMember = { submitter_uid: value.submitter_uid, anonymous: value.anonymous, auto_going: value.auto_going,
+    consent_version: value.consent_version, confirmation: part("confirmation", nullable(memberConfirmation)),
+    corrections: corrections ?? { items: [], unreadable: [] }, re_review: part("re_review", nullable(memberReReview)),
+    standing: part("standing", nullable(memberStanding)),
+    // Nobody is asked on the strength of a block the console could not read whole.
+    can_ask: value.can_ask, unreadable };
+  if (unreadable.length > 0) member.can_ask = false;
+  return member;
+}
+
 const detailEnvelope = closed({ ...envelope, intake: record, capabilities });
 
 export type DatesIntakeDetail = DatesIntakeQueueRow & {
@@ -351,6 +428,11 @@ export type DatesIntakeDetail = DatesIntakeQueueRow & {
   images_delete_after: number | null;
   retention_until: number | null;
   content_purged_at: number | null;
+  /**
+   * The member's side of a suggestion; null for an operator's draft. When the block cannot be read ("member" is then in
+   * `unreadable_sections`) it is null too - and the intake is still a member's: `channel` says so.
+   */
+  member: DatesIntakeMember | null;
   /** Detail sections Core served in a shape this console cannot read. */
   unreadable_sections: string[];
 };
@@ -407,8 +489,13 @@ export function projectDatesIntakeDetail(value: unknown, intakeId: string): Date
     images_delete_after: section("images_delete_after", nullable(clock), null),
     retention_until: section("retention_until", nullable(clock), null),
     content_purged_at: section("content_purged_at", nullable(clock), null),
+    member: null,
     unreadable_sections: unreadable,
   };
+  // A member block exactly when it is a member's suggestion (Core's own rule); anything else is unreadable, not "no member".
+  const member = projectMember(source.member), suggestion = row.channel === null ? null : row.channel === "member_suggestion";
+  if (member === undefined || (suggestion !== null && (member !== null) !== suggestion)) unreadable.push("member");
+  else intake.member = member;
   // A suspected injection that cannot be read must not look like "none".
   if (unreadable.includes("prompt_injection_suspected")) intake.prompt_injection_suspected = true;
   return { intake, capabilities: value.capabilities, server_now: value.server_now };
@@ -591,13 +678,26 @@ export function datesIntakeEditorGaps(input: DatesIntakeEditorInput): string[] {
   return gaps;
 }
 
-// ---------------------------------------------------------------- receipts (strictly closed)
+// ---------------------------------------------------------------- receipts
 
-const createReceipt = closed({ ...envelope, replayed: bool,
-  intake: closed({ intake_id: datesIntakeId, revision: literal(1), status: literal("received") }), audit_id: auditId });
+/**
+ * The create receipt binds on what identifies the command - success, the
+ * intake, its revision and status, the audit id - and on the two markers, and
+ * tolerates keys it does not know.
+ *
+ * `existing: true` is not a new draft and not an error: the operator already
+ * has an OPEN draft of this source, and `intake` is that draft as it is now -
+ * any open status, any revision. Core, not the console, guarantees that a
+ * source does not become two open drafts. `existing: false` is a new draft:
+ * revision 1, `received`.
+ */
+const createReceipt = bound({ success: literal(true), status_code: literal(200), replayed: bool, existing: bool,
+  intake: bound({ intake_id: datesIntakeId, revision: integer(1), status: oneOf(DATES_INTAKE_STATUSES) }), audit_id: auditId });
 export type DatesIntakeCreateReceipt = Parsed<typeof createReceipt>;
 export function decodeDatesIntakeCreateReceipt(value: unknown): DatesIntakeCreateReceipt | null {
-  return createReceipt(value) ? value : null;
+  if (!createReceipt(value)) return null;
+  const { revision, status } = value.intake;
+  return (value.existing ? (DATES_INTAKE_OPEN_STATUSES as readonly string[]).includes(status) : revision === 1 && status === "received") ? value : null;
 }
 
 const leaseReceipt = closed({ ...envelope, intake: closed({ intake_id: datesIntakeId, revision: integer(2), status: literal("in_review"),
@@ -627,7 +727,8 @@ export function decodeDatesIntakeRejectReceipt(value: unknown, request: { intake
 }
 
 const publishReceipt = closed({ ...envelope, replayed: bool, external_event_id: externalEventId, revision: literal(1),
-  activity_id: id("act"), activity_revision: literal(1), event_status: literal("published"), audit_id: auditId,
+  // The activity is new, but not always at revision 1: a member's "going" is recorded with the publication (P2b).
+  activity_id: id("act"), activity_revision: integer(1), event_status: literal("published"), audit_id: auditId,
   intake: closed({ intake_id: datesIntakeId, revision: integer(2), status: oneOf(["in_review", "published"] as const), published_count: integer(1) }) });
 export type DatesIntakePublishReceipt = Parsed<typeof publishReceipt>;
 /** The P1 publish receipt plus what became of the intake, bound to the request. */
@@ -706,12 +807,14 @@ export function datesMicroUsd(value: number, locale: string): string {
 
 /** Every `dates-intake-*` token Core's contract names, with its logical status. */
 export const DATES_INTAKE_REFUSALS: Readonly<Record<string, number>> = {
-  "dates-intake-admin-drafts-disabled": 403, "dates-intake-claimed": 409, "dates-intake-conflict": 409, "dates-intake-event-unavailable": 409,
+  "dates-intake-admin-drafts-disabled": 403, "dates-intake-claimed": 409, "dates-intake-conflict": 409,
+  "dates-intake-duplicate-event-unavailable": 409, "dates-intake-event-unavailable": 409,
   "dates-intake-filter-invalid": 422, "dates-intake-id-invalid": 422, "dates-intake-image-invalid": 422, "dates-intake-image-unavailable": 404,
   "dates-intake-input-invalid": 422, "dates-intake-kind-invalid": 422, "dates-intake-lease-invalid": 422, "dates-intake-lease-lost": 409,
   "dates-intake-lease-owner-required": 403, "dates-intake-lease-required": 409, "dates-intake-locale-invalid": 422,
   "dates-intake-origin-invalid": 422, "dates-intake-reason-invalid": 422, "dates-intake-revision-invalid": 422,
   "dates-intake-source-not-readable": 422, "dates-intake-state-invalid": 409, "dates-intake-storage-unavailable": 503,
+  "dates-intake-suggestions-disabled": 403,
   "dates-intake-text-invalid": 422, "dates-intake-unavailable": 404, "dates-intake-url-invalid": 422,
 };
 
