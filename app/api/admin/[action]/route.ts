@@ -39,7 +39,7 @@ import {
 } from "@/lib/adminActions";
 import { ADMIN_GRANTED_VERIFICATION_CONTRACT_READY } from "@/lib/contractReadiness";
 import { coreCall, mergeCoreParams } from "@/lib/core";
-import { datesAdminContractParams } from "@/lib/datesAdminContract";
+import { withDatesAdminContract } from "@/lib/datesAdminContract";
 import {
   normalizePersonaProxyBody,
   personaProxyCapabilityAuthorized,
@@ -371,8 +371,9 @@ export async function POST(
   // depends on the order of an object literal to stay authoritative.
   const result = await coreCall(
     action,
-    // D-143: the Admin intake contract selector goes with every Dates Admin request, as a server-owned parameter.
-    mergeCoreParams(body, { admin_email: session.email, ...datesAdminContractParams(action) }),
+    // D-143: the Admin intake contract selector goes with every Dates Admin request. It is added to the merged
+    // parameters, after the browser's body and the actor, so it is server-owned like them.
+    withDatesAdminContract(action, mergeCoreParams(body, { admin_email: session.email })),
     adminActionTimeoutMs(action),
   );
   const transportError = adminBridgeCoreTransportError(result.status, result.data);

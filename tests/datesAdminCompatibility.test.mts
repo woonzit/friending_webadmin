@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { datesConfigurationRawValue, datesSettingEditable, datesSettingEffectiveText, datesSettingStorefrontEffective } from "../lib/datesAdmin.ts";
-import { DATES_ADMIN_INTAKE_CONTRACT_SELECTOR, datesAdminContractParams } from "../lib/datesAdminContract.ts";
+import { DATES_ADMIN_INTAKE_CONTRACT_SELECTOR, datesAdminContractParams, withDatesAdminContract } from "../lib/datesAdminContract.ts";
 import { decodeDatesActivityList, decodeDatesActivityOriginDetail, decodeDatesExternalDetail, decodeDatesExternalList, decodeDatesExternalPlaces,
   decodeDatesExternalReceipt } from "../lib/datesExternalAdmin.ts";
 import { datesCaseDetail, datesConsoleCommandReceipt, datesEvidenceRead, datesLegalHoldReceipt, datesModerationQueue } from "../lib/datesModerationRead.ts";
@@ -225,7 +225,18 @@ test("D-143: the Admin intake contract selector is one constant, attached by the
   assert.deepEqual(datesAdminContractParams("dates_configuration", null), {});
   // Server-owned: merged after the browser's body in the generic bridge and in the two dedicated intake routes, so a browser cannot set or unset it.
   const route = readFileSync(new URL("../app/api/admin/[action]/route.ts", import.meta.url), "utf8");
-  assert.match(route, /mergeCoreParams\([^)]*\{ admin_email: [^}]*\.\.\.datesAdminContractParams\(action\) \}\)/s);
+  assert.match(route, /withDatesAdminContract\(action, mergeCoreParams\(body, \{ admin_email: session\.email \}\)\),/);
+  // The selector is written last into the merged object itself: a browser value under its name does not survive, and
+  // the null prototype of the merge is kept.
+  // (`merged` stands for what `mergeCoreParams` returns: a null-prototype object with the browser's fields and the
+  // actor; the real route, merge and encoder are run in tests/datesIntakeRequestShape.test.mts.)
+  const merged: Record<string, unknown> = Object.assign(Object.create(null), { intake_id: "x", dates_event_intake_admin_contract_version: 99, admin_email: "admin@example.test" });
+  const sent = withDatesAdminContract("dates_event_intake_list", merged, standIn);
+  assert.equal(sent, merged); assert.equal(Object.getPrototypeOf(sent), null);
+  assert.deepEqual({ ...sent }, { intake_id: "x", dates_event_intake_admin_contract_version: 1, admin_email: "admin@example.test" });
+  assert.deepEqual({ ...withDatesAdminContract("users_list", Object.assign(Object.create(null), { q: "a", admin_email: "admin@example.test" }), standIn) },
+    { q: "a", admin_email: "admin@example.test" });
+  assert.deepEqual({ ...withDatesAdminContract("dates_configuration", Object.assign(Object.create(null), { admin_email: "admin@example.test" }), null) }, { admin_email: "admin@example.test" });
   const bridge = readFileSync(new URL("../lib/datesIntakeBridge.ts", import.meta.url), "utf8");
   assert.equal((bridge.match(/\.\.\.datesAdminContractParams\("dates_event_intake_(create|image)"\)/g) ?? []).length, 2);
 });

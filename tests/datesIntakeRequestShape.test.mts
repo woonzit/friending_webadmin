@@ -7,7 +7,7 @@ import ts from "typescript";
 import * as actions from "../lib/adminActions.ts";
 import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
 import { datesAvailabilityWriteIsRetired } from "../lib/datesAdmin.ts";
-import { DATES_ADMIN_INTAKE_CONTRACT_SELECTOR, datesAdminContractParams } from "../lib/datesAdminContract.ts";
+import { DATES_ADMIN_INTAKE_CONTRACT_SELECTOR, datesAdminContractParams, withDatesAdminContract } from "../lib/datesAdminContract.ts";
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "../lib/datesExternalAdmin.ts";
 import { datesExternalDraftInput } from "../lib/datesExternalInput.ts";
 import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody } from "../lib/datesExternalModeration.ts";
@@ -85,7 +85,7 @@ async function capture<T>(answer: unknown, task: (core: typeof coreCall) => Prom
 /** The browser's request to the generic bridge, through the actual route handler and the real coreCall. */
 async function bridge(action: string, browserBody: unknown, answer: unknown = { success: true, status_code: 200 }) {
   return capture(answer, async (core) => {
-    const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, datesAvailabilityWriteIsRetired, datesAdminContractParams,
+    const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, datesAvailabilityWriteIsRetired, withDatesAdminContract,
       datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody, datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody,
       datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody, ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
       readAdminSession: async () => ({ email }), coreCall: core, mergeCoreParams, isReservedCoreParam,

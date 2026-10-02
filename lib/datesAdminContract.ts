@@ -33,3 +33,15 @@ export function datesAdminContractParams(action: string, selector: DatesAdminCon
   Record<string, number | string> {
   return selector !== null && /^dates_[a-z0-9_]+$/.test(action) ? { [selector.parameter]: selector.value } : {};
 }
+
+/**
+ * The parameters the generic bridge hands to Core, with the selector written
+ * LAST into the same object: whatever the browser's body carried under that
+ * name is overwritten, and the object keeps the null prototype
+ * `mergeCoreParams` gave it.
+ */
+export function withDatesAdminContract(action: string, params: Record<string, unknown>,
+  selector: DatesAdminContractSelector | null = DATES_ADMIN_INTAKE_CONTRACT_SELECTOR): Record<string, unknown> {
+  for (const [key, value] of Object.entries(datesAdminContractParams(action, selector))) params[key] = value;
+  return params;
+}
