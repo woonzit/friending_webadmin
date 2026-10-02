@@ -574,6 +574,173 @@
             "valid": true,
             "revision": 1,
             "updated_at": 1790000000
+        },
+        {
+            "key": "dates_external_admin_drafts_enabled",
+            "type": "boolean",
+            "value": false,
+            "effective_value": false,
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": false,
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": null,
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_ai_monthly_budget_usd",
+            "type": "integer",
+            "value": 50,
+            "effective_value": 50,
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": 50,
+            "minimum": 0,
+            "maximum": 10000,
+            "allowed_values": null,
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_ai_provider_order",
+            "type": "string_list",
+            "value": [
+                "openai",
+                "gemini",
+                "anthropic"
+            ],
+            "effective_value": [
+                "openai",
+                "gemini",
+                "anthropic"
+            ],
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": [
+                "openai",
+                "gemini",
+                "anthropic"
+            ],
+            "minimum": 1,
+            "maximum": 3,
+            "allowed_values": [
+                "openai",
+                "gemini",
+                "anthropic"
+            ],
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_ai_openai_model",
+            "type": "string",
+            "value": "gpt-6.1-sol",
+            "effective_value": "gpt-6.1-sol",
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": "gpt-6.1-sol",
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": null,
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_ai_openai_adjudication_model",
+            "type": "string",
+            "value": "gpt-6-luna",
+            "effective_value": "gpt-6-luna",
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": "gpt-6-luna",
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": null,
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_ai_gemini_model",
+            "type": "string",
+            "value": "gemini-3.8-flash",
+            "effective_value": "gemini-3.8-flash",
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": "gemini-3.8-flash",
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": null,
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_event_intake_retention_days",
+            "type": "integer",
+            "value": 30,
+            "effective_value": 30,
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": 30,
+            "minimum": 1,
+            "maximum": 365,
+            "allowed_values": null,
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_event_ticket_domains",
+            "type": "string_list",
+            "value": [
+                "jegy.hu",
+                "eventim.hu",
+                "tixa.hu",
+                "ticketmaster.com"
+            ],
+            "effective_value": [
+                "jegy.hu",
+                "eventim.hu",
+                "tixa.hu",
+                "ticketmaster.com"
+            ],
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": [
+                "jegy.hu",
+                "eventim.hu",
+                "tixa.hu",
+                "ticketmaster.com"
+            ],
+            "minimum": 0,
+            "maximum": 50,
+            "allowed_values": null,
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
         }
     ],
     "activity_types": [

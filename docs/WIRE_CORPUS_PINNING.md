@@ -62,3 +62,20 @@ The three invite-limit/cooldown settings appear only when Core returns them;
 the help panel explicitly marks absent settings as not returned. The additive
 `effective_by_storefront` answer remains optional for compatibility with old Core.
 Presence retains `date_enabled` and the `date` key; only its EN/HU labels change.
+
+## T-865 P2a coordinated provider/consumer handoff (T-884 / T-885)
+
+`dates_event_intake_admin_wire` (113 bodies, contract `dates-event-intake-admin-v1`) is copied
+byte-for-byte from the Core lane tip `06c8c3eaa51785b097b0005d3a23322ed4853179`; its manifest
+records scoped source `0109e37035581eaf5e81c7d59c2621b7b3231672` and
+`fixture_set_sha256` `fcf9b1ab7086b7535a2035223c00459d680051df77d2c1c1168b8a87737554ee`. The two
+`member-*` bodies are the iOS lane's and are vendored only so that the set digest can be recomputed.
+
+The same Core tip changes exactly two bodies of `dates_external_admin_wire` - the two configuration
+reads, which gain the eight intake settings after the 33 P1 rows - and rebinds its manifest
+(`source_commit` `74de12591f9d0f24e6a80316dfe397bc695177c7`, set
+`9ac34b0ba9b466c199d5984d7f1a607fadc9d9bb18d0cb27b4a75a48357c29a3`). The other 136 bodies are
+byte-identical to the accepted P1 pin; `tests/datesExternalWire.test.mts` pins their digest
+(`b97e6e54...fe7c1`, computed from the P1 manifest at Webadmin `7825bc13`) separately from the
+new set digest. Both source commits are lane commits until Core publishes; re-pin to the first
+published Core commit carrying the same set digests, as the reachability rule above requires.

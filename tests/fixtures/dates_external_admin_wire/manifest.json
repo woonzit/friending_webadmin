@@ -1,10 +1,10 @@
 {
     "schema_version": 1,
     "contract": "dates-external-admin-v1",
-    "source_commit": "c94d144691b93c3aea3dd180def345c4d03a4e55",
-    "source_checksum": "690ab9c5da0d6fb0133398c41988ab5166faec487c15ccbd267d0781b069e3b0",
+    "source_commit": "74de12591f9d0f24e6a80316dfe397bc695177c7",
+    "source_checksum": "0202c584b025c4509391ed9db5732fd9add8e3fb74975b8671e5ab82c85b1704",
     "fixture_count": 138,
-    "fixture_set_sha256": "d84a3e162703db1578db59f0a0a972de24fffc8562f23a13bf5715101306e4ed",
+    "fixture_set_sha256": "9ac34b0ba9b466c199d5984d7f1a607fadc9d9bb18d0cb27b4a75a48357c29a3",
     "provenance": {
         "generator": "tests/dates_external_admin_fixture_dump.php",
         "generator_sha256": "51e746e0946ddac4319b56cdff0adcc7107a320ed08e1ca1a1f70fa7d90fbf3d",
@@ -113,6 +113,7 @@
             "src/Http/Controllers/WebadminController.php",
             "src/Http/Controllers/WebadminDatesController.php",
             "src/Http/Controllers/WebadminDatesExternalController.php",
+            "src/Http/Controllers/WebadminDatesIntakeController.php",
             "src/Http/Controllers/WebadminFeatureSwitchesController.php",
             "src/Http/Controllers/WebadminIntoTagModerationController.php",
             "src/Http/Controllers/WebadminInviteConfigurationController.php",
@@ -164,6 +165,8 @@
             "src/Services/DatesDomainOutbox.php",
             "src/Services/DatesDraftService.php",
             "src/Services/DatesEventCapabilityService.php",
+            "src/Services/DatesEventIntakeAdminService.php",
+            "src/Services/DatesEventIntakeErasure.php",
             "src/Services/DatesExpiryService.php",
             "src/Services/DatesExternalAccessService.php",
             "src/Services/DatesExternalAttendanceService.php",
@@ -269,6 +272,8 @@
             "src/Support/DatesCityKey.php",
             "src/Support/DatesContract.php",
             "src/Support/DatesEventContract.php",
+            "src/Support/DatesEventIntakePolicy.php",
+            "src/Support/DatesEventIntakeSettings.php",
             "src/Support/DatesEventOrigin.php",
             "src/Support/DatesExternalAvailabilityPolicy.php",
             "src/Support/DatesExternalCapabilityPolicy.php",
@@ -298,6 +303,7 @@
             "src/Support/DatesVisibilityPolicy.php",
             "src/Support/DatesWireResponse.php",
             "src/Support/EmailProofPolicy.php",
+            "src/Support/EventAi/EventImageNormalizer.php",
             "src/Support/ForcedVerificationEvaluator.php",
             "src/Support/ForcedVerificationPolicy.php",
             "src/Support/FriendRequestLifecyclePolicy.php",
@@ -319,6 +325,7 @@
             "src/Support/PushDeliveryModePolicy.php",
             "src/Support/RealtimePollPolicy.php",
             "src/Support/RealtimeProtocol.php",
+            "src/Support/SafeExternalFetch.php",
             "src/Support/Sanitize.php",
             "src/Support/SectionAvailabilityPolicy.php",
             "src/Support/SessionExpiryPolicy.php",
@@ -628,14 +635,14 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "db826e3665cd3aaaaf6c4200961f140561878b1d3bdd8e2302e8ef73721152fc"
+            "sha256": "990116b1b5247aad9cf2fee57445659805983a928e667d04bd3b0e892e309162"
         },
         {
             "file": "admin-configuration-publishing-on.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "b97015edcea6096478d0221794dfd5d02154cac12363e2bb0101db12276e3481"
+            "sha256": "be38ab3485244460eeb559e3dc79e8bb96e616e020273e7e0a6dfcfe8ccab66b"
         },
         {
             "file": "admin-confirmation-required-denied.json",

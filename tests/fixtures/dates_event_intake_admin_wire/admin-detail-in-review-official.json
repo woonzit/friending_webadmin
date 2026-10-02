@@ -1,0 +1,327 @@
+{
+    "success": true,
+    "status_code": 200,
+    "intake": {
+        "intake_id": "xin_00000000000000000000000000000004",
+        "revision": 9,
+        "channel": "admin_draft",
+        "status": "in_review",
+        "status_detail": null,
+        "input_kind": "url",
+        "source_host": "akvariumklub.hu",
+        "image_count": 0,
+        "provider": "openai",
+        "event_count": 1,
+        "published_count": 0,
+        "first_title": "AkvaWaves pres.: ACID ARAB (DJ SET)",
+        "earliest_start_at": 1791061200,
+        "hard_fails": [],
+        "warning_count": 3,
+        "dedupe_decision": "new",
+        "lease": {
+            "holder": null,
+            "until": 0,
+            "active": false,
+            "mine": false
+        },
+        "decision_action": null,
+        "created_at": 1790924404,
+        "updated_at": 1790928000,
+        "admin_principal": "admin@example.test",
+        "inputs": {
+            "kind": "url",
+            "url": "https://akvariumklub.hu/programok/acidarab/",
+            "text": null,
+            "locale": "hu",
+            "images": []
+        },
+        "fetch": {
+            "final_url": "https://akvariumklub.hu/programok/acidarab/",
+            "http_status": 200,
+            "truncated": false,
+            "fetched_at": 1790928000
+        },
+        "source_texts": [
+            {
+                "label": "page:1",
+                "text": "[text]\n[title]\nAkvaWaves pres.: ACID ARAB (DJ SET) • Akvárium\n[meta]\nog:type: article\nog:title: AkvaWaves pres.: ACID ARAB (DJ SET) • Akvárium\nog:site_name: Akvárium\n[text]\nUgrás a fő tartalomhoz\nen\nProgramok\nRendezvényhelyszín\nen\nProgramok\nRendezvényhelyszín\nSzolgáltatások\nGYIK\nKarrier\nElérhetőségek\nMégse\nen\nSikeres hírlevél feliratkozás. Köszönjük!\nA csillaggal (*) jelölt mezők kitöltése kötelező!\nOkt.\n03.\nszombat\nOkt.\n03.\nszombat\nAkvaWaves pres.: ACID ARAB (DJ SET)\nKapunyitás: 23:00\nNagyhall\nKorhatár: 18\nA Házirend szerinti esetekben a ruhatár használata kötelező, melynek díja 600 Ft, és a helyszínen fizetendő. A ruhatár árának változtatási jogát fenntartjuk.\nJegytípusok\nAkvaWaves pres.: ACID ARAB (DJ SET)\nKapunyitás: 23:00\nNagyhall\nKorhatár: 18\nFacebook esemény\nAkvaWaves pres.: ACID ARAB (DJ SET)\n2026.10.03. | Akvárium Klub, Budapest\nAz AkvaWaves jóvoltából Budapest újra a nemzetközi elektronikus zenei színtér egyik legizgalmasabb formációját látja vendégül: az Acid Arab 2026. október 3-án DJ set-jével érkezik az Akvárium Klubba.\nA Párizsban alakult francia–algériai kollektíva a hagyományos arab zenei stílusokat ötvözi a párizsi techno szcéna nyers energiájával. Hangzásvilágukban észak-afrikai, közel-keleti és anatóliai hatások találkoznak house, techno és acid elemekkel, létrehozva azt az egyedi zenei univerzumot, amely a kortárs elektronikus zene egyik meghatározó szereplőjévé tette őket.\nAz Acid Arab az elmúlt években klubokat és fesztiválokat járt be több mint ötven országban, miközben a tánczenén keresztül hidat épít különböző kultúrák között. 2026 júniusában jelent meg negyedik nagylemezük, a Resonance, amelyen tizennégy, az arab zenei színtérhez kötődő vendégelőadó működik közre. Az album tovább tágítja az Acid Arab karakteres hangzásvilágát, miközben hű marad ahhoz a kulturális sokszínűséghez és elektronikus kísérletező szellemhez, amely kezdettől fogva meghatározza a kollektíva munkásságát.\nSupport: hamarosan\nJegyek kaphatók: 202. július 23. (csütörtök), 11:00-től\nHelyszín\nNagyhall\nAz Akvárium legnagyobb koncertterme, a közel 1300 fős NagyHall, Budapest egyik legkorszerűbb rendezvényhelyszíneként biztonsággal kiszolgálja a legnépszerűbb hazai és külföldi zenekarokat és elektronikus zenei produkciókat is. Szinte minden számottevő magyar zenekar fellépett az egyedi hangosítással és kiváló fényrendszerrel felszerelt koncerthallban. A magyar kiválóságokon kívül az Akvárium helyt adott már számos nemzetközi sztárnak is: itt járt a Klaxons, Fritz Kalkbrenner, Marina And The Diamonds, a GusGus, Passenger, Hernan Cattaneo, Sasha, az Eagles Of Death Metal, a Kollektiv Turmstrasse, Troyboi, Wilkinson, Rebecca Ferguson, John Mayall és sokan mások.\nÉtterem\nRuhatár\nKönnyen megközelíthető\nDohányzás az arra kijelölt szabadtéri helyeken\nKoktélbár\nParkoló\nKözterületi kerékpár tároló\nIngyen Wifi\nVissza a programnaptárba\nA Házirend szerinti esetekben a ruhatár használata kötelező, melynek díja 600 Ft, és a helyszínen fizetendő. A ruhatár árának változtatási jogát fenntartjuk.\nJegytípusok\nAz árak az ÁFA-t tartalmazzák.\nA jegyeket 6%, de minimum 300 Ft adminisztrációs díj terheli.\nA Házirend szerinti esetekben a ruhatár használata kötelező, melynek díja 600 Ft, és a helyszínen fizetendő. A ruhatár árának változtatási jogát fenntartjuk.\nJegytípusok:\nAz árak az ÁFA-t tartalmazzák.\nA jegyeket 6%, de minimum 300 Ft adminisztrációs díj terheli.\nA Házirend szerinti esetekben a ruhatár használata kötelező, melynek díja 600 Ft, és a helyszínen fizetendő. A ruhatár árának változtatási jogát fenntartjuk.\nAdatkezelési tájékoztató\nÁltalános szerződési feltételek\nAkvárium Klub Biztonsági Terv\nCookie beállítások\nFelelősségkizáró nyilatkozat\nGDPR tájékoztató\nHázirend\nJátékszabályzatok\nNyilatkozat\nSajtó\n[links]\nen | https://akvariumklub.hu/en/events/acidarab/\nhttps://akvariumklub.hu\nhttps://akvariumklub.hu/akvawaves/\nProgramok | https://akvariumklub.hu/programok/\nRendezvényhelyszín | https://akvariumklub.hu/rendezvenyhelyszin/\nSzolgáltatások | https://akvariumklub.hu/szolgaltatasok/\nGYIK | https://akvariumklub.hu/gyik/\nKarrier | https://akvariumklub.hu/karrier/\nElérhetőségek | https://akvariumklub.hu/elerhetoseg/\nhttps://www.facebook.com/akvariumklub/\nhttps://www.instagram.com/akvariumklub/\nhttps://www.youtube.com/channel/UC7C1zwKSsOf1ESEnDWaVpyw\nhttps://www.tiktok.com/@akvariumklub\nhttps://www.residentadvisor.net/club.aspx?id=66727\nhttps://www.facebook.com/acidarab\nhttps://www.youtube.com/channel/UChbNWfnY5xA-A57jmcals1w\nhttps://open.spotify.com/artist/3ShO8tPKqXUUpOA0urOWW7?si=aD9Tsa4gTXGvVViAiG04aw\nhttps://www.instagram.com/acid_arab/\nFacebook esemény | https://www.facebook.com/events/1019680384289652\nhttps://www.facebook.com/AkvariumLokalBudapest/\nhttps://www.heinekenhungaria.hu/\nhttps://www.coca-cola.hu/fooldal\nhttps://hangfoglalo.hu\nAdatkezelési tájékoztató | https://akvariumklub.hu/wp-content/uploads/2024/08/adatkezelesi_akvarium_20240826.pdf\nÁltalános szerződési feltételek | https://akvariumklub.hu/wp-content/uploads/2020/06/aszf_2020_akvarium.pdf\nAkvárium Klub Biztonsági Terv | https://akvariumklub.hu/wp-content/uploads/2026/02/Akvarium-Klub-biztonsagi-terv.pdf\nFelelősségkizáró nyilatkozat | https://akvariumklub.hu/wp-content/uploads/2020/08/Felelősségkizáró-nyilatkozat-hun.pdf\nGDPR tájékoztató | https://akvariumklub.hu/wp-content/uploads/2024/06/2024_06_05_belepesipont_info_gdpr_A5.pdf\nHázirend | https://akvariumklub.hu/hazirend/\nJátékszabályzatok | https://akvariumklub.hu/wp-content/uploads/2026/08/DeNash_KorszakzaroMulatsag_nyeremenyjatekszabalyzat.docx\nNyilatkozat | https://akvariumklub.hu/wp-content/uploads/2024/12/szuloi_hozzajarulo_nyilatkozat_2024_dec.pdf\nSajtó | https://akvariumklub.hu/sajto/",
+                "truncated": false
+            }
+        ],
+        "result": "event",
+        "result_note": null,
+        "prohibited_category": null,
+        "prompt_injection_suspected": false,
+        "validated_at": 1790928000,
+        "events": [
+            {
+                "index": 0,
+                "published_external_event_id": null,
+                "draft": {
+                    "title": "AkvaWaves pres.: ACID ARAB (DJ SET)",
+                    "summary_hu": "Az Acid Arab DJ-szettel lép fel az AkvaWaves eseményén, az Akvárium Klub Nagyhall termében. A francia–algériai kollektíva arab zenei stílusokat ötvöz house, techno és acid elemekkel.",
+                    "summary_en": "Acid Arab will perform a DJ set at an AkvaWaves event in Akvárium Klub’s Nagyhall. The French–Algerian collective combines Arabic musical styles with house, techno and acid elements.",
+                    "category": "club_night",
+                    "sensitive": false,
+                    "sensitive_reason": null,
+                    "date_text_verbatim": "Okt. 03. szombat",
+                    "starts_local": "2026-10-03T23:00",
+                    "ends_local": null,
+                    "start_time_stated": true,
+                    "all_day": false,
+                    "year_inferred": false,
+                    "attendance_mode": "in_person",
+                    "venue": {
+                        "name": "Akvárium Klub",
+                        "address_text": null,
+                        "city": "Budapest",
+                        "country_code": "HU",
+                        "is_public_venue": true
+                    },
+                    "organizer_name": "AkvaWaves",
+                    "price_text": "A jegyeket 6%, de minimum 300 Ft adminisztrációs díj terheli.",
+                    "is_free": false,
+                    "age_restriction": 18,
+                    "status_signal": "scheduled"
+                },
+                "validation": {
+                    "hard_fails": [],
+                    "warnings": [
+                        "start_is_doors_time",
+                        "price_unclear",
+                        "end_estimated"
+                    ],
+                    "needs_more_info": false,
+                    "tier": "official",
+                    "auto_publishable": false,
+                    "auto_blockers": [
+                        "warnings_benign"
+                    ],
+                    "needs_public_venue_confirmation": false,
+                    "checks": {
+                        "weekday_match": true,
+                        "venue_resolved": true,
+                        "public_place": true,
+                        "tz_from_venue": true,
+                        "urls_from_evidence": true,
+                        "quotes_verified": true,
+                        "content_safe": null,
+                        "witness": {
+                            "present": false,
+                            "date": "absent",
+                            "time": "absent",
+                            "venue": "absent"
+                        }
+                    },
+                    "schedule": {
+                        "timezone": "Europe/Budapest",
+                        "start_local": "2026-10-03T23:00",
+                        "end_local": null,
+                        "start_at": 1791061200,
+                        "end_at": 1791079200,
+                        "end_estimated": true,
+                        "all_day": false
+                    },
+                    "links": {
+                        "official_url": "https://akvariumklub.hu/programok/acidarab/",
+                        "ticket_url": null,
+                        "organizer_url": "https://akvariumklub.hu/akvawaves/",
+                        "dropped": []
+                    },
+                    "venue": {
+                        "place_id": "ChIJ4-4EKkDcQUcRPGkz1ExWaWg",
+                        "name": "Akvárium Klub",
+                        "formatted_address": "1051 Budapest, Erzsébet tér 12. [stand-in]",
+                        "latitude": 47.5,
+                        "longitude": 19.05,
+                        "city": "Budapest",
+                        "country_code": "HU",
+                        "timezone": "Europe/Budapest",
+                        "website_domain": "akvariumklub.hu",
+                        "business_status": "OPERATIONAL"
+                    },
+                    "venue_similarity": 1,
+                    "venue_candidates": [
+                        {
+                            "place_id": "ChIJ4-4EKkDcQUcRPGkz1ExWaWg",
+                            "name": "Akvárium Klub",
+                            "formatted_address": "1051 Budapest, Erzsébet tér 12. [stand-in]",
+                            "latitude": 47.5,
+                            "longitude": 19.05,
+                            "city": "Budapest",
+                            "country_code": "HU",
+                            "timezone": "Europe/Budapest",
+                            "similarity": 1,
+                            "public_venue_warning": false
+                        }
+                    ]
+                },
+                "field_evidence": {
+                    "title": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "page:1",
+                        "quote": "AkvaWaves pres.: ACID ARAB (DJ SET)",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "date": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "page:1",
+                        "quote": "Okt. 03. szombat",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "time": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "page:1",
+                        "quote": "Kapunyitás: 23:00",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "venue": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "page:1",
+                        "quote": "2026.10.03. | Akvárium Klub, Budapest",
+                        "model_confidence": 0.99,
+                        "confidence": 0.99
+                    },
+                    "organizer": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "page:1",
+                        "quote": "AkvaWaves pres.: ACID ARAB (DJ SET)",
+                        "model_confidence": 0.98,
+                        "confidence": 0.98
+                    },
+                    "price": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "page:1",
+                        "quote": "A jegyeket 6%, de minimum 300 Ft adminisztrációs díj terheli.",
+                        "model_confidence": null,
+                        "confidence": null
+                    },
+                    "status": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "page:1",
+                        "quote": "az Acid Arab 2026. október 3-án DJ set-jével érkezik az Akvárium Klubba.",
+                        "model_confidence": null,
+                        "confidence": null
+                    }
+                },
+                "dedupe": {
+                    "decision": "new",
+                    "candidates": []
+                },
+                "editor_input": {
+                    "title": "AkvaWaves pres.: ACID ARAB (DJ SET)",
+                    "summary": {
+                        "hu": "Az Acid Arab DJ-szettel lép fel az AkvaWaves eseményén, az Akvárium Klub Nagyhall termében. A francia–algériai kollektíva arab zenei stílusokat ötvöz house, techno és acid elemekkel.",
+                        "en": "Acid Arab will perform a DJ set at an AkvaWaves event in Akvárium Klub’s Nagyhall. The French–Algerian collective combines Arabic musical styles with house, techno and acid elements."
+                    },
+                    "category": "club_night",
+                    "sensitive": {
+                        "flag": false,
+                        "reason": null
+                    },
+                    "start_at": 1791061200,
+                    "end_at": null,
+                    "timezone": "Europe/Budapest",
+                    "all_day": false,
+                    "is_free": false,
+                    "price_text": "A jegyeket 6%, de minimum 300 Ft adminisztrációs díj terheli.",
+                    "age_restriction": 18,
+                    "venue": {
+                        "name": "Akvárium Klub",
+                        "formatted_address": "1051 Budapest, Erzsébet tér 12. [stand-in]",
+                        "latitude": 47.5,
+                        "longitude": 19.05,
+                        "city": "Budapest",
+                        "country_code": "HU"
+                    },
+                    "organizer": {
+                        "name": "AkvaWaves",
+                        "website": "https://akvariumklub.hu/akvawaves/"
+                    },
+                    "links": {
+                        "official_url": "https://akvariumklub.hu/programok/acidarab/",
+                        "ticket_url": null
+                    },
+                    "source_url": "https://akvariumklub.hu/programok/acidarab/",
+                    "attendee_list": "visible",
+                    "confirmations": {
+                        "source": false,
+                        "public_venue": false,
+                        "timezone": false,
+                        "content_safe": false
+                    }
+                }
+            }
+        ],
+        "ai_runs": [
+            {
+                "provider": "openai",
+                "task": "url_extract",
+                "model": "gpt-6.1-sol",
+                "outcome": "sheet",
+                "input_tokens": 4429,
+                "output_tokens": 1004,
+                "cost_micro_usd": 10489,
+                "cost_estimated": false,
+                "at": 1790906975
+            }
+        ],
+        "decision": null,
+        "duplicate_of": null,
+        "budget_waiting_since": null,
+        "images_delete_after": null,
+        "retention_until": null,
+        "content_purged_at": null
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

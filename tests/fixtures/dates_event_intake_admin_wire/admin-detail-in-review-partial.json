@@ -1,0 +1,945 @@
+{
+    "success": true,
+    "status_code": 200,
+    "intake": {
+        "intake_id": "xin_00000000000000000000000000000006",
+        "revision": 11,
+        "channel": "admin_draft",
+        "status": "in_review",
+        "status_detail": null,
+        "input_kind": "images",
+        "source_host": null,
+        "image_count": 1,
+        "provider": "openai",
+        "event_count": 4,
+        "published_count": 1,
+        "first_title": "Fotókiállítás-megnyitó: Budapest fényei",
+        "earliest_start_at": 1793984400,
+        "hard_fails": [],
+        "warning_count": 1,
+        "dedupe_decision": "new",
+        "lease": {
+            "holder": "admin@example.test",
+            "until": 1790000300,
+            "active": true,
+            "mine": true
+        },
+        "decision_action": null,
+        "created_at": 1790924406,
+        "updated_at": 1790000000,
+        "admin_principal": "admin@example.test",
+        "inputs": {
+            "kind": "images",
+            "url": null,
+            "text": "Városligeti programok novemberben",
+            "locale": "hu",
+            "images": [
+                {
+                    "index": 1,
+                    "ready": true,
+                    "width": 900,
+                    "height": 1200,
+                    "bytes": 1,
+                    "safe_search": {
+                        "adult": "VERY_UNLIKELY",
+                        "violence": "VERY_UNLIKELY"
+                    }
+                }
+            ]
+        },
+        "fetch": null,
+        "source_texts": [
+            {
+                "label": "image:1",
+                "text": "VÁROSLIGETI ŐSZ\n2026. novemberi program\nnov. 6. (péntek) 18:00\nFotókiállítás-megnyitó: Budapest fényei\nnov. 13. (péntek) 19:30\nFilmklub: klasszikus magyar vígjátékok\nnov. 21. (szombat) 10:00–16:00\nKézműves vásár helyi alkotókkal\nnov. 28. (szombat) 15:00\nCsaládi futás, 5 km\nHelyszín: Városliget, Napozórét, Budapest XIV.\nA belépés minden programra ingyenes.\nSzervező: Zugló Közösségi Egyesület\nwww.varosligetiosz.example",
+                "truncated": false
+            },
+            {
+                "label": "text:1",
+                "text": "Városligeti programok novemberben",
+                "truncated": false
+            }
+        ],
+        "result": "multiple_events",
+        "result_note": null,
+        "prohibited_category": null,
+        "prompt_injection_suspected": false,
+        "validated_at": 1790928000,
+        "events": [
+            {
+                "index": 0,
+                "published_external_event_id": "xev_00000000000000000000000000000002",
+                "draft": {
+                    "title": "Fotókiállítás-megnyitó: Budapest fényei",
+                    "summary_hu": "A Városligeti Ősz programjában a Budapest fényei című fotókiállítás megnyitóját tartják a Napozóréten.",
+                    "summary_en": "The Városligeti Ősz programme includes the opening of the photography exhibition Budapest fényei at Napozórét.",
+                    "category": "exhibition",
+                    "sensitive": false,
+                    "sensitive_reason": null,
+                    "date_text_verbatim": "nov. 6. (péntek) 18:00",
+                    "starts_local": "2026-11-06T18:00",
+                    "ends_local": null,
+                    "start_time_stated": true,
+                    "all_day": false,
+                    "year_inferred": false,
+                    "attendance_mode": "in_person",
+                    "venue": {
+                        "name": "Városliget, Napozórét",
+                        "address_text": null,
+                        "city": "Budapest XIV.",
+                        "country_code": "HU",
+                        "is_public_venue": true
+                    },
+                    "organizer_name": "Zugló Közösségi Egyesület",
+                    "price_text": "A belépés minden programra ingyenes.",
+                    "is_free": true,
+                    "age_restriction": null,
+                    "status_signal": "scheduled"
+                },
+                "validation": {
+                    "hard_fails": [],
+                    "warnings": [
+                        "end_estimated"
+                    ],
+                    "needs_more_info": false,
+                    "tier": "single_source",
+                    "auto_publishable": true,
+                    "auto_blockers": [],
+                    "needs_public_venue_confirmation": false,
+                    "checks": {
+                        "weekday_match": true,
+                        "venue_resolved": true,
+                        "public_place": true,
+                        "tz_from_venue": true,
+                        "urls_from_evidence": true,
+                        "quotes_verified": true,
+                        "content_safe": true,
+                        "witness": {
+                            "present": false,
+                            "date": "absent",
+                            "time": "absent",
+                            "venue": "absent"
+                        }
+                    },
+                    "schedule": {
+                        "timezone": "Europe/Budapest",
+                        "start_local": "2026-11-06T18:00",
+                        "end_local": null,
+                        "start_at": 1793984400,
+                        "end_at": 1793991600,
+                        "end_estimated": true,
+                        "all_day": false
+                    },
+                    "links": {
+                        "official_url": "https://www.varosligetiosz.example",
+                        "ticket_url": null,
+                        "organizer_url": null,
+                        "dropped": []
+                    },
+                    "venue": {
+                        "place_id": "ChIJw9ImY3_cQUcRqdLIgVMneDw",
+                        "name": "Napozórét",
+                        "formatted_address": "Városliget, Budapest XIV. [stand-in]",
+                        "latitude": 47.51,
+                        "longitude": 19.09,
+                        "city": "Budapest",
+                        "country_code": "HU",
+                        "timezone": "Europe/Budapest",
+                        "website_domain": null,
+                        "business_status": "OPERATIONAL"
+                    },
+                    "venue_similarity": 0.9,
+                    "venue_candidates": [
+                        {
+                            "place_id": "ChIJw9ImY3_cQUcRqdLIgVMneDw",
+                            "name": "Napozórét",
+                            "formatted_address": "Városliget, Budapest XIV. [stand-in]",
+                            "latitude": 47.51,
+                            "longitude": 19.09,
+                            "city": "Budapest",
+                            "country_code": "HU",
+                            "timezone": "Europe/Budapest",
+                            "similarity": 0.9,
+                            "public_venue_warning": false
+                        }
+                    ]
+                },
+                "field_evidence": {
+                    "title": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Fotókiállítás-megnyitó: Budapest fényei",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "date": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "nov. 6. (péntek) 18:00",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "time": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "nov. 6. (péntek) 18:00",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "venue": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Helyszín: Városliget, Napozórét, Budapest XIV.",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "organizer": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Szervező: Zugló Közösségi Egyesület",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "price": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "A belépés minden programra ingyenes.",
+                        "model_confidence": null,
+                        "confidence": null
+                    },
+                    "status": {
+                        "quoted": false,
+                        "verified": false,
+                        "denotes": null,
+                        "match": null,
+                        "source": null,
+                        "quote": null,
+                        "model_confidence": null,
+                        "confidence": null
+                    }
+                },
+                "dedupe": {
+                    "decision": "new",
+                    "candidates": []
+                },
+                "editor_input": null
+            },
+            {
+                "index": 1,
+                "published_external_event_id": null,
+                "draft": {
+                    "title": "Filmklub: klasszikus magyar vígjátékok",
+                    "summary_hu": "A Városligeti Ősz keretében klasszikus magyar vígjátékokat bemutató filmklubot rendeznek a Napozóréten.",
+                    "summary_en": "The Városligeti Ősz programme includes a film club featuring classic Hungarian comedies at Napozórét.",
+                    "category": "cinema",
+                    "sensitive": false,
+                    "sensitive_reason": null,
+                    "date_text_verbatim": "nov. 13. (péntek) 19:30",
+                    "starts_local": "2026-11-13T19:30",
+                    "ends_local": null,
+                    "start_time_stated": true,
+                    "all_day": false,
+                    "year_inferred": false,
+                    "attendance_mode": "in_person",
+                    "venue": {
+                        "name": "Városliget, Napozórét",
+                        "address_text": null,
+                        "city": "Budapest XIV.",
+                        "country_code": "HU",
+                        "is_public_venue": true
+                    },
+                    "organizer_name": "Zugló Közösségi Egyesület",
+                    "price_text": "A belépés minden programra ingyenes.",
+                    "is_free": true,
+                    "age_restriction": null,
+                    "status_signal": "scheduled"
+                },
+                "validation": {
+                    "hard_fails": [],
+                    "warnings": [
+                        "end_estimated"
+                    ],
+                    "needs_more_info": false,
+                    "tier": "single_source",
+                    "auto_publishable": true,
+                    "auto_blockers": [],
+                    "needs_public_venue_confirmation": false,
+                    "checks": {
+                        "weekday_match": true,
+                        "venue_resolved": true,
+                        "public_place": true,
+                        "tz_from_venue": true,
+                        "urls_from_evidence": true,
+                        "quotes_verified": true,
+                        "content_safe": true,
+                        "witness": {
+                            "present": false,
+                            "date": "absent",
+                            "time": "absent",
+                            "venue": "absent"
+                        }
+                    },
+                    "schedule": {
+                        "timezone": "Europe/Budapest",
+                        "start_local": "2026-11-13T19:30",
+                        "end_local": null,
+                        "start_at": 1794594600,
+                        "end_at": 1794601800,
+                        "end_estimated": true,
+                        "all_day": false
+                    },
+                    "links": {
+                        "official_url": "https://www.varosligetiosz.example",
+                        "ticket_url": null,
+                        "organizer_url": null,
+                        "dropped": []
+                    },
+                    "venue": {
+                        "place_id": "ChIJw9ImY3_cQUcRqdLIgVMneDw",
+                        "name": "Napozórét",
+                        "formatted_address": "Városliget, Budapest XIV. [stand-in]",
+                        "latitude": 47.51,
+                        "longitude": 19.09,
+                        "city": "Budapest",
+                        "country_code": "HU",
+                        "timezone": "Europe/Budapest",
+                        "website_domain": null,
+                        "business_status": "OPERATIONAL"
+                    },
+                    "venue_similarity": 0.9,
+                    "venue_candidates": [
+                        {
+                            "place_id": "ChIJw9ImY3_cQUcRqdLIgVMneDw",
+                            "name": "Napozórét",
+                            "formatted_address": "Városliget, Budapest XIV. [stand-in]",
+                            "latitude": 47.51,
+                            "longitude": 19.09,
+                            "city": "Budapest",
+                            "country_code": "HU",
+                            "timezone": "Europe/Budapest",
+                            "similarity": 0.9,
+                            "public_venue_warning": false
+                        }
+                    ]
+                },
+                "field_evidence": {
+                    "title": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Filmklub: klasszikus magyar vígjátékok",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "date": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "nov. 13. (péntek) 19:30",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "time": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "nov. 13. (péntek) 19:30",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "venue": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Helyszín: Városliget, Napozórét, Budapest XIV.",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "organizer": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Szervező: Zugló Közösségi Egyesület",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "price": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "A belépés minden programra ingyenes.",
+                        "model_confidence": null,
+                        "confidence": null
+                    },
+                    "status": {
+                        "quoted": false,
+                        "verified": false,
+                        "denotes": null,
+                        "match": null,
+                        "source": null,
+                        "quote": null,
+                        "model_confidence": null,
+                        "confidence": null
+                    }
+                },
+                "dedupe": {
+                    "decision": "new",
+                    "candidates": []
+                },
+                "editor_input": {
+                    "title": "Filmklub: klasszikus magyar vígjátékok",
+                    "summary": {
+                        "hu": "A Városligeti Ősz keretében klasszikus magyar vígjátékokat bemutató filmklubot rendeznek a Napozóréten.",
+                        "en": "The Városligeti Ősz programme includes a film club featuring classic Hungarian comedies at Napozórét."
+                    },
+                    "category": "cinema",
+                    "sensitive": {
+                        "flag": false,
+                        "reason": null
+                    },
+                    "start_at": 1794594600,
+                    "end_at": null,
+                    "timezone": "Europe/Budapest",
+                    "all_day": false,
+                    "is_free": true,
+                    "price_text": "A belépés minden programra ingyenes.",
+                    "age_restriction": null,
+                    "venue": {
+                        "name": "Napozórét",
+                        "formatted_address": "Városliget, Budapest XIV. [stand-in]",
+                        "latitude": 47.51,
+                        "longitude": 19.09,
+                        "city": "Budapest",
+                        "country_code": "HU"
+                    },
+                    "organizer": {
+                        "name": "Zugló Közösségi Egyesület",
+                        "website": null
+                    },
+                    "links": {
+                        "official_url": "https://www.varosligetiosz.example",
+                        "ticket_url": null
+                    },
+                    "source_url": "https://www.varosligetiosz.example",
+                    "attendee_list": "visible",
+                    "confirmations": {
+                        "source": false,
+                        "public_venue": false,
+                        "timezone": false,
+                        "content_safe": false
+                    }
+                }
+            },
+            {
+                "index": 2,
+                "published_external_event_id": null,
+                "draft": {
+                    "title": "Kézműves vásár helyi alkotókkal",
+                    "summary_hu": "Helyi alkotók részvételével kézműves vásárt rendeznek a Napozóréten, a Városligeti Ősz programjában.",
+                    "summary_en": "A craft market featuring local makers takes place at Napozórét as part of the Városligeti Ősz programme.",
+                    "category": "market",
+                    "sensitive": false,
+                    "sensitive_reason": null,
+                    "date_text_verbatim": "nov. 21. (szombat) 10:00–16:00",
+                    "starts_local": "2026-11-21T10:00",
+                    "ends_local": "2026-11-21T16:00",
+                    "start_time_stated": true,
+                    "all_day": false,
+                    "year_inferred": false,
+                    "attendance_mode": "in_person",
+                    "venue": {
+                        "name": "Városliget, Napozórét",
+                        "address_text": null,
+                        "city": "Budapest XIV.",
+                        "country_code": "HU",
+                        "is_public_venue": true
+                    },
+                    "organizer_name": "Zugló Közösségi Egyesület",
+                    "price_text": "A belépés minden programra ingyenes.",
+                    "is_free": true,
+                    "age_restriction": null,
+                    "status_signal": "scheduled"
+                },
+                "validation": {
+                    "hard_fails": [],
+                    "warnings": [],
+                    "needs_more_info": false,
+                    "tier": "single_source",
+                    "auto_publishable": true,
+                    "auto_blockers": [],
+                    "needs_public_venue_confirmation": false,
+                    "checks": {
+                        "weekday_match": true,
+                        "venue_resolved": true,
+                        "public_place": true,
+                        "tz_from_venue": true,
+                        "urls_from_evidence": true,
+                        "quotes_verified": true,
+                        "content_safe": true,
+                        "witness": {
+                            "present": false,
+                            "date": "absent",
+                            "time": "absent",
+                            "venue": "absent"
+                        }
+                    },
+                    "schedule": {
+                        "timezone": "Europe/Budapest",
+                        "start_local": "2026-11-21T10:00",
+                        "end_local": "2026-11-21T16:00",
+                        "start_at": 1795251600,
+                        "end_at": 1795273200,
+                        "end_estimated": false,
+                        "all_day": false
+                    },
+                    "links": {
+                        "official_url": "https://www.varosligetiosz.example",
+                        "ticket_url": null,
+                        "organizer_url": null,
+                        "dropped": []
+                    },
+                    "venue": {
+                        "place_id": "ChIJw9ImY3_cQUcRqdLIgVMneDw",
+                        "name": "Napozórét",
+                        "formatted_address": "Városliget, Budapest XIV. [stand-in]",
+                        "latitude": 47.51,
+                        "longitude": 19.09,
+                        "city": "Budapest",
+                        "country_code": "HU",
+                        "timezone": "Europe/Budapest",
+                        "website_domain": null,
+                        "business_status": "OPERATIONAL"
+                    },
+                    "venue_similarity": 0.9,
+                    "venue_candidates": [
+                        {
+                            "place_id": "ChIJw9ImY3_cQUcRqdLIgVMneDw",
+                            "name": "Napozórét",
+                            "formatted_address": "Városliget, Budapest XIV. [stand-in]",
+                            "latitude": 47.51,
+                            "longitude": 19.09,
+                            "city": "Budapest",
+                            "country_code": "HU",
+                            "timezone": "Europe/Budapest",
+                            "similarity": 0.9,
+                            "public_venue_warning": false
+                        }
+                    ]
+                },
+                "field_evidence": {
+                    "title": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Kézműves vásár helyi alkotókkal",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "date": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "nov. 21. (szombat) 10:00–16:00",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "time": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "nov. 21. (szombat) 10:00–16:00",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "venue": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Helyszín: Városliget, Napozórét, Budapest XIV.",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "organizer": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Szervező: Zugló Közösségi Egyesület",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "price": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "A belépés minden programra ingyenes.",
+                        "model_confidence": null,
+                        "confidence": null
+                    },
+                    "status": {
+                        "quoted": false,
+                        "verified": false,
+                        "denotes": null,
+                        "match": null,
+                        "source": null,
+                        "quote": null,
+                        "model_confidence": null,
+                        "confidence": null
+                    }
+                },
+                "dedupe": {
+                    "decision": "new",
+                    "candidates": []
+                },
+                "editor_input": {
+                    "title": "Kézműves vásár helyi alkotókkal",
+                    "summary": {
+                        "hu": "Helyi alkotók részvételével kézműves vásárt rendeznek a Napozóréten, a Városligeti Ősz programjában.",
+                        "en": "A craft market featuring local makers takes place at Napozórét as part of the Városligeti Ősz programme."
+                    },
+                    "category": "market",
+                    "sensitive": {
+                        "flag": false,
+                        "reason": null
+                    },
+                    "start_at": 1795251600,
+                    "end_at": 1795273200,
+                    "timezone": "Europe/Budapest",
+                    "all_day": false,
+                    "is_free": true,
+                    "price_text": "A belépés minden programra ingyenes.",
+                    "age_restriction": null,
+                    "venue": {
+                        "name": "Napozórét",
+                        "formatted_address": "Városliget, Budapest XIV. [stand-in]",
+                        "latitude": 47.51,
+                        "longitude": 19.09,
+                        "city": "Budapest",
+                        "country_code": "HU"
+                    },
+                    "organizer": {
+                        "name": "Zugló Közösségi Egyesület",
+                        "website": null
+                    },
+                    "links": {
+                        "official_url": "https://www.varosligetiosz.example",
+                        "ticket_url": null
+                    },
+                    "source_url": "https://www.varosligetiosz.example",
+                    "attendee_list": "visible",
+                    "confirmations": {
+                        "source": false,
+                        "public_venue": false,
+                        "timezone": false,
+                        "content_safe": false
+                    }
+                }
+            },
+            {
+                "index": 3,
+                "published_external_event_id": null,
+                "draft": {
+                    "title": "Családi futás, 5 km",
+                    "summary_hu": "Öt kilométeres családi futást rendeznek a Napozóréten a Városligeti Ősz részeként.",
+                    "summary_en": "A five-kilometre family run takes place at Napozórét as part of Városligeti Ősz.",
+                    "category": "sport_participation",
+                    "sensitive": false,
+                    "sensitive_reason": null,
+                    "date_text_verbatim": "nov. 28. (szombat) 15:00",
+                    "starts_local": "2026-11-28T15:00",
+                    "ends_local": null,
+                    "start_time_stated": true,
+                    "all_day": false,
+                    "year_inferred": false,
+                    "attendance_mode": "in_person",
+                    "venue": {
+                        "name": "Városliget, Napozórét",
+                        "address_text": null,
+                        "city": "Budapest XIV.",
+                        "country_code": "HU",
+                        "is_public_venue": true
+                    },
+                    "organizer_name": "Zugló Közösségi Egyesület",
+                    "price_text": "A belépés minden programra ingyenes.",
+                    "is_free": true,
+                    "age_restriction": null,
+                    "status_signal": "scheduled"
+                },
+                "validation": {
+                    "hard_fails": [],
+                    "warnings": [
+                        "end_estimated"
+                    ],
+                    "needs_more_info": false,
+                    "tier": "single_source",
+                    "auto_publishable": true,
+                    "auto_blockers": [],
+                    "needs_public_venue_confirmation": false,
+                    "checks": {
+                        "weekday_match": true,
+                        "venue_resolved": true,
+                        "public_place": true,
+                        "tz_from_venue": true,
+                        "urls_from_evidence": true,
+                        "quotes_verified": true,
+                        "content_safe": true,
+                        "witness": {
+                            "present": false,
+                            "date": "absent",
+                            "time": "absent",
+                            "venue": "absent"
+                        }
+                    },
+                    "schedule": {
+                        "timezone": "Europe/Budapest",
+                        "start_local": "2026-11-28T15:00",
+                        "end_local": null,
+                        "start_at": 1795874400,
+                        "end_at": 1795881600,
+                        "end_estimated": true,
+                        "all_day": false
+                    },
+                    "links": {
+                        "official_url": "https://www.varosligetiosz.example",
+                        "ticket_url": null,
+                        "organizer_url": null,
+                        "dropped": []
+                    },
+                    "venue": {
+                        "place_id": "ChIJw9ImY3_cQUcRqdLIgVMneDw",
+                        "name": "Napozórét",
+                        "formatted_address": "Városliget, Budapest XIV. [stand-in]",
+                        "latitude": 47.51,
+                        "longitude": 19.09,
+                        "city": "Budapest",
+                        "country_code": "HU",
+                        "timezone": "Europe/Budapest",
+                        "website_domain": null,
+                        "business_status": "OPERATIONAL"
+                    },
+                    "venue_similarity": 0.9,
+                    "venue_candidates": [
+                        {
+                            "place_id": "ChIJw9ImY3_cQUcRqdLIgVMneDw",
+                            "name": "Napozórét",
+                            "formatted_address": "Városliget, Budapest XIV. [stand-in]",
+                            "latitude": 47.51,
+                            "longitude": 19.09,
+                            "city": "Budapest",
+                            "country_code": "HU",
+                            "timezone": "Europe/Budapest",
+                            "similarity": 0.9,
+                            "public_venue_warning": false
+                        }
+                    ]
+                },
+                "field_evidence": {
+                    "title": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Családi futás, 5 km",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "date": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "nov. 28. (szombat) 15:00",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "time": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "nov. 28. (szombat) 15:00",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "venue": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Helyszín: Városliget, Napozórét, Budapest XIV.",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "organizer": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Szervező: Zugló Közösségi Egyesület",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "price": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "A belépés minden programra ingyenes.",
+                        "model_confidence": null,
+                        "confidence": null
+                    },
+                    "status": {
+                        "quoted": false,
+                        "verified": false,
+                        "denotes": null,
+                        "match": null,
+                        "source": null,
+                        "quote": null,
+                        "model_confidence": null,
+                        "confidence": null
+                    }
+                },
+                "dedupe": {
+                    "decision": "new",
+                    "candidates": []
+                },
+                "editor_input": {
+                    "title": "Családi futás, 5 km",
+                    "summary": {
+                        "hu": "Öt kilométeres családi futást rendeznek a Napozóréten a Városligeti Ősz részeként.",
+                        "en": "A five-kilometre family run takes place at Napozórét as part of Városligeti Ősz."
+                    },
+                    "category": "sport_participation",
+                    "sensitive": {
+                        "flag": false,
+                        "reason": null
+                    },
+                    "start_at": 1795874400,
+                    "end_at": null,
+                    "timezone": "Europe/Budapest",
+                    "all_day": false,
+                    "is_free": true,
+                    "price_text": "A belépés minden programra ingyenes.",
+                    "age_restriction": null,
+                    "venue": {
+                        "name": "Napozórét",
+                        "formatted_address": "Városliget, Budapest XIV. [stand-in]",
+                        "latitude": 47.51,
+                        "longitude": 19.09,
+                        "city": "Budapest",
+                        "country_code": "HU"
+                    },
+                    "organizer": {
+                        "name": "Zugló Közösségi Egyesület",
+                        "website": null
+                    },
+                    "links": {
+                        "official_url": "https://www.varosligetiosz.example",
+                        "ticket_url": null
+                    },
+                    "source_url": "https://www.varosligetiosz.example",
+                    "attendee_list": "visible",
+                    "confirmations": {
+                        "source": false,
+                        "public_venue": false,
+                        "timezone": false,
+                        "content_safe": false
+                    }
+                }
+            }
+        ],
+        "ai_runs": [
+            {
+                "provider": "openai",
+                "task": "flyer_extract",
+                "model": "gpt-6.1-sol",
+                "outcome": "sheet",
+                "input_tokens": 3639,
+                "output_tokens": 2649,
+                "cost_micro_usd": 30157,
+                "cost_estimated": false,
+                "at": 1790905558
+            }
+        ],
+        "decision": null,
+        "duplicate_of": null,
+        "budget_waiting_since": null,
+        "images_delete_after": null,
+        "retention_until": null,
+        "content_purged_at": null
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

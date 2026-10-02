@@ -11,14 +11,20 @@ import { datesConfigurationRawValue, datesSettingEffectiveText, permittedResolut
 import { DATES_RUNTIME_HELP_GROUPS } from "../lib/datesRuntimeHelp.ts";
 import { prepareDatesExternalPending, readDatesExternalPending, runDatesExternalMutation } from "../lib/datesExternalMutations.ts";
 
-// FINAL E1 actual Router/Webadmin capture, byte-identical to Core 51140a6f2b995207af2e8140bf5d7d1e2323293c.
+// Actual Router/Webadmin capture, byte-identical to Core 06c8c3eaa51785b097b0005d3a23322ed4853179 (T-884, P2a).
+// Against the FINAL P1 pin (Core 51140a6f, set d84a3e16...) exactly two bodies changed - the two
+// configuration reads, which gained the eight intake settings - and the other 136 are byte-identical;
+// `P1_BODIES` below pins that, body by body. The generator is the P1 one, unchanged.
 // The source/generator pin is intentionally independent of the vendored manifest.
 const DIRECTORY = new URL("./fixtures/dates_external_admin_wire/", import.meta.url);
-const SOURCE = "c94d144691b93c3aea3dd180def345c4d03a4e55";
-const SOURCE_SHA = "690ab9c5da0d6fb0133398c41988ab5166faec487c15ccbd267d0781b069e3b0";
-const MANIFEST_SHA = "41bd137bb1bd37b1115f9f9dae201f43b5b6b10fb54159d796d36868a61246a9";
+const SOURCE = "74de12591f9d0f24e6a80316dfe397bc695177c7";
+const SOURCE_SHA = "0202c584b025c4509391ed9db5732fd9add8e3fb74975b8671e5ab82c85b1704";
+const MANIFEST_SHA = "2010f3ea75f2c9f283bcd8943140101cd074a7a2c1c4b68c5c2b0779c116548a";
 const GENERATOR_SHA = "51e746e0946ddac4319b56cdff0adcc7107a320ed08e1ca1a1f70fa7d90fbf3d";
-const SET_SHA = "d84a3e162703db1578db59f0a0a972de24fffc8562f23a13bf5715101306e4ed";
+const SET_SHA = "9ac34b0ba9b466c199d5984d7f1a607fadc9d9bb18d0cb27b4a75a48357c29a3";
+// The body set of the accepted P1 pin with the two configuration bodies taken out: 136 entries.
+const P1_UNCHANGED_SET_SHA = "b97e6e547021e7a6bec01487872366880d74910d6ddb4b9d58c628d7d0cfe7c1";
+const P1_CHANGED = ["admin-configuration-default-off.json", "admin-configuration-publishing-on.json"];
 const LISTS = ["admin", "canceled", "empty", "filter-empty", "page-empty", "viewer"];
 const DETAILS = ["admin", "canceled", "estimated", "viewer"];
 const PLACES = ["available", "empty", "rate-limited", "unavailable"];
@@ -39,7 +45,7 @@ const HELD_DETAILS = ["detail", "detail-updated", "detail-reverified", "detail-c
 const HELD_WRITES = ["update", "update-replay", "reverify", "reverify-replay", "cancel", "cancel-replay"];
 const CHAT_REVIEW = ["queue", "detail", "evidence", "claim", "claim-replay", "claimed", "stale-denied", "resolve", "resolve-replay", "resolved"];
 
-test("external console corpus is the complete 138-response FINAL genuine capture with independent provenance pins", () => {
+test("external console corpus is the complete 138-response genuine capture with independent provenance pins", () => {
   const manifest = fixture("manifest");
   assert.equal(hash(readFileSync(new URL("manifest.json", DIRECTORY))), MANIFEST_SHA);
   assert.equal(manifest.schema_version, 1);
@@ -49,7 +55,7 @@ test("external console corpus is the complete 138-response FINAL genuine capture
   assert.equal(manifest.provenance.generator, "tests/dates_external_admin_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
   assert.equal(manifest.fixture_count, 138);
-  assert.equal(manifest.provenance.source_paths.length, 313);
+  assert.equal(manifest.provenance.source_paths.length, 320);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   const names = ["admin-activity-list-external.json", ...LISTS.map((name) => `admin-list-${name}.json`),
     ...DETAILS.map((name) => `admin-detail-${name}.json`), ...PLACES.map((name) => `admin-places-${name}.json`),
@@ -76,6 +82,9 @@ test("external console corpus is the complete 138-response FINAL genuine capture
     return `${entry.file}\0${entry.sha256}`;
   });
   assert.equal(hash(lines.join("\n")), SET_SHA);
+  // P2a changed two bodies and nothing else: the other 136 hash to what the accepted P1 pin held.
+  assert.equal(hash(lines.filter((line: string) => !P1_CHANGED.includes(line.split("\0")[0])).join("\n")), P1_UNCHANGED_SET_SHA);
+  assert.equal(lines.length - P1_CHANGED.length, 136);
   assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 94);
   assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code !== 200).length, 44);
 });
@@ -96,7 +105,8 @@ for (const name of ACTIVITY_WRITES) test(`genuine lifecycle ${name} uses activit
 });
 for (const name of ["default-off", "publishing-on"]) test(`genuine configuration ${name} exposes all six exact P1 settings`, () => {
   const body = fixture(`admin-configuration-${name}`), group = DATES_RUNTIME_HELP_GROUPS.find((item) => item.id === "externalEvents")!;
-  assert.equal(body.settings.length, 33);
+  // P2a: the 33 P1 rows, in their P1 order, followed by the eight intake settings.
+  assert.equal(body.settings.length, 41);
   const expected: Record<string, unknown> = { dates_external_events_enabled: true, dates_external_events_enabled_overrides: [],
     dates_external_publishing_enabled: name === "publishing-on", dates_event_invite_daily_limit: 20, dates_event_invite_per_event_limit: 10, dates_event_lookahead_days: 180 };
   assert.deepEqual([...group.settingKeys].sort(), Object.keys(expected).sort());
@@ -172,6 +182,7 @@ for (const name of DETAILS) test(`genuine external detail ${name} passes the pro
   assert.equal(body.event.can_edit, name === "admin" || name === "estimated");
   assert.equal(body.event.editor_input.end_at === null, name === "estimated" || name === "canceled");
   assert.equal(body.event.ai_assisted, false);
+  assert.deepEqual([body.event.venue.place_id, body.event.venue.resolved_by], [null, "admin_pin"]);
   assert.deepEqual(body.event.credit, { channel: "admin", submitted_by_uid: null, anonymous: true, first_submitter_uid: null });
 });
 test("genuine held list permits corrections without treating pending content as approved", () => {

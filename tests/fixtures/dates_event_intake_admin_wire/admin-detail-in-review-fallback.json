@@ -1,0 +1,337 @@
+{
+    "success": true,
+    "status_code": 200,
+    "intake": {
+        "intake_id": "xin_00000000000000000000000000000019",
+        "revision": 9,
+        "channel": "admin_draft",
+        "status": "in_review",
+        "status_detail": null,
+        "input_kind": "text",
+        "source_host": null,
+        "image_count": 0,
+        "provider": "gemini",
+        "event_count": 1,
+        "published_count": 0,
+        "first_title": "Kék Hold Zenekar koncert",
+        "earliest_start_at": 1794682800,
+        "hard_fails": [],
+        "warning_count": 5,
+        "dedupe_decision": "new",
+        "lease": {
+            "holder": null,
+            "until": 0,
+            "active": false,
+            "mine": false
+        },
+        "decision_action": null,
+        "created_at": 1790924425,
+        "updated_at": 1790928000,
+        "admin_principal": "admin@example.test",
+        "inputs": {
+            "kind": "text",
+            "url": null,
+            "text": "Kék Hold Zenekar koncert november 14-én 20:00-kor az Akvárium Klubban",
+            "locale": "hu",
+            "images": []
+        },
+        "fetch": null,
+        "source_texts": [
+            {
+                "label": "text:1",
+                "text": "Kék Hold Zenekar koncert november 14-én 20:00-kor az Akvárium Klubban",
+                "truncated": false
+            }
+        ],
+        "result": "event",
+        "result_note": null,
+        "prohibited_category": null,
+        "prompt_injection_suspected": false,
+        "validated_at": 1790928000,
+        "events": [
+            {
+                "index": 0,
+                "published_external_event_id": null,
+                "draft": {
+                    "title": "Kék Hold Zenekar koncert",
+                    "summary_hu": "A Kék Hold Zenekar koncertet ad az Akvárium Klubban.",
+                    "summary_en": "Kék Hold Zenekar will perform in concert at Akvárium Klub.",
+                    "category": "concert",
+                    "sensitive": false,
+                    "sensitive_reason": null,
+                    "date_text_verbatim": "november 14-én 20:00-kor",
+                    "starts_local": "2026-11-14T20:00",
+                    "ends_local": null,
+                    "start_time_stated": true,
+                    "all_day": false,
+                    "year_inferred": true,
+                    "attendance_mode": "in_person",
+                    "venue": {
+                        "name": "Akvárium Klub",
+                        "address_text": null,
+                        "city": null,
+                        "country_code": null,
+                        "is_public_venue": true
+                    },
+                    "organizer_name": null,
+                    "price_text": null,
+                    "is_free": null,
+                    "age_restriction": null,
+                    "status_signal": "scheduled"
+                },
+                "validation": {
+                    "hard_fails": [],
+                    "warnings": [
+                        "fallback_provider",
+                        "city_missing",
+                        "year_inferred",
+                        "end_estimated",
+                        "organizer_missing"
+                    ],
+                    "needs_more_info": false,
+                    "tier": "single_source",
+                    "auto_publishable": false,
+                    "auto_blockers": [
+                        "warnings_benign",
+                        "primary_provider",
+                        "venue_place_matches"
+                    ],
+                    "needs_public_venue_confirmation": false,
+                    "checks": {
+                        "weekday_match": null,
+                        "venue_resolved": true,
+                        "public_place": true,
+                        "tz_from_venue": true,
+                        "urls_from_evidence": true,
+                        "quotes_verified": true,
+                        "content_safe": null,
+                        "witness": {
+                            "present": false,
+                            "date": "absent",
+                            "time": "absent",
+                            "venue": "absent"
+                        }
+                    },
+                    "schedule": {
+                        "timezone": "Europe/Budapest",
+                        "start_local": "2026-11-14T20:00",
+                        "end_local": null,
+                        "start_at": 1794682800,
+                        "end_at": 1794693600,
+                        "end_estimated": true,
+                        "all_day": false
+                    },
+                    "links": {
+                        "official_url": null,
+                        "ticket_url": null,
+                        "organizer_url": null,
+                        "dropped": []
+                    },
+                    "venue": {
+                        "place_id": "ChIJ4-4EKkDcQUcRPGkz1ExWaWg",
+                        "name": "Akvárium Klub",
+                        "formatted_address": "1051 Budapest, Erzsébet tér 12. [stand-in]",
+                        "latitude": 47.5,
+                        "longitude": 19.05,
+                        "city": "Budapest",
+                        "country_code": "HU",
+                        "timezone": "Europe/Budapest",
+                        "website_domain": "akvariumklub.hu",
+                        "business_status": "OPERATIONAL"
+                    },
+                    "venue_similarity": 1,
+                    "venue_candidates": [
+                        {
+                            "place_id": "ChIJ4-4EKkDcQUcRPGkz1ExWaWg",
+                            "name": "Akvárium Klub",
+                            "formatted_address": "1051 Budapest, Erzsébet tér 12. [stand-in]",
+                            "latitude": 47.5,
+                            "longitude": 19.05,
+                            "city": "Budapest",
+                            "country_code": "HU",
+                            "timezone": "Europe/Budapest",
+                            "similarity": 1,
+                            "public_venue_warning": false
+                        }
+                    ]
+                },
+                "field_evidence": {
+                    "title": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "text:1",
+                        "quote": "Kék Hold Zenekar koncert",
+                        "model_confidence": 0.95,
+                        "confidence": 0.95
+                    },
+                    "date": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "text:1",
+                        "quote": "november 14-én",
+                        "model_confidence": 0.95,
+                        "confidence": 0.95
+                    },
+                    "time": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "text:1",
+                        "quote": "20:00-kor",
+                        "model_confidence": 0.95,
+                        "confidence": 0.95
+                    },
+                    "venue": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "text:1",
+                        "quote": "Akvárium Klubban",
+                        "model_confidence": 0.9,
+                        "confidence": 0.9
+                    },
+                    "organizer": {
+                        "quoted": false,
+                        "verified": false,
+                        "denotes": null,
+                        "match": null,
+                        "source": null,
+                        "quote": null,
+                        "model_confidence": 0,
+                        "confidence": 0
+                    },
+                    "price": {
+                        "quoted": false,
+                        "verified": false,
+                        "denotes": null,
+                        "match": null,
+                        "source": null,
+                        "quote": null,
+                        "model_confidence": null,
+                        "confidence": null
+                    },
+                    "status": {
+                        "quoted": false,
+                        "verified": false,
+                        "denotes": null,
+                        "match": null,
+                        "source": null,
+                        "quote": null,
+                        "model_confidence": null,
+                        "confidence": null
+                    }
+                },
+                "dedupe": {
+                    "decision": "new",
+                    "candidates": []
+                },
+                "editor_input": {
+                    "title": "Kék Hold Zenekar koncert",
+                    "summary": {
+                        "hu": "A Kék Hold Zenekar koncertet ad az Akvárium Klubban.",
+                        "en": "Kék Hold Zenekar will perform in concert at Akvárium Klub."
+                    },
+                    "category": "concert",
+                    "sensitive": {
+                        "flag": false,
+                        "reason": null
+                    },
+                    "start_at": 1794682800,
+                    "end_at": null,
+                    "timezone": "Europe/Budapest",
+                    "all_day": false,
+                    "is_free": null,
+                    "price_text": null,
+                    "age_restriction": null,
+                    "venue": {
+                        "name": "Akvárium Klub",
+                        "formatted_address": "1051 Budapest, Erzsébet tér 12. [stand-in]",
+                        "latitude": 47.5,
+                        "longitude": 19.05,
+                        "city": "Budapest",
+                        "country_code": "HU"
+                    },
+                    "organizer": {
+                        "name": null,
+                        "website": null
+                    },
+                    "links": {
+                        "official_url": null,
+                        "ticket_url": null
+                    },
+                    "source_url": null,
+                    "attendee_list": "visible",
+                    "confirmations": {
+                        "source": false,
+                        "public_venue": false,
+                        "timezone": false,
+                        "content_safe": false
+                    }
+                }
+            }
+        ],
+        "ai_runs": [
+            {
+                "provider": "openai",
+                "task": "text_extract",
+                "model": "gpt-6.1-sol",
+                "outcome": "unavailable",
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "cost_micro_usd": 0,
+                "cost_estimated": false,
+                "at": 1790928000
+            },
+            {
+                "provider": "gemini",
+                "task": "text_extract",
+                "model": "gemini-3.8-flash",
+                "outcome": "sheet",
+                "input_tokens": 1631,
+                "output_tokens": 639,
+                "cost_micro_usd": 3620,
+                "cost_estimated": false,
+                "at": 1790905738
+            }
+        ],
+        "decision": null,
+        "duplicate_of": null,
+        "budget_waiting_since": null,
+        "images_delete_after": null,
+        "retention_until": null,
+        "content_purged_at": null
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -1,0 +1,120 @@
+{
+    "success": true,
+    "status_code": 200,
+    "intake": {
+        "intake_id": "xin_00000000000000000000000000000014",
+        "revision": 7,
+        "channel": "admin_draft",
+        "status": "rejected",
+        "status_detail": "prohibited-category",
+        "input_kind": "images",
+        "source_host": null,
+        "image_count": 1,
+        "provider": "openai",
+        "event_count": 0,
+        "published_count": 0,
+        "first_title": null,
+        "earliest_start_at": null,
+        "hard_fails": [],
+        "warning_count": 0,
+        "dedupe_decision": null,
+        "lease": {
+            "holder": null,
+            "until": 0,
+            "active": false,
+            "mine": false
+        },
+        "decision_action": "extraction_rejected",
+        "created_at": 1790924420,
+        "updated_at": 1790928000,
+        "admin_principal": "admin@example.test",
+        "inputs": {
+            "kind": "images",
+            "url": null,
+            "text": null,
+            "locale": "hu",
+            "images": [
+                {
+                    "index": 1,
+                    "ready": true,
+                    "width": 900,
+                    "height": 1200,
+                    "bytes": 1,
+                    "safe_search": {
+                        "adult": "VERY_UNLIKELY",
+                        "violence": "UNLIKELY"
+                    }
+                }
+            ]
+        },
+        "fetch": null,
+        "source_texts": [
+            {
+                "label": "image:1",
+                "text": "KRIPTO\nVAGYONÉPÍTŐ SZEMINÁRIUM\nGarantált havi 20% hozam!\nFektess be most, és élj passzív jövedelemből.\nÉpítsd saját hálózatod:\nhozz 3 új tagot, és jutalékot kapsz utánuk!\n2026. október 30., péntek 18:00\nHotel Panoráma, konferenciaterem, Budapest\nBelépő: 9 900 Ft\nRegisztráció: www.kriptovagyon.example",
+                "truncated": false
+            }
+        ],
+        "result": "prohibited",
+        "result_note": "The source promotes a cryptocurrency wealth-building seminar with guaranteed returns and recruitment commissions.",
+        "prohibited_category": "crypto_seminar",
+        "prompt_injection_suspected": false,
+        "validated_at": null,
+        "events": [],
+        "ai_runs": [
+            {
+                "provider": "openai",
+                "task": "flyer_extract",
+                "model": "gpt-6.1-sol",
+                "outcome": "sheet",
+                "input_tokens": 3639,
+                "output_tokens": 55,
+                "cost_micro_usd": 4217,
+                "cost_estimated": false,
+                "at": 1790905606
+            }
+        ],
+        "decision": {
+            "by": "system",
+            "at": 1790928000,
+            "action": "extraction_rejected",
+            "reason_code": "prohibited_content",
+            "statement": {
+                "en": "The event belongs to a category that is not allowed here.",
+                "hu": "Az esemény olyan kategóriába tartozik, amely itt nem engedélyezett."
+            }
+        },
+        "duplicate_of": null,
+        "budget_waiting_since": null,
+        "images_delete_after": 1793520000,
+        "retention_until": 1806480000,
+        "content_purged_at": null
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

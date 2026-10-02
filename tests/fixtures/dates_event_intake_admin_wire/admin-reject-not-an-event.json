@@ -1,0 +1,23 @@
+{
+    "success": true,
+    "status_code": 200,
+    "replayed": false,
+    "intake": {
+        "intake_id": "xin_00000000000000000000000000000007",
+        "revision": 11,
+        "status": "rejected"
+    },
+    "decision": {
+        "action": "rejected",
+        "reason_code": "not_an_event",
+        "statement": {
+            "en": "The submission does not describe a public event that people can attend.",
+            "hu": "A beküldés nem olyan nyilvános eseményt ír le, amelyen részt lehet venni."
+        }
+    },
+    "audit_id": "aud_0000000000000000000000000000000a",
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

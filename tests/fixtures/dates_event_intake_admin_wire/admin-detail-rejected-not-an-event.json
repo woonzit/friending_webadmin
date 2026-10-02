@@ -1,0 +1,131 @@
+{
+    "success": true,
+    "status_code": 200,
+    "intake": {
+        "intake_id": "xin_00000000000000000000000000000013",
+        "revision": 7,
+        "channel": "admin_draft",
+        "status": "rejected",
+        "status_detail": "not-an-event",
+        "input_kind": "images",
+        "source_host": null,
+        "image_count": 1,
+        "provider": "openai",
+        "event_count": 0,
+        "published_count": 0,
+        "first_title": null,
+        "earliest_start_at": null,
+        "hard_fails": [],
+        "warning_count": 0,
+        "dedupe_decision": null,
+        "lease": {
+            "holder": null,
+            "until": 0,
+            "active": false,
+            "mine": false
+        },
+        "decision_action": "extraction_rejected",
+        "created_at": 1790924419,
+        "updated_at": 1790928000,
+        "admin_principal": "admin@example.test",
+        "inputs": {
+            "kind": "images",
+            "url": null,
+            "text": null,
+            "locale": "hu",
+            "images": [
+                {
+                    "index": 1,
+                    "ready": true,
+                    "width": 900,
+                    "height": 1200,
+                    "bytes": 1,
+                    "safe_search": {
+                        "adult": "VERY_UNLIKELY",
+                        "violence": "VERY_UNLIKELY"
+                    }
+                }
+            ]
+        },
+        "fetch": null,
+        "source_texts": [
+            {
+                "label": "image:1",
+                "text": "KÁVÉZÓ A SARKON\nEspresso\nCappuccino\nFlat white\nITALLAP\nForró csokoládé\nHázi limonádé\nAlmás pite\nSajttorta\n650 Ft\n890 Ft\n990 Ft\n1 190 Ft\n1 090 Ft\n1 290 Ft\n1 390 Ft\nNyitvatartás: H-P 8:00–18:00\nSzo V 9:00-16:00\nLaktózmentes tej kérhető.",
+                "truncated": false
+            }
+        ],
+        "result": "not_an_event",
+        "result_note": "The image shows a café menu and opening hours, not an event announcement.",
+        "prohibited_category": null,
+        "prompt_injection_suspected": false,
+        "validated_at": null,
+        "events": [],
+        "ai_runs": [
+            {
+                "provider": "openai",
+                "task": "flyer_extract",
+                "model": "gpt-6.1-sol",
+                "outcome": "sheet",
+                "input_tokens": 3639,
+                "output_tokens": 53,
+                "cost_micro_usd": 4197,
+                "cost_estimated": false,
+                "at": 1790905601
+            },
+            {
+                "provider": "gemini",
+                "task": "flyer_extract",
+                "model": "gemini-3.8-flash",
+                "outcome": "sheet",
+                "input_tokens": 2645,
+                "output_tokens": 172,
+                "cost_micro_usd": 2629,
+                "cost_estimated": false,
+                "at": 1790905604
+            }
+        ],
+        "decision": {
+            "by": "system",
+            "at": 1790928000,
+            "action": "extraction_rejected",
+            "reason_code": "not_an_event",
+            "statement": {
+                "en": "The submission does not describe a public event that people can attend.",
+                "hu": "A beküldés nem olyan nyilvános eseményt ír le, amelyen részt lehet venni."
+            }
+        },
+        "duplicate_of": null,
+        "budget_waiting_since": null,
+        "images_delete_after": 1793520000,
+        "retention_until": 1806480000,
+        "content_purged_at": null
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

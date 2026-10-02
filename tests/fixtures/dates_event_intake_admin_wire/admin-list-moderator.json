@@ -1,0 +1,71 @@
+{
+    "success": true,
+    "status_code": 200,
+    "intakes": [
+        {
+            "intake_id": "xin_00000000000000000000000000000003",
+            "revision": 3,
+            "channel": "admin_draft",
+            "status": "duplicate",
+            "status_detail": "duplicate-source",
+            "input_kind": "url",
+            "source_host": "dunapartikamara.example",
+            "image_count": 0,
+            "provider": null,
+            "event_count": 0,
+            "published_count": 0,
+            "first_title": null,
+            "earliest_start_at": null,
+            "hard_fails": [],
+            "warning_count": 0,
+            "dedupe_decision": null,
+            "lease": {
+                "holder": null,
+                "until": 0,
+                "active": false,
+                "mine": false
+            },
+            "decision_action": "duplicate",
+            "created_at": 1790924403,
+            "updated_at": 1790928000
+        }
+    ],
+    "page": 1,
+    "limit": 40,
+    "total": 1,
+    "status_counts": {
+        "received": 0,
+        "screening": 0,
+        "extracting": 0,
+        "validating": 0,
+        "member_confirming": 0,
+        "in_review": 5,
+        "published": 0,
+        "merged": 0,
+        "rejected": 0,
+        "duplicate": 1,
+        "failed": 0,
+        "withdrawn": 0,
+        "expired": 0,
+        "awaiting_budget": 0
+    },
+    "drafts_enabled": true,
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

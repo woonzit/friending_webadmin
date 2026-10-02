@@ -1,0 +1,298 @@
+{
+    "success": true,
+    "status_code": 200,
+    "intake": {
+        "intake_id": "xin_00000000000000000000000000000007",
+        "revision": 11,
+        "channel": "admin_draft",
+        "status": "rejected",
+        "status_detail": null,
+        "input_kind": "text",
+        "source_host": null,
+        "image_count": 0,
+        "provider": "openai",
+        "event_count": 1,
+        "published_count": 0,
+        "first_title": "Szabadtéri jóga",
+        "earliest_start_at": 1791702000,
+        "hard_fails": [],
+        "warning_count": 4,
+        "dedupe_decision": "duplicate",
+        "lease": {
+            "holder": null,
+            "until": 0,
+            "active": false,
+            "mine": false
+        },
+        "decision_action": "rejected",
+        "created_at": 1790924407,
+        "updated_at": 1790000000,
+        "admin_principal": "admin@example.test",
+        "inputs": {
+            "kind": "text",
+            "url": null,
+            "text": "Szabadtéri jóga a Margitszigeten, a Zenélő szökőkútnál, október 11-én vasárnap reggel 9-kor, ingyenes #1",
+            "locale": "hu",
+            "images": []
+        },
+        "fetch": null,
+        "source_texts": [
+            {
+                "label": "text:1",
+                "text": "Szabadtéri jóga a Margitszigeten, a Zenélő szökőkútnál, október 11-én vasárnap reggel 9-kor, ingyenes #1",
+                "truncated": false
+            }
+        ],
+        "result": "event",
+        "result_note": null,
+        "prohibited_category": null,
+        "prompt_injection_suspected": false,
+        "validated_at": 1790928000,
+        "events": [
+            {
+                "index": 0,
+                "published_external_event_id": null,
+                "draft": {
+                    "title": "Szabadtéri jóga",
+                    "summary_hu": "Ingyenes szabadtéri jóga a Margitszigeten, a Zenélő szökőkútnál, október 11-én reggel 9 órakor.",
+                    "summary_en": "An outdoor yoga session takes place on Margitsziget by the musical fountain on October 11 at 9 a.m.",
+                    "category": "sport_participation",
+                    "sensitive": false,
+                    "sensitive_reason": null,
+                    "date_text_verbatim": "október 11-én vasárnap reggel 9-kor",
+                    "starts_local": "2026-10-11T09:00",
+                    "ends_local": null,
+                    "start_time_stated": true,
+                    "all_day": false,
+                    "year_inferred": true,
+                    "attendance_mode": "in_person",
+                    "venue": {
+                        "name": "Zenélő szökőkútnál",
+                        "address_text": "Margitszigeten, a Zenélő szökőkútnál",
+                        "city": null,
+                        "country_code": null,
+                        "is_public_venue": true
+                    },
+                    "organizer_name": null,
+                    "price_text": "ingyenes",
+                    "is_free": true,
+                    "age_restriction": null,
+                    "status_signal": "scheduled"
+                },
+                "validation": {
+                    "hard_fails": [],
+                    "warnings": [
+                        "city_missing",
+                        "year_inferred",
+                        "end_estimated",
+                        "organizer_missing"
+                    ],
+                    "needs_more_info": false,
+                    "tier": "single_source",
+                    "auto_publishable": false,
+                    "auto_blockers": [
+                        "warnings_benign",
+                        "venue_place_matches"
+                    ],
+                    "needs_public_venue_confirmation": false,
+                    "checks": {
+                        "weekday_match": true,
+                        "venue_resolved": true,
+                        "public_place": true,
+                        "tz_from_venue": true,
+                        "urls_from_evidence": true,
+                        "quotes_verified": true,
+                        "content_safe": null,
+                        "witness": {
+                            "present": false,
+                            "date": "absent",
+                            "time": "absent",
+                            "venue": "absent"
+                        }
+                    },
+                    "schedule": {
+                        "timezone": "Europe/Budapest",
+                        "start_local": "2026-10-11T09:00",
+                        "end_local": null,
+                        "start_at": 1791702000,
+                        "end_at": 1791709200,
+                        "end_estimated": true,
+                        "all_day": false
+                    },
+                    "links": {
+                        "official_url": null,
+                        "ticket_url": null,
+                        "organizer_url": null,
+                        "dropped": []
+                    },
+                    "venue": {
+                        "place_id": "ChIJSSiiJgDdQUcRZ7o4Xemzi0g",
+                        "name": "Zenélő szökőkút",
+                        "formatted_address": "Budapest, Margitsziget [stand-in]",
+                        "latitude": 47.52,
+                        "longitude": 19.04,
+                        "city": "Budapest",
+                        "country_code": "HU",
+                        "timezone": "Europe/Budapest",
+                        "website_domain": null,
+                        "business_status": "OPERATIONAL"
+                    },
+                    "venue_similarity": 0.9,
+                    "venue_candidates": [
+                        {
+                            "place_id": "ChIJSSiiJgDdQUcRZ7o4Xemzi0g",
+                            "name": "Zenélő szökőkút",
+                            "formatted_address": "Budapest, Margitsziget [stand-in]",
+                            "latitude": 47.52,
+                            "longitude": 19.04,
+                            "city": "Budapest",
+                            "country_code": "HU",
+                            "timezone": "Europe/Budapest",
+                            "similarity": 0.9,
+                            "public_venue_warning": false
+                        }
+                    ]
+                },
+                "field_evidence": {
+                    "title": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "text:1",
+                        "quote": "Szabadtéri jóga",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "date": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "text:1",
+                        "quote": "október 11-én vasárnap reggel 9-kor",
+                        "model_confidence": 0.95,
+                        "confidence": 0.95
+                    },
+                    "time": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "text:1",
+                        "quote": "október 11-én vasárnap reggel 9-kor",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "venue": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "text:1",
+                        "quote": "Margitszigeten, a Zenélő szökőkútnál",
+                        "model_confidence": 0.95,
+                        "confidence": 0.95
+                    },
+                    "organizer": {
+                        "quoted": false,
+                        "verified": false,
+                        "denotes": null,
+                        "match": null,
+                        "source": null,
+                        "quote": null,
+                        "model_confidence": 0,
+                        "confidence": 0
+                    },
+                    "price": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "text:1",
+                        "quote": "ingyenes",
+                        "model_confidence": null,
+                        "confidence": null
+                    },
+                    "status": {
+                        "quoted": false,
+                        "verified": false,
+                        "denotes": null,
+                        "match": null,
+                        "source": null,
+                        "quote": null,
+                        "model_confidence": null,
+                        "confidence": null
+                    }
+                },
+                "dedupe": {
+                    "decision": "duplicate",
+                    "candidates": [
+                        {
+                            "kind": "intake",
+                            "id": "xin_00000000000000000000000000000001",
+                            "similarity": 1,
+                            "verdict": "duplicate"
+                        }
+                    ]
+                },
+                "editor_input": null
+            }
+        ],
+        "ai_runs": [
+            {
+                "provider": "openai",
+                "task": "text_extract",
+                "model": "gpt-6.1-sol",
+                "outcome": "sheet",
+                "input_tokens": 2379,
+                "output_tokens": 735,
+                "cost_micro_usd": 7867,
+                "cost_estimated": false,
+                "at": 1790905691
+            }
+        ],
+        "decision": {
+            "by": "moderator@example.test",
+            "at": 1790000000,
+            "action": "rejected",
+            "reason_code": "not_an_event",
+            "statement": {
+                "en": "The submission does not describe a public event that people can attend.",
+                "hu": "A beküldés nem olyan nyilvános eseményt ír le, amelyen részt lehet venni."
+            }
+        },
+        "duplicate_of": null,
+        "budget_waiting_since": null,
+        "images_delete_after": 1792592000,
+        "retention_until": 1805552000,
+        "content_purged_at": null
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

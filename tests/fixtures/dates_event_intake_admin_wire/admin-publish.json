@@ -1,0 +1,21 @@
+{
+    "success": true,
+    "status_code": 200,
+    "replayed": false,
+    "external_event_id": "xev_00000000000000000000000000000001",
+    "revision": 1,
+    "activity_id": "act_00000000000000000000000000000001",
+    "activity_revision": 1,
+    "event_status": "published",
+    "audit_id": "aud_00000000000000000000000000000013",
+    "intake": {
+        "intake_id": "xin_00000000000000000000000000000002",
+        "revision": 11,
+        "status": "published",
+        "published_count": 1
+    },
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

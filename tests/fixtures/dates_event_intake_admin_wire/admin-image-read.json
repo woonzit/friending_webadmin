@@ -1,0 +1,17 @@
+{
+    "success": true,
+    "status_code": 200,
+    "image": {
+        "index": 1,
+        "mime": "image/jpeg",
+        "width": 900,
+        "height": 1200,
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "data_base64": "<base64 of the JPEG; bytes depend on the encoder build>"
+    },
+    "audit_id": "aud_00000000000000000000000000000005",
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

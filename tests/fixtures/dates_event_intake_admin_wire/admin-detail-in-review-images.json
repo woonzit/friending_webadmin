@@ -1,0 +1,333 @@
+{
+    "success": true,
+    "status_code": 200,
+    "intake": {
+        "intake_id": "xin_00000000000000000000000000000005",
+        "revision": 9,
+        "channel": "admin_draft",
+        "status": "in_review",
+        "status_detail": null,
+        "input_kind": "images",
+        "source_host": null,
+        "image_count": 1,
+        "provider": "openai",
+        "event_count": 1,
+        "published_count": 0,
+        "first_title": "KÉK HOLD ZENEKAR – Őszi lemezbemutató koncert",
+        "earliest_start_at": 1794682800,
+        "hard_fails": [],
+        "warning_count": 2,
+        "dedupe_decision": "new",
+        "lease": {
+            "holder": null,
+            "until": 0,
+            "active": false,
+            "mine": false
+        },
+        "decision_action": null,
+        "created_at": 1790924405,
+        "updated_at": 1790928000,
+        "admin_principal": "admin@example.test",
+        "inputs": {
+            "kind": "images",
+            "url": null,
+            "text": null,
+            "locale": "hu",
+            "images": [
+                {
+                    "index": 1,
+                    "ready": true,
+                    "width": 900,
+                    "height": 1200,
+                    "bytes": 1,
+                    "safe_search": {
+                        "adult": "VERY_UNLIKELY",
+                        "violence": "UNLIKELY"
+                    }
+                }
+            ]
+        },
+        "fetch": null,
+        "source_texts": [
+            {
+                "label": "image:1",
+                "text": "KÉK HOLD ZENEKAR\nŐszi lemezbemutató koncert\n2026. november 14., szombat 20:00\nKapunyitás: 19:00\nAkvárium Klub\n1051 Budapest, Erzsébet tér 12.\nJegyek: 4 900 Ft elővételben,\n5 900 Ft a helyszínen\nJegyvásárlás:\nhttps://jegy.kekhold.example/osz2026\nSzervező: Kék Hold Produkció\nwww.kekhold.example\nA koncert 18 éven felülieknek szól.",
+                "truncated": false
+            }
+        ],
+        "result": "event",
+        "result_note": null,
+        "prohibited_category": null,
+        "prompt_injection_suspected": false,
+        "validated_at": 1790928000,
+        "events": [
+            {
+                "index": 0,
+                "published_external_event_id": null,
+                "draft": {
+                    "title": "KÉK HOLD ZENEKAR – Őszi lemezbemutató koncert",
+                    "summary_hu": "A Kék Hold Zenekar őszi lemezbemutató koncertet ad az Akvárium Klubban. A koncert 20:00-kor kezdődik, a kapunyitás 19:00-kor lesz; a rendezvény 18 éven felülieknek szól.",
+                    "summary_en": "Kék Hold Zenekar will perform an autumn album-launch concert at Akvárium Klub. The concert starts at 20:00, with doors opening at 19:00; the event is for people over 18.",
+                    "category": "concert",
+                    "sensitive": false,
+                    "sensitive_reason": null,
+                    "date_text_verbatim": "2026. november 14., szombat 20:00",
+                    "starts_local": "2026-11-14T20:00",
+                    "ends_local": null,
+                    "start_time_stated": true,
+                    "all_day": false,
+                    "year_inferred": false,
+                    "attendance_mode": "in_person",
+                    "venue": {
+                        "name": "Akvárium Klub",
+                        "address_text": "1051 Budapest, Erzsébet tér 12.",
+                        "city": "Budapest",
+                        "country_code": "HU",
+                        "is_public_venue": true
+                    },
+                    "organizer_name": "Kék Hold Produkció",
+                    "price_text": "Jegyek: 4 900 Ft elővételben, 5 900 Ft a helyszínen",
+                    "is_free": false,
+                    "age_restriction": 18,
+                    "status_signal": "scheduled"
+                },
+                "validation": {
+                    "hard_fails": [],
+                    "warnings": [
+                        "end_estimated",
+                        "paid_without_official_link"
+                    ],
+                    "needs_more_info": false,
+                    "tier": "single_source",
+                    "auto_publishable": false,
+                    "auto_blockers": [
+                        "warnings_benign"
+                    ],
+                    "needs_public_venue_confirmation": false,
+                    "checks": {
+                        "weekday_match": true,
+                        "venue_resolved": true,
+                        "public_place": true,
+                        "tz_from_venue": true,
+                        "urls_from_evidence": true,
+                        "quotes_verified": true,
+                        "content_safe": true,
+                        "witness": {
+                            "present": false,
+                            "date": "absent",
+                            "time": "absent",
+                            "venue": "absent"
+                        }
+                    },
+                    "schedule": {
+                        "timezone": "Europe/Budapest",
+                        "start_local": "2026-11-14T20:00",
+                        "end_local": null,
+                        "start_at": 1794682800,
+                        "end_at": 1794693600,
+                        "end_estimated": true,
+                        "all_day": false
+                    },
+                    "links": {
+                        "official_url": null,
+                        "ticket_url": "https://jegy.kekhold.example/osz2026",
+                        "organizer_url": "https://www.kekhold.example",
+                        "dropped": []
+                    },
+                    "venue": {
+                        "place_id": "ChIJ4-4EKkDcQUcRPGkz1ExWaWg",
+                        "name": "Akvárium Klub",
+                        "formatted_address": "1051 Budapest, Erzsébet tér 12. [stand-in]",
+                        "latitude": 47.5,
+                        "longitude": 19.05,
+                        "city": "Budapest",
+                        "country_code": "HU",
+                        "timezone": "Europe/Budapest",
+                        "website_domain": "akvariumklub.hu",
+                        "business_status": "OPERATIONAL"
+                    },
+                    "venue_similarity": 1,
+                    "venue_candidates": [
+                        {
+                            "place_id": "ChIJ4-4EKkDcQUcRPGkz1ExWaWg",
+                            "name": "Akvárium Klub",
+                            "formatted_address": "1051 Budapest, Erzsébet tér 12. [stand-in]",
+                            "latitude": 47.5,
+                            "longitude": 19.05,
+                            "city": "Budapest",
+                            "country_code": "HU",
+                            "timezone": "Europe/Budapest",
+                            "similarity": 1,
+                            "public_venue_warning": false
+                        }
+                    ]
+                },
+                "field_evidence": {
+                    "title": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "KÉK HOLD ZENEKAR",
+                        "model_confidence": 0.99,
+                        "confidence": 0.99
+                    },
+                    "date": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "2026. november 14., szombat 20:00",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "time": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": true,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "2026. november 14., szombat 20:00",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "venue": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Akvárium Klub",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "organizer": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Szervező: Kék Hold Produkció www.kekhold.example",
+                        "model_confidence": 1,
+                        "confidence": 1
+                    },
+                    "price": {
+                        "quoted": true,
+                        "verified": true,
+                        "denotes": null,
+                        "match": "exact",
+                        "source": "image:1",
+                        "quote": "Jegyek: 4 900 Ft elővételben, 5 900 Ft a helyszínen",
+                        "model_confidence": null,
+                        "confidence": null
+                    },
+                    "status": {
+                        "quoted": false,
+                        "verified": false,
+                        "denotes": null,
+                        "match": null,
+                        "source": null,
+                        "quote": null,
+                        "model_confidence": null,
+                        "confidence": null
+                    }
+                },
+                "dedupe": {
+                    "decision": "new",
+                    "candidates": []
+                },
+                "editor_input": {
+                    "title": "KÉK HOLD ZENEKAR – Őszi lemezbemutató koncert",
+                    "summary": {
+                        "hu": "A Kék Hold Zenekar őszi lemezbemutató koncertet ad az Akvárium Klubban. A koncert 20:00-kor kezdődik, a kapunyitás 19:00-kor lesz; a rendezvény 18 éven felülieknek szól.",
+                        "en": "Kék Hold Zenekar will perform an autumn album-launch concert at Akvárium Klub. The concert starts at 20:00, with doors opening at 19:00; the event is for people over 18."
+                    },
+                    "category": "concert",
+                    "sensitive": {
+                        "flag": false,
+                        "reason": null
+                    },
+                    "start_at": 1794682800,
+                    "end_at": null,
+                    "timezone": "Europe/Budapest",
+                    "all_day": false,
+                    "is_free": false,
+                    "price_text": "Jegyek: 4 900 Ft elővételben, 5 900 Ft a helyszínen",
+                    "age_restriction": 18,
+                    "venue": {
+                        "name": "Akvárium Klub",
+                        "formatted_address": "1051 Budapest, Erzsébet tér 12. [stand-in]",
+                        "latitude": 47.5,
+                        "longitude": 19.05,
+                        "city": "Budapest",
+                        "country_code": "HU"
+                    },
+                    "organizer": {
+                        "name": "Kék Hold Produkció",
+                        "website": "https://www.kekhold.example"
+                    },
+                    "links": {
+                        "official_url": null,
+                        "ticket_url": "https://jegy.kekhold.example/osz2026"
+                    },
+                    "source_url": null,
+                    "attendee_list": "visible",
+                    "confirmations": {
+                        "source": false,
+                        "public_venue": false,
+                        "timezone": false,
+                        "content_safe": false
+                    }
+                }
+            }
+        ],
+        "ai_runs": [
+            {
+                "provider": "openai",
+                "task": "flyer_extract",
+                "model": "gpt-6.1-sol",
+                "outcome": "sheet",
+                "input_tokens": 3639,
+                "output_tokens": 899,
+                "cost_micro_usd": 18086,
+                "cost_estimated": false,
+                "at": 1790905527
+            }
+        ],
+        "decision": null,
+        "duplicate_of": null,
+        "budget_waiting_since": null,
+        "images_delete_after": null,
+        "retention_until": null,
+        "content_purged_at": null
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

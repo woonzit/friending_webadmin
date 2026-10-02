@@ -1,0 +1,23 @@
+{
+    "success": true,
+    "status_code": 200,
+    "replayed": false,
+    "intake": {
+        "intake_id": "xin_0000000000000000000000000000000e",
+        "revision": 11,
+        "status": "rejected"
+    },
+    "decision": {
+        "action": "rejected",
+        "reason_code": "sensitive_not_allowed",
+        "statement": {
+            "en": "Events of this sensitive kind are not listed.",
+            "hu": "Ilyen érzékeny témájú eseményeket nem teszünk közzé."
+        }
+    },
+    "audit_id": "aud_00000000000000000000000000000011",
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

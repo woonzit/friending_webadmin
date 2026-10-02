@@ -1,0 +1,23 @@
+{
+    "success": true,
+    "status_code": 200,
+    "replayed": false,
+    "intake": {
+        "intake_id": "xin_00000000000000000000000000000008",
+        "revision": 11,
+        "status": "rejected"
+    },
+    "decision": {
+        "action": "rejected",
+        "reason_code": "date_unclear_or_past",
+        "statement": {
+            "en": "The date of the event is unclear or has already passed.",
+            "hu": "Az esemény időpontja nem egyértelmű, vagy már elmúlt."
+        }
+    },
+    "audit_id": "aud_0000000000000000000000000000000b",
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

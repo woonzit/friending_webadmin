@@ -1,0 +1,23 @@
+{
+    "success": true,
+    "status_code": 200,
+    "replayed": false,
+    "intake": {
+        "intake_id": "xin_0000000000000000000000000000000b",
+        "revision": 11,
+        "status": "rejected"
+    },
+    "decision": {
+        "action": "rejected",
+        "reason_code": "prohibited_content",
+        "statement": {
+            "en": "The event belongs to a category that is not allowed here.",
+            "hu": "Az esemény olyan kategóriába tartozik, amely itt nem engedélyezett."
+        }
+    },
+    "audit_id": "aud_0000000000000000000000000000000e",
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
