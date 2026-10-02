@@ -20,6 +20,7 @@ import { normalizeSectionTeasersProxyBody } from "@/lib/sectionTeasers";
 import { datesAvailabilityWriteIsRetired } from "@/lib/datesAdmin";
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "@/lib/datesExternalAdmin";
 import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody } from "@/lib/datesExternalModeration";
+import { datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody } from "@/lib/datesIntakeAdmin";
 import {
   featureSwitchesProxyCapabilityAuthorized,
   normalizeFeatureSwitchesProxyBody,
@@ -125,6 +126,10 @@ export async function POST(
   if (datesExternalProxyCapabilityAuthorized(action, membership.data) === false) {
     return bridgeError("dates-admin-capability-required", 403);
   }
+  // T-865 P2a: each intake route mirrors the one capability Core requires for it.
+  if (datesIntakeProxyCapabilityAuthorized(action, membership.data) === false) {
+    return bridgeError("dates-admin-capability-required", 403);
+  }
   const legacyAdminGrantRetryAuthorized = ADMIN_GRANTED_VERIFICATION_CONTRACT_READY
     ? adminGrantedVerificationLegacyReceiptRetryAuthorized(action, membership.data)
     : null;
@@ -209,6 +214,10 @@ export async function POST(
   const externalBody = normalizeDatesExternalProxyBody(action, body);
   if (externalBody === null) return bridgeError("invalid-input", 400);
   if (externalBody !== undefined) body = externalBody;
+  // An intake command travels as its closed shape or not at all.
+  const intakeBody = normalizeDatesIntakeProxyBody(action, body);
+  if (intakeBody === null) return bridgeError("invalid-input", 400);
+  if (intakeBody !== undefined) body = intakeBody;
   const externalResolution = normalizeDatesExternalResolutionProxyBody(action, body);
   if (externalResolution === null) return bridgeError("invalid-input", 400);
   if (externalResolution !== undefined && !datesExternalResolutionAuthorized(membership.data)) {

@@ -180,3 +180,27 @@ export async function adminUploadSupportImage(
     return null;
   }
 }
+
+/** "Draft from source" (T-865 P2a): the source, and a flyer when there is one, to the console's own route. */
+export async function adminIntakeCreate(body: FormData): Promise<AdminResponse | null> {
+  let response: Response;
+  try {
+    response = await fetch("/api/admin/dates-intake-create", {
+      method: "POST",
+      headers: { [ADMIN_REQUEST_HEADER]: ADMIN_REQUEST_HEADER_VALUE },
+      body,
+      cache: "no-store",
+    });
+  } catch {
+    return null;
+  }
+  if (response.status === 401) {
+    window.location.assign("/login");
+    return null;
+  }
+  try {
+    return (await response.json()) as AdminResponse;
+  } catch {
+    return null;
+  }
+}

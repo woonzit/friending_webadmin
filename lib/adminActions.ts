@@ -16,6 +16,7 @@ import { SECTION_TEASERS_ACTIONS } from "@/lib/sectionTeasers";
 import { PROFILE_TEXT_MODERATION_ACTIONS } from "@/lib/profileTextModeration";
 import { VERIFICATION_METHOD_ACTIONS } from "@/lib/verificationMethod";
 import { DATES_EXTERNAL_ACTIONS } from "@/lib/datesExternalAdmin";
+import { DATES_INTAKE_PROXY_ACTIONS } from "@/lib/datesIntakeAdmin";
 import { OUTBOUND_MESSAGING_ACTIONS } from "@/lib/outboundMessaging";
 import { PERSONA_ADMIN_ACTIONS } from "@/lib/personaAdmin";
 import { PERSONA_SCREENS_ACTIONS } from "@/lib/personaScreens";
@@ -51,6 +52,10 @@ export const DATES_ADMIN_ACTIONS = [
   "dates_reason_save",
   "dates_reason_deactivate",
   ...DATES_EXTERNAL_ACTIONS,
+  // T-865 P2a. Creating an intake and reading a flyer are NOT here: they have
+  // their own routes (multipart, private bytes) and cannot be reached as a
+  // generic action.
+  ...DATES_INTAKE_PROXY_ACTIONS,
 ] as const;
 
 const REPORTED_CONTENT_ADMIN_ACTIONS = ["moderation_reported_list", "moderation_report_action"] as const;
@@ -565,6 +570,16 @@ export const ADMIN_ACTION_ACCESS = {
   dates_external_event_update: "dates_write",
   dates_external_event_command: "dates_write",
   dates_external_event_place_search: "dates_write",
+  // T-865 P2a event intake. These rows are only the floor of the Dates ladder;
+  // `datesIntakeProxyCapabilityAuthorized` mirrors Core's exact capability per
+  // route (review for the queue, a draft, the hold and a rejection; manage for
+  // publishing; read for the AI usage) and Core checks it again.
+  dates_event_intake_list: "dates_read",
+  dates_event_intake_detail: "dates_read",
+  dates_event_intake_usage: "dates_read",
+  dates_event_intake_lease: "dates_write",
+  dates_event_intake_reject: "dates_write",
+  dates_event_intake_publish: "dates_write",
 } as Record<AdminAction, AdminActionAccess>;
 
 // A Map, not the record itself: a plain-object lookup would resolve inherited

@@ -183,6 +183,66 @@ export async function coreMultipartCall<T = Record<string, unknown>>(
 }
 
 /**
+ * Multipart bridge for several named files (T-865 P2a: one or two event
+ * flyers for `dates_event_intake_create`). The caller has already
+ * authenticated the operator, bounded every file and recognised its type; the
+ * bytes are forwarded as they were uploaded, because Core re-encodes a flyer
+ * itself and never serves the upload.
+ */
+export async function coreMultipartFilesCall<T = Record<string, unknown>>(
+  action: string,
+  payload: Record<string, unknown>,
+  files: ReadonlyArray<{ field: string; bytes: Uint8Array; mime: string; filename: string }>,
+  timeoutMs = 60_000,
+): Promise<CoreResult<T>> {
+  if (!/^[a-z][a-z0-9_]{1,63}$/.test(action)) {
+    return { status: 404, data: null };
+  }
+  const body = new FormData();
+  for (const [key, value] of Object.entries(payload)) {
+    if (key === "secret") continue;
+    if (/^[a-z][a-z0-9_]{0,63}$/.test(key)) body.set(key, encodeValue(value));
+  }
+  for (const file of files) {
+    // A file may not take the name of a scalar parameter, least of all the credential's.
+    if (!/^[a-z][a-z0-9_]{0,63}$/.test(file.field) || isReservedCoreParam(file.field) || body.has(file.field)) {
+      return { status: 400, data: { success: false, error: "invalid-input" } as T };
+    }
+    body.set(file.field, new Blob([Uint8Array.from(file.bytes)], { type: file.mime }), file.filename);
+  }
+  body.set("secret", apiSecret());
+
+  let response: Response;
+  try {
+    response = await fetch(`${CORE_API_BASE}/v1/webadmin/${action}`, {
+      method: "POST",
+      headers: { Accept: "application/json" },
+      body,
+      cache: "no-store",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (error) {
+    const name = (error as { name?: unknown } | null)?.name;
+    if (name === "TimeoutError" || name === "AbortError") {
+      return { status: 504, data: { success: false, error: "core-timeout" } as T };
+    }
+    return { status: 502, data: { success: false, error: "core-unavailable" } as T };
+  }
+
+  let data: T | null;
+  try {
+    data = (await response.json()) as T;
+  } catch {
+    return { status: 502, data: { success: false, error: "invalid-core-response" } as T };
+  }
+  const logicalStatus = Number((data as Record<string, unknown> | null)?.status_code);
+  const status = Number.isInteger(logicalStatus) && logicalStatus >= 100 && logicalStatus <= 599
+    ? logicalStatus
+    : response.status;
+  return { status, data };
+}
+
+/**
  * Server-only binary bridge used for private verification evidence.
  *
  * The ordinary `coreCall` intentionally insists on JSON. Evidence is the one

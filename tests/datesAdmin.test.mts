@@ -68,6 +68,14 @@ const EXPECTED_DATES_ACTIONS = [
   "dates_external_event_update",
   "dates_external_event_command",
   "dates_external_event_place_search",
+  // T-865 P2a: the intake routes that travel as a generic action. Creating an
+  // intake and reading a flyer have their own routes and are not listed.
+  "dates_event_intake_list",
+  "dates_event_intake_detail",
+  "dates_event_intake_lease",
+  "dates_event_intake_reject",
+  "dates_event_intake_publish",
+  "dates_event_intake_usage",
 ] as const;
 
 test("retired and inactive activity types are readable but never newly assigned", () => {
