@@ -12,14 +12,19 @@ rule; the provider is the Core lane's contract `dates-event-intake-admin-v1`.
 
 ## Release boundary
 
-- Provider: Core branch `claude/t865-p2-core` (T-884), tip
-  `285b14a87c2e9977130d4b8a0bae19cb8bbb18b9`. Core is released first.
+- Provider: Core branch `claude/t865-p2-core` (T-884, T-886), tip
+  `32d418cff7a68217d9358959c297a469139586f0`. Core is released first, and this
+  console needs that Core or a later one: it requires the `existing` marker on
+  the create receipt and `suggestions_enabled` on the queue, which an earlier
+  Core does not serve (a create would then read as "not known" and the queue as
+  unreadable).
 - Everything is inert while `dates_external_admin_drafts_enabled` is false, which
   is Core's default: no intake can be created or published, nothing is stored and
   the worker has nothing to do. Deploying this console enables nothing.
 - Publishing a draft also needs the P1 switch `dates_external_publishing_enabled`.
-- The two configuration bodies of the P1 corpus carry 41 settings from this Core
-  on. A console without this change still reads them (unknown rows fall into the
+- The two configuration bodies of the P1 corpus carry 50 settings from this Core
+  on (the 33 of P1, the eight of the admin channel, the nine of the member
+  channel). A console without this change still reads them (unknown rows fall into the
   number field of the P1 page), which is why this console ships with Core.
 
 ## Routes
@@ -150,9 +155,24 @@ that was answered, when one was.
   tabs, a clock its user sets and storage that is neither atomic nor
   trustworthy. **That a source cannot become two open drafts is Core's
   guarantee**: Core answers an identical resubmission by the same operator,
-  while an open draft of the same source exists, with that draft (T-886; the
-  console consumes the marker of that answer with Core's next corpus pin). The
-  console does only what is safe and useful:
+  while an open draft of the same source exists, with that draft - the
+  ordinary create receipt with `existing: true` and the draft's id, revision
+  and status as they are now (Core's proof:
+  `tests/dates_event_intake_resubmission_storage_test.php`). The console keeps
+  no state for it and does only what is safe and useful:
+  - the create receipt is bound, not closed: `success`, the intake's id,
+    revision and status, the audit id and the two markers `replayed` and
+    `existing` are required and checked, any other key is tolerated. A new
+    draft is revision 1 and `received`; an existing one is open. A body
+    without the marker, or one that calls an ended draft "existing", is not a
+    receipt: the outcome is not known;
+  - a receipt takes the operator to that intake's review screen
+    (`datesIntakeLanding`). When it carried `existing: true` the screen says,
+    once, that the source had already been submitted and that this is its
+    draft as it is now - information, not a success message for a new
+    submission and not an error. That is remembered in memory for exactly
+    that intake: it is never read from the address, and a reload or a later
+    create forgets it;
   - while the panel is open, `createDatesIntakeSourceAttempts`
     (`lib/datesIntakeConsole.ts`) keeps the key across every outcome that is
     not known, so sending the same source again is the same request. Core's
@@ -164,7 +184,9 @@ that was answered, when one was.
     only; on a retry they are not known;
   - after an unknown outcome a reminder is kept in the browser for the
     signed-in operator ("your submission at HH:MM may have arrived - check the
-    queue", with the link). It holds a time and a kind of source - no key, no
+    queue, or simply submit the same source again", with the link). Submitting
+    again after a reload is a new request under a new key, and that is fine:
+    Core answers it with the open draft. It holds a time and a kind of source - no key, no
     content, no file name - is shown only to that operator, gates nothing,
     decides nothing, is never compared with the clock and can be dismissed at
     any time.
