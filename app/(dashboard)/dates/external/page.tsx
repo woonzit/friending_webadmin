@@ -93,7 +93,7 @@ export default function DatesExternalEventsPage() {
       {data.events.length === 0 ? <section className="panel"><p>{t(data.total === 0 ? "empty" : "emptyPage")}</p></section> : <div className="table-wrap"><table className="data-table">
         <thead><tr><th>{t("columns.event")}</th><th>{t("columns.status")}</th><th>{t("columns.venue")}</th><th>{t("columns.start")}</th><th>{t("columns.counts")}</th><th>{t("columns.recheck")}</th></tr></thead>
         <tbody>{data.events.map((row) => <tr key={row.external_event_id}>
-          <td><Link href={`/dates/external/${row.external_event_id}`}>{row.title}</Link><div><span className="badge badge-demo">{t("badge")}</span></div><small>{row.organizer_name}</small></td>
+          <td><Link href={`/dates/external/${row.external_event_id}`}>{row.title}</Link><div><span className="badge badge-demo">{t("badge")}</span>{row.ai_assisted && <span className="badge badge-warning">{t("aiBadge")}</span>}</div><small>{row.organizer_name}</small></td>
           <td>{t(`statusValues.${row.status}`)}<div><small>{t(`tierValues.${row.verification_tier}`)}</small></div></td>
           <td>{row.venue_name}<div><small>{row.city} · {row.country_code}</small></div></td>
           <td><time dateTime={row.start_local}>{new Intl.DateTimeFormat(locale, { timeZone: row.timezone, dateStyle: "medium", timeStyle: "short" }).format(row.start_at * 1000)}</time><div><small>{row.timezone}</small></div></td>

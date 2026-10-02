@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import React from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatDate } from "@/lib/format";
@@ -7,7 +8,7 @@ import type { DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
 
 /** Only the validated, deliberately safe Core projection reaches this panel. */
 export default function DatesExternalProvenance({ event }: { event: DatesExternalDetailRow }) {
-  const t = useTranslations("datesAdmin.external"), locale = useLocale();
+  const t = useTranslations("datesAdmin.external"), channels = useTranslations("datesAdmin.intake.channelValues"), locale = useLocale();
   return <section className="panel dates-external-fields">
     <h2>{t("provenance.title")}</h2>
     <dl className="dates-external-facts">
@@ -18,6 +19,10 @@ export default function DatesExternalProvenance({ event }: { event: DatesExterna
       <dt>{t("provenance.channel")}</dt><dd>{t(`channelValues.${event.credit.channel}`)}</dd>
       <dt>{t("provenance.assistance")}</dt><dd>{event.ai_assisted
         ? <><span className="badge badge-warning">{t("aiBadge")}</span> {t("provenance.aiAssisted")}</> : t("provenance.noAi")}</dd>
+      {/* The way back to the intake the event was drafted from; a manual event has none. */}
+      {event.intake && <><dt>{t("provenance.intake")}</dt><dd>
+        <Link href={`/dates/intakes/${event.intake.intake_id}`}>{t("provenance.intakeLink")}</Link>
+        {" · "}{channels(event.intake.channel)} · {t("provenance.intakeEvent", { index: event.intake.event_index + 1 })}</dd></>}
       <dt>{t("provenance.venue")}</dt><dd>{event.venue.place_id === null ? t("provenance.venuePin")
         : <>{t("provenance.venuePlaces")} <code>{event.venue.place_id}</code></>}</dd>
       <dt>{t("form.sourceTitle")}</dt><dd>{event.sources.map((source) => <p key={source.source_id}>

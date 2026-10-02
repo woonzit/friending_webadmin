@@ -8,7 +8,7 @@ import DatesExternalProvenance from "../components/DatesExternalProvenance.tsx";
 import DatesIntakeEventPanel, { datesIntakeFieldVerified } from "../components/DatesIntakeEventPanel.tsx";
 import { DatesIntakeInputsPanel, DatesIntakeRunsPanel, DatesIntakeStatusPanel } from "../components/DatesIntakePanels.tsx";
 import DatesIntakeRefusal from "../components/DatesIntakeRefusal.tsx";
-import { decodeDatesExternalDetail } from "../lib/datesExternalAdmin.ts";
+import { decodeDatesActivityOriginDetail, decodeDatesExternalDetail, decodeDatesExternalList } from "../lib/datesExternalAdmin.ts";
 import { DATES_EXTERNAL_CATEGORIES } from "../lib/datesExternalInput.ts";
 import {
   DATES_INTAKE_EVIDENCE_FIELDS, DATES_INTAKE_KNOWN_ATTENDANCE_MODES, DATES_INTAKE_KNOWN_LINK_FIELDS, DATES_INTAKE_KNOWN_PROHIBITED_CATEGORIES,
@@ -159,23 +159,47 @@ test("the review screen says in both languages that the content is AI-extracted,
   }
 });
 
-test("the published event carries the AI-assisted label and its Places venue on both detail surfaces", () => {
+test("the published event carries the AI-assisted label, its Places venue and the way back to its intake on both detail surfaces", () => {
   const body = fixture("admin-external-detail-ai-assisted");
   const event = decodeDatesExternalDetail(body, body.event.external_event_id)!.event;
+  const embedded = fixture("admin-activity-detail-ai-assisted");
+  const activity = decodeDatesActivityOriginDetail(embedded, embedded.activity.activity_id, ["dates_external_event_read", "dates_external_event_manage"])!.external!;
   for (const locale of LOCALES) {
-    const copy = messagesOf(locale).datesAdmin.external;
-    const html = render(locale, createElement(DatesExternalProvenance, { event }));
-    assert.ok(html.includes(escaped(copy.aiBadge)) && html.includes(escaped(copy.provenance.aiAssisted)));
-    assert.equal(html.includes(escaped(copy.provenance.noAi)), false);
-    assert.ok(html.includes(escaped(copy.provenance.venuePlaces)) && html.includes(event.venue.place_id!));
-    assert.ok(html.includes(escaped(copy.provenance.adminEntered)), "published by an administrator, not credited to a member");
+    const copy = messagesOf(locale).datesAdmin.external, channels = messagesOf(locale).datesAdmin.intake.channelValues;
+    // The same panel serves the external detail and the activity detail; both genuine bodies render the same provenance.
+    for (const source of [event, activity]) {
+      const html = render(locale, createElement(DatesExternalProvenance, { event: source }));
+      assert.ok(html.includes(escaped(copy.aiBadge)) && html.includes(escaped(copy.provenance.aiAssisted)));
+      assert.equal(html.includes(escaped(copy.provenance.noAi)), false);
+      assert.ok(html.includes(escaped(copy.provenance.venuePlaces)) && html.includes(source.venue.place_id!));
+      assert.ok(html.includes(escaped(copy.provenance.adminEntered)), "published by an administrator, not credited to a member");
+      // The link back to the intake the event was drafted from, its channel in words and which of its events this was.
+      assert.ok(html.includes(`<a href="/dates/intakes/${source.intake!.intake_id}">${escaped(copy.provenance.intakeLink)}</a>`));
+      assert.ok(html.includes(escaped(copy.provenance.intake)) && html.includes(escaped(channels.admin_draft)));
+      assert.ok(html.includes(escaped(copy.provenance.intakeEvent.replace("{index}", "1"))), "Core's index 0 is the first event");
+      assert.doesNotMatch(html.replace(/href="[^"]*"/g, ""), /admin_draft|xin_/, "no machine value as text");
+    }
+    // DERIVED: an event published from a member's suggestion names that channel (no genuine body until P2b).
+    const member = render(locale, createElement(DatesExternalProvenance, { event: { ...event, intake: { ...event.intake!, channel: "member_suggestion", event_index: 2 } } }));
+    assert.ok(member.includes(escaped(channels.member_suggestion)) && member.includes(escaped(copy.provenance.intakeEvent.replace("{index}", "3"))));
   }
   // A manually entered event still says so.
   const manual = JSON.parse(readFileSync(new URL("./fixtures/dates_external_admin_wire/admin-detail-admin.json", import.meta.url), "utf8"));
   const html = render("en", createElement(DatesExternalProvenance, { event: decodeDatesExternalDetail(manual, manual.event.external_event_id)!.event }));
   assert.ok(html.includes(escaped(messagesOf("en").datesAdmin.external.provenance.noAi)) && html.includes(escaped(messagesOf("en").datesAdmin.external.provenance.venuePin)));
   assert.equal(html.includes(messagesOf("en").datesAdmin.external.aiBadge), false);
-  // The badge is on the editor page header, the activity detail and the activities list - where Core serves the flag.
+  // ...and has no intake to link to (Core serves `intake: null`).
+  assert.equal(manual.event.intake, null);
+  assert.doesNotMatch(html, /\/dates\/intakes\//);
+  assert.equal(html.includes(escaped(messagesOf("en").datesAdmin.external.provenance.intake)), false);
+  // The badge is on the external list row, the editor page header, the activity detail and the Activities list.
+  assert.match(readFileSync(new URL("../app/(dashboard)/dates/external/page.tsx", import.meta.url), "utf8"),
+    /<span className="badge badge-demo">\{t\("badge"\)\}<\/span>\{row\.ai_assisted && <span className="badge badge-warning">\{t\("aiBadge"\)\}<\/span>\}/);
+  // The genuine list with an AI-assisted row decodes with the flag the badge reads; every row of the manual lists has it false.
+  const assistedList = fixture("admin-external-list-ai-assisted");
+  assert.deepEqual(decodeDatesExternalList(assistedList, { page: 1, limit: 40 })!.events.map((row) => row.ai_assisted), [true]);
+  const manualList = JSON.parse(readFileSync(new URL("./fixtures/dates_external_admin_wire/admin-list-admin.json", import.meta.url), "utf8"));
+  assert.ok(decodeDatesExternalList(manualList, { page: manualList.page, limit: manualList.limit })!.events.every((row) => row.ai_assisted === false));
   assert.match(readFileSync(new URL("../components/DatesExternalEditorPage.tsx", import.meta.url), "utf8"), /event\.ai_assisted && <span className="badge badge-warning">\{t\("aiBadge"\)\}/);
   assert.match(readFileSync(new URL("../app/(dashboard)/dates/[activityId]/page.tsx", import.meta.url), "utf8"), /data\.external_event\.ai_assisted && <span className="badge badge-warning">\{external\("aiBadge"\)\}/);
   assert.match(readFileSync(new URL("../app/(dashboard)/dates/page.tsx", import.meta.url), "utf8"), /row\.host === null && row\.ai_assisted && <span className="badge badge-warning">\{external\("aiBadge"\)\}/);

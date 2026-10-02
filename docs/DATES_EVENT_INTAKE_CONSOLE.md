@@ -13,7 +13,7 @@ rule; the provider is the Core lane's contract `dates-event-intake-admin-v1`.
 ## Release boundary
 
 - Provider: Core branch `claude/t865-p2-core` (T-884), tip
-  `06c8c3eaa51785b097b0005d3a23322ed4853179`. Core is released first.
+  `285b14a87c2e9977130d4b8a0bae19cb8bbb18b9`. Core is released first.
 - Everything is inert while `dates_external_admin_drafts_enabled` is false, which
   is Core's default: no intake can be created or published, nothing is stored and
   the worker has nothing to do. Deploying this console enables nothing.
@@ -106,13 +106,26 @@ A flyer is private evidence.
 - A multi-event intake is published one event at a time; `complete` says that an
   event is the last one the reviewer takes from it.
 
+## The published event
+
+From Core `3d4a0b40` on, the Admin projection of an external event says where
+it came from:
+
+- every row of `dates_external_event_list` ends with `ai_assisted` (boolean);
+  the list shows the AI-assisted badge for a true row;
+- the detail, and the `external_event` the activity detail embeds, end with
+  `intake`: null for a manual event, otherwise exactly
+  `{intake_id, channel, event_index}`. The provenance panel links back to
+  `/dates/intakes/<intake_id>` and names the channel and which of the intake's
+  events it was. Core derives the label and the reference from the same ledger
+  record, so the decoder refuses one without the other.
+
+Both keys are closed like the rest of the projection. A console without this
+change refuses the new list and detail bodies (closed key sets), so this console
+ships with that Core.
+
 ## What Core does not serve yet
 
-- The external-event list row has no `ai_assisted`, so the list shows no badge;
-  the detail, the activity detail and the Activities list do.
-- The external-event detail carries no intake id or channel, so it cannot link
-  back to the intake it was drafted from. The intake links forward to its
-  published events.
 - `sources` still has one row of kind `admin` for an event published from an
   intake. The console's decoder already accepts up to twenty rows and the six
   kinds.

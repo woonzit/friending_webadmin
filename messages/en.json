@@ -8148,7 +8148,10 @@
         "aiAssisted": "Drafted by AI from a submitted source; a person checked it against the source and published it.",
         "venue": "Where the venue comes from",
         "venuePin": "A pin an administrator confirmed",
-        "venuePlaces": "Google Places, as the intake resolved it and the reviewer left it:"
+        "venuePlaces": "Google Places, as the intake resolved it and the reviewer left it:",
+        "intake": "Drafted from",
+        "intakeLink": "Open the intake",
+        "intakeEvent": "event {index} of the intake"
       },
       "moderation": {
         "target": "External event", "nonmember": "External organizer — not a member account",

@@ -8148,7 +8148,10 @@
         "aiAssisted": "A vázlatát MI készítette egy beküldött forrásból; ember vetette össze a forrással, és ő publikálta.",
         "venue": "A helyszín eredete",
         "venuePin": "Adminisztrátor által megerősített jelölő",
-        "venuePlaces": "Google Places, ahogy a beküldés azonosította, és az ellenőr változatlanul hagyta:"
+        "venuePlaces": "Google Places, ahogy a beküldés azonosította, és az ellenőr változatlanul hagyta:",
+        "intake": "Ebből a beküldésből készült",
+        "intakeLink": "Beküldés megnyitása",
+        "intakeEvent": "a beküldés {index}. eseménye"
       },
       "moderation": {
         "target": "Külső esemény", "nonmember": "Külső szervező — nem tagi fiók",
