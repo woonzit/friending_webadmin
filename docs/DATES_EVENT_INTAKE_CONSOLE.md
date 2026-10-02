@@ -145,15 +145,35 @@ any refusal of the bridge itself, a 5xx, `dates-admin-command-in-progress`,
 receipt lookup) and any token outside the list. The notice shows the token
 that was answered, when one was.
 
-- **Create** ("Draft from source"). The source's identity is held by
-  `createDatesIntakeSourceAttempts` (`lib/datesIntakeConsole.ts`). It is retired
-  by Core's receipt, by a definitive refusal, or by the operator's explicit
-  "give this request up" - and by nothing else. While an attempt is not known
-  the source is locked, so the retry is the same request with the same key.
-  Two refusals Core raises before the receipt lookup from state that can change
-  between attempts (`dates-intake-admin-drafts-disabled`, and
-  `dates-intake-image-invalid`, which also covers a flyer that arrived
-  incomplete) settle a first attempt only; on a retry they are not known.
+- **Create** ("Draft from source"). A create has no revision to fence it, so
+  its identity is durable (`lib/datesIntakeTombstone.ts`). Before a request
+  leaves, the console writes a *tombstone* to the browser's `localStorage`,
+  scoped to the signed-in operator: the idempotency key, the time of the first
+  and the latest attempt, the input kind, the locale and a SHA-256 fingerprint
+  of the inputs - for a flyer its digest, size and name. Never the bytes, the
+  link or the text. While a tombstone exists the source panel shows it first,
+  on any page and after any reload, and nothing else can be submitted by that
+  operator from that browser. It is retired only by:
+  1. Core's receipt for the same request: the operator enters the same source
+     again (a flyer is picked again and must hash the same; a different source
+     is not sent at all) and it goes out under the stored key and locale. Not
+     offered after six days, when Core no longer keeps the receipt.
+  2. Core's definitive no-write refusal. Two refusals Core raises before the
+     receipt lookup from state that can change between attempts
+     (`dates-intake-admin-drafts-disabled`, and `dates-intake-image-invalid`,
+     which also covers a flyer that arrived incomplete) settle a first attempt
+     only; on a resend they are not known.
+  3. A queue read made for it (`readDatesIntakeTombstoneEvidence`), at least
+     three minutes after the latest attempt: admin drafts newest first until
+     past the submission's time (with five minutes' clock allowance), and for
+     each one Core's detail says who created it. If it shows no draft of this
+     operator since the submission, the record may be closed as "did not
+     arrive"; if it shows some, they are listed with links and the record may
+     be closed as "it is in the queue". Any row, page or detail the read
+     cannot be sure of makes it "unconfirmed" and closes nothing, and a read
+     does not cover an attempt made after it.
+  The operator's wish alone retires nothing; a record the console cannot read
+  blocks the panel and is never cleared silently.
 - **Reject** keeps its command (key included) until it is settled; the retry is
   that command.
 - **Publish** is the P1 journal, unchanged.

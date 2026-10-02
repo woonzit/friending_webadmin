@@ -1222,7 +1222,7 @@
             "guidance": "The entry is offered only to administrators and only while the draft switch is on. The AI never publishes, and a flyer is never shown publicly.",
             "actions": {
               "1": "Prefer the organizer's or the venue's own page; pages behind a login cannot be read.",
-              "2": "After an unanswered request send the same one again: it cannot create a second draft."
+              "2": "After an unanswered request the panel keeps a record of it in this browser and shows it first: send the same source again, or look for it in the queue."
             }
           }
         }
@@ -2945,7 +2945,7 @@
             "guidance": "The entry is offered only to administrators and only while the draft switch is on. The AI never publishes, and a flyer is never shown publicly.",
             "actions": {
               "1": "Prefer the organizer's or the venue's own page; pages behind a login cannot be read.",
-              "2": "After an unanswered request send the same one again: it cannot create a second draft."
+              "2": "After an unanswered request the panel keeps a record of it in this browser and shows it first: send the same source again, or look for it in the queue."
             }
           },
           "queue": {
@@ -9362,12 +9362,30 @@
           "text": "Write between 1 and 500 characters.",
           "imageCount": "Choose one or two photos.",
           "imageSize": "A photo is empty or larger than 10 MiB.",
-          "imageType": "A file is not a JPEG, PNG, WEBP or HEIC image."
+          "imageType": "A file is not a JPEG, PNG, WEBP or HEIC image.",
+          "identity": "The console could not confirm who is signed in, so it cannot keep the record a submission needs. Nothing was sent; reload the page.",
+          "storage": "This browser cannot keep the record a submission needs, or holds one that cannot be read. Nothing was sent.",
+          "mismatch": "This is not the source of the waiting submission: its content differs. Nothing was sent.",
+          "expired": "The waiting submission is too old to be sent again. Nothing was sent."
         },
-        "locked": "The source stays locked until this is settled, so that the retry is the same request.",
-        "checkQueue": "Open the intake queue to see whether the draft is there",
-        "discard": "Give this request up and start over",
-        "discardHint": "Give the request up only if the queue does not show the draft: a new request can create a second one."
+        "pending": {
+          "title": "A submission from {time} has no known outcome.",
+          "what": "It was: {kind}.",
+          "unnamedFile": "unnamed file",
+          "copy": "Until its outcome is known, no other source can be submitted by you from this browser. There are three ways on.",
+          "resend": "1. Send the same request again: enter the same source below. It goes out under the same identity, so it finds the draft if it was made and cannot create a second one. A different source is not sent.",
+          "resendFlyer": "1. Send the same request again: pick the same file or files below (and the same line of text, if there was one). The console checks that they are the same before anything is sent; it goes out under the same identity, so it cannot create a second draft.",
+          "resendExpired": "1. This submission is more than six days old. Core no longer keeps its receipt, so it cannot be sent again.",
+          "check": "2. Look for it in the queue",
+          "queueLink": "Open the intake queue",
+          "early": "The last attempt may still be arriving. Look again after {time}.",
+          "unconfirmed": "The queue could not be read completely, so nothing is known yet. Try again.",
+          "none": "3. The queue, read at {checked}, shows no draft created by you since {since}: the submission did not arrive.",
+          "discard": "Close this submission: it did not arrive",
+          "found": "3. The queue, read at {checked}, shows these drafts created by you since {since}. If the submission arrived, it is one of them:",
+          "foundRetire": "Close this submission: it is in the queue",
+          "blocked": "This browser holds a record of an earlier submission of yours that cannot be read, or cannot keep such a record at all. Nothing can be submitted from here until the stored data of this site is cleared in the browser."
+        }
       },
       "usage": {
         "open": "AI usage",

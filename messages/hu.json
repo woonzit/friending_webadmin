@@ -1222,7 +1222,7 @@
             "guidance": "A belépési pont csak adminisztrátoroknak és csak bekapcsolt vázlatkapcsoló mellett érhető el. Az MI soha nem publikál, a plakát soha nem nyilvános.",
             "actions": {
               "1": "A szervező vagy a helyszín saját oldalát részesítsd előnyben; a bejelentkezés mögötti oldal nem olvasható.",
-              "2": "Megválaszolatlan kérés után ugyanazt küldd újra: második vázlatot nem hozhat létre."
+              "2": "Megválaszolatlan kérés után a panel feljegyzést őriz róla ebben a böngészőben, és azt mutatja elsőként: küldd el újra ugyanazt a forrást, vagy keresd meg a beküldések között."
             }
           }
         }
@@ -2945,7 +2945,7 @@
             "guidance": "A belépési pont csak adminisztrátoroknak és csak bekapcsolt vázlatkapcsoló mellett érhető el. Az MI soha nem publikál, a plakát soha nem nyilvános.",
             "actions": {
               "1": "A szervező vagy a helyszín saját oldalát részesítsd előnyben; a bejelentkezés mögötti oldal nem olvasható.",
-              "2": "Megválaszolatlan kérés után ugyanazt küldd újra: második vázlatot nem hozhat létre."
+              "2": "Megválaszolatlan kérés után a panel feljegyzést őriz róla ebben a böngészőben, és azt mutatja elsőként: küldd el újra ugyanazt a forrást, vagy keresd meg a beküldések között."
             }
           },
           "queue": {
@@ -9362,12 +9362,30 @@
           "text": "1 és 500 karakter közötti szöveget írj.",
           "imageCount": "Egy vagy két fotót válassz.",
           "imageSize": "Az egyik fotó üres, vagy nagyobb 10 MiB-nál.",
-          "imageType": "Az egyik fájl nem JPEG-, PNG-, WEBP- vagy HEIC-kép."
+          "imageType": "Az egyik fájl nem JPEG-, PNG-, WEBP- vagy HEIC-kép.",
+          "identity": "A konzol nem tudta megerősíteni, ki van bejelentkezve, ezért nem tudja megőrizni a beküldéshez szükséges feljegyzést. Semmi nem ment el; töltsd újra az oldalt.",
+          "storage": "Ez a böngésző nem tudja megőrizni a beküldéshez szükséges feljegyzést, vagy olvashatatlant őriz. Semmi nem ment el.",
+          "mismatch": "Ez nem a várakozó beküldés forrása: a tartalma eltér. Semmi nem ment el.",
+          "expired": "A várakozó beküldés túl régi ahhoz, hogy újra el lehessen küldeni. Semmi nem ment el."
         },
-        "locked": "A forrás zárolva marad, amíg ez el nem dől, hogy az újraküldés ugyanaz a kérés legyen.",
-        "checkQueue": "Nyisd meg a beküldések listáját, és nézd meg, ott van-e a vázlat",
-        "discard": "Lemondok erről a kérésről, és újrakezdem",
-        "discardHint": "Csak akkor mondj le a kérésről, ha a listában nincs ott a vázlat: egy új kérés második vázlatot hozhat létre."
+        "pending": {
+          "title": "A(z) {time} időpontú beküldés kimenetele nem ismert.",
+          "what": "Ez volt: {kind}.",
+          "unnamedFile": "névtelen fájl",
+          "copy": "Amíg a kimenetele nem ismert, ebből a böngészőből nem küldhetsz be másik forrást. Három módon lehet továbblépni.",
+          "resend": "1. Küldd el újra ugyanazt a kérést: add meg lent ugyanazt a forrást. Ugyanazzal az azonosítóval megy el, így megtalálja a vázlatot, ha létrejött, és másodikat nem hozhat létre. Más forrást a konzol nem küld el.",
+          "resendFlyer": "1. Küldd el újra ugyanazt a kérést: válaszd ki lent ugyanazt a fájlt vagy fájlokat (és ugyanazt a szövegsort, ha volt). A konzol küldés előtt ellenőrzi, hogy ugyanazok-e; ugyanazzal az azonosítóval megy el, így második vázlatot nem hozhat létre.",
+          "resendExpired": "1. Ez a beküldés hat napnál régebbi. A Core már nem őrzi a nyugtáját, ezért nem küldhető el újra.",
+          "check": "2. Megkeresem a beküldések között",
+          "queueLink": "Beküldések megnyitása",
+          "early": "Az utolsó kísérlet még megérkezhet. Nézd meg újra ezután: {time}.",
+          "unconfirmed": "A beküldések listáját nem sikerült hiánytalanul beolvasni, ezért még semmi nem tudható. Próbáld újra.",
+          "none": "3. A beküldések listája ({checked}) szerint {since} óta nem hoztál létre vázlatot: a beküldés nem érkezett meg.",
+          "discard": "Lezárom ezt a beküldést: nem érkezett meg",
+          "found": "3. A beküldések listája ({checked}) szerint {since} óta ezeket a vázlatokat hoztad létre. Ha a beküldés megérkezett, ezek egyike az:",
+          "foundRetire": "Lezárom ezt a beküldést: ott van a listában",
+          "blocked": "Ez a böngésző egy korábbi beküldésedről olyan feljegyzést őriz, amely nem olvasható, vagy egyáltalán nem tud ilyen feljegyzést tárolni. Innen semmi nem küldhető be, amíg a böngészőben nem törlöd ennek az oldalnak a tárolt adatait."
+        }
       },
       "usage": {
         "open": "MI-költés",

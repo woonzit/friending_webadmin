@@ -102,15 +102,21 @@ export async function readDatesAiUsage(send: DatesIntakeSend, monthFilter: strin
   return { kind: "ready", operator, usage, awaitingBudget };
 }
 
-/** Whether the "Draft from source" entry is offered, and why not when it is not. */
-export type DatesIntakeDraftEntry = { state: "available" } | { state: "disabled" } | { state: "noCapability" } | { state: "unknown" };
+/**
+ * Whether the "Draft from source" entry is offered, and why not when it is not.
+ * `actor` is the signed-in operator as Core names them (null when the identity
+ * read failed): the record of an unanswered submission is kept per operator.
+ * `serverNow` is Core's clock at the read, when the read carried one.
+ */
+export type DatesIntakeDraftEntry = { state: "available" | "disabled" | "noCapability" | "unknown"; actor: string | null; serverNow: number | null };
 export async function readDatesIntakeDraftEntry(send: DatesIntakeSend, signal?: AbortSignal): Promise<DatesIntakeDraftEntry> {
   // The usage read is the one every Dates role may make that carries the switch.
   const [response, identity] = await pair(send, "dates_event_intake_usage", {}, signal);
   const operator = datesIntakeOperator(identity), usage = projectDatesAiUsage(response, null);
-  if (!operator || !usage) return operator && !operator.manage ? { state: "noCapability" } : { state: "unknown" };
-  if (!operator.manage) return { state: "noCapability" };
-  return { state: usage.drafts_enabled ? "available" : "disabled" };
+  const who = { actor: operator?.principal.email ?? null, serverNow: usage?.server_now ?? null };
+  if (!operator || !usage) return { state: operator && !operator.manage ? "noCapability" : "unknown", ...who };
+  if (!operator.manage) return { state: "noCapability", ...who };
+  return { state: usage.drafts_enabled ? "available" : "disabled", ...who };
 }
 
 // ---------------------------------------------------------------- commands
@@ -238,54 +244,6 @@ export async function submitDatesIntakeSource(post: DatesIntakePost, draft: Date
 
 export function createDatesIntakeSourceKey(): string {
   return createAdminIdempotencyKey("dates-intake-create");
-}
-
-/**
- * Refusals Core's create route raises BEFORE it looks the request's identity
- * up, from something that can differ between two attempts of one request: the
- * default-off switch, and a flyer that did not arrive whole. For the first
- * attempt of an identity they prove that nothing was written. After an attempt
- * whose outcome is unknown they say nothing about that earlier attempt.
- */
-const CREATE_REFUSED_BEFORE_REPLAY: readonly string[] = ["dates-intake-admin-drafts-disabled", "dates-intake-image-invalid"];
-
-/**
- * The identity of one source across its attempts. The key is minted for the
- * first attempt and retired by exactly three things: Core's receipt, Core's
- * definitive no-write refusal, or the operator's explicit decision to give
- * the request up. A lost, unreadable, in-progress or transport answer keeps
- * it, and keeps the source locked, so that the retry is the same request.
- */
-export type DatesIntakeSourceAttempts = {
-  /** An earlier attempt has no known outcome: the source may not change until it is settled or given up. */
-  readonly unanswered: boolean;
-  send(post: DatesIntakePost, draft: DatesIntakeSourceDraft, files: readonly Blob[], locale: "en" | "hu"): Promise<DatesIntakeCommandOutcome<DatesIntakeCreateReceipt>>;
-  /** The operator edited the source: a new request, a new identity. Refused (false) while an attempt is unanswered. */
-  changed(): boolean;
-  /** The operator gives the unanswered request up; the next one is a new command. */
-  discard(): void;
-};
-
-export function createDatesIntakeSourceAttempts(mint: () => string = createDatesIntakeSourceKey): DatesIntakeSourceAttempts {
-  let key = "", unanswered = false;
-  return {
-    get unanswered() { return unanswered; },
-    async send(post, draft, files, locale) {
-      if (key === "") key = mint();
-      let outcome = await submitDatesIntakeSource(post, draft, files, locale, key);
-      if (outcome.kind === "refused" && unanswered && CREATE_REFUSED_BEFORE_REPLAY.includes(outcome.error))
-        outcome = { kind: "uncertain", error: outcome.error };
-      if (outcome.kind === "uncertain") unanswered = true;
-      else { key = ""; unanswered = false; }
-      return outcome;
-    },
-    changed() {
-      if (unanswered) return false;
-      key = "";
-      return true;
-    },
-    discard() { key = ""; unanswered = false; },
-  };
 }
 
 // ---------------------------------------------------------------- pacing
