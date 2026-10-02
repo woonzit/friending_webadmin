@@ -31,15 +31,14 @@ import {
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
 import { datesCommandOutcome, decodeDatesExternalDetail, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
-import { prepareDatesKeptCommand, readDatesKeptCommand, runDatesKeptCommand, type DatesKeptCommand, type DatesKeptCommandRead } from "@/lib/datesKeptCommand";
 import { datesExternalBrowserStorage } from "@/lib/datesExternalMutations";
 import { datesExternalResolutionMatches, prepareDatesExternalResolution, readDatesExternalResolution, readDatesExternalResolutionAccess,
   runDatesExternalResolution, type DatesExternalResolutionPending, type DatesExternalResolutionRead } from "@/lib/datesExternalModeration";
 import { datesExternalMessageResolutionBaseline, datesExternalMessageResolutionMayStart, prepareDatesExternalMessageResolution,
   readDatesExternalMessageResolution, readDatesExternalMessageResolutionAccess, runDatesExternalMessageResolution,
   type DatesExternalMessageResolutionPending, type DatesExternalMessageResolutionRead } from "@/lib/datesExternalMessageModeration";
-import { DatesCaseReadFence, datesCaseDetail, datesEvidenceRead, datesLegalHoldAllowed,
-  datesConsoleCommandReceipt, isDatesConsoleCommand,
+import { DatesCaseReadFence, datesCaseDetail, datesEvidenceRead, datesLegalHoldAllowed, datesLegalHoldReceipt,
+  datesConsoleCommandReceipt, datesTrailEvidenceReceipt, isDatesConsoleCommand,
   type DatesCaseDetail, type DatesEvidenceRead } from "@/lib/datesModerationRead";
 
 type Feedback = { tone: "success" | "error"; text: string };
@@ -79,10 +78,12 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [confirmed, setConfirmed] = useState<ConfirmedOperation | null>(null);
-  // The two case commands no revision fences in Core (legal hold, trail capture). A repeat under a new key would be
-  // applied again, so the command - key included - is saved in the journal's storage before it leaves. This state only
-  // mirrors what the storage holds; it is read on every load, so a reload or another case page shows it too.
-  const [kept, setKept] = useState<DatesKeptCommandRead>({ kind: "blocked" });
+  // The two case commands no revision fences in Core (a Core finding, reported to lead). While this page is open, a
+  // command whose outcome is not known is kept - key included - so that it can be sent again as the same request,
+  // which Core answers with the first attempt's receipt. It is a convenience of the open page: nothing is locked, it
+  // can be dismissed, and it is gone after a reload. That a repeat is not applied twice is for Core to guarantee.
+  const [holdCommand, setHoldCommand] = useState<Record<string, unknown> | null>(null);
+  const [trailCommand, setTrailCommand] = useState<Record<string, unknown> | null>(null);
   const [breakGlass, setBreakGlass] = useState(false);
   const [breakGlassReason, setBreakGlassReason] = useState("");
   const [evidenceSensitive, setEvidenceSensitive] = useState(false);
@@ -160,21 +161,17 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
   }, [caseId, readFence, external]);
 
   useEffect(() => { void load(); return () => { readFence.invalidate(); ++lifetime.current; }; }, [load, readFence]);
-  // The saved command is read whenever the operator is (re)established - after every load, on any case page, after a
-  // reload - so a command that is waiting is shown wherever the operator is.
-  const operatorEmail = principal?.email ?? null;
-  useEffect(() => { if (operatorEmail !== null) setKept(readDatesKeptCommand(datesExternalBrowserStorage(), operatorEmail)); }, [operatorEmail]);
 
   const writeLocked = busy || externalPending.kind !== "empty" || externalNeedsReload
     || messagePending.kind !== "empty" || messageNeedsReload;
 
   /**
-   * One revision-fenced command, sent under a new key each time (Core refuses a stale repeat). `skipped`: nothing was
-   * sent. `abandoned`: it was sent, and the page moved on before the answer. `refused`: an answer that wrote nothing.
-   * `uncertain`: nothing says whether it landed - no answer, an unreadable one, a transport or server failure - so the
-   * page says exactly that and reads the case again. The two commands Core does not fence go through `runKept`.
+   * One command. `skipped`: nothing was sent. `abandoned`: it was sent, and the page moved on before the answer.
+   * `refused`: an answer that wrote nothing. `uncertain`: nothing says whether it landed - no answer, an unreadable
+   * one, a transport or server failure - so the page says exactly that and reads the case again.
+   * `identity` is `kept` for the commands the page holds for a same-request retry (see `datesCommandOutcome`).
    */
-  async function mutate(action: string, payload: Record<string, unknown>, successMessage: string) {
+  async function mutate(action: string, payload: Record<string, unknown>, successMessage: string, identity: "kept" | "fresh" = "fresh") {
     if (writeLocked || mutationBusy.current) return "skipped" as const;
     mutationBusy.current = true;
     const ticket = readFence.begin(), currentLifetime = lifetime.current;
@@ -186,14 +183,17 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       try { response = await adminCall(action, payload); } catch { response = null; }
       if (!readFence.accepts(ticket)) return "abandoned" as const;
       const receipt = isDatesConsoleCommand(action) ? datesConsoleCommandReceipt(response, action, caseId, payload.expected_revision) !== null
+        : action === "dates_moderation_legal_hold" ? datesLegalHoldReceipt(response, caseId, payload.action, payload.review_at)
+        : action === "dates_moderation_trail_evidence" ? datesTrailEvidenceReceipt(response, caseId, payload.captured_from, payload.captured_to)
         : response?.success === true;
-      const outcome = datesCommandOutcome(response, receipt, "fresh");
+      const outcome = datesCommandOutcome(response, receipt, identity);
       if (outcome.kind === "refused") {
         setFeedback({ tone: "error", text: t("operationFailed", { error: outcome.error }) });
         return "refused" as const;
       }
       if (outcome.kind === "uncertain") {
-        setFeedback({ tone: "error", text: commandOutcome(outcome.error === null ? "unknown" : "unknownAnswered", { error: outcome.error ?? "" }) });
+        const key = `${identity === "kept" ? "kept" : "unknown"}${outcome.error === null ? "" : "Answered"}`;
+        setFeedback({ tone: "error", text: commandOutcome(key, { error: outcome.error ?? "" }) });
         await load();
         return "uncertain" as const;
       }
@@ -204,52 +204,6 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       mutationBusy.current = false;
       if (currentLifetime === lifetime.current) setBusy(false);
     }
-  }
-
-  const nowSeconds = () => Math.floor(Date.now() / 1000);
-
-  /**
-   * One command Core does not fence, through its saved record: saved before it leaves, sent exactly as saved, and
-   * removed only by its receipt or by a pinned no-land refusal (`runDatesKeptCommand`). First attempt and retry are the
-   * same call. Whatever happens, the page shows what the storage holds afterwards.
-   */
-  async function runKept(command: DatesKeptCommand, successMessage: string) {
-    if (mutationBusy.current) return "skipped" as const;
-    mutationBusy.current = true;
-    const ticket = readFence.begin(), currentLifetime = lifetime.current;
-    setEvidence(null);
-    setBusy(true);
-    setFeedback(null);
-    try {
-      const storage = datesExternalBrowserStorage();
-      const outcome = await runDatesKeptCommand(command, storage, nowSeconds(), adminCall);
-      if (currentLifetime === lifetime.current) setKept(readDatesKeptCommand(storage, command.actor));
-      if (!readFence.accepts(ticket)) return "abandoned" as const;
-      const retained = (outcome.kind === "success" || outcome.kind === "refused") && outcome.retained ? ` ${commandOutcome("retained")}` : "";
-      if (outcome.kind === "success") {
-        setFeedback({ tone: "success", text: `${successMessage}${retained}` });
-        await load();
-      } else if (outcome.kind === "refused") {
-        setFeedback({ tone: "error", text: `${t("operationFailed", { error: outcome.error })}${retained}` });
-      } else if (outcome.kind === "uncertain") {
-        setFeedback({ tone: "error", text: commandOutcome(outcome.error === null ? "kept" : "keptAnswered", { error: outcome.error ?? "" }) });
-        await load();
-      } else setFeedback({ tone: "error", text: commandOutcome(outcome.kind) });
-      return outcome.kind;
-    } finally {
-      mutationBusy.current = false;
-      if (currentLifetime === lifetime.current) setBusy(false);
-    }
-  }
-
-  /** The saved command again, exactly as it was saved: Core replays the first attempt's receipt if it landed. */
-  async function retryKept() {
-    // Only from the page of the case it belongs to: the case is read again afterwards.
-    if (kept.kind !== "pending" || kept.command.body.case_id !== caseId) return;
-    const hold = kept.command.action === "dates_moderation_legal_hold";
-    const result = await runKept(kept.command, t(hold ? "legalHoldUpdated" : "trailEvidenceCaptured"));
-    if (result === "success" && hold) { setHoldReason(""); setLegalBasis(""); setHoldReviewAt(""); }
-    if (result === "success" && !hold) { setTrailFrom(""); setTrailTo(""); setTrailReason(""); setEvidence(null); }
   }
 
   async function claim() {
@@ -331,17 +285,13 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
   async function captureTrailEvidence(event: React.FormEvent) {
     event.preventDefault();
     if (!data || busy || data.case.target_type === "external_event" || isDatesExternalMessageCase(data.case) || !data.case.activity_id) return;
-    // A saved command whose outcome is not known is settled first, and only by the same request.
-    if (kept.kind !== "empty" || !principal) return;
     const capturedFrom = epochFromLocalInput(trailFrom);
     const capturedTo = epochFromLocalInput(trailTo);
     if (!capturedFrom || !capturedTo || capturedTo <= capturedFrom || trailReason.trim().length < 3) {
       setFeedback({ tone: "error", text: t("trailEvidenceInputInvalid") });
       return;
     }
-    // Core checks the case revision for a capture but does not move it, so a repeat under a new key would store a
-    // second snapshot: the command is saved with its key before it leaves.
-    const command = prepareDatesKeptCommand(principal.email, "dates_moderation_trail_evidence", {
+    await sendTrailEvidence({
       case_id: caseId,
       expected_revision: data.case.revision,
       captured_from: capturedFrom,
@@ -349,9 +299,18 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       reason: trailReason.trim(),
       break_glass: data.case.conflict_of_interest && breakGlass,
       idempotency_key: createAdminIdempotencyKey("dates-case-trail-evidence"),
-    }, nowSeconds());
-    if (!command) { setFeedback({ tone: "error", text: t("trailEvidenceInputInvalid") }); return; }
-    const result = await runKept(command, t("trailEvidenceCaptured"));
+    });
+  }
+
+  /**
+   * Core checks the case revision for a capture but does not move it, so a repeat under a new key would store a
+   * second snapshot. The command is sent as it is - first attempt and retry alike - and kept until Core answers.
+   */
+  async function sendTrailEvidence(command: Record<string, unknown>) {
+    if (command.case_id !== caseId) return;
+    const result = await mutate("dates_moderation_trail_evidence", command, t("trailEvidenceCaptured"), "kept");
+    if (result === "skipped") return;
+    setTrailCommand(result === "uncertain" || result === "abandoned" ? command : null);
     if (result === "success") {
       setTrailFrom("");
       setTrailTo("");
@@ -396,8 +355,6 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
 
   function prepareLegalHold(event: React.FormEvent) {
     event.preventDefault();
-    // A saved command whose outcome is not known is settled first, and only by the same request.
-    if (kept.kind !== "empty") return;
     if (writeLocked || !data || !principal || !datesLegalHoldAllowed(data.case, principal, holdAction, breakGlass)) return;
     if (holdReason.trim().length < 3 || legalBasis.trim().length < 3 || (holdAction === "place" && !holdReviewAt)) return;
     setConfirmed({
@@ -424,21 +381,25 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     if (operation.kind === "resolve" && data && isDatesExternalMessageCase(data.case)) {
       await executeMessageResolution(operation); return;
     }
-    if (operation.kind === "legal_hold") {
-      // A legal hold has no revision in Core: under a new key it would be applied again. It is saved with its key
-      // before it leaves and stays saved until Core answers it.
-      setConfirmed(null);
-      const command = principal ? prepareDatesKeptCommand(principal.email, "dates_moderation_legal_hold", operation.payload, nowSeconds()) : null;
-      if (!command) { setFeedback({ tone: "error", text: commandOutcome("invalid") }); return; }
-      const result = await runKept(command, t("legalHoldUpdated"));
-      if (result === "success") { setHoldReason(""); setLegalBasis(""); setHoldReviewAt(""); }
-      return;
-    }
-    const result = await mutate("dates_moderation_resolve", operation.payload, t("resolved"));
+    // A legal hold has no revision in Core: under a new key it would be applied again. It keeps its identity.
+    const result = await mutate(operation.kind === "resolve" ? "dates_moderation_resolve" : "dates_moderation_legal_hold", operation.payload,
+      t(operation.kind === "resolve" ? "resolved" : "legalHoldUpdated"), operation.kind === "legal_hold" ? "kept" : "fresh");
     setConfirmed(null);
-    if (result === "success") {
+    // The newest hold command is the one offered again; one that Core answered leaves nothing to offer.
+    if (operation.kind === "legal_hold" && (result === "uncertain" || result === "abandoned")) setHoldCommand(operation.payload);
+    else if (operation.kind === "legal_hold" && (result === "success" || result === "refused")) setHoldCommand(null);
+    if (result === "success" && operation.kind === "legal_hold") { setHoldReason(""); setLegalBasis(""); setHoldReviewAt(""); }
+    if (result === "success" && operation.kind === "resolve") {
       setResolutionReason(""); setVisibleReasonEn(""); setVisibleReasonHu(""); setRestrictionExpiry("");
     }
+  }
+
+  /** The same legal-hold request again, key included: Core replays the first attempt's receipt if it landed. */
+  async function retryLegalHold() {
+    if (!holdCommand || holdCommand.case_id !== caseId) return;
+    const result = await mutate("dates_moderation_legal_hold", holdCommand, t("legalHoldUpdated"), "kept");
+    if (result === "success" || result === "refused") setHoldCommand(null);
+    if (result === "success") { setHoldReason(""); setLegalBasis(""); setHoldReviewAt(""); }
   }
 
   async function executeExternalResolution(operation: ConfirmedOperation | null, retry: DatesExternalResolutionPending | null = null) {
@@ -545,8 +506,8 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
   );
   const actions = permittedResolutionActions(item, principal);
   const mayResolve = actions.length > 0 && (item.capabilities.can_resolve || (item.conflict_of_interest && canBreakGlass && assignedToMe && leaseActive));
-  // While a command is saved (or the store cannot be read) no other legal hold or capture can be made, on any case.
-  const keptLocked = kept.kind !== "empty";
+  const holdPending = holdCommand !== null && holdCommand.case_id === caseId;
+  const trailPending = trailCommand !== null && trailCommand.case_id === caseId;
   const restrictionActionsHidden = actions.length > 0 && resolutionActions(item).some((action) => !actions.includes(action));
 
   return (
@@ -555,7 +516,6 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       <PageHeader eyebrow={t("eyebrow")} title={item.case_id} subtitle={t("subtitle", { queue: humanizeMachineKey(item.queue), revision: item.revision })} actions={<button className="button button-secondary" onClick={() => void load()} disabled={busy}>{common("refresh")}</button>} />
       <DatesAdminTabs />
       {feedback && <div className={`alert ${feedback.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{feedback.text}</div>}
-      {kept.kind !== "empty" && <DatesUnansweredCommand read={kept} caseId={caseId} now={nowSeconds()} busy={busy} onRetry={() => void retryKept()} />}
       {item.conflict_of_interest && <div className="alert alert-error page-alert"><strong>{t("conflictTitle")}</strong> {t("conflictCopy")}</div>}
       {isExternal && <section className="panel dates-external-fields">
         <span className="badge badge-demo">{external("badge")}</span>
@@ -662,11 +622,12 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       {!isExternal && !isExternalMessage && principal.sensitive_location && hasDatesCapability(principal, "dates_trail_evidence_capture") && item.activity_id && <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("trailEvidenceTitle")}</h2><p>{t("trailEvidenceCopy")}</p></div></div>
         <div className="panel-body">
+          {trailPending && <DatesUnansweredCommand busy={busy} onRetry={() => { if (trailCommand) void sendTrailEvidence(trailCommand); }} onDiscard={() => setTrailCommand(null)} />}
           <form className="dates-evidence-controls" onSubmit={captureTrailEvidence}>
-            <label className="field"><span>{t("trailFrom")}</span><input type="datetime-local" required disabled={keptLocked} value={trailFrom} onChange={(event) => setTrailFrom(event.target.value)} /></label>
-            <label className="field"><span>{t("trailTo")}</span><input type="datetime-local" required disabled={keptLocked} value={trailTo} onChange={(event) => setTrailTo(event.target.value)} /></label>
-            <label className="field"><span>{t("trailReason")}</span><input required minLength={3} maxLength={500} disabled={keptLocked} value={trailReason} onChange={(event) => setTrailReason(event.target.value)} /></label>
-            <button className="button button-danger" type="submit" disabled={writeLocked || !mayCaptureTrail || keptLocked}>{t("captureTrailEvidence")}</button>
+            <label className="field"><span>{t("trailFrom")}</span><input type="datetime-local" required value={trailFrom} onChange={(event) => setTrailFrom(event.target.value)} /></label>
+            <label className="field"><span>{t("trailTo")}</span><input type="datetime-local" required value={trailTo} onChange={(event) => setTrailTo(event.target.value)} /></label>
+            <label className="field"><span>{t("trailReason")}</span><input required minLength={3} maxLength={500} value={trailReason} onChange={(event) => setTrailReason(event.target.value)} /></label>
+            <button className="button button-danger" type="submit" disabled={writeLocked || !mayCaptureTrail}>{t("captureTrailEvidence")}</button>
           </form>
         </div>
       </section>}
@@ -691,13 +652,14 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       {hasDatesCapability(principal, "dates_legal_hold") && <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("legalHoldTitle")}</h2><p>{t("legalHoldCopy")}</p></div></div>
         <form className="panel-body form-grid" onSubmit={prepareLegalHold}>
-          <label className="field"><span>{t("holdAction")}</span><select value={holdAction} disabled={keptLocked} onChange={(event) => setHoldAction(event.target.value)}><option value="place">{t("placeHold")}</option><option value="release" disabled={["new", "in_review", "appealed"].includes(item.status)}>{t("releaseHold")}</option></select></label>
+          {holdPending && <DatesUnansweredCommand busy={busy} onRetry={() => void retryLegalHold()} onDiscard={() => setHoldCommand(null)} />}
+          <label className="field"><span>{t("holdAction")}</span><select value={holdAction} onChange={(event) => setHoldAction(event.target.value)}><option value="place">{t("placeHold")}</option><option value="release" disabled={["new", "in_review", "appealed"].includes(item.status)}>{t("releaseHold")}</option></select></label>
           {["new", "in_review", "appealed"].includes(item.status) && <p className="field-full field-hint">{t("holdReleaseCaseOpen")}</p>}
           {item.conflict_of_interest && !(canBreakGlass && breakGlass) && <p className="field-full alert alert-warning">{t("holdConflictUnavailable")}</p>}
-          {holdAction === "place" && <label className="field"><span>{t("reviewAt")}</span><input type="datetime-local" required disabled={keptLocked} value={holdReviewAt} onChange={(event) => setHoldReviewAt(event.target.value)} /></label>}
-          <label className="field"><span>{t("auditReason")}</span><textarea required disabled={keptLocked} value={holdReason} onChange={(event) => setHoldReason(event.target.value)} /></label>
-          <label className="field"><span>{t("legalBasis")}</span><textarea required disabled={keptLocked} value={legalBasis} onChange={(event) => setLegalBasis(event.target.value)} /></label>
-          <div className="field-full"><button className="button button-danger" type="submit" disabled={writeLocked || keptLocked || !datesLegalHoldAllowed(item, principal, holdAction, breakGlass)}>{t("prepareLegalHold")}</button></div>
+          {holdAction === "place" && <label className="field"><span>{t("reviewAt")}</span><input type="datetime-local" required value={holdReviewAt} onChange={(event) => setHoldReviewAt(event.target.value)} /></label>}
+          <label className="field"><span>{t("auditReason")}</span><textarea required value={holdReason} onChange={(event) => setHoldReason(event.target.value)} /></label>
+          <label className="field"><span>{t("legalBasis")}</span><textarea required value={legalBasis} onChange={(event) => setLegalBasis(event.target.value)} /></label>
+          <div className="field-full"><button className="button button-danger" type="submit" disabled={writeLocked || !datesLegalHoldAllowed(item, principal, holdAction, breakGlass)}>{t("prepareLegalHold")}</button></div>
         </form>
       </section>}
 
