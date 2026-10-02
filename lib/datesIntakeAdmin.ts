@@ -179,8 +179,8 @@ export type DatesIntakeLease = Parsed<typeof leaseShape>;
 const leaseCoherent = (value: DatesIntakeLease) => value.active === (value.holder !== null) && (value.active || value.until === 0) && (!value.mine || value.active);
 /** Core's own coherence rule for a projected lease (contract `lease coherence`). */
 export const datesIntakeLease: Guard<DatesIntakeLease> = (value): value is DatesIntakeLease => leaseShape(value) && leaseCoherent(value);
-/** The lease as a receipt echoes it: the same four facts and the same coherence, with any other key tolerated. */
-const receiptLease: Guard<DatesIntakeLease> = (value): value is DatesIntakeLease => bound(LEASE)(value) && leaseCoherent(value);
+/** The lease as a receipt echoes it: the same four facts, any other key tolerated. What they must say is the action's (below). */
+const receiptLease: Guard<DatesIntakeLease> = bound(LEASE);
 
 // ---------------------------------------------------------------- queue row
 

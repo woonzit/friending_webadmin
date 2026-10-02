@@ -591,6 +591,17 @@ test("T-886: asking the member sends one request with the page's revision; the r
     fields: ["starts_local", "venue_address"], note: "Biztosan reggel 9-kor kezdődik?" });
   assert.equal(shown.member.can_ask, false);
 
+  // The receipt alone moves the revision: when the read that follows cannot be made, the page still holds the
+  // revision Core answered with, and the next command would go out with it.
+  let answered = false;
+  const blind = harness(id, { dates_event_intake_detail: () => answered ? null : before, dates_event_intake_ask_member: () => { answered = true; return receipt; },
+    dates_event_intake_list: { ...fixture("admin-list-member-channel"), limit: 1 } });
+  await blind.api.load(); blind.context.revision.current = receipt.intake.revision - 1;
+  blind.context.askDraft = { fields: ["starts_local", "venue_address"], note: "", reason: "why" };
+  await blind.api.ask(null);
+  assert.deepEqual(plain(blind.state.Notice), { tone: "success", key: "ask.done", time: receipt.asked.due_at });
+  assert.equal(blind.context.revision.current, receipt.intake.revision); assert.equal(blind.state.Result.read.intake.status, "in_review", "the failed read wiped nothing");
+
   // Nothing is sent for a request the console itself would not make, or without a draft.
   for (const draft of [null, { fields: [], note: "", reason: "why" }, { fields: ["title"], note: "", reason: "  " }, { fields: ["title"], note: "x".repeat(501), reason: "why" }]) {
     const none = harness(id, { dates_event_intake_detail: before, dates_event_intake_ask_member: receipt });

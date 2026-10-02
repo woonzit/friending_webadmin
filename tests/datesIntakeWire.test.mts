@@ -552,7 +552,7 @@ for (const name of LEASES) test(`genuine lease ${name} answers exactly its reque
   // Bound, not exact-key: a key this console does not know is tolerated (at the top and in the intake) ...
   const wider = { ...body, extra: true, intake: { ...body.intake, extra: 1, lease: { ...body.intake.lease, extra: 2 } } };
   assert.deepEqual(decodeDatesIntakeLeaseReceipt(wider, request), wider);
-  // The four facts of the lease are still all required, and still have to agree with each other.
+  // The four facts of the lease are still all required, and have to say what the action leaves.
   const { until: _until, ...timeless } = body.intake.lease;
   for (const lease of [timeless, { ...body.intake.lease, mine: "yes" }, { ...body.intake.lease, active: !body.intake.lease.active }])
     assert.equal(decodeDatesIntakeLeaseReceipt({ ...body, intake: { ...body.intake, lease } }, request), null, JSON.stringify(lease));

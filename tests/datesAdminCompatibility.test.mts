@@ -8,7 +8,10 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { datesConfigurationRawValue, datesSettingEditable, datesSettingEffectiveText, datesSettingStorefrontEffective } from "../lib/datesAdmin.ts";
 import { DATES_ADMIN_INTAKE_CONTRACT_SELECTOR, datesAdminContractParams } from "../lib/datesAdminContract.ts";
-import { decodeDatesActivityOriginDetail, decodeDatesExternalDetail, decodeDatesExternalList } from "../lib/datesExternalAdmin.ts";
+import { decodeDatesActivityList, decodeDatesActivityOriginDetail, decodeDatesExternalDetail, decodeDatesExternalList, decodeDatesExternalPlaces,
+  decodeDatesExternalReceipt } from "../lib/datesExternalAdmin.ts";
+import { datesCaseDetail, datesConsoleCommandReceipt, datesEvidenceRead, datesLegalHoldReceipt, datesModerationQueue } from "../lib/datesModerationRead.ts";
+import { datesAdminReasons } from "../lib/datesReasons.ts";
 
 // D-143 (team/DECISIONS.md): the compatibility check of every Admin hand-over.
 //
@@ -220,10 +223,6 @@ test("D-143: the Admin intake contract selector is one constant, attached by the
 });
 
 // ---------------------------------------------------------------- no exact key set, per decoder
-
-import { decodeDatesActivityList, decodeDatesExternalPlaces, decodeDatesExternalReceipt } from "../lib/datesExternalAdmin.ts";
-import { datesCaseDetail, datesConsoleCommandReceipt, datesEvidenceRead, datesLegalHoldReceipt, datesModerationQueue } from "../lib/datesModerationRead.ts";
-import { datesAdminReasons } from "../lib/datesReasons.ts";
 
 /**
  * Each P1 Dates decoder on a genuine body: `read` says whether it decodes.

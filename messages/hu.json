@@ -9405,7 +9405,7 @@
         "memberStatement": "A tag értesítést kap, és megjelenik neki a Core ehhez az indokhoz tartozó indokolása.",
         "memberDuplicate": "A tag azt az értesítést kapja, hogy az esemény már szerepel, és oda jut el. Ha nem kérte, hogy ne nevezzük meg, az adott eseményen az első beküldő mellett rögzítjük.",
         "strike": "A „kéretlen vagy hamis” indokú elutasítás figyelmeztetés a tagnak. Jelenleg {strikes} / {limit} figyelmeztetése van az időszakban; a korlátnál eltiltjuk a javaslattételtől.",
-        "strikeUnknown": "A „kéretlen vagy hamis” indokú elutasítás figyelmeztetés a tagnak. A jelenlegi megítélése ezen az oldalon nem olvasható.",
+        "strikeUnknown": "A „kéretlen vagy hamis” indokú elutasítás figyelmeztetés a tagnak. A figyelmeztetéseinek jelenlegi száma ezen az oldalon nem olvasható.",
         "strikeNobody": "A tag fiókját törölték: ez az elutasítás senkinek nem figyelmeztetés.",
         "secondLook": "Ez a tag által kért felülvizsgálat. Felülvizsgálat csak egyszer kérhető: az újabb elutasítás lezárja a javaslatot."
       },
@@ -9906,7 +9906,7 @@
         "confirmationNone": "A vázlat még nem került a tag elé.",
         "due": "válasz határideje: {time}",
         "askedByReviewer": "Ellenőr kérdezett rá",
-        "standing": "Megítélés",
+        "standing": "Figyelmeztetések és tiltás",
         "standingNone": "Nincs: a fiókot törölték.",
         "strikes": "Figyelmeztetések az időszakban: {strikes} / {limit}",
         "notBanned": "nincs eltiltva",
