@@ -30,7 +30,8 @@ import {
   type DatesCaseInternalNotes,
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
-import { datesCommandOutcome, datesUncheckedReceipt, decodeDatesExternalDetail, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
+import { datesCaseResolutionReceipt } from "@/lib/datesCommandReceipts";
+import { datesCommandOutcome, decodeDatesExternalDetail, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
 import { datesExternalBrowserStorage } from "@/lib/datesExternalMutations";
 import { datesExternalResolutionMatches, prepareDatesExternalResolution, readDatesExternalResolution, readDatesExternalResolutionAccess,
   runDatesExternalResolution, type DatesExternalResolutionPending, type DatesExternalResolutionRead } from "@/lib/datesExternalModeration";
@@ -186,7 +187,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       const receipt = isDatesConsoleCommand(action) ? datesConsoleCommandReceipt(response, action, caseId, payload.expected_revision) !== null
         : action === "dates_moderation_legal_hold" ? datesLegalHoldReceipt(response, caseId, payload.action, payload.review_at)
         : action === "dates_moderation_trail_evidence" ? datesTrailEvidenceReceipt(response, caseId, payload.captured_from, payload.captured_to)
-        : datesUncheckedReceipt("dates_moderation_resolve", response);
+        : datesCaseResolutionReceipt(response, payload);
       const outcome = datesCommandOutcome(response, receipt, identity);
       if (outcome.kind === "refused") {
         setFeedback({ tone: "error", text: t("operationFailed", { error: outcome.error }) });

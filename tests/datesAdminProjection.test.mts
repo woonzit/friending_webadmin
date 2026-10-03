@@ -14,9 +14,10 @@ import { datesCaseDetail, datesEvidenceRead, datesModerationQueue } from "../lib
 // Lead's ruling on D-143: nothing unnamed reaches the browser. The bridge
 // hands the browser the PROJECTION of a Dates Core body - the fields this
 // console names - never the raw body. These tests hold the projection to the
-// genuine bodies of all four Dates corpora and to the deny-list.
+// genuine bodies of every Dates corpus and to the deny-list.
 const FIXTURES = new URL("./fixtures/", import.meta.url);
-const CORPORA = ["dates_event_intake_admin_wire", "dates_external_admin_wire", "dates_external_admin_wire_released", "dates_moderation_console_wire", "dates_moderation_wire"];
+const CORPORA = ["dates_admin_command_wire", "dates_event_intake_admin_wire", "dates_external_admin_wire", "dates_external_admin_wire_released", "dates_moderation_console_wire",
+  "dates_moderation_wire"];
 const read = (corpus: string, file: string) => JSON.parse(readFileSync(new URL(`${corpus}/${file}`, FIXTURES), "utf8"));
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 
@@ -25,6 +26,10 @@ function routeOf(corpus: string, file: string): string | null {
   const name = file.slice(0, -5);
   const first = (table: Array<[string, string]>) => table.find(([prefix]) => name.startsWith(prefix))?.[1];
   if (name.startsWith("member-")) return null;
+  if (corpus === "dates_admin_command_wire") return first([["admin-hold-", "dates_moderation_legal_hold"], ["admin-trail-", "dates_moderation_trail_evidence"],
+    ["admin-host-transfer", "dates_activity_host_transfer"], ["admin-activity-update", "dates_activity_update"], ["admin-activity-type-save", "dates_activity_type_save"],
+    ["admin-activity-", "dates_activity_command"], ["admin-configuration-save", "dates_configuration_save"], ["admin-reason-deactivate", "dates_reason_deactivate"],
+    ["admin-resolve-", "dates_moderation_resolve"]]) ?? "?";
   if (corpus === "dates_event_intake_admin_wire") return first([["admin-list-", "dates_event_intake_list"], ["admin-detail-", "dates_event_intake_detail"],
     ["admin-create-", "dates_event_intake_create"], ["admin-lease-", "dates_event_intake_lease"], ["admin-reject-", "dates_event_intake_reject"],
     ["admin-duplicate-of-event", "dates_event_intake_reject"], ["admin-ask-member", "dates_event_intake_ask_member"], ["admin-publish", "dates_event_intake_publish"],
@@ -93,9 +98,8 @@ test("the projection of every genuine body is that body: no named field is lost,
   assert.ok(successes > 300 && refusals > 140, `${successes} / ${refusals}`);
   // Each route that has a genuine success body, by name - the others are listed with the reason they have none.
   const covered = new Set(SUCCESSES.map((item) => item.route));
-  assert.deepEqual(Object.keys(DATES_ADMIN_NAMED).filter((route) => !covered.has(route)).sort(), ["dates_activity_host_transfer", "dates_activity_location",
-    "dates_activity_type_save", "dates_activity_update", "dates_moderation_trail_evidence", "dates_reason_deactivate"],
-  "no genuine body: four unchecked receipts (the success flag is all a page reads), the break-glass location, the trail capture receipt");
+  assert.deepEqual(Object.keys(DATES_ADMIN_NAMED).filter((route) => !covered.has(route)).sort(), ["dates_activity_location"],
+    "no genuine body: only the break-glass location (since T-891 every command receipt has Core's genuine bodies)");
 });
 
 /** Adds a key to every object the tree names (not inside a part kept whole): what the projection must take out again. */
@@ -122,7 +126,7 @@ test("per route: a key this console does not name, at any depth, is not in what 
     perRoute.set(route, (perRoute.get(route) ?? 0) + added.count);
   }
   // Every route family with a genuine body was exercised, and deep: the intake detail alone has dozens of named objects.
-  assert.equal(perRoute.size, Object.keys(DATES_ADMIN_NAMED).length - 6);
+  assert.equal(perRoute.size, Object.keys(DATES_ADMIN_NAMED).length - 1);
   assert.ok(perRoute.get("dates_event_intake_detail")! > 500 && perRoute.get("dates_moderation_detail")! > 30 && perRoute.get("dates_external_event_detail")! > 100);
   // A refusal is Core's six keys and nothing beside them.
   const refusal = GENUINE.find((item) => item.body.success === false)!.body;

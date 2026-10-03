@@ -8,7 +8,8 @@ import DatesSuggestionConsentStatus from "@/components/DatesSuggestionConsentSta
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
-import { datesCommandOutcome, datesUncheckedReceipt } from "@/lib/datesExternalAdmin";
+import { datesActivityTypeSaveReceipt, datesReasonDeactivateReceipt, datesSettingSaveReceipt } from "@/lib/datesCommandReceipts";
+import { datesCommandOutcome } from "@/lib/datesExternalAdmin";
 import { datesSuggestionConsent, type DatesSuggestionConsent } from "@/lib/datesIntakeAdmin";
 import {
   configurationInputValue,
@@ -207,15 +208,16 @@ function SettingEditor({ setting, canManage, onSaved, onError, onUnknown }: { se
     if (listProblem) { setProblem(t(`stringListProblems.${listProblem}`, { minimum: setting.minimum ?? 0, maximum: setting.maximum ?? 0 })); return; }
     setProblem("");
     setBusy(true);
-    const response = await adminCall("dates_configuration_save", {
+    const request = {
       key: setting.key,
       value: configurationInputValue(setting.type, value, setting.key),
       expected_revision: setting.revision,
       reason: reason.trim(),
       idempotency_key: createAdminIdempotencyKey("dates-configuration-save"),
-    });
+    };
+    const response = await adminCall("dates_configuration_save", request);
     setBusy(false);
-    const outcome = datesCommandOutcome(response, datesUncheckedReceipt("dates_configuration_save", response), "fresh");
+    const outcome = datesCommandOutcome(response, datesSettingSaveReceipt(response, request), "fresh");
     if (outcome.kind === "uncertain") { onUnknown(outcome.error); return; }
     // Core accepts only a consent version whose text exists in this release: said as what it is, beside the field.
     if (outcome.kind === "refused" && setting.key === DATES_CONSENT_VERSION_SETTING && outcome.error === "dates-configuration-value-invalid") { setProblem(t("consentVersionNoText")); return; }
@@ -267,14 +269,15 @@ function ActivityTypeEditor({ activityType, canManage, locale, onSaved, onError,
     event.preventDefault();
     if (reason.trim().length < 3 || busy) return;
     setBusy(true);
-    const response = await adminCall("dates_activity_type_save", {
+    const request = {
       key: activityType.key,
       name_en: nameEn.trim(), name_hu: nameHu.trim(), order: Number(order), active: !retired && active,
       expected_revision: activityType.revision,
       reason: reason.trim(), idempotency_key: createAdminIdempotencyKey("dates-activity-type-save"),
-    });
+    };
+    const response = await adminCall("dates_activity_type_save", request);
     setBusy(false);
-    const outcome = datesCommandOutcome(response, datesUncheckedReceipt("dates_activity_type_save", response), "fresh");
+    const outcome = datesCommandOutcome(response, datesActivityTypeSaveReceipt(response, request), "fresh");
     if (outcome.kind === "uncertain") { onUnknown(outcome.error); return; }
     if (outcome.kind === "refused") { onError(outcome.error); return; }
     await onSaved();
@@ -359,12 +362,13 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
   async function deactivate() {
     if (!reason || auditReason.trim().length < 3 || busy) return;
     setBusy(true);
-    const response = await adminCall("dates_reason_deactivate", {
+    const request = {
       reason_id: reason.reason_id, expected_revision: reason.revision,
       reason: auditReason.trim(), idempotency_key: createAdminIdempotencyKey("dates-reason-deactivate"),
-    });
+    };
+    const response = await adminCall("dates_reason_deactivate", request);
     setBusy(false);
-    const outcome = datesCommandOutcome(response, datesUncheckedReceipt("dates_reason_deactivate", response), "fresh");
+    const outcome = datesCommandOutcome(response, datesReasonDeactivateReceipt(response, request), "fresh");
     if (outcome.kind === "uncertain") { onUnknown(outcome.error); return; }
     if (outcome.kind === "refused") { onError(outcome.error); return; }
     await onSaved();

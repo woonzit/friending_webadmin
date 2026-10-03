@@ -26,7 +26,8 @@ import {
   type DatesAdminPrincipal,
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
-import { datesCommandOutcome, datesUncheckedReceipt, projectDatesActivityOriginDetail, type DatesActivityDisplayDetail, type DatesCommandOutcome, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
+import { datesActivityCommandReceipt, datesActivityUpdateReceipt, datesHostTransferReceipt } from "@/lib/datesCommandReceipts";
+import { datesCommandOutcome, projectDatesActivityOriginDetail, type DatesActivityDisplayDetail, type DatesCommandOutcome, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
 
 type Activity = DatesActivityDisplayDetail;
 
@@ -176,15 +177,16 @@ export default function DatesActivityDetailPage() {
     }
     const changes = datesActivityEditChanges(draft, audience);
     setBusy(true);
-    const response = await adminCall("dates_activity_update", {
+    const request = {
       activity_id: data.activity.activity_id,
       expected_revision: data.activity.revision,
       changes,
       reason: draft.reason.trim(),
       idempotency_key: createAdminIdempotencyKey("dates-activity-update"),
-    });
+    };
+    const response = await adminCall("dates_activity_update", request);
     setBusy(false);
-    const outcome = datesCommandOutcome(response, datesUncheckedReceipt("dates_activity_update", response), "fresh");
+    const outcome = datesCommandOutcome(response, datesActivityUpdateReceipt(response, request), "fresh");
     if (outcome.kind !== "success") { reportFailure(outcome); return; }
     setFeedback({ tone: "success", text: t("saved") });
     await load();
@@ -193,16 +195,17 @@ export default function DatesActivityDetailPage() {
   async function executeCommand() {
     if (!data || data.activity.host === null || !pendingCommand || busy) return;
     setBusy(true);
-    const response = await adminCall("dates_activity_command", {
+    const request = {
       activity_id: data.activity.activity_id,
       expected_revision: data.activity.revision,
       action: pendingCommand.action,
       reason: pendingCommand.reason,
       idempotency_key: createAdminIdempotencyKey(`dates-activity-${pendingCommand.action}`),
-    });
+    };
+    const response = await adminCall("dates_activity_command", request);
     setBusy(false);
     setPendingCommand(null);
-    const outcome = datesCommandOutcome(response, datesUncheckedReceipt("dates_activity_command", response), "fresh");
+    const outcome = datesCommandOutcome(response, datesActivityCommandReceipt(response, request), "fresh");
     if (outcome.kind !== "success" || !response) { if (outcome.kind !== "success") reportFailure(outcome); return; }
     if (response.purged === true) {
       window.location.assign("/dates");
@@ -256,7 +259,7 @@ export default function DatesActivityDetailPage() {
     setBusy(true);
     const response = await adminCall("dates_activity_host_transfer", command);
     setBusy(false);
-    const outcome = datesCommandOutcome(response, datesUncheckedReceipt("dates_activity_host_transfer", response), "kept");
+    const outcome = datesCommandOutcome(response, datesHostTransferReceipt(response, command) !== null, "kept");
     setTransferCommand(outcome.kind === "uncertain" ? command : null);
     if (outcome.kind === "refused") { reportFailure(outcome); return; }
     if (outcome.kind === "uncertain") {

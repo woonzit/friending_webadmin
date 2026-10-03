@@ -152,11 +152,14 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   },
   // Break-glass: the exact location, to an operator with the capability, per case, audited by Core.
   dates_activity_location: { ...ENVELOPE, private_location: OPAQUE },
-  // No genuine body is vendored for these four receipts (among DATES_RECEIPT_CHECKS_PENDING): the pages read the success flag only.
-  dates_activity_update: ENVELOPE,
-  dates_activity_host_transfer: ENVELOPE,
-  dates_activity_type_save: ENVELOPE,
-  dates_reason_deactivate: ENVELOPE,
+  // T-891: the command receipts, named from Core's genuine bodies (tests/fixtures/dates_admin_command_wire).
+  dates_activity_update: { ...ENVELOPE, ...leaves("activity_id revision moderation_state audit_id idempotency_replayed") },
+  // `activity_revision` is served with the command contract selector (lib/datesAdminContract.ts).
+  dates_activity_host_transfer: { ...ENVELOPE,
+    ...leaves("transfer_id activity_id outgoing_host_uid target_uid transfer_status expires_at revision activity_revision audit_id idempotency_replayed") },
+  dates_activity_type_save: { ...ENVELOPE, ...leaves("revision audit_id idempotency_replayed"),
+    activity_type: leaves("key name_en name_hu order active revision system_owned deletable updated_at") },
+  dates_reason_deactivate: { ...ENVELOPE, ...leaves("reason_id active revision referenced_report_count hard_delete_allowed audit_id idempotency_replayed") },
   // The saved setting is echoed; its value is data, like every setting's value.
   dates_configuration_save: { ...ENVELOPE, ...leaves("audit_id idempotency_replayed"), setting: { ...leaves("key revision"), value: OPAQUE } },
   dates_activity_command: { ...ENVELOPE,
@@ -188,8 +191,9 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
       snapshot: OPAQUE }],
     appeal_note: leaves("appeal_id note created_at"),
   },
-  // No genuine body is vendored; these are the fields the receipt check reads by value.
-  dates_moderation_trail_evidence: { ...ENVELOPE, ...leaves("case_id evidence_id audit_id captured_from captured_to") },
+  // `revision` and `existing` are served with the command contract selector (T-891).
+  dates_moderation_trail_evidence: { ...ENVELOPE,
+    ...leaves("case_id activity_id evidence_id captured_from captured_to point_count audit_id break_glass_used revision existing idempotency_replayed") },
   dates_moderation_claim: { ...ENVELOPE, ...COMMAND_RECEIPT, ...leaves("case_status assignee_email claim_expires_at break_glass_used") },
   dates_moderation_heartbeat: { ...ENVELOPE, ...COMMAND_RECEIPT, ...leaves("case_status claim_expires_at") },
   dates_moderation_release: { ...ENVELOPE, ...COMMAND_RECEIPT, ...leaves("case_status claim_expires_at") },
@@ -199,7 +203,9 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
     ...ENVELOPE, ...COMMAND_RECEIPT, ...leaves("case_status action decision_id break_glass_used"),
     target_result: { ...leaves("target_type target_id subject_uid activity_id target_path"), before: TARGET_STATE, after: TARGET_STATE },
   },
-  dates_moderation_legal_hold: { ...ENVELOPE, ...leaves("case_id legal_hold review_at evidence_count audit_id idempotency_replayed") },
+  // `revision`, `hold_change` and `evidence_changed_count` are served to a request that carries `expected_revision` (T-891).
+  dates_moderation_legal_hold: { ...ENVELOPE,
+    ...leaves("case_id legal_hold review_at evidence_count audit_id idempotency_replayed revision hold_change evidence_changed_count") },
   dates_moderation_sla: {
     ...ENVELOPE, ...leaves("open_count unassigned_count sla_breach_count oldest_unassigned_at median_seconds_to_claim median_seconds_to_resolve appeals_waiting"),
     age_buckets: leaves("under_1h 1h_to_6h 6h_to_24h over_24h"),
