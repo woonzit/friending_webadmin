@@ -250,6 +250,56 @@ test("the parts kept whole are exactly the listed ones, each bounded by its own 
   for (const [route, paths] of Object.entries(DATES_ADMIN_OPAQUE)) for (const path of paths) assert.ok(document.includes(`\`${route}\``) && document.includes(`\`${path}\``), `${route}: ${path}`);
 });
 
+/**
+ * Every key a Core evidence writer can put on a `moderation_evidence` row, read from Core's source (git objects) on main
+ * 07215298, the P2 branch b5b2b299 and the T-891 branch 33265e46 - the same keys on all three:
+ * - the inserts: DatesModerationEvidenceService::store (83-98), DatesPrepublicationModerationService (148-162, with
+ *   `target_revision`), DatesTrailEvidenceService (33265e46: 242-268; 07215298: 166-191, with `restricted_access`);
+ * - a legal hold placed: `legal_basis`, `hold_updated_at` (DatesModerationCommandService, 33265e46: 676-690; 07215298: 559-566);
+ * - released: `hold_released_at`, `hold_release_reason`, `hold_release_legal_basis`, `hold_updated_at`, `purge_at` when a
+ *   retention is set (33265e46: 693-710; 07215298: 567-587);
+ * - an automatic hold closed: `automatic_hold_closed_at`, `purge_at` (DatesPrepublicationModerationService 24-56);
+ * - an account erased with an open case: `restricted_access` (DatesAccountLifecycleService, 33265e46: 95-116).
+ * `activity_id` is on the rows of the moderation corpus (its generator's own inserts) and stays named.
+ */
+const EVIDENCE_WRITER_KEYS = ["evidence_id", "case_id", "report_id", "evidence_type", "sensitive_location", "snapshot", "target_revision", "immutable", "legal_hold",
+  "hold_started_at", "hold_reason", "review_at", "created_at", "restricted_access", "legal_basis", "hold_updated_at", "hold_released_at", "hold_release_reason",
+  "hold_release_legal_basis", "purge_at", "automatic_hold_closed_at"];
+
+test("review finding (opus-review-p2, MEDIUM): an evidence row after a hold, a release, an automatic close or an erasure reaches the browser whole", () => {
+  const row = (DATES_ADMIN_NAMED.dates_moderation_evidence as any).evidence[0];
+  for (const key of EVIDENCE_WRITER_KEYS) assert.ok(Object.hasOwn(row, key), `${key} is named`);
+  assert.equal(row.purge_at, "opaque", "a MongoDB date is passed as served"); assert.equal(row.snapshot, "opaque");
+  // DERIVED, NOT GENUINE: no vendored body was captured after a hold was placed or released (the Core lane is asked for
+  // genuine ones). Each row below is the genuine P1 evidence row with what the writer named above sets on it.
+  const base = read("dates_external_admin_wire", "admin-moderation-evidence.json"), genuine = base.evidence[0], now = 1790000000;
+  const purgeAt = { $date: { $numberLong: String((now + 30 * 86400) * 1000) } };
+  const ROWS: Record<string, Record<string, unknown>> = {
+    placed: { ...genuine, legal_hold: true, hold_reason: "Synthetic legal retention.", legal_basis: "Synthetic authority request.", review_at: now + 86400, hold_updated_at: now },
+    amended: { ...genuine, legal_hold: true, hold_reason: "Synthetic legal retention.", legal_basis: "Synthetic court order.", review_at: now + 2 * 86400, hold_updated_at: now + 60 },
+    released: { ...genuine, legal_hold: false, hold_reason: "Synthetic legal retention.", legal_basis: "Synthetic court order.", review_at: null, hold_updated_at: now + 120,
+      hold_released_at: now + 120, hold_release_reason: "Synthetic withdrawal.", hold_release_legal_basis: "Synthetic letter of withdrawal.", purge_at: purgeAt },
+    closed: { ...genuine, evidence_type: "activity_prepublication_snapshot", report_id: null, target_revision: 3, legal_hold: false, automatic_hold_closed_at: now, purge_at: purgeAt },
+    trail: { ...genuine, evidence_type: "live_trail_window_snapshot", report_id: null, sensitive_location: true, restricted_access: true, hold_reason: "open_safety_case_trail_subset",
+      snapshot: { activity_id: "act_" + "4".padStart(32, "0"), requested_window: { captured_from: now - 600, captured_to: now - 60 }, captured_window: { first_at: now - 540, last_at: now - 120 },
+        point_count: 2, points: [{ lat: 47.49, lng: 19.04, captured_at: now - 540 }, { lat: 47.5, lng: 19.05, captured_at: now - 120 }] } },
+    erased: { ...genuine, legal_hold: true, hold_started_at: now, hold_reason: "account_erasure_open_safety_case", restricted_access: true },
+  };
+  for (const [name, evidence] of Object.entries(ROWS)) {
+    const body = { ...base, evidence: [evidence] }, lines: string[] = [];
+    const sent = projectDatesAdminBody("dates_moderation_evidence", body, (line) => lines.push(line)) as any;
+    // What the released console showed (it printed the row whole): the same row, key for key, value for value.
+    assert.deepEqual(sent, body, name); assert.deepEqual(lines, [], `${name}: nothing to warn about`);
+    assert.equal(DECODES.dates_moderation_evidence(sent), true, `${name}: the page reads it`);
+  }
+  assert.deepEqual((projectDatesAdminBody("dates_moderation_evidence", { ...base, evidence: [ROWS.released] }) as any).evidence[0].purge_at, purgeAt);
+  // Still named fields only: a key no writer sets is dropped beside them.
+  const unknown = projectDatesAdminBody("dates_moderation_evidence", { ...base, evidence: [{ ...ROWS.released, future_key: "x" }] }) as any;
+  assert.equal(Object.hasOwn(unknown.evidence[0], "future_key"), false); assert.equal(unknown.evidence[0].hold_release_reason, "Synthetic withdrawal.");
+  // And the row is not kept whole: the snapshot and the purge date are the only parts passed as served.
+  assert.deepEqual(DATES_ADMIN_OPAQUE.dates_moderation_evidence, ["evidence[].snapshot", "evidence[].purge_at"]);
+});
+
 test("a record Core passes through whole reaches the browser as its safe keys and a count of what was withheld", () => {
   const genuine = SUCCESSES.find((item) => item.route === "dates_activity_detail")!.body, body = copy(genuine);
   const decision = { decision_id: "dec_" + "1".repeat(32), action: "remove_content", severity: "high", created_at: 1790000000, actor_email: "moderator@example.test",

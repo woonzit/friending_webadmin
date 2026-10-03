@@ -149,6 +149,7 @@ body that reach the browser without being named field by field:
 |---|---|---|
 | `dates_activity_location` | `private_location` | The break-glass read of one activity's exact location: its own capability, a case and a reason per read, audited by Core; shown only after the operator asks. |
 | `dates_moderation_evidence` | `evidence[].snapshot` | The evidence of one case: the separately authorised, audited evidence read; refused to a conflicted operator. The row around the snapshot is named fields. |
+| `dates_moderation_evidence` | `evidence[].purge_at` | The date Core scheduled a released row's purge: a MongoDB date, which Core's JSON encoding serves as an extended-JSON object (`{"$date": …}`). Passed as served; every other key a Core evidence writer can put on a row is named (the inserts, a legal hold placed and released, an automatic hold closed, a restricted trail snapshot or an erased account). |
 | `dates_activity_detail` | `activity.photo`, `activity.audience`, `activity.pending_public_revision` | An activity's own public data, which the activity editor shows and sends back unchanged (narrowing it here would write the narrowed value back). |
 | `dates_configuration` | `settings[].value`, `settings[].effective_value`, `settings[].default_value`, `settings[].allowed_values` | A setting's values: data the editors show and send back; a setting row's other fields are named. |
 | `dates_configuration_save` | `setting.value` | The value Core echoes of the setting that was just saved - the same data. |

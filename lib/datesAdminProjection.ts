@@ -186,9 +186,16 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   },
   dates_moderation_evidence: {
     ...ENVELOPE, ...leaves("case_id redacted_sensitive_location_count break_glass_used audit_id"),
+    // Core serves a row whole (minus `_id`); these are every key its evidence writers can put on one - on Core main, the
+    // P2 branch and the T-891 branch alike: the inserts, a legal hold placed (`legal_basis`, `hold_updated_at`) and
+    // released (`hold_released_at`, `hold_release_reason`, `hold_release_legal_basis`, `purge_at`), an automatic hold
+    // closed (`automatic_hold_closed_at`), a restricted trail snapshot or an erased account (`restricted_access`).
     evidence: [{ ...leaves("evidence_id case_id report_id evidence_type sensitive_location target_revision immutable legal_hold hold_started_at hold_reason review_at created_at activity_id"),
+      ...leaves("legal_basis hold_updated_at hold_released_at hold_release_reason hold_release_legal_basis automatic_hold_closed_at restricted_access"),
       // The snapshot IS the evidence: served only by this separately authorised, audited read.
-      snapshot: OPAQUE }],
+      snapshot: OPAQUE,
+      // A MongoDB date, which Core's JSON encoding serves as an extended-JSON object ({"$date": ...}): passed as served.
+      purge_at: OPAQUE }],
     appeal_note: leaves("appeal_id note created_at"),
   },
   // `revision` and `existing` are served with the command contract selector (T-891).
@@ -263,7 +270,7 @@ export const DATES_ADMIN_OPAQUE: Readonly<Record<string, readonly string[]>> = {
   // The exact location of one activity: the break-glass read, per case and reason, audited by Core.
   dates_activity_location: ["private_location"],
   // The evidence snapshots of one case: the separately authorised, audited evidence read.
-  dates_moderation_evidence: ["evidence[].snapshot"],
+  dates_moderation_evidence: ["evidence[].snapshot", "evidence[].purge_at"],
   // What the activity editor shows and sends back unchanged (an activity's own public data).
   dates_activity_detail: ["activity.photo", "activity.audience", "activity.pending_public_revision"],
   // A setting's values: the editors show them and send them back.
