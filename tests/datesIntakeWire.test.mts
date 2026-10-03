@@ -11,29 +11,35 @@ import {
   datesIntakeImageBytes, datesIntakeInProgress, datesIntakePublishableEvents, datesIntakeReferenceHref, datesIntakeRefusal, datesIntakeUnreadableEvents,
   datesIntakeAskFields, datesIntakeAskState, datesIntakeAskValid, datesIntakeMemberNote, datesSuggestionConsent, decodeDatesIntakeAskReceipt,
   decodeDatesIntakeCreateReceipt, decodeDatesIntakeImage, decodeDatesIntakeLeaseReceipt, decodeDatesIntakePublishReceipt,
-  decodeDatesIntakeRejectReceipt, projectDatesAiUsage, projectDatesIntakeDetail, projectDatesIntakeQueue,
+  decodeDatesIntakeRejectReceipt, projectDatesAiUsage, projectDatesIntakeDetail, projectDatesIntakeQueue, DATES_AI_AMBIGUOUS_SOURCES,
   type DatesIntakeLeaseAction,
 } from "../lib/datesIntakeAdmin.ts";
 
 // T-865 P2a + P2b. The event-intake Admin wire, vendored byte-identically from the
-// Core lane's tip b5b2b29983cf2dfb89371d7ac4eaf026a16b9e69 (T-886, D-143): 159
-// genuine bodies captured as real HTTP POSTs encoded the way lib/core.ts encodes
-// them, every console request carrying the Admin intake contract selector.
-// Against the pin before it (Core 32d418cf, 148 bodies, set c4b6f583...) 11 bodies
-// are new and 57 changed: every queue read gained `second_look_count`, every
-// intake row (queue rows and details) `second_look`; nothing else moved in them.
+// Core lane's tip 62cee304c68eaeda456ddf0b042cb340b8702d48 (T-886 rebased onto
+// Core main 33265e46, D-143, D-145; its bodies are those of 8a621565, the manifest
+// is rebound on the no-usage fix 2034a93a): 161 genuine bodies captured as real HTTP
+// POSTs encoded the way lib/core.ts encodes them, every console request carrying
+// the Admin intake contract selector. Against the pin before it (b5b2b299, 159
+// bodies, set 008719da...): the three usage reads gained the calls whose cost is
+// not known (`ambiguous_calls`, `ambiguous_micro_usd`, `ambiguous_runs`, and
+// `ambiguous_calls` per row) and `admin-usage-ambiguous` is new; the two
+// selector-less details of an AI-assisted event are now refusals (`-denied`,
+// `dates-external-intake-contract-required`, 426) and the selector-less activity
+// list of that event is new. Nothing else changed.
 // The set digest and the source commit are transcribed from the Core hand-over
-// (team/chat/20261002T194348Z-opus-core-p2-to-opus-admin-p2-p2b-admin-corpus-pin.md);
+// (team/chat/20261003T025530Z-opus-core-p2-to-opus-admin-p2-p2-core-rebased.md and
+// 20261003T033201Z-opus-core-p2-to-opus-admin-p2-p2-intake-corpus-4415fcb2.md);
 // the manifest digest, the source checksum and the generator digest were read
 // from the Core lane's git objects at that tip, not from the vendored copy.
 // Rows marked DERIVED are built from a genuine body for a branch no genuine
 // body carries; they are named in the lane's report.
 const DIRECTORY = new URL("./fixtures/dates_event_intake_admin_wire/", import.meta.url);
-const SOURCE = "2df1849c356ef443e8ac2318c6507a6e3cd799e4";
-const SOURCE_SHA = "7c1ab85adf181b6686bdd38eed5b8665737bd696036b374d73ac662f44d1621a";
-const MANIFEST_SHA = "8a53f5ec4cbc280f139b6de384aebd2acca22b30b7611ed39726a23b09a81874";
-const GENERATOR_SHA = "03f11eba1e036d8d089c83b916fd34eab97d7211fdd4f334be8b67480c8c8941";
-const SET_SHA = "008719da095096506d4d583e5f5465a5b086fc4b0ef6136da4a56baf658bbfed";
+const SOURCE = "2034a93a03b1a7d221add795bce7bab15058ef59";
+const SOURCE_SHA = "e22c768ad4fed10c3f2c64d96709f76b342bfa783b30c588789c0bbf510c445c";
+const MANIFEST_SHA = "f50c8d90fd9bf3cedd0b4499924b36e5c75e8f951b1eae835699a5aacc118bef";
+const GENERATOR_SHA = "33191975d3212cd3c7e58f2ebdf3a70daadd71b9c18e8d9af75a69a0afb1ce98";
+const SET_SHA = "4415fcb2f85025205eda028fa1e10591b457355e688627e5f438648843fbe79c";
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`${name}.json`, DIRECTORY), "utf8"));
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
@@ -41,9 +47,10 @@ const xin = (number: number) => "xin_" + number.toString(16).padStart(32, "0");
 
 const LISTS = ["all", "channel", "empty", "in-review", "member-channel", "moderator", "page-two", "rejected", "second-look"];
 // D-143: the P1 routes as Core serves them with the selector (`manual`, `configuration`) and, for the released console,
-// without it (`released-console`); and the receipt and the two refusals of saving an intake setting.
+// without it (`released-console`; its two details of an AI-assisted event are refusals since D-145, below); and the
+// receipt and the two refusals of saving an intake setting.
 const SELECTOR_BODIES = ["external-detail-manual", "external-list-manual", "configuration", "configuration-save",
-  "external-detail-released-console", "external-list-released-console", "activity-detail-released-console", "configuration-released-console"];
+  "external-list-released-console", "activity-list-released-console", "configuration-released-console"];
 const DETAILS = ["awaiting-budget", "duplicate", "expired", "extracting", "extracting-retry", "failed-ai-not-configured", "failed-ai-refused",
   "failed-image", "failed-source", "in-review-ambiguous-venue", "in-review-country-unavailable", "in-review-fallback", "in-review-images",
   "in-review-multi", "in-review-needs-info", "in-review-official", "in-review-partial", "in-review-private-address", "in-review-text",
@@ -61,7 +68,7 @@ const EXTERNAL_DETAILS = ["external-detail-ai-assisted", "external-detail-member
 const LEASES = ["claim", "heartbeat", "release", "release-idle"];
 const REJECT_SUCCESSES = [...DATES_INTAKE_REJECT_REASONS.map((reason) => reason.replaceAll("_", "-")), "replay"];
 const PUBLISHES = ["publish", "publish-replay", "publish-partial", "publish-complete", "publish-places-venue", "publish-member"];
-const USAGES = ["month", "empty", "earlier-month"];
+const USAGES = ["month", "empty", "earlier-month", "ambiguous"];
 // Refusal name => [Core's machine error, logical status], as tests/support/dates_event_intake_admin_wire_contract.php lists them.
 const REFUSALS: Record<string, [string, number]> = {
   unauthorized: ["unauthorized", 401], revoked: ["admin-revoked", 403], "create-moderator": ["dates-admin-capability-required", 403],
@@ -91,6 +98,8 @@ const REFUSALS: Record<string, [string, number]> = {
   "reject-duplicate-event-unavailable": ["dates-intake-duplicate-event-unavailable", 409], "reject-duplicate-invalid": ["dates-intake-input-invalid", 422],
   // D-143: an intake setting is not saveable without the selector; a consent version needs a text in this release.
   "configuration-save-released-console": ["dates-configuration-key-invalid", 422], "configuration-save-consent-text-missing": ["dates-configuration-value-invalid", 422],
+  // D-145: what a request WITHOUT the selector gets for an event the released console cannot represent.
+  "external-detail-released-console": ["dates-external-intake-contract-required", 426], "activity-detail-released-console": ["dates-external-intake-contract-required", 426],
 };
 
 test("intake corpus is the complete 148-response genuine capture with independent provenance pins", () => {
@@ -103,8 +112,8 @@ test("intake corpus is the complete 148-response genuine capture with independen
   assert.equal(manifest.provenance.generator, "tests/dates_event_intake_admin_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
   assert.match(manifest.provenance.transport, /real HTTP.*application\/x-www-form-urlencoded/s);
-  assert.equal(manifest.fixture_count, 159);
-  assert.equal(manifest.provenance.source_paths.length, 283);
+  assert.equal(manifest.fixture_count, 161);
+  assert.equal(manifest.provenance.source_paths.length, 287);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   const names = [...LISTS.map((name) => `admin-list-${name}.json`), ...[...DETAILS, ...MEMBER_DETAILS].map((name) => `admin-detail-${name}.json`),
     ...CREATES.map((name) => `admin-create-${name}.json`), ...LEASES.map((name) => `admin-lease-${name}.json`),
@@ -112,7 +121,7 @@ test("intake corpus is the complete 148-response genuine capture with independen
     ...USAGES.map((name) => `admin-usage-${name}.json`), "admin-image-read.json",
     "admin-activity-detail-ai-assisted.json", "admin-external-list-ai-assisted.json", ...Object.keys(REFUSALS).map((name) => `admin-${name}-denied.json`),
     ...SELECTOR_BODIES.map((name) => `admin-${name}.json`), "member-ai-assisted-detail.json", "member-ai-assisted-discover.json"].sort();
-  assert.equal(names.length, 159);
+  assert.equal(names.length, 161);
   assert.deepEqual(manifest.fixtures.map((entry: { file: string }) => entry.file), names);
   assert.deepEqual(readdirSync(DIRECTORY).sort(), ["manifest.json", ...names].sort());
   const lines = manifest.fixtures.map((entry: { file: string; sha256: string; consumer: string; http_status: number; status_code: number }) => {
@@ -126,7 +135,7 @@ test("intake corpus is the complete 148-response genuine capture with independen
   });
   assert.equal(hash(lines.join("\n")), SET_SHA);
   assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 108);
-  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code !== 200).length, 51);
+  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code !== 200).length, 53);
 });
 
 test("the console's closed vocabularies are exactly the ones Core's manifest publishes", () => {
@@ -912,7 +921,9 @@ test("a refusal that is not Core's closed envelope is not reported as Core's wor
 for (const name of USAGES) test(`genuine AI usage ${name} decodes with every row`, () => {
   const body = fixture(`admin-usage-${name}`), read = projectDatesAiUsage(body, name === "earlier-month" ? "2026-09" : null);
   assert.ok(read);
-  assert.deepEqual({ ...read.usage, rows: read.usage.rows }, { ...body.usage, unreadable_rows: [] });
+  // Every served key as served, the rows whole, and the calls whose cost is not known read (D-145).
+  assert.deepEqual({ ...read.usage, rows: read.usage.rows }, { ...body.usage, unreadable_rows: [], ambiguous: { kind: "known", calls: body.usage.ambiguous_calls,
+    micro_usd: body.usage.ambiguous_micro_usd, runs: body.usage.ambiguous_runs, unreadable_runs: [] } });
   assert.equal(read.drafts_enabled, true);
   assert.equal(projectDatesAiUsage(body, "2026-01"), null, "the reply for another month is never adopted");
   assert.equal(read.usage.cap_usd, 50);
@@ -929,6 +940,39 @@ test("genuine month-to-date usage: spend against the cap by provider, model, tas
   // The read capability is enough for the usage; the genuine body was served to a support viewer.
   assert.deepEqual(fixture("admin-usage-month").capabilities.filter((item: string) => item.startsWith("dates_external")), ["dates_external_event_read"]);
 });
+test("D-145: a call whose cost is not known is money that may have been spent - counted, listed, and never read as none", () => {
+  // Genuine: one call that timed out after it was sent, booked at its whole reservation; it is in the month's spend.
+  const body = fixture("admin-usage-ambiguous"), usage = projectDatesAiUsage(body, null)!.usage;
+  assert.deepEqual(usage.ambiguous, { kind: "known", calls: 1, micro_usd: 149243, runs: [{ provider: "openai", model: "gpt-6.1-sol", task: "text_extract",
+    channel: "admin_draft", source: "transport", failure: "curl-28", booked_micro_usd: 149243, at: 1790000000 }], unreadable_runs: [] });
+  assert.equal(usage.rows.reduce((sum, row) => sum + row.cost_micro_usd, 0), usage.spent_micro_usd, "the booked reservation is part of the spend");
+  assert.deepEqual(usage.rows.map((row) => row.ambiguous_calls), [1, 0]);
+  assert.ok(DATES_AI_AMBIGUOUS_SOURCES.includes(usage.ambiguous.kind === "known" ? usage.ambiguous.runs[0].source as never : "x" as never));
+  // The other genuine reads say none, as numbers.
+  for (const name of ["month", "empty", "earlier-month"]) {
+    const read = projectDatesAiUsage(fixture(`admin-usage-${name}`), name === "earlier-month" ? "2026-09" : null)!.usage;
+    assert.deepEqual([read.ambiguous.kind, read.ambiguous.kind === "known" && read.ambiguous.calls], ["known", 0], name);
+  }
+  // DERIVED: a Core before D-145 serves none of the three keys - that is "absent", not "none"; rows without the key read.
+  const before = copy(body); delete before.usage.ambiguous_calls; delete before.usage.ambiguous_micro_usd; delete before.usage.ambiguous_runs;
+  for (const row of before.usage.rows) delete row.ambiguous_calls;
+  const absent = projectDatesAiUsage(before, null)!.usage;
+  assert.deepEqual(absent.ambiguous, { kind: "absent" }); assert.equal(absent.unreadable_rows.length, 0);
+  // DERIVED: served but not readable - a part of the three, a figure of the wrong type - is "unreadable", never a zero.
+  for (const change of [{ ambiguous_calls: "1" }, { ambiguous_micro_usd: -1 }, { ambiguous_runs: "none" }, { ambiguous_calls: undefined }]) {
+    const odd = copy(body); Object.assign(odd.usage, change);
+    if (change.ambiguous_calls === undefined && "ambiguous_calls" in change) delete odd.usage.ambiguous_calls;
+    assert.deepEqual(projectDatesAiUsage(odd, null)!.usage.ambiguous, { kind: "unreadable" }, JSON.stringify(change));
+  }
+  // A listed run that cannot be read is counted, not dropped silently; an unknown source is kept for the page to show raw.
+  const damaged = copy(body); damaged.usage.ambiguous_runs.push({ provider: "openai" }, { ...damaged.usage.ambiguous_runs[0], source: "watchdog", failure: "" });
+  const read = projectDatesAiUsage(damaged, null)!.usage.ambiguous;
+  assert.ok(read.kind === "known" && read.runs.length === 2 && read.runs[1].source === "watchdog" && read.unreadable_runs.length === 1);
+  // A row's figure of the wrong type makes that row unreadable.
+  const row = copy(body); row.usage.rows[0].ambiguous_calls = "1";
+  assert.deepEqual(projectDatesAiUsage(row, null)!.usage.unreadable_rows, [0]);
+});
+
 test("DERIVED: the 80% alert, an exhausted cap, a zero cap and a damaged row of the usage read", () => {
   const base = fixture("admin-usage-month");
   const read = (change: Record<string, unknown>) => projectDatesAiUsage({ ...base, usage: { ...base.usage, ...change } }, null);

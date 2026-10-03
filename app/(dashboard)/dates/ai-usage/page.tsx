@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
+import DatesAiAmbiguousCalls from "@/components/DatesAiAmbiguousCalls";
 import DatesIntakeRefusal from "@/components/DatesIntakeRefusal";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -77,6 +78,8 @@ export default function DatesAiUsagePage() {
           <span className="stat-meta">{t(read.awaitingBudget !== null ? "usage.awaitingBudgetHint" : read.review ? "usage.awaitingBudgetUnread" : "usage.awaitingBudgetReviewOnly")}</span></div>
       </div>
       {share !== null && <progress className="dates-intake-budget" max={1} value={share} aria-label={t("usage.progress")} />}
+      {/* D-145: money that may have been spent. Said plainly, above the breakdown; never shown as nothing when it cannot be read. */}
+      <DatesAiAmbiguousCalls ambiguous={usage.ambiguous} />
       <section className="panel dates-external-fields">
         <h2>{t("usage.breakdown")}</h2>
         <p className="field-hint">{t("usage.breakdownHint")}</p>
@@ -90,7 +93,8 @@ export default function DatesAiUsagePage() {
             <td>{formatNumber(row.calls, locale)}{row.unanswered_calls > 0 ? <div><small>{t("usage.unanswered", { count: row.unanswered_calls })}</small></div> : null}</td>
             <td>{formatNumber(row.input_tokens, locale)} / {formatNumber(row.output_tokens, locale)}
               <div><small>{t("usage.tokenDetail", { read: formatNumber(row.cache_read_tokens, locale), write: formatNumber(row.cache_write_tokens, locale), reasoning: formatNumber(row.reasoning_tokens, locale) })}</small></div></td>
-            <td>{datesMicroUsd(row.cost_micro_usd, locale)}{row.estimated_cost_calls > 0 ? <div><small>{t("usage.estimatedCalls", { count: row.estimated_cost_calls })}</small></div> : null}</td>
+            <td>{datesMicroUsd(row.cost_micro_usd, locale)}{row.estimated_cost_calls > 0 ? <div><small>{t("usage.estimatedCalls", { count: row.estimated_cost_calls })}</small></div> : null}
+              {(row.ambiguous_calls ?? 0) > 0 ? <div><small>{t("usage.ambiguousRow", { count: row.ambiguous_calls ?? 0 })}</small></div> : null}</td>
           </tr>)}</tbody>
         </table></div>}
       </section>

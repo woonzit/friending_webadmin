@@ -34,7 +34,8 @@ function routeOf(corpus: string, file: string): string | null {
     ["admin-create-", "dates_event_intake_create"], ["admin-lease-", "dates_event_intake_lease"], ["admin-reject-", "dates_event_intake_reject"],
     ["admin-duplicate-of-event", "dates_event_intake_reject"], ["admin-ask-member", "dates_event_intake_ask_member"], ["admin-publish", "dates_event_intake_publish"],
     ["admin-usage-", "dates_event_intake_usage"], ["admin-image-", "dates_event_intake_image"], ["admin-external-detail-", "dates_external_event_detail"],
-    ["admin-external-list-", "dates_external_event_list"], ["admin-activity-detail-", "dates_activity_detail"], ["admin-unauthorized", "dates_event_intake_list"],
+    ["admin-external-list-", "dates_external_event_list"], ["admin-activity-detail-", "dates_activity_detail"], ["admin-activity-list-", "dates_activity_list"],
+    ["admin-unauthorized", "dates_event_intake_list"],
     ["admin-configuration-save", "dates_configuration_save"], ["admin-configuration", "dates_configuration"],
     ["admin-revoked", "dates_event_intake_list"]]) ?? "?";
   if (corpus.startsWith("dates_external_admin_wire")) {

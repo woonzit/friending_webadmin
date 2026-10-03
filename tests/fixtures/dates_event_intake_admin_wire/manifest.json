@@ -1,10 +1,10 @@
 {
     "schema_version": 1,
     "contract": "dates-event-intake-admin-v1",
-    "source_commit": "2df1849c356ef443e8ac2318c6507a6e3cd799e4",
-    "source_checksum": "7c1ab85adf181b6686bdd38eed5b8665737bd696036b374d73ac662f44d1621a",
-    "fixture_count": 159,
-    "fixture_set_sha256": "008719da095096506d4d583e5f5465a5b086fc4b0ef6136da4a56baf658bbfed",
+    "source_commit": "2034a93a03b1a7d221add795bce7bab15058ef59",
+    "source_checksum": "e22c768ad4fed10c3f2c64d96709f76b342bfa783b30c588789c0bbf510c445c",
+    "fixture_count": 161,
+    "fixture_set_sha256": "4415fcb2f85025205eda028fa1e10591b457355e688627e5f438648843fbe79c",
     "vocabularies": {
         "status": [
             "received",
@@ -639,7 +639,7 @@
     },
     "provenance": {
         "generator": "tests/dates_event_intake_admin_fixture_dump.php",
-        "generator_sha256": "03f11eba1e036d8d089c83b916fd34eab97d7211fdd4f334be8b67480c8c8941",
+        "generator_sha256": "33191975d3212cd3c7e58f2ebdf3a70daadd71b9c18e8d9af75a69a0afb1ce98",
         "transport": "Admin bodies: real HTTP. Core's public/index.php runs under PHP's own web server on 127.0.0.1 and every call is a POST encoded as the Webadmin's lib/core.ts encodes it - application/x-www-form-urlencoded;charset=UTF-8 with every value a string (boolean \"1\"/\"0\", number its decimal string, object one JSON string), multipart/form-data for a flyer upload - so PHP's own body parsing, $_POST, $_FILES and the Router serve it (tests/support/event_intake_http.php). No Admin route is handed a PHP int, bool or array. Member bodies: in-process Router dispatch, as the P1 member corpus.",
         "wire_adapters": [
             "public/index.php -> Friending\\Core\\Router::dispatch -> Friending\\Support\\Webadmin::noStoreReply",
@@ -815,6 +815,7 @@
             "src/Services/DatesExternalReadService.php",
             "src/Services/DatesExternalRestrictionService.php",
             "src/Services/DatesFilterService.php",
+            "src/Services/DatesHostTransferService.php",
             "src/Services/DatesIdempotencyService.php",
             "src/Services/DatesIntakeStorage.php",
             "src/Services/DatesMembershipBundleService.php",
@@ -855,6 +856,7 @@
             "src/Support/AudienceVisibilityReadinessPolicy.php",
             "src/Support/AuthMethodPolicy.php",
             "src/Support/DatesActivityPolicy.php",
+            "src/Support/DatesAdminInput.php",
             "src/Support/DatesCanonicalPayload.php",
             "src/Support/DatesCityKey.php",
             "src/Support/DatesContract.php",
@@ -912,6 +914,8 @@
             "src/Support/ForcedVerificationEvaluator.php",
             "src/Support/ForcedVerificationPolicy.php",
             "src/Support/IdentityV2Policy.php",
+            "src/Support/ImageDecodeGuard.php",
+            "src/Support/ImageHeader.php",
             "src/Support/ImageRoots.php",
             "src/Support/IpGeo.php",
             "src/Support/ModerationPolicy.php",
@@ -958,11 +962,18 @@
             "sha256": "cc0b89c299cda17fcf19f0c8999acbd0ba86ff33263c7941d007b92f0bf8adf3"
         },
         {
-            "file": "admin-activity-detail-released-console.json",
+            "file": "admin-activity-detail-released-console-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 426,
+            "sha256": "364c6602fdaf2fd85e98ea05d1ef481169d276f6c798b16f70ee5b51d6b5f881"
+        },
+        {
+            "file": "admin-activity-list-released-console.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "d7f449ca3a6e293e1623521192ca10a8935004195bdd0775f8e8967cb91d6898"
+            "sha256": "9635fd339bf3d2319be97f25e7bf2b49038dbe820f108b3e46f57e19717f4fa7"
         },
         {
             "file": "admin-ask-member-input-invalid-denied.json",
@@ -1581,11 +1592,11 @@
             "sha256": "10054e34fa4bbc6d2d1ea659de8b79579f320015ae26335ec97053bf14e78fa1"
         },
         {
-            "file": "admin-external-detail-released-console.json",
+            "file": "admin-external-detail-released-console-denied.json",
             "consumer": "webadmin",
             "http_status": 200,
-            "status_code": 200,
-            "sha256": "d614019155291078d9ad0a51c0954c6303948d3ac1bda8c056fe1de2ae1a8b8b"
+            "status_code": 426,
+            "sha256": "364c6602fdaf2fd85e98ea05d1ef481169d276f6c798b16f70ee5b51d6b5f881"
         },
         {
             "file": "admin-external-list-ai-assisted.json",
@@ -2022,18 +2033,25 @@
             "sha256": "92a1f1484a7aae426dbcce31512c40eb078ddeb28fa893a4c7354c1303499c29"
         },
         {
+            "file": "admin-usage-ambiguous.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "cb678338f6668a6cd3fbec6ed8fe2c693853c970fb56e5ac0ef3d05661457b81"
+        },
+        {
             "file": "admin-usage-earlier-month.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "7db486cb0facfe9008c0f8cad7dca451851f069c2d4a76e66e2fcc17504ca7fb"
+            "sha256": "abe68f62d0f5daa9aa2dc54f9b4fcb0000578b5bcb63abf49669e8f7dff24882"
         },
         {
             "file": "admin-usage-empty.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "f2a4bae4ef7d2f8c197b46b950d51fe074ede6f0ca404f048ebaf17c13c2bd7d"
+            "sha256": "ec804371aa937bfe5a79c342b4423c3732e9e729697605d3c00033f305a8a055"
         },
         {
             "file": "admin-usage-filter-invalid-denied.json",
@@ -2047,7 +2065,7 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "6bc13aa09541174474f4ffc3a342c85b866892b894cf0ee139c971a8b63fea2d"
+            "sha256": "0096bc09ff3753019f9ba248d7fa4f039477509784242b2349c69d86109daf90"
         },
         {
             "file": "member-ai-assisted-detail.json",

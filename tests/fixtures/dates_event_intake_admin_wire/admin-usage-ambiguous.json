@@ -1,0 +1,91 @@
+{
+    "success": true,
+    "status_code": 200,
+    "usage": {
+        "month": "2026-10",
+        "cap_usd": 50,
+        "spent_micro_usd": 166009,
+        "reserved_micro_usd": 0,
+        "remaining_micro_usd": 49833991,
+        "calls": 2,
+        "alert": false,
+        "alert_at": null,
+        "exhausted": false,
+        "rows": [
+            {
+                "provider": "openai",
+                "model": "gpt-6.1-sol",
+                "task": "text_extract",
+                "channel": "admin_draft",
+                "calls": 1,
+                "unanswered_calls": 1,
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "cache_read_tokens": 0,
+                "cache_write_tokens": 0,
+                "reasoning_tokens": 0,
+                "cost_micro_usd": 149243,
+                "estimated_cost_calls": 1,
+                "ambiguous_calls": 1
+            },
+            {
+                "provider": "openai",
+                "model": "gpt-6.1-sol",
+                "task": "url_extract",
+                "channel": "member_suggestion",
+                "calls": 1,
+                "unanswered_calls": 0,
+                "input_tokens": 3003,
+                "output_tokens": 926,
+                "cache_read_tokens": 0,
+                "cache_write_tokens": 3000,
+                "reasoning_tokens": 0,
+                "cost_micro_usd": 16766,
+                "estimated_cost_calls": 0,
+                "ambiguous_calls": 0
+            }
+        ],
+        "ambiguous_calls": 1,
+        "ambiguous_micro_usd": 149243,
+        "ambiguous_runs": [
+            {
+                "provider": "openai",
+                "model": "gpt-6.1-sol",
+                "task": "text_extract",
+                "channel": "admin_draft",
+                "source": "transport",
+                "failure": "curl-28",
+                "booked_micro_usd": 149243,
+                "at": 1790000000
+            }
+        ]
+    },
+    "drafts_enabled": true,
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

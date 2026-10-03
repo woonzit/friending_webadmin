@@ -4,6 +4,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { createElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
+import DatesAiAmbiguousCalls from "../components/DatesAiAmbiguousCalls.tsx";
 import DatesExternalProvenance from "../components/DatesExternalProvenance.tsx";
 import DatesIntakeEventPanel, { datesIntakeFieldVerified } from "../components/DatesIntakeEventPanel.tsx";
 import { DatesIntakeInputsPanel, DatesIntakeRunsPanel, DatesIntakeStatusPanel } from "../components/DatesIntakePanels.tsx";
@@ -14,6 +15,7 @@ import { DATES_EXTERNAL_CATEGORIES } from "../lib/datesExternalInput.ts";
 import {
   DATES_INTAKE_EVIDENCE_FIELDS, DATES_INTAKE_KNOWN_ATTENDANCE_MODES, DATES_INTAKE_KNOWN_LINK_FIELDS, DATES_INTAKE_KNOWN_PROHIBITED_CATEGORIES,
   DATES_INTAKE_KNOWN_STATUS_SIGNALS, DATES_INTAKE_KNOWN_TASKS, DATES_INTAKE_REFUSALS, DATES_INTAKE_VOCABULARIES, datesSuggestionConsent, projectDatesIntakeDetail,
+  DATES_AI_AMBIGUOUS_SOURCES, projectDatesAiUsage,
 } from "../lib/datesIntakeAdmin.ts";
 
 // Static EN/HU renders of the review screen's panels from the genuine Core
@@ -198,10 +200,11 @@ test("the published event carries the AI-assisted label, its Places venue and th
     assert.doesNotMatch(html, /\/dates\/intakes\//);
     assert.equal(html.includes(escaped(messagesOf("en").datesAdmin.external.provenance.intake)), false);
   }
-  // An AI-assisted event as a request WITHOUT the selector is served it (the genuine `-released-console` body): the
-  // label is there, the reference is not - the panel says AI-assisted and offers no link back.
-  const unlinked = fixture("admin-external-detail-released-console");
-  assert.equal(unlinked.event.ai_assisted, true); assert.equal(Object.hasOwn(unlinked.event, "intake"), false);
+  // An AI-assisted event's detail without its intake reference: since D-145 Core refuses that read to a request without
+  // the selector (genuine `admin-external-detail-released-console-denied`, 426). DERIVED from the AI-assisted detail:
+  // should such a body ever be served, the label is there and the reference is not - the panel offers no link back.
+  assert.equal(fixture("admin-external-detail-released-console-denied").error, "dates-external-intake-contract-required");
+  const unlinked = fixture("admin-external-detail-ai-assisted"); delete unlinked.event.intake;
   const bare = render("en", createElement(DatesExternalProvenance, { event: decodeDatesExternalDetail(unlinked, unlinked.event.external_event_id)!.event }));
   assert.ok(bare.includes(escaped(messagesOf("en").datesAdmin.external.provenance.aiAssisted))); assert.doesNotMatch(bare, /\/dates\/intakes\//);
   // The badge is on the external list row, the editor page header, the activity detail and the Activities list.
@@ -756,6 +759,41 @@ test("T-886: an event that came from a member's suggestion says who is credited,
     const p1 = fixture("admin-external-detail-ai-assisted"), manual = decodeDatesExternalDetail(p1, p1.event.external_event_id)!.event;
     assert.doesNotMatch(render(locale, createElement(DatesExternalProvenance, { event: manual })), /alert-warning" role="status"/);
   }
+});
+
+test("D-145: the AI usage page says plainly that a call whose cost is not known is money that may have been spent", () => {
+  const page = readFileSync(new URL("../app/(dashboard)/dates/ai-usage/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /<DatesAiAmbiguousCalls ambiguous=\{usage\.ambiguous\} \/>/);
+  assert.match(page, /\{\(row\.ambiguous_calls \?\? 0\) > 0 \? <div><small>\{t\("usage\.ambiguousRow", \{ count: row\.ambiguous_calls \?\? 0 \}\)\}<\/small><\/div> : null\}/);
+  const genuine = projectDatesAiUsage(fixture("admin-usage-ambiguous"), null)!.usage.ambiguous;
+  for (const locale of LOCALES) {
+    const copy = messagesOf(locale).datesAdmin.intake.usage;
+    const html = render(locale, createElement(DatesAiAmbiguousCalls, { ambiguous: genuine }));
+    // The statement with the count and the amount booked; the run: why its cost is not known, the failure code, the amount.
+    assert.match(html, /class="alert alert-warning" role="status"/);
+    assert.ok(html.includes(escaped(copy.ambiguousTitle)) && html.includes(escaped(copy.ambiguousSources.transport)), locale);
+    assert.ok(html.includes(escaped(copy.ambiguousFailures.curl.replace("{code}", "curl-28"))) && html.includes(escaped(copy.ambiguousListed)), locale);
+    // The two other failures Core names (2034a93a: an answer without usage figures; an answer too large to read), and
+    // a token this console does not know, shown as it is (DERIVED rows; the genuine corpus has the curl one).
+    const failures = render(locale, createElement(DatesAiAmbiguousCalls, { ambiguous: { ...(genuine as any), calls: 3,
+      runs: ["no-usage", "response-too-large", "tls-reset"].map((failure) => ({ ...(genuine as any).runs[0], failure })) } }));
+    assert.ok(failures.includes(escaped(copy.ambiguousFailures["no-usage"])) && failures.includes(escaped(copy.ambiguousFailures["response-too-large"])), locale);
+    assert.ok(failures.includes(escaped(copy.ambiguousFailure.replace("{failure}", "tls-reset"))), locale);
+    assert.equal((html.match(/<tr>/g) ?? []).length, 2, "the header and the one run");
+    // Unreadable is said, and is not "none"; absent (an older Core) and none draw nothing.
+    const unreadable = render(locale, createElement(DatesAiAmbiguousCalls, { ambiguous: { kind: "unreadable" } }));
+    assert.match(unreadable, /alert alert-error/); assert.ok(unreadable.includes(escaped(copy.ambiguousUnreadable)));
+    assert.equal(render(locale, createElement(DatesAiAmbiguousCalls, { ambiguous: { kind: "absent" } })), "");
+    assert.equal(render(locale, createElement(DatesAiAmbiguousCalls, { ambiguous: { kind: "known", calls: 0, micro_usd: 0, runs: [], unreadable_runs: [] } })), "");
+    // More calls than Core lists, a run that cannot be read, an unknown source shown raw.
+    const many = render(locale, createElement(DatesAiAmbiguousCalls, { ambiguous: { ...(genuine as any), calls: 150, unreadable_runs: [1],
+      runs: [{ ...(genuine as any).runs[0], source: "watchdog", failure: "" }] } }));
+    assert.ok(many.includes("<code>watchdog</code>") && many.includes(escaped(copy.ambiguousUnreadableRuns.replace("{count}", "1"))), locale);
+    assert.equal(many.includes(escaped(copy.ambiguousListed)), false);
+    for (const source of DATES_AI_AMBIGUOUS_SOURCES) assert.ok(copy.ambiguousSources[source].length > 20, `${locale}.${source}`);
+    assert.match(copy.ambiguous, /\{count\}/); assert.match(copy.ambiguous, /\{amount\}/);
+  }
+  assert.match(messagesOf("en").datesAdmin.intake.usage.ambiguous, /may have been charged/);
 });
 
 test("the state of the consent text is said beside the member switch: draft and approved as states, missing as a problem", () => {

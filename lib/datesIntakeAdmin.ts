@@ -889,19 +889,45 @@ export function datesIntakeMediaUrl(intakeId: string, index: number): string {
 const usageRow = bound({ provider: string(64), model: string(200), task: string(200), channel: string(64), calls: integer(0),
   unanswered_calls: integer(0), input_tokens: integer(0), output_tokens: integer(0), cache_read_tokens: integer(0),
   cache_write_tokens: integer(0), reasoning_tokens: integer(0), cost_micro_usd: integer(0), estimated_cost_calls: integer(0) });
-export type DatesAiUsageRow = Parsed<typeof usageRow>;
+/** A row's calls whose cost is not known (D-145): optional - a Core before it does not serve the key. */
+export type DatesAiUsageRow = Parsed<typeof usageRow> & { ambiguous_calls?: number };
+const usageRowRead = (value: unknown): value is DatesAiUsageRow => usageRow(value)
+  && (!Object.hasOwn(value, "ambiguous_calls") || integer(0)((value as Record<string, unknown>).ambiguous_calls));
 const month: Guard<string> = (value): value is string => typeof value === "string" && /^20\d{2}-(?:0[1-9]|1[0-2])$/.test(value);
 const usageGuard = bound({ ...envelope, usage: bound({ month, cap_usd: integer(0), spent_micro_usd: integer(0), reserved_micro_usd: integer(0),
   remaining_micro_usd: integer(0), calls: integer(0), alert: bool, alert_at: nullable(clock), exhausted: bool,
   rows: ((value: unknown): value is unknown[] => Array.isArray(value) && value.length <= 500) }), drafts_enabled: bool, capabilities });
-export type DatesAiUsage = Omit<Parsed<typeof usageGuard>["usage"], "rows"> & { rows: DatesAiUsageRow[]; unreadable_rows: number[] };
+
+/** Where Core booked a call whose cost is not known from: the transport's answer, a call that threw, the reaper. */
+export const DATES_AI_AMBIGUOUS_SOURCES = ["transport", "unsettled", "reaped"] as const;
+const ambiguousRun = bound({ provider: string(64), model: string(200), task: string(200), channel: string(64), source: string(64),
+  failure: string(64), booked_micro_usd: integer(0), at: clock });
+export type DatesAiAmbiguousRun = Parsed<typeof ambiguousRun>;
+/**
+ * The calls whose cost is not known (Core D-145): a call that was sent and whose answer never arrived or could not be
+ * settled may have been charged by the provider, so Core books it at its whole reservation as money spent (it is in
+ * `spent_micro_usd`) and lists the newest of them. `absent`: a Core that does not serve the three keys. `unreadable`:
+ * served, but not in a shape this console can read - never taken as "none".
+ */
+export type DatesAiAmbiguous = { kind: "absent" } | { kind: "unreadable" }
+  | { kind: "known"; calls: number; micro_usd: number; runs: DatesAiAmbiguousRun[]; unreadable_runs: number[] };
+export type DatesAiUsage = Omit<Parsed<typeof usageGuard>["usage"], "rows"> & { rows: DatesAiUsageRow[]; unreadable_rows: number[]; ambiguous: DatesAiAmbiguous };
 export type DatesAiUsageRead = { usage: DatesAiUsage; drafts_enabled: boolean; capabilities: string[]; server_now: number };
+
+function ambiguousOf(usage: Record<string, unknown>): DatesAiAmbiguous {
+  const served = ["ambiguous_calls", "ambiguous_micro_usd", "ambiguous_runs"].filter((key) => Object.hasOwn(usage, key));
+  if (served.length === 0) return { kind: "absent" };
+  // Each of the three is checked: one that is missing or of the wrong type makes the whole of it unreadable.
+  const runs = integer(0)(usage.ambiguous_calls) && integer(0)(usage.ambiguous_micro_usd) ? rows(usage.ambiguous_runs, ambiguousRun, 100) : null;
+  return runs === null ? { kind: "unreadable" }
+    : { kind: "known", calls: usage.ambiguous_calls as number, micro_usd: usage.ambiguous_micro_usd as number, runs: runs.items, unreadable_runs: runs.unreadable };
+}
 
 /** Month-to-date AI spend. `expectedMonth` is null for "the current month, as Core counts it". */
 export function projectDatesAiUsage(value: unknown, expectedMonth: string | null): DatesAiUsageRead | null {
   if (!usageGuard(value) || (expectedMonth !== null && value.usage.month !== expectedMonth)) return null;
-  const read = rows(value.usage.rows, usageRow, 500)!;
-  return { usage: { ...value.usage, rows: read.items, unreadable_rows: read.unreadable }, drafts_enabled: value.drafts_enabled,
+  const read = rows(value.usage.rows, usageRowRead, 500)!;
+  return { usage: { ...value.usage, rows: read.items, unreadable_rows: read.unreadable, ambiguous: ambiguousOf(value.usage) }, drafts_enabled: value.drafts_enabled,
     capabilities: value.capabilities, server_now: value.server_now };
 }
 

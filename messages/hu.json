@@ -9520,6 +9520,29 @@
           "calls": "Hívások",
           "tokens": "Tokenek be / ki",
           "cost": "Költség"
+        },
+        "ambiguousTitle": "Hívások, amelyek költsége nem ismert",
+        "ambiguous": "Ebben a hónapban {count} MI-hívásért a szolgáltató díjat számolhatott fel: mindegyiket elküldtük, de a válasza nem érkezett meg, vagy nem lehetett elszámolni. Az ilyen hívást a Core a teljes lefoglalt összeggel elköltöttnek számolja – összesen {amount}. Ez az összeg benne van a fenti költésben, és a keretbe is beleszámít, bár nem tudni, hogy a szolgáltató felszámolta-e.",
+        "ambiguousListed": "A legújabb elöl.",
+        "ambiguousListedSome": "A legújabb elöl; a Core a(z) {count} hívásból {shown} hívást listáz.",
+        "ambiguousUnreadable": "A nem ismert költségű hívások nem olvashatók. A fenti költés a Core saját adata, és ezeket is tartalmazza; hogy hány ilyen hívás van, nem tudni.",
+        "ambiguousUnreadableRuns": "Listázott, de nem olvasható és nem megjelenített hívások: {count}.",
+        "ambiguousRow": "nem ismert költségű: {count}",
+        "ambiguousFailure": "hiba: {failure}",
+        "ambiguousColumns": {
+          "at": "Mikor",
+          "why": "Miért nem ismert a költség",
+          "booked": "Elköltöttnek számolva"
+        },
+        "ambiguousSources": {
+          "transport": "A kérést elküldtük a szolgáltatónak, de a visszaérkezett válaszból nem derült ki, mennyibe került.",
+          "unsettled": "A hívás a feldolgozóban hibára futott, mielőtt a költségét el lehetett számolni.",
+          "reaped": "A feldolgozó leállt, miközben a hívás folyamatban volt; a Core takarítása számolta el."
+        },
+        "ambiguousFailures": {
+          "curl": "A kapcsolat a kérés elküldése után megszakadt ({code}).",
+          "no-usage": "A szolgáltató válaszolt, de a válasza nem mondta meg, mennyit használt.",
+          "response-too-large": "A válasz túl nagy volt ahhoz, hogy beolvassuk."
         }
       },
       "statusValues": {
@@ -9894,7 +9917,8 @@
         "dates-intake-suggestions-disabled": "A tagok javaslatai ki vannak kapcsolva. Adminisztrátor kapcsolhatja be a Konfigurációban (dates_external_suggestions_enabled).",
         "dates-intake-duplicate-event-unavailable": "A már szereplőként megnevezett esemény nem létezik. Ellenőrizd az azonosítóját.",
         "dates-configuration-key-invalid": "A Core ehhez a kéréshez nem ismeri ezt a beállítást. Beküldési beállítást csak olyan konzol menthet, amely elküldi a beküldési szerződés jelölőjét; a korábban kiadott konzol nem látja ezeket a beállításokat.",
-        "dates-configuration-value-invalid": "A Core elutasította ezt az értéket. A hozzájárulás verziójánál: csak olyan verzió fogadható el, amelynek a szövege létezik ebben a kiadásban."
+        "dates-configuration-value-invalid": "A Core elutasította ezt az értéket. A hozzájárulás verziójánál: csak olyan verzió fogadható el, amelynek a szövege létezik ebben a kiadásban.",
+        "dates-external-intake-contract-required": "A Core nem adja ki ezt az MI-vel készült eseményt olyan konzolnak, amely nem küldi a beküldési szerződés jelölőjét: a korábban kiadott konzol nem tudja megjeleníteni. Ez a konzol elküldi; ha mégis ezt látod, a kérés jelölő nélkül ért a Core-hoz – töltsd újra az oldalt."
       },
       "memberConfirmationValues": {
         "awaiting": "A tag válaszára vár",

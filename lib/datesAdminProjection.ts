@@ -252,7 +252,10 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   dates_event_intake_usage: {
     ...ENVELOPE, ...leaves("drafts_enabled capabilities"),
     usage: { ...leaves("month cap_usd spent_micro_usd reserved_micro_usd remaining_micro_usd calls alert alert_at exhausted"),
-      rows: [leaves("provider model task channel calls unanswered_calls input_tokens output_tokens cache_read_tokens cache_write_tokens reasoning_tokens cost_micro_usd estimated_cost_calls")] },
+      rows: [leaves("provider model task channel calls unanswered_calls input_tokens output_tokens cache_read_tokens cache_write_tokens reasoning_tokens cost_micro_usd estimated_cost_calls ambiguous_calls")],
+      // D-145: the calls whose cost is not known, booked at their whole reservation, and the newest of them listed.
+      ...leaves("ambiguous_calls ambiguous_micro_usd"),
+      ambiguous_runs: [leaves("provider model task channel source failure booked_micro_usd at")] },
   },
   dates_event_intake_create: { ...ENVELOPE, ...leaves("replayed existing audit_id"), intake: INTAKE_RECEIPT },
   dates_event_intake_lease: { ...ENVELOPE, audit_id: L, intake: { ...INTAKE_RECEIPT, lease: leaves("holder until active mine") } },

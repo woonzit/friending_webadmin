@@ -12,14 +12,16 @@ rule; the provider is the Core lane's contract `dates-event-intake-admin-v1`.
 
 ## Release boundary and deploy order (D-143)
 
-- Provider: Core branch `claude/t865-p2-core` (T-884, T-886, D-143), pinned at
-  `b5b2b29983cf2dfb89371d7ac4eaf026a16b9e69`. Two corpora are vendored from that
-  tip, byte-identically: the intake corpus
-  (`tests/fixtures/dates_event_intake_admin_wire/`, 159 bodies, set
-  `008719da…`), every console request of which carries the Admin intake
-  contract selector (below), and the provider's capture of the P1 routes
-  WITHOUT the selector (`tests/fixtures/dates_external_admin_wire/`, 138 bodies,
-  set `d84a3e16…` - the released set, body for body).
+- Provider: Core branch `claude/t865-p2-core` (T-884, T-886, D-143, D-145),
+  rebased onto Core main `33265e46`, pinned at
+  `62cee304c68eaeda456ddf0b042cb340b8702d48` (the no-usage fix `2034a93a`; its
+  bodies are those of `8a621565`). The intake corpus is vendored from that tip
+  byte-identically (`tests/fixtures/dates_event_intake_admin_wire/`,
+  161 bodies, set `4415fcb2…`); every console request in it carries the Admin
+  intake contract selector (below). The P1 routes WITHOUT the selector are Core
+  main's capture (`tests/fixtures/dates_external_admin_wire/`, 138 bodies, set
+  `ba9ebf7a…`: the released set but four revision values, T-891), which the P2
+  tip serves body for body.
 - **Order: Core first, then this console.** The intake pages need Core's P2
   routes, the `existing` marker on the create receipt and `suggestions_enabled`
   on the queue; an earlier Core serves none of them.
@@ -178,17 +180,22 @@ at render.
   corpus body for body (138 of 138; only the manifest, which binds the capture
   to its source, differs);
 - as a control, the same released decoders refuse the genuine selector-carrying
-  bodies (a manual event's list and detail, an AI-assisted activity detail) -
-  and, of an AI-assisted event read WITHOUT the selector, they read the list
-  row and refuse the detail and the activity detail: the reason the switches
+  bodies (a manual event's list and detail, an AI-assisted activity detail).
+  Of an AI-assisted event read WITHOUT the selector (D-145): the external list
+  row decodes; the activity list reads and names the event's row as
+  unreadable; and the external detail and the activity detail are refused by
+  Core itself (`dates-external-intake-contract-required`, 426) - the released
+  decoders read no body from it, and the released pages (their source is
+  vendored too) show their load error, nothing else. That is why the switches
   are turned on only after this console is live;
 - this console's decoders read both shapes of every P1 read that depends on the
   selector, on genuine bodies: without it the 9 lists, 13 details, the external
   activity detail and the 2 configuration reads of the P1 corpus; with it the
   manual and AI-assisted list and detail, the AI-assisted activity detail and
-  the 50-row configuration of the intake corpus; and the three
-  `-released-console` reads, each proven to be its selector sibling minus the
-  one added key.
+  the 50-row configuration of the intake corpus; the released-console list
+  (its selector sibling minus the one key) and activity list; and the two
+  refusals, read as refusals with their token. This console sends the
+  selector, so it is never answered with them.
 
 ## Routes
 
@@ -475,6 +482,27 @@ it came from:
 Both keys are closed like the rest of the projection. A console without this
 change refuses the new list and detail bodies (closed key sets), so this console
 ships with that Core.
+
+## AI usage: calls whose cost is not known (D-145)
+
+The usage read serves, since Core D-145, the calls whose cost is not known: a
+call that was sent and whose answer never arrived or could not be settled
+(`transport`), a call that failed in the worker before its cost was settled
+(`unsettled`), or one whose worker stopped while it was outstanding and that
+Core's clean-up closed (`reaped`). The provider may have charged for it, so
+Core books it at its whole reservation as money spent: it is in
+`spent_micro_usd`, counts against the cap, and is counted in
+`ambiguous_calls` / `ambiguous_micro_usd` with the newest of them listed in
+`ambiguous_runs` (provider, model, task, channel, source, the failure - a
+transport's curl code, `response-too-large`, or `no-usage` for a successful
+answer that carried no usage figures (Core `2034a93a`), empty for the other
+two sources - the amount, the time); each usage row has its own
+`ambiguous_calls`. The AI usage page says it plainly - "may have been charged
+by the provider … counted as spent … not known whether the provider charged
+it" - and lists the runs. All four keys are optional (D-143): a Core that
+does not serve them shows nothing; figures that cannot be read are said to
+be unreadable, never "none"; a run that cannot be read is counted; an
+unknown source is shown as its token.
 
 ## What Core does not serve yet
 

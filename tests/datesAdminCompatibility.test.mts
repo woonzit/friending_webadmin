@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { datesConfigurationRawValue, datesSettingEditable, datesSettingEffectiveText, datesSettingStorefrontEffective } from "../lib/datesAdmin.ts";
 import { DATES_ADMIN_INTAKE_CONTRACT_SELECTOR, datesAdminContractParams, withDatesAdminContract } from "../lib/datesAdminContract.ts";
-import { decodeDatesActivityList, decodeDatesActivityOriginDetail, decodeDatesExternalDetail, decodeDatesExternalList, decodeDatesExternalPlaces,
+import { datesExternalRefusal, decodeDatesActivityList, decodeDatesActivityOriginDetail, projectDatesActivityList, decodeDatesExternalDetail, decodeDatesExternalList, decodeDatesExternalPlaces,
   decodeDatesExternalReceipt } from "../lib/datesExternalAdmin.ts";
 import { datesCaseDetail, datesConsoleCommandReceipt, datesEvidenceRead, datesLegalHoldReceipt, datesModerationQueue } from "../lib/datesModerationRead.ts";
 import { datesAdminReasons } from "../lib/datesReasons.ts";
@@ -66,6 +66,10 @@ const RELEASED_CONSOLE_PIN: Record<string, string> = {
   "lib/datesRuntimeHelp.ts": "4ad5826668c6f3135765fc21b332f5c241c5e2c61ce563e690b5545de1464c3c",
   "tests/datesExternalMessageWire.test.mts": "d6d8dd8d86e98ca32bbd4d79544319e1479227e35750ee4e43f8dc270156b732",
   "tests/datesExternalWire.test.mts": "fef0d01b5cc63c50e285a121420a47d171209577765227fe1c0646e2f2903925",
+  // Two released pages, to read what they do with a body their decoder refuses (D-145): `pages/DatesExternalEditorPage.tsx`
+  // is components/DatesExternalEditorPage.tsx, `pages/dates-activity-detail-page.tsx` is app/(dashboard)/dates/[activityId]/page.tsx.
+  "pages/DatesExternalEditorPage.tsx": "499e3e0c23b9e069c57d31e09a346d782f7795180e1b15249791db7e2f275d2f",
+  "pages/dates-activity-detail-page.tsx": "d46bc17dd5b3d5592622b5c927f915fd62ddb4820d4ebd73d46b6bf51e14b3de",
 };
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
 const body = (directory: URL, file: string) => JSON.parse(readFileSync(new URL(file, directory), "utf8"));
@@ -124,7 +128,7 @@ test("D-143 / T-891: what the provider serves WITHOUT the selector is the releas
 });
 
 test("D-143: the released console's decoder modules and wire tests are vendored byte-identical to Webadmin 7825bc13", () => {
-  const vendored = ["lib", "tests"].flatMap((directory) => readdirSync(new URL(`${directory}/`, RELEASED_CONSOLE)).map((name) => `${directory}/${name}`)).sort();
+  const vendored = ["lib", "tests", "pages"].flatMap((directory) => readdirSync(new URL(`${directory}/`, RELEASED_CONSOLE)).map((name) => `${directory}/${name}`)).sort();
   assert.deepEqual(vendored, Object.keys(RELEASED_CONSOLE_PIN).map((name) => `${name}.txt`).sort());
   for (const [name, digest] of Object.entries(RELEASED_CONSOLE_PIN)) assert.equal(hash(readFileSync(new URL(`${name}.txt`, RELEASED_CONSOLE))), digest, name);
   // They are what the reviewer found: the released list row and detail are exact-key and know nothing of the P2 keys.
@@ -212,27 +216,36 @@ test("D-143: the released console's own wire tests pass, unchanged, on the relea
 
 test("D-143 control: the same released decoders refuse the bodies Core serves WITH the selector - which is why the selector exists", () => {
   // Genuine bodies of the same routes with the selector (a manual event, so that only the added key differs), and the
-  // three reads of an AI-assisted event as a request WITHOUT the selector is served them.
+  // reads of an AI-assisted event as a request WITHOUT the selector is served them (Core 8a621565, D-145): the list
+  // row, the activity list, and - for the two details - Core's refusal `dates-external-intake-contract-required` (426).
   const selector = (name: string) => new URL(name, SELECTOR_BODIES);
   const PROBED = ["admin-external-list-manual.json", "admin-external-detail-manual.json", "admin-activity-detail-ai-assisted.json",
-    "admin-external-list-released-console.json", "admin-external-detail-released-console.json", "admin-activity-detail-released-console.json"];
+    "admin-external-list-released-console.json", "admin-external-detail-released-console-denied.json", "admin-activity-detail-released-console-denied.json",
+    "admin-activity-list-released-console.json"];
   const tree = releasedTree(SELECTORLESS_BODIES, Object.fromEntries(PROBED.map((name) => [name, selector(name)])));
   try {
     // The reviewer's probe, kept: list, detail and activity detail through the released decoders.
     writeFileSync(join(tree.root, "tests", "probe.test.mts"), `
       import test from "node:test";
       import { readFileSync } from "node:fs";
-      import { decodeDatesActivityOriginDetail, decodeDatesExternalDetail, decodeDatesExternalList } from "../lib/datesExternalAdmin.ts";
+      import { decodeDatesActivityOriginDetail, decodeDatesExternalDetail, decodeDatesExternalList, projectDatesActivityList, projectDatesActivityOriginDetail } from "../lib/datesExternalAdmin.ts";
       const body = (name) => JSON.parse(readFileSync(new URL("./fixtures/dates_external_admin_wire/" + name, import.meta.url), "utf8"));
       const list = (name) => { const value = body(name); return decodeDatesExternalList(value, { page: value.page, limit: value.limit }) !== null; };
-      const detail = (name) => { const value = body(name); return decodeDatesExternalDetail(value, value.event.external_event_id) !== null; };
-      const activity = (name) => { const value = body(name); return decodeDatesActivityOriginDetail(value, value.activity.activity_id, ${JSON.stringify(CAPABILITIES)}) !== null; };
+      const detail = (name, id) => { const value = body(name); return decodeDatesExternalDetail(value, id ?? value.event.external_event_id) !== null; };
+      const activity = (name, id) => { const value = body(name); return decodeDatesActivityOriginDetail(value, id ?? value.activity.activity_id, ${JSON.stringify(CAPABILITIES)}) !== null; };
+      // The event the two refused reads are of (the AI-assisted event of the corpus).
+      const EVENT = "xev_" + "4".padStart(32, "0"), ACTIVITY = "act_" + "4".padStart(32, "0");
       test("probe", () => {
         console.log("PROBE " + JSON.stringify({
           selectorless: { list: list("admin-list-admin.json"), detail: detail("admin-detail-admin.json"), activity: activity("${ACTIVITY_DETAIL}") },
           selector: { list: list("admin-external-list-manual.json"), detail: detail("admin-external-detail-manual.json"), activity: activity("admin-activity-detail-ai-assisted.json") },
-          assisted: { list: list("admin-external-list-released-console.json"), detail: detail("admin-external-detail-released-console.json"),
-            activity: activity("admin-activity-detail-released-console.json") } }));
+          assisted: { list: list("admin-external-list-released-console.json"), detail: detail("admin-external-detail-released-console-denied.json", EVENT),
+            activity: activity("admin-activity-detail-released-console-denied.json", ACTIVITY),
+            // What the activity page itself reads (the same decoder behind a projection for the page).
+            activityPage: projectDatesActivityOriginDetail(body("admin-activity-detail-released-console-denied.json"), ACTIVITY, ${JSON.stringify(CAPABILITIES)}) !== null,
+            // What the activity list page reads (its projection, as the page calls it).
+            activityList: (() => { const value = body("admin-activity-list-released-console.json"), read = projectDatesActivityList(value, { page: value.page, limit: value.limit });
+              return read === null ? null : { rows: read.activities.length, unreadable: read.unreadable_rows.map((row) => row.activity_id) }; })() } }));
       });`);
     const probe = tree.run("tests/probe.test.mts");
     assert.equal(probe.status, 0, probe.output.slice(-2000));
@@ -241,11 +254,25 @@ test("D-143 control: the same released decoders refuse the bodies Core serves WI
       selectorless: { list: true, detail: true, activity: true },
       // With it: none. The released console never sends it, so it is never served these.
       selector: { list: false, detail: false, activity: false },
-      // What the selector cannot cover: an AI-assisted event read WITHOUT the selector still says `ai_assisted: true` and has
-      // a Places venue, which the released detail and activity decoders fix by literal. Its list row is the P1 row and
-      // decodes. Hence the rule: the draft and suggestion switches are turned on only after the new console is live.
-      assisted: { list: true, detail: false, activity: false },
+      // What the selector cannot cover: an AI-assisted event, which the released detail and activity decoders cannot
+      // represent. Since D-145 Core refuses those two reads without the selector (426) instead of serving a body the
+      // released console would refuse; the external list row decodes; the activity list reads the page and names the
+      // event's row as unreadable. Hence the rule: the draft and suggestion switches go on only after the new console is live.
+      assisted: { list: true, detail: false, activity: false, activityPage: false, activityList: { rows: 0, unreadable: ["act_" + "4".padStart(32, "0")] } },
     });
+    // And what the released pages do with a refused read: their load error, nothing else. Read from their source
+    // (vendored byte-identically from 7825bc13; not run - no browser).
+    const editor = readFileSync(new URL("pages/DatesExternalEditorPage.tsx.txt", RELEASED_CONSOLE), "utf8");
+    assert.match(editor, /const detail = externalId \? decodeDatesExternalDetail\(response, externalId\) : null;/);
+    assert.match(editor, /if \(!nextPrincipal \|\| !hasDatesCapability\(nextPrincipal, "dates_external_event_read"\) \|\| !decoded\) \{\s+setPrincipal\(null\); setCanManage\(false\); setState\("error"\); return;/);
+    assert.match(editor, /\{state === "error" && <ErrorPanel message=\{t\("loadError"\)\}/);
+    // (Its only other path for a refused detail is the recovery of a purge this browser itself had pending - not this read.)
+    assert.match(editor, /if \(!decoded && nextPrincipal && saved\?\.kind === "pending" && saved\.pending\.baseline\?\.external_event_id === externalId\)/);
+    const activityPage = readFileSync(new URL("pages/dates-activity-detail-page.tsx.txt", RELEASED_CONSOLE), "utf8");
+    assert.match(activityPage, /if \(response\?\.error === "dates-admin-activity-unavailable"\) \{\s+setState\("not-found"\);/);
+    assert.doesNotMatch(activityPage, /dates-external-intake-contract-required/, "the new token takes no special path: not \"not found\"");
+    assert.match(activityPage, /const origin = nextPrincipal \? projectDatesActivityOriginDetail\(response, activityId, nextPrincipal\.capabilities\) : null;\s+if \(!origin \|\| !response \|\| !Array\.isArray\(response\.notifications\) \|\| !nextPrincipal\) \{\s+setPrincipal\(null\);\s+setState\("error"\);/);
+    assert.match(activityPage, /if \(state === "error" \|\| !data \|\| !draft \|\| !principal\) return <ErrorPanel message=\{t\("loadError"\)\}/);
   } finally { rmSync(tree.root, { recursive: true, force: true }); }
 });
 
@@ -291,20 +318,24 @@ test("D-143: this console decodes both shapes of every P1 read that depends on t
   const assisted = body(SELECTOR_BODIES, "admin-activity-detail-ai-assisted.json");
   assert.ok(decodeDatesActivityOriginDetail(assisted, assisted.activity.activity_id, CAPABILITIES)?.external?.intake);
   const fifty = body(SELECTOR_BODIES, "admin-configuration.json").settings; assert.equal(fifty.length, 50); rows(fifty, "admin-configuration");
-  // The pairs Core captured both ways: each `-released-console` read is its selector sibling minus the one key - and this
-  // console reads it (an AI-assisted event from a Core that is not sent the selector: labelled where Core says so, no link).
-  for (const [without, withSelector, at] of [["admin-external-list-released-console.json", "admin-external-list-ai-assisted.json", "events.0.ai_assisted"],
-    ["admin-external-detail-released-console.json", "admin-external-detail-ai-assisted.json", "event.intake"],
-    ["admin-activity-detail-released-console.json", "admin-activity-detail-ai-assisted.json", "external_event.intake"]] as const) {
-    const bare = body(SELECTOR_BODIES, without), full = structuredClone(body(SELECTOR_BODIES, withSelector)), path = at.split(".");
-    delete path.slice(0, -1).reduce((node: any, key) => node[key], full)[path.at(-1)!];
-    assert.deepEqual(bare, full, `${without} = ${withSelector} minus ${at}`);
-  }
-  const bareList = body(SELECTOR_BODIES, "admin-external-list-released-console.json"), bareDetail = body(SELECTOR_BODIES, "admin-external-detail-released-console.json");
+  // The AI-assisted event as Core answers a request WITHOUT the selector (Core 8a621565, D-145). The list row is its
+  // selector sibling minus the one key, and this console reads it; the activity list reads too.
+  const bareList = body(SELECTOR_BODIES, "admin-external-list-released-console.json"), fullList = structuredClone(body(SELECTOR_BODIES, "admin-external-list-ai-assisted.json"));
+  delete fullList.events[0].ai_assisted;
+  assert.deepEqual(bareList, fullList, "the released-console list = the AI-assisted list minus ai_assisted");
   assert.deepEqual(decodeDatesExternalList(bareList, { page: bareList.page, limit: bareList.limit }), bareList);
-  assert.deepEqual(decodeDatesExternalDetail(bareDetail, bareDetail.event.external_event_id), bareDetail);
-  const bareActivity = body(SELECTOR_BODIES, "admin-activity-detail-released-console.json");
-  assert.ok(decodeDatesActivityOriginDetail(bareActivity, bareActivity.activity.activity_id, CAPABILITIES));
+  const activities = body(SELECTOR_BODIES, "admin-activity-list-released-console.json"), listed = projectDatesActivityList(activities, { page: activities.page, limit: activities.limit })!;
+  assert.deepEqual([listed.activities.length, listed.unreadable_rows.length, listed.activities[0].ai_assisted], [1, 0, true]);
+  assert.ok(decodeDatesActivityList(activities, { page: activities.page, limit: activities.limit }));
+  // The two details are refused (426) - a request of this console carries the selector and is never answered so; if it
+  // were, the body is no detail here either, and its refusal is read with its token.
+  for (const name of ["admin-external-detail-released-console-denied.json", "admin-activity-detail-released-console-denied.json"]) {
+    const refused = body(SELECTOR_BODIES, name);
+    assert.deepEqual(refused, { success: false, status_code: 426, error: "dates-external-intake-contract-required", message: 200, status: 200, can_send: 0 }, name);
+    assert.equal(decodeDatesExternalDetail(refused, "xev_" + "4".padStart(32, "0")), null, name);
+    assert.equal(decodeDatesActivityOriginDetail(refused, "act_" + "4".padStart(32, "0"), CAPABILITIES), null, name);
+    assert.deepEqual([datesExternalRefusal(refused).error, datesExternalRefusal(refused).status], ["dates-external-intake-contract-required", 426], name);
+  }
   const thirtyThree = body(SELECTOR_BODIES, "admin-configuration-released-console.json").settings;
   assert.deepEqual(thirtyThree, fifty.slice(0, 33)); rows(thirtyThree, "admin-configuration-released-console");
 });

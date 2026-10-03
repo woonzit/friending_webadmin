@@ -9520,6 +9520,29 @@
           "calls": "Calls",
           "tokens": "Tokens in / out",
           "cost": "Cost"
+        },
+        "ambiguousTitle": "Calls whose cost is not known",
+        "ambiguous": "{count} AI calls this month may have been charged by the provider: each was sent, and its answer never arrived or could not be settled. Core counts such a call as spent at its whole reservation - {amount} in all. That money is in the spend above and counts against the cap, although it is not known whether the provider charged it.",
+        "ambiguousListed": "Newest first.",
+        "ambiguousListedSome": "Newest first; Core lists {shown} of the {count}.",
+        "ambiguousUnreadable": "The calls whose cost is not known could not be read. The spend above is Core's own figure and includes them; it is not known how many there are.",
+        "ambiguousUnreadableRuns": "Listed calls that could not be read and are not shown: {count}.",
+        "ambiguousRow": "cost not known: {count}",
+        "ambiguousFailure": "failure: {failure}",
+        "ambiguousColumns": {
+          "at": "When",
+          "why": "Why the cost is not known",
+          "booked": "Counted as spent"
+        },
+        "ambiguousSources": {
+          "transport": "The request was sent to the provider, and what it cost could not be read from what came back.",
+          "unsettled": "The call failed in the worker before its cost could be settled.",
+          "reaped": "The worker stopped while the call was outstanding; Core's clean-up counted it."
+        },
+        "ambiguousFailures": {
+          "curl": "The connection failed after the request was sent ({code}).",
+          "no-usage": "The provider answered, but its answer said nothing of what it used.",
+          "response-too-large": "The answer was too large to read."
         }
       },
       "statusValues": {
@@ -9894,7 +9917,8 @@
         "dates-intake-suggestions-disabled": "Members' suggestions are switched off. An administrator turns them on in Configuration (dates_external_suggestions_enabled).",
         "dates-intake-duplicate-event-unavailable": "The event named as the one already listed does not exist. Check its identifier.",
         "dates-configuration-key-invalid": "Core does not know this setting for this request. An intake setting can be saved only by a console that sends the intake contract selector; the released console is not shown these settings.",
-        "dates-configuration-value-invalid": "Core refused this value. For the consent version: only a version whose text exists in this release is accepted."
+        "dates-configuration-value-invalid": "Core refused this value. For the consent version: only a version whose text exists in this release is accepted.",
+        "dates-external-intake-contract-required": "Core does not serve this AI-assisted event to a console that does not send the intake contract: the released console cannot show it. This console sends it; if you see this, the request reached Core without it - reload the page."
       },
       "memberConfirmationValues": {
         "awaiting": "Waiting for the member's answer",

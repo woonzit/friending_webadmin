@@ -69,8 +69,8 @@ These supersede the P2a figures below; the tests named here are the authority.
 
 | Directory | Provider tip | Bodies | `fixture_set_sha256` | Pinned in |
 |---|---|---|---|---|
-| `dates_event_intake_admin_wire` | Core lane `opus-core-p2`, `b5b2b29983cf2dfb89371d7ac4eaf026a16b9e69` (source `2df1849c`) | 159 | `008719da095096506d4d583e5f5465a5b086fc4b0ef6136da4a56baf658bbfed` | `tests/datesIntakeWire.test.mts` |
-| `dates_external_admin_wire` | Core lane `opus-core-fix`, `33265e469650a48202eb21c25a171bc2aea09139` (source `b5118909`) | 138 | `ba9ebf7a93d120d0ecd8c4efc94ce67964cdb2a86c248b3d389d974c4858bae7` | `tests/datesExternalWire.test.mts` |
+| `dates_event_intake_admin_wire` | Core lane `opus-core-p2`, `62cee304c68eaeda456ddf0b042cb340b8702d48` (rebased onto Core main `33265e46`; bodies of `8a621565`, manifest rebound on `2034a93a`) | 161 | `4415fcb2f85025205eda028fa1e10591b457355e688627e5f438648843fbe79c` | `tests/datesIntakeWire.test.mts` |
+| `dates_external_admin_wire` | Core main `33265e469650a48202eb21c25a171bc2aea09139` (T-891 landed; source `b5118909`) | 138 | `ba9ebf7a93d120d0ecd8c4efc94ce67964cdb2a86c248b3d389d974c4858bae7` | `tests/datesExternalWire.test.mts` |
 | `dates_admin_command_wire` | the same branch, commit `754b9eb310016abdcca11584e44ad525a1bee34b` (source `11a999d6`): the 61 command bodies of `33265e46` unchanged, and three evidence reads after a legal hold was placed, amended and released | 64 | `b9b921db4a15684bd4df0d4a9a9e9b8a50dd625c33c472c8e82b415149e2b126` | `tests/datesAdminCommandWire.test.mts` |
 | `dates_external_admin_wire_released` | Core main `0721529847602d4298f881119428f0e99eae9d53` | 138 | `d84a3e162703db1578db59f0a0a972de24fffc8562f23a13bf5715101306e4ed` | `tests/datesAdminCompatibility.test.mts` |
 
@@ -81,7 +81,8 @@ hold moves the case revision since T-891, and the capture holds case 01 before r
 `case.revision` 3 -> 4, `admin-moderation-detail-purged` 3 -> 5). Both tests prove that from bytes.
 `dates_admin_command_wire` keeps its requests in Core's generator
 (`tests/dates_admin_command_fixture_dump.php`, digest pinned); the tests transcribe each request
-they use with its line. Both T-891 directories come from a lane branch not yet on Core main: re-pin
+they use with its line. The P1 directory is Core main's now (T-891 landed at `33265e46`); the command corpus
+comes from commit `754b9eb3` of the lane branch, not yet on Core main: re-pin
 to the published commit with the same set digests when it lands.
 
 ## T-865 P2a coordinated provider/consumer handoff (T-884 / T-885)

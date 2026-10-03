@@ -11,7 +11,10 @@
         "alert": false,
         "alert_at": null,
         "exhausted": false,
-        "rows": []
+        "rows": [],
+        "ambiguous_calls": 0,
+        "ambiguous_micro_usd": 0,
+        "ambiguous_runs": []
     },
     "drafts_enabled": true,
     "capabilities": [
