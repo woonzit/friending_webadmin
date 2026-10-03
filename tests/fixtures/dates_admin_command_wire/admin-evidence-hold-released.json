@@ -1,0 +1,67 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case_id": "cas_00000000000000000000000000000005",
+    "evidence": [
+        {
+            "evidence_id": "evi_000000000000000000000000000001f5",
+            "case_id": "cas_00000000000000000000000000000005",
+            "report_id": "rpt_000000000000000000000000000001f5",
+            "evidence_type": "target",
+            "sensitive_location": false,
+            "snapshot": {
+                "kind": "self-made hold evidence"
+            },
+            "immutable": true,
+            "legal_hold": false,
+            "hold_started_at": 1789999100,
+            "hold_reason": "Synthetic legal retention.",
+            "review_at": null,
+            "created_at": 1789999100,
+            "hold_updated_at": 1790000000,
+            "legal_basis": "Synthetic court order.",
+            "hold_release_legal_basis": "Synthetic letter of withdrawal.",
+            "hold_release_reason": "Synthetic withdrawal.",
+            "hold_released_at": 1790000000,
+            "purge_at": {
+                "$date": {
+                    "$numberLong": "1792592000000"
+                }
+            }
+        },
+        {
+            "evidence_id": "evi_000000000000000000000000000001f6",
+            "case_id": "cas_00000000000000000000000000000005",
+            "report_id": "rpt_000000000000000000000000000001f6",
+            "evidence_type": "target",
+            "sensitive_location": false,
+            "snapshot": {
+                "kind": "self-made hold evidence"
+            },
+            "immutable": true,
+            "legal_hold": false,
+            "hold_started_at": 1789999100,
+            "hold_reason": "Synthetic legal retention.",
+            "review_at": null,
+            "created_at": 1789999100,
+            "hold_updated_at": 1790000000,
+            "legal_basis": "Synthetic court order.",
+            "hold_release_legal_basis": "Synthetic letter of withdrawal.",
+            "hold_release_reason": "Synthetic withdrawal.",
+            "hold_released_at": 1790000000,
+            "purge_at": {
+                "$date": {
+                    "$numberLong": "1792592000000"
+                }
+            }
+        }
+    ],
+    "appeal_note": null,
+    "redacted_sensitive_location_count": 0,
+    "break_glass_used": false,
+    "audit_id": "aud_00000000000000000000000000000018",
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

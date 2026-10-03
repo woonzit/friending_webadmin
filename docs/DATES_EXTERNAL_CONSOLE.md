@@ -193,8 +193,9 @@ replies with the journal's classifier and one of two identities:
 
 Every command's success body is checked against the request the page sent
 (`lib/datesCommandReceipts.ts`, `lib/datesModerationRead.ts`), on Core's
-genuine request / answer pairs (`tests/fixtures/dates_admin_command_wire`, 61
-bodies; the requests are those of Core's generator). A check binds on what
+genuine request / answer pairs (`tests/fixtures/dates_admin_command_wire`; the
+requests are those of Core's generator; the corpus also holds three evidence
+reads after a legal hold was placed, amended and released). A check binds on what
 identifies the command - the target, the action, the revision the command
 leaves - and tolerates keys it does not name. A success body that fails its
 check is "the outcome is not known". No route is taken on the bare success

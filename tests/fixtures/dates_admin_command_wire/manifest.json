@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
     "contract": "dates-admin-command-v1",
-    "source_commit": "7353371a821b26762ff0f993cf252250a408217f",
-    "fixture_set_sha256": "80c762f2b64f0e99de0a8d702b52400b7e80787c7f5e98c6c253446f7b02d135",
+    "source_commit": "11a999d63da00a076ed967b8862680acffe969e0",
+    "fixture_set_sha256": "b9b921db4a15684bd4df0d4a9a9e9b8a50dd625c33c472c8e82b415149e2b126",
     "provenance": {
         "generator": "tests/dates_admin_command_fixture_dump.php",
-        "generator_sha256": "7d3efa7632333bc96824895321b93769f34737b01a84f60681d1a549e73fc4e0",
+        "generator_sha256": "d65e9154ecdf5e3b0ffd0813bbee1c20f9d05f5ed8fe13a15b7dac62428e6945",
         "wire_adapters": {
             "webadmin_routes": "HTTP POST application/x-www-form-urlencoded -> public/index.php under the PHP web server -> Friending\\Core\\Router::dispatch -> Friending\\Support\\Webadmin::reply"
         },
@@ -24,7 +24,11 @@
             "review_at": "exact equality to the requested time, then shift by seed epoch only; null preserved",
             "captured_from/captured_to": "exact equality to the requested bounds, then shift by seed epoch only",
             "expires_at": "the stored transfer expiry, exactly seven days after the stored creation time; replaced by the normalized clock plus seven days",
-            "activity_type.updated_at": "exact equality to the stored row; replaced by the normalized clock"
+            "activity_type.updated_at": "exact equality to the stored row; replaced by the normalized clock",
+            "evidence[].created_at, evidence[].hold_started_at": "exact equality to the seeded time and the stored row, then shift by seed epoch only",
+            "evidence[].hold_updated_at, evidence[].hold_released_at": "the time of the hold write, equal to the stored row; replaced by the normalized clock",
+            "evidence[].review_at": "equal to the stored row, then shift by seed epoch only",
+            "evidence[].purge_at": "a BSON date in MongoDB extended JSON, equal to the stored row and thirty days after the release; replaced by the normalized clock plus thirty days"
         },
         "normalized_identifier_fields": {
             "audit_id": "top-level only; real aud_32hex of a persisted audit row; numbered by first appearance, so a repeat that names an earlier row keeps that row's number",
@@ -172,6 +176,7 @@
             "src/Support/AgePolicy.php",
             "src/Support/AppAppearancePolicy.php",
             "src/Support/AuthMethodPolicy.php",
+            "src/Support/DatesActivityPhotoPolicy.php",
             "src/Support/DatesActivityPolicy.php",
             "src/Support/DatesAdminInput.php",
             "src/Support/DatesCanonicalPayload.php",
@@ -369,6 +374,27 @@
             "http_status": 200,
             "status_code": 200,
             "sha256": "0b989b510bd8e016c873d04235108cbfbaafefff41d2ed0bea661eccf433c115"
+        },
+        {
+            "file": "admin-evidence-hold-amended.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "dc4e031a360d001aa4aaea62b062a775b4316add42014fc7d27709bcac8c4c95"
+        },
+        {
+            "file": "admin-evidence-hold-placed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "1946e90f48368ea692b8a373254a7b03db2b26c4a8fe8584bac6dda276ec51cb"
+        },
+        {
+            "file": "admin-evidence-hold-released.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "89cdc65e98ecf1bd60f395aecd6b8e190942bb135bfd0b08523ee95fb2f6c298"
         },
         {
             "file": "admin-hold-amend.json",

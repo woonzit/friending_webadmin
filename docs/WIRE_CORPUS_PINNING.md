@@ -71,7 +71,7 @@ These supersede the P2a figures below; the tests named here are the authority.
 |---|---|---|---|---|
 | `dates_event_intake_admin_wire` | Core lane `opus-core-p2`, `b5b2b29983cf2dfb89371d7ac4eaf026a16b9e69` (source `2df1849c`) | 159 | `008719da095096506d4d583e5f5465a5b086fc4b0ef6136da4a56baf658bbfed` | `tests/datesIntakeWire.test.mts` |
 | `dates_external_admin_wire` | Core lane `opus-core-fix`, `33265e469650a48202eb21c25a171bc2aea09139` (source `b5118909`) | 138 | `ba9ebf7a93d120d0ecd8c4efc94ce67964cdb2a86c248b3d389d974c4858bae7` | `tests/datesExternalWire.test.mts` |
-| `dates_admin_command_wire` | the same, source `7353371a` | 61 | `80c762f2b64f0e99de0a8d702b52400b7e80787c7f5e98c6c253446f7b02d135` | `tests/datesAdminCommandWire.test.mts` |
+| `dates_admin_command_wire` | the same branch, commit `754b9eb310016abdcca11584e44ad525a1bee34b` (source `11a999d6`): the 61 command bodies of `33265e46` unchanged, and three evidence reads after a legal hold was placed, amended and released | 64 | `b9b921db4a15684bd4df0d4a9a9e9b8a50dd625c33c472c8e82b415149e2b126` | `tests/datesAdminCommandWire.test.mts` |
 | `dates_external_admin_wire_released` | Core main `0721529847602d4298f881119428f0e99eae9d53` | 138 | `d84a3e162703db1578db59f0a0a972de24fffc8562f23a13bf5715101306e4ed` | `tests/datesAdminCompatibility.test.mts` |
 
 `dates_external_admin_wire` is captured without the Admin intake contract selector (D-143) and

@@ -11,8 +11,11 @@ import { datesCommandOutcome } from "../lib/datesExternalAdmin.ts";
 
 // T-891: the receipts of the Dates console's commands, as Core serves them.
 // Vendored byte-identically from the Core lane opus-core-fix, branch
-// claude/core-hardening-20261002, tip 33265e469650a48202eb21c25a171bc2aea09139
-// (git objects; hand-over team/chat/20261002T233953Z-opus-core-fix-to-opus-admin-p2-t891-core-pin.md).
+// claude/core-hardening-20261002, commit 754b9eb310016abdcca11584e44ad525a1bee34b
+// (git objects; hand-overs team/chat/20261002T233953Z-opus-core-fix-to-opus-admin-p2-t891-core-pin.md and
+// 20261003T023124Z-opus-core-fix-to-lead-t891-core-pin-evidence.md). Against the first pin (33265e46, 61 bodies,
+// set 80c762f2...) three evidence reads were added - after a legal hold was placed, amended and released - and no
+// body changed.
 // Every body is the answer to a real form-encoded HTTP POST into Core's front
 // controller, checked by the generator against storage, audit and the durable
 // command receipt, and captured twice. The REQUESTS are in the generator
@@ -20,10 +23,10 @@ import { datesCommandOutcome } from "../lib/datesExternalAdmin.ts";
 // each request / answer pair the tests of this console use is transcribed from
 // it at the place it is used, with its line.
 const DIRECTORY = new URL("./fixtures/dates_admin_command_wire/", import.meta.url);
-const SOURCE = "7353371a821b26762ff0f993cf252250a408217f";
-const MANIFEST_SHA = "63bbcc6ed3801deb6395c2beb891dbb2c69319943f2a906022729956bc003c94";
-const GENERATOR_SHA = "7d3efa7632333bc96824895321b93769f34737b01a84f60681d1a549e73fc4e0";
-const SET_SHA = "80c762f2b64f0e99de0a8d702b52400b7e80787c7f5e98c6c253446f7b02d135";
+const SOURCE = "11a999d63da00a076ed967b8862680acffe969e0";
+const MANIFEST_SHA = "093f15bc218b84b7d72cb0dd899fa8aac3f1410ed402728ea255903e4ab3e28c";
+const GENERATOR_SHA = "d65e9154ecdf5e3b0ffd0813bbee1c20f9d05f5ed8fe13a15b7dac62428e6945";
+const SET_SHA = "b9b921db4a15684bd4df0d4a9a9e9b8a50dd625c33c472c8e82b415149e2b126";
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`${name}.json`, DIRECTORY), "utf8"));
 
@@ -69,22 +72,24 @@ export const COMMAND_CORPUS: Record<string, { successes: string[]; refusals: Rec
     successes: ["resolve-dismiss", "resolve-dismiss-replay"],
     refusals: { "resolve-stale": ["dates-admin-stale-revision", 409], "resolve-viewer": ["dates-admin-capability-required", 403] },
   },
+  // A read, not a command: the case's evidence after a legal hold was placed, amended and released (commit 754b9eb3).
+  dates_moderation_evidence: { successes: ["evidence-hold-placed", "evidence-hold-amended", "evidence-hold-released"], refusals: {} },
 };
 
-test("the command corpus is Core's capture at the pinned tip: 61 bodies, each against its digest, pinned independently of its manifest", () => {
+test("the command corpus is Core's capture at the pinned commit: 64 bodies, each against its digest, pinned independently of its manifest", () => {
   const raw = readFileSync(new URL("manifest.json", DIRECTORY)), manifest = JSON.parse(raw.toString());
   assert.equal(hash(raw), MANIFEST_SHA);
   assert.deepEqual([manifest.schema_version, manifest.contract, manifest.source_commit], [1, "dates-admin-command-v1", SOURCE]);
   assert.equal(manifest.provenance.generator, "tests/dates_admin_command_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
-  assert.equal(manifest.provenance.source_paths.length, 173);
+  assert.equal(manifest.provenance.source_paths.length, 174);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   // The released console's requests get the released keys; the `selected` bodies answer requests that carry a selector.
   assert.match(manifest.provenance.released_console, /without expected_revision/);
   assert.match(manifest.provenance.released_console, /without dates_admin_command_contract_version/);
   const names = Object.values(COMMAND_CORPUS).flatMap(({ successes, refusals }) =>
     [...successes.map((name) => `admin-${name}.json`), ...Object.keys(refusals).map((name) => `admin-${name}-denied.json`)]).sort();
-  assert.equal(names.length, 61);
+  assert.equal(names.length, 64);
   assert.deepEqual(manifest.fixtures.map((entry: { file: string }) => entry.file), names);
   assert.deepEqual(readdirSync(DIRECTORY).sort(), ["manifest.json", ...names].sort());
   const lines = manifest.fixtures.map((entry: { file: string; sha256: string; consumer: string; http_status: number; status_code: number }) => {
@@ -95,12 +100,13 @@ test("the command corpus is Core's capture at the pinned tip: 61 bodies, each ag
     return `${entry.file}\0${entry.sha256}`;
   });
   assert.equal(hash(lines.join("\n")), SET_SHA);
-  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 38);
+  assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 41);
   // Each refusal is Core's: its token, its status and the legacy envelope; nothing else in it.
   for (const { refusals } of Object.values(COMMAND_CORPUS)) for (const [name, [error, status]] of Object.entries(refusals))
     assert.deepEqual(fixture(`admin-${name}-denied`), { success: false, status_code: status, error, message: 200, status: 200, can_send: 0 }, name);
-  // Each success is Core's envelope around the receipt.
-  for (const { successes } of Object.values(COMMAND_CORPUS)) for (const name of successes) {
+  // Each success is Core's envelope around the receipt (the three evidence reads are reads: no idempotency flag).
+  for (const [route, { successes }] of Object.entries(COMMAND_CORPUS)) for (const name of successes) {
+    if (route === "dates_moderation_evidence") continue;
     const body = fixture(`admin-${name}`);
     assert.deepEqual([body.success, body.status_code, body.message, body.status, body.can_send, body.server_now], [true, 200, 200, 200, 0, 1790000000], name);
     assert.equal(typeof body.idempotency_replayed, "boolean", name); assert.match(body.audit_id, /^aud_[0-9a-f]{32}$/, name);

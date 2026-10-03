@@ -29,7 +29,7 @@ function routeOf(corpus: string, file: string): string | null {
   if (corpus === "dates_admin_command_wire") return first([["admin-hold-", "dates_moderation_legal_hold"], ["admin-trail-", "dates_moderation_trail_evidence"],
     ["admin-host-transfer", "dates_activity_host_transfer"], ["admin-activity-update", "dates_activity_update"], ["admin-activity-type-save", "dates_activity_type_save"],
     ["admin-activity-", "dates_activity_command"], ["admin-configuration-save", "dates_configuration_save"], ["admin-reason-deactivate", "dates_reason_deactivate"],
-    ["admin-resolve-", "dates_moderation_resolve"]]) ?? "?";
+    ["admin-resolve-", "dates_moderation_resolve"], ["admin-evidence-", "dates_moderation_evidence"]]) ?? "?";
   if (corpus === "dates_event_intake_admin_wire") return first([["admin-list-", "dates_event_intake_list"], ["admin-detail-", "dates_event_intake_detail"],
     ["admin-create-", "dates_event_intake_create"], ["admin-lease-", "dates_event_intake_lease"], ["admin-reject-", "dates_event_intake_reject"],
     ["admin-duplicate-of-event", "dates_event_intake_reject"], ["admin-ask-member", "dates_event_intake_ask_member"], ["admin-publish", "dates_event_intake_publish"],
@@ -252,7 +252,9 @@ test("the parts kept whole are exactly the listed ones, each bounded by its own 
 
 /**
  * Every key a Core evidence writer can put on a `moderation_evidence` row, read from Core's source (git objects) on main
- * 07215298, the P2 branch b5b2b299 and the T-891 branch 33265e46 - the same keys on all three:
+ * 07215298, the P2 branch b5b2b299 and the T-891 branch 33265e46 - the same keys on all three - and the same list the
+ * Core lane states for main and its branch (team/chat/20261003T023124Z-opus-core-fix-to-lead-t891-core-pin-evidence.md;
+ * no key is missing on either side):
  * - the inserts: DatesModerationEvidenceService::store (83-98), DatesPrepublicationModerationService (148-162, with
  *   `target_revision`), DatesTrailEvidenceService (33265e46: 242-268; 07215298: 166-191, with `restricted_access`);
  * - a legal hold placed: `legal_basis`, `hold_updated_at` (DatesModerationCommandService, 33265e46: 676-690; 07215298: 559-566);
@@ -270,15 +272,26 @@ test("review finding (opus-review-p2, MEDIUM): an evidence row after a hold, a r
   const row = (DATES_ADMIN_NAMED.dates_moderation_evidence as any).evidence[0];
   for (const key of EVIDENCE_WRITER_KEYS) assert.ok(Object.hasOwn(row, key), `${key} is named`);
   assert.equal(row.purge_at, "opaque", "a MongoDB date is passed as served"); assert.equal(row.snapshot, "opaque");
-  // DERIVED, NOT GENUINE: no vendored body was captured after a hold was placed or released (the Core lane is asked for
-  // genuine ones). Each row below is the genuine P1 evidence row with what the writer named above sets on it.
+  // GENUINE (Core 754b9eb3, command corpus): the evidence read after a legal hold was placed, amended and released - each
+  // the body itself after the projection, no warning, read by the page's decoder.
+  const served: Record<string, any> = {};
+  for (const name of ["placed", "amended", "released"]) {
+    const body = read("dates_admin_command_wire", `admin-evidence-hold-${name}.json`), lines: string[] = [];
+    const sent = projectDatesAdminBody("dates_moderation_evidence", body, (line) => lines.push(line)) as any;
+    assert.deepEqual(sent, body, name); assert.deepEqual(lines, [], `${name}: nothing to warn about`);
+    assert.equal(DECODES.dates_moderation_evidence(sent), true, `${name}: the page reads it`);
+    served[name] = body.evidence[0];
+  }
+  // They carry what the finding was about: the basis and the update time once held, the release fields and the purge
+  // date (extended JSON, as served) once released.
+  for (const key of ["legal_basis", "hold_updated_at"]) assert.ok(Object.hasOwn(served.placed, key) && Object.hasOwn(served.amended, key), key);
+  for (const key of ["hold_released_at", "hold_release_reason", "hold_release_legal_basis", "purge_at"]) assert.ok(Object.hasOwn(served.released, key), key);
+  assert.deepEqual(Object.keys(served.released.purge_at), ["$date"]);
+  // DERIVED, NOT GENUINE - only where no genuine body covers the case: an automatic hold closed, a restricted trail
+  // snapshot, an erased account. Each row is the genuine P1 evidence row with what the writer named above sets on it.
   const base = read("dates_external_admin_wire", "admin-moderation-evidence.json"), genuine = base.evidence[0], now = 1790000000;
   const purgeAt = { $date: { $numberLong: String((now + 30 * 86400) * 1000) } };
   const ROWS: Record<string, Record<string, unknown>> = {
-    placed: { ...genuine, legal_hold: true, hold_reason: "Synthetic legal retention.", legal_basis: "Synthetic authority request.", review_at: now + 86400, hold_updated_at: now },
-    amended: { ...genuine, legal_hold: true, hold_reason: "Synthetic legal retention.", legal_basis: "Synthetic court order.", review_at: now + 2 * 86400, hold_updated_at: now + 60 },
-    released: { ...genuine, legal_hold: false, hold_reason: "Synthetic legal retention.", legal_basis: "Synthetic court order.", review_at: null, hold_updated_at: now + 120,
-      hold_released_at: now + 120, hold_release_reason: "Synthetic withdrawal.", hold_release_legal_basis: "Synthetic letter of withdrawal.", purge_at: purgeAt },
     closed: { ...genuine, evidence_type: "activity_prepublication_snapshot", report_id: null, target_revision: 3, legal_hold: false, automatic_hold_closed_at: now, purge_at: purgeAt },
     trail: { ...genuine, evidence_type: "live_trail_window_snapshot", report_id: null, sensitive_location: true, restricted_access: true, hold_reason: "open_safety_case_trail_subset",
       snapshot: { activity_id: "act_" + "4".padStart(32, "0"), requested_window: { captured_from: now - 600, captured_to: now - 60 }, captured_window: { first_at: now - 540, last_at: now - 120 },
@@ -292,9 +305,10 @@ test("review finding (opus-review-p2, MEDIUM): an evidence row after a hold, a r
     assert.deepEqual(sent, body, name); assert.deepEqual(lines, [], `${name}: nothing to warn about`);
     assert.equal(DECODES.dates_moderation_evidence(sent), true, `${name}: the page reads it`);
   }
-  assert.deepEqual((projectDatesAdminBody("dates_moderation_evidence", { ...base, evidence: [ROWS.released] }) as any).evidence[0].purge_at, purgeAt);
+  assert.deepEqual((projectDatesAdminBody("dates_moderation_evidence", { ...base, evidence: [ROWS.closed] }) as any).evidence[0].purge_at, purgeAt);
   // Still named fields only: a key no writer sets is dropped beside them.
-  const unknown = projectDatesAdminBody("dates_moderation_evidence", { ...base, evidence: [{ ...ROWS.released, future_key: "x" }] }) as any;
+  const released = read("dates_admin_command_wire", "admin-evidence-hold-released.json");
+  const unknown = projectDatesAdminBody("dates_moderation_evidence", { ...released, evidence: [{ ...released.evidence[0], future_key: "x" }] }) as any;
   assert.equal(Object.hasOwn(unknown.evidence[0], "future_key"), false); assert.equal(unknown.evidence[0].hold_release_reason, "Synthetic withdrawal.");
   // And the row is not kept whole: the snapshot and the purge date are the only parts passed as served.
   assert.deepEqual(DATES_ADMIN_OPAQUE.dates_moderation_evidence, ["evidence[].snapshot", "evidence[].purge_at"]);
