@@ -635,7 +635,7 @@ test("T-886: the member's own words are plain text, and a part that cannot be re
 });
 
 test("T-886: before a rejection or a publication the reviewer is told what it means for the member, from Core's figures", async () => {
-  const { DatesIntakeMemberRejectNotes, DatesIntakeMemberPublishNotes, datesIntakeSecondLookOpen } = await import("../components/DatesIntakeMemberPanel.tsx");
+  const { DatesIntakeMemberRejectNotes, DatesIntakeMemberPublishNotes, datesIntakeSecondLookOpen, datesIntakeSecondLookStrike } = await import("../components/DatesIntakeMemberPanel.tsx");
   for (const locale of LOCALES) {
     const copy = messagesOf(locale).datesAdmin.intake, reject = copy.reject, editor = copy.editor;
     const notes = (name: string, reasonCode: string, namesEvent = false, change?: (intake: any) => void) => { const intake = detail(name); change?.(intake);
@@ -649,16 +649,35 @@ test("T-886: before a rejection or a publication the reviewer is told what it me
     for (const reason of ["duplicate", "not_an_event", "unverifiable", "outside_area"]) assert.doesNotMatch(notes("admin-detail-member-in-review", reason), /alert-warning/, reason);
     const named = notes("admin-detail-member-in-review", "duplicate", true);
     assert.ok(named.includes(escaped(reject.memberDuplicate))); assert.equal(named.includes(escaped(reject.memberStatement)), false); assert.doesNotMatch(named, /alert-warning/);
-    // The second look: 2 of 3 (the rejection under review is not counted meanwhile), and rejecting again is final.
+    // The second look (review finding of opus-review-p2, LOW). The genuine body: the first decision rejected it as
+    // spam_or_fake, a strike Core counts per suggestion from its current decision. Rejecting as spam again keeps that one
+    // strike and adds none - so the line about a NEW strike is not shown; rejecting again is final either way.
     const second = notes("admin-detail-member-re-review", "spam_or_fake");
-    assert.ok(second.includes(escaped(text(reject.strike, { strikes: 2, limit: 3 }))) && second.includes(escaped(reject.secondLook)));
+    assert.ok(second.includes(escaped(reject.secondLookStrikeKept)) && second.includes(escaped(reject.secondLook)));
+    assert.equal(second.includes(escaped(text(reject.strike, { strikes: 2, limit: 3 }))), false, "no new strike is announced");
+    assert.equal(second.includes(escaped(reject.secondLookStrikeTakenBack)), false);
+    // Another reason takes that strike back, and can end the ban it caused (Core: DatesEventIntakeAdminService `wasStrike`).
+    for (const reason of ["not_an_event", "duplicate", "unverifiable"]) {
+      const other = notes("admin-detail-member-re-review", reason);
+      assert.ok(other.includes(escaped(reject.secondLookStrikeTakenBack)) && other.includes(escaped(reject.secondLook)), reason);
+      assert.equal(other.includes(escaped(reject.secondLookStrikeKept)), false, reason);
+    }
+    // DERIVED: a second look whose first decision was no strike says nothing about strikes beyond the usual line.
+    const noStrike = (intake: any) => { intake.member.re_review.first_decision.reason_code = "not_an_event"; };
+    const plainSecond = notes("admin-detail-member-re-review", "spam_or_fake", false, noStrike);
+    assert.ok(plainSecond.includes(escaped(text(reject.strike, { strikes: 2, limit: 3 })))); assert.equal(plainSecond.includes(escaped(reject.secondLookStrikeKept)), false);
+    assert.equal(notes("admin-detail-member-re-review", "not_an_event", false, noStrike).includes(escaped(reject.secondLookStrikeTakenBack)), false);
+    // ... nor once the second decision is on record, nor on a suggestion that is not on a second look.
+    const decided = (intake: any) => { intake.member.re_review.decided_at = 1790000000; intake.second_look = false; };
+    assert.equal(notes("admin-detail-member-re-review", "not_an_event", false, decided).includes(escaped(reject.secondLookStrikeTakenBack)), false);
     assert.equal(notes("admin-detail-member-in-review", "spam_or_fake").includes(escaped(reject.secondLook)), false);
+    assert.deepEqual([datesIntakeSecondLookStrike(detail("admin-detail-member-re-review")), datesIntakeSecondLookStrike(detail("admin-detail-member-in-review"))], [true, false]);
     // A standing the console could not read is said to be unknown; an erased account is a strike against nobody.
     assert.ok(notes("admin-detail-member-in-review", "spam_or_fake", false, (intake) => { intake.member.unreadable = ["standing"]; intake.member.standing = null; }).includes(escaped(reject.strikeUnknown)));
     assert.ok(notes("admin-detail-member-in-review", "spam_or_fake", false, (intake) => { intake.member = null; }).includes(escaped(reject.strikeUnknown)));
     assert.ok(notes("admin-detail-member-in-review", "spam_or_fake", false, (intake) => { intake.member.standing = null; intake.member.submitter_uid = null; }).includes(escaped(reject.strikeNobody)));
     // Publishing: credit by number, or no name; "going" only where Core would join them.
-    const publish = (member: any, events = 1) => render(locale, createElement(DatesIntakeMemberPublishNotes, { member, events }));
+    const publish = (member: any, events = 1, secondLookStrike = false) => render(locale, createElement(DatesIntakeMemberPublishNotes, { member, events, secondLookStrike }));
     const credited = detail("admin-detail-member-in-review").member!, anonymous = detail("admin-detail-member-re-review").member!, erased = detail("admin-detail-member-erased").member!;
     assert.deepEqual([credited.anonymous, credited.auto_going, anonymous.anonymous, anonymous.auto_going, erased.submitter_uid], [false, true, true, false, null]);
     const first = publish(credited);
@@ -668,6 +687,10 @@ test("T-886: before a rejection or a publication the reviewer is told what it me
     assert.ok(hidden.includes(escaped(editor.memberAnonymous))); assert.doesNotMatch(hidden, /19602/, "an anonymous member's number is not repeated in the confirmation");
     assert.equal(hidden.includes(escaped(editor.memberGoing)), false);
     assert.ok(publish(erased).includes(escaped(editor.memberErased)));
+    // Publishing after a second look whose first decision counted a strike takes it back (Core: DatesExternalEventPublisher).
+    const takenBack = publish(anonymous, 1, datesIntakeSecondLookStrike(detail("admin-detail-member-re-review")));
+    assert.ok(takenBack.includes(escaped(editor.memberSecondLookStrikeTakenBack)));
+    assert.equal(publish(credited).includes(escaped(editor.memberSecondLookStrikeTakenBack)), false);
     assert.ok(publish(null).includes(escaped(editor.memberUnreadable)));
   }
   // The second look is open exactly while the member has asked and no second decision is on record.

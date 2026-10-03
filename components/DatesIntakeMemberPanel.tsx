@@ -101,29 +101,47 @@ export default function DatesIntakeMemberPanel({ intake }: { intake: DatesIntake
   </section>;
 }
 
+/**
+ * A second look whose first decision was a rejection for a strike reason. Core counts a strike per suggestion from
+ * its current decision: the second decision keeps that one strike when it rejects for a strike reason again (and adds
+ * none), and takes it back - which can end a ban it caused - when it rejects for another reason or publishes.
+ */
+export function datesIntakeSecondLookStrike(intake: Pick<DatesIntakeDetail, "status" | "member" | "second_look">): boolean {
+  const first = intake.member?.re_review?.first_decision ?? null;
+  return datesIntakeSecondLookOpen(intake) && first !== null && first.action === "rejected" && first.reason_code !== null
+    && DATES_INTAKE_STRIKE_REASONS.includes(first.reason_code);
+}
+
 /** What a rejection means for the member who suggested the event - said before the reviewer confirms it. */
 export function DatesIntakeMemberRejectNotes({ intake, reasonCode, namesEvent }: { intake: DatesIntakeDetail; reasonCode: string; namesEvent: boolean }) {
   const t = useTranslations("datesAdmin.intake.reject");
   if (intake.channel !== "member_suggestion") return null;
   const member = intake.member, standing = member?.standing ?? null;
   // Only the reason `duplicate` can name an event, and it is not a strike reason.
-  const strike = DATES_INTAKE_STRIKE_REASONS.includes(reasonCode);
+  const strike = DATES_INTAKE_STRIKE_REASONS.includes(reasonCode), counted = datesIntakeSecondLookStrike(intake);
   return <>
     <p className="field-hint">{t(namesEvent ? "memberDuplicate" : "memberStatement")}</p>
-    {strike && <p className="alert alert-warning" role="status">{member === null || member.unreadable.includes("standing") ? t("strikeUnknown")
+    {strike && !counted && <p className="alert alert-warning" role="status">{member === null || member.unreadable.includes("standing") ? t("strikeUnknown")
       : standing === null ? t("strikeNobody") : t("strike", { strikes: standing.strikes, limit: standing.strike_limit })}</p>}
+    {/* A second look after a strike: the same reason adds no new strike; another reason takes the first one back. */}
+    {strike && counted && <p className="alert alert-warning" role="status">{t("secondLookStrikeKept")}</p>}
+    {!strike && counted && <p className="alert alert-info" role="status">{t("secondLookStrikeTakenBack")}</p>}
     {datesIntakeSecondLookOpen(intake) && <p className="alert alert-warning" role="status">{t("secondLook")}</p>}
   </>;
 }
 
-/** What publishing does for the member who suggested the event - said before the reviewer confirms it. */
-export function DatesIntakeMemberPublishNotes({ member, events }: { member: DatesIntakeMember | null; events: number }) {
+/**
+ * What publishing does for the member who suggested the event - said before the reviewer confirms it.
+ * `secondLookStrike`: a second look whose first decision counted a strike (`datesIntakeSecondLookStrike`).
+ */
+export function DatesIntakeMemberPublishNotes({ member, events, secondLookStrike = false }: { member: DatesIntakeMember | null; events: number; secondLookStrike?: boolean }) {
   const t = useTranslations("datesAdmin.intake.editor");
   if (member === null) return <p className="alert alert-warning" role="status">{t("memberUnreadable")}</p>;
   if (member.submitter_uid === null) return <p>{t("memberErased")}</p>;
   return <>
     <p>{member.anonymous ? t("memberAnonymous") : t("memberCredit", { uid: member.submitter_uid })}</p>
     {member.auto_going && <p>{t(events === 1 ? "memberGoing" : "memberGoingProgramme")}</p>}
+    {secondLookStrike && <p className="alert alert-info" role="status">{t("memberSecondLookStrikeTakenBack")}</p>}
   </>;
 }
 

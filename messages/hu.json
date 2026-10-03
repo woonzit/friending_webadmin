@@ -9400,7 +9400,8 @@
         "memberGoingProgramme": "A tag azt kérte, hogy ott legyen, de ez a javaslat több eseményt tartalmaz: a Core csak egyetlen eseményből álló javaslathoz csatlakoztat tagot.",
         "memberErased": "A tag fiókját törölték: az eseményen nincs beküldő.",
         "memberUnreadable": "A tag választásai (megnevezés, részvétel) ezen az oldalon nem olvashatók. A Core úgy alkalmazza őket, ahogy tárolta.",
-        "cannotPublishSuggestion": "A publikálás itt nem érhető el számodra: eseménykezelési jogosultság kell hozzá, és a tagok javaslatainak kapcsolója legyen bekapcsolva."
+        "cannotPublishSuggestion": "A publikálás itt nem érhető el számodra: eseménykezelési jogosultság kell hozzá, és a tagok javaslatainak kapcsolója legyen bekapcsolva.",
+        "memberSecondLookStrikeTakenBack": "Az első döntés „kéretlen vagy hamis” indokkal utasította el ezt a javaslatot, ami figyelmeztetést jelentett a tagnak. A közzététel visszavonja ezt a figyelmeztetést, és az általa okozott eltiltás is véget érhet."
       },
       "reject": {
         "title": "Beküldés elutasítása",
@@ -9431,7 +9432,9 @@
         "strike": "A „kéretlen vagy hamis” indokú elutasítás figyelmeztetés a tagnak. Jelenleg {strikes} / {limit} figyelmeztetése van az időszakban; a korlátnál eltiltjuk a javaslattételtől.",
         "strikeUnknown": "A „kéretlen vagy hamis” indokú elutasítás figyelmeztetés a tagnak. A figyelmeztetéseinek jelenlegi száma ezen az oldalon nem olvasható.",
         "strikeNobody": "A tag fiókját törölték: ez az elutasítás senkinek nem figyelmeztetés.",
-        "secondLook": "Ez a tag által kért felülvizsgálat. Felülvizsgálat csak egyszer kérhető: az újabb elutasítás lezárja a javaslatot."
+        "secondLook": "Ez a tag által kért felülvizsgálat. Felülvizsgálat csak egyszer kérhető: az újabb elutasítás lezárja a javaslatot.",
+        "secondLookStrikeKept": "Az első döntés már figyelmeztetést jelentett a tagnak ezért a javaslatért. Ha most is „kéretlen vagy hamis” indokkal utasítod el, az az egy figyelmeztetés megmarad, újat nem kap.",
+        "secondLookStrikeTakenBack": "Az első döntés „kéretlen vagy hamis” indokkal utasította el ezt a javaslatot, ami figyelmeztetést jelentett a tagnak. Ha most más indokkal utasítod el, az a figyelmeztetés visszavonódik, és az általa okozott eltiltás is véget érhet."
       },
       "publish": {
         "done": "Az esemény publikálva, a beküldés lezárult.",

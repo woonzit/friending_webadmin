@@ -9400,7 +9400,8 @@
         "memberGoingProgramme": "The member asked to go, but this suggestion holds more than one event: Core joins a member only to a single-event suggestion.",
         "memberErased": "The member's account was erased: the event carries no submitter.",
         "memberUnreadable": "The member's choices (credit, going) could not be read on this page. Core applies them as it stored them.",
-        "cannotPublishSuggestion": "Publishing is not available to you here: it needs the event management capability and the members' suggestion switch to be on."
+        "cannotPublishSuggestion": "Publishing is not available to you here: it needs the event management capability and the members' suggestion switch to be on.",
+        "memberSecondLookStrikeTakenBack": "The first decision rejected this suggestion as spam or fake, which counted a strike against the member. Publishing it takes that strike back, and can end a ban it caused."
       },
       "reject": {
         "title": "Reject the intake",
@@ -9431,7 +9432,9 @@
         "strike": "Rejecting as spam or fake is a strike against the member. They have {strikes} of {limit} inside the window now; at the limit they are banned from suggesting.",
         "strikeUnknown": "Rejecting as spam or fake is a strike against the member. Their current standing could not be read on this page.",
         "strikeNobody": "The member's account was erased: this rejection is a strike against nobody.",
-        "secondLook": "This is the second look the member asked for. A second look can be asked for only once: rejecting again ends the suggestion."
+        "secondLook": "This is the second look the member asked for. A second look can be asked for only once: rejecting again ends the suggestion.",
+        "secondLookStrikeKept": "The first decision already counted a strike against the member for this suggestion. Rejecting it as spam or fake again keeps that one strike and adds no new one.",
+        "secondLookStrikeTakenBack": "The first decision rejected this suggestion as spam or fake, which counted a strike against the member. Rejecting it now for another reason takes that strike back, and can end a ban it caused."
       },
       "publish": {
         "done": "The event is published and the intake is finished.",

@@ -702,7 +702,7 @@ test("T-886: what the review screen shows and offers for a member's suggestion i
   assert.match(source, /onRetry=\{\(\) => \{ if \(askCommand\) void ask\(askCommand\); \}\}/); assert.match(source, /onChanged=\{\(\) => setAskCommand\(null\)\}/);
   // Before a rejection and before a publication the reviewer is told what it means for the member.
   assert.equal((source.match(/<DatesIntakeMemberRejectNotes intake=\{intake\} reasonCode=\{rejectCode\} namesEvent=\{namedDuplicate !== ""\} \/>/g) ?? []).length, 2, "in the form and in the confirmation");
-  assert.match(source, /\{suggestion && intake && <DatesIntakeMemberPublishNotes member=\{intake\.member\} events=\{intake\.events\?\.length \?\? 0\} \/>\}/);
+  assert.match(source, /\{suggestion && intake && <DatesIntakeMemberPublishNotes member=\{intake\.member\} events=\{intake\.events\?\.length \?\? 0\} secondLookStrike=\{datesIntakeSecondLookStrike\(intake\)\} \/>\}/);
   // The events Core's own duplicate check pointed at are offered as the name; nothing else is.
   assert.match(source, /item\.kind === "event" && datesExternalEventId\(item\.id\) \? \[item\.id\] : \[\]/);
   // No member data is fetched for this screen: the page reads the detail, the operator and the one-row queue - nothing of a member.

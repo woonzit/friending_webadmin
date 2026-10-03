@@ -7,7 +7,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesExternalEventForm from "@/components/DatesExternalEventForm";
 import DatesIntakeEventPanel from "@/components/DatesIntakeEventPanel";
-import DatesIntakeMemberPanel, { DatesIntakeAskSection, DatesIntakeMemberPublishNotes, DatesIntakeMemberRejectNotes, datesIntakeSecondLookOpen,
+import DatesIntakeMemberPanel, { DatesIntakeAskSection, DatesIntakeMemberPublishNotes, DatesIntakeMemberRejectNotes, datesIntakeSecondLookOpen, datesIntakeSecondLookStrike,
   type DatesIntakeAskDraft } from "@/components/DatesIntakeMemberPanel";
 import { DatesIntakeAlreadySubmitted, DatesIntakeCompletionChoice, DatesIntakeExtractionPanel, DatesIntakeInputsPanel, DatesIntakeRejectWarning, DatesIntakeRunsPanel, DatesIntakeStatusPanel } from "@/components/DatesIntakePanels";
 import DatesIntakeRefusal from "@/components/DatesIntakeRefusal";
@@ -454,7 +454,7 @@ export default function DatesIntakeReviewPage({ intakeId }: { intakeId: string }
     {confirmable && <ConfirmDialog title={external("editor.publish")} copy={t("editor.confirm")} confirmLabel={external("editor.publish")} tone="primary" busy={busy}
       onCancel={() => { if (!busyRef.current) setCandidate(null); }} onConfirm={() => void publish({ candidate: confirmable })}>
       <p><strong>{confirmable.event.title}</strong></p>
-      {suggestion && intake && <DatesIntakeMemberPublishNotes member={intake.member} events={intake.events?.length ?? 0} />}
+      {suggestion && intake && <DatesIntakeMemberPublishNotes member={intake.member} events={intake.events?.length ?? 0} secondLookStrike={datesIntakeSecondLookStrike(intake)} />}
       <p>{confirmable.complete && confirmable.unreadable > 0 ? t("editor.confirmCloseUnreadable", { count: confirmable.unreadable })
         : t(confirmable.complete ? "editor.confirmComplete" : "editor.confirmPartial")}</p>
       <p className="preserve-whitespace">{confirmable.reason}</p>
