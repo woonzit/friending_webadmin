@@ -88,7 +88,7 @@ test("a kept command is settled only by a receipt or a pinned no-land refusal; a
   }
   // Raised before the receipt lookup from the clock, or left to the accepted journal's judgement: they settle nothing.
   for (const [error, status] of [["dates-legal-hold-review-invalid", 422], ["dates-trail-evidence-window-invalid", 422], ["dates-moderation-conflict", 403],
-    ["dates-sensitive-location-capability-required", 403]] as const)
+    ["dates-sensitive-location-capability-required", 403], ["dates-disabled", 403]] as const)
     assert.deepEqual(datesCommandOutcome(core(error, status), false, "kept"), { kind: "uncertain", error }, error);
   assert.equal(datesExternalRefusal(fixture("admin-moderation-conflict-denied")).kind, "uncertain", "the P1 journal's reading of the conflict refusal is unchanged");
 });
@@ -406,6 +406,13 @@ test("a revision-fenced case command is worded as unknown when nothing says whet
   // A receipt of another command is not a receipt (the genuine claim receipt in answer to a note).
   const wrong = caseHarness(() => note); await wrong.api.addNote(submit);
   assert.equal(wrong.state.Feedback.text, "outcome.unknown:");
+  // The genuine note receipt to the note it answers (its case, at the revision before it): a receipt, and its revision is
+  // adopted; at any other revision it is not this note's receipt.
+  const genuineNote = JSON.parse(readFileSync(new URL("./fixtures/dates_moderation_console_wire/admin-note.json", import.meta.url), "utf8"));
+  const noted = caseHarness(() => genuineNote, genuineNote.case_id, genuineNote.revision - 1); await noted.api.addNote(submit);
+  assert.deepEqual(plain(noted.state.Feedback), { tone: "success", text: "noteAdded" }); assert.equal(noted.context.data.case.revision, genuineNote.revision);
+  const offByOne = caseHarness(() => genuineNote, genuineNote.case_id, genuineNote.revision); await offByOne.api.addNote(submit);
+  assert.equal(offByOne.state.Feedback.text, "outcome.unknown:"); assert.equal(offByOne.context.data.case.revision, genuineNote.revision);
   // The reread is the operator's: one button beside the message, and `mutate` itself calls `load()` only after a receipt.
   assert.match(casePage.source, /\{feedback\.refresh && <> <button type="button" className="button button-secondary button-small" disabled=\{busy\} onClick=\{\(\) => void load\(\)\}>\{commandOutcome\("refreshCase"\)\}<\/button><\/>\}/);
   const mutateSource = casePage.text("mutate");

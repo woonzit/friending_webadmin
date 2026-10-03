@@ -220,8 +220,9 @@ export function datesLegalHoldCommandReceipt(value: unknown, request: Record<str
   if (typeof request.case_id !== "string" || !datesLegalHoldReceipt(value, request.case_id, request.action, request.review_at)) return null;
   const served = value as Record<string, unknown>, extension = ["revision", "hold_change", "evidence_changed_count"].filter((key) => Object.hasOwn(served, key));
   if (extension.length === 0) return { hold_change: null, revision: null };
+  // Each of the three is checked below: one that is missing fails its own check, so a part of the extension is no receipt.
   const expected = request.expected_revision;
-  if (extension.length !== 3 || !Number.isSafeInteger(expected) || Number(expected) < 0 || !Number.isSafeInteger(served.revision)
+  if (!Number.isSafeInteger(expected) || Number(expected) < 0 || !Number.isSafeInteger(served.revision)
     || !Number.isSafeInteger(served.evidence_changed_count) || Number(served.evidence_changed_count) < 0
     || Number(served.evidence_changed_count) > Number(served.evidence_count)) return null;
   const change = served.hold_change, allowed = request.action === "place" ? ["placed", "amended", "unchanged"] : ["released", "unchanged"];
