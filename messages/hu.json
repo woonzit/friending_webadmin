@@ -8693,7 +8693,13 @@
         "suspend_account": "Fiók felfüggesztése",
         "remove_review": "Értékelés eltávolítása",
         "remove_participant": "Résztvevő eltávolítása"
-      }
+      },
+      "legalHoldPlaced": "A legal hold érvénybe lépett az ügy minden bizonyítékán.",
+      "legalHoldAmended": "A legal hold módosult: megváltozott az alapja vagy a felülvizsgálat ideje.",
+      "legalHoldReleased": "A legal hold feloldva.",
+      "legalHoldAlreadyInPlace": "Ez a legal hold már érvényben volt: semmi sem változott.",
+      "legalHoldNothingHeld": "Nem volt érvényben legal hold: nem volt mit feloldani, semmi sem változott.",
+      "trailEvidenceExisting": "Ezt az időablakot már rögzítették: a pillanatképe már az ügy bizonyítékai között van, új nem készült."
     },
     "configuration": {
       "eyebrow": "AreYouIn runtime",
@@ -9983,12 +9989,6 @@
     "commandOutcome": {
       "unknown": "A művelet kimenetele nem ismert: nem érkezett olvasható válasz. Mielőtt megismétled, nézd meg, megtörtént-e a változás; a Frissítés a jelenlegi állapotot mutatja.",
       "unknownAnswered": "A művelet kimenetele nem ismert ({error}). Mielőtt megismétled, nézd meg, megtörtént-e a változás; a Frissítés a jelenlegi állapotot mutatja.",
-      "kept": "A művelet kimenetele nem ismert: nem érkezett olvasható válasz. Küldd el újra ugyanazt a kérést: ha az első kísérlet megtörtént, a Core annak a nyugtájával válaszol, és kétszer nem hajtja végre.",
-      "keptAnswered": "A művelet kimenetele nem ismert ({error}). Küldd el újra ugyanazt a kérést: ha az első kísérlet megtörtént, a Core annak a nyugtájával válaszol, és kétszer nem hajtja végre.",
-      "pending": "Egy ismeretlen kimenetelű kérés innen ugyanazon kérésként újraküldhető.",
-      "retry": "Ugyanazon kérés újraküldése",
-      "discard": "Elrejtés",
-      "discardHint": "A Core nem tudja megkülönböztetni az ismétlést az új kéréstől: ha ezt elrejted, és újból elindítod a kérést, akkor is végrehajtja még egyszer, ha az első kísérlet megtörtént.",
       "refreshCase": "Ügy frissítése"
     }
   },

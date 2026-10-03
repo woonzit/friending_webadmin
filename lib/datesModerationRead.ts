@@ -193,15 +193,77 @@ export function datesLegalHoldReceipt(value: unknown, caseId: string, action: un
     && (action !== "place" || (epoch(reviewAt) && Number(reviewAt) > 0));
 }
 
+export const DATES_LEGAL_HOLD_CHANGES = ["placed", "amended", "unchanged", "released"] as const;
+export type DatesLegalHoldChange = typeof DATES_LEGAL_HOLD_CHANGES[number];
+export type DatesLegalHoldCommandReceipt = {
+  /** What the command did (T-891, served to a request with `expected_revision`); `null` from a Core that does not say. */
+  hold_change: DatesLegalHoldChange | null;
+  /** The case revision after the command; `null` when not served. */
+  revision: number | null;
+};
+
+/**
+ * The legal-hold receipt bound to the request the page sent. The released
+ * fields bind as `datesLegalHoldReceipt` does (the case, the action, the
+ * review date). A request that carries `expected_revision` is answered with
+ * three more (T-891): `revision`, `hold_change` and `evidence_changed_count`.
+ * When they are served they must agree with each other and with the request:
+ * a place is placed / amended / unchanged, a release released / unchanged; a
+ * write moves the case revision by one, `unchanged` writes nothing and moves
+ * nothing (and changed no evidence row). When none of them is served (a Core
+ * without T-891) the released receipt stands, and what the command did is not
+ * said. Some but not all of them is no receipt.
+ * Pairs (Core 33265e46, command corpus, generator lines 405-417): placed 1 -> 2, unchanged 2 -> 2, amended 2 -> 3,
+ * released 3 -> 4, release unchanged 4 -> 4.
+ */
+export function datesLegalHoldCommandReceipt(value: unknown, request: Record<string, unknown>): DatesLegalHoldCommandReceipt | null {
+  if (typeof request.case_id !== "string" || !datesLegalHoldReceipt(value, request.case_id, request.action, request.review_at)) return null;
+  const served = value as Record<string, unknown>, extension = ["revision", "hold_change", "evidence_changed_count"].filter((key) => Object.hasOwn(served, key));
+  if (extension.length === 0) return { hold_change: null, revision: null };
+  const expected = request.expected_revision;
+  if (extension.length !== 3 || !Number.isSafeInteger(expected) || Number(expected) < 0 || !Number.isSafeInteger(served.revision)
+    || !Number.isSafeInteger(served.evidence_changed_count) || Number(served.evidence_changed_count) < 0
+    || Number(served.evidence_changed_count) > Number(served.evidence_count)) return null;
+  const change = served.hold_change, allowed = request.action === "place" ? ["placed", "amended", "unchanged"] : ["released", "unchanged"];
+  if (typeof change !== "string" || !allowed.includes(change)) return null;
+  const unchanged = change === "unchanged";
+  if (served.revision !== Number(expected) + (unchanged ? 0 : 1) || (unchanged && served.evidence_changed_count !== 0)) return null;
+  return { hold_change: change as DatesLegalHoldChange, revision: served.revision as number };
+}
+
 /**
  * The receipt of a live-trail capture, bound to its request: this case and
- * this window. Checked by value, not as a closed key set - no genuine body of
- * this route is vendored - and it names the snapshot Core stored.
+ * this window, by value; it names the snapshot Core stored.
  */
 export function datesTrailEvidenceReceipt(value: unknown, caseId: string, capturedFrom: unknown, capturedTo: unknown): boolean {
   return record(value) && value.success === true && value.status_code === 200 && value.case_id === caseId
     && id("evi")(value.evidence_id) && id("aud")(value.audit_id) && epoch(capturedFrom) && epoch(capturedTo)
     && value.captured_from === capturedFrom && value.captured_to === capturedTo;
+}
+
+export type DatesTrailEvidenceCommandReceipt = {
+  /** The window had been captured: the same snapshot, nothing stored (T-891, with the selector); `null` when not served. */
+  existing: boolean | null;
+  /** The case revision after the command; `null` when not served. */
+  revision: number | null;
+};
+
+/**
+ * The capture's receipt bound to the request the page sent, with what Core
+ * serves to the command contract selector (T-891): `revision` and `existing`,
+ * both or neither. A new snapshot moves the case revision by one; an existing
+ * one moves nothing.
+ * Pairs (Core 33265e46, command corpus, generator lines 518-522): captured 2 -> 3 `existing: false`; the same window
+ * again at 3 -> 3 `existing: true`, the same evidence and audit ids.
+ */
+export function datesTrailEvidenceCommandReceipt(value: unknown, request: Record<string, unknown>): DatesTrailEvidenceCommandReceipt | null {
+  if (typeof request.case_id !== "string" || !datesTrailEvidenceReceipt(value, request.case_id, request.captured_from, request.captured_to)) return null;
+  const served = value as Record<string, unknown>, extension = ["revision", "existing"].filter((key) => Object.hasOwn(served, key));
+  if (extension.length === 0) return { existing: null, revision: null };
+  const expected = request.expected_revision;
+  if (extension.length !== 2 || typeof served.existing !== "boolean" || !Number.isSafeInteger(expected) || Number(expected) < 0
+    || served.revision !== Number(expected) + (served.existing ? 0 : 1)) return null;
+  return { existing: served.existing, revision: served.revision as number };
 }
 
 /**

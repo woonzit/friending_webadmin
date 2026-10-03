@@ -2,18 +2,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
-import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-import { NextIntlClientProvider } from "next-intl";
 import ts from "typescript";
-import DatesUnansweredCommand from "../components/DatesUnansweredCommand.tsx";
 import { createAdminIdempotencyKey, datesReasonEntryPoints, datesReasonEntryPointsRefused } from "../lib/datesAdmin.ts";
 import {
   datesActivityCommandReceipt, datesActivityTypeSaveReceipt, datesActivityUpdateReceipt, datesCaseResolutionReceipt, datesHostTransferReceipt,
   datesReasonDeactivateReceipt, datesSettingSaveReceipt,
 } from "../lib/datesCommandReceipts.ts";
 import { DATES_RECEIPT_CHECKS_PENDING, datesCommandOutcome, datesExternalRefusal } from "../lib/datesExternalAdmin.ts";
-import { DatesCaseReadFence, datesConsoleCommandReceipt, datesLegalHoldReceipt, datesTrailEvidenceReceipt, isDatesConsoleCommand } from "../lib/datesModerationRead.ts";
+import {
+  DatesCaseReadFence, datesConsoleCommandReceipt, datesLegalHoldCommandReceipt, datesLegalHoldReceipt, datesTrailEvidenceCommandReceipt, datesTrailEvidenceReceipt,
+  isDatesConsoleCommand,
+} from "../lib/datesModerationRead.ts";
 
 // T-890: what a reply means for the commands of the Dates console that do not
 // go through the publication journal, and what the three pages do with it.
@@ -94,34 +93,90 @@ test("a kept command is settled only by a receipt or a pinned no-land refusal; a
   assert.equal(datesExternalRefusal(fixture("admin-moderation-conflict-denied")).kind, "uncertain", "the P1 journal's reading of the conflict refusal is unchanged");
 });
 
-test("the trail capture's receipt is bound to its case and its window", () => {
-  // TRANSCRIBED from DatesTrailEvidenceService::capture's return (Core main 07215298); no genuine body of this route is vendored.
-  const receipt = { success: true, status_code: 200, case_id: "cas_" + "0".repeat(31) + "1", activity_id: "act_" + "0".repeat(31) + "2", evidence_id: "evi_" + "0".repeat(31) + "3",
-    captured_from: 1789990000, captured_to: 1789993600, point_count: 12, audit_id: "aud_" + "0".repeat(31) + "4", break_glass_used: false, idempotency_replayed: false,
-    server_now: 1790000000, message: 200, status: 200, can_send: 0 };
-  assert.equal(datesTrailEvidenceReceipt(receipt, receipt.case_id, 1789990000, 1789993600), true);
-  assert.equal(datesTrailEvidenceReceipt({ ...receipt, idempotency_replayed: true }, receipt.case_id, 1789990000, 1789993600), true);
+test("the trail capture's receipt is bound to its case and its window, and - with the selector - to the revision it leaves", () => {
+  // Core's genuine pairs (command corpus, generator lines 422-428 released, 518-522 with the selector).
+  const caseId = `cas_${"3".padStart(32, "0")}`;
+  const request = (expected: number, from: number) => ({ case_id: caseId, expected_revision: expected, captured_from: from, captured_to: 1789999940,
+    reason: "Synthetic incident window.", break_glass: false });
+  for (const name of ["admin-trail-capture", "admin-trail-capture-replay", "admin-trail-capture-existing"]) {
+    const body = command(name), expected = name.endsWith("existing") ? 2 : 1;
+    assert.equal(datesTrailEvidenceReceipt(body, caseId, 1789999400, 1789999940), true, name);
+    assert.deepEqual(datesTrailEvidenceCommandReceipt(body, request(expected, 1789999400)), { existing: null, revision: null }, `${name}: the released shape says neither`);
+  }
+  assert.deepEqual(datesTrailEvidenceCommandReceipt(command("admin-trail-selected-capture"), request(2, 1789999700)), { existing: false, revision: 3 });
+  assert.deepEqual(datesTrailEvidenceCommandReceipt(command("admin-trail-selected-capture-replay"), request(2, 1789999700)), { existing: false, revision: 3 });
+  assert.deepEqual(datesTrailEvidenceCommandReceipt(command("admin-trail-selected-existing"), request(3, 1789999700)), { existing: true, revision: 3 });
+  // The released fields bind as before: another case, snapshot, audit or window is not this capture's receipt.
+  const receipt = command("admin-trail-selected-capture");
   for (const change of [{ success: false }, { status_code: 409 }, { case_id: "cas_" + "f".repeat(32) }, { evidence_id: "evi_1" }, { evidence_id: null }, { audit_id: "" },
-    { captured_from: 1789990001 }, { captured_to: 1789993601 }])
-    assert.equal(datesTrailEvidenceReceipt({ ...receipt, ...change }, receipt.case_id, 1789990000, 1789993600), false, JSON.stringify(change));
-  for (const value of [null, "ok", [], { success: true }]) assert.equal(datesTrailEvidenceReceipt(value, receipt.case_id, 1789990000, 1789993600), false);
-  assert.equal(datesTrailEvidenceReceipt(receipt, receipt.case_id, "1789990000", 1789993600), false);
+    { captured_from: 1789999701 }, { captured_to: 1789999941 },
+    // ... and the two that are served with the selector agree with each other and with the request, or are both absent.
+    { revision: 4 }, { revision: 2 }, { existing: true }, { existing: "false" }, { revision: null }])
+    assert.equal(datesTrailEvidenceCommandReceipt({ ...receipt, ...change }, request(2, 1789999700)), null, JSON.stringify(change));
+  const { existing: _existing, ...half } = receipt;
+  assert.equal(datesTrailEvidenceCommandReceipt(half, request(2, 1789999700)), null, "one of the two without the other");
+  assert.equal(datesTrailEvidenceCommandReceipt(receipt, request(3, 1789999700)), null, "another revision was sent");
+  assert.equal(datesTrailEvidenceCommandReceipt(receipt, { ...request(2, 1789999700), expected_revision: "2" }), null);
+  assert.ok(datesTrailEvidenceCommandReceipt({ ...receipt, future: 1 }, request(2, 1789999700)), "a key it does not name is tolerated");
+  for (const value of [null, "ok", [], { success: true }]) assert.equal(datesTrailEvidenceCommandReceipt(value, request(2, 1789999700)), null);
+});
+
+test("the legal hold's receipt says what the command did, bound to the request's revision; the released shape still binds", () => {
+  // Core's genuine pairs (command corpus, generator lines 385-417): case 1 without expected_revision (the released shape),
+  // case 2 with it (the extended shape).
+  const hold = (number: number, action: "place" | "release", reviewAt: number | null, extra: Record<string, unknown> = {}) => ({ case_id: `cas_${String(number).padStart(32, "0")}`,
+    action, reason: "Synthetic.", legal_basis: "Synthetic.", break_glass: false, review_at: reviewAt, ...extra });
+  for (const [name, action, reviewAt] of [["admin-hold-place", "place", 1790086400], ["admin-hold-place-unchanged", "place", 1790086400], ["admin-hold-place-replay", "place", 1790086400],
+    ["admin-hold-amend", "place", 1790172800], ["admin-hold-release", "release", null], ["admin-hold-release-unchanged", "release", null]] as const) {
+    assert.deepEqual(datesLegalHoldCommandReceipt(command(name), hold(1, action, reviewAt)), { hold_change: null, revision: null }, name);
+    // The released shape cannot tell a placement from "already in place": the same audit id, the same body.
+    assert.equal(datesLegalHoldReceipt(command(name), `cas_${"1".padStart(32, "0")}`, action, reviewAt), true, name);
+  }
+  assert.deepEqual(command("admin-hold-place-unchanged"), { ...command("admin-hold-place") }, "without expected_revision an identical place answers the first receipt");
+  const EXTENDED = [["admin-hold-selected-placed", "place", 1790086400, 1, "placed", 2], ["admin-hold-selected-unchanged", "place", 1790086400, 2, "unchanged", 2],
+    ["admin-hold-selected-amended", "place", 1790172800, 2, "amended", 3], ["admin-hold-selected-released", "release", null, 3, "released", 4],
+    ["admin-hold-selected-release-unchanged", "release", null, 4, "unchanged", 4]] as const;
+  for (const [name, action, reviewAt, expected, change, revision] of EXTENDED) {
+    const request = hold(2, action, reviewAt, { expected_revision: expected });
+    assert.deepEqual(datesLegalHoldCommandReceipt(command(name), request), { hold_change: change, revision }, name);
+    // The same answer to another revision, another action or another case is not this command's receipt.
+    assert.equal(datesLegalHoldCommandReceipt(command(name), { ...request, expected_revision: expected + 1 }), null, `${name} +1`);
+    assert.equal(datesLegalHoldCommandReceipt(command(name), hold(1, action, reviewAt, { expected_revision: expected })), null, `${name} case`);
+    assert.equal(datesLegalHoldCommandReceipt(command(name), { ...request, action: action === "place" ? "release" : "place", review_at: action === "place" ? null : 1790086400 }), null);
+    assert.equal(datesLegalHoldCommandReceipt(command(name), { ...request, expected_revision: String(expected) }), null, `${name}: a revision that is not a number`);
+  }
+  // The extension agrees with itself: all three or none; a change the action cannot have; an unchanged hold that moved
+  // the revision or changed evidence rows; more rows changed than the case has.
+  const placed = command("admin-hold-selected-placed"), request = hold(2, "place", 1790086400, { expected_revision: 1 });
+  for (const change of [{ hold_change: "released" }, { hold_change: "unchanged" }, { hold_change: "held" }, { revision: 3 }, { revision: "2" }, { evidence_changed_count: 3 },
+    { evidence_changed_count: -1 }]) assert.equal(datesLegalHoldCommandReceipt({ ...placed, ...change }, request), null, JSON.stringify(change));
+  for (const key of ["revision", "hold_change", "evidence_changed_count"]) {
+    const { [key]: _gone, ...partial } = placed;
+    assert.equal(datesLegalHoldCommandReceipt(partial, request), null, `without ${key}`);
+  }
+  const unchanged = command("admin-hold-selected-unchanged"), again = hold(2, "place", 1790086400, { expected_revision: 2 });
+  assert.equal(datesLegalHoldCommandReceipt({ ...unchanged, evidence_changed_count: 2 }, again), null);
+  assert.equal(datesLegalHoldCommandReceipt({ ...unchanged, revision: 3 }, again), null);
+  assert.ok(datesLegalHoldCommandReceipt({ ...placed, future: true }, request), "a key it does not name is tolerated");
+  for (const name of ["admin-hold-selected-stale-denied", "admin-hold-selected-malformed-denied", "admin-hold-viewer-denied", "admin-hold-release-open-denied"])
+    assert.equal(datesLegalHoldCommandReceipt(command(name), request), null, name);
 });
 
 // ---------------------------------------------------------------- Core, as far as these commands go
 
 /**
- * TRANSCRIBED from Core main 07215298. `DatesAdminIdempotencyService::execute` (lines 42-97): a command row keyed by
- * (actor, operation, key); an existing completed row is replayed when the payload hash matches, refused as
- * `dates-admin-idempotency-conflict` when it does not; otherwise the callback runs and its result is stored.
- * `legalHold` (DatesModerationCommandService 478-626) and `capture` (DatesTrailEvidenceService 19-232) have no
- * compare-and-set of their own: under a NEW key each runs again - a second hold write with a new `hold_started_at`
- * and a second audit row, or a second evidence snapshot. `capture` checks the case revision but does not move it.
+ * The two case commands as Core T-891 does them (Core claude/core-hardening-20261002 33265e46, the Core lane's
+ * hand-over and the genuine bodies of its command corpus). Same key: the stored receipt is replayed. A new key:
+ * the request's `expected_revision` must be the case revision (else `dates-admin-stale-revision`, nothing written).
+ * A hold WRITE moves the revision; an identical place, or a release where nothing is held, writes nothing and
+ * answers `unchanged`. A capture moves the revision; the same window at the current revision answers the snapshot
+ * that exists (`existing: true`).
  */
-function coreModel(caseId: string) {
+function coreModel(caseId: string, start = 7) {
   const commands = new Map<string, { hash: string; result: Record<string, unknown> }>();
   const writes: Array<{ operation: string; key: string }> = [];
-  let sequence = 0;
+  let revision = start, held: string | null = null, sequence = 0;
+  const windows = new Map<string, string>();
   const hex = (prefix: string) => `${prefix}_${(++sequence).toString(16).padStart(32, "0")}`;
   function answer(action: string, body: Record<string, any>): Record<string, unknown> {
     const operation = action === "dates_moderation_legal_hold" ? "moderation.case.legal_hold" : "moderation.case.capture_trail";
@@ -130,38 +185,44 @@ function coreModel(caseId: string) {
     const hash = JSON.stringify(payload), existing = commands.get(`${operation}\u0000${key}`);
     if (existing) return existing.hash === hash ? { ...existing.result, idempotency_replayed: true } : core("dates-admin-idempotency-conflict", 409);
     if (body.case_id !== caseId) return core("dates-moderation-case-unavailable", 404);
-    writes.push({ operation, key });
-    const result = action === "dates_moderation_legal_hold"
-      // The genuine receipt bodies of the P1 corpus, with what Core generates per write.
-      ? { ...fixture(body.action === "place" ? "admin-moderation-hold-place" : "admin-moderation-hold-release"), case_id: caseId,
-        review_at: body.action === "place" ? body.review_at : null, audit_id: hex("aud") }
-      : { success: true, status_code: 200, case_id: caseId, activity_id: "act_" + "0".repeat(31) + "2", evidence_id: hex("evi"), captured_from: body.captured_from,
-        captured_to: body.captured_to, point_count: 3, audit_id: hex("aud"), break_glass_used: false, idempotency_replayed: false, server_now: 1790000000,
-        message: 200, status: 200, can_send: 0 };
+    if (body.expected_revision !== revision) return core("dates-admin-stale-revision", 409);
+    let result: Record<string, unknown>;
+    if (action === "dates_moderation_legal_hold") {
+      const state = body.action === "place" ? `${body.legal_basis}|${body.review_at}` : null;
+      const change = state === held ? "unchanged" : body.action === "release" ? "released" : held === null ? "placed" : "amended";
+      if (change !== "unchanged") { writes.push({ operation, key }); revision++; held = state; }
+      result = { ...command(body.action === "place" ? "admin-hold-selected-placed" : "admin-hold-selected-released"), case_id: caseId, review_at: body.action === "place" ? body.review_at : null,
+        audit_id: hex("aud"), revision, hold_change: change, evidence_changed_count: change === "unchanged" ? 0 : 2 };
+    } else {
+      const window = `${body.captured_from}|${body.captured_to}`, known = windows.get(window);
+      if (!known) { writes.push({ operation, key }); revision++; windows.set(window, hex("evi")); }
+      result = { ...command("admin-trail-selected-capture"), case_id: caseId, evidence_id: windows.get(window), captured_from: body.captured_from, captured_to: body.captured_to,
+        audit_id: hex("aud"), revision, existing: Boolean(known) };
+    }
     commands.set(`${operation}\u0000${key}`, { hash, result });
     return result;
   }
-  return { writes, answer };
+  return { writes, answer, revision: () => revision };
 }
 
 // ---------------------------------------------------------------- the moderation case page
 
 const casePage = functionsOf("../app/(dashboard)/dates/moderation/[caseId]/page.tsx", "DatesModerationCase");
 const CASE_ID = fixture("admin-moderation-hold-place").case_id as string;
-const caseCode = compile(`${["mutate", "executeConfirmed", "retryLegalHold", "prepareLegalHold", "captureTrailEvidence", "sendTrailEvidence", "addNote"]
+const caseCode = compile(`${["mutate", "commandSettled", "adoptCaseRevision", "executeConfirmed", "prepareLegalHold", "captureTrailEvidence", "addNote"]
   .map(casePage.text).join("\n")}
-  exports.mutate = mutate; exports.executeConfirmed = executeConfirmed; exports.retryLegalHold = retryLegalHold; exports.prepareLegalHold = prepareLegalHold;
-  exports.captureTrailEvidence = captureTrailEvidence; exports.sendTrailEvidence = sendTrailEvidence; exports.addNote = addNote;`);
+  exports.mutate = mutate; exports.executeConfirmed = executeConfirmed; exports.prepareLegalHold = prepareLegalHold;
+  exports.captureTrailEvidence = captureTrailEvidence; exports.addNote = addNote;`);
 
-function caseHarness(reply: (action: string, body: Record<string, any>) => unknown) {
+function caseHarness(reply: (action: string, body: Record<string, any>) => unknown, caseId = CASE_ID, revision = 7) {
   const sent: Array<{ action: string; body: Record<string, any> }> = [], state: Record<string, any> = {}, writes: string[] = [];
   const readFence = new DatesCaseReadFence();
-  const context: any = { exports: {}, caseId: CASE_ID, writeLocked: false, busy: false, mutationBusy: { current: false }, readFence, lifetime: { current: 0 },
-    isDatesConsoleCommand, datesConsoleCommandReceipt, datesLegalHoldReceipt, datesTrailEvidenceReceipt, datesCommandOutcome, datesCaseResolutionReceipt, createAdminIdempotencyKey,
-    t: translator(""), commandOutcome: translator("outcome."), load: async () => { writes.push("load"); },
+  const context: any = { exports: {}, caseId, writeLocked: false, busy: false, mutationBusy: { current: false }, readFence, lifetime: { current: 0 },
+    isDatesConsoleCommand, datesConsoleCommandReceipt, datesLegalHoldCommandReceipt, datesTrailEvidenceCommandReceipt, datesCommandOutcome, datesCaseResolutionReceipt,
+    createAdminIdempotencyKey, t: translator(""), commandOutcome: translator("outcome."), load: async () => { writes.push("load"); },
     isDatesExternalMessageCase: () => false, datesLegalHoldAllowed: () => true, epochFromLocalInput: (value: string) => Number(value),
-    data: { case: { case_id: CASE_ID, revision: 7, target_type: "activity", activity_id: "act_" + "0".repeat(31) + "2", conflict_of_interest: false, status: "actioned" } },
-    principal: { email: "moderator@example.test" }, breakGlass: false, confirmed: null, holdCommand: null, trailCommand: null,
+    data: { case: { case_id: caseId, revision, target_type: "activity", activity_id: "act_" + "0".repeat(31) + "2", conflict_of_interest: false, status: "actioned" } },
+    principal: { email: "moderator@example.test" }, breakGlass: false, confirmed: null,
     holdAction: "place", holdReason: "Preservation request 2026/118.", legalBasis: "Court order 12.Pk.50.118/2026.", holdReviewAt: "1790086400",
     trailFrom: "1789990000", trailTo: "1789993600", trailReason: "Route during the reported incident.", note: "Checked the report against the thread.", noteReason: "",
     adminCall: async (action: string, body: Record<string, any>) => {
@@ -170,129 +231,113 @@ function caseHarness(reply: (action: string, body: Record<string, any>) => unkno
       if (value instanceof Error) throw value;
       return value;
     } };
-  for (const name of ["Busy", "Evidence", "Feedback", "Confirmed", "HoldCommand", "TrailCommand", "HoldReason", "LegalBasis", "HoldReviewAt", "TrailFrom", "TrailTo", "TrailReason",
+  // `setData` takes React's updater: the page's own adoption runs on the harness's copy of the case.
+  context.setData = (update: unknown) => { context.data = typeof update === "function" ? (update as (value: unknown) => unknown)(context.data) : update; writes.push("Data"); };
+  for (const name of ["Busy", "Evidence", "Feedback", "Confirmed", "HoldReason", "LegalBasis", "HoldReviewAt", "TrailFrom", "TrailTo", "TrailReason",
     "Note", "NoteReason", "ResolutionReason", "VisibleReasonEn", "VisibleReasonHu", "RestrictionExpiry"])
     context[`set${name}`] = (value: unknown) => {
       state[name] = value; writes.push(name);
-      // The functions read these four through the component's scope.
-      if (["Confirmed", "HoldCommand", "TrailCommand"].includes(name)) context[name[0].toLowerCase() + name.slice(1)] = value;
+      if (name === "Confirmed") context.confirmed = value;
     };
   vm.runInNewContext(caseCode, context);
   return { context, state, writes, sent, readFence, api: context.exports as Record<string, (...values: any[]) => Promise<any>> };
 }
 const submit = { preventDefault() {} };
 
-for (const action of ["place", "release"] as const) test(`legal hold ${action}: the first attempt lands, its reply is lost, and the retry ends in that attempt's receipt - one write`, async () => {
+for (const action of ["place", "release"] as const) test(`legal hold ${action}: a lost reply is an unknown outcome, and the blind repeat is refused as stale - one write`, async () => {
   for (const [name, lost, token] of LOST) {
     const model = coreModel(CASE_ID);
+    if (action === "release") model.answer("dates_moderation_legal_hold", { case_id: CASE_ID, action: "place", reason: "x", legal_basis: "Court order.", break_glass: false,
+      review_at: 1790086400, expected_revision: 7, idempotency_key: "dates-legal-hold-place:00000000-0000-4000-8000-000000000000" });
     let lose = true;
-    const h = caseHarness((sentAction, body) => { const answer = model.answer(sentAction, body); return lose ? lost : answer; });
+    const h = caseHarness((sentAction, body) => { const answer = model.answer(sentAction, body); return lose ? lost : answer; }, CASE_ID, model.revision());
     h.context.holdAction = action;
-    // The operator fills the form and confirms: the page's own two steps.
+    // The operator fills the form and confirms: the page's own two steps. The request carries the case revision (T-891).
     h.api.prepareLegalHold(submit);
     const prepared = plain(h.state.Confirmed);
-    assert.equal(prepared.kind, "legal_hold"); assert.equal(prepared.payload.action, action);
+    assert.equal(prepared.kind, "legal_hold"); assert.equal(prepared.payload.action, action); assert.equal(prepared.payload.expected_revision, model.revision());
     assert.match(prepared.payload.idempotency_key, new RegExp(`^dates-legal-hold-${action}:[0-9a-f-]{36}$`));
+    const writes = model.writes.length;
     await h.api.executeConfirmed();
-    assert.equal(model.writes.length, 1, `${name}: Core applied the hold`);
-    // The page does not call it a failure, keeps the command with its key, and reads the case again.
-    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: token === null ? "outcome.kept:" : `outcome.keptAnswered:${token}`, refresh: true }, name);
-    assert.deepEqual(plain(h.state.HoldCommand), prepared.payload, `${name}: the same command, key included, is what a retry sends`);
+    assert.equal(model.writes.length, writes + 1, `${name}: Core applied it`);
+    // Not a failure: the outcome is not known, said with the operator's own "Refresh the case"; nothing is kept, and the
+    // form keeps what was sent.
+    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: token === null ? "outcome.unknown:" : `outcome.unknownAnswered:${token}`, refresh: true }, name);
     assert.equal(h.state.Confirmed, null); assert.equal(h.writes.includes("load"), false, "the page does not reread by itself");
-    // Nothing is locked: the form could prepare another hold (that would be a new request - see the next test).
-    // The operator sends the same request again; Core answers with the first attempt's receipt.
+    for (const field of ["HoldReason", "LegalBasis", "HoldReviewAt"]) assert.equal(h.writes.includes(field), false, field);
+    // The operator repeats it without refreshing: a new key, the revision the page had read. Core refuses it as stale.
     lose = false;
-    await h.api.retryLegalHold();
-    assert.equal(model.writes.length, 1, `${name}: the retry wrote nothing`);
-    assert.deepEqual(h.sent.map((call) => call.action), ["dates_moderation_legal_hold", "dates_moderation_legal_hold"]);
-    assert.deepEqual(h.sent[1].body, h.sent[0].body, "byte-for-byte the same request");
-    assert.deepEqual(plain(h.state.Feedback), { tone: "success", text: "legalHoldUpdated" });
-    assert.equal(h.state.HoldCommand, null, "settled by the receipt");
-    for (const field of ["HoldReason", "LegalBasis", "HoldReviewAt"]) assert.equal(h.state[field], "", field);
+    h.api.prepareLegalHold(submit); await h.api.executeConfirmed();
+    assert.notEqual(h.sent[1].body.idempotency_key, h.sent[0].body.idempotency_key);
+    assert.equal(model.writes.length, writes + 1, `${name}: no second write`);
+    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: "operationFailed:dates-admin-stale-revision" });
+    // After a refresh the same hold is answered for what it is: already so, nothing written.
+    h.context.data = { case: { ...h.context.data.case, revision: model.revision() } };
+    h.api.prepareLegalHold(submit); await h.api.executeConfirmed();
+    assert.equal(model.writes.length, writes + 1, `${name}: still one write`);
+    assert.deepEqual(plain(h.state.Feedback), { tone: "success", text: action === "place" ? "legalHoldAlreadyInPlace" : "legalHoldNothingHeld" });
   }
 });
 
-test("legal hold: what Core would do with a new key, and which answers settle the kept command", async () => {
-  // The hazard itself, on the model of Core: the same hold under a new key is applied a second time.
-  const model = coreModel(CASE_ID), body = { case_id: CASE_ID, action: "place", reason: "Preservation request.", legal_basis: "Court order.", break_glass: false, review_at: 1790086400 };
-  model.answer("dates_moderation_legal_hold", { ...body, idempotency_key: createAdminIdempotencyKey("dates-legal-hold-place") });
-  model.answer("dates_moderation_legal_hold", { ...body, idempotency_key: createAdminIdempotencyKey("dates-legal-hold-place") });
-  assert.equal(model.writes.length, 2, "Core has no revision for a hold: a new key is a new write");
-
-  const operation = (key = "dates-legal-hold-release:00000000-0000-4000-8000-000000000001") => ({ kind: "legal_hold", label: "Release",
-    payload: { case_id: CASE_ID, action: "release", reason: "Preservation ended.", legal_basis: "Order withdrawn.", break_glass: false, review_at: null, idempotency_key: key } });
-  // Core's genuine definitive refusal on the first attempt: shown as it is, nothing is kept.
-  const open = caseHarness(() => fixture("admin-moderation-hold-open-denied"));
-  open.context.confirmed = operation(); await open.api.executeConfirmed();
-  assert.deepEqual(plain(open.state.Feedback), { tone: "error", text: "operationFailed:dates-legal-hold-case-open" });
-  assert.equal(open.state.HoldCommand, null, "nothing is offered again"); assert.equal(open.writes.includes("load"), false, "a refusal changes nothing else on the page");
-  // The same refusal as the answer to a retry settles the kept command too: Core raises it after the receipt lookup.
-  let reply: unknown = null;
-  const kept = caseHarness(() => reply);
-  kept.context.confirmed = operation(); await kept.api.executeConfirmed();
-  assert.ok(kept.state.HoldCommand);
-  // Core still running the first attempt, then a capability refusal (before the lookup), then a hold whose review date
-  // has passed meanwhile (the clock, before the lookup): none of them says what became of the first attempt.
-  for (const answer of [core("dates-admin-command-in-progress", 409), fixture("admin-moderation-hold-viewer-denied"), core("dates-legal-hold-review-invalid", 422), bridge("core-timeout", 504)]) {
-    reply = answer; await kept.api.retryLegalHold();
-    assert.ok(kept.context.holdCommand, String((answer as any).error));
-    assert.equal(kept.state.Feedback.text, `outcome.keptAnswered:${(answer as any).error}`);
-  }
-  reply = fixture("admin-moderation-hold-open-denied"); await kept.api.retryLegalHold();
-  assert.equal(kept.state.HoldCommand, null); assert.equal(kept.state.Feedback.text, "operationFailed:dates-legal-hold-case-open");
-  assert.equal(new Set(kept.sent.map((call) => call.body.idempotency_key)).size, 1, "six requests, one key");
-  assert.equal(kept.sent.length, 6);
-  // A receipt for another case or another action is not this command's receipt.
-  for (const wrong of [{ ...fixture("admin-moderation-hold-release"), case_id: "cas_" + "f".repeat(32) }, fixture("admin-moderation-hold-place")]) {
-    const other = caseHarness(() => wrong); other.context.confirmed = operation(); await other.api.executeConfirmed();
-    assert.ok(other.state.HoldCommand); assert.equal(other.state.Feedback.text, "outcome.kept:");
-  }
-  // The page left the case while the request was in flight: the command was sent, so it is kept, not dropped.
-  const moved = caseHarness(() => null); moved.context.confirmed = operation();
-  const pending = moved.api.executeConfirmed(); moved.readFence.invalidate(); await pending;
-  assert.deepEqual(plain(moved.state.HoldCommand), operation().payload); assert.equal(moved.writes.includes("Feedback") && moved.state.Feedback !== null, false);
-  // NOTHING IS LOCKED, and the browser does not compensate for Core: with an unanswered hold on the page the operator may
-  // prepare and confirm the hold anew. That is a new request under a new key, and Core - which has no fence for a hold -
-  // applies it a second time. This is the Core finding sent to lead, shown on the model of Core; the page only says what
-  // dismissing means and offers the same-request retry beside it.
-  {
-    const core2 = coreModel(CASE_ID);
-    let lose = true;
-    const h = caseHarness((sentAction, body) => { const answer = core2.answer(sentAction, body); return lose ? null : answer; });
+test("legal hold: Core's genuine answers say what the command did, the revision is adopted, and stale or malformed is a refusal", async () => {
+  // Case 2 of the command corpus (generator lines 405-417), each request as the page builds it from its form.
+  const CASE_2 = `cas_${"2".padStart(32, "0")}`;
+  const run = async (reply: unknown, revision: number, action: "place" | "release", basis: string, reviewAt: string) => {
+    const h = caseHarness(() => reply, CASE_2, revision);
+    Object.assign(h.context, { holdAction: action, legalBasis: basis, holdReviewAt: reviewAt, holdReason: "Synthetic legal retention." });
     h.api.prepareLegalHold(submit); await h.api.executeConfirmed();
-    assert.ok(h.context.holdCommand); assert.equal(core2.writes.length, 1);
-    lose = false;
-    h.api.prepareLegalHold(submit);
-    assert.equal(plain(h.state.Confirmed).kind, "legal_hold", "the form is not closed to the operator");
-    assert.notEqual(plain(h.state.Confirmed).payload.idempotency_key, h.sent[0].body.idempotency_key);
-    await h.api.executeConfirmed();
-    assert.equal(core2.writes.length, 2, "Core applied the same hold twice: it cannot tell the repeat from a new request");
-    assert.equal(h.state.HoldCommand, null, "the answered command leaves nothing to offer");
+    return h;
+  };
+  for (const [name, revision, action, basis, reviewAt, text, adopted] of [
+    ["admin-hold-selected-placed", 1, "place", "Synthetic authority request.", "1790086400", "legalHoldPlaced", 2],
+    ["admin-hold-selected-unchanged", 2, "place", "Synthetic authority request.", "1790086400", "legalHoldAlreadyInPlace", 2],
+    ["admin-hold-selected-amended", 2, "place", "Synthetic court order.", "1790172800", "legalHoldAmended", 3],
+    ["admin-hold-selected-released", 3, "release", "Synthetic letter of withdrawal.", "", "legalHoldReleased", 4],
+    ["admin-hold-selected-release-unchanged", 4, "release", "Synthetic letter of withdrawal.", "", "legalHoldNothingHeld", 4]] as const) {
+    const h = await run(command(name), revision, action, basis, reviewAt);
+    assert.equal(h.sent[0].body.expected_revision, revision, name);
+    assert.deepEqual(plain(h.state.Feedback), { tone: "success", text }, name);
+    // The receipt's revision is adopted at once (never backwards), and the case is read again.
+    assert.equal(h.context.data.case.revision, adopted, name); assert.ok(h.writes.includes("load"), name);
+    for (const field of ["HoldReason", "LegalBasis", "HoldReviewAt"]) assert.equal(h.state[field], "", `${name}: ${field}`);
   }
-  // Nothing was sent (another write is running): nothing is kept.
-  const busy = caseHarness(() => assert.fail("not sent")); busy.context.writeLocked = true; busy.context.confirmed = operation();
-  await busy.api.executeConfirmed();
-  assert.equal(busy.sent.length, 0); assert.equal(busy.writes.includes("HoldCommand"), false);
-  // A kept command of another case is never sent from this page.
-  const foreign = caseHarness(() => assert.fail("not sent")); foreign.context.holdCommand = { ...operation().payload, case_id: "cas_" + "f".repeat(32) };
-  await foreign.api.retryLegalHold(); assert.equal(foreign.sent.length, 0);
-  // A member-case resolution is fenced by the case revision: a refusal is a refusal, and nothing is kept.
+  // A receipt that names a revision below the one the page holds does not move it back.
+  const behind = caseHarness(() => command("admin-hold-selected-placed"), CASE_2, 1);
+  behind.context.data.case.revision = 1; await behind.api.mutate("dates_moderation_legal_hold", { case_id: CASE_2, action: "place", reason: "x", legal_basis: "y", break_glass: false,
+    review_at: 1790086400, expected_revision: 1, idempotency_key: "dates-legal-hold-place:00000000-0000-4000-8000-000000000001" }, "legalHoldUpdated");
+  assert.equal(behind.context.data.case.revision, 2);
+  behind.context.data.case.revision = 9; await behind.api.mutate("dates_moderation_legal_hold", { case_id: CASE_2, action: "place", reason: "x", legal_basis: "y", break_glass: false,
+    review_at: 1790086400, expected_revision: 1, idempotency_key: "dates-legal-hold-place:00000000-0000-4000-8000-000000000002" }, "legalHoldUpdated");
+  assert.equal(behind.context.data.case.revision, 9, "never backwards");
+  // The released shape (a Core without T-891) is still a receipt: the generic wording, nothing adopted.
+  const released = await run(command("admin-hold-place"), 7, "place", "Synthetic authority request.", "1790086400");
+  // (case 1's receipt in answer to case 2's request is not one; on its own case it is)
+  assert.equal(released.state.Feedback.text, "outcome.unknown:");
+  const own = caseHarness(() => command("admin-hold-place"), `cas_${"1".padStart(32, "0")}`, 7); own.api.prepareLegalHold(submit); await own.api.executeConfirmed();
+  assert.deepEqual(plain(own.state.Feedback), { tone: "success", text: "legalHoldUpdated" }); assert.equal(own.context.data.case.revision, 7);
+  // Stale (409) and malformed (422): refusals, worded as every refusal of the page; nothing is adopted or cleared.
+  for (const name of ["admin-hold-selected-stale-denied", "admin-hold-selected-malformed-denied", "admin-hold-viewer-denied", "admin-hold-release-open-denied"]) {
+    const h = await run(command(name), 1, "place", "Synthetic court order.", "1790172800");
+    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: `operationFailed:${command(name).error}` }, name);
+    assert.equal(h.context.data.case.revision, 1); assert.equal(h.writes.includes("load"), false); assert.equal(h.writes.includes("HoldReason"), false);
+  }
+  // A member-case resolution is fenced by the case revision: a refusal is a refusal.
   const resolve = caseHarness(() => fixture("admin-moderation-hold-viewer-denied"));
   resolve.context.confirmed = { kind: "resolve", label: "Dismiss", payload: { case_id: CASE_ID, expected_revision: 7, action: "dismiss", idempotency_key: "dates-case-resolve:00000000-0000-4000-8000-000000000001" } };
   await resolve.api.executeConfirmed();
-  assert.equal(resolve.state.Feedback.text, "operationFailed:dates-admin-capability-required"); assert.equal(resolve.writes.includes("HoldCommand"), false);
+  assert.equal(resolve.state.Feedback.text, "operationFailed:dates-admin-capability-required");
   // Its receipt is bound since T-891, on Core's genuine pair (command corpus, generator lines 504-510): the answer to this
   // case's dismissal at revision 2 is a receipt; the same answer to another revision or another case is not.
   const dismissal = (revision: number, caseId = `cas_${"4".padStart(32, "0")}`) => ({ kind: "resolve", label: "Dismiss", payload: { case_id: caseId, expected_revision: revision,
     action: "dismiss", reason: "Synthetic review: no violation found.", user_visible_reason_en: "No violation was found.", user_visible_reason_hu: "Nem találtunk szabálysértést.",
     expires_at: null, break_glass: false, idempotency_key: "dates-case-resolve:command-0092" } });
-  for (const [confirmed, text] of [[dismissal(2), "resolved"], [dismissal(3), "outcome.unknown:"], [dismissal(2, CASE_ID), "outcome.unknown:"]] as const) {
-    const h = caseHarness(() => command("admin-resolve-dismiss")); h.context.confirmed = confirmed; await h.api.executeConfirmed();
-    assert.equal(h.state.Feedback.text, text, JSON.stringify(confirmed.payload).slice(0, 80));
+  for (const [confirmed, text, adopted] of [[dismissal(2), "resolved", 3], [dismissal(3), "outcome.unknown:", 2], [dismissal(2, CASE_ID), "outcome.unknown:", 2]] as const) {
+    const h = caseHarness(() => command("admin-resolve-dismiss"), confirmed.payload.case_id, 2); h.context.confirmed = confirmed; await h.api.executeConfirmed();
+    assert.equal(h.state.Feedback.text, text, JSON.stringify(confirmed.payload).slice(0, 80)); assert.equal(h.context.data.case.revision, adopted);
   }
 });
 
-test("trail capture: the first attempt lands, its reply is lost, and the retry ends in that attempt's receipt - one snapshot", async () => {
+test("trail capture: a lost reply is an unknown outcome; the blind repeat is refused as stale, the same window later is the snapshot that exists", async () => {
   for (const [name, lost, token] of LOST) {
     const model = coreModel(CASE_ID);
     let lose = true;
@@ -303,41 +348,36 @@ test("trail capture: the first attempt lands, its reply is lost, and the retry e
     assert.deepEqual({ ...first, idempotency_key: null }, { case_id: CASE_ID, expected_revision: 7, captured_from: 1789990000, captured_to: 1789993600,
       reason: "Route during the reported incident.", break_glass: false, idempotency_key: null });
     assert.match(first.idempotency_key, /^dates-case-trail-evidence:[0-9a-f-]{36}$/);
-    assert.equal(h.state.Feedback.text, token === null ? "outcome.kept:" : `outcome.keptAnswered:${token}`, name);
-    assert.deepEqual(plain(h.state.TrailCommand), first, `${name}: the command is kept with its key`);
+    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: token === null ? "outcome.unknown:" : `outcome.unknownAnswered:${token}`, refresh: true }, name);
     for (const field of ["TrailFrom", "TrailTo", "TrailReason"]) assert.equal(h.writes.includes(field), false, "the form keeps what was sent");
-    // The same request again; Core replays the first attempt's receipt, and no second snapshot exists.
+    // Submitted again without a refresh: a new key, the old revision - refused as stale, no second snapshot.
     lose = false;
-    await h.api.sendTrailEvidence(h.context.trailCommand);
+    await h.api.captureTrailEvidence(submit);
+    assert.notEqual(h.sent[1].body.idempotency_key, first.idempotency_key);
     assert.equal(model.writes.length, 1, `${name}: one snapshot`);
-    assert.deepEqual(h.sent[1].body, first);
-    assert.deepEqual(plain(h.state.Feedback), { tone: "success", text: "trailEvidenceCaptured" });
-    assert.equal(h.state.TrailCommand, null);
+    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: "operationFailed:dates-admin-stale-revision" });
+    // After a refresh, the same window: Core answers with the snapshot that exists, and says so.
+    h.context.data = { case: { ...h.context.data.case, revision: model.revision() } };
+    await h.api.captureTrailEvidence(submit);
+    assert.equal(model.writes.length, 1, `${name}: still one snapshot`);
+    assert.deepEqual(plain(h.state.Feedback), { tone: "success", text: "trailEvidenceExisting" });
     for (const field of ["TrailFrom", "TrailTo", "TrailReason"]) assert.equal(h.state[field], "", field);
   }
-  // Nothing is locked here either: submitting the form again after an unknown outcome is a new request under a new key,
-  // and Core - whose revision check does not move the revision - stores a second snapshot (the Core finding).
-  {
-    const core2 = coreModel(CASE_ID);
-    let lose = true;
-    const h = caseHarness((action, body) => { const answer = core2.answer(action, body); return lose ? null : answer; });
+  // Core's genuine answers (command corpus, generator lines 422-428 and 518-522), each to the request the page builds.
+  const CASE_3 = `cas_${"3".padStart(32, "0")}`;
+  for (const [name, revision, from, text, adopted] of [["admin-trail-selected-capture", 2, "1789999700", "trailEvidenceCaptured", 3],
+    ["admin-trail-selected-capture-replay", 2, "1789999700", "trailEvidenceCaptured", 3], ["admin-trail-selected-existing", 3, "1789999700", "trailEvidenceExisting", 3],
+    ["admin-trail-capture", 1, "1789999400", "trailEvidenceCaptured", 1], ["admin-trail-capture-existing", 2, "1789999400", "trailEvidenceCaptured", 2]] as const) {
+    const h = caseHarness(() => command(name), CASE_3, revision);
+    Object.assign(h.context, { trailFrom: from, trailTo: "1789999940", trailReason: "Synthetic incident window." });
     await h.api.captureTrailEvidence(submit);
-    lose = false;
-    await h.api.captureTrailEvidence(submit);
-    assert.equal(h.sent.length, 2); assert.notEqual(h.sent[1].body.idempotency_key, h.sent[0].body.idempotency_key);
-    assert.equal(core2.writes.length, 2);
+    assert.deepEqual(plain(h.state.Feedback), { tone: "success", text }, name);
+    assert.equal(h.context.data.case.revision, adopted, `${name}: adopted (the released shape names no revision)`);
   }
-  // The same on the model directly: the case revision is checked, not moved, so a new key stores a second snapshot.
-  const model = coreModel(CASE_ID), body = { case_id: CASE_ID, expected_revision: 7, captured_from: 1789990000, captured_to: 1789993600, reason: "Route.", break_glass: false };
-  for (let attempt = 0; attempt < 2; attempt++) model.answer("dates_moderation_trail_evidence", { ...body, idempotency_key: createAdminIdempotencyKey("dates-case-trail-evidence") });
-  assert.equal(model.writes.length, 2);
-  // Core's definitive refusals settle it (first attempt and retry alike); the window check against the clock does not.
-  for (const [answer, settled] of [[core("dates-trail-evidence-unavailable", 404), true], [core("dates-admin-stale-revision", 409), true],
-    [core("dates-trail-evidence-range-too-large", 422), true], [core("dates-trail-evidence-window-invalid", 422), false],
-    [core("dates-sensitive-location-capability-required", 403), false]] as const) {
-    const h = caseHarness(() => answer); await h.api.captureTrailEvidence(submit);
-    assert.equal(h.state.TrailCommand !== null && h.state.TrailCommand !== undefined, !settled, answer.error);
-    assert.equal(h.state.Feedback.text, settled ? `operationFailed:${answer.error}` : `outcome.keptAnswered:${answer.error}`);
+  // Refusals answer the request.
+  for (const name of ["admin-trail-capture-stale-denied", "admin-trail-capture-viewer-denied", "admin-trail-selected-version-denied"]) {
+    const h = caseHarness(() => command(name)); await h.api.captureTrailEvidence(submit);
+    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: `operationFailed:${command(name).error}` }, name);
   }
   // An invalid window never becomes a command.
   const invalid = caseHarness(() => assert.fail("not sent")); invalid.context.trailTo = "1789980000";
@@ -356,7 +396,7 @@ test("a revision-fenced case command is worded as unknown when nothing says whet
     assert.deepEqual(h.writes.filter((name) => !["Evidence", "Busy", "Feedback"].includes(name)), [], "no other state is written");
     assert.deepEqual(h.writes.filter((name) => name === "Evidence").length, 1, "only what every command did before: the evidence view is closed when a command starts");
     assert.equal(h.writes.includes("Note"), false, "what the operator typed stays");
-    assert.equal(h.writes.includes("HoldCommand") || h.writes.includes("TrailCommand"), false, "a fenced command is not kept: Core refuses a stale repeat");
+    assert.equal(h.writes.includes("Data"), false, "nothing is adopted without a receipt");
   }
   // Core's genuine refusals answer the request: the wording and the behaviour are what they were.
   for (const name of ["admin-moderation-revision-stale-denied", "admin-moderation-hold-viewer-denied", "admin-moderation-key-conflict-denied"]) {
@@ -371,15 +411,12 @@ test("a revision-fenced case command is worded as unknown when nothing says whet
   const mutateSource = casePage.text("mutate");
   assert.equal((mutateSource.match(/await load\(\)/g) ?? []).length, 1, "after success only");
   assert.ok(mutateSource.indexOf("await load()") > mutateSource.indexOf('setFeedback({ tone: "success"'));
-  // Each attempt of a fenced command still carries its own key; the legal hold and the capture are the only kept ones.
-  assert.equal((casePage.source.match(/, "kept"\)/g) ?? []).length, 2, "sendTrailEvidence and retryLegalHold");
-  assert.match(casePage.source, /operation\.kind === "legal_hold" \? "kept" : "fresh"\);/);
-  assert.match(casePage.source, /\{holdPending && <DatesUnansweredCommand busy=\{busy\} onRetry=\{\(\) => void retryLegalHold\(\)\} onDiscard=\{\(\) => setHoldCommand\(null\)\} \/>\}/);
-  assert.match(casePage.source, /\{trailPending && <DatesUnansweredCommand busy=\{busy\} onRetry=\{\(\) => \{ if \(trailCommand\) void sendTrailEvidence\(trailCommand\); \}\} onDiscard=\{\(\) => setTrailCommand\(null\)\} \/>\}/);
-  assert.equal((casePage.source.match(/setHoldCommand\(null\)/g) ?? []).length, 3, "an answer to a new hold, an answer to the retry, and the operator's free dismissal");
-  assert.equal((casePage.source.match(/setTrailCommand\(null\)/g) ?? []).length, 1, "the operator's free dismissal (answers go through sendTrailEvidence)");
-  // No field and no button of the two forms is closed because of an earlier outcome, and nothing durable is kept.
-  assert.doesNotMatch(casePage.source, /disabled=\{(hold|trail)Pending\}|\|\| (hold|trail)Pending|if \((hold|trail)Command\) return/);
+  // Since T-891 every command of the page is fenced by the case revision: each attempt carries its own key, and nothing
+  // is kept for a same-request retry any more (the interim re-offer of the hold and the capture is retired).
+  assert.doesNotMatch(casePage.source, /"kept"|DatesUnansweredCommand|holdCommand|trailCommand|retryLegalHold|sendTrailEvidence/);
+  assert.match(casePage.source, /const outcome = datesCommandOutcome\(response, settled !== null, "fresh"\);/);
+  assert.match(casePage.text("prepareLegalHold"), /expected_revision: data\.case\.revision,/);
+  assert.throws(() => readFileSync(new URL("../components/DatesUnansweredCommand.tsx", import.meta.url)), /ENOENT/);
   assert.doesNotMatch(casePage.source, /KeptCommand|sessionStorage|localStorage|setItem|removeItem/);
   assert.throws(() => readFileSync(new URL("../lib/datesKeptCommand.ts", import.meta.url)), /ENOENT/);
 });
@@ -387,8 +424,8 @@ test("a revision-fenced case command is worded as unknown when nothing says whet
 // ---------------------------------------------------------------- the activity page
 
 const activityPage = functionsOf("../app/(dashboard)/dates/[activityId]/page.tsx", "DatesActivityDetailPage");
-const activityCode = compile(`${["reportFailure", "executeCommand", "requestTransfer", "sendTransfer"].map(activityPage.text).join("\n")}
-  exports.executeCommand = executeCommand; exports.requestTransfer = requestTransfer; exports.sendTransfer = sendTransfer;`);
+const activityCode = compile(`${["reportFailure", "executeCommand", "requestTransfer", "adoptActivityRevision"].map(activityPage.text).join("\n")}
+  exports.executeCommand = executeCommand; exports.requestTransfer = requestTransfer;`);
 const ACTIVITY_ID = "act_" + "0".repeat(31) + "2";
 
 /**
@@ -406,14 +443,15 @@ function activityModel(revision: number) {
 }
 function activityHarness(reply: (action: string, body: Record<string, any>) => unknown) {
   const sent: Array<{ action: string; body: Record<string, any> }> = [], state: Record<string, any> = {}, writes: string[] = [];
-  const context: any = { exports: {}, busy: false, activityId: ACTIVITY_ID, transferCommand: null,
+  const context: any = { exports: {}, busy: false, activityId: ACTIVITY_ID,
     data: { activity: { activity_id: ACTIVITY_ID, revision: 4, host: { uid: 7 } } }, pendingCommand: { action: "end", reason: "Reported as over." },
     transferUid: "42", transferReason: "The host asked for it.", datesCommandOutcome, datesActivityCommandReceipt, datesActivityUpdateReceipt, datesHostTransferReceipt,
     createAdminIdempotencyKey, t: translator(""), commandOutcome: translator("outcome."),
     load: async () => { writes.push("load"); }, window: { location: { assign: (target: string) => { writes.push(`go:${target}`); } } },
     adminCall: async (action: string, body: Record<string, any>) => { sent.push({ action, body: plain(body) }); return reply(action, plain(body)); } };
-  for (const name of ["Busy", "Feedback", "PendingCommand", "CommandReason", "TransferUid", "TransferReason", "TransferCommand"])
-    context[`set${name}`] = (value: unknown) => { state[name] = value; writes.push(name); if (name === "TransferCommand") context.transferCommand = value; };
+  for (const name of ["Busy", "Feedback", "PendingCommand", "CommandReason", "TransferUid", "TransferReason"])
+    context[`set${name}`] = (value: unknown) => { state[name] = value; writes.push(name); };
+  context.setData = (update: unknown) => { context.data = typeof update === "function" ? (update as (value: unknown) => unknown)(context.data) : update; writes.push("Data"); };
   vm.runInNewContext(activityCode, context);
   return { context, state, writes, sent, api: context.exports as Record<string, (...values: any[]) => Promise<any>> };
 }
@@ -468,37 +506,29 @@ test("activity commands: a lost reply is an unknown outcome, and Core's revision
 });
 
 /**
- * TRANSCRIBED from Core main 07215298, DatesHostTransferService. `request` (20-135) checks the activity's revision
- * (eligibleActivity, 452-470) but does not move it, and refuses only while a transfer of the activity is active and
- * pending (59-65). `resolve` with a decline (241-249) and `expireDue` (184-207) unset that mark without touching the
- * activity. So after a decline or an expiry the same request under a NEW key is inserted again: a second transfer, a
- * second outbox notification, a second audit row (74-119). Under the SAME key the stored receipt is replayed.
+ * A host-transfer request as Core T-891 does it (Core claude/core-hardening-20261002 33265e46, the Core lane's hand-over
+ * and its genuine bodies). Same key: the stored receipt. A new key: `expected_revision` must be the activity revision
+ * (else `dates-stale-revision`). The request moves the activity revision, and so do a decline, an expiry and a cancel -
+ * so a request repeated with the revision it was first sent with is stale whatever became of the first transfer.
  */
 function transferModel(revision: number) {
   const receipts = new Map<string, Record<string, unknown>>(), inserted: string[] = [];
   let pending = false, sequence = 0;
-  return { inserted, decline() { pending = false; }, answer(body: Record<string, any>) {
+  return { inserted, revision: () => revision, decline() { pending = false; revision++; }, answer(body: Record<string, any>) {
     const replay = receipts.get(body.idempotency_key);
     if (replay) return { ...replay, idempotency_replayed: true };
     if (body.expected_revision !== revision) return core("dates-stale-revision", 409);
     if (pending) return core("dates-host-transfer-already-pending", 409);
-    pending = true; inserted.push(body.idempotency_key);
-    // Core's genuine receipt (T-891 corpus, released shape), for this activity and target.
-    const receipt = { ...command("admin-host-transfer"), transfer_id: `trf_${(++sequence).toString(16).padStart(32, "0")}`, activity_id: body.activity_id, target_uid: body.target_uid };
+    pending = true; revision++; inserted.push(body.idempotency_key);
+    // Core's genuine receipt with the command contract selector, for this activity and target.
+    const receipt = { ...command("admin-host-transfer-selected"), transfer_id: `trf_${(++sequence).toString(16).padStart(32, "0")}`, activity_id: body.activity_id,
+      target_uid: body.target_uid, activity_revision: revision };
     receipts.set(body.idempotency_key, receipt);
     return receipt;
   } };
 }
 
-test("review finding: a host transfer is not durably fenced - the page offers the same request again, and says what a new one would do", async () => {
-  // The hazard, on the model of Core: the request lands, the target declines, and the same request under a new key is a second transfer.
-  const hazard = transferModel(4), request = { activity_id: ACTIVITY_ID, target_uid: 42, expected_revision: 4, reason: "The host asked for it." };
-  hazard.answer({ ...request, idempotency_key: "dates-host-transfer:00000000-0000-4000-8000-000000000001" });
-  assert.equal(hazard.answer({ ...request, idempotency_key: "dates-host-transfer:00000000-0000-4000-8000-000000000002" }).error, "dates-host-transfer-already-pending", "refused only while it is pending");
-  hazard.decline();
-  hazard.answer({ ...request, idempotency_key: "dates-host-transfer:00000000-0000-4000-8000-000000000003" });
-  assert.equal(hazard.inserted.length, 2, "after a decline the pending guard is gone and the revision never moved");
-
+test("host transfer (T-891): a lost reply is an unknown outcome; repeated with the old revision it is refused as stale - one transfer", async () => {
   for (const [name, lost, token] of LOST) {
     if (lost instanceof Error) continue; // adminCall never throws: it answers null
     const model = transferModel(4);
@@ -507,56 +537,46 @@ test("review finding: a host transfer is not durably fenced - the page offers th
     await h.api.requestTransfer(submit);
     assert.equal(model.inserted.length, 1, `${name}: Core created the transfer`);
     const first = h.sent[0].body;
-    assert.deepEqual({ ...first, idempotency_key: null }, { ...request, idempotency_key: null });
+    assert.deepEqual({ ...first, idempotency_key: null }, { activity_id: ACTIVITY_ID, target_uid: 42, expected_revision: 4, reason: "The host asked for it.", idempotency_key: null });
     assert.match(first.idempotency_key, /^dates-host-transfer:[0-9a-f-]{36}$/);
-    // Not "failed": the outcome is not known, and the request - key included - is offered again.
-    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: token === null ? "outcome.kept:" : `outcome.keptAnswered:${token}` }, name);
-    assert.deepEqual(plain(h.state.TransferCommand), first, name);
+    // Worded like every revision-fenced command: not known, check before repeating. Nothing is kept or offered again.
+    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: token === null ? "outcome.unknown:" : `outcome.unknownAnswered:${token}` }, name);
     for (const field of ["TransferUid", "TransferReason"]) assert.equal(h.writes.includes(field), false, "the form keeps what was sent");
     assert.equal(h.writes.includes("load"), false);
-    // The target declines meanwhile - the case in which a new key would be a second transfer. The operator sends the
-    // SAME request again: Core answers with the first attempt's receipt and inserts nothing.
+    // The target declines meanwhile - the case in which Core main would have created a second transfer. The form sent
+    // again is a new key with the revision the page had read: Core refuses it as stale.
     model.decline(); lose = false;
-    await h.api.sendTransfer(h.context.transferCommand);
+    await h.api.requestTransfer(submit);
+    assert.notEqual(h.sent[1].body.idempotency_key, first.idempotency_key);
     assert.equal(model.inserted.length, 1, `${name}: one transfer`);
-    assert.deepEqual(h.sent[1].body, first, "byte-for-byte the same request");
-    assert.deepEqual(plain(h.state.Feedback), { tone: "success", text: "transferRequested" });
-    assert.equal(h.state.TransferCommand, null); assert.ok(h.writes.includes("load"));
+    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: "operationFailed:dates-stale-revision" });
+  }
+  // Core's genuine answers (command corpus, generator lines 466-471 and 528-531), each to the request the page builds.
+  for (const [name, number, target, adopted] of [["admin-host-transfer-selected", 16, "70316", 2], ["admin-host-transfer-selected-replay", 16, "70316", 2],
+    ["admin-host-transfer", 15, "70315", 1], ["admin-host-transfer-replay", 15, "70315", 1]] as const) {
+    const h = activityHarness(() => command(name));
+    h.context.data = { activity: { activity_id: `act_${number.toString(16).padStart(32, "0")}`, revision: 1, host: { uid: 7 } } }; h.context.activityId = h.context.data.activity.activity_id;
+    Object.assign(h.context, { transferUid: target, transferReason: "Synthetic transfer to the confirmed participant." });
+    await h.api.requestTransfer(submit);
+    assert.deepEqual(plain(h.state.Feedback), { tone: "success", text: "transferRequested" }, name);
+    // With the selector the activity revision the request left is adopted; the released shape names none.
+    assert.equal(h.context.data.activity.revision, adopted, name); assert.ok(h.writes.includes("load"), name);
     for (const field of ["TransferUid", "TransferReason"]) assert.equal(h.state[field], "", field);
   }
-  // What the console does NOT prevent (nothing is locked, nothing is stored): the form submitted anew after the decline
-  // is a new key, and Core inserts a second transfer. That is the Core finding (T-891), shown here on the model.
-  {
-    const model = transferModel(4);
-    let lose = true;
-    const h = activityHarness((_action, body) => { const answer = model.answer(body); return lose ? null : answer; });
-    await h.api.requestTransfer(submit);
-    model.decline(); lose = false;
-    await h.api.requestTransfer(submit);
-    assert.notEqual(h.sent[1].body.idempotency_key, h.sent[0].body.idempotency_key);
-    assert.equal(model.inserted.length, 2);
-    assert.equal(h.state.TransferCommand, null, "the answered request leaves nothing to offer");
+  // A receipt of another activity or target is not this request's; refusals answer the request.
+  const other = activityHarness(() => command("admin-host-transfer-selected")); await other.api.requestTransfer(submit);
+  assert.equal(other.state.Feedback.text, "outcome.unknown:"); assert.equal(other.context.data.activity.revision, 4);
+  for (const name of ["admin-host-transfer-stale-denied", "admin-host-transfer-administrator-denied"]) {
+    const h = activityHarness(() => command(name)); await h.api.requestTransfer(submit);
+    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: `operationFailed:${command(name).error}` }, name);
   }
-  // Which answers end the offer: Core's refusals raised inside the request's transaction or by a check of the request.
-  for (const [answer, settled] of [[core("dates-host-transfer-already-pending", 409), true], [core("dates-host-transfer-target-not-joined", 409), true],
-    [core("dates-host-transfer-ineligible", 409), true], [core("dates-stale-revision", 409), true], [core("dates-activity-unavailable", 404), true],
-    [core("dates-host-transfer-target-invalid", 422), true], [core("dates-admin-revision-required", 422), true],
-    // read from a switch before the receipt lookup; a capability check; Core still running the first attempt
-    [core("dates-disabled", 403), false], [core("dates-admin-capability-required", 403), false], [core("dates-admin-command-in-progress", 409), false]] as const) {
-    const h = activityHarness(() => answer); await h.api.requestTransfer(submit);
-    assert.equal(h.state.TransferCommand !== null, !settled, answer.error);
-    assert.equal(h.state.Feedback.text, settled ? `operationFailed:${answer.error}` : `outcome.keptAnswered:${answer.error}`);
-  }
-  // A request kept for another activity is never sent from this page, and a running request is not doubled.
-  const foreign = activityHarness(() => assert.fail("not sent"));
-  await foreign.api.sendTransfer({ ...request, activity_id: "act_" + "f".repeat(32), idempotency_key: "dates-host-transfer:00000000-0000-4000-8000-000000000001" });
+  // A running request is not doubled.
   const running = activityHarness(() => assert.fail("not sent")); running.context.busy = true;
-  await running.api.sendTransfer({ ...request, idempotency_key: "dates-host-transfer:00000000-0000-4000-8000-000000000001" });
-  assert.equal(foreign.sent.length + running.sent.length, 0);
-  // The page: the offer is the shared notice, with a free dismissal; no field is closed and nothing is stored.
-  assert.match(activityPage.source, /\{transferCommand && transferCommand\.activity_id === activityId && <div className="panel-body"><DatesUnansweredCommand busy=\{busy\}\s+onRetry=\{\(\) => void sendTransfer\(transferCommand\)\} onDiscard=\{\(\) => setTransferCommand\(null\)\} \/><\/div>\}/);
-  assert.match(activityPage.source, /datesCommandOutcome\(response, datesHostTransferReceipt\(response, command\) !== null, "kept"\)/);
-  assert.doesNotMatch(activityPage.source, /sessionStorage|localStorage|setItem|disabled=\{[^}]*transferCommand/);
+  await running.api.requestTransfer(submit); assert.equal(running.sent.length, 0);
+  // The page: no re-offer, nothing stored, the bound receipt and the fresh identity.
+  assert.doesNotMatch(activityPage.source, /transferCommand|sendTransfer|DatesUnansweredCommand|"kept"|sessionStorage|localStorage|setItem/);
+  assert.match(activityPage.source, /const outcome = datesCommandOutcome\(response, receipt !== null, "fresh"\);/);
+  assert.match(activityPage.source, /const receipt = datesHostTransferReceipt\(response, request\);/);
 });
 
 // ---------------------------------------------------------------- the configuration page
@@ -710,12 +730,13 @@ test("review finding: a success body is a receipt only where a check proven on g
   const pages = files.map((file) => readFileSync(new URL(file, import.meta.url), "utf8")).join("\n");
   assert.doesNotMatch(pages, /datesUncheckedReceipt|datesCommandOutcome\(response, response\?\.success|datesCommandOutcome\(response, true/);
   // Each command of the three pages names its bound check at the one place it classifies a reply.
-  for (const call of ["datesActivityUpdateReceipt(response, request)", "datesActivityCommandReceipt(response, request)", "datesHostTransferReceipt(response, command) !== null",
+  for (const call of ["datesActivityUpdateReceipt(response, request)", "datesActivityCommandReceipt(response, request)", "datesHostTransferReceipt(response, request)",
     "datesSettingSaveReceipt(response, request)", "datesActivityTypeSaveReceipt(response, request)", "datesReasonDeactivateReceipt(response, request)",
-    "datesCaseResolutionReceipt(response, payload)"]) assert.equal(pages.split(call).length - 1, 1, call);
+    "datesCaseResolutionReceipt(response, payload)", "datesLegalHoldCommandReceipt(response, payload)", "datesTrailEvidenceCommandReceipt(response, payload)"])
+    assert.equal(pages.split(call).length - 1, 1, call);
   // Every `datesCommandOutcome(` of the three pages gets a check's verdict (or the moderation page's `receipt`, chosen per route).
   for (const match of pages.matchAll(/datesCommandOutcome\(response, (.+?), (?:"fresh"|"kept"|identity)\);/g))
-    assert.match(match[1], /^(datesActivityUpdateReceipt|datesActivityCommandReceipt|datesHostTransferReceipt|datesSettingSaveReceipt|datesActivityTypeSaveReceipt|datesReasonDeactivateReceipt|receipt\b|Boolean\(response\?\.success && datesReasonSaveReceipt)/, match[0]);
+    assert.match(match[1], /^(datesActivityUpdateReceipt|datesActivityCommandReceipt|datesHostTransferReceipt|datesSettingSaveReceipt|datesActivityTypeSaveReceipt|datesReasonDeactivateReceipt|receipt !== null$|settled !== null$|Boolean\(response\?\.success && datesReasonSaveReceipt)/, match[0]);
   assert.equal((pages.match(/datesCommandOutcome\(/g) ?? []).length, 8, "the eight classified replies of the three pages");
   assert.equal([...pages.matchAll(/datesCommandOutcome\(response, (.+?), (?:"fresh"|"kept"|identity)\);/g)].length, 8, "each of them read above");
 
@@ -741,22 +762,19 @@ test("review finding: a success body is a receipt only where a check proven on g
 
 // ---------------------------------------------------------------- copy
 
-test("the unknown-outcome copy exists in both languages and the kept-command block renders", () => {
-  const keys = ["unknown", "unknownAnswered", "kept", "keptAnswered", "pending", "retry", "discard", "discardHint", "refreshCase"];
+test("the unknown-outcome copy exists in both languages; the re-offer's copy is gone with it", () => {
   for (const locale of ["en", "hu"]) {
     const copy = messagesOf(locale).datesAdmin.commandOutcome;
-    assert.deepEqual(Object.keys(copy), keys, locale);
-    for (const key of ["unknownAnswered", "keptAnswered"]) assert.match(copy[key], /\{error\}/, `${locale}.${key}`);
-    for (const key of ["unknown", "kept", "pending", "retry", "discard", "discardHint", "refreshCase"]) assert.doesNotMatch(copy[key], /\{/, `${locale}.${key}`);
-    const errors: string[] = [];
-    const html = renderToStaticMarkup(createElement(NextIntlClientProvider, { locale, messages: messagesOf(locale), timeZone: "UTC", onError: (error: unknown) => errors.push(String(error)) },
-      createElement(DatesUnansweredCommand, { busy: false, onRetry: () => undefined, onDiscard: () => undefined })));
-    assert.deepEqual(errors, []);
-    for (const key of ["pending", "retry", "discard", "discardHint"]) assert.ok(html.includes(copy[key].replaceAll("'", "&#x27;")), `${locale}.${key}`);
-    assert.equal((html.match(/<button type="button"/g) ?? []).length, 2);
-    const busy = renderToStaticMarkup(createElement(NextIntlClientProvider, { locale, messages: messagesOf(locale), timeZone: "UTC" },
-      createElement(DatesUnansweredCommand, { busy: true, onRetry: () => undefined, onDiscard: () => undefined })));
-    assert.equal((busy.match(/disabled=""/g) ?? []).length, 2, "neither button while a request is running");
+    assert.deepEqual(Object.keys(copy), ["unknown", "unknownAnswered", "refreshCase"], locale);
+    assert.match(copy.unknownAnswered, /\{error\}/, `${locale}.unknownAnswered`);
+    for (const key of ["unknown", "refreshCase"]) assert.doesNotMatch(copy[key], /\{/, `${locale}.${key}`);
+    // What a hold and a capture can now say they did (T-891).
+    const detail = messagesOf(locale).datesAdmin.caseDetail;
+    for (const key of ["legalHoldPlaced", "legalHoldAmended", "legalHoldReleased", "legalHoldAlreadyInPlace", "legalHoldNothingHeld", "trailEvidenceExisting"])
+      assert.ok(detail[key].length > 10 && !detail[key].includes("{"), `${locale}.${key}`);
   }
   assert.notEqual(messagesOf("en").datesAdmin.commandOutcome.unknown, messagesOf("hu").datesAdmin.commandOutcome.unknown);
+  assert.match(messagesOf("en").datesAdmin.caseDetail.legalHoldAlreadyInPlace, /already in place/);
+  assert.match(messagesOf("en").datesAdmin.caseDetail.legalHoldNothingHeld, /Nothing was held/);
+  assert.match(messagesOf("en").datesAdmin.caseDetail.trailEvidenceExisting, /already captured/);
 });

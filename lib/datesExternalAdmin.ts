@@ -498,7 +498,9 @@ export type DatesCommandOutcome =
  *
  * - `kept`: the command keeps its idempotency key across attempts, like a
  *   journal command, and the journal's rule applies unchanged: only a receipt
- *   or a pinned no-land refusal in Core's own envelope settles it.
+ *   or a pinned no-land refusal in Core's own envelope settles it. No page
+ *   uses it since T-891 (Core fences the legal hold, the trail capture and the
+ *   host transfer); it stays for a command Core cannot fence.
  * - `fresh`: the command is fenced by a revision (or by the existence of what
  *   it creates) and is sent under a new key each time, so a repeat cannot
  *   write twice. Every readable refusal below 500 answers this request. What

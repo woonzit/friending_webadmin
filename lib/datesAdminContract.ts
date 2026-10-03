@@ -35,13 +35,35 @@ export function datesAdminContractParams(action: string, selector: DatesAdminCon
 }
 
 /**
- * The parameters the generic bridge hands to Core, with the selector written
- * LAST into the same object: whatever the browser's body carried under that
- * name is overwritten, and the object keeps the null prototype
+ * T-891: the command contract selector. With it Core's receipt of a live-trail
+ * capture adds `revision` (the case revision after it) and `existing` (the
+ * window was already captured: the same snapshot, nothing stored), and the
+ * receipt of a host-transfer request adds `activity_revision`. Without it Core
+ * answers with the released keys, so the released console keeps reading them.
+ * Present and not exactly 1 is refused by Core (`dates-admin-contract-version-
+ * invalid`, nothing written). Named by the Core lane opus-core-fix
+ * (team/chat/20261002T233953Z-opus-core-fix-to-opus-admin-p2-t891-core-pin.md).
+ * It goes with these two routes only; the selector never changes what a
+ * command does. The legal hold has no selector: its extension is asked for by
+ * the request's own `expected_revision`, which the page sends.
+ */
+export const DATES_ADMIN_COMMAND_CONTRACT_SELECTOR: DatesAdminContractSelector = { parameter: "dates_admin_command_contract_version", value: 1 };
+export const DATES_ADMIN_COMMAND_CONTRACT_ROUTES: readonly string[] = ["dates_moderation_trail_evidence", "dates_activity_host_transfer"];
+
+/** What the SERVER adds for the command contract: the selector on its two routes, nothing on any other. */
+export function datesAdminCommandContractParams(action: string): Record<string, number | string> {
+  return DATES_ADMIN_COMMAND_CONTRACT_ROUTES.includes(action)
+    ? { [DATES_ADMIN_COMMAND_CONTRACT_SELECTOR.parameter]: DATES_ADMIN_COMMAND_CONTRACT_SELECTOR.value } : {};
+}
+
+/**
+ * The parameters the generic bridge hands to Core, with the selectors written
+ * LAST into the same object: whatever the browser's body carried under those
+ * names is overwritten, and the object keeps the null prototype
  * `mergeCoreParams` gave it.
  */
 export function withDatesAdminContract(action: string, params: Record<string, unknown>,
   selector: DatesAdminContractSelector | null = DATES_ADMIN_INTAKE_CONTRACT_SELECTOR): Record<string, unknown> {
-  for (const [key, value] of Object.entries(datesAdminContractParams(action, selector))) params[key] = value;
+  for (const [key, value] of Object.entries({ ...datesAdminContractParams(action, selector), ...datesAdminCommandContractParams(action) })) params[key] = value;
   return params;
 }

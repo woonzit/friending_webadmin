@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import DatesUnansweredCommand from "@/components/DatesUnansweredCommand";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesCaseHistory from "@/components/DatesCaseHistory";
 import DatesExternalProvenance from "@/components/DatesExternalProvenance";
@@ -38,8 +37,8 @@ import { datesExternalResolutionMatches, prepareDatesExternalResolution, readDat
 import { datesExternalMessageResolutionBaseline, datesExternalMessageResolutionMayStart, prepareDatesExternalMessageResolution,
   readDatesExternalMessageResolution, readDatesExternalMessageResolutionAccess, runDatesExternalMessageResolution,
   type DatesExternalMessageResolutionPending, type DatesExternalMessageResolutionRead } from "@/lib/datesExternalMessageModeration";
-import { DatesCaseReadFence, datesCaseDetail, datesEvidenceRead, datesLegalHoldAllowed, datesLegalHoldReceipt,
-  datesConsoleCommandReceipt, datesTrailEvidenceReceipt, isDatesConsoleCommand,
+import { DatesCaseReadFence, datesCaseDetail, datesEvidenceRead, datesLegalHoldAllowed, datesLegalHoldCommandReceipt,
+  datesConsoleCommandReceipt, datesTrailEvidenceCommandReceipt, isDatesConsoleCommand,
   type DatesCaseDetail, type DatesEvidenceRead } from "@/lib/datesModerationRead";
 
 /** `refresh` adds the operator's own "Refresh the case" beside the message; the page never rereads by itself after an unknown outcome. */
@@ -80,12 +79,6 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [confirmed, setConfirmed] = useState<ConfirmedOperation | null>(null);
-  // The two case commands no revision fences in Core (a Core finding, reported to lead). While this page is open, a
-  // command whose outcome is not known is kept - key included - so that it can be sent again as the same request,
-  // which Core answers with the first attempt's receipt. It is a convenience of the open page: nothing is locked, it
-  // can be dismissed, and it is gone after a reload. That a repeat is not applied twice is for Core to guarantee.
-  const [holdCommand, setHoldCommand] = useState<Record<string, unknown> | null>(null);
-  const [trailCommand, setTrailCommand] = useState<Record<string, unknown> | null>(null);
   const [breakGlass, setBreakGlass] = useState(false);
   const [breakGlassReason, setBreakGlassReason] = useState("");
   const [evidenceSensitive, setEvidenceSensitive] = useState(false);
@@ -168,12 +161,43 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     || messagePending.kind !== "empty" || messageNeedsReload;
 
   /**
+   * The receipt of a legal hold, a trail capture or a resolution, bound to the request it answers, with what the page
+   * says about it and the case revision it leaves; `null`: the body is no receipt of this command (the outcome is then
+   * not known). The four console commands are read in `mutate` itself.
+   */
+  function commandSettled(action: string, payload: Record<string, unknown>, response: unknown, successMessage: string):
+    { message: string; revision: number | null } | null {
+    if (action === "dates_moderation_legal_hold") {
+      // What the hold did, as Core says it (T-891): placed, amended, released - or nothing, because it was already so.
+      const receipt = datesLegalHoldCommandReceipt(response, payload);
+      if (receipt === null) return null;
+      const message = receipt.hold_change === null ? successMessage
+        : t(receipt.hold_change === "unchanged" ? (payload.action === "place" ? "legalHoldAlreadyInPlace" : "legalHoldNothingHeld")
+          : receipt.hold_change === "placed" ? "legalHoldPlaced" : receipt.hold_change === "amended" ? "legalHoldAmended" : "legalHoldReleased");
+      return { message, revision: receipt.revision };
+    }
+    if (action === "dates_moderation_trail_evidence") {
+      const receipt = datesTrailEvidenceCommandReceipt(response, payload);
+      return receipt === null ? null : { message: receipt.existing ? t("trailEvidenceExisting") : successMessage, revision: receipt.revision };
+    }
+    return datesCaseResolutionReceipt(response, payload) ? { message: successMessage, revision: (response as { revision: number }).revision } : null;
+  }
+
+  /** A receipt's case revision, adopted at once: it never moves back, and never to nothing. The case is then read again. */
+  function adoptCaseRevision(revision: number | null) {
+    if (revision === null) return;
+    setData((current) => current && current.case.case_id === caseId && revision > current.case.revision
+      ? { ...current, case: { ...current.case, revision } } : current);
+  }
+
+  /**
    * One command. `skipped`: nothing was sent. `abandoned`: it was sent, and the page moved on before the answer.
    * `refused`: an answer that wrote nothing. `uncertain`: nothing says whether it landed - no answer, an unreadable
    * one, a transport or server failure - so the page says exactly that, and changes nothing else.
-   * `identity` is `kept` for the commands the page holds for a same-request retry (see `datesCommandOutcome`).
+   * Every command of this page is fenced in Core by the case revision - since T-891 the legal hold and the trail
+   * capture too - so each attempt carries its own key: a repeat of a command that did land is refused as stale.
    */
-  async function mutate(action: string, payload: Record<string, unknown>, successMessage: string, identity: "kept" | "fresh" = "fresh") {
+  async function mutate(action: string, payload: Record<string, unknown>, successMessage: string) {
     if (writeLocked || mutationBusy.current) return "skipped" as const;
     mutationBusy.current = true;
     const ticket = readFence.begin(), currentLifetime = lifetime.current;
@@ -184,24 +208,24 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       let response: Awaited<ReturnType<typeof adminCall>> = null;
       try { response = await adminCall(action, payload); } catch { response = null; }
       if (!readFence.accepts(ticket)) return "abandoned" as const;
-      const receipt = isDatesConsoleCommand(action) ? datesConsoleCommandReceipt(response, action, caseId, payload.expected_revision) !== null
-        : action === "dates_moderation_legal_hold" ? datesLegalHoldReceipt(response, caseId, payload.action, payload.review_at)
-        : action === "dates_moderation_trail_evidence" ? datesTrailEvidenceReceipt(response, caseId, payload.captured_from, payload.captured_to)
-        : datesCaseResolutionReceipt(response, payload);
-      const outcome = datesCommandOutcome(response, receipt, identity);
+      const consoleReceipt = isDatesConsoleCommand(action) ? datesConsoleCommandReceipt(response, action, caseId, payload.expected_revision) : null;
+      const settled = !isDatesConsoleCommand(action) ? commandSettled(action, payload, response, successMessage)
+        : consoleReceipt === null ? null : { message: successMessage, revision: consoleReceipt.revision };
+      const outcome = datesCommandOutcome(response, settled !== null, "fresh");
       if (outcome.kind === "refused") {
         setFeedback({ tone: "error", text: t("operationFailed", { error: outcome.error }) });
         return "refused" as const;
       }
       if (outcome.kind === "uncertain") {
-        const key = `${identity === "kept" ? "kept" : "unknown"}${outcome.error === null ? "" : "Answered"}`;
+        const key = `unknown${outcome.error === null ? "" : "Answered"}`;
         // Wording only. Nothing on the page changes: a reread would clear the evidence the operator has read, the
         // break-glass choice and the confirmation, and under a continuing outage replace the page with an error.
         // Whether to read the case again is the operator's decision, offered beside the message.
         setFeedback({ tone: "error", text: commandOutcome(key, { error: outcome.error ?? "" }), refresh: true });
         return "uncertain" as const;
       }
-      setFeedback({ tone: "success", text: successMessage });
+      adoptCaseRevision(settled!.revision);
+      setFeedback({ tone: "success", text: settled!.message });
       await load();
       return "success" as const;
     } finally {
@@ -295,7 +319,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       setFeedback({ tone: "error", text: t("trailEvidenceInputInvalid") });
       return;
     }
-    await sendTrailEvidence({
+    const result = await mutate("dates_moderation_trail_evidence", {
       case_id: caseId,
       expected_revision: data.case.revision,
       captured_from: capturedFrom,
@@ -303,18 +327,10 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       reason: trailReason.trim(),
       break_glass: data.case.conflict_of_interest && breakGlass,
       idempotency_key: createAdminIdempotencyKey("dates-case-trail-evidence"),
-    });
-  }
-
-  /**
-   * Core checks the case revision for a capture but does not move it, so a repeat under a new key would store a
-   * second snapshot. The command is sent as it is - first attempt and retry alike - and kept until Core answers.
-   */
-  async function sendTrailEvidence(command: Record<string, unknown>) {
-    if (command.case_id !== caseId) return;
-    const result = await mutate("dates_moderation_trail_evidence", command, t("trailEvidenceCaptured"), "kept");
-    if (result === "skipped") return;
-    setTrailCommand(result === "uncertain" || result === "abandoned" ? command : null);
+    }, t("trailEvidenceCaptured"));
+    // A capture moves the case revision (T-891): repeated under a new key after it landed, it is refused as stale; the
+    // same window at the current revision is answered with the snapshot that exists. The form keeps what was sent
+    // until the capture is confirmed.
     if (result === "success") {
       setTrailFrom("");
       setTrailTo("");
@@ -371,6 +387,9 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
         legal_basis: legalBasis.trim(),
         break_glass: data.case.conflict_of_interest && breakGlass,
         review_at: holdAction === "place" ? epochFromLocalInput(holdReviewAt) : null,
+        // T-891: the hold is fenced by the case revision. With it Core says what the command did (placed, amended,
+        // released, or nothing because it was already so) and the revision it leaves; a stale one is refused.
+        expected_revision: data.case.revision,
         idempotency_key: createAdminIdempotencyKey(`dates-legal-hold-${holdAction}`),
       },
     });
@@ -385,25 +404,13 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     if (operation.kind === "resolve" && data && isDatesExternalMessageCase(data.case)) {
       await executeMessageResolution(operation); return;
     }
-    // A legal hold has no revision in Core: under a new key it would be applied again. It keeps its identity.
     const result = await mutate(operation.kind === "resolve" ? "dates_moderation_resolve" : "dates_moderation_legal_hold", operation.payload,
-      t(operation.kind === "resolve" ? "resolved" : "legalHoldUpdated"), operation.kind === "legal_hold" ? "kept" : "fresh");
+      t(operation.kind === "resolve" ? "resolved" : "legalHoldUpdated"));
     setConfirmed(null);
-    // The newest hold command is the one offered again; one that Core answered leaves nothing to offer.
-    if (operation.kind === "legal_hold" && (result === "uncertain" || result === "abandoned")) setHoldCommand(operation.payload);
-    else if (operation.kind === "legal_hold" && (result === "success" || result === "refused")) setHoldCommand(null);
     if (result === "success" && operation.kind === "legal_hold") { setHoldReason(""); setLegalBasis(""); setHoldReviewAt(""); }
     if (result === "success" && operation.kind === "resolve") {
       setResolutionReason(""); setVisibleReasonEn(""); setVisibleReasonHu(""); setRestrictionExpiry("");
     }
-  }
-
-  /** The same legal-hold request again, key included: Core replays the first attempt's receipt if it landed. */
-  async function retryLegalHold() {
-    if (!holdCommand || holdCommand.case_id !== caseId) return;
-    const result = await mutate("dates_moderation_legal_hold", holdCommand, t("legalHoldUpdated"), "kept");
-    if (result === "success" || result === "refused") setHoldCommand(null);
-    if (result === "success") { setHoldReason(""); setLegalBasis(""); setHoldReviewAt(""); }
   }
 
   async function executeExternalResolution(operation: ConfirmedOperation | null, retry: DatesExternalResolutionPending | null = null) {
@@ -510,8 +517,6 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
   );
   const actions = permittedResolutionActions(item, principal);
   const mayResolve = actions.length > 0 && (item.capabilities.can_resolve || (item.conflict_of_interest && canBreakGlass && assignedToMe && leaseActive));
-  const holdPending = holdCommand !== null && holdCommand.case_id === caseId;
-  const trailPending = trailCommand !== null && trailCommand.case_id === caseId;
   const restrictionActionsHidden = actions.length > 0 && resolutionActions(item).some((action) => !actions.includes(action));
 
   return (
@@ -627,7 +632,6 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       {!isExternal && !isExternalMessage && principal.sensitive_location && hasDatesCapability(principal, "dates_trail_evidence_capture") && item.activity_id && <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("trailEvidenceTitle")}</h2><p>{t("trailEvidenceCopy")}</p></div></div>
         <div className="panel-body">
-          {trailPending && <DatesUnansweredCommand busy={busy} onRetry={() => { if (trailCommand) void sendTrailEvidence(trailCommand); }} onDiscard={() => setTrailCommand(null)} />}
           <form className="dates-evidence-controls" onSubmit={captureTrailEvidence}>
             <label className="field"><span>{t("trailFrom")}</span><input type="datetime-local" required value={trailFrom} onChange={(event) => setTrailFrom(event.target.value)} /></label>
             <label className="field"><span>{t("trailTo")}</span><input type="datetime-local" required value={trailTo} onChange={(event) => setTrailTo(event.target.value)} /></label>
@@ -657,7 +661,6 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       {hasDatesCapability(principal, "dates_legal_hold") && <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("legalHoldTitle")}</h2><p>{t("legalHoldCopy")}</p></div></div>
         <form className="panel-body form-grid" onSubmit={prepareLegalHold}>
-          {holdPending && <DatesUnansweredCommand busy={busy} onRetry={() => void retryLegalHold()} onDiscard={() => setHoldCommand(null)} />}
           <label className="field"><span>{t("holdAction")}</span><select value={holdAction} onChange={(event) => setHoldAction(event.target.value)}><option value="place">{t("placeHold")}</option><option value="release" disabled={["new", "in_review", "appealed"].includes(item.status)}>{t("releaseHold")}</option></select></label>
           {["new", "in_review", "appealed"].includes(item.status) && <p className="field-full field-hint">{t("holdReleaseCaseOpen")}</p>}
           {item.conflict_of_interest && !(canBreakGlass && breakGlass) && <p className="field-full alert alert-warning">{t("holdConflictUnavailable")}</p>}

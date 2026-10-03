@@ -7,7 +7,9 @@ import ts from "typescript";
 import * as actions from "../lib/adminActions.ts";
 import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
 import { datesAvailabilityWriteIsRetired } from "../lib/datesAdmin.ts";
-import { DATES_ADMIN_INTAKE_CONTRACT_SELECTOR, datesAdminContractParams, withDatesAdminContract } from "../lib/datesAdminContract.ts";
+import {
+  DATES_ADMIN_COMMAND_CONTRACT_SELECTOR, DATES_ADMIN_INTAKE_CONTRACT_SELECTOR, datesAdminCommandContractParams, datesAdminContractParams, withDatesAdminContract,
+} from "../lib/datesAdminContract.ts";
 import { isDatesAdminRoute, projectDatesAdminResponse } from "../lib/datesAdminProjection.ts";
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "../lib/datesExternalAdmin.ts";
 import { datesExternalDraftInput } from "../lib/datesExternalInput.ts";
@@ -279,6 +281,44 @@ test("D-143: the selector is the server's - a browser value under its name is ov
   // A browser cannot smuggle a selector-like field through a closed request shape either.
   const forged = await bridge("dates_event_intake_list", { page: 1, limit: 1, dates_event_intake_admin_contract_version: 1 });
   assert.equal(forged.result.status, 400); assert.equal(forged.sent.length, 0);
+});
+
+test("T-891: the command contract selector goes with the trail capture and the host transfer only, set by the server; the hold sends its revision", async () => {
+  assert.deepEqual(DATES_ADMIN_COMMAND_CONTRACT_SELECTOR, { parameter: "dates_admin_command_contract_version", value: 1 });
+  for (const action of ["dates_moderation_trail_evidence", "dates_activity_host_transfer"])
+    assert.deepEqual(datesAdminCommandContractParams(action), { dates_admin_command_contract_version: 1 }, action);
+  for (const action of ["dates_moderation_legal_hold", "dates_moderation_resolve", "dates_activity_update", "dates_activity_command", "dates_event_intake_list", "users_list", "admin_me"])
+    assert.deepEqual(datesAdminCommandContractParams(action), {}, action);
+  const sentBy = async (action: string, body: Record<string, unknown>) => {
+    const { sent } = await bridge(action, body);
+    assert.equal(sent.length, 1, action); assert.equal(sent[0].url, `https://core.invalid/v1/webadmin/${action}`);
+    return sent[0].form!;
+  };
+  // The capture as the page builds it - and a browser value under the selector's name, which the server overwrites.
+  const capture = await sentBy("dates_moderation_trail_evidence", { case_id: "cas_" + "3".padStart(32, "0"), expected_revision: 2, captured_from: 1789999700,
+    captured_to: 1789999940, reason: "Synthetic incident window.", break_glass: false, idempotency_key: "dates-case-trail-evidence:00000000-0000-4000-8000-000000000001",
+    dates_admin_command_contract_version: 2 });
+  assert.equal(capture.get("dates_admin_command_contract_version"), "1");
+  assert.equal(capture.getAll("dates_admin_command_contract_version").length, 1);
+  assert.deepEqual([capture.get("expected_revision"), capture.get("break_glass")], ["2", "0"]);
+  for (const [key, value] of Object.entries(owned("dates_moderation_trail_evidence"))) assert.equal(capture.get(key), value, "the intake selector goes with every Dates route as before");
+  const transfer = await sentBy("dates_activity_host_transfer", { activity_id: "act_" + "10".padStart(32, "0"), target_uid: 70316, expected_revision: 1,
+    reason: "Synthetic transfer to the confirmed participant.", idempotency_key: "dates-host-transfer:00000000-0000-4000-8000-000000000001" });
+  assert.equal(transfer.get("dates_admin_command_contract_version"), "1"); assert.equal(transfer.get("target_uid"), "70316");
+  // The legal hold asks for its extension with its own revision; it gets no selector.
+  const hold = await sentBy("dates_moderation_legal_hold", { case_id: "cas_" + "2".padStart(32, "0"), action: "place", reason: "Synthetic legal retention.",
+    legal_basis: "Synthetic authority request.", break_glass: false, review_at: 1790086400, expected_revision: 1,
+    idempotency_key: "dates-legal-hold-place:00000000-0000-4000-8000-000000000001" });
+  assert.equal(hold.get("expected_revision"), "1"); assert.equal(hold.has("dates_admin_command_contract_version"), false);
+  const release = await sentBy("dates_moderation_legal_hold", { case_id: "cas_" + "2".padStart(32, "0"), action: "release", reason: "Synthetic withdrawal.",
+    legal_basis: "Synthetic letter of withdrawal.", break_glass: false, review_at: null, expected_revision: 3,
+    idempotency_key: "dates-legal-hold-release:00000000-0000-4000-8000-000000000001" });
+  // The generator's request (line 395): a release sends `review_at` as an empty field, and so does the encoder for null.
+  assert.deepEqual([release.get("expected_revision"), release.get("review_at")], ["3", ""]);
+  const update = await sentBy("dates_activity_update", { activity_id: "act_" + "b".padStart(32, "0"), expected_revision: 1, changes: { maximum_people: 12 },
+    reason: "Synthetic capacity correction.", idempotency_key: "dates-activity-update:00000000-0000-4000-8000-000000000001" });
+  assert.equal(update.has("dates_admin_command_contract_version"), false);
+  assert.equal(update.get("changes"), '{"maximum_people":12}', "the generator's form value (line 433)");
 });
 
 test("response shape: the browser receives the named fields of a Dates body through the real bridge - an unknown key is dropped, a denied one is dropped and logged by name", async () => {

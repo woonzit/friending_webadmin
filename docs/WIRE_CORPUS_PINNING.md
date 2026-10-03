@@ -63,6 +63,27 @@ the help panel explicitly marks absent settings as not returned. The additive
 `effective_by_storefront` answer remains optional for compatibility with old Core.
 Presence retains `date_enabled` and the `date` key; only its EN/HU labels change.
 
+## Dates console pins after D-143 and T-891 (current)
+
+These supersede the P2a figures below; the tests named here are the authority.
+
+| Directory | Provider tip | Bodies | `fixture_set_sha256` | Pinned in |
+|---|---|---|---|---|
+| `dates_event_intake_admin_wire` | Core lane `opus-core-p2`, `b5b2b29983cf2dfb89371d7ac4eaf026a16b9e69` (source `2df1849c`) | 159 | `008719da095096506d4d583e5f5465a5b086fc4b0ef6136da4a56baf658bbfed` | `tests/datesIntakeWire.test.mts` |
+| `dates_external_admin_wire` | Core lane `opus-core-fix`, `33265e469650a48202eb21c25a171bc2aea09139` (source `b5118909`) | 138 | `ba9ebf7a93d120d0ecd8c4efc94ce67964cdb2a86c248b3d389d974c4858bae7` | `tests/datesExternalWire.test.mts` |
+| `dates_admin_command_wire` | the same, source `7353371a` | 61 | `80c762f2b64f0e99de0a8d702b52400b7e80787c7f5e98c6c253446f7b02d135` | `tests/datesAdminCommandWire.test.mts` |
+| `dates_external_admin_wire_released` | Core main `0721529847602d4298f881119428f0e99eae9d53` | 138 | `d84a3e162703db1578db59f0a0a972de24fffc8562f23a13bf5715101306e4ed` | `tests/datesAdminCompatibility.test.mts` |
+
+`dates_external_admin_wire` is captured without the Admin intake contract selector (D-143) and
+equals the released corpus body for body except four bodies, each by one revision value: a legal
+hold moves the case revision since T-891, and the capture holds case 01 before resolving it
+(`admin-moderation-resolve` and `-resolve-replay` `revision` 3 -> 4, `admin-moderation-detail-closed`
+`case.revision` 3 -> 4, `admin-moderation-detail-purged` 3 -> 5). Both tests prove that from bytes.
+`dates_admin_command_wire` keeps its requests in Core's generator
+(`tests/dates_admin_command_fixture_dump.php`, digest pinned); the tests transcribe each request
+they use with its line. Both T-891 directories come from a lane branch not yet on Core main: re-pin
+to the published commit with the same set digests when it lands.
+
 ## T-865 P2a coordinated provider/consumer handoff (T-884 / T-885)
 
 Both corpora are copied byte-for-byte from the Core lane tip

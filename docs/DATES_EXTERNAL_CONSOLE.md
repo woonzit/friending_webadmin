@@ -163,18 +163,62 @@ replies with the journal's classifier and one of two identities:
   the page: there is no automatic reread (on the case page it would clear the
   evidence read, the break-glass choice and the confirmation); the case page
   offers "Refresh the case" beside the message.
-- **kept** - three commands Core does not durably fence: a legal hold (place,
-  release) has no compare-and-set; a live-trail capture checks the case
-  revision but does not move it; a host-transfer request does not move the
-  activity's revision and its "one pending transfer" guard ends when the target
-  declines or the request expires. Each is applied again under a new key. That is a Core finding (reported to
-  lead with file and line); the browser does not compensate for it with a
-  durable record of its own. What the page does is the safe and useful
-  part: while it is open it keeps such a command, key included, after an
-  unknown outcome and offers "send the same request again", which Core answers
-  with the first attempt's receipt. A receipt bound to the request or a pinned
-  no-land refusal ends the offer. Nothing is locked, the offer can be
-  dismissed, and it is gone after a reload.
+- **kept** - a command Core does not durably fence would keep its key and be
+  offered again as the same request. Since T-891 no command of the console is
+  kept: the interim re-offer of the legal hold, the live-trail capture and the
+  host-transfer request is retired, because Core fences all three now
+  (Core `claude/core-hardening-20261002`, 33265e46). What a repeat under a NEW
+  key does since then, per command:
+  - **legal hold** (place, release): the page sends the case revision
+    (`expected_revision`, both actions). Every hold write moves the case
+    revision, so a repeat with the revision the page had read is refused as
+    stale (`dates-admin-stale-revision`, 409, nothing written). After a
+    refresh, the identical hold is answered as `unchanged` - "already in
+    place" / "nothing was held" - and writes nothing.
+  - **live-trail capture**: the capture moves the case revision, so a repeat
+    with the old revision is refused as stale; the same window at the current
+    revision is answered with the snapshot that exists (`existing: true`:
+    "this window was already captured"), nothing stored.
+  - **host-transfer request**: the request moves the activity revision, and so
+    do a decline, an expiry and a cancel; a repeat with the old revision is
+    refused as stale (`dates-stale-revision`) whatever became of the first
+    transfer. A new transfer needs a refresh, which shows the pending one.
+
+  So all three are **fresh**, worded like every revision-fenced command. This
+  rests on Core T-891: a console of this kind on a Core without those fences
+  would let a blind repeat write again, so the order is Core first, and a Core
+  rollback below T-891 needs this console rolled back with it.
+
+#### Receipts (T-891)
+
+Every command's success body is checked against the request the page sent
+(`lib/datesCommandReceipts.ts`, `lib/datesModerationRead.ts`), on Core's
+genuine request / answer pairs (`tests/fixtures/dates_admin_command_wire`, 61
+bodies; the requests are those of Core's generator). A check binds on what
+identifies the command - the target, the action, the revision the command
+leaves - and tolerates keys it does not name. A success body that fails its
+check is "the outcome is not known". No route is taken on the bare success
+flag any more (`DATES_RECEIPT_CHECKS_PENDING` is empty).
+
+| Command | The receipt binds |
+|---|---|
+| activity edit | the activity; revision = expected + 1 |
+| activity end / cancel / soft delete / restore | the activity and the action; revision = expected + 1; ended / canceled / soft-deleted / not soft-deleted |
+| activity purge | the activity; `purged: true`; revision = expected (the revision removed) |
+| host-transfer request | a pending transfer of this activity to this member; with the command contract selector `activity_revision` = expected + 1, adopted at once |
+| setting save | the key; revision = expected + 1 (the first save: 0 -> 1); the value is Core's normalised one, not compared with what was typed |
+| activity-type save | the key; both revisions = expected + 1 |
+| reason deactivation | the reason; inactive; revision = expected + 1 |
+| member-case resolution | the case and the action; a decision; revision = expected + 1 |
+| legal hold | the case, the action, the review date; with `expected_revision` also `hold_change` (placed / amended / released / unchanged), `revision` (= expected + 1, or = expected when unchanged) and `evidence_changed_count` (0 when unchanged) - all three or none; the revision is adopted |
+| live-trail capture | the case and the window, a snapshot; with the command contract selector also `revision` and `existing` (= expected + 1 for a new snapshot, = expected for an existing one) - both or neither; the revision is adopted |
+
+The command contract selector (`dates_admin_command_contract_version=1`) is
+added by the server to the trail capture and the host transfer only
+(`lib/datesAdminContract.ts`); without it Core answers with the released keys,
+and the checks read those too (the extension is absent, nothing is adopted).
+The browser receives the receipts through the projection, whose trees name
+these keys (`lib/datesAdminProjection.ts`).
 
 ## Existing activity console and moderation boundary
 

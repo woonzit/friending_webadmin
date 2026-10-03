@@ -8693,7 +8693,13 @@
         "suspend_account": "Suspend account",
         "remove_review": "Remove review",
         "remove_participant": "Remove participant"
-      }
+      },
+      "legalHoldPlaced": "The legal hold was placed on all evidence of this case.",
+      "legalHoldAmended": "The legal hold was amended: its basis or its review date changed.",
+      "legalHoldReleased": "The legal hold was released.",
+      "legalHoldAlreadyInPlace": "This legal hold was already in place: nothing was changed.",
+      "legalHoldNothingHeld": "Nothing was held: there was nothing to release, and nothing was changed.",
+      "trailEvidenceExisting": "This window was already captured: its snapshot is already among the case's evidence, and nothing new was stored."
     },
     "configuration": {
       "eyebrow": "AreYouIn runtime",
@@ -9983,12 +9989,6 @@
     "commandOutcome": {
       "unknown": "The outcome is not known: no readable answer came back. Check whether the change is there before you repeat it; Refresh shows the current state.",
       "unknownAnswered": "The outcome is not known ({error}). Check whether the change is there before you repeat it; Refresh shows the current state.",
-      "kept": "The outcome is not known: no readable answer came back. Send the same request again: if the first attempt landed, Core answers with its receipt and does not apply it twice.",
-      "keptAnswered": "The outcome is not known ({error}). Send the same request again: if the first attempt landed, Core answers with its receipt and does not apply it twice.",
-      "pending": "A request with an unknown outcome can be sent again from here as the same request.",
-      "retry": "Send the same request again",
-      "discard": "Dismiss",
-      "discardHint": "Core has no way to tell a repeat from a new request: if you dismiss this and make the request anew, it is applied again even if the first attempt landed.",
       "refreshCase": "Refresh the case"
     }
   },
