@@ -36,8 +36,18 @@ export function prepareResearchCommand(actor: string, action: DatesResearchActio
   return { actor, action, body: JSON.parse(JSON.stringify(request)) as Record<string, unknown> };
 }
 export function decodeResearchCommandReceipt(command: ResearchCommand, response: unknown): ResearchCommandOutcome | null {
-  if (!researchSuccess(response) || typeof response.replayed !== "boolean" || !researchString(response.audit_id) || response.audit_id === "") return null;
+  if (!researchSuccess(response) || typeof response.replayed !== "boolean") return null;
   const { body, action } = command;
+  // Batch children own their audits; Core returns no parent audit_id.
+  if (action === "dates_event_intake_batch_decide") {
+    const results = decodeResearchBatchReceipt(response, body.intake_ids as string[]);
+    return results ? { kind: "success", receipt: response, results } : null;
+  }
+  const audited = researchString(response.audit_id) && response.audit_id !== "";
+  // Reusing an open scheduled run changes no configuration and has no
+  // original administrator audit. Only an explicit replay may carry null.
+  const scheduledReplay = action === "dates_event_research_source_run_now" && response.replayed === true && response.audit_id === null;
+  if (!audited && !scheduledReplay) return null;
   if (action === "dates_event_research_defaults_save") {
     const row = decodeResearchDefaults(response.defaults);
     return row && row.revision === Number(body.expected_revision) + 1 ? { kind: "success", receipt: row } : null;
@@ -62,10 +72,6 @@ export function decodeResearchCommandReceipt(command: ResearchCommand, response:
       && researchInteger(response.source_revision, 1) && boundRevision
       ? { kind: "success", receipt: response, runId: response.run_id } : null;
   }
-  if (action === "dates_event_intake_batch_decide") {
-    const results = decodeResearchBatchReceipt(response, body.intake_ids as string[]);
-    return results ? { kind: "success", receipt: response, results } : null;
-  }
   return null;
 }
 // Only Core's no-write refusals settle an identity. Capability, transport, in-progress and unknown responses never do.
@@ -78,8 +84,7 @@ export async function runResearchCommand(send: ResearchSend, command: ResearchCo
   try { response = await send(command.action, command.body); } catch { return { kind: "uncertain", error: null }; }
   const receipt = decodeResearchCommandReceipt(command, response);
   if (receipt) return receipt;
-  if (command.action === "dates_event_intake_batch_decide" && researchSuccess(response) && typeof response.replayed === "boolean"
-    && researchString(response.audit_id) && response.audit_id !== "") {
+  if (command.action === "dates_event_intake_batch_decide" && researchSuccess(response) && typeof response.replayed === "boolean") {
     const partial = decodeResearchBatchRows(response, command.body.intake_ids as string[]);
     if (partial) return { kind: "uncertain", error: null, partial };
   }

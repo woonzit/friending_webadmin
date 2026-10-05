@@ -178,12 +178,32 @@ test("DERIVED: batch results are bound to every chosen intake and mixed refusal 
   assert.ok(normalizeDatesResearchProxyBody("dates_event_intake_batch_decide", request));
   assert.equal(normalizeDatesResearchProxyBody("dates_event_intake_batch_decide", { ...request, expected_revisions: { [ids[0]]: 2 } }), null);
 });
+test("DERIVED committed Core batch shape: child-audited receipts settle without a parent audit ID", async () => {
+  const id = "xin_" + "1".repeat(32);
+  const command = prepareResearchCommand(actor, "dates_event_intake_batch_decide", { intake_ids: [id], expected_revisions: { [id]: 2 }, action: "reject",
+    reason: "Reviewed batch receipt", reason_code: "unverifiable" })!;
+  const response = { ...DERIVED_ENVELOPE, replayed: true, results: [{ intake_id: id, outcome: "rejected", refusal: null, external_event_id: null }] };
+  assert.equal(Object.hasOwn(response, "audit_id"), false);
+  for (const replayed of [false, true]) assert.equal(decodeResearchCommandReceipt(command, { ...response, replayed })?.kind, "success");
+  assert.equal(decodeResearchCommandReceipt(command, { ...response, replayed: undefined }), null);
+  assert.equal(decodeResearchCommandReceipt(command, { ...response, results: [{ ...response.results[0], intake_id: "foreign" }] }), null);
+  const seen: unknown[] = [];
+  const send = async (_action: string, body: unknown) => { seen.push(structuredClone(body)); if (seen.length === 1) throw new Error("lost response"); return response; };
+  assert.equal((await runResearchCommand(send, command)).kind, "uncertain");
+  assert.equal((await runResearchCommand(send, command)).kind, "success");
+  assert.deepEqual(seen[0], seen[1]);
+  const save = prepareResearchCommand(actor, "dates_event_research_defaults_save", { expected_revision: 0, values: {
+    enabled: GENUINE_DEFAULTS.enabled, auto_cities_enabled: GENUINE_DEFAULTS.auto_cities_enabled, ...GENUINE_AREA.effective,
+  }, reason: "Reviewed defaults" })!;
+  assert.equal(decodeResearchCommandReceipt(save, { ...DERIVED_ENVELOPE, replayed: false, defaults: { ...GENUINE_DEFAULTS, revision: 1 } }), null,
+    "configuration saves still require their audit receipt");
+});
 test("DERIVED: an unknown batch outcome makes only its row unreadable while retaining the command for exact retry", async () => {
   const ids = ["xin_" + "1".repeat(32), "xin_" + "2".repeat(32)];
   const request = { intake_ids: ids, expected_revisions: { [ids[0]]: 2, [ids[1]]: 3 }, action: "publish",
     confirmations: { source: true, public_venue: true, timezone: true, content_safe: true }, reason: "Reviewed both" };
   const command = prepareResearchCommand(actor, "dates_event_intake_batch_decide", request)!;
-  const response = { ...DERIVED_ENVELOPE, replayed: false, audit_id: "aud_derived", results: [
+  const response = { ...DERIVED_ENVELOPE, replayed: false, results: [
     { intake_id: ids[0], outcome: "published", refusal: null, external_event_id: "xev_derived" },
     { intake_id: ids[1], outcome: "future-outcome", refusal: null, external_event_id: null },
   ] };
@@ -207,13 +227,25 @@ test("DERIVED Core replay semantics: advanced source revision can remain unchang
   assert.equal(decodeResearchCommandReceipt(command, { ...response, dry_run: false }), null);
   assert.equal(decodeResearchCommandReceipt(command, { ...response, source_id: "wrong" }), null);
 });
+test("DERIVED committed Core scheduled-open replay: explicit null audit settles only a bound replay", () => {
+  const command = prepareResearchCommand(actor, "dates_event_research_source_run_now", { source_id: GENUINE_SOURCE.source_id, expected_revision: 2, dry_run: false })!;
+  const response = { ...DERIVED_ENVELOPE, replayed: true, audit_id: null, source_id: GENUINE_SOURCE.source_id,
+    source_revision: 2, dry_run: false, run_id: DERIVED_RUN.run_id };
+  assert.equal(decodeResearchCommandReceipt(command, response)?.kind, "success");
+  for (const audit_id of [undefined, "", 123]) assert.equal(decodeResearchCommandReceipt(command, { ...response, audit_id }), null);
+  assert.equal(decodeResearchCommandReceipt(command, { ...response, replayed: false, source_revision: 3 }), null,
+    "a newly queued manual run still needs its actual audit");
+  assert.equal(decodeResearchCommandReceipt(command, { ...response, source_revision: 1 }), null);
+  assert.equal(decodeResearchCommandReceipt(command, { ...response, source_id: "foreign" }), null);
+  assert.equal(decodeResearchCommandReceipt(command, { ...response, dry_run: true }), null);
+});
 test("DERIVED Core replay semantics: batch receipts show the actual opposite terminal decision without re-deciding", () => {
   const id = "xin_" + "1".repeat(32);
   for (const action of ["publish", "reject"] as const) {
     const command = prepareResearchCommand(actor, "dates_event_intake_batch_decide", { intake_ids: [id], expected_revisions: { [id]: 2 }, action, reason: "Reviewed terminal replay",
       ...(action === "publish" ? { confirmations: { source: true, public_venue: true, timezone: true, content_safe: true } } : { reason_code: "unverifiable" }) })!;
     const outcome = action === "publish" ? "rejected" : "published";
-    const response = { ...DERIVED_ENVELOPE, replayed: true, audit_id: "aud_derived", results: [{ intake_id: id, outcome, refusal: null, external_event_id: outcome === "published" ? "xev_derived" : null }] };
+    const response = { ...DERIVED_ENVELOPE, replayed: true, results: [{ intake_id: id, outcome, refusal: null, external_event_id: outcome === "published" ? "xev_derived" : null }] };
     const result = decodeResearchCommandReceipt(command, response)!;
     assert.equal(result.kind, "success"); if (result.kind === "success") assert.equal(result.results![0].outcome, outcome);
   }
