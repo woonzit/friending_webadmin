@@ -828,8 +828,8 @@ test("the state of the consent text is said beside the member switch: draft and 
 
 test("T-886: the queue filters by channel and says when the member channel is switched off", () => {
   const queue = readFileSync(new URL("../app/(dashboard)/dates/intakes/page.tsx", import.meta.url), "utf8");
-  assert.match(queue, /readDatesIntakeQueue\(adminCall, \{ status, channel, page, limit: PAGE_SIZE, \.\.\.\(secondLook === "" \? \{\} : \{ second_look: secondLook === "only" \}\) \}, signal\)/);
-  assert.match(queue, /\}, \[status, channel, secondLook, page\]\);/);
+  assert.match(queue, /readDatesIntakeQueue\(adminCall, \{ status, channel, page, limit: PAGE_SIZE, \.\.\.\(secondLook === "" \? \{\} : \{ second_look: secondLook === "only" \}\), \.\.\.\(researchRun \? \{ research_run_id: researchRun \} : \{\}\) \}, signal\)/);
+  assert.match(queue, /\}, \[status, channel, secondLook, page, researchRun\]\);/);
   // The second look (Core b5b2b299): a filter, the count of those waiting with the way to them, a badge on the row.
   assert.match(queue, /<select value=\{secondLook\} onChange=\{\(event\) => \{ setPage\(1\); setSecondLook\(event\.target\.value as "" \| "only" \| "without"\); \}\}>/);
   assert.match(queue, /\{queue\.second_look_count !== null && queue\.second_look_count > 0 && secondLook !== "only" && <p className="alert alert-warning" role="status">/);

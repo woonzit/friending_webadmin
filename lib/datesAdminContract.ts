@@ -56,6 +56,14 @@ export function datesAdminCommandContractParams(action: string): Record<string, 
     ? { [DATES_ADMIN_COMMAND_CONTRACT_SELECTOR.parameter]: DATES_ADMIN_COMMAND_CONTRACT_SELECTOR.value } : {};
 }
 
+/** T-896 / D-143: added by the server to research actions and the selected intake queue. */
+export const DATES_ADMIN_RESEARCH_CONTRACT_SELECTOR: DatesAdminContractSelector = { parameter: "dates_event_research_admin_contract_version", value: 1 };
+export function datesAdminResearchContractParams(action: string, params: Record<string, unknown> = {}): Record<string, number | string> {
+  const research = /^dates_event_research_[a-z0-9_]+$/.test(action) || action === "dates_event_intake_batch_decide"
+    || action === "dates_event_intake_list" && (Object.hasOwn(params, "research_run_id") || params.channel === "ai_research");
+  return research ? { [DATES_ADMIN_RESEARCH_CONTRACT_SELECTOR.parameter]: DATES_ADMIN_RESEARCH_CONTRACT_SELECTOR.value } : {};
+}
+
 /**
  * The parameters the generic bridge hands to Core, with the selectors written
  * LAST into the same object: whatever the browser's body carried under those
@@ -64,6 +72,6 @@ export function datesAdminCommandContractParams(action: string): Record<string, 
  */
 export function withDatesAdminContract(action: string, params: Record<string, unknown>,
   selector: DatesAdminContractSelector | null = DATES_ADMIN_INTAKE_CONTRACT_SELECTOR): Record<string, unknown> {
-  for (const [key, value] of Object.entries({ ...datesAdminContractParams(action, selector), ...datesAdminCommandContractParams(action) })) params[key] = value;
+  for (const [key, value] of Object.entries({ ...datesAdminContractParams(action, selector), ...datesAdminCommandContractParams(action), ...datesAdminResearchContractParams(action, params) })) params[key] = value;
   return params;
 }

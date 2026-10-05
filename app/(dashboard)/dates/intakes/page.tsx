@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesIntakeRefusal from "@/components/DatesIntakeRefusal";
 import DatesIntakeSourcePanel from "@/components/DatesIntakeSourcePanel";
+import DatesResearchBatch from "@/components/DatesResearchBatch";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
@@ -21,6 +22,7 @@ type Notice = { tone: "success" | "error"; key: string; error?: string };
 export default function DatesIntakeQueuePage() {
   const t = useTranslations("datesAdmin.intake");
   const common = useTranslations("common");
+  const research = useTranslations("datesAdmin.research");
   const locale = useLocale();
   const router = useRouter();
   const [status, setStatus] = useState("in_review");
@@ -28,6 +30,7 @@ export default function DatesIntakeQueuePage() {
   const [channel, setChannel] = useState("");
   // Second looks (a member asked for a rejection to be looked at again): all, only them, or everything but them.
   const [secondLook, setSecondLook] = useState<"" | "only" | "without">("");
+  const [researchRun, setResearchRun] = useState(""), [researchRunDraft, setResearchRunDraft] = useState("");
   const [page, setPage] = useState(1);
   const [queue, setQueue] = useState<DatesIntakeQueue | null>(null);
   const [operator, setOperator] = useState<DatesIntakeOperator | null>(null);
@@ -41,7 +44,7 @@ export default function DatesIntakeQueuePage() {
     if (signal?.aborted) return;
     const generation = ++loadGeneration.current;
     setState("loading");
-    const result = await readDatesIntakeQueue(adminCall, { status, channel, page, limit: PAGE_SIZE, ...(secondLook === "" ? {} : { second_look: secondLook === "only" }) }, signal);
+    const result = await readDatesIntakeQueue(adminCall, { status, channel, page, limit: PAGE_SIZE, ...(secondLook === "" ? {} : { second_look: secondLook === "only" }), ...(researchRun ? { research_run_id: researchRun } : {}) }, signal);
     // A reply to an earlier filter, page or refresh never replaces a newer one.
     if (signal?.aborted || generation !== loadGeneration.current) return;
     if (result.kind !== "ready") {
@@ -50,7 +53,12 @@ export default function DatesIntakeQueuePage() {
       return;
     }
     setQueue(result.queue); setOperator(result.operator); setProblem(null); setState("ready");
-  }, [status, channel, secondLook, page]);
+  }, [status, channel, secondLook, page, researchRun]);
+
+  useEffect(() => {
+    const id = new URL(window.location.href).searchParams.get("research_run_id");
+    if (id) { setResearchRun(id); setResearchRunDraft(id); setChannel("ai_research"); }
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -99,6 +107,12 @@ export default function DatesIntakeQueuePage() {
         <option value="without">{t("queue.secondLookWithout")}</option>
       </select></label>
     </form>
+    <form className="dates-filter-grid" onSubmit={(event) => { event.preventDefault(); setResearchRun(researchRunDraft.trim()); setPage(1); }}>
+      <label className="field"><span>{research("fields.runId")}</span><input value={researchRunDraft} onChange={(event) => setResearchRunDraft(event.target.value)} /><small>{research("runFilterHint")}</small></label>
+      <div className="row-actions"><button className="button button-secondary" type="submit">{research("applyRun")}</button>
+        <button className="button button-secondary" type="button" onClick={() => { setResearchRun(""); setResearchRunDraft(""); setPage(1); }}>{research("clearRun")}</button></div>
+    </form>
+    <DatesResearchBatch runId={researchRun} rows={queue?.intakes ?? []} actor={operator?.principal.email ?? ""} manage={operator?.manage === true} reload={async () => { await load(); }} />
     {notice && (notice.key === "refused" && notice.error ? <DatesIntakeRefusal error={notice.error} />
       : <p className={`alert alert-${notice.tone}`} role="status">{t(notice.key)}{notice.error ? <> <code>{notice.error}</code></> : null}</p>)}
     {state === "loading" ? <LoadingPanel /> : state === "error" || !queue ? <>

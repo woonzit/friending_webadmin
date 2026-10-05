@@ -66,7 +66,7 @@ async function pair(send: DatesIntakeSend, action: string, body: Record<string, 
 
 export type DatesIntakeQueueFilters = { status: string; channel: string; page: number; limit: number;
   /** Only the second looks (true), everything but them (false), or no such filter (absent). */
-  second_look?: boolean };
+  second_look?: boolean; research_run_id?: string };
 
 export async function readDatesIntakeQueue(send: DatesIntakeSend, filters: DatesIntakeQueueFilters, signal?: AbortSignal):
   Promise<DatesIntakeRead<{ queue: DatesIntakeQueue }>> {

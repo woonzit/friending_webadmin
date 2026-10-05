@@ -17,6 +17,7 @@ import { PROFILE_TEXT_MODERATION_ACTIONS } from "@/lib/profileTextModeration";
 import { VERIFICATION_METHOD_ACTIONS } from "@/lib/verificationMethod";
 import { DATES_EXTERNAL_ACTIONS } from "@/lib/datesExternalAdmin";
 import { DATES_INTAKE_PROXY_ACTIONS } from "@/lib/datesIntakeAdmin";
+import { DATES_RESEARCH_ACTIONS } from "@/lib/datesResearchAdmin";
 import { OUTBOUND_MESSAGING_ACTIONS } from "@/lib/outboundMessaging";
 import { PERSONA_ADMIN_ACTIONS } from "@/lib/personaAdmin";
 import { PERSONA_SCREENS_ACTIONS } from "@/lib/personaScreens";
@@ -56,6 +57,7 @@ export const DATES_ADMIN_ACTIONS = [
   // their own routes (multipart, private bytes) and cannot be reached as a
   // generic action.
   ...DATES_INTAKE_PROXY_ACTIONS,
+  ...DATES_RESEARCH_ACTIONS,
 ] as const;
 
 const REPORTED_CONTENT_ADMIN_ACTIONS = ["moderation_reported_list", "moderation_report_action"] as const;
@@ -581,6 +583,14 @@ export const ADMIN_ACTION_ACCESS = {
   dates_event_intake_reject: "dates_write",
   dates_event_intake_publish: "dates_write",
   dates_event_intake_ask_member: "dates_write",
+  dates_event_research_overview: "dates_read",
+  dates_event_research_defaults_save: "dates_write",
+  dates_event_research_area_save: "dates_write",
+  dates_event_research_source_save: "dates_write",
+  dates_event_research_source_run_now: "dates_write",
+  dates_event_research_run_list: "dates_read",
+  dates_event_research_run_detail: "dates_read",
+  dates_event_intake_batch_decide: "dates_write",
 } as Record<AdminAction, AdminActionAccess>;
 
 // A Map, not the record itself: a plain-object lookup would resolve inherited

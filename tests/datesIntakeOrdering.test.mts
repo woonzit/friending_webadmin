@@ -25,7 +25,10 @@ function callbacks(page: ReturnType<typeof component>) {
   const declaration = page.body.statements.flatMap((node) => ts.isVariableStatement(node) ? [...node.declarationList.declarations] : [])
     .find((node) => node.name.getText(page.tree) === "load");
   assert.ok(declaration?.initializer && ts.isCallExpression(declaration.initializer));
-  const effect = page.body.statements.find((node) => ts.isExpressionStatement(node) && ts.isCallExpression(node.expression) && node.expression.expression.getText(page.tree) === "useEffect");
+  // A page can have other effects (for example a URL filter). Select the load
+  // lifecycle itself, not whichever effect happens to appear first in source.
+  const effect = page.body.statements.find((node) => ts.isExpressionStatement(node) && ts.isCallExpression(node.expression)
+    && node.expression.expression.getText(page.tree) === "useEffect" && node.expression.arguments[1]?.getText(page.tree) === "[load]");
   assert.ok(effect && ts.isExpressionStatement(effect) && ts.isCallExpression(effect.expression));
   return { load: declaration.initializer.arguments[0].getText(page.tree), effect: effect.expression.arguments[0].getText(page.tree),
     dependencies: effect.expression.arguments[1].getText(page.tree) };
@@ -42,9 +45,9 @@ assert.ok(lease);
 
 function queueHarness() {
   const loadGeneration = { current: 0 }, writes: string[] = [], state = { queue: null as any, status: "ready", operator: null as any, problem: null as any };
-  function render(status: string, page: number, limit = 40) {
+  function render(status: string, page: number, limit = 40, researchRun = "") {
     const response = deferred(), membership = deferred(); let pending: Promise<void> | undefined;
-    const context: any = { exports: {}, AbortController, status, channel: "", secondLook: "", page, PAGE_SIZE: limit, loadGeneration, readDatesIntakeQueue,
+    const context: any = { exports: {}, AbortController, status, channel: "", secondLook: "", researchRun, page, PAGE_SIZE: limit, loadGeneration, readDatesIntakeQueue,
       adminCall: (action: string) => action === "admin_me" ? membership.promise : response.promise,
       setState: (value: string) => { state.status = value; writes.push("state"); },
       setQueue: (value: unknown) => { state.queue = value; writes.push("queue"); },

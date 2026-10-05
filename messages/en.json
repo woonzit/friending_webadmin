@@ -2965,6 +2965,15 @@
               "1": "Take an intake only when you are about to review it.",
               "2": "Release it when you stop, instead of leaving it to expire."
             }
+          },
+          "researchBatch": {
+            "title": "Review a research run together",
+            "purpose": "A research-run filter narrows the queue to one discovery run and offers batch publication or rejection of its reviewed intakes.",
+            "guidance": "Only intakes in review with your active hold can be selected. Each intake gets its own result; one refusal does not undo the others.",
+            "actions": {
+              "1": "Open and verify each intake, take its hold, then select it in the filtered queue.",
+              "2": "Confirm the four publication checks once for the selection and write an internal reason, or choose a rejection reason."
+            }
           }
         }
       },
@@ -3020,6 +3029,62 @@
             "actions": {
               "1": "Choose the reason that the submitter should be told.",
               "2": "Write the audit note so that another reviewer understands the decision."
+            }
+          }
+        }
+      },
+      "datesResearch": {
+        "title": "Event research help",
+        "summary": "Research configures automatic event discovery by city and collection source, shows counts and measured costs, and records each run's candidates. Core owns city geometry, safety checks and scheduling; the console never requests individual member locations.",
+        "steps": {
+          "1": "Review the global defaults and budget before enabling automatic research for any city or source.",
+          "2": "Select a city through search, choose its mode and override only the fields that need a local value.",
+          "3": "Add a public collection URL, use Test to inspect its candidates, and review imported intakes before publication."
+        },
+        "sections": {
+          "defaults": {
+            "title": "Defaults, switches and budget",
+            "purpose": "Global values are inherited by cities; the master and automatic-city switches govern whether scheduled research can start.",
+            "guidance": "Limits come from Core. A cost estimate marked not measured yet is unknown, not zero, and never grants additional spending authority.",
+            "actions": {
+              "1": "Read the field's effective value and cost guidance before changing the defaults.",
+              "2": "Compare spend and reservations with the shared event-AI budget, then save with an internal reason."
+            }
+          },
+          "cities": {
+            "title": "Cities and inherited values",
+            "purpose": "Each city shows its member count, operating state and reason, effective values, event stock and scheduled research times.",
+            "guidance": "Core resolves the city's identity and map geometry. Switching miles and kilometres changes display only; always-on mode still obeys safety and budget gates.",
+            "actions": {
+              "1": "Choose a city through search; set city bounds or a radius in the research fields.",
+              "2": "Keep Use global value checked unless the city genuinely needs its own setting."
+            }
+          },
+          "sources": {
+            "title": "Collection sources and checks",
+            "purpose": "A source has a public collection URL, city, type, interval and maximum upcoming stock, with its robots state and latest result.",
+            "guidance": "Test is a dry run and imports nothing. Aggregators provide facts, not copied descriptions; official sources may pass Core's automatic-publication checks.",
+            "actions": {
+              "1": "Use a public organiser, venue or city page where possible and choose the correct source type.",
+              "2": "Run Test to inspect the candidates before using Review now for a real import."
+            }
+          },
+          "runs": {
+            "title": "Run history and candidates",
+            "purpose": "History shows found, imported, duplicate and dropped counts with reasons and measured cost, filtered by source, city and run type.",
+            "guidance": "Queued and running details refresh automatically. An unreadable row is marked unavailable without hiding the remaining history.",
+            "actions": {
+              "1": "Open a run to inspect candidate outcomes and the reason each dropped candidate was excluded.",
+              "2": "For a real import, open its filtered intake queue and review each draft's evidence."
+            }
+          },
+          "commands": {
+            "title": "Saving, conflicts and safe retries",
+            "purpose": "Every save is revision-fenced and audited; a logical command keeps one immutable request and idempotency key until its outcome is known.",
+            "guidance": "For an unknown outcome, use Retry while the page remains open. A revision conflict reloads stored values while preserving your unsaved edits.",
+            "actions": {
+              "1": "Explain the change with an internal reason that another administrator can understand.",
+              "2": "Do not reload an unanswered command to start it again; use the same-command retry offered by the console."
             }
           }
         }
@@ -7110,6 +7175,7 @@
       "candidateGeometry": "{latitude}, {longitude} · suggested radius {radius} km",
       "mapLabel": "Map picker",
       "mapHint": "Drag the marker or click the map to move the centre. The circle shows the radius.",
+      "mapReadOnlyHint": "The map shows the selected city's centre and research radius. Choose the city with search and edit the radius in the form.",
       "unavailableTitle": "Map picker not configured",
       "unavailable": "No Google Maps browser key is built into this console. Set the centre with the latitude, longitude and radius fields or a city search.",
       "loading": "Loading the map…",
@@ -8116,6 +8182,339 @@
     "withheld": "{count, plural, =1 {# more field withheld} other {# more fields withheld}}"
   },
   "datesAdmin": {
+    "research": {
+      "eyebrow": "AreYouIn operations",
+      "title": "Research",
+      "subtitle": "Automatic event collection by city and source. Global defaults, city overrides and the results of each run.",
+      "unavailable": "Research is not available on this Core.",
+      "denied": "Your current permissions do not allow access to research.",
+      "unconfirmed": "Research could not be read. Refresh to try again.",
+      "refreshFailed": "The refresh could not be confirmed. The last read and your edits are still shown.",
+      "readOnly": "You can read research settings and runs; your current permissions do not allow changes.",
+      "sectionsLabel": "Research sections",
+      "sections": {
+        "defaults": "Defaults",
+        "cities": "Cities",
+        "sources": "Sources",
+        "runs": "Runs"
+      },
+      "global": "global default",
+      "own": "own value",
+      "effective": "Effective: {value} ({source}).",
+      "useGlobal": "Use the global value",
+      "useInherited": "Use the city or global value",
+      "hours": "hours",
+      "days": "days",
+      "km": "km",
+      "mi": "miles",
+      "timeUnit": "Interval unit",
+      "distanceUnit": "Distance unit",
+      "unitsHint": "Changing the display unit preserves the stored value until you edit the number.",
+      "scopeValues": {
+        "city": "City bounds",
+        "radius": "Centre and radius"
+      },
+      "modeValues": {
+        "auto": "Automatic",
+        "on": "Always on",
+        "off": "Off"
+      },
+      "sourceTypes": {
+        "official": "Official organiser, venue or city",
+        "aggregator": "Ticketing or event listing site"
+      },
+      "fields": {
+        "enabled": "Research enabled",
+        "source_enabled": "Source enabled",
+        "auto_cities_enabled": "Automatic cities enabled",
+        "cadence_hours": "Refresh interval",
+        "scope": "Research area",
+        "radius_km": "Radius",
+        "member_threshold": "Members needed",
+        "target_events": "Target event stock",
+        "window_days": "Look ahead",
+        "autopublish": "Automatic publication",
+        "city": "City",
+        "mode": "City mode",
+        "url": "Collection URL",
+        "label": "Label",
+        "type": "Source type",
+        "max_events": "Maximum upcoming events",
+        "archived": "Archived",
+        "reason": "Internal reason",
+        "source": "Source",
+        "runKind": "Run type",
+        "runId": "Research run"
+      },
+      "budget": "Budget and monthly estimate",
+      "budgetSpent": "All event AI spend ({month})",
+      "budgetCap": "Monthly cap: {amount}",
+      "researchSpent": "Research spend this month",
+      "researchStop": "Research stops at {amount} of total spend",
+      "estimate": "Estimated monthly research cost",
+      "notMeasured": "Not measured yet",
+      "monthlyChecks": "Estimated checks per month: {count}",
+      "reserved": "Pending AI reservations: {amount}",
+      "budgetPaused": "Research is paused at its budget boundary. Drafts and member suggestions retain the remaining budget.",
+      "defaultsUnreadable": "The global values could not be read. The other readable research rows remain available.",
+      "addCity": "Add city",
+      "editCity": "Edit city",
+      "addSource": "Add source",
+      "editSource": "Edit source",
+      "citiesHint": "Member counts cover the research area. An own value overrides the global default for this city.",
+      "citiesEmpty": "No research cities have been configured.",
+      "sourcesHint": "Each source tops up its upcoming event stock. Only its first collection page is checked.",
+      "sourcesEmpty": "No collection sources have been configured.",
+      "proposed": "Proposed city",
+      "running": "Runs automatically",
+      "notRunning": "Not running",
+      "stock": "{count} / {target} events",
+      "missing": "Missing: {count}",
+      "next": "Next",
+      "noCity": "No city association",
+      "unavailableCity": "City unavailable ({id})",
+      "editedRowUnavailable": "The row being edited is unavailable. Refresh before changing it.",
+      "mapHint": "Choose a city from search. Core resolves its place identity and bounds; the map shows the resulting centre and radius.",
+      "aggregatorHint": "Aggregators provide facts only. Their own summaries and images are not imported and their events are not automatically published.",
+      "test": "Test",
+      "runNow": "Check now",
+      "sourceEffective": "Window: {days} days · automatic publication: {publish}",
+      "archived": "Archived",
+      "foundImported": "Found: {found}, imported: {imported}",
+      "notRunningReasons": {
+        "research_off": "Research is switched off",
+        "mode_off": "This city is switched off",
+        "auto_cities_off": "Automatic cities are switched off",
+        "below_threshold": "Not enough members in the area",
+        "section_unavailable": "AreYouIn or external events are unavailable in this country",
+        "budget_paused": "Research is paused by the budget"
+      },
+      "robotsStates": {
+        "unknown": "Robots policy not checked",
+        "allowed": "Robots policy allows checking",
+        "disallowed": "Blocked by robots policy",
+        "unreachable": "Robots policy could not be read"
+      },
+      "runKinds": {
+        "source": "Collection source"
+      },
+      "runTriggers": {
+        "schedule": "Scheduled",
+        "manual": "Manual"
+      },
+      "runStatuses": {
+        "queued": "Queued",
+        "running": "Running",
+        "completed": "Completed",
+        "unchanged": "Page unchanged",
+        "skipped_target_met": "Target stock already met",
+        "blocked_by_robots": "Blocked by robots policy",
+        "fetch_failed": "Page could not be fetched",
+        "budget_paused": "Budget paused",
+        "failed": "Failed"
+      },
+      "outcomes": {
+        "imported": "Imported",
+        "would_import": "Would import",
+        "duplicate": "Duplicate",
+        "dropped": "Dropped"
+      },
+      "dropReasons": {
+        "past_date": "Past event",
+        "outside_window": "Outside the time window",
+        "outside_area": "Outside the area",
+        "known_url": "Known event URL",
+        "no_event_page": "No event page",
+        "fetch_failed": "Fetch failed",
+        "validation_failed": "Validation failed",
+        "over_cap": "Stock cap reached",
+        "robots_disallowed": "Robots policy disallows fetching"
+      },
+      "columns": {
+        "city": "City",
+        "members": "Members in area",
+        "state": "State and reason",
+        "effective": "Effective values",
+        "stock": "Stock",
+        "time": "Last / next",
+        "cost": "Cost this month",
+        "actions": "Actions",
+        "source": "Source",
+        "intervalStock": "Interval / stock",
+        "robots": "Robots / last result",
+        "run": "Run",
+        "status": "Status",
+        "found": "Found",
+        "imported": "Imported",
+        "duplicates": "Duplicates",
+        "dropped": "Dropped",
+        "candidate": "Candidate",
+        "date": "Date from source",
+        "host": "Source host",
+        "outcome": "Outcome",
+        "reason": "Reason",
+        "intake": "Intake"
+      },
+      "unreadableRow": "Row {row} is unavailable: its values could not be read.",
+      "runsUnreadable": "Run history could not be read.",
+      "runUnreadable": "This run could not be read.",
+      "runsEmpty": "No runs match the filters.",
+      "openRun": "Open run",
+      "runDetail": "Run detail",
+      "dryRun": "Dry run",
+      "dryRunHint": "This is a test: candidates are shown and no intakes are imported.",
+      "runCounts": "Found: {found} · imported: {imported} · duplicates: {duplicates} · dropped: {dropped}",
+      "openIntakes": "Review this run's intakes",
+      "candidatesUnreadable": "The candidates could not be read.",
+      "candidatesEmpty": "No candidates have been recorded for this run.",
+      "runFilterHint": "Enter a run ID or open the intake queue from a run. Only that run's intakes will be listed.",
+      "applyRun": "Show run",
+      "clearRun": "Clear run filter",
+      "command": {
+        "success": "The command was confirmed.",
+        "conflict": "The stored row was reloaded after a revision conflict. Your unsaved edits are kept over it; review them before saving again.",
+        "refused": "The command was refused.",
+        "uncertain": "The outcome is not known. Retry sends the exact same command and idempotency key."
+      },
+      "batch": {
+        "title": "Decide this run's intakes together",
+        "hint": "Open and check each intake, then take its review hold. Choose up to {count} intakes from this page. The four publication confirmations apply once to the chosen batch.",
+        "unavailable": "Batch decisions are not available on this Core.",
+        "selected": "Selected: {count}",
+        "select": "Select intake",
+        "reasonCode": "Rejection reason",
+        "publish": "Publish selected",
+        "reject": "Reject selected",
+      "reviewHint": "Only readable research intakes in review can be chosen. Each must be held by you; Core rechecks the revision and hold for every item.",
+      "selectionChanged": "A selected row or its revision changed. Clear the selection and check the current rows before deciding.",
+        "confirmations": {
+          "source": "I have checked every selected event against its source.",
+          "public_venue": "I have confirmed that every selected venue is public.",
+          "timezone": "I have confirmed every venue timezone and local time.",
+          "content_safe": "I have checked the content of every selected event for safety."
+        },
+        "outcomes": {
+          "published": "Published",
+          "rejected": "Rejected",
+          "refused": "Refused"
+        },
+        "results": "Result per intake",
+        "tooMany": "Choose no more than {count} intakes.",
+        "clearSelection": "Clear selection"
+      },
+      "help": {
+        "enabled": {
+          "purpose": "Master switch for collection checks and city research.",
+          "effect": "Off stops automatic research for every city and source.",
+          "cost": "No new research AI spend while off."
+        },
+        "source_enabled": {
+          "purpose": "Enable automatic checks for this collection source.",
+          "effect": "The master research switch, robots policy, stock and budget still apply.",
+          "cost": "A disabled source starts no scheduled checks. Manual checks are separate commands."
+        },
+        "auto_cities_enabled": {
+          "purpose": "Lets cities in automatic mode start at their member threshold.",
+          "effect": "Cities set to always on do not depend on this switch.",
+          "cost": "More active cities can increase research spend."
+        },
+        "cadence_hours": {
+          "purpose": "Time between automatic checks.",
+          "effect": "A city can inherit this interval or use its own. Each source has its own interval.",
+          "cost": "Shorter intervals can increase fetches and AI calls; unchanged pages avoid a new discovery call."
+        },
+        "scope": {
+          "purpose": "Area in which members and upcoming events are counted.",
+          "effect": "Use city bounds or a radius around Core's resolved city centre.",
+          "cost": "A larger area may find more events and require more processing."
+        },
+        "radius_km": {
+          "purpose": "Distance from the resolved city centre.",
+          "effect": "US and GB cities initially display miles; other cities display kilometres. Core stores kilometres.",
+          "cost": "Changing units alone has no cost and does not change the stored radius."
+        },
+        "member_threshold": {
+          "purpose": "Members whose last known position is inside the research area.",
+          "effect": "Automatic mode starts once this count is reached. Counts are refreshed by Core.",
+          "cost": "A higher threshold can limit the number of cities spending research budget."
+        },
+        "target_events": {
+          "purpose": "Desired stock of upcoming events in the area.",
+          "effect": "Published events and events in review inside the window count toward the target. Runs only fill the missing stock.",
+          "cost": "A met target causes a skipped run without discovery spend."
+        },
+        "window_days": {
+          "purpose": "How far ahead to discover and count events.",
+          "effect": "Past events and events beyond this window do not fill the stock.",
+          "cost": "A longer window may require more candidate processing."
+        },
+        "autopublish": {
+          "purpose": "Allow eligible official-source events to be published automatically.",
+          "effect": "Core still requires all safety checks, a new event, a non-sensitive category and a start at least 24 hours away. Other events wait for review.",
+          "cost": "Does not raise the AI budget; discovery and validation still cost money."
+        },
+        "city": {
+          "purpose": "Resolved city associated with an area or a source.",
+          "effect": "City identity and geometry come from Core. A source without a city uses global values.",
+          "cost": "Selecting a city does not start a run by itself."
+        },
+        "mode": {
+          "purpose": "Choose automatic, always on or off for this city.",
+          "effect": "Automatic uses the member threshold; always on bypasses it. The master switch, country availability and budget still apply.",
+          "cost": "Always on can enable spend before the member threshold is reached."
+        },
+        "url": {
+          "purpose": "Public first page of an event collection.",
+          "effect": "Core checks robots policy and fetches only safe public URLs; links are checked separately.",
+          "cost": "An unchanged page avoids discovery AI; event-page processing can still cost money."
+        },
+        "label": {
+          "purpose": "Internal name for this collection source.",
+          "effect": "Appears in lists and run filters.",
+          "cost": "Changing the label makes no AI call."
+        },
+        "type": {
+          "purpose": "Official pages or ticketing/listing aggregators.",
+          "effect": "Official sources can supply a new own-words summary. Aggregators supply facts only; Core can follow an organiser link.",
+          "cost": "Official event-page extraction may cost more than facts-only processing."
+        },
+        "max_events": {
+          "purpose": "Maximum stock of upcoming events associated with this source.",
+          "effect": "Each check tops up only what is missing; this is not a fresh allowance on every check.",
+          "cost": "A lower cap can reduce candidate processing."
+        },
+        "archived": {
+          "purpose": "Retire a source while retaining its history.",
+          "effect": "An archived source is not scheduled for further checks.",
+          "cost": "Archiving prevents new scheduled source spend."
+        },
+        "reason": {
+          "purpose": "Required internal audit explanation.",
+          "effect": "Stored with the command for other administrators; it is not member copy.",
+          "cost": "No AI call is made for the reason."
+        },
+        "source": {
+          "purpose": "Narrow history to one collection source.",
+          "effect": "Only runs associated with the selected source are listed.",
+          "cost": "Reading history does not start research."
+        },
+        "runKind": {
+          "purpose": "Narrow history by the kind of research.",
+          "effect": "Collection-source runs are available in this release.",
+          "cost": "Changing a filter makes no AI call."
+        },
+        "budget": {
+          "purpose": "Shared monthly cap for event AI.",
+          "effect": "Research stops at its served share of the cap, including reservations, leaving capacity for other channels.",
+          "cost": "The estimate is unknown until Core has measured real runs."
+        },
+        "estimate": {
+          "purpose": "Monthly research checks and cost based on measured runs.",
+          "effect": "Null means not measured yet, not zero. The estimate is not a spending permission.",
+          "cost": "Actual spend remains bounded by the shared budget."
+        }
+      }
+    },
     "recordWithheld": "{count, plural, =1 {# more field withheld} other {# more fields withheld}}",
     "tabs": {
       "label": "AreYouIn administration",
@@ -8124,6 +8523,7 @@
       "moderation": "Moderation",
       "configuration": "Configuration",
       "intakes": "Intakes",
+      "research": "Research",
       "usage": "AI usage"
     },
     "external": {

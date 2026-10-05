@@ -21,6 +21,7 @@ import { datesAvailabilityWriteIsRetired } from "@/lib/datesAdmin";
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "@/lib/datesExternalAdmin";
 import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody } from "@/lib/datesExternalModeration";
 import { datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody } from "@/lib/datesIntakeAdmin";
+import { datesResearchProxyCapabilityAuthorized, normalizeDatesResearchProxyBody } from "@/lib/datesResearchProxy";
 import {
   featureSwitchesProxyCapabilityAuthorized,
   normalizeFeatureSwitchesProxyBody,
@@ -132,6 +133,9 @@ export async function POST(
   if (datesIntakeProxyCapabilityAuthorized(action, membership.data) === false) {
     return bridgeError("dates-admin-capability-required", 403);
   }
+  if (datesResearchProxyCapabilityAuthorized(action, membership.data) === false) {
+    return bridgeError("dates-admin-capability-required", 403);
+  }
   const legacyAdminGrantRetryAuthorized = ADMIN_GRANTED_VERIFICATION_CONTRACT_READY
     ? adminGrantedVerificationLegacyReceiptRetryAuthorized(action, membership.data)
     : null;
@@ -220,6 +224,9 @@ export async function POST(
   const intakeBody = normalizeDatesIntakeProxyBody(action, body);
   if (intakeBody === null) return bridgeError("invalid-input", 400);
   if (intakeBody !== undefined) body = intakeBody;
+  const researchBody = normalizeDatesResearchProxyBody(action, body);
+  if (researchBody === null) return bridgeError("invalid-input", 400);
+  if (researchBody !== undefined) body = researchBody;
   const externalResolution = normalizeDatesExternalResolutionProxyBody(action, body);
   if (externalResolution === null) return bridgeError("invalid-input", 400);
   if (externalResolution !== undefined && !datesExternalResolutionAuthorized(membership.data)) {

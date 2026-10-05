@@ -1,4 +1,5 @@
 import { OPERATIONAL_RECORD_SAFE_KEYS } from "@/lib/auditLog";
+import { DATES_RESEARCH_NAMED } from "@/lib/datesResearchProjection";
 
 /**
  * What of a Dates Core body leaves the server (lead's ruling on D-143).
@@ -101,7 +102,7 @@ const REASON = leaves("reason_id scope key name_en name_hu explanation_en explan
 
 const INTAKE_ROW = {
   ...leaves("intake_id revision channel status status_detail input_kind source_host image_count provider event_count published_count first_title earliest_start_at "
-    + "hard_fails warning_count dedupe_decision decision_action created_at updated_at second_look"),
+    + "hard_fails warning_count dedupe_decision decision_action created_at updated_at second_look research_run_id"),
   lease: leaves("holder until active mine"),
 };
 const EVIDENCE = leaves("quoted verified denotes match source quote model_confidence confidence");
@@ -135,6 +136,7 @@ const STATEMENT = leaves("en hu");
 
 /** The named fields of each Dates Admin route's success body. A route that is not here has no body the browser may see. */
 export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
+  ...DATES_RESEARCH_NAMED,
   dates_activity_list: { ...ENVELOPE, ...leaves("page limit total"), activities: [ACTIVITY] },
   dates_activity_detail: {
     ...ENVELOPE,

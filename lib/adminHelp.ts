@@ -292,7 +292,7 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "datesIntakeQueue",
     route: "/dates/intakes",
-    sections: ["draftFromSource", "queue", "holds"],
+    sections: ["draftFromSource", "queue", "holds", "researchBatch"],
     matches: exact("/dates/intakes"),
   },
   {
@@ -300,6 +300,12 @@ export const ADMIN_HELP_PAGES = [
     route: "/dates/intakes/[intakeId]",
     sections: ["status", "inputs", "evidence", "editor", "reject"],
     matches: dynamic("/dates/intakes"),
+  },
+  {
+    key: "datesResearch",
+    route: "/dates/research",
+    sections: ["defaults", "cities", "sources", "runs", "commands"],
+    matches: exact("/dates/research"),
   },
   {
     key: "datesAiUsage",

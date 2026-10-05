@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
 import {
@@ -25,6 +25,8 @@ type Props = {
   radiusKm: number | null;
   language: AppearanceMapLanguage;
   disabled: boolean;
+  /** City identities resolved by Core can be searched, but their map pin cannot be moved by the browser. */
+  mapReadOnly?: boolean;
   onMove: (center: AppearanceMapCenter) => void;
   onCandidate: (candidate: AppearanceGeocodeCandidate) => void;
 };
@@ -34,8 +36,9 @@ type Props = {
  * is optional: without a build-time browser key the notice replaces the frame
  * and the coordinate/radius inputs in the editor remain the way to set a place.
  */
-export default function AppearanceMapPicker({ center, radiusKm, language, disabled, onMove, onCandidate }: Props) {
+export default function AppearanceMapPicker({ center, radiusKm, language, disabled: controlsDisabled, mapReadOnly = false, onMove, onCandidate }: Props) {
   const t = useTranslations("appearance.map");
+  const disabled = controlsDisabled || mapReadOnly;
   const hasKey = googleMapsBrowserKey() !== "";
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [frameReady, setFrameReady] = useState(false);
@@ -105,7 +108,7 @@ export default function AppearanceMapPicker({ center, radiusKm, language, disabl
           <input
             value={query}
             maxLength={MAX_APPEARANCE_GEOCODE_QUERY_LENGTH}
-            disabled={disabled || searching}
+            disabled={controlsDisabled || searching}
             placeholder={t("searchPlaceholder")}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
@@ -120,7 +123,7 @@ export default function AppearanceMapPicker({ center, radiusKm, language, disabl
         <button
           type="button"
           className="button button-secondary"
-          disabled={disabled || searching || appearanceTrim(query) === ""}
+          disabled={controlsDisabled || searching || appearanceTrim(query) === ""}
           onClick={() => void search()}
         >
           {searching ? t("searching") : t("searchButton")}
@@ -137,7 +140,7 @@ export default function AppearanceMapPicker({ center, radiusKm, language, disabl
                 <button
                   type="button"
                   className="appearance-map-candidate"
-                  disabled={disabled}
+                  disabled={controlsDisabled}
                   onClick={() => {
                     onCandidate(candidate);
                     setCandidates(null);
@@ -171,7 +174,7 @@ export default function AppearanceMapPicker({ center, radiusKm, language, disabl
             referrerPolicy="strict-origin-when-cross-origin"
             loading="lazy"
           />
-          <small className="field-hint">{t("mapHint")}</small>
+          <small className="field-hint">{t(mapReadOnly ? "mapReadOnlyHint" : "mapHint")}</small>
         </div>
       ) : (
         <div className="alert alert-info appearance-map-notice" role="status">

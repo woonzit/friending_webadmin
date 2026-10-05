@@ -78,6 +78,15 @@ const EXPECTED_DATES_ACTIONS = [
   "dates_event_intake_usage",
   // T-886: a reviewer sends a member's draft back to the member.
   "dates_event_intake_ask_member",
+  // T-896: research reads, revision-fenced writes and run batch decisions.
+  "dates_event_research_overview",
+  "dates_event_research_defaults_save",
+  "dates_event_research_area_save",
+  "dates_event_research_source_save",
+  "dates_event_research_source_run_now",
+  "dates_event_research_run_list",
+  "dates_event_research_run_detail",
+  "dates_event_intake_batch_decide",
 ] as const;
 
 test("retired and inactive activity types are readable but never newly assigned", () => {

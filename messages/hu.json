@@ -2965,6 +2965,15 @@
               "1": "Csak akkor vedd magadhoz a beküldést, amikor valóban ellenőrizni kezded.",
               "2": "Ha abbahagyod, engedd el, ne hagyd lejárni."
             }
+          },
+          "researchBatch": {
+            "title": "Kutatási futás közös ellenőrzése",
+            "purpose": "A kutatási futás szűrője egy keresés beküldéseire szűkíti a sort, és lehetővé teszi az ellenőrzött beküldések csoportos közzétételét vagy elutasítását.",
+            "guidance": "Csak ellenőrzés alatt álló, aktívan nálad lefoglalt beküldés választható. Mindegyik saját eredményt kap; egy elutasított művelet nem vonja vissza a többit.",
+            "actions": {
+              "1": "Nyisd meg és ellenőrizd a beküldéseket, foglald le őket, majd jelöld ki a szűrt sorban.",
+              "2": "A négy közzétételi ellenőrzést egyszer erősítsd meg a kijelölésre, és írj belső indoklást, vagy válassz elutasítási okot."
+            }
           }
         }
       },
@@ -3020,6 +3029,62 @@
             "actions": {
               "1": "Azt az okot válaszd, amelyet a beküldőnek tudnia kell.",
               "2": "Úgy írd meg az auditmegjegyzést, hogy más ellenőr is értse a döntést."
+            }
+          }
+        }
+      },
+      "datesResearch": {
+        "title": "Eseménykutatás súgója",
+        "summary": "A Kutatás városonként és gyűjtőoldalanként szabályozza az automatikus eseménykeresést, darabszámokat és mért költségeket mutat, valamint megőrzi a futások találatait. A város térképi adatait, a biztonsági ellenőrzéseket és az ütemezést a Core kezeli; a konzol nem kér le egyéni taghelyzeteket.",
+        "steps": {
+          "1": "Nézd át az alapértékeket és a keretet, mielőtt bármely város vagy forrás automatikus kutatását bekapcsolod.",
+          "2": "Kereséssel válassz várost, állítsd be a működési módját, és csak a szükséges mezőknek adj saját értéket.",
+          "3": "Adj hozzá nyilvános gyűjtőoldalt, a Próba gombbal nézd meg a találatait, majd közzététel előtt ellenőrizd a beküldéseket."
+        },
+        "sections": {
+          "defaults": {
+            "title": "Alapértékek, kapcsolók és keret",
+            "purpose": "A városok az alapértékeket öröklik; a főkapcsoló és az automatikus városok kapcsolója szabályozza az ütemezett kutatás indulását.",
+            "guidance": "A határokat a Core adja. A még nem mért költség ismeretlen, nem nulla, és a becslés nem engedélyez további költést.",
+            "actions": {
+              "1": "Módosítás előtt olvasd el a mező tényleges értékét és költségmagyarázatát.",
+              "2": "Vesd össze a költést és a foglalásokat a közös esemény-MI-kerettel, majd ments belső indoklással."
+            }
+          },
+          "cities": {
+            "title": "Városok és örökölt értékek",
+            "purpose": "Minden városnál látszik a taglétszám, a működési állapot és indoka, a tényleges értékek, az eseményszám és a kutatás időpontjai.",
+            "guidance": "A város azonosítóját és térképi adatait a Core határozza meg. A mérföld és kilométer váltása csak megjelenítés; a mindig bekapcsolt módra is érvényesek a biztonsági és költséghatárok.",
+            "actions": {
+              "1": "Kereséssel válassz várost; a kutatási mezőkben állítsd be a városhatárt vagy a sugarat.",
+              "2": "Hagyd bekapcsolva az Alapérték használata opciót, ha nincs szükség eltérő helyi beállításra."
+            }
+          },
+          "sources": {
+            "title": "Gyűjtőoldalak és ellenőrzések",
+            "purpose": "A forrásnak nyilvános URL-je, városa, típusa, időköze és felső eseményszáma van, a robots állapotával és az utolsó eredménnyel.",
+            "guidance": "A Próba nem importál semmit. A gyűjtőoldalakból tényeket vesz át a rendszer, nem leírásokat; a hivatalos források átmehetnek a Core automatikus közzétételi ellenőrzésein.",
+            "actions": {
+              "1": "Lehetőleg nyilvános szervezői, helyszíni vagy városi oldalt használj, és válaszd a megfelelő forrástípust.",
+              "2": "A Próba találatai után az Átnézés most gombbal indíthatsz tényleges importálást."
+            }
+          },
+          "runs": {
+            "title": "Futások és találatok",
+            "purpose": "Az előzmények a talált, importált, ismétlődő és kihagyott események számát, indokait és mért költségét mutatják, forrásra, városra és típusra szűrve.",
+            "guidance": "A sorban álló és folyamatban lévő futás részletei automatikusan frissülnek. Egy olvashatatlan sor nem rejti el a többi előzményt.",
+            "actions": {
+              "1": "Nyisd meg a futást a találatok eredményéhez és a kihagyott események indokához.",
+              "2": "Tényleges importálásnál nyisd meg a futás beküldési sorát, és ellenőrizd minden vázlat bizonyítékait."
+            }
+          },
+          "commands": {
+            "title": "Mentés, ütközés és biztonságos újrapróbálás",
+            "purpose": "Minden mentést revízió véd és audit rögzít; egy logikai parancs változatlan kérését és azonosítóját a konzol az eredmény tisztázásáig megőrzi.",
+            "guidance": "Ismeretlen eredménynél a nyitott oldalon válaszd az újrapróbálást. Revízióütközésnél a tárolt értékek frissülnek, a saját nem mentett módosításaid megmaradnak.",
+            "actions": {
+              "1": "Olyan belső indoklást írj a módosításhoz, amelyet egy másik adminisztrátor is megért.",
+              "2": "Megválaszolatlan parancsnál ne újratöltéssel indíts új műveletet; a konzol ugyanazt a parancsot próbálja újra."
             }
           }
         }
@@ -7110,6 +7175,7 @@
       "candidateGeometry": "{latitude}, {longitude} · javasolt sugár {radius} km",
       "mapLabel": "Térképes kijelölő",
       "mapHint": "Húzd a jelölőt vagy kattints a térképre a középpont áthelyezéséhez. A kör a sugarat mutatja.",
+      "mapReadOnlyHint": "A térkép a kiválasztott város középpontját és kutatási sugarát mutatja. A várost a keresőben válaszd ki, a sugarat az űrlapon módosítsd.",
       "unavailableTitle": "A térképes kijelölő nincs beállítva",
       "unavailable": "Ebbe a konzolba nincs beépítve Google Maps böngészőkulcs. A középpontot a szélesség, hosszúság és sugár mezőkkel vagy városkereséssel add meg.",
       "loading": "A térkép betöltése…",
@@ -8116,6 +8182,339 @@
     "withheld": "{count, plural, =1 {# további mező visszatartva} other {# további mező visszatartva}}"
   },
   "datesAdmin": {
+    "research": {
+      "eyebrow": "AreYouIn üzemeltetés",
+      "title": "Kutatás",
+      "subtitle": "Automatikus eseménygyűjtés városonként és forrásonként. Alapértékek, városi felülírások és a futások eredményei.",
+      "unavailable": "A kutatás ezen a Core-verzión nem érhető el.",
+      "denied": "A jelenlegi jogosultságoddal nem férsz hozzá a kutatáshoz.",
+      "unconfirmed": "A kutatás adatai nem olvashatók. Próbáld újra a frissítést.",
+      "refreshFailed": "A frissítés eredménye nem állapítható meg. A legutóbb beolvasott adatokat és a módosításaidat látod.",
+      "readOnly": "A kutatás beállításait és futásait megtekintheted, de a jelenlegi jogosultságoddal nem módosíthatod őket.",
+      "sectionsLabel": "A kutatás részei",
+      "sections": {
+        "defaults": "Alapértékek",
+        "cities": "Városok",
+        "sources": "Források",
+        "runs": "Futások"
+      },
+      "global": "alapérték",
+      "own": "saját érték",
+      "effective": "Érvényes érték: {value} ({source}).",
+      "useGlobal": "Az alapérték használata",
+      "useInherited": "A városi vagy az alapérték használata",
+      "hours": "óra",
+      "days": "nap",
+      "km": "km",
+      "mi": "mérföld",
+      "timeUnit": "Az időköz mértékegysége",
+      "distanceUnit": "A távolság mértékegysége",
+      "unitsHint": "A mértékegység váltása nem módosítja a tárolt értéket; ehhez a számot kell átírnod.",
+      "scopeValues": {
+        "city": "A város határain belül",
+        "radius": "Középpont és sugár"
+      },
+      "modeValues": {
+        "auto": "Automatikus",
+        "on": "Mindig bekapcsolva",
+        "off": "Kikapcsolva"
+      },
+      "sourceTypes": {
+        "official": "Hivatalos szervezői, helyszíni vagy városi oldal",
+        "aggregator": "Jegyértékesítő vagy eseménygyűjtő oldal"
+      },
+      "fields": {
+        "enabled": "Kutatás bekapcsolva",
+        "source_enabled": "Forrás bekapcsolva",
+        "auto_cities_enabled": "Automatikus városok bekapcsolva",
+        "cadence_hours": "Frissítési időköz",
+        "scope": "Kutatási terület",
+        "radius_km": "Sugár",
+        "member_threshold": "Szükséges taglétszám",
+        "target_events": "Megcélzott eseményszám",
+        "window_days": "Előretekintés",
+        "autopublish": "Automatikus közzététel",
+        "city": "Város",
+        "mode": "A város működési módja",
+        "url": "Gyűjtőoldal URL-je",
+        "label": "Megnevezés",
+        "type": "A forrás típusa",
+        "max_events": "A közelgő események felső határa",
+        "archived": "Archiválva",
+        "reason": "Belső indoklás",
+        "source": "Forrás",
+        "runKind": "A futás típusa",
+        "runId": "Kutatási futás"
+      },
+      "budget": "Keret és becsült havi költség",
+      "budgetSpent": "Az események összes MI-költése ({month})",
+      "budgetCap": "Havi keret: {amount}",
+      "researchSpent": "A kutatás havi költése",
+      "researchStop": "A kutatás {amount} összköltésnél leáll",
+      "estimate": "A kutatás becsült havi költsége",
+      "notMeasured": "Még nincs mérés",
+      "monthlyChecks": "Becsült havi ellenőrzések: {count}",
+      "reserved": "Folyamatban lévő MI-hívásokra lefoglalt összeg: {amount}",
+      "budgetPaused": "A kutatás elérte a költési határát, ezért szünetel. A fennmaradó keretből továbbra is készülhetnek vázlatok és tagi ajánlások.",
+      "defaultsUnreadable": "Az alapértékek nem olvashatók. A többi olvasható kutatási sor továbbra is elérhető.",
+      "addCity": "Város hozzáadása",
+      "editCity": "Város szerkesztése",
+      "addSource": "Forrás hozzáadása",
+      "editSource": "Forrás szerkesztése",
+      "citiesHint": "A taglétszám a kutatási területre vonatkozik. A saját érték ennél a városnál felülírja az alapértéket.",
+      "citiesEmpty": "Még nincs beállított kutatási város.",
+      "sourcesHint": "Minden forrás a közelgő eseményeit tölti fel a beállított számig. Csak a gyűjtőoldal első oldalát ellenőrzi.",
+      "sourcesEmpty": "Még nincs beállított gyűjtőforrás.",
+      "proposed": "Javasolt város",
+      "running": "Automatikusan fut",
+      "notRunning": "Nem fut",
+      "stock": "{count} / {target} esemény",
+      "missing": "Hiányzik: {count}",
+      "next": "Következő",
+      "noCity": "Nincs városhoz rendelve",
+      "unavailableCity": "Nem elérhető város ({id})",
+      "editedRowUnavailable": "A szerkesztett sor nem érhető el. Módosítás előtt frissítsd az adatokat.",
+      "mapHint": "Válassz várost a keresőből. A Core azonosítja a helyet és a városhatárokat; a térkép a kapott középpontot és a sugarat mutatja.",
+      "aggregatorHint": "Az eseménygyűjtő oldalakról csak a tényadatok kerülnek át. A saját leírásuk és képeik nem, és az eseményeik nem jelennek meg automatikusan.",
+      "test": "Próba",
+      "runNow": "Átnézés most",
+      "sourceEffective": "Előretekintés: {days} nap · automatikus közzététel: {publish}",
+      "archived": "Archiválva",
+      "foundImported": "Talált: {found}, importált: {imported}",
+      "notRunningReasons": {
+        "research_off": "A kutatás ki van kapcsolva",
+        "mode_off": "Ennél a városnál ki van kapcsolva",
+        "auto_cities_off": "Az automatikus városok ki vannak kapcsolva",
+        "below_threshold": "Nincs elég tag a területen",
+        "section_unavailable": "Ebben az országban az AreYouIn vagy a külső események nem érhetők el",
+        "budget_paused": "A költési keret miatt szünetel"
+      },
+      "robotsStates": {
+        "unknown": "A robots-szabály még nincs ellenőrizve",
+        "allowed": "A robots-szabály engedi az ellenőrzést",
+        "disallowed": "A robots-szabály tiltja az ellenőrzést",
+        "unreachable": "A robots-szabály nem olvasható"
+      },
+      "runKinds": {
+        "source": "Gyűjtőforrás"
+      },
+      "runTriggers": {
+        "schedule": "Ütemezett",
+        "manual": "Kézi"
+      },
+      "runStatuses": {
+        "queued": "Sorban áll",
+        "running": "Folyamatban",
+        "completed": "Befejeződött",
+        "unchanged": "Az oldal nem változott",
+        "skipped_target_met": "A célzott eseményszám már megvan",
+        "blocked_by_robots": "A robots-szabály tiltja",
+        "fetch_failed": "Az oldal nem tölthető le",
+        "budget_paused": "A keret miatt szünetel",
+        "failed": "Sikertelen"
+      },
+      "outcomes": {
+        "imported": "Importálva",
+        "would_import": "Importálható lenne",
+        "duplicate": "Duplikátum",
+        "dropped": "Kihagyva"
+      },
+      "dropReasons": {
+        "past_date": "Már elmúlt esemény",
+        "outside_window": "Az időablakon kívül",
+        "outside_area": "A területen kívül",
+        "known_url": "Már ismert esemény-URL",
+        "no_event_page": "Nincs eseményoldal",
+        "fetch_failed": "Sikertelen letöltés",
+        "validation_failed": "Sikertelen ellenőrzés",
+        "over_cap": "Megvan az események felső határa",
+        "robots_disallowed": "A robots-szabály tiltja a letöltést"
+      },
+      "columns": {
+        "city": "Város",
+        "members": "Tagok a területen",
+        "state": "Állapot és indok",
+        "effective": "Érvényes értékek",
+        "stock": "Események",
+        "time": "Legutóbbi / következő",
+        "cost": "Havi költség",
+        "actions": "Műveletek",
+        "source": "Forrás",
+        "intervalStock": "Időköz / események",
+        "robots": "Robots / legutóbbi eredmény",
+        "run": "Futás",
+        "status": "Állapot",
+        "found": "Talált",
+        "imported": "Importált",
+        "duplicates": "Duplikátumok",
+        "dropped": "Kihagyott",
+        "candidate": "Találat",
+        "date": "Dátum a forrásból",
+        "host": "Forrás domainje",
+        "outcome": "Eredmény",
+        "reason": "Indok",
+        "intake": "Beküldés"
+      },
+      "unreadableRow": "A(z) {row}. sor nem érhető el: az értékei nem olvashatók.",
+      "runsUnreadable": "A futások előzményei nem olvashatók.",
+      "runUnreadable": "Ez a futás nem olvasható.",
+      "runsEmpty": "Nincs a szűrőknek megfelelő futás.",
+      "openRun": "Futás megnyitása",
+      "runDetail": "A futás részletei",
+      "dryRun": "Próbafutás",
+      "dryRunHint": "Ez próba: a találatokat megmutatja, de nem importál beküldéseket.",
+      "runCounts": "Talált: {found} · importált: {imported} · duplikátum: {duplicates} · kihagyott: {dropped}",
+      "openIntakes": "A futás beküldéseinek átnézése",
+      "candidatesUnreadable": "A találatok nem olvashatók.",
+      "candidatesEmpty": "Ehhez a futáshoz még nincs rögzített találat.",
+      "runFilterHint": "Írj be egy futásazonosítót, vagy nyisd meg a beküldéseket egy futásból. Csak annak a futásnak a beküldéseit fogod látni.",
+      "applyRun": "Futás megjelenítése",
+      "clearRun": "Futásszűrő törlése",
+      "command": {
+        "success": "A művelet eredménye visszaigazolt.",
+        "conflict": "Verzióütközés után a tárolt sor újra beolvasva. A nem mentett módosításaid megmaradtak rajta; mentés előtt nézd át őket.",
+        "refused": "A műveletet a rendszer elutasította.",
+        "uncertain": "A művelet eredménye nem ismert. Az újrapróbálás pontosan ugyanazt a kérést és azonosítót küldi el."
+      },
+      "batch": {
+        "title": "A futás beküldéseinek közös elbírálása",
+        "hint": "Nyisd meg és ellenőrizd a beküldéseket, majd vedd át őket átnézésre. Erről az oldalról legfeljebb {count} beküldést jelölhetsz ki. A négy közzétételi megerősítés egyszer vonatkozik a kijelölt csoportra.",
+        "unavailable": "A csoportos elbírálás ezen a Core-verzión nem érhető el.",
+        "selected": "Kijelölve: {count}",
+        "select": "Beküldés kijelölése",
+        "reasonCode": "Az elutasítás oka",
+        "publish": "Kijelöltek közzététele",
+        "reject": "Kijelöltek elutasítása",
+      "reviewHint": "Csak olvasható, átnézésre váró kutatási beküldések jelölhetők ki. Mindegyiket neked kell átnézésre tartanod; a Core soronként újra ellenőrzi a verziót és ezt a foglalást.",
+      "selectionChanged": "Egy kijelölt sor vagy a verziója megváltozott. Töröld a kijelölést, és döntés előtt ellenőrizd az aktuális sorokat.",
+        "confirmations": {
+          "source": "Minden kijelölt eseményt újra ellenőriztem a forrása alapján.",
+          "public_venue": "Minden kijelölt helyszínről megerősítettem, hogy nyilvános.",
+          "timezone": "Minden helyszín időzónáját és helyi időpontját ellenőriztem.",
+          "content_safe": "Minden kijelölt esemény tartalmát biztonsági szempontból ellenőriztem."
+        },
+        "outcomes": {
+          "published": "Közzétéve",
+          "rejected": "Elutasítva",
+          "refused": "Nem hajtható végre"
+        },
+        "results": "Eredmény beküldésenként",
+        "tooMany": "Legfeljebb {count} beküldést jelölj ki.",
+        "clearSelection": "Kijelölés törlése"
+      },
+      "help": {
+        "enabled": {
+          "purpose": "A gyűjtőoldalak ellenőrzésének és a városi kutatásnak a főkapcsolója.",
+          "effect": "Kikapcsolva minden város és forrás automatikus kutatása leáll.",
+          "cost": "Kikapcsolva nem indul új kutatási MI-költés."
+        },
+        "source_enabled": {
+          "purpose": "A gyűjtőoldal automatikus ellenőrzéseinek bekapcsolása.",
+          "effect": "A kutatás főkapcsolója, a robots szabályai, az eseményszám és a keret továbbra is érvényesek.",
+          "cost": "Kikapcsolt forrásnál nem indul ütemezett ellenőrzés. A kézi ellenőrzés külön parancs."
+        },
+        "auto_cities_enabled": {
+          "purpose": "Az automatikus városok a taglétszám elérésekor indulhatnak.",
+          "effect": "A mindig bekapcsolt városok működését ez a kapcsoló nem szabályozza.",
+          "cost": "Több aktív város nagyobb kutatási költséget okozhat."
+        },
+        "cadence_hours": {
+          "purpose": "Az automatikus ellenőrzések közötti idő.",
+          "effect": "A város örökölheti ezt, vagy saját időközt használhat. Minden forrásnak külön időköze van.",
+          "cost": "A rövidebb időköz több letöltést és MI-hívást jelenthet; változatlan oldalnál nincs új keresési MI-hívás."
+        },
+        "scope": {
+          "purpose": "Itt számítja a rendszer a tagokat és a közelgő eseményeket.",
+          "effect": "A városhatárok vagy a Core által meghatározott városközéppont körüli sugár használható.",
+          "cost": "Nagyobb területen több esemény található, ami több feldolgozást igényelhet."
+        },
+        "radius_km": {
+          "purpose": "Távolság a meghatározott városközépponttól.",
+          "effect": "Az amerikai és brit városoknál kezdetben mérföld, máshol kilométer látszik. A Core kilométerben tárol.",
+          "cost": "A mértékegység váltása önmagában nem kerül pénzbe és nem módosítja a tárolt sugarat."
+        },
+        "member_threshold": {
+          "purpose": "Azok a tagok számítanak, akiknek utolsó ismert helyzete a kutatási területen belül van.",
+          "effect": "Az automatikus mód ennek a létszámnak az elérésekor indul. A számot a Core frissíti.",
+          "cost": "A magasabb küszöb csökkentheti a kutatási keretet használó városok számát."
+        },
+        "target_events": {
+          "purpose": "A területen kívánt közelgő eseményszám.",
+          "effect": "Az időablakon belüli közzétett és átnézésre váró események is számítanak. A futás csak a hiányt tölti fel.",
+          "cost": "Ha a cél már teljesült, a kutatási futás keresési költés nélkül kimarad."
+        },
+        "window_days": {
+          "purpose": "Hány napra előre keres és számít eseményeket a rendszer.",
+          "effect": "A múltbeli és az időablakon túli események nem számítanak bele az állományba.",
+          "cost": "A hosszabb időablak több találat feldolgozását igényelheti."
+        },
+        "autopublish": {
+          "purpose": "A megfelelő hivatalos forrású események automatikusan közzétehetők.",
+          "effect": "A Core minden biztonsági ellenőrzést, új eseményt, nem érzékeny kategóriát és legalább 24 órával későbbi kezdést kér. A többi esemény átnézésre vár.",
+          "cost": "Nem emeli az MI-keretet; a keresés és az ellenőrzés továbbra is költséggel jár."
+        },
+        "city": {
+          "purpose": "A területhez vagy forráshoz tartozó, azonosított város.",
+          "effect": "A város azonosítója és földrajzi adatai a Core-tól származnak. A város nélküli forrás az alapértékeket használja.",
+          "cost": "A város kiválasztása önmagában nem indít futást."
+        },
+        "mode": {
+          "purpose": "A város automatikus, mindig bekapcsolt vagy kikapcsolt működése.",
+          "effect": "Az automatikus mód a taglétszámhoz kötött, a mindig bekapcsolt nem. A főkapcsoló, az ország elérhetősége és a keret továbbra is számít.",
+          "cost": "Mindig bekapcsolva a létszámküszöb előtt is keletkezhet költség."
+        },
+        "url": {
+          "purpose": "Egy eseménygyűjtő oldal nyilvános első oldala.",
+          "effect": "A Core ellenőrzi a robots-szabályt, és csak biztonságos nyilvános URL-t tölt le; az eseménylinkeket külön ellenőrzi.",
+          "cost": "Változatlan oldalnál nincs keresési MI-hívás; az eseményoldalak feldolgozása költséggel járhat."
+        },
+        "label": {
+          "purpose": "A gyűjtőforrás belső megnevezése.",
+          "effect": "A listákban és a futásszűrőkben jelenik meg.",
+          "cost": "A megnevezés átírása nem indít MI-hívást."
+        },
+        "type": {
+          "purpose": "Hivatalos oldal vagy jegyértékesítő, illetve eseménygyűjtő oldal.",
+          "effect": "Hivatalos forrásból új, saját megfogalmazású leírás készülhet. Gyűjtőoldalról csak tényadatok jönnek; a Core követheti a szervező linkjét.",
+          "cost": "A hivatalos eseményoldal feldolgozása többe kerülhet a puszta tényadatokénál."
+        },
+        "max_events": {
+          "purpose": "A forráshoz tartozó közelgő események felső határa.",
+          "effect": "Minden ellenőrzés csak a hiányt tölti fel; nem indul új keret minden alkalommal.",
+          "cost": "Az alacsonyabb határ csökkentheti a találatok feldolgozását."
+        },
+        "archived": {
+          "purpose": "Forrás kivonása az előzmények megtartásával.",
+          "effect": "Archivált forráshoz nem ütemeződik új ellenőrzés.",
+          "cost": "Az archiválás megakadályozza az új ütemezett forrásköltséget."
+        },
+        "reason": {
+          "purpose": "Kötelező belső indoklás a naplóhoz.",
+          "effect": "A többi adminisztrátor számára a művelettel együtt tárolódik; nem tagoknak szóló szöveg.",
+          "cost": "Az indokláshoz nem indul MI-hívás."
+        },
+        "source": {
+          "purpose": "Az előzmények szűkítése egy gyűjtőforrásra.",
+          "effect": "Csak a kiválasztott forráshoz tartozó futások látszanak.",
+          "cost": "Az előzmények olvasása nem indít kutatást."
+        },
+        "runKind": {
+          "purpose": "Az előzmények szűkítése a kutatás típusára.",
+          "effect": "Ebben a kiadásban a gyűjtőforrások futásai érhetők el.",
+          "cost": "A szűrő váltása nem indít MI-hívást."
+        },
+        "budget": {
+          "purpose": "Az események MI-feldolgozásának közös havi kerete.",
+          "effect": "A kutatás a kapott költési határnál, a foglalásokat is számítva leáll, így marad keret a többi csatornának.",
+          "cost": "A becslés nem ismert, amíg a Core nem mért valós futásokat."
+        },
+        "estimate": {
+          "purpose": "Havi kutatási ellenőrzések és költség a mért futások alapján.",
+          "effect": "A hiányzó érték azt jelenti, hogy még nincs mérés, nem azt, hogy nulla a költség. A becslés nem költési engedély.",
+          "cost": "A tényleges költést továbbra is a közös keret korlátozza."
+        }
+      }
+    },
     "recordWithheld": "{count, plural, =1 {# további mező visszatartva} other {# további mező visszatartva}}",
     "tabs": {
       "label": "AreYouIn adminisztráció",
@@ -8124,6 +8523,7 @@
       "moderation": "Moderáció",
       "configuration": "Konfiguráció",
       "intakes": "Beküldések",
+      "research": "Kutatás",
       "usage": "MI-költés"
     },
     "external": {
