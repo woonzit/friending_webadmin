@@ -1,0 +1,10 @@
+{
+  "provider_commit": "9e8f6319c4883a42313fe3fbfa822dd1169794f5",
+  "source_commit": "6f12cc9bf31375316805b5812d96c10435cc337d",
+  "manifest_sha256": "852a400943381a087db2f38ffc3bb8d0ec468111b9787615495564ee9b31fc99",
+  "source_checksum": "47e1b3e60d3be686f8d72de9c686c1ae92237868c8da2bd2e08e84b1cd6df8ca",
+  "fixture_set_sha256": "c6ca62ed6d5b60061d0cae5cbd05aa676bd996cae21063e44207a8e5d4440664",
+  "generator_sha256": "ae31bfa9224542734953108f7aa55ebcaa0f1bb55dcb2a6dac0fe4be74d4b10e",
+  "fixture_count": 49,
+  "contract": "dates-event-research-admin-v1"
+}

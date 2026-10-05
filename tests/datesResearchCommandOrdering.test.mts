@@ -68,6 +68,6 @@ test("a confirmed new actor never sees, retries or adopts the previous actor's i
   const current = h.render("other@example.test"); assert.equal(current.pending, null); assert.equal(current.outcome, null); assert.equal(h.success.length, 0);
   await current.retry(); assert.equal(h.calls.length, 1);
   const next = current.submit("dates_event_research_source_run_now", input); assert.equal(h.calls[1].command.actor, "other@example.test");
-  h.calls[1].resolve({ kind: "conflict", error: "dates-admin-stale-revision" }); await next;
+  h.calls[1].resolve({ kind: "conflict", error: "dates-research-conflict" }); await next;
   assert.deepEqual(h.conflicts, ["other@example.test"]); assert.equal(h.render("other@example.test").pending, null);
 });

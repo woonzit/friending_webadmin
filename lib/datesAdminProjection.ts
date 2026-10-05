@@ -1,5 +1,5 @@
 import { OPERATIONAL_RECORD_SAFE_KEYS } from "@/lib/auditLog";
-import { DATES_RESEARCH_NAMED } from "@/lib/datesResearchProjection";
+import { DATES_RESEARCH_CONFLICT_NAMED, DATES_RESEARCH_NAMED } from "@/lib/datesResearchProjection";
 
 /**
  * What of a Dates Core body leaves the server (lead's ruling on D-143).
@@ -361,12 +361,16 @@ function project(value: unknown, tree: DatesNamedTree, path: string, denied: Rea
 /**
  * The body the browser receives for a Dates Admin route, or `undefined` when
  * the route has no named body (the bridge then answers with its own error).
- * A refusal - anything that does not say `success: true` - is Core's six
- * refusal keys and nothing else. `warn` is given one line per denied key.
+ * A refusal is Core's six refusal keys; selected research conflicts additionally
+ * retain their named public/counts-only current row. `warn` is given one line per denied key.
  */
 export function projectDatesAdminBody(action: string, body: unknown, warn: (line: string) => void = () => undefined): unknown {
   if (!plain(body)) return body === null ? null : undefined;
-  if (body.success !== true) return project(body, REFUSAL, "", new Set(), new Map());
+  if (body.success !== true) {
+    const current: Record<string, DatesNamedTree> = body.error === "dates-research-conflict" && body.status_code === 409 && Object.hasOwn(DATES_RESEARCH_CONFLICT_NAMED, action)
+      ? { current: DATES_RESEARCH_CONFLICT_NAMED[action] } : {};
+    return project(body, { ...REFUSAL, ...current }, "", new Set(), new Map());
+  }
   if (!Object.hasOwn(DATES_ADMIN_NAMED, action)) return undefined;
   const contract = Object.hasOwn(DATES_ADMIN_DENIED_KEYS, action) ? DATES_ADMIN_DENIED_KEYS[action] : null;
   const hits = new Map<string, number>();

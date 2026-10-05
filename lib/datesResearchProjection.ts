@@ -34,3 +34,10 @@ export const DATES_RESEARCH_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   dates_event_research_run_detail: { ...envelope, run },
   dates_event_intake_batch_decide: { ...envelope, results: [leaf("intake_id outcome refusal external_event_id")] },
 };
+/** A selected conflict serves only the same public/counts-only row as the corresponding save. */
+export const DATES_RESEARCH_CONFLICT_NAMED: Readonly<Record<string, DatesNamedTree>> = {
+  dates_event_research_defaults_save: defaults,
+  dates_event_research_area_save: area,
+  dates_event_research_source_save: source,
+  dates_event_research_source_run_now: source,
+};

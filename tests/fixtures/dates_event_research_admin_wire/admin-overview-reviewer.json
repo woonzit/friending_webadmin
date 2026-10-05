@@ -1,0 +1,84 @@
+{
+    "success": true,
+    "status_code": 200,
+    "defaults": {
+        "enabled": false,
+        "auto_cities_enabled": false,
+        "member_threshold": 5,
+        "cadence_hours": 168,
+        "scope": {
+            "kind": "city",
+            "radius_km": null
+        },
+        "target_events": 15,
+        "window_days": 30,
+        "autopublish": false,
+        "revision": 0,
+        "updated_at": null,
+        "updated_by": null
+    },
+    "areas": [],
+    "sources": [],
+    "budget": {
+        "month": "2026-10",
+        "cap_micro_usd": 50000000,
+        "spent_micro_usd": 0,
+        "reserved_micro_usd": 0,
+        "research_spent_micro_usd": 0,
+        "research_stop_at_micro_usd": 35000000,
+        "research_paused": false
+    },
+    "estimate": {
+        "monthly_checks": 0,
+        "monthly_cost_micro_usd": null,
+        "basis": "unmeasured"
+    },
+    "limits": {
+        "cadence_hours": {
+            "min": 6,
+            "max": 2160
+        },
+        "radius_km": {
+            "min": 1,
+            "max": 160
+        },
+        "member_threshold": {
+            "min": 1,
+            "max": 100000
+        },
+        "target_events": {
+            "min": 1,
+            "max": 200
+        },
+        "window_days": {
+            "min": 1,
+            "max": 180
+        },
+        "max_events": {
+            "min": 1,
+            "max": 100
+        },
+        "batch_intakes": {
+            "min": 1,
+            "max": 25
+        }
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review"
+    ],
+    "server_now": 1791201600,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

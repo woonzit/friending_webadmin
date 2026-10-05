@@ -6,8 +6,7 @@ import { ResearchCommandFeedback, ResearchDuration, ResearchHelp, ResearchReason
 import { decodeResearchArea, decodeResearchDefaults, decodeResearchSource, DATES_RESEARCH_MODES, DATES_RESEARCH_SOURCE_TYPES,
   type ResearchArea, type ResearchCenter, type ResearchDefaults, type ResearchLimits, type ResearchOverrides, type ResearchSource, type ResearchSourceType } from "@/lib/datesResearchAdmin";
 import { researchDefaultValues, researchDistanceUnit, researchEditsAfterConflict, researchEffectiveValues, researchEmptyOverrides, researchValuesIssue, type ResearchDistanceUnit } from "@/lib/datesResearchView";
-import { datesIntakeAuditNote } from "@/lib/datesIntakeAdmin";
-import { researchSourceUrl } from "@/lib/datesResearchProxy";
+import { researchAuditReason, researchSourceUrl } from "@/lib/datesResearchProxy";
 import { formatNumber } from "@/lib/format";
 
 function useResearchDraft<T extends object>(authority: T, revision: number) {
@@ -35,7 +34,7 @@ export function ResearchDefaultsEditor({ defaults, actor, manage, limits, reload
     })}</div>
     <ResearchValuesFields values={model.draft} limits={limits} disabled={disabled} unit={unit} onUnit={setUnit} onChange={(values) => model.set({ ...model.draft, ...values })} />
     {manage && <><ResearchReason value={reason} onChange={setReason} disabled={command.busy} /><button className="button button-primary" type="submit"
-      disabled={command.busy || command.pending !== null || issue !== null || !datesIntakeAuditNote(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
+      disabled={command.busy || command.pending !== null || issue !== null || !researchAuditReason(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
     <ResearchCommandFeedback command={command} />
   </form>;
 }
@@ -60,7 +59,7 @@ export function ResearchAreaEditor({ row, defaults, actor, manage, limits, reloa
     <ResearchValuesFields values={effective} limits={limits} disabled={disabled || command.busy} unit={unit} onUnit={setUnit} onChange={() => undefined}
       inheritance={{ overrides: model.draft.overrides, onChange: (overrides) => model.set({ ...model.draft, overrides }) }} />
     {manage && <><ResearchReason value={reason} onChange={setReason} disabled={command.busy} /><button className="button button-primary" type="submit"
-      disabled={command.busy || command.pending !== null || (!row && !placeId) || issue !== null || !datesIntakeAuditNote(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
+      disabled={command.busy || command.pending !== null || (!row && !placeId) || issue !== null || !researchAuditReason(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
     <ResearchCommandFeedback command={command} />
   </form>;
 }
@@ -74,8 +73,9 @@ export function ResearchSourceEditor({ row, defaults, areas, actor, manage, limi
   const command = useResearchCommand(actor, async (answer) => { const saved = decodeResearchSource(answer.receipt); if (saved) model.adopt(sourceDraft(saved, defaults, limits), saved.revision); await reload(); close(); }, reload);
   const disabled = !manage || command.busy, values = model.draft;
   const area = areas.find((item) => item.area_id === values.area_id), inherited = area?.effective ?? defaults;
-  const valid = researchSourceUrl(values.url) && values.cadence_hours >= limits.cadence_hours.min && values.cadence_hours <= limits.cadence_hours.max
-    && values.max_events >= limits.max_events.min && values.max_events <= limits.max_events.max && (values.window_days === null || values.window_days >= limits.window_days.min && values.window_days <= limits.window_days.max);
+  const valid = researchSourceUrl(values.url) && Number.isSafeInteger(values.cadence_hours) && values.cadence_hours >= limits.cadence_hours.min && values.cadence_hours <= limits.cadence_hours.max
+    && Number.isSafeInteger(values.max_events) && values.max_events >= limits.max_events.min && values.max_events <= limits.max_events.max
+    && (values.window_days === null || Number.isSafeInteger(values.window_days) && values.window_days >= limits.window_days.min && values.window_days <= limits.window_days.max);
   return <form className="panel research-editor" onSubmit={(event) => { event.preventDefault(); void command.submit("dates_event_research_source_save", {
     ...(row ? { source_id: row.source_id, expected_revision: model.revision } : {}), ...values, reason }); }}>
     <div className="panel-header"><h2>{t(row ? "editSource" : "addSource")}</h2><button className="button button-secondary" type="button" disabled={command.busy || command.pending !== null} onClick={close}>{common("close")}</button></div>
@@ -84,25 +84,23 @@ export function ResearchSourceEditor({ row, defaults, areas, actor, manage, limi
         onChange={(event) => model.set({ ...values, [key]: event.target.value })} /><ResearchHelp field={key} effective={values[key] || "—"} own /></label>;
     })}
       <label className="field"><span>{t("fields.type")}</span><select value={values.type} disabled={disabled} onChange={(event) => { const type = event.target.value as ResearchSourceType;
-        model.set({ ...values, type, ...(type === "aggregator" ? { window_days: null, autopublish: null } : {}) }); }}>{DATES_RESEARCH_SOURCE_TYPES.map((type) => <option key={type} value={type}>{t(`sourceTypes.${type}`)}</option>)}</select><ResearchHelp field="type" effective={t(`sourceTypes.${values.type}`)} own /></label>
+        model.set({ ...values, type, ...(type === "aggregator" ? { autopublish: null } : {}) }); }}>{DATES_RESEARCH_SOURCE_TYPES.map((type) => <option key={type} value={type}>{t(`sourceTypes.${type}`)}</option>)}</select><ResearchHelp field="type" effective={t(`sourceTypes.${values.type}`)} own /></label>
       <label className="field"><span>{t("fields.city")}</span><select value={values.area_id ?? ""} disabled={disabled} onChange={(event) => model.set({ ...values, area_id: event.target.value || null })}>
         <option value="">{t("noCity")}</option>{values.area_id && !area && <option value={values.area_id}>{t("unavailableCity", { id: values.area_id })}</option>}
         {areas.map((item) => <option key={item.area_id} value={item.area_id}>{item.label}</option>)}</select><ResearchHelp field="city" effective={area?.label ?? (values.area_id ? t("unavailableCity", { id: values.area_id }) : t("noCity"))} own /></label>
       <label className="field"><span>{t("fields.cadence_hours")}</span><ResearchDuration hours={values.cadence_hours} range={limits.cadence_hours} disabled={disabled} onChange={(cadence_hours) => model.set({ ...values, cadence_hours })} /><ResearchHelp field="cadence_hours" effective={`${formatNumber(values.cadence_hours, locale)} ${t("hours")}`} own /></label>
       <label className="field"><span>{t("fields.max_events")}</span><input type="number" step="1" min={limits.max_events.min} max={limits.max_events.max} value={Number.isFinite(values.max_events) ? values.max_events : ""} disabled={disabled}
         onChange={(event) => model.set({ ...values, max_events: event.target.value === "" ? NaN : Number(event.target.value) })} /><ResearchHelp field="max_events" effective={formatNumber(values.max_events, locale)} own /></label>
-      {values.type === "official" && <>
-        <div className="field"><label><span>{t("fields.window_days")}</span><input type="number" step="1" min={limits.window_days.min} max={limits.window_days.max} value={values.window_days ?? inherited.window_days} disabled={disabled || values.window_days === null}
+      <div className="field"><label><span>{t("fields.window_days")}</span><input type="number" step="1" min={limits.window_days.min} max={limits.window_days.max} value={values.window_days === null ? inherited.window_days : Number.isFinite(values.window_days) ? values.window_days : ""} disabled={disabled || values.window_days === null}
           onChange={(event) => model.set({ ...values, window_days: Number(event.target.value) })} /></label><label className="research-inherit"><input type="checkbox" checked={values.window_days === null} disabled={disabled}
             onChange={(event) => model.set({ ...values, window_days: event.target.checked ? null : inherited.window_days })} />{t("useInherited")}</label><ResearchHelp field="window_days" effective={`${formatNumber(values.window_days ?? inherited.window_days, locale)} ${t("days")}`} own={values.window_days !== null || !!area && area.overrides.window_days !== null} /></div>
-        <div className="field"><label><span>{t("fields.autopublish")}</span><input type="checkbox" checked={values.autopublish ?? inherited.autopublish} disabled={disabled || values.autopublish === null}
+      {values.type === "official" && <div className="field"><label><span>{t("fields.autopublish")}</span><input type="checkbox" checked={values.autopublish ?? inherited.autopublish} disabled={disabled || values.autopublish === null}
           onChange={(event) => model.set({ ...values, autopublish: event.target.checked })} /></label><label className="research-inherit"><input type="checkbox" checked={values.autopublish === null} disabled={disabled}
-            onChange={(event) => model.set({ ...values, autopublish: event.target.checked ? null : inherited.autopublish })} />{t("useInherited")}</label><ResearchHelp field="autopublish" effective={common((values.autopublish ?? inherited.autopublish) ? "yes" : "no")} own={values.autopublish !== null || !!area && area.overrides.autopublish !== null} /></div>
-      </>}
+            onChange={(event) => model.set({ ...values, autopublish: event.target.checked ? null : inherited.autopublish })} />{t("useInherited")}</label><ResearchHelp field="autopublish" effective={common((values.autopublish ?? inherited.autopublish) ? "yes" : "no")} own={values.autopublish !== null || !!area && area.overrides.autopublish !== null} /></div>}
       {(["enabled", "archived"] as const).map((key) => <label className="field" key={key}><span>{t(`fields.${key === "enabled" ? "source_enabled" : key}`)}</span><input type="checkbox" checked={values[key]} disabled={disabled}
         onChange={(event) => model.set({ ...values, [key]: event.target.checked })} /><ResearchHelp field={key === "enabled" ? "source_enabled" : key} effective={common(values[key] ? "yes" : "no")} own /></label>)}
     </div>{values.type === "aggregator" && <p className="alert alert-info">{t("aggregatorHint")}</p>}
-    {manage && <><ResearchReason value={reason} onChange={setReason} disabled={command.busy} /><button type="submit" className="button button-primary" disabled={command.busy || command.pending !== null || !valid || !datesIntakeAuditNote(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
+    {manage && <><ResearchReason value={reason} onChange={setReason} disabled={command.busy} /><button type="submit" className="button button-primary" disabled={command.busy || command.pending !== null || !valid || !researchAuditReason(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
     <ResearchCommandFeedback command={command} />
   </form>;
 }

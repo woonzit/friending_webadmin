@@ -20,9 +20,10 @@ export function researchEffectiveValues(defaults: ResearchValues, overrides: Res
 }
 export function researchRunningState(defaults: Pick<ResearchDefaults, "enabled" | "auto_cities_enabled">,
   area: Pick<ResearchArea, "mode" | "member_count">, values: ResearchValues, sectionAvailable: boolean, budgetPaused: boolean): { running: boolean; reason: ResearchArea["not_running_reason"] } {
-  const reason = !defaults.enabled ? "research_off" : area.mode === "off" ? "mode_off" : !sectionAvailable ? "section_unavailable"
-    : budgetPaused ? "budget_paused" : area.mode === "auto" && !defaults.auto_cities_enabled ? "auto_cities_off"
-      : area.mode === "auto" && area.member_count < values.member_threshold ? "below_threshold" : null;
+  const reason = !defaults.enabled ? "research_off" : area.mode === "off" ? "mode_off"
+    : area.mode === "auto" && !defaults.auto_cities_enabled ? "auto_cities_off"
+      : area.mode === "auto" && area.member_count < values.member_threshold ? "below_threshold"
+        : !sectionAvailable ? "section_unavailable" : budgetPaused ? "budget_paused" : null;
   return { running: reason === null, reason };
 }
 export function researchStock(upcoming: number, target: number) { return { upcoming, target, missing: Math.max(0, target - upcoming), met: upcoming >= target, share: target > 0 ? Math.min(1, upcoming / target) : null }; }
@@ -35,7 +36,7 @@ export function researchMonthlyEstimate(estimate: ResearchEstimate, budget: Rese
 }
 export function researchValuesIssue(values: ResearchValues, limits: ResearchLimits): string | null {
   for (const key of ["cadence_hours", "member_threshold", "target_events", "window_days"] as const) {
-    if (!Number.isFinite(values[key]) || values[key] < limits[key].min || values[key] > limits[key].max) return key;
+    if (!Number.isSafeInteger(values[key]) || values[key] < limits[key].min || values[key] > limits[key].max) return key;
   }
   if (values.scope.kind === "radius" && (!Number.isFinite(values.scope.radius_km) || values.scope.radius_km < limits.radius_km.min || values.scope.radius_km > limits.radius_km.max)) return "radius_km";
   return null;

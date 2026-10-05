@@ -1,0 +1,26 @@
+{
+    "success": true,
+    "status_code": 200,
+    "replayed": false,
+    "defaults": {
+        "enabled": true,
+        "auto_cities_enabled": false,
+        "member_threshold": 5,
+        "cadence_hours": 168,
+        "scope": {
+            "kind": "radius",
+            "radius_km": 50
+        },
+        "target_events": 15,
+        "window_days": 30,
+        "autopublish": true,
+        "revision": 5,
+        "updated_at": 1791201600,
+        "updated_by": "admin@example.test"
+    },
+    "audit_id": "aud_0000000000000000000000000000000d",
+    "server_now": 1791201600,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

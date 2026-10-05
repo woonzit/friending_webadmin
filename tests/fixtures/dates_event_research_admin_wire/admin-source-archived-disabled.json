@@ -1,0 +1,41 @@
+{
+    "success": true,
+    "status_code": 200,
+    "replayed": false,
+    "source": {
+        "url": "https://events.example.com/programme",
+        "registrable_domain": "example.com",
+        "label": "Self-made organiser",
+        "type": "official",
+        "area_id": "rar_00000000000000000000000000000001",
+        "cadence_hours": 168,
+        "max_events": 15,
+        "window_days": 45,
+        "autopublish": true,
+        "enabled": false,
+        "archived": true,
+        "source_id": "rso_00000000000000000000000000000001",
+        "revision": 3,
+        "effective": {
+            "window_days": 45,
+            "autopublish": true
+        },
+        "robots": {
+            "state": "unknown",
+            "checked_at": null
+        },
+        "stock": {
+            "upcoming": 16,
+            "max": 15,
+            "missing": 0
+        },
+        "last_check": null,
+        "next_check_at": 1791201600,
+        "month_cost_micro_usd": 0
+    },
+    "audit_id": "aud_0000000000000000000000000000000e",
+    "server_now": 1791201600,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

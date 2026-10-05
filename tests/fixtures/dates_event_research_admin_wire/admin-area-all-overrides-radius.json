@@ -1,0 +1,67 @@
+{
+    "success": true,
+    "status_code": 200,
+    "replayed": false,
+    "area": {
+        "area_id": "rar_00000000000000000000000000000001",
+        "revision": 5,
+        "mode": "on",
+        "overrides": {
+            "cadence_hours": 24,
+            "scope": {
+                "kind": "radius",
+                "radius_km": 1.5
+            },
+            "member_threshold": 1,
+            "target_events": 2,
+            "window_days": 7,
+            "autopublish": false
+        },
+        "label": "Self-made city",
+        "proposed": false,
+        "place_id": "SelfMadeCity",
+        "country_code": "HU",
+        "center": {
+            "latitude": 47.5,
+            "longitude": 19
+        },
+        "bounds": {
+            "southwest": {
+                "latitude": 47.4,
+                "longitude": 18.9
+            },
+            "northeast": {
+                "latitude": 47.6,
+                "longitude": 19.1
+            }
+        },
+        "effective": {
+            "cadence_hours": 24,
+            "scope": {
+                "kind": "radius",
+                "radius_km": 1.5
+            },
+            "member_threshold": 1,
+            "target_events": 2,
+            "window_days": 7,
+            "autopublish": false
+        },
+        "member_count": 0,
+        "member_count_at": null,
+        "running": true,
+        "not_running_reason": null,
+        "stock": {
+            "upcoming": 0,
+            "target": 2,
+            "missing": 2
+        },
+        "last_run": null,
+        "next_run_at": 1791201600,
+        "month_cost_micro_usd": 0
+    },
+    "audit_id": "aud_0000000000000000000000000000000a",
+    "server_now": 1791201600,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

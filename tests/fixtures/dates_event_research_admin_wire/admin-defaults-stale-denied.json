@@ -1,0 +1,24 @@
+{
+    "success": false,
+    "status_code": 409,
+    "error": "dates-research-conflict",
+    "current": {
+        "enabled": false,
+        "auto_cities_enabled": false,
+        "member_threshold": 5,
+        "cadence_hours": 168,
+        "scope": {
+            "kind": "city",
+            "radius_km": null
+        },
+        "target_events": 15,
+        "window_days": 30,
+        "autopublish": false,
+        "revision": 1,
+        "updated_at": 1791201600,
+        "updated_by": "admin@example.test"
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

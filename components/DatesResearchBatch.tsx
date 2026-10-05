@@ -4,7 +4,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { readResearchOverview } from "@/lib/datesResearchConsole";
 import { type ResearchBatchResult } from "@/lib/datesResearchAdmin";
-import { datesIntakeAuditNote, DATES_INTAKE_REJECT_REASONS, type DatesIntakeQueueRow } from "@/lib/datesIntakeAdmin";
+import { DATES_INTAKE_REJECT_REASONS, type DatesIntakeQueueRow } from "@/lib/datesIntakeAdmin";
+import { researchAuditReason } from "@/lib/datesResearchProxy";
 import { adminCall } from "@/lib/adminClient";
 import { ResearchCommandFeedback, ResearchReason, useResearchCommand } from "@/components/DatesResearchControls";
 
@@ -39,7 +40,7 @@ export default function DatesResearchBatch({ runId, rows, actor, manage, reload 
     setSelected((current) => { const next = { ...current }; if (checked) next[row.intake_id] = row.revision!; else delete next[row.intake_id]; return next; });
     setChecks(unchecked()); setResults(null);
   }
-  const ready = manage && !!runId && maximum !== null && ids.length > 0 && ids.length <= maximum && selectionCurrent && datesIntakeAuditNote(reason) && !command.busy && command.pending === null;
+  const ready = manage && !!runId && maximum !== null && ids.length > 0 && ids.length <= maximum && selectionCurrent && researchAuditReason(reason) && !command.busy && command.pending === null;
   async function decide(action: "publish" | "reject") {
     if (!ready || action === "publish" && !confirmations.every((key) => checks[key])) return;
     setPendingRun(runId);

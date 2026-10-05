@@ -12,10 +12,11 @@ import { isDatesAdminRoute, projectDatesAdminResponse } from "../lib/datesAdminP
 import { datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody } from "../lib/datesIntakeAdmin.ts";
 import { datesResearchProxyCapabilityAuthorized, normalizeDatesResearchProxyBody } from "../lib/datesResearchProxy.ts";
 import { isTrustedAdminRequest } from "../lib/requestGuard.ts";
-import { SELF_MADE_AREA, SELF_MADE_DEFAULTS, SELF_MADE_ENVELOPE, SELF_MADE_OVERVIEW, SELF_MADE_RUN, SELF_MADE_SOURCE } from "./support/datesResearchSELF_MADE.ts";
+import { GENUINE_AREA, GENUINE_DEFAULTS, DERIVED_ENVELOPE, DERIVED_OVERVIEW, DERIVED_RUN, GENUINE_SOURCE } from "./support/datesResearchCorpus.ts";
 
 // The production JSON bridge -> coreCall -> fetch form bytes. No provider or
-// socket is reached; response bodies remain SELF-MADE until part 2's corpus.
+// socket is reached. Response substitutions/missing Part B branches are DERIVED,
+// not provider captures; datesResearchCorpus.test.mts checks the unchanged corpus.
 const empty = "data:text/javascript,";
 type NextResolve = (specifier: string, context: unknown) => unknown;
 const modules = nodeModule as unknown as { registerHooks?: (hooks: { resolve: (specifier: string, context: unknown, next: NextResolve) => unknown }) => void; register?: (specifier: string, parent: string) => void };
@@ -32,7 +33,7 @@ const source = readFileSync(new URL("../app/api/admin/[action]/route.ts", import
 const tree = ts.createSourceFile("route.ts", source, ts.ScriptTarget.Latest, true);
 const bodyCode = tree.statements.filter((node) => !ts.isImportDeclaration(node)).map((node) => node.getText(tree)).join("\n");
 const code = ts.transpileModule(bodyCode, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-async function bridge(action: string, browser: unknown, answer: unknown = SELF_MADE_ENVELOPE, identity: unknown = member) {
+async function bridge(action: string, browser: unknown, answer: unknown = DERIVED_ENVELOPE, identity: unknown = member) {
   const fetchBefore = globalThis.fetch, sent: { url: string; form: URLSearchParams; headers: Headers; cache: RequestCache | undefined }[] = [];
   globalThis.fetch = (async (input: unknown, init?: RequestInit) => {
     if (String(input).endsWith("/admin_me")) return { status: 200, json: async () => identity } as Response;
@@ -70,41 +71,41 @@ function formOf(result: Awaited<ReturnType<typeof bridge>>, action: string, fiel
   assert.equal(JSON.stringify(result.body).includes(fakeSecret), false);
   return Object.fromEntries(form);
 }
-const values = { enabled: SELF_MADE_DEFAULTS.enabled, auto_cities_enabled: SELF_MADE_DEFAULTS.auto_cities_enabled, cadence_hours: SELF_MADE_DEFAULTS.cadence_hours,
-  scope: SELF_MADE_DEFAULTS.scope, member_threshold: SELF_MADE_DEFAULTS.member_threshold, target_events: SELF_MADE_DEFAULTS.target_events,
-  window_days: SELF_MADE_DEFAULTS.window_days, autopublish: SELF_MADE_DEFAULTS.autopublish };
-const sourceInput = { url: SELF_MADE_SOURCE.url, label: SELF_MADE_SOURCE.label, type: SELF_MADE_SOURCE.type, area_id: SELF_MADE_SOURCE.area_id,
-  cadence_hours: SELF_MADE_SOURCE.cadence_hours, max_events: SELF_MADE_SOURCE.max_events, window_days: null, autopublish: null, enabled: true, archived: false, reason: "Reviewed", idempotency_key: key };
+const values = { enabled: GENUINE_DEFAULTS.enabled, auto_cities_enabled: GENUINE_DEFAULTS.auto_cities_enabled, cadence_hours: GENUINE_DEFAULTS.cadence_hours,
+  scope: GENUINE_DEFAULTS.scope, member_threshold: GENUINE_DEFAULTS.member_threshold, target_events: GENUINE_DEFAULTS.target_events,
+  window_days: GENUINE_DEFAULTS.window_days, autopublish: GENUINE_DEFAULTS.autopublish };
+const sourceInput = { url: GENUINE_SOURCE.url, label: GENUINE_SOURCE.label, type: GENUINE_SOURCE.type, area_id: GENUINE_SOURCE.area_id,
+  cadence_hours: GENUINE_SOURCE.cadence_hours, max_events: GENUINE_SOURCE.max_events, window_days: null, autopublish: null, enabled: true, archived: false, reason: "Reviewed", idempotency_key: key };
 const reads: [string, Record<string, unknown>, unknown][] = [
-  ["dates_event_research_overview", {}, SELF_MADE_OVERVIEW],
-  ["dates_event_research_run_list", { source_id: SELF_MADE_SOURCE.source_id, area_id: SELF_MADE_AREA.area_id, kind: "source", cursor: "opaque:+/page=2", limit: 17 }, { ...SELF_MADE_ENVELOPE, runs: [SELF_MADE_RUN], next_cursor: null, limit: 17 }],
-  ["dates_event_research_run_detail", { run_id: SELF_MADE_RUN.run_id }, { ...SELF_MADE_ENVELOPE, run: { ...SELF_MADE_RUN, candidates: [] } }],
+  ["dates_event_research_overview", {}, DERIVED_OVERVIEW],
+  ["dates_event_research_run_list", { source_id: GENUINE_SOURCE.source_id, area_id: GENUINE_AREA.area_id, kind: "source", cursor: "opaque:+/page=2", limit: 17 }, { ...DERIVED_ENVELOPE, runs: [DERIVED_RUN], next_cursor: null, limit: 17 }],
+  ["dates_event_research_run_detail", { run_id: DERIVED_RUN.run_id }, { ...DERIVED_ENVELOPE, run: { ...DERIVED_RUN, candidates: [] } }],
 ];
-for (const [action, input, answer] of reads) test(`SELF-MADE transport: ${action} has exact server-owned selectors and filters`, async () => {
+for (const [action, input, answer] of reads) test(`DERIVED transport: ${action} has exact server-owned selectors and filters`, async () => {
   const fields = formOf(await bridge(action, input, answer), action, Object.keys(input));
   for (const [name, value] of Object.entries(input)) assert.equal(fields[name], String(value));
 });
-test("SELF-MADE transport: defaults revision zero and one JSON values object", async () => {
+test("DERIVED transport: defaults revision zero and one JSON values object", async () => {
   const action = "dates_event_research_defaults_save", input = { expected_revision: 0, values, reason: "Reviewed", idempotency_key: key };
-  const fields = formOf(await bridge(action, input, { ...SELF_MADE_ENVELOPE, defaults: { ...SELF_MADE_DEFAULTS, revision: 1 }, replayed: false, audit_id: "aud_self_made" }), action, Object.keys(input));
+  const fields = formOf(await bridge(action, input, { ...DERIVED_ENVELOPE, defaults: { ...GENUINE_DEFAULTS, revision: 1 }, replayed: false, audit_id: "aud_derived" }), action, Object.keys(input));
   assert.equal(fields.expected_revision, "0"); assert.deepEqual(JSON.parse(fields.values), values); assert.equal(typeof JSON.parse(fields.values).enabled, "boolean");
 });
-for (const update of [false, true]) test(`SELF-MADE transport: city ${update ? "update" : "create"} sends identity, never geometry`, async () => {
-  const action = "dates_event_research_area_save", input = { ...(update ? { area_id: SELF_MADE_AREA.area_id, expected_revision: 1, label: "Budapest" } : { place_id: SELF_MADE_AREA.place_id }),
-    mode: "auto", overrides: SELF_MADE_AREA.overrides, reason: "Reviewed", idempotency_key: key };
-  const fields = formOf(await bridge(action, input), action, Object.keys(input)); assert.deepEqual(JSON.parse(fields.overrides), SELF_MADE_AREA.overrides);
+for (const update of [false, true]) test(`DERIVED transport: city ${update ? "update" : "create"} sends identity, never geometry`, async () => {
+  const action = "dates_event_research_area_save", input = { ...(update ? { area_id: GENUINE_AREA.area_id, expected_revision: 1, label: "Budapest" } : { place_id: GENUINE_AREA.place_id }),
+    mode: "auto", overrides: GENUINE_AREA.overrides, reason: "Reviewed", idempotency_key: key };
+  const fields = formOf(await bridge(action, input), action, Object.keys(input)); assert.deepEqual(JSON.parse(fields.overrides), GENUINE_AREA.overrides);
   assert.equal(Object.hasOwn(fields, "center"), false); assert.equal(Object.hasOwn(fields, "country_code"), false);
 });
-for (const update of [false, true]) test(`SELF-MADE transport: source ${update ? "update" : "create"} preserves null inheritance and booleans`, async () => {
-  const action = "dates_event_research_source_save", input = { ...sourceInput, ...(update ? { source_id: SELF_MADE_SOURCE.source_id, expected_revision: 1 } : {}) };
+for (const update of [false, true]) test(`DERIVED transport: source ${update ? "update" : "create"} preserves null inheritance and booleans`, async () => {
+  const action = "dates_event_research_source_save", input = { ...sourceInput, ...(update ? { source_id: GENUINE_SOURCE.source_id, expected_revision: 1 } : {}) };
   const fields = formOf(await bridge(action, input), action, Object.keys(input));
   assert.equal(fields.enabled, "1"); assert.equal(fields.archived, "0"); assert.equal(fields.window_days, ""); assert.equal(fields.autopublish, "");
 });
-for (const dry_run of [false, true]) test(`SELF-MADE transport: source run (dry ${dry_run}) fences revision and carries one key`, async () => {
-  const action = "dates_event_research_source_run_now", input = { source_id: SELF_MADE_SOURCE.source_id, expected_revision: 1, dry_run, idempotency_key: key };
+for (const dry_run of [false, true]) test(`DERIVED transport: source run (dry ${dry_run}) fences revision and carries one key`, async () => {
+  const action = "dates_event_research_source_run_now", input = { source_id: GENUINE_SOURCE.source_id, expected_revision: 1, dry_run, idempotency_key: key };
   const fields = formOf(await bridge(action, input), action, Object.keys(input)); assert.equal(fields.dry_run, dry_run ? "1" : "0"); assert.equal(fields.expected_revision, "1");
 });
-for (const action of ["publish", "reject"]) test(`SELF-MADE transport: batch ${action} carries JSON list, revision map and confirmations once`, async () => {
+for (const action of ["publish", "reject"]) test(`DERIVED transport: batch ${action} carries JSON list, revision map and confirmations once`, async () => {
   const route = "dates_event_intake_batch_decide", ids = ["xin_" + "1".repeat(32), "xin_" + "2".repeat(32)];
   const input = { intake_ids: ids, expected_revisions: { [ids[0]]: 2, [ids[1]]: 3 }, action, reason: "Reviewed both", idempotency_key: key,
     ...(action === "publish" ? { confirmations: { source: true, public_venue: true, timezone: true, content_safe: true } } : { reason_code: "unverifiable" }) };
@@ -113,7 +114,7 @@ for (const action of ["publish", "reject"]) test(`SELF-MADE transport: batch ${a
   if (action === "publish") assert.deepEqual(JSON.parse(fields.confirmations), input.confirmations);
 });
 test("research queue transport adds its selector only for the selected run/channel", async () => {
-  const action = "dates_event_intake_list", input = { research_run_id: SELF_MADE_RUN.run_id, channel: "ai_research", page: 1, limit: 40 };
+  const action = "dates_event_intake_list", input = { research_run_id: DERIVED_RUN.run_id, channel: "ai_research", page: 1, limit: 40 };
   formOf(await bridge(action, input), action, Object.keys(input));
   const old = await bridge(action, { page: 1, limit: 40 }); assert.equal(old.status, 200);
   assert.equal(old.sent[0].form.has("dates_event_research_admin_contract_version"), false);
@@ -122,15 +123,15 @@ test("research transport denies browser-owned selectors, actors, unknown fields 
   for (const extra of [{ secret: "fake" }, { admin_email: "other@example.test" }, { dates_event_research_admin_contract_version: 1 }, { dates_event_intake_admin_contract_version: 1 }, { unknown: true }]) {
     const result = await bridge("dates_event_research_source_save", { ...sourceInput, ...extra }); assert.equal(result.status, 400); assert.equal(result.sent.length, 0);
   }
-  const city = { place_id: "place", mode: "auto", overrides: SELF_MADE_AREA.overrides, reason: "Reviewed", idempotency_key: key };
+  const city = { place_id: "place", mode: "auto", overrides: GENUINE_AREA.overrides, reason: "Reviewed", idempotency_key: key };
   for (const extra of [{ center: { latitude: 47, longitude: 19 } }, { bounds: null }, { country_code: "HU" }]) {
     const result = await bridge("dates_event_research_area_save", { ...city, ...extra }); assert.equal(result.status, 400); assert.equal(result.sent.length, 0);
   }
 });
 test("research transport checks review for reads and manage for writes on every call", async () => {
   const reviewer = { ...member, dates: { ...member.dates, capabilities: ["dates_external_event_review"] } };
-  assert.equal((await bridge("dates_event_research_overview", {}, SELF_MADE_OVERVIEW, reviewer)).status, 200);
-  const denied = await bridge("dates_event_research_source_save", sourceInput, SELF_MADE_ENVELOPE, reviewer); assert.equal(denied.status, 403); assert.equal(denied.sent.length, 0);
+  assert.equal((await bridge("dates_event_research_overview", {}, DERIVED_OVERVIEW, reviewer)).status, 200);
+  const denied = await bridge("dates_event_research_source_save", sourceInput, DERIVED_ENVELOPE, reviewer); assert.equal(denied.status, 403); assert.equal(denied.sent.length, 0);
   const noReview = { ...member, dates: { ...member.dates, capabilities: ["dates_external_event_manage"] } };
-  assert.equal((await bridge("dates_event_research_overview", {}, SELF_MADE_OVERVIEW, noReview)).status, 403);
+  assert.equal((await bridge("dates_event_research_overview", {}, DERIVED_OVERVIEW, noReview)).status, 403);
 });

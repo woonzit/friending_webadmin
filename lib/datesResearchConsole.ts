@@ -3,7 +3,7 @@ import { datesIntakeRefusal } from "@/lib/datesIntakeAdmin";
 import { decodeResearchArea, decodeResearchBatchReceipt, decodeResearchDefaults, decodeResearchOverview, decodeResearchRunDetail, decodeResearchRunList,
   decodeResearchSource, researchInteger, researchRecord, researchSuccess, researchString, type DatesResearchAction, type ResearchBatchResult,
   type ResearchOverview, type ResearchRunDetail, type ResearchRunList } from "@/lib/datesResearchAdmin";
-import { DATES_RESEARCH_READ_CAPABILITY, DATES_RESEARCH_WRITE_CAPABILITY, normalizeDatesResearchProxyBody } from "@/lib/datesResearchProxy";
+import { DATES_RESEARCH_READ_CAPABILITY, DATES_RESEARCH_WRITE_CAPABILITY, normalizeDatesResearchProxyBody, researchSourceCanonicalUrl } from "@/lib/datesResearchProxy";
 
 export type ResearchSend = (action: string, body: Record<string, unknown>, signal?: AbortSignal) => Promise<unknown>;
 export type ResearchRead<T> = { kind: "ready"; value: T; operator: DatesAdminPrincipal; manage: boolean }
@@ -48,7 +48,8 @@ export function decodeResearchCommandReceipt(command: ResearchCommand, response:
   }
   if (action === "dates_event_research_source_save") {
     const row = decodeResearchSource(response.source);
-    const bound = row && row.url === body.url && (body.source_id ? row.source_id === body.source_id && row.revision === Number(body.expected_revision) + 1 : row.revision >= 1);
+    const bound = row && row.url === researchSourceCanonicalUrl(body.url)
+      && (body.source_id ? row.source_id === body.source_id && row.revision === Number(body.expected_revision) + 1 : row.revision === 1);
     return bound ? { kind: "success", receipt: row } : null;
   }
   if (action === "dates_event_research_source_run_now") {
@@ -63,7 +64,10 @@ export function decodeResearchCommandReceipt(command: ResearchCommand, response:
   return null;
 }
 // Only Core's no-write refusals settle an identity. Capability, transport, in-progress and unknown responses never do.
-const NO_WRITE = new Set<string>(); // Populated from Core's genuine corpus, never guessed from the draft.
+const NO_WRITE: Readonly<Record<string, number>> = {
+  "dates-research-request-invalid": 400, "dates-research-values-invalid": 422, "dates-research-url-invalid": 422,
+  "dates-research-aggregator-autopublish-invalid": 422, "dates-admin-reason-required": 422, "dates-admin-idempotency-invalid": 422,
+}; // Part A's genuine no-write captures; Part B extends this only with verified no-write refusals.
 export async function runResearchCommand(send: ResearchSend, command: ResearchCommand): Promise<ResearchCommandOutcome> {
   let response: unknown;
   try { response = await send(command.action, command.body); } catch { return { kind: "uncertain", error: null }; }
@@ -71,8 +75,8 @@ export async function runResearchCommand(send: ResearchSend, command: ResearchCo
   if (receipt) return receipt;
   const refusal = datesIntakeRefusal(response);
   if (refusal.kind === "core" && refusal.status < 500) {
-    if (refusal.status === 409 && ["dates-admin-stale-revision", "dates-research-stale-revision"].includes(refusal.error)) return { kind: "conflict", error: refusal.error };
-    if (NO_WRITE.has(refusal.error)) return { kind: "refused", error: refusal.error };
+    if (refusal.status === 409 && refusal.error === "dates-research-conflict") return { kind: "conflict", error: refusal.error };
+    if (Object.hasOwn(NO_WRITE, refusal.error) && NO_WRITE[refusal.error] === refusal.status) return { kind: "refused", error: refusal.error };
   }
   return { kind: "uncertain", error: refusal.kind === "unreadable" ? null : refusal.error };
 }
