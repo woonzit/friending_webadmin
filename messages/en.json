@@ -8201,6 +8201,8 @@
       "global": "global default",
       "own": "own value",
       "effective": "Effective: {value} ({source}).",
+      "inheritanceUnavailable": "city overrides unavailable",
+      "effectiveUnavailable": "not available",
       "useGlobal": "Use the global value",
       "useInherited": "Use the city or global value",
       "hours": "hours",

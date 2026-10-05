@@ -8201,6 +8201,8 @@
       "global": "alapérték",
       "own": "saját érték",
       "effective": "Érvényes érték: {value} ({source}).",
+      "inheritanceUnavailable": "a város saját értékei nem érhetők el",
+      "effectiveUnavailable": "nem érhető el",
       "useGlobal": "Az alapérték használata",
       "useInherited": "A városi vagy az alapérték használata",
       "hours": "óra",

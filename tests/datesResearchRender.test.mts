@@ -79,6 +79,20 @@ for (const locale of ["en", "hu"]) {
     assert.equal(aggregator.includes(escaped(copy.fields.window_days)), true);
     assert.equal((aggregator.match(new RegExp(escaped(copy.useInherited), "g")) ?? []).length, 1);
   });
+  test(`DERIVED render ${locale}: an unavailable city does not replace stored source inheritance with global defaults`, () => {
+    const copy = messages(locale).datesAdmin.research;
+    const row = { ...GENUINE_SOURCE, area_id: GENUINE_AREA.area_id, window_days: null, autopublish: null,
+      effective: { window_days: 45, autopublish: true } };
+    const html = render(locale, createElement(ResearchSourceEditor, { ...props, row, defaults: GENUINE_DEFAULTS, areas: [] }));
+    assert.match(html, /<input[^>]*type="number"[^>]*value="45"/);
+    const start = html.indexOf(escaped(copy.fields.autopublish));
+    assert.match(html.slice(start, html.indexOf("</label>", start)), /type="checkbox" disabled="" checked=""/);
+    assert.equal((html.match(new RegExp(escaped(copy.inheritanceUnavailable), "g")) ?? []).length, 2);
+    const overridden = render(locale, createElement(ResearchSourceEditor, { ...props, row: { ...row, window_days: 21, autopublish: false,
+      effective: { window_days: 21, autopublish: false } }, defaults: GENUINE_DEFAULTS, areas: [] }));
+    assert.match(overridden, /<input[^>]*type="number"[^>]*value="21"/);
+    assert.equal(overridden.includes(escaped(copy.inheritanceUnavailable)), false, "an explicit source override has known provenance");
+  });
   test(`DERIVED render ${locale}: read-only defaults expose no save, and run/batch filters resolve copy`, () => {
     const copy = messages(locale).datesAdmin.research;
     const html = render(locale, createElement(ResearchDefaultsEditor, { ...props, defaults: GENUINE_DEFAULTS, manage: false }));

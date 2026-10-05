@@ -7,10 +7,10 @@ import { prepareResearchCommand, runResearchCommand, type ResearchCommand, type 
 import { researchDistanceFromKm, researchDistanceToKm, researchInputNumber, researchTimeFromHours, researchTimeToHours, type ResearchDistanceUnit, type ResearchTimeUnit } from "@/lib/datesResearchView";
 import { formatNumber } from "@/lib/format";
 
-export function ResearchHelp({ field, effective, own = false }: { field: string; effective?: string; own?: boolean }) {
+export function ResearchHelp({ field, effective, own = false, unavailableInheritance = false }: { field: string; effective?: string; own?: boolean; unavailableInheritance?: boolean }) {
   const t = useTranslations("datesAdmin.research");
   return <div className="research-field-help"><small>{t(`help.${field}.purpose`)}</small>
-    {effective !== undefined && <small>{t("effective", { value: effective, source: t(own ? "own" : "global") })}</small>}
+    {effective !== undefined && <small>{t("effective", { value: effective, source: t(unavailableInheritance ? "inheritanceUnavailable" : own ? "own" : "global") })}</small>}
     <small>{t(`help.${field}.effect`)}</small><small>{t(`help.${field}.cost`)}</small></div>;
 }
 export function ResearchDuration({ hours, range, disabled, onChange }: { hours: number; range: { min: number; max: number }; disabled: boolean; onChange: (value: number) => void }) {

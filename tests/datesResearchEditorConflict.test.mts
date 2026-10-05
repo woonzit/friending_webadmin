@@ -29,6 +29,43 @@ function elements(node: any): Element[] {
 }
 const flush = async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); };
 
+test("DERIVED unreadable city: changing a source override to inheritance shows unknown effective values without guessing or writing", () => {
+  const slots: any[] = [], calls: any[] = []; let index = 0;
+  const row = { ...GENUINE_SOURCE, area_id: GENUINE_AREA.area_id, window_days: 21, autopublish: false,
+    effective: { window_days: 21, autopublish: false } };
+  const context: any = { exports: {}, ...research, ...view, ...proxy, formatNumber,
+    React: { createElement: (type: any, props: any, ...children: any[]) => ({ type, props: props ?? {}, children }) },
+    useLocale: () => "en", useTranslations: () => (key: string) => key, useEffect: () => {},
+    useState: (initial: any) => { const slot = index++; if (!(slot in slots)) slots[slot] = initial;
+      return [slots[slot], (value: any) => { slots[slot] = typeof value === "function" ? value(slots[slot]) : value; }]; },
+    useResearchCommand: () => ({ busy: false, pending: null, retained: false, submit: (action: string, body: any) => calls.push({ action, body: structuredClone(body) }) }),
+  };
+  for (const name of ["ResearchCommandFeedback", "ResearchDuration", "ResearchHelp", "ResearchReason"]) context[name] = name;
+  vm.runInNewContext(ts.transpileModule(editorTree.statements.filter((node) => !ts.isImportDeclaration(node)).map((node) => node.getText(editorTree)).join("\n"),
+    { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText, context);
+  const render = () => { index = 0; return elements(context.exports.ResearchSourceEditor({ row, defaults: GENUINE_DEFAULTS, areas: [],
+    actor: "operator@example.test", manage: true, limits: GENUINE_LIMITS, reload: async () => {}, close: () => {} })); };
+  const toggles = (nodes: Element[]) => nodes.filter((node) => node.type === "label" && node.props.className === "research-inherit").map((label) => elements(label.children).find((node) => node.type === "input")!);
+  let nodes = render(); toggles(nodes)[0].props.onChange({ target: { checked: true } });
+  nodes = render(); toggles(nodes)[1].props.onChange({ target: { checked: true } });
+  nodes = render();
+  const window = nodes.find((node) => node.type === "input" && node.props.max === GENUINE_LIMITS.window_days.max)!;
+  assert.equal(window.props.value, ""); assert.equal(window.props.placeholder, "effectiveUnavailable");
+  for (const field of ["window_days", "autopublish"]) {
+    const help = nodes.find((node) => node.type === "ResearchHelp" && node.props.field === field)!;
+    assert.equal(help.props.effective, "effectiveUnavailable"); assert.equal(help.props.unavailableInheritance, true);
+  }
+  assert.equal(calls.length, 0, "draft inheritance changes never write automatically");
+  nodes.find((node) => node.type === "ResearchReason")!.props.onChange("Use the configured city values");
+  nodes = render(); nodes.find((node) => node.type === "form")!.props.onSubmit({ preventDefault() {} });
+  assert.equal(calls.length, 1); assert.equal(calls[0].body.window_days, null); assert.equal(calls[0].body.autopublish, null);
+  toggles(nodes)[0].props.onChange({ target: { checked: false } });
+  nodes = render(); toggles(nodes)[1].props.onChange({ target: { checked: false } });
+  nodes = render();
+  assert.equal(nodes.find((node) => node.type === "input" && node.props.max === GENUINE_LIMITS.window_days.max)!.props.value, 21);
+  assert.equal(nodes.find((node) => node.type === "ResearchHelp" && node.props.field === "autopublish")!.props.unavailableInheritance, false);
+});
+
 test("DERIVED scheduled check finishes with an open source editor: conflict reload keeps edits and requires an explicit second save", async () => {
   const before = research.decodeResearchSource({ ...GENUINE_SOURCE, revision: 2, last_check: {
     run_id: DERIVED_RUN.run_id, status: "running", finished_at: null, found: 3, imported: 0,
