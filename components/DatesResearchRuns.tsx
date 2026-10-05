@@ -55,10 +55,10 @@ export default function DatesResearchRuns({ areas, sources, focusRunId, refresh 
     {loading && !history ? <LoadingPanel /> : history && <>
       {history.unreadable.map((row) => <p className="alert alert-warning" key={row.index}>{t("unreadableRow", { row: row.index + 1 })}{row.id ? <> <code>{row.id}</code></> : null}</p>)}
       {history.rows.length === 0 && history.unreadable.length === 0 ? <p>{t("runsEmpty")}</p> : <div className="table-wrap"><table className="data-table"><thead><tr>
-        {["run", "status", "found", "imported", "duplicates", "dropped", "cost", "time"].map((key) => <th key={key}>{t(`columns.${key}`)}</th>)}</tr></thead>
+          {["run", "status", "found", "imported", "duplicates", "dropped", "runCost", "runTime"].map((key) => <th key={key}>{t(`columns.${key}`)}</th>)}</tr></thead>
         <tbody>{history.rows.map((row) => <tr key={row.run_id}><td><button type="button" className="button button-secondary button-small" onClick={() => setRunId(row.run_id)}>{t("openRun")}</button>
           <div><small>{row.source_id ? sources.find((value) => value.source_id === row.source_id)?.label || row.source_id : row.area_id ? areas.find((value) => value.area_id === row.area_id)?.label || row.area_id : "—"}</small></div>
-          <small>{t(`runTriggers.${row.trigger}`)}{row.dry_run ? ` · ${t("dryRun")}` : ""}</small></td>
+          <small>{t(`runKinds.${row.kind}`)} · {t(`runTriggers.${row.trigger}`)}{row.dry_run ? ` · ${t("dryRun")}` : ""}</small></td>
           <td>{t(`runStatuses.${row.status}`)}</td><td>{formatNumber(row.found, locale)}</td><td>{formatNumber(row.imported, locale)}</td><td>{formatNumber(row.duplicates, locale)}</td>
           <td>{row.dropped.map((item) => <div key={item.reason}>{t(`dropReasons.${item.reason}`)}: {formatNumber(item.count, locale)}</div>)}</td><td>{researchCost(row.cost_micro_usd, locale)}</td>
           <td>{formatDate(row.started_at, locale, true)}<div><small>{formatDate(row.finished_at, locale, true)}</small></div></td></tr>)}</tbody></table></div>}

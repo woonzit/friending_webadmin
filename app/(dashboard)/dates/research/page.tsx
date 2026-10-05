@@ -70,7 +70,7 @@ export default function DatesResearchPage() {
       {problem && <p className="alert alert-warning" role="status">{t("refreshFailed")}{problem.kind === "refused" ? <> <code>{problem.error}</code></> : null}</p>}
       {!read.manage && <p className="alert alert-info">{t("readOnly")}</p>}
       <nav className="research-sections" aria-label={t("sectionsLabel")}>{(["defaults", "cities", "sources", "runs"] as const).map((key) => <a key={key} href={`#research-${key}`}>{t(`sections.${key}`)}</a>)}</nav>
-      <section className="panel" id="research-defaults"><h2>{t("budget")}</h2><div className="stat-grid">
+      <section className="panel research-panel" id="research-defaults"><h2>{t("budget")}</h2><div className="stat-grid">
         <div className="stat-card"><span className="stat-label">{t("budgetSpent", { month: overview.budget.month })}</span><strong className="stat-value">{researchCost(overview.budget.spent_micro_usd, locale)}</strong><small>{t("budgetCap", { amount: researchCost(overview.budget.cap_micro_usd, locale) })}</small></div>
         <div className="stat-card"><span className="stat-label">{t("researchSpent")}</span><strong className="stat-value">{researchCost(overview.budget.research_spent_micro_usd, locale)}</strong><small>{t("researchStop", { amount: researchCost(overview.budget.research_stop_at_micro_usd, locale) })}</small></div>
         <div className="stat-card"><span className="stat-label">{t("estimate")}</span><strong className="stat-value">{estimate?.microUsd === null ? t("notMeasured") : researchCost(estimate?.microUsd ?? 0, locale)}</strong><small>{t("monthlyChecks", { count: overview.estimate.monthly_checks })}</small></div>
@@ -79,14 +79,14 @@ export default function DatesResearchPage() {
       </section>
       {!overview.defaults && <p className="alert alert-warning">{t("defaultsUnreadable")}</p>}
       {defaults && <ResearchDefaultsEditor key={read.operator.email} defaults={defaults} actor={read.operator.email} manage={read.manage && overview.defaults !== null} limits={overview.limits} reload={reload} />}
-      <section className="panel" id="research-cities"><div className="panel-header"><h2>{t("sections.cities")}</h2>{read.manage && overview.defaults && <button className="button button-primary" disabled={areaEditor !== null} onClick={() => setAreaEditor("new")}>{t("addCity")}</button>}</div>
+      <section className="panel research-panel" id="research-cities"><div className="panel-header"><h2>{t("sections.cities")}</h2>{read.manage && overview.defaults && <button className="button button-primary" disabled={areaEditor !== null} onClick={() => setAreaEditor("new")}>{t("addCity")}</button>}</div>
         <p>{t("citiesHint")}</p>{overview.areas.unreadable.map((row) => <p className="alert alert-warning" key={row.index}>{t("unreadableRow", { row: row.index + 1 })}{row.id ? <> <code>{row.id}</code></> : null}</p>)}
         {overview.areas.rows.length === 0 && overview.areas.unreadable.length === 0 ? <p>{t("citiesEmpty")}</p> : <div className="table-wrap"><table className="data-table"><thead><tr>
           {["city", "members", "state", "effective", "stock", "time", "cost", "actions"].map((key) => <th key={key}>{t(`columns.${key}`)}</th>)}</tr></thead><tbody>
           {overview.areas.rows.map((row) => { const stock = researchStock(row.stock.upcoming, row.stock.target), unit = researchDistanceUnit(row.country_code);
             return <tr key={row.area_id}><td><strong>{row.label}</strong><div>{row.country_code}</div>{row.proposed && <span className="badge badge-warning">{t("proposed")}</span>}
               <div><small>{t(`modeValues.${row.mode}`)}</small></div></td><td>{formatNumber(row.member_count, locale)}<div><small>{formatDate(row.member_count_at, locale, true)}</small></div></td>
-              <td><span className={`badge ${row.running ? "badge-success" : "badge-warning"}`}>{t(row.running ? "running" : "notRunning")}</span>{row.not_running_reason && <div>{t(`notRunningReasons.${row.not_running_reason}`)}</div>}</td>
+              <td><span className={`badge ${row.running ? "badge-active" : "badge-warning"}`}>{t(row.running ? "running" : "notRunning")}</span>{row.not_running_reason && <div>{t(`notRunningReasons.${row.not_running_reason}`)}</div>}</td>
               <td>{DATES_RESEARCH_VALUE_FIELDS.map((field) => <div key={field}><small>{t(`fields.${field}`)}: <ResearchValue field={field} values={row.effective} unit={unit} />{row.overrides[field] !== null && <> <span className="badge">{t("own")}</span></>}</small></div>)}</td>
               <td>{t("stock", { count: row.stock.upcoming, target: row.stock.target })}<div><small>{t("missing", { count: row.stock.missing })}</small></div><progress value={stock.upcoming} max={Math.max(1, stock.target)} aria-label={t("columns.stock")} /></td>
               <td>{formatDate(row.last_run?.finished_at, locale, true)}<div><small>{t("next")}: {formatDate(row.next_run_at, locale, true)}</small></div></td><td>{researchCost(row.month_cost_micro_usd, locale)}</td>
@@ -95,7 +95,7 @@ export default function DatesResearchPage() {
       </section>
       {areaEditor !== null && defaults && (areaEditor === "new" || editedArea) && <ResearchAreaEditor key={`${read.operator.email}:${areaEditor}`} row={editedArea} defaults={defaults} actor={read.operator.email} manage={read.manage && overview.defaults !== null && (areaEditor === "new" || area !== null)} limits={overview.limits} reload={reload} close={() => setAreaEditor(null)} />}
       {areaEditor !== null && areaEditor !== "new" && !area && <p className="alert alert-warning">{t("editedRowUnavailable")}</p>}
-      <section className="panel" id="research-sources"><div className="panel-header"><h2>{t("sections.sources")}</h2>{read.manage && overview.defaults && <button className="button button-primary" disabled={sourceEditor !== null} onClick={() => setSourceEditor("new")}>{t("addSource")}</button>}</div>
+      <section className="panel research-panel" id="research-sources"><div className="panel-header"><h2>{t("sections.sources")}</h2>{read.manage && overview.defaults && <button className="button button-primary" disabled={sourceEditor !== null} onClick={() => setSourceEditor("new")}>{t("addSource")}</button>}</div>
         <p>{t("sourcesHint")}</p>{overview.sources.unreadable.map((row) => <p className="alert alert-warning" key={row.index}>{t("unreadableRow", { row: row.index + 1 })}{row.id ? <> <code>{row.id}</code></> : null}</p>)}
         {overview.sources.rows.length === 0 && overview.sources.unreadable.length === 0 ? <p>{t("sourcesEmpty")}</p> : <div className="table-wrap"><table className="data-table"><thead><tr>
           {["source", "intervalStock", "robots", "time", "cost", "actions"].map((key) => <th key={key}>{t(`columns.${key}`)}</th>)}</tr></thead><tbody>

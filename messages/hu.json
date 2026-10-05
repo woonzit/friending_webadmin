@@ -8337,6 +8337,8 @@
         "effective": "Érvényes értékek",
         "stock": "Események",
         "time": "Legutóbbi / következő",
+        "runCost": "A futás költsége",
+        "runTime": "Indult / befejeződött",
         "cost": "Havi költség",
         "actions": "Műveletek",
         "source": "Forrás",

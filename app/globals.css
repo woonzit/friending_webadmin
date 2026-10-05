@@ -15258,7 +15258,9 @@ fieldset.dates-external-fields {
 }
 /* Event research: inherited values and canonical-unit editors. */
 .research-sections { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
-.research-editor, .research-runs, .research-batch { margin-top: 1rem; }
+.research-panel, .research-editor, .research-runs, .research-batch { padding: 24px; margin-top: 1rem; }
+.research-panel .panel-header, .research-editor .panel-header, .research-runs .panel-header { padding: 0 0 20px; margin-bottom: 20px; }
+.research-runs .dates-filter-grid { align-items: start; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .research-field-help { display: grid; gap: .35rem; color: var(--muted); margin: .5rem 0; line-height: 1.5; }
 .research-field > label { display: grid; gap: .5rem; }
 .research-inherit, .research-batch-selection label, .research-batch-confirmations label { display: flex !important; align-items: flex-start; gap: .65rem; margin: .6rem 0; }
@@ -15270,3 +15272,4 @@ fieldset.dates-external-fields {
 .research-run-detail { border-top: 1px solid var(--border); margin-top: 1.25rem; padding-top: 1.25rem; }
 .research-batch-selection, .research-batch-confirmations { display: grid; gap: .4rem; margin: 1rem 0; }
 .research-batch input[type="checkbox"], .research-field input[type="checkbox"] { width: 1rem; min-width: 1rem; height: 1rem; }
+@media (max-width: 760px) { .research-runs .dates-filter-grid { grid-template-columns: minmax(0, 1fr); } .research-panel, .research-editor, .research-runs, .research-batch { padding: 16px; } }

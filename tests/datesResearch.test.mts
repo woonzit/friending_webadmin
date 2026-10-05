@@ -99,6 +99,12 @@ test("revision conflict keeps changed fields over fresh authority, including ind
   const draft = copy(before); draft.overrides.target_events = 19;
   const stored = { ...copy(before), label: "Fresh", mode: "on", overrides: { ...before.overrides, cadence_hours: 48 } };
   assert.deepEqual(researchEditsAfterConflict(before, draft, stored), { ...stored, overrides: { ...stored.overrides, target_events: 19 } });
+  const inherited = { overrides: { target_events: null as number | null, cadence_hours: null as number | null } };
+  const invalid = { overrides: { target_events: NaN, cadence_hours: null } };
+  const fresh = { overrides: { target_events: 17, cadence_hours: 48 } };
+  const kept = researchEditsAfterConflict(inherited, invalid, fresh);
+  assert.equal(Number.isNaN(kept.overrides.target_events), true, "an erased own value is not mistaken for unchanged inheritance");
+  assert.equal(kept.overrides.cadence_hours, 48);
 });
 test("research selector is added by the server and cannot change existing request selectors", () => {
   assert.deepEqual(datesAdminResearchContractParams("dates_configuration"), {});

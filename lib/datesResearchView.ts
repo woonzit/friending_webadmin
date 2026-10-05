@@ -47,8 +47,15 @@ export function researchDefaultValues(defaults: ResearchDefaults): ResearchValue
 }
 /** A conflict changes the authority/revision, preserving only the operator's edits over the new row. */
 export function researchEditsAfterConflict<T extends object>(baseline: T, draft: T, stored: T): T {
+  function equal(left: unknown, right: unknown): boolean {
+    if (Object.is(left, right)) return true;
+    if (left === null || right === null || typeof left !== "object" || typeof right !== "object" || Array.isArray(left) !== Array.isArray(right)) return false;
+    const before = left as Record<string, unknown>, after = right as Record<string, unknown>, keys = Object.keys(before);
+    return keys.length === Object.keys(after).length && keys.every((key) => Object.hasOwn(after, key) && equal(before[key], after[key]));
+  }
   function merge(before: unknown, edited: unknown, current: unknown): unknown {
-    if (JSON.stringify(edited) === JSON.stringify(before)) return current;
+    // NaN is an erased numeric draft, not the null that means inheritance.
+    if (equal(edited, before)) return current;
     const object = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value);
     if (!object(before) || !object(edited) || !object(current) || Object.hasOwn(edited, "kind")) return edited;
     const result = { ...current };

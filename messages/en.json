@@ -3066,7 +3066,7 @@
             "guidance": "Test is a dry run and imports nothing. Aggregators provide facts, not copied descriptions; official sources may pass Core's automatic-publication checks.",
             "actions": {
               "1": "Use a public organiser, venue or city page where possible and choose the correct source type.",
-              "2": "Run Test to inspect the candidates before using Review now for a real import."
+              "2": "Run Test to inspect the candidates before using Check now for a real import."
             }
           },
           "runs": {
@@ -8337,6 +8337,8 @@
         "effective": "Effective values",
         "stock": "Stock",
         "time": "Last / next",
+        "runCost": "Run cost",
+        "runTime": "Started / finished",
         "cost": "Cost this month",
         "actions": "Actions",
         "source": "Source",
