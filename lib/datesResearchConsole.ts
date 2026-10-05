@@ -54,12 +54,16 @@ export function decodeResearchCommandReceipt(command: ResearchCommand, response:
     return bound ? { kind: "success", receipt: row } : null;
   }
   if (action === "dates_event_research_source_run_now") {
+    const next = Number(body.expected_revision) + 1;
+    // A new key after a re-read reuses the existing open run without bumping
+    // its source again. Core refuses source configuration saves while open.
+    const boundRevision = response.source_revision === next || response.replayed === true && response.source_revision === body.expected_revision;
     return researchString(response.run_id) && response.run_id !== "" && response.source_id === body.source_id && response.dry_run === body.dry_run
-      && researchInteger(response.source_revision, 1) && response.source_revision === Number(body.expected_revision) + 1
+      && researchInteger(response.source_revision, 1) && boundRevision
       ? { kind: "success", receipt: response, runId: response.run_id } : null;
   }
   if (action === "dates_event_intake_batch_decide") {
-    const results = decodeResearchBatchReceipt(response, body.intake_ids as string[], body.action as "publish" | "reject");
+    const results = decodeResearchBatchReceipt(response, body.intake_ids as string[]);
     return results ? { kind: "success", receipt: response, results } : null;
   }
   return null;
@@ -76,7 +80,7 @@ export async function runResearchCommand(send: ResearchSend, command: ResearchCo
   if (receipt) return receipt;
   if (command.action === "dates_event_intake_batch_decide" && researchSuccess(response) && typeof response.replayed === "boolean"
     && researchString(response.audit_id) && response.audit_id !== "") {
-    const partial = decodeResearchBatchRows(response, command.body.intake_ids as string[], command.body.action as "publish" | "reject");
+    const partial = decodeResearchBatchRows(response, command.body.intake_ids as string[]);
     if (partial) return { kind: "uncertain", error: null, partial };
   }
   const refusal = datesIntakeRefusal(response);

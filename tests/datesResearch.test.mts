@@ -172,9 +172,8 @@ test("DERIVED: Core without research yields one unavailable state; transport fai
 test("DERIVED: batch results are bound to every chosen intake and mixed refusal is not a page failure", () => {
   const ids = ["xin_" + "1".repeat(32), "xin_" + "2".repeat(32)];
   const body = { ...DERIVED_ENVELOPE, results: [{ intake_id: ids[0], outcome: "published", refusal: null, external_event_id: "xev_test" }, { intake_id: ids[1], outcome: "refused", refusal: "stale", external_event_id: null }] };
-  assert.equal(decodeResearchBatchReceipt(body, ids, "publish")!.length, 2);
-  assert.equal(decodeResearchBatchReceipt({ ...body, results: [body.results[0], body.results[0]] }, ids, "publish"), null);
-  assert.equal(decodeResearchBatchReceipt(body, ids, "reject"), null);
+  assert.equal(decodeResearchBatchReceipt(body, ids)!.length, 2);
+  assert.equal(decodeResearchBatchReceipt({ ...body, results: [body.results[0], body.results[0]] }, ids), null);
   const request = { intake_ids: ids, expected_revisions: { [ids[0]]: 2, [ids[1]]: 3 }, action: "publish", confirmations: { source: true, public_venue: true, timezone: true, content_safe: true }, reason: "Reviewed both", idempotency_key: key };
   assert.ok(normalizeDatesResearchProxyBody("dates_event_intake_batch_decide", request));
   assert.equal(normalizeDatesResearchProxyBody("dates_event_intake_batch_decide", { ...request, expected_revisions: { [ids[0]]: 2 } }), null);
@@ -188,15 +187,36 @@ test("DERIVED: an unknown batch outcome makes only its row unreadable while reta
     { intake_id: ids[0], outcome: "published", refusal: null, external_event_id: "xev_derived" },
     { intake_id: ids[1], outcome: "future-outcome", refusal: null, external_event_id: null },
   ] };
-  const partial = decodeResearchBatchRows(response, ids, "publish")!;
+  const partial = decodeResearchBatchRows(response, ids)!;
   assert.equal(partial.rows.length, 1); assert.deepEqual(partial.unreadable, [{ index: 1, id: ids[1] }]);
-  assert.equal(decodeResearchBatchReceipt(response, ids, "publish"), null);
+  assert.equal(decodeResearchBatchReceipt(response, ids), null);
   const seen: unknown[] = [];
   const send = async (_action: string, body: unknown) => { seen.push(structuredClone(body)); return response; };
   const result = await runResearchCommand(send, command);
   assert.equal(result.kind, "uncertain"); if (result.kind === "uncertain") assert.deepEqual(result.partial, partial);
   await runResearchCommand(send, command); assert.deepEqual(seen[0], seen[1]);
-  assert.equal(decodeResearchBatchRows({ ...response, results: [response.results[0], { ...response.results[1], intake_id: "wrong" }] }, ids, "publish"), null);
+  assert.equal(decodeResearchBatchRows({ ...response, results: [response.results[0], { ...response.results[1], intake_id: "wrong" }] }, ids), null);
+});
+test("DERIVED Core replay semantics: advanced source revision can remain unchanged only for a verified open-run replay", () => {
+  const command = prepareResearchCommand(actor, "dates_event_research_source_run_now", { source_id: GENUINE_SOURCE.source_id, expected_revision: 2, dry_run: true })!;
+  const response = { ...DERIVED_ENVELOPE, replayed: true, audit_id: "aud_derived", source_id: GENUINE_SOURCE.source_id,
+    source_revision: 2, dry_run: true, run_id: DERIVED_RUN.run_id };
+  assert.equal(decodeResearchCommandReceipt(command, response)?.kind, "success");
+  assert.equal(decodeResearchCommandReceipt(command, { ...response, replayed: false }), null);
+  assert.equal(decodeResearchCommandReceipt(command, { ...response, source_revision: 1 }), null);
+  assert.equal(decodeResearchCommandReceipt(command, { ...response, dry_run: false }), null);
+  assert.equal(decodeResearchCommandReceipt(command, { ...response, source_id: "wrong" }), null);
+});
+test("DERIVED Core replay semantics: batch receipts show the actual opposite terminal decision without re-deciding", () => {
+  const id = "xin_" + "1".repeat(32);
+  for (const action of ["publish", "reject"] as const) {
+    const command = prepareResearchCommand(actor, "dates_event_intake_batch_decide", { intake_ids: [id], expected_revisions: { [id]: 2 }, action, reason: "Reviewed terminal replay",
+      ...(action === "publish" ? { confirmations: { source: true, public_venue: true, timezone: true, content_safe: true } } : { reason_code: "unverifiable" }) })!;
+    const outcome = action === "publish" ? "rejected" : "published";
+    const response = { ...DERIVED_ENVELOPE, replayed: true, audit_id: "aud_derived", results: [{ intake_id: id, outcome, refusal: null, external_event_id: outcome === "published" ? "xev_derived" : null }] };
+    const result = decodeResearchCommandReceipt(command, response)!;
+    assert.equal(result.kind, "success"); if (result.kind === "success") assert.equal(result.results![0].outcome, outcome);
+  }
 });
 test("research run filter and additive queue row preserve the released queue shape", () => {
   const input: any = JSON.parse(readFileSync(new URL("./fixtures/dates_event_intake_admin_wire/admin-list-in-review.json", import.meta.url), "utf8"));

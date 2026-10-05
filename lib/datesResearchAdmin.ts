@@ -232,16 +232,14 @@ export function decodeResearchBatchResult(value: unknown): ResearchBatchResult |
     || !nullable(value.refusal, researchString) || !nullable(value.external_event_id, researchId)) return null;
   return { intake_id: value.intake_id, outcome: value.outcome, refusal: value.refusal, external_event_id: value.external_event_id };
 }
-export function decodeResearchBatchRows(value: unknown, ids: readonly string[], action: "publish" | "reject"): ResearchRows<ResearchBatchResult> | null {
+/** Terminal replays report the actual stored outcome, never re-decide for a later requested action. */
+export function decodeResearchBatchRows(value: unknown, ids: readonly string[]): ResearchRows<ResearchBatchResult> | null {
   if (!researchSuccess(value) || !Array.isArray(value.results) || value.results.length !== ids.length) return null;
   const received = value.results.map((row) => researchRecord(row) && researchId(row.intake_id) ? row.intake_id : null);
   if (new Set(received).size !== ids.length || received.some((id) => id === null || !ids.includes(id))) return null;
-  return rowList(value.results, (raw) => {
-    const row = decodeResearchBatchResult(raw);
-    return row && (row.outcome === "refused" || row.outcome === (action === "publish" ? "published" : "rejected")) ? row : null;
-  }, "intake_id");
+  return rowList(value.results, decodeResearchBatchResult, "intake_id");
 }
-export function decodeResearchBatchReceipt(value: unknown, ids: readonly string[], action: "publish" | "reject"): ResearchBatchResult[] | null {
-  const results = decodeResearchBatchRows(value, ids, action);
+export function decodeResearchBatchReceipt(value: unknown, ids: readonly string[]): ResearchBatchResult[] | null {
+  const results = decodeResearchBatchRows(value, ids);
   return results && results.unreadable.length === 0 ? results.rows : null;
 }
