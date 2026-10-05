@@ -56,10 +56,16 @@ test("DERIVED: history decodes every status and drop reason, a damaged run stays
   const value = decodeResearchRunList({ ...DERIVED_ENVELOPE, runs: [DERIVED_RUN, { ...DERIVED_RUN, run_id: "other", status: "future" }], next_cursor: null })!;
   assert.equal(value.rows.length, 1); assert.equal(value.unreadable.length, 1);
 });
-test("DERIVED: history and detail keep Core's public terminal revision trace while stripping worker and member material", () => {
+test("DERIVED: overview, history and detail keep public run fields while stripping worker and member material", () => {
   for (const [status, before, after] of [["running", null, null], ["completed", 2, 3]] as const) {
     const run = { ...DERIVED_RUN, status, source_revision_before: before, source_revision_after: after };
     const privateRun = { ...run, work: { prompt: "Derived private worker text" }, lease: { holder: "derived-worker" }, members: [{ uid: 123 }] };
+    const lastCheck = Object.fromEntries(["run_id", "status", "finished_at", "found", "imported"].map((key) => [key, run[key as keyof typeof run]]));
+    const overview = { ...DERIVED_OVERVIEW, areas: [{ ...GENUINE_AREA, last_run: run }], sources: [{ ...GENUINE_SOURCE, last_check: lastCheck }] };
+    assert.deepEqual(projectDatesAdminBody("dates_event_research_overview", { ...overview,
+      areas: [{ ...GENUINE_AREA, last_run: { ...privateRun, candidates: [DERIVED_CANDIDATE] } }],
+      sources: [{ ...GENUINE_SOURCE, last_check: privateRun }],
+    }), overview, "area last_run is a full public run; source last_check is only its documented summary");
     const list = { ...DERIVED_ENVELOPE, runs: [run], next_cursor: null };
     assert.deepEqual(projectDatesAdminBody("dates_event_research_run_list", { ...list, runs: [privateRun] }), list);
     const detail = { ...DERIVED_ENVELOPE, run: { ...run, candidates: [DERIVED_CANDIDATE] } };

@@ -5,18 +5,21 @@ const scope = leaf("kind radius_km");
 const values = { ...leaf("cadence_hours member_threshold target_events window_days autopublish"), scope };
 const defaults = { ...values, ...leaf("enabled auto_cities_enabled revision updated_at updated_by") };
 const last = leaf("run_id status finished_at found imported");
+const runSummary = {
+  ...leaf("run_id kind dry_run trigger source_id area_id status found imported duplicates cost_micro_usd started_at finished_at source_revision_before source_revision_after"),
+  dropped: [leaf("reason count")],
+};
 const area = {
   ...leaf("area_id revision label place_id country_code mode proposed member_count member_count_at running not_running_reason next_run_at month_cost_micro_usd"),
   center: leaf("latitude longitude"), bounds: { southwest: leaf("latitude longitude"), northeast: leaf("latitude longitude") }, overrides: values, effective: values,
-  stock: leaf("upcoming target missing"), last_run: last,
+  stock: leaf("upcoming target missing"), last_run: runSummary,
 };
 const source = {
   ...leaf("source_id revision url registrable_domain label type area_id cadence_hours max_events window_days autopublish enabled archived next_check_at month_cost_micro_usd"),
   effective: leaf("window_days autopublish"), robots: leaf("state checked_at"), stock: leaf("upcoming max missing"), last_check: last,
 };
 const run = {
-  ...leaf("run_id kind dry_run trigger source_id area_id status found imported duplicates cost_micro_usd started_at finished_at source_revision_before source_revision_after"),
-  dropped: [leaf("reason count")], candidates: [leaf("title date_text url_host outcome reason intake_id")],
+  ...runSummary, candidates: [leaf("title date_text url_host outcome reason intake_id")],
 };
 /** Counts and public source metadata only. No raw document, member, provider prompt or response is kept. */
 export const DATES_RESEARCH_NAMED: Readonly<Record<string, DatesNamedTree>> = {
