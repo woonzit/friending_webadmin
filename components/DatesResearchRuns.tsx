@@ -10,7 +10,7 @@ import { formatDate, formatNumber } from "@/lib/format";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { ResearchHelp } from "@/components/DatesResearchControls";
 
-export default function DatesResearchRuns({ areas, sources, focusRunId, refresh }: { areas: ResearchArea[]; sources: ResearchSource[]; focusRunId: string | null; refresh: number }) {
+export default function DatesResearchRuns({ areas, sources, focusRunId, refresh, active = true }: { areas: ResearchArea[]; sources: ResearchSource[]; focusRunId: string | null; refresh: number; active?: boolean }) {
   const t = useTranslations("datesAdmin.research"), common = useTranslations("common"), locale = useLocale();
   const [source, setSource] = useState(""), [area, setArea] = useState(""), [kind, setKind] = useState("");
   const [cursor, setCursor] = useState<string | null>(null), [previous, setPrevious] = useState<(string | null)[]>([]), [history, setHistory] = useState<ResearchRunList | null>(null);
@@ -18,33 +18,35 @@ export default function DatesResearchRuns({ areas, sources, focusRunId, refresh 
   const [detail, setDetail] = useState<ResearchRunDetail | null>(null), [detailError, setDetailError] = useState(false), [detailLoading, setDetailLoading] = useState(false);
   const generation = useRef(0), detailGeneration = useRef(0);
   const load = useCallback(async (signal?: AbortSignal) => {
+    if (!active) return;
     const current = ++generation.current; setLoading(true);
     const value = await readResearchRuns(adminCall, { ...(source ? { source_id: source } : {}), ...(area ? { area_id: area } : {}), ...(kind ? { kind } : {}), ...(cursor ? { cursor } : {}) }, signal);
     if (signal?.aborted || current !== generation.current) return;
     setLoading(false); setError(value === null); if (value) setHistory(value);
-  }, [source, area, kind, cursor]);
+  }, [source, area, kind, cursor, active]);
   useEffect(() => { const controller = new AbortController(); void load(controller.signal); return () => { controller.abort(); ++generation.current; }; }, [load, refresh]);
   useEffect(() => { if (focusRunId) setRunId(focusRunId); }, [focusRunId]);
   const loadDetail = useCallback(async (signal?: AbortSignal, background = false) => {
-    if (!runId) return;
+    if (!runId || !active) return;
     const current = ++detailGeneration.current; if (!background) setDetailLoading(true);
     const value = await readResearchRun(adminCall, runId, signal);
     if (signal?.aborted || current !== detailGeneration.current) return;
     setDetailLoading(false); setDetailError(value === null); if (value) setDetail(value);
-  }, [runId]);
+  }, [runId, active]);
   useEffect(() => {
+    if (!active) return;
     setDetail(null); setDetailError(false);
     if (!runId) return;
     const controller = new AbortController(); void loadDetail(controller.signal); return () => { controller.abort(); ++detailGeneration.current; };
-  }, [loadDetail, runId]);
+  }, [loadDetail, runId, active]);
   useEffect(() => {
-    if (!detail || !["queued", "running"].includes(detail.run.status)) return;
+    if (!active || !detail || !["queued", "running"].includes(detail.run.status)) return;
     const controller = new AbortController(), timer = window.setTimeout(() => { void loadDetail(controller.signal, true); void load(controller.signal); }, 10_000);
     return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [detail, loadDetail, load]);
+  }, [detail, loadDetail, load, active]);
   function changeFilter(setter: (value: string) => void, value: string) { setCursor(null); setPrevious([]); setHistory(null); setter(value); }
   return <section className="panel research-runs" id="research-runs"><div className="panel-header"><h2>{t("sections.runs")}</h2>
-    <button className="button button-secondary" onClick={() => void load()} disabled={loading}>{common("refresh")}</button></div>
+    <button className="button button-secondary" onClick={() => void load()} disabled={loading || !active}>{common("refresh")}</button></div>
     <div className="dates-filter-grid"><label className="field"><span>{t("fields.source")}</span><select value={source} onChange={(event) => changeFilter(setSource, event.target.value)}><option value="">{common("all")}</option>
       {sources.map((row) => <option key={row.source_id} value={row.source_id}>{row.label || row.url}</option>)}</select><ResearchHelp field="source" /></label>
       <label className="field"><span>{t("fields.city")}</span><select value={area} onChange={(event) => changeFilter(setArea, event.target.value)}><option value="">{common("all")}</option>
@@ -66,7 +68,7 @@ export default function DatesResearchRuns({ areas, sources, focusRunId, refresh 
         <button className="button button-secondary button-small" disabled={loading || history.next_cursor === null} onClick={() => { setPrevious((rows) => [...rows, cursor]); setCursor(history.next_cursor); setHistory(null); }}>{common("next")}</button></div>
     </>}
     {runId && <section className="research-run-detail"><div className="panel-header"><h3>{t("runDetail")}</h3><div className="row-actions">
-      <button className="button button-secondary" disabled={detailLoading} onClick={() => void loadDetail()}>{common("refresh")}</button>
+      <button className="button button-secondary" disabled={detailLoading || !active} onClick={() => void loadDetail()}>{common("refresh")}</button>
       <button className="button button-secondary" onClick={() => { ++detailGeneration.current; setRunId(null); setDetail(null); }}>{common("close")}</button></div></div>
       {detailError && <ErrorPanel message={t("runUnreadable")} retry={() => void loadDetail()} />}
       {detailLoading && !detail ? <LoadingPanel /> : detail && <>

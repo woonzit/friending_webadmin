@@ -53,7 +53,7 @@ test("research command is retained before sending and rapid double submits canno
 test("an unknown actor hides the command but preserves a safe same-actor retry after the in-flight response", async () => {
   const h = harness(), submit = h.render().submit("dates_event_research_source_run_now", input);
   const original = h.calls[0].command;
-  assert.equal(h.render("").pending, null);
+  assert.equal(h.render("").pending, null); assert.equal(h.render("").retained, true, "hiding an unknown actor's retry does not allow an editor to discard it");
   h.calls[0].resolve({ kind: "success", receipt: {}, runId: "xrr_example" }); await submit;
   assert.equal(h.success.length, 0);
   const recovered = h.render(); assert.equal(recovered.pending, original); assert.equal(recovered.outcome.kind, "uncertain");

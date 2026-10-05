@@ -48,7 +48,7 @@ export function ResearchAreaEditor({ row, defaults, actor, manage, limits, reloa
   const command = useResearchCommand(actor, async (answer) => { const saved = decodeResearchArea(answer.receipt); if (saved) model.adopt(areaDraft(saved), saved.revision); await reload(); close(); }, reload);
   return <form className="panel research-editor" onSubmit={(event) => { event.preventDefault(); void command.submit("dates_event_research_area_save", {
     ...(row ? { area_id: row.area_id, expected_revision: model.revision, label: model.draft.label } : { place_id: placeId }), mode: model.draft.mode, overrides: model.draft.overrides, reason }); }}>
-    <div className="panel-header"><h2>{t(row ? "editCity" : "addCity")}</h2><button type="button" className="button button-secondary" disabled={command.busy || command.pending !== null} onClick={close}>{common("close")}</button></div>
+    <div className="panel-header"><h2>{t(row ? "editCity" : "addCity")}</h2><button type="button" className="button button-secondary" disabled={command.busy || command.retained} onClick={close}>{common("close")}</button></div>
     <label className="field"><span>{t("fields.city")}</span><input value={model.draft.label} readOnly={!row} disabled={disabled || command.busy} onChange={(event) => model.set({ ...model.draft, label: event.target.value })} /><ResearchHelp field="city" effective={model.draft.label || "—"} own /></label>
     <AppearanceMapPicker center={center} radiusKm={effective.scope.kind === "radius" ? effective.scope.radius_km : null} language={locale === "hu" ? "hu" : "en"}
       disabled={disabled || command.busy || row !== null} mapReadOnly onMove={() => undefined} onCandidate={(candidate) => { setPlaceId(candidate.place_id); setCountry(candidate.country_code ?? "");
@@ -78,7 +78,7 @@ export function ResearchSourceEditor({ row, defaults, areas, actor, manage, limi
     && (values.window_days === null || Number.isSafeInteger(values.window_days) && values.window_days >= limits.window_days.min && values.window_days <= limits.window_days.max);
   return <form className="panel research-editor" onSubmit={(event) => { event.preventDefault(); void command.submit("dates_event_research_source_save", {
     ...(row ? { source_id: row.source_id, expected_revision: model.revision } : {}), ...values, reason }); }}>
-    <div className="panel-header"><h2>{t(row ? "editSource" : "addSource")}</h2><button className="button button-secondary" type="button" disabled={command.busy || command.pending !== null} onClick={close}>{common("close")}</button></div>
+    <div className="panel-header"><h2>{t(row ? "editSource" : "addSource")}</h2><button className="button button-secondary" type="button" disabled={command.busy || command.retained} onClick={close}>{common("close")}</button></div>
     <div className="form-grid">{(["url", "label"] as const).map((key) => {
       return <label className="field" key={key}><span>{t(`fields.${key}`)}</span><input type={key === "url" ? "url" : "text"} value={values[key]} disabled={disabled} required={key === "url"}
         onChange={(event) => model.set({ ...values, [key]: event.target.value })} /><ResearchHelp field={key} effective={values[key] || "—"} own /></label>;

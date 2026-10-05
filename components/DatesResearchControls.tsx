@@ -94,7 +94,7 @@ export function useResearchCommand(actor: string, onSuccess: (outcome: Extract<R
     } finally { busyRef.current = false; setBusy(false); }
   }
   const visiblePending = owner === actor ? pending : null, visibleOutcome = owner === actor ? outcome : null;
-  return { busy, pending: visiblePending, outcome: visibleOutcome, clear: () => setOutcome(null), retry: () => visiblePending ? execute(visiblePending) : Promise.resolve(),
+  return { busy, retained: pending !== null, pending: visiblePending, outcome: visibleOutcome, clear: () => setOutcome(null), retry: () => visiblePending ? execute(visiblePending) : Promise.resolve(),
     submit: async (action: DatesResearchAction, body: Record<string, unknown>) => {
       if (busyRef.current || pending) return;
       const command = prepareResearchCommand(actor, action, body);

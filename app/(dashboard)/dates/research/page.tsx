@@ -48,13 +48,18 @@ export default function DatesResearchPage() {
       setRead(result); setProblem(null); setRefresh((value) => value + 1);
       if (result.value.defaults) setDefaultsSnapshot({ actor: result.operator.email, row: result.value.defaults });
     }
-    else { setProblem(result); if (result.kind === "denied" || result.kind === "unavailable") { setRead(null); setAreaEditor(null); setSourceEditor(null); } }
+    // Keep mounted drafts/unknown commands, but a failed refresh is never a
+    // fresh actor/capability proof. Revoked/unsupported consoles are hidden.
+    else setProblem(result);
   }, []);
   useEffect(() => { const controller = new AbortController(); void load(controller.signal); return () => { controller.abort(); ++generation.current; }; }, [load]);
   const reload = useCallback(async () => { await load(); }, [load]);
   // Keep the run identity outside the source rows: a later unreadable row must
   // not remove the only safe retry for a command whose outcome is unknown.
-  const runCommand = useResearchCommand(read?.operator.email ?? "", async (answer) => { if (answer.runId) setFocusRun(answer.runId); await reload(); }, reload);
+  const confirmedActor = problem === null ? read?.operator.email ?? "" : "";
+  const manage = problem === null && read?.manage === true;
+  const hidden = problem?.kind === "denied" || problem?.kind === "unavailable";
+  const runCommand = useResearchCommand(confirmedActor, async (answer) => { if (answer.runId) setFocusRun(answer.runId); await reload(); }, reload);
   useEffect(() => { const id = new URL(window.location.href).searchParams.get("run_id"); if (id) setFocusRun(id); }, []);
   const overview = read?.value, defaults = overview?.defaults ?? (defaultsSnapshot?.actor === read?.operator.email ? defaultsSnapshot?.row : null);
   const estimate = overview ? researchMonthlyEstimate(overview.estimate, overview.budget) : null;
@@ -65,9 +70,11 @@ export default function DatesResearchPage() {
   return <>
     <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} actions={<button className="button button-secondary" disabled={loading} onClick={() => void load()}>{common("refresh")}</button>} />
     <DatesAdminTabs />
-    {loading && !read ? <LoadingPanel /> : problem?.kind === "unavailable" ? <section className="panel"><p>{t("unavailable")}</p></section>
-      : !read || !overview ? <ErrorPanel message={t(problem?.kind === "denied" ? "denied" : "unconfirmed")} retry={() => void load()} /> : <>
-      {problem && <p className="alert alert-warning" role="status">{t("refreshFailed")}{problem.kind === "refused" ? <> <code>{problem.error}</code></> : null}</p>}
+    {problem?.kind === "unavailable" && <section className="panel"><p>{t("unavailable")}</p></section>}
+    {loading && !read ? <LoadingPanel /> : problem?.kind !== "unavailable" && (!read || !overview || problem?.kind === "denied")
+      ? <ErrorPanel message={t(problem?.kind === "denied" ? "denied" : "unconfirmed")} retry={() => void load()} /> : null}
+    {read && overview && <div hidden={hidden}>
+      {problem && !hidden && <p className="alert alert-warning" role="status">{t("refreshFailed")}{problem.kind === "refused" ? <> <code>{problem.error}</code></> : null}</p>}
       {!read.manage && <p className="alert alert-info">{t("readOnly")}</p>}
       <nav className="research-sections" aria-label={t("sectionsLabel")}>{(["defaults", "cities", "sources", "runs"] as const).map((key) => <a key={key} href={`#research-${key}`}>{t(`sections.${key}`)}</a>)}</nav>
       <section className="panel research-panel" id="research-defaults"><h2>{t("budget")}</h2><div className="stat-grid">
@@ -78,8 +85,8 @@ export default function DatesResearchPage() {
         {overview.budget.research_paused && <p className="alert alert-warning">{t("budgetPaused")}</p>}
       </section>
       {!overview.defaults && <p className="alert alert-warning">{t("defaultsUnreadable")}</p>}
-      {defaults && <ResearchDefaultsEditor key={read.operator.email} defaults={defaults} actor={read.operator.email} manage={read.manage && overview.defaults !== null} limits={overview.limits} reload={reload} />}
-      <section className="panel research-panel" id="research-cities"><div className="panel-header"><h2>{t("sections.cities")}</h2>{read.manage && overview.defaults && <button className="button button-primary" disabled={areaEditor !== null} onClick={() => setAreaEditor("new")}>{t("addCity")}</button>}</div>
+      {defaults && <ResearchDefaultsEditor key={read.operator.email} defaults={defaults} actor={confirmedActor} manage={manage && overview.defaults !== null} limits={overview.limits} reload={reload} />}
+      <section className="panel research-panel" id="research-cities"><div className="panel-header"><h2>{t("sections.cities")}</h2>{manage && overview.defaults && <button className="button button-primary" disabled={areaEditor !== null} onClick={() => setAreaEditor("new")}>{t("addCity")}</button>}</div>
         <p>{t("citiesHint")}</p>{overview.areas.unreadable.map((row) => <p className="alert alert-warning" key={row.index}>{t("unreadableRow", { row: row.index + 1 })}{row.id ? <> <code>{row.id}</code></> : null}</p>)}
         {overview.areas.rows.length === 0 && overview.areas.unreadable.length === 0 ? <p>{t("citiesEmpty")}</p> : <div className="table-wrap"><table className="data-table"><thead><tr>
           {["city", "members", "state", "effective", "stock", "time", "cost", "actions"].map((key) => <th key={key}>{t(`columns.${key}`)}</th>)}</tr></thead><tbody>
@@ -93,18 +100,18 @@ export default function DatesResearchPage() {
               <td><button className="button button-secondary button-small" disabled={!overview.defaults || areaEditor !== null} onClick={() => { setAreaSnapshot({ actor: read.operator.email, row }); setAreaEditor(row.area_id); }}>{common("edit")}</button></td></tr>;
           })}</tbody></table></div>}
       </section>
-      {areaEditor !== null && defaults && (areaEditor === "new" || editedArea) && <ResearchAreaEditor key={`${read.operator.email}:${areaEditor}`} row={editedArea} defaults={defaults} actor={read.operator.email} manage={read.manage && overview.defaults !== null && (areaEditor === "new" || area !== null)} limits={overview.limits} reload={reload} close={() => setAreaEditor(null)} />}
+      {areaEditor !== null && defaults && (areaEditor === "new" || editedArea) && <ResearchAreaEditor key={`${read.operator.email}:${areaEditor}`} row={editedArea} defaults={defaults} actor={confirmedActor} manage={manage && overview.defaults !== null && (areaEditor === "new" || area !== null)} limits={overview.limits} reload={reload} close={() => setAreaEditor(null)} />}
       {areaEditor !== null && areaEditor !== "new" && !area && <p className="alert alert-warning">{t("editedRowUnavailable")}</p>}
-      <section className="panel research-panel" id="research-sources"><div className="panel-header"><h2>{t("sections.sources")}</h2>{read.manage && overview.defaults && <button className="button button-primary" disabled={sourceEditor !== null} onClick={() => setSourceEditor("new")}>{t("addSource")}</button>}</div>
+      <section className="panel research-panel" id="research-sources"><div className="panel-header"><h2>{t("sections.sources")}</h2>{manage && overview.defaults && <button className="button button-primary" disabled={sourceEditor !== null} onClick={() => setSourceEditor("new")}>{t("addSource")}</button>}</div>
         <p>{t("sourcesHint")}</p>{overview.sources.unreadable.map((row) => <p className="alert alert-warning" key={row.index}>{t("unreadableRow", { row: row.index + 1 })}{row.id ? <> <code>{row.id}</code></> : null}</p>)}
         {overview.sources.rows.length === 0 && overview.sources.unreadable.length === 0 ? <p>{t("sourcesEmpty")}</p> : <div className="table-wrap"><table className="data-table"><thead><tr>
           {["source", "intervalStock", "robots", "time", "cost", "actions"].map((key) => <th key={key}>{t(`columns.${key}`)}</th>)}</tr></thead><tbody>
-          {overview.sources.rows.map((row) => <SourceRow key={row.source_id} row={row} read={read} command={runCommand} onEdit={() => { setSourceSnapshot({ actor: read.operator.email, row }); setSourceEditor(row.source_id); }} editing={sourceEditor !== null || !overview.defaults} />)}</tbody></table></div>}
+          {overview.sources.rows.map((row) => <SourceRow key={row.source_id} row={row} read={{ ...read, manage }} command={runCommand} onEdit={() => { setSourceSnapshot({ actor: read.operator.email, row }); setSourceEditor(row.source_id); }} editing={sourceEditor !== null || !overview.defaults} />)}</tbody></table></div>}
         <ResearchCommandFeedback command={runCommand} />
       </section>
-      {sourceEditor !== null && defaults && (sourceEditor === "new" || editedSource) && <ResearchSourceEditor key={`${read.operator.email}:${sourceEditor}`} row={editedSource} defaults={defaults} areas={overview.areas.rows} actor={read.operator.email} manage={read.manage && overview.defaults !== null && (sourceEditor === "new" || source !== null)} limits={overview.limits} reload={reload} close={() => setSourceEditor(null)} />}
+      {sourceEditor !== null && defaults && (sourceEditor === "new" || editedSource) && <ResearchSourceEditor key={`${read.operator.email}:${sourceEditor}`} row={editedSource} defaults={defaults} areas={overview.areas.rows} actor={confirmedActor} manage={manage && overview.defaults !== null && (sourceEditor === "new" || source !== null)} limits={overview.limits} reload={reload} close={() => setSourceEditor(null)} />}
       {sourceEditor !== null && sourceEditor !== "new" && !source && <p className="alert alert-warning">{t("editedRowUnavailable")}</p>}
-      <DatesResearchRuns areas={overview.areas.rows} sources={overview.sources.rows} focusRunId={focusRun} refresh={refresh} />
-    </>}
+      <DatesResearchRuns areas={overview.areas.rows} sources={overview.sources.rows} focusRunId={focusRun} refresh={refresh} active={confirmedActor !== ""} />
+    </div>}
   </>;
 }
