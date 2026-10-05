@@ -56,6 +56,18 @@ test("DERIVED: history decodes every status and drop reason, a damaged run stays
   const value = decodeResearchRunList({ ...DERIVED_ENVELOPE, runs: [DERIVED_RUN, { ...DERIVED_RUN, run_id: "other", status: "future" }], next_cursor: null })!;
   assert.equal(value.rows.length, 1); assert.equal(value.unreadable.length, 1);
 });
+test("DERIVED: history and detail keep Core's public terminal revision trace while stripping worker and member material", () => {
+  for (const [status, before, after] of [["running", null, null], ["completed", 2, 3]] as const) {
+    const run = { ...DERIVED_RUN, status, source_revision_before: before, source_revision_after: after };
+    const privateRun = { ...run, work: { prompt: "Derived private worker text" }, lease: { holder: "derived-worker" }, members: [{ uid: 123 }] };
+    const list = { ...DERIVED_ENVELOPE, runs: [run], next_cursor: null };
+    assert.deepEqual(projectDatesAdminBody("dates_event_research_run_list", { ...list, runs: [privateRun] }), list);
+    const detail = { ...DERIVED_ENVELOPE, run: { ...run, candidates: [DERIVED_CANDIDATE] } };
+    assert.deepEqual(projectDatesAdminBody("dates_event_research_run_detail", { ...detail, run: { ...privateRun, candidates: [DERIVED_CANDIDATE] } }), detail);
+    assert.equal(decodeResearchRunList(list)!.rows[0].status, status);
+    assert.ok(decodeResearchRunDetail(detail, run.run_id));
+  }
+});
 test("DERIVED: candidates degrade separately and every outcome is represented", () => {
   for (const outcome of DATES_RESEARCH_CANDIDATE_OUTCOMES) {
     const value = decodeResearchRunDetail({ ...DERIVED_ENVELOPE, run: { ...DERIVED_RUN, candidates: [{ ...DERIVED_CANDIDATE, outcome }, { ...DERIVED_CANDIDATE, outcome: "future" }] } }, DERIVED_RUN.run_id)!;

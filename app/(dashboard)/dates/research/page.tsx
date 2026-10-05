@@ -16,6 +16,7 @@ import { formatDate, formatNumber } from "@/lib/format";
 type Ready = Extract<ResearchRead<ResearchOverview>, { kind: "ready" }>;
 function SourceRow({ row, read, command, onEdit, editing }: { row: ResearchSource; read: Ready; command: ReturnType<typeof useResearchCommand>; onEdit: () => void; editing: boolean }) {
   const t = useTranslations("datesAdmin.research"), common = useTranslations("common"), locale = useLocale();
+  const newRunsAllowed = read.value.defaults?.enabled === true;
   return <tr><td><strong>{row.label || row.url}</strong><div className="research-url">{row.url}</div><small>{row.registrable_domain}</small>
     <div>{t(`sourceTypes.${row.type}`)} · {common(row.enabled ? "enabled" : "disabled")}{row.archived ? ` · ${t("archived")}` : ""}</div>
     <small>{row.area_id ? read.value.areas.rows.find((area) => area.area_id === row.area_id)?.label ?? t("unavailableCity", { id: row.area_id }) : t("noCity")}</small></td>
@@ -26,9 +27,9 @@ function SourceRow({ row, read, command, onEdit, editing }: { row: ResearchSourc
     <td>{formatDate(row.last_check?.finished_at, locale, true)}<div><small>{t("next")}: {formatDate(row.next_check_at, locale, true)}</small></div></td>
     <td>{researchCost(row.month_cost_micro_usd, locale)}</td><td><div className="row-actions">
       <button className="button button-secondary button-small" disabled={editing || command.busy || command.pending !== null} onClick={onEdit}>{common("edit")}</button>
-      {read.manage && <><button className="button button-secondary button-small" disabled={row.archived || command.busy || command.pending !== null}
+      {read.manage && <><button className="button button-secondary button-small" disabled={!newRunsAllowed || row.archived || command.busy || command.pending !== null}
         onClick={() => void command.submit("dates_event_research_source_run_now", { source_id: row.source_id, expected_revision: row.revision, dry_run: true })}>{t("test")}</button>
-        <button className="button button-primary button-small" disabled={row.archived || command.busy || command.pending !== null}
+        <button className="button button-primary button-small" disabled={!newRunsAllowed || row.archived || !row.enabled || command.busy || command.pending !== null}
           onClick={() => void command.submit("dates_event_research_source_run_now", { source_id: row.source_id, expected_revision: row.revision, dry_run: false })}>{t("runNow")}</button></>}
     </div></td></tr>;
 }

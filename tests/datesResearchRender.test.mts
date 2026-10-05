@@ -99,6 +99,19 @@ for (const locale of ["en", "hu"]) {
       assert.equal(html.includes(escaped(messages(locale).common.retry)), kind === "uncertain");
     }
   });
+  test(`render ${locale}: confirmed master/source refusals explain the next step; uncertain answers keep retry guidance`, () => {
+    const copy = messages(locale).datesAdmin.research;
+    for (const error of ["dates-research-disabled", "dates-research-source-disabled"]) {
+      const command: any = { outcome: { kind: "refused", error }, pending: null, busy: false, retry: async () => {} };
+      const refused = render(locale, createElement(ResearchCommandFeedback, { command }));
+      assert.ok(refused.includes(escaped(copy.commandErrors[error])));
+      assert.ok(refused.includes(`<code>${error}</code>`));
+      const uncertain = render(locale, createElement(ResearchCommandFeedback, { command: { ...command, outcome: { kind: "uncertain", error }, pending: {} } }));
+      assert.equal(uncertain.includes(escaped(copy.commandErrors[error])), false);
+      assert.ok(uncertain.includes(escaped(copy.command.uncertain)));
+      assert.ok(uncertain.includes(escaped(messages(locale).common.retry)));
+    }
+  });
 }
 test("research EN/HU key trees match exactly, including help and closed vocabulary labels", () => {
   const paths = (value: unknown, prefix = ""): string[] => value && typeof value === "object" ? Object.entries(value).flatMap(([key, child]) => paths(child, `${prefix}.${key}`)).sort() : [prefix];

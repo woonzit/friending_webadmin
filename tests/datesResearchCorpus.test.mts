@@ -2,12 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
-import { decodeResearchArea, decodeResearchDefaults, decodeResearchOverview, decodeResearchSource,
+import { decodeResearchArea, decodeResearchBatchReceipt, decodeResearchDefaults, decodeResearchOverview, decodeResearchRunDetail, decodeResearchRunList, decodeResearchSource,
   DATES_RESEARCH_MODES, DATES_RESEARCH_SCOPE_KINDS, DATES_RESEARCH_SOURCE_TYPES, DATES_RESEARCH_NOT_RUNNING_REASONS,
   DATES_RESEARCH_ROBOTS_STATES, DATES_RESEARCH_RUN_KINDS, DATES_RESEARCH_RUN_TRIGGERS, DATES_RESEARCH_RUN_STATUSES,
-  DATES_RESEARCH_CANDIDATE_OUTCOMES, DATES_RESEARCH_DROP_REASONS } from "../lib/datesResearchAdmin.ts";
+  DATES_RESEARCH_CANDIDATE_OUTCOMES, DATES_RESEARCH_DROP_REASONS, DATES_RESEARCH_BATCH_OUTCOMES } from "../lib/datesResearchAdmin.ts";
 import { projectDatesAdminBody } from "../lib/datesAdminProjection.ts";
-import { datesIntakeRefusal } from "../lib/datesIntakeAdmin.ts";
+import { datesIntakeRefusal, projectDatesIntakeQueue } from "../lib/datesIntakeAdmin.ts";
 import { decodeResearchCommandReceipt, prepareResearchCommand, runResearchCommand } from "../lib/datesResearchConsole.ts";
 import { researchDefaultValues, researchRunningState, researchStock } from "../lib/datesResearchView.ts";
 import { GENUINE_DEFAULTS, researchFixture } from "./support/datesResearchCorpus.ts";
@@ -18,9 +18,14 @@ const hash = (value: string | Buffer) => createHash("sha256").update(value).dige
 const manifest = JSON.parse(bytes("manifest.json").toString());
 const pin = JSON.parse(readFileSync(new URL("./support/datesResearchProviderPin.json", import.meta.url), "utf8"));
 const fixtures: { file: string; body: any; status_code: number; sha256: string }[] = manifest.fixtures.map((entry: any) => ({ ...entry, body: JSON.parse(bytes(entry.file).toString()) }));
-// Part A captures four selected routes. Refusals without a payload use the
-// defaults save's identical refusal envelope; current rows identify their save.
+// Payloads identify their selected action. Refusal filenames identify their
+// originating route; common boundary refusals share the same envelope.
 function route(file: string, body: any): string {
+  if (body.intakes || file.startsWith("admin-intake-list-")) return "dates_event_intake_list";
+  if (body.results || file.startsWith("admin-batch-")) return "dates_event_intake_batch_decide";
+  if (body.runs || file.startsWith("admin-run-list-")) return "dates_event_research_run_list";
+  if (typeof body.run_id === "string" || file.startsWith("admin-source-run-")) return "dates_event_research_source_run_now";
+  if (body.run || file.startsWith("admin-run-")) return "dates_event_research_run_detail";
   if (body.areas || file.startsWith("admin-overview-") || file.startsWith("admin-read-")) return "dates_event_research_overview";
   if (body.area || file.startsWith("admin-area-") || file.startsWith("admin-client-geometry-") || file.startsWith("admin-place-")) return "dates_event_research_area_save";
   if (body.source || file.startsWith("admin-source-") || file.startsWith("admin-aggregator-")) return "dates_event_research_source_save";
@@ -42,8 +47,42 @@ for (const { file, body, status_code } of fixtures) test(`GENUINE research body:
   assert.deepEqual(projectDatesAdminBody(route(file, body), body), body, "no named genuine field is lost by the production bridge projection");
   if (body.success === false) {
     assert.deepEqual(datesIntakeRefusal(body), { kind: "core", error: body.error, status: body.status_code });
-    if (body.current) assert.ok(decodeResearchDefaults(body.current), "authoritative conflict row decodes");
+    if (body.current) {
+      const decode = body.current.source_id ? decodeResearchSource : body.current.area_id ? decodeResearchArea : decodeResearchDefaults;
+      assert.ok(decode(body.current), "authoritative conflict row decodes");
+    }
     return;
+  }
+  if (body.runs) {
+    const value = decodeResearchRunList(body)!; assert.ok(value);
+    assert.equal(value.unreadable.length, 0); assert.equal(value.rows.length, body.runs.length);
+    assert.equal(value.next_cursor, body.next_cursor); return;
+  }
+  if (body.run) {
+    const value = decodeResearchRunDetail(body, body.run.run_id)!; assert.ok(value);
+    assert.ok(value.candidates); assert.equal(value.candidates.unreadable.length, 0);
+    assert.equal(value.candidates.rows.length, body.run.candidates.length); return;
+  }
+  if (body.intakes) {
+    const value = projectDatesIntakeQueue(body, { page: body.page, limit: body.limit })!; assert.ok(value);
+    assert.equal(value.unreadable_rows.length, 0); assert.equal(value.intakes.length, body.intakes.length);
+    for (const row of value.intakes) {
+      assert.deepEqual(row.lease, body.intakes.find((raw: any) => raw.intake_id === row.intake_id).lease);
+      assert.equal(row.research_run_id, body.intakes.find((raw: any) => raw.intake_id === row.intake_id).research_run_id);
+    }
+    return;
+  }
+  if (body.results) {
+    const ids = body.results.map((row: any) => row.intake_id);
+    assert.deepEqual(decodeResearchBatchReceipt(body, ids), body.results); return;
+  }
+  if (body.run_id) {
+    // DERIVED matching input for this unchanged genuine receipt: decoding and
+    // echoed identity, not a claim about the capture's original request.
+    const command = prepareResearchCommand("admin@example.test", "dates_event_research_source_run_now", {
+      source_id: body.source_id, expected_revision: body.source_revision - 1, dry_run: body.dry_run,
+    });
+    assert.ok(command); assert.equal(decodeResearchCommandReceipt(command!, body)?.kind, "success"); return;
   }
   if (body.areas) {
     const value = decodeResearchOverview(body)!; assert.ok(value); assert.ok(value.defaults);
@@ -67,21 +106,39 @@ for (const { file, body, status_code } of fixtures) test(`GENUINE research body:
     assert.ok(command); assert.equal(decodeResearchCommandReceipt(command!, body)?.kind, "success", "unchanged genuine receipt binds to its row/revision");
   }
 });
-test("genuine Part A vocabulary coverage is observed, not inferred from declarations; Part B is explicitly pending", () => {
+test("genuine pinned vocabulary coverage is observed, not inferred from declarations; pending stages are explicit", () => {
   const expected = { mode: DATES_RESEARCH_MODES, scope_kind: DATES_RESEARCH_SCOPE_KINDS, source_type: DATES_RESEARCH_SOURCE_TYPES,
     not_running_reason: DATES_RESEARCH_NOT_RUNNING_REASONS, robots_state: DATES_RESEARCH_ROBOTS_STATES, run_trigger: DATES_RESEARCH_RUN_TRIGGERS,
-    run_status: DATES_RESEARCH_RUN_STATUSES, candidate_outcome: DATES_RESEARCH_CANDIDATE_OUTCOMES, drop_reason: DATES_RESEARCH_DROP_REASONS };
-  for (const [key, values] of Object.entries(expected)) assert.deepEqual([...manifest.vocabularies[key]].sort(), [...values].sort(), key);
+    run_status: DATES_RESEARCH_RUN_STATUSES, candidate_outcome: DATES_RESEARCH_CANDIDATE_OUTCOMES, drop_reason: DATES_RESEARCH_DROP_REASONS,
+    run_kind: DATES_RESEARCH_RUN_KINDS, batch_outcome: DATES_RESEARCH_BATCH_OUTCOMES };
+  for (const [key, values] of Object.entries(expected)) {
+    if (key !== "run_kind" && (key !== "batch_outcome" || manifest.vocabularies.batch_outcome))
+      assert.deepEqual([...manifest.vocabularies[key]].sort(), [...values].sort(), key);
+  }
   assert.deepEqual(manifest.vocabularies.run_kind.filter((kind: string) => kind !== "area"), [...DATES_RESEARCH_RUN_KINDS]);
-  assert.equal(manifest.coverage.stage, "part_a"); assert.equal(manifest.coverage.pending_part_b.length, 3); assert.ok(manifest.coverage.pending_p3b.length);
+  const stage = pin.coverage_stage ?? "part_a";
+  assert.equal(manifest.coverage.stage, stage); assert.ok(manifest.coverage.pending_p3b.length);
+  if (stage === "part_a") assert.equal(manifest.coverage.pending_part_b.length, 3);
+  else {
+    assert.equal(stage, "p3a_final"); assert.deepEqual(manifest.coverage.pending_part_b, []);
+    for (const [key, values] of Object.entries(expected)) assert.deepEqual([...manifest.coverage.covered_values[key]].sort(), [...values].sort(), key);
+  }
   const observed: Record<string, Set<string>> = Object.fromEntries(Object.keys(manifest.coverage.covered_values).map((key) => [key, new Set<string>()]));
-  const scope = (row: any) => { if (row?.scope) observed.scope_kind.add(row.scope.kind); };
-  const area = (row: any) => { observed.mode.add(row.mode); if (row.not_running_reason) observed.not_running_reason.add(row.not_running_reason); scope(row.overrides); scope(row.effective); };
-  const source = (row: any) => { observed.source_type.add(row.type); observed.robots_state.add(row.robots.state); };
+  const add = (key: string, value: string | null | undefined) => { if (value != null) observed[key]?.add(value); };
+  const scope = (row: any) => { if (row?.scope) add("scope_kind", row.scope.kind); };
+  const area = (row: any) => { add("mode", row.mode); add("not_running_reason", row.not_running_reason); scope(row.overrides); scope(row.effective); };
+  const source = (row: any) => { add("source_type", row.type); add("robots_state", row.robots.state); };
+  const run = (row: any) => {
+    add("run_kind", row.kind); add("run_trigger", row.trigger); add("run_status", row.status);
+    for (const entry of row.dropped) add("drop_reason", entry.reason);
+    for (const candidate of row.candidates ?? []) { add("candidate_outcome", candidate.outcome); add("drop_reason", candidate.reason); }
+  };
   for (const { body } of fixtures) {
     if (!body.success) continue;
     scope(body.defaults); if (body.area) area(body.area); for (const row of body.areas ?? []) area(row);
     if (body.source) source(body.source); for (const row of body.sources ?? []) source(row);
+    if (body.run) run(body.run); for (const row of body.runs ?? []) run(row);
+    for (const row of body.results ?? []) add("batch_outcome", row.outcome);
   }
   for (const [key, values] of Object.entries(observed)) assert.deepEqual([...values].sort(), [...manifest.coverage.covered_values[key]].sort(), key);
 });

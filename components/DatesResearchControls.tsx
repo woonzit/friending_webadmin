@@ -110,5 +110,6 @@ export function ResearchCommandFeedback({ command, children }: { command: Return
   if (!outcome) return null;
   return <div className={`alert alert-${outcome.kind === "success" ? "success" : outcome.kind === "conflict" ? "warning" : "error"}`} role="status">
     <p>{t(`command.${outcome.kind}`)}{outcome.kind !== "success" && outcome.error ? <> <code>{outcome.error}</code></> : null}</p>
+    {outcome.kind === "refused" && t.has(`commandErrors.${outcome.error}`) && <p>{t(`commandErrors.${outcome.error}`)}</p>}
     {command.pending && <button type="button" className="button button-secondary" disabled={command.busy} onClick={() => void command.retry()}>{common("retry")}</button>}{children}</div>;
 }

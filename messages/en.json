@@ -8378,6 +8378,10 @@
         "refused": "The command was refused.",
         "uncertain": "The outcome is not known. Retry sends the exact same command and idempotency key."
       },
+      "commandErrors": {
+        "dates-research-disabled": "Turn on research in Defaults to start a new check or preview.",
+        "dates-research-source-disabled": "A live check requires an enabled source. An archived source cannot be checked or previewed."
+      },
       "batch": {
         "title": "Decide this run's intakes together",
         "hint": "Open and check each intake, then take its review hold. Choose up to {count} intakes from this page. The four publication confirmations apply once to the chosen batch.",
@@ -8407,13 +8411,13 @@
       "help": {
         "enabled": {
           "purpose": "Master switch for collection checks and city research.",
-          "effect": "Off stops automatic research for every city and source.",
+          "effect": "Off stops research for every city and source and prevents new manual checks and previews. An earlier request can still be retried to confirm its result.",
           "cost": "No new research AI spend while off."
         },
         "source_enabled": {
           "purpose": "Enable automatic checks for this collection source.",
-          "effect": "The master research switch, robots policy, stock and budget still apply.",
-          "cost": "A disabled source starts no scheduled checks. Manual checks are separate commands."
+          "effect": "A live check requires an enabled source. A disabled source can still be previewed while the research master switch is on; robots policy, stock and budget still apply.",
+          "cost": "A disabled source starts no scheduled or live checks. A preview can still incur AI costs but imports no events."
         },
         "auto_cities_enabled": {
           "purpose": "Lets cities in automatic mode start at their member threshold.",

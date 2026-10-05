@@ -15,7 +15,7 @@ const source = {
   effective: leaf("window_days autopublish"), robots: leaf("state checked_at"), stock: leaf("upcoming max missing"), last_check: last,
 };
 const run = {
-  ...leaf("run_id kind dry_run trigger source_id area_id status found imported duplicates cost_micro_usd started_at finished_at"),
+  ...leaf("run_id kind dry_run trigger source_id area_id status found imported duplicates cost_micro_usd started_at finished_at source_revision_before source_revision_after"),
   dropped: [leaf("reason count")], candidates: [leaf("title date_text url_host outcome reason intake_id")],
 };
 /** Counts and public source metadata only. No raw document, member, provider prompt or response is kept. */

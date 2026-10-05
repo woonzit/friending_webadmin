@@ -8378,6 +8378,10 @@
         "refused": "A műveletet a rendszer elutasította.",
         "uncertain": "A művelet eredménye nem ismert. Az újrapróbálás pontosan ugyanazt a kérést és azonosítót küldi el."
       },
+      "commandErrors": {
+        "dates-research-disabled": "Új átnézéshez vagy próbához kapcsold be a kutatást az Alapértékeknél.",
+        "dates-research-source-disabled": "Éles átnézés csak bekapcsolt forráson indítható. Archivált forráson próba sem indítható."
+      },
       "batch": {
         "title": "A futás beküldéseinek közös elbírálása",
         "hint": "Nyisd meg és ellenőrizd a beküldéseket, majd vedd át őket átnézésre. Erről az oldalról legfeljebb {count} beküldést jelölhetsz ki. A négy közzétételi megerősítés egyszer vonatkozik a kijelölt csoportra.",
@@ -8407,13 +8411,13 @@
       "help": {
         "enabled": {
           "purpose": "A gyűjtőoldalak ellenőrzésének és a városi kutatásnak a főkapcsolója.",
-          "effect": "Kikapcsolva minden város és forrás automatikus kutatása leáll.",
+          "effect": "Kikapcsolva minden város és forrás kutatása leáll, új kézi átnézés és próba sem indítható. Egy korábbi kérés újrapróbálásával továbbra is ellenőrizheted az eredményét.",
           "cost": "Kikapcsolva nem indul új kutatási MI-költés."
         },
         "source_enabled": {
           "purpose": "A gyűjtőoldal automatikus ellenőrzéseinek bekapcsolása.",
-          "effect": "A kutatás főkapcsolója, a robots szabályai, az eseményszám és a keret továbbra is érvényesek.",
-          "cost": "Kikapcsolt forrásnál nem indul ütemezett ellenőrzés. A kézi ellenőrzés külön parancs."
+          "effect": "Éles átnézés csak bekapcsolt forráson indítható. Kikapcsolt forráson is indítható próba, ha a kutatás főkapcsolója be van kapcsolva; a robots szabályai, az eseményszám és a keret továbbra is érvényesek.",
+          "cost": "Kikapcsolt forrásnál nem indul ütemezett vagy éles átnézés. A próba járhat MI-költséggel, de nem importál eseményt."
         },
         "auto_cities_enabled": {
           "purpose": "Az automatikus városok a taglétszám elérésekor indulhatnak.",

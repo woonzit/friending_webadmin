@@ -6,7 +6,7 @@ import ts from "typescript";
 import { decodeResearchOverview } from "../lib/datesResearchAdmin.ts";
 import { researchCost, researchDistanceUnit, researchMonthlyEstimate, researchStock } from "../lib/datesResearchView.ts";
 import { formatDate, formatNumber } from "../lib/format.ts";
-import { DERIVED_OVERVIEW } from "./support/datesResearchCorpus.ts";
+import { DERIVED_OVERVIEW, GENUINE_SOURCE } from "./support/datesResearchCorpus.ts";
 
 // Production page handlers under a controlled hook scheduler; not a browser/React mount.
 // Element descriptors verify stable mounted editor identity and actor/write props.
@@ -40,8 +40,34 @@ function harness() {
   function render() { index = 0; const result = context.exports.default(); for (const effect of effects.splice(0)) effect(); return elements(result); }
   async function answer(value: any) { assert.ok(requests.length); requests.shift()!(value); await Promise.resolve(); await Promise.resolve(); }
   function refresh(nodes: Element[]) { nodes.find((node) => node.type === "PageHeader")!.props.actions.props.onClick(); }
-  return { render, answer, refresh, actors };
+  return { render, answer, refresh, actors, sourceRow: (props: any) => elements(context.SourceRow(props)) };
 }
+test("DERIVED source row: new checks require the master switch; disabled-source preview is allowed and archives allow neither", () => {
+  const h = harness(), calls: { action: string; body: Record<string, unknown> }[] = [];
+  const command = { busy: false, pending: null, submit: (action: string, body: Record<string, unknown>) => { calls.push({ action, body: structuredClone(body) }); } };
+  for (const master of [true, false]) for (const [enabled, archived] of [[false, false], [true, false], [true, true], [false, true]]) {
+    const row = { ...GENUINE_SOURCE, enabled, archived };
+    const read = ready(); read.value!.defaults!.enabled = master;
+    const nodes = h.sourceRow({ row, read, command, onEdit: () => {}, editing: false });
+    const preview = nodes.find((node) => node.type === "button" && node.children.includes("test"))!;
+    const real = nodes.find((node) => node.type === "button" && node.children.includes("runNow"))!;
+    assert.equal(preview.props.disabled, !master || archived);
+    assert.equal(real.props.disabled, !master || archived || !enabled);
+    if (!preview.props.disabled) {
+      preview.props.onClick();
+      assert.deepEqual(calls.at(-1)?.body, { source_id: row.source_id, expected_revision: row.revision, dry_run: true });
+    }
+    if (!real.props.disabled) {
+      real.props.onClick();
+      assert.deepEqual(calls.at(-1)?.body, { source_id: row.source_id, expected_revision: row.revision, dry_run: false });
+    }
+  }
+  const unknown = ready(); unknown.value!.defaults = null;
+  const blocked = h.sourceRow({ row: GENUINE_SOURCE, read: unknown, command, onEdit: () => {}, editing: false });
+  for (const label of ["test", "runNow"]) assert.equal(blocked.find((node) => node.type === "button" && node.children.includes(label))!.props.disabled, true);
+  assert.equal(calls.length, 3);
+  assert.ok(calls.every((call) => call.action === "dates_event_research_source_run_now"));
+});
 for (const kind of ["unconfirmed", "denied", "unavailable"] as const) test(`research page ${kind}: fences stale actor and preserves mounted drafts/command owners`, async () => {
   const h = harness(); h.render(); await h.answer(ready());
   let nodes = h.render(); const before = nodes.find((node) => node.type === "ResearchDefaultsEditor")!;
