@@ -5,10 +5,11 @@ import { createElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { ResearchAreaEditor, ResearchDefaultsEditor, ResearchSourceEditor } from "../components/DatesResearchEditors.tsx";
-import { ResearchCommandFeedback, ResearchHelp, ResearchValuesFields } from "../components/DatesResearchControls.tsx";
+import { ResearchCommandFeedback, ResearchHelp, ResearchReason, ResearchValuesFields } from "../components/DatesResearchControls.tsx";
 import DatesResearchRuns from "../components/DatesResearchRuns.tsx";
 import DatesResearchBatch from "../components/DatesResearchBatch.tsx";
 import { DATES_RESEARCH_VALUE_FIELDS } from "../lib/datesResearchAdmin.ts";
+import { researchAuditReason } from "../lib/datesResearchProxy.ts";
 import { GENUINE_AREA, GENUINE_DEFAULTS, GENUINE_LIMITS, GENUINE_SOURCE } from "./support/datesResearchCorpus.ts";
 
 // Static renders of real components; no browser, mounted effects or provider
@@ -25,6 +26,15 @@ function render(locale: string, ...children: ReactNode[]) {
 }
 const props = { actor: "operator@example.test", manage: true, limits: GENUINE_LIMITS, reload: async () => {}, close: () => {} };
 for (const locale of ["en", "hu"]) {
+  test(`DERIVED render ${locale}: reason input does not narrow Core's trimmed Unicode bounds`, () => {
+    for (const reason of ["😀".repeat(1000), `${" ".repeat(1001)}abc${" ".repeat(1001)}`]) {
+      assert.equal(researchAuditReason(reason), true);
+      const html = render(locale, createElement(ResearchReason, { value: reason, disabled: false, onChange: () => {} }));
+      assert.match(html, /<textarea required="">/);
+      assert.doesNotMatch(html, /\b(?:minlength|maxlength)=/i);
+      assert.ok(html.includes(escaped(reason)));
+    }
+  });
   test(`DERIVED render ${locale}: defaults include every effective value, purpose, effect and cost`, () => {
     const copy = messages(locale).datesAdmin.research;
     const html = render(locale, createElement(ResearchDefaultsEditor, { ...props, defaults: GENUINE_DEFAULTS }));

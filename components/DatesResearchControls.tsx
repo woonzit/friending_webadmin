@@ -69,7 +69,9 @@ export function ResearchValuesFields({ values, limits, disabled, unit, onUnit, o
 }
 export function ResearchReason({ value, disabled, onChange }: { value: string; disabled: boolean; onChange: (value: string) => void }) {
   const t = useTranslations("datesAdmin.research");
-  return <label className="field field-full"><span>{t("fields.reason")}</span><textarea value={value} disabled={disabled} required minLength={3} maxLength={1000} onChange={(event) => onChange(event.target.value)} />
+  // Parents and the proxy use researchAuditReason: native length limits count
+  // untrimmed UTF-16 units, unlike Core's trimmed Unicode character count.
+  return <label className="field field-full"><span>{t("fields.reason")}</span><textarea value={value} disabled={disabled} required onChange={(event) => onChange(event.target.value)} />
     <ResearchHelp field="reason" /></label>;
 }
 export function useResearchCommand(actor: string, onSuccess: (outcome: Extract<ResearchCommandOutcome, { kind: "success" }>) => Promise<void> | void,
