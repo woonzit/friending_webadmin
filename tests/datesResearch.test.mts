@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { decodeResearchOverview, decodeResearchRunList, decodeResearchRunDetail, decodeResearchBatchReceipt, DATES_RESEARCH_MODES, DATES_RESEARCH_NOT_RUNNING_REASONS,
+import { decodeResearchOverview, decodeResearchRunList, decodeResearchRunDetail, decodeResearchBatchReceipt, decodeResearchBatchRows, DATES_RESEARCH_MODES, DATES_RESEARCH_NOT_RUNNING_REASONS,
   DATES_RESEARCH_ROBOTS_STATES, DATES_RESEARCH_SOURCE_TYPES, DATES_RESEARCH_RUN_STATUSES, DATES_RESEARCH_DROP_REASONS, DATES_RESEARCH_CANDIDATE_OUTCOMES } from "../lib/datesResearchAdmin.ts";
 import { researchCost, researchDistanceUnit, researchDistanceToKm, researchDistanceFromKm, researchTimeFromHours, researchTimeToHours, researchEffective,
   researchEffectiveValues, researchRunningState, researchStock, researchMonthlyEstimate, researchEditsAfterConflict, researchValuesIssue } from "../lib/datesResearchView.ts";
@@ -63,6 +63,8 @@ test("DERIVED: candidates degrade separately and every outcome is represented", 
   }
   assert.equal(decodeResearchRunDetail({ ...DERIVED_ENVELOPE, run: { ...DERIVED_RUN, candidates: null } }, DERIVED_RUN.run_id)!.candidates, null);
   assert.equal(decodeResearchRunDetail({ ...DERIVED_ENVELOPE, run: DERIVED_RUN }, "wrong-run"), null);
+  const extra = { ...DERIVED_CANDIDATE, "": "an unknown extra key" };
+  assert.equal(decodeResearchRunDetail({ ...DERIVED_ENVELOPE, run: { ...DERIVED_RUN, candidates: [extra, extra] } }, DERIVED_RUN.run_id)!.candidates!.rows.length, 2);
 });
 test("effective values preserve false overrides and identify their source", () => {
   const defaults = { ...GENUINE_DEFAULTS, autopublish: true }, overrides = { ...GENUINE_AREA.overrides, autopublish: false, cadence_hours: 12 };
@@ -176,6 +178,25 @@ test("DERIVED: batch results are bound to every chosen intake and mixed refusal 
   const request = { intake_ids: ids, expected_revisions: { [ids[0]]: 2, [ids[1]]: 3 }, action: "publish", confirmations: { source: true, public_venue: true, timezone: true, content_safe: true }, reason: "Reviewed both", idempotency_key: key };
   assert.ok(normalizeDatesResearchProxyBody("dates_event_intake_batch_decide", request));
   assert.equal(normalizeDatesResearchProxyBody("dates_event_intake_batch_decide", { ...request, expected_revisions: { [ids[0]]: 2 } }), null);
+});
+test("DERIVED: an unknown batch outcome makes only its row unreadable while retaining the command for exact retry", async () => {
+  const ids = ["xin_" + "1".repeat(32), "xin_" + "2".repeat(32)];
+  const request = { intake_ids: ids, expected_revisions: { [ids[0]]: 2, [ids[1]]: 3 }, action: "publish",
+    confirmations: { source: true, public_venue: true, timezone: true, content_safe: true }, reason: "Reviewed both" };
+  const command = prepareResearchCommand(actor, "dates_event_intake_batch_decide", request)!;
+  const response = { ...DERIVED_ENVELOPE, replayed: false, audit_id: "aud_derived", results: [
+    { intake_id: ids[0], outcome: "published", refusal: null, external_event_id: "xev_derived" },
+    { intake_id: ids[1], outcome: "future-outcome", refusal: null, external_event_id: null },
+  ] };
+  const partial = decodeResearchBatchRows(response, ids, "publish")!;
+  assert.equal(partial.rows.length, 1); assert.deepEqual(partial.unreadable, [{ index: 1, id: ids[1] }]);
+  assert.equal(decodeResearchBatchReceipt(response, ids, "publish"), null);
+  const seen: unknown[] = [];
+  const send = async (_action: string, body: unknown) => { seen.push(structuredClone(body)); return response; };
+  const result = await runResearchCommand(send, command);
+  assert.equal(result.kind, "uncertain"); if (result.kind === "uncertain") assert.deepEqual(result.partial, partial);
+  await runResearchCommand(send, command); assert.deepEqual(seen[0], seen[1]);
+  assert.equal(decodeResearchBatchRows({ ...response, results: [response.results[0], { ...response.results[1], intake_id: "wrong" }] }, ids, "publish"), null);
 });
 test("research run filter and additive queue row preserve the released queue shape", () => {
   const input: any = JSON.parse(readFileSync(new URL("./fixtures/dates_event_intake_admin_wire/admin-list-in-review.json", import.meta.url), "utf8"));

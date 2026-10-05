@@ -160,7 +160,7 @@ export function decodeResearchSource(value: unknown): ResearchSource | null {
 
 function rowList<T>(value: unknown, decode: (value: unknown) => T | null, idKey: string): ResearchRows<T> | null {
   if (!Array.isArray(value)) return null;
-  const ids = value.map((row) => researchRecord(row) && researchId(row[idKey]) ? row[idKey] as string : null);
+  const ids = value.map((row) => idKey !== "" && researchRecord(row) && researchId(row[idKey]) ? row[idKey] as string : null);
   const rows: T[] = [], unreadable: ResearchUnreadable[] = [];
   value.forEach((raw, index) => {
     const id = ids[index], duplicate = id !== null && ids.indexOf(id) !== ids.lastIndexOf(id);
@@ -232,10 +232,16 @@ export function decodeResearchBatchResult(value: unknown): ResearchBatchResult |
     || !nullable(value.refusal, researchString) || !nullable(value.external_event_id, researchId)) return null;
   return { intake_id: value.intake_id, outcome: value.outcome, refusal: value.refusal, external_event_id: value.external_event_id };
 }
-export function decodeResearchBatchReceipt(value: unknown, ids: readonly string[], action: "publish" | "reject"): ResearchBatchResult[] | null {
+export function decodeResearchBatchRows(value: unknown, ids: readonly string[], action: "publish" | "reject"): ResearchRows<ResearchBatchResult> | null {
   if (!researchSuccess(value) || !Array.isArray(value.results) || value.results.length !== ids.length) return null;
-  const results = value.results.map(decodeResearchBatchResult);
-  if (results.some((row) => row === null) || new Set(results.map((row) => row?.intake_id)).size !== ids.length
-    || results.some((row) => !ids.includes(row!.intake_id) || (row!.outcome !== "refused" && row!.outcome !== (action === "publish" ? "published" : "rejected")))) return null;
-  return results as ResearchBatchResult[];
+  const received = value.results.map((row) => researchRecord(row) && researchId(row.intake_id) ? row.intake_id : null);
+  if (new Set(received).size !== ids.length || received.some((id) => id === null || !ids.includes(id))) return null;
+  return rowList(value.results, (raw) => {
+    const row = decodeResearchBatchResult(raw);
+    return row && (row.outcome === "refused" || row.outcome === (action === "publish" ? "published" : "rejected")) ? row : null;
+  }, "intake_id");
+}
+export function decodeResearchBatchReceipt(value: unknown, ids: readonly string[], action: "publish" | "reject"): ResearchBatchResult[] | null {
+  const results = decodeResearchBatchRows(value, ids, action);
+  return results && results.unreadable.length === 0 ? results.rows : null;
 }

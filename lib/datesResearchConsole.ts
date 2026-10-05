@@ -1,8 +1,8 @@
 import { createAdminIdempotencyKey, datesAdminPrincipal, hasDatesCapability, type DatesAdminPrincipal } from "@/lib/datesAdmin";
 import { datesIntakeRefusal } from "@/lib/datesIntakeAdmin";
-import { decodeResearchArea, decodeResearchBatchReceipt, decodeResearchDefaults, decodeResearchOverview, decodeResearchRunDetail, decodeResearchRunList,
+import { decodeResearchArea, decodeResearchBatchReceipt, decodeResearchBatchRows, decodeResearchDefaults, decodeResearchOverview, decodeResearchRunDetail, decodeResearchRunList,
   decodeResearchSource, researchInteger, researchRecord, researchSuccess, researchString, type DatesResearchAction, type ResearchBatchResult,
-  type ResearchOverview, type ResearchRunDetail, type ResearchRunList } from "@/lib/datesResearchAdmin";
+  type ResearchOverview, type ResearchRows, type ResearchRunDetail, type ResearchRunList } from "@/lib/datesResearchAdmin";
 import { DATES_RESEARCH_READ_CAPABILITY, DATES_RESEARCH_WRITE_CAPABILITY, normalizeDatesResearchProxyBody, researchSourceCanonicalUrl } from "@/lib/datesResearchProxy";
 
 export type ResearchSend = (action: string, body: Record<string, unknown>, signal?: AbortSignal) => Promise<unknown>;
@@ -27,7 +27,8 @@ export async function readResearchRun(send: ResearchSend, runId: string, signal?
 }
 export type ResearchCommand = { actor: string; action: DatesResearchAction; body: Record<string, unknown> };
 export type ResearchCommandOutcome = { kind: "success"; receipt: unknown; runId?: string; results?: ResearchBatchResult[] }
-  | { kind: "conflict"; error: string } | { kind: "refused"; error: string } | { kind: "uncertain"; error: string | null };
+  | { kind: "conflict"; error: string } | { kind: "refused"; error: string }
+  | { kind: "uncertain"; error: string | null; partial?: ResearchRows<ResearchBatchResult> };
 /** Prepared once. The entire immutable request is kept while its outcome is not known. */
 export function prepareResearchCommand(actor: string, action: DatesResearchAction, body: Record<string, unknown>): ResearchCommand | null {
   const request = { ...body, idempotency_key: createAdminIdempotencyKey("dates-research") };
@@ -73,6 +74,11 @@ export async function runResearchCommand(send: ResearchSend, command: ResearchCo
   try { response = await send(command.action, command.body); } catch { return { kind: "uncertain", error: null }; }
   const receipt = decodeResearchCommandReceipt(command, response);
   if (receipt) return receipt;
+  if (command.action === "dates_event_intake_batch_decide" && researchSuccess(response) && typeof response.replayed === "boolean"
+    && researchString(response.audit_id) && response.audit_id !== "") {
+    const partial = decodeResearchBatchRows(response, command.body.intake_ids as string[], command.body.action as "publish" | "reject");
+    if (partial) return { kind: "uncertain", error: null, partial };
+  }
   const refusal = datesIntakeRefusal(response);
   if (refusal.kind === "core" && refusal.status < 500) {
     if (refusal.status === 409 && refusal.error === "dates-research-conflict") return { kind: "conflict", error: refusal.error };

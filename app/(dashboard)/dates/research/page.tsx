@@ -70,7 +70,7 @@ export default function DatesResearchPage() {
   return <>
     <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} actions={<button className="button button-secondary" disabled={loading} onClick={() => void load()}>{common("refresh")}</button>} />
     <DatesAdminTabs />
-    {problem?.kind === "unavailable" && <section className="panel"><p>{t("unavailable")}</p></section>}
+    {problem?.kind === "unavailable" && <section className="panel research-panel"><p>{t("unavailable")}</p></section>}
     {loading && !read ? <LoadingPanel /> : problem?.kind !== "unavailable" && (!read || !overview || problem?.kind === "denied")
       ? <ErrorPanel message={t(problem?.kind === "denied" ? "denied" : "unconfirmed")} retry={() => void load()} /> : null}
     {read && overview && <div hidden={hidden}>

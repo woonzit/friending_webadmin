@@ -31,7 +31,9 @@ export default function DatesResearchBatch({ runId, rows, actor, manage, reload 
     && row.controls && row.revision !== null && row.lease?.active && row.lease.mine), [rows, runId]);
   const ids = Object.keys(selected), selectionCurrent = ids.every((id) => eligible.some((row) => row.intake_id === id && row.revision === selected[id]));
   const command = useResearchCommand(actor, async (answer) => { setResults(answer.results ?? null); setResultOwner(actor); setResultRun(pendingRunRef.current); setSelected({}); setChecks(unchecked()); await reload(); }, reload);
-  const visibleResults = resultOwner === actor ? results : null;
+  const partial = command.outcome?.kind === "uncertain" ? command.outcome.partial : undefined;
+  const visibleResults = partial?.rows ?? (resultOwner === actor ? results : null);
+  const visibleResultRun = partial ? pendingRun : resultRun;
   if (!actor) return null;
   if (!runId && command.pending === null && visibleResults === null) return null;
   if (!manage && command.pending === null) return null;
@@ -65,7 +67,8 @@ export default function DatesResearchBatch({ runId, rows, actor, manage, reload 
     <div className="row-actions"><button className="button button-primary" disabled={!ready || !confirmations.every((key) => checks[key])} onClick={() => void decide("publish")}>{t("batch.publish")}</button>
       <button className="button button-danger" disabled={!ready} onClick={() => void decide("reject")}>{t("batch.reject")}</button></div>
     <ResearchCommandFeedback command={command} />
-    {visibleResults && <div><h3>{t("batch.results")}</h3><p><code>{resultRun}</code></p>{visibleResults.map((row) => <p key={row.intake_id}>
+    {partial?.unreadable.map((row) => <p className="alert alert-warning" key={row.index}>{t("unreadableRow", { row: row.index + 1 })}{row.id ? <> <code>{row.id}</code></> : null}</p>)}
+    {visibleResults && <div><h3>{t("batch.results")}</h3><p><code>{visibleResultRun}</code></p>{visibleResults.map((row) => <p key={row.intake_id}>
       <Link href={`/dates/intakes/${row.intake_id}`}>{row.intake_id}</Link> · {t(`batch.outcomes.${row.outcome}`)}{row.refusal ? <> · <code>{row.refusal}</code></> : null}
       {row.external_event_id ? <> · <Link href={`/dates/external/${row.external_event_id}`}>{row.external_event_id}</Link></> : null}</p>)}</div>}
   </section>;
