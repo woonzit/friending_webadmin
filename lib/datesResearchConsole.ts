@@ -108,9 +108,10 @@ function researchConflictCause(command: ResearchCommand, current: unknown): Extr
     if (action === "dates_event_research_source_save" && row.url === researchSourceCanonicalUrl(body.url)
       && row.source_id !== body.source_id) return row.archived ? "archived_url_owned" : "url_owned";
     if (row.source_id !== body.source_id) return undefined;
+    if (row.revision !== body.expected_revision) return "revision";
     if (row.archived) return "source_archived";
     if (row.last_check && ["queued", "running"].includes(row.last_check.status)) return "source_open_run";
-    return row.revision !== body.expected_revision ? "revision" : undefined;
+    return undefined;
   }
   if (action === "dates_event_research_area_save") {
     const row = decodeResearchArea(current);

@@ -75,7 +75,7 @@ for (const locale of ["en", "hu"]) {
     const html = render(locale, createElement(DatesResearchBatch, { runId: "derived_run", rows: [], actor: props.actor, manage: true, reload: props.reload }));
     assert.ok(html.includes(escaped(copy.batch.loading))); assert.equal(html.includes(escaped(copy.unconfirmed)), false);
   });
-  test(`render ${locale}: replayed runs say no new run was queued; a batch replay does not claim no child writes`, () => {
+  test(`render ${locale}: replayed runs say no additional run was queued by this attempt; batch replay does not claim no child writes`, () => {
     const copy = messages(locale).datesAdmin.research;
     for (const [runId, key] of [["derived_run", "runReplayed"], [undefined, "replayed"]] as const) {
       const html = render(locale, createElement(ResearchCommandFeedback, { command: { outcome: { kind: "success", replayed: true, receipt: {}, runId }, pending: null } as any }));

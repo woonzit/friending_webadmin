@@ -44,6 +44,8 @@ test("GENUINE open-run conflict explains Core's public stored state; DERIVED dup
     assert.equal(answer.kind, "conflict"); return answer.kind === "conflict" ? answer.cause : undefined;
   };
   assert.equal(await classify({ ...row, archived: true }), "source_archived");
+  assert.equal(await classify({ ...row, archived: true, revision: row.revision + 1 }), "revision", "a stale save reports its revision difference before incidental archive state");
+  assert.equal(await classify({ ...row, revision: row.revision + 1 }), "revision", "an open-run row at a different revision also reports the stale authority first");
   const create = prepareResearchCommand("admin@example.test", command.action, { ...fields, reason: "Register this source" })!;
   assert.equal(await classify(row, create), "url_owned");
   assert.equal(await classify({ ...row, archived: true }, create), "archived_url_owned");
