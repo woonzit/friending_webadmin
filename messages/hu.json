@@ -8388,7 +8388,14 @@
         "archived_url_owned": "Ez az URL már egy archivált forráshoz tartozik. Az archivált források is megtartják az URL-jüket.",
         "city_registered": "Ez a város már szerepel a listában. Újbóli hozzáadás helyett a meglévő sorát szerkeszd."
       },
+      "requiredField": "Kötelező",
       "commandErrors": {
+        "dates-research-request-invalid": "A Core elutasította a kérés szerkezetét. Új parancs összeállítása előtt frissítsd ezt az oldalt.",
+        "dates-research-values-invalid": "Töltsd ki a kötelező mezőket, köztük a forrás megnevezését, és ellenőrizd az értékeket a Core által megadott korlátokhoz képest.",
+        "dates-research-url-invalid": "Támogatott, nyilvános HTTP- vagy HTTPS-eseményoldal URL-jét add meg, belépési adatok és bejelentkezést igénylő domain nélkül.",
+        "dates-research-aggregator-autopublish-invalid": "Gyűjtőoldalnál az automatikus közzététel nem írható felül. Hagyd örökölt értéken; a Core gyűjtőoldalaknál mindig kikapcsolja.",
+        "dates-admin-reason-required": "Adj meg 3–1000 karakteres belső indoklást; a kezdő és záró szóközök nem számítanak bele.",
+        "dates-admin-idempotency-invalid": "A parancs azonosítója érvénytelen volt. Másik parancs összeállítása előtt frissíts.",
         "dates-research-place-unavailable": "A Core nem tudott használható városhatárokat feloldani. Ez a próbálkozás nem mentett várost. Válassz másik várost, vagy próbáld újra, amikor a helyszolgáltatás elérhető.",
         "dates-research-place-invalid": "Válassz érvényes várost a keresési találatokból. Egy már tárolt város helye nem módosítható.",
         "dates-research-scope-invalid": "Ellenőrizd a városi vagy sugaras területet, és a sugarat a Core által megadott korlátokhoz képest.",

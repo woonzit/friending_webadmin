@@ -88,7 +88,7 @@ export function ResearchSourceEditor({ row, defaults, areas, actor, manage, limi
     ...(row ? { source_id: row.source_id, expected_revision: model.revision } : {}), ...values, reason }); }}>
     <div className="panel-header"><h2>{t(row ? "editSource" : "addSource")}</h2><button className="button button-secondary" type="button" disabled={command.busy || command.retained} onClick={close}>{common("close")}</button></div>
     <div className="form-grid">{(["url", "label"] as const).map((key) => {
-      return <label className="field" key={key}><span>{t(`fields.${key}`)}</span><input type={key === "url" ? "url" : "text"} value={values[key]} disabled={disabled} required={key === "url"}
+      return <label className="field" key={key}><span>{t(`fields.${key}`)}{key === "label" && <> · {t("requiredField")}</>}</span><input type={key === "url" ? "url" : "text"} value={values[key]} disabled={disabled} required
         onChange={(event) => model.set({ ...values, [key]: event.target.value })} /><ResearchHelp field={key} effective={values[key] || "—"} own /></label>;
     })}
       <label className="field"><span>{t("fields.type")}</span><select value={values.type} disabled={disabled} onChange={(event) => { const type = event.target.value as ResearchSourceType;

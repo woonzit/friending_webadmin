@@ -76,6 +76,7 @@ for (const locale of ["en", "hu"]) {
   test(`DERIVED render ${locale}: all sources can override the window; only official sources can autopublish`, () => {
     const copy = messages(locale).datesAdmin.research;
     const html = render(locale, createElement(ResearchSourceEditor, { ...props, row: GENUINE_SOURCE, defaults: GENUINE_DEFAULTS, areas: [GENUINE_AREA] }));
+    assert.ok(html.includes(escaped(copy.requiredField))); assert.match(html, /type="text"[^>]*required=""/);
     for (const field of ["url", "label", "type", "city", "cadence_hours", "max_events", "window_days", "autopublish", "source_enabled", "archived", "reason"]) {
       assert.ok(html.includes(escaped(copy.fields[field])), field);
       assert.ok(html.includes(escaped(copy.help[field].cost)), `${field}.cost`);
@@ -123,7 +124,10 @@ for (const locale of ["en", "hu"]) {
   });
   test(`render ${locale}: confirmed source/batch refusals explain the next step; uncertain answers keep retry guidance`, () => {
     const copy = messages(locale).datesAdmin.research;
-    for (const error of ["dates-research-disabled", "dates-research-source-disabled", "dates-research-batch-invalid", "dates-external-confirmation-required"]) {
+    const consoleSource = readFileSync(new URL("../lib/datesResearchConsole.ts", import.meta.url), "utf8");
+    const refusalTable = consoleSource.slice(consoleSource.indexOf("const NO_WRITE"), consoleSource.indexOf("}; // Pinned"));
+    const errors = [...refusalTable.matchAll(/"([^"]+)"\s*:\s*\d+/g)].map((entry) => entry[1]); assert.equal(errors.length, 19);
+    for (const error of errors) {
       const command: any = { outcome: { kind: "refused", error }, pending: null, busy: false, retry: async () => {} };
       const refused = render(locale, createElement(ResearchCommandFeedback, { command }));
       assert.ok(refused.includes(escaped(copy.commandErrors[error])));

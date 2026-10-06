@@ -8388,7 +8388,14 @@
         "archived_url_owned": "This URL is already owned by an archived source. Archived sources still retain their URLs.",
         "city_registered": "This city is already registered. Edit its existing row instead of adding it again."
       },
+      "requiredField": "Required",
       "commandErrors": {
+        "dates-research-request-invalid": "Core refused the request shape. Refresh this page before preparing a new command.",
+        "dates-research-values-invalid": "Complete the required fields, including the source label, and check values against Core's returned limits.",
+        "dates-research-url-invalid": "Use a supported public HTTP or HTTPS event URL, without credentials or a login-walled domain.",
+        "dates-research-aggregator-autopublish-invalid": "Aggregator sources cannot override automatic publication. Keep that value inherited; Core always disables it for aggregators.",
+        "dates-admin-reason-required": "Enter an internal reason of 3–1000 characters after trimming surrounding spaces.",
+        "dates-admin-idempotency-invalid": "The command identity was invalid. Refresh before preparing another command.",
         "dates-research-place-unavailable": "Core could not resolve usable city boundaries. No city was saved by this attempt. Choose another city or retry when the place service is available.",
         "dates-research-place-invalid": "Choose a valid city from the search results. An existing city's place cannot be changed.",
         "dates-research-scope-invalid": "Check the city or radius scope and the radius against Core's returned limits.",
