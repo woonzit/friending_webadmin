@@ -8391,6 +8391,14 @@
         "city_registered": "This city is already registered. Edit its existing row instead of adding it again."
       },
       "requiredField": "Required",
+      "membersNotCounted": "Not counted yet",
+      "validation": {
+        "integer": "Check {field}: use a whole-number value from {min} to {max}{unit} in Core's saved units.",
+        "range": "Check {field}: use a value from {min} to {max}{unit} in Core's saved units.",
+        "url": "Enter a valid HTTP or HTTPS source URL without credentials.",
+        "label": "Enter a source label of 1–160 characters after trimming surrounding spaces.",
+        "city": "Choose a city from the search results before saving."
+      },
       "commandErrors": {
         "dates-research-request-invalid": "Core refused the request shape. Refresh this page before preparing a new command.",
         "dates-research-values-invalid": "Complete the required fields, including the source label, and check values against Core's returned limits.",
@@ -8416,6 +8424,7 @@
         "title": "Decide this run's intakes together",
         "hint": "Open and check each intake, then take its review hold. Choose up to {count} intakes from this page. The four publication confirmations apply once to the chosen batch.",
         "unavailable": "Batch decisions are not available on this Core.",
+        "loading": "Loading Core's batch limit…",
         "selected": "Selected: {count}",
         "select": "Select intake",
         "reasonCode": "Rejection reason",

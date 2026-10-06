@@ -5,7 +5,7 @@ import { createElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { ResearchAreaEditor, ResearchDefaultsEditor, ResearchSourceEditor } from "../components/DatesResearchEditors.tsx";
-import { ResearchCommandFeedback, ResearchHelp, ResearchReason, ResearchValuesFields } from "../components/DatesResearchControls.tsx";
+import { ResearchCommandFeedback, ResearchHelp, ResearchReason, ResearchSaveIssue, ResearchValuesFields } from "../components/DatesResearchControls.tsx";
 import DatesResearchRuns from "../components/DatesResearchRuns.tsx";
 import DatesResearchBatch from "../components/DatesResearchBatch.tsx";
 import { DATES_RESEARCH_VALUE_FIELDS } from "../lib/datesResearchAdmin.ts";
@@ -26,6 +26,26 @@ function render(locale: string, ...children: ReactNode[]) {
 }
 const props = { actor: "operator@example.test", manage: true, limits: GENUINE_LIMITS, reload: async () => {}, close: () => {} };
 for (const locale of ["en", "hu"]) {
+  test(`DERIVED render ${locale}: disabled saves name their field and Core's canonical bounds`, () => {
+    const copy = messages(locale).datesAdmin.research;
+    for (const issue of ["cadence_hours", "member_threshold", "target_events", "window_days", "radius_km", "max_events"] as const) {
+      const html = render(locale, createElement(ResearchSaveIssue, { issue, limits: { ...GENUINE_LIMITS, [issue]: { min: 9, max: 37 } } }));
+      assert.ok(html.includes(escaped(copy.fields[issue]))); assert.ok(html.includes("9")); assert.ok(html.includes("37"));
+    }
+    for (const [component, extra, text] of [
+      [ResearchDefaultsEditor, { defaults: { ...GENUINE_DEFAULTS, target_events: 1.5 } }, copy.fields.target_events],
+      [ResearchAreaEditor, { row: { ...GENUINE_AREA, overrides: { ...GENUINE_AREA.overrides, target_events: 1.5 } }, defaults: GENUINE_DEFAULTS }, copy.fields.target_events],
+      [ResearchSourceEditor, { row: { ...GENUINE_SOURCE, label: "   " }, defaults: GENUINE_DEFAULTS, areas: [] }, copy.validation.label],
+    ] as const) {
+      const html = render(locale, createElement(component as any, { ...props, ...extra }));
+      assert.match(html, /<p class="field-hint" role="status">/); assert.ok(html.includes(escaped(text))); assert.match(html, /type="submit"[^>]*disabled=""/);
+    }
+  });
+  test(`render ${locale}: batch limits start loading, not with a failed-read warning`, () => {
+    const copy = messages(locale).datesAdmin.research;
+    const html = render(locale, createElement(DatesResearchBatch, { runId: "derived_run", rows: [], actor: props.actor, manage: true, reload: props.reload }));
+    assert.ok(html.includes(escaped(copy.batch.loading))); assert.equal(html.includes(escaped(copy.unconfirmed)), false);
+  });
   test(`render ${locale}: replayed runs say no new run was queued; a batch replay does not claim no child writes`, () => {
     const copy = messages(locale).datesAdmin.research;
     for (const [runId, key] of [["derived_run", "runReplayed"], [undefined, "replayed"]] as const) {

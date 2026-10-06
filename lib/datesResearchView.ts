@@ -1,5 +1,6 @@
 import { DATES_RESEARCH_VALUE_FIELDS, type ResearchArea, type ResearchBudget, type ResearchDefaults, type ResearchEstimate,
-  type ResearchLimits, type ResearchOverrides, type ResearchScope, type ResearchValues } from "@/lib/datesResearchAdmin";
+  type ResearchLimits, type ResearchOverrides, type ResearchScope, type ResearchSource, type ResearchValues } from "@/lib/datesResearchAdmin";
+import { researchSourceLabel, researchSourceUrl } from "@/lib/datesResearchProxy";
 
 export type ResearchDistanceUnit = "km" | "mi";
 export type ResearchTimeUnit = "hours" | "days";
@@ -34,11 +35,23 @@ export function researchMonthlyEstimate(estimate: ResearchEstimate, budget: Rese
   return { measured: estimate.monthly_cost_micro_usd !== null, checks: estimate.monthly_checks, microUsd: estimate.monthly_cost_micro_usd,
     share: estimate.monthly_cost_micro_usd === null || budget.cap_micro_usd <= 0 ? null : estimate.monthly_cost_micro_usd / budget.cap_micro_usd };
 }
-export function researchValuesIssue(values: ResearchValues, limits: ResearchLimits): string | null {
+export type ResearchNumericIssue = "cadence_hours" | "member_threshold" | "target_events" | "window_days" | "radius_km" | "max_events";
+export function researchValuesIssue(values: ResearchValues, limits: ResearchLimits): ResearchNumericIssue | null {
   for (const key of ["cadence_hours", "member_threshold", "target_events", "window_days"] as const) {
     if (!Number.isSafeInteger(values[key]) || values[key] < limits[key].min || values[key] > limits[key].max) return key;
   }
   if (values.scope.kind === "radius" && (!Number.isFinite(values.scope.radius_km) || values.scope.radius_km < limits.radius_km.min || values.scope.radius_km > limits.radius_km.max)) return "radius_km";
+  return null;
+}
+export function researchSourceValuesIssue(values: Pick<ResearchSource, "url" | "label" | "cadence_hours" | "max_events" | "window_days">,
+  limits: ResearchLimits): ResearchNumericIssue | "url" | "label" | null {
+  if (!researchSourceUrl(values.url)) return "url";
+  if (!researchSourceLabel(values.label)) return "label";
+  for (const key of ["cadence_hours", "max_events", "window_days"] as const) {
+    if (key === "window_days" && values[key] === null) continue;
+    const value = values[key];
+    if (value === null || !Number.isSafeInteger(value) || value < limits[key].min || value > limits[key].max) return key;
+  }
   return null;
 }
 export function researchEmptyOverrides(): ResearchOverrides { return { cadence_hours: null, scope: null, member_threshold: null, target_events: null, window_days: null, autopublish: null }; }

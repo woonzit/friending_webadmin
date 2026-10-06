@@ -36,3 +36,24 @@ test("DERIVED partial batch: one future row is unavailable, known outcomes remai
   for (const key of ["batch.publish", "batch.reject"]) assert.equal(nodes.find((node) => node?.type === "button" && node.children.includes(key)).props.disabled, true);
   assert.equal(render("").element, null, "unknown actors see none of the prior results or retry controls");
 });
+test("DERIVED batch limits: a pending read is loading; only a completed failed read is unconfirmed", async () => {
+  const slots: any[] = [], effects: (() => void)[] = []; let index = 0, answer!: (value: any) => void;
+  const context: any = { exports: {}, DATES_INTAKE_REJECT_REASONS, researchAuditReason, AbortController, adminCall: () => {},
+    Link: "Link", ResearchReason: "ResearchReason", ResearchCommandFeedback: "Feedback",
+    React: { createElement: (type: any, props: any, ...children: any[]) => ({ type, props: props ?? {}, children }) },
+    useTranslations: () => (key: string) => key, readResearchOverview: () => new Promise((resolve) => { answer = resolve; }),
+    useState: (initial: any) => { const slot = index++; if (!(slot in slots)) slots[slot] = typeof initial === "function" ? initial() : initial;
+      return [slots[slot], (value: any) => { slots[slot] = typeof value === "function" ? value(slots[slot]) : value; }]; },
+    useRef: (initial: any) => { const slot = index++; if (!(slot in slots)) slots[slot] = { current: initial }; return slots[slot]; },
+    useEffect: (effect: any, deps: any[]) => { const slot = index++, old = slots[slot]; slots[slot] = deps; if (!old || deps.some((value, i) => value !== old[i])) effects.push(effect); },
+    useMemo: (fn: any) => fn(), useResearchCommand: () => ({ busy: false, retained: false, pending: null, outcome: null }),
+  };
+  vm.runInNewContext(code, context);
+  const flat = (node: any): any[] => Array.isArray(node) ? node.flatMap(flat) : node && typeof node === "object" && "type" in node ? [node, ...flat(node.children)] : [node];
+  const draw = () => { index = 0; const nodes = flat(context.exports.default({ runId: "derived_run", rows: [], actor: "operator@example.test", manage: true, reload: async () => {} }));
+    for (const effect of effects.splice(0)) effect(); return nodes; };
+  let nodes = draw(); assert.ok(nodes.includes("batch.loading")); assert.equal(nodes.includes("unconfirmed"), false);
+  for (const key of ["batch.publish", "batch.reject"]) assert.equal(nodes.find((node) => node?.type === "button" && node.children.includes(key)).props.disabled, true);
+  answer({ kind: "unconfirmed" }); await Promise.resolve(); await Promise.resolve(); nodes = draw();
+  assert.ok(nodes.includes("unconfirmed")); assert.equal(nodes.includes("batch.loading"), false);
+});

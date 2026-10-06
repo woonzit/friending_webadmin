@@ -22,6 +22,11 @@ export function researchAuditReason(value: unknown): boolean {
   const length = Array.from(value.replace(/^[\x00\x09\x0a\x0b\x0d\x20]+|[\x00\x09\x0a\x0b\x0d\x20]+$/g, "")).length;
   return length >= 3 && length <= 1000;
 }
+/** Editor hint only; Core remains the authority for saved text. */
+export function researchSourceLabel(value: string): boolean {
+  const length = Array.from(value.replace(/^[\x00\x09\x0a\x0b\x0d\x20]+|[\x00\x09\x0a\x0b\x0d\x20]+$/g, "")).length;
+  return length >= 1 && length <= 160;
+}
 const audited = (body: Record<string, unknown>) => command(body) && researchAuditReason(body.reason);
 const bool = (value: unknown) => typeof value === "boolean";
 const scopeKeys = (value: unknown) => researchRecord(value) && keys(value, ["kind", "radius_km"]);

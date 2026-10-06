@@ -33,7 +33,7 @@ test("DERIVED retained command locks every editor field, including when actor fe
     React: { Fragment: "fragment", createElement: (type: any, props: any, ...children: any[]) => ({ type, props: props ?? {}, children }) },
     useLocale: () => "en", useTranslations: () => (key: string) => key, useEffect: () => {}, useState: (value: any) => [value, () => {}],
     useResearchCommand: () => ({ busy: false, retained: true, pending: null, submit: () => {} }) };
-  for (const name of ["ResearchCommandFeedback", "ResearchDuration", "ResearchHelp", "ResearchReason", "ResearchValuesFields", "AppearanceMapPicker"]) context[name] = name;
+  for (const name of ["ResearchCommandFeedback", "ResearchDuration", "ResearchHelp", "ResearchReason", "ResearchSaveIssue", "ResearchValuesFields", "AppearanceMapPicker"]) context[name] = name;
   vm.runInNewContext(ts.transpileModule(editorTree.statements.filter((node) => !ts.isImportDeclaration(node)).map((node) => node.getText(editorTree)).join("\n"),
     { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText, context);
   const props = { defaults: GENUINE_DEFAULTS, actor: "operator@example.test", manage: true, limits: GENUINE_LIMITS, reload: async () => {}, close: () => {} };
@@ -55,7 +55,7 @@ test("DERIVED unreadable city: changing a source override to inheritance shows u
       return [slots[slot], (value: any) => { slots[slot] = typeof value === "function" ? value(slots[slot]) : value; }]; },
     useResearchCommand: () => ({ busy: false, pending: null, retained: false, submit: (action: string, body: any) => calls.push({ action, body: structuredClone(body) }) }),
   };
-  for (const name of ["ResearchCommandFeedback", "ResearchDuration", "ResearchHelp", "ResearchReason"]) context[name] = name;
+  for (const name of ["ResearchCommandFeedback", "ResearchDuration", "ResearchHelp", "ResearchReason", "ResearchSaveIssue"]) context[name] = name;
   vm.runInNewContext(ts.transpileModule(editorTree.statements.filter((node) => !ts.isImportDeclaration(node)).map((node) => node.getText(editorTree)).join("\n"),
     { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText, context);
   const render = () => { index = 0; return elements(context.exports.ResearchSourceEditor({ row, defaults: GENUINE_DEFAULTS, areas: [],
@@ -109,7 +109,7 @@ test("DERIVED scheduled check finishes with an open source editor: conflict relo
       return { ...DERIVED_ENVELOPE, replayed: false, audit_id: "aud_derived_source_save", source: backend };
     },
   };
-  for (const name of ["AppearanceMapPicker", "ResearchCommandFeedback", "ResearchDuration", "ResearchHelp", "ResearchReason", "ResearchValuesFields"]) context[name] = name;
+  for (const name of ["AppearanceMapPicker", "ResearchCommandFeedback", "ResearchDuration", "ResearchHelp", "ResearchReason", "ResearchSaveIssue", "ResearchValuesFields"]) context[name] = name;
   vm.runInNewContext(code, context);
   function render(): Element[] {
     for (let attempt = 0; attempt < 10; attempt++) {

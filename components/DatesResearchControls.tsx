@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
 import { DATES_RESEARCH_VALUE_FIELDS, type DatesResearchAction, type ResearchLimits, type ResearchOverrides, type ResearchScope, type ResearchValues } from "@/lib/datesResearchAdmin";
 import { prepareResearchCommand, runResearchCommand, type ResearchCommand, type ResearchCommandOutcome } from "@/lib/datesResearchConsole";
-import { researchDistanceFromKm, researchDistanceToKm, researchInputNumber, researchTimeFromHours, researchTimeToHours, type ResearchDistanceUnit, type ResearchTimeUnit } from "@/lib/datesResearchView";
+import { researchDistanceFromKm, researchDistanceToKm, researchInputNumber, researchTimeFromHours, researchTimeToHours, type ResearchDistanceUnit, type ResearchNumericIssue, type ResearchTimeUnit } from "@/lib/datesResearchView";
 import { formatNumber } from "@/lib/format";
 
 export function ResearchHelp({ field, effective, own = false, unavailableInheritance = false }: { field: string; effective?: string; own?: boolean; unavailableInheritance?: boolean }) {
@@ -73,6 +73,16 @@ export function ResearchReason({ value, disabled, onChange }: { value: string; d
   // untrimmed UTF-16 units, unlike Core's trimmed Unicode character count.
   return <label className="field field-full"><span>{t("fields.reason")}</span><textarea value={value} disabled={disabled} required onChange={(event) => onChange(event.target.value)} />
     <ResearchHelp field="reason" /></label>;
+}
+export function ResearchSaveIssue({ issue, limits }: { issue: ResearchNumericIssue | "url" | "label" | "city" | "reason" | null; limits: ResearchLimits }) {
+  const t = useTranslations("datesAdmin.research"), locale = useLocale();
+  if (!issue) return null;
+  if (issue === "reason") return <p className="field-hint" role="status">{t("commandErrors.dates-admin-reason-required")}</p>;
+  if (issue === "url" || issue === "label" || issue === "city") return <p className="field-hint" role="status">{t(`validation.${issue}`)}</p>;
+  const range = limits[issue], unit = issue === "radius_km" ? t("km") : issue === "cadence_hours" ? t("hours") : issue === "window_days" ? t("days") : "";
+  return <p className="field-hint" role="status">{t(issue === "radius_km" ? "validation.range" : "validation.integer", {
+    field: t(`fields.${issue}`), min: formatNumber(range.min, locale), max: formatNumber(range.max, locale), unit: unit ? ` ${unit}` : "",
+  })}</p>;
 }
 export function useResearchCommand(actor: string, onSuccess: (outcome: Extract<ResearchCommandOutcome, { kind: "success" }>) => Promise<void> | void,
   onConflict: () => Promise<void>) {

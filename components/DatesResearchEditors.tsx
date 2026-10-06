@@ -2,11 +2,11 @@
 import React, { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import AppearanceMapPicker from "@/components/AppearanceMapPicker";
-import { ResearchCommandFeedback, ResearchDuration, ResearchHelp, ResearchReason, ResearchValuesFields, useResearchCommand } from "@/components/DatesResearchControls";
+import { ResearchCommandFeedback, ResearchDuration, ResearchHelp, ResearchReason, ResearchSaveIssue, ResearchValuesFields, useResearchCommand } from "@/components/DatesResearchControls";
 import { decodeResearchArea, decodeResearchDefaults, decodeResearchSource, DATES_RESEARCH_MODES, DATES_RESEARCH_SOURCE_TYPES,
   type ResearchArea, type ResearchCenter, type ResearchDefaults, type ResearchLimits, type ResearchOverrides, type ResearchSource, type ResearchSourceType } from "@/lib/datesResearchAdmin";
-import { researchDefaultValues, researchDistanceUnit, researchEditsAfterConflict, researchEffectiveValues, researchEmptyOverrides, researchValuesIssue, type ResearchDistanceUnit } from "@/lib/datesResearchView";
-import { researchAuditReason, researchSourceUrl } from "@/lib/datesResearchProxy";
+import { researchDefaultValues, researchDistanceUnit, researchEditsAfterConflict, researchEffectiveValues, researchEmptyOverrides, researchSourceValuesIssue, researchValuesIssue, type ResearchDistanceUnit } from "@/lib/datesResearchView";
+import { researchAuditReason } from "@/lib/datesResearchProxy";
 import { formatNumber } from "@/lib/format";
 
 function useResearchDraft<T extends object>(authority: T, revision: number) {
@@ -33,7 +33,7 @@ export function ResearchDefaultsEditor({ defaults, actor, manage, limits, reload
         onChange={(event) => model.set({ ...model.draft, [key]: event.target.checked })} /><ResearchHelp field={key} effective={common(model.draft[key] ? "yes" : "no")} /></label>;
     })}</div>
     <ResearchValuesFields values={model.draft} limits={limits} disabled={disabled} unit={unit} onUnit={setUnit} onChange={(values) => model.set({ ...model.draft, ...values })} />
-    {manage && <><ResearchReason value={reason} onChange={setReason} disabled={disabled} /><button className="button button-primary" type="submit"
+    {manage && <><ResearchReason value={reason} onChange={setReason} disabled={disabled} /><ResearchSaveIssue issue={issue ?? (!researchAuditReason(reason) ? "reason" : null)} limits={limits} /><button className="button button-primary" type="submit"
       disabled={disabled || issue !== null || !researchAuditReason(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
     <ResearchCommandFeedback command={command} />
   </form>;
@@ -59,7 +59,7 @@ export function ResearchAreaEditor({ row, defaults, actor, manage, limits, reloa
       {DATES_RESEARCH_MODES.map((mode) => <option key={mode} value={mode}>{t(`modeValues.${mode}`)}</option>)}</select><ResearchHelp field="mode" effective={t(`modeValues.${model.draft.mode}`)} own /></label>
     <ResearchValuesFields values={effective} limits={limits} disabled={disabled || command.busy} unit={unit} onUnit={setUnit} onChange={() => undefined}
       inheritance={{ overrides: model.draft.overrides, onChange: (overrides) => model.set({ ...model.draft, overrides }) }} />
-    {manage && <><ResearchReason value={reason} onChange={setReason} disabled={disabled} /><button className="button button-primary" type="submit"
+    {manage && <><ResearchReason value={reason} onChange={setReason} disabled={disabled} /><ResearchSaveIssue issue={issue ?? (!row && !placeId ? "city" : !researchAuditReason(reason) ? "reason" : null)} limits={limits} /><button className="button button-primary" type="submit"
       disabled={disabled || (!row && !placeId) || issue !== null || !researchAuditReason(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
     <ResearchCommandFeedback command={command} />
   </form>;
@@ -82,9 +82,7 @@ export function ResearchSourceEditor({ row, defaults, areas, actor, manage, limi
     autopublish: stored?.autopublish === null ? stored.effective.autopublish : null,
   } : defaults);
   const windowDays = values.window_days ?? inherited.window_days, autopublish = values.autopublish ?? inherited.autopublish;
-  const valid = researchSourceUrl(values.url) && Number.isSafeInteger(values.cadence_hours) && values.cadence_hours >= limits.cadence_hours.min && values.cadence_hours <= limits.cadence_hours.max
-    && Number.isSafeInteger(values.max_events) && values.max_events >= limits.max_events.min && values.max_events <= limits.max_events.max
-    && (values.window_days === null || Number.isSafeInteger(values.window_days) && values.window_days >= limits.window_days.min && values.window_days <= limits.window_days.max);
+  const issue = researchSourceValuesIssue(values, limits);
   return <form className="panel research-editor" onSubmit={(event) => { event.preventDefault(); void command.submit("dates_event_research_source_save", {
     ...(row ? { source_id: row.source_id, expected_revision: model.revision } : {}), ...values, reason }); }}>
     <div className="panel-header"><h2>{t(row ? "editSource" : "addSource")}</h2><button className="button button-secondary" type="button" disabled={command.busy || command.retained} onClick={close}>{common("close")}</button></div>
@@ -109,7 +107,7 @@ export function ResearchSourceEditor({ row, defaults, areas, actor, manage, limi
       {(["enabled", "archived"] as const).map((key) => <label className="field" key={key}><span>{t(`fields.${key === "enabled" ? "source_enabled" : key}`)}</span><input type="checkbox" checked={values[key]} disabled={disabled}
         onChange={(event) => model.set({ ...values, [key]: event.target.checked })} /><ResearchHelp field={key === "enabled" ? "source_enabled" : key} effective={common(values[key] ? "yes" : "no")} own /></label>)}
     </div>{values.type === "aggregator" && <p className="alert alert-info">{t("aggregatorHint")}</p>}
-    {manage && <><ResearchReason value={reason} onChange={setReason} disabled={disabled} /><button type="submit" className="button button-primary" disabled={disabled || !valid || !researchAuditReason(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
+    {manage && <><ResearchReason value={reason} onChange={setReason} disabled={disabled} /><ResearchSaveIssue issue={issue ?? (!researchAuditReason(reason) ? "reason" : null)} limits={limits} /><button type="submit" className="button button-primary" disabled={disabled || issue !== null || !researchAuditReason(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
     <ResearchCommandFeedback command={command} />
   </form>;
 }

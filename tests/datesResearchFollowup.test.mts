@@ -2,6 +2,18 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { decodeResearchCommandReceipt, prepareResearchCommand, runResearchCommand } from "../lib/datesResearchConsole.ts";
 import { GENUINE_AREA, GENUINE_SOURCE, DERIVED_ENVELOPE, researchFixture } from "./support/datesResearchCorpus.ts";
+import { researchSourceValuesIssue } from "../lib/datesResearchView.ts";
+import { GENUINE_LIMITS } from "./support/datesResearchCorpus.ts";
+
+test("DERIVED source validation identifies the invalid field, follows served bounds and preserves Core's trimmed Unicode label rule", () => {
+  for (const label of ["", " \t\n ", "😀".repeat(161)]) assert.equal(researchSourceValuesIssue({ ...GENUINE_SOURCE, label }, GENUINE_LIMITS), "label");
+  for (const label of ["😀".repeat(160), `${" ".repeat(1000)}x${" ".repeat(1000)}`]) assert.equal(researchSourceValuesIssue({ ...GENUINE_SOURCE, label }, GENUINE_LIMITS), null);
+  assert.equal(researchSourceValuesIssue({ ...GENUINE_SOURCE, url: "not a URL" }, GENUINE_LIMITS), "url");
+  for (const field of ["cadence_hours", "max_events", "window_days"] as const) {
+    for (const value of [NaN, 1.5, GENUINE_LIMITS[field].max + 1]) assert.equal(researchSourceValuesIssue({ ...GENUINE_SOURCE, [field]: value }, GENUINE_LIMITS), field);
+  }
+  assert.equal(researchSourceValuesIssue({ ...GENUINE_SOURCE, max_events: 37 }, { ...GENUINE_LIMITS, max_events: { min: 9, max: 37 } }), null);
+});
 
 test("DERIVED source-audited pre-write/transaction-aborted validation refusals settle only at their documented status", async () => {
   const command = prepareResearchCommand("admin@example.test", "dates_event_research_area_save", {

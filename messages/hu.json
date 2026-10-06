@@ -8391,6 +8391,14 @@
         "city_registered": "Ez a város már szerepel a listában. Újbóli hozzáadás helyett a meglévő sorát szerkeszd."
       },
       "requiredField": "Kötelező",
+      "membersNotCounted": "Még nincs megszámolva",
+      "validation": {
+        "integer": "Ellenőrizd ezt: {field}. {min} és {max}{unit} közötti egész értéket adj meg, a Core mentett mértékegységében.",
+        "range": "Ellenőrizd ezt: {field}. {min} és {max}{unit} közötti értéket adj meg, a Core mentett mértékegységében.",
+        "url": "Érvényes HTTP- vagy HTTPS-forrás URL-jét add meg, belépési adatok nélkül.",
+        "label": "Adj meg 1–160 karakteres forrásmegnevezést; a kezdő és záró szóközök nem számítanak bele.",
+        "city": "Mentés előtt válassz várost a keresési találatokból."
+      },
       "commandErrors": {
         "dates-research-request-invalid": "A Core elutasította a kérés szerkezetét. Új parancs összeállítása előtt frissítsd ezt az oldalt.",
         "dates-research-values-invalid": "Töltsd ki a kötelező mezőket, köztük a forrás megnevezését, és ellenőrizd az értékeket a Core által megadott korlátokhoz képest.",
@@ -8416,6 +8424,7 @@
         "title": "A futás beküldéseinek közös elbírálása",
         "hint": "Nyisd meg és ellenőrizd a beküldéseket, majd vedd át őket átnézésre. Erről az oldalról legfeljebb {count} beküldést jelölhetsz ki. A négy közzétételi megerősítés egyszer vonatkozik a kijelölt csoportra.",
         "unavailable": "A csoportos elbírálás ezen a Core-verzión nem érhető el.",
+        "loading": "A Core csoportos korlátjának betöltése…",
         "selected": "Kijelölve: {count}",
         "select": "Beküldés kijelölése",
         "reasonCode": "Az elutasítás oka",

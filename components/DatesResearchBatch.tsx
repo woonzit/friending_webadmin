@@ -13,16 +13,18 @@ const confirmations = ["source", "public_venue", "timezone", "content_safe"] as 
 const unchecked = () => ({ source: false, public_venue: false, timezone: false, content_safe: false });
 export default function DatesResearchBatch({ runId, rows, actor, manage, reload }: { runId: string; rows: DatesIntakeQueueRow[]; actor: string; manage: boolean; reload: () => Promise<void> }) {
   const t = useTranslations("datesAdmin.research"), intake = useTranslations("datesAdmin.intake");
-  const [maximum, setMaximum] = useState<number | null>(null), [unavailable, setUnavailable] = useState(false), [selected, setSelected] = useState<Record<string, number>>({});
+  const [maximum, setMaximum] = useState<number | null>(null), [limitLoading, setLimitLoading] = useState(true), [unavailable, setUnavailable] = useState(false), [selected, setSelected] = useState<Record<string, number>>({});
   const [checks, setChecks] = useState(unchecked), [reason, setReason] = useState(""), [reasonCode, setReasonCode] = useState<string>(DATES_INTAKE_REJECT_REASONS[0]);
   const [results, setResults] = useState<ResearchBatchResult[] | null>(null), [resultOwner, setResultOwner] = useState(""), [resultRun, setResultRun] = useState(""), [pendingRun, setPendingRun] = useState("");
   const generation = useRef(0), pendingRunRef = useRef("");
   useEffect(() => {
     if (!runId || !manage) return;
     const controller = new AbortController(), current = ++generation.current;
+    setLimitLoading(true); setMaximum(null); setUnavailable(false);
     void readResearchOverview(adminCall, controller.signal).then((read) => {
       if (controller.signal.aborted || current !== generation.current) return;
       setUnavailable(read.kind === "unavailable"); setMaximum(read.kind === "ready" && read.manage ? read.value.limits.batch_intakes?.max ?? null : null);
+      setLimitLoading(false);
     });
     return () => { controller.abort(); ++generation.current; };
   }, [runId, actor, manage]);
@@ -51,7 +53,7 @@ export default function DatesResearchBatch({ runId, rows, actor, manage, reload 
       ...(action === "publish" ? { confirmations: checks } : { reason_code: reasonCode }) });
   }
   return <section className="panel research-batch"><h2>{t("batch.title")}</h2><p><code>{command.pending ? pendingRun : runId || resultRun}</code></p>
-    {maximum === null ? <p className="alert alert-warning">{t(unavailable ? "batch.unavailable" : "unconfirmed")}</p> : <p>{t("batch.hint", { count: maximum })}</p>}
+    {maximum === null ? limitLoading ? <p role="status">{t("batch.loading")}</p> : <p className="alert alert-warning">{t(unavailable ? "batch.unavailable" : "unconfirmed")}</p> : <p>{t("batch.hint", { count: maximum })}</p>}
     <p className="field-hint">{t("batch.reviewHint")}</p>
     <div className="research-batch-selection">{eligible.map((row) => <label key={row.intake_id}><input type="checkbox" aria-label={t("batch.select")} checked={Object.hasOwn(selected, row.intake_id)}
       disabled={command.busy || command.pending !== null || maximum === null || ids.length >= maximum && !Object.hasOwn(selected, row.intake_id)} onChange={(event) => choose(row, event.target.checked)} />

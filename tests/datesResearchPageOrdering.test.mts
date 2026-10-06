@@ -68,6 +68,17 @@ test("DERIVED source row: new checks require the master switch; disabled-source 
   assert.equal(calls.length, 3);
   assert.ok(calls.every((call) => call.action === "dates_event_research_source_run_now"));
 });
+test("DERIVED city row: an absent count timestamp is not a measured zero", async () => {
+  const h = harness(); h.render(); const read = ready();
+  const area = read.value!.areas.rows[0]; area.member_count = 0; area.member_count_at = null;
+  await h.answer(read); let nodes = h.render();
+  const city = nodes.find((node) => node.type === "tr" && node.props.key === area.area_id)!;
+  const memberCell = city.children[1]; assert.equal(memberCell.children[0], "membersNotCounted");
+  h.refresh(nodes); const counted = ready(); counted.value!.areas.rows[0].member_count = 0; counted.value!.areas.rows[0].member_count_at = 1770000000;
+  await h.answer(counted); nodes = h.render();
+  const current = nodes.find((node) => node.type === "tr" && node.props.key === area.area_id)!;
+  assert.equal(elements(current.children[1]).some((node) => node.children.includes("0")), true, "an actual measured zero remains zero");
+});
 for (const kind of ["unconfirmed", "denied", "unavailable"] as const) test(`research page ${kind}: fences stale actor and preserves mounted drafts/command owners`, async () => {
   const h = harness(); h.render(); await h.answer(ready());
   let nodes = h.render(); const before = nodes.find((node) => node.type === "ResearchDefaultsEditor")!;
