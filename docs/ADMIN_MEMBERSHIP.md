@@ -142,6 +142,25 @@ existing pinned feature classifiers decide whether a named refusal proves
 no write; keeping a refusal name does not add a settlement token. Ordinary
 healthy feature successes retain their original handler-owned shapes.
 
+### Global write-outcome notice: proof per name
+
+Lost/malformed answers, synthetic transport failures and unproven named 5xx
+feature/storage refusals raise the independent unknown-outcome notice. A
+complete refusal envelope or an HTTP status class alone is not a no-write
+proof. The pre-forward membership/auth/input refusals keep their existing
+behavior. The short source-proven 5xx exemption table currently has one entry:
+
+| Action | Named refusal / status | Core no-write proof |
+| --- | --- | --- |
+| `dates_event_research_area_save` | `dates-research-place-unavailable` / 503, complete matching envelope | Immutable Core main `68881e54f5c2e8e9cf4b7516c0816b9dfc9dc0b2`, `src/Services/DatesEventResearchAdminService.php:182-187` resolves the place before `DatesEventResearchCommands::execute` opens its transaction; `src/Services/DatesEventResearchAreaResolver.php:29,57,63` raises the refusal there |
+
+A new name enters the client table only with its own Core source proof and a
+regression test. The exemption only avoids raising a NEW global notice: it
+never dismisses one from an earlier lost write, even after membership recovery
+or a later definite refusal. Feature commands still own their idempotency and
+settlement rules; `support-storage-unavailable`, for example, may follow a
+stored message and keeps both the unknown notice and the original retry id.
+
 ## Deliberate cancellation and sign-in behavior
 
 A browser request abandoned between its positive membership proof and its

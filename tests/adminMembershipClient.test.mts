@@ -182,6 +182,50 @@ test("DERIVED client: ordinary feature failures and valid-role refusals are not 
     assert.deepEqual(h.redirects, []); assert.equal(h.calls.length, 1); assert.equal(h.time.jobs.size, 0);
   }
 });
+test("GENUINE Add city refusal: the one proven no-write name/action does not raise a new global unknown-outcome notice", async () => {
+  const data = JSON.parse(readFileSync(new URL("./fixtures/dates_event_research_admin_wire/admin-place-unavailable-denied.json", import.meta.url), "utf8"));
+  const h = client({ status: 503, data });
+  assert.deepEqual(await h.api.adminCall("dates_event_research_area_save", { place_id: "DERIVED-place", idempotency_key: "original-key" }), data);
+  assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), false);
+  assert.equal(h.api.adminMembershipRecovery.getSnapshot(), false); assert.equal(h.calls.length, 1);
+  assert.deepEqual(h.redirects, []); assert.equal(h.time.jobs.size, 0);
+});
+test("DERIVED no-write notice exemption: an unproven name/action or incomplete/mismatched envelope stays unknown", async () => {
+  const data = JSON.parse(readFileSync(new URL("./fixtures/dates_event_research_admin_wire/admin-place-unavailable-denied.json", import.meta.url), "utf8"));
+  for (const answer of [
+    { status: 500, data }, { status: 503, data: { ...data, success: true } },
+    { status: 503, data: { ...data, status_code: 500 } }, { status: 503, data: { ...data, message: "200" } },
+    { status: 503, data: { ...data, status: 503 } }, { status: 503, data: { ...data, can_send: 1 } },
+    { status: 503, data: { success: false, error: data.error } }, { status: 503, data: { ...data, error: "future-named-refusal" } },
+  ]) {
+    const h = client(answer); await h.api.adminCall("dates_event_research_area_save");
+    assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true, JSON.stringify(answer)); assert.equal(h.calls.length, 1);
+  }
+  for (let index = 0; index < 7; index++) {
+    const h = client({ status: 503, data }); await h.entries[index][1]();
+    assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true, "the proven name cannot exempt another action/upload");
+  }
+});
+test("DERIVED complete named storage/feature refusals remain uncertain for every write and upload", async () => {
+  const envelope = JSON.parse(readFileSync(new URL("./fixtures/dates_event_research_admin_wire/admin-place-unavailable-denied.json", import.meta.url), "utf8"));
+  for (const error of ["support-storage-unavailable", "support-image-storage-unavailable", "dates-research-storage-unavailable", "future-core-refusal"]) {
+    for (let index = 0; index < 7; index++) {
+      const h = client({ status: 503, data: { ...envelope, error } }); await h.entries[index][1]();
+      assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true, error);
+      assert.equal(h.calls.length, 1); assert.equal(h.time.jobs.size, 0); assert.deepEqual(h.redirects, []);
+    }
+  }
+});
+test("DERIVED an earlier lost-write notice survives membership recovery and a later proven no-write refusal", async () => {
+  const h = client(); h.state.hook = async () => { throw new Error("DERIVED earlier lost answer"); };
+  await h.entries[0][1](); assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true);
+  h.state.hook = undefined; h.state.answer = good; await h.time.tick();
+  assert.equal(h.api.adminMembershipRecovery.getSnapshot(), false); assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true);
+  h.state.answer = { status: 503, data: JSON.parse(readFileSync(new URL("./fixtures/dates_event_research_admin_wire/admin-place-unavailable-denied.json", import.meta.url), "utf8")) };
+  await h.api.adminCall("dates_event_research_area_save");
+  assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true, "a later refusal cannot settle the earlier write");
+  assert.deepEqual(h.calls.map(call => call.url), ["/api/admin/set_settings", "/api/admin/admin_me", "/api/admin/dates_event_research_area_save"]);
+});
 test("DERIVED dedicated Persona lookup: lost read resolves immediately to failure but never raises a lost-write notice or retries itself", async () => {
   const h = client(); h.state.hook = async () => { throw new Error("DERIVED lost lookup connection"); };
   assert.deepEqual(await h.api.adminCall("persona-member", { uid: "123" }), adminMembershipFailure());

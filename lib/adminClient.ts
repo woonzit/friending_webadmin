@@ -15,6 +15,24 @@ export type AdminResponse = {
   [key: string]: unknown;
 };
 
+// PROOF per name/action, not per HTTP class or complete envelope. Core main
+// 68881e54: src/Services/DatesEventResearchAdminService.php:182-187 resolves the
+// place before DatesEventResearchCommands::execute opens its transaction;
+// src/Services/DatesEventResearchAreaResolver.php:29,57,63 raises this refusal.
+// A new entry requires its own Core no-write proof AND a regression test.
+const PROVEN_CORE_NO_WRITE_REFUSALS = [
+  { action: "dates_event_research_area_save", status: 503, error: "dates-research-place-unavailable" },
+] as const;
+
+function unknownWriteOutcome(action: string, response: Response | null, data: AdminResponse | null): boolean {
+  if (!response || !data) return true;
+  if (response.status < 500) return false;
+  const complete = data.success === false && data.status_code === response.status
+    && data.message === 200 && data.status === 200 && data.can_send === 0;
+  return !complete || !PROVEN_CORE_NO_WRITE_REFUSALS.some(rule =>
+    rule.action === action && rule.status === response.status && rule.error === data.error);
+}
+
 const refuseUnconfirmed = adminMembershipFailure;
 export const adminWriteOutcomeNotice = createAdminWriteOutcomeNotice();
 const redirectToLogin = () => window.location.assign("/login");
@@ -58,7 +76,7 @@ async function finishUpload(response: Response, signal?: AbortSignal): Promise<A
   if (response.status === 503 && data?.success === false && data.error === ADMIN_MEMBERSHIP_UNCONFIRMED) {
     adminMembershipRecovery.markUnconfirmed(); return refuseUnconfirmed();
   }
-  else if (response.status >= 500 || !data) adminWriteOutcomeNotice.markUnknown();
+  else if (unknownWriteOutcome("", response, data)) adminWriteOutcomeNotice.markUnknown();
   return data ?? adminRequestOutcomeUnknownFailure();
 }
 
@@ -83,7 +101,7 @@ export async function adminCall(
     if (signal?.aborted) return null; // A late body / 401 cannot navigate an abandoned caller.
     if (response && definiteSignedOut(response.status, data)) { redirectToLogin(); return null; }
     const preForwardRefusal = response?.status === 503 && data?.success === false && data.error === ADMIN_MEMBERSHIP_UNCONFIRMED;
-    if (!readOnly && (!response || (!preForwardRefusal && (response.status >= 500 || !data)))) adminWriteOutcomeNotice.markUnknown();
+    if (!readOnly && !preForwardRefusal && unknownWriteOutcome(action, response, data)) adminWriteOutcomeNotice.markUnknown();
     if (!readOnly && !data) {
       adminMembershipRecovery.markUnconfirmed();
       return adminRequestOutcomeUnknownFailure();
