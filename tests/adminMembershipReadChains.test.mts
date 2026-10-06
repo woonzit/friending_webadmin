@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
 import { isAdminClientReadAction } from "../lib/adminClientReadActions.ts";
@@ -210,11 +210,73 @@ test("DERIVED real client: a request-specific failure with healthy membership st
   assert.ok(h.requests.every(action => action === "overview" || action === "admin_me"));
   assert.equal(h.api.adminMembershipRecovery.getSnapshot(), false); release();
 });
-test("DERIVED source audit: conservative registrations are ONLY Overview and never-loaded Research; audit/evidence reads and command handlers are not registered", () => {
+type Source = { path: string; code: string };
+function recoverySourceInventory(): Source[] {
+  return ["app", "components", "lib"].flatMap(folder => readdirSync(new URL(`../${folder}/`, import.meta.url), { recursive: true })
+    .filter(path => /\.(?:ts|tsx)$/.test(path)).map(path => ({ path: `${folder}/${path}`, code: file(`${folder}/${path}`) })));
+}
+function assertRecoveryTopology(sources: Source[]) {
+  const targets = ["useAdminReadRecovery", "registerAdminReadRecovery", "subscribeRecovered"];
+  const calls: string[] = [], imports: string[] = [];
+  for (const source of sources) {
+    const parsed = ts.createSourceFile(source.path, source.code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const aliases = new Map(targets.map(name => [name, name]));
+    const reference = (node: ts.Expression): string | undefined => ts.isIdentifier(node) ? aliases.get(node.text)
+      : ts.isPropertyAccessExpression(node) ? aliases.get(node.name.text)
+        : ts.isElementAccessExpression(node) && node.argumentExpression && ts.isStringLiteral(node.argumentExpression) ? aliases.get(node.argumentExpression.text) : undefined;
+    for (const statement of parsed.statements) if (ts.isImportDeclaration(statement)) {
+      const module = (statement.moduleSpecifier as ts.StringLiteral).text;
+      if (module === "@/components/useAdminReadRecovery" || module === "@/lib/adminReadRecovery") imports.push(`${source.path}:${module}`);
+      const bindings = statement.importClause?.namedBindings;
+      if (bindings && ts.isNamedImports(bindings)) for (const binding of bindings.elements) {
+        const original = binding.propertyName?.text ?? binding.name.text;
+        if (targets.includes(original)) aliases.set(binding.name.text, original);
+      }
+    }
+    // Also follow local aliases of the hook/factory/direct subscriber.
+    let changed = true;
+    while (changed) {
+      changed = false;
+      const alias = (node: ts.Node) => {
+        if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+          const target = reference(node.initializer);
+          if (target && !aliases.has(node.name.text)) { aliases.set(node.name.text, target); changed = true; }
+        }
+        ts.forEachChild(node, alias);
+      };
+      alias(parsed);
+    }
+    const visit = (node: ts.Node) => {
+      if (ts.isCallExpression(node)) {
+        const target = reference(node.expression); if (target) calls.push(`${source.path}:${target}`);
+        if (node.expression.kind === ts.SyntaxKind.ImportKeyword && node.arguments[0] && ts.isStringLiteral(node.arguments[0])
+          && ["@/components/useAdminReadRecovery", "@/lib/adminReadRecovery"].includes(node.arguments[0].text)) imports.push(`${source.path}:${node.arguments[0].text}`);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(parsed);
+  }
+  assert.deepEqual(calls.sort(), ["app/(dashboard)/page.tsx:useAdminReadRecovery", "app/(dashboard)/dates/research/page.tsx:useAdminReadRecovery",
+    "components/useAdminReadRecovery.ts:registerAdminReadRecovery", "lib/adminReadRecovery.ts:subscribeRecovered"].sort(), "no third loader, alternate factory or direct recovery subscriber");
+  assert.deepEqual(imports.sort(), ["app/(dashboard)/page.tsx:@/components/useAdminReadRecovery", "app/(dashboard)/dates/research/page.tsx:@/components/useAdminReadRecovery",
+    "components/useAdminReadRecovery.ts:@/lib/adminReadRecovery"].sort(), "no unreviewed recovery importer");
+}
+test("DERIVED source audit: ONLY Overview and never-loaded Research register; the entire production source inventory rejects any extra recovery path", () => {
+  assertRecoveryTopology(recoverySourceInventory());
   for (const [path, expected] of [["app/(dashboard)/page.tsx", /useAdminReadRecovery\(load, data === null && state === "error"\)/],
     ["app/(dashboard)/dates/research/page.tsx", /useAdminReadRecovery\(reload, read === null && problem\?\.kind === "unconfirmed"\)/]] as const) assert.match(file(path), expected);
   assert.doesNotMatch(file("lib/adminClient.ts"), /waitUntilRecovered|for\s*\(\s*;;\s*\)|continue;/);
   assert.match(file("components/Shell.tsx"), /<AdminManualReload \/>/);
+});
+test("DERIVED recovery inventory negative controls: third loader, alias, direct subscriber and duplicate in an approved file all fail", () => {
+  const sources = recoverySourceInventory();
+  for (const code of ['useAdminReadRecovery(save, true);', 'import { useAdminReadRecovery as restart } from "@/components/useAdminReadRecovery"; restart(save, true);',
+    'adminMembershipRecovery.subscribeRecovered(save);', 'const resume = adminMembershipRecovery.subscribeRecovered; resume(save);',
+    'import * as recovery from "@/lib/adminReadRecovery"; recovery.registerAdminReadRecovery(adminMembershipRecovery, () => true, save);']) {
+    assert.throws(() => assertRecoveryTopology([...sources, { path: "components/DERIVED_unapproved.tsx", code }]), /no third loader/);
+  }
+  assert.throws(() => assertRecoveryTopology(sources.map(source => source.path === "app/(dashboard)/page.tsx"
+    ? { ...source, code: source.code + "\nuseAdminReadRecovery(save, true);" } : source)), /no third loader/);
 });
 test("DERIVED stopped-call failure is a typed ordinary result, never an exception or suspended call", () => {
   assert.deepEqual(adminMembershipFailure(), { success: false, status_code: 503, error: ADMIN_MEMBERSHIP_UNCONFIRMED });

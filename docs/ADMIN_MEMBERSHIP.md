@@ -161,3 +161,24 @@ failures; it still returns an unconfirmed failure immediately, and recovery neve
 replays it. Its server writer-role, capability, projection and fresh membership
 checks are unchanged. No authorization, action allow-list, Core vocabulary or
 audit policy was expanded.
+
+## One timer-driven write exception: intake lease heartbeat
+
+The lead explicitly exempts the existing `DatesIntakeReviewPage` maintenance
+heartbeat from the no-operator-intent write rule. It carries no new operator
+intent, is identical to released main, and is NOT triggered by recovery or a
+held/re-sent Promise. Its regular timer is 120 seconds (with the existing
+pre-expiry first renewal for an already-held lease). Every tick is a new
+`dates_event_intake_lease` / `heartbeat` against the page's current revision;
+while membership is unconfirmed, the client refuses it locally without a
+bridge request. This is the one permitted timer-driven maintenance write,
+not permission for any additional automatic command.
+
+Immutable Core `3f0791d2548315c0a77a694f0e21825903a9f573`,
+`DatesEventIntakeAdminService::lease` and `DatesEventIntakeProjection::lease`,
+require an in-review intake at the exact revision and an unexpired lease owned
+by this current actor. Wrong state/revision returns 409 `dates-intake-conflict`;
+a missing/expired/other actor's lease returns 409 `dates-intake-lease-lost`.
+Heartbeat writes no audit row. A new account cannot acquire or revive the
+old lease by recovery, and an interrupted operator command is never resumed.
+These are source/ruling facts, not a new live Core storage test.
