@@ -614,8 +614,11 @@ test("T-885 existing marker: the same source after a reload goes out as a new re
   const page = readFileSync(new URL("../components/DatesIntakeReviewPage.tsx", import.meta.url), "utf8");
   assert.match(page, /useState\(\(\) => datesIntakeLandedOnExisting\(intakeId\)\)/); assert.match(page, /useEffect\(\(\) => forgetDatesIntakeLanding, \[\]\)/);
   assert.doesNotMatch(page, /useSearchParams|location\.search|existing=/);
-  for (const file of ["../components/DatesIntakeSourceEntry.tsx", "../app/(dashboard)/dates/intakes/page.tsx"])
-    assert.match(readFileSync(new URL(file, import.meta.url), "utf8"), /onCreated=\{\(receipt\) => router\.push\(datesIntakeLanding\(receipt\)\)\}/, file);
+  assert.match(readFileSync(new URL("../components/DatesIntakeSourceEntry.tsx", import.meta.url), "utf8"), /onCreated=\{\(receipt\) => router\.push\(datesIntakeLanding\(receipt\)\)\}/);
+  // The shared queue can also own an unanswered research batch: its departure
+  // choice guards navigation, without changing the one receipt-bound landing.
+  assert.match(readFileSync(new URL("../app/(dashboard)/dates/intakes/page.tsx", import.meta.url), "utf8"),
+    /onCreated=\{async \(receipt\) => \{\s*if \(await confirmResearchNavigation\(\)\) router\.push\(datesIntakeLanding\(receipt\)\); else await load\(\);\s*\}\}/);
   assert.match(readFileSync(new URL("../components/DatesIntakeSourcePanel.tsx", import.meta.url), "utf8"), /if \(outcome\.kind === "success"\) \{ onCreated\(outcome\.receipt\); return; \}/);
   const lib = readFileSync(new URL("../lib/datesIntakeConsole.ts", import.meta.url), "utf8");
   const landing = lib.slice(lib.indexOf("let landedOnExisting"), lib.indexOf("export type DatesIntakeSubmissionHint")).replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
