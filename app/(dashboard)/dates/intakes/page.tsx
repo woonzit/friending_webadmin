@@ -14,6 +14,7 @@ import { adminCall } from "@/lib/adminClient";
 import { DATES_INTAKE_QUEUE_CHANNELS, DATES_INTAKE_STATUSES, datesIntakeAffordances, type DatesIntakeLeaseAction, type DatesIntakeQueue, type DatesIntakeQueueRow } from "@/lib/datesIntakeAdmin";
 import { datesIntakeLanding, readDatesIntakeQueue, runDatesIntakeLease, type DatesIntakeOperator } from "@/lib/datesIntakeConsole";
 import { formatDate, formatNumber } from "@/lib/format";
+import { confirmResearchNavigation } from "@/lib/datesResearchNavigation";
 
 const PAGE_SIZE = 40;
 type Problem = { kind: "denied" } | { kind: "unconfirmed" } | { kind: "refused"; error: string };
@@ -91,7 +92,9 @@ export default function DatesIntakeQueuePage() {
         <Link className="button button-secondary" href="/dates/ai-usage">{t("usage.open")}</Link></div>} />
     <DatesAdminTabs />
     <p className="alert alert-info">{t("aiNotice")}</p>
-    {operator?.manage && queue && <DatesIntakeSourcePanel entry={{ state: queue.drafts_enabled ? "available" : "disabled", actor: operator.principal.email }} onCreated={(receipt) => router.push(datesIntakeLanding(receipt))} />}
+    {operator?.manage && queue && <DatesIntakeSourcePanel entry={{ state: queue.drafts_enabled ? "available" : "disabled", actor: operator.principal.email }} onCreated={async (receipt) => {
+      if (await confirmResearchNavigation()) router.push(datesIntakeLanding(receipt)); else await load();
+    }} />}
     <form className="dates-filter-grid" onSubmit={(event) => event.preventDefault()}>
       <label className="field"><span>{t("queue.statusFilter")}</span><select value={status} onChange={(event) => { setPage(1); setStatus(event.target.value); }}>
         <option value="">{common("all")}</option>

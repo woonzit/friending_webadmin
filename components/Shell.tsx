@@ -7,6 +7,8 @@ import { useTranslations } from "next-intl";
 import AdminHelp from "@/components/AdminHelp";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import { PROFILE_TEXT_MODERATION_CONTRACT_READY } from "@/lib/contractReadiness";
+import DatesResearchNavigationNotice from "@/components/DatesResearchNavigationNotice";
+import { confirmResearchNavigation } from "@/lib/datesResearchNavigation";
 
 type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "templates" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "intoTagModeration" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit";
 
@@ -119,6 +121,7 @@ export default function Shell({
   const [open, setOpen] = useState(false);
 
   async function logout() {
+    if (!await confirmResearchNavigation()) return;
     await fetch("/api/auth/logout", { method: "POST" });
     router.replace("/login");
     router.refresh();
@@ -181,6 +184,7 @@ export default function Shell({
           <span className="mobile-brand">Friending <b>{common("adminBadge")}</b></span>
           <LocaleSwitcher />
         </header>
+        <DatesResearchNavigationNotice />
         <main className="content">{children}</main>
       </div>
       <AdminHelp

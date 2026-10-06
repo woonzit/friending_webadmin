@@ -8400,8 +8400,10 @@
       },
       "requiredField": "Required",
       "navigation": {
+        "title": "Leave with an unknown research outcome?",
+        "leave": "Leave page",
         "confirm": "This page retains a research command whose outcome is not known. Leaving discards its local retry identity; it does not cancel work already sent to Core. Leave this page?",
-        "history": "You are leaving a page that retains a research command whose outcome is not known. Its local retry identity will be discarded; work already sent to Core is not canceled.",
+        "history": "Navigation discards a retained research command's local retry identity. Its original outcome is still unknown; work already sent to Core is not canceled. Reload the relevant list to check what Core did.",
         "retained": "Stay on this page to keep the original retry identity. Leaving the page discards it and does not cancel work already sent to Core."
       },
       "retryBlocked": {

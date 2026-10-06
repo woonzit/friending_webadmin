@@ -8400,8 +8400,10 @@
       },
       "requiredField": "Kötelező",
       "navigation": {
+        "title": "Elhagyod az oldalt nem ismert kutatási eredménnyel?",
+        "leave": "Oldal elhagyása",
         "confirm": "Az oldal megőriz egy kutatási parancsot, amelynek az eredménye nem ismert. Az oldal elhagyása törli a helyi újrapróbálási azonosítót; a Core-nak már elküldött munkát nem állítja le. Elhagyod az oldalt?",
-        "history": "Olyan oldalt hagysz el, amely egy nem ismert eredményű kutatási parancsot őriz. A helyi újrapróbálási azonosító törlődik; a Core-nak már elküldött munka nem áll le.",
+        "history": "Az oldalváltás törli egy megőrzött kutatási parancs helyi újrapróbálási azonosítóját. Az eredeti eredmény továbbra sem ismert; a Core-nak már elküldött munka nem áll le. Frissítsd az érintett listát a Core eredményének ellenőrzéséhez.",
         "retained": "Maradj ezen az oldalon az eredeti újrapróbálási azonosító megőrzéséhez. Az oldal elhagyása törli azt, de a Core-nak már elküldött munkát nem állítja le."
       },
       "retryBlocked": {
