@@ -268,10 +268,14 @@ export default function SupportInboxPage() {
     setImageSending(false);
     if (!response?.success) {
       const error = typeof response?.error === "string" ? response.error : "";
-      const terminal = error === "support-image-under-review"
-        || error.includes("invalid")
-        || error.includes("too-large")
-        || error === "support-idempotency-conflict";
+      // Only exact input/moderation conflicts end this intent. An unreadable
+      // Core answer (invalid-core-response) still needs the SAME request id.
+      const terminal = [
+        "support-image-under-review", "support-idempotency-conflict", "invalid-input",
+        "support-user-invalid", "support-message-xor-invalid", "support-request-id-invalid",
+        "support-image-invalid", "support-image-format-invalid", "support-image-dimensions-invalid",
+        "support-image-too-large",
+      ].includes(error);
       setFailedImage(terminal ? null : intent);
       setSendError(error === "support-image-under-review" ? t("imageReview") : t("imageSendError"));
       return;

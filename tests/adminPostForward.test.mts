@@ -19,7 +19,10 @@ const cases = [
   { name: "partial role 403", status: 403, data: { success: false, error: "admin-write-required" }, expected: 502 },
   { name: "unknown complete 403", status: 403, data: membershipRefusal(403, "unknown"), expected: 502 },
   { name: "wrong negative status pair", status: 403, data: membershipRefusal(403, "admin-session-invalid"), expected: 502 },
-  { name: "Core 5xx", status: 500, data: membershipRefusal(500, "query-failed"), expected: 502 },
+  { name: "complete named Core 5xx", status: 500, data: membershipRefusal(500, "query-failed"), expected: 500, error: "query-failed" },
+  { name: "complete named Core 5xx with material", status: 503, data: { ...membershipRefusal(503, "support-storage-unavailable"), data: { opaque: "DERIVED feature material" } }, expected: 503, error: "support-storage-unavailable" },
+  { name: "unreadable Core 5xx", status: 500, data: null, expected: 502 },
+  { name: "mismatched named Core 5xx", status: 500, data: membershipRefusal(503, "support-storage-unavailable"), expected: 502 },
   { name: "HTTP 5xx logical success", status: 503, data: { ...MEMBERSHIP_LEGACY, success: true, status_code: 200 }, expected: 502 },
   { name: "timeout", status: 504, data: { success: false, error: "core-timeout" }, expected: 502, error: "core-timeout" },
   { name: "transport unavailable", status: 502, data: { success: false, error: "core-unavailable" }, expected: 502, error: "core-unavailable" },
@@ -60,6 +63,18 @@ test("DERIVED post-forward classifier: complete ordinary successes and named inp
   for (const status of [400, 409, 422]) assert.equal(adminPostForwardError({ status, data: membershipRefusal(status, "derived-feature-refusal") }, MEMBERSHIP_EMAIL), null);
   for (const data of [null, { success: "true" }, { success: true, message: { smid: 91 } }]) {
     assert.equal(adminPostForwardError({ status: 200, data }, MEMBERSHIP_EMAIL), null, "feature success shape is never judged by the AUTH classifier");
+  }
+});
+test("DERIVED post-forward classifier: named 5xx needs the complete matching refusal envelope, never an HTTP success or malformed answer", () => {
+  for (const status of [500, 503, 599]) {
+    const refusal = membershipRefusal(status, "derived-storage-unavailable");
+    assert.deepEqual(adminPostForwardError({ status, data: refusal }, MEMBERSHIP_EMAIL), { status, error: "derived-storage-unavailable" });
+    for (const data of [null, [], { success: false, error: "derived-storage-unavailable" },
+      { ...refusal, success: true }, { ...refusal, success: "false" }, { ...refusal, status_code: "503" },
+      { ...refusal, status_code: status === 503 ? 500 : 503 }, { ...refusal, message: {} },
+      { ...refusal, status: 503 }, { ...refusal, can_send: 1 }, { ...refusal, error: "" }, { ...refusal, error: 12 }]) {
+      assert.deepEqual(adminPostForwardError({ status, data }, MEMBERSHIP_EMAIL), { status: 502, error: "invalid-core-response" });
+    }
   }
 });
 
