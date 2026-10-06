@@ -112,3 +112,10 @@ never queues or automatically retries any of these requests.
 Real HTTP errors cannot be overwritten by a logical success body in these
 opted-in transports. Uncertainty-notice dismissal is presentation only: it
 does not settle, delete, regenerate or retry any durable command identity.
+
+The generic action bridge also refuses to expose any HTTP 5xx as feature
+success, even with a complete positive logical envelope. Known synthesized
+transport failures retain their public 502/504; other 5xx become 502
+`invalid-core-response` with `success: false` and no feature data. This happens
+after forwarding, so it never proves that a write did not occur. Ordinary
+healthy feature successes keep the original handler-owned shape.

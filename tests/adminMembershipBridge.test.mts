@@ -109,3 +109,22 @@ test("DERIVED action gate: an abandoned late feature answer never returns protec
   assert.equal(result.status, 504); assert.equal(result.body.error, "core-timeout"); assert.equal(result.body.protected_value, undefined);
   assert.deepEqual(result.forwarded, ["set_settings"]);
 });
+for (const status of [500, 503]) for (const action of ["overview", "set_settings"]) {
+  test(`DERIVED generic post-forward ${action} / HTTP ${status}: even a complete success body is an unknown outcome`, async () => {
+    for (const data of [{ ...MEMBERSHIP_MEMBER, protected_value: "DERIVED must not escape" }, { success: true, data: { count: 2 } },
+      { ...MEMBERSHIP_MEMBER, success: false, status_code: 403, error: "admin-revoked" }, { success: false, error: "storage-failed" }, null]) {
+      const result = await bridge(MEMBERSHIP_CASES[0], action, { featureAnswer: { status, data } });
+      assert.equal(result.status, 502); assert.deepEqual(result.body, { success: false, status_code: 502, error: "invalid-core-response" });
+      assert.deepEqual(result.forwarded, [action]); assert.equal(result.headers.get("cache-control"), "no-store");
+    }
+  });
+}
+test("DERIVED generic post-forward: named synthesized transport failures retain public status, while healthy feature success is unchanged", async () => {
+  for (const [status, error] of [[502, "core-unavailable"], [504, "core-timeout"], [502, "invalid-core-response"]] as const) {
+    const result = await bridge(MEMBERSHIP_CASES[0], "set_settings", { featureAnswer: { status, data: { success: false, error } } });
+    assert.equal(result.status, status); assert.deepEqual(result.body, { success: false, status_code: status, error });
+  }
+  const data = { success: true, message: { smid: 91 }, protected_value: "DERIVED healthy feature response" };
+  const result = await bridge(MEMBERSHIP_CASES[0], "set_settings", { featureAnswer: { status: 200, data } });
+  assert.equal(result.status, 200); assert.deepEqual(result.body, data);
+});

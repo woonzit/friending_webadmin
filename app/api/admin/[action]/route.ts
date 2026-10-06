@@ -395,6 +395,10 @@ export async function POST(
   if (transportError) {
     return bridgeError(transportError.error, transportError.status_code);
   }
+  // HTTP failure wins over every logical body, even success:true. The action
+  // was already forwarded: expose an unknown outcome, never successful data
+  // or a definite pre-forward refusal.
+  if (result.status >= 500) return bridgeError("invalid-core-response", 502);
   const coreError = (result.data as Record<string, unknown> | null)?.error;
   if (invalidatesAdminSession(result.status, coreError)) {
     // A feature reply can race a revocation, but an unknown/service 401 is
