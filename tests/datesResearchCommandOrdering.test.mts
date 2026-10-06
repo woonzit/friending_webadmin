@@ -54,6 +54,25 @@ test("GENUINE place refusal releases the production hook so another city can be 
   assert.notEqual(h.calls[0].command.body.idempotency_key, h.calls[1].command.body.idempotency_key);
   h.calls[1].resolve({ kind: "refused", error: "dates-research-place-unavailable" }); await second;
 });
+test("GENUINE city-unavailable answer on DERIVED retry keeps the first attempt unknown and reloads, rather than settling the whole command", async () => {
+  const h = harness(), first = h.render().submit("dates_event_research_area_save", {
+    place_id: GENUINE_AREA.place_id, mode: "auto", overrides: GENUINE_AREA.overrides, reason: "Choose a supported city",
+  });
+  const original = h.calls[0].command; h.calls[0].resolve({ kind: "uncertain", error: "core-timeout" }); await first;
+  const retry = h.render().retry(); await flush(); assert.equal(h.calls[1].command, original);
+  h.calls[1].resolve(await runResearchCommand(async () => researchFixture("admin-place-unavailable-denied.json"), original)); await retry;
+  const state = h.render(); assert.equal(state.pending, original); assert.equal(state.retained, true); assert.equal(state.outcome.kind, "uncertain");
+  assert.equal(state.outcome.retryNoWrite, true); assert.deepEqual(h.conflicts, ["operator@example.test"]); assert.equal(h.success.length, 0);
+  const recover = state.retry(); await flush(); assert.equal(h.calls[2].command, original);
+  h.calls[2].resolve({ kind: "success", replayed: true, receipt: GENUINE_AREA }); await recover;
+  assert.equal(h.render().retained, false); assert.equal(h.success.length, 1);
+});
+test("DERIVED generic retry failure makes no no-write claim and does not pretend its unknown response can refresh away uncertainty", async () => {
+  const h = harness(), first = h.render().submit("dates_event_research_source_run_now", input);
+  h.calls[0].resolve({ kind: "uncertain", error: "core-timeout" }); await first;
+  const retry = h.render().retry(); await flush(); h.calls[1].resolve({ kind: "uncertain", error: "dates-admin-unavailable" }); await retry;
+  assert.equal(h.render().outcome.retryNoWrite, undefined); assert.equal(h.render().retained, true); assert.equal(h.conflicts.length, 0);
+});
 test("research command is retained before sending and rapid double submits cannot create another identity", async () => {
   const h = harness(), first = h.render();
   const pending = first.submit("dates_event_research_source_run_now", input);

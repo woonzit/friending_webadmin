@@ -114,6 +114,12 @@ export function useResearchCommand(actor: string, onSuccess: (outcome: Extract<R
         if (!actorRef.current) setOutcome({ kind: "uncertain", error: null });
         return;
       }
+      if (retry && answer.kind === "refused" && answer.error === "dates-research-place-unavailable") {
+        // Place lookup precedes Core's key fence: this retry wrote nothing,
+        // but the original timed-out attempt may still commit afterwards.
+        setOutcome({ kind: "uncertain", error: answer.error, retryNoWrite: true }); setPending(command);
+        await onConflict(); return;
+      }
       setOutcome(answer);
       if (answer.kind === "uncertain") setPending(command);
       else { setPending(null); if (answer.kind === "success") await onSuccess(answer); else if (answer.kind === "conflict") await onConflict(); }
@@ -144,6 +150,7 @@ export function ResearchCommandFeedback({ command, children }: { command: Return
     {outcome.kind === "conflict" && outcome.cause && <p>{t(`conflicts.${outcome.cause}`)}</p>}
     {outcome.kind === "refused" && t.has(`commandErrors.${outcome.error}`) && <p>{t(`commandErrors.${outcome.error}`)}</p>}
     {outcome.kind === "uncertain" && outcome.retryBlocked && <p>{t(`retryBlocked.${outcome.retryBlocked}`)}</p>}
+    {outcome.kind === "uncertain" && outcome.retryNoWrite && <p>{t("command.retryNoWrite")}</p>}
     {command.pending && <p>{t("navigation.retained")}</p>}
     {command.pending && <><button type="button" className="button button-secondary" disabled={command.busy} onClick={() => void command.retry()}>{common("retry")}</button>
       <button type="button" className="button button-secondary" disabled={command.busy} onClick={() => setDiscardTarget(command.pending)}>{t("command.discard")}</button>

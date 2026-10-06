@@ -8386,6 +8386,7 @@
         "refused": "A műveletet a rendszer elutasította.",
         "uncertain": "A művelet eredménye nem ismert. Az újrapróbálás pontosan ugyanazt a kérést és azonosítót küldi el.",
         "discard": "Újrapróbálási azonosító elvetése",
+        "retryNoWrite": "Ez az újrapróbálás nem tudta feloldani a várost, és nem írt semmit. Az első próbálkozás még futhat, és később létrehozhatja azt, ezért az eredeti eredmény továbbra sem ismert. A lista frissítése el lett kérve; ellenőrizd tovább a városlistát, mielőtt az újrapróbálási azonosító elvetéséről döntesz.",
         "discardWarning": "Az eredmény továbbra sem ismert. Az elvetés csak a helyi újrapróbálási azonosítót törli; a Core-nak már elküldött munkát nem állítja le. A listát frissíteni kell a Core eredményének ellenőrzéséhez, és egy még futó első próbálkozás később is befejeződhet. Elveted és frissíted?",
         "discardConfirm": "Elvetés és frissítés",
         "discarded": "A helyi újrapróbálási azonosító törlődött, és a lista frissítése el lett kérve. Az eredeti eredmény továbbra sem ismert; frissítsd újra a listát, hogy lásd, befejezte-e a Core a munkát."

@@ -38,7 +38,7 @@ export async function confirmResearchRetryActor(send: ResearchSend, command: Res
 }
 export type ResearchCommandOutcome = { kind: "success"; replayed: boolean; receipt: unknown; runId?: string; results?: ResearchBatchResult[] }
   | { kind: "conflict"; error: string; cause?: "revision" | "source_open_run" | "source_archived" | "url_owned" | "archived_url_owned" | "city_registered" } | { kind: "refused"; error: string }
-  | { kind: "uncertain"; error: string | null; partial?: ResearchRows<ResearchBatchResult>; retryBlocked?: ResearchRetryIssue; discarded?: true };
+  | { kind: "uncertain"; error: string | null; partial?: ResearchRows<ResearchBatchResult>; retryBlocked?: ResearchRetryIssue; retryNoWrite?: true; discarded?: true };
 /** Prepared once. The entire immutable request is kept while its outcome is not known. */
 export function prepareResearchCommand(actor: string, action: DatesResearchAction, body: Record<string, unknown>): ResearchCommand | null {
   const request = { ...body, idempotency_key: createAdminIdempotencyKey("dates-research") };

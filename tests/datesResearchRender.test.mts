@@ -27,6 +27,12 @@ function render(locale: string, ...children: ReactNode[]) {
 }
 const props = { actor: "operator@example.test", manage: true, limits: GENUINE_LIMITS, reload: async () => {}, close: () => {} };
 for (const locale of ["en", "hu"]) {
+  test(`render ${locale}: a city-refused retry distinguishes its own no-write proof from the original unknown outcome`, () => {
+    const copy = messages(locale).datesAdmin.research;
+    const html = render(locale, createElement(ResearchCommandFeedback, { command: { outcome: { kind: "uncertain", error: "dates-research-place-unavailable", retryNoWrite: true }, pending: {}, retry: async () => {}, discard: async () => {} } as any }));
+    assert.ok(html.includes(escaped(copy.command.retryNoWrite))); assert.ok(html.includes(escaped(copy.command.uncertain)));
+    assert.equal(html.includes(escaped(copy.command.refused)), false); assert.equal(html.includes(escaped(copy.commandErrors["dates-research-place-unavailable"])), false);
+  });
   test(`render ${locale}: unresolved commands offer explicit discard; discarded feedback stays unknown with no retry`, () => {
     const copy = messages(locale).datesAdmin.research;
     const command: any = { outcome: { kind: "uncertain", error: "unknown-core-name" }, pending: {}, retry: async () => {}, discard: async () => {} };
