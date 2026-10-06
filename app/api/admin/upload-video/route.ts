@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { coreCall } from "@/lib/core";
+import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { requireAdminWriter } from "@/lib/session";
 import { AdminVideoError, validateAdminVideo } from "@/lib/adminVideo";
@@ -32,13 +33,14 @@ export async function POST(request: NextRequest) {
 
   // Writing bytes into public media storage is a write, so it needs the write
   // role and not only an active membership row.
-  const writer = await requireAdminWriter();
+  const writer = await requireAdminWriter(request.signal);
   if (!writer.ok) return errorResponse(writer.error, writer.status);
   const session = writer.session;
 
   let video: File;
   try {
     const form = await request.formData();
+    if (request.signal?.aborted) return errorResponse(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
     const entry = form.get("video");
     if (!(entry instanceof File)) return errorResponse("video-missing", 400);
     video = entry;
@@ -64,6 +66,7 @@ export async function POST(request: NextRequest) {
     return errorResponse("video-upload-failed", 500);
   }
 
+  if (request.signal?.aborted) return errorResponse(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
   const result = await coreCall<{
     success?: boolean;
     error?: string;

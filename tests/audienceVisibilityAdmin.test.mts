@@ -1149,7 +1149,8 @@ test("released routes and panels rely on Core capability gates without a second 
   assert.match(shell, /\{ href: "\/audience-visibility", key: "audienceVisibility", icon: "userGroups" \}/);
   assert.match(bridge, /audienceVisibilityProxyCapabilityAuthorized/);
   assert.match(bridge, /normalizeAudienceVisibilityProxyBody/);
-  assert.match(session, /audienceVisibilityAdminMe\(result\.data\.audience_visibility\)/);
+  assert.match(session, /const data = decision\.membership/);
+  assert.match(session, /audienceVisibilityAdminMe\(data\.audience_visibility\)/);
   assert.match(
     session,
     /audienceVisibilityConsoleReady: audienceVisibility\?\.contract_ready === true\s+&& audienceVisibility\.actions\.includes\("audience_visibility_catalog"\)/,
@@ -1690,8 +1691,8 @@ test("the users detail panel gates the editor on the sibling block and the page 
   assert.doesNotMatch(editor, /detailOptions|gender_detail|show_gender_detail/u);
   assert.match(page, /<AudienceVisibilityUserPanel uid=\{uid\} onIdentitySaved=\{load\} \/>/);
   // T-653 §2a: the server session decodes the sibling block, tolerantly.
-  assert.match(session, /audienceVisibilityIdentityWriteAuthorized\(result\.data\)/);
-  assert.match(session, /audience_visibility_identity\?: unknown/);
+  assert.match(session, /audienceVisibilityIdentityWriteAuthorized\(data\)/);
+  assert.match(session, /const data = decision\.membership/);
   // The editor offers the two genders D-097 #1 rules on, in the owner's order,
   // and never a third.
   assert.match(editor, /AUDIENCE_VISIBILITY_OFFERED_GENDERS = \["woman", "man"\] as const/);

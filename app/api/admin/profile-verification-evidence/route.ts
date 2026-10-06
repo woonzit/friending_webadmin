@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { coreBinaryCall } from "@/lib/core";
+import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
 import {
   isProfileVerificationEvidenceKind,
   profileVerificationEvidenceContentType,
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
   if (!isTrustedAdminMediaRead(request.headers)) {
     return jsonError("bad-origin", 403);
   }
-  const writer = await requireAdminWriter();
+  const writer = await requireAdminWriter(request.signal);
   if (!writer.ok) return jsonError(writer.error, writer.status);
 
   const caseId = (request.nextUrl.searchParams.get("case_id") ?? "").trim();
@@ -48,6 +49,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  if (request.signal?.aborted) return jsonError(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
   const upstream = await coreBinaryCall(
     "profile_verification_evidence",
     { admin_email: writer.session.email, case_id: caseId, kind },

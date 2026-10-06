@@ -3,6 +3,7 @@ import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
 import { coreCall } from "@/lib/core";
+import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
 import {
   PERSONA_ADMIN_CONTRACT_VERSION,
   canonicalPersonaUid,
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
     return errorResponse("too-large", 413);
   }
 
-  const writer = await requireAdminWriter();
+  const writer = await requireAdminWriter(request.signal);
   if (!writer.ok) return errorResponse(writer.error, writer.status);
   const capabilities = personaAdminCapabilitiesFrom(
     writer.membership,
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
   let body: Record<string, unknown>;
   try {
     const raw = await request.text();
+    if (request.signal?.aborted) return errorResponse(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
     if (Buffer.byteLength(raw, "utf8") > BODY_LIMIT) return errorResponse("too-large", 413);
     const parsed = raw ? JSON.parse(raw) : null;
     body = record(parsed) ?? Object.create(null);

@@ -566,7 +566,8 @@ test("route, navigation, session, UI, locales, and Help share one dormant no-bul
   assert.ok(bridge.indexOf("if (!isAdminActionAllowed(action)") < bridge.indexOf("await readAdminSession()"));
   assert.match(bridge, /const NO_STORE_HEADERS = \{ "Cache-Control": "no-store" \}/);
   assert.match(actions, /ACTIVE_PROFILE_TEXT_MODERATION_ACTIONS/);
-  assert.match(session, /profileTextModerationAdminMe\(result\.data\.profile_text_moderation\)/);
+  assert.match(session, /const data = decision\.membership/);
+  assert.match(session, /profileTextModerationAdminMe\(data\.profile_text_moderation\)/);
   assert.match(consoleSource, /profileTextModerationPersistBeforeMutation\([\s\S]+adminCall\(next\.action/);
   assert.match(consoleSource, /window\.sessionStorage/);
   assert.match(consoleSource, /\{item\.text\}/);

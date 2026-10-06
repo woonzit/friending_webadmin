@@ -918,7 +918,8 @@ test("route, navigation, page, console and user panel preserve every security an
   assert.match(core, /if \(typeof value === "boolean"\) return value \? "1" : "0"/);
 
   assert.match(page, /if \(!me\?\.verificationConsoleReady\) notFound\(\)/);
-  assert.match(session, /verificationAdminMe\(result\.data\.verification\)/);
+  assert.match(session, /const data = decision\.membership/);
+  assert.match(session, /verificationAdminMe\(data\.verification\)/);
   assert.match(session, /verification\.actions\.includes\("verification_console"\)/);
   assert.match(shell, /item\.key !== "verificationSettings" \|\| verificationConsoleReady/);
   assert.match(layout, /verificationConsoleReady=\{me\.verificationConsoleReady\}/);

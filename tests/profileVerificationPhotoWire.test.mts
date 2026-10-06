@@ -328,7 +328,7 @@ test("the evidence route takes photo_1..photo_10 as JPEG and keeps the S3/S9 req
 
   const route = await readFile(new URL("../app/api/admin/profile-verification-evidence/route.ts", import.meta.url), "utf8");
   const guard = route.indexOf("if (!isTrustedAdminMediaRead(request.headers))");
-  assert.ok(guard > 0 && guard < route.indexOf("requireAdminWriter()") && guard < route.indexOf("coreBinaryCall("),
+  assert.ok(guard > 0 && guard < route.indexOf("requireAdminWriter(request.signal)") && guard < route.indexOf("coreBinaryCall("),
     "the same-origin / Fetch Metadata guard still runs before the session and Core");
   assert.match(route, /if \(!CASE_ID\.test\(caseId\) \|\| !isProfileVerificationEvidenceKind\(kind\)\) \{\s+return jsonError\("profile-verification-evidence-invalid", 422\);/);
   assert.match(route, /const expectedType = profileVerificationEvidenceContentType\(kind\);/);

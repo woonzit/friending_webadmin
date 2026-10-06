@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { coreCall } from "@/lib/core";
+import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "@/lib/adminMembership";
 import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
   PROFILE_TEXT_MODERATION_CONTRACT_READY,
@@ -10,7 +11,7 @@ import {
   audienceVisibilityIdentityWriteAuthorized,
 } from "@/lib/audienceVisibilityAdmin";
 import { profileTextModerationAdminMe } from "@/lib/profileTextModeration";
-import { isAdminWriteRole, normalizeAdminRole } from "@/lib/authPolicy";
+import { isAdminWriteRole } from "@/lib/authPolicy";
 import {
   personaAdminCapabilitiesFrom,
   personaCapabilityAllows,
@@ -62,7 +63,13 @@ export type AdminWriter =
       role: string;
       membership: Record<string, unknown>;
     }
-  | { ok: false; error: "auth-required" | "admin-write-required"; status: 401 | 403 };
+  | { ok: false; error: "auth-required" | "admin-write-required"; status: 401 | 403 }
+  | { ok: false; error: typeof ADMIN_MEMBERSHIP_UNCONFIRMED; status: 503 };
+
+/** A failed read is neither an identity nor a definite signed-out result. */
+export class AdminMembershipUnconfirmedError extends Error {
+  constructor() { super(ADMIN_MEMBERSHIP_UNCONFIRMED); this.name = "AdminMembershipUnconfirmedError"; }
+}
 
 function sessionSecret(): string {
   const secret = process.env.WEBADMIN_SESSION_SECRET ?? "";
@@ -91,43 +98,39 @@ export async function revokeCurrentAdminSession(): Promise<boolean> {
   return true;
 }
 
-export async function adminMe(): Promise<AdminIdentity | null> {
-  const session = await readAdminSession();
+export async function adminMe(signal?: AbortSignal): Promise<AdminIdentity | null> {
+  let session;
+  try { session = await readAdminSession(); } catch { throw new AdminMembershipUnconfirmedError(); }
+  if (signal?.aborted) throw new AdminMembershipUnconfirmedError();
   if (!session) return null;
-  const result = await coreCall<{
-    success?: boolean;
-    email?: string;
-    role?: string;
-    persona?: unknown;
-    verification?: unknown;
-    verification_method?: unknown;
-    audience_visibility?: unknown;
-    audience_visibility_identity?: unknown;
-    profile_text_moderation?: unknown;
-  }>("admin_me", { admin_email: session.email });
-  if (result.status !== 200 || !result.data?.success) return null;
-  const role = normalizeAdminRole(result.data.role);
-  if (!role) return null;
+  let result;
+  try {
+    result = await coreCall("admin_me", { admin_email: session.email }, undefined, { signal, membershipCheck: true });
+  } catch { throw new AdminMembershipUnconfirmedError(); }
+  const decision = classifyAdminMembership(result, session.email, signal?.aborted === true);
+  if (decision.kind === "revoked") return null;
+  if (decision.kind !== "confirmed") throw new AdminMembershipUnconfirmedError();
+  const data = decision.membership;
   const persona = personaAdminCapabilitiesFrom(
-    result.data,
+    data,
     ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
   );
-  const verification = verificationAdminMe(result.data.verification);
-  const audienceVisibility = audienceVisibilityAdminMe(result.data.audience_visibility);
-  const profileTextModeration = profileTextModerationAdminMe(result.data.profile_text_moderation);
+  const verification = verificationAdminMe(data.verification);
+  const audienceVisibility = audienceVisibilityAdminMe(data.audience_visibility);
+  const profileTextModeration = profileTextModerationAdminMe(data.profile_text_moderation);
   return {
-    email: String(result.data.email ?? session.email),
-    role,
+    email: decision.email,
+    role: decision.role,
     personaConsoleReady: personaCapabilityAllows(persona, "read_start_config"),
     verificationConsoleReady: verification?.contract_ready === true
       && verification.actions.includes("verification_console"),
     audienceVisibilityConsoleReady: audienceVisibility?.contract_ready === true
       && audienceVisibility.actions.includes("audience_visibility_catalog"),
-    audienceVisibilityIdentityWrite: audienceVisibilityIdentityWriteAuthorized(result.data),
+    audienceVisibilityIdentityWrite: audienceVisibilityIdentityWriteAuthorized(data),
     profileTextModerationConsoleReady: PROFILE_TEXT_MODERATION_CONTRACT_READY
       && profileTextModeration?.contract_ready === true
       && profileTextModeration.actions.includes("moderation_profile_text_list"),
-    verificationMethod: verificationMethodAccess(verificationMethodAdminMe(result.data.verification_method)),
+    verificationMethod: verificationMethodAccess(verificationMethodAdminMe(data.verification_method)),
   };
 }
 
@@ -136,23 +139,26 @@ export async function adminMe(): Promise<AdminIdentity | null> {
  * remains the authoritative check; this stops a read-only principal before the
  * console spends a Core round trip or an upload decode on it.
  */
-export async function requireAdminWriter(): Promise<AdminWriter> {
-  const session = await readAdminSession();
+export async function requireAdminWriter(signal?: AbortSignal): Promise<AdminWriter> {
+  let session;
+  try { session = await readAdminSession(); } catch { return { ok: false, error: ADMIN_MEMBERSHIP_UNCONFIRMED, status: 503 }; }
+  if (signal?.aborted) return { ok: false, error: ADMIN_MEMBERSHIP_UNCONFIRMED, status: 503 };
   if (!session) return { ok: false, error: "auth-required", status: 401 };
-  const result = await coreCall<Record<string, unknown> & { success?: boolean; role?: string }>("admin_me", {
-    admin_email: session.email,
-  });
-  if (result.status !== 200 || !result.data?.success) {
-    return { ok: false, error: "auth-required", status: 401 };
-  }
-  if (!isAdminWriteRole(result.data.role)) {
+  let result;
+  try {
+    result = await coreCall("admin_me", { admin_email: session.email }, undefined, { signal, membershipCheck: true });
+  } catch { return { ok: false, error: ADMIN_MEMBERSHIP_UNCONFIRMED, status: 503 }; }
+  const decision = classifyAdminMembership(result, session.email, signal?.aborted === true);
+  if (decision.kind === "revoked") return { ok: false, error: "auth-required", status: 401 };
+  if (decision.kind !== "confirmed") return { ok: false, error: ADMIN_MEMBERSHIP_UNCONFIRMED, status: 503 };
+  if (!isAdminWriteRole(decision.role)) {
     return { ok: false, error: "admin-write-required", status: 403 };
   }
   return {
     ok: true,
     session,
-    role: normalizeAdminRole(result.data.role),
-    membership: result.data,
+    role: decision.role,
+    membership: decision.membership,
   };
 }
 

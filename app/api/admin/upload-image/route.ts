@@ -6,6 +6,7 @@ import {
 import { MAX_ADMIN_IMAGE_INPUT_BYTES } from "@/lib/adminImageConfig";
 import { createAdminImageUploadPayload } from "@/lib/adminImageUploadPayload";
 import { coreCall } from "@/lib/core";
+import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { requireAdminWriter } from "@/lib/session";
 
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
 
   // Writing bytes into public media storage is a write, so it needs the write
   // role and not only an active membership row.
-  const writer = await requireAdminWriter();
+  const writer = await requireAdminWriter(request.signal);
   if (!writer.ok) {
     return errorResponse(writer.error, writer.status);
   }
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
   let image: File;
   try {
     const form = await request.formData();
+    if (request.signal?.aborted) return errorResponse(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
     const entry = form.get("image");
     if (!(entry instanceof File)) {
       return errorResponse("image-missing", 400);
@@ -72,6 +74,7 @@ export async function POST(request: NextRequest) {
     return errorResponse("image-upload-failed", 500);
   }
 
+  if (request.signal?.aborted) return errorResponse(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
   const result = await coreCall<{
     success?: boolean;
     error?: string;

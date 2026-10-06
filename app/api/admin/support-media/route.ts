@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { coreMultipartCall } from "@/lib/core";
+import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { requireAdminWriter } from "@/lib/session";
 import {
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     return failure("support-image-too-large", 413);
   }
 
-  const writer = await requireAdminWriter();
+  const writer = await requireAdminWriter(request.signal);
   if (!writer.ok) return failure(writer.error, writer.status);
 
   let image: File;
@@ -37,6 +38,7 @@ export async function POST(request: NextRequest) {
   let requestId = "";
   try {
     const form = await request.formData();
+    if (request.signal?.aborted) return failure(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
     const entry = form.get("image");
     if (!(entry instanceof File)) return failure("support-image-missing", 400);
     image = entry;
@@ -61,6 +63,7 @@ export async function POST(request: NextRequest) {
     return failure("support-image-upload-failed", 500);
   }
 
+  if (request.signal?.aborted) return failure(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
   const result = await coreMultipartCall<{
     success?: boolean;
     status_code?: number;

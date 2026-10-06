@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { coreMultipartCall } from "@/lib/core";
+import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { requireAdminWriter } from "@/lib/session";
 import {
@@ -34,13 +35,14 @@ export async function POST(request: NextRequest) {
     return errorResponse("pinger-icon-too-large", 413);
   }
 
-  const writer = await requireAdminWriter();
+  const writer = await requireAdminWriter(request.signal);
   if (!writer.ok) return errorResponse(writer.error, writer.status);
 
   let icon: File;
   let variant: "light" | "dark";
   try {
     const form = await request.formData();
+    if (request.signal?.aborted) return errorResponse(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
     const entry = form.get("icon");
     const rawVariant = form.get("variant");
     if (!(entry instanceof File)) return errorResponse("pinger-icon-missing", 400);
@@ -67,6 +69,7 @@ export async function POST(request: NextRequest) {
     return errorResponse("pinger-icon-upload-failed", 500);
   }
 
+  if (request.signal?.aborted) return errorResponse(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
   const result = await coreMultipartCall(
     "upload_pinger_icon",
     {
