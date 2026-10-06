@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import ProfileTextModerationConsole from "@/components/ProfileTextModerationConsole";
 import { PROFILE_TEXT_MODERATION_CONTRACT_READY } from "@/lib/contractReadiness";
 import { profileTextModerationFilterField } from "@/lib/profileTextModeration";
-import { adminMe } from "@/lib/session";
+import AdminMembershipUnavailable from "@/components/AdminMembershipUnavailable";
+import { adminMe, AdminMembershipUnconfirmedError } from "@/lib/session";
 
 export default async function ProfileTextModerationPage({
   searchParams,
@@ -10,7 +11,11 @@ export default async function ProfileTextModerationPage({
   searchParams: Promise<{ field?: string | string[]; uid?: string | string[] }>;
 }) {
   if (!PROFILE_TEXT_MODERATION_CONTRACT_READY) notFound();
-  const me = await adminMe();
+  let me;
+  try { me = await adminMe(); } catch (error) {
+    if (error instanceof AdminMembershipUnconfirmedError) return <AdminMembershipUnavailable checkId={crypto.randomUUID()} />;
+    throw error;
+  }
   if (!me?.profileTextModerationConsoleReady) notFound();
   const query = await searchParams;
   const requestedField = Array.isArray(query.field) ? query.field[0] : query.field;

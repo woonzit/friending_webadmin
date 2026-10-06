@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import * as nodeModule from "node:module";
 import vm from "node:vm";
 import ts from "typescript";
+import * as React from "react";
 import { createSessionToken, SESSION_MAX_AGE_SECONDS } from "../../lib/sessionCodec.ts";
 import { MEMBERSHIP_EMAIL, type MembershipCase } from "./adminMembershipCases.mts";
 
@@ -16,10 +17,10 @@ const secret = "test-membership-session-secret-0000000000";
 export async function serverModule(path: string, overrides: Record<string, unknown>) {
   const source = readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
   const tree = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
-  const context: Record<string, any> = { exports: {}, Buffer, JSON, Object, File, FormData, URLSearchParams, AbortSignal, NextRequest: class {},
+  const context: Record<string, any> = { exports: {}, Buffer, JSON, Object, File, FormData, URLSearchParams, AbortSignal, React, crypto: globalThis.crypto, NextRequest: class {},
     process: { env: { WEBADMIN_SESSION_SECRET: secret } }, ...overrides };
   for (const node of tree.statements) {
-    if (!ts.isImportDeclaration(node) || !node.importClause?.namedBindings || !ts.isNamedImports(node.importClause.namedBindings)) continue;
+    if (!ts.isImportDeclaration(node) || node.importClause?.isTypeOnly || !node.importClause?.namedBindings || !ts.isNamedImports(node.importClause.namedBindings)) continue;
     const module = (node.moduleSpecifier as ts.StringLiteral).text;
     const missing = node.importClause.namedBindings.elements.filter((item) => !item.isTypeOnly && context[item.name.text] === undefined);
     if (!missing.length) continue;
@@ -28,7 +29,7 @@ export async function serverModule(path: string, overrides: Record<string, unkno
     for (const item of missing) context[item.name.text] = actual[item.propertyName?.text ?? item.name.text];
   }
   const body = tree.statements.filter((node) => !ts.isImportDeclaration(node)).map((node) => node.getText(tree)).join("\n");
-  vm.runInNewContext(ts.transpileModule(body, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, context);
+  vm.runInNewContext(ts.transpileModule(body, { fileName: path, compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText, context);
   return context.exports;
 }
 export async function sessionHarness(answer: MembershipCase) {

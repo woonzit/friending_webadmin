@@ -1,11 +1,16 @@
 import { redirect } from "next/navigation";
 import Shell from "@/components/Shell";
-import { adminMe } from "@/lib/session";
+import AdminMembershipUnavailable from "@/components/AdminMembershipUnavailable";
+import { adminMe, AdminMembershipUnconfirmedError } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const me = await adminMe();
+  let me;
+  try { me = await adminMe(); } catch (error) {
+    if (error instanceof AdminMembershipUnconfirmedError) return <AdminMembershipUnavailable checkId={crypto.randomUUID()} />;
+    throw error;
+  }
   if (!me) redirect("/login");
   return (
     <Shell

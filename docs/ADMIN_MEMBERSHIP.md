@@ -27,12 +27,21 @@ All bodies below must have their own strictly typed legacy envelope markers
 | Malformed 200: null/scalar/array, missing or loosely typed fields, unknown role, wrong actor, wrong legacy markers, conflicting success/error/status | Unconfirmed | Same 503 refusal | Same neutral shell | Same in-place recovery |
 | Partial/malformed negative body or wrong error/status pair | Unconfirmed | Same 503 refusal | Same neutral shell | Same in-place recovery |
 
-The classifier commit establishes this table. Subsequent separately reviewed
-commits wire the bridge, client, session gates, layout, and direct intake gate.
-Their production-handler tests must exercise every applicable row above,
+The boundary is wired in separate commits for the bridge, client, session
+gates, layout, and direct intake gate. Their production-handler tests exercise
+every applicable row above,
 including malformed 200 and abandoned requests that receive a late positive or
 negative answer. Auto-recovery is restricted to membership and read-only calls;
 an operator retry of a refused write must pass a new membership check.
+
+`adminMe` returns an identity only on a complete positive proof, `null` only
+for a definite non-session/non-member, and throws the typed
+`AdminMembershipUnconfirmedError` otherwise. Every server-render caller
+handles that specific error with a neutral recovery component and no protected
+page props/children. A fresh opaque render id makes a new unconfirmed server
+result restart backoff even when Next reuses the neutral component. Only that
+initial neutral page may refresh after a positive recovery probe; ongoing
+client outages hide, but never unmount or refresh, existing editors.
 
 ## Separate post-forward boundary
 

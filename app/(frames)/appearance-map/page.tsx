@@ -1,6 +1,7 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import AppearanceMapFrame from "@/components/AppearanceMapFrame";
-import { adminMe } from "@/lib/session";
+import AdminMembershipUnavailable from "@/components/AdminMembershipUnavailable";
+import { adminMe, AdminMembershipUnconfirmedError } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,11 @@ export const dynamic = "force-dynamic";
 export default async function AppearanceMapPage() {
   const t = await getTranslations("appearance.map");
   const locale = await getLocale();
-  const me = await adminMe();
+  let me;
+  try { me = await adminMe(); } catch (error) {
+    if (error instanceof AdminMembershipUnconfirmedError) return <AdminMembershipUnavailable checkId={crypto.randomUUID()} />;
+    throw error;
+  }
   if (!me) {
     return (
       <main className="appearance-map-frame" data-status="refused">
