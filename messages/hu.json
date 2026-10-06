@@ -8391,6 +8391,11 @@
         "city_registered": "Ez a város már szerepel a listában. Újbóli hozzáadás helyett a meglévő sorát szerkeszd."
       },
       "requiredField": "Kötelező",
+      "navigation": {
+        "confirm": "Az oldal megőriz egy kutatási parancsot, amelynek az eredménye nem ismert. Az oldal elhagyása törli a helyi újrapróbálási azonosítót; a Core-nak már elküldött munkát nem állítja le. Elhagyod az oldalt?",
+        "history": "Olyan oldalt hagysz el, amely egy nem ismert eredményű kutatási parancsot őriz. A helyi újrapróbálási azonosító törlődik; a Core-nak már elküldött munka nem áll le.",
+        "retained": "Maradj ezen az oldalon az eredeti újrapróbálási azonosító megőrzéséhez. Az oldal elhagyása törli azt, de a Core-nak már elküldött munkát nem állítja le."
+      },
       "retryBlocked": {
         "actor_changed": "Az újrapróbálás nem lett elküldve: az aktív fiók eltér a parancs tulajdonosától. Az eredeti eredmény továbbra sem ismert. Térj vissza az eredeti fiókhoz, és újrapróbálás előtt frissíts.",
         "unconfirmed": "Az újrapróbálás nem lett elküldve, mert az aktív fiók nem volt visszaigazolható. Az eredeti eredmény továbbra sem ismert. Ellenőrizd a munkamenetet, majd próbáld újra.",

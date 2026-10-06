@@ -6,7 +6,7 @@ import ts from "typescript";
 import * as research from "../lib/datesResearchAdmin.ts";
 import * as view from "../lib/datesResearchView.ts";
 import * as proxy from "../lib/datesResearchProxy.ts";
-import { prepareResearchCommand, runResearchCommand } from "../lib/datesResearchConsole.ts";
+import { confirmResearchRetryActor, prepareResearchCommand, runResearchCommand } from "../lib/datesResearchConsole.ts";
 import { projectDatesAdminBody } from "../lib/datesAdminProjection.ts";
 import { formatNumber } from "../lib/format.ts";
 import { DERIVED_ENVELOPE, GENUINE_RUN, GENUINE_AREA, GENUINE_DEFAULTS, GENUINE_LIMITS, GENUINE_SOURCE } from "./support/datesResearchCorpus.ts";
@@ -93,7 +93,8 @@ test("DERIVED scheduled check finishes with an open source editor: conflict relo
   let index = 0, dirty = false, reloads = 0, closes = 0;
   const props = { row: before, defaults: GENUINE_DEFAULTS, areas: [GENUINE_AREA], actor: "operator@example.test", manage: true, limits: GENUINE_LIMITS,
     reload: async () => { reloads++; props.row = backend; }, close: () => { closes++; } };
-  const context: any = { exports: {}, ...research, ...view, ...proxy, prepareResearchCommand, runResearchCommand, formatNumber,
+  const context: any = { exports: {}, ...research, ...view, ...proxy, prepareResearchCommand, runResearchCommand, confirmResearchRetryActor, formatNumber,
+    retainResearchCommandNavigation: () => () => {},
     React: { createElement: (type: any, value: any, ...children: any[]) => ({ type, props: value ?? {}, children }) },
     useLocale: () => "en", useTranslations: () => (key: string) => key,
     useState: (initial: any) => { const slot = index++; if (!(slot in slots)) slots[slot] = initial;

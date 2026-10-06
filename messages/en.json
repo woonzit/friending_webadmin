@@ -8391,6 +8391,11 @@
         "city_registered": "This city is already registered. Edit its existing row instead of adding it again."
       },
       "requiredField": "Required",
+      "navigation": {
+        "confirm": "This page retains a research command whose outcome is not known. Leaving discards its local retry identity; it does not cancel work already sent to Core. Leave this page?",
+        "history": "You are leaving a page that retains a research command whose outcome is not known. Its local retry identity will be discarded; work already sent to Core is not canceled.",
+        "retained": "Stay on this page to keep the original retry identity. Leaving the page discards it and does not cancel work already sent to Core."
+      },
       "retryBlocked": {
         "actor_changed": "Retry was not sent: the active account differs from this command's owner. The original outcome remains unknown. Return to the original account and refresh before retrying.",
         "unconfirmed": "Retry was not sent because the active account could not be confirmed. The original outcome remains unknown. Check your session and try again.",

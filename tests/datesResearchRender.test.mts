@@ -26,6 +26,11 @@ function render(locale: string, ...children: ReactNode[]) {
 }
 const props = { actor: "operator@example.test", manage: true, limits: GENUINE_LIMITS, reload: async () => {}, close: () => {} };
 for (const locale of ["en", "hu"]) {
+  test(`render ${locale}: a retained command warns that navigation loses retry, not that it cancels Core work`, () => {
+    const copy = messages(locale).datesAdmin.research;
+    const html = render(locale, createElement(ResearchCommandFeedback, { command: { outcome: { kind: "uncertain", error: null }, pending: {}, retry: async () => {} } as any }));
+    assert.ok(html.includes(escaped(copy.navigation.retained)));
+  });
   test(`render ${locale}: blocked retry explains the fresh-account check without settling the original command`, () => {
     const copy = messages(locale).datesAdmin.research;
     for (const retryBlocked of Object.keys(copy.retryBlocked)) {

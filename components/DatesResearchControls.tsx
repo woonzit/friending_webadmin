@@ -6,6 +6,7 @@ import { DATES_RESEARCH_VALUE_FIELDS, type DatesResearchAction, type ResearchLim
 import { confirmResearchRetryActor, prepareResearchCommand, runResearchCommand, type ResearchCommand, type ResearchCommandOutcome } from "@/lib/datesResearchConsole";
 import { researchDistanceFromKm, researchDistanceToKm, researchInputNumber, researchTimeFromHours, researchTimeToHours, type ResearchDistanceUnit, type ResearchNumericIssue, type ResearchTimeUnit } from "@/lib/datesResearchView";
 import { formatNumber } from "@/lib/format";
+import { retainResearchCommandNavigation } from "@/lib/datesResearchNavigation";
 
 export function ResearchHelp({ field, effective, own = false, unavailableInheritance = false }: { field: string; effective?: string; own?: boolean; unavailableInheritance?: boolean }) {
   const t = useTranslations("datesAdmin.research");
@@ -86,9 +87,12 @@ export function ResearchSaveIssue({ issue, limits }: { issue: ResearchNumericIss
 }
 export function useResearchCommand(actor: string, onSuccess: (outcome: Extract<ResearchCommandOutcome, { kind: "success" }>) => Promise<void> | void,
   onConflict: () => Promise<void>) {
+  const t = useTranslations("datesAdmin.research"), leave = t("navigation.confirm"), history = t("navigation.history");
   const [pending, setPending] = useState<ResearchCommand | null>(null), [outcome, setOutcome] = useState<ResearchCommandOutcome | null>(null), [busy, setBusy] = useState(false);
   const [owner, setOwner] = useState(actor), busyRef = useRef(false), actorRef = useRef(actor); actorRef.current = actor;
   useEffect(() => { if (actor && actor !== owner) { setOwner(actor); setPending(null); setOutcome(null); } }, [actor, owner]);
+  const retained = pending !== null;
+  useEffect(() => retained ? retainResearchCommandNavigation(leave, history) : undefined, [retained, leave, history]);
   async function execute(command: ResearchCommand, retry = false) {
     if (busyRef.current || command.actor !== actorRef.current) return;
     const partial = retry && outcome?.kind === "uncertain" ? outcome.partial : undefined;
@@ -115,7 +119,7 @@ export function useResearchCommand(actor: string, onSuccess: (outcome: Extract<R
     } finally { busyRef.current = false; setBusy(false); }
   }
   const visiblePending = owner === actor ? pending : null, visibleOutcome = owner === actor ? outcome : null;
-  return { busy, retained: pending !== null, pending: visiblePending, outcome: visibleOutcome, clear: () => setOutcome(null), retry: () => visiblePending ? execute(visiblePending, true) : Promise.resolve(),
+  return { busy, retained, pending: visiblePending, outcome: visibleOutcome, clear: () => setOutcome(null), retry: () => visiblePending ? execute(visiblePending, true) : Promise.resolve(),
     submit: async (action: DatesResearchAction, body: Record<string, unknown>) => {
       if (busyRef.current || pending) return;
       const command = prepareResearchCommand(actor, action, body);
@@ -132,5 +136,6 @@ export function ResearchCommandFeedback({ command, children }: { command: Return
     {outcome.kind === "conflict" && outcome.cause && <p>{t(`conflicts.${outcome.cause}`)}</p>}
     {outcome.kind === "refused" && t.has(`commandErrors.${outcome.error}`) && <p>{t(`commandErrors.${outcome.error}`)}</p>}
     {outcome.kind === "uncertain" && outcome.retryBlocked && <p>{t(`retryBlocked.${outcome.retryBlocked}`)}</p>}
+    {command.pending && <p>{t("navigation.retained")}</p>}
     {command.pending && <button type="button" className="button button-secondary" disabled={command.busy} onClick={() => void command.retry()}>{common("retry")}</button>}{children}</div>;
 }

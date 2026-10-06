@@ -21,6 +21,7 @@ function harness(preflight: () => Promise<unknown> = async () => identity()) {
   const slots: any[] = [], effects: (() => void)[] = [], calls: any[] = [], reads: any[] = [], success: any[] = [], conflicts: string[] = [];
   let index = 0;
   const context: any = { exports: {}, prepareResearchCommand, confirmResearchRetryActor,
+    useTranslations: () => (key: string) => key, retainResearchCommandNavigation: () => () => {},
     adminCall: (action: string, body: object) => { reads.push({ action, body }); return preflight(); },
     runResearchCommand: (_send: unknown, command: unknown) => new Promise((resolve) => calls.push({ command, resolve })),
     useState: (initial: unknown) => {
