@@ -26,15 +26,15 @@ export function ResearchDefaultsEditor({ defaults, actor, manage, limits, reload
   const t = useTranslations("datesAdmin.research"), common = useTranslations("common");
   const model = useResearchDraft(defaultDraft(defaults), defaults.revision), [reason, setReason] = useState(""), [unit, setUnit] = useState<ResearchDistanceUnit>("km");
   const command = useResearchCommand(actor, async (answer) => { const row = decodeResearchDefaults(answer.receipt); if (row) model.adopt(defaultDraft(row), row.revision); setReason(""); await reload(); }, reload);
-  const disabled = !manage || command.busy, issue = researchValuesIssue(model.draft, limits);
+  const disabled = !manage || command.busy || command.retained, issue = researchValuesIssue(model.draft, limits);
   return <form className="panel research-editor" onSubmit={(event) => { event.preventDefault(); void command.submit("dates_event_research_defaults_save", { expected_revision: model.revision, values: model.draft, reason }); }}>
     <h2>{t("sections.defaults")}</h2><div className="form-grid">{(["enabled", "auto_cities_enabled"] as const).map((key) => {
       return <label className="field" key={key}><span>{t(`fields.${key}`)}</span><input type="checkbox" checked={model.draft[key]} disabled={disabled}
         onChange={(event) => model.set({ ...model.draft, [key]: event.target.checked })} /><ResearchHelp field={key} effective={common(model.draft[key] ? "yes" : "no")} /></label>;
     })}</div>
     <ResearchValuesFields values={model.draft} limits={limits} disabled={disabled} unit={unit} onUnit={setUnit} onChange={(values) => model.set({ ...model.draft, ...values })} />
-    {manage && <><ResearchReason value={reason} onChange={setReason} disabled={command.busy} /><button className="button button-primary" type="submit"
-      disabled={command.busy || command.pending !== null || issue !== null || !researchAuditReason(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
+    {manage && <><ResearchReason value={reason} onChange={setReason} disabled={disabled} /><button className="button button-primary" type="submit"
+      disabled={disabled || issue !== null || !researchAuditReason(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
     <ResearchCommandFeedback command={command} />
   </form>;
 }
@@ -44,8 +44,9 @@ export function ResearchAreaEditor({ row, defaults, actor, manage, limits, reloa
   const t = useTranslations("datesAdmin.research"), common = useTranslations("common"), locale = useLocale();
   const model = useResearchDraft(areaDraft(row), row?.revision ?? 0), [placeId, setPlaceId] = useState(row?.place_id ?? ""), [country, setCountry] = useState(row?.country_code ?? "");
   const [center, setCenter] = useState<ResearchCenter | null>(row?.center ?? null), [unit, setUnit] = useState<ResearchDistanceUnit>(researchDistanceUnit(country)), [reason, setReason] = useState("");
-  const effective = researchEffectiveValues(defaults, model.draft.overrides), disabled = !manage, issue = researchValuesIssue(effective, limits);
+  const effective = researchEffectiveValues(defaults, model.draft.overrides), issue = researchValuesIssue(effective, limits);
   const command = useResearchCommand(actor, async (answer) => { const saved = decodeResearchArea(answer.receipt); if (saved) model.adopt(areaDraft(saved), saved.revision); await reload(); close(); }, reload);
+  const disabled = !manage || command.busy || command.retained;
   return <form className="panel research-editor" onSubmit={(event) => { event.preventDefault(); void command.submit("dates_event_research_area_save", {
     ...(row ? { area_id: row.area_id, expected_revision: model.revision, label: model.draft.label } : { place_id: placeId }), mode: model.draft.mode, overrides: model.draft.overrides, reason }); }}>
     <div className="panel-header"><h2>{t(row ? "editCity" : "addCity")}</h2><button type="button" className="button button-secondary" disabled={command.busy || command.retained} onClick={close}>{common("close")}</button></div>
@@ -58,8 +59,8 @@ export function ResearchAreaEditor({ row, defaults, actor, manage, limits, reloa
       {DATES_RESEARCH_MODES.map((mode) => <option key={mode} value={mode}>{t(`modeValues.${mode}`)}</option>)}</select><ResearchHelp field="mode" effective={t(`modeValues.${model.draft.mode}`)} own /></label>
     <ResearchValuesFields values={effective} limits={limits} disabled={disabled || command.busy} unit={unit} onUnit={setUnit} onChange={() => undefined}
       inheritance={{ overrides: model.draft.overrides, onChange: (overrides) => model.set({ ...model.draft, overrides }) }} />
-    {manage && <><ResearchReason value={reason} onChange={setReason} disabled={command.busy} /><button className="button button-primary" type="submit"
-      disabled={command.busy || command.pending !== null || (!row && !placeId) || issue !== null || !researchAuditReason(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
+    {manage && <><ResearchReason value={reason} onChange={setReason} disabled={disabled} /><button className="button button-primary" type="submit"
+      disabled={disabled || (!row && !placeId) || issue !== null || !researchAuditReason(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
     <ResearchCommandFeedback command={command} />
   </form>;
 }
@@ -71,7 +72,7 @@ export function ResearchSourceEditor({ row, defaults, areas, actor, manage, limi
   const t = useTranslations("datesAdmin.research"), common = useTranslations("common"), locale = useLocale();
   const model = useResearchDraft(sourceDraft(row, defaults, limits), row?.revision ?? 0), [reason, setReason] = useState("");
   const command = useResearchCommand(actor, async (answer) => { const saved = decodeResearchSource(answer.receipt); if (saved) model.adopt(sourceDraft(saved, defaults, limits), saved.revision); await reload(); close(); }, reload);
-  const disabled = !manage || command.busy, values = model.draft;
+  const disabled = !manage || command.busy || command.retained, values = model.draft;
   const area = areas.find((item) => item.area_id === values.area_id), unavailableInheritance = values.area_id !== null && !area;
   // Stored inheritance is known only for fields that were already inherited.
   // A source override cannot reveal an unreadable city's value underneath it.
@@ -108,7 +109,7 @@ export function ResearchSourceEditor({ row, defaults, areas, actor, manage, limi
       {(["enabled", "archived"] as const).map((key) => <label className="field" key={key}><span>{t(`fields.${key === "enabled" ? "source_enabled" : key}`)}</span><input type="checkbox" checked={values[key]} disabled={disabled}
         onChange={(event) => model.set({ ...values, [key]: event.target.checked })} /><ResearchHelp field={key === "enabled" ? "source_enabled" : key} effective={common(values[key] ? "yes" : "no")} own /></label>)}
     </div>{values.type === "aggregator" && <p className="alert alert-info">{t("aggregatorHint")}</p>}
-    {manage && <><ResearchReason value={reason} onChange={setReason} disabled={command.busy} /><button type="submit" className="button button-primary" disabled={command.busy || command.pending !== null || !valid || !researchAuditReason(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
+    {manage && <><ResearchReason value={reason} onChange={setReason} disabled={disabled} /><button type="submit" className="button button-primary" disabled={disabled || !valid || !researchAuditReason(reason)}>{common(command.busy ? "saving" : "save")}</button></>}
     <ResearchCommandFeedback command={command} />
   </form>;
 }

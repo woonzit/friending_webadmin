@@ -28,6 +28,21 @@ function elements(node: any): Element[] {
   return node && typeof node === "object" && "type" in node ? [node, ...elements(node.children)] : [];
 }
 const flush = async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); };
+test("DERIVED retained command locks every editor field, including when actor fencing hides the visible pending command", () => {
+  const context: any = { exports: {}, ...research, ...view, ...proxy, formatNumber,
+    React: { Fragment: "fragment", createElement: (type: any, props: any, ...children: any[]) => ({ type, props: props ?? {}, children }) },
+    useLocale: () => "en", useTranslations: () => (key: string) => key, useEffect: () => {}, useState: (value: any) => [value, () => {}],
+    useResearchCommand: () => ({ busy: false, retained: true, pending: null, submit: () => {} }) };
+  for (const name of ["ResearchCommandFeedback", "ResearchDuration", "ResearchHelp", "ResearchReason", "ResearchValuesFields", "AppearanceMapPicker"]) context[name] = name;
+  vm.runInNewContext(ts.transpileModule(editorTree.statements.filter((node) => !ts.isImportDeclaration(node)).map((node) => node.getText(editorTree)).join("\n"),
+    { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText, context);
+  const props = { defaults: GENUINE_DEFAULTS, actor: "operator@example.test", manage: true, limits: GENUINE_LIMITS, reload: async () => {}, close: () => {} };
+  for (const [name, extra] of [["ResearchDefaultsEditor", {}], ["ResearchAreaEditor", { row: GENUINE_AREA }], ["ResearchSourceEditor", { row: GENUINE_SOURCE, areas: [GENUINE_AREA] }]] as const) {
+    const nodes = elements(context.exports[name]({ ...props, ...extra }));
+    for (const node of nodes.filter((node) => ["input", "select", "button", "ResearchReason", "ResearchValuesFields", "ResearchDuration", "AppearanceMapPicker"].includes(node.type)))
+      assert.equal(node.props.disabled, true, `${name}: ${node.type} is locked while the original command is retained`);
+  }
+});
 
 test("DERIVED unreadable city: changing a source override to inheritance shows unknown effective values without guessing or writing", () => {
   const slots: any[] = [], calls: any[] = []; let index = 0;
