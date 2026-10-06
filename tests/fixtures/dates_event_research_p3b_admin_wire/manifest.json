@@ -1,0 +1,1907 @@
+{
+    "schema_version": 1,
+    "contract": "dates-event-research-admin-v1",
+    "source_commit": "0da6f55d542c094120d40018d096a6e63f817bd6",
+    "source_checksum": "5456561289b2bc1e107923c3c1ea3033d489379d584af2f27cddee0df7b12771",
+    "fixture_count": 200,
+    "fixture_set_sha256": "c0faf4de01f4944f4fe6991091ff8bbd0701ba0c44c9bc315b830b974aeedbe5",
+    "vocabularies": {
+        "mode": [
+            "auto",
+            "on",
+            "off"
+        ],
+        "scope_kind": [
+            "city",
+            "radius"
+        ],
+        "source_type": [
+            "official",
+            "aggregator"
+        ],
+        "not_running_reason": [
+            "research_off",
+            "mode_off",
+            "auto_cities_off",
+            "below_threshold",
+            "section_unavailable",
+            "budget_paused",
+            "discovery_bound_exceeded"
+        ],
+        "robots_state": [
+            "unknown",
+            "allowed",
+            "disallowed",
+            "unreachable"
+        ],
+        "run_kind": [
+            "source",
+            "area"
+        ],
+        "run_trigger": [
+            "schedule",
+            "manual"
+        ],
+        "run_status": [
+            "queued",
+            "running",
+            "completed",
+            "unchanged",
+            "skipped_target_met",
+            "blocked_by_robots",
+            "fetch_failed",
+            "budget_paused",
+            "failed",
+            "provider_unavailable"
+        ],
+        "candidate_outcome": [
+            "imported",
+            "would_import",
+            "duplicate",
+            "dropped"
+        ],
+        "drop_reason": [
+            "past_date",
+            "outside_window",
+            "outside_area",
+            "known_url",
+            "no_event_page",
+            "fetch_failed",
+            "validation_failed",
+            "over_cap",
+            "robots_disallowed",
+            "blocked_domain"
+        ],
+        "batch_outcome": [
+            "published",
+            "rejected",
+            "refused"
+        ]
+    },
+    "coverage": {
+        "stage": "p3b_final",
+        "covered_values": {
+            "mode": [
+                "auto",
+                "off",
+                "on"
+            ],
+            "scope_kind": [
+                "city",
+                "radius"
+            ],
+            "source_type": [
+                "aggregator",
+                "official"
+            ],
+            "not_running_reason": [
+                "auto_cities_off",
+                "below_threshold",
+                "budget_paused",
+                "discovery_bound_exceeded",
+                "mode_off",
+                "research_off",
+                "section_unavailable"
+            ],
+            "robots_state": [
+                "allowed",
+                "disallowed",
+                "unknown",
+                "unreachable"
+            ],
+            "run_kind": [
+                "area",
+                "source"
+            ],
+            "run_trigger": [
+                "manual",
+                "schedule"
+            ],
+            "run_status": [
+                "blocked_by_robots",
+                "budget_paused",
+                "completed",
+                "failed",
+                "fetch_failed",
+                "provider_unavailable",
+                "queued",
+                "running",
+                "skipped_target_met",
+                "unchanged"
+            ],
+            "candidate_outcome": [
+                "dropped",
+                "duplicate",
+                "imported",
+                "would_import"
+            ],
+            "drop_reason": [
+                "blocked_domain",
+                "fetch_failed",
+                "known_url",
+                "no_event_page",
+                "outside_area",
+                "outside_window",
+                "over_cap",
+                "past_date",
+                "robots_disallowed",
+                "validation_failed"
+            ],
+            "batch_outcome": [
+                "published",
+                "refused",
+                "rejected"
+            ]
+        },
+        "covered_branches": [
+            "all_overridden",
+            "archived",
+            "area_scheduled_receipts",
+            "batch-new-key-replay",
+            "batch-opposite-returns-published",
+            "batch-opposite-returns-rejected",
+            "batch-same-key-replay",
+            "discovery_pause",
+            "discovery_tool_counts",
+            "dry_run",
+            "filtered_queue_empty",
+            "filtered_queue_populated",
+            "first_write",
+            "history_last_page",
+            "history_next_page",
+            "inherited",
+            "measured_estimate",
+            "missing_stock",
+            "mixed_batch",
+            "model_domain_configuration",
+            "proposed",
+            "refused",
+            "replayed",
+            "running",
+            "source-disabled-preview-queued",
+            "source-run-archived-preview-denied",
+            "source-run-archived-real-denied",
+            "source-run-completed-new-key-replay",
+            "source-run-completed-same-key-replay",
+            "source-run-disabled-denied",
+            "source-run-master-off-historical-replay",
+            "source-run-master-off-open-replay",
+            "source-run-master-off-preview-denied",
+            "source-run-master-off-real-denied",
+            "source-run-next-dry-intent-queued",
+            "source-run-next-scheduled-intent-queued",
+            "source-run-open-alias-completed-replay",
+            "source-run-open-new-key-replay",
+            "source-run-same-key-replay",
+            "source-run-scheduled-alias-completed-replay",
+            "source-run-scheduled-open-replay",
+            "source-run-stale-other-admin-denied",
+            "source-save-after-scheduled-completion-stale",
+            "target_met",
+            "terminal_generation",
+            "unmeasured_estimate"
+        ],
+        "pending_part_b": [],
+        "pending_p3b": []
+    },
+    "provenance": {
+        "generator": "tests/dates_event_research_admin_fixture_dump.php",
+        "generator_sha256": "cab57ed86b5ae925f45fa4fb43aa2a0a2c06093c4652365f0213a952a707c124",
+        "transport": "Real loopback HTTP POSTs through unchanged public/index.php, PHP body parsing, Router, middleware, services and Webadmin serializer. Form scalars/objects follow released lib/core.ts; one typed JSON-body replay additionally proves integer selector 1.",
+        "provider_boundary": "No live AI provider call or public-page fetch. Actual source workers, SafeExternalFetch, evidence/Places validation and publication replay recorded genuine OpenAI/Gemini answers on SELF-MADE listing/event/robots pages (dates_event_research_ai and event_research_source_harness.php). Recorded request fingerprints are checked by the replay transport. The new city geocoder alone is synthetic self-made data (event_research_harness.php), never labelled genuine provider evidence.",
+        "declared_adjustments": {
+            "area-created-receipt": "The real area service first resolves synthetic geocoding in-process; HTTP reads its same-command receipt. Every edit and other create/refusal is HTTP; no response object is fabricated.",
+            "overview-target-met": "Prepared in-review per-event stock state, explicitly not an AI answer or completed pipeline run. The real stock query serves its count.",
+            "overview-budget-paused": "A real outstanding DatesAiBudget reservation at the 70-percent boundary, then released. No call or cost is invented.",
+            "overview-proposed-city": "Disposable fixture members and real daily count/proposal stage, with the synthetic city resolver. No member identity is projected.",
+            "part-b-worker-clock": "Only owned source/run fixture timestamps and the worker clock are frozen to the genuine operational request day 2026-10-05. One monotonic second per pass preserves actual history and queue ordering. All statuses, candidates, intake drafts, costs and decisions are actual production-service writes.",
+            "batch-human-leases": "Three genuine worker-born intake leases are claimed through the actual intake service before HTTP batch decisions. No decision/result is prepared.",
+            "batch-row-channel-refused": "A declared SELF-MADE admin_draft document exercises only the per-row wrong-channel refusal; it is not an AI answer or a research intake."
+        },
+        "normalized_clock_fields": "Part A/current-wall *_at fields are checked against capture start/current time and mapped to RESEARCH_WIRE_NOW. Part B frozen worker/business timestamps are bounded to the declared reference day plus 180 days and retained exactly; live review leases are verified within 300 seconds and mapped to the reference lease expiry. server_now is additionally checked against its exact request interval. The budget month is checked against the actual UTC month, then mapped to the reference month.",
+        "normalized_identifier_fields": "Real research area/source/audit/run/intake/external-event identifiers are mapped by prefix and first appearance. History and queue ordering is retained. ID-keyed batch result sets are sorted by the normalized opaque ID (Core sorts by the original ID); no outcome or field is changed. History cursors use the same checked clock/ID mapping.",
+        "source_paths": [
+            "config/dates_event_research/public_suffix_list.dat",
+            "config/dates_v1_fixture.json",
+            "config/routes.php",
+            "docs/DATES_EVENT_RESEARCH_ADMIN_V1.md",
+            "docs/DATES_EVENT_RESEARCH_DISCOVERY_V1.md",
+            "public/index.php",
+            "scripts/audit_dates_research_domains.php",
+            "scripts/bootstrap_dates.js",
+            "src/Core/Config.php",
+            "src/Core/DeferredWork.php",
+            "src/Core/LegacyProxy.php",
+            "src/Core/Mongo.php",
+            "src/Core/PerfMonitor.php",
+            "src/Core/Request.php",
+            "src/Core/Response.php",
+            "src/Core/Router.php",
+            "src/Http/Controllers/AccountController.php",
+            "src/Http/Controllers/AlbumController.php",
+            "src/Http/Controllers/AppController.php",
+            "src/Http/Controllers/AppStoreNotificationController.php",
+            "src/Http/Controllers/AppearanceController.php",
+            "src/Http/Controllers/BrowseController.php",
+            "src/Http/Controllers/ChatController.php",
+            "src/Http/Controllers/ChatRequestController.php",
+            "src/Http/Controllers/DatesChatController.php",
+            "src/Http/Controllers/DatesController.php",
+            "src/Http/Controllers/DatesEventSuggestionController.php",
+            "src/Http/Controllers/DatesExternalMembershipController.php",
+            "src/Http/Controllers/DatesHostTransferController.php",
+            "src/Http/Controllers/DatesLiveController.php",
+            "src/Http/Controllers/DatesModerationController.php",
+            "src/Http/Controllers/DatesNotificationController.php",
+            "src/Http/Controllers/DatesReviewController.php",
+            "src/Http/Controllers/DatesSafetyController.php",
+            "src/Http/Controllers/EmailVerificationController.php",
+            "src/Http/Controllers/FeedController.php",
+            "src/Http/Controllers/FootprintController.php",
+            "src/Http/Controllers/ForcedVerificationAdminController.php",
+            "src/Http/Controllers/GiveawayController.php",
+            "src/Http/Controllers/GoogleRtdnController.php",
+            "src/Http/Controllers/HealthController.php",
+            "src/Http/Controllers/HelpSupportController.php",
+            "src/Http/Controllers/IcebreakerController.php",
+            "src/Http/Controllers/IntoTagController.php",
+            "src/Http/Controllers/InvitesController.php",
+            "src/Http/Controllers/IosadminController.php",
+            "src/Http/Controllers/JoinController.php",
+            "src/Http/Controllers/LocationController.php",
+            "src/Http/Controllers/MembershipController.php",
+            "src/Http/Controllers/MembershipStoreController.php",
+            "src/Http/Controllers/ModerationController.php",
+            "src/Http/Controllers/NotificationController.php",
+            "src/Http/Controllers/PeopleController.php",
+            "src/Http/Controllers/PersonaController.php",
+            "src/Http/Controllers/PersonaScreensAdminController.php",
+            "src/Http/Controllers/PingerAdminController.php",
+            "src/Http/Controllers/PingerController.php",
+            "src/Http/Controllers/ProfileAlbumController.php",
+            "src/Http/Controllers/ProfileController.php",
+            "src/Http/Controllers/ProfileFieldController.php",
+            "src/Http/Controllers/ProfileHubController.php",
+            "src/Http/Controllers/ProfileIntentsController.php",
+            "src/Http/Controllers/ProfileMediaController.php",
+            "src/Http/Controllers/ProfileTagController.php",
+            "src/Http/Controllers/ProfileUsernameController.php",
+            "src/Http/Controllers/ProfileVerificationController.php",
+            "src/Http/Controllers/ProfileVisibilityController.php",
+            "src/Http/Controllers/QuickPhraseController.php",
+            "src/Http/Controllers/RealtimeController.php",
+            "src/Http/Controllers/RefDataController.php",
+            "src/Http/Controllers/RelationController.php",
+            "src/Http/Controllers/RelationListController.php",
+            "src/Http/Controllers/RetiredFeatureController.php",
+            "src/Http/Controllers/SessionActivityController.php",
+            "src/Http/Controllers/SettingsController.php",
+            "src/Http/Controllers/SportInterestController.php",
+            "src/Http/Controllers/SubscriptionController.php",
+            "src/Http/Controllers/UserController.php",
+            "src/Http/Controllers/VerificationAdminController.php",
+            "src/Http/Controllers/VerificationMethodAdminController.php",
+            "src/Http/Controllers/WebadminAppReviewController.php",
+            "src/Http/Controllers/WebadminAppearanceController.php",
+            "src/Http/Controllers/WebadminAudienceVisibilityController.php",
+            "src/Http/Controllers/WebadminController.php",
+            "src/Http/Controllers/WebadminDatesController.php",
+            "src/Http/Controllers/WebadminDatesExternalController.php",
+            "src/Http/Controllers/WebadminDatesIntakeController.php",
+            "src/Http/Controllers/WebadminDatesResearchController.php",
+            "src/Http/Controllers/WebadminFeatureSwitchesController.php",
+            "src/Http/Controllers/WebadminIntoTagModerationController.php",
+            "src/Http/Controllers/WebadminInviteConfigurationController.php",
+            "src/Http/Controllers/WebadminLayer2Controller.php",
+            "src/Http/Controllers/WebadminLocationAccessPolicyController.php",
+            "src/Http/Controllers/WebadminMemberBirthdayLockController.php",
+            "src/Http/Controllers/WebadminMembershipController.php",
+            "src/Http/Controllers/WebadminModeCardsController.php",
+            "src/Http/Controllers/WebadminModerationController.php",
+            "src/Http/Controllers/WebadminProfilePresenceConfigurationController.php",
+            "src/Http/Controllers/WebadminProfilePresentationController.php",
+            "src/Http/Controllers/WebadminProfileTextModerationController.php",
+            "src/Http/Controllers/WebadminProfileVerificationController.php",
+            "src/Http/Controllers/WebadminSectionTeasersController.php",
+            "src/Http/Middleware/AuthMiddleware.php",
+            "src/Http/Middleware/DatesApiVersionMiddleware.php",
+            "src/Http/Middleware/DatesRestrictionMiddleware.php",
+            "src/Http/Middleware/ForcedVerificationGateMiddleware.php",
+            "src/Http/Middleware/JoinWebSecretMiddleware.php",
+            "src/Http/Middleware/SessionBoundaryMiddleware.php",
+            "src/Http/Middleware/StorefrontCountryMiddleware.php",
+            "src/Http/Middleware/VerificationGateMiddleware.php",
+            "src/Http/Middleware/WebadminSecretMiddleware.php",
+            "src/Services/AdministrativeMessageConsentService.php",
+            "src/Services/AdministrativeMessageConsentStore.php",
+            "src/Services/AppleOidcVerifier.php",
+            "src/Services/DatesAdminAuditService.php",
+            "src/Services/DatesAdminAuthorizationService.php",
+            "src/Services/DatesAdminException.php",
+            "src/Services/DatesAdminIdempotencyService.php",
+            "src/Services/DatesAiBudget.php",
+            "src/Services/DatesConfigurationAdminService.php",
+            "src/Services/DatesDomainOutbox.php",
+            "src/Services/DatesEventGoogleClient.php",
+            "src/Services/DatesEventImageScreening.php",
+            "src/Services/DatesEventIntakeAdminService.php",
+            "src/Services/DatesEventIntakePipeline.php",
+            "src/Services/DatesEventIntakeStore.php",
+            "src/Services/DatesEventIntakeWorker.php",
+            "src/Services/DatesEventResearchAdminService.php",
+            "src/Services/DatesEventResearchAreaResolver.php",
+            "src/Services/DatesEventResearchAreaWorker.php",
+            "src/Services/DatesEventResearchBatchService.php",
+            "src/Services/DatesEventResearchCandidate.php",
+            "src/Services/DatesEventResearchCommands.php",
+            "src/Services/DatesEventResearchConflict.php",
+            "src/Services/DatesEventResearchFetch.php",
+            "src/Services/DatesEventResearchMemberCounts.php",
+            "src/Services/DatesEventResearchRunService.php",
+            "src/Services/DatesEventResearchSourceWorker.php",
+            "src/Services/DatesEventResearchStore.php",
+            "src/Services/DatesEventVenueResolver.php",
+            "src/Services/DatesExternalEventPublisher.php",
+            "src/Services/DatesMembershipBundleService.php",
+            "src/Services/DatesModerationReadService.php",
+            "src/Services/DatesReferenceService.php",
+            "src/Services/DatesResearchFetchRefusal.php",
+            "src/Services/DatesResearchNativeFence.php",
+            "src/Services/DatesResearchSpendGuard.php",
+            "src/Services/DatesRuntimeConfiguration.php",
+            "src/Services/DatesTransaction.php",
+            "src/Services/MongoAdministrativeMessageConsentStore.php",
+            "src/Services/ProfileIntentsService.php",
+            "src/Services/UserModerationService.php",
+            "src/Support/AgePolicy.php",
+            "src/Support/AppAppearancePolicy.php",
+            "src/Support/AppSettings.php",
+            "src/Support/AppearancePolicy.php",
+            "src/Support/AuthMethodPolicy.php",
+            "src/Support/DatesActivityPolicy.php",
+            "src/Support/DatesAdminInput.php",
+            "src/Support/DatesCanonicalPayload.php",
+            "src/Support/DatesCityKey.php",
+            "src/Support/DatesContract.php",
+            "src/Support/DatesEventContract.php",
+            "src/Support/DatesEventDedupe.php",
+            "src/Support/DatesEventDraftValidator.php",
+            "src/Support/DatesEventEvidence.php",
+            "src/Support/DatesEventIntakePolicy.php",
+            "src/Support/DatesEventIntakeProjection.php",
+            "src/Support/DatesEventIntakeSettings.php",
+            "src/Support/DatesEventOrigin.php",
+            "src/Support/DatesEventResearchDomainPolicy.php",
+            "src/Support/DatesEventResearchPolicy.php",
+            "src/Support/DatesEventSuggestionPolicy.php",
+            "src/Support/DatesEventText.php",
+            "src/Support/DatesEventVenuePolicy.php",
+            "src/Support/DatesExternalAvailabilityPolicy.php",
+            "src/Support/DatesExternalEventDedupe.php",
+            "src/Support/DatesExternalEventInput.php",
+            "src/Support/DatesExternalEventPolicy.php",
+            "src/Support/DatesExternalEventProjection.php",
+            "src/Support/DatesExternalPlacePolicy.php",
+            "src/Support/DatesFeatureFlags.php",
+            "src/Support/DatesId.php",
+            "src/Support/DatesResearchDomain.php",
+            "src/Support/DatesResearchPublicationPolicy.php",
+            "src/Support/DatesResearchRobots.php",
+            "src/Support/DatesReviewSandboxPolicy.php",
+            "src/Support/ErrorLogDestination.php",
+            "src/Support/EventAi/AbstractEventAiProvider.php",
+            "src/Support/EventAi/EventAiContext.php",
+            "src/Support/EventAi/EventAiPricing.php",
+            "src/Support/EventAi/EventAiPrompt.php",
+            "src/Support/EventAi/EventAiProvider.php",
+            "src/Support/EventAi/EventAiRequestShape.php",
+            "src/Support/EventAi/EventAiResult.php",
+            "src/Support/EventAi/EventAiRouter.php",
+            "src/Support/EventAi/EventAiRouting.php",
+            "src/Support/EventAi/EventAiSpendGuard.php",
+            "src/Support/EventAi/EventAiTransport.php",
+            "src/Support/EventAi/EventAreaResearch.php",
+            "src/Support/EventAi/EventAreaResearchProvider.php",
+            "src/Support/EventAi/EventAreaResearchSchema.php",
+            "src/Support/EventAi/EventImageNormalizer.php",
+            "src/Support/EventAi/EventListingSchema.php",
+            "src/Support/EventAi/EventPageText.php",
+            "src/Support/EventAi/EventResearchPrompt.php",
+            "src/Support/EventAi/EventResearchProvider.php",
+            "src/Support/EventAi/EventSheetSchema.php",
+            "src/Support/EventAi/OpenAiEventAiProvider.php",
+            "src/Support/ForcedVerificationPolicy.php",
+            "src/Support/IpGeo.php",
+            "src/Support/ModerationPolicy.php",
+            "src/Support/MongoNamespacePolicy.php",
+            "src/Support/PeopleFilterPolicy.php",
+            "src/Support/PhoneAuth.php",
+            "src/Support/PublicProfileLinkPolicy.php",
+            "src/Support/PublicWebBasePolicy.php",
+            "src/Support/PushDeliveryModePolicy.php",
+            "src/Support/SafeExternalFetch.php",
+            "src/Support/SectionAvailabilityPolicy.php",
+            "src/Support/SessionExpiryPolicy.php",
+            "src/Support/StrictJson.php",
+            "src/Support/VerificationPolicy.php",
+            "src/Support/Webadmin.php",
+            "src/Support/WebadminRolePolicy.php",
+            "src/Support/WelcomeMessage.php",
+            "tests/dates_event_research_admin_fixture_dump.php",
+            "tests/fixture_manifest_provenance.php",
+            "tests/fixtures/dates_event_research_ai/call_ledger.json",
+            "tests/fixtures/dates_event_research_ai/cases.php",
+            "tests/fixtures/dates_event_research_ai/pages/aggregator_missing_organizer.html",
+            "tests/fixtures/dates_event_research_ai/pages/aggregator_missing_status.html",
+            "tests/fixtures/dates_event_research_ai/pages/aggregator_stated.html",
+            "tests/fixtures/dates_event_research_ai/pages/listing_injection.html",
+            "tests/fixtures/dates_event_research_ai/pages/listing_plain.html",
+            "tests/fixtures/dates_event_research_ai/pages/official_event.html",
+            "tests/fixtures/dates_event_research_ai/recorded/aggregator_missing_organizer.gemini.json",
+            "tests/fixtures/dates_event_research_ai/recorded/aggregator_missing_organizer.gemini.v2.valid.json",
+            "tests/fixtures/dates_event_research_ai/recorded/aggregator_missing_organizer.openai.json",
+            "tests/fixtures/dates_event_research_ai/recorded/aggregator_missing_organizer.openai.v2.json",
+            "tests/fixtures/dates_event_research_ai/recorded/aggregator_missing_status.gemini.json",
+            "tests/fixtures/dates_event_research_ai/recorded/aggregator_missing_status.gemini.v2.valid.json",
+            "tests/fixtures/dates_event_research_ai/recorded/aggregator_missing_status.openai.json",
+            "tests/fixtures/dates_event_research_ai/recorded/aggregator_missing_status.openai.v2.json",
+            "tests/fixtures/dates_event_research_ai/recorded/aggregator_stated.gemini.json",
+            "tests/fixtures/dates_event_research_ai/recorded/aggregator_stated.gemini.v2.valid.json",
+            "tests/fixtures/dates_event_research_ai/recorded/aggregator_stated.openai.json",
+            "tests/fixtures/dates_event_research_ai/recorded/aggregator_stated.openai.v2.json",
+            "tests/fixtures/dates_event_research_ai/recorded/listing_injection.gemini.json",
+            "tests/fixtures/dates_event_research_ai/recorded/listing_injection.gemini.schema2.json",
+            "tests/fixtures/dates_event_research_ai/recorded/listing_injection.gemini.schema3.json",
+            "tests/fixtures/dates_event_research_ai/recorded/listing_injection.gemini.valid.json",
+            "tests/fixtures/dates_event_research_ai/recorded/listing_injection.openai.json",
+            "tests/fixtures/dates_event_research_ai/recorded/listing_plain.gemini.json",
+            "tests/fixtures/dates_event_research_ai/recorded/listing_plain.gemini.schema2.json",
+            "tests/fixtures/dates_event_research_ai/recorded/listing_plain.gemini.schema3.json",
+            "tests/fixtures/dates_event_research_ai/recorded/listing_plain.gemini.valid.json",
+            "tests/fixtures/dates_event_research_ai/recorded/listing_plain.openai.json",
+            "tests/fixtures/dates_event_research_ai/recorded/official_event.gemini.json",
+            "tests/fixtures/dates_event_research_ai/recorded/official_event.gemini.valid.json",
+            "tests/fixtures/dates_event_research_ai/recorded/official_event.openai.json",
+            "tests/fixtures/dates_event_research_area_ai/README.md",
+            "tests/fixtures/dates_event_research_area_ai/budapest_city.openai.json",
+            "tests/fixtures/dates_event_research_area_ai/budapest_radius.openai.json",
+            "tests/fixtures/dates_event_research_area_ai/call_ledger.json",
+            "tests/fixtures/dates_event_research_area_ai/candidate.gemini.json",
+            "tests/fixtures/dates_event_research_area_ai/candidate.openai.json",
+            "tests/fixtures/dates_event_research_area_ai/candidate.php",
+            "tests/fixtures/dates_event_research_area_ai/cases.php",
+            "tests/fixtures/dates_event_research_area_ai/london_city.openai.json",
+            "tests/fixtures/dates_event_research_area_ai/pages/native_candidate.html",
+            "tests/support/dates_event_research_admin_wire_contract.php",
+            "tests/support/event_area_research_corpus.php",
+            "tests/support/event_area_research_runtime_harness.php",
+            "tests/support/event_intake_http.php",
+            "tests/support/event_research_ai_corpus.php",
+            "tests/support/event_research_harness.php",
+            "tests/support/event_research_runtime_harness.php",
+            "tests/support/event_research_source_harness.php"
+        ]
+    },
+    "fixtures": [
+        {
+            "file": "admin-aggregator-autopublish-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "0764dcb434ace4c8b96b08c641c4f09fa25910bc0dfdc0ced3efe701d5593d57"
+        },
+        {
+            "file": "admin-aliased-field-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 400,
+            "sha256": "4eb69848836a4725f5b62e9178662da101b7eedb6cc80117b3e6894ad68cc413"
+        },
+        {
+            "file": "admin-area-all-overrides-radius.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "974acbaa3ead516a99c3885b1f85b865efe38fb1922c19047819a8a955efae89"
+        },
+        {
+            "file": "admin-area-created-receipt.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "87e5a7cb0e86aa3378bb795121e8834dac9dfce044dc8f0a9c015561c3fb3194"
+        },
+        {
+            "file": "admin-area-mode-auto.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "e0a44ecbd5103cec4846e4c3bc9e44980a8a3c0e0818388ee7b0c62bcbaea133"
+        },
+        {
+            "file": "admin-area-mode-off.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "49604bc0df20dedeaf6e9d867f1924b76c62f4fed7130aeb98b5dfe59b38e28e"
+        },
+        {
+            "file": "admin-area-mode-on-running.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "be57b110162ac44b6b03ee897f4f683042d5518c95349feb552377f5089b8f4f"
+        },
+        {
+            "file": "admin-area-run-breaker-reservation-exceeded.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "2aa4eb29a16039dc5d41c9d9b57ba0b1db4e0f11f11b247a36f5e4999e6a5c89"
+        },
+        {
+            "file": "admin-area-run-breaker-tool-bound-exceeded.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "27b08d7fa9af00fbc47aa922bf8e0df41fa832b09a4c976fb3065a1c6e8271f1"
+        },
+        {
+            "file": "admin-area-run-dry-capability-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-area-run-dry-completed-new-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f51f78c8760d197269cd3133214fb78f59ccdd91bffc206939648313f42afa7a"
+        },
+        {
+            "file": "admin-area-run-dry-completed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "65415f5f81bf9df7f0cf9323d42ea9c9b70a9b137ea2927217caa4ea42c4c1aa"
+        },
+        {
+            "file": "admin-area-run-dry-history.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "32dfb30a0a0b1df906d9e96185f073d890af5ceb25e8fc7cce4757fc9c9558ad"
+        },
+        {
+            "file": "admin-area-run-dry-master-off-historical-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f51f78c8760d197269cd3133214fb78f59ccdd91bffc206939648313f42afa7a"
+        },
+        {
+            "file": "admin-area-run-dry-master-off-new-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "381203e341c5b8dbe252f3a402bb2e3c47ad383e657f4852429f81d3406689df"
+        },
+        {
+            "file": "admin-area-run-dry-open-new-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f51f78c8760d197269cd3133214fb78f59ccdd91bffc206939648313f42afa7a"
+        },
+        {
+            "file": "admin-area-run-dry-opposite-mode-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "661217031b5087ef13e8b0dd0d4c636c1bc4e7c3bf5d6e1319cc5ac5d5c3684a"
+        },
+        {
+            "file": "admin-area-run-dry-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "2dc0fbca98498dd99d36184deae7aa51f5ceed580da632afe24443b416254053"
+        },
+        {
+            "file": "admin-area-run-dry-running.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c983d08d08c9019897aa8d1856337fafa216e8d152b3e65276bb19dfb33fe13e"
+        },
+        {
+            "file": "admin-area-run-dry-same-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f51f78c8760d197269cd3133214fb78f59ccdd91bffc206939648313f42afa7a"
+        },
+        {
+            "file": "admin-area-run-dry-selector-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 426,
+            "sha256": "2f49f30841c5aca7f2bf2aa4642be2c95b7efb2d54a4c3603d7ce547023db71b"
+        },
+        {
+            "file": "admin-area-run-paused-reservation-exceeded.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "cba174b86a9bfe5001f9b6923d9e0a99514138a3bf8670205cb28a8836eb5f7a"
+        },
+        {
+            "file": "admin-area-run-paused-tool-bound-exceeded.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "cba174b86a9bfe5001f9b6923d9e0a99514138a3bf8670205cb28a8836eb5f7a"
+        },
+        {
+            "file": "admin-area-run-provider-unavailable-scheduled.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "073d7d9390dc4c84fe63d21d7b9284eb08a780d255949d125f9f1e9bcb8f44cc"
+        },
+        {
+            "file": "admin-area-run-real-capability-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-area-run-real-completed-new-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c5dca471757b0683186f6a27c0de3e69ca41a046c2ac4729a46d74fdfe024d17"
+        },
+        {
+            "file": "admin-area-run-real-completed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "9166ebabb90d15fcfdc2739049aa760c487959cf6d2f94329b0938957e6ef15b"
+        },
+        {
+            "file": "admin-area-run-real-history.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "9077053d6fb56c4145e0db351d92ff3dd2357d84e4597d780b0aa736ab64c6d4"
+        },
+        {
+            "file": "admin-area-run-real-master-off-historical-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c5dca471757b0683186f6a27c0de3e69ca41a046c2ac4729a46d74fdfe024d17"
+        },
+        {
+            "file": "admin-area-run-real-master-off-new-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "381203e341c5b8dbe252f3a402bb2e3c47ad383e657f4852429f81d3406689df"
+        },
+        {
+            "file": "admin-area-run-real-open-new-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c5dca471757b0683186f6a27c0de3e69ca41a046c2ac4729a46d74fdfe024d17"
+        },
+        {
+            "file": "admin-area-run-real-opposite-mode-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "f28e3504b53c1ece5d2328030acdfe78577e6f7059fe4f8e71675973381ea763"
+        },
+        {
+            "file": "admin-area-run-real-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "1f3f23374e26d60b71b601e166daffec9555f8a874cf47e7b40f8612709a0a1f"
+        },
+        {
+            "file": "admin-area-run-real-running.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "0177abfecfa6eacd1e194ca5e1c6fe3a879185afa5a4f34c1e41add7b132ca1b"
+        },
+        {
+            "file": "admin-area-run-real-same-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c5dca471757b0683186f6a27c0de3e69ca41a046c2ac4729a46d74fdfe024d17"
+        },
+        {
+            "file": "admin-area-run-real-selector-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 426,
+            "sha256": "2f49f30841c5aca7f2bf2aa4642be2c95b7efb2d54a4c3603d7ce547023db71b"
+        },
+        {
+            "file": "admin-area-run-scheduled-alias-completed-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f6e040bb8a791deef7ddd25665a13a2a18359317be958684ae744e2494187b21"
+        },
+        {
+            "file": "admin-area-run-scheduled-completed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "7351c4457fa6ecc582e2442f8c0e82bc163d330e5e631e4f00c275f39cfd74b6"
+        },
+        {
+            "file": "admin-area-run-scheduled-master-off-open-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f6e040bb8a791deef7ddd25665a13a2a18359317be958684ae744e2494187b21"
+        },
+        {
+            "file": "admin-area-run-scheduled-new-generation-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "51038efeb770f60f2b1bd2186eb84580b618a0514f2bf94defc0c6eeea32c15f"
+        },
+        {
+            "file": "admin-area-run-scheduled-open-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f6e040bb8a791deef7ddd25665a13a2a18359317be958684ae744e2494187b21"
+        },
+        {
+            "file": "admin-area-run-scheduled-running.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "8cf17dca667bfcb42b27d46b40359d8e0e854a12ae3eaa085e475eb6358403f0"
+        },
+        {
+            "file": "admin-area-save-dry-open-run-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "661217031b5087ef13e8b0dd0d4c636c1bc4e7c3bf5d6e1319cc5ac5d5c3684a"
+        },
+        {
+            "file": "admin-area-save-real-open-run-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "f28e3504b53c1ece5d2328030acdfe78577e6f7059fe4f8e71675973381ea763"
+        },
+        {
+            "file": "admin-batch-action-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "27ac09d45824dbf2bf75f3994b33e04be5e95d16df88b584612c6a1871ed7ed9"
+        },
+        {
+            "file": "admin-batch-confirmations-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "ac63e445edf1af516ca345314ca05c152120563c9b5be8cf622a30b756bbdb49"
+        },
+        {
+            "file": "admin-batch-ids-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "27ac09d45824dbf2bf75f3994b33e04be5e95d16df88b584612c6a1871ed7ed9"
+        },
+        {
+            "file": "admin-batch-key-reuse-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "91492440b5eae5714835505289f8d819b32dbde248a4a333280388c1dc642ace"
+        },
+        {
+            "file": "admin-batch-nested-revision-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "27ac09d45824dbf2bf75f3994b33e04be5e95d16df88b584612c6a1871ed7ed9"
+        },
+        {
+            "file": "admin-batch-new-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "484cc9028a17fbb40a82790e2035897d15b7f9ef233f51f6c7db8d3a50335633"
+        },
+        {
+            "file": "admin-batch-opposite-returns-published.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "8d58018294da4f4b8f4ddb05dbc5bb30b21333debbe03feb7a1b12a790d76d65"
+        },
+        {
+            "file": "admin-batch-opposite-returns-rejected.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "8c1ee1a38b4861b09a9c1a3b5bb690d7658a0f1368ae6c31f2c455a35d9b4404"
+        },
+        {
+            "file": "admin-batch-publish-mixed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "4c2050ae09f24bd13fec6ff9c19e09a79fb17ebedea60d9a132c60e0a4270581"
+        },
+        {
+            "file": "admin-batch-reject-decided.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "8c1ee1a38b4861b09a9c1a3b5bb690d7658a0f1368ae6c31f2c455a35d9b4404"
+        },
+        {
+            "file": "admin-batch-revisions-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "27ac09d45824dbf2bf75f3994b33e04be5e95d16df88b584612c6a1871ed7ed9"
+        },
+        {
+            "file": "admin-batch-row-channel-refused.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "8601af67a24d4d6a24b90b5b1fce322d434ef95a3e5d49dbaf67a6a95836ae00"
+        },
+        {
+            "file": "admin-batch-row-lease-refused.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "149399964d1d284ce4429eb4ddea4922339d65d75fbb6dff9edfa30589952e1e"
+        },
+        {
+            "file": "admin-batch-row-not-found-refused.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "943434fc3eefa54ca86585b19ee02504671b446e8e5feb0d986e3d6522209c42"
+        },
+        {
+            "file": "admin-batch-row-revision-refused.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "b60280c2f2905de603138479cf3b80b67da543f2ff70cebc09d88e78e15fe73a"
+        },
+        {
+            "file": "admin-batch-same-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "484cc9028a17fbb40a82790e2035897d15b7f9ef233f51f6c7db8d3a50335633"
+        },
+        {
+            "file": "admin-batch-selector-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 426,
+            "sha256": "2f49f30841c5aca7f2bf2aa4642be2c95b7efb2d54a4c3603d7ce547023db71b"
+        },
+        {
+            "file": "admin-batch-write-capability-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-client-geometry-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 400,
+            "sha256": "4eb69848836a4725f5b62e9178662da101b7eedb6cc80117b3e6894ad68cc413"
+        },
+        {
+            "file": "admin-defaults-area-dry-master-off.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "4fce514803a62b78ce73efd44aafb9f4b3131bbce4becca8f945423faba726a2"
+        },
+        {
+            "file": "admin-defaults-area-real-master-off.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "e22c1a61514c58c793d90c3aa8315e8e64ac45b2c420c735c9f799f5ca57fbf9"
+        },
+        {
+            "file": "admin-defaults-area-scheduled-master-off.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "e56002212520338cce9fbf8a1cf35624dc9386767ebc02f45bdfc3e7c4778111"
+        },
+        {
+            "file": "admin-defaults-area-scheduled-master-on.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "8948c615007c10bf58ec6c374b0a85d053de21ce15b16978fae171db9b77cd0b"
+        },
+        {
+            "file": "admin-defaults-auto-enabled.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "df671c7efaaf1888ef2f655caae8078ff012918920c291dd4e00254d09a833ee"
+        },
+        {
+            "file": "admin-defaults-created-off.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "bf10a379796ff47b581fd261525eecfa0f62983fe982b65469d04772b925d949"
+        },
+        {
+            "file": "admin-defaults-domain-type-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "3d1d5045992d8bdd89777aec7bdedcc92ca328ce7121ebd3a69260138b1d8f77"
+        },
+        {
+            "file": "admin-defaults-domains-all-types.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c163fbc8228d86d290130960950a386ba805a6e4668b82dce630146f3a6c5211"
+        },
+        {
+            "file": "admin-defaults-enabled-auto-off.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "0d96653cc05aa6d7707275de09c34c395c661a8abfdf1f78c1968f7971c07228"
+        },
+        {
+            "file": "admin-defaults-json-integer-selector-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "a5fdf79cdf33f35b9905da772e2d2920025dd5cdeab5821e07b37ae1d5662387"
+        },
+        {
+            "file": "admin-defaults-new-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "a5fdf79cdf33f35b9905da772e2d2920025dd5cdeab5821e07b37ae1d5662387"
+        },
+        {
+            "file": "admin-defaults-paused-reservation-exceeded-off.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "d6d3a12c7734abf3d1c41711280018a87614c03fbd6706812b6527a14e2d98fd"
+        },
+        {
+            "file": "admin-defaults-paused-tool-bound-exceeded-off.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "03d18849353ce889ae763dba4a70872c1a24f24814e324cf9eef08c9961d8f6e"
+        },
+        {
+            "file": "admin-defaults-proposals-auto-off.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "43e82059fa38bac58f858a535381684f9a89864fe486afbdf53be8b42d055a3f"
+        },
+        {
+            "file": "admin-defaults-radius-autopublish.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "5cc27ae0f421a93c54e1e1e18c066e8efff5ef4107a49535ccad2bfaeb0d0cb5"
+        },
+        {
+            "file": "admin-defaults-research-model-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "8b135fe675a7d0c21858dbcb985226277bd9d4b30b18e78b2e0ac87beb908393"
+        },
+        {
+            "file": "admin-defaults-resume-flag-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 400,
+            "sha256": "4eb69848836a4725f5b62e9178662da101b7eedb6cc80117b3e6894ad68cc413"
+        },
+        {
+            "file": "admin-defaults-same-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "a5fdf79cdf33f35b9905da772e2d2920025dd5cdeab5821e07b37ae1d5662387"
+        },
+        {
+            "file": "admin-defaults-source-domain-blocked.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "43bc25597173ca14be9edff6758c037eb9dff452bbee32eba79485bde8ccdbe0"
+        },
+        {
+            "file": "admin-defaults-stale-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "f68ba52df1b371ac2732d4469f2b7f83ca39b6ceea715d08df7de0bec61fe113"
+        },
+        {
+            "file": "admin-discovery-resume-not-paused.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "313234d83626bfc6b5fc36737e430dbf2ea2e2c85a243de7cbd8368cc3f39e69"
+        },
+        {
+            "file": "admin-discovery-resume-reservation-exceeded-capability-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-discovery-resume-reservation-exceeded-new-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "1843327318459d96bd794279398ee54e24ed111239fc252b58c99eab77a00553"
+        },
+        {
+            "file": "admin-discovery-resume-reservation-exceeded-same-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "1843327318459d96bd794279398ee54e24ed111239fc252b58c99eab77a00553"
+        },
+        {
+            "file": "admin-discovery-resume-reservation-exceeded-stale-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "b3aada034bae80a3913b590c4cf2646013c63212e485cf1c9a2ff8b5216163f3"
+        },
+        {
+            "file": "admin-discovery-resume-reservation-exceeded.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "59381699cf00e8bc523e7f2ad8beb4690b71fdaef3b8ada4a94308817f788cad"
+        },
+        {
+            "file": "admin-discovery-resume-tool-bound-exceeded-capability-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-discovery-resume-tool-bound-exceeded-new-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "dcf8de2f04b71bd3dfa8ad818be210edccf0966d0bc907e90459c516df5582f1"
+        },
+        {
+            "file": "admin-discovery-resume-tool-bound-exceeded-same-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "dcf8de2f04b71bd3dfa8ad818be210edccf0966d0bc907e90459c516df5582f1"
+        },
+        {
+            "file": "admin-discovery-resume-tool-bound-exceeded-stale-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "b3aada034bae80a3913b590c4cf2646013c63212e485cf1c9a2ff8b5216163f3"
+        },
+        {
+            "file": "admin-discovery-resume-tool-bound-exceeded.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "38ea9cd3d0c4d2edd78deafb75189cfedf8723f40afe949323a7eb402fa0d119"
+        },
+        {
+            "file": "admin-duplicate-field-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 400,
+            "sha256": "4eb69848836a4725f5b62e9178662da101b7eedb6cc80117b3e6894ad68cc413"
+        },
+        {
+            "file": "admin-duplicate-json-field-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 400,
+            "sha256": "4eb69848836a4725f5b62e9178662da101b7eedb6cc80117b3e6894ad68cc413"
+        },
+        {
+            "file": "admin-duplicate-nested-json-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "fa677ed2e10dcac0ddb371217b0bac2225ec71758b710f2f0cdba08ce4c76be1"
+        },
+        {
+            "file": "admin-intake-list-by-research-run.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "7af58ff452c0ca4c7a297d38de497e24aed59f4f3863d089a27b9b419fe51d9e"
+        },
+        {
+            "file": "admin-intake-list-run-after-decisions.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "b9192609fd1e7e332509036bbbce8513f91b495ec994f34c28388f11810112e7"
+        },
+        {
+            "file": "admin-intake-list-run-empty.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "13d8c8dfb03b034d74969d3eea19535ee2eaa2914883149bf05a513bb26cfca3"
+        },
+        {
+            "file": "admin-intake-list-run-invalid.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "2d2c319f56b026b08df3faa46f2ecac3dbd1c931aa8f7d3de520f982b5f288ea"
+        },
+        {
+            "file": "admin-intake-list-run-populated.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "d05a4da8e19af045ee6a288fbbb8e6c00e23062a00d507170df3a954e36da795"
+        },
+        {
+            "file": "admin-key-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "c102438e931fe65c05b57d766323ca559b37f8e812ca3951b84fffdc4e7e9969"
+        },
+        {
+            "file": "admin-key-reuse-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "91492440b5eae5714835505289f8d819b32dbde248a4a333280388c1dc642ace"
+        },
+        {
+            "file": "admin-nested-boolean-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "fa677ed2e10dcac0ddb371217b0bac2225ec71758b710f2f0cdba08ce4c76be1"
+        },
+        {
+            "file": "admin-overview-after-blocked-by-robots.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "72481e617530fdd231b2dd99b01ff1e10f8a613ee311d3bca92cecfb3d115d19"
+        },
+        {
+            "file": "admin-overview-after-failed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "904b6c20a9cd739e6c3142aa35feac42e26a9be335e181e1a0d3c9996489d742"
+        },
+        {
+            "file": "admin-overview-after-fetch-failed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "90399709e7264164a80be05a99cc8ac6022b427df1b491002db7060244edbb04"
+        },
+        {
+            "file": "admin-overview-after-unreachable.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "5bcb33b64e1c1cc812b98099a35fb9b0568043715d4bee2c1b1fd51157b62f00"
+        },
+        {
+            "file": "admin-overview-area-dry-measured.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "65d96b1b28e421d16f4c0528b3d592a80b6b2e2aaaa212b795c9432c75c94cca"
+        },
+        {
+            "file": "admin-overview-area-real-measured.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "5bfd2b6eaebaadcceff32dc9964f7eb42a34174370c2b967d7be95cfe20db1be"
+        },
+        {
+            "file": "admin-overview-auto-cities-off.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "fb969934d521f654e86beded9531f26b8941503b72198ce4e44235efb66b87b2"
+        },
+        {
+            "file": "admin-overview-below-threshold.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "792c950bb330e255b6ceb0e8f01c497c88e22c39d4fb401537bea51d83250bbc"
+        },
+        {
+            "file": "admin-overview-budget-paused.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "07f87fe65e572ef81020474e404a21c282fa3088ae4d76949a2119d15d89da8a"
+        },
+        {
+            "file": "admin-overview-discovery-reservation-exceeded.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "9aaf1eddd623090d6be23f360251c236396154fda9746b0e88c88d721e86317f"
+        },
+        {
+            "file": "admin-overview-discovery-tool-bound-exceeded.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "b2290c38077a794848eeb3f1d4239749c7c1db49cf374418ad8bfd0a2f905ace"
+        },
+        {
+            "file": "admin-overview-empty.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "d0407fbbe993bc558a9242eb14a3d9c7b424ce360636fece6a546f28c9aec2cd"
+        },
+        {
+            "file": "admin-overview-populated.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "2ab26a73e29efe2103c5039cc20144ed4a6c908e65b00fdcc94156b939bff8a3"
+        },
+        {
+            "file": "admin-overview-proposed-city.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "0449d4dafd8ebc6b93225a6b788a042eb2558dae51c9e12a381c42fb97f54392"
+        },
+        {
+            "file": "admin-overview-reviewer.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "4d49f2600439f98e126c6861369eb272dc8b0e82c37bfc7022209c4167db87c0"
+        },
+        {
+            "file": "admin-overview-robots-allowed-measured.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "b0e54f89bac432990c8a51fb09f32bc5a781a267b84cb57e3bf427e43cd7db65"
+        },
+        {
+            "file": "admin-overview-section-unavailable.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f7f68f36193796ea4fea7206361f3ef9fe0e7bc472c7b14e77394cdb5cec53a5"
+        },
+        {
+            "file": "admin-overview-target-met.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "e52299e5386ce4f278ba81a3bc364b3796e008bd966032adca4ee7275d052b08"
+        },
+        {
+            "file": "admin-place-unavailable-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 503,
+            "sha256": "ff3a069bf90181e76637898689945fd25a707bfb2209663b030c00324d67d3ba"
+        },
+        {
+            "file": "admin-query-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 400,
+            "sha256": "4eb69848836a4725f5b62e9178662da101b7eedb6cc80117b3e6894ad68cc413"
+        },
+        {
+            "file": "admin-read-capability-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-reason-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "a9b8eb289ebf29539e22c730d5583d9da9ffc3e01778355afc10702ddb7277e6"
+        },
+        {
+            "file": "admin-revoked-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "7ca14279ec3e818347b77f76b3b2c68550e2977556e39510f0b89c138cfafa9b"
+        },
+        {
+            "file": "admin-run-batch-completed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "7ab11e671b026fc66ded7fa0180b9742a019c842850f64411ed1eb35404e6071"
+        },
+        {
+            "file": "admin-run-candidate-blocked-domain.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "88fcf71dcd0a73231cf52fca521e9a4aef0944acae3bd63c7aabae0c357fb73d"
+        },
+        {
+            "file": "admin-run-candidate-fetch-robots-validation.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "7ce196cad4220e9aede7b399a0a4c855053a07cd16a2b2ccab7ae1fbbeb4abbe"
+        },
+        {
+            "file": "admin-run-candidate-known-url.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "aa8df01537cce5f7363e1b3f37a49682e7a4426c91e88e4065b0eba79c651f3f"
+        },
+        {
+            "file": "admin-run-candidate-outside-area.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "28008bdb11e0a74ffce3bc91a6b9f0f92371292231df9b551f9f7d8ec3b7ddde"
+        },
+        {
+            "file": "admin-run-candidates-over-cap.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "35a35d76b6649745e7d958e9c4548eff12cf7a691626adf6333fddf8ec490bc7"
+        },
+        {
+            "file": "admin-run-detail-missing-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 404,
+            "sha256": "ddd05df5bd266b215c6128bfc1a4349f5131652ac904febfe41629c0ddb76ff9"
+        },
+        {
+            "file": "admin-run-dry-completed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "20cff990906277963a91d9f8dbbafa08abd42c3a928b8e0b94b323bb1f654d59"
+        },
+        {
+            "file": "admin-run-list-cursor-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "6c2404ba78c35c0f59c51707868682e57f9acdbd59c59cc94c1650bb75717aa2"
+        },
+        {
+            "file": "admin-run-list-filtered.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "1f00cb9dc4a9f23920d85eedf980db23a80f6e14f5d70d9d8750e59aa670275e"
+        },
+        {
+            "file": "admin-run-list-limit-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "6c2404ba78c35c0f59c51707868682e57f9acdbd59c59cc94c1650bb75717aa2"
+        },
+        {
+            "file": "admin-run-list-page-last.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "828ce07173fe73b481d757b5eda552928171b896c0f13a8928fff8089a897039"
+        },
+        {
+            "file": "admin-run-list-page-one.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "06f275f6296237c43e35ae068783b96a3296b8223209141cb6b8d8b612b0fd74"
+        },
+        {
+            "file": "admin-run-list-page-two.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "5d9381996edee85b987413789785e52f85789944d88b0c55a73c3c32167d5973"
+        },
+        {
+            "file": "admin-run-status-blocked-by-robots.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "8782e5456e25482af0ce41c77e5894978e5a5548ddb81b582bab92f110639d16"
+        },
+        {
+            "file": "admin-run-status-budget-paused.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "b35829eebb8d91f03c494c5d446782f24f095277487949e8cb13abd3083d306e"
+        },
+        {
+            "file": "admin-run-status-completed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "fbdb311fa0a5bf76a42da539fdf9d10e3f3cc230a4df8451295956c7876b28d8"
+        },
+        {
+            "file": "admin-run-status-failed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "207074be423981c1c5944540eaa0a479a29a2b3fb3e1c38acd2fad0f9463ea53"
+        },
+        {
+            "file": "admin-run-status-fetch-failed.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "a8887bb0666258ded6c2f59a98ceee600c35657715c776e80ed75d7c59bf986a"
+        },
+        {
+            "file": "admin-run-status-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "fe77f41fa0646e71c4a6ce6b080298a040a1f561a991dd6aa416ec462f9c0394"
+        },
+        {
+            "file": "admin-run-status-running.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "95f2ccad0cce1ed8599c472ea7f7dc062fb0744fae14217511bdbdcd5ad11802"
+        },
+        {
+            "file": "admin-run-status-skipped-target-met.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "02bde1bcdd7fa15bdfd880908efc63ad42f95261cb5b49bc67cf5d659af79765"
+        },
+        {
+            "file": "admin-run-status-unchanged.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "43f2d596e407380700ea45ba4656dadd2f1fe961deb9001dc145d6dcc522056b"
+        },
+        {
+            "file": "admin-run-status-unreachable.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "66c4bb82fd7c7c07a94203ca32bf01d27b38b94ced5f7fe908907aba255297be"
+        },
+        {
+            "file": "admin-run-trigger-schedule.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "fe518d02a28b2df82f9bdde895dc3d3fc8441f64a877605735ed6aa365c6d29f"
+        },
+        {
+            "file": "admin-secret-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 401,
+            "sha256": "92a1f1484a7aae426dbcce31512c40eb078ddeb28fa893a4c7354c1303499c29"
+        },
+        {
+            "file": "admin-selector-invalid-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 426,
+            "sha256": "2f49f30841c5aca7f2bf2aa4642be2c95b7efb2d54a4c3603d7ce547023db71b"
+        },
+        {
+            "file": "admin-selector-missing-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 426,
+            "sha256": "2f49f30841c5aca7f2bf2aa4642be2c95b7efb2d54a4c3603d7ce547023db71b"
+        },
+        {
+            "file": "admin-source-aggregator-created.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "e36fe4f4a8bd94bfde133fabe7b96aeaf91d04c065036c97cac7e69b7c9e5b7e"
+        },
+        {
+            "file": "admin-source-archived-disabled.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "be4290ea2dbf9e067dfc3d4875fbcee0c0307a6b0943f4e9ad349bb5398c3d6e"
+        },
+        {
+            "file": "admin-source-batch-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "498acb36575efa4aae19434ee1664daeb33983242488b10a45d8cc86ff9695d9"
+        },
+        {
+            "file": "admin-source-blocked-by-robots-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c72a9a021a324623ade1bd823219c9c81cf34319dbe5bc7c05a271d4590eff21"
+        },
+        {
+            "file": "admin-source-budget-paused-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "25b6c957de0e2fac6499ed8a4a7cee40dbac836234e7d2e1966cdf5cc3178d33"
+        },
+        {
+            "file": "admin-source-candidate-refusals-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f78d6ea5d39ad3e7bea555020d7091bcaea6341f998d2beb93717627e5dd36f2"
+        },
+        {
+            "file": "admin-source-cap-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "21f1fcac8bd556141c7f59f1e527a746f4ac81793fb9f9d11e4357b61549246c"
+        },
+        {
+            "file": "admin-source-disabled-preview-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "aef47cdaa9890548a0e5e621c658b92cc48dc489fc41e88a121932d25b7c4570"
+        },
+        {
+            "file": "admin-source-domain-block-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "ee25fb6b7cfe7331c7777874a033351ac65f4e23e71a5077836e92cf280a9cc8"
+        },
+        {
+            "file": "admin-source-dry-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c70abf2f86ca8762931311f284ff2427b038061863806c63c3adf2d33b6d3699"
+        },
+        {
+            "file": "admin-source-failed-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "9970f185824bb7512dc7d44f6651662061e36c6c272a74bb22ddf64d1036b473"
+        },
+        {
+            "file": "admin-source-fetch-failed-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "a7d30096556cc70a6fa244b30b1a836e1cb65df50bb8c70fe489c3e86413553d"
+        },
+        {
+            "file": "admin-source-known-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "10da2d7a0a508336eae04afc4aa54cb70ed06dd8a186c73107d2a29fd6cbb16f"
+        },
+        {
+            "file": "admin-source-new-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "10414595e96aa6b07b5b2bb204fc908805d657211cbc7ecf01bbc7247ab8e6b5"
+        },
+        {
+            "file": "admin-source-official-created.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "8a25626f422251602c0a2c9aacf31afd47a0a0a67eab1b2db1cf168b5a8a469e"
+        },
+        {
+            "file": "admin-source-official-overrides.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "949877a9f7f978b8c1e43bebeb4bf6eadd4cf9864bb1f624969d9d8e4629e14e"
+        },
+        {
+            "file": "admin-source-outside-area-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "9721fa5a343aa851fdc8a07321ee914068f2ebb50fb78792bd48dcc38e1773af"
+        },
+        {
+            "file": "admin-source-real-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "b282e56ba6e4581b4b78cb73f1e00253d767383976452d30cb31afb4fbfe2048"
+        },
+        {
+            "file": "admin-source-run-archived-preview-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "06fb26d70d46b70b899cb149ffb5dde0002c4111055b4f47f51841152d6a082d"
+        },
+        {
+            "file": "admin-source-run-archived-real-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "06fb26d70d46b70b899cb149ffb5dde0002c4111055b4f47f51841152d6a082d"
+        },
+        {
+            "file": "admin-source-run-completed-new-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c0abe3a4134f40072635fee587b9c79cb5f2024078dd48e04a3411d0095752a2"
+        },
+        {
+            "file": "admin-source-run-completed-same-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c0abe3a4134f40072635fee587b9c79cb5f2024078dd48e04a3411d0095752a2"
+        },
+        {
+            "file": "admin-source-run-disabled-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "06fb26d70d46b70b899cb149ffb5dde0002c4111055b4f47f51841152d6a082d"
+        },
+        {
+            "file": "admin-source-run-master-off-historical-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "0c128abf6f494364040031b76f1f013b71876750867a8ebe29c79ff3ae695960"
+        },
+        {
+            "file": "admin-source-run-master-off-open-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "0c128abf6f494364040031b76f1f013b71876750867a8ebe29c79ff3ae695960"
+        },
+        {
+            "file": "admin-source-run-master-off-preview-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "381203e341c5b8dbe252f3a402bb2e3c47ad383e657f4852429f81d3406689df"
+        },
+        {
+            "file": "admin-source-run-master-off-real-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "381203e341c5b8dbe252f3a402bb2e3c47ad383e657f4852429f81d3406689df"
+        },
+        {
+            "file": "admin-source-run-next-dry-intent-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "466798fab4246de39253c6554d062d87ec7d2cd8ad43e139fa93e5fecc94dc33"
+        },
+        {
+            "file": "admin-source-run-next-scheduled-intent-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "10591a4a88811900e175908d6a49e6b61daafbe4de36e67733157620fee38d83"
+        },
+        {
+            "file": "admin-source-run-open-alias-completed-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c0abe3a4134f40072635fee587b9c79cb5f2024078dd48e04a3411d0095752a2"
+        },
+        {
+            "file": "admin-source-run-open-new-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c0abe3a4134f40072635fee587b9c79cb5f2024078dd48e04a3411d0095752a2"
+        },
+        {
+            "file": "admin-source-run-same-key-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c0abe3a4134f40072635fee587b9c79cb5f2024078dd48e04a3411d0095752a2"
+        },
+        {
+            "file": "admin-source-run-scheduled-alias-completed-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "341026333906046dfcc60f99876fcd247d1b7e893d1310e131d2e5f0cb9ded38"
+        },
+        {
+            "file": "admin-source-run-scheduled-open-replay.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "341026333906046dfcc60f99876fcd247d1b7e893d1310e131d2e5f0cb9ded38"
+        },
+        {
+            "file": "admin-source-run-stale-other-admin-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "50ad6043bbf3c4827d4c22a046aa3ce4f093edc66bc9281459cd3e9e52e0bdb2"
+        },
+        {
+            "file": "admin-source-save-after-scheduled-completion-stale.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "ab1e4a36781de0ae61ba7e623d8caed0132dc4fd1a4fd24bc96e0842c6a61ecc"
+        },
+        {
+            "file": "admin-source-save-open-conflict.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "bb7dcf249723cc7b94f75ea7b34f3ecdcd5a3c42e1efc02bb2473ac35a152eae"
+        },
+        {
+            "file": "admin-source-target-met-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "681b7c857f6c2e4e71119c0ec2d7912d1f1104370e3d212861f5acc35df51a93"
+        },
+        {
+            "file": "admin-source-unchanged-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "8865beefa0b164f3f4478ac01d162988b40795afcd65cb969115631d061b42d7"
+        },
+        {
+            "file": "admin-source-unreachable-queued.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "747dbbce639a87775f849a42919941f3e79f48ca9820102adb21d19e4198ee4e"
+        },
+        {
+            "file": "admin-source-url-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "98f7730d68fe266ca3bd21b404b903c2c5b3fd990775a362e8be19c7e14565ba"
+        },
+        {
+            "file": "admin-unknown-field-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 400,
+            "sha256": "4eb69848836a4725f5b62e9178662da101b7eedb6cc80117b3e6894ad68cc413"
+        },
+        {
+            "file": "admin-values-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "fa677ed2e10dcac0ddb371217b0bac2225ec71758b710f2f0cdba08ce4c76be1"
+        },
+        {
+            "file": "admin-write-capability-denied.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        }
+    ]
+}

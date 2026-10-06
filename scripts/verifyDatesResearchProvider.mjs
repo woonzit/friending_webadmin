@@ -14,6 +14,9 @@ const pin = JSON.parse(readFileSync(pinPath, "utf8"));
 for (const field of ["provider_commit", "source_commit", "manifest_sha256", "source_checksum", "fixture_set_sha256", "generator_sha256"]) assert.match(pin[field], /^[a-f0-9]+$/, field);
 assert.match(pin.provider_commit, /^[a-f0-9]{40}$/); assert.match(pin.source_commit, /^[a-f0-9]{40}$/);
 const directory = "tests/fixtures/dates_event_research_admin_wire";
+// P3a is frozen independently. A versioned P3b copy must not replace its bytes.
+const vendoredDirectory = pin.vendored_directory ?? directory;
+assert.match(vendoredDirectory, /^tests\/fixtures\/dates_event_research(?:_p3b)?_admin_wire$/);
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const git = (...args) => execFileSync("git", ["-C", coreRepo, ...args], { maxBuffer: 64 * 1024 * 1024 });
 const blob = (revision, path) => git("show", `${revision}:${path}`);
@@ -41,13 +44,13 @@ assert.deepEqual(names, [...new Set(names)].sort());
 assert.ok(names.every((name) => /^[a-z0-9][a-z0-9-]*\.json$/.test(name)), "plain fixture filenames only");
 const expected = ["manifest.json", ...names].sort();
 assert.deepEqual(git("ls-tree", "--name-only", `${pin.provider_commit}:${directory}`).toString().trim().split("\n").sort(), expected);
-assert.deepEqual(readdirSync(join(adminTree, directory)).sort(), expected, "vendored inventory matches provider");
-assert.deepEqual(readFileSync(join(adminTree, directory, "manifest.json")), bytes);
+assert.deepEqual(readdirSync(join(adminTree, vendoredDirectory)).sort(), expected, "vendored inventory matches provider");
+assert.deepEqual(readFileSync(join(adminTree, vendoredDirectory, "manifest.json")), bytes);
 let successes = 0;
 const lines = manifest.fixtures.map((entry) => {
   const provider = blob(pin.provider_commit, `${directory}/${entry.file}`);
   assert.equal(digest(provider), entry.sha256, entry.file);
-  assert.deepEqual(readFileSync(join(adminTree, directory, entry.file)), provider, `${entry.file} vendored bytes`);
+  assert.deepEqual(readFileSync(join(adminTree, vendoredDirectory, entry.file)), provider, `${entry.file} vendored bytes`);
   const body = JSON.parse(provider);
   assert.equal(body.status_code, entry.status_code, `${entry.file} logical status`);
   if (body.success === true && body.status_code === 200) successes++;

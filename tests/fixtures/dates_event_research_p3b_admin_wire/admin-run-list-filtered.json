@@ -1,0 +1,101 @@
+{
+    "success": true,
+    "status_code": 200,
+    "runs": [
+        {
+            "run_id": "rru_00000000000000000000000000000003",
+            "kind": "source",
+            "source_id": "rso_00000000000000000000000000000003",
+            "area_id": "rar_00000000000000000000000000000003",
+            "trigger": "manual",
+            "dry_run": false,
+            "status": "unchanged",
+            "found": 0,
+            "imported": 0,
+            "duplicates": 0,
+            "dropped": [],
+            "cost_micro_usd": 0,
+            "started_at": 1791201610,
+            "finished_at": 1791201610,
+            "source_revision_before": 6,
+            "source_revision_after": 7,
+            "area_revision_before": null,
+            "area_revision_after": null,
+            "discovery_tool_usage": null
+        },
+        {
+            "run_id": "rru_00000000000000000000000000000002",
+            "kind": "source",
+            "source_id": "rso_00000000000000000000000000000003",
+            "area_id": "rar_00000000000000000000000000000003",
+            "trigger": "manual",
+            "dry_run": false,
+            "status": "completed",
+            "found": 4,
+            "imported": 1,
+            "duplicates": 0,
+            "dropped": [
+                {
+                    "reason": "past_date",
+                    "count": 1
+                },
+                {
+                    "reason": "outside_window",
+                    "count": 1
+                },
+                {
+                    "reason": "no_event_page",
+                    "count": 1
+                }
+            ],
+            "cost_micro_usd": 17245,
+            "started_at": 1791201605,
+            "finished_at": 1791201609,
+            "source_revision_before": 4,
+            "source_revision_after": 5,
+            "area_revision_before": null,
+            "area_revision_after": null,
+            "discovery_tool_usage": null
+        },
+        {
+            "run_id": "rru_00000000000000000000000000000001",
+            "kind": "source",
+            "source_id": "rso_00000000000000000000000000000003",
+            "area_id": "rar_00000000000000000000000000000003",
+            "trigger": "manual",
+            "dry_run": true,
+            "status": "completed",
+            "found": 4,
+            "imported": 0,
+            "duplicates": 0,
+            "dropped": [
+                {
+                    "reason": "past_date",
+                    "count": 1
+                },
+                {
+                    "reason": "outside_window",
+                    "count": 1
+                },
+                {
+                    "reason": "no_event_page",
+                    "count": 1
+                }
+            ],
+            "cost_micro_usd": 17245,
+            "started_at": 1791201600,
+            "finished_at": 1791201604,
+            "source_revision_before": 2,
+            "source_revision_after": 3,
+            "area_revision_before": null,
+            "area_revision_after": null,
+            "discovery_tool_usage": null
+        }
+    ],
+    "limit": 100,
+    "next_cursor": null,
+    "server_now": 1791201600,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

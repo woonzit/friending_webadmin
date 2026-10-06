@@ -206,7 +206,7 @@ for (const locale of ["en", "hu"]) {
     const copy = messages(locale).datesAdmin.research;
     const consoleSource = readFileSync(new URL("../lib/datesResearchConsole.ts", import.meta.url), "utf8");
     const refusalTable = consoleSource.slice(consoleSource.indexOf("const NO_WRITE"), consoleSource.indexOf("}; // Pinned"));
-    const errors = [...refusalTable.matchAll(/"([^"]+)"\s*:\s*\d+/g)].map((entry) => entry[1]); assert.equal(errors.length, 19);
+    const errors = [...refusalTable.matchAll(/"([^"]+)"\s*:\s*\d+/g)].map((entry) => entry[1]); assert.equal(errors.length, 21);
     for (const error of errors) {
       const command: any = { outcome: { kind: "refused", error }, pending: null, busy: false, retry: async () => {} };
       const refused = render(locale, createElement(ResearchCommandFeedback, { command }));
@@ -216,6 +216,11 @@ for (const locale of ["en", "hu"]) {
       assert.equal(uncertain.includes(escaped(copy.commandErrors[error])), false);
       assert.ok(uncertain.includes(escaped(copy.command.uncertain)));
       assert.ok(uncertain.includes(escaped(messages(locale).common.retry)));
+    }
+    for (const [error, text] of Object.entries(copy.commandUncertainErrors) as [string, string][]) {
+      const uncertain = render(locale, createElement(ResearchCommandFeedback, { command: { outcome: { kind: "uncertain", error }, pending: {}, retry: async () => {} } as any }));
+      assert.ok(uncertain.includes(escaped(text))); assert.ok(uncertain.includes(escaped(copy.command.uncertain)));
+      assert.equal(uncertain.includes(escaped(copy.command.refused)), false);
     }
   });
 }

@@ -95,6 +95,9 @@ const NO_WRITE: Readonly<Record<string, number>> = {
   "dates-research-request-invalid": 400, "dates-research-values-invalid": 422, "dates-research-url-invalid": 422,
   "dates-research-aggregator-autopublish-invalid": 422, "dates-admin-reason-required": 422, "dates-admin-idempotency-invalid": 422,
   "dates-research-disabled": 409, "dates-research-source-disabled": 409,
+  // Core 5f03015b: permanent receipt lookup precedes these transactional
+  // admission checks, which throw before a run/defaults/audit write.
+  "dates-research-area-disabled": 409, "dates-research-discovery-not-paused": 409,
   "dates-research-batch-invalid": 422, "dates-external-confirmation-required": 422,
   "dates-research-place-unavailable": 503, "dates-research-place-invalid": 422, "dates-research-scope-invalid": 422,
   "dates-research-id-invalid": 422, "dates-research-revision-invalid": 422, "dates-research-mode-invalid": 422,
@@ -113,13 +116,13 @@ function researchConflictCause(command: ResearchCommand, current: unknown): Extr
     if (row.last_check && ["queued", "running"].includes(row.last_check.status)) return "source_open_run";
     return undefined;
   }
-  if (action === "dates_event_research_area_save") {
+  if (action === "dates_event_research_area_save" || action === "dates_event_research_area_run_now") {
     const row = decodeResearchArea(current);
     if (!row) return undefined;
     if (!body.area_id && row.place_id === body.place_id) return "city_registered";
     return row.area_id === body.area_id && row.revision !== body.expected_revision ? "revision" : undefined;
   }
-  const row = action === "dates_event_research_defaults_save" ? decodeResearchDefaults(current) : null;
+  const row = action === "dates_event_research_defaults_save" || action === "dates_event_research_discovery_resume" ? decodeResearchDefaults(current) : null;
   return row && row.revision !== body.expected_revision ? "revision" : undefined;
 }
 export async function runResearchCommand(send: ResearchSend, command: ResearchCommand): Promise<ResearchCommandOutcome> {

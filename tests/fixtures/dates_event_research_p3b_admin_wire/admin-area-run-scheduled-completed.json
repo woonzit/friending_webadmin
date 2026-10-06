@@ -1,0 +1,94 @@
+{
+    "success": true,
+    "status_code": 200,
+    "run": {
+        "run_id": "rru_00000000000000000000000000000015",
+        "kind": "area",
+        "source_id": null,
+        "area_id": "rar_00000000000000000000000000000010",
+        "trigger": "schedule",
+        "dry_run": false,
+        "status": "completed",
+        "found": 6,
+        "imported": 1,
+        "duplicates": 0,
+        "dropped": [
+            {
+                "reason": "fetch_failed",
+                "count": 5
+            }
+        ],
+        "cost_micro_usd": 103149,
+        "started_at": 1791201600,
+        "finished_at": 1791201600,
+        "source_revision_before": null,
+        "source_revision_after": null,
+        "area_revision_before": 2,
+        "area_revision_after": 3,
+        "discovery_tool_usage": {
+            "requested_cap": 3,
+            "echoed_cap": 3,
+            "tool_items": 3,
+            "action_counts": {
+                "search": 1,
+                "open_page": 2,
+                "find_in_page": 0,
+                "unknown": 0
+            }
+        },
+        "candidates": [
+            {
+                "title": "Mecénások - Az uralkodó",
+                "date_text": "2026. október 10. | szombat | 17.00 - 19.00",
+                "url_host": "www.utazenehez.hu",
+                "outcome": "imported",
+                "reason": null,
+                "intake_id": "xin_00000000000000000000000000000009"
+            },
+            {
+                "title": "A zenegyűlölő 2.0",
+                "date_text": "2026. október 11. | vasárnap | 19.00 - 21.00",
+                "url_host": "www.utazenehez.hu",
+                "outcome": "dropped",
+                "reason": "fetch_failed",
+                "intake_id": null
+            },
+            {
+                "title": "Az opera hadművelet",
+                "date_text": "2026. október 18. | vasárnap | 10.00 - 11.00",
+                "url_host": "www.utazenehez.hu",
+                "outcome": "dropped",
+                "reason": "fetch_failed",
+                "intake_id": null
+            },
+            {
+                "title": "Infánsnő",
+                "date_text": "2026. október 20. | kedd | 19.30 - 22.00",
+                "url_host": "www.utazenehez.hu",
+                "outcome": "dropped",
+                "reason": "fetch_failed",
+                "intake_id": null
+            },
+            {
+                "title": "HOLLYWOOD!",
+                "date_text": "2026. október 25. | vasárnap | 17.00 - 19.30",
+                "url_host": "www.utazenehez.hu",
+                "outcome": "dropped",
+                "reason": "fetch_failed",
+                "intake_id": null
+            },
+            {
+                "title": "Hol vagytok, Mama?",
+                "date_text": "2026. október 28. | szerda | 19.30 - 21.30",
+                "url_host": "www.utazenehez.hu",
+                "outcome": "dropped",
+                "reason": "fetch_failed",
+                "intake_id": null
+            }
+        ]
+    },
+    "server_now": 1791201600,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

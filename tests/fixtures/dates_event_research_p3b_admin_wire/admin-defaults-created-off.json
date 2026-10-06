@@ -1,0 +1,31 @@
+{
+    "success": true,
+    "status_code": 200,
+    "replayed": false,
+    "defaults": {
+        "enabled": false,
+        "auto_cities_enabled": false,
+        "member_threshold": 5,
+        "cadence_hours": 168,
+        "scope": {
+            "kind": "city",
+            "radius_km": null
+        },
+        "target_events": 15,
+        "window_days": 30,
+        "autopublish": false,
+        "research_models": {
+            "openai": "gpt-6.1-sol",
+            "gemini": "gemini-3.8-flash"
+        },
+        "domains": [],
+        "revision": 1,
+        "updated_at": 1791201600,
+        "updated_by": "admin@example.test"
+    },
+    "audit_id": "aud_00000000000000000000000000000001",
+    "server_now": 1791201600,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

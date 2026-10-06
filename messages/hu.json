@@ -8421,6 +8421,8 @@
         "city": "Mentés előtt válassz várost a keresési találatokból."
       },
       "commandErrors": {
+        "dates-research-area-disabled": "A Core nem indított új városi futást, mert a város jelenleg nem jogosult rá. Frissíts, majd újrapróbálás előtt ellenőrizd a város módját, a kutatás kapcsolóit, a szakasz elérhetőségét és a kutatási szünetet.",
+        "dates-research-discovery-not-paused": "Jelenleg nincs tárolt kutatási szünet. Frissítsd az engedélyezési állapotot; ennek a folytatási parancsnak nincs mit feloldania.",
         "dates-research-request-invalid": "A Core elutasította a kérés szerkezetét. Új parancs összeállítása előtt frissítsd ezt az oldalt.",
         "dates-research-values-invalid": "Töltsd ki a kötelező mezőket, köztük a forrás megnevezését, és ellenőrizd az értékeket a Core által megadott korlátokhoz képest.",
         "dates-research-url-invalid": "Támogatott, nyilvános HTTP- vagy HTTPS-eseményoldal URL-jét add meg, belépési adatok és bejelentkezést igénylő domain nélkül.",
@@ -8440,6 +8442,10 @@
         "dates-research-source-disabled": "Éles átnézés csak bekapcsolt forráson indítható. Archivált forráson próba sem indítható.",
         "dates-research-batch-invalid": "Új beküldés előtt ellenőrizd a kijelölt beküldéseket és az aktuális verziójukat.",
         "dates-external-confirmation-required": "Mind a négy közzétételi megerősítést be kell jelölni."
+      },
+      "commandUncertainErrors": {
+        "dates-research-domains-invalid": "A Core nem tudta ellenőrizni a domainbesorolásokat vagy a domainszabályokhoz szükséges adatokat. Ez a válasz nem igazol egy korábbi eredményt. Őrizd meg az eredeti újrapróbálási azonosítót, és kérj beállítás- vagy Core-adatellenőrzést; ne cseréld új parancsra.",
+        "dates-research-models-invalid": "A Core elutasította a kiválasztott kutatási modellt. Frissítsd az engedélyezett modellek listáját, de amíg egy korábbi eredmény nem ismert, őrizd meg az eredeti újrapróbálási azonosítót; ez a válasz nem igazolja azt."
       },
       "discovery": {
         "policyTitle": "Domainek és kutatási modellek",

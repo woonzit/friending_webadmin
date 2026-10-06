@@ -149,6 +149,7 @@ export function ResearchCommandFeedback({ command, children }: { command: Return
     <p>{t(`command.${outcome.kind === "uncertain" && outcome.discarded ? "discarded" : outcome.kind === "success" && outcome.replayed ? outcome.runId ? "runReplayed" : "replayed" : outcome.kind}`)}{outcome.kind !== "success" && outcome.error ? <> <code>{outcome.error}</code></> : null}</p>
     {outcome.kind === "conflict" && outcome.cause && <p>{t(`conflicts.${outcome.cause}`)}</p>}
     {outcome.kind === "refused" && t.has(`commandErrors.${outcome.error}`) && <p>{t(`commandErrors.${outcome.error}`)}</p>}
+    {outcome.kind === "uncertain" && outcome.error && t.has(`commandUncertainErrors.${outcome.error}`) && <p>{t(`commandUncertainErrors.${outcome.error}`)}</p>}
     {outcome.kind === "uncertain" && outcome.retryBlocked && <p>{t(`retryBlocked.${outcome.retryBlocked}`)}</p>}
     {outcome.kind === "uncertain" && outcome.retryNoWrite && <p>{t("command.retryNoWrite")}</p>}
     {command.pending && <p>{t("navigation.retained")}</p>}

@@ -1,0 +1,45 @@
+{
+    "success": false,
+    "status_code": 409,
+    "error": "dates-research-conflict",
+    "current": {
+        "url": "https://research-organiser.example/programme",
+        "registrable_domain": "research-organiser.example",
+        "label": "Self-made organiser",
+        "type": "official",
+        "area_id": "rar_00000000000000000000000000000003",
+        "cadence_hours": 168,
+        "max_events": 15,
+        "window_days": null,
+        "autopublish": null,
+        "enabled": true,
+        "archived": false,
+        "source_id": "rso_00000000000000000000000000000003",
+        "revision": 9,
+        "effective": {
+            "window_days": 30,
+            "autopublish": false
+        },
+        "robots": {
+            "state": "allowed",
+            "checked_at": 1791201600
+        },
+        "stock": {
+            "upcoming": 1,
+            "max": 15,
+            "missing": 14
+        },
+        "last_check": {
+            "run_id": "rru_00000000000000000000000000000004",
+            "status": "completed",
+            "found": 1,
+            "imported": 0,
+            "finished_at": 1791201612
+        },
+        "next_check_at": 1791806412,
+        "month_cost_micro_usd": 34490
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

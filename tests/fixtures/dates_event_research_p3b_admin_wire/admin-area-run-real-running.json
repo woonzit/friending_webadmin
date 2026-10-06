@@ -1,0 +1,40 @@
+{
+    "success": true,
+    "status_code": 200,
+    "run": {
+        "run_id": "rru_00000000000000000000000000000013",
+        "kind": "area",
+        "source_id": null,
+        "area_id": "rar_0000000000000000000000000000000e",
+        "trigger": "manual",
+        "dry_run": false,
+        "status": "running",
+        "found": 6,
+        "imported": 0,
+        "duplicates": 0,
+        "dropped": [],
+        "cost_micro_usd": 87693,
+        "started_at": 1791201600,
+        "finished_at": null,
+        "source_revision_before": null,
+        "source_revision_after": null,
+        "area_revision_before": null,
+        "area_revision_after": null,
+        "discovery_tool_usage": {
+            "requested_cap": 3,
+            "echoed_cap": 3,
+            "tool_items": 3,
+            "action_counts": {
+                "search": 1,
+                "open_page": 2,
+                "find_in_page": 0,
+                "unknown": 0
+            }
+        },
+        "candidates": []
+    },
+    "server_now": 1791201600,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

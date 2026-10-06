@@ -1,0 +1,12 @@
+{
+  "provider_commit": "5f03015b57c516285b76f2d1a8d3f7f26f16b1a6",
+  "source_commit": "0da6f55d542c094120d40018d096a6e63f817bd6",
+  "manifest_sha256": "1b642be4d1833965ee44ecad5c46e6690a24c123d0930a6e79ab6f7ce4f10e5d",
+  "source_checksum": "5456561289b2bc1e107923c3c1ea3033d489379d584af2f27cddee0df7b12771",
+  "fixture_set_sha256": "c0faf4de01f4944f4fe6991091ff8bbd0701ba0c44c9bc315b830b974aeedbe5",
+  "generator_sha256": "cab57ed86b5ae925f45fa4fb43aa2a0a2c06093c4652365f0213a952a707c124",
+  "fixture_count": 200,
+  "contract": "dates-event-research-admin-v1",
+  "coverage_stage": "p3b_final",
+  "vendored_directory": "tests/fixtures/dates_event_research_p3b_admin_wire"
+}

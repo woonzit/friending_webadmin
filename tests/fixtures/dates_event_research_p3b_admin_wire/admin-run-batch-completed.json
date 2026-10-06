@@ -1,0 +1,55 @@
+{
+    "success": true,
+    "status_code": 200,
+    "run": {
+        "run_id": "rru_00000000000000000000000000000011",
+        "kind": "source",
+        "source_id": "rso_0000000000000000000000000000000d",
+        "area_id": "rar_0000000000000000000000000000000d",
+        "trigger": "manual",
+        "dry_run": false,
+        "status": "completed",
+        "found": 3,
+        "imported": 3,
+        "duplicates": 0,
+        "dropped": [],
+        "cost_micro_usd": 28666,
+        "started_at": 1791201600,
+        "finished_at": 1791201603,
+        "source_revision_before": 2,
+        "source_revision_after": 3,
+        "area_revision_before": null,
+        "area_revision_after": null,
+        "discovery_tool_usage": null,
+        "candidates": [
+            {
+                "title": "Őszi Kamarakoncert",
+                "date_text": "2026-10-10T19:00:00+02:00",
+                "url_host": "research-tickets.example",
+                "outcome": "imported",
+                "reason": null,
+                "intake_id": "xin_00000000000000000000000000000003"
+            },
+            {
+                "title": "Őszi Kamarakoncert",
+                "date_text": "2026-10-10T19:00:00+02:00",
+                "url_host": "research-tickets.example",
+                "outcome": "imported",
+                "reason": null,
+                "intake_id": "xin_00000000000000000000000000000004"
+            },
+            {
+                "title": "Őszi Kamarakoncert",
+                "date_text": "2026-10-10T19:00:00+02:00",
+                "url_host": "research-tickets.example",
+                "outcome": "imported",
+                "reason": null,
+                "intake_id": "xin_00000000000000000000000000000005"
+            }
+        ]
+    },
+    "server_now": 1791201600,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

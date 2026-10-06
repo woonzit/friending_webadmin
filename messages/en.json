@@ -8421,6 +8421,8 @@
         "city": "Choose a city from the search results before saving."
       },
       "commandErrors": {
+        "dates-research-area-disabled": "Core refused a new city run because the city is not currently eligible. Refresh and check its mode, research switches, section availability and discovery pause before trying again.",
+        "dates-research-discovery-not-paused": "No discovery pause is currently stored. Refresh the admission state; there is nothing for this resume command to clear.",
         "dates-research-request-invalid": "Core refused the request shape. Refresh this page before preparing a new command.",
         "dates-research-values-invalid": "Complete the required fields, including the source label, and check values against Core's returned limits.",
         "dates-research-url-invalid": "Use a supported public HTTP or HTTPS event URL, without credentials or a login-walled domain.",
@@ -8440,6 +8442,10 @@
         "dates-research-source-disabled": "A live check requires an enabled source. An archived source cannot be checked or previewed.",
         "dates-research-batch-invalid": "Check the selected intakes and their current revisions before submitting the batch again.",
         "dates-external-confirmation-required": "All four publication confirmations must be checked."
+      },
+      "commandUncertainErrors": {
+        "dates-research-domains-invalid": "Core could not validate the domain declarations or its required domain-policy data. This attempt is not a confirmation of any earlier outcome. Keep the original retry identity and arrange a configuration or Core-data check; do not replace it with a new command.",
+        "dates-research-models-invalid": "Core refused the research model selection. Refresh the admitted model options, but keep the original retry identity while an earlier outcome is unknown; this response does not confirm it."
       },
       "discovery": {
         "policyTitle": "Domains and research models",

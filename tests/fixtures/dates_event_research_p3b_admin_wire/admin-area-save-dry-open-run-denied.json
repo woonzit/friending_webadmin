@@ -1,0 +1,82 @@
+{
+    "success": false,
+    "status_code": 409,
+    "error": "dates-research-conflict",
+    "current": {
+        "area_id": "rar_0000000000000000000000000000000f",
+        "revision": 2,
+        "mode": "on",
+        "overrides": {
+            "cadence_hours": null,
+            "scope": null,
+            "member_threshold": null,
+            "target_events": null,
+            "window_days": null,
+            "autopublish": null
+        },
+        "label": "Budapest",
+        "proposed": false,
+        "place_id": "SelfMadeCity",
+        "country_code": "HU",
+        "center": {
+            "latitude": 47.5,
+            "longitude": 19
+        },
+        "bounds": {
+            "southwest": {
+                "latitude": 47.4,
+                "longitude": 18.9
+            },
+            "northeast": {
+                "latitude": 47.6,
+                "longitude": 19.1
+            }
+        },
+        "effective": {
+            "cadence_hours": 168,
+            "scope": {
+                "kind": "radius",
+                "radius_km": 10
+            },
+            "member_threshold": 5,
+            "target_events": 15,
+            "window_days": 30,
+            "autopublish": false
+        },
+        "member_count": 0,
+        "member_count_at": null,
+        "running": true,
+        "not_running_reason": null,
+        "stock": {
+            "upcoming": 0,
+            "target": 15,
+            "missing": 15
+        },
+        "last_run": {
+            "run_id": "rru_00000000000000000000000000000014",
+            "kind": "area",
+            "source_id": null,
+            "area_id": "rar_0000000000000000000000000000000f",
+            "trigger": "manual",
+            "dry_run": true,
+            "status": "queued",
+            "found": 0,
+            "imported": 0,
+            "duplicates": 0,
+            "dropped": [],
+            "cost_micro_usd": 0,
+            "started_at": null,
+            "finished_at": null,
+            "source_revision_before": null,
+            "source_revision_after": null,
+            "area_revision_before": null,
+            "area_revision_after": null,
+            "discovery_tool_usage": null
+        },
+        "next_run_at": 1791201600,
+        "month_cost_micro_usd": 0
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

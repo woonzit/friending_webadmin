@@ -1,0 +1,44 @@
+{
+    "success": true,
+    "status_code": 200,
+    "run": {
+        "run_id": "rru_0000000000000000000000000000000e",
+        "kind": "source",
+        "source_id": "rso_0000000000000000000000000000000b",
+        "area_id": "rar_0000000000000000000000000000000b",
+        "trigger": "manual",
+        "dry_run": false,
+        "status": "completed",
+        "found": 1,
+        "imported": 0,
+        "duplicates": 0,
+        "dropped": [
+            {
+                "reason": "outside_area",
+                "count": 1
+            }
+        ],
+        "cost_micro_usd": 14579,
+        "started_at": 1791201600,
+        "finished_at": 1791201601,
+        "source_revision_before": 2,
+        "source_revision_after": 3,
+        "area_revision_before": null,
+        "area_revision_after": null,
+        "discovery_tool_usage": null,
+        "candidates": [
+            {
+                "title": "Őszi Kamarakoncert",
+                "date_text": "2026-10-10T19:00:00+02:00",
+                "url_host": "research-organiser.example",
+                "outcome": "dropped",
+                "reason": "outside_area",
+                "intake_id": null
+            }
+        ]
+    },
+    "server_now": 1791201600,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
