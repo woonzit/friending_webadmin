@@ -2,7 +2,7 @@ import { datesAdminPrincipal, hasDatesCapability } from "@/lib/datesAdmin";
 import { datesIntakeId, DATES_INTAKE_REJECT_REASONS } from "@/lib/datesIntakeAdmin";
 import { DATES_RESEARCH_ACTIONS, DATES_RESEARCH_MODES, DATES_RESEARCH_SOURCE_TYPES, DATES_RESEARCH_RUN_KINDS,
   DATES_RESEARCH_VALUE_FIELDS, decodeResearchOverrides, decodeResearchValues, researchId, researchInteger, researchOneOf,
-  researchRecord, researchString, type DatesResearchAction } from "@/lib/datesResearchAdmin";
+  DATES_RESEARCH_DOMAIN_TYPES, decodeResearchModels, researchRecord, researchString, type DatesResearchAction } from "@/lib/datesResearchAdmin";
 
 export const DATES_RESEARCH_READ_CAPABILITY = "dates_external_event_review";
 export const DATES_RESEARCH_WRITE_CAPABILITY = "dates_external_event_manage";
@@ -31,10 +31,28 @@ const audited = (body: Record<string, unknown>) => command(body) && researchAudi
 const bool = (value: unknown) => typeof value === "boolean";
 const scopeKeys = (value: unknown) => researchRecord(value) && keys(value, ["kind", "radius_km"]);
 function exactValues(value: unknown, defaults: boolean) {
-  return researchRecord(value) && keys(value, [...DATES_RESEARCH_VALUE_FIELDS, ...(defaults ? ["enabled", "auto_cities_enabled"] : [])])
+  return researchRecord(value) && keys(value, [...DATES_RESEARCH_VALUE_FIELDS, ...(defaults ? ["enabled", "auto_cities_enabled"] : [])], defaults ? ["research_models", "domains"] : [])
     && scopeKeys(value.scope) && decodeResearchValues(value) !== null
     && ["cadence_hours", "member_threshold", "target_events", "window_days"].every((key) => researchInteger(value[key], 1))
-    && (!defaults || (bool(value.enabled) && bool(value.auto_cities_enabled)));
+    && (!defaults || (bool(value.enabled) && bool(value.auto_cities_enabled)))
+    && (!Object.hasOwn(value, "research_models") || researchRecord(value.research_models) && keys(value.research_models, ["openai", "gemini"]) && decodeResearchModels(value.research_models) !== null)
+    && (!Object.hasOwn(value, "domains") || researchDomainsValid(value.domains));
+}
+/** Syntax only. Core alone owns the public-host, suffix and immutable deny-list decisions. */
+export function researchDomainName(value: unknown): string | null {
+  if (!researchString(value)) return null;
+  const host = value.replace(/^[\x00\x09\x0a\x0b\x0d\x20]+|[\x00\x09\x0a\x0b\x0d\x20]+$/g, "").toLowerCase();
+  return host.length <= 253 && /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/.test(host) ? host : null;
+}
+export function researchDomainsValid(value: unknown): boolean {
+  if (!Array.isArray(value)) return false; // Core owns the count bound; controls use overview.limits.domains.
+  const seen = new Set<string>();
+  return value.every((row) => {
+    if (!researchRecord(row) || !keys(row, ["domain", "type"]) || !researchOneOf(row.type, DATES_RESEARCH_DOMAIN_TYPES)) return false;
+    const domain = researchDomainName(row.domain);
+    if (!domain || seen.has(domain)) return false;
+    seen.add(domain); return true;
+  });
 }
 function exactOverrides(value: unknown) {
   return researchRecord(value) && keys(value, DATES_RESEARCH_VALUE_FIELDS) && (value.scope === null || scopeKeys(value.scope)) && decodeResearchOverrides(value) !== null
@@ -70,6 +88,8 @@ export function normalizeDatesResearchProxyBody(action: string, body: Record<str
   if (action === "dates_event_research_overview") return keys(body, []) ? {} : null;
   if (action === "dates_event_research_defaults_save") return keys(body, ["expected_revision", "values", "reason", "idempotency_key"])
     && researchInteger(body.expected_revision) && exactValues(body.values, true) && audited(body) ? body : null;
+  if (action === "dates_event_research_discovery_resume") return keys(body, ["expected_revision", "reason", "idempotency_key"])
+    && researchInteger(body.expected_revision) && audited(body) ? body : null;
   if (action === "dates_event_research_area_save") {
     if (!keys(body, ["mode", "overrides", "reason", "idempotency_key"], ["area_id", "expected_revision", "place_id", "label"])
       || !researchOneOf(body.mode, DATES_RESEARCH_MODES) || !exactOverrides(body.overrides) || !audited(body)
@@ -91,6 +111,8 @@ export function normalizeDatesResearchProxyBody(action: string, body: Record<str
   }
   if (action === "dates_event_research_source_run_now") return keys(body, ["source_id", "expected_revision", "dry_run", "idempotency_key"])
     && researchId(body.source_id) && researchInteger(body.expected_revision, 1) && bool(body.dry_run) && command(body) ? body : null;
+  if (action === "dates_event_research_area_run_now") return keys(body, ["area_id", "expected_revision", "dry_run", "idempotency_key"])
+    && researchId(body.area_id) && researchInteger(body.expected_revision, 1) && bool(body.dry_run) && command(body) ? body : null;
   if (action === "dates_event_research_run_detail") return keys(body, ["run_id"]) && researchId(body.run_id) ? body : null;
   if (action === "dates_event_research_run_list") {
     if (!keys(body, [], ["source_id", "area_id", "kind", "cursor", "limit"])) return null;

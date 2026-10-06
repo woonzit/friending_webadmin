@@ -588,6 +588,8 @@ export const ADMIN_ACTION_ACCESS = {
   dates_event_research_area_save: "dates_write",
   dates_event_research_source_save: "dates_write",
   dates_event_research_source_run_now: "dates_write",
+  dates_event_research_area_run_now: "dates_write",
+  dates_event_research_discovery_resume: "dates_write",
   dates_event_research_run_list: "dates_read",
   dates_event_research_run_detail: "dates_read",
   dates_event_intake_batch_decide: "dates_write",

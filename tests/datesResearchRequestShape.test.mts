@@ -90,6 +90,20 @@ test("DERIVED transport: defaults revision zero and one JSON values object", asy
   const fields = formOf(await bridge(action, input, { ...DERIVED_ENVELOPE, defaults: { ...GENUINE_DEFAULTS, revision: 1 }, replayed: false, audit_id: "aud_derived" }), action, Object.keys(input));
   assert.equal(fields.expected_revision, "0"); assert.deepEqual(JSON.parse(fields.values), values); assert.equal(typeof JSON.parse(fields.values).enabled, "boolean");
 });
+test("DERIVED P3b transport: domain/model values are one typed JSON object, not browser selectors or resume flags", async () => {
+  const action = "dates_event_research_defaults_save";
+  const input = { expected_revision: 0, values: { ...values, research_models: { openai: "derived-openai", gemini: "derived-gemini" },
+    domains: [{ domain: "events.example.org", type: "blocked" }] }, reason: "Reviewed domains and models", idempotency_key: key };
+  const fields = formOf(await bridge(action, input), action, Object.keys(input));
+  assert.deepEqual(JSON.parse(fields.values), input.values); assert.equal(typeof JSON.parse(fields.values).enabled, "boolean");
+  const invalid = await bridge(action, { ...input, values: { ...input.values, resume_discovery: true } });
+  assert.equal(invalid.status, 400); assert.equal(invalid.sent.length, 0);
+});
+test("DERIVED P3b transport: discovery resume is a separate defaults-revision command with reason and exact key", async () => {
+  const action = "dates_event_research_discovery_resume", input = { expected_revision: 3, reason: "Reviewed project limit and safety pause", idempotency_key: key };
+  const fields = formOf(await bridge(action, input), action, Object.keys(input));
+  assert.equal(fields.expected_revision, "3"); assert.equal(fields.reason, input.reason); assert.equal(fields.idempotency_key, key);
+});
 for (const update of [false, true]) test(`DERIVED transport: city ${update ? "update" : "create"} sends identity, never geometry`, async () => {
   const action = "dates_event_research_area_save", input = { ...(update ? { area_id: GENUINE_AREA.area_id, expected_revision: 1, label: "Budapest" } : { place_id: GENUINE_AREA.place_id }),
     mode: "auto", overrides: GENUINE_AREA.overrides, reason: "Reviewed", idempotency_key: key };
@@ -104,6 +118,11 @@ for (const update of [false, true]) test(`DERIVED transport: source ${update ? "
 for (const dry_run of [false, true]) test(`DERIVED transport: source run (dry ${dry_run}) fences revision and carries one key`, async () => {
   const action = "dates_event_research_source_run_now", input = { source_id: GENUINE_SOURCE.source_id, expected_revision: 1, dry_run, idempotency_key: key };
   const fields = formOf(await bridge(action, input), action, Object.keys(input)); assert.equal(fields.dry_run, dry_run ? "1" : "0"); assert.equal(fields.expected_revision, "1");
+});
+for (const dry_run of [false, true]) test(`DERIVED P3b transport: area run (dry ${dry_run}) fences its area revision and carries one key`, async () => {
+  const action = "dates_event_research_area_run_now", input = { area_id: GENUINE_AREA.area_id, expected_revision: 1, dry_run, idempotency_key: key };
+  const fields = formOf(await bridge(action, input), action, Object.keys(input));
+  assert.equal(fields.area_id, GENUINE_AREA.area_id); assert.equal(fields.dry_run, dry_run ? "1" : "0"); assert.equal(fields.expected_revision, "1");
 });
 for (const action of ["publish", "reject"]) test(`DERIVED transport: batch ${action} carries JSON list, revision map and confirmations once`, async () => {
   const route = "dates_event_intake_batch_decide", ids = ["xin_" + "1".repeat(32), "xin_" + "2".repeat(32)];
@@ -132,6 +151,13 @@ test("research transport checks review for reads and manage for writes on every 
   const reviewer = { ...member, dates: { ...member.dates, capabilities: ["dates_external_event_review"] } };
   assert.equal((await bridge("dates_event_research_overview", {}, DERIVED_OVERVIEW, reviewer)).status, 200);
   const denied = await bridge("dates_event_research_source_save", sourceInput, DERIVED_ENVELOPE, reviewer); assert.equal(denied.status, 403); assert.equal(denied.sent.length, 0);
+  for (const [action, input] of [["dates_event_research_area_run_now", { area_id: GENUINE_AREA.area_id, expected_revision: 1, dry_run: false, idempotency_key: key }],
+    ["dates_event_research_discovery_resume", { expected_revision: 0, reason: "Reviewed pause", idempotency_key: key }]] as const) {
+    const blocked = await bridge(action, input, DERIVED_ENVELOPE, reviewer); assert.equal(blocked.status, 403); assert.equal(blocked.sent.length, 0);
+    for (const extra of [{ admin_email: "foreign@example.test" }, { dates_event_research_admin_contract_version: 1 }]) {
+      const forged = await bridge(action, { ...input, ...extra }); assert.equal(forged.status, 400); assert.equal(forged.sent.length, 0);
+    }
+  }
   const noReview = { ...member, dates: { ...member.dates, capabilities: ["dates_external_event_manage"] } };
   assert.equal((await bridge("dates_event_research_overview", {}, DERIVED_OVERVIEW, noReview)).status, 403);
 });

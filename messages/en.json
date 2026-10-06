@@ -8289,7 +8289,8 @@
         "auto_cities_off": "Automatic cities are switched off",
         "below_threshold": "Not enough members in the area",
         "section_unavailable": "AreYouIn or external events are unavailable in this country",
-        "budget_paused": "Research is paused by the budget"
+        "budget_paused": "Research is paused by the budget",
+        "discovery_bound_exceeded": "City discovery is paused by its safety limit"
       },
       "robotsStates": {
         "unknown": "Robots policy not checked",
@@ -8298,7 +8299,8 @@
         "unreachable": "Robots policy could not be read"
       },
       "runKinds": {
-        "source": "Collection source"
+        "source": "Collection source",
+        "area": "City discovery"
       },
       "runTriggers": {
         "schedule": "Scheduled",
@@ -8313,7 +8315,8 @@
         "blocked_by_robots": "Blocked by robots policy",
         "fetch_failed": "Page could not be fetched",
         "budget_paused": "Budget paused",
-        "failed": "Failed"
+        "failed": "Failed",
+        "provider_unavailable": "Discovery provider unavailable"
       },
       "outcomes": {
         "imported": "Imported",
@@ -8330,7 +8333,8 @@
         "fetch_failed": "Fetch failed",
         "validation_failed": "Validation failed",
         "over_cap": "Stock cap reached",
-        "robots_disallowed": "Robots policy disallows fetching"
+        "robots_disallowed": "Robots policy disallows fetching",
+        "blocked_domain": "Domain is blocked"
       },
       "columns": {
         "city": "City",
@@ -8430,6 +8434,37 @@
         "dates-research-batch-invalid": "Check the selected intakes and their current revisions before submitting the batch again.",
         "dates-external-confirmation-required": "All four publication confirmations must be checked."
       },
+      "discovery": {
+        "policyTitle": "Domains and research models",
+        "policyHint": "This saves model and domain edits with the current stored global values. Unsaved edits in Defaults are not submitted here, and an ordinary save never clears a safety pause.",
+        "policyUnavailable": "Domain and model configuration is unavailable on this Core or could not be read.",
+        "models": { "openai": "OpenAI research model", "gemini": "Gemini page-extraction fallback" },
+        "domainsTitle": "Domain declarations",
+        "domainsEmpty": "No domains are declared. Undeclared domains never auto-publish.",
+        "domain": "Public hostname",
+        "domainType": "Classification",
+        "domainLimits": "Core allows {min}–{max} domain declarations per save.",
+        "domainPlaceholder": "events.example.org",
+        "domainTypes": { "official": "Official", "aggregator": "Aggregator", "blocked": "Blocked" },
+        "addDomain": "Add domain",
+        "removeDomain": "Remove domain",
+        "title": "City discovery admission",
+        "admissionUnavailable": "Discovery admission could not be read. New city runs are unavailable.",
+        "openaiAdmitted": "OpenAI discovery is admitted by the provider rule. The research master, city eligibility and budget still apply.",
+        "openaiPaused": "OpenAI city discovery is paused. Source checks and ordinary page extraction are unaffected by this pause.",
+        "geminiUnavailable": "Gemini is not offered for city discovery: its search-query count has no proven bound. It remains the ordinary event-page extraction fallback.",
+        "marginHint": "The requested tool cap is not guaranteed. Core reserves an engineered margin, books actual spend and pauses on an overrun. A hard monthly OpenAI project limit is required before activation.",
+        "pauseReasons": { "reservation_exceeded": "Actual discovery spend exceeded its reservation.", "tool_bound_exceeded": "Discovery returned more tool items than the reserved margin." },
+        "resumeHint": "Resume only after checking the project limit and the cause. This is a separate audited command; it does not enable research or save other edits.",
+        "resume": "Resume city discovery",
+        "runNow": "Research now",
+        "estimateHint": "City and source estimates use their own measured runs. A nonzero unmeasured component leaves the total unmeasured; cadence estimates are not a spend guarantee.",
+        "estimates": { "area": "City discovery estimate", "source": "Source check estimate" },
+        "lastMeasuredCost": "Last measured run: {amount}",
+        "toolUsage": "Requested cap: {requested} · echoed: {echoed} · tool items: {total} · searches: {search} · page opens: {open} · finds: {find} · unknown actions: {unknown}",
+        "notReported": "not reported",
+        "areaRevision": "City revision on completion: {before} → {after} (not a configuration save)."
+      },
       "batch": {
         "title": "Decide this run's intakes together",
         "hint": "Open and check each intake, then take its review hold. Choose up to {count} intakes from this page. The four publication confirmations apply once to the chosen batch.",
@@ -8458,6 +8493,16 @@
         "clearSelection": "Clear selection"
       },
       "help": {
+        "research_models": {
+          "purpose": "Choose research models offered by this Core.",
+          "effect": "OpenAI performs native city discovery. Gemini is an event-page extraction fallback, not a discovery option.",
+          "cost": "Model choice affects provider pricing. Core reserves and records usage; no fixed monthly price is promised."
+        },
+        "domains": {
+          "purpose": "Classify public hostnames as official, aggregator or blocked.",
+          "effect": "Declarations include subdomains. The longest match applies, but a blocked ancestor and Core's immutable deny-list always win. Undeclared domains never auto-publish.",
+          "cost": "Blocking prevents that domain's fetch and candidate processing; discovery itself can still incur cost."
+        },
         "enabled": {
           "purpose": "Master switch for collection checks and city research.",
           "effect": "Off stops research for every city and source and prevents new manual checks and previews. An earlier request can still be retried to confirm its result.",

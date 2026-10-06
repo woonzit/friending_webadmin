@@ -56,9 +56,9 @@ export function decodeResearchCommandReceipt(command: ResearchCommand, response:
   const audited = researchString(response.audit_id) && response.audit_id !== "";
   // Reusing an open scheduled run changes no configuration and has no
   // original administrator audit. Only an explicit replay may carry null.
-  const scheduledReplay = action === "dates_event_research_source_run_now" && response.replayed === true && response.audit_id === null;
+  const scheduledReplay = ["dates_event_research_source_run_now", "dates_event_research_area_run_now"].includes(action) && response.replayed === true && response.audit_id === null;
   if (!audited && !scheduledReplay) return null;
-  if (action === "dates_event_research_defaults_save") {
+  if (action === "dates_event_research_defaults_save" || action === "dates_event_research_discovery_resume") {
     const row = decodeResearchDefaults(response.defaults);
     return row && row.revision === Number(body.expected_revision) + 1 ? { kind: "success", replayed: response.replayed, receipt: row } : null;
   }
@@ -81,6 +81,12 @@ export function decodeResearchCommandReceipt(command: ResearchCommand, response:
     return researchString(response.run_id) && response.run_id !== "" && response.source_id === body.source_id && response.dry_run === body.dry_run
       && researchInteger(response.source_revision, 2) && boundRevision
       ? { kind: "success", replayed: response.replayed, receipt: response, runId: response.run_id } : null;
+  }
+  if (action === "dates_event_research_area_run_now") {
+    const next = Number(body.expected_revision) + 1;
+    const boundRevision = response.replayed === true || response.area_revision === next;
+    return researchString(response.run_id) && response.run_id !== "" && response.area_id === body.area_id && response.dry_run === body.dry_run
+      && researchInteger(response.area_revision, 2) && boundRevision ? { kind: "success", replayed: response.replayed, receipt: response, runId: response.run_id } : null;
   }
   return null;
 }

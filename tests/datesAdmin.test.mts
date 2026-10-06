@@ -84,6 +84,8 @@ const EXPECTED_DATES_ACTIONS = [
   "dates_event_research_area_save",
   "dates_event_research_source_save",
   "dates_event_research_source_run_now",
+  "dates_event_research_area_run_now",
+  "dates_event_research_discovery_resume",
   "dates_event_research_run_list",
   "dates_event_research_run_detail",
   "dates_event_intake_batch_decide",

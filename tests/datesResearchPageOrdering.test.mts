@@ -16,6 +16,12 @@ const code = ts.transpileModule(tree.statements.filter((node) => !ts.isImportDec
   { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText;
 const ready = (email = "operator@example.test") => ({ kind: "ready", value: decodeResearchOverview(DERIVED_OVERVIEW),
   operator: { email, capabilities: ["dates_external_event_review", "dates_external_event_manage"] }, manage: true });
+const readyP3b = (email = "operator@example.test") => ({ ...ready(email), value: decodeResearchOverview({ ...DERIVED_OVERVIEW,
+  defaults: { ...DERIVED_OVERVIEW.defaults, research_models: { openai: "derived-openai", gemini: "derived-gemini" }, domains: [] },
+  limits: { ...DERIVED_OVERVIEW.limits, domains: { min: 0, max: 100 } },
+  research_model_options: { openai: ["derived-openai"], gemini: ["derived-gemini"] },
+  discovery_admission: { openai_admitted: false, openai_reason: null, gemini_admitted: false, gemini_reason: "unbounded_search_queries",
+    pause: { reason: "tool_bound_exceeded", run_id: "derived-run", at: 10 } } }) });
 type Element = { type: any; props: any; children: any[] };
 function elements(node: any): Element[] {
   if (Array.isArray(node)) return node.flatMap(elements);
@@ -35,7 +41,8 @@ function harness() {
     useCallback: (callback: any, deps: any[]) => { const slot = index++, old = slots[slot]; if (!old || deps.some((value, i) => value !== old.deps[i])) slots[slot] = { callback, deps }; return slots[slot].callback; },
     useEffect: (effect: any, deps: any[]) => { const slot = index++, old = slots[slot]; slots[slot] = deps; if (!old || deps.some((value, i) => value !== old[i])) effects.push(effect); },
   };
-  for (const name of ["PageHeader", "DatesAdminTabs", "DatesResearchRuns", "ResearchAreaEditor", "ResearchDefaultsEditor", "ResearchSourceEditor", "ResearchCommandFeedback", "ResearchHelp", "ResearchValue", "ErrorPanel", "LoadingPanel"]) context[name] = name;
+  for (const name of ["PageHeader", "DatesAdminTabs", "DatesResearchRuns", "ResearchAreaEditor", "ResearchDefaultsEditor", "ResearchSourceEditor", "ResearchCommandFeedback", "ResearchHelp", "ResearchValue", "ErrorPanel", "LoadingPanel",
+    "ResearchAreaRunButtons", "ResearchDiscoveryAdmissionPanel", "ResearchDomainEditor", "ResearchEstimateComponents"]) context[name] = name;
   vm.runInNewContext(code, context);
   function render() { index = 0; const result = context.exports.default(); for (const effect of effects.splice(0)) effect(); return elements(result); }
   async function answer(value: any) { assert.ok(requests.length); requests.shift()!(value); await Promise.resolve(); await Promise.resolve(); }
@@ -97,4 +104,20 @@ for (const kind of ["unconfirmed", "denied", "unavailable"] as const) test(`rese
   assert.equal(h.actors.at(-1), "operator@example.test"); assert.equal(nodes.find((node) => node.type === "ResearchDefaultsEditor")!.props.manage, true);
   h.refresh(nodes); await h.answer(ready("other@example.test")); nodes = h.render();
   assert.notEqual(nodes.find((node) => node.type === "ResearchSourceEditor")!.props.key, sourceEditor.props.key, "a confirmed different actor never owns the old draft/command instance");
+});
+for (const kind of ["unconfirmed", "denied", "unavailable"] as const) test(`DERIVED P3b page ${kind}: policy and resume owners stay mounted but lose write authority`, async () => {
+  const h = harness(); h.render(); await h.answer(readyP3b());
+  let nodes = h.render();
+  const names = ["ResearchDomainEditor", "ResearchDiscoveryAdmissionPanel"];
+  const before = names.map((name) => nodes.find((node) => node.type === name)!);
+  assert.deepEqual(before[0].props.limits.domains, { min: 0, max: 100 });
+  h.refresh(nodes); await h.answer({ kind }); nodes = h.render();
+  names.forEach((name, index) => {
+    const owner = nodes.find((node) => node.type === name)!;
+    assert.equal(owner.props.key, before[index].props.key); assert.equal(owner.props.actor, ""); assert.equal(owner.props.manage, false);
+  });
+  h.refresh(nodes); await h.answer(readyP3b()); nodes = h.render();
+  names.forEach((name, index) => assert.equal(nodes.find((node) => node.type === name)!.props.key, before[index].props.key));
+  h.refresh(nodes); await h.answer(readyP3b("other@example.test")); nodes = h.render();
+  names.forEach((name, index) => assert.notEqual(nodes.find((node) => node.type === name)!.props.key, before[index].props.key));
 });

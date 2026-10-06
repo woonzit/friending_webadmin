@@ -8289,7 +8289,8 @@
         "auto_cities_off": "Az automatikus városok ki vannak kapcsolva",
         "below_threshold": "Nincs elég tag a területen",
         "section_unavailable": "Ebben az országban az AreYouIn vagy a külső események nem érhetők el",
-        "budget_paused": "A költési keret miatt szünetel"
+        "budget_paused": "A költési keret miatt szünetel",
+        "discovery_bound_exceeded": "A városi kutatás a biztonsági határ miatt szünetel"
       },
       "robotsStates": {
         "unknown": "A robots-szabály még nincs ellenőrizve",
@@ -8298,7 +8299,8 @@
         "unreachable": "A robots-szabály nem olvasható"
       },
       "runKinds": {
-        "source": "Gyűjtőforrás"
+        "source": "Gyűjtőforrás",
+        "area": "Városi kutatás"
       },
       "runTriggers": {
         "schedule": "Ütemezett",
@@ -8313,7 +8315,8 @@
         "blocked_by_robots": "A robots-szabály tiltja",
         "fetch_failed": "Az oldal nem tölthető le",
         "budget_paused": "A keret miatt szünetel",
-        "failed": "Sikertelen"
+        "failed": "Sikertelen",
+        "provider_unavailable": "A kutatási szolgáltató nem érhető el"
       },
       "outcomes": {
         "imported": "Importálva",
@@ -8330,7 +8333,8 @@
         "fetch_failed": "Sikertelen letöltés",
         "validation_failed": "Sikertelen ellenőrzés",
         "over_cap": "Megvan az események felső határa",
-        "robots_disallowed": "A robots-szabály tiltja a letöltést"
+        "robots_disallowed": "A robots-szabály tiltja a letöltést",
+        "blocked_domain": "Tiltott domain"
       },
       "columns": {
         "city": "Város",
@@ -8430,6 +8434,37 @@
         "dates-research-batch-invalid": "Új beküldés előtt ellenőrizd a kijelölt beküldéseket és az aktuális verziójukat.",
         "dates-external-confirmation-required": "Mind a négy közzétételi megerősítést be kell jelölni."
       },
+      "discovery": {
+        "policyTitle": "Domainek és kutatási modellek",
+        "policyHint": "Ez a mentés a tárolt alapértékek mellett a modell- és domainmódosításokat küldi el. Az Alapértékeknél még nem mentett módosításokat nem menti, és a biztonsági szünetet sem oldja fel.",
+        "policyUnavailable": "A domain- és modellbeállítások ezen a Core-verzión nem érhetők el, vagy nem olvashatók.",
+        "models": { "openai": "OpenAI kutatási modell", "gemini": "Gemini tartalék az eseményoldalakhoz" },
+        "domainsTitle": "Domainbesorolások",
+        "domainsEmpty": "Nincs besorolt domain. A besorolás nélküli domainekről nincs automatikus közzététel.",
+        "domain": "Nyilvános hosztnév",
+        "domainType": "Besorolás",
+        "domainLimits": "Mentésenként {min}–{max} domainbesorolást enged a Core.",
+        "domainPlaceholder": "events.example.org",
+        "domainTypes": { "official": "Hivatalos", "aggregator": "Gyűjtőoldal", "blocked": "Tiltott" },
+        "addDomain": "Domain hozzáadása",
+        "removeDomain": "Domain eltávolítása",
+        "title": "A városi kutatás engedélyezése",
+        "admissionUnavailable": "A kutatás engedélyezési állapota nem olvasható. Új városi futás nem indítható.",
+        "openaiAdmitted": "Az OpenAI a szolgáltatói szabály szerint használható. A kutatás főkapcsolója, a város jogosultsága és a költési keret ettől még külön feltétel.",
+        "openaiPaused": "Az OpenAI városi kutatása szünetel. Ez a szünet a források ellenőrzését és az eseményoldalak szokásos feldolgozását nem érinti.",
+        "geminiUnavailable": "A Gemini városi kutatásra nem választható: a kereséseinek számára nincs igazolt felső határ. Az eseményoldalak feldolgozásának tartaléka marad.",
+        "marginHint": "A kért eszközhívási korlát nem garantált. A Core tervezett ráhagyással foglal keretet, elszámolja a tényleges költést, és túllépésnél szüneteltet. Bekapcsolás előtt kötelező a kemény havi OpenAI-projektkeret.",
+        "pauseReasons": { "reservation_exceeded": "A tényleges kutatási költés meghaladta a lefoglalt keretet.", "tool_bound_exceeded": "A kutatás a lefoglalt ráhagyásnál több eszközhívást adott vissza." },
+        "resumeHint": "Csak a projektkeret és az ok ellenőrzése után folytasd. Külön, naplózott művelet: nem kapcsolja be a kutatást, és más módosítást sem ment.",
+        "resume": "Városi kutatás folytatása",
+        "runNow": "Kutatás most",
+        "estimateHint": "A városi és a forrásos becslés külön, saját mért futásokból készül. Ha van tervezett, de még nem mért rész, az összesítés sem mért; az ütemezés nem költséggarancia.",
+        "estimates": { "area": "Városi kutatás becslése", "source": "Forrásellenőrzés becslése" },
+        "lastMeasuredCost": "Az utolsó mért futás: {amount}",
+        "toolUsage": "Kért korlát: {requested} · visszajelzett: {echoed} · eszközhívások: {total} · keresés: {search} · oldalmegnyitás: {open} · oldalon belüli keresés: {find} · ismeretlen művelet: {unknown}",
+        "notReported": "nincs visszajelezve",
+        "areaRevision": "A város verziója befejezéskor: {before} → {after} (nem beállításmentés)."
+      },
       "batch": {
         "title": "A futás beküldéseinek közös elbírálása",
         "hint": "Nyisd meg és ellenőrizd a beküldéseket, majd vedd át őket átnézésre. Erről az oldalról legfeljebb {count} beküldést jelölhetsz ki. A négy közzétételi megerősítés egyszer vonatkozik a kijelölt csoportra.",
@@ -8458,6 +8493,16 @@
         "clearSelection": "Kijelölés törlése"
       },
       "help": {
+        "research_models": {
+          "purpose": "Az ezen a Core-verzión választható kutatási modellek.",
+          "effect": "A városi keresést az OpenAI végzi. A Gemini az eseményoldalak feldolgozásának tartaléka, nem városi keresési lehetőség.",
+          "cost": "A modell befolyásolja a szolgáltatói árat. A Core keretet foglal és használatot mér; nincs ígért fix havi ár."
+        },
+        "domains": {
+          "purpose": "Nyilvános hosztnevek besorolása hivatalos, gyűjtőoldali vagy tiltott forrásként.",
+          "effect": "A besorolás az aldomainekre is érvényes. A leghosszabb egyezés dönt, de a tiltott fölérendelt domain és a Core állandó tiltólistája mindig elsőbbséget élvez. Besorolás nélkül nincs automatikus közzététel.",
+          "cost": "A tiltás megakadályozza a domain letöltését és a találatok feldolgozását; maga a keresés ettől még költséggel járhat."
+        },
         "enabled": {
           "purpose": "A gyűjtőoldalak ellenőrzésének és a városi kutatásnak a főkapcsolója.",
           "effect": "Kikapcsolva minden város és forrás kutatása leáll, új kézi átnézés és próba sem indítható. Egy korábbi kérés újrapróbálásával továbbra is ellenőrizheted az eredményét.",

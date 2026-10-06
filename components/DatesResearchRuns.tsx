@@ -77,6 +77,12 @@ export default function DatesResearchRuns({ areas, sources, focusRunId, refresh,
       {detailLoading && !detail ? <LoadingPanel /> : detail && <>
         <p><code>{detail.run.run_id}</code> · {t(`runStatuses.${detail.run.status}`)}{detail.run.dry_run ? ` · ${t("dryRun")}` : ""}</p>
         <p>{t("runCounts", { found: detail.run.found, imported: detail.run.imported, duplicates: detail.run.duplicates, dropped: detail.run.dropped.reduce((sum, row) => sum + row.count, 0) })} · {researchCost(detail.run.cost_micro_usd, locale)}</p>
+        {detail.run.discovery_tool_usage && <><p>{t("discovery.toolUsage", {
+          requested: detail.run.discovery_tool_usage.requested_cap, echoed: detail.run.discovery_tool_usage.echoed_cap === null ? t("discovery.notReported") : formatNumber(detail.run.discovery_tool_usage.echoed_cap, locale),
+          total: detail.run.discovery_tool_usage.tool_items, search: detail.run.discovery_tool_usage.action_counts.search, open: detail.run.discovery_tool_usage.action_counts.open_page,
+          find: detail.run.discovery_tool_usage.action_counts.find_in_page, unknown: detail.run.discovery_tool_usage.action_counts.unknown,
+        })}</p><p className="field-hint">{t("discovery.marginHint")}</p></>}
+        {typeof detail.run.area_revision_before === "number" && typeof detail.run.area_revision_after === "number" && <p>{t("discovery.areaRevision", { before: detail.run.area_revision_before, after: detail.run.area_revision_after })}</p>}
         {detail.run.dry_run && <p className="alert alert-info">{t("dryRunHint")}</p>}
         {!detail.run.dry_run && <Link className="button button-secondary" href={`/dates/intakes?research_run_id=${encodeURIComponent(detail.run.run_id)}`}>{t("openIntakes")}</Link>}
         {detail.candidates === null ? <p className="alert alert-warning">{t("candidatesUnreadable")}</p> : <>

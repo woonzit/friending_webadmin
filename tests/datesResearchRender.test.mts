@@ -8,6 +8,7 @@ import { ResearchAreaEditor, ResearchDefaultsEditor, ResearchSourceEditor } from
 import { ResearchCommandFeedback, ResearchHelp, ResearchReason, ResearchSaveIssue, ResearchValuesFields } from "../components/DatesResearchControls.tsx";
 import DatesResearchRuns from "../components/DatesResearchRuns.tsx";
 import DatesResearchBatch from "../components/DatesResearchBatch.tsx";
+import { ResearchDiscoveryAdmissionPanel, ResearchDomainEditor, ResearchEstimateComponents } from "../components/DatesResearchDiscovery.tsx";
 import { DATES_RESEARCH_VALUE_FIELDS } from "../lib/datesResearchAdmin.ts";
 import { researchAuditReason } from "../lib/datesResearchProxy.ts";
 import { GENUINE_AREA, GENUINE_DEFAULTS, GENUINE_LIMITS, GENUINE_SOURCE } from "./support/datesResearchCorpus.ts";
@@ -73,6 +74,30 @@ for (const locale of ["en", "hu"]) {
       assert.ok(html.includes(escaped(copy.command.conflict)));
       if (cause) assert.ok(html.includes(escaped(copy.conflicts[cause])));
     }
+  });
+  test(`DERIVED P3b render ${locale}: domain policy, safety admission and independent estimates remain explicit and readonly`, () => {
+    const copy = messages(locale).datesAdmin.research;
+    const research_models = { openai: "derived-openai", gemini: "derived-gemini" };
+    const defaults = { ...GENUINE_DEFAULTS, research_models, domains: { rows: [{ domain: "events.example.org", type: "blocked" as const }], unreadable: [] } };
+    const limits = { ...GENUINE_LIMITS, domains: { min: 0, max: 100 } };
+    const policy = render(locale, createElement(ResearchDomainEditor, { defaults, limits, actor: props.actor, manage: false, reload: props.reload,
+      options: { openai: [research_models.openai], gemini: [research_models.gemini] } }));
+    for (const value of [copy.discovery.policyTitle, copy.discovery.policyHint, "events.example.org", copy.discovery.domainTypes.blocked]) assert.ok(policy.includes(escaped(value)));
+    for (const field of ["research_models", "domains"]) for (const part of ["purpose", "effect", "cost"]) assert.ok(policy.includes(escaped(copy.help[field][part])));
+    assert.doesNotMatch(policy, /type="submit"/);
+    const unknown = render(locale, createElement(ResearchDomainEditor, { defaults: { ...defaults, domains: { ...defaults.domains, unreadable: [{ index: 1, id: "future.example.org" }] } },
+      limits, actor: props.actor, manage: true, reload: props.reload, options: { openai: [research_models.openai], gemini: [research_models.gemini] } }));
+    assert.ok(unknown.includes("future.example.org")); assert.match(unknown, /type="submit"[^>]*disabled=""/);
+    const admission = { openai_admitted: false, openai_reason: null, gemini_admitted: false as const, gemini_reason: "unbounded_search_queries" as const,
+      pause: { reason: "tool_bound_exceeded" as const, run_id: "derived-run", at: 100 } };
+    const paused = render(locale, createElement(ResearchDiscoveryAdmissionPanel, { admission, defaults, actor: props.actor, manage: true, reload: props.reload }));
+    for (const value of [copy.discovery.marginHint, copy.discovery.geminiUnavailable, copy.discovery.pauseReasons.tool_bound_exceeded, copy.discovery.resumeHint, copy.discovery.resume])
+      assert.ok(paused.includes(escaped(value)));
+    assert.match(paused, /<form>/, "master OFF still allows the separate audited resume form, not a run");
+    const estimate = render(locale, createElement(ResearchEstimateComponents, { estimate: { monthly_checks: 4, monthly_cost_micro_usd: null, basis: "unmeasured",
+      area: { monthly_checks: 2, monthly_cost_micro_usd: null, basis: "unmeasured", last_run_id: null, last_run_cost_micro_usd: null },
+      source: { monthly_checks: 2, monthly_cost_micro_usd: 2_000_000, basis: "last_completed_run", last_run_id: "derived-source-run", last_run_cost_micro_usd: 1_000_000 } }, onRun: () => {} }));
+    for (const value of [copy.discovery.estimateHint, copy.discovery.estimates.area, copy.discovery.estimates.source, copy.notMeasured]) assert.ok(estimate.includes(escaped(value)));
   });
   test(`DERIVED render ${locale}: reason input does not narrow Core's trimmed Unicode bounds`, () => {
     for (const reason of ["😀".repeat(1000), `${" ".repeat(1001)}abc${" ".repeat(1001)}`]) {

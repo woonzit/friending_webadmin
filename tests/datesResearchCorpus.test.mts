@@ -89,7 +89,7 @@ for (const { file, body, status_code } of fixtures) test(`GENUINE research body:
     assert.equal(value.areas.unreadable.length, 0); assert.equal(value.sources.unreadable.length, 0);
     assert.equal(value.areas.rows.length, body.areas.length); assert.equal(value.sources.rows.length, body.sources.length);
     for (const area of value.areas.rows) {
-      assert.deepEqual(researchRunningState(value.defaults!, area, area.effective, area.not_running_reason !== "section_unavailable", value.budget.research_paused),
+      assert.deepEqual(researchRunningState(value.defaults!, area, area.effective, area.not_running_reason !== "section_unavailable", value.budget.research_paused, area.not_running_reason === "discovery_bound_exceeded"),
         { running: area.running, reason: area.not_running_reason }, "running preview agrees with Core's genuine stored/count/budget state");
       assert.equal(researchStock(area.stock.upcoming, area.stock.target).missing, area.stock.missing);
     }
@@ -107,21 +107,27 @@ for (const { file, body, status_code } of fixtures) test(`GENUINE research body:
   }
 });
 test("genuine pinned vocabulary coverage is observed, not inferred from declarations; pending stages are explicit", () => {
+  const stage = pin.coverage_stage ?? "part_a";
+  // During explicitly DERIVED P3b preparation, the unchanged P3a pin proves
+  // only its own vocabulary. A P3b FINAL pin must prove the additions too.
+  const p3bOnly: Record<string, string[]> = { not_running_reason: ["discovery_bound_exceeded"], run_status: ["provider_unavailable"], drop_reason: ["blocked_domain"], run_kind: ["area"] };
+  const atStage = (key: string, values: readonly string[]) => stage === "p3b_final" ? [...values] : values.filter((value) => !p3bOnly[key]?.includes(value));
   const expected = { mode: DATES_RESEARCH_MODES, scope_kind: DATES_RESEARCH_SCOPE_KINDS, source_type: DATES_RESEARCH_SOURCE_TYPES,
     not_running_reason: DATES_RESEARCH_NOT_RUNNING_REASONS, robots_state: DATES_RESEARCH_ROBOTS_STATES, run_trigger: DATES_RESEARCH_RUN_TRIGGERS,
     run_status: DATES_RESEARCH_RUN_STATUSES, candidate_outcome: DATES_RESEARCH_CANDIDATE_OUTCOMES, drop_reason: DATES_RESEARCH_DROP_REASONS,
     run_kind: DATES_RESEARCH_RUN_KINDS, batch_outcome: DATES_RESEARCH_BATCH_OUTCOMES };
   for (const [key, values] of Object.entries(expected)) {
     if (key !== "run_kind" && (key !== "batch_outcome" || manifest.vocabularies.batch_outcome))
-      assert.deepEqual([...manifest.vocabularies[key]].sort(), [...values].sort(), key);
+      assert.deepEqual([...manifest.vocabularies[key]].sort(), atStage(key, values).sort(), key);
   }
-  assert.deepEqual(manifest.vocabularies.run_kind.filter((kind: string) => kind !== "area"), [...DATES_RESEARCH_RUN_KINDS]);
-  const stage = pin.coverage_stage ?? "part_a";
-  assert.equal(manifest.coverage.stage, stage); assert.ok(manifest.coverage.pending_p3b.length);
+  assert.deepEqual(manifest.vocabularies.run_kind.filter((kind: string) => stage === "p3b_final" || kind !== "area"), atStage("run_kind", DATES_RESEARCH_RUN_KINDS));
+  assert.equal(manifest.coverage.stage, stage);
+  if (stage === "p3b_final") assert.deepEqual(manifest.coverage.pending_p3b, []);
+  else assert.ok(manifest.coverage.pending_p3b.length);
   if (stage === "part_a") assert.equal(manifest.coverage.pending_part_b.length, 3);
   else {
-    assert.equal(stage, "p3a_final"); assert.deepEqual(manifest.coverage.pending_part_b, []);
-    for (const [key, values] of Object.entries(expected)) assert.deepEqual([...manifest.coverage.covered_values[key]].sort(), [...values].sort(), key);
+    assert.ok(["p3a_final", "p3b_final"].includes(stage)); assert.deepEqual(manifest.coverage.pending_part_b, []);
+    for (const [key, values] of Object.entries(expected)) assert.deepEqual([...manifest.coverage.covered_values[key]].sort(), atStage(key, values).sort(), key);
   }
   const observed: Record<string, Set<string>> = Object.fromEntries(Object.keys(manifest.coverage.covered_values).map((key) => [key, new Set<string>()]));
   const add = (key: string, value: string | null | undefined) => { if (value != null) observed[key]?.add(value); };

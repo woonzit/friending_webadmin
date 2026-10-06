@@ -9,7 +9,7 @@ import { researchDefaultValues, researchDistanceUnit, researchEditsAfterConflict
 import { researchAuditReason } from "@/lib/datesResearchProxy";
 import { formatNumber } from "@/lib/format";
 
-function useResearchDraft<T extends object>(authority: T, revision: number) {
+export function useResearchDraft<T extends object>(authority: T, revision: number) {
   const [state, setState] = useState({ baseline: authority, draft: authority, revision });
   useEffect(() => {
     setState((current) => revision < current.revision ? current : { baseline: authority, revision,

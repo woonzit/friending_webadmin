@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesResearchRuns from "@/components/DatesResearchRuns";
+import { ResearchAreaRunButtons, ResearchDiscoveryAdmissionPanel, ResearchDomainEditor, ResearchEstimateComponents } from "@/components/DatesResearchDiscovery";
 import { ResearchAreaEditor, ResearchDefaultsEditor, ResearchSourceEditor } from "@/components/DatesResearchEditors";
 import { ResearchCommandFeedback, ResearchHelp, ResearchValue, useResearchCommand } from "@/components/DatesResearchControls";
 import PageHeader from "@/components/PageHeader";
@@ -55,7 +56,7 @@ export default function DatesResearchPage() {
   }, []);
   useEffect(() => { const controller = new AbortController(); void load(controller.signal); return () => { controller.abort(); ++generation.current; }; }, [load]);
   const reload = useCallback(async () => { await load(); }, [load]);
-  // Keep the run identity outside the source rows: a later unreadable row must
+  // Keep the run identity outside the source/area rows: a later unreadable row must
   // not remove the only safe retry for a command whose outcome is unknown.
   const confirmedActor = problem === null ? read?.operator.email ?? "" : "";
   const manage = problem === null && read?.manage === true;
@@ -83,10 +84,15 @@ export default function DatesResearchPage() {
         <div className="stat-card"><span className="stat-label">{t("researchSpent")}</span><strong className="stat-value">{researchCost(overview.budget.research_spent_micro_usd, locale)}</strong><small>{t("researchStop", { amount: researchCost(overview.budget.research_stop_at_micro_usd, locale) })}</small></div>
         <div className="stat-card"><span className="stat-label">{t("estimate")}</span><strong className="stat-value">{estimate?.microUsd === null ? t("notMeasured") : researchCost(estimate?.microUsd ?? 0, locale)}</strong><small>{t("monthlyChecks", { count: overview.estimate.monthly_checks })}</small></div>
       </div><p>{t("reserved", { amount: researchCost(overview.budget.reserved_micro_usd, locale) })}</p><ResearchHelp field="budget" /><ResearchHelp field="estimate" />
+        <ResearchEstimateComponents estimate={overview.estimate} onRun={setFocusRun} />
         {overview.budget.research_paused && <p className="alert alert-warning">{t("budgetPaused")}</p>}
       </section>
       {!overview.defaults && <p className="alert alert-warning">{t("defaultsUnreadable")}</p>}
       {defaults && <ResearchDefaultsEditor key={read.operator.email} defaults={defaults} actor={confirmedActor} manage={manage && overview.defaults !== null} limits={overview.limits} reload={reload} />}
+      {defaults && (Object.hasOwn(defaults, "domains") || Object.hasOwn(defaults, "research_models")) && <ResearchDomainEditor key={`policy:${read.operator.email}`}
+        defaults={defaults} options={overview.research_model_options} limits={overview.limits} actor={confirmedActor} manage={manage && overview.defaults !== null} reload={reload} />}
+      {overview.discovery_admission !== undefined && <ResearchDiscoveryAdmissionPanel key={`discovery:${read.operator.email}`} admission={overview.discovery_admission}
+        defaults={overview.defaults} actor={confirmedActor} manage={manage} reload={reload} />}
       <section className="panel research-panel" id="research-cities"><div className="panel-header"><h2>{t("sections.cities")}</h2>{manage && overview.defaults && <button className="button button-primary" disabled={areaEditor !== null} onClick={() => setAreaEditor("new")}>{t("addCity")}</button>}</div>
         <p>{t("citiesHint")}</p>{overview.areas.unreadable.map((row) => <p className="alert alert-warning" key={row.index}>{t("unreadableRow", { row: row.index + 1 })}{row.id ? <> <code>{row.id}</code></> : null}</p>)}
         {overview.areas.rows.length === 0 && overview.areas.unreadable.length === 0 ? <p>{t("citiesEmpty")}</p> : <div className="table-wrap"><table className="data-table"><thead><tr>
@@ -98,7 +104,8 @@ export default function DatesResearchPage() {
               <td>{DATES_RESEARCH_VALUE_FIELDS.map((field) => <div key={field}><small>{t(`fields.${field}`)}: <ResearchValue field={field} values={row.effective} unit={unit} />{row.overrides[field] !== null && <> <span className="badge">{t("own")}</span></>}</small></div>)}</td>
               <td>{t("stock", { count: row.stock.upcoming, target: row.stock.target })}<div><small>{t("missing", { count: row.stock.missing })}</small></div><progress value={stock.upcoming} max={Math.max(1, stock.target)} aria-label={t("columns.stock")} /></td>
               <td>{formatDate(row.last_run?.finished_at, locale, true)}<div><small>{t("next")}: {formatDate(row.next_run_at, locale, true)}</small></div></td><td>{researchCost(row.month_cost_micro_usd, locale)}</td>
-              <td><button className="button button-secondary button-small" disabled={!overview.defaults || areaEditor !== null} onClick={() => { setAreaSnapshot({ actor: read.operator.email, row }); setAreaEditor(row.area_id); }}>{common("edit")}</button></td></tr>;
+              <td><div className="row-actions"><button className="button button-secondary button-small" disabled={!overview.defaults || areaEditor !== null} onClick={() => { setAreaSnapshot({ actor: read.operator.email, row }); setAreaEditor(row.area_id); }}>{common("edit")}</button>
+                <ResearchAreaRunButtons row={row} defaults={overview.defaults} admission={overview.discovery_admission} manage={manage} command={runCommand} /></div></td></tr>;
           })}</tbody></table></div>}
       </section>
       {areaEditor !== null && defaults && (areaEditor === "new" || editedArea) && <ResearchAreaEditor key={`${read.operator.email}:${areaEditor}`} row={editedArea} defaults={defaults} actor={confirmedActor} manage={manage && overview.defaults !== null && (areaEditor === "new" || area !== null)} limits={overview.limits} reload={reload} close={() => setAreaEditor(null)} />}

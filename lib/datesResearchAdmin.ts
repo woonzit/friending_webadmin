@@ -2,19 +2,22 @@
 export const DATES_RESEARCH_ACTIONS = [
   "dates_event_research_overview", "dates_event_research_defaults_save", "dates_event_research_area_save",
   "dates_event_research_source_save", "dates_event_research_source_run_now",
+  "dates_event_research_area_run_now", "dates_event_research_discovery_resume",
   "dates_event_research_run_list", "dates_event_research_run_detail", "dates_event_intake_batch_decide",
 ] as const;
 export type DatesResearchAction = typeof DATES_RESEARCH_ACTIONS[number];
 export const DATES_RESEARCH_MODES = ["auto", "on", "off"] as const;
 export const DATES_RESEARCH_SCOPE_KINDS = ["city", "radius"] as const;
 export const DATES_RESEARCH_SOURCE_TYPES = ["official", "aggregator"] as const;
-export const DATES_RESEARCH_NOT_RUNNING_REASONS = ["research_off", "mode_off", "auto_cities_off", "below_threshold", "section_unavailable", "budget_paused"] as const;
+export const DATES_RESEARCH_NOT_RUNNING_REASONS = ["research_off", "mode_off", "auto_cities_off", "below_threshold", "section_unavailable", "budget_paused", "discovery_bound_exceeded"] as const;
 export const DATES_RESEARCH_ROBOTS_STATES = ["unknown", "allowed", "disallowed", "unreachable"] as const;
-export const DATES_RESEARCH_RUN_KINDS = ["source"] as const;
+export const DATES_RESEARCH_RUN_KINDS = ["source", "area"] as const;
 export const DATES_RESEARCH_RUN_TRIGGERS = ["schedule", "manual"] as const;
-export const DATES_RESEARCH_RUN_STATUSES = ["queued", "running", "completed", "unchanged", "skipped_target_met", "blocked_by_robots", "fetch_failed", "budget_paused", "failed"] as const;
+export const DATES_RESEARCH_RUN_STATUSES = ["queued", "running", "completed", "unchanged", "skipped_target_met", "blocked_by_robots", "fetch_failed", "budget_paused", "failed", "provider_unavailable"] as const;
 export const DATES_RESEARCH_CANDIDATE_OUTCOMES = ["imported", "would_import", "duplicate", "dropped"] as const;
-export const DATES_RESEARCH_DROP_REASONS = ["past_date", "outside_window", "outside_area", "known_url", "no_event_page", "fetch_failed", "validation_failed", "over_cap", "robots_disallowed"] as const;
+export const DATES_RESEARCH_DROP_REASONS = ["past_date", "outside_window", "outside_area", "known_url", "no_event_page", "fetch_failed", "validation_failed", "over_cap", "robots_disallowed", "blocked_domain"] as const;
+export const DATES_RESEARCH_DOMAIN_TYPES = ["official", "aggregator", "blocked"] as const;
+export const DATES_RESEARCH_PAUSE_REASONS = ["reservation_exceeded", "tool_bound_exceeded"] as const;
 export const DATES_RESEARCH_BATCH_OUTCOMES = ["published", "rejected", "refused"] as const;
 export const DATES_RESEARCH_VALUE_FIELDS = ["cadence_hours", "scope", "member_threshold", "target_events", "window_days", "autopublish"] as const;
 export const DATES_RESEARCH_LIMIT_FIELDS = ["cadence_hours", "radius_km", "member_threshold", "target_events", "window_days", "max_events"] as const;
@@ -26,8 +29,14 @@ export type ResearchDropReason = typeof DATES_RESEARCH_DROP_REASONS[number];
 export type ResearchScope = { kind: "city"; radius_km: null } | { kind: "radius"; radius_km: number };
 export type ResearchValues = { cadence_hours: number; scope: ResearchScope; member_threshold: number; target_events: number; window_days: number; autopublish: boolean };
 export type ResearchOverrides = { [K in keyof ResearchValues]: ResearchValues[K] | null };
-export type ResearchDefaults = ResearchValues & { enabled: boolean; auto_cities_enabled: boolean; revision: number; updated_at: number | null; updated_by: string | null };
-export type ResearchLimits = { [K in typeof DATES_RESEARCH_LIMIT_FIELDS[number]]: { min: number; max: number } } & { batch_intakes?: { min: number; max: number } };
+export type ResearchModels = Record<"openai" | "gemini", string>;
+export type ResearchModelOptions = Record<"openai" | "gemini", string[]>;
+export type ResearchDomain = { domain: string; type: typeof DATES_RESEARCH_DOMAIN_TYPES[number] };
+export type ResearchDefaults = ResearchValues & { enabled: boolean; auto_cities_enabled: boolean; revision: number; updated_at: number | null; updated_by: string | null;
+  research_models?: ResearchModels | null; domains?: ResearchRows<ResearchDomain> | null };
+export type ResearchLimits = { [K in typeof DATES_RESEARCH_LIMIT_FIELDS[number]]: { min: number; max: number } } & {
+  batch_intakes?: { min: number; max: number }; domains?: { min: number; max: number } | null;
+};
 export type ResearchCenter = { latitude: number; longitude: number };
 export type ResearchBounds = { southwest: ResearchCenter; northeast: ResearchCenter };
 export type ResearchLastRun = { run_id: string; status: ResearchRunStatus; finished_at: number | null; found: number; imported: number };
@@ -44,17 +53,24 @@ export type ResearchSource = {
   stock: { upcoming: number; max: number; missing: number }; last_check: ResearchLastRun | null; next_check_at: number | null; month_cost_micro_usd: number;
 };
 export type ResearchBudget = { month: string; cap_micro_usd: number; spent_micro_usd: number; reserved_micro_usd: number; research_spent_micro_usd: number; research_stop_at_micro_usd: number; research_paused: boolean };
-export type ResearchEstimate = { monthly_checks: number; monthly_cost_micro_usd: number | null; basis: string };
+export type ResearchEstimateComponent = { monthly_checks: number; monthly_cost_micro_usd: number | null; basis: "unmeasured" | "last_completed_run"; last_run_id: string | null; last_run_cost_micro_usd: number | null };
+export type ResearchEstimate = { monthly_checks: number; monthly_cost_micro_usd: number | null; basis: string; area?: ResearchEstimateComponent | null; source?: ResearchEstimateComponent | null };
+export type ResearchDiscoveryAdmission = { openai_admitted: boolean; openai_reason: null; gemini_admitted: false; gemini_reason: "unbounded_search_queries";
+  pause: { reason: typeof DATES_RESEARCH_PAUSE_REASONS[number]; run_id: string; at: number } | null };
+export type ResearchToolUsage = { requested_cap: number; echoed_cap: number | null; tool_items: number; action_counts: Record<"search" | "open_page" | "find_in_page" | "unknown", number> };
 export type ResearchUnreadable = { index: number; id: string | null };
 export type ResearchRows<T> = { rows: T[]; unreadable: ResearchUnreadable[] };
 export type ResearchOverview = {
   defaults: ResearchDefaults | null; areas: ResearchRows<ResearchArea>; sources: ResearchRows<ResearchSource>;
   budget: ResearchBudget; estimate: ResearchEstimate; limits: ResearchLimits; server_now: number;
+  research_model_options?: ResearchModelOptions | null; discovery_admission?: ResearchDiscoveryAdmission | null;
 };
 export type ResearchRun = {
   run_id: string; kind: typeof DATES_RESEARCH_RUN_KINDS[number]; dry_run: boolean; trigger: typeof DATES_RESEARCH_RUN_TRIGGERS[number];
   source_id: string | null; area_id: string | null; status: ResearchRunStatus; found: number; imported: number; duplicates: number;
   dropped: { reason: ResearchDropReason; count: number }[]; cost_micro_usd: number; started_at: number | null; finished_at: number | null;
+  source_revision_before?: number | null; source_revision_after?: number | null; area_revision_before?: number | null; area_revision_after?: number | null;
+  discovery_tool_usage?: ResearchToolUsage | null;
 };
 export type ResearchCandidate = { title: string; date_text: string; url_host: string; outcome: typeof DATES_RESEARCH_CANDIDATE_OUTCOMES[number]; reason: ResearchDropReason | null; intake_id: string | null };
 export type ResearchRunList = ResearchRows<ResearchRun> & { next_cursor: string | null };
@@ -111,7 +127,41 @@ export function decodeResearchDefaults(value: unknown): ResearchDefaults | null 
   const values = decodeResearchValues(value);
   if (!values || !researchRecord(value) || !boolean(value.enabled) || !boolean(value.auto_cities_enabled) || !researchInteger(value.revision)
     || !nullable(value.updated_at, clock) || !nullable(value.updated_by, researchString)) return null;
-  return { ...values, enabled: value.enabled, auto_cities_enabled: value.auto_cities_enabled, revision: value.revision, updated_at: value.updated_at, updated_by: value.updated_by };
+  return { ...values, enabled: value.enabled, auto_cities_enabled: value.auto_cities_enabled, revision: value.revision, updated_at: value.updated_at, updated_by: value.updated_by,
+    ...(Object.hasOwn(value, "research_models") ? { research_models: decodeResearchModels(value.research_models) } : {}),
+    ...(Object.hasOwn(value, "domains") ? { domains: rowList(value.domains, decodeResearchDomain, "domain") } : {}) };
+}
+export function decodeResearchModels(value: unknown): ResearchModels | null {
+  return researchRecord(value) && researchId(value.openai) && researchId(value.gemini) ? { openai: value.openai, gemini: value.gemini } : null;
+}
+export function decodeResearchDomain(value: unknown): ResearchDomain | null {
+  return researchRecord(value) && researchId(value.domain) && researchOneOf(value.type, DATES_RESEARCH_DOMAIN_TYPES) ? { domain: value.domain, type: value.type } : null;
+}
+function modelOptions(value: unknown): ResearchModelOptions | null {
+  if (!researchRecord(value) || !["openai", "gemini"].every((key) => Array.isArray(value[key]) && (value[key] as unknown[]).every(researchId)
+    && new Set(value[key] as string[]).size === (value[key] as string[]).length)) return null;
+  return { openai: [...value.openai as string[]], gemini: [...value.gemini as string[]] };
+}
+function discoveryAdmission(value: unknown): ResearchDiscoveryAdmission | null {
+  if (!researchRecord(value) || !boolean(value.openai_admitted) || value.openai_reason !== null || value.gemini_admitted !== false
+    || value.gemini_reason !== "unbounded_search_queries") return null;
+  let pause: ResearchDiscoveryAdmission["pause"] = null;
+  if (value.pause !== null) {
+    if (!researchRecord(value.pause) || !researchOneOf(value.pause.reason, DATES_RESEARCH_PAUSE_REASONS) || !researchId(value.pause.run_id) || !clock(value.pause.at)) return null;
+    pause = { reason: value.pause.reason, run_id: value.pause.run_id, at: value.pause.at };
+  }
+  return { openai_admitted: value.openai_admitted, openai_reason: null, gemini_admitted: false, gemini_reason: "unbounded_search_queries", pause };
+}
+function estimateComponent(value: unknown): ResearchEstimateComponent | null {
+  if (!researchRecord(value) || !researchNumber(value.monthly_checks) || !nullable(value.monthly_cost_micro_usd, researchNumber)
+    || !researchOneOf(value.basis, ["unmeasured", "last_completed_run"] as const) || !nullable(value.last_run_id, researchId) || !nullable(value.last_run_cost_micro_usd, researchNumber)) return null;
+  return { monthly_checks: value.monthly_checks, monthly_cost_micro_usd: value.monthly_cost_micro_usd, basis: value.basis, last_run_id: value.last_run_id, last_run_cost_micro_usd: value.last_run_cost_micro_usd };
+}
+function toolUsage(value: unknown): ResearchToolUsage | null {
+  if (!researchRecord(value) || !fieldNumbers(value, ["requested_cap", "tool_items"]) || !nullable(value.echoed_cap, researchInteger)
+    || !researchRecord(value.action_counts) || !fieldNumbers(value.action_counts, ["search", "open_page", "find_in_page", "unknown"])) return null;
+  return { requested_cap: value.requested_cap as number, echoed_cap: value.echoed_cap, tool_items: value.tool_items as number,
+    action_counts: { search: value.action_counts.search as number, open_page: value.action_counts.open_page as number, find_in_page: value.action_counts.find_in_page as number, unknown: value.action_counts.unknown as number } };
 }
 
 function lastRun(value: unknown): ResearchLastRun | null {
@@ -182,6 +232,12 @@ export function decodeResearchLimits(value: unknown): ResearchLimits | null {
     if (!researchRecord(range) || !researchInteger(range.min, 1) || !researchInteger(range.max, range.min)) return null;
     limits.batch_intakes = { min: range.min, max: range.max };
   }
+  if (Object.hasOwn(value, "domains")) {
+    const range = value.domains;
+    // An unavailable additive limit disables only domain-policy writes, not the overview.
+    limits.domains = researchRecord(range) && researchInteger(range.min) && researchInteger(range.max, range.min)
+      ? { min: range.min, max: range.max } : null;
+  }
   return limits;
 }
 export function decodeResearchOverview(value: unknown): ResearchOverview | null {
@@ -195,7 +251,11 @@ export function decodeResearchOverview(value: unknown): ResearchOverview | null 
     budget: { month: value.budget.month, cap_micro_usd: value.budget.cap_micro_usd as number, spent_micro_usd: value.budget.spent_micro_usd as number,
       reserved_micro_usd: value.budget.reserved_micro_usd as number,
       research_spent_micro_usd: value.budget.research_spent_micro_usd as number, research_stop_at_micro_usd: value.budget.research_stop_at_micro_usd as number, research_paused: value.budget.research_paused },
-    estimate: { monthly_checks: value.estimate.monthly_checks, monthly_cost_micro_usd: value.estimate.monthly_cost_micro_usd, basis: value.estimate.basis } };
+    estimate: { monthly_checks: value.estimate.monthly_checks, monthly_cost_micro_usd: value.estimate.monthly_cost_micro_usd, basis: value.estimate.basis,
+      ...(Object.hasOwn(value.estimate, "area") ? { area: estimateComponent(value.estimate.area) } : {}),
+      ...(Object.hasOwn(value.estimate, "source") ? { source: estimateComponent(value.estimate.source) } : {}) },
+    ...(Object.hasOwn(value, "research_model_options") ? { research_model_options: modelOptions(value.research_model_options) } : {}),
+    ...(Object.hasOwn(value, "discovery_admission") ? { discovery_admission: discoveryAdmission(value.discovery_admission) } : {}) };
 }
 export function decodeResearchRun(value: unknown): ResearchRun | null {
   if (!researchRecord(value) || !researchId(value.run_id) || !researchOneOf(value.kind, DATES_RESEARCH_RUN_KINDS) || !boolean(value.dry_run)
@@ -207,9 +267,18 @@ export function decodeResearchRun(value: unknown): ResearchRun | null {
     if (!researchRecord(entry) || !researchOneOf(entry.reason, DATES_RESEARCH_DROP_REASONS) || !researchInteger(entry.count)) return null;
     dropped.push({ reason: entry.reason, count: entry.count });
   }
+  const revisions: Pick<ResearchRun, "source_revision_before" | "source_revision_after" | "area_revision_before" | "area_revision_after"> = {};
+  for (const key of ["source_revision_before", "source_revision_after", "area_revision_before", "area_revision_after"] as const) {
+    if (!Object.hasOwn(value, key)) continue;
+    if (value[key] !== null && !researchInteger(value[key], 1)) return null;
+    revisions[key] = value[key];
+  }
+  const usage = Object.hasOwn(value, "discovery_tool_usage") && value.discovery_tool_usage !== null ? toolUsage(value.discovery_tool_usage) : null;
+  if (value.discovery_tool_usage != null && !usage) return null;
   return { run_id: value.run_id, kind: value.kind, dry_run: value.dry_run, trigger: value.trigger, source_id: value.source_id, area_id: value.area_id,
     status: value.status, found: value.found as number, imported: value.imported as number, duplicates: value.duplicates as number, dropped,
-    cost_micro_usd: value.cost_micro_usd as number, started_at: value.started_at, finished_at: value.finished_at };
+    cost_micro_usd: value.cost_micro_usd as number, started_at: value.started_at, finished_at: value.finished_at, ...revisions,
+    ...(Object.hasOwn(value, "discovery_tool_usage") ? { discovery_tool_usage: usage } : {}) };
 }
 export function decodeResearchRunList(value: unknown): ResearchRunList | null {
   if (!researchSuccess(value) || !nullable(value.next_cursor, researchString)) return null;

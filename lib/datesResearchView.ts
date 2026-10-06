@@ -20,11 +20,11 @@ export function researchEffectiveValues(defaults: ResearchValues, overrides: Res
   return Object.fromEntries(DATES_RESEARCH_VALUE_FIELDS.map((key) => [key, researchEffective(defaults, overrides, key).value])) as ResearchValues;
 }
 export function researchRunningState(defaults: Pick<ResearchDefaults, "enabled" | "auto_cities_enabled">,
-  area: Pick<ResearchArea, "mode" | "member_count">, values: ResearchValues, sectionAvailable: boolean, budgetPaused: boolean): { running: boolean; reason: ResearchArea["not_running_reason"] } {
+  area: Pick<ResearchArea, "mode" | "member_count">, values: ResearchValues, sectionAvailable: boolean, budgetPaused: boolean, discoveryPaused = false): { running: boolean; reason: ResearchArea["not_running_reason"] } {
   const reason = !defaults.enabled ? "research_off" : area.mode === "off" ? "mode_off"
     : area.mode === "auto" && !defaults.auto_cities_enabled ? "auto_cities_off"
       : area.mode === "auto" && area.member_count < values.member_threshold ? "below_threshold"
-        : !sectionAvailable ? "section_unavailable" : budgetPaused ? "budget_paused" : null;
+        : !sectionAvailable ? "section_unavailable" : budgetPaused ? "budget_paused" : discoveryPaused ? "discovery_bound_exceeded" : null;
   return { running: reason === null, reason };
 }
 export function researchStock(upcoming: number, target: number) { return { upcoming, target, missing: Math.max(0, target - upcoming), met: upcoming >= target, share: target > 0 ? Math.min(1, upcoming / target) : null }; }
