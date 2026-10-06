@@ -18,7 +18,8 @@ function useResearchDraft<T extends object>(authority: T, revision: number) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revision]);
   return { ...state, set: (draft: T) => setState((current) => ({ ...current, draft })),
-    adopt: (draft: T, nextRevision: number) => setState({ baseline: draft, draft, revision: nextRevision }) };
+    // A permanent command receipt can predate a newer authority already read.
+    adopt: (draft: T, nextRevision: number) => setState((current) => nextRevision < current.revision ? current : { baseline: draft, draft, revision: nextRevision }) };
 }
 type EditorProps = { actor: string; manage: boolean; limits: ResearchLimits; reload: () => Promise<void> };
 const defaultDraft = (row: ResearchDefaults) => ({ ...researchDefaultValues(row), enabled: row.enabled, auto_cities_enabled: row.auto_cities_enabled });

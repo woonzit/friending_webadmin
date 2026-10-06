@@ -28,6 +28,31 @@ function elements(node: any): Element[] {
   return node && typeof node === "object" && "type" in node ? [node, ...elements(node.children)] : [];
 }
 const flush = async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); };
+test("DERIVED permanent receipt cannot regress a draft behind newer authority already seen, even when reload returns the same revision", () => {
+  const draftHook = editorTree.statements.find((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && node.name?.text === "useResearchDraft")!;
+  const slots: any[] = [], effects: (() => void)[] = []; let index = 0;
+  const context: any = { exports: {}, researchEditsAfterConflict: view.researchEditsAfterConflict,
+    useState: (initial: any) => { const slot = index++; if (!(slot in slots)) slots[slot] = initial;
+      return [slots[slot], (value: any) => { slots[slot] = typeof value === "function" ? value(slots[slot]) : value; }]; },
+    useEffect: (effect: () => void, deps: any[]) => { const slot = index++, old = slots[slot]; slots[slot] = deps;
+      if (!old || deps.some((value, i) => value !== old[i])) effects.push(effect); },
+  };
+  vm.runInNewContext(ts.transpileModule(`${draftHook.getText(editorTree)}\nexports.hook=useResearchDraft;`,
+    { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, context);
+  const draw = (authority: object, revision: number) => { index = 0; const result = context.exports.hook(authority, revision); for (const effect of effects.splice(0)) effect(); return result; };
+  const before = { enabled: true, cadence_hours: 24, window_days: 30 }, newer = { enabled: false, cadence_hours: 168, window_days: 45 };
+  let model = draw(before, 1); model.set({ ...before, cadence_hours: 72 });
+  draw(newer, 3); model = draw(newer, 3);
+  assert.equal(model.revision, 3); assert.equal(model.baseline, newer);
+  assert.deepEqual(JSON.parse(JSON.stringify(model.draft)), { ...newer, cadence_hours: 72 });
+  const currentDraft = model.draft;
+  model.adopt({ ...before, cadence_hours: 72 }, 2); model = draw(newer, 3); // unchanged reload cannot rerun the revision effect
+  assert.equal(model.revision, 3); assert.equal(model.baseline, newer); assert.equal(model.draft, currentDraft);
+  const sameGeneration = { ...newer, cadence_hours: 72 };
+  model.adopt(sameGeneration, 3); model = draw(newer, 3); assert.equal(model.baseline, sameGeneration);
+  const next = { ...newer, cadence_hours: 96 };
+  model.adopt(next, 4); model = draw(newer, 3); assert.equal(model.revision, 4); assert.equal(model.draft, next);
+});
 test("DERIVED retained command locks every editor field, including when actor fencing hides the visible pending command", () => {
   const context: any = { exports: {}, ...research, ...view, ...proxy, formatNumber,
     React: { Fragment: "fragment", createElement: (type: any, props: any, ...children: any[]) => ({ type, props: props ?? {}, children }) },
