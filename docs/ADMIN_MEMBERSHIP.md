@@ -76,6 +76,24 @@ unsaved state/in-memory retry identities will be discarded and a previously
 forwarded write may still finish. It never sends a mutation. A refused write
 requires a new operator attempt and another fresh server membership check.
 
+The whole production source inventory statically guards the two registered
+loaders, their imports/calls, and barrel/local re-exports of the recovery APIs.
+It also censuses direct/local-aliased membership-state observers and React
+effects on values derived from that state, including a new effect reusing the
+loaded Shell's existing membership flag. This prevents the ordinary "reload
+when membership heals" effect from bypassing the registry's budget/eligibility.
+The existing initial-neutral component's one refresh effect is the documented
+exception; notices/manual controls observe state but do not auto-reload data.
+
+This is a static regression guard, not whole-program security or data-flow
+proof. Exotic forms left outside its guarantee include a hook passed as a
+value/default parameter inside an already approved file, renamed object
+destructuring of a subscriber, `subscribeRecovered.call/bind` or opaque wrapper
+callbacks, template-literal/dynamically computed property keys, and callbacks
+or timers reusing already-approved state outside the recognized React effects.
+These limits authorize no new recovery path: any new path still needs review
+and its own eligibility/budget/no-write regression.
+
 The browser imports only `adminClientReadActions` presentation metadata, not
 the server bridge's complete action/access/normalizer table. Exact active-read
 parity is tested. This set grants no server authority or automatic retry;

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
+import { posix } from "node:path";
 import vm from "node:vm";
 import ts from "typescript";
 import { isAdminClientReadAction } from "../lib/adminClientReadActions.ts";
@@ -226,24 +227,44 @@ test("DERIVED real client: a request-specific failure with healthy membership st
 type Source = { path: string; code: string };
 function recoverySourceInventory(): Source[] {
   return ["app", "components", "lib"].flatMap(folder => readdirSync(new URL(`../${folder}/`, import.meta.url), { recursive: true })
-    .filter(path => /\.(?:ts|tsx)$/.test(path)).map(path => ({ path: `${folder}/${path}`, code: file(`${folder}/${path}`) })));
+    .filter(path => /\.(?:[cm]?[jt]s|[jt]sx)$/.test(path)).map(path => ({ path: `${folder}/${path}`, code: file(`${folder}/${path}`) })));
 }
 function assertRecoveryTopology(sources: Source[]) {
   const targets = ["useAdminReadRecovery", "registerAdminReadRecovery", "subscribeRecovered"];
-  const calls: string[] = [], imports: string[] = [];
+  const recoveryModules = ["components/useAdminReadRecovery", "lib/adminReadRecovery"];
+  const stateMethods = new Set(["subscribe", "getSnapshot", "getServerSnapshot", "getRecoveryEpoch", "getServerRecoveryEpoch"]);
+  const calls: string[] = [], imports: string[] = [], reexports: string[] = [], observers: string[] = [], stateEffects: string[] = [];
   for (const source of sources) {
     const parsed = ts.createSourceFile(source.path, source.code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const modulePath = (module: string) => (module.startsWith("@/") ? module.slice(2)
+      : module.startsWith(".") ? posix.join(posix.dirname(source.path), module) : module).replace(/\.(?:[cm]?[jt]s|[jt]sx)$/, "").replace(/\/index$/, "");
     const aliases = new Map(targets.map(name => [name, name]));
+    const membershipAliases = new Map([["adminMembershipRecovery", "root"], ["useAdminMembershipUnconfirmed", "hook"]]);
+    const effectAliases = new Map([["useEffect", "useEffect"], ["useLayoutEffect", "useLayoutEffect"]]);
     const reference = (node: ts.Expression): string | undefined => ts.isIdentifier(node) ? aliases.get(node.text)
       : ts.isPropertyAccessExpression(node) ? aliases.get(node.name.text)
         : ts.isElementAccessExpression(node) && node.argumentExpression && ts.isStringLiteral(node.argumentExpression) ? aliases.get(node.argumentExpression.text) : undefined;
+    const membershipReference = (node: ts.Expression): string | undefined => {
+      if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isNonNullExpression(node)) return membershipReference(node.expression);
+      if (ts.isIdentifier(node)) return membershipAliases.get(node.text);
+      const name = ts.isPropertyAccessExpression(node) ? node.name.text
+        : ts.isElementAccessExpression(node) && node.argumentExpression && ts.isStringLiteral(node.argumentExpression) ? node.argumentExpression.text : undefined;
+      if (name === "adminMembershipRecovery") return "root";
+      if (name === "useAdminMembershipUnconfirmed") return "hook";
+      return name && stateMethods.has(name) && (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node))
+        && membershipReference(node.expression) === "root" ? `state:${name}` : undefined;
+    };
     for (const statement of parsed.statements) if (ts.isImportDeclaration(statement)) {
+      if (statement.importClause?.isTypeOnly) continue;
       const module = (statement.moduleSpecifier as ts.StringLiteral).text;
-      if (module === "@/components/useAdminReadRecovery" || module === "@/lib/adminReadRecovery") imports.push(`${source.path}:${module}`);
+      if (recoveryModules.includes(modulePath(module))) imports.push(`${source.path}:@/${modulePath(module)}`);
       const bindings = statement.importClause?.namedBindings;
       if (bindings && ts.isNamedImports(bindings)) for (const binding of bindings.elements) {
+        if (binding.isTypeOnly) continue;
         const original = binding.propertyName?.text ?? binding.name.text;
         if (targets.includes(original)) aliases.set(binding.name.text, original);
+        if (membershipAliases.has(original)) membershipAliases.set(binding.name.text, membershipAliases.get(original)!);
+        if (effectAliases.has(original)) effectAliases.set(binding.name.text, effectAliases.get(original)!);
       }
     }
     // Also follow local aliases of the hook/factory/direct subscriber.
@@ -254,16 +275,62 @@ function assertRecoveryTopology(sources: Source[]) {
         if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
           const target = reference(node.initializer);
           if (target && !aliases.has(node.name.text)) { aliases.set(node.name.text, target); changed = true; }
+          const member = membershipReference(node.initializer);
+          if (member && !membershipAliases.has(node.name.text)) { membershipAliases.set(node.name.text, member); changed = true; }
         }
         ts.forEachChild(node, alias);
       };
       alias(parsed);
     }
+    // Follow values derived from the membership hook/store, including an
+    // already-approved Shell variable reused by a new recovery effect.
+    const stateValues = new Set<string>();
+    const containsState = (start: ts.Node): boolean => {
+      let found = false;
+      const inspect = (node: ts.Node) => {
+        const member = ts.isCallExpression(node) ? membershipReference(node.expression)
+          : ts.isIdentifier(node) || ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node) ? membershipReference(node) : undefined;
+        if (member === "hook" || member?.startsWith("state:") || ts.isIdentifier(node) && stateValues.has(node.text)) found = true;
+        if (!found) ts.forEachChild(node, inspect);
+      };
+      inspect(start); return found;
+    };
+    changed = true;
+    while (changed) {
+      changed = false;
+      const value = (node: ts.Node) => {
+        if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer && !stateValues.has(node.name.text) && containsState(node.initializer)) {
+          stateValues.add(node.name.text); changed = true;
+        }
+        ts.forEachChild(node, value);
+      };
+      value(parsed);
+    }
     const visit = (node: ts.Node) => {
+      if (ts.isExportDeclaration(node) && !node.isTypeOnly) {
+        const module = node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier) ? modulePath(node.moduleSpecifier.text) : undefined;
+        const names = node.exportClause && ts.isNamedExports(node.exportClause)
+          ? node.exportClause.elements.filter(item => !item.isTypeOnly).map(item => item.propertyName?.text ?? item.name.text) : undefined;
+        const exportsRecovery = module && recoveryModules.includes(module)
+          || module && ["components/AdminMembershipNotice", "lib/adminClient"].includes(module)
+            && (!names || names.some(name => membershipAliases.has(name)))
+          || !module && names?.some(name => aliases.has(name) || membershipAliases.has(name));
+        if (exportsRecovery) reexports.push(`${source.path}:${module ?? "local alias"}`);
+      }
+      if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
+        const member = membershipReference(node);
+        if (member?.startsWith("state:")) observers.push(`${source.path}:${member.slice(6)}`);
+      }
       if (ts.isCallExpression(node)) {
         const target = reference(node.expression); if (target) calls.push(`${source.path}:${target}`);
+        const member = membershipReference(node.expression);
+        if (member === "hook") observers.push(`${source.path}:useAdminMembershipUnconfirmed`);
+        else if (ts.isIdentifier(node.expression) && member?.startsWith("state:")) observers.push(`${source.path}:${member.slice(6)}`);
+        const effectName = ts.isIdentifier(node.expression) ? effectAliases.get(node.expression.text)
+          : ts.isPropertyAccessExpression(node.expression) ? effectAliases.get(node.expression.name.text) : undefined;
+        if (effectName && node.arguments.some(argument => containsState(argument))) stateEffects.push(`${source.path}:${effectName}`);
         if (node.expression.kind === ts.SyntaxKind.ImportKeyword && node.arguments[0] && ts.isStringLiteral(node.arguments[0])
-          && ["@/components/useAdminReadRecovery", "@/lib/adminReadRecovery"].includes(node.arguments[0].text)) imports.push(`${source.path}:${node.arguments[0].text}`);
+          && recoveryModules.includes(modulePath(node.arguments[0].text))) imports.push(`${source.path}:@/${modulePath(node.arguments[0].text)}`);
       }
       ts.forEachChild(node, visit);
     };
@@ -273,6 +340,16 @@ function assertRecoveryTopology(sources: Source[]) {
     "components/useAdminReadRecovery.ts:registerAdminReadRecovery", "lib/adminReadRecovery.ts:subscribeRecovered"].sort(), "no third loader, alternate factory or direct recovery subscriber");
   assert.deepEqual(imports.sort(), ["app/(dashboard)/page.tsx:@/components/useAdminReadRecovery", "app/(dashboard)/dates/research/page.tsx:@/components/useAdminReadRecovery",
     "components/useAdminReadRecovery.ts:@/lib/adminReadRecovery"].sort(), "no unreviewed recovery importer");
+  assert.deepEqual(reexports, [], "no unreviewed recovery re-export or barrel");
+  assert.deepEqual(observers.sort(), [
+    ...Array<string>(7).fill("lib/adminClient.ts:getSnapshot"),
+    "components/AdminMembershipNotice.tsx:subscribe", "components/AdminMembershipNotice.tsx:getSnapshot", "components/AdminMembershipNotice.tsx:getServerSnapshot",
+    "components/AdminManualReload.tsx:subscribe", "components/AdminManualReload.tsx:getRecoveryEpoch", "components/AdminManualReload.tsx:getServerRecoveryEpoch",
+    "components/AdminMembershipUnavailable.tsx:subscribe", "components/AdminMembershipUnavailable.tsx:getSnapshot",
+    "components/Shell.tsx:useAdminMembershipUnconfirmed",
+  ].sort(), "no unreviewed membership state observer outside gating/notices/manual/initial-neutral presentation");
+  assert.deepEqual(stateEffects.sort(), ["components/AdminMembershipUnavailable.tsx:useEffect"],
+    "no unreviewed membership-driven effect; only the existing initial-neutral refresh is exempt");
 }
 test("DERIVED source audit: ONLY Overview and never-loaded Research register; the entire production source inventory rejects any extra recovery path", () => {
   assertRecoveryTopology(recoverySourceInventory());
@@ -290,6 +367,41 @@ test("DERIVED recovery inventory negative controls: third loader, alias, direct 
   }
   assert.throws(() => assertRecoveryTopology(sources.map(source => source.path === "app/(dashboard)/page.tsx"
     ? { ...source, code: source.code + "\nuseAdminReadRecovery(save, true);" } : source)), /no third loader/);
+});
+test("DERIVED recovery inventory rejects barrel/local re-exports, including renamed and relative multi-hop forms", () => {
+  const sources = recoverySourceInventory();
+  assert.doesNotThrow(() => assertRecoveryTopology([...sources,
+    { path: "components/DERIVED_ordinary.ts", code: 'export { formatDate } from "../lib/format"; useEffect(() => { load(); }, []);' },
+  ]), "ordinary domain re-exports/initial effects are not recovery paths");
+  for (const code of [
+    'export { useAdminReadRecovery as restart } from "@/components/useAdminReadRecovery";',
+    'export * from "./useAdminReadRecovery";',
+    'export { useAdminReadRecovery as restart } from "./useAdminReadRecovery.js";',
+    'export { registerAdminReadRecovery as restart } from "../lib/adminReadRecovery";',
+    'import { useAdminReadRecovery as local } from "@/components/useAdminReadRecovery"; export { local as restart };',
+    'export { useAdminMembershipUnconfirmed as healthy } from "@/components/AdminMembershipNotice";',
+    'export { adminMembershipRecovery as member } from "../lib/adminClient";',
+  ]) assert.throws(() => assertRecoveryTopology([...sources, { path: "components/DERIVED_barrel.ts", code }]), /no unreviewed recovery/);
+  assert.throws(() => assertRecoveryTopology([...sources,
+    { path: "components/DERIVED_first.ts", code: 'export { useAdminReadRecovery as first } from "./useAdminReadRecovery";' },
+    { path: "components/DERIVED_second.ts", code: 'export { first as second } from "./DERIVED_first";' },
+  ]), /no unreviewed recovery/);
+  assert.throws(() => assertRecoveryTopology([...sources,
+    { path: "components/DERIVED_barrel.js", code: 'export { registerAdminReadRecovery as restart } from "../lib/adminReadRecovery.js";' },
+  ]), /no unreviewed recovery/);
+});
+test("DERIVED recovery inventory rejects ordinary membership-state effects, even reusing the approved Shell's existing state", () => {
+  const sources = recoverySourceInventory();
+  for (const code of [
+    'adminMembershipRecovery.subscribe(() => { if (!adminMembershipRecovery.getSnapshot()) load(); });',
+    'const epoch = useSyncExternalStore(adminMembershipRecovery.subscribe, adminMembershipRecovery.getRecoveryEpoch); useEffect(() => { if (epoch) load(); }, [epoch]);',
+    'import { useAdminMembershipUnconfirmed as observe } from "@/components/AdminMembershipNotice"; const waiting = observe(); useEffect(() => { if (!waiting) load(); }, [waiting]);',
+  ]) assert.throws(() => assertRecoveryTopology([...sources, { path: "components/DERIVED_effect.tsx", code }]), /no unreviewed membership/);
+  const updated = sources.map(source => source.path === "components/Shell.tsx" ? { ...source, code: source.code.replace(
+    'const membershipUnconfirmed = useAdminMembershipUnconfirmed();',
+    'const membershipUnconfirmed = useAdminMembershipUnconfirmed(); useEffect(() => { if (!membershipUnconfirmed) window.location.reload(); }, [membershipUnconfirmed]);') } : source);
+  assert.notEqual(updated.find(source => source.path === "components/Shell.tsx")!.code, sources.find(source => source.path === "components/Shell.tsx")!.code);
+  assert.throws(() => assertRecoveryTopology(updated), /no unreviewed membership-driven effect/);
 });
 test("DERIVED stopped-call failure is a typed ordinary result, never an exception or suspended call", () => {
   assert.deepEqual(adminMembershipFailure(), { success: false, status_code: 503, error: ADMIN_MEMBERSHIP_UNCONFIRMED });
