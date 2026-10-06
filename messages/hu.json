@@ -44,6 +44,7 @@
     "you": "te"
   },
   "adminMembership": {
+    "logoutFailed": "A kijelentkezést nem sikerült megerősíteni. Próbáld újra; a helyi munkamenet még aktív lehet.",
     "reload": "Oldal újratöltése",
     "reloadWarning": "A megszakadt próbálkozások nem folytatódnak. Az újratöltés csak az oldal olvasásait indítja el; módosítást nem próbál újra. A nem mentett szerkesztések és a csak memóriában tartott újrapróbálási azonosítók elvesznek. Egy korábban elküldött módosítás még befejeződhet: előbb ellenőrizd az érintett rekordot és az auditnaplót.",
     "keepPage": "Oldal és szerkesztések megtartása",

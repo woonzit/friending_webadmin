@@ -8,6 +8,7 @@ import AdminHelp from "@/components/AdminHelp";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import AdminMembershipNotice, { AdminWriteOutcomeNotice, useAdminMembershipUnconfirmed, useAdminWriteOutcomeUnknown } from "@/components/AdminMembershipNotice";
 import AdminManualReload from "@/components/AdminManualReload";
+import AdminLogoutButton from "@/components/AdminLogoutButton";
 import { PROFILE_TEXT_MODERATION_CONTRACT_READY } from "@/lib/contractReadiness";
 import DatesResearchNavigationNotice from "@/components/DatesResearchNavigationNotice";
 import { confirmResearchNavigation } from "@/lib/datesResearchNavigation";
@@ -126,7 +127,8 @@ export default function Shell({
 
   async function logout() {
     if (!await confirmResearchNavigation()) return;
-    await fetch("/api/auth/logout", { method: "POST" });
+    const response = await fetch("/api/auth/logout", { method: "POST" });
+    if (!response.ok) throw new Error("admin-logout-failed");
     router.replace("/login");
     router.refresh();
   }
@@ -153,7 +155,7 @@ export default function Shell({
           </div>
           <div className="sidebar-actions">
             <LocaleSwitcher />
-            <button className="text-button" onClick={logout}>{common("logout")}</button>
+            <AdminLogoutButton className="text-button" onLogout={logout} />
           </div>
         </div>
         <nav className="main-nav" aria-label={common("mainNavigation")}>
@@ -190,7 +192,7 @@ export default function Shell({
         </header>
         <DatesResearchNavigationNotice />
         <main className="content">
-          <AdminMembershipNotice visible={membershipUnconfirmed} />
+          <AdminMembershipNotice visible={membershipUnconfirmed} onLogout={logout} />
           <AdminWriteOutcomeNotice visible={writeOutcomeUnknown} />
           <AdminManualReload />
           {/* Hide, never unmount: local drafts and retained unknown commands

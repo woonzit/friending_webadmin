@@ -3,12 +3,13 @@
 import React, { useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { adminMembershipRecovery, adminWriteOutcomeNotice } from "@/lib/adminClient";
+import AdminLogoutButton from "@/components/AdminLogoutButton";
 
 export function useAdminMembershipUnconfirmed() {
   return useSyncExternalStore(adminMembershipRecovery.subscribe, adminMembershipRecovery.getSnapshot, adminMembershipRecovery.getServerSnapshot);
 }
 
-export default function AdminMembershipNotice({ visible }: { visible: boolean }) {
+export default function AdminMembershipNotice({ visible, onLogout }: { visible: boolean; onLogout?: () => Promise<void> }) {
   const t = useTranslations("adminMembership");
   if (!visible) return null;
   return (
@@ -17,6 +18,7 @@ export default function AdminMembershipNotice({ visible }: { visible: boolean })
       <p>{t("retained")}</p>
       <p>{t("retrying")}</p>
       <button className="secondary-button" type="button" onClick={() => { void adminMembershipRecovery.retry(); }}>{t("retry")}</button>
+      <AdminLogoutButton onLogout={onLogout} />
     </section>
   );
 }

@@ -81,7 +81,7 @@ test("DERIVED production Logout warns before its POST/router transition and Stay
   let logout: ts.FunctionDeclaration | undefined;
   const visit = (node: ts.Node) => { if (ts.isFunctionDeclaration(node) && node.name?.text === "logout") logout = node; ts.forEachChild(node, visit); }; visit(tree); assert.ok(logout);
   const h = harness(), release = h.guard.retain("leave-confirmation", "history-warning"), calls: unknown[] = [];
-  const context: any = { exports: {}, confirmResearchNavigation: () => h.guard.request(), fetch: async (...args: unknown[]) => { calls.push(args); },
+  const context: any = { exports: {}, confirmResearchNavigation: () => h.guard.request(), fetch: async (...args: unknown[]) => { calls.push(args); return { ok: true }; },
     router: { replace: (url: string) => calls.push(url), refresh: () => calls.push("refresh") } };
   vm.runInNewContext(compile(`${logout.getText(tree)}\nexports.logout=logout;`), context);
   let pending = context.exports.logout(); assert.equal(calls.length, 0); h.guard.choose(false); await pending; assert.equal(calls.length, 0);

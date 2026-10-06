@@ -44,6 +44,7 @@
     "you": "you"
   },
   "adminMembership": {
+    "logoutFailed": "Sign out could not be confirmed. Try again; the local session may still be active.",
     "reload": "Reload page",
     "reloadWarning": "Interrupted attempts stay stopped. Reloading only starts the page's readers; it does not retry a change. Unsaved edits and in-memory retry identities will be lost. An earlier forwarded change may still finish: check the affected record and audit history first.",
     "keepPage": "Keep this page and its edits",

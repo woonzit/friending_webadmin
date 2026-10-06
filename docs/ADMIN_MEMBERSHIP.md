@@ -82,6 +82,15 @@ result restart backoff even when Next reuses the neutral component. Only that
 initial neutral page may refresh after a positive recovery probe; ongoing
 client outages hide, but never unmount or refresh, existing editors.
 
+Both the initial neutral shell and the loaded Shell's unconfirmed notice keep
+Sign out visible. It uses only the same-origin local logout route, never a
+Core/admin RPC. The loaded Shell keeps its existing router transition; the
+neutral shell navigates to login only after confirmed local logout. Both obey
+the retained research-command in-page departure guard before the logout POST.
+Staying sends nothing and preserves the session/commands; signing out never
+claims to cancel an earlier forwarded action. A local logout failure remains
+visible and can be retried rather than claiming the session was cleared.
+
 ## Separate post-forward boundary
 
 These six routes have already positively confirmed membership and attempted

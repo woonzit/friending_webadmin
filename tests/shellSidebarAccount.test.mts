@@ -79,7 +79,7 @@ test("the sidebar account block renders after the logo and before the nav", asyn
     assert.match(block, /class="locale-picker"/);
     assert.match(block, /<option value="en"[^>]*>EN<\/option>/);
     assert.match(block, /<option value="hu"[^>]*>HU<\/option>/);
-    assert.match(block, locale === "en" ? /class="text-button">Sign out</ : /class="text-button">Kijelentkezés</);
+    assert.match(block, locale === "en" ? /class="text-button" type="button">Sign out</ : /class="text-button" type="button">Kijelentkezés</);
   }
 });
 
