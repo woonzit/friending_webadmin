@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
-import { prepareResearchCommand, runResearchCommand } from "../lib/datesResearchConsole.ts";
+import { confirmResearchRetryActor, prepareResearchCommand, runResearchCommand } from "../lib/datesResearchConsole.ts";
 import { GENUINE_AREA, researchFixture } from "./support/datesResearchCorpus.ts";
 
 // Execute the production hook's handlers with a controlled hook scheduler and
@@ -13,10 +13,15 @@ const tree = ts.createSourceFile("controls.tsx", file, ts.ScriptTarget.Latest, t
 const fn = tree.statements.find((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && node.name?.text === "useResearchCommand");
 assert.ok(fn);
 const code = ts.transpileModule(`${fn.getText(tree)}\nexports.hook = useResearchCommand;`, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-function harness() {
-  const slots: any[] = [], effects: (() => void)[] = [], calls: any[] = [], success: any[] = [], conflicts: string[] = [];
+const identity = (email = "operator@example.test", capabilities = ["dates_external_event_manage"]) => ({ success: true, dates: {
+  email, role: "administrator", rank: 40, linked_uid: null, sensitive_location: false, break_glass: false, capabilities,
+} }); // DERIVED membership, not an authenticated session capture.
+const flush = async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); };
+function harness(preflight: () => Promise<unknown> = async () => identity()) {
+  const slots: any[] = [], effects: (() => void)[] = [], calls: any[] = [], reads: any[] = [], success: any[] = [], conflicts: string[] = [];
   let index = 0;
-  const context: any = { exports: {}, prepareResearchCommand, adminCall: () => {},
+  const context: any = { exports: {}, prepareResearchCommand, confirmResearchRetryActor,
+    adminCall: (action: string, body: object) => { reads.push({ action, body }); return preflight(); },
     runResearchCommand: (_send: unknown, command: unknown) => new Promise((resolve) => calls.push({ command, resolve })),
     useState: (initial: unknown) => {
       const slot = index++; if (!(slot in slots)) slots[slot] = initial;
@@ -34,7 +39,7 @@ function harness() {
     for (const effect of effects.splice(0)) effect();
     return result;
   }
-  return { render, calls, success, conflicts };
+  return { render, calls, reads, success, conflicts };
 }
 const input = { source_id: "xrs_" + "1".repeat(32), expected_revision: 1, dry_run: true };
 test("GENUINE place refusal releases the production hook so another city can be submitted without a page reload", async () => {
@@ -58,7 +63,8 @@ test("research command is retained before sending and rapid double submits canno
   const unanswered = h.render(), original = unanswered.pending;
   assert.equal(unanswered.outcome.kind, "uncertain");
   await unanswered.submit("dates_event_research_source_run_now", { ...input, dry_run: false }); assert.equal(h.calls.length, 1);
-  const retry = unanswered.retry(); assert.equal(h.calls.length, 2); assert.equal(h.calls[1].command, original);
+  const retry = unanswered.retry(); await flush(); assert.equal(h.calls.length, 2); assert.equal(h.calls[1].command, original);
+  assert.deepEqual(h.reads, [{ action: "admin_me", body: {} }]);
   h.calls[1].resolve({ kind: "success", receipt: {}, runId: "xrr_example" }); await retry;
   assert.equal(h.render().pending, null); assert.equal(h.success.length, 1);
 });
@@ -69,7 +75,7 @@ test("an unknown actor hides the command but preserves a safe same-actor retry a
   h.calls[0].resolve({ kind: "success", receipt: {}, runId: "xrr_example" }); await submit;
   assert.equal(h.success.length, 0);
   const recovered = h.render(); assert.equal(recovered.pending, original); assert.equal(recovered.outcome.kind, "uncertain");
-  const retry = recovered.retry(); assert.equal(h.calls[1].command, original);
+  const retry = recovered.retry(); await flush(); assert.equal(h.calls[1].command, original);
   h.calls[1].resolve({ kind: "success", receipt: {}, runId: "xrr_example" }); await retry;
   assert.equal(h.success.length, 1); assert.equal(h.render().pending, null);
 });
@@ -82,4 +88,37 @@ test("a confirmed new actor never sees, retries or adopts the previous actor's i
   const next = current.submit("dates_event_research_source_run_now", input); assert.equal(h.calls[1].command.actor, "other@example.test");
   h.calls[1].resolve({ kind: "conflict", error: "dates-research-conflict" }); await next;
   assert.deepEqual(h.conflicts, ["other@example.test"]); assert.equal(h.render("other@example.test").pending, null);
+});
+for (const [kind, read] of [
+  ["actor_changed", async () => identity("other@example.test")], ["not_authorized", async () => identity("operator@example.test", [])],
+  ["unconfirmed", async () => ({ success: false })], ["unconfirmed", async () => { throw new Error("lost membership response"); }],
+] as const) test(`DERIVED retry preflight ${kind}: retains the unknown command and sends no mutation`, async () => {
+  const h = harness(read), first = h.render().submit("dates_event_research_source_run_now", input), original = h.calls[0].command;
+  h.calls[0].resolve({ kind: "uncertain", error: null }); await first;
+  await h.render().retry(); const state = h.render();
+  assert.equal(h.calls.length, 1); assert.equal(h.reads.length, 1); assert.equal(state.pending, original); assert.equal(state.retained, true);
+  assert.equal(state.outcome.kind, "uncertain"); assert.equal(state.outcome.retryBlocked, kind); assert.equal(state.busy, false);
+});
+test("DERIVED retry preflight: rapid retries cannot overlap; a fresh matching actor sends the identical frozen command", async () => {
+  let answer!: (value: unknown) => void;
+  const h = harness(() => new Promise((resolve) => { answer = resolve; })), first = h.render().submit("dates_event_research_source_run_now", input);
+  h.calls[0].resolve({ kind: "uncertain", error: null }); await first;
+  const state = h.render(), original = state.pending, bytes = JSON.stringify(original.body), retry = state.retry();
+  await state.retry(); assert.equal(h.reads.length, 1); assert.equal(h.calls.length, 1); assert.equal(h.render().busy, true);
+  answer(identity()); await flush(); assert.equal(h.calls.length, 2); assert.equal(h.calls[1].command, original); assert.equal(JSON.stringify(h.calls[1].command.body), bytes);
+  h.calls[1].resolve({ kind: "success", replayed: true, receipt: {}, runId: "derived_existing_run" }); await retry;
+  assert.equal(h.render().retained, false);
+});
+test("DERIVED retry preflight: an identity change during the fresh read fences the retry before mutation", async () => {
+  let answer!: (value: unknown) => void;
+  const h = harness(() => new Promise((resolve) => { answer = resolve; })), first = h.render().submit("dates_event_research_source_run_now", input);
+  h.calls[0].resolve({ kind: "uncertain", error: null }); await first;
+  const retry = h.render().retry(); h.render("other@example.test"); answer(identity()); await retry;
+  assert.equal(h.calls.length, 1); assert.equal(h.render("other@example.test").pending, null); assert.equal(h.success.length, 0);
+});
+test("DERIVED blocked retry retains already known partial batch outcomes", async () => {
+  const h = harness(async () => ({ success: false })), first = h.render().submit("dates_event_research_source_run_now", input);
+  const partial = { rows: [{ intake_id: "derived_intake", outcome: "published" }], unreadable: [{ index: 1, id: "derived_future" }] };
+  h.calls[0].resolve({ kind: "uncertain", error: null, partial }); await first; await h.render().retry();
+  assert.equal(h.render().outcome.partial, partial); assert.equal(h.calls.length, 1);
 });

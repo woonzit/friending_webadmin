@@ -26,9 +26,19 @@ export async function readResearchRun(send: ResearchSend, runId: string, signal?
   try { return decodeResearchRunDetail(await send("dates_event_research_run_detail", { run_id: runId }, signal), runId); } catch { return null; }
 }
 export type ResearchCommand = { actor: string; action: DatesResearchAction; body: Record<string, unknown> };
+export type ResearchRetryIssue = "actor_changed" | "unconfirmed" | "not_authorized";
+/** Fresh session-bound membership read immediately before retry, never a browser-owned actor selector. */
+export async function confirmResearchRetryActor(send: ResearchSend, command: ResearchCommand): Promise<ResearchRetryIssue | null> {
+  try {
+    const principal = datesAdminPrincipal(await send("admin_me", {}));
+    if (!principal) return "unconfirmed";
+    if (principal.email !== command.actor) return "actor_changed";
+    return hasDatesCapability(principal, DATES_RESEARCH_WRITE_CAPABILITY) ? null : "not_authorized";
+  } catch { return "unconfirmed"; }
+}
 export type ResearchCommandOutcome = { kind: "success"; replayed: boolean; receipt: unknown; runId?: string; results?: ResearchBatchResult[] }
   | { kind: "conflict"; error: string; cause?: "revision" | "source_open_run" | "source_archived" | "url_owned" | "archived_url_owned" | "city_registered" } | { kind: "refused"; error: string }
-  | { kind: "uncertain"; error: string | null; partial?: ResearchRows<ResearchBatchResult> };
+  | { kind: "uncertain"; error: string | null; partial?: ResearchRows<ResearchBatchResult>; retryBlocked?: ResearchRetryIssue };
 /** Prepared once. The entire immutable request is kept while its outcome is not known. */
 export function prepareResearchCommand(actor: string, action: DatesResearchAction, body: Record<string, unknown>): ResearchCommand | null {
   const request = { ...body, idempotency_key: createAdminIdempotencyKey("dates-research") };

@@ -26,6 +26,14 @@ function render(locale: string, ...children: ReactNode[]) {
 }
 const props = { actor: "operator@example.test", manage: true, limits: GENUINE_LIMITS, reload: async () => {}, close: () => {} };
 for (const locale of ["en", "hu"]) {
+  test(`render ${locale}: blocked retry explains the fresh-account check without settling the original command`, () => {
+    const copy = messages(locale).datesAdmin.research;
+    for (const retryBlocked of Object.keys(copy.retryBlocked)) {
+      const html = render(locale, createElement(ResearchCommandFeedback, { command: { outcome: { kind: "uncertain", error: null, retryBlocked }, pending: {}, retry: async () => {} } as any }));
+      assert.ok(html.includes(escaped(copy.retryBlocked[retryBlocked]))); assert.ok(html.includes(escaped(copy.command.uncertain)));
+      assert.equal(html.includes(escaped(copy.command.refused)), false); assert.ok(html.includes(escaped(messages(locale).common.retry)));
+    }
+  });
   test(`DERIVED render ${locale}: disabled saves name their field and Core's canonical bounds`, () => {
     const copy = messages(locale).datesAdmin.research;
     for (const issue of ["cadence_hours", "member_threshold", "target_events", "window_days", "radius_km", "max_events"] as const) {

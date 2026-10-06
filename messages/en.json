@@ -8391,6 +8391,11 @@
         "city_registered": "This city is already registered. Edit its existing row instead of adding it again."
       },
       "requiredField": "Required",
+      "retryBlocked": {
+        "actor_changed": "Retry was not sent: the active account differs from this command's owner. The original outcome remains unknown. Return to the original account and refresh before retrying.",
+        "unconfirmed": "Retry was not sent because the active account could not be confirmed. The original outcome remains unknown. Check your session and try again.",
+        "not_authorized": "Retry was not sent because the active account no longer has research write permission. The original outcome remains unknown. Ask an administrator to check access."
+      },
       "membersNotCounted": "Not counted yet",
       "validation": {
         "integer": "Check {field}: use a whole-number value from {min} to {max}{unit} in Core's saved units.",

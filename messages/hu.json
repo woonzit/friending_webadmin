@@ -8391,6 +8391,11 @@
         "city_registered": "Ez a város már szerepel a listában. Újbóli hozzáadás helyett a meglévő sorát szerkeszd."
       },
       "requiredField": "Kötelező",
+      "retryBlocked": {
+        "actor_changed": "Az újrapróbálás nem lett elküldve: az aktív fiók eltér a parancs tulajdonosától. Az eredeti eredmény továbbra sem ismert. Térj vissza az eredeti fiókhoz, és újrapróbálás előtt frissíts.",
+        "unconfirmed": "Az újrapróbálás nem lett elküldve, mert az aktív fiók nem volt visszaigazolható. Az eredeti eredmény továbbra sem ismert. Ellenőrizd a munkamenetet, majd próbáld újra.",
+        "not_authorized": "Az újrapróbálás nem lett elküldve, mert az aktív fióknak már nincs kutatási írási jogosultsága. Az eredeti eredmény továbbra sem ismert. Kérj jogosultság-ellenőrzést egy adminisztrátortól."
+      },
       "membersNotCounted": "Még nincs megszámolva",
       "validation": {
         "integer": "Ellenőrizd ezt: {field}. {min} és {max}{unit} közötti egész értéket adj meg, a Core mentett mértékegységében.",

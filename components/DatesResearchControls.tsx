@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
 import { DATES_RESEARCH_VALUE_FIELDS, type DatesResearchAction, type ResearchLimits, type ResearchOverrides, type ResearchScope, type ResearchValues } from "@/lib/datesResearchAdmin";
-import { prepareResearchCommand, runResearchCommand, type ResearchCommand, type ResearchCommandOutcome } from "@/lib/datesResearchConsole";
+import { confirmResearchRetryActor, prepareResearchCommand, runResearchCommand, type ResearchCommand, type ResearchCommandOutcome } from "@/lib/datesResearchConsole";
 import { researchDistanceFromKm, researchDistanceToKm, researchInputNumber, researchTimeFromHours, researchTimeToHours, type ResearchDistanceUnit, type ResearchNumericIssue, type ResearchTimeUnit } from "@/lib/datesResearchView";
 import { formatNumber } from "@/lib/format";
 
@@ -89,10 +89,19 @@ export function useResearchCommand(actor: string, onSuccess: (outcome: Extract<R
   const [pending, setPending] = useState<ResearchCommand | null>(null), [outcome, setOutcome] = useState<ResearchCommandOutcome | null>(null), [busy, setBusy] = useState(false);
   const [owner, setOwner] = useState(actor), busyRef = useRef(false), actorRef = useRef(actor); actorRef.current = actor;
   useEffect(() => { if (actor && actor !== owner) { setOwner(actor); setPending(null); setOutcome(null); } }, [actor, owner]);
-  async function execute(command: ResearchCommand) {
+  async function execute(command: ResearchCommand, retry = false) {
     if (busyRef.current || command.actor !== actorRef.current) return;
+    const partial = retry && outcome?.kind === "uncertain" ? outcome.partial : undefined;
     busyRef.current = true; setBusy(true); setPending(command); setOutcome(null);
     try {
+      if (retry) {
+        const retryBlocked = await confirmResearchRetryActor(adminCall, command);
+        if (command.actor !== actorRef.current) {
+          if (!actorRef.current) setOutcome({ kind: "uncertain", error: null, partial, retryBlocked: "unconfirmed" });
+          return;
+        }
+        if (retryBlocked) { setOutcome({ kind: "uncertain", error: null, partial, retryBlocked }); return; }
+      }
       const answer = await runResearchCommand(adminCall, command);
       if (command.actor !== actorRef.current) {
         // A failed identity refresh must not erase an in-flight command. A
@@ -106,7 +115,7 @@ export function useResearchCommand(actor: string, onSuccess: (outcome: Extract<R
     } finally { busyRef.current = false; setBusy(false); }
   }
   const visiblePending = owner === actor ? pending : null, visibleOutcome = owner === actor ? outcome : null;
-  return { busy, retained: pending !== null, pending: visiblePending, outcome: visibleOutcome, clear: () => setOutcome(null), retry: () => visiblePending ? execute(visiblePending) : Promise.resolve(),
+  return { busy, retained: pending !== null, pending: visiblePending, outcome: visibleOutcome, clear: () => setOutcome(null), retry: () => visiblePending ? execute(visiblePending, true) : Promise.resolve(),
     submit: async (action: DatesResearchAction, body: Record<string, unknown>) => {
       if (busyRef.current || pending) return;
       const command = prepareResearchCommand(actor, action, body);
@@ -122,5 +131,6 @@ export function ResearchCommandFeedback({ command, children }: { command: Return
     <p>{t(`command.${outcome.kind === "success" && outcome.replayed ? outcome.runId ? "runReplayed" : "replayed" : outcome.kind}`)}{outcome.kind !== "success" && outcome.error ? <> <code>{outcome.error}</code></> : null}</p>
     {outcome.kind === "conflict" && outcome.cause && <p>{t(`conflicts.${outcome.cause}`)}</p>}
     {outcome.kind === "refused" && t.has(`commandErrors.${outcome.error}`) && <p>{t(`commandErrors.${outcome.error}`)}</p>}
+    {outcome.kind === "uncertain" && outcome.retryBlocked && <p>{t(`retryBlocked.${outcome.retryBlocked}`)}</p>}
     {command.pending && <button type="button" className="button button-secondary" disabled={command.busy} onClick={() => void command.retry()}>{common("retry")}</button>}{children}</div>;
 }
