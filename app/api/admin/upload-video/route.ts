@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { coreCall } from "@/lib/core";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
+import { adminPostForwardError } from "@/lib/adminPostForward";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { requireAdminWriter } from "@/lib/session";
 import { AdminVideoError, validateAdminVideo } from "@/lib/adminVideo";
@@ -80,10 +81,10 @@ export async function POST(request: NextRequest) {
       video_mime: validated.mime,
     },
     UPLOAD_TIMEOUT_MS,
+    { signal: request.signal, strictResponse: true },
   );
-  if (result.status === 401 || result.status === 403) {
-    return errorResponse("auth-required", 401);
-  }
+  const postForwardError = adminPostForwardError(result, session.email, request.signal?.aborted === true);
+  if (postForwardError) return errorResponse(postForwardError.error, postForwardError.status);
   if (
     result.status !== 200
     || !result.data?.success

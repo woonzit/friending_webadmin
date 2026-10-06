@@ -378,13 +378,16 @@ export async function POST(
     // parameters, after the browser's body and the actor, so it is server-owned like them.
     withDatesAdminContract(action, mergeCoreParams(body, { admin_email: session.email })),
     adminActionTimeoutMs(action),
-    action === "admin_me" ? { signal: request.signal, membershipCheck: true } : undefined,
+    action === "admin_me" ? { signal: request.signal, membershipCheck: true } : { signal: request.signal, strictResponse: true },
   );
   if (action === "admin_me") {
     const finalMembership = classifyAdminMembership(result, session.email, request.signal?.aborted === true);
     if (finalMembership.kind === "revoked") return bridgeError("auth-required", 401);
     if (finalMembership.kind !== "confirmed") return bridgeError(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
   }
+  // The action may already have run. This is an unknown outcome, not the
+  // definite pre-forward membership refusal used above.
+  if (request.signal?.aborted) return bridgeError("core-timeout", 504);
   const transportError = adminBridgeCoreTransportError(result.status, result.data);
   if (transportError) {
     return bridgeError(transportError.error, transportError.status_code);

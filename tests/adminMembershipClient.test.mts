@@ -6,10 +6,10 @@ import ts from "typescript";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
-import AdminMembershipNotice from "../components/AdminMembershipNotice.tsx";
+import AdminMembershipNotice, { AdminWriteOutcomeNotice } from "../components/AdminMembershipNotice.tsx";
 import { ADMIN_ACTIONS, adminActionAccess } from "../lib/adminActions.ts";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
-import { createAdminMembershipRecovery } from "../lib/adminMembershipRecovery.ts";
+import { createAdminMembershipRecovery, createAdminWriteOutcomeNotice } from "../lib/adminMembershipRecovery.ts";
 import { ADMIN_REQUEST_HEADER, ADMIN_REQUEST_HEADER_VALUE } from "../lib/requestGuard.ts";
 import { MEMBERSHIP_CASES, MEMBERSHIP_MEMBER } from "./support/adminMembershipCases.mts";
 import { membershipClock } from "./support/adminMembershipClock.mts";
@@ -29,7 +29,7 @@ function client(initial: Answer = good) {
   const state = { answer: initial, hook: undefined as undefined | ((url: string, options: RequestInit) => Promise<Response>) };
   const context: any = { exports: {}, JSON, File, FormData, AbortSignal, adminActionAccess, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership,
     ADMIN_REQUEST_HEADER, ADMIN_REQUEST_HEADER_VALUE, window: { location: { assign: (url: string) => redirects.push(url) } },
-    createAdminMembershipRecovery: (probe: Parameters<typeof createAdminMembershipRecovery>[0], redirect: () => void) => createAdminMembershipRecovery(probe, redirect, time.clock),
+    createAdminWriteOutcomeNotice, createAdminMembershipRecovery: (probe: Parameters<typeof createAdminMembershipRecovery>[0], redirect: () => void) => createAdminMembershipRecovery(probe, redirect, time.clock),
     fetch: async (url: string, options: RequestInit) => {
       calls.push({ url, options }); assert.equal(options.cache, "no-store"); assert.equal(new Headers(options.headers).get(ADMIN_REQUEST_HEADER), ADMIN_REQUEST_HEADER_VALUE);
       if (state.hook) return state.hook(url, options);
@@ -59,6 +59,7 @@ for (const row of MEMBERSHIP_CASES) test(`DERIVED client table / every write and
     const result = await invoke(); assert.equal(h.calls.length, 1, name);
     assert.deepEqual(h.redirects, row.kind === "revoked" ? ["/login"] : [], name);
     assert.equal(h.api.adminMembershipRecovery.getSnapshot(), row.kind === "unconfirmed", name);
+    assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), false, "a pre-forward refusal is not an unknown forwarded write");
     if (row.kind === "unconfirmed") {
       assert.equal(result?.error, ADMIN_MEMBERSHIP_UNCONFIRMED, name);
       await invoke(); assert.equal(h.calls.length, 1, `${name}: repeated click while unconfirmed is refused locally`);
@@ -107,9 +108,30 @@ test("DERIVED client: late positive, outage and definite 401 bodies from abandon
     };
     const result = index === 7 ? await h.api.adminCall("admin_me", {}, controller.signal) : await h.entries[index][1](controller.signal);
     assert.equal(result, null); assert.equal(h.api.adminMembershipRecovery.getSnapshot(), false);
+    assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), false);
     assert.deepEqual(h.redirects, []); assert.equal(h.time.jobs.size, 0);
     assert.equal(h.calls.length, phase === "before" ? 0 : 1);
   }
+});
+test("DERIVED client: post-forward 502/5xx and lost upload replies explain uncertainty, never navigate or replay, and dismissal cannot settle a command", async () => {
+  for (const status of [502, 500, 504]) for (let index = 0; index < 7; index++) {
+    const h = client({ status, data: { success: false, error: "invalid-core-response" } }); await h.entries[index][1]();
+    assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true); assert.equal(h.api.adminMembershipRecovery.getSnapshot(), false);
+    assert.equal(h.calls.length, 1); assert.deepEqual(h.redirects, []); assert.equal(h.time.jobs.size, 0);
+    h.api.adminWriteOutcomeNotice.dismiss(); assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), false); assert.equal(h.calls.length, 1);
+  }
+  for (let index = 1; index < 7; index++) {
+    const h = client(); h.state.hook = async () => { throw new Error("DERIVED lost upload reply"); };
+    assert.equal(await h.entries[index][1](), null); assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true);
+    h.state.hook = undefined; await h.time.tick();
+    assert.deepEqual(h.calls.map((call) => call.url).slice(1), ["/api/admin/admin_me"]); assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true);
+  }
+});
+for (const locale of ["en", "hu"]) test(`DERIVED static render ${locale}: unknown forwarded outcome tells the operator what to check, not that a refusal is definite`, () => {
+  const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
+  const html = renderToStaticMarkup(createElement(NextIntlClientProvider, { locale, messages, timeZone: "UTC" }, createElement(AdminWriteOutcomeNotice, { visible: true })));
+  for (const value of Object.values(messages.adminWriteOutcome) as string[]) assert.ok(html.includes(value.replaceAll("&", "&amp;").replaceAll("'", "&#x27;")));
+  assert.match(html, /role="alert"/);
 });
 test("DERIVED client: a lost write reply and later account change never replay the original write", async () => {
   const h = client(); let first = true;

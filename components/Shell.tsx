@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import AdminHelp from "@/components/AdminHelp";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
-import AdminMembershipNotice, { useAdminMembershipUnconfirmed } from "@/components/AdminMembershipNotice";
+import AdminMembershipNotice, { AdminWriteOutcomeNotice, useAdminMembershipUnconfirmed, useAdminWriteOutcomeUnknown } from "@/components/AdminMembershipNotice";
 import { PROFILE_TEXT_MODERATION_CONTRACT_READY } from "@/lib/contractReadiness";
 import DatesResearchNavigationNotice from "@/components/DatesResearchNavigationNotice";
 import { confirmResearchNavigation } from "@/lib/datesResearchNavigation";
@@ -121,6 +121,7 @@ export default function Shell({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const membershipUnconfirmed = useAdminMembershipUnconfirmed();
+  const writeOutcomeUnknown = useAdminWriteOutcomeUnknown();
 
   async function logout() {
     if (!await confirmResearchNavigation()) return;
@@ -189,6 +190,7 @@ export default function Shell({
         <DatesResearchNavigationNotice />
         <main className="content">
           <AdminMembershipNotice visible={membershipUnconfirmed} />
+          <AdminWriteOutcomeNotice visible={writeOutcomeUnknown} />
           {/* Hide, never unmount: local drafts and retained unknown commands
               stay owned by their original components throughout recovery. */}
           <div className="membership-retained" hidden={membershipUnconfirmed}>{children}</div>

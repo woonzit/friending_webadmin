@@ -10,7 +10,7 @@ const modules = nodeModule as unknown as { registerHooks: (hooks: { resolve: (sp
 modules.registerHooks({ resolve(specifier, context, next) { return specifier === "server-only" ? { url: "data:text/javascript,", shortCircuit: true, format: "module" } : next(specifier, context); } });
 process.env.WEBADMIN_API_SECRET = "test-membership-api-secret-000000000000";
 process.env.CORE_API_BASE = "https://core.invalid";
-const { coreCall } = await import("../lib/core.ts");
+const { coreCall, coreMultipartCall } = await import("../lib/core.ts");
 const realFetch = globalThis.fetch;
 
 test("DERIVED membership transport: an HTTP error cannot be overridden by a successful or revoked logical body", async () => {
@@ -46,5 +46,24 @@ test("DERIVED membership transport: the deadline includes a late JSON body from 
     globalThis.fetch = (async () => ({ status: 200, json: async () => { await new Promise((resolve) => setTimeout(resolve, 20)); return MEMBERSHIP_MEMBER; } })) as typeof fetch;
     const answer = await coreCall("admin_me", { admin_email: MEMBERSHIP_EMAIL }, 1, { membershipCheck: true });
     assert.equal(answer.status, 504); assert.equal(classifyAdminMembership(answer, MEMBERSHIP_EMAIL).kind, "unconfirmed");
+  } finally { globalThis.fetch = realFetch; }
+});
+
+test("DERIVED post-forward transport: opt-in JSON and multipart calls preserve real HTTP failures and discard late body answers", async () => {
+  try {
+    const call = (multipart: boolean, signal?: AbortSignal, timeout = 10_000) => multipart
+      ? coreMultipartCall("upload_pinger_icon", { admin_email: MEMBERSHIP_EMAIL }, { buffer: Buffer.from("DERIVED"), mime: "image/png", filename: "derived.png" }, timeout, { signal, strictResponse: true })
+      : coreCall("upload_image", { admin_email: MEMBERSHIP_EMAIL }, timeout, { signal, strictResponse: true });
+    for (const multipart of [false, true]) {
+      for (const status of [401, 403, 500, 503]) {
+        globalThis.fetch = (async () => ({ status, json: async () => MEMBERSHIP_MEMBER })) as typeof fetch;
+        assert.equal((await call(multipart)).status, status);
+      }
+      const controller = new AbortController();
+      globalThis.fetch = (async () => ({ status: 200, json: async () => { controller.abort(); return MEMBERSHIP_MEMBER; } })) as typeof fetch;
+      assert.equal((await call(multipart, controller.signal)).status, 504);
+      globalThis.fetch = (async () => ({ status: 200, json: async () => { await new Promise((resolve) => setTimeout(resolve, 20)); return MEMBERSHIP_MEMBER; } })) as typeof fetch;
+      assert.equal((await call(multipart, undefined, 1)).status, 504);
+    }
   } finally { globalThis.fetch = realFetch; }
 });

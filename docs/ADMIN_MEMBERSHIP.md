@@ -33,3 +33,24 @@ Their production-handler tests must exercise every applicable row above,
 including malformed 200 and abandoned requests that receive a late positive or
 negative answer. Auto-recovery is restricted to membership and read-only calls;
 an operator retry of a refused write must pass a new membership check.
+
+## Separate post-forward boundary
+
+These six routes have already positively confirmed membership and attempted
+the feature call: `upload-image`, `upload-video`, `upload-profile-icon`,
+`upload-pinger-icon`, `support-media`, and `persona-member`. Their failure must
+not be represented as a definite pre-forward refusal. The same-origin client
+never queues or automatically retries any of these requests.
+
+| Feature answer after forwarding | Bridge status | What the operator sees |
+| --- | --- | --- |
+| Complete `admin-session-invalid` / 401 or `admin-revoked` / 403 | 401 `auth-required` | `/login`; only these complete definite negatives force it |
+| Complete known role denial `admin-write-required` / 403 or `owner-required` / 403 | 403, same role error | Remain on page; role refusal, no automatic retry |
+| Bare, service, malformed or contradictory 401/403; unknown 403 | 502 `invalid-core-response` | Outcome not confirmed; check affected record/media/audit before an explicit retry |
+| 5xx, transport failure, timeout, malformed/truthy-success 200, or abandoned late answer | 502 (public transport error or `invalid-core-response`) | Same uncertainty notice; no claim that no write occurred, no automatic retry |
+| Complete ordinary success | Existing feature response | Existing success handling, no added permission |
+| Existing named input/conflict refusal (other 4xx) | Existing feature status | Existing feature handling; no vocabulary change |
+
+Real HTTP errors cannot be overwritten by a logical success body in these
+opted-in transports. Uncertainty-notice dismissal is presentation only: it
+does not settle, delete, regenerate or retry any durable command identity.

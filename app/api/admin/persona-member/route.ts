@@ -4,6 +4,7 @@ import {
 } from "@/lib/contractReadiness";
 import { coreCall } from "@/lib/core";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
+import { adminPostForwardError } from "@/lib/adminPostForward";
 import {
   PERSONA_ADMIN_CONTRACT_VERSION,
   canonicalPersonaUid,
@@ -82,10 +83,9 @@ export async function POST(request: NextRequest) {
     persona_contract_version: PERSONA_ADMIN_CONTRACT_VERSION,
     uid: String(uid),
     admin_email: writer.session.email,
-  });
-  if (result.status === 401 || result.status === 403) {
-    return errorResponse("auth-required", 401);
-  }
+  }, undefined, { signal: request.signal, strictResponse: true });
+  const postForwardError = adminPostForwardError(result, writer.session.email, request.signal?.aborted === true);
+  if (postForwardError) return errorResponse(postForwardError.error, postForwardError.status);
 
   const target = personaTargetFromUserDetail(result.data);
   const data = target ? personaTargetLookupData(target) : null;

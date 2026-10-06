@@ -1,5 +1,14 @@
 export type MembershipRecoveryAnswer = "confirmed" | "revoked" | "unconfirmed";
 
+/** An advisory notice only; dismissal never settles or deletes a retained command. */
+export function createAdminWriteOutcomeNotice() {
+  let visible = false;
+  const listeners = new Set<() => void>();
+  const update = (value: boolean) => { visible = value; for (const listener of listeners) listener(); };
+  return { markUnknown: () => update(true), dismiss: () => update(false), getSnapshot: () => visible, getServerSnapshot: () => false,
+    subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; } };
+}
+
 /**
  * Presentation / read-recovery semaphore, NOT an authorization cache. Clearing
  * the notice never authorizes a request: every server gate checks Core again.

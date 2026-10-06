@@ -49,6 +49,12 @@
     "retrying": "A tagságellenőrzést növekvő időközönként újrapróbáljuk (legfeljebb 30 másodperces késleltetéssel). Ha helyreállt, ellenőrizd a bizonytalan eredményt, és szükség esetén te magad próbáld újra a módosítást.",
     "retry": "Tagság ellenőrzése újra"
   },
+  "adminWriteOutcome": {
+    "title": "A kérés eredménye nincs megerősítve",
+    "check": "A kérés eljuthatott a Core-hoz. Újrapróbálás előtt ellenőrizd az érintett rekordot, médiát és az adminisztrátori auditnaplót. A sikeres tagságellenőrzés nem igazolja, hogy a korábbi módosítás megtörtént-e.",
+    "retained": "Sem módosítást, sem feltöltést nem próbálunk újra automatikusan. A megtartott kéréseknél őrizd meg az eredeti azonosítót; az értesítés bezárása nem zárja le és nem törli a kérést.",
+    "dismiss": "Értesítés bezárása"
+  },
   "adminHelp": {
     "button": "Help",
     "openLabel": "{page} megnyitása",

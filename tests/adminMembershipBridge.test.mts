@@ -94,8 +94,13 @@ test("DERIVED membership read: a positive first check cannot bless a malformed o
 test("DERIVED action gate: only a complete definite revocation after forwarding can force login; unknown 401s stay errors", async () => {
   for (const answer of MEMBERSHIP_CASES.filter((row) => row.status === 401 || row.kind === "revoked")) {
     const result = await bridge(MEMBERSHIP_CASES[0], "set_settings", { featureAnswer: answer });
-    assert.equal(result.status, answer.kind === "revoked" ? 401 : 502, answer.name);
+    assert.equal(result.status, answer.abandoned ? 504 : answer.kind === "revoked" ? 401 : 502, answer.name);
     assert.deepEqual(result.forwarded, ["set_settings"], "the already forwarded write is never represented as a pre-forward refusal");
-    assert.equal(result.body.error, answer.kind === "revoked" ? "auth-required" : "invalid-core-response");
+    assert.equal(result.body.error, answer.abandoned ? "core-timeout" : answer.kind === "revoked" ? "auth-required" : "invalid-core-response");
   }
+});
+test("DERIVED action gate: an abandoned late feature answer never returns protected data or claims that no action was forwarded", async () => {
+  const result = await bridge(MEMBERSHIP_CASES[0], "set_settings", { featureAnswer: { status: 200, data: { success: true, protected_value: "derived" }, abandoned: true } });
+  assert.equal(result.status, 504); assert.equal(result.body.error, "core-timeout"); assert.equal(result.body.protected_value, undefined);
+  assert.deepEqual(result.forwarded, ["set_settings"]);
 });

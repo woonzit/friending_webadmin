@@ -49,6 +49,12 @@
     "retrying": "We retry the membership check with increasing delays (up to 30 seconds). Once it recovers, review any uncertain result and retry a change explicitly if needed.",
     "retry": "Check membership again"
   },
+  "adminWriteOutcome": {
+    "title": "The request outcome is not confirmed",
+    "check": "The request may have reached Core. Check the affected record, media and administrator audit history before retrying. A successful membership check does not confirm whether the earlier change was applied.",
+    "retained": "No change or upload is retried automatically. Keep the original identity of any retained request; dismissing this notice does not settle or discard it.",
+    "dismiss": "Dismiss notice"
+  },
   "adminHelp": {
     "button": "Help",
     "openLabel": "Open {page}",

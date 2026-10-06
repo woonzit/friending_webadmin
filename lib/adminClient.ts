@@ -2,7 +2,7 @@
 
 import { adminActionAccess } from "@/lib/adminActions";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "@/lib/adminMembership";
-import { createAdminMembershipRecovery } from "@/lib/adminMembershipRecovery";
+import { createAdminMembershipRecovery, createAdminWriteOutcomeNotice } from "@/lib/adminMembershipRecovery";
 import {
   ADMIN_REQUEST_HEADER,
   ADMIN_REQUEST_HEADER_VALUE,
@@ -15,6 +15,7 @@ export type AdminResponse = {
 };
 
 const unconfirmedResponse = (): AdminResponse => ({ success: false, status_code: 503, error: ADMIN_MEMBERSHIP_UNCONFIRMED });
+export const adminWriteOutcomeNotice = createAdminWriteOutcomeNotice();
 const redirectToLogin = () => window.location.assign("/login");
 function definiteSignedOut(status: number, data: AdminResponse | null): boolean {
   return status === 401 && data?.success === false && data.error === "auth-required"
@@ -54,7 +55,13 @@ async function finishUpload(response: Response, signal?: AbortSignal): Promise<A
   if (signal?.aborted) return null;
   if (definiteSignedOut(response.status, data)) { redirectToLogin(); return null; }
   if (response.status === 503 && data?.success === false && data.error === ADMIN_MEMBERSHIP_UNCONFIRMED) adminMembershipRecovery.markUnconfirmed();
+  else if (response.status >= 500 || !data) adminWriteOutcomeNotice.markUnknown();
   return data;
+}
+
+function lostUpload(signal?: AbortSignal): null {
+  if (!signal?.aborted) { adminWriteOutcomeNotice.markUnknown(); adminMembershipRecovery.markUnconfirmed(); }
+  return null;
 }
 
 export async function adminCall(
@@ -76,6 +83,8 @@ export async function adminCall(
     const data = response ? await responseData(response, signal) : null;
     if (signal?.aborted) return null; // A late body / 401 cannot navigate an abandoned caller.
     if (response && definiteSignedOut(response.status, data)) { redirectToLogin(); return null; }
+    const preForwardRefusal = response?.status === 503 && data?.success === false && data.error === ADMIN_MEMBERSHIP_UNCONFIRMED;
+    if (!readOnly && (!response || (!preForwardRefusal && (response.status >= 500 || !data)))) adminWriteOutcomeNotice.markUnknown();
     const unavailable = !response
       || (response.status === 503 && data?.success === false && data.error === ADMIN_MEMBERSHIP_UNCONFIRMED)
       || (action === "admin_me" && classifyAdminMembership({ status: response.status, data }, typeof data?.email === "string" ? data.email : "").kind !== "confirmed");
@@ -106,7 +115,7 @@ export async function adminUploadImage(file: File, signal?: AbortSignal): Promis
       signal,
     });
   } catch {
-    return null;
+    return lostUpload(signal);
   }
   return finishUpload(response, signal);
 }
@@ -129,7 +138,7 @@ export async function adminUploadVideo(file: File, signal?: AbortSignal): Promis
       signal,
     });
   } catch {
-    return null;
+    return lostUpload(signal);
   }
   return finishUpload(response, signal);
 }
@@ -149,7 +158,7 @@ export async function adminUploadProfileIcon(file: File, signal?: AbortSignal): 
       signal,
     });
   } catch {
-    return null;
+    return lostUpload(signal);
   }
   return finishUpload(response, signal);
 }
@@ -176,7 +185,7 @@ export async function adminUploadPingerIcon(
       signal,
     });
   } catch {
-    return null;
+    return lostUpload(signal);
   }
   return finishUpload(response, signal);
 }
@@ -203,7 +212,7 @@ export async function adminUploadSupportImage(
       signal,
     });
   } catch {
-    return null;
+    return lostUpload(signal);
   }
   return finishUpload(response, signal);
 }
@@ -222,7 +231,7 @@ export async function adminIntakeCreate(body: FormData, signal?: AbortSignal): P
       signal,
     });
   } catch {
-    return null;
+    return lostUpload(signal);
   }
   return finishUpload(response, signal);
 }

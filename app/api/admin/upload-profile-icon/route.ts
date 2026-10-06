@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { coreCall } from "@/lib/core";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
+import { adminPostForwardError } from "@/lib/adminPostForward";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { requireAdminWriter } from "@/lib/session";
 import {
@@ -75,10 +76,9 @@ export async function POST(request: NextRequest) {
     admin_email: session.email,
     icon_mime: validated.mime,
     icon_b64: validated.buffer.toString("base64"),
-  }, 30_000);
-  if (result.status === 401 || result.status === 403) {
-    return errorResponse("auth-required", 401);
-  }
+  }, 30_000, { signal: request.signal, strictResponse: true });
+  const postForwardError = adminPostForwardError(result, session.email, request.signal?.aborted === true);
+  if (postForwardError) return errorResponse(postForwardError.error, postForwardError.status);
   return NextResponse.json(
     result.data ?? { success: false, error: "profile-icon-upload-failed" },
     { status: result.status || 502 },

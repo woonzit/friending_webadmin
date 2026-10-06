@@ -9,6 +9,8 @@ export type CoreCallOptions = {
   signal?: AbortSignal;
   /** Membership proof must not turn an HTTP error or abandoned read into a grant. */
   membershipCheck?: boolean;
+  /** Opt-in for post-forward outcome checking: HTTP errors / late bodies are not successes. */
+  strictResponse?: boolean;
 };
 
 const CORE_API_BASE = (process.env.CORE_API_BASE ?? "https://core.friending.com").replace(/\/+$/, "");
@@ -96,7 +98,10 @@ export async function coreCall<T = Record<string, unknown>>(
   // protected here — this module has no session context and every caller has to
   // supply it — so request bodies must be filtered with `mergeCoreParams` before
   // they get this far.
-  body.set("secret", apiSecret());
+  try { body.set("secret", apiSecret()); } catch (error) {
+    if (options.strictResponse) return { status: 502, data: { success: false, error: "core-unavailable" } as T };
+    throw error;
+  }
 
   const timeout = AbortSignal.timeout(timeoutMs);
   const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
@@ -133,7 +138,7 @@ export async function coreCall<T = Record<string, unknown>>(
     return { status: 502, data: { success: false, error: "invalid-core-response" } as T };
   }
 
-  if (options.membershipCheck) {
+  if (options.membershipCheck || options.strictResponse) {
     // Covers a late fetch/body answer even if a transport ignores cancellation.
     if (signal.aborted) return { status: 504, data: { success: false, error: "core-timeout" } as T };
     // Core normally uses HTTP 200 for logical refusals. An actual HTTP failure
@@ -155,6 +160,7 @@ export async function coreMultipartCall<T = Record<string, unknown>>(
   payload: Record<string, unknown>,
   image: { buffer: Buffer; mime: string; filename: string },
   timeoutMs = 30_000,
+  options: CoreCallOptions = {},
 ): Promise<CoreResult<T>> {
   if (!/^[a-z][a-z0-9_]{1,63}$/.test(action)) {
     return { status: 404, data: null };
@@ -164,13 +170,19 @@ export async function coreMultipartCall<T = Record<string, unknown>>(
     if (key === "secret") continue;
     if (/^[a-z][a-z0-9_]{0,63}$/.test(key)) body.set(key, encodeValue(value));
   }
-  body.set("secret", apiSecret());
+  try { body.set("secret", apiSecret()); } catch (error) {
+    if (options.strictResponse) return { status: 502, data: { success: false, error: "core-unavailable" } as T };
+    throw error;
+  }
   body.set(
     "image",
     new Blob([Uint8Array.from(image.buffer)], { type: image.mime }),
     image.filename,
   );
 
+  const timeout = AbortSignal.timeout(timeoutMs);
+  const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
+  if (signal.aborted) return { status: 504, data: { success: false, error: "core-timeout" } as T };
   let response: Response;
   try {
     response = await fetch(`${CORE_API_BASE}/v1/webadmin/${action}`, {
@@ -178,7 +190,7 @@ export async function coreMultipartCall<T = Record<string, unknown>>(
       headers: { Accept: "application/json" },
       body,
       cache: "no-store",
-      signal: AbortSignal.timeout(timeoutMs),
+      signal,
     });
   } catch (error) {
     const name = (error as { name?: unknown } | null)?.name;
@@ -193,6 +205,10 @@ export async function coreMultipartCall<T = Record<string, unknown>>(
     data = (await response.json()) as T;
   } catch {
     return { status: 502, data: { success: false, error: "invalid-core-response" } as T };
+  }
+  if (options.strictResponse) {
+    if (signal.aborted) return { status: 504, data: { success: false, error: "core-timeout" } as T };
+    if (response.status !== 200) return { status: response.status, data };
   }
   const logicalStatus = Number((data as Record<string, unknown> | null)?.status_code);
   const status = Number.isInteger(logicalStatus) && logicalStatus >= 100 && logicalStatus <= 599

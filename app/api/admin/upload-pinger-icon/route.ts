@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { coreMultipartCall } from "@/lib/core";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
+import { adminPostForwardError } from "@/lib/adminPostForward";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { requireAdminWriter } from "@/lib/session";
 import {
@@ -82,8 +83,10 @@ export async function POST(request: NextRequest) {
       filename: validated.mime === "image/svg+xml" ? "pinger.svg" : "pinger.png",
     },
     30_000,
+    { signal: request.signal, strictResponse: true },
   );
-  if (result.status === 401 || result.status === 403) return errorResponse("auth-required", 401);
+  const postForwardError = adminPostForwardError(result, writer.session.email, request.signal?.aborted === true);
+  if (postForwardError) return errorResponse(postForwardError.error, postForwardError.status);
   const root = record(result.data);
   const data = record(root?.data);
   if (!root?.success || !data || typeof data.media_url !== "string") {

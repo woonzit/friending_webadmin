@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { coreMultipartCall } from "@/lib/core";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
+import { adminPostForwardError } from "@/lib/adminPostForward";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { requireAdminWriter } from "@/lib/session";
 import {
@@ -78,10 +79,10 @@ export async function POST(request: NextRequest) {
     },
     { buffer: normalized.buffer, mime: normalized.mime, filename: "support.jpg" },
     35_000,
+    { signal: request.signal, strictResponse: true },
   );
-  if (result.status === 401 || result.status === 403) {
-    return failure("auth-required", 401);
-  }
+  const postForwardError = adminPostForwardError(result, writer.session.email, request.signal?.aborted === true);
+  if (postForwardError) return failure(postForwardError.error, postForwardError.status);
   if (!result.data) return failure("core-unavailable", result.status || 502);
   return NextResponse.json(result.data, { status: result.status || 502 });
 }
