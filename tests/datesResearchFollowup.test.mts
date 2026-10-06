@@ -54,9 +54,9 @@ test("GENUINE open-run conflict explains Core's public stored state; DERIVED dup
   })!;
   assert.equal(await classify(GENUINE_AREA, city), "city_registered");
 });
-test("GENUINE scheduled-open receipt settles stale-page aliases independently of the page's expected revision", () => {
+test("GENUINE scheduled-open receipt settles stale-page aliases only at or above the page's revision", () => {
   const body = researchFixture("admin-source-run-scheduled-open-replay.json");
-  for (const expected_revision of [1, 2, 5, 99]) {
+  for (const expected_revision of [1, 2]) {
     const command = prepareResearchCommand("admin@example.test", "dates_event_research_source_run_now", {
       source_id: body.source_id, dry_run: body.dry_run, expected_revision,
     })!;
@@ -64,6 +64,12 @@ test("GENUINE scheduled-open receipt settles stale-page aliases independently of
     const answer = decodeResearchCommandReceipt(command, body)!; if (answer.kind === "success") assert.equal(answer.replayed, true);
     for (const change of [{ source_id: "foreign" }, { dry_run: !body.dry_run }, { source_revision: 1 }, { source_revision: "2" }, { replayed: false }])
       assert.equal(decodeResearchCommandReceipt(command, { ...body, ...change }), null);
+  }
+  for (const expected_revision of [3, 42, 99]) {
+    const command = prepareResearchCommand("admin@example.test", "dates_event_research_source_run_now", {
+      source_id: body.source_id, dry_run: body.dry_run, expected_revision,
+    })!;
+    assert.equal(decodeResearchCommandReceipt(command, body), null, "an explicit replay cannot predate the page authority");
   }
 });
 test("DERIVED same-mode replay ahead by two revisions is accepted, but a new receipt at that revision is not", () => {

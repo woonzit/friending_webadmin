@@ -77,14 +77,14 @@ export function decodeResearchCommandReceipt(command: ResearchCommand, response:
     const next = Number(body.expected_revision) + 1;
     // A same-mode open run is reused before Core compares the submitted
     // revision. Only a genuinely new intent must advance expected by one.
-    const boundRevision = response.replayed === true || response.source_revision === next;
+    const boundRevision = response.replayed === true ? Number(response.source_revision) >= Number(body.expected_revision) : response.source_revision === next;
     return researchString(response.run_id) && response.run_id !== "" && response.source_id === body.source_id && response.dry_run === body.dry_run
       && researchInteger(response.source_revision, 2) && boundRevision
       ? { kind: "success", replayed: response.replayed, receipt: response, runId: response.run_id } : null;
   }
   if (action === "dates_event_research_area_run_now") {
     const next = Number(body.expected_revision) + 1;
-    const boundRevision = response.replayed === true || response.area_revision === next;
+    const boundRevision = response.replayed === true ? Number(response.area_revision) >= Number(body.expected_revision) : response.area_revision === next;
     return researchString(response.run_id) && response.run_id !== "" && response.area_id === body.area_id && response.dry_run === body.dry_run
       && researchInteger(response.area_revision, 2) && boundRevision ? { kind: "success", replayed: response.replayed, receipt: response, runId: response.run_id } : null;
   }

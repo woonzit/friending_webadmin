@@ -73,6 +73,7 @@ test("DERIVED P3b: area commands keep exact identity and bind historical/schedul
   assert.equal(decodeResearchCommandReceipt(command, receipt)?.kind, "success");
   const stale = prepareResearchCommand("admin@example.test", command.action, { area_id: GENUINE_AREA.area_id, expected_revision: 5, dry_run: false })!;
   assert.equal(decodeResearchCommandReceipt(stale, { ...receipt, area_revision: 7 })?.kind, "success", "explicit same-mode replay need not match the page revision");
+  for (const area_revision of [2, 4]) assert.equal(decodeResearchCommandReceipt(stale, { ...receipt, area_revision }), null, "replay must not predate the submitted revision");
   assert.equal(decodeResearchCommandReceipt(stale, { ...receipt, area_revision: 7, replayed: false, audit_id: "aud_derived" }), null, "a new intent must still advance its page revision exactly once");
   const replay = decodeResearchCommandReceipt(command, receipt)!; if (replay.kind === "success") assert.equal(replay.replayed, true);
   for (const change of [{ area_id: "foreign" }, { area_revision: 1 }, { dry_run: true }, { replayed: false }, { audit_id: "" }])
