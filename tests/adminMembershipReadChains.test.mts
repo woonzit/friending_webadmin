@@ -141,6 +141,18 @@ test("DERIVED registered loader: recovery invokes only eligible never-loaded rea
   eligible = false; recovery.markUnconfirmed(); await time.tick(); assert.equal(loads, 1, "loaded drafts/data are left exactly alone");
   eligible = true; release(); recovery.markUnconfirmed(); await time.tick(); assert.equal(loads, 1, "unmounted/error-free pages are never refreshed implicitly");
 });
+test("DERIVED real client: a request-specific failure with healthy membership stops after the loader budget, with no audited read or write", async () => {
+  const h = client("overview");
+  const release = registerAdminReadRecovery(h.api.adminMembershipRecovery, () => true, async () => {
+    await assert.rejects(h.api.adminCall("overview"), AdminMembershipUnconfirmedClientError);
+  }, h.time.clock);
+  await assert.rejects(h.api.adminCall("overview"), AdminMembershipUnconfirmedClientError);
+  let ticks = 0;
+  while (h.time.jobs.size > 0) { assert.ok(++ticks < 30, "specific-read recovery must finish"); await h.time.tick(); }
+  assert.equal(h.requests.filter(action => action === "overview").length, 8, "one original request plus at most seven fresh loader attempts");
+  assert.ok(h.requests.every(action => action === "overview" || action === "admin_me"));
+  assert.equal(h.api.adminMembershipRecovery.getSnapshot(), false); release();
+});
 test("DERIVED source audit: conservative registrations are ONLY Overview and never-loaded Research; audit/evidence reads and command handlers are not registered", () => {
   for (const [path, expected] of [["app/(dashboard)/page.tsx", /useAdminReadRecovery\(load, data === null && state === "error"\)/],
     ["app/(dashboard)/dates/research/page.tsx", /useAdminReadRecovery\(reload, read === null && problem\?\.kind === "unconfirmed"\)/]] as const) assert.match(file(path), expected);

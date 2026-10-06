@@ -44,7 +44,12 @@ registered read-only page loaders from the top: Overview when it has no data
 and shows its load error; Research when its overview has never loaded and is
 unconfirmed. Once either page has successfully loaded, it is NOT auto-reloaded;
 its data, editor drafts and command owners remain untouched. No audited reads
-are registered. All other pages/editors rely on their existing manual reload,
+are registered. Each mounted registered loader has at most seven recovery
+attempts, with increasing delays (immediate, 1, 2, 4, 8, 16, 30 seconds).
+Fresh healthy membership probes do not reset that budget; a request-specific
+connection failure cannot loop forever. After exhaustion the page retains its
+error and manual reload. Unmount cancels a scheduled attempt, and eligibility
+is rechecked at execution. All other pages/editors rely on their existing manual reload,
 plus a Shell-wide manual page reload after recovery for an interrupted legacy
 loader. That fallback has an explicit in-page second confirmation warning that
 unsaved state/in-memory retry identities will be discarded and a previously
