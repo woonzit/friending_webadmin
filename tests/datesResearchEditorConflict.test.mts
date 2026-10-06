@@ -53,6 +53,22 @@ test("DERIVED permanent receipt cannot regress a draft behind newer authority al
   const next = { ...newer, cadence_hours: 96 };
   model.adopt(next, 4); model = draw(newer, 3); assert.equal(model.revision, 4); assert.equal(model.draft, next);
 });
+test("DERIVED choosing radius requires an explicit value instead of pre-filling Core's minimum", () => {
+  const field = controlTree.statements.find((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && node.name?.text === "ResearchScopeInput")!;
+  const context: any = { exports: {}, ...view, ResearchHelp: "ResearchHelp", useTranslations: () => (key: string) => key,
+    React: { Fragment: "fragment", createElement: (type: any, props: any, ...children: any[]) => ({ type, props: props ?? {}, children }) } };
+  vm.runInNewContext(ts.transpileModule(field.getText(controlTree), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText, context);
+  let scope: research.ResearchScope = { kind: "city", radius_km: null };
+  const draw = () => elements(context.exports.ResearchScopeInput({ scope, range: GENUINE_LIMITS.radius_km, unit: "km", disabled: false, onUnit: () => {}, onChange: (value: research.ResearchScope) => { scope = value; } }));
+  draw().find((node) => node.type === "select")!.props.onChange({ target: { value: "radius" } });
+  assert.equal(scope.kind, "radius"); assert.equal(Number.isNaN(scope.radius_km), true);
+  let nodes = draw(), input = nodes.find((node) => node.type === "input")!;
+  assert.equal(input.props.value, ""); assert.equal(view.researchValuesIssue({ ...GENUINE_AREA.effective, scope }, GENUINE_LIMITS), "radius_km");
+  input.props.onChange({ target: { value: "5" } }); assert.deepEqual(JSON.parse(JSON.stringify(scope)), { kind: "radius", radius_km: 5 });
+  assert.equal(view.researchValuesIssue({ ...GENUINE_AREA.effective, scope }, GENUINE_LIMITS), null);
+  nodes = draw(); nodes.find((node) => node.type === "select")!.props.onChange({ target: { value: "city" } });
+  assert.deepEqual(JSON.parse(JSON.stringify(scope)), { kind: "city", radius_km: null });
+});
 test("DERIVED retained command locks every editor field, including when actor fencing hides the visible pending command", () => {
   const context: any = { exports: {}, ...research, ...view, ...proxy, formatNumber,
     React: { Fragment: "fragment", createElement: (type: any, props: any, ...children: any[]) => ({ type, props: props ?? {}, children }) },

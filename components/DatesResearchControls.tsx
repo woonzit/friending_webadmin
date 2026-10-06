@@ -26,7 +26,7 @@ export function ResearchScopeInput({ scope, range, unit, disabled, onUnit, onCha
   unit: ResearchDistanceUnit; disabled: boolean; onUnit: (value: ResearchDistanceUnit) => void; onChange: (value: ResearchScope) => void }) {
   const t = useTranslations("datesAdmin.research");
   return <div className="research-scope-input"><select value={scope.kind} disabled={disabled} onChange={(event) => onChange(event.target.value === "city"
-    ? { kind: "city", radius_km: null } : { kind: "radius", radius_km: range.min })}>
+    ? { kind: "city", radius_km: null } : { kind: "radius", radius_km: NaN })}>
     <option value="city">{t("scopeValues.city")}</option><option value="radius">{t("scopeValues.radius")}</option></select>
     {scope.kind === "radius" && <div className="research-unit-input"><input type="number" step="any" aria-label={t("fields.radius_km")}
       value={Number.isFinite(scope.radius_km) ? researchInputNumber(researchDistanceFromKm(scope.radius_km, unit)) : ""}

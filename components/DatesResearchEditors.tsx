@@ -52,7 +52,7 @@ export function ResearchAreaEditor({ row, defaults, actor, manage, limits, reloa
     ...(row ? { area_id: row.area_id, expected_revision: model.revision, label: model.draft.label } : { place_id: placeId }), mode: model.draft.mode, overrides: model.draft.overrides, reason }); }}>
     <div className="panel-header"><h2>{t(row ? "editCity" : "addCity")}</h2><button type="button" className="button button-secondary" disabled={command.busy || command.retained} onClick={close}>{common("close")}</button></div>
     <label className="field"><span>{t("fields.city")}</span><input value={model.draft.label} readOnly={!row} disabled={disabled || command.busy} onChange={(event) => model.set({ ...model.draft, label: event.target.value })} /><ResearchHelp field="city" effective={model.draft.label || "—"} own /></label>
-    <AppearanceMapPicker center={center} radiusKm={effective.scope.kind === "radius" ? effective.scope.radius_km : null} language={locale === "hu" ? "hu" : "en"}
+    <AppearanceMapPicker center={center} radiusKm={effective.scope.kind === "radius" && Number.isFinite(effective.scope.radius_km) ? effective.scope.radius_km : null} language={locale === "hu" ? "hu" : "en"}
       disabled={disabled || command.busy || row !== null} mapReadOnly onMove={() => undefined} onCandidate={(candidate) => { setPlaceId(candidate.place_id); setCountry(candidate.country_code ?? "");
         setUnit(researchDistanceUnit(candidate.country_code ?? "")); setCenter(candidate.center); model.set({ ...model.draft, label: candidate.place_label }); }} />
     <p className="field-hint">{t("mapHint")}</p>
