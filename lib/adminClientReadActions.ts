@@ -22,4 +22,7 @@ export const ADMIN_CLIENT_READ_ACTIONS = [
   "dates_event_research_overview", "dates_event_research_run_list", "dates_event_research_run_detail",
 ] as const;
 const reads: ReadonlySet<string> = new Set(ADMIN_CLIENT_READ_ACTIONS);
-export function isAdminClientReadAction(action: string): boolean { return reads.has(action); }
+// Dedicated URI, not an allow-listed generic Core action. Its existing writer
+// role/capability gate remains unchanged; a failed lookup is not a lost write.
+const dedicatedReads: ReadonlySet<string> = new Set(["persona-member"]);
+export function isAdminClientReadAction(action: string): boolean { return reads.has(action) || dedicatedReads.has(action); }

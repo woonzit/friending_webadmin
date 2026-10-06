@@ -152,6 +152,23 @@ test("DERIVED client: ordinary feature failures and valid-role refusals are not 
     assert.deepEqual(h.redirects, []); assert.equal(h.calls.length, 1); assert.equal(h.time.jobs.size, 0);
   }
 });
+test("DERIVED dedicated Persona lookup: lost read rejects immediately but never raises a lost-write notice or retries itself", async () => {
+  const h = client(); h.state.hook = async () => { throw new Error("DERIVED lost lookup connection"); };
+  await assert.rejects(h.api.adminCall("persona-member", { uid: "123" }), AdminMembershipUnconfirmedClientError);
+  assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), false); assert.equal(h.api.adminMembershipRecovery.getSnapshot(), true);
+  h.state.hook = undefined; await h.time.tick();
+  assert.deepEqual(h.calls.map(call => call.url), ["/api/admin/persona-member", "/api/admin/admin_me"]);
+  assert.deepEqual(h.redirects, []); assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), false);
+  const failed = client({ status: 502, data: { success: false, status_code: 502, error: "persona-member-lookup-failed" } });
+  assert.equal((await failed.api.adminCall("persona-member", { uid: "123" }))?.success, false);
+  assert.equal(failed.api.adminWriteOutcomeNotice.getSnapshot(), false); assert.equal(failed.calls.length, 1); assert.equal(failed.time.jobs.size, 0);
+});
+test("DERIVED bare proxy 401 is a failed request, not a logout proof; a later explicit bridge auth-required still navigates", async () => {
+  const h = client(); h.state.hook = async () => new Response("", { status: 401 });
+  assert.equal(await h.api.adminCall("overview"), null); assert.deepEqual(h.redirects, []); assert.equal(h.calls.length, 1);
+  assert.equal(h.api.adminMembershipRecovery.getSnapshot(), false);
+  h.state.hook = undefined; h.state.answer = signedOut; await h.api.adminCall("overview"); assert.deepEqual(h.redirects, ["/login"]);
+});
 for (const locale of ["en", "hu"]) test(`DERIVED static render ${locale}: the membership notice states refusal, retention, backoff and explicit write retry`, () => {
   const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8")), errors: string[] = [];
   const html = renderToStaticMarkup(createElement(NextIntlClientProvider, { locale, messages, timeZone: "UTC", onError: (error: unknown) => errors.push(String(error)) },

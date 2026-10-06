@@ -119,3 +119,31 @@ transport failures retain their public 502/504; other 5xx become 502
 `invalid-core-response` with `success: false` and no feature data. This happens
 after forwarding, so it never proves that a write did not occur. Ordinary
 healthy feature successes keep the original handler-owned shape.
+
+## Deliberate cancellation and sign-in behavior
+
+A browser request abandoned between its positive membership proof and its
+feature forward is no longer forwarded. The bridge returns 503
+`admin-membership-unconfirmed` while no feature was attempted; an abandoned
+client ignores late data/navigation. This intentionally avoids continuing an
+operator gesture after its caller has gone away. It cannot cancel a feature
+that was already forwarded: that response is 504/unknown, and Core may finish.
+
+Only the bridge's complete 401 `success: false`, `auth-required` response
+proves sign-out to the browser. A proxy's bare 401 is not treated as proof of
+revocation and does not clear the cookie or automatically navigate to login.
+An ordinary page gets its failed-request result and its existing error/manual
+retry UI. If the membership probe itself gets that answer, membership stays
+unconfirmed, protected content stays hidden and the recovery/Sign out controls
+remain visible. An unparseable write answer also shows the independent unknown
+outcome warning; never infer no write. A later complete bridge auth-required
+still navigates normally. A session-holding visitor cannot use the login form
+while its membership check is unconfirmed; the neutral shell's local Sign out
+is the explicit way to clear that session.
+
+`persona-member` is a dedicated read-only lookup URI, not a generic action.
+Its client metadata now suppresses the false lost-WRITE warning for lookup
+failures; it still rejects an unconfirmed call immediately, and recovery never
+replays it. Its server writer-role, capability, projection and fresh membership
+checks are unchanged. No authorization, action allow-list, Core vocabulary or
+audit policy was expanded.

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { ADMIN_ACTIONS, adminActionAccess } from "../lib/adminActions.ts";
+import { ADMIN_ACTIONS, adminActionAccess, isAdminActionAllowed } from "../lib/adminActions.ts";
 import { ADMIN_CLIENT_READ_ACTIONS, isAdminClientReadAction } from "../lib/adminClientReadActions.ts";
 
 test("client presentation metadata is exactly the server's active read set, never a mutation authority", () => {
@@ -18,4 +18,10 @@ test("client read metadata has no dependencies on bridge tables/decoders and the
   const client = readFileSync(new URL("../lib/adminClient.ts", import.meta.url), "utf8");
   assert.doesNotMatch(client, /adminActions|adminActionAccess/);
   assert.match(client, /import \{ isAdminClientReadAction \} from "@\/lib\/adminClientReadActions"/);
+});
+test("dedicated Persona member lookup is read presentation metadata, never a new generic action or authority grant", () => {
+  assert.equal(isAdminClientReadAction("persona-member"), true);
+  assert.equal(isAdminActionAllowed("persona-member"), false); assert.equal(adminActionAccess("persona-member"), null);
+  const route = readFileSync(new URL("../app/api/admin/persona-member/route.ts", import.meta.url), "utf8");
+  assert.match(route, /requireAdminWriter\(request.signal\)/); assert.match(route, /persona-capability-required/);
 });
