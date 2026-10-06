@@ -60,8 +60,9 @@ never queues or automatically retries any of these requests.
 | Complete `admin-session-invalid` / 401 or `admin-revoked` / 403 | 401 `auth-required` | `/login`; only these complete definite negatives force it |
 | Complete known role denial `admin-write-required` / 403 or `owner-required` / 403 | 403, same role error | Remain on page; role refusal, no automatic retry |
 | Bare, service, malformed or contradictory 401/403; unknown 403 | 502 `invalid-core-response` | Outcome not confirmed; check affected record/media/audit before an explicit retry |
-| 5xx, transport failure, timeout, malformed/truthy-success 200, or abandoned late answer | 502 (public transport error or `invalid-core-response`) | Same uncertainty notice; no claim that no write occurred, no automatic retry |
-| Complete ordinary success | Existing feature response | Existing success handling, no added permission |
+| 5xx, transport failure, timeout, or abandoned late answer | 502 (public transport error or `invalid-core-response`) | Same uncertainty notice; no claim that no write occurred, no automatic retry |
+| Core's real success: image/video/profile icon top-level media fields, pinger nested `data`, support sent `message` OBJECT plus replay/capabilities, persona `profile` + `persona_admin` | Original feature response/projection | Existing success handling, no added permission; six source-derived production-route regressions |
+| Other 2xx (including malformed feature bodies) | Passed to the original feature handler | AUTH classifier does not constrain feature success shapes; original per-feature validation remains |
 | Existing named input/conflict refusal (other 4xx) | Existing feature status | Existing feature handling; no vocabulary change |
 
 Real HTTP errors cannot be overwritten by a logical success body in these

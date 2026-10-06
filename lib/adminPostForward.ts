@@ -1,5 +1,5 @@
 import { classifyAdminMembership } from "@/lib/adminMembership";
-import { webadminEnvelope, webadminErrorEnvelope } from "@/lib/webadminEnvelope";
+import { webadminErrorEnvelope } from "@/lib/webadminEnvelope";
 
 /** An attempted action may have run: never label these errors as pre-forward refusals. */
 export function adminPostForwardError(result: { status: number; data: unknown }, email: string, abandoned = false):
@@ -16,13 +16,8 @@ export function adminPostForwardError(result: { status: number; data: unknown },
     const error = data?.success === false && (data.error === "core-timeout" || data.error === "core-unavailable") ? data.error : "invalid-core-response";
     return { status: 502, error };
   }
-  if (result.status >= 200 && result.status < 400) {
-    const positive = webadminEnvelope(result.data, true, []);
-    if (result.status !== 200 || positive?.status_code !== 200 || Object.hasOwn(result.data as object, "error")) {
-      return { status: 502, error: "invalid-core-response" };
-    }
-  }
-  // Existing named validation/conflict refusals (4xx other than auth) remain
-  // the feature handler's responsibility; no feature vocabulary is changed.
+  // AUTH outcomes only. A feature can own `message` (support_send carries the
+  // sent message object), and its success/validation shape is not membership.
+  // Pass 2xx and existing non-auth refusals to the original feature handler.
   return null;
 }
