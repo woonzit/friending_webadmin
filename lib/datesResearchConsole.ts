@@ -80,7 +80,10 @@ const NO_WRITE: Readonly<Record<string, number>> = {
   "dates-research-aggregator-autopublish-invalid": 422, "dates-admin-reason-required": 422, "dates-admin-idempotency-invalid": 422,
   "dates-research-disabled": 409, "dates-research-source-disabled": 409,
   "dates-research-batch-invalid": 422, "dates-external-confirmation-required": 422,
-}; // FINAL pinned HTTP witnesses plus provider no-write snapshots; child refusals are batch receipts, not entries here.
+  "dates-research-place-unavailable": 503, "dates-research-place-invalid": 422, "dates-research-scope-invalid": 422,
+  "dates-research-id-invalid": 422, "dates-research-revision-invalid": 422, "dates-research-mode-invalid": 422,
+  "dates-research-source-type-invalid": 422, "dates-research-not-found": 404, "dates-intake-reason-invalid": 422,
+}; // Pinned HTTP witnesses and audited Core validation/rollback paths. Child refusals are batch receipts, not entries here.
 export async function runResearchCommand(send: ResearchSend, command: ResearchCommand): Promise<ResearchCommandOutcome> {
   let response: unknown;
   try { response = await send(command.action, command.body); } catch { return { kind: "uncertain", error: null }; }
@@ -91,7 +94,7 @@ export async function runResearchCommand(send: ResearchSend, command: ResearchCo
     if (partial) return { kind: "uncertain", error: null, partial };
   }
   const refusal = datesIntakeRefusal(response);
-  if (refusal.kind === "core" && refusal.status < 500) {
+  if (refusal.kind === "core") {
     if (refusal.status === 409 && refusal.error === "dates-research-conflict") return { kind: "conflict", error: refusal.error };
     if (Object.hasOwn(NO_WRITE, refusal.error) && NO_WRITE[refusal.error] === refusal.status) return { kind: "refused", error: refusal.error };
   }

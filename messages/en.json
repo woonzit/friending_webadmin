@@ -8381,6 +8381,15 @@
         "uncertain": "The outcome is not known. Retry sends the exact same command and idempotency key."
       },
       "commandErrors": {
+        "dates-research-place-unavailable": "Core could not resolve usable city boundaries. No city was saved by this attempt. Choose another city or retry when the place service is available.",
+        "dates-research-place-invalid": "Choose a valid city from the search results. An existing city's place cannot be changed.",
+        "dates-research-scope-invalid": "Check the city or radius scope and the radius against Core's returned limits.",
+        "dates-research-id-invalid": "The city or source identifier is invalid. Refresh and select the stored row again.",
+        "dates-research-revision-invalid": "Refresh the stored row before saving; its revision is missing or invalid.",
+        "dates-research-mode-invalid": "Choose Automatic, On or Off for the city mode.",
+        "dates-research-source-type-invalid": "Choose Official or Aggregator as the source type.",
+        "dates-research-not-found": "The selected city or source no longer exists. Refresh and choose an available row.",
+        "dates-intake-reason-invalid": "Choose a supported rejection reason before submitting the batch.",
         "dates-research-disabled": "Turn on research in Defaults to start a new check or preview.",
         "dates-research-source-disabled": "A live check requires an enabled source. An archived source cannot be checked or previewed.",
         "dates-research-batch-invalid": "Check the selected intakes and their current revisions before submitting the batch again.",

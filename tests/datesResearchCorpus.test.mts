@@ -10,7 +10,7 @@ import { projectDatesAdminBody } from "../lib/datesAdminProjection.ts";
 import { datesIntakeRefusal, projectDatesIntakeQueue } from "../lib/datesIntakeAdmin.ts";
 import { decodeResearchCommandReceipt, prepareResearchCommand, runResearchCommand } from "../lib/datesResearchConsole.ts";
 import { researchDefaultValues, researchRunningState, researchStock } from "../lib/datesResearchView.ts";
-import { GENUINE_DEFAULTS, researchFixture } from "./support/datesResearchCorpus.ts";
+import { GENUINE_AREA, GENUINE_DEFAULTS, researchFixture } from "./support/datesResearchCorpus.ts";
 
 const directory = new URL("./fixtures/dates_event_research_admin_wire/", import.meta.url);
 const bytes = (file: string) => readFileSync(new URL(file, directory));
@@ -153,6 +153,16 @@ test("genuine conflict is a definite conflict; verified no-write validation refu
     assert.equal((await runResearchCommand(async () => researchFixture(name), command)).kind, "uncertain", name);
   const unexpectedStatus = { ...researchFixture("admin-values-denied.json"), status_code: 409 };
   assert.equal((await runResearchCommand(async () => unexpectedStatus, command)).kind, "uncertain", "a familiar token at an unverified status is not proof of no write");
+});
+test("GENUINE place-unavailable 503 is a definite pre-transaction refusal, not a generic server failure", async () => {
+  const command = prepareResearchCommand("admin@example.test", "dates_event_research_area_save", {
+    place_id: "derived_city", mode: "auto", overrides: GENUINE_AREA.overrides, reason: "Choose a city with usable boundaries",
+  })!;
+  const body = researchFixture("admin-place-unavailable-denied.json");
+  assert.equal(body.status_code, 503);
+  assert.deepEqual(await runResearchCommand(async () => body, command), { kind: "refused", error: "dates-research-place-unavailable" });
+  for (const change of [{ error: "server-unavailable" }, { status_code: 500 }, { status_code: 504 }])
+    assert.equal((await runResearchCommand(async () => ({ ...body, ...change }), command)).kind, "uncertain");
 });
 test("GENUINE FINAL no-write witnesses settle source gates and top-level batch validation, never child or authority refusals", async () => {
   const queued = researchFixture("admin-source-dry-queued.json");

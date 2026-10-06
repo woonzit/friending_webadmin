@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
-import { prepareResearchCommand } from "../lib/datesResearchConsole.ts";
+import { prepareResearchCommand, runResearchCommand } from "../lib/datesResearchConsole.ts";
+import { GENUINE_AREA, researchFixture } from "./support/datesResearchCorpus.ts";
 
 // Execute the production hook's handlers with a controlled hook scheduler and
 // command transport. This is not a React/browser mount or a provider capture.
@@ -36,6 +37,17 @@ function harness() {
   return { render, calls, success, conflicts };
 }
 const input = { source_id: "xrs_" + "1".repeat(32), expected_revision: 1, dry_run: true };
+test("GENUINE place refusal releases the production hook so another city can be submitted without a page reload", async () => {
+  const h = harness();
+  const body = { place_id: "derived_first", mode: "auto", overrides: GENUINE_AREA.overrides, reason: "Choose a supported city" };
+  const first = h.render().submit("dates_event_research_area_save", body);
+  h.calls[0].resolve(await runResearchCommand(async () => researchFixture("admin-place-unavailable-denied.json"), h.calls[0].command)); await first;
+  const settled = h.render(); assert.equal(settled.retained, false); assert.equal(settled.pending, null); assert.equal(settled.outcome.kind, "refused");
+  const second = settled.submit("dates_event_research_area_save", { ...body, place_id: "derived_second" });
+  assert.equal(h.calls.length, 2); assert.equal(h.calls[1].command.body.place_id, "derived_second");
+  assert.notEqual(h.calls[0].command.body.idempotency_key, h.calls[1].command.body.idempotency_key);
+  h.calls[1].resolve({ kind: "refused", error: "dates-research-place-unavailable" }); await second;
+});
 test("research command is retained before sending and rapid double submits cannot create another identity", async () => {
   const h = harness(), first = h.render();
   const pending = first.submit("dates_event_research_source_run_now", input);

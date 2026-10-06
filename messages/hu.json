@@ -8381,6 +8381,15 @@
         "uncertain": "A művelet eredménye nem ismert. Az újrapróbálás pontosan ugyanazt a kérést és azonosítót küldi el."
       },
       "commandErrors": {
+        "dates-research-place-unavailable": "A Core nem tudott használható városhatárokat feloldani. Ez a próbálkozás nem mentett várost. Válassz másik várost, vagy próbáld újra, amikor a helyszolgáltatás elérhető.",
+        "dates-research-place-invalid": "Válassz érvényes várost a keresési találatokból. Egy már tárolt város helye nem módosítható.",
+        "dates-research-scope-invalid": "Ellenőrizd a városi vagy sugaras területet, és a sugarat a Core által megadott korlátokhoz képest.",
+        "dates-research-id-invalid": "A város vagy a forrás azonosítója érvénytelen. Frissíts, majd válaszd ki újra a tárolt sort.",
+        "dates-research-revision-invalid": "Mentés előtt frissítsd a tárolt sort: a verziószáma hiányzik vagy érvénytelen.",
+        "dates-research-mode-invalid": "A város módjaként az Automatikus, Be vagy Ki lehetőséget válaszd.",
+        "dates-research-source-type-invalid": "Forrástípusként a Hivatalos vagy a Gyűjtőoldal lehetőséget válaszd.",
+        "dates-research-not-found": "A kiválasztott város vagy forrás már nem létezik. Frissíts, és válassz elérhető sort.",
+        "dates-intake-reason-invalid": "A csoportos döntés előtt válassz támogatott elutasítási indokot.",
         "dates-research-disabled": "Új átnézéshez vagy próbához kapcsold be a kutatást az Alapértékeknél.",
         "dates-research-source-disabled": "Éles átnézés csak bekapcsolt forráson indítható. Archivált forráson próba sem indítható.",
         "dates-research-batch-invalid": "Új beküldés előtt ellenőrizd a kijelölt beküldéseket és az aktuális verziójukat.",
