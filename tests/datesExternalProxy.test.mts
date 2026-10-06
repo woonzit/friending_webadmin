@@ -6,6 +6,7 @@ import ts from "typescript";
 import * as actions from "../lib/adminActions.ts";
 import { isTrustedAdminRequest } from "../lib/requestGuard.ts";
 import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
+import { webadminErrorEnvelope } from "../lib/webadminEnvelope.ts";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
 import { MEMBERSHIP_MEMBER, membershipRefusal } from "./support/adminMembershipCases.mts";
 import { datesAvailabilityWriteIsRetired } from "../lib/datesAdmin.ts";
@@ -37,7 +38,7 @@ function harness() {
   // Parsing shares the production helpers' realm, so their plain-object guard
   // is tested without the artificial vm Object.prototype mismatch.
   // D-143: the route adds the Admin intake contract selector to Dates requests itself (the real function, as it is).
-  const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, withDatesAdminContract,
+  const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, webadminErrorEnvelope, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, withDatesAdminContract,
     // The route hands the browser the projection of a Dates body (lead's ruling on D-143): the real functions, as they are.
     isDatesAdminRoute, projectDatesAdminResponse,
     datesAvailabilityWriteIsRetired, datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody,

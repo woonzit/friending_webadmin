@@ -115,12 +115,15 @@ Real HTTP errors cannot be overwritten by a logical success body in these
 opted-in transports. Uncertainty-notice dismissal is presentation only: it
 does not settle, delete, regenerate or retry any durable command identity.
 
-The generic action bridge also refuses to expose any HTTP 5xx as feature
-success, even with a complete positive logical envelope. Known synthesized
-transport failures retain their public 502/504; other 5xx become 502
-`invalid-core-response` with `success: false` and no feature data. This happens
-after forwarding, so it never proves that a write did not occur. Ordinary
-healthy feature successes keep the original handler-owned shape.
+The generic action bridge refuses to expose HTTP 5xx SUCCESS bodies as feature
+success. Known synthesized transport failures retain public 502/504; malformed
+or successful 5xx bodies become 502 `invalid-core-response`, `success: false`,
+without feature data. A complete named Core refusal with matching logical
+status keeps its name/status as on main, including 503
+`dates-research-place-unavailable` and policy/storage refusals. Only the
+existing pinned feature classifiers decide whether a named refusal proves
+no write; keeping a refusal name does not add a settlement token. Ordinary
+healthy feature successes retain their original handler-owned shapes.
 
 ## Deliberate cancellation and sign-in behavior
 

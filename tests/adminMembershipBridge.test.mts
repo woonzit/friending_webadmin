@@ -6,6 +6,11 @@ import ts from "typescript";
 import * as actions from "../lib/adminActions.ts";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
 import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
+import { webadminErrorEnvelope } from "../lib/webadminEnvelope.ts";
+import { normalizeDatesResearchProxyBody, datesResearchProxyCapabilityAuthorized } from "../lib/datesResearchProxy.ts";
+import { isDatesAdminRoute, projectDatesAdminResponse } from "../lib/datesAdminProjection.ts";
+import { prepareResearchCommand, runResearchCommand } from "../lib/datesResearchConsole.ts";
+import { GENUINE_AREA, researchFixture } from "./support/datesResearchCorpus.ts";
 import { isTrustedAdminRequest } from "../lib/requestGuard.ts";
 import { withDatesAdminContract } from "../lib/datesAdminContract.ts";
 import { MEMBERSHIP_CASES, MEMBERSHIP_EMAIL, MEMBERSHIP_MEMBER, type MembershipCase } from "./support/adminMembershipCases.mts";
@@ -17,11 +22,11 @@ const tree = ts.createSourceFile("route.ts", source, ts.ScriptTarget.Latest, tru
 const code = ts.transpileModule(tree.statements.filter((node) => !ts.isImportDeclaration(node)).map((node) => node.getText(tree)).join("\n"),
   { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 
-async function bridge(answer: MembershipCase, action: string, config: { guest?: boolean; sessionThrows?: boolean; throws?: boolean; finalMe?: MembershipCase; abandonBody?: boolean; featureAnswer?: { status: number; data: unknown; abandoned?: boolean } } = {}) {
+async function bridge(answer: MembershipCase, action: string, config: { guest?: boolean; sessionThrows?: boolean; throws?: boolean; finalMe?: MembershipCase; abandonBody?: boolean; research?: boolean; body?: unknown; featureAnswer?: { status: number; data: unknown; abandoned?: boolean } } = {}) {
   const controller = new AbortController(), forwarded: string[] = [], checks: unknown[] = [];
   let bodyReads = 0;
   const context: any = { exports: {}, Buffer, JSON, ...actions, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership,
-    adminBridgeCoreTransportError, isTrustedAdminRequest, withDatesAdminContract,
+    adminBridgeCoreTransportError, webadminErrorEnvelope, isTrustedAdminRequest, withDatesAdminContract,
     ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
     readAdminSession: async () => { if (config.sessionThrows) throw new Error("DERIVED cookie read failure"); return config.guest ? null : { email: MEMBERSHIP_EMAIL }; },
     coreCall: async (name: string, payload: Record<string, unknown>, timeout: number, options: unknown) => {
@@ -39,7 +44,8 @@ async function bridge(answer: MembershipCase, action: string, config: { guest?: 
       return config.featureAnswer ?? { status: 200, data: { success: true, protected_value: "derived protected result" } };
     },
     mergeCoreParams: (input: Record<string, unknown>, owned: Record<string, unknown>) => ({ ...input, ...owned }),
-    datesAvailabilityWriteIsRetired: () => false, isDatesAdminRoute: () => false,
+    datesAvailabilityWriteIsRetired: () => false, isDatesAdminRoute: config.research ? isDatesAdminRoute : () => false,
+    ...(config.research ? { normalizeDatesResearchProxyBody, datesResearchProxyCapabilityAuthorized, projectDatesAdminResponse } : {}),
     NextResponse: { json: (value: unknown, options: ResponseInit) => new Response(JSON.stringify(value), options) },
   };
   for (const node of tree.statements) {
@@ -54,7 +60,7 @@ async function bridge(answer: MembershipCase, action: string, config: { guest?: 
   vm.runInNewContext(code, context);
   const headers = new Headers({ origin: "https://admin.example.test", host: "admin.example.test", "sec-fetch-site": "same-origin", "x-friending-admin-request": "1" });
   const response = await context.exports.POST({ headers, signal: controller.signal, text: async () => {
-    bodyReads++; if (config.abandonBody) controller.abort(); return "{}";
+    bodyReads++; if (config.abandonBody) controller.abort(); return JSON.stringify(config.body ?? {});
   } }, { params: Promise.resolve({ action }) }) as Response;
   return { status: response.status, body: await response.json(), headers: response.headers, checks, forwarded, bodyReads };
 }
@@ -127,4 +133,28 @@ test("DERIVED generic post-forward: named synthesized transport failures retain 
   const data = { success: true, message: { smid: 91 }, protected_value: "DERIVED healthy feature response" };
   const result = await bridge(MEMBERSHIP_CASES[0], "set_settings", { featureAnswer: { status: 200, data } });
   assert.equal(result.status, 200); assert.deepEqual(result.body, data);
+});
+test("DERIVED generic bridge: complete named Core 5xx refusals keep status/name while incomplete or successful bodies stay unknown", async () => {
+  for (const [status, error] of [[503, "location-access-policy-unavailable"], [503, "dates-admin-unavailable"], [503, "dates-intake-storage-unavailable"], [500, "derived-storage-refusal"]] as const) {
+    const data = { ...MEMBERSHIP_MEMBER, success: false, status_code: status, error };
+    const result = await bridge(MEMBERSHIP_CASES[0], "overview", { featureAnswer: { status, data } });
+    assert.equal(result.status, status); assert.deepEqual(result.body, data); assert.deepEqual(result.forwarded, ["overview"]);
+    const incomplete = await bridge(MEMBERSHIP_CASES[0], "overview", { featureAnswer: { status, data: { success: false, status_code: status, error } } });
+    assert.equal(incomplete.status, 502); assert.equal(incomplete.body.error, "invalid-core-response");
+  }
+});
+test("GENUINE city-unavailable 503 through the production bridge/projection settles the first command; HTTP 500 success remains unknown", async () => {
+  const command = prepareResearchCommand(MEMBERSHIP_EMAIL, "dates_event_research_area_save", {
+    place_id: "derived_city", mode: "auto", overrides: GENUINE_AREA.overrides, reason: "Choose a supported city" });
+  assert.ok(command);
+  const member: MembershipCase = { ...MEMBERSHIP_CASES[0], data: { ...MEMBERSHIP_MEMBER, dates: { email: MEMBERSHIP_EMAIL, role: "administrator", rank: 40,
+    linked_uid: null, sensitive_location: false, break_glass: false, capabilities: ["dates_external_event_manage"] } } };
+  const data = researchFixture("admin-place-unavailable-denied.json");
+  const refused = await bridge(member, command.action, { research: true, body: command.body, featureAnswer: { status: 503, data } });
+  assert.equal(refused.status, 503); assert.equal(refused.body.error, "dates-research-place-unavailable");
+  assert.deepEqual(refused.forwarded, [command.action]);
+  assert.deepEqual(await runResearchCommand(async () => refused.body, command), { kind: "refused", error: "dates-research-place-unavailable" });
+  const unknown = await bridge(member, command.action, { research: true, body: command.body, featureAnswer: { status: 500, data: { ...MEMBERSHIP_MEMBER } } });
+  assert.equal(unknown.status, 502); assert.equal(unknown.body.success, false);
+  assert.equal((await runResearchCommand(async () => unknown.body, command)).kind, "uncertain");
 });

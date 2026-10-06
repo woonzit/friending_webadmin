@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminBridgeCoreTransportError } from "@/lib/adminBridge";
+import { webadminErrorEnvelope } from "@/lib/webadminEnvelope";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "@/lib/adminMembership";
 import {
   adminGrantedVerificationLegacyReceiptRetryAuthorized,
@@ -395,10 +396,11 @@ export async function POST(
   if (transportError) {
     return bridgeError(transportError.error, transportError.status_code);
   }
-  // HTTP failure wins over every logical body, even success:true. The action
-  // was already forwarded: expose an unknown outcome, never successful data
-  // or a definite pre-forward refusal.
-  if (result.status >= 500) return bridgeError("invalid-core-response", 502);
+  // A 5xx SUCCESS or malformed body is unknown, not feature success. Preserve
+  // complete named Core refusal envelopes at their actual logical status:
+  // existing feature classifiers, not membership, own their settlement.
+  const namedRefusal = webadminErrorEnvelope(result.data) ?? webadminErrorEnvelope(result.data, "required");
+  if (result.status >= 500 && namedRefusal?.status_code !== result.status) return bridgeError("invalid-core-response", 502);
   const coreError = (result.data as Record<string, unknown> | null)?.error;
   if (invalidatesAdminSession(result.status, coreError)) {
     // A feature reply can race a revocation, but an unknown/service 401 is

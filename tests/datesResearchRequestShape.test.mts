@@ -6,6 +6,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import * as actions from "../lib/adminActions.ts";
 import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
+import { webadminErrorEnvelope } from "../lib/webadminEnvelope.ts";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
 import { datesAvailabilityWriteIsRetired } from "../lib/datesAdmin.ts";
 import { withDatesAdminContract } from "../lib/datesAdminContract.ts";
@@ -43,7 +44,7 @@ async function bridge(action: string, browser: unknown, answer: unknown = DERIVE
     return { status: 200, json: async () => answer } as Response;
   }) as typeof globalThis.fetch;
   try {
-    const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, datesAvailabilityWriteIsRetired, withDatesAdminContract,
+    const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, webadminErrorEnvelope, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, datesAvailabilityWriteIsRetired, withDatesAdminContract,
       isDatesAdminRoute, projectDatesAdminResponse, datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody, datesResearchProxyCapabilityAuthorized, normalizeDatesResearchProxyBody,
       ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true, readAdminSession: async () => ({ email: actor }), coreCall, mergeCoreParams,
       NextResponse: { json: (value: unknown, options: ResponseInit) => new Response(JSON.stringify(value), { ...options, headers: { ...options.headers, "Content-Type": "application/json" } }) } };
