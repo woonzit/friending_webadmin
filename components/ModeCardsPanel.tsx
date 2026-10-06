@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { adminCall, adminUploadProfileIcon, type AdminResponse } from "@/lib/adminClient";
@@ -115,7 +114,7 @@ export function ModeCardsEditor({
     }
     onIconError(card, "");
     onUploadingChange(card);
-    const response = await adminUploadProfileIcon(file).catch(adminMembershipRefusalForUi);
+    const response = await adminUploadProfileIcon(file);
     onUploadingChange(null);
     if (!response?.success
       || typeof response.media_url !== "string"
@@ -345,7 +344,7 @@ export default function ModeCardsPanel() {
     let response: AdminResponse | null;
     if (existing) {
       // Never mint a second request id: the retry is the SAME command.
-      response = await adminCall(existing.action, existing.payload).catch(adminMembershipRefusalForUi);
+      response = await adminCall(existing.action, existing.payload);
     } else {
       const issued = command;
       const persisted = await modeCardsPersistBeforeMutation(
@@ -354,7 +353,7 @@ export default function ModeCardsPanel() {
         () => {
           pendingRef.current = issued;
           setPending(issued);
-          return adminCall(issued.action, issued.payload).catch(adminMembershipRefusalForUi);
+          return adminCall(issued.action, issued.payload);
         },
       );
       if (!persisted.ok) {

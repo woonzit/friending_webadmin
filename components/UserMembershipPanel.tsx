@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -303,7 +302,7 @@ export default function UserMembershipPanel({
     setBusy("preview");
     setNotice(null);
     setPreview(null);
-    const response = await adminCall("membership_admin_grant_preview", grantBody()).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("membership_admin_grant_preview", grantBody());
     setBusy("");
     if (!response?.success) {
       setNotice({ tone: "error", text: actionErrorText("grant_preview", response?.error) });
@@ -407,7 +406,7 @@ export default function UserMembershipPanel({
       expires_at: expiryWire,
       reason: normalizedReason(expiryReason),
       request_id: crypto.randomUUID(),
-    }).catch(adminMembershipRefusalForUi);
+    });
     const adopted = response?.success === true && adopt(response.data);
     const outcome = membershipMutationOutcome("expiry_update", response, adopted);
     if (outcome !== "success") {
@@ -440,7 +439,7 @@ export default function UserMembershipPanel({
       expected_grant_id: currentGrant.grant_id,
       reason: normalizedReason(expiryReason),
       request_id: crypto.randomUUID(),
-    }).catch(adminMembershipRefusalForUi);
+    });
     const adopted = response?.success === true && adopt(response.data);
     const outcome = membershipMutationOutcome("grant_revoke", response, adopted);
     if (outcome !== "success") {

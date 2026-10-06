@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
@@ -265,7 +264,7 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
         x: crop.x,
         y: crop.y,
         size: crop.size,
-      }).catch(adminMembershipRefusalForUi);
+      });
       savingRef.current = false;
       setBusy(false);
       if (response?.success !== true) {
@@ -289,7 +288,7 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
       uid,
       image_id: imageId,
       image_b64: encoded,
-    }).catch(adminMembershipRefusalForUi);
+    });
     savingRef.current = false;
     setBusy(false);
     if (response?.success !== true) {

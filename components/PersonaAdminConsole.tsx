@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -457,7 +456,7 @@ export default function PersonaAdminConsole() {
     setMemberFeedback(null);
     setMemberRecoveryRequired(false);
     setConfirmation(null);
-    const response = await adminCall("persona-member", { uid: String(uid) }).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("persona-member", { uid: String(uid) });
     setTargetBusy(false);
     const parsedTarget = personaTargetLookupResponse(response);
     if (!parsedTarget) {
@@ -497,7 +496,7 @@ export default function PersonaAdminConsole() {
 
     let response;
     if (existing) {
-      response = await adminCall(existing.action, existing.payload).catch(adminMembershipRefusalForUi);
+      response = await adminCall(existing.action, existing.payload);
     } else {
       const persisted = await personaPersistBeforeMutation(
         window.sessionStorage,
@@ -505,7 +504,7 @@ export default function PersonaAdminConsole() {
         () => {
           pendingRef.current = next;
           setPending(next);
-          return adminCall(next.action, next.payload).catch(adminMembershipRefusalForUi);
+          return adminCall(next.action, next.payload);
         },
       );
       if (!persisted.ok) {

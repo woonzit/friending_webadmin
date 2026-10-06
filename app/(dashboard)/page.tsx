@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
 import RegistrationPlatformStats from "@/components/RegistrationPlatformStats";
 import { EmptyPanel, ErrorPanel, LoadingPanel } from "@/components/StatePanel";
-import { adminCall, AdminMembershipUnconfirmedClientError } from "@/lib/adminClient";
+import { adminCall } from "@/lib/adminClient";
 import { useAdminReadRecovery } from "@/components/useAdminReadRecovery";
 import { formatDate, formatNumber } from "@/lib/format";
 import { parseSignupMetrics } from "@/lib/signupMetrics";
@@ -42,12 +42,7 @@ export default function OverviewPage() {
     const generation = ++requestGeneration.current;
     setRefreshing(true);
     setState(data ? "ready" : "loading");
-    let response;
-    try { response = await adminCall("overview"); } catch (error) {
-      if (!(error instanceof AdminMembershipUnconfirmedClientError)) throw error;
-      if (generation !== requestGeneration.current) return;
-      setRefreshing(false); setState("error"); return;
-    }
+    const response = await adminCall("overview");
     if (generation !== requestGeneration.current) return;
     setRefreshing(false);
     if (response?.success !== true || response.status_code !== 200

@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import React, { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
@@ -143,7 +142,7 @@ export default function UserProfileDataEditor({
       // change" (T-634 refuses a stray `height_cm` key).
       builtin_values_json: JSON.stringify(data.height ? { height_cm: heightCm } : {}),
       lang: locale,
-    }).catch(adminMembershipRefusalForUi);
+    });
     setFieldBusy(false);
     const parsed = userProfileFields(response?.data);
     if (!response?.success || !parsed) {

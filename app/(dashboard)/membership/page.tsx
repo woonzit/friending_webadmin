@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -198,7 +197,7 @@ export default function MembershipConfigurationPage() {
       expected_revision: catalogue.configuration.revision,
       configuration: membershipConfigurationCandidate(draft),
       request_id: crypto.randomUUID(),
-    }).catch(adminMembershipRefusalForUi);
+    });
     setSaving(false);
     if (!response?.success) {
       const errorKey = membershipActionErrorKey("configuration_save", response?.error);

@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -523,7 +522,7 @@ export default function ProfileFieldsPage() {
     const response = await adminCall("save_profile_section_layout", {
       sections_json: JSON.stringify(sections),
       expected_revision: layout.revision,
-    }).catch(adminMembershipRefusalForUi);
+    });
     setLayoutBusy(false);
     const parsed = profileSectionLayout(response?.layout);
     if (!response?.success || !parsed) {
@@ -583,7 +582,7 @@ export default function ProfileFieldsPage() {
       sort_order: fieldEditor.sortOrder,
       active: fieldEditor.active,
       expected_revision: fieldEditor.revision,
-    }).catch(adminMembershipRefusalForUi);
+    });
     setBusy(false);
     if (!response?.success || !applyCatalog(response.catalog)) {
       setError(saveErrorMessage(response?.error));
@@ -613,7 +612,7 @@ export default function ProfileFieldsPage() {
       sort_order: optionEditor.sortOrder,
       active: optionEditor.active,
       expected_revision: optionEditor.revision,
-    }).catch(adminMembershipRefusalForUi);
+    });
     setBusy(false);
     if (!response?.success || !applyCatalog(response.catalog)) {
       setError(saveErrorMessage(response?.error));
@@ -627,8 +626,8 @@ export default function ProfileFieldsPage() {
     if (!archive) return;
     setBusy(true);
     const response = archive.type === "field"
-      ? await adminCall("archive_profile_field", { field_key: archive.field.key, expected_revision: archive.field.revision }).catch(adminMembershipRefusalForUi)
-      : await adminCall("archive_profile_field_option", { field_key: archive.field.key, option_key: archive.option.key, expected_revision: archive.option.revision }).catch(adminMembershipRefusalForUi);
+      ? await adminCall("archive_profile_field", { field_key: archive.field.key, expected_revision: archive.field.revision })
+      : await adminCall("archive_profile_field_option", { field_key: archive.field.key, option_key: archive.option.key, expected_revision: archive.option.revision });
     setBusy(false);
     if (!response?.success || !applyCatalog(response.catalog)) {
       setToast(response?.error === "profile-field-minimum-unavailable"

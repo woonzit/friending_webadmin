@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
@@ -133,7 +132,7 @@ export default function AudienceVisibilityUserPanel({
     requestRef.current = request;
     setBusy(true);
     setNotice(null);
-    const response = await adminCall(AUDIENCE_VISIBILITY_IDENTITY_ACTIONS[0], body).catch(adminMembershipRefusalForUi);
+    const response = await adminCall(AUDIENCE_VISIBILITY_IDENTITY_ACTIONS[0], body);
     setBusy(false);
 
     const result = audienceVisibilityMemberIdentityMutationResponse(response);

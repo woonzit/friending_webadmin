@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import {
   DragEvent,
   useId,
@@ -81,7 +80,7 @@ export default function VideoUploadField({
     setBusy(true);
     onBusyChangeRef.current?.(true);
     try {
-      const response = await adminUploadVideo(file).catch(adminMembershipRefusalForUi);
+      const response = await adminUploadVideo(file);
       if (!response?.success || typeof response.media_url !== "string") {
         setError(localizedError(response?.error));
         return;

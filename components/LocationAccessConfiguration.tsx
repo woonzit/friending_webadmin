@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -191,7 +190,7 @@ export default function LocationAccessConfiguration() {
     inFlight.current = true;
     const body = locationAccessPolicySaveBody(model.stored.configuration.revision, model.draft);
     dispatch({ type: "saveStarted" });
-    const response = await adminCall("save_location_access_policy", body).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("save_location_access_policy", body);
     const outcome = locationAccessPolicySaveOutcome(response, body);
     setConfirming(null);
     dispatch({ type: "saveFinished", outcome });

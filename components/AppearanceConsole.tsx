@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import AppearanceRuleEditor from "@/components/AppearanceRuleEditor";
@@ -180,7 +179,7 @@ export default function AppearanceConsole() {
     }
     setBusy(true);
     setFormError("");
-    const response = await adminCall("appearance_rules_save", { id: draft.id, expected_revision: draft.revision, rule: input }).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("appearance_rules_save", { id: draft.id, expected_revision: draft.revision, rule: input });
     const decoded = decodeAppearanceSaveResponse(response, { id: draft.id, expected_revision: draft.revision, input });
     if (decoded.ok) {
       const saved = decoded.value;
@@ -214,7 +213,7 @@ export default function AppearanceConsole() {
     }
     setBusy(true);
     const target = deleting;
-    const response = await adminCall("appearance_rules_delete", { id: target.id, expected_revision: target.revision }).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("appearance_rules_delete", { id: target.id, expected_revision: target.revision });
     const decoded = decodeAppearanceDeleteResponse(response, target.id);
     setDeleting(null);
     if (decoded.ok) {

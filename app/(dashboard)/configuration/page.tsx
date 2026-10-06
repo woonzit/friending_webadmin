@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import AuthPolicyConfigurationCard from "@/components/AuthPolicyConfigurationCard";
@@ -137,7 +136,7 @@ export default function ConfigurationPage() {
     const response = await adminCall("set_settings", {
       settings: payload,
       ...(expectedRevision === undefined ? {} : { expected_revision: expectedRevision }),
-    }).catch(adminMembershipRefusalForUi);
+    });
     const saved = configurationSnapshot(response, currentAuthPolicy?.vocabulary);
     if (saved) {
       if (kind === "runtime") {

@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AppReviewCheckList } from "@/components/AppReviewCheckList";
@@ -116,7 +115,7 @@ export default function AppReviewSandboxPage() {
       request_id: request.requestId,
       expected_revision: request.expectedRevision,
       confirmation: phrase,
-    }).catch(adminMembershipRefusalForUi);
+    });
     const result = response?.success ? appReviewResetResult(response.data) : null;
     if (!result) {
       const key = appReviewResetErrorKey(response?.error);

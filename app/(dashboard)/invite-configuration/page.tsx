@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import InviteAttributionPanel from "@/components/InviteAttributionPanel";
@@ -169,7 +168,7 @@ export default function InviteConfigurationPage() {
     }
     setBusy(true);
     setStatusMessage(null);
-    const response = await adminCall("save_invite_configuration", inviteSaveBody(draft)).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("save_invite_configuration", inviteSaveBody(draft));
     setBusy(false);
     if (response?.success && adopt(response.data)) {
       setStatusMessage({ tone: "success", text: t("saved") });

@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -65,7 +64,7 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
     if (!decoded && nextPrincipal && saved?.kind === "pending" && saved.pending.baseline?.external_event_id === externalId) {
       // A successful purge may have removed the detail before its receipt was
       // received. Recover through independent fresh access, not missing detail.
-      const access = await readDatesExternalMutationAccess((action, body) => adminCall(action, body, signal).catch(adminMembershipRefusalForUi), saved.pending);
+      const access = await readDatesExternalMutationAccess((action, body) => adminCall(action, body, signal), saved.pending);
       if (signal?.aborted || current !== generation.current) return;
       if (access?.actor === nextPrincipal.email) {
         setData(null); setEditorOpened(false); setPrincipal(nextPrincipal); setCanManage(true); setPending(saved);

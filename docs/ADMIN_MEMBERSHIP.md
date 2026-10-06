@@ -32,12 +32,13 @@ The boundary is wired in separate commits for the bridge, client, session
 gates, layout, and direct intake gate. Their production-handler tests exercise
 every applicable row above, including malformed 200 and abandoned requests
 that receive a late positive or negative answer. EVERY unconfirmed client call
-rejects immediately with `AdminMembershipUnconfirmedClientError`, including
-reads, writes and uploads. No Promise/request is held or re-sent: a pre-write
-read cannot silently resume its command after recovery or an account change.
-UI mutation handlers explicitly catch that typed refusal for their normal
-error/busy cleanup; unrelated exceptions are rethrown. This never turns a
-failed pre-write read into permission, and no rejected attempt is retried.
+resolves immediately to an ordinary failure result with the distinct typed
+`admin-membership-unconfirmed` code, including reads, writes and uploads.
+It does NOT throw into existing callers. No Promise/request is held or re-sent:
+a pre-write read cannot silently resume its command after recovery or an
+account change. Existing read, write and helper callers run their normal
+failure/busy cleanup and keep edits; no per-call exception conversion is
+needed. A failed pre-write read is never permission to continue a command.
 
 Automatic recovery probes membership only. Its recovery event starts ONLY
 registered read-only page loaders from the top: Overview when it has no data
@@ -50,8 +51,9 @@ Fresh healthy membership probes do not reset that budget; a request-specific
 connection failure cannot loop forever. After exhaustion the page retains its
 error and manual reload. Unmount cancels a scheduled attempt, and eligibility
 is rechecked at execution. All other pages/editors rely on their existing manual reload,
-plus a Shell-wide manual page reload after recovery for an interrupted legacy
-loader. That fallback has an explicit in-page second confirmation warning that
+plus a Shell-wide optional manual page reload after recovery. Ordinary request
+failures clear the caller's busy state and show its existing error without
+requiring that reload or losing drafts. The fallback has an explicit in-page second confirmation warning that
 unsaved state/in-memory retry identities will be discarded and a previously
 forwarded write may still finish. It never sends a mutation. A refused write
 requires a new operator attempt and another fresh server membership check.
@@ -143,7 +145,7 @@ is the explicit way to clear that session.
 
 `persona-member` is a dedicated read-only lookup URI, not a generic action.
 Its client metadata now suppresses the false lost-WRITE warning for lookup
-failures; it still rejects an unconfirmed call immediately, and recovery never
+failures; it still returns an unconfirmed failure immediately, and recovery never
 replays it. Its server writer-role, capability, projection and fresh membership
 checks are unchanged. No authorization, action allow-list, Core vocabulary or
 audit policy was expanded.

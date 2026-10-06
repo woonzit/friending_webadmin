@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
@@ -104,7 +103,7 @@ export default function UserAlbumsPanel({ uid }: { uid: number }) {
   async function remove(image: AlbumImage) {
     if (!canWrite || !window.confirm(t("deleteAlbumImageConfirm"))) return;
     setBusy(image.id);
-    const response = await adminCall("admin_delete_profile_album_image", { image_id: image.id }).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("admin_delete_profile_album_image", { image_id: image.id });
     setBusy("");
     if (!response?.success) {
       // `error` replaces the whole panel with a *load* failure, so reusing it here destroyed the
@@ -121,7 +120,7 @@ export default function UserAlbumsPanel({ uid }: { uid: number }) {
   async function makeMain(image: AlbumImage) {
     if (!canWrite || !window.confirm(t("makeMainConfirm"))) return;
     setBusy(image.id);
-    const response = await adminCall("admin_set_main_photo", { uid, image_id: image.id }).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("admin_set_main_photo", { uid, image_id: image.id });
     setBusy("");
     if (!response?.success) {
       setDeleteError(true);

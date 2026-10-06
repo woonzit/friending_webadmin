@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
@@ -182,7 +181,7 @@ export default function DatesActivityDetailPage() {
       reason: draft.reason.trim(),
       idempotency_key: createAdminIdempotencyKey("dates-activity-update"),
     };
-    const response = await adminCall("dates_activity_update", request).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("dates_activity_update", request);
     setBusy(false);
     const outcome = datesCommandOutcome(response, datesActivityUpdateReceipt(response, request), "fresh");
     if (outcome.kind !== "success") { reportFailure(outcome); return; }
@@ -200,7 +199,7 @@ export default function DatesActivityDetailPage() {
       reason: pendingCommand.reason,
       idempotency_key: createAdminIdempotencyKey(`dates-activity-${pendingCommand.action}`),
     };
-    const response = await adminCall("dates_activity_command", request).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("dates_activity_command", request);
     setBusy(false);
     setPendingCommand(null);
     const outcome = datesCommandOutcome(response, datesActivityCommandReceipt(response, request), "fresh");
@@ -251,7 +250,7 @@ export default function DatesActivityDetailPage() {
       idempotency_key: createAdminIdempotencyKey("dates-host-transfer"),
     };
     setBusy(true);
-    const response = await adminCall("dates_activity_host_transfer", request).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("dates_activity_host_transfer", request);
     setBusy(false);
     const receipt = datesHostTransferReceipt(response, request);
     const outcome = datesCommandOutcome(response, receipt !== null, "fresh");

@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
@@ -91,7 +90,7 @@ export default function AppearanceMapPicker({ center, radiusKm, language, disabl
     setSearching(true);
     setSearchError("");
     setCandidates(null);
-    const response = await adminCall("appearance_city_geocode", { query: trimmed.slice(0, MAX_APPEARANCE_GEOCODE_QUERY_LENGTH), lang: language }).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("appearance_city_geocode", { query: trimmed.slice(0, MAX_APPEARANCE_GEOCODE_QUERY_LENGTH), lang: language });
     setSearching(false);
     const decoded = decodeAppearanceGeocodeResponse(response);
     if (!decoded.ok) {

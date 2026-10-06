@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
@@ -177,7 +176,7 @@ export default function PhotoModerationPage() {
       image_id: item.id,
       image_action: action,
       avatar_type: "profile",
-    }).catch(adminMembershipRefusalForUi);
+    });
     setBusy("");
     if (response?.success !== true) {
       setNotice({ tone: "error", text: t("actionError") });

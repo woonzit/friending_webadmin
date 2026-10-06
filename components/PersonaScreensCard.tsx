@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -294,7 +293,7 @@ export default function PersonaScreensCard({ projection, locked }: Props) {
     setRefusedField(null);
     const submitted = { expected_revision: console_.revision, document: document_ };
     const decoded = decodePersonaScreensSaveResponse(
-      await adminCall("persona_screens_save", submitted).catch(adminMembershipRefusalForUi),
+      await adminCall("persona_screens_save", submitted),
       submitted,
     );
     if (decoded.ok) {

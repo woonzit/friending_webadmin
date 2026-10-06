@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
@@ -248,7 +247,7 @@ export default function SupportInboxPage() {
       uid: intent.uid,
       body: intent.body,
       request_id: intent.requestId,
-    }).catch(adminMembershipRefusalForUi);
+    });
     setSending(false);
     if (!response?.success) {
       if (response?.error === "support-idempotency-conflict") failedTextRef.current = null;
@@ -265,7 +264,7 @@ export default function SupportInboxPage() {
     if (imageSending || sending) return;
     setImageSending(true);
     setSendError("");
-    const response = await adminUploadSupportImage(intent.uid, intent.file, intent.requestId).catch(adminMembershipRefusalForUi);
+    const response = await adminUploadSupportImage(intent.uid, intent.file, intent.requestId);
     setImageSending(false);
     if (!response?.success) {
       const error = typeof response?.error === "string" ? response.error : "";

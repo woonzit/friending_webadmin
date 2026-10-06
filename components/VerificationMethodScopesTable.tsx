@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
@@ -275,12 +274,12 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     if (existing) {
       // The retained command is replayed byte-for-byte: same request id, same
       // revision, same material. Core answers with its receipt, never a second change.
-      response = await adminCall(existing.action, existing.payload).catch(adminMembershipRefusalForUi);
+      response = await adminCall(existing.action, existing.payload);
     } else {
       const persisted = await verificationMethodPersistBeforeMutation(
         window.sessionStorage,
         next,
-        () => adminCall(next.action, next.payload).catch(adminMembershipRefusalForUi),
+        () => adminCall(next.action, next.payload),
       );
       if (!persisted.ok) {
         setBusy(false);
@@ -364,7 +363,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     const response = await adminCall("verification_method_impact", {
       contract_version: 1,
       expected_revision: expected,
-    }).catch(adminMembershipRefusalForUi);
+    });
     const parsed = verificationMethodImpactResponse(response);
     const bound = parsed?.expected_revision === expected ? parsed : null;
     setImpact(bound);

@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -214,7 +213,7 @@ export default function IcebreakersPage() {
       sort_order: editor.sortOrder,
       active: editor.active,
       expected_revision: editor.revision,
-    }).catch(adminMembershipRefusalForUi);
+    });
     setBusy(false);
     if (!response?.success || !applyCatalog(response.catalog)) {
       setError(response?.error === "icebreaker-prompt-conflict" ? t("conflict") : t("saveError")); return;
@@ -225,7 +224,7 @@ export default function IcebreakersPage() {
   async function confirmArchive() {
     if (!archive) return;
     setBusy(true);
-    const response = await adminCall("archive_icebreaker_prompt", { prompt_key: archive.key, expected_revision: archive.revision }).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("archive_icebreaker_prompt", { prompt_key: archive.key, expected_revision: archive.revision });
     setBusy(false);
     if (!response?.success || !applyCatalog(response.catalog)) {
       setToast(t("archiveError")); setArchive(null); return;

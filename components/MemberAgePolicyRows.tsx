@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import React, { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
@@ -55,7 +54,7 @@ export function MemberAgePolicyRows({
     setBusy(true);
     setNotice(null);
     try {
-      const response = await adminCall("reset_member_birthday_lock", payload).catch(adminMembershipRefusalForUi);
+      const response = await adminCall("reset_member_birthday_lock", payload);
       const result = memberBirthdayLockResetResponse(response, uid, payload.request_id);
       if (result) {
         pendingRequestId.current = null;

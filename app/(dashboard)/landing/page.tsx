@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -996,7 +995,7 @@ export default function LandingPage() {
     }
     setBusy(true);
     setFormError("");
-    const response = await adminCall("save_landing", draft).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("save_landing", draft);
     setBusy(false);
     if (!response?.success || !response.landing) {
       setFormError(response?.error === "global-exists" ? t("globalExists") : t("saveError"));
@@ -1016,7 +1015,7 @@ export default function LandingPage() {
   async function remove() {
     if (!deleting) return;
     setBusy(true);
-    const response = await adminCall("delete_landing", { id: deleting.id }).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("delete_landing", { id: deleting.id });
     setBusy(false);
     if (!response?.success) {
       setToast({ tone: "error", text: t("deleteError") });

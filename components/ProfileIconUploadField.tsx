@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import React, { useId, useRef, useState } from "react";
 import { adminUploadProfileIcon } from "@/lib/adminClient";
 
@@ -45,7 +44,7 @@ export default function ProfileIconUploadField({
     }
     setBusy(true);
     onBusyChange?.(true);
-    const response = await adminUploadProfileIcon(file).catch(adminMembershipRefusalForUi);
+    const response = await adminUploadProfileIcon(file);
     setBusy(false);
     onBusyChange?.(false);
     if (

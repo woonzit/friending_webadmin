@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
@@ -216,7 +215,7 @@ function SettingEditor({ setting, canManage, onSaved, onError, onUnknown }: { se
       reason: reason.trim(),
       idempotency_key: createAdminIdempotencyKey("dates-configuration-save"),
     };
-    const response = await adminCall("dates_configuration_save", request).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("dates_configuration_save", request);
     setBusy(false);
     const outcome = datesCommandOutcome(response, datesSettingSaveReceipt(response, request), "fresh");
     if (outcome.kind === "uncertain") { onUnknown(outcome.error); return; }
@@ -276,7 +275,7 @@ function ActivityTypeEditor({ activityType, canManage, locale, onSaved, onError,
       expected_revision: activityType.revision,
       reason: reason.trim(), idempotency_key: createAdminIdempotencyKey("dates-activity-type-save"),
     };
-    const response = await adminCall("dates_activity_type_save", request).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("dates_activity_type_save", request);
     setBusy(false);
     const outcome = datesCommandOutcome(response, datesActivityTypeSaveReceipt(response, request), "fresh");
     if (outcome.kind === "uncertain") { onUnknown(outcome.error); return; }
@@ -343,7 +342,7 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
       ...(reason ? { expected_revision: reason.revision } : {}),
       reason: auditReason.trim(), idempotency_key: createAdminIdempotencyKey("dates-reason-save"),
     };
-    const response = await adminCall("dates_reason_save", submitted).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("dates_reason_save", submitted);
     setBusy(false);
     // Only the receipt of this save, or a refusal, is an answer. A success this console cannot read as that receipt
     // may still have been written: it is "not known", named by what was wrong with it.
@@ -367,7 +366,7 @@ function ReasonEditor({ reason, defaultScope, canManage = true, onSaved, onError
       reason_id: reason.reason_id, expected_revision: reason.revision,
       reason: auditReason.trim(), idempotency_key: createAdminIdempotencyKey("dates-reason-deactivate"),
     };
-    const response = await adminCall("dates_reason_deactivate", request).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("dates_reason_deactivate", request);
     setBusy(false);
     const outcome = datesCommandOutcome(response, datesReasonDeactivateReceipt(response, request), "fresh");
     if (outcome.kind === "uncertain") { onUnknown(outcome.error); return; }

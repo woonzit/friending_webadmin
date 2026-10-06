@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
@@ -79,7 +78,7 @@ export default function ProfileLocationPage() {
       country_code: code,
       max_distance_km: value,
       active,
-    }).catch(adminMembershipRefusalForUi);
+    });
     const parsed = response?.success ? payload(response.data) : null;
     setBusy("");
     if (!parsed) {
@@ -98,7 +97,7 @@ export default function ProfileLocationPage() {
   async function remove(code: string) {
     if (!window.confirm(t("deleteConfirm", { country: code }))) return;
     setBusy(code);
-    const response = await adminCall("delete_profile_location_policy", { country_code: code }).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("delete_profile_location_policy", { country_code: code });
     const parsed = response?.success ? payload(response.data) : null;
     setBusy("");
     if (!parsed) {

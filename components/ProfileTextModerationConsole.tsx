@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
@@ -116,7 +115,7 @@ export default function ProfileTextModerationConsole({
     };
     const [meResponse, listResponse] = await Promise.all([
       adminCall("admin_me", {}),
-      adminCall("moderation_profile_text_list", body).catch(adminMembershipRefusalForUi),
+      adminCall("moderation_profile_text_list", body),
     ]);
     if (sequence !== loadSequenceRef.current) return;
     const adminMe = profileTextModerationAdminMe(meResponse?.profile_text_moderation);
@@ -199,12 +198,12 @@ export default function ProfileTextModerationConsole({
     const existing = pendingRef.current;
     let response: AdminResponse | null;
     if (existing) {
-      response = await adminCall(existing.action, existing.payload).catch(adminMembershipRefusalForUi);
+      response = await adminCall(existing.action, existing.payload);
     } else {
       const persisted = await profileTextModerationPersistBeforeMutation(
         window.sessionStorage,
         next,
-        () => adminCall(next.action, next.payload).catch(adminMembershipRefusalForUi),
+        () => adminCall(next.action, next.payload),
       );
       if (!persisted.ok) {
         setBusy(false);

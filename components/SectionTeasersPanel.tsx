@@ -1,6 +1,5 @@
 "use client";
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
@@ -163,7 +162,7 @@ export function useSectionTeasers(): SectionTeasersConsole {
       // twice.
       pendingRef.current = command;
       setPending(true);
-      const response: AdminResponse | null = await adminCall("save_section_teasers", command).catch(adminMembershipRefusalForUi);
+      const response: AdminResponse | null = await adminCall("save_section_teasers", command);
 
       const result = sectionTeasersMutationResponse(response);
       if (result && sectionTeasersMutationConverged(command, result)) {

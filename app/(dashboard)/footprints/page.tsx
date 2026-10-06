@@ -4,7 +4,6 @@
 // with its two-sided audiences, the per-user daily-limit override, and the
 // reported-footprints queue.
 
-import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -124,7 +123,7 @@ export default function FootprintsPage() {
       daily_limit: Number(dailyLimit),
       message_max_length: Number(messageMax),
       expected_revision: payload.settings.revision,
-    }).catch(adminMembershipRefusalForUi);
+    });
     setBusy(false);
     const parsed = response?.success ? footprintsAdminPayload(response) : null;
     if (!parsed) {
@@ -147,7 +146,7 @@ export default function FootprintsPage() {
     const response = await adminCall("set_footprint_user_limit", {
       uid,
       limit: overrideLimit.trim() === "" ? "" : Number(overrideLimit),
-    }).catch(adminMembershipRefusalForUi);
+    });
     setBusy(false);
     setNotice(response?.success ? t("overrideSaved", { uid }) : t("saveError"));
   }
@@ -181,7 +180,7 @@ export default function FootprintsPage() {
       request.id = draft.id;
       request.expected_revision = draft.revision;
     }
-    const response = await adminCall("save_footprint_badge", request).catch(adminMembershipRefusalForUi);
+    const response = await adminCall("save_footprint_badge", request);
     setBusy(false);
     const parsed = response?.success ? footprintsAdminPayload(response) : null;
     if (!parsed) {
@@ -203,7 +202,7 @@ export default function FootprintsPage() {
     const response = await adminCall("archive_footprint_badge", {
       id: archiveTarget.id,
       expected_revision: archiveTarget.revision,
-    }).catch(adminMembershipRefusalForUi);
+    });
     setBusy(false);
     setArchiveTarget(null);
     const parsed = response?.success ? footprintsAdminPayload(response) : null;

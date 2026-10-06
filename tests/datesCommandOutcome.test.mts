@@ -1,4 +1,3 @@
-import { adminMembershipRefusalForUi } from "../lib/adminMembershipClientError.ts";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -218,7 +217,7 @@ const caseCode = compile(`${["mutate", "commandSettled", "adoptCaseRevision", "e
 function caseHarness(reply: (action: string, body: Record<string, any>) => unknown, caseId = CASE_ID, revision = 7) {
   const sent: Array<{ action: string; body: Record<string, any> }> = [], state: Record<string, any> = {}, writes: string[] = [];
   const readFence = new DatesCaseReadFence();
-  const context: any = { exports: {}, adminMembershipRefusalForUi, caseId, writeLocked: false, busy: false, mutationBusy: { current: false }, readFence, lifetime: { current: 0 },
+  const context: any = { exports: {}, caseId, writeLocked: false, busy: false, mutationBusy: { current: false }, readFence, lifetime: { current: 0 },
     isDatesConsoleCommand, datesConsoleCommandReceipt, datesLegalHoldCommandReceipt, datesTrailEvidenceCommandReceipt, datesCommandOutcome, datesCaseResolutionReceipt,
     createAdminIdempotencyKey, t: translator(""), commandOutcome: translator("outcome."), load: async () => { writes.push("load"); },
     isDatesExternalMessageCase: () => false, datesLegalHoldAllowed: () => true, epochFromLocalInput: (value: string) => Number(value),
@@ -451,7 +450,7 @@ function activityModel(revision: number) {
 }
 function activityHarness(reply: (action: string, body: Record<string, any>) => unknown) {
   const sent: Array<{ action: string; body: Record<string, any> }> = [], state: Record<string, any> = {}, writes: string[] = [];
-  const context: any = { exports: {}, adminMembershipRefusalForUi, busy: false, activityId: ACTIVITY_ID,
+  const context: any = { exports: {}, busy: false, activityId: ACTIVITY_ID,
     data: { activity: { activity_id: ACTIVITY_ID, revision: 4, host: { uid: 7 } } }, pendingCommand: { action: "end", reason: "Reported as over." },
     transferUid: "42", transferReason: "The host asked for it.", datesCommandOutcome, datesActivityCommandReceipt, datesActivityUpdateReceipt, datesHostTransferReceipt,
     createAdminIdempotencyKey, t: translator(""), commandOutcome: translator("outcome."),
@@ -509,8 +508,8 @@ test("activity commands: a lost reply is an unknown outcome, and Core's revision
   }
   assert.match(activityPage.source, /datesCommandOutcome\(response, datesActivityUpdateReceipt\(response, request\), "fresh"\)/);
   assert.match(activityPage.source, /datesCommandOutcome\(response, datesActivityCommandReceipt\(response, request\), "fresh"\)/);
-  assert.match(activityPage.source, /const response = await adminCall\("dates_activity_update", request\)\.catch\(adminMembershipRefusalForUi\);/);
-  assert.match(activityPage.source, /const response = await adminCall\("dates_activity_command", request\)\.catch\(adminMembershipRefusalForUi\);/);
+  assert.match(activityPage.source, /const response = await adminCall\("dates_activity_update", request\);/);
+  assert.match(activityPage.source, /const response = await adminCall\("dates_activity_command", request\);/);
 });
 
 /**
@@ -617,7 +616,7 @@ test("configuration saves: a lost reply is an unknown outcome; creating a reason
   const reasonCode = editorSave("ReasonEditor");
   function reasonHarness(reply: (body: Record<string, any>) => unknown) {
     const sent: Array<Record<string, any>> = [], errors: unknown[] = [], unknown: Array<string | null> = []; let saved = 0;
-    const context: any = { exports: {}, adminMembershipRefusalForUi, reason: null, scope: "activity", keyName: "Wrong_Details", nameEn: "Wrong details", nameHu: "Hibás adatok", explanationEn: "", explanationHu: "",
+    const context: any = { exports: {}, reason: null, scope: "activity", keyName: "Wrong_Details", nameEn: "Wrong details", nameHu: "Hibás adatok", explanationEn: "", explanationHu: "",
       severity: "medium", order: "10", active: true, commentRequired: false, entryPoints: "detail", escalationCategory: "", auditReason: "A reason members asked for.", canManage: true,
       busy: false, allowedEntryPoints: "detail", datesReasonEntryPoints, datesReasonEntryPointsRefused, datesCommandOutcome, datesReasonDeactivateReceipt, createAdminIdempotencyKey, t: translator(""),
       // The receipt check itself is covered on Core's genuine bodies in tests/datesExternalReasons.test.mts.
@@ -676,7 +675,7 @@ test("configuration saves: a lost reply is an unknown outcome; creating a reason
     [intake("admin-configuration-save-consent-text-missing-denied"), { unknown: [], errors: ["dates-configuration-value-invalid"], saved: 0 }, SLA]] as const) {
     const run = async (key: string, revision: number) => {
       const errors: unknown[] = [], unknown: Array<string | null> = [], problems: string[] = [], sent: Array<Record<string, unknown>> = []; let saved = 0;
-      const context: any = { exports: {}, adminMembershipRefusalForUi, editable: true, reason: "Raised after the pilot.", busy: false, value: "12", items: [], setting: { key, type: "integer", revision },
+      const context: any = { exports: {}, editable: true, reason: "Raised after the pilot.", busy: false, value: "12", items: [], setting: { key, type: "integer", revision },
         DATES_AI_MODEL_SETTING_KEYS: [], datesModelIdValid: () => true, datesStringListProblem: () => null, configurationInputValue: (_type: string, value: string) => Number(value),
         DATES_CONSENT_VERSION_SETTING: "dates_event_suggestion_consent_version",
         datesCommandOutcome, datesSettingSaveReceipt, createAdminIdempotencyKey, t: translator(""), setProblem: (text: string) => { if (text !== "") problems.push(text); }, setBusy: () => {},
@@ -702,7 +701,7 @@ test("configuration saves: a lost reply is an unknown outcome; creating a reason
     [command("admin-activity-type-save-replay"), 1, { unknown: [], errors: [], saved: 1 }], [command("admin-activity-type-save"), 2, { unknown: [null], errors: [], saved: 0 }],
     [{ success: true }, 1, { unknown: [null], errors: [], saved: 0 }], [command("admin-activity-type-save-stale-denied"), 1, { unknown: [], errors: ["dates-admin-stale-revision"], saved: 0 }]] as const) {
     const errors: unknown[] = [], unknown: Array<string | null> = []; let saved = 0;
-    const context: any = { exports: {}, adminMembershipRefusalForUi, activityType: { key: "sport", revision }, retired: false, nameEn: "Sports activity", nameHu: "Sportprogram", order: "5", active: true,
+    const context: any = { exports: {}, activityType: { key: "sport", revision }, retired: false, nameEn: "Sports activity", nameHu: "Sportprogram", order: "5", active: true,
       reason: "Synthetic label correction.", busy: false, datesCommandOutcome, datesActivityTypeSaveReceipt, createAdminIdempotencyKey, setBusy: () => {},
       adminCall: async () => reply, onError: (error: unknown) => errors.push(error), onUnknown: (error: string | null) => unknown.push(error), onSaved: async () => { saved++; } };
     vm.runInNewContext(typeCode, context); await context.exports.save(submit);
