@@ -1,4 +1,6 @@
 import { adminBridgeCoreTransportError } from "@/lib/adminBridge";
+import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "@/lib/adminMembership";
+import type { CoreCallOptions } from "@/lib/core";
 import { invalidatesAdminSession } from "@/lib/adminActions";
 import { datesAdminPrincipal, hasDatesCapability } from "@/lib/datesAdmin";
 import { datesAdminContractParams } from "@/lib/datesAdminContract";
@@ -23,8 +25,8 @@ type CoreAnswer = { status: number; data: unknown };
 export type DatesIntakeBridgeFile = { field: string; bytes: Uint8Array; mime: string; filename: string };
 export type DatesIntakeBridgeDeps = {
   session: () => Promise<{ email: string } | null>;
-  core: (action: string, payload: Record<string, unknown>, timeoutMs?: number) => Promise<CoreAnswer>;
-  coreFiles: (action: string, payload: Record<string, unknown>, files: DatesIntakeBridgeFile[], timeoutMs?: number) => Promise<CoreAnswer>;
+  core: (action: string, payload: Record<string, unknown>, timeoutMs?: number, options?: CoreCallOptions) => Promise<CoreAnswer>;
+  coreFiles: (action: string, payload: Record<string, unknown>, files: DatesIntakeBridgeFile[], timeoutMs?: number, options?: CoreCallOptions) => Promise<CoreAnswer>;
   requestId: () => string;
 };
 export type DatesIntakeBridgeReply =
@@ -59,23 +61,30 @@ function refusal(error: string, status: number): DatesIntakeBridgeReply {
 }
 
 /** Session, live membership and the Dates capability, checked on every call. */
-async function operator(deps: DatesIntakeBridgeDeps, capability: string): Promise<{ email: string } | DatesIntakeBridgeReply> {
-  const session = await deps.session();
+async function operator(deps: DatesIntakeBridgeDeps, capability: string, signal?: AbortSignal): Promise<{ email: string } | DatesIntakeBridgeReply> {
+  let session;
+  try { session = await deps.session(); } catch { return refusal(ADMIN_MEMBERSHIP_UNCONFIRMED, 503); }
+  if (signal?.aborted) return refusal(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
   if (!session) return refusal("auth-required", 401);
-  const membership = await deps.core("admin_me", { admin_email: session.email });
-  const data = membership.data as { success?: unknown } | null;
-  if (membership.status !== 200 || data?.success !== true) return refusal("auth-required", 401);
-  const principal = datesAdminPrincipal(data);
+  let membership;
+  try { membership = await deps.core("admin_me", { admin_email: session.email }, undefined, { signal, membershipCheck: true }); }
+  catch { return refusal(ADMIN_MEMBERSHIP_UNCONFIRMED, 503); }
+  const decision = classifyAdminMembership(membership, session.email, signal?.aborted === true);
+  if (decision.kind === "revoked") return refusal("auth-required", 401);
+  if (decision.kind !== "confirmed") return refusal(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
+  const principal = datesAdminPrincipal(decision.membership);
   return principal && hasDatesCapability(principal, capability) ? { email: session.email } : refusal("dates-admin-capability-required", 403);
 }
 
 /** What Core answered when it is not the expected success: its own refusal, or a transport failure named as one. */
-function coreFailure(result: CoreAnswer): DatesIntakeBridgeReply {
+function coreFailure(result: CoreAnswer, email: string): DatesIntakeBridgeReply {
   const transport = adminBridgeCoreTransportError(result.status, result.data);
   if (transport) return refusal(transport.error, transport.status_code);
   const answered = datesIntakeRefusal(result.data);
   if (answered.kind === "unreadable") return refusal("invalid-core-response", 502);
-  if (invalidatesAdminSession(answered.status, answered.error)) return refusal("auth-required", 401);
+  if (invalidatesAdminSession(answered.status, answered.error)) {
+    return classifyAdminMembership(result, email).kind === "revoked" ? refusal("auth-required", 401) : refusal("invalid-core-response", 502);
+  }
   // Core's refusal travels on as its six refusal keys, so the page can show exactly what Core said - and nothing beside it.
   return { status: answered.status, headers: { ...DATES_INTAKE_NO_STORE }, json: projectDatesAdminResponse("dates_event_intake_create", result.data) };
 }
@@ -85,19 +94,22 @@ function coreFailure(result: CoreAnswer): DatesIntakeBridgeReply {
  * is audited by Core. The image element of this console is the only reader:
  * a direct visit, another site and a script fetch are all refused.
  */
-export async function serveDatesIntakeMedia(request: { headers: HeaderReader; searchParams: URLSearchParams }, deps: DatesIntakeBridgeDeps):
+export async function serveDatesIntakeMedia(request: { headers: HeaderReader; searchParams: URLSearchParams; signal?: AbortSignal }, deps: DatesIntakeBridgeDeps):
   Promise<DatesIntakeBridgeReply> {
   if (!isTrustedAdminMediaRead(request.headers)) return refusal("bad-origin", 403);
-  const who = await operator(deps, "dates_external_event_review");
+  const who = await operator(deps, "dates_external_event_review", request.signal);
   if (!("email" in who)) return who;
   const intakeId = request.searchParams.get("intake_id") ?? "", rawIndex = request.searchParams.get("index") ?? "";
   if ([...request.searchParams.keys()].some((key) => key !== "intake_id" && key !== "index") || !datesIntakeId(intakeId)
     || !/^[1-9]$/.test(rawIndex) || Number(rawIndex) > DATES_INTAKE_MAX_IMAGES) return refusal("invalid-input", 400);
   const index = Number(rawIndex);
+  if (request.signal?.aborted) return refusal(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
   const result = await deps.core("dates_event_intake_image",
-    { admin_email: who.email, intake_id: intakeId, index, admin_request_id: deps.requestId(), ...datesAdminContractParams("dates_event_intake_image") }, MEDIA_TIMEOUT_MS);
+    { admin_email: who.email, intake_id: intakeId, index, admin_request_id: deps.requestId(), ...datesAdminContractParams("dates_event_intake_image") }, MEDIA_TIMEOUT_MS,
+    { signal: request.signal, strictResponse: true });
+  if (request.signal?.aborted) return refusal("core-timeout", 504);
   const read = decodeDatesIntakeImage(result.data, index);
-  if (!read) return coreFailure(result);
+  if (!read || result.status !== 200) return coreFailure(result, who.email);
   const bytes = datesIntakeImageBytes(read);
   if (!bytes) return refusal("invalid-core-response", 502);
   return { status: 200, headers: { ...DATES_INTAKE_MEDIA_HEADERS, "Content-Length": String(bytes.length) }, bytes };
@@ -112,17 +124,18 @@ const IMAGE_FIELDS = ["image_1", "image_2"];
  * The files go to Core as they are: Core re-encodes them, and nothing is
  * resized or stored here.
  */
-export async function serveDatesIntakeCreate(request: { headers: HeaderReader; form: () => Promise<FormData> }, deps: DatesIntakeBridgeDeps):
+export async function serveDatesIntakeCreate(request: { headers: HeaderReader; form: () => Promise<FormData>; signal?: AbortSignal }, deps: DatesIntakeBridgeDeps):
   Promise<DatesIntakeBridgeReply> {
   if (!isTrustedAdminRequest(request.headers)) return refusal("bad-origin", 403);
   const declared = Number(request.headers.get("content-length") ?? "");
   if (!Number.isFinite(declared) || declared <= 0) return refusal("invalid-input", 400);
   if (declared > DATES_INTAKE_MAX_REQUEST_BYTES) return refusal("image-too-large", 413);
-  const who = await operator(deps, "dates_external_event_manage");
+  const who = await operator(deps, "dates_external_event_manage", request.signal);
   if (!("email" in who)) return who;
 
   let form: FormData;
   try { form = await request.form(); } catch { return refusal("invalid-input", 400); }
+  if (request.signal?.aborted) return refusal(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
   const scalars: Record<string, unknown> = {}, uploads: Blob[] = [];
   for (const key of new Set(form.keys())) {
     const values = form.getAll(key);
@@ -152,17 +165,21 @@ export async function serveDatesIntakeCreate(request: { headers: HeaderReader; f
       if (upload.size < 1) return refusal("invalid-input", 400);
       if (upload.size > DATES_INTAKE_MAX_IMAGE_BYTES) return refusal("image-too-large", 413);
       const bytes = new Uint8Array(await upload.arrayBuffer());
+      if (request.signal?.aborted) return refusal(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
       const type = datesIntakeUploadType(bytes.subarray(0, 16));
       if (bytes.length !== upload.size || type === null) return refusal("image-type-unsupported", 415);
       files.push({ field: IMAGE_FIELDS[position], bytes, mime: UPLOAD_MIME[type].mime, filename: `flyer-${position + 1}.${UPLOAD_MIME[type].extension}` });
     }
-    result = await deps.coreFiles("dates_event_intake_create", payload, files, UPLOAD_TIMEOUT_MS);
+    if (request.signal?.aborted) return refusal(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
+    result = await deps.coreFiles("dates_event_intake_create", payload, files, UPLOAD_TIMEOUT_MS, { signal: request.signal, strictResponse: true });
   } else {
-    result = await deps.core("dates_event_intake_create", payload, CREATE_TIMEOUT_MS);
+    if (request.signal?.aborted) return refusal(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
+    result = await deps.core("dates_event_intake_create", payload, CREATE_TIMEOUT_MS, { signal: request.signal, strictResponse: true });
   }
+  if (request.signal?.aborted) return refusal("core-timeout", 504);
   const data = result.data as { success?: unknown } | null;
   // The browser is handed the receipt's named fields only (lib/datesAdminProjection.ts), never Core's raw body.
   if (result.status === 200 && data?.success === true)
     return { status: 200, headers: { ...DATES_INTAKE_NO_STORE }, json: projectDatesAdminResponse("dates_event_intake_create", result.data) };
-  return coreFailure(result);
+  return coreFailure(result, who.email);
 }

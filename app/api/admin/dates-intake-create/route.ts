@@ -14,7 +14,7 @@ export const runtime = "nodejs";
  */
 export async function POST(request: NextRequest) {
   const reply = await serveDatesIntakeCreate(
-    { headers: request.headers, form: () => request.formData() },
+    { headers: request.headers, form: () => request.formData(), signal: request.signal },
     { session: readAdminSession, core: coreCall, coreFiles: coreMultipartFilesCall, requestId: randomUUID },
   );
   return NextResponse.json("json" in reply ? reply.json : null, { status: reply.status, headers: reply.headers });

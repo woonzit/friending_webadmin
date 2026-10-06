@@ -15,7 +15,7 @@ export const runtime = "nodejs";
  */
 export async function GET(request: NextRequest) {
   const reply = await serveDatesIntakeMedia(
-    { headers: request.headers, searchParams: request.nextUrl.searchParams },
+    { headers: request.headers, searchParams: request.nextUrl.searchParams, signal: request.signal },
     { session: readAdminSession, core: coreCall, coreFiles: coreMultipartFilesCall, requestId: randomUUID },
   );
   return "bytes" in reply

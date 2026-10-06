@@ -229,6 +229,7 @@ export async function coreMultipartFilesCall<T = Record<string, unknown>>(
   payload: Record<string, unknown>,
   files: ReadonlyArray<{ field: string; bytes: Uint8Array; mime: string; filename: string }>,
   timeoutMs = 60_000,
+  options: CoreCallOptions = {},
 ): Promise<CoreResult<T>> {
   if (!/^[a-z][a-z0-9_]{1,63}$/.test(action)) {
     return { status: 404, data: null };
@@ -245,8 +246,14 @@ export async function coreMultipartFilesCall<T = Record<string, unknown>>(
     }
     body.set(file.field, new Blob([Uint8Array.from(file.bytes)], { type: file.mime }), file.filename);
   }
-  body.set("secret", apiSecret());
+  try { body.set("secret", apiSecret()); } catch (error) {
+    if (options.strictResponse) return { status: 502, data: { success: false, error: "core-unavailable" } as T };
+    throw error;
+  }
 
+  const timeout = AbortSignal.timeout(timeoutMs);
+  const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
+  if (signal.aborted) return { status: 504, data: { success: false, error: "core-timeout" } as T };
   let response: Response;
   try {
     response = await fetch(`${CORE_API_BASE}/v1/webadmin/${action}`, {
@@ -254,7 +261,7 @@ export async function coreMultipartFilesCall<T = Record<string, unknown>>(
       headers: { Accept: "application/json" },
       body,
       cache: "no-store",
-      signal: AbortSignal.timeout(timeoutMs),
+      signal,
     });
   } catch (error) {
     const name = (error as { name?: unknown } | null)?.name;
@@ -269,6 +276,10 @@ export async function coreMultipartFilesCall<T = Record<string, unknown>>(
     data = (await response.json()) as T;
   } catch {
     return { status: 502, data: { success: false, error: "invalid-core-response" } as T };
+  }
+  if (options.strictResponse) {
+    if (signal.aborted) return { status: 504, data: { success: false, error: "core-timeout" } as T };
+    if (response.status !== 200) return { status: response.status, data };
   }
   const logicalStatus = Number((data as Record<string, unknown> | null)?.status_code);
   const status = Number.isInteger(logicalStatus) && logicalStatus >= 100 && logicalStatus <= 599

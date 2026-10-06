@@ -10,7 +10,7 @@ const modules = nodeModule as unknown as { registerHooks: (hooks: { resolve: (sp
 modules.registerHooks({ resolve(specifier, context, next) { return specifier === "server-only" ? { url: "data:text/javascript,", shortCircuit: true, format: "module" } : next(specifier, context); } });
 process.env.WEBADMIN_API_SECRET = "test-membership-api-secret-000000000000";
 process.env.CORE_API_BASE = "https://core.invalid";
-const { coreCall, coreMultipartCall } = await import("../lib/core.ts");
+const { coreCall, coreMultipartCall, coreMultipartFilesCall } = await import("../lib/core.ts");
 const realFetch = globalThis.fetch;
 
 test("DERIVED membership transport: an HTTP error cannot be overridden by a successful or revoked logical body", async () => {
@@ -49,21 +49,23 @@ test("DERIVED membership transport: the deadline includes a late JSON body from 
   } finally { globalThis.fetch = realFetch; }
 });
 
-test("DERIVED post-forward transport: opt-in JSON and multipart calls preserve real HTTP failures and discard late body answers", async () => {
+test("DERIVED post-forward transport: opt-in JSON and both multipart calls preserve real HTTP failures and discard late body answers", async () => {
   try {
-    const call = (multipart: boolean, signal?: AbortSignal, timeout = 10_000) => multipart
-      ? coreMultipartCall("upload_pinger_icon", { admin_email: MEMBERSHIP_EMAIL }, { buffer: Buffer.from("DERIVED"), mime: "image/png", filename: "derived.png" }, timeout, { signal, strictResponse: true })
-      : coreCall("upload_image", { admin_email: MEMBERSHIP_EMAIL }, timeout, { signal, strictResponse: true });
-    for (const multipart of [false, true]) {
+    const call = (mode: "json" | "image" | "files", signal?: AbortSignal, timeout = 10_000) => mode === "files"
+      ? coreMultipartFilesCall("dates_event_intake_create", { admin_email: MEMBERSHIP_EMAIL }, [{ field: "flyer_1", bytes: new Uint8Array([68, 69, 82, 73, 86, 69, 68]), mime: "image/png", filename: "derived.png" }], timeout, { signal, strictResponse: true })
+      : mode === "image"
+        ? coreMultipartCall("upload_pinger_icon", { admin_email: MEMBERSHIP_EMAIL }, { buffer: Buffer.from("DERIVED"), mime: "image/png", filename: "derived.png" }, timeout, { signal, strictResponse: true })
+        : coreCall("upload_image", { admin_email: MEMBERSHIP_EMAIL }, timeout, { signal, strictResponse: true });
+    for (const mode of ["json", "image", "files"] as const) {
       for (const status of [401, 403, 500, 503]) {
         globalThis.fetch = (async () => ({ status, json: async () => MEMBERSHIP_MEMBER })) as typeof fetch;
-        assert.equal((await call(multipart)).status, status);
+        assert.equal((await call(mode)).status, status);
       }
       const controller = new AbortController();
       globalThis.fetch = (async () => ({ status: 200, json: async () => { controller.abort(); return MEMBERSHIP_MEMBER; } })) as typeof fetch;
-      assert.equal((await call(multipart, controller.signal)).status, 504);
+      assert.equal((await call(mode, controller.signal)).status, 504);
       globalThis.fetch = (async () => ({ status: 200, json: async () => { await new Promise((resolve) => setTimeout(resolve, 20)); return MEMBERSHIP_MEMBER; } })) as typeof fetch;
-      assert.equal((await call(multipart, undefined, 1)).status, 504);
+      assert.equal((await call(mode, undefined, 1)).status, 504);
     }
   } finally { globalThis.fetch = realFetch; }
 });

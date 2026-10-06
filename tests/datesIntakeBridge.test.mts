@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import * as nodeModule from "node:module";
 import { ADMIN_ACTION_ACCESS, adminPrincipalFrom, isAdminActionAllowed, isAdminBridgeActionAuthorized } from "../lib/adminActions.ts";
+import { MEMBERSHIP_MEMBER, membershipRefusal } from "./support/adminMembershipCases.mts";
 import {
   DATES_INTAKE_MEDIA_HEADERS, DATES_INTAKE_MAX_REQUEST_BYTES, serveDatesIntakeCreate, serveDatesIntakeMedia,
   type DatesIntakeBridgeDeps, type DatesIntakeBridgeFile,
@@ -25,7 +26,7 @@ const CAPABILITIES = {
   moderator: ["dates_external_event_read", "dates_external_event_review"],
   administrator: ["dates_external_event_read", "dates_external_event_review", "dates_external_event_manage"],
 };
-const membership = (role: keyof typeof CAPABILITIES = "administrator") => ({ success: true, role: role === "support_viewer" ? "viewer" : "admin",
+const membership = (role: keyof typeof CAPABILITIES = "administrator") => ({ ...MEMBERSHIP_MEMBER, role: role === "support_viewer" ? "viewer" : "admin",
   dates: { email, role, rank: 40, linked_uid: null, sensitive_location: false, break_glass: false, capabilities: CAPABILITIES[role] } });
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16, 0x4a, 0x46, 0x49, 0x46, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0xff, 0xd9]);
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52, 1, 2, 3]);
@@ -167,7 +168,7 @@ test("create refuses a foreign origin, a guest, a revoked operator and a reviewe
   }
   const guest = harness(); guest.state.session = null;
   assert.equal((await serveDatesIntakeCreate(multipart(fields), guest.deps)).status, 401); assert.equal(guest.state.calls.length, 0);
-  const revoked = harness(); revoked.state.member = { status: 403, data: { success: false, error: "admin-revoked" } };
+  const revoked = harness(); revoked.state.member = { status: 403, data: membershipRefusal(403, "admin-revoked") };
   assert.equal((await serveDatesIntakeCreate(multipart(fields), revoked.deps)).status, 401);
   for (const role of ["moderator", "support_viewer"] as const) {
     const h = harness(undefined, role), reply = await serveDatesIntakeCreate(multipart(fields), h.deps);
