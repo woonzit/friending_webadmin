@@ -43,6 +43,12 @@
     "never": "Never",
     "you": "you"
   },
+  "adminMembership": {
+    "title": "Administrator membership could not be confirmed",
+    "retained": "Protected content is temporarily hidden and changes and uploads are refused. Your unsaved edits and retained requests stay on this page; no change or upload is sent again automatically.",
+    "retrying": "We retry the membership check with increasing delays (up to 30 seconds). Once it recovers, review any uncertain result and retry a change explicitly if needed.",
+    "retry": "Check membership again"
+  },
   "adminHelp": {
     "button": "Help",
     "openLabel": "Open {page}",

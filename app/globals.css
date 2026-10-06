@@ -220,6 +220,21 @@
   background: rgba(240, 106, 120, 0.09);
 }
 
+/* Keeping these nodes mounted preserves drafts; no protected view is shown
+   until an in-place membership read recovers. Author CSS must not override hidden. */
+.membership-retained[hidden] {
+  display: none !important;
+}
+
+.shell.membership-unconfirmed .content-column {
+  margin-left: 0;
+}
+
+.admin-membership-notice h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+
 /* T-757: the read-only invite-conversion summary panel (D-124 point 3 / D-126). */
 .invite-attribution-body {
   display: grid;

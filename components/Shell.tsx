@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import AdminHelp from "@/components/AdminHelp";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
+import AdminMembershipNotice, { useAdminMembershipUnconfirmed } from "@/components/AdminMembershipNotice";
 import { PROFILE_TEXT_MODERATION_CONTRACT_READY } from "@/lib/contractReadiness";
 import DatesResearchNavigationNotice from "@/components/DatesResearchNavigationNotice";
 import { confirmResearchNavigation } from "@/lib/datesResearchNavigation";
@@ -119,6 +120,7 @@ export default function Shell({
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const membershipUnconfirmed = useAdminMembershipUnconfirmed();
 
   async function logout() {
     if (!await confirmResearchNavigation()) return;
@@ -128,9 +130,9 @@ export default function Shell({
   }
 
   return (
-    <div className={`shell${open ? " nav-open" : ""}`}>
+    <div className={`shell${open && !membershipUnconfirmed ? " nav-open" : ""}${membershipUnconfirmed ? " membership-unconfirmed" : ""}`}>
       <button className="nav-backdrop" aria-label={common("closeMenu")} onClick={() => setOpen(false)} />
-      <aside className="sidebar">
+      <aside className="sidebar membership-retained" hidden={membershipUnconfirmed}>
         <Link href="/" className="brand" onClick={() => setOpen(false)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" width="42" height="42" alt="" />
@@ -176,7 +178,7 @@ export default function Shell({
       </aside>
       <div className="content-column">
         <header className="topbar">
-          <button className="menu-button" onClick={() => setOpen(true)} aria-label={common("openMenu")}>
+          <button className="menu-button" disabled={membershipUnconfirmed} onClick={() => setOpen(true)} aria-label={common("openMenu")}>
             <span />
             <span />
             <span />
@@ -185,14 +187,19 @@ export default function Shell({
           <LocaleSwitcher />
         </header>
         <DatesResearchNavigationNotice />
-        <main className="content">{children}</main>
+        <main className="content">
+          <AdminMembershipNotice visible={membershipUnconfirmed} />
+          {/* Hide, never unmount: local drafts and retained unknown commands
+              stay owned by their original components throughout recovery. */}
+          <div className="membership-retained" hidden={membershipUnconfirmed}>{children}</div>
+        </main>
       </div>
-      <AdminHelp
+      <div className="membership-retained" hidden={membershipUnconfirmed}><AdminHelp
         personaConsoleReady={personaConsoleReady}
         verificationConsoleReady={verificationConsoleReady}
         audienceVisibilityConsoleReady={audienceVisibilityConsoleReady}
         profileTextModerationConsoleReady={profileTextModerationConsoleReady}
-      />
+      /></div>
     </div>
   );
 }
