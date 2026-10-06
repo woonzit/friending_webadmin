@@ -123,3 +123,40 @@ test("DERIVED blocked retry retains already known partial batch outcomes", async
   h.calls[0].resolve({ kind: "uncertain", error: null, partial }); await first; await h.render().retry();
   assert.equal(h.render().outcome.partial, partial); assert.equal(h.calls.length, 1);
 });
+test("DERIVED explicit discard releases the local identity, requests a reload and never claims the unknown Core work was canceled", async () => {
+  const h = harness(), first = h.render().submit("dates_event_research_source_run_now", input);
+  await h.render().discard(); assert.equal(h.render().retained, true, "a busy request cannot be discarded");
+  const partial = { rows: [{ intake_id: "derived_intake", outcome: "published" }], unreadable: [{ index: 1, id: "derived_future" }] };
+  h.calls[0].resolve({ kind: "uncertain", error: "unknown-core-name", partial }); await first;
+  await h.render().discard(); const state = h.render();
+  assert.equal(state.retained, false); assert.equal(state.pending, null); assert.equal(state.outcome.kind, "uncertain");
+  assert.equal(state.outcome.discarded, true); assert.equal(state.outcome.partial, partial); assert.equal(h.calls.length, 1);
+  assert.deepEqual(h.conflicts, ["operator@example.test"], "the existing reload callback is requested without a mutating send");
+  const next = state.submit("dates_event_research_source_run_now", input); assert.equal(h.calls.length, 2);
+  h.calls[1].resolve({ kind: "uncertain", error: null }); await next;
+});
+test("DERIVED stale discard handler cannot clear a newer retained command", async () => {
+  const h = harness(), first = h.render().submit("dates_event_research_source_run_now", input);
+  h.calls[0].resolve({ kind: "uncertain", error: null }); await first; const old = h.render(); await old.discard();
+  const next = h.render().submit("dates_event_research_source_run_now", input); h.calls[1].resolve({ kind: "uncertain", error: null }); await next;
+  const current = h.render(); await old.discard(); assert.equal(h.render().pending, current.pending); assert.equal(h.conflicts.length, 1);
+});
+test("DERIVED discard UI requires an in-page warning and a second explicit choice, without a browser dialog", () => {
+  const feedback = tree.statements.find((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && node.name?.text === "ResearchCommandFeedback")!;
+  const slots: any[] = []; let index = 0, discards = 0;
+  const context: any = { exports: {}, React: { Fragment: "fragment", createElement: (type: any, props: any, ...children: any[]) => ({ type, props: props ?? {}, children }) },
+    useTranslations: () => (key: string) => key,
+    useState: (initial: any) => { const slot = index++; if (!(slot in slots)) slots[slot] = initial; return [slots[slot], (value: any) => { slots[slot] = value; }]; },
+  };
+  vm.runInNewContext(ts.transpileModule(feedback.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText, context);
+  const command: any = { pending: {}, busy: false, outcome: { kind: "uncertain", error: null }, retry: () => {}, discard: () => { discards++; } };
+  const flat = (node: any): any[] => Array.isArray(node) ? node.flatMap(flat) : node && typeof node === "object" && "type" in node ? [node, ...flat(node.children)] : [node];
+  const draw = () => { index = 0; return flat(context.exports.ResearchCommandFeedback({ command })); };
+  let nodes = draw(); nodes.find((node) => node?.type === "button" && node.children.includes("command.discard")).props.onClick();
+  nodes = draw(); assert.ok(nodes.includes("command.discardWarning")); assert.equal(discards, 0);
+  nodes.find((node) => node?.type === "button" && node.children.includes("cancel")).props.onClick();
+  nodes = draw(); assert.equal(nodes.includes("command.discardWarning"), false); assert.equal(discards, 0);
+  nodes.find((node) => node?.type === "button" && node.children.includes("command.discard")).props.onClick(); nodes = draw();
+  nodes.find((node) => node?.type === "button" && node.children.includes("command.discardConfirm")).props.onClick();
+  assert.equal(discards, 1); assert.equal(draw().includes("command.discardWarning"), false);
+});

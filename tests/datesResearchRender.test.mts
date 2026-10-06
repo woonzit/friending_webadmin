@@ -27,6 +27,15 @@ function render(locale: string, ...children: ReactNode[]) {
 }
 const props = { actor: "operator@example.test", manage: true, limits: GENUINE_LIMITS, reload: async () => {}, close: () => {} };
 for (const locale of ["en", "hu"]) {
+  test(`render ${locale}: unresolved commands offer explicit discard; discarded feedback stays unknown with no retry`, () => {
+    const copy = messages(locale).datesAdmin.research;
+    const command: any = { outcome: { kind: "uncertain", error: "unknown-core-name" }, pending: {}, retry: async () => {}, discard: async () => {} };
+    const html = render(locale, createElement(ResearchCommandFeedback, { command }));
+    assert.ok(html.includes(escaped(copy.command.discard)));
+    const discarded = render(locale, createElement(ResearchCommandFeedback, { command: { ...command, pending: null, outcome: { kind: "uncertain", error: null, discarded: true } } }));
+    assert.ok(discarded.includes(escaped(copy.command.discarded))); assert.equal(discarded.includes(escaped(messages(locale).common.retry)), false);
+    assert.equal(discarded.includes(escaped(copy.command.refused)), false);
+  });
   test(`render ${locale}: a retained command warns that navigation loses retry, not that it cancels Core work`, () => {
     const copy = messages(locale).datesAdmin.research;
     const html = render(locale, createElement(ResearchCommandFeedback, { command: { outcome: { kind: "uncertain", error: null }, pending: {}, retry: async () => {} } as any }));

@@ -8384,7 +8384,11 @@
         "runReplayed": "Core returned the existing run. No new run was queued.",
         "conflict": "Core returned a conflict with stored state. Refresh and review it before trying again. Any unsaved edits are kept.",
         "refused": "The command was refused.",
-        "uncertain": "The outcome is not known. Retry sends the exact same command and idempotency key."
+        "uncertain": "The outcome is not known. Retry sends the exact same command and idempotency key.",
+        "discard": "Discard retry identity",
+        "discardWarning": "The outcome is still unknown. Discarding removes only the local retry identity; it does not cancel work already sent to Core. The list must be reloaded to check what Core did, and a still-running first attempt may finish later. Discard and reload?",
+        "discardConfirm": "Discard and reload",
+        "discarded": "The local retry identity was discarded and a list reload was requested. The original outcome is still unknown; refresh the list again to see whether Core completed the work."
       },
       "conflicts": {
         "revision": "The stored revision differs from the submitted revision.",

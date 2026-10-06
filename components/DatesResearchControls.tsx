@@ -90,6 +90,7 @@ export function useResearchCommand(actor: string, onSuccess: (outcome: Extract<R
   const t = useTranslations("datesAdmin.research"), leave = t("navigation.confirm"), history = t("navigation.history");
   const [pending, setPending] = useState<ResearchCommand | null>(null), [outcome, setOutcome] = useState<ResearchCommandOutcome | null>(null), [busy, setBusy] = useState(false);
   const [owner, setOwner] = useState(actor), busyRef = useRef(false), actorRef = useRef(actor); actorRef.current = actor;
+  const pendingRef = useRef(pending); pendingRef.current = pending;
   useEffect(() => { if (actor && actor !== owner) { setOwner(actor); setPending(null); setOutcome(null); } }, [actor, owner]);
   const retained = pending !== null;
   useEffect(() => retained ? retainResearchCommandNavigation(leave, history) : undefined, [retained, leave, history]);
@@ -120,6 +121,12 @@ export function useResearchCommand(actor: string, onSuccess: (outcome: Extract<R
   }
   const visiblePending = owner === actor ? pending : null, visibleOutcome = owner === actor ? outcome : null;
   return { busy, retained, pending: visiblePending, outcome: visibleOutcome, clear: () => setOutcome(null), retry: () => visiblePending ? execute(visiblePending, true) : Promise.resolve(),
+    discard: async () => {
+      if (busyRef.current || !pending || pending !== pendingRef.current || pending.actor !== actorRef.current) return;
+      busyRef.current = true; setBusy(true); setPending(null);
+      setOutcome({ kind: "uncertain", error: null, discarded: true, partial: outcome?.kind === "uncertain" ? outcome.partial : undefined });
+      try { await onConflict(); } finally { busyRef.current = false; setBusy(false); }
+    },
     submit: async (action: DatesResearchAction, body: Record<string, unknown>) => {
       if (busyRef.current || pending) return;
       const command = prepareResearchCommand(actor, action, body);
@@ -129,13 +136,19 @@ export function useResearchCommand(actor: string, onSuccess: (outcome: Extract<R
 }
 export function ResearchCommandFeedback({ command, children }: { command: ReturnType<typeof useResearchCommand>; children?: ReactNode }) {
   const t = useTranslations("datesAdmin.research"), common = useTranslations("common");
+  const [discardTarget, setDiscardTarget] = useState<ResearchCommand | null>(null);
   const outcome = command.outcome;
   if (!outcome) return null;
   return <div className={`alert alert-${outcome.kind === "success" ? "success" : outcome.kind === "conflict" ? "warning" : "error"}`} role="status">
-    <p>{t(`command.${outcome.kind === "success" && outcome.replayed ? outcome.runId ? "runReplayed" : "replayed" : outcome.kind}`)}{outcome.kind !== "success" && outcome.error ? <> <code>{outcome.error}</code></> : null}</p>
+    <p>{t(`command.${outcome.kind === "uncertain" && outcome.discarded ? "discarded" : outcome.kind === "success" && outcome.replayed ? outcome.runId ? "runReplayed" : "replayed" : outcome.kind}`)}{outcome.kind !== "success" && outcome.error ? <> <code>{outcome.error}</code></> : null}</p>
     {outcome.kind === "conflict" && outcome.cause && <p>{t(`conflicts.${outcome.cause}`)}</p>}
     {outcome.kind === "refused" && t.has(`commandErrors.${outcome.error}`) && <p>{t(`commandErrors.${outcome.error}`)}</p>}
     {outcome.kind === "uncertain" && outcome.retryBlocked && <p>{t(`retryBlocked.${outcome.retryBlocked}`)}</p>}
     {command.pending && <p>{t("navigation.retained")}</p>}
-    {command.pending && <button type="button" className="button button-secondary" disabled={command.busy} onClick={() => void command.retry()}>{common("retry")}</button>}{children}</div>;
+    {command.pending && <><button type="button" className="button button-secondary" disabled={command.busy} onClick={() => void command.retry()}>{common("retry")}</button>
+      <button type="button" className="button button-secondary" disabled={command.busy} onClick={() => setDiscardTarget(command.pending)}>{t("command.discard")}</button>
+      {discardTarget === command.pending && <div className="research-discard-confirmation" role="alert"><p>{t("command.discardWarning")}</p>
+        <button type="button" className="button button-danger" disabled={command.busy} onClick={() => { setDiscardTarget(null); void command.discard(); }}>{t("command.discardConfirm")}</button>
+        <button type="button" className="button button-secondary" onClick={() => setDiscardTarget(null)}>{common("cancel")}</button></div>}
+    </>}{children}</div>;
 }
