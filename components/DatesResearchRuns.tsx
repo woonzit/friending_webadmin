@@ -10,13 +10,13 @@ import { formatDate, formatNumber } from "@/lib/format";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { ResearchHelp } from "@/components/DatesResearchControls";
 
-export default function DatesResearchRuns({ areas, sources, focusRunId, refresh, active = true }: { areas: ResearchArea[]; sources: ResearchSource[]; focusRunId: string | null; refresh: number; active?: boolean }) {
+export default function DatesResearchRuns({ areas, sources, focusRunId, refresh, active = true, onRunFinished }: { areas: ResearchArea[]; sources: ResearchSource[]; focusRunId: string | null; refresh: number; active?: boolean; onRunFinished?: () => Promise<void> | void }) {
   const t = useTranslations("datesAdmin.research"), common = useTranslations("common"), locale = useLocale();
   const [source, setSource] = useState(""), [area, setArea] = useState(""), [kind, setKind] = useState("");
   const [cursor, setCursor] = useState<string | null>(null), [previous, setPrevious] = useState<(string | null)[]>([]), [history, setHistory] = useState<ResearchRunList | null>(null);
   const [loading, setLoading] = useState(true), [error, setError] = useState(false), [runId, setRunId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ResearchRunDetail | null>(null), [detailError, setDetailError] = useState(false), [detailLoading, setDetailLoading] = useState(false);
-  const generation = useRef(0), detailGeneration = useRef(0);
+  const generation = useRef(0), detailGeneration = useRef(0), finished = useRef(new Set<string>());
   const load = useCallback(async (signal?: AbortSignal) => {
     if (!active) return;
     const current = ++generation.current; setLoading(true);
@@ -32,7 +32,10 @@ export default function DatesResearchRuns({ areas, sources, focusRunId, refresh,
     const value = await readResearchRun(adminCall, runId, signal);
     if (signal?.aborted || current !== detailGeneration.current) return;
     setDetailLoading(false); setDetailError(value === null); if (value) setDetail(value);
-  }, [runId, active]);
+    if (value && !["queued", "running"].includes(value.run.status) && !finished.current.has(value.run.run_id)) {
+      finished.current.add(value.run.run_id); await onRunFinished?.();
+    }
+  }, [runId, active, onRunFinished]);
   useEffect(() => {
     if (!active) return;
     setDetail(null); setDetailError(false);

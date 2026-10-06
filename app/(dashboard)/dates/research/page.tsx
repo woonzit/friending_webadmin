@@ -112,7 +112,7 @@ export default function DatesResearchPage() {
       </section>
       {sourceEditor !== null && defaults && (sourceEditor === "new" || editedSource) && <ResearchSourceEditor key={`${read.operator.email}:${sourceEditor}`} row={editedSource} defaults={defaults} areas={overview.areas.rows} actor={confirmedActor} manage={manage && overview.defaults !== null && (sourceEditor === "new" || source !== null)} limits={overview.limits} reload={reload} close={() => setSourceEditor(null)} />}
       {sourceEditor !== null && sourceEditor !== "new" && !source && <p className="alert alert-warning">{t("editedRowUnavailable")}</p>}
-      <DatesResearchRuns areas={overview.areas.rows} sources={overview.sources.rows} focusRunId={focusRun} refresh={refresh} active={confirmedActor !== ""} />
+      <DatesResearchRuns areas={overview.areas.rows} sources={overview.sources.rows} focusRunId={focusRun} refresh={refresh} active={confirmedActor !== ""} onRunFinished={reload} />
     </div>}
   </>;
 }
