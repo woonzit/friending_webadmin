@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import LocalizedFields, { plainText, type Language } from "@/components/LocalizedFields";
 import PhotoGestureCatalogue, { PhotoFlowWording, type PhotoCoverage } from "@/components/PhotoVerificationEditor";
 import { adminCall } from "@/lib/adminClient";
+import { adminMembershipFailureText } from "@/lib/adminMembershipFailureText";
 import { isAdminWriteRole } from "@/lib/authPolicy";
 import { formatDate } from "@/lib/format";
 import { forcedStorefrontName } from "@/lib/forcedVerification";
@@ -83,6 +84,7 @@ function ColorFields({
 
 export default function ProfileVerificationConfiguration() {
   const t = useTranslations("profileVerification.configuration");
+  const membership = useTranslations("adminMembership");
   const methodReason = useTranslations("verificationAdmin.live.methodReasons");
   const common = useTranslations("common");
   const locale = useLocale();
@@ -230,7 +232,7 @@ export default function ProfileVerificationConfiguration() {
         setFeedback({ tone: "error", text: t("writeRequired") });
         return;
       }
-      setFeedback({ tone: "error", text: t("saveError", { error }) });
+      setFeedback({ tone: "error", text: adminMembershipFailureText(error, t("saveError", { error }), membership("requestUnconfirmed")) });
       return;
     }
     if (!adopt(authoritative)) {

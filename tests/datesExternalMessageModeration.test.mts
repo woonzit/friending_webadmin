@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
+import { adminMembershipFailureText } from "../lib/adminMembershipFailureText.ts";
 import { datesAdminPrincipal, datesCaseInternalNotes, datesCaseClaimableByRole, datesExternalReviewAllowed, isDatesExternalMessageCase,
   permittedResolutionActions, resolutionActions } from "../lib/datesAdmin.ts";
 import { DatesCaseReadFence, datesCaseDetail, datesModerationQueue } from "../lib/datesModerationRead.ts";
@@ -416,7 +417,9 @@ test("actual evidence callback never requests live-location scope for an externa
       principal: { ...principal, capabilities: [...caps, "dates_external_event_review"] },
       datesExternalReviewAllowed, isDatesExternalMessageCase, evidenceSensitive: true,
       evidenceReason: mode === "ordinary" ? "Read authorized evidence" : "", readFence: new DatesCaseReadFence(),
-      t: (key: string) => key, setBusy: () => {}, setEvidence: () => {}, setFeedback: () => {},
+      t: (key: string) => key, adminMembershipFailureText,
+      membership: (key: string) => JSON.parse(readFileSync(new URL("../messages/en.json", import.meta.url), "utf8")).adminMembership[key],
+      setBusy: () => {}, setEvidence: () => {}, setFeedback: () => {},
       adminCall: async (action: string, body: unknown) => { sent.push({ action, body }); return null; },
       datesEvidenceRead: (_value: unknown, scope: unknown) => { scopes.push(scope); return null; } };
     vm.runInNewContext(compile(`${callback("readEvidence")}; exports.read = readEvidence;`), context);

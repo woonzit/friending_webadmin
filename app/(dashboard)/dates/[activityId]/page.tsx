@@ -10,6 +10,7 @@ import DatesExternalProvenance from "@/components/DatesExternalProvenance";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
+import { adminMembershipFailureText } from "@/lib/adminMembershipFailureText";
 import { operationalRecordSummary } from "@/lib/auditLog";
 import {
   createAdminIdempotencyKey,
@@ -80,6 +81,7 @@ function displayValue(value: unknown): string {
 
 export default function DatesActivityDetailPage() {
   const t = useTranslations("datesAdmin.activityDetail");
+  const membership = useTranslations("adminMembership");
   const values = useTranslations("datesAdmin.activities.values");
   const common = useTranslations("common");
   const external = useTranslations("datesAdmin.external");
@@ -225,7 +227,7 @@ export default function DatesActivityDetailPage() {
     });
     setBusy(false);
     if (!response?.success || !response.private_location || typeof response.private_location !== "object") {
-      setFeedback({ tone: "error", text: t("operationFailed", { error: String(response?.error || "core-unavailable") }) });
+      setFeedback({ tone: "error", text: adminMembershipFailureText(response?.error, t("operationFailed", { error: String(response?.error || "core-unavailable") }), membership("requestUnconfirmed")) });
       return;
     }
     setPrivateLocation(response.private_location as Record<string, unknown>);

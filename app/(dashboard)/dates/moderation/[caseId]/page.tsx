@@ -11,6 +11,7 @@ import DatesExternalProvenance from "@/components/DatesExternalProvenance";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
+import { adminMembershipFailureText } from "@/lib/adminMembershipFailureText";
 import {
   createAdminIdempotencyKey,
   DATES_CASE_NOTE_LIMIT,
@@ -59,6 +60,7 @@ export default function DatesModerationCasePage() {
 
 function DatesModerationCase({ caseId }: { caseId: string }) {
   const t = useTranslations("datesAdmin.caseDetail");
+  const membership = useTranslations("adminMembership");
   const external = useTranslations("datesAdmin.external");
   const commandOutcome = useTranslations("datesAdmin.commandOutcome");
   const messageReview = useTranslations("datesAdmin.external.messageModeration");
@@ -285,7 +287,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     const decoded = datesEvidenceRead(response, { case_id: caseId, appeal_id: data.appeal?.appeal_id ?? null,
       include_sensitive_location: includeSensitiveLocation, break_glass: conflictBreakGlass });
     if (!decoded) {
-      setFeedback({ tone: "error", text: t("operationFailed", { error: String(response?.error || "core-unavailable") }) });
+      setFeedback({ tone: "error", text: adminMembershipFailureText(response?.error, t("operationFailed", { error: String(response?.error || "core-unavailable") }), membership("requestUnconfirmed")) });
       return;
     }
     setEvidence(decoded);

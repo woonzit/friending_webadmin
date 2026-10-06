@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
+import { adminMembershipFailureText } from "@/lib/adminMembershipFailureText";
 import { isAdminWriteRole } from "@/lib/authPolicy";
 import { formatDate } from "@/lib/format";
 import {
@@ -46,6 +47,7 @@ export default function FootprintReportsPanel({
   onResolved: () => void;
 }) {
   const t = useTranslations("footprints");
+  const membership = useTranslations("adminMembership");
   const common = useTranslations("common");
   const locale = useLocale();
 
@@ -160,7 +162,7 @@ export default function FootprintReportsPanel({
       // Refused, lost, timed out or answered for another report: the write may or
       // may not have landed, so the console re-reads the queue instead of
       // offering a blind retry.
-      setNotice({ tone: "error", text: t("reportActionError", { code: errorCode(response) }) });
+      setNotice({ tone: "error", text: adminMembershipFailureText(errorCode(response), t("reportActionError", { code: errorCode(response) }), membership("requestUnconfirmed")) });
       void load(status);
       return;
     }

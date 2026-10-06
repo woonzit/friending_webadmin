@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { adminCall } from "@/lib/adminClient";
+import { adminMembershipFailureText } from "@/lib/adminMembershipFailureText";
 import { formatDate } from "@/lib/format";
 import {
   MANDATORY_PROFILE_PRESENCE_MODES,
@@ -30,6 +31,7 @@ function draftFrom(payload: ProfilePresenceConfigurationPayload): Draft {
 
 export default function ProfilePresenceConfiguration() {
   const t = useTranslations("profilePresence.configuration");
+  const membership = useTranslations("adminMembership");
   const common = useTranslations("common");
   const locale = useLocale();
   const [stored, setStored] = useState<ProfilePresenceConfigurationPayload | null>(null);
@@ -100,7 +102,7 @@ export default function ProfilePresenceConfiguration() {
       }
       setFeedback({
         tone: "error",
-        text: t("saveError", { error: String(response?.error || "core-unavailable") }),
+        text: adminMembershipFailureText(response?.error, t("saveError", { error: String(response?.error || "core-unavailable") }), membership("requestUnconfirmed")),
       });
       return;
     }

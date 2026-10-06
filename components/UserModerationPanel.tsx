@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
+import { adminMembershipFailureText } from "@/lib/adminMembershipFailureText";
 import { formatDate } from "@/lib/format";
 
 // Wire mirror of Core's ModerationPolicy::statusWire + the service extras.
@@ -111,6 +112,7 @@ const ICON_TABLE: Record<string, () => JSX.Element> = {
 
 export default function UserModerationPanel({ uid }: { uid: number }) {
   const t = useTranslations("moderation");
+  const membership = useTranslations("adminMembership");
   const locale = useLocale();
   const [status, setStatus] = useState<ModerationStatus | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
@@ -252,7 +254,7 @@ export default function UserModerationPanel({ uid }: { uid: number }) {
         </span>
       </div>
       <div className="panel-body">
-        {actionError ? <p className="alert alert-error" role="alert">{t("actionError", { code: actionError })}</p> : null}
+        {actionError ? <p className="alert alert-error" role="alert">{adminMembershipFailureText(actionError, t("actionError", { code: actionError }), membership("requestUnconfirmed"))}</p> : null}
 
         <div className="modx-layout">
           <div className="modx-main">

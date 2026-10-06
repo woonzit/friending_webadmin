@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
+import { adminMembershipFailureText } from "@/lib/adminMembershipFailureText";
 import {
   clampCropZoom, cropGeometry, INITIAL_CROP, MAX_CROP_ZOOM, MIN_CROP_ZOOM,
   panCrop, pinchCrop, squareCropInOriginalSpace,
@@ -51,6 +52,7 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
   const canvasWidth = CANVAS_WIDTH;
   const canvasHeight = isSquare ? CANVAS_WIDTH : CANVAS_HEIGHT;
   const t = useTranslations("imageEditor");
+  const membership = useTranslations("adminMembership");
   const common = useTranslations("common");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
@@ -331,10 +333,10 @@ export default function AdminImageEditor({ uid, imageId, mode = "replace", onCan
           <p className="page-subtitle">{t(isSquare ? "squareCopy" : "copy")}</p>
 
           {loadError ? (
-            <p className="alert alert-error" role="alert">{t("loadError")}</p>
+            <p className="alert alert-error" role="alert">{adminMembershipFailureText(loadError, t("loadError"), membership("requestUnconfirmed"))}</p>
           ) : null}
           {saveError ? (
-            <p className="alert alert-error" role="alert">{t("saveError")}</p>
+            <p className="alert alert-error" role="alert">{adminMembershipFailureText(saveError, t("saveError"), membership("requestUnconfirmed"))}</p>
           ) : null}
 
           <div className={`image-editor-stage${isSquare ? " is-square" : ""}`}>

@@ -6,6 +6,7 @@ import ts from "typescript";
 import { isAdminClientReadAction } from "../lib/adminClientReadActions.ts";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
 import { adminMembershipFailure, adminRequestOutcomeUnknownFailure } from "../lib/adminMembershipClientError.ts";
+import { adminMembershipFailureText } from "../lib/adminMembershipFailureText.ts";
 import { createAdminMembershipRecovery, createAdminWriteOutcomeNotice } from "../lib/adminMembershipRecovery.ts";
 import { registerAdminReadRecovery } from "../lib/adminReadRecovery.ts";
 import { ADMIN_REQUEST_HEADER, ADMIN_REQUEST_HEADER_VALUE } from "../lib/requestGuard.ts";
@@ -141,14 +142,16 @@ const uiSites = [
     args: [{ preventDefault() {} }], reply: { ...MEMBERSHIP_MEMBER, private_location: { country_code: "DERIVED" } },
     context: (page: any, api: ReturnType<typeof client>["api"]) => ({ data: { activity: { host: {}, activity_id: "derived_activity" } }, busy: false,
       locationCaseId: "derived_case", locationReason: "Checked this location", locationBreakGlass: false, adminCall: api.adminCall,
-      t: (key: string, values: unknown) => `${key}:${JSON.stringify(values)}`, setBusy: (value: boolean) => { page.busy = value; },
+      t: (key: string, values: unknown) => `${key}:${JSON.stringify(values)}`, adminMembershipFailureText,
+      membership: (key: string) => JSON.parse(file("messages/en.json")).adminMembership[key], setBusy: (value: boolean) => { page.busy = value; },
       setFeedback: (value: unknown) => { page.feedback = value; }, setPrivateLocation: () => { page.adopted = true; } }) },
   { name: "Read evidence", action: "dates_moderation_evidence", path: "app/(dashboard)/dates/moderation/[caseId]/page.tsx", handler: "readEvidence",
     args: [{ preventDefault() {} }], reply: evidenceWire,
     context: (page: any, api: ReturnType<typeof client>["api"]) => ({ data: { case: { conflict_of_interest: false, target_type: "activity" }, appeal: null },
       principal: { email: MEMBERSHIP_EMAIL }, busy: false, breakGlass: false, evidenceSensitive: false, evidenceReason: "", caseId: evidenceWire.case_id,
       datesExternalReviewAllowed: () => true, isDatesExternalMessageCase: () => false, readFence: { begin: () => 1, accepts: () => true },
-      adminCall: api.adminCall, datesEvidenceRead, t: (key: string, values: unknown) => `${key}:${JSON.stringify(values)}`,
+      adminCall: api.adminCall, datesEvidenceRead, t: (key: string, values: unknown) => `${key}:${JSON.stringify(values)}`, adminMembershipFailureText,
+      membership: (key: string) => JSON.parse(file("messages/en.json")).adminMembership[key],
       setEvidence: (value: unknown) => { if (value !== null) page.adopted = true; }, setBusy: (value: boolean) => { page.busy = value; },
       setFeedback: (value: unknown) => { page.feedback = value; }, setResolutionReason: () => assert.fail("read failure must keep the resolution draft") }) },
   { name: "Save headline/about", action: "admin_save_user_content", path: "components/UserContentEditor.tsx", handler: "save", args: [],
@@ -180,6 +183,16 @@ for (const site of uiSites) {
 test("DERIVED user-content adapter reads resolve their existing null failure instead of throwing", async () => {
   const h = client("user_detail", "network"); assert.equal(await readUserContent(h.api.adminCall, 5), null);
   h.state.failedRead = null; await h.time.tick(); assert.deepEqual(h.requests, ["user_detail", "admin_me"]);
+});
+for (const locale of ["en", "hu"]) for (const site of uiSites.slice(0, 2)) test(`DERIVED ${locale} ${site.name}: a dropped READ shows the operator sentence, keeps edits, and never repeats`, async () => {
+  const h = client(site.action, "network"), page: any = { busy: false, adopted: false, resolutionReason: "Keep my typed reason" };
+  const messages = JSON.parse(file(`messages/${locale}.json`));
+  const context: any = { exports: {}, ...site.context(page, h.api), membership: (key: string) => messages.adminMembership[key] };
+  await compile(functionSource(site.path, site.handler) + `\nexports.run=${site.handler};`, context).run(...site.args);
+  assert.equal(page.feedback.text, messages.adminMembership.requestUnconfirmed);
+  assert.ok(!page.feedback.text.includes(ADMIN_MEMBERSHIP_UNCONFIRMED)); assert.equal(page.busy, false); assert.equal(page.adopted, false);
+  assert.equal(page.resolutionReason, "Keep my typed reason"); h.state.failedRead = null; await h.time.tick();
+  assert.deepEqual(h.requests, [site.action, "admin_me"]); assert.equal(page.resolutionReason, "Keep my typed reason");
 });
 for (const locale of ["en", "hu"]) test(`DERIVED ${locale} profile-text lost answer: the actual handler chooses unknown-outcome copy, not a no-write/save-failed claim`, async () => {
   const site = uiSites[2], h = client(site.action, "network"), page: any = { busy: false };

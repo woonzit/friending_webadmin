@@ -40,6 +40,15 @@ account change. Existing read, write and helper callers run their normal
 failure/busy cleanup and keep edits; no per-call exception conversion is
 needed. A failed pre-write read is never permission to continue a command.
 
+A dropped browser connection on a READ also resolves immediately with
+`admin-membership-unconfirmed` / 503. The client cannot distinguish a dropped
+read socket from an unavailable administrator check. This code is not proof
+that membership was revoked or that the read never reached Core. The affected
+presentation points show an EN/HU sentence about the temporarily unavailable
+connection/access check instead of printing the machine code; the typed result
+itself is unchanged. Busy state clears, edits remain, and recovery still sends
+only its membership probe, never the original audited read or a follow-on write.
+
 Pre-forward/local refusal and a lost write answer are different failure values.
 For writes, only a locally blocked call or the bridge's pre-forward 503 uses
 `admin-membership-unconfirmed`. An attempted JSON write/upload with a lost
