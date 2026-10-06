@@ -26,6 +26,13 @@ function render(locale: string, ...children: ReactNode[]) {
 }
 const props = { actor: "operator@example.test", manage: true, limits: GENUINE_LIMITS, reload: async () => {}, close: () => {} };
 for (const locale of ["en", "hu"]) {
+  test(`render ${locale}: replayed runs say no new run was queued; a batch replay does not claim no child writes`, () => {
+    const copy = messages(locale).datesAdmin.research;
+    for (const [runId, key] of [["derived_run", "runReplayed"], [undefined, "replayed"]] as const) {
+      const html = render(locale, createElement(ResearchCommandFeedback, { command: { outcome: { kind: "success", replayed: true, receipt: {}, runId }, pending: null } as any }));
+      assert.ok(html.includes(escaped(copy.command[key]))); assert.equal(html.includes(escaped(copy.command.success)), false);
+    }
+  });
   test(`render ${locale}: conflict feedback uses neutral fallback and every public-state explanation`, () => {
     const copy = messages(locale).datesAdmin.research;
     for (const cause of [undefined, ...Object.keys(copy.conflicts)]) {

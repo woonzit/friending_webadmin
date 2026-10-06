@@ -26,7 +26,7 @@ export async function readResearchRun(send: ResearchSend, runId: string, signal?
   try { return decodeResearchRunDetail(await send("dates_event_research_run_detail", { run_id: runId }, signal), runId); } catch { return null; }
 }
 export type ResearchCommand = { actor: string; action: DatesResearchAction; body: Record<string, unknown> };
-export type ResearchCommandOutcome = { kind: "success"; receipt: unknown; runId?: string; results?: ResearchBatchResult[] }
+export type ResearchCommandOutcome = { kind: "success"; replayed: boolean; receipt: unknown; runId?: string; results?: ResearchBatchResult[] }
   | { kind: "conflict"; error: string; cause?: "revision" | "source_open_run" | "source_archived" | "url_owned" | "archived_url_owned" | "city_registered" } | { kind: "refused"; error: string }
   | { kind: "uncertain"; error: string | null; partial?: ResearchRows<ResearchBatchResult> };
 /** Prepared once. The entire immutable request is kept while its outcome is not known. */
@@ -41,7 +41,7 @@ export function decodeResearchCommandReceipt(command: ResearchCommand, response:
   // Batch children own their audits; Core returns no parent audit_id.
   if (action === "dates_event_intake_batch_decide") {
     const results = decodeResearchBatchReceipt(response, body.intake_ids as string[]);
-    return results ? { kind: "success", receipt: response, results } : null;
+    return results ? { kind: "success", replayed: response.replayed, receipt: response, results } : null;
   }
   const audited = researchString(response.audit_id) && response.audit_id !== "";
   // Reusing an open scheduled run changes no configuration and has no
@@ -50,18 +50,18 @@ export function decodeResearchCommandReceipt(command: ResearchCommand, response:
   if (!audited && !scheduledReplay) return null;
   if (action === "dates_event_research_defaults_save") {
     const row = decodeResearchDefaults(response.defaults);
-    return row && row.revision === Number(body.expected_revision) + 1 ? { kind: "success", receipt: row } : null;
+    return row && row.revision === Number(body.expected_revision) + 1 ? { kind: "success", replayed: response.replayed, receipt: row } : null;
   }
   if (action === "dates_event_research_area_save") {
     const row = decodeResearchArea(response.area);
     const bound = row && (body.area_id ? row.area_id === body.area_id && row.revision === Number(body.expected_revision) + 1 : row.place_id === body.place_id);
-    return bound ? { kind: "success", receipt: row } : null;
+    return bound ? { kind: "success", replayed: response.replayed, receipt: row } : null;
   }
   if (action === "dates_event_research_source_save") {
     const row = decodeResearchSource(response.source);
     const bound = row && row.url === researchSourceCanonicalUrl(body.url)
       && (body.source_id ? row.source_id === body.source_id && row.revision === Number(body.expected_revision) + 1 : row.revision === 1);
-    return bound ? { kind: "success", receipt: row } : null;
+    return bound ? { kind: "success", replayed: response.replayed, receipt: row } : null;
   }
   if (action === "dates_event_research_source_run_now") {
     const next = Number(body.expected_revision) + 1;
@@ -70,7 +70,7 @@ export function decodeResearchCommandReceipt(command: ResearchCommand, response:
     const boundRevision = response.replayed === true || response.source_revision === next;
     return researchString(response.run_id) && response.run_id !== "" && response.source_id === body.source_id && response.dry_run === body.dry_run
       && researchInteger(response.source_revision, 2) && boundRevision
-      ? { kind: "success", receipt: response, runId: response.run_id } : null;
+      ? { kind: "success", replayed: response.replayed, receipt: response, runId: response.run_id } : null;
   }
   return null;
 }

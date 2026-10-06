@@ -8376,6 +8376,8 @@
       "clearRun": "Clear run filter",
       "command": {
         "success": "The command was confirmed.",
+        "replayed": "Core reused this command's identity. Review the returned outcome.",
+        "runReplayed": "Core returned the existing run. No new run was queued.",
         "conflict": "Core returned a conflict with stored state. Refresh and review it before trying again. Any unsaved edits are kept.",
         "refused": "The command was refused.",
         "uncertain": "The outcome is not known. Retry sends the exact same command and idempotency key."

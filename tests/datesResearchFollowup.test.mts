@@ -49,6 +49,7 @@ test("GENUINE scheduled-open receipt settles stale-page aliases independently of
       source_id: body.source_id, dry_run: body.dry_run, expected_revision,
     })!;
     assert.equal(decodeResearchCommandReceipt(command, body)?.kind, "success", "classify unchanged genuine receipt against DERIVED stale/reread commands");
+    const answer = decodeResearchCommandReceipt(command, body)!; if (answer.kind === "success") assert.equal(answer.replayed, true);
     for (const change of [{ source_id: "foreign" }, { dry_run: !body.dry_run }, { source_revision: 1 }, { source_revision: "2" }, { replayed: false }])
       assert.equal(decodeResearchCommandReceipt(command, { ...body, ...change }), null);
   }
