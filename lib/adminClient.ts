@@ -2,7 +2,7 @@
 
 import { isAdminClientReadAction } from "@/lib/adminClientReadActions";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "@/lib/adminMembership";
-import { adminMembershipFailure } from "@/lib/adminMembershipClientError";
+import { adminMembershipFailure, adminRequestOutcomeUnknownFailure } from "@/lib/adminMembershipClientError";
 import { createAdminMembershipRecovery, createAdminWriteOutcomeNotice } from "@/lib/adminMembershipRecovery";
 import {
   ADMIN_REQUEST_HEADER,
@@ -59,11 +59,11 @@ async function finishUpload(response: Response, signal?: AbortSignal): Promise<A
     adminMembershipRecovery.markUnconfirmed(); return refuseUnconfirmed();
   }
   else if (response.status >= 500 || !data) adminWriteOutcomeNotice.markUnknown();
-  return data;
+  return data ?? adminRequestOutcomeUnknownFailure();
 }
 
 function lostUpload(signal?: AbortSignal): AdminResponse | null {
-  if (!signal?.aborted) { adminWriteOutcomeNotice.markUnknown(); adminMembershipRecovery.markUnconfirmed(); return refuseUnconfirmed(); }
+  if (!signal?.aborted) { adminWriteOutcomeNotice.markUnknown(); adminMembershipRecovery.markUnconfirmed(); return adminRequestOutcomeUnknownFailure(); }
   return null;
 }
 
@@ -84,6 +84,10 @@ export async function adminCall(
     if (response && definiteSignedOut(response.status, data)) { redirectToLogin(); return null; }
     const preForwardRefusal = response?.status === 503 && data?.success === false && data.error === ADMIN_MEMBERSHIP_UNCONFIRMED;
     if (!readOnly && (!response || (!preForwardRefusal && (response.status >= 500 || !data)))) adminWriteOutcomeNotice.markUnknown();
+    if (!readOnly && !data) {
+      adminMembershipRecovery.markUnconfirmed();
+      return adminRequestOutcomeUnknownFailure();
+    }
     const unavailable = !response
       || (response.status === 503 && data?.success === false && data.error === ADMIN_MEMBERSHIP_UNCONFIRMED)
       || (action === "admin_me" && classifyAdminMembership({ status: response.status, data }, typeof data?.email === "string" ? data.email : "").kind !== "confirmed");

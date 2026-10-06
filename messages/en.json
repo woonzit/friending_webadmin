@@ -6487,6 +6487,7 @@
     "contentRevisionInvalid": "The profile text revision is invalid. This is a technical error; reload the page and report it if it happens again.",
     "contentInvalid": "The profile text was refused. Check the headline and About text before trying again.",
     "contentSaveFailed": "The profile text could not be saved. Your draft is preserved. Try again shortly.",
+    "contentOutcomeUnknown": "The save outcome is unknown: the request may have been applied. Your draft is preserved. Check the member's current profile and audit history before trying again.",
     "contentResponseInvalid": "The save response could not be read. Your draft is preserved; check the member's current profile before trying again."
   },
   "profileLocation": {

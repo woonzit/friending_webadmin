@@ -6487,6 +6487,7 @@
     "contentRevisionInvalid": "A profilszöveg verziószáma érvénytelen. Ez technikai hiba; töltsd újra az oldalt, és ha ismét előfordul, jelezd a hibát.",
     "contentInvalid": "A profilszöveget nem fogadta el a rendszer. Újrapróbálás előtt ellenőrizd a címsort és a bemutatkozást.",
     "contentSaveFailed": "Nem sikerült menteni a profilszöveget. A piszkozatod megmaradt. Próbáld újra egy kicsit később.",
+    "contentOutcomeUnknown": "A mentés eredménye bizonytalan: a kérés már érvényesülhetett. A piszkozatod megmaradt. Újrapróbálás előtt ellenőrizd a tag aktuális profilját és az auditnaplót.",
     "contentResponseInvalid": "A mentés eredménye nem olvasható. A piszkozatod megmaradt; újrapróbálás előtt ellenőrizd a tag aktuális profilját."
   },
   "profileLocation": {

@@ -5,7 +5,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import { isAdminClientReadAction } from "../lib/adminClientReadActions.ts";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
-import { adminMembershipFailure } from "../lib/adminMembershipClientError.ts";
+import { adminMembershipFailure, adminRequestOutcomeUnknownFailure } from "../lib/adminMembershipClientError.ts";
 import { createAdminMembershipRecovery, createAdminWriteOutcomeNotice } from "../lib/adminMembershipRecovery.ts";
 import { registerAdminReadRecovery } from "../lib/adminReadRecovery.ts";
 import { ADMIN_REQUEST_HEADER, ADMIN_REQUEST_HEADER_VALUE } from "../lib/requestGuard.ts";
@@ -59,7 +59,7 @@ const grantDetail = grantContext.exports.detail;
 function client(failedRead: string | null, failure: "503" | "network" = "503") {
   const time = membershipClock(), requests: string[] = []; const state = { failedRead, actor: MEMBERSHIP_EMAIL, replies: {} as Record<string, any> };
   const parsed = tree("lib/adminClient.ts"), context: any = { exports: {}, JSON, File, FormData, AbortSignal, isAdminClientReadAction,
-    ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, adminMembershipFailure, createAdminWriteOutcomeNotice,
+    ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, adminMembershipFailure, adminRequestOutcomeUnknownFailure, createAdminWriteOutcomeNotice,
     ADMIN_REQUEST_HEADER, ADMIN_REQUEST_HEADER_VALUE, window: { location: { assign: () => assert.fail("an outage must not redirect") } },
     createAdminMembershipRecovery: (probe: any, redirect: any) => createAdminMembershipRecovery(probe, redirect, time.clock),
     fetch: async (url: string) => {
@@ -170,6 +170,7 @@ for (const site of uiSites) {
     const context: any = { exports: {}, ...site.context(page, h.api) };
     const run = compile(functionSource(site.path, site.handler) + `\nexports.run=${site.handler};`, context).run;
     await run(...site.args); assert.equal(page.busy, false); assert.ok(page.feedback || page.error); assert.equal(page.adopted, false);
+    if (site.action === "admin_save_user_content" && failure === "network") assert.equal(page.error, "contentOutcomeUnknown");
     assert.equal(page.resolutionReason, "Keep my typed resolution");
     h.state.failedRead = null; await h.time.tick();
     assert.deepEqual(h.requests, [site.action, "admin_me"], "recovery sends no repeat, audited read or command");
@@ -179,6 +180,15 @@ for (const site of uiSites) {
 test("DERIVED user-content adapter reads resolve their existing null failure instead of throwing", async () => {
   const h = client("user_detail", "network"); assert.equal(await readUserContent(h.api.adminCall, 5), null);
   h.state.failedRead = null; await h.time.tick(); assert.deepEqual(h.requests, ["user_detail", "admin_me"]);
+});
+for (const locale of ["en", "hu"]) test(`DERIVED ${locale} profile-text lost answer: the actual handler chooses unknown-outcome copy, not a no-write/save-failed claim`, async () => {
+  const site = uiSites[2], h = client(site.action, "network"), page: any = { busy: false };
+  const context: any = { exports: {}, ...site.context(page, h.api) };
+  await compile(functionSource(site.path, site.handler) + `\nexports.run=${site.handler};`, context).run();
+  assert.equal(page.error, "contentOutcomeUnknown"); assert.equal(page.busy, false);
+  const messages = JSON.parse(file(`messages/${locale}.json`));
+  assert.ok(messages.moderation[page.error]); assert.notEqual(messages.moderation[page.error], messages.moderation.contentSaveFailed);
+  h.state.failedRead = null; await h.time.tick(); assert.deepEqual(h.requests, [site.action, "admin_me"]);
 });
 test("DERIVED registered loader: recovery invokes only eligible never-loaded readers; unregister/new successful adoption prevents later runs", async () => {
   const time = membershipClock(), recovery = createAdminMembershipRecovery(async () => "confirmed", () => assert.fail(), time.clock);

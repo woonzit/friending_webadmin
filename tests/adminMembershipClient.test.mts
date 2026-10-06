@@ -10,7 +10,7 @@ import AdminMembershipNotice, { AdminWriteOutcomeNotice } from "../components/Ad
 import { ADMIN_ACTIONS, adminActionAccess } from "../lib/adminActions.ts";
 import { isAdminClientReadAction } from "../lib/adminClientReadActions.ts";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
-import { adminMembershipFailure } from "../lib/adminMembershipClientError.ts";
+import { adminMembershipFailure, adminRequestOutcomeUnknownFailure, ADMIN_REQUEST_OUTCOME_UNKNOWN } from "../lib/adminMembershipClientError.ts";
 import { createAdminMembershipRecovery, createAdminWriteOutcomeNotice } from "../lib/adminMembershipRecovery.ts";
 import { ADMIN_REQUEST_HEADER, ADMIN_REQUEST_HEADER_VALUE } from "../lib/requestGuard.ts";
 import { MEMBERSHIP_CASES, MEMBERSHIP_MEMBER } from "./support/adminMembershipCases.mts";
@@ -29,7 +29,7 @@ type Answer = { status: number; data: unknown };
 function client(initial: Answer = good) {
   const time = membershipClock(), redirects: string[] = [], calls: { url: string; options: RequestInit }[] = [];
   const state = { answer: initial, hook: undefined as undefined | ((url: string, options: RequestInit) => Promise<Response>) };
-  const context: any = { exports: {}, JSON, File, FormData, AbortSignal, isAdminClientReadAction, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, adminMembershipFailure,
+  const context: any = { exports: {}, JSON, File, FormData, AbortSignal, isAdminClientReadAction, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, adminMembershipFailure, adminRequestOutcomeUnknownFailure,
     ADMIN_REQUEST_HEADER, ADMIN_REQUEST_HEADER_VALUE, window: { location: { assign: (url: string) => redirects.push(url) } },
     createAdminWriteOutcomeNotice, createAdminMembershipRecovery: (probe: Parameters<typeof createAdminMembershipRecovery>[0], redirect: () => void) => createAdminMembershipRecovery(probe, redirect, time.clock),
     fetch: async (url: string, options: RequestInit) => {
@@ -94,7 +94,7 @@ test("DERIVED client: unknown, owner-only and every classified mutating action h
 test("DERIVED all client action classes: a dropped connection resolves a typed failure once, never rejects into any caller", async () => {
   for (const action of [...ADMIN_ACTIONS, "persona-member", "unclassified_action"]) {
     const h = client(); h.state.hook = async () => { throw new Error("DERIVED one dropped connection"); };
-    assert.deepEqual(await h.api.adminCall(action, { request_id: "original-request-identity" }), adminMembershipFailure(), action);
+    assert.deepEqual(await h.api.adminCall(action, { request_id: "original-request-identity" }), isAdminClientReadAction(action) ? adminMembershipFailure() : adminRequestOutcomeUnknownFailure(), action);
     assert.equal(h.calls.length, 1, action); assert.deepEqual(h.redirects, [], action);
     assert.deepEqual(await h.api.adminCall(action), adminMembershipFailure(), "while unconfirmed, every class fails locally without throwing");
     assert.equal(h.calls.length, 1, action);
@@ -135,7 +135,7 @@ test("DERIVED client: post-forward 502/5xx and lost upload replies explain uncer
   }
   for (let index = 1; index < 7; index++) {
     const h = client(); h.state.hook = async () => { throw new Error("DERIVED lost upload reply"); };
-    assert.deepEqual(await h.entries[index][1](), adminMembershipFailure()); assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true);
+    assert.deepEqual(await h.entries[index][1](), adminRequestOutcomeUnknownFailure()); assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true);
     h.state.hook = undefined; await h.time.tick();
     assert.deepEqual(h.calls.map((call) => call.url).slice(1), ["/api/admin/admin_me"]); assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true);
   }
@@ -150,10 +150,30 @@ test("DERIVED client: a lost write reply and later account change never replay t
   const h = client(); let first = true;
   h.state.hook = async (_url) => { if (first) { first = false; throw new Error("DERIVED lost reply"); }
     return new Response(JSON.stringify({ ...MEMBERSHIP_MEMBER, email: "other@example.test" }), { status: 200 }); };
-  assert.deepEqual(await h.entries[0][1](), adminMembershipFailure()); await h.time.tick();
+  assert.deepEqual(await h.entries[0][1](), adminRequestOutcomeUnknownFailure()); await h.time.tick();
   assert.deepEqual(h.calls.map((call) => call.url), ["/api/admin/set_settings", "/api/admin/admin_me"]);
   assert.deepEqual(JSON.parse(h.calls[0].options.body as string), { draft: "keep", request_id: "keep-this-identity" });
   assert.deepEqual(h.redirects, []);
+});
+test("DERIVED every write/upload: a never-forwarded refusal and a lost/unreadable answer have different truthful failure codes", async () => {
+  for (let index = 0; index < 7; index++) {
+    const blocked = client(); blocked.api.adminMembershipRecovery.markUnconfirmed();
+    assert.deepEqual(await blocked.entries[index][1](), adminMembershipFailure());
+    assert.equal(blocked.calls.length, 0); assert.equal(blocked.api.adminWriteOutcomeNotice.getSnapshot(), false);
+    for (const failure of ["connection", "json"] as const) {
+      const h = client(); h.state.hook = async () => {
+        if (failure === "connection") throw new Error("DERIVED answer lost after attempting the request");
+        return new Response("DERIVED unreadable answer", { status: 200 });
+      };
+      const result = await h.entries[index][1]();
+      assert.deepEqual(result, adminRequestOutcomeUnknownFailure());
+      assert.equal(result?.error, ADMIN_REQUEST_OUTCOME_UNKNOWN); assert.notEqual(result?.error, ADMIN_MEMBERSHIP_UNCONFIRMED);
+      assert.equal(h.calls.length, 1); assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true);
+      h.state.hook = undefined; await h.api.adminMembershipRecovery.retry();
+      assert.deepEqual(h.calls.map(call => call.url).slice(1), ["/api/admin/admin_me"], "membership recovery cannot repeat the attempted request");
+      assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true, "recovery never confirms the earlier write's outcome");
+    }
+  }
 });
 test("DERIVED client: ordinary feature failures and valid-role refusals are not automatic retry or logout signals", async () => {
   for (const answer of [{ status: 403, data: { success: false, error: "admin-write-required" } },

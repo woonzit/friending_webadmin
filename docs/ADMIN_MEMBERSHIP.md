@@ -40,6 +40,15 @@ account change. Existing read, write and helper callers run their normal
 failure/busy cleanup and keep edits; no per-call exception conversion is
 needed. A failed pre-write read is never permission to continue a command.
 
+Pre-forward/local refusal and a lost write answer are different failure values.
+For writes, only a locally blocked call or the bridge's pre-forward 503 uses
+`admin-membership-unconfirmed`. An attempted JSON write/upload with a lost
+connection or unreadable answer resolves `admin-request-outcome-unknown` / 502,
+not the no-forward code. Its global warning remains visible; feature/durable
+classifiers must retain unknown intent and check the record/audit before an
+explicit retry. Profile-text Save also renders this distinction in EN/HU while
+keeping the draft and clearing busy. Neither value resumes or replays a call.
+
 Automatic recovery probes membership only. Its recovery event starts ONLY
 registered read-only page loaders from the top: Overview when it has no data
 and shows its load error; Research when its overview has never loaded and is

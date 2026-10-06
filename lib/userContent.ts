@@ -1,3 +1,5 @@
+import { ADMIN_REQUEST_OUTCOME_UNKNOWN } from "@/lib/adminMembershipClientError";
+
 /** The admin editor shares the member's content revision chain. */
 export type UserContentRevision = number | undefined | null;
 export type UserContent = { headline: string; about: string; revision: number };
@@ -30,7 +32,7 @@ export async function readUserContent(call: UserContentCall, uid: number): Promi
 export type UserContentSaveResult =
   | { kind: "saved"; content: UserContent }
   | { kind: "conflict"; current: UserContent | null }
-  | { kind: "failed"; errorKey: "contentRevisionInvalid" | "contentInvalid" | "contentSaveFailed" | "contentResponseInvalid" };
+  | { kind: "failed"; errorKey: "contentRevisionInvalid" | "contentInvalid" | "contentSaveFailed" | "contentResponseInvalid" | "contentOutcomeUnknown" };
 
 /** A conflict never resubmits or replaces the operator's draft; review belongs to the operator. */
 export async function saveUserContent(
@@ -43,6 +45,7 @@ export async function saveUserContent(
     ...(input.revision === undefined ? {} : { expected_revision: input.revision }),
   });
   if (response?.success !== true) {
+    if (response?.error === ADMIN_REQUEST_OUTCOME_UNKNOWN) return { kind: "failed", errorKey: "contentOutcomeUnknown" };
     if (response?.error === "profile-content-conflict") {
       return { kind: "conflict", current: await readUserContent(call, input.uid) };
     }
