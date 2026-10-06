@@ -8382,7 +8382,9 @@
       },
       "commandErrors": {
         "dates-research-disabled": "Új átnézéshez vagy próbához kapcsold be a kutatást az Alapértékeknél.",
-        "dates-research-source-disabled": "Éles átnézés csak bekapcsolt forráson indítható. Archivált forráson próba sem indítható."
+        "dates-research-source-disabled": "Éles átnézés csak bekapcsolt forráson indítható. Archivált forráson próba sem indítható.",
+        "dates-research-batch-invalid": "Új beküldés előtt ellenőrizd a kijelölt beküldéseket és az aktuális verziójukat.",
+        "dates-external-confirmation-required": "Mind a négy közzétételi megerősítést be kell jelölni."
       },
       "batch": {
         "title": "A futás beküldéseinek közös elbírálása",
@@ -8493,8 +8495,8 @@
         },
         "archived": {
           "purpose": "Forrás kivonása az előzmények megtartásával.",
-          "effect": "Archivált forráshoz nem ütemeződik új ellenőrzés.",
-          "cost": "Az archiválás megakadályozza az új ütemezett forrásköltséget."
+          "effect": "Archivált forráson sem ütemezett vagy kézi átnézés, sem próba nem indítható.",
+          "cost": "Az archiválás megakadályozza az új átnézések és próbák költségét."
         },
         "reason": {
           "purpose": "Kötelező belső indoklás a naplóhoz.",

@@ -12,7 +12,7 @@ import { isDatesAdminRoute, projectDatesAdminResponse } from "../lib/datesAdminP
 import { datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody } from "../lib/datesIntakeAdmin.ts";
 import { datesResearchProxyCapabilityAuthorized, normalizeDatesResearchProxyBody } from "../lib/datesResearchProxy.ts";
 import { isTrustedAdminRequest } from "../lib/requestGuard.ts";
-import { GENUINE_AREA, GENUINE_DEFAULTS, DERIVED_ENVELOPE, DERIVED_OVERVIEW, DERIVED_RUN, GENUINE_SOURCE } from "./support/datesResearchCorpus.ts";
+import { GENUINE_AREA, GENUINE_DEFAULTS, DERIVED_ENVELOPE, DERIVED_OVERVIEW, GENUINE_RUN, GENUINE_SOURCE } from "./support/datesResearchCorpus.ts";
 
 // The production JSON bridge -> coreCall -> fetch form bytes. No provider or
 // socket is reached. Response substitutions/missing Part B branches are DERIVED,
@@ -78,8 +78,8 @@ const sourceInput = { url: GENUINE_SOURCE.url, label: GENUINE_SOURCE.label, type
   cadence_hours: GENUINE_SOURCE.cadence_hours, max_events: GENUINE_SOURCE.max_events, window_days: null, autopublish: null, enabled: true, archived: false, reason: "Reviewed", idempotency_key: key };
 const reads: [string, Record<string, unknown>, unknown][] = [
   ["dates_event_research_overview", {}, DERIVED_OVERVIEW],
-  ["dates_event_research_run_list", { source_id: GENUINE_SOURCE.source_id, area_id: GENUINE_AREA.area_id, kind: "source", cursor: "opaque:+/page=2", limit: 17 }, { ...DERIVED_ENVELOPE, runs: [DERIVED_RUN], next_cursor: null, limit: 17 }],
-  ["dates_event_research_run_detail", { run_id: DERIVED_RUN.run_id }, { ...DERIVED_ENVELOPE, run: { ...DERIVED_RUN, candidates: [] } }],
+  ["dates_event_research_run_list", { source_id: GENUINE_SOURCE.source_id, area_id: GENUINE_AREA.area_id, kind: "source", cursor: "opaque:+/page=2", limit: 17 }, { ...DERIVED_ENVELOPE, runs: [GENUINE_RUN], next_cursor: null, limit: 17 }],
+  ["dates_event_research_run_detail", { run_id: GENUINE_RUN.run_id }, { ...DERIVED_ENVELOPE, run: { ...GENUINE_RUN, candidates: [] } }],
 ];
 for (const [action, input, answer] of reads) test(`DERIVED transport: ${action} has exact server-owned selectors and filters`, async () => {
   const fields = formOf(await bridge(action, input, answer), action, Object.keys(input));
@@ -114,7 +114,7 @@ for (const action of ["publish", "reject"]) test(`DERIVED transport: batch ${act
   if (action === "publish") assert.deepEqual(JSON.parse(fields.confirmations), input.confirmations);
 });
 test("research queue transport adds its selector only for the selected run/channel", async () => {
-  const action = "dates_event_intake_list", input = { research_run_id: DERIVED_RUN.run_id, channel: "ai_research", page: 1, limit: 40 };
+  const action = "dates_event_intake_list", input = { research_run_id: GENUINE_RUN.run_id, channel: "ai_research", page: 1, limit: 40 };
   formOf(await bridge(action, input), action, Object.keys(input));
   const old = await bridge(action, { page: 1, limit: 40 }); assert.equal(old.status, 200);
   assert.equal(old.sent[0].form.has("dates_event_research_admin_contract_version"), false);

@@ -9,7 +9,7 @@ import * as proxy from "../lib/datesResearchProxy.ts";
 import { prepareResearchCommand, runResearchCommand } from "../lib/datesResearchConsole.ts";
 import { projectDatesAdminBody } from "../lib/datesAdminProjection.ts";
 import { formatNumber } from "../lib/format.ts";
-import { DERIVED_ENVELOPE, DERIVED_RUN, GENUINE_AREA, GENUINE_DEFAULTS, GENUINE_LIMITS, GENUINE_SOURCE } from "./support/datesResearchCorpus.ts";
+import { DERIVED_ENVELOPE, GENUINE_RUN, GENUINE_AREA, GENUINE_DEFAULTS, GENUINE_LIMITS, GENUINE_SOURCE } from "./support/datesResearchCorpus.ts";
 
 // DERIVED scheduled-completion conflict. Execute the production editor, draft
 // effect and command hook with controlled hooks/transport. Not a React/browser
@@ -68,10 +68,10 @@ test("DERIVED unreadable city: changing a source override to inheritance shows u
 
 test("DERIVED scheduled check finishes with an open source editor: conflict reload keeps edits and requires an explicit second save", async () => {
   const before = research.decodeResearchSource({ ...GENUINE_SOURCE, revision: 2, last_check: {
-    run_id: DERIVED_RUN.run_id, status: "running", finished_at: null, found: 3, imported: 0,
+    run_id: GENUINE_RUN.run_id, status: "running", finished_at: null, found: 3, imported: 0,
   } })!;
   let backend = research.decodeResearchSource({ ...before, revision: 3, month_cost_micro_usd: 1234, last_check: {
-    ...before.last_check, status: "completed", finished_at: DERIVED_RUN.finished_at, imported: 1,
+    ...before.last_check, status: "completed", finished_at: GENUINE_RUN.finished_at, imported: 1,
   } })!;
   assert.ok(before && backend);
   const slots: any[] = [], effects: (() => void)[] = [], calls: Record<string, unknown>[] = [];

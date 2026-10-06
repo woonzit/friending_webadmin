@@ -8382,7 +8382,9 @@
       },
       "commandErrors": {
         "dates-research-disabled": "Turn on research in Defaults to start a new check or preview.",
-        "dates-research-source-disabled": "A live check requires an enabled source. An archived source cannot be checked or previewed."
+        "dates-research-source-disabled": "A live check requires an enabled source. An archived source cannot be checked or previewed.",
+        "dates-research-batch-invalid": "Check the selected intakes and their current revisions before submitting the batch again.",
+        "dates-external-confirmation-required": "All four publication confirmations must be checked."
       },
       "batch": {
         "title": "Decide this run's intakes together",
@@ -8493,8 +8495,8 @@
         },
         "archived": {
           "purpose": "Retire a source while retaining its history.",
-          "effect": "An archived source is not scheduled for further checks.",
-          "cost": "Archiving prevents new scheduled source spend."
+          "effect": "An archived source cannot start a scheduled check, a manual check or a preview.",
+          "cost": "Archiving prevents spend on new checks and previews."
         },
         "reason": {
           "purpose": "Required internal audit explanation.",

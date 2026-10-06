@@ -1,0 +1,65 @@
+{
+    "success": true,
+    "status_code": 200,
+    "run": {
+        "run_id": "rru_0000000000000000000000000000000d",
+        "kind": "source",
+        "source_id": "rso_0000000000000000000000000000000a",
+        "area_id": "rar_0000000000000000000000000000000a",
+        "trigger": "manual",
+        "dry_run": false,
+        "status": "completed",
+        "found": 3,
+        "imported": 0,
+        "duplicates": 0,
+        "dropped": [
+            {
+                "reason": "fetch_failed",
+                "count": 1
+            },
+            {
+                "reason": "validation_failed",
+                "count": 1
+            },
+            {
+                "reason": "robots_disallowed",
+                "count": 1
+            }
+        ],
+        "cost_micro_usd": 14579,
+        "started_at": 1791201600,
+        "finished_at": 1791201603,
+        "source_revision_before": 2,
+        "source_revision_after": 3,
+        "candidates": [
+            {
+                "title": "SELF-MADE missing detail",
+                "date_text": "2026-10-10",
+                "url_host": "research-organiser.example",
+                "outcome": "dropped",
+                "reason": "fetch_failed",
+                "intake_id": null
+            },
+            {
+                "title": "SELF-MADE disallowed detail",
+                "date_text": "2026-10-10",
+                "url_host": "research-organiser.example",
+                "outcome": "dropped",
+                "reason": "robots_disallowed",
+                "intake_id": null
+            },
+            {
+                "title": "A different self-made title",
+                "date_text": "2026-10-10T19:00:00+02:00",
+                "url_host": "research-organiser.example",
+                "outcome": "dropped",
+                "reason": "validation_failed",
+                "intake_id": null
+            }
+        ]
+    },
+    "server_now": 1791201600,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

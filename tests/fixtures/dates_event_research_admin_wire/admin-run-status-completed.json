@@ -1,0 +1,73 @@
+{
+    "success": true,
+    "status_code": 200,
+    "run": {
+        "run_id": "rru_00000000000000000000000000000002",
+        "kind": "source",
+        "source_id": "rso_00000000000000000000000000000003",
+        "area_id": "rar_00000000000000000000000000000003",
+        "trigger": "manual",
+        "dry_run": false,
+        "status": "completed",
+        "found": 4,
+        "imported": 1,
+        "duplicates": 0,
+        "dropped": [
+            {
+                "reason": "past_date",
+                "count": 1
+            },
+            {
+                "reason": "outside_window",
+                "count": 1
+            },
+            {
+                "reason": "no_event_page",
+                "count": 1
+            }
+        ],
+        "cost_micro_usd": 17245,
+        "started_at": 1791201605,
+        "finished_at": 1791201609,
+        "source_revision_before": 4,
+        "source_revision_after": 5,
+        "candidates": [
+            {
+                "title": "Őszi Kamarakoncert",
+                "date_text": "2026. október 10., szombat 19:00",
+                "url_host": "research-organiser.example",
+                "outcome": "imported",
+                "reason": null,
+                "intake_id": "xin_00000000000000000000000000000001"
+            },
+            {
+                "title": "Korábbi Kamarakoncert",
+                "date_text": "2026-09-01",
+                "url_host": "research-organiser.example",
+                "outcome": "dropped",
+                "reason": "past_date",
+                "intake_id": null
+            },
+            {
+                "title": "Téli Kamarakoncert",
+                "date_text": "2027-03-01",
+                "url_host": "research-organiser.example",
+                "outcome": "dropped",
+                "reason": "outside_window",
+                "intake_id": null
+            },
+            {
+                "title": "Hiányos program",
+                "date_text": "2026. október 11.",
+                "url_host": "",
+                "outcome": "dropped",
+                "reason": "no_event_page",
+                "intake_id": null
+            }
+        ]
+    },
+    "server_now": 1791201600,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

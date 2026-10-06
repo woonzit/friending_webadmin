@@ -10,7 +10,7 @@ import { prepareResearchCommand, runResearchCommand, readResearchOverview, decod
 import { projectDatesAdminBody } from "../lib/datesAdminProjection.ts";
 import { datesAdminResearchContractParams, withDatesAdminContract } from "../lib/datesAdminContract.ts";
 import { normalizeDatesIntakeProxyBody, projectDatesIntakeQueue } from "../lib/datesIntakeAdmin.ts";
-import { DERIVED_OVERVIEW, DERIVED_ENVELOPE, GENUINE_AREA, GENUINE_SOURCE, DERIVED_RUN, DERIVED_CANDIDATE,
+import { DERIVED_OVERVIEW, DERIVED_ENVELOPE, GENUINE_AREA, GENUINE_SOURCE, GENUINE_RUN, GENUINE_CANDIDATE,
   GENUINE_DEFAULTS, GENUINE_LIMITS } from "./support/datesResearchCorpus.ts";
 
 // DERIVED mutations/combinations of pinned genuine models, never new provider captures.
@@ -51,38 +51,38 @@ test("DERIVED: server limits are not decoder storage ceilings and the editor use
   input.limits.radius_km.max = 200; assert.equal(researchValuesIssue(input.areas[0].effective, input.limits), null);
 });
 test("DERIVED: history decodes every status and drop reason, a damaged run stays a single unavailable row", () => {
-  for (const status of DATES_RESEARCH_RUN_STATUSES) assert.equal(decodeResearchRunList({ ...DERIVED_ENVELOPE, runs: [{ ...DERIVED_RUN, status }], next_cursor: null })!.rows[0].status, status);
-  for (const reason of DATES_RESEARCH_DROP_REASONS) assert.equal(decodeResearchRunList({ ...DERIVED_ENVELOPE, runs: [{ ...DERIVED_RUN, dropped: [{ reason, count: 1 }] }], next_cursor: "opaque" })!.rows.length, 1);
-  const value = decodeResearchRunList({ ...DERIVED_ENVELOPE, runs: [DERIVED_RUN, { ...DERIVED_RUN, run_id: "other", status: "future" }], next_cursor: null })!;
+  for (const status of DATES_RESEARCH_RUN_STATUSES) assert.equal(decodeResearchRunList({ ...DERIVED_ENVELOPE, runs: [{ ...GENUINE_RUN, status }], next_cursor: null })!.rows[0].status, status);
+  for (const reason of DATES_RESEARCH_DROP_REASONS) assert.equal(decodeResearchRunList({ ...DERIVED_ENVELOPE, runs: [{ ...GENUINE_RUN, dropped: [{ reason, count: 1 }] }], next_cursor: "opaque" })!.rows.length, 1);
+  const value = decodeResearchRunList({ ...DERIVED_ENVELOPE, runs: [GENUINE_RUN, { ...GENUINE_RUN, run_id: "other", status: "future" }], next_cursor: null })!;
   assert.equal(value.rows.length, 1); assert.equal(value.unreadable.length, 1);
 });
 test("DERIVED: overview, history and detail keep public run fields while stripping worker and member material", () => {
   for (const [status, before, after] of [["running", null, null], ["completed", 2, 3]] as const) {
-    const run = { ...DERIVED_RUN, status, source_revision_before: before, source_revision_after: after };
+    const run = { ...GENUINE_RUN, status, source_revision_before: before, source_revision_after: after };
     const privateRun = { ...run, work: { prompt: "Derived private worker text" }, lease: { holder: "derived-worker" }, members: [{ uid: 123 }] };
     const lastCheck = Object.fromEntries(["run_id", "status", "finished_at", "found", "imported"].map((key) => [key, run[key as keyof typeof run]]));
     const overview = { ...DERIVED_OVERVIEW, areas: [{ ...GENUINE_AREA, last_run: run }], sources: [{ ...GENUINE_SOURCE, last_check: lastCheck }] };
     assert.deepEqual(projectDatesAdminBody("dates_event_research_overview", { ...overview,
-      areas: [{ ...GENUINE_AREA, last_run: { ...privateRun, candidates: [DERIVED_CANDIDATE] } }],
+      areas: [{ ...GENUINE_AREA, last_run: { ...privateRun, candidates: [GENUINE_CANDIDATE] } }],
       sources: [{ ...GENUINE_SOURCE, last_check: privateRun }],
     }), overview, "area last_run is a full public run; source last_check is only its documented summary");
     const list = { ...DERIVED_ENVELOPE, runs: [run], next_cursor: null };
     assert.deepEqual(projectDatesAdminBody("dates_event_research_run_list", { ...list, runs: [privateRun] }), list);
-    const detail = { ...DERIVED_ENVELOPE, run: { ...run, candidates: [DERIVED_CANDIDATE] } };
-    assert.deepEqual(projectDatesAdminBody("dates_event_research_run_detail", { ...detail, run: { ...privateRun, candidates: [DERIVED_CANDIDATE] } }), detail);
+    const detail = { ...DERIVED_ENVELOPE, run: { ...run, candidates: [GENUINE_CANDIDATE] } };
+    assert.deepEqual(projectDatesAdminBody("dates_event_research_run_detail", { ...detail, run: { ...privateRun, candidates: [GENUINE_CANDIDATE] } }), detail);
     assert.equal(decodeResearchRunList(list)!.rows[0].status, status);
     assert.ok(decodeResearchRunDetail(detail, run.run_id));
   }
 });
 test("DERIVED: candidates degrade separately and every outcome is represented", () => {
   for (const outcome of DATES_RESEARCH_CANDIDATE_OUTCOMES) {
-    const value = decodeResearchRunDetail({ ...DERIVED_ENVELOPE, run: { ...DERIVED_RUN, candidates: [{ ...DERIVED_CANDIDATE, outcome }, { ...DERIVED_CANDIDATE, outcome: "future" }] } }, DERIVED_RUN.run_id)!;
+    const value = decodeResearchRunDetail({ ...DERIVED_ENVELOPE, run: { ...GENUINE_RUN, candidates: [{ ...GENUINE_CANDIDATE, outcome }, { ...GENUINE_CANDIDATE, outcome: "future" }] } }, GENUINE_RUN.run_id)!;
     assert.equal(value.candidates!.rows.length, 1); assert.equal(value.candidates!.unreadable.length, 1);
   }
-  assert.equal(decodeResearchRunDetail({ ...DERIVED_ENVELOPE, run: { ...DERIVED_RUN, candidates: null } }, DERIVED_RUN.run_id)!.candidates, null);
-  assert.equal(decodeResearchRunDetail({ ...DERIVED_ENVELOPE, run: DERIVED_RUN }, "wrong-run"), null);
-  const extra = { ...DERIVED_CANDIDATE, "": "an unknown extra key" };
-  assert.equal(decodeResearchRunDetail({ ...DERIVED_ENVELOPE, run: { ...DERIVED_RUN, candidates: [extra, extra] } }, DERIVED_RUN.run_id)!.candidates!.rows.length, 2);
+  assert.equal(decodeResearchRunDetail({ ...DERIVED_ENVELOPE, run: { ...GENUINE_RUN, candidates: null } }, GENUINE_RUN.run_id)!.candidates, null);
+  assert.equal(decodeResearchRunDetail({ ...DERIVED_ENVELOPE, run: GENUINE_RUN }, "wrong-run"), null);
+  const extra = { ...GENUINE_CANDIDATE, "": "an unknown extra key" };
+  assert.equal(decodeResearchRunDetail({ ...DERIVED_ENVELOPE, run: { ...GENUINE_RUN, candidates: [extra, extra] } }, GENUINE_RUN.run_id)!.candidates!.rows.length, 2);
 });
 test("effective values preserve false overrides and identify their source", () => {
   const defaults = { ...GENUINE_DEFAULTS, autopublish: true }, overrides = { ...GENUINE_AREA.overrides, autopublish: false, cadence_hours: 12 };
@@ -175,12 +175,12 @@ test("research proxy refuses client identity, geometry and wrong capabilities", 
 test("DERIVED: same command, key and revision survive all unknown outcomes until a bound receipt", async () => {
   const command = prepareResearchCommand(actor, "dates_event_research_source_run_now", { source_id: GENUINE_SOURCE.source_id, expected_revision: 1, dry_run: true })!;
   const seen: Record<string, unknown>[] = [], answers: unknown[] = [null, refusal("dates-admin-command-in-progress"), { success: false, status_code: 504, error: "core-timeout" }, { success: true },
-    { ...DERIVED_ENVELOPE, replayed: true, audit_id: "aud_derived", source_id: GENUINE_SOURCE.source_id, source_revision: 2, dry_run: true, run_id: DERIVED_RUN.run_id }];
+    { ...DERIVED_ENVELOPE, replayed: true, audit_id: "aud_derived", source_id: GENUINE_SOURCE.source_id, source_revision: 2, dry_run: true, run_id: GENUINE_RUN.run_id }];
   const send = async (_action: string, body: Record<string, unknown>) => { seen.push(copy(body)); return answers.shift(); };
   for (let i = 0; i < 4; i++) assert.equal((await runResearchCommand(send, command)).kind, "uncertain");
   assert.equal((await runResearchCommand(send, command)).kind, "success");
   assert.equal(new Set(seen.map((body) => body.idempotency_key)).size, 1); assert.ok(seen.every((body) => body.expected_revision === 1 && body.dry_run === true));
-  assert.equal(decodeResearchCommandReceipt(command, { ...DERIVED_ENVELOPE, replayed: true, audit_id: "aud_derived", source_id: "wrong", source_revision: 2, dry_run: true, run_id: DERIVED_RUN.run_id }), null);
+  assert.equal(decodeResearchCommandReceipt(command, { ...DERIVED_ENVELOPE, replayed: true, audit_id: "aud_derived", source_id: "wrong", source_revision: 2, dry_run: true, run_id: GENUINE_RUN.run_id }), null);
 });
 test("DERIVED: Core without research yields one unavailable state; transport failure stays unknown", async () => {
   assert.equal((await readResearchOverview(async (action) => action === "admin_me" ? identity : refusal("not-found", 404))).kind, "unavailable");
@@ -238,7 +238,7 @@ test("DERIVED: an unknown batch outcome makes only its row unreadable while reta
 test("DERIVED Core replay semantics: advanced source revision can remain unchanged only for a verified open-run replay", () => {
   const command = prepareResearchCommand(actor, "dates_event_research_source_run_now", { source_id: GENUINE_SOURCE.source_id, expected_revision: 2, dry_run: true })!;
   const response = { ...DERIVED_ENVELOPE, replayed: true, audit_id: "aud_derived", source_id: GENUINE_SOURCE.source_id,
-    source_revision: 2, dry_run: true, run_id: DERIVED_RUN.run_id };
+    source_revision: 2, dry_run: true, run_id: GENUINE_RUN.run_id };
   assert.equal(decodeResearchCommandReceipt(command, response)?.kind, "success");
   assert.equal(decodeResearchCommandReceipt(command, { ...response, replayed: false }), null);
   assert.equal(decodeResearchCommandReceipt(command, { ...response, source_revision: 1 }), null);
@@ -248,7 +248,7 @@ test("DERIVED Core replay semantics: advanced source revision can remain unchang
 test("DERIVED committed Core scheduled-open replay: explicit null audit settles only a bound replay", () => {
   const command = prepareResearchCommand(actor, "dates_event_research_source_run_now", { source_id: GENUINE_SOURCE.source_id, expected_revision: 2, dry_run: false })!;
   const response = { ...DERIVED_ENVELOPE, replayed: true, audit_id: null, source_id: GENUINE_SOURCE.source_id,
-    source_revision: 2, dry_run: false, run_id: DERIVED_RUN.run_id };
+    source_revision: 2, dry_run: false, run_id: GENUINE_RUN.run_id };
   assert.equal(decodeResearchCommandReceipt(command, response)?.kind, "success");
   for (const audit_id of [undefined, "", 123]) assert.equal(decodeResearchCommandReceipt(command, { ...response, audit_id }), null);
   assert.equal(decodeResearchCommandReceipt(command, { ...response, replayed: false, source_revision: 3 }), null,
@@ -272,7 +272,7 @@ test("research run filter and additive queue row preserve the released queue sha
   const input: any = JSON.parse(readFileSync(new URL("./fixtures/dates_event_intake_admin_wire/admin-list-in-review.json", import.meta.url), "utf8"));
   const before = projectDatesIntakeQueue(input, { page: input.page, limit: input.limit })!;
   assert.equal(Object.hasOwn(before.intakes[0], "research_run_id"), false);
-  input.intakes[0].research_run_id = DERIVED_RUN.run_id;
-  assert.equal(projectDatesIntakeQueue(input, { page: input.page, limit: input.limit })!.intakes[0].research_run_id, DERIVED_RUN.run_id);
-  assert.deepEqual(normalizeDatesIntakeProxyBody("dates_event_intake_list", { page: 1, limit: 40, research_run_id: DERIVED_RUN.run_id }), { page: 1, limit: 40, research_run_id: DERIVED_RUN.run_id });
+  input.intakes[0].research_run_id = GENUINE_RUN.run_id;
+  assert.equal(projectDatesIntakeQueue(input, { page: input.page, limit: input.limit })!.intakes[0].research_run_id, GENUINE_RUN.run_id);
+  assert.deepEqual(normalizeDatesIntakeProxyBody("dates_event_intake_list", { page: 1, limit: 40, research_run_id: GENUINE_RUN.run_id }), { page: 1, limit: 40, research_run_id: GENUINE_RUN.run_id });
 });

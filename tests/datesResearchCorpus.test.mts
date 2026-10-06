@@ -154,6 +154,146 @@ test("genuine conflict is a definite conflict; verified no-write validation refu
   const unexpectedStatus = { ...researchFixture("admin-values-denied.json"), status_code: 409 };
   assert.equal((await runResearchCommand(async () => unexpectedStatus, command)).kind, "uncertain", "a familiar token at an unverified status is not proof of no write");
 });
+test("GENUINE FINAL no-write witnesses settle source gates and top-level batch validation, never child or authority refusals", async () => {
+  const queued = researchFixture("admin-source-dry-queued.json");
+  const source = prepareResearchCommand("admin@example.test", "dates_event_research_source_run_now", {
+    source_id: queued.source_id, expected_revision: 1, dry_run: true,
+  })!;
+  const mixed = researchFixture("admin-batch-publish-mixed.json"), queue = researchFixture("admin-intake-list-run-populated.json");
+  const ids = mixed.results.map((row: any) => row.intake_id);
+  const batch = prepareResearchCommand("admin@example.test", "dates_event_intake_batch_decide", {
+    intake_ids: ids, expected_revisions: Object.fromEntries(queue.intakes.map((row: any) => [row.intake_id, row.revision])),
+    action: "publish", reason: "Reviewed actual facts-only worker drafts.",
+    confirmations: { source: true, public_venue: true, timezone: true, content_safe: true },
+  })!;
+  // Classification of unchanged genuine responses. The invalid original
+  // requests cannot be prepared by our validating consumer. Core's pinned
+  // generator snapshots all research, intake, receipt and audit rows around
+  // each of these top-level refusals; no database mutation is claimed here.
+  for (const [command, names] of [[source, ["admin-source-run-disabled-denied.json", "admin-source-run-archived-real-denied.json",
+    "admin-source-run-archived-preview-denied.json", "admin-source-run-master-off-real-denied.json", "admin-source-run-master-off-preview-denied.json"]],
+  [batch, ["admin-batch-ids-denied.json", "admin-batch-revisions-denied.json", "admin-batch-nested-revision-denied.json",
+    "admin-batch-action-denied.json", "admin-batch-confirmations-denied.json"]]] as const) {
+    for (const name of names) {
+      const body = researchFixture(name);
+      assert.deepEqual(await runResearchCommand(async () => body, command), { kind: "refused", error: body.error }, name);
+      const wrongStatus = { ...body, status_code: body.status_code === 409 ? 422 : 409 };
+      assert.equal((await runResearchCommand(async () => wrongStatus, command)).kind, "uncertain", `${name}: status is part of the proof`);
+    }
+  }
+  for (const name of ["admin-batch-key-reuse-denied.json", "admin-batch-write-capability-denied.json", "admin-batch-selector-denied.json"])
+    assert.equal((await runResearchCommand(async () => researchFixture(name), batch)).kind, "uncertain", name);
+  const child = researchFixture("admin-batch-row-revision-refused.json");
+  const id = child.results[0].intake_id;
+  const single = prepareResearchCommand("admin@example.test", "dates_event_intake_batch_decide", {
+    ...batch.body, intake_ids: [id], expected_revisions: { [id]: 1 },
+  })!;
+  assert.equal((await runResearchCommand(async () => child, single)).kind, "success", "a committed per-child refusal is a successful batch receipt");
+});
+test("GENUINE permanent source receipts bind the original generation and open alias after later completions", async () => {
+  const queued = researchFixture("admin-source-dry-queued.json");
+  // Original valid request values are in the pinned capturePartB generator;
+  // only the opaque key is consumer-minted, never inferred from a newer row.
+  for (const [expected_revision, names] of [[1, ["admin-source-run-same-key-replay.json", "admin-source-run-completed-same-key-replay.json",
+    "admin-source-run-completed-new-key-replay.json"]], [2, ["admin-source-run-open-new-key-replay.json", "admin-source-run-open-alias-completed-replay.json"]]] as const) {
+    const command = prepareResearchCommand("admin@example.test", "dates_event_research_source_run_now", {
+      source_id: queued.source_id, expected_revision, dry_run: true,
+    })!;
+    for (const name of names) {
+      const body = researchFixture(name), result = decodeResearchCommandReceipt(command, body);
+      assert.equal(result?.kind, "success", name); assert.equal(body.run_id, queued.run_id);
+      assert.equal(body.source_revision, queued.source_revision); assert.equal(body.replayed, true);
+    }
+  }
+  const command = prepareResearchCommand("admin@example.test", "dates_event_research_source_run_now", {
+    source_id: queued.source_id, expected_revision: 1, dry_run: true,
+  })!;
+  const requests: unknown[] = [];
+  const send = async (_action: string, body: unknown) => {
+    requests.push(structuredClone(body)); if (requests.length === 1) throw new Error("DERIVED lost response");
+    return researchFixture("admin-source-run-completed-same-key-replay.json");
+  };
+  assert.equal((await runResearchCommand(send, command)).kind, "uncertain");
+  const settled = await runResearchCommand(send, command);
+  assert.equal(settled.kind, "success"); if (settled.kind === "success") assert.equal(settled.runId, queued.run_id);
+  assert.deepEqual(requests[0], requests[1]);
+  assert.equal((await runResearchCommand(async () => researchFixture("admin-source-run-stale-other-admin-denied.json"), command)).kind, "conflict");
+  const fresh = researchFixture("admin-source-run-next-dry-intent-queued.json");
+  assert.notEqual(fresh.run_id, queued.run_id); assert.equal(fresh.replayed, false);
+  assert.equal(decodeResearchCommandReceipt(command, fresh), null, "an old command cannot adopt a fresh generation");
+  assert.equal(decodeResearchCommandReceipt(prepareResearchCommand("admin@example.test", command.action, {
+    source_id: fresh.source_id, expected_revision: 9, dry_run: true,
+  })!, fresh)?.kind, "success");
+});
+test("GENUINE scheduled and master-OFF replay receipts settle without creating another intent", () => {
+  for (const [name, expected_revision] of [["admin-source-run-scheduled-open-replay.json", 2],
+    ["admin-source-run-scheduled-alias-completed-replay.json", 2], ["admin-source-run-master-off-open-replay.json", 2],
+    ["admin-source-run-master-off-historical-replay.json", 1]] as const) {
+    const body = researchFixture(name);
+    const command = prepareResearchCommand("admin@example.test", "dates_event_research_source_run_now", {
+      source_id: body.source_id, expected_revision, dry_run: body.dry_run,
+    })!;
+    assert.equal(decodeResearchCommandReceipt(command, body)?.kind, "success", name);
+    assert.equal(body.replayed, true);
+    if (name.includes("scheduled")) assert.equal(body.audit_id, null);
+  }
+  const scheduled = researchFixture("admin-source-run-scheduled-open-replay.json");
+  const next = researchFixture("admin-source-run-next-scheduled-intent-queued.json");
+  assert.notEqual(next.run_id, scheduled.run_id); assert.equal(next.replayed, false); assert.ok(next.audit_id);
+  assert.equal(decodeResearchCommandReceipt(prepareResearchCommand("admin@example.test", "dates_event_research_source_run_now", {
+    source_id: next.source_id, expected_revision: 3, dry_run: false,
+  })!, next)?.kind, "success");
+});
+test("GENUINE batch mixed results, permanent replay and opposite terminal requests retain actual outcomes and leases", () => {
+  const queueBody = researchFixture("admin-intake-list-run-populated.json");
+  const queue = projectDatesIntakeQueue(queueBody, { page: queueBody.page, limit: queueBody.limit })!;
+  const mixed = researchFixture("admin-batch-publish-mixed.json"), ids = mixed.results.map((row: any) => row.intake_id);
+  const command = prepareResearchCommand("admin@example.test", "dates_event_intake_batch_decide", {
+    intake_ids: ids, expected_revisions: Object.fromEntries(queue.intakes.map((row) => [row.intake_id, row.revision])),
+    action: "publish", reason: "Reviewed actual facts-only worker drafts.",
+    confirmations: { source: true, public_venue: true, timezone: true, content_safe: true },
+  })!;
+  assert.equal(queue.total, 3); assert.ok(queue.intakes.every((row) => row.lease.active && row.lease.mine));
+  assert.deepEqual(mixed.results.map((row: any) => row.refusal), [null, "dates-research-organizer-unverified", "dates-research-price-unverified"]);
+  for (const name of ["admin-batch-publish-mixed.json", "admin-batch-same-key-replay.json", "admin-batch-new-key-replay.json"]) {
+    const body = researchFixture(name), receipt = decodeResearchCommandReceipt(command, body);
+    assert.equal(receipt?.kind, "success"); if (receipt?.kind === "success") assert.deepEqual(receipt.results, mixed.results);
+    assert.equal(Object.hasOwn(body, "audit_id"), false, "Core audits children, not a parent");
+  }
+  for (const [name, action, outcome] of [["admin-batch-opposite-returns-published.json", "reject", "published"],
+    ["admin-batch-opposite-returns-rejected.json", "publish", "rejected"]] as const) {
+    const body = researchFixture(name), id = body.results[0].intake_id;
+    const opposite = prepareResearchCommand("admin@example.test", command.action, {
+      intake_ids: [id], expected_revisions: { [id]: 1 }, action, reason: "Opposite-action lost-response retry.",
+      ...(action === "reject" ? { reason_code: "not_an_event" } : { confirmations: command.body.confirmations }),
+    })!;
+    const receipt = decodeResearchCommandReceipt(opposite, body);
+    assert.equal(receipt?.kind, "success"); if (receipt?.kind === "success") assert.equal(receipt.results![0].outcome, outcome);
+  }
+  const afterBody = researchFixture("admin-intake-list-run-after-decisions.json");
+  const after = projectDatesIntakeQueue(afterBody, { page: afterBody.page, limit: afterBody.limit })!;
+  for (const row of after.intakes) {
+    assert.equal(row.research_run_id, queue.intakes[0].research_run_id);
+    if (row.status === "published" || row.status === "rejected") assert.equal(row.lease.active, false);
+    else assert.equal(row.lease.mine, true, "sparse undecided intake retains its reviewer hold");
+  }
+});
+test("GENUINE history pagination, dry-run candidates and selected intake filtering remain exact", () => {
+  const pages = ["admin-run-list-page-one.json", "admin-run-list-page-two.json", "admin-run-list-page-last.json"].map(researchFixture);
+  const rows = pages.flatMap((body) => decodeResearchRunList(body)!.rows);
+  assert.equal(rows.length, 3); assert.equal(new Set(rows.map((row) => row.run_id)).size, 3);
+  assert.ok(rows.every((row) => row.source_id === rows[0].source_id));
+  assert.ok(pages[0].next_cursor && pages[1].next_cursor); assert.equal(pages[2].next_cursor, null);
+  assert.ok(rows[0].started_at! > rows[1].started_at! && rows[1].started_at! > rows[2].started_at!);
+  const dryBody = researchFixture("admin-run-dry-completed.json"), dry = decodeResearchRunDetail(dryBody, dryBody.run.run_id)!;
+  assert.equal(dry.run.dry_run, true); assert.equal(dry.run.imported, 0);
+  assert.deepEqual(dry.candidates!.rows.map((row) => row.outcome), ["would_import", "dropped", "dropped", "dropped"]);
+  assert.ok(dry.candidates!.rows.every((row) => row.intake_id === null));
+  assert.equal(dryBody.run.source_revision_after, dryBody.run.source_revision_before + 1);
+  const emptyBody = researchFixture("admin-intake-list-run-empty.json");
+  const empty = projectDatesIntakeQueue(emptyBody, { page: emptyBody.page, limit: emptyBody.limit })!;
+  assert.equal(empty.total, 0); assert.deepEqual(empty.intakes, []);
+});
 test("DERIVED conflict projection keeps only the selected public row, and no arbitrary refusal current block", () => {
   const body = researchFixture("admin-defaults-stale-denied.json"), changed = structuredClone(body);
   changed.current.members = [{ uid: 123 }]; changed.current.secret = "derived-not-a-secret";

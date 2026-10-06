@@ -113,9 +113,9 @@ for (const locale of ["en", "hu"]) {
       assert.equal(html.includes(escaped(messages(locale).common.retry)), kind === "uncertain");
     }
   });
-  test(`render ${locale}: confirmed master/source refusals explain the next step; uncertain answers keep retry guidance`, () => {
+  test(`render ${locale}: confirmed source/batch refusals explain the next step; uncertain answers keep retry guidance`, () => {
     const copy = messages(locale).datesAdmin.research;
-    for (const error of ["dates-research-disabled", "dates-research-source-disabled"]) {
+    for (const error of ["dates-research-disabled", "dates-research-source-disabled", "dates-research-batch-invalid", "dates-external-confirmation-required"]) {
       const command: any = { outcome: { kind: "refused", error }, pending: null, busy: false, retry: async () => {} };
       const refused = render(locale, createElement(ResearchCommandFeedback, { command }));
       assert.ok(refused.includes(escaped(copy.commandErrors[error])));

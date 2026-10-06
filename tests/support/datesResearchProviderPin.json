@@ -1,10 +1,11 @@
 {
-  "provider_commit": "9e8f6319c4883a42313fe3fbfa822dd1169794f5",
-  "source_commit": "6f12cc9bf31375316805b5812d96c10435cc337d",
-  "manifest_sha256": "852a400943381a087db2f38ffc3bb8d0ec468111b9787615495564ee9b31fc99",
-  "source_checksum": "47e1b3e60d3be686f8d72de9c686c1ae92237868c8da2bd2e08e84b1cd6df8ca",
-  "fixture_set_sha256": "c6ca62ed6d5b60061d0cae5cbd05aa676bd996cae21063e44207a8e5d4440664",
-  "generator_sha256": "ae31bfa9224542734953108f7aa55ebcaa0f1bb55dcb2a6dac0fe4be74d4b10e",
-  "fixture_count": 49,
-  "contract": "dates-event-research-admin-v1"
+  "provider_commit": "9f83efea45c5fc54c28116be3d8e71fd7d9f73d6",
+  "source_commit": "3ce83eaa6f6a82535ebee0159f6d105092278819",
+  "manifest_sha256": "3300d9e1696cc7b4e98856e20bf25c8ff759897d6047cbdf7a891adbc3d814dc",
+  "source_checksum": "e39e2c4718b52bbad1a4273cd356c58b21c17bfa7280700129fadff2120d6c12",
+  "fixture_set_sha256": "e1e9e0b8e353bff46912c39d7b9886e1f601f1a71072cb8ef76c63a71981d1d2",
+  "generator_sha256": "848db106b43dc0b62c043adb79cee98077e15b05b020c8a562b704623cf96c63",
+  "fixture_count": 135,
+  "contract": "dates-event-research-admin-v1",
+  "coverage_stage": "p3a_final"
 }

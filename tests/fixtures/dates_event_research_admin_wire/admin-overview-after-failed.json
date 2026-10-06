@@ -1,0 +1,203 @@
+{
+    "success": true,
+    "status_code": 200,
+    "defaults": {
+        "enabled": true,
+        "auto_cities_enabled": false,
+        "member_threshold": 5,
+        "cadence_hours": 168,
+        "scope": {
+            "kind": "city",
+            "radius_km": null
+        },
+        "target_events": 15,
+        "window_days": 30,
+        "autopublish": false,
+        "revision": 1,
+        "updated_at": 1791201600,
+        "updated_by": "admin@example.test"
+    },
+    "areas": [
+        {
+            "area_id": "rar_00000000000000000000000000000007",
+            "revision": 1,
+            "mode": "on",
+            "overrides": {
+                "cadence_hours": null,
+                "scope": null,
+                "member_threshold": null,
+                "target_events": null,
+                "window_days": null,
+                "autopublish": null
+            },
+            "label": "Self-made city",
+            "proposed": false,
+            "place_id": "SelfMadeCity",
+            "country_code": "HU",
+            "center": {
+                "latitude": 47.5,
+                "longitude": 19
+            },
+            "bounds": {
+                "southwest": {
+                    "latitude": 47.4,
+                    "longitude": 18.9
+                },
+                "northeast": {
+                    "latitude": 47.6,
+                    "longitude": 19.1
+                }
+            },
+            "effective": {
+                "cadence_hours": 168,
+                "scope": {
+                    "kind": "city",
+                    "radius_km": null
+                },
+                "member_threshold": 5,
+                "target_events": 15,
+                "window_days": 30,
+                "autopublish": false
+            },
+            "member_count": 0,
+            "member_count_at": null,
+            "running": true,
+            "not_running_reason": null,
+            "stock": {
+                "upcoming": 0,
+                "target": 15,
+                "missing": 15
+            },
+            "last_run": {
+                "run_id": "rru_0000000000000000000000000000000a",
+                "kind": "source",
+                "source_id": "rso_00000000000000000000000000000007",
+                "area_id": "rar_00000000000000000000000000000007",
+                "trigger": "manual",
+                "dry_run": false,
+                "status": "failed",
+                "found": 0,
+                "imported": 0,
+                "duplicates": 0,
+                "dropped": [],
+                "cost_micro_usd": 0,
+                "started_at": 1791201600,
+                "finished_at": 1791201600,
+                "source_revision_before": 2,
+                "source_revision_after": 3
+            },
+            "next_run_at": 1791201600,
+            "month_cost_micro_usd": 0
+        }
+    ],
+    "sources": [
+        {
+            "url": "https://research-organiser.example/programme",
+            "registrable_domain": "research-organiser.example",
+            "label": "Self-made organiser",
+            "type": "official",
+            "area_id": "rar_00000000000000000000000000000007",
+            "cadence_hours": 168,
+            "max_events": 15,
+            "window_days": null,
+            "autopublish": null,
+            "enabled": true,
+            "archived": false,
+            "source_id": "rso_00000000000000000000000000000007",
+            "revision": 3,
+            "effective": {
+                "window_days": 30,
+                "autopublish": false
+            },
+            "robots": {
+                "state": "allowed",
+                "checked_at": 1791201600
+            },
+            "stock": {
+                "upcoming": 0,
+                "max": 15,
+                "missing": 15
+            },
+            "last_check": {
+                "run_id": "rru_0000000000000000000000000000000a",
+                "status": "failed",
+                "found": 0,
+                "imported": 0,
+                "finished_at": 1791201600
+            },
+            "next_check_at": 1791806400,
+            "month_cost_micro_usd": 0
+        }
+    ],
+    "budget": {
+        "month": "2026-10",
+        "cap_micro_usd": 50000000,
+        "spent_micro_usd": 0,
+        "reserved_micro_usd": 0,
+        "research_spent_micro_usd": 0,
+        "research_stop_at_micro_usd": 35000000,
+        "research_paused": false
+    },
+    "estimate": {
+        "monthly_checks": 10,
+        "monthly_cost_micro_usd": null,
+        "basis": "unmeasured"
+    },
+    "limits": {
+        "cadence_hours": {
+            "min": 6,
+            "max": 2160
+        },
+        "radius_km": {
+            "min": 1,
+            "max": 160
+        },
+        "member_threshold": {
+            "min": 1,
+            "max": 100000
+        },
+        "target_events": {
+            "min": 1,
+            "max": 200
+        },
+        "window_days": {
+            "min": 1,
+            "max": 180
+        },
+        "max_events": {
+            "min": 1,
+            "max": 100
+        },
+        "batch_intakes": {
+            "min": 1,
+            "max": 25
+        }
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1791201600,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

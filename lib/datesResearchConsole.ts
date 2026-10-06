@@ -78,7 +78,9 @@ export function decodeResearchCommandReceipt(command: ResearchCommand, response:
 const NO_WRITE: Readonly<Record<string, number>> = {
   "dates-research-request-invalid": 400, "dates-research-values-invalid": 422, "dates-research-url-invalid": 422,
   "dates-research-aggregator-autopublish-invalid": 422, "dates-admin-reason-required": 422, "dates-admin-idempotency-invalid": 422,
-}; // Part A's genuine no-write captures; Part B extends this only with verified no-write refusals.
+  "dates-research-disabled": 409, "dates-research-source-disabled": 409,
+  "dates-research-batch-invalid": 422, "dates-external-confirmation-required": 422,
+}; // FINAL pinned HTTP witnesses plus provider no-write snapshots; child refusals are batch receipts, not entries here.
 export async function runResearchCommand(send: ResearchSend, command: ResearchCommand): Promise<ResearchCommandOutcome> {
   let response: unknown;
   try { response = await send(command.action, command.body); } catch { return { kind: "uncertain", error: null }; }

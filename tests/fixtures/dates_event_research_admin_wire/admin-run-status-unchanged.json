@@ -1,0 +1,27 @@
+{
+    "success": true,
+    "status_code": 200,
+    "run": {
+        "run_id": "rru_00000000000000000000000000000003",
+        "kind": "source",
+        "source_id": "rso_00000000000000000000000000000003",
+        "area_id": "rar_00000000000000000000000000000003",
+        "trigger": "manual",
+        "dry_run": false,
+        "status": "unchanged",
+        "found": 0,
+        "imported": 0,
+        "duplicates": 0,
+        "dropped": [],
+        "cost_micro_usd": 0,
+        "started_at": 1791201610,
+        "finished_at": 1791201610,
+        "source_revision_before": 6,
+        "source_revision_after": 7,
+        "candidates": []
+    },
+    "server_now": 1791201600,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
