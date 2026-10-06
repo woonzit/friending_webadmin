@@ -6,6 +6,8 @@ import ts from "typescript";
 import * as actions from "../lib/adminActions.ts";
 import { isTrustedAdminRequest } from "../lib/requestGuard.ts";
 import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
+import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
+import { MEMBERSHIP_MEMBER, membershipRefusal } from "./support/adminMembershipCases.mts";
 import { datesAvailabilityWriteIsRetired } from "../lib/datesAdmin.ts";
 import { withDatesAdminContract } from "../lib/datesAdminContract.ts";
 import { isDatesAdminRoute, projectDatesAdminResponse } from "../lib/datesAdminProjection.ts";
@@ -25,7 +27,7 @@ const merge = coreTree.statements.find((node): node is ts.FunctionDeclaration =>
 assert.ok(merge);
 const email = "operator@example.test";
 const caps = ["dates_external_event_read", "dates_external_event_manage"];
-const membership = () => ({ success: true, role: "admin", dates: { email, role: "administrator", rank: 40,
+const membership = () => ({ ...MEMBERSHIP_MEMBER, dates: { email, role: "administrator", rank: 40,
   linked_uid: null, sensitive_location: false, break_glass: false, capabilities: [...caps] } });
 const externalId = "xev_" + "a".repeat(32);
 const command = () => ({ external_event_id: externalId, expected_revision: 1, action: "cancel", reason: "Confirmed cancellation", idempotency_key: "external-proxy:000000000001" });
@@ -35,7 +37,7 @@ function harness() {
   // Parsing shares the production helpers' realm, so their plain-object guard
   // is tested without the artificial vm Object.prototype mismatch.
   // D-143: the route adds the Admin intake contract selector to Dates requests itself (the real function, as it is).
-  const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, withDatesAdminContract,
+  const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, withDatesAdminContract,
     // The route hands the browser the projection of a Dates body (lead's ruling on D-143): the real functions, as they are.
     isDatesAdminRoute, projectDatesAdminResponse,
     datesAvailabilityWriteIsRetired, datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody,
@@ -77,11 +79,11 @@ test("external proxy checks current membership and explicit Dates capability on 
   const h = harness(); assert.equal((await h.send()).status, 200);
   h.state.member.data.dates.capabilities = ["dates_external_event_read"];
   assert.equal((await h.send()).body.error, "dates-admin-capability-required");
-  h.state.member = { status: 200, data: { success: false, error: "admin-revoked" } };
+  h.state.member = { status: 403, data: membershipRefusal(403, "admin-revoked") };
   assert.equal((await h.send()).status, 401);
   assert.equal(h.state.calls.filter((call) => call.action === "admin_me").length, 3);
   assert.equal(h.state.calls.filter((call) => call.action !== "admin_me").length, 1);
-  const owner = harness(); owner.state.member.data = { success: true, role: "owner" };
+  const owner = harness(); owner.state.member.data = { ...MEMBERSHIP_MEMBER, role: "owner" };
   assert.equal((await owner.send()).status, 403, "top-level owner does not invent Dates capability");
 });
 test("external reads permit a current viewer; mutations retain both role and capability gates", async () => {
@@ -127,7 +129,7 @@ test("proxy retains Core logical refusal bytes and normalizes only transport/ses
     h.state.response = { status, data: { success: false, error } };
     assert.deepEqual(await h.send(), { status, body: { success: false, status_code: status, error } });
   }
-  h.state.response = { status: 403, data: { success: false, error: "admin-revoked" } };
+  h.state.response = { status: 403, data: membershipRefusal(403, "admin-revoked") };
   assert.equal((await h.send()).status, 401);
 });
 

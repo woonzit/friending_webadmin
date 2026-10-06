@@ -6,6 +6,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import * as actions from "../lib/adminActions.ts";
 import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
+import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
 import { datesAvailabilityWriteIsRetired } from "../lib/datesAdmin.ts";
 import {
   DATES_ADMIN_COMMAND_CONTRACT_SELECTOR, DATES_ADMIN_INTAKE_CONTRACT_SELECTOR, datesAdminCommandContractParams, datesAdminContractParams, withDatesAdminContract,
@@ -63,7 +64,7 @@ const DIRECTORY = new URL("./fixtures/dates_event_intake_admin_wire/", import.me
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`${name}.json`, DIRECTORY), "utf8"));
 const xin = (number: number) => "xin_" + number.toString(16).padStart(32, "0");
 const email = "operator@example.test";
-const membership = { success: true, role: "admin", dates: { email, role: "administrator", rank: 40, linked_uid: null, sensitive_location: false,
+const membership = { message: 200, status: 200, can_send: 0, status_code: 200, success: true, email, role: "admin", dates: { email, role: "administrator", rank: 40, linked_uid: null, sensitive_location: false,
   break_glass: false, capabilities: ["dates_external_event_read", "dates_external_event_review", "dates_external_event_manage"] } };
 
 // The production POST function of the generic bridge, as datesExternalProxy.test.mts runs it.
@@ -97,7 +98,7 @@ async function bridge(action: string, browserBody: unknown, answer: unknown = { 
 }
 async function forward(action: string, browserBody: unknown, answer: unknown) {
   return capture(answer, async (core) => {
-    const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, datesAvailabilityWriteIsRetired, withDatesAdminContract,
+    const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, datesAvailabilityWriteIsRetired, withDatesAdminContract,
       isDatesAdminRoute, projectDatesAdminResponse,
       datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody, datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody,
       datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody, ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,

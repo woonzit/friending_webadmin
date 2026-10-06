@@ -6,6 +6,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import * as actions from "../lib/adminActions.ts";
 import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
+import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
 import { datesAvailabilityWriteIsRetired } from "../lib/datesAdmin.ts";
 import { withDatesAdminContract } from "../lib/datesAdminContract.ts";
 import { isDatesAdminRoute, projectDatesAdminResponse } from "../lib/datesAdminProjection.ts";
@@ -27,7 +28,7 @@ const fakeSecret = "test-research-api-secret-000000000000";
 process.env.WEBADMIN_API_SECRET = fakeSecret; process.env.CORE_API_BASE = "https://core.invalid";
 const { coreCall, mergeCoreParams } = await import("../lib/core.ts");
 const actor = "operator@example.test", key = "research-wire-test-command-0001";
-const member = { success: true, role: "admin", dates: { email: actor, role: "administrator", rank: 40, linked_uid: null, sensitive_location: false, break_glass: false,
+const member = { ...DERIVED_ENVELOPE, email: actor, role: "admin", dates: { email: actor, role: "administrator", rank: 40, linked_uid: null, sensitive_location: false, break_glass: false,
   capabilities: ["dates_external_event_review", "dates_external_event_manage"] } };
 const source = readFileSync(new URL("../app/api/admin/[action]/route.ts", import.meta.url), "utf8");
 const tree = ts.createSourceFile("route.ts", source, ts.ScriptTarget.Latest, true);
@@ -42,7 +43,7 @@ async function bridge(action: string, browser: unknown, answer: unknown = DERIVE
     return { status: 200, json: async () => answer } as Response;
   }) as typeof globalThis.fetch;
   try {
-    const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, datesAvailabilityWriteIsRetired, withDatesAdminContract,
+    const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, datesAvailabilityWriteIsRetired, withDatesAdminContract,
       isDatesAdminRoute, projectDatesAdminResponse, datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody, datesResearchProxyCapabilityAuthorized, normalizeDatesResearchProxyBody,
       ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true, readAdminSession: async () => ({ email: actor }), coreCall, mergeCoreParams,
       NextResponse: { json: (value: unknown, options: ResponseInit) => new Response(JSON.stringify(value), { ...options, headers: { ...options.headers, "Content-Type": "application/json" } }) } };

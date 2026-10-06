@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminBridgeCoreTransportError } from "@/lib/adminBridge";
+import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "@/lib/adminMembership";
 import {
   adminGrantedVerificationLegacyReceiptRetryAuthorized,
   adminGrantedVerificationProxyCapabilityAuthorized,
@@ -98,26 +99,19 @@ export async function POST(
     return bridgeError("auth-required", 401);
   }
 
-  // Revocation is authoritative in Core. This is deliberately checked on every
-  // bridge call, not only when the dashboard layout is rendered.
-  const membership = await coreCall<{
-    success?: boolean;
-    role?: string;
-    dates?: unknown;
-    persona?: unknown;
-    persona_screens?: unknown;
-    verification?: unknown;
-    admin_granted_verification?: unknown;
-    audience_visibility?: unknown;
-    profile_text_moderation?: unknown;
-    feature_switches?: unknown;
-  }>(
-    "admin_me",
-    { admin_email: session.email },
-  );
-  if (membership.status !== 200 || !membership.data?.success) {
-    return bridgeError("auth-required", 401);
+  // No cached grant: both reads and writes need a fresh, complete own-actor
+  // proof. A failed check is not evidence of revocation and forwards nothing.
+  let answer;
+  try {
+    answer = await coreCall("admin_me", { admin_email: session.email }, adminActionTimeoutMs("admin_me"),
+      { signal: request.signal, membershipCheck: true });
+  } catch {
+    return bridgeError(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
   }
+  const decision = classifyAdminMembership(answer, session.email, request.signal?.aborted === true);
+  if (decision.kind === "revoked") return bridgeError("auth-required", 401);
+  if (decision.kind !== "confirmed") return bridgeError(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
+  const membership = { data: decision.membership };
 
   // Membership is not authorization: `viewer` is a deliberately read-only role,
   // and Core still runs several mutating handlers on its permissive actor gate.
@@ -377,20 +371,31 @@ export async function POST(
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer
   // depends on the order of an object literal to stay authoritative.
+  if (request.signal?.aborted) return bridgeError(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
   const result = await coreCall(
     action,
     // D-143: the Admin intake contract selector goes with every Dates Admin request. It is added to the merged
     // parameters, after the browser's body and the actor, so it is server-owned like them.
     withDatesAdminContract(action, mergeCoreParams(body, { admin_email: session.email })),
     adminActionTimeoutMs(action),
+    action === "admin_me" ? { signal: request.signal, membershipCheck: true } : undefined,
   );
+  if (action === "admin_me") {
+    const finalMembership = classifyAdminMembership(result, session.email, request.signal?.aborted === true);
+    if (finalMembership.kind === "revoked") return bridgeError("auth-required", 401);
+    if (finalMembership.kind !== "confirmed") return bridgeError(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
+  }
   const transportError = adminBridgeCoreTransportError(result.status, result.data);
   if (transportError) {
     return bridgeError(transportError.error, transportError.status_code);
   }
   const coreError = (result.data as Record<string, unknown> | null)?.error;
   if (invalidatesAdminSession(result.status, coreError)) {
-    return bridgeError("auth-required", 401);
+    // A feature reply can race a revocation, but an unknown/service 401 is
+    // still not a definite membership denial. It must not force logout.
+    return classifyAdminMembership(result, session.email, request.signal?.aborted === true).kind === "revoked"
+      ? bridgeError("auth-required", 401)
+      : bridgeError("invalid-core-response", 502);
   }
   if (result.data === null) return bridgeError("core-unavailable", result.status || 502);
   if (isDatesAdminRoute(action)) {

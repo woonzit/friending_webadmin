@@ -5,6 +5,12 @@ export type CoreResult<T = Record<string, unknown>> = {
   data: T | null;
 };
 
+export type CoreCallOptions = {
+  signal?: AbortSignal;
+  /** Membership proof must not turn an HTTP error or abandoned read into a grant. */
+  membershipCheck?: boolean;
+};
+
 const CORE_API_BASE = (process.env.CORE_API_BASE ?? "https://core.friending.com").replace(/\/+$/, "");
 
 /**
@@ -72,6 +78,7 @@ export async function coreCall<T = Record<string, unknown>>(
   action: string,
   payload: Record<string, unknown> = {},
   timeoutMs = 10_000,
+  options: CoreCallOptions = {},
 ): Promise<CoreResult<T>> {
   if (!/^[a-z][a-z0-9_]{1,63}$/.test(action)) {
     return { status: 404, data: null };
@@ -91,6 +98,10 @@ export async function coreCall<T = Record<string, unknown>>(
   // they get this far.
   body.set("secret", apiSecret());
 
+  const timeout = AbortSignal.timeout(timeoutMs);
+  const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
+  if (signal.aborted) return { status: 504, data: { success: false, error: "core-timeout" } as T };
+
   let response: Response;
   try {
     response = await fetch(`${CORE_API_BASE}/v1/webadmin/${action}`, {
@@ -101,7 +112,7 @@ export async function coreCall<T = Record<string, unknown>>(
       },
       body: body.toString(),
       cache: "no-store",
-      signal: AbortSignal.timeout(timeoutMs),
+      signal,
     });
   } catch (error) {
     // A timeout is reported distinctly from an unreachable Core. They need different operator
@@ -120,6 +131,14 @@ export async function coreCall<T = Record<string, unknown>>(
     data = (await response.json()) as T;
   } catch {
     return { status: 502, data: { success: false, error: "invalid-core-response" } as T };
+  }
+
+  if (options.membershipCheck) {
+    // Covers a late fetch/body answer even if a transport ignores cancellation.
+    if (signal.aborted) return { status: 504, data: { success: false, error: "core-timeout" } as T };
+    // Core normally uses HTTP 200 for logical refusals. An actual HTTP failure
+    // must never be replaced with a body that claims logical success.
+    if (response.status !== 200) return { status: response.status, data };
   }
 
   const logicalStatus = Number((data as Record<string, unknown> | null)?.status_code);
