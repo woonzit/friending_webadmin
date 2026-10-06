@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { decodeResearchCommandReceipt, prepareResearchCommand, runResearchCommand } from "../lib/datesResearchConsole.ts";
-import { GENUINE_AREA, DERIVED_ENVELOPE, researchFixture } from "./support/datesResearchCorpus.ts";
+import { GENUINE_AREA, GENUINE_SOURCE, DERIVED_ENVELOPE, researchFixture } from "./support/datesResearchCorpus.ts";
 
 test("DERIVED source-audited pre-write/transaction-aborted validation refusals settle only at their documented status", async () => {
   const command = prepareResearchCommand("admin@example.test", "dates_event_research_area_save", {
@@ -18,6 +18,29 @@ test("DERIVED source-audited pre-write/transaction-aborted validation refusals s
     for (const wrongStatus of [409, 500, 503])
       assert.equal((await runResearchCommand(async () => ({ ...response, status_code: wrongStatus }), command)).kind, "uncertain");
   }
+});
+test("GENUINE open-run conflict explains Core's public stored state; DERIVED duplicate/archive/city conflicts do not claim a revision change", async () => {
+  const conflict = researchFixture("admin-source-save-open-conflict.json"), row = conflict.current;
+  const fields = Object.fromEntries(["url", "label", "type", "area_id", "cadence_hours", "max_events", "window_days", "autopublish", "enabled", "archived"].map((key) => [key, row[key]]));
+  const command = prepareResearchCommand("admin@example.test", "dates_event_research_source_save", {
+    ...fields, source_id: row.source_id, expected_revision: row.revision, reason: "Reviewed source configuration",
+  })!;
+  const open = await runResearchCommand(async () => conflict, command);
+  assert.equal(open.kind, "conflict"); if (open.kind === "conflict") assert.equal(open.cause, "source_open_run");
+  const classify = async (current: unknown, request = command) => {
+    const answer = await runResearchCommand(async () => ({ ...conflict, current }), request);
+    assert.equal(answer.kind, "conflict"); return answer.kind === "conflict" ? answer.cause : undefined;
+  };
+  assert.equal(await classify({ ...row, archived: true }), "source_archived");
+  const create = prepareResearchCommand("admin@example.test", command.action, { ...fields, reason: "Register this source" })!;
+  assert.equal(await classify(row, create), "url_owned");
+  assert.equal(await classify({ ...row, archived: true }, create), "archived_url_owned");
+  assert.equal(await classify({ ...row, source_id: GENUINE_SOURCE.source_id, url: "https://foreign.example.org/" }), undefined, "never infer a cause from a foreign row");
+  assert.equal(await classify({ unknown: "future row" }), undefined);
+  const city = prepareResearchCommand("admin@example.test", "dates_event_research_area_save", {
+    place_id: GENUINE_AREA.place_id, mode: "auto", overrides: GENUINE_AREA.overrides, reason: "Register this city",
+  })!;
+  assert.equal(await classify(GENUINE_AREA, city), "city_registered");
 });
 test("GENUINE scheduled-open receipt settles stale-page aliases independently of the page's expected revision", () => {
   const body = researchFixture("admin-source-run-scheduled-open-replay.json");

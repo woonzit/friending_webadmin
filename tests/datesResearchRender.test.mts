@@ -26,6 +26,14 @@ function render(locale: string, ...children: ReactNode[]) {
 }
 const props = { actor: "operator@example.test", manage: true, limits: GENUINE_LIMITS, reload: async () => {}, close: () => {} };
 for (const locale of ["en", "hu"]) {
+  test(`render ${locale}: conflict feedback uses neutral fallback and every public-state explanation`, () => {
+    const copy = messages(locale).datesAdmin.research;
+    for (const cause of [undefined, ...Object.keys(copy.conflicts)]) {
+      const html = render(locale, createElement(ResearchCommandFeedback, { command: { outcome: { kind: "conflict", error: "dates-research-conflict", cause }, pending: null } as any }));
+      assert.ok(html.includes(escaped(copy.command.conflict)));
+      if (cause) assert.ok(html.includes(escaped(copy.conflicts[cause])));
+    }
+  });
   test(`DERIVED render ${locale}: reason input does not narrow Core's trimmed Unicode bounds`, () => {
     for (const reason of ["😀".repeat(1000), `${" ".repeat(1001)}abc${" ".repeat(1001)}`]) {
       assert.equal(researchAuditReason(reason), true);

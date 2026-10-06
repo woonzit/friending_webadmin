@@ -8376,9 +8376,17 @@
       "clearRun": "Clear run filter",
       "command": {
         "success": "The command was confirmed.",
-        "conflict": "The stored row was reloaded after a revision conflict. Your unsaved edits are kept over it; review them before saving again.",
+        "conflict": "Core returned a conflict with stored state. Refresh and review it before trying again. Any unsaved edits are kept.",
         "refused": "The command was refused.",
         "uncertain": "The outcome is not known. Retry sends the exact same command and idempotency key."
+      },
+      "conflicts": {
+        "revision": "The stored revision differs from the submitted revision.",
+        "source_open_run": "Core reports an open run for this source. Configuration cannot be changed until it finishes; another run mode may also conflict with it.",
+        "source_archived": "Core reports that this source is archived. Review the stored source before trying again.",
+        "url_owned": "This URL is already owned by another stored source. Edit that source or choose another URL.",
+        "archived_url_owned": "This URL is already owned by an archived source. Archived sources still retain their URLs.",
+        "city_registered": "This city is already registered. Edit its existing row instead of adding it again."
       },
       "commandErrors": {
         "dates-research-place-unavailable": "Core could not resolve usable city boundaries. No city was saved by this attempt. Choose another city or retry when the place service is available.",

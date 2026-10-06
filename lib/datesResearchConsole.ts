@@ -27,7 +27,7 @@ export async function readResearchRun(send: ResearchSend, runId: string, signal?
 }
 export type ResearchCommand = { actor: string; action: DatesResearchAction; body: Record<string, unknown> };
 export type ResearchCommandOutcome = { kind: "success"; receipt: unknown; runId?: string; results?: ResearchBatchResult[] }
-  | { kind: "conflict"; error: string } | { kind: "refused"; error: string }
+  | { kind: "conflict"; error: string; cause?: "revision" | "source_open_run" | "source_archived" | "url_owned" | "archived_url_owned" | "city_registered" } | { kind: "refused"; error: string }
   | { kind: "uncertain"; error: string | null; partial?: ResearchRows<ResearchBatchResult> };
 /** Prepared once. The entire immutable request is kept while its outcome is not known. */
 export function prepareResearchCommand(actor: string, action: DatesResearchAction, body: Record<string, unknown>): ResearchCommand | null {
@@ -84,6 +84,27 @@ const NO_WRITE: Readonly<Record<string, number>> = {
   "dates-research-id-invalid": 422, "dates-research-revision-invalid": 422, "dates-research-mode-invalid": 422,
   "dates-research-source-type-invalid": 422, "dates-research-not-found": 404, "dates-intake-reason-invalid": 422,
 }; // Pinned HTTP witnesses and audited Core validation/rollback paths. Child refusals are batch receipts, not entries here.
+function researchConflictCause(command: ResearchCommand, current: unknown): Extract<ResearchCommandOutcome, { kind: "conflict" }>["cause"] {
+  const { action, body } = command;
+  if (action === "dates_event_research_source_save" || action === "dates_event_research_source_run_now") {
+    const row = decodeResearchSource(current);
+    if (!row) return undefined;
+    if (action === "dates_event_research_source_save" && row.url === researchSourceCanonicalUrl(body.url)
+      && row.source_id !== body.source_id) return row.archived ? "archived_url_owned" : "url_owned";
+    if (row.source_id !== body.source_id) return undefined;
+    if (row.archived) return "source_archived";
+    if (row.last_check && ["queued", "running"].includes(row.last_check.status)) return "source_open_run";
+    return row.revision !== body.expected_revision ? "revision" : undefined;
+  }
+  if (action === "dates_event_research_area_save") {
+    const row = decodeResearchArea(current);
+    if (!row) return undefined;
+    if (!body.area_id && row.place_id === body.place_id) return "city_registered";
+    return row.area_id === body.area_id && row.revision !== body.expected_revision ? "revision" : undefined;
+  }
+  const row = action === "dates_event_research_defaults_save" ? decodeResearchDefaults(current) : null;
+  return row && row.revision !== body.expected_revision ? "revision" : undefined;
+}
 export async function runResearchCommand(send: ResearchSend, command: ResearchCommand): Promise<ResearchCommandOutcome> {
   let response: unknown;
   try { response = await send(command.action, command.body); } catch { return { kind: "uncertain", error: null }; }
@@ -95,7 +116,10 @@ export async function runResearchCommand(send: ResearchSend, command: ResearchCo
   }
   const refusal = datesIntakeRefusal(response);
   if (refusal.kind === "core") {
-    if (refusal.status === 409 && refusal.error === "dates-research-conflict") return { kind: "conflict", error: refusal.error };
+    if (refusal.status === 409 && refusal.error === "dates-research-conflict") {
+      const cause = researchConflictCause(command, researchRecord(response) ? response.current : null);
+      return { kind: "conflict", error: refusal.error, ...(cause ? { cause } : {}) };
+    }
     if (Object.hasOwn(NO_WRITE, refusal.error) && NO_WRITE[refusal.error] === refusal.status) return { kind: "refused", error: refusal.error };
   }
   return { kind: "uncertain", error: refusal.kind === "unreadable" ? null : refusal.error };
