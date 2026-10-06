@@ -10,9 +10,24 @@ import { MEMBERSHIP_EMAIL, type MembershipCase } from "./adminMembershipCases.mt
 // Production server functions, DERIVED Next/cookie/socket adapters. All other
 // imports are real production helpers. No provider, server, or user cookie.
 type NextResolve = (specifier: string, context: unknown) => unknown;
-(nodeModule as unknown as { registerHooks: (hooks: { resolve: (specifier: string, context: unknown, next: NextResolve) => unknown }) => void }).registerHooks({
-  resolve(specifier, context, next) { return specifier === "server-only" ? { url: "data:text/javascript,", shortCircuit: true, format: "module" } : next(specifier, context); },
-});
+const EMPTY_MODULE_URL = "data:text/javascript,";
+const moduleApi = nodeModule as unknown as {
+  registerHooks?: (hooks: { resolve: (specifier: string, context: unknown, next: NextResolve) => unknown }) => void;
+  register?: (specifier: string, parentURL: string) => void;
+};
+if (typeof moduleApi.registerHooks === "function") {
+  moduleApi.registerHooks({
+    resolve(specifier, context, next) {
+      return specifier === "server-only" ? { url: EMPTY_MODULE_URL, shortCircuit: true, format: "module" } : next(specifier, context);
+    },
+  });
+} else if (typeof moduleApi.register === "function") {
+  // Node 20 has the asynchronous loader API, but not registerHooks.
+  moduleApi.register("data:text/javascript," + encodeURIComponent(
+    `export function resolve(specifier, context, next) { if (specifier === "server-only") return { url: ${JSON.stringify(EMPTY_MODULE_URL)}, shortCircuit: true, format: "module" }; return next(specifier, context); }`), import.meta.url);
+} else {
+  throw new Error("no module resolution hook API available");
+}
 const secret = "test-membership-session-secret-0000000000";
 export async function serverModule(path: string, overrides: Record<string, unknown>) {
   const source = readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");

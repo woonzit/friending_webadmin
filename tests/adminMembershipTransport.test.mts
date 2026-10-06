@@ -6,8 +6,24 @@ import { MEMBERSHIP_EMAIL, MEMBERSHIP_MEMBER, membershipRefusal } from "./suppor
 
 // Real server-only transport with a controlled socket, no Core service call.
 type NextResolve = (specifier: string, context: unknown) => unknown;
-const modules = nodeModule as unknown as { registerHooks: (hooks: { resolve: (specifier: string, context: unknown, next: NextResolve) => unknown }) => void };
-modules.registerHooks({ resolve(specifier, context, next) { return specifier === "server-only" ? { url: "data:text/javascript,", shortCircuit: true, format: "module" } : next(specifier, context); } });
+const EMPTY_MODULE_URL = "data:text/javascript,";
+const moduleApi = nodeModule as unknown as {
+  registerHooks?: (hooks: { resolve: (specifier: string, context: unknown, next: NextResolve) => unknown }) => void;
+  register?: (specifier: string, parentURL: string) => void;
+};
+if (typeof moduleApi.registerHooks === "function") {
+  moduleApi.registerHooks({
+    resolve(specifier, context, next) {
+      return specifier === "server-only" ? { url: EMPTY_MODULE_URL, shortCircuit: true, format: "module" } : next(specifier, context);
+    },
+  });
+} else if (typeof moduleApi.register === "function") {
+  // Node 20 has the asynchronous loader API, but not registerHooks.
+  moduleApi.register("data:text/javascript," + encodeURIComponent(
+    `export function resolve(specifier, context, next) { if (specifier === "server-only") return { url: ${JSON.stringify(EMPTY_MODULE_URL)}, shortCircuit: true, format: "module" }; return next(specifier, context); }`), import.meta.url);
+} else {
+  throw new Error("no module resolution hook API available");
+}
 process.env.WEBADMIN_API_SECRET = "test-membership-api-secret-000000000000";
 process.env.CORE_API_BASE = "https://core.invalid";
 const { coreCall, coreMultipartCall, coreMultipartFilesCall } = await import("../lib/core.ts");
