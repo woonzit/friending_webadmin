@@ -17,6 +17,7 @@ All bodies below must have their own strictly typed legacy envelope markers
 | Core answer / local condition | Decision | Protected JSON bridge, writer/upload gate, direct intake | Protected server render | Client behavior |
 | --- | --- | --- | --- | --- |
 | No valid local session (missing, invalid, expired, locally revoked) | Definite non-member | 401 `auth-required`; no action/upload | Redirect `/login`; no protected data | `/login` |
+| Local session read / configuration throws (not an established invalid session) | Unconfirmed | 503 `admin-membership-unconfirmed`; no Core action/upload | Neutral recovery shell; no protected page data, no redirect | In-place recovery; no login redirect |
 | Complete `success: false`, logical 401, `admin-session-invalid` | Definite non-member | 401 `auth-required`; no action/upload | Redirect `/login`; no protected data | `/login` |
 | Complete `success: false`, logical 403, `admin-revoked` | Definite non-member | 401 `auth-required`; no action/upload | Redirect `/login`; no protected data | `/login` |
 | HTTP 200, complete `success: true`, logical 200, exact canonical session email and known canonical `owner` / `admin` / `viewer`, no contradictory `error` | Confirmed for this request only | Continue existing independent role/capability/body gates; no added permission | Existing capability-gated page | Existing behavior; recovery does not replay writes |
@@ -33,6 +34,9 @@ every applicable row above,
 including malformed 200 and abandoned requests that receive a late positive or
 negative answer. Auto-recovery is restricted to membership and read-only calls;
 an operator retry of a refused write must pass a new membership check.
+Strict Core transports also check elapsed monotonic time after parsing: a
+blocked event loop cannot delay the abort timer and turn an expired answer into
+a grant or a definite revocation.
 
 `adminMe` returns an identity only on a complete positive proof, `null` only
 for a definite non-session/non-member, and throws the typed

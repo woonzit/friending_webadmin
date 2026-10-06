@@ -94,7 +94,10 @@ export async function POST(
   if (Number.isFinite(declaredLength) && declaredLength > bodyLimit) {
     return bridgeError("too-large", 413);
   }
-  const session = await readAdminSession();
+  let session;
+  try { session = await readAdminSession(); } catch {
+    return bridgeError(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
+  }
   if (!session) {
     return bridgeError("auth-required", 401);
   }

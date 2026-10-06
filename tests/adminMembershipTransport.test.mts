@@ -69,3 +69,22 @@ test("DERIVED post-forward transport: opt-in JSON and both multipart calls prese
     }
   } finally { globalThis.fetch = realFetch; }
 });
+
+test("DERIVED strict transport: elapsed deadlines discard late JSON even before a blocked event loop delivers its abort timer", async () => {
+  try {
+    for (const mode of ["membership", "json", "image", "files"] as const) for (const data of [MEMBERSHIP_MEMBER, membershipRefusal(403, "admin-revoked")]) {
+      globalThis.fetch = (async () => ({ status: 200, json: async () => {
+        const until = performance.now() + 15;
+        while (performance.now() < until) { /* DERIVED event-loop stall, not a network call. */ }
+        return data;
+      } })) as typeof fetch;
+      const payload = { admin_email: MEMBERSHIP_EMAIL };
+      const answer = mode === "membership" ? await coreCall("admin_me", payload, 1, { membershipCheck: true })
+        : mode === "json" ? await coreCall("upload_image", payload, 1, { strictResponse: true })
+          : mode === "image" ? await coreMultipartCall("upload_pinger_icon", payload, { buffer: Buffer.from("DERIVED"), mime: "image/png", filename: "derived.png" }, 1, { strictResponse: true })
+            : await coreMultipartFilesCall("dates_event_intake_create", payload, [], 1, { strictResponse: true });
+      assert.equal(answer.status, 504, `${mode} must not accept a result after its own elapsed deadline`);
+      assert.equal(classifyAdminMembership(answer, MEMBERSHIP_EMAIL).kind, "unconfirmed");
+    }
+  } finally { globalThis.fetch = realFetch; }
+});

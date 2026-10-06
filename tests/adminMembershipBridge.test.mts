@@ -17,13 +17,13 @@ const tree = ts.createSourceFile("route.ts", source, ts.ScriptTarget.Latest, tru
 const code = ts.transpileModule(tree.statements.filter((node) => !ts.isImportDeclaration(node)).map((node) => node.getText(tree)).join("\n"),
   { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 
-async function bridge(answer: MembershipCase, action: string, config: { guest?: boolean; throws?: boolean; finalMe?: MembershipCase; abandonBody?: boolean; featureAnswer?: { status: number; data: unknown; abandoned?: boolean } } = {}) {
+async function bridge(answer: MembershipCase, action: string, config: { guest?: boolean; sessionThrows?: boolean; throws?: boolean; finalMe?: MembershipCase; abandonBody?: boolean; featureAnswer?: { status: number; data: unknown; abandoned?: boolean } } = {}) {
   const controller = new AbortController(), forwarded: string[] = [], checks: unknown[] = [];
   let bodyReads = 0;
   const context: any = { exports: {}, Buffer, JSON, ...actions, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership,
     adminBridgeCoreTransportError, isTrustedAdminRequest, withDatesAdminContract,
     ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
-    readAdminSession: async () => config.guest ? null : { email: MEMBERSHIP_EMAIL },
+    readAdminSession: async () => { if (config.sessionThrows) throw new Error("DERIVED cookie read failure"); return config.guest ? null : { email: MEMBERSHIP_EMAIL }; },
     coreCall: async (name: string, payload: Record<string, unknown>, timeout: number, options: unknown) => {
       assert.equal(payload.admin_email, MEMBERSHIP_EMAIL);
       if (name === "admin_me") {
@@ -79,6 +79,11 @@ test("DERIVED action gate: a local non-session never reaches Core", async () => 
 test("DERIVED action gate: service setup failure is unconfirmed and accepts no action", async () => {
   const result = await bridge(MEMBERSHIP_CASES[0], "set_settings", { throws: true });
   assert.equal(result.status, 503); assert.deepEqual(result.forwarded, []);
+});
+test("DERIVED action gate: a local session-read exception is unconfirmed, not signed out, and sends nothing", async () => {
+  const result = await bridge(MEMBERSHIP_CASES[0], "set_settings", { sessionThrows: true });
+  assert.equal(result.status, 503); assert.equal(result.body.error, ADMIN_MEMBERSHIP_UNCONFIRMED);
+  assert.equal(result.checks.length, 0); assert.equal(result.bodyReads, 0); assert.deepEqual(result.forwarded, []);
 });
 test("DERIVED action gate: a slow request body abandoned after membership does not forward a write", async () => {
   const result = await bridge(MEMBERSHIP_CASES[0], "set_settings", { abandonBody: true });

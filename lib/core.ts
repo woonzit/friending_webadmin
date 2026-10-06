@@ -103,6 +103,7 @@ export async function coreCall<T = Record<string, unknown>>(
     throw error;
   }
 
+  const deadline = performance.now() + timeoutMs;
   const timeout = AbortSignal.timeout(timeoutMs);
   const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
   if (signal.aborted) return { status: 504, data: { success: false, error: "core-timeout" } as T };
@@ -139,8 +140,9 @@ export async function coreCall<T = Record<string, unknown>>(
   }
 
   if (options.membershipCheck || options.strictResponse) {
-    // Covers a late fetch/body answer even if a transport ignores cancellation.
-    if (signal.aborted) return { status: 504, data: { success: false, error: "core-timeout" } as T };
+    // A blocked event loop can delay the timeout signal; elapsed time still
+    // fences a late fetch/body answer even if transport cancellation is ignored.
+    if (signal.aborted || performance.now() >= deadline) return { status: 504, data: { success: false, error: "core-timeout" } as T };
     // Core normally uses HTTP 200 for logical refusals. An actual HTTP failure
     // must never be replaced with a body that claims logical success.
     if (response.status !== 200) return { status: response.status, data };
@@ -180,6 +182,7 @@ export async function coreMultipartCall<T = Record<string, unknown>>(
     image.filename,
   );
 
+  const deadline = performance.now() + timeoutMs;
   const timeout = AbortSignal.timeout(timeoutMs);
   const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
   if (signal.aborted) return { status: 504, data: { success: false, error: "core-timeout" } as T };
@@ -207,7 +210,7 @@ export async function coreMultipartCall<T = Record<string, unknown>>(
     return { status: 502, data: { success: false, error: "invalid-core-response" } as T };
   }
   if (options.strictResponse) {
-    if (signal.aborted) return { status: 504, data: { success: false, error: "core-timeout" } as T };
+    if (signal.aborted || performance.now() >= deadline) return { status: 504, data: { success: false, error: "core-timeout" } as T };
     if (response.status !== 200) return { status: response.status, data };
   }
   const logicalStatus = Number((data as Record<string, unknown> | null)?.status_code);
@@ -251,6 +254,7 @@ export async function coreMultipartFilesCall<T = Record<string, unknown>>(
     throw error;
   }
 
+  const deadline = performance.now() + timeoutMs;
   const timeout = AbortSignal.timeout(timeoutMs);
   const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
   if (signal.aborted) return { status: 504, data: { success: false, error: "core-timeout" } as T };
@@ -278,7 +282,7 @@ export async function coreMultipartFilesCall<T = Record<string, unknown>>(
     return { status: 502, data: { success: false, error: "invalid-core-response" } as T };
   }
   if (options.strictResponse) {
-    if (signal.aborted) return { status: 504, data: { success: false, error: "core-timeout" } as T };
+    if (signal.aborted || performance.now() >= deadline) return { status: 504, data: { success: false, error: "core-timeout" } as T };
     if (response.status !== 200) return { status: response.status, data };
   }
   const logicalStatus = Number((data as Record<string, unknown> | null)?.status_code);
