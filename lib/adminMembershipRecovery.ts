@@ -23,6 +23,8 @@ export function createAdminMembershipRecovery(
   let timer: ReturnType<typeof setTimeout> | undefined;
   let checking: Promise<boolean> | undefined;
   const listeners = new Set<() => void>();
+  const recoveredListeners = new Set<() => void>();
+  let recoveryEpoch = 0;
   const notify = () => { for (const listener of listeners) listener(); };
   const cancelTimer = () => { if (timer !== undefined) clock.cancel(timer); timer = undefined; };
   const schedule = () => {
@@ -45,22 +47,23 @@ export function createAdminMembershipRecovery(
       // revocation. Only a subsequent fresh probe may clear / redirect it.
       if (startedVersion !== version) return false;
       if (answer === "revoked") { stopped = true; unconfirmed = true; notify(); redirect(); return false; }
-      if (answer === "confirmed") { unconfirmed = false; delay = 1000; notify(); return true; }
+      if (answer === "confirmed") {
+        const recovered = unconfirmed;
+        unconfirmed = false; delay = 1000;
+        if (recovered) recoveryEpoch++;
+        notify();
+        if (recovered) for (const listener of recoveredListeners) {
+          if (startedVersion !== version || unconfirmed || stopped) break;
+          listener();
+        }
+        return true;
+      }
       unconfirmed = true; notify(); return false;
     })().finally(() => { checking = undefined; schedule(); });
     return checking;
   }
   const subscribe = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
-  function waitUntilRecovered(signal?: AbortSignal): Promise<boolean> {
-    if (signal?.aborted || stopped) return Promise.resolve(false);
-    if (!unconfirmed) return Promise.resolve(true);
-    schedule();
-    return new Promise((resolve) => {
-      const finish = (value: boolean) => { release(); signal?.removeEventListener("abort", aborted); resolve(value); };
-      const aborted = () => finish(false);
-      const release = subscribe(() => { if (stopped || !unconfirmed) finish(!stopped); });
-      signal?.addEventListener("abort", aborted, { once: true });
-    });
-  }
-  return { markUnconfirmed, retry, subscribe, waitUntilRecovered, getSnapshot: () => unconfirmed, getServerSnapshot: () => false };
+  const subscribeRecovered = (listener: () => void) => { recoveredListeners.add(listener); return () => { recoveredListeners.delete(listener); }; };
+  return { markUnconfirmed, retry, subscribe, subscribeRecovered, getSnapshot: () => unconfirmed, getServerSnapshot: () => false,
+    getRecoveryEpoch: () => recoveryEpoch, getServerRecoveryEpoch: () => 0 };
 }

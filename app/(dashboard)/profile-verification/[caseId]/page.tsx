@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
@@ -125,7 +126,7 @@ export default function ProfileVerificationDetailPage() {
       case_id: detail.case.case_id,
       action: operation,
       expected_revision: detail.case.revision,
-    });
+    }).catch(adminMembershipRefusalForUi);
     if (liveScope.current !== scope) return;
     setBusy(false);
     if (!response?.success) {
@@ -207,7 +208,7 @@ export default function ProfileVerificationDetailPage() {
       note: confirmation.note,
       expected_revision: confirmation.revision,
       request_id: confirmation.requestId,
-    });
+    }).catch(adminMembershipRefusalForUi);
     if (liveScope.current !== scope) return;
     setBusy(false);
     setConfirmation(null);

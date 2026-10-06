@@ -2,6 +2,8 @@
 
 import { adminActionAccess } from "@/lib/adminActions";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "@/lib/adminMembership";
+import { AdminMembershipUnconfirmedClientError } from "@/lib/adminMembershipClientError";
+export { AdminMembershipUnconfirmedClientError };
 import { createAdminMembershipRecovery, createAdminWriteOutcomeNotice } from "@/lib/adminMembershipRecovery";
 import {
   ADMIN_REQUEST_HEADER,
@@ -14,7 +16,7 @@ export type AdminResponse = {
   [key: string]: unknown;
 };
 
-const unconfirmedResponse = (): AdminResponse => ({ success: false, status_code: 503, error: ADMIN_MEMBERSHIP_UNCONFIRMED });
+const refuseUnconfirmed = (): never => { throw new AdminMembershipUnconfirmedClientError(); };
 export const adminWriteOutcomeNotice = createAdminWriteOutcomeNotice();
 const redirectToLogin = () => window.location.assign("/login");
 function definiteSignedOut(status: number, data: AdminResponse | null): boolean {
@@ -54,13 +56,15 @@ async function finishUpload(response: Response, signal?: AbortSignal): Promise<A
   const data = await responseData(response, signal);
   if (signal?.aborted) return null;
   if (definiteSignedOut(response.status, data)) { redirectToLogin(); return null; }
-  if (response.status === 503 && data?.success === false && data.error === ADMIN_MEMBERSHIP_UNCONFIRMED) adminMembershipRecovery.markUnconfirmed();
+  if (response.status === 503 && data?.success === false && data.error === ADMIN_MEMBERSHIP_UNCONFIRMED) {
+    adminMembershipRecovery.markUnconfirmed(); refuseUnconfirmed();
+  }
   else if (response.status >= 500 || !data) adminWriteOutcomeNotice.markUnknown();
   return data;
 }
 
 function lostUpload(signal?: AbortSignal): null {
-  if (!signal?.aborted) { adminWriteOutcomeNotice.markUnknown(); adminMembershipRecovery.markUnconfirmed(); }
+  if (!signal?.aborted) { adminWriteOutcomeNotice.markUnknown(); adminMembershipRecovery.markUnconfirmed(); refuseUnconfirmed(); }
   return null;
 }
 
@@ -70,14 +74,10 @@ export async function adminCall(
   signal?: AbortSignal,
 ): Promise<AdminResponse | null> {
   const access = adminActionAccess(action), readOnly = access === "read" || access === "dates_read";
-  for (;;) {
     if (signal?.aborted) return null;
-    if (adminMembershipRecovery.getSnapshot()) {
-      // No queued mutation exists here. An operator must explicitly retry a
-      // write later; that new attempt gets its own fresh server membership gate.
-      if (!readOnly) return unconfirmedResponse();
-      if (!await adminMembershipRecovery.waitUntilRecovered(signal)) return null;
-    }
+    // Reads can be the first step of a write. NEVER hold/resend any caller's
+    // Promise: recovery starts registered read-only page loaders from the top.
+    if (adminMembershipRecovery.getSnapshot()) refuseUnconfirmed();
     const response = await jsonRequest(action, body, signal);
     if (signal?.aborted) return null;
     const data = response ? await responseData(response, signal) : null;
@@ -90,16 +90,14 @@ export async function adminCall(
       || (action === "admin_me" && classifyAdminMembership({ status: response.status, data }, typeof data?.email === "string" ? data.email : "").kind !== "confirmed");
     if (unavailable) {
       adminMembershipRecovery.markUnconfirmed();
-      if (readOnly) continue;
-      return response ? data : null;
+      refuseUnconfirmed();
     }
     return data;
-  }
 }
 
 export async function adminUploadImage(file: File, signal?: AbortSignal): Promise<AdminResponse | null> {
   if (signal?.aborted) return null;
-  if (adminMembershipRecovery.getSnapshot()) return unconfirmedResponse();
+  if (adminMembershipRecovery.getSnapshot()) refuseUnconfirmed();
   const body = new FormData();
   body.set("image", file, file.name);
 
@@ -122,7 +120,7 @@ export async function adminUploadImage(file: File, signal?: AbortSignal): Promis
 
 export async function adminUploadVideo(file: File, signal?: AbortSignal): Promise<AdminResponse | null> {
   if (signal?.aborted) return null;
-  if (adminMembershipRecovery.getSnapshot()) return unconfirmedResponse();
+  if (adminMembershipRecovery.getSnapshot()) refuseUnconfirmed();
   const body = new FormData();
   body.set("video", file, file.name);
 
@@ -145,7 +143,7 @@ export async function adminUploadVideo(file: File, signal?: AbortSignal): Promis
 
 export async function adminUploadProfileIcon(file: File, signal?: AbortSignal): Promise<AdminResponse | null> {
   if (signal?.aborted) return null;
-  if (adminMembershipRecovery.getSnapshot()) return unconfirmedResponse();
+  if (adminMembershipRecovery.getSnapshot()) refuseUnconfirmed();
   const body = new FormData();
   body.set("icon", file, file.name);
   let response: Response;
@@ -171,7 +169,7 @@ export async function adminUploadPingerIcon(
   signal?: AbortSignal,
 ): Promise<AdminResponse | null> {
   if (signal?.aborted) return null;
-  if (adminMembershipRecovery.getSnapshot()) return unconfirmedResponse();
+  if (adminMembershipRecovery.getSnapshot()) refuseUnconfirmed();
   const body = new FormData();
   body.set("icon", file, file.name);
   body.set("variant", variant);
@@ -197,7 +195,7 @@ export async function adminUploadSupportImage(
   signal?: AbortSignal,
 ): Promise<AdminResponse | null> {
   if (signal?.aborted) return null;
-  if (adminMembershipRecovery.getSnapshot()) return unconfirmedResponse();
+  if (adminMembershipRecovery.getSnapshot()) refuseUnconfirmed();
   const body = new FormData();
   body.set("uid", String(uid));
   body.set("request_id", requestId);
@@ -220,7 +218,7 @@ export async function adminUploadSupportImage(
 /** "Draft from source" (T-865 P2a): the source, and a flyer when there is one, to the console's own route. */
 export async function adminIntakeCreate(body: FormData, signal?: AbortSignal): Promise<AdminResponse | null> {
   if (signal?.aborted) return null;
-  if (adminMembershipRecovery.getSnapshot()) return unconfirmedResponse();
+  if (adminMembershipRecovery.getSnapshot()) refuseUnconfirmed();
   let response: Response;
   try {
     response = await fetch("/api/admin/dates-intake-create", {

@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import AdminHelp from "@/components/AdminHelp";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import AdminMembershipNotice, { AdminWriteOutcomeNotice, useAdminMembershipUnconfirmed, useAdminWriteOutcomeUnknown } from "@/components/AdminMembershipNotice";
+import AdminManualReload from "@/components/AdminManualReload";
 import { PROFILE_TEXT_MODERATION_CONTRACT_READY } from "@/lib/contractReadiness";
 import DatesResearchNavigationNotice from "@/components/DatesResearchNavigationNotice";
 import { confirmResearchNavigation } from "@/lib/datesResearchNavigation";
@@ -191,6 +192,7 @@ export default function Shell({
         <main className="content">
           <AdminMembershipNotice visible={membershipUnconfirmed} />
           <AdminWriteOutcomeNotice visible={writeOutcomeUnknown} />
+          <AdminManualReload />
           {/* Hide, never unmount: local drafts and retained unknown commands
               stay owned by their original components throughout recovery. */}
           <div className="membership-retained" hidden={membershipUnconfirmed}>{children}</div>

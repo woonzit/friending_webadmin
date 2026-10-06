@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import LocalizedFields, { plainText, type Language } from "@/components/LocalizedFields";
@@ -204,7 +205,7 @@ export default function ProfileVerificationConfiguration() {
     const response = await adminCall("save_profile_verification_config", {
       configuration: profileVerificationSavePayload(validated),
       expected_revision: stored.revision,
-    });
+    }).catch(adminMembershipRefusalForUi);
     setBusy(false);
     const authoritative = profileVerificationResponseData(response);
     if (!response?.success) {

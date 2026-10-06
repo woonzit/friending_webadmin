@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
@@ -108,7 +109,7 @@ export default function SignupOptionsPage() {
     setBusy(true);
     setError("");
     setNotice("");
-    const response = await adminCall("save_signup_page_layout", body);
+    const response = await adminCall("save_signup_page_layout", body).catch(adminMembershipRefusalForUi);
     if (signupPageConflict(response)) {
       setBusy(false);
       // Core's 409 answers with the document that won, so authority is

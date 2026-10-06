@@ -44,6 +44,10 @@
     "you": "te"
   },
   "adminMembership": {
+    "reload": "Oldal újratöltése",
+    "reloadWarning": "A megszakadt próbálkozások nem folytatódnak. Az újratöltés csak az oldal olvasásait indítja el; módosítást nem próbál újra. A nem mentett szerkesztések és a csak memóriában tartott újrapróbálási azonosítók elvesznek. Egy korábban elküldött módosítás még befejeződhet: előbb ellenőrizd az érintett rekordot és az auditnaplót.",
+    "keepPage": "Oldal és szerkesztések megtartása",
+    "reloadConfirm": "Oldalállapot elvetése és újratöltés",
     "title": "Az adminisztrátori tagságot nem sikerült megerősíteni",
     "retained": "A védett tartalom átmenetileg rejtve van; a módosításokat és feltöltéseket nem fogadjuk el. A nem mentett szerkesztéseid és megtartott kéréseid ezen az oldalon maradnak; sem módosítást, sem feltöltést nem küldünk el újra automatikusan.",
     "retrying": "A tagságellenőrzést növekvő időközönként újrapróbáljuk (legfeljebb 30 másodperces késleltetéssel). Ha helyreállt, ellenőrizd a bizonytalan eredményt, és szükség esetén te magad próbáld újra a módosítást.",

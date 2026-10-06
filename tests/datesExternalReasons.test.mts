@@ -1,3 +1,4 @@
+import { adminMembershipRefusalForUi } from "../lib/adminMembershipClientError.ts";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -94,7 +95,7 @@ const compiled = ts.transpileModule(functions.map((node) => node.getText(tree)).
   { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
 function harness(response: unknown, overrides: Record<string, unknown> = {}) {
   const calls: Array<{ action: string; body: any }> = [], errors: string[] = [], inline: string[] = [], unknown: Array<string | null> = []; let saved = 0;
-  const context: any = { exports: {}, reason: external, scope: "activity", keyName: "wrong_details", nameEn: submitted.name_en, nameHu: submitted.name_hu,
+  const context: any = { exports: {}, adminMembershipRefusalForUi, reason: external, scope: "activity", keyName: "wrong_details", nameEn: submitted.name_en, nameHu: submitted.name_hu,
     explanationEn: submitted.explanation_en, explanationHu: submitted.explanation_hu, severity: "medium", order: "10", active: true, commentRequired: true,
     entryPoints: "external_event", escalationCategory: "integrity", auditReason: submitted.reason, canManage: true, busy: false,
     allowedEntryPoints: "external_event", datesReasonEntryPoints, datesReasonEntryPointsRefused, datesReasonSaveReceipt,

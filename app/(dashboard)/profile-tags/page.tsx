@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
@@ -265,7 +266,7 @@ export default function ProfileTagsPage() {
     if ((impact.selectedReferences > 0 || impact.limitLowered) && !window.confirm(t("impactConfirm", { count: impact.selectedReferences }))) return;
     setBusy(true);
     setError("");
-    const response = await adminCall("save_profile_tag_catalog", { catalog: serializeTagCatalog(draft) });
+    const response = await adminCall("save_profile_tag_catalog", { catalog: serializeTagCatalog(draft) }).catch(adminMembershipRefusalForUi);
     setBusy(false);
     if (!response?.success) {
       // D-107 R11. Core refuses a save that would activate or re-state a

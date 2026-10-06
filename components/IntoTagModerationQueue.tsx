@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
@@ -198,7 +199,7 @@ export default function IntoTagModerationQueue() {
     summary: string,
   ): Promise<{ ok: true; revision: number } | { ok: false; message: string }> {
     remember({ kind: "decide", payload });
-    const response = await adminCall("into_tag_moderation_decide", payload);
+    const response = await adminCall("into_tag_moderation_decide", payload).catch(adminMembershipRefusalForUi);
     const result = intoTagModerationDecisionResponse(response);
     if (result && result.item.key === payload.key) {
       revisionRef.current = result.revision;
@@ -289,7 +290,7 @@ export default function IntoTagModerationQueue() {
 
   async function saveSettings(payload: IntoTagModerationSettingsPayload) {
     remember({ kind: "settings", payload });
-    const response = await adminCall("into_tag_moderation_settings", payload);
+    const response = await adminCall("into_tag_moderation_settings", payload).catch(adminMembershipRefusalForUi);
     const result = intoTagModerationSettingsResponse(response);
     if (result) {
       revisionRef.current = result.revision;

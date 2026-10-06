@@ -30,10 +30,35 @@ All bodies below must have their own strictly typed legacy envelope markers
 
 The boundary is wired in separate commits for the bridge, client, session
 gates, layout, and direct intake gate. Their production-handler tests exercise
-every applicable row above,
-including malformed 200 and abandoned requests that receive a late positive or
-negative answer. Auto-recovery is restricted to membership and read-only calls;
-an operator retry of a refused write must pass a new membership check.
+every applicable row above, including malformed 200 and abandoned requests
+that receive a late positive or negative answer. EVERY unconfirmed client call
+rejects immediately with `AdminMembershipUnconfirmedClientError`, including
+reads, writes and uploads. No Promise/request is held or re-sent: a pre-write
+read cannot silently resume its command after recovery or an account change.
+UI mutation handlers explicitly catch that typed refusal for their normal
+error/busy cleanup; unrelated exceptions are rethrown. This never turns a
+failed pre-write read into permission, and no rejected attempt is retried.
+
+Automatic recovery probes membership only. Its recovery event starts ONLY
+registered read-only page loaders from the top: Overview when it has no data
+and shows its load error; Research when its overview has never loaded and is
+unconfirmed. Once either page has successfully loaded, it is NOT auto-reloaded;
+its data, editor drafts and command owners remain untouched. No audited reads
+are registered. All other pages/editors rely on their existing manual reload,
+plus a Shell-wide manual page reload after recovery for an interrupted legacy
+loader. That fallback has an explicit in-page second confirmation warning that
+unsaved state/in-memory retry identities will be discarded and a previously
+forwarded write may still finish. It never sends a mutation. A refused write
+requires a new operator attempt and another fresh server membership check.
+
+The five reported read-before-write flows (intake Publish, research Retry,
+membership grant Retry, external-event command, external-event case resolution)
+are tested against the real client through read outage and same/different actor
+recovery: their original handlers end and send zero writes. Positive controls
+reach each writer when its reads succeed. Membership grant Retry additionally
+compares a fresh complete own-session proof with the editor's stored actor;
+another account cannot inherit the pinned request. This does not claim an atomic
+actor fence across the subsequent HTTP request; Core still binds every request.
 Strict Core transports also check elapsed monotonic time after parsing: a
 blocked event loop cannot delay the abort timer and turn an expired answer into
 a grant or a definite revocation.

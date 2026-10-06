@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
@@ -116,7 +117,7 @@ export default function SignupIntentsLimitsDialog({
     setRevisionState("loading");
     const response = await adminCall(SIGNUP_INTENTS_REVISION_READ_ACTION, {
       contract_version: SIGNUP_INTENTS_CONTRACT_VERSION,
-    });
+    }).catch(adminMembershipRefusalForUi);
     const parsed = signupIntentsLimitsRead(response);
     if (!parsed) {
       setRevisionState("error");
@@ -171,7 +172,7 @@ export default function SignupIntentsLimitsDialog({
     setBusy(true);
     setNotice(null);
     setServerIssues([]);
-    const response = await adminCall(SIGNUP_INTENTS_SELECTION_LIMITS_ACTION, body);
+    const response = await adminCall(SIGNUP_INTENTS_SELECTION_LIMITS_ACTION, body).catch(adminMembershipRefusalForUi);
     setBusy(false);
 
     const saved = signupIntentsLimitsSaved(response);

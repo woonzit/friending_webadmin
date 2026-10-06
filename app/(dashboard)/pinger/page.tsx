@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
@@ -103,7 +104,7 @@ export default function PingerPage() {
   async function uploadIcon(file: File, variant: PingerIconVariant) {
     setUploading(variant);
     setNotice(null);
-    const response = await adminUploadPingerIcon(file, variant);
+    const response = await adminUploadPingerIcon(file, variant).catch(adminMembershipRefusalForUi);
     setUploading(null);
     const mediaUrl = pingerIconURL(response?.media_url) ?? "";
     if (!response?.success || !mediaUrl) {
@@ -132,7 +133,7 @@ export default function PingerPage() {
     const response = await adminCall("save_pinger_config", {
       expected_revision: draft.revision,
       configuration: pingerConfigurationWire(draft),
-    });
+    }).catch(adminMembershipRefusalForUi);
     setBusy(false);
     if (response?.success && adopt(response)) {
       setNotice({ tone: "success", text: t("saved") });

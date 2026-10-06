@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
@@ -309,7 +310,7 @@ export default function FeatureSwitchesPanel() {
     setNotice(null);
     let response: AdminResponse | null;
     if (existing) {
-      response = await adminCall(existing.action, existing.payload);
+      response = await adminCall(existing.action, existing.payload).catch(adminMembershipRefusalForUi);
     } else {
       const persisted = await featureSwitchesPersistBeforeMutation(
         window.sessionStorage,
@@ -317,7 +318,7 @@ export default function FeatureSwitchesPanel() {
         () => {
           pendingRef.current = command;
           setPending(command);
-          return adminCall(command!.action, command!.payload);
+          return adminCall(command!.action, command!.payload).catch(adminMembershipRefusalForUi);
         },
       );
       if (!persisted.ok) {

@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
@@ -170,7 +171,7 @@ export default function ProfilePresentationPage() {
     setBusy(true);
     setError("");
     setRefused([]);
-    const response = await adminCall("save_profile_presentation", serializePresentationLayout(draft));
+    const response = await adminCall("save_profile_presentation", serializePresentationLayout(draft)).catch(adminMembershipRefusalForUi);
     setBusy(false);
     if (!response?.success) {
       // A refusal now names the offending rows. The draft is kept either way,
@@ -205,7 +206,7 @@ export default function ProfilePresentationPage() {
     const response = await adminCall(
       "save_profile_presentation_source",
       serializePresentationSource(sourceOriginal, sourceEditor),
-    );
+    ).catch(adminMembershipRefusalForUi);
     setSourceBusy(false);
     if (!response?.success) {
       setSourceError(response?.error === "profile-presentation-source-conflict"

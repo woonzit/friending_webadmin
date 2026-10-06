@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import ImageUploadField from "@/components/ImageUploadField";
@@ -147,7 +148,7 @@ export default function SignupPhotosPage() {
     }
     setBusy(true);
     setError("");
-    const response = await adminCall("save_signup_photo_config", signupPhotoSavePayload(draft));
+    const response = await adminCall("save_signup_photo_config", signupPhotoSavePayload(draft)).catch(adminMembershipRefusalForUi);
     setBusy(false);
 
     const failure = signupPhotoFailureCode(response);

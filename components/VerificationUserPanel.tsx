@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
@@ -105,9 +106,9 @@ export default function VerificationUserPanel({ uid, access }: { uid: number; ac
     setNotice(null);
     const existing = pendingRef.current;
     let response: AdminResponse | null;
-    if (existing) response = await adminCall(existing.action, existing.payload);
+    if (existing) response = await adminCall(existing.action, existing.payload).catch(adminMembershipRefusalForUi);
     else {
-      const persisted = await verificationPersistBeforeMutation(window.sessionStorage, next, () => adminCall(next.action, next.payload));
+      const persisted = await verificationPersistBeforeMutation(window.sessionStorage, next, () => adminCall(next.action, next.payload).catch(adminMembershipRefusalForUi));
       if (!persisted.ok) {
         setBusy(false);
         setNotice({ tone: "error", text: t("live.persistenceUnavailable") });
@@ -150,7 +151,7 @@ export default function VerificationUserPanel({ uid, access }: { uid: number; ac
       reason,
       ...(expiryTimestamp === null ? {} : { expires_at: expiryTimestamp }),
       expected_revision: data.grant_revision,
-    });
+    }).catch(adminMembershipRefusalForUi);
     const parsed = verificationGrantPreviewResponse(response);
     if (!parsed || parsed.current.uid !== uid || parsed.preview.granted_level !== level) {
       setPreview(null);

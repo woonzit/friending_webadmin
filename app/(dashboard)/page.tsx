@@ -6,7 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
 import RegistrationPlatformStats from "@/components/RegistrationPlatformStats";
 import { EmptyPanel, ErrorPanel, LoadingPanel } from "@/components/StatePanel";
-import { adminCall } from "@/lib/adminClient";
+import { adminCall, AdminMembershipUnconfirmedClientError } from "@/lib/adminClient";
+import { useAdminReadRecovery } from "@/components/useAdminReadRecovery";
 import { formatDate, formatNumber } from "@/lib/format";
 import { parseSignupMetrics } from "@/lib/signupMetrics";
 
@@ -41,7 +42,12 @@ export default function OverviewPage() {
     const generation = ++requestGeneration.current;
     setRefreshing(true);
     setState(data ? "ready" : "loading");
-    const response = await adminCall("overview");
+    let response;
+    try { response = await adminCall("overview"); } catch (error) {
+      if (!(error instanceof AdminMembershipUnconfirmedClientError)) throw error;
+      if (generation !== requestGeneration.current) return;
+      setRefreshing(false); setState("error"); return;
+    }
     if (generation !== requestGeneration.current) return;
     setRefreshing(false);
     if (response?.success !== true || response.status_code !== 200
@@ -54,6 +60,7 @@ export default function OverviewPage() {
   }, [data]);
 
   useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useAdminReadRecovery(load, data === null && state === "error");
 
   if (state === "loading") return <LoadingPanel />;
   if (state === "error" || !data) return <ErrorPanel message={t("loadError")} retry={load} />;

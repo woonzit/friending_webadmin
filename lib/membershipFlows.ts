@@ -20,12 +20,13 @@ import {
   type MembershipPinnedMutation,
   type MembershipUserDetail,
 } from "@/lib/membership";
+import { classifyAdminMembership } from "@/lib/adminMembership";
 
 /** The same-origin bridge (`adminCall`), injected so flows stay testable. */
 export type MembershipAdminCall = (
   action: string,
   body?: Record<string, unknown>,
-) => Promise<{ success?: unknown; error?: unknown; data?: unknown } | null>;
+) => Promise<{ success?: unknown; error?: unknown; data?: unknown; [key: string]: unknown } | null>;
 
 /**
  * A grant request sent to Core. While its outcome is unknown the exact body (request ID and
@@ -47,7 +48,8 @@ export async function membershipReadUserDetail(
   call: MembershipAdminCall,
   uid: number,
 ): Promise<MembershipUserDetail | null> {
-  const response = await call("membership_user_detail", { uid });
+  let response;
+  try { response = await call("membership_user_detail", { uid }); } catch { return null; }
   const parsed = response?.success === true ? membershipUserDetail(response.data) : null;
   return parsed && parsed.uid === uid && parsed.effective_membership.lifecycle_state !== "unavailable"
     ? parsed
@@ -82,6 +84,8 @@ export type MembershipGrantSubmitResult =
 export async function membershipSubmitGrant(
   call: MembershipAdminCall,
   input: {
+    /** The owner of this editor/persisted retry, never the newly signed-in actor. */
+    actor: string | null;
     uid: number;
     pending: MembershipPendingGrant | null;
     detail: MembershipUserDetail;
@@ -93,6 +97,16 @@ export async function membershipSubmitGrant(
 ): Promise<MembershipGrantSubmitResult> {
   let attempt = input.pending;
   let known: MembershipUserDetail | null = null;
+  // An explicit Retry never migrates a retained grant to another account.
+  // This is a fresh own-session proof, not a browser authority/cache.
+  let identity;
+  try { identity = await call("admin_me", {}); } catch { identity = null; }
+  const actor = input.actor;
+  const confirmed = actor && classifyAdminMembership({ status: identity?.status_code as number, data: identity }, actor);
+  if (!confirmed || confirmed.kind !== "confirmed" || confirmed.role === "viewer") {
+    return attempt ? { kind: "uncertain", detail: null, pending: { ...attempt, uncertain: true } }
+      : { kind: "previewStale", detail: null, pending: null };
+  }
   if (attempt) {
     known = await membershipReadUserDetail(call, input.uid);
     if (!known) return { kind: "uncertain", detail: null, pending: { ...attempt, uncertain: true } };
@@ -129,7 +143,10 @@ export async function membershipSubmitGrant(
     };
   }
   input.persist?.(attempt);
-  const response = await call("membership_admin_grant", attempt.pinned.body);
+  let response;
+  try { response = await call("membership_admin_grant", attempt.pinned.body); } catch {
+    return { kind: "uncertain", detail: known, pending: { ...attempt, uncertain: true } };
+  }
   const granted = response?.success === true ? membershipUserDetail(response.data) : null;
   const adopted = granted !== null && granted.uid === input.uid;
   const outcome = membershipMutationOutcome("grant_create", response, adopted);

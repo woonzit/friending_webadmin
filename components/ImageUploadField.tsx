@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import React, {
   DragEvent,
   useId,
@@ -87,7 +88,7 @@ export default function ImageUploadField({
     setBusy(true);
     onBusyChangeRef.current?.(true);
     try {
-      const response = await adminUploadImage(file);
+      const response = await adminUploadImage(file).catch(adminMembershipRefusalForUi);
       if (!response?.success || typeof response.media_url !== "string") {
         setError(localizedError(response?.error));
         return;

@@ -1,3 +1,4 @@
+import { adminMembershipRefusalForUi } from "../lib/adminMembershipClientError.ts";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
@@ -38,7 +39,7 @@ function listHarness() {
   const loadGeneration = { current: 0 }, writes: string[] = [], state = { data: null as any, status: "ready", principal: null as any };
   function render(page: number) {
     const response = deferred(), membership = deferred(); let pending: Promise<void> | undefined;
-    const context: any = { exports: {}, AbortController, page, PAGE_SIZE: 40, loadGeneration,
+    const context: any = { exports: {}, adminMembershipRefusalForUi, AbortController, page, PAGE_SIZE: 40, loadGeneration,
       filters: { status: "", tier: "", category: "", channel: "", city: "", query: "", startFrom: "", startTo: "" },
       datesAdminPrincipal, hasDatesCapability, decodeDatesExternalList, datesExternalTimeFromInput,
       adminCall: (action: string) => action === "admin_me" ? membership.promise : response.promise,
@@ -84,7 +85,7 @@ assert.ok(search);
 test("optional place lookup rejects late or newly locked responses without overwriting manual entry", async () => {
   for (const change of ["generation", "lock", "abort"] as const) {
     const response = deferred(), writes: string[] = [], generation = { current: 0 }, locked = { current: false }, controller = { current: null as AbortController | null };
-    const context: any = { exports: {}, AbortController, generation, locked, controller, query: "Public venue", locale: "en",
+    const context: any = { exports: {}, adminMembershipRefusalForUi, AbortController, generation, locked, controller, query: "Public venue", locale: "en",
       datesExternalPlaceQuery, decodeDatesExternalPlaces, adminCall: () => response.promise,
       setState: () => writes.push("state"), setResult: () => writes.push("result") };
     vm.runInNewContext(compile(`${search.getText(places.tree)}; exports.search = search;`), context);
@@ -101,7 +102,7 @@ assert.ok(commandAllowed);
 test("actual held editor offers non-approving corrections and safety actions but no thread update", () => {
   const body = JSON.parse(readFileSync(new URL("./fixtures/dates_external_admin_wire/admin-held-detail.json", import.meta.url), "utf8"));
   assert.ok(decodeDatesExternalDetail(body, body.event.external_event_id));
-  const context: any = { exports: {}, event: body.event, principal: { ...identity.dates, capabilities: body.capabilities },
+  const context: any = { exports: {}, adminMembershipRefusalForUi, event: body.event, principal: { ...identity.dates, capabilities: body.capabilities },
     ACTIVITY_COMMANDS: ["end", "soft_delete", "restore", "purge"], hasDatesCapability };
   vm.runInNewContext(compile(`${commandAllowed.getText(editor.tree)}; exports.allowed = commandAllowed;`), context);
   for (const action of ["reverify", "cancel", "withdraw", "end", "soft_delete"]) assert.equal(context.exports.allowed(action), true, action);
@@ -126,7 +127,7 @@ function mutationHarness() {
   const access = deferred(), response = deferred(), lifetime = { current: 0 }, values = new Map<string, string>();
   const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); }, removeItem: (key: string) => { values.delete(key); } };
   const writes: string[] = [], sent: unknown[] = [], state: any = {};
-  const context: any = { exports: {}, lifetime, busyRef: { current: false }, principal: identity.dates,
+  const context: any = { exports: {}, adminMembershipRefusalForUi, lifetime, busyRef: { current: false }, principal: identity.dates,
     readDatesExternalMutationAccess: () => access.promise, datesExternalBrowserStorage: () => storage,
     prepareDatesExternalPending, readDatesExternalPending, runDatesExternalMutation,
     adminCall: (action: string, body: unknown) => { sent.push({ action, body }); return response.promise; },
@@ -171,7 +172,7 @@ test("missing detail after a purge still exposes only the saved receipt-recovery
   const pending = prepareDatesExternalPending(actor, "dates_activity_command", { activity_id: baseline.activity_id,
     expected_revision: 5, action: "purge", reason: "Retention checked" }, { ...baseline, soft_deleted: true }, now);
   assert.ok(pending);
-  const state: any = {}, context: any = { exports: {}, externalId: baseline.external_event_id, generation: { current: 0 },
+  const state: any = {}, context: any = { exports: {}, adminMembershipRefusalForUi, externalId: baseline.external_event_id, generation: { current: 0 },
     FRESH: {}, datesAdminPrincipal, hasDatesCapability, decodeDatesExternalDetail, decodeDatesExternalList,
     datesExternalBrowserStorage: () => null, readDatesExternalPending: () => ({ kind: "pending", pending }), readDatesExternalMutationAccess,
     adminCall: async (action: string) => action === "admin_me" ? { ...identity, dates: { ...identity.dates, capabilities: [...capabilities, "dates_activity_command", "dates_activity_purge"] } }

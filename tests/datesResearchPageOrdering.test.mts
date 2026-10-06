@@ -30,7 +30,7 @@ function elements(node: any): Element[] {
 function harness() {
   const slots: any[] = [], effects: (() => void)[] = [], requests: ((value: any) => void)[] = [], actors: string[] = [];
   let index = 0;
-  const context: any = { exports: {}, window: { location: { href: "https://admin.example.test/dates/research" } }, URL, AbortController,
+  const context: any = { exports: {}, useAdminReadRecovery: () => {}, window: { location: { href: "https://admin.example.test/dates/research" } }, URL, AbortController,
     React: { Fragment: "fragment", createElement: (type: any, props: any, ...children: any[]) => ({ type, props: props ?? {}, children }) },
     useLocale: () => "en", useTranslations: () => (key: string) => key, adminCall: () => {},
     DATES_RESEARCH_VALUE_FIELDS: [], researchCost, researchDistanceUnit, researchMonthlyEstimate, researchStock, formatDate, formatNumber,

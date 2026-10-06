@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
@@ -206,7 +207,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     setFeedback(null);
     try {
       let response: Awaited<ReturnType<typeof adminCall>> = null;
-      try { response = await adminCall(action, payload); } catch { response = null; }
+      try { response = await adminCall(action, payload).catch(adminMembershipRefusalForUi); } catch { response = null; }
       if (!readFence.accepts(ticket)) return "abandoned" as const;
       const consoleReceipt = isDatesConsoleCommand(action) ? datesConsoleCommandReceipt(response, action, caseId, payload.expected_revision) : null;
       const settled = !isDatesConsoleCommand(action) ? commandSettled(action, payload, response, successMessage)

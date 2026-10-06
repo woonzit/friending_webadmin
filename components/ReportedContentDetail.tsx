@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
@@ -199,7 +200,7 @@ export default function ReportedContentDetail() {
         setBusy(true);
         setConfirming(false);
         setNotice(null);
-        return adminCall("moderation_report_action", payload);
+        return adminCall("moderation_report_action", payload).catch(adminMembershipRefusalForUi);
       },
     );
     if (!persisted.ok) {

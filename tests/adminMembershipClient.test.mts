@@ -9,6 +9,7 @@ import { NextIntlClientProvider } from "next-intl";
 import AdminMembershipNotice, { AdminWriteOutcomeNotice } from "../components/AdminMembershipNotice.tsx";
 import { ADMIN_ACTIONS, adminActionAccess } from "../lib/adminActions.ts";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
+import { AdminMembershipUnconfirmedClientError } from "../lib/adminMembershipClientError.ts";
 import { createAdminMembershipRecovery, createAdminWriteOutcomeNotice } from "../lib/adminMembershipRecovery.ts";
 import { ADMIN_REQUEST_HEADER, ADMIN_REQUEST_HEADER_VALUE } from "../lib/requestGuard.ts";
 import { MEMBERSHIP_CASES, MEMBERSHIP_MEMBER } from "./support/adminMembershipCases.mts";
@@ -27,7 +28,7 @@ type Answer = { status: number; data: unknown };
 function client(initial: Answer = good) {
   const time = membershipClock(), redirects: string[] = [], calls: { url: string; options: RequestInit }[] = [];
   const state = { answer: initial, hook: undefined as undefined | ((url: string, options: RequestInit) => Promise<Response>) };
-  const context: any = { exports: {}, JSON, File, FormData, AbortSignal, adminActionAccess, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership,
+  const context: any = { exports: {}, JSON, File, FormData, AbortSignal, adminActionAccess, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, AdminMembershipUnconfirmedClientError,
     ADMIN_REQUEST_HEADER, ADMIN_REQUEST_HEADER_VALUE, window: { location: { assign: (url: string) => redirects.push(url) } },
     createAdminWriteOutcomeNotice, createAdminMembershipRecovery: (probe: Parameters<typeof createAdminMembershipRecovery>[0], redirect: () => void) => createAdminMembershipRecovery(probe, redirect, time.clock),
     fetch: async (url: string, options: RequestInit) => {
@@ -56,13 +57,14 @@ for (const row of MEMBERSHIP_CASES) test(`DERIVED client table / every write and
   const answer = row.kind === "unconfirmed" ? unknown : row.kind === "revoked" ? signedOut : good;
   for (let index = 0; index < 7; index++) {
     const h = client(answer), [name, invoke] = h.entries[index];
-    const result = await invoke(); assert.equal(h.calls.length, 1, name);
+    if (row.kind === "unconfirmed") await assert.rejects(invoke(), AdminMembershipUnconfirmedClientError);
+    else await invoke();
+    assert.equal(h.calls.length, 1, name);
     assert.deepEqual(h.redirects, row.kind === "revoked" ? ["/login"] : [], name);
     assert.equal(h.api.adminMembershipRecovery.getSnapshot(), row.kind === "unconfirmed", name);
     assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), false, "a pre-forward refusal is not an unknown forwarded write");
     if (row.kind === "unconfirmed") {
-      assert.equal(result?.error, ADMIN_MEMBERSHIP_UNCONFIRMED, name);
-      await invoke(); assert.equal(h.calls.length, 1, `${name}: repeated click while unconfirmed is refused locally`);
+      await assert.rejects(invoke(), AdminMembershipUnconfirmedClientError); assert.equal(h.calls.length, 1, `${name}: repeated click while unconfirmed is refused locally`);
       h.state.answer = good; await h.time.tick();
       assert.equal(h.api.adminMembershipRecovery.getSnapshot(), false); assert.equal(h.calls.length, 2);
       assert.equal(h.calls[1].url, "/api/admin/admin_me", `${name}: recovery never repeats the write/upload`);
@@ -71,20 +73,20 @@ for (const row of MEMBERSHIP_CASES) test(`DERIVED client table / every write and
     }
   }
 });
-test("DERIVED client: automatic retry is limited to read-only requests and each retry still uses the protected bridge", async () => {
+test("DERIVED client: reads reject immediately too; recovery NEVER holds or resends the original read Promise", async () => {
   for (const action of ["overview", "dates_event_research_overview"]) {
-    const h = client(unknown); let settled = false;
-    const pending = h.api.adminCall(action).then((result) => { settled = true; return result; }); await flush();
-    assert.equal(settled, false); assert.equal(h.calls.length, 1); assert.deepEqual(h.redirects, []);
-    h.state.answer = good; await h.time.tick(); assert.equal((await pending)?.success, true);
-    assert.deepEqual(h.calls.map((call) => call.url), [`/api/admin/${action}`, "/api/admin/admin_me", `/api/admin/${action}`]);
+    const h = client(unknown);
+    await assert.rejects(h.api.adminCall(action), AdminMembershipUnconfirmedClientError);
+    assert.equal(h.calls.length, 1); assert.deepEqual(h.redirects, []);
+    h.state.answer = good; await h.time.tick();
+    assert.deepEqual(h.calls.map((call) => call.url), [`/api/admin/${action}`, "/api/admin/admin_me"]);
   }
 });
 test("DERIVED client: unknown, owner-only and every classified mutating action has no automatic retry queue", async () => {
   const h = client(); h.api.adminMembershipRecovery.markUnconfirmed();
   for (const action of [...ADMIN_ACTIONS, "unclassified_action"]) {
     const access = adminActionAccess(action); if (access === "read" || access === "dates_read") continue;
-    assert.equal((await h.api.adminCall(action, { request_id: "retained-original" }))?.error, ADMIN_MEMBERSHIP_UNCONFIRMED, action);
+    await assert.rejects(h.api.adminCall(action, { request_id: "retained-original" }), AdminMembershipUnconfirmedClientError, action);
   }
   assert.equal(h.calls.length, 0);
 });
@@ -93,10 +95,10 @@ test("DERIVED client: malformed 200 membership responses and service/unknown 401
   // The browser has no HttpOnly-session identity with which to compare an
   // otherwise canonical email, and never uses this parse to grant a request.
   for (const row of MEMBERSHIP_CASES.filter((row) => row.kind === "unconfirmed" && !row.abandoned && row.name !== "foreign email")) {
-    const h = client({ status: row.status, data: row.data }), controller = new AbortController();
-    const pending = h.api.adminCall("admin_me", {}, controller.signal); await flush();
+    const h = client({ status: row.status, data: row.data });
+    await assert.rejects(h.api.adminCall("admin_me"), AdminMembershipUnconfirmedClientError);
     assert.equal(h.api.adminMembershipRecovery.getSnapshot(), true, row.name); assert.deepEqual(h.redirects, []);
-    controller.abort(); assert.equal(await pending, null); assert.equal(h.api.adminMembershipRecovery.getSnapshot(), true);
+    assert.equal(h.api.adminMembershipRecovery.getSnapshot(), true);
   }
 });
 test("DERIVED client: late positive, outage and definite 401 bodies from abandoned reads/writes/uploads have no effect", async () => {
@@ -122,7 +124,7 @@ test("DERIVED client: post-forward 502/5xx and lost upload replies explain uncer
   }
   for (let index = 1; index < 7; index++) {
     const h = client(); h.state.hook = async () => { throw new Error("DERIVED lost upload reply"); };
-    assert.equal(await h.entries[index][1](), null); assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true);
+    await assert.rejects(h.entries[index][1](), AdminMembershipUnconfirmedClientError); assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true);
     h.state.hook = undefined; await h.time.tick();
     assert.deepEqual(h.calls.map((call) => call.url).slice(1), ["/api/admin/admin_me"]); assert.equal(h.api.adminWriteOutcomeNotice.getSnapshot(), true);
   }
@@ -137,7 +139,7 @@ test("DERIVED client: a lost write reply and later account change never replay t
   const h = client(); let first = true;
   h.state.hook = async (_url) => { if (first) { first = false; throw new Error("DERIVED lost reply"); }
     return new Response(JSON.stringify({ ...MEMBERSHIP_MEMBER, email: "other@example.test" }), { status: 200 }); };
-  assert.equal(await h.entries[0][1](), null); await h.time.tick();
+  await assert.rejects(h.entries[0][1](), AdminMembershipUnconfirmedClientError); await h.time.tick();
   assert.deepEqual(h.calls.map((call) => call.url), ["/api/admin/set_settings", "/api/admin/admin_me"]);
   assert.deepEqual(JSON.parse(h.calls[0].options.body as string), { draft: "keep", request_id: "keep-this-identity" });
   assert.deepEqual(h.redirects, []);
@@ -153,7 +155,7 @@ for (const locale of ["en", "hu"]) test(`DERIVED static render ${locale}: the me
   const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8")), errors: string[] = [];
   const html = renderToStaticMarkup(createElement(NextIntlClientProvider, { locale, messages, timeZone: "UTC", onError: (error: unknown) => errors.push(String(error)) },
     createElement(AdminMembershipNotice, { visible: true })));
-  for (const value of Object.values(messages.adminMembership) as string[]) assert.ok(html.includes(value.replaceAll("&", "&amp;").replaceAll("'", "&#x27;")));
+  for (const key of ["title", "retained", "retrying", "retry"]) assert.ok(html.includes(messages.adminMembership[key].replaceAll("&", "&amp;").replaceAll("'", "&#x27;")));
   assert.deepEqual(errors, []); assert.match(html, /role="status"/); assert.match(html, /type="button"/);
 });
 test("DERIVED source boundary: recovery hides but never conditionally replaces existing page children or touches retained storage", () => {

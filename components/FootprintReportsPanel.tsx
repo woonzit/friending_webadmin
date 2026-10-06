@@ -5,6 +5,7 @@
 // note. Both resolutions are Core editor actions, so the controls render only
 // for a write role proven by admin_me; an unreadable admin_me fails closed.
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
@@ -150,7 +151,7 @@ export default function FootprintReportsPanel({
       id: report.id,
       action,
       note: normalizedNote,
-    });
+    }).catch(adminMembershipRefusalForUi);
     setBusy(false);
     setPending(null);
     setNote("");

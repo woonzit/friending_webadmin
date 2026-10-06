@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -133,7 +134,7 @@ export default function HelpCmsPage() {
         hu: { title: categoryDraft.titleHu.trim(), summary: categoryDraft.summaryHu.trim() },
       }),
       expected_revision: categoryDraft.revision,
-    });
+    }).catch(adminMembershipRefusalForUi);
     setBusy(false);
     if (!response?.success || !adopt(response)) {
       if (response?.error === "help-category-conflict") {
@@ -182,7 +183,7 @@ export default function HelpCmsPage() {
         Object.fromEntries(Object.entries(locales)) as ArticleDraft["locales"],
       )),
       expected_revision: article.revision,
-    });
+    }).catch(adminMembershipRefusalForUi);
     setBusy(false);
     if (!response?.success || !adopt(response)) {
       if (response?.error === "help-article-conflict") {
@@ -216,7 +217,7 @@ export default function HelpCmsPage() {
     const response = await adminCall("publish_help_article", {
       id: saved.id,
       expected_revision: saved.revision,
-    });
+    }).catch(adminMembershipRefusalForUi);
     setBusy(false);
     if (!response?.success || !adopt(response)) {
       setFormError(response?.error === "help-article-locale-incomplete"
@@ -238,7 +239,7 @@ export default function HelpCmsPage() {
     const response = await adminCall("archive_help_article", {
       id: archiving.id,
       expected_revision: archiving.revision,
-    });
+    }).catch(adminMembershipRefusalForUi);
     setBusy(false);
     setArchiving(null);
     if (!response?.success || !adopt(response)) {

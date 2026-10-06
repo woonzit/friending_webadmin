@@ -9,6 +9,7 @@ import { ResearchCommandFeedback, ResearchHelp, ResearchValue, useResearchComman
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
+import { useAdminReadRecovery } from "@/components/useAdminReadRecovery";
 import { readResearchOverview, type ResearchRead } from "@/lib/datesResearchConsole";
 import { DATES_RESEARCH_VALUE_FIELDS, type ResearchArea, type ResearchDefaults, type ResearchOverview, type ResearchSource } from "@/lib/datesResearchAdmin";
 import { researchCost, researchDistanceUnit, researchMonthlyEstimate, researchStock } from "@/lib/datesResearchView";
@@ -56,6 +57,7 @@ export default function DatesResearchPage() {
   }, []);
   useEffect(() => { const controller = new AbortController(); void load(controller.signal); return () => { controller.abort(); ++generation.current; }; }, [load]);
   const reload = useCallback(async () => { await load(); }, [load]);
+  useAdminReadRecovery(reload, read === null && problem?.kind === "unconfirmed");
   // Keep the run identity outside the source/area rows: a later unreadable row must
   // not remove the only safe retry for a command whose outcome is unknown.
   const confirmedActor = problem === null ? read?.operator.email ?? "" : "";

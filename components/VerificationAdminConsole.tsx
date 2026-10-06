@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
@@ -369,12 +370,12 @@ export default function VerificationAdminConsole({ initialTab, methodAccess }: {
     const existing = pendingRef.current;
     let response: AdminResponse | null;
     if (existing) {
-      response = await adminCall(existing.action, existing.payload);
+      response = await adminCall(existing.action, existing.payload).catch(adminMembershipRefusalForUi);
     } else {
       const persisted = await verificationPersistBeforeMutation(
         window.sessionStorage,
         next,
-        () => adminCall(next.action, next.payload),
+        () => adminCall(next.action, next.payload).catch(adminMembershipRefusalForUi),
       );
       if (!persisted.ok) {
         setBusy(false);
@@ -471,7 +472,7 @@ export default function VerificationAdminConsole({ initialTab, methodAccess }: {
       scope_key: selectedPolicy.scope_key,
       operation,
       expected_revision: selectedPolicy.revision,
-    });
+    }).catch(adminMembershipRefusalForUi);
     const parsed = verificationPolicyImpactPreviewResponse(response);
     const bound = parsed?.scope_key === selectedPolicy.scope_key
       && parsed.operation === operation
@@ -508,7 +509,7 @@ export default function VerificationAdminConsole({ initialTab, methodAccess }: {
       search_token: token,
       query: cityQuery.trim(),
       ...(cityCountry ? { country_code: cityCountry.trim().toUpperCase() } : {}),
-    });
+    }).catch(adminMembershipRefusalForUi);
     const parsed = verificationCitySearchResponse(response);
     const bound = parsed?.search_token === token ? parsed : null;
     setCitySuggestions(bound?.suggestions ?? []);
@@ -521,7 +522,7 @@ export default function VerificationAdminConsole({ initialTab, methodAccess }: {
     const token = searchTokenRef.current;
     if (!token || busy) return;
     setBusy(true);
-    const response = await adminCall("verification_places_city_detail", { contract_version: 1, search_token: token, place_id: place });
+    const response = await adminCall("verification_places_city_detail", { contract_version: 1, search_token: token, place_id: place }).catch(adminMembershipRefusalForUi);
     const parsed = verificationCityDetailResponse(response);
     const bound = parsed?.city.place_id === place ? parsed : null;
     setCityDetail(bound?.city ?? null);

@@ -53,7 +53,7 @@ for (const row of MEMBERSHIP_CASES) test(`DERIVED server render gate / every adm
 test("DERIVED layout: an absent signed session redirects as before and does not query Core", async () => {
   const h = await sessionHarness(MEMBERSHIP_CASES[0]); h.state.token = "";
   const module = await serverModule(paths[0], { adminMe: h.api.adminMe, AdminMembershipUnconfirmedError: h.api.AdminMembershipUnconfirmedError,
-    AdminMembershipUnavailable: neutral, Shell: shell, redirect: (target: string) => { throw new Navigation(target); } });
+      AdminMembershipUnavailable: neutral, Shell: shell, redirect: (target: string) => { throw new Navigation(target); } });
   await assert.rejects(module.default({ children: "PROTECTED_CHILD" }), (error: unknown) => error instanceof Navigation && error.target === "/login");
   assert.equal(h.calls.length, 0);
 });

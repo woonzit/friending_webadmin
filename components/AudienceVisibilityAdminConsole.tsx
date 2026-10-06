@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
@@ -183,12 +184,12 @@ export default function AudienceVisibilityAdminConsole({ initialTab }: { initial
     const existing = pendingRef.current;
     let response: AdminResponse | null;
     if (existing) {
-      response = await adminCall(existing.action, existing.payload);
+      response = await adminCall(existing.action, existing.payload).catch(adminMembershipRefusalForUi);
     } else {
       const persisted = await audienceVisibilityPersistBeforeMutation(
         window.sessionStorage,
         next,
-        () => adminCall(next.action, next.payload),
+        () => adminCall(next.action, next.payload).catch(adminMembershipRefusalForUi),
       );
       if (!persisted.ok) {
         setBusy(false);

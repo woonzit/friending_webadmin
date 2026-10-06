@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
@@ -169,7 +170,7 @@ export default function UserModerationPanel({ uid }: { uid: number }) {
     setBusy(marker);
     setActionError("");
     setConfirming("");
-    const response = await adminCall(action, { uid, ...body });
+    const response = await adminCall(action, { uid, ...body }).catch(adminMembershipRefusalForUi);
     setBusy("");
     const parsed = response?.success ? parseModerationStatus(response.moderation) : null;
     if (!parsed) {
@@ -195,7 +196,7 @@ export default function UserModerationPanel({ uid }: { uid: number }) {
     setBusy("quota");
     setActionError("");
     setQuotaSaved(false);
-    const response = await adminCall("set_footprint_user_limit", { uid, limit: quota.trim() });
+    const response = await adminCall("set_footprint_user_limit", { uid, limit: quota.trim() }).catch(adminMembershipRefusalForUi);
     setBusy("");
     if (!response?.success) {
       setActionError(typeof response?.error === "string" && response.error ? response.error : "request-failed");

@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import React, { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
@@ -23,7 +24,7 @@ export default function DatesExternalPlaceSearch({ disabled, onSelect }: { disab
     controller.current?.abort(); setResult(null);
     if (!datesExternalPlaceQuery(query)) { setState("invalid"); return; }
     const next = new AbortController(); controller.current = next; setState("loading");
-    const response = await adminCall("dates_external_event_place_search", { query: query.trim(), language: locale === "hu" ? "hu" : "en" }, next.signal);
+    const response = await adminCall("dates_external_event_place_search", { query: query.trim(), language: locale === "hu" ? "hu" : "en" }, next.signal).catch(adminMembershipRefusalForUi);
     if (next.signal.aborted || current !== generation.current || locked.current) return;
     const decoded = decodeDatesExternalPlaces(response);
     if (!decoded) { setState("error"); return; }

@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -392,7 +393,7 @@ export default function CannedTemplatesConsole() {
     const response = await adminCall(
       durable.action === "save" ? "save_canned" : "delete_canned",
       durable.payload,
-    );
+    ).catch(adminMembershipRefusalForUi);
 
     if (durable.action === "save") {
       const result = cannedTemplateSaveResponse(response);

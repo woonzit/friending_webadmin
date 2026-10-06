@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
@@ -197,7 +198,7 @@ export default function AdminGrantedVerificationPanel({ uid }: { uid: number }) 
       const existing = pendingRef.current;
       let response: AdminResponse | null;
       if (existing) {
-        response = await adminCall(existing.action, existing.payload);
+        response = await adminCall(existing.action, existing.payload).catch(adminMembershipRefusalForUi);
       } else {
         const persisted = await adminGrantedVerificationPersistBeforeMutation(
           window.sessionStorage,
@@ -205,7 +206,7 @@ export default function AdminGrantedVerificationPanel({ uid }: { uid: number }) 
           () => {
             pendingRef.current = next;
             setPending(next);
-            return adminCall(next.action, next.payload);
+            return adminCall(next.action, next.payload).catch(adminMembershipRefusalForUi);
           },
         );
         if (!persisted.ok) {

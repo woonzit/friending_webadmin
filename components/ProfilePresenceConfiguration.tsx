@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -88,7 +89,7 @@ export default function ProfilePresenceConfiguration() {
     const response = await adminCall(
       "save_profile_presence_configuration",
       profilePresenceConfigurationSaveBody(candidate),
-    );
+    ).catch(adminMembershipRefusalForUi);
     setBusy(false);
     setConfirmation(null);
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
@@ -240,7 +241,7 @@ export default function WelcomeMessageConfiguration() {
     const sent = payload.settings.welcome_message;
     setModel((current) => ({ ...current, busy: true, notice: null }));
     try {
-      const outcome = welcomeMessageSaveOutcome(await adminCall("set_settings", payload), sent);
+      const outcome = welcomeMessageSaveOutcome(await adminCall("set_settings", payload).catch(adminMembershipRefusalForUi), sent);
       if (outcome.kind === "saved") {
         setModel((current) => ({
           ...current, phase: "ready", stored: outcome.stored, draft: outcome.stored.value, busy: false,

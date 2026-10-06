@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -60,7 +61,7 @@ export default function AdminsPage() {
     if (!normalized) return;
     setBusyEmail(normalized);
     setMessage(null);
-    const response = await adminCall("add_admin", { email: normalized });
+    const response = await adminCall("add_admin", { email: normalized }).catch(adminMembershipRefusalForUi);
     setBusyEmail("");
     if (!response?.success || !response.admin) {
       setMessage({ tone: "error", text: errorText(response?.error) });
@@ -73,7 +74,7 @@ export default function AdminsPage() {
   async function update(row: AdminRow, body: Record<string, unknown>) {
     setBusyEmail(row.email);
     setMessage(null);
-    const response = await adminCall("update_admin", { email: row.email, ...body });
+    const response = await adminCall("update_admin", { email: row.email, ...body }).catch(adminMembershipRefusalForUi);
     setBusyEmail("");
     if (!response?.success || !response.admin) {
       setMessage({ tone: "error", text: errorText(response?.error) });
@@ -85,7 +86,7 @@ export default function AdminsPage() {
   async function remove() {
     if (!deleting) return;
     setBusyEmail(deleting.email);
-    const response = await adminCall("delete_admin", { email: deleting.email });
+    const response = await adminCall("delete_admin", { email: deleting.email }).catch(adminMembershipRefusalForUi);
     setBusyEmail("");
     if (!response?.success) {
       setMessage({ tone: "error", text: errorText(response?.error) });

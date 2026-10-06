@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
@@ -182,7 +183,7 @@ function RegisteredUsers() {
     const response = await adminCall("set_demo_visibility_permission", {
       uid: row.uid,
       can_see_demo_users: enabled,
-    });
+    }).catch(adminMembershipRefusalForUi);
     const permission = response?.permission;
     const returnedUid = permission && typeof permission === "object"
       ? Number((permission as Record<string, unknown>).uid)

@@ -20,10 +20,17 @@ import {
   membershipRestorePendingGrant,
   membershipSessionStorage,
   membershipStorePendingGrant,
-  membershipSubmitGrant,
+  membershipSubmitGrant as submitGrant,
   type MembershipAdminCall,
   type MembershipPendingGrant,
 } from "../lib/membershipFlows.ts";
+
+// Existing grant/detail regressions use a DERIVED positively confirmed, fixed
+// actor adapter. Separate T-899 tests exercise the REAL client and actor changes.
+const membershipSubmitGrant = (call: MembershipAdminCall, input: Omit<Parameters<typeof submitGrant>[1], "actor">) => submitGrant(
+  async (action, body) => action === "admin_me"
+    ? { message: 200, status: 200, can_send: 0, success: true, status_code: 200, email: "owner@example.invalid", role: "owner" }
+    : call(action, body), { ...input, actor: "owner@example.invalid" });
 
 const ISO = "2026-08-15T12:00:00Z";
 const LATER = "2026-09-15T12:00:00Z";

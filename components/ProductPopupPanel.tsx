@@ -1,5 +1,6 @@
 "use client";
 
+import { adminMembershipRefusalForUi } from "@/lib/adminMembershipClientError";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -359,7 +360,7 @@ export default function ProductPopupPanel({ uid }: { uid: number }) {
     const response = await adminCall(
       durable.action === "set" ? "admin_set_user_popup" : "admin_clear_user_popup",
       durable.payload,
-    );
+    ).catch(adminMembershipRefusalForUi);
     const result = durable.action === "set"
       ? productPopupSetResponse(response)
       : productPopupClearResponse(response);
