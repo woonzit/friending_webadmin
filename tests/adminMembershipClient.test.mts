@@ -8,6 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import AdminMembershipNotice, { AdminWriteOutcomeNotice } from "../components/AdminMembershipNotice.tsx";
 import { ADMIN_ACTIONS, adminActionAccess } from "../lib/adminActions.ts";
+import { isAdminClientReadAction } from "../lib/adminClientReadActions.ts";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
 import { AdminMembershipUnconfirmedClientError } from "../lib/adminMembershipClientError.ts";
 import { createAdminMembershipRecovery, createAdminWriteOutcomeNotice } from "../lib/adminMembershipRecovery.ts";
@@ -28,7 +29,7 @@ type Answer = { status: number; data: unknown };
 function client(initial: Answer = good) {
   const time = membershipClock(), redirects: string[] = [], calls: { url: string; options: RequestInit }[] = [];
   const state = { answer: initial, hook: undefined as undefined | ((url: string, options: RequestInit) => Promise<Response>) };
-  const context: any = { exports: {}, JSON, File, FormData, AbortSignal, adminActionAccess, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, AdminMembershipUnconfirmedClientError,
+  const context: any = { exports: {}, JSON, File, FormData, AbortSignal, isAdminClientReadAction, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, AdminMembershipUnconfirmedClientError,
     ADMIN_REQUEST_HEADER, ADMIN_REQUEST_HEADER_VALUE, window: { location: { assign: (url: string) => redirects.push(url) } },
     createAdminWriteOutcomeNotice, createAdminMembershipRecovery: (probe: Parameters<typeof createAdminMembershipRecovery>[0], redirect: () => void) => createAdminMembershipRecovery(probe, redirect, time.clock),
     fetch: async (url: string, options: RequestInit) => {

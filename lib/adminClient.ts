@@ -1,6 +1,6 @@
 "use client";
 
-import { adminActionAccess } from "@/lib/adminActions";
+import { isAdminClientReadAction } from "@/lib/adminClientReadActions";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "@/lib/adminMembership";
 import { AdminMembershipUnconfirmedClientError } from "@/lib/adminMembershipClientError";
 export { AdminMembershipUnconfirmedClientError };
@@ -73,7 +73,7 @@ export async function adminCall(
   body: Record<string, unknown> = {},
   signal?: AbortSignal,
 ): Promise<AdminResponse | null> {
-  const access = adminActionAccess(action), readOnly = access === "read" || access === "dates_read";
+  const readOnly = isAdminClientReadAction(action);
     if (signal?.aborted) return null;
     // Reads can be the first step of a write. NEVER hold/resend any caller's
     // Promise: recovery starts registered read-only page loaders from the top.

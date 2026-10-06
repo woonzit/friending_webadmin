@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
-import * as actions from "../lib/adminActions.ts";
+import { isAdminClientReadAction } from "../lib/adminClientReadActions.ts";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
 import { AdminMembershipUnconfirmedClientError, adminMembershipRefusalForUi } from "../lib/adminMembershipClientError.ts";
 import { createAdminMembershipRecovery, createAdminWriteOutcomeNotice } from "../lib/adminMembershipRecovery.ts";
@@ -57,7 +57,7 @@ compile(functionSource("tests/membershipFlows.test.mts", "grantWire") + "\n" + f
 const grantDetail = grantContext.exports.detail;
 function client(failedRead: string | null) {
   const time = membershipClock(), requests: string[] = []; const state = { failedRead, actor: MEMBERSHIP_EMAIL };
-  const parsed = tree("lib/adminClient.ts"), context: any = { exports: {}, JSON, File, FormData, AbortSignal, adminActionAccess: actions.adminActionAccess,
+  const parsed = tree("lib/adminClient.ts"), context: any = { exports: {}, JSON, File, FormData, AbortSignal, isAdminClientReadAction,
     ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, AdminMembershipUnconfirmedClientError, createAdminWriteOutcomeNotice,
     ADMIN_REQUEST_HEADER, ADMIN_REQUEST_HEADER_VALUE, window: { location: { assign: () => assert.fail("an outage must not redirect") } },
     createAdminMembershipRecovery: (probe: any, redirect: any) => createAdminMembershipRecovery(probe, redirect, time.clock),

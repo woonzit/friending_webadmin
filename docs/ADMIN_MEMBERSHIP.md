@@ -56,6 +56,11 @@ unsaved state/in-memory retry identities will be discarded and a previously
 forwarded write may still finish. It never sends a mutation. A refused write
 requires a new operator attempt and another fresh server membership check.
 
+The browser imports only `adminClientReadActions` presentation metadata, not
+the server bridge's complete action/access/normalizer table. Exact active-read
+parity is tested. This set grants no server authority or automatic retry;
+in particular its audited location/evidence entries are not registered loaders.
+
 The five reported read-before-write flows (intake Publish, research Retry,
 membership grant Retry, external-event command, external-event case resolution)
 are tested against the real client through read outage and same/different actor
