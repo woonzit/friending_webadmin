@@ -65,11 +65,11 @@ export function decodeResearchCommandReceipt(command: ResearchCommand, response:
   }
   if (action === "dates_event_research_source_run_now") {
     const next = Number(body.expected_revision) + 1;
-    // A new key after a re-read reuses the existing open run without bumping
-    // its source again. Core refuses source configuration saves while open.
-    const boundRevision = response.source_revision === next || response.replayed === true && response.source_revision === body.expected_revision;
+    // A same-mode open run is reused before Core compares the submitted
+    // revision. Only a genuinely new intent must advance expected by one.
+    const boundRevision = response.replayed === true || response.source_revision === next;
     return researchString(response.run_id) && response.run_id !== "" && response.source_id === body.source_id && response.dry_run === body.dry_run
-      && researchInteger(response.source_revision, 1) && boundRevision
+      && researchInteger(response.source_revision, 2) && boundRevision
       ? { kind: "success", receipt: response, runId: response.run_id } : null;
   }
   return null;
