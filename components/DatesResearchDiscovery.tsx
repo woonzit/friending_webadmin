@@ -5,7 +5,7 @@ import { ResearchCommandFeedback, ResearchHelp, ResearchReason, useResearchComma
 import { useResearchDraft } from "@/components/DatesResearchEditors";
 import { DATES_RESEARCH_DOMAIN_TYPES, type ResearchArea, type ResearchDefaults, type ResearchDiscoveryAdmission, type ResearchDomain,
   type ResearchEstimate, type ResearchLimits, type ResearchModelOptions, type ResearchModels } from "@/lib/datesResearchAdmin";
-import { researchAuditReason, researchDomainsValid } from "@/lib/datesResearchProxy";
+import { researchAuditReason, researchDomainDraftIssues, researchDomainsValid } from "@/lib/datesResearchProxy";
 import { researchCost, researchDefaultValues } from "@/lib/datesResearchView";
 import { formatDate, formatNumber } from "@/lib/format";
 
@@ -27,6 +27,7 @@ export function ResearchDomainEditor({ defaults, options, limits, actor, manage,
   const readable = !!defaults.research_models && !!defaults.domains && !!options && !!range;
   const incomplete = !readable || defaults.domains!.unreadable.length !== 0;
   const disabled = !manage || command.busy || command.retained || incomplete;
+  const domainIssues = researchDomainDraftIssues(model.draft.domains);
   const valid = readable && researchDomainsValid(model.draft.domains)
     && model.draft.domains.length >= range!.min && model.draft.domains.length <= range!.max
     && options!.openai.includes(model.draft.research_models.openai) && options!.gemini.includes(model.draft.research_models.gemini);
@@ -46,14 +47,18 @@ export function ResearchDomainEditor({ defaults, options, limits, actor, manage,
     })}</div><ResearchHelp field="research_models" />
       <h3>{t("discovery.domainsTitle")}</h3><ResearchHelp field="domains" /><p className="field-hint">{t("discovery.domainLimits", { min: range!.min, max: range!.max })}</p>
       {model.draft.domains.length === 0 && <p>{t("discovery.domainsEmpty")}</p>}
-      {model.draft.domains.map((row, index) => <div className="form-grid" key={index}>
-        <label className="field"><span>{t("discovery.domain")}</span><input value={row.domain} disabled={disabled} placeholder={t("discovery.domainPlaceholder")}
-          onChange={(event) => model.set({ ...model.draft, domains: model.draft.domains.map((entry, at) => at === index ? { ...entry, domain: event.target.value } : entry) })} /></label>
+      {model.draft.domains.map((row, index) => { const issue = domainIssues[index], errorId = `research-domain-${index}-error`;
+        return <div className="form-grid" key={index}>
+        <label className="field"><span>{t("discovery.domainRow", { row: index + 1 })}</span><input value={row.domain} disabled={disabled} placeholder={t("discovery.domainPlaceholder")}
+          aria-invalid={issue ? true : undefined} aria-describedby={issue ? errorId : undefined}
+          onChange={(event) => model.set({ ...model.draft, domains: model.draft.domains.map((entry, at) => at === index ? { ...entry, domain: event.target.value } : entry) })} />
+          {issue && <span className="field-error" id={errorId}>{issue.kind === "invalid" ? t("discovery.domainInvalid", { row: index + 1 })
+            : t("discovery.domainDuplicate", { row: index + 1, other: issue.otherIndex + 1 })}</span>}</label>
         <label className="field"><span>{t("discovery.domainType")}</span><select value={row.type} disabled={disabled}
           onChange={(event) => model.set({ ...model.draft, domains: model.draft.domains.map((entry, at) => at === index ? { ...entry, type: event.target.value as ResearchDomain["type"] } : entry) })}>
           {DATES_RESEARCH_DOMAIN_TYPES.map((type) => <option key={type} value={type}>{t(`discovery.domainTypes.${type}`)}</option>)}</select></label>
         {manage && <button type="button" className="button button-secondary" disabled={disabled} onClick={() => model.set({ ...model.draft, domains: model.draft.domains.filter((_entry, at) => at !== index) })}>{t("discovery.removeDomain")}</button>}
-      </div>)}
+      </div>; })}
       {manage && <><button type="button" className="button button-secondary" disabled={disabled || model.draft.domains.length >= range!.max}
         onClick={() => { if (!disabled && model.draft.domains.length < range!.max) model.set({ ...model.draft, domains: [...model.draft.domains, { domain: "", type: "official" }] }); }}>{t("discovery.addDomain")}</button>
         <ResearchReason value={reason} onChange={setReason} disabled={disabled} /><button type="submit" className="button button-primary"

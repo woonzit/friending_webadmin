@@ -44,6 +44,24 @@ export function researchDomainName(value: unknown): string | null {
   const host = value.replace(/^[\x00\x09\x0a\x0b\x0d\x20]+|[\x00\x09\x0a\x0b\x0d\x20]+$/g, "").toLowerCase();
   return host.length <= 253 && /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/.test(host) ? host : null;
 }
+export type ResearchDomainDraftIssue = { kind: "invalid" } | { kind: "duplicate"; otherIndex: number };
+/** Indexed editor hints only; do not claim Core's public-host or suffix validation. */
+export function researchDomainDraftIssues(rows: readonly { domain: unknown }[]): (ResearchDomainDraftIssue | null)[] {
+  const issues: (ResearchDomainDraftIssue | null)[] = rows.map(() => null);
+  const groups = new Map<string, number[]>();
+  rows.forEach((row, index) => {
+    const name = researchDomainName(row.domain);
+    if (name === null) issues[index] = { kind: "invalid" };
+    else {
+      const indices = groups.get(name) ?? [];
+      indices.push(index); groups.set(name, indices);
+    }
+  });
+  for (const indices of groups.values()) if (indices.length > 1) {
+    for (const index of indices) issues[index] = { kind: "duplicate", otherIndex: index === indices[0] ? indices[1] : indices[0] };
+  }
+  return issues;
+}
 export function researchDomainsValid(value: unknown): boolean {
   if (!Array.isArray(value)) return false; // Core owns the count bound; controls use overview.limits.domains.
   const seen = new Set<string>();

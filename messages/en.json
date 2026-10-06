@@ -8444,7 +8444,7 @@
         "dates-external-confirmation-required": "All four publication confirmations must be checked."
       },
       "commandUncertainErrors": {
-        "dates-research-domains-invalid": "Core could not validate the domain declarations or its required domain-policy data. This attempt is not a confirmation of any earlier outcome. Keep the original retry identity and arrange a configuration or Core-data check; do not replace it with a new command.",
+        "dates-research-domains-invalid": "Core could not validate the domain declarations or its required domain-policy data; it did not identify an entry. Check each hostname, duplicate and Core public-host/suffix rule. If local checks pass, ask for a Core domain-policy data check. This response does not confirm an earlier outcome: keep the original retry identity; do not replace it with a new command.",
         "dates-research-models-invalid": "Core refused the research model selection. Refresh the admitted model options, but keep the original retry identity while an earlier outcome is unknown; this response does not confirm it."
       },
       "discovery": {
@@ -8455,6 +8455,9 @@
         "domainsTitle": "Domain declarations",
         "domainsEmpty": "No domains are declared. Undeclared domains never auto-publish.",
         "domain": "Public hostname",
+        "domainRow": "Public hostname — entry {row}",
+        "domainInvalid": "Entry {row}: enter a hostname such as events.example.org, without a URL, path or underscore. Core still checks its public-host and suffix rules.",
+        "domainDuplicate": "Entry {row} duplicates entry {other} after trimming and ignoring case. Keep only one declaration for this hostname.",
         "domainType": "Classification",
         "domainLimits": "Core allows {min}–{max} domain declarations per save.",
         "domainPlaceholder": "events.example.org",

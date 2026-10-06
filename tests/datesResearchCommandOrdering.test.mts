@@ -4,7 +4,8 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
 import { confirmResearchRetryActor, prepareResearchCommand, runResearchCommand } from "../lib/datesResearchConsole.ts";
-import { GENUINE_AREA, researchFixture } from "./support/datesResearchCorpus.ts";
+import { DERIVED_ENVELOPE, GENUINE_AREA, GENUINE_DEFAULTS, researchFixture } from "./support/datesResearchCorpus.ts";
+import { researchDefaultValues } from "../lib/datesResearchView.ts";
 
 // Execute the production hook's handlers with a controlled hook scheduler and
 // command transport. This is not a React/browser mount or a provider capture.
@@ -43,6 +44,20 @@ function harness(preflight: () => Promise<unknown> = async () => identity()) {
   return { render, calls, reads, success, conflicts };
 }
 const input = { source_id: "xrs_" + "1".repeat(32), expected_revision: 1, dry_run: true };
+test("DERIVED domain-policy refusal after an unknown save retains the same hook command and retry identity", async () => {
+  const h = harness(), first = h.render().submit("dates_event_research_defaults_save", { expected_revision: GENUINE_DEFAULTS.revision,
+    reason: "Reviewed domain policy", values: { ...researchDefaultValues(GENUINE_DEFAULTS), enabled: GENUINE_DEFAULTS.enabled,
+      auto_cities_enabled: GENUINE_DEFAULTS.auto_cities_enabled, research_models: { openai: "derived-openai", gemini: "derived-gemini" },
+      domains: [{ domain: "events.example.org", type: "official" }] } });
+  const original = h.calls[0].command, bytes = JSON.stringify(original.body);
+  h.calls[0].resolve({ kind: "uncertain", error: null }); await first;
+  const retry = h.render().retry(); await flush();
+  h.calls[1].resolve(await runResearchCommand(async () => ({ ...DERIVED_ENVELOPE, success: false, status_code: 400, error: "dates-research-domains-invalid" }), original));
+  await retry;
+  const state = h.render(); assert.equal(state.pending, original); assert.equal(state.retained, true);
+  assert.equal(state.outcome.kind, "uncertain"); assert.equal(state.outcome.error, "dates-research-domains-invalid");
+  assert.equal(JSON.stringify(state.pending.body), bytes); assert.equal(h.calls.length, 2);
+});
 test("GENUINE place refusal releases the production hook so another city can be submitted without a page reload", async () => {
   const h = harness();
   const body = { place_id: "derived_first", mode: "auto", overrides: GENUINE_AREA.overrides, reason: "Choose a supported city" };

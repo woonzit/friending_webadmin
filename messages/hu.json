@@ -8444,7 +8444,7 @@
         "dates-external-confirmation-required": "Mind a négy közzétételi megerősítést be kell jelölni."
       },
       "commandUncertainErrors": {
-        "dates-research-domains-invalid": "A Core nem tudta ellenőrizni a domainbesorolásokat vagy a domainszabályokhoz szükséges adatokat. Ez a válasz nem igazol egy korábbi eredményt. Őrizd meg az eredeti újrapróbálási azonosítót, és kérj beállítás- vagy Core-adatellenőrzést; ne cseréld új parancsra.",
+        "dates-research-domains-invalid": "A Core nem tudta ellenőrizni a domainbesorolásokat vagy a domainszabályokhoz szükséges adatokat; nem jelölt meg konkrét sort. Ellenőrizd a hosztneveket, az ismétlődéseket és a Core nyilvános hosztokra, illetve domainvégződésekre vonatkozó szabályait. Ha a helyi ellenőrzés nem jelez hibát, kérd a Core domainszabály-adatainak ellenőrzését. Ez a válasz nem igazol egy korábbi eredményt: őrizd meg az eredeti újrapróbálási azonosítót, ne cseréld új parancsra.",
         "dates-research-models-invalid": "A Core elutasította a kiválasztott kutatási modellt. Frissítsd az engedélyezett modellek listáját, de amíg egy korábbi eredmény nem ismert, őrizd meg az eredeti újrapróbálási azonosítót; ez a válasz nem igazolja azt."
       },
       "discovery": {
@@ -8455,6 +8455,9 @@
         "domainsTitle": "Domainbesorolások",
         "domainsEmpty": "Nincs besorolt domain. A besorolás nélküli domainekről nincs automatikus közzététel.",
         "domain": "Nyilvános hosztnév",
+        "domainRow": "Nyilvános hosztnév — {row}. sor",
+        "domainInvalid": "{row}. sor: hosztnevet adj meg, például events.example.org; URL, útvonal vagy aláhúzásjel nélkül. A nyilvános hosztokra és domainvégződésekre vonatkozó szabályokat továbbra is a Core ellenőrzi.",
+        "domainDuplicate": "A {row}. sor a szóközök levágása és a kis- és nagybetűk egységesítése után megegyezik a {other}. sorral. Egy hosztnévhez csak egy besorolást hagyj meg.",
         "domainType": "Besorolás",
         "domainLimits": "Mentésenként {min}–{max} domainbesorolást enged a Core.",
         "domainPlaceholder": "events.example.org",
