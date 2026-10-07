@@ -1,3 +1,19 @@
+.dates-event-icons-body { padding: 20px; }
+.dates-event-icons-body > .row-actions { align-items: end; }
+.dates-event-icon-editor .dates-event-icon-check { display: flex; align-items: center; gap: 10px; }
+.dates-event-icon-check input[type="checkbox"] { width: 20px; height: 20px; min-height: 20px; padding: 0; margin: 0; accent-color: var(--accent); }
+.dates-event-icons-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 24px; margin: 20px 0; align-items: start; }
+.dates-event-icons-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.dates-event-icon-choice { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 18px 10px; border: 1px solid var(--border); border-radius: 16px; background: var(--bg-soft); color: var(--text); cursor: pointer; }
+.dates-event-icon-choice.active { border-color: var(--accent); background: var(--accent-soft); }
+.dates-event-icon-choice small { color: var(--muted); font-size: 12px; }
+.dates-event-icon-pin { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50% 50% 50% 12px; background: var(--accent); font-size: 26px; box-shadow: 0 4px 12px #0003; }
+.dates-event-icon-pin img { width: 30px; height: 30px; object-fit: contain; }
+.dates-event-icon-editor { display: grid; min-width: 0; gap: 14px; border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+.dates-event-icons-save { display: flex; gap: 16px; align-items: end; }
+.dates-event-icons-save .field { flex: 1; }
+@media (max-width: 760px) { .dates-event-icons-layout { grid-template-columns: 1fr; } .dates-event-icons-save { flex-direction: column; align-items: stretch; } }
+
 @font-face {
   font-family: "Proxima Nova";
   src: url("/fonts/ProximaNova-Regular.otf") format("opentype");

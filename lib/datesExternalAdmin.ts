@@ -463,7 +463,10 @@ const refusalCodes: Readonly<Record<number, readonly string[]>> = {
     "dates-intake-lease-invalid",
     "dates-moderation-case-id-invalid", "dates-moderation-target-invalid", "dates-legal-hold-action-invalid",
     "dates-admin-revision-invalid", "dates-trail-evidence-range-too-large",
-    "dates-host-transfer-target-invalid", "dates-admin-activity-id-invalid", "dates-admin-revision-required"],
+    "dates-host-transfer-target-invalid", "dates-admin-activity-id-invalid", "dates-admin-revision-required",
+    "dates-event-icons-invalid", "dates-event-icon-invalid", "dates-event-icon-name-invalid",
+    "dates-event-icon-image-required", "dates-event-icon-default-invalid",
+    "dates-event-icon-removal-forbidden", "dates-event-icon-type-immutable"],
 };
 
 /** Only pinned Core no-land refusals release an attempted command's identity. */

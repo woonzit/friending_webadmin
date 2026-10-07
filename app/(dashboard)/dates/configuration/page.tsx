@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
+import DatesEventIconsConfiguration from "@/components/DatesEventIconsConfiguration";
 import DatesRuntimeSettingsHelp from "@/components/DatesRuntimeSettingsHelp";
 import DatesSuggestionConsentStatus from "@/components/DatesSuggestionConsentStatus";
 import PageHeader from "@/components/PageHeader";
@@ -164,6 +165,8 @@ export default function DatesConfigurationPage() {
       </section>
 
       {limitation && <div className="alert alert-info dates-section"><strong>{t("knownLimitation")}</strong> {t("knownLimitationCopy")}</div>}
+
+      <DatesEventIconsConfiguration canManage={canManageConfiguration} />
 
       <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("reasonsTitle")}</h2><p>{t("reasonsCopy")}</p></div><label className="field dates-scope-filter"><span>{t("scope")}</span><select value={scope} onChange={(event) => setScope(event.target.value)}>{["all", "user", "activity", "message", "review"].map((value) => <option key={value} value={value}>{value === "all" ? common("all") : t(`scopes.${value}`)}</option>)}</select></label></div>

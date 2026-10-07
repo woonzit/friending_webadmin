@@ -18,13 +18,14 @@ import { datesCaseDetail, datesEvidenceRead, datesModerationQueue } from "../lib
 // genuine bodies of every Dates corpus and to the deny-list.
 const FIXTURES = new URL("./fixtures/", import.meta.url);
 const CORPORA = ["dates_admin_command_wire", "dates_event_intake_admin_wire", "dates_external_admin_wire", "dates_external_admin_wire_released", "dates_moderation_console_wire",
-  "dates_moderation_wire"];
+  "dates_moderation_wire", "dates_event_icons_wire"];
 const read = (corpus: string, file: string) => JSON.parse(readFileSync(new URL(`${corpus}/${file}`, FIXTURES), "utf8"));
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 
 /** Which route answered a genuine body, by the corpus's file names. `null`: not a console body (the app's). */
 function routeOf(corpus: string, file: string): string | null {
   const name = file.slice(0, -5);
+  if (corpus === "dates_event_icons_wire") return name;
   const first = (table: Array<[string, string]>) => table.find(([prefix]) => name.startsWith(prefix))?.[1];
   if (name.startsWith("member-")) return null;
   if (corpus === "dates_admin_command_wire") return first([["admin-hold-", "dates_moderation_legal_hold"], ["admin-trail-", "dates_moderation_trail_evidence"],

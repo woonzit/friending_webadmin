@@ -164,6 +164,10 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   dates_reason_deactivate: { ...ENVELOPE, ...leaves("reason_id active revision referenced_report_count hard_delete_allowed audit_id idempotency_replayed") },
   // The saved setting is echoed; its value is data, like every setting's value.
   dates_configuration_save: { ...ENVELOPE, ...leaves("audit_id idempotency_replayed"), setting: { ...leaves("key revision"), value: OPAQUE } },
+  dates_event_icons: { ...ENVELOPE, ...leaves("event_icon_contract_version revision"),
+    icons: [leaves("key activity_type emoji image_url name_en name_hu enabled is_default order")] },
+  dates_event_icons_save: { ...ENVELOPE, ...leaves("event_icon_contract_version revision audit_id idempotency_replayed"),
+    icons: [leaves("key activity_type emoji image_url name_en name_hu enabled is_default order")] },
   dates_activity_command: { ...ENVELOPE,
     ...leaves("external_event_id activity_id revision activity_revision action event_status lifecycle soft_deleted external_revision audit_id idempotency_replayed purged") },
   dates_configuration: {

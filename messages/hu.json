@@ -8201,6 +8201,19 @@
     "withheld": "{count, plural, =1 {# további mező visszatartva} other {# további mező visszatartva}}"
   },
   "datesAdmin": {
+    "eventIcons": {
+      "title": "Események térképes ikonjai",
+      "copy": "Az AreYouIn ikonválasztékának kezelése. Egy eseménytípushoz több ikon is tartozhat. A kikapcsolt ikon új eseménynél nem választható, a korábbi eseményeken megmarad.",
+      "loadError": "Az ikonkatalógus nem tölthető be. A funkcióhoz frissített Core API szükséges.",
+      "type": "Eseménytípus", "types": { "sport": "Sport", "travel": "Utazás", "hangout": "Találkozó" },
+      "add": "Új ikon", "edit": "Kiválasztott ikon szerkesztése", "key": "Állandó ikonazonosító", "nameEn": "Angol név", "nameHu": "Magyar név",
+      "emoji": "Tartalék emoji", "image": "PNG feltöltése", "imageHint": "Átlátszó PNG, legfeljebb 2 MB. Ha a kép nem tölthető be, az emoji jelenik meg.",
+      "imageError": "Válassz legfeljebb 2 MB-os PNG-t, vagy próbáld újra a feltöltést.", "removeImage": "Csak emoji használata",
+      "order": "Megjelenítési sorrend", "default": "A típus alapértelmezett ikonja", "reason": "Módosítás indoka",
+      "saved": "Az eseményikonokat elmentettük.", "refused": "A módosítást nem mentettük: {error}",
+      "unknown": "A mentés eredménye nem ismert. A pontos kérést megőriztük; az újrapróbálás nem duplázza meg a módosítást.",
+      "retry": "Mentés ellenőrzése / újrapróbálása", "discard": "Elveted a nem mentett ikonmódosításokat, és betöltöd az aktuális katalógust?"
+    },
     "research": {
       "eyebrow": "AreYouIn üzemeltetés",
       "title": "Kutatás",

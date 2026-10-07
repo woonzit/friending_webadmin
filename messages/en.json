@@ -8201,6 +8201,19 @@
     "withheld": "{count, plural, =1 {# more field withheld} other {# more fields withheld}}"
   },
   "datesAdmin": {
+    "eventIcons": {
+      "title": "Event pin icons",
+      "copy": "Choose the icons available in AreYouIn. Several icons can belong to one event type. Disabling an icon hides it from new choices; published events keep their icon.",
+      "loadError": "The event icon catalogue could not be loaded. This feature requires the updated Core API.",
+      "type": "Event type", "types": { "sport": "Sport", "travel": "Travel", "hangout": "Hangout" },
+      "add": "Add icon", "edit": "Edit selected icon", "key": "Permanent icon key", "nameEn": "English name", "nameHu": "Hungarian name",
+      "emoji": "Emoji fallback", "image": "Upload PNG", "imageHint": "Transparent PNG, up to 2 MB. The emoji is used if the image cannot load.",
+      "imageError": "Choose a valid PNG of up to 2 MB, or retry the upload.", "removeImage": "Use emoji only",
+      "order": "Display order", "default": "Default for this type", "reason": "Reason for change",
+      "saved": "Event icons saved.", "refused": "The change was not saved: {error}",
+      "unknown": "The save result is unknown. Your exact request is retained; retry to confirm it without duplicating the change.",
+      "retry": "Confirm / retry save", "discard": "Discard unsaved icon changes and reload the current catalogue?"
+    },
     "research": {
       "eyebrow": "AreYouIn operations",
       "title": "Research",

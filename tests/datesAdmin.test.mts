@@ -47,6 +47,8 @@ const EXPECTED_DATES_ACTIONS = [
   "dates_configuration",
   "dates_configuration_save",
   "dates_activity_type_save",
+  "dates_event_icons",
+  "dates_event_icons_save",
   "dates_moderation_queue",
   "dates_moderation_detail",
   "dates_moderation_evidence",
