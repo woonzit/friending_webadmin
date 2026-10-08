@@ -2,8 +2,8 @@
   "success": true,
   "status_code": 200,
   "event_icon_contract_version": 2,
-  "idempotency_replayed": false,
   "server_now": 1791472911,
+  "revision": 0,
   "icons": [
     {
       "key": "running",
@@ -22,7 +22,7 @@
       "activity_type": "sport",
       "emoji": "🧘",
       "image_url": null,
-      "marker_background_color": "#8A72D8",
+      "marker_background_color": null,
       "name_en": "Yoga",
       "name_hu": "Jóga",
       "enabled": true,
@@ -46,7 +46,7 @@
       "activity_type": "sport",
       "emoji": "🚴",
       "image_url": null,
-      "marker_background_color": "#2B9D8F",
+      "marker_background_color": null,
       "name_en": "Cycling",
       "name_hu": "Kerékpár",
       "enabled": true,
@@ -131,9 +131,9 @@
       "emoji": "🍷",
       "image_url": null,
       "marker_background_color": null,
-      "name_en": "Wine & drinks",
+      "name_en": "Drinks",
       "name_hu": "Italozás",
-      "enabled": false,
+      "enabled": true,
       "is_default": false,
       "order": 110
     },
@@ -154,7 +154,7 @@
       "activity_type": "hangout",
       "emoji": "🎵",
       "image_url": null,
-      "marker_background_color": "#E47768",
+      "marker_background_color": null,
       "name_en": "Music",
       "name_hu": "Zene",
       "enabled": true,
@@ -208,22 +208,8 @@
       "enabled": true,
       "is_default": false,
       "order": 170
-    },
-    {
-      "key": "icon_1a2b3c4d",
-      "activity_type": "hangout",
-      "emoji": "🎤",
-      "image_url": null,
-      "marker_background_color": "#E6B640",
-      "name_en": "Karaoke",
-      "name_hu": "Karaoke",
-      "enabled": true,
-      "is_default": false,
-      "order": 180
     }
   ],
-  "revision": 1,
-  "audit_id": "aud_d58101c747b12fe94ef0a98ceca74682",
   "message": 200,
   "status": 200,
   "can_send": 0

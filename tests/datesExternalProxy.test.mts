@@ -14,6 +14,7 @@ import { withDatesAdminContract } from "../lib/datesAdminContract.ts";
 import { isDatesAdminRoute, projectDatesAdminResponse } from "../lib/datesAdminProjection.ts";
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "../lib/datesExternalAdmin.ts";
 import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody } from "../lib/datesExternalModeration.ts";
+import { normalizeDatesEventIconsProxyBody } from "../lib/datesEventIcons.ts";
 
 // Execute the production POST function, not a reimplementation. Session/Core
 // I/O and NextResponse are controlled adapters; unrelated domain predicates
@@ -42,7 +43,7 @@ function harness() {
     // The route hands the browser the projection of a Dates body (lead's ruling on D-143): the real functions, as they are.
     isDatesAdminRoute, projectDatesAdminResponse,
     datesAvailabilityWriteIsRetired, datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody,
-    datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody,
+    datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody, normalizeDatesEventIconsProxyBody,
     ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
     readAdminSession: async () => state.session,
     coreCall: async (action: string, body: any) => { state.calls.push({ action, body }); return action === "admin_me" ? state.member : state.response; },
@@ -154,4 +155,25 @@ test("external resolve proxy freshly requires both capabilities and forwards the
   h.state.member.data.dates.capabilities = ["dates_case_resolve"];
   assert.equal((await h.send("dates_moderation_resolve", member)).status, 200);
   assert.equal(Object.hasOwn(h.state.calls.at(-1)!.body, "expected_external_revision"), false);
+});
+
+test("icon catalogue proxy forwards only the closed read and save shapes, with the server's own selector", async () => {
+  const row = { key: "yoga", activity_type: "sport", emoji: "🧘", image_url: null, marker_background_color: "#8A72D8", name_en: "Yoga", name_hu: "Jóga", enabled: true, is_default: true, order: 10 };
+  const save = { icons: JSON.stringify([row]), expected_revision: 3, reason: "Yoga pin colour", idempotency_key: "event-icons:000000000001" };
+  const h = harness();
+  assert.equal((await h.send("dates_event_icons", {})).status, 200);
+  assert.deepEqual(JSON.parse(JSON.stringify(h.state.calls.at(-1)!.body)),
+    { admin_email: email, dates_event_intake_admin_contract_version: 1, dates_event_icon_contract_version: 2 });
+  assert.equal((await h.send("dates_event_icons_save", save)).status, 200);
+  assert.deepEqual(JSON.parse(JSON.stringify(h.state.calls.at(-1)!.body)),
+    { ...save, admin_email: email, dates_event_intake_admin_contract_version: 1, dates_event_icon_contract_version: 2 });
+  const forwarded = h.state.calls.length;
+  for (const body of [{ ...save, dates_event_icon_contract_version: 1 }, { ...save, admin_email: "other@example.test" }, { ...save, expected_revision: "3" },
+    { ...save, reason: "" }, { ...save, icons: [row] }, { ...save, icons: JSON.stringify([{ ...row, name_en: "Yoga\u00A0" }]) },
+    { ...save, icons: JSON.stringify([{ ...row, marker_background_color: "#8a72d8" }]) }, { ...save, icons: JSON.stringify([{ ...row, extra: 1 }]) }]) {
+    assert.deepEqual(await h.send("dates_event_icons_save", body), { status: 400, body: { success: false, status_code: 400, error: "invalid-input" } });
+  }
+  assert.deepEqual(await h.send("dates_event_icons", { page: 2 }), { status: 400, body: { success: false, status_code: 400, error: "invalid-input" } });
+  // Each refused request cost one fresh membership check and reached no icon route.
+  assert.deepEqual(h.state.calls.slice(forwarded).map((call) => call.action), Array(9).fill("admin_me"));
 });

@@ -1,40 +1,3 @@
-.dates-event-icons-body { padding: 20px; }
-.dates-event-icons-body > .row-actions { align-items: end; }
-.dates-event-icon-editor .dates-event-icon-check { display: flex; align-items: center; gap: 10px; }
-.dates-event-icon-check input[type="checkbox"] { width: 20px; height: 20px; min-height: 20px; padding: 0; margin: 0; accent-color: var(--accent); }
-.dates-event-icons-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 24px; margin: 20px 0; align-items: start; }
-.dates-event-icons-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-.dates-event-icon-choice { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 18px 10px; border: 1px solid var(--border); border-radius: 16px; background: var(--bg-soft); color: var(--text); cursor: pointer; }
-.dates-event-icon-choice.active { border-color: var(--accent); background: var(--accent-soft); }
-.dates-event-icon-choice small { color: var(--muted); font-size: 12px; }
-.dates-event-icon-pin { position: relative; display: block; flex: none; width: 48px; height: 60px; filter: drop-shadow(0 3px 3px #0002); }
-.dates-event-icon-pin svg { width: 100%; height: 100%; fill: var(--event-pin-color, #F68B3F); stroke: white; stroke-width: 2; }
-.dates-event-icon-art { position: absolute; left: 8px; top: 8px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: white; color: #292520; font-size: 26px; line-height: 1; }
-.dates-event-icon-art img { width: 27px; height: 27px; object-fit: contain; }
-.dates-event-icon-pin.selected { width: 56px; height: 70px; }
-.dates-event-icon-pin.selected svg { fill: white; stroke: var(--event-pin-color, #F68B3F); }
-.dates-event-icon-pin.selected .dates-event-icon-art { left: 9px; top: 9px; width: 38px; height: 38px; font-size: 30px; }
-.dates-event-icon-pin.selected img { width: 32px; height: 32px; }
-.dates-event-pin-colors { display: grid; gap: 12px; padding: 18px 0; border-block: 1px solid var(--border); }
-.dates-event-pin-colors > small { color: var(--muted); }
-.dates-event-color-modes, .dates-event-color-inputs { display: flex; gap: 8px; }
-.dates-event-color-modes > button { flex: 1; }
-.dates-event-color-modes > button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
-.dates-event-color-inputs > label:first-child { flex: 1; min-width: 0; }
-.dates-event-color-inputs input[type="color"] { width: 64px; padding: 4px; cursor: pointer; }
-.dates-event-color-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
-.dates-event-color-swatches button { width: 36px; height: 36px; border: 3px solid transparent; border-radius: 50%; background: var(--event-pin-color); background-clip: padding-box; cursor: pointer; }
-.dates-event-color-swatches button[aria-pressed="true"] { border-color: var(--accent); }
-.dates-event-pin-previews { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.dates-event-pin-preview { display: grid; gap: 10px; padding: 12px 8px; border-radius: 12px; color: #233330; background: repeating-linear-gradient(35deg, #fff7 0 2px, transparent 2px 24px), #e0ece7; }
-.dates-event-pin-preview.night { color: #f2f7f5; background: repeating-linear-gradient(35deg, #ffffff14 0 2px, transparent 2px 24px), #1b2c36; }
-.dates-event-pin-preview > div { display: flex; gap: 4px; justify-content: center; align-items: end; }
-.dates-event-pin-preview small { font-size: 11px; }
-.dates-event-icon-editor { display: grid; min-width: 0; gap: 14px; border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
-.dates-event-icons-save { display: flex; gap: 16px; align-items: end; }
-.dates-event-icons-save .field { flex: 1; }
-@media (max-width: 760px) { .dates-event-icons-layout { grid-template-columns: 1fr; } .dates-event-icons-save { flex-direction: column; align-items: stretch; } }
-
 @font-face {
   font-family: "Proxima Nova";
   src: url("/fonts/ProximaNova-Regular.otf") format("opentype");
@@ -15327,5 +15290,142 @@ fieldset.dates-external-fields {
 @media (max-width: 760px) { .research-runs .dates-filter-grid { grid-template-columns: minmax(0, 1fr); } .research-panel, .research-editor, .research-runs, .research-batch { padding: 16px; } }
 .dates-event-photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; max-width: 680px; }
 .dates-event-photo-grid figure { margin: 0; }
-.dates-event-photo-grid img { width: 100%; aspect-ratio: 4/3; object-fit: contain; border-radius: 10px; background: #f4f4f4; }
+.dates-event-photo-grid img { width: 100%; aspect-ratio: 4/3; object-fit: contain; border-radius: 10px; background: var(--bg-soft); }
 .dates-event-photo-grid figcaption { font-size: 12px; overflow-wrap: anywhere; }
+
+/* AreYouIn event icon catalogue editor (components/DatesEventIconsConfiguration.tsx). */
+.dates-event-icons-notice { margin: 20px 22px; }
+.dates-event-icons-body { padding: 22px; container: event-icons / inline-size; }
+.dates-event-icons-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 420px); gap: 24px; align-items: start; }
+.dates-event-icons-catalog { min-width: 0; }
+.dates-event-icons-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.dates-event-icons-toolbar select { width: auto; min-width: 200px; max-width: 100%; }
+.dates-event-outline-button { gap: 8px; border-color: var(--accent); background: transparent; color: var(--accent); }
+.dates-event-outline-button:hover:not(:disabled) { background: var(--accent-soft); }
+.dates-event-glyph { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+.dates-event-icons-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 12px; }
+.dates-event-icon-choice { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; padding: 20px 10px 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg-soft); color: var(--text); text-align: center; cursor: pointer; transition: border-color 120ms ease, background 120ms ease; }
+.dates-event-icon-choice:hover { border-color: var(--border-strong); }
+.dates-event-icon-choice.active { border-color: var(--accent); background: rgba(0, 189, 255, 0.06); box-shadow: inset 0 0 0 1px var(--accent); }
+.dates-event-icon-choice:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 3px; }
+.dates-event-icon-choice:has(input:disabled) { cursor: not-allowed; opacity: 0.6; }
+/* The radio covers its tile: one tab stop for the whole catalogue, the arrow keys move the choice. */
+.dates-event-icon-choice input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; cursor: inherit; }
+.dates-event-icon-choice .dates-event-icon-pin { margin-bottom: 8px; }
+.dates-event-icon-choice.off .dates-event-icon-pin { opacity: 0.45; }
+.dates-event-icon-choice strong { max-width: 100%; font-size: 15px; line-height: 1.25; overflow-wrap: anywhere; }
+.dates-event-icon-choice small { color: var(--muted); font-size: 12.5px; }
+.dates-event-icon-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 6px; }
+.dates-event-icon-tags span { padding: 1px 7px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 10.5px; font-weight: 700; line-height: 1.5; }
+.dates-event-icon-tags .accent { border-color: rgba(0, 189, 255, 0.4); color: var(--accent); }
+.dates-event-icon-tags .danger { border-color: rgba(255, 90, 105, 0.45); color: #ff9aa4; }
+
+/* The pin. `--event-pin-stroke`, `--event-pin-ring` and `--event-pin-plate` come from eventPinOutline(): a very light
+   colour gets a darker outline and a plate border instead of white on white. */
+.dates-event-icon-pin { --event-pin-size: 44px; position: relative; display: block; flex: none; width: var(--event-pin-size); height: calc(var(--event-pin-size) * 1.25); filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.28)); }
+.dates-event-icon-pin.large { --event-pin-size: 68px; }
+.dates-event-icon-pin.selected { --event-pin-size: 54px; }
+.dates-event-icon-pin svg { display: block; width: 100%; height: 100%; overflow: visible; fill: var(--event-pin-color, #F68B3F); stroke: var(--event-pin-stroke, #fff); stroke-width: 2.5; stroke-linejoin: round; }
+.dates-event-icon-art { position: absolute; left: 16%; top: 12.8%; display: grid; place-items: center; width: 68%; aspect-ratio: 1; overflow: hidden; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1.5px var(--event-pin-plate, transparent); color: #292520; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; font-size: calc(var(--event-pin-size) * 0.44); line-height: 1; }
+.dates-event-icon-art img { width: 78%; height: 78%; object-fit: contain; }
+/* Selected on the map: larger, a light body and plate, outlined in the assigned colour. */
+.dates-event-icon-pin.selected svg { fill: #fff; stroke: var(--event-pin-ring, #F68B3F); stroke-width: 3.5; }
+.dates-event-icon-pin.selected .dates-event-icon-art { background: color-mix(in srgb, var(--event-pin-ring, #F68B3F) 16%, #fff); box-shadow: none; }
+
+.dates-event-icon-editor { min-width: 0; padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--bg-soft); container: event-icon-editor / inline-size; }
+.dates-event-icon-editor h3 { margin: 0 0 16px; font-size: 18px; }
+.dates-event-icon-editor h4 { margin: 0; font-size: 15px; }
+.dates-event-icon-fields { display: grid; gap: 12px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.dates-event-icon-row { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 4px 12px; align-items: start; }
+.dates-event-icon-row > label { padding-top: 13px; color: var(--text-soft); font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.dates-event-icon-row > div { display: grid; gap: 6px; min-width: 0; justify-items: start; }
+.dates-event-icon-row input[readonly] { background: var(--surface-raised); color: var(--muted); }
+/* Locked (read-only operator, a request in flight, a save in doubt): the fields say so. */
+.dates-event-icon-row input:disabled, .dates-event-icon-row select:disabled, .dates-event-color-inputs input:disabled, .dates-event-icon-save input:disabled { cursor: not-allowed; opacity: 0.6; }
+.dates-event-icon-editor [aria-invalid="true"] { border-color: var(--danger); }
+.dates-event-icon-error { margin: 0; color: #f68a96; font-size: 12px; font-weight: 650; line-height: 1.4; }
+.dates-event-icon-hint { color: var(--muted); font-size: 12px; line-height: 1.4; }
+.dates-event-emoji-line { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; width: 100%; }
+.dates-event-emoji-input { flex: none; width: 56px; height: 56px; padding: 0; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; font-size: 28px; text-align: center; }
+.dates-event-image-thumb { display: grid; flex: none; place-items: center; width: 56px; height: 56px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #fff; }
+.dates-event-image-thumb img { width: 40px; height: 40px; object-fit: contain; }
+.dates-event-order-input { max-width: 140px; }
+.dates-event-link { display: inline-flex; align-items: center; min-height: 32px; padding: 0; border: 0; background: none; color: var(--accent); font-size: 13px; font-weight: 600; text-align: left; cursor: pointer; }
+.dates-event-link:hover:not(:disabled) { text-decoration: underline; }
+.dates-event-link:disabled { cursor: not-allowed; opacity: 0.5; }
+.dates-event-link.danger { color: #ff9aa4; }
+
+.dates-event-pin-colors, .dates-event-pin-previews-block { display: grid; gap: 12px; min-width: 0; padding-top: 16px; border-top: 1px solid var(--border); }
+/* Two native radios drawn as one segmented control. */
+.dates-event-segmented { display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: #0a0d11; }
+.dates-event-segmented label { position: relative; display: block; min-width: 0; cursor: pointer; }
+.dates-event-segmented input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; cursor: inherit; }
+.dates-event-segmented span { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 4px 10px; color: var(--text-soft); font-size: 14px; font-weight: 700; text-align: center; transition: background 120ms ease, color 120ms ease; }
+.dates-event-segmented label:hover input:not(:checked):not(:disabled) + span { background: var(--surface-hover); }
+.dates-event-segmented input:checked + span { background: var(--accent); color: #071216; }
+.dates-event-segmented input:focus-visible + span { outline: 2px solid var(--text); outline-offset: -4px; }
+.dates-event-segmented:has(input:disabled) { opacity: 0.55; }
+.dates-event-segmented:has(input:disabled) label { cursor: not-allowed; }
+.dates-event-color-inputs { display: flex; align-items: center; gap: 10px; }
+.dates-event-hex-input { flex: 1; min-width: 0; letter-spacing: 0.03em; text-transform: uppercase; }
+.dates-event-hex-input::placeholder { text-transform: none; }
+.dates-event-color-inputs input[type="color"] { flex: none; width: 46px; height: 46px; padding: 3px; cursor: pointer; }
+.dates-event-color-quick { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 6px 12px; }
+/* A 44 px target around a 30 px disc. */
+.dates-event-color-swatches { display: flex; flex-wrap: wrap; margin-left: -7px; }
+.dates-event-color-swatches button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
+.dates-event-color-swatches button span { width: 30px; height: 30px; border-radius: 50%; background: var(--event-pin-color); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16); }
+.dates-event-color-swatches button[aria-pressed="true"] span { box-shadow: 0 0 0 2px var(--bg-soft), 0 0 0 4px var(--accent); }
+.dates-event-color-swatches button:disabled { cursor: not-allowed; opacity: 0.5; }
+.dates-event-color-reset { display: grid; justify-items: end; margin-left: auto; text-align: right; }
+.dates-event-color-reset small { color: var(--muted); font-size: 12px; }
+
+.dates-event-pin-previews { display: grid; grid-template-columns: repeat(auto-fit, minmax(136px, 1fr)); gap: 10px; }
+.dates-event-pin-preview { position: relative; display: grid; place-items: center; min-height: 136px; padding: 14px 10px 34px; overflow: hidden; border: 1px solid var(--border); border-radius: 12px; }
+/* A drawn map, not a map tile: water, two parks and two roads, in the day and the night palette. */
+.dates-event-pin-preview.day { background:
+  linear-gradient(118deg, transparent 0 16%, #b7d6ee 16% 29%, transparent 29%),
+  radial-gradient(ellipse 34% 44% at 80% 26%, #cde7c6 0 98%, transparent 100%),
+  radial-gradient(ellipse 24% 30% at 46% 92%, #cde7c6 0 98%, transparent 100%),
+  linear-gradient(0deg, transparent 0 60%, #fff 60% 63.5%, transparent 63.5%),
+  linear-gradient(90deg, transparent 0 57%, #fff 57% 59.5%, transparent 59.5%),
+  #e9eee7; }
+.dates-event-pin-preview.night { background:
+  linear-gradient(118deg, transparent 0 16%, #0d1b2a 16% 29%, transparent 29%),
+  radial-gradient(ellipse 34% 44% at 80% 26%, #17322a 0 98%, transparent 100%),
+  radial-gradient(ellipse 24% 30% at 46% 92%, #17322a 0 98%, transparent 100%),
+  linear-gradient(0deg, transparent 0 60%, #2b3a49 60% 63.5%, transparent 63.5%),
+  linear-gradient(90deg, transparent 0 57%, #2b3a49 57% 59.5%, transparent 59.5%),
+  #1b2733; }
+.dates-event-pin-preview-pins { display: flex; align-items: flex-end; justify-content: center; gap: 14px; }
+.dates-event-pin-preview-chip { position: absolute; bottom: 8px; left: 8px; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+.dates-event-pin-preview.day .dates-event-pin-preview-chip { background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); color: #233330; }
+.dates-event-pin-preview.night .dates-event-pin-preview-chip { background: rgba(8, 13, 19, 0.86); color: #e6edf3; }
+
+.dates-event-icon-checks { display: flex; flex-wrap: wrap; gap: 10px 24px; padding-top: 16px; border-top: 1px solid var(--border); }
+.dates-event-icon-check { display: inline-flex; align-items: center; gap: 10px; min-height: 32px; color: var(--text-soft); font-size: 14px; cursor: pointer; }
+.dates-event-icon-check input[type="checkbox"] { flex: none; width: 20px; height: 20px; min-height: 20px; margin: 0; padding: 0; accent-color: var(--accent); cursor: inherit; }
+.dates-event-icon-check:has(input:disabled) { cursor: not-allowed; opacity: 0.55; }
+
+.dates-event-icon-save { display: grid; gap: 8px; min-width: 0; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+.dates-event-icon-save > label { color: var(--text-soft); font-size: 13px; font-weight: 600; }
+.dates-event-required { color: var(--danger); }
+.dates-event-icon-save .alert { margin: 4px 0 0; }
+.dates-event-save-block { margin: 4px 0 0; color: var(--text-soft); font-size: 13px; }
+.dates-event-problems { color: var(--text-soft); font-size: 13px; }
+.dates-event-problems p { margin: 0; }
+.dates-event-problems ul { margin: 2px 0 0; padding-left: 18px; }
+.dates-event-icon-save-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+
+/* One column when the panel is narrow; the catalogue then scrolls in itself so that the editor stays in reach. */
+@media (max-width: 1100px) { .dates-event-icons-layout { grid-template-columns: minmax(0, 1fr); } }
+@container event-icons (max-width: 860px) {
+  .dates-event-icons-layout { grid-template-columns: minmax(0, 1fr); }
+  .dates-event-icons-grid { max-height: 388px; margin: -6px; padding: 6px; overflow-y: auto; scrollbar-color: var(--border-strong) transparent; scrollbar-width: thin; }
+}
+@container event-icon-editor (max-width: 360px) {
+  .dates-event-icon-row { grid-template-columns: minmax(0, 1fr); }
+  .dates-event-icon-row > label { padding-top: 0; }
+}
+@media (max-width: 760px) { .dates-event-icons-body, .dates-event-icon-editor { padding: 16px; } }

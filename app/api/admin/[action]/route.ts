@@ -24,6 +24,7 @@ import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody
 import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody } from "@/lib/datesExternalModeration";
 import { datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody } from "@/lib/datesIntakeAdmin";
 import { datesResearchProxyCapabilityAuthorized, normalizeDatesResearchProxyBody } from "@/lib/datesResearchProxy";
+import { normalizeDatesEventIconsProxyBody } from "@/lib/datesEventIcons";
 import {
   featureSwitchesProxyCapabilityAuthorized,
   normalizeFeatureSwitchesProxyBody,
@@ -225,6 +226,10 @@ export async function POST(
   const researchBody = normalizeDatesResearchProxyBody(action, body);
   if (researchBody === null) return bridgeError("invalid-input", 400);
   if (researchBody !== undefined) body = researchBody;
+  // The icon catalogue read carries nothing; its save carries exactly the catalogue, the revision, the reason and the key.
+  const eventIconsBody = normalizeDatesEventIconsProxyBody(action, body);
+  if (eventIconsBody === null) return bridgeError("invalid-input", 400);
+  if (eventIconsBody !== undefined) body = eventIconsBody;
   const externalResolution = normalizeDatesExternalResolutionProxyBody(action, body);
   if (externalResolution === null) return bridgeError("invalid-input", 400);
   if (externalResolution !== undefined && !datesExternalResolutionAuthorized(membership.data)) {

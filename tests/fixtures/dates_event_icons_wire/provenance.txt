@@ -1,0 +1,23 @@
+dates_event_icons_wire: bodies Core answers on /v1/webadmin/dates_event_icons and
+/v1/webadmin/dates_event_icons_save, icon contract version 2 (per-icon pin colours).
+
+Source: Core commit 1bc768f46004b511d6cefed632e178526c9c7d3d (local, not yet
+        published when captured on 2026-10-08; re-pin to the published commit that
+        carries the same DatesEventIconService once it exists).
+How:    WebadminDatesController::eventIcons() / ::saveEventIcons() were called
+        in-process against a throwaway local replica-set mongod, with the form
+        values the console's bridge sends (strings, the selector
+        dates_event_icon_contract_version=2). Each file is the JSON value of the
+        wire body, re-encoded with two-space indentation; nothing was edited.
+
+dates_event_icons-bootstrap.json          read before anything is stored (revision 0, the 17 defaults)
+dates_event_icons_save.request            the form of the save below (icons is the JSON text that was sent)
+dates_event_icons_save.json               its receipt (revision 1, idempotency_replayed false)
+dates_event_icons_save-replay.json        the same form sent again (idempotency_replayed true)
+dates_event_icons.json                    read after the save
+dates_event_icons_save-stale.json         the same catalogue against revision 0 under a new key
+dates_event_icons_save-name-invalid.json  an empty name
+dates_event_icons-contract-v1.json        the read as contract version 1 answers it (no colour key);
+                                          this console must refuse it
+
+A file's route is its name up to the first "-".

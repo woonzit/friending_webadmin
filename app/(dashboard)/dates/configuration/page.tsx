@@ -92,6 +92,8 @@ export default function DatesConfigurationPage() {
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [runtimeHelpOpen, setRuntimeHelpOpen] = useState(false);
+  // Whether the icon editor holds unsaved edits or a save whose outcome is not known (it reports this itself).
+  const [iconHold, setIconHold] = useState(false);
 
   const load = useCallback(async () => {
     if (settings.length === 0) setState("loading");
@@ -133,14 +135,16 @@ export default function DatesConfigurationPage() {
   /** An inline refusal replaces the page-level error of an earlier attempt, which would otherwise stay above it. */
   function clearFailure() { setFeedback((current) => current?.tone === "error" ? null : current); }
 
-  if (state === "loading") return <LoadingPanel />;
-  if (state === "error" || !principal) return <ErrorPanel message={t("loadError")} retry={() => void load()} />;
+  const ready = state === "ready" && principal !== null;
+  const canManageConfiguration = principal !== null && hasDatesCapability(principal, "dates_configuration_manage");
+  const canManageReasons = principal !== null && hasDatesCapability(principal, "dates_reason_manage");
 
-  const canManageConfiguration = hasDatesCapability(principal, "dates_configuration_manage");
-  const canManageReasons = hasDatesCapability(principal, "dates_reason_manage");
-
+  // The icon editor keeps one place in this tree in every state of the page. While it holds unsaved edits or a save
+  // in doubt, a failed page reload shows its error above the editor instead of unmounting it; the editor is
+  // read-only until the page (and with it the operator's capabilities) is read again.
   return (
     <>
+      {state === "loading" ? <LoadingPanel /> : !ready ? <ErrorPanel message={t("loadError")} retry={() => void load()} /> : <>
       <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} actions={<button className="button button-secondary" onClick={() => void load()}>{common("refresh")}</button>} />
       <DatesAdminTabs />
       {feedback && <div className={`alert ${feedback.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{feedback.text}</div>}
@@ -166,8 +170,11 @@ export default function DatesConfigurationPage() {
 
       {limitation && <div className="alert alert-info dates-section"><strong>{t("knownLimitation")}</strong> {t("knownLimitationCopy")}</div>}
 
-      <DatesEventIconsConfiguration canManage={canManageConfiguration} />
+      </>}
 
+      {(ready || iconHold) && <DatesEventIconsConfiguration canManage={ready && canManageConfiguration} onHoldChange={setIconHold} />}
+
+      {ready && <>
       <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("reasonsTitle")}</h2><p>{t("reasonsCopy")}</p></div><label className="field dates-scope-filter"><span>{t("scope")}</span><select value={scope} onChange={(event) => setScope(event.target.value)}>{["all", "user", "activity", "message", "review"].map((value) => <option key={value} value={value}>{value === "all" ? common("all") : t(`scopes.${value}`)}</option>)}</select></label></div>
         <div className="dates-card-list">
@@ -180,6 +187,7 @@ export default function DatesConfigurationPage() {
         </div>
       </section>
       {runtimeHelpOpen && <DatesRuntimeSettingsHelp settings={settings} onClose={() => setRuntimeHelpOpen(false)} />}
+      </>}
     </>
   );
 }
