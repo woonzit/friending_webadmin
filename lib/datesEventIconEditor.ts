@@ -40,21 +40,26 @@ function nameProblem(value: string): EventIconProblemCode | null {
   return graphemes(name) > EVENT_ICON_NAME_MAX ? "tooLong" : null;
 }
 
+/** The fields a member icon and a third-party pin have in common, and with them the rules below. */
+export type PinRowFields = Pick<DatesEventIcon, "name_en" | "name_hu" | "emoji" | "image_url" | "order" | "marker_background_color">;
+/** What Core's catalogue validation would refuse in one row, by field (lib/datesExternalPinEditor.ts applies the same rules). */
+export function pinRowProblems(row: PinRowFields): { field: EventIconField; code: EventIconProblemCode }[] {
+  const problems: { field: EventIconField; code: EventIconProblemCode }[] = [];
+  for (const field of ["name_hu", "name_en"] as const) {
+    const code = nameProblem(row[field]);
+    if (code) problems.push({ field, code });
+  }
+  const emoji = row.emoji.trim();
+  if (emoji === "" && row.image_url === null) problems.push({ field: "emoji", code: "required" });
+  else if (!validEventIconEmoji(emoji)) problems.push({ field: "emoji", code: "invalid" });
+  if (!validEventIconOrder(row.order)) problems.push({ field: "order", code: "invalid" });
+  if (!validEventPinColor(row.marker_background_color)) problems.push({ field: "marker_background_color", code: "invalid" });
+  return problems;
+}
+
 /** Every field Core's catalogue validation would refuse, by icon and field. Empty: the catalogue may be sent. */
 export function eventIconProblems(icons: readonly DatesEventIcon[]): EventIconProblem[] {
-  const problems: EventIconProblem[] = [];
-  for (const icon of icons) {
-    for (const field of ["name_hu", "name_en"] as const) {
-      const code = nameProblem(icon[field]);
-      if (code) problems.push({ key: icon.key, field, code });
-    }
-    const emoji = icon.emoji.trim();
-    if (emoji === "" && icon.image_url === null) problems.push({ key: icon.key, field: "emoji", code: "required" });
-    else if (!validEventIconEmoji(emoji)) problems.push({ key: icon.key, field: "emoji", code: "invalid" });
-    if (!validEventIconOrder(icon.order)) problems.push({ key: icon.key, field: "order", code: "invalid" });
-    if (!validEventPinColor(icon.marker_background_color)) problems.push({ key: icon.key, field: "marker_background_color", code: "invalid" });
-  }
-  return problems;
+  return icons.flatMap(icon => pinRowProblems(icon).map(problem => ({ key: icon.key, ...problem })));
 }
 
 export type EventIconCommand = { icons: string; expected_revision: number; reason: string; idempotency_key: string };
