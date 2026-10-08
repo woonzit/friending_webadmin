@@ -140,7 +140,7 @@ test("external resolve proxy freshly requires both capabilities and forwards the
     expires_at: null, break_glass: false, idempotency_key: "external-review:000000000001" };
   const h = harness(); h.state.member.data.dates.capabilities = ["dates_case_resolve", "dates_external_event_review"];
   assert.equal((await h.send("dates_moderation_resolve", payload)).status, 200);
-  assert.deepEqual(JSON.parse(JSON.stringify(h.state.calls[1].body)), { ...payload, admin_email: email, dates_event_intake_admin_contract_version: 1 });
+  assert.deepEqual(JSON.parse(JSON.stringify(h.state.calls[1].body)), { ...payload, admin_email: email, dates_event_intake_admin_contract_version: 1, dates_event_media_contract_version: 1 });
   for (const missing of ["dates_case_resolve", "dates_external_event_review"]) {
     h.state.member.data.dates.capabilities = ["dates_case_resolve", "dates_external_event_review"].filter((cap) => cap !== missing);
     assert.equal((await h.send("dates_moderation_resolve", payload)).body.error, "dates-admin-capability-required");

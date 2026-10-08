@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
+import DatesEventPhotos from "@/components/DatesEventPhotos";
 import DatesCaseHistory from "@/components/DatesCaseHistory";
 import DatesExternalProvenance from "@/components/DatesExternalProvenance";
 import PageHeader from "@/components/PageHeader";
@@ -625,7 +626,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
             <p className="field-hint">{t("evidenceAuditReceipt", { id: evidence.audit_id })}</p>
             {evidence.appeal_note && <article><div className="dates-evidence-header"><strong>{t("appellantNote")}</strong><time dateTime={new Date(evidence.appeal_note.created_at * 1000).toISOString()}>{formatDate(evidence.appeal_note.created_at, locale, true)}</time></div><p className="dates-note-text">{evidence.appeal_note.note ?? t("noAppellantNote")}</p></article>}
             {evidence.evidence.length === 0 && evidence.appeal_note === null && <p className="page-subtitle">{t("noEvidence")}</p>}
-            {evidence.evidence.map((entry) => <article key={String(entry.evidence_id)}><div className="dates-evidence-header"><strong>{String(entry.evidence_id)}</strong><span className="badge">{humanizeMachineKey(String(entry.evidence_type))}</span></div><pre>{safeJson(entry)}</pre></article>)}
+            {evidence.evidence.map((entry) => <article key={String(entry.evidence_id)}><div className="dates-evidence-header"><strong>{String(entry.evidence_id)}</strong><span className="badge">{humanizeMachineKey(String(entry.evidence_type))}</span></div><DatesEventPhotos source={entry.snapshot} /><pre>{safeJson(entry)}</pre></article>)}
             {evidence.redacted_sensitive_location_count > 0 && <p className="alert alert-info">{t("redactedEvidence", { count: evidence.redacted_sensitive_location_count })}</p>}
           </div>}
         </div>

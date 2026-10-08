@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
+import DatesEventPhotos from "@/components/DatesEventPhotos";
 import DatesExternalProvenance from "@/components/DatesExternalProvenance";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -303,13 +304,13 @@ export default function DatesActivityDetailPage() {
             <div className="detail-row"><dt>{t("schedule")}</dt><dd>{values(activity.time_mode)} · {activity.start_at ? formatDate(activity.start_at, locale, true) : "—"} → {activity.end_at ? formatDate(activity.end_at, locale, true) : "—"}</dd></div>
             <div className="detail-row"><dt>{t("location")}</dt><dd>{values(activity.location_mode)} · {[activity.city, activity.country_code].filter(Boolean).join(", ") || "—"}</dd></div>
             <div className="detail-row"><dt>{t("publicLocation")}</dt><dd>{displayValue(data.location.public_location)}</dd></div>
-            <div className="detail-row"><dt>{t("photo")}</dt><dd>{displayValue(activity.photo)}</dd></div>
+            <div className="detail-row"><dt>{t("photo")}</dt><dd><DatesEventPhotos source={activity} />{displayValue(activity.photo)}</dd></div>
             <div className="detail-row"><dt>{t("attendance")}</dt><dd>{t("attendanceValue", { going: activity.going_count, pending: activity.pending_count, maximum: activity.maximum_people ?? "—" })}</dd></div>
             <div className="detail-row"><dt>{t("liveSharing")}</dt><dd>{humanizeMachineKey(activity.live_sharing_state)}</dd></div>
             <div className="detail-row"><dt>{common("createdAt")}</dt><dd>{formatDate(activity.created_at, locale, true)}</dd></div>
             <div className="detail-row"><dt>{t("updated")}</dt><dd>{formatDate(activity.updated_at, locale, true)}</dd></div>
             {activity.purge_eligible_at && <div className="detail-row"><dt>{t("purgeEligible")}</dt><dd>{formatDate(activity.purge_eligible_at, locale, true)}</dd></div>}
-            {activity.pending_public_revision && <div className="detail-row"><dt>{t("pendingRevision")}</dt><dd><pre className="dates-inline-json">{JSON.stringify(activity.pending_public_revision, null, 2)}</pre></dd></div>}
+            {activity.pending_public_revision && <div className="detail-row"><dt>{t("pendingRevision")}</dt><dd><DatesEventPhotos source={activity.pending_public_revision} /><pre className="dates-inline-json">{JSON.stringify(activity.pending_public_revision, null, 2)}</pre></dd></div>}
           </dl></div>
         </section>
 

@@ -7,8 +7,29 @@
 .dates-event-icon-choice { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 18px 10px; border: 1px solid var(--border); border-radius: 16px; background: var(--bg-soft); color: var(--text); cursor: pointer; }
 .dates-event-icon-choice.active { border-color: var(--accent); background: var(--accent-soft); }
 .dates-event-icon-choice small { color: var(--muted); font-size: 12px; }
-.dates-event-icon-pin { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50% 50% 50% 12px; background: var(--accent); font-size: 26px; box-shadow: 0 4px 12px #0003; }
-.dates-event-icon-pin img { width: 30px; height: 30px; object-fit: contain; }
+.dates-event-icon-pin { position: relative; display: block; flex: none; width: 48px; height: 60px; filter: drop-shadow(0 3px 3px #0002); }
+.dates-event-icon-pin svg { width: 100%; height: 100%; fill: var(--event-pin-color, #F68B3F); stroke: white; stroke-width: 2; }
+.dates-event-icon-art { position: absolute; left: 8px; top: 8px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: white; color: #292520; font-size: 26px; line-height: 1; }
+.dates-event-icon-art img { width: 27px; height: 27px; object-fit: contain; }
+.dates-event-icon-pin.selected { width: 56px; height: 70px; }
+.dates-event-icon-pin.selected svg { fill: white; stroke: var(--event-pin-color, #F68B3F); }
+.dates-event-icon-pin.selected .dates-event-icon-art { left: 9px; top: 9px; width: 38px; height: 38px; font-size: 30px; }
+.dates-event-icon-pin.selected img { width: 32px; height: 32px; }
+.dates-event-pin-colors { display: grid; gap: 12px; padding: 18px 0; border-block: 1px solid var(--border); }
+.dates-event-pin-colors > small { color: var(--muted); }
+.dates-event-color-modes, .dates-event-color-inputs { display: flex; gap: 8px; }
+.dates-event-color-modes > button { flex: 1; }
+.dates-event-color-modes > button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.dates-event-color-inputs > label:first-child { flex: 1; min-width: 0; }
+.dates-event-color-inputs input[type="color"] { width: 64px; padding: 4px; cursor: pointer; }
+.dates-event-color-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.dates-event-color-swatches button { width: 36px; height: 36px; border: 3px solid transparent; border-radius: 50%; background: var(--event-pin-color); background-clip: padding-box; cursor: pointer; }
+.dates-event-color-swatches button[aria-pressed="true"] { border-color: var(--accent); }
+.dates-event-pin-previews { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dates-event-pin-preview { display: grid; gap: 10px; padding: 12px 8px; border-radius: 12px; color: #233330; background: repeating-linear-gradient(35deg, #fff7 0 2px, transparent 2px 24px), #e0ece7; }
+.dates-event-pin-preview.night { color: #f2f7f5; background: repeating-linear-gradient(35deg, #ffffff14 0 2px, transparent 2px 24px), #1b2c36; }
+.dates-event-pin-preview > div { display: flex; gap: 4px; justify-content: center; align-items: end; }
+.dates-event-pin-preview small { font-size: 11px; }
 .dates-event-icon-editor { display: grid; min-width: 0; gap: 14px; border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
 .dates-event-icons-save { display: flex; gap: 16px; align-items: end; }
 .dates-event-icons-save .field { flex: 1; }
@@ -15304,3 +15325,7 @@ fieldset.dates-external-fields {
 .research-batch-selection, .research-batch-confirmations { display: grid; gap: .4rem; margin: 1rem 0; }
 .research-batch input[type="checkbox"], .research-field input[type="checkbox"] { width: 1rem; min-width: 1rem; height: 1rem; }
 @media (max-width: 760px) { .research-runs .dates-filter-grid { grid-template-columns: minmax(0, 1fr); } .research-panel, .research-editor, .research-runs, .research-batch { padding: 16px; } }
+.dates-event-photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; max-width: 680px; }
+.dates-event-photo-grid figure { margin: 0; }
+.dates-event-photo-grid img { width: 100%; aspect-ratio: 4/3; object-fit: contain; border-radius: 10px; background: #f4f4f4; }
+.dates-event-photo-grid figcaption { font-size: 12px; overflow-wrap: anywhere; }

@@ -142,7 +142,7 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
     ...ENVELOPE,
     ...leaves("memberships_truncated chats_truncated reports_truncated report_count notifications_truncated notification_count"),
     activity: { ...ACTIVITY, ...leaves("details timezone auto_end_at tbd_expires_at live_sharing_state purge_eligible_at"),
-      photo: OPAQUE, audience: OPAQUE, pending_public_revision: OPAQUE },
+      photo: OPAQUE, photos: [leaves("id url moderation_state")], audience: OPAQUE, pending_public_revision: OPAQUE },
     location: { ...leaves("mode city country_code exact_location_redacted exact_location_route"), public_location: leaves("type coordinates") },
     memberships: [leaves("uid relationship live_access updated_at")],
     chat: leaves("thread_id read_only message_count pinned_message_id"),
@@ -165,9 +165,9 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   // The saved setting is echoed; its value is data, like every setting's value.
   dates_configuration_save: { ...ENVELOPE, ...leaves("audit_id idempotency_replayed"), setting: { ...leaves("key revision"), value: OPAQUE } },
   dates_event_icons: { ...ENVELOPE, ...leaves("event_icon_contract_version revision"),
-    icons: [leaves("key activity_type emoji image_url name_en name_hu enabled is_default order")] },
+    icons: [leaves("key activity_type emoji image_url marker_background_color name_en name_hu enabled is_default order")] },
   dates_event_icons_save: { ...ENVELOPE, ...leaves("event_icon_contract_version revision audit_id idempotency_replayed"),
-    icons: [leaves("key activity_type emoji image_url name_en name_hu enabled is_default order")] },
+    icons: [leaves("key activity_type emoji image_url marker_background_color name_en name_hu enabled is_default order")] },
   dates_activity_command: { ...ENVELOPE,
     ...leaves("external_event_id activity_id revision activity_revision action event_status lifecycle soft_deleted external_revision audit_id idempotency_replayed purged") },
   dates_configuration: {

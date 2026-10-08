@@ -3,7 +3,12 @@ import { datesCommandOutcome } from "./datesExternalAdmin";
 export type DatesEventIcon = {
   key: string; activity_type: "sport" | "travel" | "hangout"; emoji: string; image_url: string | null;
   name_en: string; name_hu: string; enabled: boolean; is_default: boolean; order: number;
+  marker_background_color: string | null;
 };
+export const DEFAULT_EVENT_PIN_COLOR = "#F68B3F";
+export const DEFAULT_EVENT_PIN_COLOR_DARK = "#FFA45F";
+export const validEventPinColor = (value: unknown): value is string | null => value === null
+  || typeof value === "string" && /^#[A-F0-9]{6}$/.test(value);
 export type DatesEventIconCatalog = { icons: DatesEventIcon[]; revision: number };
 const record = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v);
 const graphemes = (v: string) => [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(v)].length;
@@ -17,14 +22,14 @@ export function eventIconImageURL(v: unknown): v is string {
     && /^https:\/\/img\.friending\.co\/(?:api\/cache\/)?[a-zA-Z0-9_./-]+\.png$/.test(v) && !v.includes("..");
 }
 export function eventIconCatalog(value: unknown): DatesEventIconCatalog | null {
-  if (!record(value) || value.success !== true || value.status_code !== 200 || value.event_icon_contract_version !== 1
+  if (!record(value) || value.success !== true || value.status_code !== 200 || value.event_icon_contract_version !== 2
     || !Number.isSafeInteger(value.revision) || (value.revision as number) < 0
     || !Array.isArray(value.icons) || value.icons.length < 1 || value.icons.length > 128) return null;
   const keys = new Set(), defaults = new Set();
   for (const row of value.icons) {
     if (!record(row) || typeof row.key !== "string" || !/^[a-z][a-z0-9_-]{0,47}$/.test(row.key) || keys.has(row.key)
       || typeof row.activity_type !== "string" || !["sport", "travel", "hangout"].includes(row.activity_type) || !validEmoji(row.emoji)
-      || (row.image_url !== null && !eventIconImageURL(row.image_url))
+      || (row.image_url !== null && !eventIconImageURL(row.image_url)) || !validEventPinColor(row.marker_background_color)
       || (!row.emoji && !row.image_url) || typeof row.enabled !== "boolean" || typeof row.is_default !== "boolean"
       || !Number.isSafeInteger(row.order) || (row.order as number) < 0 || (row.order as number) > 100000
       || !validName(row.name_en) || !validName(row.name_hu)) return null;
@@ -47,7 +52,7 @@ export function eventIconReceipt(value: unknown, request: { expected_revision: n
   try {
     const sent = JSON.parse(request.icons) as DatesEventIcon[];
     const normalize = (rows: DatesEventIcon[]) => JSON.stringify([...rows].sort((a, b) => a.key.localeCompare(b.key)).map(r =>
-      [r.key, r.activity_type, r.emoji, r.image_url, r.name_en, r.name_hu, r.enabled, r.is_default, r.order]));
+      [r.key, r.activity_type, r.emoji, r.image_url, r.marker_background_color, r.name_en, r.name_hu, r.enabled, r.is_default, r.order]));
     return normalize(catalog.icons) === normalize(sent) ? catalog : null;
   } catch { return null; }
 }

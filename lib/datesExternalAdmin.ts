@@ -286,6 +286,7 @@ export function projectDatesActivityList(value: unknown, expected: { page: numbe
 }
 
 const activityDetailExtras = { details: nullable(((value: unknown): value is string => typeof value === "string")), photo: ((_: unknown): _ is unknown => true),
+  photos: optional(array(object({ id: text(1, 100), url: text(1, 2048), moderation_state: oneOf(["pending", "approved", "rejected", "removed", "appealed"] as const) }), 10)),
   timezone: nullable(text(1, 80)), auto_end_at: nullable(epoch), tbd_expires_at: nullable(epoch), audience: nullable(record),
   pending_public_revision: nullable(record), live_sharing_state: oneOf(["off", "on", "paused"] as const), purge_eligible_at: nullable(epoch) };
 const memberActivityDetailFields = object({ ...memberActivityShape, host: memberHost, ...activityDetailExtras });

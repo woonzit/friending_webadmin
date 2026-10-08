@@ -73,5 +73,7 @@ export function datesAdminResearchContractParams(action: string, params: Record<
 export function withDatesAdminContract(action: string, params: Record<string, unknown>,
   selector: DatesAdminContractSelector | null = DATES_ADMIN_INTAKE_CONTRACT_SELECTOR): Record<string, unknown> {
   for (const [key, value] of Object.entries({ ...datesAdminContractParams(action, selector), ...datesAdminCommandContractParams(action), ...datesAdminResearchContractParams(action, params) })) params[key] = value;
+  if (action === "dates_event_icons" || action === "dates_event_icons_save") params.dates_event_icon_contract_version = 2;
+  if (["dates_activity_detail", "dates_moderation_evidence", "dates_moderation_resolve"].includes(action)) params.dates_event_media_contract_version = 1;
   return params;
 }

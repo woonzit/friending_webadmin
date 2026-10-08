@@ -1,15 +1,36 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { eventIconCatalog, eventIconImageURL, eventIconReceipt, eventIconSaveOutcome } from "../lib/datesEventIcons.ts";
+import { eventIconCatalog, eventIconImageURL, eventIconReceipt, eventIconSaveOutcome, validEventPinColor } from "../lib/datesEventIcons.ts";
+import { withDatesAdminContract } from "../lib/datesAdminContract.ts";
 
-const icon = { key: "yoga", activity_type: "sport", emoji: "🧘", image_url: null, name_en: "Yoga", name_hu: "Jóga", enabled: true, is_default: true, order: 10 };
-const catalog = { success: true, status_code: 200, event_icon_contract_version: 1, icons: [icon], revision: 1 };
+const icon = { key: "yoga", activity_type: "sport", emoji: "🧘", image_url: null, marker_background_color: null, name_en: "Yoga", name_hu: "Jóga", enabled: true, is_default: true, order: 10 };
+const catalog = { success: true, status_code: 200, event_icon_contract_version: 2, icons: [icon], revision: 1 };
 test("icon catalogue is versioned, typed, unique and fail closed", () => {
   assert.ok(eventIconCatalog(catalog));
-  for (const patch of [{ event_icon_contract_version: 2 }, { revision: -1 }, { icons: [] }, { icons: [icon, icon] },
+  for (const patch of [{ event_icon_contract_version: 1 }, { event_icon_contract_version: 3 }, { revision: -1 }, { icons: [] }, { icons: [icon, icon] },
     { icons: [{ ...icon, enabled: false }] }, { icons: [{ ...icon, image_url: "https://evil.test/a.png" }] }]) {
     assert.equal(eventIconCatalog({ ...catalog, ...patch }), null);
   }
+});
+test("pin colors are validated and included in the exact save receipt", () => {
+  for (const color of [null, "#8A72D8", "#000000", "#FFFFFF"]) {
+    assert.equal(validEventPinColor(color), true);
+    assert.ok(eventIconCatalog({ ...catalog, icons: [{ ...icon, marker_background_color: color }] }));
+  }
+  for (const color of [undefined, "", "orange", "#FFF", "#ff00ff", "#FF000080", true, ["#000000"]]) {
+    assert.equal(validEventPinColor(color), false);
+    assert.equal(eventIconCatalog({ ...catalog, icons: [{ ...icon, marker_background_color: color }] }), null);
+  }
+  const request = { icons: JSON.stringify([{ ...icon, marker_background_color: "#8A72D8" }]), expected_revision: 0 };
+  const receipt = { ...catalog, audit_id: `aud_${"a".repeat(32)}`, idempotency_replayed: false };
+  assert.equal(eventIconReceipt(receipt, request), null);
+  assert.ok(eventIconReceipt({ ...receipt, icons: [{ ...icon, marker_background_color: "#8A72D8" }] }, request));
+});
+test("server owns the color contract selector only for icon routes", () => {
+  for (const action of ["dates_event_icons", "dates_event_icons_save"]) {
+    assert.equal(withDatesAdminContract(action, { dates_event_icon_contract_version: 1 }).dates_event_icon_contract_version, 2);
+  }
+  assert.equal(withDatesAdminContract("dates_configuration", {}).dates_event_icon_contract_version, undefined);
 });
 test("malformed provider success cannot populate the icon editor", () => {
   assert.equal(eventIconCatalog({ ...catalog, status_code: 503 }), null);
