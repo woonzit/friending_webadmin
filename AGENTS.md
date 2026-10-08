@@ -23,6 +23,10 @@ are optional read-only references; never edit or deploy them as an incidental We
 
 ## Start and coordination
 
+- Owner direction (2026-10-08): solo AreYouIn work is developed and handed over on the
+  canonical `admin` checkout's `main` branch. Finished work must not remain only in a
+  feature worktree. Preserve existing local changes. Push/deployment still need explicit authorization.
+
 - Start every session with `git status --short --branch`, inspect the complete current diff, then
   read `git log --oneline -10`.
 - Never assume a clean tree and never discard or overwrite changes you did not create.
