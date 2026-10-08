@@ -1,14 +1,20 @@
 dates_event_icons_wire: bodies Core answers on /v1/webadmin/dates_event_icons and
 /v1/webadmin/dates_event_icons_save, icon contract version 2 (per-icon pin colours).
 
-Source: Core commit 1bc768f46004b511d6cefed632e178526c9c7d3d (local, not yet
+Source: Core commit 81b7161bd40d2afd4c949af5d556c254814aa39d (local, not yet
         published when captured on 2026-10-08; re-pin to the published commit that
-        carries the same DatesEventIconService once it exists).
+        carries the same DatesEventIconService and DatesEventIcons once it exists).
+        The tree was a `git archive` of exactly that commit with a copy of vendor/,
+        not the working checkout.
 How:    WebadminDatesController::eventIcons() / ::saveEventIcons() were called
         in-process against a throwaway local replica-set mongod, with the form
         values the console's bridge sends (strings, the selector
         dates_event_icon_contract_version=2). Each file is the JSON value of the
         wire body, re-encoded with two-space indentation; nothing was edited.
+        `server_now` and `audit_id` are of that run: a new capture differs in them
+        and, of an unchanged Core, in nothing else.
+
+In the order they were captured:
 
 dates_event_icons-bootstrap.json          read before anything is stored (revision 0, the 17 defaults)
 dates_event_icons_save.request            the form of the save below (icons is the JSON text that was sent)
@@ -19,5 +25,15 @@ dates_event_icons_save-stale.json         the same catalogue against revision 0 
 dates_event_icons_save-name-invalid.json  an empty name
 dates_event_icons-contract-v1.json        the read as contract version 1 answers it (no colour key);
                                           this console must refuse it
+dates_event_icons_save-nbsp-names.request a save against revision 1 whose two changed names carry a
+                                          no-break space (U+00A0) at an edge, as an editor that does not
+                                          trim would have sent them. The file writes those three
+                                          characters as JSON escapes so that they can be seen; the
+                                          value is the one that was sent. The console's own bridge
+                                          refuses this form (400 invalid-input) and never forwards it.
+dates_event_icons_save-nbsp-names.json    Core's receipt: accepted, the names stored and answered trimmed
+                                          (revision 2), so it is not the catalogue that was sent
+dates_event_icons_save-nbsp-names-replay.json  the same form sent again
+dates_event_icons-after-nbsp-save.json    read after it
 
 A file's route is its name up to the first "-".

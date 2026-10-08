@@ -26,11 +26,17 @@ const record = (v: unknown): v is Record<string, unknown> => v !== null && typeo
 const graphemes = (v: string) => [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(v)].length;
 /**
  * A name as Core stored it: non-empty, bounded, no control character. Whether its
- * edges are whitespace is NOT judged here. Core and the browser do not agree on
- * what whitespace is (PHP `trim` knows six ASCII characters, JS `trim` every
- * Unicode space), and a name one side accepted must never make the catalogue
- * unreadable on the other. The editor trims before it sends
- * (`normalizeEventIconName`); what was stored is read as it is.
+ * edges are whitespace is NOT judged here: a name Core accepted and serves must
+ * never make the catalogue unreadable because the two sides trim differently
+ * (PHP `trim` knows six ASCII characters, JS `trim` every Unicode space; Core's
+ * `DatesEventIcons::trimName` uses JavaScript's set for that reason). The
+ * editor trims before it sends (`normalizeEventIconName`); what is served is
+ * read as it is.
+ *
+ * The receipt check stays exact. A catalogue sent with untrimmed names is
+ * stored trimmed, so Core's answer is not a receipt of it and the save's
+ * outcome stays unknown until the stored catalogue is read ("Reload from
+ * server"). This editor never sends such a catalogue and the bridge refuses it.
  */
 export const storedEventIconName = (v: unknown): v is string => typeof v === "string" && v.length > 0
   && graphemes(v) <= EVENT_ICON_NAME_MAX && !/[\x00-\x1f\x7f]/.test(v);

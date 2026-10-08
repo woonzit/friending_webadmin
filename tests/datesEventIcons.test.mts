@@ -15,7 +15,7 @@ import { withDatesAdminContract } from "../lib/datesAdminContract.ts";
 import { projectDatesAdminBody } from "../lib/datesAdminProjection.ts";
 import { EventIconPin } from "../components/DatesEventIconsConfiguration.tsx";
 
-// GENUINE: the bodies Core 1bc768f4 answered on the two icon routes (tests/fixtures/dates_event_icons_wire/provenance.txt).
+// GENUINE: the bodies Core 81b7161b answered on the two icon routes (tests/fixtures/dates_event_icons_wire/provenance.txt).
 // Every use below goes through the bridge's projection first, as the browser receives them.
 const FIXTURES = new URL("./fixtures/dates_event_icons_wire/", import.meta.url);
 const raw = (file: string) => JSON.parse(readFileSync(new URL(file, FIXTURES), "utf8"));
@@ -75,7 +75,9 @@ test("icon catalogue is versioned, typed, unique and fail closed", () => {
 });
 
 test("a name Core stored is read whatever its edges; the editor trims what it sends", () => {
-  // DERIVED from the genuine read: PHP `trim` (Core's check) leaves these characters, JS `trim` removes them.
+  // DERIVED from the genuine read. Core 81b7161b trims names with JavaScript's own set and no longer serves such a
+  // name; a Core before it kept these characters (PHP `trim` knows six ASCII ones). The parser's rule does not depend
+  // on which Core answers: a name is read as it was served.
   for (const edge of ["\u00A0", "\u3000", "\u202F", "\uFEFF", " "]) {
     const body = copy(wire("dates_event_icons")) as { icons: DatesEventIcon[] };
     body.icons[1].name_en = `Yoga${edge}`; body.icons[2].name_hu = `${edge}Foci`;
@@ -90,6 +92,59 @@ test("a name Core stored is read whatever its edges; the editor trims what it se
     assert.equal(sent[2].name_hu, "Foci");
     assert.equal(normalizeEventIconName(`${edge}Yoga${edge}`), "Yoga");
   }
+});
+
+test("genuine: a save sent with untrimmed names is stored trimmed, so Core's answer is no receipt of it; the outcome stays unknown until a forced read", () => {
+  // The form an editor that does not trim would have sent: two names with a no-break space at an edge. It is not this
+  // console's: its editor trims before it sends and its bridge refuses the form. Core 81b7161b itself accepts it.
+  const NBSP = "\xA0";
+  const form = raw("dates_event_icons_save-nbsp-names.request") as typeof GENUINE_FORM;
+  const request = { icons: form.icons, expected_revision: Number(form.expected_revision) };
+  const sent = JSON.parse(form.icons) as DatesEventIcon[];
+  const names = (rows: DatesEventIcon[]) => [rows.find(row => row.key === "yoga")!.name_en, rows.find(row => row.key === "football")!.name_hu];
+  assert.deepEqual(names(sent), [`Park yoga${NBSP}`, `${NBSP}Kispályás foci${NBSP}`]);
+  assert.equal(normalizeDatesEventIconsProxyBody("dates_event_icons_save", { ...form, expected_revision: request.expected_revision }), null,
+    "this console's bridge answers 400 and forwards nothing");
+
+  for (const [name, replayed] of [["dates_event_icons_save-nbsp-names", false], ["dates_event_icons_save-nbsp-names-replay", true]] as const) {
+    const answer = wire(name) as { success: boolean; revision: number; idempotency_replayed: boolean };
+    assert.deepEqual([answer.success, answer.revision, answer.idempotency_replayed], [true, 2, replayed]);
+    // Core committed the save: its answer is a readable catalogue, with the names trimmed.
+    const stored = eventIconCatalog(answer);
+    assert.ok(stored, name);
+    assert.deepEqual(names(stored.icons), ["Park yoga", "Kispályás foci"]);
+    // It is not a receipt of the request: the catalogue that came back is not the catalogue that was sent.
+    assert.equal(eventIconReceipt(answer, request), null);
+    // And it is not a refusal either. First attempt or retry, the console says "unknown" - never "saved", and never
+    // "not saved", which would be false: the write landed.
+    for (const retrying of [false, true]) assert.deepEqual(eventIconSaveOutcome(answer, request, retrying), { receipt: null, outcome: { kind: "uncertain", error: null } });
+    // The same answer IS the receipt of the same catalogue sent the way this editor sends it.
+    assert.ok(eventIconReceipt(answer, { ...request, icons: serializeEventIcons(sent) }));
+  }
+
+  // The state machine with that command in flight (as an older tab would hold it).
+  const command: EventIconCommand = { ...request, reason: form.reason, idempotency_key: form.idempotency_key };
+  let state: EventIconEditorState = { ...loaded("dates_event_icons"), icons: sent, reason: form.reason };
+  assert.equal(state.revision, 1);
+  state = reduce(state, { type: "saveStarted", command }, { type: "saveAnswered", response: wire("dates_event_icons_save-nbsp-names") });
+  assert.deepEqual(state.outcome, { kind: "unknown" });
+  assert.equal(state.pending, command);
+  // A retry sends the very same command, Core replays the very same answer: still unknown, for as long as it is retried.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    assert.equal(eventIconSaveCommand(state, true, noMint), command);
+    state = reduce(state, { type: "saveStarted", command }, { type: "saveAnswered", response: wire("dates_event_icons_save-nbsp-names-replay") });
+    assert.deepEqual(state.outcome, { kind: "unknown" });
+    assert.equal(state.pending, command);
+    assert.equal(state.revision, 1, "nothing of the unread answer is adopted");
+  }
+  // The exit: "Reload from server" reads what is stored - the committed, trimmed catalogue - and releases the command.
+  state = reduce(state, { type: "requestStarted" }, { type: "loaded", catalog: catalogOf("dates_event_icons-after-nbsp-save"), force: true });
+  assert.equal(state.pending, null);
+  assert.equal(state.outcome, null);
+  assert.equal(state.revision, 2);
+  assert.deepEqual(names(state.icons), ["Park yoga", "Kispályás foci"]);
+  assert.equal(eventIconHold(state), false);
+  assert.equal(eventIconSaveCommand(state, true, mint), null, "nothing is left to send: no second write");
 });
 
 test("pin colors are validated and included in the exact save receipt", () => {
