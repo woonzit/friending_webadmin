@@ -15429,3 +15429,58 @@ fieldset.dates-external-fields {
   .dates-event-icon-row > label { padding-top: 0; }
 }
 @media (max-width: 760px) { .dates-event-icons-body, .dates-event-icon-editor { padding: 16px; } }
+
+/* AreYouIn third-party event pins (components/DatesExternalPinsConfiguration.tsx). The editor is laid out by the icon
+   editor's rules above; these are what a third-party pin and its catalogue add. */
+.dates-event-icon-pin.small { --event-pin-size: 34px; }
+/* The external pin's head is a rounded square (its outline is in components/DatesPinControls.tsx); the plate follows it. */
+.dates-event-icon-pin.external .dates-event-icon-art { border-radius: 24%; }
+.dates-external-pin-default { display: grid; gap: 8px; min-width: 0; margin: 0 0 16px; padding: 12px 16px 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg-soft); }
+.dates-external-pin-default legend { padding: 0 6px; color: var(--text-soft); font-size: 13px; font-weight: 600; }
+.dates-external-pin-default-line { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.dates-external-pin-default-line .dates-event-color-inputs { flex: 1 1 190px; max-width: 300px; }
+.dates-external-pin-default input:disabled { cursor: not-allowed; opacity: 0.6; }
+.dates-external-pin-default [aria-invalid="true"] { border-color: var(--danger); }
+.dates-external-pin-label { padding-top: 13px; color: var(--text-soft); font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.dates-external-pin-covers { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 9px 0 0; list-style: none; }
+.dates-external-pin-covers li { padding: 2px 9px; border: 1px solid var(--border); border-radius: 999px; color: var(--text-soft); font-size: 12.5px; font-weight: 600; }
+.dates-external-pin-compare { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-raised); color: var(--text-soft); font-size: 13px; font-weight: 600; }
+.dates-external-pin-compare > span { display: inline-flex; align-items: center; gap: 10px; }
+@container event-icon-editor (max-width: 360px) { .dates-external-pin-label { padding-top: 0; } }
+
+/* AreYouIn submission leaderboard (components/DatesSuggestionLeaderboardCard.tsx): a default row and one row per country. */
+.dates-leaderboard-body { display: grid; gap: 14px; padding: 22px; container: leaderboard / inline-size; }
+.dates-leaderboard-body > .alert, .dates-leaderboard-body > .page-subtitle { margin: 0; }
+.dates-leaderboard-fields { display: grid; gap: 12px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.dates-leaderboard-rows { display: grid; gap: 10px; }
+/* Fixed widths for the switch and the remove button: the default row, which has no button, lines up with the countries'. */
+.dates-leaderboard-row { display: grid; grid-template-columns: minmax(200px, 1.4fr) 172px minmax(150px, 0.7fr) 112px; gap: 10px 16px; align-items: end; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-raised); }
+.dates-leaderboard-row.default { border-color: var(--border-strong); }
+.dates-leaderboard-row > button { justify-self: end; }
+.dates-leaderboard-row > .field-error { grid-column: 1 / -1; }
+.dates-leaderboard-name { display: grid; gap: 3px; min-width: 0; align-self: center; }
+.dates-leaderboard-name small { color: var(--muted); font-size: 12px; line-height: 1.4; }
+.dates-leaderboard-select { display: grid; gap: 6px; min-width: 0; }
+.dates-leaderboard-select > span { color: var(--text-soft); font-size: 11px; font-weight: 700; }
+.dates-leaderboard-select select[aria-invalid="true"] { border-color: var(--danger); }
+.dates-leaderboard-switch { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--text-soft); font-size: 14px; font-weight: 600; cursor: pointer; }
+.dates-leaderboard-fields:disabled .dates-leaderboard-switch, .dates-leaderboard-switch:has(input:disabled) { cursor: not-allowed; opacity: 0.6; }
+.dates-leaderboard-fields select:disabled { cursor: not-allowed; opacity: 0.6; }
+.dates-leaderboard-heading { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px 14px; margin-top: 6px; }
+.dates-leaderboard-heading h3 { margin: 0; font-size: 16px; }
+.dates-leaderboard-heading p { margin: 4px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+.dates-leaderboard-help { display: grid; gap: 4px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.dates-leaderboard-help p { margin: 0; }
+.dates-leaderboard-help strong { color: var(--text-soft); }
+.dates-leaderboard .dates-event-icon-save { margin-top: 2px; }
+.dates-leaderboard .dates-event-icon-save > input { max-width: 640px; }
+.dates-leaderboard .dates-event-icon-save > input:disabled { cursor: not-allowed; opacity: 0.6; }
+@container leaderboard (max-width: 720px) {
+  .dates-leaderboard-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .dates-leaderboard-row > .dates-leaderboard-name, .dates-leaderboard-row > .dates-leaderboard-select.country { grid-column: 1 / -1; }
+  .dates-leaderboard-row > button { justify-self: start; }
+}
+@container leaderboard (max-width: 400px) {
+  .dates-leaderboard-row { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) { .dates-leaderboard-body { padding: 16px; } }

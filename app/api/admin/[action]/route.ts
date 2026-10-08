@@ -25,6 +25,8 @@ import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProx
 import { datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody } from "@/lib/datesIntakeAdmin";
 import { datesResearchProxyCapabilityAuthorized, normalizeDatesResearchProxyBody } from "@/lib/datesResearchProxy";
 import { normalizeDatesEventIconsProxyBody } from "@/lib/datesEventIcons";
+import { normalizeDatesExternalPinsProxyBody } from "@/lib/datesExternalPins";
+import { normalizeDatesLeaderboardProxyBody } from "@/lib/datesSuggestionLeaderboard";
 import {
   featureSwitchesProxyCapabilityAuthorized,
   normalizeFeatureSwitchesProxyBody,
@@ -230,6 +232,14 @@ export async function POST(
   const eventIconsBody = normalizeDatesEventIconsProxyBody(action, body);
   if (eventIconsBody === null) return bridgeError("invalid-input", 400);
   if (eventIconsBody !== undefined) body = eventIconsBody;
+  // The third-party pin catalogue likewise: nothing on the read, exactly the eleven types and the default colour on the save.
+  const externalPinsBody = normalizeDatesExternalPinsProxyBody(action, body);
+  if (externalPinsBody === null) return bridgeError("invalid-input", 400);
+  if (externalPinsBody !== undefined) body = externalPinsBody;
+  // A leaderboard setting is saved as its closed value: a switch, a scope, or a storefront map of them.
+  const leaderboardBody = normalizeDatesLeaderboardProxyBody(action, body);
+  if (leaderboardBody === null) return bridgeError("invalid-input", 400);
+  if (leaderboardBody !== undefined) body = leaderboardBody;
   const externalResolution = normalizeDatesExternalResolutionProxyBody(action, body);
   if (externalResolution === null) return bridgeError("invalid-input", 400);
   if (externalResolution !== undefined && !datesExternalResolutionAuthorized(membership.data)) {

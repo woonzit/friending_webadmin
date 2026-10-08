@@ -1,0 +1,41 @@
+dates_external_pins_wire: bodies Core answers on /v1/webadmin/dates_external_pins and
+/v1/webadmin/dates_external_pins_save (the catalogue of third-party event pins).
+
+Source: Core tests/fixtures/dates_external_pins_admin_wire at commit
+        7276444db15d365fce4db334bca6d04b994bc6ce (local on Core main, not yet published when
+        copied on 2026-10-09). The corpus was generated at
+        a356553affc4a2afddad46e5b38345d9d2f34df7 (manifest.json, `source_commit`) by
+        tests/dates_external_pins_admin_fixture_dump.php: both routes through the real secret
+        middleware, router, controller, storage and Response::send.
+How:    BYTE COPIES of the eleven files of that directory, manifest.json included; nothing
+        was edited. tests/datesExternalPins.test.mts checks every body against the sha256
+        the manifest names, so a body changed here is noticed. In Core's capture `server_now`
+        is normalised to 1790000000 and `audit_id` to aud_ and 32 zeros.
+
+webadmin-pins-read-default.json            read before anything is stored (revision 0, the code defaults)
+webadmin-pins-save-viewer.json             the save below sent by a viewer (403, nothing written)
+webadmin-pins-save.json                    its receipt (revision 1, idempotency_replayed false)
+webadmin-pins-save-replay.json             the same form sent again (idempotency_replayed true)
+webadmin-pins-read-saved.json              read after the save (manifest.json names the save route for
+                                           it; it is a read: no audit_id, no idempotency_replayed)
+webadmin-pins-save-stale.json              the same catalogue against revision 0 under a new key
+webadmin-pins-save-type-missing.json       ten of the eleven types
+webadmin-pins-save-default-color-null.json no default colour
+webadmin-pins-save-no-image.json           a type with neither emoji nor image
+member-event-icons.json                    not a console body: the member `event_icon` of every fine
+                                           category (the iOS side); kept so that the copy is whole
+
+NOT a file of Core's corpus:
+
+webadmin-pins-save.request  The parameters of the save whose receipt is webadmin-pins-save.json.
+        Core's corpus does not carry them, so they were reconstructed: lines 56-64 of the
+        generator at a356553a, run unchanged (PHP 8.5) against webadmin-pins-read-default.json.
+        `pins` is the JSON text PHP's json_encode gave. It is a form this console never sends
+        and its bridge refuses (400 invalid-input): two colours in lower case, a name with a
+        no-break space and a space at its edges, and one row that carries `categories`. Core
+        accepts it and stores it normalised, which is why its receipt is a receipt of the same
+        catalogue as this console's editor sends it (the tests build that request from the
+        editor's reducer) and not of this literal form.
+
+A file's route: `webadmin-pins-read-*` is dates_external_pins, `webadmin-pins-save*` is
+dates_external_pins_save.

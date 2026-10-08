@@ -1,0 +1,148 @@
+{
+    "success": true,
+    "status_code": 200,
+    "server_now": 1790000000,
+    "revision": 1,
+    "default_marker_background_color": "#5B4BC4",
+    "pins": [
+        {
+            "key": "music",
+            "emoji": "🎵",
+            "image_url": null,
+            "marker_background_color": null,
+            "name_en": "Music",
+            "name_hu": "Zene, koncert",
+            "order": 5,
+            "categories": [
+                "concert"
+            ]
+        },
+        {
+            "key": "sport",
+            "emoji": "⚽",
+            "image_url": null,
+            "marker_background_color": null,
+            "name_en": "Sports",
+            "name_hu": "Sport",
+            "order": 10,
+            "categories": [
+                "sport_match",
+                "sport_participation"
+            ]
+        },
+        {
+            "key": "party",
+            "emoji": "🪩",
+            "image_url": null,
+            "marker_background_color": "#FF2D95",
+            "name_en": "Nightlife",
+            "name_hu": "Buli, éjszakai élet",
+            "order": 30,
+            "categories": [
+                "club_night"
+            ]
+        },
+        {
+            "key": "festival",
+            "emoji": "🎪",
+            "image_url": null,
+            "marker_background_color": null,
+            "name_en": "Festival",
+            "name_hu": "Fesztivál",
+            "order": 40,
+            "categories": [
+                "festival"
+            ]
+        },
+        {
+            "key": "arts",
+            "emoji": "",
+            "image_url": "https://img.friending.co/dates/pins/arts.png",
+            "marker_background_color": null,
+            "name_en": "Arts and culture",
+            "name_hu": "Művészet, kultúra",
+            "order": 50,
+            "categories": [
+                "theatre",
+                "cinema",
+                "exhibition"
+            ]
+        },
+        {
+            "key": "learning",
+            "emoji": "🎓",
+            "image_url": null,
+            "marker_background_color": null,
+            "name_en": "Talks and workshops",
+            "name_hu": "Előadás, workshop",
+            "order": 60,
+            "categories": [
+                "talk",
+                "workshop"
+            ]
+        },
+        {
+            "key": "market",
+            "emoji": "🛍️",
+            "image_url": null,
+            "marker_background_color": null,
+            "name_en": "Markets",
+            "name_hu": "Vásár, piac",
+            "order": 70,
+            "categories": [
+                "market"
+            ]
+        },
+        {
+            "key": "food",
+            "emoji": "🍽️",
+            "image_url": null,
+            "marker_background_color": null,
+            "name_en": "Food and drink",
+            "name_hu": "Gasztro",
+            "order": 80,
+            "categories": [
+                "food_drink"
+            ]
+        },
+        {
+            "key": "community",
+            "emoji": "🤝",
+            "image_url": null,
+            "marker_background_color": null,
+            "name_en": "Community",
+            "name_hu": "Közösségi",
+            "order": 90,
+            "categories": [
+                "community"
+            ]
+        },
+        {
+            "key": "outdoor",
+            "emoji": "🌳",
+            "image_url": null,
+            "marker_background_color": null,
+            "name_en": "Outdoors",
+            "name_hu": "Szabadtéri",
+            "order": 100,
+            "categories": [
+                "outdoor"
+            ]
+        },
+        {
+            "key": "other",
+            "emoji": "🎟️",
+            "image_url": null,
+            "marker_background_color": null,
+            "name_en": "Other",
+            "name_hu": "Minden más",
+            "order": 110,
+            "categories": [
+                "other"
+            ]
+        }
+    ],
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

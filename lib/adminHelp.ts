@@ -267,7 +267,7 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "datesConfiguration",
     route: "/dates/configuration",
-    sections: ["runtimeSettings", "activityTypes", "reportReasons"],
+    sections: ["runtimeSettings", "activityTypes", "suggestionLeaderboard", "externalPins", "reportReasons"],
     matches: exact("/dates/configuration"),
   },
   {

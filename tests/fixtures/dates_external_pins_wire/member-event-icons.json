@@ -1,0 +1,338 @@
+{
+    "event_icon_contract_version": 2,
+    "note": "Not a route body: the event_icon object of an external card for each fine category, from the saved catalogue above.",
+    "hu": {
+        "sport_match": {
+            "key": "external_sport",
+            "activity_type": "sport",
+            "name": "Sport",
+            "emoji": "⚽",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 10,
+            "marker_background_color": "#5B4BC4"
+        },
+        "sport_participation": {
+            "key": "external_sport",
+            "activity_type": "sport",
+            "name": "Sport",
+            "emoji": "⚽",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 10,
+            "marker_background_color": "#5B4BC4"
+        },
+        "concert": {
+            "key": "external_music",
+            "activity_type": "hangout",
+            "name": "Zene, koncert",
+            "emoji": "🎵",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 5,
+            "marker_background_color": "#5B4BC4"
+        },
+        "club_night": {
+            "key": "external_party",
+            "activity_type": "hangout",
+            "name": "Buli, éjszakai élet",
+            "emoji": "🪩",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 30,
+            "marker_background_color": "#FF2D95"
+        },
+        "festival": {
+            "key": "external_festival",
+            "activity_type": "hangout",
+            "name": "Fesztivál",
+            "emoji": "🎪",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 40,
+            "marker_background_color": "#5B4BC4"
+        },
+        "theatre": {
+            "key": "external_arts",
+            "activity_type": "hangout",
+            "name": "Művészet, kultúra",
+            "emoji": "",
+            "image_url": "https://img.friending.co/dates/pins/arts.png",
+            "enabled": true,
+            "is_default": false,
+            "order": 50,
+            "marker_background_color": "#5B4BC4"
+        },
+        "cinema": {
+            "key": "external_arts",
+            "activity_type": "hangout",
+            "name": "Művészet, kultúra",
+            "emoji": "",
+            "image_url": "https://img.friending.co/dates/pins/arts.png",
+            "enabled": true,
+            "is_default": false,
+            "order": 50,
+            "marker_background_color": "#5B4BC4"
+        },
+        "exhibition": {
+            "key": "external_arts",
+            "activity_type": "hangout",
+            "name": "Művészet, kultúra",
+            "emoji": "",
+            "image_url": "https://img.friending.co/dates/pins/arts.png",
+            "enabled": true,
+            "is_default": false,
+            "order": 50,
+            "marker_background_color": "#5B4BC4"
+        },
+        "talk": {
+            "key": "external_learning",
+            "activity_type": "hangout",
+            "name": "Előadás, workshop",
+            "emoji": "🎓",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 60,
+            "marker_background_color": "#5B4BC4"
+        },
+        "workshop": {
+            "key": "external_learning",
+            "activity_type": "hangout",
+            "name": "Előadás, workshop",
+            "emoji": "🎓",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 60,
+            "marker_background_color": "#5B4BC4"
+        },
+        "market": {
+            "key": "external_market",
+            "activity_type": "hangout",
+            "name": "Vásár, piac",
+            "emoji": "🛍️",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 70,
+            "marker_background_color": "#5B4BC4"
+        },
+        "food_drink": {
+            "key": "external_food",
+            "activity_type": "hangout",
+            "name": "Gasztro",
+            "emoji": "🍽️",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 80,
+            "marker_background_color": "#5B4BC4"
+        },
+        "community": {
+            "key": "external_community",
+            "activity_type": "hangout",
+            "name": "Közösségi",
+            "emoji": "🤝",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 90,
+            "marker_background_color": "#5B4BC4"
+        },
+        "outdoor": {
+            "key": "external_outdoor",
+            "activity_type": "hangout",
+            "name": "Szabadtéri",
+            "emoji": "🌳",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 100,
+            "marker_background_color": "#5B4BC4"
+        },
+        "other": {
+            "key": "external_other",
+            "activity_type": "hangout",
+            "name": "Minden más",
+            "emoji": "🎟️",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 110,
+            "marker_background_color": "#5B4BC4"
+        }
+    },
+    "en": {
+        "sport_match": {
+            "key": "external_sport",
+            "activity_type": "sport",
+            "name": "Sports",
+            "emoji": "⚽",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 10,
+            "marker_background_color": "#5B4BC4"
+        },
+        "sport_participation": {
+            "key": "external_sport",
+            "activity_type": "sport",
+            "name": "Sports",
+            "emoji": "⚽",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 10,
+            "marker_background_color": "#5B4BC4"
+        },
+        "concert": {
+            "key": "external_music",
+            "activity_type": "hangout",
+            "name": "Music",
+            "emoji": "🎵",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 5,
+            "marker_background_color": "#5B4BC4"
+        },
+        "club_night": {
+            "key": "external_party",
+            "activity_type": "hangout",
+            "name": "Nightlife",
+            "emoji": "🪩",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 30,
+            "marker_background_color": "#FF2D95"
+        },
+        "festival": {
+            "key": "external_festival",
+            "activity_type": "hangout",
+            "name": "Festival",
+            "emoji": "🎪",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 40,
+            "marker_background_color": "#5B4BC4"
+        },
+        "theatre": {
+            "key": "external_arts",
+            "activity_type": "hangout",
+            "name": "Arts and culture",
+            "emoji": "",
+            "image_url": "https://img.friending.co/dates/pins/arts.png",
+            "enabled": true,
+            "is_default": false,
+            "order": 50,
+            "marker_background_color": "#5B4BC4"
+        },
+        "cinema": {
+            "key": "external_arts",
+            "activity_type": "hangout",
+            "name": "Arts and culture",
+            "emoji": "",
+            "image_url": "https://img.friending.co/dates/pins/arts.png",
+            "enabled": true,
+            "is_default": false,
+            "order": 50,
+            "marker_background_color": "#5B4BC4"
+        },
+        "exhibition": {
+            "key": "external_arts",
+            "activity_type": "hangout",
+            "name": "Arts and culture",
+            "emoji": "",
+            "image_url": "https://img.friending.co/dates/pins/arts.png",
+            "enabled": true,
+            "is_default": false,
+            "order": 50,
+            "marker_background_color": "#5B4BC4"
+        },
+        "talk": {
+            "key": "external_learning",
+            "activity_type": "hangout",
+            "name": "Talks and workshops",
+            "emoji": "🎓",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 60,
+            "marker_background_color": "#5B4BC4"
+        },
+        "workshop": {
+            "key": "external_learning",
+            "activity_type": "hangout",
+            "name": "Talks and workshops",
+            "emoji": "🎓",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 60,
+            "marker_background_color": "#5B4BC4"
+        },
+        "market": {
+            "key": "external_market",
+            "activity_type": "hangout",
+            "name": "Markets",
+            "emoji": "🛍️",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 70,
+            "marker_background_color": "#5B4BC4"
+        },
+        "food_drink": {
+            "key": "external_food",
+            "activity_type": "hangout",
+            "name": "Food and drink",
+            "emoji": "🍽️",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 80,
+            "marker_background_color": "#5B4BC4"
+        },
+        "community": {
+            "key": "external_community",
+            "activity_type": "hangout",
+            "name": "Community",
+            "emoji": "🤝",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 90,
+            "marker_background_color": "#5B4BC4"
+        },
+        "outdoor": {
+            "key": "external_outdoor",
+            "activity_type": "hangout",
+            "name": "Outdoors",
+            "emoji": "🌳",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 100,
+            "marker_background_color": "#5B4BC4"
+        },
+        "other": {
+            "key": "external_other",
+            "activity_type": "hangout",
+            "name": "Other",
+            "emoji": "🎟️",
+            "image_url": null,
+            "enabled": true,
+            "is_default": false,
+            "order": 110,
+            "marker_background_color": "#5B4BC4"
+        }
+    }
+}

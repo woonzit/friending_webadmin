@@ -111,3 +111,25 @@ The first row is proven from bytes: removing the one appended key from the raw t
 23 bodies reproduces the previous set digest. All source commits are lane commits until Core
 publishes; re-pin to the first published Core commit carrying the same set digests, as the
 reachability rule above requires.
+
+## Third-party pin catalogue (AreYouIn submission system, 2026-10-09)
+
+`dates_external_pins_wire` (contract `dates-external-pins-v1`) is copied byte-for-byte from Core main
+`7276444db15d365fce4db334bca6d04b994bc6ce`; its manifest records scoped source
+`a356553affc4a2afddad46e5b38345d9d2f34df7`. Ten bodies: nine of the console's two routes
+(`dates_external_pins`, `dates_external_pins_save`) and the iOS lane's `member-event-icons.json`, vendored
+only so that the set digest can be recomputed. `fixture_set_sha256`
+`396410cdfafe787e6b54bc4cc1853ff9a69706e166412e908bed6a7097031bbd`, pinned in
+`tests/datesExternalPins.test.mts`, which also checks every body against the sha256 its manifest names.
+
+Two files of that directory are the console's own and not part of Core's corpus: `provenance.txt`, and
+`webadmin-pins-save.request`, the parameters of the genuine save, reconstructed from Core's generator
+because the corpus does not carry them (the note says how).
+
+Both Core commits were local on Core main when the corpus was copied (two ahead of the published tip). If
+Core is rebased before it is published, re-pin as the reachability rule above requires.
+
+The four leaderboard settings (`dates_suggestion_leaderboard_*`) have no Core body yet:
+`tests/datesSuggestionLeaderboard.test.mts` builds their rows to the specification inside Core's genuine
+configuration read and marks them PROVISIONAL. Replace them with Core's bodies when its configuration
+corpus carries the four rows.

@@ -467,7 +467,12 @@ const refusalCodes: Readonly<Record<number, readonly string[]>> = {
     "dates-host-transfer-target-invalid", "dates-admin-activity-id-invalid", "dates-admin-revision-required",
     "dates-event-icons-invalid", "dates-event-icon-invalid", "dates-event-icon-name-invalid",
     "dates-event-icon-image-required", "dates-event-icon-default-invalid",
-    "dates-event-icon-removal-forbidden", "dates-event-icon-type-immutable"],
+    "dates-event-icon-removal-forbidden", "dates-event-icon-type-immutable",
+    // The third-party pin catalogue (Core a356553a, DatesExternalPins::validate): each is raised by a check of the request
+    // alone, before the command is looked up or run - and `-pins-invalid` also inside its transaction, for a stored
+    // catalogue that does not validate.
+    "dates-external-pins-invalid", "dates-external-pin-invalid", "dates-external-pin-name-invalid",
+    "dates-external-pin-image-required", "dates-external-pin-color-invalid"],
 };
 
 /** Only pinned Core no-land refusals release an attempted command's identity. */

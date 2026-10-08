@@ -152,7 +152,8 @@ test("every inventoried functional section has detailed English and Hungarian he
   // T-865 P2a adds eleven: "Draft from source" on the external list (1), the
   // intake queue (3), the intake review screen (5) and the AI usage page (2).
   // T-896 adds five research topics and one run-batch topic on the intake queue.
-  assert.equal(totalSections, 280, "review the functional-section census when the UI changes");
+  // The submission system adds two on /dates/configuration: the third-party event pins and the submission leaderboard (282).
+  assert.equal(totalSections, 282, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [

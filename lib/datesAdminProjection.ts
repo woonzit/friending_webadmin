@@ -132,6 +132,7 @@ const MEMBER = {
   standing: leaves("strikes strike_limit banned_until"),
 };
 const INTAKE_RECEIPT = leaves("intake_id revision status");
+const EXTERNAL_PIN = leaves("key emoji image_url marker_background_color name_en name_hu order categories");
 const STATEMENT = leaves("en hu");
 
 /** The named fields of each Dates Admin route's success body. A route that is not here has no body the browser may see. */
@@ -168,6 +169,9 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
     icons: [leaves("key activity_type emoji image_url marker_background_color name_en name_hu enabled is_default order")] },
   dates_event_icons_save: { ...ENVELOPE, ...leaves("event_icon_contract_version revision audit_id idempotency_replayed"),
     icons: [leaves("key activity_type emoji image_url marker_background_color name_en name_hu enabled is_default order")] },
+  // The third-party pin catalogue (lib/datesExternalPins.ts): the eleven types, each with the fine categories it covers.
+  dates_external_pins: { ...ENVELOPE, ...leaves("revision default_marker_background_color"), pins: [EXTERNAL_PIN] },
+  dates_external_pins_save: { ...ENVELOPE, ...leaves("revision default_marker_background_color audit_id idempotency_replayed"), pins: [EXTERNAL_PIN] },
   dates_activity_command: { ...ENVELOPE,
     ...leaves("external_event_id activity_id revision activity_revision action event_status lifecycle soft_deleted external_revision audit_id idempotency_replayed purged") },
   dates_configuration: {

@@ -1170,7 +1170,7 @@
       },
       "datesConfiguration": {
         "title": "AreYouIn configuration help",
-        "summary": "This page owns the bounded AreYouIn capability and retention settings, member-visible activity types, and bilingual report reasons. AreYouIn section availability is managed once on Configuration.",
+        "summary": "This page owns the bounded AreYouIn capability and retention settings, the submission leaderboard, member-visible activity types, the event icon and third-party pin catalogues, and bilingual report reasons. AreYouIn section availability is managed once on Configuration.",
         "steps": {
           "1": "Read the effective value and the dedicated runtime help before changing a feature, limit or retention rule.",
           "2": "Keep stable catalog keys intact and update bilingual labels or active state with an audit reason.",
@@ -1204,6 +1204,26 @@
               "2": "Add a new versioned reason when a genuinely new policy category is needed."
             },
             "guidance": "Reason IDs and keys preserve historical meaning. Deactivate obsolete choices instead of rewriting an old reason into a different policy concept."
+          },
+          "suggestionLeaderboard": {
+            "title": "Submission leaderboard",
+            "purpose": "The leaderboard ranks members by the third-party events that were published from their submissions. This panel decides where it is shown and whose leaderboard a member sees, with one default and a row for every country that differs from it.",
+            "actions": {
+              "1": "Set the default: on or off, and the scope (the whole country, or the member's current city).",
+              "2": "Add a country to give that App Store storefront its own answer; a country's row always holds both the switch and the scope.",
+              "3": "Enter a reason and save. Every changed setting is saved as its own revision-checked, audited command."
+            },
+            "guidance": "The leaderboard appears only where members' suggestions are switched on (a switch of the Runtime settings). If a save stops half way, the panel says which settings it has already saved and keeps the rest of your changes for another try."
+          },
+          "externalPins": {
+            "title": "Third-party event pins",
+            "purpose": "Third-party events are sorted into eleven fixed types by their category, and every type has its own pin on the map. This panel sets the emoji or PNG, the names, the order and the pin color of each type, and the one default color of all third-party pins.",
+            "actions": {
+              "1": "Choose a type in the catalogue and edit its emoji or PNG, its Hungarian and English name and its order.",
+              "2": "Leave the pin color on Default to follow the default color of third-party pins, or choose Custom for a color of its own, and check the day and night preview.",
+              "3": "Enter a reason and save. One save stores the whole catalogue with the default color and is recorded in the audit log."
+            },
+            "guidance": "Types cannot be added or removed, and an event's type follows from its category: to move one event to another type, change its category in the external event editor. If the result of a save is unknown, use “Confirm / retry save” or “Reload from server” instead of repeating the change by hand."
           }
         }
       },
@@ -8299,6 +8319,94 @@
         "marker_background_color": {
           "invalid": "Enter a six-digit HEX color."
         }
+      }
+    },
+    "externalPins": {
+      "title": "Third-party event pins",
+      "copy": "Third-party events (a concert, a match, a festival…) get one of eleven fixed types. The type follows from the event's category, which the AI assigns and an administrator can change on the event. Here you set how the pin of each type looks; types cannot be added or removed.",
+      "loading": "Loading the pin catalogue…",
+      "loadError": "The third-party pin catalogue could not be loaded. Use Refresh to try again; if it keeps failing, Core may not serve this catalogue yet.",
+      "catalogLabel": "Third-party event types. Choose the type to edit.",
+      "untitled": "Unnamed type",
+      "defaultColorTitle": "Default color of third-party pins",
+      "defaultColorHint": "Every type without a color of its own gets this color, by day and at night. It is saved together with the types.",
+      "defaultColorReset": "Reset to {color}",
+      "defaultColorInvalid": "Enter a six-digit HEX color, for example {color}. The default color cannot be left empty.",
+      "edit": "Edit type",
+      "covers": "Categories",
+      "coversHint": "Events of these categories get this pin. To move one event to another type, change its category in the external event editor.",
+      "colorReset": "Use the default color",
+      "colorBase": "Default color: {color}",
+      "colorDefaultHint": "This type uses the default color of third-party pins: {color}.",
+      "swatches": {
+        "default": "Default color",
+        "blue": "Blue",
+        "teal": "Teal",
+        "magenta": "Magenta",
+        "green": "Green"
+      },
+      "compareLabel": "The pin of a member's event beside the pin of a third-party event",
+      "compareMember": "Member's event",
+      "compareExternal": "Third-party event",
+      "saved": "Third-party event pins saved.",
+      "discard": "Discard the unsaved pin changes and reload the current catalogue?",
+      "blockReadOnly": "You do not have permission to change the third-party event pins.",
+      "problemsElsewhere": "Other types to fix:"
+    },
+    "suggestionLeaderboard": {
+      "title": "Submission leaderboard",
+      "copy": "Members get a point for every third-party event that was published from their submission. Set here where the leaderboard is shown and whose leaderboard a member sees: one default, and a row for every country that differs from it.",
+      "absent": "This Core does not serve the leaderboard settings yet, so there is nothing to set here.",
+      "unreadable": "The leaderboard settings could not be read from the configuration. Nothing is shown instead of a guess; use Refresh to try again.",
+      "suggestionsOff": "Members' suggestions are switched off at the moment (runtime setting dates_external_suggestions_enabled), so no leaderboard is shown anywhere, whatever is set here. The leaderboard appears only where members' suggestions are on.",
+      "invalidStored": "The stored value of these settings is invalid, so their default is shown and in effect: {settings}. Saving replaces them.",
+      "halfRows": "These countries are stored in only one of the two settings, so their other value is the default: {codes}. Saving stores both values for them.",
+      "rebased": "The stored settings changed in the meantime. Your unsaved changes were kept; check them, then save again.",
+      "vocabularyWarning": "These stored countries are not among the App Store storefronts Core knows; replace or remove them before saving: {codes}.",
+      "defaultTitle": "Default",
+      "defaultCopy": "Every country without a row of its own.",
+      "on": "On",
+      "off": "Off",
+      "scope": "Scope",
+      "scopes": {
+        "country": "Country",
+        "city": "City"
+      },
+      "scopeHelp": {
+        "country": "everyone who submitted a published event in that country.",
+        "city": "the leaderboard of the member's current city."
+      },
+      "countriesTitle": "Countries",
+      "countriesCopy": "A country's row replaces the default for the members of that App Store storefront, with both values.",
+      "addCountry": "Add country",
+      "removeCountry": "Remove",
+      "emptyCountries": "Every country uses the default.",
+      "countriesLoading": "Loading the list of countries…",
+      "countriesError": "The list of countries could not be loaded, so the country rows cannot be changed now.",
+      "country": "Country",
+      "selectCountry": "Select a country",
+      "unknownCountry": "Unsupported storefront · {code}",
+      "rowSwitch": "Leaderboard in {country}",
+      "settings": {
+        "dates_suggestion_leaderboard_enabled": "the default switch",
+        "dates_suggestion_leaderboard_enabled_overrides": "the switches of the countries",
+        "dates_suggestion_leaderboard_scope": "the default scope",
+        "dates_suggestion_leaderboard_scope_overrides": "the scopes of the countries"
+      },
+      "saved": "The leaderboard settings were saved.",
+      "refused": "Not saved: {setting} ({error}).",
+      "refusedStale": "Not saved: someone else changed {setting} in the meantime. Your changes were kept; check them against the current values, then save again.",
+      "savedBefore": "Saved before it: {settings}.",
+      "unknown": "The result of saving {setting} is unknown, and the fields are locked until it is settled. The exact request is retained: “Confirm / retry save” sends it again without duplicating the change, then saves the rest. The other way out is “Reload from server”: it shows what is actually stored and drops the retained request and your local edits.",
+      "discard": "Discard the unsaved leaderboard changes and reload the stored settings?",
+      "discardPending": "Reload the leaderboard settings from the server? The retained save request and your local edits are dropped; whatever the server stored stays.",
+      "blockReason": "Enter a reason of at least {min} characters to save.",
+      "block": {
+        "readOnly": "You do not have permission to change the leaderboard settings.",
+        "clean": "There are no unsaved changes.",
+        "storefront": "Choose a country for every row.",
+        "duplicateStorefront": "The same country cannot have two rows.",
+        "vocabulary": "Replace or remove every flagged country before saving."
       }
     },
     "research": {

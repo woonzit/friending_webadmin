@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesEventIconsConfiguration from "@/components/DatesEventIconsConfiguration";
+import DatesExternalPinsConfiguration from "@/components/DatesExternalPinsConfiguration";
 import DatesRuntimeSettingsHelp from "@/components/DatesRuntimeSettingsHelp";
 import DatesSuggestionConsentStatus from "@/components/DatesSuggestionConsentStatus";
+import DatesSuggestionLeaderboardCard from "@/components/DatesSuggestionLeaderboardCard";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
@@ -38,6 +40,7 @@ import {
   DATES_LIVE_TRAIL_RETENTION_KEY,
   datesLiveRetentionUnset,
 } from "@/lib/datesRuntimeHelp";
+import { isLeaderboardSettingKey, leaderboardSettings, type LeaderboardRead } from "@/lib/datesSuggestionLeaderboard";
 import { formatDate } from "@/lib/format";
 import { projectDatesAdminReasons, datesReasonSaveReceipt, type DatesReasonDisplayRow as Reason, type DatesReasonUnreadableRow } from "@/lib/datesReasons";
 
@@ -94,6 +97,11 @@ export default function DatesConfigurationPage() {
   const [runtimeHelpOpen, setRuntimeHelpOpen] = useState(false);
   // Whether the icon editor holds unsaved edits or a save whose outcome is not known (it reports this itself).
   const [iconHold, setIconHold] = useState(false);
+  // The same of the third-party pin editor and of the leaderboard card.
+  const [pinHold, setPinHold] = useState(false);
+  const [leaderboardHold, setLeaderboardHold] = useState(false);
+  // The four leaderboard settings of the last configuration that was read; they are edited in their own card only.
+  const [leaderboard, setLeaderboard] = useState<LeaderboardRead>({ status: "absent" });
 
   const load = useCallback(async () => {
     if (settings.length === 0) setState("loading");
@@ -110,8 +118,9 @@ export default function DatesConfigurationPage() {
       return;
     }
     setSettings((configuration.settings as Setting[]).filter(
-      (setting) => datesRuntimeSettingVisible(setting?.key),
+      (setting) => datesRuntimeSettingVisible(setting?.key) && !isLeaderboardSettingKey(setting?.key),
     ));
+    setLeaderboard(leaderboardSettings(configuration.settings));
     setActivityTypes(configuration.activity_types as ActivityType[]);
     setReasons(nextReasons.reasons); setUnreadableReasons(nextReasons.unreadable_rows);
     setLimitation(String(configuration.known_limitation || ""));
@@ -138,10 +147,17 @@ export default function DatesConfigurationPage() {
   const ready = state === "ready" && principal !== null;
   const canManageConfiguration = principal !== null && hasDatesCapability(principal, "dates_configuration_manage");
   const canManageReasons = principal !== null && hasDatesCapability(principal, "dates_reason_manage");
+  // The leaderboard shows only where member suggestions are on: globally, or in a storefront of its own.
+  const suggestionsOn = useMemo(() => {
+    const row = settings.find((setting) => setting.key === DATES_SUGGESTIONS_SWITCH);
+    if (!row) return null;
+    const storefronts = datesSettingStorefrontEffective(row);
+    return row.effective_value === true || (storefronts.status === "ready" && storefronts.rows.some((storefront) => storefront.effective));
+  }, [settings]);
 
-  // The icon editor keeps one place in this tree in every state of the page. While it holds unsaved edits or a save
-  // in doubt, a failed page reload shows its error above the editor instead of unmounting it; the editor is
-  // read-only until the page (and with it the operator's capabilities) is read again.
+  // The icon editor, the third-party pin editor and the leaderboard card each keep one place in this tree in every
+  // state of the page. While one holds unsaved edits or a save in doubt, a failed page reload shows its error above
+  // it instead of unmounting it; it is read-only until the page (and with it the operator's capabilities) is read again.
   return (
     <>
       {state === "loading" ? <LoadingPanel /> : !ready ? <ErrorPanel message={t("loadError")} retry={() => void load()} /> : <>
@@ -172,7 +188,12 @@ export default function DatesConfigurationPage() {
 
       </>}
 
+      {(ready || leaderboardHold) && <DatesSuggestionLeaderboardCard read={leaderboard} canManage={ready && canManageConfiguration} suggestionsOn={suggestionsOn}
+        onReload={() => void load()} onHoldChange={setLeaderboardHold} />}
+
       {(ready || iconHold) && <DatesEventIconsConfiguration canManage={ready && canManageConfiguration} onHoldChange={setIconHold} />}
+
+      {(ready || pinHold) && <DatesExternalPinsConfiguration canManage={ready && canManageConfiguration} onHoldChange={setPinHold} />}
 
       {ready && <>
       <section className="panel dates-section">

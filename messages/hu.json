@@ -1170,7 +1170,7 @@
       },
       "datesConfiguration": {
         "title": "AreYouIn konfiguráció súgó",
-        "summary": "Ez az oldal kezeli az AreYouIn korlátozott képesség- és megőrzési beállításait, a tagok által látott aktivitástípusokat és a kétnyelvű jelentési okokat. Az AreYouIn szekció elérhetőségének egyetlen helye a Konfiguráció.",
+        "summary": "Ez az oldal kezeli az AreYouIn korlátozott képesség- és megőrzési beállításait, a beküldési ranglistát, a tagok által látott aktivitástípusokat, az eseményikonok és a külső pinek katalógusát, valamint a kétnyelvű jelentési okokat. Az AreYouIn szekció elérhetőségének egyetlen helye a Konfiguráció.",
         "steps": {
           "1": "Feature, limit vagy retention szabály módosítása előtt olvasd el az effektív értéket és a részletes runtime súgót.",
           "2": "A stabil katalóguskulcsokat hagyd változatlanul, a kétnyelvű címkét vagy aktív állapotot auditindokkal frissítsd.",
@@ -1204,6 +1204,26 @@
               "2": "Valóban új szabályzati kategóriához adj új, verziózott okot."
             },
             "guidance": "Az okazonosítók és kulcsok őrzik a történelmi jelentést. Elavult választást inaktiválj, ne írj át egy régi okot teljesen más policy-fogalommá."
+          },
+          "suggestionLeaderboard": {
+            "title": "Beküldési ranglista",
+            "purpose": "A ranglista aszerint rangsorolja a tagokat, hogy hány külső esemény jelent meg a beküldésükből. Ez a panel dönti el, hol látszik a ranglista, és kinek a ranglistáját látja a tag: egy alapértelmezéssel és az ettől eltérő országok soraival.",
+            "actions": {
+              "1": "Állítsd be az alapértelmezést: be vagy ki, valamint a hatókört (az egész ország vagy a tag aktuális városa).",
+              "2": "Adj hozzá országot, ha az adott App Store-storefront saját választ kapjon; egy ország sora mindig a kapcsolót és a hatókört is tartalmazza.",
+              "3": "Adj meg indokot, és ments. Minden módosított beállítást külön, revízió-ellenőrzött és naplózott parancs ment el."
+            },
+            "guidance": "A ranglista csak ott jelenik meg, ahol a tagok javaslatai be vannak kapcsolva (ez a Runtime beállítások egyik kapcsolója). Ha a mentés félúton megáll, a panel megmondja, mely beállításokat mentette már el, a többi módosításodat pedig megőrzi a következő próbálkozáshoz."
+          },
+          "externalPins": {
+            "title": "Külső események pinjei",
+            "purpose": "A külső események a kategóriájuk alapján tizenegy rögzített típusba kerülnek, és minden típusnak saját pinje van a térképen. Ez a panel állítja be a típusok emojiját vagy PNG-képét, nevét, sorrendjét és pinszínét, valamint a külső pinek közös alapszínét.",
+            "actions": {
+              "1": "Válassz egy típust a katalógusban, és szerkeszd az emojiját vagy PNG-képét, a magyar és az angol nevét, valamint a sorrendjét.",
+              "2": "A pinszínt hagyd Alapértelmezetten, ha a külső pinek alapszínét kövesse, vagy válaszd az Egyedit saját színhez, és nézd meg a nappali és az éjszakai előnézetet.",
+              "3": "Adj meg indokot, és ments. Egy mentés a teljes katalógust tárolja az alapszínnel együtt, és bekerül az auditnaplóba."
+            },
+            "guidance": "Típust felvenni vagy törölni nem lehet, az esemény típusa pedig a kategóriájából adódik: egy eseményt úgy tehetsz át másik típusba, hogy a külső esemény szerkesztőjében módosítod a kategóriáját. Ha a mentés eredménye nem ismert, a módosítás kézi megismétlése helyett használd a „Mentés ellenőrzése / újrapróbálása” vagy az „Újratöltés a szerverről” gombot."
           }
         }
       },
@@ -8299,6 +8319,94 @@
         "marker_background_color": {
           "invalid": "Adj meg hatjegyű HEX színt."
         }
+      }
+    },
+    "externalPins": {
+      "title": "Külső események pinjei",
+      "copy": "A külső események (koncert, meccs, fesztivál…) tizenegy rögzített típus egyikébe kerülnek. A típus az esemény kategóriájából adódik: azt az MI állítja be, és az eseménynél egy adminisztrátor módosíthatja. Itt azt adod meg, hogyan nézzen ki az egyes típusok pinje; típust felvenni vagy törölni nem lehet.",
+      "loading": "A pinkatalógus betöltése…",
+      "loadError": "A külső események pinkatalógusát nem sikerült betölteni. Próbáld újra a Frissítés gombbal; ha továbbra sem megy, a Core talán még nem szolgálja ki ezt a katalógust.",
+      "catalogLabel": "Külső eseménytípusok. Válaszd ki a szerkesztendő típust.",
+      "untitled": "Névtelen típus",
+      "defaultColorTitle": "Külső pinek alapszíne",
+      "defaultColorHint": "Ezt a színt kapja minden típus, amelynek nincs saját színe, nappal és éjjel egyaránt. A típusokkal együtt mentjük.",
+      "defaultColorReset": "Visszaállítás erre: {color}",
+      "defaultColorInvalid": "Adj meg hatjegyű HEX színt, például: {color}. Az alapszín nem maradhat üresen.",
+      "edit": "Típus szerkesztése",
+      "covers": "Kategóriák",
+      "coversHint": "Az ilyen kategóriájú események kapják ezt a pint. Ha egy eseményt másik típusba tennél, a külső esemény szerkesztőjében módosítsd a kategóriáját.",
+      "colorReset": "Alapszín használata",
+      "colorBase": "Alapszín: {color}",
+      "colorDefaultHint": "Ez a típus a külső pinek alapszínét használja: {color}.",
+      "swatches": {
+        "default": "Alapszín",
+        "blue": "Kék",
+        "teal": "Türkizzöld",
+        "magenta": "Magenta",
+        "green": "Zöld"
+      },
+      "compareLabel": "Egy tagi esemény pinje egy külső esemény pinje mellett",
+      "compareMember": "Tagi esemény",
+      "compareExternal": "Külső esemény",
+      "saved": "A külső események pinjeit elmentettük.",
+      "discard": "Elveted a nem mentett pinmódosításokat, és betöltöd az aktuális katalógust?",
+      "blockReadOnly": "Nincs jogosultságod a külső események pinjeinek módosításához.",
+      "problemsElsewhere": "További javítandó típusok:"
+    },
+    "suggestionLeaderboard": {
+      "title": "Beküldési ranglista",
+      "copy": "A tagok egy pontot kapnak minden külső eseményért, amely a beküldésükből jelent meg. Itt adod meg, hol látszik a ranglista, és kinek a ranglistáját látja a tag: egy alapértelmezést, és egy-egy sort azoknak az országoknak, amelyek ettől eltérnek.",
+      "absent": "Ez a Core még nem szolgálja ki a ranglista beállításait, ezért itt egyelőre nincs mit beállítani.",
+      "unreadable": "A ranglista beállításait nem sikerült kiolvasni a konfigurációból. Találgatás helyett semmit sem mutatunk; próbáld újra a Frissítés gombbal.",
+      "suggestionsOff": "A tagok javaslatai jelenleg ki vannak kapcsolva (runtime beállítás: dates_external_suggestions_enabled), ezért ranglista sehol sem látszik, bármi van itt beállítva. A ranglista csak ott jelenik meg, ahol a tagok javaslatai be vannak kapcsolva.",
+      "invalidStored": "Ezeknek a beállításoknak hibás a tárolt értéke, ezért az alapértelmezésük látszik és érvényes: {settings}. Mentéskor felülírjuk őket.",
+      "halfRows": "Ezek az országok a két beállítás közül csak az egyikben szerepelnek, ezért a másik értékük az alapértelmezés: {codes}. Mentéskor mindkét értéküket eltároljuk.",
+      "rebased": "A tárolt beállítások közben megváltoztak. A nem mentett módosításaid megmaradtak; nézd át őket, majd ments újra.",
+      "vocabularyWarning": "Ezek a tárolt országok nem szerepelnek a Core által ismert App Store-storefrontok között; mentés előtt cseréld le vagy távolítsd el őket: {codes}.",
+      "defaultTitle": "Alapértelmezett",
+      "defaultCopy": "Minden ország, amelynek nincs saját sora.",
+      "on": "Bekapcsolva",
+      "off": "Kikapcsolva",
+      "scope": "Hatókör",
+      "scopes": {
+        "country": "Ország",
+        "city": "Város"
+      },
+      "scopeHelp": {
+        "country": "mindenki, aki az adott országban küldött be megjelent eseményt.",
+        "city": "a tag aktuális városának ranglistája."
+      },
+      "countriesTitle": "Országok",
+      "countriesCopy": "Egy ország sora az adott App Store-storefront tagjainál lecseréli az alapértelmezést, mindkét értékkel.",
+      "addCountry": "Ország hozzáadása",
+      "removeCountry": "Eltávolítás",
+      "emptyCountries": "Minden ország az alapértelmezést használja.",
+      "countriesLoading": "Az országlista betöltése…",
+      "countriesError": "Az országlistát nem sikerült betölteni, ezért az országok sorai most nem módosíthatók.",
+      "country": "Ország",
+      "selectCountry": "Válassz országot",
+      "unknownCountry": "Nem támogatott storefront · {code}",
+      "rowSwitch": "Ranglista itt: {country}",
+      "settings": {
+        "dates_suggestion_leaderboard_enabled": "az alapértelmezett kapcsoló",
+        "dates_suggestion_leaderboard_enabled_overrides": "az országok kapcsolói",
+        "dates_suggestion_leaderboard_scope": "az alapértelmezett hatókör",
+        "dates_suggestion_leaderboard_scope_overrides": "az országok hatóköre"
+      },
+      "saved": "A ranglista beállításait elmentettük.",
+      "refused": "Nem mentettük: {setting} ({error}).",
+      "refusedStale": "Nem mentettük, mert közben valaki más módosította ezt: {setting}. A módosításaid megmaradtak; vesd össze őket az aktuális értékekkel, majd ments újra.",
+      "savedBefore": "Előtte már elmentettük: {settings}.",
+      "unknown": "A mentés eredménye ennél a beállításnál nem ismert: {setting}. A mezők ezért zárolva vannak, amíg ez el nem dől. A pontos kérést megőriztük: a „Mentés ellenőrzése / újrapróbálása” ugyanazt küldi el újra, a módosítás megduplázása nélkül, majd elmenti a többit. A másik kiút az „Újratöltés a szerverről”: megmutatja, mi van ténylegesen eltárolva, és eldobja a megőrzött kérést meg a helyi módosításaidat.",
+      "discard": "Elveted a ranglista nem mentett módosításait, és betöltöd a tárolt beállításokat?",
+      "discardPending": "Újratöltöd a ranglista beállításait a szerverről? A megőrzött mentési kérés és a helyi módosításaid elvesznek; amit a szerver eltárolt, az megmarad.",
+      "blockReason": "A mentéshez adj meg legalább {min} karakteres indokot.",
+      "block": {
+        "readOnly": "Nincs jogosultságod a ranglista beállításainak módosításához.",
+        "clean": "Nincs nem mentett módosítás.",
+        "storefront": "Minden sorhoz válassz országot.",
+        "duplicateStorefront": "Egy országnak nem lehet két sora.",
+        "vocabulary": "Mentés előtt cserélj le vagy távolíts el minden megjelölt országot."
       }
     },
     "research": {

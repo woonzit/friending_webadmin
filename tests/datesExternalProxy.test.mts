@@ -15,6 +15,8 @@ import { isDatesAdminRoute, projectDatesAdminResponse } from "../lib/datesAdminP
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "../lib/datesExternalAdmin.ts";
 import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody } from "../lib/datesExternalModeration.ts";
 import { normalizeDatesEventIconsProxyBody } from "../lib/datesEventIcons.ts";
+import { normalizeDatesExternalPinsProxyBody } from "../lib/datesExternalPins.ts";
+import { normalizeDatesLeaderboardProxyBody } from "../lib/datesSuggestionLeaderboard.ts";
 
 // Execute the production POST function, not a reimplementation. Session/Core
 // I/O and NextResponse are controlled adapters; unrelated domain predicates
@@ -44,6 +46,7 @@ function harness() {
     isDatesAdminRoute, projectDatesAdminResponse,
     datesAvailabilityWriteIsRetired, datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody,
     datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody, normalizeDatesEventIconsProxyBody,
+    normalizeDatesExternalPinsProxyBody, normalizeDatesLeaderboardProxyBody,
     ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
     readAdminSession: async () => state.session,
     coreCall: async (action: string, body: any) => { state.calls.push({ action, body }); return action === "admin_me" ? state.member : state.response; },
@@ -176,4 +179,48 @@ test("icon catalogue proxy forwards only the closed read and save shapes, with t
   assert.deepEqual(await h.send("dates_event_icons", { page: 2 }), { status: 400, body: { success: false, status_code: 400, error: "invalid-input" } });
   // Each refused request cost one fresh membership check and reached no icon route.
   assert.deepEqual(h.state.calls.slice(forwarded).map((call) => call.action), Array(9).fill("admin_me"));
+});
+
+test("third-party pin proxy forwards only the closed read and save shapes, with no selector beyond the Dates one", async () => {
+  const types = ["sport", "music", "party", "festival", "arts", "learning", "market", "food", "community", "outdoor", "other"];
+  const rows = types.map((key, index) => ({ key, emoji: "🎟️", image_url: null, marker_background_color: index === 0 ? "#FF2D95" : null, name_en: `Type ${index}`, name_hu: `Típus ${index}`, order: (index + 1) * 10 }));
+  const save = { pins: JSON.stringify(rows), default_marker_background_color: "#6D5BD0", expected_revision: 3, reason: "Pin colours", idempotency_key: "external-pins:000000000001" };
+  const h = harness();
+  assert.equal((await h.send("dates_external_pins", {})).status, 200);
+  assert.deepEqual(JSON.parse(JSON.stringify(h.state.calls.at(-1)!.body)), { admin_email: email, dates_event_intake_admin_contract_version: 1 });
+  assert.equal((await h.send("dates_external_pins_save", save)).status, 200);
+  assert.deepEqual(JSON.parse(JSON.stringify(h.state.calls.at(-1)!.body)), { ...save, admin_email: email, dates_event_intake_admin_contract_version: 1 });
+  const forwarded = h.state.calls.length;
+  for (const body of [{ ...save, admin_email: "other@example.test" }, { ...save, expected_revision: "3" }, { ...save, reason: "" }, { ...save, pins: rows },
+    { ...save, default_marker_background_color: null }, { ...save, default_marker_background_color: "#6d5bd0" }, { ...save, pins: JSON.stringify(rows.slice(1)) },
+    { ...save, pins: JSON.stringify(rows.map((row) => ({ ...row, categories: ["concert"] }))) }, { ...save, pins: JSON.stringify([{ ...rows[0], name_en: "Sports " }, ...rows.slice(1)]) }]) {
+    assert.deepEqual(await h.send("dates_external_pins_save", body), { status: 400, body: { success: false, status_code: 400, error: "invalid-input" } });
+  }
+  assert.deepEqual(await h.send("dates_external_pins", { page: 2 }), { status: 400, body: { success: false, status_code: 400, error: "invalid-input" } });
+  // Each refused request cost one fresh membership check and reached no pin route.
+  assert.deepEqual(h.state.calls.slice(forwarded).map((call) => call.action), Array(10).fill("admin_me"));
+  // A viewer of AreYouIn reads the catalogue and cannot save it.
+  h.state.member.data.dates = { ...h.state.member.data.dates, role: "support_viewer", rank: 10 };
+  assert.equal((await h.send("dates_external_pins", {})).status, 200);
+  assert.equal((await h.send("dates_external_pins_save", save)).status, 403);
+});
+
+test("a leaderboard setting is forwarded only in its closed value; every other Dates setting travels as before", async () => {
+  const base = { expected_revision: 0, reason: "Leaderboard for Hungary", idempotency_key: "leaderboard:000000000001" };
+  const h = harness();
+  for (const command of [{ ...base, key: "dates_suggestion_leaderboard_scope_overrides", value: '{"HUN":"city"}' }, { ...base, key: "dates_suggestion_leaderboard_enabled_overrides", value: '{"HUN":true}' },
+    { ...base, key: "dates_suggestion_leaderboard_enabled", value: true }, { ...base, key: "dates_suggestion_leaderboard_scope", value: "city" }]) {
+    assert.equal((await h.send("dates_configuration_save", command)).status, 200);
+    assert.deepEqual(JSON.parse(JSON.stringify(h.state.calls.at(-1)!.body)), { ...command, admin_email: email, dates_event_intake_admin_contract_version: 1 });
+  }
+  // The generic editor's save of another setting is not this check's business.
+  const generic = { key: "dates_report_sla_hours", value: 12, expected_revision: 1, reason: "SLA", idempotency_key: "dates-configuration-save:1" };
+  assert.equal((await h.send("dates_configuration_save", generic)).status, 200);
+  const forwarded = h.state.calls.length;
+  for (const body of [{ ...base, key: "dates_suggestion_leaderboard_enabled", value: "true" }, { ...base, key: "dates_suggestion_leaderboard_scope", value: "world" },
+    { ...base, key: "dates_suggestion_leaderboard_enabled_overrides", value: { HUN: true } }, { ...base, key: "dates_suggestion_leaderboard_enabled_overrides", value: '{"hun":true}' },
+    { ...base, key: "dates_suggestion_leaderboard_scope_overrides", value: '{"HUN":true}' }, { ...base, key: "dates_suggestion_leaderboard_enabled", value: true, reason: "" }]) {
+    assert.deepEqual(await h.send("dates_configuration_save", body), { status: 400, body: { success: false, status_code: 400, error: "invalid-input" } });
+  }
+  assert.deepEqual(h.state.calls.slice(forwarded).map((call) => call.action), Array(6).fill("admin_me"));
 });

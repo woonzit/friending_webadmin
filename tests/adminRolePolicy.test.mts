@@ -228,6 +228,7 @@ test("the Dates read/write split matches the Core capability ladder", () => {
     "dates_activity_detail",
     "dates_activity_location",
     "dates_configuration",
+    "dates_external_pins",
     "dates_moderation_queue",
     "dates_moderation_detail",
     "dates_moderation_evidence",
@@ -240,6 +241,7 @@ test("the Dates read/write split matches the Core capability ladder", () => {
     "dates_activity_host_transfer",
     "dates_configuration_save",
     "dates_activity_type_save",
+    "dates_external_pins_save",
     "dates_moderation_trail_evidence",
     "dates_moderation_claim",
     "dates_moderation_heartbeat",
@@ -260,5 +262,5 @@ test("the Dates read/write split matches the Core capability ladder", () => {
   for (const action of writes) {
     assert.equal(adminActionAccess(action), "dates_write", `${action} must be a Dates write`);
   }
-  assert.equal(reads.length + writes.length, 25);
+  assert.equal(reads.length + writes.length, 27);
 });
