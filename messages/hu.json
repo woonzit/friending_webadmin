@@ -2845,7 +2845,7 @@
           },
           "counts": {
             "title": "Scoped dokumentum-witness-ek",
-            "purpose": "A 23 darabszámból álló teljes census a védett fixture scope profil-, média-, kapcsolat-, chat-, notification-, tagsági, verifikációs és AreYouIn rekordjait fedi le.",
+            "purpose": "A 27 darabszámból álló teljes census a védett fixture scope profil-, média-, kapcsolat-, chat-, notification-, tagsági, verifikációs és AreYouIn (az eseményfalakkal együtt) rekordjait fedi le.",
             "actions": {
               "1": "Minden tényleges darabszámot hasonlíts össze a várt witness-szel.",
               "2": "Az eltérésből azonosítsd, mely fixture-terület igényel védett resetet vagy szervervizsgálatot."
@@ -2854,7 +2854,7 @@
           },
           "checks": {
             "title": "Readiness checkek",
-            "purpose": "A 34 zárt check a controlt, környezeti egyezést, fiókállapotot, teljes tartalmat, érvényes médiát, a PLUS- és verifikációs jogosultságot, valamint az AreYouIn szemantikát bizonyítja.",
+            "purpose": "A 38 zárt check a controlt, környezeti egyezést, fiókállapotot, teljes tartalmat, érvényes médiát, a PLUS- és verifikációs jogosultságot, valamint az AreYouIn szemantikát bizonyítja.",
             "actions": {
               "1": "Vizsgálj meg minden hibás checket és kapcsolódó darabszám- vagy életciklus-támpontot.",
               "2": "Csak a teljesen zöld készletnél állíts readiness-t."
@@ -11891,7 +11891,11 @@
       "dates_threads": "AreYouIn beszélgetések",
       "dates_thread_members": "AreYouIn beszélgetéstagok",
       "dates_messages": "AreYouIn üzenetek",
-      "dates_notifications": "AreYouIn értesítések"
+      "dates_notifications": "AreYouIn értesítések",
+      "dates_wall_posts": "AreYouIn falbejegyzések",
+      "dates_wall_comments": "AreYouIn falhozzászólások",
+      "dates_wall_likes": "AreYouIn falkedvelések",
+      "dates_wall_assets": "AreYouIn falfotók"
     },
     "checks": {
       "control": "Kontrollrekord kész",
@@ -11927,6 +11931,10 @@
       "dates_thread_members": "AreYouIn beszélgetéstagok",
       "dates_messages": "AreYouIn üzenetek",
       "dates_notifications": "AreYouIn értesítések",
+      "dates_wall_posts": "AreYouIn falbejegyzések",
+      "dates_wall_comments": "AreYouIn falhozzászólások",
+      "dates_wall_likes": "AreYouIn falkedvelések",
+      "dates_wall_assets": "AreYouIn falfotók",
       "dates_semantics": "AreYouIn fixture-szerepek és állapotok"
     },
     "resetTitle": "Visszaállítás baseline-ra",

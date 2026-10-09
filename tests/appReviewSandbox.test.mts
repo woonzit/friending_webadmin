@@ -57,18 +57,20 @@ function statusFixture(): Record<string, unknown> {
 }
 
 /**
- * Pinned from Core c0a4212: fixed checks and counts come from
+ * Pinned from Core 254a00d (fixture version 6, the event walls): a genuine
+ * answer of the status route after a reset. Fixed checks and counts come from
  * `src/Services/AppReviewSandboxService.php`; ordered fixture checks come from
  * `src/Services/AppReviewFixtureV1.php`; Dates counts come from
- * `src/Services/AppReviewDatesFixtureService.php`.
+ * `src/Services/AppReviewDatesFixtureService.php` and the wall counts from
+ * `src/Services/AppReviewDatesWallFixture.php`.
  */
-test("the pinned Core c0a4212 status decodes and owns the exact closed key order and set", () => {
+test("the pinned Core 254a00d status decodes and owns the exact closed key order and set", () => {
   const fixture = JSON.parse(readFileSync(
-    new URL("./fixtures/app_review_sandbox/status-core-c0a4212.json", import.meta.url),
+    new URL("./fixtures/app_review_sandbox/status-core-254a00d.json", import.meta.url),
     "utf8",
   )) as { source_commit: unknown; status: Record<string, unknown> };
   assert.deepEqual(Object.keys(fixture), ["source_commit", "status"]);
-  assert.equal(fixture.source_commit, "c0a4212710bff4f3eafd5879c3536289f87c644b");
+  assert.equal(fixture.source_commit, "254a00d872c71e149bd98e3f791213fca9b96ac5");
 
   const rawChecks = fixture.status.checks as Array<{ key: string }>;
   const rawCounts = fixture.status.counts as Record<string, unknown>;
@@ -85,6 +87,13 @@ test("the pinned Core c0a4212 status decodes and owns the exact closed key order
   assert.ok(decoded, "the full Core-derived status is accepted by the fail-closed decoder");
   assert.deepEqual(decoded.checks.map((check) => check.key), checkKeys);
   assert.deepEqual(Object.keys(decoded.counts), countKeys);
+  // The event walls of fixture version 6: counted, and each count is a check of its own.
+  assert.equal(decoded.fixtureVersion, 6); assert.equal(decoded.ready, true);
+  const walls = { dates_wall_posts: 10, dates_wall_comments: 9, dates_wall_likes: 16, dates_wall_assets: 1 } as const;
+  for (const [key, expected] of Object.entries(walls)) {
+    assert.equal(decoded.counts[key as keyof typeof walls], expected, key);
+    assert.deepEqual(decoded.checks.find((check) => check.key === key), { key, ok: true, actual: expected, expected });
+  }
 });
 
 test("the status decoder accepts the documented shape and projects it", () => {
@@ -258,12 +267,14 @@ test("the closed key lists are the ones the page renders", () => {
     "photo_likes", "chat_rooms", "chat_messages", "mutes", "blocks", "notifications", "plus_grant",
     "verification_grant",
     "dates_activities", "dates_memberships", "dates_threads", "dates_thread_members", "dates_messages",
-    "dates_notifications", "dates_semantics", "content",
+    "dates_notifications", "dates_wall_posts", "dates_wall_comments", "dates_wall_likes", "dates_wall_assets",
+    "dates_semantics", "content",
   ]);
   assert.deepEqual([...APP_REVIEW_COUNT_KEYS], [
     "members", "albums", "chat_rooms", "chat_messages", "friends", "friend_requests",
     "visitors", "notifications", "reviewer_photos", "counterpart_photos", "album_access",
     "footprints", "photo_likes", "mutes", "blocks", "plus_grant", "verification_grant", "dates_activities",
     "dates_memberships", "dates_threads", "dates_thread_members", "dates_messages", "dates_notifications",
+    "dates_wall_posts", "dates_wall_comments", "dates_wall_likes", "dates_wall_assets",
   ]);
 });

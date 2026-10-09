@@ -2845,7 +2845,7 @@
           },
           "counts": {
             "title": "Scoped document witnesses",
-            "purpose": "The complete census of 23 counts covers profile, media, relationships, chats, notifications, membership, verification and AreYouIn records belonging to the protected fixture scope.",
+            "purpose": "The complete census of 27 counts covers profile, media, relationships, chats, notifications, membership, verification and AreYouIn records, event walls included, belonging to the protected fixture scope.",
             "actions": {
               "1": "Compare every actual count with its expected witness.",
               "2": "Use a mismatch to identify which fixture area needs a guarded reset or server investigation."
@@ -2854,7 +2854,7 @@
           },
           "checks": {
             "title": "Readiness checks",
-            "purpose": "The 34 closed checks prove control, environment match, account state, complete content, valid media, the PLUS and verification grants and AreYouIn semantics.",
+            "purpose": "The 38 closed checks prove control, environment match, account state, complete content, valid media, the PLUS and verification grants and AreYouIn semantics.",
             "actions": {
               "1": "Inspect every failing check and its associated count or lifecycle clue.",
               "2": "Claim readiness only when the complete set is green."
@@ -11891,7 +11891,11 @@
       "dates_threads": "AreYouIn threads",
       "dates_thread_members": "AreYouIn thread members",
       "dates_messages": "AreYouIn messages",
-      "dates_notifications": "AreYouIn notifications"
+      "dates_notifications": "AreYouIn notifications",
+      "dates_wall_posts": "AreYouIn wall posts",
+      "dates_wall_comments": "AreYouIn wall comments",
+      "dates_wall_likes": "AreYouIn wall likes",
+      "dates_wall_assets": "AreYouIn wall photos"
     },
     "checks": {
       "control": "Control record ready",
@@ -11927,6 +11931,10 @@
       "dates_thread_members": "AreYouIn thread members",
       "dates_messages": "AreYouIn messages",
       "dates_notifications": "AreYouIn notifications",
+      "dates_wall_posts": "AreYouIn wall posts",
+      "dates_wall_comments": "AreYouIn wall comments",
+      "dates_wall_likes": "AreYouIn wall likes",
+      "dates_wall_assets": "AreYouIn wall photos",
       "dates_semantics": "AreYouIn fixture roles and states"
     },
     "resetTitle": "Reset to baseline",

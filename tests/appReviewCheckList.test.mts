@@ -123,13 +123,13 @@ test("fixture-v4 expected Dates counts decode and render in both locales using t
   Object.assign(payload.counts as Record<string, unknown>, datesCounts);
   const status = appReviewSandboxStatus(payload); assert.ok(status);
   assert.equal(status.fixtureVersion, 4); assert.equal(status.control.fixtureVersion, 4);
-  assert.equal(status.ready, true); assert.equal(status.checks.length, 34); assert.equal(Object.keys(status.counts).length, 23);
+  assert.equal(status.ready, true); assert.equal(status.checks.length, 38); assert.equal(Object.keys(status.counts).length, 27);
   for (const [key, expected] of Object.entries(datesCounts)) {
     assert.equal(status.counts[key as keyof typeof status.counts], expected);
     assert.deepEqual(status.checks.find((check) => check.key === key), { key, ok: true, actual: expected, expected });
   }
   for (const locale of ["en", "hu"] as const) {
-    const green = await renderChecks(locale, payload); assert.equal(green.rows.length, 34); assert.doesNotMatch(green.markup, /check-failed/);
+    const green = await renderChecks(locale, payload); assert.equal(green.rows.length, 38); assert.doesNotMatch(green.markup, /check-failed/);
     for (const [key, expected] of Object.entries(datesCounts)) {
       const stale = structuredClone(payload);
       const check = (stale.checks as Array<Record<string, unknown>>).find((row) => row.key === key)!;

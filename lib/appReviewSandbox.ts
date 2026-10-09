@@ -53,6 +53,10 @@ export const APP_REVIEW_CHECK_KEYS = [
   "dates_thread_members",
   "dates_messages",
   "dates_notifications",
+  "dates_wall_posts",
+  "dates_wall_comments",
+  "dates_wall_likes",
+  "dates_wall_assets",
   "dates_semantics",
   "content",
 ] as const;
@@ -82,6 +86,10 @@ export const APP_REVIEW_COUNT_KEYS = [
   "dates_thread_members",
   "dates_messages",
   "dates_notifications",
+  "dates_wall_posts",
+  "dates_wall_comments",
+  "dates_wall_likes",
+  "dates_wall_assets",
 ] as const;
 export type AppReviewCountKey = (typeof APP_REVIEW_COUNT_KEYS)[number];
 
