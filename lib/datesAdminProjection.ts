@@ -313,6 +313,9 @@ export const DATES_ADMIN_DENIED_KEYS: Readonly<Record<string, { family: string; 
     "reports[].reporter_uid", "reports[].reporter_email", "appeal.note", "appeal.appellant_uid"] },
   dates_moderation_evidence: { family: "moderation-evidence", keys: ["appeal_note.appellant_uid"] },
   dates_moderation_resolve: { family: "moderation-decision-receipt", keys: ["target_result.text", "target_result.before.text", "target_result.after.text"] },
+  // A row of an event's content says how many members hid or reported it, never who. Core stores the member beside
+  // each count it serves here: a hide's `uid`, a report's `reporter_uid`, a case's `reporter_uids`.
+  dates_event_content: { family: "event-content", keys: ["items[].reporter_uid", "items[].reporter_uids", "items[].hider_uid", "items[].hider_uids"] },
   dates_external_event_list: { family: "external-event-list", keys: ["events[]._id", "events[].host", "events[].submitted_by_uid"] },
   dates_external_event_detail: { family: "external-event", keys: [
     // The reference to the intake: never the AI provider behind the draft, never a person.

@@ -345,6 +345,12 @@ const bodyKeys = (body: Record<string, unknown>, required: string[], optional: s
 const requestKey: Guard<string> = (value): value is string => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$/.test(value);
 const reason: Guard<string> = (value): value is string => typeof value === "string" && Array.from(value.trim()).length >= 3
   && Array.from(value).length <= 1000 && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\uD800-\uDFFF]/u.test(value);
+/**
+ * The guards of this module that another Dates console module reads a body or a request with (lib/datesEventContent.ts,
+ * lib/datesWallMediaBridge.ts): one definition of a Dates id, a bounded integer, a boolean, an audit reason, a request
+ * key and a closed key set, instead of one per module.
+ */
+export { bodyKeys as datesBodyKeys, bool as datesBoolean, id as datesId, integer as datesInteger, reason as datesReason, record as datesRecord, requestKey as datesRequestKey };
 export function datesExternalOfficialText(value: unknown): value is string {
   if (typeof value !== "string" || value.length > 32000 || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\uD800-\uDFFF]/u.test(value)) return false;
   const size = [...segmenter.segment(value.trim())].length;

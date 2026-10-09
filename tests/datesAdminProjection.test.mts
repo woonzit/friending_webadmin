@@ -7,6 +7,7 @@ import { OPERATIONAL_RECORD_SAFE_KEYS, operationalRecordSummary } from "../lib/a
 import {
   DATES_ADMIN_DENIED_KEYS, DATES_ADMIN_NAMED, DATES_ADMIN_OPAQUE, isDatesAdminRoute, projectDatesAdminBody, type DatesNamedTree,
 } from "../lib/datesAdminProjection.ts";
+import { eventContentPage } from "../lib/datesEventContent.ts";
 import { decodeDatesActivityOriginDetail, decodeDatesExternalDetail, decodeDatesExternalList, decodeDatesExternalPlaces } from "../lib/datesExternalAdmin.ts";
 import { datesExternalMessageResolutionReceipt } from "../lib/datesExternalMessageModeration.ts";
 import { projectDatesIntakeDetail, projectDatesIntakeQueue } from "../lib/datesIntakeAdmin.ts";
@@ -182,6 +183,7 @@ const DECODES: Record<string, (sent: any) => boolean> = {
   dates_moderation_evidence: (sent) => datesEvidenceRead(sent, { case_id: sent.case_id, appeal_id: sent.appeal_note?.appeal_id ?? null,
     include_sensitive_location: sent.evidence.some((row: any) => row.sensitive_location), break_glass: sent.break_glass_used }) !== null,
   dates_moderation_resolve: (sent) => sent.target_result.target_type !== "message" || typeof datesExternalMessageResolutionReceipt === "function",
+  dates_event_content: (sent) => eventContentPage(sent, sent.activity_id, sent.kind) !== null,
   dates_external_event_list: (sent) => decodeDatesExternalList(sent, { page: sent.page, limit: sent.limit }) !== null,
   dates_external_event_detail: (sent) => decodeDatesExternalDetail(sent, sent.event.external_event_id) !== null,
   dates_activity_detail: (sent) => decodeDatesActivityOriginDetail(sent, sent.activity.activity_id, ["dates_external_event_read", "dates_external_event_manage"]) !== null,
@@ -227,7 +229,7 @@ test("the deny-list is the one lead's ruling names, and more: every key the rele
     "dates_moderation_detail:decisions[].subject_uid", "dates_moderation_detail:decisions[].after", "dates_event_intake_detail:intake.submitter_uid",
     "dates_event_intake_detail:intake.consent", "dates_event_intake_detail:intake.inputs.origin_hint", "dates_event_intake_detail:intake.inputs.images[].storage_key",
     "dates_event_intake_detail:intake.ai_runs[].prompt"]) assert.ok(all.includes(named), named);
-  assert.equal(all.length, 71);
+  assert.equal(all.length, 75);
   // The document carries the same list, route by route and key by key.
   const document = readFileSync(new URL("../docs/DATES_EVENT_INTAKE_CONSOLE.md", import.meta.url), "utf8");
   for (const [route, contract] of Object.entries(DATES_ADMIN_DENIED_KEYS)) {

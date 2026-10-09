@@ -132,6 +132,7 @@ tree per route) - and nothing else. A refusal is Core's six refusal keys.
 | `dates_moderation_detail` (moderation-case) | `case.text`, `case.message_text`, `case.snapshot`, `case.target_content_hash`, `case.reporter_uid`, `case.reporter_uids`, `case.external_message.text`, `case.external_message.snapshot`, `case.external_message.target_content_hash`, `decisions[].before`, `decisions[].after`, `decisions[].actor_email`, `decisions[].subject_uid`, `decisions[].text`, `reports[].reporter_uid`, `reports[].reporter_email`, `appeal.note`, `appeal.appellant_uid` | Case metadata: never the reported content, never who reported or appealed, never the acting moderator, the sanctioned member or the raw before / after of a decision; the appeal's note comes only from the audited evidence read. |
 | `dates_moderation_evidence` (moderation-evidence) | `appeal_note.appellant_uid` | The appeal note is the appellant's words, not their identity. |
 | `dates_moderation_resolve` (moderation-decision-receipt) | `target_result.text`, `target_result.before.text`, `target_result.after.text` | A receipt names states and revisions, never a message text. |
+| `dates_event_content` (event-content) | `items[].reporter_uid`, `items[].reporter_uids`, `items[].hider_uid`, `items[].hider_uids` | A row of an event's content carries how many members hid or reported it, never who did. |
 | `dates_external_event_list` (external-event-list) | `events[]._id`, `events[].host`, `events[].submitted_by_uid` | A list row has no member host, no database id and no submitter. |
 | `dates_external_event_detail` (external-event) | `event._id`, `event.host`, `event.intake.provider`, `event.intake.admin_principal`, `event.intake.submitter_uid` | The reference to the intake names the intake, its channel and the event index: never the AI provider behind the draft, never a person. |
 | `dates_activity_detail` (activity) | `external_event._id`, `external_event.host`, `external_event.intake.provider`, `external_event.intake.admin_principal`, `external_event.intake.submitter_uid` | The same, for the event embedded in an activity detail. |
@@ -144,8 +145,9 @@ ones the released decoders used to catch by refusing the whole body; what
 Core stores beside what it serves (read from Core's source: a decision's
 `actor_email`, `subject_uid`, `before`, `after`; a report's `reporter_uid`; an
 appeal's `appellant_uid` and `note`; an intake's `submitter_uid`, `consent`,
-`inputs.origin_hint`, storage keys and fingerprints); and what an AI run must
-never carry.
+`inputs.origin_hint`, storage keys and fingerprints; the member behind a
+personal hide or a report of an event's wall content, of which the content
+list serves only the counts); and what an AI run must never carry.
 
 **Kept whole, by design** (`DATES_ADMIN_OPAQUE`) - the only parts of a Dates
 body that reach the browser without being named field by field:
