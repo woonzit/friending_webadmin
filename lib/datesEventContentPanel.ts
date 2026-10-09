@@ -12,7 +12,8 @@ import {
  *
  * The rules, in short:
  * - Nothing is read until the operator asks ("shown"): a read shows members'
- *   content and Core records it.
+ *   content and Core records it. Nothing else opens the list - not a request
+ *   for a case of the event, and not applying an access scope.
  * - Every read has a ticket. A new read raises it; an answer to an older
  *   ticket is dropped. "Loading" is the state of the newest ticket and ends
  *   with its answer, so a superseded read can leave nothing behind.
@@ -35,12 +36,15 @@ export type EventReviewTarget =
   | { kind: EventContentRowKind; id: string; reply: boolean; author_uid: number | null; excerpt: string; cut: boolean };
 
 export type EventContentRead =
-  /** Nothing was asked for yet: the panel is closed. */
+  /** No read was asked for. */
   | { status: "idle" }
   /** The read of the newest ticket is on its way. `more`: the next page of the list that is shown. */
   | { status: "loading"; more: boolean }
   | { status: "ready" }
-  /** `more`: the next page failed and the rows that were read are still shown. Otherwise there is no list. */
+  /**
+   * `more`: the next page failed and the rows that were read are still shown. Otherwise there is no list - a read failed,
+   * or a request was refused for who is asking (which can happen before the list was ever asked for).
+   */
   | { status: "failed"; more: boolean; problem: EventContentProblem };
 
 export type EventReviewCommand =
@@ -58,6 +62,8 @@ export type EventReviewNotice =
 
 export type EventContentPanelState = {
   activityId: string;
+  /** The operator asked for the list. Until then there is no read, whatever else happens in the panel. */
+  shown: boolean;
   kind: EventContentKind;
   /** One post's comments, on the comments tab; "" for all. */
   postId: string;
@@ -94,7 +100,7 @@ export const EVENT_REVIEW_REASON_MAX = 1000;
 export const EVENT_REVIEW_EXCERPT = 80;
 
 export function eventContentPanelInitial(activityId: string): EventContentPanelState {
-  return { activityId, kind: "wall_post", postId: "", access: { break_glass: false, reason: "" }, ticket: 0, read: { status: "idle" }, page: null,
+  return { activityId, shown: false, kind: "wall_post", postId: "", access: { break_glass: false, reason: "" }, ticket: 0, read: { status: "idle" }, page: null,
     target: null, reason: "", command: { status: "idle" }, notice: null };
 }
 
@@ -112,8 +118,6 @@ export const eventReviewReasonValid = (reason: string): boolean => Array.from(re
 /** Break-glass is asked for with a reason, or not at all. */
 export const eventContentAccessValid = (access: EventContentAccess): boolean => !access.break_glass || eventReviewReasonValid(access.reason);
 
-/** The panel was asked to show the list (it may still be loading, or have failed). */
-export const eventContentShown = (state: EventContentPanelState): boolean => state.read.status !== "idle";
 /**
  * A request is on its way or in doubt. What it was made from stays as it is
  * until it is settled: the list that is asked for, the access scope, the target
@@ -208,22 +212,24 @@ function reviewAnswered(state: EventContentPanelState, request: EventReviewReque
 export function eventContentPanelReducer(state: EventContentPanelState, action: EventContentPanelAction): EventContentPanelState {
   switch (action.type) {
     case "shown":
-      return eventContentShown(state) ? state : reading(state, false);
+      return state.shown ? state : reading({ ...state, shown: true }, false);
     case "listChosen": {
       const postId = action.kind === "wall_comment" ? action.postId : "";
       // The list that is shown, asked for again by its own tab: nothing changes - no blank list, no read to lose.
-      if (!eventContentShown(state) || eventContentHeld(state) || (action.kind === state.kind && postId === state.postId)) return state;
+      if (!state.shown || eventContentHeld(state) || (action.kind === state.kind && postId === state.postId)) return state;
       return reading(withoutRowTarget({ ...state, kind: action.kind, postId, notice: null }), false);
     }
     case "accessApplied": {
       const access = { break_glass: action.access.break_glass, reason: action.access.reason.trim() };
       if (eventContentHeld(state) || !eventContentAccessValid(access)) return state;
       // Another scope is another list: the rows read under the earlier one go, and a row selected among them with them.
-      return eventContentShown(state) ? reading(withoutRowTarget({ ...state, access, notice: null }), false) : { ...state, access };
+      if (state.shown) return reading(withoutRowTarget({ ...state, access, notice: null }), false);
+      // The list was never asked for: a scope is all this is. What an earlier request was refused for is over with it.
+      return { ...state, access, read: { status: "idle" }, notice: null };
     }
     case "refreshed":
       // Also while a request is in doubt: reading the list again is how the operator finds out what became of it.
-      return !eventContentShown(state) || state.command.status === "sending" ? state : reading(state, false);
+      return !state.shown || state.command.status === "sending" ? state : reading(state, false);
     case "moreAsked": {
       const next = state.read.status === "ready" || (state.read.status === "failed" && state.read.more);
       return next && !eventContentHeld(state) && state.page !== null && state.page.has_more ? reading(state, true) : state;

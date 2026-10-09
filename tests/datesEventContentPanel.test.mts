@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  EVENT_REVIEW_EXCERPT, eventContentAccessValid, eventContentHeld, eventContentPanelInitial, eventContentPanelReducer, eventContentReadBody, eventContentShown,
+  EVENT_REVIEW_EXCERPT, eventContentAccessValid, eventContentHeld, eventContentPanelInitial, eventContentPanelReducer, eventContentReadBody,
   eventReviewReasonValid, eventReviewRequest, eventReviewTargetOf,
   type EventContentPanelAction, type EventContentPanelState,
 } from "../lib/datesEventContentPanel.ts";
@@ -34,13 +34,17 @@ function sent(reason = "Proactive safety check") {
 
 test("nothing is read until the operator asks; then every read has a ticket and a body that says what is wanted", () => {
   const closed = eventContentPanelInitial(activity);
-  assert.equal(eventContentShown(closed), false); assert.deepEqual(closed.read, { status: "idle" }); assert.equal(closed.page, null); assert.equal(closed.ticket, 0);
+  assert.equal(closed.shown, false); assert.deepEqual(closed.read, { status: "idle" }); assert.equal(closed.page, null); assert.equal(closed.ticket, 0);
   // Closed, nothing but "show" asks for a read.
   for (const action of [{ type: "refreshed" }, { type: "moreAsked" }, { type: "listChosen", kind: "message", postId: "" }, { type: "readAnswered", ticket: 0, response: posts }] as EventContentPanelAction[]) {
     assert.equal(eventContentPanelReducer(closed, action), closed, action.type);
   }
+  // An access scope applied to a closed panel is a scope, not a read: it goes with the first read when that is asked for.
+  const scopedClosed = run(closed, { type: "accessApplied", access: { break_glass: true, reason: "Cleared by the duty lead" } });
+  assert.equal(scopedClosed.shown, false); assert.deepEqual(scopedClosed.read, { status: "idle" }); assert.equal(scopedClosed.ticket, 0);
+  assert.deepEqual(eventContentReadBody(run(scopedClosed, { type: "shown" })), { activity_id: activity, kind: "wall_post", break_glass: true, reason: "Cleared by the duty lead" });
   const shown = run(closed, { type: "shown" });
-  assert.deepEqual(shown.read, { status: "loading", more: false }); assert.equal(shown.ticket, 1);
+  assert.equal(shown.shown, true); assert.deepEqual(shown.read, { status: "loading", more: false }); assert.equal(shown.ticket, 1);
   assert.deepEqual(eventContentReadBody(shown), { activity_id: activity, kind: "wall_post", break_glass: false });
   assert.equal(run(shown, { type: "shown" }), shown, "shown once");
   const ready = run(shown, { type: "readAnswered", ticket: 1, response: posts });
@@ -240,12 +244,20 @@ test("a refusal settles a request and keeps the list; a refusal for who is askin
   assert.equal(refused.page, null);
   const late = run(refused, { type: "readAnswered", ticket: chosen.ticket, response: lastPage([]) });
   assert.equal(late, refused); assert.equal(late.page, null);
-  // The event as a whole, refused for a conflict before the list was ever shown: the problem opens the panel on it.
+  // The event as a whole needs no list. Refused for a conflict before the list was ever asked for, the problem is said -
+  // and the list stays closed: neither the refusal nor the break-glass scope applied after it reads members' content.
   const whole = run(eventContentPanelInitial(activity), { type: "targetChosen", target: { kind: "activity", id: activity } }, { type: "reasonTyped", value: "The whole event" });
   const wholeRequest = eventReviewRequest(whole, KEY)!;
   assert.deepEqual(wholeRequest, { activity_id: activity, kind: "activity", target_id: activity, reason: "The whole event", break_glass: false, idempotency_key: KEY });
   const conflicted = run(whole, { type: "reviewStarted", request: wholeRequest }, { type: "reviewAnswered", request: wholeRequest, response: core(403, "dates-moderation-conflict") });
   assert.deepEqual(conflicted.read, { status: "failed", more: false, problem: { kind: "conflict" } }); assert.deepEqual(conflicted.target, { kind: "activity", id: activity });
+  assert.equal(conflicted.shown, false); assert.equal(conflicted.page, null);
+  for (const action of [{ type: "refreshed" }, { type: "moreAsked" }, { type: "listChosen", kind: "message", postId: "" }] as EventContentPanelAction[]) assert.equal(run(conflicted, action), conflicted, action.type);
+  const cleared = run(conflicted, { type: "accessApplied", access: { break_glass: true, reason: "Cleared by the duty lead" } });
+  assert.equal(cleared.shown, false); assert.deepEqual(cleared.read, { status: "idle" }, "no read, and the refusal that is over is not shown any more");
+  assert.equal(cleared.notice, null); assert.equal(cleared.reason, "The whole event");
+  assert.equal(eventReviewRequest(cleared, "content:under-break-glass")?.break_glass, true, "the next request goes under the scope");
+  assert.deepEqual(run(cleared, { type: "shown" }).read, { status: "loading", more: false }, "the list is still there to ask for");
 });
 
 test("a request in doubt goes out again as the very same object, and any answer to it settles it - there is no dead end", () => {
