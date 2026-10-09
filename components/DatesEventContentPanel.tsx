@@ -11,7 +11,7 @@ import { EVENT_CONTENT_KINDS, eventContentReviewOutcome, type EventContentProble
 import {
   EVENT_REVIEW_REASON_MAX, EVENT_REVIEW_REASON_MIN, eventContentAccessValid, eventContentHeld, eventContentPanelInitial, eventContentPanelReducer,
   eventContentReadBody, eventReviewReasonValid, eventReviewRequest, eventReviewTargetOf,
-  type EventContentPanelState, type EventReviewTarget,
+  type EventContentAccess, type EventContentPanelState, type EventReviewNotice as EventReviewNoticeState, type EventReviewTarget,
 } from "@/lib/datesEventContentPanel";
 import { formatDate } from "@/lib/format";
 
@@ -102,7 +102,7 @@ export default function DatesEventContentPanel({ activityId, principal, deleted,
     <div className="panel-body">
       {/* The event as a whole has no row, and a row that is not listed (its list is being read again) has no card: the form is here. */}
       {!anchored && form}
-      {target === null && <EventReviewNotice state={state} />}
+      {target === null && state.notice !== null && <EventReviewNotice notice={state.notice} />}
       {shown && <div className="row-actions dates-event-content-tabs" role="group" aria-label={t("kindsLabel")}>
         {EVENT_CONTENT_KINDS.map((kind) => <button key={kind} type="button" className={`button ${kind === state.kind ? "button-primary" : "button-secondary"}`}
           aria-pressed={kind === state.kind} disabled={held} onClick={() => dispatch({ type: "listChosen", kind, postId: "" })}>{t(`kinds.${kind}`)}</button>)}
@@ -206,10 +206,8 @@ function EventReviewForm({ state, reasonField, onSubmit, onReason, onDrop }: {
 }
 
 /** What became of a request whose form is closed: the case it opened, the case a re-read found, or its refusal. */
-function EventReviewNotice({ state }: { state: EventContentPanelState }) {
+function EventReviewNotice({ notice }: { notice: EventReviewNoticeState }) {
   const t = useTranslations("datesAdmin.eventContent");
-  const { notice } = state;
-  if (notice === null) return null;
   if (notice.kind === "refused") return <p className="alert alert-error" role="alert">{t("refused", { error: notice.error })}</p>;
   return <div className={`alert ${notice.kind === "opened" ? "alert-success" : "alert-info"} dates-event-content-notice`} role="status">
     <span>{t(notice.kind === "opened" ? "caseOpened" : "caseExists")}</span>
@@ -233,21 +231,24 @@ function EventContentProblemNotice({ problem, breakGlass }: { problem: EventCont
 /**
  * Break-glass for an operator who is party to the event: asked for with a
  * reason, applied on purpose, and from then on sent with every read of this
- * panel and every request made from it. Open while a conflict is the problem.
+ * panel and every request made from it - which is said above the control for
+ * as long as it is so. The control is open while a conflict is the problem.
  */
-function EventContentAccessControl({ state, onApply }: { state: EventContentPanelState; onApply: (access: { break_glass: boolean; reason: string }) => void }) {
+function EventContentAccessControl({ state, onApply }: { state: EventContentPanelState; onApply: (access: EventContentAccess) => void }) {
   const t = useTranslations("datesAdmin.eventContent");
   const [draft, setDraft] = useState(state.access);
   const held = eventContentHeld(state);
   const conflict = state.read.status === "failed" && state.read.problem.kind === "conflict";
-  return <details className="dates-event-content-access" open={conflict || undefined}>
-    <summary>{t("breakGlassTitle")}</summary>
+  return <>
     {state.access.break_glass && <p className="alert alert-warning" role="status">{t("breakGlassOn")}</p>}
-    <label className="checkbox-field"><input type="checkbox" checked={draft.break_glass} disabled={held}
-      onChange={(event) => setDraft({ ...draft, break_glass: event.target.checked })} /><span>{t("breakGlass")}</span></label>
-    <label className="field"><span>{t("accessReason")}</span>
-      <input value={draft.reason} maxLength={EVENT_REVIEW_REASON_MAX} disabled={held} onChange={(event) => setDraft({ ...draft, reason: event.target.value })} /></label>
-    <div className="row-actions"><button type="button" className="button button-secondary" disabled={held || !eventContentAccessValid(draft)}
-      onClick={() => onApply(draft)}>{t("applyAccess")}</button></div>
-  </details>;
+    <details className="dates-event-content-access" open={conflict || undefined}>
+      <summary>{t("breakGlassTitle")}</summary>
+      <label className="checkbox-field"><input type="checkbox" checked={draft.break_glass} disabled={held}
+        onChange={(event) => setDraft({ ...draft, break_glass: event.target.checked })} /><span>{t("breakGlass")}</span></label>
+      <label className="field"><span>{t("accessReason")}</span>
+        <input value={draft.reason} maxLength={EVENT_REVIEW_REASON_MAX} disabled={held} onChange={(event) => setDraft({ ...draft, reason: event.target.value })} /></label>
+      <div className="row-actions"><button type="button" className="button button-secondary" disabled={held || !eventContentAccessValid(draft)}
+        onClick={() => onApply(draft)}>{t("applyAccess")}</button></div>
+    </details>
+  </>;
 }

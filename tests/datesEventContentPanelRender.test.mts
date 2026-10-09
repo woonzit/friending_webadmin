@@ -117,6 +117,10 @@ for (const locale of ["en", "hu"]) test(`${locale}: the form sits in the card of
   const pointed = await render(locale, { initialState: conflict, principal: urgent });
   assert.ok(pointed.includes(escaped(copy.problems.conflictBreakGlass))); assert.match(pointed, /<details[^>]* open=""/); assert.ok(pointed.includes(escaped(copy.breakGlassTitle)));
   assert.equal((await render(locale, { initialState: conflict })).includes(escaped(copy.breakGlassTitle)), false);
+  // Once applied, emergency access is said above the control - also while the control is folded - for as long as it is on.
+  const applied = await render(locale, { principal: urgent, initialState: run(listed(), { type: "accessApplied", access: { break_glass: true, reason: "Cleared by the duty lead" } }) });
+  assert.ok(applied.includes(escaped(copy.breakGlassOn))); assert.ok(applied.indexOf(escaped(copy.breakGlassOn)) < applied.indexOf("<details"));
+  assert.equal((await render(locale, { principal: urgent, initialState: listed() })).includes(escaped(copy.breakGlassOn)), false);
   // The control is there before the list is asked for too (closed until it is needed): the scope can be applied first.
   const before = await render(locale, { principal: urgent });
   assert.ok(before.includes(escaped(copy.breakGlassTitle))); assert.ok(before.includes(escaped(copy.show))); assert.doesNotMatch(before, /<details[^>]* open=""/);
