@@ -1,0 +1,46 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "dates_api_version": 1,
+        "wall": {
+            "schema_version": 1,
+            "activity_id": "act_047dbccb9073e328204314a3048991d8",
+            "revision": 3,
+            "settings": {
+                "posting": "everyone",
+                "comments_enabled": true,
+                "commenting": "everyone",
+                "poster_uids": []
+            },
+            "capabilities": {
+                "can_post": true,
+                "can_comment": true,
+                "can_like": true,
+                "can_manage": true
+            },
+            "unread_count": 0,
+            "maximum_text_length": 4000,
+            "maximum_comment_length": 1000,
+            "maximum_video_seconds": 15,
+            "maximum_media_bytes": 12582912
+        },
+        "eligible_posters": [
+            {
+                "uid": 102,
+                "id": 102,
+                "display_name": "Participant",
+                "avatar_url": null
+            },
+            {
+                "uid": 103,
+                "id": 103,
+                "display_name": "Delegate",
+                "avatar_url": null
+            }
+        ]
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

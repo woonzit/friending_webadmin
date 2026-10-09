@@ -25,6 +25,7 @@ import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProx
 import { datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody } from "@/lib/datesIntakeAdmin";
 import { datesResearchProxyCapabilityAuthorized, normalizeDatesResearchProxyBody } from "@/lib/datesResearchProxy";
 import { normalizeDatesEventIconsProxyBody } from "@/lib/datesEventIcons";
+import { eventContentProxyAuthorized, normalizeEventContentBody } from "@/lib/datesEventContent";
 import { normalizeDatesExternalPinsProxyBody } from "@/lib/datesExternalPins";
 import { normalizeDatesLeaderboardProxyBody } from "@/lib/datesSuggestionLeaderboard";
 import {
@@ -127,6 +128,9 @@ export async function POST(
   // purpose: the session is valid, so `adminClient` must not send the operator
   // back to /login.
   const principal = adminPrincipalFrom(membership.data);
+  if (eventContentProxyAuthorized(action, membership.data) === false) {
+    return bridgeError("dates-admin-capability-required", 403);
+  }
   if (datesExternalProxyCapabilityAuthorized(action, membership.data) === false) {
     return bridgeError("dates-admin-capability-required", 403);
   }
@@ -217,6 +221,10 @@ export async function POST(
   if (datesAvailabilityWriteIsRetired(action, body)) {
     return bridgeError("invalid-input", 400);
   }
+
+  const eventContentBody = normalizeEventContentBody(action, body);
+  if (eventContentBody === null) return bridgeError("invalid-input", 400);
+  if (eventContentBody !== undefined) body = eventContentBody;
 
   const externalBody = normalizeDatesExternalProxyBody(action, body);
   if (externalBody === null) return bridgeError("invalid-input", 400);

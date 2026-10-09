@@ -139,6 +139,9 @@ const STATEMENT = leaves("en hu");
 export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   ...DATES_RESEARCH_NAMED,
   dates_activity_list: { ...ENVELOPE, ...leaves("page limit total"), activities: [ACTIVITY] },
+  dates_event_content: { ...ENVELOPE, ...leaves("event_content_version activity_id kind has_more next_cursor audit_id"),
+    items: [leaves("id kind author_uid text content_kind state post_id root_id created_at signal_at has_media hide_count report_count case_id can_review")] },
+  dates_event_content_review: { ...ENVELOPE, ...leaves("event_content_version activity_id kind target_id case_id created audit_id idempotency_replayed") },
   dates_activity_detail: {
     ...ENVELOPE,
     ...leaves("memberships_truncated chats_truncated reports_truncated report_count notifications_truncated notification_count"),

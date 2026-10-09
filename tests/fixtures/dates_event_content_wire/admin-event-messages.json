@@ -1,0 +1,33 @@
+{
+    "success": true,
+    "status_code": 200,
+    "event_content_version": 1,
+    "activity_id": "act_047dbccb9073e328204314a3048991d8",
+    "kind": "message",
+    "items": [
+        {
+            "id": "msg_330aff5e26094a06f27e1f6bf2888815",
+            "kind": "message",
+            "author_uid": 102,
+            "text": "Event chat UGC",
+            "content_kind": "text",
+            "state": "active",
+            "post_id": null,
+            "root_id": null,
+            "created_at": 1791559024,
+            "signal_at": null,
+            "has_media": false,
+            "hide_count": 0,
+            "report_count": 0,
+            "case_id": null,
+            "can_review": true
+        }
+    ],
+    "has_more": false,
+    "next_cursor": null,
+    "audit_id": "aud_869f09694d68d3350c362e076129b9ef",
+    "server_now": 1791559027,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

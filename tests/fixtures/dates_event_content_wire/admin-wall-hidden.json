@@ -1,0 +1,33 @@
+{
+    "success": true,
+    "status_code": 200,
+    "event_content_version": 1,
+    "activity_id": "act_047dbccb9073e328204314a3048991d8",
+    "kind": "hidden",
+    "items": [
+        {
+            "id": "wpo_238fb57716357ec35b2277719cf6e15d",
+            "kind": "wall_post",
+            "author_uid": 102,
+            "text": "Itt vagyunk",
+            "content_kind": "photo",
+            "state": "active",
+            "post_id": null,
+            "root_id": null,
+            "created_at": 1791559026,
+            "signal_at": 1791559027,
+            "has_media": true,
+            "hide_count": 1,
+            "report_count": 1,
+            "case_id": "cas_5dd1f1d2ce8ca8d662a18796b0e9f7f4",
+            "can_review": true
+        }
+    ],
+    "has_more": false,
+    "next_cursor": null,
+    "audit_id": "aud_c6837fc113a8621d5648a2f645770e33",
+    "server_now": 1791559027,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

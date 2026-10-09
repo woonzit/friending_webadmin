@@ -1,0 +1,286 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "dates_api_version": 1,
+        "wall": {
+            "schema_version": 1,
+            "activity_id": "act_047dbccb9073e328204314a3048991d8",
+            "revision": 3,
+            "settings": {
+                "posting": "everyone",
+                "comments_enabled": true,
+                "commenting": "everyone",
+                "poster_uids": []
+            },
+            "capabilities": {
+                "can_post": true,
+                "can_comment": true,
+                "can_like": true,
+                "can_manage": false
+            },
+            "unread_count": 4,
+            "maximum_text_length": 4000,
+            "maximum_comment_length": 1000,
+            "maximum_video_seconds": 15,
+            "maximum_media_bytes": 12582912
+        },
+        "posts": [
+            {
+                "id": "wpo_6dabf0f40bc4c7fb01ca66eefa486e1f",
+                "activity_id": "act_047dbccb9073e328204314a3048991d8",
+                "sequence": 8,
+                "author": {
+                    "uid": 101,
+                    "id": 101,
+                    "display_name": "Host",
+                    "avatar_url": null,
+                    "is_host": true
+                },
+                "text": "Fixture update",
+                "kind": "location",
+                "asset": null,
+                "link": null,
+                "location": {
+                    "name": "Találkozási pont",
+                    "latitude": 47.5,
+                    "longitude": 19.05
+                },
+                "created_at": 1791559028,
+                "like_count": 0,
+                "liked": false,
+                "comment_count": 0,
+                "comment_preview": [],
+                "can_delete": false,
+                "can_report": true,
+                "can_hide": true
+            },
+            {
+                "id": "wpo_2dd10bd8a0243444d1c6c47de8fa92f2",
+                "activity_id": "act_047dbccb9073e328204314a3048991d8",
+                "sequence": 7,
+                "author": {
+                    "uid": 101,
+                    "id": 101,
+                    "display_name": "Host",
+                    "avatar_url": null,
+                    "is_host": true
+                },
+                "text": "Fixture update",
+                "kind": "tiktok",
+                "asset": null,
+                "link": {
+                    "url": "https://www.tiktok.com/@fixture/video/7123456789012345678",
+                    "host": "www.tiktok.com",
+                    "provider": "tiktok",
+                    "video_id": null,
+                    "title": "TikTok",
+                    "thumbnail_url": null
+                },
+                "location": null,
+                "created_at": 1791559028,
+                "like_count": 0,
+                "liked": false,
+                "comment_count": 0,
+                "comment_preview": [],
+                "can_delete": false,
+                "can_report": true,
+                "can_hide": true
+            },
+            {
+                "id": "wpo_328a00156ea4defed327e7ea31d5c520",
+                "activity_id": "act_047dbccb9073e328204314a3048991d8",
+                "sequence": 6,
+                "author": {
+                    "uid": 101,
+                    "id": 101,
+                    "display_name": "Host",
+                    "avatar_url": null,
+                    "is_host": true
+                },
+                "text": "Fixture update",
+                "kind": "youtube",
+                "asset": null,
+                "link": {
+                    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                    "host": "www.youtube.com",
+                    "provider": "youtube",
+                    "video_id": "dQw4w9WgXcQ",
+                    "title": "YouTube",
+                    "thumbnail_url": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+                },
+                "location": null,
+                "created_at": 1791559028,
+                "like_count": 0,
+                "liked": false,
+                "comment_count": 0,
+                "comment_preview": [],
+                "can_delete": false,
+                "can_report": true,
+                "can_hide": true
+            },
+            {
+                "id": "wpo_777c6cb353a9cec8266e097e4e5faefc",
+                "activity_id": "act_047dbccb9073e328204314a3048991d8",
+                "sequence": 5,
+                "author": {
+                    "uid": 101,
+                    "id": 101,
+                    "display_name": "Host",
+                    "avatar_url": null,
+                    "is_host": true
+                },
+                "text": "Fixture update",
+                "kind": "link",
+                "asset": null,
+                "link": {
+                    "url": "https://example.org/meeting",
+                    "host": "example.org",
+                    "provider": "web",
+                    "video_id": null,
+                    "title": "example.org",
+                    "thumbnail_url": null
+                },
+                "location": null,
+                "created_at": 1791559028,
+                "like_count": 0,
+                "liked": false,
+                "comment_count": 0,
+                "comment_preview": [],
+                "can_delete": false,
+                "can_report": true,
+                "can_hide": true
+            },
+            {
+                "id": "wpo_3bfbadbea678f0816e5bae12ac21aefa",
+                "activity_id": "act_047dbccb9073e328204314a3048991d8",
+                "sequence": 3,
+                "author": {
+                    "uid": 104,
+                    "id": 104,
+                    "display_name": "Visitor",
+                    "avatar_url": null,
+                    "is_host": false
+                },
+                "text": "Visible visitor update",
+                "kind": "text",
+                "asset": null,
+                "link": null,
+                "location": null,
+                "created_at": 1791559026,
+                "like_count": 0,
+                "liked": false,
+                "comment_count": 0,
+                "comment_preview": [],
+                "can_delete": false,
+                "can_report": true,
+                "can_hide": true
+            },
+            {
+                "id": "wpo_26ec7478604a325d47dc98e652527d11",
+                "activity_id": "act_047dbccb9073e328204314a3048991d8",
+                "sequence": 2,
+                "author": {
+                    "uid": 103,
+                    "id": 103,
+                    "display_name": "Delegate",
+                    "avatar_url": null,
+                    "is_host": false
+                },
+                "text": "Delegate update",
+                "kind": "text",
+                "asset": null,
+                "link": null,
+                "location": null,
+                "created_at": 1791559026,
+                "like_count": 0,
+                "liked": false,
+                "comment_count": 0,
+                "comment_preview": [],
+                "can_delete": false,
+                "can_report": true,
+                "can_hide": true
+            },
+            {
+                "id": "wpo_8c1b6c64b836833227668ae2c3dde934",
+                "activity_id": "act_047dbccb9073e328204314a3048991d8",
+                "sequence": 1,
+                "author": {
+                    "uid": 102,
+                    "id": 102,
+                    "display_name": "Participant",
+                    "avatar_url": null,
+                    "is_host": false
+                },
+                "text": "Találkozunk a bejáratnál!",
+                "kind": "text",
+                "asset": null,
+                "link": null,
+                "location": null,
+                "created_at": 1791559026,
+                "like_count": 1,
+                "liked": true,
+                "comment_count": 6,
+                "comment_preview": [
+                    {
+                        "id": "wco_6f0471057639abf7939fc7d7309c5a0a",
+                        "post_id": "wpo_8c1b6c64b836833227668ae2c3dde934",
+                        "root_id": null,
+                        "reply_to_id": null,
+                        "reply_to": null,
+                        "sequence": 5,
+                        "author": {
+                            "uid": 102,
+                            "id": 102,
+                            "display_name": "Participant",
+                            "avatar_url": null
+                        },
+                        "text": "Komment 0",
+                        "deleted": false,
+                        "created_at": 1791559026,
+                        "can_delete": true,
+                        "can_reply": true,
+                        "can_report": false,
+                        "can_hide": true,
+                        "replies": [],
+                        "reply_count": 0,
+                        "replies_next_cursor": null
+                    },
+                    {
+                        "id": "wco_f393a372b094c8d2263cf4b069f6f884",
+                        "post_id": "wpo_8c1b6c64b836833227668ae2c3dde934",
+                        "root_id": null,
+                        "reply_to_id": null,
+                        "reply_to": null,
+                        "sequence": 6,
+                        "author": {
+                            "uid": 102,
+                            "id": 102,
+                            "display_name": "Participant",
+                            "avatar_url": null
+                        },
+                        "text": "Komment 1",
+                        "deleted": false,
+                        "created_at": 1791559026,
+                        "can_delete": true,
+                        "can_reply": true,
+                        "can_report": false,
+                        "can_hide": true,
+                        "replies": [],
+                        "reply_count": 0,
+                        "replies_next_cursor": null
+                    }
+                ],
+                "can_delete": true,
+                "can_report": false,
+                "can_hide": true
+            }
+        ],
+        "has_more": false,
+        "next_cursor": null,
+        "read_sequence": 8
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -1,0 +1,26 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "dates_api_version": 1,
+        "report_id": "rpt_e578bea1629d0ca71958d0fd43542e8f",
+        "case_reference": "cas_1c4d8bfa91471c43f9be6de271528e33",
+        "status": "new",
+        "submitted_at": 1791559027,
+        "sla_due_at": 1791645427,
+        "target_hidden": true,
+        "receipt": {
+            "id": "rpt_e578bea1629d0ca71958d0fd43542e8f",
+            "kind": "report",
+            "status": "new",
+            "title": "Report received",
+            "anonymous_to_target": true,
+            "sanction_disclosed": false
+        },
+        "idempotency_replayed": false,
+        "server_now": 1791559027
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

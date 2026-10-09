@@ -18,13 +18,14 @@ import { datesCaseDetail, datesEvidenceRead, datesModerationQueue } from "../lib
 // genuine bodies of every Dates corpus and to the deny-list.
 const FIXTURES = new URL("./fixtures/", import.meta.url);
 const CORPORA = ["dates_admin_command_wire", "dates_event_intake_admin_wire", "dates_external_admin_wire", "dates_external_admin_wire_released", "dates_moderation_console_wire",
-  "dates_moderation_wire", "dates_event_icons_wire", "dates_external_pins_wire", "dates_suggestion_leaderboard_member_wire"];
+  "dates_moderation_wire", "dates_event_icons_wire", "dates_external_pins_wire", "dates_suggestion_leaderboard_member_wire", "dates_event_content_wire"];
 const read = (corpus: string, file: string) => JSON.parse(readFileSync(new URL(`${corpus}/${file}`, FIXTURES), "utf8"));
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 
 /** Which route answered a genuine body, by the corpus's file names. `null`: not a console body (the app's). */
 function routeOf(corpus: string, file: string): string | null {
   const name = file.slice(0, -5);
+  if (corpus === "dates_event_content_wire") return !name.startsWith("admin-") ? null : name === "admin-wall-review" ? "dates_event_content_review" : "dates_event_content";
   // The icon corpus names a file after its route, then "-" and the case (tests/fixtures/dates_event_icons_wire/provenance.txt).
   if (corpus === "dates_event_icons_wire") return name.split("-")[0];
   // The third-party pin corpus is Core's own (tests/fixtures/dates_external_pins_wire/provenance.txt): reads, saves, and one file of the app's side.

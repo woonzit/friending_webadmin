@@ -16,7 +16,7 @@ export const ADMIN_CLIENT_READ_ACTIONS = [
   "verification_simulate", "verification_pending_summary", "verification_user_detail", "verification_method_console",
   "persona_screens_console", "audience_visibility_catalog", "audience_visibility_member_detail", "feature_switches_get",
   "appearance_rules_list", "appearance_rules_preview", "mode_cards_get", "section_teasers_get", "admin_me",
-  "dates_activity_list", "dates_activity_detail", "dates_activity_location", "dates_configuration", "dates_event_icons", "dates_external_pins", "dates_moderation_queue",
+  "dates_activity_list", "dates_activity_detail", "dates_event_content", "dates_activity_location", "dates_configuration", "dates_event_icons", "dates_external_pins", "dates_moderation_queue",
   "dates_moderation_detail", "dates_moderation_evidence", "dates_moderation_sla", "dates_reason_list", "dates_external_event_list",
   "dates_external_event_detail", "dates_event_intake_list", "dates_event_intake_detail", "dates_event_intake_usage",
   "dates_event_research_overview", "dates_event_research_run_list", "dates_event_research_run_detail",

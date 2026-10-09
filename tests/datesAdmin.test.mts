@@ -40,6 +40,8 @@ const EXPECTED_DATES_ACTIONS = [
   "admin_me",
   "dates_activity_list",
   "dates_activity_detail",
+  "dates_event_content",
+  "dates_event_content_review",
   "dates_activity_location",
   "dates_activity_update",
   "dates_activity_command",

@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesEventPhotos from "@/components/DatesEventPhotos";
+import DatesEventContentPanel from "@/components/DatesEventContentPanel";
 import DatesExternalProvenance from "@/components/DatesExternalProvenance";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -295,6 +296,7 @@ export default function DatesActivityDetailPage() {
       {data.external_event && <DatesExternalProvenance event={data.external_event} />}
       {feedback && <div className={`alert ${feedback.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{feedback.text}</div>}
 
+      <DatesEventContentPanel key={activityId} activityId={activityId} principal={principal} deleted={activity.soft_deleted} />
       <div className="dates-detail-grid">
         <section className="panel">
           <div className="panel-header"><div><h2>{t("overview")}</h2><p>{t("overviewCopy")}</p></div><div className="row-actions"><span className={`badge ${activity.soft_deleted ? "badge-warning" : "badge-active"}`}>{activity.soft_deleted ? t("softDeleted") : values(activity.lifecycle)}</span><span className={`badge ${activity.moderation_state === "ok" || activity.moderation_state === "approved" ? "badge-active" : "badge-warning"}`}>{values(activity.moderation_state)}</span></div></div>

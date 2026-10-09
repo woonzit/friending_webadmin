@@ -1,0 +1,250 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "dates_api_version": 1,
+        "wall": {
+            "schema_version": 1,
+            "activity_id": "act_047dbccb9073e328204314a3048991d8",
+            "revision": 3,
+            "settings": {
+                "posting": "everyone",
+                "comments_enabled": true,
+                "commenting": "everyone",
+                "poster_uids": []
+            },
+            "capabilities": {
+                "can_post": true,
+                "can_comment": true,
+                "can_like": true,
+                "can_manage": false
+            },
+            "unread_count": 4,
+            "maximum_text_length": 4000,
+            "maximum_comment_length": 1000,
+            "maximum_video_seconds": 15,
+            "maximum_media_bytes": 12582912
+        },
+        "post": {
+            "id": "wpo_8c1b6c64b836833227668ae2c3dde934",
+            "activity_id": "act_047dbccb9073e328204314a3048991d8",
+            "sequence": 1,
+            "author": {
+                "uid": 102,
+                "id": 102,
+                "display_name": "Participant",
+                "avatar_url": null,
+                "is_host": false
+            },
+            "text": "Találkozunk a bejáratnál!",
+            "kind": "text",
+            "asset": null,
+            "link": null,
+            "location": null,
+            "created_at": 1791559026,
+            "like_count": 1,
+            "liked": true,
+            "comment_count": 6,
+            "comment_preview": [
+                {
+                    "id": "wco_6f0471057639abf7939fc7d7309c5a0a",
+                    "post_id": "wpo_8c1b6c64b836833227668ae2c3dde934",
+                    "root_id": null,
+                    "reply_to_id": null,
+                    "reply_to": null,
+                    "sequence": 5,
+                    "author": {
+                        "uid": 102,
+                        "id": 102,
+                        "display_name": "Participant",
+                        "avatar_url": null
+                    },
+                    "text": "Komment 0",
+                    "deleted": false,
+                    "created_at": 1791559026,
+                    "can_delete": true,
+                    "can_reply": true,
+                    "can_report": false,
+                    "can_hide": true,
+                    "replies": [],
+                    "reply_count": 0,
+                    "replies_next_cursor": null
+                },
+                {
+                    "id": "wco_f393a372b094c8d2263cf4b069f6f884",
+                    "post_id": "wpo_8c1b6c64b836833227668ae2c3dde934",
+                    "root_id": null,
+                    "reply_to_id": null,
+                    "reply_to": null,
+                    "sequence": 6,
+                    "author": {
+                        "uid": 102,
+                        "id": 102,
+                        "display_name": "Participant",
+                        "avatar_url": null
+                    },
+                    "text": "Komment 1",
+                    "deleted": false,
+                    "created_at": 1791559026,
+                    "can_delete": true,
+                    "can_reply": true,
+                    "can_report": false,
+                    "can_hide": true,
+                    "replies": [],
+                    "reply_count": 0,
+                    "replies_next_cursor": null
+                }
+            ],
+            "can_delete": true,
+            "can_report": false,
+            "can_hide": true
+        },
+        "comments": [
+            {
+                "id": "wco_51eb2e4858e8e7a00ddc6052bf5c6d1d",
+                "post_id": "wpo_8c1b6c64b836833227668ae2c3dde934",
+                "root_id": null,
+                "reply_to_id": null,
+                "reply_to": null,
+                "sequence": 1,
+                "author": null,
+                "text": "",
+                "deleted": true,
+                "created_at": 1791559026,
+                "can_delete": false,
+                "can_reply": false,
+                "can_report": false,
+                "can_hide": false,
+                "replies": [
+                    {
+                        "id": "wco_709c1dd3f1cdd7372b91cb6a0e5b8af1",
+                        "post_id": "wpo_8c1b6c64b836833227668ae2c3dde934",
+                        "root_id": "wco_51eb2e4858e8e7a00ddc6052bf5c6d1d",
+                        "reply_to_id": "wco_51eb2e4858e8e7a00ddc6052bf5c6d1d",
+                        "reply_to": null,
+                        "sequence": 2,
+                        "author": {
+                            "uid": 101,
+                            "id": 101,
+                            "display_name": "Host",
+                            "avatar_url": null
+                        },
+                        "text": "Válasz 0",
+                        "deleted": false,
+                        "created_at": 1791559026,
+                        "can_delete": false,
+                        "can_reply": true,
+                        "can_report": true,
+                        "can_hide": true,
+                        "replies": [],
+                        "reply_count": 0,
+                        "replies_next_cursor": null
+                    },
+                    {
+                        "id": "wco_c3588b5d35d878ad81673429f166264e",
+                        "post_id": "wpo_8c1b6c64b836833227668ae2c3dde934",
+                        "root_id": "wco_51eb2e4858e8e7a00ddc6052bf5c6d1d",
+                        "reply_to_id": "wco_51eb2e4858e8e7a00ddc6052bf5c6d1d",
+                        "reply_to": null,
+                        "sequence": 3,
+                        "author": {
+                            "uid": 101,
+                            "id": 101,
+                            "display_name": "Host",
+                            "avatar_url": null
+                        },
+                        "text": "Válasz 1",
+                        "deleted": false,
+                        "created_at": 1791559026,
+                        "can_delete": false,
+                        "can_reply": true,
+                        "can_report": true,
+                        "can_hide": true,
+                        "replies": [],
+                        "reply_count": 0,
+                        "replies_next_cursor": null
+                    }
+                ],
+                "reply_count": 3,
+                "replies_next_cursor": "eyJ2IjoxLCJzY29wZSI6ImV2ZW50LXdhbGwtdjEiLCJjb250ZXh0IjoiZTg4MGE1OWMxNzEzZmIyN2RmMmE2MDI0NWE0MjM0ZjhjYTU2NmQ0YzMzYzk3Y2E1ZTkwZGFlZDI0ZjIxZWVjYiIsInNvcnQiOlszXSwiaXNzdWVkX2F0IjoxNzkxNTU5MDI4fQ.NAbKH83lT7ZvmQP8DhAaEBKGpACcKzgKrZC-hkN9_0k"
+            },
+            {
+                "id": "wco_6f0471057639abf7939fc7d7309c5a0a",
+                "post_id": "wpo_8c1b6c64b836833227668ae2c3dde934",
+                "root_id": null,
+                "reply_to_id": null,
+                "reply_to": null,
+                "sequence": 5,
+                "author": {
+                    "uid": 102,
+                    "id": 102,
+                    "display_name": "Participant",
+                    "avatar_url": null
+                },
+                "text": "Komment 0",
+                "deleted": false,
+                "created_at": 1791559026,
+                "can_delete": true,
+                "can_reply": true,
+                "can_report": false,
+                "can_hide": true,
+                "replies": [],
+                "reply_count": 0,
+                "replies_next_cursor": null
+            },
+            {
+                "id": "wco_f393a372b094c8d2263cf4b069f6f884",
+                "post_id": "wpo_8c1b6c64b836833227668ae2c3dde934",
+                "root_id": null,
+                "reply_to_id": null,
+                "reply_to": null,
+                "sequence": 6,
+                "author": {
+                    "uid": 102,
+                    "id": 102,
+                    "display_name": "Participant",
+                    "avatar_url": null
+                },
+                "text": "Komment 1",
+                "deleted": false,
+                "created_at": 1791559026,
+                "can_delete": true,
+                "can_reply": true,
+                "can_report": false,
+                "can_hide": true,
+                "replies": [],
+                "reply_count": 0,
+                "replies_next_cursor": null
+            },
+            {
+                "id": "wco_42707279a41f4d24c0cb7fdafc2052a0",
+                "post_id": "wpo_8c1b6c64b836833227668ae2c3dde934",
+                "root_id": null,
+                "reply_to_id": null,
+                "reply_to": null,
+                "sequence": 7,
+                "author": {
+                    "uid": 102,
+                    "id": 102,
+                    "display_name": "Participant",
+                    "avatar_url": null
+                },
+                "text": "Komment 2",
+                "deleted": false,
+                "created_at": 1791559026,
+                "can_delete": true,
+                "can_reply": true,
+                "can_report": false,
+                "can_hide": true,
+                "replies": [],
+                "reply_count": 0,
+                "replies_next_cursor": null
+            }
+        ],
+        "has_more": false,
+        "next_cursor": null
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

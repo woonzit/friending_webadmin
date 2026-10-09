@@ -1,0 +1,68 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "dates_api_version": 1,
+        "wall": {
+            "schema_version": 1,
+            "activity_id": "act_047dbccb9073e328204314a3048991d8",
+            "revision": 3,
+            "settings": {
+                "posting": "everyone",
+                "comments_enabled": true,
+                "commenting": "everyone",
+                "poster_uids": []
+            },
+            "capabilities": {
+                "can_post": true,
+                "can_comment": true,
+                "can_like": true,
+                "can_manage": false
+            },
+            "unread_count": 0,
+            "maximum_text_length": 4000,
+            "maximum_comment_length": 1000,
+            "maximum_video_seconds": 15,
+            "maximum_media_bytes": 12582912
+        },
+        "post": {
+            "id": "wpo_238fb57716357ec35b2277719cf6e15d",
+            "activity_id": "act_047dbccb9073e328204314a3048991d8",
+            "sequence": 4,
+            "author": {
+                "uid": 102,
+                "id": 102,
+                "display_name": "Participant",
+                "avatar_url": null,
+                "is_host": false
+            },
+            "text": "Itt vagyunk",
+            "kind": "photo",
+            "asset": {
+                "id": "wma_57ba9864e3448da28dba799f6507a51e",
+                "kind": "photo",
+                "width": 90,
+                "height": 160,
+                "duration": null,
+                "mime": "image/jpeg",
+                "bytes": 928
+            },
+            "link": null,
+            "location": null,
+            "created_at": 1791559026,
+            "like_count": 0,
+            "liked": false,
+            "comment_count": 0,
+            "comment_preview": [],
+            "can_delete": true,
+            "can_report": false,
+            "can_hide": true
+        },
+        "comments": [],
+        "has_more": false,
+        "next_cursor": null
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

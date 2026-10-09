@@ -15493,3 +15493,11 @@ fieldset.dates-external-fields {
   border-radius: 12px;
   object-fit: contain;
 }
+.dates-event-content { margin-bottom: 24px; }
+.dates-event-content .panel-body { display: grid; gap: 16px; }
+.dates-event-content-tabs { flex-wrap: wrap; }
+.dates-event-content-list { display: grid; gap: 12px; }
+.dates-event-content-card, .dates-event-review-form { padding: 16px; border: 1px solid var(--border); border-radius: 12px; display: grid; gap: 12px; }
+.dates-event-content-text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+.dates-event-content code { overflow-wrap: anywhere; font-size: 12px; }
+.dates-event-content-access { display: grid; gap: 12px; }
