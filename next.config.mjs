@@ -13,7 +13,10 @@ export const contentSecurityPolicy = [
   "font-src 'self' data:",
   "img-src 'self' data: blob: https:",
   "connect-src 'self'",
-  "media-src 'self' https:",
+  // Authorized private clips use revocable, memory-only object URLs. This is
+  // document-wide because client-side navigation retains the original CSP.
+  // No blob grant is added to script-src, connect-src, or object-src.
+  "media-src 'self' https: blob:",
 ].join("; ");
 
 /**

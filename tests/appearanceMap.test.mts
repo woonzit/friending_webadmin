@@ -18,7 +18,7 @@ import {
 
 type HeaderEntry = { source: string; headers: Array<{ key: string; value: string }> };
 
-/** The console policy as shipped before T-468; the global entry must not drift. */
+/** Console policy: event-wall media adds only blob playback; other directives stay pinned. */
 const GLOBAL_CSP = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -30,7 +30,7 @@ const GLOBAL_CSP = [
   "font-src 'self' data:",
   "img-src 'self' data: blob: https:",
   "connect-src 'self'",
-  "media-src 'self' https:",
+  "media-src 'self' https: blob:",
 ].join("; ");
 
 /**

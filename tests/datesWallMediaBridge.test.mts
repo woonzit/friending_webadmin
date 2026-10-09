@@ -39,3 +39,17 @@ test("an unexpected MIME and oversized response cannot become active content", a
   state.mime = "video/mp4"; state.bytes = new Uint8Array(WALL_MEDIA_LIMIT + 1);
   assert.equal((await serveDatesWallMedia(request(), deps)).status, 502);
 });
+
+test("private video object URLs are playable without granting blob scripts or connections", async () => {
+  const { contentSecurityPolicy } = await import("../next.config.mjs");
+  const directives = new Map<string, string[]>(contentSecurityPolicy.split(";").map((part: string) => {
+    const [name, ...sources] = part.trim().split(/\s+/); return [name!, sources];
+  }));
+  assert.deepEqual(directives.get("media-src"), ["'self'", "https:", "blob:"]);
+  assert.equal(directives.get("script-src")?.includes("blob:"), false);
+  assert.deepEqual(directives.get("connect-src"), ["'self'"]);
+  assert.deepEqual(directives.get("object-src"), ["'none'"]);
+  const { state, deps } = harness(); state.mime = "video/mp4";
+  const reply = await serveDatesWallMedia(request(), deps);
+  assert.equal(reply.status, 200); assert.equal(reply.headers["Content-Type"], "video/mp4");
+});
