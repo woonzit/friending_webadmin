@@ -15484,3 +15484,12 @@ fieldset.dates-external-fields {
   .dates-leaderboard-row { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 760px) { .dates-leaderboard-body { padding: 16px; } }
+.dates-wall-evidence-media img,
+.dates-wall-evidence-media video {
+  display: block;
+  max-width: 100%;
+  max-height: 620px;
+  margin: 12px 0;
+  border-radius: 12px;
+  object-fit: contain;
+}
