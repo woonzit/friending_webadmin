@@ -34,7 +34,7 @@ async function render(locale: string, props: Record<string, unknown>) {
   return html;
 }
 
-for (const locale of ["en", "hu"]) test(`${locale}: the panel starts closed - one control, no member content, and nothing asked of Core`, async () => {
+for (const locale of ["en", "hu"]) test(`${locale}: the panel starts closed - no member content on the screen, and nothing asked of Core`, async () => {
   const copy = messagesOf(locale).datesAdmin.eventContent;
   const html = await render(locale, {});
   assert.ok(html.includes(escaped(copy.show))); assert.ok(html.includes(escaped(copy.closedCopy)));
@@ -144,4 +144,8 @@ test("no copy of the panel is written in the component, and both languages name 
     assert.deepEqual(Object.keys(copy.contentKinds).sort(), ["link", "location", "photo", "text", "tiktok", "video", "youtube"]);
   }
   assert.doesNotMatch(readFileSync(new URL("../app/globals.css", import.meta.url), "utf8"), /^\.muted\b/m);
+  // The panel renders without a router: the page that mounts it hands it the way to a case, and remounts it per event.
+  const page = readFileSync(new URL("../app/(dashboard)/dates/[activityId]/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /<DatesEventContentPanel key=\{activityId\} activityId=\{activityId\} principal=\{principal\} deleted=\{activity\.soft_deleted\}\s+onOpenCase=\{\(caseId\) => router\.push\(`\/dates\/moderation\/\$\{caseId\}`\)\} \/>/);
+  assert.doesNotMatch(source, /next\/navigation/);
 });

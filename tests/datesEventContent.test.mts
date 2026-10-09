@@ -201,4 +201,10 @@ test("proxy admits only closed event-scoped requests and fresh evidence/claim ca
   assert.equal(adminActionAccess("dates_event_content_review"), "dates_write");
   assert.equal(isAdminClientReadAction("dates_event_content"), true);
   assert.equal(isAdminClientReadAction("dates_event_content_review"), false);
+  // The bridge uses both: the capability before it reads the body, the closed shape before anything is forwarded.
+  const route = readFileSync(new URL("../app/api/admin/[action]/route.ts", import.meta.url), "utf8");
+  const gate = route.indexOf("if (eventContentProxyAuthorized(action, membership.data) === false) {"), read = route.indexOf("await request.text()");
+  const shape = route.indexOf("const eventContentBody = normalizeEventContentBody(action, body);"), forward = route.indexOf("const result = await coreCall(");
+  assert.ok(gate > 0 && gate < read && read < shape && shape < forward, "capability, then the body, then its shape, then Core");
+  assert.match(route.slice(shape, forward), /if \(eventContentBody === null\) return bridgeError\("invalid-input", 400\);\s+if \(eventContentBody !== undefined\) body = eventContentBody;/);
 });
