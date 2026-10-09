@@ -8359,7 +8359,7 @@
       "absent": "Ez a Core még nem szolgálja ki a ranglista beállításait, ezért itt egyelőre nincs mit beállítani.",
       "unreadable": "A ranglista beállításait nem sikerült kiolvasni a konfigurációból. Találgatás helyett semmit sem mutatunk; próbáld újra a Frissítés gombbal.",
       "suggestionsOff": "A tagok javaslatai jelenleg ki vannak kapcsolva (runtime beállítás: dates_external_suggestions_enabled), ezért ranglista sehol sem látszik, bármi van itt beállítva. A ranglista csak ott jelenik meg, ahol a tagok javaslatai be vannak kapcsolva.",
-      "invalidStored": "Ezeknek a beállításoknak hibás a tárolt értéke, ezért az alapértelmezésük látszik és érvényes: {settings}. Mentéskor felülírjuk őket.",
+      "invalidStored": "A Core szerint ezeknek a beállításoknak hibás a tárolt értéke: {settings}. Itt az látszik, ami helyettük ténylegesen érvényben van; mentéskor a tárolt értéket felülírjuk.",
       "halfRows": "Ezek az országok a két beállítás közül csak az egyikben szerepelnek, ezért a másik értékük az alapértelmezés: {codes}. Mentéskor mindkét értéküket eltároljuk.",
       "rebased": "A tárolt beállítások közben megváltoztak. A nem mentett módosításaid megmaradtak; nézd át őket, majd ments újra.",
       "vocabularyWarning": "Ezek a tárolt országok nem szerepelnek a Core által ismert App Store-storefrontok között; mentés előtt cseréld le vagy távolítsd el őket: {codes}.",

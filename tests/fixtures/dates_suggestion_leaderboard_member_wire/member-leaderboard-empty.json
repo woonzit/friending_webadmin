@@ -1,0 +1,23 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "dates_api_version": 1,
+        "period": "week",
+        "scope": "country",
+        "scope_label": "Austria",
+        "from": 1789948800,
+        "to": 1790000000,
+        "entries": [],
+        "self": {
+            "rank": null,
+            "count": 0,
+            "hidden": false
+        },
+        "participants": 0,
+        "server_now": 1790000000
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

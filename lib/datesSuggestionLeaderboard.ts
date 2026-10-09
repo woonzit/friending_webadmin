@@ -52,10 +52,10 @@ export type LeaderboardValues = {
   scopeOverrides: Readonly<Record<string, LeaderboardScope>>;
 };
 export type LeaderboardAuthority = {
-  /** What is stored. A row Core reports as invalid is read as its default - what Core itself falls back to. */
+  /** What is stored - of a row Core reports as invalid, what is in effect instead of it. */
   values: LeaderboardValues;
   revisions: Readonly<Record<LeaderboardSettingKey, number>>;
-  /** The rows whose stored value does not validate: the next save writes them whatever else changed. */
+  /** The rows whose stored value Core reports as invalid: the next save writes them whatever else changed. */
   invalid: readonly LeaderboardSettingKey[];
 };
 export type LeaderboardRead =
@@ -92,8 +92,18 @@ const PARSERS: Record<LeaderboardSettingKey, (value: unknown) => unknown | null>
 
 /**
  * The four rows out of the configuration read's `settings` (the whole list,
- * as Core served it). A row is bound on its key, its revision and the shape of
- * its value - not on the name Core gives its type.
+ * as Core served it; they are its last four, of the types `boolean`,
+ * `storefront_overrides`, `enum` and `storefront_enum_overrides`). A row is
+ * bound on its key, its revision and the shape of its value - not on the name
+ * Core gives its type, which the generic setting editor does not know for the
+ * scope map and need not: these rows are never rows of its list.
+ *
+ * A row Core reports as not valid (`valid: false`) carries the raw stored
+ * value, which may be anything. What members get in its place is the row's
+ * `effective_value`, and that is what the control shows: the default for a
+ * switch or a scope that is not one, an empty map for a map that is not one -
+ * and, for a map that names a storefront Core's vocabulary no longer has, the
+ * map itself, which still resolves (the control then flags that country).
  */
 export function leaderboardSettings(settings: unknown): LeaderboardRead {
   if (!Array.isArray(settings)) return { status: "unreadable" };
@@ -104,8 +114,7 @@ export function leaderboardSettings(settings: unknown): LeaderboardRead {
   for (const row of rows) {
     const key = row.key as LeaderboardSettingKey;
     if (Object.hasOwn(parsed, key) || !Number.isSafeInteger(row.revision) || (row.revision as number) < 0 || typeof row.valid !== "boolean") return { status: "unreadable" };
-    // A stored value that does not validate is not what members get: Core answers with the default until it is replaced.
-    const value = PARSERS[key](row.valid ? row.value : row.default_value);
+    const value = PARSERS[key](row.valid ? row.value : row.effective_value);
     if (value === null) return { status: "unreadable" };
     parsed[key] = value;
     revisions[key] = row.revision as number;
@@ -164,7 +173,20 @@ export function leaderboardDraftIssue(draft: LeaderboardDraft, known: ReadonlySe
   return known !== null && draft.rows.some(row => !known.has(row.storefront)) ? "vocabulary" : null;
 }
 
-/** A value as it travels: a switch and a scope as they are, a map as its JSON text (the form of the other storefront maps). */
+/**
+ * A value as the card sends it - the form Core's `dates_configuration_save`
+ * reads for each of the four rows (Core 7175aabe):
+ * - the switch as a boolean. The bridge writes it into the form as "1" / "0",
+ *   which `DatesConfigurationAdminService::strictBoolean` reads;
+ * - the scope as its token, `country` or `city`;
+ * - a map as the JSON text of an object, storefronts sorted, `{}` when empty.
+ *   A form field is text, so this is the one form a map has on the wire, and
+ *   Core decodes it itself: `storefrontOverrides()` for the switches and
+ *   `DatesSuggestionLeaderboardPolicy::scopeOverridesForWrite()` for the
+ *   scopes both `json_decode` a string. (An object handed to the bridge would
+ *   leave it as these same bytes; Core's own capture sent `{"HUN":true}` and
+ *   `{"HUN":"city"}`.)
+ */
 function wireValue(key: LeaderboardSettingKey, values: LeaderboardValues): boolean | string {
   if (key === LEADERBOARD_ENABLED) return values.enabled;
   if (key === LEADERBOARD_SCOPE) return values.scope;
@@ -240,11 +262,16 @@ export type LeaderboardEditorAction =
 /** There is something to save: a row whose value differs from what is stored (or whose stored value is invalid). */
 export const leaderboardDirty = (state: LeaderboardEditorState): boolean => state.authority !== null && state.draft !== null
   && leaderboardChangedKeys(state.authority, state.draft).length > 0;
-/** The operator's hand is on the control: also a new row whose country is not chosen yet, which is nothing to save. */
-const touched = (state: LeaderboardEditorState): boolean => state.authority !== null && state.draft !== null
+/**
+ * The operator's hand is on the control: it no longer shows what the stored
+ * values show. That includes a new row whose country is not chosen yet, which
+ * is nothing to save; it does not include what is to be saved without anyone
+ * having edited it (a country stored in one map only, an invalid stored row).
+ */
+export const leaderboardEdited = (state: LeaderboardEditorState): boolean => state.authority !== null && state.draft !== null
   && JSON.stringify(state.draft) !== JSON.stringify(leaderboardDraft(state.authority.values));
 /** Unsaved edits or a command in doubt: what a reload must not silently replace. */
-export const leaderboardHold = (state: LeaderboardEditorState): boolean => state.queue.length > 0 || leaderboardDirty(state) || touched(state);
+export const leaderboardHold = (state: LeaderboardEditorState): boolean => state.queue.length > 0 || leaderboardEdited(state);
 const sameAuthority = (left: LeaderboardAuthority, right: LeaderboardAuthority): boolean => LEADERBOARD_SETTING_KEYS.every(key => left.revisions[key] === right.revisions[key]
   && left.invalid.includes(key) === right.invalid.includes(key) && wireValue(key, left.values) === wireValue(key, right.values));
 

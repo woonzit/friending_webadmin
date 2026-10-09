@@ -15,31 +15,35 @@ import {
   type DatesIntakeLeaseAction,
 } from "../lib/datesIntakeAdmin.ts";
 
-// T-865 P2a + P2b. The event-intake Admin wire, vendored byte-identically from the
-// Core lane's tip 62cee304c68eaeda456ddf0b042cb340b8702d48 (T-886 rebased onto
-// Core main 33265e46, D-143, D-145; its bodies are those of 8a621565, the manifest
-// is rebound on the no-usage fix 2034a93a): 161 genuine bodies captured as real HTTP
-// POSTs encoded the way lib/core.ts encodes them, every console request carrying
-// the Admin intake contract selector. Against the pin before it (b5b2b299, 159
-// bodies, set 008719da...): the three usage reads gained the calls whose cost is
-// not known (`ambiguous_calls`, `ambiguous_micro_usd`, `ambiguous_runs`, and
-// `ambiguous_calls` per row) and `admin-usage-ambiguous` is new; the two
-// selector-less details of an AI-assisted event are now refusals (`-denied`,
-// `dates-external-intake-contract-required`, 426) and the selector-less activity
-// list of that event is new. Nothing else changed.
-// The set digest and the source commit are transcribed from the Core hand-over
-// (team/chat/20261003T025530Z-opus-core-p2-to-opus-admin-p2-p2-core-rebased.md and
-// 20261003T033201Z-opus-core-p2-to-opus-admin-p2-p2-intake-corpus-4415fcb2.md);
-// the manifest digest, the source checksum and the generator digest were read
-// from the Core lane's git objects at that tip, not from the vendored copy.
+// T-865 P2a + P2b. The event-intake Admin wire, vendored byte-identically from Core
+// main a5bbba5c2d12351e4b012e4a1f3bcdba1d9e359b (the submission leaderboard; the
+// corpus was regenerated at 7175aabe and its manifest rebound on ab6e7e65): 161
+// genuine bodies captured as real HTTP POSTs encoded the way lib/core.ts encodes
+// them, every console request carrying the Admin intake contract selector.
+// Against the pin before it (Core lane tip 62cee304, manifest source 2034a93a, set
+// 4415fcb2...): ONE body changed, `admin-configuration.json`, by 74 appended
+// lines - the four settings of the submission leaderboard after the 50 rows it
+// had. No line of it was changed and no other body moved; the pin test proves it
+// from bytes by taking the lines out again and getting the previous body digest
+// and the previous set digest back. (That pin, against the one before it,
+// b5b2b299 with 159 bodies: the three usage reads gained the calls whose cost is
+// not known and `admin-usage-ambiguous` was new; the two selector-less details of
+// an AI-assisted event became refusals and the selector-less activity list of
+// that event was new.)
+// The manifest digest and the generator digest were read from Core's git objects
+// at a5bbba5c, not from the vendored copy; the source commit, the source checksum
+// and the set digest are that manifest's.
 // Rows marked DERIVED are built from a genuine body for a branch no genuine
 // body carries; they are named in the lane's report.
 const DIRECTORY = new URL("./fixtures/dates_event_intake_admin_wire/", import.meta.url);
-const SOURCE = "2034a93a03b1a7d221add795bce7bab15058ef59";
-const SOURCE_SHA = "e22c768ad4fed10c3f2c64d96709f76b342bfa783b30c588789c0bbf510c445c";
-const MANIFEST_SHA = "f50c8d90fd9bf3cedd0b4499924b36e5c75e8f951b1eae835699a5aacc118bef";
-const GENERATOR_SHA = "33191975d3212cd3c7e58f2ebdf3a70daadd71b9c18e8d9af75a69a0afb1ce98";
-const SET_SHA = "4415fcb2f85025205eda028fa1e10591b457355e688627e5f438648843fbe79c";
+const SOURCE = "7175aabe9268a3e42b2aa832add2049b699a59a4";
+const SOURCE_SHA = "947f16316b38093e57fbe0d0aa64cecdfd6f416d15a354b28082c9bb13aad336";
+const MANIFEST_SHA = "000bedc0f81a517a3ca17b23b32fb53f257b22364eab70c26ed3248e3e5f8aa1";
+const GENERATOR_SHA = "8be05a0aaa3838c449e8efc6fc069b5b2e68e587e7ecab5984b3fda2cc1af3e6";
+const SET_SHA = "a672e1e6462e5d7db462f261ecb932647fe8b05de4f878db164e4aa0ad7ecaca";
+// The pin before this one: its set digest, and the one body that differs from it.
+const PREVIOUS_SET_SHA = "4415fcb2f85025205eda028fa1e10591b457355e688627e5f438648843fbe79c";
+const PREVIOUS_CONFIGURATION_SHA = "28c8810e13c2469451526b2eea2de8c671ea0a3eb50c7bd0827c796aa5c2bc63";
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`${name}.json`, DIRECTORY), "utf8"));
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
@@ -113,7 +117,7 @@ test("intake corpus is the complete 148-response genuine capture with independen
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
   assert.match(manifest.provenance.transport, /real HTTP.*application\/x-www-form-urlencoded/s);
   assert.equal(manifest.fixture_count, 161);
-  assert.equal(manifest.provenance.source_paths.length, 287);
+  assert.equal(manifest.provenance.source_paths.length, 303);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   const names = [...LISTS.map((name) => `admin-list-${name}.json`), ...[...DETAILS, ...MEMBER_DETAILS].map((name) => `admin-detail-${name}.json`),
     ...CREATES.map((name) => `admin-create-${name}.json`), ...LEASES.map((name) => `admin-lease-${name}.json`),
@@ -134,6 +138,14 @@ test("intake corpus is the complete 148-response genuine capture with independen
     return `${entry.file}\0${entry.sha256}`;
   });
   assert.equal(hash(lines.join("\n")), SET_SHA);
+  // Against the previous pin, from bytes: the configuration read without its 74 appended lines (the four leaderboard
+  // rows, which follow the last row it had) is the previous body, and with that one digest the previous set comes back.
+  const configuration = readFileSync(new URL("admin-configuration.json", DIRECTORY), "utf8").split("\n");
+  const appended = configuration.splice(896, 74);
+  assert.deepEqual([appended[0].trim(), appended[2].trim(), appended.at(-1)!.trim()], ["},", '"key": "dates_suggestion_leaderboard_enabled",', '"updated_at": null']);
+  assert.equal(appended.filter((line) => line.includes('"key": "dates_suggestion_leaderboard_')).length, 4);
+  assert.equal(hash(configuration.join("\n")), PREVIOUS_CONFIGURATION_SHA);
+  assert.equal(hash(lines.map((line: string) => line.startsWith("admin-configuration.json\0") ? `admin-configuration.json\0${PREVIOUS_CONFIGURATION_SHA}` : line).join("\n")), PREVIOUS_SET_SHA);
   assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 108);
   assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code !== 200).length, 53);
 });

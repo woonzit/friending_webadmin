@@ -7,10 +7,12 @@ import {
 } from "../lib/datesAdmin.ts";
 import { DATES_RUNTIME_HELP_GROUPS, DATES_RUNTIME_HELP_KEYS } from "../lib/datesRuntimeHelp.ts";
 import { DATES_AI_PROVIDERS } from "../lib/datesIntakeAdmin.ts";
+import { LEADERBOARD_SETTING_KEYS, isLeaderboardSettingKey } from "../lib/datesSuggestionLeaderboard.ts";
 
 // T-865 P2a / P2b: the intake settings of the Dates configuration read. Core serves them only to a request that
-// carries the Admin intake contract selector (D-143): the genuine 50-row body is `admin-configuration.json` of the
-// intake corpus (Core b5b2b299); without the selector the read is the 33 P1 rows (`admin-configuration-released-console`).
+// carries the Admin intake contract selector (D-143): the genuine body is `admin-configuration.json` of the intake
+// corpus (Core a5bbba5c): 50 rows of the generic list and, after them, the four of the submission leaderboard, which
+// have their own card. Without the selector the read is the 33 P1 rows (`admin-configuration-released-console`).
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/dates_event_intake_admin_wire/admin-${name}.json`, import.meta.url), "utf8"));
 const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
 const INTAKE: Array<[string, string, unknown]> = [
@@ -30,8 +32,13 @@ const SUGGESTION: Array<[string, string, unknown]> = [
 ];
 
 test("genuine configuration with the selector: the eight intake settings and the nine of the member channel follow the 33 P1 rows, each with an editor; the switches default OFF", () => {
-  const settings = fixture("configuration").settings as Array<Record<string, any>>;
-  assert.equal(settings.length, 50);
+  const served = fixture("configuration").settings as Array<Record<string, any>>;
+  assert.equal(served.length, 54);
+  // The last four are the submission leaderboard's (Core 7175aabe). They are not rows of the generic list - the page
+  // hands them to their own card - so the list this test is about is the 50 before them.
+  assert.deepEqual(served.slice(50).map((row) => row.key).sort(), [...LEADERBOARD_SETTING_KEYS].sort());
+  const settings = served.filter((row) => !isLeaderboardSettingKey(row.key));
+  assert.deepEqual(settings, served.slice(0, 50));
   // Core's defaults, row by row. (In this capture the three switches had been turned on for the corpus; their default is off.)
   assert.deepEqual(settings.slice(33, 41).map((row) => [row.key, row.type, row.default_value]), INTAKE);
   assert.deepEqual(settings.slice(41).map((row) => [row.key, row.type, row.default_value]), SUGGESTION);
@@ -140,8 +147,10 @@ test("the intake settings have their own help group and full help in both langua
   assert.ok(suggestion);
   assert.deepEqual([...suggestion.settingKeys], SUGGESTION.map(([key]) => key));
   assert.deepEqual(DATES_RUNTIME_HELP_KEYS.slice(-17), [...INTAKE, ...SUGGESTION].map(([key]) => key));
-  // Every setting Core serves is documented: nothing falls into the "undocumented" list of the help dialog.
-  const served = (fixture("configuration").settings as Array<{ key: string }>).map((row) => row.key).filter((key) => key !== "dates_enabled");
+  // Every setting the generic list shows is documented: nothing falls into the "undocumented" list of the help dialog.
+  // (Not rows of that list: the section switch, and the leaderboard's four, whose help is their card's and the page's.)
+  const served = (fixture("configuration").settings as Array<{ key: string }>).map((row) => row.key).filter((key) => key !== "dates_enabled" && !isLeaderboardSettingKey(key));
+  assert.equal(served.length, 49);
   assert.deepEqual(served.filter((key) => !(DATES_RUNTIME_HELP_KEYS as string[]).includes(key)), []);
   for (const locale of ["en", "hu"]) {
     const configuration = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8")).datesAdmin.configuration;

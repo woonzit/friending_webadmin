@@ -894,6 +894,80 @@
             "valid": true,
             "revision": 1,
             "updated_at": 0
+        },
+        {
+            "key": "dates_suggestion_leaderboard_enabled",
+            "type": "boolean",
+            "value": false,
+            "effective_value": false,
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": false,
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": null,
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_suggestion_leaderboard_enabled_overrides",
+            "type": "storefront_overrides",
+            "value": [],
+            "effective_value": [],
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": [],
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": null,
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_suggestion_leaderboard_scope",
+            "type": "enum",
+            "value": "country",
+            "effective_value": "country",
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": "country",
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": [
+                "country",
+                "city"
+            ],
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_suggestion_leaderboard_scope_overrides",
+            "type": "storefront_enum_overrides",
+            "value": [],
+            "effective_value": [],
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": [],
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": [
+                "country",
+                "city"
+            ],
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
         }
     ],
     "activity_types": [

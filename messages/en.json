@@ -8359,7 +8359,7 @@
       "absent": "This Core does not serve the leaderboard settings yet, so there is nothing to set here.",
       "unreadable": "The leaderboard settings could not be read from the configuration. Nothing is shown instead of a guess; use Refresh to try again.",
       "suggestionsOff": "Members' suggestions are switched off at the moment (runtime setting dates_external_suggestions_enabled), so no leaderboard is shown anywhere, whatever is set here. The leaderboard appears only where members' suggestions are on.",
-      "invalidStored": "The stored value of these settings is invalid, so their default is shown and in effect: {settings}. Saving replaces them.",
+      "invalidStored": "Core reports the stored value of these settings as invalid: {settings}. What is shown here is what is in effect instead; saving replaces the stored value.",
       "halfRows": "These countries are stored in only one of the two settings, so their other value is the default: {codes}. Saving stores both values for them.",
       "rebased": "The stored settings changed in the meantime. Your unsaved changes were kept; check them, then save again.",
       "vocabularyWarning": "These stored countries are not among the App Store storefronts Core knows; replace or remove them before saving: {codes}.",

@@ -317,7 +317,12 @@ test("D-143: this console decodes both shapes of every P1 read that depends on t
   }
   const assisted = body(SELECTOR_BODIES, "admin-activity-detail-ai-assisted.json");
   assert.ok(decodeDatesActivityOriginDetail(assisted, assisted.activity.activity_id, CAPABILITIES)?.external?.intake);
-  const fifty = body(SELECTOR_BODIES, "admin-configuration.json").settings; assert.equal(fifty.length, 50); rows(fifty, "admin-configuration");
+  // With the selector Core serves 54 rows: the 50 of the generic list (checked as its rows are), then the four of the
+  // submission leaderboard, which have their own card and are never rows of that list (tests/datesSuggestionLeaderboard.test.mts).
+  const served = body(SELECTOR_BODIES, "admin-configuration.json").settings; assert.equal(served.length, 54);
+  const fifty = served.slice(0, 50); rows(fifty, "admin-configuration");
+  assert.deepEqual(served.slice(50).map((row: { key: string }) => row.key), ["dates_suggestion_leaderboard_enabled", "dates_suggestion_leaderboard_enabled_overrides",
+    "dates_suggestion_leaderboard_scope", "dates_suggestion_leaderboard_scope_overrides"]);
   // The AI-assisted event as Core answers a request WITHOUT the selector (Core 8a621565, D-145). The list row is its
   // selector sibling minus the one key, and this console reads it; the activity list reads too.
   const bareList = body(SELECTOR_BODIES, "admin-external-list-released-console.json"), fullList = structuredClone(body(SELECTOR_BODIES, "admin-external-list-ai-assisted.json"));

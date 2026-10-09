@@ -12,12 +12,15 @@ rule; the provider is the Core lane's contract `dates-event-intake-admin-v1`.
 
 ## Release boundary and deploy order (D-143)
 
-- Provider: Core branch `claude/t865-p2-core` (T-884, T-886, D-143, D-145),
-  rebased onto Core main `33265e46`, pinned at
-  `62cee304c68eaeda456ddf0b042cb340b8702d48` (the no-usage fix `2034a93a`; its
-  bodies are those of `8a621565`). The intake corpus is vendored from that tip
-  byte-identically (`tests/fixtures/dates_event_intake_admin_wire/`,
-  161 bodies, set `4415fcb2…`); every console request in it carries the Admin
+- Provider: Core's event-intake contract (T-884, T-886, D-143, D-145), first
+  pinned at the tip `62cee304c68eaeda456ddf0b042cb340b8702d48` of the Core
+  branch `claude/t865-p2-core` (a lane commit, not an ancestor of Core main).
+  The intake corpus is now vendored byte-identically from Core main
+  `a5bbba5c2d12351e4b012e4a1f3bcdba1d9e359b`
+  (`tests/fixtures/dates_event_intake_admin_wire/`, 161 bodies, set `a672e1e6…`;
+  against that first pin, set `4415fcb2…`, only the configuration read differs,
+  by the four appended rows of the submission leaderboard -
+  `docs/WIRE_CORPUS_PINNING.md`); every console request in it carries the Admin
   intake contract selector (below). The P1 routes WITHOUT the selector are Core
   main's capture (`tests/fixtures/dates_external_admin_wire/`, 138 bodies, set
   `ba9ebf7a…`: the released set but four revision values, T-891), which the P2
@@ -192,7 +195,9 @@ at render.
   selector, on genuine bodies: without it the 9 lists, 13 details, the external
   activity detail and the 2 configuration reads of the P1 corpus; with it the
   manual and AI-assisted list and detail, the AI-assisted activity detail and
-  the 50-row configuration of the intake corpus; the released-console list
+  the configuration of the intake corpus (54 rows: the 50 of the generic list
+  and the four of the submission leaderboard, which have their own card); the
+  released-console list
   (its selector sibling minus the one key) and activity list; and the two
   refusals, read as refusals with their token. This console sends the
   selector, so it is never answered with them.

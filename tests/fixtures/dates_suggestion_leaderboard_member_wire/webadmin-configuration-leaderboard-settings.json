@@ -1,0 +1,165 @@
+{
+    "note": "Not a route body: the last four rows of `settings` of POST /v1/webadmin/dates_configuration (with the intake contract selector), before any save and after the saves of this capture.",
+    "default": [
+        {
+            "key": "dates_suggestion_leaderboard_enabled",
+            "type": "boolean",
+            "value": false,
+            "effective_value": false,
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": false,
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": null,
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_suggestion_leaderboard_enabled_overrides",
+            "type": "storefront_overrides",
+            "value": [],
+            "effective_value": [],
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": [],
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": null,
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_suggestion_leaderboard_scope",
+            "type": "enum",
+            "value": "country",
+            "effective_value": "country",
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": "country",
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": [
+                "country",
+                "city"
+            ],
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_suggestion_leaderboard_scope_overrides",
+            "type": "storefront_enum_overrides",
+            "value": [],
+            "effective_value": [],
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": [],
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": [
+                "country",
+                "city"
+            ],
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        }
+    ],
+    "saved": [
+        {
+            "key": "dates_suggestion_leaderboard_enabled",
+            "type": "boolean",
+            "value": false,
+            "effective_value": false,
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": false,
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": null,
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_suggestion_leaderboard_enabled_overrides",
+            "type": "storefront_overrides",
+            "value": {
+                "AUT": true,
+                "HUN": true
+            },
+            "effective_value": {
+                "AUT": true,
+                "HUN": true
+            },
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": [],
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": null,
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 3,
+            "updated_at": 1790000000
+        },
+        {
+            "key": "dates_suggestion_leaderboard_scope",
+            "type": "enum",
+            "value": "country",
+            "effective_value": "country",
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": "country",
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": [
+                "country",
+                "city"
+            ],
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 0,
+            "updated_at": null
+        },
+        {
+            "key": "dates_suggestion_leaderboard_scope_overrides",
+            "type": "storefront_enum_overrides",
+            "value": {
+                "HUN": "city"
+            },
+            "effective_value": {
+                "HUN": "city"
+            },
+            "effective_scope": "global",
+            "effective_by_storefront": null,
+            "default_value": [],
+            "minimum": null,
+            "maximum": null,
+            "allowed_values": [
+                "country",
+                "city"
+            ],
+            "system_owned": true,
+            "deletable": false,
+            "valid": true,
+            "revision": 1,
+            "updated_at": 1790000000
+        }
+    ]
+}

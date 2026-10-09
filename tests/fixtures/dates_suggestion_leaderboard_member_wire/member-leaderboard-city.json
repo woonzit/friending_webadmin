@@ -1,0 +1,48 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "dates_api_version": 1,
+        "period": "week",
+        "scope": "city",
+        "scope_label": "Budapest",
+        "from": 1789948800,
+        "to": 1790000000,
+        "entries": [
+            {
+                "rank": 1,
+                "uid": 6302,
+                "name": "Bori",
+                "avatar_url": "https://img.friending.co/api/cache/pr/profile_fixture_6302/773478d5422d5493d8113c021abcca41_meetpic.jpeg",
+                "count": 3,
+                "is_self": false
+            },
+            {
+                "rank": 2,
+                "uid": 6303,
+                "name": "Csaba",
+                "avatar_url": null,
+                "count": 2,
+                "is_self": false
+            },
+            {
+                "rank": 3,
+                "uid": 6301,
+                "name": "Anna",
+                "avatar_url": null,
+                "count": 2,
+                "is_self": true
+            }
+        ],
+        "self": {
+            "rank": 3,
+            "count": 2,
+            "hidden": false
+        },
+        "participants": 8,
+        "server_now": 1790000000
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -69,7 +69,7 @@ These supersede the P2a figures below; the tests named here are the authority.
 
 | Directory | Provider tip | Bodies | `fixture_set_sha256` | Pinned in |
 |---|---|---|---|---|
-| `dates_event_intake_admin_wire` | Core lane `opus-core-p2`, `62cee304c68eaeda456ddf0b042cb340b8702d48` (rebased onto Core main `33265e46`; bodies of `8a621565`, manifest rebound on `2034a93a`) | 161 | `4415fcb2f85025205eda028fa1e10591b457355e688627e5f438648843fbe79c` | `tests/datesIntakeWire.test.mts` |
+| `dates_event_intake_admin_wire` | Core main `a5bbba5c2d12351e4b012e4a1f3bcdba1d9e359b` (the submission leaderboard; source `7175aabe`, on Core main). Against the pin before it (Core lane tip `62cee304`, not on Core main, set `4415fcb2…`): one body, `admin-configuration.json`, with 74 appended lines | 161 | `a672e1e6462e5d7db462f261ecb932647fe8b05de4f878db164e4aa0ad7ecaca` | `tests/datesIntakeWire.test.mts` |
 | `dates_external_admin_wire` | Core main `33265e469650a48202eb21c25a171bc2aea09139` (T-891 landed; source `b5118909`) | 138 | `ba9ebf7a93d120d0ecd8c4efc94ce67964cdb2a86c248b3d389d974c4858bae7` | `tests/datesExternalWire.test.mts` |
 | `dates_admin_command_wire` | the same branch, commit `754b9eb310016abdcca11584e44ad525a1bee34b` (source `11a999d6`): the 61 command bodies of `33265e46` unchanged, and three evidence reads after a legal hold was placed, amended and released | 64 | `b9b921db4a15684bd4df0d4a9a9e9b8a50dd625c33c472c8e82b415149e2b126` | `tests/datesAdminCommandWire.test.mts` |
 | `dates_external_admin_wire_released` | Core main `0721529847602d4298f881119428f0e99eae9d53` | 138 | `d84a3e162703db1578db59f0a0a972de24fffc8562f23a13bf5715101306e4ed` | `tests/datesAdminCompatibility.test.mts` |
@@ -129,7 +129,31 @@ because the corpus does not carry them (the note says how).
 Both Core commits were local on Core main when the corpus was copied (two ahead of the published tip). If
 Core is rebased before it is published, re-pin as the reachability rule above requires.
 
-The four leaderboard settings (`dates_suggestion_leaderboard_*`) have no Core body yet:
-`tests/datesSuggestionLeaderboard.test.mts` builds their rows to the specification inside Core's genuine
-configuration read and marks them PROVISIONAL. Replace them with Core's bodies when its configuration
-corpus carries the four rows.
+## Submission leaderboard settings (2026-10-09)
+
+Two pins, both copied byte-for-byte from Core main `a5bbba5c2d12351e4b012e4a1f3bcdba1d9e359b`; both
+manifests record scoped source `7175aabe9268a3e42b2aa832add2049b699a59a4` (on Core main).
+
+`dates_event_intake_admin_wire` is re-vendored: `admin-configuration.json` gains the four
+`dates_suggestion_leaderboard_*` rows after the 50 it had (74 lines appended, none changed) and the
+manifest follows; the other 160 bodies are the previous pin's, byte for byte. Set
+`a672e1e6462e5d7db462f261ecb932647fe8b05de4f878db164e4aa0ad7ecaca` (before:
+`4415fcb2f85025205eda028fa1e10591b457355e688627e5f438648843fbe79c`). `tests/datesIntakeWire.test.mts`
+proves the difference from bytes: without the appended lines the body has the previous digest, and
+with that one digest the previous set digest comes back.
+
+`dates_suggestion_leaderboard_member_wire` (contract `dates-suggestion-leaderboard-v1`) is new: 21
+bodies, set `77fe61840ea49a3d0de1bde82f634e3a45c7e80042596d23d29663312bbe40d3`, pinned in
+`tests/datesSuggestionLeaderboard.test.mts` with the digest of its manifest and of every body. Six
+bodies are the console's: the four leaderboard rows of the configuration read before and after Core's
+saves (an excerpt, not a route body), the receipts of two `dates_configuration_save` calls and three
+refusals of a bad value. The fifteen `member-*` bodies are the iOS lane's and are vendored only so
+that the set digest can be recomputed.
+
+The requests of the two genuine saves are in Core's generator
+(`tests/dates_suggestion_leaderboard_member_fixture_dump.php`), form-encoded as `lib/core.ts` encodes
+them: `value={"HUN":true}` and `value={"HUN":"city"}`, a storefront map as the JSON text of an
+object. That is the form the leaderboard card sends; the test builds both commands from the card's
+reducer and settles them with Core's two receipts. What no genuine body carries (a replay of these
+saves, the default switch and scope saved, an invalid stored row) is DERIVED there from the genuine
+rows and receipts and is marked so.

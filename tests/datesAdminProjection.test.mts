@@ -18,7 +18,7 @@ import { datesCaseDetail, datesEvidenceRead, datesModerationQueue } from "../lib
 // genuine bodies of every Dates corpus and to the deny-list.
 const FIXTURES = new URL("./fixtures/", import.meta.url);
 const CORPORA = ["dates_admin_command_wire", "dates_event_intake_admin_wire", "dates_external_admin_wire", "dates_external_admin_wire_released", "dates_moderation_console_wire",
-  "dates_moderation_wire", "dates_event_icons_wire", "dates_external_pins_wire"];
+  "dates_moderation_wire", "dates_event_icons_wire", "dates_external_pins_wire", "dates_suggestion_leaderboard_member_wire"];
 const read = (corpus: string, file: string) => JSON.parse(readFileSync(new URL(`${corpus}/${file}`, FIXTURES), "utf8"));
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 
@@ -29,6 +29,8 @@ function routeOf(corpus: string, file: string): string | null {
   if (corpus === "dates_event_icons_wire") return name.split("-")[0];
   // The third-party pin corpus is Core's own (tests/fixtures/dates_external_pins_wire/provenance.txt): reads, saves, and one file of the app's side.
   if (corpus === "dates_external_pins_wire") return name.startsWith("member-") ? null : name.startsWith("webadmin-pins-save") ? "dates_external_pins_save" : "dates_external_pins";
+  // Core's leaderboard corpus: the console's bodies in it are saves of a setting; the four-row excerpt of the configuration read is no route body.
+  if (corpus === "dates_suggestion_leaderboard_member_wire") return name.startsWith("webadmin-setting-save-") ? "dates_configuration_save" : null;
   const first = (table: Array<[string, string]>) => table.find(([prefix]) => name.startsWith(prefix))?.[1];
   if (name.startsWith("member-")) return null;
   if (corpus === "dates_admin_command_wire") return first([["admin-hold-", "dates_moderation_legal_hold"], ["admin-trail-", "dates_moderation_trail_evidence"],

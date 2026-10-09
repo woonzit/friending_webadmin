@@ -1,0 +1,44 @@
+{
+    "note": "Not a route body: `data.capabilities` of POST /v1/dates/bootstrap for the same member under four states.",
+    "switch_off": {
+        "dates_enabled": true,
+        "dates_creation_enabled": false,
+        "dates_live_sharing_enabled": false,
+        "dates_reviews_enabled": false,
+        "dates_digest_enabled": false,
+        "dates_external_events_enabled": true,
+        "dates_event_suggestions_enabled": true,
+        "dates_suggestion_leaderboard_enabled": false,
+        "dates_suggestion_leaderboard_scope": "country"
+    },
+    "on_by_country": {
+        "dates_enabled": true,
+        "dates_creation_enabled": false,
+        "dates_live_sharing_enabled": false,
+        "dates_reviews_enabled": false,
+        "dates_digest_enabled": false,
+        "dates_external_events_enabled": true,
+        "dates_event_suggestions_enabled": true,
+        "dates_suggestion_leaderboard_enabled": true,
+        "dates_suggestion_leaderboard_scope": "country"
+    },
+    "without_suggestion_selector": {
+        "dates_enabled": true,
+        "dates_creation_enabled": false,
+        "dates_live_sharing_enabled": false,
+        "dates_reviews_enabled": false,
+        "dates_digest_enabled": false,
+        "dates_external_events_enabled": true
+    },
+    "on_by_city": {
+        "dates_enabled": true,
+        "dates_creation_enabled": false,
+        "dates_live_sharing_enabled": false,
+        "dates_reviews_enabled": false,
+        "dates_digest_enabled": false,
+        "dates_external_events_enabled": true,
+        "dates_event_suggestions_enabled": true,
+        "dates_suggestion_leaderboard_enabled": true,
+        "dates_suggestion_leaderboard_scope": "city"
+    }
+}
