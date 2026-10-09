@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
@@ -90,6 +90,7 @@ export default function DatesActivityDetailPage() {
   const commandOutcome = useTranslations("datesAdmin.commandOutcome");
   const locale = useLocale();
   const params = useParams<{ activityId: string }>();
+  const router = useRouter();
   const activityId = useMemo(() => decodeURIComponent(params.activityId || ""), [params.activityId]);
   const [data, setData] = useState<ActivityDetail | null>(null);
   const [principal, setPrincipal] = useState<DatesAdminPrincipal | null>(null);
@@ -296,7 +297,8 @@ export default function DatesActivityDetailPage() {
       {data.external_event && <DatesExternalProvenance event={data.external_event} />}
       {feedback && <div className={`alert ${feedback.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{feedback.text}</div>}
 
-      <DatesEventContentPanel key={activityId} activityId={activityId} principal={principal} deleted={activity.soft_deleted} />
+      <DatesEventContentPanel key={activityId} activityId={activityId} principal={principal} deleted={activity.soft_deleted}
+        onOpenCase={(caseId) => router.push(`/dates/moderation/${caseId}`)} />
       <div className="dates-detail-grid">
         <section className="panel">
           <div className="panel-header"><div><h2>{t("overview")}</h2><p>{t("overviewCopy")}</p></div><div className="row-actions"><span className={`badge ${activity.soft_deleted ? "badge-warning" : "badge-active"}`}>{activity.soft_deleted ? t("softDeleted") : values(activity.lifecycle)}</span><span className={`badge ${activity.moderation_state === "ok" || activity.moderation_state === "approved" ? "badge-active" : "badge-warning"}`}>{values(activity.moderation_state)}</span></div></div>

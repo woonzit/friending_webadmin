@@ -15501,3 +15501,9 @@ fieldset.dates-external-fields {
 .dates-event-content-text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
 .dates-event-content code { overflow-wrap: anywhere; font-size: 12px; }
 .dates-event-content-access { display: grid; gap: 12px; }
+.dates-event-content .field-hint { margin: 0; }
+.dates-event-content-card-selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.dates-event-review-form h3 { margin: 0; font-size: 16px; }
+.dates-event-review-target { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.dates-event-content-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.dates-wall-evidence-media .alert { margin: 12px 0 0; }
