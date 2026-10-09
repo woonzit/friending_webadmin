@@ -9391,6 +9391,8 @@
       "wallMediaOpen": "Open event-wall photo or video",
       "wallMediaLoading": "Loading private media…",
       "wallMediaFailed": "This media is unavailable or your access has changed.",
+      "wallMediaPhotoAlt": "Event-wall photo kept as evidence",
+      "wallMediaVideoLabel": "Event-wall video kept as evidence",
       "evidenceLoaded": "Evidence was loaded and the read was audited.",
       "noEvidence": "No retained evidence is available.",
       "evidenceItem": "Evidence {index}",

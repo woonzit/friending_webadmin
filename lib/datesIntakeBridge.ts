@@ -61,7 +61,7 @@ function refusal(error: string, status: number): DatesIntakeBridgeReply {
 }
 
 /** Session, live membership and the Dates capability, checked on every call. */
-async function operator(deps: DatesIntakeBridgeDeps, capability: string, signal?: AbortSignal): Promise<{ email: string } | DatesIntakeBridgeReply> {
+async function operator(deps: Pick<DatesIntakeBridgeDeps, "session" | "core">, capability: string, signal?: AbortSignal): Promise<{ email: string } | DatesIntakeBridgeReply> {
   let session;
   try { session = await deps.session(); } catch { return refusal(ADMIN_MEMBERSHIP_UNCONFIRMED, 503); }
   if (signal?.aborted) return refusal(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
@@ -88,6 +88,12 @@ function coreFailure(result: CoreAnswer, email: string): DatesIntakeBridgeReply 
   // Core's refusal travels on as its six refusal keys, so the page can show exactly what Core said - and nothing beside it.
   return { status: answered.status, headers: { ...DATES_INTAKE_NO_STORE }, json: projectDatesAdminResponse("dates_event_intake_create", result.data) };
 }
+
+/**
+ * The three steps every private Dates bridge shares - who is asking, what the bridge itself refuses, and what Core's
+ * answer was when it is not the expected one - for the bridge of another Dates surface (lib/datesWallMediaBridge.ts).
+ */
+export { coreFailure as datesBridgeCoreFailure, operator as datesBridgeOperator, refusal as datesBridgeRefusal };
 
 /**
  * GET: one flyer of an intake as the metadata-free JPEG Core keeps. Each read

@@ -306,6 +306,8 @@ export async function coreBinaryCall(
   payload: Record<string, unknown>,
   range: string | null,
   timeoutMs = 30_000,
+  /** The caller's own request: when the browser gives up, the read of Core stops with it. */
+  signal?: AbortSignal,
 ): Promise<Response | null> {
   if (!/^[a-z][a-z0-9_]{1,63}$/.test(action)) return null;
   if (range !== null && !/^bytes=(?:\d+-\d*|-\d+)$/.test(range)) return null;
@@ -329,7 +331,7 @@ export async function coreBinaryCall(
       headers,
       body: body.toString(),
       cache: "no-store",
-      signal: AbortSignal.timeout(timeoutMs),
+      signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
     });
   } catch {
     return null;

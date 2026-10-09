@@ -9391,6 +9391,8 @@
       "wallMediaOpen": "Eseményfal képének vagy videójának megnyitása",
       "wallMediaLoading": "Privát média betöltése…",
       "wallMediaFailed": "A média nem elérhető, vagy megváltozott a hozzáférésed.",
+      "wallMediaPhotoAlt": "Bizonyítékként megőrzött eseményfal-fotó",
+      "wallMediaVideoLabel": "Bizonyítékként megőrzött eseményfal-videó",
       "evidenceLoaded": "A bizonyíték betöltve, az olvasás naplózva.",
       "noEvidence": "Nincs megőrzött bizonyíték.",
       "evidenceItem": "{index}. bizonyíték",

@@ -43,6 +43,7 @@ import { datesExternalMessageResolutionBaseline, datesExternalMessageResolutionM
 import { DatesCaseReadFence, datesCaseDetail, datesEvidenceRead, datesLegalHoldAllowed, datesLegalHoldCommandReceipt,
   datesConsoleCommandReceipt, datesTrailEvidenceCommandReceipt, isDatesConsoleCommand,
   type DatesCaseDetail, type DatesEvidenceRead } from "@/lib/datesModerationRead";
+import type { DatesWallMediaAccess } from "@/lib/datesWallMedia";
 
 /** `refresh` adds the operator's own "Refresh the case" beside the message; the page never rereads by itself after an unknown outcome. */
 type Feedback = { tone: "success" | "error"; text: string; refresh?: boolean };
@@ -78,7 +79,8 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
   const [messageNeedsReload, setMessageNeedsReload] = useState(false);
   const [principal, setPrincipal] = useState<DatesAdminPrincipal | null>(null);
   const [notes, setNotes] = useState<DatesCaseInternalNotes>({ status: "unsupported" });
-  const [evidence, setEvidence] = useState<DatesEvidenceRead | null>(null);
+  // The evidence that is shown, with the scope it was read with: the private media of the list is read with that scope.
+  const [evidence, setEvidence] = useState<(DatesEvidenceRead & { sent: DatesWallMediaAccess }) | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error" | "not-found">("loading");
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -278,12 +280,8 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     const ticket = readFence.begin();
     setBusy(true);
     setFeedback(null);
-    const response = await adminCall("dates_moderation_evidence", {
-      case_id: caseId,
-      include_sensitive_location: includeSensitiveLocation,
-      break_glass: conflictBreakGlass,
-      reason: evidenceReason.trim() || null,
-    });
+    const sent = { include_sensitive_location: includeSensitiveLocation, break_glass: conflictBreakGlass, reason: evidenceReason.trim() || null };
+    const response = await adminCall("dates_moderation_evidence", { case_id: caseId, ...sent });
     if (!readFence.accepts(ticket)) return;
     setBusy(false);
     const decoded = datesEvidenceRead(response, { case_id: caseId, appeal_id: data.appeal?.appeal_id ?? null,
@@ -292,7 +290,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       setFeedback({ tone: "error", text: adminMembershipFailureText(response?.error, t("operationFailed", { error: String(response?.error || "core-unavailable") }), membership("requestUnconfirmed")) });
       return;
     }
-    setEvidence(decoded);
+    setEvidence({ ...decoded, sent });
     setFeedback({ tone: "success", text: t("evidenceLoaded") });
   }
 
@@ -627,7 +625,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
             <p className="field-hint">{t("evidenceAuditReceipt", { id: evidence.audit_id })}</p>
             {evidence.appeal_note && <article><div className="dates-evidence-header"><strong>{t("appellantNote")}</strong><time dateTime={new Date(evidence.appeal_note.created_at * 1000).toISOString()}>{formatDate(evidence.appeal_note.created_at, locale, true)}</time></div><p className="dates-note-text">{evidence.appeal_note.note ?? t("noAppellantNote")}</p></article>}
             {evidence.evidence.length === 0 && evidence.appeal_note === null && <p className="page-subtitle">{t("noEvidence")}</p>}
-            {evidence.evidence.map((entry) => <article key={String(entry.evidence_id)}><div className="dates-evidence-header"><strong>{String(entry.evidence_id)}</strong><span className="badge">{humanizeMachineKey(String(entry.evidence_type))}</span></div><DatesEventPhotos source={entry.snapshot} /><DatesWallEvidenceMedia source={entry.snapshot} caseId={item.case_id} evidenceId={String(entry.evidence_id)} breakGlass={item.conflict_of_interest && breakGlass} sensitive={evidenceSensitive} reason={evidenceReason} /><pre>{safeJson(entry)}</pre></article>)}
+            {evidence.evidence.map((entry) => <article key={String(entry.evidence_id)}><div className="dates-evidence-header"><strong>{String(entry.evidence_id)}</strong><span className="badge">{humanizeMachineKey(String(entry.evidence_type))}</span></div><DatesEventPhotos source={entry.snapshot} /><DatesWallEvidenceMedia source={entry.snapshot} caseId={item.case_id} evidenceId={String(entry.evidence_id)} access={evidence.sent} /><pre>{safeJson(entry)}</pre></article>)}
             {evidence.redacted_sensitive_location_count > 0 && <p className="alert alert-info">{t("redactedEvidence", { count: evidence.redacted_sensitive_location_count })}</p>}
           </div>}
         </div>

@@ -236,6 +236,48 @@ export async function adminUploadSupportImage(
   return finishUpload(response, signal);
 }
 
+/**
+ * A private event-wall photo or clip of a moderation case's evidence, from the
+ * console's own bridge: the bytes, or the refusal. A read, so nothing is
+ * marked as a write in doubt; a definite sign-out goes to /login and an
+ * unconfirmed membership starts the recovery, as for every other call. It
+ * does not itself look at the membership state (the reviewed list of its
+ * observers stays as it is): the bridge checks the membership on every read.
+ * `null`: the caller gave up, or the page is leaving for /login.
+ */
+export async function adminWallEvidenceMedia(body: Record<string, unknown>, signal?: AbortSignal): Promise<Blob | AdminResponse | null> {
+  if (signal?.aborted) return null;
+  let response: Response;
+  try {
+    response = await fetch("/api/admin/dates-wall-media", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", [ADMIN_REQUEST_HEADER]: ADMIN_REQUEST_HEADER_VALUE },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      signal,
+    });
+  } catch {
+    if (signal?.aborted) return null;
+    adminMembershipRecovery.markUnconfirmed();
+    return refuseUnconfirmed();
+  }
+  if (signal?.aborted) return null;
+  if (response.ok) {
+    let media: Blob | null = null;
+    try { media = await response.blob(); } catch { media = null; }
+    if (signal?.aborted) return null;
+    return media ?? { success: false, error: "media-unreadable" };
+  }
+  const data = await responseData(response, signal);
+  if (signal?.aborted) return null;
+  if (definiteSignedOut(response.status, data)) { redirectToLogin(); return null; }
+  if (response.status === 503 && data?.success === false && data.error === ADMIN_MEMBERSHIP_UNCONFIRMED) {
+    adminMembershipRecovery.markUnconfirmed();
+    return refuseUnconfirmed();
+  }
+  return data ?? { success: false, error: "media-unreadable" };
+}
+
 /** "Draft from source" (T-865 P2a): the source, and a flyer when there is one, to the console's own route. */
 export async function adminIntakeCreate(body: FormData, signal?: AbortSignal): Promise<AdminResponse | null> {
   if (signal?.aborted) return null;
