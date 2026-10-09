@@ -1,0 +1,122 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "dates_api_version": 1,
+        "wall": {
+            "schema_version": 1,
+            "activity_id": "act_07df787e41f77169525479fd3d189204",
+            "revision": 1,
+            "settings": {
+                "posting": "participants",
+                "comments_enabled": true,
+                "commenting": "participants",
+                "poster_uids": []
+            },
+            "capabilities": {
+                "can_post": true,
+                "can_comment": true,
+                "can_like": true,
+                "can_manage": false
+            },
+            "unread_count": 1,
+            "maximum_text_length": 4000,
+            "maximum_comment_length": 1000,
+            "maximum_video_seconds": 15,
+            "maximum_media_bytes": 12582912
+        },
+        "receipt": {
+            "post_id": "wpo_2ec1e24f865b8f21099f0183ab1d15bd",
+            "comment_id": "wco_826f83cd33c04d254784c92ec3b846e3"
+        },
+        "idempotency_replayed": false,
+        "post": {
+            "id": "wpo_2ec1e24f865b8f21099f0183ab1d15bd",
+            "activity_id": "act_07df787e41f77169525479fd3d189204",
+            "sequence": 2,
+            "author": {
+                "uid": 108,
+                "id": 108,
+                "display_name": "Third participant",
+                "avatar_url": null,
+                "is_host": false
+            },
+            "text": "Post of the third participant",
+            "kind": "text",
+            "asset": null,
+            "link": null,
+            "location": null,
+            "created_at": 1791585547,
+            "like_count": 0,
+            "liked": false,
+            "comment_count": 3,
+            "comment_preview": [
+                {
+                    "id": "wco_826f83cd33c04d254784c92ec3b846e3",
+                    "post_id": "wpo_2ec1e24f865b8f21099f0183ab1d15bd",
+                    "root_id": null,
+                    "reply_to_id": null,
+                    "reply_to": null,
+                    "sequence": 1,
+                    "author": {
+                        "uid": 107,
+                        "id": 107,
+                        "display_name": "Blocking member",
+                        "avatar_url": null,
+                        "is_host": false
+                    },
+                    "text": "Root comment of the blocker",
+                    "deleted": false,
+                    "created_at": 1791585547,
+                    "like_count": 1,
+                    "liked": true,
+                    "can_delete": false,
+                    "can_reply": true,
+                    "can_report": true,
+                    "can_hide": true,
+                    "replies": [],
+                    "reply_count": 0,
+                    "replies_next_cursor": null
+                },
+                {
+                    "id": "wco_21c5710a95d994bca68503c74792eb95",
+                    "post_id": "wpo_2ec1e24f865b8f21099f0183ab1d15bd",
+                    "root_id": null,
+                    "reply_to_id": null,
+                    "reply_to": null,
+                    "sequence": 3,
+                    "author": {
+                        "uid": 108,
+                        "id": 108,
+                        "display_name": "Third participant",
+                        "avatar_url": null,
+                        "is_host": false
+                    },
+                    "text": "Own root comment",
+                    "deleted": false,
+                    "created_at": 1791585547,
+                    "like_count": 0,
+                    "liked": false,
+                    "can_delete": true,
+                    "can_reply": true,
+                    "can_report": false,
+                    "can_hide": true,
+                    "replies": [],
+                    "reply_count": 0,
+                    "replies_next_cursor": null
+                }
+            ],
+            "can_delete": true,
+            "can_report": false,
+            "can_hide": true
+        },
+        "comment_like": {
+            "comment_id": "wco_826f83cd33c04d254784c92ec3b846e3",
+            "like_count": 1,
+            "liked": true
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

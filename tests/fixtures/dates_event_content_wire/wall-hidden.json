@@ -5,7 +5,7 @@
         "dates_api_version": 1,
         "wall": {
             "schema_version": 1,
-            "activity_id": "act_047dbccb9073e328204314a3048991d8",
+            "activity_id": "act_66ade4903ca93e6e35046fbbbd02e8fc",
             "revision": 1,
             "settings": {
                 "posting": "participants",
@@ -26,7 +26,7 @@
             "maximum_media_bytes": 12582912
         },
         "receipt": {
-            "target_id": "wpo_8c1b6c64b836833227668ae2c3dde934"
+            "target_id": "wpo_1882893a8b973e744ee2b805e0fe352e"
         },
         "idempotency_replayed": false,
         "hidden": true

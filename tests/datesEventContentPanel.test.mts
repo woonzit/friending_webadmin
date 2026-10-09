@@ -24,9 +24,13 @@ const hex = (seed: number) => seed.toString(16).padStart(32, "0");
 /** A last page: the rows given, no cursor. */
 const lastPage = (rows: unknown[]) => ({ ...comments, items: rows, has_more: false, next_cursor: null });
 const KEY = "content:00000000-0000-4000-8000-000000000001";
-/** The first reviewable wall post selected, with a reason, and its request sent. */
+/**
+ * The wall post Core's genuine receipt is for, selected with a reason, and its request sent. Core lists rows created in
+ * the same second in no fixed order, so the row is found by the receipt's target, never by its place in the list.
+ */
 function sent(reason = "Proactive safety check") {
-  const row = posts.items[0];
+  const row = posts.items.find((item: { id: string }) => item.id === receipt.target_id);
+  assert.ok(row, "the genuine receipt's target is on the genuine first page of wall posts");
   const chosen = run(listed(), { type: "targetChosen", target: eventReviewTargetOf(row) }, { type: "reasonTyped", value: reason });
   const request = eventReviewRequest(chosen, KEY)!;
   return { row, chosen, request, state: run(chosen, { type: "reviewStarted", request }) };

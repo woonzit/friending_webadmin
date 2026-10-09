@@ -2,7 +2,7 @@
     "schema_version": 1,
     "contract": "dates-event-wall-v1",
     "generator": "tests/dates_wall_storage_test.php",
-    "generator_sha256": "9c64af34adfd1fc49e473178e90de8a74849449911d3eabd8ef869241dbe7f54",
+    "generator_sha256": "169a53101e582531fad9e0ba205d6db18fd5d5e3ea8f78b90692b2e7b9e67973",
     "source_paths_sha256": {
         "config/routes.php": "4e4e2fb50a6a67b96b8331b2a209c0906753c2ab9602ce041ba739898f56432c",
         "src/Core/Config.php": "6ece8d6954567ad623830cac8b9eb5aee7ac75d1ed7970850729b6f06d68dfe2",
@@ -28,7 +28,7 @@
         "src/Http/Controllers/DatesNotificationController.php": "9be73088b25077251e45e49b0c605b7087bc2cf2b08f3935171849d582738375",
         "src/Http/Controllers/DatesReviewController.php": "8a94640d9e3e898401e9199bdcab2d48740aa4bf294a465c28d7bdda407acd9e",
         "src/Http/Controllers/DatesSafetyController.php": "5d70168d0519361d88703e6a05f8c62a94d66f0de23c0aca2a492075b23d0395",
-        "src/Http/Controllers/DatesWallController.php": "b8a13df6d21a9787a5584bfe7a571710dc85e866fb5a30d885ad6eea3ff9d0cc",
+        "src/Http/Controllers/DatesWallController.php": "f27fdae861088b9b9ea03e38a90bbcda43091ad9ffc6fc8d46d8ff9f90f79d35",
         "src/Http/Controllers/EmailVerificationController.php": "1c3cbd6b616d23a2f3b3e4d782f0eb11b2ce7bde807205a9b9d0d6b892453645",
         "src/Http/Controllers/FeedController.php": "70fef6c0fbedda7c7d2e3e656503f3169972bcac58ffa93e9fab5bd88ac6083d",
         "src/Http/Controllers/FootprintController.php": "e22a27a6a2af3aa2ad0241f9bcb348d2a40db3feb563dfdefd2993eaad15030c",
@@ -120,7 +120,7 @@
         "src/Services/DatesDiscoveryContextService.php": "6eb5b0e78bf35cd57fb0da71965f649c573c66eecd23cedbcbb80083aa830659",
         "src/Services/DatesDomainException.php": "62a00a37f6918e8dca543aa9d963b65a72831aee4625a690ec53fffb5e096f7b",
         "src/Services/DatesDomainOutbox.php": "8281c21352ad1d6866fd904acb55663ff559a51b931d276d97602196dd0f39a9",
-        "src/Services/DatesEventContentAdminService.php": "9a104a85216cd6e3981360afffe128ca9665d57dedf6039d3e67a44fd5eafc4a",
+        "src/Services/DatesEventContentAdminService.php": "d71ebe2252d1f75da58a6a9e5c582007b9e39c4a535c908c7092fe684e6b2507",
         "src/Services/DatesEventIntakeAdminService.php": "931e8c60a63c8a5cc1979b27cbe97a4a908d72132276517e6858ea43e7289e9b",
         "src/Services/DatesExternalAccessService.php": "8003f47d99d4adaa2fc5da7833cf3409b08542eb1d394654a6c605af22557254",
         "src/Services/DatesExternalEventAdminService.php": "11c1e5842a6257669054c5fad240bea8e1f49c6502e3a29ec6a1b57f4448dbd0",
@@ -128,7 +128,7 @@
         "src/Services/DatesExternalInvitationAuthority.php": "8dd01c7c7ce37b8ff6595ec2775959208e93f44898f624de838dbcc0ece0671a",
         "src/Services/DatesExternalMessageReportService.php": "33c85ca8ac51a0b52469a4c99db7e15053b820585967535e855475043427891a",
         "src/Services/DatesExternalReportService.php": "7b3167be09eb14cffedf13955221b3080ab56b0c41d832e445d2ccc900906071",
-        "src/Services/DatesIdempotencyService.php": "ba7ed929fca298862f0bada3003dfe95feb3e37b74029b020d5af58463f18d30",
+        "src/Services/DatesIdempotencyService.php": "5ca5410107e63492c32169df237a4f9650aab9e76bda9e3a2265cd73c2d1b3aa",
         "src/Services/DatesMembershipBundleService.php": "89c0e6bd5113124365d543159d256c3ff3dc2555f4814a70267f446ee9be3ba9",
         "src/Services/DatesModerationCommandService.php": "056a3bd034956670c8a6f4f6227ffd681ca061539689bc4e663e5dc40715e3fc",
         "src/Services/DatesModerationConflictService.php": "2adc59e255bf47a2d5f7388db03ed09cd7a49a754d8f351ce0975bd58d30bb09",
@@ -140,16 +140,20 @@
         "src/Services/DatesPhotoCleanupService.php": "dd855d74138580cf7bd0525236c572f27ff9120baa409c0b7de8f1499f9552c7",
         "src/Services/DatesPrepublicationModerationService.php": "ba9875f5b862ceb6ac428aadff44f8808b261340fc162860ff9acf92f0fcfadf",
         "src/Services/DatesReferenceService.php": "43207699b842b338d2bce187d932cf7e28a4eaed8b751408857cbe9abfacf990",
-        "src/Services/DatesReportReasonService.php": "41b2f2ba46e01a80373596b025f2feb1c578c780c17d137e2d0a1e2e3b6287ca",
-        "src/Services/DatesReportService.php": "2e5954023a54dc902f452c274a7190172b3a593c167127d3d9685dec55cddec0",
+        "src/Services/DatesReportReasonService.php": "a347d917f211ef81b1f3aafe38debfc4c499bf6d940ef45caad311db674459a1",
+        "src/Services/DatesReportService.php": "0502345b1ee36c59b24751c2d5189242966b7efbd4904c38d8d8bf6cb28dd01b",
         "src/Services/DatesRestrictionService.php": "08b4d1b18b0534be808b07b0443fc93fdcc9f56a21629581c4c658bf86997375",
         "src/Services/DatesRuntimeConfiguration.php": "c2d833f894adb6ea334571d285dc925e61022f20d24cff79dd865692a46d716e",
         "src/Services/DatesTransaction.php": "e5e17474085679844cc53ace2a868177e432f9b8f72884f7eb37fbd253453c4d",
-        "src/Services/DatesWallAccess.php": "07f84a59df3267f2014d7f53c9a15b5a3a05e7a4419cb30911e5a6190cd333ef",
-        "src/Services/DatesWallCommandService.php": "b437cba4b0b8ff54b45efe19a1cab9b5c809b40b4e4121bfee9bb88656097aab",
-        "src/Services/DatesWallMediaService.php": "ec29675ad63cdf9374f7ab9ea9adfbac343d949f0a9175a248e2eeb518635039",
-        "src/Services/DatesWallModerationService.php": "4bd89f9d5d56f263045dafe79ab1f95b96c62ef3654cf17ec1c2267ec9c8dc48",
-        "src/Services/DatesWallReadService.php": "2b5e0f86c49c1af772b42c7737d8b74e4fbc3ffa8a31a92859385a9a37aae842",
+        "src/Services/DatesWallAccess.php": "34f26a049cd15cc4573bbcf9b2a2a9d853abced09b02c695f0a2c153ab4be8c7",
+        "src/Services/DatesWallCommandService.php": "fbdccaed99a2405551e90731c8cc731aff3bb517909f5985051154d38444f873",
+        "src/Services/DatesWallCursor.php": "6e84c41f7d2a4b27888e924b2297088bfbba735517e08c4801cfe1bcc0c38aa2",
+        "src/Services/DatesWallMediaService.php": "19377f5f87885b039d514d652329b502fa3e57f5c6e21e3e4372efa253314599",
+        "src/Services/DatesWallModerationService.php": "a2d90c057dec3576ef8ce04c4d15f1fcf1642752678662f115739963b33ef534",
+        "src/Services/DatesWallProjector.php": "20f0b0ef89edcfe3ff88d5a9cd29a1c76e4b11f7ed7916ffacf565f6019a88bf",
+        "src/Services/DatesWallReadService.php": "5fe0a51baa2c59be26aba88796aa98c0426b03aba1ea2a231352faeef7f21006",
+        "src/Services/DatesWallViewer.php": "e2c3e067a621df3c39acbbb145ccf468739cd442154a3d466fa566d55eb054c6",
+        "src/Services/DatesWallVisibility.php": "06c8694cac3435a0452ef9fc50e8efb836bce49986f6a2a1a17a8d33c2f3ccca",
         "src/Services/ForcedVerificationService.php": "5a390cc69b5a742a92302036c75e70a66e5a6d3a20e1f2607f3032cbc983fa9f",
         "src/Services/ModeratedUidSetService.php": "4804b70feea7faf78a36b6b6e9c48a06024c68798c1de72456f6f64f22bbd103",
         "src/Services/MongoAdministrativeMessageConsentStore.php": "2522a72e0d7ecc2b9da065875be7a7e9838c3466ce3a935c3c4c21d8ef8f1b3e",
@@ -180,7 +184,7 @@
         "src/Support/DatesCanonicalPayload.php": "7320a213f1f4f2ff14dc86bcaf10702d4857f2ca09b88cf3fd046e4557ad3efe",
         "src/Support/DatesChatSerializer.php": "7bb9952df7dbc72403cf09a4db58e8d8dd19333a8415e83a0eeb80922a9c3952",
         "src/Support/DatesCityKey.php": "e89ece7b29349aa76d24bd01dff21a227368dff24c53b7973c6d36449ed85d92",
-        "src/Support/DatesContract.php": "8905c1dd3a6d0895ebb444394eb069fff77bf1ee5bb7ae3e0bef6aa4a0f4ebd9",
+        "src/Support/DatesContract.php": "f2c89cef724f57fdcb109da0b0d0358752b0eaef20fd192eba727e657e6bb75b",
         "src/Support/DatesCursor.php": "c09ee3c6998de6ee36fb3ead550de3d95b32df6f6dc61e357c321f384995e9ef",
         "src/Support/DatesEventContract.php": "44f87e699a2cc8bbbb60b6a69d70b0805b77c02bf16fe298edc5246d4b31f1b0",
         "src/Support/DatesEventOrigin.php": "c924ff4c1b52b53e7ffffc4226fe939e75ee0dec1e5a0b1d2f2e8b385424920e",
@@ -198,8 +202,8 @@
         "src/Support/DatesRevisionPolicy.php": "4e9e58c89d6fe1512a26fbdc26d66f68c2bdd82572849d01fbd49161a9d70e50",
         "src/Support/DatesStateProjector.php": "6225319840b1bcc8d845bed124ee70becf12b2a211ce30fdabeec3c4204d38bb",
         "src/Support/DatesViewerPolicy.php": "14ccfa47b7d5fa46ba21c87aa50cf3c34aaf95db845262ecc40a0d38c08aaa28",
-        "src/Support/DatesWallPolicy.php": "b112ad257ee830fea7707f5fce0985b28fd64bb199054c847f5647a2ec376606",
-        "src/Support/DatesWallSchema.php": "3b7509cab07f668ab9b91ee8b468e732585a1a49932e12aec97c3dba6f4c6f4c",
+        "src/Support/DatesWallPolicy.php": "a0bfd88997a49c9c0e561ab1825f8da44d54598448ba9dc08c6e00fe9792667d",
+        "src/Support/DatesWallSchema.php": "c4d86aad57fde2490ced566c68ac0d62c7fa2cee69b86ca8ec4217fe92daca49",
         "src/Support/DatesWireResponse.php": "f748e519d12b28344dbdeb4d6e3377b938fdba788f1fc29cbfd13951c1497889",
         "src/Support/EmailProofPolicy.php": "9eee72a8bc550e23b4339f79b9e63ce7ef19bdbbd0bf20e5a89df94bc9dbe61a",
         "src/Support/EventAi/EventImageNormalizer.php": "eb9850cac0f813145fbb16070473d033ab21199ff9a46aee6a4e1cf7218f0ac4",
@@ -237,32 +241,32 @@
     "fixtures": [
         {
             "file": "wall-detail.json",
-            "sha256": "97ca226f648f6f4c7e560b00479beec6afa94d79cc547d6ff3bed568398c7e22",
+            "sha256": "6a91fb35ce338e1a6e1bc4e0e9a84f41455e81c4dd065c586cd69d6567de8764",
             "status_code": 200
         },
         {
             "file": "wall-list.json",
-            "sha256": "22fed07456b57d5fd0edbbb86d8b01e8cd2fc1135c9b7c36f30d00ddab17a1d7",
+            "sha256": "8aa92c799cf4ec847c39c1346f6140199376cd1e2b81600711501b26a5895ec5",
             "status_code": 200
         },
         {
             "file": "wall-published.json",
-            "sha256": "0696a5ce8ed51925522aeb90d3661203c29f411cc4a5cb04a297b9b3a39d4ad5",
+            "sha256": "55b100fcc5b8078fe4c6fc2009efd45d8320441af1adf2887f533ee31eadab77",
             "status_code": 200
         },
         {
             "file": "wall-photo.json",
-            "sha256": "b770c34f040d69ae860920422719b40fed1a11860fa2bc77041de623529e239d",
+            "sha256": "1f858270daf59e68fe1cd8ffa220faeb14d8817cc5b7f78117d1d911b3823b18",
             "status_code": 200
         },
         {
             "file": "wall-summaries.json",
-            "sha256": "939a661dfe9634c23b6e5699cd0bea8d37300189eebd30d4ef7f1ac2494bda6a",
+            "sha256": "4c9b72e291d65fc82e0c3c1c904fcbb8ba39dc1ee5be7fe47af42476cdfe9c99",
             "status_code": 200
         },
         {
             "file": "wall-settings.json",
-            "sha256": "886db2ecc0a746a5d449c7e6f67073be0a09d592a6146b948a3cdbcf437c41c5",
+            "sha256": "a75339f0f6bf84ee13d471fa494ff229ab312a12291a9f626208b385c54da417",
             "status_code": 200
         },
         {
@@ -272,92 +276,97 @@
         },
         {
             "file": "wall-external.json",
-            "sha256": "96309966c11261289863381efb62bdca09225e55fd21bcfe2ced1b4967837ef0",
+            "sha256": "ab3d17c3ffd2b805fb773a3f615a3ed8e16f5c2912c3c349616ba38202c6d009",
             "status_code": 200
         },
         {
             "file": "wall-link.json",
-            "sha256": "9ff3e262b35ae32385d9435837456458c9bebdbc977ad63ae6190a62529ffd7b",
+            "sha256": "03e63b1f0e31561e566e6d36aee22ea2381c7a970cf48b4cea074cf87bcb83c5",
             "status_code": 200
         },
         {
             "file": "wall-youtube.json",
-            "sha256": "270c729dadac04e723aef287b354514fa69b084f827ba2e3c594d6c2b23cc12e",
+            "sha256": "07b53267001c7cb17547ddf533ad3c0272cbfa960d9de9b4dbaf057448a54006",
             "status_code": 200
         },
         {
             "file": "wall-tiktok.json",
-            "sha256": "5ee65e163a58c36a4c830f74f271f5a5418203e1a62e70b057419c4ec097bf46",
+            "sha256": "22e136621fbe6911f698b333e499627ba924e911188c76b4d6763a4c70057dff",
             "status_code": 200
         },
         {
             "file": "wall-location.json",
-            "sha256": "7c5ced8b5d2f7a0f2979c620b82e1263566bb3e1ae5b8821ed28542fee891484",
+            "sha256": "626e7595a2c9650525bddac7a336703ef934c61554a8b08b6f5e5344871d4e7f",
+            "status_code": 200
+        },
+        {
+            "file": "wall-comment-liked.json",
+            "sha256": "4097d13ae9d79d9c1dfdac591e2268ba4b7dd8ac8b08771775022c4c104f3e8e",
             "status_code": 200
         },
         {
             "file": "wall-comments-active.json",
-            "sha256": "024134210d3d9a0f90dbe3cb331a3bc6853535af70c8e98f6b19893560f54aa5",
+            "sha256": "6f597d1ef5e15b080aa4db32d1c0250b4b54f0fd3cca2c4b945e9b9235b9e3b1",
             "status_code": 200
         },
         {
             "file": "wall-hidden.json",
-            "sha256": "6130e9693613f51a62ea820390aa0ad483f87c6057fa8982f57b3a33bca2233f",
+            "sha256": "6cfa6b3ff920c494c74ca4dfc0495ee04ac74cec2df61a612ac2277caac52c40",
             "status_code": 200
         },
         {
             "file": "wall-unhidden.json",
-            "sha256": "7b25ea41cf438befd0de1118183c3cfc14a6cce98295e267940042d47f00755f",
+            "sha256": "7eb657eeb68703d736abd34523cb97b6f408eb29f909f0bcdef43e470ca55c2f",
             "status_code": 200
         },
         {
             "file": "wall-reply-hidden.json",
-            "sha256": "1e3a29b39b73d561b00795ef9724d3100d91560f1f3334914500451e02b4406f",
+            "sha256": "044962b6bcd0dea9b39ee0ff3741da69e147c74975eab116f318726430fe9f8b",
             "status_code": 200
         },
         {
             "file": "wall-root-hidden.json",
-            "sha256": "280410ed0f4b84529b02919609705184a1a46be4d6de55bcaafd280f9fd68443",
+            "sha256": "1bdc2d3c79139a742d409695d9483a7eb90bbcd86318fbeb8fd94582f5c8e6d0",
             "status_code": 200
         },
         {
             "file": "admin-wall-posts.json",
-            "sha256": "403987baf5e3599cd2f5e2b91e4db2cfc23149429f8a0e72918ac4ca063635c6",
+            "sha256": "f2ef718580fbc5133781628bddc09402b079cb845f9edf7c5fb4b85bf844ca5b",
             "status_code": 200
         },
         {
             "file": "admin-wall-hidden.json",
-            "sha256": "222c986f149153d19665a9c5a12c5d98f47e7efd2f4f88b92a91e7ea93755bda",
+            "sha256": "9007f062a45ee3556f3dc4f819d295b56ebeb9734a1a5e07ebc5e0251eac8602",
             "status_code": 200
         },
         {
             "file": "admin-wall-comments.json",
-            "sha256": "ce1807a36a373efa0a414f4b1d4744a03b7635e7f6038c30fdf2d9ee226f052c",
+            "sha256": "4c220796ed97e60afbdcf527c449ae2b13d1e49e9c595ce18258da1c905a0117",
             "status_code": 200
         },
         {
             "file": "wall-comment-reported.json",
-            "sha256": "3f11658283ab9c6379b087462e45ca5bb72a19ca616ef75d5cb131785e8893bb",
+            "sha256": "367c42f226f56c8321f5c73faeeba83b1d9ab832423e2520a5cf801de6433173",
             "status_code": 200
         },
         {
             "file": "admin-wall-review.json",
-            "sha256": "93b57e03f8aba6a4d43acd30ce8371673e28d9d0c981b0cc7fa077129c21443a",
+            "sha256": "8ada28c530c8587a7c3984549da0cb132cce6e75cc597bac96ccf9ae297fd44d",
             "status_code": 200
         },
         {
             "file": "admin-event-messages.json",
-            "sha256": "f2132eebc27185d1a2b23a5f1079b0b94fe97bdfbbff72a8f6a1586ab17c44be",
+            "sha256": "4c4dca9f5f5a0421009ccce839135c1cc5ac959ce55bbfd7113c59c246abba70",
             "status_code": 200
         },
         {
             "file": "admin-event-reviews.json",
-            "sha256": "58ba5fdfa884a4fbada05bb9aa917a3e4434de02c7a746d1bfd3277613629f5a",
+            "sha256": "eec4c121c2b6bcf39a1f237eaa66363f9c960dc770707103aadfe856191ab231",
             "status_code": 200
         },
         {
             "file": "admin-comments-page.json",
-            "sha256": "17b689c4b81036dc4cae19621022a456f1aa79b8bc24c38037e1a7c897ca41b7",
+            "sha256": "f1cbebd5ccb6022322a452749bcc943750745b21e108cddd702988a419079516",
             "status_code": 200
         }
     ],

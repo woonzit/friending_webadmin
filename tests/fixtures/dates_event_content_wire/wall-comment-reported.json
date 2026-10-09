@@ -3,14 +3,14 @@
     "status_code": 200,
     "data": {
         "dates_api_version": 1,
-        "report_id": "rpt_e578bea1629d0ca71958d0fd43542e8f",
-        "case_reference": "cas_1c4d8bfa91471c43f9be6de271528e33",
+        "report_id": "rpt_ec2dc41c3127d0920b89d77283e75a2f",
+        "case_reference": "cas_fc6f1bfeec3462464d44972718186277",
         "status": "new",
-        "submitted_at": 1791559027,
-        "sla_due_at": 1791645427,
+        "submitted_at": 1791585546,
+        "sla_due_at": 1791671946,
         "target_hidden": true,
         "receipt": {
-            "id": "rpt_e578bea1629d0ca71958d0fd43542e8f",
+            "id": "rpt_ec2dc41c3127d0920b89d77283e75a2f",
             "kind": "report",
             "status": "new",
             "title": "Report received",
@@ -18,7 +18,7 @@
             "sanction_disclosed": false
         },
         "idempotency_replayed": false,
-        "server_now": 1791559027
+        "server_now": 1791585546
     },
     "message": 200,
     "status": 200,
