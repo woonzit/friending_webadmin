@@ -7714,7 +7714,7 @@
       "title": "Friending Start",
       "subtitle": "Eldönti, hogyan lehet két tag személyesen barát. Barátság csak az app Friending Start képernyőjén jön létre, egy itt bekapcsolt módszerrel. Alapból mindkét módszer be van kapcsolva, és ezt a panelt külön kell menteni.",
       "scope": "Ezt a beállítást a Core ki is kényszeríti: a kikapcsolt módszert akkor is elutasítja, ha egy app még felkínálja. A kikapcsolás minden tagnál akkor lép életbe, amikor az appja legközelebb beolvassa a beállításait.",
-      "touchNote": "iPhone-on a telefonok összeérintését az app abból ismeri fel, hogy a két telefon rádiós hatótávolságon belül van, és ugyanabban a pillanatban koccanást érzékel. Ez nem NFC: az iOS nem ad az appoknak két telefon közötti NFC-t.",
+      "meetNote": "Ha valaki távolról koppint egy másik tag profilján, abból nem lesz barátság: az találkozókérést küld, amelynek elfogadása megnyitja a privát beszélgetést.",
       "revision": "{revision}. revízió",
       "neverSaved": "Még senki nem mentette: az alapértelmezés érvényes, mindkét módszer be van kapcsolva.",
       "updatedAt": "Utolsó mentés",

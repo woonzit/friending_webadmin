@@ -7714,7 +7714,7 @@
       "title": "Friending Start",
       "subtitle": "Decides how two members can become friends in person. Friendship is made only in the app's Friending Start screen, with a method that is switched on here. Both methods are on by default, and this panel saves on its own.",
       "scope": "Core enforces this setting: it refuses a method that is off even if an app still offers it. Switching a method off reaches each member the next time their app reads its configuration.",
-      "touchNote": "On iPhone, touching phones together is recognised from the two phones being in radio range and registering a bump at the same moment. It is not NFC: iOS offers apps no NFC between two phones.",
+      "meetNote": "A tap on another member's profile from afar never makes friends: it sends a meet request, and accepting it opens the private chat.",
       "revision": "Revision {revision}",
       "neverSaved": "Never saved: the default applies and both methods are on.",
       "updatedAt": "Last saved",

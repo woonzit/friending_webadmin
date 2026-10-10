@@ -233,8 +233,10 @@ test("the copy says what the two methods really are, in both languages with the 
   assert.match(en.methods.touch_enabled.copy, /touch their phones together/);
   assert.match(en.methods.touch_enabled.copy, /On iPhone this is detected from the phones' radio range and a simultaneous bump, not NFC, because iOS offers no phone-to-phone NFC to apps/);
   assert.match(hu.methods.touch_enabled.copy, /összeérintik a telefonjukat/); assert.match(hu.methods.touch_enabled.copy, /nem NFC-vel, mert az iOS nem ad az appoknak két telefon közötti NFC-t/);
-  for (const copy of [en, hu]) assert.doesNotMatch(JSON.stringify([copy.methods.radar_enabled, copy.title, copy.subtitle]), /NFC/, "nothing but the touch method mentions NFC, and only to say it is not used");
-  for (const text of [en.touchNote, hu.touchNote]) assert.match(text, /NFC/);
+  // NFC is named once in the panel, on the touch method, and only to say that it is not what is used.
+  for (const copy of [en, hu]) assert.equal(JSON.stringify(copy).match(/NFC/g)?.length, JSON.stringify(copy.methods.touch_enabled.copy).match(/NFC/g)?.length);
+  // What a tap from afar does instead, so that nobody looks for a third way to make friends here.
+  assert.match(en.meetNote, /never makes friends: it sends a meet request/); assert.match(hu.meetNote, /abból nem lesz barátság: az találkozókérést küld/);
   // Friendship is made only with a method that is on; switching one off reaches members with their next configuration read.
   assert.match(en.subtitle, /Friendship is made only in the app's Friending Start screen, with a method that is switched on here/);
   assert.match(hu.subtitle, /Barátság csak az app Friending Start képernyőjén jön létre, egy itt bekapcsolt módszerrel/);

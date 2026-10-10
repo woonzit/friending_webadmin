@@ -168,7 +168,7 @@ export function FriendingStartPolicyView({
           })}
         </div>
         <p className="presence-config-footnote">{t("scope")}</p>
-        <p className="presence-config-footnote">{t("touchNote")}</p>
+        <p className="presence-config-footnote">{t("meetNote")}</p>
       </div>
     </section>
   );
