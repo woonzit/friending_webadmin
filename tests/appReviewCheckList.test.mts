@@ -148,14 +148,14 @@ const COPY = {
   en: {
     notApplicable: "Not applicable (the feature is switched off)",
     label: "Footprints",
-    failedLabel: "Friend requests",
+    failedLabel: "Meet requests",
     actual: "actual 0",
     expected: "expected 3",
   },
   hu: {
     notApplicable: "Nem alkalmazható (a funkció ki van kapcsolva)",
     label: "Lábnyomok",
-    failedLabel: "Barátkérelmek",
+    failedLabel: "Találkozókérések",
     actual: "tényleges: 0",
     expected: "elvárt: 3",
   },

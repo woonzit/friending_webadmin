@@ -2861,7 +2861,7 @@
               "1": "Compare every actual count with its expected witness.",
               "2": "Use a mismatch to identify which fixture area needs a guarded reset or server investigation."
             },
-            "guidance": "Counts alone do not prove meaningful content or valid media. They must be read together with all semantic checks."
+            "guidance": "Counts alone do not prove meaningful content or valid media. They must be read together with all semantic checks. Meet requests are the rows Core still counts under the key friend_requests: a tap on a profile from afar now asks to meet and no longer makes a friendship."
           },
           "checks": {
             "title": "Readiness checks",
@@ -11932,7 +11932,7 @@
       "chat_rooms": "Chat rooms",
       "chat_messages": "Chat messages",
       "friends": "Friend rows",
-      "friend_requests": "Friend requests",
+      "friend_requests": "Meet requests",
       "visitors": "Visitor rows",
       "notifications": "Notifications",
       "reviewer_photos": "Reviewer photos",
@@ -11972,7 +11972,7 @@
       "counterpart_photos": "Counterpart album photos",
       "album_access": "Album access states",
       "friends": "Friendship rows",
-      "friend_requests": "Friend requests",
+      "friend_requests": "Meet requests",
       "visitors": "Visitors",
       "footprints": "Footprints",
       "photo_likes": "Photo likes",

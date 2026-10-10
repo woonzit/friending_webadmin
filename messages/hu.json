@@ -2861,7 +2861,7 @@
               "1": "Minden tényleges darabszámot hasonlíts össze a várt witness-szel.",
               "2": "Az eltérésből azonosítsd, mely fixture-terület igényel védett resetet vagy szervervizsgálatot."
             },
-            "guidance": "A darabszám önmagában nem bizonyít értelmes tartalmat vagy érvényes médiát. Minden szemantikai checkkel együtt kell olvasni."
+            "guidance": "A darabszám önmagában nem bizonyít értelmes tartalmat vagy érvényes médiát. Minden szemantikai checkkel együtt kell olvasni. A találkozókérések azok a sorok, amelyeket a Core továbbra is a friend_requests kulcs alatt számol: ha valaki távolról koppint egy profilon, az mostantól találkozót kér, és nem hoz létre barátságot."
           },
           "checks": {
             "title": "Readiness checkek",
@@ -11932,7 +11932,7 @@
       "chat_rooms": "Chat-szobák",
       "chat_messages": "Chat-üzenetek",
       "friends": "Barát-sorok",
-      "friend_requests": "Barátkérések",
+      "friend_requests": "Találkozókérések",
       "visitors": "Látogató-sorok",
       "notifications": "Értesítések",
       "reviewer_photos": "Reviewer fotók",
@@ -11972,7 +11972,7 @@
       "counterpart_photos": "Partner-album fotók",
       "album_access": "Album-hozzáférési állapotok",
       "friends": "Barátság sorok",
-      "friend_requests": "Barátkérelmek",
+      "friend_requests": "Találkozókérések",
       "visitors": "Látogatók",
       "footprints": "Lábnyomok",
       "photo_likes": "Fotó-kedvelések",
