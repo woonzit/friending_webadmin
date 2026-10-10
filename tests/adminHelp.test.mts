@@ -154,7 +154,8 @@ test("every inventoried functional section has detailed English and Hungarian he
   // T-896 adds five research topics and one run-batch topic on the intake queue.
   // The submission system adds two on /dates/configuration: the third-party event pins and the submission leaderboard (282).
   // Friending Start adds the methods panel on /configuration (radar, touch), which has its own revision and its own save (283).
-  assert.equal(totalSections, 283, "review the functional-section census when the UI changes");
+  // The event page's "Content & signals" panel, which shipped with no topic, gets one (284).
+  assert.equal(totalSections, 284, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [
@@ -233,6 +234,8 @@ test("independently saved or operator-facing embedded tools have dedicated help 
     photoModeration: ["imageEditing"],
     configuration: ["sectionAvailability", "sectionTeasers", "featureSwitches", "authPolicy", "phoneCountries", "locationAccess", "friendingStart", "welcomeMessage"],
     appearance: ["landing", "landingButtons", "landingFooter", "landingQr", "modeSwitcher", "saving"],
+    // The event page's audited "Content & signals" panel: its own reads, and the way into a case.
+    datesActivityDetail: ["contentSignals"],
   };
   for (const [key, sections] of Object.entries(required)) {
     const page = ADMIN_HELP_PAGES.find((entry) => entry.key === key);
@@ -240,6 +243,46 @@ test("independently saved or operator-facing embedded tools have dedicated help 
     for (const section of sections) {
       assert.ok((page.sections as readonly string[]).includes(section), `${key}.${section}`);
     }
+  }
+});
+
+test("the event page guide documents the Content & signals panel by the names the panel itself shows, in both languages", async () => {
+  const page = ADMIN_HELP_PAGES.find((entry) => entry.key === "datesActivityDetail");
+  assert.ok(page);
+  // The panel is the first panel of the page, and its topic the first of the guide.
+  assert.equal(page.sections[0], "contentSignals");
+  const source = await readFile(path.join(root, "app", "(dashboard)", "dates", "[activityId]", "page.tsx"), "utf8");
+  const mounted = source.indexOf("<DatesEventContentPanel ");
+  assert.ok(mounted > 0 && mounted < source.indexOf('<h2>{t("overview")}</h2>'), "the panel is mounted above the overview");
+  // The panel decides from the operator's capabilities whether it renders at all, after the page is on the screen:
+  // no catalogue gate can express that, so the topic's own copy names it.
+  const panel = await readFile(path.join(root, "components", "DatesEventContentPanel.tsx"), "utf8");
+  assert.match(panel, /const canRead = hasDatesCapability\(principal, "dates_evidence_read"\);/);
+  assert.match(panel, /const canReview = canRead && hasDatesCapability\(principal, "dates_case_claim"\);/);
+  assert.match(panel, /if \(!canRead\) return null;/);
+  assert.equal(Object.hasOwn(page, "sectionReady"), false);
+
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));
+    const topic = messages.adminHelp.pages.datesActivityDetail.sections.contentSignals;
+    const copy = messages.datesAdmin.eventContent;
+    assert.equal(topic.title, copy.title, `${locale}: the topic carries the panel's own title`);
+    // The controls are quoted by the labels the operator sees on them.
+    assert.ok(topic.actions["1"].includes(copy.show), `${locale}: ${copy.show}`);
+    for (const label of [copy.openReview, copy.reviewMedia, copy.reviewEvent]) {
+      assert.ok(topic.actions["2"].includes(label), `${locale}: ${label}`);
+    }
+    // What the panel shows: the four kinds of member content, reported or not, and the personal hides.
+    assert.match(topic.purpose, locale === "en"
+      ? /wall posts, comments and replies, event chat messages and reviews — whether or not anyone reported it, and what individual members hid for themselves/u
+      : /falposztokat, kommenteket és válaszokat, eseménychat-üzeneteket és értékeléseket –, akkor is, ha senki sem jelentette be, valamint azt, amit egy-egy tag a maga számára elrejtett/u);
+    // Opening a case removes nothing, as the panel's own form says where the request is made.
+    assert.match(topic.guidance, locale === "en" ? /^Opening a case does not remove content: / : /^Az ügy megnyitása nem távolít el tartalmat: /u);
+    assert.match(copy.reviewCopy, locale === "en" ? /This does not remove content\./ : /Ez még nem távolítja el a tartalmat\./u);
+    // Who sees the panel, and who may open a case from it.
+    assert.match(topic.guidance, locale === "en"
+      ? /shown only to operators who may read evidence, and opening a case also requires the right to claim cases/
+      : /csak az látja, aki bizonyítékot olvashat; ügyet pedig az nyithat innen, akinek az ügyek átvételére is van joga/u);
   }
 });
 

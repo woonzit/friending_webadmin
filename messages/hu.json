@@ -1480,6 +1480,15 @@
           "3": "Szerkesztés vagy parancs után ellenőrizd az új revíziót, auditbejegyzést és várt életciklus-eredményt."
         },
         "sections": {
+          "contentSignals": {
+            "title": "Tartalmak és jelzések",
+            "purpose": "A panel azt mutatja, amit a tagok ennél az eseménynél írtak – falposztokat, kommenteket és válaszokat, eseménychat-üzeneteket és értékeléseket –, akkor is, ha senki sem jelentette be, valamint azt, amit egy-egy tag a maga számára elrejtett. Minden sorban látszik a tartalom állapota, szerzője és időpontja, a személyes elrejtések és a bejelentések száma, és az is, ha már tartozik hozzá ügy.",
+            "actions": {
+              "1": "A lista beolvasásához nyomd meg a „Tartalmak és jelzések megjelenítése” gombot, majd válassz tartalomtípust. A Core minden olvasást a neved alatt naplóz.",
+              "2": "Egy sornál a „Moderáció megnyitása” (médiát tartalmazó sornál a „Tartalom és média ellenőrzése”), az esemény egészénél az „Esemény moderálása” gombbal, indoklást megadva nyithatsz új ügyet, vagy léphetsz a meglévőhöz. A munkát az ügy oldalán folytatod."
+            },
+            "guidance": "Az ügy megnyitása nem távolít el tartalmat: ebből a konzolból tartalmat csak az ügy oldalán hozott döntés távolít el. A személyes elrejtés csak annál a tagnál érvényes, aki elrejtette. A panelt csak az látja, aki bizonyítékot olvashat; ügyet pedig az nyithat innen, akinek az ügyek átvételére is van joga. A törölt tartalomnak csak a helye látszik, szöveg és szerző nélkül."
+          },
           "overview": {
             "title": "Aktivitás áttekintése",
             "purpose": "Az áttekintés a szerver által adott életciklust, moderációt, időzítést, hostot, helycímkét, join módot és részvételi állapotot mutatja.",

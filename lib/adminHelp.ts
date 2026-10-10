@@ -339,6 +339,10 @@ export const ADMIN_HELP_PAGES = [
     key: "datesActivityDetail",
     route: "/dates/[activityId]",
     sections: [
+      // The "Content & signals" panel is the first panel of the page. It renders only for an operator
+      // who holds the evidence-read capability, which the panel decides from the principal it is
+      // given; the section names that gate in its copy, as no catalogue value can express it.
+      "contentSignals",
       "overview",
       "operationalHistory",
       "publicFields",

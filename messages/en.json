@@ -1480,6 +1480,15 @@
           "3": "After an edit or command, verify the new revision, audit entry and expected lifecycle result."
         },
         "sections": {
+          "contentSignals": {
+            "title": "Content & signals",
+            "purpose": "The panel shows what members wrote at this event — wall posts, comments and replies, event chat messages and reviews — whether or not anyone reported it, and what individual members hid for themselves. Each row shows the state, author and date of the content, the number of personal hides and reports, and whether a case already exists for it.",
+            "actions": {
+              "1": "Press “Show content and signals” to read the list, then choose a content type. Core records every read under your name.",
+              "2": "Use “Open moderation” on a row (“Review content & media” when the row carries media) or “Moderate this event” for the event as a whole, and give a reason: a case opens, or the existing one is reused, and you continue on the case screen."
+            },
+            "guidance": "Opening a case does not remove content: from this console, content is removed only by a decision on the case screen. A personal hide affects only the member who made it. The panel is shown only to operators who may read evidence, and opening a case also requires the right to claim cases. Deleted content appears as a placeholder, without its text or author."
+          },
           "overview": {
             "title": "Activity overview",
             "purpose": "The overview shows server-authored lifecycle, moderation, schedule, host, location label, join mode and attendance state.",
