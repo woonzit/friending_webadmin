@@ -10656,8 +10656,9 @@ fieldset.dates-external-fields {
   opacity: 0.72;
 }
 
-/* Location access: the same cards as presence, two switches wide. */
-.location-access-grid {
+/* Location access and Friending Start: the same cards as presence, two switches wide. */
+.location-access-grid,
+.friending-start-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 

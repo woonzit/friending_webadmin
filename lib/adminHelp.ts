@@ -499,6 +499,8 @@ export const ADMIN_HELP_PAGES = [
       "presence",
       // P-073: the location access panel, with its own revision and save.
       "locationAccess",
+      // The Friending Start methods (radar, touch): its own revision and save too.
+      "friendingStart",
       // P-091: the new-member welcome message, saved on its own.
       "welcomeMessage",
       "verificationFlow",

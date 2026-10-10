@@ -2765,6 +2765,17 @@
             },
             "guidance": "This sets app behavior, it does not enforce anything: Core never checks it, and older iOS versions, Android and the Join website ignore it. Requiring location at signup risks App Store rejection under guideline 5.1.1(iv), so switch it on only for a version App Review has seen behaving this way. Viewers can read the policy but cannot save it."
           },
+          "friendingStart": {
+            "title": "Friending Start methods",
+            "purpose": "Two switches decide how two members can become friends in person on the app's Friending Start screen: by tapping each other in the list of people nearby (radar), or by touching their phones together (touch). Friendship is made only with a method that is on. The panel has its own revision and its own save.",
+            "actions": {
+              "1": "Read both switches, the revision and who saved last before changing anything.",
+              "2": "Change a switch, press Save Friending Start, and confirm when you are switching a method off.",
+              "3": "Keep at least one method on: the panel explains this instead of saving both off, and Core would refuse it anyway.",
+              "4": "After a conflict the panel loads the newer revision but the switches keep your unsaved choices: review them, then save again or discard them. After an unconfirmed save, reload before trying again."
+            },
+            "guidance": "Radar: both people have Friending Start open and tap each other in the list of people nearby, which the phones build over Bluetooth and the local network. Touch: both people have it open and touch their phones together; on iPhone this is recognised from the phones' radio range and a simultaneous bump, not NFC, because iOS offers apps no NFC between two phones. Switching a method off takes effect for each member the next time their app reads its configuration, and Core refuses a method that is off. A tap on a profile from afar never makes friends: it sends a meet request. Viewers can read the setting but cannot save it."
+          },
           "verificationFlow": {
             "title": "Profile selfie verification flow",
             "purpose": "This editor owns status cards, introduction, camera guidance, preview, detailed owner messages, challenge prompts, consent and privacy link in both languages and appearances.",
@@ -7698,6 +7709,53 @@
       "confirmCopy": "Compatible iOS apps will require location access for: {flags}. Members who do not allow it cannot use that part of the app.",
       "confirmSignupRisk": "Requiring location at signup can lead to App Store rejection; switch it on only for a version App Review has seen behaving this way.",
       "confirmAction": "Switch on"
+    },
+    "friendingStart": {
+      "title": "Friending Start",
+      "subtitle": "Decides how two members can become friends in person. Friendship is made only in the app's Friending Start screen, with a method that is switched on here. Both methods are on by default, and this panel saves on its own.",
+      "scope": "Core enforces this setting: it refuses a method that is off even if an app still offers it. Switching a method off reaches each member the next time their app reads its configuration.",
+      "touchNote": "On iPhone, touching phones together is recognised from the two phones being in radio range and registering a bump at the same moment. It is not NFC: iOS offers apps no NFC between two phones.",
+      "revision": "Revision {revision}",
+      "neverSaved": "Never saved: the default applies and both methods are on.",
+      "updatedAt": "Last saved",
+      "updatedBy": "Saved by",
+      "enabled": "On",
+      "disabled": "Off",
+      "changed": "unsaved",
+      "methods": {
+        "radar_enabled": {
+          "title": "People nearby (radar)",
+          "short": "the list of people nearby",
+          "copy": "Both people open Friending Start and tap each other in the list of people nearby. The phones find each other over Bluetooth and the local network."
+        },
+        "touch_enabled": {
+          "title": "Phones touched together (touch)",
+          "short": "touching phones together",
+          "copy": "Both people open Friending Start and touch their phones together. On iPhone this is detected from the phones' radio range and a simultaneous bump, not NFC, because iOS offers no phone-to-phone NFC to apps."
+        }
+      },
+      "readOnly": "Your role can view this setting but cannot change it. Ask an owner or an admin.",
+      "unsaved": "You have unsaved changes.",
+      "bothOff": "At least one method has to stay on: with both off nobody could become friends, and Core refuses that setting. Switch one on to save.",
+      "discard": "Discard changes",
+      "save": "Save Friending Start",
+      "saving": "Saving…",
+      "reload": "Reload",
+      "loading": "Loading the Friending Start setting…",
+      "unavailable": "Core cannot read the Friending Start setting right now. Nothing has been assumed about which methods are on; try again shortly.",
+      "loadError": "The Friending Start setting could not be read. Nothing has been assumed about which methods are on.",
+      "saved": "Friending Start saved as revision {revision}.",
+      "unchanged": "Nothing to save: the stored setting already matches.",
+      "conflict": "Someone else saved this setting while you were editing. The stored version is now revision {revision}.",
+      "conflictDraftKept": "The switches still show your unsaved choices. Review them, then save again or discard them.",
+      "conflictReloadFailed": "Someone else saved this setting while you were editing, and the new version could not be loaded. Your unsaved choices are still shown; reload before saving again.",
+      "notConfirmed": "The save could not be confirmed because Core did not answer normally. Your choices are still shown; reload to check what is stored before saving again.",
+      "writeRequired": "Your role can no longer change this setting. The stored values are shown.",
+      "invalid": "Core refused this setting as invalid. Reload and try again.",
+      "unexpected": "Core answered in an unexpected way. Reload to check what is stored before saving again.",
+      "confirmTitle": "Switch a method off?",
+      "confirmCopy": "Members will no longer be able to become friends through: {methods}. It applies to each member the next time their app reads its configuration.",
+      "confirmAction": "Switch off"
     },
     "welcomeMessage": {
       "title": "Welcome message for new members",

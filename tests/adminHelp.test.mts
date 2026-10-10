@@ -153,7 +153,8 @@ test("every inventoried functional section has detailed English and Hungarian he
   // intake queue (3), the intake review screen (5) and the AI usage page (2).
   // T-896 adds five research topics and one run-batch topic on the intake queue.
   // The submission system adds two on /dates/configuration: the third-party event pins and the submission leaderboard (282).
-  assert.equal(totalSections, 282, "review the functional-section census when the UI changes");
+  // Friending Start adds the methods panel on /configuration (radar, touch), which has its own revision and its own save (283).
+  assert.equal(totalSections, 283, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [
@@ -230,7 +231,7 @@ test("independently saved or operator-facing embedded tools have dedicated help 
     overview: ["metrics", "signupMetrics", "registrations"],
     userDetail: ["membership", "membershipRestore"],
     photoModeration: ["imageEditing"],
-    configuration: ["sectionAvailability", "sectionTeasers", "featureSwitches", "authPolicy", "phoneCountries", "locationAccess", "welcomeMessage"],
+    configuration: ["sectionAvailability", "sectionTeasers", "featureSwitches", "authPolicy", "phoneCountries", "locationAccess", "friendingStart", "welcomeMessage"],
     appearance: ["landing", "landingButtons", "landingFooter", "landingQr", "modeSwitcher", "saving"],
   };
   for (const [key, sections] of Object.entries(required)) {

@@ -2765,6 +2765,17 @@
             },
             "guidance": "Ez az app viselkedését állítja, nem kényszerít ki semmit: a Core nem ellenőrzi, a régebbi iOS-verziók, az Android és a Join weboldal pedig figyelmen kívül hagyják. A regisztrációnál kötelező helyadat az 5.1.1(iv) irányelv miatt App Store-elutasítást kockáztat, ezért csak olyan verziónál kapcsold be, amelyet az App Review már így látott. A viewer szerepkör látja a szabályt, de nem mentheti."
           },
+          "friendingStart": {
+            "title": "Friending Start módszerek",
+            "purpose": "Két kapcsoló dönti el, hogyan lehet két tag személyesen barát az app Friending Start képernyőjén: úgy, hogy a közelben lévők listájában egymásra koppintanak (radar), vagy úgy, hogy összeérintik a telefonjukat (touch). Barátság csak bekapcsolt módszerrel jön létre. A panelnek saját revíziója és saját mentése van.",
+            "actions": {
+              "1": "Bármilyen módosítás előtt nézd meg mindkét kapcsolót, a revíziót és azt, hogy ki mentett utoljára.",
+              "2": "Állíts át egy kapcsolót, nyomd meg a Friending Start mentése gombot, és erősítsd meg, ha kikapcsolsz egy módszert.",
+              "3": "Legalább az egyik módszer maradjon bekapcsolva: a panel ezt elmagyarázza, ahelyett hogy mindkettőt kikapcsolva mentené, és a Core egyébként is elutasítaná.",
+              "4": "Ütközés után a panel betölti az újabb revíziót, de a kapcsolók továbbra is a te nem mentett beállításaidat mutatják: nézd át őket, aztán mentsd újra, vagy vesd el őket. Ha a mentést nem sikerült megerősíteni, újabb próbálkozás előtt töltsd újra a panelt."
+            },
+            "guidance": "Radar: mindketten megnyitják a Friending Startot, és egymásra koppintanak a közelben lévők listájában, amelyet a telefonok Bluetoothon és a helyi hálózaton állítanak össze. Touch: mindketten megnyitják, és összeérintik a telefonjukat; iPhone-on ezt az app a telefonok rádiós közelségéből és az egyidejű koccanásból ismeri fel, nem NFC-vel, mert az iOS nem ad az appoknak két telefon közötti NFC-t. A kikapcsolás minden tagnál akkor lép életbe, amikor az appja legközelebb beolvassa a beállításait, a kikapcsolt módszert pedig a Core is elutasítja. Ha valaki távolról koppint egy profilon, abból sosem lesz barátság: az találkozókérést küld. A viewer szerepkör látja a beállítást, de nem mentheti."
+          },
           "verificationFlow": {
             "title": "Szelfis profilhitelesítési folyamat",
             "purpose": "Ez a szerkesztő kezeli az állapotkártyát, intro-, kamera- és preview szöveget, részletes ownerüzenetet, challenge promptot, consentet és privacy linket mindkét nyelven és appearance-ben.",
@@ -7698,6 +7709,53 @@
       "confirmCopy": "A kompatibilis iOS-appok a következőknél kötelezővé teszik a helyhozzáférést: {flags}. Aki nem engedélyezi, az app ezen részét nem tudja használni.",
       "confirmSignupRisk": "A regisztrációnál kötelező helyadat App Store-elutasításhoz vezethet; csak olyan verziónál kapcsold be, amelyet az App Review már így látott.",
       "confirmAction": "Bekapcsolás"
+    },
+    "friendingStart": {
+      "title": "Friending Start",
+      "subtitle": "Eldönti, hogyan lehet két tag személyesen barát. Barátság csak az app Friending Start képernyőjén jön létre, egy itt bekapcsolt módszerrel. Alapból mindkét módszer be van kapcsolva, és ezt a panelt külön kell menteni.",
+      "scope": "Ezt a beállítást a Core ki is kényszeríti: a kikapcsolt módszert akkor is elutasítja, ha egy app még felkínálja. A kikapcsolás minden tagnál akkor lép életbe, amikor az appja legközelebb beolvassa a beállításait.",
+      "touchNote": "iPhone-on a telefonok összeérintését az app abból ismeri fel, hogy a két telefon rádiós hatótávolságon belül van, és ugyanabban a pillanatban koccanást érzékel. Ez nem NFC: az iOS nem ad az appoknak két telefon közötti NFC-t.",
+      "revision": "{revision}. revízió",
+      "neverSaved": "Még senki nem mentette: az alapértelmezés érvényes, mindkét módszer be van kapcsolva.",
+      "updatedAt": "Utolsó mentés",
+      "updatedBy": "Mentette",
+      "enabled": "Bekapcsolva",
+      "disabled": "Kikapcsolva",
+      "changed": "nincs mentve",
+      "methods": {
+        "radar_enabled": {
+          "title": "Közelben lévők listája (radar)",
+          "short": "a közelben lévők listája",
+          "copy": "Mindketten megnyitják a Friending Startot, és a közelben lévők listájában egymásra koppintanak. A telefonok Bluetoothon és a helyi hálózaton találják meg egymást."
+        },
+        "touch_enabled": {
+          "title": "Telefonok összeérintése (touch)",
+          "short": "a telefonok összeérintése",
+          "copy": "Mindketten megnyitják a Friending Startot, és összeérintik a telefonjukat. iPhone-on ezt az app a telefonok rádiós közelségéből és az egyidejű koccanásból ismeri fel, nem NFC-vel, mert az iOS nem ad az appoknak két telefon közötti NFC-t."
+        }
+      },
+      "readOnly": "A szerepköröddel megtekintheted, de nem módosíthatod ezt a beállítást. Módosításhoz kérj meg egy tulajdonost vagy adminisztrátort.",
+      "unsaved": "Nem mentett módosításaid vannak.",
+      "bothOff": "Legalább az egyik módszernek bekapcsolva kell maradnia: ha mindkettő ki van kapcsolva, senki sem lehetne barát, és ezt a beállítást a Core is elutasítja. A mentéshez kapcsold be az egyiket.",
+      "discard": "Módosítások elvetése",
+      "save": "Friending Start mentése",
+      "saving": "Mentés…",
+      "reload": "Újratöltés",
+      "loading": "A Friending Start beállítás betöltése…",
+      "unavailable": "A Core most nem tudja kiolvasni a Friending Start beállítást. Arról, hogy melyik módszer van bekapcsolva, semmit sem feltételeztünk; próbáld újra kicsit később.",
+      "loadError": "A Friending Start beállítást nem sikerült beolvasni. Arról, hogy melyik módszer van bekapcsolva, semmit sem feltételeztünk.",
+      "saved": "Friending Start elmentve ({revision}. revízió).",
+      "unchanged": "Nincs mit menteni: a tárolt beállítás már pontosan ez.",
+      "conflict": "Amíg szerkesztettél, valaki más elmentette ezt a beállítást. A jelenlegi revízió: {revision}.",
+      "conflictDraftKept": "A kapcsolók továbbra is a te nem mentett beállításaidat mutatják. Nézd át őket, aztán mentsd újra, vagy vesd el őket.",
+      "conflictReloadFailed": "Amíg szerkesztettél, valaki más elmentette ezt a beállítást, és az új változatot nem sikerült betölteni. A nem mentett választásaid láthatók maradnak; újbóli mentés előtt töltsd újra a panelt.",
+      "notConfirmed": "A mentést nem sikerült megerősíteni, mert a Core nem válaszolt rendesen. A választásaid megmaradtak; újbóli mentés előtt töltsd újra a panelt, és nézd meg, mi van tárolva.",
+      "writeRequired": "A szerepköröd már nem engedi a beállítás módosítását. A tárolt értékeket látod.",
+      "invalid": "A Core érvénytelennek találta ezt a beállítást. Töltsd újra a panelt, és próbáld meg ismét.",
+      "unexpected": "A Core váratlan választ adott. Újbóli mentés előtt töltsd újra a panelt, és nézd meg, mi van tárolva.",
+      "confirmTitle": "Kikapcsolsz egy módszert?",
+      "confirmCopy": "A tagok ezzel a módszerrel többé nem lehetnek barátok: {methods}. Minden tagnál akkor lép életbe, amikor az appja legközelebb beolvassa a beállításait.",
+      "confirmAction": "Kikapcsolás"
     },
     "welcomeMessage": {
       "title": "Üdvözlő üzenet az új tagoknak",
