@@ -15,6 +15,21 @@ export type DatesExternalMessageMetadata = {
   available: boolean;
 };
 
+/**
+ * The host's side of a case (Core `moderation_cases.host_review`): opened by
+ * the first report the host is shown (`state: "open"`, no decision, `at` the
+ * moment it was opened), then decided once (`state: "handled"`, the decision,
+ * the host and the moment). It never closes the case.
+ */
+export type DatesHostReview = { state: string; decision: string | null; by_uid: number | null; at: number | null };
+/**
+ * One event's host on a case that several hosts can be shown: a case about a
+ * MEMBER is one case for the whole app, whatever events the member was
+ * reported in, so Core serves the review of each of those events' hosts with
+ * the event it is of.
+ */
+export type DatesHostReviewEntry = DatesHostReview & { activity_id: string };
+
 export type DatesCaseSummary = {
   case_id: string;
   queue: string;
@@ -45,6 +60,20 @@ export type DatesCaseSummary = {
   external_message?: DatesExternalMessageMetadata;
   // Current Core actions, shared by the two explicit external variants only.
   allowed_actions?: string[];
+  // Host moderation v1: all three, or - from a Core that does not serve them - none.
+  /** Where the reported content of a message case lives; `null` for any other case and where Core cannot tell. */
+  surface?: string | null;
+  /** The event's host is shown this case in the app. */
+  host_visible?: boolean;
+  /** What the host decided, on a case about content; `null` for a case the host is not shown, and for a case about a member. */
+  host_review?: DatesHostReview | null;
+  /**
+   * The reviews of the hosts a case about a member was shown to, one per event
+   * (empty: no host was shown it). Optional on every case: Core may serve it on
+   * a case about content too, as an empty list or as that case's one review.
+   * `null` is no list.
+   */
+  host_reviews?: DatesHostReviewEntry[] | null;
   capabilities: {
     can_claim: boolean;
     can_read_evidence: boolean;
@@ -406,11 +435,13 @@ export const DATES_REPORT_ENTRY_POINTS: Readonly<Record<typeof DATES_REPORT_SCOP
 
 /**
  * Entry points the console names in the operator's language
- * (`datesAdmin.caseDetail.entryPoints.<value>` in both locale files). A
- * report's `entry_point` is Core's text, so the list is closed here: a value
- * that is not on it is printed as its humanized machine key, never looked up.
+ * (`datesAdmin.caseDetail.entryPoints.<value>` in both locale files): every
+ * value a reason can list, once. A report's `entry_point` is Core's text - a
+ * stored report can carry a value from before this vocabulary - so the list is
+ * closed here: a value that is not on it is printed as its humanized machine
+ * key, never looked up.
  */
-export const DATES_NAMED_ENTRY_POINTS: readonly string[] = ["event_wall"];
+export const DATES_NAMED_ENTRY_POINTS: readonly string[] = Array.from(new Set(Object.values(DATES_REPORT_ENTRY_POINTS).flat()));
 
 export function datesReportEntryPointsFor(scope: string, existing?: readonly string[]): readonly string[] {
   const allowed = Object.hasOwn(DATES_REPORT_ENTRY_POINTS, scope)
@@ -636,25 +667,104 @@ export function isDatesExternalMessageCase(value: Pick<DatesCaseSummary, "queue"
     && value.external_message !== undefined;
 }
 
-export const DATES_CASE_TARGET_KINDS = ["wall_post", "wall_comment"] as const;
+export const DATES_CASE_TARGET_KINDS = ["wall_post", "wall_comment", "event_wall", "activity_chat", "direct_chat"] as const;
 export type DatesCaseTargetKind = typeof DATES_CASE_TARGET_KINDS[number];
 
 /**
- * What a case is about, where the console can say it more exactly than the
- * target type: a reported wall post or wall comment is a `message` case like a
- * reported chat message. `null` means the target type is all there is to say.
- *
- * DERIVED from the target id until Core serves the surface of a case: the
- * event wall's ids are `wpo_` (a post) and `wco_` (a comment or a reply) with
- * 32 hex digits, the test Core's DatesWallModerationService::handles applies.
- * This is the one place that reads an id for its meaning; the queue and the
- * case page only print what it answers.
+ * Which of the wall's two collections an id is of: `wpo_` a post, `wco_` a
+ * comment or a reply, with 32 hex digits - the test Core applies
+ * (DatesWallModerationService::handles, DatesHostModerationPolicy::reportKind).
  */
-export function datesCaseTargetKind(value: Pick<DatesCaseSummary, "target_type" | "target_id">): DatesCaseTargetKind | null {
-  if (value.target_type !== "message" || typeof value.target_id !== "string") return null;
-  if (/^wpo_[a-f0-9]{32}$/.test(value.target_id)) return "wall_post";
-  if (/^wco_[a-f0-9]{32}$/.test(value.target_id)) return "wall_comment";
+function wallContentKind(targetId: unknown): "wall_post" | "wall_comment" | null {
+  if (typeof targetId !== "string") return null;
+  if (/^wpo_[a-f0-9]{32}$/.test(targetId)) return "wall_post";
+  if (/^wco_[a-f0-9]{32}$/.test(targetId)) return "wall_comment";
   return null;
+}
+
+/**
+ * What a case is about, where the console can say it more exactly than the
+ * target type: reported wall content and a reported chat message are both
+ * `message` cases. `null` means the target type is all there is to say.
+ *
+ * Core says where the content of a message case lives (`surface`, host
+ * moderation v1): the event wall, the event's group chat or a direct thread.
+ * When the field is served it is the answer - also when it is `null` (a thread
+ * Core cannot place): the id is not read against it. On the wall the id still
+ * says which collection the row is in, as Core's own host inbox tells a post
+ * from a comment; wall content of neither kind is named by its surface.
+ *
+ * A Core that does not serve the field (absent, not `null`) leaves the
+ * derivation from the id: the wall's two kinds. A chat message cannot be told
+ * from its id and stays a "message". This is the one place that reads a
+ * surface or an id for its meaning; the queue and the case page only print
+ * what it answers.
+ */
+export function datesCaseTargetKind(value: Pick<DatesCaseSummary, "target_type" | "target_id"> & Pick<Partial<DatesCaseSummary>, "surface">): DatesCaseTargetKind | null {
+  if (value.target_type !== "message") return null;
+  const wall = wallContentKind(value.target_id);
+  if (value.surface === undefined) return wall;
+  if (value.surface === "event_wall") return wall ?? "event_wall";
+  return value.surface === "activity_chat" || value.surface === "direct_chat" ? value.surface : null;
+}
+
+/** What a host can decide about a case they are shown (Core DatesHostModerationPolicy::HOST_DECISIONS). */
+export const DATES_HOST_DECISIONS = ["kept", "content_removed", "member_removed", "member_banned"] as const;
+/**
+ * A host's side of a case, in one word: the case is not theirs to see; it is
+ * (with no review record beside it, which Core does not write); it waits in
+ * their inbox; or what they decided.
+ */
+export const DATES_CASE_HOST_STATES = ["not_shown", "shown", "waiting", ...DATES_HOST_DECISIONS] as const;
+export type DatesCaseHostState = typeof DATES_CASE_HOST_STATES[number];
+/**
+ * A state or decision this console has no name for is handed back as it is
+ * (`unnamed`), to be printed as a machine key like the status and severity
+ * beside it - never read as one of the named ones.
+ */
+export type DatesHostReviewState = { state: DatesCaseHostState } | { unnamed: string };
+
+/** One review record in that word: waiting while it is open, the decision once it is handled. */
+export function datesHostReviewState(review: DatesHostReview): DatesHostReviewState {
+  if (review.state === "open") return { state: "waiting" };
+  if (review.state !== "handled") return { unnamed: review.state };
+  const decision = (DATES_HOST_DECISIONS as readonly string[]).includes(review.decision ?? "") ? review.decision as DatesCaseHostState : null;
+  return decision !== null ? { state: decision } : { unnamed: review.decision ?? review.state };
+}
+
+type CaseHostSide = Pick<Partial<DatesCaseSummary>, "host_visible" | "host_review" | "host_reviews">;
+
+/**
+ * The reviews of the hosts a case was shown to, or `null` when Core did not
+ * serve the hosts' side (a Core without host moderation: nothing is shown).
+ *
+ * A case about content belongs to one event, and its host's review is
+ * `host_review`: one entry, of the case's own event (`event: null` - the
+ * case names it). A case about a member has `host_review: null` and its
+ * hosts in `host_reviews`, each with its event. So `host_review` is the
+ * answer when it is there, the list otherwise; an empty answer is a case no
+ * host was shown.
+ */
+export function datesCaseHostReviews(value: CaseHostSide): Array<{ event: string | null; review: DatesHostReview }> | null {
+  if (value.host_visible === undefined || value.host_review === undefined) return null;
+  if (value.host_review !== null) return [{ event: null, review: value.host_review }];
+  return (value.host_reviews ?? []).map((entry) => ({ event: entry.activity_id, review: entry }));
+}
+
+/**
+ * The hosts' side of a case for the queue's badge: `null` when it was not
+ * served; with no review, whether the case is shown to a host at all
+ * (`host_visible` speaks only where there is no review - the review record
+ * is the fact); with one review, that review's word; with several (a member
+ * reported in several events), how many hosts were shown the case and how
+ * many of them have decided.
+ */
+export function datesCaseHostState(value: CaseHostSide): DatesHostReviewState | { hosts: number; decided: number } | null {
+  const reviews = datesCaseHostReviews(value);
+  if (reviews === null) return null;
+  if (reviews.length === 0) return { state: value.host_visible ? "shown" : "not_shown" };
+  if (reviews.length === 1) return datesHostReviewState(reviews[0].review);
+  return { hosts: reviews.length, decided: reviews.filter(({ review }) => review.state !== "open").length };
 }
 
 export function datesExternalReviewAllowed(value: Pick<DatesCaseSummary, "target_type">, principal: Pick<DatesAdminPrincipal, "capabilities">): boolean {

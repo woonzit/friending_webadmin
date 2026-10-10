@@ -8,6 +8,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesEventPhotos from "@/components/DatesEventPhotos";
 import DatesEventContentPanel from "@/components/DatesEventContentPanel";
+import DatesEventMemberships from "@/components/DatesEventMemberships";
 import DatesExternalProvenance from "@/components/DatesExternalProvenance";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -29,6 +30,7 @@ import {
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
 import { datesActivityCommandReceipt, datesActivityUpdateReceipt, datesHostTransferReceipt } from "@/lib/datesCommandReceipts";
+import { datesMemberships } from "@/lib/datesMemberships";
 import { datesCommandOutcome, projectDatesActivityOriginDetail, type DatesActivityDisplayDetail, type DatesCommandOutcome, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
 
 type Activity = DatesActivityDisplayDetail;
@@ -284,6 +286,8 @@ export default function DatesActivityDetailPage() {
   const canCommand = !isExternal && hasDatesCapability(principal, "dates_activity_command");
   const canTransfer = !isExternal && hasDatesCapability(principal, "dates_host_transfer");
   const canLocation = !isExternal && principal.sensitive_location && hasDatesCapability(principal, "dates_evidence_read");
+  // The listed members with what removed or banned each of them, where Core serves it (lib/datesMemberships.ts).
+  const memberships = datesMemberships(data.memberships);
 
   return (
     <>
@@ -322,6 +326,11 @@ export default function DatesActivityDetailPage() {
           <div className="panel-header"><div><h2>{t("operationalHistory")}</h2><p>{t("operationalHistoryCopy")}</p></div></div>
           <div className="panel-body dates-count-grid">
             <div><strong>{data.memberships.length}{data.memberships_truncated ? "+" : ""}</strong><span>{t("memberships")}</span></div>
+            {/* Of the listed members; shown only when Core says of every one of them whether a ban stands. */}
+            {memberships.counts && <>
+              <div><strong>{memberships.counts.removed}{data.memberships_truncated ? "+" : ""}</strong><span>{t("removedMembers")}</span></div>
+              <div><strong>{memberships.counts.banned}{data.memberships_truncated ? "+" : ""}</strong><span>{t("bannedMembers")}</span></div>
+            </>}
             <div><strong>{data.chats.length}</strong><span>{t("chats")}</span></div>
             <div><strong>{data.reports.length}</strong><span>{t("reports")}</span></div>
             <div><strong>{data.moderation_cases.length}</strong><span>{t("cases")}</span></div>
@@ -394,7 +403,7 @@ export default function DatesActivityDetailPage() {
       <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("membershipsAndChats")}</h2><p>{t("membershipsAndChatsCopy")}</p></div></div>
         <div className="panel-body section-grid">
-          <div><h3 className="dates-subheading">{t("memberships")}</h3><div className="dates-scroll-list">{data.memberships.map((item, index) => <div className="dates-list-row" key={`${item.uid || 0}-${index}`}><span>UID {item.uid || 0}</span><span className="badge">{humanizeMachineKey(item.relationship || "unknown")}</span></div>)}</div></div>
+          <div><h3 className="dates-subheading">{t("memberships")}</h3><DatesEventMemberships rows={memberships.rows} /></div>
           <div><h3 className="dates-subheading">{t("chats")}</h3><div className="dates-scroll-list">{data.chats.map((item, index) => <div className="dates-list-row" key={item.thread_id || index}><span>{item.thread_id || "—"}</span><small>{t("chatSummary", { members: item.member_count || 0, messages: item.message_count || 0 })}</small></div>)}</div></div>
         </div>
       </section>

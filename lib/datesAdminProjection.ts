@@ -89,9 +89,15 @@ const RECORD = new Summary(OPERATIONAL_RECORD_SAFE_KEYS);
 const CASE = {
   ...leaves("case_id queue case_kind target_type target_id target_uid activity_id status severity escalated distinct_reporter_count report_count assignee_email "
     + "claimed_at claim_expires_at sla_due_at sla_breached revision created_at updated_at conflict_of_interest allowed_actions "
-    + "external_revision external_status external_target_available"),
+    + "external_revision external_status external_target_available "
+    // Host moderation v1, served with the command contract selector: where the reported content lives, and whether the event's host is shown the case.
+    + "surface host_visible"),
   capabilities: leaves("can_claim can_read_evidence can_resolve can_break_glass"),
   external_message: leaves("thread_id revision moderation_state available"),
+  // What the host decided. It names the host, never a reporter.
+  host_review: leaves("state decision by_uid at"),
+  // A case about a member can be shown to the hosts of several events: one review per event.
+  host_reviews: [leaves("activity_id state decision by_uid at")],
 };
 const COMMAND_RECEIPT = leaves("case_id revision audit_id idempotency_replayed");
 const TARGET_STATE = leaves("moderation_state revision sequence event_status activity_revision lifecycle soft_deleted");
@@ -140,7 +146,11 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   ...DATES_RESEARCH_NAMED,
   dates_activity_list: { ...ENVELOPE, ...leaves("page limit total"), activities: [ACTIVITY] },
   dates_event_content: { ...ENVELOPE, ...leaves("event_content_version activity_id kind has_more next_cursor audit_id"),
-    items: [leaves("id kind author_uid text content_kind state post_id root_id created_at signal_at has_media hide_count report_count case_id can_review")] },
+    items: [{ ...leaves("id kind author_uid text content_kind state post_id root_id created_at signal_at has_media hide_count report_count case_id can_review "
+      // Host moderation v1, served with the command contract selector: who took the row down.
+      + "removed_by"),
+      // What a host's removal of another member's content kept, for the operators: the text is member content, like `text` beside it.
+      host_removed: { ...leaves("text kind had_media at by_uid author_uid"), link: leaves("url host provider video_id title thumbnail_url") } }] },
   dates_event_content_review: { ...ENVELOPE, ...leaves("event_content_version activity_id kind target_id case_id created audit_id idempotency_replayed") },
   dates_activity_detail: {
     ...ENVELOPE,
@@ -148,7 +158,11 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
     activity: { ...ACTIVITY, ...leaves("details timezone auto_end_at tbd_expires_at live_sharing_state purge_eligible_at"),
       photo: OPAQUE, photos: [leaves("id url moderation_state")], audience: OPAQUE, pending_public_revision: OPAQUE },
     location: { ...leaves("mode city country_code exact_location_redacted exact_location_route"), public_location: leaves("type coordinates") },
-    memberships: [leaves("uid relationship live_access updated_at")],
+    // Core serves a membership row whole; the page lists the member, the relationship and - of what removed or banned
+    // them - when, by whom and the host's note (`ban`, `removal_note` and a null for an absent key come with the
+    // command contract selector; `released_at` is the seat a restriction released, which names no host).
+    memberships: [{ ...leaves("uid relationship live_access updated_at removed_at removed_by_uid removed_reason removal_note released_at"),
+      ban: leaves("state at by_uid note lifted_at lifted_by_uid") }],
     chat: leaves("thread_id read_only message_count pinned_message_id"),
     chats: [leaves("thread_id kind read_only closed_at member_count message_count pinned_message_id updated_at")],
     moderation_cases: [leaves("case_id queue status case_kind severity created_at")],

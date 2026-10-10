@@ -9,7 +9,7 @@ import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesEventPhotos from "@/components/DatesEventPhotos";
 import DatesWallEvidenceMedia from "@/components/DatesWallEvidenceMedia";
 import DatesCaseHistory from "@/components/DatesCaseHistory";
-import { DatesCaseEventLink, DatesCaseTarget, DatesReportEntryPoint } from "@/components/DatesCaseLabels";
+import { DatesCaseEventLink, DatesCaseHostReview, DatesCaseTarget, DatesReportEntryPoint } from "@/components/DatesCaseLabels";
 import DatesExternalProvenance from "@/components/DatesExternalProvenance";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -595,6 +595,8 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
           </div>
         </section>
       </div>
+
+      <DatesCaseHostReview item={item} />
 
       <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("reportsTitle")}</h2><p>{t("reportsCopy")}</p></div></div>

@@ -35,11 +35,32 @@ export const EVENT_CONTENT_PAGE_SIZE = 20;
 const TEXT_MAX = 16000;
 const CURSOR_MAX = 4096;
 
+/** Who took a row down (host moderation v1): its author, the event's host, or a moderation decision. */
+export const EVENT_CONTENT_REMOVERS = ["author", "host", "moderation"] as const;
+export type EventContentRemover = typeof EVENT_CONTENT_REMOVERS[number];
+/**
+ * What Core kept, for the operators, of another member's content when the
+ * event's host removed it: the text, its kind, a shared link, and whether it
+ * had a photo or a video (which is deleted; a shared location is not kept).
+ * `by_uid` is the host, `null` once that account is erased. `author_uid` is
+ * the member who wrote it: the tombstone itself no longer names its author.
+ */
+export type EventContentHostRemoved = { text: string; kind: EventContentAttachment; link: { url: string } | null; had_media: boolean;
+  at: number; by_uid: number | null; author_uid: number | null };
+
 export type EventContentRow = {
   id: string; kind: EventContentRowKind; author_uid: number | null; text: string;
   content_kind: EventContentAttachment; state: EventContentState;
   post_id: string | null; root_id: string | null; created_at: number; signal_at: number | null;
   has_media: boolean; hide_count: number; report_count: number; case_id: string | null; can_review: boolean;
+  /**
+   * Host moderation v1, served with the command contract selector: both, or -
+   * from a Core that does not serve them - neither. `removed_by` is `null` for
+   * a live row and where the row does not say (a comment that went with its
+   * post, an erased author's tombstone).
+   */
+  removed_by?: EventContentRemover | null;
+  host_removed?: EventContentHostRemoved | null;
 };
 export type EventContentPage = { items: EventContentRow[]; has_more: boolean; next_cursor: string | null };
 export type EventReviewRequest = { activity_id: string; kind: EventReviewKind; target_id: string; reason: string;
@@ -89,10 +110,38 @@ const commentHasPost = (row: EventContentRow): boolean => row.kind !== "wall_com
 /** A full page and the cursor of the next one, or the last page and none. */
 const paging = (body: Record<string, unknown>, rows: number): boolean => datesBoolean(body.has_more)
   && (body.has_more ? cursor(body.next_cursor) && rows === EVENT_CONTENT_PAGE_SIZE : body.next_cursor === null);
-/** The named fields of a checked row, and nothing a body carried beside them. */
+const LINK_MAX = 2048;
+/** A kept link is printed, never followed: one https URL, as Core's wall stores a shared link (`DatesWallPolicy::link`). */
+const keptLink = (value: unknown): value is { url: string } => datesRecord(value) && typeof value.url === "string"
+  && value.url.length <= LINK_MAX && /^https:\/\/[^\s\p{Cc}]+$/u.test(value.url);
+/** Every field of what a host removal kept, each of its own type, as the row's own fields are read. */
+const hostRemoved = (value: unknown): value is EventContentHostRemoved => datesRecord(value) && memberText(value.text)
+  && oneOf(EVENT_CONTENT_ATTACHMENTS, value.kind) && (value.link === null || keptLink(value.link)) && datesBoolean(value.had_media) && count(value.at)
+  && (value.by_uid === null || memberUid(value.by_uid)) && (value.author_uid === null || memberUid(value.author_uid));
+/**
+ * Host moderation v1 on a row: both keys, or neither (a Core that does not
+ * serve them). Who took a row down is said of a row that is down - its author
+ * or the host of a deleted one, moderation of a moderated one - and what a host
+ * removal kept is said of a removal by the host. A row that says otherwise is
+ * not a row.
+ */
+function removalRead(row: Record<string, unknown> & EventContentRow): boolean {
+  const said = Object.hasOwn(row, "removed_by"), kept = Object.hasOwn(row, "host_removed");
+  if (!said && !kept) return true;
+  if (!said || !kept || !(row.removed_by === null || oneOf(EVENT_CONTENT_REMOVERS, row.removed_by))
+    || !(row.host_removed === null || hostRemoved(row.host_removed))) return false;
+  if (row.removed_by === "moderation" ? row.state !== "moderated" : row.removed_by !== null && row.state !== "deleted") return false;
+  return row.host_removed === null || row.removed_by === "host";
+}
+/** The named fields of what was kept: of a link, the address the panel prints. */
+const keptOf = (kept: EventContentHostRemoved): EventContentHostRemoved => ({ text: kept.text, kind: kept.kind, link: kept.link === null ? null : { url: kept.link.url },
+  had_media: kept.had_media, at: kept.at, by_uid: kept.by_uid, author_uid: kept.author_uid });
+/** The named fields of a checked row, and nothing a body carried beside them. What a Core did not serve stays absent. */
 const rowOf = (row: EventContentRow): EventContentRow => ({ id: row.id, kind: row.kind, author_uid: row.author_uid, text: row.text,
   content_kind: row.content_kind, state: row.state, post_id: row.post_id, root_id: row.root_id, created_at: row.created_at, signal_at: row.signal_at,
-  has_media: row.has_media, hide_count: row.hide_count, report_count: row.report_count, case_id: row.case_id, can_review: row.can_review });
+  has_media: row.has_media, hide_count: row.hide_count, report_count: row.report_count, case_id: row.case_id, can_review: row.can_review,
+  ...(row.removed_by === undefined || row.host_removed === undefined ? {}
+    : { removed_by: row.removed_by, host_removed: row.host_removed === null ? null : keptOf(row.host_removed) }) });
 
 /**
  * The page of a read, or `null`: not the page that was asked for (another
@@ -106,7 +155,7 @@ export function eventContentPage(value: unknown, activityId: string, kind: Event
   const items: EventContentRow[] = [], seen = new Set<string>();
   for (const row of value.items as unknown[]) {
     if (!datesRecord(row) || !rowFields(row) || seen.has(row.id)
-      || !rowOfTab(row, kind) || !rowOfPost(row, postId) || !tombstoneBare(row) || !commentHasPost(row)) return null;
+      || !rowOfTab(row, kind) || !rowOfPost(row, postId) || !tombstoneBare(row) || !commentHasPost(row) || !removalRead(row)) return null;
     seen.add(row.id);
     items.push(rowOf(row));
   }

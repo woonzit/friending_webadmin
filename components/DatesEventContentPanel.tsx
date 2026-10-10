@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { adminCall } from "@/lib/adminClient";
 import { adminMembershipFailureText } from "@/lib/adminMembershipFailureText";
 import { createAdminIdempotencyKey, hasDatesCapability, type DatesAdminPrincipal } from "@/lib/datesAdmin";
-import { EVENT_CONTENT_KINDS, eventContentReviewOutcome, type EventContentProblem, type EventContentRow } from "@/lib/datesEventContent";
+import { EVENT_CONTENT_KINDS, eventContentReviewOutcome, type EventContentHostRemoved, type EventContentProblem, type EventContentRow } from "@/lib/datesEventContent";
 import {
   EVENT_REVIEW_REASON_MAX, EVENT_REVIEW_REASON_MIN, eventContentAccessValid, eventContentHeld, eventContentPanelInitial, eventContentPanelReducer,
   eventContentReadBody, eventReviewReasonValid, eventReviewRequest, eventReviewTargetOf,
@@ -153,6 +153,9 @@ function EventContentCard({ row, selected, canReview, locked, onComments, onRevi
     </div>
     {/* A tombstone says that something was deleted, and nothing of what it was. */}
     <p className="dates-event-content-text">{row.state === "deleted" ? t("deletedCopy") : row.text || t("attachmentOnly")}</p>
+    {/* Who took the row down, where Core says so; and what Core kept of it when that was the event's host. */}
+    {row.removed_by != null && <p className="field-hint">{t(`removedBy.${row.removed_by}`)}</p>}
+    {row.host_removed != null && <EventContentKept kept={row.host_removed} />}
     {row.content_kind !== "text" && <p className="field-hint">{t("attachment", { kind: t(`contentKinds.${row.content_kind}`) })}</p>}
     <p className="field-hint">{row.signal_at === null ? t("signals", signals) : t("signalsAt", { ...signals, date: formatDate(row.signal_at, locale, true) })}</p>
     <code>{row.id}</code>
@@ -163,6 +166,28 @@ function EventContentCard({ row, selected, canReview, locked, onComments, onRevi
     </div>
     {children}
   </article>;
+}
+
+/**
+ * What Core kept of another member's content when the event's host removed
+ * it. It is member content like a live row's text and is printed the same
+ * way: as text. A shared link is printed as its address and is not a link -
+ * nothing a member wrote is followed from here. The photo or video itself is
+ * gone; only that there was one is kept.
+ */
+function EventContentKept({ kept }: { kept: EventContentHostRemoved }) {
+  const t = useTranslations("datesAdmin.eventContent"), locale = useLocale();
+  const author = kept.author_uid === null ? t("noAuthor") : t("author", { uid: kept.author_uid });
+  return <div className="dates-event-content-kept">
+    <h4>{t("kept.title")}</h4>
+    <p className="field-hint">{t("kept.byline", { author })}</p>
+    <p className="dates-event-content-text">{kept.text || t("kept.noText")}</p>
+    {kept.kind !== "text" && <p className="field-hint">{t("kept.kind", { kind: t(`contentKinds.${kept.kind}`) })}</p>}
+    {kept.link !== null && <p className="field-hint">{t("kept.link")} <code>{kept.link.url}</code></p>}
+    {kept.had_media && <p className="field-hint">{t("kept.hadMedia")}</p>}
+    <p className="field-hint">{t("kept.removedAt", { date: formatDate(kept.at, locale, true) })}{" · "}
+      {kept.by_uid === null ? t("kept.hostErased") : <>{t("kept.byHost")} (<Link href={`/users/${kept.by_uid}`}>{t("author", { uid: kept.by_uid })}</Link>)</>}</p>
+  </div>;
 }
 
 /** What the request is for, in words: the kind of content, its author and the start of its text - or the event itself. */

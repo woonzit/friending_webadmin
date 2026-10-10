@@ -9268,6 +9268,22 @@
       "comments": "Comments & replies",
       "existingCase": "Existing case",
       "reviewMedia": "Review content & media",
+      "removedBy": {
+        "author": "Deleted by its author.",
+        "host": "Removed by the event's host.",
+        "moderation": "Removed by a moderation decision."
+      },
+      "kept": {
+        "title": "Kept when the host removed it",
+        "byline": "Written by {author}",
+        "noText": "The removed content had no text.",
+        "kind": "Kind: {kind}",
+        "link": "Shared link, printed as text:",
+        "hadMedia": "It had a photo or a video. The file was deleted with the removal; only this note is kept.",
+        "removedAt": "Removed {date}",
+        "byHost": "by the host",
+        "hostErased": "the host's account has been erased"
+      },
       "more": "Load more",
       "problems": {
         "conflict": "Core refused access because your account is connected to this event (conflict of interest). Ask a moderator who has no connection to it.",
@@ -9366,6 +9382,19 @@
       "membershipsAndChats": "Memberships and chat",
       "membershipsAndChatsCopy": "Bounded operational summaries; message evidence remains behind the moderation evidence read.",
       "chatSummary": "{members} members · {messages} messages",
+      "removedMembers": "Removed",
+      "bannedMembers": "Banned",
+      "members": {
+        "uid": "UID {uid}",
+        "banned": "Banned",
+        "removed": "Removed",
+        "banLifted": "Ban lifted",
+        "byHost": "By the host",
+        "byModeration": "By moderation",
+        "note": "Note from the host: {note}",
+        "bannedAt": "Banned: {date}",
+        "unreadable": "The removal and ban details of this member could not be read."
+      },
       "boundedHistory": "Bounded operational history",
       "boundedHistoryCopy": "Reports, notifications, moderation decisions and immutable admin audit entries returned by Core.",
       "notifications": "Notifications",
@@ -9426,8 +9455,22 @@
       },
       "targetKinds": {
         "wall_post": "Wall post",
-        "wall_comment": "Wall comment"
-      }
+        "wall_comment": "Wall comment",
+        "event_wall": "Event wall content",
+        "activity_chat": "Event chat message",
+        "direct_chat": "Direct chat message"
+      },
+      "hostStates": {
+        "not_shown": "Not shown to the host",
+        "shown": "Shown to the host",
+        "waiting": "Waiting for the host",
+        "kept": "Host kept it",
+        "content_removed": "Host removed the content",
+        "member_removed": "Host removed the member",
+        "member_banned": "Host banned the member"
+      },
+      "hostStateUnnamed": "Host: {value}",
+      "hostStatesSeveral": "{hosts} hosts shown, {decided} decided"
     },
     "caseDetail": {
       "back": "Back to moderation queue",
@@ -9473,7 +9516,31 @@
       "reason": "Reason",
       "entryPoint": "Entry point",
       "entryPoints": {
-        "event_wall": "Event wall"
+        "detail": "Event details",
+        "participant": "Participant list",
+        "profile": "Member profile",
+        "check_in": "Post-event check-in",
+        "chat_header": "Chat header",
+        "direct_chat_header": "Direct chat header",
+        "message_action": "Message menu",
+        "card": "Event card",
+        "external_event": "External event",
+        "message": "Message",
+        "event_wall": "Event wall",
+        "review": "Review"
+      },
+      "hostReview": {
+        "title": "Host review",
+        "copy": "Whether an event's host is shown this case in the app, and what each host did about it.",
+        "notShown": "No event's host is shown this case. Only moderators handle it.",
+        "shownNoReview": "An event's host is shown this case; no decision of a host is recorded.",
+        "event": "Event",
+        "state": "Status with the host",
+        "openedAt": "In the host's inbox since",
+        "decidedAt": "Decided at",
+        "host": "Host",
+        "uid": "UID {uid}",
+        "doesNotClose": "A host's decision does not close the case: it stays in this queue until a moderator resolves it."
       },
       "note": "Reporter note",
       "notesTitle": "Internal notes",

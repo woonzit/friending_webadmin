@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
-import { DatesCaseTarget } from "@/components/DatesCaseLabels";
+import { DatesCaseHostBadge, DatesCaseTarget } from "@/components/DatesCaseLabels";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
@@ -132,6 +132,7 @@ export default function DatesModerationQueuePage() {
             <td><div className="cell-stack"><span><DatesCaseTarget item={row} /></span>
               {row.target_type === "external_event" && <span className="badge badge-demo">{external("moderation.nonmember")}</span>}
               {row.external_message && <span className="badge badge-demo">{external("messageModeration.badge")}</span>}
+              <DatesCaseHostBadge item={row} />
               <small>{row.activity_id || `UID ${row.target_uid}`}</small></div></td>
             <td><span className={`badge ${row.status === "new" || row.status === "in_review" ? "badge-warning" : ""}`}>{t(`statuses.${row.status}`)}</span></td>
             <td><span className={`badge ${row.severity === "high" || row.severity === "critical" ? "badge-warning" : ""}`}>{humanizeMachineKey(row.severity)}</span>{row.escalated && <small className="table-subline dates-danger-text">{t("escalated")}</small>}</td>

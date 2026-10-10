@@ -43,16 +43,37 @@ export function datesAdminContractParams(action: string, selector: DatesAdminCon
  * Present and not exactly 1 is refused by Core (`dates-admin-contract-version-
  * invalid`, nothing written). Named by the Core lane opus-core-fix
  * (team/chat/20261002T233953Z-opus-core-fix-to-opus-admin-p2-t891-core-pin.md).
- * It goes with these two routes only; the selector never changes what a
- * command does. The legal hold has no selector: its extension is asked for by
+ * Of the commands it goes with these two only; the selector never changes what
+ * a command does. The legal hold has no selector: its extension is asked for by
  * the request's own `expected_revision`, which the page sends.
  */
 export const DATES_ADMIN_COMMAND_CONTRACT_SELECTOR: DatesAdminContractSelector = { parameter: "dates_admin_command_contract_version", value: 1 };
 export const DATES_ADMIN_COMMAND_CONTRACT_ROUTES: readonly string[] = ["dates_moderation_trail_evidence", "dates_activity_host_transfer"];
 
-/** What the SERVER adds for the command contract: the selector on its two routes, nothing on any other. */
+/**
+ * Host moderation v1 (Core docs/EVENT_HOST_MODERATION_V1.md, "Console"): the
+ * same selector asks four READS for what an event's host did. With it Core
+ * appends
+ * - to every membership row of `dates_activity_detail`: `removed_at`,
+ *   `removed_by_uid`, `removed_reason`, `removal_note` and `ban`;
+ * - to every item of `dates_event_content`: `removed_by` and `host_removed`;
+ * - to every case of `dates_moderation_queue` and to the case of
+ *   `dates_moderation_detail`: `surface`, `host_visible` and `host_review`
+ *   (and `host_reviews`, the hosts of a case about a member, one per event).
+ * Without it those reads keep their released bodies. The selector changes the
+ * shape of an answer only, never what is read or who may read it.
+ *
+ * A Core that does not know host moderation (main 47702611 and before) reads
+ * named parameters only on these four routes and never looks at the selector:
+ * it answers exactly as it does without it. So every addition is optional in
+ * this console's decoders - absent means "not served", and what would show it
+ * is not rendered - and the console reads a Core of either kind.
+ */
+export const DATES_ADMIN_HOST_MODERATION_READS: readonly string[] = ["dates_activity_detail", "dates_event_content", "dates_moderation_queue", "dates_moderation_detail"];
+
+/** What the SERVER adds for the command contract: the selector on its two commands and on the four host moderation reads, nothing on any other route. */
 export function datesAdminCommandContractParams(action: string): Record<string, number | string> {
-  return DATES_ADMIN_COMMAND_CONTRACT_ROUTES.includes(action)
+  return DATES_ADMIN_COMMAND_CONTRACT_ROUTES.includes(action) || DATES_ADMIN_HOST_MODERATION_READS.includes(action)
     ? { [DATES_ADMIN_COMMAND_CONTRACT_SELECTOR.parameter]: DATES_ADMIN_COMMAND_CONTRACT_SELECTOR.value } : {};
 }
 

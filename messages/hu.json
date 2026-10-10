@@ -9268,6 +9268,22 @@
       "comments": "Kommentek és válaszok",
       "existingCase": "Meglévő ügy",
       "reviewMedia": "Tartalom és média ellenőrzése",
+      "removedBy": {
+        "author": "A szerzője törölte.",
+        "host": "Az esemény hostja távolította el.",
+        "moderation": "Moderációs döntés távolította el."
+      },
+      "kept": {
+        "title": "A host eltávolításakor megőrzött tartalom",
+        "byline": "Írta: {author}",
+        "noText": "Az eltávolított tartalomnak nem volt szövege.",
+        "kind": "Típus: {kind}",
+        "link": "Megosztott hivatkozás, szövegként:",
+        "hadMedia": "Fotó vagy videó tartozott hozzá. A fájl az eltávolításkor törlődött; csak ez a jelzés maradt meg.",
+        "removedAt": "Eltávolítva: {date}",
+        "byHost": "a host által",
+        "hostErased": "a host fiókját törölték"
+      },
       "more": "Továbbiak betöltése",
       "problems": {
         "conflict": "A Core megtagadta a hozzáférést, mert a fiókod kapcsolatban áll ezzel az eseménnyel (összeférhetetlenség). Kérj meg egy moderátort, akinek nincs köze hozzá.",
@@ -9366,6 +9382,19 @@
       "membershipsAndChats": "Tagságok és chat",
       "membershipsAndChatsCopy": "Korlátozott üzemeltetési összegzés; az üzenetbizonyíték külön moderációs evidence-olvasás mögött marad.",
       "chatSummary": "{members} tag · {messages} üzenet",
+      "removedMembers": "Eltávolítva",
+      "bannedMembers": "Kitiltva",
+      "members": {
+        "uid": "UID {uid}",
+        "banned": "Kitiltva",
+        "removed": "Eltávolítva",
+        "banLifted": "Kitiltás feloldva",
+        "byHost": "A host által",
+        "byModeration": "A moderáció által",
+        "note": "A host megjegyzése: {note}",
+        "bannedAt": "Kitiltva: {date}",
+        "unreadable": "Ennek a tagnak az eltávolítási és kitiltási adatai nem olvashatók."
+      },
       "boundedHistory": "Korlátozott üzemeltetési előzmények",
       "boundedHistoryCopy": "A Core által visszaadott jelentések, értesítések, moderációs döntések és megváltoztathatatlan admin audit bejegyzések.",
       "notifications": "Értesítések",
@@ -9426,8 +9455,22 @@
       },
       "targetKinds": {
         "wall_post": "Falposzt",
-        "wall_comment": "Falkomment"
-      }
+        "wall_comment": "Falkomment",
+        "event_wall": "Eseményfal-tartalom",
+        "activity_chat": "Eseménychat-üzenet",
+        "direct_chat": "Privát beszélgetés üzenete"
+      },
+      "hostStates": {
+        "not_shown": "A host nem látja",
+        "shown": "A host látja",
+        "waiting": "A host döntésére vár",
+        "kept": "A host megtartotta",
+        "content_removed": "A host eltávolította a tartalmat",
+        "member_removed": "A host eltávolította a tagot",
+        "member_banned": "A host kitiltotta a tagot"
+      },
+      "hostStateUnnamed": "Host: {value}",
+      "hostStatesSeveral": "{hosts} host látja, {decided} döntött"
     },
     "caseDetail": {
       "back": "Vissza a moderációs queue-hoz",
@@ -9473,7 +9516,31 @@
       "reason": "Indok",
       "entryPoint": "Belépési pont",
       "entryPoints": {
-        "event_wall": "Eseményfal"
+        "detail": "Esemény adatlapja",
+        "participant": "Résztvevőlista",
+        "profile": "Tag profilja",
+        "check_in": "Esemény utáni check-in",
+        "chat_header": "Chat fejléce",
+        "direct_chat_header": "Privát beszélgetés fejléce",
+        "message_action": "Üzenet menüje",
+        "card": "Eseménykártya",
+        "external_event": "Külső esemény",
+        "message": "Üzenet",
+        "event_wall": "Eseményfal",
+        "review": "Értékelés"
+      },
+      "hostReview": {
+        "title": "A host döntése",
+        "copy": "Látja-e ezt az ügyet az appban valamelyik esemény hostja, és melyik host mit tett vele.",
+        "notShown": "Ezt az ügyet egyetlen esemény hostja sem látja. Csak a moderátorok kezelik.",
+        "shownNoReview": "Ezt az ügyet látja az esemény hostja; hostdöntés nincs rögzítve.",
+        "event": "Esemény",
+        "state": "Állapot a hostnál",
+        "openedAt": "A hostnál ekkortól",
+        "decidedAt": "A döntés időpontja",
+        "host": "Host",
+        "uid": "UID {uid}",
+        "doesNotClose": "A host döntése nem zárja le az ügyet: az ügy ebben a queue-ban marad, amíg egy moderátor le nem zárja."
       },
       "note": "Bejelentő megjegyzése",
       "notesTitle": "Belső jegyzetek",

@@ -215,9 +215,16 @@ flag any more (`DATES_RECEIPT_CHECKS_PENDING` is empty).
 | live-trail capture | the case and the window, a snapshot; with the command contract selector also `revision` and `existing` (= expected + 1 for a new snapshot, = expected for an existing one) - both or neither; the revision is adopted |
 
 The command contract selector (`dates_admin_command_contract_version=1`) is
-added by the server to the trail capture and the host transfer only
-(`lib/datesAdminContract.ts`); without it Core answers with the released keys,
-and the checks read those too (the extension is absent, nothing is adopted).
+added by the server (`lib/datesAdminContract.ts`). Of the commands it goes with
+the trail capture and the host transfer only; without it Core answers with the
+released keys, and the checks read those too (the extension is absent, nothing
+is adopted). The same selector goes with four reads - the activity detail, the
+event content, the moderation queue and the case detail - where it asks Core
+for what an event's host did (host moderation v1: removed and banned members,
+who took content down and what a host removal kept, where a case's content
+lives and what the host decided). Those additions are optional in the decoders:
+a Core that does not serve them answers as before, and what would show them is
+not rendered.
 The browser receives the receipts through the projection, whose trees name
 these keys (`lib/datesAdminProjection.ts`).
 

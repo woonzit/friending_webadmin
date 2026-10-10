@@ -285,7 +285,7 @@ test("D-143: the selector is the server's - a browser value under its name is ov
   assert.equal(forged.result.status, 400); assert.equal(forged.sent.length, 0);
 });
 
-test("T-891: the command contract selector goes with the trail capture and the host transfer only, set by the server; the hold sends its revision", async () => {
+test("T-891: of the commands, the command contract selector goes with the trail capture and the host transfer only, set by the server; the hold sends its revision", async () => {
   assert.deepEqual(DATES_ADMIN_COMMAND_CONTRACT_SELECTOR, { parameter: "dates_admin_command_contract_version", value: 1 });
   for (const action of ["dates_moderation_trail_evidence", "dates_activity_host_transfer"])
     assert.deepEqual(datesAdminCommandContractParams(action), { dates_admin_command_contract_version: 1 }, action);
@@ -321,6 +321,43 @@ test("T-891: the command contract selector goes with the trail capture and the h
     reason: "Synthetic capacity correction.", idempotency_key: "dates-activity-update:00000000-0000-4000-8000-000000000001" });
   assert.equal(update.has("dates_admin_command_contract_version"), false);
   assert.equal(update.get("changes"), '{"maximum_people":12}', "the generator's form value (line 433)");
+});
+
+test("host moderation: the four reads reach Core with the command contract selector, as Core's own capture asked them - set by the server, whatever the browser sent", async () => {
+  // GENUINE requests: Core's host moderation console corpus records what was sent for each body (tests/fixtures/
+  // dates_host_moderation_admin_wire/manifest.json, pinned in tests/datesHostModerationWire.test.mts).
+  type Asked = { file: string; route: string; request: Record<string, string | number> };
+  const manifest = JSON.parse(readFileSync(new URL("./fixtures/dates_host_moderation_admin_wire/manifest.json", import.meta.url), "utf8")) as { fixtures: Asked[] };
+  const SELECTOR = DATES_ADMIN_COMMAND_CONTRACT_SELECTOR.parameter;
+  const asked = manifest.fixtures.filter((entry) => entry.request[SELECTOR] === 1);
+  assert.deepEqual(asked.map((entry) => entry.route.replace("/v1/webadmin/", "")).sort(), ["dates_activity_detail", "dates_event_content", "dates_event_content", "dates_event_content",
+    "dates_moderation_detail", "dates_moderation_queue"]);
+  for (const entry of asked) {
+    const action = entry.route.replace("/v1/webadmin/", "");
+    // What a page sends is the request without the selector: the server adds that.
+    const { [SELECTOR]: _selector, ...browser } = entry.request;
+    const { sent } = await bridge(action, browser);
+    assert.equal(sent.length, 1, entry.file); assert.equal(sent[0].url, `https://core.invalid${entry.route}`);
+    const form = sent[0].form!;
+    // Everything Core's capture sent is what the console sends, value for value, each once ...
+    for (const [key, value] of Object.entries(entry.request)) assert.deepEqual(form.getAll(key), [String(value)], `${entry.file}: ${key}`);
+    // ... and beside it only the actor, the credential and the console's other server-owned selectors.
+    assert.deepEqual([...form.keys()].filter((key) => !Object.hasOwn(entry.request, key)).sort(),
+      ["admin_email", "secret", ...Object.keys(owned(action)), ...(action === "dates_activity_detail" ? ["dates_event_media_contract_version"] : [])].sort(), entry.file);
+    // A browser value under the selector's name does not survive: asking for another version is Core's refusal (422), never the browser's to cause.
+    const forged = await bridge(action, { ...browser, [SELECTOR]: 2 });
+    if (forged.sent.length > 0) assert.deepEqual(forged.sent[0].form!.getAll(SELECTOR), ["1"], entry.file); else assert.equal(forged.result.status, 400, entry.file);
+  }
+  // The `-released` bodies of the corpus are the same reads without the selector: that one parameter is the whole difference between the two consoles' requests.
+  for (const entry of manifest.fixtures.filter((item) => item.file.endsWith("-released.json"))) {
+    const twin = asked.find((item) => item.file === entry.file.replace("-released", ""))!;
+    assert.deepEqual({ ...entry.request, [SELECTOR]: 1 }, twin.request, entry.file);
+  }
+  // The neighbours of the four reads are sent without it.
+  for (const [action, body] of [["dates_moderation_sla", {}], ["dates_activity_list", { page: 1, limit: 40 }]] as const) {
+    const { sent } = await bridge(action, body);
+    assert.equal(sent[0].form!.has(SELECTOR), false, action);
+  }
 });
 
 test("response shape: the browser receives the named fields of a Dates body through the real bridge - an unknown key is dropped, a denied one is dropped and logged by name", async () => {

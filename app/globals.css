@@ -15508,3 +15508,11 @@ fieldset.dates-external-fields {
 .dates-event-review-target { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
 .dates-event-content-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .dates-wall-evidence-media .alert { margin: 12px 0 0; }
+/* Host moderation: what a host's removal kept, inside the tombstone's card; what removed or banned a member, under the member's row. */
+.dates-event-content-kept { display: grid; gap: 8px; padding: 12px; border: 1px dashed var(--border); border-radius: 10px; }
+.dates-event-content-kept h4 { margin: 0; font-size: 13px; }
+.dates-member-entry { display: grid; gap: 4px; }
+.dates-member-standing { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0; padding: 0 11px 4px; color: var(--muted); font-size: 12px; }
+.dates-member-note { overflow-wrap: anywhere; color: var(--text-soft); }
+.dates-host-review .panel-body { display: grid; gap: 12px; }
+.dates-host-review .detail-list + .detail-list { padding-top: 12px; border-top: 1px solid var(--border); }

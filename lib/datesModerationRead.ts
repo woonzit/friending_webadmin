@@ -79,9 +79,37 @@ const caseRules = {
   capabilities: (value: unknown) => shape(value, { can_claim: boolean, can_read_evidence: boolean, can_resolve: boolean, can_break_glass: boolean }),
 };
 
+/**
+ * Host moderation v1: where a message case's content lives, whether the
+ * event's host is shown the case, and what the host decided. Core appends the
+ * three to a row together, for a request with the command contract selector;
+ * a Core that does not know them serves none. So: all three, each read as its
+ * neighbours are (a vocabulary is bounded text - a value the page has no name
+ * for is printed as a machine key - a flag is a boolean, a time an epoch), or
+ * none. One or two of them is not a row.
+ */
+const hostReviewRules: Record<string, Rule> = { state: text(40), decision: nullable(text(40)), by_uid: nullable(integer), at: nullable(epoch) };
+const hostModerationRules: Record<string, Rule> = {
+  surface: nullable(text(40)), host_visible: boolean, host_review: (value) => value === null || shape(value, hostReviewRules),
+};
+/**
+ * A case about a member is one case for the whole app, so the hosts of
+ * several events can be shown it: Core then serves `host_review: null` and
+ * `host_reviews`, one review per event with the event it is of. The list is
+ * optional on every case (Core may serve it on a case about content too), and
+ * it comes only with the three above: a list, each entry a review of an event.
+ * A `null` in its place is read as "no list", like the `null` review beside it.
+ */
+const hostReviews: Rule = (value) => value === null || (Array.isArray(value) && value.every((entry) => shape(entry, { ...hostReviewRules, activity_id: id("act") })));
+function hostModerationRead(value: Record<string, unknown>): boolean {
+  const served = Object.keys(hostModerationRules).filter((key) => Object.hasOwn(value, key));
+  if (!Object.hasOwn(value, "host_reviews")) return served.length === 0 || (served.length === Object.keys(hostModerationRules).length && shape(value, hostModerationRules));
+  return shape(value, { ...hostModerationRules, host_reviews: hostReviews });
+}
+
 /** Explicit external variants stay closed before the ordinary metadata fallback. */
 function caseRow(value: unknown): value is DatesCaseSummary {
-  if (!record(value)) return false;
+  if (!record(value) || !hostModerationRead(value)) return false;
   if (Object.hasOwn(value, "external_message") || (value.target_type === "message" && value.case_kind === "prepublication")) {
     if (!shape(value, { ...caseRules,
       external_message: (v) => shape(v, {
