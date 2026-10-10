@@ -7,39 +7,38 @@ import { DATES_ADMIN_COMMAND_CONTRACT_ROUTES, DATES_ADMIN_COMMAND_CONTRACT_SELEC
   withDatesAdminContract } from "../lib/datesAdminContract.ts";
 import { DATES_ADMIN_NAMED, projectDatesAdminBody } from "../lib/datesAdminProjection.ts";
 import { eventContentPage, eventContentReadProblem, type EventContentKind } from "../lib/datesEventContent.ts";
+import { decodeDatesActivityOriginDetail } from "../lib/datesExternalAdmin.ts";
 import { datesMemberships } from "../lib/datesMemberships.ts";
 import { datesCaseDetail, datesModerationQueue } from "../lib/datesModerationRead.ts";
 
 // Host moderation v1 on the console plane (Core docs/EVENT_HOST_MODERATION_V1.md, "Console"): what Core appends to four
 // reads for a request with the command contract selector, read from Core's own genuine bodies.
 //
-// GENUINE: tests/fixtures/dates_host_moderation_admin_wire, copied byte for byte from Core (docs/WIRE_CORPUS_PINNING.md,
-// "Host moderation console corpus"). Each selector body has, where Core captured one, its `-released` twin: the same
-// read as the released console asks it, without the selector.
-// DERIVED, and marked so at each use: the states Core's capture does not hold (a direct-chat case, a case the host is
-// not shown, a member the host removed, a moderation removal of wall content, kept media, an erased host, a seat a
-// restriction released). Each is a genuine body with one stated change, read by the production decoder.
+// GENUINE: tests/fixtures/dates_host_moderation_admin_wire, copied byte for byte from Core's final tip
+// (docs/WIRE_CORPUS_PINNING.md, "Host moderation console corpus"): a queue of thirteen cases, two case details (a
+// wall comment the host kept; a member reported in two events), a whole event page, the wall of three events, an event
+// chat, and - where Core captured one - the `-released` twin of a read: the same read as the released console asks
+// it, without the selector.
+// DERIVED, and marked so at each use, only where no genuine body holds the state: a body that breaks a rule (the
+// negative controls), a value this console has no name for, and a few states of a membership row and of kept content
+// that Core's capture does not reach. Each is a genuine body with one stated change, read by the production decoder.
 const CORPUS = "dates_host_moderation_admin_wire";
 /**
- * THE PIN. This is Core's capture at its lane tip; Core's final tip regenerates it. The manifest is then re-bound
- * (`source_commit`) and - announced by the lead - bodies change as well: a case about a member carries its hosts as
- * `host_reviews` (and `host_review: null`), and report counts move. Re-vendoring is one mechanical step: copy the
- * directory from that Core commit and replace the five values below with what the new files say
- * (docs/WIRE_CORPUS_PINNING.md has the commands). The tests below read the hosts' side of a case through the one
- * function, which reads both shapes of the member case, and state the announced shape as DERIVED rows until then.
- * After that re-vendor a changed `set` is again what it always is: a body changed - stop and review, not a re-pin.
+ * THE PIN (docs/WIRE_CORPUS_PINNING.md). Re-vendoring is one mechanical step: copy the directory from the Core commit
+ * and replace these five values with what the new files say. A changed `set` means a BODY changed: stop and review,
+ * not a re-pin.
  */
 const PIN = {
   /** The Core commit the directory was copied from, from its git objects. */
-  core: "3b57e1869c04ab4025b8c176a1f5345c4ad7283c",
+  core: "28439d7e5549e09cf8d663fcb6ff7cc85172decb",
   /** sha256 of manifest.json. */
-  manifest: "d4dde51c684354bdd98318df30ec1df233436af75a36ce16a8f6fc3abe4ce77c",
+  manifest: "2becdfadf11215a1043406403fe5731acab39401910b015e9feb8dc440d1c21d",
   /** The manifest's source binding. */
-  source_commit: "692b8d40d48ea07b5e2e9da636438d0ac911196b",
-  /** `fixture_set_sha256`: the ten bodies. */
-  set: "f22076e8243bd5bbd75cb650c6b0daec5bd7354684c92d8c14607f964c1a9033",
+  source_commit: "50100ad334ca2a0c8d7be2515b3d458361e2a876",
+  /** `fixture_set_sha256`: the fourteen bodies. */
+  set: "abd639fbdd564de36a371dca6bfdf37990064ade00aee0e5bff991ac74ca4127",
   /** sha256 of Core's generator, tests/dates_host_moderation_fixture_dump.php. */
-  generator: "8eb3e807b1a5865a4e120b40f52bb7a1144661a9247ddaa64e5a227aed7fad9d",
+  generator: "95fa3b9d1630e7cdfb7646618bc50376811bac0b2d275aee38d89306fd9479b0",
 };
 const DIRECTORY = new URL(`./fixtures/${CORPUS}/`, import.meta.url);
 const bytes = (file: string) => readFileSync(new URL(file, DIRECTORY));
@@ -53,20 +52,24 @@ const SELECTOR = DATES_ADMIN_COMMAND_CONTRACT_SELECTOR.parameter;
 const actionOf = (entry: Entry) => entry.route.replace(/^\/v1\/webadmin\//, "");
 
 const QUEUE = fixture("admin-moderation-queue"), QUEUE_RELEASED = fixture("admin-moderation-queue-released");
-const DETAIL = fixture("admin-moderation-detail"), DETAIL_RELEASED = fixture("admin-moderation-detail-released");
+const DETAIL = fixture("admin-moderation-detail"), DETAIL_RELEASED = fixture("admin-moderation-detail-released"), DETAIL_MEMBER = fixture("admin-moderation-detail-member");
 const POSTS = fixture("admin-event-content-wall-posts"), POSTS_RELEASED = fixture("admin-event-content-wall-posts-released");
+const POSTS_SECOND = fixture("admin-event-content-wall-posts-second-event"), COMMENTS_ERASED = fixture("admin-event-content-wall-comments-host-erased");
 const COMMENTS = fixture("admin-event-content-wall-comments"), MESSAGES = fixture("admin-event-content-messages");
+const ACTIVITY = fixture("admin-activity-detail");
 const MEMBERSHIPS = fixture("admin-activity-detail-memberships") as { note: string; with_contract: Record<string, any>[]; released: Record<string, any>[] };
 const REFUSED = fixture("admin-contract-version-invalid-denied");
-const EVENT: string = POSTS.activity_id;
+const EVENT: string = POSTS.activity_id, SECOND_EVENT: string = POSTS_SECOND.activity_id, THIRD_EVENT: string = COMMENTS_ERASED.activity_id;
+const HOST = 8101, NOW = 1790000000;
 /** What the browser receives of a body: its projection. The decoders below read that, as the pages do. */
 const sent = (route: string, body: unknown) => projectDatesAdminBody(route, body, (line) => assert.fail(`nothing of a genuine or derived body is on the deny-list: ${line}`)) as any;
 const queueOf = (body: any) => datesModerationQueue(sent("dates_moderation_queue", body), { page: body.page, limit: body.limit });
 const detailOf = (body: any) => datesCaseDetail(sent("dates_moderation_detail", body), body.case?.case_id);
-const pageOf = (body: any) => eventContentPage(sent("dates_event_content", body), EVENT, body.kind as EventContentKind);
-/** An activity detail as the page receives it, with the given membership rows (DERIVED wrapper: a genuine detail body of another corpus). */
-const DETAIL_BODY = JSON.parse(readFileSync(new URL("./fixtures/dates_external_admin_wire/admin-activity-detail-external.json", import.meta.url), "utf8"));
-const membershipsOf = (rows: unknown) => datesMemberships(sent("dates_activity_detail", { ...DETAIL_BODY, memberships: rows }).memberships);
+const pageOf = (body: any) => eventContentPage(sent("dates_event_content", body), body.activity_id, body.kind as EventContentKind);
+/** The member rows of an event page as the page reads them: Core's genuine event page with these rows, through the projection. */
+const membershipsOf = (rows: unknown) => datesMemberships(sent("dates_activity_detail", { ...ACTIVITY, memberships: rows }).memberships);
+/** The cases of Core's queue, by what they are (the order is Core's: severity, deadline, age). */
+const CASE = { wallPostRemoved: 0, wallCommentKept: 1, chatWaiting: 2, memberBanned: 3, memberRemoved: 6, memberTwoEvents: 7, memberNotShown: 8, directChat: 9, wallPostWaiting: 10, wallPostActioned: 11 };
 
 test("the host moderation console corpus is Core's, byte for byte, with its requests", () => {
   assert.equal(sha256(bytes("manifest.json")), PIN.manifest);
@@ -76,7 +79,7 @@ test("the host moderation console corpus is Core's, byte for byte, with its requ
   assert.equal(MANIFEST.provenance.documentation, "docs/EVENT_HOST_MODERATION_V1.md");
   // The selector the capture sent is the one this console's bridge adds.
   assert.deepEqual(MANIFEST.selectors.webadmin, { [SELECTOR]: DATES_ADMIN_COMMAND_CONTRACT_SELECTOR.value });
-  assert.equal(MANIFEST.fixtures.length, 10);
+  assert.equal(MANIFEST.fixtures.length, 14);
   const lines = MANIFEST.fixtures.map((entry) => {
     assert.equal(sha256(bytes(entry.file)), entry.sha256, entry.file);
     assert.equal(entry.consumer, "webadmin", entry.file); assert.equal(entry.http_status, 200, "Core answers 200 for a logical refusal too");
@@ -114,30 +117,23 @@ test("the server asks the four reads for the additions, a browser cannot, and Co
   assert.deepEqual(REFUSED, { success: false, status_code: 422, error: "dates-admin-contract-version-invalid", message: 200, status: 200, can_send: 0 });
   for (const action of DATES_ADMIN_HOST_MODERATION_READS) assert.deepEqual(sent(action, REFUSED), REFUSED, action);
   assert.equal(datesModerationQueue(REFUSED, { page: 1, limit: 40 }), null); assert.equal(datesCaseDetail(REFUSED, DETAIL.case.case_id), null);
-  assert.equal(eventContentPage(REFUSED, EVENT, "wall_post"), null);
+  assert.equal(eventContentPage(REFUSED, EVENT, "wall_post"), null); assert.equal(decodeDatesActivityOriginDetail(REFUSED, EVENT, []), null);
   assert.deepEqual(eventContentReadProblem(REFUSED), { kind: "refused", error: "dates-admin-contract-version-invalid" });
 });
 
-test("what Core appends with the selector is exactly the contract's keys: without them each body is its released twin", () => {
+test("what Core appends with the selector is exactly the contract's keys, in its order: without them each body is its released twin", () => {
   const without = (row: Record<string, unknown>, keys: string[]) => Object.fromEntries(Object.entries(row).filter(([key]) => !keys.includes(key)));
-  // `host_reviews` (the hosts of a case about a member, one per event) is announced for Core's final capture and may
-  // then follow the three on any case; the capture pinned here does not carry it yet.
-  const CASE_KEYS = ["surface", "host_visible", "host_review"], LISTED = "host_reviews", ITEM_KEYS = ["removed_by", "host_removed"];
-  const appended = (row: Record<string, unknown>, released: Record<string, unknown>) => Object.keys(row).filter((key) => !Object.hasOwn(released, key));
-  assert.deepEqual({ ...QUEUE, cases: QUEUE.cases.map((row: any) => without(row, [...CASE_KEYS, LISTED])) }, QUEUE_RELEASED);
-  assert.deepEqual({ ...DETAIL, case: without(DETAIL.case, [...CASE_KEYS, LISTED]) }, DETAIL_RELEASED);
+  const CASE_KEYS = ["surface", "host_visible", "host_review", "host_reviews"], ITEM_KEYS = ["removed_by", "host_removed"];
+  assert.equal(QUEUE.cases.length, 13); assert.equal(QUEUE_RELEASED.cases.length, 13);
+  assert.deepEqual({ ...QUEUE, cases: QUEUE.cases.map((row: any) => without(row, CASE_KEYS)) }, QUEUE_RELEASED);
+  assert.deepEqual({ ...DETAIL, case: without(DETAIL.case, CASE_KEYS) }, DETAIL_RELEASED);
   // Each read is audited: the two reads of the wall differ in their audit id, and in nothing else but the two keys.
   assert.notEqual(POSTS.audit_id, POSTS_RELEASED.audit_id);
   assert.deepEqual({ ...POSTS, audit_id: POSTS_RELEASED.audit_id, items: POSTS.items.map((row: any) => without(row, ITEM_KEYS)) }, POSTS_RELEASED);
   // Appended, and on every row: the last keys of each row, in the contract's order.
-  const atTheEnd = (row: Record<string, unknown>, released: Record<string, unknown>) => {
-    const keys = appended(row, released);
-    assert.deepEqual(keys.filter((key) => key !== LISTED), CASE_KEYS, "the three, on every case");
-    assert.deepEqual(Object.keys(row).slice(-keys.length), keys, "appended at the end of the row");
-  };
-  QUEUE.cases.forEach((row: any, index: number) => atTheEnd(row, QUEUE_RELEASED.cases[index]));
-  atTheEnd(DETAIL.case, DETAIL_RELEASED.case);
-  for (const body of [POSTS, COMMENTS, MESSAGES]) for (const row of body.items) assert.deepEqual(Object.keys(row).slice(-2), ITEM_KEYS);
+  for (const row of [...QUEUE.cases, DETAIL.case, DETAIL_MEMBER.case]) assert.deepEqual(Object.keys(row).slice(-4), CASE_KEYS, row.case_id);
+  for (const body of [POSTS, POSTS_SECOND, COMMENTS, COMMENTS_ERASED, MESSAGES]) for (const row of body.items) assert.deepEqual(Object.keys(row).slice(-2), ITEM_KEYS);
+  for (const row of [...QUEUE_RELEASED.cases, DETAIL_RELEASED.case]) for (const key of CASE_KEYS) assert.equal(Object.hasOwn(row, key), false, key);
   // A membership row is served whole. With the selector it carries all five keys (null where it has none); without it,
   // the three older facts where the row has them and never the ban or the host's note.
   const FACTS = ["removed_at", "removed_by_uid", "removed_reason", "removal_note", "ban"];
@@ -149,54 +145,119 @@ test("what Core appends with the selector is exactly the contract's keys: withou
     for (const key of ["removed_at", "removed_by_uid", "removed_reason"]) assert.equal(row[key], Object.hasOwn(released, key) ? released[key] : null, `${row.uid}: ${key}`);
     assert.equal(Object.hasOwn(released, "ban") || Object.hasOwn(released, "removal_note"), false, `${row.uid}: the released row has neither`);
   });
+  for (const row of ACTIVITY.memberships) for (const key of FACTS) assert.ok(Object.hasOwn(row, key), `${row.uid}: ${key} is served on the whole event page too`);
 });
 
-test("the projection names what the pages show of the additions: every genuine route body is itself, a membership row its named part", () => {
-  for (const entry of MANIFEST.fixtures.filter((item) => !item.excerpt)) {
+test("the projection names what the pages show: every genuine route body but the event page is itself, and the event page is itself but for what it withholds by design", () => {
+  for (const entry of MANIFEST.fixtures.filter((item) => !item.excerpt && item.file !== "admin-activity-detail.json")) {
     const body = JSON.parse(bytes(entry.file).toString("utf8"));
     assert.deepEqual(sent(actionOf(entry), body), body, entry.file);
   }
   // A membership row is Core's whole stored row. The page lists the member and the relationship, and of what removed or
   // banned them the facts lib/datesMemberships.ts reads; the rest of the row does not leave the server.
   const NAMED = ["uid", "relationship", "live_access", "updated_at", "removed_at", "removed_by_uid", "removed_reason", "removal_note", "released_at", "ban"];
+  const named = (row: Record<string, unknown>) => Object.fromEntries(Object.entries(row).filter(([key]) => NAMED.includes(key)));
   assert.deepEqual(Object.keys((DATES_ADMIN_NAMED.dates_activity_detail as any).memberships[0]).sort(), [...NAMED].sort());
   assert.deepEqual(Object.keys((DATES_ADMIN_NAMED.dates_activity_detail as any).memberships[0].ban), ["state", "at", "by_uid", "note", "lifted_at", "lifted_by_uid"]);
+
+  // GENUINE: a whole member-hosted event page, the first in any corpus of this console. Its projection is the body
+  // itself in every part but four, each reduced by a rule that is older than host moderation or stated above:
+  const page = sent("dates_activity_detail", ACTIVITY);
+  const reduced = ["memberships", "reports", "moderation_cases", "moderation_decisions"];
+  assert.deepEqual(Object.keys(page), Object.keys(ACTIVITY));
+  assert.deepEqual(Object.keys(ACTIVITY).filter((key) => JSON.stringify(page[key]) !== JSON.stringify(ACTIVITY[key])), reduced);
+  // - a membership row is its named part: the stored row's other fields stay on the server;
+  assert.deepEqual(page.memberships, ACTIVITY.memberships.map(named));
+  assert.deepEqual([...new Set(ACTIVITY.memberships.flatMap((row: any) => Object.keys(row).filter((key) => !NAMED.includes(key))))].sort(),
+    ["activity_id", "created_at", "joined_at", "rejoin_window_count", "rejoin_window_started_at", "released_reason"]);
+  // - a linked case is listed by the six fields the page's table has; Core also serves when it was resolved;
+  assert.deepEqual(page.moderation_cases, ACTIVITY.moderation_cases.map(({ resolved_at: _resolved, ...row }: any) => row));
+  // - a report and a decision are passed by Core as whole documents and reach the browser as their safe keys and a count
+  //   of what was withheld: no moderator, no sanctioned member, no reason text, no before / after.
+  assert.deepEqual(page.moderation_decisions, [{ decision_id: ACTIVITY.moderation_decisions[0].decision_id, target_type: "message", action: "remove_content", severity: "low", created_at: NOW, withheld_fields: 9 }]);
+  assert.deepEqual(page.reports[0], { report_id: ACTIVITY.reports[0].report_id, target_type: "message", severity: "high", status: "new", created_at: ACTIVITY.reports[0].created_at,
+    reporter_identity_redacted: true, withheld_fields: 3 });
+  assert.equal(page.reports.length, ACTIVITY.reports.length);
+  assert.doesNotMatch(JSON.stringify(page), /moderator@example\.test|subject_uid|user_visible_reason|moderated_removed|released_reason|rejoin_window|host_report/);
+  // The page's own decoder reads it, and the member rows read as the page lists them.
+  assert.ok(decodeDatesActivityOriginDetail(page, ACTIVITY.activity.activity_id, []), "a member-hosted event");
+  assert.deepEqual(datesMemberships(page.memberships), datesMemberships(ACTIVITY.memberships), "the projection takes nothing the page reads");
+
+  // The excerpt (the member rows of another event, with the selector and as the released console is served them) is
+  // not a route body: its rows are read in the place of the genuine event page's own.
   for (const rows of [MEMBERSHIPS.with_contract, MEMBERSHIPS.released]) {
-    const projected = sent("dates_activity_detail", { ...DETAIL_BODY, memberships: rows }).memberships as Record<string, unknown>[];
-    projected.forEach((row, index) => assert.deepEqual(row, Object.fromEntries(Object.entries(rows[index]).filter(([key]) => NAMED.includes(key))), String(rows[index].uid)));
-    const withheld = new Set(rows.flatMap((row) => Object.keys(row).filter((key) => !NAMED.includes(key))));
-    assert.deepEqual([...withheld].sort(), ["activity_id", "created_at", "invited_at", "invited_by_uid", "joined_at", "rejoin_window_count", "rejoin_window_started_at"]);
+    assert.deepEqual(sent("dates_activity_detail", { ...ACTIVITY, memberships: rows }).memberships, rows.map(named));
+    assert.deepEqual([...new Set(rows.flatMap((row) => Object.keys(row).filter((key) => !NAMED.includes(key))))].sort(),
+      ["activity_id", "created_at", "invited_at", "invited_by_uid", "joined_at", "rejoin_window_count", "rejoin_window_started_at"]);
   }
-  // A ban is the whole subdocument, and nothing beside its six fields.
+  // A ban is the whole subdocument, and nothing beside its six fields. (Negative control: two keys Core does not serve.)
   const wider = copy(MEMBERSHIPS.with_contract); wider[0].ban.internal = "UNNAMED"; wider[0].request_message = "a member's words";
-  assert.doesNotMatch(JSON.stringify(sent("dates_activity_detail", { ...DETAIL_BODY, memberships: wider })), /UNNAMED|a member's words/);
+  assert.doesNotMatch(JSON.stringify(sent("dates_activity_detail", { ...ACTIVITY, memberships: wider })), /UNNAMED|a member's words/);
 });
 
-test("queue: Core's surface and the host's side of each case are read as served, and a Core that serves neither is read as before", () => {
+test("queue: where each case's content lives and what its hosts decided are read as served, and a Core that serves neither is read as before", () => {
   const queue = queueOf(QUEUE), released = queueOf(QUEUE_RELEASED);
   assert.ok(queue && released);
   assert.deepEqual(queue.cases, QUEUE.cases); assert.deepEqual(released.cases, QUEUE_RELEASED.cases);
-  assert.deepEqual(queue.cases.map((row) => [row.target_type, row.target_id.slice(0, 4), row.surface]),
-    [["message", "wpo_", "event_wall"], ["message", "wco_", "event_wall"], ["message", "msg_", "activity_chat"], ["user", "8102", null], ["message", "wpo_", "event_wall"]]);
-  assert.deepEqual(queue.cases.map(datesCaseTargetKind), ["wall_post", "wall_comment", "activity_chat", null, "wall_post"]);
-  assert.deepEqual(queue.cases.map(datesCaseHostState), [{ state: "content_removed" }, { state: "kept" }, { state: "member_banned" }, { state: "member_banned" }, { state: "waiting" }]);
-  assert.ok(queue.cases.every((row) => row.host_visible === true), "every case of the capture is one the host is shown");
-  // An open review has no decision and no host yet; `at` is when it was opened.
-  assert.deepEqual(queue.cases[4].host_review, { state: "open", decision: null, by_uid: null, at: 1790000000 });
-  assert.deepEqual(queue.cases[0].host_review, { state: "handled", decision: "content_removed", by_uid: 8101, at: 1790000000 });
-  // The host's decision never closes the case: every decided case is still open for the operators.
-  assert.ok(queue.cases.every((row) => row.status === "new" && row.capabilities.can_claim));
+  assert.deepEqual(queue.cases.map((row) => [row.target_type, row.target_id.slice(0, 4), row.surface]), [
+    ["message", "wpo_", "event_wall"], ["message", "wco_", "event_wall"], ["message", "msg_", "activity_chat"], ["user", "8102", null], ["message", "wco_", "event_wall"],
+    ["message", "msg_", "activity_chat"], ["user", "8113", null], ["user", "8112", null], ["user", "8116", null], ["message", "msg_", "direct_chat"],
+    ["message", "wpo_", "event_wall"], ["message", "wpo_", "event_wall"], ["message", "wpo_", "event_wall"]]);
+  assert.deepEqual(queue.cases.map(datesCaseTargetKind), ["wall_post", "wall_comment", "activity_chat", null, "wall_comment", "activity_chat", null, null, null, "direct_chat",
+    "wall_post", "wall_post", "wall_post"]);
+  assert.deepEqual(queue.cases.map(datesCaseHostState), [{ state: "content_removed" }, { state: "kept" }, { state: "waiting" }, { state: "member_banned" }, { state: "waiting" },
+    { state: "waiting" }, { state: "member_removed" }, { hosts: 2, decided: 1 }, { state: "not_shown" }, { state: "not_shown" }, { state: "waiting" }, { state: "not_shown" },
+    { state: "not_shown" }]);
+  // `host_reviews` is the one rule for every case: `host_visible` says whether it has an entry, and `host_review`
+  // repeats the single entry of a case about content without its event - never of a case about a member.
+  for (const row of queue.cases) {
+    assert.equal(row.host_visible, row.host_reviews!.length > 0, row.case_id);
+    if (row.target_type === "user") assert.equal(row.host_review, null, `${row.case_id}: a member case has no single review`);
+    else assert.deepEqual(row.host_reviews, row.host_review === null ? [] : [{ activity_id: row.activity_id, ...row.host_review }], row.case_id);
+  }
+  // An open review has no decision and no host yet; `at` is when it was opened. A decided one names the host.
+  assert.deepEqual(queue.cases[CASE.wallPostWaiting].host_review, { state: "open", decision: null, by_uid: null, at: NOW });
+  assert.deepEqual(queue.cases[CASE.wallPostRemoved].host_review, { state: "handled", decision: "content_removed", by_uid: HOST, at: NOW });
+  // A message of a direct thread is never a host's to see; nor is a case the operators had before any host was shown it.
+  assert.deepEqual([queue.cases[CASE.directChat].host_visible, queue.cases[CASE.directChat].host_reviews], [false, []]);
+  assert.deepEqual([queue.cases[CASE.wallPostActioned].status, queue.cases[CASE.wallPostActioned].host_visible], ["actioned", false]);
+  // A host's decision never closes the case: every case a host decided is still open for the operators.
+  const decided = queue.cases.filter((row) => row.host_reviews!.some((review) => review.state === "handled"));
+  assert.equal(decided.length, 5); assert.ok(decided.every((row) => row.status === "new" && row.capabilities.can_claim));
 
-  // Absent (the released twin; a Core without host moderation): the wall is told by its ids as in PART A, a chat
-  // message cannot be told and stays a message, and nothing is said of the host - no badge, no section.
-  for (const row of released.cases) for (const key of ["surface", "host_visible", "host_review"]) assert.equal(Object.hasOwn(row, key), false, key);
-  assert.deepEqual(released.cases.map(datesCaseTargetKind), ["wall_post", "wall_comment", null, null, "wall_post"]);
-  assert.deepEqual(released.cases.map(datesCaseHostState), [null, null, null, null, null]);
+  // Absent (the released twin; a Core without host moderation): the wall is told by its ids, a chat message cannot be
+  // told from its id - of the event's chat or of a direct thread - and stays a message, and nothing is said of a host.
+  assert.deepEqual(released.cases.map(datesCaseTargetKind), ["wall_post", "wall_comment", null, null, "wall_comment", null, null, null, null, null, "wall_post", "wall_post", "wall_post"]);
+  assert.ok(released.cases.every((row) => datesCaseHostState(row) === null && datesCaseHostReviews(row) === null));
 });
 
-test("queue: a served addition that is not what Core writes fails the queue as its neighbours do; one or two of the three is not a row", () => {
+test("a case about a member is one case for the whole app: each event whose host was shown it has a review of its own", () => {
+  const queue = queueOf(QUEUE)!, detail = detailOf(DETAIL_MEMBER);
+  assert.ok(detail);
+  assert.deepEqual(detail.case, DETAIL_MEMBER.case); assert.deepEqual(detail.case, queue.cases[CASE.memberTwoEvents], "the queue row and the case detail are one row");
+  // GENUINE: a member reported in two events. The host of one kept the member; the host of the other has not decided.
+  const kept = { activity_id: SECOND_EVENT, state: "handled", decision: "kept", by_uid: HOST, at: NOW }, waiting = { activity_id: THIRD_EVENT, state: "open", decision: null, by_uid: null, at: NOW };
+  assert.deepEqual([detail.case.target_type, detail.case.surface, detail.case.host_visible, detail.case.host_review], ["user", null, true, null]);
+  assert.deepEqual(detail.case.host_reviews, [kept, waiting]);
+  assert.deepEqual(datesCaseHostReviews(detail.case), [{ event: SECOND_EVENT, review: kept }, { event: THIRD_EVENT, review: waiting }]);
+  assert.deepEqual(datesCaseHostState(detail.case), { hosts: 2, decided: 1 });
+  assert.equal(detail.case.status, "new", "still open for the operators, whatever the hosts decided");
+  // The reports are the operators': two of them, filed from an event's detail, each with the note no host is shown.
+  assert.deepEqual(detail.reports.map((report) => [report.entry_point, report.note]), [["detail", "A note only the Friending team may read."], ["detail", "A note only the Friending team may read."]]);
+  // GENUINE: one event - that host's decision; and a member no host was shown a report about.
+  assert.deepEqual(datesCaseHostReviews(queue.cases[CASE.memberBanned]), [{ event: EVENT, review: { activity_id: EVENT, state: "handled", decision: "member_banned", by_uid: HOST, at: NOW } }]);
+  assert.deepEqual(datesCaseHostState(queue.cases[CASE.memberBanned]), { state: "member_banned" });
+  assert.deepEqual(datesCaseHostState(queue.cases[CASE.memberRemoved]), { state: "member_removed" });
+  assert.deepEqual(datesCaseHostReviews(queue.cases[CASE.memberNotShown]), []); assert.deepEqual(datesCaseHostState(queue.cases[CASE.memberNotShown]), { state: "not_shown" });
+  // GENUINE: a case about content keeps its one review, of the case's own event - which the page names once, in the overview.
+  assert.deepEqual(datesCaseHostReviews(queue.cases[CASE.wallPostRemoved]), [{ event: null, review: QUEUE.cases[CASE.wallPostRemoved].host_review }]);
+  assert.deepEqual(datesCaseHostReviews(queue.cases[CASE.directChat]), []);
+});
+
+test("case rows: an addition that is not what Core writes fails the queue as its neighbours do; some of the four without the others is not a row (negative controls)", () => {
   const scope = { page: QUEUE.page, limit: QUEUE.limit };
-  const broken = (change: (row: any) => void) => { const body = copy(QUEUE); change(body.cases[0]); return datesModerationQueue(sent("dates_moderation_queue", body), scope); };
+  const broken = (change: (row: any) => void, index = CASE.wallPostRemoved) => { const body = copy(QUEUE); change(body.cases[index]); return datesModerationQueue(sent("dates_moderation_queue", body), scope); };
+  const review = QUEUE.cases[CASE.wallPostRemoved].host_review;
   for (const [name, change] of Object.entries<(row: any) => void>({
     "surface: a number": (row) => { row.surface = 5; }, "surface: empty": (row) => { row.surface = ""; }, "surface: a list": (row) => { row.surface = ["event_wall"]; },
     "surface: too long": (row) => { row.surface = "x".repeat(41); },
@@ -207,168 +268,122 @@ test("queue: a served addition that is not what Core writes fails the queue as i
     "host_review.by_uid: text": (row) => { row.host_review.by_uid = "8101"; }, "host_review.by_uid: negative": (row) => { row.host_review.by_uid = -1; },
     "host_review.by_uid: a fraction": (row) => { row.host_review.by_uid = 1.5; }, "host_review.at: text": (row) => { row.host_review.at = "1790000000"; },
     "host_review.at: negative": (row) => { row.host_review.at = -1; }, "host_review.at: missing": (row) => { delete row.host_review.at; },
+    "host_reviews: text": (row) => { row.host_reviews = "none"; }, "host_reviews: a number": (row) => { row.host_reviews = 2; }, "host_reviews: null": (row) => { row.host_reviews = null; },
+    "an entry that is not a review": (row) => { row.host_reviews = [5]; }, "an empty entry": (row) => { row.host_reviews = [null]; },
+    "an entry without its event": (row) => { row.host_reviews = [{ ...review }]; },
+    "an entry of something that is not an event": (row) => { row.host_reviews = [{ ...review, activity_id: "8102" }]; },
+    "an entry without a state": (row) => { row.host_reviews = [{ activity_id: EVENT, decision: null, by_uid: null, at: NOW }]; },
+    "an entry whose host is text": (row) => { row.host_reviews = [{ ...review, activity_id: EVENT, by_uid: "8101" }]; },
   })) assert.equal(broken(change), null, name);
   // The same strictness as the row's own fields, on the same body.
   assert.equal(broken((row) => { row.status = 5; }), null); assert.equal(broken((row) => { row.sla_breached = "true"; }), null);
-  // All three or none.
-  for (const keys of [["surface"], ["host_visible"], ["host_review"], ["surface", "host_visible"], ["surface", "host_review"], ["host_visible", "host_review"]]) {
-    assert.equal(broken((row) => { for (const key of keys) delete row[key]; }), null, `without ${keys.join(" and ")}`);
+  // All four or none.
+  const FOUR = ["surface", "host_visible", "host_review", "host_reviews"];
+  for (const kept of FOUR) assert.equal(broken((row) => { for (const key of FOUR) if (key !== kept) delete row[key]; }), null, `only ${kept}`);
+  for (const gone of FOUR) assert.equal(broken((row) => { delete row[gone]; }), null, `without ${gone}`);
+  assert.ok(broken((row) => { for (const key of FOUR) delete row[key]; }), "none of them: a row of a Core that does not serve them");
+  // A list where the review is named, and an object where the list is, are not passed on by the projection: three of four.
+  assert.equal(broken((row) => { row.host_review = []; }), null); assert.equal(broken((row) => { row.host_reviews = {}; }), null);
+  // The same on a case about a member, and on a case detail.
+  assert.equal(broken((row) => { row.host_reviews[1].activity_id = "act_1"; }, CASE.memberTwoEvents), null);
+  assert.equal(broken((row) => { delete row.host_reviews[0].decision; }, CASE.memberTwoEvents), null);
+  for (const change of [(row: any) => { row.surface = 5; }, (row: any) => { row.host_visible = "yes"; }, (row: any) => { row.host_review = { state: "handled" }; },
+    (row: any) => { row.host_review.by_uid = "8101"; }, (row: any) => { delete row.host_visible; }, (row: any) => { delete row.host_reviews; }, (row: any) => { row.host_reviews = [{}]; }]) {
+    const body = copy(DETAIL); change(body.case);
+    assert.equal(datesCaseDetail(sent("dates_moderation_detail", body), body.case.case_id), null, change.toString());
   }
-  assert.ok(broken((row) => { for (const key of ["surface", "host_visible", "host_review", "host_reviews"]) delete row[key]; }), "none of them: a row of a Core that does not serve them");
-  // A list where the review is named is not passed on by the projection, so the row has two of three: not a row either.
-  assert.equal(broken((row) => { row.host_review = []; }), null);
-  // The hosts of a case about a member: a list of reviews, each of an event. It comes only with the three.
-  for (const [name, change] of Object.entries<(row: any) => void>({
-    "host_reviews: text": (row) => { row.host_reviews = "none"; }, "host_reviews: a number": (row) => { row.host_reviews = 2; },
-    "an entry that is not a review": (row) => { row.host_reviews = [5]; }, "an empty entry": (row) => { row.host_reviews = [null]; },
-    "an entry without its event": (row) => { row.host_reviews = [{ ...QUEUE.cases[0].host_review }]; },
-    "an entry of something that is not an event": (row) => { row.host_reviews = [{ ...QUEUE.cases[0].host_review, activity_id: "8102" }]; },
-    "an entry without a state": (row) => { row.host_reviews = [{ activity_id: EVENT, decision: null, by_uid: null, at: 1790000000 }]; },
-    "an entry whose host is text": (row) => { row.host_reviews = [{ ...QUEUE.cases[0].host_review, activity_id: EVENT, by_uid: "8101" }]; },
-    "the list without the three": (row) => { row.host_reviews = []; for (const key of ["surface", "host_visible", "host_review"]) delete row[key]; },
-    "the list with two of the three": (row) => { row.host_reviews = []; delete row.surface; },
-  })) assert.equal(broken(change), null, name);
-  for (const list of [[], null, [{ ...QUEUE.cases[0].host_review, activity_id: EVENT }]]) assert.ok(broken((row) => { row.host_reviews = list; }), `a list Core may serve: ${JSON.stringify(list)?.slice(0, 40)}`);
 
-  // A vocabulary is bounded text, as the status and the severity beside it: a value this console has no name for is
-  // read, and printed as what it is - never as one of the named values.
+  // DERIVED: a vocabulary is bounded text, as the status and the severity beside it. A value this console has no name
+  // for is read, and printed as what it is - never as one of the named values.
   const future = copy(QUEUE);
-  Object.assign(future.cases[0], { surface: "event_album", host_review: { state: "handled", decision: "warned", by_uid: 8101, at: 1790000000 } });
-  future.cases[1].host_review.state = "escalated";
+  Object.assign(future.cases[CASE.wallPostRemoved], { surface: "event_album", host_review: { ...review, decision: "warned" } });
+  future.cases[CASE.wallCommentKept].host_review.state = "escalated";
   const read = datesModerationQueue(sent("dates_moderation_queue", future), scope);
   assert.ok(read);
-  assert.equal(datesCaseTargetKind(read.cases[0]), null, "an unknown surface names nothing: the case stays a message");
-  assert.deepEqual(datesCaseHostState(read.cases[0]), { unnamed: "warned" }); assert.deepEqual(datesCaseHostState(read.cases[1]), { unnamed: "escalated" });
+  assert.equal(datesCaseTargetKind(read.cases[CASE.wallPostRemoved]), null, "an unknown surface names nothing: the case stays a message");
+  assert.deepEqual(datesCaseHostState(read.cases[CASE.wallPostRemoved]), { unnamed: "warned" }); assert.deepEqual(datesCaseHostState(read.cases[CASE.wallCommentKept]), { unnamed: "escalated" });
 });
 
-test("the one function: Core's surface is the answer when it is served, the id only where it is not (derived rows)", () => {
-  const wall = QUEUE.cases[0], chat = QUEUE.cases[2], hex = "0".repeat(31) + "9";
-  // DERIVED: a message of a direct thread. Core's capture has none (and the host is never shown one).
-  assert.equal(datesCaseTargetKind({ ...chat, surface: "direct_chat", host_visible: false, host_review: null }), "direct_chat");
-  // DERIVED: a chat message whose thread Core cannot place is served `surface: null`: a message, and no more.
+test("the one function: Core's surface is the answer when it is served, the id only where it is not", () => {
+  const queue = queueOf(QUEUE)!, released = queueOf(QUEUE_RELEASED)!;
+  const wall = queue.cases[CASE.wallPostRemoved], chat = queue.cases[CASE.chatWaiting], direct = queue.cases[CASE.directChat];
+  // GENUINE: the same ids, told apart by the surface alone - a message of the event's chat and one of a direct thread.
+  assert.deepEqual([chat.target_id.slice(0, 4), datesCaseTargetKind(chat)], ["msg_", "activity_chat"]); assert.deepEqual([direct.target_id.slice(0, 4), datesCaseTargetKind(direct)], ["msg_", "direct_chat"]);
+  // GENUINE: not served (the released twin) - the derivation from the id; neither chat message can be told.
+  assert.equal(datesCaseTargetKind(released.cases[CASE.wallPostRemoved]), "wall_post");
+  assert.equal(datesCaseTargetKind(released.cases[CASE.chatWaiting]), null); assert.equal(datesCaseTargetKind(released.cases[CASE.directChat]), null);
+  // DERIVED: no genuine body has a chat message whose thread Core cannot place. It is served `surface: null`: a message, and no more.
   assert.equal(datesCaseTargetKind({ ...chat, surface: null }), null);
-  // Served means served: the id is not read against Core's answer...
+  // DERIVED (bodies Core's rule does not produce): served means served - the id is not read against Core's answer ...
   assert.equal(datesCaseTargetKind({ ...wall, surface: null }), null);
   assert.equal(datesCaseTargetKind({ ...wall, surface: "activity_chat" }), "activity_chat");
   // ... except to say which of the wall's two collections a wall row is in; wall content of neither is named by its surface.
-  assert.equal(datesCaseTargetKind({ ...wall, surface: "event_wall" }), "wall_post");
-  assert.equal(datesCaseTargetKind({ ...wall, target_id: `wco_${hex}`, surface: "event_wall" }), "wall_comment");
-  assert.equal(datesCaseTargetKind({ ...wall, target_id: `wxx_${hex}`, surface: "event_wall" }), "event_wall");
+  assert.equal(datesCaseTargetKind({ ...wall, target_id: "wxx_" + "0".repeat(32), surface: "event_wall" }), "event_wall");
   // Only a message case has a surface (Core serves null for any other); a surface on another target names nothing.
-  assert.equal(datesCaseTargetKind({ ...QUEUE.cases[3], surface: "activity_chat" }), null);
-  // Not served: the derivation from the id, as before.
-  const { surface: _surface, ...unserved } = wall;
-  assert.equal(datesCaseTargetKind(unserved), "wall_post"); assert.equal(datesCaseTargetKind({ ...unserved, target_id: chat.target_id }), null);
+  assert.equal(datesCaseTargetKind({ ...queue.cases[CASE.memberBanned], surface: "activity_chat" }), null);
 
-  // DERIVED host states the capture does not hold.
-  const decided = (decision: string | null, state = "handled") => ({ host_visible: true, host_review: { state, decision, by_uid: 8101, at: 1790000000 } });
-  assert.deepEqual(datesCaseHostState(decided("member_removed")), { state: "member_removed" });
-  assert.deepEqual(datesCaseHostState({ host_visible: false, host_review: null }), { state: "not_shown" });
-  assert.deepEqual(datesCaseHostState({ host_visible: true, host_review: null }), { state: "shown" });
-  // The review record is the fact: it is said whatever the flag beside it says.
-  assert.deepEqual(datesCaseHostState({ ...decided("kept"), host_visible: false }), { state: "kept" });
-  assert.deepEqual(datesCaseHostState(decided(null)), { unnamed: "handled" });
+  // DERIVED (bodies Core's rule does not produce): the review is the fact, whatever the flag beside it says; a case
+  // that is "shown" with no review is said as that, not as "not shown"; a handled review without a decision is not named.
+  const review = { state: "handled", decision: "kept", by_uid: HOST, at: NOW };
+  assert.deepEqual(datesCaseHostState({ host_visible: false, host_review: review, host_reviews: [] }), { state: "kept" });
+  assert.deepEqual(datesCaseHostState({ host_visible: true, host_review: null, host_reviews: [] }), { state: "shown" });
+  assert.deepEqual(datesCaseHostState({ host_visible: true, host_review: { ...review, decision: null }, host_reviews: [] }), { unnamed: "handled" });
   // Not served, in whole or in part, says nothing.
-  for (const item of [{}, { host_visible: true }, { host_review: null }, { host_reviews: [] }]) assert.equal(datesCaseHostState(item), null);
-});
-
-test("a case about a member is one case for the whole app: the hosts of several events can be shown it, each with a review of its own (derived rows)", () => {
-  // DERIVED, announced by the lead for Core's final capture, which the corpus pinned here does not hold yet: on a case
-  // about a member Core serves `host_review: null` and `host_reviews`, one review per event, and `host_visible` says
-  // whether the list has an entry. Each row below is the genuine member case of Core's queue with that list in it, read
-  // through the projection by the production decoder.
-  const MEMBER = 3, OTHER_EVENT = "act_" + "2".padStart(32, "0"), THIRD_EVENT = "act_" + "3".padStart(32, "0");
-  assert.equal(QUEUE.cases[MEMBER].target_type, "user");
-  const banned = { state: "handled", decision: "member_banned", by_uid: 8101, at: 1790000000, activity_id: EVENT };
-  const waiting = { state: "open", decision: null, by_uid: null, at: 1789999000, activity_id: OTHER_EVENT };
-  const kept = { state: "handled", decision: "kept", by_uid: 8201, at: 1789999500, activity_id: THIRD_EVENT };
-  const member = (change: Record<string, unknown>) => {
-    const body = copy(QUEUE); Object.assign(body.cases[MEMBER], { host_review: null, ...change });
-    const read = queueOf(body);
-    assert.ok(read, JSON.stringify(change).slice(0, 80));
-    return read.cases[MEMBER];
-  };
-  // Two hosts were shown the case; one banned the member, the other has not decided.
-  const two = member({ host_visible: true, host_reviews: [banned, waiting] });
-  assert.deepEqual(two.host_reviews, [banned, waiting], "the projection names the list and the event of each entry");
-  assert.deepEqual(datesCaseHostState(two), { hosts: 2, decided: 1 });
-  assert.deepEqual(datesCaseHostReviews(two), [{ event: EVENT, review: banned }, { event: OTHER_EVENT, review: waiting }]);
-  assert.deepEqual(datesCaseHostState(member({ host_visible: true, host_reviews: [banned, waiting, kept] })), { hosts: 3, decided: 2 });
-  // One entry is that host's decision; no entry is a case no host was shown.
-  assert.deepEqual(datesCaseHostState(member({ host_visible: true, host_reviews: [banned] })), { state: "member_banned" });
-  assert.deepEqual(datesCaseHostState(member({ host_visible: true, host_reviews: [waiting] })), { state: "waiting" });
-  assert.deepEqual(datesCaseHostState(member({ host_visible: false, host_reviews: [] })), { state: "not_shown" });
-  assert.deepEqual(datesCaseHostReviews(member({ host_visible: false, host_reviews: [] })), []);
-  assert.deepEqual(datesCaseHostState(member({ host_visible: false, host_reviews: null })), { state: "not_shown" });
-  // Still open for the operators, whatever the hosts decided.
-  assert.equal(two.status, "new");
-
-  // A case about content keeps its one review: Core may serve the list beside it, empty or with that review, and the
-  // case reads the same either way - as it does today, without the list.
-  const content = (list: unknown) => { const body = copy(QUEUE); body.cases[0].host_reviews = list; return queueOf(body)!.cases[0]; };
-  const single = [{ ...QUEUE.cases[0].host_review, activity_id: EVENT }];
-  for (const list of [[], single, null]) {
-    assert.deepEqual(datesCaseHostState(content(list)), { state: "content_removed" });
-    assert.deepEqual(datesCaseHostReviews(content(list)), [{ event: null, review: QUEUE.cases[0].host_review }]);
+  for (const item of [{}, { host_visible: true }, { host_review: null }, { host_reviews: [] }, { host_visible: false, host_review: null }, { host_visible: false, host_reviews: [] }]) {
+    assert.equal(datesCaseHostState(item), null, JSON.stringify(item)); assert.equal(datesCaseHostReviews(item), null);
   }
-  assert.deepEqual(datesCaseHostReviews(queueOf(QUEUE)!.cases[0]), [{ event: null, review: QUEUE.cases[0].host_review }]);
-  // GENUINE: the member case of the capture pinned here carries its one review as `host_review`; the final capture will carry it in the list. Either shape reads as the same decision.
-  assert.deepEqual(datesCaseHostState(queueOf(QUEUE)!.cases[MEMBER]), { state: "member_banned" });
-  assert.deepEqual(datesCaseHostState(member({ host_visible: true, host_reviews: [banned] })), datesCaseHostState(queueOf(QUEUE)!.cases[MEMBER]));
-  assert.equal(datesCaseHostReviews(queueOf(QUEUE_RELEASED)!.cases[MEMBER]), null, "not served");
 });
 
-test("case detail: the case carries the same three; a reporter's note stays on the operators' page", () => {
+test("case detail: the case carries the same four; a reporter's note stays on the operators' page", () => {
   const detail = detailOf(DETAIL), released = detailOf(DETAIL_RELEASED);
   assert.ok(detail && released);
   assert.deepEqual(detail.case, DETAIL.case); assert.deepEqual(released.case, DETAIL_RELEASED.case);
   assert.equal(datesCaseTargetKind(detail.case), "wall_comment"); assert.deepEqual(datesCaseHostState(detail.case), { state: "kept" });
-  assert.deepEqual(detail.case.host_review, { state: "handled", decision: "kept", by_uid: 8101, at: 1790000000 });
+  assert.deepEqual(detail.case.host_review, { state: "handled", decision: "kept", by_uid: HOST, at: NOW });
+  assert.deepEqual(detail.case.host_reviews, [{ activity_id: EVENT, ...detail.case.host_review! }]);
   assert.equal(detail.case.status, "new", "kept by the host, and still open here");
   // The wall's entry point, and the note the host is never shown.
   assert.deepEqual(detail.reports.map((report) => [report.entry_point, report.note]), [["event_wall", "A note only the Friending team may read."]]);
   assert.equal(datesCaseTargetKind(released.case), "wall_comment", "by its id"); assert.equal(datesCaseHostState(released.case), null);
-  for (const change of [(row: any) => { row.surface = 5; }, (row: any) => { row.host_visible = "yes"; }, (row: any) => { row.host_review = { state: "handled" }; },
-    (row: any) => { row.host_review.by_uid = "8101"; }, (row: any) => { delete row.host_visible; }, (row: any) => { delete row.surface; delete row.host_review; }]) {
-    const body = copy(DETAIL); change(body.case);
-    assert.equal(datesCaseDetail(sent("dates_moderation_detail", body), body.case.case_id), null, change.toString());
-  }
 });
 
 /** A row as the page holds it: of a kept link, the address. */
 const shown = (row: any) => !row.host_removed?.link ? row : { ...row, host_removed: { ...row.host_removed, link: { url: row.host_removed.link.url } } };
 
 test("event content: who took a row down and what a host removal kept are read as served; the released twin is read as before", () => {
-  for (const body of [POSTS, COMMENTS, MESSAGES, POSTS_RELEASED]) {
+  for (const body of [POSTS, POSTS_SECOND, COMMENTS, COMMENTS_ERASED, MESSAGES, POSTS_RELEASED]) {
     const page = pageOf(body);
-    assert.ok(page, body.kind);
+    assert.ok(page, `${body.activity_id} ${body.kind}`);
     assert.deepEqual(page.items, body.items.map(shown), body.kind);
   }
-  assert.deepEqual(pageOf(POSTS)!.items.map((row) => [row.state, row.removed_by, row.host_removed === null ? null : row.host_removed!.kind]),
-    [["active", null, null], ["deleted", "author", null], ["deleted", "host", "link"], ["active", null, null]]);
+  const facts = (body: any) => pageOf(body)!.items.map((row) => [row.state, row.removed_by, row.host_removed === null ? null : row.host_removed!.kind]);
+  assert.deepEqual(facts(POSTS), [["active", null, null], ["deleted", "author", null], ["deleted", "host", "link"], ["active", null, null]]);
+  // A moderation decision took a post down: the row is `moderated` and still carries its text. A photo the host removed.
+  assert.deepEqual(facts(POSTS_SECOND), [["active", null, null], ["moderated", "moderation", null], ["deleted", "host", "photo"], ["active", null, null]]);
+  assert.equal(pageOf(POSTS_SECOND)!.items[1].text, "A post the operators remove.");
   assert.ok(pageOf(COMMENTS)!.items.every((row) => row.removed_by === null && row.host_removed === null));
   // What Core kept of the post the host removed: the text and the link, the author the tombstone no longer names, the host and the time.
   const post = pageOf(POSTS)!.items[2];
   assert.deepEqual([post.text, post.author_uid, post.has_media, post.can_review], ["", null, false, false], "the tombstone itself is as bare as any");
-  assert.deepEqual(post.host_removed, { text: "Buy my course, it is the best.", kind: "link", link: { url: "https://example.org/course" }, had_media: false, at: 1790000000, by_uid: 8101, author_uid: 8102 });
+  assert.deepEqual(post.host_removed, { text: "Buy my course, it is the best.", kind: "link", link: { url: "https://example.org/course" }, had_media: false, at: NOW, by_uid: HOST, author_uid: 8102 });
+  // ... of a photo post: the text, and that it had a photo - the file itself is deleted;
+  assert.deepEqual(pageOf(POSTS_SECOND)!.items[2].host_removed, { text: "Anna posts a photo.", kind: "photo", link: null, had_media: true, at: NOW, by_uid: HOST, author_uid: 8112 });
+  // ... of a comment whose removing host has since been erased: nobody is named (`null` on the wire, never 0);
+  assert.deepEqual(pageOf(COMMENTS_ERASED)!.items[0].host_removed, { text: "A comment the other host removes.", kind: "text", link: null, had_media: false, at: NOW, by_uid: null, author_uid: 8112 });
   // ... and of a chat message the host removed.
-  assert.deepEqual(pageOf(MESSAGES)!.items[0].host_removed, { text: "A message the host removes.", kind: "text", link: null, had_media: false, at: 1790000000, by_uid: 8101, author_uid: 8110 });
+  assert.deepEqual(pageOf(MESSAGES)!.items[0].host_removed, { text: "A message the host removes.", kind: "text", link: null, had_media: false, at: NOW, by_uid: HOST, author_uid: 8110 });
   // Absent: a row of the released twin has neither key, and the panel shows nothing of them.
   for (const row of pageOf(POSTS_RELEASED)!.items) { assert.equal(Object.hasOwn(row, "removed_by"), false); assert.equal(Object.hasOwn(row, "host_removed"), false); }
 
-  // DERIVED, each a genuine row with what Core's own rule serves in that state (DatesEventContentAdminService::removal).
-  const derived = (index: number, change: (row: any) => void) => { const body = copy(POSTS); change(body.items[index]); return pageOf(body); };
-  // A moderation decision took a live row down: the row is `moderated` and still carries its text.
-  assert.equal(derived(0, (row) => { row.state = "moderated"; row.removed_by = "moderation"; })?.items[0].removed_by, "moderation");
-  // The removed post had a photo: only that there was one is kept.
-  assert.equal(derived(2, (row) => { row.host_removed.kind = "photo"; row.host_removed.link = null; row.host_removed.had_media = true; })?.items[2].host_removed?.had_media, true);
-  // The removing host's account is erased: the snapshot no longer names them.
-  assert.equal(derived(2, (row) => { row.host_removed.by_uid = null; })?.items[2].host_removed?.by_uid, null);
-  // Removed by the host with nothing kept (the author's account was erased, or the removal is older than the snapshot).
-  assert.deepEqual(derived(2, (row) => { row.host_removed = null; })?.items[2].removed_by, "host");
+  // DERIVED, each a genuine row with what Core's own rule serves in a state its capture does not reach
+  // (DatesEventContentAdminService::removal): removed by the host with nothing kept (the author's account was erased
+  // since, or the removal is older than the snapshot), and a snapshot of a row that no longer names its author.
+  const derived = (change: (row: any) => void) => { const body = copy(POSTS); change(body.items[2]); return pageOf(body); };
+  assert.deepEqual(derived((row) => { row.host_removed = null; })?.items[2].removed_by, "host");
+  assert.equal(derived((row) => { row.host_removed.author_uid = null; })?.items[2].host_removed?.author_uid, null);
 });
 
-test("event content: a served addition that is not what Core writes fails the page as a row's own fields do", () => {
+test("event content: an addition that is not what Core writes fails the page as a row's own fields do (negative controls)", () => {
   const broken = (index: number, change: (row: any) => void) => { const body = copy(POSTS); change(body.items[index]); return pageOf(body); };
   const KEPT = 2, AUTHOR = 1, LIVE = 0;
   for (const [name, change] of Object.entries<(row: any) => void>({
@@ -384,6 +399,7 @@ test("event content: a served addition that is not what Core writes fails the pa
     "link.url: too long": (row) => { row.host_removed.link.url = "https://example.org/" + "a".repeat(2048); }, "link.url: a number": (row) => { row.host_removed.link.url = 5; },
     "had_media: a number": (row) => { row.host_removed.had_media = 1; }, "had_media: missing": (row) => { delete row.host_removed.had_media; },
     "at: negative": (row) => { row.host_removed.at = -1; }, "at: text": (row) => { row.host_removed.at = "1790000000"; },
+    // An erased host is `null` on the wire, never 0.
     "by_uid: text": (row) => { row.host_removed.by_uid = "8101"; }, "by_uid: zero": (row) => { row.host_removed.by_uid = 0; }, "by_uid: missing": (row) => { delete row.host_removed.by_uid; },
     "author_uid: text": (row) => { row.host_removed.author_uid = "8102"; }, "author_uid: zero": (row) => { row.host_removed.author_uid = 0; },
   })) assert.equal(broken(KEPT, change), null, name);
@@ -410,19 +426,31 @@ test("event content: a served addition that is not what Core writes fails the pa
 });
 
 test("memberships: who is removed or banned, when, by whom and the host's note - a ban outranks a removal, a lifted ban is said as lifted", () => {
+  // GENUINE: the whole event page. A member banned after being removed, and a member whose seat a Dates restriction
+  // released: no host removed them (`released_at`, and no `removed_at`), which Core's own rule reads as moderation.
+  assert.deepEqual(ACTIVITY.memberships[4].released_reason, "dates_restriction");
+  assert.deepEqual([ACTIVITY.memberships[4].released_at, ACTIVITY.memberships[4].removed_at, ACTIVITY.memberships[4].removed_by_uid], [NOW, null, null]);
+  assert.deepEqual(datesMemberships(sent("dates_activity_detail", ACTIVITY).memberships), { rows: [
+    { uid: 8112, relationship: "joined", standing: null, lifted: null, unreadable: false },
+    { uid: 8113, relationship: "removed", standing: { state: "banned", at: NOW, by_uid: HOST, note: null }, lifted: null, unreadable: false },
+    { uid: 8114, relationship: "joined", standing: null, lifted: null, unreadable: false },
+    { uid: 8115, relationship: "joined", standing: null, lifted: null, unreadable: false },
+    { uid: 8117, relationship: "removed", standing: { state: "removed", at: NOW, by: { kind: "moderation" }, note: null }, lifted: null, unreadable: false },
+  ], counts: { removed: 1, banned: 1 } });
+
+  // GENUINE: the member rows of the first event (the excerpt), with the selector.
   const read = membershipsOf(MEMBERSHIPS.with_contract);
-  const host = 8101, now = 1790000000;
   assert.deepEqual(read.rows, [
     // Banned while a participant: the relationship is `removed`, and the row is listed as banned.
-    { uid: 8102, relationship: "removed", standing: { state: "banned", at: now, by_uid: host, note: "Kept insulting other guests." }, lifted: null, unreadable: false },
+    { uid: 8102, relationship: "removed", standing: { state: "banned", at: NOW, by_uid: HOST, note: "Kept insulting other guests." }, lifted: null, unreadable: false },
     // Banned with no relationship (an invitation withdrawn by the ban).
-    { uid: 8104, relationship: "none", standing: { state: "banned", at: now, by_uid: host, note: null }, lifted: null, unreadable: false },
+    { uid: 8104, relationship: "none", standing: { state: "banned", at: NOW, by_uid: HOST, note: null }, lifted: null, unreadable: false },
     { uid: 8105, relationship: "joined", standing: null, lifted: null, unreadable: false },
     { uid: 8106, relationship: "joined", standing: null, lifted: null, unreadable: false },
     // A ban that was lifted: not banned, and said as lifted.
-    { uid: 8107, relationship: "none", standing: null, lifted: { at: now, by_uid: host, banned_at: now }, unreadable: false },
+    { uid: 8107, relationship: "none", standing: null, lifted: { at: NOW, by_uid: HOST, banned_at: NOW }, unreadable: false },
     // Removed by the host, with the host's note.
-    { uid: 8108, relationship: "removed", standing: { state: "removed", at: now, by: { kind: "host", uid: host }, note: "Arrived drunk." }, lifted: null, unreadable: false },
+    { uid: 8108, relationship: "removed", standing: { state: "removed", at: NOW, by: { kind: "host", uid: HOST }, note: "Arrived drunk." }, lifted: null, unreadable: false },
     // Removed by a moderation decision: no host, no note.
     { uid: 8109, relationship: "removed", standing: { state: "removed", at: 1789999950, by: { kind: "moderation" }, note: null }, lifted: null, unreadable: false },
     { uid: 8110, relationship: "joined", standing: null, lifted: null, unreadable: false },
@@ -430,37 +458,36 @@ test("memberships: who is removed or banned, when, by whom and the host's note -
   assert.deepEqual(read.counts, { removed: 2, banned: 2 });
   assert.deepEqual(datesMemberships(MEMBERSHIPS.with_contract), read, "the projection takes nothing the page reads");
 
-  // Absent (the released rows; a Core without host moderation): what the row itself says is still read - the host
-  // removed two members and moderation one - and nothing is said of a ban, a note, or how many are banned.
+  // Absent (the same rows as the released console is served them; a Core without host moderation): what the row itself
+  // says is still read - the host removed two members and moderation one - and nothing is said of a ban, a note, or
+  // how many are banned.
   const released = membershipsOf(MEMBERSHIPS.released);
   assert.deepEqual(released.rows.filter((row) => row.standing !== null).map((row) => [row.uid, row.standing]), [
-    [8102, { state: "removed", at: now, by: { kind: "host", uid: host }, note: null }], [8108, { state: "removed", at: now, by: { kind: "host", uid: host }, note: null }],
+    [8102, { state: "removed", at: NOW, by: { kind: "host", uid: HOST }, note: null }], [8108, { state: "removed", at: NOW, by: { kind: "host", uid: HOST }, note: null }],
     [8109, { state: "removed", at: 1789999950, by: { kind: "moderation" }, note: null }]]);
   assert.ok(released.rows.every((row) => row.lifted === null && !row.unreadable));
   assert.equal(released.counts, null, "who is banned was not served: no count");
   assert.deepEqual(datesMemberships([]), { rows: [], counts: null }); assert.deepEqual(datesMemberships(null), { rows: [], counts: null });
 
-  // DERIVED, each a genuine row with what Core's own rule reads in that state (DatesHostModerationPolicy::removedEntry).
+  // DERIVED, each a genuine row in a state Core's capture does not reach, read by Core's own rule
+  // (DatesHostModerationPolicy::removedEntry).
   const one = (index: number, change: Record<string, unknown>) => membershipsOf([{ ...MEMBERSHIPS.with_contract[index], ...change }]).rows[0];
   const HOST_REMOVED = 5, MODERATED = 6, JOINED = 2;
-  // A restriction released the seat: it writes `released_at` and names no host.
-  assert.deepEqual(one(HOST_REMOVED, { removed_at: null, removed_by_uid: null, removal_note: null, released_at: 1789999999 }).standing,
-    { state: "removed", at: 1789999999, by: { kind: "moderation" }, note: null });
-  // The host removed the member again after an earlier release: the later of the two is the removal.
-  assert.deepEqual(one(HOST_REMOVED, { released_at: now - 10 }).standing, { state: "removed", at: now, by: { kind: "host", uid: host }, note: "Arrived drunk." });
-  assert.deepEqual(one(HOST_REMOVED, { released_at: now + 10 }).standing, { state: "removed", at: now + 10, by: { kind: "moderation" }, note: null });
+  // The host removed the member again after an earlier release, and the other way round: the later of the two is the removal.
+  assert.deepEqual(one(HOST_REMOVED, { released_at: NOW - 10 }).standing, { state: "removed", at: NOW, by: { kind: "host", uid: HOST }, note: "Arrived drunk." });
+  assert.deepEqual(one(HOST_REMOVED, { released_at: NOW + 10 }).standing, { state: "removed", at: NOW + 10, by: { kind: "moderation" }, note: null });
   // A note an earlier host removal left on the row is not the operators': not shown beside a moderation removal.
   assert.equal(one(MODERATED, { removal_note: "An older note of the host." }).standing?.note, null);
   // A removed member whose row names nobody and no time: removed, and nothing is guessed.
   assert.deepEqual(one(HOST_REMOVED, { removed_at: null, removed_by_uid: null, removal_note: null }).standing, { state: "removed", at: null, by: { kind: "unknown" }, note: null });
   // A note that is only space is no note; a ban whose host is not named has no host to link.
   assert.equal(one(HOST_REMOVED, { removal_note: "   " }).standing?.note, null);
-  assert.deepEqual(one(0, { ban: { ...MEMBERSHIPS.with_contract[0].ban, by_uid: 0 } }).standing, { state: "banned", at: now, by_uid: null, note: "Kept insulting other guests." });
+  assert.deepEqual(one(0, { ban: { ...MEMBERSHIPS.with_contract[0].ban, by_uid: 0 } }).standing, { state: "banned", at: NOW, by_uid: null, note: "Kept insulting other guests." });
   // The other facts of a member who is not removed say nothing (a re-invited member keeps an old `removed_at`).
-  assert.equal(one(JOINED, { removed_at: now - 500, removed_by_uid: host }).standing, null);
+  assert.equal(one(JOINED, { removed_at: NOW - 500, removed_by_uid: HOST }).standing, null);
 });
 
-test("memberships: a served fact that is not what Core writes makes that row unreadable - never 'not removed, not banned' - and stops the counts", () => {
+test("memberships: a served fact that is not what Core writes makes that row unreadable - never 'not removed, not banned' - and stops the counts (negative controls)", () => {
   const BANNED = 0, LIFTED = 4, HOST_REMOVED = 5;
   const ban = (change: Record<string, unknown>) => ({ ban: { ...MEMBERSHIPS.with_contract[BANNED].ban, ...change } });
   const cases: Array<[string, number, Record<string, unknown>]> = [

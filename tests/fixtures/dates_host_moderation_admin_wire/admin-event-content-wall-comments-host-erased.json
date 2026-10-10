@@ -1,0 +1,43 @@
+{
+    "success": true,
+    "status_code": 200,
+    "event_content_version": 1,
+    "activity_id": "act_00000000000000000000000000000004",
+    "kind": "wall_comment",
+    "items": [
+        {
+            "id": "wco_00000000000000000000000000000005",
+            "kind": "wall_comment",
+            "author_uid": null,
+            "text": "",
+            "content_kind": "text",
+            "state": "deleted",
+            "post_id": "wpo_00000000000000000000000000000009",
+            "root_id": null,
+            "created_at": 1789997230,
+            "signal_at": null,
+            "has_media": false,
+            "hide_count": 0,
+            "report_count": 0,
+            "case_id": null,
+            "can_review": false,
+            "removed_by": "host",
+            "host_removed": {
+                "text": "A comment the other host removes.",
+                "kind": "text",
+                "link": null,
+                "had_media": false,
+                "at": 1790000000,
+                "by_uid": null,
+                "author_uid": 8112
+            }
+        }
+    ],
+    "has_more": false,
+    "next_cursor": null,
+    "audit_id": "aud_00000000000000000000000000000006",
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

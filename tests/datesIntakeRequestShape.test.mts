@@ -330,8 +330,9 @@ test("host moderation: the four reads reach Core with the command contract selec
   const manifest = JSON.parse(readFileSync(new URL("./fixtures/dates_host_moderation_admin_wire/manifest.json", import.meta.url), "utf8")) as { fixtures: Asked[] };
   const SELECTOR = DATES_ADMIN_COMMAND_CONTRACT_SELECTOR.parameter;
   const asked = manifest.fixtures.filter((entry) => entry.request[SELECTOR] === 1);
-  assert.deepEqual(asked.map((entry) => entry.route.replace("/v1/webadmin/", "")).sort(), ["dates_activity_detail", "dates_event_content", "dates_event_content", "dates_event_content",
-    "dates_moderation_detail", "dates_moderation_queue"]);
+  // Ten requests with the selector: two event pages, the wall and the chat of three events, two case details, the queue.
+  assert.deepEqual(asked.map((entry) => entry.route.replace("/v1/webadmin/", "")).sort(), ["dates_activity_detail", "dates_activity_detail", "dates_event_content", "dates_event_content",
+    "dates_event_content", "dates_event_content", "dates_event_content", "dates_moderation_detail", "dates_moderation_detail", "dates_moderation_queue"]);
   for (const entry of asked) {
     const action = entry.route.replace("/v1/webadmin/", "");
     // What a page sends is the request without the selector: the server adds that.

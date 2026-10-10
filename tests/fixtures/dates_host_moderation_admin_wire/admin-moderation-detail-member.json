@@ -2,25 +2,25 @@
     "success": true,
     "status_code": 200,
     "case": {
-        "case_id": "cas_00000000000000000000000000000004",
-        "queue": "messages",
+        "case_id": "cas_0000000000000000000000000000000a",
+        "queue": "users",
         "case_kind": "reports",
-        "target_type": "message",
-        "target_id": "wco_00000000000000000000000000000001",
-        "target_uid": 8102,
-        "activity_id": "act_00000000000000000000000000000001",
+        "target_type": "user",
+        "target_id": "8112",
+        "target_uid": 8112,
+        "activity_id": "act_00000000000000000000000000000003",
         "status": "new",
         "severity": "high",
         "escalated": false,
         "distinct_reporter_count": 1,
-        "report_count": 1,
+        "report_count": 2,
         "assignee_email": null,
         "claimed_at": null,
         "claim_expires_at": null,
         "sla_due_at": 1790086400,
         "sla_breached": false,
-        "revision": 3,
-        "created_at": 1789999600,
+        "revision": 4,
+        "created_at": 1789999940,
         "updated_at": 1790000000,
         "conflict_of_interest": false,
         "capabilities": {
@@ -29,38 +29,55 @@
             "can_resolve": false,
             "can_break_glass": false
         },
-        "surface": "event_wall",
+        "surface": null,
         "host_visible": true,
-        "host_review": {
-            "state": "handled",
-            "decision": "kept",
-            "by_uid": 8101,
-            "at": 1790000000
-        },
+        "host_review": null,
         "host_reviews": [
             {
-                "activity_id": "act_00000000000000000000000000000001",
+                "activity_id": "act_00000000000000000000000000000003",
                 "state": "handled",
                 "decision": "kept",
                 "by_uid": 8101,
+                "at": 1790000000
+            },
+            {
+                "activity_id": "act_00000000000000000000000000000004",
+                "state": "open",
+                "decision": null,
+                "by_uid": null,
                 "at": 1790000000
             }
         ]
     },
     "reports": [
         {
-            "report_id": "rpt_00000000000000000000000000000001",
-            "reason_id": "reason_message_harassment_hate",
+            "report_id": "rpt_00000000000000000000000000000003",
+            "reason_id": "reason_user_harassment_hate",
             "reason_key": "harassment_hate",
             "reason_label_snapshot": {
                 "locale": "en",
                 "label": "Harassment or hate"
             },
-            "entry_point": "event_wall",
+            "entry_point": "detail",
             "note": "A note only the Friending team may read.",
             "severity": "high",
             "status": "new",
-            "created_at": 1789999943,
+            "created_at": 1789999950,
+            "reporter_identity_redacted": true
+        },
+        {
+            "report_id": "rpt_00000000000000000000000000000007",
+            "reason_id": "reason_user_scam_spam",
+            "reason_key": "scam_spam",
+            "reason_label_snapshot": {
+                "locale": "en",
+                "label": "Scam or spam"
+            },
+            "entry_point": "detail",
+            "note": "A note only the Friending team may read.",
+            "severity": "medium",
+            "status": "new",
+            "created_at": 1789999951,
             "reporter_identity_redacted": true
         }
     ],

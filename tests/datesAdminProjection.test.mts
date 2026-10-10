@@ -22,9 +22,16 @@ const CORPORA = ["dates_admin_command_wire", "dates_event_intake_admin_wire", "d
   "dates_moderation_wire", "dates_event_icons_wire", "dates_external_pins_wire", "dates_suggestion_leaderboard_member_wire", "dates_event_content_wire",
   "dates_host_moderation_admin_wire"];
 const read = (corpus: string, file: string) => JSON.parse(readFileSync(new URL(`${corpus}/${file}`, FIXTURES), "utf8"));
-/** Core's host moderation corpus records the route that answered each body in its manifest; an excerpt (the memberships of an activity detail) is no route body. */
+/**
+ * Core's host moderation corpus records the route that answered each body in its manifest; an excerpt (the memberships
+ * of an activity detail) is no route body. One route body is not taken here: the whole member-hosted event page, the
+ * first with members and history in any corpus. Its projection is not the body by design - a membership row is reduced
+ * to its named part and each history record to its safe keys - so tests/datesHostModerationWire.test.mts holds it to
+ * its exact projection instead.
+ */
+const HOST_MODERATION_REDUCED = "admin-activity-detail.json";
 const HOST_MODERATION_ROUTES = new Map<string, string | null>((read("dates_host_moderation_admin_wire", "manifest.json").fixtures as Array<{ file: string; route: string; excerpt: boolean }>)
-  .map((entry) => [entry.file, entry.excerpt ? null : entry.route.replace(/^\/v1\/webadmin\//, "")]));
+  .map((entry) => [entry.file, entry.excerpt || entry.file === HOST_MODERATION_REDUCED ? null : entry.route.replace(/^\/v1\/webadmin\//, "")]));
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 
 /** Which route answered a genuine body, by the corpus's file names. `null`: not a console body (the app's). */

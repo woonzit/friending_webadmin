@@ -1,8 +1,8 @@
 {
     "schema_version": 1,
     "contract": "dates-host-moderation-v1",
-    "source_commit": "692b8d40d48ea07b5e2e9da636438d0ac911196b",
-    "fixture_set_sha256": "f22076e8243bd5bbd75cb650c6b0daec5bd7354684c92d8c14607f964c1a9033",
+    "source_commit": "50100ad334ca2a0c8d7be2515b3d458361e2a876",
+    "fixture_set_sha256": "abd639fbdd564de36a371dca6bfdf37990064ade00aee0e5bff991ac74ca4127",
     "selectors": {
         "webadmin": {
             "dates_admin_command_contract_version": 1
@@ -10,7 +10,7 @@
     },
     "provenance": {
         "generator": "tests/dates_host_moderation_fixture_dump.php",
-        "generator_sha256": "8eb3e807b1a5865a4e120b40f52bb7a1144661a9247ddaa64e5a227aed7fad9d",
+        "generator_sha256": "95fa3b9d1630e7cdfb7646618bc50376811bac0b2d275aee38d89306fd9479b0",
         "documentation": "docs/EVENT_HOST_MODERATION_V1.md",
         "transport": "Real HTTP: public/index.php under PHP's own web server on 127.0.0.1. Member calls are form-encoded as the iOS app encodes them; console calls as the console encodes them, with its secret.",
         "wire_adapters": {
@@ -142,6 +142,7 @@
             "src/Services/AgeDisplayProjection.php",
             "src/Services/AppleOidcVerifier.php",
             "src/Services/AudienceVisibilityReadinessService.php",
+            "src/Services/DatesAccountLifecycleService.php",
             "src/Services/DatesActivityAccessService.php",
             "src/Services/DatesActivityDetailService.php",
             "src/Services/DatesActivityListService.php",
@@ -159,14 +160,18 @@
             "src/Services/DatesDiscoveryContextService.php",
             "src/Services/DatesDomainException.php",
             "src/Services/DatesDomainOutbox.php",
+            "src/Services/DatesDraftService.php",
             "src/Services/DatesEventCapabilityService.php",
             "src/Services/DatesEventContentAdminService.php",
             "src/Services/DatesEventIconService.php",
             "src/Services/DatesEventIntakeAdminService.php",
+            "src/Services/DatesEventIntakeErasure.php",
+            "src/Services/DatesEventSuggesterStore.php",
             "src/Services/DatesEventSuggestionNotice.php",
             "src/Services/DatesExpiryService.php",
             "src/Services/DatesExternalAccessService.php",
             "src/Services/DatesExternalChatEventService.php",
+            "src/Services/DatesExternalCreditErasure.php",
             "src/Services/DatesExternalEventAdminService.php",
             "src/Services/DatesExternalEventPublisher.php",
             "src/Services/DatesExternalExpiryService.php",
@@ -179,17 +184,21 @@
             "src/Services/DatesExternalReminderNotification.php",
             "src/Services/DatesExternalReminderService.php",
             "src/Services/DatesExternalReportService.php",
+            "src/Services/DatesExternalRestrictionService.php",
             "src/Services/DatesExternalThreadAccess.php",
             "src/Services/DatesFilterService.php",
             "src/Services/DatesHostReportService.php",
+            "src/Services/DatesHostTransferService.php",
             "src/Services/DatesIdempotencyService.php",
             "src/Services/DatesMapSnapshotService.php",
             "src/Services/DatesMemberTimezoneService.php",
             "src/Services/DatesMembershipBundleService.php",
             "src/Services/DatesMembershipService.php",
+            "src/Services/DatesModerationCommandService.php",
             "src/Services/DatesModerationConflictService.php",
             "src/Services/DatesModerationEvidenceService.php",
             "src/Services/DatesModerationReadService.php",
+            "src/Services/DatesModerationTargetService.php",
             "src/Services/DatesNotificationAccessService.php",
             "src/Services/DatesNotificationReadService.php",
             "src/Services/DatesNotificationService.php",
@@ -199,6 +208,7 @@
             "src/Services/DatesPairVisibility.php",
             "src/Services/DatesPeopleService.php",
             "src/Services/DatesPhotoCleanupService.php",
+            "src/Services/DatesPrepublicationModerationService.php",
             "src/Services/DatesReferenceService.php",
             "src/Services/DatesReportReasonService.php",
             "src/Services/DatesReportService.php",
@@ -210,6 +220,8 @@
             "src/Services/DatesWallAccess.php",
             "src/Services/DatesWallCommandService.php",
             "src/Services/DatesWallCursor.php",
+            "src/Services/DatesWallErasure.php",
+            "src/Services/DatesWallMediaService.php",
             "src/Services/DatesWallModerationService.php",
             "src/Services/DatesWallProjector.php",
             "src/Services/DatesWallReadService.php",
@@ -260,8 +272,10 @@
             "src/Support/DatesCursor.php",
             "src/Support/DatesEventContract.php",
             "src/Support/DatesEventIcons.php",
+            "src/Support/DatesEventIntakePolicy.php",
             "src/Support/DatesEventOrigin.php",
             "src/Support/DatesEventSuggestionContract.php",
+            "src/Support/DatesEventSuggestionPolicy.php",
             "src/Support/DatesExternalAvailabilityPolicy.php",
             "src/Support/DatesExternalCapabilityPolicy.php",
             "src/Support/DatesExternalEventDedupe.php",
@@ -298,6 +312,8 @@
             "src/Support/GenerationPolicy.php",
             "src/Support/HiddenMemberPolicy.php",
             "src/Support/IdentityV2Policy.php",
+            "src/Support/ImageDecodeGuard.php",
+            "src/Support/ImageHeader.php",
             "src/Support/ImageHelpers.php",
             "src/Support/ImageModerationStatus.php",
             "src/Support/ImageRoots.php",
@@ -349,6 +365,19 @@
             "sha256": "515c18add49cc10fb5ea929fd3fd9f0f4aade3a768a5500d81354fbb8e023613"
         },
         {
+            "file": "admin-activity-detail.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_activity_detail",
+            "excerpt": false,
+            "http_status": 200,
+            "status_code": 200,
+            "request": {
+                "activity_id": "act_00000000000000000000000000000003",
+                "dates_admin_command_contract_version": 1
+            },
+            "sha256": "e4dc5e99bf44ae0dc5681d44902978d5fcee744f51544ac8255fba437666df4c"
+        },
+        {
             "file": "admin-contract-version-invalid-denied.json",
             "consumer": "webadmin",
             "route": "/v1/webadmin/dates_activity_detail",
@@ -375,6 +404,21 @@
                 "dates_admin_command_contract_version": 1
             },
             "sha256": "cc5f3f9e2f45378cf7ace18091f377142efd4bf97c78392b7c1137c867d267c9"
+        },
+        {
+            "file": "admin-event-content-wall-comments-host-erased.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_event_content",
+            "excerpt": false,
+            "http_status": 200,
+            "status_code": 200,
+            "request": {
+                "activity_id": "act_00000000000000000000000000000004",
+                "reason": "Host moderation wire capture.",
+                "kind": "wall_comment",
+                "dates_admin_command_contract_version": 1
+            },
+            "sha256": "50fd989465b3e160e3af26db6f17bdecaea1ba308172e20379e6b9299cceae22"
         },
         {
             "file": "admin-event-content-wall-comments.json",
@@ -406,6 +450,21 @@
             "sha256": "722420eaba8c79778aa862b2c6dd370426f8e060dae160d3d0786b0471bc9501"
         },
         {
+            "file": "admin-event-content-wall-posts-second-event.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_event_content",
+            "excerpt": false,
+            "http_status": 200,
+            "status_code": 200,
+            "request": {
+                "activity_id": "act_00000000000000000000000000000003",
+                "reason": "Host moderation wire capture.",
+                "kind": "wall_post",
+                "dates_admin_command_contract_version": 1
+            },
+            "sha256": "b3fc3a9a5fecd6c9284c3909f3e1b9fc867683e5d59c00760c94c55d5e83a526"
+        },
+        {
             "file": "admin-event-content-wall-posts.json",
             "consumer": "webadmin",
             "route": "/v1/webadmin/dates_event_content",
@@ -421,6 +480,19 @@
             "sha256": "db65054644c88aa208167221cecaa7c81ea51905cf76e8b7406bc2b6b8ea034a"
         },
         {
+            "file": "admin-moderation-detail-member.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_moderation_detail",
+            "excerpt": false,
+            "http_status": 200,
+            "status_code": 200,
+            "request": {
+                "case_id": "cas_0000000000000000000000000000000a",
+                "dates_admin_command_contract_version": 1
+            },
+            "sha256": "8e75826ed038043cc71f8c5cd6953203e464b1584cd9fcb671df94641cf36cf2"
+        },
+        {
             "file": "admin-moderation-detail-released.json",
             "consumer": "webadmin",
             "route": "/v1/webadmin/dates_moderation_detail",
@@ -430,7 +502,7 @@
             "request": {
                 "case_id": "cas_00000000000000000000000000000004"
             },
-            "sha256": "46037d32b18c37c31388e8a489599b44b599c9fa2798a1abef9d1b0c25c457f1"
+            "sha256": "6faecfee06ba160210f37381333b80b5edba15924dd1ebc4be0b912ee0ab5b9c"
         },
         {
             "file": "admin-moderation-detail.json",
@@ -443,7 +515,7 @@
                 "case_id": "cas_00000000000000000000000000000004",
                 "dates_admin_command_contract_version": 1
             },
-            "sha256": "e67f21a259ed99ba1706a6f81acb345749ddd00cf68dd4fe561815d33972ed70"
+            "sha256": "7777115339578112b0ba850163dfa963fa1a9fcffd86096914543ee8bd20ab88"
         },
         {
             "file": "admin-moderation-queue-released.json",
@@ -458,7 +530,7 @@
                 "page": 1,
                 "limit": 40
             },
-            "sha256": "15c633be1423297ea8acb34263e759dc4bc0bfd524cf6e1ae00bf4f82a08a67b"
+            "sha256": "eaef2edaa108e4fe6db562e58dedf4d169a519f421432ab8765cb1f47943a4a9"
         },
         {
             "file": "admin-moderation-queue.json",
@@ -474,7 +546,7 @@
                 "limit": 40,
                 "dates_admin_command_contract_version": 1
             },
-            "sha256": "5f3aaeb9d30dc2cf0c940321a407ae89f72396b49afffef580cdabe234631c6c"
+            "sha256": "d9c31249b0630b416ccc855472b53e1f5305bda4b3c610831c2043453709ac2b"
         }
     ]
 }

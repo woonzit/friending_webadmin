@@ -80,31 +80,29 @@ const caseRules = {
 };
 
 /**
- * Host moderation v1: where a message case's content lives, whether the
- * event's host is shown the case, and what the host decided. Core appends the
- * three to a row together, for a request with the command contract selector;
- * a Core that does not know them serves none. So: all three, each read as its
- * neighbours are (a vocabulary is bounded text - a value the page has no name
- * for is printed as a machine key - a flag is a boolean, a time an epoch), or
- * none. One or two of them is not a row.
+ * Host moderation v1 (Core docs/EVENT_HOST_MODERATION_V1.md, "Console"): where
+ * a message case's content lives, and the hosts who were shown the case. Core
+ * appends four keys to every case row, for a request with the command contract
+ * selector; a Core that does not know them serves none.
+ * - `host_reviews` is the one rule for every case: one review per event whose
+ *   host was shown it, each with its event; `[]` when no host was. A case
+ *   about content has at most one; a case about a member is one case for the
+ *   whole app and has one per event.
+ * - `host_review` repeats the single review of a case about content without
+ *   its event, and is `null` for a case about a member.
+ * So: all four, each read as its neighbours are (a vocabulary is bounded text
+ * - a value the page has no name for is printed as a machine key - a flag is
+ * a boolean, a time an epoch, an event an event id), or none. Some of the four
+ * without the others is not a row.
  */
 const hostReviewRules: Record<string, Rule> = { state: text(40), decision: nullable(text(40)), by_uid: nullable(integer), at: nullable(epoch) };
 const hostModerationRules: Record<string, Rule> = {
   surface: nullable(text(40)), host_visible: boolean, host_review: (value) => value === null || shape(value, hostReviewRules),
+  host_reviews: (value) => Array.isArray(value) && value.every((entry) => shape(entry, { ...hostReviewRules, activity_id: id("act") })),
 };
-/**
- * A case about a member is one case for the whole app, so the hosts of
- * several events can be shown it: Core then serves `host_review: null` and
- * `host_reviews`, one review per event with the event it is of. The list is
- * optional on every case (Core may serve it on a case about content too), and
- * it comes only with the three above: a list, each entry a review of an event.
- * A `null` in its place is read as "no list", like the `null` review beside it.
- */
-const hostReviews: Rule = (value) => value === null || (Array.isArray(value) && value.every((entry) => shape(entry, { ...hostReviewRules, activity_id: id("act") })));
 function hostModerationRead(value: Record<string, unknown>): boolean {
   const served = Object.keys(hostModerationRules).filter((key) => Object.hasOwn(value, key));
-  if (!Object.hasOwn(value, "host_reviews")) return served.length === 0 || (served.length === Object.keys(hostModerationRules).length && shape(value, hostModerationRules));
-  return shape(value, { ...hostModerationRules, host_reviews: hostReviews });
+  return served.length === 0 || (served.length === Object.keys(hostModerationRules).length && shape(value, hostModerationRules));
 }
 
 /** Explicit external variants stay closed before the ordinary metadata fallback. */

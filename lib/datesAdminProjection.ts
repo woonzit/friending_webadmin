@@ -94,9 +94,9 @@ const CASE = {
     + "surface host_visible"),
   capabilities: leaves("can_claim can_read_evidence can_resolve can_break_glass"),
   external_message: leaves("thread_id revision moderation_state available"),
-  // What the host decided. It names the host, never a reporter.
+  // What a host decided: the single review of a case about content, and the review of every host who was shown the
+  // case, each with its event (a case about a member can involve several). A review names a host, never a reporter.
   host_review: leaves("state decision by_uid at"),
-  // A case about a member can be shown to the hosts of several events: one review per event.
   host_reviews: [leaves("activity_id state decision by_uid at")],
 };
 const COMMAND_RECEIPT = leaves("case_id revision audit_id idempotency_replayed");

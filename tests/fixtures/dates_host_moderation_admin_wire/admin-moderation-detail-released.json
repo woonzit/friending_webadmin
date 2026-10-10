@@ -43,7 +43,7 @@
             "note": "A note only the Friending team may read.",
             "severity": "high",
             "status": "new",
-            "created_at": 1790000000,
+            "created_at": 1789999943,
             "reporter_identity_redacted": true
         }
     ],

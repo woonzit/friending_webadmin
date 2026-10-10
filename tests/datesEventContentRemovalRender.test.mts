@@ -13,19 +13,22 @@ import { formatDate } from "../lib/format.ts";
 // content the event's host removed. The panel as the browser first receives it (a server render), in both languages,
 // from states the reducer reaches on what the bridge hands the browser.
 //
-// GENUINE: tests/fixtures/dates_host_moderation_admin_wire (pinned in tests/datesHostModerationWire.test.mts) - the wall
-// with a post its author deleted and a post the host removed, the event chat with a message the host removed, and the
-// wall as a Core without host moderation serves it. DERIVED rows are marked at their use.
+// GENUINE: tests/fixtures/dates_host_moderation_admin_wire (pinned in tests/datesHostModerationWire.test.mts) - a wall
+// with a post its author deleted and a post with a link the host removed; an event chat with a message the host
+// removed; the wall of a second event with a post a moderation decision took down and a photo the host removed; a
+// comment removed by a host whose account has since been erased; and the first wall as a Core without host moderation
+// serves it. DERIVED rows are marked at their use.
 const root = new URL("./fixtures/dates_host_moderation_admin_wire/", import.meta.url);
 const body = (name: string) => JSON.parse(readFileSync(new URL(name + ".json", root), "utf8"));
 const POSTS = body("admin-event-content-wall-posts"), RELEASED = body("admin-event-content-wall-posts-released"), MESSAGES = body("admin-event-content-messages");
+const SECOND = body("admin-event-content-wall-posts-second-event"), ERASED = body("admin-event-content-wall-comments-host-erased");
 const EVENT: string = POSTS.activity_id, HOST = 8101, REMOVED_AT = 1790000000;
 const HOST_REMOVED = 2, AUTHOR_DELETED = 1, LIVE = 0;
 const run = (state: EventContentPanelState, ...actions: EventContentPanelAction[]) => actions.reduce(eventContentPanelReducer, state);
-/** The panel's state after the list of a tab was read: the browser's body is the projection of Core's. */
-function listed(response: { kind: string }): EventContentPanelState {
+/** The panel's state after the list of a tab of an event was read: the browser's body is the projection of Core's. */
+function listed(response: { kind: string; activity_id: string }): EventContentPanelState {
   const sent = projectDatesAdminBody("dates_event_content", response);
-  const shown = run(eventContentPanelInitial(EVENT), { type: "shown" });
+  const shown = run(eventContentPanelInitial(response.activity_id), { type: "shown" });
   const state = response.kind === "wall_post" ? run(shown, { type: "readAnswered", ticket: 1, response: sent })
     : run(shown, { type: "listChosen", kind: response.kind as EventContentKind, postId: "" }, { type: "readAnswered", ticket: 2, response: sent });
   assert.equal(state.read.status, "ready", "the body is read as a page");
@@ -42,7 +45,7 @@ async function cards(locale: string, initialState: EventContentPanelState): Prom
   const { default: DatesEventContentPanel } = await import("../components/DatesEventContentPanel.tsx");
   const errors: string[] = [];
   const html = renderToStaticMarkup(createElement(NextIntlClientProvider, { locale, messages: messagesOf(locale), timeZone: "UTC", onError: (error: unknown) => errors.push(String(error)) },
-    createElement(DatesEventContentPanel as any, { activityId: EVENT, principal, deleted: false, onOpenCase: () => undefined, initialState })));
+    createElement(DatesEventContentPanel as any, { activityId: initialState.activityId, principal, deleted: false, onOpenCase: () => undefined, initialState })));
   assert.deepEqual(errors, [], "every message the panel asks for exists");
   return html.split("<article").slice(1).map((part) => part.slice(0, part.indexOf("</article>")));
 }
@@ -102,32 +105,49 @@ for (const locale of ["en", "hu"]) test(`${locale}: a post the host removed says
   assert.equal((await cards(locale, listed(RELEASED))).length, 4);
 });
 
-for (const locale of ["en", "hu"]) test(`${locale}: a moderation removal, kept media, an erased host and member-written text are each said as they are (derived rows)`, async () => {
+for (const locale of ["en", "hu"]) test(`${locale}: a moderation removal, a removed photo and a host who has since been erased are each said as they are`, async () => {
   const copy = messagesOf(locale).datesAdmin.eventContent;
-  // DERIVED: a moderation decision took a live post down. The row is "moderated", keeps its text, and says who removed it.
-  const moderated = (await cards(locale, wallWith(LIVE, (row) => { row.state = "moderated"; row.removed_by = "moderation"; })))[LIVE];
-  assert.ok(moderated.includes(`<p class="field-hint">${escaped(copy.removedBy.moderation)}</p>`)); assert.ok(moderated.includes(escaped(POSTS.items[LIVE].text)));
-  assert.ok(moderated.includes(escaped(copy.states.moderated))); assert.equal(kept(moderated), null);
-  // DERIVED: the removed post was a photo without text. The file is gone; that there was one is said.
-  const photo = kept((await cards(locale, wallWith(HOST_REMOVED, (row) => { Object.assign(row.host_removed, { text: "", kind: "photo", link: null, had_media: true }); })))[HOST_REMOVED])!;
-  assert.ok(photo.includes(`<p class="dates-event-content-text">${escaped(copy.kept.noText)}</p>`)); assert.ok(photo.includes(`<p class="field-hint">${escaped(copy.kept.hadMedia)}</p>`));
-  assert.ok(photo.includes(escaped(copy.kept.kind.replace("{kind}", copy.contentKinds.photo)))); assert.doesNotMatch(photo, /<code>|<img|<video/);
-  // DERIVED: the removing host's account is erased, and so is the author's name on the snapshot: nobody is linked.
-  const erased = kept((await cards(locale, wallWith(HOST_REMOVED, (row) => { row.host_removed.by_uid = null; row.host_removed.author_uid = null; })))[HOST_REMOVED])!;
+  // GENUINE: the wall of the second event.
+  const wall = await cards(locale, listed(SECOND));
+  assert.equal(wall.length, 4);
+  // A moderation decision took a post down. The row is "moderated", keeps its text and its author, and says who removed it.
+  const moderated = wall[1];
+  assert.ok(moderated.includes(`<p class="field-hint">${escaped(copy.removedBy.moderation)}</p>`)); assert.ok(moderated.includes('<p class="dates-event-content-text">A post the operators remove.</p>'));
+  assert.ok(moderated.includes(escaped(copy.states.moderated))); assert.ok(moderated.includes("UID 8112")); assert.equal(kept(moderated), null);
+  // The host removed a photo post. The text is kept; the file is gone, and that there was one is said - nothing is shown of it.
+  const photo = kept(wall[2])!;
+  assert.ok(wall[2].includes(escaped(copy.removedBy.host)));
+  assert.ok(photo.includes('<p class="dates-event-content-text">Anna posts a photo.</p>')); assert.ok(photo.includes(`<p class="field-hint">${escaped(copy.kept.hadMedia)}</p>`));
+  assert.ok(photo.includes(`<p class="field-hint">${escaped(copy.kept.kind.replace("{kind}", copy.contentKinds.photo))}</p>`)); assert.doesNotMatch(photo, /<code>|<img|<video/);
+  assert.ok(photo.includes(escaped(copy.kept.byline.replace("{author}", "UID 8112")))); assert.ok(photo.includes(`<a href="/users/${HOST}">UID ${HOST}</a>`));
+  for (const index of [0, 3]) { assert.equal(kept(wall[index]), null); for (const absent of Object.values<string>(copy.removedBy)) assert.equal(wall[index].includes(escaped(absent)), false, absent); }
+
+  // GENUINE: a comment removed by a host whose account has since been erased. The snapshot names nobody as its
+  // remover (`by_uid` is null on the wire) and links nobody; the author it was written by is still said.
+  const erased = kept((await cards(locale, listed(ERASED)))[0])!;
+  assert.ok(erased.includes('<p class="dates-event-content-text">A comment the other host removes.</p>'));
   assert.ok(erased.includes(`${escaped(copy.kept.removedAt.replace("{date}", formatDate(REMOVED_AT, locale, true)))} · ${escaped(copy.kept.hostErased)}</p>`));
-  assert.ok(erased.includes(escaped(copy.kept.byline.replace("{author}", copy.noAuthor)))); assert.doesNotMatch(erased, /href=/);
+  assert.ok(erased.includes(escaped(copy.kept.byline.replace("{author}", "UID 8112")))); assert.doesNotMatch(erased, /href=/);
+  assert.equal(ERASED.items[0].host_removed.by_uid, null);
+});
+
+for (const locale of ["en", "hu"]) test(`${locale}: what no genuine body holds - nothing kept, no text, no author - and what a member wrote is never markup (derived rows)`, async () => {
+  const copy = messagesOf(locale).datesAdmin.eventContent;
   // DERIVED: the host removed it and nothing is kept (the author's account was erased since): the line, and no block.
   const bare = (await cards(locale, wallWith(HOST_REMOVED, (row) => { row.host_removed = null; })))[HOST_REMOVED];
   assert.ok(bare.includes(escaped(copy.removedBy.host))); assert.equal(kept(bare), null);
-  // DERIVED: the kept text is what a member wrote. It is a text node, exactly as a live row's text is: markup in it is
-  // not markup on the page, in the kept block and in the live row alike.
+  // DERIVED: the removed post had no text (Core's genuine photo post has one), and its row no longer names an author.
+  const silent = kept((await cards(locale, wallWith(HOST_REMOVED, (row) => { Object.assign(row.host_removed, { text: "", kind: "photo", link: null, had_media: true, author_uid: null }); })))[HOST_REMOVED])!;
+  assert.ok(silent.includes(`<p class="dates-event-content-text">${escaped(copy.kept.noText)}</p>`)); assert.ok(silent.includes(escaped(copy.kept.byline.replace("{author}", copy.noAuthor))));
+  // DERIVED (negative control): the kept text is what a member wrote. It is a text node, exactly as a live row's text
+  // is: markup in it is not markup on the page, in the kept block and in the live row alike.
   const hostile = '<img src=x onerror="alert(1)"><script>alert(2)</script> & "quoted" </p></div>';
   const withText = await cards(locale, wallWith(HOST_REMOVED, (row) => { row.host_removed.text = hostile; }));
   assert.ok(kept(withText[HOST_REMOVED])!.includes(`<p class="dates-event-content-text">${escaped(hostile)}</p>`));
   const live = await cards(locale, wallWith(LIVE, (row) => { row.text = hostile; }));
   assert.ok(live[LIVE].includes(`<p class="dates-event-content-text">${escaped(hostile)}</p>`), "the same element, the same escaping");
   for (const card of [withText[HOST_REMOVED], live[LIVE]]) assert.doesNotMatch(card, /<img|<script|onerror="/);
-  // A link Core would not have stored never reaches the page: the decoder refuses the body, and the panel says it cannot verify the list.
+  // DERIVED (negative control): a link Core would not have stored never reaches the page: the decoder refuses the body, and the panel says it cannot verify the list.
   const unsafe = structuredClone(POSTS); unsafe.items[HOST_REMOVED].host_removed.link.url = "javascript:alert(1)";
   const refused = run(run(eventContentPanelInitial(EVENT), { type: "shown" }), { type: "readAnswered", ticket: 1, response: projectDatesAdminBody("dates_event_content", unsafe) });
   assert.deepEqual(refused.read, { status: "failed", more: false, problem: { kind: "malformed" } }); assert.equal(refused.page, null);

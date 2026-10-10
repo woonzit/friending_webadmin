@@ -58,8 +58,8 @@ export const DATES_ADMIN_COMMAND_CONTRACT_ROUTES: readonly string[] = ["dates_mo
  *   `removed_by_uid`, `removed_reason`, `removal_note` and `ban`;
  * - to every item of `dates_event_content`: `removed_by` and `host_removed`;
  * - to every case of `dates_moderation_queue` and to the case of
- *   `dates_moderation_detail`: `surface`, `host_visible` and `host_review`
- *   (and `host_reviews`, the hosts of a case about a member, one per event).
+ *   `dates_moderation_detail`: `surface`, `host_visible`, `host_review` and
+ *   `host_reviews` (the review of every host who was shown the case).
  * Without it those reads keep their released bodies. The selector changes the
  * shape of an answer only, never what is read or who may read it.
  *

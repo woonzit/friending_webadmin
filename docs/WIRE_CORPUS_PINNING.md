@@ -158,27 +158,39 @@ reducer and settles them with Core's two receipts. What no genuine body carries 
 saves, the default switch and scope saved, an invalid stored row) is DERIVED there from the genuine
 rows and receipts and is marked so.
 
-## Host moderation console corpus (2026-10-10)
+## Host moderation console corpus (2026-10-11)
 
 `dates_host_moderation_admin_wire` (contract `dates-host-moderation-v1`, Core `docs/EVENT_HOST_MODERATION_V1.md`,
-"Console") is copied byte for byte from the git objects of Core's host moderation lane tip
-`3b57e1869c04ab4025b8c176a1f5345c4ad7283c`; its manifest records scoped source
-`692b8d40d48ea07b5e2e9da636438d0ac911196b`. Ten bodies, all the console's, each with the request that
-produced it: the queue, a case detail and the wall posts of an event with the command contract selector
-and as the released console asks them (`-released`), the wall comments and the event chat with the
-selector, Core's refusal of another selector value, and one excerpt that is not a route body
-(`admin-activity-detail-memberships.json`: the membership rows of an activity detail, both ways).
-`fixture_set_sha256` `f22076e8243bd5bbd75cb650c6b0daec5bd7354684c92d8c14607f964c1a9033`; the pin is the
-`PIN` block of `tests/datesHostModerationWire.test.mts`, which also checks every body against the
-sha256 its manifest names.
+"Console") is copied byte for byte from the git objects of Core
+`28439d7e5549e09cf8d663fcb6ff7cc85172decb`, the final tip of Core's `host-moderation` branch; its manifest records
+scoped source `50100ad334ca2a0c8d7be2515b3d458361e2a876`, an ancestor of that tip. Fourteen bodies, all the
+console's, each with the request that produced it:
 
-**This pin is provisional, and both of its commits are lane commits** (neither is on Core `main`, so the
-reachability rule above is not met yet). Core's final tip regenerates the corpus: the manifest is
-re-bound and, as the lead announced, bodies change too (a case about a member carries its hosts as
-`host_reviews` with `host_review: null`; report counts move). Re-vendoring is one step:
+| Bodies | What |
+|---|---|
+| `admin-moderation-queue.json`, `-released` | thirteen cases: wall posts and comments, messages of an event's chat and of a direct thread, members; kept, removed, banned, waiting, and not shown to any host |
+| `admin-moderation-detail.json`, `-released` | a wall comment the host kept |
+| `admin-moderation-detail-member.json` | a member reported in two events: two `host_reviews` |
+| `admin-activity-detail.json` | a whole member-hosted event page, with a banned member and a seat a restriction released |
+| `admin-activity-detail-memberships.json` | an excerpt, not a route body: the membership rows of another event, with the selector and as the released console is served them |
+| `admin-event-content-wall-posts.json`, `-released`, `-second-event` | a post its author deleted, a post with a link the host removed; a post a moderation decision took down, a photo the host removed |
+| `admin-event-content-wall-comments.json`, `-host-erased` | live comments; a comment removed by a host whose account has since been erased |
+| `admin-event-content-messages.json` | an event chat with a message the host removed |
+| `admin-contract-version-invalid-denied.json` | Core's refusal of another selector value |
+
+A `-released` body is the same read as the released console asks it, without the command contract selector.
+`fixture_set_sha256` `abd639fbdd564de36a371dca6bfdf37990064ade00aee0e5bff991ac74ca4127`; the pin is the `PIN` block of
+`tests/datesHostModerationWire.test.mts`, which also checks every body against the sha256 its manifest names and the
+directory against the manifest's list.
+
+The source commit is on Core's `host-moderation` branch, which was not merged into Core `main` when the corpus was
+copied. It satisfies the reachability rule above once that branch is merged as it is. If Core is rebased before it is
+published, re-pin to the published commit with the same set digest, with the step below.
+
+Re-vendoring is one step:
 
 ```bash
-CORE=<Core checkout>; TIP=<Core's final commit, on Core main>; D=tests/fixtures/dates_host_moderation_admin_wire
+CORE=<Core checkout>; TIP=<the Core commit>; D=tests/fixtures/dates_host_moderation_admin_wire
 TMP=$(mktemp -d) && git -C "$CORE" archive "$TIP" "$D" | tar -x -C "$TMP" && cp "$TMP/$D"/* "$D"/
 shasum -a 256 "$D/manifest.json"                                   # -> PIN.manifest
 grep -m3 -e '"source_commit"' -e '"fixture_set_sha256"' -e '"generator_sha256"' "$D/manifest.json"   # -> PIN.source_commit, PIN.set, PIN.generator
@@ -187,14 +199,20 @@ git -C "$CORE" merge-base --is-ancestor "$(sed -n 's/.*"source_commit": "\(.*\)"
 
 then replace the five values of `PIN` (`core` is `$TIP`) and run
 `npx tsx --test tests/datesHostModerationWire.test.mts tests/datesCaseLabels.test.mts tests/datesAdminProjection.test.mts`.
-Nothing else is expected to change: the decoders already read the announced shape, the tests read the
-hosts' side of a case through `datesCaseHostState` (which reads both shapes of the member case) and state
-the announced shape as DERIVED rows, and no test names a report count of this corpus. If a file is added
-to or removed from the directory, the directory listing in the pin test says so. After that re-vendor the
-ordinary rule holds again: a changed `fixture_set_sha256` is a stop-and-review.
+A provenance-only re-bind changes `manifest`, `source_commit` and `core` and nothing else. A changed
+`fixture_set_sha256` means a body changed: stop and review. (The copy does not remove a file Core has removed; the
+pin test compares the directory with the manifest's list and says so.)
 
-What no genuine body of this corpus holds is DERIVED in the tests from a genuine body, through the
-production decoder, and marked so: a `direct_chat` case; a case no host is shown (`host_visible: false`);
-the decision `member_removed`; a member case with the hosts of several events; `removed_by: "moderation"`;
-kept media (`had_media: true`); an erased host (`host_removed.by_uid: null`); a seat a restriction released
-(`released_at`); a whole activity detail body with the selector.
+The whole event page is the one route body of this corpus whose projection is not the body itself: a membership row
+is Core's whole stored row, of which the bridge names ten fields, and the page's reports and decisions are whole
+documents that reach the browser as their safe keys and a count of what was withheld. The projection test therefore
+does not take it; `tests/datesHostModerationWire.test.mts` holds it to its exact projection.
+
+What no genuine body of this corpus holds is DERIVED in the tests from a genuine body, through the production
+decoder, and marked so. After the final capture that is: the negative controls (a body that breaks a rule); a value
+the console has no name for (a future surface, state or decision); bodies Core's rule does not produce but the labels
+must still say as they are (a case "shown" with no review, a decision that names no host, a surface on a case that is
+not about a message); a chat message whose thread Core cannot place (`surface: null`); a member case whose hosts
+have all decided; a host removal with nothing kept, kept content without text, a snapshot whose row names no author;
+and, of a membership row: a release before or after a host removal, a moderation removal over an older host note, a
+removed member whose row names nobody, a ban whose host is not named.

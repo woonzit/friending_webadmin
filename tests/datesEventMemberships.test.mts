@@ -10,11 +10,13 @@ import { datesMemberships } from "../lib/datesMemberships.ts";
 
 // The members of an event on its page: who is removed or banned, when, by whom, and the host's note.
 //
-// GENUINE: the membership rows of Core's host moderation console corpus (tests/fixtures/dates_host_moderation_admin_wire,
-// pinned in tests/datesHostModerationWire.test.mts, where the decoder is held to every row): the same eight members with
-// the command contract selector and as a Core without host moderation serves them. DERIVED rows are marked at their use.
-const ROWS = JSON.parse(readFileSync(new URL("./fixtures/dates_host_moderation_admin_wire/admin-activity-detail-memberships.json", import.meta.url), "utf8")) as
-  { with_contract: Record<string, any>[]; released: Record<string, any>[] };
+// GENUINE: Core's host moderation console corpus (tests/fixtures/dates_host_moderation_admin_wire, pinned in
+// tests/datesHostModerationWire.test.mts, where the decoder is held to every row): the member rows of one event with
+// the command contract selector and as a Core without host moderation serves them, and a whole event page of another
+// event. DERIVED rows are marked at their use.
+const corpus = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/dates_host_moderation_admin_wire/${name}.json`, import.meta.url), "utf8"));
+const ROWS = corpus("admin-activity-detail-memberships") as { with_contract: Record<string, any>[]; released: Record<string, any>[] };
+const PAGE = corpus("admin-activity-detail") as { memberships: Record<string, any>[] };
 const HOST = 8101, NOW = 1790000000;
 const messagesOf = (locale: string) => JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
 const escaped = (text: string) => text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -61,6 +63,15 @@ for (const locale of ["en", "hu"]) test(`${locale}: a banned or removed member s
   // A member who is neither has the row and nothing under it.
   for (const uid of [8105, 8106, 8110]) assert.equal(list.get(uid), `<div class="dates-list-row"><span>UID ${uid}</span><span class="badge">joined</span></div></div>`, String(uid));
 
+  // GENUINE: the members of a whole event page. One was removed and then banned; the seat of another was released by a
+  // Dates restriction - nobody removed that member, so the row names no host and the list says "by moderation".
+  const page = entries(locale, PAGE.memberships);
+  assert.deepEqual([...page.keys()], [8112, 8113, 8114, 8115, 8117]);
+  assert.ok(page.get(8113)!.endsWith(`<p class="dates-member-standing"><span class="badge badge-warning">${copy.banned}</span>${when(NOW)}${host}</p></div>`));
+  assert.ok(page.get(8117)!.endsWith(`<p class="dates-member-standing"><span class="badge badge-warning">${copy.removed}</span>${when(NOW)}<span>${copy.byModeration}</span></p></div>`));
+  assert.doesNotMatch(page.get(8117)!, /href=|dates_restriction/);
+  for (const uid of [8112, 8114, 8115]) assert.equal(page.get(uid), `<div class="dates-list-row"><span>UID ${uid}</span><span class="badge">joined</span></div></div>`, String(uid));
+
   // Absent - the same members from a Core without host moderation: what the row itself says of a removal is shown,
   // and nothing of a ban or a note. The member Core would list as banned is, to this console, a removed member.
   const released = entries(locale, ROWS.released);
@@ -82,9 +93,7 @@ for (const locale of ["en", "hu"]) test(`${locale}: facts that cannot be read ar
   const hostile = '<img src=x onerror="alert(1)"> & </span><script>x</script>';
   const noted = entries(locale, [{ ...ROWS.with_contract[5], removal_note: hostile }]).get(8108)!;
   assert.ok(noted.includes(escaped(copy.note.replace("{note}", hostile)))); assert.doesNotMatch(noted, /<img|<script/);
-  // DERIVED: a seat a restriction released names no host; a removed member whose row names nobody says only that.
-  const released = entries(locale, [{ ...ROWS.with_contract[5], removed_at: null, removed_by_uid: null, removal_note: null, released_at: NOW - 60 }]).get(8108)!;
-  assert.ok(released.includes(`<span>${copy.byModeration}</span>`)); assert.doesNotMatch(released, /href=/);
+  // DERIVED: a removed member whose row names nobody and no time says only that.
   const bare = entries(locale, [{ ...ROWS.with_contract[5], removed_at: null, removed_by_uid: null, removal_note: null }]).get(8108)!;
   assert.ok(bare.endsWith(`<p class="dates-member-standing"><span class="badge badge-warning">${copy.removed}</span></p></div>`));
   // The page shows what hosts did. There is no ban, unban or removal to press, and the component asks Core for nothing.
@@ -102,6 +111,7 @@ test("the event page lists its members through the decoder, and counts the remov
   assert.match(page, /<strong>\{data\.memberships\.length\}\{data\.memberships_truncated \? "\+" : ""\}<\/strong><span>\{t\("memberships"\)\}<\/span>/);
   assert.match(page, /\{memberships\.counts && <>\s+<div><strong>\{memberships\.counts\.removed\}\{data\.memberships_truncated \? "\+" : ""\}<\/strong><span>\{t\("removedMembers"\)\}<\/span><\/div>\s+<div><strong>\{memberships\.counts\.banned\}\{data\.memberships_truncated \? "\+" : ""\}<\/strong><span>\{t\("bannedMembers"\)\}<\/span><\/div>/);
   assert.deepEqual(datesMemberships(ROWS.with_contract).counts, { removed: 2, banned: 2 });
+  assert.deepEqual(datesMemberships(PAGE.memberships).counts, { removed: 1, banned: 1 }, "the whole event page: one seat released, one member banned");
   assert.equal(datesMemberships(ROWS.released).counts, null, "a Core without host moderation: no tile claims that nobody is banned");
   // The page no longer prints a membership row itself.
   assert.doesNotMatch(page, /item\.relationship \|\| "unknown"/);

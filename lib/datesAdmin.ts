@@ -23,10 +23,10 @@ export type DatesExternalMessageMetadata = {
  */
 export type DatesHostReview = { state: string; decision: string | null; by_uid: number | null; at: number | null };
 /**
- * One event's host on a case that several hosts can be shown: a case about a
+ * One host's review with the event it is of (Core `host_reviews[]`, the one
+ * rule for every case). A case about content has at most one. A case about a
  * MEMBER is one case for the whole app, whatever events the member was
- * reported in, so Core serves the review of each of those events' hosts with
- * the event it is of.
+ * reported in, and has one per event whose host was shown it.
  */
 export type DatesHostReviewEntry = DatesHostReview & { activity_id: string };
 
@@ -60,20 +60,15 @@ export type DatesCaseSummary = {
   external_message?: DatesExternalMessageMetadata;
   // Current Core actions, shared by the two explicit external variants only.
   allowed_actions?: string[];
-  // Host moderation v1: all three, or - from a Core that does not serve them - none.
+  // Host moderation v1: all four, or - from a Core that does not serve them - none.
   /** Where the reported content of a message case lives; `null` for any other case and where Core cannot tell. */
   surface?: string | null;
-  /** The event's host is shown this case in the app. */
+  /** A host is shown this case in the app: `host_reviews` is not empty. */
   host_visible?: boolean;
-  /** What the host decided, on a case about content; `null` for a case the host is not shown, and for a case about a member. */
+  /** The single review of a case about content, without its event; `null` when no host is shown the case, and always for a case about a member. */
   host_review?: DatesHostReview | null;
-  /**
-   * The reviews of the hosts a case about a member was shown to, one per event
-   * (empty: no host was shown it). Optional on every case: Core may serve it on
-   * a case about content too, as an empty list or as that case's one review.
-   * `null` is no list.
-   */
-  host_reviews?: DatesHostReviewEntry[] | null;
+  /** The review of every host who was shown the case, one per event; empty when no host was. */
+  host_reviews?: DatesHostReviewEntry[];
   capabilities: {
     can_claim: boolean;
     can_read_evidence: boolean;
@@ -712,8 +707,9 @@ export function datesCaseTargetKind(value: Pick<DatesCaseSummary, "target_type" 
 export const DATES_HOST_DECISIONS = ["kept", "content_removed", "member_removed", "member_banned"] as const;
 /**
  * A host's side of a case, in one word: the case is not theirs to see; it is
- * (with no review record beside it, which Core does not write); it waits in
- * their inbox; or what they decided.
+ * (with no review beside it - a body Core's rule does not produce, said as it
+ * is rather than read as "not shown"); it waits in their inbox; or what they
+ * decided.
  */
 export const DATES_CASE_HOST_STATES = ["not_shown", "shown", "waiting", ...DATES_HOST_DECISIONS] as const;
 export type DatesCaseHostState = typeof DATES_CASE_HOST_STATES[number];
@@ -738,17 +734,17 @@ type CaseHostSide = Pick<Partial<DatesCaseSummary>, "host_visible" | "host_revie
  * The reviews of the hosts a case was shown to, or `null` when Core did not
  * serve the hosts' side (a Core without host moderation: nothing is shown).
  *
- * A case about content belongs to one event, and its host's review is
- * `host_review`: one entry, of the case's own event (`event: null` - the
- * case names it). A case about a member has `host_review: null` and its
- * hosts in `host_reviews`, each with its event. So `host_review` is the
- * answer when it is there, the list otherwise; an empty answer is a case no
- * host was shown.
+ * A case about content belongs to one event: its one review is
+ * `host_review`, of the case's own event (`event: null` - the case names
+ * it, and the page links it once). A case about a member has no single review
+ * (`host_review` is `null`) and its hosts are the entries of
+ * `host_reviews`, each with its event. So `host_review` is the answer when
+ * it is there, the list otherwise; an empty answer is a case no host was shown.
  */
 export function datesCaseHostReviews(value: CaseHostSide): Array<{ event: string | null; review: DatesHostReview }> | null {
-  if (value.host_visible === undefined || value.host_review === undefined) return null;
+  if (value.host_visible === undefined || value.host_review === undefined || value.host_reviews === undefined) return null;
   if (value.host_review !== null) return [{ event: null, review: value.host_review }];
-  return (value.host_reviews ?? []).map((entry) => ({ event: entry.activity_id, review: entry }));
+  return value.host_reviews.map((entry) => ({ event: entry.activity_id, review: entry }));
 }
 
 /**
