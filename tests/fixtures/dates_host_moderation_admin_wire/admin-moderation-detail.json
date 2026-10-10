@@ -1,0 +1,68 @@
+{
+    "success": true,
+    "status_code": 200,
+    "case": {
+        "case_id": "cas_00000000000000000000000000000004",
+        "queue": "messages",
+        "case_kind": "reports",
+        "target_type": "message",
+        "target_id": "wco_00000000000000000000000000000001",
+        "target_uid": 8102,
+        "activity_id": "act_00000000000000000000000000000001",
+        "status": "new",
+        "severity": "high",
+        "escalated": false,
+        "distinct_reporter_count": 1,
+        "report_count": 1,
+        "assignee_email": null,
+        "claimed_at": null,
+        "claim_expires_at": null,
+        "sla_due_at": 1790086400,
+        "sla_breached": false,
+        "revision": 3,
+        "created_at": 1789999600,
+        "updated_at": 1790000000,
+        "conflict_of_interest": false,
+        "capabilities": {
+            "can_claim": true,
+            "can_read_evidence": true,
+            "can_resolve": false,
+            "can_break_glass": false
+        },
+        "surface": "event_wall",
+        "host_visible": true,
+        "host_review": {
+            "state": "handled",
+            "decision": "kept",
+            "by_uid": 8101,
+            "at": 1790000000
+        }
+    },
+    "reports": [
+        {
+            "report_id": "rpt_00000000000000000000000000000001",
+            "reason_id": "reason_message_harassment_hate",
+            "reason_key": "harassment_hate",
+            "reason_label_snapshot": {
+                "locale": "en",
+                "label": "Harassment or hate"
+            },
+            "entry_point": "event_wall",
+            "note": "A note only the Friending team may read.",
+            "severity": "high",
+            "status": "new",
+            "created_at": 1790000000,
+            "reporter_identity_redacted": true
+        }
+    ],
+    "report_notes_withheld": false,
+    "decisions": [],
+    "appeal": null,
+    "internal_notes": [],
+    "internal_notes_withheld": false,
+    "evidence_requires_separate_audited_read": true,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
