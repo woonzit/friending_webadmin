@@ -8,7 +8,7 @@ export const ADMIN_CLIENT_READ_ACTIONS = [
   "membership_configuration", "membership_user_detail", "app_review_sandbox_status", "list_landing", "get_settings",
   "invite_configuration", "list_signup_options", "list_profile_fields", "support_threads", "support_messages", "help_admin_list",
   "footprints_admin", "pinger_admin", "footprint_reports", "profile_verification_config", "profile_presence_configuration",
-  "location_access_policy", "profile_verification_queue", "profile_verification_detail", "user_moderation", "list_icebreakers",
+  "location_access_policy", "friending_start_policy", "profile_verification_queue", "profile_verification_detail", "user_moderation", "list_icebreakers",
   "user_profile_fields", "moderation_pic_list", "user_profile_albums", "admin_get_image_data", "profile_location_policies",
   "profile_presentation", "profile_tag_catalogs", "profile_tag_catalog_preview", "profile_photo_insights", "list_admins",
   "list_audit", "signup_photo_config", "admin_get_user_popup", "list_canned", "user_history", "user_history_detail",

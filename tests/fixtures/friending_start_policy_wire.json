@@ -1,0 +1,155 @@
+{
+    "generator": "DERIVED: written by hand in the Webadmin lane. NOT the output of a Core test.",
+    "provenance": "DERIVED from the specification, not from Core: team/handoffs/friending-start-meet-requests.md section 3.2 and the lead's contract note of 2026-10-10 (read data {configuration: {schema_version, revision, radar_enabled, touch_enabled, updated_at, updated_by}, can_write}; refusals 409 friending-start-policy-conflict, 422 friending-start-policy-invalid, 403 admin-write-required, 503 friending-start-policy-unavailable), in the envelope and the shape of location_access_policy_wire.json. No body below is a Core controller response. Core's genuine corpus replaces this file byte for byte; tests/friendingStartPolicy.test.mts then needs only its two pin constants changed.",
+    "routes": {
+        "read": "/v1/webadmin/friending_start_policy",
+        "save": "/v1/webadmin/save_friending_start_policy"
+    },
+    "responses": {
+        "viewer-default": {
+            "success": true,
+            "status_code": 200,
+            "data": {
+                "configuration": {
+                    "schema_version": 1,
+                    "revision": 0,
+                    "radar_enabled": true,
+                    "touch_enabled": true,
+                    "updated_at": 0,
+                    "updated_by": ""
+                },
+                "can_write": false
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "viewer-write-refused": {
+            "success": false,
+            "status_code": 403,
+            "error": "admin-write-required",
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "owner-default": {
+            "success": true,
+            "status_code": 200,
+            "data": {
+                "configuration": {
+                    "schema_version": 1,
+                    "revision": 0,
+                    "radar_enabled": true,
+                    "touch_enabled": true,
+                    "updated_at": 0,
+                    "updated_by": ""
+                },
+                "can_write": true
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "app-configuration-block": {
+            "contract_version": 1,
+            "radar_enabled": true,
+            "touch_enabled": true
+        },
+        "invalid-both-off": {
+            "success": false,
+            "status_code": 422,
+            "error": "friending-start-policy-invalid",
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "saved-1": {
+            "success": true,
+            "status_code": 200,
+            "data": {
+                "configuration": {
+                    "schema_version": 1,
+                    "revision": 1,
+                    "radar_enabled": true,
+                    "touch_enabled": false,
+                    "updated_at": 1700000000,
+                    "updated_by": "owner@example.test"
+                },
+                "can_write": true
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "noop": {
+            "success": true,
+            "status_code": 200,
+            "data": {
+                "configuration": {
+                    "schema_version": 1,
+                    "revision": 1,
+                    "radar_enabled": true,
+                    "touch_enabled": false,
+                    "updated_at": 1700000000,
+                    "updated_by": "owner@example.test"
+                },
+                "can_write": true
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "conflict": {
+            "success": false,
+            "status_code": 409,
+            "error": "friending-start-policy-conflict",
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "saved-2": {
+            "success": true,
+            "status_code": 200,
+            "data": {
+                "configuration": {
+                    "schema_version": 1,
+                    "revision": 2,
+                    "radar_enabled": false,
+                    "touch_enabled": true,
+                    "updated_at": 1700000000,
+                    "updated_by": "owner@example.test"
+                },
+                "can_write": true
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "owner-after-saves": {
+            "success": true,
+            "status_code": 200,
+            "data": {
+                "configuration": {
+                    "schema_version": 1,
+                    "revision": 2,
+                    "radar_enabled": false,
+                    "touch_enabled": true,
+                    "updated_at": 1700000000,
+                    "updated_by": "owner@example.test"
+                },
+                "can_write": true
+            },
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        },
+        "stored-invalid": {
+            "success": false,
+            "status_code": 503,
+            "error": "friending-start-policy-unavailable",
+            "message": 200,
+            "status": 200,
+            "can_send": 0
+        }
+    }
+}

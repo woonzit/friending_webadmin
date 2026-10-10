@@ -13,6 +13,7 @@ import {
   audienceVisibilityProxyCapabilityAuthorized,
 } from "@/lib/audienceVisibilityAdmin";
 import { normalizeAppearanceProxyBody } from "@/lib/appearanceRules";
+import { normalizeFriendingStartPolicyProxyBody } from "@/lib/friendingStartPolicy";
 import { normalizeLocationAccessPolicyProxyBody } from "@/lib/locationAccessPolicy";
 import { normalizeModeCardsProxyBody } from "@/lib/modeCards";
 import { normalizeMemberBirthdayLockProxyBody } from "@/lib/memberBirthdayLock";
@@ -371,6 +372,15 @@ export async function POST(
     return bridgeError("invalid-input", 400);
   }
   if (normalizedLocationAccessBody !== undefined) body = normalizedLocationAccessBody;
+
+  // The Friending Start setting likewise: nothing on the read, exactly the
+  // expected revision and the three candidate keys on the save - and never
+  // both methods off, which Core would refuse.
+  const normalizedFriendingStartBody = normalizeFriendingStartPolicyProxyBody(action, body);
+  if (normalizedFriendingStartBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (normalizedFriendingStartBody !== undefined) body = normalizedFriendingStartBody;
 
   // The member reset accepts only its contract, positive uid and UUIDv4
   // receipt identity. Core remains the authority for membership and lock state.
