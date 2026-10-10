@@ -383,19 +383,24 @@ export const DATES_REPORT_SCOPES = ["user", "activity", "message", "review"] as 
  *   and `review` for reviews;
  * - Core's own report targets carry `check_in` (post-activity check-in),
  *   `direct_chat_header` (direct chat counterpart) and `message_action`
- *   (a chat message and its sender).
+ *   (a chat message and its sender);
+ * - the event wall reports its posts, comments and replies with `event_wall`,
+ *   in the message scope. Core accepts it for every message reason (the three
+ *   message values are one equivalence group), so a reason need not list it;
+ *   a reason that does store it is as valid as any other.
  * The seeded-only values (`card`, `profile`, `participant`, `chat_header`,
  * `message`) stay valid so a seeded reason can still be edited and saved.
  * Core validates a saved reason against the same per-scope lists
- * (DatesContract::REPORT_ENTRY_POINTS) and refuses an empty list or any other
- * value with dates-report-entry-points-invalid. P1 external_event is activity-
- * only and must stand alone; an existing reason's member/external cohort is
- * immutable even though its labels and other entry points remain editable.
+ * (DatesContract::REPORT_ENTRY_POINTS, copied here value for value and in its
+ * order) and refuses an empty list or any other value with
+ * dates-report-entry-points-invalid. P1 external_event is activity-only and
+ * must stand alone; an existing reason's member/external cohort is immutable
+ * even though its labels and other entry points remain editable.
  */
 export const DATES_REPORT_ENTRY_POINTS: Readonly<Record<typeof DATES_REPORT_SCOPES[number], readonly string[]>> = {
   user: ["detail", "participant", "profile", "check_in", "chat_header", "direct_chat_header", "message_action"],
   activity: ["detail", "card", "check_in", "external_event"],
-  message: ["message_action", "message"],
+  message: ["message_action", "message", "event_wall"],
   review: ["review"],
 };
 

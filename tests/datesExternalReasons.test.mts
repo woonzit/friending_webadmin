@@ -144,6 +144,62 @@ test("display-only reason repairs cannot be written back as cleared fields", asy
   assert.match(source, /canManage=\{canManageReasons && !reason\.unreadable_fields\?\.length\}/);
 });
 
+// The event wall's entry point (`event_wall`, message scope). No pinned body carries a message-scope reason, so the rows
+// and the receipt below are DERIVED and marked so: a genuine member row of the captured catalogue given the message
+// scope, its id and entry points Core's save accepts for that scope (DatesContract::REPORT_ENTRY_POINTS['message']);
+// the genuine save receipt given that row. Every one of them goes through the production decoders.
+const memberRow = list.reasons.find((row: any) => !row.entry_points.includes("external_event"));
+const chatReason = (entry_points: string[], revision = memberRow.revision) =>
+  ({ ...memberRow, scope: "message", reason_id: `reason_message_${memberRow.key}`, entry_points, revision });
+const chatCatalogue = (entry_points: string[]) => ({ ...list, reasons: [chatReason(entry_points)] });
+
+test("a stored message reason that lists event_wall is a readable row, in the message scope only (derived rows)", () => {
+  for (const entryPoints of [["event_wall"], ["message", "event_wall"], ["message_action", "message", "event_wall"]]) {
+    const body = chatCatalogue(entryPoints);
+    assert.deepEqual(datesAdminReasons(body, "message"), body.reasons, entryPoints.join());
+    for (const scope of ["message", "all"])
+      assert.deepEqual(projectDatesAdminReasons(body, scope), { reasons: body.reasons, unreadable_rows: [] }, `${scope}: not flagged unreadable`);
+  }
+  // Control: the seeded shape read before, and reads the same now.
+  assert.deepEqual(projectDatesAdminReasons(chatCatalogue(["message"]), "message")?.unreadable_rows, []);
+  // What is still unreadable: the value beside one outside the vocabulary, a repeated value, and the value in another scope.
+  for (const entryPoints of [["event_wall", "wall"], ["event_wall", "event_wall"], ["EVENT_WALL"], ["event_wall", "external_event"]]) {
+    const body = chatCatalogue(entryPoints);
+    assert.equal(datesAdminReasons(body, "message"), null, entryPoints.join());
+    assert.deepEqual(projectDatesAdminReasons(body, "message"), { reasons: [], unreadable_rows: [{ index: 0, reason_id: body.reasons[0].reason_id }] });
+  }
+  const activity = { ...list, reasons: [{ ...memberRow, entry_points: ["detail", "event_wall"] }] };
+  assert.equal(datesAdminReasons(activity, "activity"), null);
+  assert.deepEqual(projectDatesAdminReasons(activity, "activity"), { reasons: [], unreadable_rows: [{ index: 0, reason_id: memberRow.reason_id }] });
+});
+
+test("the production reason editor sends event_wall for a message reason and reads the receipt that carries it (derived receipt)", async () => {
+  const stored = chatReason(["message"]);
+  const sent = {
+    reason_id: stored.reason_id, scope: "message", key: stored.key, name_en: stored.name_en, name_hu: stored.name_hu,
+    explanation_en: stored.explanation_en, explanation_hu: stored.explanation_hu, severity: stored.severity, order: stored.order,
+    active: stored.active, comment_required: stored.comment_required, entry_points: ["message", "event_wall"],
+    escalation_category: stored.escalation_category, expected_revision: stored.revision,
+    reason: "Wall reports use this reason too", idempotency_key: submitted.idempotency_key,
+  };
+  const saved = { ...receipt, reason: chatReason(sent.entry_points, stored.revision + 1), revision: stored.revision + 1 };
+  assert.deepEqual(datesReasonSaveReceipt(saved, sent), saved.reason);
+  assert.equal(datesReasonSaveReceipt(saved, { ...sent, entry_points: ["message"] }), null, "a receipt that carries another list is not this save's");
+  const editor = (entryPoints: string, scope = "message") => harness(saved, { reason: stored, scope, keyName: stored.key, nameEn: stored.name_en, nameHu: stored.name_hu,
+    explanationEn: stored.explanation_en ?? "", explanationHu: stored.explanation_hu ?? "", severity: stored.severity, order: String(stored.order),
+    active: stored.active, commentRequired: stored.comment_required, entryPoints, escalationCategory: stored.escalation_category ?? "", auditReason: sent.reason,
+    allowedEntryPoints: datesReportEntryPointsFor(scope, stored.entry_points).join(", ") });
+  const h = editor("message, event_wall"); await h.save();
+  assert.deepEqual(JSON.parse(JSON.stringify(h.calls)), [{ action: "dates_reason_save", body: sent }]);
+  assert.equal(h.saved(), 1); assert.deepEqual(h.errors, []); assert.deepEqual(h.inline, []); assert.deepEqual(h.unknown, []);
+  // The local check still stops a value that is not the scope's, before anything is sent.
+  const wrong = editor("message, event_wal"); await wrong.save();
+  assert.equal(wrong.calls.length, 0); assert.deepEqual(wrong.inline, ["entryPointsUnknown"]); assert.equal(wrong.saved(), 0);
+  // The field's hint lists it for the message scope (the same list the check uses), and for no other scope.
+  assert.equal(datesReportEntryPointsFor("message", stored.entry_points).join(", "), "message_action, message, event_wall");
+  for (const scope of ["user", "activity", "review"]) assert.equal(datesReportEntryPointsFor(scope).includes("event_wall"), false, scope);
+});
+
 test("the configuration read isolates row diagnostics and both locales explain cohort immutability", () => {
   assert.match(source, /projectDatesAdminReasons\(reasonResponse, scope\)/);
   assert.match(source, /setReasons\(nextReasons\.reasons\)/);

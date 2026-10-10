@@ -513,13 +513,21 @@ test("report-reason entry points use the vocabulary Core seeds and clients send 
     message: ["message"],
     review: ["review"],
   };
-  // What reaches Core today: iOS literals and the targets Core itself serializes.
+  // What reaches Core today: iOS literals and the targets Core itself serializes; the event wall reports with `event_wall`.
   const sent: Record<string, string[]> = {
     user: ["detail", "check_in", "direct_chat_header", "message_action"],
     activity: ["detail", "check_in"],
-    message: ["message_action"],
+    message: ["message_action", "event_wall"],
     review: ["review"],
   };
+  // Core's DatesContract::REPORT_ENTRY_POINTS, value for value and in its order: the list the reason editor offers is
+  // the list Core's save accepts, and a stored value outside it is what makes a reason row unreadable here.
+  assert.deepEqual(DATES_REPORT_ENTRY_POINTS, {
+    user: ["detail", "participant", "profile", "check_in", "chat_header", "direct_chat_header", "message_action"],
+    activity: ["detail", "card", "check_in", "external_event"],
+    message: ["message_action", "message", "event_wall"],
+    review: ["review"],
+  });
   for (const scope of DATES_REPORT_SCOPES) {
     const allowed = DATES_REPORT_ENTRY_POINTS[scope];
     assert.equal(new Set(allowed).size, allowed.length, `${scope} has no duplicates`);
@@ -547,6 +555,16 @@ test("report-reason entry points use the vocabulary Core seeds and clients send 
   assert.deepEqual(datesReasonEntryPoints("review", "detail"), { ok: false, error: "unknown", tokens: ["detail"] });
   assert.deepEqual(datesReasonEntryPoints("message", "review"), { ok: false, error: "unknown", tokens: ["review"] });
   assert.deepEqual(datesReasonEntryPoints("owner", "detail"), { ok: false, error: "unknown", tokens: ["detail"] });
+  // The event wall's entry point belongs to the message scope and to no other: alone, beside the chat values, and as typed.
+  assert.deepEqual(datesReasonEntryPoints("message", "event_wall"), { ok: true, entryPoints: ["event_wall"] });
+  assert.deepEqual(datesReasonEntryPoints("message", "message, Event_Wall , message_action"), { ok: true, entryPoints: ["message", "event_wall", "message_action"] });
+  assert.deepEqual(datesReportEntryPointsFor("message"), ["message_action", "message", "event_wall"]);
+  assert.deepEqual(datesReportEntryPointsFor("message", ["message"]), ["message_action", "message", "event_wall"], "an existing message reason is offered it too");
+  for (const scope of ["user", "activity", "review", "owner"]) {
+    assert.deepEqual(datesReasonEntryPoints(scope, "event_wall"), { ok: false, error: "unknown", tokens: ["event_wall"] }, scope);
+    assert.equal(datesReportEntryPointsFor(scope).includes("event_wall"), false, scope);
+  }
+  assert.deepEqual(datesReasonEntryPoints("message", "event_wall, wall"), { ok: false, error: "unknown", tokens: ["wall"] });
 
   const page = readFileSync(new URL("../app/(dashboard)/dates/configuration/page.tsx", import.meta.url), "utf8");
   assert.match(page, /datesReasonEntryPoints\(scope, entryPoints, reason\?\.entry_points\)/);
