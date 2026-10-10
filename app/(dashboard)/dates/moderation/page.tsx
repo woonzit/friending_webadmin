@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
+import { DatesCaseTarget } from "@/components/DatesCaseLabels";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
@@ -128,7 +129,7 @@ export default function DatesModerationQueuePage() {
           <thead><tr><th>{t("case")}</th><th>{t("target")}</th><th>{common("status")}</th><th>{t("severity")}</th><th>{t("reports")}</th><th>{t("assignee")}</th><th>{t("sla")}</th><th><span className="sr-only">{common("actions")}</span></th></tr></thead>
           <tbody>{rows.map((row) => <tr key={row.case_id} className={row.sla_breached ? "dates-row-breached" : ""}>
             <td><div className="cell-stack"><strong>{row.case_id}</strong><small>{t(`queues.${row.queue}`)} · {humanizeMachineKey(row.case_kind)}</small>{row.conflict_of_interest && <small className="dates-danger-text">{t("conflict")}</small>}</div></td>
-            <td><div className="cell-stack"><span>{row.target_type === "external_event" ? external("moderation.target") : humanizeMachineKey(row.target_type)} · {row.target_id}</span>
+            <td><div className="cell-stack"><span><DatesCaseTarget item={row} /></span>
               {row.target_type === "external_event" && <span className="badge badge-demo">{external("moderation.nonmember")}</span>}
               {row.external_message && <span className="badge badge-demo">{external("messageModeration.badge")}</span>}
               <small>{row.activity_id || `UID ${row.target_uid}`}</small></div></td>

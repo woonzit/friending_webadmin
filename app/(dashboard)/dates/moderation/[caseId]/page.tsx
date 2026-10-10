@@ -9,6 +9,7 @@ import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesEventPhotos from "@/components/DatesEventPhotos";
 import DatesWallEvidenceMedia from "@/components/DatesWallEvidenceMedia";
 import DatesCaseHistory from "@/components/DatesCaseHistory";
+import { DatesCaseEventLink, DatesCaseTarget, DatesReportEntryPoint } from "@/components/DatesCaseLabels";
 import DatesExternalProvenance from "@/components/DatesExternalProvenance";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -571,8 +572,8 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
           <div className="panel-header"><div><h2>{t("caseOverview")}</h2><p>{t("caseOverviewCopy")}</p></div><div className="row-actions"><span className={`badge ${["new", "in_review", "appealed"].includes(item.status) ? "badge-warning" : "badge-active"}`}>{humanizeMachineKey(item.status)}</span><span className={`badge ${["high", "critical"].includes(item.severity) ? "badge-warning" : ""}`}>{humanizeMachineKey(item.severity)}</span></div></div>
           <div className="panel-body"><dl className="detail-list">
             <div className="detail-row"><dt>{t("queue")}</dt><dd>{humanizeMachineKey(item.queue)} · {humanizeMachineKey(item.case_kind)}</dd></div>
-            <div className="detail-row"><dt>{t("target")}</dt><dd>{isExternal ? external("moderation.target") : humanizeMachineKey(item.target_type)} · {item.target_id}</dd></div>
-            <div className="detail-row"><dt>{t("subject")}</dt><dd>{isExternal ? external("moderation.nonmember") : `UID ${item.target_uid}`}{item.activity_id ? ` · ${item.activity_id}` : ""}</dd></div>
+            <div className="detail-row"><dt>{t("target")}</dt><dd><DatesCaseTarget item={item} /></dd></div>
+            <div className="detail-row"><dt>{t("subject")}</dt><dd>{isExternal ? external("moderation.nonmember") : `UID ${item.target_uid}`}{item.activity_id && <> · <DatesCaseEventLink activityId={item.activity_id} /></>}</dd></div>
             <div className="detail-row"><dt>{t("reports")}</dt><dd>{item.report_count} · {t("distinctReporters", { count: item.distinct_reporter_count })}</dd></div>
             <div className="detail-row"><dt>{t("assignee")}</dt><dd>{item.assignee_email || t("unassigned")}</dd></div>
             <div className="detail-row"><dt>{t("claimExpiry")}</dt><dd>{item.claim_expires_at ? formatDate(item.claim_expires_at, locale, true) : "—"}</dd></div>
@@ -598,7 +599,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("reportsTitle")}</h2><p>{t("reportsCopy")}</p></div></div>
         {data.report_notes_withheld && <p className="alert alert-warning">{t("reportNotesWithheld")}</p>}
-        <div className="table-wrap dates-embedded-table">{data.reports.length === 0 ? <div className="empty-state dates-compact-empty"><p>{t("noReports")}</p></div> : <table className="data-table"><thead><tr><th>{t("reportId")}</th><th>{t("reason")}</th><th>{t("entryPoint")}</th><th>{t("note")}</th><th>{common("createdAt")}</th></tr></thead><tbody>{data.reports.map((report) => <tr key={report.report_id}><td>{report.report_id}</td><td><div className="cell-stack"><span>{displayReason(report.reason_label_snapshot, locale)}</span><small>{report.reason_key} · {humanizeMachineKey(report.severity)}</small></div></td><td>{humanizeMachineKey(report.entry_point)}</td><td className="dates-wrapping-cell">{report.note || "—"}</td><td>{formatDate(report.created_at, locale, true)}</td></tr>)}</tbody></table>}</div>
+        <div className="table-wrap dates-embedded-table">{data.reports.length === 0 ? <div className="empty-state dates-compact-empty"><p>{t("noReports")}</p></div> : <table className="data-table"><thead><tr><th>{t("reportId")}</th><th>{t("reason")}</th><th>{t("entryPoint")}</th><th>{t("note")}</th><th>{common("createdAt")}</th></tr></thead><tbody>{data.reports.map((report) => <tr key={report.report_id}><td>{report.report_id}</td><td><div className="cell-stack"><span>{displayReason(report.reason_label_snapshot, locale)}</span><small>{report.reason_key} · {humanizeMachineKey(report.severity)}</small></div></td><td><DatesReportEntryPoint value={report.entry_point} /></td><td className="dates-wrapping-cell">{report.note || "—"}</td><td>{formatDate(report.created_at, locale, true)}</td></tr>)}</tbody></table>}</div>
       </section>
 
       <section className="panel dates-section">

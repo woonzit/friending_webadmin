@@ -9414,6 +9414,10 @@
         "dismissed": "Elutasítva",
         "appealed": "Fellebbezve",
         "closed": "Lezárva"
+      },
+      "targetKinds": {
+        "wall_post": "Falposzt",
+        "wall_comment": "Falkomment"
       }
     },
     "caseDetail": {
@@ -9430,6 +9434,7 @@
       "queue": "Queue és típus",
       "target": "Cél",
       "subject": "Érintett",
+      "openEvent": "Az esemény oldalának megnyitása",
       "reports": "Jelentések",
       "distinctReporters": "{count} különböző bejelentő",
       "assignee": "Felelős",
@@ -9458,6 +9463,9 @@
       "reportId": "Jelentés ID",
       "reason": "Indok",
       "entryPoint": "Belépési pont",
+      "entryPoints": {
+        "event_wall": "Eseményfal"
+      },
       "note": "Bejelentő megjegyzése",
       "notesTitle": "Belső jegyzetek",
       "notesCopy": "A moderátorok által az ügyhöz írt jegyzetek, a legrégebbivel kezdve.",

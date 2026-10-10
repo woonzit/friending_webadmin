@@ -404,6 +404,14 @@ export const DATES_REPORT_ENTRY_POINTS: Readonly<Record<typeof DATES_REPORT_SCOP
   review: ["review"],
 };
 
+/**
+ * Entry points the console names in the operator's language
+ * (`datesAdmin.caseDetail.entryPoints.<value>` in both locale files). A
+ * report's `entry_point` is Core's text, so the list is closed here: a value
+ * that is not on it is printed as its humanized machine key, never looked up.
+ */
+export const DATES_NAMED_ENTRY_POINTS: readonly string[] = ["event_wall"];
+
 export function datesReportEntryPointsFor(scope: string, existing?: readonly string[]): readonly string[] {
   const allowed = Object.hasOwn(DATES_REPORT_ENTRY_POINTS, scope)
     ? DATES_REPORT_ENTRY_POINTS[scope as keyof typeof DATES_REPORT_ENTRY_POINTS]
@@ -626,6 +634,27 @@ type ResolutionCase = Pick<DatesCaseSummary, "queue" | "case_kind" | "target_typ
 export function isDatesExternalMessageCase(value: Pick<DatesCaseSummary, "queue" | "case_kind" | "target_type" | "external_message">): boolean {
   return value.target_type === "message" && value.queue === "messages" && value.case_kind === "prepublication"
     && value.external_message !== undefined;
+}
+
+export const DATES_CASE_TARGET_KINDS = ["wall_post", "wall_comment"] as const;
+export type DatesCaseTargetKind = typeof DATES_CASE_TARGET_KINDS[number];
+
+/**
+ * What a case is about, where the console can say it more exactly than the
+ * target type: a reported wall post or wall comment is a `message` case like a
+ * reported chat message. `null` means the target type is all there is to say.
+ *
+ * DERIVED from the target id until Core serves the surface of a case: the
+ * event wall's ids are `wpo_` (a post) and `wco_` (a comment or a reply) with
+ * 32 hex digits, the test Core's DatesWallModerationService::handles applies.
+ * This is the one place that reads an id for its meaning; the queue and the
+ * case page only print what it answers.
+ */
+export function datesCaseTargetKind(value: Pick<DatesCaseSummary, "target_type" | "target_id">): DatesCaseTargetKind | null {
+  if (value.target_type !== "message" || typeof value.target_id !== "string") return null;
+  if (/^wpo_[a-f0-9]{32}$/.test(value.target_id)) return "wall_post";
+  if (/^wco_[a-f0-9]{32}$/.test(value.target_id)) return "wall_comment";
+  return null;
 }
 
 export function datesExternalReviewAllowed(value: Pick<DatesCaseSummary, "target_type">, principal: Pick<DatesAdminPrincipal, "capabilities">): boolean {

@@ -9414,6 +9414,10 @@
         "dismissed": "Dismissed",
         "appealed": "Appealed",
         "closed": "Closed"
+      },
+      "targetKinds": {
+        "wall_post": "Wall post",
+        "wall_comment": "Wall comment"
       }
     },
     "caseDetail": {
@@ -9430,6 +9434,7 @@
       "queue": "Queue and kind",
       "target": "Target",
       "subject": "Subject",
+      "openEvent": "Open the event page",
       "reports": "Reports",
       "distinctReporters": "{count} distinct reporters",
       "assignee": "Assignee",
@@ -9458,6 +9463,9 @@
       "reportId": "Report ID",
       "reason": "Reason",
       "entryPoint": "Entry point",
+      "entryPoints": {
+        "event_wall": "Event wall"
+      },
       "note": "Reporter note",
       "notesTitle": "Internal notes",
       "notesCopy": "Notes moderators added to this case, oldest first.",
