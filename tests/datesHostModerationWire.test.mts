@@ -391,6 +391,9 @@ test("event content: a served addition that is not what Core writes fails the pa
   assert.equal(broken(KEPT, (row) => { row.content_kind = "gif"; }), null); assert.equal(broken(KEPT, (row) => { row.report_count = "2"; }), null);
   // Both keys or neither.
   assert.equal(broken(KEPT, (row) => { delete row.host_removed; }), null); assert.equal(broken(KEPT, (row) => { delete row.removed_by; }), null);
+  // ... on any row, also where the key that is left says nothing by itself: a tombstone with "nothing kept" and no word of who removed it.
+  assert.equal(broken(AUTHOR, (row) => { delete row.removed_by; }), null); assert.equal(broken(AUTHOR, (row) => { delete row.host_removed; }), null);
+  assert.equal(broken(LIVE, (row) => { delete row.removed_by; }), null); assert.equal(broken(LIVE, (row) => { delete row.host_removed; }), null);
   assert.ok(broken(KEPT, (row) => { delete row.removed_by; delete row.host_removed; }), "neither: a row of a Core that does not serve them");
   // What is said of a row agrees with the row: nobody took down a live row, moderation leaves a `moderated` one, an
   // author or the host a deleted one, and something is kept only of a removal by the host.
