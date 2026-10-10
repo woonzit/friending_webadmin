@@ -15,29 +15,23 @@ import {
 } from "../../lib/friendingStartPolicy.ts";
 
 /**
- * The Friending Start policy corpus, and THE SWAP.
+ * The Friending Start policy corpus.
  *
- * The corpus is DERIVED: the Webadmin lane wrote it from the specification
- * (team/handoffs/friending-start-meet-requests.md, section 3.2) before Core's
- * policy routes existed, in the envelope and the file shape of Core's
- * `location_access_policy_wire.json`. No body in it is a Core response. When
- * Core publishes its genuine `tests/fixtures/friending_start_policy_wire.json`:
+ * The file is Core's own `tests/fixtures/friending_start_policy_wire.json`,
+ * copied byte for byte: FIXTURE_SOURCE is the Core commit that carries it and
+ * FIXTURE_SHA256 its digest. To follow a later Core change, copy the file over
+ * again and set the two constants; nothing else changes.
  *
- *   1. copy it over tests/fixtures/friending_start_policy_wire.json, byte for byte;
- *   2. set the two constants below this comment: FIXTURE_SOURCE to the Core
- *      commit that carries the file, FIXTURE_SHA256 to its sha256.
- *
- * Nothing else changes - not here, and not in the two test files that read the
- * corpus through this module (tests/friendingStartPolicy.test.mts and
- * tests/friendingStartPanel.test.mts). No test names a body of the corpus:
- * each finds what it needs by what a body SAYS (a console state, a refusal and
- * its error, something else), and the test titles take "DERIVED" or "Core's"
- * from the file's own provenance line. A genuine body the decoder does not
- * accept then fails these tests, which is the point of the swap.
+ * No test names a body of the corpus: each finds what it needs by what a body
+ * SAYS (a console state, a refusal and its error, something else), and the
+ * test titles take their origin from the file's own provenance line. A body
+ * the decoder does not accept fails the two test files that read the corpus
+ * through this module (tests/friendingStartPolicy.test.mts and
+ * tests/friendingStartPanel.test.mts).
  */
 const FIXTURE = new URL("../fixtures/friending_start_policy_wire.json", import.meta.url);
-export const FIXTURE_SOURCE = "DERIVED from the specification - no Core commit carries these bodies yet";
-export const FIXTURE_SHA256 = "e840bad10870640bd0cbe96b0b86ad89ec7cad3beb4a2f8793b7e419fbcbc2ef";
+export const FIXTURE_SOURCE = "c89692ee805363ba70165a74a06257b24bec4ca9";
+export const FIXTURE_SHA256 = "57be3e9eef01072ad7dd745d1f13cda0db2df2dec689bb86d73eb5006563cc55";
 
 export type Json = Record<string, any>;
 export const FIXTURE_BYTES = readFileSync(FIXTURE);
