@@ -127,7 +127,8 @@ bundled Proxima Nova fonts and never load remote fonts.
 Core is the authority for the deterministic review identity, fixture, deletion/reprovisioning,
 and scheduled recovery. Webadmin provides only authenticated operations surfaces:
 
-- decode the complete closed fixture status contract (fixture version 6 adds the event walls);
+- decode the complete closed fixture status contract (the event walls joined its closed lists with
+  fixture version 6; Core's served `fixture_version` is the authority for the current one);
 - show all 38 readiness checks, 27 count witnesses, media/profile semantics, and lifecycle state;
 - hide review identity fields unless Core deliberately projects them to the current operator;
 - persist reset request ID and expected revision in `sessionStorage` before mutation;
