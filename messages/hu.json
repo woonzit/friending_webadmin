@@ -1491,7 +1491,7 @@
         "sections": {
           "contentSignals": {
             "title": "Tartalmak és jelzések",
-            "purpose": "A panel azt mutatja, amit a tagok ennél az eseménynél írtak – falposztokat, kommenteket és válaszokat, eseménychat-üzeneteket és értékeléseket –, akkor is, ha senki sem jelentette be, valamint azt, amit egy-egy tag a maga számára elrejtett. Minden sorban látszik a tartalom állapota, szerzője és időpontja, a személyes elrejtések és a bejelentések száma, és az is, ha már tartozik hozzá ügy. Az eltávolított soron – ahol a Core megadja – az is látszik, hogy a szerzője, az esemény hostja vagy moderációs döntés távolította-e el.",
+            "purpose": "A panel azt mutatja, amit a tagok ennél az eseménynél írtak – falposztokat, kommenteket és válaszokat, eseménychat-üzeneteket és értékeléseket –, akkor is, ha senki sem jelentette be, valamint azt, amit egy-egy tag a maga számára elrejtett. Minden sorban látszik a tartalom állapota, szerzője és időpontja, a személyes elrejtések és a bejelentések száma, és az is, ha már tartozik hozzá ügy. Az eltávolított sorban – ahol a Core megadja – az is látszik, hogy a szerzője, az esemény hostja vagy moderációs döntés távolította-e el.",
             "actions": {
               "1": "A lista beolvasásához nyomd meg a „Tartalmak és jelzések megjelenítése” gombot, majd válassz tartalomtípust. A Core minden olvasást a neved alatt naplóz.",
               "2": "Egy sornál a „Moderáció megnyitása” (médiát tartalmazó sornál a „Tartalom és média ellenőrzése”), az esemény egészénél az „Esemény moderálása” gombbal, indoklást megadva nyithatsz új ügyet, vagy léphetsz a meglévőhöz. A munkát az ügy oldalán folytatod."
