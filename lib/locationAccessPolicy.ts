@@ -1,4 +1,5 @@
 import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
+import { policyActor, policyExactObject, policyInteger, type PolicyJsonObject } from "@/lib/policyWire";
 import {
   webadminDataSuccessEnvelope,
   webadminErrorEnvelope,
@@ -63,7 +64,7 @@ export type LocationAccessPolicySaveBody = {
   };
 };
 
-type JsonObject = Record<string, unknown>;
+type JsonObject = PolicyJsonObject;
 
 const CONFIGURATION_KEYS = [
   "schema_version",
@@ -74,55 +75,11 @@ const CONFIGURATION_KEYS = [
   "updated_by",
 ] as const;
 const CANDIDATE_KEYS = ["schema_version", ...LOCATION_ACCESS_POLICY_FLAGS] as const;
-const PLAIN_TEXT_CONTROL = /[\u0000-\u001f\u007f-\u009f]/u;
 
-function record(value: unknown): JsonObject | null {
-  return value !== null && typeof value === "object" && !Array.isArray(value)
-    ? value as JsonObject
-    : null;
-}
-
-/** Exact key sets: Core states them as the contract, so an extra key is a provider change. */
-function exactObject(value: unknown, keys: readonly string[]): JsonObject | null {
-  const source = record(value);
-  if (!source) return null;
-  const actual = Object.keys(source).sort();
-  const expected = [...keys].sort();
-  return actual.length === expected.length
-    && actual.every((key, index) => key === expected[index])
-    ? source
-    : null;
-}
-
-function integer(value: unknown, minimum = 0, maximum = Number.MAX_SAFE_INTEGER): number | null {
-  return typeof value === "number" && Number.isSafeInteger(value)
-    && value >= minimum && value <= maximum
-    ? value
-    : null;
-}
-
-function hasUnpairedSurrogate(value: string): boolean {
-  for (let index = 0; index < value.length; index += 1) {
-    const code = value.charCodeAt(index);
-    if (code >= 0xd800 && code <= 0xdbff) {
-      const next = value.charCodeAt(index + 1);
-      if (!(next >= 0xdc00 && next <= 0xdfff)) return true;
-      index += 1;
-    } else if (code >= 0xdc00 && code <= 0xdfff) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/** The saver's e-mail as Core stores it: trimmed, control-free, at most 320 UTF-8 bytes. */
-function actor(value: unknown): string | null {
-  if (typeof value !== "string" || value !== value.trim()
-    || hasUnpairedSurrogate(value) || PLAIN_TEXT_CONTROL.test(value)) return null;
-  return new TextEncoder().encode(value).length <= LOCATION_ACCESS_POLICY_ACTOR_MAX_BYTES
-    ? value
-    : null;
-}
+// The key-set, integer and actor rules are the ones every revisioned policy of this console shares (lib/policyWire.ts).
+const exactObject = policyExactObject;
+const integer = policyInteger;
+const actor = (value: unknown): string | null => policyActor(value, LOCATION_ACCESS_POLICY_ACTOR_MAX_BYTES);
 
 function configurationShape(value: unknown): LocationAccessPolicyConfiguration | null {
   const source = exactObject(value, CONFIGURATION_KEYS);
