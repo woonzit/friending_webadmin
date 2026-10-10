@@ -1370,12 +1370,12 @@
           },
           "caseQueue": {
             "title": "Moderation cases",
-            "purpose": "Rows summarize case ID, target, queue, severity, status, due time, report count, assignee and escalation state.",
+            "purpose": "Rows summarize case ID, target, queue, severity, status, due time, report count, assignee and escalation state. A message case names where the reported content lives — a wall post or wall comment, an event chat message or a direct chat message — and a badge says whether the event's host is shown the case and what the host decided. For a member reported in several events the badge counts the hosts who were shown the case and those who decided.",
             "actions": {
               "1": "Open the exact case that matches the task and SLA priority.",
               "2": "Refresh after another moderator may have claimed or resolved it."
             },
-            "guidance": "The list is not a decision surface. Evidence, conflicts of interest, legal holds and immutable resolution live in case detail. An external-event badge identifies a non-member organizer, not a UID 0 member account."
+            "guidance": "The list is not a decision surface. Evidence, conflicts of interest, legal holds and immutable resolution live in case detail. An external-event badge identifies a non-member organizer, not a UID 0 member account. A host's decision never closes a case: a case the host kept or acted on still waits here for a moderator."
           }
         }
       },
@@ -1390,7 +1390,7 @@
         "sections": {
           "overview": {
             "title": "Case overview",
-            "purpose": "The overview provides redacted, server-authored queue state, target identity, severity, SLA, escalation and optimistic revision.",
+            "purpose": "The overview provides redacted, server-authored queue state, target identity, severity, SLA, escalation and optimistic revision. The target is named by where the reported content lives (wall post, wall comment, event chat message or direct chat message), and the event is a link to its page.",
             "actions": {
               "1": "Verify this is the intended case and inspect any conflict-of-interest block.",
               "2": "Use the status badges to understand whether normal handling is still allowed."
@@ -1405,6 +1405,15 @@
               "2": "Keep the lease alive while working and release it if you stop."
             },
             "guidance": "The lease does not freeze case facts. A stale optimistic revision still requires a full refresh."
+          },
+          "hostReview": {
+            "title": "Host review",
+            "purpose": "A report about another member's wall content, event chat message or participation is also shown to the event's host in the app. This section says whether the host is shown this case, whether it still waits in the host's inbox, and what the host decided: kept it, removed the content, removed the member or banned the member. A case about a member is one case for the whole app: when the member was reported in several events, each event is listed with its own host's decision.",
+            "actions": {
+              "1": "Read the host's decision and its time before you decide: content the host removed is already gone for members, and a banned member's wall content is hidden.",
+              "2": "Open the event page to see the kept text of content the host removed, and the members the host removed or banned."
+            },
+            "guidance": "The host's decision does not close the case and is not a moderation decision: the case stays in the queue until a moderator resolves it. The host is never shown who reported, nor a reporter's note. This section is read-only: the console cannot change what the host did."
           },
           "reports": {
             "title": "Reporter submissions",
@@ -1482,12 +1491,12 @@
         "sections": {
           "contentSignals": {
             "title": "Content & signals",
-            "purpose": "The panel shows what members wrote at this event — wall posts, comments and replies, event chat messages and reviews — whether or not anyone reported it, and what individual members hid for themselves. Each row shows the state, author and date of the content, the number of personal hides and reports, and whether a case already exists for it.",
+            "purpose": "The panel shows what members wrote at this event — wall posts, comments and replies, event chat messages and reviews — whether or not anyone reported it, and what individual members hid for themselves. Each row shows the state, author and date of the content, the number of personal hides and reports, and whether a case already exists for it. A row that was taken down says, where Core serves it, whether its author, the event's host or a moderation decision removed it.",
             "actions": {
               "1": "Press “Show content and signals” to read the list, then choose a content type. Core records every read under your name.",
               "2": "Use “Open moderation” on a row (“Review content & media” when the row carries media) or “Moderate this event” for the event as a whole, and give a reason: a case opens, or the existing one is reused, and you continue on the case screen."
             },
-            "guidance": "Opening a case does not remove content: from this console, content is removed only by a decision on the case screen. A personal hide affects only the member who made it. The panel is shown only to operators who may read evidence, and opening a case also requires the right to claim cases. Deleted content appears as a placeholder, without its text or author."
+            "guidance": "Opening a case does not remove content: from this console, content is removed only by a decision on the case screen. A personal hide affects only the member who made it. The panel is shown only to operators who may read evidence, and opening a case also requires the right to claim cases. Deleted content appears as a placeholder, without its text or author; when the event's host removed another member's content, the kept text, its author and the host are shown under the placeholder, and a kept link is printed as text."
           },
           "overview": {
             "title": "Activity overview",
@@ -1554,12 +1563,12 @@
           },
           "membershipsChats": {
             "title": "Membership and chat summaries",
-            "purpose": "Bounded rows show participant relationships and thread message counts without exposing message bodies in ordinary activity support.",
+            "purpose": "Bounded rows show participant relationships and thread message counts without exposing message bodies in ordinary activity support. A member the host removed or banned from the event carries that state, its time, who did it (the host, or moderation) and the host's note; a lifted ban is shown as lifted.",
             "actions": {
-              "1": "Check who is host, joined, invited, requested or left.",
+              "1": "Check who is host, joined, invited, requested, left or removed, and whom the host banned.",
               "2": "Use thread counts to locate the relevant safety case rather than reading unrestricted chat."
             },
-            "guidance": "Message content remains behind audited moderation evidence. A relationship row is operational state, not proof of offline attendance."
+            "guidance": "Message content remains behind audited moderation evidence. A relationship row is operational state, not proof of offline attendance. A ban outranks a removal. Removed and banned members are only shown here: the console has no ban or unban control."
           },
           "boundedHistory": {
             "title": "Reports, notifications, decisions and audit",

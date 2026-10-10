@@ -325,6 +325,9 @@ export const ADMIN_HELP_PAGES = [
     sections: [
       "overview",
       "claim",
+      // Host moderation v1: what the event's host was shown of the case and decided. The panel renders only when Core
+      // serves the host's side of the case, which the page learns from the body it reads; the topic stays in the guide.
+      "hostReview",
       "reports",
       "evidence",
       "trailEvidence",

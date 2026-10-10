@@ -1370,12 +1370,12 @@
           },
           "caseQueue": {
             "title": "Moderációs ügyek",
-            "purpose": "A sorok összefoglalják az ügyazonosítót, célt, queue-t, súlyosságot, állapotot, határidőt, bejelentésszámot, assignee-t és eszkalációs állapotot.",
+            "purpose": "A sorok összefoglalják az ügyazonosítót, célt, queue-t, súlyosságot, állapotot, határidőt, bejelentésszámot, assignee-t és eszkalációs állapotot. Üzenetügynél a cél megnevezi, hol van a bejelentett tartalom – falposzt vagy falkomment, eseménychat-üzenet vagy privát beszélgetés üzenete –, egy jelvény pedig azt mutatja, látja-e az ügyet az esemény hostja, és hogyan döntött. Ha a tagot több eseménynél is bejelentették, a jelvény azt mutatja, hány host látja az ügyet, és közülük hány döntött.",
             "actions": {
               "1": "A feladathoz és SLA-prioritáshoz illeszkedő pontos ügyet nyisd meg.",
               "2": "Frissíts, ha egy másik moderátor lefoglalhatta vagy lezárhatta."
             },
-            "guidance": "A lista nem döntési felület. A bizonyíték, összeférhetetlenség, legal hold és megváltoztathatatlan resolution az ügy részleteiben található. A külsőesemény-jelvény nem tagi szervezőt jelöl, nem egy UID 0 azonosítójú tagi fiókot."
+            "guidance": "A lista nem döntési felület. A bizonyíték, összeférhetetlenség, legal hold és megváltoztathatatlan resolution az ügy részleteiben található. A külsőesemény-jelvény nem tagi szervezőt jelöl, nem egy UID 0 azonosítójú tagi fiókot. A host döntése soha nem zárja le az ügyet: amit a host megtartott, vagy amiben intézkedett, az itt továbbra is moderátorra vár."
           }
         }
       },
@@ -1390,7 +1390,7 @@
         "sections": {
           "overview": {
             "title": "Ügyáttekintés",
-            "purpose": "Az áttekintés kitakart, szerver által adott queue-állapotot, célazonosságot, súlyosságot, SLA-t, eszkalációt és optimista revíziót mutat.",
+            "purpose": "Az áttekintés kitakart, szerver által adott queue-állapotot, célazonosságot, súlyosságot, SLA-t, eszkalációt és optimista revíziót mutat. A cél megnevezése megmutatja, hol van a bejelentett tartalom (falposzt, falkomment, eseménychat-üzenet vagy privát beszélgetés üzenete), az esemény azonosítója pedig az esemény oldalára visz.",
             "actions": {
               "1": "Ellenőrizd, hogy ez a megfelelő ügy, és vizsgáld meg az összeférhetetlenségi blokkot.",
               "2": "Az állapotjelvényekből értsd meg, engedélyezett-e még a normál kezelés."
@@ -1405,6 +1405,15 @@
               "2": "Munka közben tartsd életben, leálláskor pedig engedd el a lease-t."
             },
             "guidance": "A lease nem fagyasztja be az ügy tényeit. Elavult optimista revíziónál teljes frissítés szükséges."
+          },
+          "hostReview": {
+            "title": "A host döntése",
+            "purpose": "A más tag faltartalmáról, eseménychat-üzenetéről vagy részvételéről szóló bejelentést az appban az esemény hostja is megkapja. Ez a rész megmutatja, látja-e a host ezt az ügyet, vár-e még a host bejövő listájában, és hogyan döntött a host: megtartotta, eltávolította a tartalmat, eltávolította a tagot vagy kitiltotta a tagot. Egy tagról szóló ügy az egész appban egyetlen ügy: ha a tagot több eseménynél is bejelentették, eseményenként külön látszik az adott host döntése.",
+            "actions": {
+              "1": "Döntés előtt nézd meg a host döntését és annak időpontját: amit a host eltávolított, azt a tagok már nem látják, a kitiltott tag faltartalma pedig rejtve van.",
+              "2": "Az esemény oldalán megnézheted a host által eltávolított tartalom megőrzött szövegét, valamint a host által eltávolított és kitiltott tagokat."
+            },
+            "guidance": "A host döntése nem zárja le az ügyet, és nem moderációs döntés: az ügy a queue-ban marad, amíg egy moderátor le nem zárja. A host soha nem látja, ki tett bejelentést, és a bejelentő megjegyzését sem. Ez a rész csak olvasható: a konzolból nem módosítható, amit a host tett."
           },
           "reports": {
             "title": "Bejelentői beküldések",
@@ -1482,12 +1491,12 @@
         "sections": {
           "contentSignals": {
             "title": "Tartalmak és jelzések",
-            "purpose": "A panel azt mutatja, amit a tagok ennél az eseménynél írtak – falposztokat, kommenteket és válaszokat, eseménychat-üzeneteket és értékeléseket –, akkor is, ha senki sem jelentette be, valamint azt, amit egy-egy tag a maga számára elrejtett. Minden sorban látszik a tartalom állapota, szerzője és időpontja, a személyes elrejtések és a bejelentések száma, és az is, ha már tartozik hozzá ügy.",
+            "purpose": "A panel azt mutatja, amit a tagok ennél az eseménynél írtak – falposztokat, kommenteket és válaszokat, eseménychat-üzeneteket és értékeléseket –, akkor is, ha senki sem jelentette be, valamint azt, amit egy-egy tag a maga számára elrejtett. Minden sorban látszik a tartalom állapota, szerzője és időpontja, a személyes elrejtések és a bejelentések száma, és az is, ha már tartozik hozzá ügy. Az eltávolított soron – ahol a Core megadja – az is látszik, hogy a szerzője, az esemény hostja vagy moderációs döntés távolította-e el.",
             "actions": {
               "1": "A lista beolvasásához nyomd meg a „Tartalmak és jelzések megjelenítése” gombot, majd válassz tartalomtípust. A Core minden olvasást a neved alatt naplóz.",
               "2": "Egy sornál a „Moderáció megnyitása” (médiát tartalmazó sornál a „Tartalom és média ellenőrzése”), az esemény egészénél az „Esemény moderálása” gombbal, indoklást megadva nyithatsz új ügyet, vagy léphetsz a meglévőhöz. A munkát az ügy oldalán folytatod."
             },
-            "guidance": "Az ügy megnyitása nem távolít el tartalmat: ebből a konzolból tartalmat csak az ügy oldalán hozott döntés távolít el. A személyes elrejtés csak annál a tagnál érvényes, aki elrejtette. A panelt csak az látja, aki bizonyítékot olvashat; ügyet pedig az nyithat innen, akinek az ügyek átvételére is van joga. A törölt tartalomnak csak a helye látszik, szöveg és szerző nélkül."
+            "guidance": "Az ügy megnyitása nem távolít el tartalmat: ebből a konzolból tartalmat csak az ügy oldalán hozott döntés távolít el. A személyes elrejtés csak annál a tagnál érvényes, aki elrejtette. A panelt csak az látja, aki bizonyítékot olvashat; ügyet pedig az nyithat innen, akinek az ügyek átvételére is van joga. A törölt tartalomnak csak a helye látszik, szöveg és szerző nélkül; ha más tag tartalmát az esemény hostja távolította el, a hely alatt megjelenik a megőrzött szöveg, a szerzője és a host, a megőrzött hivatkozás pedig szövegként."
           },
           "overview": {
             "title": "Aktivitás áttekintése",
@@ -1554,12 +1563,12 @@
           },
           "membershipsChats": {
             "title": "Tagsági és chatösszefoglalók",
-            "purpose": "A korlátozott sorok a résztvevői kapcsolatokat és thread-üzenetszámot mutatják anélkül, hogy normál aktivitástámogatásban üzenettörzset fednének fel.",
+            "purpose": "A korlátozott sorok a résztvevői kapcsolatokat és thread-üzenetszámot mutatják anélkül, hogy normál aktivitástámogatásban üzenettörzset fednének fel. Akit a host eltávolított vagy kitiltott az eseményről, annál látszik ez az állapot, az időpontja, az, hogy ki tette (a host vagy a moderáció), és a host megjegyzése; a feloldott kitiltás feloldottként jelenik meg.",
             "actions": {
-              "1": "Ellenőrizd, ki host, joined, invited, requested vagy left állapotú.",
+              "1": "Ellenőrizd, ki host, joined, invited, requested, left vagy removed állapotú, és kit tiltott ki a host.",
               "2": "A threadszámlálóból keresd meg a releváns biztonsági ügyet korlátlan chatolvasás helyett."
             },
-            "guidance": "Az üzenettartalom auditált moderációs bizonyíték mögött marad. A kapcsolati sor üzemeltetési állapot, nem offline részvétel bizonyítéka."
+            "guidance": "Az üzenettartalom auditált moderációs bizonyíték mögött marad. A kapcsolati sor üzemeltetési állapot, nem offline részvétel bizonyítéka. A kitiltás erősebb az eltávolításnál. Az eltávolított és a kitiltott tagokat a konzol csak megmutatja: kitiltani vagy kitiltást feloldani innen nem lehet."
           },
           "boundedHistory": {
             "title": "Bejelentések, notificationök, döntések és audit",

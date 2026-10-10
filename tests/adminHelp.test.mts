@@ -155,7 +155,8 @@ test("every inventoried functional section has detailed English and Hungarian he
   // The submission system adds two on /dates/configuration: the third-party event pins and the submission leaderboard (282).
   // Friending Start adds the methods panel on /configuration (radar, touch), which has its own revision and its own save (283).
   // The event page's "Content & signals" panel, which shipped with no topic, gets one (284).
-  assert.equal(totalSections, 284, "review the functional-section census when the UI changes");
+  // Host moderation adds the case page's "Host review" section: what the event's host was shown and decided (285).
+  assert.equal(totalSections, 285, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [
@@ -236,6 +237,8 @@ test("independently saved or operator-facing embedded tools have dedicated help 
     appearance: ["landing", "landingButtons", "landingFooter", "landingQr", "modeSwitcher", "saving"],
     // The event page's audited "Content & signals" panel: its own reads, and the way into a case.
     datesActivityDetail: ["contentSignals"],
+    // What the event's host was shown of a case and decided about it.
+    datesModerationDetail: ["hostReview"],
   };
   for (const [key, sections] of Object.entries(required)) {
     const page = ADMIN_HELP_PAGES.find((entry) => entry.key === key);
@@ -283,6 +286,54 @@ test("the event page guide documents the Content & signals panel by the names th
     assert.match(topic.guidance, locale === "en"
       ? /shown only to operators who may read evidence, and opening a case also requires the right to claim cases/
       : /csak az látja, aki bizonyítékot olvashat; ügyet pedig az nyithat innen, akinek az ügyek átvételére is van joga/u);
+  }
+});
+
+test("host moderation is documented where the operator meets it: the queue, the case and the event page, in both languages and in the console's own words", async () => {
+  const caseGuide = ADMIN_HELP_PAGES.find((entry) => entry.key === "datesModerationDetail");
+  assert.ok(caseGuide);
+  // The section sits between the claim panel and the reports, and so does its topic.
+  assert.deepEqual(caseGuide.sections.slice(0, 4), ["overview", "claim", "hostReview", "reports"]);
+  const casePage = await readFile(path.join(root, "app", "(dashboard)", "dates", "moderation", "[caseId]", "page.tsx"), "utf8");
+  const mounted = casePage.indexOf("<DatesCaseHostReview ");
+  assert.ok(mounted > casePage.indexOf('{t("claimTitle")}') && mounted < casePage.indexOf('{t("reportsTitle")}'));
+
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(await readFile(path.join(root, "messages", `${locale}.json`), "utf8"));
+    const pages = messages.adminHelp.pages, dates = messages.datesAdmin, hu = locale === "hu";
+    // The case guide: the topic carries the section's own title, names the four decisions, and says what a host's decision is not.
+    const topic = pages.datesModerationDetail.sections.hostReview;
+    assert.equal(topic.title, dates.caseDetail.hostReview.title, locale);
+    assert.match(topic.purpose, hu ? /megtartotta, eltávolította a tartalmat, eltávolította a tagot vagy kitiltotta a tagot/u : /kept it, removed the content, removed the member or banned the member/);
+    assert.match(topic.purpose, hu ? /Egy tagról szóló ügy az egész appban egyetlen ügy/u : /A case about a member is one case for the whole app/);
+    assert.match(topic.guidance, hu ? /^A host döntése nem zárja le az ügyet, és nem moderációs döntés: /u : /^The host's decision does not close the case and is not a moderation decision: /);
+    assert.match(topic.guidance, hu ? /A host soha nem látja, ki tett bejelentést, és a bejelentő megjegyzését sem\./u : /The host is never shown who reported, nor a reporter's note\./);
+    assert.match(topic.guidance, hu ? /csak olvasható/u : /read-only/);
+    // The overview of the case names the target by where the content lives, with the labels the page prints, and the event as a link.
+    const kinds = dates.moderation.targetKinds, lower = (label: string) => label.charAt(0).toLowerCase() + label.slice(1);
+    for (const label of [kinds.wall_post, kinds.wall_comment, kinds.activity_chat, kinds.direct_chat]) {
+      assert.ok(pages.datesModerationDetail.sections.overview.purpose.includes(lower(label)), `${locale} case overview: ${label}`);
+      assert.ok(pages.datesModeration.sections.caseQueue.purpose.includes(lower(label)), `${locale} queue: ${label}`);
+    }
+    assert.match(pages.datesModerationDetail.sections.overview.purpose, hu ? /az esemény azonosítója pedig az esemény oldalára visz/u : /the event is a link to its page/);
+    // The queue guide: the badge, and that a host's decision never closes a case.
+    assert.match(pages.datesModeration.sections.caseQueue.purpose, hu ? /egy jelvény pedig azt mutatja, látja-e az ügyet az esemény hostja, és hogyan döntött/u
+      : /a badge says whether the event's host is shown the case and what the host decided/);
+    assert.match(pages.datesModeration.sections.caseQueue.guidance, hu ? /A host döntése soha nem zárja le az ügyet/u : /A host's decision never closes a case/);
+    // The event guide: removed and banned members, and that the console only shows them.
+    const members = pages.datesActivityDetail.sections.membershipsChats;
+    assert.match(members.purpose, hu ? /Akit a host eltávolított vagy kitiltott az eseményről/u : /A member the host removed or banned from the event/);
+    assert.match(members.purpose, hu ? /a feloldott kitiltás feloldottként jelenik meg/u : /a lifted ban is shown as lifted/);
+    assert.match(members.guidance, hu ? /A kitiltás erősebb az eltávolításnál\..*kitiltani vagy kitiltást feloldani innen nem lehet/u : /A ban outranks a removal\..*the console has no ban or unban control/);
+    // ... and content the host removed, in the topic of the panel that shows it.
+    const content = pages.datesActivityDetail.sections.contentSignals;
+    assert.match(content.purpose, hu ? /a szerzője, az esemény hostja vagy moderációs döntés távolította-e el/u : /whether its author, the event's host or a moderation decision removed it/);
+    assert.match(content.guidance, hu ? /a megőrzött hivatkozás pedig szövegként/u : /a kept link is printed as text/);
+    // One word for the member who hosts an event, in every guide of the feature: the console's "host". "Szervező" /
+    // "organizer" is the console's word for the organizer of an external event, a different party.
+    for (const section of [topic, members, content, pages.datesModeration.sections.caseQueue]) {
+      assert.doesNotMatch(JSON.stringify(section).replace(/nem tagi szervezőt|non-member organizer/gu, ""), /szervező|organizer|házigazda/iu, locale);
+    }
   }
 });
 
