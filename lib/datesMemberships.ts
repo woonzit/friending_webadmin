@@ -54,7 +54,7 @@ export type DatesMemberships = {
   counts: { removed: number; banned: number } | null;
 };
 
-/** Core's limit of a host's note (DatesHostModerationPolicy::NOTE_LIMIT), in characters. */
+/** Core's limit of a host's note (DatesHostModerationPolicy::NOTE_LIMIT), in graphemes. */
 export const DATES_MEMBERSHIP_NOTE_MAX = 200;
 export const DATES_MEMBERSHIP_BAN_STATES = ["active", "lifted"] as const;
 
@@ -62,7 +62,8 @@ const record = (value: unknown): value is Record<string, unknown> => value !== n
 const epoch = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0 && value <= 8_640_000_000_000;
 /** A member id, or the 0 Core leaves where there is none. */
 const uidOrNone = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
-const noteText = (value: unknown): value is string => typeof value === "string" && Array.from(value).length <= DATES_MEMBERSHIP_NOTE_MAX;
+const noteGraphemes = new Intl.Segmenter("en", { granularity: "grapheme" });
+const noteText = (value: unknown): value is string => typeof value === "string" && [...noteGraphemes.segment(value)].length <= DATES_MEMBERSHIP_NOTE_MAX;
 /** An absent key and a `null` are both "the row has none". */
 const none = (value: unknown): value is null | undefined => value === null || value === undefined;
 const member = (value: number | null | undefined): number | null => typeof value === "number" && value > 0 ? value : null;
