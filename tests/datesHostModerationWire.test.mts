@@ -396,7 +396,7 @@ test("event content: an addition that is not what Core writes fails the page as 
     "link: missing": (row) => { delete row.host_removed.link; },
     "link.url: not https": (row) => { row.host_removed.link.url = "http://example.org/course"; }, "link.url: a script": (row) => { row.host_removed.link.url = "javascript:alert(1)"; },
     "link.url: with a space": (row) => { row.host_removed.link.url = "https://example.org/a b"; }, "link.url: two lines": (row) => { row.host_removed.link.url = "https://example.org/a\nhttps://b"; },
-    "link.url: too long": (row) => { row.host_removed.link.url = "https://example.org/" + "a".repeat(2048); }, "link.url: a number": (row) => { row.host_removed.link.url = 5; },
+    "link.url: beyond Core's canonical stored ceiling": (row) => { row.host_removed.link.url = "https://example.org/" + "a".repeat(6382); }, "link.url: a number": (row) => { row.host_removed.link.url = 5; },
     "had_media: a number": (row) => { row.host_removed.had_media = 1; }, "had_media: missing": (row) => { delete row.host_removed.had_media; },
     "at: negative": (row) => { row.host_removed.at = -1; }, "at: text": (row) => { row.host_removed.at = "1790000000"; },
     // An erased host is `null` on the wire, never 0.

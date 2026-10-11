@@ -32,7 +32,10 @@ export const EVENT_CONTENT_STATES = ["active", "pending", "moderated", "deleted"
 export type EventContentState = typeof EVENT_CONTENT_STATES[number];
 /** Core's page (`DatesEventContentAdminService::content`): a body with more rows is not this route's. */
 export const EVENT_CONTENT_PAGE_SIZE = 20;
-const TEXT_MAX = 16000;
+/** Core writes these grapheme bounds: DatesWallPolicy:15-16, DatesChatPolicy:16,
+ * DatesReviewPolicy:12. DatesEventContentAdminService::row/removal serve text
+ * verbatim; a UTF-16/code-point bound can reject valid multi-code-point text. */
+const TEXT_MAX: Readonly<Record<EventContentRowKind, number>> = { wall_post: 4000, wall_comment: 1000, message: 2000, review: 280 };
 const CURSOR_MAX = 4096;
 
 /** Who took a row down (host moderation v1): its author, the event's host, or a moderation decision. */
@@ -75,7 +78,13 @@ const ID_PREFIX: Readonly<Record<EventReviewKind, string>> = { wall_post: "wpo",
 const oneOf = <T extends string>(values: readonly T[], value: unknown): value is T => typeof value === "string" && (values as readonly string[]).includes(value);
 const count = datesInteger(0);
 const memberUid = datesInteger(1);
-const memberText = (value: unknown): value is string => typeof value === "string" && value.length <= TEXT_MAX * 2 && Array.from(value).length <= TEXT_MAX;
+const textGraphemes = new Intl.Segmenter("en", { granularity: "grapheme" });
+function memberText(value: unknown, kind: EventContentRowKind): value is string {
+  if (typeof value !== "string") return false;
+  let length = 0;
+  for (const _ of textGraphemes.segment(value)) if (++length > TEXT_MAX[kind]) return false;
+  return true;
+}
 const cursor = (value: unknown): value is string => typeof value === "string" && value.length >= 1 && value.length <= CURSOR_MAX;
 const envelope = (value: unknown): value is Record<string, unknown> => datesRecord(value) && value.success === true && value.status_code === 200
   && value.message === 200 && value.status === 200 && value.can_send === 0 && value.event_content_version === 1;
@@ -85,7 +94,7 @@ const envelope = (value: unknown): value is Record<string, unknown> => datesReco
 /** Every field of a row, each of its own type: the id is one of the row's kind, a count is a number, a flag a boolean. */
 function rowFields(row: Record<string, unknown>): row is Record<string, unknown> & EventContentRow {
   return oneOf(EVENT_CONTENT_ROW_KINDS, row.kind) && datesId(ID_PREFIX[row.kind])(row.id)
-    && (row.author_uid === null || memberUid(row.author_uid)) && memberText(row.text)
+    && (row.author_uid === null || memberUid(row.author_uid)) && memberText(row.text, row.kind)
     && oneOf(EVENT_CONTENT_ATTACHMENTS, row.content_kind) && oneOf(EVENT_CONTENT_STATES, row.state)
     && (row.post_id === null || datesId("wpo")(row.post_id)) && (row.root_id === null || datesId("wco")(row.root_id))
     && count(row.created_at) && (row.signal_at === null || count(row.signal_at))
@@ -110,12 +119,18 @@ const commentHasPost = (row: EventContentRow): boolean => row.kind !== "wall_com
 /** A full page and the cursor of the next one, or the last page and none. */
 const paging = (body: Record<string, unknown>, rows: number): boolean => datesBoolean(body.has_more)
   && (body.has_more ? cursor(body.next_cursor) && rows === EVENT_CONTENT_PAGE_SIZE : body.next_cursor === null);
-const LINK_MAX = 2048;
+/** Core 9c172174 SafeExternalFetch:246 bounds INPUT at 2,048 UTF-8 bytes,
+ * :373-383 independently bounds the canonical IDNA host at 253 ASCII bytes,
+ * :290-296 expands each non-ASCII path/query byte into three ASCII characters,
+ * and :298 can insert a slash. This conservative stored-output ceiling is
+ * https prefix + host + 3x remaining input + slash (6,382), not a claim that
+ * all component maxima are simultaneously attainable. No URL is fetched. */
+const LINK_MAX = 8 + 253 + 3 * (2048 - 8) + 1;
 /** A kept link is printed, never followed: one https URL, as Core's wall stores a shared link (`DatesWallPolicy::link`). */
 const keptLink = (value: unknown): value is { url: string } => datesRecord(value) && typeof value.url === "string"
   && value.url.length <= LINK_MAX && /^https:\/\/[^\s\p{Cc}]+$/u.test(value.url);
 /** Every field of what a host removal kept, each of its own type, as the row's own fields are read. */
-const hostRemoved = (value: unknown): value is EventContentHostRemoved => datesRecord(value) && memberText(value.text)
+const hostRemoved = (value: unknown, kind: EventContentRowKind): value is EventContentHostRemoved => datesRecord(value) && memberText(value.text, kind)
   && oneOf(EVENT_CONTENT_ATTACHMENTS, value.kind) && (value.link === null || keptLink(value.link)) && datesBoolean(value.had_media) && count(value.at)
   && (value.by_uid === null || memberUid(value.by_uid)) && (value.author_uid === null || memberUid(value.author_uid));
 /**
@@ -129,7 +144,7 @@ function removalRead(row: Record<string, unknown> & EventContentRow): boolean {
   const said = Object.hasOwn(row, "removed_by"), kept = Object.hasOwn(row, "host_removed");
   if (!said && !kept) return true;
   if (!said || !kept || !(row.removed_by === null || oneOf(EVENT_CONTENT_REMOVERS, row.removed_by))
-    || !(row.host_removed === null || hostRemoved(row.host_removed))) return false;
+    || !(row.host_removed === null || hostRemoved(row.host_removed, row.kind))) return false;
   if (row.removed_by === "moderation" ? row.state !== "moderated" : row.removed_by !== null && row.state !== "deleted") return false;
   return row.host_removed === null || row.removed_by === "host";
 }
