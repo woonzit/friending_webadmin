@@ -122,3 +122,25 @@ test("the event page lists its members through the decoder, and counts the remov
     assert.doesNotMatch(JSON.stringify(copy.members), /szervező|organizer/iu, locale);
   }
 });
+
+// DERIVED: Core's DatesHostModerationPolicy::note delegates to DatesInput::boundedText,
+// whose 200-character boundary uses grapheme_strlen, not the count of code points.
+for (const [name, character] of [["family emoji", "👨‍👩‍👧‍👦"], ["decomposed accents", "a\u0301"], ["flag emoji", "🇭🇺"]] as const) {
+  for (const kind of ["ban", "removal"] as const) test(`${kind} notes accept 200 ${name} and reject 201, as Core does`, () => {
+    const row = structuredClone(ROWS.with_contract.find((item) => item.uid === (kind === "ban" ? 8102 : 8108))!);
+    const note = character.repeat(200);
+    assert.equal([...new Intl.Segmenter("en", { granularity: "grapheme" }).segment(note)].length, 200);
+    assert.ok(Array.from(note).length > 200, "distinguishes graphemes from code points");
+    if (kind === "ban") row.ban.note = note;
+    else row.removal_note = note;
+    const result = datesMemberships([row]);
+    assert.equal(result.rows[0].unreadable, false, "valid text must not hide the member's standing");
+    assert.equal(result.rows[0].standing?.note, note);
+    assert.deepEqual(result.counts, kind === "ban" ? { removed: 0, banned: 1 } : { removed: 1, banned: 0 });
+    for (const locale of ["en", "hu"]) assert.ok(entries(locale, [row]).get(row.uid)!.includes(note));
+    if (kind === "ban") row.ban.note = character.repeat(201);
+    else row.removal_note = character.repeat(201);
+    assert.equal(datesMemberships([row]).rows[0].unreadable, true, "the limit is not removed");
+    assert.equal(datesMemberships([row]).counts, null);
+  });
+}
