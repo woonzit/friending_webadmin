@@ -15,6 +15,7 @@ export type AppearanceMode = "system" | "light" | "dark";
 
 export type RuntimeSettings = {
   people_hero_enabled: Setting<boolean>;
+  passkey_enabled?: Setting<boolean>;
   demo_system_enabled: Setting<boolean>;
   app_appearance_mode: Setting<AppearanceMode>;
   join_session_idle_minutes: Setting<number>;
@@ -74,6 +75,10 @@ export function normalizeRuntimeSettings(raw: unknown): RuntimeSettings | null {
   const value = record(raw);
   if (!value) return null;
   const people = record(value.people_hero_enabled);
+  const passkey = record(value.passkey_enabled);
+  // Older Core has no control. A malformed present control is never shown as off.
+  if (Object.prototype.hasOwnProperty.call(value, "passkey_enabled")
+      && typeof passkey?.value !== "boolean") return null;
   const demo = record(value.demo_system_enabled);
   const appearance = record(value.app_appearance_mode);
   const session = record(value.join_session_idle_minutes);
@@ -110,6 +115,7 @@ export function normalizeRuntimeSettings(raw: unknown): RuntimeSettings | null {
 
   return {
     people_hero_enabled: { value: people.value, ...settingMetadata(people) },
+    ...(passkey ? { passkey_enabled: { value: passkey.value as boolean, ...settingMetadata(passkey) } } : {}),
     demo_system_enabled: { value: demo.value, ...settingMetadata(demo) },
     app_appearance_mode: { value: mode, ...settingMetadata(appearance) },
     public_profile_base_url: {
@@ -134,6 +140,7 @@ export function runtimeSettingsSavePayload(settings: RuntimeSettings) {
     app_appearance_mode: settings.app_appearance_mode.value,
     join_session_idle_minutes: settings.join_session_idle_minutes.value,
   };
+  if (settings.passkey_enabled) payload.passkey_enabled = settings.passkey_enabled.value;
   // Omitted rather than sent empty when this Core does not manage it: the
   // server validates every key it is given, so one unmanaged value would
   // refuse the whole save and block the settings that ARE managed.

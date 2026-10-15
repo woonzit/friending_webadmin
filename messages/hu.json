@@ -7811,6 +7811,11 @@
       "writeRequired": "A szerepköröddel nem módosíthatod az üdvözlő üzenetet. Semmi nem mentődött el.",
       "refused": "A Core elutasította a mentést ({error}). Semmi nem mentődött el.",
       "notApplied": "A mentést nem sikerült visszaigazolni, és a tárolt üzenet eltér a tiédtől, így a módosításod valószínűleg nem ment át. Újratöltöttük a tárolt változatot, a szövegszerkesztőben viszont megmaradt, amit írtál: nézd át, és mentsd el újra."
+    },
+    "passkey": {
+      "section": "Belépés hozzáférési kulccsal",
+      "title": "Passkey engedélyezése az iOS-appban",
+      "copy": "A tagok hozzáférési kulccsal is beléphetnek, és a Beállításokban kezelhetik kulcsaikat. Alapból kikapcsolva. Kikapcsoláskor eltűnnek az app vezérlői, és a szerver tiltja a passkey-műveleteket; a meglévő kulcsok és munkamenetek megmaradnak. Bekapcsolás előtt telepíteni kell a szerveroldali tárolást és az Apple domain-hozzárendelést."
     }
   },
   "signupOptions": {

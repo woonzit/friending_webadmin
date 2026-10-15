@@ -7811,6 +7811,11 @@
       "writeRequired": "Your role cannot change the welcome message. Nothing was saved.",
       "refused": "Core refused the save ({error}). Nothing was saved.",
       "notApplied": "The save could not be confirmed, and the stored message differs from yours, so your change was most likely not applied. The stored version has been reloaded and your text is still in the editor: review it and save again."
+    },
+    "passkey": {
+      "section": "Passkey sign-in",
+      "title": "Enable passkeys in the iOS app",
+      "copy": "Allow members to sign in with a passkey and manage their keys in Settings. Off by default. Turning this off hides the app controls and blocks passkey operations; existing keys and sessions are kept. The server storage prerequisites and Apple domain association must be installed before activation."
     }
   },
   "signupOptions": {

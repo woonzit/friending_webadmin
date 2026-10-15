@@ -114,3 +114,22 @@ test("the website origin is carried through and omitted when unmanaged", () => {
     "https://friending.com",
   );
 });
+
+test("passkey control preserves actual booleans and remains absent on an older Core", () => {
+  for (const enabled of [false, true]) {
+    const normalized = normalizeRuntimeSettings({
+      ...payload(43_200), passkey_enabled: { value: enabled, updated_at: 123, updated_by: "owner@example.test" },
+    });
+    assert.ok(normalized);
+    assert.equal(normalized.passkey_enabled?.value, enabled);
+    assert.equal(runtimeSettingsSavePayload(normalized).passkey_enabled, enabled);
+  }
+  const oldCore = normalizeRuntimeSettings(payload(43_200));
+  assert.ok(oldCore);
+  assert.equal(oldCore.passkey_enabled, undefined);
+  assert.equal("passkey_enabled" in runtimeSettingsSavePayload(oldCore), false);
+  for (const value of [1, 0, "true", "false", null, [], {}]) {
+    assert.equal(normalizeRuntimeSettings({ ...payload(43_200), passkey_enabled: { value } }), null);
+  }
+  assert.equal(normalizeRuntimeSettings({ ...payload(43_200), passkey_enabled: null }), null);
+});

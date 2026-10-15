@@ -115,7 +115,7 @@ export default function ConfigurationPage() {
 
   useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function setBooleanValue(key: "people_hero_enabled" | "demo_system_enabled", value: boolean) {
+  function setBooleanValue(key: "people_hero_enabled" | "demo_system_enabled" | "passkey_enabled", value: boolean) {
     setSettings((current) => current ? {
       ...current,
       [key]: { ...current[key], value },
@@ -306,7 +306,7 @@ export default function ConfigurationPage() {
   }
 
   const rows: Array<{
-    key: "people_hero_enabled" | "demo_system_enabled";
+    key: "people_hero_enabled" | "demo_system_enabled" | "passkey_enabled";
     section: string;
     title: string;
     copy: string;
@@ -324,6 +324,13 @@ export default function ConfigurationPage() {
       copy: t("demoSystemEnabledCopy"),
     },
   ];
+
+  if (settings.passkey_enabled) rows.unshift({
+    key: "passkey_enabled",
+    section: t("passkey.section"),
+    title: t("passkey.title"),
+    copy: t("passkey.copy"),
+  });
 
   return (
     <>
@@ -362,6 +369,7 @@ export default function ConfigurationPage() {
       <div className="section-grid">
         {rows.map((row) => {
           const setting = settings[row.key];
+          if (!setting) return null;
           return (
             <section className="panel" key={row.key}>
               <div className="panel-header"><div><h2>{row.section}</h2></div></div>
