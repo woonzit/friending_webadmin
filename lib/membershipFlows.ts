@@ -207,7 +207,7 @@ export async function membershipCheckPendingGrant(
 export async function membershipMemberAfterGrantNotFound(
   call: MembershipAdminCall,
   uid: number,
-  response: { data?: unknown } | null,
+  response: Awaited<ReturnType<MembershipAdminCall>>,
 ): Promise<MembershipUserDetail | null> {
   const carried = membershipUserDetail(response?.data);
   if (carried && carried.uid === uid && carried.effective_membership.lifecycle_state !== "unavailable") return carried;
