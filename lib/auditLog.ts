@@ -154,6 +154,8 @@ export const OPERATIONAL_RECORD_SAFE_KEYS = [
   "notification_id",
   "outcome",
   "reason_key",
+  // A notification row of the activity page (Core b50e9423): its recipient is not named, only that it was withheld.
+  "recipient_identity_redacted",
   "report_id",
   "reporter_identity_redacted",
   "resolved_at",

@@ -12,8 +12,8 @@ import { datesMemberships } from "../lib/datesMemberships.ts";
 //
 // GENUINE: Core's host moderation console corpus (tests/fixtures/dates_host_moderation_admin_wire, pinned in
 // tests/datesHostModerationWire.test.mts, where the decoder is held to every row): the member rows of one event with
-// the command contract selector and as a Core without host moderation serves them, and a whole event page of another
-// event. DERIVED rows are marked at their use.
+// the command contract selector and without it, and a whole event page of another event. DERIVED rows are marked at
+// their use.
 const corpus = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/dates_host_moderation_admin_wire/${name}.json`, import.meta.url), "utf8"));
 const ROWS = corpus("admin-activity-detail-memberships") as { with_contract: Record<string, any>[]; released: Record<string, any>[] };
 const PAGE = corpus("admin-activity-detail") as { memberships: Record<string, any>[] };
@@ -72,12 +72,15 @@ for (const locale of ["en", "hu"]) test(`${locale}: a banned or removed member s
   assert.doesNotMatch(page.get(8117)!, /href=|dates_restriction/);
   for (const uid of [8112, 8114, 8115]) assert.equal(page.get(uid), `<div class="dates-list-row"><span>UID ${uid}</span><span class="badge">joined</span></div></div>`, String(uid));
 
-  // Absent - the same members from a Core without host moderation: what the row itself says of a removal is shown,
-  // and nothing of a ban or a note. The member Core would list as banned is, to this console, a removed member.
+  // Absent - the same members as a request without the command contract selector is served them: what the row itself
+  // says of a removal is shown - removed, and when - and nothing of a ban or a note, and (Core b50e9423 serves no
+  // `removed_by_uid` / `removed_reason` there) nobody is named as having removed them. The member Core would list as
+  // banned is, to this console, a removed member.
   const released = entries(locale, ROWS.released);
-  assert.ok(released.get(8102)!.endsWith(`<span class="badge badge-warning">${copy.removed}</span>${when(NOW)}${host}</p></div>`));
-  assert.ok(released.get(8108)!.endsWith(`<span class="badge badge-warning">${copy.removed}</span>${when(NOW)}${host}</p></div>`));
-  assert.ok(released.get(8109)!.includes(copy.byModeration));
+  assert.ok(released.get(8102)!.endsWith(`<span class="badge badge-warning">${copy.removed}</span>${when(NOW)}</p></div>`));
+  assert.ok(released.get(8108)!.endsWith(`<span class="badge badge-warning">${copy.removed}</span>${when(NOW)}</p></div>`));
+  assert.ok(released.get(8109)!.endsWith(`<span class="badge badge-warning">${copy.removed}</span>${when(1789999950)}</p></div>`));
+  for (const uid of [8102, 8108, 8109]) assert.equal(released.get(uid)!.includes(copy.byHost) || released.get(uid)!.includes(copy.byModeration), false, String(uid));
   for (const uid of [8104, 8107]) assert.equal(released.get(uid), `<div class="dates-list-row"><span>UID ${uid}</span><span class="badge">none</span></div></div>`, String(uid));
   const all = [...released.values()].join("");
   for (const absent of [copy.banned, copy.banLifted, "Kept insulting other guests.", "Arrived drunk."]) assert.equal(all.includes(absent), false, absent);

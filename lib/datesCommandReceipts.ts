@@ -124,3 +124,22 @@ export function datesCaseResolutionReceipt(value: unknown, request: Fields): boo
     && token(request.action) && value.action === request.action && token(value.case_status) && id("dec", value.decision_id)
     && value.revision === expected + 1 && typeof value.break_glass_used === "boolean";
 }
+
+/**
+ * What a resolution did to its target because the host may not publish (Core b50e9423), read from the receipt's
+ * `target_result` (DatesModerationCommandService::withdrawUnavailableHostsReplacement, DatesModerationTargetService::
+ * skippedDecisionTarget):
+ * - `replacement_withdrawn`: `dismiss` withdrew the waiting replacement (`target_path: "pending_public_revision"`,
+ *   `after.withdrawn: "host_unavailable"`); what is published stays;
+ * - `draft_kept`: `dismiss` closed the review of a first publication (`after.withdrawn` only); the activity stays an
+ *   unpublished draft;
+ * - `restoration_skipped`: an overturn did not restore the content (`after.restoration_skipped: "host_unavailable"`).
+ * `null` for anything else, also from a Core before that release. Read only from a body that is this command's receipt.
+ */
+export type DatesCaseResolutionEffect = "replacement_withdrawn" | "draft_kept" | "restoration_skipped";
+export function datesCaseResolutionEffect(value: unknown): DatesCaseResolutionEffect | null {
+  const result = record(value) ? value.target_result : null, after = record(result) ? result.after : null;
+  if (!record(result) || !record(after)) return null;
+  if (after.withdrawn === "host_unavailable") return result.target_path === "pending_public_revision" ? "replacement_withdrawn" : "draft_kept";
+  return after.restoration_skipped === "host_unavailable" ? "restoration_skipped" : null;
+}

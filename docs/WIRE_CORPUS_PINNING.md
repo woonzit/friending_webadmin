@@ -63,9 +63,39 @@ the help panel explicitly marks absent settings as not returned. The additive
 `effective_by_storefront` answer remains optional for compatibility with old Core.
 Presence retains `date_enabled` and the `date` key; only its EN/HU labels change.
 
-## Dates console pins after D-143 and T-891 (current)
+## AreYouIn port (2026-11-02, current for six corpora)
 
-These supersede the P2a figures below; the tests named here are the authority.
+Six corpora are re-vendored byte for byte (git objects, `git archive`) from Core branch
+`claude/freelove-port2-20261102-core-ayi`, tip `b50e9423931ebce1f55e23905ceafa1f03f17fea` (the AreYouIn
+fix port, rebased on the live Core `e311d69d`). They supersede the rows of the same corpora in the tables
+below. Every source commit is a commit of that lane branch, not yet on Core main: when Core publishes (or
+the branch gets its review-fix tip), re-vendor from the published tip as the reachability rule says.
+
+| Directory | Manifest source | Bodies moved | `fixture_set_sha256` | Pinned in |
+|---|---|---|---|---|
+| `dates_admin_command_wire` | `cc0d70ec` | 3: the revision-bound place receipts gain `media_unavailable: []` | `6e36fff7…4230` | `tests/datesAdminCommandWire.test.mts` |
+| `dates_event_intake_admin_wire` | `cc0d70ec` | 1: the AI-assisted activity detail gains `conflict_of_interest` / `audit_reasons_withheld` | `db972f0c…8951` | `tests/datesIntakeWire.test.mts` |
+| `dates_external_admin_wire` | `cc0d70ec` | 1: the external activity detail, the same two booleans (generator digest moved with Core main `c0de7750`, no body) | `45d8a92c…a007` | `tests/datesExternalWire.test.mts`, `tests/datesAdminCompatibility.test.mts` |
+| `dates_host_moderation_admin_wire` | `cc0d70ec` | 2: the event page (membership rows are Core's allow-list, decisions the case read's metadata, the two booleans) and the membership excerpt | `6f343dbb…3e2f` | `tests/datesHostModerationWire.test.mts` |
+| `dates_moderation_console_wire` | `d03a542f` | 7 queue bodies: capability values only, each `true -> false` | `c73e2f36…ae07` | `tests/datesModerationConsole.test.mts` |
+| `dates_moderation_wire` | `862e5763` | 2 viewer details: one capability value each, `true -> false` | `2652bb98…dd56` | `tests/datesModerationRead.test.mts` |
+
+Webadmin deploys before this Core, so the console reads both shapes. The 16 bodies the port moved are kept
+as the live Core serves them in `tests/fixtures/dates_ayi_live_e311d69d/<corpus>/<file>` (byte copies of
+what Webadmin `7515a72` vendored, byte-identical to the same files at Core `e311d69d`; each pinned by
+sha256). `tests/datesAyiPortCompatibility.test.mts` proves from bytes what moved and nothing else, and reads
+both shapes through the bridge's projection and the pages' decoders: the same cases and the same offered
+actions for the capture's principal, the same activity, members and history panels, and the hold receipt
+with and without `media_unavailable`. What no genuine body holds is DERIVED there and marked: the refusal
+`dates-moderation-host-unavailable`, a dismissal that withdraws a submission, a hold that could not preserve
+a file, the appealed moderator's withheld notes, and an activity page read with a conflict of interest.
+The other Core manifests that moved only in provenance (for example `dates_external_review_wire`) are not
+re-pinned, by the rule at the top.
+
+## Dates console pins after D-143 and T-891
+
+These supersede the P2a figures below; the tests named here are the authority. For the command, intake and
+external corpora the AreYouIn port above supersedes them in turn.
 
 | Directory | Provider tip | Bodies | `fixture_set_sha256` | Pinned in |
 |---|---|---|---|---|
@@ -159,6 +189,8 @@ saves, the default switch and scope saved, an invalid stored row) is DERIVED the
 rows and receipts and is marked so.
 
 ## Host moderation console corpus (2026-10-11)
+
+(Re-vendored since: see "AreYouIn port" above. The `PIN` block now names Core `b50e9423`; the step below is unchanged.)
 
 `dates_host_moderation_admin_wire` (contract `dates-host-moderation-v1`, Core `docs/EVENT_HOST_MODERATION_V1.md`,
 "Console") is copied byte for byte from the git objects of Core

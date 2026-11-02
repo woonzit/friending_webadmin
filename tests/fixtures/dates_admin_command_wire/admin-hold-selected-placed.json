@@ -9,6 +9,7 @@
     "revision": 2,
     "hold_change": "placed",
     "evidence_changed_count": 2,
+    "media_unavailable": [],
     "idempotency_replayed": false,
     "server_now": 1790000000,
     "message": 200,

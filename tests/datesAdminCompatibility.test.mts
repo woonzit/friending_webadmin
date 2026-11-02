@@ -108,14 +108,27 @@ const MOVED: Record<string, [string, number, number]> = {
   "admin-moderation-resolve.json": ["revision", 3, 4], "admin-moderation-resolve-replay.json": ["revision", 3, 4],
   "admin-moderation-detail-closed.json": ["case.revision", 3, 4], "admin-moderation-detail-purged.json": ["case.revision", 3, 5],
 };
+/**
+ * The AreYouIn port (Core branch claude/freelove-port2-20261102-core-ayi, b50e9423): the activity detail gains the
+ * operator's `conflict_of_interest` and `audit_reasons_withheld` on every request, with the selector or without it.
+ * Appended keys only; the released decoders tolerate a key beside the activity and the event (below, and the released
+ * console's own wire tests).
+ */
+const APPENDED: Record<string, string[]> = { [ACTIVITY_DETAIL]: ["conflict_of_interest", "audit_reasons_withheld"] };
 
-test("D-143 / T-891: what the provider serves WITHOUT the selector is the released corpus, body for body, but four revision values", () => {
-  // The provider's selector-less capture at its pinned tip: 138 bodies, the same names as main's; 134 byte-identical, and
-  // in the four others one revision value moved - no key, no other value. Only the manifest (the source binding) differs.
+test("D-143 / T-891: what the provider serves WITHOUT the selector is the released corpus, body for body, but four revision values and the activity page's two booleans", () => {
+  // The provider's selector-less capture at its pinned tip: 138 bodies, the same names as main's; 133 byte-identical; in
+  // four one revision value moved - no key, no other value - and one gained two keys and nothing else. Beside the bodies
+  // only the manifest (the source binding) differs.
   const names = files(RELEASED_CORPUS);
   assert.deepEqual(files(SELECTORLESS_BODIES), names); assert.equal(names.length, 138);
   const differing = names.filter((name) => !readFileSync(new URL(name, SELECTORLESS_BODIES)).equals(readFileSync(new URL(name, RELEASED_CORPUS))));
-  assert.deepEqual(differing, Object.keys(MOVED).sort());
+  assert.deepEqual(differing, [...Object.keys(MOVED), ...Object.keys(APPENDED)].sort());
+  for (const [name, keys] of Object.entries(APPENDED)) {
+    const now = body(SELECTORLESS_BODIES, name), then = body(RELEASED_CORPUS, name);
+    for (const key of keys) { assert.equal(typeof now[key], "boolean", `${name}: ${key}`); delete now[key]; }
+    assert.deepEqual(now, then, name);
+  }
   for (const [name, [path, before, after]] of Object.entries(MOVED)) {
     const now = body(SELECTORLESS_BODIES, name), then = body(RELEASED_CORPUS, name), keys = path.split(".");
     const parent = (value: any) => keys.slice(0, -1).reduce((node, key) => node[key], value);
@@ -124,7 +137,10 @@ test("D-143 / T-891: what the provider serves WITHOUT the selector is the releas
   }
   const provider = JSON.parse(readFileSync(new URL("manifest.json", SELECTORLESS_BODIES), "utf8"));
   assert.notEqual(provider.fixture_set_sha256, RELEASED_CORPUS_PIN.set); assert.notEqual(provider.source_commit, RELEASED_CORPUS_PIN.source_commit);
-  assert.equal(provider.provenance.generator_sha256, body(RELEASED_CORPUS, "manifest.json").provenance.generator_sha256, "the same generator");
+  // The generator is the same file but for Core main's c0de7750 (every PHP child runs on the suite's interpreter), which
+  // changes no body; the bodies above are the proof.
+  assert.equal(provider.provenance.generator, body(RELEASED_CORPUS, "manifest.json").provenance.generator, "the same generator");
+  assert.equal(provider.provenance.generator_sha256, "0421d5860c2acdb8d184651ef5e0b548d39bf5e74ffbc4642808f6ce5235f528");
 });
 
 test("D-143: the released console's decoder modules and wire tests are vendored byte-identical to Webadmin 7825bc13", () => {

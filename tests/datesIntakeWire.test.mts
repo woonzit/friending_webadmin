@@ -33,17 +33,26 @@ import {
 // The manifest digest and the generator digest were read from Core's git objects
 // at a5bbba5c, not from the vendored copy; the source commit, the source checksum
 // and the set digest are that manifest's.
+// Re-vendored byte for byte from Core branch claude/freelove-port2-20261102-core-ayi, tip
+// b50e9423931ebce1f55e23905ceafa1f03f17fea (manifest source cc0d70ec; the AreYouIn port on live Core e311d69d): ONE
+// body changed, `admin-activity-detail-ai-assisted.json`, by two appended lines - `conflict_of_interest` and
+// `audit_reasons_withheld`, both false. The pin test proves it from bytes as above; the live body is kept in
+// tests/fixtures/dates_ayi_live_e311d69d. The manifest's scoped source list grew by 17 files.
 // Rows marked DERIVED are built from a genuine body for a branch no genuine
 // body carries; they are named in the lane's report.
 const DIRECTORY = new URL("./fixtures/dates_event_intake_admin_wire/", import.meta.url);
-const SOURCE = "7175aabe9268a3e42b2aa832add2049b699a59a4";
-const SOURCE_SHA = "947f16316b38093e57fbe0d0aa64cecdfd6f416d15a354b28082c9bb13aad336";
-const MANIFEST_SHA = "000bedc0f81a517a3ca17b23b32fb53f257b22364eab70c26ed3248e3e5f8aa1";
+const SOURCE = "cc0d70ece8d9fca31813bb60c15d8f0a02c80950";
+const SOURCE_SHA = "e32277af508b626044be2578c57425cc1861bab7c00b2f20cf857cc04535993b";
+const MANIFEST_SHA = "a294bd9e43d6ef96d18bfc722dcde68c1044991383e2664bc0730a3dd8ac509b";
 const GENERATOR_SHA = "8be05a0aaa3838c449e8efc6fc069b5b2e68e587e7ecab5984b3fda2cc1af3e6";
-const SET_SHA = "a672e1e6462e5d7db462f261ecb932647fe8b05de4f878db164e4aa0ad7ecaca";
-// The pin before this one: its set digest, and the one body that differs from it.
-const PREVIOUS_SET_SHA = "4415fcb2f85025205eda028fa1e10591b457355e688627e5f438648843fbe79c";
-const PREVIOUS_CONFIGURATION_SHA = "28c8810e13c2469451526b2eea2de8c671ea0a3eb50c7bd0827c796aa5c2bc63";
+const SET_SHA = "db972f0ce8af90b3af999c58253a1540dd9598acf2fb00000386ae63cec88951";
+// The pin before this one (Core a5bbba5c, the corpus the live Core e311d69d serves): its set digest, and the one body
+// that differs from it.
+const PREVIOUS_SET_SHA = "a672e1e6462e5d7db462f261ecb932647fe8b05de4f878db164e4aa0ad7ecaca";
+const PREVIOUS_ACTIVITY_DETAIL_SHA = "cc0b89c299cda17fcf19f0c8999acbd0ba86ff33263c7941d007b92f0bf8adf3";
+// The pin before that one (Core lane tip 62cee304): its set digest, and the one further body that differs from it.
+const EARLIER_SET_SHA = "4415fcb2f85025205eda028fa1e10591b457355e688627e5f438648843fbe79c";
+const EARLIER_CONFIGURATION_SHA = "28c8810e13c2469451526b2eea2de8c671ea0a3eb50c7bd0827c796aa5c2bc63";
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`${name}.json`, DIRECTORY), "utf8"));
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
@@ -117,7 +126,7 @@ test("intake corpus is the complete 148-response genuine capture with independen
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
   assert.match(manifest.provenance.transport, /real HTTP.*application\/x-www-form-urlencoded/s);
   assert.equal(manifest.fixture_count, 161);
-  assert.equal(manifest.provenance.source_paths.length, 303);
+  assert.equal(manifest.provenance.source_paths.length, 320);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   const names = [...LISTS.map((name) => `admin-list-${name}.json`), ...[...DETAILS, ...MEMBER_DETAILS].map((name) => `admin-detail-${name}.json`),
     ...CREATES.map((name) => `admin-create-${name}.json`), ...LEASES.map((name) => `admin-lease-${name}.json`),
@@ -138,14 +147,21 @@ test("intake corpus is the complete 148-response genuine capture with independen
     return `${entry.file}\0${entry.sha256}`;
   });
   assert.equal(hash(lines.join("\n")), SET_SHA);
-  // Against the previous pin, from bytes: the configuration read without its 74 appended lines (the four leaderboard
-  // rows, which follow the last row it had) is the previous body, and with that one digest the previous set comes back.
+  // Against the previous pin, from bytes: the AI-assisted activity detail without its two appended lines (the activity
+  // page's conflict booleans, Core b50e9423) is the previous body, and with that one digest the previous set comes back.
+  const activity = readFileSync(new URL("admin-activity-detail-ai-assisted.json", DIRECTORY), "utf8").split("\n");
+  assert.deepEqual(activity.splice(95, 2).map((line) => line.trim()), ['"conflict_of_interest": false,', '"audit_reasons_withheld": false,']);
+  assert.equal(hash(activity.join("\n")), PREVIOUS_ACTIVITY_DETAIL_SHA);
+  const previous = lines.map((line: string) => line.startsWith("admin-activity-detail-ai-assisted.json\0") ? `admin-activity-detail-ai-assisted.json\0${PREVIOUS_ACTIVITY_DETAIL_SHA}` : line);
+  assert.equal(hash(previous.join("\n")), PREVIOUS_SET_SHA);
+  // And against the pin before that: the configuration read without its 74 appended lines (the four leaderboard rows,
+  // which follow the last row it had) is that body, and with both digests that set comes back.
   const configuration = readFileSync(new URL("admin-configuration.json", DIRECTORY), "utf8").split("\n");
   const appended = configuration.splice(896, 74);
   assert.deepEqual([appended[0].trim(), appended[2].trim(), appended.at(-1)!.trim()], ["},", '"key": "dates_suggestion_leaderboard_enabled",', '"updated_at": null']);
   assert.equal(appended.filter((line) => line.includes('"key": "dates_suggestion_leaderboard_')).length, 4);
-  assert.equal(hash(configuration.join("\n")), PREVIOUS_CONFIGURATION_SHA);
-  assert.equal(hash(lines.map((line: string) => line.startsWith("admin-configuration.json\0") ? `admin-configuration.json\0${PREVIOUS_CONFIGURATION_SHA}` : line).join("\n")), PREVIOUS_SET_SHA);
+  assert.equal(hash(configuration.join("\n")), EARLIER_CONFIGURATION_SHA);
+  assert.equal(hash(previous.map((line: string) => line.startsWith("admin-configuration.json\0") ? `admin-configuration.json\0${EARLIER_CONFIGURATION_SHA}` : line).join("\n")), EARLIER_SET_SHA);
   assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code === 200).length, 108);
   assert.equal(manifest.fixtures.filter((entry: { status_code: number }) => entry.status_code !== 200).length, 53);
 });

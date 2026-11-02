@@ -29,17 +29,24 @@ const DIRECTORY = new URL("./fixtures/dates_external_admin_wire/", import.meta.u
 // (`case.revision` 3 -> 4), admin-moderation-detail-purged (`case.revision` 3 -> 5). No key changed; the generator is
 // the same file (same digest); the resolution request of the capture now carries `expected_revision: 3`
 // (tests/support/dates_external_console_capture.php at 33265e46). The other 134 bodies are byte-identical to main's.
-const SOURCE = "b5118909b62aa9a21571f01f28c0927252c301ae";
-const SOURCE_SHA = "d2b51f096ac0739eb5840dc06f2953141b4d3cb8bfa3907a5f6e4c2008ea1c3d";
-const MANIFEST_SHA = "1cfe811fde641ccc802bdd26f7bcd9ed21b4f605faba54781b622c10f6529aa9";
-const GENERATOR_SHA = "51e746e0946ddac4319b56cdff0adcc7107a320ed08e1ca1a1f70fa7d90fbf3d";
-const SET_SHA = "ba9ebf7a93d120d0ecd8c4efc94ce67964cdb2a86c248b3d389d974c4858bae7";
+// Re-vendored byte for byte from Core branch claude/freelove-port2-20261102-core-ayi, tip
+// b50e9423931ebce1f55e23905ceafa1f03f17fea (manifest source cc0d70ec; the AreYouIn port on live Core e311d69d): one
+// more body differs from main's, the external activity detail, by two appended lines - the activity page's
+// `conflict_of_interest` and `audit_reasons_withheld`, both false (APPENDED). The generator digest moved with Core
+// main's c0de7750 (the suite interpreter for every PHP child), which changes no body.
+const SOURCE = "cc0d70ece8d9fca31813bb60c15d8f0a02c80950";
+const SOURCE_SHA = "43a148408585e1bc4c7b650a2a2b83cb88e68cf193ed5ba8dd4ad314b22155a5";
+const MANIFEST_SHA = "422dc27c394c4301555f8d11139f9724d4114f334ba7a3e83f1f70f20f21498d";
+const GENERATOR_SHA = "0421d5860c2acdb8d184651ef5e0b548d39bf5e74ffbc4642808f6ce5235f528";
+const SET_SHA = "45d8a92c55abb3d0fe3ab32fb75ccca5b872cdb41e9712abb460eade9215a007";
 /** The released set (Core main 07215298) and the four bodies that differ from it, with the one value that moved. */
 const RELEASED_SET_SHA = "d84a3e162703db1578db59f0a0a972de24fffc8562f23a13bf5715101306e4ed";
 const MOVED: Record<string, [string, number, number]> = {
   "admin-moderation-resolve.json": ["revision", 3, 4], "admin-moderation-resolve-replay.json": ["revision", 3, 4],
   "admin-moderation-detail-closed.json": ["case.revision", 3, 4], "admin-moderation-detail-purged.json": ["case.revision", 3, 5],
 };
+/** Core b50e9423: bodies that differ from main's by appended keys only, each `false` in this capture. */
+const APPENDED: Record<string, string[]> = { "admin-activity-detail-external.json": ["conflict_of_interest", "audit_reasons_withheld"] };
 /** The corpus of Core main 07215298, vendored for D-143: the bodies this directory must equal. */
 const RELEASED = new URL("./fixtures/dates_external_admin_wire_released/", import.meta.url);
 const LISTS = ["admin", "canceled", "empty", "filter-empty", "page-empty", "viewer"];
@@ -72,7 +79,7 @@ test("external console corpus is the complete 138-response genuine capture with 
   assert.equal(manifest.provenance.generator, "tests/dates_external_admin_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
   assert.equal(manifest.fixture_count, 138);
-  assert.equal(manifest.provenance.source_paths.length, 316);
+  assert.equal(manifest.provenance.source_paths.length, 365);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   const names = ["admin-activity-list-external.json", ...LISTS.map((name) => `admin-list-${name}.json`),
     ...DETAILS.map((name) => `admin-detail-${name}.json`), ...PLACES.map((name) => `admin-places-${name}.json`),
@@ -100,11 +107,20 @@ test("external console corpus is the complete 138-response genuine capture with 
   });
   assert.equal(hash(lines.join("\n")), SET_SHA);
   // Without the selector Core serves the released P1 shapes: this corpus equals the corpus of Core main body for body,
-  // except the four bodies in which T-891's hold moved one revision value - and in those, that value is ALL that moved.
+  // except the four bodies in which T-891's hold moved one revision value - and in those, that value is ALL that moved -
+  // and the activity detail, to which the AreYouIn port appended two booleans and nothing else.
   const released = JSON.parse(readFileSync(new URL("manifest.json", RELEASED), "utf8"));
   assert.equal(released.fixture_set_sha256, RELEASED_SET_SHA); assert.notEqual(hash(readFileSync(new URL("manifest.json", RELEASED))), MANIFEST_SHA);
   const differing = names.filter((name) => !readFileSync(new URL(name, DIRECTORY)).equals(readFileSync(new URL(name, RELEASED))));
-  assert.deepEqual(differing, Object.keys(MOVED).sort());
+  assert.deepEqual(differing, [...Object.keys(MOVED), ...Object.keys(APPENDED)].sort());
+  for (const [name, keys] of Object.entries(APPENDED)) {
+    const now = fixture(name.slice(0, -5)), then = JSON.parse(readFileSync(new URL(name, RELEASED), "utf8"));
+    for (const key of keys) { assert.equal(now[key], false, `${name}: ${key}`); assert.equal(Object.hasOwn(then, key), false); delete now[key]; }
+    assert.deepEqual(now, then, `${name}: nothing but ${keys.join(", ")} was added`);
+    // Byte for byte too: without the appended lines the text is main's.
+    assert.equal(readFileSync(new URL(name, DIRECTORY), "utf8").split("\n").filter((line) => !keys.some((key) => line.trim() === `"${key}": false,`)).join("\n"),
+      readFileSync(new URL(name, RELEASED), "utf8"), name);
+  }
   for (const [name, [path, before, after]] of Object.entries(MOVED)) {
     const now = fixture(name.slice(0, -5)), then = JSON.parse(readFileSync(new URL(name, RELEASED), "utf8"));
     const keys = path.split("."), at = (body: any) => keys.slice(0, -1).reduce((node, key) => node[key], body);

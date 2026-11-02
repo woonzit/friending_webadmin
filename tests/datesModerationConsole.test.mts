@@ -7,12 +7,16 @@ import { datesModerationQueue, datesModerationConsoleSla, datesConsoleCommandRec
   isDatesConsoleCommand } from "../lib/datesModerationRead.ts";
 
 // Exact provider capture from Core 262fba782bc23727a376fe499e8c44512c0de711.
+// Re-vendored byte for byte from Core branch claude/freelove-port2-20261102-core-ayi, tip b50e9423 (manifest source
+// d03a542f; the AreYouIn port on live Core e311d69d): seven queue bodies moved, each in capability VALUES only - a
+// support viewer is not offered a claim, nor a moderator an appeal (no key added or removed). The live bodies and the
+// proof are in tests/fixtures/dates_ayi_live_e311d69d and tests/datesAyiPortCompatibility.test.mts.
 // Synthetic variants below are negative/compatibility controls, never captures.
 const DIRECTORY = new URL("./fixtures/dates_moderation_console_wire/", import.meta.url);
-const SOURCE = "51fcf7e4c2eab33280f314e042788c39c8b534b4";
-const MANIFEST_SHA = "8dbd2491fa6cd6fb3d1dacbf5c2ef793d7a84dab84efb08cd05e117665db6c90";
+const SOURCE = "d03a542fbe1275572498b7d0d514c6c641dfcf31";
+const MANIFEST_SHA = "fa8b519d863071732ace5e3c2640fa0a071b319836c69f1455c81debf19c9ecb";
 const GENERATOR_SHA = "d3f561f96747dd935d661884c3b2318d099a0afb21f3924e17a773855c90dcf0";
-const SET_SHA = "4f390a3e1e06e71cf237f7f4b37331d17d1da2ffda9e0dcc8fd15329c41f5151";
+const SET_SHA = "c73e2f3693fcb51fd07a6672f72127e1aa74e944d8d71f1a1a7037bf4a9fae07";
 const QUEUES = ["appeals", "breached", "closed", "conflicted", "mine", "page-empty", "page-one", "page-two",
   "search", "unassigned", "unknown-role"];
 const COMMANDS = ["claim", "escalate", "heartbeat", "heartbeat-replay", "note", "release", "release-expired", "release-replay"];

@@ -15,16 +15,18 @@ rule; the provider is the Core lane's contract `dates-event-intake-admin-v1`.
 - Provider: Core's event-intake contract (T-884, T-886, D-143, D-145), first
   pinned at the tip `62cee304c68eaeda456ddf0b042cb340b8702d48` of the Core
   branch `claude/t865-p2-core` (a lane commit, not an ancestor of Core main).
-  The intake corpus is now vendored byte-identically from Core main
-  `a5bbba5c2d12351e4b012e4a1f3bcdba1d9e359b`
-  (`tests/fixtures/dates_event_intake_admin_wire/`, 161 bodies, set `a672e1e6…`;
-  against that first pin, set `4415fcb2…`, only the configuration read differs,
-  by the four appended rows of the submission leaderboard -
-  `docs/WIRE_CORPUS_PINNING.md`); every console request in it carries the Admin
-  intake contract selector (below). The P1 routes WITHOUT the selector are Core
-  main's capture (`tests/fixtures/dates_external_admin_wire/`, 138 bodies, set
-  `ba9ebf7a…`: the released set but four revision values, T-891), which the P2
-  tip serves body for body.
+  The intake corpus is now vendored byte-identically from the AreYouIn port,
+  Core branch `claude/freelove-port2-20261102-core-ayi` tip `b50e9423`
+  (`tests/fixtures/dates_event_intake_admin_wire/`, 161 bodies, set `db972f0c…`;
+  against the Core main `a5bbba5c` pin, set `a672e1e6…`, only the AI-assisted
+  activity detail differs, by its two appended conflict booleans; against the
+  first pin, set `4415fcb2…`, also the configuration read, by the four appended
+  rows of the submission leaderboard - `docs/WIRE_CORPUS_PINNING.md`); every
+  console request in it carries the Admin intake contract selector (below). The
+  P1 routes WITHOUT the selector are the same Core's capture
+  (`tests/fixtures/dates_external_admin_wire/`, 138 bodies, set `45d8a92c…`: the
+  released set but four revision values, T-891, and the activity detail's two
+  appended booleans), which the P2 tip serves body for body.
 - **Order: Core first, then this console.** The intake pages need Core's P2
   routes, the `existing` marker on the create receipt and `suggestions_enabled`
   on the queue; an earlier Core serves none of them.

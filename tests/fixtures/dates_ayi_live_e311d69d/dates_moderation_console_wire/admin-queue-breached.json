@@ -1,0 +1,71 @@
+{
+    "success": true,
+    "status_code": 200,
+    "cases": [
+        {
+            "case_id": "cas_00000000000000000000000000000001",
+            "queue": "activities",
+            "case_kind": "reports",
+            "target_type": "activity",
+            "target_id": "act_00000000000000000000000000000001",
+            "target_uid": 70101,
+            "activity_id": "act_00000000000000000000000000000001",
+            "status": "new",
+            "severity": "high",
+            "escalated": false,
+            "distinct_reporter_count": 1,
+            "report_count": 2,
+            "assignee_email": null,
+            "claimed_at": null,
+            "claim_expires_at": null,
+            "sla_due_at": 1789999940,
+            "sla_breached": true,
+            "revision": 1,
+            "created_at": 1789999100,
+            "updated_at": 1789999990,
+            "conflict_of_interest": false,
+            "capabilities": {
+                "can_claim": true,
+                "can_read_evidence": false,
+                "can_resolve": false,
+                "can_break_glass": false
+            }
+        },
+        {
+            "case_id": "cas_00000000000000000000000000000003",
+            "queue": "reviews",
+            "case_kind": "reports",
+            "target_type": "review",
+            "target_id": "rev_00000000000000000000000000000003",
+            "target_uid": 70103,
+            "activity_id": null,
+            "status": "appealed",
+            "severity": "medium",
+            "escalated": false,
+            "distinct_reporter_count": 0,
+            "report_count": 0,
+            "assignee_email": "other@example.invalid",
+            "claimed_at": 1789970100,
+            "claim_expires_at": 1789999900,
+            "sla_due_at": 1789992800,
+            "sla_breached": true,
+            "revision": 1,
+            "created_at": 1789970000,
+            "updated_at": 1789999990,
+            "conflict_of_interest": false,
+            "capabilities": {
+                "can_claim": true,
+                "can_read_evidence": false,
+                "can_resolve": false,
+                "can_break_glass": false
+            }
+        }
+    ],
+    "page": 1,
+    "limit": 40,
+    "total": 2,
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

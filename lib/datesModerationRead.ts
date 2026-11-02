@@ -1,5 +1,5 @@
 import { DATES_EXTERNAL_MODERATION_ACTIONS, DATES_EXTERNAL_MESSAGE_ACTIONS, datesCaseInternalNotes, datesModerationSla, hasDatesCapability,
-  type DatesAdminPrincipal, type DatesCaseSummary, type DatesModerationSla } from "./datesAdmin";
+  isDatesAppealCase, type DatesAdminPrincipal, type DatesCaseSummary, type DatesModerationSla } from "./datesAdmin";
 import { DATES_EXTERNAL_STATUSES } from "./datesExternalAdmin";
 
 type LocalizedReason = { en: string | null; hu: string | null } | null;
@@ -221,12 +221,39 @@ export function datesLegalHoldReceipt(value: unknown, caseId: string, action: un
 
 export const DATES_LEGAL_HOLD_CHANGES = ["placed", "amended", "unchanged", "released"] as const;
 export type DatesLegalHoldChange = typeof DATES_LEGAL_HOLD_CHANGES[number];
+/**
+ * A file a placed hold could no longer preserve (Core b50e9423, DatesPhotoCleanupService::guardHold and the
+ * whole-activity photo purge): its deletion was already claimed (`deleting`) or finished (`completed`). `photo` is one
+ * file of the activity (`photo_id`: the file's name, or `null` when Core could not name it); `activity_photos` is every
+ * photo of the activity, `photo_id` then always `null`. Core serves `at: null`.
+ */
+export type DatesHoldMediaUnavailable = {
+  scope: "photo" | "activity_photos"; activity_id: string; photo_id: string | null; state: "deleting" | "completed"; at: number | null;
+};
 export type DatesLegalHoldCommandReceipt = {
   /** What the command did (T-891, served to a request with `expected_revision`); `null` from a Core that does not say. */
   hold_change: DatesLegalHoldChange | null;
   /** The case revision after the command; `null` when not served. */
   revision: number | null;
+  /**
+   * What the hold could not preserve, in Core's order; `[]`: everything that still existed is held. `null` when not
+   * served: a release, a request without `expected_revision`, or a Core before b50e9423 - which refused such a hold
+   * with `dates-legal-hold-media-purge-started` instead.
+   */
+  media_unavailable: DatesHoldMediaUnavailable[] | null;
 };
+
+const holdMediaRules: Record<string, Rule> = {
+  scope: (v) => v === "photo" || v === "activity_photos", activity_id: id("act"), photo_id: nullable(text(200)),
+  state: (v) => v === "deleting" || v === "completed", at: nullable(epoch),
+};
+/** The list a place receipt carries, or `undefined` when it is not one Core writes. */
+function holdMediaUnavailable(value: unknown): DatesHoldMediaUnavailable[] | undefined {
+  if (!Array.isArray(value) || value.length > 1000) return undefined;
+  return value.every((row) => shape(row, holdMediaRules) && (row.scope === "photo" || row.photo_id === null))
+    ? value.map((row) => ({ scope: row.scope, activity_id: row.activity_id, photo_id: row.photo_id, state: row.state, at: row.at }))
+    : undefined;
+}
 
 /**
  * The legal-hold receipt bound to the request the page sent. The released
@@ -239,13 +266,17 @@ export type DatesLegalHoldCommandReceipt = {
  * nothing (and changed no evidence row). When none of them is served (a Core
  * without T-891) the released receipt stands, and what the command did is not
  * said. Some but not all of them is no receipt.
+ * Since Core b50e9423 a place receipt with the extension also lists what the
+ * hold could not preserve (`media_unavailable`, `[]` when nothing); a list
+ * that is not what Core writes makes the body no receipt. A Core before that
+ * release does not serve the list (`null`).
  * Pairs (Core 33265e46, command corpus, generator lines 405-417): placed 1 -> 2, unchanged 2 -> 2, amended 2 -> 3,
  * released 3 -> 4, release unchanged 4 -> 4.
  */
 export function datesLegalHoldCommandReceipt(value: unknown, request: Record<string, unknown>): DatesLegalHoldCommandReceipt | null {
   if (typeof request.case_id !== "string" || !datesLegalHoldReceipt(value, request.case_id, request.action, request.review_at)) return null;
   const served = value as Record<string, unknown>, extension = ["revision", "hold_change", "evidence_changed_count"].filter((key) => Object.hasOwn(served, key));
-  if (extension.length === 0) return { hold_change: null, revision: null };
+  if (extension.length === 0) return { hold_change: null, revision: null, media_unavailable: null };
   // Each of the three is checked below: one that is missing fails its own check, so a part of the extension is no receipt.
   const expected = request.expected_revision;
   if (!Number.isSafeInteger(expected) || Number(expected) < 0 || !Number.isSafeInteger(served.revision)
@@ -255,7 +286,10 @@ export function datesLegalHoldCommandReceipt(value: unknown, request: Record<str
   if (typeof change !== "string" || !allowed.includes(change)) return null;
   const unchanged = change === "unchanged";
   if (served.revision !== Number(expected) + (unchanged ? 0 : 1) || (unchanged && served.evidence_changed_count !== 0)) return null;
-  return { hold_change: change as DatesLegalHoldChange, revision: served.revision as number };
+  // Only a place says what it could not hold; on a release the key is not Core's and is not read.
+  const media = request.action === "place" && Object.hasOwn(served, "media_unavailable") ? holdMediaUnavailable(served.media_unavailable) : null;
+  if (media === undefined) return null;
+  return { hold_change: change as DatesLegalHoldChange, revision: served.revision as number, media_unavailable: media };
 }
 
 /**
@@ -294,11 +328,25 @@ export function datesTrailEvidenceCommandReceipt(value: unknown, request: Record
 }
 
 /**
+ * Whether the notes of a case may be withheld from this principal, as Core decides it (DatesModerationReadService::
+ * detail): always for a conflict of interest; and on an appeal case from the moderator of the decision under appeal,
+ * who is kept away from the appeal altogether - every capability flag false (DatesModerationReadService::caseRow,
+ * `$originalModerator`). The Core branch at b50e9423 serves that moderator `conflict_of_interest: false` beside the
+ * withheld notes; its review fix serves `true`, and the live Core withholds the notes exactly when there is a
+ * conflict. This rule reads all three.
+ */
+function notesWithheldAllowed(item: DatesCaseSummary): boolean {
+  const { can_claim, can_read_evidence, can_resolve, can_break_glass } = item.capabilities;
+  return item.conflict_of_interest || (isDatesAppealCase(item) && !can_claim && !can_read_evidence && !can_resolve && !can_break_glass);
+}
+
+/**
  * Case metadata, bound on its fields (D-143): every named field must be there
  * and valid, and a key this console does not know is tolerated and never read -
  * the screens print named fields only. What the metadata must not carry by
- * its own rules is still refused: a reporter that is not redacted, a note on a
- * conflicted case, a decision of another case.
+ * its own rules is still refused: a reporter that is not redacted, a note
+ * shown where the notes are withheld, notes withheld without a reason Core
+ * has for it (`notesWithheldAllowed`), a decision of another case.
  */
 export function datesCaseDetail(value: unknown, expectedCaseId: string): DatesCaseDetail | null {
   if (!shape(value, { ...envelope, case: caseRow, reports: Array.isArray,
@@ -309,13 +357,16 @@ export function datesCaseDetail(value: unknown, expectedCaseId: string): DatesCa
   const reports = value.reports as unknown[];
   const decisions = value.decisions as unknown[];
   const appeal = value.appeal as DatesAppealMetadata | null;
+  // Core withholds the report notes and the internal notes together, for one reason.
+  const withheld = value.report_notes_withheld as boolean;
   if (item.case_id !== expectedCaseId || !uniqueRows(reports, reportRules, "report_id")
     || !uniqueRows(decisions, decisionRules, "decision_id")
-    || value.report_notes_withheld !== item.conflict_of_interest
-    || value.internal_notes_withheld !== item.conflict_of_interest
+    || value.internal_notes_withheld !== withheld
+    || (item.conflict_of_interest && !withheld)
+    || (withheld && !notesWithheldAllowed(item))
     || datesCaseInternalNotes(value).status === "invalid"
     || decisions.some((row) => (row as DatesDecisionMetadata).case_id !== expectedCaseId)
-    || (item.conflict_of_interest && reports.some((row) => (row as DatesReportMetadata).note !== null))
+    || (withheld && reports.some((row) => (row as DatesReportMetadata).note !== null))
     || (item.case_kind === "appeal" ? !appeal || appeal.case_id !== expectedCaseId || appeal.appeal_id !== item.target_id : appeal !== null)) return null;
   if (item.target_type === "external_event" && decisions.some((row) => {
     const decision = row as DatesDecisionMetadata;

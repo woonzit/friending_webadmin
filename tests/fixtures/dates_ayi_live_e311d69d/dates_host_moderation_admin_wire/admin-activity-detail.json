@@ -1,0 +1,349 @@
+{
+    "success": true,
+    "status_code": 200,
+    "activity": {
+        "activity_id": "act_00000000000000000000000000000003",
+        "title": "Hill hike",
+        "activity_type": "hangout",
+        "host": {
+            "uid": 8101,
+            "display_name": "Hanna"
+        },
+        "lifecycle": "active",
+        "moderation_state": "ok",
+        "pending_public_moderation_state": null,
+        "time_mode": "scheduled",
+        "start_at": 1790086400,
+        "end_at": 1790090000,
+        "location_mode": "city",
+        "city": "Budapest",
+        "country_code": "HU",
+        "join_mode": "auto",
+        "maximum_people": 20,
+        "going_count": 4,
+        "pending_count": 0,
+        "report_count": 0,
+        "soft_deleted": false,
+        "revision": 9,
+        "created_at": 1790000000,
+        "updated_at": 1790000000,
+        "details": "A walk and a coffee, everybody welcome.",
+        "photo": null,
+        "timezone": "Europe/Budapest",
+        "auto_end_at": null,
+        "tbd_expires_at": null,
+        "audience": {
+            "genders": [
+                "male",
+                "female",
+                "other"
+            ],
+            "age_min": 18,
+            "age_max": 99
+        },
+        "pending_public_revision": null,
+        "live_sharing_state": "off",
+        "purge_eligible_at": null
+    },
+    "location": {
+        "mode": "city",
+        "city": "Budapest",
+        "country_code": "HU",
+        "public_location": null,
+        "exact_location_redacted": true,
+        "exact_location_route": "/v1/webadmin/dates_activity_location"
+    },
+    "memberships": [
+        {
+            "activity_id": "act_00000000000000000000000000000003",
+            "uid": 8112,
+            "created_at": 1790000000,
+            "relationship": "joined",
+            "joined_at": 1790000000,
+            "live_access": true,
+            "rejoin_window_started_at": 1790000000,
+            "rejoin_window_count": 0,
+            "updated_at": 1789989888,
+            "removed_at": null,
+            "removed_by_uid": null,
+            "removed_reason": null,
+            "removal_note": null,
+            "ban": null
+        },
+        {
+            "activity_id": "act_00000000000000000000000000000003",
+            "uid": 8113,
+            "created_at": 1790000000,
+            "relationship": "removed",
+            "joined_at": 1790000000,
+            "live_access": false,
+            "rejoin_window_started_at": 1790000000,
+            "rejoin_window_count": 0,
+            "updated_at": 1789989887,
+            "removed_at": 1790000000,
+            "removed_by_uid": 8101,
+            "ban": {
+                "state": "active",
+                "at": 1790000000,
+                "by_uid": 8101,
+                "note": null,
+                "lifted_at": null,
+                "lifted_by_uid": null
+            },
+            "removed_reason": null,
+            "removal_note": null
+        },
+        {
+            "activity_id": "act_00000000000000000000000000000003",
+            "uid": 8114,
+            "created_at": 1790000000,
+            "relationship": "joined",
+            "joined_at": 1790000000,
+            "live_access": true,
+            "rejoin_window_started_at": 1790000000,
+            "rejoin_window_count": 0,
+            "updated_at": 1789989886,
+            "removed_at": null,
+            "removed_by_uid": null,
+            "removed_reason": null,
+            "removal_note": null,
+            "ban": null
+        },
+        {
+            "activity_id": "act_00000000000000000000000000000003",
+            "uid": 8115,
+            "created_at": 1790000000,
+            "relationship": "joined",
+            "joined_at": 1790000000,
+            "live_access": true,
+            "rejoin_window_started_at": 1790000000,
+            "rejoin_window_count": 0,
+            "updated_at": 1789989885,
+            "removed_at": null,
+            "removed_by_uid": null,
+            "removed_reason": null,
+            "removal_note": null,
+            "ban": null
+        },
+        {
+            "activity_id": "act_00000000000000000000000000000003",
+            "uid": 8117,
+            "created_at": 1790000000,
+            "relationship": "removed",
+            "joined_at": 1790000000,
+            "live_access": false,
+            "rejoin_window_started_at": 1790000000,
+            "rejoin_window_count": 0,
+            "updated_at": 1789989883,
+            "released_at": 1790000000,
+            "released_reason": "dates_restriction",
+            "removed_at": null,
+            "removed_by_uid": null,
+            "removed_reason": null,
+            "removal_note": null,
+            "ban": null
+        }
+    ],
+    "memberships_truncated": false,
+    "chat": {
+        "thread_id": "thr_00000000000000000000000000000002",
+        "read_only": false,
+        "message_count": 8,
+        "pinned_message_id": null
+    },
+    "chats": [
+        {
+            "thread_id": "thr_00000000000000000000000000000002",
+            "kind": "activity",
+            "read_only": false,
+            "closed_at": null,
+            "member_count": 4,
+            "message_count": 8,
+            "pinned_message_id": null,
+            "updated_at": 1790000000
+        },
+        {
+            "thread_id": "thr_00000000000000000000000000000003",
+            "kind": "direct",
+            "read_only": false,
+            "closed_at": null,
+            "member_count": 2,
+            "message_count": 1,
+            "pinned_message_id": null,
+            "updated_at": 1790000000
+        }
+    ],
+    "chats_truncated": false,
+    "reports": [
+        {
+            "report_id": "rpt_00000000000000000000000000000002",
+            "case_id": "cas_0000000000000000000000000000000c",
+            "target_type": "message",
+            "target_id": "msg_0000000000000000000000000000000b",
+            "reason_label_snapshot": {
+                "locale": "en",
+                "label": "Harassment or hate"
+            },
+            "severity": "high",
+            "status": "new",
+            "created_at": 1789999953,
+            "reporter_identity_redacted": true
+        },
+        {
+            "report_id": "rpt_00000000000000000000000000000003",
+            "case_id": "cas_0000000000000000000000000000000a",
+            "target_type": "user",
+            "target_id": "8112",
+            "reason_label_snapshot": {
+                "locale": "en",
+                "label": "Harassment or hate"
+            },
+            "severity": "high",
+            "status": "new",
+            "created_at": 1789999950,
+            "reporter_identity_redacted": true
+        },
+        {
+            "report_id": "rpt_00000000000000000000000000000004",
+            "case_id": "cas_00000000000000000000000000000009",
+            "target_type": "user",
+            "target_id": "8113",
+            "reason_label_snapshot": {
+                "locale": "en",
+                "label": "Harassment or hate"
+            },
+            "severity": "high",
+            "status": "new",
+            "created_at": 1789999949,
+            "reporter_identity_redacted": true
+        },
+        {
+            "report_id": "rpt_00000000000000000000000000000005",
+            "case_id": "cas_00000000000000000000000000000007",
+            "target_type": "message",
+            "target_id": "msg_0000000000000000000000000000000a",
+            "reason_label_snapshot": {
+                "locale": "en",
+                "label": "Harassment or hate"
+            },
+            "severity": "high",
+            "status": "new",
+            "created_at": 1789999948,
+            "reporter_identity_redacted": true
+        },
+        {
+            "report_id": "rpt_00000000000000000000000000000006",
+            "case_id": "cas_00000000000000000000000000000008",
+            "target_type": "message",
+            "target_id": "wco_00000000000000000000000000000004",
+            "reason_label_snapshot": {
+                "locale": "en",
+                "label": "Harassment or hate"
+            },
+            "severity": "high",
+            "status": "new",
+            "created_at": 1789999947,
+            "reporter_identity_redacted": true
+        }
+    ],
+    "reports_truncated": false,
+    "report_count": 5,
+    "notifications": [],
+    "notifications_truncated": false,
+    "notification_count": 0,
+    "moderation_cases": [
+        {
+            "case_id": "cas_0000000000000000000000000000000e",
+            "queue": "messages",
+            "status": "actioned",
+            "case_kind": "reports",
+            "severity": "low",
+            "created_at": 1789999980,
+            "resolved_at": 1790000000
+        },
+        {
+            "case_id": "cas_0000000000000000000000000000000d",
+            "queue": "messages",
+            "status": "actioned",
+            "case_kind": "reports",
+            "severity": "low",
+            "created_at": 1789999970,
+            "resolved_at": 1790000000
+        },
+        {
+            "case_id": "cas_0000000000000000000000000000000c",
+            "queue": "messages",
+            "status": "new",
+            "case_kind": "reports",
+            "severity": "high",
+            "created_at": 1789999960,
+            "resolved_at": null
+        },
+        {
+            "case_id": "cas_0000000000000000000000000000000a",
+            "queue": "users",
+            "status": "new",
+            "case_kind": "reports",
+            "severity": "high",
+            "created_at": 1789999940,
+            "resolved_at": null
+        },
+        {
+            "case_id": "cas_00000000000000000000000000000009",
+            "queue": "users",
+            "status": "new",
+            "case_kind": "reports",
+            "severity": "high",
+            "created_at": 1789999930,
+            "resolved_at": null
+        },
+        {
+            "case_id": "cas_00000000000000000000000000000007",
+            "queue": "messages",
+            "status": "new",
+            "case_kind": "reports",
+            "severity": "high",
+            "created_at": 1789999920,
+            "resolved_at": null
+        },
+        {
+            "case_id": "cas_00000000000000000000000000000008",
+            "queue": "messages",
+            "status": "new",
+            "case_kind": "reports",
+            "severity": "high",
+            "created_at": 1789999910,
+            "resolved_at": null
+        }
+    ],
+    "moderation_decisions": [
+        {
+            "decision_id": "dec_00000000000000000000000000000001",
+            "case_id": "cas_0000000000000000000000000000000d",
+            "target_type": "message",
+            "target_id": "wpo_00000000000000000000000000000006",
+            "subject_uid": 8112,
+            "activity_id": "act_00000000000000000000000000000003",
+            "target_path": "published",
+            "action": "remove_content",
+            "actor_email": "moderator@example.test",
+            "severity": "low",
+            "user_visible_reason": {
+                "en": "A decision by the operators.",
+                "hu": "Az üzemeltetők döntése."
+            },
+            "before": {
+                "moderated_removed": false
+            },
+            "after": {
+                "moderated_removed": true
+            },
+            "created_at": 1790000000
+        }
+    ],
+    "audit_history": [],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

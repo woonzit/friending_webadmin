@@ -317,6 +317,14 @@ test("resolution and claim options follow the principal's capabilities (AYI-076)
   }
   assert.deepEqual(permittedResolutionActions(userCase, moderator), ["dismiss", "warn", "remove_participant"]);
   assert.deepEqual(permittedResolutionActions(prepublication, moderator), ["approve_content", "reject_content"]);
+  // Core b50e9423: after Core refused the approval because the host cannot publish, `dismiss` withdraws the submission. Only
+  // on a member's activity submission: not on a held message, a review or an appeal, and never before that refusal.
+  assert.deepEqual(permittedResolutionActions(prepublication, moderator, { hostUnavailable: true }), ["approve_content", "reject_content", "dismiss"]);
+  assert.deepEqual(permittedResolutionActions(prepublication, moderator, { hostUnavailable: false }), ["approve_content", "reject_content"]);
+  assert.deepEqual(permittedResolutionActions(prepublication, supportViewer, { hostUnavailable: true }), []);
+  for (const item of [{ ...prepublication, target_type: "review", queue: "reviews" }, { ...prepublication, queue: "appeals" }, activityCase, userCase])
+    assert.deepEqual(permittedResolutionActions(item, senior, { hostUnavailable: true }), permittedResolutionActions(item, senior), JSON.stringify(item));
+  assert.deepEqual(resolutionActions(prepublication, { hostUnavailable: true }), ["approve_content", "reject_content", "dismiss"]);
   assert.deepEqual(permittedResolutionActions(appealCase, moderator), []);
   assert.deepEqual(permittedResolutionActions({ ...appealCase, queue: "activities" }, moderator), [], "an appeal kind outside the appeals queue is still an appeal");
   assert.deepEqual(permittedResolutionActions(appealCase, senior), ["uphold", "overturn"]);
@@ -333,10 +341,10 @@ test("resolution and claim options follow the principal's capabilities (AYI-076)
   assert.equal(datesCaseClaimableByRole(userCase, supportViewer), false);
 
   const page = readFileSync(new URL("../app/(dashboard)/dates/moderation/[caseId]/page.tsx", import.meta.url), "utf8");
-  assert.match(page, /const actions = permittedResolutionActions\(item, principal\)/);
+  assert.match(page, /const actions = permittedResolutionActions\(item, principal, \{ hostUnavailable \}\)/);
   assert.match(page, /const mayResolve = actions\.length > 0 &&/);
   assert.match(page, /datesCaseClaimableByRole\(item, principal\) &&/);
-  assert.match(page, /permittedResolutionActions\(data\.case, principal\)\.includes\(resolutionAction\)/);
+  assert.match(page, /permittedResolutionActions\(data\.case, principal, \{ hostUnavailable \}\)\.includes\(resolutionAction\)/);
   assert.equal(/resolutionActions\(next\.case\)/.test(page), false, "the initial choice comes from the permitted list");
   assert.match(page, /setResolutionAction\(\(current\) => datesResolutionAfterRead\(permitted, current\)\);/);
   assert.equal(/permitted\[0\]/.test(page), false, "a read never swaps a set decision for the first permitted one");
@@ -375,7 +383,7 @@ test("a set decision the page stops offering is named and unsendable, never sile
   assert.match(page, /\{withdrawnAction && <small className="field-error" role="alert">\{t\("resolutionChoiceWithdrawn", \{ action: t\(`actions\.\$\{withdrawnAction\}`\) \}\)\}<\/small>\}/);
   assert.match(page, /\{!withdrawnAction && resolutionAction === "restrict_dates" &&/);
   assert.match(page, /disabled=\{writeLocked \|\| \(item\.conflict_of_interest && !breakGlass\) \|\| !actions\.includes\(resolutionAction\)\}>\{t\("prepareResolution"\)\}/);
-  assert.match(page, /if \(!permittedResolutionActions\(data\.case, principal\)\.includes\(resolutionAction\)\) \{\s*\/\/[^\n]*\n\s*if \(resolutionAction !== ""\) setFeedback\(\{ tone: "error", text: t\("resolutionChoiceWithdrawn"/);
+  assert.match(page, /if \(!permittedResolutionActions\(data\.case, principal, \{ hostUnavailable \}\)\.includes\(resolutionAction\)\) \{\s*\/\/[^\n]*\n\s*if \(resolutionAction !== ""\) setFeedback\(\{ tone: "error", text: t\("resolutionChoiceWithdrawn"/);
   for (const locale of ["en", "hu"]) {
     const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
     for (const key of ["resolutionChoiceWithdrawn", "resolutionChoiceWithdrawnOption"]) {

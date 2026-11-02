@@ -767,8 +767,22 @@ export function datesExternalReviewAllowed(value: Pick<DatesCaseSummary, "target
   return value.target_type !== "external_event" || principal.capabilities.includes("dates_external_event_review");
 }
 
+/**
+ * What the page has learnt about a case beside its metadata. `hostUnavailable`: Core refused to approve this case's
+ * submission with `dates-moderation-host-unavailable` (409, Core b50e9423) - its host may not publish (banned,
+ * suspended, restricted, being deleted or erased). Such a case can then be closed with `dismiss`, which withdraws the
+ * waiting submission. Core serves no flag for it on the case row, so the page knows it only from that refusal; a Core
+ * before that release never sends it.
+ */
+export type DatesResolutionContext = { hostUnavailable?: boolean };
+
+/** A pre-publication case of a member's activity: the review of a first publication or of a waiting replacement. */
+export function isDatesActivitySubmissionCase(value: Pick<DatesCaseSummary, "queue" | "case_kind" | "target_type">): boolean {
+  return value.target_type === "activity" && value.case_kind === "prepublication" && !isDatesAppealCase(value);
+}
+
 /** Every decision Core accepts for this kind of case, before role gates. */
-export function resolutionActions(value: ResolutionCase): string[] {
+export function resolutionActions(value: ResolutionCase, context: DatesResolutionContext = {}): string[] {
   if (value.target_type === "external_event") {
     if (value.queue !== "activities" || value.case_kind !== "reports" || value.external_target_available !== true
       || !Number.isSafeInteger(value.external_revision) || Number(value.external_revision) < 1 || !Array.isArray(value.allowed_actions)) return [];
@@ -781,7 +795,10 @@ export function resolutionActions(value: ResolutionCase): string[] {
   }
   if (isDatesAppealCase(value)) return ["uphold", "overturn"];
   if (value.case_kind === "prepublication") {
-    return ["approve_content", "reject_content"];
+    // Once Core has said the host cannot publish, `dismiss` closes the case and withdraws the submission. Approval stays
+    // offered: a Dates restriction ends, and Core judges the host again at every attempt.
+    return context.hostUnavailable === true && isDatesActivitySubmissionCase(value)
+      ? ["approve_content", "reject_content", "dismiss"] : ["approve_content", "reject_content"];
   }
   if (value.target_type === "activity") {
     return ["dismiss", "restore_content", "remove_content", "remove_photo", "cancel_activity", "remove_activity", "warn", "restrict_dates", "suspend_account"];
@@ -810,13 +827,14 @@ const RESTRICTING_RESOLUTIONS = new Set(["restrict_dates", "suspend_account"]);
 export function permittedResolutionActions(
   value: ResolutionCase,
   principal: Pick<DatesAdminPrincipal, "capabilities">,
+  context: DatesResolutionContext = {},
 ): string[] {
   if (!principal.capabilities.includes("dates_case_resolve") || !datesExternalReviewAllowed(value, principal)) return [];
   if (isDatesAppealCase(value)) {
     return principal.capabilities.includes("dates_appeal_resolve") ? resolutionActions(value) : [];
   }
   const restrict = principal.capabilities.includes("dates_restrict_user");
-  return resolutionActions(value).filter((action) => restrict || !RESTRICTING_RESOLUTIONS.has(action));
+  return resolutionActions(value, context).filter((action) => restrict || !RESTRICTING_RESOLUTIONS.has(action));
 }
 
 /**
@@ -857,6 +875,30 @@ export function datesCaseClaimableByRole(
     && (!(Object.hasOwn(value, "external_message") || (value.target_type === "message" && value.case_kind === "prepublication"))
       || (value.target_type === "message" && value.queue === "messages" && value.case_kind === "prepublication"
         && value.external_message?.available === true && value.external_message.moderation_state === "pending"));
+}
+
+/**
+ * The operator's conflict of interest with an activity, from its `dates_activity_detail` body (Core b50e9423). Core
+ * applies the case rule to the activity as a whole - the operator's linked member hosts it, takes part in it or
+ * reported something in it - and then withholds the free-text reasons of its audit history (`reason: null` on each
+ * row; this console never prints that field anyway).
+ * - "unsupported": neither key, a Core from before they were served. Nothing is said.
+ * - "ready": both, each a boolean.
+ * - "invalid": anything else. It is said that the state could not be read, never shown as "no conflict".
+ */
+export type DatesActivityConflict =
+  | { status: "unsupported" }
+  | { status: "ready"; conflict: boolean; audit_reasons_withheld: boolean }
+  | { status: "invalid" };
+
+export function datesActivityConflict(value: unknown): DatesActivityConflict {
+  const response = record(value);
+  if (!response) return { status: "invalid" };
+  const served = ["conflict_of_interest", "audit_reasons_withheld"].filter((key) => Object.hasOwn(response, key));
+  if (served.length === 0) return { status: "unsupported" };
+  const { conflict_of_interest: conflict, audit_reasons_withheld: withheld } = response;
+  return typeof conflict === "boolean" && typeof withheld === "boolean"
+    ? { status: "ready", conflict, audit_reasons_withheld: withheld } : { status: "invalid" };
 }
 
 export function humanizeMachineKey(value: string): string {

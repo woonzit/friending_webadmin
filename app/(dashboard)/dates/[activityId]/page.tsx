@@ -19,6 +19,7 @@ import {
   createAdminIdempotencyKey,
   datesActivityEditChanges,
   datesActivityTypeAvailability,
+  datesActivityConflict,
   datesActivityTypeChoices,
   datesAdminPrincipal,
   hasDatesCapability,
@@ -51,6 +52,9 @@ type ActivityDetail = {
   moderation_cases: CaseRow[];
   moderation_decisions: Array<Record<string, unknown>>;
   audit_history: Array<Record<string, unknown>>;
+  /** Core b50e9423; absent from a Core before it (lib/datesAdmin.ts, datesActivityConflict). */
+  conflict_of_interest?: unknown;
+  audit_reasons_withheld?: unknown;
 };
 
 type EditDraft = DatesActivityEditDraft;
@@ -288,6 +292,8 @@ export default function DatesActivityDetailPage() {
   const canLocation = !isExternal && principal.sensitive_location && hasDatesCapability(principal, "dates_evidence_read");
   // The listed members with what removed or banned each of them, where Core serves it (lib/datesMemberships.ts).
   const memberships = datesMemberships(data.memberships);
+  // The operator's conflict of interest with this activity, where Core says it; an unreadable answer is said, never read as "none".
+  const conflict = datesActivityConflict(data);
 
   return (
     <>
@@ -300,6 +306,8 @@ export default function DatesActivityDetailPage() {
         <p>{external("editor.activityRedirect")}</p><Link className="button button-primary" href={`/dates/external/${data.external_event.external_event_id}`}>{external("editor.detailTitle")}</Link></section>}
       {data.external_event && <DatesExternalProvenance event={data.external_event} />}
       {feedback && <div className={`alert ${feedback.tone === "success" ? "alert-success" : "alert-error"} page-alert`} role="status">{feedback.text}</div>}
+      {conflict.status === "ready" && conflict.conflict && <div className="alert alert-warning page-alert"><strong>{t("conflictTitle")}</strong> {t("conflictCopy")}</div>}
+      {conflict.status === "invalid" && <div className="alert alert-error page-alert" role="status">{t("conflictUnreadable")}</div>}
 
       <DatesEventContentPanel key={activityId} activityId={activityId} principal={principal} deleted={activity.soft_deleted}
         onOpenCase={(caseId) => router.push(`/dates/moderation/${caseId}`)} />
@@ -410,6 +418,7 @@ export default function DatesActivityDetailPage() {
 
       <section className="panel dates-section">
         <div className="panel-header"><div><h2>{t("boundedHistory")}</h2><p>{t("boundedHistoryCopy")}</p></div></div>
+        {conflict.status === "ready" && conflict.audit_reasons_withheld && <p className="alert alert-warning">{t("auditReasonsWithheld")}</p>}
         <div className="panel-body dates-history-sections">
           <OperationalRecords title={t("reports")} empty={t("noHistoryRecords")} records={data.reports as unknown as Array<Record<string, unknown>>} withheldLabel={(count) => t("recordWithheld", { count })} />
           <OperationalRecords title={t("notifications")} empty={t("noHistoryRecords")} records={data.notifications} withheldLabel={(count) => t("recordWithheld", { count })} />

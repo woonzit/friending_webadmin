@@ -1,8 +1,8 @@
 {
     "schema_version": 1,
     "contract": "dates-moderation-console-v1",
-    "source_commit": "51fcf7e4c2eab33280f314e042788c39c8b534b4",
-    "fixture_set_sha256": "4f390a3e1e06e71cf237f7f4b37331d17d1da2ffda9e0dcc8fd15329c41f5151",
+    "source_commit": "d03a542fbe1275572498b7d0d514c6c641dfcf31",
+    "fixture_set_sha256": "c73e2f3693fcb51fd07a6672f72127e1aa74e944d8d71f1a1a7037bf4a9fae07",
     "provenance": {
         "generator": "tests/dates_moderation_console_fixture_dump.php",
         "generator_sha256": "d3f561f96747dd935d661884c3b2318d099a0afb21f3924e17a773855c90dcf0",
@@ -40,16 +40,21 @@
             "src/Http/Controllers/ChatRequestController.php",
             "src/Http/Controllers/DatesChatController.php",
             "src/Http/Controllers/DatesController.php",
+            "src/Http/Controllers/DatesEventSuggestionController.php",
+            "src/Http/Controllers/DatesExternalCorrectionController.php",
+            "src/Http/Controllers/DatesExternalMembershipController.php",
             "src/Http/Controllers/DatesHostTransferController.php",
             "src/Http/Controllers/DatesLiveController.php",
             "src/Http/Controllers/DatesModerationController.php",
             "src/Http/Controllers/DatesNotificationController.php",
             "src/Http/Controllers/DatesReviewController.php",
             "src/Http/Controllers/DatesSafetyController.php",
+            "src/Http/Controllers/DatesWallController.php",
             "src/Http/Controllers/EmailVerificationController.php",
             "src/Http/Controllers/FeedController.php",
             "src/Http/Controllers/FootprintController.php",
             "src/Http/Controllers/ForcedVerificationAdminController.php",
+            "src/Http/Controllers/FriendingStartController.php",
             "src/Http/Controllers/GiveawayController.php",
             "src/Http/Controllers/GoogleRtdnController.php",
             "src/Http/Controllers/HealthController.php",
@@ -60,10 +65,12 @@
             "src/Http/Controllers/IosadminController.php",
             "src/Http/Controllers/JoinController.php",
             "src/Http/Controllers/LocationController.php",
+            "src/Http/Controllers/MeetController.php",
             "src/Http/Controllers/MembershipController.php",
             "src/Http/Controllers/MembershipStoreController.php",
             "src/Http/Controllers/ModerationController.php",
             "src/Http/Controllers/NotificationController.php",
+            "src/Http/Controllers/PasskeyController.php",
             "src/Http/Controllers/PeopleController.php",
             "src/Http/Controllers/PersonaController.php",
             "src/Http/Controllers/PersonaScreensAdminController.php",
@@ -87,6 +94,7 @@
             "src/Http/Controllers/RetiredFeatureController.php",
             "src/Http/Controllers/SessionActivityController.php",
             "src/Http/Controllers/SettingsController.php",
+            "src/Http/Controllers/SharingController.php",
             "src/Http/Controllers/SportInterestController.php",
             "src/Http/Controllers/SubscriptionController.php",
             "src/Http/Controllers/UserController.php",
@@ -97,7 +105,11 @@
             "src/Http/Controllers/WebadminAudienceVisibilityController.php",
             "src/Http/Controllers/WebadminController.php",
             "src/Http/Controllers/WebadminDatesController.php",
+            "src/Http/Controllers/WebadminDatesExternalController.php",
+            "src/Http/Controllers/WebadminDatesIntakeController.php",
+            "src/Http/Controllers/WebadminDatesResearchController.php",
             "src/Http/Controllers/WebadminFeatureSwitchesController.php",
+            "src/Http/Controllers/WebadminFriendingStartPolicyController.php",
             "src/Http/Controllers/WebadminIntoTagModerationController.php",
             "src/Http/Controllers/WebadminInviteConfigurationController.php",
             "src/Http/Controllers/WebadminLayer2Controller.php",
@@ -125,8 +137,10 @@
             "src/Services/AppleOidcVerifier.php",
             "src/Services/DatesAdminAuditService.php",
             "src/Services/DatesAdminAuthorizationService.php",
+            "src/Services/DatesAdminCommandContract.php",
             "src/Services/DatesAdminException.php",
             "src/Services/DatesAdminIdempotencyService.php",
+            "src/Services/DatesEventIntakeAdminService.php",
             "src/Services/DatesModerationCommandService.php",
             "src/Services/DatesModerationConflictService.php",
             "src/Services/DatesModerationReadService.php",
@@ -135,10 +149,13 @@
             "src/Services/ProfileIntentsService.php",
             "src/Support/AppAppearancePolicy.php",
             "src/Support/AuthMethodPolicy.php",
+            "src/Support/DatesAdminInput.php",
             "src/Support/DatesCanonicalPayload.php",
             "src/Support/DatesContract.php",
             "src/Support/DatesId.php",
+            "src/Support/EventAi/EventImageNormalizer.php",
             "src/Support/ForcedVerificationPolicy.php",
+            "src/Support/IntegerRange.php",
             "src/Support/IpGeo.php",
             "src/Support/MongoNamespacePolicy.php",
             "src/Support/PublicProfileLinkPolicy.php",
@@ -246,7 +263,7 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "52c3463f9b4dfa329ad133a032640852815a12b8378e218d9c6da3f5719d9870"
+            "sha256": "2fe645891f197e514462457d186082f6de48f0ef25b22a8089c8e756b0ed09d0"
         },
         {
             "file": "admin-queue-closed.json",
@@ -267,7 +284,7 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "4fc904467af81caf690a40b4a4db0133035eaab26bf19bd1f0dacb13592bee78"
+            "sha256": "30b42a5379a46bdf819e6371160d7f119b076d6ea5ea84f0b91fafcc115103d0"
         },
         {
             "file": "admin-queue-page-empty.json",
@@ -281,35 +298,35 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "837542bb69c32656f8b063c73beb5e84c0e192a0701170800adc237c38999641"
+            "sha256": "260bc6cd770476e29391f50a653b6bf1f37355487c70f9012411a40780ef27e5"
         },
         {
             "file": "admin-queue-page-two.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "68dbf6c32520e0b18ae2fd91e52d96fd91857379df84253bce26bd6258f75c6e"
+            "sha256": "ccf8d6c18b9eef283f00412acdaa756667288365150c6e70761b1f48cf31a4a5"
         },
         {
             "file": "admin-queue-search.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "33c24ef57942507fcdf113be21c52546c71f3919e8420957988e7f0de048127d"
+            "sha256": "5a95c336093fd77e599a02268bdd6be2cf6eea13d9e367ab6552996945c84dc0"
         },
         {
             "file": "admin-queue-unassigned.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "da8ba9f468c59929a22cf55d710d4b0ad78f398eb8433ab6eee153e1fd521a68"
+            "sha256": "79f5f7f1a7b9f54691750cd28f4959c499a3f86e67f943f7f9657c657f3cd93a"
         },
         {
             "file": "admin-queue-unknown-role.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "fb11747dcfde14dbb0c8a12ddc8eda399b30cf75934faa94c0de4a2930007dbb"
+            "sha256": "83f066c5f618836a521c8778b6ba1cb63448c2b5d2959a3feafbbf4b3ebfcc6a"
         },
         {
             "file": "admin-release-expired.json",

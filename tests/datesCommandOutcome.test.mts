@@ -5,7 +5,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import { createAdminIdempotencyKey, datesReasonEntryPoints, datesReasonEntryPointsRefused } from "../lib/datesAdmin.ts";
 import {
-  datesActivityCommandReceipt, datesActivityTypeSaveReceipt, datesActivityUpdateReceipt, datesCaseResolutionReceipt, datesHostTransferReceipt,
+  datesActivityCommandReceipt, datesActivityTypeSaveReceipt, datesActivityUpdateReceipt, datesCaseResolutionEffect, datesCaseResolutionReceipt, datesHostTransferReceipt,
   datesReasonDeactivateReceipt, datesSettingSaveReceipt,
 } from "../lib/datesCommandReceipts.ts";
 import { DATES_RECEIPT_CHECKS_PENDING, datesCommandOutcome, datesExternalRefusal } from "../lib/datesExternalAdmin.ts";
@@ -128,7 +128,7 @@ test("the legal hold's receipt says what the command did, bound to the request's
     action, reason: "Synthetic.", legal_basis: "Synthetic.", break_glass: false, review_at: reviewAt, ...extra });
   for (const [name, action, reviewAt] of [["admin-hold-place", "place", 1790086400], ["admin-hold-place-unchanged", "place", 1790086400], ["admin-hold-place-replay", "place", 1790086400],
     ["admin-hold-amend", "place", 1790172800], ["admin-hold-release", "release", null], ["admin-hold-release-unchanged", "release", null]] as const) {
-    assert.deepEqual(datesLegalHoldCommandReceipt(command(name), hold(1, action, reviewAt)), { hold_change: null, revision: null }, name);
+    assert.deepEqual(datesLegalHoldCommandReceipt(command(name), hold(1, action, reviewAt)), { hold_change: null, revision: null, media_unavailable: null }, name);
     // The released shape cannot tell a placement from "already in place": the same audit id, the same body.
     assert.equal(datesLegalHoldReceipt(command(name), `cas_${"1".padStart(32, "0")}`, action, reviewAt), true, name);
   }
@@ -138,7 +138,8 @@ test("the legal hold's receipt says what the command did, bound to the request's
     ["admin-hold-selected-release-unchanged", "release", null, 4, "unchanged", 4]] as const;
   for (const [name, action, reviewAt, expected, change, revision] of EXTENDED) {
     const request = hold(2, action, reviewAt, { expected_revision: expected });
-    assert.deepEqual(datesLegalHoldCommandReceipt(command(name), request), { hold_change: change, revision }, name);
+    // Core b50e9423: a place also lists what it could not preserve - nothing in this capture; a release says nothing of it.
+    assert.deepEqual(datesLegalHoldCommandReceipt(command(name), request), { hold_change: change, revision, media_unavailable: action === "place" ? [] : null }, name);
     // The same answer to another revision, another action or another case is not this command's receipt.
     assert.equal(datesLegalHoldCommandReceipt(command(name), { ...request, expected_revision: expected + 1 }), null, `${name} +1`);
     assert.equal(datesLegalHoldCommandReceipt(command(name), hold(1, action, reviewAt, { expected_revision: expected })), null, `${name} case`);
@@ -219,7 +220,7 @@ function caseHarness(reply: (action: string, body: Record<string, any>) => unkno
   const readFence = new DatesCaseReadFence();
   const context: any = { exports: {}, caseId, writeLocked: false, busy: false, mutationBusy: { current: false }, readFence, lifetime: { current: 0 },
     isDatesConsoleCommand, datesConsoleCommandReceipt, datesLegalHoldCommandReceipt, datesTrailEvidenceCommandReceipt, datesCommandOutcome, datesCaseResolutionReceipt,
-    createAdminIdempotencyKey, t: translator(""), commandOutcome: translator("outcome."), load: async () => { writes.push("load"); },
+    datesCaseResolutionEffect, createAdminIdempotencyKey, t: translator(""), commandOutcome: translator("outcome."), load: async () => { writes.push("load"); },
     isDatesExternalMessageCase: () => false, datesLegalHoldAllowed: () => true, epochFromLocalInput: (value: string) => Number(value),
     data: { case: { case_id: caseId, revision, target_type: "activity", activity_id: "act_" + "0".repeat(31) + "2", conflict_of_interest: false, status: "actioned" } },
     principal: { email: "moderator@example.test" }, breakGlass: false, confirmed: null,
@@ -234,7 +235,7 @@ function caseHarness(reply: (action: string, body: Record<string, any>) => unkno
   // `setData` takes React's updater: the page's own adoption runs on the harness's copy of the case.
   context.setData = (update: unknown) => { context.data = typeof update === "function" ? (update as (value: unknown) => unknown)(context.data) : update; writes.push("Data"); };
   for (const name of ["Busy", "Evidence", "Feedback", "Confirmed", "HoldReason", "LegalBasis", "HoldReviewAt", "TrailFrom", "TrailTo", "TrailReason",
-    "Note", "NoteReason", "ResolutionReason", "VisibleReasonEn", "VisibleReasonHu", "RestrictionExpiry"])
+    "Note", "NoteReason", "ResolutionReason", "VisibleReasonEn", "VisibleReasonHu", "RestrictionExpiry", "HostUnavailable"])
     context[`set${name}`] = (value: unknown) => {
       state[name] = value; writes.push(name);
       if (name === "Confirmed") context.confirmed = value;
@@ -334,6 +335,74 @@ test("legal hold: Core's genuine answers say what the command did, the revision 
   for (const [confirmed, text, adopted] of [[dismissal(2), "resolved", 3], [dismissal(3), "outcome.unknown:", 2], [dismissal(2, CASE_ID), "outcome.unknown:", 2]] as const) {
     const h = caseHarness(() => command("admin-resolve-dismiss"), confirmed.payload.case_id, 2); h.context.confirmed = confirmed; await h.api.executeConfirmed();
     assert.equal(h.state.Feedback.text, text, JSON.stringify(confirmed.payload).slice(0, 80)); assert.equal(h.context.data.case.revision, adopted);
+  }
+});
+
+test("AreYouIn port (Core b50e9423): a host who cannot publish is said and offers Dismiss, the withdrawal is said, and a hold names what it could not preserve", async () => {
+  // DERIVED: Core's refusal of the approval (DatesModerationTargetService, 409), in Core's envelope as every refusal of the corpus.
+  const hostRefusal = core("dates-moderation-host-unavailable", 409);
+  const resolve = (action: string, revision = 2, caseId = `cas_${"4".padStart(32, "0")}`) => ({ kind: "resolve", label: action, payload: { case_id: caseId,
+    expected_revision: revision, action, reason: "Synthetic review of the submission.", user_visible_reason_en: "Reviewed.", user_visible_reason_hu: "Ellenőrizve.",
+    expires_at: null, break_glass: false, idempotency_key: "dates-case-resolve:00000000-0000-4000-8000-000000000041" } });
+  const refused = caseHarness(() => hostRefusal, `cas_${"4".padStart(32, "0")}`, 2);
+  refused.context.confirmed = resolve("approve_content"); await refused.api.executeConfirmed();
+  assert.deepEqual(plain(refused.state.Feedback), { tone: "error", text: "hostUnavailableRefused" });
+  assert.equal(refused.state.HostUnavailable, true, "the page now offers dismiss on this case");
+  assert.equal(refused.writes.includes("load"), false); assert.equal(refused.context.data.case.revision, 2, "a refusal wrote nothing");
+  // The token on any other command, and any other refusal of a resolution, is worded as before and offers nothing.
+  for (const [action, body] of [["dates_moderation_legal_hold", hostRefusal], ["dates_moderation_resolve", core("dates-admin-stale-revision", 409)]] as const) {
+    const h = caseHarness(() => body);
+    await h.api.mutate(action, { case_id: CASE_ID, expected_revision: 7, action: "place", idempotency_key: "dates-case-x:00000000-0000-4000-8000-000000000042" }, "done");
+    assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: `operationFailed:${body.error}` }, action);
+    assert.equal(h.writes.includes("HostUnavailable"), false, action);
+  }
+  // A Core before b50e9423 refused a hold over media it had begun to delete: worded, still a refusal.
+  const purge = caseHarness(() => core("dates-legal-hold-media-purge-started", 409)); purge.api.prepareLegalHold(submit); await purge.api.executeConfirmed();
+  assert.deepEqual(plain(purge.state.Feedback), { tone: "error", text: "legalHoldMediaPurgeStarted" });
+  assert.equal(datesCommandOutcome(core("dates-legal-hold-media-purge-started", 409), false, "fresh").kind, "refused");
+
+  // DERIVED from Core's genuine dismissal receipt (command corpus, case 4 at revision 2) with the target result Core's
+  // withdrawal writes (DatesModerationCommandService::withdrawUnavailableHostsReplacement, b50e9423).
+  const genuine = command("admin-resolve-dismiss");
+  const replacement = { ...genuine, target_result: { ...genuine.target_result, target_path: "pending_public_revision",
+    before: { pending_revision: 3, moderation_state: "pending" }, after: { pending_public_revision: null, withdrawn: "host_unavailable" } } };
+  const firstPublication = { ...genuine, target_result: { ...genuine.target_result, after: { withdrawn: "host_unavailable" } } };
+  const overturned = { ...genuine, action: "overturn", case_status: "closed", target_result: { ...genuine.target_result, target_path: "published",
+    before: null, after: { restoration_skipped: "host_unavailable" } } };
+  for (const [body, action, text] of [[genuine, "dismiss", "resolved"], [replacement, "dismiss", "submissionWithdrawn"], [firstPublication, "dismiss", "submissionDraftKept"],
+    [overturned, "overturn", "restorationSkippedHostUnavailable"]] as const) {
+    const h = caseHarness(() => body, genuine.case_id, 2); h.context.confirmed = resolve(action); await h.api.executeConfirmed();
+    assert.deepEqual(plain(h.state.Feedback), { tone: "success", text }, text);
+    assert.equal(h.context.data.case.revision, 3, `${text}: the receipt's revision is adopted`); assert.ok(h.writes.includes("load"));
+  }
+  assert.deepEqual([genuine, replacement, firstPublication, overturned].map(datesCaseResolutionEffect), [null, "replacement_withdrawn", "draft_kept", "restoration_skipped"]);
+  for (const value of [null, {}, { target_result: null }, { target_result: { after: { withdrawn: "other" } } }, { target_result: { after: { restoration_skipped: "superseded_or_deleted" } } }])
+    assert.equal(datesCaseResolutionEffect(value), null, JSON.stringify(value));
+
+  // A place receipt (Core's genuine one, case 2 at revision 1) that lists what it could not preserve - DERIVED in the
+  // three forms Core writes (DatesPhotoCleanupService::guardKeys and the whole-activity purge).
+  const activity = `act_${"2".padStart(32, "0")}`;
+  const media = [{ scope: "photo", activity_id: activity, photo_id: "ph_1", state: "deleting", at: null },
+    { scope: "photo", activity_id: activity, photo_id: null, state: "completed", at: null },
+    { scope: "activity_photos", activity_id: activity, photo_id: null, state: "completed", at: null }];
+  const place = (body: unknown) => {
+    const h = caseHarness(() => body, `cas_${"2".padStart(32, "0")}`, 1);
+    Object.assign(h.context, { holdAction: "place", legalBasis: "Synthetic authority request.", holdReviewAt: "1790086400" });
+    h.api.prepareLegalHold(submit); return h.api.executeConfirmed().then(() => h);
+  };
+  const listed = await place({ ...command("admin-hold-selected-placed"), media_unavailable: media });
+  assert.deepEqual(plain(listed.state.Feedback), { tone: "success", text: `legalHoldPlaced legalHoldMediaUnavailable:${[
+    `holdMediaPhoto:ph_1,${activity},holdMediaStates.deleting`, `holdMediaPhotoUnnamed:${activity},holdMediaStates.completed`,
+    `holdMediaActivityPhotos:${activity},holdMediaStates.completed`].join("; ")}` });
+  assert.equal(listed.context.data.case.revision, 2);
+  // Nothing listed (the genuine body), and a live Core that serves no list: the hold's own words only.
+  assert.deepEqual(plain((await place(command("admin-hold-selected-placed"))).state.Feedback), { tone: "success", text: "legalHoldPlaced" });
+  const { media_unavailable: _media, ...live } = command("admin-hold-selected-placed");
+  assert.deepEqual(plain((await place(live)).state.Feedback), { tone: "success", text: "legalHoldPlaced" });
+  // A list Core does not write is no receipt: the outcome is said to be unknown, nothing is adopted.
+  for (const bad of ["none", [{ ...media[0], scope: "video" }], [{ ...media[2], photo_id: "ph_2" }], [{ ...media[0], state: "pending" }], [{ ...media[0], activity_id: "act_1" }], [null]]) {
+    const h = await place({ ...command("admin-hold-selected-placed"), media_unavailable: bad });
+    assert.equal(h.state.Feedback.text, "outcome.unknown:", JSON.stringify(bad)); assert.equal(h.context.data.case.revision, 1);
   }
 });
 

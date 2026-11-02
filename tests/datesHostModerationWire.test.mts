@@ -22,6 +22,12 @@ import { datesCaseDetail, datesModerationQueue } from "../lib/datesModerationRea
 // DERIVED, and marked so at each use, only where no genuine body holds the state: a body that breaks a rule (the
 // negative controls), a value this console has no name for, and a few states of a membership row and of kept content
 // that Core's capture does not reach. Each is a genuine body with one stated change, read by the production decoder.
+// Re-vendored from Core branch claude/freelove-port2-20261102-core-ayi at b50e9423 (the AreYouIn port on live Core
+// e311d69d): the whole event page and the membership excerpt moved - a membership row is Core's allow-list now (no
+// `activity_id`, no rejoin window, every relationship time named, `released_reason`; without the selector no
+// `removed_by_uid` / `removed_reason`), a decision row is the case read's decision metadata, and the page gains
+// `conflict_of_interest` / `audit_reasons_withheld`. The live bodies and the proof that they read the same are in
+// tests/fixtures/dates_ayi_live_e311d69d and tests/datesAyiPortCompatibility.test.mts.
 const CORPUS = "dates_host_moderation_admin_wire";
 /**
  * THE PIN (docs/WIRE_CORPUS_PINNING.md). Re-vendoring is one mechanical step: copy the directory from the Core commit
@@ -30,13 +36,13 @@ const CORPUS = "dates_host_moderation_admin_wire";
  */
 const PIN = {
   /** The Core commit the directory was copied from, from its git objects. */
-  core: "28439d7e5549e09cf8d663fcb6ff7cc85172decb",
+  core: "b50e9423931ebce1f55e23905ceafa1f03f17fea",
   /** sha256 of manifest.json. */
-  manifest: "2becdfadf11215a1043406403fe5731acab39401910b015e9feb8dc440d1c21d",
+  manifest: "fdba77b15f69fde1c0477bc2167d72b81fdf8731d1a9d9ed87b58c2a2f902c3b",
   /** The manifest's source binding. */
-  source_commit: "50100ad334ca2a0c8d7be2515b3d458361e2a876",
+  source_commit: "cc0d70ece8d9fca31813bb60c15d8f0a02c80950",
   /** `fixture_set_sha256`: the fourteen bodies. */
-  set: "abd639fbdd564de36a371dca6bfdf37990064ade00aee0e5bff991ac74ca4127",
+  set: "6f343dbb575f9d1147016f93d4e707d87dbe80dc9dada3de8c7f838e07923e2f",
   /** sha256 of Core's generator, tests/dates_host_moderation_fixture_dump.php. */
   generator: "95fa3b9d1630e7cdfb7646618bc50376811bac0b2d275aee38d89306fd9479b0",
 };
@@ -134,16 +140,17 @@ test("what Core appends with the selector is exactly the contract's keys, in its
   for (const row of [...QUEUE.cases, DETAIL.case, DETAIL_MEMBER.case]) assert.deepEqual(Object.keys(row).slice(-4), CASE_KEYS, row.case_id);
   for (const body of [POSTS, POSTS_SECOND, COMMENTS, COMMENTS_ERASED, MESSAGES]) for (const row of body.items) assert.deepEqual(Object.keys(row).slice(-2), ITEM_KEYS);
   for (const row of [...QUEUE_RELEASED.cases, DETAIL_RELEASED.case]) for (const key of CASE_KEYS) assert.equal(Object.hasOwn(row, key), false, key);
-  // A membership row is served whole. With the selector it carries all five keys (null where it has none); without it,
-  // the three older facts where the row has them and never the ban or the host's note.
+  // A membership row is Core's allow-list (b50e9423). With the selector it carries all five keys (null where it has none);
+  // without it, `removed_at` (a relationship time like the others) and none of the four that say who removed a member, why,
+  // or what the host noted.
   const FACTS = ["removed_at", "removed_by_uid", "removed_reason", "removal_note", "ban"];
   assert.equal(MEMBERSHIPS.with_contract.length, 8); assert.equal(MEMBERSHIPS.released.length, 8);
   MEMBERSHIPS.with_contract.forEach((row, index) => {
     const released = MEMBERSHIPS.released[index];
     for (const key of FACTS) assert.ok(Object.hasOwn(row, key), `${row.uid}: ${key} is served`);
     assert.deepEqual(without(row, FACTS), without(released, FACTS), `${row.uid}: the rest of the row is the released row`);
-    for (const key of ["removed_at", "removed_by_uid", "removed_reason"]) assert.equal(row[key], Object.hasOwn(released, key) ? released[key] : null, `${row.uid}: ${key}`);
-    assert.equal(Object.hasOwn(released, "ban") || Object.hasOwn(released, "removal_note"), false, `${row.uid}: the released row has neither`);
+    assert.equal(row.removed_at, released.removed_at, `${row.uid}: removed_at`);
+    for (const key of ["removed_by_uid", "removed_reason", "removal_note", "ban"]) assert.equal(Object.hasOwn(released, key), false, `${row.uid}: the released row has no ${key}`);
   });
   for (const row of ACTIVITY.memberships) for (const key of FACTS) assert.ok(Object.hasOwn(row, key), `${row.uid}: ${key} is served on the whole event page too`);
 });
@@ -169,12 +176,13 @@ test("the projection names what the pages show: every genuine route body but the
   // - a membership row is its named part: the stored row's other fields stay on the server;
   assert.deepEqual(page.memberships, ACTIVITY.memberships.map(named));
   assert.deepEqual([...new Set(ACTIVITY.memberships.flatMap((row: any) => Object.keys(row).filter((key) => !NAMED.includes(key))))].sort(),
-    ["activity_id", "created_at", "joined_at", "rejoin_window_count", "rejoin_window_started_at", "released_reason"]);
+    ["created_at", "declined_at", "invalidated_at", "invited_at", "joined_at", "left_at", "relationship_archive_state", "released_reason", "requested_at", "withdrawn_at"]);
   // - a linked case is listed by the six fields the page's table has; Core also serves when it was resolved;
   assert.deepEqual(page.moderation_cases, ACTIVITY.moderation_cases.map(({ resolved_at: _resolved, ...row }: any) => row));
   // - a report and a decision are passed by Core as whole documents and reach the browser as their safe keys and a count
   //   of what was withheld: no moderator, no sanctioned member, no reason text, no before / after.
-  assert.deepEqual(page.moderation_decisions, [{ decision_id: ACTIVITY.moderation_decisions[0].decision_id, target_type: "message", action: "remove_content", severity: "low", created_at: NOW, withheld_fields: 9 }]);
+  // (Core b50e9423 serves the decision as the case read's metadata: no moderator, no member, no before / after left to withhold.)
+  assert.deepEqual(page.moderation_decisions, [{ decision_id: ACTIVITY.moderation_decisions[0].decision_id, target_type: "message", action: "remove_content", severity: "low", created_at: NOW, withheld_fields: 8 }]);
   assert.deepEqual(page.reports[0], { report_id: ACTIVITY.reports[0].report_id, target_type: "message", severity: "high", status: "new", created_at: ACTIVITY.reports[0].created_at,
     reporter_identity_redacted: true, withheld_fields: 3 });
   assert.equal(page.reports.length, ACTIVITY.reports.length);
@@ -188,7 +196,7 @@ test("the projection names what the pages show: every genuine route body but the
   for (const rows of [MEMBERSHIPS.with_contract, MEMBERSHIPS.released]) {
     assert.deepEqual(sent("dates_activity_detail", { ...ACTIVITY, memberships: rows }).memberships, rows.map(named));
     assert.deepEqual([...new Set(rows.flatMap((row) => Object.keys(row).filter((key) => !NAMED.includes(key))))].sort(),
-      ["activity_id", "created_at", "invited_at", "invited_by_uid", "joined_at", "rejoin_window_count", "rejoin_window_started_at"]);
+      ["created_at", "declined_at", "invalidated_at", "invited_at", "joined_at", "left_at", "relationship_archive_state", "released_reason", "requested_at", "withdrawn_at"]);
   }
   // A ban is the whole subdocument, and nothing beside its six fields. (Negative control: two keys Core does not serve.)
   const wider = copy(MEMBERSHIPS.with_contract); wider[0].ban.internal = "UNNAMED"; wider[0].request_message = "a member's words";
@@ -458,13 +466,13 @@ test("memberships: who is removed or banned, when, by whom and the host's note -
   assert.deepEqual(read.counts, { removed: 2, banned: 2 });
   assert.deepEqual(datesMemberships(MEMBERSHIPS.with_contract), read, "the projection takes nothing the page reads");
 
-  // Absent (the same rows as the released console is served them; a Core without host moderation): what the row itself
-  // says is still read - the host removed two members and moderation one - and nothing is said of a ban, a note, or
-  // how many are banned.
+  // Absent (the same rows as the released console is served them, without the selector): what the row itself says is
+  // still read - three members were removed, and when - and nothing is guessed of who removed them (Core b50e9423 serves
+  // no `removed_by_uid` / `removed_reason` there), a ban, a note, or how many are banned.
   const released = membershipsOf(MEMBERSHIPS.released);
   assert.deepEqual(released.rows.filter((row) => row.standing !== null).map((row) => [row.uid, row.standing]), [
-    [8102, { state: "removed", at: NOW, by: { kind: "host", uid: HOST }, note: null }], [8108, { state: "removed", at: NOW, by: { kind: "host", uid: HOST }, note: null }],
-    [8109, { state: "removed", at: 1789999950, by: { kind: "moderation" }, note: null }]]);
+    [8102, { state: "removed", at: NOW, by: { kind: "unknown" }, note: null }], [8108, { state: "removed", at: NOW, by: { kind: "unknown" }, note: null }],
+    [8109, { state: "removed", at: 1789999950, by: { kind: "unknown" }, note: null }]]);
   assert.ok(released.rows.every((row) => row.lifted === null && !row.unreadable));
   assert.equal(released.counts, null, "who is banned was not served: no count");
   assert.deepEqual(datesMemberships([]), { rows: [], counts: null }); assert.deepEqual(datesMemberships(null), { rows: [], counts: null });

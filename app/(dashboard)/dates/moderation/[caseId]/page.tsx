@@ -28,6 +28,7 @@ import {
   datesExternalReviewAllowed,
   datesResolutionAfterRead,
   datesWithdrawnResolution,
+  isDatesActivitySubmissionCase,
   isDatesExternalMessageCase,
   permittedResolutionActions,
   resolutionActions,
@@ -35,7 +36,7 @@ import {
   type DatesCaseInternalNotes,
 } from "@/lib/datesAdmin";
 import { formatDate } from "@/lib/format";
-import { datesCaseResolutionReceipt } from "@/lib/datesCommandReceipts";
+import { datesCaseResolutionEffect, datesCaseResolutionReceipt } from "@/lib/datesCommandReceipts";
 import { datesCommandOutcome, decodeDatesExternalDetail, type DatesExternalDetailRow } from "@/lib/datesExternalAdmin";
 import { datesExternalBrowserStorage } from "@/lib/datesExternalMutations";
 import { datesExternalResolutionMatches, prepareDatesExternalResolution, readDatesExternalResolution, readDatesExternalResolutionAccess,
@@ -107,6 +108,9 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
   const [holdReason, setHoldReason] = useState("");
   const [legalBasis, setLegalBasis] = useState("");
   const [holdReviewAt, setHoldReviewAt] = useState("");
+  // Core refused to approve this case's submission because its host may not publish: `dismiss` is then offered, which
+  // withdraws the submission (Core serves no flag for it; the page learns it from that refusal).
+  const [hostUnavailable, setHostUnavailable] = useState(false);
 
   const load = useCallback(async () => {
     const ticket = readFence.begin();
@@ -184,13 +188,24 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       const message = receipt.hold_change === null ? successMessage
         : t(receipt.hold_change === "unchanged" ? (payload.action === "place" ? "legalHoldAlreadyInPlace" : "legalHoldNothingHeld")
           : receipt.hold_change === "placed" ? "legalHoldPlaced" : receipt.hold_change === "amended" ? "legalHoldAmended" : "legalHoldReleased");
-      return { message, revision: receipt.revision };
+      // Since Core b50e9423 a hold is never refused over media: the receipt names each file it could no longer preserve.
+      const unavailable = (receipt.media_unavailable ?? []).map((item) => {
+        const state = item.state === "deleting" ? t("holdMediaStates.deleting") : t("holdMediaStates.completed");
+        return item.scope === "activity_photos" ? t("holdMediaActivityPhotos", { activity: item.activity_id, state })
+          : item.photo_id === null ? t("holdMediaPhotoUnnamed", { activity: item.activity_id, state })
+            : t("holdMediaPhoto", { photo: item.photo_id, activity: item.activity_id, state });
+      });
+      return { message: unavailable.length === 0 ? message : `${message} ${t("legalHoldMediaUnavailable", { items: unavailable.join("; ") })}`, revision: receipt.revision };
     }
     if (action === "dates_moderation_trail_evidence") {
       const receipt = datesTrailEvidenceCommandReceipt(response, payload);
       return receipt === null ? null : { message: receipt.existing ? t("trailEvidenceExisting") : successMessage, revision: receipt.revision };
     }
-    return datesCaseResolutionReceipt(response, payload) ? { message: successMessage, revision: (response as { revision: number }).revision } : null;
+    if (!datesCaseResolutionReceipt(response, payload)) return null;
+    // What the decision did because the host may not publish (Core b50e9423), said instead of the generic wording.
+    const effect = datesCaseResolutionEffect(response);
+    return { message: effect === "replacement_withdrawn" ? t("submissionWithdrawn") : effect === "draft_kept" ? t("submissionDraftKept")
+      : effect === "restoration_skipped" ? t("restorationSkippedHostUnavailable") : successMessage, revision: (response as { revision: number }).revision };
   }
 
   /** A receipt's case revision, adopted at once: it never moves back, and never to nothing. The case is then read again. */
@@ -223,7 +238,12 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
         : consoleReceipt === null ? null : { message: successMessage, revision: consoleReceipt.revision };
       const outcome = datesCommandOutcome(response, settled !== null, "fresh");
       if (outcome.kind === "refused") {
-        setFeedback({ tone: "error", text: t("operationFailed", { error: outcome.error }) });
+        // Two refusals are worded: approval of a submission whose host may not publish (Core b50e9423), after which
+        // `dismiss` is offered; and the hold refused over media a Core before b50e9423 had begun to delete.
+        const hostRefused = action === "dates_moderation_resolve" && outcome.error === "dates-moderation-host-unavailable";
+        if (hostRefused) setHostUnavailable(true);
+        setFeedback({ tone: "error", text: hostRefused ? t("hostUnavailableRefused")
+          : outcome.error === "dates-legal-hold-media-purge-started" ? t("legalHoldMediaPurgeStarted") : t("operationFailed", { error: outcome.error }) });
         return "refused" as const;
       }
       if (outcome.kind === "uncertain") {
@@ -357,10 +377,15 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     if (result === "success") setEscalationReason("");
   }
 
+  /** A decision's name on this case: on a member's submission `dismiss` withdraws it (Core b50e9423, host unavailable). */
+  function resolutionLabel(action: string): string {
+    return action === "dismiss" && data !== null && isDatesActivitySubmissionCase(data.case) ? t("withdrawSubmission") : t(`actions.${action}`);
+  }
+
   function prepareResolution(event: React.FormEvent) {
     event.preventDefault();
     if (writeLocked || !data || !principal) return;
-    if (!permittedResolutionActions(data.case, principal).includes(resolutionAction)) {
+    if (!permittedResolutionActions(data.case, principal, { hostUnavailable }).includes(resolutionAction)) {
       // Never a silent no-op: the set decision is no longer offered, and the moderator chooses again.
       if (resolutionAction !== "") setFeedback({ tone: "error", text: t("resolutionChoiceWithdrawn", { action: t(`actions.${resolutionAction}`) }) });
       return;
@@ -368,7 +393,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     if (resolutionReason.trim().length < 3 || visibleReasonEn.trim().length < 1 || visibleReasonHu.trim().length < 1) return;
     setConfirmed({
       kind: "resolve",
-      label: t(`actions.${resolutionAction}`),
+      label: resolutionLabel(resolutionAction),
       payload: {
         case_id: caseId,
         expected_revision: data.case.revision,
@@ -526,9 +551,9 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     && hasDatesCapability(principal, "dates_trail_evidence_capture")
     && (!item.conflict_of_interest || (canBreakGlass && breakGlass)),
   );
-  const actions = permittedResolutionActions(item, principal);
+  const actions = permittedResolutionActions(item, principal, { hostUnavailable });
   const mayResolve = actions.length > 0 && (item.capabilities.can_resolve || (item.conflict_of_interest && canBreakGlass && assignedToMe && leaseActive));
-  const restrictionActionsHidden = actions.length > 0 && resolutionActions(item).some((action) => !actions.includes(action));
+  const restrictionActionsHidden = actions.length > 0 && resolutionActions(item, { hostUnavailable }).some((action) => !actions.includes(action));
   // A set decision the page no longer offers stays visible, disabled and named until the moderator chooses again.
   const withdrawnAction = datesWithdrawnResolution(actions, resolutionAction);
 
@@ -663,8 +688,9 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
 
       {mayResolve && <section className="panel dates-section dates-resolution-panel">
         <div className="panel-header"><div><h2>{t("resolutionTitle")}</h2><p>{t("resolutionCopy")}</p></div></div>
+        {hostUnavailable && isDatesActivitySubmissionCase(item) && <p className="alert alert-warning">{t("hostUnavailableCopy")}</p>}
         <form className="panel-body form-grid" onSubmit={prepareResolution}>
-          <label className="field"><span>{t("action")}</span><select value={resolutionAction} onChange={(event) => setResolutionAction(event.target.value)}>{withdrawnAction && <option value={withdrawnAction} disabled>{t("resolutionChoiceWithdrawnOption", { action: t(`actions.${withdrawnAction}`) })}</option>}{actions.map((action) => <option key={action} value={action}>{t(`actions.${action}`)}</option>)}</select>{withdrawnAction && <small className="field-error" role="alert">{t("resolutionChoiceWithdrawn", { action: t(`actions.${withdrawnAction}`) })}</small>}{restrictionActionsHidden && <small className="field-hint">{t("restrictionActionsUnavailable")}</small>}</label>
+          <label className="field"><span>{t("action")}</span><select value={resolutionAction} onChange={(event) => setResolutionAction(event.target.value)}>{withdrawnAction && <option value={withdrawnAction} disabled>{t("resolutionChoiceWithdrawnOption", { action: t(`actions.${withdrawnAction}`) })}</option>}{actions.map((action) => <option key={action} value={action}>{resolutionLabel(action)}</option>)}</select>{withdrawnAction && <small className="field-error" role="alert">{t("resolutionChoiceWithdrawn", { action: t(`actions.${withdrawnAction}`) })}</small>}{restrictionActionsHidden && <small className="field-hint">{t("restrictionActionsUnavailable")}</small>}</label>
           {!withdrawnAction && resolutionAction === "restrict_dates" && <label className="field"><span>{t("restrictionExpiry")}</span><input type="datetime-local" value={restrictionExpiry} onChange={(event) => setRestrictionExpiry(event.target.value)} /></label>}
           <label className="field field-full"><span>{t("internalReason")}</span><textarea required maxLength={1000} value={resolutionReason} onChange={(event) => setResolutionReason(event.target.value)} /></label>
           <label className="field"><span>{t("visibleReasonEn")}</span><textarea required maxLength={500} value={visibleReasonEn} onChange={(event) => setVisibleReasonEn(event.target.value)} /></label>

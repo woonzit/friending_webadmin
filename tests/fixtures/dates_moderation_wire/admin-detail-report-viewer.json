@@ -24,7 +24,7 @@
         "updated_at": 1789999900,
         "conflict_of_interest": false,
         "capabilities": {
-            "can_claim": true,
+            "can_claim": false,
             "can_read_evidence": false,
             "can_resolve": false,
             "can_break_glass": false

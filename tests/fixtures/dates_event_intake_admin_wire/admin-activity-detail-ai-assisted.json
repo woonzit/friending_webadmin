@@ -93,6 +93,8 @@
     "moderation_cases": [],
     "moderation_decisions": [],
     "audit_history": [],
+    "conflict_of_interest": false,
+    "audit_reasons_withheld": false,
     "server_now": 1790000000,
     "external_event": {
         "external_event_id": "xev_00000000000000000000000000000004",

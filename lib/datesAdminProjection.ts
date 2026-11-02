@@ -117,7 +117,10 @@ const CASE = {
   host_reviews: [leaves("activity_id state decision by_uid at")],
 };
 const COMMAND_RECEIPT = leaves("case_id revision audit_id idempotency_replayed");
-const TARGET_STATE = leaves("moderation_state revision sequence event_status activity_revision lifecycle soft_deleted");
+const TARGET_STATE = leaves("moderation_state revision sequence event_status activity_revision lifecycle soft_deleted "
+  // Core b50e9423: what a resolution did because the host may not publish - a waiting replacement withdrawn by `dismiss`
+  // (`pending_revision` before, `pending_public_revision: null` and `withdrawn` after), or an overturn that restored nothing.
+  + "pending_revision pending_public_revision withdrawn restoration_skipped");
 const REASON = leaves("reason_id scope key name_en name_hu explanation_en explanation_hu active order severity comment_required entry_points escalation_category "
   + "system_owned catalog_version revision updated_at");
 
@@ -174,6 +177,8 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   dates_activity_detail: {
     ...ENVELOPE,
     ...leaves("memberships_truncated chats_truncated reports_truncated report_count notifications_truncated notification_count"),
+    // Core b50e9423: the operator's conflict of interest with the activity, and that the audit rows' reasons are withheld for it.
+    ...leaves("conflict_of_interest audit_reasons_withheld"),
     activity: { ...ACTIVITY, ...leaves("details timezone auto_end_at tbd_expires_at live_sharing_state purge_eligible_at"),
       photo: OPAQUE, photos: [leaves("id url moderation_state")], audience: OPAQUE, pending_public_revision: OPAQUE },
     location: { ...leaves("mode city country_code exact_location_redacted exact_location_route"), public_location: leaves("type coordinates") },
@@ -258,7 +263,9 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   },
   // `revision`, `hold_change` and `evidence_changed_count` are served to a request that carries `expected_revision` (T-891).
   dates_moderation_legal_hold: { ...ENVELOPE,
-    ...leaves("case_id legal_hold review_at evidence_count audit_id idempotency_replayed revision hold_change evidence_changed_count") },
+    ...leaves("case_id legal_hold review_at evidence_count audit_id idempotency_replayed revision hold_change evidence_changed_count"),
+    // Core b50e9423, on a place with `expected_revision`: the files the hold could no longer preserve.
+    media_unavailable: [leaves("scope activity_id photo_id state at")] },
   dates_moderation_sla: {
     ...ENVELOPE, ...leaves("open_count unassigned_count sla_breach_count oldest_unassigned_at median_seconds_to_claim median_seconds_to_resolve appeals_waiting"),
     age_buckets: leaves("under_1h 1h_to_6h 6h_to_24h over_24h"),

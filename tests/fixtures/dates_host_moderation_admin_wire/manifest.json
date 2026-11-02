@@ -1,8 +1,8 @@
 {
     "schema_version": 1,
     "contract": "dates-host-moderation-v1",
-    "source_commit": "50100ad334ca2a0c8d7be2515b3d458361e2a876",
-    "fixture_set_sha256": "abd639fbdd564de36a371dca6bfdf37990064ade00aee0e5bff991ac74ca4127",
+    "source_commit": "cc0d70ece8d9fca31813bb60c15d8f0a02c80950",
+    "fixture_set_sha256": "6f343dbb575f9d1147016f93d4e707d87dbe80dc9dada3de8c7f838e07923e2f",
     "selectors": {
         "webadmin": {
             "dates_admin_command_contract_version": 1
@@ -49,6 +49,7 @@
             "src/Http/Controllers/DatesChatController.php",
             "src/Http/Controllers/DatesController.php",
             "src/Http/Controllers/DatesEventSuggestionController.php",
+            "src/Http/Controllers/DatesExternalCorrectionController.php",
             "src/Http/Controllers/DatesExternalMembershipController.php",
             "src/Http/Controllers/DatesHostTransferController.php",
             "src/Http/Controllers/DatesLiveController.php",
@@ -77,6 +78,7 @@
             "src/Http/Controllers/MembershipStoreController.php",
             "src/Http/Controllers/ModerationController.php",
             "src/Http/Controllers/NotificationController.php",
+            "src/Http/Controllers/PasskeyController.php",
             "src/Http/Controllers/PeopleController.php",
             "src/Http/Controllers/PersonaController.php",
             "src/Http/Controllers/PersonaScreensAdminController.php",
@@ -100,6 +102,7 @@
             "src/Http/Controllers/RetiredFeatureController.php",
             "src/Http/Controllers/SessionActivityController.php",
             "src/Http/Controllers/SettingsController.php",
+            "src/Http/Controllers/SharingController.php",
             "src/Http/Controllers/SportInterestController.php",
             "src/Http/Controllers/SubscriptionController.php",
             "src/Http/Controllers/UserController.php",
@@ -142,6 +145,7 @@
             "src/Services/AgeDisplayProjection.php",
             "src/Services/AppleOidcVerifier.php",
             "src/Services/AudienceVisibilityReadinessService.php",
+            "src/Services/DatesAccountCascadeService.php",
             "src/Services/DatesAccountLifecycleService.php",
             "src/Services/DatesActivityAccessService.php",
             "src/Services/DatesActivityDetailService.php",
@@ -190,6 +194,7 @@
             "src/Services/DatesHostReportService.php",
             "src/Services/DatesHostTransferService.php",
             "src/Services/DatesIdempotencyService.php",
+            "src/Services/DatesLiveRetentionService.php",
             "src/Services/DatesMapSnapshotService.php",
             "src/Services/DatesMemberTimezoneService.php",
             "src/Services/DatesMembershipBundleService.php",
@@ -227,6 +232,7 @@
             "src/Services/DatesWallReadService.php",
             "src/Services/DatesWallViewer.php",
             "src/Services/DatesWallVisibility.php",
+            "src/Services/FootprintService.php",
             "src/Services/ForcedVerificationService.php",
             "src/Services/HiddenMemberService.php",
             "src/Services/ModeratedUidSetService.php",
@@ -317,6 +323,7 @@
             "src/Support/ImageHelpers.php",
             "src/Support/ImageModerationStatus.php",
             "src/Support/ImageRoots.php",
+            "src/Support/IntegerRange.php",
             "src/Support/IpGeo.php",
             "src/Support/ModerationPolicy.php",
             "src/Support/MongoNamespacePolicy.php",
@@ -332,6 +339,7 @@
             "src/Support/SectionAvailabilityPolicy.php",
             "src/Support/SessionExpiryPolicy.php",
             "src/Support/SessionScopePolicy.php",
+            "src/Support/SignupOutcomeDiagnostics.php",
             "src/Support/UnprovedAccountPolicy.php",
             "src/Support/Validate.php",
             "src/Support/VerificationCompletion.php",
@@ -362,7 +370,7 @@
                 "activity_id": "act_00000000000000000000000000000001",
                 "dates_admin_command_contract_version": 1
             },
-            "sha256": "515c18add49cc10fb5ea929fd3fd9f0f4aade3a768a5500d81354fbb8e023613"
+            "sha256": "fc1938228f637a70b37036e31320f492036698424a9a74f9435d3572034d2b34"
         },
         {
             "file": "admin-activity-detail.json",
@@ -375,7 +383,7 @@
                 "activity_id": "act_00000000000000000000000000000003",
                 "dates_admin_command_contract_version": 1
             },
-            "sha256": "e4dc5e99bf44ae0dc5681d44902978d5fcee744f51544ac8255fba437666df4c"
+            "sha256": "aa21160eef14137edd4b72e22bee258d868a9b707df48e6dc0b987c7172c7178"
         },
         {
             "file": "admin-contract-version-invalid-denied.json",
