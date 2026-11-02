@@ -124,7 +124,9 @@ const REASON = leaves("reason_id scope key name_en name_hu explanation_en explan
 
 const INTAKE_ROW = {
   ...leaves("intake_id revision channel status status_detail input_kind source_host image_count provider event_count published_count first_title earliest_start_at "
-    + "hard_fails warning_count dedupe_decision decision_action created_at updated_at second_look research_run_id"),
+    + "hard_fails warning_count dedupe_decision decision_action created_at updated_at second_look research_run_id "
+    // D-149 PROVISIONAL: the blocker of the system's "not publishable" decision on a research intake.
+    + "publication_blocker"),
   lease: leaves("holder until active mine"),
 };
 const EVIDENCE = leaves("quoted verified denotes match source quote model_confidence confidence");

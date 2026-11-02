@@ -41,6 +41,12 @@ export const DATES_INTAKE_STATUS_DETAILS = ["image-empty", "image-unreadable", "
   "source-not-text", "source-too-large", "source-empty", "not-an-event", "prohibited-category", "ai-unavailable", "ai-refused",
   "ai-not-configured", "ai-budget-overrun", "venue-search-unavailable", "duplicate-source", "duplicate-event", "start-passed", "storage-unavailable",
   "attempts-exhausted", "account-erased"] as const;
+/**
+ * D-149 (T-908) PROVISIONAL: a research intake that fails the automatic publication gate is closed by the system as
+ * `rejected` with this detail (the specification's "system decision `research-not-publishable`"). Kept apart from the
+ * manifest-pinned list above until Core's genuine corpus publishes it.
+ */
+export const DATES_INTAKE_STATUS_DETAILS_D149 = ["research-not-publishable"] as const;
 export const DATES_INTAKE_CHANNELS = ["admin_draft", "member_suggestion", "ai_research"] as const;
 /** The channels that have a writer today, offered as the queue's filter (the research channel is P3). */
 export const DATES_INTAKE_QUEUE_CHANNELS = ["admin_draft", "member_suggestion", "ai_research"] as const;
@@ -190,7 +196,7 @@ export type DatesIntakeStatus = typeof DATES_INTAKE_STATUSES[number];
 type RowField = { [key: string]: Guard<unknown> };
 /** Display fields of a row: an unreadable one is blanked and named, the row stays. */
 const rowDisplayFields = {
-  channel: oneOf(DATES_INTAKE_CHANNELS), status_detail: nullable(oneOf(DATES_INTAKE_STATUS_DETAILS)),
+  channel: oneOf(DATES_INTAKE_CHANNELS), status_detail: nullable(oneOf([...DATES_INTAKE_STATUS_DETAILS, ...DATES_INTAKE_STATUS_DETAILS_D149])),
   input_kind: oneOf(DATES_INTAKE_INPUT_KINDS), source_host: nullable(string(2048)), image_count: integer(0),
   provider: nullable(oneOf(DATES_AI_PROVIDERS)), event_count: integer(0), published_count: integer(0),
   first_title: nullable(string()), earliest_start_at: nullable(clock), hard_fails: list(oneOf(DATES_INTAKE_HARD_FAILS), 100),
@@ -210,6 +216,11 @@ export type DatesIntakeQueueRow = RowDisplay & {
   second_look: boolean;
   /** Served only on a research-selected read. Absence keeps the released queue shape. */
   research_run_id?: string | null;
+  /**
+   * D-149 PROVISIONAL: the blocker code of the system's "not publishable" decision on a research intake (a short code;
+   * the console words the ones it knows). Absent: not served.
+   */
+  publication_blocker?: string | null;
   /** Null when Core's value cannot be used for a compare-and-set. */
   revision: number | null;
   /** Null when Core's lease cannot be trusted. */
@@ -238,8 +249,12 @@ function projectRow(value: unknown, keys: readonly string[]): DatesIntakeQueueRo
   if (Object.hasOwn(value, "second_look") && !bool(value.second_look)) unreadable.push("second_look");
   const researchRun = value.research_run_id;
   if (Object.hasOwn(value, "research_run_id") && researchRun !== null && (typeof researchRun !== "string" || researchRun === "")) unreadable.push("research_run_id");
+  const blocker = value.publication_blocker;
+  const blockerReadable = blocker === null || (typeof blocker === "string" && /^[a-z][a-z0-9_-]{1,63}$/.test(blocker));
+  if (Object.hasOwn(value, "publication_blocker") && !blockerReadable) unreadable.push("publication_blocker");
   return { ...display, intake_id: value.intake_id, status: value.status, revision, lease, second_look: value.second_look === true,
     ...(Object.hasOwn(value, "research_run_id") ? { research_run_id: typeof researchRun === "string" && researchRun !== "" ? researchRun : null } : {}),
+    ...(Object.hasOwn(value, "publication_blocker") ? { publication_blocker: blockerReadable ? blocker as string | null : null } : {}),
     controls: revision !== null && lease !== null, unreadable_fields: unreadable };
 }
 

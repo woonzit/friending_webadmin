@@ -21,7 +21,8 @@ const source = {
   effective: leaf("window_days autopublish"), robots: leaf("state checked_at"), stock: leaf("upcoming max missing"), last_check: last,
 };
 const run = {
-  ...runSummary, candidates: [leaf("title date_text url_host outcome reason intake_id")],
+  // D-149 PROVISIONAL: the gate's blocker for a candidate the system did not publish.
+  ...runSummary, candidates: [leaf("title date_text url_host outcome reason intake_id publication_blocker")],
 };
 /** Counts and public source metadata only. No raw document, member, provider prompt or response is kept. */
 export const DATES_RESEARCH_NAMED: Readonly<Record<string, DatesNamedTree>> = {

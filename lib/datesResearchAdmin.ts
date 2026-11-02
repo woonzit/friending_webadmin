@@ -15,6 +15,16 @@ export const DATES_RESEARCH_RUN_KINDS = ["source", "area"] as const;
 export const DATES_RESEARCH_RUN_TRIGGERS = ["schedule", "manual"] as const;
 export const DATES_RESEARCH_RUN_STATUSES = ["queued", "running", "completed", "unchanged", "skipped_target_met", "blocked_by_robots", "fetch_failed", "budget_paused", "failed", "provider_unavailable"] as const;
 export const DATES_RESEARCH_CANDIDATE_OUTCOMES = ["imported", "would_import", "duplicate", "dropped"] as const;
+/**
+ * D-149 (T-908) PROVISIONAL: what automatic publication may report for a run's candidate - published, or closed by the
+ * system as not publishable - and the gate's blocker codes the console words (decision 1, (a)-(g)). Kept apart from the
+ * manifest-pinned vocabularies until Core's genuine corpus publishes them; an unknown blocker is shown as written.
+ */
+export const DATES_RESEARCH_CANDIDATE_OUTCOMES_D149 = ["published", "not_publishable"] as const;
+export const DATES_RESEARCH_PUBLICATION_BLOCKERS = ["not_single_event", "not_an_event", "hard_fail", "title_unverified", "date_unverified",
+  "time_unverified", "venue_unverified", "sensitive", "prompt_injection_suspected", "duplicate", "domain_blocked", "outside_area",
+  "outside_window", "start_in_past"] as const;
+export const datesResearchBlockerCode = (value: unknown): value is string => typeof value === "string" && /^[a-z][a-z0-9_-]{1,63}$/.test(value);
 export const DATES_RESEARCH_DROP_REASONS = ["past_date", "outside_window", "outside_area", "known_url", "no_event_page", "fetch_failed", "validation_failed", "over_cap", "robots_disallowed", "blocked_domain"] as const;
 export const DATES_RESEARCH_DOMAIN_TYPES = ["official", "aggregator", "blocked"] as const;
 export const DATES_RESEARCH_PAUSE_REASONS = ["reservation_exceeded", "tool_bound_exceeded"] as const;
@@ -72,7 +82,10 @@ export type ResearchRun = {
   source_revision_before?: number | null; source_revision_after?: number | null; area_revision_before?: number | null; area_revision_after?: number | null;
   discovery_tool_usage?: ResearchToolUsage | null;
 };
-export type ResearchCandidate = { title: string; date_text: string; url_host: string; outcome: typeof DATES_RESEARCH_CANDIDATE_OUTCOMES[number]; reason: ResearchDropReason | null; intake_id: string | null };
+export type ResearchCandidate = { title: string; date_text: string; url_host: string;
+  outcome: typeof DATES_RESEARCH_CANDIDATE_OUTCOMES[number] | typeof DATES_RESEARCH_CANDIDATE_OUTCOMES_D149[number]; reason: ResearchDropReason | null; intake_id: string | null;
+  /** D-149 PROVISIONAL: the gate's blocker for a candidate the system did not publish. Absent: not served. */
+  publication_blocker?: string | null };
 export type ResearchRunList = ResearchRows<ResearchRun> & { next_cursor: string | null };
 export type ResearchRunDetail = { run: ResearchRun; candidates: ResearchRows<ResearchCandidate> | null };
 export type ResearchBatchResult = { intake_id: string; outcome: typeof DATES_RESEARCH_BATCH_OUTCOMES[number]; refusal: string | null; external_event_id: string | null };
@@ -287,9 +300,11 @@ export function decodeResearchRunList(value: unknown): ResearchRunList | null {
 }
 function candidate(value: unknown): ResearchCandidate | null {
   if (!researchRecord(value) || !["title", "date_text", "url_host"].every((key) => researchString(value[key]))
-    || !researchOneOf(value.outcome, DATES_RESEARCH_CANDIDATE_OUTCOMES)
-    || !nullable(value.reason, (v): v is ResearchDropReason => researchOneOf(v, DATES_RESEARCH_DROP_REASONS)) || !nullable(value.intake_id, researchId)) return null;
-  return { title: value.title as string, date_text: value.date_text as string, url_host: value.url_host as string, outcome: value.outcome, reason: value.reason, intake_id: value.intake_id };
+    || !researchOneOf(value.outcome, [...DATES_RESEARCH_CANDIDATE_OUTCOMES, ...DATES_RESEARCH_CANDIDATE_OUTCOMES_D149])
+    || !nullable(value.reason, (v): v is ResearchDropReason => researchOneOf(v, DATES_RESEARCH_DROP_REASONS)) || !nullable(value.intake_id, researchId)
+    || (Object.hasOwn(value, "publication_blocker") && !nullable(value.publication_blocker, datesResearchBlockerCode))) return null;
+  return { title: value.title as string, date_text: value.date_text as string, url_host: value.url_host as string, outcome: value.outcome, reason: value.reason, intake_id: value.intake_id,
+    ...(Object.hasOwn(value, "publication_blocker") ? { publication_blocker: value.publication_blocker as string | null } : {}) };
 }
 export function decodeResearchRunDetail(value: unknown, runId: string): ResearchRunDetail | null {
   if (!researchSuccess(value)) return null;

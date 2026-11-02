@@ -1236,6 +1236,15 @@
           "3": "Use Create and publish only when authorized and the release lead has enabled publication."
         },
         "sections": {
+          "review": {
+            "title": "Reviewed mark and quick view",
+            "purpose": "Research events are published automatically; the Reviewed column shows which ones an administrator has looked at, and the quick view lists the published research events nobody has reviewed yet.",
+            "guidance": "Reviewed, OK is a note for the team, not a publication decision. Any later change of the facts by the system clears it. A possible-duplicate badge links to the similar event; the counts link to open corrections and reports.",
+            "actions": {
+              "1": "Use the quick view, open each event, and mark it Reviewed, OK when the facts are right.",
+              "2": "Clear the mark with a reason when an event needs another look."
+            }
+          },
           "filters": {
             "title": "Filters and pagination",
             "purpose": "Filters narrow the external ledger without mixing its statuses with ordinary member-hosted activity states.",
@@ -1312,6 +1321,24 @@
           "3": "Check the server receipt; on conflict reload and review, and on uncertainty retry only the saved request."
         },
         "sections": {
+          "review": {
+            "title": "Review, corrections and removal",
+            "purpose": "The detail shows the Reviewed, OK mark, a possible duplicate, and the members' corrections of this event with Approve and edit and Reject.",
+            "guidance": "Remove is the withdraw command: members no longer find the event, and its history is kept. A mark, a re-research or a correction changes the event elsewhere; with unsaved edits the page asks you to refresh instead of reloading under them.",
+            "actions": {
+              "1": "Mark the event Reviewed, OK after checking its facts against the source.",
+              "2": "Use Remove with a reason for a wrong or unsuitable event."
+            }
+          },
+          "recheck": {
+            "title": "Re-research with AI",
+            "purpose": "Asks the AI to look at this one event again, with optional instructions, and shows the job's status and the last five jobs with their changes and cost.",
+            "guidance": "One job runs per event, paid from the AI research budget, and none starts while research is paused by the budget. A changed fact is applied and members are notified; a different event or a failure leaves the event untouched.",
+            "actions": {
+              "1": "Write what was missing or wrong, or where to look, in the instructions (at most 1000 characters).",
+              "2": "After an unanswered request send the same request again; Core starts no second job from it."
+            }
+          },
           "provenance": {
             "title": "Provenance and hostless identity",
             "purpose": "Source links, category art, verification tier and administrator-entry credit identify a human-reviewed external recommendation, not a member host.",
@@ -2997,6 +3024,44 @@
           }
         }
       },
+      "datesCorrections": {
+        "title": "Corrections help",
+        "summary": "Members can send a correction of a published external event. Nothing they send is shown to others or sent to an AI before a moderator approves it here. Approval goes through the event editor; a rejection records a reason.",
+        "steps": {
+          "1": "Keep the status filter on Pending and start with the oldest correction.",
+          "2": "Compare the current and proposed values with the event's source, and read the member's note.",
+          "3": "Use Approve and edit to apply the change through the editor, or reject it with a reason code."
+        },
+        "sections": {
+          "queue": {
+            "title": "Correction queue",
+            "purpose": "Each correction shows its event, the facts the member says are wrong with the current and proposed values side by side, the note, the member and the time.",
+            "guidance": "A member can have one open correction per event and at most ten a day. A read error is never evidence that no correction waits.",
+            "actions": {
+              "1": "Filter by status to see decided corrections and who decided them.",
+              "2": "Open the event to see its other corrections, reports and re-research history."
+            }
+          },
+          "approve": {
+            "title": "Approve and edit",
+            "purpose": "Opens the event editor prefilled with the proposed title, times and website; saving it with the four checks approves the correction in the same step.",
+            "guidance": "A proposed place is free text: find it with the place search. A cancellation is recorded with the event's cancel command, not by saving. Members are notified as for any edit.",
+            "actions": {
+              "1": "Check every prefilled value against the source before you tick the four checks.",
+              "2": "If the save reports a conflict, refresh and review again; the correction stays pending until a save succeeds."
+            }
+          },
+          "reject": {
+            "title": "Reject",
+            "purpose": "Rejecting closes the correction with a reason code and an optional note; the event is unchanged and the member sees that it was not accepted.",
+            "guidance": "A decided correction cannot be decided again. If the answer is lost, refresh and check the status before you repeat it.",
+            "actions": {
+              "1": "Choose the reason that matches what you checked.",
+              "2": "Add a note when the reason needs context for other moderators."
+            }
+          }
+        }
+      },
       "datesIntakeQueue": {
         "title": "Intake queue help",
         "summary": "This queue lists the sources handed to the event AI and the drafts it made. A reviewer takes an intake, compares the draft with the source and then rejects it or publishes its events; nothing in the queue is visible to members.",
@@ -3130,7 +3195,7 @@
           "sources": {
             "title": "Collection sources and checks",
             "purpose": "A source has a public collection URL, city, type, interval and maximum upcoming stock, with its robots state and latest result.",
-            "guidance": "Test is a dry run and imports nothing. Aggregators provide facts, not copied descriptions; official sources may pass Core's automatic-publication checks.",
+            "guidance": "Test is a dry run and imports nothing. Aggregators provide facts, not copied descriptions. With automatic publication on, events from both kinds of source are published when the AI verified them; the rest is closed with its reason.",
             "actions": {
               "1": "Use a public organiser, venue or city page where possible and choose the correct source type.",
               "2": "Run Test to inspect the candidates before using Check now for a real import."
@@ -8587,7 +8652,26 @@
       "unavailableCity": "City unavailable ({id})",
       "editedRowUnavailable": "The row being edited is unavailable. Refresh before changing it.",
       "mapHint": "Choose a city from search. Core resolves its place identity and bounds; the map shows the resulting centre and radius.",
-      "aggregatorHint": "Aggregators provide facts only. Their own summaries and images are not imported and their events are not automatically published.",
+      "aggregatorHint": "Aggregators provide facts only: their own summaries and images are not imported. Their events follow the city's or the global automatic publication setting, like those of official sources.",
+      "publication": {
+        "notPublishable": "Not publishable (system decision)",
+        "blockers": {
+          "not_single_event": "Not exactly one event",
+          "not_an_event": "Not an event",
+          "hard_fail": "Failed a required check",
+          "title_unverified": "Title not verified",
+          "date_unverified": "Date not verified",
+          "time_unverified": "Time not verified",
+          "venue_unverified": "Venue not verified",
+          "sensitive": "Sensitive category",
+          "prompt_injection_suspected": "Suspected manipulation of the AI",
+          "duplicate": "Duplicate of a published event",
+          "domain_blocked": "Blocked website",
+          "outside_area": "Outside the area",
+          "outside_window": "Outside the time window",
+          "start_in_past": "Start is in the past"
+        }
+      },
       "test": "Test",
       "runNow": "Check now",
       "sourceEffective": "Window: {days} days · automatic publication: {publish}",
@@ -8632,7 +8716,9 @@
         "imported": "Imported",
         "would_import": "Would import",
         "duplicate": "Duplicate",
-        "dropped": "Dropped"
+        "dropped": "Dropped",
+        "published": "Published",
+        "not_publishable": "Not publishable"
       },
       "dropReasons": {
         "past_date": "Past event",
@@ -8875,9 +8961,9 @@
           "cost": "A longer window may require more candidate processing."
         },
         "autopublish": {
-          "purpose": "Allow eligible official-source events to be published automatically.",
-          "effect": "Core still requires all safety checks, a new event, a non-sensitive category and a start at least 24 hours away. Other events wait for review.",
-          "cost": "Does not raise the AI budget; discovery and validation still cost money."
+          "purpose": "Publish what the AI verified, without waiting for a reviewer.",
+          "effect": "On: every event the AI verified is published automatically - one real, public, in-person event with a verified title, date, time and venue, not sensitive, not a duplicate, inside the area and the time window. What fails these checks is closed by the system with its reason and does not enter the queue. Off: research events wait for a reviewer in the intake queue.",
+          "cost": "Does not raise the AI budget. Members can report a published event or send a correction; on External events you can review it, re-research it or remove it."
         },
         "city": {
           "purpose": "Resolved city associated with an area or a source.",
@@ -8941,17 +9027,192 @@
         }
       }
     },
+    "corrections": {
+      "eyebrow": "AreYouIn operations",
+      "title": "Corrections",
+      "subtitle": "Members' corrections of published external events. Approve one by editing the event, or reject it with a reason.",
+      "boundary": "Nothing a member sends is shown to anyone else, or sent to an AI, before a moderator approves it. Approval goes through the event editor, so the place search, the time zone, the revision and member notifications work as for any edit.",
+      "statusFilter": "Status",
+      "statuses": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "loadError": "The corrections could not be read. No empty-list conclusion can be drawn. Refresh to retry.",
+      "unreadableRow": "Row {row} could not be read and is not shown.",
+      "empty": "No corrections with this status.",
+      "emptyPage": "This page contains no corrections. The list may have changed while loading; refresh or go back a page.",
+      "pagination": "Page {page} · {total} corrections",
+      "approveEdit": "Approve and edit",
+      "reject": "Reject",
+      "rejected": "The correction was rejected.",
+      "unchanged": "unchanged",
+      "noValue": "(none)",
+      "noEnd": "No end time",
+      "statusValues": {
+        "canceled": "Canceled",
+        "postponed": "Postponed",
+        "scheduled": "As planned"
+      },
+      "submitted": "Sent {at}",
+      "member": "Member #{uid}",
+      "revisionAtSubmit": "event revision when sent: {revision}",
+      "columns": {
+        "field": "Fact",
+        "current": "Now",
+        "proposed": "Proposed"
+      },
+      "fields": {
+        "title": "Title",
+        "starts_local": "Start (local time)",
+        "ends_local": "End (local time)",
+        "venue": "Place",
+        "status": "Canceled or postponed",
+        "official_url": "Website"
+      },
+      "note": "Member's note",
+      "decided": {
+        "approved": "Approved by {by} · {at}",
+        "rejected": "Rejected by {by} · {at}"
+      },
+      "rejectReasons": {
+        "not_accurate": "The proposed facts are not accurate",
+        "unverifiable": "Cannot be verified from a source",
+        "already_correct": "The event already shows this",
+        "not_a_fact_change": "Not a correction of the facts",
+        "abusive": "Abusive or spam",
+        "other": "Other"
+      },
+      "rejectTitle": "Reject this correction",
+      "rejectCopy": "The event stays as it is and the member sees that the correction was not accepted.",
+      "rejectReason": "Reason",
+      "chooseReason": "Choose a reason",
+      "rejectNote": "Note (optional)",
+      "rejectNoteHint": "Kept with the decision.",
+      "uncertain": "It is not known whether the rejection was saved. Refresh and check the correction's status before you repeat it."
+    },
     "tabs": {
       "label": "AreYouIn administration",
       "activities": "Activities",
       "external": "External events",
       "moderation": "Moderation",
       "configuration": "Configuration",
+      "corrections": "Corrections",
       "intakes": "Intakes",
       "research": "Research",
       "usage": "AI usage"
     },
     "external": {
+      "review": {
+        "quickViews": "Quick view:",
+        "researchUnreviewed": "Research, published, not reviewed",
+        "filterValues": {
+          "true": "Reviewed",
+          "false": "Not reviewed"
+        },
+        "reviewed": "Reviewed, OK",
+        "notReviewed": "Not reviewed",
+        "markedBy": "Marked by {by} · {at}",
+        "clearedBy": "Last changed by {by} · {at}",
+        "mark": "Reviewed, OK",
+        "clear": "Clear mark",
+        "clearTitle": "Clear the review mark",
+        "clearCopy": "The event returns to “not reviewed”. Write why, for the audit log.",
+        "clearReason": "Reason",
+        "uncertain": "It is not known whether the mark was saved: no readable answer came back. The event was read again; check its mark before you repeat it.",
+        "refusals": {
+          "recheckOpen": "A re-research of this event is already queued or running. Wait for it to finish.",
+          "recheckUnavailable": "This event cannot be re-researched: it is no longer a published external event, or research is switched off.",
+          "budgetPaused": "Research is paused: this month's AI research spend reached its 70% stop. Raise the cap or wait for next month.",
+          "instructionsInvalid": "The instructions are too long or contain characters Core does not accept (at most 1000 characters).",
+          "correctionUnavailable": "This correction is no longer available.",
+          "correctionDecided": "This correction has already been decided. Refresh to see the decision.",
+          "reasonInvalid": "Choose a valid rejection reason.",
+          "eventUnavailable": "The event is no longer available.",
+          "stale": "The event changed in the meantime. Refresh, check it again, then repeat.",
+          "stateInvalid": "The event's current state does not allow this. Refresh to see it.",
+          "capability": "Your administrator role does not allow this action.",
+          "other": "Core refused the request. Refresh and check the event before trying again."
+        },
+        "duplicate": "Possible duplicate",
+        "duplicateHint": "Automatic publication found a similar event. Open it to compare.",
+        "duplicateCopy": "Automatic publication found a similar published event (a possible duplicate).",
+        "duplicateOpen": "Open the other event",
+        "openCorrections": "{count, plural, one {# open correction} other {# open corrections}}",
+        "openReports": "{count, plural, one {# open report} other {# open reports}}",
+        "lastRecheck": "AI re-research: {status}",
+        "remove": "Remove",
+        "correctionsTitle": "Members' corrections",
+        "unreadableCorrection": "Correction {row} could not be read and is not shown.",
+        "noCorrections": "No member has sent a correction for this event.",
+        "approveEdit": "Approve and edit",
+        "reject": "Reject",
+        "correctionNotPending": "The correction in the link is no longer pending, or it does not belong to this event. The editor shows the stored facts.",
+        "approveTitle": "Approving a member's correction",
+        "approveCopy": "The editor below is prefilled with the proposed values. Check them against the source, complete what the form could not take over, tick the four checks, then save: the save approves this correction. Nothing the member wrote is shown to others before that.",
+        "venueHint": "Proposed place: “{venue}”. Find it with the place search and check the pin; free text is not copied into the venue fields.",
+        "statusCanceledHint": "The member says the event is canceled. If the organizer confirms it, use “Record organizer cancellation” among the commands; saving here does not cancel the event.",
+        "statusPostponedHint": "The member says the event is postponed. Enter the new date and time if the source confirms them.",
+        "unappliedHint": "Some proposed values could not be put into the form as they are (for example a link that is not https). They are listed above; enter them by hand if they are right.",
+        "approveReview": "Review approval",
+        "approveSave": "Approve correction and save"
+      },
+      "recheck": {
+        "title": "Re-research with AI",
+        "copy": "Ask the AI to look at this one event again: it searches the web for it, reads its known pages and up to five new ones, and checks the facts as for new events. If it is the same event and facts changed, they are updated and members are notified as for an edit; otherwise the event is left untouched. Paid from the AI research budget.",
+        "pollError": "The job's status could not be read just now. It is read again shortly; Refresh retries now.",
+        "pendingCopy": "A re-research request of yours has no confirmed answer yet. Send the same request again: Core recognizes it and starts no second job.",
+        "retry": "Send the same request again",
+        "pendingBlocked": "The request saved in this browser tab cannot be read or does not match. No new re-research can be started here; check the browser storage or ask the operations lead.",
+        "openJob": "A re-research is in progress: {status} (asked {at}). This page checks it every 10 seconds.",
+        "instructions": "Instructions for the AI (optional)",
+        "counter": "{count} / {max} characters",
+        "instructionsHint": "For example what was missing or wrong, or where to look. Only administrators see this text; it is logged.",
+        "start": "Re-research with AI",
+        "notStartable": "Only a published event without an open job can be re-researched.",
+        "history": "Last re-research jobs",
+        "unreadableJob": "Job {row} could not be read and is not shown.",
+        "none": "This event has not been re-researched yet.",
+        "columns": {
+          "status": "Status",
+          "requested": "Asked",
+          "instructions": "Instructions",
+          "result": "Result",
+          "cost": "Cost",
+          "field": "Field",
+          "before": "Before",
+          "after": "After"
+        },
+        "finished": "Finished {at}",
+        "noInstructions": "No instructions",
+        "empty": "(empty)",
+        "statuses": {
+          "queued": "Queued",
+          "running": "Running",
+          "applied": "Changes applied",
+          "no_change": "No change",
+          "failed": "Failed"
+        },
+        "reasons": {
+          "no_change": "The facts were found unchanged.",
+          "not_same_event": "The pages found describe a different event; nothing was applied.",
+          "no_valid_page": "No page described this event in a way that validated.",
+          "fetch_failed": "The event's pages could not be fetched.",
+          "robots_disallowed": "The site's robots rules do not allow reading the page.",
+          "validation_failed": "The extracted facts did not pass validation.",
+          "provider_unavailable": "The AI provider was unavailable.",
+          "budget_paused": "Research was paused by the budget.",
+          "event_not_published": "The event was no longer published when the job ran.",
+          "event_changed": "The event was edited while the job ran; nothing was applied.",
+          "timeout": "The job did not finish in time."
+        },
+        "confirmTitle": "Re-research this event with AI?",
+        "confirmCopy": "This starts one paid AI job for this event. Changed facts are applied and members are notified; if the result is not the same event, nothing changes. Instructions:",
+        "queued": "Core queued the re-research. Its status appears below.",
+        "retained": "Core confirmed the request, but the copy saved in this tab could not be cleared. Send the same request again to finish.",
+        "uncertain": "It is not known whether Core received the request. It is saved: send the same request again; no second job can start from it.",
+        "invalid": "The instructions may be at most 1000 characters."
+      },
       "eyebrow": "AreYouIn operations",
       "title": "External events",
       "subtitle": "Manually entered events by external organizers. Source checks, revisions and publication remain Core-owned.",
@@ -9017,9 +9278,9 @@
       "next": "Next",
       "filters": {
         "query": "Title contains", "city": "City", "status": "Status", "tier": "Verification tier",
-        "category": "Category", "channel": "Entry channel", "startFrom": "Starts from (UTC)", "startTo": "Starts through (UTC)"
+        "category": "Category", "channel": "Entry channel", "startFrom": "Starts from (UTC)", "startTo": "Starts through (UTC)", "reviewed": "Reviewed"
       },
-      "columns": { "event": "Event and organizer", "status": "Status", "venue": "Venue", "start": "Local start", "counts": "Participation", "recheck": "Next check" },
+      "columns": { "event": "Event and organizer", "status": "Status", "venue": "Venue", "start": "Local start", "counts": "Participation", "recheck": "Next check", "reviewed": "Reviewed" },
       "statusValues": { "in_review": "In review", "published": "Published", "rechecking": "Rechecking", "canceled_upstream": "Canceled by organizer", "withdrawn": "Withdrawn", "ended": "Ended", "merged_into": "Merged", "rejected": "Rejected" },
       "tierValues": { "admin": "Administrator checked", "official": "Official source", "corroborated": "Corroborated", "single_source": "Single source" },
       "channelValues": { "admin": "Administrator", "member_suggestion": "Member suggestion", "ai_research": "AI research" },
@@ -9059,7 +9320,7 @@
         "soft_delete": { "label": "Soft-delete event", "copy": "Hide the event while retaining its ledger, attendance and history. Invitations end and the conversation becomes read-only. This can be restored without changing a terminal or pending state." },
         "restore": { "label": "Undo soft deletion", "copy": "Restore the retained record only. A withdrawn, canceled or ended event stays terminal; pending moderation stays pending. No live-location access is granted." },
         "purge": { "label": "Permanently purge event", "copy": "Irreversibly remove the event after retention eligibility. Core requires superadmin permission, no open case and no legal/evidence hold. The external ledger and interests are also removed. This cannot be undone." },
-        "withdraw": { "label": "Withdraw publication", "copy": "Remove this recommendation from active discovery. Attendance history is retained, invitations end and the conversation becomes read-only. This is not an upstream cancellation claim." },
+        "withdraw": { "label": "Remove event", "copy": "Remove this event from AreYouIn: members no longer find it, invitations end and its conversation becomes read-only. Attendance history is kept. Use it for a wrong or unsuitable event; it does not claim that the organizer canceled it." },
         "cancel": { "label": "Record organizer cancellation", "copy": "Use only after confirming that the organizer canceled the event. Attendance history is retained, invitations end and the conversation becomes read-only." },
         "reverify": { "label": "Confirm source again", "copy": "Record a new human check with four fresh confirmations. This starts no AI or network job, sends no notification and does not approve pending moderation." },
         "official_update": { "label": "Post official update", "copy": "Post and pin a system update in the event conversation. Members see a Friending update, not your operator identity. The event must still be active and its conversation writable." }
@@ -9070,6 +9331,9 @@
         "payload": "Review exact saved request", "open": "Open the outstanding operation", "retry": "Retry the same operation"
       },
       "feedback": {
+        "changedElsewhere": "The event changed while you were editing (a review mark, a re-research or a correction decision). Your draft is kept, but nothing can be saved on the old revision. Refresh to load the current facts, then review your changes again.",
+        "correctionApproved": "Core saved the edit and approved the member's correction in the same step. Members are notified as for any edit.",
+        "correctionRejected": "The correction was rejected. The member sees that it was not accepted; the event is unchanged.",
         "success": "Core confirmed the audited operation.",
         "publishingDisabled": "Publication and content corrections are disabled by the release switch. Only the release lead should enable it after compatible Core and Webadmin releases. Cancellation, withdrawal and saved successful receipt retries remain available.",
         "recoveryOnly": "Current event details are unavailable. Only the saved operation can be retried; this can recover a receipt after a successful purge. No new event change is enabled.",
@@ -10548,6 +10812,7 @@
         "awaiting_budget": "The monthly AI budget is used up or set to zero. The worker tries again every hour; raise the cap in Configuration to continue sooner."
       },
       "statusDetailValues": {
+        "research-not-publishable": "Closed by the system: not publishable",
         "image-empty": "Empty flyer file",
         "image-unreadable": "Flyer cannot be read",
         "image-too-large": "Flyer file too large",
@@ -10577,6 +10842,7 @@
         "ai-budget-overrun": "AI billed beyond its limit"
       },
       "statusDetailHelp": {
+        "research-not-publishable": "The automatic publication gate found this research event not publishable, and the system closed it. The reason is shown beside the decision; nobody has to act on it.",
         "image-empty": "The uploaded file had no content. Upload the photo again.",
         "image-unreadable": "Core could not decode the file as an image. Try a JPEG or PNG copy of the flyer.",
         "image-too-large": "The file is larger than 10 MiB.",

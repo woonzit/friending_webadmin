@@ -9,6 +9,7 @@ import { researchCost } from "@/lib/datesResearchView";
 import { formatDate, formatNumber } from "@/lib/format";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { ResearchHelp } from "@/components/DatesResearchControls";
+import DatesResearchBlocker from "@/components/DatesResearchBlocker";
 
 export default function DatesResearchRuns({ areas, sources, focusRunId, refresh, active = true, onRunFinished }: { areas: ResearchArea[]; sources: ResearchSource[]; focusRunId: string | null; refresh: number; active?: boolean; onRunFinished?: () => Promise<void> | void }) {
   const t = useTranslations("datesAdmin.research"), common = useTranslations("common"), locale = useLocale();
@@ -89,7 +90,8 @@ export default function DatesResearchRuns({ areas, sources, focusRunId, refresh,
           {detail.candidates.unreadable.map((row) => <p className="alert alert-warning" key={row.index}>{t("unreadableRow", { row: row.index + 1 })}</p>)}
           {detail.candidates.rows.length === 0 && detail.candidates.unreadable.length === 0 ? <p>{t("candidatesEmpty")}</p> : <div className="table-wrap"><table className="data-table"><thead><tr>
             {["candidate", "date", "host", "outcome", "reason", "intake"].map((key) => <th key={key}>{t(`columns.${key}`)}</th>)}</tr></thead><tbody>
-            {detail.candidates.rows.map((row, index) => <tr key={index}><td>{row.title}</td><td>{row.date_text}</td><td>{row.url_host}</td><td>{t(`outcomes.${row.outcome}`)}</td><td>{row.reason ? t(`dropReasons.${row.reason}`) : "—"}</td>
+            {detail.candidates.rows.map((row, index) => <tr key={index}><td>{row.title}</td><td>{row.date_text}</td><td>{row.url_host}</td><td>{t(`outcomes.${row.outcome}`)}</td><td>{row.reason ? t(`dropReasons.${row.reason}`) : row.outcome === "not_publishable" || (row.publication_blocker ?? null) !== null
+                ? <DatesResearchBlocker code={row.publication_blocker ?? null} /> : "—"}</td>
               <td>{row.intake_id ? <Link href={`/dates/intakes/${encodeURIComponent(row.intake_id)}`}>{t("columns.intake")}</Link> : "—"}</td></tr>)}</tbody></table></div>}
         </>}
       </>}

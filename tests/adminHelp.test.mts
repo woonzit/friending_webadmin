@@ -72,8 +72,9 @@ test("all authenticated routes have a live guide or an explicit redirect to one"
   // T-865 P2a adds the intake queue, the intake review screen and the AI usage
   // page: 44 live guides plus 2 redirects.
   // T-896 adds Research: 45 live guides plus the same two redirects.
-  assert.equal(actualRoutes.length, 47, "the current screen census changed; review every new or removed screen");
-  assert.equal(ADMIN_HELP_PAGES.length, 45, "review the live-screen census");
+  // D-149 (T-908) adds the AreYouIn corrections queue: 46 live guides plus the same two redirects.
+  assert.equal(actualRoutes.length, 48, "the current screen census changed; review every new or removed screen");
+  assert.equal(ADMIN_HELP_PAGES.length, 46, "review the live-screen census");
   assert.equal(ADMIN_HELP_REDIRECTS.length, 2, "review the retired-route census");
   assert.deepEqual(helpRoutes, actualRoutes);
   assert.equal(new Set(helpRoutes).size, helpRoutes.length, "a screen may have only one help document");
@@ -156,7 +157,9 @@ test("every inventoried functional section has detailed English and Hungarian he
   // Friending Start adds the methods panel on /configuration (radar, touch), which has its own revision and its own save (283).
   // The event page's "Content & signals" panel, which shipped with no topic, gets one (284).
   // Host moderation adds the case page's "Host review" section: what the event's host was shown and decided (285).
-  assert.equal(totalSections, 285, "review the functional-section census when the UI changes");
+  // D-149 (T-908) adds the reviewed mark on the external list (1), review and AI re-research on the external detail (2)
+  // and the three topics of the corrections queue (3) (291).
+  assert.equal(totalSections, 291, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [

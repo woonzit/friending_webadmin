@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 const TABS = [
   { href: "/dates", key: "activities", exact: true },
   { href: "/dates/external", key: "external", exact: false },
+  { href: "/dates/corrections", key: "corrections", exact: false },
   { href: "/dates/intakes", key: "intakes", exact: false },
   { href: "/dates/research", key: "research", exact: false },
   { href: "/dates/ai-usage", key: "usage", exact: false },

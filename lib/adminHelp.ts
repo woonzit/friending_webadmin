@@ -274,7 +274,8 @@ export const ADMIN_HELP_PAGES = [
     key: "datesExternalList",
     route: "/dates/external",
     // T-865 P2a: "Draft from source" is offered on the list and on the intake queue.
-    sections: ["filters", "results", "draftFromSource"],
+    // D-149 adds the reviewed mark, the research quick view and the review counts.
+    sections: ["filters", "results", "draftFromSource", "review"],
     matches: exact("/dates/external"),
   },
   {
@@ -286,8 +287,16 @@ export const ADMIN_HELP_PAGES = [
   {
     key: "datesExternalDetail",
     route: "/dates/external/[externalId]",
-    sections: ["provenance", "changes", "commands"],
+    // D-149 adds the review / corrections / removal topic and the AI re-research.
+    sections: ["provenance", "changes", "commands", "review", "recheck"],
     matches: dynamic("/dates/external"),
+  },
+  {
+    // D-149 W4: members' corrections of published external events.
+    key: "datesCorrections",
+    route: "/dates/corrections",
+    sections: ["queue", "approve", "reject"],
+    matches: exact("/dates/corrections"),
   },
   {
     key: "datesIntakeQueue",

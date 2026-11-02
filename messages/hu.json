@@ -1236,6 +1236,15 @@
           "3": "Csak jogosultsággal és a kiadás vezetője által engedélyezett publikálás mellett hozz létre eseményt."
         },
         "sections": {
+          "review": {
+            "title": "Átnézési jelölés és gyorsnézet",
+            "purpose": "A kutatásból érkező események automatikusan megjelennek; az Átnézés oszlop mutatja, melyiket nézte már át adminisztrátor, a gyorsnézet pedig a még át nem nézett, közzétett kutatási eseményeket listázza.",
+            "guidance": "Az Átnézve, rendben jelölés a csapatnak szól, nem publikálási döntés. Ha a rendszer később módosítja az adatokat, a jelölés törlődik. A Lehetséges duplikátum jelvény a hasonló eseményre visz; a számok a nyitott javításokra és bejelentésekre mutatnak.",
+            "actions": {
+              "1": "Használd a gyorsnézetet, nyisd meg az eseményeket, és jelöld őket Átnézve, rendben állapotúra, ha az adatok helyesek.",
+              "2": "Ha egy eseményt újra meg kell nézni, okkal töröld a jelölést."
+            }
+          },
           "filters": {
             "title": "Szűrés és lapozás",
             "purpose": "A szűrők a külső eseményrekordokat szűkítik, és nem keverik azok állapotát a tagok által szervezett programokéval.",
@@ -1312,6 +1321,24 @@
           "3": "Ellenőrizd a szervernyugtát; ütközésnél olvass újra és tekintsd át az adatokat, bizonytalanságnál csak a mentett kérést próbáld újra."
         },
         "sections": {
+          "review": {
+            "title": "Átnézés, javítások és eltávolítás",
+            "purpose": "A részletek oldalon látszik az Átnézve, rendben jelölés, a lehetséges duplikátum, és a tagok javításai ehhez az eseményhez a Jóváhagyás és szerkesztés, illetve az Elutasítás gombbal.",
+            "guidance": "Az Eltávolítás a visszavonási művelet: a tagok nem találják az eseményt, az előzményei megmaradnak. Jelölés, újrakeresés vagy javítás máshol is módosítja az eseményt; mentetlen szerkesztésnél az oldal frissítést kér, nem tölti újra alattad.",
+            "actions": {
+              "1": "Ha a forrással összevetve az adatok rendben vannak, jelöld az eseményt Átnézve, rendben állapotúra.",
+              "2": "Hibás vagy nem odaillő eseménynél okkal használd az Eltávolítás gombot."
+            }
+          },
+          "recheck": {
+            "title": "Újrakeresés AI-val",
+            "purpose": "Az AI újra megvizsgálja ezt az egy eseményt, nem kötelező utasítással, és megmutatja a feladat állapotát, valamint az utolsó öt feladatot a módosításokkal és a költséggel.",
+            "guidance": "Eseményenként egy feladat futhat, az MI-kutatási keretből fizetve, és nem indul, amíg a keret miatt szünetel a kutatás. A változott adat átvezetésre kerül, és a tagok értesítést kapnak; másik esemény vagy hiba esetén az esemény változatlan marad.",
+            "actions": {
+              "1": "Az utasításban írd le, mi hiányzott vagy volt hibás, vagy hol érdemes keresni (legfeljebb 1000 karakter).",
+              "2": "Megválaszolatlan kérés után küldd el ugyanazt a kérést újra; ebből a Core nem indít második feladatot."
+            }
+          },
           "provenance": {
             "title": "Forrás és házigazda nélküli azonosság",
             "purpose": "A forráslinkek, kategóriakép, ellenőrzési szint és adminisztrátori felvitel egy ember által ellenőrzött külső ajánlást azonosítanak, nem tagi házigazdát.",
@@ -2997,6 +3024,44 @@
           }
         }
       },
+      "datesCorrections": {
+        "title": "Javítási javaslatok súgója",
+        "summary": "A tagok javítást küldhetnek egy közzétett külső eseményhez. Amit beküldenek, azt jóváhagyás előtt senki más nem látja, és AI-hoz sem kerül. A jóváhagyás az eseményszerkesztőn keresztül történik, az elutasításhoz ok tartozik.",
+        "steps": {
+          "1": "Hagyd a szűrőt Függőben állapoton, és a legrégebbi javítással kezdd.",
+          "2": "Vesd össze a jelenlegi és a javasolt értékeket az esemény forrásával, és olvasd el a tag megjegyzését.",
+          "3": "A Jóváhagyás és szerkesztés a szerkesztőn át vezeti át a módosítást; vagy utasítsd el a javítást egy okkal."
+        },
+        "sections": {
+          "queue": {
+            "title": "Javítások sora",
+            "purpose": "Minden javítás mutatja az eseményt, a tag szerint hibás adatokat a jelenlegi és a javasolt értékkel egymás mellett, a megjegyzést, a tagot és az időpontot.",
+            "guidance": "Egy tagnak eseményenként egy nyitott javítása lehet, naponta legfeljebb tíz. Olvasási hiba nem bizonyítja, hogy nincs várakozó javítás.",
+            "actions": {
+              "1": "Állapot szerint szűrve az eldöntött javításokat és a döntéshozót is látod.",
+              "2": "Nyisd meg az eseményt a többi javítása, bejelentése és újrakeresése miatt."
+            }
+          },
+          "approve": {
+            "title": "Jóváhagyás és szerkesztés",
+            "purpose": "Megnyitja az eseményszerkesztőt a javasolt címmel, időpontokkal és weboldallal kitöltve; a négy ellenőrzéssel együtt mentve ugyanabban a lépésben jóváhagyja a javítást.",
+            "guidance": "A javasolt helyszín szabad szöveg: keresd meg a helykeresővel. A lemondást az esemény lemondási műveletével rögzítsd, nem mentéssel. A tagok úgy kapnak értesítést, mint bármely szerkesztésnél.",
+            "actions": {
+              "1": "A négy ellenőrzés kipipálása előtt minden kitöltött értéket vess össze a forrással.",
+              "2": "Ha a mentés ütközést jelez, frissíts és nézd át újra; a javítás a sikeres mentésig függőben marad."
+            }
+          },
+          "reject": {
+            "title": "Elutasítás",
+            "purpose": "Az elutasítás okkóddal és nem kötelező megjegyzéssel zárja le a javítást; az esemény nem változik, a tag pedig látja, hogy nem fogadtuk el.",
+            "guidance": "Eldöntött javításról nem lehet újra dönteni. Ha elveszett a válasz, ismétlés előtt frissíts, és nézd meg az állapotot.",
+            "actions": {
+              "1": "Azt az okot válaszd, amely megfelel annak, amit ellenőriztél.",
+              "2": "Írj megjegyzést, ha az okhoz a többi moderátornak háttér kell."
+            }
+          }
+        }
+      },
       "datesIntakeQueue": {
         "title": "Beküldések sorának súgója",
         "summary": "Ez a sor az esemény-MI-nek átadott forrásokat és az azokból készült vázlatokat mutatja. Az ellenőr magához veszi a beküldést, összeveti a vázlatot a forrással, majd elutasítja, vagy publikálja az eseményeit; a sorból a tagok semmit nem látnak.",
@@ -3130,7 +3195,7 @@
           "sources": {
             "title": "Gyűjtőoldalak és ellenőrzések",
             "purpose": "A forrásnak nyilvános URL-je, városa, típusa, időköze és felső eseményszáma van, a robots állapotával és az utolsó eredménnyel.",
-            "guidance": "A Próba nem importál semmit. A gyűjtőoldalakból tényeket vesz át a rendszer, nem leírásokat; a hivatalos források átmehetnek a Core automatikus közzétételi ellenőrzésein.",
+            "guidance": "A Próba nem importál semmit. A gyűjtőoldalakból tényeket vesz át a rendszer, nem leírásokat. Bekapcsolt automatikus közzétételnél mindkét forrástípus eseményei megjelennek, ha az MI ellenőrizte őket; a többit a rendszer az okával lezárja.",
             "actions": {
               "1": "Lehetőleg nyilvános szervezői, helyszíni vagy városi oldalt használj, és válaszd a megfelelő forrástípust.",
               "2": "A Próba találatai után az Átnézés most gombbal indíthatsz tényleges importálást."
@@ -8587,7 +8652,26 @@
       "unavailableCity": "Nem elérhető város ({id})",
       "editedRowUnavailable": "A szerkesztett sor nem érhető el. Módosítás előtt frissítsd az adatokat.",
       "mapHint": "Válassz várost a keresőből. A Core azonosítja a helyet és a városhatárokat; a térkép a kapott középpontot és a sugarat mutatja.",
-      "aggregatorHint": "Az eseménygyűjtő oldalakról csak a tényadatok kerülnek át. A saját leírásuk és képeik nem, és az eseményeik nem jelennek meg automatikusan.",
+      "aggregatorHint": "Az eseménygyűjtő oldalakról csak a tényadatok kerülnek át, a saját leírásuk és képeik nem. Az eseményeik a város vagy a globális automatikus közzétételi beállítást követik, mint a hivatalos forrásoké.",
+      "publication": {
+        "notPublishable": "Nem közzétehető (rendszerdöntés)",
+        "blockers": {
+          "not_single_event": "Nem pontosan egy esemény",
+          "not_an_event": "Nem esemény",
+          "hard_fail": "Nem ment át egy kötelező ellenőrzésen",
+          "title_unverified": "A cím nem ellenőrzött",
+          "date_unverified": "A dátum nem ellenőrzött",
+          "time_unverified": "Az időpont nem ellenőrzött",
+          "venue_unverified": "A helyszín nem ellenőrzött",
+          "sensitive": "Érzékeny kategória",
+          "prompt_injection_suspected": "Az MI manipulálásának gyanúja",
+          "duplicate": "Már közzétett esemény duplikátuma",
+          "domain_blocked": "Tiltott weboldal",
+          "outside_area": "A területen kívül",
+          "outside_window": "Az időablakon kívül",
+          "start_in_past": "A kezdés a múltban van"
+        }
+      },
       "test": "Próba",
       "runNow": "Átnézés most",
       "sourceEffective": "Előretekintés: {days} nap · automatikus közzététel: {publish}",
@@ -8632,7 +8716,9 @@
         "imported": "Importálva",
         "would_import": "Importálható lenne",
         "duplicate": "Duplikátum",
-        "dropped": "Kihagyva"
+        "dropped": "Kihagyva",
+        "published": "Közzétéve",
+        "not_publishable": "Nem közzétehető"
       },
       "dropReasons": {
         "past_date": "Már elmúlt esemény",
@@ -8875,9 +8961,9 @@
           "cost": "A hosszabb időablak több találat feldolgozását igényelheti."
         },
         "autopublish": {
-          "purpose": "A megfelelő hivatalos forrású események automatikusan közzétehetők.",
-          "effect": "A Core minden biztonsági ellenőrzést, új eseményt, nem érzékeny kategóriát és legalább 24 órával későbbi kezdést kér. A többi esemény átnézésre vár.",
-          "cost": "Nem emeli az MI-keretet; a keresés és az ellenőrzés továbbra is költséggel jár."
+          "purpose": "Amit az MI ellenőrzött, átnézésre várakozás nélkül megjelenik.",
+          "effect": "Bekapcsolva minden esemény automatikusan megjelenik, amelyet az MI ellenőrzött: egyetlen valós, nyilvános, személyes részvételű esemény ellenőrzött címmel, dátummal, időponttal és helyszínnel, amely nem érzékeny, nem duplikátum, és a területen és az időablakon belül van. Ami ezen nem megy át, azt a rendszer az okával lezárja, és nem kerül a sorba. Kikapcsolva a kutatásból érkező események a beküldési sorban várnak egy moderátorra.",
+          "cost": "Nem emeli az MI-keretet. A tagok jelenthetik a megjelent eseményt, vagy javítást küldhetnek; a Külső események fülön átnézheted, újrakerestetheted vagy eltávolíthatod."
         },
         "city": {
           "purpose": "A területhez vagy forráshoz tartozó, azonosított város.",
@@ -8941,17 +9027,192 @@
         }
       }
     },
+    "corrections": {
+      "eyebrow": "AreYouIn üzemeltetés",
+      "title": "Javítási javaslatok",
+      "subtitle": "A tagok javaslatai a közzétett külső események javítására. Jóváhagyni az esemény szerkesztésével lehet, elutasítani okkal.",
+      "boundary": "Amit a tag beküld, azt jóváhagyás előtt senki más nem látja, és AI-hoz sem kerül. A jóváhagyás az eseményszerkesztőn keresztül történik, így a helykeresés, az időzóna, a változatszám és a tagok értesítése ugyanúgy működik, mint bármely szerkesztésnél.",
+      "statusFilter": "Állapot",
+      "statuses": {
+        "pending": "Függőben",
+        "approved": "Jóváhagyva",
+        "rejected": "Elutasítva"
+      },
+      "loadError": "A javítások nem olvashatók. Ebből nem következik, hogy a lista üres. Frissíts az újrapróbáláshoz.",
+      "unreadableRow": "A(z) {row}. sor nem olvasható, ezért nem látszik.",
+      "empty": "Nincs ilyen állapotú javítás.",
+      "emptyPage": "Ezen az oldalon nincs javítás. A lista betöltés közben változhatott; frissíts, vagy lépj vissza egy oldalt.",
+      "pagination": "{page}. oldal · {total} javítás",
+      "approveEdit": "Jóváhagyás és szerkesztés",
+      "reject": "Elutasítás",
+      "rejected": "A javítást elutasítottad.",
+      "unchanged": "változatlan",
+      "noValue": "(nincs)",
+      "noEnd": "Nincs befejezési idő",
+      "statusValues": {
+        "canceled": "Elmarad",
+        "postponed": "Elhalasztva",
+        "scheduled": "A tervek szerint"
+      },
+      "submitted": "Beküldve: {at}",
+      "member": "#{uid} tag",
+      "revisionAtSubmit": "az esemény változata beküldéskor: {revision}",
+      "columns": {
+        "field": "Adat",
+        "current": "Jelenleg",
+        "proposed": "Javasolt"
+      },
+      "fields": {
+        "title": "Cím",
+        "starts_local": "Kezdés (helyi idő)",
+        "ends_local": "Befejezés (helyi idő)",
+        "venue": "Helyszín",
+        "status": "Elmarad vagy elhalasztva",
+        "official_url": "Weboldal"
+      },
+      "note": "A tag megjegyzése",
+      "decided": {
+        "approved": "Jóváhagyta: {by} · {at}",
+        "rejected": "Elutasította: {by} · {at}"
+      },
+      "rejectReasons": {
+        "not_accurate": "A javasolt adatok nem pontosak",
+        "unverifiable": "Forrásból nem ellenőrizhető",
+        "already_correct": "Az esemény már ezt mutatja",
+        "not_a_fact_change": "Nem az adatok javítása",
+        "abusive": "Bántó vagy kéretlen tartalom",
+        "other": "Egyéb"
+      },
+      "rejectTitle": "Javítás elutasítása",
+      "rejectCopy": "Az esemény változatlan marad, a tag pedig látja, hogy a javítást nem fogadtuk el.",
+      "rejectReason": "Ok",
+      "chooseReason": "Válassz okot",
+      "rejectNote": "Megjegyzés (nem kötelező)",
+      "rejectNoteHint": "A döntés mellé kerül.",
+      "uncertain": "Nem tudni, hogy az elutasítás elmentődött-e. Frissíts, és ismétlés előtt nézd meg a javítás állapotát."
+    },
     "tabs": {
       "label": "AreYouIn adminisztráció",
       "activities": "Aktivitások",
       "external": "Külső események",
       "moderation": "Moderáció",
       "configuration": "Konfiguráció",
+      "corrections": "Javítási javaslatok",
       "intakes": "Beküldések",
       "research": "Kutatás",
       "usage": "MI-költés"
     },
     "external": {
+      "review": {
+        "quickViews": "Gyorsnézet:",
+        "researchUnreviewed": "Kutatásból, közzétéve, nincs átnézve",
+        "filterValues": {
+          "true": "Átnézve",
+          "false": "Nincs átnézve"
+        },
+        "reviewed": "Átnézve, rendben",
+        "notReviewed": "Nincs átnézve",
+        "markedBy": "Jelölte: {by} · {at}",
+        "clearedBy": "Utoljára módosította: {by} · {at}",
+        "mark": "Átnézve, rendben",
+        "clear": "Jelölés törlése",
+        "clearTitle": "Átnézési jelölés törlése",
+        "clearCopy": "Az esemény visszakerül a „nincs átnézve” állapotba. Írd le az okát a naplóhoz.",
+        "clearReason": "Indoklás",
+        "uncertain": "Nem tudni, hogy a jelölés elmentődött-e: nem jött olvasható válasz. Az eseményt újraolvastuk; ismétlés előtt nézd meg a jelölését.",
+        "refusals": {
+          "recheckOpen": "Ehhez az eseményhez már sorban áll vagy fut egy újrakeresés. Várd meg, amíg befejeződik.",
+          "recheckUnavailable": "Ez az esemény nem kereshető újra: már nem közzétett külső esemény, vagy a kutatás ki van kapcsolva.",
+          "budgetPaused": "A kutatás szünetel: a havi MI-kutatási költés elérte a 70%-os megállási pontot. Emeld a keretet, vagy várd meg a következő hónapot.",
+          "instructionsInvalid": "Az utasítás túl hosszú, vagy a Core által nem elfogadott karaktert tartalmaz (legfeljebb 1000 karakter).",
+          "correctionUnavailable": "Ez a javítás már nem érhető el.",
+          "correctionDecided": "Erről a javításról már döntöttek. Frissíts a döntés megtekintéséhez.",
+          "reasonInvalid": "Válassz érvényes elutasítási okot.",
+          "eventUnavailable": "Az esemény már nem érhető el.",
+          "stale": "Az esemény közben megváltozott. Frissíts, nézd át újra, majd ismételd meg.",
+          "stateInvalid": "Az esemény jelenlegi állapotában ez nem lehetséges. Frissíts a megtekintéséhez.",
+          "capability": "Az adminisztrátori szereped ezt a műveletet nem engedi.",
+          "other": "A Core elutasította a kérést. Frissíts, és nézd át az eseményt, mielőtt újra próbálod."
+        },
+        "duplicate": "Lehetséges duplikátum",
+        "duplicateHint": "Az automatikus közzététel hasonló eseményt talált. Nyisd meg az összevetéshez.",
+        "duplicateCopy": "Az automatikus közzététel hasonló, már közzétett eseményt talált (lehetséges duplikátum).",
+        "duplicateOpen": "A másik esemény megnyitása",
+        "openCorrections": "{count} nyitott javítás",
+        "openReports": "{count} nyitott bejelentés",
+        "lastRecheck": "AI-újrakeresés: {status}",
+        "remove": "Eltávolítás",
+        "correctionsTitle": "Tagok javítási javaslatai",
+        "unreadableCorrection": "A(z) {row}. javítás nem olvasható, ezért nem látszik.",
+        "noCorrections": "Ehhez az eseményhez még egy tag sem küldött javítást.",
+        "approveEdit": "Jóváhagyás és szerkesztés",
+        "reject": "Elutasítás",
+        "correctionNotPending": "A linkben szereplő javítás már nincs függőben, vagy nem ehhez az eseményhez tartozik. A szerkesztő a tárolt adatokat mutatja.",
+        "approveTitle": "Tag javításának jóváhagyása",
+        "approveCopy": "Az alábbi szerkesztőbe a javasolt értékek kerültek. Vesd össze őket a forrással, egészítsd ki, amit az űrlap nem tudott átvenni, pipáld ki a négy ellenőrzést, majd ments: a mentés jóváhagyja ezt a javítást. Amit a tag írt, addig más nem látja.",
+        "venueHint": "Javasolt helyszín: „{venue}”. Keresd meg a helykeresővel, és ellenőrizd a térképjelölőt; a szabad szöveg nem kerül át a helyszín mezőibe.",
+        "statusCanceledHint": "A tag szerint az esemény elmarad. Ha a szervező megerősíti, a műveletek közül válaszd a „Szervezői lemondás rögzítése” lehetőséget; az itteni mentés nem mondja le az eseményt.",
+        "statusPostponedHint": "A tag szerint az esemény elhalasztva. Ha a forrás megerősíti, add meg az új dátumot és időpontot.",
+        "unappliedHint": "Néhány javasolt érték nem kerülhetett át változatlanul az űrlapba (például nem https link). Fent látod őket; ha helyesek, írd be kézzel.",
+        "approveReview": "Jóváhagyás áttekintése",
+        "approveSave": "Javítás jóváhagyása és mentés"
+      },
+      "recheck": {
+        "title": "Újrakeresés AI-val",
+        "copy": "Az AI újra megvizsgálja ezt az egy eseményt: rákeres a weben, elolvassa az ismert oldalait és legfeljebb öt újat, és úgy ellenőrzi az adatokat, mint az új eseményeknél. Ha ugyanarról az eseményről van szó és az adatok változtak, frissülnek, és a tagok úgy kapnak értesítést, mint egy szerkesztésnél; különben az esemény változatlan marad. Az MI-kutatási keretből fizetjük.",
+        "pollError": "A feladat állapota most nem olvasható. Hamarosan újra lekérjük; a Frissítés azonnal újrapróbálja.",
+        "pendingCopy": "Egy újrakeresési kérésedre még nincs megerősített válasz. Küldd el ugyanazt a kérést újra: a Core felismeri, és nem indít második feladatot.",
+        "retry": "Ugyanazon kérés újraküldése",
+        "pendingBlocked": "A böngészőfülön mentett kérés nem olvasható, vagy nem egyezik. Innen nem indítható új újrakeresés; ellenőrizd a böngészőtárat, vagy kérdezd az üzemeltetésért felelőst.",
+        "openJob": "Újrakeresés folyamatban: {status} (kérve: {at}). Az oldal 10 másodpercenként ellenőrzi.",
+        "instructions": "Utasítás az AI-nak (nem kötelező)",
+        "counter": "{count} / {max} karakter",
+        "instructionsHint": "Például mi hiányzott vagy volt hibás, vagy hol érdemes keresni. Ezt a szöveget csak adminisztrátorok látják; naplózzuk.",
+        "start": "Újrakeresés AI-val",
+        "notStartable": "Csak olyan közzétett esemény kereshető újra, amelyhez nincs folyamatban lévő feladat.",
+        "history": "Legutóbbi újrakeresések",
+        "unreadableJob": "A(z) {row}. feladat nem olvasható, ezért nem látszik.",
+        "none": "Ezt az eseményt még nem kerestük újra.",
+        "columns": {
+          "status": "Állapot",
+          "requested": "Kérve",
+          "instructions": "Utasítás",
+          "result": "Eredmény",
+          "cost": "Költség",
+          "field": "Mező",
+          "before": "Előtte",
+          "after": "Utána"
+        },
+        "finished": "Befejezve: {at}",
+        "noInstructions": "Nincs utasítás",
+        "empty": "(üres)",
+        "statuses": {
+          "queued": "Sorban áll",
+          "running": "Fut",
+          "applied": "Módosítások átvezetve",
+          "no_change": "Nincs változás",
+          "failed": "Sikertelen"
+        },
+        "reasons": {
+          "no_change": "Az adatok változatlanok.",
+          "not_same_event": "A talált oldalak másik eseményt írnak le; semmi nem változott.",
+          "no_valid_page": "Egyik oldal sem írta le az eseményt ellenőrizhető módon.",
+          "fetch_failed": "Az esemény oldalai nem tölthetők le.",
+          "robots_disallowed": "Az oldal robots-szabálya nem engedi az olvasást.",
+          "validation_failed": "A kinyert adatok nem mentek át az ellenőrzésen.",
+          "provider_unavailable": "Az AI-szolgáltató nem volt elérhető.",
+          "budget_paused": "A kutatást a keret szüneteltette.",
+          "event_not_published": "Az esemény a futáskor már nem volt közzétéve.",
+          "event_changed": "Az eseményt a futás közben szerkesztették; semmi nem változott.",
+          "timeout": "A feladat nem fejeződött be időben."
+        },
+        "confirmTitle": "Újrakeresed ezt az eseményt AI-val?",
+        "confirmCopy": "Ez egy fizetős AI-feladatot indít ehhez az eseményhez. A változott adatok átvezetésre kerülnek, és a tagok értesítést kapnak; ha az eredmény nem ugyanaz az esemény, semmi nem változik. Utasítás:",
+        "queued": "A Core sorba állította az újrakeresést. Az állapota lent látható.",
+        "retained": "A Core megerősítette a kérést, de a fülön mentett másolat nem törölhető. A lezáráshoz küldd el ugyanazt a kérést újra.",
+        "uncertain": "Nem tudni, hogy a Core megkapta-e a kérést. El van mentve: küldd el ugyanazt újra; ebből nem indulhat második feladat.",
+        "invalid": "Az utasítás legfeljebb 1000 karakter lehet."
+      },
       "eyebrow": "AreYouIn üzemeltetés",
       "title": "Külső események",
       "subtitle": "Külső szervezők kézzel felvitt eseményei. A forrásellenőrzés, a revízió és a publikálás a Core fennhatósága alatt marad.",
@@ -9017,9 +9278,9 @@
       "next": "Következő",
       "filters": {
         "query": "Cím tartalmazza", "city": "Város", "status": "Állapot", "tier": "Ellenőrzési szint",
-        "category": "Kategória", "channel": "Felviteli csatorna", "startFrom": "Kezdés ettől (UTC)", "startTo": "Kezdés eddig (UTC)"
+        "category": "Kategória", "channel": "Felviteli csatorna", "startFrom": "Kezdés ettől (UTC)", "startTo": "Kezdés eddig (UTC)", "reviewed": "Átnézve"
       },
-      "columns": { "event": "Esemény és szervező", "status": "Állapot", "venue": "Helyszín", "start": "Helyi kezdés", "counts": "Részvétel", "recheck": "Következő ellenőrzés" },
+      "columns": { "event": "Esemény és szervező", "status": "Állapot", "venue": "Helyszín", "start": "Helyi kezdés", "counts": "Részvétel", "recheck": "Következő ellenőrzés", "reviewed": "Átnézés" },
       "statusValues": { "in_review": "Ellenőrzés alatt", "published": "Publikált", "rechecking": "Újraellenőrzés alatt", "canceled_upstream": "Szervező által lemondva", "withdrawn": "Visszavonva", "ended": "Befejeződött", "merged_into": "Összevonva", "rejected": "Elutasítva" },
       "tierValues": { "admin": "Admin által ellenőrzött", "official": "Hivatalos forrás", "corroborated": "Több forrásból megerősített", "single_source": "Egyetlen forrás" },
       "channelValues": { "admin": "Adminisztrátor", "member_suggestion": "Tag javaslata", "ai_research": "MI-kutatás" },
@@ -9059,7 +9320,7 @@
         "soft_delete": { "label": "Esemény ideiglenes törlése", "copy": "Elrejti az eseményt az eseményrekord, a részvétel és az előzmények megtartásával. A meghívók megszűnnek, a beszélgetés csak olvasható lesz. Visszaállítható a lezárt vagy függő állapot megváltoztatása nélkül." },
         "restore": { "label": "Ideiglenes törlés visszavonása", "copy": "Csak a megőrzött rekordot állítja vissza. A visszavont, lemondott vagy befejeződött esemény lezárt marad; a függő moderáció továbbra is függő. Élőhelyzet-hozzáférést nem ad." },
         "purge": { "label": "Esemény végleges törlése", "copy": "A megőrzési idő után visszafordíthatatlanul törli az eseményt. A Core szuperadmin-jogosultságot követel, és nem lehet nyitott ügy vagy jogi/bizonyítékmegőrzés. A külső eseményrekord és az érdeklődések is törlődnek. Ez nem vonható vissza." },
-        "withdraw": { "label": "Publikálás visszavonása", "copy": "Az ajánlás kikerül az aktív felfedezésből. A részvételi előzmények megmaradnak, a meghívók megszűnnek, a beszélgetés csak olvasható lesz. Ez nem állítja, hogy a szervező lemondta az eseményt." },
+        "withdraw": { "label": "Esemény eltávolítása", "copy": "Az esemény kikerül az AreYouIn-ból: a tagok nem találják meg, a meghívók megszűnnek, a beszélgetés csak olvasható lesz. A részvételi előzmények megmaradnak. Hibás vagy nem odaillő eseménynél használd; ez nem állítja, hogy a szervező lemondta az eseményt." },
         "cancel": { "label": "Szervezői lemondás rögzítése", "copy": "Csak a szervezői lemondás ellenőrzése után használd. A részvételi előzmények megmaradnak, a meghívók megszűnnek, a beszélgetés csak olvasható lesz." },
         "reverify": { "label": "Forrás újbóli megerősítése", "copy": "Új emberi ellenőrzést rögzít négy friss megerősítéssel. Nem indít MI- vagy hálózati feladatot, nem küld értesítést, és nem hagy jóvá függő moderációt." },
         "official_update": { "label": "Hivatalos frissítés közzététele", "copy": "Rendszerfrissítést ír és rögzít az esemény beszélgetésében. A tagok Friending-frissítést látnak, nem az üzemeltetői személyazonosságodat. Az eseménynek aktívnak, a beszélgetésnek írhatónak kell lennie." }
@@ -9070,6 +9331,9 @@
         "payload": "Pontos mentett kérés megtekintése", "open": "Függő művelet megnyitása", "retry": "Ugyanazon művelet újrapróbálása"
       },
       "feedback": {
+        "changedElsewhere": "Az esemény szerkesztés közben megváltozott (átnézési jelölés, AI-újrakeresés vagy javításról hozott döntés miatt). A piszkozatod megmaradt, de a régi változatra nem menthető. Frissíts a mostani adatokért, majd nézd át újra a módosításaidat.",
+        "correctionApproved": "A Core elmentette a szerkesztést, és ugyanabban a lépésben jóváhagyta a tag javítását. A tagok úgy kapnak értesítést, mint bármely szerkesztésnél.",
+        "correctionRejected": "A javítást elutasítottad. A tag látja, hogy nem fogadtuk el; az esemény nem változott.",
         "success": "A Core megerősítette az auditált műveletet.",
         "publishingDisabled": "A kiadási kapcsoló tiltja a publikálást és az adatjavítást. Csak a kiadás vezetője engedélyezze a kompatibilis Core és Webadmin élesítése után. A lemondás, a visszavonás és a korábbi sikeres nyugták azonos újrapróbálása elérhető marad.",
         "recoveryOnly": "Az aktuális eseményadatok nem érhetők el. Csak a mentett művelet próbálható újra; ez sikeres végleges törlés után is visszaadhatja a nyugtát. Új eseménymódosítás nincs engedélyezve.",
@@ -10548,6 +10812,7 @@
         "awaiting_budget": "A havi MI-keret elfogyott, vagy nullára van állítva. A feldolgozó óránként újrapróbálja; a Konfigurációban emeld a keretet, ha hamarabb folytatnád."
       },
       "statusDetailValues": {
+        "research-not-publishable": "A rendszer lezárta: nem közzétehető",
         "image-empty": "Üres plakátfájl",
         "image-unreadable": "A plakát nem olvasható",
         "image-too-large": "Túl nagy plakátfájl",
@@ -10577,6 +10842,7 @@
         "ai-budget-overrun": "Az MI a keretén túl számlázott"
       },
       "statusDetailHelp": {
+        "research-not-publishable": "Az automatikus közzététel ellenőrzése szerint ez a kutatási esemény nem tehető közzé, ezért a rendszer lezárta. Az ok a döntés mellett látszik; senkinek nem kell vele foglalkoznia.",
         "image-empty": "A feltöltött fájl üres volt. Töltsd fel újra a fotót.",
         "image-unreadable": "A Core nem tudta képként értelmezni a fájlt. Próbáld a plakát JPEG- vagy PNG-másolatával.",
         "image-too-large": "A fájl nagyobb 10 MiB-nál.",

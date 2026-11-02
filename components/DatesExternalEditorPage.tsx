@@ -6,14 +6,18 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
+import { DatesExternalCorrectionReject, DatesExternalCorrectionView } from "@/components/DatesExternalCorrectionView";
 import DatesExternalEventForm from "@/components/DatesExternalEventForm";
 import DatesExternalProvenance from "@/components/DatesExternalProvenance";
+import DatesExternalRecheckPanel from "@/components/DatesExternalRecheckPanel";
+import DatesExternalReviewMark from "@/components/DatesExternalReviewMark";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import { datesAdminPrincipal, hasDatesCapability, type DatesAdminPrincipal } from "@/lib/datesAdmin";
-import { DATES_EXTERNAL_COMMANDS, datesExternalOfficialText, decodeDatesExternalDetail, decodeDatesExternalList,
-  type DatesExternalDetail, type DatesExternalMutationAction, type DatesExternalMutationBaseline } from "@/lib/datesExternalAdmin";
+import { DATES_EXTERNAL_COMMANDS, datesExternalCorrections, datesExternalOfficialText, decodeDatesExternalDetail, decodeDatesExternalList,
+  type DatesExternalCorrection, type DatesExternalDetail, type DatesExternalMutationAction, type DatesExternalMutationBaseline } from "@/lib/datesExternalAdmin";
+import { datesExternalCorrectionPrefill } from "@/lib/datesExternalReview";
 import { datesExternalBrowserStorage, prepareDatesExternalPending, readDatesExternalMutationAccess, readDatesExternalPending,
   runDatesExternalMutation, type DatesExternalPending, type DatesExternalPendingRead } from "@/lib/datesExternalMutations";
 import { formatDate } from "@/lib/format";
@@ -24,7 +28,9 @@ type Command = typeof DATES_EXTERNAL_COMMANDS[number] | typeof ACTIVITY_COMMANDS
 type Feedback = { tone: "success" | "error"; key: string };
 const FRESH = { source: false, public_venue: false, timezone: false, content_safe: false };
 
-export default function DatesExternalEditorPage({ externalId }: { externalId?: string }) {
+export default function DatesExternalEditorPage({ externalId, correctionId }: { externalId?: string;
+  /** D-149 W4: "approve and edit" - the member correction whose proposed values prefill the editor and whose id the save carries. */
+  correctionId?: string }) {
   const t = useTranslations("datesAdmin.external"), common = useTranslations("common");
   const locale = useLocale(), router = useRouter();
   const [data, setData] = useState<DatesExternalDetail | null>(null);
@@ -44,7 +50,10 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
   const [commandReason, setCommandReason] = useState("");
   const [commandText, setCommandText] = useState("");
   const [confirmations, setConfirmations] = useState(FRESH);
+  const [formDirty, setFormDirty] = useState(false);
+  const [rejecting, setRejecting] = useState<DatesExternalCorrection | null>(null);
   const generation = useRef(0), lifetime = useRef(0), busyRef = useRef(false);
+  const commandsRef = useRef<HTMLElement>(null), commandReasonRef = useRef<HTMLTextAreaElement>(null);
 
   const load = useCallback(async (signal?: AbortSignal) => {
     if (signal?.aborted) return;
@@ -78,9 +87,25 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
     setCanManage(hasDatesCapability(nextPrincipal, "dates_external_event_manage") && decoded.capabilities.includes("dates_external_event_manage"));
     if (hasDatesCapability(nextPrincipal, "dates_external_event_manage") && decoded.capabilities.includes("dates_external_event_manage")) setEditorOpened(true);
     setPending(saved!);
-    setNeedsReload(false); setState("ready"); setFormGeneration((value) => value + 1);
+    setNeedsReload(false); setState("ready"); setFormGeneration((value) => value + 1); setFormDirty(false);
     setConfirmations(FRESH); setCommandReason(""); setCommandText("");
   }, [externalId]);
+
+  /**
+   * D-149: after the review mark, a re-research or a correction decision changed the event elsewhere. An untouched
+   * editor is simply read again; one with unsaved work is never reloaded under it - the page asks for an explicit
+   * refresh instead, like any stale revision.
+   */
+  const eventChangedElsewhere = useCallback(async () => {
+    if (!externalId) return;
+    if (!formDirty) { await load(); return; }
+    let response: unknown = null;
+    try { response = await adminCall("dates_external_event_detail", { external_event_id: externalId }); } catch { /* unread */ }
+    const detail = decodeDatesExternalDetail(response, externalId);
+    // The same revisions: only the review fields moved, the editor's baseline is still current.
+    if (detail && data && detail.event.revision === data.event.revision && detail.event.activity_revision === data.event.activity_revision) { setData(detail); return; }
+    setNeedsReload(true); setFeedback({ tone: "error", key: "changedElsewhere" });
+  }, [externalId, formDirty, load, data]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -94,6 +119,10 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
     return { external_event_id, activity_id, revision, activity_revision, status, lifecycle, soft_deleted };
   }
   const event = data?.event;
+  // D-149 W4: the event's corrections (v2), and the pending one an "approve and edit" link names.
+  const corrections = event && data ? datesExternalCorrections(event, data.server_now) : null;
+  const approving = correctionId && corrections ? corrections.rows.find((row) => row.correction_id === correctionId && row.status === "pending") ?? null : null;
+  const prefill = approving && event ? datesExternalCorrectionPrefill(event.editor_input, approving) : null;
   const writeLocked = busy || candidate !== null || pending.kind !== "empty" || needsReload || completedCreate || state !== "ready" || !canManage;
   const locked = writeLocked || (externalId !== undefined && !event?.can_edit);
   // P2a: a publication begun from an AI intake is resumed where its draft and its hold are.
@@ -134,7 +163,9 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
       if (currentLifetime !== lifetime.current) return;
       setPending(readDatesExternalPending(storage, access.actor)); setCandidate(null);
       if (result.kind === "success") {
-        setFeedback({ tone: "success", key: result.retained ? "successRetained" : "success" });
+        const approved = operation.action === "dates_external_event_update" && typeof operation.body.correction_id === "string";
+        setFeedback({ tone: "success", key: result.retained ? "successRetained" : approved ? "correctionApproved" : "success" });
+        if (!result.retained && approved && externalId) router.replace(`/dates/external/${externalId}`);
         if (!result.retained) {
           if ("purged" in result.receipt) { setCompletedCreate(true); router.replace("/dates/external"); }
           else if (operation.action === "dates_external_event_publish") {
@@ -155,6 +186,12 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
     }
   }
 
+  /** D-149 W3: "Remove" is the withdraw command, with its reason and its confirmation. */
+  function startRemove() {
+    setCommand("withdraw"); setConfirmations(FRESH); setFeedback(null);
+    window.requestAnimationFrame(() => { commandsRef.current?.scrollIntoView({ block: "start" }); commandReasonRef.current?.focus(); });
+  }
+
   function proposeCommand(submit: React.FormEvent) {
     submit.preventDefault();
     if (writeLocked || !event || !commandAllowed(command)) return;
@@ -171,12 +208,13 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
   }
   function operationLabel(action: string, body: Record<string, unknown>) {
     return action === "dates_external_event_publish" || action === "dates_event_intake_publish" ? t("editor.publish") : action === "dates_external_event_update"
-      ? t("editor.save") : t(`commands.${String(body.action)}.label`);
+      ? typeof body.correction_id === "string" ? t("review.approveSave") : t("editor.save") : t(`commands.${String(body.action)}.label`);
   }
 
   return <>
     <PageHeader eyebrow={t("eyebrow")} title={externalId ? event?.title ?? t("editor.detailTitle") : t("editor.createTitle")}
       subtitle={t("editor.subtitle")} actions={<div className="row-actions"><Link className="button button-secondary" href="/dates/external">{t("editor.back")}</Link>
+        {canManage && event && commandAllowed("withdraw") && <button type="button" className="button button-danger" disabled={writeLocked} onClick={startRemove}>{t("review.remove")}</button>}
         <button className="button button-secondary" disabled={busy || candidate !== null} onClick={() => setConfirmReload(true)}>{common("refresh")}</button></div>} />
     <DatesAdminTabs />
     {feedback && <p className={`alert alert-${feedback.tone}`} role="status">{t(`feedback.${feedback.key}`)}</p>}
@@ -197,6 +235,12 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
       <div className="row-actions"><span className="badge badge-demo">{t("badge")}</span>{event.ai_assisted && <span className="badge badge-warning">{t("aiBadge")}</span>}<span>{t(`statusValues.${event.status}`)}</span>
         <span>{t(`tierValues.${event.verification_tier}`)}</span><Link href={`/dates/${event.activity_id}`}>{t("editor.activity")}</Link></div>
       <p>{t("editor.revisions", { ledger: event.revision, activity: event.activity_revision })}</p>
+      {event.admin_review && <DatesExternalReviewMark target={event} review={event.admin_review} canManage={canManage && !needsReload} onSettled={() => eventChangedElsewhere()} />}
+      {event.possible_duplicate_of && <p className="alert alert-warning">{t("review.duplicateCopy")} <Link href={`/dates/external/${event.possible_duplicate_of}`}>{t("review.duplicateOpen")}</Link></p>}
+      {((event.open_corrections ?? 0) > 0 || (event.open_reports ?? 0) > 0) && <p>
+        {(event.open_corrections ?? 0) > 0 && <a href="#corrections">{t("review.openCorrections", { count: event.open_corrections ?? 0 })}</a>}
+        {(event.open_corrections ?? 0) > 0 && (event.open_reports ?? 0) > 0 && " · "}
+        {(event.open_reports ?? 0) > 0 && <Link href={`/dates/${event.activity_id}`}>{t("review.openReports", { count: event.open_reports ?? 0 })}</Link>}</p>}
       <p>{t("editor.moderationNotice")}</p>
       {event.soft_deleted && <p className="alert alert-info">{t("editor.deleted")}</p>}
       <dl className="dates-external-facts">
@@ -212,26 +256,47 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
       <p>{t("counts", { going: event.going_count, interested: event.interested_count })} · {t("operatorCounts")}</p><p>{t("form.imagePolicy")}</p>
     </section>}
     {event && <DatesExternalProvenance event={event} />}
+    {event && data && principal && event.rechecks !== undefined && <DatesExternalRecheckPanel key={formGeneration} event={event} serverNow={data.server_now}
+      actor={principal.email} canManage={canManage} onFactsChanged={() => void eventChangedElsewhere()} />}
+    {event && corrections && <section className="panel dates-external-fields" id="corrections" aria-labelledby="corrections-title">
+      <h2 id="corrections-title">{t("review.correctionsTitle")}</h2>
+      {corrections.unreadable.map((row) => <p className="alert alert-warning" key={row.index}>{t("review.unreadableCorrection", { row: row.index + 1 })}{row.id ? <> <code>{row.id}</code></> : null}</p>)}
+      {corrections.rows.length === 0 && corrections.unreadable.length === 0 ? <p>{t("review.noCorrections")}</p> : corrections.rows.map((row) =>
+        <div className="dates-correction-item" key={row.correction_id}>
+          {row.status === "pending" && canManage && <div className="row-actions">
+            {row.correction_id !== correctionId && <Link className="button button-primary button-small" href={`/dates/external/${event.external_event_id}?correction=${row.correction_id}`}>{t("review.approveEdit")}</Link>}
+            <button type="button" className="button button-danger button-small" onClick={() => setRejecting(row)}>{t("review.reject")}</button></div>}
+          <DatesExternalCorrectionView correction={row} showEvent={false} /></div>)}
+    </section>}
     {principal && !canManage && <p className="alert alert-info">{t("editor.readOnly")}</p>}
     {editorOpened && <section className="panel dates-external-fields">
       <h2>{t(externalId ? "editor.editTitle" : "editor.createTitle")}</h2>
       {externalId && !event?.can_edit && <p className="alert alert-info">{t("editor.terminal")}</p>}
       {event?.status === "in_review" && <p className="alert alert-info">{t("editor.held")}</p>}
-      <DatesExternalEventForm key={formGeneration} initial={event?.editor_input} disabled={locked}
-        submitLabel={t(externalId ? "editor.reviewSave" : "editor.reviewPublish")} onSubmit={(facts, reason) => {
+      {correctionId && state === "ready" && event && !approving && <p className="alert alert-warning">{t("review.correctionNotPending")}</p>}
+      {approving && prefill && <div className="alert alert-info dates-correction-approve" role="status"><strong>{t("review.approveTitle")}</strong>
+        <p>{t("review.approveCopy")}</p>
+        <DatesExternalCorrectionView correction={approving} showEvent={false} />
+        {prefill.venue !== null && <p>{t("review.venueHint", { venue: prefill.venue })}</p>}
+        {prefill.status !== null && <p>{t(prefill.status === "canceled" ? "review.statusCanceledHint" : "review.statusPostponedHint")}</p>}
+        {prefill.unapplied.length > 0 && <p>{t("review.unappliedHint")}</p>}</div>}
+      <DatesExternalEventForm key={formGeneration} initial={event?.editor_input} initialDraft={prefill?.draft} disabled={locked}
+        onEdit={() => setFormDirty(true)}
+        submitLabel={approving ? t("review.approveReview") : t(externalId ? "editor.reviewSave" : "editor.reviewPublish")} onSubmit={(facts, reason) => {
           if (locked) return;
           setCandidate({ action: externalId ? "dates_external_event_update" : "dates_external_event_publish", baseline: baseline(),
-            body: { event: facts, reason, ...(externalId && event ? { external_event_id: externalId, expected_revision: event.revision } : {}) } });
+            body: { event: facts, reason, ...(externalId && event ? { external_event_id: externalId, expected_revision: event.revision } : {}),
+              ...(externalId && approving ? { correction_id: approving.correction_id } : {}) } });
         }} />
     </section>}
-    {canManage && event && <section className="panel dates-external-fields"><h2>{t("editor.commandsTitle")}</h2>
+    {canManage && event && <section className="panel dates-external-fields" ref={commandsRef}><h2>{t("editor.commandsTitle")}</h2>
       <form onSubmit={proposeCommand}><fieldset className="dates-external-fields" disabled={writeLocked}>
         <label className="field"><span>{t("editor.command")}</span><select value={command} onChange={(change) => { setCommand(change.target.value as Command); setConfirmations(FRESH); }}>
           {[...DATES_EXTERNAL_COMMANDS, ...ACTIVITY_COMMANDS].map((action) => <option key={action} value={action} disabled={!commandAllowed(action)}>{t(`commands.${action}.label`)}</option>)}</select></label>
         <p>{t(`commands.${command}.copy`)}</p>
         {command === "reverify" && <div className="dates-checkbox-stack">{Object.keys(FRESH).map((key) => <label key={key} className="checkbox-field"><input type="checkbox" required checked={confirmations[key as keyof typeof FRESH]} onChange={(change) => setConfirmations((value) => ({ ...value, [key]: change.target.checked }))} /><span>{t(`editor.confirmations.${key}`)}</span></label>)}</div>}
         {command === "official_update" && <label className="field"><span>{t("editor.updateText")}</span><textarea required rows={4} maxLength={32000} value={commandText} onChange={(change) => setCommandText(change.target.value)} /></label>}
-        <label className="field"><span>{t("form.reason")}</span><textarea required minLength={3} maxLength={1000} rows={2} value={commandReason} onChange={(change) => setCommandReason(change.target.value)} /></label>
+        <label className="field"><span>{t("form.reason")}</span><textarea ref={commandReasonRef} required minLength={3} maxLength={1000} rows={2} value={commandReason} onChange={(change) => setCommandReason(change.target.value)} /></label>
         <button type="submit" className="button button-secondary" disabled={!commandAllowed(command)}>{t("editor.reviewCommand")}</button>
       </fieldset></form>
     </section>}
@@ -242,6 +307,12 @@ export default function DatesExternalEditorPage({ externalId }: { externalId?: s
       <p className="preserve-whitespace">{String(candidate.body.reason)}</p>
       {candidate.body.action === "official_update" && <p className="preserve-whitespace">{String(candidate.body.text)}</p>}
     </ConfirmDialog>}
+    {rejecting && <DatesExternalCorrectionReject correction={rejecting} onCancel={() => setRejecting(null)} onSettled={async (outcome) => {
+      const current = rejecting.correction_id === correctionId;
+      if (outcome.kind === "success") { setRejecting(null); setFeedback({ tone: "success", key: "correctionRejected" }); }
+      // Rejecting the correction this editor was prefilled with ends its approval: the form returns to the stored facts.
+      if (outcome.kind === "success" && current && externalId) { router.replace(`/dates/external/${externalId}`); await load(); } else await eventChangedElsewhere();
+    }} />}
     {confirmReload && <ConfirmDialog title={common("refresh")} copy={t("editor.reloadCopy")} confirmLabel={common("refresh")} tone="primary"
       onCancel={() => setConfirmReload(false)} onConfirm={() => { setConfirmReload(false); setFeedback(null); void load(); }} />}
   </>;

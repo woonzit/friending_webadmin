@@ -12,13 +12,15 @@ import {
 
 type TextField = { [K in keyof DatesExternalDraft]: DatesExternalDraft[K] extends string ? K : never }[keyof DatesExternalDraft];
 
-export default function DatesExternalEventForm({ initial, initialDraft, notice, disabled, submitLabel, onSubmit }: {
+export default function DatesExternalEventForm({ initial, initialDraft, notice, disabled, submitLabel, onSubmit, onEdit }: {
   initial?: DatesExternalManualEvent | DatesExternalEditorInput | null; disabled: boolean; submitLabel: string;
   /** P2a: Core's prefill for an AI intake, where a field Core does not know is left empty for the reviewer. */
   initialDraft?: DatesExternalDraft;
   /** Replaces the "entered by hand" note when the draft did not start with a person. */
   notice?: string;
   onSubmit: (event: DatesExternalManualEvent, reason: string) => void | Promise<void>;
+  /** D-149: told once the operator changes anything, so a page does not reload the form under unsaved work. */
+  onEdit?: () => void;
 }) {
   const t = useTranslations("datesAdmin.external.form");
   const [draft, setDraft] = useState(() => initialDraft ?? datesExternalDraft(initial));
@@ -26,7 +28,7 @@ export default function DatesExternalEventForm({ initial, initialDraft, notice, 
   const [error, setError] = useState("");
   function edit<K extends keyof DatesExternalDraft>(key: K, value: DatesExternalDraft[K]) {
     setDraft((current) => ({ ...current, ...DATES_EXTERNAL_FRESH_CONFIRMATIONS, [key]: value }));
-    setError("");
+    setError(""); onEdit?.();
   }
   function input(key: TextField, maximum: number, type = "text", required = false) {
     return <label className="field"><span>{t(key)}</span><input value={draft[key]} type={type} maxLength={maximum}
@@ -77,6 +79,7 @@ export default function DatesExternalEventForm({ initial, initialDraft, notice, 
       <h3>{t("venueTitle")}</h3>
       <DatesExternalPlaceSearch disabled={disabled} onSelect={(place) => {
         if (disabled) return;
+        onEdit?.();
         setDraft((current) => ({ ...current, ...DATES_EXTERNAL_FRESH_CONFIRMATIONS,
           venueName: place.name, venueAddress: place.formatted_address, city: place.city, countryCode: place.country_code,
           latitude: String(place.latitude), longitude: String(place.longitude), timezone: place.timezone ?? current.timezone,
@@ -90,6 +93,7 @@ export default function DatesExternalEventForm({ initial, initialDraft, notice, 
         {input("latitude", 24, "text", true)}{input("longitude", 24, "text", true)}
         <DatesExternalVenueMap center={center} disabled={disabled} onMove={(point) => {
           if (disabled) return;
+          onEdit?.();
           setDraft((current) => ({ ...current, ...DATES_EXTERNAL_FRESH_CONFIRMATIONS,
             latitude: String(point.latitude), longitude: String(point.longitude) }));
         }} />
@@ -107,9 +111,9 @@ export default function DatesExternalEventForm({ initial, initialDraft, notice, 
       <div className="dates-checkbox-stack">
         {(["confirmSource", "confirmPublicVenue", "confirmTimezone", "confirmContentSafe"] as const).map((key) =>
           <label className="checkbox-field" key={key}><input required type="checkbox" checked={draft[key]}
-            onChange={(event) => setDraft((current) => ({ ...current, [key]: event.target.checked }))} /><span>{t(key)}</span></label>)}
+            onChange={(event) => { onEdit?.(); setDraft((current) => ({ ...current, [key]: event.target.checked })); }} /><span>{t(key)}</span></label>)}
       </div>
-      <label className="field"><span>{t("reason")}</span><textarea required maxLength={1000} minLength={3} rows={2} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
+      <label className="field"><span>{t("reason")}</span><textarea required maxLength={1000} minLength={3} rows={2} value={reason} onChange={(event) => { onEdit?.(); setReason(event.target.value); }} /></label>
       {error && <p className="alert alert-error" role="alert">{error}</p>}
       <button type="submit" className="button button-primary">{submitLabel}</button>
     </fieldset>

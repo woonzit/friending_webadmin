@@ -13,7 +13,7 @@ import DatesSuggestionConsentStatus from "../components/DatesSuggestionConsentSt
 import { decodeDatesActivityOriginDetail, decodeDatesExternalDetail, decodeDatesExternalList } from "../lib/datesExternalAdmin.ts";
 import { DATES_EXTERNAL_CATEGORIES } from "../lib/datesExternalInput.ts";
 import {
-  DATES_INTAKE_EVIDENCE_FIELDS, DATES_INTAKE_KNOWN_ATTENDANCE_MODES, DATES_INTAKE_KNOWN_LINK_FIELDS, DATES_INTAKE_KNOWN_PROHIBITED_CATEGORIES,
+  DATES_INTAKE_EVIDENCE_FIELDS, DATES_INTAKE_STATUS_DETAILS_D149, DATES_INTAKE_KNOWN_ATTENDANCE_MODES, DATES_INTAKE_KNOWN_LINK_FIELDS, DATES_INTAKE_KNOWN_PROHIBITED_CATEGORIES,
   DATES_INTAKE_KNOWN_STATUS_SIGNALS, DATES_INTAKE_KNOWN_TASKS, DATES_INTAKE_REFUSALS, DATES_INTAKE_VOCABULARIES, datesSuggestionConsent, projectDatesIntakeDetail,
   DATES_AI_AMBIGUOUS_SOURCES, projectDatesAiUsage,
 } from "../lib/datesIntakeAdmin.ts";
@@ -233,7 +233,7 @@ test("every closed value of the wire has words in both languages, and both trees
     ? Object.entries(value).flatMap(([key, item]) => keys(item, `${prefix}${key}/`)) : [prefix];
   assert.deepEqual(keys(en), keys(hu));
   const GROUPS: Record<string, [string, readonly string[]]> = {
-    status: ["statusValues", DATES_INTAKE_VOCABULARIES.status], status_detail: ["statusDetailValues", DATES_INTAKE_VOCABULARIES.status_detail],
+    status: ["statusValues", DATES_INTAKE_VOCABULARIES.status], status_detail: ["statusDetailValues", [...DATES_INTAKE_VOCABULARIES.status_detail, ...DATES_INTAKE_STATUS_DETAILS_D149]],
     channel: ["channelValues", DATES_INTAKE_VOCABULARIES.channel], input_kind: ["inputKindValues", DATES_INTAKE_VOCABULARIES.input_kind],
     decision_action: ["decisionValues", DATES_INTAKE_VOCABULARIES.decision_action], reject_reason: ["rejectReasons", DATES_INTAKE_VOCABULARIES.reject_reason],
     result: ["resultValues", DATES_INTAKE_VOCABULARIES.result], hard_fail: ["hardFails", DATES_INTAKE_VOCABULARIES.hard_fail],
@@ -244,7 +244,7 @@ test("every closed value of the wire has words in both languages, and both trees
     dedupe_candidate_kind: ["dedupeKinds", DATES_INTAKE_VOCABULARIES.dedupe_candidate_kind], link_drop_reason: ["linkDropReasons", DATES_INTAKE_VOCABULARIES.link_drop_reason],
     provider: ["providerValues", DATES_INTAKE_VOCABULARIES.provider], ai_outcome: ["outcomeValues", DATES_INTAKE_VOCABULARIES.ai_outcome],
     safe_search_likelihood: ["likelihoodValues", DATES_INTAKE_VOCABULARIES.safe_search_likelihood],
-    status_help: ["statusHelp", DATES_INTAKE_VOCABULARIES.status], status_detail_help: ["statusDetailHelp", DATES_INTAKE_VOCABULARIES.status_detail],
+    status_help: ["statusHelp", DATES_INTAKE_VOCABULARIES.status], status_detail_help: ["statusDetailHelp", [...DATES_INTAKE_VOCABULARIES.status_detail, ...DATES_INTAKE_STATUS_DETAILS_D149]],
     attendance: ["attendanceModes", DATES_INTAKE_KNOWN_ATTENDANCE_MODES], signals: ["statusSignals", DATES_INTAKE_KNOWN_STATUS_SIGNALS],
     prohibited: ["prohibitedCategories", DATES_INTAKE_KNOWN_PROHIBITED_CATEGORIES], tasks: ["taskValues", DATES_INTAKE_KNOWN_TASKS],
     links: ["linkFields", DATES_INTAKE_KNOWN_LINK_FIELDS],

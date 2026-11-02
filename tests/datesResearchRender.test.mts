@@ -153,7 +153,7 @@ for (const locale of ["en", "hu"]) {
     assert.ok(html.includes(escaped(copy.help.radius_km.cost)));
     assert.ok(html.includes(escaped(copy.help.mode.effect)));
   });
-  test(`DERIVED render ${locale}: all sources can override the window; only official sources can autopublish`, () => {
+  test(`DERIVED render ${locale}: all sources can override the window; only official sources can override autopublish, aggregators show the inherited value`, () => {
     const copy = messages(locale).datesAdmin.research;
     const html = render(locale, createElement(ResearchSourceEditor, { ...props, row: GENUINE_SOURCE, defaults: GENUINE_DEFAULTS, areas: [GENUINE_AREA] }));
     assert.ok(html.includes(escaped(copy.requiredField))); assert.match(html, /type="text"[^>]*required=""/);
@@ -164,9 +164,13 @@ for (const locale of ["en", "hu"]) {
     assert.equal((html.match(new RegExp(escaped(copy.useInherited), "g")) ?? []).length, 2);
     const aggregator = render(locale, createElement(ResearchSourceEditor, { ...props, row: { ...GENUINE_SOURCE, type: "aggregator" }, defaults: GENUINE_DEFAULTS, areas: [GENUINE_AREA] }));
     assert.ok(aggregator.includes(escaped(copy.aggregatorHint)));
-    assert.equal(aggregator.includes(escaped(copy.fields.autopublish)), false);
+    // D-149: an aggregator's events publish under the inherited automatic publication too, so its effective value is
+    // shown - but its own override stays closed (Core's genuine corpus refuses one), the inherit box locked on.
+    assert.equal(aggregator.includes(escaped(copy.fields.autopublish)), true);
     assert.equal(aggregator.includes(escaped(copy.fields.window_days)), true);
-    assert.equal((aggregator.match(new RegExp(escaped(copy.useInherited), "g")) ?? []).length, 1);
+    assert.equal((aggregator.match(new RegExp(escaped(copy.useInherited), "g")) ?? []).length, 2);
+    const start = aggregator.indexOf(escaped(copy.fields.autopublish)), inherit = aggregator.indexOf(escaped(copy.useInherited), start);
+    assert.match(aggregator.slice(aggregator.lastIndexOf("<input", inherit), inherit), /type="checkbox" disabled="" checked=""/);
   });
   test(`DERIVED render ${locale}: an unavailable city does not replace stored source inheritance with global defaults`, () => {
     const copy = messages(locale).datesAdmin.research;
