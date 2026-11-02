@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
@@ -32,149 +33,198 @@ import { MEMBERSHIP_EMAIL, MEMBERSHIP_MEMBER } from "./support/adminMembershipCa
 type Json = Record<string, any>;
 
 /**
- * DERIVED answer in the shape of Friending Core's `MailDeliveryReadService::read` (the port of Freelove
- * c8d2ca85 with the review fix 9f9c067a's `sync_attempted_at` / `sync_failed_at`), not a capture: a
- * delivered code a receiving server held back once with a 421, a Webadmin login code still waiting
- * after twelve seconds in the queue, and an email that was never sent.
+ * Friending Core's genuine `/v1/webadmin/mail_delivery` response bodies, byte for byte: written by
+ * Core's committed `mail_delivery_events_storage_test` (c9f55b08, `MAIL_DELIVERY_WIRE_CAPTURE_DIR`)
+ * against the read of e7673d0f (+ comment-only 4fdee6b1), Core tip 355b8ae4. Timestamps are real
+ * time, so a regeneration changes the bytes but not the shape; re-vendor with the new hashes.
+ *
+ * - owner-30-days: an owner, `days=30`. A support request to a mixed-case stored address, an erased
+ *   member (empty recipient, domain `?`), a queued `other`, a never-sent code with its send error, a
+ *   1.2 s delivery after one temporary refusal (an issue without code or text), a 550 bounce, the
+ *   634 s delivery a 421 held back, and an old pending code.
+ * - viewer-30-days-slow: a viewer, `days=30`, `state=slow`: the 634 s delivery, address masked (the
+ *   bullet escaped as • on the wire).
+ * - refusal-invalid-input: an owner, `days=365`.
  */
-const ROWS = [
-  {
-    id: "6720f0c2a1b2c3d4e5f60718", kind: "email_auth_verification", recipient: "bela@example.hu", recipient_domain: "example.hu",
-    created_at: 1793499000, handed_at: 1793499000.2, delivered_at: 1793499634.2, delivery_seconds: 634, state: "delivered",
-    send_error: "", delivery_attempts: 2, temporary_failures: 1, issue: { code: 421, message: "4.4.2 Connection timed out for <address>" },
-  },
-  {
-    id: "6720f0c2a1b2c3d4e5f60719", kind: "admin_login_verification", recipient: "anna@gmail.com", recipient_domain: "gmail.com",
-    created_at: 1793498000, handed_at: 1793498012.5, delivered_at: null, delivery_seconds: null, state: "pending",
-    send_error: "", delivery_attempts: null, temporary_failures: 0, issue: null,
-  },
-  {
-    id: "6720f0c2a1b2c3d4e5f6071a", kind: "other", recipient: "", recipient_domain: "",
-    created_at: 1793497000, handed_at: null, delivered_at: null, delivery_seconds: null, state: "not_sent",
-    send_error: "provider_rejected", delivery_attempts: null, temporary_failures: 0, issue: null,
-  },
-];
-const MASKED = ["be•••@example.hu", "an•••@gmail.com", ""];
-const DATA = {
-  filters: { days: 1, kind: "", state: "", email: "" },
-  summary: {
-    total: 3, counts: { delivered: 1, pending: 1, retrying: 0, failed: 0, not_sent: 1 },
-    median_seconds: 634, p90_seconds: 634, max_seconds: 634, slow: 1,
-    by_domain: [
-      { domain: "example.hu", total: 1, delivered: 1, median_seconds: 634, max_seconds: 634, slow: 1 },
-      { domain: "gmail.com", total: 1, delivered: 0, median_seconds: null, max_seconds: null, slow: 0 },
-      { domain: "?", total: 1, delivered: 0, median_seconds: null, max_seconds: null, slow: 0 },
-    ],
-  },
-  rows: ROWS, page: 1, has_more: false, slow_seconds: 60,
-  synced_at: 1793500000, sync_attempted_at: 1793500060, sync_failed_at: 1793500060, can_see_addresses: true,
-};
-const ANSWER = { success: true, status_code: 200, data: DATA, message: 200, status: 200, can_send: 0 };
-const FILTERS: MailDeliveryFilters = { ...DEFAULT_MAIL_DELIVERY_FILTERS };
+const WIRE = new URL("./fixtures/mail_delivery_wire/", import.meta.url);
+const CORE_SOURCE_COMMIT = "e7673d0f";
+const CAPTURES = {
+  "owner-30-days.json": "d941a083eb2a9f50e15a86d3307a5994d9ad2374353b09b585b6ceb3baccf2b4",
+  "viewer-30-days-slow.json": "9eace120a792af3e7352a49f73aef56a1420f95c02edf409279dbcad94dfd435",
+  "refusal-invalid-input.json": "4289c574e2487a28aa491a01071a45a2d71d39db36f78acc70726149d8b951cf",
+} as const;
+const raw = (name: keyof typeof CAPTURES) => readFileSync(new URL(name, WIRE));
+const OWNER = JSON.parse(raw("owner-30-days.json").toString("utf8")) as Json;
+const VIEWER = JSON.parse(raw("viewer-30-days-slow.json").toString("utf8")) as Json;
+const REFUSAL = JSON.parse(raw("refusal-invalid-input.json").toString("utf8")) as Json;
+const OWNER_FILTERS: MailDeliveryFilters = { ...DEFAULT_MAIL_DELIVERY_FILTERS, days: 30 };
+const VIEWER_FILTERS: MailDeliveryFilters = { ...OWNER_FILTERS, state: "slow" };
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
-function masked(): Json {
-  const body = clone(ANSWER) as Json;
+/** Core's `MailDeliveryReadService::mask`: at most two leading characters, the mask, then `@domain`. */
+function mask(address: string): string {
+  const at = address.lastIndexOf("@");
+  return at < 0 ? "" : `${[...address.slice(0, at)].slice(0, 2).join("")}•••${address.slice(at)}`;
+}
+/** The owner capture as Core would answer a viewer (the same rows, addresses masked). */
+function maskedOwner(): Json {
+  const body = clone(OWNER);
   body.data.can_see_addresses = false;
-  body.data.rows.forEach((row: Json, index: number) => { row.recipient = MASKED[index]; });
+  for (const row of body.data.rows) row.recipient = mask(row.recipient);
   return body;
 }
-function refused(change: (data: Json, body: Json) => void, why: string, filters = FILTERS, base: Json = ANSWER): void {
-  const body = clone(base) as Json;
+function variant(change: (data: Json, body: Json) => void, base: Json = OWNER): Json {
+  const body = clone(base);
   change(body.data, body);
-  assert.equal(mailDelivery(body, filters), null, why);
+  return body;
+}
+function refused(change: (data: Json, body: Json) => void, why: string, filters = OWNER_FILTERS, base: Json = OWNER): void {
+  assert.equal(mailDelivery(variant(change, base), filters), null, why);
+}
+function accepted(change: (data: Json, body: Json) => void, why: string, filters = OWNER_FILTERS, base: Json = OWNER): MailDelivery {
+  const parsed = mailDelivery(variant(change, base), filters);
+  assert.ok(parsed, why);
+  return parsed;
 }
 
-test("Email delivery: Core's complete answer is read in full, nothing added or dropped", () => {
-  const parsed = mailDelivery(ANSWER, FILTERS);
-  assert.ok(parsed);
-  assert.deepEqual(parsed, DATA);
-  assert.ok(mailDelivery(masked(), FILTERS), "a viewer's masked answer");
-  const { message: _message, status: _status, can_send: _canSend, ...withoutTrio } = ANSWER;
-  assert.ok(mailDelivery(withoutTrio, FILTERS), "with and without the legacy trio");
-  // Before the first complete poll; and a later good poll that cleared the failure.
-  refusedNot((data) => { data.synced_at = null; data.sync_attempted_at = null; data.sync_failed_at = null; });
-  refusedNot((data) => { data.synced_at = 1793500120; data.sync_attempted_at = 1793500120; data.sync_failed_at = null; });
-  refusedNot((data) => { data.synced_at = null; data.sync_attempted_at = 1793500060; data.sync_failed_at = 1793500060; });
+test("the vendored captures are byte-identical to Core's", () => {
+  for (const [name, sha] of Object.entries(CAPTURES)) {
+    assert.equal(createHash("sha256").update(raw(name as keyof typeof CAPTURES)).digest("hex"), sha,
+      `tests/fixtures/mail_delivery_wire/${name} must stay byte-identical to Core's capture (read source ${CORE_SOURCE_COMMIT})`);
+  }
+  assert.equal(OWNER.data.rows.length, 8);
+  assert.ok(raw("viewer-30-days-slow.json").toString("utf8").includes("be\\u2022\\u2022\\u2022@zsakmany.hu"), "the mask arrives escaped");
+  assert.deepEqual(REFUSAL, { success: false, status_code: 422, error: "invalid-input", message: 200, status: 200, can_send: 0 });
 });
 
-function refusedNot(change: (data: Json) => void): void {
-  const body = clone(ANSWER) as Json;
-  change(body.data);
-  assert.ok(mailDelivery(body, FILTERS), JSON.stringify(body.data).slice(0, 60));
-}
+test("Core's captures are read in full, nothing added or dropped", () => {
+  assert.deepEqual(mailDelivery(OWNER, OWNER_FILTERS), OWNER.data);
+  assert.deepEqual(mailDelivery(VIEWER, VIEWER_FILTERS, { viewer: true }), VIEWER.data);
+  assert.equal(mailDelivery(VIEWER, VIEWER_FILTERS)?.rows[0]?.recipient, "be•••@zsakmany.hu");
+  assert.equal(mailDelivery(OWNER, OWNER_FILTERS, { viewer: true }), null, "the viewer floor refuses unmasked addresses");
+  assert.ok(mailDelivery(maskedOwner(), OWNER_FILTERS, { viewer: true }), "the same rows masked");
+  const { message: _message, status: _status, can_send: _canSend, ...withoutTrio } = OWNER;
+  assert.ok(mailDelivery(withoutTrio, OWNER_FILTERS), "with and without the legacy trio");
+  assert.equal(mailDelivery(REFUSAL, OWNER_FILTERS), null);
+  assert.equal(mailDeliveryFailure(REFUSAL), "invalid");
+});
+
+test("the cases Core listed are accepted: erased members, zero seconds, one-character masks, bounces, whole numbers", () => {
+  // An erased member: no recipient in either view, counted under domain `?`.
+  const owner = mailDelivery(OWNER, OWNER_FILTERS)!;
+  const erased = owner.rows.find((row) => row.recipient === "")!;
+  assert.equal(erased.recipient_domain, "");
+  assert.ok(owner.summary.by_domain.some((entry) => entry.domain === "?"));
+  assert.equal(mailDelivery(maskedOwner(), OWNER_FILTERS)!.rows.find((row) => row.id === erased.id)!.recipient, "");
+  // A delivery stamped before Core's own acceptance reads 0 seconds, never negative.
+  const zero = accepted((data) => {
+    const row = data.rows.find((entry: Json) => entry.recipient === "anna@gmail.com");
+    row.handed_at = 1793636809.4; row.delivered_at = 1793636809; row.delivery_seconds = 0;
+    const gmail = data.summary.by_domain.find((entry: Json) => entry.domain === "gmail.com");
+    gmail.median_seconds = 0; gmail.max_seconds = 0;
+  }, "zero seconds");
+  assert.equal(zero.rows.find((row) => row.recipient === "anna@gmail.com")!.delivery_seconds, 0);
+  // A one-character local part masks as one character.
+  const one = (data: Json) => { data.rows.find((entry: Json) => entry.recipient === "queued@example.test").recipient = "q@example.test"; };
+  accepted(one, "one character, unmasked");
+  const masked = accepted((data) => {
+    data.can_see_addresses = false;
+    for (const row of data.rows) row.recipient = mask(row.recipient === "queued@example.test" ? "q@example.test" : row.recipient);
+  }, "one character, masked");
+  assert.ok(masked.rows.some((row) => row.recipient === "q•••@example.test"));
+  // A delayed bounce: failed, with its delivery time kept.
+  const bounce = accepted((data) => {
+    data.rows.find((entry: Json) => entry.recipient === "bela@zsakmany.hu").state = "failed";
+    data.summary.counts.delivered -= 1; data.summary.counts.failed += 1;
+  }, "a delayed bounce");
+  const bounced = bounce.rows.find((row) => row.recipient === "bela@zsakmany.hu")!;
+  assert.equal(bounced.state, "failed");
+  assert.equal(bounced.delivery_seconds, 634);
+  // Whole numbers arrive without a fraction; Core's acceptance is an integer, Mailgun's a fraction.
+  const bela = owner.rows.find((row) => row.recipient === "bela@zsakmany.hu")!;
+  assert.ok(Number.isInteger(bela.delivery_seconds) && Number.isInteger(bela.handed_at));
+  assert.equal(owner.rows.find((row) => row.recipient === "anna@gmail.com")!.handed_at, 1793636807.8);
+  // A temporary refusal can leave an issue without a code or text.
+  assert.deepEqual(owner.rows.find((row) => row.recipient === "anna@gmail.com")!.issue, { code: null, message: "" });
+  // Before the first complete poll; and after a later failed one.
+  accepted((data) => { data.synced_at = null; data.sync_attempted_at = null; }, "never polled");
+  accepted((data) => { data.sync_attempted_at = data.synced_at + 60; data.sync_failed_at = data.synced_at + 60; }, "a later failed poll");
+  accepted((data) => { data.synced_at = null; data.sync_failed_at = data.sync_attempted_at; }, "only failed polls");
+});
 
 test("Email delivery: a partial, loosely typed or self-contradicting answer is never a list", () => {
-  for (const value of [null, [], { success: false }, { ...ANSWER, status_code: 422 }, { ...ANSWER, status_code: undefined },
-    { ...ANSWER, error: "x" }, { ...ANSWER, success: "true" }, { ...ANSWER, data: [] }]) {
-    assert.equal(mailDelivery(value, FILTERS), null, JSON.stringify(value)?.slice(0, 60));
+  for (const value of [null, [], { success: false }, { ...OWNER, status_code: 422 }, { ...OWNER, status_code: undefined },
+    { ...OWNER, error: "x" }, { ...OWNER, success: "true" }, { ...OWNER, data: [] }]) {
+    assert.equal(mailDelivery(value, OWNER_FILTERS), null, JSON.stringify(value)?.slice(0, 60));
   }
+  // By id: a masked view no longer carries the address. bela@zsakmany.hu (634 s, 421) and the queued `other`.
+  const bela = (data: Json) => data.rows.find((row: Json) => row.id === "6ae8ba2cb1e77fd9630cc363");
+  const queued = (data: Json) => data.rows.find((row: Json) => row.id === "6ae8ba2cb1e77fd9630cc371");
   refused((data) => { delete data.rows; }, "rows missing");
   refused((data) => { delete data.sync_failed_at; }, "the review fix's sync fields are required");
   refused((data) => { data.synced_at = "now"; }, "a loosely typed time");
-  refused((data) => { data.synced_at = 1793500060.5; }, "a fractional poll time");
+  refused((data) => { data.synced_at += 0.5; }, "a fractional poll time");
   refused((data) => { data.sync_failed_at = data.synced_at; }, "a failure no newer than the last complete poll");
-  refused((data) => { data.sync_attempted_at = data.synced_at - 1; data.sync_failed_at = null; }, "an attempt older than the poll it made");
+  refused((data) => { data.sync_attempted_at = data.synced_at - 1; }, "an attempt older than the poll it made");
   refused((data) => { data.sync_attempted_at = null; }, "a poll without an attempt");
   refused((data) => { data.can_see_addresses = "yes"; }, "a loose masking flag");
   refused((data) => { data.slow_seconds = 0; }, "no slow limit");
   refused((data) => { data.has_more = true; }, "more pages behind a short page");
-  refused((data) => { data.rows = [...data.rows, ...data.rows].slice(0, 51); }, "an oversized page");
+  refused((data) => { data.rows = Array.from({ length: 51 }, () => data.rows[0]); }, "an oversized page");
   refused((data) => { data.rows[1] = data.rows[0]; }, "a duplicate row");
   refused((data) => { data.rows.reverse(); }, "rows not newest first");
   refused((data) => { data.rows[0].id = "../x"; }, "an unsafe id");
   refused((data) => { data.rows[0].state = "lost"; }, "an unknown state");
-  refused((data) => { data.rows[0].kind = "newsletter"; }, "a kind Core reports as other");
-  refused((data) => { data.rows[0].delivery_seconds = 10; }, "a delivery time that is not delivered minus handed");
-  refused((data) => { data.rows[1].delivery_seconds = 5; }, "a delivery time without a delivery");
-  refused((data) => { data.rows[0].send_error = "rejected"; }, "a send error on a handed email");
-  refused((data) => { data.rows[0].issue = { code: 421 }; }, "an issue without its answer");
-  refused((data) => { data.rows[0].issue.message = "é".repeat(201); }, "an issue over 200 characters");
-  refused((data) => { data.rows[0].temporary_failures = -1; }, "a negative count");
-  refused((data) => { data.rows[0].recipient = "be•••@example.hu"; }, "a mask in an unmasked view");
-  refused((data) => { data.rows[0].recipient = "bela@example.hu"; }, "an address in a masked view", FILTERS, masked());
+  refused((data) => { data.rows[0].kind = "moderation_report"; }, "a Freelove kind Friending Core reports as other");
+  refused((data) => { bela(data).delivery_seconds = 10; }, "a delivery time that is not delivered minus handed");
+  refused((data) => { bela(data).delivery_seconds = -1; }, "a negative delivery time");
+  refused((data) => { queued(data).delivery_seconds = 5; }, "a delivery time without a delivery");
+  refused((data) => { bela(data).send_error = "rejected"; }, "a send error on a handed email");
+  refused((data) => { bela(data).issue = { code: 421 }; }, "an issue without its answer");
+  refused((data) => { bela(data).issue.message = "é".repeat(201); }, "an issue over 200 characters");
+  refused((data) => { bela(data).temporary_failures = -1; }, "a negative count");
+  refused((data) => { bela(data).created_at = 0; }, "a row without a creation time");
+  refused((data) => { bela(data).recipient = "be•••@zsakmany.hu"; }, "a mask in an unmasked view");
+  refused((data) => { bela(data).recipient = "bela@zsakmany.hu"; }, "an address in a masked view", OWNER_FILTERS, maskedOwner());
+  refused((data) => { data.rows[0].recipient = "no-at-sign"; }, "a recipient that is not an address");
+  refused((data) => { bela(data).recipient_domain = "Zsakmany.HU"; }, "a domain Core did not normalize");
   refused((data) => { delete data.summary.counts.not_sent; }, "a missing state count");
   refused((data) => { data.summary.counts.lost = 0; }, "an unknown state count");
-  refused((data) => { data.summary.total = 4; }, "a total that is not the sum of the states");
+  refused((data) => { data.summary.total = 9; }, "a total that is not the sum of the states");
   refused((data) => { data.summary.median_seconds = 700; }, "a median above the slowest");
   refused((data) => { data.summary.p90_seconds = null; }, "a missing percentile beside the others");
   refused((data) => { data.summary.slow = 0; }, "a slow delivery that is not counted");
   refused((data) => { data.summary.by_domain[0].slow = 2; }, "more slow than delivered in a domain");
-  refused((data) => { data.summary.by_domain[1].domain = "example.hu"; }, "a repeated domain");
-  refused((data) => { data.summary.by_domain[1].median_seconds = 5; }, "a domain median without a delivery");
-  refused((data) => { data.summary.by_domain.push({ ...data.summary.by_domain[1], domain: "x.hu" }); }, "domains over the total");
+  refused((data) => { data.summary.by_domain[1].domain = "zsakmany.hu"; }, "a repeated domain");
+  refused((data) => { data.summary.by_domain[2].median_seconds = 5; }, "a domain median without a delivery");
+  refused((data) => { data.summary.by_domain.push({ ...data.summary.by_domain[4], domain: "x.hu" }); }, "domains over the total");
 });
 
 test("Email delivery: the answer belongs to the filters that asked, row by row", () => {
   refused((data) => { data.filters.days = 7; }, "another period");
   refused((data) => { data.page = 2; }, "another page");
   refused((data) => { data.filters.extra = 1; }, "an unknown echo");
-  const kind = { ...FILTERS, kind: "email_auth_verification" as const };
+  assert.equal(mailDelivery(OWNER, { ...OWNER_FILTERS, days: 1 }), null, "an answer for another period");
+  const kind = { ...OWNER_FILTERS, kind: "email_auth_verification" as const };
   refused((data) => { data.filters.kind = kind.kind; }, "a row of another kind", kind);
-  const slow = { ...FILTERS, state: "slow" as const };
-  refused((data) => { data.filters.state = "slow"; }, "a row that is not slow", slow);
-  const slowAnswer = clone(ANSWER) as Json;
-  slowAnswer.data.filters.state = "slow";
-  slowAnswer.data.rows = [slowAnswer.data.rows[0]];
-  assert.ok(mailDelivery(slowAnswer, slow), "the slow row alone");
-  const email = { ...FILTERS, email: "anna@gmail.com" };
-  refused((data) => { data.filters.email = email.email; }, "a row for another address", email);
+  // The slow view: Core's own capture holds the one slow row; a faster one beside it is refused.
+  refused((data) => {
+    const anna = OWNER.data.rows.find((row: Json) => row.recipient === "anna@gmail.com");
+    data.rows = [{ ...anna, recipient: mask(anna.recipient) }, ...data.rows];
+  }, "a row that is not slow", VIEWER_FILTERS, VIEWER);
   // Core matches the address in any letter case and shows it as the outbox stored it.
-  const stored = clone(ANSWER) as Json;
-  stored.data.filters.email = email.email;
-  stored.data.rows = [stored.data.rows[1]];
-  stored.data.rows[0].recipient = "Anna@Gmail.com";
-  assert.ok(mailDelivery(stored, email), "the stored letter case");
-  stored.data.rows[0].recipient = "anna@gmail.co";
-  assert.equal(mailDelivery(stored, email), null, "another address");
+  const email = { ...OWNER_FILTERS, email: "mixed.case@example.test" };
+  const stored = variant((data) => { data.filters.email = email.email; data.rows = [data.rows[0]]; });
+  assert.equal(mailDelivery(stored, email)?.rows[0]?.recipient, "Mixed.Case@Example.TEST", "the stored letter case");
+  refused((data) => { data.filters.email = "mixed.case@example.tes"; data.rows = [data.rows[0]]; }, "another address",
+    { ...OWNER_FILTERS, email: "mixed.case@example.tes" });
   // A masked view cannot show the address the filter matched; Core's own filter is the authority there.
-  const maskedEmail = masked();
-  maskedEmail.data.filters.email = email.email;
+  const maskedEmail = variant((data) => { data.filters.email = email.email; data.rows = [data.rows[0]]; }, maskedOwner());
   assert.ok(mailDelivery(maskedEmail, email));
   // Without a state filter the list never outnumbers the summary's population.
-  refused((data) => { data.summary.total = 2; data.summary.counts.not_sent = 0; data.summary.by_domain.pop(); }, "rows beyond the summary");
+  refused((data) => { data.summary.total = 7; data.summary.counts.not_sent = 2; data.summary.by_domain.pop(); }, "rows beyond the summary");
 });
 
 test("Email delivery: the bridge forwards only the closed filters, canonical and with defaults left out", () => {
@@ -184,8 +234,8 @@ test("Email delivery: the bridge forwards only the closed filters, canonical and
     normalizeMailDeliveryProxyBody("mail_delivery", { days: 7, kind: "email_auth_verification", state: "slow", email: " Anna@Gmail.com ", page: 2 }),
     { days: 7, page: 2, kind: "email_auth_verification", state: "slow", email: "anna@gmail.com" },
   );
-  for (const body of [{ days: 2 }, { days: "7" }, { kind: "everything" }, { state: "lost" }, { email: "not an address" }, { email: "a@b" },
-    { email: 1 }, { page: 0 }, { page: 1.5 }, { page: 10000 }, { extra: 1 }, { admin_email: "x@example.test" }, { days: null }]) {
+  for (const body of [{ days: 2 }, { days: 365 }, { days: "7" }, { kind: "everything" }, { state: "lost" }, { email: "not an address" },
+    { email: "a@b" }, { email: 1 }, { page: 0 }, { page: 1.5 }, { page: 10000 }, { extra: 1 }, { admin_email: "x@example.test" }, { days: null }]) {
     assert.equal(normalizeMailDeliveryProxyBody("mail_delivery", body as Json), null, JSON.stringify(body));
   }
   assert.equal(normalizeMailDeliveryProxyBody("list_users", { anything: 1 }), undefined);
@@ -206,6 +256,7 @@ test("Email delivery: the type filter is Friending Core's closed outbox vocabula
   for (const kind of ["moderation_report", "legacy_engagement"]) {
     assert.equal(normalizeMailDeliveryProxyBody("mail_delivery", { kind }), null, kind);
   }
+  for (const row of OWNER.data.rows) assert.ok([...MAIL_DELIVERY_KINDS, "other"].includes(row.kind), row.kind);
 });
 
 test("Email delivery: an allow-listed read any active administrator may run, never a recovery loader", () => {
@@ -256,54 +307,51 @@ async function bridge(role: string, body: unknown, answer: { status: number; dat
 }
 
 test("DERIVED bridge: the browser receives only the parsed answer for the filters it sent", async () => {
-  const result = await bridge("owner", { ...DEFAULT_MAIL_DELIVERY_FILTERS }, { status: 200, data: ANSWER });
+  const result = await bridge("owner", { ...OWNER_FILTERS }, { status: 200, data: OWNER });
   assert.equal(result.status, 200);
-  assert.deepEqual(result.body, { success: true, status_code: 200, data: DATA }, "no legacy trio, no unparsed key");
+  assert.deepEqual(result.body, { success: true, status_code: 200, data: OWNER.data }, "no legacy trio, no unparsed key");
   assert.equal(result.cache, "no-store");
-  assert.deepEqual(result.forwarded, [{ days: 1, page: 1, admin_email: MEMBERSHIP_EMAIL }]);
-  const extra = clone(ANSWER) as Json;
-  extra.data.rows[0].internal_note = "never forwarded";
-  assert.equal(JSON.stringify((await bridge("admin", {}, { status: 200, data: extra })).body).includes("internal_note"), false);
-  const searched = await bridge("admin", { days: 30, state: "failed", email: "Anna@Gmail.com", page: 3 }, { status: 200, data: ANSWER });
+  assert.deepEqual(result.forwarded, [{ days: 30, page: 1, admin_email: MEMBERSHIP_EMAIL }]);
+  const extra = variant((data) => { data.rows[0].internal_note = "never forwarded"; });
+  assert.equal(JSON.stringify((await bridge("admin", { days: 30 }, { status: 200, data: extra })).body).includes("internal_note"), false);
+  const searched = await bridge("admin", { days: 30, state: "failed", email: "Anna@Gmail.com", page: 3 }, { status: 200, data: OWNER });
   assert.deepEqual(searched.forwarded, [{ days: 30, page: 3, state: "failed", email: "anna@gmail.com", admin_email: MEMBERSHIP_EMAIL }]);
   assert.deepEqual(searched.body, { success: false, status_code: 502, error: "invalid-core-response" }, "an answer for other filters");
 });
 
 test("DERIVED bridge: a viewer never receives unmasked addresses, whatever Core sends", async () => {
-  const leak = await bridge("viewer", {}, { status: 200, data: ANSWER });
+  const leak = await bridge("viewer", { days: 30 }, { status: 200, data: OWNER });
   assert.equal(leak.status, 502);
   assert.deepEqual(leak.body, { success: false, status_code: 502, error: "invalid-core-response" });
-  assert.equal(JSON.stringify(leak.body).includes("bela@example.hu"), false);
-  const fine = await bridge("viewer", {}, { status: 200, data: masked() });
+  assert.equal(JSON.stringify(leak.body).includes("bela@zsakmany.hu"), false);
+  const fine = await bridge("viewer", { days: 30, state: "slow" }, { status: 200, data: VIEWER });
   assert.equal(fine.status, 200);
-  assert.equal(fine.body.data.can_see_addresses, false);
-  assert.equal(fine.body.data.rows[0].recipient, "be•••@example.hu");
+  assert.deepEqual(fine.body, { success: true, status_code: 200, data: VIEWER.data });
+  assert.equal(fine.body.data.rows[0].recipient, "be•••@zsakmany.hu");
 });
 
 test("DERIVED bridge: bad filters never reach Core; a malformed success is unknown; a named refusal is kept", async () => {
-  for (const body of [{ days: 2 }, { email: "nope" }, { extra: 1 }, { admin_email: "other@example.test" }]) {
-    const result = await bridge("owner", body, { status: 200, data: ANSWER });
+  for (const body of [{ days: 2 }, { days: 365 }, { email: "nope" }, { extra: 1 }, { admin_email: "other@example.test" }]) {
+    const result = await bridge("owner", body, { status: 200, data: OWNER });
     assert.equal(result.status, 400, JSON.stringify(body));
     assert.deepEqual(result.forwarded, []);
   }
-  const broken = clone(ANSWER) as Json;
-  broken.data.summary.total = 99;
-  for (const answer of [{ status: 200, data: broken }, { status: 201, data: ANSWER }]) {
-    const result = await bridge("owner", {}, answer);
+  const broken = variant((data) => { data.summary.total = 99; });
+  for (const answer of [{ status: 200, data: broken }, { status: 201, data: OWNER }]) {
+    const result = await bridge("owner", { days: 30 }, answer);
     assert.deepEqual(result.body, { success: false, status_code: 502, error: "invalid-core-response" });
   }
-  const refusal = { success: false, status_code: 422, error: "invalid-input", message: 200, status: 200, can_send: 0 };
-  const result = await bridge("owner", {}, { status: 200, data: refusal });
-  assert.deepEqual(result.body, refusal);
+  // Core's genuine refusal, at HTTP 200 as Core sends it, reaches the page unchanged.
+  const result = await bridge("owner", {}, { status: 200, data: REFUSAL });
+  assert.deepEqual(result.body, REFUSAL);
   assert.equal(mailDeliveryFailure(result.body), "invalid");
   // Core's own read failure keeps its name and status through the bridge.
   const unavailable = { success: false, status_code: 503, error: "mail-delivery-unavailable", message: 200, status: 200, can_send: 0 };
-  const down = await bridge("owner", {}, { status: 503, data: unavailable });
-  assert.equal(down.status, 503);
+  const down = await bridge("owner", {}, { status: 200, data: unavailable });
   assert.deepEqual(down.body, unavailable);
   assert.equal(mailDeliveryFailure(down.body), "unavailable");
   for (const value of [{ success: false, status_code: 502, error: "invalid-core-response" }, { success: false, status_code: 200, error: "invalid-input" },
-    { success: false, status_code: 500, error: "mail-delivery-unavailable" }, ANSWER, null]) {
+    { success: false, status_code: 500, error: "mail-delivery-unavailable" }, OWNER, null]) {
     assert.equal(mailDeliveryFailure(value), "error", JSON.stringify(value)?.slice(0, 60));
   }
 });
@@ -322,7 +370,7 @@ const MESSAGES = {
 // PageHeader relies on the automatic JSX runtime of the Next build; tsx compiles it to React.createElement.
 (globalThis as { React?: typeof React }).React = React;
 
-function render(locale: "en" | "hu", data: MailDelivery | null, load: MailDeliveryLoad, filters = FILTERS): string {
+function render(locale: "en" | "hu", data: MailDelivery | null, load: MailDeliveryLoad, filters = OWNER_FILTERS): string {
   const noop = () => undefined;
   return renderToStaticMarkup(createElement(NextIntlClientProvider, {
     locale, messages: MESSAGES[locale], timeZone: "UTC", onError: (error: Error) => { throw error; },
@@ -333,46 +381,50 @@ function escaped(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 }
 
-test("the page renders Core's answer in both locales: cards, domains, rows, held-back answer and the failed poll", () => {
-  const data = mailDelivery(ANSWER, FILTERS)!;
+test("the page renders Core's owner capture in both locales: cards, domains, rows and the receiving servers' answers", () => {
+  const data = mailDelivery(OWNER, OWNER_FILTERS)!;
   for (const locale of ["en", "hu"] as const) {
     const copy = MESSAGES[locale].mailDelivery;
     const html = render(locale, data, "ready");
-    for (const text of [copy.title, copy.byDomain.title, copy.list.title, copy.state.delivered, copy.state.pending, copy.state.not_sent,
-      copy.kind.email_auth_verification, copy.kind.admin_login_verification, copy.kind.other, copy.byDomain.unknown]) {
+    for (const text of [copy.title, copy.byDomain.title, copy.list.title, copy.state.delivered, copy.state.pending, copy.state.failed,
+      copy.state.not_sent, copy.kind.support_request, copy.kind.admin_login_verification, copy.kind.other, copy.byDomain.unknown]) {
       assert.ok(html.includes(escaped(text)), `${locale}: ${text}`);
     }
     // Every option of the closed filters has its label.
     for (const kind of MAIL_DELIVERY_KINDS) assert.ok(html.includes(escaped(copy.kind[kind])), `${locale}: ${kind}`);
     for (const state of MAIL_DELIVERY_STATES) assert.ok(html.includes(escaped(copy.stateFilter[state])), `${locale}: ${state}`);
-    assert.ok(html.includes("bela@example.hu"));
+    assert.ok(html.includes("Mixed.Case@Example.TEST"), "the stored letter case");
     assert.ok(html.includes("<code>421</code> 4.4.2 Connection timed out for &lt;address&gt;"));
-    assert.ok(html.includes("<code>provider_rejected</code>"));
+    assert.ok(html.includes("<code>550</code> mailbox unavailable"));
+    assert.ok(html.includes("<code>configuration-missing</code>"));
     assert.ok(html.includes(locale === "en" ? "10 min 34 s" : "10 perc 34 mp"), "634 s");
     assert.ok(html.includes(locale === "en" ? "2 attempts" : "2 próbálkozás"));
     assert.ok(html.includes(locale === "en" ? "1 temporary refusal" : "1 átmeneti elutasítás"));
-    assert.ok(html.includes(locale === "en" ? "13 s before Mailgun accepted it" : "13 mp telt el, mire a Mailgun átvette"), "the queue wait");
-    assert.ok(html.includes('class="alert alert-warning mail-delivery-sync-alert"'), "the failed poll is told apart");
+    assert.ok(html.includes(locale === "en" ? "71 h 59 min before Mailgun accepted it" : "71 óra 59 perc telt el, mire a Mailgun átvette"),
+      "the old code's queue wait");
     assert.equal([...html.matchAll(/<table/g)].length, 2);
+    assert.doesNotMatch(html, /mail-delivery-sync-alert/, "the capture's last poll succeeded");
     assert.doesNotMatch(html, new RegExp(escaped(copy.maskedNote)));
     assert.doesNotMatch(html, /role="alert"/);
+    const failedPoll = render(locale, mailDelivery(variant((d) => { d.sync_attempted_at += 60; d.sync_failed_at = d.sync_attempted_at; }), OWNER_FILTERS)!, "ready");
+    assert.ok(failedPoll.includes('class="alert alert-warning mail-delivery-sync-alert"'), "a failed poll is told apart");
   }
 });
 
 test("a viewer's page says the addresses are masked; an empty page is not a failure", () => {
   for (const locale of ["en", "hu"] as const) {
     const copy = MESSAGES[locale].mailDelivery;
-    const html = render(locale, mailDelivery(masked(), FILTERS)!, "ready");
+    const html = render(locale, mailDelivery(VIEWER, VIEWER_FILTERS)!, "ready", VIEWER_FILTERS);
     assert.ok(html.includes(escaped(copy.maskedNote)));
-    assert.ok(html.includes("be•••@example.hu"));
-    assert.equal(html.includes("bela@example.hu"), false);
-    const empty = clone(ANSWER) as Json;
-    Object.assign(empty.data, { rows: [], summary: { total: 0, counts: { delivered: 0, pending: 0, retrying: 0, failed: 0, not_sent: 0 },
-      median_seconds: null, p90_seconds: null, max_seconds: null, slow: 0, by_domain: [] }, sync_failed_at: null });
-    const emptyHtml = render(locale, mailDelivery(empty, FILTERS)!, "ready");
+    assert.ok(html.includes("be•••@zsakmany.hu"));
+    assert.equal(html.includes("bela@zsakmany.hu"), false);
+    const empty = variant((data) => {
+      Object.assign(data, { rows: [], summary: { total: 0, counts: { delivered: 0, pending: 0, retrying: 0, failed: 0, not_sent: 0 },
+        median_seconds: null, p90_seconds: null, max_seconds: null, slow: 0, by_domain: [] } });
+    });
+    const emptyHtml = render(locale, mailDelivery(empty, OWNER_FILTERS)!, "ready");
     assert.ok(emptyHtml.includes(escaped(copy.list.empty)));
     assert.equal([...emptyHtml.matchAll(/<table/g)].length, 0);
-    assert.doesNotMatch(emptyHtml, /mail-delivery-sync-alert/);
   }
 });
 
