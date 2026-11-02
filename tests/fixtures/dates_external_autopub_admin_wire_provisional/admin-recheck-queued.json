@@ -1,0 +1,22 @@
+{
+    "success": true,
+    "status_code": 200,
+    "message": 200,
+    "status": 200,
+    "can_send": 0,
+    "server_now": 1790000000,
+    "recheck": {
+        "recheck_id": "rck_00000000000000000000000000000004",
+        "status": "queued",
+        "external_event_id": "xev_00000000000000000000000000000001",
+        "instructions": null,
+        "requested_by": "operator@example.test",
+        "created_at": 1790000000,
+        "finished_at": null,
+        "reason": null,
+        "changes": [],
+        "cost_usd": null
+    },
+    "replayed": false,
+    "audit_id": "aud_00000000000000000000000000000000"
+}

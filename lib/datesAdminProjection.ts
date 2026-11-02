@@ -66,9 +66,24 @@ const EDITOR_INPUT = {
   summary: leaves("hu en"), sensitive: leaves("flag reason"), venue: leaves("name formatted_address longitude latitude city country_code"),
   organizer: leaves("name website"), links: leaves("official_url ticket_url"), confirmations: leaves("source public_venue timezone content_safe"),
 };
-const EXTERNAL_ROW = leaves("external_event_id activity_id revision activity_revision status lifecycle moderation_state soft_deleted title category sensitive "
-  + "start_at end_at start_local end_local timezone city country_code venue_name organizer_name verification_tier checked_at next_reverify_at credit_channel "
-  + "going_count interested_count created_at updated_at can_edit ai_assisted");
+/** D-149 (T-908), served with the external admin contract selector v2: the "reviewed, OK" mark. */
+const ADMIN_REVIEW = leaves("reviewed by at at_revision");
+const EXTERNAL_ROW = {
+  ...leaves("external_event_id activity_id revision activity_revision status lifecycle moderation_state soft_deleted title category sensitive "
+    + "start_at end_at start_local end_local timezone city country_code venue_name organizer_name verification_tier checked_at next_reverify_at credit_channel "
+    + "going_count interested_count created_at updated_at can_edit ai_assisted "
+    // v2: the best match of a review-band dedupe, and the open corrections and reports of the event (counts).
+    + "possible_duplicate_of open_corrections open_reports"),
+  admin_review: ADMIN_REVIEW, last_recheck: leaves("status finished_at"),
+};
+/** v2: a re-research job. `instructions` is the administrator's own text; `changes` are the event's public facts before and after. */
+const RECHECK = { ...leaves("recheck_id status instructions requested_by created_at finished_at reason cost_usd"), changes: [leaves("field before after")] };
+/** v2: a member's correction. The member is named to the moderators (uid and profile name); the note is member content. */
+const CORRECTION_FACTS = leaves("title starts_local ends_local venue status official_url");
+const CORRECTION = {
+  ...leaves("correction_id external_event_id activity_id event_title event_revision_at_submit note created_at status decided_by decided_at decision_reason"),
+  current: CORRECTION_FACTS, proposed: CORRECTION_FACTS, submitter: leaves("uid display_name"),
+};
 const EXTERNAL_EVENT = {
   ...EXTERNAL_ROW,
   facts: { ...leaves("title category start_at end_at start_local end_local end_estimated all_day timezone is_free price_text age_restriction"),
@@ -81,6 +96,7 @@ const EXTERNAL_EVENT = {
   credit: leaves("channel submitted_by_uid anonymous first_submitter_uid"),
   editor_input: EDITOR_INPUT,
   intake: leaves("intake_id channel event_index"),
+  rechecks: [RECHECK], corrections: [CORRECTION],
 } as const;
 const RECORD = new Summary(OPERATIONAL_RECORD_SAFE_KEYS);
 
@@ -253,9 +269,17 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
     places: [{ ...leaves("place_id name formatted_address latitude longitude city country_code timezone public_venue_warning"), attributions: [leaves("provider uri")] }],
   },
   dates_external_event_publish: { ...ENVELOPE, ...leaves("replayed external_event_id revision activity_id activity_revision event_status audit_id") },
-  dates_external_event_update: { ...ENVELOPE, ...leaves("replayed external_event_id revision activity_id activity_revision event_status audit_id") },
+  // v2: an update that approved a member's correction may echo it.
+  dates_external_event_update: { ...ENVELOPE, ...leaves("replayed external_event_id revision activity_id activity_revision event_status audit_id correction_id correction_status") },
   dates_external_event_command: { ...ENVELOPE,
-    ...leaves("replayed external_event_id activity_id revision activity_revision action event_status lifecycle soft_deleted audit_id thread_id message_id message_sequence") },
+    ...leaves("replayed external_event_id activity_id revision activity_revision action event_status lifecycle soft_deleted audit_id thread_id message_id message_sequence"),
+    // v2: the receipt of mark_reviewed / clear_reviewed.
+    admin_review: ADMIN_REVIEW },
+  // D-149 (T-908), v2 routes. PROVISIONAL trees, from the specification until Core's genuine bodies are vendored.
+  // The legacy envelope has a top-level `status` (200): the job's and the correction's states are nested, or `*_status`.
+  dates_external_event_recheck: { ...ENVELOPE, ...leaves("recheck_id recheck_status external_event_id replayed audit_id"), recheck: { ...RECHECK, external_event_id: L } },
+  dates_external_correction_list: { ...ENVELOPE, ...leaves("page limit total capabilities"), corrections: [CORRECTION] },
+  dates_external_correction_decide: { ...ENVELOPE, ...leaves("correction_id correction_status replayed audit_id"), correction: CORRECTION },
   dates_event_intake_list: {
     ...ENVELOPE, ...leaves("page limit total drafts_enabled suggestions_enabled second_look_count capabilities"), intakes: [INTAKE_ROW],
     // Keyed by status (a closed vocabulary of the manifest).

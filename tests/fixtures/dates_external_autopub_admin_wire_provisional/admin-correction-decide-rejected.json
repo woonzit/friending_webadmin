@@ -1,0 +1,38 @@
+{
+    "success": true,
+    "status_code": 200,
+    "message": 200,
+    "status": 200,
+    "can_send": 0,
+    "server_now": 1790000000,
+    "correction": {
+        "correction_id": "cor_00000000000000000000000000000001",
+        "external_event_id": "xev_00000000000000000000000000000001",
+        "activity_id": "act_00000000000000000000000000000001",
+        "event_title": "Közösségi koncert",
+        "event_revision_at_submit": 1,
+        "current": {
+            "title": "Közösségi koncert",
+            "starts_local": "2026-09-23T16:13",
+            "ends_local": "2026-09-23T19:13",
+            "official_url": "https://orchestra.example.test/concert"
+        },
+        "proposed": {
+            "starts_local": "2026-09-23T18:00",
+            "ends_local": null,
+            "official_url": "https://orchestra.example.test/concert-2026"
+        },
+        "note": "The organizer's page says 18:00.\nNo end time is given.",
+        "submitter": {
+            "uid": 4242,
+            "display_name": "Anna"
+        },
+        "created_at": 1789990000,
+        "status": "rejected",
+        "decided_by": "operator@example.test",
+        "decided_at": 1789996000,
+        "decision_reason": "not_accurate"
+    },
+    "replayed": false,
+    "audit_id": "aud_00000000000000000000000000000000"
+}

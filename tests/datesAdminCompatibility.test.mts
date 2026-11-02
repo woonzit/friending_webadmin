@@ -434,6 +434,8 @@ test("D-143: no Dates decoder of a Core body counts keys; the only closed key se
     "lib/datesExternalMutations.ts": [/if \(Object\.keys\(row\)\.sort\(\)\.join\(\) !== \["version", "actor", "issued_at", "action", "body", "baseline"\]/],
     // The reload reminder's own two-field value in local storage.
     "lib/datesIntakeConsole.ts": [/return Object\.keys\(value\)\.length === 2 && typeof at === "number"/],
+    // D-149: the re-research request's own saved row in session storage (its identity is kept across attempts).
+    "lib/datesExternalReview.ts": [/if \(Object\.keys\(row\)\.sort\(\)\.join\(\) !== "actor,body,issued_at,version"/],
   };
   const libraries = readdirSync(new URL("../lib/", import.meta.url)).filter((name) => /^dates[A-Za-z]*\.ts$/.test(name)).map((name) => `lib/${name}`);
   assert.ok(libraries.length >= 12);

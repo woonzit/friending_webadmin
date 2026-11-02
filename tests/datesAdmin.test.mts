@@ -76,6 +76,10 @@ const EXPECTED_DATES_ACTIONS = [
   "dates_external_event_update",
   "dates_external_event_command",
   "dates_external_event_place_search",
+  // D-149 (T-908): re-research one event; the members' corrections queue and its rejection.
+  "dates_external_event_recheck",
+  "dates_external_correction_list",
+  "dates_external_correction_decide",
   // T-865 P2a: the intake routes that travel as a generic action. Creating an
   // intake and reading a flyer have their own routes and are not listed.
   "dates_event_intake_list",

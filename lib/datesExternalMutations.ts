@@ -1,6 +1,6 @@
 import { createAdminIdempotencyKey, datesAdminPrincipal, hasDatesCapability } from "@/lib/datesAdmin";
 import {
-  datesExternalBaseline, datesExternalRefusal, decodeDatesExternalReceipt, normalizeDatesExternalPendingBody,
+  DATES_EXTERNAL_REVIEW_COMMANDS, datesExternalBaseline, datesExternalRefusal, decodeDatesExternalReceipt, normalizeDatesExternalPendingBody,
   decodeDatesExternalList,
   type DatesExternalMutationAction, type DatesExternalMutationBaseline, type DatesExternalReceipt,
 } from "@/lib/datesExternalAdmin";
@@ -51,6 +51,8 @@ export function decodeDatesExternalPending(value: unknown, actor: string): Dates
       "dates_event_intake_publish"].includes(String(row.action))
     || !row.body || typeof row.body !== "object" || Array.isArray(row.body)) return null;
   const body = row.body as Record<string, unknown>;
+  // D-149: the "reviewed" mark is revision-fenced and sent outside this journal; a stored one is not a journal command.
+  if (row.action === "dates_external_event_command" && (DATES_EXTERNAL_REVIEW_COMMANDS as readonly unknown[]).includes(body.action)) return null;
   if (!normalizeDatesExternalPendingBody(String(row.action), body)) return null;
   if (row.action === "dates_external_event_publish" || row.action === "dates_event_intake_publish") {
     if (row.baseline !== null) return null;

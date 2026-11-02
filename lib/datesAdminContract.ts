@@ -86,6 +86,24 @@ export function datesAdminResearchContractParams(action: string, params: Record<
 }
 
 /**
+ * D-149 (T-908): the external admin contract selector v2. With it Core adds the review fields to the external event
+ * list rows and to the detail (`admin_review`, `possible_duplicate_of`, `open_corrections`, `open_reports`,
+ * `last_recheck`, and on the detail the latest re-research jobs and the corrections), accepts the `reviewed` list
+ * filter, the `mark_reviewed` / `clear_reviewed` commands and the update's `correction_id`, and serves the three new
+ * routes. Without it the released console bodies stay byte-identical (the D-143 rule). Named by the specification
+ * (team/handoffs/areyouin-autopublish-research.md, "Admin wire"); Core finalises it in docs/DATES_EXTERNAL_ADMIN_V1.md.
+ * Every addition is optional in the decoders, so the console reads a Core of either kind.
+ */
+export const DATES_EXTERNAL_ADMIN_CONTRACT_SELECTOR: DatesAdminContractSelector = { parameter: "dates_external_admin_contract_version", value: 2 };
+/** The external / correction routes the v2 selector goes with. Publication and the place search keep their released shapes. */
+export const DATES_EXTERNAL_ADMIN_V2_ROUTES: readonly string[] = ["dates_external_event_list", "dates_external_event_detail", "dates_external_event_update",
+  "dates_external_event_command", "dates_external_event_recheck", "dates_external_correction_list", "dates_external_correction_decide"];
+export function datesExternalAdminContractParams(action: string): Record<string, number | string> {
+  return DATES_EXTERNAL_ADMIN_V2_ROUTES.includes(action)
+    ? { [DATES_EXTERNAL_ADMIN_CONTRACT_SELECTOR.parameter]: DATES_EXTERNAL_ADMIN_CONTRACT_SELECTOR.value } : {};
+}
+
+/**
  * The parameters the generic bridge hands to Core, with the selectors written
  * LAST into the same object: whatever the browser's body carried under those
  * names is overwritten, and the object keeps the null prototype
@@ -93,7 +111,8 @@ export function datesAdminResearchContractParams(action: string, params: Record<
  */
 export function withDatesAdminContract(action: string, params: Record<string, unknown>,
   selector: DatesAdminContractSelector | null = DATES_ADMIN_INTAKE_CONTRACT_SELECTOR): Record<string, unknown> {
-  for (const [key, value] of Object.entries({ ...datesAdminContractParams(action, selector), ...datesAdminCommandContractParams(action), ...datesAdminResearchContractParams(action, params) })) params[key] = value;
+  for (const [key, value] of Object.entries({ ...datesAdminContractParams(action, selector), ...datesAdminCommandContractParams(action), ...datesAdminResearchContractParams(action, params),
+    ...datesExternalAdminContractParams(action) })) params[key] = value;
   if (action === "dates_event_icons" || action === "dates_event_icons_save") params.dates_event_icon_contract_version = 2;
   if (["dates_activity_detail", "dates_moderation_evidence", "dates_moderation_resolve"].includes(action)) params.dates_event_media_contract_version = 1;
   return params;

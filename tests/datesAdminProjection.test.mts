@@ -86,6 +86,12 @@ type Genuine = { corpus: string; file: string; route: string; body: any };
 const GENUINE: Genuine[] = CORPORA.flatMap((corpus) => readdirSync(new URL(`${corpus}/`, FIXTURES)).filter((file) => file.endsWith(".json") && file !== "manifest.json").sort()
   .flatMap((file) => { const route = routeOf(corpus, file); return route === null ? [] : [{ corpus, file, route, body: read(corpus, file) }]; }));
 const SUCCESSES = GENUINE.filter((item) => item.body.success === true && item.route !== "dates_event_intake_image");
+/**
+ * D-149 (T-908): routes whose trees are PROVISIONAL - written from the specification while Core-B finalises the admin
+ * contract. No genuine body exists yet; tests/datesExternalReview.test.mts holds them to the provisional fixtures in
+ * tests/fixtures/dates_external_autopub_admin_wire_provisional. They leave this list when Core's corpus is vendored.
+ */
+const PROVISIONAL_ROUTES = ["dates_external_correction_decide", "dates_external_correction_list", "dates_external_event_recheck"];
 
 test("every Dates Admin route this console calls has its named fields, and no other route is projected", () => {
   assert.deepEqual(GENUINE.filter((item) => item.route === "?").map((item) => item.file), [], "every genuine body is mapped to its route");
@@ -120,8 +126,9 @@ test("the projection of every genuine body is that body: no named field is lost,
   assert.ok(successes > 300 && refusals > 140, `${successes} / ${refusals}`);
   // Each route that has a genuine success body, by name - the others are listed with the reason they have none.
   const covered = new Set(SUCCESSES.map((item) => item.route));
-  assert.deepEqual(Object.keys(DATES_ADMIN_NAMED).filter((route) => !(DATES_RESEARCH_ACTIONS as readonly string[]).includes(route) && !covered.has(route)).sort(), ["dates_activity_location"],
-    "no genuine body: only the break-glass location (since T-891 every command receipt has Core's genuine bodies)");
+  assert.deepEqual(Object.keys(DATES_ADMIN_NAMED).filter((route) => !(DATES_RESEARCH_ACTIONS as readonly string[]).includes(route) && !covered.has(route)).sort(),
+    ["dates_activity_location", ...PROVISIONAL_ROUTES],
+    "no genuine body: only the break-glass location (since T-891 every command receipt has Core's genuine bodies) and the provisional D-149 routes");
 });
 
 /** Adds a key to every object the tree names (not inside a part kept whole): what the projection must take out again. */
@@ -148,7 +155,7 @@ test("per route: a key this console does not name, at any depth, is not in what 
     perRoute.set(route, (perRoute.get(route) ?? 0) + added.count);
   }
   // Every route family with a genuine body was exercised, and deep: the intake detail alone has dozens of named objects.
-  assert.equal(perRoute.size, Object.keys(DATES_ADMIN_NAMED).length - DATES_RESEARCH_ACTIONS.length - 1);
+  assert.equal(perRoute.size, Object.keys(DATES_ADMIN_NAMED).length - DATES_RESEARCH_ACTIONS.length - 1 - PROVISIONAL_ROUTES.length);
   assert.ok(perRoute.get("dates_event_intake_detail")! > 500 && perRoute.get("dates_moderation_detail")! > 30 && perRoute.get("dates_external_event_detail")! > 100);
   // A refusal is Core's six keys and nothing beside them.
   const refusal = GENUINE.find((item) => item.body.success === false)!.body;

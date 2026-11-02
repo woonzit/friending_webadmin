@@ -592,6 +592,10 @@ export const ADMIN_ACTION_ACCESS = {
   dates_external_event_update: "dates_write",
   dates_external_event_command: "dates_write",
   dates_external_event_place_search: "dates_write",
+  // D-149 (T-908): re-research one event; the corrections queue and its rejection (an approval is an update).
+  dates_external_event_recheck: "dates_write",
+  dates_external_correction_list: "dates_read",
+  dates_external_correction_decide: "dates_write",
   // T-865 P2a event intake. These rows are only the floor of the Dates ladder;
   // `datesIntakeProxyCapabilityAuthorized` mirrors Core's exact capability per
   // route (review for the queue, a draft, the hold and a rejection; manage for

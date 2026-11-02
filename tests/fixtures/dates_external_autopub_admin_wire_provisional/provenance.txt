@@ -1,0 +1,44 @@
+dates_external_autopub_admin_wire_provisional: PROVISIONAL bodies of the external admin contract v2
+(D-149, T-908): the review fields of the external event list and detail, the re-research route,
+the corrections queue and its decision, the mark_reviewed / clear_reviewed commands and an update
+that approves a correction.
+
+NOT CORE'S BODIES. Written by the Webadmin lane on 2026-11-02 from the specification
+(team/handoffs/areyouin-autopublish-research.md, "Admin wire") while Core-B
+(claude/areyouin-autopub-20261102-core) finalises the contract in docs/DATES_EXTERNAL_ADMIN_V1.md.
+Nothing here proves what Core serves.
+
+How:   the list and detail files are Core's genuine P1 bodies
+       tests/fixtures/dates_external_admin_wire/admin-list-admin.json and admin-detail-admin.json
+       (byte copies of FINAL E1 Core 51140a6f, see docs/DATES_EXTERNAL_CONSOLE.md) with the v2 keys
+       added; every other file is written from the specification. The envelope, ids and
+       `server_now` (1790000000) follow Core's normalised capture. Names the specification does not
+       fix are the lane's guesses and are marked PROVISIONAL in the code that reads them:
+       - the re-research job id prefix `rck_`;
+       - the refusal statuses (409 open / budget, 404 unavailable, 409 correction already decided);
+       - the correction list page keys `page`, `limit`, `total` and the rows under `corrections`;
+       - the re-research and decision receipts: the specification writes `{recheck_id, status}`, but
+         the legacy envelope already has a top-level `status` (200), so the job and the correction are
+         nested (`recheck`, `correction`); flat `recheck_status` / `correction_status` is read too;
+       - the review command receipt (the command receipt plus `admin_review`, revision + 1);
+       - the update receipt's `correction_id` / `correction_status` echo;
+       - the change-set field names (`start_at`, `is_free`) and the job reason codes.
+
+Re-pin: when Core-B's genuine admin bodies exist, vendor them as a corpus of their own (a byte copy
+with its manifest, like tests/fixtures/dates_external_pins_wire), point
+tests/datesExternalReview.test.mts at it, move the three routes out of PROVISIONAL_ROUTES in
+tests/datesAdminProjection.test.mts, and delete this directory.
+
+admin-list-v2.json                       a row not reviewed: possible duplicate, 1 open correction, 2 open reports, a running re-research
+admin-list-v2-reviewed.json              the same row reviewed, nothing open, the last re-research applied
+admin-detail-v2.json                     the detail with the mark, three jobs (applied with a change set, failed, no change with an unknown reason) and two corrections (pending, rejected)
+admin-recheck-queued.json                dates_external_event_recheck: the queued job
+admin-recheck-open-denied.json           ... refused: a job is open (409 dates-recheck-open)
+admin-recheck-budget-paused-denied.json  ... refused: the research budget stop (409 dates-research-budget-paused)
+admin-recheck-unavailable-denied.json    ... refused: not re-researchable (404 dates-recheck-unavailable)
+admin-correction-list-pending.json       dates_external_correction_list, status pending
+admin-correction-decide-rejected.json    dates_external_correction_decide: rejected
+admin-correction-decide-decided-denied.json  ... refused: already decided (409 dates-correction-state-invalid)
+admin-command-mark-reviewed.json         dates_external_event_command mark_reviewed
+admin-command-clear-reviewed.json        dates_external_event_command clear_reviewed
+admin-update-correction-approved.json    dates_external_event_update with correction_id
