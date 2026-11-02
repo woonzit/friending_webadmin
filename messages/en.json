@@ -12474,9 +12474,12 @@
     },
     "kind": {
       "email_auth_verification": "Sign-in and signup code",
-      "admin_login_verification": "Admin login code",
-      "moderation_report": "Moderation report",
-      "legacy_engagement": "Reactivation email",
+      "email_change_verification": "Email change code",
+      "admin_login_verification": "Webadmin login code",
+      "admin_outbound_message": "Outbound message",
+      "user_report": "Profile report to moderators",
+      "moderation_footprint_report": "Footprint report to moderators",
+      "support_request": "Support request",
       "other": "Other"
     },
     "stateFilter": {
@@ -12542,6 +12545,7 @@
     },
     "failures": {
       "invalid": "Core refused these filters. Check the recipient address and try again.",
+      "unavailable": "Core could not read the email outbox just now. Try again shortly.",
       "error": "Email delivery could not be loaded. Nothing is shown rather than an incomplete list."
     }
   },

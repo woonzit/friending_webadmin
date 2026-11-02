@@ -61,7 +61,7 @@ export function MailDeliveryView({ data, load, filters, onFilters, onReload }: {
     setAddressInvalid(canonical === null);
     if (canonical !== null) change({ email: canonical });
   };
-  const failure = load === "invalid" || load === "error" ? load : null;
+  const failure = load === "invalid" || load === "unavailable" || load === "error" ? load : null;
 
   return (
     <>

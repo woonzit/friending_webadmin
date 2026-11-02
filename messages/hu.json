@@ -12474,9 +12474,12 @@
     },
     "kind": {
       "email_auth_verification": "Belépési és regisztrációs kód",
-      "admin_login_verification": "Admin belépési kód",
-      "moderation_report": "Moderációs jelentés",
-      "legacy_engagement": "Visszahívó levél",
+      "email_change_verification": "E-mail-cím-módosító kód",
+      "admin_login_verification": "Webadmin belépési kód",
+      "admin_outbound_message": "Kimenő üzenet",
+      "user_report": "Profilbejelentés a moderátoroknak",
+      "moderation_footprint_report": "Footprint-bejelentés a moderátoroknak",
+      "support_request": "Support-kérés",
       "other": "Egyéb"
     },
     "stateFilter": {
@@ -12542,6 +12545,7 @@
     },
     "failures": {
       "invalid": "A Core elutasította ezeket a szűrőket. Ellenőrizd a címzett címét, és próbáld újra.",
+      "unavailable": "A Core most nem tudta beolvasni a kimenő leveleket. Próbáld újra kicsit később.",
       "error": "Az e-mail-kézbesítés nem tölthető be. Hiányos lista helyett inkább semmit sem mutatunk."
     }
   },

@@ -32,9 +32,10 @@ import { MEMBERSHIP_EMAIL, MEMBERSHIP_MEMBER } from "./support/adminMembershipCa
 type Json = Record<string, any>;
 
 /**
- * DERIVED answer in the shape of Freelove Core's `MailDeliveryReadService::read` (8eb62bd3, with the
- * review fix's `sync_attempted_at` / `sync_failed_at`): a delivered code a receiving server held
- * back once with a 421, a queued admin code still waiting, and an email that was never sent.
+ * DERIVED answer in the shape of Friending Core's `MailDeliveryReadService::read` (the port of Freelove
+ * c8d2ca85 with the review fix 9f9c067a's `sync_attempted_at` / `sync_failed_at`), not a capture: a
+ * delivered code a receiving server held back once with a 421, a Webadmin login code still waiting
+ * after twelve seconds in the queue, and an email that was never sent.
  */
 const ROWS = [
   {
@@ -160,6 +161,14 @@ test("Email delivery: the answer belongs to the filters that asked, row by row",
   assert.ok(mailDelivery(slowAnswer, slow), "the slow row alone");
   const email = { ...FILTERS, email: "anna@gmail.com" };
   refused((data) => { data.filters.email = email.email; }, "a row for another address", email);
+  // Core matches the address in any letter case and shows it as the outbox stored it.
+  const stored = clone(ANSWER) as Json;
+  stored.data.filters.email = email.email;
+  stored.data.rows = [stored.data.rows[1]];
+  stored.data.rows[0].recipient = "Anna@Gmail.com";
+  assert.ok(mailDelivery(stored, email), "the stored letter case");
+  stored.data.rows[0].recipient = "anna@gmail.co";
+  assert.equal(mailDelivery(stored, email), null, "another address");
   // A masked view cannot show the address the filter matched; Core's own filter is the authority there.
   const maskedEmail = masked();
   maskedEmail.data.filters.email = email.email;
@@ -185,6 +194,18 @@ test("Email delivery: the bridge forwards only the closed filters, canonical and
     assert.equal(mailDeliveryAddress(value), null, value);
   }
   assert.deepEqual(MAIL_DELIVERY_STATES.filter((state) => state !== "slow"), [...MAIL_DELIVERY_ROW_STATES]);
+});
+
+test("Email delivery: the type filter is Friending Core's closed outbox vocabulary, not Freelove's", () => {
+  // MailDeliveryReadService::KINDS in Friending Core. Freelove's moderation_report and legacy_engagement are not
+  // Friending kinds; Core reports any kind outside its list as `other`.
+  assert.deepEqual([...MAIL_DELIVERY_KINDS], [
+    "email_auth_verification", "email_change_verification", "admin_login_verification", "admin_outbound_message",
+    "user_report", "moderation_footprint_report", "support_request",
+  ]);
+  for (const kind of ["moderation_report", "legacy_engagement"]) {
+    assert.equal(normalizeMailDeliveryProxyBody("mail_delivery", { kind }), null, kind);
+  }
 });
 
 test("Email delivery: an allow-listed read any active administrator may run, never a recovery loader", () => {
@@ -275,8 +296,16 @@ test("DERIVED bridge: bad filters never reach Core; a malformed success is unkno
   const result = await bridge("owner", {}, { status: 200, data: refusal });
   assert.deepEqual(result.body, refusal);
   assert.equal(mailDeliveryFailure(result.body), "invalid");
-  assert.equal(mailDeliveryFailure({ success: false, status_code: 502, error: "invalid-core-response" }), "error");
-  assert.equal(mailDeliveryFailure(null), "error");
+  // Core's own read failure keeps its name and status through the bridge.
+  const unavailable = { success: false, status_code: 503, error: "mail-delivery-unavailable", message: 200, status: 200, can_send: 0 };
+  const down = await bridge("owner", {}, { status: 503, data: unavailable });
+  assert.equal(down.status, 503);
+  assert.deepEqual(down.body, unavailable);
+  assert.equal(mailDeliveryFailure(down.body), "unavailable");
+  for (const value of [{ success: false, status_code: 502, error: "invalid-core-response" }, { success: false, status_code: 200, error: "invalid-input" },
+    { success: false, status_code: 500, error: "mail-delivery-unavailable" }, ANSWER, null]) {
+    assert.equal(mailDeliveryFailure(value), "error", JSON.stringify(value)?.slice(0, 60));
+  }
 });
 
 test("DERIVED bridge projection: the route wires the normalizers and refuses before forwarding", () => {
@@ -350,7 +379,7 @@ test("a viewer's page says the addresses are masked; an empty page is not a fail
 test("a failed read says why and never renders cards, tables or zeros", () => {
   for (const locale of ["en", "hu"] as const) {
     const copy = MESSAGES[locale].mailDelivery;
-    for (const load of ["invalid", "error"] as const) {
+    for (const load of ["invalid", "unavailable", "error"] as const) {
       const html = render(locale, null, load);
       assert.ok(html.includes(escaped(copy.failures[load])), `${locale} ${load}`);
       assert.doesNotMatch(html, /<table|stat-card/u);

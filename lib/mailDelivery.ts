@@ -12,12 +12,18 @@
 
 export const MAIL_DELIVERY_DAYS = [1, 7, 30] as const;
 export type MailDeliveryDays = (typeof MAIL_DELIVERY_DAYS)[number];
-/** Core's `MailDeliveryReadService::KINDS`; any other stored kind is reported as `other`. */
+/**
+ * Friending Core's `MailDeliveryReadService::KINDS`, in its order: the outbox kinds Core writes.
+ * Core reports any other stored kind as `other`, so a kind outside this list is a contract change.
+ */
 export const MAIL_DELIVERY_KINDS = [
   "email_auth_verification",
+  "email_change_verification",
   "admin_login_verification",
-  "moderation_report",
-  "legacy_engagement",
+  "admin_outbound_message",
+  "user_report",
+  "moderation_footprint_report",
+  "support_request",
 ] as const;
 export type MailDeliveryKind = (typeof MAIL_DELIVERY_KINDS)[number];
 /** The state filter: the five row states plus `slow` (delivered later than `slow_seconds`). */
@@ -316,7 +322,8 @@ export function mailDelivery(
     if (filters.kind && parsed.kind !== filters.kind) return null;
     if (filters.state === "slow" ? !(parsed.delivery_seconds !== null && parsed.delivery_seconds > data.slow_seconds)
       : filters.state !== "" && parsed.state !== filters.state) return null;
-    if (filters.email && data.can_see_addresses && parsed.recipient !== filters.email) return null;
+    // Core matches the address in any letter case and shows it as the outbox stored it.
+    if (filters.email && data.can_see_addresses && parsed.recipient.toLowerCase() !== filters.email) return null;
     rows.push(parsed);
   }
   // Without a state filter the list is the summary's own population, page by page.
@@ -350,10 +357,16 @@ export function normalizeMailDeliveryResponse(
   return data ? { success: true, status_code: 200, data } : null;
 }
 
-export type MailDeliveryFailure = "invalid" | "error";
+export type MailDeliveryFailure = "invalid" | "unavailable" | "error";
 
-/** Why a read failed: a filter Core refused (`invalid-input`), or anything else. */
+/**
+ * Why a read failed: Core's 422 `invalid-input` (a filter this console should never send), its 503
+ * `mail-delivery-unavailable` (the outbox could not be read), or anything else.
+ */
 export function mailDeliveryFailure(response: unknown): MailDeliveryFailure {
   const envelope = record(response);
-  return envelope?.success === false && envelope.error === "invalid-input" ? "invalid" : "error";
+  if (envelope?.success !== false) return "error";
+  if (envelope.status_code === 422 && envelope.error === "invalid-input") return "invalid";
+  if (envelope.status_code === 503 && envelope.error === "mail-delivery-unavailable") return "unavailable";
+  return "error";
 }
