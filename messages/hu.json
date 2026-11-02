@@ -8940,7 +8940,6 @@
         }
       }
     },
-    "recordWithheld": "{count, plural, =1 {# további mező visszatartva} other {# további mező visszatartva}}",
     "tabs": {
       "label": "AreYouIn adminisztráció",
       "activities": "Aktivitások",
@@ -9414,6 +9413,7 @@
       "boundedHistoryCopy": "A Core által visszaadott jelentések, értesítések, moderációs döntések és megváltoztathatatlan admin audit bejegyzések.",
       "notifications": "Értesítések",
       "noHistoryRecords": "Nincs rekord ebben a korlátozott nézetben.",
+      "recordWithheld": "{count, plural, =1 {# további mező visszatartva} other {# további mező visszatartva}}",
       "confirmCommandTitle": "Megerősítés: {action}",
       "confirmCommandCopy": "Indoklás: {reason}. A szerver elutasítja az elavult vagy nem biztonságos műveleteket.",
       "confirmCommand": "Művelet végrehajtása"

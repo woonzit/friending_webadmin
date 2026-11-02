@@ -8940,7 +8940,6 @@
         }
       }
     },
-    "recordWithheld": "{count, plural, =1 {# more field withheld} other {# more fields withheld}}",
     "tabs": {
       "label": "AreYouIn administration",
       "activities": "Activities",
@@ -9414,6 +9413,7 @@
       "boundedHistoryCopy": "Reports, notifications, moderation decisions and immutable admin audit entries returned by Core.",
       "notifications": "Notifications",
       "noHistoryRecords": "No records in this bounded projection.",
+      "recordWithheld": "{count, plural, =1 {# more field withheld} other {# more fields withheld}}",
       "confirmCommandTitle": "Confirm: {action}",
       "confirmCommandCopy": "Reason: {reason}. The server will reject stale or unsafe commands.",
       "confirmCommand": "Execute command"
