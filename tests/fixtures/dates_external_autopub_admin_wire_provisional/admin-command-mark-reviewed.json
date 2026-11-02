@@ -18,6 +18,7 @@
     "admin_review": {
         "reviewed": true,
         "by": "operator@example.test",
-        "at": 1789996000
+        "at": 1789996000,
+        "at_revision": 2
     }
 }

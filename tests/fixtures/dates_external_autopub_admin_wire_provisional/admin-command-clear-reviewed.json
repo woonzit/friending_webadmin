@@ -17,7 +17,8 @@
     "action": "clear_reviewed",
     "admin_review": {
         "reviewed": false,
-        "by": "operator@example.test",
-        "at": 1789996000
+        "by": null,
+        "at": null,
+        "at_revision": null
     }
 }

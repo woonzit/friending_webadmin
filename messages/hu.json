@@ -9077,18 +9077,23 @@
       },
       "rejectReasons": {
         "not_accurate": "A javasolt adatok nem pontosak",
-        "unverifiable": "Forrásból nem ellenőrizhető",
         "already_correct": "Az esemény már ezt mutatja",
-        "not_a_fact_change": "Nem az adatok javítása",
-        "abusive": "Bántó vagy kéretlen tartalom",
-        "other": "Egyéb"
+        "not_verifiable": "Forrásból nem ellenőrizhető",
+        "duplicate": "Egy másik javítás ismétlése",
+        "event_unavailable": "Az esemény már nem érhető el",
+        "inappropriate": "Nem helyénvaló vagy bántó",
+        "other": "Egyéb (a megjegyzésben indokold)"
       },
       "rejectTitle": "Javítás elutasítása",
       "rejectCopy": "Az esemény változatlan marad, a tag pedig látja, hogy a javítást nem fogadtuk el.",
       "rejectReason": "Ok",
       "chooseReason": "Válassz okot",
       "rejectNote": "Megjegyzés (nem kötelező)",
-      "rejectNoteHint": "A döntés mellé kerül.",
+      "rejectNoteHint": "A döntés mellé kerül. Az Egyéb oknál kötelező.",
+      "rejectNoteRequired": "Megjegyzés (az Egyéb oknál kötelező)",
+      "noteCounter": "{count} / {max} karakter",
+      "eventGone": "Az esemény törölve",
+      "decisionNote": "Moderátori megjegyzés: {note}",
       "uncertain": "Nem tudni, hogy az elutasítás elmentődött-e. Frissíts, és ismétlés előtt nézd meg a javítás állapotát."
     },
     "tabs": {
@@ -9128,6 +9133,7 @@
           "correctionUnavailable": "Ez a javítás már nem érhető el.",
           "correctionDecided": "Erről a javításról már döntöttek. Frissíts a döntés megtekintéséhez.",
           "reasonInvalid": "Válassz érvényes elutasítási okot.",
+          "noteInvalid": "A megjegyzés túl hosszú (legfeljebb 500 karakter), vagy az Egyéb oknál hiányzik.",
           "eventUnavailable": "Az esemény már nem érhető el.",
           "stale": "Az esemény közben megváltozott. Frissíts, nézd át újra, majd ismételd meg.",
           "stateInvalid": "Az esemény jelenlegi állapotában ez nem lehetséges. Frissíts a megtekintéséhez.",

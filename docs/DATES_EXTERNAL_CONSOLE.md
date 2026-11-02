@@ -366,15 +366,25 @@ decoders: a Core without it answers as before and nothing that would show it is
 rendered. A Core that does not know the three routes refuses them; Core is
 released first.
 
-**PROVISIONAL bindings.** Built from the specification before Core-B's genuine
-admin bodies existed. The bodies in
-`tests/fixtures/dates_external_autopub_admin_wire_provisional` are the lane's,
-not Core's (see its `provenance.txt` for every guessed name). Re-pin them, and
-the three routes in `PROVISIONAL_ROUTES` (`tests/datesAdminProjection.test.mts`),
-against Core's corpus before release. Because the legacy envelope already has a
-top-level `status: 200`, the re-research and decision receipts are read nested
-(`recheck`, `correction`) or flat with `recheck_status` / `correction_status`,
-never as a second top-level `status`.
+**Bindings.** The list, detail, review mark, corrections queue, decision and
+approving update follow Core-B's committed contract (Core
+`claude/areyouin-autopub-20261102-core` 4b58099c, `docs/DATES_EXTERNAL_ADMIN_V1.md`
+"The review contract selector"): the queue and a rejection need
+`dates_external_event_review`, an approval is an update (manage); the decision
+receipt is flat (`correction_id`, `correction_status`, `decided_at`); an update
+sent with `correction_id` ends with `correction {correction_id, status:
+"approved"}`; a mark moves the ledger revision by one and its receipt carries
+`admin_review`. The re-research route is still PROVISIONAL (not yet in Core's
+contract): its receipt is read nested (`recheck`) or flat with
+`recheck_status`, never as a second top-level `status` beside the envelope's.
+The test bodies in `tests/fixtures/dates_external_autopub_admin_wire_provisional`
+are the lane's, written to that contract, not Core's bytes (see its
+`provenance.txt`). Vendor Core's genuine corpus
+(`tests/fixtures/dates_external_review_wire` in Core) and move the three routes
+out of `PROVISIONAL_ROUTES` (`tests/datesAdminProjection.test.mts`) before
+release. Core-B's text sends the selector on every Dates Admin request; the
+console sends it on the seven routes whose body or input it changes, which by
+the same byte-identity rule is the same contract.
 
 **Reviewed mark (W1).** List rows and the detail show `admin_review`; the list
 has a reviewed / not reviewed filter (`reviewed=true|false`, sent only when
@@ -416,9 +426,10 @@ wall time has exactly one) and an https website; a proposed place (free text)
 and a cancelled / postponed status are shown as hints, not copied. The four
 confirmations stay fresh. The save is the ordinary journaled
 `dates_external_event_update` with `correction_id`. "Reject" sends
-`dates_external_correction_decide` with a reason code (the console's list is
-PROVISIONAL; the bridge forwards any well-formed code) and an optional note,
-fenced by the correction's state. A mark, a re-research or a decision changes
+`dates_external_correction_decide` with one of Core's reason codes (the bridge
+forwards any well-formed code) and a note of at most 500 graphemes, required
+for `other`, fenced by the correction's state. A purged event's correction
+(`current: null`) is shown without a link or an approval. A mark, a re-research or a decision changes
 the event elsewhere: an untouched editor is read again, one with unsaved work
 asks for an explicit refresh.
 

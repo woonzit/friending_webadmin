@@ -24,7 +24,7 @@ export default function DatesCorrectionsPage() {
   const [status, setStatus] = useState<DatesExternalCorrectionStatus | "">("pending");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<DatesExternalCorrectionList | null>(null);
-  const [manage, setManage] = useState(false);
+  const [review, setReview] = useState(false), [manage, setManage] = useState(false);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [rejecting, setRejecting] = useState<DatesExternalCorrection | null>(null);
   const [notice, setNotice] = useState<{ tone: "success" | "error"; key: string } | null>(null);
@@ -39,8 +39,9 @@ export default function DatesCorrectionsPage() {
     if (signal?.aborted || current !== generation.current) return;
     const decoded = decodeDatesExternalCorrectionList(response, { page, status });
     const principal = datesAdminPrincipal(identity);
-    if (!decoded || !principal || !hasDatesCapability(principal, "dates_external_event_read")) { setData(null); setState("error"); return; }
-    setData(decoded); setManage(hasDatesCapability(principal, "dates_external_event_manage")); setState("ready");
+    // Core-B 4b58099c: the queue and a rejection need the review capability; an approval is an edit (manage).
+    if (!decoded || !principal || !hasDatesCapability(principal, "dates_external_event_review")) { setData(null); setState("error"); return; }
+    setData(decoded); setReview(true); setManage(hasDatesCapability(principal, "dates_external_event_manage")); setState("ready");
   }, [status, page]);
   useEffect(() => {
     const controller = new AbortController();
@@ -68,8 +69,8 @@ export default function DatesCorrectionsPage() {
         : <div className="dates-correction-list">{data.rows.map((correction) => <section className="panel" key={correction.correction_id}>
           <div className="panel-header"><span className={`badge ${correction.status === "pending" ? "badge-warning" : correction.status === "approved" ? "badge-active" : "badge-inactive"}`}>
             {t(`statuses.${correction.status}`)}</span>
-            {correction.status === "pending" && manage && <div className="row-actions">
-              <Link className="button button-primary button-small" href={`/dates/external/${correction.external_event_id}?correction=${correction.correction_id}`}>{t("approveEdit")}</Link>
+            {correction.status === "pending" && review && <div className="row-actions">
+              {manage && correction.event_title !== null && <Link className="button button-primary button-small" href={`/dates/external/${correction.external_event_id}?correction=${correction.correction_id}`}>{t("approveEdit")}</Link>}
               <button type="button" className="button button-danger button-small" onClick={() => { setNotice(null); setRejecting(correction); }}>{t("reject")}</button></div>}</div>
           <DatesExternalCorrectionView correction={correction} />
         </section>)}</div>}

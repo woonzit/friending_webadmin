@@ -12,6 +12,8 @@
     "activity_revision": 2,
     "event_status": "published",
     "audit_id": "aud_00000000000000000000000000000000",
-    "correction_id": "cor_00000000000000000000000000000001",
-    "correction_status": "approved"
+    "correction": {
+        "correction_id": "cor_00000000000000000000000000000001",
+        "status": "approved"
+    }
 }

@@ -37,11 +37,13 @@ export type DatesExternalCorrectionStatus = typeof DATES_EXTERNAL_CORRECTION_STA
 export const DATES_EXTERNAL_CORRECTION_FIELDS = ["title", "starts_local", "ends_local", "venue", "status", "official_url"] as const;
 export type DatesExternalCorrectionField = typeof DATES_EXTERNAL_CORRECTION_FIELDS[number];
 /**
- * PROVISIONAL (T-908): the reason codes a moderator rejects a correction with. The specification names no list; Core
- * finalises it in docs/DATES_EXTERNAL_ADMIN_V1.md. The bridge forwards any well-formed code (Core validates), the
- * console offers these and shows any other code Core reports as it was written.
+ * The reason codes a moderator rejects a correction with (Core-B 4b58099c, docs/DATES_EXTERNAL_ADMIN_V1.md "Member
+ * corrections"); `other` requires a note. The bridge forwards any well-formed code (Core validates), the console offers
+ * these and shows any other code Core reports as it was written.
  */
-export const DATES_EXTERNAL_CORRECTION_REJECT_REASONS = ["not_accurate", "unverifiable", "already_correct", "not_a_fact_change", "abusive", "other"] as const;
+export const DATES_EXTERNAL_CORRECTION_REJECT_REASONS = ["not_accurate", "already_correct", "not_verifiable", "duplicate", "event_unavailable", "inappropriate", "other"] as const;
+/** A rejection note: at most 500 graphemes (Core counts graphemes). */
+export const DATES_EXTERNAL_CORRECTION_NOTE_MAX = 500;
 
 type Guard<T> = (value: unknown) => value is T;
 type Parsed<T> = T extends Guard<infer U> ? U : never;
@@ -320,8 +322,11 @@ const correctionFactGuards: Readonly<Record<DatesExternalCorrectionField, Guard<
 export type DatesExternalCorrectionFacts = Partial<{ title: string; starts_local: string; ends_local: string | null; venue: string; status: string | null; official_url: string | null }>;
 const correctionFacts: Guard<DatesExternalCorrectionFacts> = (value): value is DatesExternalCorrectionFacts => record(value)
   && DATES_EXTERNAL_CORRECTION_FIELDS.every((key) => !Object.hasOwn(value, key) || correctionFactGuards[key](value[key]));
+// Core-B 4b58099c: `event_title`, `event_status`, `event_revision` and `current` are null for a purged event.
 const correctionGuard = object({ correction_id: id("cor"), external_event_id: id("xev"), activity_id: id("act"),
-  event_title: nullable(text(1, 200)), event_revision_at_submit: integer(1), current: correctionFacts, proposed: correctionFacts,
+  event_title: nullable(text(1, 200)), event_status: optional(nullable(oneOf(DATES_EXTERNAL_STATUSES))), event_revision: optional(nullable(integer(1))),
+  decision_note: optional(nullable(plainText(1, 2000))),
+  event_revision_at_submit: integer(1), current: nullable(correctionFacts), proposed: correctionFacts,
   // Core projects the stored profile name as-is (as for an activity's host): no grapheme bound, possibly empty.
   note: nullable(plainText(1, 2000)), submitter: object({ uid: integer(1), display_name: (value: unknown): value is string => typeof value === "string"
     && value.length <= 64000 && !/[\uD800-\uDFFF]/u.test(value) }), created_at: epoch,
@@ -379,31 +384,30 @@ export function decodeDatesExternalRecheckReceipt(value: unknown, request: Recor
 }
 
 /**
- * `dates_external_correction_decide`: a rejection. As above, PROVISIONAL: the decided correction nested
- * (`correction: {correction_id, status}`), or flat with `correction_status`.
+ * `dates_external_correction_decide`: a rejection. Core-B 4b58099c: `replayed`, `correction_id`, `external_event_id`,
+ * `correction_status: "rejected"`, `decided_at`, `audit_id` beside the legacy envelope (whose `status` stays 200).
  */
-const correctionDecisionNested = object({ ...envelope, correction: object({ correction_id: id("cor"), status: oneOf(DATES_EXTERNAL_CORRECTION_STATUSES) }) });
-const correctionDecisionFlat = object({ ...envelope, correction_id: id("cor"), correction_status: oneOf(DATES_EXTERNAL_CORRECTION_STATUSES) });
+const correctionDecisionGuard = object({ ...envelope, correction_id: id("cor"), external_event_id: id("xev"),
+  correction_status: oneOf(DATES_EXTERNAL_CORRECTION_STATUSES), decided_at: epoch, audit_id: id("aud"), replayed: bool });
 export function decodeDatesExternalCorrectionDecision(value: unknown, request: Record<string, unknown>): { correction_id: string; status: "rejected" } | null {
-  const decided = correctionDecisionNested(value) ? value.correction
-    : correctionDecisionFlat(value) ? { correction_id: value.correction_id, status: value.correction_status } : null;
-  return decided && decided.correction_id === request.correction_id && decided.status === "rejected"
-    ? { correction_id: decided.correction_id, status: "rejected" } : null;
+  return correctionDecisionGuard(value) && value.correction_id === request.correction_id && value.correction_status === "rejected"
+    && value.decided_at <= value.server_now ? { correction_id: value.correction_id, status: "rejected" } : null;
 }
 
 /**
- * The receipt of `mark_reviewed` / `clear_reviewed`. Bound on the event, the activity, the action and the status
- * (unchanged by a mark). PROVISIONAL: whether the mark moves the ledger revision is not specified, so the revision may
- * stay or move by one; when Core echoes `admin_review`, it must say what was asked.
+ * The receipt of `mark_reviewed` / `clear_reviewed` (Core-B 4b58099c): the command receipt plus `admin_review`. Bound on
+ * the event, the activity, the action, the unchanged status and lifecycle, and the ledger revision the mark leaves
+ * (expected + 1; the activity revision is not the mark's). `admin_review` must say what was asked.
  */
-const reviewReceiptGuard = object({ ...envelope, external_event_id: id("xev"), activity_id: id("act"), revision: integer(1),
-  event_status: oneOf(DATES_EXTERNAL_STATUSES), action: oneOf(DATES_EXTERNAL_REVIEW_COMMANDS), admin_review: optional(adminReviewGuard) });
+const reviewReceiptGuard = object({ ...envelope, external_event_id: id("xev"), activity_id: id("act"), revision: integer(1), activity_revision: integer(1),
+  event_status: oneOf(DATES_EXTERNAL_STATUSES), lifecycle: literal("active"), soft_deleted: literal(false), action: oneOf(DATES_EXTERNAL_REVIEW_COMMANDS),
+  admin_review: adminReviewGuard, audit_id: id("aud"), replayed: bool });
 export function decodeDatesExternalReviewReceipt(value: unknown, request: Record<string, unknown>,
   baseline: Pick<DatesExternalRow, "external_event_id" | "activity_id" | "revision" | "status">): boolean {
   return reviewReceiptGuard(value) && request.external_event_id === baseline.external_event_id && request.expected_revision === baseline.revision
     && value.external_event_id === baseline.external_event_id && value.activity_id === baseline.activity_id && value.action === request.action
-    && (value.revision === baseline.revision || value.revision === baseline.revision + 1) && value.event_status === baseline.status
-    && (value.admin_review === undefined || value.admin_review.reviewed === (request.action === "mark_reviewed"));
+    && value.revision === baseline.revision + 1 && value.event_status === baseline.status
+    && value.admin_review.reviewed === (request.action === "mark_reviewed");
 }
 
 const activityShape = {
@@ -526,9 +530,11 @@ export function decodeDatesActivityOriginDetail(response: unknown, activityId: s
 export function datesExternalProxyCapabilityAuthorized(action: string, membership: unknown): boolean | undefined {
   if (!DATES_EXTERNAL_ACTIONS.includes(action as DatesExternalAction)) return undefined;
   const principal = datesAdminPrincipal(membership);
-  // D-149 PROVISIONAL: the corrections queue is a read of the external ledger; deciding a correction and asking for a
-  // re-research change it (an approval itself goes through the update, which is manage already). Core checks again.
-  const read = ["dates_external_event_list", "dates_external_event_detail", "dates_external_correction_list"].includes(action);
+  // D-149 (Core-B 4b58099c): the corrections queue and its rejection need the review capability (moderator and above);
+  // an approval is an update (manage). PROVISIONAL: the re-research is taken as manage.
+  if (action === "dates_external_correction_list" || action === "dates_external_correction_decide")
+    return principal !== null && hasDatesCapability(principal, "dates_external_event_review");
+  const read = action === "dates_external_event_list" || action === "dates_external_event_detail";
   return principal !== null && hasDatesCapability(principal, read ? "dates_external_event_read" : "dates_external_event_manage");
 }
 
@@ -607,10 +613,12 @@ export function decodeDatesExternalReceipt(value: unknown, action: DatesExternal
   if (receipt.event_status !== status) return null;
   if (command && (!("action" in receipt) || receipt.action !== body.action || receipt.soft_deleted !== false
     || receipt.lifecycle !== (["withdraw", "cancel"].includes(String(body.action)) ? "canceled" : "active"))) return null;
-  // D-149: an edit that approves a member's correction. PROVISIONAL: when Core echoes the correction, it must be this one, approved.
-  const echoed = receipt as Record<string, unknown>;
-  if (!command && (Object.hasOwn(echoed, "correction_id") || Object.hasOwn(echoed, "correction_status"))
-    && (echoed.correction_id !== body.correction_id || (Object.hasOwn(echoed, "correction_status") && echoed.correction_status !== "approved"))) return null;
+  // D-149 (Core-B 4b58099c): an edit sent with `correction_id` ends with `correction {correction_id, status: "approved"}`,
+  // and only then. An edit that did not approve the correction it named is not this command's receipt.
+  const echoed = (receipt as Record<string, unknown>).correction;
+  if (!command && (Object.hasOwn(body, "correction_id")
+    ? !(record(echoed) && echoed.correction_id === body.correction_id && echoed.status === "approved")
+    : Object.hasOwn(receipt, "correction"))) return null;
   return receipt;
 }
 
@@ -684,7 +692,8 @@ const refusalCodes: Readonly<Record<number, readonly string[]>> = {
     "dates-external-pins-invalid", "dates-external-pin-invalid", "dates-external-pin-name-invalid",
     "dates-external-pin-image-required", "dates-external-pin-color-invalid",
     // D-149 PROVISIONAL (see 404): a request check of the re-research and of the correction decision.
-    "dates-recheck-instructions-invalid", "dates-correction-id-invalid", "dates-correction-reason-invalid"],
+    "dates-recheck-instructions-invalid", "dates-correction-id-invalid", "dates-correction-reason-invalid",
+    "dates-correction-decision-invalid", "dates-correction-note-invalid"],
 };
 
 /** Only pinned Core no-land refusals release an attempted command's identity. */
@@ -768,7 +777,8 @@ export function datesExternalRecheckInstructions(value: unknown): value is strin
 }
 /** A correction's rejection code as the console sends it: Core owns the vocabulary (see the PROVISIONAL list above). */
 const reasonCode: Guard<string> = (value): value is string => typeof value === "string" && /^[a-z][a-z0-9_]{1,63}$/.test(value);
-const optionalNote = (value: unknown) => value === undefined || (plainText(1, 1000)(value) && value.trim() !== "");
+const optionalNote = (value: unknown) => value === undefined || (typeof value === "string" && value.trim() !== "" && plainText(1, 4000)(value)
+  && [...segmenter.segment(value)].length <= DATES_EXTERNAL_CORRECTION_NOTE_MAX);
 
 export function normalizeDatesExternalProxyBody(action: string, body: Record<string, unknown>): Record<string, unknown> | null | undefined {
   if (!DATES_EXTERNAL_ACTIONS.includes(action as DatesExternalAction)) return undefined;
@@ -780,6 +790,7 @@ export function normalizeDatesExternalProxyBody(action: string, body: Record<str
     && (!Object.hasOwn(body, "page") || formInteger(body.page, 1, 10000)) ? body : null;
   if (action === "dates_external_correction_decide") return bodyKeys(body, ["correction_id", "decision", "reason_code", "idempotency_key"], ["note"])
     && id("cor")(body.correction_id) && body.decision === "reject" && reasonCode(body.reason_code) && optionalNote(body.note)
+    && (body.reason_code !== "other" || Object.hasOwn(body, "note"))
     && requestKey(body.idempotency_key) ? body : null;
   if (action === "dates_external_event_list") {
     if (!bodyKeys(body, [], ["status", "tier", "category", "channel", "city", "query", "start_from", "start_to", "page", "limit", "reviewed"])) return null;

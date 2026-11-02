@@ -76,7 +76,10 @@ for (const locale of ["en", "hu"]) {
       "The organizer's page says 18:00.\nNo end time is given."]) assert.ok(view.includes(escaped(text)), text);
     assert.equal(view.includes(escaped(copy.corrections.fields.title)), false, "an untouched fact is not listed");
     const rejected = render(locale, createElement(DatesExternalCorrectionView, { correction: corrections.rows[1], showEvent: false }));
-    assert.ok(rejected.includes(escaped(copy.corrections.rejectReasons.unverifiable))); assert.ok(rejected.includes(escaped(copy.corrections.statusValues.canceled)));
+    assert.ok(rejected.includes(escaped(copy.corrections.rejectReasons.not_verifiable))); assert.ok(rejected.includes(escaped(copy.corrections.statusValues.canceled)));
+    assert.ok(rejected.includes(escaped(copy.corrections.decisionNote.replace("{note}", "No source mentions a cancellation."))));
+    const purged = render(locale, createElement(DatesExternalCorrectionView, { correction: { ...corrections.rows[0], event_title: null, event_status: null, event_revision: null, current: null } }));
+    assert.ok(purged.includes(escaped(copy.corrections.eventGone))); assert.equal(purged.includes("/dates/external/"), false, "no link to a purged event");
     assert.ok(rejected.includes(escaped(copy.corrections.member.replace("{uid}", "77"))), "an empty profile name is named by uid");
     const blocker = render(locale, createElement(DatesResearchBlocker, { code: "venue_unverified" }), createElement(DatesResearchBlocker, { code: "brand_new_code" }));
     assert.ok(blocker.includes(escaped(copy.research.publication.blockers.venue_unverified))); assert.ok(blocker.includes("<code>brand_new_code</code>"));

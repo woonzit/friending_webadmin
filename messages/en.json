@@ -9077,18 +9077,23 @@
       },
       "rejectReasons": {
         "not_accurate": "The proposed facts are not accurate",
-        "unverifiable": "Cannot be verified from a source",
         "already_correct": "The event already shows this",
-        "not_a_fact_change": "Not a correction of the facts",
-        "abusive": "Abusive or spam",
-        "other": "Other"
+        "not_verifiable": "Cannot be verified from a source",
+        "duplicate": "Repeats another correction",
+        "event_unavailable": "The event is no longer available",
+        "inappropriate": "Inappropriate or abusive",
+        "other": "Other (explain in the note)"
       },
       "rejectTitle": "Reject this correction",
       "rejectCopy": "The event stays as it is and the member sees that the correction was not accepted.",
       "rejectReason": "Reason",
       "chooseReason": "Choose a reason",
       "rejectNote": "Note (optional)",
-      "rejectNoteHint": "Kept with the decision.",
+      "rejectNoteHint": "Kept with the decision. Required when the reason is Other.",
+      "rejectNoteRequired": "Note (required for Other)",
+      "noteCounter": "{count} / {max} characters",
+      "eventGone": "Event removed",
+      "decisionNote": "Moderator's note: {note}",
       "uncertain": "It is not known whether the rejection was saved. Refresh and check the correction's status before you repeat it."
     },
     "tabs": {
@@ -9128,6 +9133,7 @@
           "correctionUnavailable": "This correction is no longer available.",
           "correctionDecided": "This correction has already been decided. Refresh to see the decision.",
           "reasonInvalid": "Choose a valid rejection reason.",
+          "noteInvalid": "The note is too long (at most 500 characters), or it is missing for Other.",
           "eventUnavailable": "The event is no longer available.",
           "stale": "The event changed in the meantime. Refresh, check it again, then repeat.",
           "stateInvalid": "The event's current state does not allow this. Refresh to see it.",

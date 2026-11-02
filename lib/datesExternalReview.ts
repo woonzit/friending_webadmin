@@ -127,7 +127,7 @@ export async function runDatesExternalCorrectionReject(send: Send, request: Reco
 export const DATES_EXTERNAL_REVIEW_REFUSALS: Readonly<Record<string, string>> = {
   "dates-recheck-open": "recheckOpen", "dates-recheck-unavailable": "recheckUnavailable", "dates-research-budget-paused": "budgetPaused",
   "dates-recheck-instructions-invalid": "instructionsInvalid", "dates-correction-unavailable": "correctionUnavailable",
-  "dates-correction-state-invalid": "correctionDecided", "dates-correction-reason-invalid": "reasonInvalid",
+  "dates-correction-state-invalid": "correctionDecided", "dates-correction-reason-invalid": "reasonInvalid", "dates-correction-note-invalid": "noteInvalid",
   "dates-correction-id-invalid": "correctionUnavailable", "dates-external-unavailable": "eventUnavailable",
   "dates-admin-stale-revision": "stale", "dates-external-conflict": "stale", "dates-external-command-state-invalid": "stateInvalid",
   "dates-admin-capability-required": "capability", "admin-write-required": "capability",

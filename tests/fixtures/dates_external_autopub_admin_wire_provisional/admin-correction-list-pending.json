@@ -37,11 +37,15 @@
             "external_event_id": "xev_00000000000000000000000000000001",
             "activity_id": "act_00000000000000000000000000000001",
             "event_title": "Közösségi koncert",
+            "event_status": "published",
+            "event_revision": 1,
             "event_revision_at_submit": 1,
             "current": {
                 "title": "Közösségi koncert",
                 "starts_local": "2026-09-23T16:13",
                 "ends_local": "2026-09-23T19:13",
+                "venue": "Városliget, Budapest, Olof Palme sétány 1.",
+                "status": null,
                 "official_url": "https://orchestra.example.test/concert"
             },
             "proposed": {
@@ -58,7 +62,8 @@
             "status": "pending",
             "decided_by": null,
             "decided_at": null,
-            "decision_reason": null
+            "decision_reason": null,
+            "decision_note": null
         }
     ]
 }

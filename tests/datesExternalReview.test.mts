@@ -45,17 +45,20 @@ test("the three new routes are allow-listed, classified and gated by the externa
   }
   const member = (capabilities: string[]) => ({ success: true, role: "admin", dates: { email: "operator@example.test", role: "administrator", rank: 40,
     linked_uid: null, sensitive_location: false, break_glass: false, capabilities } });
-  assert.equal(datesExternalProxyCapabilityAuthorized("dates_external_correction_list", member(["dates_external_event_read"])), true);
-  for (const action of ["dates_external_event_recheck", "dates_external_correction_decide"]) {
-    assert.equal(datesExternalProxyCapabilityAuthorized(action, member(["dates_external_event_read"])), false, action);
-    assert.equal(datesExternalProxyCapabilityAuthorized(action, member(["dates_external_event_read", "dates_external_event_manage"])), true, action);
+  // Core-B 4b58099c: the queue and a rejection need the review capability (moderator and above); a re-research, manage.
+  for (const action of ["dates_external_correction_list", "dates_external_correction_decide"]) {
+    assert.equal(datesExternalProxyCapabilityAuthorized(action, member(["dates_external_event_read", "dates_external_event_manage"])), false, action);
+    assert.equal(datesExternalProxyCapabilityAuthorized(action, member(["dates_external_event_review"])), true, action);
   }
+  assert.equal(datesExternalProxyCapabilityAuthorized("dates_external_event_recheck", member(["dates_external_event_read", "dates_external_event_review"])), false);
+  assert.equal(datesExternalProxyCapabilityAuthorized("dates_external_event_recheck", member(["dates_external_event_read", "dates_external_event_manage"])), true);
 });
 
-test("the v2 selector goes with the external / correction routes only, and the browser cannot set or unset it", () => {
+test("the v2 selector goes with every route whose body or input it changes, and the browser cannot set or unset it", () => {
   assert.deepEqual([...DATES_EXTERNAL_ADMIN_V2_ROUTES].sort(), ["dates_external_correction_decide", "dates_external_correction_list", "dates_external_event_command",
     "dates_external_event_detail", "dates_external_event_list", "dates_external_event_recheck", "dates_external_event_update"]);
   for (const action of DATES_EXTERNAL_ADMIN_V2_ROUTES) assert.deepEqual(datesExternalAdminContractParams(action), { dates_external_admin_contract_version: 2 });
+  // Core-B 4b58099c: on any other route selector 2 changes nothing, so their released requests stay as they are.
   for (const action of ["dates_external_event_publish", "dates_external_event_place_search", "dates_activity_detail", "dates_event_intake_list", "users_list"])
     assert.deepEqual(datesExternalAdminContractParams(action), {}, action);
   const merged = Object.assign(Object.create(null), { external_event_id: XEV, dates_external_admin_contract_version: 9, admin_email: "operator@example.test" });
@@ -80,8 +83,10 @@ test("closed browser requests: re-research, corrections queue and decision, revi
   assert.ok(normalizeDatesExternalProxyBody("dates_external_correction_decide", decide));
   assert.ok(normalizeDatesExternalProxyBody("dates_external_correction_decide", { ...decide, note: "Checked the organizer page." }));
   assert.ok(normalizeDatesExternalProxyBody("dates_external_correction_decide", { ...decide, reason_code: "a_core_code_the_console_does_not_list" }), "Core owns the vocabulary");
+  assert.ok(normalizeDatesExternalProxyBody("dates_external_correction_decide", { ...decide, note: "👍🏽".repeat(500) }), "500 graphemes");
+  assert.ok(normalizeDatesExternalProxyBody("dates_external_correction_decide", { ...decide, reason_code: "other", note: "Explained." }));
   for (const bad of [{ ...decide, decision: "approve" }, { ...decide, reason_code: "Not Accurate" }, { ...decide, note: "" }, { ...decide, correction_id: XEV },
-    { ...decide, expected_revision: 1 }])
+    { ...decide, expected_revision: 1 }, { ...decide, reason_code: "other" }, { ...decide, note: "a".repeat(501) }])
     assert.equal(normalizeDatesExternalProxyBody("dates_external_correction_decide", bad), null, JSON.stringify(bad).slice(0, 80));
   const mark = { external_event_id: XEV, expected_revision: 3, action: "mark_reviewed", idempotency_key: KEY };
   assert.ok(normalizeDatesExternalProxyBody("dates_external_event_command", mark));
@@ -199,11 +204,13 @@ test("receipts bind to what was asked: re-research, decision, review mark, appro
   assert.equal(decodeDatesExternalRecheckReceipt({ ...envelopeOnly, recheck_id: job.recheck_id, status: "queued" }, recheck), null, "never in place of the envelope's status");
   const decide = { correction_id: COR, decision: "reject", reason_code: "not_accurate", idempotency_key: KEY };
   const rejected = fixture("admin-correction-decide-rejected");
+  assert.equal(rejected.status, 200, "the decided state is correction_status; the envelope keeps its status");
   assert.deepEqual(decodeDatesExternalCorrectionDecision(rejected, decide), { correction_id: COR, status: "rejected" });
-  const { correction: _decided, ...decisionEnvelope } = rejected;
-  assert.ok(decodeDatesExternalCorrectionDecision({ ...decisionEnvelope, correction_id: COR, correction_status: "rejected" }, decide), "read flat with correction_status as well");
-  assert.equal(decodeDatesExternalCorrectionDecision({ ...rejected, correction: { ...rejected.correction, status: "approved" } }, decide), null);
+  assert.equal(decodeDatesExternalCorrectionDecision({ ...rejected, correction_status: "approved" }, decide), null);
+  assert.equal(decodeDatesExternalCorrectionDecision({ ...rejected, decided_at: 1790000001 }, decide), null);
   assert.equal(decodeDatesExternalCorrectionDecision(rejected, { ...decide, correction_id: "cor_" + "2".padStart(32, "0") }), null);
+  const { audit_id: _audit, ...noAudit } = rejected;
+  assert.equal(decodeDatesExternalCorrectionDecision(noAudit, decide), null);
   const target = { external_event_id: XEV, activity_id: ACT, revision: 1, status: "published" as const };
   const mark = { external_event_id: XEV, expected_revision: 1, action: "mark_reviewed", idempotency_key: KEY };
   assert.equal(decodeDatesExternalReviewReceipt(fixture("admin-command-mark-reviewed"), mark, target), true);
@@ -211,17 +218,23 @@ test("receipts bind to what was asked: re-research, decision, review mark, appro
   assert.equal(decodeDatesExternalReviewReceipt(fixture("admin-command-mark-reviewed"), { ...mark, action: "clear_reviewed", reason: "Again" }, target), false, "the other action");
   assert.equal(decodeDatesExternalReviewReceipt({ ...fixture("admin-command-mark-reviewed"), admin_review: { reviewed: false, by: null, at: null } }, mark, target), false);
   assert.equal(decodeDatesExternalReviewReceipt({ ...fixture("admin-command-mark-reviewed"), revision: 3 }, mark, target), false);
+  assert.equal(decodeDatesExternalReviewReceipt({ ...fixture("admin-command-mark-reviewed"), revision: 1 }, mark, target), false, "a mark moves the ledger revision by one");
   assert.equal(decodeDatesExternalReviewReceipt({ ...fixture("admin-command-mark-reviewed"), event_status: "withdrawn" }, mark, target), false);
+  assert.equal(decodeDatesExternalReviewReceipt({ ...fixture("admin-command-mark-reviewed"), lifecycle: "canceled" }, mark, target), false);
   assert.equal(decodeDatesExternalReviewReceipt(fixture("admin-command-mark-reviewed"), { ...mark, expected_revision: 2 }, target), false);
   const { admin_review: _review, ...bare } = fixture("admin-command-mark-reviewed");
-  assert.equal(decodeDatesExternalReviewReceipt({ ...bare, revision: 1 }, mark, target), true, "a mark that does not move the revision, without the echo");
+  assert.equal(decodeDatesExternalReviewReceipt(bare, mark, target), false, "the receipt says what the mark is now");
   const baseline = { external_event_id: XEV, activity_id: ACT, revision: 1, activity_revision: 1, status: "published" as const, lifecycle: "active" as const, soft_deleted: false };
   const update = { external_event_id: XEV, expected_revision: 1, correction_id: COR };
-  assert.ok(decodeDatesExternalReceipt(fixture("admin-update-correction-approved"), "dates_external_event_update", update, baseline));
-  assert.equal(decodeDatesExternalReceipt(fixture("admin-update-correction-approved"), "dates_external_event_update", { ...update, correction_id: "cor_" + "2".padStart(32, "0") }, baseline), null);
-  assert.equal(decodeDatesExternalReceipt({ ...fixture("admin-update-correction-approved"), correction_status: "pending" }, "dates_external_event_update", update, baseline), null);
-  const { correction_id: _c, correction_status: _s, ...plainUpdate } = fixture("admin-update-correction-approved");
-  assert.ok(decodeDatesExternalReceipt(plainUpdate, "dates_external_event_update", update, baseline), "a Core that does not echo the correction");
+  const approved = fixture("admin-update-correction-approved");
+  assert.ok(decodeDatesExternalReceipt(approved, "dates_external_event_update", update, baseline));
+  assert.equal(decodeDatesExternalReceipt(approved, "dates_external_event_update", { ...update, correction_id: "cor_" + "2".padStart(32, "0") }, baseline), null);
+  assert.equal(decodeDatesExternalReceipt({ ...approved, correction: { ...approved.correction, status: "pending" } }, "dates_external_event_update", update, baseline), null);
+  const { correction: _c, ...plainUpdate } = approved;
+  assert.equal(decodeDatesExternalReceipt(plainUpdate, "dates_external_event_update", update, baseline), null, "an edit that names a correction approves it, or it is not this receipt");
+  const { correction_id: _id, ...edit } = update;
+  assert.ok(decodeDatesExternalReceipt(plainUpdate, "dates_external_event_update", edit, baseline), "an ordinary edit");
+  assert.equal(decodeDatesExternalReceipt(approved, "dates_external_event_update", edit, baseline), null, "an ordinary edit approves nothing");
 });
 
 test("refusals: the specified tokens settle a request; transport and server failures do not; each has words", () => {

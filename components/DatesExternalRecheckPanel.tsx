@@ -46,6 +46,9 @@ export default function DatesExternalRecheckPanel({ event, serverNow, actor, can
   const [notice, setNotice] = useState<{ tone: "success" | "error" | "info"; text: string } | null>(null);
   const [pollError, setPollError] = useState(false);
   const busyRef = useRef(false), revision = useRef(event.revision), alive = useRef(true);
+  // The caller's callback may be a new function on every render; the poll must not restart because of it.
+  const factsChanged = useRef(onFactsChanged);
+  factsChanged.current = onFactsChanged;
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   useEffect(() => { setPending(readDatesExternalRecheckPending(storage(), actor, event.external_event_id)); }, [actor, event.external_event_id]);
 
@@ -58,8 +61,8 @@ export default function DatesExternalRecheckPanel({ event, serverNow, actor, can
     if (!detail) { setPollError(true); return; }
     setPollError(false); setJobs(datesExternalRechecks(detail.event, detail.server_now));
     // A job that applied facts moved the ledger: the page's revision is stale, so its writes wait for a reload.
-    if (detail.event.revision !== revision.current) { revision.current = detail.event.revision; onFactsChanged(); }
-  }, [event.external_event_id, onFactsChanged]);
+    if (detail.event.revision !== revision.current) { revision.current = detail.event.revision; factsChanged.current(); }
+  }, [event.external_event_id]);
   useEffect(() => {
     if (!open) return;
     const controller = new AbortController(), timer = window.setTimeout(() => void refresh(controller.signal), POLL_MS);

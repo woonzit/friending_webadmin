@@ -81,7 +81,8 @@ const RECHECK = { ...leaves("recheck_id status instructions requested_by created
 /** v2: a member's correction. The member is named to the moderators (uid and profile name); the note is member content. */
 const CORRECTION_FACTS = leaves("title starts_local ends_local venue status official_url");
 const CORRECTION = {
-  ...leaves("correction_id external_event_id activity_id event_title event_revision_at_submit note created_at status decided_by decided_at decision_reason"),
+  ...leaves("correction_id external_event_id activity_id event_title event_status event_revision event_revision_at_submit note created_at status "
+    + "decided_by decided_at decision_reason decision_note"),
   current: CORRECTION_FACTS, proposed: CORRECTION_FACTS, submitter: leaves("uid display_name"),
 };
 const EXTERNAL_EVENT = {
@@ -271,8 +272,9 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
     places: [{ ...leaves("place_id name formatted_address latitude longitude city country_code timezone public_venue_warning"), attributions: [leaves("provider uri")] }],
   },
   dates_external_event_publish: { ...ENVELOPE, ...leaves("replayed external_event_id revision activity_id activity_revision event_status audit_id") },
-  // v2: an update that approved a member's correction may echo it.
-  dates_external_event_update: { ...ENVELOPE, ...leaves("replayed external_event_id revision activity_id activity_revision event_status audit_id correction_id correction_status") },
+  // v2: an update sent with `correction_id` ends with the correction it approved.
+  dates_external_event_update: { ...ENVELOPE, ...leaves("replayed external_event_id revision activity_id activity_revision event_status audit_id"),
+    correction: leaves("correction_id status") },
   dates_external_event_command: { ...ENVELOPE,
     ...leaves("replayed external_event_id activity_id revision activity_revision action event_status lifecycle soft_deleted audit_id thread_id message_id message_sequence"),
     // v2: the receipt of mark_reviewed / clear_reviewed.
@@ -281,7 +283,7 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   // The legacy envelope has a top-level `status` (200): the job's and the correction's states are nested, or `*_status`.
   dates_external_event_recheck: { ...ENVELOPE, ...leaves("recheck_id recheck_status external_event_id replayed audit_id"), recheck: { ...RECHECK, external_event_id: L } },
   dates_external_correction_list: { ...ENVELOPE, ...leaves("page limit total capabilities"), corrections: [CORRECTION] },
-  dates_external_correction_decide: { ...ENVELOPE, ...leaves("correction_id correction_status replayed audit_id"), correction: CORRECTION },
+  dates_external_correction_decide: { ...ENVELOPE, ...leaves("correction_id external_event_id correction_status decided_at replayed audit_id") },
   dates_event_intake_list: {
     ...ENVELOPE, ...leaves("page limit total drafts_enabled suggestions_enabled second_look_count capabilities"), intakes: [INTAKE_ROW],
     // Keyed by status (a closed vocabulary of the manifest).

@@ -95,7 +95,13 @@ export function datesAdminResearchContractParams(action: string, params: Record<
  * Every addition is optional in the decoders, so the console reads a Core of either kind.
  */
 export const DATES_EXTERNAL_ADMIN_CONTRACT_SELECTOR: DatesAdminContractSelector = { parameter: "dates_external_admin_contract_version", value: 2 };
-/** The external / correction routes the v2 selector goes with. Publication and the place search keep their released shapes. */
+/**
+ * The routes the v2 selector goes with: every route whose body or input it changes (Core-B 4b58099c, "The review
+ * contract selector": the list, the detail and the command, the update's `correction_id`, and the three new routes,
+ * which refuse a request without it). Core-B's text has the console send it on every Dates Admin request; on any other
+ * route it changes nothing (byte-identical bodies, D-143), so sending it only here is the same contract with no
+ * change to the released requests of the other routes.
+ */
 export const DATES_EXTERNAL_ADMIN_V2_ROUTES: readonly string[] = ["dates_external_event_list", "dates_external_event_detail", "dates_external_event_update",
   "dates_external_event_command", "dates_external_event_recheck", "dates_external_correction_list", "dates_external_correction_decide"];
 export function datesExternalAdminContractParams(action: string): Record<string, number | string> {

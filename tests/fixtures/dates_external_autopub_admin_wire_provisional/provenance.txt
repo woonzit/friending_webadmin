@@ -4,9 +4,10 @@ the corrections queue and its decision, the mark_reviewed / clear_reviewed comma
 that approves a correction.
 
 NOT CORE'S BODIES. Written by the Webadmin lane on 2026-11-02 from the specification
-(team/handoffs/areyouin-autopublish-research.md, "Admin wire") while Core-B
-(claude/areyouin-autopub-20261102-core) finalises the contract in docs/DATES_EXTERNAL_ADMIN_V1.md.
-Nothing here proves what Core serves.
+(team/handoffs/areyouin-autopublish-research.md, "Admin wire"), then aligned to Core-B's committed
+contract (claude/areyouin-autopub-20261102-core 4b58099c, docs/DATES_EXTERNAL_ADMIN_V1.md "The
+review contract selector"): row fields, reason codes, the flat decision receipt, the nested
+`correction` of an approving update, the mark receipt. Nothing here proves what Core serves.
 
 How:   the list and detail files are Core's genuine P1 bodies
        tests/fixtures/dates_external_admin_wire/admin-list-admin.json and admin-detail-admin.json
@@ -15,13 +16,10 @@ How:   the list and detail files are Core's genuine P1 bodies
        `server_now` (1790000000) follow Core's normalised capture. Names the specification does not
        fix are the lane's guesses and are marked PROVISIONAL in the code that reads them:
        - the re-research job id prefix `rck_`;
-       - the refusal statuses (409 open / budget, 404 unavailable, 409 correction already decided);
-       - the correction list page keys `page`, `limit`, `total` and the rows under `corrections`;
-       - the re-research and decision receipts: the specification writes `{recheck_id, status}`, but
-         the legacy envelope already has a top-level `status` (200), so the job and the correction are
-         nested (`recheck`, `correction`); flat `recheck_status` / `correction_status` is read too;
-       - the review command receipt (the command receipt plus `admin_review`, revision + 1);
-       - the update receipt's `correction_id` / `correction_status` echo;
+       - the re-research refusal statuses (409 open / budget, 404 unavailable);
+       - the re-research receipt: the specification writes `{recheck_id, status}`, but the legacy
+         envelope already has a top-level `status` (200), so the job is nested (`recheck`); flat
+         `recheck_status` is read too;
        - the change-set field names (`start_at`, `is_free`) and the job reason codes.
 
 Re-pin: when Core-B's genuine admin bodies exist, vendor them as a corpus of their own (a byte copy

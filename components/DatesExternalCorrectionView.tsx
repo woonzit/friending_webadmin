@@ -6,15 +6,17 @@ import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { adminCall } from "@/lib/adminClient";
 import {
-  DATES_EXTERNAL_CORRECTION_REJECT_REASONS, DATES_EXTERNAL_CORRECTION_FIELDS, type DatesCommandOutcome, type DatesExternalCorrection,
+  DATES_EXTERNAL_CORRECTION_NOTE_MAX, DATES_EXTERNAL_CORRECTION_REJECT_REASONS, DATES_EXTERNAL_CORRECTION_FIELDS, type DatesCommandOutcome, type DatesExternalCorrection,
   type DatesExternalCorrectionFacts, type DatesExternalCorrectionField,
 } from "@/lib/datesExternalAdmin";
 import { datesExternalCorrectionRejectRequest, datesExternalReviewRefusalKey, runDatesExternalCorrectionReject } from "@/lib/datesExternalReview";
 import { formatDate } from "@/lib/format";
 
 /** The value of one fact of a correction, as the member wrote it or as the event had it. */
-function FactValue({ facts, field }: { facts: DatesExternalCorrectionFacts; field: DatesExternalCorrectionField }) {
+function FactValue({ facts, field }: { facts: DatesExternalCorrectionFacts | null; field: DatesExternalCorrectionField }) {
   const t = useTranslations("datesAdmin.corrections");
+  // `current` is null when the event was purged: there is nothing to compare with.
+  if (facts === null) return <span className="field-hint">{t("eventGone")}</span>;
   if (!Object.hasOwn(facts, field)) return <span className="field-hint">{t("unchanged")}</span>;
   const value = facts[field];
   if (value === null || value === undefined) return <span>{t(field === "ends_local" ? "noEnd" : "noValue")}</span>;
@@ -28,10 +30,13 @@ function FactValue({ facts, field }: { facts: DatesExternalCorrectionFacts; fiel
  * and the time. The facts a member did not touch are not listed. Member text is shown as text, never as markup.
  */
 export function DatesExternalCorrectionView({ correction, showEvent = true }: { correction: DatesExternalCorrection; showEvent?: boolean }) {
-  const t = useTranslations("datesAdmin.corrections"), locale = useLocale();
+  const t = useTranslations("datesAdmin.corrections"), external = useTranslations("datesAdmin.external"), locale = useLocale();
   const fields = DATES_EXTERNAL_CORRECTION_FIELDS.filter((field) => Object.hasOwn(correction.proposed, field));
+  const eventStatus = correction.event_status ?? null;
   return <div className="dates-correction">
-    {showEvent && <p><Link href={`/dates/external/${correction.external_event_id}`}>{correction.event_title ?? correction.external_event_id}</Link></p>}
+    {showEvent && <p>{correction.event_title === null ? <span>{t("eventGone")}</span>
+      : <Link href={`/dates/external/${correction.external_event_id}`}>{correction.event_title}</Link>}
+      {eventStatus !== null && eventStatus !== "published" && <> <span className="badge badge-warning">{external(`statusValues.${eventStatus}`)}</span></>}</p>}
     <p><small>{t("submitted", { at: formatDate(correction.created_at, locale, true) })} · <Link href={`/users/${correction.submitter.uid}`}>
       {correction.submitter.display_name || t("member", { uid: correction.submitter.uid })}</Link> · {t("revisionAtSubmit", { revision: correction.event_revision_at_submit })}</small></p>
     {fields.length > 0 && <div className="table-wrap"><table className="data-table dates-embedded-table">
@@ -43,6 +48,7 @@ export function DatesExternalCorrectionView({ correction, showEvent = true }: { 
     {correction.status !== "pending" && <p><small>{t(`decided.${correction.status}`, { by: correction.decided_by ?? "—", at: correction.decided_at === null ? "—" : formatDate(correction.decided_at, locale, true) })}
       {correction.decision_reason !== null && <> · {(DATES_EXTERNAL_CORRECTION_REJECT_REASONS as readonly string[]).includes(correction.decision_reason)
         ? t(`rejectReasons.${correction.decision_reason}`) : <code>{correction.decision_reason}</code>}</>}</small></p>}
+    {(correction.decision_note ?? null) !== null && <p className="preserve-whitespace"><small>{t("decisionNote", { note: correction.decision_note ?? "" })}</small></p>}
   </div>;
 }
 
@@ -57,8 +63,11 @@ export function DatesExternalCorrectionReject({ correction, onCancel, onSettled 
   const [reason, setReason] = useState(""), [note, setNote] = useState(""), [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const busyRef = useRef(false);
+  // Core requires a note with `other`, and counts at most 500 graphemes.
+  const noteLength = [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(note.trim())].length;
+  const ready = reason !== "" && noteLength <= DATES_EXTERNAL_CORRECTION_NOTE_MAX && (reason !== "other" || noteLength > 0);
   async function confirm() {
-    if (busyRef.current || reason === "") return;
+    if (busyRef.current || !ready) return;
     busyRef.current = true; setBusy(true); setError("");
     try {
       const outcome = await runDatesExternalCorrectionReject(adminCall, datesExternalCorrectionRejectRequest(correction.correction_id, reason, note));
@@ -67,12 +76,14 @@ export function DatesExternalCorrectionReject({ correction, onCancel, onSettled 
       await onSettled(outcome);
     } finally { busyRef.current = false; setBusy(false); }
   }
-  return <ConfirmDialog title={t("rejectTitle")} copy={t("rejectCopy")} confirmLabel={t("reject")} tone="danger" busy={busy} confirmDisabled={reason === ""}
+  return <ConfirmDialog title={t("rejectTitle")} copy={t("rejectCopy")} confirmLabel={t("reject")} tone="danger" busy={busy} confirmDisabled={!ready}
     error={error} onCancel={() => { if (!busyRef.current) onCancel(); }} onConfirm={() => void confirm()}>
     <label className="field"><span>{t("rejectReason")}</span><select required value={reason} onChange={(event) => setReason(event.target.value)}>
       <option value="">{t("chooseReason")}</option>
       {DATES_EXTERNAL_CORRECTION_REJECT_REASONS.map((code) => <option key={code} value={code}>{t(`rejectReasons.${code}`)}</option>)}</select></label>
-    <label className="field"><span>{t("rejectNote")}</span><textarea rows={3} maxLength={1000} value={note} onChange={(event) => setNote(event.target.value)} />
+    <label className="field"><span>{t(reason === "other" ? "rejectNoteRequired" : "rejectNote")}</span>
+      <textarea rows={3} maxLength={DATES_EXTERNAL_CORRECTION_NOTE_MAX * 4} required={reason === "other"} value={note} onChange={(event) => setNote(event.target.value)} />
+      <small className={noteLength > DATES_EXTERNAL_CORRECTION_NOTE_MAX ? "forced-copy-counter is-over" : "forced-copy-counter"}>{t("noteCounter", { count: noteLength, max: DATES_EXTERNAL_CORRECTION_NOTE_MAX })}</small>
       <small>{t("rejectNoteHint")}</small></label>
   </ConfirmDialog>;
 }

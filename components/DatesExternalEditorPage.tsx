@@ -123,6 +123,8 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
   const corrections = event && data ? datesExternalCorrections(event, data.server_now) : null;
   const approving = correctionId && corrections ? corrections.rows.find((row) => row.correction_id === correctionId && row.status === "pending") ?? null : null;
   const prefill = approving && event ? datesExternalCorrectionPrefill(event.editor_input, approving) : null;
+  // Rejecting a correction is a moderation decision: the review capability (Core-B 4b58099c), not manage.
+  const canReview = principal !== null && hasDatesCapability(principal, "dates_external_event_review") && state === "ready";
   const writeLocked = busy || candidate !== null || pending.kind !== "empty" || needsReload || completedCreate || state !== "ready" || !canManage;
   const locked = writeLocked || (externalId !== undefined && !event?.can_edit);
   // P2a: a publication begun from an AI intake is resumed where its draft and its hold are.
@@ -263,9 +265,9 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
       {corrections.unreadable.map((row) => <p className="alert alert-warning" key={row.index}>{t("review.unreadableCorrection", { row: row.index + 1 })}{row.id ? <> <code>{row.id}</code></> : null}</p>)}
       {corrections.rows.length === 0 && corrections.unreadable.length === 0 ? <p>{t("review.noCorrections")}</p> : corrections.rows.map((row) =>
         <div className="dates-correction-item" key={row.correction_id}>
-          {row.status === "pending" && canManage && <div className="row-actions">
-            {row.correction_id !== correctionId && <Link className="button button-primary button-small" href={`/dates/external/${event.external_event_id}?correction=${row.correction_id}`}>{t("review.approveEdit")}</Link>}
-            <button type="button" className="button button-danger button-small" onClick={() => setRejecting(row)}>{t("review.reject")}</button></div>}
+          {row.status === "pending" && (canManage || canReview) && <div className="row-actions">
+            {canManage && row.correction_id !== correctionId && <Link className="button button-primary button-small" href={`/dates/external/${event.external_event_id}?correction=${row.correction_id}`}>{t("review.approveEdit")}</Link>}
+            {canReview && <button type="button" className="button button-danger button-small" onClick={() => setRejecting(row)}>{t("review.reject")}</button>}</div>}
           <DatesExternalCorrectionView correction={row} showEvent={false} /></div>)}
     </section>}
     {principal && !canManage && <p className="alert alert-info">{t("editor.readOnly")}</p>}

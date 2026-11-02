@@ -112,8 +112,8 @@ test("all six exact external routes forward only validated input and the authent
     assert.equal(h.state.calls[0].action, "admin_me");
     const sent = h.state.calls[1]; assert.equal(sent.action, action);
     // D-143: the server adds the Admin intake contract selector to every Dates Admin request, beside the actor.
-    // D-149: and the external admin contract selector v2 to the external routes it extends; publication and the
-    // place search keep their released shapes.
+    // D-149: and the external admin contract selector v2 on the routes whose body or input it changes; publication and
+    // the place search keep their released requests (selector 2 changes nothing there, Core-B 4b58099c).
     const v2 = ["dates_external_event_list", "dates_external_event_detail", "dates_external_event_update", "dates_external_event_command"].includes(action);
     assert.deepEqual(JSON.parse(JSON.stringify(sent.body)), { ...payload as object, admin_email: email, dates_event_intake_admin_contract_version: 1,
       ...(v2 ? { dates_external_admin_contract_version: 2 } : {}) });
@@ -235,18 +235,21 @@ test("D-149: the re-research and corrections routes forward only their closed sh
   const mark = { external_event_id: externalId, expected_revision: 3, action: "mark_reviewed", idempotency_key: "external-review:000000000001" };
   for (const [action, payload] of [["dates_external_event_recheck", recheck], ["dates_external_correction_list", { status: "pending", page: 1 }],
     ["dates_external_correction_decide", decide], ["dates_external_event_command", mark]] as const) {
-    const h = harness(); assert.equal((await h.send(action, payload)).status, 200, action);
+    const h = harness(); h.state.member.data.dates.capabilities = [...caps, "dates_external_event_review"];
+    assert.equal((await h.send(action, payload)).status, 200, action);
     assert.deepEqual(JSON.parse(JSON.stringify(h.state.calls[1].body)), { ...payload, admin_email: email, dates_event_intake_admin_contract_version: 1,
       dates_external_admin_contract_version: 2 }, action);
   }
-  // A viewer with the read capability reads the queue; deciding and re-research need manage and a writing role.
-  const viewer = harness(); viewer.state.member.data.role = "viewer";
-  viewer.state.member.data.dates = { ...viewer.state.member.data.dates, role: "support_viewer", rank: 10, capabilities: ["dates_external_event_read"] };
-  assert.equal((await viewer.send("dates_external_correction_list", {})).status, 200);
-  assert.equal((await viewer.send("dates_external_correction_decide", decide)).body.error, "dates-admin-capability-required");
-  assert.equal((await viewer.send("dates_external_event_recheck", recheck)).body.error, "dates-admin-capability-required");
+  // Core-B 4b58099c: the queue and a rejection need the review capability (a moderator); re-research needs manage.
+  const moderator = harness();
+  moderator.state.member.data.dates = { ...moderator.state.member.data.dates, role: "moderator", rank: 20, capabilities: ["dates_external_event_read", "dates_external_event_review"] };
+  assert.equal((await moderator.send("dates_external_correction_list", {})).status, 200);
+  assert.equal((await moderator.send("dates_external_correction_decide", decide)).status, 200);
+  assert.equal((await moderator.send("dates_external_event_recheck", recheck)).body.error, "dates-admin-capability-required");
+  const manager = harness();
+  assert.equal((await manager.send("dates_external_correction_list", {})).body.error, "dates-admin-capability-required", "manage alone is not the review capability");
   // The selector cannot be set from the browser, and an unknown field never reaches Core.
-  const h = harness();
+  const h = harness(); h.state.member.data.dates.capabilities = [...caps, "dates_external_event_review"];
   for (const [action, payload] of [["dates_external_event_recheck", { ...recheck, dates_external_admin_contract_version: 1 }], ["dates_external_event_recheck", { ...recheck, model: "x" }],
     ["dates_external_correction_decide", { ...decide, decision: "approve" }], ["dates_external_correction_list", { status: "open" }],
     ["dates_external_event_command", { ...mark, action: "clear_reviewed" }]] as const)

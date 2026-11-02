@@ -34,7 +34,8 @@ export default function DatesExternalReviewMark({ target, review, canManage, com
     } finally { busyRef.current = false; setBusy(false); }
   }
 
-  const markable = target.status === "published" || target.status === "rechecking";
+  // Core-B 4b58099c: published, rechecking or in_review, active and not soft-deleted (Core checks the rest).
+  const markable = target.status === "published" || target.status === "rechecking" || target.status === "in_review";
   return <div className="dates-review-mark">
     {review.reviewed
       ? <span className="badge badge-active">{t("reviewed")}</span>
