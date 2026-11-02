@@ -27,6 +27,8 @@ import {
   hasDatesCapability,
   normalizeDatesPrincipal,
   permittedResolutionActions,
+  datesResolutionAfterRead,
+  datesWithdrawnResolution,
   resolutionActions,
 } from "../lib/datesAdmin.ts";
 import {
@@ -332,10 +334,48 @@ test("resolution and claim options follow the principal's capabilities (AYI-076)
   assert.match(page, /datesCaseClaimableByRole\(item, principal\) &&/);
   assert.match(page, /permittedResolutionActions\(data\.case, principal\)\.includes\(resolutionAction\)/);
   assert.equal(/resolutionActions\(next\.case\)/.test(page), false, "the initial choice comes from the permitted list");
+  assert.match(page, /setResolutionAction\(\(current\) => datesResolutionAfterRead\(permitted, current\)\);/);
+  assert.equal(/permitted\[0\]/.test(page), false, "a read never swaps a set decision for the first permitted one");
   for (const locale of ["en", "hu"]) {
     const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
     for (const key of ["appealClaimUnavailable", "appealDecisionUnavailable", "restrictionActionsUnavailable"]) {
       assert.equal(typeof messages.datesAdmin.caseDetail[key], "string", `${locale}.${key}`);
+    }
+  }
+});
+
+test("a set decision the page stops offering is named and unsendable, never silently replaced (Freelove F7)", () => {
+  // Before any decision is set, a read sets the first permitted one; afterwards it keeps the set one.
+  assert.equal(datesResolutionAfterRead(["dismiss", "warn"], ""), "dismiss");
+  assert.equal(datesResolutionAfterRead([], ""), "");
+  assert.equal(datesResolutionAfterRead(["dismiss", "warn"], "warn"), "warn");
+  assert.equal(datesResolutionAfterRead(["dismiss", "warn"], "suspend_account"), "suspend_account", "a role change keeps the set decision");
+  assert.equal(datesResolutionAfterRead([], "warn"), "warn");
+  assert.equal(datesWithdrawnResolution(["dismiss", "warn"], "suspend_account"), "suspend_account");
+  assert.equal(datesWithdrawnResolution(["dismiss", "warn"], "warn"), null);
+  assert.equal(datesWithdrawnResolution(["dismiss", "warn"], ""), null);
+
+  // A senior moderator set "suspend_account"; on refresh the role is a moderator's.
+  const activityCase = { queue: "activities", case_kind: "reports", target_type: "activity" };
+  const moderator = { capabilities: ["dates_case_resolve"] };
+  const permitted = permittedResolutionActions(activityCase, moderator);
+  const kept = datesResolutionAfterRead(permitted, "suspend_account");
+  assert.equal(kept, "suspend_account");
+  assert.equal(permitted.includes(kept), false);
+  assert.equal(datesWithdrawnResolution(permitted, kept), "suspend_account");
+
+  const page = readFileSync(new URL("../app/(dashboard)/dates/moderation/[caseId]/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /const withdrawnAction = datesWithdrawnResolution\(actions, resolutionAction\);/);
+  // The select keeps it as a disabled, named option, the form says so, and nothing can be prepared.
+  assert.match(page, /<select value=\{resolutionAction\} onChange=\{\(event\) => setResolutionAction\(event\.target\.value\)\}>\{withdrawnAction && <option value=\{withdrawnAction\} disabled>\{t\("resolutionChoiceWithdrawnOption", \{ action: t\(`actions\.\$\{withdrawnAction\}`\) \}\)\}<\/option>\}\{actions\.map/);
+  assert.match(page, /\{withdrawnAction && <small className="field-error" role="alert">\{t\("resolutionChoiceWithdrawn", \{ action: t\(`actions\.\$\{withdrawnAction\}`\) \}\)\}<\/small>\}/);
+  assert.match(page, /\{!withdrawnAction && resolutionAction === "restrict_dates" &&/);
+  assert.match(page, /disabled=\{writeLocked \|\| \(item\.conflict_of_interest && !breakGlass\) \|\| !actions\.includes\(resolutionAction\)\}>\{t\("prepareResolution"\)\}/);
+  assert.match(page, /if \(!permittedResolutionActions\(data\.case, principal\)\.includes\(resolutionAction\)\) \{\s*\/\/[^\n]*\n\s*if \(resolutionAction !== ""\) setFeedback\(\{ tone: "error", text: t\("resolutionChoiceWithdrawn"/);
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
+    for (const key of ["resolutionChoiceWithdrawn", "resolutionChoiceWithdrawnOption"]) {
+      assert.match(messages.datesAdmin.caseDetail[key], /\{action\}/, `${locale}.${key}`);
     }
   }
 });

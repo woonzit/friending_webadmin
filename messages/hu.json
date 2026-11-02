@@ -9522,6 +9522,8 @@
       "appealClaimUnavailable": "A szerepköröd nem dönthet fellebbezésekről, ezért ezt a fellebbezést nem veheted át.",
       "appealDecisionUnavailable": "A szerepköröd nem dönthet fellebbezésekről. Engedd el az ügyet, hogy egy döntésre jogosult moderátor átvehesse.",
       "restrictionActionsUnavailable": "A szerepköröd nem korlátozhatja az AreYouIn-hozzáférést, és nem függeszthet fel fiókot, ezért ezek a döntések nem szerepelnek a listában.",
+      "resolutionChoiceWithdrawn": "Ennél az ügynél ez a döntés már nem érhető el számodra: {action}. Változott a szerepköröd vagy az ügy; válassz másik döntést.",
+      "resolutionChoiceWithdrawnOption": "{action} (már nem érhető el)",
       "claimed": "Az ügyet öt percre átvetted.",
       "leaseExtended": "Az átvétel meghosszabbítva.",
       "released": "Az ügy visszakerült a queue-ba.",

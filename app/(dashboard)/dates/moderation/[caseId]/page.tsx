@@ -26,6 +26,8 @@ import {
   datesAppealBlockedByRole,
   datesCaseClaimableByRole,
   datesExternalReviewAllowed,
+  datesResolutionAfterRead,
+  datesWithdrawnResolution,
   isDatesExternalMessageCase,
   permittedResolutionActions,
   resolutionActions,
@@ -157,8 +159,9 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     // Retained case history and exact receipt recovery do not depend on a
     // second successful facts read. New decisions still require a coherent pair.
     setExternalNeedsReload(factsUnavailable);
+    // A decision the moderator set and the page no longer offers stays set, named and unsendable.
     const permitted = permittedResolutionActions(next.case, nextPrincipal);
-    setResolutionAction((current) => permitted.includes(current) ? current : permitted[0] || "");
+    setResolutionAction((current) => datesResolutionAfterRead(permitted, current));
     setState("ready");
   }, [caseId, readFence, external]);
 
@@ -356,7 +359,12 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
 
   function prepareResolution(event: React.FormEvent) {
     event.preventDefault();
-    if (writeLocked || !data || !principal || !permittedResolutionActions(data.case, principal).includes(resolutionAction)) return;
+    if (writeLocked || !data || !principal) return;
+    if (!permittedResolutionActions(data.case, principal).includes(resolutionAction)) {
+      // Never a silent no-op: the set decision is no longer offered, and the moderator chooses again.
+      if (resolutionAction !== "") setFeedback({ tone: "error", text: t("resolutionChoiceWithdrawn", { action: t(`actions.${resolutionAction}`) }) });
+      return;
+    }
     if (resolutionReason.trim().length < 3 || visibleReasonEn.trim().length < 1 || visibleReasonHu.trim().length < 1) return;
     setConfirmed({
       kind: "resolve",
@@ -521,6 +529,8 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
   const actions = permittedResolutionActions(item, principal);
   const mayResolve = actions.length > 0 && (item.capabilities.can_resolve || (item.conflict_of_interest && canBreakGlass && assignedToMe && leaseActive));
   const restrictionActionsHidden = actions.length > 0 && resolutionActions(item).some((action) => !actions.includes(action));
+  // A set decision the page no longer offers stays visible, disabled and named until the moderator chooses again.
+  const withdrawnAction = datesWithdrawnResolution(actions, resolutionAction);
 
   return (
     <>
@@ -654,12 +664,12 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       {mayResolve && <section className="panel dates-section dates-resolution-panel">
         <div className="panel-header"><div><h2>{t("resolutionTitle")}</h2><p>{t("resolutionCopy")}</p></div></div>
         <form className="panel-body form-grid" onSubmit={prepareResolution}>
-          <label className="field"><span>{t("action")}</span><select value={resolutionAction} onChange={(event) => setResolutionAction(event.target.value)}>{actions.map((action) => <option key={action} value={action}>{t(`actions.${action}`)}</option>)}</select>{restrictionActionsHidden && <small className="field-hint">{t("restrictionActionsUnavailable")}</small>}</label>
-          {resolutionAction === "restrict_dates" && <label className="field"><span>{t("restrictionExpiry")}</span><input type="datetime-local" value={restrictionExpiry} onChange={(event) => setRestrictionExpiry(event.target.value)} /></label>}
+          <label className="field"><span>{t("action")}</span><select value={resolutionAction} onChange={(event) => setResolutionAction(event.target.value)}>{withdrawnAction && <option value={withdrawnAction} disabled>{t("resolutionChoiceWithdrawnOption", { action: t(`actions.${withdrawnAction}`) })}</option>}{actions.map((action) => <option key={action} value={action}>{t(`actions.${action}`)}</option>)}</select>{withdrawnAction && <small className="field-error" role="alert">{t("resolutionChoiceWithdrawn", { action: t(`actions.${withdrawnAction}`) })}</small>}{restrictionActionsHidden && <small className="field-hint">{t("restrictionActionsUnavailable")}</small>}</label>
+          {!withdrawnAction && resolutionAction === "restrict_dates" && <label className="field"><span>{t("restrictionExpiry")}</span><input type="datetime-local" value={restrictionExpiry} onChange={(event) => setRestrictionExpiry(event.target.value)} /></label>}
           <label className="field field-full"><span>{t("internalReason")}</span><textarea required maxLength={1000} value={resolutionReason} onChange={(event) => setResolutionReason(event.target.value)} /></label>
           <label className="field"><span>{t("visibleReasonEn")}</span><textarea required maxLength={500} value={visibleReasonEn} onChange={(event) => setVisibleReasonEn(event.target.value)} /></label>
           <label className="field"><span>{t("visibleReasonHu")}</span><textarea required maxLength={500} value={visibleReasonHu} onChange={(event) => setVisibleReasonHu(event.target.value)} /></label>
-          <div className="field-full"><button className="button button-danger" type="submit" disabled={writeLocked || (item.conflict_of_interest && !breakGlass)}>{t("prepareResolution")}</button></div>
+          <div className="field-full"><button className="button button-danger" type="submit" disabled={writeLocked || (item.conflict_of_interest && !breakGlass) || !actions.includes(resolutionAction)}>{t("prepareResolution")}</button></div>
         </form>
       </section>}
 

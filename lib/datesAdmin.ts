@@ -819,6 +819,21 @@ export function permittedResolutionActions(
   return resolutionActions(value).filter((action) => restrict || !RESTRICTING_RESOLUTIONS.has(action));
 }
 
+/**
+ * The resolution decision kept across a read of the case: the first permitted one only before any
+ * decision is set, otherwise the one already set, even when it is no longer permitted (a role change
+ * or a case change on refresh). A withdrawn decision is never silently replaced by another one: the
+ * form names it (`datesWithdrawnResolution`) and waits until the moderator chooses again.
+ */
+export function datesResolutionAfterRead(permitted: readonly string[], current: string): string {
+  return current === "" ? permitted[0] ?? "" : current;
+}
+
+/** The set decision the page no longer offers (shown disabled and named), or `null`. */
+export function datesWithdrawnResolution(permitted: readonly string[], current: string): string | null {
+  return current !== "" && !permitted.includes(current) ? current : null;
+}
+
 /** An appeal needs dates_appeal_resolve; without it the principal cannot decide one. */
 export function datesAppealBlockedByRole(
   value: Pick<DatesCaseSummary, "queue" | "case_kind">,
