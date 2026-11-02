@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
+import PhotoModerationQueueCount from "@/components/PhotoModerationQueueCount";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import AdminImageEditor from "@/components/AdminImageEditor";
 import { adminCall } from "@/lib/adminClient";
@@ -210,7 +211,7 @@ export default function PhotoModerationPage() {
             <button type="button" role="tab" aria-selected={scope === item} className={scope === item ? "is-active" : ""} key={item} disabled={Boolean(busy) || Boolean(editing)} onClick={() => setScope(item)}>{t(`scopes.${item}`)}</button>
           ))}
         </div>
-        <span>{t("queueCount", { count: items.length })}</span>
+        <PhotoModerationQueueCount state={state} count={items.length} />
         <button type="button" className="button button-secondary" disabled={Boolean(busy)} onClick={() => void load()}>{common("refresh")}</button>
       </div>
       {access === "read" || access === "error" ? <div className={`alert ${access === "error" ? "alert-error" : "alert-info"} page-alert`} role="status">{t(access === "error" ? "accessError" : "readOnly")}</div> : null}

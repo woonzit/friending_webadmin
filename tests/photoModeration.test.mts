@@ -2,6 +2,38 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 import { ADMIN_ACTIONS } from "../lib/adminActions.ts";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { NextIntlClientProvider } from "next-intl";
+import PhotoModerationQueueCount from "../components/PhotoModerationQueueCount.tsx";
+
+test("the queue total tells a proven empty queue from a loading tab, stale rows and a failed read in EN/HU", async () => {
+  const page = await readFile(new URL("../app/(dashboard)/photo-moderation/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /<PhotoModerationQueueCount state=\{state\} count=\{items\.length\} \/>/);
+  assert.doesNotMatch(page, /t\("queueCount"/);
+  for (const locale of ["en", "hu"]) {
+    const messages = JSON.parse(await readFile(new URL(`../messages/${locale}.json`, import.meta.url), "utf8"));
+    const errors: string[] = [];
+    const render = (state: "ready" | "loading" | "error", count: number) => renderToStaticMarkup(createElement(
+      NextIntlClientProvider, { locale, messages, timeZone: "UTC", onError: (error: unknown) => errors.push(String(error)) },
+      createElement(PhotoModerationQueueCount, { state, count }),
+    ));
+    const empty = render("ready", 0);
+    assert.match(empty, locale === "en" ? /No pending pictures/ : /Nincs függő kép/);
+    assert.match(render("ready", 14), /14/);
+    for (const count of [0, 14]) {
+      // The rows still in memory belong to an earlier tab: neither a load nor a failure may show them as a total.
+      const failed = render("error", count), loading = render("loading", count);
+      assert.ok(failed.includes(messages.photoModeration.queueUnavailable));
+      assert.ok(loading.includes(messages.common.loading));
+      for (const html of [failed, loading]) {
+        assert.notEqual(html, empty);
+        assert.doesNotMatch(html, /14/);
+      }
+    }
+    assert.deepEqual(errors, []);
+  }
+});
 
 test("profile photo moderation is an explicit authenticated admin capability", () => {
   assert.ok(ADMIN_ACTIONS.includes("moderation_pic_list"));

@@ -3926,6 +3926,7 @@
       "public_album": "Other public albums"
     },
     "queueCount": "{count, plural, =0 {No pending pictures} one {# pending picture} other {# pending pictures}}",
+    "queueUnavailable": "Pending picture count unavailable",
     "empty": "The review queue is clear",
     "emptyCopy": "New pictures that need a human decision will appear here.",
     "loadError": "The profile photo moderation queue could not be loaded.",

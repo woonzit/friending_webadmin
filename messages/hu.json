@@ -3926,6 +3926,7 @@
       "public_album": "Egyéb nyilvános albumok"
     },
     "queueCount": "{count, plural, =0 {Nincs függő kép} one {# függő kép} other {# függő kép}}",
+    "queueUnavailable": "A függő képek száma nem érhető el",
     "empty": "A moderációs sor üres",
     "emptyCopy": "Az emberi döntést igénylő új képek itt fognak megjelenni.",
     "loadError": "A profilképek moderációs sora nem tölthető be.",
